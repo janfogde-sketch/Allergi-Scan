@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Html5Qrcode } from "html5-qrcode";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 const ALLERGENS = [
@@ -87,7 +88,7 @@ html{height:-webkit-fill-available;}body{background:var(--bg);color:var(--text);
 .screen-title{font-family:var(--fh);font-size:22px;font-weight:900;color:var(--text);margin:20px 0 4px;}
 .screen-sub{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.5;}
 
-.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--surface);border-top:1px solid var(--border);display:flex;padding:8px 0 calc(20px + env(safe-area-inset-bottom));z-index:100;box-shadow:0 -4px 16px rgba(0,0,0,.07);}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;width:100%;background:var(--surface);border-top:1px solid var(--border);display:flex;padding:8px 0 calc(20px + env(safe-area-inset-bottom));z-index:100;box-shadow:0 -4px 16px rgba(0,0,0,.07);}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;opacity:.38;transition:opacity .15s;}
 .nav-item.active{opacity:1;}
 .nav-icon{width:44px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:21px;transition:background .15s;}
@@ -278,6 +279,51 @@ export default function AllergiScan() {
   const [newMemberName,   setNewMemberName]   = useState("");
   const [newMemberAllerg, setNewMemberAllerg] = useState([]);
   const [customInput,     setCustomInput]     = useState("");
+  const [cameraActive,    setCameraActive]    = useState(false);
+  const [cameraError,     setCameraError]     = useState("");
+  const html5QrRef = useRef(null);
+
+  const startCamera = useCallback(async () => {
+    setCameraError("");
+    setCameraActive(true);
+    // Small delay to let the div render
+    setTimeout(async () => {
+      try {
+        const html5Qr = new Html5Qrcode("qr-reader");
+        html5QrRef.current = html5Qr;
+        await html5Qr.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 150 } },
+          (decodedText) => {
+            // Success - stop camera and lookup
+            html5Qr.stop().then(() => {
+              setCameraActive(false);
+              setBarcodeInput(decodedText);
+              lookup(decodedText);
+            });
+          },
+          () => {} // ignore scan errors
+        );
+      } catch (err) {
+        setCameraActive(false);
+        setCameraError("Kunne ikke åbne kameraet. Tillad venligst kameraadgang i din browser.");
+      }
+    }, 300);
+  }, [lookup]);
+
+  const stopCamera = useCallback(() => {
+    if (html5QrRef.current) {
+      html5QrRef.current.stop().catch(() => {}).finally(() => {
+        setCameraActive(false);
+        html5QrRef.current = null;
+      });
+    } else {
+      setCameraActive(false);
+    }
+  }, []);
+
+  // Stop camera when changing screen
+  useEffect(() => { if (cameraActive) stopCamera(); }, [screen]);
 
   useEffect(()=>{ save("as_user",user); },[user]);
   useEffect(()=>{ save("as_allergens",allergens); },[allergens]);
@@ -327,12 +373,7 @@ Analyser produktets sikkerhed. Svar KUN med JSON (ingen markdown): {"status":"sa
     setLoading(false);
   }, [allActive, activeProfiles, family, user]);
 
-  const simulateScan = () => {
-    if (scanning||loading) return;
-    setScanning(true);
-    const pick = DEMO_CODES[Math.floor(Math.random()*DEMO_CODES.length)];
-    setTimeout(()=>{ setScanning(false); setBarcodeInput(pick.code); lookup(pick.code); }, 2000);
-  };
+
 
   const addToList  = (name,store="") => { if(!name.trim())return; setShoppingList(l=>[...l,{id:uid(),name:name.trim(),store,checked:false}]); setNewItemName(""); setNewItemStore(""); };
   const toggleItem = (id) => setShoppingList(l=>l.map(i=>i.id===id?{...i,checked:!i.checked}:i));
@@ -495,57 +536,96 @@ Analyser produktets sikkerhed. Svar KUN med JSON (ingen markdown): {"status":"sa
 
         {/* ══ HOME ══ */}
         {screen===SCREENS.HOME && (
-          <div className="screen fade-in" style={{padding:0}}>
-            <div className="home-header">
-              <div className="home-greeting">God dag 👋</div>
-              <div className="home-name">{user.name}</div>
-              <div className="home-stats">
-                <div className="stat-card"><div className="stat-num">{allergens.length+customAllerg.length}</div><div className="stat-lbl">Mine allergier</div></div>
-                <div className="stat-card"><div className="stat-num">{family.length}</div><div className="stat-lbl">Familiemedlemmer</div></div>
-                <div className="stat-card"><div className="stat-num">{history.length}</div><div className="stat-lbl">Scanninger i alt</div></div>
-                <div className="stat-card"><div className="stat-num">{shoppingList.filter(i=>!i.checked).length}</div><div className="stat-lbl">På indkøbslisten</div></div>
-              </div>
+          <div className="screen fade-in">
+            {/* Hilsen */}
+            <div style={{padding:"20px 0 8px"}}>
+              <div style={{fontSize:13,color:"var(--muted)",fontWeight:500}}>God dag 👋</div>
+              <div style={{fontFamily:"var(--fh)",fontSize:24,fontWeight:900,color:"var(--text)",marginTop:2}}>{user.name}</div>
             </div>
-            <div style={{padding:"16px 16px calc(90px + env(safe-area-inset-bottom))"}}>
-              {family.length>0&&(
-                <div className="card" style={{padding:"12px 14px"}}>
-                  <div className="card-lbl">Aktive profiler ved scanning</div>
+
+            {/* Aktive profiler */}
+            {family.length>0&&(
+              <div className="card" style={{padding:"12px 14px"}}>
+                <div className="card-lbl">Tjekker for</div>
+                {(()=>{ 
+                  const allIds=["me",...family.map(m=>m.id)];
+                  const isAll=allIds.every(id=>activeProfiles.includes(id));
+                  const toggleAll=()=>setActiveProfiles(isAll?["me"]:allIds);
+                  const toggleOne=(id)=>{
+                    // Hvis hele familien er aktiv, skift til kun dette medlem
+                    if(isAll){ setActiveProfiles([id]); return; }
+                    // Ellers toggle normalt
+                    const next=activeProfiles.includes(id)
+                      ? activeProfiles.filter(x=>x!==id)
+                      : [...activeProfiles,id];
+                    // Sørg for mindst ét er valgt
+                    setActiveProfiles(next.length===0?[id]:next);
+                  };
+                  return (
                   <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
-                    <div className={`ap-chip${activeProfiles.includes("me")?" on":""}`} onClick={()=>toggleActive("me")}>
+                    <div className={`ap-chip${isAll?" on":""}`}
+                      style={isAll?{background:"var(--g2)",borderColor:"var(--g2)",color:"#fff"}:{}}
+                      onClick={toggleAll}>
+                      👨‍👩‍👧 Hele familien
+                    </div>
+                    <div className={`ap-chip${!isAll&&activeProfiles.includes("me")?" on":""}`} onClick={()=>toggleOne("me")}>
                       <div style={{width:20,height:20,borderRadius:"50%",background:"var(--g4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--g1)"}}>{initials(user.name)}</div>
                       {user.name.split(" ")[0]}
                     </div>
                     {family.map(m=>(
-                      <div key={m.id} className={`ap-chip${activeProfiles.includes(m.id)?" on":""}`} onClick={()=>toggleActive(m.id)}>
+                      <div key={m.id} className={`ap-chip${!isAll&&activeProfiles.includes(m.id)?" on":""}`} onClick={()=>toggleOne(m.id)}>
                         <div style={{width:20,height:20,borderRadius:"50%",background:m.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(m.name)}</div>
                         {m.name.split(" ")[0]}
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-              <div className="quick-actions">
-                <div className="qa-btn" onClick={()=>setScreen(SCREENS.SCAN)}><div className="qa-icon green">📷</div><div className="qa-title">Skan produkt</div><div className="qa-sub">Tjek stregkode</div></div>
-                <div className="qa-btn" onClick={()=>setScreen(SCREENS.SEARCH)}><div className="qa-icon blue">🔎</div><div className="qa-title">Søg varer</div><div className="qa-sub">Find sikre produkter</div></div>
-                <div className="qa-btn" onClick={()=>setScreen(SCREENS.LIST)}><div className="qa-icon amber">🛒</div><div className="qa-title">Indkøbsliste</div><div className="qa-sub">{shoppingList.filter(i=>!i.checked).length} varer mangler</div></div>
-                <div className="qa-btn" onClick={()=>setScreen(SCREENS.FAMILY)}><div className="qa-icon red">👨‍👩‍👧</div><div className="qa-title">Familie</div><div className="qa-sub">{family.length} medlemmer</div></div>
+                );})()}
               </div>
-              <div className="card">
-                <div className="card-lbl">Mine allergier</div>
-                {allergens.length+customAllerg.length===0
-                  ? <div style={{fontSize:13,color:"var(--muted)"}}>Ingen allergier registreret. <span style={{color:"var(--g3)",cursor:"pointer",fontWeight:700}} onClick={()=>{setEditMode(true);setOnboardStep(2);}}>Tilføj →</span></div>
-                  : <div className="tags">{getAllergenLabels(allergens,customAllerg).map((a,i)=><div key={i} className="tag">{a}</div>)}</div>}
+            )}
+
+            {/* Scanner */}
+            {!cameraActive ? (
+              <div className="scanner-btn" onClick={startCamera}>
+                <div className="scan-icon-big">📷</div>
+                <div className="scan-title">Tryk for at scanne</div>
+                <div className="scan-sub">Åbner kameraet på din telefon</div>
               </div>
-              {history.length>0&&(
-                <div className="card">
-                  <div className="card-lbl">Seneste scanninger</div>
-                  {history.slice(0,4).map((h,i)=>(
-                    <div key={i} className="hist-row" onClick={()=>{setScanResult(h);setScreen(SCREENS.RESULT);}}>
-                      <div className={`hist-dot ${h.status}`}/><div className="hist-info"><div className="hist-name">{h.name}</div><div className="hist-time">{timeAgo(h.timestamp)}</div></div>
-                      <div className={`badge ${h.status}`}>{h.status==="safe"?"Sikker":h.status==="danger"?"Farlig":"Advarsel"}</div>
-                    </div>))}
-                </div>)}
+            ) : (
+              <div style={{position:"relative",marginBottom:14}}>
+                <div id="qr-reader" style={{width:"100%",borderRadius:18,overflow:"hidden"}}/>
+                <button className="btn btn-danger btn-sm" style={{position:"absolute",top:10,right:10,zIndex:10,padding:"7px 13px"}} onClick={stopCamera}>✕ Luk</button>
+                {cameraError&&<div className="error-box" style={{margin:"8px 0 0"}}>⚠️ {cameraError}</div>}
+              </div>
+            )}
+
+            {/* Manuel indtastning */}
+            <div className="card" style={{padding:"13px 14px"}}>
+              <div className="card-lbl">Eller indtast stregkode manuelt</div>
+              <div className="input-row">
+                <input className="field" placeholder="Fx. 3017620422003" value={barcodeInput} onChange={e=>setBarcodeInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&lookup(barcodeInput)}/>
+                <button className="btn btn-primary btn-sm" style={{whiteSpace:"nowrap",width:"auto"}} onClick={()=>lookup(barcodeInput)}>Tjek</button>
+              </div>
             </div>
+
+            {/* Demo koder */}
+            <div style={{marginBottom:12}}>
+              <div className="card-lbl" style={{marginBottom:7}}>Prøv disse produkter</div>
+              <div className="demo-row">{DEMO_CODES.map(d=><div key={d.code} className="demo-code" onClick={()=>{setBarcodeInput(d.code);lookup(d.code);}}>{d.label}</div>)}</div>
+            </div>
+
+            {loading&&<div className="loader fade-in"><div className="spinner"/><div className="loader-txt">Analyserer produkt…</div><div className="loader-sub">Tjekker mod dine allergier med AI</div></div>}
+            {scanError&&!loading&&<div className="error-box">⚠️ {scanError}</div>}
+
+            {/* Seneste scanninger */}
+            {history.length>0&&!loading&&(
+              <div className="card">
+                <div className="card-lbl">Seneste scanninger</div>
+                {history.slice(0,5).map((h,i)=>(
+                  <div key={i} className="hist-row" onClick={()=>{setScanResult(h);setScreen(SCREENS.RESULT);}}>
+                    <div className={`hist-dot ${h.status}`}/><div className="hist-info"><div className="hist-name">{h.name}</div><div className="hist-time">{timeAgo(h.timestamp)}</div></div>
+                    <div className={`badge ${h.status}`}>{h.status==="safe"?"Sikker":h.status==="danger"?"Farlig":"Advarsel"}</div>
+                  </div>))}
+              </div>)}
           </div>
         )}
 
