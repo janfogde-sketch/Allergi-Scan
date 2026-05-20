@@ -181,8 +181,8 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
 .topbar-avatar:hover{background:var(--ink2);}
 
 /* ── LAYOUT ── */
-.screen{flex:1;padding:0 16px 96px;}
-.bottom-nav{position:sticky;bottom:0;width:100%;background:var(--paper);border-top:1px solid var(--border);display:flex;padding:6px 4px 16px;z-index:100;box-shadow:0 -1px 0 var(--border),0 -4px 16px rgba(31,39,51,.06);}
+.screen{flex:1;padding:0 16px 110px;}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:390px;background:var(--paper);border-top:1px solid var(--border);display:flex;padding:6px 4px 16px;z-index:100;box-shadow:0 -1px 0 var(--border),0 -4px 16px rgba(31,39,51,.06);}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;opacity:.3;transition:all .15s;}
 .nav-item.active{opacity:1;}
 .nav-icon{width:42px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background .15s;}
@@ -414,7 +414,7 @@ export default function AllergiScan() {
   const [editMode, setEditMode] = useState(false);
 
   // User data
-  const [user, setUser] = useState({ name:"", age:"", email:"", phone:"", password:"" });
+  const [user, setUser] = useState({ name:"", age:"", email:"", phone:"", password:"", role:"" });
   const [allergens, setAllergens] = useState([]);
   const [customAllerg, setCustomAllerg] = useState([]);
   const [family, setFamily] = useState([]);
@@ -484,7 +484,7 @@ export default function AllergiScan() {
     localStorage.removeItem("as_token");
     localStorage.removeItem("as_refresh");
     localStorage.removeItem("as_user_id");
-    setUser({ name:"", age:"", email:"", phone:"", password:"" });
+    setUser({ name:"", age:"", email:"", phone:"", password:"", role:"" });
     setAllergens([]); setCustomAllerg([]); setFamily([]); setHistory([]); setShoppingList([]);
     setScreen(SCREENS.WELCOME);
   }, []);
