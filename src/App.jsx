@@ -791,7 +791,7 @@ export default function AllergiScan() {
       await saveHistoryEntry(ean.trim(), product.id, status, flags);
       setScreen(SCREENS.RESULT);
     } catch (e) {
-      setScanError("Der opstod en fejl. Tjek din forbindelse og prøv igen.");
+      setScanError("Fejl: " + (e.message || e.toString()));
     }
     setLoading(false);
   }, [accessToken, activeIds]);
