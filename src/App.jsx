@@ -391,9 +391,11 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
 .tab-row{display:flex;gap:3px;background:var(--paper2);border-radius:10px;padding:3px;margin-bottom:14px;border:1px solid var(--border);}
 .tab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--muted2);transition:all .15s;}
 .tab.active{background:#fff;color:var(--ink);box-shadow:var(--sh);}
-#qr-reader{width:100%!important;border:none!important;}
-#qr-reader video{border-radius:0!important;}
+#qr-reader{width:100%!important;border:none!important;min-height:200px;}
+#qr-reader video{width:100%!important;height:auto!important;border-radius:8px!important;display:block!important;}
 #qr-reader__dashboard{display:none!important;}
+#qr-reader__scan_region{width:100%!important;}
+#qr-reader img{display:none!important;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 .fade-in{animation:fadeUp .18s ease both;}
 `;
