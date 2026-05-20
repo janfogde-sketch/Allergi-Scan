@@ -94,56 +94,117 @@ const SCREENS = {
   ADMIN:"admin",
 };
 
+const PAGE_IDS = {
+  welcome:"SCR-01", login:"SCR-02", onboard:"SCR-03",
+  home:"SCR-04", scan:"SCR-05", search:"SCR-06",
+  list:"SCR-07", profile:"SCR-08", family:"SCR-09",
+  result:"SCR-10", history:"SCR-11", notfound:"SCR-12",
+  submitted:"SCR-13", admin:"SCR-14",
+};
+
+const DUMMY_PRODUCT = {
+  code: "3017620422003",
+  ean: "3017620422003",
+  name: "Nutella",
+  brand: "Ferrero",
+  image_url: "https://images.openfoodfacts.org/images/products/301/762/042/2003/front_en.820.400.jpg",
+  category: "Chokolade",
+  status: "danger",
+  headline: "Indeholder allergen! 🚫",
+  summary: "Produktet indeholder Laktose, Nødder.",
+  source: "open_food_facts",
+  verified_status: "unverified",
+  hasUnknown: false,
+  matchedDanger: ["laktose", "noedder"],
+  matchedWarning: ["soja"],
+  familyImpact: [],
+  allergen_flags: {
+    gluten: "no", laktose: "yes", aeg: "no",
+    noedder: "yes", jordnoedder: "no", soja: "traces",
+    fisk: "no", skaldyr: "no", selleri: "no",
+    sennep: "no", sesam: "no", svovl: "no",
+    lupin: "no", bloeddyr: "no",
+  },
+  ingredients: "Sucre, huile de palme, NOISETTES 13%, cacao maigre 7,4%, LAIT écrémé en poudre 6,6%, LACTOSERUM en poudre, émulsifiants: lécithines (SOJA), vanilline.",
+  flags: [
+    { type:"bad", text:"Indeholder Laktose" },
+    { type:"bad", text:"Indeholder Nødder" },
+    { type:"maybe", text:"Kan indeholde spor af Soja" },
+  ],
+  timestamp: Date.now(),
+};
+
 const AVATAR_COLORS = ["#52b788","#74c69d","#40916c","#b7e4c7","#2d6a4f","#95d5b2","#f4a261","#e76f51"];
 
 // ─── HJÆLPEFUNKTIONER ────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).slice(2,9);
 
+function PageID({ screen }) {
+  const id = PAGE_IDS[screen] || "SCR-??";
+  const copy = () => {
+    navigator.clipboard?.writeText(id).catch(() => {});
+  };
+  return (
+    <div
+      onClick={copy}
+      title="Klik for at kopiere side-ID"
+      style={{
+        position:"fixed", bottom:70, right:8, zIndex:200,
+        fontSize:9, fontWeight:700, color:"var(--muted)",
+        background:"var(--paper2)", border:"1px solid var(--border)",
+        borderRadius:5, padding:"2px 6px", cursor:"pointer",
+        letterSpacing:"0.5px", opacity:0.7,
+        fontFamily:"monospace",
+      }}
+    >
+      {id}
+    </div>
+  );
+}
+
 // Kategori-ikoner når produktbillede mangler
+function getProductIcon(product) {
+  if (!product) return "🛒";
+  const name = (product.name || "").toLowerCase();
+  const cat = (product.category || "").toLowerCase();
+  const combined = name + " " + cat;
+  if (/mælk|fløde|smør|ost|yoghurt|skyr/.test(combined)) return "🥛";
+  if (/brød|bolle|rugbrød|toast/.test(combined)) return "🍞";
+  if (/chokolade|nutella|kakao/.test(combined)) return "🍫";
+  if (/juice|saft|vand|cola|øl|vin/.test(combined)) return "🥤";
+  if (/kylling|oksekød|svinekød|kød/.test(combined)) return "🥩";
+  if (/laks|fisk|tun|rejer/.test(combined)) return "🐟";
+  if (/pasta|spaghetti|makaroni/.test(combined)) return "🍝";
+  if (/ris|grød|havre/.test(combined)) return "🍚";
+  if (/chips|snack|popcorn/.test(combined)) return "🍿";
+  if (/is|flødeis/.test(combined)) return "🍦";
+  if (/æble|banan|appelsin|frugt/.test(combined)) return "🍎";
+  if (/tomat|gulerod|grøntsag/.test(combined)) return "🥦";
+  if (/olie|margarine/.test(combined)) return "🫒";
+  if (/nødder|mandler|cashew/.test(combined)) return "🥜";
+  if (/morgenmad|cornflakes|müsli/.test(combined)) return "🥣";
+  return "🛒";
+}
+
 function ProductImage({ product, size = 64 }) {
-  const categoryIcons = {
-    mejeri: "🥛", drikkevarer: "🥤", brød: "🍞", bagværk: "🥐",
-    kød: "🥩", fisk: "🐟", grøntsager: "🥦", frugt: "🍎",
-    snacks: "🍿", slik: "🍬", chokolade: "🍫", is: "🍦",
-    konserves: "🥫", pasta: "🍝", ris: "🍚", morgenmad: "🥣",
-    sauce: "🫙", krydderier: "🧂", olie: "🫒", nødder: "🥜",
-    default: "🛒"
-  };
-  const getIcon = (product) => {
-    if (!product) return categoryIcons.default;
-    const name = (product.name || "").toLowerCase();
-    const cat = (product.category || "").toLowerCase();
-    const combined = name + " " + cat;
-    if (/mælk|fløde|smør|ost|yoghurt|skyr/.test(combined)) return "🥛";
-    if (/brød|bolle|rugbrød|toast/.test(combined)) return "🍞";
-    if (/chokolade|nutella|kakao/.test(combined)) return "🍫";
-    if (/juice|saft|vand|cola|øl|vin/.test(combined)) return "🥤";
-    if (/kylling|oksekød|svinekød|kød/.test(combined)) return "🥩";
-    if (/laks|fisk|tun|rejer/.test(combined)) return "🐟";
-    if (/pasta|spaghetti|makaroni/.test(combined)) return "🍝";
-    if (/ris|grød|havre/.test(combined)) return "🍚";
-    if (/chips|snack|popcorn/.test(combined)) return "🍿";
-    if (/is|flødeis/.test(combined)) return "🍦";
-    if (/æble|banan|appelsin|frugt/.test(combined)) return "🍎";
-    if (/tomat|gulerod|grøntsag/.test(combined)) return "🥦";
-    if (/olie|margarine/.test(combined)) return "🫒";
-    if (/nødder|mandler|cashew/.test(combined)) return "🥜";
-    if (/morgenmad|cornflakes|müsli/.test(combined)) return "🥣";
-    return categoryIcons.default;
-  };
   if (product?.image_url) {
     return (
-      <img
-        src={product.image_url}
-        alt={product.name}
-        style={{ width:size, height:size, objectFit:"contain", borderRadius:8 }}
-        onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }}
-      />
+      <>
+        <img
+          src={product.image_url}
+          alt={product.name}
+          style={{ width:size, height:size, objectFit:"contain", borderRadius:8 }}
+          onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }}
+        />
+        <div style={{ width:size, height:size, background:"var(--paper2)", borderRadius:8, display:"none", alignItems:"center", justifyContent:"center", fontSize:size*0.5 }}>
+          {getProductIcon(product)}
+        </div>
+      </>
     );
   }
   return (
     <div style={{ width:size, height:size, background:"var(--paper2)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:size*0.5 }}>
-      {getIcon(product)}
+      {getProductIcon(product)}
     </div>
   );
 }
@@ -451,6 +512,15 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
 #qr-reader__dashboard{display:none!important;}
 #qr-reader__scan_region{width:100%!important;}
 #qr-reader img{display:none!important;}
+/* ── PRODUKT HERO ── */
+.product-hero{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px;box-shadow:var(--sh);}
+.product-hero-img{width:100%;height:180px;object-fit:contain;background:var(--paper2);display:block;}
+.product-hero-img-placeholder{width:100%;height:180px;background:var(--paper2);display:flex;align-items:center;justify-content:center;font-size:72px;}
+.product-hero-body{padding:14px 16px;}
+.product-hero-name{font-size:19px;font-weight:800;color:var(--ink);letter-spacing:-.4px;line-height:1.2;margin-bottom:3px;}
+.product-hero-brand{font-size:13px;color:var(--muted);font-weight:500;margin-bottom:10px;}
+.product-hero-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.product-hero-source{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;letterSpacing:.3px;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 .fade-in{animation:fadeUp .18s ease both;}
 `;
@@ -1471,17 +1541,18 @@ export default function AllergiScan() {
               </div>
               <div className="scan-hero-arrow">›</div>
             </div>
-            <div className="stat-grid">
-              <div className="stat-card"><div className="stat-num">{history.length}</div><div className="stat-lbl">📷 Scanninger</div></div>
-              <div className="stat-card"><div className="stat-num">{history.filter(h=>h.result==="safe"||h.status==="safe").length}</div><div className="stat-lbl">✅ Sikre</div></div>
-              <div className="stat-card"><div className="stat-num">{history.filter(h=>h.result==="danger"||h.status==="danger").length}</div><div className="stat-lbl">🚫 Farlige</div></div>
-              <div className="stat-card"><div className="stat-num">{family.length+1}</div><div className="stat-lbl">👥 Profiler</div></div>
-            </div>
             <div className="quick-grid">
               <div className="quick-btn" onClick={() => setScreen(SCREENS.SEARCH)}><span className="quick-icon">🔎</span><span className="quick-label">Søg varer</span></div>
               <div className="quick-btn" onClick={() => setScreen(SCREENS.LIST)}><span className="quick-icon">🛒</span><span className="quick-label">Indkøbsliste</span></div>
               <div className="quick-btn" onClick={() => setScreen(SCREENS.FAMILY)}><span className="quick-icon">👨‍👩‍👧</span><span className="quick-label">Familie</span></div>
               <div className="quick-btn" onClick={() => { loadHistory(); setScreen(SCREENS.HISTORY); }}><span className="quick-icon">📋</span><span className="quick-label">Historik</span></div>
+            </div>
+            {/* DEV: Dummy produkt knap */}
+            <div className="card" style={{ borderStyle:"dashed", borderColor:"var(--border2)" }}>
+              <div className="card-lbl">🧪 Preview / Test</div>
+              <button className="btn btn-ghost btn-full btn-sm" onClick={() => { setScanResult(DUMMY_PRODUCT); setScreen(SCREENS.RESULT); }}>
+                Vis dummy produkt (Nutella)
+              </button>
             </div>
             {history.length>0&&(
               <div className="card">
@@ -1564,19 +1635,24 @@ export default function AllergiScan() {
           <div className="screen fade-in">
             <button className="btn btn-ghost btn-sm" style={{ marginTop:16, marginBottom:12 }} onClick={() => setScreen(SCREENS.SCAN)}>← Tilbage til scan</button>
 
-            {/* Produkt header */}
-            <div className="card" style={{ padding:"16px" }}>
-              <div style={{ display:"flex", gap:14, alignItems:"flex-start" }}>
-                <ProductImage product={scanResult} size={72} />
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:17, fontWeight:800, lineHeight:1.3, marginBottom:4 }}>{scanResult.name}</div>
-                  {scanResult.brand && <div style={{ fontSize:13, color:"var(--muted)", marginBottom:6 }}>{scanResult.brand}</div>}
-                  <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
-                    {(() => {
-                      const vb = verifiedBadge(scanResult.verified_status, scanResult.source);
-                      return <span style={{ fontSize:10, fontWeight:700, padding:"2px 7px", borderRadius:5, background:vb.bg, color:vb.color }}>{vb.label}</span>;
-                    })()}
-                  </div>
+            {/* Produkt hero header */}
+            <div className="product-hero">
+              {scanResult.image_url
+                ? <img src={scanResult.image_url} alt={scanResult.name} className="product-hero-img" onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
+                : null
+              }
+              <div className="product-hero-img-placeholder" style={{ display: scanResult.image_url ? "none" : "flex" }}>
+                {getProductIcon(scanResult)}
+              </div>
+              <div className="product-hero-body">
+                <div className="product-hero-name">{scanResult.name}</div>
+                {scanResult.brand && <div className="product-hero-brand">{scanResult.brand}{scanResult.category ? ` · ${scanResult.category}` : ""}</div>}
+                <div className="product-hero-meta">
+                  {(() => {
+                    const vb = verifiedBadge(scanResult.verified_status, scanResult.source);
+                    return <span className="product-hero-source" style={{ background:vb.bg, color:vb.color }}>{vb.label}</span>;
+                  })()}
+                  <span style={{ fontSize:10, color:"var(--muted)", fontWeight:500 }}>EAN: {scanResult.code}</span>
                 </div>
               </div>
             </div>
@@ -2125,6 +2201,9 @@ export default function AllergiScan() {
             </div>
           </div>
         )}
+
+        {/* SIDE ID */}
+        {!isOnboard && <PageID screen={screen} />}
 
         {/* BUNDNAVIGATION */}
         {!isOnboard && (
