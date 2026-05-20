@@ -1647,6 +1647,8 @@ export default function AllergiScan() {
               <div className="card-lbl">Konto</div>
               <div style={{ fontSize:13, color:"var(--muted)", marginBottom:4 }}>Email</div>
               <div style={{ fontSize:14, fontWeight:600, color:"var(--text)" }}>{user.email||loginEmail||"—"}</div>
+              <div style={{ fontSize:13, color:"var(--muted)", marginTop:8, marginBottom:4 }}>Rolle</div>
+              <div style={{ fontSize:14, fontWeight:600, color:"var(--text)" }}>{user.role||"ingen rolle hentet"}</div>
             </div>
             <div className="card">
               <div className="card-lbl">Scanningsstatistik</div>
