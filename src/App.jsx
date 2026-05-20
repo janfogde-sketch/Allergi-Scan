@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 
 // ─── EATSAFE LOGO KOMPONENT ──────────────────────────────────────────────────
 function EatSafeLogo({ size = 32, variant = "light" }) {
@@ -91,7 +91,7 @@ const SCREENS = {
   LIST:"list", PROFILE:"profile", FAMILY:"family",
   RESULT:"result", HISTORY:"history",
   NOTFOUND:"notfound", SUBMITTED:"submitted",
-  ADMIN:"admin",
+  ADMIN:"admin", FAVORITES:"favorites",
 };
 
 const PAGE_IDS = {
@@ -99,7 +99,7 @@ const PAGE_IDS = {
   home:"SCR-04", scan:"SCR-05", search:"SCR-06",
   list:"SCR-07", profile:"SCR-08", family:"SCR-09",
   result:"SCR-10", history:"SCR-11", notfound:"SCR-12",
-  submitted:"SCR-13", admin:"SCR-14",
+  submitted:"SCR-13", admin:"SCR-14", favorites:"SCR-15",
 };
 
 const DUMMY_PRODUCT = {
@@ -139,25 +139,61 @@ const AVATAR_COLORS = ["#52b788","#74c69d","#40916c","#b7e4c7","#2d6a4f","#95d5b
 // ─── HJÆLPEFUNKTIONER ────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).slice(2,9);
 
+// Viser profilbadges (bruger + familie) baseret på allergen flags
+function ProfileBadges({ allergenFlags, allergens, customAllerg, family, activeProfiles, size = 22 }) {
+  if (!allergenFlags) return null;
+  const profiles = [
+    { id:"me", name:"Mig", allergens: allergens || [] },
+    ...(family || []).filter(m => !activeProfiles || activeProfiles.includes(m.id)),
+  ];
+  return (
+    <div style={{ display:"flex", gap:3, flexWrap:"wrap" }}>
+      {profiles.map(p => {
+        const hasDanger = p.allergens.some(a => allergenFlags[a] === "yes");
+        const hasWarning = p.allergens.some(a => allergenFlags[a] === "traces");
+        const color = hasDanger ? "#E63946" : hasWarning ? "#D97706" : "#22C55E";
+        const bg = hasDanger ? "rgba(230,57,70,.12)" : hasWarning ? "rgba(217,119,6,.1)" : "rgba(34,197,94,.12)";
+        return (
+          <div key={p.id} title={p.id==="me"?"Din profil":p.name} style={{
+            width:size, height:size, borderRadius:"50%",
+            background:bg, border:`1.5px solid ${color}`,
+            display:"flex", alignItems:"center", justifyContent:"center",
+            fontSize:size*0.38, fontWeight:800, color, flexShrink:0,
+            letterSpacing:"-.5px",
+          }}>
+            {initials(p.id==="me"?"Mig":p.name).slice(0,2)}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function PageID({ screen }) {
   const id = PAGE_IDS[screen] || "SCR-??";
+  const [copied, setCopied] = React.useState(false);
   const copy = () => {
     navigator.clipboard?.writeText(id).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   };
   return (
     <div
       onClick={copy}
       title="Klik for at kopiere side-ID"
       style={{
-        position:"fixed", bottom:70, right:8, zIndex:200,
-        fontSize:9, fontWeight:700, color:"var(--muted)",
-        background:"var(--paper2)", border:"1px solid var(--border)",
-        borderRadius:5, padding:"2px 6px", cursor:"pointer",
-        letterSpacing:"0.5px", opacity:0.7,
-        fontFamily:"monospace",
+        position:"fixed", top:10, right:10, zIndex:999,
+        fontSize:10, fontWeight:800, color: copied ? "#fff" : "#1F2733",
+        background: copied ? "#22C55E" : "rgba(255,255,255,0.92)",
+        border: copied ? "1.5px solid #22C55E" : "1.5px solid #D0D0C8",
+        borderRadius:7, padding:"4px 9px", cursor:"pointer",
+        letterSpacing:"0.8px", fontFamily:"monospace",
+        boxShadow:"0 2px 8px rgba(0,0,0,0.12)",
+        transition:"all .15s",
+        userSelect:"none",
       }}
     >
-      {id}
+      {copied ? "✓ kopieret" : id}
     </div>
   );
 }
@@ -1521,17 +1557,9 @@ export default function EatSafe() {
         {/* ══ HJEM ══ */}
         {screen === SCREENS.HOME && (
           <div className="screen fade-in">
-            <div className="greeting">
-              <div className="greeting-main">{greeting}, {user.name||"der"} 👋</div>
-              <div className="greeting-sub">{activeIds.length>0?`Tjekker for ${activeIds.length} allergen${activeIds.length!==1?"er":""}`:"Ingen aktive allergier — tjek din profil"}</div>
-            </div>
-            {family.length>0&&(
-              <div className="card" style={{ padding:"12px 14px" }}>
-                <div className="card-lbl">Tjekker for</div>
-                <FamilyChips />
-              </div>
-            )}
-            <div className="scan-hero" onClick={() => setScreen(SCREENS.SCAN)}>
+
+            {/* Scan knap — stor og prominent */}
+            <div className="scan-hero" style={{ marginTop:8 }} onClick={() => setScreen(SCREENS.SCAN)}>
               <div className="scan-hero-icon" style={{width:44,height:44,flexShrink:0}}>
                 <svg viewBox="0 0 100 100" width="44" height="44">
                   <g fill="#3d4e5e">
@@ -1554,35 +1582,58 @@ export default function EatSafe() {
               </div>
               <div className="scan-hero-arrow">›</div>
             </div>
-            <div className="quick-grid">
-              <div className="quick-btn" onClick={() => setScreen(SCREENS.SEARCH)}><span className="quick-icon">🔎</span><span className="quick-label">Søg varer</span></div>
-              <div className="quick-btn" onClick={() => setScreen(SCREENS.LIST)}><span className="quick-icon">🛒</span><span className="quick-label">Indkøbsliste</span></div>
-              <div className="quick-btn" onClick={() => setScreen(SCREENS.FAMILY)}><span className="quick-icon">👨‍👩‍👧</span><span className="quick-label">Familie</span></div>
-              <div className="quick-btn" onClick={() => { loadHistory(); setScreen(SCREENS.HISTORY); }}><span className="quick-icon">📋</span><span className="quick-label">Historik</span></div>
+
+            {/* Søg */}
+            <div className="card" style={{ padding:"12px 14px", cursor:"pointer" }} onClick={() => setScreen(SCREENS.SEARCH)}>
+              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                <div style={{ width:38, height:38, background:"var(--paper2)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>🔎</div>
+                <div>
+                  <div style={{ fontWeight:700, fontSize:14 }}>Søg produkter</div>
+                  <div style={{ fontSize:12, color:"var(--muted)", marginTop:1 }}>Find produkter der er sikre for dig</div>
+                </div>
+                <div style={{ marginLeft:"auto", fontSize:18, color:"var(--muted)" }}>›</div>
+              </div>
             </div>
-            {/* DEV: Dummy produkt knap */}
-            <div className="card" style={{ borderStyle:"dashed", borderColor:"var(--border2)" }}>
-              <div className="card-lbl">🧪 Preview / Test</div>
-              <button className="btn btn-ghost btn-full btn-sm" onClick={() => { setScanResult(DUMMY_PRODUCT); setScreen(SCREENS.RESULT); }}>
-                Vis dummy produkt (Nutella)
-              </button>
-            </div>
-            {history.length>0&&(
+
+            {/* Senest kiggede på */}
+            {history.filter(h => h.result !== "not_found" && (h.products?.name || h.name)).length > 0 && (
               <div className="card">
-                <div className="card-lbl">Seneste scanninger</div>
-                {history.slice(0,5).map((h,i) => {
+                <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
+                  <span>Senest kiggede på</span>
+                  <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:11 }} onClick={() => { loadHistory(); setScreen(SCREENS.HISTORY); }}>Se alle</span>
+                </div>
+                {history.filter(h => h.result !== "not_found").slice(0,4).map((h,i) => {
                   const s = h.result || h.status;
                   const name = h.products?.name || h.name || h.ean_scanned || "Ukendt";
+                  const prod = { name, brand: h.products?.brand||h.brand||"", image_url: h.products?.image_url||null };
                   return (
-                    <div key={i} className="hist-row" onClick={() => { if(h.status||h.result) { setScanResult({...h, code:h.ean_scanned||h.code, name, brand:h.products?.brand||h.brand||"", headline: s==="safe"?"Sikkert produkt":s==="danger"?"Indeholder allergen!":"Mulige spor", flags:[], summary:""}); setScreen(SCREENS.RESULT); }}}>
-                      <div className={`hist-dot ${s}`} />
-                      <div className="hist-info"><div className="hist-name">{name}</div><div className="hist-time">{timeAgo(h.scanned_at||h.timestamp)}</div></div>
-                      <div className={`badge ${s==="safe"?"safe":s==="danger"?"danger":"warn"}`}>{s==="safe"?"Sikker":s==="danger"?"Farlig":s==="not_found"?"Ikke fundet":"Advarsel"}</div>
+                    <div key={i} className="hist-row" style={{ cursor:"pointer" }} onClick={() => {
+                      setScanResult({...h, code:h.ean_scanned||h.code, name, brand:h.products?.brand||h.brand||"",
+                        image_url:h.products?.image_url||null,
+                        headline:s==="safe"?"Sikkert produkt":s==="danger"?"Indeholder allergen!":"Mulige spor",
+                        flags:[], summary:"", allergen_flags:h.flags_triggered||{} });
+                      setScreen(SCREENS.RESULT);
+                    }}>
+                      <ProductImage product={prod} size={36} />
+                      <div className="hist-info" style={{ marginLeft:8 }}>
+                        <div className="hist-name">{name}</div>
+                        <div className="hist-time">{timeAgo(h.scanned_at||h.timestamp)}</div>
+                      </div>
+                      <ProfileBadges allergenFlags={h.flags_triggered||{}} allergens={allergens} customAllerg={customAllerg} family={family} activeProfiles={activeProfiles} size={24} />
                     </div>
                   );
                 })}
               </div>
             )}
+
+            {/* DEV: Dummy produkt — nederst */}
+            <div className="card" style={{ borderStyle:"dashed", borderColor:"var(--border2)", marginTop:4 }}>
+              <div className="card-lbl">🧪 Preview / Test</div>
+              <button className="btn btn-ghost btn-full btn-sm" onClick={() => { setScanResult(DUMMY_PRODUCT); setScreen(SCREENS.RESULT); }}>
+                Vis dummy produkt (Nutella)
+              </button>
+            </div>
+
           </div>
         )}
 
@@ -1809,6 +1860,30 @@ export default function EatSafe() {
               </div>
             )}
 
+            {/* Profil oversigt på produkt siden */}
+            <div className="card">
+              <div className="card-lbl">Sikkerhed per profil</div>
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {[{ id:"me", name: user.name||"Mig", allergens }, ...family.filter(m => activeProfiles.includes(m.id))].map(p => {
+                  const flags = scanResult.allergen_flags || {};
+                  const hasDanger = p.allergens.some(a => flags[a] === "yes");
+                  const hasWarning = p.allergens.some(a => flags[a] === "traces");
+                  const color = hasDanger ? "var(--red)" : hasWarning ? "var(--amber)" : "var(--green)";
+                  const bg = hasDanger ? "var(--red-lt)" : hasWarning ? "var(--amber-lt)" : "var(--green-lt)";
+                  const label = hasDanger ? "Farligt" : hasWarning ? "Mulige spor" : "Sikkert";
+                  return (
+                    <div key={p.id} style={{ display:"flex", alignItems:"center", gap:10 }}>
+                      <div style={{ width:32, height:32, borderRadius:"50%", background:bg, border:`1.5px solid ${color}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:800, color, flexShrink:0 }}>
+                        {initials(p.id==="me"?"Mig":p.name).slice(0,2)}
+                      </div>
+                      <div style={{ flex:1, fontSize:13, fontWeight:600 }}>{p.id==="me"?"Mig ("+( user.name||"dig")+")":p.name}</div>
+                      <div style={{ fontSize:12, fontWeight:700, color }}>{label}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Handlinger */}
             <div className="card">
               <div className="card-lbl">Handlinger</div>
@@ -1969,7 +2044,10 @@ export default function EatSafe() {
                   <div style={{ flex:1, minWidth:0 }}>
                     <div className="product-name">{p.name}</div>
                     <div className="product-brand">{p.brand}{p.category?` · ${p.category}`:""}</div>
-                    <div className="verified-pill" style={{ background:vb.bg, color:vb.color }}>{vb.label}</div>
+                    <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:4, flexWrap:"wrap" }}>
+                      <span style={{ fontSize:10, fontWeight:700, padding:"2px 6px", borderRadius:4, background:vb.bg, color:vb.color }}>{vb.label}</span>
+                      <ProfileBadges allergenFlags={p.allergen_flags||{}} allergens={allergens} customAllerg={customAllerg} family={family} activeProfiles={activeProfiles} size={20} />
+                    </div>
                   </div>
                   <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:5, flexShrink:0 }}>
                     <button className="btn btn-ghost btn-sm" style={{ fontSize:11, padding:"5px 9px" }} onClick={e => { e.stopPropagation(); addToList(p.name); }}>+ Liste</button>
@@ -2215,21 +2293,55 @@ export default function EatSafe() {
           </div>
         )}
 
-        {/* SIDE ID */}
-        {!isOnboard && <PageID screen={screen} />}
+        {/* SIDE ID — vises på alle sider */}
+        <PageID screen={screen} />
+
+        {/* ══ FAVORITTER ══ */}
+        {screen === SCREENS.FAVORITES && (
+          <div className="screen fade-in">
+            <div className="screen-title">★ Favoritter</div>
+            <div className="screen-sub">Dine gemte produkter.</div>
+            {favorites.length === 0 && (
+              <div className="empty-state">
+                <span className="empty-icon">★</span>
+                <div className="empty-txt">Ingen favoritter endnu</div>
+                <div className="empty-sub">Tryk ★ på et produkt for at gemme det her</div>
+              </div>
+            )}
+            {favorites.map((f,i) => (
+              <div key={i} className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:8 }}
+                onClick={() => lookupProduct(f.ean || f.code)}>
+                <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                  <ProductImage product={f} size={48} />
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontWeight:700, fontSize:14 }}>{f.name || "Ukendt"}</div>
+                    {f.brand && <div style={{ fontSize:12, color:"var(--muted)", marginTop:1 }}>{f.brand}</div>}
+                    <div style={{ marginTop:6 }}>
+                      <ProfileBadges allergenFlags={f.allergen_flags||{}} allergens={allergens} customAllerg={customAllerg} family={family} activeProfiles={activeProfiles} size={22} />
+                    </div>
+                  </div>
+                  <button className="btn btn-ghost btn-sm" style={{ fontSize:12, flexShrink:0 }}
+                    onClick={e => { e.stopPropagation(); toggleFavorite(f); }}>
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* BUNDNAVIGATION */}
         {!isOnboard && (
           <nav className="bottom-nav">
             {[
               [SCREENS.HOME,"🏠","Hjem"],
-              [SCREENS.SCAN,"📷","Skan"],
-              [SCREENS.SEARCH,"🔎","Søg"],
+              [SCREENS.FAVORITES,"★","Favoritter"],
               [SCREENS.LIST,"🛒","Liste"],
               [SCREENS.FAMILY,"👨‍👩‍👧","Familie"],
+              [SCREENS.PROFILE,"👤","Profil"],
               ...(user.role === "admin" ? [[SCREENS.ADMIN,"⚙️","Admin"]] : []),
             ].map(([s,icon,lbl]) => (
-              <div key={s} className={`nav-item${(screen===s||(screen===SCREENS.RESULT&&s===SCREENS.SCAN)||(screen===SCREENS.NOTFOUND&&s===SCREENS.SCAN)||(screen===SCREENS.SUBMITTED&&s===SCREENS.SCAN)||(screen===SCREENS.HISTORY&&s===SCREENS.HOME))?" active":""}`} onClick={() => {
+              <div key={s} className={`nav-item${(screen===s||(screen===SCREENS.RESULT&&s===SCREENS.HOME)||(screen===SCREENS.NOTFOUND&&s===SCREENS.HOME)||(screen===SCREENS.SUBMITTED&&s===SCREENS.HOME)||(screen===SCREENS.HISTORY&&s===SCREENS.HOME)||(screen===SCREENS.SEARCH&&s===SCREENS.HOME)||(screen===SCREENS.SCAN&&s===SCREENS.HOME))?" active":""}`} onClick={() => {
                 if (s === SCREENS.ADMIN) { loadSubmissions(); loadAdminStats(); }
                 setScreen(s);
               }}>
