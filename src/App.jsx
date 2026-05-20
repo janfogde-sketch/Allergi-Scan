@@ -691,6 +691,9 @@ export default function AllergiScan() {
   const startCamera = async () => {
     if (cameraActive) return;
     try {
+      await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" }
+      });
       const { Html5Qrcode } = await import("html5-qrcode");
       html5QrRef.current = new Html5Qrcode("qr-reader");
       await html5QrRef.current.start(
@@ -704,7 +707,13 @@ export default function AllergiScan() {
       );
       setCameraActive(true);
     } catch (e) {
-      setScanError("Kamera ikke tilgængeligt i preview. Brug manuel stregkode.");
+      if (e.name === "NotAllowedError") {
+        setScanError("Kamera-adgang nægtet. Tillad kamera i din browsers indstillinger og prøv igen.");
+      } else if (e.name === "NotFoundError") {
+        setScanError("Intet kamera fundet på denne enhed.");
+      } else {
+        setScanError("Kamera ikke tilgængeligt. Brug manuel stregkode nedenfor.");
+      }
     }
   };
 
