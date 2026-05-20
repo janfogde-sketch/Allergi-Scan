@@ -91,6 +91,7 @@ const SCREENS = {
   LIST:"list", PROFILE:"profile", FAMILY:"family",
   RESULT:"result", HISTORY:"history",
   NOTFOUND:"notfound", SUBMITTED:"submitted",
+  ADMIN:"admin",
 };
 
 const AVATAR_COLORS = ["#52b788","#74c69d","#40916c","#b7e4c7","#2d6a4f","#95d5b2","#f4a261","#e76f51"];
@@ -433,6 +434,11 @@ export default function AllergiScan() {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
+  // Admin
+  const [submissions, setSubmissions] = useState([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [adminStats, setAdminStats] = useState(null);
+
   // Shopping list
   const [shoppingList, setShoppingList] = useState([]);
   const [shoppingListId, setShoppingListId] = useState(null);
@@ -581,6 +587,64 @@ export default function AllergiScan() {
         if (newList.success) { setShoppingListId(newList.list?.id); setShoppingList([]); }
       }
     } catch { /* silent */ }
+  };
+
+  // ── ADMIN ─────────────────────────────────────────────────────────────────
+  const loadSubmissions = async () => {
+    setSubmissionsLoading(true);
+    try {
+      const data = await apiCall(`${SUPABASE_URL}/functions/v1/submissions?status=pending`, {
+        headers: makeHeaders(accessToken),
+      });
+      if (data.success) setSubmissions(data.submissions || []);
+    } catch { /* silent */ }
+    setSubmissionsLoading(false);
+  };
+
+  const loadAdminStats = async () => {
+    try {
+      const data = await apiCall(`${SUPABASE_URL}/functions/v1/admin/stats`, {
+        headers: makeHeaders(accessToken),
+      });
+      if (data.success) setAdminStats(data.stats);
+    } catch { /* silent */ }
+  };
+
+  const approveSubmission = async (submission) => {
+    try {
+      await apiCall(`${SUPABASE_URL}/functions/v1/submissions/${submission.id}`, {
+        method: "PATCH",
+        headers: makeHeaders(accessToken),
+        body: JSON.stringify({
+          status: "approved",
+          reviewed_by: userId,
+          name: submission.ai_parsed_data?.name || "Ukendt produkt",
+          brand: submission.ai_parsed_data?.brand || null,
+          ingredients_text: submission.ocr_raw_text || null,
+          allergen_flags: submission.ai_parsed_data || null,
+        }),
+      });
+      setSubmissions(s => s.filter(x => x.id !== submission.id));
+    } catch (e) {
+      alert("Fejl ved godkendelse: " + e.message);
+    }
+  };
+
+  const rejectSubmission = async (id) => {
+    try {
+      await apiCall(`${SUPABASE_URL}/functions/v1/submissions/${id}`, {
+        method: "PATCH",
+        headers: makeHeaders(accessToken),
+        body: JSON.stringify({
+          status: "rejected",
+          reviewed_by: userId,
+          review_note: "Afvist af admin",
+        }),
+      });
+      setSubmissions(s => s.filter(x => x.id !== id));
+    } catch (e) {
+      alert("Fejl ved afvisning: " + e.message);
+    }
   };
 
   // ── AUTH ───────────────────────────────────────────────────────────────────
@@ -791,7 +855,7 @@ export default function AllergiScan() {
       await saveHistoryEntry(ean.trim(), product.id, status, flags);
       setScreen(SCREENS.RESULT);
     } catch (e) {
-      setScanError("Fejl: " + (e.message || e.toString()));
+      setScanError("Der opstod en fejl. Tjek din forbindelse og prøv igen.");
     }
     setLoading(false);
   }, [accessToken, activeIds]);
@@ -1645,6 +1709,83 @@ export default function AllergiScan() {
           </div>
         )}
 
+        {/* ══ ADMIN ══ */}
+        {screen === SCREENS.ADMIN && (
+          <div className="screen fade-in">
+            <div className="screen-title">⚙️ Admin panel</div>
+            <div className="screen-sub">Administrér indsendelser og se systemstatistik.</div>
+
+            {/* Statistik */}
+            {adminStats && (
+              <div className="card">
+                <div className="card-lbl">Systemstatistik</div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, textAlign:"center" }}>
+                  {[
+                    [adminStats.total_users,"👥","Brugere"],
+                    [adminStats.total_products,"📦","Produkter"],
+                    [adminStats.total_scans,"📷","Scanninger"],
+                    [adminStats.pending_submissions,"⏳","Afventer"],
+                    [adminStats.total_families,"👨‍👩‍👧","Familier"],
+                  ].map(([n,ic,lbl]) => (
+                    <div key={lbl} style={{ background:"var(--paper2)", borderRadius:10, padding:"10px 6px" }}>
+                      <div style={{ fontSize:18 }}>{ic}</div>
+                      <div style={{ fontWeight:900, fontSize:20 }}>{n ?? "—"}</div>
+                      <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600 }}>{lbl}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Afventende indsendelser */}
+            <div className="card">
+              <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
+                <span>Afventende indsendelser ({submissions.length})</span>
+                <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700 }} onClick={loadSubmissions}>🔄 Opdater</span>
+              </div>
+              {submissionsLoading && <div className="loader"><div className="spinner" /><div className="loader-txt">Henter…</div></div>}
+              {!submissionsLoading && submissions.length === 0 && (
+                <div className="empty-state" style={{ padding:"20px 0" }}>
+                  <div className="empty-txt">Ingen afventende indsendelser</div>
+                </div>
+              )}
+              {submissions.map(s => (
+                <div key={s.id} style={{ borderTop:"1px solid var(--border)", paddingTop:12, marginTop:12 }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
+                    <div>
+                      <div style={{ fontWeight:700, fontSize:14 }}>EAN: {s.ean}</div>
+                      <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>
+                        Indsendt: {new Date(s.created_at).toLocaleDateString("da-DK")}
+                      </div>
+                      {s.user_confirmed && <div style={{ fontSize:11, color:"var(--green)", fontWeight:600 }}>✓ Bruger bekræftet</div>}
+                    </div>
+                    <div style={{ display:"flex", gap:6 }}>
+                      <button className="btn btn-green btn-sm" onClick={() => approveSubmission(s)}>✓ Godkend</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => rejectSubmission(s.id)}>✗ Afvis</button>
+                    </div>
+                  </div>
+                  {s.ocr_raw_text && (
+                    <div style={{ background:"var(--paper2)", borderRadius:8, padding:"8px 10px", fontSize:11, color:"var(--muted2)", marginBottom:8, maxHeight:80, overflow:"auto" }}>
+                      <strong>Ingredienser:</strong> {s.ocr_raw_text.slice(0, 200)}{s.ocr_raw_text.length > 200 ? "…" : ""}
+                    </div>
+                  )}
+                  {s.ai_parsed_data && (
+                    <div className="tags" style={{ marginTop:4 }}>
+                      {Object.entries(s.ai_parsed_data)
+                        .filter(([,v]) => v === "yes" || v === "traces")
+                        .map(([k,v]) => (
+                          <div key={k} className={`tag`} style={{ background: v==="yes" ? "var(--red-lt)" : "var(--amber-lt)", color: v==="yes" ? "var(--red)" : "var(--amber)", borderColor: v==="yes" ? "var(--red-md)" : "var(--amber-md)" }}>
+                            {ALLERGENS.find(a=>a.id===k)?.emoji} {ALLERGENS.find(a=>a.id===k)?.label || k} {v==="traces"?"(spor)":""}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* BUNDNAVIGATION */}
         {!isOnboard && (
           <nav className="bottom-nav">
@@ -1654,8 +1795,12 @@ export default function AllergiScan() {
               [SCREENS.SEARCH,"🔎","Søg"],
               [SCREENS.LIST,"🛒","Liste"],
               [SCREENS.FAMILY,"👨‍👩‍👧","Familie"],
+              ...(user.role === "admin" ? [[SCREENS.ADMIN,"⚙️","Admin"]] : []),
             ].map(([s,icon,lbl]) => (
-              <div key={s} className={`nav-item${(screen===s||(screen===SCREENS.RESULT&&s===SCREENS.SCAN)||(screen===SCREENS.NOTFOUND&&s===SCREENS.SCAN)||(screen===SCREENS.SUBMITTED&&s===SCREENS.SCAN)||(screen===SCREENS.HISTORY&&s===SCREENS.HOME))?" active":""}`} onClick={() => setScreen(s)}>
+              <div key={s} className={`nav-item${(screen===s||(screen===SCREENS.RESULT&&s===SCREENS.SCAN)||(screen===SCREENS.NOTFOUND&&s===SCREENS.SCAN)||(screen===SCREENS.SUBMITTED&&s===SCREENS.SCAN)||(screen===SCREENS.HISTORY&&s===SCREENS.HOME))?" active":""}`} onClick={() => {
+                if (s === SCREENS.ADMIN) { loadSubmissions(); loadAdminStats(); }
+                setScreen(s);
+              }}>
                 <div className="nav-icon">{icon}</div>
                 <div className="nav-lbl">{lbl}</div>
               </div>
