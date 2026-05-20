@@ -690,22 +690,42 @@ export default function AllergiScan() {
 
   const startCamera = async () => {
     if (cameraActive) return;
+    setScanError("");
     try {
-      await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
       });
-      const { Html5Qrcode } = await import("html5-qrcode");
-      html5QrRef.current = new Html5Qrcode("qr-reader");
-      await html5QrRef.current.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 150 } },
-        (code) => {
-          stopCamera();
-          lookupProduct(code);
-        },
-        () => {}
-      );
+      const videoEl = document.getElementById("qr-video");
+      if (videoEl) {
+        videoEl.srcObject = stream;
+        await videoEl.play();
+      }
+      html5QrRef.current = stream;
       setCameraActive(true);
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const scan = async () => {
+        if (!html5QrRef.current) return;
+        if (videoEl && videoEl.readyState === videoEl.HAVE_ENOUGH_DATA) {
+          canvas.width = videoEl.videoWidth;
+          canvas.height = videoEl.videoHeight;
+          ctx.drawImage(videoEl, 0, 0);
+          try {
+            const { BarcodeDetector } = window;
+            if (BarcodeDetector) {
+              const detector = new BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e"] });
+              const barcodes = await detector.detect(canvas);
+              if (barcodes.length > 0) {
+                stopCamera();
+                lookupProduct(barcodes[0].rawValue);
+                return;
+              }
+            }
+          } catch {}
+        }
+        requestAnimationFrame(scan);
+      };
+      requestAnimationFrame(scan);
     } catch (e) {
       if (e.name === "NotAllowedError") {
         setScanError("Kamera-adgang nægtet. Tillad kamera i din browsers indstillinger og prøv igen.");
@@ -719,9 +739,12 @@ export default function AllergiScan() {
 
   const stopCamera = () => {
     if (html5QrRef.current) {
-      html5QrRef.current.stop().catch(() => {});
+      const tracks = html5QrRef.current.getTracks ? html5QrRef.current.getTracks() : [];
+      tracks.forEach(t => t.stop());
       html5QrRef.current = null;
     }
+    const videoEl = document.getElementById("qr-video");
+    if (videoEl) videoEl.srcObject = null;
     setCameraActive(false);
   };
 
@@ -1281,7 +1304,7 @@ export default function AllergiScan() {
             <div className="scan-box">
               {cameraActive ? (
                 <div>
-                  <div id="qr-reader" style={{ width:"100%" }} />
+                  <video id="qr-video" style={{ width:"100%", borderRadius:"8px" }} playsInline muted autoPlay />
                   <div className="scan-bar">
                     <span className="scan-bar-txt">📷 Kamera aktivt — hold stregkoden ind i rammen</span>
                     <button className="btn btn-sm" style={{ background:"rgba(255,255,255,.2)",color:"#fff",border:"none",fontSize:12 }} onClick={stopCamera}>Stop</button>
