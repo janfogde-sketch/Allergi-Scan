@@ -1679,8 +1679,8 @@ export default function AllergiScan() {
                       )}
                       {present.length === 0 && traces.length === 0 && (
                         <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6 }}>
-                          ✅ Ingen af de 14 kendte allergener er registreret i dette produkt.
-                          {scanResult.hasUnknown && <span style={{ color:"var(--amber)", display:"block", marginTop:4 }}> ⚠️ Nogle allergener mangler data — tjek altid pakken.</span>}
+                          ✅ Der er ikke registreret nogle ingredienser kendt inden for allergier i dette produkt.
+                          {scanResult.hasUnknown && <span style={{ color:"var(--amber)", display:"block", marginTop:4 }}>⚠️ Nogle allergener mangler data — tjek altid pakken.</span>}
                         </div>
                       )}
                       {scanResult.hasUnknown && (
