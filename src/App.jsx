@@ -150,7 +150,12 @@ function ProductImage({ product, size = 64 }) {
 const initials = n => (n||"").split(" ").filter(Boolean).map(w=>w[0]).join("").toUpperCase().slice(0,2)||"?";
 const timeAgo = ts => { const d=Date.now()-new Date(ts).getTime(); if(d<60000)return"Lige nu"; if(d<3600000)return`${Math.floor(d/60000)} min siden`; if(d<86400000)return`${Math.floor(d/3600000)} t siden`; return`${Math.floor(d/86400000)} d siden`; };
 const getAllergenLabels = (ids,custom=[]) => [...ids.map(id=>ALLERGENS.find(a=>a.id===id)).filter(Boolean).map(a=>`${a.emoji} ${a.label}`),...custom.map(c=>`✏️ ${c}`)];
-const verifiedBadge = v => v==="verified"||v===true?{label:"✓ Verificeret",bg:"rgba(34,197,94,.1)",color:"#16a34a"}:v==="partial"?{label:"⚡ Delvist",bg:"rgba(217,119,6,.08)",color:"#d97706"}:{label:"? Ubekræftet",bg:"rgba(230,57,70,.08)",color:"#e63946"};
+const verifiedBadge = (v, source) => {
+  if (v==="verified"||v===true) return {label:"✓ Verificeret",bg:"rgba(34,197,94,.1)",color:"#16a34a"};
+  if (v==="partial") return {label:"⚡ Delvist verificeret",bg:"rgba(217,119,6,.08)",color:"#d97706"};
+  if (source==="open_food_facts") return {label:"✓ Open Food Facts",bg:"rgba(37,99,235,.08)",color:"#2563eb"};
+  return {label:"⚠️ Mangler data",bg:"rgba(230,57,70,.08)",color:"#e63946"};
+};
 
 // ─── SUPABASE API-HJÆLPER ────────────────────────────────────────────────────
 function makeHeaders(token) {
@@ -497,6 +502,10 @@ export default function AllergiScan() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [offLoading, setOffLoading] = useState(false);
+  const [favorites, setFavorites] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("as_favorites") || "[]"); } catch { return []; }
+  });
   const [showSafeOnly, setShowSafeOnly] = useState(false);
 
   // Family form
@@ -699,6 +708,20 @@ export default function AllergiScan() {
     }
   };
 
+  // ── FAVORITTER ────────────────────────────────────────────────────────────
+  const toggleFavorite = (product) => {
+    setFavorites(prev => {
+      const exists = prev.find(f => f.ean === product.ean || f.code === product.code);
+      const updated = exists
+        ? prev.filter(f => f.ean !== product.ean && f.code !== product.code)
+        : [...prev, { ...product, savedAt: Date.now() }];
+      localStorage.setItem("as_favorites", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const isFavorite = (ean) => favorites.some(f => f.ean === ean || f.code === ean);
+
   // ── AUTH ───────────────────────────────────────────────────────────────────
   const handleLogin = async () => {
     if (!loginEmail || !loginPassword) return;
@@ -888,15 +911,38 @@ export default function AllergiScan() {
         warn:`Produktet kan indeholde spor af ${matchedWarning.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
       };
 
+      // Beregn per-familiemedlem påvirkning
+      const familyImpact = [];
+      if (family.length > 0) {
+        for (const member of family.filter(m => activeProfiles.includes(m.id))) {
+          const memberResult = compareAllergens(flags, member.allergens || []);
+          if (memberResult.matchedDanger.length > 0 || memberResult.matchedWarning.length > 0) {
+            familyImpact.push({
+              name: member.name,
+              color: member.color,
+              danger: memberResult.matchedDanger,
+              warning: memberResult.matchedWarning,
+            });
+          }
+        }
+      }
+
       const result = {
         code: ean.trim(),
         name: product.name || "Ukendt produkt",
         brand: product.brand || "",
-        ingredients: product.ingredients?.raw_text || "",
+        image_url: product.image_url || null,
+        category: product.category || null,
+        ingredients: data.ingredients?.raw_text || product.ingredients?.raw_text || "",
+        verified_status: product.verified_status || "unverified",
         status,
         headline: headlines[status],
         summary: summaries[status],
         flags: flagList,
+        allergen_flags: flags,
+        matchedDanger,
+        matchedWarning,
+        familyImpact,
         source: data.source,
         hasUnknown,
         timestamp: Date.now(),
@@ -1083,24 +1129,58 @@ export default function AllergiScan() {
 
   // ── SØGNING ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!searchQuery.trim() || !accessToken) { setSearchResults([]); return; }
+    if (!searchQuery.trim()) { setSearchResults([]); return; }
     const timer = setTimeout(async () => {
       setSearchLoading(true);
       try {
-        const data = await apiCall(
-          `${SUPABASE_URL}/rest/v1/products?or=(name.ilike.*${encodeURIComponent(searchQuery)}*,brand.ilike.*${encodeURIComponent(searchQuery)}*)&select=id,name,brand,category,verified_status&limit=20`,
-          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-        );
-        setSearchResults(Array.isArray(data) ? data.map(p => ({
-          ...p,
-          emoji: "🍽️",
-          allergens: [],
-          verified: p.verified_status,
-          conflicts: [],
-        })) : []);
+        // Søg i egen database
+        let localResults = [];
+        try {
+          const localData = await fetch(
+            `${SUPABASE_URL}/rest/v1/products?or=(name.ilike.*${encodeURIComponent(searchQuery)}*,brand.ilike.*${encodeURIComponent(searchQuery)}*)&select=id,ean,name,brand,category,image_url,verified_status&limit=20`,
+            { headers: { "apikey": SUPABASE_ANON_KEY, "Accept": "application/json", ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) } }
+          ).then(r => r.json());
+          localResults = Array.isArray(localData) ? localData.map(p => ({
+            ...p,
+            source: "local",
+            verified: p.verified_status,
+            conflicts: [],
+          })) : [];
+        } catch { /* silent */ }
+
+        // Vis lokale resultater med det samme
+        setSearchResults(localResults);
+
+        // Søg også i Open Food Facts i baggrunden
+        const localEans = new Set(localResults.map(p => p.ean));
+        setOffLoading(true);
+        fetch(
+          `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(searchQuery)}&search_simple=1&action=process&json=1&page_size=10&lc=da`,
+          { headers: { "User-Agent": "AllergiScan/1.0 (kontakt@allergiscan.dk)" }, signal: AbortSignal.timeout(5000) }
+        ).then(r => r.json()).then(offData => {
+          const offResults = (offData.products || [])
+            .filter(p => p.product_name && !localEans.has(p.code))
+            .slice(0, 10)
+            .map(p => ({
+              id: p.code,
+              ean: p.code,
+              name: p.product_name,
+              brand: p.brands || null,
+              category: p.categories || null,
+              image_url: p.image_front_small_url || p.image_url || null,
+              verified_status: "unverified",
+              source: "open_food_facts",
+              verified: "unverified",
+              conflicts: [],
+            }));
+          if (offResults.length > 0) {
+            setSearchResults(prev => [...prev, ...offResults]);
+          }
+          setOffLoading(false);
+        }).catch(() => { setOffLoading(false); });
       } catch { setSearchResults([]); }
       setSearchLoading(false);
-    }, 400);
+    }, 600);
     return () => clearTimeout(timer);
   }, [searchQuery, accessToken]);
 
@@ -1483,40 +1563,175 @@ export default function AllergiScan() {
         {screen === SCREENS.RESULT && scanResult && (
           <div className="screen fade-in">
             <button className="btn btn-ghost btn-sm" style={{ marginTop:16, marginBottom:12 }} onClick={() => setScreen(SCREENS.SCAN)}>← Tilbage til scan</button>
-            {scanResult.source === "open_food_facts" && (
-              <div className="warn-box">⚠️ Data fra Open Food Facts — ikke verificeret af Allergi Scan</div>
-            )}
-            <div className={`result-banner ${scanResult.status}`}>
-              <div className="rb-icon">{scanResult.status==="safe"?"✅":scanResult.status==="danger"?"🚫":"⚠️"}</div>
-              <div>
-                <div className={`rb-title ${scanResult.status}`}>{scanResult.headline}</div>
-                <div className="rb-sub">Stregkode: {scanResult.code}</div>
-              </div>
-            </div>
-            <div className="card">
-              <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
-                <ProductImage product={scanResult} size={56} />
-                <div>
-                  <div style={{ fontSize:16, fontWeight:800 }}>{scanResult.name}</div>
-                  {scanResult.brand && <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{scanResult.brand}</div>}
-                  <div style={{ marginTop:4 }}>
-                    <span className={`badge ${scanResult.status==="safe"?"safe":scanResult.status==="danger"?"danger":"warn"}`}>
-                      {scanResult.status==="safe"?"✅ Sikkert":scanResult.status==="danger"?"🚫 Farligt":"⚠️ Advarsel"}
-                    </span>
+
+            {/* Produkt header */}
+            <div className="card" style={{ padding:"16px" }}>
+              <div style={{ display:"flex", gap:14, alignItems:"flex-start" }}>
+                <ProductImage product={scanResult} size={72} />
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:17, fontWeight:800, lineHeight:1.3, marginBottom:4 }}>{scanResult.name}</div>
+                  {scanResult.brand && <div style={{ fontSize:13, color:"var(--muted)", marginBottom:6 }}>{scanResult.brand}</div>}
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                    {(() => {
+                      const vb = verifiedBadge(scanResult.verified_status, scanResult.source);
+                      return <span style={{ fontSize:10, fontWeight:700, padding:"2px 7px", borderRadius:5, background:vb.bg, color:vb.color }}>{vb.label}</span>;
+                    })()}
                   </div>
                 </div>
               </div>
-              {scanResult.flags?.map((f,i) => <div key={i} className={`flag ${f.type}`}><span>{f.type==="bad"?"🚫":f.type==="maybe"?"⚠️":"✓"}</span>{f.text}</div>)}
-              {scanResult.summary && <div style={{ fontSize:13, color:"var(--text2)", lineHeight:1.7, marginTop:8 }}>{scanResult.summary}</div>}
-              {scanResult.ingredients && (
-                <><div className="ing-toggle" onClick={() => setShowIng(v => !v)}><span>Se ingrediensliste</span><span>{showIng?"▲":"▼"}</span></div>
-                {showIng && <div className="ing-text">{scanResult.ingredients}</div>}</>
-              )}
             </div>
+
+            {/* Allergen resultat banner */}
+            <div className={`result-banner ${scanResult.status}`} style={{ marginBottom:10 }}>
+              <div className="rb-icon">{scanResult.status==="safe"?"✅":scanResult.status==="danger"?"🚫":"⚠️"}</div>
+              <div style={{ flex:1 }}>
+                <div className={`rb-title ${scanResult.status}`}>{scanResult.headline}</div>
+                <div className="rb-sub">{scanResult.summary}</div>
+              </div>
+            </div>
+
+            {/* Dine allergener */}
+            {(scanResult.matchedDanger?.length > 0 || scanResult.matchedWarning?.length > 0) && (
+              <div className="card">
+                <div className="card-lbl">Dine allergener i dette produkt</div>
+                {scanResult.matchedDanger?.length > 0 && (
+                  <div style={{ marginBottom:8 }}>
+                    <div style={{ fontSize:11, fontWeight:700, color:"var(--red)", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.5px" }}>🚫 Indeholder</div>
+                    <div className="tags">
+                      {scanResult.matchedDanger.map(id => {
+                        const a = ALLERGENS.find(x=>x.id===id);
+                        return a ? <div key={id} className="tag" style={{ background:"var(--red-lt)", color:"var(--red)", borderColor:"var(--red-md)" }}>{a.emoji} {a.label}</div> : null;
+                      })}
+                    </div>
+                  </div>
+                )}
+                {scanResult.matchedWarning?.length > 0 && (
+                  <div>
+                    <div style={{ fontSize:11, fontWeight:700, color:"var(--amber)", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.5px" }}>⚠️ Mulige spor af</div>
+                    <div className="tags">
+                      {scanResult.matchedWarning.map(id => {
+                        const a = ALLERGENS.find(x=>x.id===id);
+                        return a ? <div key={id} className="tag" style={{ background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>{a.emoji} {a.label}</div> : null;
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Familie påvirkning */}
+            {scanResult.familyImpact?.length > 0 && (
+              <div className="card">
+                <div className="card-lbl">Familiemedlemmer påvirket</div>
+                {scanResult.familyImpact.map((m,i) => (
+                  <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom: i < scanResult.familyImpact.length-1 ? "1px solid var(--border)" : "none" }}>
+                    <div style={{ width:32, height:32, borderRadius:"50%", background:m.color||"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, color:"#fff", flexShrink:0 }}>
+                      {initials(m.name)}
+                    </div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:13, fontWeight:700 }}>{m.name}</div>
+                      <div className="tags" style={{ marginTop:4 }}>
+                        {m.danger.map(id => { const a=ALLERGENS.find(x=>x.id===id); return a?<div key={id} className="tag" style={{ fontSize:10, background:"var(--red-lt)", color:"var(--red)", borderColor:"var(--red-md)" }}>{a.emoji} {a.label}</div>:null; })}
+                        {m.warning.map(id => { const a=ALLERGENS.find(x=>x.id===id); return a?<div key={id} className="tag" style={{ fontSize:10, background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>{a.emoji} spor af {a.label}</div>:null; })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Allergener i produktet */}
+            {scanResult.allergen_flags && (() => {
+              const present = Object.entries(scanResult.allergen_flags).filter(([k,v]) => v==="yes" && ALLERGENS.find(a=>a.id===k));
+              const traces = Object.entries(scanResult.allergen_flags).filter(([k,v]) => v==="traces" && ALLERGENS.find(a=>a.id===k));
+              const allUnknown = Object.entries(scanResult.allergen_flags).every(([,v]) => v==="unknown");
+              const hasData = present.length > 0 || traces.length > 0 || Object.values(scanResult.allergen_flags).some(v => v==="no");
+              return (
+                <div className="card">
+                  <div className="card-lbl">Allergener i produktet</div>
+                  {!hasData || allUnknown ? (
+                    <div className="warn-box" style={{ marginBottom:0 }}>
+                      ⚠️ Vi har ingen allergendata på dette produkt — tjek altid pakken selv
+                    </div>
+                  ) : (
+                    <>
+                      {present.length > 0 && (
+                        <div style={{ marginBottom:8 }}>
+                          <div style={{ fontSize:11, fontWeight:700, color:"var(--red)", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.5px" }}>Indeholder</div>
+                          <div className="tags">
+                            {present.map(([k]) => {
+                              const a = ALLERGENS.find(x=>x.id===k);
+                              return a ? <div key={k} className="tag" style={{ background:"var(--red-lt)", color:"var(--red)", borderColor:"var(--red-md)" }}>{a.emoji} {a.label}</div> : null;
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {traces.length > 0 && (
+                        <div style={{ marginBottom:8 }}>
+                          <div style={{ fontSize:11, fontWeight:700, color:"var(--amber)", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.5px" }}>Kan indeholde spor af</div>
+                          <div className="tags">
+                            {traces.map(([k]) => {
+                              const a = ALLERGENS.find(x=>x.id===k);
+                              return a ? <div key={k} className="tag" style={{ background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>{a.emoji} {a.label}</div> : null;
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {present.length === 0 && traces.length === 0 && (
+                        <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6 }}>
+                          ✅ Ingen af de 14 kendte allergener er registreret i dette produkt.
+                          {scanResult.hasUnknown && <span style={{ color:"var(--amber)", display:"block", marginTop:4 }}> ⚠️ Nogle allergener mangler data — tjek altid pakken.</span>}
+                        </div>
+                      )}
+                      {scanResult.hasUnknown && (
+                        <div style={{ fontSize:11, color:"var(--muted)", marginTop:8, fontStyle:"italic" }}>
+                          ❓ Visse allergener mangler data — tjek altid pakken
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Ingrediensliste */}
+            {scanResult.ingredients && (
+              <div className="card">
+                <div className="ing-toggle" onClick={() => setShowIng(v => !v)}>
+                  <span>📋 Ingrediensliste</span>
+                  <span>{showIng?"▲":"▼"}</span>
+                </div>
+                {showIng && (
+                  <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.8, marginTop:10, padding:"10px", background:"var(--paper2)", borderRadius:8 }}>
+                    {scanResult.ingredients.split(",").map((ing, i) => {
+                      const trimmed = ing.trim();
+                      const isAllergen = trimmed === trimmed.toUpperCase() && trimmed.length > 2;
+                      return (
+                        <span key={i}>
+                          {i > 0 && <span style={{ color:"var(--border2)" }}>, </span>}
+                          <span style={isAllergen ? { fontWeight:700, color:"var(--red)" } : {}}>
+                            {trimmed}
+                          </span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Handlinger */}
             <div className="card">
               <div className="card-lbl">Handlinger</div>
-              <div style={{ display:"flex", gap:8 }}>
-                <button className="btn btn-outline btn-sm" style={{ flex:1 }} onClick={() => { addToList(scanResult.name); setScreen(SCREENS.LIST); }}>🛒 Tilføj til liste</button>
+              <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                <button
+                  className="btn btn-sm"
+                  style={{ flex:1, background: isFavorite(scanResult.code) ? "var(--amber-lt)" : "var(--paper2)", color: isFavorite(scanResult.code) ? "var(--amber)" : "var(--ink2)", border:"1px solid var(--border)" }}
+                  onClick={() => toggleFavorite(scanResult)}
+                >
+                  {isFavorite(scanResult.code) ? "★ Fjern favorit" : "☆ Gem favorit"}
+                </button>
+                <button className="btn btn-outline btn-sm" style={{ flex:1 }} onClick={() => { addToList(scanResult.name); setScreen(SCREENS.LIST); }}>🛒 Til liste</button>
                 <button className="btn btn-ghost btn-sm" style={{ flex:1 }} onClick={() => { if(navigator.share) navigator.share({title:scanResult.name, text:scanResult.headline}); else alert("Del ikke tilgængeligt"); }}>📤 Del</button>
               </div>
             </div>
@@ -1642,25 +1857,33 @@ export default function AllergiScan() {
               <div style={{ fontSize:12, color:"var(--muted)" }}>{searchResults.length} resultat{searchResults.length!==1?"er":""}</div>
             </div>
             {searchLoading && <div className="loader fade-in"><div className="spinner" /><div className="loader-txt">Søger…</div></div>}
-            {!searchLoading && searchQuery && searchResults.length===0 && (
+            {(searchLoading || offLoading) && searchResults.length===0 && (
+              <div className="loader fade-in"><div className="spinner" /><div className="loader-txt">Søger…</div></div>
+            )}
+            {offLoading && searchResults.length > 0 && (
+              <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", padding:"8px", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                <div className="spinner" style={{ width:14, height:14, borderWidth:2 }} />
+                Søger i Open Food Facts…
+              </div>
+            )}
+            {!searchLoading && !offLoading && searchQuery && searchResults.length===0 && (
               <div className="empty-state"><span className="empty-icon">🔍</span><div className="empty-txt">Ingen resultater</div><div className="empty-sub">Prøv et andet søgeord</div></div>
             )}
             {!searchQuery && (
               <div className="empty-state"><span className="empty-icon">🔎</span><div className="empty-txt">Søg efter et produkt</div><div className="empty-sub">Skriv et produktnavn eller mærke</div></div>
             )}
-            {searchResults.filter(p => !showSafeOnly || p.conflicts.length === 0).map(p => {
-              const vb = verifiedBadge(p.verified||p.verified_status);
+            {searchResults.filter(p => !showSafeOnly || p.conflicts?.length === 0).map(p => {
+              const vb = verifiedBadge(p.verified||p.verified_status, p.source);
               return (
-                <div key={p.id} className="product-card">
-                  <div className="product-emoji">{p.emoji||"🍽️"}</div>
+                <div key={p.id} className="product-card" style={{ cursor:"pointer" }} onClick={() => lookupProduct(p.ean||p.id)}>
+                  <ProductImage product={p} size={44} />
                   <div style={{ flex:1, minWidth:0 }}>
                     <div className="product-name">{p.name}</div>
                     <div className="product-brand">{p.brand}{p.category?` · ${p.category}`:""}</div>
                     <div className="verified-pill" style={{ background:vb.bg, color:vb.color }}>{vb.label}</div>
                   </div>
                   <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:5, flexShrink:0 }}>
-                    {p.conflicts.length>0?<div className="badge danger">⚠️ Konflikt</div>:<div className="badge safe">✓ Sikker</div>}
-                    <button className="btn btn-ghost btn-sm" style={{ fontSize:11, padding:"5px 9px" }} onClick={() => addToList(p.name)}>+ Liste</button>
+                    <button className="btn btn-ghost btn-sm" style={{ fontSize:11, padding:"5px 9px" }} onClick={e => { e.stopPropagation(); addToList(p.name); }}>+ Liste</button>
                   </div>
                 </div>
               );
