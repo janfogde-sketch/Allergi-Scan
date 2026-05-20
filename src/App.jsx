@@ -1,19 +1,19 @@
 // @ts-nocheck
 import { useState, useEffect, useCallback, useRef } from "react";
 
-// ─── LOGO KOMPONENT (inline — ingen ekstern fil nødvendig) ───────────────────
-function AllergiScanLogo({ size = 32, variant = "light" }) {
+// ─── EATSAFE LOGO KOMPONENT ──────────────────────────────────────────────────
+function EatSafeLogo({ size = 32, variant = "light" }) {
   const isDark = variant === "dark";
   const bg = isDark ? "#1F2733" : "#FAFAF7";
   const barColor = isDark ? "#3A4452" : "#1F2733";
-  const id = "as-" + size + "-" + variant;
+  const uid = "es-" + size + "-" + variant + "-" + Math.random().toString(36).slice(2,6);
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width={size} height={size} aria-label="Allergi Scan">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width={size} height={size} role="img" aria-label="EatSafe">
       <defs>
-        <clipPath id={"sq-"+id}>
+        <clipPath id={"sq-"+uid}>
           <path d="M 50 0 C 85 0, 100 15, 100 50 C 100 85, 85 100, 50 100 C 15 100, 0 85, 0 50 C 0 15, 15 0, 50 0 Z" />
         </clipPath>
-        <filter id={"glow-"+id} x="-30%" y="-50%" width="160%" height="200%">
+        <filter id={"glow-"+uid} x="-30%" y="-50%" width="160%" height="200%">
           <feGaussianBlur stdDeviation={isDark ? 2.4 : 1.6} result="blur" />
           <feMerge>
             {isDark && <feMergeNode in="blur" />}
@@ -21,13 +21,13 @@ function AllergiScanLogo({ size = 32, variant = "light" }) {
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <linearGradient id={"gline-"+id} x1="0" x2="1" y1="0" y2="0">
+        <linearGradient id={"gline-"+uid} x1="0" x2="1" y1="0" y2="0">
           <stop offset="0%" stopColor="#22C55E" stopOpacity="0.9" />
           <stop offset="60%" stopColor="#4ADE80" />
           <stop offset="100%" stopColor="#22C55E" />
         </linearGradient>
       </defs>
-      <g clipPath={"url(#sq-"+id+")"}>
+      <g clipPath={"url(#sq-"+uid+")"}>
         <rect width="100" height="100" fill={bg} />
         <g fill={barColor}>
           <rect x="18.00" y="16" width="8.31" height="68" rx="1.49" />
@@ -40,11 +40,11 @@ function AllergiScanLogo({ size = 32, variant = "light" }) {
           <rect x="72.57" y="22" width="5.54" height="56" rx="1.00" />
           <rect x="80.84" y="16" width="3.88" height="68" rx="0.70" />
         </g>
-        <g filter={"url(#glow-"+id+")"}>
+        <g filter={"url(#glow-"+uid+")"}>
           <path
             d="M 20 58 L 70 58 L 76 64 L 86 50"
             fill="none"
-            stroke={isDark ? "#4ADE80" : "url(#gline-"+id+")"}
+            stroke={isDark ? "#4ADE80" : "url(#gline-"+uid+")"}
             strokeWidth="4.6"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -350,20 +350,22 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
 
 /* ── WELCOME ── */
-.welcome-screen{min-height:100vh;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 28px;text-align:center;}
-.welcome-shield{width:96px;height:96px;background:rgba(250,250,247,.06);border-radius:28px;display:flex;align-items:center;justify-content:center;margin:0 auto 32px;border:1px solid rgba(250,250,247,.1);overflow:hidden;}
-.welcome-title{font-size:36px;font-weight:800;color:var(--paper);line-height:1.1;margin-bottom:14px;letter-spacing:-.8px;}
-.welcome-title span{color:var(--green);font-style:italic;}
-.welcome-sub{font-size:15px;color:rgba(250,250,247,.5);line-height:1.65;margin-bottom:44px;font-weight:400;}
-.welcome-features{display:flex;flex-direction:column;gap:16px;margin-bottom:44px;width:100%;}
-.welcome-feat{display:flex;align-items:center;gap:14px;text-align:left;}
-.welcome-feat-icon{width:40px;height:40px;background:rgba(250,250,247,.07);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:1px solid rgba(250,250,247,.08);}
-.welcome-feat-text{font-size:13.5px;color:rgba(250,250,247,.7);font-weight:500;line-height:1.45;}
-.welcome-feat-text strong{color:var(--paper);font-weight:700;}
-.welcome-btn{background:var(--green);color:#fff;border:none;border-radius:11px;padding:15px 32px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:all .18s;margin-bottom:10px;letter-spacing:-.1px;}
-.welcome-btn:hover{background:var(--green-glow);transform:translateY(-1px);}
-.welcome-btn-ghost{background:rgba(250,250,247,.07);color:rgba(250,250,247,.75);border:1px solid rgba(250,250,247,.12);border-radius:11px;padding:13px 32px;font-family:var(--f);font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:all .18s;}
-.welcome-btn-ghost:hover{background:rgba(250,250,247,.11);}
+.welcome-screen{min-height:100vh;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 28px;text-align:center;}
+.welcome-logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:40px;}
+.welcome-wordmark{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:20px;}
+.welcome-wordmark-text{font-family:var(--f);font-size:32px;font-weight:800;color:var(--ink);letter-spacing:-.8px;line-height:1;}
+.welcome-wordmark-text span{color:var(--green);font-style:italic;font-weight:800;}
+.welcome-tagline{font-size:15px;color:var(--muted);margin-top:10px;letter-spacing:.2px;font-weight:400;}
+.welcome-divider{width:40px;height:2px;background:var(--border2);border-radius:2px;margin:32px auto;}
+.welcome-features{display:flex;flex-direction:column;gap:14px;margin-bottom:44px;width:100%;}
+.welcome-feat{display:flex;align-items:center;gap:14px;text-align:left;padding:12px 14px;background:#fff;border:1px solid var(--border);border-radius:12px;}
+.welcome-feat-icon{width:38px;height:38px;background:var(--green-lt);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.welcome-feat-text{font-size:13px;color:var(--muted2);font-weight:500;line-height:1.45;}
+.welcome-feat-text strong{color:var(--ink);font-weight:700;display:block;margin-bottom:2px;}
+.welcome-btn{background:var(--ink);color:var(--paper);border:none;border-radius:12px;padding:15px 32px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:all .18s;margin-bottom:10px;letter-spacing:-.1px;box-shadow:0 2px 10px rgba(31,39,51,.15);}
+.welcome-btn:hover{background:var(--ink2);transform:translateY(-1px);}
+.welcome-btn-ghost{background:transparent;color:var(--ink2);border:1.5px solid var(--border2);border-radius:12px;padding:13px 32px;font-family:var(--f);font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:all .18s;}
+.welcome-btn-ghost:hover{background:var(--paper2);}
 
 /* ── LOGIN ── */
 .login-wrap{min-height:100vh;background:var(--paper);display:flex;flex-direction:column;padding:48px 20px 32px;}
@@ -526,7 +528,7 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
 `;
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
-export default function AllergiScan() {
+export default function EatSafe() {
   // Auth state
   const [accessToken, setAccessToken] = useState(() => localStorage.getItem("as_token") || null);
   const [refreshToken, setRefreshToken] = useState(() => localStorage.getItem("as_refresh") || null);
@@ -1304,22 +1306,33 @@ export default function AllergiScan() {
         {/* ══ VELKOMST ══ */}
         {screen === SCREENS.WELCOME && (
           <div className="welcome-screen fade-in">
-            <div className="welcome-shield" style={{background:"none",border:"none",padding:0}}><AllergiScanLogo size={80} variant="light" /></div>
-            <h1 className="welcome-title">Spis trygt med<br /><span>Allergi Scan</span></h1>
-            <p className="welcome-sub">Din personlige allergiguide. Skan stregkoder og få øjeblikkeligt svar om produktet er sikkert for dig.</p>
+            {/* Logo + wordmark som splash */}
+            <div className="welcome-logo-wrap">
+              <EatSafeLogo size={96} variant="light" />
+              <div className="welcome-wordmark">
+                <span className="welcome-wordmark-text">Eat<span>Safe</span></span>
+              </div>
+              <div className="welcome-tagline">Scan. Tjek. Spis trygt.</div>
+            </div>
+
+            <div className="welcome-divider" />
+
+            {/* Features */}
             <div className="welcome-features">
-              {[["📷","Skan på sekunder","Hold kameraet over stregkoden og få svar med det samme"],
+              {[
+                ["📷","Skan på sekunder","Hold kameraet over stregkoden og få svar med det samme"],
                 ["👨‍👩‍👧","Hele familien","Administrér allergiprofiler for alle i familien på ét sted"],
-                ["🛒","Smarte indkøbslister","Delte lister med allergencheck for hele familien"]
+                ["🛒","Smarte indkøbslister","Delte lister med allergencheck for hele familien"],
               ].map(([icon,title,text]) => (
                 <div key={title} className="welcome-feat">
                   <div className="welcome-feat-icon">{icon}</div>
-                  <div className="welcome-feat-text"><strong>{title}</strong><br />{text}</div>
+                  <div className="welcome-feat-text"><strong>{title}</strong>{text}</div>
                 </div>
               ))}
             </div>
-            <button className="welcome-btn" onClick={() => setScreen(SCREENS.LOGIN)}>Opret konto →</button>
-            <button className="welcome-btn-ghost" onClick={() => { setAuthTab("login"); setScreen(SCREENS.LOGIN); }}>Log ind</button>
+
+            <button className="welcome-btn" onClick={() => setScreen(SCREENS.LOGIN)}>Kom i gang →</button>
+            <button className="welcome-btn-ghost" onClick={() => { setAuthTab("login"); setScreen(SCREENS.LOGIN); }}>Jeg har allerede en konto</button>
           </div>
         )}
 
@@ -1327,8 +1340,8 @@ export default function AllergiScan() {
         {screen === SCREENS.LOGIN && (
           <div className="login-wrap fade-in">
             <div className="login-header">
-              <div className="login-shield" style={{background:"none",padding:0,width:64,height:64}}><AllergiScanLogo size={64} variant="light" /></div>
-              <div className="login-title">Allergi <span style={{color:"#22C55E",fontStyle:"italic"}}>Scan</span></div>
+              <div className="login-shield" style={{background:"none",padding:0,width:64,height:64}}><EatSafeLogo size={64} variant="light" /></div>
+              <div className="login-title">Eat<span style={{color:"#22C55E",fontStyle:"italic"}}>Safe</span></div>
               <div className="login-sub">{authTab === "login" ? "Log ind på din konto" : "Opret en ny konto"}</div>
             </div>
             <div className="tab-row">
@@ -1377,7 +1390,7 @@ export default function AllergiScan() {
           <div className="onboard-wrap fade-in">
             {!editMode && (
               <div style={{ textAlign:"center", padding:"4px 0 20px" }}>
-                <div style={{ marginBottom:6 }}><AllergiScanLogo size={40} variant="light" /></div>
+                <div style={{ marginBottom:6 }}><EatSafeLogo size={40} variant="light" /></div>
                 <div style={{ fontSize:20, fontWeight:800, color:"var(--text)" }}>Opsæt din profil</div>
                 <div style={{ fontSize:13, color:"var(--muted)", marginTop:4 }}>Tager under 2 minutter</div>
               </div>
@@ -1498,8 +1511,8 @@ export default function AllergiScan() {
         {!isOnboard && (
           <header className="topbar">
             <div className="topbar-logo">
-              <div className="topbar-shield" style={{background:"none",padding:0}}><AllergiScanLogo size={34} variant="light" /></div>
-              <div className="topbar-name">Allergi <span>Scan</span></div>
+              <div className="topbar-shield" style={{background:"none",padding:0}}><EatSafeLogo size={34} variant="light" /></div>
+              <div className="topbar-name">Eat<span>Safe</span></div>
             </div>
             <div className="topbar-avatar" onClick={() => setScreen(SCREENS.PROFILE)}>{initials(user.name||"?")}</div>
           </header>
