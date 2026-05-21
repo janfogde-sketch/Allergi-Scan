@@ -92,6 +92,7 @@ const SCREENS = {
   RESULT:"result", HISTORY:"history",
   NOTFOUND:"notfound", SUBMITTED:"submitted",
   ADMIN:"admin", FAVORITES:"favorites",
+  MADPAS:"madpas",
 };
 
 const PAGE_IDS = {
@@ -100,6 +101,7 @@ const PAGE_IDS = {
   list:"SCR-07", profile:"SCR-08", family:"SCR-09",
   result:"SCR-10", history:"SCR-11", notfound:"SCR-12",
   submitted:"SCR-13", admin:"SCR-14", favorites:"SCR-15",
+  madpas:"SCR-16",
 };
 
 const DUMMY_PRODUCT = {
@@ -135,6 +137,17 @@ const DUMMY_PRODUCT = {
 };
 
 const AVATAR_COLORS = ["#52b788","#74c69d","#40916c","#b7e4c7","#2d6a4f","#95d5b2","#f4a261","#e76f51"];
+
+const HOME_TIPS = [
+  { icon:"🌾", title:"Gluten er overalt", text:"Gluten findes ikke kun i brød — det gemmer sig i saucer, supper og krydderier. Scan altid." },
+  { icon:"📋", title:"Læs altid etiketten", text:"Opskrifter ændres uden varsel. Et produkt du har spist trygt før, kan have nye ingredienser." },
+  { icon:"👨‍👩‍👧", title:"Tilføj din familie", text:"Opret profiler for hele familien — så ser du på én gang hvem der kan spise hvad." },
+  { icon:"🤝", title:"Hjælp fællesskabet", text:"Scan du et ukendt produkt? Indsend det! Databasen vokser med hjælp fra brugere som dig." },
+  { icon:"⚠️", title:"Spor af allergener", text:"'Kan indeholde spor af' er ikke uskadeligt. For stærkt allergiske kan selv spormængder være farlige." },
+  { icon:"🛒", title:"Planlæg din indkøbsliste", text:"Brug indkøbslisten til at tjekke produkter inden du handler — spar tid i butikken." },
+  { icon:"🔎", title:"Søg inden du handler", text:"Søg på produkter inden du tager i butikken — så ved du hvad du kan købe trygt." },
+  { icon:"📱", title:"Tilføj til hjemskærm", text:"Tilføj EatSafe til din telefons hjemskærm for hurtig adgang — det føles som en rigtig app." },
+];
 
 // ─── HJÆLPEFUNKTIONER ────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).slice(2,9);
@@ -229,7 +242,7 @@ function IngredientsList({ text, allergenFlags = {} }) {
 function ProfileBadges({ allergenFlags, allergens, customAllerg, family, activeProfiles, size = 22 }) {
   if (!allergenFlags) return null;
   const profiles = [
-    { id:"me", name:"Mig", allergens: allergens || [] },
+    ...((!activeProfiles || activeProfiles.includes("me")) ? [{ id:"me", name:"Mig", allergens: allergens || [] }] : []),
     ...(family || []).filter(m => !activeProfiles || activeProfiles.includes(m.id)),
   ];
   return (
@@ -381,6 +394,65 @@ function compareAllergens(flags, activeAllergenIds) {
 }
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
+
+// ─── MADPAS — BUNDLED OVERSÆTTELSER ─────────────────────────────────────────
+const MADPAS_LANGUAGES = [
+  { code:"da", flag:"🇩🇰", name:"Dansk",      bcp:"da-DK" },
+  { code:"en", flag:"🇬🇧", name:"English",    bcp:"en-GB" },
+  { code:"de", flag:"🇩🇪", name:"Deutsch",    bcp:"de-DE" },
+  { code:"fr", flag:"🇫🇷", name:"Français",   bcp:"fr-FR" },
+  { code:"es", flag:"🇪🇸", name:"Español",    bcp:"es-ES" },
+  { code:"it", flag:"🇮🇹", name:"Italiano",   bcp:"it-IT" },
+  { code:"nl", flag:"🇳🇱", name:"Nederlands", bcp:"nl-NL" },
+  { code:"pt", flag:"🇵🇹", name:"Português",  bcp:"pt-PT" },
+  { code:"pl", flag:"🇵🇱", name:"Polski",     bcp:"pl-PL" },
+  { code:"sv", flag:"🇸🇪", name:"Svenska",    bcp:"sv-SE" },
+  { code:"no", flag:"🇳🇴", name:"Norsk",      bcp:"nb-NO" },
+  { code:"ja", flag:"🇯🇵", name:"日本語",      bcp:"ja-JP" },
+  { code:"zh", flag:"🇨🇳", name:"中文",        bcp:"zh-CN" },
+  { code:"ar", flag:"🇸🇦", name:"العربية",    bcp:"ar-SA", rtl:true },
+  { code:"tr", flag:"🇹🇷", name:"Türkçe",     bcp:"tr-TR" },
+  { code:"th", flag:"🇹🇭", name:"ภาษาไทย",    bcp:"th-TH" },
+  { code:"el", flag:"🇬🇷", name:"Ελληνικά",   bcp:"el-GR" },
+];
+
+const ALLERGEN_T = {
+  gluten:      { en:{n:"Gluten",d:"Contains gluten (wheat, rye, barley, oats, spelt)"},de:{n:"Gluten",d:"Enthält Gluten (Weizen, Roggen, Gerste, Hafer, Dinkel)"},fr:{n:"Gluten",d:"Contient du gluten (blé, seigle, orge, avoine, épeautre)"},es:{n:"Gluten",d:"Contiene gluten (trigo, centeno, cebada, avena, espelta)"},it:{n:"Glutine",d:"Contiene glutine (frumento, segale, orzo, avena, farro)"},nl:{n:"Gluten",d:"Bevat gluten (tarwe, rogge, gerst, haver, spelt)"},pt:{n:"Glúten",d:"Contém glúten (trigo, centeio, cevada, aveia, espelta)"},pl:{n:"Gluten",d:"Zawiera gluten (pszenica, żyto, jęczmień, owies, orkisz)"},sv:{n:"Gluten",d:"Innehåller gluten (vete, råg, korn, havre, dinkel)"},no:{n:"Gluten",d:"Inneholder gluten (hvete, rug, bygg, havre, spelt)"},ja:{n:"グルテン",d:"グルテン含有（小麦・ライ麦・大麦・燕麦・スペルト小麦）"},zh:{n:"麸质",d:"含麸质（小麦、黑麦、大麦、燕麦、斯佩尔特小麦）"},ar:{n:"الغلوتين",d:"يحتوي على الغلوتين (قمح، جاودار، شعير، شوفان)"},tr:{n:"Gluten",d:"Gluten içerir (buğday, çavdar, arpa, yulaf, kavılca)"},th:{n:"กลูเตน",d:"มีกลูเตน (ข้าวสาลี, ข้าวไรย์, ข้าวบาร์เลย์, ข้าวโอ๊ต)"},el:{n:"Γλουτένη",d:"Περιέχει γλουτένη (σιτάρι, σίκαλη, κριθάρι, βρώμη, ζέα)"} },
+  laktose:     { en:{n:"Lactose / Dairy",d:"Contains milk and dairy products (lactose)"},de:{n:"Laktose / Milch",d:"Enthält Milch und Milchprodukte (Laktose)"},fr:{n:"Lactose / Lait",d:"Contient du lait et des produits laitiers (lactose)"},es:{n:"Lactosa / Lácteos",d:"Contiene leche y productos lácteos (lactosa)"},it:{n:"Lattosio / Latte",d:"Contiene latte e latticini (lattosio)"},nl:{n:"Lactose / Melk",d:"Bevat melk en zuivelproducten (lactose)"},pt:{n:"Lactose / Leite",d:"Contém leite e produtos lácteos (lactose)"},pl:{n:"Laktoza / Mleko",d:"Zawiera mleko i produkty mleczne (laktoza)"},sv:{n:"Laktos / Mjölk",d:"Innehåller mjölk och mjölkprodukter (laktos)"},no:{n:"Laktose / Melk",d:"Inneholder melk og meieriprodukter (laktose)"},ja:{n:"乳糖 / 乳製品",d:"牛乳および乳製品を含む（ラクトース）"},zh:{n:"乳糖 / 乳制品",d:"含有牛奶和乳制品（乳糖）"},ar:{n:"اللاكتوز / الألبان",d:"يحتوي على الحليب ومنتجات الألبان"},tr:{n:"Laktoz / Süt",d:"Süt ve süt ürünleri içerir (laktoz)"},th:{n:"แลคโตส / นม",d:"มีนมและผลิตภัณฑ์จากนม (แลคโตส)"},el:{n:"Λακτόζη / Γάλα",d:"Περιέχει γάλα και γαλακτοκομικά (λακτόζη)"} },
+  aeg:         { en:{n:"Eggs",d:"Contains eggs and egg products"},de:{n:"Ei",d:"Enthält Eier und Eiprodukte"},fr:{n:"Œufs",d:"Contient des œufs et ovoproduits"},es:{n:"Huevos",d:"Contiene huevos y ovoproductos"},it:{n:"Uova",d:"Contiene uova e ovoprodotti"},nl:{n:"Eieren",d:"Bevat eieren en eiproducten"},pt:{n:"Ovos",d:"Contém ovos e produtos à base de ovos"},pl:{n:"Jaja",d:"Zawiera jaja i produkty na bazie jaj"},sv:{n:"Ägg",d:"Innehåller ägg och äggprodukter"},no:{n:"Egg",d:"Inneholder egg og eggprodukter"},ja:{n:"卵",d:"卵および卵製品を含む"},zh:{n:"鸡蛋",d:"含有鸡蛋和蛋制品"},ar:{n:"البيض",d:"يحتوي على البيض ومنتجاته"},tr:{n:"Yumurta",d:"Yumurta ve yumurta ürünleri içerir"},th:{n:"ไข่",d:"มีไข่และผลิตภัณฑ์จากไข่"},el:{n:"Αυγά",d:"Περιέχει αυγά και προϊόντα αυγών"} },
+  noedder:     { en:{n:"Tree Nuts",d:"Contains nuts (almonds, hazelnuts, walnuts, cashews, pistachios etc.)"},de:{n:"Schalenfrüchte",d:"Enthält Nüsse (Mandeln, Haselnüsse, Walnüsse, Cashews, Pistazien usw.)"},fr:{n:"Fruits à coque",d:"Contient des fruits à coque (amandes, noisettes, noix, cajou, pistaches, etc.)"},es:{n:"Frutos secos",d:"Contiene frutos secos (almendras, avellanas, nueces, anacardos, pistachos, etc.)"},it:{n:"Frutta a guscio",d:"Contiene frutta a guscio (mandorle, nocciole, noci, anacardi, pistacchi ecc.)"},nl:{n:"Noten",d:"Bevat noten (amandelen, hazelnoten, walnoten, cashewnoten, pistachenoten, etc.)"},pt:{n:"Frutos de casca rija",d:"Contém frutos de casca rija (amêndoas, avelãs, nozes, cajus, pistáchios, etc.)"},pl:{n:"Orzechy",d:"Zawiera orzechy (migdały, orzechy laskowe, włoskie, nerkowce, pistacje itp.)"},sv:{n:"Nötter",d:"Innehåller nötter (mandlar, hasselnötter, valnötter, cashewnötter, pistaschnötter m.fl.)"},no:{n:"Nøtter",d:"Inneholder nøtter (mandler, hasselnøtter, valnøtter, cashewnøtter, pistasjnøtter m.fl.)"},ja:{n:"ナッツ類",d:"ナッツ類含有（アーモンド・ヘーゼルナッツ・クルミ・カシューナッツ・ピスタチオ等）"},zh:{n:"坚果",d:"含有坚果（杏仁、榛子、核桃、腰果、开心果等）"},ar:{n:"المكسرات",d:"يحتوي على المكسرات (اللوز، البندق، الجوز، الكاجو، الفستق)"},tr:{n:"Kabuklu Yemişler",d:"Kabuklu yemiş içerir (badem, fındık, ceviz, kaju, antep fıstığı vb.)"},th:{n:"ถั่วต้นไม้",d:"มีถั่ว (อัลมอนด์, เฮเซลนัท, วอลนัท, มะม่วงหิมพานต์, พิสตาชิโอ)"},el:{n:"Ξηροί καρποί",d:"Περιέχει ξηρούς καρπούς (αμύγδαλα, φουντούκια, καρύδια, κάσιους, φιστίκια)"} },
+  jordnoedder: { en:{n:"Peanuts",d:"Contains peanuts and peanut products"},de:{n:"Erdnüsse",d:"Enthält Erdnüsse und Erdnussprodukte"},fr:{n:"Arachides",d:"Contient des arachides (cacahuètes) et produits"},es:{n:"Cacahuetes",d:"Contiene cacahuetes y productos a base de cacahuetes"},it:{n:"Arachidi",d:"Contiene arachidi e prodotti a base di arachidi"},nl:{n:"Pinda's",d:"Bevat pinda's en pindaproducten"},pt:{n:"Amendoins",d:"Contém amendoins e produtos à base de amendoins"},pl:{n:"Orzeszki ziemne",d:"Zawiera orzeszki ziemne i produkty z orzeszków ziemnych"},sv:{n:"Jordnötter",d:"Innehåller jordnötter och jordnötsprodukter"},no:{n:"Peanøtter",d:"Inneholder peanøtter og peanøttprodukter"},ja:{n:"ピーナッツ",d:"ピーナッツおよびピーナッツ製品を含む"},zh:{n:"花生",d:"含有花生和花生制品"},ar:{n:"الفول السوداني",d:"يحتوي على الفول السوداني ومنتجاته"},tr:{n:"Yerfıstığı",d:"Yerfıstığı ve yerfıstığı ürünleri içerir"},th:{n:"ถั่วลิสง",d:"มีถั่วลิสงและผลิตภัณฑ์จากถั่วลิสง"},el:{n:"Φιστίκια",d:"Περιέχει φιστίκια και προϊόντα φιστικιών"} },
+  soja:        { en:{n:"Soy / Soya",d:"Contains soy and soy-based products"},de:{n:"Soja",d:"Enthält Soja und sojahaltige Produkte"},fr:{n:"Soja",d:"Contient du soja et des produits à base de soja"},es:{n:"Soja",d:"Contiene soja y productos a base de soja"},it:{n:"Soia",d:"Contiene soia e prodotti a base di soia"},nl:{n:"Soja",d:"Bevat soja en sojaproducten"},pt:{n:"Soja",d:"Contém soja e produtos à base de soja"},pl:{n:"Soja",d:"Zawiera soję i produkty sojowe"},sv:{n:"Soja",d:"Innehåller soja och sojabaserade produkter"},no:{n:"Soya",d:"Inneholder soya og soyabaserte produkter"},ja:{n:"大豆",d:"大豆および大豆製品を含む"},zh:{n:"大豆",d:"含有大豆和大豆制品"},ar:{n:"الصويا",d:"يحتوي على الصويا ومنتجاتها"},tr:{n:"Soya",d:"Soya ve soya ürünleri içerir"},th:{n:"ถั่วเหลือง",d:"มีถั่วเหลืองและผลิตภัณฑ์จากถั่วเหลือง"},el:{n:"Σόγια",d:"Περιέχει σόγια και προϊόντα σόγιας"} },
+  fisk:        { en:{n:"Fish",d:"Contains fish and fish products"},de:{n:"Fisch",d:"Enthält Fisch und Fischprodukte"},fr:{n:"Poisson",d:"Contient du poisson et des produits à base de poisson"},es:{n:"Pescado",d:"Contiene pescado y productos a base de pescado"},it:{n:"Pesce",d:"Contiene pesce e prodotti ittici"},nl:{n:"Vis",d:"Bevat vis en visproducten"},pt:{n:"Peixe",d:"Contém peixe e produtos à base de peixe"},pl:{n:"Ryby",d:"Zawiera ryby i produkty rybne"},sv:{n:"Fisk",d:"Innehåller fisk och fiskprodukter"},no:{n:"Fisk",d:"Inneholder fisk og fiskeprodukter"},ja:{n:"魚",d:"魚および魚製品を含む"},zh:{n:"鱼类",d:"含有鱼和鱼制品"},ar:{n:"السمك",d:"يحتوي على السمك ومنتجاته"},tr:{n:"Balık",d:"Balık ve balık ürünleri içerir"},th:{n:"ปลา",d:"มีปลาและผลิตภัณฑ์จากปลา"},el:{n:"Ψάρι",d:"Περιέχει ψάρι και προϊόντα ψαριού"} },
+  skaldyr:     { en:{n:"Shellfish / Crustaceans",d:"Contains crustaceans and shellfish (shrimp, crab, lobster, mussels etc.)"},de:{n:"Krebstiere / Schalentiere",d:"Enthält Krebstiere und Schalentiere (Garnelen, Krabben, Hummer, Muscheln)"},fr:{n:"Crustacés / Mollusques",d:"Contient des crustacés et mollusques (crevettes, crabe, homard, moules)"},es:{n:"Crustáceos / Mariscos",d:"Contiene crustáceos y mariscos (gambas, cangrejo, langosta, mejillones)"},it:{n:"Crostacei / Molluschi",d:"Contiene crostacei e molluschi (gamberi, granchio, aragosta, cozze)"},nl:{n:"Schaaldieren",d:"Bevat schaaldieren (garnalen, krab, kreeft, mosselen)"},pt:{n:"Crustáceos / Moluscos",d:"Contém crustáceos e moluscos (camarão, caranguejo, lagosta, mexilhões)"},pl:{n:"Skorupiaki",d:"Zawiera skorupiaki (krewetki, kraby, homary, małże)"},sv:{n:"Skaldjur",d:"Innehåller skaldjur (räkor, krabba, hummer, musslor)"},no:{n:"Skalldyr",d:"Inneholder skalldyr (reker, krabbe, hummer, muslinger)"},ja:{n:"甲殻類・貝類",d:"甲殻類・貝類含有（エビ・カニ・ロブスター・ムール貝等）"},zh:{n:"甲壳类 / 贝类",d:"含有甲壳类和贝类（虾、蟹、龙虾、贻贝等）"},ar:{n:"القشريات والمحار",d:"يحتوي على القشريات والمحار"},tr:{n:"Kabuklu Deniz Ürünleri",d:"Kabuklu deniz ürünleri içerir (karides, yengeç, ıstakoz, midye)"},th:{n:"สัตว์มีเปลือก",d:"มีสัตว์มีเปลือก (กุ้ง, ปู, กุ้งมังกร, หอย)"},el:{n:"Οστρακοειδή",d:"Περιέχει οστρακοειδή (γαρίδες, καβούρι, αστακός, μύδια)"} },
+  selleri:     { en:{n:"Celery",d:"Contains celery and celery products"},de:{n:"Sellerie",d:"Enthält Sellerie und Sellerieprodukte"},fr:{n:"Céleri",d:"Contient du céleri et produits à base de céleri"},es:{n:"Apio",d:"Contiene apio y productos a base de apio"},it:{n:"Sedano",d:"Contiene sedano e prodotti a base di sedano"},nl:{n:"Selderij",d:"Bevat selderij en selderijproducten"},pt:{n:"Aipo",d:"Contém aipo e produtos à base de aipo"},pl:{n:"Seler",d:"Zawiera seler i produkty na bazie selera"},sv:{n:"Selleri",d:"Innehåller selleri och selleriprodukter"},no:{n:"Selleri",d:"Inneholder selleri og selleriprodukter"},ja:{n:"セロリ",d:"セロリおよびセロリ製品を含む"},zh:{n:"芹菜",d:"含有芹菜和芹菜制品"},ar:{n:"الكرفس",d:"يحتوي على الكرفس ومنتجاته"},tr:{n:"Kereviz",d:"Kereviz ve kereviz ürünleri içerir"},th:{n:"คื่นฉ่าย",d:"มีคื่นฉ่ายและผลิตภัณฑ์จากคื่นฉ่าย"},el:{n:"Σέλινο",d:"Περιέχει σέλινο και προϊόντα σέλινου"} },
+  sennep:      { en:{n:"Mustard",d:"Contains mustard and mustard products"},de:{n:"Senf",d:"Enthält Senf und Senfprodukte"},fr:{n:"Moutarde",d:"Contient de la moutarde et produits à base de moutarde"},es:{n:"Mostaza",d:"Contiene mostaza y productos a base de mostaza"},it:{n:"Senape",d:"Contiene senape e prodotti a base di senape"},nl:{n:"Mosterd",d:"Bevat mosterd en mosterdbevattende producten"},pt:{n:"Mostarda",d:"Contém mostarda e produtos à base de mostarda"},pl:{n:"Gorczyca",d:"Zawiera gorczycę i produkty na bazie gorczycy"},sv:{n:"Senap",d:"Innehåller senap och senapsprodukter"},no:{n:"Sennep",d:"Inneholder sennep og sennepsprodukter"},ja:{n:"マスタード",d:"マスタードおよびマスタード製品を含む"},zh:{n:"芥末",d:"含有芥末和芥末制品"},ar:{n:"الخردل",d:"يحتوي على الخردل ومنتجاته"},tr:{n:"Hardal",d:"Hardal ve hardal ürünleri içerir"},th:{n:"มัสตาร์ด",d:"มีมัสตาร์ดและผลิตภัณฑ์จากมัสตาร์ด"},el:{n:"Μουστάρδα",d:"Περιέχει μουστάρδα και προϊόντα μουστάρδας"} },
+  sesam:       { en:{n:"Sesame",d:"Contains sesame seeds and sesame products"},de:{n:"Sesam",d:"Enthält Sesamsamen und Sesamprodukte"},fr:{n:"Sésame",d:"Contient des graines de sésame et produits à base de sésame"},es:{n:"Sésamo",d:"Contiene semillas de sésamo y productos a base de sésamo"},it:{n:"Sesamo",d:"Contiene semi di sesamo e prodotti a base di sesamo"},nl:{n:"Sesam",d:"Bevat sesamzaad en sesamproducten"},pt:{n:"Sésamo",d:"Contém sementes de sésamo e produtos à base de sésamo"},pl:{n:"Sezam",d:"Zawiera ziarna sezamu i produkty sezamowe"},sv:{n:"Sesam",d:"Innehåller sesamfrön och sesamprodukter"},no:{n:"Sesam",d:"Inneholder sesamfrø og sesamprodukter"},ja:{n:"ゴマ",d:"ゴマおよびゴマ製品を含む"},zh:{n:"芝麻",d:"含有芝麻和芝麻制品"},ar:{n:"السمسم",d:"يحتوي على بذور السمسم ومنتجاته"},tr:{n:"Susam",d:"Susam tohumu ve susam ürünleri içerir"},th:{n:"งา",d:"มีเมล็ดงาและผลิตภัณฑ์จากงา"},el:{n:"Σουσάμι",d:"Περιέχει σουσάμι και προϊόντα σουσαμιού"} },
+  svovl:       { en:{n:"Sulphites / Sulfites",d:"Contains sulphites/sulphur dioxide (preservative)"},de:{n:"Sulfite / SO₂",d:"Enthält Sulfite/Schwefeldioxid (Konservierungsmittel)"},fr:{n:"Sulfites / SO₂",d:"Contient des sulfites/dioxyde de soufre (conservateur)"},es:{n:"Sulfitos / SO₂",d:"Contiene sulfitos/dióxido de azufre (conservante)"},it:{n:"Solfiti / SO₂",d:"Contiene solfiti/anidride solforosa (conservante)"},nl:{n:"Sulfieten / SO₂",d:"Bevat sulfieten/zwaveldioxide (conserveermiddel)"},pt:{n:"Sulfitos / SO₂",d:"Contém sulfitos/dióxido de enxofre (conservante)"},pl:{n:"Siarczyny / SO₂",d:"Zawiera siarczyny/dwutlenek siarki (konserwant)"},sv:{n:"Sulfiter / SO₂",d:"Innehåller sulfiter/svaveldioxid (konserveringsmedel)"},no:{n:"Sulfitter / SO₂",d:"Inneholder sulfitter/svoveldioksid (konserveringsmiddel)"},ja:{n:"亜硫酸塩 / SO₂",d:"亜硫酸塩/二酸化硫黄を含む（保存料）"},zh:{n:"亚硫酸盐 / SO₂",d:"含有亚硫酸盐/二氧化硫（防腐剂）"},ar:{n:"الكبريتيت / SO₂",d:"يحتوي على الكبريتيت (مادة حافظة)"},tr:{n:"Sülfit / SO₂",d:"Sülfit/kükürt dioksit içerir (koruyucu)"},th:{n:"ซัลไฟต์ / SO₂",d:"มีซัลไฟต์/ซัลเฟอร์ไดออกไซด์ (สารกันบูด)"},el:{n:"Θειώδη / SO₂",d:"Περιέχει θειώδη/διοξείδιο του θείου (συντηρητικό)"} },
+  lupin:       { en:{n:"Lupin",d:"Contains lupin and lupin-based products"},de:{n:"Lupinen",d:"Enthält Lupinen und Lupinenprodukte"},fr:{n:"Lupin",d:"Contient du lupin et des produits à base de lupin"},es:{n:"Altramuz",d:"Contiene altramuz y productos a base de altramuz"},it:{n:"Lupini",d:"Contiene lupini e prodotti a base di lupini"},nl:{n:"Lupine",d:"Bevat lupine en lupineproducten"},pt:{n:"Tremoço",d:"Contém tremoço e produtos à base de tremoço"},pl:{n:"Łubin",d:"Zawiera łubin i produkty z łubinu"},sv:{n:"Lupin",d:"Innehåller lupin och lupinbaserade produkter"},no:{n:"Lupin",d:"Inneholder lupin og lupinbaserte produkter"},ja:{n:"ルピナス",d:"ルピナスおよびルピナス製品を含む"},zh:{n:"羽扇豆",d:"含有羽扇豆和羽扇豆制品"},ar:{n:"الترمس",d:"يحتوي على الترمس ومنتجاته"},tr:{n:"Lupin",d:"Lupin ve lupin ürünleri içerir"},th:{n:"ลูพิน",d:"มีลูพินและผลิตภัณฑ์จากลูพิน"},el:{n:"Λούπινα",d:"Περιέχει λούπινα και προϊόντα λούπινων"} },
+  bloeddyr:    { en:{n:"Molluscs",d:"Contains molluscs (squid, oysters, mussels, snails etc.)"},de:{n:"Weichtiere",d:"Enthält Weichtiere (Tintenfisch, Austern, Muscheln, Schnecken)"},fr:{n:"Mollusques",d:"Contient des mollusques (calamar, huîtres, moules, escargots)"},es:{n:"Moluscos",d:"Contiene moluscos (calamar, ostras, mejillones, caracoles)"},it:{n:"Molluschi",d:"Contiene molluschi (calamari, ostriche, cozze, lumache)"},nl:{n:"Weekdieren",d:"Bevat weekdieren (inktvis, oesters, mosselen, slakken)"},pt:{n:"Moluscos",d:"Contém moluscos (lulas, ostras, mexilhões, caracóis)"},pl:{n:"Mięczaki",d:"Zawiera mięczaki (kałamarnica, ostrygi, małże, ślimaki)"},sv:{n:"Blötdjur",d:"Innehåller blötdjur (bläckfisk, ostron, musslor, sniglar)"},no:{n:"Bløtdyr",d:"Inneholder bløtdyr (blekksprut, østers, muslinger, snegler)"},ja:{n:"軟体動物",d:"軟体動物含有（イカ・カキ・ムール貝・カタツムリ等）"},zh:{n:"软体动物",d:"含有软体动物（鱿鱼、牡蛎、贻贝、蜗牛等）"},ar:{n:"الرخويات",d:"يحتوي على الرخويات (الحبار، المحار، بلح البحر)"},tr:{n:"Yumuşakçalar",d:"Yumuşakça içerir (kalamar, istiridye, midye, salyangoz)"},th:{n:"หอย / ปลาหมึก",d:"มีสัตว์จำพวกหอย (ปลาหมึก, หอยนางรม, หอยแมลงภู่)"},el:{n:"Μαλάκια",d:"Περιέχει μαλάκια (καλαμάρι, στρείδια, μύδια, σαλιγκάρια)"} },
+};
+
+const MADPAS_INTRO = {
+  da:"Jeg har følgende fødevareallergier og intoleranser. Vær venlig at sikre, at min mad ikke indeholder nogen af disse.",
+  en:"I have the following food allergies and intolerances. Please ensure my meal does not contain any of these.",
+  de:"Ich habe folgende Lebensmittelallergien und Unverträglichkeiten. Bitte stellen Sie sicher, dass mein Essen keines davon enthält.",
+  fr:"J'ai les allergies alimentaires et intolérances suivantes. Veuillez vous assurer que mon repas n'en contient aucune.",
+  es:"Tengo las siguientes alergias alimentarias e intolerancias. Por favor, asegúrese de que mi comida no contenga ninguno de estos.",
+  it:"Ho le seguenti allergie alimentari e intolleranze. Si prega di assicurarsi che il mio pasto non contenga nessuno di questi.",
+  nl:"Ik heb de volgende voedselallergieën en intoleranties. Zorg er alstublieft voor dat mijn maaltijd geen van deze bevat.",
+  pt:"Tenho as seguintes alergias alimentares e intolerâncias. Por favor, certifique-se de que a minha refeição não contém nenhum destes.",
+  pl:"Mam następujące alergie pokarmowe i nietolerancje. Proszę upewnić się, że moje jedzenie nie zawiera żadnego z tych składników.",
+  sv:"Jag har följande matallergier och intoleranser. Vänligen se till att min måltid inte innehåller något av dessa.",
+  no:"Jeg har følgende matallergier og intoleranser. Vennligst sørg for at mitt måltid ikke inneholder noen av disse.",
+  ja:"私は以下の食物アレルギーと不耐症があります。私の食事にこれらが含まれないようにしてください。",
+  zh:"我有以下食物过敏和不耐受。请确保我的餐食不含以下任何成分。",
+  ar:"لدي الحساسية الغذائية والتعصبات التالية. يرجى التأكد من أن وجبتي لا تحتوي على أي من هذه العناصر.",
+  tr:"Aşağıdaki gıda alerjilerim ve intoleranslarım var. Lütfen yemeğimin bunlardan hiçbirini içermediğinden emin olun.",
+  th:"ฉันมีการแพ้อาหารและการแพ้ต่อไปนี้ กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มีสิ่งเหล่านี้",
+  el:"Έχω τις ακόλουθες αλλεργίες και δυσανεξίες. Παρακαλώ βεβαιωθείτε ότι το γεύμα μου δεν περιέχει κανένα από αυτά.",
+};
+
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700;1,800&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -650,6 +722,35 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
 .product-hero-source{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;letterSpacing:.3px;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 .fade-in{animation:fadeUp .18s ease both;}
+
+/* ── MADPAS ── */
+.mp-page{background:var(--paper);display:flex;flex-direction:column;flex:1;}
+.mp-scroll{flex:1;overflow-y:auto;padding:0 16px 120px;}
+.mp-head{padding:20px 16px 0;}
+.mp-title{font-size:26px;font-weight:900;color:var(--ink);letter-spacing:-.5px;margin-bottom:5px;}
+.mp-subtitle{font-size:13px;color:var(--muted2);font-weight:500;line-height:1.5;margin-bottom:20px;}
+.mp-section-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);margin:0 0 8px;}
+.mp-lang-dropdown{width:100%;background:#fff;border:1.5px solid var(--border2);border-radius:13px;padding:13px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s;margin-bottom:16px;}
+.mp-lang-dropdown:hover{border-color:var(--green);}
+.mp-lang-flag{font-size:22px;flex-shrink:0;}
+.mp-lang-name{flex:1;font-size:15px;font-weight:700;color:var(--ink);}
+.mp-lang-arrow{font-size:14px;color:var(--muted);}
+.mp-lang-list{background:#fff;border:1.5px solid var(--border2);border-radius:13px;overflow:hidden;margin-bottom:16px;max-height:320px;overflow-y:auto;}
+.mp-lang-opt{display:flex;align-items:center;gap:10px;padding:11px 16px;cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border);}
+.mp-lang-opt:last-child{border-bottom:none;}
+.mp-lang-opt:hover{background:var(--paper2);}
+.mp-lang-opt.on{background:var(--green-lt);}
+.mp-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 16px;margin-bottom:14px;box-shadow:var(--sh);}
+.mp-allergen-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;background:var(--red-lt);border:1px solid var(--red-md);border-radius:100px;font-weight:800;color:var(--red);margin:3px;}
+.mp-allergen-pill.custom{background:var(--paper2);border-color:var(--border2);color:var(--ink2);}
+.mp-big-btn{width:100%;background:var(--ink);color:var(--paper);border:none;border-radius:14px;padding:16px;font-family:var(--f);font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;box-shadow:0 3px 12px rgba(31,39,51,.18);}
+.mp-big-btn:hover{background:var(--ink2);}
+.mp-speak-btn{background:var(--green);color:#fff;border:none;border-radius:10px;padding:8px 14px;font-family:var(--f);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;flex:1;}
+.mp-speak-btn.speaking{background:var(--amber);}
+.mp-aa{background:var(--paper2);color:var(--muted2);border:1.5px solid var(--border2);border-radius:9px;padding:7px 11px;font-family:var(--f);font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;}
+.mp-aa.on{background:var(--green-lt);border-color:var(--green);color:var(--green);}
+.mp-family-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--border);}
+.mp-family-row:last-child{border-bottom:none;}
 `;
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
@@ -709,6 +810,10 @@ export default function EatSafe() {
   const [favorites, setFavorites] = useState(() => {
     try { return JSON.parse(localStorage.getItem("as_favorites") || "[]"); } catch { return []; }
   });
+  const [madpasLang, setMadpasLang] = useState(() => localStorage.getItem("as_madpas_lang") || "en");
+  const [madpasSpeaking, setMadpasSpeaking] = useState(false);
+  const [madpasBig, setMadpasBig] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const [showSafeOnly, setShowSafeOnly] = useState(false);
 
   // Family form
@@ -1091,7 +1196,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
   // ── SCANNING ───────────────────────────────────────────────────────────────
   const allActive = useCallback(() => {
-    const ids = new Set(allergens);
+    const ids = new Set(activeProfiles.includes("me") ? allergens : []);
     family.filter(m => activeProfiles.includes(m.id)).forEach(m => m.allergens.forEach(a => ids.add(a)));
     return { ids: [...ids], custom: [...customAllerg] };
   }, [allergens, customAllerg, family, activeProfiles]);
@@ -1472,6 +1577,28 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
   }, [activeSearch, accessToken]);
 
     // ── HJÆLPEKOMPONENTER ──────────────────────────────────────────────────────
+
+  // ── MADPAS SPEAK ────────────────────────────────────────────────────────────
+  const madpasSpeak = () => {
+    if (!window.speechSynthesis) return;
+    if (madpasSpeaking) { window.speechSynthesis.cancel(); setMadpasSpeaking(false); return; }
+    const lang = MADPAS_LANGUAGES.find(l => l.code === madpasLang) || MADPAS_LANGUAGES[0];
+    const parts = [];
+    parts.push(MADPAS_INTRO[madpasLang] || MADPAS_INTRO.en);
+    allergens.forEach(id => {
+      const t = ALLERGEN_T[id]?.[madpasLang] || ALLERGEN_T[id]?.en;
+      if (t) parts.push(t.n + ". " + t.d);
+    });
+    if (customAllerg.length > 0) parts.push(customAllerg.join(", "));
+    const utter = new SpeechSynthesisUtterance(parts.join(". "));
+    utter.lang = lang.bcp;
+    utter.rate = 0.9;
+    utter.onstart = () => setMadpasSpeaking(true);
+    utter.onend = () => setMadpasSpeaking(false);
+    utter.onerror = () => setMadpasSpeaking(false);
+    window.speechSynthesis.speak(utter);
+  };
+
   const isOnboard = screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode;
 
   const FamilyChips = () => {
@@ -1901,8 +2028,89 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {screen === SCREENS.HOME && (
           <div className="screen fade-in">
 
-            {/* Scan knap — stor og prominent */}
-            <div className="scan-hero" style={{ marginTop:8 }} onClick={() => setScreen(SCREENS.SCAN)}>
+            {/* 1. Personlig hilsen */}
+            <div style={{ padding:"14px 2px 6px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+              <div>
+                <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px" }}>
+                  {greeting}, {user.name?.split(" ")[0] || "der"} 👋
+                </div>
+                <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>
+                  {allergens.length + customAllerg.length > 0
+                    ? `Tjekker for ${allergens.length + customAllerg.length} allergen${allergens.length + customAllerg.length !== 1 ? "er" : ""}`
+                    : "Ingen allergier sat — gå til profil"}
+                </div>
+              </div>
+              <div className="topbar-avatar" style={{ width:40, height:40, fontSize:14 }} onClick={() => setScreen(SCREENS.PROFILE)}>
+                {initials(user.name || "?")}
+              </div>
+            </div>
+
+            {/* 2. Allergen chips */}
+            {(allergens.length > 0 || customAllerg.length > 0) && (
+              <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:4 }}>
+                {[...allergens, ...customAllerg].map(a => {
+                  const found = ALLERGENS.find(x => x.id === a);
+                  return (
+                    <div key={a} style={{ display:"flex", alignItems:"center", gap:4, background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:20, padding:"4px 10px", fontSize:11, fontWeight:700, color:"var(--red)" }}>
+                      {found ? `${found.emoji} ${found.label}` : `✏️ ${a}`}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* 3. Familie overblik — kun hvis der er familiemedlemmer */}
+            {family.length > 0 && (
+              <div style={{ marginBottom:4 }}>
+                <div style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap" }}>
+                  {[{ id:"me", name: user.name||"Mig" }, ...family].map(m => {
+                    const isActive = activeProfiles.includes(m.id);
+                    return (
+                      <div key={m.id}
+                        onClick={() => setActiveProfiles(p => p.includes(m.id) ? p.filter(x => x !== m.id) : [...p, m.id])}
+                        style={{
+                          display:"flex", alignItems:"center", gap:6,
+                          background: isActive ? "var(--green-lt)" : "var(--paper2)",
+                          border: `1.5px solid ${isActive ? "var(--green)" : "var(--border)"}`,
+                          borderRadius:20, padding:"5px 10px 5px 6px",
+                          cursor:"pointer", transition:"all .15s",
+                        }}>
+                        <div style={{
+                          width:22, height:22, borderRadius:"50%",
+                          background: isActive ? "var(--green)" : "var(--border2)",
+                          display:"flex", alignItems:"center", justifyContent:"center",
+                          fontSize:10, fontWeight:800,
+                          color: isActive ? "#fff" : "var(--muted)",
+                        }}>
+                          {initials(m.name).slice(0,2)}
+                        </div>
+                        <span style={{ fontSize:12, fontWeight:700, color: isActive ? "var(--green)" : "var(--muted)" }}>
+                          {m.name.split(" ")[0]}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {/* Vælg alle knap */}
+                  <div
+                    onClick={() => {
+                      const allIds = ["me", ...family.map(m => m.id)];
+                      const allActive = allIds.every(id => activeProfiles.includes(id));
+                      setActiveProfiles(allActive ? [] : allIds);
+                    }}
+                    style={{
+                      fontSize:11, fontWeight:700, color:"var(--muted)",
+                      background:"var(--paper2)", border:"1.5px dashed var(--border)",
+                      borderRadius:20, padding:"5px 10px",
+                      cursor:"pointer",
+                    }}>
+                    {["me", ...family.map(m => m.id)].every(id => activeProfiles.includes(id)) ? "Fravælg alle" : "Vælg alle"}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 4. Scan-knap */}
+            <div className="scan-hero" onClick={() => setScreen(SCREENS.SCAN)}>
               <div className="scan-hero-icon" style={{width:44,height:44,flexShrink:0}}>
                 <svg viewBox="0 0 100 100" width="44" height="44">
                   <g fill="#3d4e5e">
@@ -1926,7 +2134,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               <div className="scan-hero-arrow">›</div>
             </div>
 
-            {/* Søg */}
+            {/* 4. Søg */}
             <div className="card" style={{ padding:"12px 14px", cursor:"pointer" }} onClick={() => setScreen(SCREENS.SEARCH)}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                 <div style={{ width:38, height:38, background:"var(--paper2)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>🔎</div>
@@ -1938,14 +2146,52 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               </div>
             </div>
 
-            {/* Senest kiggede på */}
+            {/* 5. Indkøbsliste preview */}
+            {shoppingList.filter(i => !i.checked).length > 0 && (
+              <div className="card" style={{ padding:"12px 14px" }}>
+                <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
+                  <span>🛒 Indkøbsliste</span>
+                  <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:11 }} onClick={() => setScreen(SCREENS.LIST)}>Se alle</span>
+                </div>
+                {shoppingList.filter(i => !i.checked).slice(0, 3).map((item, i) => (
+                  <div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"5px 0", borderTop: i > 0 ? "1px solid var(--border)" : "none" }}>
+                    <div style={{ width:8, height:8, borderRadius:"50%", background:"var(--green)", flexShrink:0 }} />
+                    <div style={{ fontSize:13, color:"var(--ink)", flex:1 }}>{item.name}</div>
+                  </div>
+                ))}
+                {shoppingList.filter(i => !i.checked).length > 3 && (
+                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:6 }}>+ {shoppingList.filter(i => !i.checked).length - 3} mere på listen</div>
+                )}
+              </div>
+            )}
+
+            {/* 6. Favoritter preview */}
+            {favorites.length > 0 && (
+              <div className="card">
+                <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
+                  <span>★ Favoritter</span>
+                  <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:11 }} onClick={() => setScreen(SCREENS.FAVORITES)}>Se alle</span>
+                </div>
+                <div style={{ display:"flex", gap:10, overflowX:"auto", paddingBottom:4 }}>
+                  {favorites.slice(0, 5).map((f, i) => (
+                    <div key={i} style={{ flexShrink:0, cursor:"pointer", textAlign:"center", width:64 }}
+                      onClick={() => { setScanResult({ ...f, code: f.ean || f.code }); setScreen(SCREENS.RESULT); }}>
+                      <ProductImage product={f} size={52} />
+                      <div style={{ fontSize:10, color:"var(--ink)", fontWeight:600, marginTop:4, lineHeight:1.2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{f.name}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 7. Senest kiggede på */}
             {history.filter(h => h.result !== "not_found" && (h.products?.name || h.name)).length > 0 && (
               <div className="card">
                 <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
                   <span>Senest kiggede på</span>
                   <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:11 }} onClick={() => { loadHistory(); setScreen(SCREENS.HISTORY); }}>Se alle</span>
                 </div>
-                {history.filter(h => h.result !== "not_found").slice(0,4).map((h,i) => {
+                {history.filter(h => h.result !== "not_found").slice(0,3).map((h,i) => {
                   const s = h.result || h.status;
                   const name = h.products?.name || h.name || h.ean_scanned || "Ukendt";
                   const prod = { name, brand: h.products?.brand||h.brand||"", image_url: h.products?.image_url||null };
@@ -1962,15 +2208,30 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                         <div className="hist-name">{name}</div>
                         <div className="hist-time">{timeAgo(h.scanned_at||h.timestamp)}</div>
                       </div>
-                      <ProfileBadges allergenFlags={h.flags_triggered||{}} allergens={allergens} customAllerg={customAllerg} family={family} activeProfiles={activeProfiles} size={24} />
+                      <ProfileBadges allergenFlags={h.flags_triggered||{}} allergens={allergens} customAllerg={customAllerg} family={family} activeProfiles={activeProfiles} size={22} />
                     </div>
                   );
                 })}
               </div>
             )}
 
-            {/* DEV: Dummy produkt — nederst */}
-            <div className="card" style={{ borderStyle:"dashed", borderColor:"var(--border2)", marginTop:4 }}>
+            {/* 8. Tip kort */}
+            {(() => {
+              const tip = HOME_TIPS[new Date().getDay() % HOME_TIPS.length];
+              return (
+                <div style={{ background:"var(--ink)", borderRadius:14, padding:"14px 16px", display:"flex", gap:12, alignItems:"flex-start" }}>
+                  <div style={{ fontSize:24, flexShrink:0 }}>{tip.icon}</div>
+                  <div>
+                    <div style={{ fontSize:12, fontWeight:700, color:"rgba(255,255,255,.5)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:3 }}>Vidste du at</div>
+                    <div style={{ fontSize:13, fontWeight:700, color:"#fff", marginBottom:4 }}>{tip.title}</div>
+                    <div style={{ fontSize:12, color:"rgba(255,255,255,.65)", lineHeight:1.5 }}>{tip.text}</div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* 9. DEV: Dummy produkt — nederst */}
+            <div className="card" style={{ borderStyle:"dashed", borderColor:"var(--border2)" }}>
               <div className="card-lbl">🧪 Preview / Test</div>
               <button className="btn btn-ghost btn-full btn-sm" onClick={() => { setScanResult(DUMMY_PRODUCT); setScreen(SCREENS.RESULT); }}>
                 Vis dummy produkt (Nutella)
@@ -2864,14 +3125,155 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
           </div>
         )}
 
+        {/* ══ MADPAS ══ */}
+        {screen === SCREENS.MADPAS && (
+          <div className="mp-page fade-in">
+            <div className="mp-scroll">
+
+              {/* HEADER */}
+              <div className="mp-head">
+                <div className="mp-title">Madpas</div>
+                <div className="mp-subtitle">Vis dette kort til restaurantpersonale for at forklare dine allergier på deres sprog</div>
+
+                {/* Sprog-dropdown */}
+                <div className="mp-section-lbl">VÆLG SPROG</div>
+                {!langOpen ? (
+                  <div className="mp-lang-dropdown" onClick={() => setLangOpen(true)}>
+                    <span className="mp-lang-flag">{MADPAS_LANGUAGES.find(l=>l.code===madpasLang)?.flag||"🌍"}</span>
+                    <span className="mp-lang-name">{MADPAS_LANGUAGES.find(l=>l.code===madpasLang)?.name||"English"}</span>
+                    <span className="mp-lang-arrow">▾</span>
+                  </div>
+                ) : (
+                  <div className="mp-lang-list">
+                    {MADPAS_LANGUAGES.map(l => (
+                      <div key={l.code} className={`mp-lang-opt${madpasLang===l.code?" on":""}`}
+                        onClick={() => { setMadpasLang(l.code); localStorage.setItem("as_madpas_lang", l.code); setLangOpen(false); if (madpasSpeaking) { window.speechSynthesis.cancel(); setMadpasSpeaking(false); }}}>
+                        <span style={{ fontSize:20 }}>{l.flag}</span>
+                        <span style={{ fontSize:14, fontWeight:madpasLang===l.code?800:600, color:madpasLang===l.code?"var(--green)":"var(--ink)" }}>{l.name}</span>
+                        {madpasLang===l.code && <span style={{ marginLeft:"auto", color:"var(--green)" }}>✓</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Tom state */}
+              {allergens.length === 0 && customAllerg.length === 0 && (
+                <div className="empty-state" style={{ paddingTop:32 }}>
+                  <span className="empty-icon">🌾</span>
+                  <div className="empty-txt">Ingen allergier registreret</div>
+                  <div className="empty-sub">Tilføj dine allergier under Profil → Mine allergier</div>
+                </div>
+              )}
+
+              {/* TEKST-KORT */}
+              {(allergens.length > 0 || customAllerg.length > 0) && (() => {
+                const lang = madpasLang;
+                const rtl = MADPAS_LANGUAGES.find(l => l.code === lang)?.rtl;
+                const big = madpasBig;
+                const helloText = { en:"Hello. I have food allergies and intolerances.", de:"Hallo. Ich habe Lebensmittelallergien und -unverträglichkeiten.", fr:"Bonjour. J'ai des allergies alimentaires et des intolérances.", es:"Hola. Tengo alergias alimentarias e intolerancias.", it:"Salve. Ho allergie alimentari e intolleranze.", nl:"Hallo. Ik heb voedselallergieën en -intoleranties.", pt:"Olá. Tenho alergias alimentares e intolerâncias.", pl:"Cześć. Mam alergie pokarmowe i nietolerancje.", ja:"こんにちは。私は食物アレルギーと不耐症があります。", zh:"您好。我有食物过敏和不耐受。", ar:"مرحباً. لدي حساسية غذائية وتعصبات.", tr:"Merhaba. Gıda alerjilerim ve intoleranslarım var.", sv:"Hej. Jag har matallergier och intoleranser.", no:"Hei. Jeg har matallergier og intoleranser.", th:"สวัสดี ฉันมีอาการแพ้อาหารและการแพ้", el:"Γεια σας. Έχω αλλεργίες και δυσανεξίες.", da:"Hej. Jeg har fødevareallergier og intoleranser." };
+                const cannotLabel = { en:'I CANNOT eat (incl. "may contain"):', de:'Ich kann NICHT essen (inkl. "kann enthalten"):', fr:"Je NE PEUX PAS manger (incl. « peut contenir ») :", es:"NO puedo comer (incl. «puede contener»):", it:"NON posso mangiare (incl. «può contenere»):", nl:"Ik KAN NIET eten (incl. 'kan bevatten'):", pt:"NÃO posso comer (incl. «pode conter»):", pl:'NIE mogę jeść (w tym "może zawierać"):', ja:"食べられません（「含む可能性あり」を含む）：", zh:'我不能吃（包括"可能含有"）：', ar:"لا أستطيع تناول (بما فيه \"قد يحتوي\"):", tr:'YİYEMEYECEĞİM ("içerebilir" dahil):', sv:'Jag KAN INTE äta (inkl. "kan innehålla"):', no:'Jeg KAN IKKE spise (inkl. «kan inneholde"):', th:"ฉัน ไม่สามารถ กิน (รวม \"อาจมี\"):", el:"ΔΕΝ μπορώ να φάω (συμπ. «μπορεί να περιέχει»):", da:'Jeg kan IKKE spise selv spor af følgende (inkl. "kan indeholde"):' };
+                const helpText = { en:"Can you help me find something safe to eat? Thank you.", de:"Können Sie mir helfen, etwas Sicheres zu finden? Vielen Dank.", fr:"Pouvez-vous m'aider à trouver quelque chose de sûr à manger ? Merci.", es:"¿Puede ayudarme a encontrar algo seguro para comer? Muchas gracias.", it:"Può aiutarmi a trovare qualcosa di sicuro da mangiare? Grazie mille.", nl:"Kunt u mij helpen iets veiligs te vinden om te eten? Hartelijk dank.", pt:"Pode ajudar-me a encontrar algo seguro para comer? Muito obrigado.", pl:"Czy może mi Pan/Pani pomóc znaleźć coś bezpiecznego do jedzenia? Dziękuję.", ja:"安全に食べられるものを選ぶのを手伝っていただけますか？ありがとうございます。", zh:"您能帮我找到可以安全食用的东西吗？非常感谢。", ar:"هل يمكنك مساعدتي في إيجاد شيء آمن لتناوله؟ شكراً جزيلاً.", tr:"Güvenli bir şey bulmama yardımcı olabilir misiniz? Çok teşekkürler.", sv:"Kan du hjälpa mig att hitta något säkert att äta? Tack så mycket.", no:"Kan du hjelpe meg å finne noe trygt å spise? Mange takk.", th:"คุณช่วยฉันหาอาหารที่ปลอดภัยได้ไหม? ขอบคุณมาก", el:"Μπορείτε να με βοηθήσετε να βρω κάτι ασφαλές να φάω; Ευχαριστώ.", da:"Kan du hjælpe mig med at vælge noget sikkert at spise? Mange tak." };
+                const familyLabel = { en:"Also for my family members:", de:"Auch für meine Familienmitglieder:", fr:"Aussi pour mes proches :", es:"También para mis familiares:", it:"Anche per i miei familiari:", nl:"Ook voor mijn familieleden:", pt:"Também para os meus familiares:", pl:"Również dla moich bliskich:", ja:"家族のために：", zh:"也为我的家人：", ar:"أيضاً لأفراد عائلتي:", tr:"Aile üyelerim için de:", sv:"Även för mina familjemedlemmar:", no:"Også for mine familiemedlemmer:", th:"รวมถึงสำหรับสมาชิกในครอบครัวของฉัน:", el:"Επίσης για τα μέλη της οικογένειάς μου:", da:"Også for mine familiemedlemmer:" };
+                const visLabel = { en:"Show to waiter", de:"Dem Kellner zeigen", fr:"Montrer au serveur", es:"Mostrar al camarero", it:"Mostrare al cameriere", nl:"Tonen aan ober", pt:"Mostrar ao empregado", pl:"Pokaż kelnerowi", ja:"ウェイターに見せる", zh:"展示给服务员", ar:"أرِ النادل", tr:"Garsona göster", sv:"Visa för servitören", no:"Vis til kelneren", th:"แสดงให้พนักงาน", el:"Δείξτε στον σερβιτόρο", da:"Vis til tjener" };
+                const sz = big ? 19 : 14;
+                const sz2 = big ? 17 : 13;
+                const sz3 = big ? 22 : 16;
+                const pillPad = big ? "6px 14px" : "4px 11px";
+                return (
+                  <div style={{ padding:"0 0 8px" }} dir={rtl ? "rtl" : "ltr"}>
+                    {/* Forstør + Oplæs */}
+                    <div style={{ display:"flex", gap:8, marginBottom:14, alignItems:"center" }}>
+                      <button className={`mp-aa${big ? " on" : ""}`} onClick={() => setMadpasBig(v => !v)}>
+                        {big ? "Aa↘ Formindsk" : "Aa↗ Forstør"}
+                      </button>
+                      {window.speechSynthesis && (
+                        <button className={`mp-speak-btn${madpasSpeaking ? " speaking" : ""}`} onClick={madpasSpeak}>
+                          {madpasSpeaking ? "⏹ Stop" : "🔊 Oplæs"}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* HOVED TEKST-KORT */}
+                    <div className="mp-card" style={{ fontSize:sz, lineHeight:big?1.9:1.75 }}>
+                      {/* Hej-sætning */}
+                      <div style={{ fontWeight:600, color:"var(--ink)", marginBottom:12, fontSize:big?20:15 }}>
+                        {helloText[lang] || helloText.en}
+                      </div>
+                      {/* Allergen-liste */}
+                      <div style={{ borderLeft:"4px solid var(--green)", paddingLeft:14, marginBottom:12 }}>
+                        <div style={{ fontWeight:800, color:"var(--red)", marginBottom:8, fontSize:sz2 }}>
+                          {cannotLabel[lang] || cannotLabel.en}
+                        </div>
+                        <div style={{ display:"flex", flexWrap:"wrap" }}>
+                          {allergens.map(id => {
+                            const a = ALLERGENS.find(x => x.id === id); if (!a) return null;
+                            const t = ALLERGEN_T[id]?.[lang] || ALLERGEN_T[id]?.en;
+                            return (
+                              <span key={id} className="mp-allergen-pill" style={{ fontSize:sz2, padding:pillPad }}>
+                                <span style={{ fontSize:sz3 }}>{a.emoji}</span>{t?.n || a.label}
+                              </span>
+                            );
+                          })}
+                          {customAllerg.map((c, i) => (
+                            <span key={i} className="mp-allergen-pill custom" style={{ fontSize:sz2, padding:pillPad }}>✏️ {c}</span>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Familiemedlemmer */}
+                      {family.filter(m => m.allergens.length > 0).length > 0 && (
+                        <div style={{ borderLeft:"4px solid var(--blue)", paddingLeft:14, marginBottom:12 }}>
+                          <div style={{ fontWeight:800, color:"var(--blue)", marginBottom:8, fontSize:sz2 }}>
+                            {familyLabel[lang] || familyLabel.en}
+                          </div>
+                          {family.filter(m => m.allergens.length > 0).map(m => (
+                            <div key={m.id} className="mp-family-row">
+                              <div style={{ width:26, height:26, borderRadius:"50%", background:m.color, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:800, flexShrink:0 }}>{initials(m.name)}</div>
+                              <span style={{ fontWeight:700, fontSize:big?15:12, color:"var(--ink)", flexShrink:0 }}>{m.name}:</span>
+                              <div style={{ display:"flex", flexWrap:"wrap", gap:3 }}>
+                                {m.allergens.map(id => { const a = ALLERGENS.find(x => x.id === id); if (!a) return null; const t = ALLERGEN_T[id]?.[lang] || ALLERGEN_T[id]?.en; return (<span key={id} style={{ display:"inline-flex", alignItems:"center", gap:3, padding:"2px 8px", background:"rgba(37,99,235,.07)", border:"1px solid rgba(37,99,235,.2)", borderRadius:100, fontSize:big?14:11, fontWeight:700, color:"var(--blue)" }}>{a.emoji} {t?.n || a.label}</span>);})}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {/* Afslutning */}
+                      <div style={{ color:"var(--muted2)", fontSize:big?16:13, fontStyle:"italic" }}>
+                        {helpText[lang] || helpText.en}
+                      </div>
+                    </div>
+
+                    {/* VIS TIL TJENER knap */}
+                    <button className="mp-big-btn">
+                      <span style={{ fontSize:18 }}>⤢</span>
+                      {visLabel[lang] || visLabel.en}
+                    </button>
+
+                    {/* Stor oplæs-knap i forstørret mode */}
+                    {big && window.speechSynthesis && (
+                      <button className={`mp-speak-btn${madpasSpeaking ? " speaking" : ""}`} onClick={madpasSpeak}
+                        style={{ width:"100%", padding:"14px", fontSize:15, borderRadius:12, marginBottom:10, justifyContent:"center" }}>
+                        {madpasSpeaking ? "⏹ Stop oplæsning" : "🔊 Oplæs højt"}
+                      </button>
+                    )}
+
+                    <div style={{ textAlign:"center", fontSize:11, color:"var(--muted)", marginTop:4 }}>
+                      🇩🇰 EatSafe · {new Date().toLocaleDateString("da-DK")}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
         {/* BUNDNAVIGATION */}
         {!isOnboard && (
           <nav className="bottom-nav">
             {[
               [SCREENS.HOME,"🏠","Hjem"],
               [SCREENS.FAVORITES,"★","Favoritter"],
+              [SCREENS.MADPAS,"🌍","Madpas"],
               [SCREENS.LIST,"🛒","Liste"],
-              [SCREENS.FAMILY,"👨‍👩‍👧","Familie"],
               [SCREENS.PROFILE,"👤","Profil"],
               ...(user.role === "admin" ? [[SCREENS.ADMIN,"⚙️","Admin"]] : []),
             ].map(([s,icon,lbl]) => (
