@@ -92,7 +92,7 @@ const SCREENS = {
   RESULT:"result", HISTORY:"history",
   NOTFOUND:"notfound", SUBMITTED:"submitted",
   ADMIN:"admin", FAVORITES:"favorites",
-  MADPAS:"madpas",
+  MADPAS:"madpas", RECIPES:"recipes",
 };
 
 const PAGE_IDS = {
@@ -101,7 +101,7 @@ const PAGE_IDS = {
   list:"SCR-07", profile:"SCR-08", family:"SCR-09",
   result:"SCR-10", history:"SCR-11", notfound:"SCR-12",
   submitted:"SCR-13", admin:"SCR-14", favorites:"SCR-15",
-  madpas:"SCR-16",
+  madpas:"SCR-16", recipes:"SCR-17",
 };
 
 const DUMMY_PRODUCT = {
@@ -134,6 +134,24 @@ const DUMMY_PRODUCT = {
     { type:"maybe", text:"Kan indeholde spor af Soja" },
   ],
   timestamp: Date.now(),
+};
+
+
+const ALLERGEN_EXAMPLES = {
+  gluten:      { products:["Brød","Pasta","Øl","Soja sauce"], ingredients:["Hvede","Rug","Byg","Havre","Spelt"] },
+  laktose:     { products:["Mælk","Ost","Smør","Is","Yoghurt"], ingredients:["Laktose","Valle","Kasein","Fløde"] },
+  aeg:         { products:["Mayonnaise","Pasta","Kage","Aioli"], ingredients:["Æg","Æggehvide","Æggeblomme"] },
+  noedder:     { products:["Pesto","Chokolade","Muesli","Nougat"], ingredients:["Mandler","Hasselnødder","Valnødder","Cashew"] },
+  jordnoedder: { products:["Jordnøddesmør","Satay sauce","Snackblandinger"], ingredients:["Jordnødder","Peanuts","Arachider"] },
+  soja:        { products:["Tofu","Soja sauce","Miso","Edamame"], ingredients:["Soja","Sojabønner","Sojalecitin"] },
+  fisk:        { products:["Fiskesauce","Worcestershire","Caesar dressing"], ingredients:["Ansjos","Laks","Tun","Makrel"] },
+  skaldyr:     { products:["Paella","Bisque","Sushi","Fiskesuppe"], ingredients:["Rejer","Krabbe","Hummer","Muslinger"] },
+  selleri:     { products:["Bouillon","Suppe","Krydderisalt","Salat"], ingredients:["Selleri","Sellerisalt","Sellerifnug"] },
+  sennep:      { products:["Sennep","Dressing","Marinade","Curry"], ingredients:["Sennepsfrø","Sennepsmel","Sennepsolie"] },
+  sesam:       { products:["Hummus","Tahini","Bagels","Sushi"], ingredients:["Sesam","Sesamfrø","Tahini","Sesamolie"] },
+  svovl:       { products:["Vin","Tørrede frugter","Konserves","Eddike"], ingredients:["E220","E221","Sulfitter","SO₂"] },
+  lupin:       { products:["Glutenfri mel","Pasta","Brød","Snacks"], ingredients:["Lupinmel","Lupinfrø","Lupinprotein"] },
+  bloeddyr:    { products:["Paella","Pasta frutti di mare","Sushi"], ingredients:["Blæksprutte","Østers","Muslinger","Snegle"] },
 };
 
 const AVATAR_COLORS = ["#52b788","#74c69d","#40916c","#b7e4c7","#2d6a4f","#95d5b2","#f4a261","#e76f51"];
@@ -811,6 +829,7 @@ export default function EatSafe() {
   const [madpasLang, setMadpasLang] = useState(() => localStorage.getItem("as_madpas_lang") || "en");
   const [madpasSpeaking, setMadpasSpeaking] = useState(false);
   const [madpasBig, setMadpasBig] = useState(false);
+  const [madpasWaiterView, setMadpasWaiterView] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [showSafeOnly, setShowSafeOnly] = useState(false);
 
@@ -1512,20 +1531,28 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
       setSearchResults([]);
       const q = searchQuery.trim();
 
-      // 1. Søg lokalt
-      fetch(
-        `${SUPABASE_URL}/rest/v1/products?or=(name.ilike.*${encodeURIComponent(q)}*,brand.ilike.*${encodeURIComponent(q)}*)&select=id,ean,name,brand,category,image_url,verified_status&limit=20`,
-        { headers: { "apikey": SUPABASE_ANON_KEY, "Accept": "application/json", ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) } }
-      )
-        .then(r => r.ok ? r.json() : [])
-        .then(data => {
-          const local = Array.isArray(data) ? data.map(p => ({ ...p, source:"local", verified:p.verified_status, conflicts:[] })) : [];
-          setSearchResults(local);
-          setSearchLoading(false);
+      // Søg i Supabase — to separate kald for navn og brand
+      const headers = { 
+        "apikey": SUPABASE_ANON_KEY, 
+        "Accept": "application/json",
+        ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {})
+      };
+      const enc = encodeURIComponent(q);
+      const base = `${SUPABASE_URL}/rest/v1/products?select=id,ean,name,brand,category,image_url,verified_status&limit=20`;
 
-          // OFF API fjernet — søger kun i lokal Supabase database
-        })
-        .catch(() => { setSearchLoading(false); });
+      Promise.all([
+        fetch(`${base}&name=ilike.*${enc}*`, { headers }).then(r => r.ok ? r.json() : []),
+        fetch(`${base}&brand=ilike.*${enc}*`, { headers }).then(r => r.ok ? r.json() : []),
+      ]).then(([byName, byBrand]) => {
+        const seen = new Set();
+        const combined = [...(Array.isArray(byName)?byName:[]), ...(Array.isArray(byBrand)?byBrand:[])].filter(p => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        }).map(p => ({ ...p, source:"local", verified:p.verified_status, conflicts:[] }));
+        setSearchResults(combined);
+        setSearchLoading(false);
+      }).catch(() => { setSearchLoading(false); });
 
     }, 450);
     return () => { clearTimeout(timer); };
@@ -1983,203 +2010,121 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {screen === SCREENS.HOME && (
           <div className="screen fade-in">
 
-            {/* 1. Personlig hilsen */}
-            <div style={{ padding:"14px 2px 6px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-              <div>
-                <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px" }}>
-                  {greeting}, {user.name?.split(" ")[0] || "der"} 👋
-                </div>
-                <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>
-                  {allergens.length + customAllerg.length > 0
-                    ? `Tjekker for ${allergens.length + customAllerg.length} allergen${allergens.length + customAllerg.length !== 1 ? "er" : ""}`
-                    : "Ingen allergier sat — gå til profil"}
-                </div>
+            {/* Hilsen */}
+            <div style={{ padding:"16px 2px 14px" }}>
+              <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px" }}>
+                {greeting}, {user.name?.split(" ")[0] || "der"} 👋
               </div>
-              <div className="topbar-avatar" style={{ width:40, height:40, fontSize:14 }} onClick={() => setScreen(SCREENS.PROFILE)}>
-                {initials(user.name || "?")}
+              <div style={{ fontSize:12, color:"var(--muted)", marginTop:3 }}>
+                {allergens.length + customAllerg.length > 0
+                  ? `Tjekker for ${allergens.length + customAllerg.length} allergen${allergens.length + customAllerg.length !== 1 ? "er" : ""}`
+                  : "Ingen allergier sat — gå til profil"}
               </div>
             </div>
 
-            {/* 2. Allergen chips */}
-            {(allergens.length > 0 || customAllerg.length > 0) && (
-              <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:4 }}>
-                {[...allergens, ...customAllerg].map(a => {
-                  const found = ALLERGENS.find(x => x.id === a);
-                  return (
-                    <div key={a} style={{ display:"flex", alignItems:"center", gap:4, background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:20, padding:"4px 10px", fontSize:11, fontWeight:700, color:"var(--red)" }}>
-                      {found ? `${found.emoji} ${found.label}` : `✏️ ${a}`}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* 3. Familie overblik — kun hvis der er familiemedlemmer */}
-            {family.length > 0 && (
-              <div style={{ marginBottom:4 }}>
-                <div style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap" }}>
-                  {[{ id:"me", name: user.name||"Mig" }, ...family].map(m => {
-                    const isActive = activeProfiles.includes(m.id);
-                    return (
-                      <div key={m.id}
-                        onClick={() => setActiveProfiles(p => p.includes(m.id) ? p.filter(x => x !== m.id) : [...p, m.id])}
-                        style={{
-                          display:"flex", alignItems:"center", gap:6,
-                          background: isActive ? "var(--green-lt)" : "var(--paper2)",
-                          border: `1.5px solid ${isActive ? "var(--green)" : "var(--border)"}`,
-                          borderRadius:20, padding:"5px 10px 5px 6px",
-                          cursor:"pointer", transition:"all .15s",
-                        }}>
-                        <div style={{
-                          width:22, height:22, borderRadius:"50%",
-                          background: isActive ? "var(--green)" : "var(--border2)",
-                          display:"flex", alignItems:"center", justifyContent:"center",
-                          fontSize:10, fontWeight:800,
-                          color: isActive ? "#fff" : "var(--muted)",
-                        }}>
-                          {initials(m.name).slice(0,2)}
-                        </div>
-                        <span style={{ fontSize:12, fontWeight:700, color: isActive ? "var(--green)" : "var(--muted)" }}>
-                          {m.name.split(" ")[0]}
-                        </span>
-                      </div>
-                    );
+            {/* Stor scan-knap — starter kamera direkte */}
+            <div style={{
+              background:"var(--ink)", borderRadius:20, marginBottom:10,
+              cursor:"pointer", overflow:"hidden", position:"relative",
+              boxShadow:"0 4px 20px rgba(31,39,51,.18)",
+              transition:"transform .15s, box-shadow .15s",
+            }} onClick={() => { setScreen(SCREENS.SCAN); setTimeout(startCamera, 120); }}>
+              {/* Laser animation baggrund */}
+              <div style={{ padding:"28px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16, position:"relative" }}>
+                {/* Stregkode-animation */}
+                <div style={{ position:"relative", width:180, height:90 }}>
+                  {/* Stregkode streger */}
+                  <svg viewBox="0 0 180 90" width="180" height="90">
+                    <g fill="rgba(255,255,255,0.15)">
+                      <rect x="10" y="0" width="7" height="90" rx="1"/>
+                      <rect x="22" y="0" width="3" height="90" rx="1"/>
+                      <rect x="29" y="0" width="5" height="90" rx="1"/>
+                      <rect x="38" y="0" width="2" height="90" rx="1"/>
+                      <rect x="44" y="0" width="8" height="90" rx="1"/>
+                      <rect x="56" y="0" width="3" height="90" rx="1"/>
+                      <rect x="63" y="0" width="6" height="90" rx="1"/>
+                      <rect x="73" y="0" width="2" height="90" rx="1"/>
+                      <rect x="79" y="0" width="4" height="90" rx="1"/>
+                      <rect x="87" y="0" width="7" height="90" rx="1"/>
+                      <rect x="98" y="0" width="3" height="90" rx="1"/>
+                      <rect x="105" y="0" width="5" height="90" rx="1"/>
+                      <rect x="114" y="0" width="2" height="90" rx="1"/>
+                      <rect x="120" y="0" width="6" height="90" rx="1"/>
+                      <rect x="130" y="0" width="3" height="90" rx="1"/>
+                      <rect x="137" y="0" width="8" height="90" rx="1"/>
+                      <rect x="149" y="0" width="4" height="90" rx="1"/>
+                      <rect x="157" y="0" width="2" height="90" rx="1"/>
+                      <rect x="163" y="0" width="7" height="90" rx="1"/>
+                    </g>
+                  </svg>
+                  {/* Laser linje */}
+                  <div style={{
+                    position:"absolute", left:0, right:0, height:2,
+                    background:"linear-gradient(90deg, transparent, #22C55E, #4ADE80, #22C55E, transparent)",
+                    animation:"laserMove 2s ease-in-out infinite",
+                    filter:"drop-shadow(0 0 6px #22C55E)",
+                    boxShadow:"0 0 8px #22C55E",
+                  }}/>
+                  {/* Hjørnemarkører */}
+                  {[["0","0","top","left"],["0","0","top","right"],["0","0","bottom","left"],["0","0","bottom","right"]].map((_,i) => {
+                    const pos = [{top:8,left:8},{top:8,right:8},{bottom:8,left:8},{bottom:8,right:8}][i];
+                    const borders = [
+                      {borderTop:"2px solid rgba(255,255,255,.6)",borderLeft:"2px solid rgba(255,255,255,.6)"},
+                      {borderTop:"2px solid rgba(255,255,255,.6)",borderRight:"2px solid rgba(255,255,255,.6)"},
+                      {borderBottom:"2px solid rgba(255,255,255,.6)",borderLeft:"2px solid rgba(255,255,255,.6)"},
+                      {borderBottom:"2px solid rgba(255,255,255,.6)",borderRight:"2px solid rgba(255,255,255,.6)"},
+                    ][i];
+                    return <div key={i} style={{ position:"absolute", width:16, height:16, ...pos, ...borders, borderRadius:2 }}/>;
                   })}
-                  {/* Vælg alle knap */}
-                  <div
-                    onClick={() => {
-                      const allIds = ["me", ...family.map(m => m.id)];
-                      const allActive = allIds.every(id => activeProfiles.includes(id));
-                      setActiveProfiles(allActive ? [] : allIds);
-                    }}
-                    style={{
-                      fontSize:11, fontWeight:700, color:"var(--muted)",
-                      background:"var(--paper2)", border:"1.5px dashed var(--border)",
-                      borderRadius:20, padding:"5px 10px",
-                      cursor:"pointer",
-                    }}>
-                    {["me", ...family.map(m => m.id)].every(id => activeProfiles.includes(id)) ? "Fravælg alle" : "Vælg alle"}
-                  </div>
+                </div>
+                {/* Tekst */}
+                <div style={{ textAlign:"center" }}>
+                  <div style={{ fontSize:20, fontWeight:900, color:"#fff", letterSpacing:"-.4px" }}>Skan produkt</div>
+                  <div style={{ fontSize:13, color:"rgba(255,255,255,.5)", marginTop:4 }}>Tryk for at starte kamera</div>
                 </div>
               </div>
-            )}
-
-            {/* 4. Scan-knap */}
-            <div className="scan-hero" onClick={() => setScreen(SCREENS.SCAN)}>
-              <div className="scan-hero-icon" style={{width:44,height:44,flexShrink:0}}>
-                <svg viewBox="0 0 100 100" width="44" height="44">
-                  <g fill="#3d4e5e">
-                    <rect x="18" y="16" width="8.31" height="68" rx="1.49"/>
-                    <rect x="29.05" y="22" width="4.15" height="56" rx="0.75"/>
-                    <rect x="35.94" y="16" width="5.54" height="68" rx="1"/>
-                    <rect x="44.21" y="22" width="2.77" height="56" rx="0.5"/>
-                    <rect x="49.71" y="16" width="3.32" height="68" rx="0.6"/>
-                    <rect x="55.76" y="22" width="6.92" height="56" rx="1.25"/>
-                    <rect x="65.41" y="16" width="4.43" height="68" rx="0.8"/>
-                    <rect x="72.57" y="22" width="5.54" height="56" rx="1"/>
-                    <rect x="80.84" y="16" width="3.88" height="68" rx="0.7"/>
-                  </g>
-                  <path d="M 20 58 L 70 58 L 76 64 L 86 50" fill="none" stroke="#22C55E" strokeWidth="4.6" strokeLinecap="round" strokeLinejoin="round" style={{filter:"drop-shadow(0 0 3px #22C55E)"}}/>
-                </svg>
-              </div>
-              <div>
-                <div className="scan-hero-title">Skan produkt</div>
-                <div className="scan-hero-sub">Hold kameraet over stregkoden</div>
-              </div>
-              <div className="scan-hero-arrow">›</div>
             </div>
 
-            {/* 4. Søg */}
-            <div className="card" style={{ padding:"12px 14px", cursor:"pointer" }} onClick={() => setScreen(SCREENS.SEARCH)}>
+            {/* Søg — fremhævet på forsiden */}
+            <div className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:10 }}
+              onClick={() => setScreen(SCREENS.SEARCH)}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <div style={{ width:38, height:38, background:"var(--paper2)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>🔎</div>
-                <div>
-                  <div style={{ fontWeight:700, fontSize:14 }}>Søg produkter</div>
-                  <div style={{ fontSize:12, color:"var(--muted)", marginTop:1 }}>Find produkter der er sikre for dig</div>
+                <div style={{ width:40, height:40, background:"var(--paper2)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>🔎</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:700 }}>Søg produkter</div>
+                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>Find varer der er sikre for dig</div>
                 </div>
-                <div style={{ marginLeft:"auto", fontSize:18, color:"var(--muted)" }}>›</div>
+                <div style={{ fontSize:18, color:"var(--muted)" }}>›</div>
               </div>
             </div>
 
-            {/* 5. Indkøbsliste preview */}
+            {/* Indkøbsliste — kun hvis der er varer */}
             {shoppingList.filter(i => !i.checked).length > 0 && (
-              <div className="card" style={{ padding:"12px 14px" }}>
-                <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
-                  <span>🛒 Indkøbsliste</span>
-                  <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:11 }} onClick={() => setScreen(SCREENS.LIST)}>Se alle</span>
-                </div>
-                {shoppingList.filter(i => !i.checked).slice(0, 3).map((item, i) => (
-                  <div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"5px 0", borderTop: i > 0 ? "1px solid var(--border)" : "none" }}>
-                    <div style={{ width:8, height:8, borderRadius:"50%", background:"var(--green)", flexShrink:0 }} />
-                    <div style={{ fontSize:13, color:"var(--ink)", flex:1 }}>{item.name}</div>
+              <div className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:10 }}
+                onClick={() => setScreen(SCREENS.LIST)}>
+                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <div style={{ width:40, height:40, background:"var(--green-lt)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>🛒</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, fontWeight:700 }}>Indkøbsliste</div>
+                    <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>
+                      {shoppingList.filter(i => !i.checked).length} vare{shoppingList.filter(i => !i.checked).length !== 1 ? "r" : ""} mangler
+                    </div>
                   </div>
-                ))}
-                {shoppingList.filter(i => !i.checked).length > 3 && (
-                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:6 }}>+ {shoppingList.filter(i => !i.checked).length - 3} mere på listen</div>
-                )}
-              </div>
-            )}
-
-            {/* 6. Favoritter preview */}
-            {favorites.length > 0 && (
-              <div className="card">
-                <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
-                  <span>★ Favoritter</span>
-                  <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:11 }} onClick={() => setScreen(SCREENS.FAVORITES)}>Se alle</span>
-                </div>
-                <div style={{ display:"flex", gap:10, overflowX:"auto", paddingBottom:4 }}>
-                  {favorites.slice(0, 5).map((f, i) => (
-                    <div key={i} style={{ flexShrink:0, cursor:"pointer", textAlign:"center", width:64 }}
-                      onClick={() => { setScanResult({ ...f, code: f.ean || f.code }); setScreen(SCREENS.RESULT); }}>
-                      <ProductImage product={f} size={52} />
-                      <div style={{ fontSize:10, color:"var(--ink)", fontWeight:600, marginTop:4, lineHeight:1.2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{f.name}</div>
-                    </div>
-                  ))}
+                  <div style={{ fontSize:18, color:"var(--muted)" }}>›</div>
                 </div>
               </div>
             )}
 
-            {/* 7. Senest kiggede på */}
-            {history.filter(h => h.result !== "not_found" && (h.products?.name || h.name)).length > 0 && (
-              <div className="card">
-                <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
-                  <span>Senest kiggede på</span>
-                  <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:11 }} onClick={() => { loadHistory(); setScreen(SCREENS.HISTORY); }}>Se alle</span>
-                </div>
-                {history.filter(h => h.result !== "not_found").slice(0,3).map((h,i) => {
-                  const s = h.result || h.status;
-                  const name = h.products?.name || h.name || h.ean_scanned || "Ukendt";
-                  const prod = { name, brand: h.products?.brand||h.brand||"", image_url: h.products?.image_url||null };
-                  return (
-                    <div key={i} className="hist-row" style={{ cursor:"pointer" }} onClick={() => {
-                      setScanResult({...h, code:h.ean_scanned||h.code, name, brand:h.products?.brand||h.brand||"",
-                        image_url:h.products?.image_url||null,
-                        headline:s==="safe"?"Sikkert produkt":s==="danger"?"Indeholder allergen!":"Mulige spor",
-                        flags:[], summary:"", allergen_flags:h.flags_triggered||{} });
-                      setScreen(SCREENS.RESULT);
-                    }}>
-                      <ProductImage product={prod} size={36} />
-                      <div className="hist-info" style={{ marginLeft:8 }}>
-                        <div className="hist-name">{name}</div>
-                        <div className="hist-time">{timeAgo(h.scanned_at||h.timestamp)}</div>
-                      </div>
-                      <ProfileBadges allergenFlags={h.flags_triggered||{}} allergens={allergens} customAllerg={customAllerg} family={family} activeProfiles={activeProfiles} size={22} />
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* 8. Tip kort */}
+            {/* Dagligt tip — kompakt, over bundbjælken */}
             {(() => {
               const tip = HOME_TIPS[new Date().getDay() % HOME_TIPS.length];
               return (
-                <div style={{ background:"var(--ink)", borderRadius:14, padding:"14px 16px", display:"flex", gap:12, alignItems:"flex-start" }}>
-                  <div style={{ fontSize:24, flexShrink:0 }}>{tip.icon}</div>
-                  <div>
-                    <div style={{ fontSize:12, fontWeight:700, color:"rgba(255,255,255,.5)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:3 }}>Vidste du at</div>
-                    <div style={{ fontSize:13, fontWeight:700, color:"#fff", marginBottom:4 }}>{tip.title}</div>
-                    <div style={{ fontSize:12, color:"rgba(255,255,255,.65)", lineHeight:1.5 }}>{tip.text}</div>
+                <div style={{ display:"flex", gap:10, alignItems:"center", padding:"10px 12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, marginBottom:8 }}>
+                  <div style={{ fontSize:16, flexShrink:0 }}>{tip.icon}</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:9, fontWeight:700, color:"var(--green)", textTransform:"uppercase", letterSpacing:".5px" }}>Vidste du at</div>
+                    <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginTop:1 }}>{tip.title}</div>
+                    <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.4, marginTop:2, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>{tip.text}</div>
                   </div>
                 </div>
               );
@@ -2188,7 +2133,23 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             {/* 9. DEV: Dummy produkt — nederst */}
             <div className="card" style={{ borderStyle:"dashed", borderColor:"var(--border2)" }}>
               <div className="card-lbl">🧪 Preview / Test</div>
-              <button className="btn btn-ghost btn-full btn-sm" onClick={() => { setScanResult(DUMMY_PRODUCT); setScreen(SCREENS.RESULT); }}>
+              <button className="btn btn-ghost btn-full btn-sm" onClick={() => {
+                const flags = DUMMY_PRODUCT.allergen_flags;
+                const { status, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(flags, activeIds);
+                const familyImpact = family.filter(m => activeProfiles.includes(m.id)).reduce((acc, m) => {
+                  const r = compareAllergens(flags, m.allergens||[]);
+                  if (r.matchedDanger.length > 0 || r.matchedWarning.length > 0) acc.push({ name:m.name, color:m.color, danger:r.matchedDanger, warning:r.matchedWarning });
+                  return acc;
+                }, []);
+                const headlines = { safe:"Sikkert produkt ✅", danger:"Indeholder allergen! 🚫", warn:"Mulige spor ⚠️" };
+                const summaries = {
+                  safe:"Ingen af dine registrerede allergener er fundet i dette produkt.",
+                  danger:`Produktet indeholder ${matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
+                  warn:`Produktet kan indeholde spor af ${matchedWarning.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
+                };
+                setScanResult({ ...DUMMY_PRODUCT, status, headline:headlines[status], summary:summaries[status], matchedDanger, matchedWarning, familyImpact, hasUnknown });
+                setScreen(SCREENS.RESULT);
+              }}>
                 Vis dummy produkt (Nutella)
               </button>
             </div>
@@ -2200,7 +2161,41 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {screen === SCREENS.SCAN && (
           <div className="screen fade-in">
             <div className="screen-title">📷 Skan produkt</div>
-            <div className="screen-sub">Skan stregkoden eller indtast den manuelt.</div>
+
+            {/* Familie-profilvælger */}
+            {family.length > 0 && (
+              <div style={{ marginBottom:12 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:6 }}>Scanner for</div>
+                <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                  {[{ id:"me", name: user.name||"Mig" }, ...family].map(m => {
+                    const isActive = activeProfiles.includes(m.id);
+                    return (
+                      <div key={m.id}
+                        onClick={() => setActiveProfiles(p => p.includes(m.id) ? p.filter(x => x !== m.id).length === 0 ? [m.id] : p.filter(x => x !== m.id) : [...p, m.id])}
+                        style={{
+                          display:"flex", alignItems:"center", gap:6,
+                          background: isActive ? "var(--green-lt)" : "var(--paper2)",
+                          border: `1.5px solid ${isActive ? "var(--green)" : "var(--border)"}`,
+                          borderRadius:20, padding:"5px 10px 5px 7px",
+                          cursor:"pointer", transition:"all .15s",
+                        }}>
+                        <div style={{
+                          width:20, height:20, borderRadius:"50%",
+                          background: isActive ? "var(--green)" : "var(--border2)",
+                          display:"flex", alignItems:"center", justifyContent:"center",
+                          fontSize:9, fontWeight:800, color: isActive ? "#fff" : "var(--muted)",
+                        }}>
+                          {initials(m.name).slice(0,2)}
+                        </div>
+                        <span style={{ fontSize:12, fontWeight:700, color: isActive ? "var(--green)" : "var(--muted)" }}>
+                          {m.name.split(" ")[0]}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className="scan-box">
               {/* qr-reader skal ALTID være i DOM — html5-qrcode kræver det */}
               <div id="qr-reader" style={{ width:"100%", display: cameraActive ? "block" : "none" }} />
@@ -2289,102 +2284,77 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               </div>
             </div>
 
-            {/* Dine allergener */}
-            {(scanResult.matchedDanger?.length > 0 || scanResult.matchedWarning?.length > 0) && (
-              <div className="card">
-                <div className="card-lbl">Dine allergener i dette produkt</div>
-                {scanResult.matchedDanger?.length > 0 && (
-                  <div style={{ marginBottom:8 }}>
-                    <div style={{ fontSize:11, fontWeight:700, color:"var(--red)", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.5px" }}>🚫 Indeholder</div>
-                    <div className="tags">
-                      {scanResult.matchedDanger.map(id => {
-                        const a = ALLERGENS.find(x=>x.id===id);
-                        return a ? <div key={id} className="tag" style={{ background:"var(--red-lt)", color:"var(--red)", borderColor:"var(--red-md)" }}>{a.emoji} {a.label}</div> : null;
-                      })}
-                    </div>
-                  </div>
-                )}
-                {scanResult.matchedWarning?.length > 0 && (
-                  <div>
-                    <div style={{ fontSize:11, fontWeight:700, color:"var(--amber)", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.5px" }}>⚠️ Mulige spor af</div>
-                    <div className="tags">
-                      {scanResult.matchedWarning.map(id => {
-                        const a = ALLERGENS.find(x=>x.id===id);
-                        return a ? <div key={id} className="tag" style={{ background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>{a.emoji} {a.label}</div> : null;
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Familie påvirkning */}
-            {scanResult.familyImpact?.length > 0 && (
-              <div className="card">
-                <div className="card-lbl">Familiemedlemmer påvirket</div>
-                {scanResult.familyImpact.map((m,i) => (
-                  <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom: i < scanResult.familyImpact.length-1 ? "1px solid var(--border)" : "none" }}>
-                    <div style={{ width:32, height:32, borderRadius:"50%", background:m.color||"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, color:"#fff", flexShrink:0 }}>
-                      {initials(m.name)}
-                    </div>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, fontWeight:700 }}>{m.name}</div>
-                      <div className="tags" style={{ marginTop:4 }}>
-                        {m.danger.map(id => { const a=ALLERGENS.find(x=>x.id===id); return a?<div key={id} className="tag" style={{ fontSize:10, background:"var(--red-lt)", color:"var(--red)", borderColor:"var(--red-md)" }}>{a.emoji} {a.label}</div>:null; })}
-                        {m.warning.map(id => { const a=ALLERGENS.find(x=>x.id===id); return a?<div key={id} className="tag" style={{ fontSize:10, background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>{a.emoji} spor af {a.label}</div>:null; })}
+            {/* ── PROFIL-KORT: én samlet visning per person ── */}
+            <div className="card">
+              <div className="card-lbl">Din sikkerhed</div>
+              {(() => {
+                const flags = scanResult.allergen_flags || {};
+                const profiles = [
+                  { id:"me", name: user.name||"Dig", allergens, color:"var(--green)" },
+                  ...family.filter(m => activeProfiles.includes(m.id)),
+                ];
+                return profiles.map(p => {
+                  const danger = p.allergens.filter(a => flags[a] === "yes");
+                  const warning = p.allergens.filter(a => flags[a] === "traces");
+                  const safe = danger.length === 0 && warning.length === 0;
+                  const color = danger.length > 0 ? "var(--red)" : warning.length > 0 ? "var(--amber)" : "var(--green)";
+                  const bg = danger.length > 0 ? "var(--red-lt)" : warning.length > 0 ? "var(--amber-lt)" : "var(--green-lt)";
+                  const border = danger.length > 0 ? "var(--red-md)" : warning.length > 0 ? "var(--amber-md)" : "var(--green-mid)";
+                  return (
+                    <div key={p.id} style={{ background:bg, border:`1px solid ${border}`, borderRadius:10, padding:"12px 14px", marginBottom:8 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom: safe ? 0 : 8 }}>
+                        <div style={{ width:32, height:32, borderRadius:"50%", background:color, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, color:"#fff", flexShrink:0 }}>
+                          {initials(p.id==="me" ? (user.name||"Mig") : p.name).slice(0,2)}
+                        </div>
+                        <div style={{ flex:1 }}>
+                          <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>{p.id==="me" ? (user.name||"Dig") : p.name}</div>
+                          <div style={{ fontSize:11, fontWeight:700, color }}>{danger.length > 0 ? "🚫 Indeholder dine allergener" : warning.length > 0 ? "⚠️ Mulige spor af dine allergener" : "✅ Sikkert for dig"}</div>
+                        </div>
                       </div>
+                      {danger.length > 0 && (
+                        <div className="tags">
+                          {danger.map(id => { const a=ALLERGENS.find(x=>x.id===id); return a ? <div key={id} className="tag" style={{ fontSize:11, background:"rgba(230,57,70,.12)", color:"var(--red)", borderColor:"var(--red-md)" }}>{a.emoji} {a.label}</div> : null; })}
+                        </div>
+                      )}
+                      {warning.length > 0 && (
+                        <div className="tags" style={{ marginTop: danger.length > 0 ? 4 : 0 }}>
+                          {warning.map(id => { const a=ALLERGENS.find(x=>x.id===id); return a ? <div key={id} className="tag" style={{ fontSize:11, background:"rgba(217,119,6,.1)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>spor: {a.emoji} {a.label}</div> : null; })}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  );
+                });
+              })()}
+            </div>
 
-            {/* Allergener i produktet — kun vis hvis der er data */}
+            {/* ── PRODUKTETS ØVRIGE ALLERGENER (kollapsibel) ── */}
             {scanResult.allergen_flags && (() => {
-              const present = Object.entries(scanResult.allergen_flags).filter(([k,v]) => v==="yes" && ALLERGENS.find(a=>a.id===k));
-              const traces = Object.entries(scanResult.allergen_flags).filter(([k,v]) => v==="traces" && ALLERGENS.find(a=>a.id===k));
-              const allUnknown = Object.entries(scanResult.allergen_flags).every(([,v]) => v==="unknown");
-              const hasData = present.length > 0 || traces.length > 0 || Object.values(scanResult.allergen_flags).some(v => v==="no");
-              if (!hasData || allUnknown) return null;
+              const flags = scanResult.allergen_flags;
+              const present = Object.entries(flags).filter(([k,v]) => v==="yes" && ALLERGENS.find(a=>a.id===k));
+              const traces = Object.entries(flags).filter(([k,v]) => v==="traces" && ALLERGENS.find(a=>a.id===k));
+              const myAllergens = new Set([...scanResult.matchedDanger||[], ...scanResult.matchedWarning||[]]);
+              const otherPresent = present.filter(([k]) => !myAllergens.has(k));
+              const otherTraces = traces.filter(([k]) => !myAllergens.has(k));
+              if (otherPresent.length === 0 && otherTraces.length === 0) return null;
               return (
                 <div className="card">
-                  <div className="card-lbl">Allergener i produktet</div>
-                  {false ? null : (
-                    <>
-                      {present.length > 0 && (
-                        <div style={{ marginBottom:8 }}>
-                          <div style={{ fontSize:11, fontWeight:700, color:"var(--red)", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.5px" }}>Indeholder</div>
-                          <div className="tags">
-                            {present.map(([k]) => {
-                              const a = ALLERGENS.find(x=>x.id===k);
-                              return a ? <div key={k} className="tag" style={{ background:"var(--red-lt)", color:"var(--red)", borderColor:"var(--red-md)" }}>{a.emoji} {a.label}</div> : null;
-                            })}
-                          </div>
-                        </div>
-                      )}
-                      {traces.length > 0 && (
-                        <div style={{ marginBottom:8 }}>
-                          <div style={{ fontSize:11, fontWeight:700, color:"var(--amber)", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.5px" }}>Kan indeholde spor af</div>
-                          <div className="tags">
-                            {traces.map(([k]) => {
-                              const a = ALLERGENS.find(x=>x.id===k);
-                              return a ? <div key={k} className="tag" style={{ background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>{a.emoji} {a.label}</div> : null;
-                            })}
-                          </div>
-                        </div>
-                      )}
-                      {present.length === 0 && traces.length === 0 && (
-                        <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6 }}>
-                          ✅ Der er ikke registreret nogle ingredienser kendt inden for allergier i dette produkt.
-                          {scanResult.hasUnknown && <span style={{ color:"var(--amber)", display:"block", marginTop:4 }}>⚠️ Nogle allergener mangler data — tjek altid pakken.</span>}
-                        </div>
-                      )}
-                      {scanResult.hasUnknown && (
-                        <div style={{ fontSize:11, color:"var(--muted)", marginTop:8, fontStyle:"italic" }}>
-                          ❓ Visse allergener mangler data — tjek altid pakken
-                        </div>
-                      )}
-                    </>
+                  <div className="card-lbl">Andre allergener i produktet</div>
+                  <div style={{ fontSize:12, color:"var(--muted)", marginBottom:10 }}>Disse allergener er i produktet, men er ikke registreret på dine profiler.</div>
+                  {otherPresent.length > 0 && (
+                    <div style={{ marginBottom:8 }}>
+                      <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:5 }}>Indeholder</div>
+                      <div className="tags">
+                        {otherPresent.map(([k]) => { const a=ALLERGENS.find(x=>x.id===k); return a ? <div key={k} className="tag" style={{ background:"var(--paper2)", color:"var(--ink2)", borderColor:"var(--border2)" }}>{a.emoji} {a.label}</div> : null; })}
+                      </div>
+                    </div>
+                  )}
+                  {otherTraces.length > 0 && (
+                    <div>
+                      <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:5 }}>Kan indeholde spor af</div>
+                      <div className="tags">
+                        {otherTraces.map(([k]) => { const a=ALLERGENS.find(x=>x.id===k); return a ? <div key={k} className="tag" style={{ background:"var(--paper2)", color:"var(--ink2)", borderColor:"var(--border2)" }}>{a.emoji} {a.label}</div> : null; })}
+                      </div>
+                    </div>
                   )}
                 </div>
               );
@@ -2407,30 +2377,6 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 )}
               </div>
             )}
-
-            {/* Profil oversigt på produkt siden */}
-            <div className="card">
-              <div className="card-lbl">Sikkerhed per profil</div>
-              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                {[{ id:"me", name: user.name||"Mig", allergens }, ...family.filter(m => activeProfiles.includes(m.id))].map(p => {
-                  const flags = scanResult.allergen_flags || {};
-                  const hasDanger = p.allergens.some(a => flags[a] === "yes");
-                  const hasWarning = p.allergens.some(a => flags[a] === "traces");
-                  const color = hasDanger ? "var(--red)" : hasWarning ? "var(--amber)" : "var(--green)";
-                  const bg = hasDanger ? "var(--red-lt)" : hasWarning ? "var(--amber-lt)" : "var(--green-lt)";
-                  const label = hasDanger ? "Farligt" : hasWarning ? "Mulige spor" : "Sikkert";
-                  return (
-                    <div key={p.id} style={{ display:"flex", alignItems:"center", gap:10 }}>
-                      <div style={{ width:32, height:32, borderRadius:"50%", background:bg, border:`1.5px solid ${color}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:800, color, flexShrink:0 }}>
-                        {initials(p.id==="me"?"Mig":p.name).slice(0,2)}
-                      </div>
-                      <div style={{ flex:1, fontSize:13, fontWeight:600 }}>{p.id==="me"?"Mig ("+( user.name||"dig")+")":p.name}</div>
-                      <div style={{ fontSize:12, fontWeight:700, color }}>{label}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
 
             {/* Handlinger */}
             <div className="card">
@@ -2729,6 +2675,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {/* ══ PROFIL ══ */}
         {screen === SCREENS.PROFILE && (
           <div className="screen fade-in">
+
+            {/* Hero */}
             <div className="profile-hero">
               <div className="pa-lg">{initials(user.name||"?")}</div>
               <div style={{ flex:1 }}>
@@ -2737,40 +2685,48 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               </div>
               <button className="profile-edit-btn" onClick={() => { setEditMode(true); setOnboardStep(1); }}>Rediger</button>
             </div>
+
+            {/* Mine allergier */}
             <div className="card">
               <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
                 <span>Mine allergier</span>
-                <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:11 }} onClick={() => { setEditMode(true); setOnboardStep(2); }}>Rediger</span>
+                <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:11 }} onClick={() => { setEditMode(true); setOnboardStep(4); }}>Rediger</span>
               </div>
               {allergens.length+customAllerg.length===0
                 ? <div style={{ fontSize:13, color:"var(--muted)" }}>Ingen registreret — tryk Rediger</div>
                 : <div className="tags">{getAllergenLabels(allergens,customAllerg).map((a,i) => <div key={i} className="tag">{a}</div>)}</div>}
             </div>
+
+            {/* Alt det andet — samlet menu */}
+            <div className="card" style={{ padding:"6px 0" }}>
+              {[
+                ["★", "Favoritter & historik", () => setScreen(SCREENS.FAVORITES)],
+                ["👨‍👩‍👧", "Familie", () => setScreen(SCREENS.FAMILY)],
+                ["🌍", "Madpas", () => setScreen(SCREENS.MADPAS)],
+                ["🍽️", "Opskrifter", () => setScreen(SCREENS.RECIPES)],
+              ].map(([icon, lbl, fn], i, arr) => (
+                <div key={lbl} onClick={fn} style={{
+                  display:"flex", alignItems:"center", gap:12,
+                  padding:"13px 16px",
+                  borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none",
+                  cursor:"pointer",
+                }}>
+                  <div style={{ width:36, height:36, background:"var(--paper2)", borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{icon}</div>
+                  <div style={{ flex:1, fontSize:14, fontWeight:600, color:"var(--ink)" }}>{lbl}</div>
+                  <div style={{ fontSize:18, color:"var(--muted)" }}>›</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Konto */}
             <div className="card">
               <div className="card-lbl">Konto</div>
               <div style={{ fontSize:13, color:"var(--muted)", marginBottom:4 }}>Email</div>
-              <div style={{ fontSize:14, fontWeight:600, color:"var(--text)" }}>{user.email||loginEmail||"—"}</div>
-              <div style={{ fontSize:13, color:"var(--muted)", marginTop:8, marginBottom:4 }}>Rolle</div>
-              <div style={{ fontSize:14, fontWeight:600, color:"var(--text)" }}>{user.role||"ingen rolle hentet"}</div>
+              <div style={{ fontSize:14, fontWeight:600, color:"var(--ink)", marginBottom:12 }}>{user.email||loginEmail||"—"}</div>
+              <button className="btn btn-danger btn-full btn-sm" style={{ marginBottom:8 }} onClick={() => { if(window.confirm("Er du sikker på at du vil slette din konto? Dette kan ikke fortrydes.")) alert("Kontakt support for at slette konto."); }}>Slet konto</button>
+              <button className="btn btn-ghost btn-full btn-sm" onClick={clearAuth}>Log ud</button>
             </div>
-            <div className="card">
-              <div className="card-lbl">Scanningsstatistik</div>
-              <div className="stat3">
-                {[[history.filter(h=>h.result==="safe"||h.status==="safe").length,"✅","Sikre"],
-                  [history.filter(h=>h.result==="warning"||h.status==="warn").length,"⚠️","Advarsler"],
-                  [history.filter(h=>h.result==="danger"||h.status==="danger").length,"🚫","Farlige"]
-                ].map(([n,ic,lbl]) => (
-                  <div key={lbl} className="stat3-item">
-                    <div style={{ fontSize:20 }}>{ic}</div>
-                    <div className="stat3-num">{n}</div>
-                    <div className="stat3-lbl">{lbl}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <button className="btn btn-ghost btn-full" style={{ marginBottom:8 }} onClick={() => { loadHistory(); setScreen(SCREENS.HISTORY); }}>📋 Se fuld historik</button>
-            <button className="btn btn-danger btn-full" style={{ marginBottom:8 }} onClick={() => { if(window.confirm("Er du sikker på at du vil slette din konto? Dette kan ikke fortrydes.")) alert("Kontakt support for at slette konto."); }}>Slet konto</button>
-            <button className="btn btn-ghost btn-full" style={{ marginBottom:16 }} onClick={clearAuth}>Log ud</button>
+
           </div>
         )}
 
@@ -3030,7 +2986,51 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {screen === SCREENS.FAVORITES && (
           <div className="screen fade-in">
             <div className="screen-title">★ Favoritter</div>
-            <div className="screen-sub">Dine gemte produkter.</div>
+
+            {/* Seneste scanninger */}
+            {history.filter(h => h.result !== "not_found" && (h.products?.name || h.name)).length > 0 && (
+              <div className="card" style={{ marginBottom:10 }}>
+                <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
+                  <span>Senest scannet</span>
+                  <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:11 }} onClick={() => { loadHistory(); setScreen(SCREENS.HISTORY); }}>Se alle</span>
+                </div>
+                {history.filter(h => h.result !== "not_found").slice(0,3).map((h,i) => {
+                  const s = h.result || h.status;
+                  const name = h.products?.name || h.name || h.ean_scanned || "Ukendt";
+                  const prod = { name, brand: h.products?.brand||h.brand||"", image_url: h.products?.image_url||null };
+                  const color = s==="safe" ? "var(--green)" : s==="danger" ? "var(--red)" : "var(--amber)";
+                  const bg = s==="safe" ? "var(--green-lt)" : s==="danger" ? "var(--red-lt)" : "var(--amber-lt)";
+                  return (
+                    <div key={i} className="hist-row" style={{ cursor:"pointer" }} onClick={() => {
+                      setScanResult({...h, code:h.ean_scanned||h.code, name, brand:h.products?.brand||h.brand||"",
+                        image_url:h.products?.image_url||null,
+                        headline:s==="safe"?"Sikkert produkt":s==="danger"?"Indeholder allergen!":"Mulige spor",
+                        flags:[], summary:"", allergen_flags:h.flags_triggered||{} });
+                      setScreen(SCREENS.RESULT);
+                    }}>
+                      <ProductImage product={prod} size={36} />
+                      <div className="hist-info" style={{ marginLeft:8 }}>
+                        <div className="hist-name">{name}</div>
+                        <div className="hist-time">{timeAgo(h.scanned_at||h.timestamp)}</div>
+                      </div>
+                      <div style={{ fontSize:11, fontWeight:700, color, background:bg, border:`1px solid ${color}`, borderRadius:20, padding:"3px 10px", flexShrink:0 }}>
+                        {s==="safe"?"Sikker":s==="danger"?"Farlig":"Advarsel"}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Gemte favoritter */}
+            {favorites.length > 0 && <div className="card-lbl" style={{ marginBottom:6 }}>Gemte produkter</div>}
+            {favorites.length === 0 && (
+              <div className="empty-state">
+                <span className="empty-icon">★</span>
+                <div className="empty-txt">Ingen favoritter endnu</div>
+                <div className="empty-sub">Tryk ★ på et produkt for at gemme det her</div>
+              </div>
+            )}
             {favorites.length === 0 && (
               <div className="empty-state">
                 <span className="empty-icon">★</span>
@@ -3080,6 +3080,105 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {/* ══ MADPAS ══ */}
         {screen === SCREENS.MADPAS && (
           <div className="mp-page fade-in">
+
+            {/* TJENER-VISNING — fullscreen overlay */}
+            {madpasWaiterView && (() => {
+              const lang = madpasLang;
+              const rtl = MADPAS_LANGUAGES.find(l => l.code === lang)?.rtl;
+              const cannotLabel = { en:'I cannot eat:', de:'Ich kann nicht essen:', fr:"Je ne peux pas manger :", es:"No puedo comer:", it:"Non posso mangiare:", nl:"Ik kan niet eten:", pt:"Não posso comer:", pl:"Nie mogę jeść:", ja:"食べられません：", zh:"我不能吃：", ar:"لا أستطيع تناول:", tr:"Yiyemiyorum:", sv:"Jag kan inte äta:", no:"Jeg kan ikke spise:", th:"ฉันไม่สามารถกิน:", el:"Δεν μπορώ να φάω:", da:"Jeg kan ikke spise:" };
+              const helloText = { en:"I have food allergies.", de:"Ich habe Lebensmittelallergien.", fr:"J'ai des allergies alimentaires.", es:"Tengo alergias alimentarias.", it:"Ho allergie alimentari.", nl:"Ik heb voedselallergieën.", pt:"Tenho alergias alimentares.", pl:"Mam alergie pokarmowe.", ja:"食物アレルギーがあります。", zh:"我有食物过敏。", ar:"لدي حساسية غذائية.", tr:"Gıda alerjilerim var.", sv:"Jag har matallergier.", no:"Jeg har matallergier.", th:"ฉันมีอาการแพ้อาหาร", el:"Έχω αλλεργίες τροφίμων.", da:"Jeg har fødevareallergier." };
+              const helpText = { en:"Can you help me find something safe?", de:"Können Sie mir helfen?", fr:"Pouvez-vous m'aider ?", es:"¿Puede ayudarme?", it:"Può aiutarmi?", nl:"Kunt u mij helpen?", pt:"Pode ajudar-me?", pl:"Czy może mi pomóc?", ja:"手伝っていただけますか？", zh:"您能帮助我吗？", ar:"هل يمكنك مساعدتي؟", tr:"Yardım edebilir misiniz?", sv:"Kan du hjälpa mig?", no:"Kan du hjelpe meg?", th:"คุณช่วยฉันได้ไหม?", el:"Μπορείτε να με βοηθήσετε;", da:"Kan du hjælpe mig?" };
+              const langInfo = MADPAS_LANGUAGES.find(l => l.code === lang);
+              return (
+                <div style={{
+                  position:"fixed", inset:0, zIndex:9999,
+                  background:"var(--paper)", display:"flex", flexDirection:"column",
+                  padding:"0",
+                }} dir={rtl ? "rtl" : "ltr"}>
+
+                  {/* Header */}
+                  <div style={{ padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid var(--border)" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                      <span style={{ fontSize:22 }}>{langInfo?.flag}</span>
+                      <span style={{ fontSize:13, fontWeight:700, color:"var(--muted)" }}>{langInfo?.name}</span>
+                    </div>
+                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                      {window.speechSynthesis && (
+                        <button onClick={madpasSpeak} style={{
+                          background: madpasSpeaking ? "var(--amber)" : "var(--green)",
+                          border:"none",
+                          borderRadius:12, padding:"14px 28px", fontSize:18, fontWeight:800,
+                          color:"#fff", cursor:"pointer", fontFamily:"var(--f)",
+                          display:"flex", alignItems:"center", gap:10,
+                          boxShadow: madpasSpeaking ? "0 4px 16px rgba(217,119,6,.4)" : "0 4px 16px rgba(34,197,94,.4)",
+                          flex:1,
+                          justifyContent:"center",
+                        }}>
+                          <span style={{ fontSize:22 }}>{madpasSpeaking ? "⏹" : "🔊"}</span>
+                          {madpasSpeaking ? "Stop" : "Oplæs"}
+                        </button>
+                      )}
+                      <button onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }} style={{
+                        background:"var(--paper2)", border:"1px solid var(--border2)",
+                        borderRadius:8, padding:"6px 12px", fontSize:13, fontWeight:700,
+                        color:"var(--ink2)", cursor:"pointer", fontFamily:"var(--f)",
+                      }}>← Tilbage</button>
+                    </div>
+                  </div>
+
+                  {/* Indhold */}
+                  <div style={{ flex:1, display:"flex", flexDirection:"column", justifyContent:"center", padding:"40px 32px", gap:32 }}>
+
+                    {/* Hej-sætning */}
+                    <div style={{ fontSize:20, color:"var(--ink2)", lineHeight:1.6, fontWeight:500 }}>
+                      {helloText[lang] || helloText.en}
+                    </div>
+
+                    {/* Allergener — ren og tydelig liste */}
+                    <div>
+                      <div style={{ fontSize:14, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:16 }}>
+                        {cannotLabel[lang] || cannotLabel.en}
+                      </div>
+                      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                        {[...allergens, ...customAllerg.map(c => ({ custom: true, label: c }))].map((item, i) => {
+                          if (typeof item === "string") {
+                            const a = ALLERGENS.find(x => x.id === item);
+                            if (!a) return null;
+                            const t = ALLERGEN_T[item]?.[lang] || ALLERGEN_T[item]?.en;
+                            return (
+                              <div key={i} style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 0", borderBottom:"1px solid var(--border)" }}>
+                                <span style={{ fontSize:28, flexShrink:0 }}>{a.emoji}</span>
+                                <span style={{ fontSize:20, fontWeight:700, color:"var(--ink)" }}>{t?.n || a.label}</span>
+                              </div>
+                            );
+                          }
+                          return (
+                            <div key={i} style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 0", borderBottom:"1px solid var(--border)" }}>
+                              <span style={{ fontSize:28, flexShrink:0 }}>✏️</span>
+                              <span style={{ fontSize:20, fontWeight:700, color:"var(--ink)" }}>{item.label}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Afslutning */}
+                    <div style={{ fontSize:17, color:"var(--muted2)", lineHeight:1.7 }}>
+                      {helpText[lang] || helpText.en}
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div style={{ padding:"12px 20px", borderTop:"1px solid var(--border)", textAlign:"center" }}>
+                    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                      <EatSafeLogo size={18} variant="light" />
+                      <span style={{ fontSize:12, color:"var(--muted)", fontWeight:600 }}>EatSafe</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="mp-scroll">
 
               {/* HEADER */}
@@ -3134,25 +3233,12 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 const pillPad = big ? "6px 14px" : "4px 11px";
                 return (
                   <div style={{ padding:"0 0 8px" }} dir={rtl ? "rtl" : "ltr"}>
-                    {/* Forstør + Oplæs */}
-                    <div style={{ display:"flex", gap:8, marginBottom:14, alignItems:"center" }}>
-                      <button className={`mp-aa${big ? " on" : ""}`} onClick={() => setMadpasBig(v => !v)}>
-                        {big ? "Aa↘ Formindsk" : "Aa↗ Forstør"}
-                      </button>
-                      {window.speechSynthesis && (
-                        <button className={`mp-speak-btn${madpasSpeaking ? " speaking" : ""}`} onClick={madpasSpeak}>
-                          {madpasSpeaking ? "⏹ Stop" : "🔊 Oplæs"}
-                        </button>
-                      )}
-                    </div>
 
                     {/* HOVED TEKST-KORT */}
                     <div className="mp-card" style={{ fontSize:sz, lineHeight:big?1.9:1.75 }}>
-                      {/* Hej-sætning */}
                       <div style={{ fontWeight:600, color:"var(--ink)", marginBottom:12, fontSize:big?20:15 }}>
                         {helloText[lang] || helloText.en}
                       </div>
-                      {/* Allergen-liste */}
                       <div style={{ borderLeft:"4px solid var(--green)", paddingLeft:14, marginBottom:12 }}>
                         <div style={{ fontWeight:800, color:"var(--red)", marginBottom:8, fontSize:sz2 }}>
                           {cannotLabel[lang] || cannotLabel.en}
@@ -3172,7 +3258,6 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                           ))}
                         </div>
                       </div>
-                      {/* Familiemedlemmer */}
                       {family.filter(m => m.allergens.length > 0).length > 0 && (
                         <div style={{ borderLeft:"4px solid var(--blue)", paddingLeft:14, marginBottom:12 }}>
                           <div style={{ fontWeight:800, color:"var(--blue)", marginBottom:8, fontSize:sz2 }}>
@@ -3189,25 +3274,16 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                           ))}
                         </div>
                       )}
-                      {/* Afslutning */}
                       <div style={{ color:"var(--muted2)", fontSize:big?16:13, fontStyle:"italic" }}>
                         {helpText[lang] || helpText.en}
                       </div>
                     </div>
 
-                    {/* VIS TIL TJENER knap */}
-                    <button className="mp-big-btn">
+                    {/* VIS TIL TJENER — åbner fullscreen med kun teksten */}
+                    <button className="mp-big-btn" onClick={() => setMadpasWaiterView(true)}>
                       <span style={{ fontSize:18 }}>⤢</span>
-                      {visLabel[lang] || visLabel.en}
+                      Vis til tjener
                     </button>
-
-                    {/* Stor oplæs-knap i forstørret mode */}
-                    {big && window.speechSynthesis && (
-                      <button className={`mp-speak-btn${madpasSpeaking ? " speaking" : ""}`} onClick={madpasSpeak}
-                        style={{ width:"100%", padding:"14px", fontSize:15, borderRadius:12, marginBottom:10, justifyContent:"center" }}>
-                        {madpasSpeaking ? "⏹ Stop oplæsning" : "🔊 Oplæs højt"}
-                      </button>
-                    )}
 
                     <div style={{ textAlign:"center", fontSize:11, color:"var(--muted)", marginTop:4 }}>
                       🇩🇰 EatSafe · {new Date().toLocaleDateString("da-DK")}
@@ -3218,18 +3294,60 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             </div>
           </div>
         )}
+        {/* ══ OPSKRIFTER ══ */}
+        {screen === SCREENS.RECIPES && (
+          <div className="screen fade-in">
+            <div style={{ textAlign:"center", padding:"60px 24px 32px" }}>
+              <div style={{ fontSize:64, marginBottom:20 }}>🍽️</div>
+              <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", letterSpacing:"-.4px", marginBottom:10 }}>Opskrifter</div>
+              <div style={{ fontSize:14, color:"var(--muted2)", lineHeight:1.6, marginBottom:32 }}>
+                Snart kan du finde og filtrere opskrifter baseret på dine allergier og familiens behov.
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                {[
+                  ["🔎","Filtrer på dine allergener","Find opskrifter der er sikre for hele familien"],
+                  ["👨‍👩‍👧","Tilpasset til familien","Se hvem der kan spise hvad på én gang"],
+                  ["🛒","Direkte til indkøbslisten","Tilføj ingredienser med ét tryk"],
+                ].map(([icon, title, text]) => (
+                  <div key={title} style={{ display:"flex", gap:14, alignItems:"center", background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", textAlign:"left" }}>
+                    <div style={{ width:40, height:40, background:"var(--paper2)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>{icon}</div>
+                    <div>
+                      <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{title}</div>
+                      <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{text}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop:28, background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:12, padding:"12px 16px" }}>
+                <div style={{ fontSize:12, fontWeight:700, color:"var(--green)" }}>🚧 Under udvikling</div>
+                <div style={{ fontSize:11, color:"var(--muted2)", marginTop:4 }}>Opskriftsfunktionen er på vej. Følg med!</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* BUNDNAVIGATION */}
         {!isOnboard && (
           <nav className="bottom-nav">
             {[
-              [SCREENS.HOME,"🏠","Hjem"],
-              [SCREENS.FAVORITES,"★","Favoritter"],
-              [SCREENS.MADPAS,"🌍","Madpas"],
-              [SCREENS.LIST,"🛒","Liste"],
-              [SCREENS.PROFILE,"👤","Profil"],
+              [SCREENS.SCAN,    "📷", "Scan"],
+              [SCREENS.HOME,    "🏠", "Hjem"],
+              [SCREENS.LIST,    "🛒", "Liste"],
+              [SCREENS.PROFILE, "👤", "Profil"],
               ...(user.role === "admin" ? [[SCREENS.ADMIN,"⚙️","Admin"]] : []),
             ].map(([s,icon,lbl]) => (
-              <div key={s} className={`nav-item${(screen===s||(screen===SCREENS.RESULT&&s===SCREENS.HOME)||(screen===SCREENS.NOTFOUND&&s===SCREENS.HOME)||(screen===SCREENS.SUBMITTED&&s===SCREENS.HOME)||(screen===SCREENS.HISTORY&&s===SCREENS.HOME)||(screen===SCREENS.SEARCH&&s===SCREENS.HOME)||(screen===SCREENS.SCAN&&s===SCREENS.HOME))?" active":""}`} onClick={() => {
+              <div key={s} className={`nav-item${(
+                screen===s ||
+                (screen===SCREENS.RESULT && s===SCREENS.SCAN) ||
+                (screen===SCREENS.NOTFOUND && s===SCREENS.SCAN) ||
+                (screen===SCREENS.SUBMITTED && s===SCREENS.SCAN) ||
+                (screen===SCREENS.SEARCH && s===SCREENS.HOME) ||
+                (screen===SCREENS.HISTORY && s===SCREENS.PROFILE) ||
+                (screen===SCREENS.FAVORITES && s===SCREENS.PROFILE) ||
+                (screen===SCREENS.MADPAS && s===SCREENS.PROFILE) ||
+                (screen===SCREENS.FAMILY && s===SCREENS.PROFILE) ||
+                (screen===SCREENS.RECIPES && s===SCREENS.HOME)
+              )?" active":""}`} onClick={() => {
                 if (s === SCREENS.ADMIN) { loadSubmissions(); loadAdminStats(); }
                 setScreen(s);
               }}>
