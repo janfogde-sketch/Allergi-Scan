@@ -721,7 +721,7 @@ export default function EatSafe() {
   const [loginPassword, setLoginPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
-  const [authTab, setAuthTab] = useState("login"); // login | signup
+  const [authTab, setAuthTab] = useState("signup"); // signup | login
 
   // NOT FOUND flow
   const [notFoundEan, setNotFoundEan] = useState("");
@@ -1059,7 +1059,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         body: JSON.stringify({ name: user.name, phone: user.phone || null, age: user.age ? parseInt(user.age) : null }),
       });
     } catch { /* silent */ }
-    setOnboardStep(2);
+    setOnboardStep(4);
   };
 
   const saveAllergensStep2 = async () => {
@@ -1084,7 +1084,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         });
       }
     } catch { /* silent */ }
-    setOnboardStep(3);
+    setOnboardStep(5);
   };
 
   const finishOnboard = () => { setScreen(SCREENS.HOME); setEditMode(false); };
@@ -1674,79 +1674,71 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             {editMode && <div style={{ height:4 }} />}
             <StepBar total={7} current={onboardStep} />
 
-            {/* ── TRIN 1: Velkomst og hvad er EatSafe ── */}
+            {/* ── TRIN 1: Hvad er EatSafe ── */}
             {onboardStep === 1 && (
               <div className="fade-in">
-                <div className="card" style={{ textAlign:"center", padding:"28px 20px" }}>
-                  <div style={{ fontSize:56, marginBottom:12 }}>🛒</div>
-                  <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", marginBottom:10 }}>Velkommen til EatSafe</div>
-                  <div style={{ fontSize:14, color:"var(--muted2)", lineHeight:1.7 }}>
-                    EatSafe hjælper dig med at handle og spise trygt — uanset om du har allergier, intoleranser eller madpræferencer.
-                  </div>
-                </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-                  {[
-                    ["📷","Skan stregkoder","Hold kameraet over en stregkode og få øjeblikkeligt svar om produktet er sikkert for dig og din familie."],
-                    ["🔎","Søg produkter","Søg i tusindvis af produkter og se allergenindhold på forhånd — fx inden du går i butikken."],
-                    ["👨‍👩‍👧","Hele familien","Opret profiler for alle i familien med deres egne allergier. Du ser på én gang hvem der kan spise hvad."],
-                    ["🛒","Indkøbsliste","Byg en delt indkøbsliste med allergencheck — aldrig mere i tvivl i supermarkedet."],
-                    ["🤝","Fælles database","Når du scanner et ukendt produkt kan du hjælpe andre ved at indsende det. Jo flere der bidrager, jo bedre bliver appen."],
-                  ].map(([icon, title, text]) => (
-                    <div key={title} style={{ display:"flex", gap:12, alignItems:"flex-start", background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px" }}>
-                      <div style={{ fontSize:24, flexShrink:0, marginTop:2 }}>{icon}</div>
-                      <div>
-                        <div style={{ fontWeight:700, fontSize:13, color:"var(--ink)", marginBottom:3 }}>{title}</div>
-                        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>{text}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <button className="btn btn-primary btn-full" style={{ marginTop:16 }} onClick={() => setOnboardStep(2)}>Fortsæt →</button>
-              </div>
-            )}
-
-            {/* ── TRIN 2: Datakvalitet og ansvarsfraskrivelse ── */}
-            {onboardStep === 4 && (
-              <div className="fade-in">
                 <div className="card" style={{ textAlign:"center", padding:"24px 20px 16px" }}>
-                  <div style={{ fontSize:48, marginBottom:10 }}>🔬</div>
-                  <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Forstå vores data</div>
-                  <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6 }}>
-                    Vi arbejder hårdt for at give dig pålidelig information — men det er vigtigt at du forstår, hvad vores data er baseret på.
-                  </div>
+                  <div style={{ fontSize:52, marginBottom:10 }}>🛒</div>
+                  <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Velkommen til EatSafe</div>
+                  <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6 }}>Din personlige allergiguide — til dig og hele familien.</div>
                 </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                   {[
-                    ["✅","Verificerede produkter","Produkter gennemgået og godkendt af vores team. Allergendata er tjekket mod officielle ingredienslister.","var(--green-lt)","var(--green)"],
-                    ["⚡","Delvist verificerede","Produkter fra Open Food Facts — en global frivillig database med millioner af produkter. Data er ikke garanteret korrekt.","var(--amber-lt)","var(--amber)"],
-                    ["⚠️","Ubekræftede produkter","Nyligt indsendte produkter der endnu ikke er gennemgået. Brug med forsigtighed.","var(--red-lt)","var(--red)"],
-                  ].map(([icon, title, text, bg, color]) => (
-                    <div key={title} style={{ background:bg, border:`1px solid ${color}`, borderRadius:12, padding:"12px 14px" }}>
-                      <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
-                        <div style={{ fontSize:20, flexShrink:0 }}>{icon}</div>
-                        <div>
-                          <div style={{ fontWeight:700, fontSize:13, color, marginBottom:3 }}>{title}</div>
-                          <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5 }}>{text}</div>
-                        </div>
+                    ["📷","Skan stregkoder","Hold kameraet over en stregkode og få øjeblikkeligt svar."],
+                    ["🔎","Søg produkter","Find allergenvenlinge produkter inden du handler."],
+                    ["👨‍👩‍👧","Hele familien","Profiler for alle — se hvem der kan spise hvad."],
+                    ["🛒","Indkøbsliste","Byg lister med allergencheck."],
+                    ["🤝","Fælles database","Bidrag til databasen og hjælp andre."],
+                  ].map(([icon, title, text]) => (
+                    <div key={title} style={{ display:"flex", gap:12, alignItems:"center", background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"10px 14px" }}>
+                      <div style={{ fontSize:22, flexShrink:0 }}>{icon}</div>
+                      <div>
+                        <div style={{ fontWeight:700, fontSize:13, color:"var(--ink)" }}>{title}</div>
+                        <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.4 }}>{text}</div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginTop:10 }}>
-                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>⚠️ Vigtigt — læs dette</div>
-                  <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>
-                    EatSafe er et hjælpeværktøj og <strong>erstatter ikke lægehjælp</strong>. Ved alvorlige allergier skal du altid tjekke den originale emballage. Vi kan ikke garantere at alle allergenoplysninger er korrekte eller opdaterede. <strong>Brug af appen sker på eget ansvar.</strong>
-                  </div>
+                <button className="btn btn-primary btn-full" style={{ marginTop:14 }} onClick={() => setOnboardStep(2)}>Fortsæt →</button>
+              </div>
+            )}
+
+            {/* ── TRIN 2: Datakvalitet og ansvar ── */}
+            {onboardStep === 2 && (
+              <div className="fade-in">
+                <div className="card" style={{ textAlign:"center", padding:"20px 20px 14px" }}>
+                  <div style={{ fontSize:44, marginBottom:8 }}>🔬</div>
+                  <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)", marginBottom:6 }}>Forstå vores data</div>
+                  <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>Vi arbejder hårdt for at give dig pålidelig information — men det er vigtigt du forstår kilden.</div>
                 </div>
-                <div style={{ display:"flex", gap:8, marginTop:16 }}>
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  {[
+                    ["✅","Verificerede produkter","Gennemgået og godkendt af vores team.","var(--green-lt)","var(--green)"],
+                    ["⚡","Open Food Facts","Global frivillig database. Ikke garanteret korrekt.","var(--amber-lt)","var(--amber)"],
+                    ["⚠️","Bruger-indsendte","Afventer godkendelse. Brug med forsigtighed.","var(--red-lt)","var(--red)"],
+                  ].map(([icon, title, text, bg, color]) => (
+                    <div key={title} style={{ background:bg, border:`1px solid ${color}`, borderRadius:12, padding:"10px 14px", display:"flex", gap:10, alignItems:"flex-start" }}>
+                      <div style={{ fontSize:18, flexShrink:0 }}>{icon}</div>
+                      <div>
+                        <div style={{ fontWeight:700, fontSize:13, color, marginBottom:2 }}>{title}</div>
+                        <div style={{ fontSize:11, color:"var(--muted2)", lineHeight:1.4 }}>{text}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, padding:"12px", marginTop:8 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>⚠️ Vigtigt</div>
+                  <div style={{ fontSize:11, color:"var(--muted2)", lineHeight:1.6 }}>EatSafe <strong>erstatter ikke lægehjælp</strong>. Tjek altid den originale emballage ved alvorlige allergier. <strong>Brug på eget ansvar.</strong></div>
+                </div>
+                <div style={{ display:"flex", gap:8, marginTop:14 }}>
                   <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(1)}>← Tilbage</button>
-                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(3)}>Jeg forstår og accepterer →</button>
+                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(3)}>Jeg forstår →</button>
                 </div>
               </div>
             )}
 
-            {/* ── TRIN 3: Profil (tidligere trin 1) ── */}
-            {onboardStep === 5 && (
+            {/* ── TRIN 3: Din profil ── */}
+            {onboardStep === 3 && (
               <div className="fade-in">
                 <div className="card">
                   <div className="step-title">👤 Din profil</div>
@@ -1759,13 +1751,14 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                   ))}
                 </div>
                 <button className="btn btn-primary btn-full" onClick={saveProfileStep1}>Fortsæt →</button>
-                {!(user.name||"").trim() && <div style={{ fontSize:12,color:"var(--muted)",textAlign:"center",marginTop:8 }}>Navn er påkrævet</div>}
+                {!(user.name||"").trim() && <div style={{ fontSize:12,color:"var(--muted)",textAlign:"center",marginTop:6 }}>Navn er påkrævet</div>}
                 <div style={{ display:"flex", justifyContent:"center", marginTop:8 }}>
                   <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(2)}>← Tilbage</button>
                 </div>
               </div>
             )}
 
+            {/* ── TRIN 4: Dine allergier ── */}
             {onboardStep === 4 && (
               <div className="fade-in">
                 <div className="card">
@@ -1789,13 +1782,14 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                   {customAllerg.length > 0 && <div className="tags">{customAllerg.map((a, i) => <div key={i} className="tag">✏️ {a}<span className="tag-x" onClick={() => setCustomAllerg(c => c.filter((_, j) => j !== i))}>×</span></div>)}</div>}
                 </div>
                 <div style={{ display:"flex", gap:8 }}>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(2)}>← Tilbage</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(3)}>← Tilbage</button>
                   <button className="btn btn-primary" style={{ flex:1 }} onClick={saveAllergensStep2}>Fortsæt →</button>
                 </div>
                 <div className="onboard-skip">Kan springes over</div>
               </div>
             )}
 
+            {/* ── TRIN 5: Familie ── */}
             {onboardStep === 5 && (
               <div className="fade-in">
                 <div className="card">
@@ -1825,46 +1819,46 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                   <button className="btn btn-outline btn-full btn-sm" onClick={addMember}>+ Tilføj {newMemberName||"familiemedlem"}</button>
                 </div>
                 <div style={{ display:"flex", gap:8 }}>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(3)}>← Tilbage</button>
-                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(5)}>Fortsæt →</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(4)}>← Tilbage</button>
+                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(6)}>Fortsæt →</button>
                 </div>
                 <div className="onboard-skip">Kan springes over</div>
               </div>
             )}
 
+            {/* ── TRIN 6: Fællesskabet ── */}
             {onboardStep === 6 && (
               <div className="fade-in">
-                <div className="card" style={{ textAlign:"center", padding:"24px 20px 16px" }}>
-                  <div style={{ fontSize:48, marginBottom:10 }}>🤝</div>
-                  <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Hjælp fællesskabet</div>
-                  <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6 }}>
-                    EatSafe fungerer fordi vi hjælper hinanden. Når du scanner et produkt der ikke findes i databasen, kan du indsende det.
-                  </div>
+                <div className="card" style={{ textAlign:"center", padding:"20px 20px 14px" }}>
+                  <div style={{ fontSize:44, marginBottom:8 }}>🤝</div>
+                  <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)", marginBottom:6 }}>Hjælp fællesskabet</div>
+                  <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>Når du scanner et ukendt produkt kan du indsende det og hjælpe andre.</div>
                 </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                   {[
                     ["1️⃣","Skan stregkoden","Hold kameraet over stregkoden på produktet."],
-                    ["2️⃣","Fotografér ingredienslisten","Tag et billede af ingredienslisten på bagsiden af pakken."],
-                    ["3️⃣","Vores AI analyserer","Vi bruger kunstig intelligens til at læse ingredienserne og identificere allergener."],
-                    ["4️⃣","Admin godkender","En administrator gennemgår og godkender produktet inden det tilføjes til databasen."],
-                    ["5️⃣","Alle får glæde af det","Produktet er nu tilgængeligt for alle EatSafe-brugere."],
+                    ["2️⃣","Fotografér ingredienslisten","Tag et billede af bagsiden af pakken."],
+                    ["3️⃣","AI analyserer","Vi finder allergener automatisk — du kan tjekke inden du sender."],
+                    ["4️⃣","Admin godkender","En administrator gennemgår produktet."],
+                    ["5️⃣","Alle får glæde af det","Produktet er nu tilgængeligt for alle brugere."],
                   ].map(([num, title, text]) => (
-                    <div key={title} style={{ display:"flex", gap:12, alignItems:"flex-start", background:"#fff", border:"1px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
-                      <div style={{ fontSize:20, flexShrink:0 }}>{num}</div>
+                    <div key={title} style={{ display:"flex", gap:10, alignItems:"flex-start", background:"#fff", border:"1px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
+                      <div style={{ fontSize:18, flexShrink:0 }}>{num}</div>
                       <div>
                         <div style={{ fontWeight:700, fontSize:13, color:"var(--ink)", marginBottom:2 }}>{title}</div>
-                        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>{text}</div>
+                        <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.4 }}>{text}</div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div style={{ display:"flex", gap:8, marginTop:16 }}>
+                <div style={{ display:"flex", gap:8, marginTop:14 }}>
                   <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(5)}>← Tilbage</button>
                   <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(7)}>Fortsæt →</button>
                 </div>
               </div>
             )}
 
+            {/* ── TRIN 7: Klar! ── */}
             {onboardStep === 7 && (
               <div className="fade-in">
                 <div className="card" style={{ textAlign:"center", padding:"32px 20px" }}>
@@ -1888,7 +1882,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 {editMode && <button className="btn btn-outline btn-full" style={{ marginTop:8 }} onClick={() => { setEditMode(false); setScreen(SCREENS.PROFILE); }}>Annuller</button>}
               </div>
             )}
-          </div>
+
+                    </div>
         )}
 
         {/* TOPBAR */}
