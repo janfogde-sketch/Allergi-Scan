@@ -803,7 +803,6 @@ export default function EatSafe() {
 
   // Search
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeSearch, setActiveSearch] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
     const [favorites, setFavorites] = useState(() => {
@@ -1502,7 +1501,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
   // ── SØGNING ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!activeSearch.trim()) {
+    if (!searchQuery.trim()) {
       setSearchResults([]);
       setSearchLoading(false);
       return;
@@ -1511,7 +1510,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     const timer = setTimeout(() => {
       setSearchLoading(true);
       setSearchResults([]);
-      const q = activeSearch.trim();
+      const q = searchQuery.trim();
 
       // 1. Søg lokalt
       fetch(
@@ -1530,7 +1529,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
     }, 450);
     return () => { clearTimeout(timer); };
-  }, [activeSearch, accessToken]);
+  }, [searchQuery, accessToken]);
 
     // ── HJÆLPEKOMPONENTER ──────────────────────────────────────────────────────
 
@@ -2600,14 +2599,14 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 placeholder="Søg på produkt eller mærke…"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") { setActiveSearch(searchQuery); setSearchResults([]); }}}
+                onKeyDown={e => { if (e.key === "Enter") { setSearchResults([]); }}}
                 style={{ flex:1, marginBottom:0 }}
                 autoFocus
               />
               <button
                 className="btn btn-primary btn-sm"
                 style={{ whiteSpace:"nowrap", padding:"0 16px" }}
-                onClick={() => { setActiveSearch(searchQuery); setSearchResults([]); }}
+                onClick={() => { setSearchResults([]); }}
                 disabled={!searchQuery.trim()}
               >
                 Søg
@@ -2632,7 +2631,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             {!searchLoading && searchQuery && searchResults.length===0 && (
               <div className="empty-state"><span className="empty-icon">🔍</span><div className="empty-txt">Ingen resultater</div><div className="empty-sub">Prøv et andet søgeord</div></div>
             )}
-            {!activeSearch && !searchQuery && (
+            {!searchQuery && (
               <div className="empty-state"><span className="empty-icon">🔎</span><div className="empty-txt">Søg efter et produkt</div><div className="empty-sub">Skriv et produktnavn eller mærke</div></div>
             )}
             {searchResults.filter(p => !showSafeOnly || p.conflicts?.length === 0).map(p => {
