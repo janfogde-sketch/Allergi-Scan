@@ -139,6 +139,92 @@ const AVATAR_COLORS = ["#52b788","#74c69d","#40916c","#b7e4c7","#2d6a4f","#95d5b
 // ─── HJÆLPEFUNKTIONER ────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).slice(2,9);
 
+// Pæn ingrediensliste — fremhæver allergener med STORE BOGSTAVER
+function IngredientsList({ text, allergenFlags = {} }) {
+  if (!text) return null;
+
+  // Rens teksten — fjern linjeskift og ekstra mellemrum
+  const cleaned = text
+    .replace(/[\n\r]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Split på komma men bevar indhold i parenteser
+  const parts = [];
+  let depth = 0;
+  let current = "";
+  for (const ch of cleaned) {
+    if (ch === "(" || ch === "[") { depth++; current += ch; }
+    else if (ch === ")" || ch === "]") { depth--; current += ch; }
+    else if (ch === "," && depth === 0) {
+      parts.push(current.trim());
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  if (current.trim()) parts.push(current.trim());
+
+  // Find allergener der skal fremhæves
+  const allergenLabels = {
+    gluten: ["gluten","hvede","rug","byg","havre","spelt","kamut","einkorn","emmer","khorasanhvede"],
+    laktose: ["mælk","laktose","fløde","smør","ost","valle","kasein","laktalbumin"],
+    aeg: ["æg","æggehvide","æggeblomme"],
+    noedder: ["nødder","mandler","hasselnødder","valnødder","cashew","pekannødder","pistacienødder","macadamia"],
+    jordnoedder: ["jordnødder","peanut"],
+    soja: ["soja","sojabønner"],
+    fisk: ["fisk","ansjos","sardiner","laks","tun","makrel"],
+    skaldyr: ["skaldyr","rejer","krabbe","hummer","muslinger"],
+    selleri: ["selleri"],
+    sennep: ["sennep","sennepsfrø"],
+    sesam: ["sesam","sesamfrø"],
+    svovl: ["sulfitter","svovldioxid","svovl"],
+    lupin: ["lupin","lupinmel","lupinfrø"],
+    bloeddyr: ["bløddyr","blæksprutte","østers","muslinger"],
+  };
+
+  const isAllergenWord = (word) => {
+    const w = word.toLowerCase().replace(/[^a-zæøå]/g, "");
+    return Object.entries(allergenLabels).some(([key, terms]) =>
+      terms.some(t => w.includes(t) || t.includes(w)) && allergenFlags[key] !== "no"
+    );
+  };
+
+  const isHighlighted = (part) => {
+    // STORE BOGSTAVER = allergen markeret af producent
+    const hasUppercase = part !== part.toLowerCase() && part === part.toUpperCase() && part.length > 2;
+    // Eller indeholder et allergen-ord
+    const words = part.toLowerCase().replace(/[()[\]]/g, "").split(/\s+/);
+    const hasAllergenWord = words.some(w => isAllergenWord(w));
+    return hasUppercase || hasAllergenWord;
+  };
+
+  return (
+    <div style={{ display:"flex", flexWrap:"wrap", gap:"4px 2px", lineHeight:1.6 }}>
+      {parts.map((part, i) => {
+        const highlighted = isHighlighted(part);
+        return (
+          <span key={i} style={{ display:"inline-flex", alignItems:"baseline" }}>
+            <span style={{
+              fontSize: 12,
+              fontWeight: highlighted ? 700 : 400,
+              color: highlighted ? "var(--red)" : "var(--muted2)",
+              background: highlighted ? "var(--red-lt)" : "transparent",
+              borderRadius: highlighted ? 4 : 0,
+              padding: highlighted ? "1px 4px" : "0",
+            }}>
+              {part}
+            </span>
+            {i < parts.length - 1 && (
+              <span style={{ color:"var(--border2)", fontSize:12, marginRight:2 }}>,</span>
+            )}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 // Viser profilbadges (bruger + familie) baseret på allergen flags
 function ProfileBadges({ allergenFlags, allergens, customAllerg, family, activeProfiles, size = 22 }) {
   if (!allergenFlags) return null;
@@ -182,15 +268,18 @@ function PageID({ screen }) {
       onClick={copy}
       title="Klik for at kopiere side-ID"
       style={{
-        position:"fixed", top:10, right:10, zIndex:999,
-        fontSize:10, fontWeight:800, color: copied ? "#fff" : "#1F2733",
-        background: copied ? "#22C55E" : "rgba(255,255,255,0.92)",
+        position:"fixed", top:8, left:"50%", transform:"translateX(-50%)",
+        zIndex:9999,
+        fontSize:10, fontWeight:800,
+        color: copied ? "#fff" : "#1F2733",
+        background: copied ? "#22C55E" : "rgba(255,255,255,0.95)",
         border: copied ? "1.5px solid #22C55E" : "1.5px solid #D0D0C8",
-        borderRadius:7, padding:"4px 9px", cursor:"pointer",
-        letterSpacing:"0.8px", fontFamily:"monospace",
-        boxShadow:"0 2px 8px rgba(0,0,0,0.12)",
+        borderRadius:20, padding:"3px 12px", cursor:"pointer",
+        letterSpacing:"1px", fontFamily:"monospace",
+        boxShadow:"0 2px 10px rgba(0,0,0,0.15)",
         transition:"all .15s",
         userSelect:"none",
+        whiteSpace:"nowrap",
       }}
     >
       {copied ? "✓ kopieret" : id}
@@ -600,6 +689,11 @@ export default function EatSafe() {
   const [submissions, setSubmissions] = useState([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [adminStats, setAdminStats] = useState(null);
+  const [openSubmission, setOpenSubmission] = useState(null);
+  const [submissionFilter, setSubmissionFilter] = useState("pending");
+  const [editingSubmission, setEditingSubmission] = useState(null);
+  const [cleaningOcr, setCleaningOcr] = useState(false);
+  const [cleanedOcrText, setCleanedOcrText] = useState(null);
 
   // Shopping list
   const [shoppingList, setShoppingList] = useState([]);
@@ -608,6 +702,7 @@ export default function EatSafe() {
 
   // Search
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [offLoading, setOffLoading] = useState(false);
@@ -637,6 +732,8 @@ export default function EatSafe() {
   const [proposedName, setProposedName] = useState("");
   const [productImageBase64, setProductImageBase64] = useState(null);
   const [productImagePreview, setProductImagePreview] = useState(null);
+  const [ocrImageBase64, setOcrImageBase64] = useState(null);
+  const [ocrImagePreview, setOcrImagePreview] = useState(null);
 
   // ── TOKEN HELPERS ──────────────────────────────────────────────────────────
   const saveTokens = useCallback((access, refresh, uid) => {
@@ -777,6 +874,68 @@ export default function EatSafe() {
       });
       if (data.success) setAdminStats(data.stats);
     } catch { /* silent */ }
+  };
+
+  const cleanOcrWithAI = async (rawText) => {
+    if (!rawText) return;
+    setCleaningOcr(true);
+    setCleanedOcrText(null);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{
+            role: "user",
+            content: `Du er en assistent der renskriver ingredienslister fra OCR-scanning.
+
+REGLER (MEGET VIGTIGT):
+- Du må ALDRIG tilføje ingredienser der ikke er i originalteksten
+- Du må ALDRIG fjerne ingredienser fra originalteksten
+- Du må ALDRIG ændre mængdeangivelser (%, g, mg etc.)
+- Du må kun rette åbenlyse OCR-fejl (fx "Hvedek|ad" → "Hvedeklid")
+- Du må fjerne tekst der åbenlyst IKKE er ingredienser (fx "Opbevares køligt", "Bedst før", adresser, telefonnumre)
+- Behold parenteser og underingredienser
+- Formater som en kommasepareret liste
+
+Renskiv denne ingrediensliste:
+${rawText}
+
+Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommentar.`
+          }]
+        })
+      });
+      const data = await res.json();
+      const cleaned = data.content?.[0]?.text?.trim();
+      if (cleaned) setCleanedOcrText(cleaned);
+    } catch (e) {
+      alert("AI fejl: " + e.message);
+    }
+    setCleaningOcr(false);
+  };
+
+  const updateSubmissionAndApprove = async (submission, edits) => {
+    try {
+      await apiCall(`${SUPABASE_URL}/functions/v1/submissions/${submission.id}`, {
+        method: "PATCH",
+        headers: makeHeaders(accessToken),
+        body: JSON.stringify({
+          status: "approved",
+          reviewed_by: userId,
+          name: edits.name || submission.ai_parsed_data?.name || "Ukendt produkt",
+          brand: edits.brand || submission.ai_parsed_data?.brand || null,
+          ingredients_text: submission.ocr_raw_text || null,
+          allergen_flags: edits.allergen_flags || submission.ai_parsed_data || null,
+        }),
+      });
+      setSubmissions(s => s.filter(x => x.id !== submission.id));
+      setOpenSubmission(null);
+      setEditingSubmission(null);
+    } catch (e) {
+      alert("Fejl ved godkendelse: " + e.message);
+    }
   };
 
   const approveSubmission = async (submission) => {
@@ -1151,7 +1310,8 @@ export default function EatSafe() {
           ean: notFoundEan,
           submitted_by: userId,
           ocr_raw_text: ocrText,
-          ai_parsed_data: { ...proposedFlags, name: proposedName, image_base64: productImageBase64 },
+          raw_label_image: ocrImageBase64 || null,
+          ai_parsed_data: { ...proposedFlags, name: proposedName, product_image_base64: productImageBase64 },
           user_confirmed: true,
         }),
       });
@@ -1236,63 +1396,82 @@ export default function EatSafe() {
   };
 
   // ── SØGNING ────────────────────────────────────────────────────────────────
+  const offControllerRef = useRef(null);
+
   useEffect(() => {
-    if (!searchQuery.trim()) { setSearchResults([]); return; }
-    const timer = setTimeout(async () => {
-      setSearchLoading(true);
-      try {
-        // Søg i egen database
-        let localResults = [];
-        try {
-          const localData = await fetch(
-            `${SUPABASE_URL}/rest/v1/products?or=(name.ilike.*${encodeURIComponent(searchQuery)}*,brand.ilike.*${encodeURIComponent(searchQuery)}*)&select=id,ean,name,brand,category,image_url,verified_status&limit=20`,
-            { headers: { "apikey": SUPABASE_ANON_KEY, "Accept": "application/json", ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) } }
-          ).then(r => r.json());
-          localResults = Array.isArray(localData) ? localData.map(p => ({
-            ...p,
-            source: "local",
-            verified: p.verified_status,
-            conflicts: [],
-          })) : [];
-        } catch { /* silent */ }
-
-        // Vis lokale resultater med det samme
-        setSearchResults(localResults);
-
-        // Søg også i Open Food Facts i baggrunden
-        const localEans = new Set(localResults.map(p => p.ean));
-        setOffLoading(true);
-        fetch(
-          `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(searchQuery)}&search_simple=1&action=process&json=1&page_size=10&lc=da`,
-          { headers: { "User-Agent": "AllergiScan/1.0 (kontakt@allergiscan.dk)" }, signal: AbortSignal.timeout(5000) }
-        ).then(r => r.json()).then(offData => {
-          const offResults = (offData.products || [])
-            .filter(p => p.product_name && !localEans.has(p.code))
-            .slice(0, 10)
-            .map(p => ({
-              id: p.code,
-              ean: p.code,
-              name: p.product_name,
-              brand: p.brands || null,
-              category: p.categories || null,
-              image_url: p.image_front_small_url || p.image_url || null,
-              verified_status: "unverified",
-              source: "open_food_facts",
-              verified: "unverified",
-              conflicts: [],
-            }));
-          if (offResults.length > 0) {
-            setSearchResults(prev => [...prev, ...offResults]);
-          }
-          setOffLoading(false);
-        }).catch(() => { setOffLoading(false); });
-      } catch { setSearchResults([]); }
+    if (!activeSearch.trim()) {
+      setSearchResults([]);
       setSearchLoading(false);
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [searchQuery, accessToken]);
+      setOffLoading(false);
+      return;
+    }
+    if (offControllerRef.current) offControllerRef.current.abort();
 
-  // ── HJÆLPEKOMPONENTER ──────────────────────────────────────────────────────
+    const timer = setTimeout(() => {
+      setSearchLoading(true);
+      setOffLoading(true);
+      setSearchResults([]);
+      const q = activeSearch.trim();
+
+      // 1. Søg lokalt
+      fetch(
+        `${SUPABASE_URL}/rest/v1/products?or=(name.ilike.*${encodeURIComponent(q)}*,brand.ilike.*${encodeURIComponent(q)}*)&select=id,ean,name,brand,category,image_url,verified_status&limit=20`,
+        { headers: { "apikey": SUPABASE_ANON_KEY, "Accept": "application/json", ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) } }
+      )
+        .then(r => r.ok ? r.json() : [])
+        .then(data => {
+          const local = Array.isArray(data) ? data.map(p => ({ ...p, source:"local", verified:p.verified_status, conflicts:[] })) : [];
+          setSearchResults(local);
+          setSearchLoading(false);
+
+          // 2. Søg i Open Food Facts parallelt
+          const controller = new AbortController();
+          offControllerRef.current = controller;
+          const localEans = new Set(local.map(p => p.ean));
+
+          // OFF v1 er det eneste endpoint med fuld tekst søgning
+          // sort_by=unique_scans_n = mest populære/kendte produkter øverst
+          fetch(
+            `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=20&fields=code,product_name,brands,image_front_small_url&sort_by=unique_scans_n`,
+            { signal: controller.signal, headers: { "User-Agent": "EatSafe/1.0" } }
+          )
+            .then(r => r.ok ? r.json() : { products:[] })
+            .then(offData => {
+              const qLower = q.toLowerCase();
+              const off = (offData.products || [])
+                .filter(p => p.product_name && p.code && !localEans.has(p.code))
+                // Filtrer strengt — kun produkter hvor navn ELLER brand indeholder søgeordet
+                .filter(p => {
+                  const name = (p.product_name || "").toLowerCase();
+                  const brand = (p.brands || "").toLowerCase();
+                  return name.includes(qLower) || brand.includes(qLower);
+                })
+                .slice(0, 10)
+                .map(p => ({
+                  id: p.code, ean: p.code,
+                  name: p.product_name,
+                  brand: p.brands || null,
+                  image_url: p.image_front_small_url || null,
+                  verified_status: "unverified",
+                  source: "open_food_facts",
+                  verified: "unverified",
+                  conflicts: [],
+                }));
+              setSearchResults(prev => {
+                const seen = new Set(prev.map(x => x.ean));
+                return [...prev, ...off.filter(r => !seen.has(r.ean))];
+              });
+              setOffLoading(false);
+            })
+            .catch(e => { if (e.name !== "AbortError") setOffLoading(false); });
+        })
+        .catch(() => { setSearchLoading(false); setOffLoading(false); });
+
+    }, 450);
+    return () => { clearTimeout(timer); offControllerRef.current?.abort(); };
+  }, [activeSearch, accessToken]);
+
+    // ── HJÆLPEKOMPONENTER ──────────────────────────────────────────────────────
   const isOnboard = screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode;
 
   const FamilyChips = () => {
@@ -1367,7 +1546,7 @@ export default function EatSafe() {
               ))}
             </div>
 
-            <button className="welcome-btn" onClick={() => setScreen(SCREENS.LOGIN)}>Kom i gang →</button>
+            <button className="welcome-btn" onClick={() => { setAuthTab("signup"); setScreen(SCREENS.LOGIN); }}>Opret gratis konto →</button>
             <button className="welcome-btn-ghost" onClick={() => { setAuthTab("login"); setScreen(SCREENS.LOGIN); }}>Jeg har allerede en konto</button>
           </div>
         )}
@@ -1375,30 +1554,91 @@ export default function EatSafe() {
         {/* ══ LOGIN / REGISTRERING ══ */}
         {screen === SCREENS.LOGIN && (
           <div className="login-wrap fade-in">
+
+            {/* Logo */}
             <div className="login-header">
-              <div className="login-shield" style={{background:"none",padding:0,width:64,height:64}}><EatSafeLogo size={64} variant="light" /></div>
+              <div className="login-shield" style={{background:"none",padding:0,width:56,height:56}}><EatSafeLogo size={56} variant="light" /></div>
               <div className="login-title">Eat<span style={{color:"#22C55E",fontStyle:"italic"}}>Safe</span></div>
-              <div className="login-sub">{authTab === "login" ? "Log ind på din konto" : "Opret en ny konto"}</div>
             </div>
+
+            {/* Tab vælger */}
             <div className="tab-row">
+              <div className={`tab${authTab==="signup"?" active":""}`} onClick={() => { setAuthTab("signup"); setAuthError(""); }}>Ny bruger</div>
               <div className={`tab${authTab==="login"?" active":""}`} onClick={() => { setAuthTab("login"); setAuthError(""); }}>Log ind</div>
-              <div className={`tab${authTab==="signup"?" active":""}`} onClick={() => { setAuthTab("signup"); setAuthError(""); }}>Opret konto</div>
             </div>
-            <div className="card">
-              <label className="field-lbl">Email</label>
-              <input className="field" type="email" placeholder="din@email.dk" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} style={{ marginBottom:12 }} onKeyDown={e => e.key==="Enter" && (authTab==="login"?handleLogin():handleSignup())} />
-              <label className="field-lbl">Kodeord</label>
-              <input className="field" type="password" placeholder="Minimum 8 tegn" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} onKeyDown={e => e.key==="Enter" && (authTab==="login"?handleLogin():handleSignup())} />
-            </div>
-            {authError && (
-              <div className="error-box" style={{ flexDirection:"column", alignItems:"flex-start", gap:4 }}>
-                <span style={{ fontWeight:800 }}>⚠️ {authError.startsWith("Opsætning") || authError.includes("Supabase") ? "Opsætningsfejl" : "Login fejlede"}</span>
-                <span style={{ fontWeight:500, fontSize:12, lineHeight:1.5 }}>{authError}</span>
+
+            {/* SIGNUP flow */}
+            {authTab === "signup" && (
+              <div className="fade-in">
+                <div style={{ textAlign:"center", marginBottom:16 }}>
+                  <div style={{ fontSize:15, fontWeight:700, color:"var(--ink)" }}>Opret din gratis konto</div>
+                  <div style={{ fontSize:12, color:"var(--muted)", marginTop:4 }}>Du opsætter dine allergier i næste trin</div>
+                </div>
+                <div className="card">
+                  <label className="field-lbl">Email</label>
+                  <input className="field" type="email" placeholder="din@email.dk" value={loginEmail}
+                    onChange={e => setLoginEmail(e.target.value)} style={{ marginBottom:12 }}
+                    onKeyDown={e => e.key==="Enter" && handleSignup()} />
+                  <label className="field-lbl">Vælg kodeord</label>
+                  <input className="field" type="password" placeholder="Minimum 8 tegn" value={loginPassword}
+                    onChange={e => setLoginPassword(e.target.value)}
+                    onKeyDown={e => e.key==="Enter" && handleSignup()} />
+                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:8, lineHeight:1.5 }}>
+                    Ved at oprette en konto accepterer du vores vilkår og bekræfter at du er over 13 år.
+                  </div>
+                </div>
+                {authError && (
+                  <div className="error-box" style={{ flexDirection:"column", alignItems:"flex-start", gap:4 }}>
+                    <span style={{ fontWeight:800 }}>⚠️ Fejl</span>
+                    <span style={{ fontWeight:500, fontSize:12, lineHeight:1.5 }}>{authError}</span>
+                  </div>
+                )}
+                <button className="btn btn-primary btn-full" onClick={handleSignup} disabled={authLoading}>
+                  {authLoading ? "Opretter konto…" : "Opret konto og fortsæt →"}
+                </button>
+                <div style={{ textAlign:"center", marginTop:12, fontSize:12, color:"var(--muted)" }}>
+                  Har du allerede en konto?{" "}
+                  <span style={{ color:"var(--green)", fontWeight:700, cursor:"pointer" }} onClick={() => { setAuthTab("login"); setAuthError(""); }}>
+                    Log ind her
+                  </span>
+                </div>
               </div>
             )}
-            <button className="btn btn-primary btn-full" onClick={authTab==="login"?handleLogin:handleSignup} disabled={authLoading}>
-              {authLoading ? "Vent…" : authTab==="login" ? "Log ind →" : "Opret konto →"}
-            </button>
+
+            {/* LOGIN flow */}
+            {authTab === "login" && (
+              <div className="fade-in">
+                <div style={{ textAlign:"center", marginBottom:16 }}>
+                  <div style={{ fontSize:15, fontWeight:700, color:"var(--ink)" }}>Velkommen tilbage</div>
+                  <div style={{ fontSize:12, color:"var(--muted)", marginTop:4 }}>Log ind med din email og kodeord</div>
+                </div>
+                <div className="card">
+                  <label className="field-lbl">Email</label>
+                  <input className="field" type="email" placeholder="din@email.dk" value={loginEmail}
+                    onChange={e => setLoginEmail(e.target.value)} style={{ marginBottom:12 }}
+                    onKeyDown={e => e.key==="Enter" && handleLogin()} />
+                  <label className="field-lbl">Kodeord</label>
+                  <input className="field" type="password" placeholder="Dit kodeord" value={loginPassword}
+                    onChange={e => setLoginPassword(e.target.value)}
+                    onKeyDown={e => e.key==="Enter" && handleLogin()} />
+                </div>
+                {authError && (
+                  <div className="error-box" style={{ flexDirection:"column", alignItems:"flex-start", gap:4 }}>
+                    <span style={{ fontWeight:800 }}>⚠️ Fejl</span>
+                    <span style={{ fontWeight:500, fontSize:12, lineHeight:1.5 }}>{authError}</span>
+                  </div>
+                )}
+                <button className="btn btn-primary btn-full" onClick={handleLogin} disabled={authLoading}>
+                  {authLoading ? "Logger ind…" : "Log ind →"}
+                </button>
+                <div style={{ textAlign:"center", marginTop:12, fontSize:12, color:"var(--muted)" }}>
+                  Har du ikke en konto?{" "}
+                  <span style={{ color:"var(--green)", fontWeight:700, cursor:"pointer" }} onClick={() => { setAuthTab("signup"); setAuthError(""); }}>
+                    Opret en her
+                  </span>
+                </div>
+              </div>
+            )}
             <div style={{ display:"flex", alignItems:"center", gap:10, margin:"14px 0 4px" }}>
               <div style={{ flex:1, height:1, background:"var(--border)" }} />
               <span style={{ fontSize:12, color:"var(--muted)", fontWeight:600 }}>eller</span>
@@ -1432,9 +1672,81 @@ export default function EatSafe() {
               </div>
             )}
             {editMode && <div style={{ height:4 }} />}
-            <StepBar total={4} current={onboardStep} />
+            <StepBar total={7} current={onboardStep} />
 
+            {/* ── TRIN 1: Velkomst og hvad er EatSafe ── */}
             {onboardStep === 1 && (
+              <div className="fade-in">
+                <div className="card" style={{ textAlign:"center", padding:"28px 20px" }}>
+                  <div style={{ fontSize:56, marginBottom:12 }}>🛒</div>
+                  <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", marginBottom:10 }}>Velkommen til EatSafe</div>
+                  <div style={{ fontSize:14, color:"var(--muted2)", lineHeight:1.7 }}>
+                    EatSafe hjælper dig med at handle og spise trygt — uanset om du har allergier, intoleranser eller madpræferencer.
+                  </div>
+                </div>
+                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                  {[
+                    ["📷","Skan stregkoder","Hold kameraet over en stregkode og få øjeblikkeligt svar om produktet er sikkert for dig og din familie."],
+                    ["🔎","Søg produkter","Søg i tusindvis af produkter og se allergenindhold på forhånd — fx inden du går i butikken."],
+                    ["👨‍👩‍👧","Hele familien","Opret profiler for alle i familien med deres egne allergier. Du ser på én gang hvem der kan spise hvad."],
+                    ["🛒","Indkøbsliste","Byg en delt indkøbsliste med allergencheck — aldrig mere i tvivl i supermarkedet."],
+                    ["🤝","Fælles database","Når du scanner et ukendt produkt kan du hjælpe andre ved at indsende det. Jo flere der bidrager, jo bedre bliver appen."],
+                  ].map(([icon, title, text]) => (
+                    <div key={title} style={{ display:"flex", gap:12, alignItems:"flex-start", background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px" }}>
+                      <div style={{ fontSize:24, flexShrink:0, marginTop:2 }}>{icon}</div>
+                      <div>
+                        <div style={{ fontWeight:700, fontSize:13, color:"var(--ink)", marginBottom:3 }}>{title}</div>
+                        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>{text}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button className="btn btn-primary btn-full" style={{ marginTop:16 }} onClick={() => setOnboardStep(2)}>Fortsæt →</button>
+              </div>
+            )}
+
+            {/* ── TRIN 2: Datakvalitet og ansvarsfraskrivelse ── */}
+            {onboardStep === 4 && (
+              <div className="fade-in">
+                <div className="card" style={{ textAlign:"center", padding:"24px 20px 16px" }}>
+                  <div style={{ fontSize:48, marginBottom:10 }}>🔬</div>
+                  <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Forstå vores data</div>
+                  <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6 }}>
+                    Vi arbejder hårdt for at give dig pålidelig information — men det er vigtigt at du forstår, hvad vores data er baseret på.
+                  </div>
+                </div>
+                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                  {[
+                    ["✅","Verificerede produkter","Produkter gennemgået og godkendt af vores team. Allergendata er tjekket mod officielle ingredienslister.","var(--green-lt)","var(--green)"],
+                    ["⚡","Delvist verificerede","Produkter fra Open Food Facts — en global frivillig database med millioner af produkter. Data er ikke garanteret korrekt.","var(--amber-lt)","var(--amber)"],
+                    ["⚠️","Ubekræftede produkter","Nyligt indsendte produkter der endnu ikke er gennemgået. Brug med forsigtighed.","var(--red-lt)","var(--red)"],
+                  ].map(([icon, title, text, bg, color]) => (
+                    <div key={title} style={{ background:bg, border:`1px solid ${color}`, borderRadius:12, padding:"12px 14px" }}>
+                      <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+                        <div style={{ fontSize:20, flexShrink:0 }}>{icon}</div>
+                        <div>
+                          <div style={{ fontWeight:700, fontSize:13, color, marginBottom:3 }}>{title}</div>
+                          <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5 }}>{text}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginTop:10 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>⚠️ Vigtigt — læs dette</div>
+                  <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>
+                    EatSafe er et hjælpeværktøj og <strong>erstatter ikke lægehjælp</strong>. Ved alvorlige allergier skal du altid tjekke den originale emballage. Vi kan ikke garantere at alle allergenoplysninger er korrekte eller opdaterede. <strong>Brug af appen sker på eget ansvar.</strong>
+                  </div>
+                </div>
+                <div style={{ display:"flex", gap:8, marginTop:16 }}>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(1)}>← Tilbage</button>
+                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(3)}>Jeg forstår og accepterer →</button>
+                </div>
+              </div>
+            )}
+
+            {/* ── TRIN 3: Profil (tidligere trin 1) ── */}
+            {onboardStep === 5 && (
               <div className="fade-in">
                 <div className="card">
                   <div className="step-title">👤 Din profil</div>
@@ -1448,10 +1760,13 @@ export default function EatSafe() {
                 </div>
                 <button className="btn btn-primary btn-full" onClick={saveProfileStep1}>Fortsæt →</button>
                 {!(user.name||"").trim() && <div style={{ fontSize:12,color:"var(--muted)",textAlign:"center",marginTop:8 }}>Navn er påkrævet</div>}
+                <div style={{ display:"flex", justifyContent:"center", marginTop:8 }}>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(2)}>← Tilbage</button>
+                </div>
               </div>
             )}
 
-            {onboardStep === 2 && (
+            {onboardStep === 4 && (
               <div className="fade-in">
                 <div className="card">
                   <div className="step-title">🌾 Dine allergier</div>
@@ -1474,14 +1789,14 @@ export default function EatSafe() {
                   {customAllerg.length > 0 && <div className="tags">{customAllerg.map((a, i) => <div key={i} className="tag">✏️ {a}<span className="tag-x" onClick={() => setCustomAllerg(c => c.filter((_, j) => j !== i))}>×</span></div>)}</div>}
                 </div>
                 <div style={{ display:"flex", gap:8 }}>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(1)}>← Tilbage</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(2)}>← Tilbage</button>
                   <button className="btn btn-primary" style={{ flex:1 }} onClick={saveAllergensStep2}>Fortsæt →</button>
                 </div>
                 <div className="onboard-skip">Kan springes over</div>
               </div>
             )}
 
-            {onboardStep === 3 && (
+            {onboardStep === 5 && (
               <div className="fade-in">
                 <div className="card">
                   <div className="step-title">👨‍👩‍👧 Familiemedlemmer</div>
@@ -1510,14 +1825,47 @@ export default function EatSafe() {
                   <button className="btn btn-outline btn-full btn-sm" onClick={addMember}>+ Tilføj {newMemberName||"familiemedlem"}</button>
                 </div>
                 <div style={{ display:"flex", gap:8 }}>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(2)}>← Tilbage</button>
-                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(4)}>Fortsæt →</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(3)}>← Tilbage</button>
+                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(5)}>Fortsæt →</button>
                 </div>
                 <div className="onboard-skip">Kan springes over</div>
               </div>
             )}
 
-            {onboardStep === 4 && (
+            {onboardStep === 6 && (
+              <div className="fade-in">
+                <div className="card" style={{ textAlign:"center", padding:"24px 20px 16px" }}>
+                  <div style={{ fontSize:48, marginBottom:10 }}>🤝</div>
+                  <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Hjælp fællesskabet</div>
+                  <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6 }}>
+                    EatSafe fungerer fordi vi hjælper hinanden. Når du scanner et produkt der ikke findes i databasen, kan du indsende det.
+                  </div>
+                </div>
+                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                  {[
+                    ["1️⃣","Skan stregkoden","Hold kameraet over stregkoden på produktet."],
+                    ["2️⃣","Fotografér ingredienslisten","Tag et billede af ingredienslisten på bagsiden af pakken."],
+                    ["3️⃣","Vores AI analyserer","Vi bruger kunstig intelligens til at læse ingredienserne og identificere allergener."],
+                    ["4️⃣","Admin godkender","En administrator gennemgår og godkender produktet inden det tilføjes til databasen."],
+                    ["5️⃣","Alle får glæde af det","Produktet er nu tilgængeligt for alle EatSafe-brugere."],
+                  ].map(([num, title, text]) => (
+                    <div key={title} style={{ display:"flex", gap:12, alignItems:"flex-start", background:"#fff", border:"1px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
+                      <div style={{ fontSize:20, flexShrink:0 }}>{num}</div>
+                      <div>
+                        <div style={{ fontWeight:700, fontSize:13, color:"var(--ink)", marginBottom:2 }}>{title}</div>
+                        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>{text}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display:"flex", gap:8, marginTop:16 }}>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(5)}>← Tilbage</button>
+                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(7)}>Fortsæt →</button>
+                </div>
+              </div>
+            )}
+
+            {onboardStep === 7 && (
               <div className="fade-in">
                 <div className="card" style={{ textAlign:"center", padding:"32px 20px" }}>
                   <div style={{ fontSize:56, marginBottom:16 }}>🎉</div>
@@ -1532,7 +1880,7 @@ export default function EatSafe() {
                   </div>
                 </div>
                 <div style={{ display:"flex", gap:8 }}>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(3)}>← Tilbage</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(6)}>← Tilbage</button>
                   <button className="btn btn-primary" style={{ flex:1 }} onClick={finishOnboard}>
                     {editMode ? "Gem ændringer ✓" : "Gå til appen →"}
                   </button>
@@ -1842,19 +2190,11 @@ export default function EatSafe() {
                   <span>{showIng?"▲":"▼"}</span>
                 </div>
                 {showIng && (
-                  <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.8, marginTop:10, padding:"10px", background:"var(--paper2)", borderRadius:8 }}>
-                    {scanResult.ingredients.split(",").map((ing, i) => {
-                      const trimmed = ing.trim();
-                      const isAllergen = trimmed === trimmed.toUpperCase() && trimmed.length > 2;
-                      return (
-                        <span key={i}>
-                          {i > 0 && <span style={{ color:"var(--border2)" }}>, </span>}
-                          <span style={isAllergen ? { fontWeight:700, color:"var(--red)" } : {}}>
-                            {trimmed}
-                          </span>
-                        </span>
-                      );
-                    })}
+                  <div style={{ marginTop:10, padding:"10px", background:"var(--paper2)", borderRadius:8 }}>
+                    <IngredientsList text={scanResult.ingredients} allergenFlags={scanResult.allergen_flags||{}} />
+                    <div style={{ fontSize:10, color:"var(--muted)", marginTop:8, fontStyle:"italic" }}>
+                      🔴 Fremhævet = kendt allergen
+                    </div>
                   </div>
                 )}
               </div>
@@ -1905,21 +2245,53 @@ export default function EatSafe() {
         {/* ══ PRODUKT IKKE FUNDET ══ */}
         {screen === SCREENS.NOTFOUND && (
           <div className="screen fade-in">
-            <button className="btn btn-ghost btn-sm" style={{ marginTop:16, marginBottom:12 }} onClick={() => setScreen(SCREENS.SCAN)}>← Tilbage</button>
-            <div className="card" style={{ textAlign:"center", padding:"28px 20px" }}>
-              <div style={{ fontSize:48, marginBottom:12 }}>🔍</div>
-              <div style={{ fontSize:18, fontWeight:800, marginBottom:8 }}>Produktet blev ikke fundet</div>
-              <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6 }}>Stregkode: <strong>{notFoundEan}</strong><br />Produktet er ikke i vores database endnu. Du kan hjælpe ved at fotografere ingredienslisten.</div>
+            <button className="btn btn-ghost btn-sm" style={{ marginTop:16, marginBottom:12 }} onClick={() => setScreen(SCREENS.SCAN)}>← Tilbage til scan</button>
+
+            {/* Hero — motiverende besked */}
+            <div style={{ background:"var(--ink)", borderRadius:16, padding:"24px 20px", marginBottom:12, textAlign:"center" }}>
+              <div style={{ fontSize:44, marginBottom:10 }}>🤝</div>
+              <div style={{ fontSize:18, fontWeight:900, color:"#fff", marginBottom:8 }}>Produktet kendes ikke endnu</div>
+              <div style={{ fontSize:13, color:"rgba(255,255,255,.65)", lineHeight:1.6 }}>
+                Du er den første der scanner dette produkt! Hjælp andre med allergier ved at indsende det — det tager under 1 minut.
+              </div>
             </div>
+
+            {/* EAN */}
+            <div style={{ display:"flex", alignItems:"center", gap:10, background:"#fff", border:"1px solid var(--border)", borderRadius:10, padding:"10px 14px", marginBottom:12 }}>
+              <div style={{ fontSize:20 }}>🏷️</div>
+              <div>
+                <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600 }}>Stregkode</div>
+                <div style={{ fontSize:14, fontWeight:700, fontFamily:"monospace" }}>{notFoundEan}</div>
+              </div>
+            </div>
+
             {ocrLoading && <div className="loader fade-in"><div className="spinner" /><div className="loader-txt">Analyserer billede…</div><div className="loader-sub">OCR og allergendetektering</div></div>}
             {!ocrText && !ocrLoading && (
-              <div className="card">
-                <div className="card-lbl">Bidrag til databasen</div>
-                <div style={{ fontSize:13, color:"var(--muted)", marginBottom:12, lineHeight:1.6 }}>Fotografér ingredienslisten på pakken. Vi bruger AI til at læse den og foreslå allergener.</div>
-                <label className="btn btn-primary btn-full" style={{ cursor:"pointer" }}>
-                  📸 Fotografér ingredienslisten
+              <div>
+                {/* Trin-guide */}
+                <div className="card" style={{ marginBottom:12 }}>
+                  <div className="card-lbl">Sådan gør du — 3 nemme trin</div>
+                  {[
+                    ["📸","Tag billede af ingredienslisten","Vend pakken om og fotografér bagsiden med ingredienserne. Hold kameraet stille for bedste resultat."],
+                    ["🤖","Vi analyserer automatisk","Vores AI læser teksten og finder allergener. Du kan tjekke og rette inden du sender."],
+                    ["✅","Hjælp alle andre","Når admin har godkendt, kan alle EatSafe-brugere se produktet. Du gør en forskel!"],
+                  ].map(([icon, title, text], i) => (
+                    <div key={i} style={{ display:"flex", gap:10, alignItems:"flex-start", marginBottom: i < 2 ? 14 : 0, paddingBottom: i < 2 ? 14 : 0, borderBottom: i < 2 ? "1px solid var(--border)" : "none" }}>
+                      <div style={{ width:36, height:36, borderRadius:"50%", background:"var(--green-lt)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{icon}</div>
+                      <div>
+                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:3 }}>{title}</div>
+                        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>{text}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <label className="btn btn-primary btn-full" style={{ cursor:"pointer", fontSize:15 }}>
+                  📸 Start — fotografér ingredienslisten
                   <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleImageCapture} />
                 </label>
+                <div style={{ textAlign:"center", marginTop:10, fontSize:12, color:"var(--muted)" }}>
+                  Har du ikke pakken ved hånden? <span style={{ color:"var(--green)", fontWeight:700, cursor:"pointer" }} onClick={() => setScreen(SCREENS.SCAN)}>Spring over</span>
+                </div>
               </div>
             )}
             {ocrText && !ocrLoading && (
@@ -2013,7 +2385,25 @@ export default function EatSafe() {
           <div className="screen fade-in">
             <div className="screen-title">🔎 Søg varer</div>
             <div className="screen-sub">Find produkter der er sikre for dig og familien.</div>
-            <input className="field" placeholder="Søg på produkt eller mærke…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ marginBottom:10 }} autoFocus />
+            <div style={{ display:"flex", gap:8, marginBottom:10 }}>
+              <input
+                className="field"
+                placeholder="Søg på produkt eller mærke…"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { setActiveSearch(searchQuery); setSearchResults([]); }}}
+                style={{ flex:1, marginBottom:0 }}
+                autoFocus
+              />
+              <button
+                className="btn btn-primary btn-sm"
+                style={{ whiteSpace:"nowrap", padding:"0 16px" }}
+                onClick={() => { setActiveSearch(searchQuery); setSearchResults([]); }}
+                disabled={!searchQuery.trim()}
+              >
+                Søg
+              </button>
+            </div>
             <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
               <div className={`filter-chip${showSafeOnly?" active":""}`} onClick={() => setShowSafeOnly(v => !v)}>
                 {showSafeOnly ? "✅ Kun sikre" : "Vis kun sikre"}
@@ -2033,7 +2423,7 @@ export default function EatSafe() {
             {!searchLoading && !offLoading && searchQuery && searchResults.length===0 && (
               <div className="empty-state"><span className="empty-icon">🔍</span><div className="empty-txt">Ingen resultater</div><div className="empty-sub">Prøv et andet søgeord</div></div>
             )}
-            {!searchQuery && (
+            {!activeSearch && !searchQuery && (
               <div className="empty-state"><span className="empty-icon">🔎</span><div className="empty-txt">Søg efter et produkt</div><div className="empty-sub">Skriv et produktnavn eller mærke</div></div>
             )}
             {searchResults.filter(p => !showSafeOnly || p.conflicts?.length === 0).map(p => {
@@ -2217,78 +2607,210 @@ export default function EatSafe() {
         )}
 
         {/* ══ ADMIN ══ */}
-        {screen === SCREENS.ADMIN && (
+        {screen === SCREENS.ADMIN && !openSubmission && (
           <div className="screen fade-in">
-            <div className="screen-title">⚙️ Admin panel</div>
-            <div className="screen-sub">Administrér indsendelser og se systemstatistik.</div>
+            <div className="screen-title">⚙️ Admin</div>
 
             {/* Statistik */}
             {adminStats && (
-              <div className="card">
-                <div className="card-lbl">Systemstatistik</div>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, textAlign:"center" }}>
-                  {[
-                    [adminStats.total_users,"👥","Brugere"],
-                    [adminStats.total_products,"📦","Produkter"],
-                    [adminStats.total_scans,"📷","Scanninger"],
-                    [adminStats.pending_submissions,"⏳","Afventer"],
-                    [adminStats.total_families,"👨‍👩‍👧","Familier"],
-                  ].map(([n,ic,lbl]) => (
-                    <div key={lbl} style={{ background:"var(--paper2)", borderRadius:10, padding:"10px 6px" }}>
-                      <div style={{ fontSize:18 }}>{ic}</div>
-                      <div style={{ fontWeight:900, fontSize:20 }}>{n ?? "—"}</div>
-                      <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600 }}>{lbl}</div>
-                    </div>
-                  ))}
-                </div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:12 }}>
+                {[
+                  [adminStats.total_users,"👥","Brugere"],
+                  [adminStats.total_products,"📦","Produkter"],
+                  [adminStats.total_scans,"📷","Scanninger"],
+                  [adminStats.pending_submissions,"⏳","Afventer"],
+                  [adminStats.total_families,"👨‍👩‍👧","Familier"],
+                ].map(([n,ic,lbl]) => (
+                  <div key={lbl} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"10px 6px", textAlign:"center", boxShadow:"var(--sh)" }}>
+                    <div style={{ fontSize:18 }}>{ic}</div>
+                    <div style={{ fontWeight:900, fontSize:20, color:"var(--ink)" }}>{n ?? "—"}</div>
+                    <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, textTransform:"uppercase", letterSpacing:".4px" }}>{lbl}</div>
+                  </div>
+                ))}
               </div>
             )}
 
-            {/* Afventende indsendelser */}
+            {/* Filter tabs */}
+            <div style={{ display:"flex", gap:6, marginBottom:12 }}>
+              {[["pending","⏳ Afventer"],["approved","✅ Godkendt"],["rejected","❌ Afvist"]].map(([val,lbl]) => (
+                <button key={val} className="btn btn-sm" onClick={() => { setSubmissionFilter(val); loadSubmissions(); }}
+                  style={{ flex:1, fontSize:11, fontWeight:700,
+                    background: submissionFilter===val ? "var(--ink)" : "var(--paper2)",
+                    color: submissionFilter===val ? "#fff" : "var(--muted)",
+                    border:"1px solid var(--border)" }}>
+                  {lbl}
+                </button>
+              ))}
+            </div>
+
+            {/* Indsendelser liste */}
             <div className="card">
               <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
-                <span>Afventende indsendelser ({submissions.length})</span>
-                <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700 }} onClick={loadSubmissions}>🔄 Opdater</span>
+                <span>Indsendelser ({submissions.length})</span>
+                <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:12 }} onClick={() => { loadSubmissions(); loadAdminStats(); }}>🔄</span>
               </div>
-              {submissionsLoading && <div className="loader"><div className="spinner" /><div className="loader-txt">Henter…</div></div>}
+              {submissionsLoading && <div className="loader"><div className="spinner"/><div className="loader-txt">Henter…</div></div>}
               {!submissionsLoading && submissions.length === 0 && (
                 <div className="empty-state" style={{ padding:"20px 0" }}>
-                  <div className="empty-txt">Ingen afventende indsendelser</div>
+                  <div className="empty-txt">Ingen indsendelser</div>
                 </div>
               )}
-              {submissions.map(s => (
-                <div key={s.id} style={{ borderTop:"1px solid var(--border)", paddingTop:12, marginTop:12 }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
-                    <div>
-                      <div style={{ fontWeight:700, fontSize:14 }}>EAN: {s.ean}</div>
-                      <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>
-                        Indsendt: {new Date(s.created_at).toLocaleDateString("da-DK")}
+              {submissions.map(s => {
+                const allergens = s.ai_parsed_data ? Object.entries(s.ai_parsed_data).filter(([k,v]) => (v==="yes"||v==="traces") && ALLERGENS.find(a=>a.id===k)) : [];
+                return (
+                  <div key={s.id} style={{ borderTop:"1px solid var(--border)", paddingTop:12, marginTop:12, cursor:"pointer" }}
+                    onClick={() => { setOpenSubmission(s); setEditingSubmission({ name: s.ai_parsed_data?.name || "", brand: s.ai_parsed_data?.brand || "", allergen_flags: s.ai_parsed_data || {} }); }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontWeight:700, fontSize:14 }}>{s.ai_parsed_data?.name || "Ukendt produkt"}</div>
+                        <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>EAN: {s.ean} · {new Date(s.created_at).toLocaleDateString("da-DK")}</div>
+                        {s.user_confirmed && <div style={{ fontSize:11, color:"var(--green)", fontWeight:600, marginTop:2 }}>✓ Bruger bekræftet</div>}
                       </div>
-                      {s.user_confirmed && <div style={{ fontSize:11, color:"var(--green)", fontWeight:600 }}>✓ Bruger bekræftet</div>}
+                      <div style={{ fontSize:18, color:"var(--muted)", marginLeft:8 }}>›</div>
                     </div>
-                    <div style={{ display:"flex", gap:6 }}>
-                      <button className="btn btn-green btn-sm" onClick={() => approveSubmission(s)}>✓ Godkend</button>
-                      <button className="btn btn-danger btn-sm" onClick={() => rejectSubmission(s.id)}>✗ Afvis</button>
-                    </div>
+                    {allergens.length > 0 && (
+                      <div className="tags" style={{ marginTop:6 }}>
+                        {allergens.slice(0,4).map(([k,v]) => {
+                          const a = ALLERGENS.find(x=>x.id===k);
+                          return a ? <div key={k} className="tag" style={{ fontSize:10, background:v==="yes"?"var(--red-lt)":"var(--amber-lt)", color:v==="yes"?"var(--red)":"var(--amber)", borderColor:v==="yes"?"var(--red-md)":"var(--amber-md)" }}>{a.emoji} {a.label}</div> : null;
+                        })}
+                        {allergens.length > 4 && <div className="tag" style={{ fontSize:10 }}>+{allergens.length-4} mere</div>}
+                      </div>
+                    )}
                   </div>
-                  {s.ocr_raw_text && (
-                    <div style={{ background:"var(--paper2)", borderRadius:8, padding:"8px 10px", fontSize:11, color:"var(--muted2)", marginBottom:8, maxHeight:80, overflow:"auto" }}>
-                      <strong>Ingredienser:</strong> {s.ocr_raw_text.slice(0, 200)}{s.ocr_raw_text.length > 200 ? "…" : ""}
-                    </div>
-                  )}
-                  {s.ai_parsed_data && (
-                    <div className="tags" style={{ marginTop:4 }}>
-                      {Object.entries(s.ai_parsed_data)
-                        .filter(([,v]) => v === "yes" || v === "traces")
-                        .map(([k,v]) => (
-                          <div key={k} className={`tag`} style={{ background: v==="yes" ? "var(--red-lt)" : "var(--amber-lt)", color: v==="yes" ? "var(--red)" : "var(--amber)", borderColor: v==="yes" ? "var(--red-md)" : "var(--amber-md)" }}>
-                            {ALLERGENS.find(a=>a.id===k)?.emoji} {ALLERGENS.find(a=>a.id===k)?.label || k} {v==="traces"?"(spor)":""}
-                          </div>
-                        ))}
-                    </div>
-                  )}
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ══ ADMIN — ÅBEN SUBMISSION ══ */}
+        {screen === SCREENS.ADMIN && openSubmission && editingSubmission && (
+          <div className="screen fade-in">
+            <button className="btn btn-ghost btn-sm" style={{ marginTop:16, marginBottom:12 }} onClick={() => { setOpenSubmission(null); setEditingSubmission(null); }}>← Tilbage</button>
+
+            {/* Produkt hero */}
+            <div className="product-hero">
+              {openSubmission.ai_parsed_data?.product_image_base64
+                ? <img src={`data:image/jpeg;base64,${openSubmission.ai_parsed_data.product_image_base64}`} className="product-hero-img" alt="Produkt" />
+                : <div className="product-hero-img-placeholder">{getProductIcon({ name: editingSubmission.name })}</div>
+              }
+              <div className="product-hero-body">
+                <div style={{ fontSize:10, fontWeight:700, color:"var(--amber)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:6 }}>⏳ Afventer godkendelse</div>
+                <div style={{ fontSize:11, color:"var(--muted)", marginBottom:4 }}>EAN: {openSubmission.ean}</div>
+                <div style={{ fontSize:11, color:"var(--muted)" }}>Indsendt: {new Date(openSubmission.created_at).toLocaleDateString("da-DK")}</div>
+              </div>
+            </div>
+
+            {/* OCR billede hvis tilgængeligt */}
+            {openSubmission.raw_label_image && (
+              <div className="card">
+                <div className="card-lbl">📸 Foto af ingrediensliste</div>
+                <img
+                  src={`data:image/jpeg;base64,${openSubmission.raw_label_image}`}
+                  alt="Ingrediensliste"
+                  style={{ width:"100%", borderRadius:8, objectFit:"contain", maxHeight:220 }}
+                />
+              </div>
+            )}
+
+            {/* Redigérbart produktnavn og brand */}
+            <div className="card">
+              <div className="card-lbl">Produktinfo — kan redigeres</div>
+              <div style={{ marginBottom:8 }}>
+                <div style={{ fontSize:11, color:"var(--muted)", marginBottom:4, fontWeight:600 }}>Produktnavn</div>
+                <input className="field" placeholder="Produktnavn…" value={editingSubmission.name}
+                  onChange={e => setEditingSubmission(s => ({ ...s, name: e.target.value }))} />
+              </div>
+              <div>
+                <div style={{ fontSize:11, color:"var(--muted)", marginBottom:4, fontWeight:600 }}>Brand</div>
+                <input className="field" placeholder="Brand / Mærke…" value={editingSubmission.brand}
+                  onChange={e => setEditingSubmission(s => ({ ...s, brand: e.target.value }))} />
+              </div>
+            </div>
+
+            {/* Ingredienser fra OCR */}
+            {openSubmission.ocr_raw_text && (
+              <div className="card">
+                <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                  <span>Ingredienser fra OCR</span>
+                  <button
+                    className="btn btn-sm"
+                    style={{ fontSize:11, background:"var(--green-lt)", color:"var(--green)", border:"1px solid var(--green-mid)" }}
+                    onClick={() => cleanOcrWithAI(openSubmission.ocr_raw_text)}
+                    disabled={cleaningOcr}
+                  >
+                    {cleaningOcr ? "🤖 Renskriver…" : "🤖 Renskiv med AI"}
+                  </button>
                 </div>
-              ))}
+
+                {/* Rå OCR tekst */}
+                <div style={{ marginBottom: cleanedOcrText ? 12 : 0 }}>
+                  <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Rå OCR tekst</div>
+                  <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.7, background:"var(--paper2)", borderRadius:8, padding:"10px", maxHeight:120, overflowY:"auto" }}>
+                    {openSubmission.ocr_raw_text}
+                  </div>
+                </div>
+
+                {/* AI renskrivet tekst */}
+                {cleanedOcrText && (
+                  <div style={{ borderTop:"1px solid var(--border)", paddingTop:12 }}>
+                    <div style={{ fontSize:10, fontWeight:700, color:"var(--green)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>🤖 AI renskrivet — tjek at intet er fjernet eller tilføjet</div>
+                    <div style={{ background:"var(--green-lt)", borderRadius:8, padding:"10px", marginBottom:8 }}>
+                      <IngredientsList text={cleanedOcrText} allergenFlags={editingSubmission.allergen_flags} />
+                    </div>
+                    <button
+                      className="btn btn-sm"
+                      style={{ fontSize:11, width:"100%", background:"var(--green)", color:"#fff", border:"none" }}
+                      onClick={() => setEditingSubmission(s => ({ ...s, ingredients_text: cleanedOcrText }))}
+                    >
+                      ✓ Brug denne version
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Allergenflags — redigérbare */}
+            <div className="card">
+              <div className="card-lbl">Allergener — klik for at ændre</div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+                {ALLERGENS.map(a => {
+                  const val = editingSubmission.allergen_flags[a.id] || "no";
+                  const next = val==="no" ? "yes" : val==="yes" ? "traces" : "no";
+                  const style = val==="yes"
+                    ? { background:"var(--red-lt)", color:"var(--red)", border:"1.5px solid var(--red-md)", fontWeight:700 }
+                    : val==="traces"
+                    ? { background:"var(--amber-lt)", color:"var(--amber)", border:"1.5px solid var(--amber-md)", fontWeight:700 }
+                    : { background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" };
+                  return (
+                    <button key={a.id} onClick={() => setEditingSubmission(s => ({ ...s, allergen_flags: { ...s.allergen_flags, [a.id]: next } }))}
+                      style={{ ...style, borderRadius:8, padding:"8px 10px", fontSize:12, cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:6 }}>
+                      <span>{a.emoji}</span>
+                      <span style={{ flex:1 }}>{a.label}</span>
+                      <span style={{ fontSize:10, opacity:.7 }}>{val==="yes"?"✓ Ja":val==="traces"?"~ Spor":"✗ Nej"}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ fontSize:11, color:"var(--muted)", marginTop:8, fontStyle:"italic" }}>Klik én gang = Ja, igen = Spor, igen = Nej</div>
+            </div>
+
+            {/* Handlinger */}
+            <div className="card">
+              <div className="card-lbl">Handlinger</div>
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                <button className="btn btn-primary btn-full" onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}>
+                  ✅ Godkend og opret produkt
+                </button>
+                <button className="btn btn-outline btn-full" style={{ color:"var(--red)", borderColor:"var(--red)" }}
+                  onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}>
+                  ❌ Afvis indsendelse
+                </button>
+                <button className="btn btn-ghost btn-full btn-sm" onClick={() => { setOpenSubmission(null); setEditingSubmission(null); }}>
+                  Annullér
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -2310,7 +2832,24 @@ export default function EatSafe() {
             )}
             {favorites.map((f,i) => (
               <div key={i} className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:8 }}
-                onClick={() => lookupProduct(f.ean || f.code)}>
+                onClick={() => {
+                  // Byg altid et komplet scanResult fra gemt favorit-data
+                  const flags = f.allergen_flags || {};
+                  const { status, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(flags, activeIds);
+                  setScanResult({
+                    ...f,
+                    code: f.ean || f.code,
+                    status: f.status || status,
+                    headline: status==="danger"?"Indeholder allergen! 🚫":status==="warning"?"Mulige spor ⚠️":"Sikkert produkt ✅",
+                    summary: "",
+                    flags: [],
+                    allergen_flags: flags,
+                    matchedDanger: matchedDanger,
+                    matchedWarning: matchedWarning,
+                    hasUnknown,
+                  });
+                  setScreen(SCREENS.RESULT);
+                }}>
                 <div style={{ display:"flex", alignItems:"center", gap:12 }}>
                   <ProductImage product={f} size={48} />
                   <div style={{ flex:1, minWidth:0 }}>
