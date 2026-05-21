@@ -92,7 +92,7 @@ const SCREENS = {
   RESULT:"result", HISTORY:"history",
   NOTFOUND:"notfound", SUBMITTED:"submitted",
   ADMIN:"admin", FAVORITES:"favorites",
-  MADPAS:"madpas", RECIPES:"recipes",
+  MADPAS:"madpas", RECIPES:"recipes", EDITPROFILE:"editprofile",
 };
 
 const PAGE_IDS = {
@@ -101,7 +101,7 @@ const PAGE_IDS = {
   list:"SCR-07", profile:"SCR-08", family:"SCR-09",
   result:"SCR-10", history:"SCR-11", notfound:"SCR-12",
   submitted:"SCR-13", admin:"SCR-14", favorites:"SCR-15",
-  madpas:"SCR-16", recipes:"SCR-17",
+  madpas:"SCR-16", recipes:"SCR-17", editprofile:"SCR-18",
 };
 
 const DUMMY_PRODUCT = {
@@ -138,20 +138,62 @@ const DUMMY_PRODUCT = {
 
 
 const ALLERGEN_EXAMPLES = {
-  gluten:      { products:["Brød","Pasta","Øl","Soja sauce"], ingredients:["Hvede","Rug","Byg","Havre","Spelt"] },
-  laktose:     { products:["Mælk","Ost","Smør","Is","Yoghurt"], ingredients:["Laktose","Valle","Kasein","Fløde"] },
-  aeg:         { products:["Mayonnaise","Pasta","Kage","Aioli"], ingredients:["Æg","Æggehvide","Æggeblomme"] },
-  noedder:     { products:["Pesto","Chokolade","Muesli","Nougat"], ingredients:["Mandler","Hasselnødder","Valnødder","Cashew"] },
-  jordnoedder: { products:["Jordnøddesmør","Satay sauce","Snackblandinger"], ingredients:["Jordnødder","Peanuts","Arachider"] },
-  soja:        { products:["Tofu","Soja sauce","Miso","Edamame"], ingredients:["Soja","Sojabønner","Sojalecitin"] },
-  fisk:        { products:["Fiskesauce","Worcestershire","Caesar dressing"], ingredients:["Ansjos","Laks","Tun","Makrel"] },
-  skaldyr:     { products:["Paella","Bisque","Sushi","Fiskesuppe"], ingredients:["Rejer","Krabbe","Hummer","Muslinger"] },
-  selleri:     { products:["Bouillon","Suppe","Krydderisalt","Salat"], ingredients:["Selleri","Sellerisalt","Sellerifnug"] },
-  sennep:      { products:["Sennep","Dressing","Marinade","Curry"], ingredients:["Sennepsfrø","Sennepsmel","Sennepsolie"] },
-  sesam:       { products:["Hummus","Tahini","Bagels","Sushi"], ingredients:["Sesam","Sesamfrø","Tahini","Sesamolie"] },
-  svovl:       { products:["Vin","Tørrede frugter","Konserves","Eddike"], ingredients:["E220","E221","Sulfitter","SO₂"] },
-  lupin:       { products:["Glutenfri mel","Pasta","Brød","Snacks"], ingredients:["Lupinmel","Lupinfrø","Lupinprotein"] },
-  bloeddyr:    { products:["Paella","Pasta frutti di mare","Sushi"], ingredients:["Blæksprutte","Østers","Muslinger","Snegle"] },
+  gluten: {
+    products: { da:["Brød","Pasta","Øl","Sojasauce"], en:["Bread","Pasta","Beer","Soy sauce"], de:["Brot","Pasta","Bier","Sojasoße"], fr:["Pain","Pâtes","Bière","Sauce soja"], es:["Pan","Pasta","Cerveza","Salsa de soja"], it:["Pane","Pasta","Birra","Salsa di soia"], nl:["Brood","Pasta","Bier","Sojasaus"], pt:["Pão","Massa","Cerveja","Molho de soja"], pl:["Chleb","Makaron","Piwo","Sos sojowy"], sv:["Bröd","Pasta","Öl","Sojasås"], no:["Brød","Pasta","Øl","Soyasaus"], ja:["パン","パスタ","ビール","醤油"], zh:["面包","面食","啤酒","酱油"], ar:["خبز","معكرونة","بيرة","صلصة الصويا"], tr:["Ekmek","Makarna","Bira","Soya sosu"], th:["ขนมปัง","พาสต้า","เบียร์","ซีอิ้ว"], el:["Ψωμί","Ζυμαρικά","Μπύρα","Σάλτσα σόγιας"] },
+    ingredients: { da:["Hvede","Rug","Byg","Havre","Spelt"], en:["Wheat","Rye","Barley","Oats","Spelt"], de:["Weizen","Roggen","Gerste","Hafer","Dinkel"], fr:["Blé","Seigle","Orge","Avoine","Épeautre"], es:["Trigo","Centeno","Cebada","Avena","Espelta"], it:["Frumento","Segale","Orzo","Avena","Farro"], nl:["Tarwe","Rogge","Gerst","Haver","Spelt"], pt:["Trigo","Centeio","Cevada","Aveia","Espelta"], pl:["Pszenica","Żyto","Jęczmień","Owies","Orkisz"], sv:["Vete","Råg","Korn","Havre","Dinkel"], no:["Hvete","Rug","Bygg","Havre","Spelt"], ja:["小麦","ライ麦","大麦","燕麦","スペルト"], zh:["小麦","黑麦","大麦","燕麦","斯佩尔特"], ar:["قمح","جاودار","شعير","شوفان","كاموت"], tr:["Buğday","Çavdar","Arpa","Yulaf","Kavılca"], th:["ข้าวสาลี","ข้าวไรย์","ข้าวบาร์เลย์","ข้าวโอ๊ต"], el:["Σιτάρι","Σίκαλη","Κριθάρι","Βρώμη","Ζέα"] },
+  },
+  laktose: {
+    products: { da:["Mælk","Ost","Smør","Is","Yoghurt"], en:["Milk","Cheese","Butter","Ice cream","Yoghurt"], de:["Milch","Käse","Butter","Eis","Joghurt"], fr:["Lait","Fromage","Beurre","Glace","Yaourt"], es:["Leche","Queso","Mantequilla","Helado","Yogur"], it:["Latte","Formaggio","Burro","Gelato","Yogurt"], nl:["Melk","Kaas","Boter","Ijs","Yoghurt"], pt:["Leite","Queijo","Manteiga","Gelado","Iogurte"], pl:["Mleko","Ser","Masło","Lody","Jogurt"], sv:["Mjölk","Ost","Smör","Glass","Yoghurt"], no:["Melk","Ost","Smør","Is","Yoghurt"], ja:["牛乳","チーズ","バター","アイスクリーム","ヨーグルト"], zh:["牛奶","奶酪","黄油","冰淇淋","酸奶"], ar:["حليب","جبن","زبدة","آيس كريم","زبادي"], tr:["Süt","Peynir","Tereyağı","Dondurma","Yoğurt"], th:["นม","ชีส","เนย","ไอศกรีม","โยเกิร์ต"], el:["Γάλα","Τυρί","Βούτυρο","Παγωτό","Γιαούρτι"] },
+    ingredients: { da:["Laktose","Valle","Kasein","Fløde","Skummetmælk"], en:["Lactose","Whey","Casein","Cream","Skimmed milk"], de:["Laktose","Molke","Kasein","Sahne","Magermilch"], fr:["Lactose","Lactosérum","Caséine","Crème","Lait écrémé"], es:["Lactosa","Suero","Caseína","Nata","Leche desnatada"], it:["Lattosio","Siero","Caseina","Panna","Latte scremato"], nl:["Lactose","Wei","Caseïne","Room","Magere melk"], pt:["Lactose","Soro","Caseína","Natas","Leite desnatado"], pl:["Laktoza","Serwatka","Kazeina","Śmietana","Mleko odtłuszczone"], sv:["Laktos","Vassle","Kasein","Grädde","Skummjölk"], no:["Laktose","Myse","Kasein","Fløte","Skummet melk"], ja:["乳糖","乳清","カゼイン","クリーム","脱脂乳"], zh:["乳糖","乳清","酪蛋白","奶油","脱脂奶"], ar:["لاكتوز","مصل اللبن","كازين","كريمة","حليب خالي الدسم"], tr:["Laktoz","Peynir altı suyu","Kazein","Krema","Yağsız süt"], th:["แลคโตส","เวย์","เคซีน","ครีม","นมพร่องมันเนย"], el:["Λακτόζη","Ορός γάλακτος","Καζεΐνη","Κρέμα","Αποβουτυρωμένο γάλα"] },
+  },
+  aeg: {
+    products: { da:["Mayonnaise","Pasta","Kage","Aioli","Vafler"], en:["Mayonnaise","Pasta","Cake","Aioli","Waffles"], de:["Mayonnaise","Pasta","Kuchen","Aioli","Waffeln"], fr:["Mayonnaise","Pâtes","Gâteau","Aïoli","Gaufres"], es:["Mayonesa","Pasta","Tarta","Alioli","Gofres"], it:["Maionese","Pasta","Torta","Aioli","Cialde"], nl:["Mayonaise","Pasta","Cake","Aioli","Wafels"], pt:["Maionese","Massa","Bolo","Aioli","Waffles"], pl:["Majonez","Makaron","Ciasto","Aioli","Gofry"], sv:["Majonnäs","Pasta","Kaka","Aioli","Våfflor"], no:["Majones","Pasta","Kake","Aioli","Vafler"], ja:["マヨネーズ","パスタ","ケーキ","アイオリ","ワッフル"], zh:["蛋黄酱","面食","蛋糕","蒜泥蛋黄酱","华夫饼"], ar:["مايونيز","معكرونة","كعكة","أيولي","وافل"], tr:["Mayonez","Makarna","Kek","Aioli","Waffle"], th:["มายองเนส","พาสต้า","เค้ก","ไอโอลี่","วาฟเฟิล"], el:["Μαγιονέζα","Ζυμαρικά","Κέικ","Αϊολί","Βάφλες"] },
+    ingredients: { da:["Æg","Æggehvide","Æggeblomme","Tørret æg"], en:["Egg","Egg white","Egg yolk","Dried egg"], de:["Ei","Eiweiß","Eigelb","Trockenei"], fr:["Œuf","Blanc d'œuf","Jaune d'œuf","Œuf en poudre"], es:["Huevo","Clara de huevo","Yema","Huevo en polvo"], it:["Uovo","Albume","Tuorlo","Uovo essiccato"], nl:["Ei","Eiwit","Eigeel","Gedroogd ei"], pt:["Ovo","Clara","Gema","Ovo em pó"], pl:["Jajo","Białko jaja","Żółtko","Jajo suszone"], sv:["Ägg","Äggvita","Äggula","Torkat ägg"], no:["Egg","Eggehvite","Eggeplomme","Tørket egg"], ja:["卵","卵白","卵黄","乾燥卵"], zh:["鸡蛋","蛋清","蛋黄","干燥蛋"], ar:["بيض","بياض البيض","صفار البيض","بيض مجفف"], tr:["Yumurta","Yumurta beyazı","Yumurta sarısı","Kurutulmuş yumurta"], th:["ไข่","ไข่ขาว","ไข่แดง","ไข่แห้ง"], el:["Αυγό","Ασπράδι","Κρόκος","Αποξηραμένο αυγό"] },
+  },
+  noedder: {
+    products: { da:["Pesto","Chokolade","Muesli","Nougat","Marcipan"], en:["Pesto","Chocolate","Muesli","Nougat","Marzipan"], de:["Pesto","Schokolade","Müsli","Nougat","Marzipan"], fr:["Pesto","Chocolat","Muesli","Nougat","Massepain"], es:["Pesto","Chocolate","Muesli","Turrón","Mazapán"], it:["Pesto","Cioccolato","Muesli","Torrone","Marzapane"], nl:["Pesto","Chocolade","Muesli","Nougat","Marsepein"], pt:["Pesto","Chocolate","Muesli","Nougat","Maçapão"], pl:["Pesto","Czekolada","Muesli","Nugat","Marcepan"], sv:["Pesto","Choklad","Müsli","Nougat","Marsipan"], no:["Pesto","Sjokolade","Müsli","Nougat","Marsipan"], ja:["ペスト","チョコレート","ミューズリー","ヌガー","マジパン"], zh:["香蒜酱","巧克力","麦片","牛轧糖","杏仁膏"], ar:["بيستو","شوكولاتة","موسلي","نوغا","لوز الحلوى"], tr:["Pesto","Çikolata","Müsli","Nuga","Badem ezmesi"], th:["เพสโต้","ช็อกโกแลต","มูสลี่","นูกัต","มาร์ซิปัน"], el:["Πέστο","Σοκολάτα","Μούσλι","Νουγκά","Μαρτσιπάνι"] },
+    ingredients: { da:["Mandler","Hasselnødder","Valnødder","Cashew","Pistacienødder"], en:["Almonds","Hazelnuts","Walnuts","Cashews","Pistachios"], de:["Mandeln","Haselnüsse","Walnüsse","Cashews","Pistazien"], fr:["Amandes","Noisettes","Noix","Noix de cajou","Pistaches"], es:["Almendras","Avellanas","Nueces","Anacardos","Pistachos"], it:["Mandorle","Nocciole","Noci","Anacardi","Pistacchi"], nl:["Amandelen","Hazelnoten","Walnoten","Cashewnoten","Pistachenoten"], pt:["Amêndoas","Avelãs","Nozes","Cajus","Pistáchios"], pl:["Migdały","Orzechy laskowe","Orzechy włoskie","Nerkowce","Pistacje"], sv:["Mandlar","Hasselnötter","Valnötter","Cashewnötter","Pistaschnötter"], no:["Mandler","Hasselnøtter","Valnøtter","Cashewnøtter","Pistasjnøtter"], ja:["アーモンド","ヘーゼルナッツ","クルミ","カシューナッツ","ピスタチオ"], zh:["杏仁","榛子","核桃","腰果","开心果"], ar:["لوز","بندق","جوز","كاجو","فستق"], tr:["Badem","Fındık","Ceviz","Kaju","Antep fıstığı"], th:["อัลมอนด์","เฮเซลนัท","วอลนัท","มะม่วงหิมพานต์","พิสตาชิโอ"], el:["Αμύγδαλα","Φουντούκια","Καρύδια","Κάσιους","Φιστίκια"] },
+  },
+  jordnoedder: {
+    products: { da:["Jordnøddesmør","Satay sauce","Snacks","Cookies"], en:["Peanut butter","Satay sauce","Snacks","Cookies"], de:["Erdnussbutter","Satay-Sauce","Snacks","Kekse"], fr:["Beurre de cacahuète","Sauce satay","Snacks","Cookies"], es:["Mantequilla de cacahuete","Salsa satay","Snacks","Galletas"], it:["Burro di arachidi","Salsa satay","Snack","Biscotti"], nl:["Pindakaas","Satésaus","Snacks","Koekjes"], pt:["Manteiga de amendoim","Molho satay","Snacks","Bolachas"], pl:["Masło orzechowe","Sos satay","Przekąski","Ciastka"], sv:["Jordnötssmör","Sataysås","Snacks","Kakor"], no:["Peanøttsmør","Sataysaus","Snacks","Kjeks"], ja:["ピーナッツバター","サテソース","スナック","クッキー"], zh:["花生酱","沙爹酱","零食","饼干"], ar:["زبدة الفول السوداني","صلصة الساتيه","وجبات خفيفة","بسكويت"], tr:["Fıstık ezmesi","Satay sosu","Atıştırmalık","Kurabiye"], th:["เนยถั่ว","ซอสสะเต๊ะ","ขนมขบเคี้ยว","คุกกี้"], el:["Βούτυρο φιστικιών","Σάλτσα σατέ","Σνακ","Μπισκότα"] },
+    ingredients: { da:["Jordnødder","Peanuts","Arachis hypogaea"], en:["Peanuts","Groundnuts","Arachis hypogaea"], de:["Erdnüsse","Erdnuss","Arachis hypogaea"], fr:["Arachides","Cacahuètes","Arachis hypogaea"], es:["Cacahuetes","Maníes","Arachis hypogaea"], it:["Arachidi","Noccioline","Arachis hypogaea"], nl:["Pinda's","Grondnoten","Arachis hypogaea"], pt:["Amendoins","Arachis hypogaea"], pl:["Orzeszki ziemne","Orzeszki arachidowe"], sv:["Jordnötter","Arachis hypogaea"], no:["Peanøtter","Jordnøtter","Arachis hypogaea"], ja:["ピーナッツ","落花生","アラキス"], zh:["花生","落花生"], ar:["الفول السوداني","فول سوداني"], tr:["Yerfıstığı","Fıstık"], th:["ถั่วลิสง"], el:["Φιστίκια Αμερικής","Αραχίδες"] },
+  },
+  soja: {
+    products: { da:["Tofu","Soja sauce","Miso","Edamame","Tempeh"], en:["Tofu","Soy sauce","Miso","Edamame","Tempeh"], de:["Tofu","Sojasoße","Miso","Edamame","Tempeh"], fr:["Tofu","Sauce soja","Miso","Edamame","Tempeh"], es:["Tofu","Salsa de soja","Miso","Edamame","Tempeh"], it:["Tofu","Salsa di soia","Miso","Edamame","Tempeh"], nl:["Tofu","Sojasaus","Miso","Edamame","Tempeh"], pt:["Tofu","Molho de soja","Miso","Edamame","Tempeh"], pl:["Tofu","Sos sojowy","Miso","Edamame","Tempeh"], sv:["Tofu","Sojasås","Miso","Edamame","Tempeh"], no:["Tofu","Soyasaus","Miso","Edamame","Tempeh"], ja:["豆腐","醤油","味噌","枝豆","テンペ"], zh:["豆腐","酱油","味噌","毛豆","天贝"], ar:["توفو","صلصة الصويا","ميسو","إيدامامي","تيمبيه"], tr:["Tofu","Soya sosu","Miso","Edamame","Tempeh"], th:["เต้าหู้","ซีอิ้ว","มิโซะ","เอดาแมม","เทมเป้"], el:["Τόφου","Σάλτσα σόγιας","Μίσο","Εντάμαμε","Τέμπε"] },
+    ingredients: { da:["Soja","Sojabønner","Sojalecitin","Sojaprotein","E322"], en:["Soy","Soybeans","Soy lecithin","Soy protein","E322"], de:["Soja","Sojabohnen","Sojalecithin","Sojaprotein","E322"], fr:["Soja","Haricots de soja","Lécithine de soja","Protéine de soja","E322"], es:["Soja","Habas de soja","Lecitina de soja","Proteína de soja","E322"], it:["Soia","Semi di soia","Lecitina di soia","Proteina di soia","E322"], nl:["Soja","Sojabone","Sojalecithine","Sojaprotein","E322"], pt:["Soja","Feijão de soja","Lecitina de soja","Proteína de soja","E322"], pl:["Soja","Sojowe","Lecytyna sojowa","Białko sojowe","E322"], sv:["Soja","Sojabönor","Sojalecithin","Sojaprotein","E322"], no:["Soya","Soyabønner","Sojalesitin","Sojaprotein","E322"], ja:["大豆","大豆レシチン","大豆タンパク","E322"], zh:["大豆","大豆卵磷脂","大豆蛋白","E322"], ar:["الصويا","فول الصويا","ليسيثين الصويا","E322"], tr:["Soya","Soya fasulyesi","Soya lesitini","E322"], th:["ถั่วเหลือง","เลซิตินถั่วเหลือง","E322"], el:["Σόγια","Σογιόλεκιθίνη","E322"] },
+  },
+  fisk: {
+    products: { da:["Fiskesauce","Worcestershire","Caesar dressing","Ansjosdip"], en:["Fish sauce","Worcestershire sauce","Caesar dressing","Anchovy paste"], de:["Fischsauce","Worcestershiresauce","Caesar-Dressing","Sardellenpaste"], fr:["Sauce de poisson","Sauce Worcestershire","Vinaigrette César","Pâte d'anchois"], es:["Salsa de pescado","Salsa Worcestershire","Aderezo César","Pasta de anchoa"], it:["Salsa di pesce","Salsa Worcestershire","Condimento Caesar","Pasta di acciughe"], nl:["Vissaus","Worcestershiresaus","Caesar dressing","Ansjovispasta"], pt:["Molho de peixe","Molho Worcestershire","Molho César","Pasta de anchova"], pl:["Sos rybny","Sos worcestershire","Sos cezar","Pasta z anchois"], sv:["Fisksås","Worcestershiresås","Caesardressing","Ansjovisröra"], no:["Fiskesaus","Worcestershiresaus","Caesardressing","Ansjosvispasta"], ja:["ナンプラー","ウスターソース","シーザードレッシング","アンチョビ"], zh:["鱼露","伍斯特酱","凯撒沙拉酱","凤尾鱼酱"], ar:["صلصة السمك","صلصة وورشيسترشير","تتبيلة سيزر","معجون الأنشوجة"], tr:["Balık sosu","Worcestershire sosu","Sezar sosu","Hamsi ezmesi"], th:["น้ำปลา","ซอสวูสเตอร์","ซีซาร์เดรสซิ่ง","แอนโชวี่เพสต์"], el:["Σάλτσα ψαριού","Σάλτσα Worcestershire","Σάλτσα Καίσαρα","Πάστα αντζούγιας"] },
+    ingredients: { da:["Ansjos","Laks","Tun","Makrel","Sardiner"], en:["Anchovy","Salmon","Tuna","Mackerel","Sardines"], de:["Sardellen","Lachs","Thunfisch","Makrele","Sardinen"], fr:["Anchois","Saumon","Thon","Maquereau","Sardines"], es:["Anchoas","Salmón","Atún","Caballa","Sardinas"], it:["Acciughe","Salmone","Tonno","Sgombro","Sardine"], nl:["Ansjovis","Zalm","Tonijn","Makreel","Sardines"], pt:["Anchova","Salmão","Atum","Cavala","Sardinha"], pl:["Anchois","Łosoś","Tuńczyk","Makrela","Sardynki"], sv:["Ansjovis","Lax","Tonfisk","Makrill","Sardiner"], no:["Ansjos","Laks","Tunfisk","Makrell","Sardiner"], ja:["アンチョビ","鮭","マグロ","サバ","イワシ"], zh:["凤尾鱼","三文鱼","金枪鱼","鲭鱼","沙丁鱼"], ar:["أنشوجة","سلمون","تونة","ماكريل","سردين"], tr:["Hamsi","Somon","Ton balığı","Uskumru","Sardalya"], th:["แอนโชวี่","แซลมอน","ทูน่า","ปลาแมคเคอเรล","ปลาซาร์ดีน"], el:["Αντζούγιες","Σολομός","Τόνος","Σκουμπρί","Σαρδέλες"] },
+  },
+  skaldyr: {
+    products: { da:["Paella","Bisque","Sushi","Fiskesuppe","Bouillabaisse"], en:["Paella","Bisque","Sushi","Fish soup","Bouillabaisse"], de:["Paella","Bisque","Sushi","Fischsuppe","Bouillabaisse"], fr:["Paella","Bisque","Sushi","Soupe de poisson","Bouillabaisse"], es:["Paella","Bisque","Sushi","Sopa de pescado","Bouillabaisse"], it:["Paella","Bisque","Sushi","Zuppa di pesce","Bouillabaisse"], nl:["Paella","Bisque","Sushi","Vissoep","Bouillabaisse"], pt:["Paella","Bisque","Sushi","Sopa de peixe","Bouillabaisse"], pl:["Paella","Bisque","Sushi","Zupa rybna","Bouillabaisse"], sv:["Paella","Bisque","Sushi","Fisksoppa","Bouillabaisse"], no:["Paella","Bisque","Sushi","Fiskesuppe","Bouillabaisse"], ja:["パエリア","ビスク","寿司","魚スープ","ブイヤベース"], zh:["海鲜饭","浓汤","寿司","鱼汤","马赛鱼汤"], ar:["باييلا","شوربة كريمة","سوشي","شوربة سمك","بويابيس"], tr:["Paella","Bisque","Sushi","Balık çorbası","Bouillabaisse"], th:["ปาเอย่า","บิสก์","ซูชิ","ซุปปลา","บูยาแบส"], el:["Παέλα","Μπισκ","Σούσι","Ψαρόσουπα","Μπουγιαμπέσα"] },
+    ingredients: { da:["Rejer","Krabbe","Hummer","Muslinger","Østers"], en:["Shrimp","Crab","Lobster","Mussels","Oysters"], de:["Garnelen","Krabbe","Hummer","Muscheln","Austern"], fr:["Crevettes","Crabe","Homard","Moules","Huîtres"], es:["Gambas","Cangrejo","Langosta","Mejillones","Ostras"], it:["Gamberi","Granchio","Aragosta","Cozze","Ostriche"], nl:["Garnalen","Krab","Kreeft","Mosselen","Oesters"], pt:["Camarão","Caranguejo","Lagosta","Mexilhões","Ostras"], pl:["Krewetki","Krab","Homar","Małże","Ostrygi"], sv:["Räkor","Krabba","Hummer","Musslor","Ostron"], no:["Reker","Krabbe","Hummer","Muslinger","Østers"], ja:["エビ","カニ","ロブスター","ムール貝","カキ"], zh:["虾","蟹","龙虾","贻贝","牡蛎"], ar:["روبيان","سرطان البحر","جراد البحر","بلح البحر","محار"], tr:["Karides","Yengeç","Istakoz","Midye","İstiridye"], th:["กุ้ง","ปู","กุ้งมังกร","หอยแมลงภู่","หอยนางรม"], el:["Γαρίδες","Καβούρι","Αστακός","Μύδια","Στρείδια"] },
+  },
+  selleri: {
+    products: { da:["Bouillon","Suppe","Krydderisalt","Salat","Remoulade"], en:["Stock","Soup","Seasoning salt","Salad","Remoulade"], de:["Brühe","Suppe","Würzsalz","Salat","Remoulade"], fr:["Bouillon","Soupe","Sel aromatisé","Salade","Rémoulade"], es:["Caldo","Sopa","Sal condimentada","Ensalada","Rémoulade"], it:["Brodo","Zuppa","Sale aromatizzato","Insalata","Remoulade"], nl:["Bouillon","Soep","Kruidenzout","Salade","Remoulade"], pt:["Caldo","Sopa","Sal temperado","Salada","Remoulade"], pl:["Bulion","Zupa","Sól przyprawowa","Sałatka","Remoulada"], sv:["Buljong","Soppa","Kryddsalt","Sallad","Remoulade"], no:["Buljong","Suppe","Kryddersalt","Salat","Remoulade"], ja:["ブイヨン","スープ","シーズニングソルト","サラダ","レムラード"], zh:["高汤","汤","调味盐","沙拉","雷穆拉达酱"], ar:["مرق","شوربة","ملح متبل","سلطة","ريمولاد"], tr:["Et suyu","Çorba","Baharlı tuz","Salata","Remulad"], th:["น้ำซุป","ซุป","เกลือปรุงรส","สลัด","เรมูลาด"], el:["Ζωμός","Σούπα","Αλάτι με μπαχαρικά","Σαλάτα","Ρεμουλάντ"] },
+    ingredients: { da:["Selleri","Sellerisalt","Sellerifnug","Sellerifrø"], en:["Celery","Celery salt","Celery flakes","Celery seeds"], de:["Sellerie","Selleriesalz","Selerieflocken","Selleriesamen"], fr:["Céleri","Sel de céleri","Flocons de céleri","Graines de céleri"], es:["Apio","Sal de apio","Copos de apio","Semillas de apio"], it:["Sedano","Sale di sedano","Fiocchi di sedano","Semi di sedano"], nl:["Selderij","Selderijzout","Selderijvlokken","Selderijzaad"], pt:["Aipo","Sal de aipo","Flocos de aipo","Sementes de aipo"], pl:["Seler","Sól selerowa","Płatki selera","Nasiona selera"], sv:["Selleri","Sellerisalt","Selleriflingor","Selleriefrön"], no:["Selleri","Sellerisalt","Sellerifnugg","Sellerifrø"], ja:["セロリ","セロリソルト","セロリフレーク","セロリシード"], zh:["芹菜","芹菜盐","芹菜片","芹菜籽"], ar:["كرفس","ملح الكرفس","رقائق الكرفس","بذور الكرفس"], tr:["Kereviz","Kereviz tuzu","Kereviz pul","Kereviz tohumu"], th:["คื่นฉ่าย","เกลือคื่นฉ่าย","คื่นฉ่ายแห้ง","เมล็ดคื่นฉ่าย"], el:["Σέλινο","Αλάτι σέλινου","Νιφάδες σέλινου","Σπόροι σέλινου"] },
+  },
+  sennep: {
+    products: { da:["Sennep","Dressing","Marinade","Curry","Pickles"], en:["Mustard","Dressing","Marinade","Curry","Pickles"], de:["Senf","Dressing","Marinade","Curry","Gewürzgurken"], fr:["Moutarde","Vinaigrette","Marinade","Curry","Cornichons"], es:["Mostaza","Aderezo","Marinada","Curry","Pepinillos"], it:["Senape","Condimento","Marinata","Curry","Sottaceti"], nl:["Mosterd","Dressing","Marinade","Curry","Augurken"], pt:["Mostarda","Molho","Marinada","Caril","Pickles"], pl:["Musztarda","Dressing","Marynata","Curry","Ogórki konserwowe"], sv:["Senap","Dressing","Marinad","Curry","Pickles"], no:["Sennep","Dressing","Marinade","Karri","Pickles"], ja:["マスタード","ドレッシング","マリネ","カレー","ピクルス"], zh:["芥末","沙拉酱","腌料","咖喱","泡菜"], ar:["خردل","صلصة السلطة","تتبيلة","كاري","مخللات"], tr:["Hardal","Sos","Turşu sosu","Köri","Turşu"], th:["มัสตาร์ด","น้ำสลัด","น้ำหมัก","แกงกะหรี่","ดองผัก"], el:["Μουστάρδα","Σαλτσάκι","Μαρινάδα","Κάρυ","Πίκλες"] },
+    ingredients: { da:["Sennepsfrø","Sennepsmel","Sennepsolie","Sennepspulver"], en:["Mustard seeds","Mustard flour","Mustard oil","Mustard powder"], de:["Senfkörner","Senfmehl","Senföl","Senfpulver"], fr:["Graines de moutarde","Farine de moutarde","Huile de moutarde","Poudre de moutarde"], es:["Semillas de mostaza","Harina de mostaza","Aceite de mostaza","Polvo de mostaza"], it:["Semi di senape","Farina di senape","Olio di senape","Polvere di senape"], nl:["Mosterdzaad","Mosterdmeel","Mosterdie","Mosterdpoeder"], pt:["Sementes de mostarda","Farinha de mostarda","Óleo de mostarda","Pó de mostarda"], pl:["Nasiona gorczycy","Mąka gorczycowa","Olej gorczycowy","Proszek gorczycowy"], sv:["Senapsfrön","Senapsmjöl","Senapsolja","Senapspulver"], no:["Sennepsfrø","Sennepsmel","Sennepsolje","Sennepspulver"], ja:["マスタードシード","マスタードフラワー","マスタードオイル","マスタードパウダー"], zh:["芥末籽","芥末粉","芥末油","芥末粉末"], ar:["بذور الخردل","دقيق الخردل","زيت الخردل","مسحوق الخردل"], tr:["Hardal tohumu","Hardal unu","Hardal yağı","Hardal tozu"], th:["เมล็ดมัสตาร์ด","แป้งมัสตาร์ด","น้ำมันมัสตาร์ด","ผงมัสตาร์ด"], el:["Σπόροι μουστάρδας","Αλεύρι μουστάρδας","Λάδι μουστάρδας","Σκόνη μουστάρδας"] },
+  },
+  sesam: {
+    products: { da:["Hummus","Tahini","Bagels","Sushi","Halvah"], en:["Hummus","Tahini","Bagels","Sushi","Halvah"], de:["Hummus","Tahini","Bagels","Sushi","Halva"], fr:["Houmous","Tahiné","Bagels","Sushi","Halva"], es:["Hummus","Tahini","Bagels","Sushi","Halva"], it:["Hummus","Tahini","Bagel","Sushi","Halva"], nl:["Hummus","Tahini","Bagels","Sushi","Halva"], pt:["Hummus","Tahini","Bagels","Sushi","Halva"], pl:["Hummus","Tahini","Bagele","Sushi","Chałwa"], sv:["Hummus","Tahini","Bagels","Sushi","Halva"], no:["Hummus","Tahini","Bagels","Sushi","Halva"], ja:["フムス","タヒニ","ベーグル","寿司","ハルヴァ"], zh:["鹰嘴豆泥","芝麻酱","百吉饼","寿司","哈尔瓦"], ar:["حمص","طحينة","بيغل","سوشي","حلاوة طحينية"], tr:["Humus","Tahin","Bagel","Sushi","Helva"], th:["ฮัมมัส","ทาฮีนี","เบเกิล","ซูชิ","ฮาลวา"], el:["Χούμους","Ταχίνι","Μπέιγκελ","Σούσι","Χαλβάς"] },
+    ingredients: { da:["Sesam","Sesamfrø","Tahini","Sesamolie","Sesammel"], en:["Sesame","Sesame seeds","Tahini","Sesame oil","Sesame flour"], de:["Sesam","Sesamsamen","Tahini","Sesamöl","Sesammehl"], fr:["Sésame","Graines de sésame","Tahiné","Huile de sésame","Farine de sésame"], es:["Sésamo","Semillas de sésamo","Tahini","Aceite de sésamo","Harina de sésamo"], it:["Sesamo","Semi di sesamo","Tahini","Olio di sesamo","Farina di sesamo"], nl:["Sesam","Sesamzaad","Tahini","Sesamolie","Sesambloem"], pt:["Sésamo","Sementes de sésamo","Tahini","Óleo de sésamo","Farinha de sésamo"], pl:["Sezam","Ziarna sezamu","Tahini","Olej sezamowy","Mąka sezamowa"], sv:["Sesam","Sesamfrön","Tahini","Sesamolja","Sesammjöl"], no:["Sesam","Sesamfrø","Tahini","Sesamolje","Sesammel"], ja:["ゴマ","ゴマの種","タヒニ","ゴマ油","ゴマ粉"], zh:["芝麻","芝麻籽","芝麻酱","芝麻油","芝麻粉"], ar:["سمسم","بذور السمسم","طحينة","زيت السمسم","دقيق السمسم"], tr:["Susam","Susam tohumu","Tahin","Susam yağı","Susam unu"], th:["งา","เมล็ดงา","ทาฮีนี","น้ำมันงา","แป้งงา"], el:["Σουσάμι","Σπόροι σουσαμιού","Ταχίνι","Λάδι σουσαμιού","Αλεύρι σουσαμιού"] },
+  },
+  svovl: {
+    products: { da:["Vin","Tørrede frugter","Konserves","Eddike","Syltetøj"], en:["Wine","Dried fruits","Preserves","Vinegar","Jam"], de:["Wein","Trockenfrüchte","Konserven","Essig","Marmelade"], fr:["Vin","Fruits secs","Conserves","Vinaigre","Confiture"], es:["Vino","Frutas secas","Conservas","Vinagre","Mermelada"], it:["Vino","Frutta secca","Conserve","Aceto","Marmellata"], nl:["Wijn","Gedroogd fruit","Conserven","Azijn","Jam"], pt:["Vinho","Frutas secas","Conservas","Vinagre","Compota"], pl:["Wino","Suszone owoce","Przetwory","Ocet","Dżem"], sv:["Vin","Torkad frukt","Konserver","Vinäger","Sylt"], no:["Vin","Tørket frukt","Hermetikk","Eddik","Syltetøy"], ja:["ワイン","ドライフルーツ","保存食","酢","ジャム"], zh:["葡萄酒","干果","罐头","醋","果酱"], ar:["نبيذ","فاكهة مجففة","معلبات","خل","مربى"], tr:["Şarap","Kurutulmuş meyve","Konserveler","Sirke","Reçel"], th:["ไวน์","ผลไม้แห้ง","อาหารกระป๋อง","น้ำส้มสายชู","แยม"], el:["Κρασί","Αποξηραμένα φρούτα","Κονσέρβες","Ξύδι","Μαρμελάδα"] },
+    ingredients: { da:["E220","E221","E222","Sulfitter","SO₂","Svovldioxid"], en:["E220","E221","E222","Sulphites","SO₂","Sulphur dioxide"], de:["E220","E221","E222","Sulfite","SO₂","Schwefeldioxid"], fr:["E220","E221","E222","Sulfites","SO₂","Dioxyde de soufre"], es:["E220","E221","E222","Sulfitos","SO₂","Dióxido de azufre"], it:["E220","E221","E222","Solfiti","SO₂","Anidride solforosa"], nl:["E220","E221","E222","Sulfieten","SO₂","Zwaveldioxide"], pt:["E220","E221","E222","Sulfitos","SO₂","Dióxido de enxofre"], pl:["E220","E221","E222","Siarczyny","SO₂","Dwutlenek siarki"], sv:["E220","E221","E222","Sulfiter","SO₂","Svaveldioxid"], no:["E220","E221","E222","Sulfitter","SO₂","Svoveldioksid"], ja:["E220","E221","E222","亜硫酸塩","SO₂","二酸化硫黄"], zh:["E220","E221","E222","亚硫酸盐","SO₂","二氧化硫"], ar:["E220","E221","E222","كبريتيت","SO₂","ثاني أكسيد الكبريت"], tr:["E220","E221","E222","Sülfit","SO₂","Kükürt dioksit"], th:["E220","E221","E222","ซัลไฟต์","SO₂","ซัลเฟอร์ไดออกไซด์"], el:["E220","E221","E222","Θειώδη","SO₂","Διοξείδιο του θείου"] },
+  },
+  lupin: {
+    products: { da:["Glutenfri mel","Pasta","Brød","Snacks","Panering"], en:["Gluten-free flour","Pasta","Bread","Snacks","Breading"], de:["Glutenfreies Mehl","Pasta","Brot","Snacks","Panade"], fr:["Farine sans gluten","Pâtes","Pain","Snacks","Chapelure"], es:["Harina sin gluten","Pasta","Pan","Snacks","Rebozado"], it:["Farina senza glutine","Pasta","Pane","Snack","Panatura"], nl:["Glutenvrij meel","Pasta","Brood","Snacks","Paneermeel"], pt:["Farinha sem glúten","Massa","Pão","Snacks","Panado"], pl:["Mąka bezglutenowa","Makaron","Chleb","Przekąski","Panierka"], sv:["Glutenfritt mjöl","Pasta","Bröd","Snacks","Panering"], no:["Glutenfritt mel","Pasta","Brød","Snacks","Panering"], ja:["グルテンフリー小麦粉","パスタ","パン","スナック","パン粉"], zh:["无麸质面粉","面食","面包","零食","面包屑"], ar:["دقيق خالي من الغلوتين","معكرونة","خبز","وجبات خفيفة","فتات الخبز"], tr:["Glutensiz un","Makarna","Ekmek","Atıştırmalık","Ekmek kırıntısı"], th:["แป้งไม่มีกลูเตน","พาสต้า","ขนมปัง","ขนมขบเคี้ยว","เกล็ดขนมปัง"], el:["Αλεύρι χωρίς γλουτένη","Ζυμαρικά","Ψωμί","Σνακ","Πανάδα"] },
+    ingredients: { da:["Lupinmel","Lupinfrø","Lupinprotein","Lupinfiber"], en:["Lupin flour","Lupin seeds","Lupin protein","Lupin fibre"], de:["Lupinenmehl","Lupinensamen","Lupinenprotein","Lupinenfaser"], fr:["Farine de lupin","Graines de lupin","Protéine de lupin","Fibre de lupin"], es:["Harina de altramuz","Semillas de altramuz","Proteína de altramuz","Fibra de altramuz"], it:["Farina di lupino","Semi di lupino","Proteina di lupino","Fibra di lupino"], nl:["Lupinebloem","Lupinezaad","Lupineprotein","Lupinevezel"], pt:["Farinha de tremoço","Sementes de tremoço","Proteína de tremoço","Fibra de tremoço"], pl:["Mąka łubinowa","Nasiona łubinu","Białko łubinu","Błonnik łubinu"], sv:["Lupinmjöl","Lupinfrön","Lupinprotein","Lupinfibrer"], no:["Lupinmel","Lupinfrø","Lupinprotein","Lupinfiber"], ja:["ルピナス粉","ルピナス種子","ルピナスタンパク","ルピナス繊維"], zh:["羽扇豆粉","羽扇豆种子","羽扇豆蛋白","羽扇豆纤维"], ar:["دقيق الترمس","بذور الترمس","بروتين الترمس","ألياف الترمس"], tr:["Lupin unu","Lupin tohumu","Lupin proteini","Lupin lifi"], th:["แป้งลูพิน","เมล็ดลูพิน","โปรตีนลูพิน","ไฟเบอร์ลูพิน"], el:["Αλεύρι λούπινων","Σπόροι λούπινων","Πρωτεΐνη λούπινων","Ίνες λούπινων"] },
+  },
+  bloeddyr: {
+    products: { da:["Paella","Pasta frutti di mare","Sushi","Risotto"], en:["Paella","Seafood pasta","Sushi","Risotto"], de:["Paella","Meeresfrüchtepasta","Sushi","Risotto"], fr:["Paella","Pâtes aux fruits de mer","Sushi","Risotto"], es:["Paella","Pasta con mariscos","Sushi","Risotto"], it:["Paella","Pasta ai frutti di mare","Sushi","Risotto"], nl:["Paella","Zeevruchtenpasta","Sushi","Risotto"], pt:["Paella","Massa com mariscos","Sushi","Risoto"], pl:["Paella","Makaron z owocami morza","Sushi","Risotto"], sv:["Paella","Skaldjurspasta","Sushi","Risotto"], no:["Paella","Sjømatpasta","Sushi","Risotto"], ja:["パエリア","シーフードパスタ","寿司","リゾット"], zh:["海鲜饭","海鲜面食","寿司","意大利烩饭"], ar:["باييلا","معكرونة بحرية","سوشي","ريزوتو"], tr:["Paella","Deniz ürünleri makarnası","Sushi","Risotto"], th:["ปาเอย่า","พาสต้าซีฟู้ด","ซูชิ","ริซอตโต้"], el:["Παέλα","Ζυμαρικά θαλασσινών","Σούσι","Ριζότο"] },
+    ingredients: { da:["Blæksprutte","Østers","Muslinger","Snegle","Kammusling"], en:["Squid","Oysters","Mussels","Snails","Scallops"], de:["Tintenfisch","Austern","Muscheln","Schnecken","Jakobsmuscheln"], fr:["Calamar","Huîtres","Moules","Escargots","Coquilles Saint-Jacques"], es:["Calamar","Ostras","Mejillones","Caracoles","Vieiras"], it:["Calamaro","Ostriche","Cozze","Lumache","Capesante"], nl:["Inktvis","Oesters","Mosselen","Slakken","Sint-jakobsschelpen"], pt:["Lula","Ostras","Mexilhões","Caracóis","Vieiras"], pl:["Kałamarnica","Ostrygi","Małże","Ślimaki","Przegrzebki"], sv:["Bläckfisk","Ostron","Musslor","Sniglar","Pilgrimsmusslor"], no:["Blekksprut","Østers","Muslinger","Snegler","Kamskjell"], ja:["イカ","カキ","ムール貝","カタツムリ","ホタテ"], zh:["鱿鱼","牡蛎","贻贝","蜗牛","扇贝"], ar:["حبار","محار","بلح البحر","حلزون","إسقلوب"], tr:["Kalamar","İstiridye","Midye","Salyangoz","Deniz tarağı"], th:["ปลาหมึก","หอยนางรม","หอยแมลงภู่","หอยทาก","หอยเชลล์"], el:["Καλαμάρι","Στρείδια","Μύδια","Σαλιγκάρια","Χτένια"] },
+  },
 };
 
 const AVATAR_COLORS = ["#52b788","#74c69d","#40916c","#b7e4c7","#2d6a4f","#95d5b2","#f4a261","#e76f51"];
@@ -1223,13 +1265,16 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     setScanError("");
     try {
       const { Html5Qrcode } = await import("html5-qrcode");
-      // Sørg for at qr-reader elementet eksisterer
-      const readerEl = document.getElementById("qr-reader");
+      // Brug qr-reader-home hvis vi er på hjem, ellers qr-reader
+      const homeEl = document.getElementById("qr-reader-home");
+      const scanEl = document.getElementById("qr-reader");
+      const readerId = homeEl ? "qr-reader-home" : "qr-reader";
+      const readerEl = homeEl || scanEl;
       if (!readerEl) {
         setScanError("Kamera-element ikke fundet. Prøv igen.");
         return;
       }
-      html5QrRef.current = new Html5Qrcode("qr-reader");
+      html5QrRef.current = new Html5Qrcode(readerId);
       await html5QrRef.current.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 150 } },
@@ -1517,7 +1562,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     } catch { /* silent */ }
   };
 
-  // ── SØGNING ────────────────────────────────────────────────────────────────
+  // ── SØGNING via Edge Function ───────────────────────────────────────────────
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -1525,37 +1570,29 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
       setSearchLoading(false);
       return;
     }
-    
-    const timer = setTimeout(() => {
+
+    const timer = setTimeout(async () => {
       setSearchLoading(true);
       setSearchResults([]);
       const q = searchQuery.trim();
 
-      // Søg i Supabase — to separate kald for navn og brand
-      const headers = { 
-        "apikey": SUPABASE_ANON_KEY, 
-        "Accept": "application/json",
-        ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {})
-      };
-      const enc = encodeURIComponent(q);
-      const base = `${SUPABASE_URL}/rest/v1/products?select=id,ean,name,brand,category,image_url,verified_status&limit=20`;
-
-      Promise.all([
-        fetch(`${base}&name=ilike.*${enc}*`, { headers }).then(r => r.ok ? r.json() : []),
-        fetch(`${base}&brand=ilike.*${enc}*`, { headers }).then(r => r.ok ? r.json() : []),
-      ]).then(([byName, byBrand]) => {
-        const seen = new Set();
-        const combined = [...(Array.isArray(byName)?byName:[]), ...(Array.isArray(byBrand)?byBrand:[])].filter(p => {
-          if (seen.has(p.id)) return false;
-          seen.add(p.id);
-          return true;
-        }).map(p => ({ ...p, source:"local", verified:p.verified_status, conflicts:[] }));
-        setSearchResults(combined);
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(q)}`,
+          { headers: { "apikey": SUPABASE_ANON_KEY, ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) } }
+        );
+        const data = await res.json();
+        if (data.success) {
+          setSearchResults((data.products || []).map(p => ({ ...p, source:"local", verified:p.verified_status, conflicts:[] })));
+        }
+      } catch {
+        // silent
+      } finally {
         setSearchLoading(false);
-      }).catch(() => { setSearchLoading(false); });
+      }
+    }, 350);
 
-    }, 450);
-    return () => { clearTimeout(timer); };
+    return () => clearTimeout(timer);
   }, [searchQuery, accessToken]);
 
     // ── HJÆLPEKOMPONENTER ──────────────────────────────────────────────────────
@@ -2028,7 +2065,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               cursor:"pointer", overflow:"hidden", position:"relative",
               boxShadow:"0 4px 20px rgba(31,39,51,.18)",
               transition:"transform .15s, box-shadow .15s",
-            }} onClick={() => { setScreen(SCREENS.SCAN); setTimeout(startCamera, 120); }}>
+            }} onClick={() => { setCameraActive(true); setTimeout(startCamera, 50); setScreen(SCREENS.SCAN); }}>
               {/* Laser animation baggrund */}
               <div style={{ padding:"28px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16, position:"relative" }}>
                 {/* Stregkode-animation */}
@@ -2115,44 +2152,20 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               </div>
             )}
 
-            {/* Dagligt tip — kompakt, over bundbjælken */}
+            {/* Vidste du at — let, i bunden */}
             {(() => {
               const tip = HOME_TIPS[new Date().getDay() % HOME_TIPS.length];
               return (
-                <div style={{ display:"flex", gap:10, alignItems:"center", padding:"10px 12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, marginBottom:8 }}>
-                  <div style={{ fontSize:16, flexShrink:0 }}>{tip.icon}</div>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:9, fontWeight:700, color:"var(--green)", textTransform:"uppercase", letterSpacing:".5px" }}>Vidste du at</div>
-                    <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginTop:1 }}>{tip.title}</div>
-                    <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.4, marginTop:2, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>{tip.text}</div>
+                <div style={{ display:"flex", gap:10, alignItems:"flex-start", padding:"10px 0", borderTop:"1px solid var(--border)", marginTop:4 }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:3 }}>Vidste du at</div>
+                    <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{tip.title}</div>
+                    <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>{tip.text}</div>
                   </div>
+                  <div style={{ fontSize:18, flexShrink:0, opacity:.6 }}>{tip.icon}</div>
                 </div>
               );
             })()}
-
-            {/* 9. DEV: Dummy produkt — nederst */}
-            <div className="card" style={{ borderStyle:"dashed", borderColor:"var(--border2)" }}>
-              <div className="card-lbl">🧪 Preview / Test</div>
-              <button className="btn btn-ghost btn-full btn-sm" onClick={() => {
-                const flags = DUMMY_PRODUCT.allergen_flags;
-                const { status, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(flags, activeIds);
-                const familyImpact = family.filter(m => activeProfiles.includes(m.id)).reduce((acc, m) => {
-                  const r = compareAllergens(flags, m.allergens||[]);
-                  if (r.matchedDanger.length > 0 || r.matchedWarning.length > 0) acc.push({ name:m.name, color:m.color, danger:r.matchedDanger, warning:r.matchedWarning });
-                  return acc;
-                }, []);
-                const headlines = { safe:"Sikkert produkt ✅", danger:"Indeholder allergen! 🚫", warn:"Mulige spor ⚠️" };
-                const summaries = {
-                  safe:"Ingen af dine registrerede allergener er fundet i dette produkt.",
-                  danger:`Produktet indeholder ${matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
-                  warn:`Produktet kan indeholde spor af ${matchedWarning.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
-                };
-                setScanResult({ ...DUMMY_PRODUCT, status, headline:headlines[status], summary:summaries[status], matchedDanger, matchedWarning, familyImpact, hasUnknown });
-                setScreen(SCREENS.RESULT);
-              }}>
-                Vis dummy produkt (Nutella)
-              </button>
-            </div>
 
           </div>
         )}
@@ -2368,15 +2381,36 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                   <span>{showIng?"▲":"▼"}</span>
                 </div>
                 {showIng && (
-                  <div style={{ marginTop:10, padding:"10px", background:"var(--paper2)", borderRadius:8 }}>
-                    <IngredientsList text={scanResult.ingredients} allergenFlags={scanResult.allergen_flags||{}} />
-                    <div style={{ fontSize:10, color:"var(--muted)", marginTop:8, fontStyle:"italic" }}>
+                  <div style={{ marginTop:10 }}>
+                    <div style={{ padding:"10px", background:"var(--paper2)", borderRadius:8, marginBottom:8 }}>
+                      <IngredientsList text={scanResult.ingredients} allergenFlags={scanResult.allergen_flags||{}} />
+                    </div>
+                    <div style={{ fontSize:10, color:"var(--muted)", fontStyle:"italic", marginBottom:6 }}>
                       🔴 Fremhævet = kendt allergen
+                    </div>
+                    <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
+                      ⚠️ Ingredienslisten vises som den fremgår på emballagen og kan være på et andet sprog. Resultater er vejledende — tjek altid selv.
                     </div>
                   </div>
                 )}
               </div>
             )}
+
+            {/* Ansvarsfraskrivelse */}
+            <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 14px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:10, marginBottom:10 }}>
+              <span style={{ fontSize:14, flexShrink:0 }}>⚠️</span>
+              <div style={{ fontSize:11, color:"var(--amber)", lineHeight:1.5, fontWeight:600 }}>
+                Resultater er vejledende og kan indeholde fejl. Tjek altid selv ved alvorlige allergier.
+              </div>
+            </div>
+
+            {/* Ansvarsfraskrivelse */}
+            <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 14px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:10, marginBottom:10 }}>
+              <span style={{ fontSize:14, flexShrink:0 }}>⚠️</span>
+              <div style={{ fontSize:11, color:"var(--amber)", lineHeight:1.5, fontWeight:600 }}>
+                Resultater er vejledende og kan indeholde fejl. Tjek altid selv ved alvorlige allergier.
+              </div>
+            </div>
 
             {/* Handlinger */}
             <div className="card">
@@ -2683,14 +2717,14 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 <div className="profile-hero-name">{user.name||"Din profil"}</div>
                 <div className="profile-hero-sub">{allergens.length+customAllerg.length} allergi{allergens.length+customAllerg.length!==1?"er":""} · {family.length} familiemedlem{family.length!==1?"mer":""}</div>
               </div>
-              <button className="profile-edit-btn" onClick={() => { setEditMode(true); setOnboardStep(1); }}>Rediger</button>
+              <button className="profile-edit-btn" onClick={() => setScreen(SCREENS.EDITPROFILE)}>Rediger</button>
             </div>
 
             {/* Mine allergier */}
             <div className="card">
               <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
                 <span>Mine allergier</span>
-                <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:11 }} onClick={() => { setEditMode(true); setOnboardStep(4); }}>Rediger</span>
+                <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:11 }} onClick={() => setScreen(SCREENS.EDITPROFILE)}>Rediger</span>
               </div>
               {allergens.length+customAllerg.length===0
                 ? <div style={{ fontSize:13, color:"var(--muted)" }}>Ingen registreret — tryk Rediger</div>
@@ -2704,6 +2738,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 ["👨‍👩‍👧", "Familie", () => setScreen(SCREENS.FAMILY)],
                 ["🌍", "Madpas", () => setScreen(SCREENS.MADPAS)],
                 ["🍽️", "Opskrifter", () => setScreen(SCREENS.RECIPES)],
+                ...(user.role === "admin" ? [["⚙️", "Admin", () => { loadSubmissions(); loadAdminStats(); setScreen(SCREENS.ADMIN); }]] : []),
               ].map(([icon, lbl, fn], i, arr) => (
                 <div key={lbl} onClick={fn} style={{
                   display:"flex", alignItems:"center", gap:12,
@@ -2960,6 +2995,14 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               <div style={{ fontSize:11, color:"var(--muted)", marginTop:8, fontStyle:"italic" }}>Klik én gang = Ja, igen = Spor, igen = Nej</div>
             </div>
 
+            {/* Ansvarsfraskrivelse */}
+            <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 14px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:10, marginBottom:10 }}>
+              <span style={{ fontSize:14, flexShrink:0 }}>⚠️</span>
+              <div style={{ fontSize:11, color:"var(--amber)", lineHeight:1.5, fontWeight:600 }}>
+                Resultater er vejledende og kan indeholde fejl. Tjek altid selv ved alvorlige allergier.
+              </div>
+            </div>
+
             {/* Handlinger */}
             <div className="card">
               <div className="card-lbl">Handlinger</div>
@@ -3081,98 +3124,97 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {screen === SCREENS.MADPAS && (
           <div className="mp-page fade-in">
 
-            {/* TJENER-VISNING — fullscreen overlay */}
+            {/* TJENER-VISNING — fullscreen overlay, identisk med madpas */}
             {madpasWaiterView && (() => {
               const lang = madpasLang;
               const rtl = MADPAS_LANGUAGES.find(l => l.code === lang)?.rtl;
-              const cannotLabel = { en:'I cannot eat:', de:'Ich kann nicht essen:', fr:"Je ne peux pas manger :", es:"No puedo comer:", it:"Non posso mangiare:", nl:"Ik kan niet eten:", pt:"Não posso comer:", pl:"Nie mogę jeść:", ja:"食べられません：", zh:"我不能吃：", ar:"لا أستطيع تناول:", tr:"Yiyemiyorum:", sv:"Jag kan inte äta:", no:"Jeg kan ikke spise:", th:"ฉันไม่สามารถกิน:", el:"Δεν μπορώ να φάω:", da:"Jeg kan ikke spise:" };
               const helloText = { en:"I have food allergies.", de:"Ich habe Lebensmittelallergien.", fr:"J'ai des allergies alimentaires.", es:"Tengo alergias alimentarias.", it:"Ho allergie alimentari.", nl:"Ik heb voedselallergieën.", pt:"Tenho alergias alimentares.", pl:"Mam alergie pokarmowe.", ja:"食物アレルギーがあります。", zh:"我有食物过敏。", ar:"لدي حساسية غذائية.", tr:"Gıda alerjilerim var.", sv:"Jag har matallergier.", no:"Jeg har matallergier.", th:"ฉันมีอาการแพ้อาหาร", el:"Έχω αλλεργίες τροφίμων.", da:"Jeg har fødevareallergier." };
+              const cannotLabel = { en:"I cannot eat:", de:"Ich kann nicht essen:", fr:"Je ne peux pas manger :", es:"No puedo comer:", it:"Non posso mangiare:", nl:"Ik kan niet eten:", pt:"Não posso comer:", pl:"Nie mogę jeść:", ja:"食べられません：", zh:"我不能吃：", ar:"لا أستطيع تناول:", tr:"Yiyemiyorum:", sv:"Jag kan inte äta:", no:"Jeg kan ikke spise:", th:"ฉันไม่สามารถกิน:", el:"Δεν μπορώ να φάω:", da:"Jeg kan ikke spise:" };
               const helpText = { en:"Can you help me find something safe?", de:"Können Sie mir helfen?", fr:"Pouvez-vous m'aider ?", es:"¿Puede ayudarme?", it:"Può aiutarmi?", nl:"Kunt u mij helpen?", pt:"Pode ajudar-me?", pl:"Czy może mi pomóc?", ja:"手伝っていただけますか？", zh:"您能帮助我吗？", ar:"هل يمكنك مساعدتي؟", tr:"Yardım edebilir misiniz?", sv:"Kan du hjälpa mig?", no:"Kan du hjelpe meg?", th:"คุณช่วยฉันได้ไหม?", el:"Μπορείτε να με βοηθήσετε;", da:"Kan du hjælpe mig?" };
+              const productLabel = { da:"Fx i", en:"E.g. in", de:"Z.B. in", fr:"Ex. dans", es:"Ej. en", it:"Es. in", nl:"Bijv. in", pt:"Ex. em", pl:"Np. w", sv:"T.ex. i", no:"F.eks. i", ja:"例えば", zh:"例如", ar:"مثلاً في", tr:"Örn.", th:"เช่นใน", el:"Π.χ." };
+              const ingredientLabel = { da:"Se efter", en:"Look for", de:"Achten auf", fr:"Chercher", es:"Buscar", it:"Cercare", nl:"Let op", pt:"Procurar", pl:"Szukaj", sv:"Se efter", no:"Se etter", ja:"確認を", zh:"注意", ar:"ابحث عن", tr:"Ara", th:"ดูหา", el:"Ψάξτε" };
               const langInfo = MADPAS_LANGUAGES.find(l => l.code === lang);
               return (
-                <div style={{
-                  position:"fixed", inset:0, zIndex:9999,
-                  background:"var(--paper)", display:"flex", flexDirection:"column",
-                  padding:"0",
-                }} dir={rtl ? "rtl" : "ltr"}>
+                <div style={{ position:"fixed", inset:0, zIndex:9999, background:"var(--paper)", display:"flex", flexDirection:"column" }} dir={rtl ? "rtl" : "ltr"}>
 
                   {/* Header */}
-                  <div style={{ padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid var(--border)" }}>
+                  <div style={{ padding:"14px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid var(--border)", flexShrink:0 }}>
                     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                      <span style={{ fontSize:22 }}>{langInfo?.flag}</span>
+                      <span style={{ fontSize:20 }}>{langInfo?.flag}</span>
                       <span style={{ fontSize:13, fontWeight:700, color:"var(--muted)" }}>{langInfo?.name}</span>
                     </div>
-                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                      {window.speechSynthesis && (
-                        <button onClick={madpasSpeak} style={{
-                          background: madpasSpeaking ? "var(--amber)" : "var(--green)",
-                          border:"none",
-                          borderRadius:12, padding:"14px 28px", fontSize:18, fontWeight:800,
-                          color:"#fff", cursor:"pointer", fontFamily:"var(--f)",
-                          display:"flex", alignItems:"center", gap:10,
-                          boxShadow: madpasSpeaking ? "0 4px 16px rgba(217,119,6,.4)" : "0 4px 16px rgba(34,197,94,.4)",
-                          flex:1,
-                          justifyContent:"center",
-                        }}>
-                          <span style={{ fontSize:22 }}>{madpasSpeaking ? "⏹" : "🔊"}</span>
-                          {madpasSpeaking ? "Stop" : "Oplæs"}
-                        </button>
-                      )}
-                      <button onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }} style={{
-                        background:"var(--paper2)", border:"1px solid var(--border2)",
-                        borderRadius:8, padding:"6px 12px", fontSize:13, fontWeight:700,
-                        color:"var(--ink2)", cursor:"pointer", fontFamily:"var(--f)",
-                      }}>← Tilbage</button>
-                    </div>
+                    <button onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }} style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:8, padding:"6px 12px", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer", fontFamily:"var(--f)" }}>← Tilbage</button>
                   </div>
 
-                  {/* Indhold */}
-                  <div style={{ flex:1, display:"flex", flexDirection:"column", justifyContent:"center", padding:"40px 32px", gap:32 }}>
-
-                    {/* Hej-sætning */}
-                    <div style={{ fontSize:20, color:"var(--ink2)", lineHeight:1.6, fontWeight:500 }}>
+                  {/* Indhold — scrollbart, identisk med madpas */}
+                  <div style={{ flex:1, overflowY:"auto", padding:"24px 20px" }}>
+                    <div style={{ fontSize:20, color:"var(--ink)", fontWeight:500, marginBottom:20, lineHeight:1.5 }}>
                       {helloText[lang] || helloText.en}
                     </div>
-
-                    {/* Allergener — ren og tydelig liste */}
-                    <div>
-                      <div style={{ fontSize:14, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:16 }}>
-                        {cannotLabel[lang] || cannotLabel.en}
-                      </div>
-                      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-                        {[...allergens, ...customAllerg.map(c => ({ custom: true, label: c }))].map((item, i) => {
-                          if (typeof item === "string") {
-                            const a = ALLERGENS.find(x => x.id === item);
-                            if (!a) return null;
-                            const t = ALLERGEN_T[item]?.[lang] || ALLERGEN_T[item]?.en;
-                            return (
-                              <div key={i} style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 0", borderBottom:"1px solid var(--border)" }}>
-                                <span style={{ fontSize:28, flexShrink:0 }}>{a.emoji}</span>
-                                <span style={{ fontSize:20, fontWeight:700, color:"var(--ink)" }}>{t?.n || a.label}</span>
-                              </div>
-                            );
-                          }
+                    <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:16 }}>
+                      {cannotLabel[lang] || cannotLabel.en}
+                    </div>
+                    <div style={{ display:"flex", flexDirection:"column" }}>
+                      {[...allergens, ...customAllerg.map(c => ({ custom:true, label:c }))].map((item, i, arr) => {
+                        const isLast = i === arr.length - 1;
+                        if (typeof item === "string") {
+                          const a = ALLERGENS.find(x => x.id === item);
+                          if (!a) return null;
+                          const t = ALLERGEN_T[item]?.[lang] || ALLERGEN_T[item]?.en;
+                          const ex = ALLERGEN_EXAMPLES[item];
+                          const exProducts = ex?.products?.[lang] || ex?.products?.en || [];
+                          const exIngredients = ex?.ingredients?.[lang] || ex?.ingredients?.en || [];
                           return (
-                            <div key={i} style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 0", borderBottom:"1px solid var(--border)" }}>
-                              <span style={{ fontSize:28, flexShrink:0 }}>✏️</span>
-                              <span style={{ fontSize:20, fontWeight:700, color:"var(--ink)" }}>{item.label}</span>
+                            <div key={i} style={{ padding:"16px 0", borderBottom: isLast ? "none" : "1px solid var(--border)" }}>
+                              <div style={{ fontSize:22, fontWeight:800, color:"var(--ink)", marginBottom: ex ? 10 : 0 }}>
+                                {t?.n || a.label}
+                              </div>
+                              {ex && (
+                                <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                                  <div style={{ fontSize:12, color:"var(--muted)" }}>
+                                    {productLabel[lang] || productLabel.en}: <span style={{ color:"var(--ink2)", fontWeight:600 }}>{exProducts.slice(0,3).join(", ")}</span>
+                                  </div>
+                                  <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+                                    <span style={{ fontSize:12, color:"var(--muted)" }}>{ingredientLabel[lang] || ingredientLabel.en}:</span>
+                                    {exIngredients.slice(0,4).map((ing, j) => (
+                                      <span key={j} style={{ fontSize:11, fontWeight:700, padding:"3px 9px", background:"var(--paper2)", color:"var(--ink2)", border:"1px solid var(--border2)", borderRadius:100 }}>{ing}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
-                        })}
-                      </div>
+                        }
+                        return (
+                          <div key={i} style={{ fontSize:22, fontWeight:800, color:"var(--ink)", padding:"16px 0", borderBottom: isLast ? "none" : "1px solid var(--border)" }}>
+                            {item.label}
+                          </div>
+                        );
+                      })}
                     </div>
-
-                    {/* Afslutning */}
-                    <div style={{ fontSize:17, color:"var(--muted2)", lineHeight:1.7 }}>
+                    <div style={{ fontSize:16, color:"var(--muted2)", margin:"20px 0 8px", lineHeight:1.6 }}>
                       {helpText[lang] || helpText.en}
                     </div>
                   </div>
 
-                  {/* Footer */}
-                  <div style={{ padding:"12px 20px", borderTop:"1px solid var(--border)", textAlign:"center" }}>
+                  {/* Footer med stor oplæs-knap */}
+                  <div style={{ padding:"16px 20px 32px", borderTop:"1px solid var(--border)", flexShrink:0 }}>
+                    {window.speechSynthesis && (
+                      <button onClick={madpasSpeak} style={{
+                        width:"100%", background: madpasSpeaking ? "var(--amber)" : "var(--green)",
+                        border:"none", borderRadius:14, padding:"18px", fontSize:20, fontWeight:800,
+                        color:"#fff", cursor:"pointer", fontFamily:"var(--f)",
+                        display:"flex", alignItems:"center", justifyContent:"center", gap:12,
+                        boxShadow: madpasSpeaking ? "0 4px 16px rgba(217,119,6,.35)" : "0 4px 16px rgba(34,197,94,.35)",
+                        marginBottom:10,
+                      }}>
+                        <span style={{ fontSize:24 }}>{madpasSpeaking ? "⏹" : "🔊"}</span>
+                        {madpasSpeaking ? "Stop oplæsning" : "Oplæs højt"}
+                      </button>
+                    )}
                     <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                      <EatSafeLogo size={18} variant="light" />
-                      <span style={{ fontSize:12, color:"var(--muted)", fontWeight:600 }}>EatSafe</span>
+                      <EatSafeLogo size={14} variant="light" />
+                      <span style={{ fontSize:11, color:"var(--muted)", fontWeight:600 }}>EatSafe</span>
                     </div>
                   </div>
                 </div>
@@ -3217,80 +3259,86 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 </div>
               )}
 
-              {/* TEKST-KORT */}
+              {/* ALLERGEN LISTE */}
               {(allergens.length > 0 || customAllerg.length > 0) && (() => {
                 const lang = madpasLang;
                 const rtl = MADPAS_LANGUAGES.find(l => l.code === lang)?.rtl;
-                const big = madpasBig;
-                const helloText = { en:"Hello. I have food allergies and intolerances.", de:"Hallo. Ich habe Lebensmittelallergien und -unverträglichkeiten.", fr:"Bonjour. J'ai des allergies alimentaires et des intolérances.", es:"Hola. Tengo alergias alimentarias e intolerancias.", it:"Salve. Ho allergie alimentari e intolleranze.", nl:"Hallo. Ik heb voedselallergieën en -intoleranties.", pt:"Olá. Tenho alergias alimentares e intolerâncias.", pl:"Cześć. Mam alergie pokarmowe i nietolerancje.", ja:"こんにちは。私は食物アレルギーと不耐症があります。", zh:"您好。我有食物过敏和不耐受。", ar:"مرحباً. لدي حساسية غذائية وتعصبات.", tr:"Merhaba. Gıda alerjilerim ve intoleranslarım var.", sv:"Hej. Jag har matallergier och intoleranser.", no:"Hei. Jeg har matallergier og intoleranser.", th:"สวัสดี ฉันมีอาการแพ้อาหารและการแพ้", el:"Γεια σας. Έχω αλλεργίες και δυσανεξίες.", da:"Hej. Jeg har fødevareallergier og intoleranser." };
-                const cannotLabel = { en:'I CANNOT eat (incl. "may contain"):', de:'Ich kann NICHT essen (inkl. "kann enthalten"):', fr:"Je NE PEUX PAS manger (incl. « peut contenir ») :", es:"NO puedo comer (incl. «puede contener»):", it:"NON posso mangiare (incl. «può contenere»):", nl:"Ik KAN NIET eten (incl. 'kan bevatten'):", pt:"NÃO posso comer (incl. «pode conter»):", pl:'NIE mogę jeść (w tym "może zawierać"):', ja:"食べられません（「含む可能性あり」を含む）：", zh:'\u6211\u4e0d\u80fd\u5403\uff08\u5305\u62ec"\u53ef\u80fd\u542b\u6709"\uff09\uff1a', ar:"\u0644\u0627 \u0623\u0633\u062a\u0637\u064a\u0639 \u062a\u0646\u0627\u0648\u0644 (\u0628\u0645\u0627 \u0641\u064a\u0647 \"\u0642\u062f \u064a\u062d\u062a\u0648\u064a\"):", tr:'Y\u0130YEMEYECE\u011e\u0130M ("i\u00e7erebilir" dahil):', sv:'Jag KAN INTE \u00e4ta (inkl. "kan inneh\u00e5lla"):', no:'Jeg KAN IKKE spise (inkl. \u00abkan inneholde"):', th:"\u0e09\u0e31\u0e19 \u0e44\u0e21\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16 \u0e01\u0e34\u0e19 (\u0e23\u0e27\u0e21 \"\u0e2d\u0e32\u0e08\u0e21\u0e35\"):", el:"\u0394\u0395\u039d \u03bc\u03c0\u03bf\u03c1\u03ce \u03bd\u03b1 \u03c6\u03ac\u03c9 (\u03c3\u03c5\u03bc\u03c0. \u00ab\u03bc\u03c0\u03bf\u03c1\u03b5\u03af \u03bd\u03b1 \u03c0\u03b5\u03c1\u03b9\u03ad\u03c7\u03b5\u03b9\u00bb):", da:'Jeg kan IKKE spise selv spor af f\u00f8lgende (inkl. "kan indeholde"):' };
-                const helpText = { en:"Can you help me find something safe to eat? Thank you.", de:"Können Sie mir helfen, etwas Sicheres zu finden? Vielen Dank.", fr:"Pouvez-vous m'aider à trouver quelque chose de sûr à manger ? Merci.", es:"¿Puede ayudarme a encontrar algo seguro para comer? Muchas gracias.", it:"Può aiutarmi a trovare qualcosa di sicuro da mangiare? Grazie mille.", nl:"Kunt u mij helpen iets veiligs te vinden om te eten? Hartelijk dank.", pt:"Pode ajudar-me a encontrar algo seguro para comer? Muito obrigado.", pl:"Czy może mi Pan/Pani pomóc znaleźć coś bezpiecznego do jedzenia? Dziękuję.", ja:"安全に食べられるものを選ぶのを手伝っていただけますか？ありがとうございます。", zh:"您能帮我找到可以安全食用的东西吗？非常感谢。", ar:"هل يمكنك مساعدتي في إيجاد شيء آمن لتناوله؟ شكراً جزيلاً.", tr:"Güvenli bir şey bulmama yardımcı olabilir misiniz? Çok teşekkürler.", sv:"Kan du hjälpa mig att hitta något säkert att äta? Tack så mycket.", no:"Kan du hjelpe meg å finne noe trygt å spise? Mange takk.", th:"คุณช่วยฉันหาอาหารที่ปลอดภัยได้ไหม? ขอบคุณมาก", el:"Μπορείτε να με βοηθήσετε να βρω κάτι ασφαλές να φάω; Ευχαριστώ.", da:"Kan du hjælpe mig med at vælge noget sikkert at spise? Mange tak." };
-                const familyLabel = { en:"Also for my family members:", de:"Auch für meine Familienmitglieder:", fr:"Aussi pour mes proches :", es:"También para mis familiares:", it:"Anche per i miei familiari:", nl:"Ook voor mijn familieleden:", pt:"Também para os meus familiares:", pl:"Również dla moich bliskich:", ja:"家族のために：", zh:"也为我的家人：", ar:"أيضاً لأفراد عائلتي:", tr:"Aile üyelerim için de:", sv:"Även för mina familjemedlemmar:", no:"Også for mine familiemedlemmer:", th:"รวมถึงสำหรับสมาชิกในครอบครัวของฉัน:", el:"Επίσης για τα μέλη της οικογένειάς μου:", da:"Også for mine familiemedlemmer:" };
-                const visLabel = { en:"Show to waiter", de:"Dem Kellner zeigen", fr:"Montrer au serveur", es:"Mostrar al camarero", it:"Mostrare al cameriere", nl:"Tonen aan ober", pt:"Mostrar ao empregado", pl:"Pokaż kelnerowi", ja:"ウェイターに見せる", zh:"展示给服务员", ar:"أرِ النادل", tr:"Garsona göster", sv:"Visa för servitören", no:"Vis til kelneren", th:"แสดงให้พนักงาน", el:"Δείξτε στον σερβιτόρο", da:"Vis til tjener" };
-                const sz = big ? 19 : 14;
-                const sz2 = big ? 17 : 13;
-                const sz3 = big ? 22 : 16;
-                const pillPad = big ? "6px 14px" : "4px 11px";
+                const helloText = { en:"I have food allergies.", de:"Ich habe Lebensmittelallergien.", fr:"J'ai des allergies alimentaires.", es:"Tengo alergias alimentarias.", it:"Ho allergie alimentari.", nl:"Ik heb voedselallergieën.", pt:"Tenho alergias alimentares.", pl:"Mam alergie pokarmowe.", ja:"食物アレルギーがあります。", zh:"我有食物过敏。", ar:"لدي حساسية غذائية.", tr:"Gıda alerjilerim var.", sv:"Jag har matallergier.", no:"Jeg har matallergier.", th:"ฉันมีอาการแพ้อาหาร", el:"Έχω αλλεργίες τροφίμων.", da:"Jeg har fødevareallergier." };
+                const cannotLabel = { en:"I cannot eat:", de:"Ich kann nicht essen:", fr:"Je ne peux pas manger :", es:"No puedo comer:", it:"Non posso mangiare:", nl:"Ik kan niet eten:", pt:"Não posso comer:", pl:"Nie mogę jeść:", ja:"食べられません：", zh:"我不能吃：", ar:"لا أستطيع تناول:", tr:"Yiyemiyorum:", sv:"Jag kan inte äta:", no:"Jeg kan ikke spise:", th:"ฉันไม่สามารถกิน:", el:"Δεν μπορώ να φάω:", da:"Jeg kan ikke spise:" };
+                const helpText = { en:"Can you help me find something safe?", de:"Können Sie mir helfen?", fr:"Pouvez-vous m'aider ?", es:"¿Puede ayudarme?", it:"Può aiutarmi?", nl:"Kunt u mij helpen?", pt:"Pode ajudar-me?", pl:"Czy może mi pomóc?", ja:"手伝っていただけますか？", zh:"您能帮助我吗？", ar:"هل يمكنك مساعدتي؟", tr:"Yardım edebilir misiniz?", sv:"Kan du hjälpa mig?", no:"Kan du hjelpe meg?", th:"คุณช่วยฉันได้ไหม?", el:"Μπορείτε να με βοηθήσετε;", da:"Kan du hjælpe mig?" };
                 return (
-                  <div style={{ padding:"0 0 8px" }} dir={rtl ? "rtl" : "ltr"}>
+                  <div style={{ paddingBottom:8 }} dir={rtl ? "rtl" : "ltr"}>
 
-                    {/* HOVED TEKST-KORT */}
-                    <div className="mp-card" style={{ fontSize:sz, lineHeight:big?1.9:1.75 }}>
-                      <div style={{ fontWeight:600, color:"var(--ink)", marginBottom:12, fontSize:big?20:15 }}>
-                        {helloText[lang] || helloText.en}
-                      </div>
-                      <div style={{ borderLeft:"4px solid var(--green)", paddingLeft:14, marginBottom:12 }}>
-                        <div style={{ fontWeight:800, color:"var(--red)", marginBottom:8, fontSize:sz2 }}>
-                          {cannotLabel[lang] || cannotLabel.en}
-                        </div>
-                        <div style={{ display:"flex", flexWrap:"wrap" }}>
-                          {allergens.map(id => {
-                            const a = ALLERGENS.find(x => x.id === id); if (!a) return null;
-                            const t = ALLERGEN_T[id]?.[lang] || ALLERGEN_T[id]?.en;
-                            return (
-                              <span key={id} className="mp-allergen-pill" style={{ fontSize:sz2, padding:pillPad }}>
-                                <span style={{ fontSize:sz3 }}>{a.emoji}</span>{t?.n || a.label}
-                              </span>
-                            );
-                          })}
-                          {customAllerg.map((c, i) => (
-                            <span key={i} className="mp-allergen-pill custom" style={{ fontSize:sz2, padding:pillPad }}>✏️ {c}</span>
-                          ))}
-                        </div>
-                      </div>
-                      {family.filter(m => m.allergens.length > 0).length > 0 && (
-                        <div style={{ borderLeft:"4px solid var(--blue)", paddingLeft:14, marginBottom:12 }}>
-                          <div style={{ fontWeight:800, color:"var(--blue)", marginBottom:8, fontSize:sz2 }}>
-                            {familyLabel[lang] || familyLabel.en}
-                          </div>
-                          {family.filter(m => m.allergens.length > 0).map(m => (
-                            <div key={m.id} className="mp-family-row">
-                              <div style={{ width:26, height:26, borderRadius:"50%", background:m.color, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:800, flexShrink:0 }}>{initials(m.name)}</div>
-                              <span style={{ fontWeight:700, fontSize:big?15:12, color:"var(--ink)", flexShrink:0 }}>{m.name}:</span>
-                              <div style={{ display:"flex", flexWrap:"wrap", gap:3 }}>
-                                {m.allergens.map(id => { const a = ALLERGENS.find(x => x.id === id); if (!a) return null; const t = ALLERGEN_T[id]?.[lang] || ALLERGEN_T[id]?.en; return (<span key={id} style={{ display:"inline-flex", alignItems:"center", gap:3, padding:"2px 8px", background:"rgba(37,99,235,.07)", border:"1px solid rgba(37,99,235,.2)", borderRadius:100, fontSize:big?14:11, fontWeight:700, color:"var(--blue)" }}>{a.emoji} {t?.n || a.label}</span>);})}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <div style={{ color:"var(--muted2)", fontSize:big?16:13, fontStyle:"italic" }}>
-                        {helpText[lang] || helpText.en}
-                      </div>
+                    {/* Intro */}
+                    <div style={{ fontSize:20, color:"var(--ink)", fontWeight:500, marginBottom:20, lineHeight:1.5 }}>
+                      {helloText[lang] || helloText.en}
                     </div>
 
-                    {/* VIS TIL TJENER — åbner fullscreen med kun teksten */}
+                    {/* Label */}
+                    <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:16 }}>
+                      {cannotLabel[lang] || cannotLabel.en}
+                    </div>
+
+                    {/* Allergen liste */}
+                    <div style={{ display:"flex", flexDirection:"column" }}>
+                      {[...allergens, ...customAllerg.map(c => ({ custom:true, label:c }))].map((item, i, arr) => {
+                        const isLast = i === arr.length - 1;
+                        if (typeof item === "string") {
+                          const a = ALLERGENS.find(x => x.id === item);
+                          if (!a) return null;
+                          const t = ALLERGEN_T[item]?.[lang] || ALLERGEN_T[item]?.en;
+                          const ex = ALLERGEN_EXAMPLES[item];
+                          const exProducts = ex?.products?.[lang] || ex?.products?.en || [];
+                          const exIngredients = ex?.ingredients?.[lang] || ex?.ingredients?.en || [];
+                          const productLabel = { da:"Fx i", en:"E.g. in", de:"Z.B. in", fr:"Ex. dans", es:"Ej. en", it:"Es. in", nl:"Bijv. in", pt:"Ex. em", pl:"Np. w", sv:"T.ex. i", no:"F.eks. i", ja:"例えば", zh:"例如在", ar:"مثلاً في", tr:"Örn.", th:"เช่นใน", el:"Π.χ. σε" };
+                          const ingredientLabel = { da:"Se efter", en:"Look for", de:"Achten auf", fr:"Chercher", es:"Buscar", it:"Cercare", nl:"Let op", pt:"Procurar", pl:"Szukaj", sv:"Se efter", no:"Se etter", ja:"確認を", zh:"注意", ar:"ابحث عن", tr:"Ara", th:"ดูหา", el:"Ψάξτε" };
+                          return (
+                            <div key={i} style={{ padding:"16px 0", borderBottom: isLast ? "none" : "1px solid var(--border)" }}>
+                              <div style={{ fontSize:22, fontWeight:800, color:"var(--ink)", marginBottom: ex ? 10 : 0 }}>
+                                {t?.n || a.label}
+                              </div>
+                              {ex && (
+                                <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                                  <div style={{ fontSize:12, color:"var(--muted)" }}>
+                                    {productLabel[lang] || productLabel.en}: <span style={{ color:"var(--ink2)", fontWeight:600 }}>{exProducts.slice(0,3).join(", ")}</span>
+                                  </div>
+                                  <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+                                    <span style={{ fontSize:12, color:"var(--muted)" }}>{ingredientLabel[lang] || ingredientLabel.en}:</span>
+                                    {exIngredients.slice(0,4).map((ing, j) => (
+                                      <span key={j} style={{ fontSize:11, fontWeight:700, padding:"3px 9px", background:"var(--paper2)", color:"var(--ink2)", border:"1px solid var(--border2)", borderRadius:100 }}>{ing}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+                        return (
+                          <div key={i} style={{ fontSize:22, fontWeight:800, color:"var(--ink)", padding:"16px 0", borderBottom: isLast ? "none" : "1px solid var(--border)" }}>
+                            {item.label}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Hjælpetekst */}
+                    <div style={{ fontSize:16, color:"var(--muted2)", margin:"20px 0 24px", lineHeight:1.6 }}>
+                      {helpText[lang] || helpText.en}
+                    </div>
+
+                    {/* VIS TIL TJENER */}
                     <button className="mp-big-btn" onClick={() => setMadpasWaiterView(true)}>
                       <span style={{ fontSize:18 }}>⤢</span>
                       Vis til tjener
                     </button>
 
-                    <div style={{ textAlign:"center", fontSize:11, color:"var(--muted)", marginTop:4 }}>
+                    <div style={{ textAlign:"center", fontSize:11, color:"var(--muted)", marginTop:10 }}>
                       🇩🇰 EatSafe · {new Date().toLocaleDateString("da-DK")}
                     </div>
                   </div>
                 );
               })()}
+
             </div>
           </div>
         )}
@@ -3326,29 +3374,87 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
           </div>
         )}
 
+        {/* ══ REDIGER PROFIL ══ */}
+        {screen === SCREENS.EDITPROFILE && (
+          <div className="screen fade-in">
+            <div style={{ display:"flex", alignItems:"center", gap:10, padding:"16px 0 20px" }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setScreen(SCREENS.PROFILE)}>← Tilbage</button>
+              <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)" }}>Rediger profil</div>
+            </div>
+
+            {/* Navn og kontakt */}
+            <div className="card" style={{ marginBottom:10 }}>
+              <div className="card-lbl">Personlige oplysninger</div>
+              {[["Dit navn","text","Fx. Anna Hansen","name"],["Telefon","tel","+45 12 34 56 78","phone"],["Alder","number","Fx. 32","age"]].map(([lbl,type,ph,key]) => (
+                <div key={key} style={{ marginBottom:10 }}>
+                  <label className="field-lbl">{lbl}</label>
+                  <input className="field" type={type} placeholder={ph} value={user[key]||""} onChange={e => setUser(u => ({ ...u, [key]: e.target.value }))} />
+                </div>
+              ))}
+              <button className="btn btn-primary btn-full" onClick={async () => {
+                try {
+                  await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+                    method:"PATCH",
+                    headers:{ ...makeHeaders(accessToken), "Prefer":"return=representation" },
+                    body:JSON.stringify({ name:user.name, phone:user.phone||null, age:user.age?parseInt(user.age):null }),
+                  });
+                } catch {}
+              }}>Gem oplysninger</button>
+            </div>
+
+            {/* Allergier */}
+            <div className="card" style={{ marginBottom:10 }}>
+              <div className="card-lbl">Mine allergier</div>
+              <div className="chip-grid" style={{ marginBottom:10 }}>
+                {ALLERGENS.map(a => { const on = allergens.includes(a.id); return (
+                  <div key={a.id} className={`chip${on?" on":""}`} onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
+                    <span>{a.emoji}</span><span style={{ flex:1 }}>{a.label}</span>{on && <div className="chip-check">✓</div>}
+                  </div>
+                );})}
+              </div>
+              <div className="card-lbl">Andre intoleranser</div>
+              <div className="input-row" style={{ marginBottom: customAllerg.length ? 8 : 0 }}>
+                <input className="field" placeholder="Fx. Fructose…" value={customInput} onChange={e => setCustomInput(e.target.value)}
+                  onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}} />
+                <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}}>+</button>
+              </div>
+              {customAllerg.length > 0 && <div className="tags">{customAllerg.map((a,i) => <div key={i} className="tag">✏️ {a}<span className="tag-x" onClick={() => setCustomAllerg(c=>c.filter((_,j)=>j!==i))}>×</span></div>)}</div>}
+              <button className="btn btn-primary btn-full" style={{ marginTop:10 }} onClick={async () => {
+                try {
+                  await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, { method:"DELETE", headers:makeHeaders(accessToken) });
+                  for(const a of allergens) await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, { method:"POST", headers:makeHeaders(accessToken), body:JSON.stringify({user_id:userId,allergen:a,type:"allergen"}) });
+                  for(const c of customAllerg) await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, { method:"POST", headers:makeHeaders(accessToken), body:JSON.stringify({user_id:userId,allergen:c,type:"custom"}) });
+                  alert("Allergier gemt!");
+                } catch {}
+              }}>Gem allergier</button>
+            </div>
+
+            <button className="btn btn-ghost btn-full" style={{ marginBottom:16 }} onClick={() => setScreen(SCREENS.PROFILE)}>Færdig</button>
+          </div>
+        )}
+
         {/* BUNDNAVIGATION */}
-        {!isOnboard && (
+        {!isOnboard && !madpasWaiterView && (
           <nav className="bottom-nav">
             {[
-              [SCREENS.SCAN,    "📷", "Scan"],
               [SCREENS.HOME,    "🏠", "Hjem"],
+              [SCREENS.RECIPES, "🍽️", "Opskrifter"],
               [SCREENS.LIST,    "🛒", "Liste"],
               [SCREENS.PROFILE, "👤", "Profil"],
-              ...(user.role === "admin" ? [[SCREENS.ADMIN,"⚙️","Admin"]] : []),
             ].map(([s,icon,lbl]) => (
               <div key={s} className={`nav-item${(
                 screen===s ||
-                (screen===SCREENS.RESULT && s===SCREENS.SCAN) ||
-                (screen===SCREENS.NOTFOUND && s===SCREENS.SCAN) ||
-                (screen===SCREENS.SUBMITTED && s===SCREENS.SCAN) ||
+                (screen===SCREENS.RESULT && s===SCREENS.HOME) ||
+                (screen===SCREENS.NOTFOUND && s===SCREENS.HOME) ||
+                (screen===SCREENS.SUBMITTED && s===SCREENS.HOME) ||
+                (screen===SCREENS.SCAN && s===SCREENS.HOME) ||
                 (screen===SCREENS.SEARCH && s===SCREENS.HOME) ||
                 (screen===SCREENS.HISTORY && s===SCREENS.PROFILE) ||
                 (screen===SCREENS.FAVORITES && s===SCREENS.PROFILE) ||
                 (screen===SCREENS.MADPAS && s===SCREENS.PROFILE) ||
                 (screen===SCREENS.FAMILY && s===SCREENS.PROFILE) ||
-                (screen===SCREENS.RECIPES && s===SCREENS.HOME)
+                (screen===SCREENS.ADMIN && s===SCREENS.PROFILE)
               )?" active":""}`} onClick={() => {
-                if (s === SCREENS.ADMIN) { loadSubmissions(); loadAdminStats(); }
                 setScreen(s);
               }}>
                 <div className="nav-icon">{icon}</div>
