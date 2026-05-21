@@ -806,8 +806,7 @@ export default function EatSafe() {
   const [activeSearch, setActiveSearch] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [offLoading, setOffLoading] = useState(false);
-  const [favorites, setFavorites] = useState(() => {
+    const [favorites, setFavorites] = useState(() => {
     try { return JSON.parse(localStorage.getItem("as_favorites") || "[]"); } catch { return []; }
   });
   const [madpasLang, setMadpasLang] = useState(() => localStorage.getItem("as_madpas_lang") || "en");
@@ -1501,20 +1500,16 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
   };
 
   // ── SØGNING ────────────────────────────────────────────────────────────────
-  const offControllerRef = useRef(null);
 
   useEffect(() => {
     if (!activeSearch.trim()) {
       setSearchResults([]);
       setSearchLoading(false);
-      setOffLoading(false);
       return;
     }
-    if (offControllerRef.current) offControllerRef.current.abort();
-
+    
     const timer = setTimeout(() => {
       setSearchLoading(true);
-      setOffLoading(true);
       setSearchResults([]);
       const q = activeSearch.trim();
 
@@ -1529,51 +1524,12 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
           setSearchResults(local);
           setSearchLoading(false);
 
-          // 2. Søg i Open Food Facts parallelt
-          const controller = new AbortController();
-          offControllerRef.current = controller;
-          const localEans = new Set(local.map(p => p.ean));
-
-          // OFF v1 er det eneste endpoint med fuld tekst søgning
-          // sort_by=unique_scans_n = mest populære/kendte produkter øverst
-          fetch(
-            `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=20&fields=code,product_name,brands,image_front_small_url&sort_by=unique_scans_n`,
-            { signal: controller.signal, headers: { "User-Agent": "EatSafe/1.0" } }
-          )
-            .then(r => r.ok ? r.json() : { products:[] })
-            .then(offData => {
-              const qLower = q.toLowerCase();
-              const off = (offData.products || [])
-                .filter(p => p.product_name && p.code && !localEans.has(p.code))
-                // Filtrer strengt — kun produkter hvor navn ELLER brand indeholder søgeordet
-                .filter(p => {
-                  const name = (p.product_name || "").toLowerCase();
-                  const brand = (p.brands || "").toLowerCase();
-                  return name.includes(qLower) || brand.includes(qLower);
-                })
-                .slice(0, 10)
-                .map(p => ({
-                  id: p.code, ean: p.code,
-                  name: p.product_name,
-                  brand: p.brands || null,
-                  image_url: p.image_front_small_url || null,
-                  verified_status: "unverified",
-                  source: "open_food_facts",
-                  verified: "unverified",
-                  conflicts: [],
-                }));
-              setSearchResults(prev => {
-                const seen = new Set(prev.map(x => x.ean));
-                return [...prev, ...off.filter(r => !seen.has(r.ean))];
-              });
-              setOffLoading(false);
-            })
-            .catch(e => { if (e.name !== "AbortError") setOffLoading(false); });
+          // OFF API fjernet — søger kun i lokal Supabase database
         })
-        .catch(() => { setSearchLoading(false); setOffLoading(false); });
+        .catch(() => { setSearchLoading(false); });
 
     }, 450);
-    return () => { clearTimeout(timer); offControllerRef.current?.abort(); };
+    return () => { clearTimeout(timer); };
   }, [activeSearch, accessToken]);
 
     // ── HJÆLPEKOMPONENTER ──────────────────────────────────────────────────────
@@ -2314,13 +2270,13 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               </div>
               <div className="product-hero-body">
                 <div className="product-hero-name">{scanResult.name}</div>
-                {scanResult.brand && <div className="product-hero-brand">{scanResult.brand}{scanResult.category ? ` · ${scanResult.category}` : ""}</div>}
+                {scanResult.brand && <div className="product-hero-brand">{scanResult.brand}</div>}
                 <div className="product-hero-meta">
-                  {(() => {
-                    const vb = verifiedBadge(scanResult.verified_status, scanResult.source);
-                    return <span className="product-hero-source" style={{ background:vb.bg, color:vb.color }}>{vb.label}</span>;
-                  })()}
                   <span style={{ fontSize:10, color:"var(--muted)", fontWeight:500 }}>EAN: {scanResult.code}</span>
+                  {scanResult.source && (() => {
+                    const vb = verifiedBadge(scanResult.verified_status, scanResult.source);
+                    return <span className="product-hero-source" style={{ background:vb.bg, color:vb.color, fontSize:9, opacity:0.75 }}>{vb.label}</span>;
+                  })()}
                 </div>
               </div>
             </div>
@@ -2384,20 +2340,17 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               </div>
             )}
 
-            {/* Allergener i produktet */}
+            {/* Allergener i produktet — kun vis hvis der er data */}
             {scanResult.allergen_flags && (() => {
               const present = Object.entries(scanResult.allergen_flags).filter(([k,v]) => v==="yes" && ALLERGENS.find(a=>a.id===k));
               const traces = Object.entries(scanResult.allergen_flags).filter(([k,v]) => v==="traces" && ALLERGENS.find(a=>a.id===k));
               const allUnknown = Object.entries(scanResult.allergen_flags).every(([,v]) => v==="unknown");
               const hasData = present.length > 0 || traces.length > 0 || Object.values(scanResult.allergen_flags).some(v => v==="no");
+              if (!hasData || allUnknown) return null;
               return (
                 <div className="card">
                   <div className="card-lbl">Allergener i produktet</div>
-                  {!hasData || allUnknown ? (
-                    <div className="warn-box" style={{ marginBottom:0 }}>
-                      ⚠️ Vi har ingen allergendata på dette produkt — tjek altid pakken selv
-                    </div>
-                  ) : (
+                  {false ? null : (
                     <>
                       {present.length > 0 && (
                         <div style={{ marginBottom:8 }}>
@@ -2667,16 +2620,16 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               <div style={{ fontSize:12, color:"var(--muted)" }}>{searchResults.length} resultat{searchResults.length!==1?"er":""}</div>
             </div>
             {searchLoading && <div className="loader fade-in"><div className="spinner" /><div className="loader-txt">Søger…</div></div>}
-            {(searchLoading || offLoading) && searchResults.length===0 && (
+            {searchLoading && searchResults.length===0 && (
               <div className="loader fade-in"><div className="spinner" /><div className="loader-txt">Søger…</div></div>
             )}
-            {offLoading && searchResults.length > 0 && (
+            {false && (
               <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", padding:"8px", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                 <div className="spinner" style={{ width:14, height:14, borderWidth:2 }} />
                 Søger i Open Food Facts…
               </div>
             )}
-            {!searchLoading && !offLoading && searchQuery && searchResults.length===0 && (
+            {!searchLoading && searchQuery && searchResults.length===0 && (
               <div className="empty-state"><span className="empty-icon">🔍</span><div className="empty-txt">Ingen resultater</div><div className="empty-sub">Prøv et andet søgeord</div></div>
             )}
             {!activeSearch && !searchQuery && (
@@ -3172,7 +3125,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 const rtl = MADPAS_LANGUAGES.find(l => l.code === lang)?.rtl;
                 const big = madpasBig;
                 const helloText = { en:"Hello. I have food allergies and intolerances.", de:"Hallo. Ich habe Lebensmittelallergien und -unverträglichkeiten.", fr:"Bonjour. J'ai des allergies alimentaires et des intolérances.", es:"Hola. Tengo alergias alimentarias e intolerancias.", it:"Salve. Ho allergie alimentari e intolleranze.", nl:"Hallo. Ik heb voedselallergieën en -intoleranties.", pt:"Olá. Tenho alergias alimentares e intolerâncias.", pl:"Cześć. Mam alergie pokarmowe i nietolerancje.", ja:"こんにちは。私は食物アレルギーと不耐症があります。", zh:"您好。我有食物过敏和不耐受。", ar:"مرحباً. لدي حساسية غذائية وتعصبات.", tr:"Merhaba. Gıda alerjilerim ve intoleranslarım var.", sv:"Hej. Jag har matallergier och intoleranser.", no:"Hei. Jeg har matallergier og intoleranser.", th:"สวัสดี ฉันมีอาการแพ้อาหารและการแพ้", el:"Γεια σας. Έχω αλλεργίες και δυσανεξίες.", da:"Hej. Jeg har fødevareallergier og intoleranser." };
-                const cannotLabel = { en:'I CANNOT eat (incl. "may contain"):', de:'Ich kann NICHT essen (inkl. "kann enthalten"):', fr:"Je NE PEUX PAS manger (incl. « peut contenir ») :", es:"NO puedo comer (incl. «puede contener»):", it:"NON posso mangiare (incl. «può contenere»):", nl:"Ik KAN NIET eten (incl. 'kan bevatten'):", pt:"NÃO posso comer (incl. «pode conter»):", pl:'NIE mogę jeść (w tym "może zawierać"):', ja:"食べられません（「含む可能性あり」を含む）：", zh:'我不能吃（包括"可能含有"）：', ar:"لا أستطيع تناول (بما فيه \"قد يحتوي\"):", tr:'YİYEMEYECEĞİM ("içerebilir" dahil):', sv:'Jag KAN INTE äta (inkl. "kan innehålla"):', no:'Jeg KAN IKKE spise (inkl. «kan inneholde"):', th:"ฉัน ไม่สามารถ กิน (รวม \"อาจมี\"):", el:"ΔΕΝ μπορώ να φάω (συμπ. «μπορεί να περιέχει»):", da:'Jeg kan IKKE spise selv spor af følgende (inkl. "kan indeholde"):' };
+                const cannotLabel = { en:'I CANNOT eat (incl. "may contain"):', de:'Ich kann NICHT essen (inkl. "kann enthalten"):', fr:"Je NE PEUX PAS manger (incl. « peut contenir ») :", es:"NO puedo comer (incl. «puede contener»):", it:"NON posso mangiare (incl. «può contenere»):", nl:"Ik KAN NIET eten (incl. 'kan bevatten'):", pt:"NÃO posso comer (incl. «pode conter»):", pl:'NIE mogę jeść (w tym "może zawierać"):', ja:"食べられません（「含む可能性あり」を含む）：", zh:'\u6211\u4e0d\u80fd\u5403\uff08\u5305\u62ec"\u53ef\u80fd\u542b\u6709"\uff09\uff1a', ar:"\u0644\u0627 \u0623\u0633\u062a\u0637\u064a\u0639 \u062a\u0646\u0627\u0648\u0644 (\u0628\u0645\u0627 \u0641\u064a\u0647 \"\u0642\u062f \u064a\u062d\u062a\u0648\u064a\"):", tr:'Y\u0130YEMEYECE\u011e\u0130M ("i\u00e7erebilir" dahil):', sv:'Jag KAN INTE \u00e4ta (inkl. "kan inneh\u00e5lla"):', no:'Jeg KAN IKKE spise (inkl. \u00abkan inneholde"):', th:"\u0e09\u0e31\u0e19 \u0e44\u0e21\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16 \u0e01\u0e34\u0e19 (\u0e23\u0e27\u0e21 \"\u0e2d\u0e32\u0e08\u0e21\u0e35\"):", el:"\u0394\u0395\u039d \u03bc\u03c0\u03bf\u03c1\u03ce \u03bd\u03b1 \u03c6\u03ac\u03c9 (\u03c3\u03c5\u03bc\u03c0. \u00ab\u03bc\u03c0\u03bf\u03c1\u03b5\u03af \u03bd\u03b1 \u03c0\u03b5\u03c1\u03b9\u03ad\u03c7\u03b5\u03b9\u00bb):", da:'Jeg kan IKKE spise selv spor af f\u00f8lgende (inkl. "kan indeholde"):' };
                 const helpText = { en:"Can you help me find something safe to eat? Thank you.", de:"Können Sie mir helfen, etwas Sicheres zu finden? Vielen Dank.", fr:"Pouvez-vous m'aider à trouver quelque chose de sûr à manger ? Merci.", es:"¿Puede ayudarme a encontrar algo seguro para comer? Muchas gracias.", it:"Può aiutarmi a trovare qualcosa di sicuro da mangiare? Grazie mille.", nl:"Kunt u mij helpen iets veiligs te vinden om te eten? Hartelijk dank.", pt:"Pode ajudar-me a encontrar algo seguro para comer? Muito obrigado.", pl:"Czy może mi Pan/Pani pomóc znaleźć coś bezpiecznego do jedzenia? Dziękuję.", ja:"安全に食べられるものを選ぶのを手伝っていただけますか？ありがとうございます。", zh:"您能帮我找到可以安全食用的东西吗？非常感谢。", ar:"هل يمكنك مساعدتي في إيجاد شيء آمن لتناوله؟ شكراً جزيلاً.", tr:"Güvenli bir şey bulmama yardımcı olabilir misiniz? Çok teşekkürler.", sv:"Kan du hjälpa mig att hitta något säkert att äta? Tack så mycket.", no:"Kan du hjelpe meg å finne noe trygt å spise? Mange takk.", th:"คุณช่วยฉันหาอาหารที่ปลอดภัยได้ไหม? ขอบคุณมาก", el:"Μπορείτε να με βοηθήσετε να βρω κάτι ασφαλές να φάω; Ευχαριστώ.", da:"Kan du hjælpe mig med at vælge noget sikkert at spise? Mange tak." };
                 const familyLabel = { en:"Also for my family members:", de:"Auch für meine Familienmitglieder:", fr:"Aussi pour mes proches :", es:"También para mis familiares:", it:"Anche per i miei familiari:", nl:"Ook voor mijn familieleden:", pt:"Também para os meus familiares:", pl:"Również dla moich bliskich:", ja:"家族のために：", zh:"也为我的家人：", ar:"أيضاً لأفراد عائلتي:", tr:"Aile üyelerim için de:", sv:"Även för mina familjemedlemmar:", no:"Også for mine familiemedlemmer:", th:"รวมถึงสำหรับสมาชิกในครอบครัวของฉัน:", el:"Επίσης για τα μέλη της οικογένειάς μου:", da:"Også for mine familiemedlemmer:" };
                 const visLabel = { en:"Show to waiter", de:"Dem Kellner zeigen", fr:"Montrer au serveur", es:"Mostrar al camarero", it:"Mostrare al cameriere", nl:"Tonen aan ober", pt:"Mostrar ao empregado", pl:"Pokaż kelnerowi", ja:"ウェイターに見せる", zh:"展示给服务员", ar:"أرِ النادل", tr:"Garsona göster", sv:"Visa för servitören", no:"Vis til kelneren", th:"แสดงให้พนักงาน", el:"Δείξτε στον σερβιτόρο", da:"Vis til tjener" };
