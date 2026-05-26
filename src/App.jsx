@@ -2590,6 +2590,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
       setAuthLoading(false);
     }
   };
+
+  const handleLogin = async () => {
     if (!loginEmail || !loginPassword) return;
     setAuthLoading(true); setAuthError("");
     try {
