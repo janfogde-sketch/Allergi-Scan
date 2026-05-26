@@ -2,6 +2,22 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 
 // ─── EATSAFE LOGO KOMPONENT ──────────────────────────────────────────────────
+
+
+
+// ─── E-NUMMER VÆLGER KOMPONENT ───────────────────────────────────────────────
+
+// ─── SIMPLE IKONER ────────────────────────────────────────────────────────────
+
+// ─── KONFIGURATION ───────────────────────────────────────────────────────────
+const SUPABASE_URL = "https://jegrpcflyguadyxialkm.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplZ3JwY2ZseWd1YWR5eGlhbGttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNjY5NjQsImV4cCI6MjA5NDc0Mjk2NH0.QErfbw2xmsdYjTZCS1WUOUwQHv6G2PKQRldyj8rdGq8";
+
+// ─── KONSTANTER ──────────────────────────────────────────────────────────────
+
+
+
+// ─── EATSAFE LOGO KOMPONENT ──────────────────────────────────────────────────
 function EatSafeLogo({ size = 32, variant = "light" }) {
   const isDark = variant === "dark";
   const bg = isDark ? "#1F2733" : "#FAFAF7";
@@ -56,11 +72,1033 @@ function EatSafeLogo({ size = 32, variant = "light" }) {
 }
 
 
-// ─── KONFIGURATION ───────────────────────────────────────────────────────────
-const SUPABASE_URL = "https://jegrpcflyguadyxialkm.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplZ3JwY2ZseWd1YWR5eGlhbGttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNjY5NjQsImV4cCI6MjA5NDc0Mjk2NH0.QErfbw2xmsdYjTZCS1WUOUwQHv6G2PKQRldyj8rdGq8";
+
+// ─── E-NUMMER VÆLGER KOMPONENT ───────────────────────────────────────────────
+// ─── SIMPLE IKONER ────────────────────────────────────────────────────────────
+const Icon = ({ name, size=18, color="currentColor" }) => {
+  const icons = {
+    home: <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>,
+    scan: <><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h1M4 10h1M4 14h1M7 6h1M7 14h1M10 6h4M10 10h4M10 14h4M16 6h1M16 10h1M16 14h1"/><rect x="2" y="2" width="7" height="7" rx="1" strokeWidth="1.5"/><rect x="11" y="2" width="7" height="7" rx="1" strokeWidth="1.5"/><rect x="2" y="11" width="7" height="7" rx="1" strokeWidth="1.5"/></>,
+    search: <><circle cx="11" cy="11" r="8"/><path strokeLinecap="round" d="M21 21l-4.35-4.35"/></>,
+    list: <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>,
+    profile: <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>,
+    recipes: <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>,
+    star: <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>,
+    globe: <path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>,
+    check: <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>,
+    x: <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>,
+    warning: <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>,
+    info: <><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M12 16v-4M12 8h.01"/></>,
+    chevronRight: <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>,
+    chevronDown: <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>,
+    chevronUp: <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7"/>,
+    heart: <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>,
+    trash: <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>,
+    share: <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>,
+    cart: <><path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></>,
+    camera: <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>,
+    bulb: <><path strokeLinecap="round" strokeLinejoin="round" d="M12 2a7 7 0 00-4.899 11.947c.492.54.899 1.197.899 1.553v.5h8v-.5c0-.356.407-1.013.9-1.553A7 7 0 0012 2z"/><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v1a3 3 0 006 0v-1"/><path strokeLinecap="round" strokeLinejoin="round" d="M9.5 17h5"/></>,
+    speaker: <><path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M12 6v12l-4-3H5a1 1 0 01-1-1V9a1 1 0 011-1h3l4-3z"/><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 010 12.728"/></>,
+    speakerOff: <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>,
+    plus: <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>,
+    edit: <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>,
+    family: <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>,
+    madpas: <><path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18M3 8c0-2.5 4-2.5 4 0v4H3M17 3v5a4 4 0 01-8 0V3"/><path strokeLinecap="round" strokeLinejoin="round" d="M13 3v18"/></>,
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" style={{ flexShrink:0, display:"block" }}>
+      {icons[name]}
+    </svg>
+  );
+};
 
 // ─── KONSTANTER ──────────────────────────────────────────────────────────────
+
+const E_CATEGORIES = [
+  { id:"farve",    label:"Farvestoffer",          range:"E100–E199", min:100,  max:199,  popular:["E102","E110","E122","E129","E150d","E171","E120","E127"] },
+  { id:"konserv",  label:"Konserveringsmidler",   range:"E200–E299", min:200,  max:299,  popular:["E202","E211","E220","E250","E251","E252","E282","E290"] },
+  { id:"antioxid", label:"Antioxidanter",         range:"E300–E399", min:300,  max:399,  popular:["E300","E306","E320","E321","E322","E330"] },
+  { id:"emulg",    label:"Emulgatorer",           range:"E400–E499", min:400,  max:499,  popular:["E407","E412","E415","E440","E471","E476","E433"] },
+  { id:"smags",    label:"Smagsforstærkere",      range:"E600–E699", min:600,  max:699,  popular:["E621","E627","E631","E635","E620"] },
+  { id:"diverse",  label:"Diverse (E700–E949)",   range:"E700–E949", min:700,  max:949,  popular:["E901","E904","E920","E942"] },
+  { id:"sode",     label:"Sødestoffer",            range:"E950–E999", min:950,  max:999,  popular:["E950","E951","E954","E955","E960","E965","E967","E968"] },
+  { id:"stivelse", label:"Stivelse & overflader",  range:"E1000+",    min:1000, max:9999, popular:["E1200","E1400","E1404","E1412","E1422","E1440"] },
+];
+
+const E_NUMBERS = {
+  "E100": "Curcumin — naturlig gul farve fra gurkemeje",
+  "E101": "Riboflavin (B2) — gul-orange farve, findes naturligt i mælk",
+  "E102": "Tartrazin — syntetisk gul azo-farve, kan give hyperaktivitet hos børn",
+  "E103": "Alkannin — rød-brun farve (ikke godkendt i EU)",
+  "E104": "Quinolingul — syntetisk gul-grøn farve",
+  "E105": "Fast Yellow AB — syntetisk gul farve (ikke godkendt i EU)",
+  "E107": "Yellow 2G — syntetisk gul farve",
+  "E110": "Solsikkegul FCF — syntetisk orange-gul azo-farve",
+  "E111": "Orange GGN — syntetisk orange farve (ikke godkendt i EU)",
+  "E120": "Cochenille/Karminsyre — rød farve fra skjoldlus",
+  "E121": "Orcein — rød-lilla farve (ikke godkendt i EU)",
+  "E122": "Azorubine/Karmoisin — syntetisk rød azo-farve",
+  "E123": "Amaranth — syntetisk rød azo-farve (ikke godkendt i EU)",
+  "E124": "Ponceau 4R — syntetisk rød azo-farve",
+  "E125": "Scarlet GN — syntetisk rød farve (ikke godkendt i EU)",
+  "E126": "Ponceau 6R — syntetisk rød azo-farve (ikke godkendt i EU)",
+  "E127": "Erythrosin — syntetisk lyserød/rød farve",
+  "E128": "Red 2G — syntetisk rød azo-farve",
+  "E129": "Allura Rød AC — syntetisk rød azo-farve",
+  "E131": "Patent Blå V — syntetisk blå farve",
+  "E132": "Indigokarmin — syntetisk blå farve",
+  "E133": "Brilliant Blå FCF — syntetisk blå farve",
+  "E140": "Klorofyller — naturlig grøn farve fra planter",
+  "E141": "Klorofylkomplekser med kobber — grøn farve",
+  "E142": "Grøn S — syntetisk grøn farve",
+  "E150a": "Karamelfarve, alm. — brun farve lavet ved opvarmning af sukker",
+  "E150b": "Karamelfarve, sulfit — brun farve fremstillet med sulfit",
+  "E150c": "Karamelfarve, ammoniak — brun farve fremstillet med ammoniak",
+  "E150d": "Karamelfarve, ammoniumsulfit — brun farve i cola og øl",
+  "E151": "Brilliant Sort BN — syntetisk sort azo-farve",
+  "E152": "Carbon Black — sort farve (ikke godkendt i EU)",
+  "E153": "Vegetabilsk kul — sort farve fra forkullet plantemateriale",
+  "E154": "Brown FK — syntetisk brun azo-farve",
+  "E155": "Brown HT — syntetisk brun azo-farve",
+  "E160a": "Alfa-, beta-, gamma-karoten — orange farve, forstadium til A-vitamin",
+  "E160b": "Annatto/Bixin/Norbixin — orange-rød farve fra annattobusk",
+  "E160c": "Paprikaekstrakt/Capsanthin — rød-orange farve fra paprika",
+  "E160d": "Lykopen — rød farve fra tomat",
+  "E160e": "Beta-apo-8-carotenal — orange farve",
+  "E160f": "Beta-apo-8-carotensyreethylester — orange farve",
+  "E161a": "Flavoxanthin — gul farve (ikke godkendt i EU)",
+  "E161b": "Lutein — gul farve fra blomster og æg",
+  "E161c": "Kryptoxanthin — gul-orange farve (ikke godkendt i EU)",
+  "E161d": "Rubixanthin — gul-orange farve (ikke godkendt i EU)",
+  "E161e": "Violaxanthin — gul farve (ikke godkendt i EU)",
+  "E161f": "Rhodoxanthin — rød farve (ikke godkendt i EU)",
+  "E162": "Rødbetarød/Betanin — rød farve fra rødbede",
+  "E163": "Anthocyaniner — rød-lilla farve fra bær og druer",
+  "E170": "Calciumkarbonat — hvid farve/fyldsoftf, også kalk",
+  "E171": "Titandioxid — hvid farve, bruges i slik og tandpasta",
+  "E172": "Jernoxider og jernhydroxider — gul, rød og sort farve",
+  "E173": "Aluminium — sølvfarve til konfekture",
+  "E174": "Sølv — sølvfarve til konfekture",
+  "E175": "Guld — guldfarve til konfekture",
+  "E180": "Litholrubine BK — rød farve til osteskorper",
+  "E200": "Sorbinsyre — konserverer mod skimmelsvamp i ost og bagværk",
+  "E201": "Natriumsorbat — konservering mod skimmel",
+  "E202": "Kaliumsorbat — meget udbredt konservering mod skimmel og gær",
+  "E203": "Calciumsorbat — konservering mod skimmel",
+  "E210": "Benzoesyre — konservering i saft, marmelade og drikkevarer",
+  "E211": "Natriumbenzoat — udbredt konservering i sodavand og saucer",
+  "E212": "Kaliumbenzoat — konservering mod gær og bakterier",
+  "E213": "Calciumbenzoat — konservering mod mikrober",
+  "E214": "Ethylparahydroxybenzoat — konservering (parabener)",
+  "E215": "Natriumethylparahydroxybenzoat — konservering (parabener)",
+  "E218": "Methylparahydroxybenzoat — konservering (parabener)",
+  "E219": "Natriummethylparahydroxybenzoat — konservering (parabener)",
+  "E220": "Svovldioxid — konservering i vin, frugt og tørrede frugter",
+  "E221": "Natriumsulfit — konservering, forhindrer brunfarvning",
+  "E222": "Natriumhydrogensulfit — konservering i vin og frugtprodukter",
+  "E223": "Natriumdisulfit — konservering og blegemiddel",
+  "E224": "Kaliumdisulfit — konservering i vin",
+  "E225": "Kaliumsulfit — konservering",
+  "E226": "Calciumsulfit — konservering og fasthedsmiddel",
+  "E227": "Calciumhydrogensulfit — konservering i øl",
+  "E228": "Kaliumhydrogensulfit — konservering i vin",
+  "E230": "Biphenyl/Diphenyl — konservering på citrusskaller",
+  "E231": "Orthophenylphenol — konservering på citrusskaller",
+  "E232": "Natriumorthophenylphenol — konservering på citrusskaller",
+  "E234": "Nisin — naturlig antibiotisk konservering i ost",
+  "E235": "Natamycin — naturlig antibiotisk konservering mod skimmel",
+  "E239": "Hexamethylentetramin — konservering i syltet fisk",
+  "E242": "Dimethyldicarbonat — konservering i drikkevarer",
+  "E249": "Kaliumnitrit — konservering og rødfarvning af kødprodukter",
+  "E250": "Natriumnitrit — konservering i pålæg og bacon, kan danne nitrosaminer",
+  "E251": "Natriumnitrat — konservering i kødprodukter og ost",
+  "E252": "Kaliumnitrat — konservering i kødprodukter og ost",
+  "E260": "Eddikesyre — konservering og smagsgiver, naturlig i eddike",
+  "E261": "Kaliumacetat — konservering og surheds regulering",
+  "E262": "Natriumacetat — konservering og smagsgiver",
+  "E263": "Calciumacetat — konservering og fasthedsmiddel",
+  "E270": "Mælkesyre — konservering, naturlig i fermenterede produkter",
+  "E280": "Propionsyre — konservering mod skimmel i brød",
+  "E281": "Natriumpropionat — konservering i brød og bagværk",
+  "E282": "Calciumpropionat — konservering i brød og bagværk",
+  "E283": "Kaliumpropionat — konservering i brød",
+  "E284": "Borsyre — konservering i kaviar",
+  "E285": "Natriumtetraborat — konservering i kaviar",
+  "E290": "Kuldioxid — kulsyre i drikkevarer og emballage",
+  "E296": "Æblesyre — konservering og smagsgiver",
+  "E297": "Fumarsyre — konservering og syrningsagent",
+  "E300": "Ascorbinsyre (C-vitamin) — antioxidant, forhindrer brunfarvning",
+  "E301": "Natriumascorbat — antioxidant, C-vitaminsalt",
+  "E302": "Calciumascorbat — antioxidant, C-vitaminsalt",
+  "E304": "Fedtsyreestere af ascorbinsyre — fedtopløselig antioxidant",
+  "E306": "Tokoferoler (E-vitamin) — naturlig antioxidant fra vegetabilske olier",
+  "E307": "Alfa-tokoferol — syntetisk E-vitamin, antioxidant",
+  "E308": "Gamma-tokoferol — syntetisk E-vitamin",
+  "E309": "Delta-tokoferol — syntetisk E-vitamin",
+  "E310": "Propylgallat — antioxidant i fedtstoffer og olier",
+  "E311": "Octylgallat — antioxidant i fedtstoffer",
+  "E312": "Dodecylgallat — antioxidant i fedtstoffer",
+  "E315": "Erythorbinsyre — antioxidant i kødprodukter",
+  "E316": "Natriumerythorbat — antioxidant i kødprodukter",
+  "E319": "TBHQ — antioxidant i vegetabilske olier og chips",
+  "E320": "BHA (Butylhydroxyanisol) — kontroversiel antioxidant i fedtstoffer",
+  "E321": "BHT (Butylhydroxytoluen) — kontroversiel antioxidant i fedtstoffer",
+  "E322": "Lecitiner — emulgator og antioxidant, ofte fra soja eller solsikke",
+  "E325": "Natriumlactat — antioxidantsynergist og fugtighedsbeholder",
+  "E326": "Kaliumlactat — antioxidantsynergist",
+  "E327": "Calciumlactat — antioxidantsynergist og fasthedsmiddel",
+  "E328": "Ammoniumlactat — antioxidantsynergist",
+  "E329": "Magnesiumlactat — antioxidantsynergist",
+  "E330": "Citronsyre — antioxidant og syrningsagent, naturlig i citrusfrugter",
+  "E331": "Natriumcitrat — antioxidantsynergist og emulgator",
+  "E332": "Kaliumcitrat — antioxidantsynergist og regulering af surhedsgrad",
+  "E333": "Calciumcitrat — antioxidantsynergist og fasthedsmiddel",
+  "E334": "Vinsyre (L-tartrat) — antioxidant og syrningsagent i vin",
+  "E335": "Natriumtartrat — antioxidantsynergist",
+  "E336": "Kaliumtartrat — antioxidantsynergist og bagepulver",
+  "E337": "Natriumkaliumtartrat — antioxidantsynergist",
+  "E338": "Fosforsyre — antioxidantsynergist og surhedsregulering i cola",
+  "E339": "Natriumfosfater — antioxidantsynergist og emulgator",
+  "E340": "Kaliumfosfater — antioxidantsynergist og hævemiddel",
+  "E341": "Calciumfosfater — antioxidantsynergist og hævemiddel",
+  "E343": "Magnesiumfosfater — antioxidantsynergist",
+  "E350": "Natriummalat — antioxidantsynergist",
+  "E351": "Kaliummalat — antioxidantsynergist",
+  "E352": "Calciummalat — antioxidantsynergist",
+  "E353": "Metavinsyre — antioxidantsynergist i vin",
+  "E354": "Calciumtartrat — antioxidantsynergist",
+  "E355": "Adipinsyre — antioxidantsynergist og syrningsagent",
+  "E356": "Natriumadipinat — antioxidantsynergist",
+  "E357": "Kaliumadipinat — antioxidantsynergist",
+  "E363": "Ravsyre — antioxidantsynergist",
+  "E380": "Triammoniumcitrat — antioxidantsynergist",
+  "E385": "Calciumdinatrium-EDTA — antioxidantsynergist og sekvestringsmiddel",
+  "E392": "Ekstrakter af rosmarin — naturlig antioxidant",
+  "E393": "Ekstrakter af rig-ekstrakt (Quillaja) — naturlig antioxidant",
+  "E400": "Alginsyre — fortykningsmiddel fra brunalger",
+  "E401": "Natriumalginat — fortykningsmiddel fra brunalger",
+  "E402": "Kaliumalginat — fortykningsmiddel fra brunalger",
+  "E403": "Ammoniumalginat — fortykningsmiddel fra brunalger",
+  "E404": "Calciumalginat — fortykningsmiddel, gelerende middel",
+  "E405": "Propylenglycolalginat — emulgator og stabilisator",
+  "E406": "Agar — gelerende middel fra rødalger, vegansk gelatine",
+  "E407": "Carrageenan — fortykningsmiddel fra rødalger, bruges i mælkeprodukter",
+  "E407a": "Bearbejdet Eucheuma-alger — fortykningsmiddel",
+  "E408": "Karayagummi — fortykningsmiddel",
+  "E410": "Johannesbrødkernmel — fortykningsmiddel fra johannesbrødtræ",
+  "E411": "Havrekernmel — fortykningsmiddel",
+  "E412": "Guargummi — fortykningsmiddel fra guarbønne",
+  "E413": "Tragant — fortykningsmiddel fra tornebusk",
+  "E414": "Arabiagummi — fortykningsmiddel, naturlig harpiks",
+  "E415": "Xanthangummi — fortykningsmiddel fra fermentering",
+  "E416": "Karayagummi — fortykningsmiddel fra karayabusk",
+  "E417": "Tarakernmel — fortykningsmiddel fra tarafrø",
+  "E418": "Gellangummi — fortykningsmiddel fra fermentering",
+  "E419": "Ghatti gummi — fortykningsmiddel",
+  "E420": "Sorbitol/Sorbitolsirup — sødemiddel og fugtighedsbeholder",
+  "E421": "Mannitol — sødemiddel og anti-klumpningsmiddel",
+  "E422": "Glycerol — fugtighedsbeholder og opløsningsmiddel",
+  "E423": "Octylgallat — antioxidant",
+  "E425": "Konjac — fortykningsmiddel og gelerende middel",
+  "E426": "Sojabønne-hemicellulose — emulgator",
+  "E427": "Cassie gummi — fortykningsmiddel",
+  "E430": "Polyoxyethylen(8)stearat — emulgator",
+  "E431": "Polyoxyethylen(40)stearat — emulgator",
+  "E432": "Polyoxyethylensobitanmonolaurat (Polysorbat 20) — emulgator",
+  "E433": "Polyoxyethylensorbitanmonooleat (Polysorbat 80) — emulgator",
+  "E434": "Polyoxyethylensorbitanmonopalmitat (Polysorbat 40) — emulgator",
+  "E435": "Polyoxyethylensorbitanmonostearat (Polysorbat 60) — emulgator",
+  "E436": "Polyoxyethylensorbitantristearat (Polysorbat 65) — emulgator",
+  "E440": "Pektiner — gelerende middel fra citrusskaller og æbler",
+  "E442": "Ammoniumfosfatider — emulgator i chokolade",
+  "E444": "Saccharoseacetoisobutyrat — emulgator i drikkevarer",
+  "E445": "Glycerolestere af træharpiks — emulgator i drikkevarer",
+  "E450": "Diphosphater — hæve- og bindemiddel i bagværk",
+  "E451": "Triphosphater — bindemiddel i kødprodukter",
+  "E452": "Polyphosphater — bindemiddel, vandholdenhed i kød",
+  "E459": "Beta-cyclodextrin — indkapslingsmiddel",
+  "E460": "Cellulose — fyldsotf og anti-klumpningsmiddel",
+  "E461": "Methylcellulose — fortykningsmiddel og emulgator",
+  "E462": "Ethylcellulose — bindemiddel",
+  "E463": "Hydroxypropylcellulose — fortykningsmiddel",
+  "E464": "Hydroxypropylmethylcellulose — fortykningsmiddel og emulgator",
+  "E465": "Ethylmethylcellulose — fortykningsmiddel",
+  "E466": "Carboxymethylcellulose — fortykningsmiddel og stabilisator",
+  "E468": "Crosslinket natriumcarboxymethylcellulose — stabilisator",
+  "E469": "Enzymatisk hydrolyseret carboxymethylcellulose — stabilisator",
+  "E470a": "Natriumsalte af fedtsyrer — emulgator",
+  "E470b": "Magnesiumsalte af fedtsyrer — emulgator og anti-klumpningsmiddel",
+  "E471": "Mono- og diglycerider af fedtsyrer — emulgator i brød og margarine",
+  "E472a": "Eddikesyreestere af mono- og diglycerider — emulgator",
+  "E472b": "Mælkesyreestere af mono- og diglycerider — emulgator",
+  "E472c": "Citronsyreestere af mono- og diglycerider — emulgator",
+  "E472d": "Vinsyreestere af mono- og diglycerider — emulgator",
+  "E472e": "Diacetyltartrat- og eddikesyreestere af mono- og diglycerider — emulgator",
+  "E472f": "Blandede eddike- og vinsyreestere af mono- og diglycerider — emulgator",
+  "E473": "Saccharosefedtsyreestere — emulgator",
+  "E474": "Saccharoglycerider — emulgator",
+  "E475": "Polyglycerolestere af fedtsyrer — emulgator",
+  "E476": "Polyglycerolpolyricinoleat — emulgator i chokolade",
+  "E477": "Propylenglycolestere af fedtsyrer — emulgator",
+  "E479b": "Varmebehandlet sojaolieinteraktion med mono- og diglycerider — emulgator",
+  "E481": "Natriumstearoyl-2-lactylat — emulgator i brød",
+  "E482": "Calciumstearoyl-2-lactylat — emulgator i brød",
+  "E483": "Stearoyltartrat — emulgator",
+  "E484": "Stearylcitrat — emulgator",
+  "E491": "Sorbitanmonostearat — emulgator",
+  "E492": "Sorbitantristearat — emulgator",
+  "E493": "Sorbitanmonolauarat — emulgator",
+  "E494": "Sorbitanmonooleat — emulgator",
+  "E495": "Sorbitanmonopalmitat — emulgator",
+  "E620": "L-Glutaminsyre — naturlig smagsforstærker, findes i tomat og ost",
+  "E621": "Mononatriumglutamat (MSG) — syntetisk smagsforstærker, omdiskuteret",
+  "E622": "Monokaliumglutamat — smagsforstærker",
+  "E623": "Calciumdiglutamat — smagsforstærker",
+  "E624": "Monoammoniumglutamat — smagsforstærker",
+  "E625": "Magnesiumdiglutamat — smagsforstærker",
+  "E626": "Guanylsyre — smagsforstærker",
+  "E627": "Dinatriumguanylat — smagsforstærker, forstærker MSG-effekt",
+  "E628": "Dikaliumguanylat — smagsforstærker",
+  "E629": "Calciumguanylat — smagsforstærker",
+  "E630": "Inosinsyre — smagsforstærker",
+  "E631": "Dinatriuminosinat — smagsforstærker, forstærker MSG-effekt",
+  "E632": "Dikaliuminosinat — smagsforstærker",
+  "E633": "Calciuminosinat — smagsforstærker",
+  "E634": "Calcium-5-ribonukleotider — smagsforstærker",
+  "E635": "Dinatrium-5-ribonukleotider — smagsforstærker, kombination af E627+E631",
+  "E636": "Maltol — smagsforstærker og aromasoftf",
+  "E637": "Ethylmaltol — smagsforstærker, forstærker sød smag",
+  "E640": "Glycin og natriumsalt — smagsforstærker",
+  "E650": "Zinkacetat — smagsforstærker i tyggegummi",
+  "E900": "Dimethylpolysiloxan — anti-skummiddel i fedtstoffer og juice",
+  "E901": "Bivoks — glaseringsmiddel på frugt og slik",
+  "E902": "Candelillavoks — glaseringsmiddel, vegansk alternativ til bivoks",
+  "E903": "Carnaubavoks — glaseringsmiddel fra palmeblade",
+  "E904": "Shellac — glaseringsmiddel fra skjoldlus",
+  "E905": "Mikrokrystallinsk voks — glaseringsmiddel",
+  "E907": "Raffineret mikrokrystallinsk voks — glaseringsmiddel",
+  "E912": "Montan-syreestere — glaseringsmiddel",
+  "E914": "Oxideret polyethylenvoks — glaseringsmiddel",
+  "E920": "L-Cystein — mel-forbedrer i bagværk",
+  "E927b": "Carbamid (urinstof) — mel-forbedrer",
+  "E938": "Argon — emballeringsgas",
+  "E939": "Helium — emballeringsgas",
+  "E941": "Kvælstof — emballeringsgas, forlænger holdbarheden",
+  "E942": "Lattergas — drivgas i flødeskum",
+  "E943a": "Butan — drivgas",
+  "E943b": "Isobutan — drivgas",
+  "E944": "Propan — drivgas",
+  "E948": "Oxygen — emballeringsgas",
+  "E949": "Hydrogen — emballeringsgas",
+  "E950": "Acesulfam K — sødemiddel, ca. 200x sødere end sukker",
+  "E951": "Aspartam — sødemiddel, 200x sødere end sukker, indeholder phenylalanin",
+  "E952": "Cyclaminsyre/Cyclamat — sødemiddel, forbudt i USA",
+  "E953": "Isomalt — sødemiddel og fyldsoftf fra sukker",
+  "E954": "Saccharin og salte — ældste kunstige sødemiddel, 300-500x sødere",
+  "E955": "Sucralose — sødemiddel, 600x sødere end sukker",
+  "E957": "Thaumatin — naturlig proteinsødemiddel fra afrikansk frugt",
+  "E958": "Glycyrrhizin — naturlig sødemiddel fra lakrids",
+  "E959": "Neohesperidindihydrochalcon — sødemiddel fra citrus",
+  "E960": "Steviolglykosider (Stevia) — naturlig sødemiddel fra steviaplante",
+  "E961": "Neotam — sødemiddel, 7000-13000x sødere end sukker",
+  "E962": "Aspartam-acesulfamsalt — sødemiddel",
+  "E965": "Maltitol/Maltitolsirup — sødemiddel og fugtighedsbeholder",
+  "E966": "Lactitol — sødemiddel, afledt af laktose",
+  "E967": "Xylitol — sødemiddel fra birkebark, godt for tænder",
+  "E968": "Erythritol — sødemiddel, naturligt i frugt og fermenterede fødevarer",
+  "E969": "Advantam — sødemiddel, 20000x sødere end sukker",
+  "E999": "Quillajaekstrakt — skumdannende middel i drikkevarer",
+  "E161g": "Canthaxanthin — orange farve, bruges i lakseopdræt",
+};
+
+const ENumberPicker = ({ selected, onChange }) => {
+  const [search, setSearch] = React.useState("");
+  const [cat, setCat] = React.useState("alle");
+
+  const filtered = Object.entries(E_NUMBERS).filter(([e, name]) => {
+    const matchSearch = !search || e.toLowerCase().includes(search.toLowerCase()) || name.toLowerCase().includes(search.toLowerCase());
+    if (!matchSearch) return false;
+    if (cat === "alle") return true;
+    const num = parseInt(e.slice(1).replace(/[^0-9]/g,''));
+    const ranges = { farve:[100,199], konserv:[200,299], antioxid:[300,399], emulg:[400,499], smags:[600,699], sode:[900,999] };
+    const r = ranges[cat];
+    return r ? (num >= r[0] && num <= r[1]) : true;
+  });
+
+  const popular = ["E621","E211","E102","E951","E250","E320","E150d","E110","E129","E951"];
+
+  return (
+    <div>
+      {/* Populære */}
+      <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:10 }}>
+        {popular.filter(e => E_NUMBERS[e]).map(e => {
+          const on = selected.includes(e);
+          return (
+            <div key={e} onClick={() => onChange(on ? selected.filter(x=>x!==e) : [...selected,e])}
+              style={{ fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:20, cursor:"pointer",
+                background: on?"var(--red-lt)":"var(--paper2)",
+                color: on?"var(--red)":"var(--ink2)",
+                border:`1.5px solid ${on?"var(--red)":"var(--border)"}` }}>
+              {e}{on?" ✓":""}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Søg */}
+      <input style={{ width:"100%", padding:"8px 12px", border:"1.5px solid var(--border2)", borderRadius:8, fontSize:13, fontFamily:"var(--f)", marginBottom:8, boxSizing:"border-box" }}
+        placeholder="Søg E-nummer eller navn..." value={search} onChange={e => setSearch(e.target.value)} />
+
+      {/* Kategori */}
+      <select style={{ width:"100%", padding:"8px 12px", border:"1.5px solid var(--border2)", borderRadius:8, fontSize:13, fontFamily:"var(--f)", marginBottom:8, background:"#fff", boxSizing:"border-box" }}
+        value={cat} onChange={e => setCat(e.target.value)}>
+        <option value="alle">Alle kategorier</option>
+        <option value="farve">Farvestoffer (E100–E199)</option>
+        <option value="konserv">Konserveringsmidler (E200–E299)</option>
+        <option value="antioxid">Antioxidanter (E300–E399)</option>
+        <option value="emulg">Emulgatorer / Stabilisatorer (E400–E499)</option>
+        <option value="smags">Smagsforstærkere (E600–E699)</option>
+        <option value="sode">Sødestoffer (E900–E999)</option>
+      </select>
+
+      {/* Farveforklaring */}
+      <div style={{ display:"flex", gap:6, marginBottom:8 }}>
+        {[["var(--border)","var(--ink)","Ingen"],["var(--amber)","var(--amber)","Intolerance"],["var(--red)","var(--red)","Allergi"]].map(([border,color,label]) => (
+          <div key={label} style={{ flex:1, display:"flex", alignItems:"center", gap:5, padding:"4px 8px", border:`1.5px solid ${border}`, borderRadius:8, background:color==="var(--ink)"?"var(--paper2)":color==="var(--amber)"?"var(--amber-lt)":"var(--red-lt)" }}>
+            <div style={{ width:7, height:7, borderRadius:"50%", background:color, flexShrink:0 }}/>
+            <span style={{ fontSize:10, fontWeight:700, color }}>{label}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize:10, color:"var(--muted)", marginBottom:8 }}>Tryk 1x = Intolerance · 2x = Allergi · 3x = Fjern</div>
+
+      {/* Liste */}
+      <div style={{ maxHeight:320, overflowY:"auto", border:"1px solid var(--border)", borderRadius:8 }}>
+        {filtered.map(([e, name], i, arr) => {
+          const state = selected.includes(e+"_intolerance") ? "intolerance" : selected.includes(e) ? "allergen" : "none";
+          const bg = state==="allergen"?"var(--red-lt)":state==="intolerance"?"var(--amber-lt)":"#fff";
+          const col = state==="allergen"?"var(--red)":state==="intolerance"?"var(--amber)":"var(--ink)";
+          const colMuted = state==="allergen"?"var(--red)":state==="intolerance"?"var(--amber)":"var(--muted2)";
+          return (
+            <div key={e} onClick={() => {
+              if (state==="none") onChange([...selected, e+"_intolerance"]);
+              else if (state==="intolerance") onChange([...selected.filter(x=>x!==e+"_intolerance"), e]);
+              else onChange(selected.filter(x=>x!==e));
+            }} style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"8px 12px",
+              borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none",
+              background: bg, cursor:"pointer" }}>
+              <div style={{ fontSize:12, fontWeight:800, color:col, width:48, flexShrink:0, paddingTop:1 }}>{e}</div>
+              <div style={{ fontSize:12, color:colMuted, flex:1, lineHeight:1.4 }}>{name}</div>
+              {state!=="none" && <div style={{ fontSize:9, fontWeight:800, color:col, flexShrink:0, paddingTop:2 }}>{state==="allergen"?"Allergi":"Intolerance"}</div>}
+            </div>
+          );
+        })}
+        {filtered.length === 0 && <div style={{ padding:"16px", fontSize:13, color:"var(--muted)", textAlign:"center" }}>Ingen resultater</div>}
+      </div>
+
+      {/* Valgte */}
+      {selected.length > 0 && (
+        <div style={{ marginTop:10 }}>
+          <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Valgte ({selected.length})</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:3 }}>
+            {selected.map(e => {
+              const isIntolerance = e.endsWith("_intolerance");
+              const eId = isIntolerance ? e.replace("_intolerance","") : e;
+              const col = isIntolerance ? "var(--amber)" : "var(--red)";
+              const bg = isIntolerance ? "var(--amber-lt)" : "var(--red-lt)";
+              const border = isIntolerance ? "var(--amber-md)" : "var(--red-md)";
+              return (
+                <div key={e} style={{ display:"flex", alignItems:"center", gap:8, padding:"5px 10px", background:bg, border:`1px solid ${border}`, borderRadius:6 }}>
+                  <div style={{ fontSize:11, fontWeight:800, color:col, width:44, flexShrink:0 }}>{eId}</div>
+                  <div style={{ fontSize:11, color:col, flex:1, lineHeight:1.3 }}>{(E_NUMBERS[eId]||"").split(" — ")[0]}</div>
+                  <div style={{ fontSize:9, fontWeight:700, color:col }}>{isIntolerance?"Intolerance":"Allergi"}</div>
+                  <div onClick={() => onChange(selected.filter(x=>x!==e))} style={{ cursor:"pointer", flexShrink:0 }}>
+                    <Icon name="x" size={12} color={col} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+
+
+// Selvmodsigende subtype-kombinationer — disse kan ikke vælges samtidig
+const INCOMPATIBLE_SUBTYPES = {
+  // Gluten: "alle" udelukker de mere specifikke (cøliaki+sensitivitet er ok, men "alle" + specifik er redundant)
+  gluten_alle:     ["gluten_coeliaki", "gluten_allergi", "gluten_sensitiv"],
+  gluten_coeliaki: ["gluten_alle"],
+  gluten_allergi:  ["gluten_alle"],
+  gluten_sensitiv: ["gluten_alle"],
+  // Mælk: "alle" udelukker de specifikke
+  laktose_alle:    ["laktose_protein", "laktose_sukker", "laktose_valle"],
+  laktose_protein: ["laktose_alle"],
+  laktose_sukker:  ["laktose_alle"],
+  laktose_valle:   ["laktose_alle"],
+  // Nødder: "alle" udelukker specifikke
+  noedder_alle:    ["noedder_hassel","noedder_mandel","noedder_valnoed","noedder_cashew","noedder_kokos"],
+  noedder_hassel:  ["noedder_alle"],
+  noedder_mandel:  ["noedder_alle"],
+  noedder_valnoed: ["noedder_alle"],
+  noedder_cashew:  ["noedder_alle"],
+  noedder_kokos:   ["noedder_alle"],
+  // Æg: "alle" udelukker specifikke
+  aeg_alle:        ["aeg_hvid", "aeg_bagt"],
+  aeg_hvid:        ["aeg_alle"],
+  aeg_bagt:        ["aeg_alle"],
+  // Fisk: "alle" udelukker specifikke
+  fisk_alle:       ["fisk_hvid", "fisk_fed", "fisk_skjult"],
+  fisk_hvid:       ["fisk_alle"],
+  fisk_fed:        ["fisk_alle"],
+  fisk_skjult:     ["fisk_alle"],
+  // Soja: "alle" udelukker specifikke
+  soja_alle:       ["soja_protein", "soja_lecitin"],
+  soja_protein:    ["soja_alle"],
+  soja_lecitin:    ["soja_alle"],
+  // Skaldyr: "alle" udelukker specifikke
+  skaldyr_alle:    ["skaldyr_krebs", "skaldyr_bloeddyr"],
+  skaldyr_krebs:   ["skaldyr_alle"],
+  skaldyr_bloeddyr:["skaldyr_alle"],
+  // Sesam: "alle" udelukker specifikke
+  sesam_alle:      ["sesam_froe", "sesam_olie"],
+  sesam_froe:      ["sesam_alle"],
+  sesam_olie:      ["sesam_alle"],
+};
+
+// ─── ALLERGEN SUBTYPE MODAL ───────────────────────────────────────────────────
+const SubtypeModal = ({ allergenId, selectedSubtypes = [], onToggle, onClose }) => {
+  const data = ALLERGEN_SUBTYPES[allergenId];
+  if (!data) return null;
+
+  const isDisabled = (optId) => {
+    const incompatible = INCOMPATIBLE_SUBTYPES[optId] || [];
+    return selectedSubtypes.some(s => incompatible.includes(s));
+  };
+
+  const isSelected = (optId) => selectedSubtypes.includes(optId);
+
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}>
+      <div style={{ background:"var(--paper)", width:"100%", borderRadius:"20px 20px 0 0", padding:"24px 20px 40px", maxHeight:"80vh", overflowY:"auto" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+          <div>
+            <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Præciser din {data.label}-reaktion</div>
+            <div style={{ fontSize:12, color:"var(--muted)", marginTop:4, lineHeight:1.5 }}>{data.intro}</div>
+          </div>
+          <div onClick={onClose} style={{ cursor:"pointer", padding:4 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
+              <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </div>
+        </div>
+
+        <div style={{ fontSize:11, color:"var(--green)", fontWeight:600, marginBottom:14 }}>
+          Du kan vælge flere — kombinationer der modsiger hinanden er låst.
+        </div>
+
+        <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+          {data.options.map(opt => {
+            const selected = isSelected(opt.id);
+            const disabled = !selected && isDisabled(opt.id);
+            return (
+              <div key={opt.id}
+                onClick={() => !disabled && onToggle(opt.id)}
+                style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px",
+                  border:`1.5px solid ${selected?"var(--green)":disabled?"var(--border)":"var(--border)"}`,
+                  background:selected?"var(--green-lt)":disabled?"var(--paper2)":"#fff",
+                  borderRadius:12, cursor:disabled?"not-allowed":"pointer",
+                  opacity:disabled?0.45:1, transition:"all .15s" }}>
+                <div style={{ fontSize:22, flexShrink:0 }}>{opt.icon}</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:selected?"var(--green)":"var(--ink)", marginBottom:2 }}>{opt.label}</div>
+                  <div style={{ fontSize:11, color:"var(--muted2)", lineHeight:1.4 }}>{opt.desc}</div>
+                  {disabled && (
+                    <div style={{ fontSize:10, color:"var(--muted)", marginTop:3 }}>Modstrider valgt kombination</div>
+                  )}
+                </div>
+                {selected && (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5">
+                    <path strokeLinecap="round" d="M5 13l4 4L19 7"/>
+                  </svg>
+                )}
+              </div>
+            );
+          })}
+          <div onClick={() => { data.options.forEach(o => isSelected(o.id) && onToggle(o.id)); onClose(); }}
+            style={{ padding:"10px 14px", border:"1px solid var(--border)", borderRadius:12,
+              cursor:"pointer", textAlign:"center", fontSize:12, color:"var(--muted)" }}>
+            Nulstil — behold bred kategori ({data.label})
+          </div>
+        </div>
+
+        <button className="btn btn-primary btn-full" style={{ marginTop:16 }} onClick={onClose}>
+          Gem valg
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
+// ─── FÆLLES ALLERGI/PROFIL FORMULAR ──────────────────────────────────────────
+// Bruges identisk i: onboarding trin 4, rediger profil, familie (onboarding + rediger)
+const AllergyForm = ({ allergens, setAllergens, customAllerg, setCustomAllerg,
+  selectedENumbers, setSelectedENumbers, allergenSubtypes, setAllergenSubtypes,
+  activeSubtypeModal, setActiveSubtypeModal, showENumbers = true }) => {
+
+  const [customInput, setCustomInput] = React.useState("");
+  const [eSearch, setESearch] = React.useState("");
+  const [eCategory, setECategory] = React.useState("alle");
+
+  return (
+    <div>
+      {/* Farveforklaring */}
+      <div style={{ display:"flex", gap:6, marginBottom:10 }}>
+        {[["var(--border)","var(--ink)","Ingen"],["var(--amber)","var(--amber)","Intolerance"],["var(--red)","var(--red)","Allergi"]].map(([border,color,label]) => (
+          <div key={label} style={{ flex:1, display:"flex", alignItems:"center", gap:5, padding:"5px 8px",
+            border:`1.5px solid ${border}`, borderRadius:8,
+            background:color==="var(--ink)"?"var(--paper2)":color==="var(--amber)"?"var(--amber-lt)":"var(--red-lt)" }}>
+            <div style={{ width:8, height:8, borderRadius:"50%", background:color, flexShrink:0 }}/>
+            <span style={{ fontSize:10, fontWeight:700, color }}>{label}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize:11, color:"var(--muted)", marginBottom:12, lineHeight:1.4 }}>
+        Tryk 1x = Intolerance · 2x = Allergi · 3x = Fjern
+      </div>
+
+      {/* Allergen chips — 3-state */}
+      <div className="chip-grid">
+        {ALLERGENS.map(a => {
+          const isAllergen = allergens.includes(a.id) && !customAllerg.includes(a.id+"_intolerance");
+          const isIntolerance = allergens.includes(a.id) && customAllerg.includes(a.id+"_intolerance");
+          const state = isAllergen ? "allergen" : isIntolerance ? "intolerance" : "none";
+          const bg = state==="allergen"?"var(--red-lt)":state==="intolerance"?"var(--amber-lt)":"var(--paper2)";
+          const border = state==="allergen"?"var(--red)":state==="intolerance"?"var(--amber)":"var(--border)";
+          const color = state==="allergen"?"var(--red)":state==="intolerance"?"var(--amber)":"var(--ink)";
+          return (
+            <div key={a.id} className="chip" style={{ background:bg, border:`1.5px solid ${border}`, color }}
+              onClick={() => {
+                if (state==="none") {
+                  setAllergens(p => [...p, a.id]);
+                  setCustomAllerg(p => [...p, a.id+"_intolerance"]);
+                } else if (state==="intolerance") {
+                  setCustomAllerg(p => p.filter(x => x !== a.id+"_intolerance"));
+                } else {
+                  setAllergens(p => p.filter(x => x !== a.id));
+                }
+              }}>
+              <span style={{ flex:1 }}>{a.label}</span>
+              {state!=="none" && allergenSubtypes[a.id] && <div style={{ fontSize:8, fontWeight:800, color }}>✓</div>}
+              {state!=="none" && !allergenSubtypes[a.id] && <div style={{ fontSize:9, fontWeight:800, color }}>{state==="allergen"?"Allergi":"Intolerance"}</div>}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Præciser valgte allergier */}
+      {allergens.some(id => ALLERGEN_SUBTYPES[id]) && (
+        <div style={{ marginTop:12, paddingTop:12, borderTop:"1px solid var(--border)" }}>
+          <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>Tilpas din allergi præcist til dig selv</div>
+          <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8, lineHeight:1.5 }}>
+            For størst mulig tryghed kan du præcisere hvad du reagerer på inden for hver kategori.
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+            {allergens.filter(id => ALLERGEN_SUBTYPES[id]).map(id => {
+              const data = ALLERGEN_SUBTYPES[id];
+              const subtype = allergenSubtypes[id];
+              const subtypeLabel = subtype && subtype.length > 0 ? subtype.map(id => data.options.find(o=>o.id===id)?.label).filter(Boolean).join(", ") : null;
+              return (
+                <div key={id} onClick={() => setActiveSubtypeModal(id)}
+                  style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px",
+                    border:"1.5px solid var(--green)", background:"var(--green-lt)",
+                    borderRadius:10, cursor:"pointer" }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:12, fontWeight:700, color:"var(--green)" }}>{data.label}</div>
+                    <div style={{ fontSize:11, color:"var(--muted2)", marginTop:2 }}>{subtypeLabel || "Tryk for at præcisere →"}</div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2">
+                    <path strokeLinecap="round" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Skriv selv */}
+      <div style={{ marginTop:12, paddingTop:12, borderTop:"1px solid var(--border)" }}>
+        <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:4 }}>Kan ikke finde din allergi?</div>
+        <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8, lineHeight:1.5 }}>Skriv det selv herunder. Vi tilføjer løbende flere valgmuligheder med større sikkerhed.</div>
+        <div className="input-row" style={{ marginBottom: customAllerg.filter(c=>!c.endsWith("_intolerance")).length ? 8 : 0 }}>
+          <input className="field" placeholder="Fx. Fructose…" value={customInput}
+            onChange={e => setCustomInput(e.target.value)}
+            onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(p=>[...p,customInput.trim()]); setCustomInput(""); }}} />
+          <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(p=>[...p,customInput.trim()]); setCustomInput(""); }}}>+</button>
+        </div>
+        {customAllerg.filter(c=>!c.endsWith("_intolerance")).length > 0 && (
+          <div className="tags">
+            {customAllerg.filter(c=>!c.endsWith("_intolerance")).map((a,i) => (
+              <div key={i} className="tag">{a}<span className="tag-x" onClick={() => setCustomAllerg(p=>p.filter(x=>x!==a))}>×</span></div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* E-numre */}
+      {showENumbers && (
+        <div style={{ marginTop:12, paddingTop:12, borderTop:"1px solid var(--border)" }}>
+          <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>E-numre der undgås</div>
+          <ENumberPicker selected={selectedENumbers} onChange={setSelectedENumbers} />
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+// ─── FÆLLES FAMILIE FORMULAR ─────────────────────────────────────────────────
+// Bruges 1-1 identisk i onboarding trin 6, familie-skærm og redigering af familiemedlem
+const MemberForm = ({
+  name, setName,
+  allergens, setAllergens,
+  customAllerg, setCustomAllerg,
+  subtypes, setSubtypes,
+  diets, setDiets,
+  eNumbers, setENumbers,
+  customInput, setCustomInput,
+  onAdd, addLabel,
+}) => {
+  const [activeSubModal, setActiveSubModal] = React.useState(null);
+  const [eSearch, setESearch] = React.useState("");
+  const [eCat, setECat] = React.useState("alle");
+
+  return (
+    <div>
+      {activeSubModal && (
+        <SubtypeModal
+          allergenId={activeSubModal}
+          selectedSubtypes={subtypes[activeSubModal] || []}
+          onToggle={(id) => setSubtypes(s => {
+            const cur = s[activeSubModal] || [];
+            return { ...s, [activeSubModal]: cur.includes(id) ? cur.filter(x=>x!==id) : [...cur, id] };
+          })}
+          onClose={() => setActiveSubModal(null)}
+        />
+      )}
+
+      {/* Navn */}
+      <label className="field-lbl">Navn</label>
+      <input className="field" placeholder="Fx. Mia (8 år)" value={name}
+        onChange={e => setName(e.target.value)} style={{ marginBottom:14 }} />
+
+      {/* Allergier / intolerancer — 3-state identisk med egen profil */}
+      <div className="card-lbl" style={{ marginBottom:6 }}>Allergier / intolerancer</div>
+
+      {/* Farveforklaring */}
+      <div style={{ display:"flex", gap:6, marginBottom:10 }}>
+        {[["var(--border)","var(--ink)","Ingen"],["var(--amber)","var(--amber)","Intolerance"],["var(--red)","var(--red)","Allergi"]].map(([border,color,label]) => (
+          <div key={label} style={{ flex:1, display:"flex", alignItems:"center", gap:5, padding:"4px 8px",
+            border:`1.5px solid ${border}`, borderRadius:8,
+            background:color==="var(--ink)"?"var(--paper2)":color==="var(--amber)"?"var(--amber-lt)":"var(--red-lt)" }}>
+            <div style={{ width:7, height:7, borderRadius:"50%", background:color, flexShrink:0 }}/>
+            <span style={{ fontSize:10, fontWeight:700, color }}>{label}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize:10, color:"var(--muted)", marginBottom:10 }}>Tryk 1x = Intolerance · 2x = Allergi · 3x = Fjern</div>
+
+      <div className="chip-grid" style={{ marginBottom:10 }}>
+        {ALLERGENS.map(a => {
+          const isAllergen = allergens.includes(a.id) && !customAllerg.includes(a.id+"_intolerance");
+          const isIntolerance = allergens.includes(a.id) && customAllerg.includes(a.id+"_intolerance");
+          const state = isAllergen ? "allergen" : isIntolerance ? "intolerance" : "none";
+          const bg = state==="allergen"?"var(--red-lt)":state==="intolerance"?"var(--amber-lt)":"var(--paper2)";
+          const border = state==="allergen"?"var(--red)":state==="intolerance"?"var(--amber)":"var(--border)";
+          const color = state==="allergen"?"var(--red)":state==="intolerance"?"var(--amber)":"var(--ink)";
+          return (
+            <div key={a.id} className="chip" style={{ background:bg, border:`1.5px solid ${border}`, color }}
+              onClick={() => {
+                if (state==="none") {
+                  setAllergens(p => [...p, a.id]);
+                  setCustomAllerg(p => [...p, a.id+"_intolerance"]);
+                } else if (state==="intolerance") {
+                  setCustomAllerg(p => p.filter(x => x !== a.id+"_intolerance"));
+                } else {
+                  setAllergens(p => p.filter(x => x !== a.id));
+                }
+              }}>
+              <span style={{ flex:1 }}>{a.label}</span>
+              {state!=="none" && (
+                <div style={{ fontSize:9, fontWeight:800, color }}>
+                  {subtypes[a.id] ? "✓" : state==="allergen"?"Allergi":"Intolerance"}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Præciser allergi */}
+      {allergens.some(id => ALLERGEN_SUBTYPES[id]) && (
+        <div style={{ marginBottom:12, paddingBottom:12, borderBottom:"1px solid var(--border)" }}>
+          <div style={{ fontSize:11, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>Tilpas allergi præcist til dig selv</div>
+          <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8, lineHeight:1.5 }}>For størst mulig tryghed — præciser hvad du reagerer på.</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+            {allergens.filter(id => ALLERGEN_SUBTYPES[id]).map(id => {
+              const data = ALLERGEN_SUBTYPES[id];
+              const subtype = subtypes[id];
+              const subtypeLabel = subtype && subtype.length > 0 ? subtype.map(id => data.options.find(o=>o.id===id)?.label).filter(Boolean).join(", ") : null;
+              return (
+                <div key={id} onClick={() => setActiveSubModal(id)}
+                  style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px",
+                    border:"1.5px solid var(--green)", background:"var(--green-lt)", borderRadius:10, cursor:"pointer" }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:12, fontWeight:700, color:"var(--green)" }}>{data.label}</div>
+                    <div style={{ fontSize:11, color:"var(--muted2)", marginTop:2 }}>{subtypeLabel || "Tryk for at præcisere →"}</div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2">
+                    <path strokeLinecap="round" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Custom allergier */}
+      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:4 }}>Kan ikke finde allergi?</div>
+      <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8, lineHeight:1.5 }}>Vi tilføjer løbende flere valgmuligheder med større sikkerhed.</div>
+      <div className="input-row" style={{ marginBottom:customAllerg.filter(c=>!c.endsWith("_intolerance")).length ? 8 : 12 }}>
+        <input className="field" placeholder="Fx. Fructose…" value={customInput}
+          onChange={e => setCustomInput(e.target.value)}
+          onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(p=>[...p,customInput.trim()]); setCustomInput(""); }}} />
+        <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(p=>[...p,customInput.trim()]); setCustomInput(""); }}}>+</button>
+      </div>
+      {customAllerg.filter(c=>!c.endsWith("_intolerance")).length > 0 && (
+        <div className="tags" style={{ marginBottom:12 }}>
+          {customAllerg.filter(c=>!c.endsWith("_intolerance")).map((a,i) => (
+            <div key={i} className="tag">{a}<span className="tag-x" onClick={() => setCustomAllerg(p=>p.filter(x=>x!==a))}>×</span></div>
+          ))}
+        </div>
+      )}
+
+      {/* Diæt */}
+      <div className="card-lbl" style={{ marginBottom:8 }}>Diæt</div>
+      <div className="chip-grid" style={{ marginBottom:12 }}>
+        {DIETS.map(d => {
+          const on = diets.includes(d.id);
+          return (
+            <div key={d.id} className={`chip${on?" on":""}`}
+              onClick={() => setDiets(p => on ? p.filter(x=>x!==d.id) : [...p,d.id])}>
+              <div style={{ flex:1 }}>
+                <div style={{ fontWeight:700 }}>{d.label}</div>
+                <div style={{ fontSize:10, color:"var(--muted)", marginTop:1 }}>{d.desc}</div>
+              </div>
+              {on && <div className="chip-check">✓</div>}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* E-numre */}
+      <div className="card-lbl" style={{ marginBottom:6 }}>E-numre der undgås</div>
+      <input className="field" placeholder="Søg E-nummer..." value={eSearch}
+        onChange={e => setESearch(e.target.value)} style={{ marginBottom:6 }} />
+      <select className="field" value={eCat} onChange={e => setECat(e.target.value)} style={{ marginBottom:8 }}>
+        <option value="alle">Alle kategorier</option>
+        {E_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label} ({c.range})</option>)}
+      </select>
+
+      {/* E-numre farveforklaring */}
+      <div style={{ display:"flex", gap:6, marginBottom:6 }}>
+        {[["var(--border)","var(--ink)","Ingen"],["var(--amber)","var(--amber)","Intolerance"],["var(--red)","var(--red)","Allergi"]].map(([border,color,label]) => (
+          <div key={label} style={{ flex:1, display:"flex", alignItems:"center", gap:4, padding:"3px 6px", border:`1.5px solid ${border}`, borderRadius:6,
+            background:color==="var(--ink)"?"var(--paper2)":color==="var(--amber)"?"var(--amber-lt)":"var(--red-lt)" }}>
+            <div style={{ width:6, height:6, borderRadius:"50%", background:color, flexShrink:0 }}/>
+            <span style={{ fontSize:9, fontWeight:700, color }}>{label}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize:9, color:"var(--muted)", marginBottom:6 }}>Tryk 1x = Intolerance · 2x = Allergi · 3x = Fjern</div>
+
+      <div style={{ maxHeight:200, overflowY:"auto", border:"1px solid var(--border)", borderRadius:8, marginBottom:eNumbers.length ? 8 : 12 }}>
+        {Object.entries(E_NUMBERS).filter(([e,name]) => {
+          const ms = !eSearch || e.toLowerCase().includes(eSearch.toLowerCase()) || name.toLowerCase().includes(eSearch.toLowerCase());
+          if (!ms) return false;
+          if (eCat==="alle") return true;
+          const cat = E_CATEGORIES.find(c=>c.id===eCat);
+          const num = parseInt(e.replace(/[^0-9]/g,""));
+          return cat ? num>=cat.min && num<=cat.max : true;
+        }).map(([e,name],i,arr) => {
+          const state = eNumbers.includes(e+"_intolerance") ? "intolerance" : eNumbers.includes(e) ? "allergen" : "none";
+          const bg = state==="allergen"?"var(--red-lt)":state==="intolerance"?"var(--amber-lt)":"#fff";
+          const col = state==="allergen"?"var(--red)":state==="intolerance"?"var(--amber)":"var(--ink)";
+          return (
+            <div key={e} onClick={() => {
+              if (state==="none") setENumbers(p=>[...p,e+"_intolerance"]);
+              else if (state==="intolerance") setENumbers(p=>[...p.filter(x=>x!==e+"_intolerance"),e]);
+              else setENumbers(p=>p.filter(x=>x!==e));
+            }} style={{ display:"flex", gap:8, padding:"7px 12px",
+              borderBottom:i<arr.length-1?"1px solid var(--border)":"none",
+              background:bg, cursor:"pointer" }}>
+              <div style={{ fontSize:11, fontWeight:800, color:col, width:44, flexShrink:0 }}>{e}</div>
+              <div style={{ fontSize:11, color:col==="var(--ink)"?"var(--muted2)":col, flex:1, lineHeight:1.3 }}>{name}</div>
+              {state!=="none" && <div style={{ fontSize:9, fontWeight:800, color:col }}>{state==="allergen"?"Allergi":"Intol."}</div>}
+            </div>
+          );
+        })}
+      </div>
+
+      {eNumbers.length > 0 && (
+        <div style={{ marginBottom:12 }}>
+          <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", marginBottom:4 }}>Valgte ({eNumbers.length})</div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+            {eNumbers.map(e => {
+              const isInt = e.endsWith("_intolerance");
+              const eId = isInt ? e.replace("_intolerance","") : e;
+              const col = isInt ? "var(--amber)" : "var(--red)";
+              return (
+                <div key={e} style={{ fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20,
+                  background:isInt?"var(--amber-lt)":"var(--red-lt)", color:col,
+                  border:`1px solid ${col}`, cursor:"pointer" }}
+                  onClick={() => setENumbers(p=>p.filter(x=>x!==e))}>
+                  {eId} ×
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Gem knap */}
+      <button className="btn btn-primary btn-full" onClick={onAdd}
+        disabled={!name.trim()}>
+        {addLabel || "+ Tilføj familiemedlem"}
+      </button>
+    </div>
+  );
+};
+
+
+// ─── KATEGORI VÆLGER ─────────────────────────────────────────────────────────
+const CategorySelect = ({ value, onChange, options, placeholder="Alle kategorier" }) => {
+  const selected = options.find(o => o.id === value);
+  return (
+    <div style={{ position:"relative", display:"inline-block", minWidth:160 }}>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        style={{
+          appearance:"none", WebkitAppearance:"none",
+          padding:"8px 36px 8px 14px",
+          borderRadius:24, border:"1.5px solid var(--border)",
+          background:"var(--paper2)", fontSize:13, fontWeight:600,
+          color: value === "alle" ? "var(--muted2)" : "var(--ink)",
+          cursor:"pointer", fontFamily:"var(--f)",
+          outline:"none", width:"100%",
+          boxShadow: value !== "alle" ? "0 0 0 2px var(--green)" : "none",
+          borderColor: value !== "alle" ? "var(--green)" : "var(--border)",
+        }}>
+        {options.map(o => (
+          <option key={o.id} value={o.id}>{o.label}</option>
+        ))}
+      </select>
+      {/* Pile-ikon */}
+      <div style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", color:"var(--muted2)", fontSize:11 }}>▾</div>
+    </div>
+  );
+};
+
+// ─── ALLERGEN UNDERKATEGORIER ────────────────────────────────────────────────
+const ALLERGEN_SUBTYPES = {
+  laktose: {
+    label: "Mælk / Laktose",
+    intro: "Mælkereaktioner kan variere meget. Præciser din reaktion for størst mulig tryghed.",
+    options: [
+      { id: "laktose_alle",    label: "Alle mælkeprodukter",        desc: "Undgår alt fra mælk — strengest", icon: "🥛" },
+      { id: "laktose_protein", label: "Mælkeprotein (kasein/valle)", desc: "Allergi mod mælkeprotein — også i smør og hård ost", icon: "🧀" },
+      { id: "laktose_sukker",  label: "Laktose (mælkesukker)",      desc: "Tåler ofte smør og hård ost med lavt laktoseindhold", icon: "🫙" },
+      { id: "laktose_valle",   label: "Valle-protein",               desc: "Relevant i sportsprodukter og proteinbarer", icon: "💪" },
+    ]
+  },
+  gluten: {
+    label: "Gluten / Hvede",
+    intro: "Glutenreaktioner varierer fra mild sensitivitet til svær cøliaki. Din præcisering hjælper os med at filtrere korrekt.",
+    options: [
+      { id: "gluten_coeliaki",   label: "Cøliaki",                    desc: "Autoimmun reaktion — ingen spor tolereres", icon: "🚫" },
+      { id: "gluten_allergi",    label: "Hvedeallergi",                desc: "Allergi specifikt mod hvede — rug og byg muligvis ok", icon: "🌾" },
+      { id: "gluten_sensitiv",   label: "Glutensensitivitet",          desc: "Ikke-cøliaki — spormængder kan tolereres", icon: "⚠️" },
+      { id: "gluten_alle",       label: "Alt med gluten",              desc: "Undgår alt gluten inkl. spor — strengest", icon: "❌" },
+    ]
+  },
+  noedder: {
+    label: "Nødder",
+    intro: "Mange er kun allergiske over for specifikke nødder. Præciser hvilke for bedre filtrering.",
+    options: [
+      { id: "noedder_alle",      label: "Alle nødder",                desc: "Undgår samtlige nøddetyper — strengest", icon: "🥜" },
+      { id: "noedder_hassel",    label: "Hasselnødder",               desc: "Specifikt hasselnød (pollenallergi)", icon: "🌰" },
+      { id: "noedder_mandel",    label: "Mandler",                    desc: "Specifikt mandel", icon: "🫘" },
+      { id: "noedder_valnoed",   label: "Valnødder",                  desc: "Specifikt valnød", icon: "🌰" },
+      { id: "noedder_cashew",    label: "Cashew & Pistacie",          desc: "Anacardiaceae-familien", icon: "🫘" },
+      { id: "noedder_kokos",     label: "Kokos",                      desc: "Botanisk frugt — ikke altid inkluderet i nødder", icon: "🥥" },
+    ]
+  },
+  aeg: {
+    label: "Æg",
+    intro: "Ægallergi kan være mod hvide, blomme eller begge. Mange tåler velbagt æg.",
+    options: [
+      { id: "aeg_alle",          label: "Alle æggeprodukter",         desc: "Undgår alt — inkl. spor i bagværk", icon: "🥚" },
+      { id: "aeg_hvid",          label: "Kun æggehvide",              desc: "Tåler æggeblomme", icon: "⚪" },
+      { id: "aeg_bagt",          label: "Rå/let tilberedt",           desc: "Tåler velbagt æg (f.eks. i kager)", icon: "🎂" },
+    ]
+  },
+  fisk: {
+    label: "Fisk",
+    intro: "Fiskeallergier er ofte artspecifikke. Præciser hvilken type.",
+    options: [
+      { id: "fisk_alle",         label: "Alle fisk",                  desc: "Undgår alle fiskearter — strengest", icon: "🐟" },
+      { id: "fisk_hvid",         label: "Hvidfisk",                   desc: "Torsk, sej, kuller, pighvar", icon: "🐠" },
+      { id: "fisk_fed",          label: "Fed fisk",                   desc: "Laks, makrel, sild, ørred", icon: "🍣" },
+      { id: "fisk_skjult",       label: "Skjulte kilder",             desc: "Worcestershiresauce, ansjoser, fiskeextrakt", icon: "⚠️" },
+    ]
+  },
+  soja: {
+    label: "Soja",
+    intro: "Sojaprotein og sojalecithin reagerer forskelligt. Mange tåler sojalecithin.",
+    options: [
+      { id: "soja_alle",         label: "Al soja",                    desc: "Undgår alt fra soja inkl. lecithin", icon: "🫘" },
+      { id: "soja_protein",      label: "Sojaprotein",                desc: "Tåler sojalecithin (E322) — brugt i chokolade", icon: "🍫" },
+      { id: "soja_lecitin",      label: "Sojalecithin (E322)",        desc: "Specifikt sojalecithin som tilsætningsstof", icon: "⚗️" },
+    ]
+  },
+  skaldyr: {
+    label: "Skaldyr",
+    intro: "Krebsdyr og bløddyr er forskellige allergener. Mange reagerer kun på det ene.",
+    options: [
+      { id: "skaldyr_alle",      label: "Alle skaldyr",               desc: "Undgår krebsdyr, muslinger og bløddyr", icon: "🦐" },
+      { id: "skaldyr_krebs",     label: "Krebsdyr",                   desc: "Rejer, krabbe, hummer, languster", icon: "🦞" },
+      { id: "skaldyr_bloeddyr",  label: "Bløddyr / Muslinger",        desc: "Muslinger, østers, blæksprutte", icon: "🦑" },
+    ]
+  },
+  sesam: {
+    label: "Sesam",
+    intro: "Sesam kan skjule sig under mange navne på etiketter.",
+    options: [
+      { id: "sesam_alle",        label: "Al sesam",                   desc: "Inkl. tahini, sesamolie og sesammel", icon: "🌱" },
+      { id: "sesam_froe",        label: "Sesamfrø",                   desc: "Primært hele eller knuste frø", icon: "·" },
+      { id: "sesam_olie",        label: "Sesamolie",                  desc: "Koldpresset — mest allergen. Raffineret muligvis ok", icon: "🫗" },
+    ]
+  },
+};
+
 const ALLERGENS = [
   { id:"gluten",      label:"Gluten",         emoji:"🌾" },
   { id:"laktose",     label:"Laktose / Mælk", emoji:"🥛" },
@@ -87,17 +1125,17 @@ const DEMO_CODES = [
 
 const SCREENS = {
   WELCOME:"welcome", LOGIN:"login", ONBOARD:"onboard",
-  HOME:"home", SCAN:"scan", SEARCH:"search",
+  HOME:"home", SEARCH:"search",
   LIST:"list", PROFILE:"profile", FAMILY:"family",
   RESULT:"result", HISTORY:"history",
   NOTFOUND:"notfound", SUBMITTED:"submitted",
   ADMIN:"admin", FAVORITES:"favorites",
-  MADPAS:"madpas", RECIPES:"recipes", EDITPROFILE:"editprofile",
+  MADPAS:"madpas", RECIPES:"recipes", EDITPROFILE:"editprofile", SUGGEST_EDIT:"suggest_edit",
 };
 
 const PAGE_IDS = {
   welcome:"SCR-01", login:"SCR-02", onboard:"SCR-03",
-  home:"SCR-04", scan:"SCR-05", search:"SCR-06",
+  home:"SCR-04", search:"SCR-06",
   list:"SCR-07", profile:"SCR-08", family:"SCR-09",
   result:"SCR-10", history:"SCR-11", notfound:"SCR-12",
   submitted:"SCR-13", admin:"SCR-14", favorites:"SCR-15",
@@ -112,7 +1150,7 @@ const DUMMY_PRODUCT = {
   image_url: "https://images.openfoodfacts.org/images/products/301/762/042/2003/front_en.820.400.jpg",
   category: "Chokolade",
   status: "danger",
-  headline: "Indeholder allergen! 🚫",
+  headline: "Indeholder allergen",
   summary: "Produktet indeholder Laktose, Nødder.",
   source: "open_food_facts",
   verified_status: "unverified",
@@ -128,6 +1166,17 @@ const DUMMY_PRODUCT = {
     lupin: "no", bloeddyr: "no",
   },
   ingredients: "Sucre, huile de palme, NOISETTES 13%, cacao maigre 7,4%, LAIT écrémé en poudre 6,6%, LACTOSERUM en poudre, émulsifiants: lécithines (SOJA), vanilline.",
+  tags: ["vegetarian"],
+  nutrition: {
+    energy_kcal: 539,
+    fat: 30.9,
+    saturated_fat: 10.6,
+    carbohydrates: 57.5,
+    sugars: 56.3,
+    fiber: 3.4,
+    protein: 6.3,
+    salt: 0.11,
+  },
   flags: [
     { type:"bad", text:"Indeholder Laktose" },
     { type:"bad", text:"Indeholder Nødder" },
@@ -135,6 +1184,37 @@ const DUMMY_PRODUCT = {
   ],
   timestamp: Date.now(),
 };
+
+// Mock produkter med fuld data til test
+const MOCK_PRODUCTS = [
+  {
+    id: "mock-1", ean: "5701029015306", name: "Lurpak Smør", brand: "Lurpak",
+    category: "Mejeri", verified_status: "verified", source: "verified",
+    image_url: null,
+    allergen_flags: { gluten:"no", laktose:"yes", aeg:"no", noedder:"no", jordnoedder:"no", soja:"no", fisk:"no", skaldyr:"no", selleri:"no", sennep:"no", sesam:"no", svovl:"no", lupin:"no", bloeddyr:"no" },
+    ingredients: "Pasteuriseret fløde (mælk), salt.",
+    nutrition: { energy_kcal:717, fat:80, saturated_fat:52, carbohydrates:0.6, sugars:0.6, fiber:0, protein:0.6, salt:1.5 },
+    tags: ["vegetarian"],
+  },
+  {
+    id: "mock-2", ean: "5000112546415", name: "Coca-Cola Original", brand: "Coca-Cola",
+    category: "Drikkevarer", verified_status: "verified", source: "verified",
+    image_url: null,
+    allergen_flags: { gluten:"no", laktose:"no", aeg:"no", noedder:"no", jordnoedder:"no", soja:"no", fisk:"no", skaldyr:"no", selleri:"no", sennep:"no", sesam:"no", svovl:"no", lupin:"no", bloeddyr:"no" },
+    ingredients: "Vand, sukker, kuldioxid, farve (E150d), surheds regulerende middel (E338), naturlige aromaer inkl. koffein.",
+    nutrition: { energy_kcal:42, fat:0, saturated_fat:0, carbohydrates:10.6, sugars:10.6, fiber:0, protein:0, salt:0 },
+    tags: ["vegan", "vegetarian"],
+  },
+  {
+    id: "mock-3", ean: "7394376616566", name: "Oatly Havredrik", brand: "Oatly",
+    category: "Plantebaseret", verified_status: "verified", source: "verified",
+    image_url: null,
+    allergen_flags: { gluten:"traces", laktose:"no", aeg:"no", noedder:"no", jordnoedder:"no", soja:"no", fisk:"no", skaldyr:"no", selleri:"no", sennep:"no", sesam:"no", svovl:"no", lupin:"no", bloeddyr:"no" },
+    ingredients: "Vand, havre 10%, rapsolie, calcium, vitaminer (D2, riboflavin, B12), salt.",
+    nutrition: { energy_kcal:46, fat:1.5, saturated_fat:0.2, carbohydrates:6.7, sugars:4, fiber:0.8, protein:1, salt:0.07 },
+    tags: ["vegan", "vegetarian"],
+  },
+];
 
 
 const ALLERGEN_EXAMPLES = {
@@ -196,17 +1276,26 @@ const ALLERGEN_EXAMPLES = {
   },
 };
 
+const DIETS = [
+  { id:"vegan",       label:"Vegansk",       desc:"Ingen animalske produkter" },
+  { id:"vegetarian",  label:"Vegetarisk",    desc:"Ingen kød eller fisk" },
+  { id:"pescetarian", label:"Pescetarisk",   desc:"Ingen kød, men fisk ok" },
+  { id:"gluten-free", label:"Glutenfri",     desc:"Ingen gluten" },
+  { id:"keto",        label:"Keto",          desc:"Lavt kulhydratindhold" },
+  { id:"paleo",       label:"Paleo",         desc:"Ingen forarbejdede fødevarer" },
+];
+
 const AVATAR_COLORS = ["#52b788","#74c69d","#40916c","#b7e4c7","#2d6a4f","#95d5b2","#f4a261","#e76f51"];
 
 const HOME_TIPS = [
-  { icon:"🌾", title:"Gluten er overalt", text:"Gluten findes ikke kun i brød — det gemmer sig i saucer, supper og krydderier. Scan altid." },
-  { icon:"📋", title:"Læs altid etiketten", text:"Opskrifter ændres uden varsel. Et produkt du har spist trygt før, kan have nye ingredienser." },
-  { icon:"👨‍👩‍👧", title:"Tilføj din familie", text:"Opret profiler for hele familien — så ser du på én gang hvem der kan spise hvad." },
-  { icon:"🤝", title:"Hjælp fællesskabet", text:"Scan du et ukendt produkt? Indsend det! Databasen vokser med hjælp fra brugere som dig." },
-  { icon:"⚠️", title:"Spor af allergener", text:"'Kan indeholde spor af' er ikke uskadeligt. For stærkt allergiske kan selv spormængder være farlige." },
-  { icon:"🛒", title:"Planlæg din indkøbsliste", text:"Brug indkøbslisten til at tjekke produkter inden du handler — spar tid i butikken." },
-  { icon:"🔎", title:"Søg inden du handler", text:"Søg på produkter inden du tager i butikken — så ved du hvad du kan købe trygt." },
-  { icon:"📱", title:"Tilføj til hjemskærm", text:"Tilføj EatSafe til din telefons hjemskærm for hurtig adgang — det føles som en rigtig app." },
+  { icon:"warning", title:"Gluten er overalt", text:"Gluten findes ikke kun i brød — det gemmer sig i saucer, supper og krydderier. Scan altid." },
+  { icon:"info", title:"Læs altid etiketten", text:"Opskrifter ændres uden varsel. Et produkt du har spist trygt før, kan have nye ingredienser." },
+  { icon:"family", title:"Tilføj din familie", text:"Opret profiler for hele familien — så ser du på én gang hvem der kan spise hvad." },
+  { icon:"heart", title:"Hjælp fællesskabet", text:"Scan du et ukendt produkt? Indsend det! Databasen vokser med hjælp fra brugere som dig." },
+  { icon:"warning", title:"Spor af allergener", text:"'Kan indeholde spor af' er ikke uskadeligt. For stærkt allergiske kan selv spormængder være farlige." },
+  { icon:"cart", title:"Planlæg din indkøbsliste", text:"Brug indkøbslisten til at tjekke produkter inden du handler — spar tid i butikken." },
+  { icon:"search", title:"Søg inden du handler", text:"Søg på produkter inden du tager i butikken — så ved du hvad du kan købe trygt." },
+  { icon:"bulb", title:"Tilføj til hjemskærm", text:"Tilføj EatSafe til din telefons hjemskærm for hurtig adgang — det føles som en rigtig app." },
 ];
 
 // ─── HJÆLPEFUNKTIONER ────────────────────────────────────────────────────────
@@ -239,28 +1328,107 @@ function IngredientsList({ text, allergenFlags = {} }) {
   if (current.trim()) parts.push(current.trim());
 
   // Find allergener der skal fremhæves
+  // Udvidet med synonymer, skjulte ingredienser og videnskabelige navne
   const allergenLabels = {
-    gluten: ["gluten","hvede","rug","byg","havre","spelt","kamut","einkorn","emmer","khorasanhvede"],
-    laktose: ["mælk","laktose","fløde","smør","ost","valle","kasein","laktalbumin"],
-    aeg: ["æg","æggehvide","æggeblomme"],
-    noedder: ["nødder","mandler","hasselnødder","valnødder","cashew","pekannødder","pistacienødder","macadamia"],
-    jordnoedder: ["jordnødder","peanut"],
-    soja: ["soja","sojabønner"],
-    fisk: ["fisk","ansjos","sardiner","laks","tun","makrel"],
-    skaldyr: ["skaldyr","rejer","krabbe","hummer","muslinger"],
-    selleri: ["selleri"],
-    sennep: ["sennep","sennepsfrø"],
-    sesam: ["sesam","sesamfrø"],
-    svovl: ["sulfitter","svovldioxid","svovl"],
-    lupin: ["lupin","lupinmel","lupinfrø"],
-    bloeddyr: ["bløddyr","blæksprutte","østers","muslinger"],
+    gluten: [
+      // Direkte
+      "gluten","hvede","rug","byg","havre","spelt","kamut","einkorn","emmer","khorasanhvede",
+      // Engelsk
+      "wheat","rye","barley","oats","oat","spelt","semolina","bulgur","couscous","farro","freekeh",
+      // Skjulte/forarbejdede
+      "hvedemel","hvedestivelse","hvedeklid","hvedekerne","hvedeprotein","hvedegluten","seitan",
+      "maltekstrakt","malteddike","maltsirup","øleddike","bryggersgær","dinkelhvede",
+      "breadcrumbs","rasp","panko","croutons","mel","stivelse af hvede",
+    ],
+    laktose: [
+      // Direkte
+      "mælk","laktose","fløde","smør","ost","valle","kasein","laktalbumin","laktoglobulin",
+      // Engelsk
+      "milk","cream","butter","cheese","whey","casein","dairy","lactose","lactalbumin",
+      // Skjulte
+      "mælkepulver","skummetmælkspulver","mælkefedt","mælkeprotein","mælkesucker",
+      "creme fraiche","yoghurt","kefir","kvark","mascarpone","ricotta","skyr","ghee",
+      "kondenseret mælk","kokosmælk erstatter","lactoferrin","lactoperoxidase",
+      // Forkortet på etiketter
+      "milk solids","milk powder","non-fat dry milk","buttermilk","milk fat",
+    ],
+    aeg: [
+      "æg","æggehvide","æggeblomme","egg","eggs","albumin","ovalbumin","ovomucin",
+      "lysozym","globulin","mayonnaise","majonæse","meringue","marengs",
+      "egg white","egg yolk","dried egg","whole egg","egg powder","æggepulver",
+    ],
+    noedder: [
+      // Alle nøddetyper
+      "nødder","mandler","hasselnødder","valnødder","cashew","pekannødder","pistacienødder","macadamia",
+      "paranødder","kokosnød","pinjenødder","chestnuts","kastanjer",
+      "almond","hazelnut","walnut","cashew","pecan","pistachio","macadamia","brazil nut","pine nut",
+      // Afledte
+      "marcipan","marzipan","nougat","pesto","praline","gianduja","mandelmel","nøddemel",
+      "mandelsmør","nøddeolie","mandelekstrakt","hasselnøddepasta",
+    ],
+    jordnoedder: [
+      "jordnødder","peanut","peanuts","groundnut","arachis","arachide",
+      "jordnøddeolie","jordnøddesmør","peanut butter","peanut oil","arachis oil",
+      // Skjult i asiatiske retter
+      "satay","kacang","nut sauce",
+    ],
+    soja: [
+      "soja","sojabønner","soy","soybeans","tofu","tempeh","miso","edamame","natto",
+      "sojamel","sojaprotein","sojalecithin","sojamælk","sojasauce","tamari","shoyu",
+      "textured vegetable protein","tvp","hydrolyseret sojaprotein","isoleret sojaprotein",
+      "lecithin","lecitin","e322", // sojalecithin skjult som e-nummer
+    ],
+    fisk: [
+      "fisk","ansjos","sardiner","laks","tun","makrel","sild","torsk","rødspætte","helleflynder",
+      "fish","salmon","tuna","anchovy","sardine","mackerel","herring","cod","halibut","tilapia",
+      // Skjulte fiskekilder
+      "worcestershire sauce","worcestershiresauce","fiskesauce","fish sauce","nam pla",
+      "caesar dressing","bouillabaisse","surimi","fiskeboller","fiskemel","omega-3",
+      "anchovies","anchois","nuoc mam",
+    ],
+    skaldyr: [
+      "skaldyr","rejer","krabbe","hummer","muslinger","østers","blæksprutte","kammusling",
+      "shrimp","prawn","crab","lobster","mussel","oyster","squid","scallop","langoustine",
+      "krebs","languster","tigerrejer","pilgrimsmusling","snegle","escargot",
+    ],
+    selleri: [
+      "selleri","celeriac","knoldselleri","sellerisalt","sellerifnug","selleripulver",
+      "celery","celeriac","celery salt","celery seed","celery extract",
+    ],
+    sennep: [
+      "sennep","sennepsfrø","sennepspulver","sennepsolie","sennepsmel",
+      "mustard","mustard seed","mustard oil","mustard flour","mustard powder",
+      "dijonsennep","dijonsennep","engelsk sennep","grovkornet sennep",
+    ],
+    sesam: [
+      "sesam","sesamfrø","sesamolie","tahini","sesampasta","sesammel",
+      "sesame","sesame seed","sesame oil","tahini","til","gingelly",
+    ],
+    svovl: [
+      "sulfitter","svovldioxid","svovl","sulphite","sulfite","sulphur dioxide","so2",
+      "e220","e221","e222","e223","e224","e225","e226","e227","e228",
+    ],
+    lupin: [
+      "lupin","lupinmel","lupinfrø","lupinprotein","lupinfiber",
+      "lupin","lupin flour","lupin seed","lupin bean",
+    ],
+    bloeddyr: [
+      "blæksprutte","østers","muslinger","snegle","kammusling",
+      "squid","oyster","mussel","snail","scallop","clam","abalone",
+    ],
   };
 
+
   const isAllergenWord = (word) => {
-    const w = word.toLowerCase().replace(/[^a-zæøå]/g, "");
-    return Object.entries(allergenLabels).some(([key, terms]) =>
-      terms.some(t => w.includes(t) || t.includes(w)) && allergenFlags[key] !== "no"
-    );
+    const w = word.toLowerCase().replace(/[^a-zæøå0-9]/g, "");
+    if (w.length < 2) return false;
+    return Object.entries(allergenLabels).some(([key, terms]) => {
+      if (allergenFlags[key] === "no" || allergenFlags[key] === false) return false;
+      return terms.some(t => {
+        const tc = t.toLowerCase().replace(/[^a-zæøå0-9]/g, "");
+        return w === tc || w.includes(tc) || (tc.length > 4 && tc.includes(w));
+      });
+    });
   };
 
   const isHighlighted = (part) => {
@@ -412,8 +1580,7 @@ const getAllergenLabels = (ids,custom=[]) => [...ids.map(id=>ALLERGENS.find(a=>a
 const verifiedBadge = (v, source) => {
   if (v==="verified"||v===true) return {label:"✓ Verificeret",bg:"rgba(34,197,94,.1)",color:"#16a34a"};
   if (v==="partial") return {label:"⚡ Delvist verificeret",bg:"rgba(217,119,6,.08)",color:"#d97706"};
-  if (source==="open_food_facts") return {label:"✓ Open Food Facts",bg:"rgba(37,99,235,.08)",color:"#2563eb"};
-  return {label:"⚠️ Mangler data",bg:"rgba(230,57,70,.08)",color:"#e63946"};
+  return {label:"Open Food Facts",bg:"rgba(37,99,235,.06)",color:"#2563eb"};
 };
 
 // ─── SUPABASE API-HJÆLPER ────────────────────────────────────────────────────
@@ -437,20 +1604,37 @@ async function apiCall(url, options = {}) {
 
 // ─── ALLERGEN SAMMENLIGNING ──────────────────────────────────────────────────
 function compareAllergens(flags, activeAllergenIds) {
-  if (!flags || activeAllergenIds.length === 0) return { status:"safe", matchedDanger:[], matchedWarning:[], hasUnknown:false };
+  if (!flags || activeAllergenIds.length === 0) return { status:"safe", matchedDanger:[], matchedWarning:[], hasUnknown:false, confidence:"high", explanation:[] };
   const matchedDanger = [];
   const matchedWarning = [];
   let hasUnknown = false;
+  const explanation = []; // Forklaring på HVORFOR et produkt er usikkert
+
   for (const id of activeAllergenIds) {
     const val = flags[id];
-    if (val === "yes") matchedDanger.push(id);
-    else if (val === "traces") matchedWarning.push(id);
-    else if (val === "unknown") hasUnknown = true;
+    // Håndter boolean (recipes) og string (produkter)
+    if (val === true || val === "yes") {
+      matchedDanger.push(id);
+      explanation.push({ allergen: id, reason: "direkte", severity: "high" });
+    } else if (val === "traces") {
+      matchedWarning.push(id);
+      explanation.push({ allergen: id, reason: "spor", severity: "medium" });
+    } else if (val === "unknown" || val === null || val === undefined) {
+      hasUnknown = true;
+    }
   }
+
   let status = "safe";
   if (matchedDanger.length > 0) status = "danger";
   else if (matchedWarning.length > 0) status = "warn";
-  return { status, matchedDanger, matchedWarning, hasUnknown };
+
+  // Confidence score baseret på datakvalitet
+  let confidence = "high";
+  if (hasUnknown) confidence = "medium";
+  if (Object.keys(flags).length === 0) confidence = "low";
+  if (Object.values(flags).every(v => v === null || v === undefined)) confidence = "low";
+
+  return { status, matchedDanger, matchedWarning, hasUnknown, confidence, explanation };
 }
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
@@ -566,7 +1750,7 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
 .card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px;box-shadow:var(--sh);}
 .card-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);margin-bottom:10px;}
 .card-title{font-size:15px;font-weight:800;color:var(--ink);margin-bottom:4px;letter-spacing:-.2px;}
-.field{width:100%;background:var(--paper2);border:1.5px solid var(--border2);border-radius:10px;padding:11px 14px;color:var(--ink);font-family:var(--f);font-size:15px;outline:none;transition:border-color .15s,background .15s;}
+.field{width:100%;background:var(--paper2);border:1.5px solid var(--border2);border-radius:10px;padding:11px 14px;color:var(--ink);font-family:var(--f);font-size:16px;outline:none;transition:border-color .15s,background .15s;}
 .field:focus{border-color:var(--green);background:#fff;box-shadow:0 0 0 3px var(--green-lt);}
 .field-lbl{font-size:11.5px;font-weight:700;color:var(--ink2);margin-bottom:5px;display:block;letter-spacing:.1px;}
 .input-row{display:flex;gap:8px;}
@@ -761,7 +1945,7 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
 .empty-sub{font-size:13px;margin-top:5px;color:var(--muted);font-weight:500;}
 .demo-code{padding:4px 10px;background:#fff;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer;transition:all .15s;display:inline-block;margin:3px;font-family:monospace;}
 .demo-code:hover{border-color:var(--green);color:var(--green);background:var(--green-lt);}
-.screen-title{font-size:21px;font-weight:800;color:var(--ink);margin:20px 0 3px;letter-spacing:-.4px;}
+.screen-title{font-size:21px;font-weight:800;color:var(--ink);margin:20px 0 16px;letter-spacing:-.4px;text-align:center;width:100%;}
 .screen-sub{font-size:13px;color:var(--muted2);margin-bottom:16px;line-height:1.5;font-weight:500;}
 .tab-row{display:flex;gap:3px;background:var(--paper2);border-radius:10px;padding:3px;margin-bottom:14px;border:1px solid var(--border);}
 .tab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--muted2);transition:all .15s;}
@@ -770,6 +1954,12 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
 #qr-reader video{width:100%!important;height:auto!important;border-radius:8px!important;display:block!important;}
 #qr-reader__dashboard{display:none!important;}
 #qr-reader__scan_region{width:100%!important;}
+#qr-reader-home{width:100%!important;overflow:hidden;}
+#qr-reader-home>div{padding:0!important;border:none!important;background:transparent!important;}
+#qr-reader-home img{display:none!important;}
+#qr-reader-home video{width:100%!important;height:260px!important;object-fit:cover!important;display:block!important;}
+#qr-reader__dashboard{display:none!important;}
+#qr-reader__status_span{display:none!important;}
 #qr-reader img{display:none!important;}
 /* ── PRODUKT HERO ── */
 .product-hero{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px;box-shadow:var(--sh);}
@@ -785,12 +1975,12 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
 
 /* ── MADPAS ── */
 .mp-page{background:var(--paper);display:flex;flex-direction:column;flex:1;}
-.mp-scroll{flex:1;overflow-y:auto;padding:0 16px 120px;}
-.mp-head{padding:20px 16px 0;}
+.mp-scroll{flex:1;overflow-y:auto;padding:0 20px 120px;}
+.mp-head{padding:20px 20px 0;}
 .mp-title{font-size:26px;font-weight:900;color:var(--ink);letter-spacing:-.5px;margin-bottom:5px;}
 .mp-subtitle{font-size:13px;color:var(--muted2);font-weight:500;line-height:1.5;margin-bottom:20px;}
 .mp-section-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);margin:0 0 8px;}
-.mp-lang-dropdown{width:100%;background:#fff;border:1.5px solid var(--border2);border-radius:13px;padding:13px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s;margin-bottom:16px;}
+.mp-lang-dropdown{width:100%;background:#fff;border:1.5px solid var(--border2);border-radius:13px;padding:13px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s;margin-bottom:16px;box-sizing:border-box;}
 .mp-lang-dropdown:hover{border-color:var(--green);}
 .mp-lang-flag{font-size:22px;flex-shrink:0;}
 .mp-lang-name{flex:1;font-size:15px;font-weight:700;color:var(--ink);}
@@ -800,7 +1990,7 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
 .mp-lang-opt:last-child{border-bottom:none;}
 .mp-lang-opt:hover{background:var(--paper2);}
 .mp-lang-opt.on{background:var(--green-lt);}
-.mp-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 16px;margin-bottom:14px;box-shadow:var(--sh);}
+.mp-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;box-shadow:var(--sh);}
 .mp-allergen-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;background:var(--red-lt);border:1px solid var(--red-md);border-radius:100px;font-weight:800;color:var(--red);margin:3px;}
 .mp-allergen-pill.custom{background:var(--paper2);border-color:var(--border2);color:var(--ink2);}
 .mp-big-btn{width:100%;background:var(--ink);color:var(--paper);border:none;border-radius:14px;padding:16px;font-family:var(--f);font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;box-shadow:0 3px 12px rgba(31,39,51,.18);}
@@ -811,7 +2001,79 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
 .mp-aa.on{background:var(--green-lt);border-color:var(--green);color:var(--green);}
 .mp-family-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--border);}
 .mp-family-row:last-child{border-bottom:none;}
+
+/* ── OPSKRIFTER ── */
+.recipe-grid{display:flex;flex-direction:column;gap:12px;}
+.recipe-card{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--sh);cursor:pointer;transition:transform .15s,box-shadow .15s;position:relative;}
+.recipe-card:active{transform:scale(.99);}
+.recipe-card-img{width:100%;height:180px;object-fit:cover;display:block;background:var(--paper2);}
+.recipe-card-img-placeholder{width:100%;height:140px;background:linear-gradient(135deg,var(--paper2) 0%,var(--border) 100%);display:flex;align-items:center;justify-content:center;font-size:52px;}
+.recipe-card-body{padding:14px 16px 16px;}
+.recipe-card-title{font-size:16px;font-weight:800;color:var(--ink);line-height:1.25;margin-bottom:6px;letter-spacing:-.2px;}
+.recipe-card-desc{font-size:12px;color:var(--muted2);line-height:1.55;margin-bottom:10px;}
+.recipe-card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.recipe-pill{font-size:10px;font-weight:700;border-radius:100px;padding:3px 9px;border:1px solid;white-space:nowrap;}
+.recipe-safe-bar{display:flex;gap:5px;flex-wrap:wrap;padding:10px 14px 0;border-top:1px solid var(--border);margin-top:10px;}
+.recipe-profile-badge{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;border:1px solid;}
+.recipe-fav-btn{position:absolute;top:10px;right:10px;z-index:2;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.35);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .15s;}
+.recipe-filter-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none;}
+.recipe-filter-row::-webkit-scrollbar{display:none;}
+.recipe-filter-chip{flex-shrink:0;padding:7px 14px;border-radius:100px;border:1.5px solid var(--border2);background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted2);transition:all .15s;white-space:nowrap;}
+.recipe-filter-chip.active{border-color:var(--green);background:var(--green-lt);color:var(--ink);box-shadow:0 0 0 2px var(--green-lt);}
+.recipe-search-wrap{position:relative;margin-bottom:12px;}
+.recipe-search-input{width:100%;padding:11px 14px 11px 42px;border:1.5px solid var(--border2);border-radius:12px;background:var(--paper2);font-family:var(--f);font-size:14px;color:var(--ink);outline:none;box-sizing:border-box;transition:border-color .15s,background .15s;}
+.recipe-search-input:focus{border-color:var(--green);background:#fff;box-shadow:0 0 0 3px var(--green-lt);}
+.recipe-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;}
+.recipe-detail-hero{position:relative;margin:-1px -16px 0;}
+.recipe-detail-img{width:100%;height:240px;object-fit:cover;display:block;}
+.recipe-detail-img-placeholder{width:100%;height:200px;background:linear-gradient(135deg,var(--paper2),var(--border));display:flex;align-items:center;justify-content:center;font-size:80px;}
+.recipe-detail-back{position:absolute;top:14px;left:14px;z-index:3;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.45);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;}
+.recipe-detail-fav{position:absolute;top:14px;right:14px;z-index:3;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.45);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.recipe-detail-title{font-size:24px;font-weight:900;color:var(--ink);letter-spacing:-.5px;line-height:1.2;margin-bottom:8px;}
+.recipe-meta-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.recipe-meta-pill{display:flex;align-items:center;gap:4px;padding:4px 10px;background:var(--paper2);border:1px solid var(--border);border-radius:100px;font-size:11px;font-weight:700;color:var(--muted2);}
+.ingredient-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);}
+.ingredient-row:last-child{border-bottom:none;}
+.ingredient-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:2px;}
+.step-row{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .2s;}
+.step-row:last-child{border-bottom:none;}
+.step-circle{width:32px;height:32px;border-radius:50%;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.servings-ctrl{display:flex;align-items:center;gap:10px;background:var(--paper2);border:1px solid var(--border);border-radius:10px;padding:5px 12px;}
+.servings-btn{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border2);background:#fff;cursor:pointer;font-size:16px;font-weight:700;color:var(--ink);display:flex;align-items:center;justify-content:center;line-height:1;transition:all .15s;font-family:var(--f);}
+.servings-btn:hover{border-color:var(--green);color:var(--green);}
+.servings-num{font-size:15px;font-weight:800;color:var(--ink);min-width:22px;text-align:center;}
+.recipe-skeleton{background:#fff;border-radius:16px;overflow:hidden;border:1px solid var(--border);margin-bottom:12px;}
+.skeleton-img{width:100%;height:140px;background:linear-gradient(90deg,var(--paper2) 25%,var(--border) 50%,var(--paper2) 75%);background-size:400% 100%;animation:shimmer 1.4s ease-in-out infinite;}
+.skeleton-line{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--paper2) 25%,var(--border) 50%,var(--paper2) 75%);background-size:400% 100%;animation:shimmer 1.4s ease-in-out infinite;margin-bottom:8px;}
+@keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+.youtube-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#FF0000;border:none;border-radius:10px;cursor:pointer;font-family:var(--f);font-size:13px;font-weight:700;color:#fff;width:100%;justify-content:center;transition:background .15s;margin-bottom:10px;}
+.youtube-btn:hover{background:#CC0000;}
+
+/* ── ACCESSIBILITY ── */
+/* Minimum touch target 44x44px */
+.btn{min-height:44px;}
+.nav-item{min-height:44px;min-width:44px;}
+.chip{min-height:44px;}
+/* Focus synlig for keyboard-navigation */
+*:focus-visible{outline:2.5px solid var(--green);outline-offset:2px;border-radius:4px;}
+/* Skip-link for screen readers */
+.skip-link{position:absolute;top:-100px;left:16px;background:var(--ink);color:#fff;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:700;z-index:9999;text-decoration:none;}
+.skip-link:focus{top:8px;}
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}
+  .spinner{animation:none;border-color:var(--green);}
+}
+/* Bedre kontrast for muted tekst */
+@media (prefers-contrast: more) {
+  :root{--muted:#555;--muted2:#444;--border:#999;--border2:#777;}
+}
+/* Større tekst support */
+@media (min-resolution: 2dppx) {
+  .field{font-size:16px;} /* Undgår iOS zoom ved focus */
+}
 `;
+
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
 export default function EatSafe() {
@@ -836,9 +2098,15 @@ export default function EatSafe() {
   const [loading, setLoading] = useState(false);
   const [scanResult, setScanResult] = useState(null);
   const [scanError, setScanError] = useState("");
-  const [showIng, setShowIng] = useState(false);
+  const [showIng, setShowIng] = useState(true); // Automatisk åben
+  const [showNutrition, setShowNutrition] = useState(false);
   const [barcodeInput, setBarcodeInput] = useState("");
   const [cameraActive, setCameraActive] = useState(false);
+  const productCacheRef = useRef({}); // Cache af seneste 50 scannede produkter
+  const [torchOn, setTorchOn] = useState(false);
+  const [profilePopup, setProfilePopup] = useState(null); // id af profil der vises popup for
+  const galleryInputRef = useRef(null);
+  const torchTrackRef = useRef(null);
   const qrRef = useRef(null);
   const html5QrRef = useRef(null);
 
@@ -863,21 +2131,55 @@ export default function EatSafe() {
 
   // Search
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchCategory, setSearchCategory] = useState("alle");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
     const [favorites, setFavorites] = useState(() => {
     try { return JSON.parse(localStorage.getItem("as_favorites") || "[]"); } catch { return []; }
   });
   const [madpasLang, setMadpasLang] = useState(() => localStorage.getItem("as_madpas_lang") || "en");
+  const [recipes, setRecipes] = useState([]);
+  const [recipesLoading, setRecipesLoading] = useState(false);
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [recipeIngredients, setRecipeIngredients] = useState([]);
+  const [recipeFilter, setRecipeFilter] = useState("alle");
+  const [favoriteRecipes, setFavoriteRecipes] = useState([]);
+  const [showSubmitRecipe, setShowSubmitRecipe] = useState(false);
+  const [submitRecipe, setSubmitRecipe] = useState({ title:"", description:"", category:"aftensmad", tags:[] });
+  const [submitSteps, setSubmitSteps] = useState([""]);
+  const [submitIngredients, setSubmitIngredients] = useState([{ name:"", amount:"", unit:"" }]);
+  const [submittingRecipe, setSubmittingRecipe] = useState(false);
+  const [recipeTermsOpen, setRecipeTermsOpen] = useState(false);
+  const [completedSteps, setCompletedSteps] = useState({});
+  const [showManualEan, setShowManualEan] = useState(false);
+  const [selectedENumbers, setSelectedENumbers] = useState([]);
+  const [allergenSubtypes, setAllergenSubtypes] = useState({}); // { "laktose": "laktose_protein", ... }
+  const [activeSubtypeModal, setActiveSubtypeModal] = useState(null); // allergen id der vises modal for
+  const [eSearch, setESearch] = useState("");
+  const [eCategory, setECategory] = useState("alle");
+  const [recipeTermsAccepted, setRecipeTermsAccepted] = useState(false);
   const [madpasSpeaking, setMadpasSpeaking] = useState(false);
   const [madpasBig, setMadpasBig] = useState(false);
   const [madpasWaiterView, setMadpasWaiterView] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [showSafeOnly, setShowSafeOnly] = useState(false);
+  const [recipeServings, setRecipeServings] = useState(4);
+  const [editStep, setEditStep] = useState("start");
+  const [editIngText, setEditIngText] = useState("");
+  const [editNote, setEditNote] = useState("");
+  const [editType, setEditType] = useState(null);
+  const [recipeSearch, setRecipeSearch] = useState("");
+  const [recipeSafeOnly, setRecipeSafeOnly] = useState(false);
 
   // Family form
   const [newMemberName, setNewMemberName] = useState("");
   const [newMemberAllerg, setNewMemberAllerg] = useState([]);
+  const [newMemberCustomAllerg, setNewMemberCustomAllerg] = useState([]);
+  const [newMemberDiets, setNewMemberDiets] = useState([]);
+  const [newMemberENumbers, setNewMemberENumbers] = useState([]);
+  const [newMemberSubtypes, setNewMemberSubtypes] = useState({});
+  const [newMemberSubtypeModal, setNewMemberSubtypeModal] = useState(null);
+  const [newMemberCustomInput, setNewMemberCustomInput] = useState("");
   const [customInput, setCustomInput] = useState("");
 
   // Auth form
@@ -890,6 +2192,11 @@ export default function EatSafe() {
   // NOT FOUND flow
   const [notFoundEan, setNotFoundEan] = useState("");
   const [ocrText, setOcrText] = useState("");
+  const [editOcrText, setEditOcrText] = useState("");
+  const [editOcrLoading, setEditOcrLoading] = useState(false);
+  const [editProductImage, setEditProductImage] = useState(null);
+  const [editProductImageB64, setEditProductImageB64] = useState(null);
+  const [editSubmitting, setEditSubmitting] = useState(false);
   const [ocrLoading, setOcrLoading] = useState(false);
   const [proposedFlags, setProposedFlags] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -908,6 +2215,28 @@ export default function EatSafe() {
     localStorage.setItem("as_refresh", refresh);
     localStorage.setItem("as_user_id", uid);
   }, []);
+
+  // Håndter OAuth callback — fang access_token fra URL hash
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash) return;
+    const params = new URLSearchParams(hash.replace("#", "?").replace("#", "&"));
+    const access = params.get("access_token");
+    const refresh = params.get("refresh_token");
+    if (access && refresh) {
+      // Hent bruger-id fra token
+      try {
+        const payload = JSON.parse(atob(access.split(".")[1]));
+        const uid = payload.sub;
+        saveTokens(access, refresh, uid);
+        setScreen(SCREENS.HOME);
+        // Ryd URL hash
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch (e) {
+        console.error("OAuth callback fejl:", e);
+      }
+    }
+  }, [saveTokens]);
 
   const clearAuth = useCallback(() => {
     setAccessToken(null); setRefreshToken(null); setUserId(null);
@@ -996,6 +2325,90 @@ export default function EatSafe() {
       if (data.success && data.scans) setHistory(data.scans);
     } catch { /* silent */ }
     finally { setHistoryLoading(false); }
+  };
+
+  const loadRecipes = async (filter = "alle") => {
+    setRecipesLoading(true);
+    try {
+      let url = `${SUPABASE_URL}/rest/v1/recipes?status=eq.approved&select=id,title,category,image_url,tags,allergen_flags,ingredients_raw,instructions,servings,description,disclaimer,metadata&limit=50`;
+      if (filter !== "alle") {
+        url += `&category=eq.${filter}`;
+      }
+      const headers = {
+        "apikey": SUPABASE_ANON_KEY,
+        "Accept": "application/json",
+        ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
+      };
+      const res = await fetch(url, { headers });
+      const text = await res.text();
+      if (!res.ok) {
+        console.error("loadRecipes HTTP fejl:", res.status, text.slice(0, 300));
+        setRecipes([]);
+        return;
+      }
+      const data = JSON.parse(text);
+      console.log("loadRecipes OK:", Array.isArray(data) ? data.length : "ikke array", filter);
+      setRecipes(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("loadRecipes fejl:", e.message);
+      setRecipes([]);
+    }
+    setRecipesLoading(false);
+  };
+
+  const loadRecipeIngredients = async (recipeId) => {
+    try {
+      const headers = {
+        "apikey": SUPABASE_ANON_KEY,
+        "Accept": "application/json",
+        ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
+      };
+      // Hent fuld opskrift inkl. ingredients_raw og instructions
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/recipes?id=eq.${recipeId}&select=id,ingredients_raw,instructions`,
+        { headers }
+      );
+      const data = await res.json();
+      if (Array.isArray(data) && data[0]) {
+        setSelectedRecipe(prev => prev ? { ...prev, ...data[0] } : prev);
+      }
+    } catch {}
+    setRecipeIngredients([]);
+  };
+
+  const submitUserRecipe = async () => {
+    if (!submitRecipe.title.trim() || submitIngredients.filter(i => i.name.trim()).length === 0) return;
+    setSubmittingRecipe(true);
+    try {
+      const [recipe] = await apiCall(`${SUPABASE_URL}/rest/v1/recipes`, {
+        method: "POST",
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+        body: JSON.stringify({
+          ...submitRecipe,
+          instructions: JSON.stringify(submitSteps.filter(s => s.trim())),
+          submitted_by: userId,
+          source: "user",
+          language: "da",
+          status: "pending",
+          disclaimer: "Allergener er vejledende. Tjek altid ingrediensernes emballage ved alvorlige allergier.",
+        }),
+      });
+      for (let i = 0; i < submitIngredients.length; i++) {
+        const ing = submitIngredients[i];
+        if (!ing.name.trim()) continue;
+        await apiCall(`${SUPABASE_URL}/rest/v1/recipe_ingredients`, {
+          method: "POST",
+          headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+          body: JSON.stringify({ recipe_id: recipe.id, name: ing.name, amount: ing.amount, unit: ing.unit, sort_order: i }),
+        });
+      }
+      setShowSubmitRecipe(false);
+      setSubmitRecipe({ title:"", description:"", category:"aftensmad", tags:[] });
+      setSubmitSteps([""]);
+      setSubmitIngredients([{ name:"", amount:"", unit:"" }]);
+      alert("Tak! Din opskrift er sendt til godkendelse.");
+    } catch (e) { alert("Fejl: " + e.message); }
+    setSubmittingRecipe(false);
   };
 
   const loadShoppingList = async () => {
@@ -1154,7 +2567,29 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
   const isFavorite = (ean) => favorites.some(f => f.ean === ean || f.code === ean);
 
   // ── AUTH ───────────────────────────────────────────────────────────────────
-  const handleLogin = async () => {
+  const handleOAuth = async (provider) => {
+    setAuthLoading(true);
+    setAuthError("");
+    try {
+      const redirectTo = window.location.origin + "/";
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/authorize?provider=${provider}&redirect_to=${encodeURIComponent(redirectTo)}`, {
+        method: "GET",
+        headers: { "apikey": SUPABASE_ANON_KEY },
+        redirect: "manual",
+      });
+      // Supabase returnerer en redirect URL
+      const location = res.headers.get("location") || res.url;
+      if (location && location.startsWith("http")) {
+        window.location.href = location;
+      } else {
+        // Fallback: brug Supabase JS-style URL
+        window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=${provider}&redirect_to=${encodeURIComponent(window.location.origin + "/")}`;
+      }
+    } catch (e) {
+      setAuthError(`${provider} login fejlede: ${e.message}`);
+      setAuthLoading(false);
+    }
+  };
     if (!loginEmail || !loginPassword) return;
     setAuthLoading(true); setAuthError("");
     try {
@@ -1248,7 +2683,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         });
       }
     } catch { /* silent */ }
-    setOnboardStep(5);
+    // step styres af knappen
   };
 
   const finishOnboard = () => { setScreen(SCREENS.HOME); setEditMode(false); };
@@ -1260,39 +2695,176 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     return { ids: [...ids], custom: [...customAllerg] };
   }, [allergens, customAllerg, family, activeProfiles]);
 
+  const lastScannedRef = useRef(null); // Anti-duplikat
   const startCamera = async () => {
     if (cameraActive) return;
     setScanError("");
+    setTorchOn(false);
+    torchTrackRef.current = null;
+    lastScannedRef.current = null;
+
+    // Tjek browser-support
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setScanError("Kamera ikke understøttet. Prøv Chrome eller Safari.");
+      return;
+    }
+
+    // iPhone kræver simpel constraints — avancerede constraints fejler på Safari
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const constraints = isIOS
+      ? { video: { facingMode: { exact: "environment" } } }
+      : { video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } };
+
+    // Bed om kamera-tilladelse
     try {
-      const { Html5Qrcode } = await import("html5-qrcode");
-      // Brug qr-reader-home hvis vi er på hjem, ellers qr-reader
-      const homeEl = document.getElementById("qr-reader-home");
-      const scanEl = document.getElementById("qr-reader");
-      const readerId = homeEl ? "qr-reader-home" : "qr-reader";
-      const readerEl = homeEl || scanEl;
-      if (!readerEl) {
-        setScanError("Kamera-element ikke fundet. Prøv igen.");
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const track = stream.getVideoTracks()[0];
+      if (track) torchTrackRef.current = track;
+      stream.getTracks().forEach(t => t.stop());
+    } catch (e) {
+      if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
+        setScanError("Kamera-adgang nægtet. Gå til telefonens indstillinger og tillad kamera for denne app.");
+      } else if (e.name === "NotFoundError") {
+        setScanError("Intet kamera fundet på denne enhed.");
+      } else if (e.name === "OverconstrainedError" && isIOS) {
+        // iOS fallback — prøv uden exact
+        try {
+          const stream2 = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+          stream2.getTracks().forEach(t => t.stop());
+        } catch {
+          setScanError("Kunne ikke starte kamera. Prøv at genindlæse siden.");
+          return;
+        }
+      } else {
+        setScanError("Kamera fejl: " + e.message);
         return;
       }
-      html5QrRef.current = new Html5Qrcode(readerId);
+    }
+
+    setCameraActive(true);
+    await new Promise(r => setTimeout(r, isIOS ? 300 : 150)); // iOS har brug for lidt mere tid
+
+    try {
+      const { Html5Qrcode } = await import("html5-qrcode");
+      const readerId = "qr-reader-home";
+
+      if (html5QrRef.current) {
+        try { await html5QrRef.current.stop(); } catch {}
+        html5QrRef.current = null;
+      }
+
+      const readerEl = document.getElementById(readerId);
+      if (!readerEl) {
+        setScanError("Kamera-element ikke fundet. Genindlæs siden.");
+        setCameraActive(false);
+        return;
+      }
+
+      html5QrRef.current = new Html5Qrcode(readerId, { verbose: false });
+
+      const qrConfig = {
+        fps: isIOS ? 10 : 20, // iOS klarer ikke 30fps
+        qrbox: (w, h) => {
+          const side = Math.min(w, h) * 0.8;
+          return { width: Math.round(side), height: Math.round(side * 0.45) };
+        },
+        aspectRatio: isIOS ? undefined : 1.0, // iOS: lad den bestemme selv
+        disableFlip: false,
+        formatsToSupport: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], // Alle stregkode-formater
+        videoConstraints: isIOS
+          ? { facingMode: { exact: "environment" } }
+          : {
+              facingMode: "environment",
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              focusMode: "continuous",
+              exposureMode: "continuous",
+            },
+      };
+
       await html5QrRef.current.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 150 } },
+        { facingMode: isIOS ? { exact: "environment" } : "environment" },
+        qrConfig,
         (code) => {
+          // Anti-duplikat — ignorer samme kode inden for 2 sekunder
+          const now = Date.now();
+          if (lastScannedRef.current?.code === code && now - lastScannedRef.current.time < 2000) return;
+          lastScannedRef.current = { code, time: now };
+
+          // Vibration feedback
+          if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
+
+          // Bip lyd
+          try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.frequency.value = 1800;
+            gain.gain.setValueAtTime(0.25, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.12);
+          } catch {}
+
           stopCamera();
           lookupProduct(code);
         },
-        () => {}
+        () => {} // Scan fejl — stille fejl, kameraet fortsætter
       );
-      setCameraActive(true);
-    } catch (e) {
-      if (e.name === "NotAllowedError") {
-        setScanError("Kamera-adgang nægtet. Tillad kamera i din browsers indstillinger og prøv igen.");
-      } else if (e.name === "NotFoundError") {
-        setScanError("Intet kamera fundet på denne enhed.");
-      } else {
-        setScanError("Kamera ikke tilgængeligt. Brug manuel stregkode nedenfor.");
+
+      // Opsnap video track til torch — vent lidt på iOS
+      await new Promise(r => setTimeout(r, 500));
+      const videoEl = document.querySelector("#qr-reader-home video");
+      if (videoEl?.srcObject) {
+        const track = videoEl.srcObject.getVideoTracks()[0];
+        if (track) torchTrackRef.current = track;
       }
+
+    } catch (e) {
+      setCameraActive(false);
+      // iPhone-venlig fejlbesked
+      if (e.message?.includes("constraint") || e.message?.includes("Constraint")) {
+        // Prøv igen uden constraints
+        setTimeout(() => startCamera(), 500);
+      } else {
+        setScanError("Kamera kunne ikke starte. Prøv at lukke andre apps og prøv igen.");
+      }
+    }
+  };
+
+  const scanFromGallery = async (file) => {
+    if (!file) return;
+    setScanError("");
+    setLoading(true);
+    try {
+      const { Html5Qrcode } = await import("html5-qrcode");
+      const scanner = new Html5Qrcode("qr-reader-gallery");
+      const result = await scanner.scanFile(file, true);
+      scanner.clear();
+      lookupProduct(result);
+    } catch (e) {
+      setLoading(false);
+      setScanError("Ingen stregkode fundet i billedet. Prøv et klarere billede.");
+    }
+  };
+
+  const toggleTorch = async () => {
+    try {
+      // Find aktiv video track
+      const videoEl = document.querySelector("#qr-reader-home video");
+      const track = videoEl?.srcObject?.getVideoTracks?.()?.[0] || torchTrackRef.current;
+      if (!track) return;
+      const capabilities = track.getCapabilities?.();
+      if (!capabilities?.torch) {
+        setScanError("Lygte ikke understøttet på denne enhed.");
+        return;
+      }
+      const newState = !torchOn;
+      await track.applyConstraints({ advanced: [{ torch: newState }] });
+      setTorchOn(newState);
+    } catch (e) {
+      setScanError("Kunne ikke tænde lygte: " + e.message);
     }
   };
 
@@ -1301,17 +2873,68 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
       html5QrRef.current.stop().catch(() => {});
       html5QrRef.current = null;
     }
+    // Sluk torch
+    if (torchTrackRef.current) {
+      try { torchTrackRef.current.applyConstraints({ advanced: [{ torch: false }] }); } catch {}
+      torchTrackRef.current = null;
+    }
     setCameraActive(false);
+    setTorchOn(false);
   };
 
   useEffect(() => {
-    if (screen !== SCREENS.SCAN) stopCamera();
+    if (screen !== SCREENS.HOME) stopCamera();
+    if (screen === SCREENS.RECIPES && recipes.length === 0 && !recipesLoading) {
+      loadRecipes("alle");
+    }
   }, [screen]);
+
+  // Intercepter Android/browser back-knap
+  useEffect(() => {
+    const handlePopState = (e) => {
+      e.preventDefault();
+      // Gå tilbage i app-flow i stedet for at lukke
+      if (activeSubtypeModal) { setActiveSubtypeModal(null); return; }
+      if (madpasWaiterView) { setMadpasWaiterView(false); return; }
+      if (showManualEan) { setShowManualEan(false); return; }
+      if (showSubmitRecipe) { setShowSubmitRecipe(false); return; }
+      if (selectedRecipe) { setSelectedRecipe(null); return; }
+      if (screen === SCREENS.RESULT) { setScreen(SCREENS.HOME); return; }
+      if (screen === SCREENS.SEARCH) { setScreen(SCREENS.HOME); return; }
+      if (screen === SCREENS.LIST) { setScreen(SCREENS.HOME); return; }
+      if (screen === SCREENS.FAVORITES) { setScreen(SCREENS.PROFILE); return; }
+      if (screen === SCREENS.FAMILY) { setScreen(SCREENS.PROFILE); return; }
+      if (screen === SCREENS.MADPAS) { setScreen(SCREENS.PROFILE); return; }
+      if (screen === SCREENS.EDITPROFILE) { setScreen(SCREENS.PROFILE); return; }
+      if (screen === SCREENS.SUGGEST_EDIT) { setScreen(SCREENS.RESULT); return; }
+      if (screen === SCREENS.ADMIN) { setScreen(SCREENS.PROFILE); return; }
+      if (screen === SCREENS.RECIPES) { setScreen(SCREENS.HOME); return; }
+      if (screen === SCREENS.NOTFOUND) { setScreen(SCREENS.HOME); return; }
+      // Hvis vi er på HOME, lad browser håndtere det
+      window.history.pushState(null, "", window.location.href);
+    };
+    // Push en state så vi har noget at gå tilbage til
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [screen, activeSubtypeModal, madpasWaiterView, showManualEan, showSubmitRecipe, selectedRecipe]);
 
   const { ids: activeIds } = allActive();
 
   const lookupProduct = useCallback(async (ean) => {
     if (!ean?.trim()) return;
+    
+    // Vibrer ved scan
+    if (navigator.vibrate) navigator.vibrate(40);
+    
+    // Tjek cache først
+    const cached = productCacheRef.current[ean.trim()];
+    if (cached) {
+      setScanResult(cached);
+      setScreen(SCREENS.RESULT);
+      return;
+    }
+    
     setLoading(true); setScanResult(null); setScanError(""); setShowIng(false);
     try {
       const data = await apiCall(`${SUPABASE_URL}/functions/v1/products/${ean.trim()}`, {
@@ -1338,7 +2961,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         ...(matchedDanger.length===0 && matchedWarning.length===0 && !hasUnknown ? [{ type:"good", text:"Ingen af dine allergener fundet" }] : []),
       ];
 
-      const headlines = { safe:"Sikkert produkt ✅", danger:"Indeholder allergen! 🚫", warn:"Mulige spor ⚠️" };
+      const headlines = { safe:"Sikkert produkt", danger:"Indeholder allergen", warn:"Mulige spor" };
       const summaries = {
         safe:"Ingen af dine registrerede allergener er fundet i dette produkt.",
         danger:`Produktet indeholder ${matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
@@ -1367,7 +2990,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         brand: product.brand || "",
         image_url: product.image_url || null,
         category: product.category || null,
-        ingredients: data.ingredients?.raw_text || product.ingredients?.raw_text || "",
+        ingredients: data.ingredients?.raw_text || product.ingredients_text || product.ingredients?.raw_text || "",
+        nutrition: data.nutrition || product.nutrition || null,
         verified_status: product.verified_status || "unverified",
         status,
         headline: headlines[status],
@@ -1382,6 +3006,11 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         timestamp: Date.now(),
       };
 
+      // Gem i cache (max 50 produkter)
+      productCacheRef.current[ean.trim()] = result;
+      const cacheKeys = Object.keys(productCacheRef.current);
+      if (cacheKeys.length > 50) delete productCacheRef.current[cacheKeys[0]];
+      
       setScanResult(result);
       setHistory(h => [result, ...h].slice(0, 50));
       await saveHistoryEntry(ean.trim(), product.id, status, flags);
@@ -1467,6 +3096,49 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     setOcrLoading(false);
   };
 
+  const handleEditIngredientCapture = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setEditOcrLoading(true);
+    try {
+      const b64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result.split(",")[1]);
+        r.onerror = () => rej(new Error("Read failed"));
+        r.readAsDataURL(file);
+      });
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({
+          model:"claude-sonnet-4-20250514", max_tokens:1000,
+          messages:[{ role:"user", content:[
+            { type:"image", source:{ type:"base64", media_type:file.type, data:b64 } },
+            { type:"text", text:"Udpak ingredienslisten fra dette billede. Returner kun den rene ingredienstekst, ingen forklaring." }
+          ]}]
+        })
+      });
+      const data = await resp.json();
+      const text = data.content?.[0]?.text || "";
+      setEditOcrText(text);
+    } catch (e) { console.error(e); }
+    setEditOcrLoading(false);
+  };
+
+  const handleEditProductCapture = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setEditProductImage(url);
+    const b64 = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result.split(",")[1]);
+      r.onerror = () => rej();
+      r.readAsDataURL(file);
+    });
+    setEditProductImageB64(b64);
+  };
+
   const submitProduct = async () => {
     setSubmitting(true);
     try {
@@ -1538,9 +3210,24 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
   const addMember = async () => {
     if (!newMemberName.trim()) return;
     const color = AVATAR_COLORS[family.length % AVATAR_COLORS.length];
-    const tempMember = { id: uid(), name: newMemberName.trim(), allergens: newMemberAllerg, custom: [], color };
+    const tempMember = {
+      id: uid(),
+      name: newMemberName.trim(),
+      allergens: newMemberAllerg,
+      custom: newMemberCustomAllerg.filter(c => !c.endsWith("_intolerance")),
+      diets: newMemberDiets,
+      eNumbers: newMemberENumbers,
+      subtypes: newMemberSubtypes,
+      color
+    };
     setFamily(f => [...f, tempMember]);
-    setNewMemberName(""); setNewMemberAllerg([]);
+    setNewMemberName("");
+    setNewMemberAllerg([]);
+    setNewMemberCustomAllerg([]);
+    setNewMemberDiets([]);
+    setNewMemberENumbers([]);
+    setNewMemberSubtypes({});
+    setNewMemberCustomInput("");
     try {
       const data = await apiCall(`${SUPABASE_URL}/functions/v1/family/members`, {
         method: "POST",
@@ -1601,17 +3288,87 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
   const madpasSpeak = () => {
     if (!window.speechSynthesis) return;
     if (madpasSpeaking) { window.speechSynthesis.cancel(); setMadpasSpeaking(false); return; }
-    const lang = MADPAS_LANGUAGES.find(l => l.code === madpasLang) || MADPAS_LANGUAGES[0];
+    const lang = madpasLang;
+    const bcp = MADPAS_LANGUAGES.find(l => l.code === lang)?.bcp || "en-US";
+
+    // Byg præcis den tekst der vises på skærmen
+    const introText = {
+      da:"Hej! Jeg har nogle fødevareallergier og ønsker gerne din hjælp til at finde noget, jeg kan spise trygt.",
+      en:"Hi! I have some food allergies and would love your help finding something safe for me to eat.",
+      de:"Hallo! Ich habe einige Lebensmittelallergien und würde mich über Ihre Hilfe freuen.",
+      fr:"Bonjour ! J'ai des allergies alimentaires et j'aurais besoin de votre aide.",
+      es:"¡Hola! Tengo algunas alergias alimentarias y agradecería su ayuda.",
+      it:"Ciao! Ho alcune allergie alimentari e apprezzerei il suo aiuto.",
+      nl:"Hallo! Ik heb wat voedselallergieën en zou graag uw hulp willen.",
+      pt:"Olá! Tenho algumas alergias alimentares e gostaria da sua ajuda.",
+      pl:"Cześć! Mam kilka alergii pokarmowych i chciałbym prosić o pomoc.",
+      sv:"Hej! Jag har några matallergier och skulle uppskatta din hjälp.",
+      no:"Hei! Jeg har noen matallergier og ønsker gjerne din hjelp.",
+      ja:"こんにちは！食物アレルギーがあります。安全な食事を見つけるお手伝いをお願いできますか。",
+      zh:"您好！我有食物过敏，希望您能帮助我找到安全的食物。",
+      ar:"مرحباً! لدي بعض الحساسية الغذائية وأود مساعدتك في إيجاد شيء آمن لي.",
+      tr:"Merhaba! Gıda alerjilerim var ve güvenli bir şey bulmam için yardımınıza ihtiyacım var.",
+      el:"Γεια σας! Έχω κάποιες αλλεργίες τροφίμων και θα εκτιμούσα τη βοήθειά σας.",
+    };
+    const cannotText = {
+      da:"Jeg kan ikke spise", en:"I cannot eat", de:"Ich kann nicht essen",
+      fr:"Je ne peux pas manger", es:"No puedo comer", it:"Non posso mangiare",
+      nl:"Ik kan niet eten", pt:"Não posso comer", pl:"Nie mogę jeść",
+      sv:"Jag kan inte äta", no:"Jeg kan ikke spise", ja:"食べられません",
+      zh:"我不能吃", ar:"لا أستطيع تناول", tr:"Yiyemiyorum", el:"Δεν μπορώ να φάω",
+    };
+    const outroText = {
+      da:"Tak for din hjælp — det betyder rigtig meget for mig.",
+      en:"Thank you so much for your help — it means a lot to me.",
+      de:"Vielen Dank für Ihre Hilfe — das bedeutet mir sehr viel.",
+      fr:"Merci beaucoup pour votre aide — cela compte beaucoup pour moi.",
+      es:"Muchas gracias por su ayuda — significa mucho para mí.",
+      it:"Grazie mille per il suo aiuto — significa molto per me.",
+      nl:"Heel erg bedankt voor uw hulp — dat betekent veel voor mij.",
+      pt:"Muito obrigado pela sua ajuda — significa muito para mim.",
+      pl:"Bardzo dziękuję za pomoc — wiele dla mnie znaczy.",
+      sv:"Tack så mycket för din hjälp — det betyder mycket för mig.",
+      no:"Tusen takk for hjelpen — det betyr mye for meg.",
+      ja:"ご協力ありがとうございます。本当に助かります。",
+      zh:"非常感谢您的帮助，对我来说意义重大。",
+      ar:"شكراً جزيلاً على مساعدتك — هذا يعني لي الكثير.",
+      tr:"Yardımınız için çok teşekkür ederim — bu benim için çok şey ifade ediyor.",
+      el:"Σας ευχαριστώ πολύ για τη βοήθειά σας — σημαίνει πολλά για μένα.",
+    };
+
     const parts = [];
-    parts.push(MADPAS_INTRO[madpasLang] || MADPAS_INTRO.en);
-    allergens.forEach(id => {
-      const t = ALLERGEN_T[id]?.[madpasLang] || ALLERGEN_T[id]?.en;
-      if (t) parts.push(t.n + ". " + t.d);
+    parts.push(introText[lang] || introText.en);
+
+    // Allergener — samme rækkefølge og tekst som på skærmen
+    const allItems = [...allergens, ...customAllerg.filter(c => !c.endsWith("_intolerance") && !allergens.includes(c))];
+    allItems.forEach((item, i) => {
+      if (typeof item !== "string") return;
+      const a = ALLERGENS.find(x => x.id === item);
+      const label = a ? (ALLERGEN_T[item]?.[lang]?.n || ALLERGEN_T[item]?.en?.n || a.label) : item;
+      const ex = a ? ALLERGEN_EXAMPLES[item] : null;
+      const exProducts = ex?.products?.[lang] || ex?.products?.en || [];
+      const exIngredients = ex?.ingredients?.[lang] || ex?.ingredients?.en || [];
+      const exText = [...exProducts.slice(0,3), ...exIngredients.slice(0,4)].join(", ");
+      const prefix = i === 0 ? (cannotText[lang] || cannotText.en) + ": " : "";
+      parts.push(prefix + label + (exText ? ". " + exText : ""));
     });
-    if (customAllerg.length > 0) parts.push(customAllerg.join(", "));
+
+    // Diæt
+    if (user.diets && user.diets.length > 0) {
+      const dietNames = user.diets.map(d => DIETS.find(x=>x.id===d)?.label).filter(Boolean).join(", ");
+      parts.push(dietNames);
+    }
+
+    // E-numre
+    if (selectedENumbers && selectedENumbers.length > 0) {
+      parts.push(selectedENumbers.join(", "));
+    }
+
+    parts.push(outroText[lang] || outroText.en);
+
     const utter = new SpeechSynthesisUtterance(parts.join(". "));
-    utter.lang = lang.bcp;
-    utter.rate = 0.9;
+    utter.lang = bcp;
+    utter.rate = 0.85;
     utter.onstart = () => setMadpasSpeaking(true);
     utter.onend = () => setMadpasSpeaking(false);
     utter.onerror = () => setMadpasSpeaking(false);
@@ -1631,7 +3388,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     };
     return (
       <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
-        <div className={`ap-chip${isAll?" on":""}`} onClick={toggleAll}>👨‍👩‍👧 Hele familien</div>
+        <div className={`ap-chip${isAll?" on":""}`} onClick={toggleAll}>Hele familien</div>
         <div className={`ap-chip${!isAll&&activeProfiles.includes("me")?" on":""}`} onClick={() => toggleOne("me")}>
           <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(user.name||"Mig")}</div>
           {(user.name||"Mig").split(" ")[0]}
@@ -1662,7 +3419,9 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
   return (
     <>
       <style>{css}</style>
-      <div className="app">
+      <div className="app" role="application" aria-label="EatSafe">
+        {/* Skip-link for tastatur/screen reader brugere */}
+        <a href="#main-content" className="skip-link">Spring til indhold</a>
 
         {/* ══ VELKOMST ══ */}
         {screen === SCREENS.WELCOME && (
@@ -1681,12 +3440,12 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             {/* Features */}
             <div className="welcome-features">
               {[
-                ["📷","Skan på sekunder","Hold kameraet over stregkoden og få svar med det samme"],
-                ["👨‍👩‍👧","Hele familien","Administrér allergiprofiler for alle i familien på ét sted"],
-                ["🛒","Smarte indkøbslister","Delte lister med allergencheck for hele familien"],
+                ["camera","Skan på sekunder","Hold kameraet over stregkoden og få svar med det samme"],
+                ["family","Hele familien","Administrér allergiprofiler for alle i familien på ét sted"],
+                ["cart","Smarte indkøbslister","Delte lister med allergencheck for hele familien"],
               ].map(([icon,title,text]) => (
                 <div key={title} className="welcome-feat">
-                  <div className="welcome-feat-icon">{icon}</div>
+                  <div className="welcome-feat-icon"><Icon name={icon} size={20} color="var(--ink)" /></div>
                   <div className="welcome-feat-text"><strong>{title}</strong>{text}</div>
                 </div>
               ))}
@@ -1785,15 +3544,58 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 </div>
               </div>
             )}
-            <div style={{ display:"flex", alignItems:"center", gap:10, margin:"14px 0 4px" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, margin:"14px 0 10px" }}>
               <div style={{ flex:1, height:1, background:"var(--border)" }} />
-              <span style={{ fontSize:12, color:"var(--muted)", fontWeight:600 }}>eller</span>
+              <span style={{ fontSize:12, color:"var(--muted)", fontWeight:600 }}>eller log ind med</span>
+              <div style={{ flex:1, height:1, background:"var(--border)" }} />
+            </div>
+
+            {/* Social login knapper */}
+            <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:12 }}>
+              {/* Google */}
+              <button onClick={() => handleOAuth("google")} disabled={authLoading}
+                style={{ display:"flex", alignItems:"center", gap:12, width:"100%", padding:"13px 16px",
+                  background:"#fff", border:"1.5px solid var(--border2)", borderRadius:12,
+                  cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:600, color:"var(--ink)",
+                  boxShadow:"var(--sh)", transition:"all .15s" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Fortsæt med Google
+              </button>
+
+              {/* Facebook */}
+              <button onClick={() => handleOAuth("facebook")} disabled={authLoading}
+                style={{ display:"flex", alignItems:"center", gap:12, width:"100%", padding:"13px 16px",
+                  background:"#1877F2", border:"1.5px solid #1877F2", borderRadius:12,
+                  cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:600, color:"#fff",
+                  boxShadow:"var(--sh)", transition:"all .15s" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                Fortsæt med Facebook
+              </button>
+            </div>
+
+            <div style={{ display:"flex", alignItems:"center", gap:10, margin:"4px 0 8px" }}>
+              <div style={{ flex:1, height:1, background:"var(--border)" }} />
+              <span style={{ fontSize:11, color:"var(--muted)", fontWeight:500 }}>eller</span>
               <div style={{ flex:1, height:1, background:"var(--border)" }} />
             </div>
             <button className="btn btn-ghost btn-full" onClick={() => {
-              setUser({ name:"Bjørn", age:"", email:"bjorn@preview.dk", phone:"" });
-              setAllergens(["gluten"]);
-              setFamily([{id:"f1",name:"Frederikke",allergens:["laktose"],custom:[],color:"#74c69d"},{id:"f2",name:"Tage",allergens:["jordnoedder"],custom:[],color:"#40916c"}]);
+              setUser({ name:"Jan", age:"", email:"jan@preview.dk", phone:"" });
+              setAllergens(["gluten", "laktose"]);
+              setCustomAllerg(["Fructose"]);
+              setActiveProfiles(["me", "f1", "f2", "f3", "f4"]);
+              setFamily([
+                { id:"f1", name:"Frederikke", allergens:["laktose","aeg"], custom:[], diets:["vegetarian"], color:"#74c69d" },
+                { id:"f2", name:"Tage", allergens:["jordnoedder","noedder"], custom:[], diets:[], color:"#40916c" },
+                { id:"f3", name:"Sofie", allergens:["sesam","soja","fisk"], custom:["Kiwi"], diets:["vegan","gluten-free"], color:"#f4a261" },
+                { id:"f4", name:"Mads", allergens:[], custom:["Sukker"], diets:["keto"], color:"#2d6a4f" },
+              ]);
               setHistory([
                 {code:"3017620422003",name:"Nutella",brand:"Ferrero",status:"danger",result:"danger",headline:"Indeholder nødder!",summary:"Produktet indeholder hasselnødder.",flags:[{type:"bad",text:"Indeholder hasselnødder"}],timestamp:Date.now()-180000,scanned_at:new Date(Date.now()-180000).toISOString()},
                 {code:"5449000054227",name:"Coca-Cola",brand:"Coca-Cola",status:"safe",result:"safe",headline:"Sikkert produkt",summary:"Ingen allergener fundet.",flags:[{type:"good",text:"Ingen kendte allergener"}],timestamp:Date.now()-7200000,scanned_at:new Date(Date.now()-7200000).toISOString()},
@@ -1801,9 +3603,21 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               setShoppingList([{id:"s1",name:"Glutenfri pasta",checked:false},{id:"s2",name:"Havremælk",checked:true}]);
               setScreen(SCREENS.HOME);
             }}>
-              🔓 Prøv app uden login (preview)
+              Prøv app uden login (preview)
             </button>
-            <button className="btn btn-ghost btn-full" style={{ marginTop:8 }} onClick={() => setScreen(SCREENS.WELCOME)}>← Tilbage</button>
+
+            <button className="btn btn-ghost btn-full btn-sm" style={{ marginTop:8, opacity:0.5, fontSize:12 }}
+              onClick={() => {
+                setOnboardStep(1);
+                setAllergens([]);
+                setCustomAllerg([]);
+                setFamily([]);
+                setUser({ name:"", age:"", email:"", phone:"" });
+                setScreen(SCREENS.ONBOARD);
+              }}>
+              🧪 Test onboarding
+            </button>
+            
           </div>
         )}
 
@@ -1818,26 +3632,42 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               </div>
             )}
             {editMode && <div style={{ height:4 }} />}
-            <StepBar total={7} current={onboardStep} />
+            {/* Step header med tilbage og titel */}
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              {onboardStep > 1 && (
+                <button onClick={() => setOnboardStep(onboardStep - 1)}
+                  style={{ background:"none", border:"none", cursor:"pointer", padding:"4px 0", flexShrink:0 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
+                    <path strokeLinecap="round" d="M15 19l-7-7 7-7"/>
+                  </svg>
+                </button>
+              )}
+              <div style={{ flex:1 }}>
+                <StepBar total={9} current={onboardStep} />
+              </div>
+              <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, flexShrink:0 }}>
+                {onboardStep}/9
+              </div>
+            </div>
 
             {/* ── TRIN 1: Hvad er EatSafe ── */}
             {onboardStep === 1 && (
               <div className="fade-in">
                 <div className="card" style={{ textAlign:"center", padding:"24px 20px 16px" }}>
-                  <div style={{ fontSize:52, marginBottom:10 }}>🛒</div>
+                  <div style={{ marginBottom:10 }}><Icon name="list" size={48} color="var(--ink2)" /></div>
                   <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Velkommen til EatSafe</div>
                   <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6 }}>Din personlige allergiguide — til dig og hele familien.</div>
                 </div>
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                   {[
-                    ["📷","Skan stregkoder","Hold kameraet over en stregkode og få øjeblikkeligt svar."],
-                    ["🔎","Søg produkter","Find allergenvenlinge produkter inden du handler."],
-                    ["👨‍👩‍👧","Hele familien","Profiler for alle — se hvem der kan spise hvad."],
-                    ["🛒","Indkøbsliste","Byg lister med allergencheck."],
-                    ["🤝","Fælles database","Bidrag til databasen og hjælp andre."],
+                    ["camera","Skan stregkoder","Hold kameraet over en stregkode og få øjeblikkeligt svar."],
+                    ["search","Søg produkter","Find allergenvenlinge produkter inden du handler."],
+                    ["family","Hele familien","Profiler for alle — se hvem der kan spise hvad."],
+                    ["list","Indkøbsliste","Byg lister med allergencheck."],
+                    ["heart","Fælles database","Bidrag til databasen og hjælp andre."],
                   ].map(([icon, title, text]) => (
                     <div key={title} style={{ display:"flex", gap:12, alignItems:"center", background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"10px 14px" }}>
-                      <div style={{ fontSize:22, flexShrink:0 }}>{icon}</div>
+                      <div style={{ flexShrink:0 }}><Icon name={icon} size={22} color="var(--ink2)" /></div>
                       <div>
                         <div style={{ fontWeight:700, fontSize:13, color:"var(--ink)" }}>{title}</div>
                         <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.4 }}>{text}</div>
@@ -1853,18 +3683,18 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             {onboardStep === 2 && (
               <div className="fade-in">
                 <div className="card" style={{ textAlign:"center", padding:"20px 20px 14px" }}>
-                  <div style={{ fontSize:44, marginBottom:8 }}>🔬</div>
+                  <div style={{ marginBottom:8 }}><Icon name="info" size={44} color="var(--ink2)" /></div>
                   <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)", marginBottom:6 }}>Forstå vores data</div>
                   <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>Vi arbejder hårdt for at give dig pålidelig information — men det er vigtigt du forstår kilden.</div>
                 </div>
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                   {[
-                    ["✅","Verificerede produkter","Gennemgået og godkendt af vores team.","var(--green-lt)","var(--green)"],
-                    ["⚡","Open Food Facts","Global frivillig database. Ikke garanteret korrekt.","var(--amber-lt)","var(--amber)"],
-                    ["⚠️","Bruger-indsendte","Afventer godkendelse. Brug med forsigtighed.","var(--red-lt)","var(--red)"],
+                    ["check","Verificerede produkter","Gennemgået og godkendt af vores team.","var(--green-lt)","var(--green)"],
+                    ["globe","Open Food Facts","Global frivillig database. Ikke garanteret korrekt.","var(--amber-lt)","var(--amber)"],
+                    ["warning","Bruger-indsendte","Afventer godkendelse. Brug med forsigtighed.","var(--red-lt)","var(--red)"],
                   ].map(([icon, title, text, bg, color]) => (
                     <div key={title} style={{ background:bg, border:`1px solid ${color}`, borderRadius:12, padding:"10px 14px", display:"flex", gap:10, alignItems:"flex-start" }}>
-                      <div style={{ fontSize:18, flexShrink:0 }}>{icon}</div>
+                      <div style={{ flexShrink:0 }}><Icon name={icon} size={18} color={color} /></div>
                       <div>
                         <div style={{ fontWeight:700, fontSize:13, color, marginBottom:2 }}>{title}</div>
                         <div style={{ fontSize:11, color:"var(--muted2)", lineHeight:1.4 }}>{text}</div>
@@ -1873,7 +3703,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                   ))}
                 </div>
                 <div style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, padding:"12px", marginTop:8 }}>
-                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>⚠️ Vigtigt</div>
+                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>Vigtigt</div>
                   <div style={{ fontSize:11, color:"var(--muted2)", lineHeight:1.6 }}>EatSafe <strong>erstatter ikke lægehjælp</strong>. Tjek altid den originale emballage ved alvorlige allergier. <strong>Brug på eget ansvar.</strong></div>
                 </div>
                 <div style={{ display:"flex", gap:8, marginTop:14 }}>
@@ -1887,7 +3717,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             {onboardStep === 3 && (
               <div className="fade-in">
                 <div className="card">
-                  <div className="step-title">👤 Din profil</div>
+                  <div className="step-title">Din profil</div>
                   <div className="step-sub">Fortæl os lidt om dig.</div>
                   {[["Dit fulde navn *","text","Fx. Anna Hansen","name"],["Telefon","tel","+45 12 34 56 78","phone"],["Alder","number","Fx. 32","age"]].map(([lbl,type,ph,key]) => (
                     <div key={key} style={{ marginBottom:10 }}>
@@ -1895,88 +3725,258 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                       <input className="field" type={type} placeholder={ph} value={user[key]||""} onChange={e => setUser(u => ({ ...u, [key]: e.target.value }))} />
                     </div>
                   ))}
+                  <label className="field-lbl">Køn</label>
+                  <div style={{ display:"flex", gap:8, marginBottom:4 }}>
+                    {["Mand","Kvinde","Andet"].map(g => (
+                      <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
+                        style={{ flex:1, padding:"9px 0", textAlign:"center", borderRadius:8,
+                          border:`1.5px solid ${user.gender===g?"var(--green)":"var(--border)"}`,
+                          background:user.gender===g?"var(--green-lt)":"#fff",
+                          fontSize:13, fontWeight:700,
+                          color:user.gender===g?"var(--green)":"var(--muted)", cursor:"pointer" }}>
+                        {g}
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <button className="btn btn-primary btn-full" onClick={saveProfileStep1}>Fortsæt →</button>
                 {!(user.name||"").trim() && <div style={{ fontSize:12,color:"var(--muted)",textAlign:"center",marginTop:6 }}>Navn er påkrævet</div>}
-                <div style={{ display:"flex", justifyContent:"center", marginTop:8 }}>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(2)}>← Tilbage</button>
-                </div>
               </div>
             )}
 
-            {/* ── TRIN 4: Dine allergier ── */}
+            {/* ── TRIN 4: Dine allergier / intolerancer ── */}
             {onboardStep === 4 && (
               <div className="fade-in">
                 <div className="card">
-                  <div className="step-title">🌾 Dine allergier</div>
-                  <div className="step-sub">Vælg dine allergener. Kan ændres senere.</div>
-                  <div className="chip-grid">
-                    {ALLERGENS.map(a => { const on = allergens.includes(a.id); return (
-                      <div key={a.id} className={`chip${on?" on":""}`} onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
-                        <span>{a.emoji}</span><span style={{ flex:1 }}>{a.label}</span>{on && <div className="chip-check">✓</div>}
+                  <div className="step-title">Allergier / intolerancer</div>
+
+                  {/* Forklaring på farver */}
+                  <div style={{ display:"flex", gap:6, marginBottom:14 }}>
+                    {[["var(--border)","var(--ink)","Ingen"],["var(--amber)","var(--amber)","Intolerance"],["var(--red)","var(--red)","Allergi"]].map(([border,color,label]) => (
+                      <div key={label} style={{ flex:1, display:"flex", alignItems:"center", gap:5, padding:"5px 8px", border:`1.5px solid ${border}`, borderRadius:8, background: color==="var(--ink)"?"var(--paper2)":color==="var(--amber)"?"var(--amber-lt)":"var(--red-lt)" }}>
+                        <div style={{ width:8, height:8, borderRadius:"50%", background:color, flexShrink:0 }}/>
+                        <span style={{ fontSize:10, fontWeight:700, color }}>{label}</span>
                       </div>
-                    );})}
+                    ))}
+                  </div>
+                  <div style={{ fontSize:11, color:"var(--muted)", marginBottom:12, lineHeight:1.4 }}>
+                    Tryk 1x = Intolerance &nbsp;·&nbsp; 2x = Allergi &nbsp;·&nbsp; 3x = Fjern
+                  </div>
+
+                  <div className="chip-grid">
+                    {ALLERGENS.map(a => {
+                      const isAllergen = allergens.includes(a.id) && !customAllerg.includes(a.id+"_intolerance");
+                      const isIntolerance = allergens.includes(a.id) && customAllerg.includes(a.id+"_intolerance");
+                      const state = isAllergen ? "allergen" : isIntolerance ? "intolerance" : "none";
+                      const bg = state==="allergen"?"var(--red-lt)":state==="intolerance"?"var(--amber-lt)":"var(--paper2)";
+                      const border = state==="allergen"?"var(--red)":state==="intolerance"?"var(--amber)":"var(--border)";
+                      const color = state==="allergen"?"var(--red)":state==="intolerance"?"var(--amber)":"var(--ink)";
+                      return (
+                        <div key={a.id} className="chip" style={{ background:bg, border:`1.5px solid ${border}`, color }}
+                          onClick={() => {
+                            if (state==="none") {
+                              setAllergens(p => [...p, a.id]);
+                              setCustomAllerg(p => [...p, a.id+"_intolerance"]);
+                            } else if (state==="intolerance") {
+                              setCustomAllerg(p => p.filter(x => x !== a.id+"_intolerance"));
+                            } else {
+                              setAllergens(p => p.filter(x => x !== a.id));
+                            }
+                          }}>
+                          <span style={{ flex:1 }}>{a.label}</span>
+                          {state!=="none" && allergenSubtypes[a.id] && (
+                            <div style={{ fontSize:8, fontWeight:800, color, opacity:0.8 }}>✓ Præciseret</div>
+                          )}
+                          {state!=="none" && !allergenSubtypes[a.id] && (
+                            <div style={{ fontSize:8, fontWeight:800, color }}>{state==="allergen"?"Allergi":"Intolerance"}</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Præciser valgte allergier */}
+                  {allergens.length > 0 && allergens.some(id => ALLERGEN_SUBTYPES[id]) && (
+                    <div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid var(--border)" }}>
+                      <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>Tilpas din allergi præcist til dig selv</div>
+                      <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10, lineHeight:1.5 }}>
+                        For størst mulig tryghed kan du præcisere hvad du reagerer på inden for hver kategori.
+                      </div>
+                      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                        {allergens.filter(id => ALLERGEN_SUBTYPES[id]).map(id => {
+                          const data = ALLERGEN_SUBTYPES[id];
+                          const subtype = allergenSubtypes[id];
+                          const subtypeLabel = subtype && subtype.length > 0 ? subtype.map(id => data.options.find(o=>o.id===id)?.label).filter(Boolean).join(", ") : null;
+                          return (
+                            <div key={id} onClick={() => setActiveSubtypeModal(id)}
+                              style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px",
+                                border:"1.5px solid var(--green)", background:"var(--green-lt)",
+                                borderRadius:10, cursor:"pointer" }}>
+                              <div style={{ flex:1 }}>
+                                <div style={{ fontSize:12, fontWeight:700, color:"var(--green)" }}>{data.label}</div>
+                                <div style={{ fontSize:11, color:"var(--muted2)", marginTop:2 }}>
+                                  {subtypeLabel || "Tryk for at præcisere →"}
+                                </div>
+                              </div>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2">
+                                <path strokeLinecap="round" d="M9 5l7 7-7 7"/>
+                              </svg>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Skriv selv */}
+                  <div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid var(--border)" }}>
+                    <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Kan ikke finde din allergi?</div>
+                    <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8, lineHeight:1.5 }}>Skriv det selv herunder. Vi tilføjer løbende flere valgmuligheder med større sikkerhed.</div>
+                    <div className="input-row" style={{ marginBottom: customAllerg.filter(c=>!c.endsWith("_intolerance")).length ? 8 : 0 }}>
+                      <input className="field" placeholder="Fx. Fructose…" value={customInput}
+                        onChange={e => setCustomInput(e.target.value)}
+                        onKeyDown={e => { if (e.key==="Enter"&&customInput.trim()) { setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}} />
+                      <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}}>+</button>
+                    </div>
+                    {customAllerg.filter(c=>!c.endsWith("_intolerance")).length > 0 && (
+                      <div className="tags">
+                        {customAllerg.filter(c=>!c.endsWith("_intolerance")).map((a,i) => (
+                          <div key={i} className="tag">{a}<span className="tag-x" onClick={() => setCustomAllerg(c=>c.filter(x=>x!==a))}>×</span></div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="card">
-                  <div className="card-lbl">Andre intoleranser</div>
-                  <div className="input-row" style={{ marginBottom: customAllerg.length ? 10 : 0 }}>
-                    <input className="field" placeholder="Fx. Fructose…" value={customInput} onChange={e => setCustomInput(e.target.value)}
-                      onKeyDown={e => { if (e.key==="Enter"&&customInput.trim()) { setCustomAllerg(c => [...c, customInput.trim()]); setCustomInput(""); }}} />
-                    <button className="btn btn-outline btn-sm" onClick={() => { if (customInput.trim()) { setCustomAllerg(c => [...c, customInput.trim()]); setCustomInput(""); }}}>+</button>
-                  </div>
-                  {customAllerg.length > 0 && <div className="tags">{customAllerg.map((a, i) => <div key={i} className="tag">✏️ {a}<span className="tag-x" onClick={() => setCustomAllerg(c => c.filter((_, j) => j !== i))}>×</span></div>)}</div>}
-                </div>
-                <div style={{ display:"flex", gap:8 }}>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(3)}>← Tilbage</button>
-                  <button className="btn btn-primary" style={{ flex:1 }} onClick={saveAllergensStep2}>Fortsæt →</button>
-                </div>
+
+                <button className="btn btn-primary btn-full" onClick={async () => { await saveAllergensStep2(); setOnboardStep(5); }}>Fortsæt →</button>
                 <div className="onboard-skip">Kan springes over</div>
               </div>
             )}
 
-            {/* ── TRIN 5: Familie ── */}
+            {/* ── TRIN 5: E-numre ── */}
             {onboardStep === 5 && (
               <div className="fade-in">
                 <div className="card">
-                  <div className="step-title">👨‍👩‍👧 Familiemedlemmer</div>
-                  <div className="step-sub">Tilføj familiemedlemmer med egne allergier. Valgfrit.</div>
-                  {family.map(m => (
-                    <div key={m.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 0", borderBottom:"1px solid var(--border)" }}>
-                      <div className="fm-avatar" style={{ background:m.color, color:"#fff" }}>{initials(m.name)}</div>
-                      <div style={{ flex:1 }}>
-                        <div style={{ fontWeight:800, fontSize:14 }}>{m.name}</div>
-                        <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>{m.allergens.map(id => ALLERGENS.find(a => a.id === id)?.emoji).join(" ")||"Ingen allergier"}</div>
-                      </div>
-                      <span style={{ cursor:"pointer", opacity:.4, fontSize:18 }} onClick={() => removeMember(m.id)}>🗑</span>
+                  <div className="step-title">E-numre</div>
+                  <div className="step-sub">Vælg E-numre du ønsker at undgå. Vi markerer dem i ingredienslister.</div>
+
+                  {/* Mest valgte */}
+                  <div style={{ marginBottom:14 }}>
+                    <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Mest valgte</div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                      {[
+                        {e:"E621",n:"MSG - Smagsforstærker"},
+                        {e:"E211",n:"Natriumbenzoat (konservering)"},
+                        {e:"E102",n:"Tartrazin (gul farve)"},
+                        {e:"E951",n:"Aspartam (sødemiddel)"},
+                        {e:"E250",n:"Natriumnitrit (konservering)"},
+                        {e:"E320",n:"BHA (antioxidant)"},
+                      ].map(({e,n}) => {
+                        const on = selectedENumbers.includes(e);
+                        return (
+                          <div key={e} onClick={() => setSelectedENumbers(p => on ? p.filter(x=>x!==e) : [...p,e])}
+                            style={{ padding:"6px 12px", borderRadius:20, cursor:"pointer", fontSize:12, fontWeight:700,
+                              background: on?"var(--red-lt)":"var(--paper2)",
+                              color: on?"var(--red)":"var(--ink2)",
+                              border:`1.5px solid ${on?"var(--red)":"var(--border)"}` }}>
+                            {e} {on?"✓":""}
+                            <div style={{ fontSize:10, fontWeight:400, color: on?"var(--red)":"var(--muted)" }}>{n}</div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                  <div className="divider">Tilføj nyt medlem</div>
-                  <label className="field-lbl">Navn</label>
-                  <input className="field" placeholder="Fx. Mia (8 år)" value={newMemberName} onChange={e => setNewMemberName(e.target.value)} style={{ marginBottom:10 }} />
-                  <div className="card-lbl" style={{ marginBottom:8 }}>Allergier</div>
-                  <div className="chip-grid" style={{ marginBottom:12 }}>
-                    {ALLERGENS.map(a => { const on = newMemberAllerg.includes(a.id); return (
-                      <div key={a.id} className={`chip${on?" on":""}`} onClick={() => setNewMemberAllerg(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
-                        <span>{a.emoji}</span><span style={{ flex:1 }}>{a.label}</span>{on && <div className="chip-check">✓</div>}
-                      </div>
-                    );})}
                   </div>
-                  <button className="btn btn-outline btn-full btn-sm" onClick={addMember}>+ Tilføj {newMemberName||"familiemedlem"}</button>
+
+                  <ENumberPicker selected={selectedENumbers} onChange={setSelectedENumbers} />
+                  <div style={{ marginTop:10, fontSize:11, color:"var(--muted)", lineHeight:1.5, paddingTop:10, borderTop:"1px solid var(--border)" }}>
+                    Kan du ikke finde det du leder efter? Vi tilføjer løbende flere valgmuligheder med større sikkerhed.
+                  </div>
                 </div>
-                <div style={{ display:"flex", gap:8 }}>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(4)}>← Tilbage</button>
-                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(6)}>Fortsæt →</button>
-                </div>
+
+                <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(6)}>Fortsæt →</button>
                 <div className="onboard-skip">Kan springes over</div>
               </div>
             )}
 
-            {/* ── TRIN 6: Fællesskabet ── */}
+            {/* ── TRIN 7: Familie ── */}
+            {onboardStep === 7 && (
+              <div className="fade-in">
+                <div className="step-title" style={{ textAlign:"center" }}>Familiemedlemmer</div>
+                <div style={{ fontSize:13, color:"var(--muted2)", textAlign:"center", marginBottom:16 }}>Tilføj familiemedlemmer med egne allergier. Valgfrit.</div>
+
+                {/* Allerede tilføjede */}
+                {family.length > 0 && (
+                  <div className="card" style={{ marginBottom:12 }}>
+                    {family.map(m => (
+                      <div key={m.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 0", borderBottom:"1px solid var(--border)" }}>
+                        <div className="fm-avatar" style={{ background:m.color, color:"#fff" }}>{initials(m.name)}</div>
+                        <div style={{ flex:1 }}>
+                          <div style={{ fontWeight:800, fontSize:14 }}>{m.name}</div>
+                          <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>
+                            {m.allergens.length ? m.allergens.map(id => ALLERGENS.find(a=>a.id===id)?.label).join(", ") : "Ingen allergier"}
+                          </div>
+                        </div>
+                        <div onClick={() => removeMember(m.id)} style={{ cursor:"pointer", opacity:.4 }}>
+                          <Icon name="trash" size={18} color="var(--muted)" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Tilføj nyt medlem */}
+                <div className="card" style={{ marginBottom:12 }}>
+                  <div className="card-lbl" style={{ marginBottom:12 }}>Tilføj nyt familiemedlem</div>
+                  <MemberForm
+                    name={newMemberName} setName={setNewMemberName}
+                    allergens={newMemberAllerg} setAllergens={setNewMemberAllerg}
+                    customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
+                    subtypes={newMemberSubtypes} setSubtypes={setNewMemberSubtypes}
+                    diets={newMemberDiets} setDiets={setNewMemberDiets}
+                    eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
+                    customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}
+                    onAdd={addMember}
+                    addLabel={`+ Tilføj ${newMemberName||"familiemedlem"}`}
+                  />
+                </div>
+
+                <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(8)}>Fortsæt →</button>
+                <div className="onboard-skip">Kan springes over</div>
+              </div>
+            )}
+
+            {/* ── TRIN 6: Diæt ── */}
             {onboardStep === 6 && (
+              <div className="step fade-in">
+                <div className="step-title">Din diæt</div>
+                <div style={{ fontSize:13, color:"var(--muted2)", marginBottom:16, lineHeight:1.5 }}>
+                  Vælg din diæt så vi kan filtrere produkter og opskrifter til dig.
+                </div>
+                <div className="chip-grid" style={{ marginBottom:12 }}>
+                  {DIETS.map(d => { const on = (user.diets||[]).includes(d.id); return (
+                    <div key={d.id} className={`chip${on?" on":""}`}
+                      onClick={() => setUser(u => ({ ...u, diets: on ? (u.diets||[]).filter(x=>x!==d.id) : [...(u.diets||[]), d.id] }))}>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontWeight:700 }}>{d.label}</div>
+                        <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>{d.desc}</div>
+                      </div>
+                      {on && <div className="chip-check">✓</div>}
+                    </div>
+                  );})}
+                </div>
+                <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5, marginBottom:20 }}>
+                  Diæt-tjek er vejledende og baseret på produkttags. Tjek altid ingredienserne selv.
+                </div>
+                <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(7)}>Fortsæt →</button>
+                <button className="btn btn-ghost btn-full btn-sm" style={{ marginTop:8 }} onClick={() => { setUser(u => ({...u, diets:[]})); setOnboardStep(7); }}>Ingen særlig diæt</button>
+              </div>
+            )}
+
+            {/* ── TRIN 8: Fællesskabet ── */}
+            {onboardStep === 8 && (
               <div className="fade-in">
                 <div className="card" style={{ textAlign:"center", padding:"20px 20px 14px" }}>
-                  <div style={{ fontSize:44, marginBottom:8 }}>🤝</div>
+                  <div style={{ marginBottom:8 }}><Icon name="heart" size={44} color="var(--ink2)" /></div>
                   <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)", marginBottom:6 }}>Hjælp fællesskabet</div>
                   <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>Når du scanner et ukendt produkt kan du indsende det og hjælpe andre.</div>
                 </div>
@@ -1989,7 +3989,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                     ["5️⃣","Alle får glæde af det","Produktet er nu tilgængeligt for alle brugere."],
                   ].map(([num, title, text]) => (
                     <div key={title} style={{ display:"flex", gap:10, alignItems:"flex-start", background:"#fff", border:"1px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
-                      <div style={{ fontSize:18, flexShrink:0 }}>{num}</div>
+                      <div style={{ fontSize:15, fontWeight:800, color:"var(--green)", flexShrink:0, width:20 }}>{num}</div>
                       <div>
                         <div style={{ fontWeight:700, fontSize:13, color:"var(--ink)", marginBottom:2 }}>{title}</div>
                         <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.4 }}>{text}</div>
@@ -1998,34 +3998,148 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                   ))}
                 </div>
                 <div style={{ display:"flex", gap:8, marginTop:14 }}>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(5)}>← Tilbage</button>
-                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(7)}>Fortsæt →</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(7)}>← Tilbage</button>
+                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(9)}>Fortsæt →</button>
                 </div>
               </div>
             )}
 
-            {/* ── TRIN 7: Klar! ── */}
-            {onboardStep === 7 && (
+            {/* ── TRIN 9: Oversigt & Klar! ── */}
+            {onboardStep === 9 && (
               <div className="fade-in">
-                <div className="card" style={{ textAlign:"center", padding:"32px 20px" }}>
-                  <div style={{ fontSize:56, marginBottom:16 }}>🎉</div>
-                  <div style={{ fontSize:22, fontWeight:900, color:"var(--text)", marginBottom:8 }}>Du er klar!</div>
-                  <div style={{ fontSize:14, color:"var(--muted)", lineHeight:1.6, marginBottom:20 }}>
-                    Profil oprettet med {allergens.length+customAllerg.length} allergi{allergens.length+customAllerg.length!==1?"er":""} og {family.length} familiemedlem{family.length!==1?"mer":""}.
+
+                {/* Header */}
+                <div style={{ textAlign:"center", padding:"8px 0 20px" }}>
+                  <div style={{ width:64, height:64, borderRadius:"50%", background:"var(--green-lt)",
+                    display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 12px" }}>
+                    <Icon name="check" size={32} color="var(--green)" />
                   </div>
-                  <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                    {allergens.length>0&&<div className="tag" style={{justifyContent:"center"}}>🌾 {allergens.length} allergi{allergens.length!==1?"er":""} valgt</div>}
-                    {family.length>0&&<div className="tag" style={{justifyContent:"center"}}>👨‍👩‍👧 {family.length} familiemedlem{family.length!==1?"mer":""}</div>}
-                    {allergens.length===0&&family.length===0&&<div style={{fontSize:13,color:"var(--muted)"}}>Du kan tilføje allergier og familiemedlemmer i din profil.</div>}
+                  <div style={{ fontSize:24, fontWeight:900, color:"var(--ink)", marginBottom:6 }}>Alt er klar!</div>
+                  <div style={{ fontSize:14, color:"var(--muted2)", lineHeight:1.6 }}>
+                    Her er et overblik over din profil. Du kan altid redigere senere.
                   </div>
                 </div>
-                <div style={{ display:"flex", gap:8 }}>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(6)}>← Tilbage</button>
-                  <button className="btn btn-primary" style={{ flex:1 }} onClick={finishOnboard}>
-                    {editMode ? "Gem ændringer ✓" : "Gå til appen →"}
+
+                {/* Din profil */}
+                <div className="card" style={{ marginBottom:12 }}>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+                    <div style={{ fontWeight:800, fontSize:15, color:"var(--ink)" }}>
+                      {user.name || "Din profil"}
+                    </div>
+                    <button className="btn btn-ghost btn-sm" style={{ fontSize:12, padding:"4px 10px" }}
+                      onClick={() => setOnboardStep(3)}>
+                      Rediger
+                    </button>
+                  </div>
+
+                  {/* Allergier */}
+                  {allergens.length > 0 ? (
+                    <div style={{ marginBottom:10 }}>
+                      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>
+                        Allergier / intolerancer
+                      </div>
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                        {allergens.map(id => {
+                          const a = ALLERGENS.find(x=>x.id===id);
+                          const isAllergen = !customAllerg.includes(id+"_intolerance");
+                          const subtypeIds = allergenSubtypes[id] || [];
+                          const subtypeData = ALLERGEN_SUBTYPES[id];
+                          const subtypeLabel = subtypeIds.length > 0 && subtypeData
+                            ? subtypeIds.map(sid => subtypeData.options.find(o=>o.id===sid)?.label).filter(Boolean).join(", ")
+                            : null;
+                          return (
+                            <div key={id} style={{ padding:"5px 10px", borderRadius:20, fontSize:12, fontWeight:700,
+                              background:isAllergen?"var(--red-lt)":"var(--amber-lt)",
+                              color:isAllergen?"var(--red)":"var(--amber)",
+                              border:`1px solid ${isAllergen?"var(--red-md)":"var(--amber-md)"}` }}>
+                              {a?.label}
+                              {subtypeLabel && <span style={{ fontWeight:400, fontSize:10 }}> · {subtypeLabel}</span>}
+                            </div>
+                          );
+                        })}
+                        {customAllerg.filter(c=>!c.endsWith("_intolerance")).map((c,i) => (
+                          <div key={i} style={{ padding:"5px 10px", borderRadius:20, fontSize:12, fontWeight:700,
+                            background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" }}>
+                            {c}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize:12, color:"var(--muted)", marginBottom:8 }}>Ingen allergier registreret</div>
+                  )}
+
+                  {/* Diæt */}
+                  {user.diets && user.diets.length > 0 && (
+                    <div style={{ marginBottom:10 }}>
+                      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Diæt</div>
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                        {user.diets.map(d => (
+                          <div key={d} style={{ padding:"5px 10px", borderRadius:20, fontSize:12, fontWeight:700,
+                            background:"var(--green-lt)", color:"var(--green)", border:"1px solid var(--green-mid)" }}>
+                            {DIETS.find(x=>x.id===d)?.label}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* E-numre */}
+                  {selectedENumbers.length > 0 && (
+                    <div>
+                      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>E-numre der undgås</div>
+                      <div style={{ fontSize:12, color:"var(--muted2)" }}>{selectedENumbers.length} E-numre valgt</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Familiemedlemmer */}
+                {family.length > 0 && (
+                  <div style={{ marginBottom:12 }}>
+                    <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>Familiemedlemmer</div>
+                    {family.map(m => (
+                      <div key={m.id} className="card" style={{ marginBottom:8, padding:"12px 14px" }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                          <div className="fm-avatar" style={{ background:m.color, color:"#fff", flexShrink:0 }}>
+                            {initials(m.name)}
+                          </div>
+                          <div style={{ flex:1 }}>
+                            <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>{m.name}</div>
+                            <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>
+                              {m.allergens.length
+                                ? m.allergens.map(id=>ALLERGENS.find(a=>a.id===id)?.label).join(", ")
+                                : "Ingen allergier"}
+                            </div>
+                          </div>
+                          <button className="btn btn-ghost btn-sm" style={{ fontSize:12, padding:"4px 10px", flexShrink:0 }}
+                            onClick={() => { setScreen(SCREENS.FAMILY); }}>
+                            Rediger
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {family.length === 0 && (
+                  <div className="card" style={{ marginBottom:12, textAlign:"center", padding:"14px" }}>
+                    <div style={{ fontSize:13, color:"var(--muted2)", marginBottom:8 }}>Ingen familiemedlemmer tilføjet</div>
+                    <button className="btn btn-outline btn-sm" onClick={() => setOnboardStep(7)}>
+                      + Tilføj familiemedlem
+                    </button>
+                  </div>
+                )}
+
+                {/* Afslut */}
+                <button className="btn btn-primary btn-full" style={{ marginTop:4 }} onClick={finishOnboard}>
+                  {editMode ? "Gem ændringer ✓" : "Gå til appen →"}
+                </button>
+                {editMode && (
+                  <button className="btn btn-outline btn-full" style={{ marginTop:8 }}
+                    onClick={() => { setEditMode(false); setScreen(SCREENS.PROFILE); }}>
+                    Annuller
                   </button>
-                </div>
-                {editMode && <button className="btn btn-outline btn-full" style={{ marginTop:8 }} onClick={() => { setEditMode(false); setScreen(SCREENS.PROFILE); }}>Annuller</button>}
+                )}
               </div>
             )}
 
@@ -2039,35 +4153,312 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               <div className="topbar-shield" style={{background:"none",padding:0}}><EatSafeLogo size={34} variant="light" /></div>
               <div className="topbar-name">Eat<span>Safe</span></div>
             </div>
-            <div className="topbar-avatar" onClick={() => setScreen(SCREENS.PROFILE)}>{initials(user.name||"?")}</div>
           </header>
         )}
 
         {/* ══ HJEM ══ */}
         {screen === SCREENS.HOME && (
-          <div className="screen fade-in">
+          <div className="screen fade-in" id="main-content" style={{ display:"flex", flexDirection:"column", minHeight:"calc(100vh - 130px)" }}>
 
-            {/* Hilsen */}
-            <div style={{ padding:"16px 2px 14px" }}>
-              <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px" }}>
-                {greeting}, {user.name?.split(" ")[0] || "der"} 👋
+            {/* Profil popup */}
+            {profilePopup && (() => {
+              const isUser = profilePopup === "user";
+              const member = isUser ? null : family.find(m => m.id === profilePopup);
+              const pName = isUser ? (user.name || "Din profil") : member?.name;
+              const pAllergens = isUser ? allergens : (member?.allergens || []);
+              const pCustom = isUser ? customAllerg : (member?.customAllerg || []);
+              const pDiets = isUser ? (user.diets || []) : (member?.diets || []);
+              const pENumbers = isUser ? selectedENumbers : (member?.eNumbers || []);
+              const isActive = isUser
+                ? activeProfiles.includes("user")
+                : activeProfiles.includes(profilePopup);
+              return (
+                <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)" }}
+                  onClick={() => setProfilePopup(null)}>
+                  <div style={{ position:"absolute", top:80, left:16, right:16,
+                    background:"var(--paper)", borderRadius:20, padding:"20px 18px",
+                    boxShadow:"0 8px 40px rgba(0,0,0,.2)" }}
+                    onClick={e => e.stopPropagation()}>
+
+                    {/* Header */}
+                    <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+                      <div style={{ width:44, height:44, borderRadius:"50%",
+                        background: isUser ? "var(--green)" : (member?.color || "var(--ink)"),
+                        color:"#fff", display:"flex", alignItems:"center", justifyContent:"center",
+                        fontSize:16, fontWeight:800, flexShrink:0 }}>
+                        {initials(pName)}
+                      </div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontWeight:800, fontSize:16, color:"var(--ink)" }}>{pName}</div>
+                        <div style={{ fontSize:12, color:"var(--muted)", marginTop:1 }}>
+                          {isActive ? "✅ Aktiv i søgning" : "⬜ Ikke aktiv i søgning"}
+                        </div>
+                      </div>
+                      <div onClick={() => setProfilePopup(null)} style={{ cursor:"pointer", padding:4, opacity:.5 }}>✕</div>
+                    </div>
+
+                    {/* Allergier */}
+                    {pAllergens.length > 0 ? (
+                      <div style={{ marginBottom:12 }}>
+                        <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Allergier / intolerancer</div>
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                          {pAllergens.map(id => {
+                            const a = ALLERGENS.find(x => x.id === id);
+                            const isInt = pCustom.includes(id + "_intolerance");
+                            return (
+                              <div key={id} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
+                                background: isInt ? "var(--amber-lt)" : "var(--red-lt)",
+                                color: isInt ? "var(--amber)" : "var(--red)",
+                                border: `1px solid ${isInt ? "var(--amber)" : "var(--red)"}` }}>
+                                {a?.label || id}
+                              </div>
+                            );
+                          })}
+                          {pCustom.filter(c => !c.endsWith("_intolerance")).map((c,i) => (
+                            <div key={i} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
+                              background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" }}>
+                              {c}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12 }}>Ingen allergier registreret</div>
+                    )}
+
+                    {/* Diæt */}
+                    {pDiets.length > 0 && (
+                      <div style={{ marginBottom:12 }}>
+                        <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Diæt</div>
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                          {pDiets.map(d => (
+                            <div key={d} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
+                              background:"var(--green-lt)", color:"var(--green)", border:"1px solid var(--green-mid)" }}>
+                              {DIETS.find(x=>x.id===d)?.label || d}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* E-numre */}
+                    {pENumbers.length > 0 && (
+                      <div style={{ marginBottom:12 }}>
+                        <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>E-numre</div>
+                        <div style={{ fontSize:12, color:"var(--muted2)" }}>{pENumbers.length} E-numre overvåges</div>
+                      </div>
+                    )}
+
+                    {/* Aktiver/deaktiver */}
+                    <button className="btn btn-full" style={{
+                      marginTop:4,
+                      background: isActive ? "var(--paper2)" : "var(--green)",
+                      color: isActive ? "var(--muted)" : "#fff",
+                      border: `1px solid ${isActive ? "var(--border)" : "var(--green)"}`,
+                    }} onClick={() => {
+                      const pid = isUser ? "user" : profilePopup;
+                      setActiveProfiles(p => p.includes(pid) ? p.filter(x=>x!==pid) : [...p, pid]);
+                      setProfilePopup(null);
+                    }}>
+                      {isActive ? "Deaktiver i søgning" : "Aktivér i søgning"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Hilsen + Profil-bar */}
+            <div style={{ padding:"16px 2px 12px" }}>
+              <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px", marginBottom:10 }}>
+                {greeting} {user.name?.split(" ")[0] || "der"}
               </div>
-              <div style={{ fontSize:12, color:"var(--muted)", marginTop:3 }}>
-                {allergens.length + customAllerg.length > 0
-                  ? `Tjekker for ${allergens.length + customAllerg.length} allergen${allergens.length + customAllerg.length !== 1 ? "er" : ""}`
-                  : "Ingen allergier sat — gå til profil"}
+
+              {/* Vælg alle / fravælg alle */}
+              <div style={{ display:"flex", gap:6, marginBottom:10 }}>
+                {(() => {
+                  const allIds = ["user", ...family.map(m => m.id)];
+                  const allActive = allIds.every(id => activeProfiles.includes(id));
+                  return (
+                    <>
+                      <button onClick={() => setActiveProfiles(allIds)}
+                        style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20, border:"1.5px solid var(--green)",
+                          background: allActive ? "var(--green)" : "var(--green-lt)", color: allActive ? "#fff" : "var(--green)", cursor:"pointer", fontFamily:"var(--f)" }}>
+                        Vælg alle
+                      </button>
+                      <button onClick={() => setActiveProfiles([])}
+                        style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20, border:"1.5px solid var(--border)",
+                          background:"var(--paper2)", color:"var(--muted)", cursor:"pointer", fontFamily:"var(--f)" }}>
+                        Fravælg alle
+                      </button>
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Profil-avatars */}
+              <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" }}>
+                {/* Brugeren selv */}
+                {(() => {
+                  const isActive = activeProfiles.includes("user");
+                  return (
+                    <div onClick={() => setProfilePopup("user")} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer" }}>
+                      <div style={{ position:"relative" }}>
+                        <div style={{ width:46, height:46, borderRadius:"50%",
+                          background: isActive ? "var(--green)" : "var(--paper2)",
+                          color: isActive ? "#fff" : "var(--muted)",
+                          display:"flex", alignItems:"center", justifyContent:"center",
+                          fontSize:15, fontWeight:800,
+                          border: `2.5px solid ${isActive ? "var(--green)" : "var(--border)"}`,
+                          boxShadow: isActive ? "0 0 0 3px var(--green-lt)" : "none",
+                          transition:"all .2s" }}>
+                          {initials(user.name || "?")}
+                        </div>
+                        {allergens.length > 0 && (
+                          <div style={{ position:"absolute", bottom:-1, right:-1, width:16, height:16,
+                            background:"var(--red)", borderRadius:"50%", border:"2px solid var(--paper)",
+                            display:"flex", alignItems:"center", justifyContent:"center",
+                            fontSize:9, color:"#fff", fontWeight:800 }}>
+                            {allergens.length}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ fontSize:10, fontWeight:700,
+                        color: isActive ? "var(--ink)" : "var(--muted2)",
+                        maxWidth:48, textAlign:"center", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                        {user.name?.split(" ")[0] || "Mig"}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Familiemedlemmer */}
+                {family.map(m => {
+                  const isActive = activeProfiles.includes(m.id);
+                  return (
+                    <div key={m.id} onClick={() => setProfilePopup(m.id)}
+                      style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer" }}>
+                      <div style={{ position:"relative" }}>
+                        <div style={{ width:46, height:46, borderRadius:"50%",
+                          background: isActive ? "var(--green)" : "var(--paper2)",
+                          color: isActive ? "#fff" : "var(--muted)",
+                          display:"flex", alignItems:"center", justifyContent:"center",
+                          fontSize:15, fontWeight:800,
+                          border: `2.5px solid ${isActive ? "var(--green)" : "var(--border)"}`,
+                          boxShadow: isActive ? "0 0 0 3px var(--green-lt)" : "none",
+                          transition:"all .2s" }}>
+                          {initials(m.name)}
+                        </div>
+                        {(m.allergens||[]).length > 0 && (
+                          <div style={{ position:"absolute", bottom:-1, right:-1, width:16, height:16,
+                            background:"var(--red)", borderRadius:"50%", border:"2px solid var(--paper)",
+                            display:"flex", alignItems:"center", justifyContent:"center",
+                            fontSize:9, color:"#fff", fontWeight:800 }}>
+                            {(m.allergens||[]).length}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ fontSize:10, fontWeight:700,
+                        color: isActive ? "var(--ink)" : "var(--muted2)",
+                        maxWidth:48, textAlign:"center", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                        {m.name?.split(" ")[0]}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Tilføj-knap */}
+                <div onClick={() => setScreen(SCREENS.FAMILY)}
+                  style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer" }}>
+                  <div style={{ width:46, height:46, borderRadius:"50%", background:"var(--paper2)",
+                    border:"2px dashed var(--border)", display:"flex", alignItems:"center", justifyContent:"center",
+                    fontSize:22, color:"var(--muted)", lineHeight:1 }}>+</div>
+                  <div style={{ fontSize:10, color:"var(--muted2)", fontWeight:600 }}>Tilføj</div>
+                </div>
               </div>
             </div>
 
-            {/* Stor scan-knap — starter kamera direkte */}
+            {/* Scan-boks — viser kamera når aktivt, animation ellers */}
             <div style={{
               background:"var(--ink)", borderRadius:20, marginBottom:10,
-              cursor:"pointer", overflow:"hidden", position:"relative",
+              overflow:"hidden", position:"relative",
               boxShadow:"0 4px 20px rgba(31,39,51,.18)",
-              transition:"transform .15s, box-shadow .15s",
-            }} onClick={() => { setCameraActive(true); setTimeout(startCamera, 50); setScreen(SCREENS.SCAN); }}>
-              {/* Laser animation baggrund */}
-              <div style={{ padding:"28px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16, position:"relative" }}>
+            }}>
+              {/* Kamera container — altid i DOM men skjult når ikke aktiv */}
+              <div style={{ position:"relative", display: cameraActive ? "block" : "none" }}>
+                <div id="qr-reader-home" style={{ width:"100%", background:"#000" }} />
+                {/* Scanner overlay — ramme og laser */}
+                <div style={{
+                  position:"absolute", inset:0, pointerEvents:"none",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                }}>
+                  {/* Mørke hjørner */}
+                  <div style={{ position:"absolute", inset:0, background:"rgba(0,0,0,.4)" }} />
+                  {/* Klar scanzone */}
+                  <div style={{
+                    position:"relative",
+                    width:"75%", height:100,
+                    boxShadow:"0 0 0 9999px rgba(0,0,0,.4)",
+                    borderRadius:8,
+                  }}>
+                    {/* Hjørne-markører */}
+                    {[["0","0","tl"],["0","auto","bl"],["auto","0","tr"],["auto","auto","br"]].map(([t,b,key]) => (
+                      <div key={key} style={{
+                        position:"absolute",
+                        top: key.startsWith("t") ? 0 : "auto",
+                        bottom: key.startsWith("b") ? 0 : "auto",
+                        left: key.endsWith("l") ? 0 : "auto",
+                        right: key.endsWith("r") ? 0 : "auto",
+                        width:22, height:22,
+                        borderColor:"var(--green)",
+                        borderStyle:"solid",
+                        borderWidth:0,
+                        borderTopWidth: key.startsWith("t") ? 3 : 0,
+                        borderBottomWidth: key.startsWith("b") ? 3 : 0,
+                        borderLeftWidth: key.endsWith("l") ? 3 : 0,
+                        borderRightWidth: key.endsWith("r") ? 3 : 0,
+                        borderRadius: key==="tl"?"4px 0 0 0":key==="tr"?"0 4px 0 0":key==="bl"?"0 0 0 4px":"0 0 4px 0",
+                      }} />
+                    ))}
+                    {/* Laser-linje */}
+                    <div style={{
+                      position:"absolute", left:4, right:4, height:2,
+                      background:"linear-gradient(90deg, transparent, var(--green), rgba(134,239,172,.8), var(--green), transparent)",
+                      boxShadow:"0 0 8px var(--green), 0 0 16px var(--green)",
+                      animation:"laserMove 1.8s ease-in-out infinite",
+                      top:0,
+                    }} />
+                  </div>
+                </div>
+              </div>
+              <div id="qr-reader-gallery" style={{ display:"none" }} />
+              <input ref={galleryInputRef} type="file" accept="image/*" style={{ display:"none" }}
+                onChange={e => { if (e.target.files[0]) scanFromGallery(e.target.files[0]); e.target.value=""; }} />
+
+              {/* Stop-knap når kamera er aktivt */}
+              {cameraActive && (
+                <div style={{ padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                  <span style={{ color:"rgba(255,255,255,.6)", fontSize:12, fontWeight:600 }}>Hold stregkoden ind i rammen</span>
+                  <div style={{ display:"flex", gap:6 }}>
+                    <button onClick={() => galleryInputRef.current?.click()} style={{ background:"rgba(255,255,255,.15)", border:"none", borderRadius:6, padding:"5px 10px", color:"#fff", fontSize:16, cursor:"pointer", lineHeight:1 }}>🖼️</button>
+                    <button onClick={toggleTorch} style={{
+                      background: torchOn ? "rgba(251,191,36,.3)" : "rgba(255,255,255,.15)",
+                      border: torchOn ? "1px solid rgba(251,191,36,.6)" : "none",
+                      borderRadius:6, padding:"5px 10px", color: torchOn ? "#FBB" : "#fff",
+                      fontSize:16, cursor:"pointer", lineHeight:1
+                    }}>🔦</button>
+                    <button onClick={stopCamera} style={{ background:"rgba(255,255,255,.15)", border:"none", borderRadius:6, padding:"5px 12px", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"var(--f)" }}>Stop</button>
+                  </div>
+                </div>
+              )}
+
+              {/* Animation når kamera ikke er aktivt */}
+              {!cameraActive && (
+              <div style={{ cursor:"pointer", padding:"28px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16, position:"relative" }}
+                onClick={() => startCamera()}
+                role="button"
+                aria-label="Start kamera for at scanne stregkode"
+                tabIndex={0}
+                onKeyDown={e => e.key === "Enter" && startCamera()}>
                 {/* Stregkode-animation */}
                 <div style={{ position:"relative", width:180, height:90 }}>
                   {/* Stregkode streger */}
@@ -2118,15 +4509,27 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 <div style={{ textAlign:"center" }}>
                   <div style={{ fontSize:20, fontWeight:900, color:"#fff", letterSpacing:"-.4px" }}>Skan produkt</div>
                   <div style={{ fontSize:13, color:"rgba(255,255,255,.5)", marginTop:4 }}>Tryk for at starte kamera</div>
+                  <div onClick={e => { e.stopPropagation(); galleryInputRef.current?.click(); }}
+                    style={{ fontSize:11, color:"rgba(255,255,255,.35)", marginTop:8, textDecoration:"underline", cursor:"pointer" }}>
+                    eller vælg billede fra galleri
+                  </div>
                 </div>
               </div>
+              )}
             </div>
+
+            {/* Fejlbesked fra kamera */}
+            {scanError && (
+              <div style={{ fontSize:12, color:"var(--red)", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, padding:"8px 12px", marginBottom:8 }}>
+                {scanError} — <span style={{ textDecoration:"underline", cursor:"pointer" }} onClick={() => setShowManualEan(true)}>Indtast manuelt</span>
+              </div>
+            )}
 
             {/* Søg — fremhævet på forsiden */}
             <div className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:10 }}
               onClick={() => setScreen(SCREENS.SEARCH)}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <div style={{ width:40, height:40, background:"var(--paper2)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>🔎</div>
+                <div style={{ width:40, height:40, background:"var(--paper2)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="search" size={20} color="var(--ink2)" /></div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13, fontWeight:700 }}>Søg produkter</div>
                   <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>Find varer der er sikre for dig</div>
@@ -2140,7 +4543,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               <div className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:10 }}
                 onClick={() => setScreen(SCREENS.LIST)}>
                 <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                  <div style={{ width:40, height:40, background:"var(--green-lt)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>🛒</div>
+                  <div style={{ width:40, height:40, background:"var(--green-lt)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="cart" size={20} color="var(--green)" /></div>
                   <div style={{ flex:1 }}>
                     <div style={{ fontSize:13, fontWeight:700 }}>Indkøbsliste</div>
                     <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>
@@ -2152,128 +4555,123 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               </div>
             )}
 
+            <div style={{ flex:1, minHeight:20 }} />
             {/* Vidste du at — let, i bunden */}
             {(() => {
               const tip = HOME_TIPS[new Date().getDay() % HOME_TIPS.length];
               return (
                 <div style={{ display:"flex", gap:10, alignItems:"flex-start", padding:"10px 0", borderTop:"1px solid var(--border)", marginTop:4 }}>
+                  <div style={{ flexShrink:0 }}><Icon name="bulb" size={20} color="#F59E0B" /></div>
                   <div style={{ flex:1 }}>
                     <div style={{ fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:3 }}>Vidste du at</div>
                     <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{tip.title}</div>
                     <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>{tip.text}</div>
                   </div>
-                  <div style={{ fontSize:18, flexShrink:0, opacity:.6 }}>{tip.icon}</div>
+                  
                 </div>
               );
             })()}
 
+            {/* Version */}
+            <div style={{ textAlign:"center", paddingTop:8, paddingBottom:4 }}>
+              <div style={{ fontSize:10, color:"var(--muted)", opacity:0.5 }}>v1.0.6</div>
+            </div>
+
           </div>
         )}
 
-        {/* ══ SKAN ══ */}
-        {screen === SCREENS.SCAN && (
-          <div className="screen fade-in">
-            <div className="screen-title">📷 Skan produkt</div>
-
-            {/* Familie-profilvælger */}
-            {family.length > 0 && (
-              <div style={{ marginBottom:12 }}>
-                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:6 }}>Scanner for</div>
-                <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-                  {[{ id:"me", name: user.name||"Mig" }, ...family].map(m => {
-                    const isActive = activeProfiles.includes(m.id);
-                    return (
-                      <div key={m.id}
-                        onClick={() => setActiveProfiles(p => p.includes(m.id) ? p.filter(x => x !== m.id).length === 0 ? [m.id] : p.filter(x => x !== m.id) : [...p, m.id])}
-                        style={{
-                          display:"flex", alignItems:"center", gap:6,
-                          background: isActive ? "var(--green-lt)" : "var(--paper2)",
-                          border: `1.5px solid ${isActive ? "var(--green)" : "var(--border)"}`,
-                          borderRadius:20, padding:"5px 10px 5px 7px",
-                          cursor:"pointer", transition:"all .15s",
-                        }}>
-                        <div style={{
-                          width:20, height:20, borderRadius:"50%",
-                          background: isActive ? "var(--green)" : "var(--border2)",
-                          display:"flex", alignItems:"center", justifyContent:"center",
-                          fontSize:9, fontWeight:800, color: isActive ? "#fff" : "var(--muted)",
-                        }}>
-                          {initials(m.name).slice(0,2)}
-                        </div>
-                        <span style={{ fontSize:12, fontWeight:700, color: isActive ? "var(--green)" : "var(--muted)" }}>
-                          {m.name.split(" ")[0]}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            <div className="scan-box">
-              {/* qr-reader skal ALTID være i DOM — html5-qrcode kræver det */}
-              <div id="qr-reader" style={{ width:"100%", display: cameraActive ? "block" : "none" }} />
-              {cameraActive ? (
-                <div className="scan-bar">
-                  <span className="scan-bar-txt">📷 Kamera aktivt — hold stregkoden ind i rammen</span>
-                  <button className="btn btn-sm" style={{ background:"rgba(255,255,255,.2)",color:"#fff",border:"none",fontSize:12 }} onClick={stopCamera}>Stop</button>
-                </div>
-              ) : (
-                <div>
-                  <div className="scan-viewfinder" onClick={startCamera}>
-                    <div className="scan-corner tl" /><div className="scan-corner tr" />
-                    <div className="scan-corner bl" /><div className="scan-corner br" />
-                    <div className="scan-laser" />
-                    <div className="scan-camera-icon">📷</div>
-                    <div className="scan-camera-text">Tryk for at åbne kamera</div>
-                  </div>
-                  <div className="scan-bar"><span className="scan-bar-txt">📱 Tryk for at starte kamera-scanning</span></div>
-                </div>
-              )}
-            </div>
-            <div className="card">
-              <div className="card-lbl">Manuel stregkode</div>
-              <div className="input-row" style={{ marginBottom:10 }}>
-                <input className="field" placeholder="Indtast EAN-kode…" value={barcodeInput} onChange={e => setBarcodeInput(e.target.value)} onKeyDown={e => e.key==="Enter" && lookupProduct(barcodeInput)} />
-                <button className="btn btn-primary btn-sm" style={{ whiteSpace:"nowrap" }} onClick={() => lookupProduct(barcodeInput)} disabled={loading}>Søg</button>
-              </div>
-              <div className="card-lbl">Prøv en demo-kode</div>
-              <div style={{ display:"flex", flexWrap:"wrap" }}>
-                {DEMO_CODES.map(d => <span key={d.code} className="demo-code" onClick={() => { setBarcodeInput(d.code); lookupProduct(d.code); }}>{d.label}</span>)}
-              </div>
-            </div>
-            {loading && <div className="loader fade-in"><div className="spinner" /><div className="loader-txt">Analyserer produkt…</div><div className="loader-sub">Slår op i databasen</div></div>}
-            {scanError && !loading && <div className="error-box">⚠️ {scanError}</div>}
-            {history.length>0&&!loading&&(
-              <div className="card">
-                <div className="card-lbl">Seneste scanninger</div>
-                {history.slice(0,4).map((h,i) => {
-                  const s = h.result||h.status; const name = h.products?.name||h.name||h.ean_scanned||"Ukendt";
-                  return (
-                    <div key={i} className="hist-row" onClick={() => { setScanResult({...h,code:h.ean_scanned||h.code,name,brand:h.products?.brand||h.brand||"",headline:s==="safe"?"Sikkert produkt":s==="danger"?"Indeholder allergen!":"Mulige spor",flags:[],summary:""}); setScreen(SCREENS.RESULT); }}>
-                      <div className={`hist-dot ${s}`} />
-                      <div className="hist-info"><div className="hist-name">{name}</div><div className="hist-time">{timeAgo(h.scanned_at||h.timestamp)}</div></div>
-                      <div className={`badge ${s==="safe"?"safe":s==="danger"?"danger":"warn"}`}>{s==="safe"?"Sikker":s==="danger"?"Farlig":s==="not_found"?"Ikke fundet":"Advarsel"}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* ══ RESULTAT ══ */}
         {screen === SCREENS.RESULT && scanResult && (
           <div className="screen fade-in">
-            <button className="btn btn-ghost btn-sm" style={{ marginTop:16, marginBottom:12 }} onClick={() => setScreen(SCREENS.SCAN)}>← Tilbage til scan</button>
 
-            {/* Produkt hero header */}
+            {/* ── 1. SIKKERHED + DIÆT ── */}
+            {(() => {
+              const flags = scanResult.allergen_flags || {};
+              const profiles = [
+                { id:"me", name: user.name||"Dig", allergens },
+                ...family.filter(m => activeProfiles.includes(m.id)),
+              ];
+              const tagLabels = { vegan:"Vegansk", vegetarian:"Vegetarisk", "palm-oil-free":"Uden palmeolie", "gluten-free":"Glutenfri", organic:"Økologisk" };
+              const hasTags = scanResult.tags && scanResult.tags.length > 0;
+
+              return (
+                <div style={{ marginBottom:10 }}>
+                  {/* 2 kolonner */}
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom: hasTags ? 8 : 0 }}>
+                  {profiles.map((p, pi) => {
+                    const danger = p.allergens.filter(a => flags[a] === "yes");
+                    const warning = p.allergens.filter(a => flags[a] === "traces");
+                    const statusColor = danger.length > 0 ? "var(--red)" : warning.length > 0 ? "var(--amber)" : "var(--green)";
+                    const statusBg = danger.length > 0 ? "var(--red-lt)" : warning.length > 0 ? "var(--amber-lt)" : "var(--green-lt)";
+                    const statusBorder = danger.length > 0 ? "var(--red-md)" : warning.length > 0 ? "var(--amber-md)" : "var(--green-mid)";
+                    const statusIcon = danger.length > 0 ? "×" : warning.length > 0 ? "!" : "✓";
+                    const productTags = scanResult.tags || [];
+                    const dietMatch = p.diets && p.diets.length > 0
+                      ? p.diets.every(d => productTags.includes(d))
+                      : null; // null = ingen diæt registreret
+                    const statusText = danger.length > 0
+                      ? danger.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
+                      : warning.length > 0
+                      ? "Spor: " + warning.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
+                      : dietMatch === false ? "Passer ikke til diæt"
+                      : "Sikkert";
+                    const finalColor = danger.length > 0 ? "var(--red)" : warning.length > 0 ? "var(--amber)" : dietMatch === false ? "var(--amber)" : "var(--green)";
+                    const finalBg = danger.length > 0 ? "var(--red-lt)" : warning.length > 0 ? "var(--amber-lt)" : dietMatch === false ? "var(--amber-lt)" : "var(--green-lt)";
+                    const finalBorder = danger.length > 0 ? "var(--red-md)" : warning.length > 0 ? "var(--amber-md)" : dietMatch === false ? "var(--amber-md)" : "var(--green-mid)";
+                    const finalIcon = danger.length > 0 ? "×" : warning.length > 0 ? "!" : dietMatch === false ? "!" : "✓";
+
+                    return (
+                      <div key={p.id} style={{
+                        display:"flex", alignItems:"center", justifyContent:"space-between",
+                        padding:"6px 10px",
+                        background: finalBg,
+                        border:`1px solid ${finalBorder}`,
+                        borderRadius:8,
+                        gap:6,
+                      }}>
+                        <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", flex:1 }}>
+                          {p.id==="me" ? "Dig" : p.name}
+                        </div>
+                        <div style={{ fontSize:11, fontWeight:700, color:finalColor, flexShrink:0 }}>{finalIcon} {statusText}</div>
+                      </div>
+                    );
+                  })}
+                  </div>
+
+                  {/* Diæt-tags — sømløst under profilerne */}
+                  {hasTags && (
+                    <div style={{
+                      display:"flex", gap:6, flexWrap:"wrap",
+                      padding:"8px 14px",
+                      background:"#fff",
+                      border:"1px solid var(--border)",
+                      borderTop:"none",
+                      borderRadius:"0 0 12px 12px",
+                    }}>
+                      {scanResult.tags.map((tag, i) => (
+                        <span key={i} style={{ fontSize:11, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:100, padding:"2px 9px" }}>
+                          {tagLabels[tag] || tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* ── 2. PRODUKT HERO ── */}
             <div className="product-hero">
               {scanResult.image_url
                 ? <img src={scanResult.image_url} alt={scanResult.name} className="product-hero-img" onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
-                : null
-              }
-              <div className="product-hero-img-placeholder" style={{ display: scanResult.image_url ? "none" : "flex" }}>
-                {getProductIcon(scanResult)}
+                : null}
+              <div className="product-hero-img-placeholder" style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"column", gap:8, background:"var(--paper2)", borderRadius:12, padding:20, margin:"0 0 10px" }}>
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="var(--border2)" strokeWidth="1.5">
+                  <rect x="4" y="10" width="40" height="30" rx="3"/>
+                  <circle cx="16" cy="20" r="4"/>
+                  <path strokeLinecap="round" d="M4 34l10-8 8 6 6-4 16 12"/>
+                </svg>
+                <div style={{ fontSize:11, color:"var(--muted)", fontWeight:500 }}>Ingen produktbillede</div>
               </div>
               <div className="product-hero-body">
                 <div className="product-hero-name">{scanResult.name}</div>
@@ -2288,59 +4686,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               </div>
             </div>
 
-            {/* Allergen resultat banner */}
-            <div className={`result-banner ${scanResult.status}`} style={{ marginBottom:10 }}>
-              <div className="rb-icon">{scanResult.status==="safe"?"✅":scanResult.status==="danger"?"🚫":"⚠️"}</div>
-              <div style={{ flex:1 }}>
-                <div className={`rb-title ${scanResult.status}`}>{scanResult.headline}</div>
-                <div className="rb-sub">{scanResult.summary}</div>
-              </div>
-            </div>
-
-            {/* ── PROFIL-KORT: én samlet visning per person ── */}
-            <div className="card">
-              <div className="card-lbl">Din sikkerhed</div>
-              {(() => {
-                const flags = scanResult.allergen_flags || {};
-                const profiles = [
-                  { id:"me", name: user.name||"Dig", allergens, color:"var(--green)" },
-                  ...family.filter(m => activeProfiles.includes(m.id)),
-                ];
-                return profiles.map(p => {
-                  const danger = p.allergens.filter(a => flags[a] === "yes");
-                  const warning = p.allergens.filter(a => flags[a] === "traces");
-                  const safe = danger.length === 0 && warning.length === 0;
-                  const color = danger.length > 0 ? "var(--red)" : warning.length > 0 ? "var(--amber)" : "var(--green)";
-                  const bg = danger.length > 0 ? "var(--red-lt)" : warning.length > 0 ? "var(--amber-lt)" : "var(--green-lt)";
-                  const border = danger.length > 0 ? "var(--red-md)" : warning.length > 0 ? "var(--amber-md)" : "var(--green-mid)";
-                  return (
-                    <div key={p.id} style={{ background:bg, border:`1px solid ${border}`, borderRadius:10, padding:"12px 14px", marginBottom:8 }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom: safe ? 0 : 8 }}>
-                        <div style={{ width:32, height:32, borderRadius:"50%", background:color, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, color:"#fff", flexShrink:0 }}>
-                          {initials(p.id==="me" ? (user.name||"Mig") : p.name).slice(0,2)}
-                        </div>
-                        <div style={{ flex:1 }}>
-                          <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>{p.id==="me" ? (user.name||"Dig") : p.name}</div>
-                          <div style={{ fontSize:11, fontWeight:700, color }}>{danger.length > 0 ? "🚫 Indeholder dine allergener" : warning.length > 0 ? "⚠️ Mulige spor af dine allergener" : "✅ Sikkert for dig"}</div>
-                        </div>
-                      </div>
-                      {danger.length > 0 && (
-                        <div className="tags">
-                          {danger.map(id => { const a=ALLERGENS.find(x=>x.id===id); return a ? <div key={id} className="tag" style={{ fontSize:11, background:"rgba(230,57,70,.12)", color:"var(--red)", borderColor:"var(--red-md)" }}>{a.emoji} {a.label}</div> : null; })}
-                        </div>
-                      )}
-                      {warning.length > 0 && (
-                        <div className="tags" style={{ marginTop: danger.length > 0 ? 4 : 0 }}>
-                          {warning.map(id => { const a=ALLERGENS.find(x=>x.id===id); return a ? <div key={id} className="tag" style={{ fontSize:11, background:"rgba(217,119,6,.1)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>spor: {a.emoji} {a.label}</div> : null; })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                });
-              })()}
-            </div>
-
-            {/* ── PRODUKTETS ØVRIGE ALLERGENER (kollapsibel) ── */}
+            {/* ── 3. ANDRE ALLERGENER I PRODUKTET ── */}
             {scanResult.allergen_flags && (() => {
               const flags = scanResult.allergen_flags;
               const present = Object.entries(flags).filter(([k,v]) => v==="yes" && ALLERGENS.find(a=>a.id===k));
@@ -2352,92 +4698,157 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               return (
                 <div className="card">
                   <div className="card-lbl">Andre allergener i produktet</div>
-                  <div style={{ fontSize:12, color:"var(--muted)", marginBottom:10 }}>Disse allergener er i produktet, men er ikke registreret på dine profiler.</div>
-                  {otherPresent.length > 0 && (
-                    <div style={{ marginBottom:8 }}>
-                      <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:5 }}>Indeholder</div>
-                      <div className="tags">
-                        {otherPresent.map(([k]) => { const a=ALLERGENS.find(x=>x.id===k); return a ? <div key={k} className="tag" style={{ background:"var(--paper2)", color:"var(--ink2)", borderColor:"var(--border2)" }}>{a.emoji} {a.label}</div> : null; })}
-                      </div>
+                  <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8 }}>Ikke registreret på dine profiler</div>
+                  {otherPresent.length > 0 && <div className="tags" style={{ marginBottom:6 }}>{otherPresent.map(([k]) => { const a=ALLERGENS.find(x=>x.id===k); return a ? <div key={k} className="tag" style={{ background:"var(--paper2)", color:"var(--ink2)", borderColor:"var(--border2)" }}>{a.emoji} {a.label}</div> : null; })}</div>}
+                  {otherTraces.length > 0 && <div className="tags">{otherTraces.map(([k]) => { const a=ALLERGENS.find(x=>x.id===k); return a ? <div key={k} className="tag" style={{ background:"var(--paper2)", color:"var(--muted)", borderColor:"var(--border2)" }}>spor: {a.emoji} {a.label}</div> : null; })}</div>}
+                </div>
+              );
+            })()}
+
+            {/* ── 4. INGREDIENSLISTE ── */}
+            <div className="card">
+              <div className="ing-toggle" onClick={() => scanResult.ingredients && setShowIng(v => !v)}
+                style={{ cursor: scanResult.ingredients ? "pointer" : "default" }}>
+                <span>Ingrediensliste</span>
+                {scanResult.ingredients && <span>{showIng?"▲":"▼"}</span>}
+              </div>
+              {scanResult.ingredients ? (
+                showIng && (
+                  <div style={{ marginTop:10 }}>
+                    <div style={{ padding:"10px", background:"var(--paper2)", borderRadius:8, marginBottom:8 }}>
+                      <IngredientsList text={scanResult.ingredients} allergenFlags={scanResult.allergen_flags||{}} />
                     </div>
-                  )}
-                  {otherTraces.length > 0 && (
-                    <div>
-                      <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:5 }}>Kan indeholde spor af</div>
-                      <div className="tags">
-                        {otherTraces.map(([k]) => { const a=ALLERGENS.find(x=>x.id===k); return a ? <div key={k} className="tag" style={{ background:"var(--paper2)", color:"var(--ink2)", borderColor:"var(--border2)" }}>{a.emoji} {a.label}</div> : null; })}
-                      </div>
+                    <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
+                      Fremhævet = allergen · Listen kan være på originalsprog — tjek altid selv
+                    </div>
+                  </div>
+                )
+              ) : (
+                <div style={{ padding:"8px 0" }}>
+                  <div style={{ fontSize:13, color:"var(--muted2)", marginBottom:8 }}>Vi mangler ingredienslisten for dette produkt.</div>
+                  <button className="btn btn-outline btn-sm" onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients || ""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
+                    Hjælp os — indsend ingrediensliste
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* ── 5. NÆRINGSINDHOLD — kollapsibel ── */}
+            {!scanResult.nutrition && (
+              <div className="card">
+                <div className="ing-toggle" style={{ cursor:"default" }}>
+                  <span>Næringsindhold pr. 100g</span>
+                </div>
+                <div style={{ padding:"12px 0", display:"flex", alignItems:"center", gap:10 }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, color:"var(--muted2)", marginBottom:6 }}>Vi mangler næringsdata for dette produkt.</div>
+                    <button className="btn btn-outline btn-sm" onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients || ""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
+                      Hjælp os — indsend næringsdata
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {scanResult.nutrition && (() => {
+              const n = scanResult.nutrition;
+              const rows = [
+                ["Energi", n.energy_kcal ? `${n.energy_kcal} kcal` : null],
+                ["Fedt", n.fat != null ? `${n.fat} g` : null],
+                ["— heraf mættet", n.saturated_fat != null ? `${n.saturated_fat} g` : null],
+                ["Kulhydrat", n.carbohydrates != null ? `${n.carbohydrates} g` : null],
+                ["— heraf sukker", n.sugars != null ? `${n.sugars} g` : null],
+                ["Kostfibre", n.fiber != null ? `${n.fiber} g` : null],
+                ["Protein", n.protein != null ? `${n.protein} g` : null],
+                ["Salt", n.salt != null ? `${n.salt} g` : null],
+              ].filter(([,v]) => v !== null);
+              if (!rows.length) return null;
+              return (
+                <div className="card">
+                  <div className="ing-toggle" onClick={() => setShowNutrition(v => !v)}>
+                    <span>Næringsindhold pr. 100g</span>
+                    <span>{showNutrition?"▲":"▼"}</span>
+                  </div>
+                  {showNutrition && (
+                    <div style={{ display:"flex", flexDirection:"column", marginTop:10 }}>
+                      {rows.map(([label, value], i) => (
+                        <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"7px 0", borderBottom: i < rows.length-1 ? "1px solid var(--border)" : "none" }}>
+                          <span style={{ fontSize:13, color: label.startsWith("—") ? "var(--muted)" : "var(--ink2)", paddingLeft: label.startsWith("—") ? 12 : 0 }}>{label}</span>
+                          <span style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{value}</span>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
               );
             })()}
 
-            {/* Ingrediensliste */}
-            {scanResult.ingredients && (
-              <div className="card">
-                <div className="ing-toggle" onClick={() => setShowIng(v => !v)}>
-                  <span>📋 Ingrediensliste</span>
-                  <span>{showIng?"▲":"▼"}</span>
-                </div>
-                {showIng && (
-                  <div style={{ marginTop:10 }}>
-                    <div style={{ padding:"10px", background:"var(--paper2)", borderRadius:8, marginBottom:8 }}>
-                      <IngredientsList text={scanResult.ingredients} allergenFlags={scanResult.allergen_flags||{}} />
-                    </div>
-                    <div style={{ fontSize:10, color:"var(--muted)", fontStyle:"italic", marginBottom:6 }}>
-                      🔴 Fremhævet = kendt allergen
-                    </div>
-                    <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
-                      ⚠️ Ingredienslisten vises som den fremgår på emballagen og kan være på et andet sprog. Resultater er vejledende — tjek altid selv.
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Ansvarsfraskrivelse */}
-            <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 14px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:10, marginBottom:10 }}>
-              <span style={{ fontSize:14, flexShrink:0 }}>⚠️</span>
-              <div style={{ fontSize:11, color:"var(--amber)", lineHeight:1.5, fontWeight:600 }}>
-                Resultater er vejledende og kan indeholde fejl. Tjek altid selv ved alvorlige allergier.
-              </div>
-            </div>
-
-            {/* Ansvarsfraskrivelse */}
-            <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 14px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:10, marginBottom:10 }}>
-              <span style={{ fontSize:14, flexShrink:0 }}>⚠️</span>
-              <div style={{ fontSize:11, color:"var(--amber)", lineHeight:1.5, fontWeight:600 }}>
-                Resultater er vejledende og kan indeholde fejl. Tjek altid selv ved alvorlige allergier.
-              </div>
-            </div>
-
-            {/* Handlinger */}
+            {/* ── 6. HANDLINGER ── */}
             <div className="card">
               <div className="card-lbl">Handlinger</div>
               <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                <button
-                  className="btn btn-sm"
-                  style={{ flex:1, background: isFavorite(scanResult.code) ? "var(--amber-lt)" : "var(--paper2)", color: isFavorite(scanResult.code) ? "var(--amber)" : "var(--ink2)", border:"1px solid var(--border)" }}
-                  onClick={() => toggleFavorite(scanResult)}
-                >
-                  {isFavorite(scanResult.code) ? "★ Fjern favorit" : "☆ Gem favorit"}
+                <button className="btn btn-sm" style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+                    background: isFavorite(scanResult.code) ? "var(--amber-lt)" : "var(--paper2)",
+                    color: isFavorite(scanResult.code) ? "var(--amber)" : "var(--ink2)",
+                    border:"1px solid var(--border)" }}
+                  onClick={() => toggleFavorite(scanResult)}>
+                  <Icon name="heart" size={15} color={isFavorite(scanResult.code) ? "var(--amber)" : "var(--muted)"} />
+                  {isFavorite(scanResult.code) ? "Fjern" : "Favorit"}
                 </button>
-                <button className="btn btn-outline btn-sm" style={{ flex:1 }} onClick={() => { addToList(scanResult.name); setScreen(SCREENS.LIST); }}>🛒 Til liste</button>
-                <button className="btn btn-ghost btn-sm" style={{ flex:1 }} onClick={() => { if(navigator.share) navigator.share({title:scanResult.name, text:scanResult.headline}); else alert("Del ikke tilgængeligt"); }}>📤 Del</button>
+                <button className="btn btn-ghost btn-sm" style={{ flex:1 }}
+                  onClick={() => { if(navigator.share) navigator.share({title:scanResult.name, text:scanResult.headline}); }}>
+                  Del
+                </button>
+                <button className="btn btn-outline btn-sm" style={{ flex:1 }}
+                  onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients || ""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
+                  Foreslå ændring
+                </button>
               </div>
             </div>
+
+            {/* ── 7. TRUST-LAG — confidence score og verifikation ── */}
+            {(() => {
+              const { confidence } = compareAllergens(scanResult.allergen_flags||{}, activeIds);
+              const verifiedAt = scanResult.verified_at || scanResult.updated_at;
+              const daysSince = verifiedAt ? Math.floor((Date.now() - new Date(verifiedAt).getTime()) / 86400000) : null;
+
+              const confidenceConfig = {
+                high:   { color:"var(--green)", bg:"var(--green-lt)",  border:"var(--green-mid)", icon:"✓", label:"Høj sikkerhed",    desc:"Allergendata er verificeret og pålidelig." },
+                medium: { color:"var(--amber)", bg:"var(--amber-lt)",  border:"var(--amber-md)",  icon:"⚠", label:"Middel sikkerhed", desc:"Visse allergener kunne ikke bekræftes fuldt ud." },
+                low:    { color:"var(--muted)", bg:"var(--paper2)",    border:"var(--border2)",   icon:"?", label:"Lav sikkerhed",    desc:"Begrænsede allergendata — tjek altid emballagen." },
+              };
+              const cfg = confidenceConfig[confidence] || confidenceConfig.low;
+
+              return (
+                <div style={{ background:cfg.bg, border:`1px solid ${cfg.border}`, borderRadius:12, padding:"12px 14px", marginBottom:16 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom: daysSince !== null ? 6 : 0 }}>
+                    <div style={{ fontSize:16, fontWeight:800, color:cfg.color, flexShrink:0 }}>{cfg.icon}</div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:12, fontWeight:700, color:cfg.color }}>{cfg.label}</div>
+                      <div style={{ fontSize:11, color:"var(--muted)", marginTop:1, lineHeight:1.4 }}>{cfg.desc}</div>
+                    </div>
+                    {scanResult.verified_status === "verified" && (
+                      <div style={{ fontSize:10, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:20, padding:"2px 8px", flexShrink:0 }}>Verificeret</div>
+                    )}
+                  </div>
+                  {daysSince !== null && (
+                    <div style={{ fontSize:10, color:"var(--muted)", paddingTop:6, borderTop:`1px solid ${cfg.border}` }}>
+                      Sidst opdateret: {daysSince === 0 ? "i dag" : daysSince === 1 ? "i går" : `for ${daysSince} dage siden`}
+                      {daysSince > 180 && " · Data kan være forældet"}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
 
         {/* ══ PRODUKT IKKE FUNDET ══ */}
         {screen === SCREENS.NOTFOUND && (
           <div className="screen fade-in">
-            <button className="btn btn-ghost btn-sm" style={{ marginTop:16, marginBottom:12 }} onClick={() => setScreen(SCREENS.SCAN)}>← Tilbage til scan</button>
 
             {/* Hero — motiverende besked */}
             <div style={{ background:"var(--ink)", borderRadius:16, padding:"24px 20px", marginBottom:12, textAlign:"center" }}>
-              <div style={{ fontSize:44, marginBottom:10 }}>🤝</div>
+              <div style={{ marginBottom:10 }}><Icon name="heart" size={44} color="var(--paper)" /></div>
               <div style={{ fontSize:18, fontWeight:900, color:"#fff", marginBottom:8 }}>Produktet kendes ikke endnu</div>
               <div style={{ fontSize:13, color:"rgba(255,255,255,.65)", lineHeight:1.6 }}>
                 Du er den første der scanner dette produkt! Hjælp andre med allergier ved at indsende det — det tager under 1 minut.
@@ -2446,7 +4857,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
             {/* EAN */}
             <div style={{ display:"flex", alignItems:"center", gap:10, background:"#fff", border:"1px solid var(--border)", borderRadius:10, padding:"10px 14px", marginBottom:12 }}>
-              <div style={{ fontSize:20 }}>🏷️</div>
+              <div><Icon name="info" size={20} color="var(--ink2)" /></div>
               <div>
                 <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600 }}>Stregkode</div>
                 <div style={{ fontSize:14, fontWeight:700, fontFamily:"monospace" }}>{notFoundEan}</div>
@@ -2460,12 +4871,12 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 <div className="card" style={{ marginBottom:12 }}>
                   <div className="card-lbl">Sådan gør du — 3 nemme trin</div>
                   {[
-                    ["📸","Tag billede af ingredienslisten","Vend pakken om og fotografér bagsiden med ingredienserne. Hold kameraet stille for bedste resultat."],
-                    ["🤖","Vi analyserer automatisk","Vores AI læser teksten og finder allergener. Du kan tjekke og rette inden du sender."],
-                    ["✅","Hjælp alle andre","Når admin har godkendt, kan alle EatSafe-brugere se produktet. Du gør en forskel!"],
+                    ["camera","Tag billede af ingredienslisten","Vend pakken om og fotografér bagsiden med ingredienserne. Hold kameraet stille for bedste resultat."],
+                    ["search","Vi analyserer automatisk","Vores AI læser teksten og finder allergener. Du kan tjekke og rette inden du sender."],
+                    ["check","Hjælp alle andre","Når admin har godkendt, kan alle EatSafe-brugere se produktet. Du gør en forskel!"],
                   ].map(([icon, title, text], i) => (
                     <div key={i} style={{ display:"flex", gap:10, alignItems:"flex-start", marginBottom: i < 2 ? 14 : 0, paddingBottom: i < 2 ? 14 : 0, borderBottom: i < 2 ? "1px solid var(--border)" : "none" }}>
-                      <div style={{ width:36, height:36, borderRadius:"50%", background:"var(--green-lt)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{icon}</div>
+                      <div style={{ width:36, height:36, borderRadius:"50%", background:"var(--green-lt)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name={icon} size={18} color="var(--green)" /></div>
                       <div>
                         <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:3 }}>{title}</div>
                         <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>{text}</div>
@@ -2474,11 +4885,11 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                   ))}
                 </div>
                 <label className="btn btn-primary btn-full" style={{ cursor:"pointer", fontSize:15 }}>
-                  📸 Start — fotografér ingredienslisten
+                  Start — fotografér ingredienslisten
                   <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleImageCapture} />
                 </label>
                 <div style={{ textAlign:"center", marginTop:10, fontSize:12, color:"var(--muted)" }}>
-                  Har du ikke pakken ved hånden? <span style={{ color:"var(--green)", fontWeight:700, cursor:"pointer" }} onClick={() => setScreen(SCREENS.SCAN)}>Spring over</span>
+                  Har du ikke pakken ved hånden? <span style={{ color:"var(--green)", fontWeight:700, cursor:"pointer" }} onClick={() => setOnboardStep(prev => prev + 1)}>Spring over</span>
                 </div>
               </div>
             )}
@@ -2506,7 +4917,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                     </div>
                   )}
                   <label className="btn btn-ghost btn-full btn-sm" style={{ cursor:"pointer" }}>
-                    📷 {productImagePreview ? "Skift billede" : "Tag produktbillede"}
+                    {productImagePreview ? "Skift billede" : "Tag produktbillede"}
                     <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleProductImageCapture} />
                   </label>
                 </div>
@@ -2545,7 +4956,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {screen === SCREENS.SUBMITTED && (
           <div className="screen fade-in">
             <div className="card" style={{ textAlign:"center", padding:"40px 24px", marginTop:32 }}>
-              <div style={{ fontSize:56, marginBottom:16 }}>🙏</div>
+              <div style={{ marginBottom:16 }}><Icon name="check" size={56} color="var(--green)" /></div>
               <div style={{ fontSize:22, fontWeight:900, color:"var(--text)", marginBottom:8 }}>Tak for dit bidrag!</div>
               <div style={{ fontSize:14, color:"var(--muted)", lineHeight:1.7, marginBottom:20 }}>
                 Din indsendelse er modtaget og afventer godkendelse af vores team. Når produktet er godkendt, vil det være tilgængeligt for alle brugere.
@@ -2571,8 +4982,68 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {/* ══ SØG ══ */}
         {screen === SCREENS.SEARCH && (
           <div className="screen fade-in">
-            <div className="screen-title">🔎 Søg varer</div>
-            <div className="screen-sub">Find produkter der er sikre for dig og familien.</div>
+            <div className="screen-title">Søg varer</div>
+
+            {/* Profil-bar — samme som hjem */}
+            <div style={{ marginBottom:12 }}>
+              <div style={{ display:"flex", gap:6, marginBottom:8 }}>
+                {(() => {
+                  const allIds = ["user", ...family.map(m => m.id)];
+                  const allActive = allIds.every(id => activeProfiles.includes(id));
+                  return (
+                    <>
+                      <button onClick={() => setActiveProfiles(allIds)}
+                        style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20,
+                          border:"1.5px solid var(--green)",
+                          background: allActive ? "var(--green)" : "var(--green-lt)",
+                          color: allActive ? "#fff" : "var(--green)", cursor:"pointer", fontFamily:"var(--f)" }}>
+                        Vælg alle
+                      </button>
+                      <button onClick={() => setActiveProfiles([])}
+                        style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20,
+                          border:"1.5px solid var(--border)",
+                          background:"var(--paper2)", color:"var(--muted)", cursor:"pointer", fontFamily:"var(--f)" }}>
+                        Fravælg alle
+                      </button>
+                    </>
+                  );
+                })()}
+              </div>
+              <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+                {[{id:"user", name: user.name, allergenCount: allergens.length}, ...family.map(m => ({id:m.id, name:m.name, allergenCount:(m.allergens||[]).length}))].map(p => {
+                  const isActive = activeProfiles.includes(p.id);
+                  return (
+                    <div key={p.id} onClick={() => setProfilePopup(p.id)}
+                      style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, cursor:"pointer" }}>
+                      <div style={{ position:"relative" }}>
+                        <div style={{ width:38, height:38, borderRadius:"50%",
+                          background: isActive ? "var(--green)" : "var(--paper2)",
+                          color: isActive ? "#fff" : "var(--muted)",
+                          display:"flex", alignItems:"center", justifyContent:"center",
+                          fontSize:13, fontWeight:800,
+                          border: `2px solid ${isActive ? "var(--green)" : "var(--border)"}`,
+                          boxShadow: isActive ? "0 0 0 2px var(--green-lt)" : "none",
+                          transition:"all .2s" }}>
+                          {initials(p.name || "?")}
+                        </div>
+                        {p.allergenCount > 0 && (
+                          <div style={{ position:"absolute", bottom:-1, right:-1, width:14, height:14,
+                            background:"var(--red)", borderRadius:"50%", border:"2px solid var(--paper)",
+                            display:"flex", alignItems:"center", justifyContent:"center",
+                            fontSize:8, color:"#fff", fontWeight:800 }}>
+                            {p.allergenCount}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ fontSize:9, fontWeight:700, color: isActive ? "var(--green)" : "var(--muted2)",
+                        maxWidth:40, textAlign:"center", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                        {p.name?.split(" ")[0] || "Mig"}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
             <div style={{ display:"flex", gap:8, marginBottom:10 }}>
               <input
                 className="field"
@@ -2592,9 +5063,28 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 Søg
               </button>
             </div>
+            {/* Kategori filter */}
+            <div style={{ marginBottom:10 }}>
+              <CategorySelect
+                value={searchCategory}
+                onChange={setSearchCategory}
+                options={[
+                  {id:"alle",          label:"Alle kategorier"},
+                  {id:"Drikkevarer",   label:"Drikkevarer"},
+                  {id:"Kolonial",      label:"Kolonial"},
+                  {id:"Snacks & slik", label:"Snacks & slik"},
+                  {id:"Mejeri & æg",   label:"Mejeri & æg"},
+                  {id:"Frugt & grønt", label:"Frugt & grønt"},
+                  {id:"Frost",         label:"Frost"},
+                  {id:"Brød & bagværk",label:"Brød & bagværk"},
+                  {id:"Kød & fisk",    label:"Kød & fisk"},
+                  {id:"Færdigretter",  label:"Færdigretter"},
+                ]}
+              />
+            </div>
             <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
               <div className={`filter-chip${showSafeOnly?" active":""}`} onClick={() => setShowSafeOnly(v => !v)}>
-                {showSafeOnly ? "✅ Kun sikre" : "Vis kun sikre"}
+                {showSafeOnly ? "Kun sikre" : "Vis kun sikre"}
               </div>
               <div style={{ fontSize:12, color:"var(--muted)" }}>{searchResults.length} resultat{searchResults.length!==1?"er":""}</div>
             </div>
@@ -2609,26 +5099,40 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               </div>
             )}
             {!searchLoading && searchQuery && searchResults.length===0 && (
-              <div className="empty-state"><span className="empty-icon">🔍</span><div className="empty-txt">Ingen resultater</div><div className="empty-sub">Prøv et andet søgeord</div></div>
+              <div className="empty-state"><div className="empty-txt">Ingen resultater</div><div className="empty-sub">Prøv et andet søgeord</div></div>
             )}
             {!searchQuery && (
-              <div className="empty-state"><span className="empty-icon">🔎</span><div className="empty-txt">Søg efter et produkt</div><div className="empty-sub">Skriv et produktnavn eller mærke</div></div>
+              <div className="empty-state"><div className="empty-txt">Søg efter et produkt</div><div className="empty-sub">Skriv et produktnavn eller mærke</div></div>
             )}
-            {searchResults.filter(p => !showSafeOnly || p.conflicts?.length === 0).map(p => {
-              const vb = verifiedBadge(p.verified||p.verified_status, p.source);
+            {searchResults.filter(p => {
+              if (showSafeOnly && p.conflicts?.length > 0) return false;
+              if (searchCategory !== "alle" && p.category !== searchCategory) return false;
+              return true;
+            }).map(p => {
+              const { status, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(p.allergen_flags||{}, activeIds);
+              const statusColor = status==="safe" ? "var(--green)" : status==="danger" ? "var(--red)" : "var(--amber)";
+              const statusLabel = status==="safe" ? "Sikker" : status==="danger" ? "Farlig" : "Advarsel";
               return (
-                <div key={p.id} className="product-card" style={{ cursor:"pointer" }} onClick={() => lookupProduct(p.ean||p.id)}>
+                <div key={p.id} style={{ display:"flex", alignItems:"center", gap:10,
+                  padding:"10px 0", borderBottom:"1px solid var(--border)", cursor:"pointer" }}
+                  onClick={() => lookupProduct(p.ean||p.id)}>
                   <ProductImage product={p} size={44} />
                   <div style={{ flex:1, minWidth:0 }}>
-                    <div className="product-name">{p.name}</div>
-                    <div className="product-brand">{p.brand}{p.category?` · ${p.category}`:""}</div>
-                    <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:4, flexWrap:"wrap" }}>
-                      <span style={{ fontSize:10, fontWeight:700, padding:"2px 6px", borderRadius:4, background:vb.bg, color:vb.color }}>{vb.label}</span>
-                      <ProfileBadges allergenFlags={p.allergen_flags||{}} allergens={allergens} customAllerg={customAllerg} family={family} activeProfiles={activeProfiles} size={20} />
-                    </div>
+                    <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{p.name}</div>
+                    <div style={{ fontSize:11, color:"var(--muted)" }}>{p.brand}{p.category ? ` · ${p.category}` : ""}</div>
+                    {p.tags && p.tags.length > 0 && (
+                      <div style={{ display:"flex", gap:4, marginTop:3, flexWrap:"wrap" }}>
+                        {p.tags.map((t,i) => {
+                          const tagLabels = { vegan:"🌱 Vegansk", vegetarian:"🥦 Vegetarisk" };
+                          return <span key={i} style={{ fontSize:10, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:100, padding:"1px 7px" }}>{tagLabels[t]||t}</span>;
+                        })}
+                      </div>
+                    )}
                   </div>
-                  <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:5, flexShrink:0 }}>
-                    <button className="btn btn-ghost btn-sm" style={{ fontSize:11, padding:"5px 9px" }} onClick={e => { e.stopPropagation(); addToList(p.name); }}>+ Liste</button>
+                  <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
+                    <div style={{ fontSize:11, fontWeight:700, color:statusColor }}>{statusLabel}</div>
+                    <button className="btn btn-ghost btn-sm" style={{ fontSize:11, padding:"3px 8px" }}
+                      onClick={e => { e.stopPropagation(); addToList(p.name); }}>+ Liste</button>
                   </div>
                 </div>
               );
@@ -2639,9 +5143,56 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {/* ══ INDKØBSLISTE ══ */}
         {screen === SCREENS.LIST && (
           <div className="screen fade-in">
-            <div className="screen-title">🛒 Indkøbsliste</div>
+            <div className="screen-title">Indkøbsliste</div>
+
+
+
+            {/* Favoritter */}
+            {favorites.length > 0 && (
+              <div className="card" style={{ marginBottom:12 }}>
+                <div className="card-lbl" style={{ marginBottom:10 }}>Dine favoritter</div>
+                {favorites.slice(0,10).map(p => {
+                  const { status } = compareAllergens(p.allergen_flags||{}, activeIds);
+                  const statusColor = status==="safe" ? "var(--green)" : status==="danger" ? "var(--red)" : "var(--amber)";
+                  const statusLabel = status==="safe" ? "Sikker" : status==="danger" ? "Farlig" : "Advarsel";
+                  return (
+                    <div key={p.ean||p.id} style={{ display:"flex", alignItems:"center", gap:10,
+                      padding:"10px 0", borderBottom:"1px solid var(--border)", cursor:"pointer" }}
+                      onClick={() => lookupProduct(p.ean||p.code||p.id)}>
+                      <ProductImage product={p} size={44} />
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{p.name}</div>
+                        <div style={{ fontSize:11, color:"var(--muted)" }}>{p.brand}</div>
+                        {p.tags && p.tags.length > 0 && (
+                          <div style={{ display:"flex", gap:4, marginTop:3, flexWrap:"wrap" }}>
+                            {p.tags.map((t,i) => {
+                              const tagLabels = { vegan:"🌱 Vegansk", vegetarian:"🥦 Vegetarisk" };
+                              return <span key={i} style={{ fontSize:10, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:100, padding:"1px 7px" }}>{tagLabels[t]||t}</span>;
+                            })}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6 }}>
+                        <div style={{ fontSize:11, fontWeight:700, color:statusColor }}>{statusLabel}</div>
+                        <button className="btn btn-ghost btn-sm" style={{ fontSize:11, padding:"3px 8px" }}
+                          onClick={e => { e.stopPropagation(); addToList(p.name); }}>
+                          + Liste
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {favorites.length > 10 && (
+                  <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", paddingTop:8, cursor:"pointer" }}
+                    onClick={() => setScreen(SCREENS.FAVORITES)}>
+                    Se alle {favorites.length} favoritter →
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="share-bar">
-              <span style={{ fontSize:18 }}>🔗</span>
+              <span style={{ fontSize:18 }}></span>
               <span className="share-txt">Del listen med familie via link</span>
               <button className="btn btn-ghost btn-sm" style={{ fontSize:12 }} onClick={() => { navigator.clipboard?.writeText(window.location.href); alert("Link kopieret! 📋"); }}>Kopiér</button>
             </div>
@@ -2652,14 +5203,14 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 <button className="btn btn-primary btn-sm" style={{ whiteSpace:"nowrap" }} onClick={() => addToList(newItemName)}>Tilføj</button>
               </div>
             </div>
-            {shoppingList.length===0 && <div className="empty-state"><span className="empty-icon">🛒</span><div className="empty-txt">Listen er tom</div><div className="empty-sub">Tilføj din første vare</div></div>}
+            {shoppingList.length===0 && <div className="empty-state"><div className="empty-txt">Listen er tom</div><div className="empty-sub">Tilføj din første vare</div></div>}
             {shoppingList.filter(i => !i.checked).length>0 && (
               <><div className="list-section">Mangler ({shoppingList.filter(i=>!i.checked).length})</div>
               {shoppingList.filter(i => !i.checked).map(item => (
                 <div key={item.id} className="list-item">
                   <div className="list-check" onClick={() => toggleItem(item.id)} />
                   <div className="list-name">{item.name}</div>
-                  <div className="list-del" onClick={() => removeItem(item.id)}>🗑</div>
+                  <div className="list-del" onClick={() => removeItem(item.id)}><Icon name="trash" size={16} color="var(--muted)" /></div>
                 </div>
               ))}</>
             )}
@@ -2672,7 +5223,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 <div key={item.id} className="list-item done">
                   <div className="list-check checked" onClick={() => toggleItem(item.id)}>✓</div>
                   <div className="list-name done">{item.name}</div>
-                  <div className="list-del" onClick={() => removeItem(item.id)}>🗑</div>
+                  <div className="list-del" onClick={() => removeItem(item.id)}><Icon name="trash" size={16} color="var(--muted)" /></div>
                 </div>
               ))}</>
             )}
@@ -2682,12 +5233,12 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {/* ══ HISTORIK ══ */}
         {screen === SCREENS.HISTORY && (
           <div className="screen fade-in">
-            <div className="screen-title">📋 Scanningshistorik</div>
+            <div className="screen-title">Scanningshistorik</div>
             <div className="screen-sub">Alle dine tidligere scanninger.</div>
-            <button className="btn btn-ghost btn-sm" style={{ marginBottom:14 }} onClick={() => { loadHistory(); }}>🔄 Opdater</button>
+            <button className="btn btn-ghost btn-sm" style={{ marginBottom:14 }} onClick={() => { loadHistory(); }}>Opdater</button>
             {historyLoading && <div className="loader fade-in"><div className="spinner" /><div className="loader-txt">Henter historik…</div></div>}
             {!historyLoading && history.length===0 && (
-              <div className="empty-state"><span className="empty-icon">📋</span><div className="empty-txt">Ingen scanninger endnu</div><div className="empty-sub">Skan dit første produkt</div></div>
+              <div className="empty-state"><div className="empty-txt">Ingen scanninger endnu</div><div className="empty-sub">Skan dit første produkt</div></div>
             )}
             {history.map((h,i) => {
               const s = h.result||h.status;
@@ -2734,11 +5285,9 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             {/* Alt det andet — samlet menu */}
             <div className="card" style={{ padding:"6px 0" }}>
               {[
-                ["★", "Favoritter & historik", () => setScreen(SCREENS.FAVORITES)],
-                ["👨‍👩‍👧", "Familie", () => setScreen(SCREENS.FAMILY)],
-                ["🌍", "Madpas", () => setScreen(SCREENS.MADPAS)],
-                ["🍽️", "Opskrifter", () => setScreen(SCREENS.RECIPES)],
-                ...(user.role === "admin" ? [["⚙️", "Admin", () => { loadSubmissions(); loadAdminStats(); setScreen(SCREENS.ADMIN); }]] : []),
+                ["star",   "Favoritter & historik", () => setScreen(SCREENS.FAVORITES)],
+                ["family", "Familie",               () => setScreen(SCREENS.FAMILY)],
+                ...(user.role === "admin" ? [["edit", "Admin", () => { loadSubmissions(); loadAdminStats(); setScreen(SCREENS.ADMIN); }]] : []),
               ].map(([icon, lbl, fn], i, arr) => (
                 <div key={lbl} onClick={fn} style={{
                   display:"flex", alignItems:"center", gap:12,
@@ -2746,7 +5295,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                   borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none",
                   cursor:"pointer",
                 }}>
-                  <div style={{ width:36, height:36, background:"var(--paper2)", borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{icon}</div>
+                  <div style={{ width:36, height:36, background:"var(--paper2)", borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name={icon} size={18} color="var(--ink2)" /></div>
                   <div style={{ flex:1, fontSize:14, fontWeight:600, color:"var(--ink)" }}>{lbl}</div>
                   <div style={{ fontSize:18, color:"var(--muted)" }}>›</div>
                 </div>
@@ -2768,13 +5317,13 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {/* ══ FAMILIE ══ */}
         {screen === SCREENS.FAMILY && (
           <div className="screen fade-in">
-            <div className="screen-title">👨‍👩‍👧 Familie</div>
+            <div className="screen-title">Familie</div>
             <div className="screen-sub">Administrér familiemedlemmers allergiprofiler.</div>
             <div className="card" style={{ padding:"12px 14px" }}>
               <div className="card-lbl">Aktive profiler ved scanning</div>
               <FamilyChips />
             </div>
-            {family.length===0 && <div className="empty-state"><span className="empty-icon">👨‍👩‍👧</span><div className="empty-txt">Ingen familiemedlemmer endnu</div><div className="empty-sub">Tilføj nedenfor</div></div>}
+            {family.length===0 && <div className="empty-state"><div className="empty-txt">Ingen familiemedlemmer endnu</div><div className="empty-sub">Tilføj nedenfor</div></div>}
             {family.map(m => (
               <div key={m.id} className="family-member">
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:m.allergens.length?10:0 }}>
@@ -2783,7 +5332,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                     <div style={{ fontWeight:800, fontSize:15 }}>{m.name}</div>
                     <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>{m.allergens.length} allergi{m.allergens.length!==1?"er":""}</div>
                   </div>
-                  <span style={{ cursor:"pointer", opacity:.35, fontSize:18, padding:4 }} onClick={() => removeMember(m.id)}>🗑</span>
+                  <span style={{ cursor:"pointer", opacity:.35, fontSize:18, padding:4 }} onClick={() => removeMember(m.id)}><Icon name="trash" size={18} color="var(--muted)" /></span>
                 </div>
                 {m.allergens.length>0 && <div className="tags">{getAllergenLabels(m.allergens,m.custom||[]).map((a,j) => <div key={j} className="tag" style={{ fontSize:11 }}>{a}</div>)}</div>}
               </div>
@@ -2792,15 +5341,17 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               <div className="card-title">+ Tilføj familiemedlem</div>
               <label className="field-lbl" style={{ marginTop:8 }}>Navn</label>
               <input className="field" placeholder="Fx. Peter (12 år)" value={newMemberName} onChange={e => setNewMemberName(e.target.value)} style={{ marginBottom:12 }} />
-              <div className="card-lbl">Allergier</div>
-              <div className="chip-grid" style={{ marginBottom:12 }}>
-                {ALLERGENS.map(a => { const on = newMemberAllerg.includes(a.id); return (
-                  <div key={a.id} className={`chip${on?" on":""}`} onClick={() => setNewMemberAllerg(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
-                    <span>{a.emoji}</span><span style={{ flex:1 }}>{a.label}</span>{on && <div className="chip-check">✓</div>}
-                  </div>
-                );})}
-              </div>
-              <button className="btn btn-primary btn-full" onClick={addMember}>+ Tilføj {newMemberName||"familiemedlem"}</button>
+              <MemberForm
+                name={newMemberName} setName={setNewMemberName}
+                allergens={newMemberAllerg} setAllergens={setNewMemberAllerg}
+                customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
+                subtypes={newMemberSubtypes} setSubtypes={setNewMemberSubtypes}
+                diets={newMemberDiets} setDiets={setNewMemberDiets}
+                eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
+                customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}
+                onAdd={addMember}
+                addLabel={`+ Tilføj ${newMemberName||"familiemedlem"}`}
+              />
             </div>
           </div>
         )}
@@ -2808,20 +5359,20 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {/* ══ ADMIN ══ */}
         {screen === SCREENS.ADMIN && !openSubmission && (
           <div className="screen fade-in">
-            <div className="screen-title">⚙️ Admin</div>
+            <div className="screen-title">️ Admin</div>
 
             {/* Statistik */}
             {adminStats && (
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:12 }}>
                 {[
-                  [adminStats.total_users,"👥","Brugere"],
-                  [adminStats.total_products,"📦","Produkter"],
-                  [adminStats.total_scans,"📷","Scanninger"],
-                  [adminStats.pending_submissions,"⏳","Afventer"],
-                  [adminStats.total_families,"👨‍👩‍👧","Familier"],
+                  [adminStats.total_users,"family","Brugere"],
+                  [adminStats.total_products,"list","Produkter"],
+                  [adminStats.total_scans,"camera","Scanninger"],
+                  [adminStats.pending_submissions,"warning","Afventer"],
+                  [adminStats.total_families,"family","Familier"],
                 ].map(([n,ic,lbl]) => (
                   <div key={lbl} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"10px 6px", textAlign:"center", boxShadow:"var(--sh)" }}>
-                    <div style={{ fontSize:18 }}>{ic}</div>
+                    <div style={{ display:"flex", justifyContent:"center" }}><Icon name={ic} size={18} color="var(--ink2)" /></div>
                     <div style={{ fontWeight:900, fontSize:20, color:"var(--ink)" }}>{n ?? "—"}</div>
                     <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, textTransform:"uppercase", letterSpacing:".4px" }}>{lbl}</div>
                   </div>
@@ -2831,7 +5382,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
             {/* Filter tabs */}
             <div style={{ display:"flex", gap:6, marginBottom:12 }}>
-              {[["pending","⏳ Afventer"],["approved","✅ Godkendt"],["rejected","❌ Afvist"]].map(([val,lbl]) => (
+              {[["pending","Afventer"],["approved","Godkendt"],["rejected","Afvist"]].map(([val,lbl]) => (
                 <button key={val} className="btn btn-sm" onClick={() => { setSubmissionFilter(val); loadSubmissions(); }}
                   style={{ flex:1, fontSize:11, fontWeight:700,
                     background: submissionFilter===val ? "var(--ink)" : "var(--paper2)",
@@ -2904,7 +5455,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             {/* OCR billede hvis tilgængeligt */}
             {openSubmission.raw_label_image && (
               <div className="card">
-                <div className="card-lbl">📸 Foto af ingrediensliste</div>
+                <div className="card-lbl">Foto af ingrediensliste</div>
                 <img
                   src={`data:image/jpeg;base64,${openSubmission.raw_label_image}`}
                   alt="Ingrediensliste"
@@ -2939,7 +5490,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                     onClick={() => cleanOcrWithAI(openSubmission.ocr_raw_text)}
                     disabled={cleaningOcr}
                   >
-                    {cleaningOcr ? "🤖 Renskriver…" : "🤖 Renskiv med AI"}
+                    {cleaningOcr ? "Renskriver…" : "Renskiv med AI"}
                   </button>
                 </div>
 
@@ -2995,6 +5546,48 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               <div style={{ fontSize:11, color:"var(--muted)", marginTop:8, fontStyle:"italic" }}>Klik én gang = Ja, igen = Spor, igen = Nej</div>
             </div>
 
+            {/* Næringsindhold */}
+            {scanResult.nutrition && (() => {
+              const n = scanResult.nutrition;
+              const rows = [
+                ["Energi", n.energy_kcal ? `${n.energy_kcal} kcal` : null],
+                ["Fedt", n.fat != null ? `${n.fat} g` : null],
+                ["— heraf mættet", n.saturated_fat != null ? `${n.saturated_fat} g` : null],
+                ["Kulhydrat", n.carbohydrates != null ? `${n.carbohydrates} g` : null],
+                ["— heraf sukker", n.sugars != null ? `${n.sugars} g` : null],
+                ["Kostfibre", n.fiber != null ? `${n.fiber} g` : null],
+                ["Protein", n.protein != null ? `${n.protein} g` : null],
+                ["Salt", n.salt != null ? `${n.salt} g` : null],
+              ].filter(([,v]) => v !== null);
+              if (!rows.length) return null;
+              return (
+                <div className="card">
+                  <div className="card-lbl">Næringsindhold pr. 100g</div>
+                  <div style={{ display:"flex", flexDirection:"column" }}>
+                    {rows.map(([label, value], i) => (
+                      <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"7px 0", borderBottom: i < rows.length-1 ? "1px solid var(--border)" : "none" }}>
+                        <span style={{ fontSize:13, color: label.startsWith("—") ? "var(--muted)" : "var(--ink2)", paddingLeft: label.startsWith("—") ? 12 : 0 }}>{label}</span>
+                        <span style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Diæt-tags */}
+            {scanResult.tags && scanResult.tags.length > 0 && (
+              <div className="card">
+                <div className="card-lbl">Egnet til</div>
+                <div className="tags">
+                  {scanResult.tags.map((tag, i) => {
+                    const tagLabels = { vegan:"🌱 Vegansk", vegetarian:"🥦 Vegetarisk", "palm-oil-free":"Uden palmeolie", "gluten-free":"Glutenfri", organic:"🌿 Økologisk" };
+                    return <div key={i} className="tag" style={{ background:"var(--green-lt)", color:"var(--green)", borderColor:"var(--green-mid)" }}>{tagLabels[tag] || tag}</div>;
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Ansvarsfraskrivelse */}
             <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 14px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:10, marginBottom:10 }}>
               <span style={{ fontSize:14, flexShrink:0 }}>⚠️</span>
@@ -3028,7 +5621,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {/* ══ FAVORITTER ══ */}
         {screen === SCREENS.FAVORITES && (
           <div className="screen fade-in">
-            <div className="screen-title">★ Favoritter</div>
+            <div className="screen-title"> Favoritter</div>
 
             {/* Seneste scanninger */}
             {history.filter(h => h.result !== "not_found" && (h.products?.name || h.name)).length > 0 && (
@@ -3044,13 +5637,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                   const color = s==="safe" ? "var(--green)" : s==="danger" ? "var(--red)" : "var(--amber)";
                   const bg = s==="safe" ? "var(--green-lt)" : s==="danger" ? "var(--red-lt)" : "var(--amber-lt)";
                   return (
-                    <div key={i} className="hist-row" style={{ cursor:"pointer" }} onClick={() => {
-                      setScanResult({...h, code:h.ean_scanned||h.code, name, brand:h.products?.brand||h.brand||"",
-                        image_url:h.products?.image_url||null,
-                        headline:s==="safe"?"Sikkert produkt":s==="danger"?"Indeholder allergen!":"Mulige spor",
-                        flags:[], summary:"", allergen_flags:h.flags_triggered||{} });
-                      setScreen(SCREENS.RESULT);
-                    }}>
+                    <div key={i} className="hist-row" style={{ cursor:"pointer" }}
+                      onClick={() => lookupProduct(h.ean_scanned || h.code)}>
                       <ProductImage product={prod} size={36} />
                       <div className="hist-info" style={{ marginLeft:8 }}>
                         <div className="hist-name">{name}</div>
@@ -3069,38 +5657,13 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             {favorites.length > 0 && <div className="card-lbl" style={{ marginBottom:6 }}>Gemte produkter</div>}
             {favorites.length === 0 && (
               <div className="empty-state">
-                <span className="empty-icon">★</span>
                 <div className="empty-txt">Ingen favoritter endnu</div>
-                <div className="empty-sub">Tryk ★ på et produkt for at gemme det her</div>
-              </div>
-            )}
-            {favorites.length === 0 && (
-              <div className="empty-state">
-                <span className="empty-icon">★</span>
-                <div className="empty-txt">Ingen favoritter endnu</div>
-                <div className="empty-sub">Tryk ★ på et produkt for at gemme det her</div>
+                <div className="empty-sub">Tryk ❤️ på et produkt for at gemme det her</div>
               </div>
             )}
             {favorites.map((f,i) => (
               <div key={i} className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:8 }}
-                onClick={() => {
-                  // Byg altid et komplet scanResult fra gemt favorit-data
-                  const flags = f.allergen_flags || {};
-                  const { status, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(flags, activeIds);
-                  setScanResult({
-                    ...f,
-                    code: f.ean || f.code,
-                    status: f.status || status,
-                    headline: status==="danger"?"Indeholder allergen! 🚫":status==="warning"?"Mulige spor ⚠️":"Sikkert produkt ✅",
-                    summary: "",
-                    flags: [],
-                    allergen_flags: flags,
-                    matchedDanger: matchedDanger,
-                    matchedWarning: matchedWarning,
-                    hasUnknown,
-                  });
-                  setScreen(SCREENS.RESULT);
-                }}>
+                onClick={() => lookupProduct(f.ean || f.code || f.id)}>
                 <div style={{ display:"flex", alignItems:"center", gap:12 }}>
                   <ProductImage product={f} size={48} />
                   <div style={{ flex:1, minWidth:0 }}>
@@ -3135,87 +5698,126 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               const ingredientLabel = { da:"Se efter", en:"Look for", de:"Achten auf", fr:"Chercher", es:"Buscar", it:"Cercare", nl:"Let op", pt:"Procurar", pl:"Szukaj", sv:"Se efter", no:"Se etter", ja:"確認を", zh:"注意", ar:"ابحث عن", tr:"Ara", th:"ดูหา", el:"Ψάξτε" };
               const langInfo = MADPAS_LANGUAGES.find(l => l.code === lang);
               return (
-                <div style={{ position:"fixed", inset:0, zIndex:9999, background:"var(--paper)", display:"flex", flexDirection:"column" }} dir={rtl ? "rtl" : "ltr"}>
+                <div style={{ position:"fixed", inset:0, zIndex:9999, background:"#fff", display:"flex", flexDirection:"column" }} dir={rtl ? "rtl" : "ltr"}>
 
-                  {/* Header */}
+                  {/* Header — sprog + kryds */}
                   <div style={{ padding:"14px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid var(--border)", flexShrink:0 }}>
                     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                       <span style={{ fontSize:20 }}>{langInfo?.flag}</span>
-                      <span style={{ fontSize:13, fontWeight:700, color:"var(--muted)" }}>{langInfo?.name}</span>
+                      <span style={{ fontSize:13, color:"var(--muted)", fontWeight:600 }}>{langInfo?.name}</span>
                     </div>
-                    <button onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }} style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:8, padding:"6px 12px", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer", fontFamily:"var(--f)" }}>← Tilbage</button>
+                    <button onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }}
+                      style={{ background:"none", border:"none", padding:4, cursor:"pointer" }}>
+                      <Icon name="x" size={22} color="var(--ink2)" />
+                    </button>
                   </div>
 
-                  {/* Indhold — scrollbart, identisk med madpas */}
-                  <div style={{ flex:1, overflowY:"auto", padding:"24px 20px" }}>
-                    <div style={{ fontSize:20, color:"var(--ink)", fontWeight:500, marginBottom:20, lineHeight:1.5 }}>
-                      {helloText[lang] || helloText.en}
-                    </div>
-                    <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:16 }}>
-                      {cannotLabel[lang] || cannotLabel.en}
-                    </div>
-                    <div style={{ display:"flex", flexDirection:"column" }}>
-                      {[...allergens, ...customAllerg.map(c => ({ custom:true, label:c }))].map((item, i, arr) => {
-                        const isLast = i === arr.length - 1;
-                        if (typeof item === "string") {
-                          const a = ALLERGENS.find(x => x.id === item);
-                          if (!a) return null;
-                          const t = ALLERGEN_T[item]?.[lang] || ALLERGEN_T[item]?.en;
-                          const ex = ALLERGEN_EXAMPLES[item];
-                          const exProducts = ex?.products?.[lang] || ex?.products?.en || [];
-                          const exIngredients = ex?.ingredients?.[lang] || ex?.ingredients?.en || [];
-                          return (
-                            <div key={i} style={{ padding:"16px 0", borderBottom: isLast ? "none" : "1px solid var(--border)" }}>
-                              <div style={{ fontSize:22, fontWeight:800, color:"var(--ink)", marginBottom: ex ? 10 : 0 }}>
-                                {t?.n || a.label}
-                              </div>
-                              {ex && (
-                                <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                                  <div style={{ fontSize:12, color:"var(--muted)" }}>
-                                    {productLabel[lang] || productLabel.en}: <span style={{ color:"var(--ink2)", fontWeight:600 }}>{exProducts.slice(0,3).join(", ")}</span>
-                                  </div>
-                                  <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
-                                    <span style={{ fontSize:12, color:"var(--muted)" }}>{ingredientLabel[lang] || ingredientLabel.en}:</span>
-                                    {exIngredients.slice(0,4).map((ing, j) => (
-                                      <span key={j} style={{ fontSize:11, fontWeight:700, padding:"3px 9px", background:"var(--paper2)", color:"var(--ink2)", border:"1px solid var(--border2)", borderRadius:100 }}>{ing}</span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        }
-                        return (
-                          <div key={i} style={{ fontSize:22, fontWeight:800, color:"var(--ink)", padding:"16px 0", borderBottom: isLast ? "none" : "1px solid var(--border)" }}>
-                            {item.label}
-                          </div>
+                  {/* Indhold — fuldstændig ensartet tekst */}
+                  <div style={{ flex:1, overflowY:"auto", padding:"32px 28px" }}>
+
+                    {/* Alle linjer samme font, størrelse og vægt */}
+                    {(() => {
+                      const s = { fontSize:17, fontWeight:400, color:"var(--ink)", margin:"0 0 16px", lineHeight:1.7, display:"block" };
+                      const sIntro = { ...s, margin:"0 0 32px" };
+                      const lines = [];
+
+                      // Intro
+                      const introText = {
+                        da: "Hej! Jeg har nogle fødevareallergier og ønsker gerne din hjælp til at finde noget, jeg kan spise trygt.",
+                        en: "Hi! I have some food allergies and would love your help finding something safe for me to eat.",
+                        de: "Hallo! Ich habe einige Lebensmittelallergien und würde mich über Ihre Hilfe freuen.",
+                        fr: "Bonjour ! J'ai des allergies alimentaires et j'aurais besoin de votre aide.",
+                        es: "¡Hola! Tengo algunas alergias alimentarias y agradecería su ayuda.",
+                        it: "Ciao! Ho alcune allergie alimentari e apprezzerei il suo aiuto.",
+                        nl: "Hallo! Ik heb wat voedselallergieën en zou graag uw hulp willen.",
+                        pt: "Olá! Tenho algumas alergias alimentares e gostaria da sua ajuda.",
+                        pl: "Cześć! Mam kilka alergii pokarmowych i chciałbym prosić o pomoc.",
+                        sv: "Hej! Jag har några matallergier och skulle uppskatta din hjälp.",
+                        no: "Hei! Jeg har noen matallergier og ønsker gjerne din hjelp.",
+                        ja: "こんにちは！食物アレルギーがあります。安全な食事を見つけるお手伝いをお願いできますか。",
+                        zh: "您好！我有食物过敏，希望您能帮助我找到安全的食物。",
+                        ar: "مرحباً! لدي بعض الحساسية الغذائية وأود مساعدتك في إيجاد شيء آمن لي.",
+                        tr: "Merhaba! Gıda alerjilerim var ve güvenli bir şey bulmam için yardımınıza ihtiyacım var.",
+                        el: "Γεια σας! Έχω κάποιες αλλεργίες τροφίμων και θα εκτιμούσα τη βοήθειά σας.",
+                      };
+                      lines.push(<span key="hello" style={sIntro}>{introText[lang] || introText.en}</span>);
+
+                      // Allergener
+                      [...allergens, ...customAllerg.filter(c => !c.endsWith("_intolerance") && !allergens.includes(c))].forEach((item, i) => {
+                        if (typeof item !== "string") return;
+                        const a = ALLERGENS.find(x => x.id === item);
+                        const label = a ? (ALLERGEN_T[item]?.[lang]?.n || ALLERGEN_T[item]?.en?.n || a.label) : item;
+                        const ex = a ? ALLERGEN_EXAMPLES[item] : null;
+                        const exProducts = ex?.products?.[lang] || ex?.products?.en || [];
+                        const exIngredients = ex?.ingredients?.[lang] || ex?.ingredients?.en || [];
+                        const exText = [
+                          exProducts.slice(0,3).join(", "),
+                          exIngredients.slice(0,4).join(", ")
+                        ].filter(Boolean).join(" · ");
+
+                        const cannotText = {
+                          da:"Jeg kan ikke spise", en:"I cannot eat", de:"Ich kann nicht essen",
+                          fr:"Je ne peux pas manger", es:"No puedo comer", it:"Non posso mangiare",
+                          nl:"Ik kan niet eten", pt:"Não posso comer", pl:"Nie mogę jeść",
+                          sv:"Jag kan inte äta", no:"Jeg kan ikke spise", ja:"食べられません",
+                          zh:"我不能吃", ar:"لا أستطيع تناول", tr:"Yiyemiyorum", el:"Δεν μπορώ να φάω",
+                        };
+                        lines.push(
+                          <span key={`a${i}`} style={s}>
+                            {i === 0 ? (cannotText[lang] || cannotText.en) + ": " : ""}{label}{exText ? ` (${exText})` : ""}
+                          </span>
                         );
-                      })}
-                    </div>
-                    <div style={{ fontSize:16, color:"var(--muted2)", margin:"20px 0 8px", lineHeight:1.6 }}>
-                      {helpText[lang] || helpText.en}
-                    </div>
+                      });
+
+                      // Diæt
+                      if (user.diets && user.diets.length > 0) {
+                        const dietNames = user.diets.map(d => DIETS.find(x=>x.id===d)?.label).filter(Boolean).join(", ");
+                        lines.push(<span key="diet" style={s}>{dietNames}</span>);
+                      }
+
+                      // E-numre
+                      if (selectedENumbers && selectedENumbers.length > 0) {
+                        lines.push(<span key="enum" style={s}>{selectedENumbers.join(", ")}</span>);
+                      }
+
+                      // Hjælp
+                      const outroText = {
+                        da: "Tak for din hjælp — det betyder rigtig meget for mig.",
+                        en: "Thank you so much for your help — it means a lot to me.",
+                        de: "Vielen Dank für Ihre Hilfe — das bedeutet mir sehr viel.",
+                        fr: "Merci beaucoup pour votre aide — cela compte beaucoup pour moi.",
+                        es: "Muchas gracias por su ayuda — significa mucho para mí.",
+                        it: "Grazie mille per il suo aiuto — significa molto per me.",
+                        nl: "Heel erg bedankt voor uw hulp — dat betekent veel voor mij.",
+                        pt: "Muito obrigado pela sua ajuda — significa muito para mim.",
+                        pl: "Bardzo dziękuję za pomoc — wiele dla mnie znaczy.",
+                        sv: "Tack så mycket för din hjälp — det betyder mycket för mig.",
+                        no: "Tusen takk for hjelpen — det betyr mye for meg.",
+                        ja: "ご協力ありがとうございます。本当に助かります。",
+                        zh: "非常感谢您的帮助，对我来说意义重大。",
+                        ar: "شكراً جزيلاً على مساعدتك — هذا يعني لي الكثير.",
+                        tr: "Yardımınız için çok teşekkür ederim — bu benim için çok şey ifade ediyor.",
+                        el: "Σας ευχαριστώ πολύ για τη βοήθειά σας — σημαίνει πολλά για μένα.",
+                      };
+                      lines.push(<span key="help" style={{ ...s, marginTop:8 }}>{outroText[lang] || outroText.en}</span>);
+
+                      return lines;
+                    })()}
                   </div>
 
-                  {/* Footer med stor oplæs-knap */}
-                  <div style={{ padding:"16px 20px 32px", borderTop:"1px solid var(--border)", flexShrink:0 }}>
+                  {/* Footer */}
+                  <div style={{ padding:"12px 24px 28px", borderTop:"1px solid var(--border)", flexShrink:0, display:"flex", justifyContent:"flex-end" }}>
                     {window.speechSynthesis && (
                       <button onClick={madpasSpeak} style={{
-                        width:"100%", background: madpasSpeaking ? "var(--amber)" : "var(--green)",
-                        border:"none", borderRadius:14, padding:"18px", fontSize:20, fontWeight:800,
+                        background: madpasSpeaking ? "var(--amber)" : "var(--green)",
+                        border:"none", borderRadius:8, padding:"8px 16px", fontSize:13, fontWeight:700,
                         color:"#fff", cursor:"pointer", fontFamily:"var(--f)",
-                        display:"flex", alignItems:"center", justifyContent:"center", gap:12,
-                        boxShadow: madpasSpeaking ? "0 4px 16px rgba(217,119,6,.35)" : "0 4px 16px rgba(34,197,94,.35)",
-                        marginBottom:10,
+                        display:"flex", alignItems:"center", gap:7,
                       }}>
-                        <span style={{ fontSize:24 }}>{madpasSpeaking ? "⏹" : "🔊"}</span>
-                        {madpasSpeaking ? "Stop oplæsning" : "Oplæs højt"}
+                        <Icon name={madpasSpeaking ? "speakerOff" : "speaker"} size={15} color="#fff" />
+                        {madpasSpeaking ? "Stop" : "Oplæs"}
                       </button>
                     )}
-                    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                      <EatSafeLogo size={14} variant="light" />
-                      <span style={{ fontSize:11, color:"var(--muted)", fontWeight:600 }}>EatSafe</span>
-                    </div>
                   </div>
                 </div>
               );
@@ -3226,7 +5828,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               {/* HEADER */}
               <div className="mp-head">
                 <div className="mp-title">Madpas</div>
-                <div className="mp-subtitle">Vis dette kort til restaurantpersonale for at forklare dine allergier på deres sprog</div>
+                <div className="mp-subtitle">Vis dit madpas til din tjener/ekspedient for at forklare dine ønsker.</div>
 
                 {/* Sprog-dropdown */}
                 <div className="mp-section-lbl">VÆLG SPROG</div>
@@ -3269,61 +5871,35 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 return (
                   <div style={{ paddingBottom:8 }} dir={rtl ? "rtl" : "ltr"}>
 
-                    {/* Intro */}
-                    <div style={{ fontSize:20, color:"var(--ink)", fontWeight:500, marginBottom:20, lineHeight:1.5 }}>
-                      {helloText[lang] || helloText.en}
-                    </div>
-
-                    {/* Label */}
-                    <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:16 }}>
-                      {cannotLabel[lang] || cannotLabel.en}
-                    </div>
-
-                    {/* Allergen liste */}
+                    {/* Allergen liste — ren, ingen labels */}
                     <div style={{ display:"flex", flexDirection:"column" }}>
-                      {[...allergens, ...customAllerg.map(c => ({ custom:true, label:c }))].map((item, i, arr) => {
+                      {[...allergens, ...customAllerg.filter(c => !c.endsWith("_intolerance") && !allergens.includes(c))].map((item, i, arr) => {
                         const isLast = i === arr.length - 1;
-                        if (typeof item === "string") {
-                          const a = ALLERGENS.find(x => x.id === item);
-                          if (!a) return null;
-                          const t = ALLERGEN_T[item]?.[lang] || ALLERGEN_T[item]?.en;
-                          const ex = ALLERGEN_EXAMPLES[item];
-                          const exProducts = ex?.products?.[lang] || ex?.products?.en || [];
-                          const exIngredients = ex?.ingredients?.[lang] || ex?.ingredients?.en || [];
-                          const productLabel = { da:"Fx i", en:"E.g. in", de:"Z.B. in", fr:"Ex. dans", es:"Ej. en", it:"Es. in", nl:"Bijv. in", pt:"Ex. em", pl:"Np. w", sv:"T.ex. i", no:"F.eks. i", ja:"例えば", zh:"例如在", ar:"مثلاً في", tr:"Örn.", th:"เช่นใน", el:"Π.χ. σε" };
-                          const ingredientLabel = { da:"Se efter", en:"Look for", de:"Achten auf", fr:"Chercher", es:"Buscar", it:"Cercare", nl:"Let op", pt:"Procurar", pl:"Szukaj", sv:"Se efter", no:"Se etter", ja:"確認を", zh:"注意", ar:"ابحث عن", tr:"Ara", th:"ดูหา", el:"Ψάξτε" };
-                          return (
-                            <div key={i} style={{ padding:"16px 0", borderBottom: isLast ? "none" : "1px solid var(--border)" }}>
-                              <div style={{ fontSize:22, fontWeight:800, color:"var(--ink)", marginBottom: ex ? 10 : 0 }}>
-                                {t?.n || a.label}
-                              </div>
-                              {ex && (
-                                <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                                  <div style={{ fontSize:12, color:"var(--muted)" }}>
-                                    {productLabel[lang] || productLabel.en}: <span style={{ color:"var(--ink2)", fontWeight:600 }}>{exProducts.slice(0,3).join(", ")}</span>
-                                  </div>
-                                  <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
-                                    <span style={{ fontSize:12, color:"var(--muted)" }}>{ingredientLabel[lang] || ingredientLabel.en}:</span>
-                                    {exIngredients.slice(0,4).map((ing, j) => (
-                                      <span key={j} style={{ fontSize:11, fontWeight:700, padding:"3px 9px", background:"var(--paper2)", color:"var(--ink2)", border:"1px solid var(--border2)", borderRadius:100 }}>{ing}</span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        }
+                        if (typeof item !== "string") return null;
+                        const a = ALLERGENS.find(x => x.id === item);
+                        if (!a) return null;
+                        const t = ALLERGEN_T[item]?.[lang] || ALLERGEN_T[item]?.en;
+                        const ex = ALLERGEN_EXAMPLES[item];
+                        const exProducts = ex?.products?.[lang] || ex?.products?.en || [];
+                        const exIngredients = ex?.ingredients?.[lang] || ex?.ingredients?.en || [];
                         return (
-                          <div key={i} style={{ fontSize:22, fontWeight:800, color:"var(--ink)", padding:"16px 0", borderBottom: isLast ? "none" : "1px solid var(--border)" }}>
-                            {item.label}
+                          <div key={i} style={{ padding:"14px 0", borderBottom: isLast ? "none" : "1px solid var(--border)" }}>
+                            <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)", marginBottom: (exProducts.length||exIngredients.length) ? 4 : 0 }}>
+                              {t?.n || a.label}
+                            </div>
+                            {(exProducts.length > 0 || exIngredients.length > 0) && (
+                              <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.5 }}>
+                                {[...exProducts.slice(0,3), ...exIngredients.slice(0,4)].join(", ")}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
-                    </div>
-
-                    {/* Hjælpetekst */}
-                    <div style={{ fontSize:16, color:"var(--muted2)", margin:"20px 0 24px", lineHeight:1.6 }}>
-                      {helpText[lang] || helpText.en}
+                      {customAllerg.filter(c => !c.endsWith("_intolerance") && !allergens.includes(c)).map((c, i) => (
+                        <div key={`custom${i}`} style={{ padding:"14px 0", borderBottom:"1px solid var(--border)" }}>
+                          <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)" }}>{c}</div>
+                        </div>
+                      ))}
                     </div>
 
                     {/* VIS TIL TJENER */}
@@ -3342,35 +5918,565 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             </div>
           </div>
         )}
-        {/* ══ OPSKRIFTER ══ */}
-        {screen === SCREENS.RECIPES && (
-          <div className="screen fade-in">
-            <div style={{ textAlign:"center", padding:"60px 24px 32px" }}>
-              <div style={{ fontSize:64, marginBottom:20 }}>🍽️</div>
-              <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", letterSpacing:"-.4px", marginBottom:10 }}>Opskrifter</div>
-              <div style={{ fontSize:14, color:"var(--muted2)", lineHeight:1.6, marginBottom:32 }}>
-                Snart kan du finde og filtrere opskrifter baseret på dine allergier og familiens behov.
+        {/* ══ OPSKRIFTER — LISTE ══ */}
+        {screen === SCREENS.RECIPES && !selectedRecipe && !showSubmitRecipe && (() => {
+          const categories = [
+            { id:"alle", label:"🍽️ Alle" }, { id:"favoritter", label:"❤️ Favoritter" },
+            { id:"morgenmad", label:"☕ Morgenmad" }, { id:"frokost", label:"🥗 Frokost" },
+            { id:"aftensmad", label:"🍝 Aftensmad" }, { id:"dessert", label:"🍰 Dessert" },
+            { id:"tilbehør", label:"🥦 Tilbehør" },
+          ];
+          const getCatEmoji = c => ({ morgenmad:"☕",frokost:"🥗",aftensmad:"🍝",dessert:"🍰",tilbehør:"🥦",snack:"🍿" })[c] || "🍽️";
+          const profiles = [
+            { id:"me", name: user.name||"Dig", allergens },
+            ...family.filter(m => activeProfiles.includes(m.id)),
+          ];
+          const filtered = (recipeFilter === "favoritter" ? recipes.filter(r => favoriteRecipes.includes(r.id)) : recipes).filter(r => {
+            if (recipeSearch && !r.title.toLowerCase().includes(recipeSearch.toLowerCase())) return false;
+            if (recipeSafeOnly && compareAllergens(r.allergen_flags || {}, activeIds).status === "danger") return false;
+            return true;
+          });
+          return (
+            <div className="screen fade-in">
+              {/* Header */}
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 0 14px" }}>
+                <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", letterSpacing:"-.4px" }}>Opskrifter</div>
+                <button onClick={() => setShowSubmitRecipe(true)}
+                  style={{ background:"var(--green)", color:"#fff", border:"none", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                  + Indsend
+                </button>
               </div>
-              <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-                {[
-                  ["🔎","Filtrer på dine allergener","Find opskrifter der er sikre for hele familien"],
-                  ["👨‍👩‍👧","Tilpasset til familien","Se hvem der kan spise hvad på én gang"],
-                  ["🛒","Direkte til indkøbslisten","Tilføj ingredienser med ét tryk"],
-                ].map(([icon, title, text]) => (
-                  <div key={title} style={{ display:"flex", gap:14, alignItems:"center", background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", textAlign:"left" }}>
-                    <div style={{ width:40, height:40, background:"var(--paper2)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>{icon}</div>
-                    <div>
-                      <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{title}</div>
-                      <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{text}</div>
-                    </div>
+
+              {/* Søgefelt */}
+              <div className="recipe-search-wrap">
+                <div className="recipe-search-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path strokeLinecap="round" d="M21 21l-4.35-4.35"/></svg>
+                </div>
+                <input className="recipe-search-input" placeholder="Søg opskrifter…" value={recipeSearch} onChange={e => setRecipeSearch(e.target.value)} />
+              </div>
+
+              {/* Kategori chips — 2-kolonne grid så alle ses */}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:14 }}>
+                {categories.map(c => (
+                  <div key={c.id} className={`recipe-filter-chip${recipeFilter === c.id ? " active" : ""}`}
+                    style={{ textAlign:"center" }}
+                    onClick={() => {
+                      if (c.id === recipeFilter) return;
+                      setRecipeFilter(c.id);
+                      setRecipeSearch("");
+                      if (c.id !== "favoritter") {
+                        setRecipes([]); // ryd gamle resultater
+                        loadRecipes(c.id);
+                      }
+                    }}>
+                    {c.label}
                   </div>
                 ))}
               </div>
-              <div style={{ marginTop:28, background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:12, padding:"12px 16px" }}>
-                <div style={{ fontSize:12, fontWeight:700, color:"var(--green)" }}>🚧 Under udvikling</div>
-                <div style={{ fontSize:11, color:"var(--muted2)", marginTop:4 }}>Opskriftsfunktionen er på vej. Følg med!</div>
+
+              {/* Kun-sikre + tæller */}
+              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
+                <div onClick={() => setRecipeSafeOnly(v => !v)} style={{
+                  display:"flex", alignItems:"center", gap:6, padding:"5px 12px",
+                  borderRadius:100, border:`1.5px solid ${recipeSafeOnly ? "var(--green)" : "var(--border2)"}`,
+                  background: recipeSafeOnly ? "var(--green-lt)" : "#fff", cursor:"pointer",
+                  fontSize:12, fontWeight:700, color: recipeSafeOnly ? "var(--green)" : "var(--muted2)" }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                  Kun sikre
+                </div>
+                {recipes.length > 0 && <div style={{ fontSize:12, color:"var(--muted)", marginLeft:"auto" }}>{filtered.length} opskrift{filtered.length !== 1 ? "er" : ""}</div>}
+              </div>
+
+              {/* Skeleton loader */}
+              {recipesLoading && [1,2,3].map(i => (
+                <div key={i} className="recipe-skeleton">
+                  <div className="skeleton-img" />
+                  <div style={{ padding:"12px 14px" }}>
+                    <div className="skeleton-line" style={{ width:"70%" }} />
+                    <div className="skeleton-line" style={{ width:"45%" }} />
+                  </div>
+                </div>
+              ))}
+
+              {/* Startside — ingen filter, ingen opskrifter endnu */}
+              {!recipesLoading && recipes.length === 0 && recipeFilter === "alle" && (
+                <div>
+                  <div style={{ background:"var(--ink)", borderRadius:16, padding:"22px 20px", marginBottom:16, display:"flex", alignItems:"center", gap:16 }}>
+                    <div style={{ fontSize:44, flexShrink:0 }}>🍳</div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:18, fontWeight:900, color:"#fff", letterSpacing:"-.3px", marginBottom:4 }}>Over 600 opskrifter</div>
+                      <div style={{ fontSize:12, color:"rgba(255,255,255,.55)", marginBottom:12 }}>Filtreret til dig og din familie</div>
+                      <button onClick={() => loadRecipes("alle")}
+                        style={{ background:"var(--green)", color:"#fff", border:"none", borderRadius:10, padding:"9px 18px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                        Vis opskrifter →
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:10 }}>Hop direkte til</div>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:20 }}>
+                    {[
+                      { id:"aftensmad", label:"Aftensmad", emoji:"🍝", desc:"Hverdagens klassikere" },
+                      { id:"morgenmad", label:"Morgenmad", emoji:"☕", desc:"Start dagen godt" },
+                      { id:"dessert",   label:"Dessert",   emoji:"🍰", desc:"Søde sager" },
+                      { id:"frokost",   label:"Frokost",   emoji:"🥗", desc:"Let og lækker" },
+                    ].map(cat => (
+                      <div key={cat.id} onClick={() => { setRecipeFilter(cat.id); setRecipes([]); loadRecipes(cat.id); }}
+                        style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"14px", cursor:"pointer", boxShadow:"var(--sh)" }}>
+                        <div style={{ fontSize:28, marginBottom:6 }}>{cat.emoji}</div>
+                        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:2 }}>{cat.label}</div>
+                        <div style={{ fontSize:11, color:"var(--muted)" }}>{cat.desc}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tom favorit-liste */}
+              {!recipesLoading && recipeFilter === "favoritter" && recipes.filter(r => favoriteRecipes.includes(r.id)).length === 0 && (
+                <div style={{ textAlign:"center", padding:"48px 0" }}>
+                  <div style={{ fontSize:52, marginBottom:12 }}>🤍</div>
+                  <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)", marginBottom:6 }}>Ingen favoritter endnu</div>
+                  <div style={{ fontSize:13, color:"var(--muted)" }}>Tryk ❤️ på en opskrift for at gemme den</div>
+                </div>
+              )}
+
+              {/* Label over kortene */}
+              {!recipesLoading && filtered.length > 0 && (
+                <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:10 }}>
+                  {recipeFilter === "alle" ? "⭐ Mest populære" :
+                   recipeFilter === "favoritter" ? "❤️ Dine favoritter" :
+                   `🍽️ ${recipeFilter.charAt(0).toUpperCase() + recipeFilter.slice(1)}`}
+                  {" "}· {filtered.length} opskrift{filtered.length !== 1 ? "er" : ""}
+                </div>
+              )}
+
+              {/* Ingen søgeresultater */}
+              {!recipesLoading && recipes.length > 0 && filtered.length === 0 && recipeFilter !== "favoritter" && recipeSearch && (
+                <div style={{ textAlign:"center", padding:"32px 0" }}>
+                  <div style={{ fontSize:13, color:"var(--muted)", marginBottom:10 }}>Ingen opskrifter matcher "{recipeSearch}"</div>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setRecipeSearch("")}>Ryd søgning</button>
+                </div>
+              )}
+
+              {/* Opskrift-kort */}
+              <div className="recipe-grid">
+                {filtered.map(r => {
+                  // allergen_flags kan være string eller objekt
+                  let rFlags = {};
+                  try { rFlags = typeof r.allergen_flags === "string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags || {}); } catch {}
+                  const { status } = compareAllergens(rFlags, activeIds);
+                  const isFav = favoriteRecipes.includes(r.id);
+                  const totalMins = (r.prep_time_minutes||0) + (r.cook_time_minutes||0);
+                  return (
+                    <div key={r.id} className="recipe-card"
+                      onClick={() => { setSelectedRecipe(r); loadRecipeIngredients(r.id); setCompletedSteps({}); setRecipeServings(r.servings || 4); }}>
+                      <button className="recipe-fav-btn"
+                        onClick={e => { e.stopPropagation(); setFavoriteRecipes(f => isFav ? f.filter(x=>x!==r.id) : [...f,r.id]); }}>
+                        {isFav ? "❤️" : "🤍"}
+                      </button>
+                      {r.image_url
+                        ? <img src={r.image_url} alt={r.title} className="recipe-card-img" loading="lazy" />
+                        : <div className="recipe-card-img-placeholder">{getCatEmoji(r.category)}</div>
+                      }
+                      <div className="recipe-card-body">
+                        <div className="recipe-card-title">{r.title}</div>
+                        {r.description && (
+                          <div className="recipe-card-desc" style={{ display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>
+                            {r.description}
+                          </div>
+                        )}
+                        <div className="recipe-card-meta">
+                          {r.category && <span className="recipe-pill" style={{ background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" }}>{getCatEmoji(r.category)} {r.category}</span>}
+                          {totalMins > 0 && <span className="recipe-pill" style={{ background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" }}>⏱ {totalMins} min</span>}
+                          {r.servings && <span className="recipe-pill" style={{ background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" }}>👤 {r.servings} pers.</span>}
+                          {(r.tags||[]).filter(t=>t==="vegetarisk"||t==="vegan").map(t => (
+                            <span key={t} className="recipe-pill" style={{ background:"var(--green-lt)", color:"var(--green)", borderColor:"var(--green-mid)" }}>
+                              {t==="vegan"?"🌱":"🥦"} {t}
+                            </span>
+                          ))}
+                        </div>
+                        {/* Sikkerhed per profil */}
+                        <div className="recipe-safe-bar">
+                          {profiles.map(p => {
+                            const { status: ps } = compareAllergens(rFlags, p.allergens||[]);
+                            const color = ps==="safe"?"var(--green)":ps==="danger"?"var(--red)":"var(--amber)";
+                            const bg = ps==="safe"?"var(--green-lt)":ps==="danger"?"var(--red-lt)":"var(--amber-lt)";
+                            return (
+                              <div key={p.id} style={{ display:"flex", alignItems:"center", gap:4, padding:"3px 8px", borderRadius:100, border:`1px solid ${color}`, background:bg, fontSize:10, fontWeight:700, color }}>
+                                <span>{ps==="safe"?"✓":ps==="danger"?"✗":"!"}</span>
+                                <span>{p.id==="me"?"Dig":p.name.split(" ")[0]}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {filtered.length > 0 && (
+                <div style={{ display:"flex", gap:8, alignItems:"center", padding:"12px", background:"var(--paper2)", borderRadius:10, marginTop:4 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2"><path strokeLinecap="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                  <div style={{ fontSize:10, color:"var(--muted)", lineHeight:1.5 }}>Allergener er vejledende. Tjek altid ingrediensernes emballage.</div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ══ OPSKRIFT DETALJE ══ */}
+        {screen === SCREENS.RECIPES && selectedRecipe && !showSubmitRecipe && (() => {
+          const isFav = favoriteRecipes.includes(selectedRecipe.id);
+          const getCatEmoji = c => ({ morgenmad:"☕",frokost:"🥗",aftensmad:"🍝",dessert:"🍰",tilbehør:"🥦",snack:"🍿" })[c] || "🍽️";
+
+          // Parse trin — håndter JSON-array, string-array og plain tekst
+          let steps = [];
+          try {
+            const raw = selectedRecipe.instructions;
+            if (typeof raw === "string") {
+              const parsed = JSON.parse(raw);
+              steps = Array.isArray(parsed) ? parsed.filter(s => s?.trim()) : [raw];
+            } else if (Array.isArray(raw)) {
+              steps = raw.filter(s => s?.trim());
+            }
+          } catch {
+            steps = (selectedRecipe.instructions||"").split("\n").filter(s => s.trim());
+          }
+
+          // Parse tags
+          let recipeTags = [];
+          try { recipeTags = Array.isArray(selectedRecipe.tags) ? selectedRecipe.tags : (typeof selectedRecipe.tags === "string" ? JSON.parse(selectedRecipe.tags) : []); } catch {}
+
+          // Ingredienser: brug ingredients_raw fra recipes-tabellen
+          let rawIngs = [];
+          try {
+            const ri = selectedRecipe.ingredients_raw;
+            rawIngs = Array.isArray(ri) ? ri : (typeof ri === "string" ? JSON.parse(ri) : []);
+          } catch {}
+
+          // Brug ingredients_raw (altid) — recipeIngredients er tom da vi ikke bruger den tabellen
+          const displayIngs = rawIngs.length > 0
+            ? rawIngs.map(i => ({ name: i.name, amount: i.amount, unit: i.unit, nameEn: i.name_en, measure: i.measure }))
+            : recipeIngredients.map(i => ({ name: i.name, amount: i.amount, unit: i.unit, nameEn: i.name_en }));
+
+          // YouTube fra metadata
+          let youtubeUrl = null;
+          try { const m = typeof selectedRecipe.metadata==="string" ? JSON.parse(selectedRecipe.metadata) : selectedRecipe.metadata; youtubeUrl = m?.youtube||null; } catch {}
+
+          // Servings — bruger component-level state
+          const servings = recipeServings;
+          const setServings = setRecipeServings;
+          const ratio = servings / (selectedRecipe.servings || 4);
+
+          const scaleAmt = (amt) => {
+            if (!amt || isNaN(amt)) return null;
+            const s = amt * ratio;
+            return s === Math.floor(s) ? s : Math.round(s * 10) / 10;
+          };
+          const fmtUnit = u => {
+            if (!u || u==="null") return "";
+            const m = { spsk:"spsk",tsk:"tsk",dl:"dl",g:"g",kg:"kg",l:"l",ml:"ml",stk:"stk" };
+            return m[u.trim().toLowerCase()] || u;
+          };
+
+          // Allergen-detektion på ingrediensnavn
+          const allergenKeywords = { gluten:["wheat","flour","bread","rye","barley","oat","spelt","hvede","hvedemel","rug","byg","havre"], laktose:["milk","cream","butter","cheese","yogurt","mælk","fløde","smør","ost"], aeg:["egg","æg"], noedder:["almond","walnut","cashew","hazel","pistachio","pecan","nut","mandel","valnød","nødder"], jordnoedder:["peanut","jordnød"], soja:["soy","tofu","soja"], fisk:["fish","salmon","tuna","cod","anchov","sardine","laks","torsk","tun"], skaldyr:["shrimp","prawn","crab","lobster","mussel","clam","rejer","krabbe","musling"], selleri:["celery","selleri"], sennep:["mustard","sennep"], sesam:["sesame","tahini","sesam"] };
+          const isAllergenIng = (ing) => allergens.some(a => (allergenKeywords[a]||[]).some(kw => (ing.nameEn||ing.name||"").toLowerCase().includes(kw)));
+
+          // Parse allergen_flags (kan være string eller objekt)
+          let recipeFlags = {};
+          try { recipeFlags = typeof selectedRecipe.allergen_flags === "string" ? JSON.parse(selectedRecipe.allergen_flags) : (selectedRecipe.allergen_flags || {}); } catch {}
+
+          const profiles = [{ id:"me", name:user.name||"Dig", allergens }, ...family.filter(m => activeProfiles.includes(m.id))];
+          const doneTrin = steps.filter((_,i) => completedSteps[`${selectedRecipe.id}_${i}`]).length;
+          const pct = steps.length ? Math.round((doneTrin/steps.length)*100) : 0;
+
+          return (
+            <div className="screen fade-in" style={{ paddingTop:0 }}>
+              {/* Hero */}
+              <div className="recipe-detail-hero">
+                {selectedRecipe.image_url
+                  ? <img src={selectedRecipe.image_url} alt={selectedRecipe.title} className="recipe-detail-img" />
+                  : <div className="recipe-detail-img-placeholder">{getCatEmoji(selectedRecipe.category)}</div>
+                }
+                <button className="recipe-detail-back" onClick={() => setSelectedRecipe(null)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path strokeLinecap="round" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <button className="recipe-detail-fav"
+                  onClick={() => setFavoriteRecipes(f => isFav ? f.filter(x=>x!==selectedRecipe.id) : [...f,selectedRecipe.id])}>
+                  {isFav ? "❤️" : "🤍"}
+                </button>
+              </div>
+
+              <div style={{ padding:"0 16px" }}>
+                {/* Titel */}
+                <div style={{ paddingTop:16, marginBottom:6 }}>
+                  <div className="recipe-detail-title">{selectedRecipe.title}</div>
+                </div>
+
+                {/* Meta */}
+                <div className="recipe-meta-row">
+                  {selectedRecipe.category && <div className="recipe-meta-pill">{getCatEmoji(selectedRecipe.category)} {selectedRecipe.category}</div>}
+                  {((selectedRecipe.prep_time_minutes||0)+(selectedRecipe.cook_time_minutes||0)) > 0 && (
+                    <div className="recipe-meta-pill">⏱ {(selectedRecipe.prep_time_minutes||0)+(selectedRecipe.cook_time_minutes||0)} min</div>
+                  )}
+                  {recipeTags.filter(t=>t==="vegetarisk"||t==="vegan").map(t => (
+                    <div key={t} className="recipe-meta-pill" style={{ color:"var(--green)", borderColor:"var(--green-mid)", background:"var(--green-lt)" }}>
+                      {t==="vegan"?"🌱":"🥦"} {t}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Beskrivelse */}
+                {selectedRecipe.description && <div style={{ fontSize:14, color:"var(--muted2)", lineHeight:1.65, marginBottom:14 }}>{selectedRecipe.description}</div>}
+
+                {/* Sikkerhed per profil */}
+                <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:16 }}>
+                  {profiles.map(p => {
+                    const { status:ps, matchedDanger } = compareAllergens(recipeFlags, p.allergens||[]);
+                    const color = ps==="safe"?"var(--green)":ps==="danger"?"var(--red)":"var(--amber)";
+                    const bg = ps==="safe"?"var(--green-lt)":ps==="danger"?"var(--red-lt)":"var(--amber-lt)";
+                    const border = ps==="safe"?"var(--green-mid)":ps==="danger"?"var(--red-md)":"var(--amber-md)";
+                    const label = ps==="safe"?"Sikker":ps==="danger"?matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label).join(", "):"Mulige spor";
+                    return (
+                      <div key={p.id} style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", background:bg, border:`1px solid ${border}`, borderRadius:100, fontSize:12, fontWeight:700, color }}>
+                        <span>{ps==="safe"?"✓":ps==="danger"?"✗":"!"}</span>
+                        <span>{p.id==="me"?"Dig":p.name.split(" ")[0]}</span>
+                        <span style={{ fontWeight:400, opacity:.8 }}>· {label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* ── INGREDIENSER ── */}
+                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, marginBottom:12, overflow:"hidden", boxShadow:"var(--sh)" }}>
+                  <div style={{ padding:"14px 16px", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                    <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>Ingredienser</div>
+                    <div className="servings-ctrl">
+                      <button className="servings-btn" onClick={() => setServings(s => Math.max(1,s-1))}>−</button>
+                      <div className="servings-num">{servings}</div>
+                      <button className="servings-btn" onClick={() => setServings(s => s+1)}>+</button>
+                      <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600 }}>pers.</div>
+                    </div>
+                  </div>
+                  <div style={{ padding:"8px 16px" }}>
+                    {displayIngs.length === 0 && <div style={{ fontSize:13, color:"var(--muted)", padding:"12px 0" }}>Ingen ingredienser fundet</div>}
+                    {displayIngs.map((ing, i) => {
+                      const isAllerg = isAllergenIng(ing);
+                      const scaledAmt = scaleAmt(ing.amount);
+                      return (
+                        <div key={i} className="ingredient-row">
+                          <div className="ingredient-dot" style={{ background: isAllerg ? "var(--red)" : "var(--border2)" }} />
+                          <div style={{ flex:1, fontSize:13, color: isAllerg?"var(--red)":"var(--ink)", fontWeight: isAllerg?700:400, lineHeight:1.4 }}>{ing.name}</div>
+                          <div style={{ fontSize:12, fontWeight:700, color:"var(--muted2)", flexShrink:0 }}>
+                            {scaledAmt}{scaledAmt && ing.unit ? " " : ""}{fmtUnit(ing.unit)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ padding:"12px 16px", borderTop:"1px solid var(--border)" }}>
+                    <button onClick={() => {
+                      displayIngs.forEach(ing => {
+                        const a = scaleAmt(ing.amount);
+                        const txt = [a, fmtUnit(ing.unit), ing.name].filter(Boolean).join(" ").trim();
+                        if (txt) addToList(txt);
+                      });
+                      setScreen(SCREENS.LIST);
+                    }} style={{ width:"100%", background:"var(--ink)", color:"#fff", border:"none", borderRadius:10, padding:"10px 16px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path strokeLinecap="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                      Tilføj til indkøbsliste ({servings} pers.)
+                    </button>
+                  </div>
+                </div>
+
+                {/* ── FREMGANGSMÅDE ── */}
+                {steps.length > 0 && (
+                  <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, marginBottom:12, overflow:"hidden", boxShadow:"var(--sh)" }}>
+                    <div style={{ padding:"14px 16px", borderBottom:"1px solid var(--border)" }}>
+                      <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>Fremgangsmåde</div>
+                      <div style={{ fontSize:11, color:"var(--muted)", marginTop:3 }}>Tryk på hvert trin for at afkrydse det</div>
+                    </div>
+                    <div style={{ padding:"0 16px" }}>
+                      {steps.map((step, i) => {
+                        const key = `${selectedRecipe.id}_${i}`;
+                        const done = !!completedSteps[key];
+                        return (
+                          <div key={i} className="step-row" style={{ opacity: done ? 0.45 : 1 }}
+                            onClick={() => setCompletedSteps(s => ({ ...s, [key]: !s[key] }))}>
+                            <div className="step-circle" style={{ background: done?"var(--green)":"var(--paper2)", border:`2px solid ${done?"var(--green)":"var(--border2)"}` }}>
+                              {done
+                                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                                : <span style={{ fontSize:12, fontWeight:800, color:"var(--muted)" }}>{i+1}</span>
+                              }
+                            </div>
+                            <div style={{ flex:1, fontSize:13, color:"var(--ink2)", lineHeight:1.7, textDecoration: done?"line-through":"none" }}>{step}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Fremskridtsbar */}
+                    <div style={{ padding:"12px 16px", borderTop:"1px solid var(--border)" }}>
+                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+                        <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)" }}>Fremgang</div>
+                        <div style={{ fontSize:11, fontWeight:800, color: doneTrin===steps.length?"var(--green)":"var(--ink)" }}>
+                          {doneTrin}/{steps.length} trin {doneTrin===steps.length&&"🎉"}
+                        </div>
+                      </div>
+                      <div style={{ height:6, background:"var(--paper2)", borderRadius:6, overflow:"hidden" }}>
+                        <div style={{ height:"100%", width:`${pct}%`, background: doneTrin===steps.length?"var(--green)":"var(--ink)", borderRadius:6, transition:"width .4s" }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* YouTube */}
+                {youtubeUrl && (
+                  <button className="youtube-btn" onClick={() => window.open(youtubeUrl, "_blank")}>
+                    <svg width="20" height="14" viewBox="0 0 20 14" fill="#fff"><path d="M19.582 2.186A2.506 2.506 0 0017.822.425C16.254 0 10 0 10 0S3.747 0 2.178.425A2.506 2.506 0 00.418 2.186C0 3.756 0 7 0 7s0 3.244.418 4.814A2.506 2.506 0 002.178 13.575C3.747 14 10 14 10 14s6.254 0 7.822-.425a2.506 2.506 0 001.76-1.761C20 10.244 20 7 20 7s0-3.244-.418-4.814z"/><path d="M8 10l5.25-3L8 4v6z" fill="red"/></svg>
+                    Se video på YouTube
+                  </button>
+                )}
+
+                {/* Disclaimer */}
+                <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 14px", background:"var(--paper2)", borderRadius:10, marginBottom:16 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}><path strokeLinecap="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                  <div style={{ fontSize:10, color:"var(--muted)", lineHeight:1.5 }}>
+                    {selectedRecipe.disclaimer || "Allergener er vejledende. Tjek altid ingrediensernes emballage ved alvorlige allergier."}
+                  </div>
+                </div>
               </div>
             </div>
+          );
+        })()}
+
+        {/* ══ INDSEND OPSKRIFT ══ */}
+        {screen === SCREENS.RECIPES && showSubmitRecipe && (
+          <div className="screen fade-in">
+            <div style={{ display:"flex", alignItems:"center", gap:10, padding:"16px 0 20px" }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowSubmitRecipe(false)}>← Tilbage</button>
+              <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)" }}>Indsend opskrift</div>
+            </div>
+
+            <div className="card" style={{ marginBottom:10 }}>
+              <div className="card-lbl">Grundoplysninger</div>
+              <label className="field-lbl">Titel</label>
+              <input className="field" placeholder="Fx. Pasta med kødsovs" value={submitRecipe.title}
+                onChange={e => setSubmitRecipe(r => ({...r, title:e.target.value}))} style={{ marginBottom:10 }} />
+              <label className="field-lbl">Kort beskrivelse</label>
+              <input className="field" placeholder="Fx. En klassisk hjemmeret..." value={submitRecipe.description}
+                onChange={e => setSubmitRecipe(r => ({...r, description:e.target.value}))} style={{ marginBottom:10 }} />
+              <label className="field-lbl">Kategori</label>
+              <select className="field" value={submitRecipe.category}
+                onChange={e => setSubmitRecipe(r => ({...r, category:e.target.value}))} style={{ marginBottom:0 }}>
+                {["morgenmad","frokost","aftensmad","dessert","tilbehør","snack"].map(c => (
+                  <option key={c} value={c}>{c.charAt(0).toUpperCase()+c.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="card" style={{ marginBottom:10 }}>
+              <div className="card-lbl">Ingredienser</div>
+              {submitIngredients.map((ing, i) => (
+                <div key={i} style={{ display:"flex", gap:6, marginBottom:8, alignItems:"center" }}>
+                  <input className="field" placeholder="Ingrediens" value={ing.name}
+                    onChange={e => setSubmitIngredients(list => list.map((x,j) => j===i?{...x,name:e.target.value}:x))}
+                    style={{ flex:2, marginBottom:0 }} />
+                  <input className="field" placeholder="Mængde" value={ing.amount}
+                    onChange={e => setSubmitIngredients(list => list.map((x,j) => j===i?{...x,amount:e.target.value}:x))}
+                    style={{ flex:1, marginBottom:0 }} />
+                  <input className="field" placeholder="Enhed" value={ing.unit}
+                    onChange={e => setSubmitIngredients(list => list.map((x,j) => j===i?{...x,unit:e.target.value}:x))}
+                    style={{ flex:1, marginBottom:0 }} />
+                  {submitIngredients.length > 1 && (
+                    <div onClick={() => setSubmitIngredients(l => l.filter((_,j)=>j!==i))} style={{ cursor:"pointer", flexShrink:0 }}>
+                      <Icon name="x" size={16} color="var(--muted)" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              <button className="btn btn-outline btn-sm btn-full" onClick={() => setSubmitIngredients(l => [...l, {name:"",amount:"",unit:""}])}>
+                + Tilføj ingrediens
+              </button>
+            </div>
+
+            <div className="card" style={{ marginBottom:10 }}>
+              <div className="card-lbl">Fremgangsmåde — trin for trin</div>
+              {submitSteps.map((step, i) => (
+                <div key={i} style={{ display:"flex", gap:8, alignItems:"flex-start", marginBottom:8 }}>
+                  <div style={{ width:24, height:24, borderRadius:"50%", background:"var(--green)", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:800, flexShrink:0, marginTop:10 }}>{i+1}</div>
+                  <textarea
+                    className="field"
+                    placeholder={`Trin ${i+1}…`}
+                    value={step}
+                    rows={2}
+                    onChange={e => setSubmitSteps(s => s.map((x,j) => j===i ? e.target.value : x))}
+                    style={{ flex:1, resize:"none", fontFamily:"var(--f)", marginBottom:0 }}
+                  />
+                  {submitSteps.length > 1 && (
+                    <div onClick={() => setSubmitSteps(s => s.filter((_,j) => j!==i))}
+                      style={{ cursor:"pointer", paddingTop:10, flexShrink:0 }}>
+                      <Icon name="x" size={16} color="var(--muted)" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              <button className="btn btn-outline btn-sm btn-full"
+                onClick={() => setSubmitSteps(s => [...s, ""])}
+                style={{ marginTop:4 }}>
+                + Tilføj trin
+              </button>
+            </div>
+
+            {/* Vilkår accordion */}
+            <div style={{ border:"1px solid var(--border)", borderRadius:12, marginBottom:12, overflow:"hidden" }}>
+              <div
+                onClick={() => setRecipeTermsOpen(v => !v)}
+                style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", cursor:"pointer", background: recipeTermsOpen ? "var(--paper2)" : "#fff" }}>
+                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>Vilkår for indsendelse</div>
+                <Icon name={recipeTermsOpen ? "chevronUp" : "chevronDown"} size={18} color="var(--muted)" />
+              </div>
+              {recipeTermsOpen && (
+                <div style={{ padding:"0 14px 14px", background:"var(--paper2)", borderTop:"1px solid var(--border)" }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", margin:"12px 0 6px" }}>Ved at indsende bekræfter du at:</div>
+                  {[
+                    "Opskriften er din egen og ikke kopieret fra en anden kilde",
+                    "Du giver EatSafe tilladelse til at offentliggøre og dele opskriften gratis",
+                    "Du er indforstået med at opskriften kan redigeres af EatSafes redaktion",
+                  ].map((t, i) => (
+                    <div key={i} style={{ display:"flex", gap:8, alignItems:"flex-start", marginBottom:6 }}>
+                      <Icon name="check" size={14} color="var(--green)" />
+                      <div style={{ fontSize:12, color:"var(--ink2)", lineHeight:1.5 }}>{t}</div>
+                    </div>
+                  ))}
+                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", margin:"12px 0 6px" }}>Om allergener</div>
+                  <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5, marginBottom:10 }}>
+                    Allergener identificeres automatisk og er vejledende. EatSafe påtager sig intet ansvar for fejl i allergeninformationen. Brugere opfordres altid til at tjekke ingrediensernes emballage.
+                  </div>
+                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", margin:"0 0 6px" }}>Indhold vi afviser</div>
+                  <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5 }}>
+                    Vi godkender ikke opskrifter der er kopieret fra andre, indeholder skadeligt indhold eller ikke er relateret til mad.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Accept checkbox */}
+            <div
+              onClick={() => setRecipeTermsAccepted(v => !v)}
+              style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"#fff", border:`1.5px solid ${recipeTermsAccepted ? "var(--green)" : "var(--border2)"}`, borderRadius:10, cursor:"pointer", marginBottom:12 }}>
+              <div style={{ width:20, height:20, borderRadius:6, background: recipeTermsAccepted ? "var(--green)" : "var(--paper2)", border:`1.5px solid ${recipeTermsAccepted ? "var(--green)" : "var(--border2)"}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                {recipeTermsAccepted && <Icon name="check" size={12} color="#fff" />}
+              </div>
+              <div style={{ fontSize:12, fontWeight:600, color:"var(--ink)" }}>Jeg accepterer vilkårene for indsendelse</div>
+            </div>
+
+            <button className="btn btn-primary btn-full"
+              onClick={submitUserRecipe}
+              disabled={submittingRecipe || !submitRecipe.title.trim() || !recipeTermsAccepted}>
+              {submittingRecipe ? "Sender…" : "Indsend opskrift"}
+            </button>
           </div>
         )}
 
@@ -3378,7 +6484,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {screen === SCREENS.EDITPROFILE && (
           <div className="screen fade-in">
             <div style={{ display:"flex", alignItems:"center", gap:10, padding:"16px 0 20px" }}>
-              <button className="btn btn-ghost btn-sm" onClick={() => setScreen(SCREENS.PROFILE)}>← Tilbage</button>
+              
               <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)" }}>Rediger profil</div>
             </div>
 
@@ -3391,26 +6497,89 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                   <input className="field" type={type} placeholder={ph} value={user[key]||""} onChange={e => setUser(u => ({ ...u, [key]: e.target.value }))} />
                 </div>
               ))}
+              <label className="field-lbl">Køn</label>
+              <div style={{ display:"flex", gap:8, marginBottom:10 }}>
+                {["Mand","Kvinde","Andet"].map(g => (
+                  <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
+                    style={{ flex:1, padding:"8px 0", textAlign:"center", borderRadius:8, border:`1.5px solid ${user.gender===g?"var(--green)":"var(--border)"}`, background:user.gender===g?"var(--green-lt)":"#fff", fontSize:13, fontWeight:700, color:user.gender===g?"var(--green)":"var(--muted)", cursor:"pointer" }}>
+                    {g}
+                  </div>
+                ))}
+              </div>
               <button className="btn btn-primary btn-full" onClick={async () => {
                 try {
                   await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
                     method:"PATCH",
                     headers:{ ...makeHeaders(accessToken), "Prefer":"return=representation" },
-                    body:JSON.stringify({ name:user.name, phone:user.phone||null, age:user.age?parseInt(user.age):null }),
+                    body:JSON.stringify({ name:user.name, phone:user.phone||null, age:user.age?parseInt(user.age):null, gender:user.gender||null }),
                   });
                 } catch {}
-              }}>Gem oplysninger</button>
+              }}>Gem</button>
             </div>
 
             {/* Allergier */}
+            {/* Diæt */}
             <div className="card" style={{ marginBottom:10 }}>
-              <div className="card-lbl">Mine allergier</div>
+              <div className="card-lbl">Diæt</div>
+              <div style={{ fontSize:12, color:"var(--muted)", marginBottom:10, lineHeight:1.5 }}>Vælg din diæt — bruges til filtrering af produkter og opskrifter.</div>
+              <div className="chip-grid" style={{ marginBottom:8 }}>
+                {DIETS.map(d => {
+                  const on = (user.diets||[]).includes(d.id);
+                  return (
+                    <div key={d.id} className={`chip${on?" on":""}`}
+                      onClick={() => setUser(u => ({ ...u, diets: on ? (u.diets||[]).filter(x=>x!==d.id) : [...(u.diets||[]), d.id] }))}>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontWeight:700 }}>{d.label}</div>
+                        <div style={{ fontSize:10, color:"var(--muted)", marginTop:1 }}>{d.desc}</div>
+                      </div>
+                      {on && <div className="chip-check">✓</div>}
+                    </div>
+                  );
+                })}
+              </div>
+              {(user.diets||[]).length > 0 && (
+                <button className="btn btn-ghost btn-sm" style={{ marginBottom:8 }} onClick={() => setUser(u => ({...u, diets:[]}))}>Nulstil diæt</button>
+              )}
+              <button className="btn btn-primary btn-full" onClick={async () => {
+                try {
+                  await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+                    method:"PATCH",
+                    headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" },
+                    body:JSON.stringify({ diets: user.diets||[] }),
+                  });
+                } catch {}
+              }}>Gem diæt</button>
+            </div>
+
+            <div className="card" style={{ marginBottom:10 }}>
+              <div className="card-lbl">Mine allergier / intolerancer</div>
               <div className="chip-grid" style={{ marginBottom:10 }}>
-                {ALLERGENS.map(a => { const on = allergens.includes(a.id); return (
-                  <div key={a.id} className={`chip${on?" on":""}`} onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
-                    <span>{a.emoji}</span><span style={{ flex:1 }}>{a.label}</span>{on && <div className="chip-check">✓</div>}
-                  </div>
-                );})}
+                <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10, padding:"6px 10px", background:"var(--paper2)", borderRadius:8, lineHeight:1.5 }}>
+                  Tryk 1x = Intolerance (spor kan være problem) · 2x = Allergi (farlig) · 3x = Fjern
+                </div>
+                {ALLERGENS.map(a => {
+                  const state = allergens.includes(a.id) ? (customAllerg.includes(a.id+"_intolerance") ? "intolerance" : "allergen") : "none";
+                  const bg = state==="allergen" ? "var(--red-lt)" : state==="intolerance" ? "var(--amber-lt)" : "var(--paper2)";
+                  const border = state==="allergen" ? "var(--red)" : state==="intolerance" ? "var(--amber)" : "var(--border)";
+                  const color = state==="allergen" ? "var(--red)" : state==="intolerance" ? "var(--amber)" : "var(--ink)";
+                  const label = state==="allergen" ? "Allergi" : state==="intolerance" ? "Intolerance" : "";
+                  return (
+                    <div key={a.id} className="chip" style={{ background:bg, border:`1.5px solid ${border}`, color }}
+                      onClick={() => {
+                        if (state==="none") {
+                          setAllergens(p => [...p, a.id]);
+                          setCustomAllerg(p => [...p, a.id+"_intolerance"]);
+                        } else if (state==="intolerance") {
+                          setCustomAllerg(p => p.filter(x => x !== a.id+"_intolerance"));
+                        } else {
+                          setAllergens(p => p.filter(x => x !== a.id));
+                        }
+                      }}>
+                      <span style={{ flex:1 }}>{a.label}</span>
+                      {label && <div style={{ fontSize:9, fontWeight:800, color }}>{label}</div>}
+                    </div>
+                  );
+                })}
               </div>
               <div className="card-lbl">Andre intoleranser</div>
               <div className="input-row" style={{ marginBottom: customAllerg.length ? 8 : 0 }}>
@@ -3419,45 +6588,450 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}}>+</button>
               </div>
               {customAllerg.length > 0 && <div className="tags">{customAllerg.map((a,i) => <div key={i} className="tag">✏️ {a}<span className="tag-x" onClick={() => setCustomAllerg(c=>c.filter((_,j)=>j!==i))}>×</span></div>)}</div>}
-              <button className="btn btn-primary btn-full" style={{ marginTop:10 }} onClick={async () => {
+              {/* Præciser allergier */}
+              {allergens.some(id => ALLERGEN_SUBTYPES[id]) && (
+                <div style={{ marginTop:12, paddingTop:12, borderTop:"1px solid var(--border)" }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>Tilpas din allergi præcist til dig selv</div>
+                  <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8, lineHeight:1.5 }}>For størst mulig tryghed kan du præcisere hvad du reagerer på.</div>
+                  <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                    {allergens.filter(id => ALLERGEN_SUBTYPES[id]).map(id => {
+                      const data = ALLERGEN_SUBTYPES[id];
+                      const subtype = allergenSubtypes[id];
+                      const subtypeLabel = subtype && subtype.length > 0 ? subtype.map(id => data.options.find(o=>o.id===id)?.label).filter(Boolean).join(", ") : null;
+                      return (
+                        <div key={id} onClick={() => setActiveSubtypeModal(id)}
+                          style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px",
+                            border:"1.5px solid var(--green)", background:"var(--green-lt)",
+                            borderRadius:10, cursor:"pointer" }}>
+                          <div style={{ flex:1 }}>
+                            <div style={{ fontSize:12, fontWeight:700, color:"var(--green)" }}>{data.label}</div>
+                            <div style={{ fontSize:11, color:"var(--muted2)", marginTop:2 }}>{subtypeLabel || "Tryk for at præcisere →"}</div>
+                          </div>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2">
+                            <path strokeLinecap="round" d="M9 5l7 7-7 7"/>
+                          </svg>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <button className="btn btn-primary btn-full" style={{ marginTop:12 }} onClick={async () => {
                 try {
                   await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, { method:"DELETE", headers:makeHeaders(accessToken) });
                   for(const a of allergens) await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, { method:"POST", headers:makeHeaders(accessToken), body:JSON.stringify({user_id:userId,allergen:a,type:"allergen"}) });
-                  for(const c of customAllerg) await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, { method:"POST", headers:makeHeaders(accessToken), body:JSON.stringify({user_id:userId,allergen:c,type:"custom"}) });
-                  alert("Allergier gemt!");
-                } catch {}
-              }}>Gem allergier</button>
+                  const realCustom = customAllerg.filter(c => !c.endsWith("_intolerance"));
+                  for(const c of realCustom) await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, { method:"POST", headers:makeHeaders(accessToken), body:JSON.stringify({user_id:userId,allergen:c,type:"custom"}) });
+                  setScreen(SCREENS.PROFILE);
+                } catch (e) { alert("Fejl: " + e.message); }
+              }}>Gem</button>
+            </div>
+
+            {/* E-numre i rediger profil */}
+            <div className="card" style={{ marginBottom:10 }}>
+              <div className="card-lbl">E-numre der undgås</div>
+              <input className="field" placeholder="Søg E-nummer..." value={eSearch}
+                onChange={e => setESearch(e.target.value)} style={{ marginBottom:8 }} />
+              <select className="field" value={eCategory} onChange={e => setECategory(e.target.value)} style={{ marginBottom:8 }}>
+                <option value="alle">Alle kategorier</option>
+                {E_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label} ({c.range})</option>)}
+              </select>
+              <div style={{ maxHeight:320, overflowY:"auto", border:"1px solid var(--border)", borderRadius:8 }}>
+                {Object.entries(E_NUMBERS).filter(([e,name]) => {
+                  const matchSearch = !eSearch || e.toLowerCase().includes(eSearch.toLowerCase()) || name.toLowerCase().includes(eSearch.toLowerCase());
+                  if (!matchSearch) return false;
+                  if (eCategory==="alle") return true;
+                  const cat = E_CATEGORIES.find(c=>c.id===eCategory);
+                  const num = parseInt(e.replace(/[^0-9]/g,""));
+                  return cat ? num>=cat.min && num<=cat.max : true;
+                }).map(([e,name],i,arr) => {
+                  const on = selectedENumbers.includes(e);
+                  return (
+                    <div key={e} onClick={() => setSelectedENumbers(p => on?p.filter(x=>x!==e):[...p,e])}
+                      style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px",
+                        borderBottom:i<arr.length-1?"1px solid var(--border)":"none",
+                        background:on?"var(--red-lt)":"#fff", cursor:"pointer" }}>
+                      <div style={{ fontSize:12, fontWeight:800, color:on?"var(--red)":"var(--ink)", width:44 }}>{e}</div>
+                      <div style={{ fontSize:11, color:on?"var(--red)":"var(--muted2)", flex:1, lineHeight:1.3 }}>{name}</div>
+                      {on && <Icon name="check" size={13} color="var(--red)" />}
+                    </div>
+                  );
+                })}
+              </div>
+              {selectedENumbers.length > 0 && (
+                <div style={{ marginTop:8, fontSize:11, fontWeight:700, color:"var(--red)" }}>
+                  {selectedENumbers.length} E-numre valgt
+                </div>
+              )}
             </div>
 
             <button className="btn btn-ghost btn-full" style={{ marginBottom:16 }} onClick={() => setScreen(SCREENS.PROFILE)}>Færdig</button>
           </div>
         )}
 
+        {/* ══ FORESLÅ ÆNDRING ══ */}
+        {screen === SCREENS.SUGGEST_EDIT && scanResult && (() => {
+
+          const runOcr = async (file) => {
+            setEditStep("scanning");
+            try {
+              const b64 = await new Promise((res, rej) => {
+                const r = new FileReader();
+                r.onload = () => res(r.result.split(",")[1]);
+                r.onerror = rej;
+                r.readAsDataURL(file);
+              });
+              // Brug Supabase OCR edge function
+              const resp = await fetch(`${SUPABASE_URL}/functions/v1/ocr`, {
+                method: "POST",
+                headers: makeHeaders(accessToken),
+                body: JSON.stringify({ image_base64: b64 }),
+              });
+              const data = await resp.json();
+              if (data.success && data.text) {
+                setEditIngText(data.text);
+                setEditStep("review");
+              } else {
+                // OCR fejlede — lad brugeren skrive manuelt
+                setEditStep("review");
+              }
+            } catch {
+              setEditStep("review");
+            }
+          };
+
+          const submit = async () => {
+            setEditStep("sending");
+            try {
+              await apiCall(`${SUPABASE_URL}/rest/v1/product_submissions`, {
+                method: "POST",
+                headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+                body: JSON.stringify({
+                  product_id: scanResult.id || null,
+                  ean: scanResult.code || scanResult.ean,
+                  product_name: scanResult.name,
+                  brand: scanResult.brand,
+                  ingredients: editType === "ingredients" ? editIngText : null,
+                  notes: `Type: ${editType}. ${editNote}`.trim(),
+                  submitted_by: userId,
+                  status: "pending",
+                  type: "edit",
+                }),
+              });
+              setEditStep("done");
+            } catch (e) {
+              alert("Fejl: " + e.message);
+              setEditStep("review");
+            }
+          };
+
+          return (
+            <div className="screen fade-in">
+
+              {/* Header */}
+              <div style={{ display:"flex", alignItems:"center", gap:12, padding:"16px 0 14px" }}>
+                <button onClick={() => setScreen(SCREENS.RESULT)}
+                  style={{ background:"none", border:"none", cursor:"pointer", padding:4 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
+                    <path strokeLinecap="round" d="M15 19l-7-7 7-7"/>
+                  </svg>
+                </button>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Hjælp os med at forbedre</div>
+                  <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{scanResult.name}</div>
+                </div>
+              </div>
+
+              {/* Produkt-chip — vises på alle trin */}
+              <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12, marginBottom:16, boxShadow:"var(--sh)" }}>
+                <ProductImage product={scanResult} size={40} />
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{scanResult.name}</div>
+                  {scanResult.brand && <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>{scanResult.brand}</div>}
+                  <div style={{ fontSize:10, color:"var(--muted)", marginTop:1, fontFamily:"monospace" }}>EAN: {scanResult.code}</div>
+                </div>
+              </div>
+
+              {/* ── TRIN 1: Vælg hvad der mangler ── */}
+              {editStep === "start" && (
+                <div className="fade-in">
+                  <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6, marginBottom:16 }}>
+                    Hvad mangler eller er forkert på dette produkt?
+                  </div>
+                  {[
+                    { id:"ingredients", emoji:"🥦", title:"Ingrediensliste mangler", desc:"Fotografér bagsiden af pakken med ingredienserne" },
+                    { id:"nutrition",   emoji:"📊", title:"Næringsindhold mangler",  desc:"Fotografér næringstabellen på pakken" },
+                    { id:"image",       emoji:"📸", title:"Produktbilledet er forkert", desc:"Tag et nyt billede af produktets forside" },
+                    { id:"other",       emoji:"✏️", title:"Andet er forkert",         desc:"Skriv hvad der skal rettes" },
+                  ].map(opt => (
+                    <div key={opt.id} onClick={() => { setEditType(opt.id); setEditStep(opt.id === "other" ? "review" : "guide"); }}
+                      style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px",
+                        background:"#fff", border:"1px solid var(--border)", borderRadius:14,
+                        marginBottom:8, cursor:"pointer", boxShadow:"var(--sh)" }}>
+                      <div style={{ fontSize:28, flexShrink:0 }}>{opt.emoji}</div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>{opt.title}</div>
+                        <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{opt.desc}</div>
+                      </div>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2">
+                        <path strokeLinecap="round" d="M9 5l7 7-7 7"/>
+                      </svg>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* ── TRIN 2: Guide til foto ── */}
+              {editStep === "guide" && (
+                <div className="fade-in">
+                  {/* Visuel guide */}
+                  <div style={{ background:"var(--ink)", borderRadius:16, padding:"20px", marginBottom:16, textAlign:"center" }}>
+                    <div style={{ fontSize:48, marginBottom:10 }}>
+                      {editType === "ingredients" ? "🥫" : editType === "nutrition" ? "📋" : "📦"}
+                    </div>
+                    <div style={{ fontSize:16, fontWeight:800, color:"#fff", marginBottom:8 }}>
+                      {editType === "ingredients" ? "Fotografér ingredienslisten" :
+                       editType === "nutrition" ? "Fotografér næringstabellen" :
+                       "Fotografér produktets forside"}
+                    </div>
+                    <div style={{ fontSize:12, color:"rgba(255,255,255,.6)", lineHeight:1.7 }}>
+                      {editType === "ingredients"
+                        ? "Vend pakken om og find listen der starter med 'Ingredienser:'. Hold telefonen stille og sørg for god belysning."
+                        : editType === "nutrition"
+                        ? "Find tabellen med energi, fedt, protein osv. Hold telefonen parallelt med pakken for skarpest billede."
+                        : "Hold produktet mod en lys baggrund. Sørg for at stregkoden og produktnavnet er synlige."}
+                    </div>
+                  </div>
+
+                  {/* Tips */}
+                  <div style={{ background:"var(--paper2)", borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
+                    <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>💡 Tips til et godt billede</div>
+                    {["Hold telefonen vandret og i armslængde", "Sørg for god belysning — undgå skygger", "Hold billedet skarpt — vent til kameraet fokuserer"].map((tip, i) => (
+                      <div key={i} style={{ display:"flex", gap:8, alignItems:"center", marginBottom: i < 2 ? 6 : 0 }}>
+                        <div style={{ width:18, height:18, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                        <div style={{ fontSize:12, color:"var(--muted2)" }}>{tip}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Foto-knap — stor og tydelig */}
+                  <label style={{
+                    display:"flex", alignItems:"center", justifyContent:"center", gap:10,
+                    width:"100%", padding:"16px", borderRadius:14, cursor:"pointer",
+                    background:"var(--green)", border:"none", color:"#fff",
+                    fontSize:16, fontWeight:800, boxShadow:"0 4px 16px rgba(34,197,94,.3)",
+                    marginBottom:10,
+                  }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+                      <path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    Tag billede med kamera
+                    <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
+                  </label>
+
+                  <label style={{
+                    display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                    width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
+                    background:"#fff", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                    fontSize:14, fontWeight:600, marginBottom:10,
+                  }}>
+                    📁 Vælg billede fra galleri
+                    <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
+                  </label>
+
+                  <button className="btn btn-ghost btn-full btn-sm" onClick={() => { setEditStep("review"); }}>
+                    Skriv manuelt i stedet
+                  </button>
+                </div>
+              )}
+
+              {/* ── TRIN 3: Scanner ── */}
+              {editStep === "scanning" && (
+                <div className="fade-in" style={{ textAlign:"center", padding:"60px 20px" }}>
+                  <div style={{ width:64, height:64, border:"4px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 20px" }} />
+                  <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>Analyserer billede…</div>
+                  <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6 }}>
+                    Vores AI læser teksten fra dit billede.<br/>Det tager et par sekunder.
+                  </div>
+                </div>
+              )}
+
+              {/* ── TRIN 4: Gennemse og send ── */}
+              {editStep === "review" && (
+                <div className="fade-in">
+
+                  {/* Ingrediensliste / tekst */}
+                  {(editType === "ingredients" || editType === "nutrition") && (
+                    <div className="card" style={{ marginBottom:12 }}>
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>
+                          {editType === "ingredients" ? "Ingrediensliste" : "Næringsindhold"}
+                        </div>
+                        {editIngText && (
+                          <div style={{ fontSize:11, color:"var(--green)", fontWeight:700 }}>✓ Tekst fundet</div>
+                        )}
+                      </div>
+                      {editIngText ? (
+                        <div style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, padding:"10px 12px", marginBottom:10 }}>
+                          <div style={{ fontSize:11, color:"var(--green)", fontWeight:700, marginBottom:6 }}>📖 Tekst fra billedet — ret hvis nødvendigt:</div>
+                          <textarea
+                            value={editIngText}
+                            onChange={e => setEditIngText(e.target.value)}
+                            rows={6}
+                            style={{ width:"100%", background:"transparent", border:"none", outline:"none", fontFamily:"var(--f)", fontSize:12, color:"var(--ink2)", resize:"vertical", lineHeight:1.6, boxSizing:"border-box" }}
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          <div style={{ fontSize:12, color:"var(--muted)", marginBottom:8 }}>
+                            Billedet kunne ikke læses automatisk. Skriv teksten manuelt:
+                          </div>
+                          <textarea
+                            value={editIngText}
+                            onChange={e => setEditIngText(e.target.value)}
+                            rows={5}
+                            placeholder={editType === "ingredients" ? "Fx. Vand, hvede, salt, gær..." : "Fx. Energi: 250 kcal, Fedt: 5g..."}
+                            className="field"
+                            style={{ resize:"vertical", fontFamily:"var(--f)", fontSize:13, lineHeight:1.6 }}
+                          />
+                        </div>
+                      )}
+                      {/* Tag nyt billede */}
+                      <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"var(--muted)", cursor:"pointer", marginTop:4 }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        Tag nyt billede
+                        <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Produktbillede */}
+                  {editType === "image" && (
+                    <div className="card" style={{ marginBottom:12 }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>Nyt produktbillede</div>
+                      {editProductImage && (
+                        <img src={editProductImage} alt="Produkt"
+                          style={{ width:"100%", maxHeight:180, objectFit:"contain", borderRadius:10, marginBottom:10 }} />
+                      )}
+                      <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"12px", background:"var(--paper2)", border:"1.5px dashed var(--border2)", borderRadius:10, cursor:"pointer", fontSize:13, color:"var(--muted2)" }}>
+                        {editProductImage ? "📸 Tag nyt billede" : "📸 Tag billede af produktet"}
+                        <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleEditProductCapture} />
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Bemærkning */}
+                  <div className="card" style={{ marginBottom:12 }}>
+                    <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Bemærkning (valgfrit)</div>
+                    <textarea
+                      value={editNote}
+                      onChange={e => setEditNote(e.target.value)}
+                      rows={2}
+                      placeholder="Fx. Ny udgave af produktet, fejl i allergen-info..."
+                      className="field"
+                      style={{ resize:"none", fontFamily:"var(--f)", fontSize:13 }}
+                    />
+                  </div>
+
+                  {/* Info */}
+                  <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 12px", background:"var(--paper2)", borderRadius:10, marginBottom:14 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}>
+                      <circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M12 16v-4M12 8h.01"/>
+                    </svg>
+                    <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>
+                      Dit forslag gennemgås af vores team inden det publiceres. Tak for din hjælp!
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={submit}
+                    disabled={editType === "ingredients" && !editIngText.trim()}
+                    style={{ width:"100%", background:"var(--ink)", color:"#fff", border:"none",
+                      borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15,
+                      fontWeight:800, cursor:"pointer", marginBottom:8,
+                      opacity: (editType === "ingredients" && !editIngText.trim()) ? 0.4 : 1 }}>
+                    Send forslag ✓
+                  </button>
+                  <button className="btn btn-ghost btn-full" onClick={() => setScreen(SCREENS.RESULT)}>Annuller</button>
+                </div>
+              )}
+
+              {/* ── TRIN 5: Sender ── */}
+              {editStep === "sending" && (
+                <div className="fade-in" style={{ textAlign:"center", padding:"60px 20px" }}>
+                  <div style={{ width:64, height:64, border:"4px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 20px" }} />
+                  <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Sender…</div>
+                </div>
+              )}
+
+              {/* ── TRIN 6: Tak! ── */}
+              {editStep === "done" && (
+                <div className="fade-in" style={{ textAlign:"center", padding:"48px 20px" }}>
+                  <div style={{ width:72, height:72, borderRadius:"50%", background:"var(--green-lt)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5">
+                      <path strokeLinecap="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  </div>
+                  <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Tak for din hjælp! 🙏</div>
+                  <div style={{ fontSize:14, color:"var(--muted2)", lineHeight:1.7, marginBottom:28 }}>
+                    Dit forslag er modtaget og vil blive gennemgået af vores team snarest.
+                    Du hjælper andre med allergi med at spise trygt.
+                  </div>
+                  <button className="btn btn-primary btn-full" onClick={() => setScreen(SCREENS.RESULT)}>
+                    Tilbage til produktet
+                  </button>
+                </div>
+              )}
+
+            </div>
+          );
+        })()}
+
+        {/* ALLERGEN SUBTYPE MODAL */}
+        {activeSubtypeModal && (
+          <SubtypeModal
+            allergenId={activeSubtypeModal}
+            selectedSubtypes={allergenSubtypes[activeSubtypeModal] || []}
+            onToggle={(id) => setAllergenSubtypes(s => {
+              const cur = s[activeSubtypeModal] || [];
+              return { ...s, [activeSubtypeModal]: cur.includes(id) ? cur.filter(x=>x!==id) : [...cur, id] };
+            })}
+            onClose={() => setActiveSubtypeModal(null)}
+          />
+        )}
+
         {/* BUNDNAVIGATION */}
         {!isOnboard && !madpasWaiterView && (
-          <nav className="bottom-nav">
+          <nav className="bottom-nav" role="navigation" aria-label="Hovednavigation">
             {[
-              [SCREENS.HOME,    "🏠", "Hjem"],
-              [SCREENS.RECIPES, "🍽️", "Opskrifter"],
-              [SCREENS.LIST,    "🛒", "Liste"],
-              [SCREENS.PROFILE, "👤", "Profil"],
+              [SCREENS.RECIPES, "recipes",  "Opskrifter"],
+              [SCREENS.LIST,    "cart",     "Indkøbsliste"],
+              [SCREENS.HOME,    "home",     "Hjem"],
+              [SCREENS.MADPAS,  "globe",    "Madpas"],
+              [SCREENS.PROFILE, "profile",  "Profil"],
             ].map(([s,icon,lbl]) => (
               <div key={s} className={`nav-item${(
                 screen===s ||
                 (screen===SCREENS.RESULT && s===SCREENS.HOME) ||
                 (screen===SCREENS.NOTFOUND && s===SCREENS.HOME) ||
                 (screen===SCREENS.SUBMITTED && s===SCREENS.HOME) ||
-                (screen===SCREENS.SCAN && s===SCREENS.HOME) ||
                 (screen===SCREENS.SEARCH && s===SCREENS.HOME) ||
                 (screen===SCREENS.HISTORY && s===SCREENS.PROFILE) ||
                 (screen===SCREENS.FAVORITES && s===SCREENS.PROFILE) ||
-                (screen===SCREENS.MADPAS && s===SCREENS.PROFILE) ||
                 (screen===SCREENS.FAMILY && s===SCREENS.PROFILE) ||
                 (screen===SCREENS.ADMIN && s===SCREENS.PROFILE)
-              )?" active":""}`} onClick={() => {
-                setScreen(s);
-              }}>
-                <div className="nav-icon">{icon}</div>
+              )?" active":""}`}
+                onClick={() => setScreen(s)}
+                role="button"
+                aria-label={lbl}
+                aria-current={screen===s ? "page" : undefined}
+                tabIndex={0}
+                onKeyDown={e => e.key === "Enter" && setScreen(s)}>
+                <div className="nav-icon"><Icon name={icon} size={22} /></div>
                 <div className="nav-lbl">{lbl}</div>
               </div>
             ))}
@@ -3467,3 +7041,4 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     </>
   );
 }
+
