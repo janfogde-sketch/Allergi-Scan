@@ -2242,15 +2242,16 @@ export default function EatSafe() {
         saveTokens(access, refresh, uid);
 
         // Tjek om brugeren er ny — hent profil fra Supabase
-        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,email`, {
+        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,created_at,onboarding_completed`, {
           headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${access}`, "Accept": "application/json" },
         })
           .then(r => r.json())
           .then(data => {
             const profile = data?.[0];
-            // Ny bruger: ingen navn sat endnu
-            if (!profile?.name) {
-              // Preudfyld email fra token metadata
+            const createdAt = profile?.created_at ? new Date(profile.created_at) : null;
+            // Ny bruger = onboarding ikke gennemført ELLER oprettet inden for 2 min
+            const isNew = !profile || profile.onboarding_completed === false || !createdAt || (Date.now() - createdAt.getTime() < 120000);
+            if (isNew) {
               const meta = payload.user_metadata || {};
               setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "" }));
               setOnboardStep(1);
@@ -2804,7 +2805,19 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     // step styres af knappen
   };
 
-  const finishOnboard = () => { setScreen(SCREENS.HOME); setEditMode(false); };
+  const finishOnboard = async () => {
+    // Marker onboarding som gennemført
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type":"application/json", "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Prefer":"return=minimal" },
+        body: JSON.stringify({ onboarding_completed: true }),
+      });
+    } catch {}
+    setScreen(SCREENS.HOME);
+    setEditMode(false);
+    setIsOAuth(false);
+  };
 
   // ── SCANNING ───────────────────────────────────────────────────────────────
   const allActive = useCallback(() => {
