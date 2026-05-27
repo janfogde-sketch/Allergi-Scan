@@ -6433,23 +6433,31 @@ ${openTicket.description}`;
             {/* ── TICKETS ── */}
             {adminSection === "tickets" && (
               <div className="fade-in">
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:6, marginBottom:14 }}>
+                {/* Status tæller grid — klikbar filter */}
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:6, marginBottom:12 }}>
                   {[
+                    { status:"all",         label:"Alle",   color:"var(--ink)" },
                     { status:"open",        label:"Åbne",   color:"var(--red)" },
                     { status:"in_progress", label:"I gang", color:"var(--amber)" },
                     { status:"resolved",    label:"Løst",   color:"var(--green)" },
                     { status:"closed",      label:"Lukket", color:"var(--muted)" },
-                  ].map(s => (
-                    <div key={s.status} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:10, padding:"10px 8px", textAlign:"center" }}>
-                      <div style={{ fontSize:20, fontWeight:900, color:s.color }}>{adminTickets.filter(t => t.status === s.status).length}</div>
-                      <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase" }}>{s.label}</div>
-                    </div>
-                  ))}
+                  ].map(s => {
+                    const count = s.status === "all" ? adminTickets.length : adminTickets.filter(t => t.status === s.status).length;
+                    const isActive = adminTicketFilter === s.status;
+                    return (
+                      <div key={s.status} onClick={() => setAdminTicketFilter(s.status)}
+                        style={{ background: isActive ? s.color : "#fff", border:`1.5px solid ${isActive ? s.color : "var(--border)"}`, borderRadius:10, padding:"10px 6px", textAlign:"center", cursor:"pointer", transition:"all .15s",
+                          gridColumn: s.status === "all" ? "1 / -1" : "auto" }}>
+                        <div style={{ fontSize:18, fontWeight:900, color: isActive ? "#fff" : s.color }}>{count}</div>
+                        <div style={{ fontSize:9, color: isActive ? "rgba(255,255,255,.8)" : "var(--muted)", fontWeight:700, textTransform:"uppercase" }}>{s.label}</div>
+                      </div>
+                    );
+                  })}
                 </div>
                 {ticketsLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
                 {!ticketsLoading && adminTickets.length === 0 && <div style={{ textAlign:"center", padding:"48px 0" }}><div style={{ fontSize:48, marginBottom:12 }}>🎉</div><div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>Ingen tickets</div></div>}
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {adminTickets.map(t => {
+                  {adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter).map(t => {
                     const typeConfig = { bug:{emoji:"🐛",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{emoji:"🎨",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{emoji:"💡",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{emoji:"📦",color:"var(--ink2)",bg:"var(--paper2)",label:"Indhold"}, crash:{emoji:"💥",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{emoji:"✨",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
                     const cfg = typeConfig[t.type] || typeConfig.bug;
                     const statusColor = t.status==="open"?"var(--red)":t.status==="in_progress"?"var(--amber)":t.status==="resolved"?"var(--green)":"var(--muted)";
