@@ -2125,6 +2125,7 @@ export default function EatSafe() {
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [openAdminUser, setOpenAdminUser] = useState(null);
   const [userSearch, setUserSearch] = useState("");
   const [userSearchParam, setUserSearchParam] = useState("all"); // all | name | email | role | onboarding
   const [openSubmission, setOpenSubmission] = useState(null);
