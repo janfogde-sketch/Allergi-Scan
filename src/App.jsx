@@ -2207,6 +2207,7 @@ export default function EatSafe() {
   const [notFoundStep, setNotFoundStep] = useState(1); // 1=forside, 2=ingredienser, 3=bekræft
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [tourIdx, setTourIdx] = useState(0);
   const [isOAuth, setIsOAuth] = useState(false);
   const [feedbackType, setFeedbackType] = useState("bug");
   const [feedbackText, setFeedbackText] = useState("");
@@ -3940,7 +3941,6 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                       ),
                     },
                   ];
-                  const [tourIdx, setTourIdx] = React.useState(0);
                   const f = features[tourIdx];
                   return (
                     <div style={{ marginBottom:4 }}>
