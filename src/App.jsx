@@ -4509,29 +4509,29 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {/* ══ HJÆLP MODAL ══ */}
         {helpOpen && (() => {
           const helpContent = {
-            [SCREENS.HOME]: { title:"📷 Scanner", tips:[
+            "home": { title:"📷 Scanner", tips:[
               { icon:"📱", title:"Skan stregkode", desc:"Tryk på scan-feltet og hold kameraet roligt over stregkoden. Appen scanner automatisk." },
               { icon:"🔍", title:"Søg manuelt", desc:"Kan du ikke scanne? Brug søgefeltet til at finde produkter ved navn." },
               { icon:"⚡", title:"Hurtig scanning", desc:"God belysning og rolig hånd giver hurtigere og mere præcist resultat." },
               { icon:"📜", title:"Historik", desc:"Dine seneste scanninger gemmes automatisk — find dem under Profil." },
             ]},
-            [SCREENS.RECIPES]: { title:"🍝 Opskrifter", tips:[
+            "recipes": { title:"🍝 Opskrifter", tips:[
               { icon:"🔍", title:"Søg og filtrer", desc:"Søg på navn eller vælg kategori. Slå 'Kun sikre' til for at skjule opskrifter med dine allergener." },
               { icon:"❤️", title:"Favoritter", desc:"Tryk hjerte-ikonet for at gemme en opskrift til Favoritter-fanen." },
               { icon:"👤", title:"Portionsjustering", desc:"Åbn en opskrift og tryk + / − for at skalere ingredienser automatisk." },
               { icon:"🛒", title:"Indkøbsliste", desc:"Tryk 'Tilføj til indkøbsliste' for at sende ingredienser direkte til din liste." },
             ]},
-            [SCREENS.LIST]: { title:"🛒 Indkøbsliste", tips:[
+            "list": { title:"🛒 Indkøbsliste", tips:[
               { icon:"✏️", title:"Tilføj varer", desc:"Skriv en vare og tryk Tilføj — eller tilføj direkte fra en opskrift." },
               { icon:"✓", title:"Afkryds varer", desc:"Tryk på en vare for at markere den som købt." },
               { icon:"🗑️", title:"Ryd listen", desc:"Brug 'Ryd' for at fjerne alle afkrydsede varer på én gang." },
             ]},
-            [SCREENS.PROFILE]: { title:"👤 Profil & præferencer", tips:[
+            "profile": { title:"👤 Profil & præferencer", tips:[
               { icon:"🚨", title:"Allergi vs. intolerance", desc:"Tryk én gang = intolerance (gul advarsel). To gange = allergi (rød advarsel)." },
               { icon:"👨‍👩‍👧", title:"Familie", desc:"Opret profiler for børn og partner — se allergencheck for alle på én gang." },
               { icon:"✏️", title:"E-numre og diæter", desc:"Brug 'Tilføj eget' for intoleranser, E-numre eller diæter der ikke er på listen." },
             ]},
-            [SCREENS.MADPAS]: { title:"🌍 Madpas", tips:[
+            "madpas": { title:"🌍 Madpas", tips:[
               { icon:"🌐", title:"Vælg sprog", desc:"Vælg sproget for landet du besøger. EatSafe oversætter dine allergier automatisk." },
               { icon:"📋", title:"Vis til tjeneren", desc:"Tryk 'Vis til tjener' for en stor, tydelig skærm du kan vise restaurantpersonalet." },
               { icon:"🔊", title:"Oplæsning", desc:"Tryk højttalerikonet for at høre udtalen på det lokale sprog." },
@@ -7348,7 +7348,7 @@ ${openTicket.description}`;
                         </div>
                       </div>
                       <div style={{ height:6, background:"var(--paper2)", borderRadius:6, overflow:"hidden" }}>
-                        <div style={{ height:"100%", width:`${pct}%`, background: doneTrin===steps.length?"var(--green)":"var(--ink)", borderRadius:6, transition:"width .4s" }} />
+                        <div style={{ height:"100%", width:(pct)+"%", background: doneTrin===steps.length?"var(--green)":"var(--ink)", borderRadius:6, transition:"width .4s" }} />
                       </div>
                     </div>
                   </div>
