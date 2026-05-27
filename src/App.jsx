@@ -3577,6 +3577,12 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
             <button className="welcome-btn" onClick={() => { setAuthTab("signup"); setScreen(SCREENS.LOGIN); }}>Opret gratis konto →</button>
             <button className="welcome-btn-ghost" onClick={() => { setAuthTab("login"); setScreen(SCREENS.LOGIN); }}>Jeg har allerede en konto</button>
+
+            {/* Privacy policy link */}
+            <div style={{ marginTop:24, fontSize:11, color:"var(--muted)", lineHeight:1.6 }}>
+              Ved at oprette en konto accepterer du vores{" "}
+              <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:600 }}>privatlivspolitik</a>
+            </div>
           </div>
         )}
 
