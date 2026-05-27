@@ -2595,7 +2595,12 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     setAuthError("");
     try {
       const redirectTo = "https://eatsafe.dk/";
-      window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=${provider}&redirect_to=${encodeURIComponent(redirectTo)}`;
+      const params = new URLSearchParams({
+        provider,
+        redirect_to: redirectTo,
+        ...(provider === "google" ? { prompt: "select_account" } : {}),
+      });
+      window.location.href = `${SUPABASE_URL}/auth/v1/authorize?${params.toString()}`;
     } catch (e) {
       setAuthError(`${provider} login fejlede: ${e.message}`);
       setAuthLoading(false);
