@@ -2524,6 +2524,8 @@ export default function EatSafe() {
     }
     setDeletingAccount(false);
   };
+
+  const loadAdminStats = async () => {
     try {
       const h = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json", "Prefer": "count=exact" };
       const hNoCount = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
