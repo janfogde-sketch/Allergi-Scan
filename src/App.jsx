@@ -2122,7 +2122,9 @@ export default function EatSafe() {
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminUsersLoading, setAdminUsersLoading] = useState(false);
   const [adminTicketFilter, setAdminTicketFilter] = useState("all");
-  const [openAdminUser, setOpenAdminUser] = useState(null);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [userSearch, setUserSearch] = useState("");
   const [userSearchParam, setUserSearchParam] = useState("all"); // all | name | email | role | onboarding
   const [openSubmission, setOpenSubmission] = useState(null);
@@ -2499,7 +2501,29 @@ export default function EatSafe() {
     setSubmissionsLoading(false);
   };
 
-  const loadAdminStats = async () => {
+  const deleteOwnAccount = async () => {
+    if (deleteConfirmText.toLowerCase() !== "slet") return;
+    setDeletingAccount(true);
+    try {
+      // Slet relaterede data
+      const h = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}` };
+      await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/shopping_lists?owner_id=eq.${userId}`, { method:"DELETE", headers:h }),
+        fetch(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, { method:"DELETE", headers:h }),
+        fetch(`${SUPABASE_URL}/rest/v1/family_members?user_id=eq.${userId}`, { method:"DELETE", headers:h }),
+        fetch(`${SUPABASE_URL}/rest/v1/scan_history?user_id=eq.${userId}`, { method:"DELETE", headers:h }),
+        fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?submitted_by=eq.${userId}`, { method:"DELETE", headers:h }),
+      ]);
+      // Slet bruger fra public.users
+      await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, { method:"DELETE", headers:h });
+      // Log ud
+      clearAuth();
+      setShowDeleteAccount(false);
+    } catch (e) {
+      alert("Fejl: " + e.message + "\nKontakt support@eatsafe.dk");
+    }
+    setDeletingAccount(false);
+  };
     try {
       const h = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json", "Prefer": "count=exact" };
       const hNoCount = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
@@ -4579,6 +4603,60 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
           );
         })()}
 
+        {/* ══ SLET KONTO MODAL ══ */}
+        {showDeleteAccount && (
+          <div style={{ position:"fixed", inset:0, zIndex:9997, background:"rgba(0,0,0,.6)", display:"flex", alignItems:"flex-end" }}
+            onClick={e => e.target === e.currentTarget && setShowDeleteAccount(false)}>
+            <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"24px 16px 40px", width:"100%" }}
+              onClick={e => e.stopPropagation()}>
+
+              <div style={{ textAlign:"center", marginBottom:20 }}>
+                <div style={{ fontSize:48, marginBottom:10 }}>⚠️</div>
+                <div style={{ fontSize:19, fontWeight:900, color:"var(--red)", marginBottom:8 }}>Slet din konto</div>
+                <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.7 }}>
+                  Dette sletter permanent alle dine data — allergier, familie, historik og præferencer. Handlingen kan ikke fortrydes.
+                </div>
+              </div>
+
+              {/* Hvad slettes */}
+              <div style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, padding:"12px 14px", marginBottom:16 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--red)", marginBottom:8 }}>FØLGENDE DATA SLETTES:</div>
+                {["Din profil og login","Allergier og præferencer","Familiemedlemmer","Scanningshistorik","Indkøbslister","Feedback og tickets"].map(item => (
+                  <div key={item} style={{ fontSize:12, color:"var(--red)", padding:"3px 0", display:"flex", gap:8 }}>
+                    <span>✗</span><span>{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bekræftelse */}
+              <div style={{ marginBottom:14 }}>
+                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>
+                  Skriv <strong>"slet"</strong> for at bekræfte:
+                </div>
+                <input
+                  value={deleteConfirmText}
+                  onChange={e => setDeleteConfirmText(e.target.value)}
+                  placeholder="slet"
+                  autoCapitalize="none"
+                  style={{ width:"100%", padding:"13px 14px", border:`1.5px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"#fff", color:"var(--ink)" }}
+                />
+              </div>
+
+              <button onClick={deleteOwnAccount}
+                disabled={deleteConfirmText.toLowerCase() !== "slet" || deletingAccount}
+                style={{ width:"100%", padding:"15px", background: deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"#fff", cursor: deleteConfirmText.toLowerCase()==="slet" ? "pointer" : "not-allowed", marginBottom:10 }}>
+                {deletingAccount ? "Sletter…" : "🗑️ Slet min konto permanent"}
+              </button>
+
+              <button onClick={() => setShowDeleteAccount(false)}
+                style={{ width:"100%", padding:"13px", background:"none", border:"none", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--muted)", cursor:"pointer" }}>
+                Annullér — behold min konto
+              </button>
+
+            </div>
+          </div>
+        )}
+
         {/* ══ FEEDBACK MODAL ══ */}
         {feedbackOpen && (
           <div style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
@@ -6081,7 +6159,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                   style={{ flex:1, padding:"11px", background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
                   Log ud
                 </button>
-                <button onClick={() => { if(window.confirm("Er du sikker? Dette kan ikke fortrydes.")) alert("Kontakt support@eatsafe.dk for at slette konto."); }}
+                <button onClick={() => { setShowDeleteAccount(true); setDeleteConfirmText(""); }}
                   style={{ flex:1, padding:"11px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
                   Slet konto
                 </button>
@@ -6255,28 +6333,24 @@ ${openTicket.description}`;
               </button>
             </div>
 
-            {/* Sektion tabs */}
-            <div style={{ display:"flex", gap:4, marginBottom:16, background:"var(--paper2)", padding:4, borderRadius:12 }}>
+            {/* Sektion tabs — ap-chip stil */}
+            <div style={{ display:"flex", flexWrap:"wrap", gap:7, marginBottom:16 }}>
               {[
-                { id:"dashboard",   label:"📊" },
-                { id:"users",       label:"👥" },
-                { id:"submissions", label:"📦" },
-                { id:"tickets",     label:"🐛" },
+                { id:"dashboard",   label:"📊 Dashboard" },
+                { id:"users",       label:"👥 Brugere" },
+                { id:"submissions", label:"📦 Indsendelser" },
+                { id:"tickets",     label:"🐛 Tickets" },
               ].map(s => (
-                <button key={s.id} onClick={() => {
-                  setAdminSection(s.id);
-                  if (s.id === "submissions") loadSubmissions(submissionFilter);
-                  if (s.id === "tickets") loadTickets();
-                  if (s.id === "dashboard") loadAdminStats();
-                  if (s.id === "users") loadAdminUsers();
-                }}
-                  style={{ flex:1, padding:"10px 4px", borderRadius:9, border:"none",
-                    background: adminSection===s.id ? "#fff" : "transparent",
-                    boxShadow: adminSection===s.id ? "0 1px 4px rgba(0,0,0,.08)" : "none",
-                    fontFamily:"var(--f)", fontSize:16, fontWeight:700,
-                    color: adminSection===s.id ? "var(--ink)" : "var(--muted)", cursor:"pointer" }}>
+                <div key={s.id} className={`ap-chip${adminSection===s.id ? " on" : ""}`}
+                  onClick={() => {
+                    setAdminSection(s.id);
+                    if (s.id === "submissions") loadSubmissions(submissionFilter);
+                    if (s.id === "tickets") loadTickets();
+                    if (s.id === "dashboard") loadAdminStats();
+                    if (s.id === "users") loadAdminUsers();
+                  }}>
                   {s.label}
-                </button>
+                </div>
               ))}
             </div>
 
@@ -6424,12 +6498,138 @@ ${openTicket.description}`;
               </div>
             )}
 
-            {/* ── BRUGER DETALJE MODAL ── */}
-            {openAdminUser && (
-              <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
-                onClick={e => e.target === e.currentTarget && setOpenAdminUser(null)}>
-                <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
-                  onClick={e => e.stopPropagation()}>
+            {/* ── SUBMISSIONS ── */}
+
+            {/* ── SUBMISSIONS ── */}
+            {adminSection === "submissions" && (
+              <div className="fade-in">
+                <div style={{ display:"flex", gap:6, marginBottom:12 }}>
+                  {[
+                    { val:"pending",  label:"⏳ Afventer", color:"var(--amber)" },
+                    { val:"approved", label:"✅ Godkendt",  color:"var(--green)" },
+                    { val:"rejected", label:"❌ Afvist",    color:"var(--red)" },
+                  ].map(({ val, label, color }) => (
+                    <button key={val} onClick={() => { setSubmissionFilter(val); loadSubmissions(val); }}
+                      style={{ flex:1, padding:"9px 4px", borderRadius:10, border:`1.5px solid ${submissionFilter===val ? color : "var(--border)"}`,
+                        background: submissionFilter===val ? (val==="pending"?"var(--amber-lt)":val==="approved"?"var(--green-lt)":"var(--red-lt)") : "#fff",
+                        fontFamily:"var(--f)", fontSize:11, fontWeight:700,
+                        color: submissionFilter===val ? color : "var(--muted)", cursor:"pointer" }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {submissionsLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
+                {!submissionsLoading && submissions.length === 0 && (
+                  <div style={{ textAlign:"center", padding:"48px 0" }}>
+                    <div style={{ fontSize:48, marginBottom:12 }}>{submissionFilter==="pending"?"🎉":"📭"}</div>
+                    <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>{submissionFilter==="pending" ? "Ingen afventer" : "Ingen indsendelser"}</div>
+                  </div>
+                )}
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  {submissions.map(s => {
+                    const flags = s.ai_parsed_data || {};
+                    const dangerAllergens = ALLERGENS.filter(a => flags[a.id]==="yes" || flags[a.id]===true);
+                    const daysSince = Math.floor((Date.now() - new Date(s.created_at).getTime()) / 86400000);
+                    return (
+                      <div key={s.id} onClick={() => { setOpenSubmission(s); setEditingSubmission({ name: s.ai_parsed_data?.name || s.product_name || "", brand: s.ai_parsed_data?.brand || s.brand || "", allergen_flags: s.ai_parsed_data || {} }); }}
+                        style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", cursor:"pointer", boxShadow:"var(--sh)" }}>
+                        <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
+                          <div style={{ width:48, height:48, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>📦</div>
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</div>
+                            <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6, fontFamily:"monospace" }}>EAN: {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`}</div>
+                            <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                              {dangerAllergens.slice(0,3).map(a => <span key={a.id} style={{ fontSize:10, padding:"2px 7px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", fontWeight:700 }}>{a.emoji} {a.label}</span>)}
+                              {dangerAllergens.length === 0 && <span style={{ fontSize:10, color:"var(--muted)" }}>Ingen allergener</span>}
+                            </div>
+                          </div>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── TICKETS ── */}
+            {adminSection === "tickets" && (
+              <div className="fade-in">
+                {/* Status tæller grid — klikbar filter */}
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:6, marginBottom:12 }}>
+                  {[
+                    { status:"all",         label:"Alle",   color:"var(--ink)" },
+                    { status:"open",        label:"Åbne",   color:"var(--red)" },
+                    { status:"in_progress", label:"I gang", color:"var(--amber)" },
+                    { status:"resolved",    label:"Løst",   color:"var(--green)" },
+                    { status:"closed",      label:"Lukket", color:"var(--muted)" },
+                  ].map(s => {
+                    const count = s.status === "all" ? adminTickets.length : adminTickets.filter(t => t.status === s.status).length;
+                    const isActive = adminTicketFilter === s.status;
+                    return (
+                      <div key={s.status} onClick={() => setAdminTicketFilter(s.status)}
+                        style={{ background: isActive ? s.color : "#fff", border:`1.5px solid ${isActive ? s.color : "var(--border)"}`, borderRadius:10, padding:"10px 6px", textAlign:"center", cursor:"pointer", transition:"all .15s",
+                          gridColumn: s.status === "all" ? "1 / -1" : "auto" }}>
+                        <div style={{ fontSize:18, fontWeight:900, color: isActive ? "#fff" : s.color }}>{count}</div>
+                        <div style={{ fontSize:9, color: isActive ? "rgba(255,255,255,.8)" : "var(--muted)", fontWeight:700, textTransform:"uppercase" }}>{s.label}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {ticketsLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
+                {!ticketsLoading && adminTickets.length === 0 && <div style={{ textAlign:"center", padding:"48px 0" }}><div style={{ fontSize:48, marginBottom:12 }}>🎉</div><div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>Ingen tickets</div></div>}
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  {adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter).map(t => {
+                    const typeConfig = { bug:{emoji:"🐛",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{emoji:"🎨",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{emoji:"💡",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{emoji:"📦",color:"var(--ink2)",bg:"var(--paper2)",label:"Indhold"}, crash:{emoji:"💥",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{emoji:"✨",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
+                    const cfg = typeConfig[t.type] || typeConfig.bug;
+                    const statusColor = t.status==="open"?"var(--red)":t.status==="in_progress"?"var(--amber)":t.status==="resolved"?"var(--green)":"var(--muted)";
+                    const statusLabel = t.status==="open"?"Åben":t.status==="in_progress"?"I gang":t.status==="resolved"?"Løst":"Lukket";
+                    return (
+                      <div key={t.id} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
+                        <div style={{ display:"flex", alignItems:"flex-start", gap:10 }} onClick={() => setOpenTicket(t)}>
+                          <div style={{ width:38, height:38, borderRadius:10, background:cfg.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{cfg.emoji}</div>
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
+                              <span style={{ fontSize:11, fontWeight:700, color:cfg.color, background:cfg.bg, padding:"2px 8px", borderRadius:100 }}>{cfg.label}</span>
+                            </div>
+                            <div style={{ fontSize:13, color:"var(--ink)", lineHeight:1.4, marginBottom:4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{t.description}</div>
+                            <div style={{ fontSize:10, color:"var(--muted)" }}>{t.context?.user_name || "Anonym"} · {t.context?.screen} · {new Date(t.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</div>
+                          </div>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:4 }}><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
+                        </div>
+                        {/* Status toggle direkte på kortet */}
+                        <div style={{ display:"flex", gap:5, marginTop:10, paddingTop:10, borderTop:"1px solid var(--border)" }}>
+                          {[
+                            { val:"open",        label:"Åben",   color:"var(--red)" },
+                            { val:"in_progress", label:"I gang", color:"var(--amber)" },
+                            { val:"resolved",    label:"Løst",   color:"var(--green)" },
+                            { val:"closed",      label:"Lukket", color:"var(--muted)" },
+                          ].map(s => (
+                            <button key={s.val} onClick={() => updateTicketStatus(t.id, s.val)}
+                              style={{ flex:1, padding:"5px 2px", borderRadius:8, border:`1px solid ${t.status===s.val ? s.color : "var(--border)"}`,
+                                background: t.status===s.val ? s.color : "#fff",
+                                fontFamily:"var(--f)", fontSize:9, fontWeight:700,
+                                color: t.status===s.val ? "#fff" : "var(--muted)", cursor:"pointer" }}>
+                              {s.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+          </div>
+        )}
+
+
+        {screen === SCREENS.ADMIN && openAdminUser && (
+          <div style={{ position:"fixed", inset:0, zIndex:9992, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
+            onClick={e => e.target === e.currentTarget && setOpenAdminUser(null)}>
+            <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
+              onClick={e => e.stopPropagation()}>
 
                   {/* Header */}
                   <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
@@ -6574,130 +6774,6 @@ ${openTicket.description}`;
                 </div>
               </div>
             )}
-
-            {/* ── SUBMISSIONS ── */}
-            {adminSection === "submissions" && (
-              <div className="fade-in">
-                <div style={{ display:"flex", gap:6, marginBottom:12 }}>
-                  {[
-                    { val:"pending",  label:"⏳ Afventer", color:"var(--amber)" },
-                    { val:"approved", label:"✅ Godkendt",  color:"var(--green)" },
-                    { val:"rejected", label:"❌ Afvist",    color:"var(--red)" },
-                  ].map(({ val, label, color }) => (
-                    <button key={val} onClick={() => { setSubmissionFilter(val); loadSubmissions(val); }}
-                      style={{ flex:1, padding:"9px 4px", borderRadius:10, border:`1.5px solid ${submissionFilter===val ? color : "var(--border)"}`,
-                        background: submissionFilter===val ? (val==="pending"?"var(--amber-lt)":val==="approved"?"var(--green-lt)":"var(--red-lt)") : "#fff",
-                        fontFamily:"var(--f)", fontSize:11, fontWeight:700,
-                        color: submissionFilter===val ? color : "var(--muted)", cursor:"pointer" }}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                {submissionsLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
-                {!submissionsLoading && submissions.length === 0 && (
-                  <div style={{ textAlign:"center", padding:"48px 0" }}>
-                    <div style={{ fontSize:48, marginBottom:12 }}>{submissionFilter==="pending"?"🎉":"📭"}</div>
-                    <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>{submissionFilter==="pending" ? "Ingen afventer" : "Ingen indsendelser"}</div>
-                  </div>
-                )}
-                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {submissions.map(s => {
-                    const flags = s.ai_parsed_data || {};
-                    const dangerAllergens = ALLERGENS.filter(a => flags[a.id]==="yes" || flags[a.id]===true);
-                    const daysSince = Math.floor((Date.now() - new Date(s.created_at).getTime()) / 86400000);
-                    return (
-                      <div key={s.id} onClick={() => { setOpenSubmission(s); setEditingSubmission({ name: s.ai_parsed_data?.name || s.product_name || "", brand: s.ai_parsed_data?.brand || s.brand || "", allergen_flags: s.ai_parsed_data || {} }); }}
-                        style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", cursor:"pointer", boxShadow:"var(--sh)" }}>
-                        <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
-                          <div style={{ width:48, height:48, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>📦</div>
-                          <div style={{ flex:1, minWidth:0 }}>
-                            <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</div>
-                            <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6, fontFamily:"monospace" }}>EAN: {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`}</div>
-                            <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
-                              {dangerAllergens.slice(0,3).map(a => <span key={a.id} style={{ fontSize:10, padding:"2px 7px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", fontWeight:700 }}>{a.emoji} {a.label}</span>)}
-                              {dangerAllergens.length === 0 && <span style={{ fontSize:10, color:"var(--muted)" }}>Ingen allergener</span>}
-                            </div>
-                          </div>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* ── TICKETS ── */}
-            {adminSection === "tickets" && (
-              <div className="fade-in">
-                {/* Status tæller grid — klikbar filter */}
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:6, marginBottom:12 }}>
-                  {[
-                    { status:"all",         label:"Alle",   color:"var(--ink)" },
-                    { status:"open",        label:"Åbne",   color:"var(--red)" },
-                    { status:"in_progress", label:"I gang", color:"var(--amber)" },
-                    { status:"resolved",    label:"Løst",   color:"var(--green)" },
-                    { status:"closed",      label:"Lukket", color:"var(--muted)" },
-                  ].map(s => {
-                    const count = s.status === "all" ? adminTickets.length : adminTickets.filter(t => t.status === s.status).length;
-                    const isActive = adminTicketFilter === s.status;
-                    return (
-                      <div key={s.status} onClick={() => setAdminTicketFilter(s.status)}
-                        style={{ background: isActive ? s.color : "#fff", border:`1.5px solid ${isActive ? s.color : "var(--border)"}`, borderRadius:10, padding:"10px 6px", textAlign:"center", cursor:"pointer", transition:"all .15s",
-                          gridColumn: s.status === "all" ? "1 / -1" : "auto" }}>
-                        <div style={{ fontSize:18, fontWeight:900, color: isActive ? "#fff" : s.color }}>{count}</div>
-                        <div style={{ fontSize:9, color: isActive ? "rgba(255,255,255,.8)" : "var(--muted)", fontWeight:700, textTransform:"uppercase" }}>{s.label}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-                {ticketsLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
-                {!ticketsLoading && adminTickets.length === 0 && <div style={{ textAlign:"center", padding:"48px 0" }}><div style={{ fontSize:48, marginBottom:12 }}>🎉</div><div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>Ingen tickets</div></div>}
-                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter).map(t => {
-                    const typeConfig = { bug:{emoji:"🐛",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{emoji:"🎨",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{emoji:"💡",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{emoji:"📦",color:"var(--ink2)",bg:"var(--paper2)",label:"Indhold"}, crash:{emoji:"💥",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{emoji:"✨",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
-                    const cfg = typeConfig[t.type] || typeConfig.bug;
-                    const statusColor = t.status==="open"?"var(--red)":t.status==="in_progress"?"var(--amber)":t.status==="resolved"?"var(--green)":"var(--muted)";
-                    const statusLabel = t.status==="open"?"Åben":t.status==="in_progress"?"I gang":t.status==="resolved"?"Løst":"Lukket";
-                    return (
-                      <div key={t.id} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
-                        <div style={{ display:"flex", alignItems:"flex-start", gap:10 }} onClick={() => setOpenTicket(t)}>
-                          <div style={{ width:38, height:38, borderRadius:10, background:cfg.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{cfg.emoji}</div>
-                          <div style={{ flex:1, minWidth:0 }}>
-                            <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
-                              <span style={{ fontSize:11, fontWeight:700, color:cfg.color, background:cfg.bg, padding:"2px 8px", borderRadius:100 }}>{cfg.label}</span>
-                            </div>
-                            <div style={{ fontSize:13, color:"var(--ink)", lineHeight:1.4, marginBottom:4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{t.description}</div>
-                            <div style={{ fontSize:10, color:"var(--muted)" }}>{t.context?.user_name || "Anonym"} · {t.context?.screen} · {new Date(t.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</div>
-                          </div>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:4 }}><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
-                        </div>
-                        {/* Status toggle direkte på kortet */}
-                        <div style={{ display:"flex", gap:5, marginTop:10, paddingTop:10, borderTop:"1px solid var(--border)" }}>
-                          {[
-                            { val:"open",        label:"Åben",   color:"var(--red)" },
-                            { val:"in_progress", label:"I gang", color:"var(--amber)" },
-                            { val:"resolved",    label:"Løst",   color:"var(--green)" },
-                            { val:"closed",      label:"Lukket", color:"var(--muted)" },
-                          ].map(s => (
-                            <button key={s.val} onClick={() => updateTicketStatus(t.id, s.val)}
-                              style={{ flex:1, padding:"5px 2px", borderRadius:8, border:`1px solid ${t.status===s.val ? s.color : "var(--border)"}`,
-                                background: t.status===s.val ? s.color : "#fff",
-                                fontFamily:"var(--f)", fontSize:9, fontWeight:700,
-                                color: t.status===s.val ? "#fff" : "var(--muted)", cursor:"pointer" }}>
-                              {s.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-          </div>
-        )}
 
         {/* ══ ADMIN — ÅBEN SUBMISSION ══ */}
         {screen === SCREENS.ADMIN && openSubmission && editingSubmission && (
