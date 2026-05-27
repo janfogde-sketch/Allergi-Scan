@@ -2145,6 +2145,7 @@ export default function EatSafe() {
     try { return JSON.parse(localStorage.getItem("as_favorites") || "[]"); } catch { return []; }
   });
   const [madpasLang, setMadpasLang] = useState(() => localStorage.getItem("as_madpas_lang") || "en");
+  const [madpasProfileId, setMadpasProfileId] = useState("self");
   const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
   const mpAllergens = madpasActiveProfile ? (madpasActiveProfile.allergens || []) : allergens;
   const mpCustom = madpasActiveProfile ? (madpasActiveProfile.customAllerg || []) : customAllerg;
