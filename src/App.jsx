@@ -2776,7 +2776,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
   const loadAdminUsers = async () => {
     setAdminUsersLoading(true);
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,name,email,role,created_at,onboarding_completed&order=created_at.desc&limit=1000`, {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,name,email,role,created_at,onboarding_completed,phone,age,plan_id,preferred_stores&order=created_at.desc&limit=1000`, {
         headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json", "Prefer": "count=exact" },
       });
       const data = await res.json();
@@ -6428,51 +6428,145 @@ ${openTicket.description}`;
             {openAdminUser && (
               <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
                 onClick={e => e.target === e.currentTarget && setOpenAdminUser(null)}>
-                <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"85vh", overflowY:"auto" }}
+                <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
                   onClick={e => e.stopPropagation()}>
 
                   {/* Header */}
                   <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
-                    <div style={{ width:48, height:48, borderRadius:"50%", background: openAdminUser.role==="admin" ? "var(--ink)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, fontWeight:800, color:"#fff", flexShrink:0 }}>
+                    <div style={{ width:52, height:52, borderRadius:"50%", background: openAdminUser.role==="admin" ? "var(--ink)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800, color:"#fff", flexShrink:0 }}>
                       {(openAdminUser.name||openAdminUser.email||"?").charAt(0).toUpperCase()}
                     </div>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)" }}>{openAdminUser.name || "Ingen navn"}</div>
-                      <div style={{ fontSize:12, color:"var(--muted)" }}>{openAdminUser.email}</div>
+                      <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>{openAdminUser.name || "Ingen navn"}</div>
+                      <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{openAdminUser.email}</div>
+                      <div style={{ display:"flex", gap:6, marginTop:5 }}>
+                        <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: openAdminUser.role==="admin" ? "var(--ink)" : "var(--paper2)", color: openAdminUser.role==="admin" ? "#fff" : "var(--muted)" }}>
+                          {openAdminUser.role==="admin" ? "🛡️ Admin" : "👤 Bruger"}
+                        </span>
+                        <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: openAdminUser.onboarding_completed ? "var(--green-lt)" : "var(--amber-lt)", color: openAdminUser.onboarding_completed ? "var(--green)" : "var(--amber)" }}>
+                          {openAdminUser.onboarding_completed ? "✓ Onboarding færdig" : "⏳ Onboarding mangler"}
+                        </span>
+                      </div>
                     </div>
                     <button onClick={() => setOpenAdminUser(null)}
                       style={{ background:"var(--paper2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
                   </div>
 
                   {/* Info grid */}
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14 }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Kontoinfo</div>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:14 }}>
                     {[
-                      ["Rolle", openAdminUser.role === "admin" ? "🛡️ Admin" : "👤 Bruger"],
-                      ["Oprettet", new Date(openAdminUser.created_at).toLocaleDateString("da-DK")],
-                      ["Onboarding", openAdminUser.onboarding_completed ? "✅ Færdig" : "⏳ Ikke færdig"],
-                      ["Bruger-ID", openAdminUser.id?.slice(0,8) + "…"],
+                      ["📅 Oprettet", new Date(openAdminUser.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", year:"numeric" })],
+                      ["🔑 Login", openAdminUser.email?.includes("google") || openAdminUser.provider === "google" ? "Google OAuth" : "Email + kode"],
+                      ["📱 Telefon", openAdminUser.phone || "—"],
+                      ["🎂 Alder", openAdminUser.age ? openAdminUser.age + " år" : "—"],
+                      ["🆔 Bruger-ID", openAdminUser.id?.slice(0,12) + "…"],
+                      ["📋 Plan", openAdminUser.plan_id ? "Premium" : "Gratis"],
                     ].map(([label, val]) => (
                       <div key={label} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
-                        <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", marginBottom:3 }}>{label}</div>
-                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{val}</div>
+                        <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:3 }}>{label}</div>
+                        <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{val}</div>
                       </div>
                     ))}
                   </div>
 
-                  {/* Handlinger */}
-                  {openAdminUser.id !== userId && (
-                    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                      <button onClick={() => { updateUserRole(openAdminUser.id, openAdminUser.role==="admin" ? "user" : "admin"); setOpenAdminUser(u => ({ ...u, role: u.role==="admin" ? "user" : "admin" })); }}
-                        style={{ width:"100%", padding:"13px", background:"var(--ink)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer" }}>
-                        {openAdminUser.role==="admin" ? "→ Skift til Bruger" : "→ Skift til Admin"}
-                      </button>
-                      <button onClick={() => { deleteUser(openAdminUser.id); setOpenAdminUser(null); }}
-                        style={{ width:"100%", padding:"13px", background:"var(--red-lt)", border:"1.5px solid var(--red-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
-                        🗑️ Slet bruger
-                      </button>
-                    </div>
+                  {/* Allergener */}
+                  {openAdminUser.allergens?.length > 0 && (
+                    <>
+                      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Allergener & præferencer</div>
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:14 }}>
+                        {openAdminUser.allergens.map(id => {
+                          const a = ALLERGENS.find(x => x.id === id);
+                          return a ? <span key={id} style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", border:"1px solid var(--red-md)" }}>{a.emoji} {a.label}</span> : null;
+                        })}
+                      </div>
+                    </>
                   )}
-                  {openAdminUser.id === userId && (
+
+                  {/* Preferred stores */}
+                  {openAdminUser.preferred_stores?.length > 0 && (
+                    <>
+                      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Foretrukne butikker</div>
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:14 }}>
+                        {openAdminUser.preferred_stores.map((s,i) => (
+                          <span key={i} style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:100, background:"var(--paper2)", color:"var(--ink2)", border:"1px solid var(--border)" }}>🛒 {s}</span>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Handlinger */}
+                  {openAdminUser.id !== userId ? (
+                    <>
+                      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Handlinger</div>
+                      <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+
+                        {/* Rolle */}
+                        <button onClick={() => {
+                          const newRole = openAdminUser.role==="admin" ? "user" : "admin";
+                          updateUserRole(openAdminUser.id, newRole);
+                          setOpenAdminUser(u => ({ ...u, role: newRole }));
+                        }}
+                          style={{ width:"100%", padding:"13px", background:"var(--ink)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+                          {openAdminUser.role==="admin" ? "👤 Skift til Bruger" : "🛡️ Skift til Admin"}
+                        </button>
+
+                        {/* Onboarding */}
+                        <div style={{ display:"flex", gap:8 }}>
+                          <button onClick={async () => {
+                            await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${openAdminUser.id}`, { method:"PATCH", headers:{ "Content-Type":"application/json", "apikey":SUPABASE_ANON_KEY, "Authorization":`Bearer ${accessToken}`, "Prefer":"return=minimal" }, body: JSON.stringify({ onboarding_completed: true }) });
+                            setOpenAdminUser(u => ({ ...u, onboarding_completed: true }));
+                          }}
+                            style={{ flex:1, padding:"11px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--green)", cursor:"pointer" }}>
+                            ✅ Markér onboarding færdig
+                          </button>
+                          <button onClick={async () => {
+                            await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${openAdminUser.id}`, { method:"PATCH", headers:{ "Content-Type":"application/json", "apikey":SUPABASE_ANON_KEY, "Authorization":`Bearer ${accessToken}`, "Prefer":"return=minimal" }, body: JSON.stringify({ onboarding_completed: false }) });
+                            setOpenAdminUser(u => ({ ...u, onboarding_completed: false }));
+                          }}
+                            style={{ flex:1, padding:"11px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--amber)", cursor:"pointer" }}>
+                            🔄 Nulstil onboarding
+                          </button>
+                        </div>
+
+                        {/* Se brugerens scanninger */}
+                        <button onClick={async () => {
+                          const res = await fetch(`${SUPABASE_URL}/rest/v1/scan_history?user_id=eq.${openAdminUser.id}&select=ean,scanned_at,product_name&order=scanned_at.desc&limit=20`, { headers:{ "apikey":SUPABASE_ANON_KEY, "Authorization":`Bearer ${accessToken}`, "Accept":"application/json" } });
+                          const data = await res.json();
+                          alert(`Seneste scanninger (${data.length}):\n\n${data.map(s => `${s.product_name||s.ean} — ${new Date(s.scanned_at).toLocaleDateString("da-DK")}`).join("\n") || "Ingen scanninger"}`);
+                        }}
+                          style={{ width:"100%", padding:"11px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                          📱 Se scanningshistorik
+                        </button>
+
+                        {/* Se brugerens indsendelser */}
+                        <button onClick={() => {
+                          setOpenAdminUser(null);
+                          setAdminSection("submissions");
+                          setSubmissionFilter("pending");
+                          loadSubmissions("pending");
+                        }}
+                          style={{ width:"100%", padding:"11px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                          📦 Se indsendelser
+                        </button>
+
+                        {/* Kopiér bruger-info til Claude */}
+                        <button onClick={() => {
+                          const txt = `Bruger: ${openAdminUser.name} (${openAdminUser.email})\nRolle: ${openAdminUser.role}\nOprettet: ${new Date(openAdminUser.created_at).toLocaleDateString("da-DK")}\nOnboarding: ${openAdminUser.onboarding_completed ? "Færdig" : "Ikke færdig"}\nAllergener: ${openAdminUser.allergens?.join(", ") || "Ingen"}\nID: ${openAdminUser.id}`;
+                          navigator.clipboard?.writeText(txt).then(() => alert("Kopieret!")).catch(() => alert(txt));
+                        }}
+                          style={{ width:"100%", padding:"11px", background:"var(--ink)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"#fff", cursor:"pointer" }}>
+                          📋 Kopiér info til Claude
+                        </button>
+
+                        {/* Slet */}
+                        <button onClick={() => { deleteUser(openAdminUser.id); setOpenAdminUser(null); }}
+                          style={{ width:"100%", padding:"13px", background:"var(--red-lt)", border:"1.5px solid var(--red-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
+                          🗑️ Slet bruger permanent
+                        </button>
+                      </div>
+                    </>
+                  ) : (
                     <div style={{ padding:"12px", background:"var(--green-lt)", borderRadius:10, fontSize:13, color:"var(--green)", fontWeight:700, textAlign:"center" }}>
                       Dette er din egen konto — kan ikke ændres
                     </div>
@@ -6823,8 +6917,8 @@ ${openTicket.description}`;
         {screen === SCREENS.MADPAS && (
           <div className="mp-page fade-in">
 
-            {/* Beregn aktive allergener baseret på valgt profil */}
-            {(() => {
+            {/* TJENER-VISNING — fullscreen overlay */}
+            {madpasWaiterView && (() => {
               const lang = madpasLang;
               const rtl = MADPAS_LANGUAGES.find(l => l.code === lang)?.rtl;
               const helloText = { en:"I have food allergies.", de:"Ich habe Lebensmittelallergien.", fr:"J'ai des allergies alimentaires.", es:"Tengo alergias alimentarias.", it:"Ho allergie alimentari.", nl:"Ik heb voedselallergieën.", pt:"Tenho alergias alimentares.", pl:"Mam alergie pokarmowe.", ja:"食物アレルギーがあります。", zh:"我有食物过敏。", ar:"لدي حساسية غذائية.", tr:"Gıda alerjilerim var.", sv:"Jag har matallergier.", no:"Jeg har matallergier.", th:"ฉันมีอาการแพ้อาหาร", el:"Έχω αλλεργίες τροφίμων.", da:"Jeg har fødevareallergier." };
@@ -6966,40 +7060,22 @@ ${openTicket.description}`;
                 <div className="mp-title">Madpas</div>
                 <div className="mp-subtitle">Vis dit madpas til din tjener/ekspedient for at forklare dine ønsker.</div>
 
-                {/* Profilvælger — selv + familie */}
-                {family.length > 0 && (
-                  <div style={{ marginBottom:14 }}>
-                    <div className="mp-section-lbl">VIS MADPAS FOR</div>
-                    <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:4 }}>
-                      {/* Brugeren selv */}
-                      <button onClick={() => setMadpasProfileId("self")}
-                        style={{ flexShrink:0, display:"flex", alignItems:"center", gap:7, padding:"8px 14px", borderRadius:100,
-                          border:`1.5px solid ${madpasProfileId==="self" ? "var(--ink)" : "var(--border)"}`,
-                          background: madpasProfileId==="self" ? "var(--ink)" : "#fff",
-                          fontFamily:"var(--f)", fontSize:12, fontWeight:700,
-                          color: madpasProfileId==="self" ? "#fff" : "var(--ink2)", cursor:"pointer" }}>
-                        <div style={{ width:22, height:22, borderRadius:"50%", background: madpasProfileId==="self" ? "rgba(255,255,255,.25)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:800, color:"#fff" }}>
-                          {initials(user.name || "?")}
-                        </div>
-                        {user.name?.split(" ")[0] || "Mig"}
-                      </button>
-                      {/* Familiemedlemmer */}
-                      {family.map(m => (
-                        <button key={m.id} onClick={() => setMadpasProfileId(m.id)}
-                          style={{ flexShrink:0, display:"flex", alignItems:"center", gap:7, padding:"8px 14px", borderRadius:100,
-                            border:`1.5px solid ${madpasProfileId===m.id ? "var(--ink)" : "var(--border)"}`,
-                            background: madpasProfileId===m.id ? "var(--ink)" : "#fff",
-                            fontFamily:"var(--f)", fontSize:12, fontWeight:700,
-                            color: madpasProfileId===m.id ? "#fff" : "var(--ink2)", cursor:"pointer" }}>
-                          <div style={{ width:22, height:22, borderRadius:"50%", background: madpasProfileId===m.id ? "rgba(255,255,255,.25)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:800, color:"#fff" }}>
-                            {initials(m.name || "?")}
-                          </div>
-                          {m.name?.split(" ")[0] || "Familiemedlem"}
-                        </button>
-                      ))}
+                {/* Profilvælger — samme stil som hjemskærmen */}
+                <div style={{ marginBottom:14 }}>
+                  <div className="mp-section-lbl">VIS MADPAS FOR</div>
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+                    <div className={`ap-chip${madpasProfileId==="self" ? " on" : ""}`} onClick={() => setMadpasProfileId("self")}>
+                      <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(user.name||"Mig")}</div>
+                      {(user.name||"Mig").split(" ")[0]}
                     </div>
+                    {family.map(m => (
+                      <div key={m.id} className={`ap-chip${madpasProfileId===m.id ? " on" : ""}`} onClick={() => setMadpasProfileId(m.id)}>
+                        <div style={{width:20,height:20,borderRadius:"50%",background:m.color||"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(m.name)}</div>
+                        {m.name.split(" ")[0]}
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
 
                 {/* Sprog-dropdown */}
                 <div className="mp-section-lbl">VÆLG SPROG</div>
