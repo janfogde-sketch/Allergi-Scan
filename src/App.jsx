@@ -2118,6 +2118,7 @@ export default function EatSafe() {
   const [submissions, setSubmissions] = useState([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [adminStats, setAdminStats] = useState(null);
+  const [adminSection, setAdminSection] = useState("dashboard"); // dashboard | submissions | tickets
   const [openSubmission, setOpenSubmission] = useState(null);
   const [submissionFilter, setSubmissionFilter] = useState("pending");
   const [editingSubmission, setEditingSubmission] = useState(null);
@@ -2488,11 +2489,32 @@ export default function EatSafe() {
 
   const loadAdminStats = async () => {
     try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/admin/stats`, {
-        headers: makeHeaders(accessToken),
+      const h = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
+      const today = new Date(); today.setHours(0,0,0,0);
+      const todayISO = today.toISOString();
+
+      const [users, products, scans, submissions, families, tickets, scansToday, newUsersToday] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/users?select=id`, { headers: h }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/products?select=id`, { headers: h }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id`, { headers: h }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/product_submissions?status=eq.pending&select=id`, { headers: h }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/family_members?select=id`, { headers: h }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?status=eq.open&select=id`, { headers: h }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id&scanned_at=gte.${todayISO}`, { headers: h }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/users?select=id&created_at=gte.${todayISO}`, { headers: h }).then(r => r.json()),
+      ]);
+
+      setAdminStats({
+        total_users: Array.isArray(users) ? users.length : 0,
+        total_products: Array.isArray(products) ? products.length : 0,
+        total_scans: Array.isArray(scans) ? scans.length : 0,
+        pending_submissions: Array.isArray(submissions) ? submissions.length : 0,
+        total_families: Array.isArray(families) ? families.length : 0,
+        open_tickets: Array.isArray(tickets) ? tickets.length : 0,
+        scans_today: Array.isArray(scansToday) ? scansToday.length : 0,
+        new_users_today: Array.isArray(newUsersToday) ? newUsersToday.length : 0,
       });
-      if (data.success) setAdminStats(data.stats);
-    } catch { /* silent */ }
+    } catch (e) { console.error("loadAdminStats fejl:", e.message); }
   };
 
   const cleanOcrWithAI = async (rawText) => {
@@ -5999,7 +6021,7 @@ ${openTicket.description}`;
         )}
 
         {/* ══ ADMIN ══ */}
-        {screen === SCREENS.ADMIN && !openSubmission && (
+        {screen === SCREENS.ADMIN && !openSubmission && !openTicket && (
           <div className="screen fade-in">
 
             {/* Header */}
@@ -6009,90 +6031,134 @@ ${openTicket.description}`;
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2"><path strokeLinecap="round" d="M15 19l-7-7 7-7"/></svg>
               </button>
               <div style={{ flex:1, fontSize:18, fontWeight:900, color:"var(--ink)" }}>🛡️ Admin</div>
-              <button onClick={() => { loadSubmissions(); loadAdminStats(); }}
+              <button onClick={() => { loadAdminStats(); if (adminSection==="submissions") loadSubmissions(submissionFilter); if (adminSection==="tickets") loadTickets(); }}
                 style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:10, padding:"6px 12px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
-                🔄 Opdater
+                🔄
               </button>
             </div>
 
-            {/* Stats grid */}
-            {adminStats && (
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:14 }}>
-                {[
-                  { n:adminStats.total_users,    emoji:"👤", label:"Brugere",    color:"var(--ink)" },
-                  { n:adminStats.total_products, emoji:"📦", label:"Produkter",  color:"var(--ink)" },
-                  { n:adminStats.total_scans,    emoji:"📱", label:"Scanninger", color:"var(--ink)" },
-                  { n:adminStats.pending_submissions, emoji:"⏳", label:"Afventer", color:"var(--amber)" },
-                  { n:adminStats.total_families, emoji:"👨‍👩‍👧", label:"Familier",  color:"var(--ink)" },
-                  { n:adminStats.approved_today || 0, emoji:"✅", label:"Godkendt i dag", color:"var(--green)" },
-                ].map(({ n, emoji, label, color }) => (
-                  <div key={label} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 8px", textAlign:"center", boxShadow:"var(--sh)" }}>
-                    <div style={{ fontSize:20, marginBottom:2 }}>{emoji}</div>
-                    <div style={{ fontSize:20, fontWeight:900, color }}>{n ?? "—"}</div>
-                    <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:".4px", marginTop:2 }}>{label}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Filter tabs — indsendelser + tickets */}
-            <div style={{ display:"flex", gap:6, marginBottom:12 }}>
+            {/* Sektion tabs */}
+            <div style={{ display:"flex", gap:6, marginBottom:16, background:"var(--paper2)", padding:4, borderRadius:12 }}>
               {[
-                { val:"pending",  label:"⏳ Afventer", color:"var(--amber)" },
-                { val:"approved", label:"✅ Godkendt",  color:"var(--green)" },
-                { val:"rejected", label:"❌ Afvist",    color:"var(--red)" },
-                { val:"tickets",  label:"🐛 Tickets",  color:"var(--ink)" },
-              ].map(({ val, label, color }) => (
-                <button key={val} onClick={() => { setSubmissionFilter(val); if (val === "tickets") loadTickets(); else loadSubmissions(val); }}
-                  style={{ flex:1, padding:"9px 4px", borderRadius:10, border:`1.5px solid ${submissionFilter===val ? color : "var(--border)"}`,
-                    background: submissionFilter===val ? (val==="pending"?"var(--amber-lt)":val==="approved"?"var(--green-lt)":val==="rejected"?"var(--red-lt)":"var(--paper2)") : "#fff",
-                    fontFamily:"var(--f)", fontSize:10, fontWeight:700,
-                    color: submissionFilter===val ? color : "var(--muted)", cursor:"pointer" }}>
-                  {label}
+                { id:"dashboard",   label:"📊 Dashboard" },
+                { id:"submissions", label:"📦 Indsendelser" },
+                { id:"tickets",     label:"🐛 Tickets" },
+              ].map(s => (
+                <button key={s.id} onClick={() => {
+                  setAdminSection(s.id);
+                  if (s.id === "submissions") loadSubmissions(submissionFilter);
+                  if (s.id === "tickets") loadTickets();
+                  if (s.id === "dashboard") loadAdminStats();
+                }}
+                  style={{ flex:1, padding:"10px 4px", borderRadius:9, border:"none",
+                    background: adminSection===s.id ? "#fff" : "transparent",
+                    boxShadow: adminSection===s.id ? "0 1px 4px rgba(0,0,0,.08)" : "none",
+                    fontFamily:"var(--f)", fontSize:11, fontWeight:700,
+                    color: adminSection===s.id ? "var(--ink)" : "var(--muted)", cursor:"pointer" }}>
+                  {s.label}
                 </button>
               ))}
             </div>
 
-            {/* Tickets liste */}
-            {submissionFilter === "tickets" && (
-              <div>
-                {ticketsLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
-                {!ticketsLoading && adminTickets.length === 0 && (
+            {/* ── DASHBOARD ── */}
+            {adminSection === "dashboard" && (
+              <div className="fade-in">
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Brugere</div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14 }}>
+                  {[
+                    { n:adminStats?.total_users,     emoji:"👤", label:"Brugere i alt",   color:"var(--ink)" },
+                    { n:adminStats?.new_users_today,  emoji:"🆕", label:"Nye i dag",        color:"var(--green)" },
+                    { n:adminStats?.total_scans,      emoji:"📱", label:"Scanninger i alt", color:"var(--ink)" },
+                    { n:adminStats?.scans_today,      emoji:"⚡", label:"Scanninger i dag", color:"var(--amber)" },
+                  ].map(({ n, emoji, label, color }) => (
+                    <div key={label} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"16px 14px", boxShadow:"var(--sh)" }}>
+                      <div style={{ fontSize:24, marginBottom:4 }}>{emoji}</div>
+                      <div style={{ fontSize:28, fontWeight:900, color, lineHeight:1 }}>{n ?? "—"}</div>
+                      <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, marginTop:4 }}>{label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Database & opgaver</div>
+                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, overflow:"hidden", marginBottom:14, boxShadow:"var(--sh)" }}>
+                  {[
+                    { emoji:"📦", label:"Produkter i databasen",   n:adminStats?.total_products,        color:"var(--ink)" },
+                    { emoji:"👨‍👩‍👧", label:"Familiemedlemmer oprettet", n:adminStats?.total_families,         color:"var(--ink)" },
+                    { emoji:"⏳", label:"Indsendelser afventer",   n:adminStats?.pending_submissions,    color:"var(--amber)", action:() => { setAdminSection("submissions"); setSubmissionFilter("pending"); loadSubmissions("pending"); } },
+                    { emoji:"🐛", label:"Åbne tickets",             n:adminStats?.open_tickets,           color:"var(--red)",   action:() => { setAdminSection("tickets"); loadTickets(); } },
+                  ].map(({ emoji, label, n, color, action }, i, arr) => (
+                    <div key={label} onClick={action}
+                      style={{ display:"flex", alignItems:"center", gap:12, padding:"13px 16px", borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", cursor: action ? "pointer" : "default" }}>
+                      <span style={{ fontSize:20 }}>{emoji}</span>
+                      <span style={{ flex:1, fontSize:13, color:"var(--ink2)", fontWeight:500 }}>{label}</span>
+                      <span style={{ fontSize:18, fontWeight:900, color }}>{n ?? "—"}</span>
+                      {action && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>}
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Hurtige handlinger</div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+                  {[
+                    { emoji:"📦", label:"Godkend indsendelser", color:"var(--amber)", fn:() => { setAdminSection("submissions"); setSubmissionFilter("pending"); loadSubmissions("pending"); } },
+                    { emoji:"🐛", label:"Gennemse tickets",     color:"var(--red)",   fn:() => { setAdminSection("tickets"); loadTickets(); } },
+                    { emoji:"✅", label:"Godkendte produkter",  color:"var(--green)", fn:() => { setAdminSection("submissions"); setSubmissionFilter("approved"); loadSubmissions("approved"); } },
+                    { emoji:"👥", label:"Supabase brugere",     color:"var(--ink)",   fn:() => window.open("https://supabase.com/dashboard/project/jegrpcflyguadyxialkm/auth/users", "_blank") },
+                  ].map(({ emoji, label, color, fn }) => (
+                    <button key={label} onClick={fn}
+                      style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:6, padding:"14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
+                      <span style={{ fontSize:24 }}>{emoji}</span>
+                      <span style={{ fontSize:12, fontWeight:700, color }}>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── SUBMISSIONS ── */}
+            {adminSection === "submissions" && (
+              <div className="fade-in">
+                <div style={{ display:"flex", gap:6, marginBottom:12 }}>
+                  {[
+                    { val:"pending",  label:"⏳ Afventer", color:"var(--amber)" },
+                    { val:"approved", label:"✅ Godkendt",  color:"var(--green)" },
+                    { val:"rejected", label:"❌ Afvist",    color:"var(--red)" },
+                  ].map(({ val, label, color }) => (
+                    <button key={val} onClick={() => { setSubmissionFilter(val); loadSubmissions(val); }}
+                      style={{ flex:1, padding:"9px 4px", borderRadius:10, border:`1.5px solid ${submissionFilter===val ? color : "var(--border)"}`,
+                        background: submissionFilter===val ? (val==="pending"?"var(--amber-lt)":val==="approved"?"var(--green-lt)":"var(--red-lt)") : "#fff",
+                        fontFamily:"var(--f)", fontSize:11, fontWeight:700,
+                        color: submissionFilter===val ? color : "var(--muted)", cursor:"pointer" }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {submissionsLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
+                {!submissionsLoading && submissions.length === 0 && (
                   <div style={{ textAlign:"center", padding:"48px 0" }}>
-                    <div style={{ fontSize:48, marginBottom:12 }}>🎉</div>
-                    <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>Ingen tickets</div>
+                    <div style={{ fontSize:48, marginBottom:12 }}>{submissionFilter==="pending"?"🎉":"📭"}</div>
+                    <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>{submissionFilter==="pending" ? "Ingen afventer" : "Ingen indsendelser"}</div>
                   </div>
                 )}
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {adminTickets.map(t => {
-                    const typeConfig = {
-                      bug:        { emoji:"🐛", color:"var(--red)",   bg:"var(--red-lt)",   label:"Fejl" },
-                      ui:         { emoji:"🎨", color:"var(--amber)", bg:"var(--amber-lt)", label:"Design" },
-                      missing:    { emoji:"💡", color:"var(--amber)", bg:"var(--amber-lt)", label:"Mangler" },
-                      content:    { emoji:"📦", color:"var(--ink2)",  bg:"var(--paper2)",   label:"Indhold" },
-                      crash:      { emoji:"💥", color:"var(--red)",   bg:"var(--red-lt)",   label:"Crash" },
-                      suggestion: { emoji:"✨", color:"var(--green)", bg:"var(--green-lt)", label:"Forslag" },
-                    };
-                    const cfg = typeConfig[t.type] || typeConfig.bug;
-                    const statusColor = t.status==="open"?"var(--amber)":t.status==="in_progress"?"var(--ink)":t.status==="resolved"?"var(--green)":"var(--muted)";
+                  {submissions.map(s => {
+                    const flags = s.ai_parsed_data || {};
+                    const dangerAllergens = ALLERGENS.filter(a => flags[a.id]==="yes" || flags[a.id]===true);
+                    const daysSince = Math.floor((Date.now() - new Date(s.created_at).getTime()) / 86400000);
                     return (
-                      <div key={t.id} onClick={() => setOpenTicket(t)}
+                      <div key={s.id} onClick={() => { setOpenSubmission(s); setEditingSubmission({ name: s.ai_parsed_data?.name || s.product_name || "", brand: s.ai_parsed_data?.brand || s.brand || "", allergen_flags: s.ai_parsed_data || {} }); }}
                         style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", cursor:"pointer", boxShadow:"var(--sh)" }}>
-                        <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
-                          <div style={{ width:36, height:36, borderRadius:10, background:cfg.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{cfg.emoji}</div>
+                        <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
+                          <div style={{ width:48, height:48, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>📦</div>
                           <div style={{ flex:1, minWidth:0 }}>
-                            <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
-                              <span style={{ fontSize:11, fontWeight:700, color:cfg.color, background:cfg.bg, padding:"2px 8px", borderRadius:100 }}>{cfg.label}</span>
-                              <span style={{ fontSize:10, fontWeight:700, color:statusColor }}>● {t.status==="open"?"Åben":t.status==="in_progress"?"I gang":t.status==="resolved"?"Løst":"Lukket"}</span>
-                            </div>
-                            <div style={{ fontSize:13, color:"var(--ink)", lineHeight:1.4, marginBottom:4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                              {t.description}
-                            </div>
-                            <div style={{ fontSize:10, color:"var(--muted)" }}>
-                              {t.context?.user_name || "Anonym"} · {t.context?.screen} · {new Date(t.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}
+                            <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</div>
+                            <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6, fontFamily:"monospace" }}>EAN: {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`}</div>
+                            <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                              {dangerAllergens.slice(0,3).map(a => <span key={a.id} style={{ fontSize:10, padding:"2px 7px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", fontWeight:700 }}>{a.emoji} {a.label}</span>)}
+                              {dangerAllergens.length === 0 && <span style={{ fontSize:10, color:"var(--muted)" }}>Ingen allergener</span>}
                             </div>
                           </div>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:4 }}><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
                         </div>
                       </div>
                     );
@@ -6101,76 +6167,50 @@ ${openTicket.description}`;
               </div>
             )}
 
-            {/* Indsendelser */}
-            {submissionsLoading && (
-              <div style={{ textAlign:"center", padding:"32px 0" }}>
-                <div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 12px" }} />
-                <div style={{ fontSize:13, color:"var(--muted)" }}>Henter indsendelser…</div>
-              </div>
-            )}
-
-            {!submissionsLoading && submissions.length === 0 && (
-              <div style={{ textAlign:"center", padding:"48px 20px" }}>
-                <div style={{ fontSize:48, marginBottom:12 }}>
-                  {submissionFilter==="pending" ? "🎉" : submissionFilter==="approved" ? "✅" : "📭"}
-                </div>
-                <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)", marginBottom:6 }}>
-                  {submissionFilter==="pending" ? "Ingen afventer godkendelse" : "Ingen indsendelser"}
-                </div>
-              </div>
-            )}
-
-            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-              {submissions.map(s => {
-                const flags = s.ai_parsed_data || {};
-                const dangerAllergens = ALLERGENS.filter(a => flags[a.id]==="yes" || flags[a.id]===true);
-                const traceAllergens = ALLERGENS.filter(a => flags[a.id]==="traces");
-                const daysSince = Math.floor((Date.now() - new Date(s.created_at).getTime()) / 86400000);
-                return (
-                  <div key={s.id} onClick={() => { setOpenSubmission(s); setEditingSubmission({ name: s.ai_parsed_data?.name || "", brand: s.ai_parsed_data?.brand || "", allergen_flags: s.ai_parsed_data || {} }); }}
-                    style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", cursor:"pointer", boxShadow:"var(--sh)", transition:"transform .15s" }}>
-                    <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
-                      {/* Produktbillede */}
-                      {s.ai_parsed_data?.product_image_base64
-                        ? <img src={`data:image/jpeg;base64,${s.ai_parsed_data.product_image_base64}`}
-                            style={{ width:52, height:52, borderRadius:10, objectFit:"contain", border:"1px solid var(--border)", flexShrink:0 }} alt="" />
-                        : <div style={{ width:52, height:52, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, flexShrink:0 }}>📦</div>
-                      }
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                          {s.ai_parsed_data?.name || "Ukendt produkt"}
-                        </div>
-                        <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6, fontFamily:"monospace" }}>
-                          EAN: {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`}
-                        </div>
-                        {/* Allergen preview */}
-                        <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
-                          {dangerAllergens.slice(0,4).map(a => (
-                            <span key={a.id} style={{ fontSize:10, padding:"2px 7px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", fontWeight:700 }}>
-                              {a.emoji} {a.label}
-                            </span>
-                          ))}
-                          {traceAllergens.slice(0,2).map(a => (
-                            <span key={a.id} style={{ fontSize:10, padding:"2px 7px", borderRadius:100, background:"var(--amber-lt)", color:"var(--amber)", fontWeight:700 }}>
-                              {a.emoji} spor
-                            </span>
-                          ))}
-                          {dangerAllergens.length + traceAllergens.length === 0 && (
-                            <span style={{ fontSize:10, color:"var(--muted)" }}>Ingen allergener detekteret</span>
-                          )}
-                        </div>
-                      </div>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:4 }}><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
+            {/* ── TICKETS ── */}
+            {adminSection === "tickets" && (
+              <div className="fade-in">
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:6, marginBottom:14 }}>
+                  {[
+                    { status:"open",        label:"Åbne",   color:"var(--red)" },
+                    { status:"in_progress", label:"I gang", color:"var(--amber)" },
+                    { status:"resolved",    label:"Løst",   color:"var(--green)" },
+                    { status:"closed",      label:"Lukket", color:"var(--muted)" },
+                  ].map(s => (
+                    <div key={s.status} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:10, padding:"10px 8px", textAlign:"center" }}>
+                      <div style={{ fontSize:20, fontWeight:900, color:s.color }}>{adminTickets.filter(t => t.status === s.status).length}</div>
+                      <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase" }}>{s.label}</div>
                     </div>
-                    {s.user_confirmed && (
-                      <div style={{ marginTop:8, paddingTop:8, borderTop:"1px solid var(--border)", fontSize:11, color:"var(--green)", fontWeight:700 }}>
-                        ✓ Brugeren har bekræftet allergenerne
+                  ))}
+                </div>
+                {ticketsLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
+                {!ticketsLoading && adminTickets.length === 0 && <div style={{ textAlign:"center", padding:"48px 0" }}><div style={{ fontSize:48, marginBottom:12 }}>🎉</div><div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>Ingen tickets</div></div>}
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  {adminTickets.map(t => {
+                    const typeConfig = { bug:{emoji:"🐛",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{emoji:"🎨",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{emoji:"💡",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{emoji:"📦",color:"var(--ink2)",bg:"var(--paper2)",label:"Indhold"}, crash:{emoji:"💥",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{emoji:"✨",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
+                    const cfg = typeConfig[t.type] || typeConfig.bug;
+                    const statusColor = t.status==="open"?"var(--red)":t.status==="in_progress"?"var(--amber)":t.status==="resolved"?"var(--green)":"var(--muted)";
+                    const statusLabel = t.status==="open"?"Åben":t.status==="in_progress"?"I gang":t.status==="resolved"?"Løst":"Lukket";
+                    return (
+                      <div key={t.id} onClick={() => setOpenTicket(t)} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", cursor:"pointer", boxShadow:"var(--sh)" }}>
+                        <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
+                          <div style={{ width:38, height:38, borderRadius:10, background:cfg.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{cfg.emoji}</div>
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
+                              <span style={{ fontSize:11, fontWeight:700, color:cfg.color, background:cfg.bg, padding:"2px 8px", borderRadius:100 }}>{cfg.label}</span>
+                              <span style={{ fontSize:10, fontWeight:700, color:statusColor }}>● {statusLabel}</span>
+                            </div>
+                            <div style={{ fontSize:13, color:"var(--ink)", lineHeight:1.4, marginBottom:4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{t.description}</div>
+                            <div style={{ fontSize:10, color:"var(--muted)" }}>{t.context?.user_name || "Anonym"} · {t.context?.screen} · {new Date(t.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</div>
+                          </div>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
           </div>
         )}
