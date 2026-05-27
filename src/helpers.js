@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { ALLERGENS, SUPABASE_ANON_KEY } from "./constants.js";
+import { ALLERGENS, SUPABASE_ANON_KEY } from "./constants.jsx";
 
 // ─── HJÆLPEFUNKTIONER ────────────────────────────────────────────────────────
 

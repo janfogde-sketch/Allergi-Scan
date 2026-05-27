@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { ALLERGENS, E_NUMBERS, E_CATEGORIES, ALLERGEN_SUBTYPES, INCOMPATIBLE_SUBTYPES, DIETS } from "./constants.js";
+import { ALLERGENS, E_NUMBERS, E_CATEGORIES, ALLERGEN_SUBTYPES, INCOMPATIBLE_SUBTYPES, DIETS } from "./constants.jsx";
 
 export const ENumberPicker = ({ selected, onChange }) => {
   const [search, setSearch] = React.useState("");

@@ -8,7 +8,7 @@ import {
   ALLERGEN_EXAMPLES, E_NUMBERS, E_CATEGORIES, ALLERGEN_SUBTYPES,
   INCOMPATIBLE_SUBTYPES, MADPAS_LANGUAGES, ALLERGEN_T, MADPAS_INTRO,
   PAGE_IDS, uid
-} from "./constants.js";
+} from "./constants.jsx";
 
 import {
   initials, timeAgo, getAllergenLabels, verifiedBadge,
