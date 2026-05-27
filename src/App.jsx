@@ -2118,7 +2118,10 @@ export default function EatSafe() {
   const [submissions, setSubmissions] = useState([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [adminStats, setAdminStats] = useState(null);
-  const [adminSection, setAdminSection] = useState("dashboard"); // dashboard | submissions | tickets
+  const [adminSection, setAdminSection] = useState("dashboard");
+  const [adminUsers, setAdminUsers] = useState([]);
+  const [adminUsersLoading, setAdminUsersLoading] = useState(false);
+  const [adminTicketFilter, setAdminTicketFilter] = useState("all");
   const [openSubmission, setOpenSubmission] = useState(null);
   const [submissionFilter, setSubmissionFilter] = useState("pending");
   const [editingSubmission, setEditingSubmission] = useState(null);
@@ -2203,6 +2206,7 @@ export default function EatSafe() {
   const [submitting, setSubmitting] = useState(false);
   const [notFoundStep, setNotFoundStep] = useState(1); // 1=forside, 2=ingredienser, 3=bekræft
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [isOAuth, setIsOAuth] = useState(false);
   const [feedbackType, setFeedbackType] = useState("bug");
   const [feedbackText, setFeedbackText] = useState("");
@@ -2489,30 +2493,31 @@ export default function EatSafe() {
 
   const loadAdminStats = async () => {
     try {
-      const h = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
+      const h = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json", "Prefer": "count=exact" };
+      const hNoCount = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
       const today = new Date(); today.setHours(0,0,0,0);
       const todayISO = today.toISOString();
 
       const [users, products, scans, submissions, families, tickets, scansToday, newUsersToday] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/users?select=id`, { headers: h }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/products?select=id`, { headers: h }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id`, { headers: h }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/product_submissions?status=eq.pending&select=id`, { headers: h }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/family_members?select=id`, { headers: h }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?status=eq.open&select=id`, { headers: h }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id&scanned_at=gte.${todayISO}`, { headers: h }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/users?select=id&created_at=gte.${todayISO}`, { headers: h }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/users?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
+        fetch(`${SUPABASE_URL}/rest/v1/products?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
+        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
+        fetch(`${SUPABASE_URL}/rest/v1/product_submissions?status=eq.pending&select=id`, { headers: hNoCount }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/family_members?select=id`, { headers: hNoCount }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?status=eq.open&select=id`, { headers: hNoCount }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id&scanned_at=gte.${todayISO}`, { headers: hNoCount }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/users?select=id&created_at=gte.${todayISO}`, { headers: hNoCount }).then(r => r.json()),
       ]);
 
       setAdminStats({
-        total_users: Array.isArray(users) ? users.length : 0,
-        total_products: Array.isArray(products) ? products.length : 0,
-        total_scans: Array.isArray(scans) ? scans.length : 0,
-        pending_submissions: Array.isArray(submissions) ? submissions.length : 0,
-        total_families: Array.isArray(families) ? families.length : 0,
-        open_tickets: Array.isArray(tickets) ? tickets.length : 0,
-        scans_today: Array.isArray(scansToday) ? scansToday.length : 0,
-        new_users_today: Array.isArray(newUsersToday) ? newUsersToday.length : 0,
+        total_users:          typeof users === "number" ? users : (Array.isArray(users) ? users.length : 0),
+        total_products:       typeof products === "number" ? products : (Array.isArray(products) ? products.length : 0),
+        total_scans:          typeof scans === "number" ? scans : (Array.isArray(scans) ? scans.length : 0),
+        pending_submissions:  Array.isArray(submissions) ? submissions.length : 0,
+        total_families:       Array.isArray(families) ? families.length : 0,
+        open_tickets:         Array.isArray(tickets) ? tickets.length : 0,
+        scans_today:          Array.isArray(scansToday) ? scansToday.length : 0,
+        new_users_today:      Array.isArray(newUsersToday) ? newUsersToday.length : 0,
       });
     } catch (e) { console.error("loadAdminStats fejl:", e.message); }
   };
@@ -2760,7 +2765,32 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     setFeedbackSending(false);
   };
 
-  const loadTickets = async () => {
+  const loadAdminUsers = async () => {
+    setAdminUsersLoading(true);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,name,email,role,created_at,onboarding_completed&order=created_at.desc&limit=100`, {
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" },
+      });
+      const data = await res.json();
+      setAdminUsers(Array.isArray(data) ? data : []);
+    } catch { setAdminUsers([]); }
+    setAdminUsersLoading(false);
+  };
+
+  const updateUserRole = async (uid, role) => {
+    await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}`, {
+      method: "PATCH",
+      headers: { "Content-Type":"application/json", "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Prefer":"return=minimal" },
+      body: JSON.stringify({ role }),
+    });
+    setAdminUsers(u => u.map(x => x.id === uid ? { ...x, role } : x));
+  };
+
+  const deleteUser = async (uid) => {
+    if (!window.confirm("Er du sikker? Dette kan ikke fortrydes.")) return;
+    await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}`, { method: "DELETE", headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}` } });
+    setAdminUsers(u => u.filter(x => x.id !== uid));
+  };
     setTicketsLoading(true);
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?order=created_at.desc&limit=100`, {
@@ -3830,7 +3860,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 </button>
               )}
               <div style={{ flex:1 }}>
-                <StepBar total={9} current={onboardStep} />
+                <StepBar total={10} current={onboardStep === 25 ? 3 : onboardStep > 25 ? onboardStep - 1 : onboardStep} />
               </div>
             </div>
 
@@ -3842,24 +3872,126 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                   <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Velkommen til EatSafe</div>
                   <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6 }}>Din personlige allergiguide — til dig og hele familien.</div>
                 </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {[
-                    ["camera","Skan stregkoder","Hold kameraet over en stregkode og få øjeblikkeligt svar."],
-                    ["search","Søg produkter","Find allergenvenlinge produkter inden du handler."],
-                    ["family","Hele familien","Profiler for alle — se hvem der kan spise hvad."],
-                    ["list","Indkøbsliste","Byg lister med allergencheck."],
-                    ["heart","Fælles database","Bidrag til databasen og hjælp andre."],
-                  ].map(([icon, title, text]) => (
-                    <div key={title} style={{ display:"flex", gap:12, alignItems:"center", background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"10px 14px" }}>
-                      <div style={{ flexShrink:0 }}><Icon name={icon} size={22} color="var(--ink2)" /></div>
-                      <div>
-                        <div style={{ fontWeight:700, fontSize:13, color:"var(--ink)" }}>{title}</div>
-                        <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.4 }}>{text}</div>
+
+                {/* Feature tour — swipeable kort */}
+                {(() => {
+                  const features = [
+                    {
+                      emoji:"📷", bg:"#1F2733", color:"#fff",
+                      title:"Skan på sekunder",
+                      desc:"Hold kameraet over en stregkode. EatSafe fortæller dig øjeblikkeligt om produktet er sikkert for dig.",
+                      tags:["Øjeblikkelig scanning","Vibration ved fund","Historik"],
+                      mockup: (
+                        <div style={{ background:"#fff", borderRadius:12, padding:"10px 14px", marginTop:10, display:"flex", alignItems:"center", gap:10 }}>
+                          <div style={{ fontSize:28 }}>🥛</div>
+                          <div style={{ flex:1 }}>
+                            <div style={{ fontSize:12, fontWeight:800, color:"#1F2733" }}>Karolines Køkken mælk</div>
+                            <div style={{ fontSize:10, color:"#6B7280" }}>EAN: 5701234567890</div>
+                          </div>
+                          <div style={{ background:"#FEE2E2", border:"1px solid #FCA5A5", borderRadius:8, padding:"4px 10px", fontSize:10, fontWeight:800, color:"#EF4444" }}>⚠ Farlig</div>
+                        </div>
+                      ),
+                    },
+                    {
+                      emoji:"👨‍👩‍👧", bg:"#22C55E", color:"#fff",
+                      title:"Hele familien",
+                      desc:"Opret profiler for børn, partner og andre. Se på ét blik hvem der kan spise hvad.",
+                      tags:["Individuelle profiler","Fælles oversigt","Børnevenlig"],
+                      mockup: (
+                        <div style={{ background:"rgba(255,255,255,.15)", borderRadius:12, padding:"10px 14px", marginTop:10 }}>
+                          {[["Anna","✓ Sikker","#fff"],["Mikkel","✗ Gluten","#FEE2E2"],["Sofie","✓ Sikker","#fff"]].map(([name,status,bg]) => (
+                            <div key={name} style={{ display:"flex", alignItems:"center", gap:8, padding:"5px 0", borderBottom:"1px solid rgba(255,255,255,.15)" }}>
+                              <div style={{ width:24, height:24, borderRadius:"50%", background:"rgba(255,255,255,.3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:800, color:"#fff" }}>{name[0]}</div>
+                              <div style={{ flex:1, fontSize:11, fontWeight:700, color:"#fff" }}>{name}</div>
+                              <div style={{ fontSize:10, fontWeight:700, background:bg, color: bg==="#fff"?"#22C55E":"#EF4444", padding:"2px 8px", borderRadius:100 }}>{status}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ),
+                    },
+                    {
+                      emoji:"🍝", bg:"#6366F1", color:"#fff",
+                      title:"Sikre opskrifter",
+                      desc:"Over 600 opskrifter filtreret til netop din families præferencer. Med ingrediensliste og fremgangsmåde.",
+                      tags:["600+ opskrifter","Allergenfiltreret","Skalerbar portion"],
+                      mockup: (
+                        <div style={{ background:"rgba(255,255,255,.15)", borderRadius:12, padding:"10px 14px", marginTop:10 }}>
+                          {[["Spaghetti Bolognese","aftensmad","✓"],["Bananpandekager","morgenmad","✓"],["Nødde-granola","morgenmad","✗"]].map(([name,cat,safe]) => (
+                            <div key={name} style={{ display:"flex", alignItems:"center", gap:8, padding:"5px 0", borderBottom:"1px solid rgba(255,255,255,.15)" }}>
+                              <div style={{ fontSize:18 }}>{cat==="morgenmad"?"☕":"🍝"}</div>
+                              <div style={{ flex:1, fontSize:11, fontWeight:700, color:"#fff" }}>{name}</div>
+                              <div style={{ fontSize:12, color: safe==="✓"?"#86EFAC":"#FCA5A5" }}>{safe==="✓"?"✓":"✗"}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ),
+                    },
+                    {
+                      emoji:"🌍", bg:"#F59E0B", color:"#fff",
+                      title:"Madpas til udlandet",
+                      desc:"Vis tjenere dine allergier på 17 sprog. Med udtale og forklaring på det lokale sprog.",
+                      tags:["17 sprog","Tekst-til-tale","Offline"],
+                      mockup: (
+                        <div style={{ background:"rgba(255,255,255,.15)", borderRadius:12, padding:"10px 14px", marginTop:10 }}>
+                          <div style={{ fontSize:11, color:"rgba(255,255,255,.7)", marginBottom:6 }}>🇫🇷 Français</div>
+                          <div style={{ fontSize:13, fontWeight:800, color:"#fff", lineHeight:1.5 }}>"Je suis allergique au gluten et aux œufs"</div>
+                          <div style={{ fontSize:10, color:"rgba(255,255,255,.6)", marginTop:4 }}>Jeg er allergisk over for gluten og æg</div>
+                        </div>
+                      ),
+                    },
+                  ];
+                  const [tourIdx, setTourIdx] = React.useState(0);
+                  const f = features[tourIdx];
+                  return (
+                    <div style={{ marginBottom:4 }}>
+                      {/* Feature kort */}
+                      <div style={{ background:f.bg, borderRadius:18, padding:"20px", marginBottom:10 }}>
+                        <div style={{ fontSize:36, marginBottom:8 }}>{f.emoji}</div>
+                        <div style={{ fontSize:18, fontWeight:900, color:f.color, marginBottom:6 }}>{f.title}</div>
+                        <div style={{ fontSize:13, color:`${f.color}CC`, lineHeight:1.65, marginBottom:8 }}>{f.desc}</div>
+                        <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:4 }}>
+                          {f.tags.map(t => <span key={t} style={{ fontSize:10, fontWeight:700, padding:"3px 9px", borderRadius:100, background:"rgba(255,255,255,.15)", color:f.color }}>{t}</span>)}
+                        </div>
+                        {f.mockup}
                       </div>
+
+                      {/* Dots navigation */}
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10 }}>
+                        {features.map((_, i) => (
+                          <div key={i} onClick={() => setTourIdx(i)}
+                            style={{ width: tourIdx===i ? 20 : 7, height:7, borderRadius:4, background: tourIdx===i ? "var(--ink)" : "var(--border2)", cursor:"pointer", transition:"all .25s" }} />
+                        ))}
+                      </div>
+
+                      {/* Navigation */}
+                      <div style={{ display:"flex", gap:8 }}>
+                        {tourIdx > 0 && (
+                          <button onClick={() => setTourIdx(i => i-1)}
+                            style={{ flex:1, padding:"12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                            ← Forrige
+                          </button>
+                        )}
+                        {tourIdx < features.length - 1 ? (
+                          <button onClick={() => setTourIdx(i => i+1)}
+                            style={{ flex:1, padding:"12px", background:"var(--ink)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#fff", cursor:"pointer" }}>
+                            Næste →
+                          </button>
+                        ) : (
+                          <button onClick={() => setOnboardStep(2)}
+                            style={{ flex:1, padding:"12px", background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"#fff", cursor:"pointer" }}>
+                            Kom i gang →
+                          </button>
+                        )}
+                      </div>
+                      {tourIdx < features.length - 1 && (
+                        <button onClick={() => setOnboardStep(2)}
+                          style={{ width:"100%", background:"none", border:"none", padding:"10px", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", cursor:"pointer", marginTop:4 }}>
+                          Spring over
+                        </button>
+                      )}
                     </div>
-                  ))}
-                </div>
-                <button className="btn btn-primary btn-full" style={{ marginTop:14 }} onClick={() => setOnboardStep(2)}>Fortsæt →</button>
+                  );
+                })()}
               </div>
             )}
 
@@ -3892,7 +4024,66 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 </div>
                 <div style={{ display:"flex", gap:8, marginTop:14 }}>
                   <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(1)}>← Tilbage</button>
-                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(3)}>Jeg forstår →</button>
+                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(25)}>Jeg forstår →</button>
+                </div>
+              </div>
+            )}
+
+            {/* ── TRIN 2.5: Hvad kan EatSafe? ── */}
+            {onboardStep === 25 && (
+              <div className="fade-in">
+                <div style={{ textAlign:"center", marginBottom:20 }}>
+                  <div style={{ fontSize:48, marginBottom:8 }}>✨</div>
+                  <div className="step-title">EatSafe kan mere end allergier</div>
+                  <div className="step-sub">Appen dækker tre typer fødevarepræferencer</div>
+                </div>
+
+                {[
+                  {
+                    emoji:"🚨",
+                    color:"var(--red)",
+                    bg:"var(--red-lt)",
+                    border:"var(--red-md)",
+                    title:"Allergier",
+                    desc:"Livstruende reaktioner på fx gluten, nødder, skaldyr og mælk. Vi advarer tydeligt og kategorisk.",
+                    examples:["Glutenallergi (cøliaki)","Nøddeallergi","Laktoseallergi","Skaldyrsallergi"],
+                  },
+                  {
+                    emoji:"⚠️",
+                    color:"var(--amber)",
+                    bg:"var(--amber-lt)",
+                    border:"var(--amber-md)",
+                    title:"Intoleranser & E-numre",
+                    desc:"Ubehag uden livstruende reaktion. Vi viser advarsler og fremhæver relevante E-numre i ingredienslister.",
+                    examples:["Laktoseintolerance","Fruktoseintolerance","E-numre som E621 (MSG)","Histaminintolerance"],
+                  },
+                  {
+                    emoji:"🌱",
+                    color:"var(--green)",
+                    bg:"var(--green-lt)",
+                    border:"var(--green-mid)",
+                    title:"Diæter & valg",
+                    desc:"Personlige valg og livsstil. Vi filtrerer produkter og opskrifter der passer til dig.",
+                    examples:["Vegansk","Vegetarisk","Halal / Kosher","Lavkulhydrat / Keto"],
+                  },
+                ].map(cat => (
+                  <div key={cat.title} style={{ background:cat.bg, border:`1px solid ${cat.border}`, borderRadius:14, padding:"14px 16px", marginBottom:10 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+                      <span style={{ fontSize:24 }}>{cat.emoji}</span>
+                      <div style={{ fontSize:14, fontWeight:800, color:cat.color }}>{cat.title}</div>
+                    </div>
+                    <div style={{ fontSize:12, color:"var(--ink2)", lineHeight:1.6, marginBottom:8 }}>{cat.desc}</div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                      {cat.examples.map(e => (
+                        <span key={e} style={{ fontSize:10, fontWeight:700, padding:"3px 9px", borderRadius:100, background:"rgba(255,255,255,.6)", color:"var(--ink2)" }}>{e}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                <div style={{ display:"flex", gap:8, marginTop:14 }}>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(2)}>← Tilbage</button>
+                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(3)}>Fortsæt →</button>
                 </div>
               </div>
             )}
@@ -4357,19 +4548,25 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             <div className="topbar-logo">
               <div className="topbar-shield" style={{background:"none",padding:0}}><EatSafeLogo size={34} variant="light" /></div>
               <div className="topbar-name">Eat<span>Safe</span></div>
-              {/* BETA badge */}
               <div style={{ background:"var(--amber)", color:"#fff", fontSize:9, fontWeight:800, padding:"2px 7px", borderRadius:100, letterSpacing:".5px", marginLeft:4, marginTop:2 }}>BETA</div>
             </div>
-            {/* Feedback-knap i topbar */}
-            <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
-              style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-              Feedback
-            </button>
+            <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+              {/* Hjælp-knap */}
+              <button onClick={() => setHelpOpen(true)}
+                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:32, height:32, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                ?
+              </button>
+              {/* Feedback-knap */}
+              <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
+                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                Feedback
+              </button>
+            </div>
           </header>
         )}
 
-        {/* Feedback-knap under onboarding — fast placeret øverst til højre */}
+        {/* Feedback-knap under onboarding */}
         {isOnboard && (
           <div style={{ position:"fixed", top:12, right:12, zIndex:1000 }}>
             <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
@@ -4379,6 +4576,70 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             </button>
           </div>
         )}
+
+        {/* ══ HJÆLP MODAL ══ */}
+        {helpOpen && (() => {
+          const helpContent = {
+            [SCREENS.HOME]: { title:"📷 Scanner", tips:[
+              { icon:"📱", title:"Skan stregkode", desc:"Tryk på scan-feltet og hold kameraet roligt over stregkoden. Appen scanner automatisk." },
+              { icon:"🔍", title:"Søg manuelt", desc:"Kan du ikke scanne? Brug søgefeltet til at finde produkter ved navn." },
+              { icon:"⚡", title:"Hurtig scanning", desc:"God belysning og rolig hånd giver hurtigere og mere præcist resultat." },
+              { icon:"📜", title:"Historik", desc:"Dine seneste scanninger gemmes automatisk — find dem under Profil." },
+            ]},
+            [SCREENS.RECIPES]: { title:"🍝 Opskrifter", tips:[
+              { icon:"🔍", title:"Søg og filtrer", desc:"Søg på navn eller vælg kategori. Slå 'Kun sikre' til for at skjule opskrifter med dine allergener." },
+              { icon:"❤️", title:"Favoritter", desc:"Tryk hjerte-ikonet for at gemme en opskrift til Favoritter-fanen." },
+              { icon:"👤", title:"Portionsjustering", desc:"Åbn en opskrift og tryk + / − for at skalere ingredienser automatisk." },
+              { icon:"🛒", title:"Indkøbsliste", desc:"Tryk 'Tilføj til indkøbsliste' for at sende ingredienser direkte til din liste." },
+            ]},
+            [SCREENS.LIST]: { title:"🛒 Indkøbsliste", tips:[
+              { icon:"✏️", title:"Tilføj varer", desc:"Skriv en vare og tryk Tilføj — eller tilføj direkte fra en opskrift." },
+              { icon:"✓", title:"Afkryds varer", desc:"Tryk på en vare for at markere den som købt." },
+              { icon:"🗑️", title:"Ryd listen", desc:"Brug 'Ryd' for at fjerne alle afkrydsede varer på én gang." },
+            ]},
+            [SCREENS.PROFILE]: { title:"👤 Profil & præferencer", tips:[
+              { icon:"🚨", title:"Allergi vs. intolerance", desc:"Tryk én gang = intolerance (gul advarsel). To gange = allergi (rød advarsel)." },
+              { icon:"👨‍👩‍👧", title:"Familie", desc:"Opret profiler for børn og partner — se allergencheck for alle på én gang." },
+              { icon:"✏️", title:"E-numre og diæter", desc:"Brug 'Tilføj eget' for intoleranser, E-numre eller diæter der ikke er på listen." },
+            ]},
+            [SCREENS.MADPAS]: { title:"🌍 Madpas", tips:[
+              { icon:"🌐", title:"Vælg sprog", desc:"Vælg sproget for landet du besøger. EatSafe oversætter dine allergier automatisk." },
+              { icon:"📋", title:"Vis til tjeneren", desc:"Tryk 'Vis til tjener' for en stor, tydelig skærm du kan vise restaurantpersonalet." },
+              { icon:"🔊", title:"Oplæsning", desc:"Tryk højttalerikonet for at høre udtalen på det lokale sprog." },
+            ]},
+          };
+          const content = helpContent[screen] || { title:"ℹ️ Hjælp", tips:[
+            { icon:"💬", title:"Send feedback", desc:"Brug Feedback-knappen øverst til at rapportere problemer eller forslag." },
+          ]};
+          return (
+            <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
+              onClick={e => e.target === e.currentTarget && setHelpOpen(false)}>
+              <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
+                onClick={e => e.stopPropagation()}>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+                  <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>{content.title}</div>
+                  <button onClick={() => setHelpOpen(false)}
+                    style={{ background:"var(--paper2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
+                </div>
+                <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
+                  {content.tips.map((tip, i) => (
+                    <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12 }}>
+                      <div style={{ fontSize:22, flexShrink:0 }}>{tip.icon}</div>
+                      <div>
+                        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:3 }}>{tip.title}</div>
+                        <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>{tip.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => { setHelpOpen(false); setFeedbackOpen(true); setFeedbackDone(false); }}
+                  style={{ width:"100%", padding:"12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted2)", cursor:"pointer" }}>
+                  💬 Send feedback eller rapportér fejl
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ══ FEEDBACK MODAL ══ */}
         {feedbackOpen && (
@@ -5818,18 +6079,37 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               </div>
             </div>
 
-            {/* Mine allergier */}
+            {/* Mine præferencer */}
             <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:10, boxShadow:"var(--sh)" }}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-                <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Mine allergier</div>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Mine præferencer</div>
+                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>Allergier · Intoleranser · Diæter · E-numre</div>
+                </div>
                 <button onClick={() => setScreen(SCREENS.EDITPROFILE)}
                   style={{ background:"var(--green-lt)", border:"none", borderRadius:8, padding:"4px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--green)", cursor:"pointer" }}>
                   Rediger
                 </button>
               </div>
               {allergens.length + customAllerg.length === 0
-                ? <div style={{ fontSize:13, color:"var(--muted)", padding:"8px 0" }}>Ingen allergier registreret endnu</div>
-                : <div className="tags">{getAllergenLabels(allergens, customAllerg).map((a,i) => <div key={i} className="tag">{a}</div>)}</div>
+                ? <div style={{ fontSize:13, color:"var(--muted)", padding:"8px 0" }}>Ingen præferencer registreret endnu</div>
+                : (
+                  <div>
+                    {/* Gruppér: allergener, intoleranser, diæter */}
+                    {allergens.filter(id => ["gluten","laktose","aeg","noedder","jordnoedder","soja","fisk","skaldyr","selleri","sennep","sesam","svovl","lupin","bloeddyr"].includes(id)).length > 0 && (
+                      <div style={{ marginBottom:8 }}>
+                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Allergier</div>
+                        <div className="tags">{allergens.filter(id => ["gluten","laktose","aeg","noedder","jordnoedder","soja","fisk","skaldyr","selleri","sennep","sesam","svovl","lupin","bloeddyr"].includes(id)).map(id => { const a = ALLERGENS.find(x=>x.id===id); return a ? <div key={id} className="tag" style={{ background:"var(--red-lt)", color:"var(--red)", borderColor:"var(--red-md)" }}>{a.emoji} {a.label}</div> : null; })}</div>
+                      </div>
+                    )}
+                    {customAllerg.length > 0 && (
+                      <div style={{ marginBottom:8 }}>
+                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Intoleranser & diæter</div>
+                        <div className="tags">{customAllerg.map((c,i) => <div key={i} className="tag" style={{ background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>✏️ {c}</div>)}</div>
+                      </div>
+                    )}
+                  </div>
+                )
               }
             </div>
 
@@ -6038,22 +6318,24 @@ ${openTicket.description}`;
             </div>
 
             {/* Sektion tabs */}
-            <div style={{ display:"flex", gap:6, marginBottom:16, background:"var(--paper2)", padding:4, borderRadius:12 }}>
+            <div style={{ display:"flex", gap:4, marginBottom:16, background:"var(--paper2)", padding:4, borderRadius:12 }}>
               {[
-                { id:"dashboard",   label:"📊 Dashboard" },
-                { id:"submissions", label:"📦 Indsendelser" },
-                { id:"tickets",     label:"🐛 Tickets" },
+                { id:"dashboard",   label:"📊" },
+                { id:"users",       label:"👥" },
+                { id:"submissions", label:"📦" },
+                { id:"tickets",     label:"🐛" },
               ].map(s => (
                 <button key={s.id} onClick={() => {
                   setAdminSection(s.id);
                   if (s.id === "submissions") loadSubmissions(submissionFilter);
                   if (s.id === "tickets") loadTickets();
                   if (s.id === "dashboard") loadAdminStats();
+                  if (s.id === "users") loadAdminUsers();
                 }}
                   style={{ flex:1, padding:"10px 4px", borderRadius:9, border:"none",
                     background: adminSection===s.id ? "#fff" : "transparent",
                     boxShadow: adminSection===s.id ? "0 1px 4px rgba(0,0,0,.08)" : "none",
-                    fontFamily:"var(--f)", fontSize:11, fontWeight:700,
+                    fontFamily:"var(--f)", fontSize:16, fontWeight:700,
                     color: adminSection===s.id ? "var(--ink)" : "var(--muted)", cursor:"pointer" }}>
                   {s.label}
                 </button>
@@ -6103,13 +6385,63 @@ ${openTicket.description}`;
                     { emoji:"📦", label:"Godkend indsendelser", color:"var(--amber)", fn:() => { setAdminSection("submissions"); setSubmissionFilter("pending"); loadSubmissions("pending"); } },
                     { emoji:"🐛", label:"Gennemse tickets",     color:"var(--red)",   fn:() => { setAdminSection("tickets"); loadTickets(); } },
                     { emoji:"✅", label:"Godkendte produkter",  color:"var(--green)", fn:() => { setAdminSection("submissions"); setSubmissionFilter("approved"); loadSubmissions("approved"); } },
-                    { emoji:"👥", label:"Supabase brugere",     color:"var(--ink)",   fn:() => window.open("https://supabase.com/dashboard/project/jegrpcflyguadyxialkm/auth/users", "_blank") },
+                    { emoji:"👥", label:"Administrér brugere",  color:"var(--ink)",   fn:() => { setAdminSection("users"); loadAdminUsers(); } },
                   ].map(({ emoji, label, color, fn }) => (
                     <button key={label} onClick={fn}
                       style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:6, padding:"14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
                       <span style={{ fontSize:24 }}>{emoji}</span>
                       <span style={{ fontSize:12, fontWeight:700, color }}>{label}</span>
                     </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── BRUGERE ── */}
+            {adminSection === "users" && (
+              <div className="fade-in">
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>
+                  {adminUsers.length} brugere
+                </div>
+                {adminUsersLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
+                <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                  {adminUsers.map(u => (
+                    <div key={u.id} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", boxShadow:"var(--sh)" }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                        <div style={{ width:38, height:38, borderRadius:"50%", background: u.role==="admin" ? "var(--ink)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, color:"#fff", flexShrink:0 }}>
+                          {(u.name||u.email||"?").charAt(0).toUpperCase()}
+                        </div>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.name || "Ingen navn"}</div>
+                          <div style={{ fontSize:11, color:"var(--muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</div>
+                        </div>
+                        {/* Rolle badge */}
+                        <span style={{ fontSize:10, fontWeight:700, padding:"3px 10px", borderRadius:100,
+                          background: u.role==="admin" ? "var(--ink)" : "var(--paper2)",
+                          color: u.role==="admin" ? "#fff" : "var(--muted)", flexShrink:0 }}>
+                          {u.role==="admin" ? "Admin" : "Bruger"}
+                        </span>
+                      </div>
+                      <div style={{ display:"flex", gap:6, marginTop:10, paddingTop:10, borderTop:"1px solid var(--border)" }}>
+                        <div style={{ fontSize:10, color:"var(--muted)", flex:1 }}>
+                          Oprettet: {new Date(u.created_at).toLocaleDateString("da-DK")}
+                          {u.onboarding_completed === false && <span style={{ color:"var(--amber)", fontWeight:700 }}> · Onboarding ikke færdig</span>}
+                        </div>
+                        {u.id !== userId && (
+                          <>
+                            <button onClick={() => updateUserRole(u.id, u.role==="admin" ? "user" : "admin")}
+                              style={{ fontSize:10, fontWeight:700, padding:"4px 10px", borderRadius:8, border:"1px solid var(--border2)", background:"var(--paper2)", color:"var(--ink2)", cursor:"pointer", fontFamily:"var(--f)" }}>
+                              {u.role==="admin" ? "→ Bruger" : "→ Admin"}
+                            </button>
+                            <button onClick={() => deleteUser(u.id)}
+                              style={{ fontSize:10, fontWeight:700, padding:"4px 10px", borderRadius:8, border:"1px solid var(--red-md)", background:"var(--red-lt)", color:"var(--red)", cursor:"pointer", fontFamily:"var(--f)" }}>
+                              Slet
+                            </button>
+                          </>
+                        )}
+                        {u.id === userId && <span style={{ fontSize:10, color:"var(--green)", fontWeight:700 }}>← Det er dig</span>}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -6192,18 +6524,34 @@ ${openTicket.description}`;
                     const statusColor = t.status==="open"?"var(--red)":t.status==="in_progress"?"var(--amber)":t.status==="resolved"?"var(--green)":"var(--muted)";
                     const statusLabel = t.status==="open"?"Åben":t.status==="in_progress"?"I gang":t.status==="resolved"?"Løst":"Lukket";
                     return (
-                      <div key={t.id} onClick={() => setOpenTicket(t)} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", cursor:"pointer", boxShadow:"var(--sh)" }}>
-                        <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
+                      <div key={t.id} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
+                        <div style={{ display:"flex", alignItems:"flex-start", gap:10 }} onClick={() => setOpenTicket(t)}>
                           <div style={{ width:38, height:38, borderRadius:10, background:cfg.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{cfg.emoji}</div>
                           <div style={{ flex:1, minWidth:0 }}>
                             <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
                               <span style={{ fontSize:11, fontWeight:700, color:cfg.color, background:cfg.bg, padding:"2px 8px", borderRadius:100 }}>{cfg.label}</span>
-                              <span style={{ fontSize:10, fontWeight:700, color:statusColor }}>● {statusLabel}</span>
                             </div>
                             <div style={{ fontSize:13, color:"var(--ink)", lineHeight:1.4, marginBottom:4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{t.description}</div>
                             <div style={{ fontSize:10, color:"var(--muted)" }}>{t.context?.user_name || "Anonym"} · {t.context?.screen} · {new Date(t.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</div>
                           </div>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:4 }}><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
+                        </div>
+                        {/* Status toggle direkte på kortet */}
+                        <div style={{ display:"flex", gap:5, marginTop:10, paddingTop:10, borderTop:"1px solid var(--border)" }}>
+                          {[
+                            { val:"open",        label:"Åben",   color:"var(--red)" },
+                            { val:"in_progress", label:"I gang", color:"var(--amber)" },
+                            { val:"resolved",    label:"Løst",   color:"var(--green)" },
+                            { val:"closed",      label:"Lukket", color:"var(--muted)" },
+                          ].map(s => (
+                            <button key={s.val} onClick={() => updateTicketStatus(t.id, s.val)}
+                              style={{ flex:1, padding:"5px 2px", borderRadius:8, border:`1px solid ${t.status===s.val ? s.color : "var(--border)"}`,
+                                background: t.status===s.val ? s.color : "#fff",
+                                fontFamily:"var(--f)", fontSize:9, fontWeight:700,
+                                color: t.status===s.val ? "#fff" : "var(--muted)", cursor:"pointer" }}>
+                              {s.label}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     );
@@ -6603,7 +6951,7 @@ ${openTicket.description}`;
                 <div className="empty-state" style={{ paddingTop:32 }}>
                   <span className="empty-icon">🌾</span>
                   <div className="empty-txt">Ingen allergier registreret</div>
-                  <div className="empty-sub">Tilføj dine allergier under Profil → Mine allergier</div>
+                  <div className="empty-sub">Tilføj dine allergier, intoleranser og diæter under Profil → Mine præferencer</div>
                 </div>
               )}
 
