@@ -65,8 +65,3 @@ export function compareAllergens(flags, activeAllergenIds) {
 
   return { status, matchedDanger, matchedWarning, hasUnknown, confidence, explanation };
 }
-
-// ─── CSS ─────────────────────────────────────────────────────────────────────
-
-// ─── MADPAS — BUNDLED OVERSÆTTELSER ─────────────────────────────────────────
-const MADPAS_LANGUAGES = [
