@@ -1,0 +1,24 @@
+{
+  "name": "EatSafe — Scan. Tjek. Spis trygt.",
+  "short_name": "EatSafe",
+  "description": "Scan produkter og tjek allergener for dig og din familie",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1F2733",
+  "theme_color": "#1F2733",
+  "orientation": "portrait",
+  "lang": "da",
+  "icons": [
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Skan produkt",
+      "short_name": "Skan",
+      "url": "/",
+      "icons": [{ "src": "/apple-touch-icon.png", "sizes": "180x180" }]
+    }
+  ],
+  "categories": ["food", "health", "lifestyle"]
+}
