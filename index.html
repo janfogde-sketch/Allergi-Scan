@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EatSafe</title>
     <meta name="description" content="Scan. Tjek. Spis trygt. Din personlige allergiguide." />
-    <meta name="theme-color" content="#FAFAF7" />
+    <meta name="theme-color" content="#1F2733" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="privacy-policy" href="https://eatsafe.dk/privacy.html" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="EatSafe" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta property="og:title" content="EatSafe" />
@@ -19,5 +21,12 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
   </body>
 </html>
