@@ -301,8 +301,6 @@ export const E_NUMBERS = {
   "E161g": "Canthaxanthin — orange farve, bruges i lakseopdræt",
 };
 
-const ENumberPicker = ({ selected, onChange }) => {
-
 export const INCOMPATIBLE_SUBTYPES = {
   // Gluten: "alle" udelukker de mere specifikke (cøliaki+sensitivitet er ok, men "alle" + specifik er redundant)
   gluten_alle:     ["gluten_coeliaki", "gluten_allergi", "gluten_sensitiv"],
