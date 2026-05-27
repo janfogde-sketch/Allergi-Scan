@@ -2202,6 +2202,7 @@ export default function EatSafe() {
   const [submitting, setSubmitting] = useState(false);
   const [notFoundStep, setNotFoundStep] = useState(1); // 1=forside, 2=ingredienser, 3=bekræft
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [isOAuth, setIsOAuth] = useState(false);
   const [feedbackType, setFeedbackType] = useState("bug");
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackImage, setFeedbackImage] = useState(null);
@@ -2235,16 +2236,37 @@ export default function EatSafe() {
     const access = params.get("access_token");
     const refresh = params.get("refresh_token");
     if (access && refresh) {
-      // Hent bruger-id fra token
       try {
         const payload = JSON.parse(atob(access.split(".")[1]));
         const uid = payload.sub;
         saveTokens(access, refresh, uid);
-        setScreen(SCREENS.HOME);
+
+        // Tjek om brugeren er ny — hent profil fra Supabase
+        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,email`, {
+          headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${access}`, "Accept": "application/json" },
+        })
+          .then(r => r.json())
+          .then(data => {
+            const profile = data?.[0];
+            // Ny bruger: ingen navn sat endnu
+            if (!profile?.name) {
+              // Preudfyld email fra token metadata
+              const meta = payload.user_metadata || {};
+              setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "" }));
+              setOnboardStep(1);
+              setIsOAuth(true);
+              setScreen(SCREENS.ONBOARD);
+            } else {
+              setScreen(SCREENS.HOME);
+            }
+          })
+          .catch(() => setScreen(SCREENS.HOME));
+
         // Ryd URL hash
         window.history.replaceState({}, document.title, window.location.pathname);
       } catch (e) {
         console.error("OAuth callback fejl:", e);
+        setScreen(SCREENS.HOME);
       }
     }
   }, [saveTokens]);
@@ -3856,9 +3878,14 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                       <label className="field-lbl">{lbl}</label>
                       <input className="field" type={type} placeholder={ph} value={user[key]||""} onChange={e => setUser(u => ({ ...u, [key]: e.target.value }))}
                         style={key==="email" ? { background: user.email ? "var(--paper2)" : "var(--paper2)", opacity: loginEmail ? 0.6 : 1 } : {}} 
-                        readOnly={key==="email" && !!loginEmail}
+                        readOnly={key === "email" && (!!loginEmail || isOAuth)}
                       />
-                      {key==="email" && loginEmail && <div style={{ fontSize:10, color:"var(--muted)", marginTop:3 }}>Hentet fra din konto</div>}
+                      {key === "email" && isOAuth && (
+                        <div style={{ fontSize:10, color:"var(--green)", marginTop:3, display:"flex", alignItems:"center", gap:4 }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                          Bekræftet via Google
+                        </div>
+                      )}
                     </div>
                   ))}
                   <label className="field-lbl">Køn</label>
