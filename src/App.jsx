@@ -1328,28 +1328,107 @@ function IngredientsList({ text, allergenFlags = {} }) {
   if (current.trim()) parts.push(current.trim());
 
   // Find allergener der skal fremhæves
+  // Udvidet med synonymer, skjulte ingredienser og videnskabelige navne
   const allergenLabels = {
-    gluten: ["gluten","hvede","rug","byg","havre","spelt","kamut","einkorn","emmer","khorasanhvede"],
-    laktose: ["mælk","laktose","fløde","smør","ost","valle","kasein","laktalbumin"],
-    aeg: ["æg","æggehvide","æggeblomme"],
-    noedder: ["nødder","mandler","hasselnødder","valnødder","cashew","pekannødder","pistacienødder","macadamia"],
-    jordnoedder: ["jordnødder","peanut"],
-    soja: ["soja","sojabønner"],
-    fisk: ["fisk","ansjos","sardiner","laks","tun","makrel"],
-    skaldyr: ["skaldyr","rejer","krabbe","hummer","muslinger"],
-    selleri: ["selleri"],
-    sennep: ["sennep","sennepsfrø"],
-    sesam: ["sesam","sesamfrø"],
-    svovl: ["sulfitter","svovldioxid","svovl"],
-    lupin: ["lupin","lupinmel","lupinfrø"],
-    bloeddyr: ["bløddyr","blæksprutte","østers","muslinger"],
+    gluten: [
+      // Direkte
+      "gluten","hvede","rug","byg","havre","spelt","kamut","einkorn","emmer","khorasanhvede",
+      // Engelsk
+      "wheat","rye","barley","oats","oat","spelt","semolina","bulgur","couscous","farro","freekeh",
+      // Skjulte/forarbejdede
+      "hvedemel","hvedestivelse","hvedeklid","hvedekerne","hvedeprotein","hvedegluten","seitan",
+      "maltekstrakt","malteddike","maltsirup","øleddike","bryggersgær","dinkelhvede",
+      "breadcrumbs","rasp","panko","croutons","mel","stivelse af hvede",
+    ],
+    laktose: [
+      // Direkte
+      "mælk","laktose","fløde","smør","ost","valle","kasein","laktalbumin","laktoglobulin",
+      // Engelsk
+      "milk","cream","butter","cheese","whey","casein","dairy","lactose","lactalbumin",
+      // Skjulte
+      "mælkepulver","skummetmælkspulver","mælkefedt","mælkeprotein","mælkesucker",
+      "creme fraiche","yoghurt","kefir","kvark","mascarpone","ricotta","skyr","ghee",
+      "kondenseret mælk","kokosmælk erstatter","lactoferrin","lactoperoxidase",
+      // Forkortet på etiketter
+      "milk solids","milk powder","non-fat dry milk","buttermilk","milk fat",
+    ],
+    aeg: [
+      "æg","æggehvide","æggeblomme","egg","eggs","albumin","ovalbumin","ovomucin",
+      "lysozym","globulin","mayonnaise","majonæse","meringue","marengs",
+      "egg white","egg yolk","dried egg","whole egg","egg powder","æggepulver",
+    ],
+    noedder: [
+      // Alle nøddetyper
+      "nødder","mandler","hasselnødder","valnødder","cashew","pekannødder","pistacienødder","macadamia",
+      "paranødder","kokosnød","pinjenødder","chestnuts","kastanjer",
+      "almond","hazelnut","walnut","cashew","pecan","pistachio","macadamia","brazil nut","pine nut",
+      // Afledte
+      "marcipan","marzipan","nougat","pesto","praline","gianduja","mandelmel","nøddemel",
+      "mandelsmør","nøddeolie","mandelekstrakt","hasselnøddepasta",
+    ],
+    jordnoedder: [
+      "jordnødder","peanut","peanuts","groundnut","arachis","arachide",
+      "jordnøddeolie","jordnøddesmør","peanut butter","peanut oil","arachis oil",
+      // Skjult i asiatiske retter
+      "satay","kacang","nut sauce",
+    ],
+    soja: [
+      "soja","sojabønner","soy","soybeans","tofu","tempeh","miso","edamame","natto",
+      "sojamel","sojaprotein","sojalecithin","sojamælk","sojasauce","tamari","shoyu",
+      "textured vegetable protein","tvp","hydrolyseret sojaprotein","isoleret sojaprotein",
+      "lecithin","lecitin","e322", // sojalecithin skjult som e-nummer
+    ],
+    fisk: [
+      "fisk","ansjos","sardiner","laks","tun","makrel","sild","torsk","rødspætte","helleflynder",
+      "fish","salmon","tuna","anchovy","sardine","mackerel","herring","cod","halibut","tilapia",
+      // Skjulte fiskekilder
+      "worcestershire sauce","worcestershiresauce","fiskesauce","fish sauce","nam pla",
+      "caesar dressing","bouillabaisse","surimi","fiskeboller","fiskemel","omega-3",
+      "anchovies","anchois","nuoc mam",
+    ],
+    skaldyr: [
+      "skaldyr","rejer","krabbe","hummer","muslinger","østers","blæksprutte","kammusling",
+      "shrimp","prawn","crab","lobster","mussel","oyster","squid","scallop","langoustine",
+      "krebs","languster","tigerrejer","pilgrimsmusling","snegle","escargot",
+    ],
+    selleri: [
+      "selleri","celeriac","knoldselleri","sellerisalt","sellerifnug","selleripulver",
+      "celery","celeriac","celery salt","celery seed","celery extract",
+    ],
+    sennep: [
+      "sennep","sennepsfrø","sennepspulver","sennepsolie","sennepsmel",
+      "mustard","mustard seed","mustard oil","mustard flour","mustard powder",
+      "dijonsennep","dijonsennep","engelsk sennep","grovkornet sennep",
+    ],
+    sesam: [
+      "sesam","sesamfrø","sesamolie","tahini","sesampasta","sesammel",
+      "sesame","sesame seed","sesame oil","tahini","til","gingelly",
+    ],
+    svovl: [
+      "sulfitter","svovldioxid","svovl","sulphite","sulfite","sulphur dioxide","so2",
+      "e220","e221","e222","e223","e224","e225","e226","e227","e228",
+    ],
+    lupin: [
+      "lupin","lupinmel","lupinfrø","lupinprotein","lupinfiber",
+      "lupin","lupin flour","lupin seed","lupin bean",
+    ],
+    bloeddyr: [
+      "blæksprutte","østers","muslinger","snegle","kammusling",
+      "squid","oyster","mussel","snail","scallop","clam","abalone",
+    ],
   };
 
+
   const isAllergenWord = (word) => {
-    const w = word.toLowerCase().replace(/[^a-zæøå]/g, "");
-    return Object.entries(allergenLabels).some(([key, terms]) =>
-      terms.some(t => w.includes(t) || t.includes(w)) && allergenFlags[key] !== "no"
-    );
+    const w = word.toLowerCase().replace(/[^a-zæøå0-9]/g, "");
+    if (w.length < 2) return false;
+    return Object.entries(allergenLabels).some(([key, terms]) => {
+      if (allergenFlags[key] === "no" || allergenFlags[key] === false) return false;
+      return terms.some(t => {
+        const tc = t.toLowerCase().replace(/[^a-zæøå0-9]/g, "");
+        return w === tc || w.includes(tc) || (tc.length > 4 && tc.includes(w));
+      });
+    });
   };
 
   const isHighlighted = (part) => {
@@ -1525,20 +1604,37 @@ async function apiCall(url, options = {}) {
 
 // ─── ALLERGEN SAMMENLIGNING ──────────────────────────────────────────────────
 function compareAllergens(flags, activeAllergenIds) {
-  if (!flags || activeAllergenIds.length === 0) return { status:"safe", matchedDanger:[], matchedWarning:[], hasUnknown:false };
+  if (!flags || activeAllergenIds.length === 0) return { status:"safe", matchedDanger:[], matchedWarning:[], hasUnknown:false, confidence:"high", explanation:[] };
   const matchedDanger = [];
   const matchedWarning = [];
   let hasUnknown = false;
+  const explanation = []; // Forklaring på HVORFOR et produkt er usikkert
+
   for (const id of activeAllergenIds) {
     const val = flags[id];
-    if (val === "yes") matchedDanger.push(id);
-    else if (val === "traces") matchedWarning.push(id);
-    else if (val === "unknown") hasUnknown = true;
+    // Håndter boolean (recipes) og string (produkter)
+    if (val === true || val === "yes") {
+      matchedDanger.push(id);
+      explanation.push({ allergen: id, reason: "direkte", severity: "high" });
+    } else if (val === "traces") {
+      matchedWarning.push(id);
+      explanation.push({ allergen: id, reason: "spor", severity: "medium" });
+    } else if (val === "unknown" || val === null || val === undefined) {
+      hasUnknown = true;
+    }
   }
+
   let status = "safe";
   if (matchedDanger.length > 0) status = "danger";
   else if (matchedWarning.length > 0) status = "warn";
-  return { status, matchedDanger, matchedWarning, hasUnknown };
+
+  // Confidence score baseret på datakvalitet
+  let confidence = "high";
+  if (hasUnknown) confidence = "medium";
+  if (Object.keys(flags).length === 0) confidence = "low";
+  if (Object.values(flags).every(v => v === null || v === undefined)) confidence = "low";
+
+  return { status, matchedDanger, matchedWarning, hasUnknown, confidence, explanation };
 }
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
@@ -1654,7 +1750,7 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
 .card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px;box-shadow:var(--sh);}
 .card-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);margin-bottom:10px;}
 .card-title{font-size:15px;font-weight:800;color:var(--ink);margin-bottom:4px;letter-spacing:-.2px;}
-.field{width:100%;background:var(--paper2);border:1.5px solid var(--border2);border-radius:10px;padding:11px 14px;color:var(--ink);font-family:var(--f);font-size:15px;outline:none;transition:border-color .15s,background .15s;}
+.field{width:100%;background:var(--paper2);border:1.5px solid var(--border2);border-radius:10px;padding:11px 14px;color:var(--ink);font-family:var(--f);font-size:16px;outline:none;transition:border-color .15s,background .15s;}
 .field:focus{border-color:var(--green);background:#fff;box-shadow:0 0 0 3px var(--green-lt);}
 .field-lbl{font-size:11.5px;font-weight:700;color:var(--ink2);margin-bottom:5px;display:block;letter-spacing:.1px;}
 .input-row{display:flex;gap:8px;}
@@ -1905,7 +2001,79 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
 .mp-aa.on{background:var(--green-lt);border-color:var(--green);color:var(--green);}
 .mp-family-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--border);}
 .mp-family-row:last-child{border-bottom:none;}
+
+/* ── OPSKRIFTER ── */
+.recipe-grid{display:flex;flex-direction:column;gap:12px;}
+.recipe-card{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--sh);cursor:pointer;transition:transform .15s,box-shadow .15s;position:relative;}
+.recipe-card:active{transform:scale(.99);}
+.recipe-card-img{width:100%;height:180px;object-fit:cover;display:block;background:var(--paper2);}
+.recipe-card-img-placeholder{width:100%;height:140px;background:linear-gradient(135deg,var(--paper2) 0%,var(--border) 100%);display:flex;align-items:center;justify-content:center;font-size:52px;}
+.recipe-card-body{padding:14px 16px 16px;}
+.recipe-card-title{font-size:16px;font-weight:800;color:var(--ink);line-height:1.25;margin-bottom:6px;letter-spacing:-.2px;}
+.recipe-card-desc{font-size:12px;color:var(--muted2);line-height:1.55;margin-bottom:10px;}
+.recipe-card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.recipe-pill{font-size:10px;font-weight:700;border-radius:100px;padding:3px 9px;border:1px solid;white-space:nowrap;}
+.recipe-safe-bar{display:flex;gap:5px;flex-wrap:wrap;padding:10px 14px 0;border-top:1px solid var(--border);margin-top:10px;}
+.recipe-profile-badge{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;border:1px solid;}
+.recipe-fav-btn{position:absolute;top:10px;right:10px;z-index:2;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.35);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .15s;}
+.recipe-filter-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none;}
+.recipe-filter-row::-webkit-scrollbar{display:none;}
+.recipe-filter-chip{flex-shrink:0;padding:7px 14px;border-radius:100px;border:1.5px solid var(--border2);background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted2);transition:all .15s;white-space:nowrap;}
+.recipe-filter-chip.active{border-color:var(--green);background:var(--green-lt);color:var(--ink);box-shadow:0 0 0 2px var(--green-lt);}
+.recipe-search-wrap{position:relative;margin-bottom:12px;}
+.recipe-search-input{width:100%;padding:11px 14px 11px 42px;border:1.5px solid var(--border2);border-radius:12px;background:var(--paper2);font-family:var(--f);font-size:14px;color:var(--ink);outline:none;box-sizing:border-box;transition:border-color .15s,background .15s;}
+.recipe-search-input:focus{border-color:var(--green);background:#fff;box-shadow:0 0 0 3px var(--green-lt);}
+.recipe-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;}
+.recipe-detail-hero{position:relative;margin:-1px -16px 0;}
+.recipe-detail-img{width:100%;height:240px;object-fit:cover;display:block;}
+.recipe-detail-img-placeholder{width:100%;height:200px;background:linear-gradient(135deg,var(--paper2),var(--border));display:flex;align-items:center;justify-content:center;font-size:80px;}
+.recipe-detail-back{position:absolute;top:14px;left:14px;z-index:3;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.45);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;}
+.recipe-detail-fav{position:absolute;top:14px;right:14px;z-index:3;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.45);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.recipe-detail-title{font-size:24px;font-weight:900;color:var(--ink);letter-spacing:-.5px;line-height:1.2;margin-bottom:8px;}
+.recipe-meta-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.recipe-meta-pill{display:flex;align-items:center;gap:4px;padding:4px 10px;background:var(--paper2);border:1px solid var(--border);border-radius:100px;font-size:11px;font-weight:700;color:var(--muted2);}
+.ingredient-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);}
+.ingredient-row:last-child{border-bottom:none;}
+.ingredient-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:2px;}
+.step-row{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .2s;}
+.step-row:last-child{border-bottom:none;}
+.step-circle{width:32px;height:32px;border-radius:50%;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.servings-ctrl{display:flex;align-items:center;gap:10px;background:var(--paper2);border:1px solid var(--border);border-radius:10px;padding:5px 12px;}
+.servings-btn{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border2);background:#fff;cursor:pointer;font-size:16px;font-weight:700;color:var(--ink);display:flex;align-items:center;justify-content:center;line-height:1;transition:all .15s;font-family:var(--f);}
+.servings-btn:hover{border-color:var(--green);color:var(--green);}
+.servings-num{font-size:15px;font-weight:800;color:var(--ink);min-width:22px;text-align:center;}
+.recipe-skeleton{background:#fff;border-radius:16px;overflow:hidden;border:1px solid var(--border);margin-bottom:12px;}
+.skeleton-img{width:100%;height:140px;background:linear-gradient(90deg,var(--paper2) 25%,var(--border) 50%,var(--paper2) 75%);background-size:400% 100%;animation:shimmer 1.4s ease-in-out infinite;}
+.skeleton-line{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--paper2) 25%,var(--border) 50%,var(--paper2) 75%);background-size:400% 100%;animation:shimmer 1.4s ease-in-out infinite;margin-bottom:8px;}
+@keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+.youtube-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#FF0000;border:none;border-radius:10px;cursor:pointer;font-family:var(--f);font-size:13px;font-weight:700;color:#fff;width:100%;justify-content:center;transition:background .15s;margin-bottom:10px;}
+.youtube-btn:hover{background:#CC0000;}
+
+/* ── ACCESSIBILITY ── */
+/* Minimum touch target 44x44px */
+.btn{min-height:44px;}
+.nav-item{min-height:44px;min-width:44px;}
+.chip{min-height:44px;}
+/* Focus synlig for keyboard-navigation */
+*:focus-visible{outline:2.5px solid var(--green);outline-offset:2px;border-radius:4px;}
+/* Skip-link for screen readers */
+.skip-link{position:absolute;top:-100px;left:16px;background:var(--ink);color:#fff;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:700;z-index:9999;text-decoration:none;}
+.skip-link:focus{top:8px;}
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}
+  .spinner{animation:none;border-color:var(--green);}
+}
+/* Bedre kontrast for muted tekst */
+@media (prefers-contrast: more) {
+  :root{--muted:#555;--muted2:#444;--border:#999;--border2:#777;}
+}
+/* Større tekst support */
+@media (min-resolution: 2dppx) {
+  .field{font-size:16px;} /* Undgår iOS zoom ved focus */
+}
 `;
+
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
 export default function EatSafe() {
@@ -1950,6 +2118,13 @@ export default function EatSafe() {
   const [submissions, setSubmissions] = useState([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [adminStats, setAdminStats] = useState(null);
+  const [adminSection, setAdminSection] = useState("dashboard");
+  const [adminUsers, setAdminUsers] = useState([]);
+  const [adminUsersLoading, setAdminUsersLoading] = useState(false);
+  const [adminTicketFilter, setAdminTicketFilter] = useState("all");
+  const [openAdminUser, setOpenAdminUser] = useState(null);
+  const [userSearch, setUserSearch] = useState("");
+  const [userSearchParam, setUserSearchParam] = useState("all"); // all | name | email | role | onboarding
   const [openSubmission, setOpenSubmission] = useState(null);
   const [submissionFilter, setSubmissionFilter] = useState("pending");
   const [editingSubmission, setEditingSubmission] = useState(null);
@@ -1970,6 +2145,9 @@ export default function EatSafe() {
     try { return JSON.parse(localStorage.getItem("as_favorites") || "[]"); } catch { return []; }
   });
   const [madpasLang, setMadpasLang] = useState(() => localStorage.getItem("as_madpas_lang") || "en");
+  const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
+  const mpAllergens = madpasActiveProfile ? (madpasActiveProfile.allergens || []) : allergens;
+  const mpCustom = madpasActiveProfile ? (madpasActiveProfile.customAllerg || []) : customAllerg;
   const [recipes, setRecipes] = useState([]);
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
@@ -1995,6 +2173,13 @@ export default function EatSafe() {
   const [madpasWaiterView, setMadpasWaiterView] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [showSafeOnly, setShowSafeOnly] = useState(false);
+  const [recipeServings, setRecipeServings] = useState(4);
+  const [editStep, setEditStep] = useState("start");
+  const [editIngText, setEditIngText] = useState("");
+  const [editNote, setEditNote] = useState("");
+  const [editType, setEditType] = useState(null);
+  const [recipeSearch, setRecipeSearch] = useState("");
+  const [recipeSafeOnly, setRecipeSafeOnly] = useState(false);
 
   // Family form
   const [newMemberName, setNewMemberName] = useState("");
@@ -2025,6 +2210,20 @@ export default function EatSafe() {
   const [ocrLoading, setOcrLoading] = useState(false);
   const [proposedFlags, setProposedFlags] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [notFoundStep, setNotFoundStep] = useState(1); // 1=forside, 2=ingredienser, 3=bekræft
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [tourIdx, setTourIdx] = useState(0);
+  const [isOAuth, setIsOAuth] = useState(false);
+  const [feedbackType, setFeedbackType] = useState("bug");
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackImage, setFeedbackImage] = useState(null);
+  const [feedbackImageB64, setFeedbackImageB64] = useState(null);
+  const [feedbackSending, setFeedbackSending] = useState(false);
+  const [feedbackDone, setFeedbackDone] = useState(false);
+  const [adminTickets, setAdminTickets] = useState([]);
+  const [openTicket, setOpenTicket] = useState(null);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
   const [proposedName, setProposedName] = useState("");
   const [productImageBase64, setProductImageBase64] = useState(null);
   const [productImagePreview, setProductImagePreview] = useState(null);
@@ -2040,6 +2239,50 @@ export default function EatSafe() {
     localStorage.setItem("as_refresh", refresh);
     localStorage.setItem("as_user_id", uid);
   }, []);
+
+  // Håndter OAuth callback — fang access_token fra URL hash
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash) return;
+    const params = new URLSearchParams(hash.replace("#", "?").replace("#", "&"));
+    const access = params.get("access_token");
+    const refresh = params.get("refresh_token");
+    if (access && refresh) {
+      try {
+        const payload = JSON.parse(atob(access.split(".")[1]));
+        const uid = payload.sub;
+        saveTokens(access, refresh, uid);
+
+        // Tjek om brugeren er ny — hent profil fra Supabase
+        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,created_at,onboarding_completed`, {
+          headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${access}`, "Accept": "application/json" },
+        })
+          .then(r => r.json())
+          .then(data => {
+            const profile = data?.[0];
+            const createdAt = profile?.created_at ? new Date(profile.created_at) : null;
+            // Ny bruger = onboarding ikke gennemført ELLER oprettet inden for 2 min
+            const isNew = !profile || profile.onboarding_completed === false || !createdAt || (Date.now() - createdAt.getTime() < 120000);
+            if (isNew) {
+              const meta = payload.user_metadata || {};
+              setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "" }));
+              setOnboardStep(1);
+              setIsOAuth(true);
+              setScreen(SCREENS.ONBOARD);
+            } else {
+              setScreen(SCREENS.HOME);
+            }
+          })
+          .catch(() => setScreen(SCREENS.HOME));
+
+        // Ryd URL hash
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch (e) {
+        console.error("OAuth callback fejl:", e);
+        setScreen(SCREENS.HOME);
+      }
+    }
+  }, [saveTokens]);
 
   const clearAuth = useCallback(() => {
     setAccessToken(null); setRefreshToken(null); setUserId(null);
@@ -2133,22 +2376,55 @@ export default function EatSafe() {
   const loadRecipes = async (filter = "alle") => {
     setRecipesLoading(true);
     try {
-      let url = `${SUPABASE_URL}/rest/v1/recipes?status=eq.approved&select=*&order=created_at.desc&limit=50`;
-      if (filter !== "alle") url += `&category=eq.${filter}`;
-      const data = await apiCall(url, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } });
+      let url = `${SUPABASE_URL}/rest/v1/recipes?select=id,title,category,image_url,tags,allergen_flags,servings,prep_time_minutes,cook_time_minutes,description&limit=50`;
+      // Prøv med status filter først
+      url += `&status=eq.approved`;
+      if (filter !== "alle") {
+        url += `&category=eq.${filter}`;
+      }
+      const headers = {
+        "apikey": SUPABASE_ANON_KEY,
+        "Accept": "application/json",
+        ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
+      };
+      const res = await fetch(url, { headers });
+      const text = await res.text();
+      if (!res.ok) {
+        console.error("loadRecipes fejl:", res.status, text.slice(0, 200));
+        // Fallback: prøv uden status filter
+        const url2 = `${SUPABASE_URL}/rest/v1/recipes?select=id,title,category,image_url,tags,allergen_flags,servings,description&limit=50${filter !== "alle" ? `&category=eq.${filter}` : ""}`;
+        const res2 = await fetch(url2, { headers });
+        const data2 = await res2.json();
+        setRecipes(Array.isArray(data2) ? data2 : []);
+        return;
+      }
+      const data = JSON.parse(text);
       setRecipes(Array.isArray(data) ? data : []);
-    } catch { setRecipes([]); }
+    } catch (e) {
+      console.error("loadRecipes fejl:", e.message);
+      setRecipes([]);
+    }
     setRecipesLoading(false);
   };
 
   const loadRecipeIngredients = async (recipeId) => {
     try {
-      const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/recipe_ingredients?recipe_id=eq.${recipeId}&select=*&order=sort_order`,
-        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+      const headers = {
+        "apikey": SUPABASE_ANON_KEY,
+        "Accept": "application/json",
+        ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
+      };
+      // Hent fuld opskrift inkl. ingredients_raw og instructions
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/recipes?id=eq.${recipeId}&select=id,ingredients_raw,instructions`,
+        { headers }
       );
-      setRecipeIngredients(Array.isArray(data) ? data : []);
-    } catch { setRecipeIngredients([]); }
+      const data = await res.json();
+      if (Array.isArray(data) && data[0]) {
+        setSelectedRecipe(prev => prev ? { ...prev, ...data[0] } : prev);
+      }
+    } catch {}
+    setRecipeIngredients([]);
   };
 
   const submitUserRecipe = async () => {
@@ -2208,24 +2484,49 @@ export default function EatSafe() {
   };
 
   // ── ADMIN ─────────────────────────────────────────────────────────────────
-  const loadSubmissions = async () => {
+  const loadSubmissions = async (filter) => {
+    const f = filter || submissionFilter;
+    if (f === "tickets") return;
     setSubmissionsLoading(true);
     try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/submissions?status=pending`, {
-        headers: makeHeaders(accessToken),
-      });
-      if (data.success) setSubmissions(data.submissions || []);
-    } catch { /* silent */ }
+      const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
+      const url = `${SUPABASE_URL}/rest/v1/product_submissions?status=eq.${f}&order=created_at.desc&limit=100`;
+      const res = await fetch(url, { headers });
+      const data = await res.json();
+      setSubmissions(Array.isArray(data) ? data : []);
+    } catch { setSubmissions([]); }
     setSubmissionsLoading(false);
   };
 
   const loadAdminStats = async () => {
     try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/admin/stats`, {
-        headers: makeHeaders(accessToken),
+      const h = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json", "Prefer": "count=exact" };
+      const hNoCount = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
+      const today = new Date(); today.setHours(0,0,0,0);
+      const todayISO = today.toISOString();
+
+      const [users, products, scans, submissions, families, tickets, scansToday, newUsersToday] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/users?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
+        fetch(`${SUPABASE_URL}/rest/v1/products?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
+        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
+        fetch(`${SUPABASE_URL}/rest/v1/product_submissions?status=eq.pending&select=id`, { headers: hNoCount }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/family_members?select=id`, { headers: hNoCount }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?status=eq.open&select=id`, { headers: hNoCount }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id&scanned_at=gte.${todayISO}`, { headers: hNoCount }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/users?select=id&created_at=gte.${todayISO}`, { headers: hNoCount }).then(r => r.json()),
+      ]);
+
+      setAdminStats({
+        total_users:          typeof users === "number" ? users : (Array.isArray(users) ? users.length : 0),
+        total_products:       typeof products === "number" ? products : (Array.isArray(products) ? products.length : 0),
+        total_scans:          typeof scans === "number" ? scans : (Array.isArray(scans) ? scans.length : 0),
+        pending_submissions:  Array.isArray(submissions) ? submissions.length : 0,
+        total_families:       Array.isArray(families) ? families.length : 0,
+        open_tickets:         Array.isArray(tickets) ? tickets.length : 0,
+        scans_today:          Array.isArray(scansToday) ? scansToday.length : 0,
+        new_users_today:      Array.isArray(newUsersToday) ? newUsersToday.length : 0,
       });
-      if (data.success) setAdminStats(data.stats);
-    } catch { /* silent */ }
+    } catch (e) { console.error("loadAdminStats fejl:", e.message); }
   };
 
   const cleanOcrWithAI = async (rawText) => {
@@ -2270,21 +2571,26 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
   const updateSubmissionAndApprove = async (submission, edits) => {
     try {
-      await apiCall(`${SUPABASE_URL}/functions/v1/submissions/${submission.id}`, {
+      const headers = { "Content-Type":"application/json", "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Prefer":"return=minimal" };
+      // Opdater status i product_submissions tabellen
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/product_submissions?id=eq.${submission.id}`, {
         method: "PATCH",
-        headers: makeHeaders(accessToken),
+        headers,
         body: JSON.stringify({
           status: "approved",
           reviewed_by: userId,
-          name: edits.name || submission.ai_parsed_data?.name || "Ukendt produkt",
+          product_name: edits.name || submission.ai_parsed_data?.name || "Ukendt produkt",
           brand: edits.brand || submission.ai_parsed_data?.brand || null,
-          ingredients_text: submission.ocr_raw_text || null,
-          allergen_flags: edits.allergen_flags || submission.ai_parsed_data || null,
+          ingredients: edits.ingredients_text || submission.ocr_raw_text || null,
+          notes: `Godkendt af admin. Allergener: ${JSON.stringify(edits.allergen_flags || {})}`,
         }),
       });
-      setSubmissions(s => s.filter(x => x.id !== submission.id));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setOpenSubmission(null);
       setEditingSubmission(null);
+      // Reload med samme filter (pending) — submission forsvinder herfra
+      await loadSubmissions("pending");
+      loadAdminStats();
     } catch (e) {
       alert("Fejl ved godkendelse: " + e.message);
     }
@@ -2312,21 +2618,20 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
   const rejectSubmission = async (id) => {
     try {
-      await apiCall(`${SUPABASE_URL}/functions/v1/submissions/${id}`, {
+      const headers = { "Content-Type":"application/json", "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Prefer":"return=minimal" };
+      await fetch(`${SUPABASE_URL}/rest/v1/product_submissions?id=eq.${id}`, {
         method: "PATCH",
-        headers: makeHeaders(accessToken),
-        body: JSON.stringify({
-          status: "rejected",
-          reviewed_by: userId,
-          review_note: "Afvist af admin",
-        }),
+        headers,
+        body: JSON.stringify({ status: "rejected", reviewed_by: userId }),
       });
-      setSubmissions(s => s.filter(x => x.id !== id));
+      setOpenSubmission(null);
+      setEditingSubmission(null);
+      await loadSubmissions("pending");
+      loadAdminStats();
     } catch (e) {
       alert("Fejl ved afvisning: " + e.message);
     }
   };
-
   // ── FAVORITTER ────────────────────────────────────────────────────────────
   const toggleFavorite = (product) => {
     setFavorites(prev => {
@@ -2342,6 +2647,23 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
   const isFavorite = (ean) => favorites.some(f => f.ean === ean || f.code === ean);
 
   // ── AUTH ───────────────────────────────────────────────────────────────────
+  const handleOAuth = async (provider) => {
+    setAuthLoading(true);
+    setAuthError("");
+    try {
+      const redirectTo = "https://eatsafe.dk/";
+      const params = new URLSearchParams({
+        provider,
+        redirect_to: redirectTo,
+        ...(provider === "google" ? { prompt: "select_account" } : {}),
+      });
+      window.location.href = `${SUPABASE_URL}/auth/v1/authorize?${params.toString()}`;
+    } catch (e) {
+      setAuthError(`${provider} login fejlede: ${e.message}`);
+      setAuthLoading(false);
+    }
+  };
+
   const handleLogin = async () => {
     if (!loginEmail || !loginPassword) return;
     setAuthLoading(true); setAuthError("");
@@ -2402,14 +2724,119 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
   };
 
   // ── ONBOARDING GEM ─────────────────────────────────────────────────────────
+  const submitFeedback = async () => {
+    if (!feedbackText.trim()) return;
+    setFeedbackSending(true);
+    try {
+      // Saml al diagnostisk info automatisk
+      const ctx = {
+        screen,
+        url: window.location.href,
+        user_agent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language,
+        screen_size: `${window.screen.width}x${window.screen.height}`,
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+        online: navigator.onLine,
+        timestamp: new Date().toISOString(),
+        user_id: userId || null,
+        user_name: user?.name || null,
+        user_email: user?.email || loginEmail || null,
+        user_role: user?.role || null,
+        allergens_count: allergens.length,
+        family_count: family.length,
+        history_count: history.length,
+        active_profiles: activeProfiles,
+        app_version: "beta-1.0",
+      };
+      const headers = {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
+      };
+      await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets`, {
+        method: "POST",
+        headers: { ...headers, "Prefer": "return=minimal" },
+        body: JSON.stringify({
+          type: feedbackType,
+          description: feedbackText,
+          context: ctx,
+          image_base64: feedbackImageB64 || null,
+          status: "open",
+          submitted_by: userId || null,
+        }),
+      });
+      setFeedbackDone(true);
+      setTimeout(() => { setFeedbackOpen(false); setFeedbackDone(false); setFeedbackText(""); setFeedbackImage(null); setFeedbackImageB64(null); setFeedbackType("bug"); }, 2000);
+    } catch(e) { alert("Fejl: " + e.message); }
+    setFeedbackSending(false);
+  };
+
+  const loadAdminUsers = async () => {
+    setAdminUsersLoading(true);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,name,email,role,created_at,onboarding_completed&order=created_at.desc&limit=1000`, {
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json", "Prefer": "count=exact" },
+      });
+      const data = await res.json();
+      setAdminUsers(Array.isArray(data) ? data : []);
+    } catch { setAdminUsers([]); }
+    setAdminUsersLoading(false);
+  };
+
+  const updateUserRole = async (uid, role) => {
+    await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}`, {
+      method: "PATCH",
+      headers: { "Content-Type":"application/json", "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Prefer":"return=minimal" },
+      body: JSON.stringify({ role }),
+    });
+    setAdminUsers(u => u.map(x => x.id === uid ? { ...x, role } : x));
+  };
+
+  const deleteUser = async (uid) => {
+    if (!window.confirm("Er du sikker? Dette kan ikke fortrydes.")) return;
+    await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}`, { method: "DELETE", headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}` } });
+    setAdminUsers(u => u.filter(x => x.id !== uid));
+  };
+
+  const loadTickets = async () => {
+    setTicketsLoading(true);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?order=created_at.desc&limit=100`, {
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" },
+      });
+      const data = await res.json();
+      setAdminTickets(Array.isArray(data) ? data : []);
+    } catch { setAdminTickets([]); }
+    setTicketsLoading(false);
+  };
+
+  const updateTicketStatus = async (id, status) => {
+    await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?id=eq.${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type":"application/json", "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Prefer":"return=minimal" },
+      body: JSON.stringify({ status }),
+    });
+    setAdminTickets(t => t.map(x => x.id === id ? { ...x, status } : x));
+    if (openTicket?.id === id) setOpenTicket(t => ({ ...t, status }));
+  };
+
+  // ── ONBOARDING GEM ─────────────────────────────────────────────────────────
   const saveProfileStep1 = async () => {
     if (!(user.name || "").trim()) return;
+    const emailToSave = user.email || loginEmail || "";
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
         method: "PATCH",
         headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
-        body: JSON.stringify({ name: user.name, phone: user.phone || null, age: user.age ? parseInt(user.age) : null }),
+        body: JSON.stringify({
+          name: user.name,
+          email: emailToSave || null,
+          phone: user.phone || null,
+          age: user.age ? parseInt(user.age) : null,
+        }),
       });
+      if (emailToSave) setUser(u => ({ ...u, email: emailToSave }));
     } catch { /* silent */ }
     setOnboardStep(4);
   };
@@ -2439,7 +2866,19 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     // step styres af knappen
   };
 
-  const finishOnboard = () => { setScreen(SCREENS.HOME); setEditMode(false); };
+  const finishOnboard = async () => {
+    // Marker onboarding som gennemført
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type":"application/json", "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Prefer":"return=minimal" },
+        body: JSON.stringify({ onboarding_completed: true }),
+      });
+    } catch {}
+    setScreen(SCREENS.HOME);
+    setEditMode(false);
+    setIsOAuth(false);
+  };
 
   // ── SCANNING ───────────────────────────────────────────────────────────────
   const allActive = useCallback(() => {
@@ -2448,42 +2887,54 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     return { ids: [...ids], custom: [...customAllerg] };
   }, [allergens, customAllerg, family, activeProfiles]);
 
+  const lastScannedRef = useRef(null); // Anti-duplikat
   const startCamera = async () => {
     if (cameraActive) return;
     setScanError("");
     setTorchOn(false);
     torchTrackRef.current = null;
+    lastScannedRef.current = null;
 
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setScanError("Dit browser understøtter ikke kamera. Prøv Chrome eller Safari.");
+    // Tjek browser-support
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setScanError("Kamera ikke understøttet. Prøv Chrome eller Safari.");
       return;
     }
 
-    // Bed om tilladelse og opsnap track til torch
+    // iPhone kræver simpel constraints — avancerede constraints fejler på Safari
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const constraints = isIOS
+      ? { video: { facingMode: { exact: "environment" } } }
+      : { video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } };
+
+    // Bed om kamera-tilladelse
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment",
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-          focusMode: { ideal: "continuous" },
-        }
-      });
-      // Gem track til torch-brug
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       const track = stream.getVideoTracks()[0];
       if (track) torchTrackRef.current = track;
       stream.getTracks().forEach(t => t.stop());
     } catch (e) {
-      if (e.name === "NotAllowedError") {
-        setScanError("Kamera-adgang nægtet. Tillad kamera i browserens indstillinger og prøv igen.");
+      if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
+        setScanError("Kamera-adgang nægtet. Gå til telefonens indstillinger og tillad kamera for denne app.");
+      } else if (e.name === "NotFoundError") {
+        setScanError("Intet kamera fundet på denne enhed.");
+      } else if (e.name === "OverconstrainedError" && isIOS) {
+        // iOS fallback — prøv uden exact
+        try {
+          const stream2 = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+          stream2.getTracks().forEach(t => t.stop());
+        } catch {
+          setScanError("Kunne ikke starte kamera. Prøv at genindlæse siden.");
+          return;
+        }
       } else {
-        setScanError("Kunne ikke få adgang til kamera: " + e.message);
+        setScanError("Kamera fejl: " + e.message);
+        return;
       }
-      return;
     }
 
     setCameraActive(true);
-    await new Promise(r => setTimeout(r, 150));
+    await new Promise(r => setTimeout(r, isIOS ? 300 : 150)); // iOS har brug for lidt mere tid
 
     try {
       const { Html5Qrcode } = await import("html5-qrcode");
@@ -2501,29 +2952,40 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         return;
       }
 
-      html5QrRef.current = new Html5Qrcode(readerId);
+      html5QrRef.current = new Html5Qrcode(readerId, { verbose: false });
+
+      const qrConfig = {
+        fps: isIOS ? 10 : 20, // iOS klarer ikke 30fps
+        qrbox: (w, h) => {
+          const side = Math.min(w, h) * 0.8;
+          return { width: Math.round(side), height: Math.round(side * 0.45) };
+        },
+        aspectRatio: isIOS ? undefined : 1.0, // iOS: lad den bestemme selv
+        disableFlip: false,
+        formatsToSupport: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], // Alle stregkode-formater
+        videoConstraints: isIOS
+          ? { facingMode: { exact: "environment" } }
+          : {
+              facingMode: "environment",
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              focusMode: "continuous",
+              exposureMode: "continuous",
+            },
+      };
+
       await html5QrRef.current.start(
-        {
-          facingMode: "environment",
-        },
-        {
-          fps: 30,
-          qrbox: (viewfinderWidth, viewfinderHeight) => {
-            const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.85;
-            return { width: Math.round(size), height: Math.round(size * 0.5) };
-          },
-          aspectRatio: 1.0,
-          disableFlip: false,
-          videoConstraints: {
-            facingMode: "environment",
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            focusMode: "continuous",
-            exposureMode: "continuous",
-            whiteBalanceMode: "continuous",
-          },
-        },
+        { facingMode: isIOS ? { exact: "environment" } : "environment" },
+        qrConfig,
         (code) => {
+          // Anti-duplikat — ignorer samme kode inden for 2 sekunder
+          const now = Date.now();
+          if (lastScannedRef.current?.code === code && now - lastScannedRef.current.time < 2000) return;
+          lastScannedRef.current = { code, time: now };
+
+          // Vibration feedback
+          if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
+
           // Bip lyd
           try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2531,18 +2993,20 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             const gain = ctx.createGain();
             osc.connect(gain); gain.connect(ctx.destination);
             osc.frequency.value = 1800;
-            gain.gain.setValueAtTime(0.3, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.25, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
             osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.1);
+            osc.stop(ctx.currentTime + 0.12);
           } catch {}
+
           stopCamera();
           lookupProduct(code);
         },
-        () => {}
+        () => {} // Scan fejl — stille fejl, kameraet fortsætter
       );
 
-      // Opsnap den aktive video track til torch
+      // Opsnap video track til torch — vent lidt på iOS
+      await new Promise(r => setTimeout(r, 500));
       const videoEl = document.querySelector("#qr-reader-home video");
       if (videoEl?.srcObject) {
         const track = videoEl.srcObject.getVideoTracks()[0];
@@ -2551,7 +3015,13 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
     } catch (e) {
       setCameraActive(false);
-      setScanError("Kamera fejl: " + (e.message || e.toString()));
+      // iPhone-venlig fejlbesked
+      if (e.message?.includes("constraint") || e.message?.includes("Constraint")) {
+        // Prøv igen uden constraints
+        setTimeout(() => startCamera(), 500);
+      } else {
+        setScanError("Kamera kunne ikke starte. Prøv at lukke andre apps og prøv igen.");
+      }
     }
   };
 
@@ -2606,6 +3076,9 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
   useEffect(() => {
     if (screen !== SCREENS.HOME) stopCamera();
+    if (screen === SCREENS.RECIPES && recipes.length === 0 && !recipesLoading) {
+      loadRecipes("alle");
+    }
   }, [screen]);
 
   // Intercepter Android/browser back-knap
@@ -2665,7 +3138,13 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         setNotFoundEan(ean.trim());
         await saveHistoryEntry(ean.trim(), null, "not_found", {});
         setLoading(false);
-        setScreen(SCREENS.NOTFOUND);
+          setScreen(SCREENS.NOTFOUND);
+        setNotFoundStep(1);
+        setOcrText("");
+        setProposedName("");
+        setProposedFlags(Object.fromEntries(ALLERGENS.map(a => [a.id, false])));
+        setProductImagePreview(null);
+        setProductImageBase64(null);
         return;
       }
 
@@ -2774,14 +3253,33 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
   const handleProductImageCapture = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const base64 = await new Promise((res, rej) => {
-      const r = new FileReader();
-      r.onload = () => res(r.result.split(",")[1]);
-      r.onerror = rej;
-      r.readAsDataURL(file);
-    });
-    setProductImageBase64(base64);
-    setProductImagePreview(URL.createObjectURL(file));
+    setOcrLoading(true);
+    try {
+      const base64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result.split(",")[1]);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+      setProductImageBase64(base64);
+      setProductImagePreview(URL.createObjectURL(file));
+
+      // Brug Supabase OCR til at hente produktnavn fra forsidebilledet
+      try {
+        const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, {
+          method: "POST",
+          headers: makeHeaders(accessToken),
+          body: JSON.stringify({ image_base64: base64, mode: "product_name" }),
+        });
+        if (ocrData.success && ocrData.text) {
+          // Ekstrakt produktnavn — første linje der ikke er tal/EAN
+          const name = extractProductName(ocrData.text);
+          if (name) setProposedName(name);
+        }
+      } catch { /* silent — bruger kan stadig skrive manuelt */ }
+    } catch { setScanError("Billedet kunne ikke læses. Prøv igen."); }
+    setOcrLoading(false);
+    setNotFoundStep(2); // Gå automatisk til trin 2
   };
 
   const handleImageCapture = async (e) => {
@@ -2795,6 +3293,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         r.onerror = rej;
         r.readAsDataURL(file);
       });
+      setOcrImageBase64(base64);
       const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, {
         method: "POST",
         headers: makeHeaders(accessToken),
@@ -2802,14 +3301,16 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
       });
       if (ocrData.success) {
         setOcrText(ocrData.text);
-        setProposedName(extractProductName(ocrData.text));
-        // Kør allergenanalyse
+        if (!proposedName) setProposedName(extractProductName(ocrData.text));
         const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, {
           method: "POST",
           headers: makeHeaders(accessToken),
           body: JSON.stringify({ text: ocrData.text }),
         });
         if (allergenData.success) setProposedFlags(allergenData.allergen_flags);
+        setNotFoundStep(3); // Gå automatisk til bekræft
+      } else {
+        setScanError("Billedet kunne ikke læses. Prøv at tage et klarere billede.");
       }
     } catch { setScanError("Billedet kunne ikke analyseres. Prøv igen."); }
     setOcrLoading(false);
@@ -3138,7 +3639,9 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
   return (
     <>
       <style>{css}</style>
-      <div className="app">
+      <div className="app" role="application" aria-label="EatSafe">
+        {/* Skip-link for tastatur/screen reader brugere */}
+        <a href="#main-content" className="skip-link">Spring til indhold</a>
 
         {/* ══ VELKOMST ══ */}
         {screen === SCREENS.WELCOME && (
@@ -3170,6 +3673,12 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
             <button className="welcome-btn" onClick={() => { setAuthTab("signup"); setScreen(SCREENS.LOGIN); }}>Opret gratis konto →</button>
             <button className="welcome-btn-ghost" onClick={() => { setAuthTab("login"); setScreen(SCREENS.LOGIN); }}>Jeg har allerede en konto</button>
+
+            {/* Privacy policy link */}
+            <div style={{ marginTop:24, fontSize:11, color:"var(--muted)", lineHeight:1.6 }}>
+              Ved at oprette en konto accepterer du vores{" "}
+              <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:600 }}>privatlivspolitik</a>
+            </div>
           </div>
         )}
 
@@ -3261,9 +3770,45 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 </div>
               </div>
             )}
-            <div style={{ display:"flex", alignItems:"center", gap:10, margin:"14px 0 4px" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, margin:"14px 0 10px" }}>
               <div style={{ flex:1, height:1, background:"var(--border)" }} />
-              <span style={{ fontSize:12, color:"var(--muted)", fontWeight:600 }}>eller</span>
+              <span style={{ fontSize:12, color:"var(--muted)", fontWeight:600 }}>eller log ind med</span>
+              <div style={{ flex:1, height:1, background:"var(--border)" }} />
+            </div>
+
+            {/* Social login knapper */}
+            <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:12 }}>
+              {/* Google */}
+              <button onClick={() => handleOAuth("google")} disabled={authLoading}
+                style={{ display:"flex", alignItems:"center", gap:12, width:"100%", padding:"13px 16px",
+                  background:"#fff", border:"1.5px solid var(--border2)", borderRadius:12,
+                  cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:600, color:"var(--ink)",
+                  boxShadow:"var(--sh)", transition:"all .15s" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Fortsæt med Google
+              </button>
+
+              {/* Facebook */}
+              <button onClick={() => handleOAuth("facebook")} disabled={authLoading}
+                style={{ display:"flex", alignItems:"center", gap:12, width:"100%", padding:"13px 16px",
+                  background:"#1877F2", border:"1.5px solid #1877F2", borderRadius:12,
+                  cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:600, color:"#fff",
+                  boxShadow:"var(--sh)", transition:"all .15s" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                Fortsæt med Facebook
+              </button>
+            </div>
+
+            <div style={{ display:"flex", alignItems:"center", gap:10, margin:"4px 0 8px" }}>
+              <div style={{ flex:1, height:1, background:"var(--border)" }} />
+              <span style={{ fontSize:11, color:"var(--muted)", fontWeight:500 }}>eller</span>
               <div style={{ flex:1, height:1, background:"var(--border)" }} />
             </div>
             <button className="btn btn-ghost btn-full" onClick={() => {
@@ -3313,7 +3858,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               </div>
             )}
             {editMode && <div style={{ height:4 }} />}
-            {/* Step header med tilbage og titel */}
+            {/* Step header med tilbage og fremgang */}
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               {onboardStep > 1 && (
                 <button onClick={() => setOnboardStep(onboardStep - 1)}
@@ -3324,10 +3869,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 </button>
               )}
               <div style={{ flex:1 }}>
-                <StepBar total={9} current={onboardStep} />
-              </div>
-              <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, flexShrink:0 }}>
-                {onboardStep}/9
+                <StepBar total={10} current={onboardStep === 25 ? 3 : onboardStep > 25 ? onboardStep - 1 : onboardStep} />
               </div>
             </div>
 
@@ -3339,28 +3881,58 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                   <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Velkommen til EatSafe</div>
                   <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6 }}>Din personlige allergiguide — til dig og hele familien.</div>
                 </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {[
-                    ["camera","Skan stregkoder","Hold kameraet over en stregkode og få øjeblikkeligt svar."],
-                    ["search","Søg produkter","Find allergenvenlinge produkter inden du handler."],
-                    ["family","Hele familien","Profiler for alle — se hvem der kan spise hvad."],
-                    ["list","Indkøbsliste","Byg lister med allergencheck."],
-                    ["heart","Fælles database","Bidrag til databasen og hjælp andre."],
-                  ].map(([icon, title, text]) => (
-                    <div key={title} style={{ display:"flex", gap:12, alignItems:"center", background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"10px 14px" }}>
-                      <div style={{ flexShrink:0 }}><Icon name={icon} size={22} color="var(--ink2)" /></div>
-                      <div>
-                        <div style={{ fontWeight:700, fontSize:13, color:"var(--ink)" }}>{title}</div>
-                        <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.4 }}>{text}</div>
+
+                {/* Feature tour — swipeable kort */}
+                {[
+                  { emoji:"📷", bg:"#1F2733", color:"#fff", title:"Skan på sekunder", desc:"Hold kameraet over en stregkode. EatSafe fortæller dig øjeblikkeligt om produktet er sikkert for dig.", tags:["Øjeblikkelig scanning","Vibration ved fund","Historik"] },
+                  { emoji:"👨‍👩‍👧", bg:"#22C55E", color:"#fff", title:"Hele familien", desc:"Opret profiler for børn, partner og andre. Se på ét blik hvem der kan spise hvad.", tags:["Individuelle profiler","Fælles oversigt","Børnevenlig"] },
+                  { emoji:"🍝", bg:"#6366F1", color:"#fff", title:"Sikre opskrifter", desc:"Over 600 opskrifter filtreret til netop din families præferencer. Med ingrediensliste og fremgangsmåde.", tags:["600+ opskrifter","Allergenfiltreret","Skalerbar portion"] },
+                  { emoji:"🌍", bg:"#F59E0B", color:"#fff", title:"Madpas til udlandet", desc:"Vis tjenere dine allergier på 17 sprog. Med udtale og forklaring på det lokale sprog.", tags:["17 sprog","Tekst-til-tale","Offline"] },
+                ].map((f, i) => i === tourIdx ? (
+                  <div key={i} style={{ marginBottom:4 }}>
+                    <div style={{ background:f.bg, borderRadius:18, padding:"20px", marginBottom:10 }}>
+                      <div style={{ fontSize:36, marginBottom:8 }}>{f.emoji}</div>
+                      <div style={{ fontSize:18, fontWeight:900, color:f.color, marginBottom:6 }}>{f.title}</div>
+                      <div style={{ fontSize:13, color:f.color, opacity:0.8, lineHeight:1.65, marginBottom:8 }}>{f.desc}</div>
+                      <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
+                        {f.tags.map(t => <span key={t} style={{ fontSize:10, fontWeight:700, padding:"3px 9px", borderRadius:100, background:"rgba(255,255,255,.15)", color:f.color }}>{t}</span>)}
                       </div>
                     </div>
-                  ))}
-                </div>
-                <button className="btn btn-primary btn-full" style={{ marginTop:14 }} onClick={() => setOnboardStep(2)}>Fortsæt →</button>
+                    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10 }}>
+                      {[0,1,2,3].map(idx => (
+                        <div key={idx} onClick={() => setTourIdx(idx)}
+                          style={{ width: tourIdx===idx ? 20 : 7, height:7, borderRadius:4, background: tourIdx===idx ? "var(--ink)" : "var(--border2)", cursor:"pointer", transition:"all .25s" }} />
+                      ))}
+                    </div>
+                    <div style={{ display:"flex", gap:8 }}>
+                      {tourIdx > 0 && (
+                        <button onClick={() => setTourIdx(v => v-1)}
+                          style={{ flex:1, padding:"12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                          ← Forrige
+                        </button>
+                      )}
+                      {tourIdx < 3 ? (
+                        <button onClick={() => setTourIdx(v => v+1)}
+                          style={{ flex:1, padding:"12px", background:"var(--ink)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#fff", cursor:"pointer" }}>
+                          Næste →
+                        </button>
+                      ) : (
+                        <button onClick={() => setOnboardStep(2)}
+                          style={{ flex:1, padding:"12px", background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"#fff", cursor:"pointer" }}>
+                          Kom i gang →
+                        </button>
+                      )}
+                    </div>
+                    {tourIdx < 3 && (
+                      <button onClick={() => setOnboardStep(2)}
+                        style={{ width:"100%", background:"none", border:"none", padding:"10px", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", cursor:"pointer", marginTop:4 }}>
+                        Spring over
+                      </button>
+                    )}
+                  </div>
+                ) : null)}
               </div>
             )}
-
-            {/* ── TRIN 2: Datakvalitet og ansvar ── */}
             {onboardStep === 2 && (
               <div className="fade-in">
                 <div className="card" style={{ textAlign:"center", padding:"20px 20px 14px" }}>
@@ -3389,7 +3961,66 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 </div>
                 <div style={{ display:"flex", gap:8, marginTop:14 }}>
                   <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(1)}>← Tilbage</button>
-                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(3)}>Jeg forstår →</button>
+                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(25)}>Jeg forstår →</button>
+                </div>
+              </div>
+            )}
+
+            {/* ── TRIN 2.5: Hvad kan EatSafe? ── */}
+            {onboardStep === 25 && (
+              <div className="fade-in">
+                <div style={{ textAlign:"center", marginBottom:20 }}>
+                  <div style={{ fontSize:48, marginBottom:8 }}>✨</div>
+                  <div className="step-title">EatSafe kan mere end allergier</div>
+                  <div className="step-sub">Appen dækker tre typer fødevarepræferencer</div>
+                </div>
+
+                {[
+                  {
+                    emoji:"🚨",
+                    color:"var(--red)",
+                    bg:"var(--red-lt)",
+                    border:"var(--red-md)",
+                    title:"Allergier",
+                    desc:"Livstruende reaktioner på fx gluten, nødder, skaldyr og mælk. Vi advarer tydeligt og kategorisk.",
+                    examples:["Glutenallergi (cøliaki)","Nøddeallergi","Laktoseallergi","Skaldyrsallergi"],
+                  },
+                  {
+                    emoji:"⚠️",
+                    color:"var(--amber)",
+                    bg:"var(--amber-lt)",
+                    border:"var(--amber-md)",
+                    title:"Intoleranser & E-numre",
+                    desc:"Ubehag uden livstruende reaktion. Vi viser advarsler og fremhæver relevante E-numre i ingredienslister.",
+                    examples:["Laktoseintolerance","Fruktoseintolerance","E-numre som E621 (MSG)","Histaminintolerance"],
+                  },
+                  {
+                    emoji:"🌱",
+                    color:"var(--green)",
+                    bg:"var(--green-lt)",
+                    border:"var(--green-mid)",
+                    title:"Diæter & valg",
+                    desc:"Personlige valg og livsstil. Vi filtrerer produkter og opskrifter der passer til dig.",
+                    examples:["Vegansk","Vegetarisk","Halal / Kosher","Lavkulhydrat / Keto"],
+                  },
+                ].map(cat => (
+                  <div key={cat.title} style={{ background:cat.bg, border:`1px solid ${cat.border}`, borderRadius:14, padding:"14px 16px", marginBottom:10 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+                      <span style={{ fontSize:24 }}>{cat.emoji}</span>
+                      <div style={{ fontSize:14, fontWeight:800, color:cat.color }}>{cat.title}</div>
+                    </div>
+                    <div style={{ fontSize:12, color:"var(--ink2)", lineHeight:1.6, marginBottom:8 }}>{cat.desc}</div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                      {cat.examples.map(e => (
+                        <span key={e} style={{ fontSize:10, fontWeight:700, padding:"3px 9px", borderRadius:100, background:"rgba(255,255,255,.6)", color:"var(--ink2)" }}>{e}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                <div style={{ display:"flex", gap:8, marginTop:14 }}>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(2)}>← Tilbage</button>
+                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(3)}>Fortsæt →</button>
                 </div>
               </div>
             )}
@@ -3400,10 +4031,24 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 <div className="card">
                   <div className="step-title">Din profil</div>
                   <div className="step-sub">Fortæl os lidt om dig.</div>
-                  {[["Dit fulde navn *","text","Fx. Anna Hansen","name"],["Telefon","tel","+45 12 34 56 78","phone"],["Alder","number","Fx. 32","age"]].map(([lbl,type,ph,key]) => (
+                  {[
+                    ["Dit fulde navn *","text","Fx. Anna Hansen","name"],
+                    ["Email *","email","din@email.dk","email"],
+                    ["Telefon","tel","+45 12 34 56 78","phone"],
+                    ["Alder","number","Fx. 32","age"],
+                  ].map(([lbl,type,ph,key]) => (
                     <div key={key} style={{ marginBottom:10 }}>
                       <label className="field-lbl">{lbl}</label>
-                      <input className="field" type={type} placeholder={ph} value={user[key]||""} onChange={e => setUser(u => ({ ...u, [key]: e.target.value }))} />
+                      <input className="field" type={type} placeholder={ph} value={user[key]||""} onChange={e => setUser(u => ({ ...u, [key]: e.target.value }))}
+                        style={key==="email" ? { background: user.email ? "var(--paper2)" : "var(--paper2)", opacity: loginEmail ? 0.6 : 1 } : {}} 
+                        readOnly={key === "email" && (!!loginEmail || isOAuth)}
+                      />
+                      {key === "email" && isOAuth && (
+                        <div style={{ fontSize:10, color:"var(--green)", marginTop:3, display:"flex", alignItems:"center", gap:4 }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                          Bekræftet via Google
+                        </div>
+                      )}
                     </div>
                   ))}
                   <label className="field-lbl">Køn</label>
@@ -3420,8 +4065,15 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                     ))}
                   </div>
                 </div>
-                <button className="btn btn-primary btn-full" onClick={saveProfileStep1}>Fortsæt →</button>
-                {!(user.name||"").trim() && <div style={{ fontSize:12,color:"var(--muted)",textAlign:"center",marginTop:6 }}>Navn er påkrævet</div>}
+                <button className="btn btn-primary btn-full" onClick={saveProfileStep1}
+                  disabled={!(user.name||"").trim() || !(user.email||loginEmail||"").trim()}>
+                  Fortsæt →
+                </button>
+                {(!(user.name||"").trim() || !(user.email||loginEmail||"").trim()) && (
+                  <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", marginTop:6 }}>
+                    {!(user.name||"").trim() ? "Navn er påkrævet" : "Email er påkrævet"}
+                  </div>
+                )}
               </div>
             )}
 
@@ -3833,13 +4485,203 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             <div className="topbar-logo">
               <div className="topbar-shield" style={{background:"none",padding:0}}><EatSafeLogo size={34} variant="light" /></div>
               <div className="topbar-name">Eat<span>Safe</span></div>
+              <div style={{ background:"var(--amber)", color:"#fff", fontSize:9, fontWeight:800, padding:"2px 7px", borderRadius:100, letterSpacing:".5px", marginLeft:4, marginTop:2 }}>BETA</div>
+            </div>
+            <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+              {/* Hjælp-knap */}
+              <button onClick={() => setHelpOpen(true)}
+                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:32, height:32, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                ?
+              </button>
+              {/* Feedback-knap */}
+              <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
+                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                Feedback
+              </button>
             </div>
           </header>
         )}
 
+        {/* Feedback-knap under onboarding */}
+        {isOnboard && (
+          <div style={{ position:"fixed", top:12, right:12, zIndex:1000 }}>
+            <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
+              style={{ background:"rgba(255,255,255,.85)", backdropFilter:"blur(8px)", border:"1px solid var(--border2)", borderRadius:100, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", gap:5, boxShadow:"0 2px 8px rgba(0,0,0,.08)" }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              Feedback
+            </button>
+          </div>
+        )}
+
+        {/* ══ HJÆLP MODAL ══ */}
+        {helpOpen && (() => {
+          const helpContent = {
+            "home": { title:"📷 Scanner", tips:[
+              { icon:"📱", title:"Skan stregkode", desc:"Tryk på scan-feltet og hold kameraet roligt over stregkoden. Appen scanner automatisk." },
+              { icon:"🔍", title:"Søg manuelt", desc:"Kan du ikke scanne? Brug søgefeltet til at finde produkter ved navn." },
+              { icon:"⚡", title:"Hurtig scanning", desc:"God belysning og rolig hånd giver hurtigere og mere præcist resultat." },
+              { icon:"📜", title:"Historik", desc:"Dine seneste scanninger gemmes automatisk — find dem under Profil." },
+            ]},
+            "recipes": { title:"🍝 Opskrifter", tips:[
+              { icon:"🔍", title:"Søg og filtrer", desc:"Søg på navn eller vælg kategori. Slå 'Kun sikre' til for at skjule opskrifter med dine allergener." },
+              { icon:"❤️", title:"Favoritter", desc:"Tryk hjerte-ikonet for at gemme en opskrift til Favoritter-fanen." },
+              { icon:"👤", title:"Portionsjustering", desc:"Åbn en opskrift og tryk + / − for at skalere ingredienser automatisk." },
+              { icon:"🛒", title:"Indkøbsliste", desc:"Tryk 'Tilføj til indkøbsliste' for at sende ingredienser direkte til din liste." },
+            ]},
+            "list": { title:"🛒 Indkøbsliste", tips:[
+              { icon:"✏️", title:"Tilføj varer", desc:"Skriv en vare og tryk Tilføj — eller tilføj direkte fra en opskrift." },
+              { icon:"✓", title:"Afkryds varer", desc:"Tryk på en vare for at markere den som købt." },
+              { icon:"🗑️", title:"Ryd listen", desc:"Brug 'Ryd' for at fjerne alle afkrydsede varer på én gang." },
+            ]},
+            "profile": { title:"👤 Profil & præferencer", tips:[
+              { icon:"🚨", title:"Allergi vs. intolerance", desc:"Tryk én gang = intolerance (gul advarsel). To gange = allergi (rød advarsel)." },
+              { icon:"👨‍👩‍👧", title:"Familie", desc:"Opret profiler for børn og partner — se allergencheck for alle på én gang." },
+              { icon:"✏️", title:"E-numre og diæter", desc:"Brug 'Tilføj eget' for intoleranser, E-numre eller diæter der ikke er på listen." },
+            ]},
+            "madpas": { title:"🌍 Madpas", tips:[
+              { icon:"🌐", title:"Vælg sprog", desc:"Vælg sproget for landet du besøger. EatSafe oversætter dine allergier automatisk." },
+              { icon:"📋", title:"Vis til tjeneren", desc:"Tryk 'Vis til tjener' for en stor, tydelig skærm du kan vise restaurantpersonalet." },
+              { icon:"🔊", title:"Oplæsning", desc:"Tryk højttalerikonet for at høre udtalen på det lokale sprog." },
+            ]},
+          };
+          const content = helpContent[screen] || { title:"ℹ️ Hjælp", tips:[
+            { icon:"💬", title:"Send feedback", desc:"Brug Feedback-knappen øverst til at rapportere problemer eller forslag." },
+          ]};
+          return (
+            <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
+              onClick={e => e.target === e.currentTarget && setHelpOpen(false)}>
+              <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
+                onClick={e => e.stopPropagation()}>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+                  <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>{content.title}</div>
+                  <button onClick={() => setHelpOpen(false)}
+                    style={{ background:"var(--paper2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
+                </div>
+                <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
+                  {content.tips.map((tip, i) => (
+                    <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12 }}>
+                      <div style={{ fontSize:22, flexShrink:0 }}>{tip.icon}</div>
+                      <div>
+                        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:3 }}>{tip.title}</div>
+                        <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>{tip.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => { setHelpOpen(false); setFeedbackOpen(true); setFeedbackDone(false); }}
+                  style={{ width:"100%", padding:"12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted2)", cursor:"pointer" }}>
+                  💬 Send feedback eller rapportér fejl
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ══ FEEDBACK MODAL ══ */}
+        {feedbackOpen && (
+          <div style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
+            onClick={e => e.target === e.currentTarget && setFeedbackOpen(false)}>
+            <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"85vh", overflowY:"auto" }}
+              onClick={e => e.stopPropagation()}>
+
+              {feedbackDone ? (
+                <div style={{ textAlign:"center", padding:"32px 0" }}>
+                  <div style={{ fontSize:48, marginBottom:12 }}>🙏</div>
+                  <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>Tak for din feedback!</div>
+                  <div style={{ fontSize:13, color:"var(--muted)", marginTop:6 }}>Vi kigger på det hurtigst muligt.</div>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+                    <div>
+                      <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)" }}>Send feedback</div>
+                      <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>Skærm: {screen} · Beta v1.0</div>
+                    </div>
+                    <button onClick={() => setFeedbackOpen(false)}
+                      style={{ background:"var(--paper2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
+                  </div>
+
+                  {/* Type dropdown */}
+                  <div style={{ marginBottom:12 }}>
+                    <label style={{ fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 }}>Type</label>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
+                      {[
+                        { id:"bug",        emoji:"🐛", label:"Fejl / bug" },
+                        { id:"ui",         emoji:"🎨", label:"Design / UI" },
+                        { id:"missing",    emoji:"💡", label:"Mangler noget" },
+                        { id:"content",    emoji:"📦", label:"Forkert indhold" },
+                        { id:"crash",      emoji:"💥", label:"App crasher" },
+                        { id:"suggestion", emoji:"✨", label:"Forslag" },
+                      ].map(t => (
+                        <div key={t.id} onClick={() => setFeedbackType(t.id)}
+                          style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", borderRadius:10, cursor:"pointer",
+                            border:`1.5px solid ${feedbackType===t.id?"var(--ink)":"var(--border)"}`,
+                            background: feedbackType===t.id ? "var(--ink)" : "#fff" }}>
+                          <span style={{ fontSize:16 }}>{t.emoji}</span>
+                          <span style={{ fontSize:12, fontWeight:700, color: feedbackType===t.id ? "#fff" : "var(--ink2)" }}>{t.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Beskrivelse */}
+                  <div style={{ marginBottom:12 }}>
+                    <label style={{ fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 }}>Beskriv problemet</label>
+                    <textarea
+                      value={feedbackText}
+                      onChange={e => setFeedbackText(e.target.value)}
+                      rows={4}
+                      placeholder="Fx. 'Når jeg trykker på X sker der Y…' — jo mere detail, jo bedre"
+                      style={{ width:"100%", padding:"12px 14px", border:"1.5px solid var(--border2)", borderRadius:12, background:"var(--paper2)", fontFamily:"var(--f)", fontSize:14, color:"var(--ink)", resize:"none", outline:"none", lineHeight:1.6, boxSizing:"border-box" }}
+                    />
+                  </div>
+
+                  {/* Vedhæft billede */}
+                  <div style={{ marginBottom:16 }}>
+                    <label style={{ fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 }}>Skærmbillede (valgfrit)</label>
+                    {feedbackImage ? (
+                      <div style={{ position:"relative", display:"inline-block" }}>
+                        <img src={feedbackImage} alt="Screenshot" style={{ maxWidth:"100%", maxHeight:160, borderRadius:10, objectFit:"contain", border:"1px solid var(--border)" }} />
+                        <button onClick={() => { setFeedbackImage(null); setFeedbackImageB64(null); }}
+                          style={{ position:"absolute", top:4, right:4, background:"rgba(0,0,0,.6)", border:"none", borderRadius:"50%", width:24, height:24, color:"#fff", cursor:"pointer", fontSize:14 }}>×</button>
+                      </div>
+                    ) : (
+                      <label style={{ display:"flex", alignItems:"center", gap:8, padding:"12px 14px", border:"1.5px dashed var(--border2)", borderRadius:12, cursor:"pointer", background:"var(--paper2)" }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        <span style={{ fontSize:13, color:"var(--muted)" }}>Tag skærmbillede eller vælg fra galleri</span>
+                        <input type="file" accept="image/*" style={{ display:"none" }} onChange={async e => {
+                          const f = e.target.files?.[0];
+                          if (!f) return;
+                          setFeedbackImage(URL.createObjectURL(f));
+                          const b64 = await new Promise((res,rej) => { const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(f); });
+                          setFeedbackImageB64(b64);
+                        }} />
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Auto-context info */}
+                  <div style={{ background:"var(--paper2)", borderRadius:10, padding:"10px 12px", marginBottom:14 }}>
+                    <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:4 }}>📊 Automatisk inkluderet diagnostik</div>
+                    <div style={{ fontSize:10, color:"var(--muted)", lineHeight:1.7 }}>
+                      Skærm: <b>{screen}</b> · Bruger: <b>{user?.name || "anonym"}</b> · Enhed: <b>{/iPhone|iPad/.test(navigator.userAgent)?"iOS":/Android/.test(navigator.userAgent)?"Android":"Desktop"}</b> · Viewport: <b>{window.innerWidth}×{window.innerHeight}</b>
+                    </div>
+                  </div>
+
+                  <button onClick={submitFeedback} disabled={feedbackSending || !feedbackText.trim()}
+                    style={{ width:"100%", background: feedbackText.trim() ? "var(--ink)" : "var(--border2)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"#fff", cursor: feedbackText.trim() ? "pointer" : "not-allowed" }}>
+                    {feedbackSending ? "Sender…" : "Send feedback →"}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ══ HJEM ══ */}
         {screen === SCREENS.HOME && (
-          <div className="screen fade-in" style={{ display:"flex", flexDirection:"column", minHeight:"calc(100vh - 130px)" }}>
+          <div className="screen fade-in" id="main-content" style={{ display:"flex", flexDirection:"column", minHeight:"calc(100vh - 130px)" }}>
 
             {/* Profil popup */}
             {profilePopup && (() => {
@@ -4135,7 +4977,11 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               {/* Animation når kamera ikke er aktivt */}
               {!cameraActive && (
               <div style={{ cursor:"pointer", padding:"28px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16, position:"relative" }}
-                onClick={() => startCamera()}>
+                onClick={() => startCamera()}
+                role="button"
+                aria-label="Start kamera for at scanne stregkode"
+                tabIndex={0}
+                onKeyDown={e => e.key === "Enter" && startCamera()}>
                 {/* Stregkode-animation */}
                 <div style={{ position:"relative", width:180, height:90 }}>
                   {/* Stregkode streger */}
@@ -4403,7 +5249,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               ) : (
                 <div style={{ padding:"8px 0" }}>
                   <div style={{ fontSize:13, color:"var(--muted2)", marginBottom:8 }}>Vi mangler ingredienslisten for dette produkt.</div>
-                  <button className="btn btn-outline btn-sm" onClick={() => setScreen(SCREENS.SUGGEST_EDIT)}>
+                  <button className="btn btn-outline btn-sm" onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients || ""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
                     Hjælp os — indsend ingrediensliste
                   </button>
                 </div>
@@ -4419,7 +5265,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 <div style={{ padding:"12px 0", display:"flex", alignItems:"center", gap:10 }}>
                   <div style={{ flex:1 }}>
                     <div style={{ fontSize:13, color:"var(--muted2)", marginBottom:6 }}>Vi mangler næringsdata for dette produkt.</div>
-                    <button className="btn btn-outline btn-sm" onClick={() => setScreen(SCREENS.SUGGEST_EDIT)}>
+                    <button className="btn btn-outline btn-sm" onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients || ""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
                       Hjælp os — indsend næringsdata
                     </button>
                   </div>
@@ -4476,19 +5322,46 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                   Del
                 </button>
                 <button className="btn btn-outline btn-sm" style={{ flex:1 }}
-                  onClick={() => setScreen(SCREENS.SUGGEST_EDIT)}>
+                  onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients || ""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
                   Foreslå ændring
                 </button>
               </div>
             </div>
 
-            {/* ── 7. ANSVARSFRASKRIVELSE ── */}
-            <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"8px 12px", background:"var(--paper2)", borderRadius:8, marginBottom:16 }}>
-              <Icon name="warning" size={14} color="var(--amber)" />
-              <div style={{ fontSize:10, color:"var(--muted)", lineHeight:1.5 }}>
-                Resultater er vejledende og kan indeholde fejl. Tjek altid selv ved alvorlige allergier.
-              </div>
-            </div>
+            {/* ── 7. TRUST-LAG — confidence score og verifikation ── */}
+            {(() => {
+              const { confidence } = compareAllergens(scanResult.allergen_flags||{}, activeIds);
+              const verifiedAt = scanResult.verified_at || scanResult.updated_at;
+              const daysSince = verifiedAt ? Math.floor((Date.now() - new Date(verifiedAt).getTime()) / 86400000) : null;
+
+              const confidenceConfig = {
+                high:   { color:"var(--green)", bg:"var(--green-lt)",  border:"var(--green-mid)", icon:"✓", label:"Høj sikkerhed",    desc:"Allergendata er verificeret og pålidelig." },
+                medium: { color:"var(--amber)", bg:"var(--amber-lt)",  border:"var(--amber-md)",  icon:"⚠", label:"Middel sikkerhed", desc:"Visse allergener kunne ikke bekræftes fuldt ud." },
+                low:    { color:"var(--muted)", bg:"var(--paper2)",    border:"var(--border2)",   icon:"?", label:"Lav sikkerhed",    desc:"Begrænsede allergendata — tjek altid emballagen." },
+              };
+              const cfg = confidenceConfig[confidence] || confidenceConfig.low;
+
+              return (
+                <div style={{ background:cfg.bg, border:`1px solid ${cfg.border}`, borderRadius:12, padding:"12px 14px", marginBottom:16 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom: daysSince !== null ? 6 : 0 }}>
+                    <div style={{ fontSize:16, fontWeight:800, color:cfg.color, flexShrink:0 }}>{cfg.icon}</div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:12, fontWeight:700, color:cfg.color }}>{cfg.label}</div>
+                      <div style={{ fontSize:11, color:"var(--muted)", marginTop:1, lineHeight:1.4 }}>{cfg.desc}</div>
+                    </div>
+                    {scanResult.verified_status === "verified" && (
+                      <div style={{ fontSize:10, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:20, padding:"2px 8px", flexShrink:0 }}>Verificeret</div>
+                    )}
+                  </div>
+                  {daysSince !== null && (
+                    <div style={{ fontSize:10, color:"var(--muted)", paddingTop:6, borderTop:`1px solid ${cfg.border}` }}>
+                      Sidst opdateret: {daysSince === 0 ? "i dag" : daysSince === 1 ? "i går" : `for ${daysSince} dage siden`}
+                      {daysSince > 180 && " · Data kan være forældet"}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -4496,109 +5369,311 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {screen === SCREENS.NOTFOUND && (
           <div className="screen fade-in">
 
-            {/* Hero — motiverende besked */}
-            <div style={{ background:"var(--ink)", borderRadius:16, padding:"24px 20px", marginBottom:12, textAlign:"center" }}>
-              <div style={{ marginBottom:10 }}><Icon name="heart" size={44} color="var(--paper)" /></div>
-              <div style={{ fontSize:18, fontWeight:900, color:"#fff", marginBottom:8 }}>Produktet kendes ikke endnu</div>
-              <div style={{ fontSize:13, color:"rgba(255,255,255,.65)", lineHeight:1.6 }}>
-                Du er den første der scanner dette produkt! Hjælp andre med allergier ved at indsende det — det tager under 1 minut.
+            {/* Header */}
+            <div style={{ display:"flex", alignItems:"center", gap:12, padding:"16px 0 14px" }}>
+              <button onClick={() => setScreen(SCREENS.HOME)}
+                style={{ background:"none", border:"none", cursor:"pointer", padding:4 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
+                  <path strokeLinecap="round" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Nyt produkt</div>
+                <div style={{ fontSize:12, color:"var(--muted)", marginTop:1, fontFamily:"monospace" }}>EAN: {notFoundEan}</div>
+              </div>
+              {/* Fremgangsindikator */}
+              <div style={{ display:"flex", gap:5, alignItems:"center" }}>
+                {[1,2,3].map(s => (
+                  <div key={s} style={{
+                    width: notFoundStep === s ? 20 : 8,
+                    height:8, borderRadius:4, transition:"all .3s",
+                    background: s < notFoundStep ? "var(--green)" : s === notFoundStep ? "var(--ink)" : "var(--border2)"
+                  }} />
+                ))}
               </div>
             </div>
 
-            {/* EAN */}
-            <div style={{ display:"flex", alignItems:"center", gap:10, background:"#fff", border:"1px solid var(--border)", borderRadius:10, padding:"10px 14px", marginBottom:12 }}>
-              <div><Icon name="info" size={20} color="var(--ink2)" /></div>
-              <div>
-                <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600 }}>Stregkode</div>
-                <div style={{ fontSize:14, fontWeight:700, fontFamily:"monospace" }}>{notFoundEan}</div>
-              </div>
-            </div>
+            {/* ── TRIN 1: Fotografér forsiden ── */}
+            {notFoundStep === 1 && !ocrLoading && (
+              <div className="fade-in">
+                <div style={{ background:"var(--ink)", borderRadius:16, padding:"24px 20px", marginBottom:16, textAlign:"center" }}>
+                  <div style={{ fontSize:52, marginBottom:10 }}>📦</div>
+                  <div style={{ fontSize:18, fontWeight:900, color:"#fff", marginBottom:8 }}>
+                    Vi kender ikke dette produkt
+                  </div>
+                  <div style={{ fontSize:13, color:"rgba(255,255,255,.6)", lineHeight:1.7 }}>
+                    Tag 2 hurtige billeder — vi finder automatisk navn og allergener
+                  </div>
+                </div>
 
-            {ocrLoading && <div className="loader fade-in"><div className="spinner" /><div className="loader-txt">Analyserer billede…</div><div className="loader-sub">OCR og allergendetektering</div></div>}
-            {!ocrText && !ocrLoading && (
-              <div>
-                {/* Trin-guide */}
-                <div className="card" style={{ marginBottom:12 }}>
-                  <div className="card-lbl">Sådan gør du — 3 nemme trin</div>
+                {/* Trin-oversigt */}
+                <div style={{ display:"flex", gap:8, marginBottom:20 }}>
                   {[
-                    ["camera","Tag billede af ingredienslisten","Vend pakken om og fotografér bagsiden med ingredienserne. Hold kameraet stille for bedste resultat."],
-                    ["search","Vi analyserer automatisk","Vores AI læser teksten og finder allergener. Du kan tjekke og rette inden du sender."],
-                    ["check","Hjælp alle andre","Når admin har godkendt, kan alle EatSafe-brugere se produktet. Du gør en forskel!"],
-                  ].map(([icon, title, text], i) => (
-                    <div key={i} style={{ display:"flex", gap:10, alignItems:"flex-start", marginBottom: i < 2 ? 14 : 0, paddingBottom: i < 2 ? 14 : 0, borderBottom: i < 2 ? "1px solid var(--border)" : "none" }}>
-                      <div style={{ width:36, height:36, borderRadius:"50%", background:"var(--green-lt)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name={icon} size={18} color="var(--green)" /></div>
-                      <div>
-                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:3 }}>{title}</div>
-                        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>{text}</div>
-                      </div>
+                    { num:1, emoji:"📸", label:"Forside", desc:"Produktnavn" },
+                    { num:2, emoji:"🔍", label:"Ingredienser", desc:"Allergenanalyse" },
+                    { num:3, emoji:"✓", label:"Bekræft", desc:"Send ind" },
+                  ].map(s => (
+                    <div key={s.num} style={{ flex:1, background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 8px", textAlign:"center", boxShadow:"var(--sh)" }}>
+                      <div style={{ fontSize:22, marginBottom:4 }}>{s.emoji}</div>
+                      <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{s.label}</div>
+                      <div style={{ fontSize:10, color:"var(--muted)", marginTop:2 }}>{s.desc}</div>
                     </div>
                   ))}
                 </div>
-                <label className="btn btn-primary btn-full" style={{ cursor:"pointer", fontSize:15 }}>
-                  Start — fotografér ingredienslisten
-                  <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleImageCapture} />
+
+                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>
+                  Trin 1 — Fotografér produktets forside
+                </div>
+                <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6, marginBottom:16 }}>
+                  Hold telefonen foran produktets forside. Vi bruger billedet til at hente produktnavnet automatisk.
+                </div>
+
+                <label style={{
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:10,
+                  width:"100%", padding:"16px", borderRadius:14, cursor:"pointer",
+                  background:"var(--ink)", border:"none", color:"#fff",
+                  fontSize:15, fontWeight:800, boxShadow:"0 4px 16px rgba(31,39,51,.25)",
+                  marginBottom:10,
+                }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+                    <path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                  Fotografér forsiden
+                  <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleProductImageCapture} />
                 </label>
-                <div style={{ textAlign:"center", marginTop:10, fontSize:12, color:"var(--muted)" }}>
-                  Har du ikke pakken ved hånden? <span style={{ color:"var(--green)", fontWeight:700, cursor:"pointer" }} onClick={() => setOnboardStep(prev => prev + 1)}>Spring over</span>
+                <label style={{
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                  width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
+                  background:"#fff", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                  fontSize:13, fontWeight:600, marginBottom:10,
+                }}>
+                  📁 Vælg fra galleri
+                  <input type="file" accept="image/*" style={{ display:"none" }} onChange={handleProductImageCapture} />
+                </label>
+                <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, color:"var(--muted)", padding:"8px 0", fontFamily:"var(--f)" }}
+                  onClick={() => setNotFoundStep(2)}>
+                  Spring forside over →
+                </button>
+              </div>
+            )}
+
+            {/* ── SCANNING-LOADER ── */}
+            {ocrLoading && (
+              <div className="fade-in" style={{ textAlign:"center", padding:"60px 20px" }}>
+                <div style={{ width:64, height:64, border:"4px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 20px" }} />
+                <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>
+                  {notFoundStep === 1 ? "Henter produktnavn…" : "Analyserer ingredienser…"}
+                </div>
+                <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6 }}>
+                  {notFoundStep === 1
+                    ? "Vores AI læser produktnavnet fra billedet"
+                    : "Vi finder allergener og ingredienser automatisk"
+                  }
                 </div>
               </div>
             )}
-            {ocrText && !ocrLoading && (
+
+            {/* ── TRIN 2: Fotografér ingredienslisten ── */}
+            {notFoundStep === 2 && !ocrLoading && (
               <div className="fade-in">
-                {/* Produktnavn */}
-                <div className="card">
-                  <div className="card-lbl">Produktnavn</div>
-                  <div style={{ fontSize:12, color:"var(--muted)", marginBottom:8 }}>Vi har forsøgt at gætte navnet fra billedet — ret det hvis det er forkert.</div>
-                  <input
-                    className="field"
-                    placeholder="Indtast produktnavn…"
-                    value={proposedName}
-                    onChange={e => setProposedName(e.target.value)}
-                  />
+                {/* Vis produktbillede + navn hvis hentet */}
+                {productImagePreview && (
+                  <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12, marginBottom:14, boxShadow:"var(--sh)" }}>
+                    <img src={productImagePreview} alt="Produkt"
+                      style={{ width:52, height:52, objectFit:"contain", borderRadius:8, border:"1px solid var(--border)", flexShrink:0 }} />
+                    <div style={{ flex:1 }}>
+                      <input
+                        value={proposedName}
+                        onChange={e => setProposedName(e.target.value)}
+                        placeholder="Produktnavn…"
+                        style={{ width:"100%", border:"none", outline:"none", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--ink)", background:"transparent", padding:0 }}
+                      />
+                      <div style={{ fontSize:11, color:"var(--green)", marginTop:2 }}>✓ Forside fotograferet</div>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>
+                  Trin 2 — Fotografér ingredienslisten
                 </div>
 
-                {/* Produktbillede */}
-                <div className="card">
-                  <div className="card-lbl">Produktbillede (valgfrit)</div>
-                  <div style={{ fontSize:12, color:"var(--muted)", marginBottom:8 }}>Tag et billede af produktets forside.</div>
-                  {productImagePreview && (
-                    <div style={{ marginBottom:10, textAlign:"center" }}>
-                      <img src={productImagePreview} alt="Produkt" style={{ maxWidth:"100%", maxHeight:150, borderRadius:8, objectFit:"contain" }} />
+                {/* Visuel guide */}
+                <div style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:14 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:10 }}>Sådan finder du ingredienslisten:</div>
+                  <div style={{ display:"flex", gap:10, alignItems:"flex-start", marginBottom:8 }}>
+                    <div style={{ width:28, height:28, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
                     </div>
-                  )}
-                  <label className="btn btn-ghost btn-full btn-sm" style={{ cursor:"pointer" }}>
-                    {productImagePreview ? "Skift billede" : "Tag produktbillede"}
+                    <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5 }}>Vend pakken om — ingredienslisten starter typisk med "Ingredienser:" eller "Indeholder:"</div>
+                  </div>
+                  <div style={{ display:"flex", gap:10, alignItems:"flex-start", marginBottom:8 }}>
+                    <div style={{ width:28, height:28, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                    <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5 }}>Hold telefonen stille og vent til teksten er skarp</div>
+                  </div>
+                  <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+                    <div style={{ width:28, height:28, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                    <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5 }}>God belysning giver bedre resultat — undgå skygger</div>
+                  </div>
+                </div>
+
+                <label style={{
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:10,
+                  width:"100%", padding:"16px", borderRadius:14, cursor:"pointer",
+                  background:"var(--green)", border:"none", color:"#fff",
+                  fontSize:15, fontWeight:800, boxShadow:"0 4px 16px rgba(34,197,94,.3)",
+                  marginBottom:10,
+                }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+                    <path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                  Fotografér ingredienslisten
+                  <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleImageCapture} />
+                </label>
+                <label style={{
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                  width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
+                  background:"#fff", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                  fontSize:13, fontWeight:600, marginBottom:10,
+                }}>
+                  📁 Vælg fra galleri
+                  <input type="file" accept="image/*" style={{ display:"none" }} onChange={handleImageCapture} />
+                </label>
+                {scanError && <div className="error-box" style={{ marginBottom:10 }}>⚠️ {scanError}</div>}
+                <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, color:"var(--muted)", padding:"8px 0", fontFamily:"var(--f)" }}
+                  onClick={() => { setProposedFlags({}); setNotFoundStep(3); }}>
+                  Spring ingredienser over →
+                </button>
+              </div>
+            )}
+
+            {/* ── TRIN 3: Bekræft og send ── */}
+            {notFoundStep === 3 && !ocrLoading && (
+              <div className="fade-in">
+                {/* Produktkort */}
+                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
+                    {productImagePreview
+                      ? <img src={productImagePreview} alt="Produkt" style={{ width:60, height:60, objectFit:"contain", borderRadius:10, border:"1px solid var(--border)", flexShrink:0 }} />
+                      : <div style={{ width:60, height:60, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>📦</div>
+                    }
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, marginBottom:4 }}>Produktnavn</div>
+                      <input
+                        value={proposedName}
+                        onChange={e => setProposedName(e.target.value)}
+                        placeholder="Skriv produktnavn…"
+                        className="field"
+                        style={{ padding:"8px 12px", fontSize:14 }}
+                      />
+                    </div>
+                  </div>
+                  {/* Ændre billede */}
+                  <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, color:"var(--muted)", cursor:"pointer" }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    Skift forsidebillede
                     <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleProductImageCapture} />
                   </label>
                 </div>
 
-                {/* OCR tekst */}
-                <div className="card">
-                  <div className="card-lbl">Ingredienser fra billedet</div>
-                  <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.7, maxHeight:100, overflowY:"auto" }}>{ocrText}</div>
-                </div>
-
-                {/* Allergener */}
-                {proposedFlags && (
-                  <div className="card">
-                    <div className="card-lbl">Foreslåede allergener</div>
-                    <div className="tags">
-                      {Object.entries(proposedFlags).filter(([,v]) => v==="yes"||v==="traces").map(([k,v]) => {
-                        const a = ALLERGENS.find(x=>x.id===k);
-                        return a ? <div key={k} className="tag" style={v==="traces"?{background:"var(--amber-lt)",color:"var(--amber)"}:{}}>{a.emoji} {a.label}{v==="traces"?" (spor)":""}</div> : null;
-                      })}
-                      {Object.entries(proposedFlags).filter(([,v]) => v==="yes"||v==="traces").length===0 && (
-                        <div style={{ fontSize:13, color:"var(--muted)" }}>Ingen allergener detekteret</div>
-                      )}
+                {/* Ingredienser */}
+                {ocrText ? (
+                  <div style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
+                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+                      <div style={{ fontSize:12, fontWeight:700, color:"var(--green)" }}>✓ Ingredienser hentet</div>
+                      <label style={{ fontSize:11, color:"var(--green)", cursor:"pointer", fontWeight:600 }}>
+                        Nyt billede
+                        <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleImageCapture} />
+                      </label>
                     </div>
-                    {scanError && <div className="error-box" style={{ marginTop:8 }}>⚠️ {scanError}</div>}
-                    <button className="btn btn-primary btn-full" style={{ marginTop:12 }} onClick={submitProduct} disabled={submitting}>
-                      {submitting ? "Sender…" : "✓ Bekræft og indsend"}
-                    </button>
+                    <div style={{ fontSize:11, color:"var(--muted2)", lineHeight:1.6, maxHeight:80, overflowY:"auto" }}>{ocrText}</div>
+                  </div>
+                ) : (
+                  <div style={{ background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
+                    <div style={{ fontSize:12, fontWeight:700, color:"var(--amber)", marginBottom:6 }}>⚠ Ingen ingredienser endnu</div>
+                    <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"var(--amber)", cursor:"pointer", fontWeight:600 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                      Fotografér ingredienslisten nu
+                      <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleImageCapture} />
+                    </label>
                   </div>
                 )}
+
+                {/* Detekterede allergener — toggle */}
+                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12, boxShadow:"var(--sh)" }}>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+                    <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Allergener</div>
+                    <div style={{ fontSize:11, color:"var(--muted)" }}>Tryk for at til/fra</div>
+                  </div>
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+                    {ALLERGENS.filter(a => !["svovl","lupin","bloeddyr"].includes(a.id)).map(a => {
+                      const val = proposedFlags?.[a.id];
+                      const isOn = val === "yes" || val === true;
+                      const isTrace = val === "traces";
+                      return (
+                        <div key={a.id}
+                          onClick={() => {
+                            setProposedFlags(prev => {
+                              const cur = prev?.[a.id];
+                              // Cycler: off → yes → traces → off
+                              const next = !cur || cur === false ? "yes"
+                                : cur === "yes" ? "traces"
+                                : false;
+                              return { ...prev, [a.id]: next };
+                            });
+                          }}
+                          style={{
+                            display:"flex", alignItems:"center", gap:5,
+                            padding:"6px 11px", borderRadius:100, cursor:"pointer",
+                            border:`1.5px solid ${isOn ? "var(--red-md)" : isTrace ? "var(--amber-md)" : "var(--border2)"}`,
+                            background: isOn ? "var(--red-lt)" : isTrace ? "var(--amber-lt)" : "var(--paper2)",
+                            transition:"all .15s",
+                          }}>
+                          <span style={{ fontSize:14 }}>{a.emoji}</span>
+                          <span style={{ fontSize:11, fontWeight:700, color: isOn ? "var(--red)" : isTrace ? "var(--amber)" : "var(--muted2)" }}>
+                            {a.label}
+                          </span>
+                          {isOn && <span style={{ fontSize:9, fontWeight:800, color:"var(--red)", background:"var(--red-lt)", padding:"1px 5px", borderRadius:4 }}>JA</span>}
+                          {isTrace && <span style={{ fontSize:9, fontWeight:800, color:"var(--amber)", background:"var(--amber-lt)", padding:"1px 5px", borderRadius:4 }}>SPOR</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ fontSize:10, color:"var(--muted)", marginTop:10, lineHeight:1.5 }}>
+                    Ét tryk = indeholder · To tryk = spor · Tre tryk = fjern
+                  </div>
+                </div>
+
+                {/* Info */}
+                <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 12px", background:"var(--paper2)", borderRadius:10, marginBottom:14 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}>
+                    <circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M12 16v-4M12 8h.01"/>
+                  </svg>
+                  <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>
+                    Dit bidrag gennemgås af EatSafe-teamet inden publicering. Tak fordi du hjælper!
+                  </div>
+                </div>
+
+                {scanError && <div className="error-box" style={{ marginBottom:10 }}>⚠️ {scanError}</div>}
+
+                <button
+                  onClick={submitProduct}
+                  disabled={submitting || !proposedName.trim()}
+                  style={{ width:"100%", background: proposedName.trim() ? "var(--ink)" : "var(--border2)", color:"#fff", border:"none",
+                    borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15,
+                    fontWeight:800, cursor: proposedName.trim() ? "pointer" : "not-allowed", marginBottom:8,
+                    opacity: submitting ? 0.6 : 1 }}>
+                  {submitting ? "Sender…" : "Send produkt ind ✓"}
+                </button>
+                <button className="btn btn-ghost btn-full" onClick={() => setNotFoundStep(2)}>← Tilbage</button>
               </div>
             )}
+
           </div>
         )}
 
@@ -4912,55 +5987,211 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
           <div className="screen fade-in">
 
             {/* Hero */}
-            <div className="profile-hero">
-              <div className="pa-lg">{initials(user.name||"?")}</div>
-              <div style={{ flex:1 }}>
-                <div className="profile-hero-name">{user.name||"Din profil"}</div>
-                <div className="profile-hero-sub">{allergens.length+customAllerg.length} allergi{allergens.length+customAllerg.length!==1?"er":""} · {family.length} familiemedlem{family.length!==1?"mer":""}</div>
+            <div style={{ background:"var(--ink)", borderRadius:20, padding:"22px 20px", marginBottom:14 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:16 }}>
+                <div style={{ width:56, height:56, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800, color:"#fff", flexShrink:0 }}>
+                  {initials(user.name||"?")}
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:19, fontWeight:900, color:"#fff", letterSpacing:"-.3px" }}>{user.name||"Din profil"}</div>
+                  <div style={{ fontSize:12, color:"rgba(255,255,255,.5)", marginTop:3 }}>{user.email||loginEmail||""}</div>
+                </div>
+                <button onClick={() => setScreen(SCREENS.EDITPROFILE)}
+                  style={{ background:"rgba(255,255,255,.1)", border:"1px solid rgba(255,255,255,.15)", borderRadius:10, padding:"7px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"#fff", cursor:"pointer" }}>
+                  Rediger
+                </button>
               </div>
-              <button className="profile-edit-btn" onClick={() => setScreen(SCREENS.EDITPROFILE)}>Rediger</button>
+              {/* Stats */}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
+                {[
+                  [allergens.length + customAllerg.length, "Allergener"],
+                  [family.length, "Familie"],
+                  [history.length, "Scanninger"],
+                ].map(([n, lbl]) => (
+                  <div key={lbl} style={{ background:"rgba(255,255,255,.08)", borderRadius:10, padding:"10px 8px", textAlign:"center" }}>
+                    <div style={{ fontSize:20, fontWeight:900, color:"#fff" }}>{n}</div>
+                    <div style={{ fontSize:10, color:"rgba(255,255,255,.45)", fontWeight:600, marginTop:2 }}>{lbl}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Mine allergier */}
-            <div className="card">
-              <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
-                <span>Mine allergier</span>
-                <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:11 }} onClick={() => setScreen(SCREENS.EDITPROFILE)}>Rediger</span>
+            {/* Mine præferencer */}
+            <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:10, boxShadow:"var(--sh)" }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Mine præferencer</div>
+                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>Allergier · Intoleranser · Diæter · E-numre</div>
+                </div>
+                <button onClick={() => setScreen(SCREENS.EDITPROFILE)}
+                  style={{ background:"var(--green-lt)", border:"none", borderRadius:8, padding:"4px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--green)", cursor:"pointer" }}>
+                  Rediger
+                </button>
               </div>
-              {allergens.length+customAllerg.length===0
-                ? <div style={{ fontSize:13, color:"var(--muted)" }}>Ingen registreret — tryk Rediger</div>
-                : <div className="tags">{getAllergenLabels(allergens,customAllerg).map((a,i) => <div key={i} className="tag">{a}</div>)}</div>}
+              {allergens.length + customAllerg.length === 0
+                ? <div style={{ fontSize:13, color:"var(--muted)", padding:"8px 0" }}>Ingen præferencer registreret endnu</div>
+                : (
+                  <div>
+                    {/* Gruppér: allergener, intoleranser, diæter */}
+                    {allergens.filter(id => ["gluten","laktose","aeg","noedder","jordnoedder","soja","fisk","skaldyr","selleri","sennep","sesam","svovl","lupin","bloeddyr"].includes(id)).length > 0 && (
+                      <div style={{ marginBottom:8 }}>
+                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Allergier</div>
+                        <div className="tags">{allergens.filter(id => ["gluten","laktose","aeg","noedder","jordnoedder","soja","fisk","skaldyr","selleri","sennep","sesam","svovl","lupin","bloeddyr"].includes(id)).map(id => { const a = ALLERGENS.find(x=>x.id===id); return a ? <div key={id} className="tag" style={{ background:"var(--red-lt)", color:"var(--red)", borderColor:"var(--red-md)" }}>{a.emoji} {a.label}</div> : null; })}</div>
+                      </div>
+                    )}
+                    {customAllerg.length > 0 && (
+                      <div style={{ marginBottom:8 }}>
+                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Intoleranser & diæter</div>
+                        <div className="tags">{customAllerg.map((c,i) => <div key={i} className="tag" style={{ background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>✏️ {c}</div>)}</div>
+                      </div>
+                    )}
+                  </div>
+                )
+              }
             </div>
 
-            {/* Alt det andet — samlet menu */}
-            <div className="card" style={{ padding:"6px 0" }}>
+            {/* Menu */}
+            <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, overflow:"hidden", marginBottom:10, boxShadow:"var(--sh)" }}>
               {[
-                ["star",   "Favoritter & historik", () => setScreen(SCREENS.FAVORITES)],
-                ["family", "Familie",               () => setScreen(SCREENS.FAMILY)],
-                ...(user.role === "admin" ? [["edit", "Admin", () => { loadSubmissions(); loadAdminStats(); setScreen(SCREENS.ADMIN); }]] : []),
-              ].map(([icon, lbl, fn], i, arr) => (
-                <div key={lbl} onClick={fn} style={{
-                  display:"flex", alignItems:"center", gap:12,
-                  padding:"13px 16px",
-                  borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none",
-                  cursor:"pointer",
-                }}>
-                  <div style={{ width:36, height:36, background:"var(--paper2)", borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name={icon} size={18} color="var(--ink2)" /></div>
-                  <div style={{ flex:1, fontSize:14, fontWeight:600, color:"var(--ink)" }}>{lbl}</div>
-                  <div style={{ fontSize:18, color:"var(--muted)" }}>›</div>
+                { icon:"⭐", label:"Favoritter", sub:"Gemte produkter og opskrifter", fn:() => setScreen(SCREENS.FAVORITES) },
+                { icon:"👨‍👩‍👧", label:"Familie", sub:`${family.length} ${family.length===1?"profil":"profiler"} oprettet`, fn:() => setScreen(SCREENS.FAMILY) },
+                { icon:"📋", label:"Scanningshistorik", sub:`${history.length} produkter scannet`, fn:() => setScreen(SCREENS.HISTORY) },
+                ...(user.role==="admin" ? [{ icon:"🛡️", label:"Admin panel", sub:"Godkend og administrér produkter", fn:() => { loadSubmissions(); loadAdminStats(); setScreen(SCREENS.ADMIN); } }] : []),
+              ].map((item, i, arr) => (
+                <div key={item.label} onClick={item.fn}
+                  style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 16px", borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", cursor:"pointer" }}>
+                  <div style={{ width:40, height:40, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
+                    {item.icon}
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>{item.label}</div>
+                    <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>{item.sub}</div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
                 </div>
               ))}
             </div>
 
             {/* Konto */}
-            <div className="card">
-              <div className="card-lbl">Konto</div>
-              <div style={{ fontSize:13, color:"var(--muted)", marginBottom:4 }}>Email</div>
-              <div style={{ fontSize:14, fontWeight:600, color:"var(--ink)", marginBottom:12 }}>{user.email||loginEmail||"—"}</div>
-              <button className="btn btn-danger btn-full btn-sm" style={{ marginBottom:8 }} onClick={() => { if(window.confirm("Er du sikker på at du vil slette din konto? Dette kan ikke fortrydes.")) alert("Kontakt support for at slette konto."); }}>Slet konto</button>
-              <button className="btn btn-ghost btn-full btn-sm" onClick={clearAuth}>Log ud</button>
+            <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
+              <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:12 }}>Konto</div>
+              <div style={{ display:"flex", gap:8 }}>
+                <button onClick={clearAuth}
+                  style={{ flex:1, padding:"11px", background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                  Log ud
+                </button>
+                <button onClick={() => { if(window.confirm("Er du sikker? Dette kan ikke fortrydes.")) alert("Kontakt support@eatsafe.dk for at slette konto."); }}
+                  style={{ flex:1, padding:"11px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
+                  Slet konto
+                </button>
+              </div>
             </div>
 
+          </div>
+        )}
+
+        {/* ══ TICKET DETALJE ══ */}
+        {openTicket && (
+          <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
+            onClick={e => e.target === e.currentTarget && setOpenTicket(null)}>
+            <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
+              onClick={e => e.stopPropagation()}>
+
+              {/* Header */}
+              <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+                <button onClick={() => setOpenTicket(null)}
+                  style={{ background:"var(--paper2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
+                <div style={{ flex:1, fontSize:16, fontWeight:800, color:"var(--ink)" }}>🐛 Ticket #{openTicket.id?.slice(0,8)}</div>
+              </div>
+
+              {/* Status knapper */}
+              <div style={{ display:"flex", gap:6, marginBottom:14 }}>
+                {[
+                  { val:"open",        label:"🔴 Åben" },
+                  { val:"in_progress", label:"🟡 I gang" },
+                  { val:"resolved",    label:"🟢 Løst" },
+                  { val:"closed",      label:"⚫ Lukket" },
+                ].map(s => (
+                  <button key={s.val} onClick={() => updateTicketStatus(openTicket.id, s.val)}
+                    style={{ flex:1, padding:"8px 4px", borderRadius:10, border:`1.5px solid ${openTicket.status===s.val?"var(--ink)":"var(--border)"}`,
+                      background: openTicket.status===s.val ? "var(--ink)" : "#fff",
+                      fontFamily:"var(--f)", fontSize:10, fontWeight:700,
+                      color: openTicket.status===s.val ? "#fff" : "var(--muted)", cursor:"pointer" }}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Beskrivelse */}
+              <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
+                <div style={{ fontSize:11, color:"var(--muted)", fontWeight:700, marginBottom:6 }}>BESKRIVELSE</div>
+                <div style={{ fontSize:14, color:"var(--ink)", lineHeight:1.7 }}>{openTicket.description}</div>
+              </div>
+
+              {/* Skærmbillede */}
+              {openTicket.image_base64 && (
+                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
+                  <div style={{ fontSize:11, color:"var(--muted)", fontWeight:700, marginBottom:8 }}>SKÆRMBILLEDE</div>
+                  <img src={`data:image/jpeg;base64,${openTicket.image_base64}`} alt="Screenshot"
+                    style={{ width:"100%", borderRadius:8, objectFit:"contain" }} />
+                </div>
+              )}
+
+              {/* Diagnostisk info */}
+              {openTicket.context && (
+                <div style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
+                  <div style={{ fontSize:11, color:"var(--muted)", fontWeight:700, marginBottom:8 }}>📊 DIAGNOSTISK INFO</div>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
+                    {[
+                      ["Bruger", openTicket.context.user_name || "Anonym"],
+                      ["Email", openTicket.context.user_email || "—"],
+                      ["Skærm", openTicket.context.screen],
+                      ["Enhed", /iPhone|iPad/.test(openTicket.context.user_agent||"")?"iOS":/Android/.test(openTicket.context.user_agent||"")?"Android":"Desktop"],
+                      ["Viewport", openTicket.context.viewport],
+                      ["Version", openTicket.context.app_version],
+                      ["Allergener", openTicket.context.allergens_count],
+                      ["Familie", openTicket.context.family_count],
+                      ["Scanninger", openTicket.context.history_count],
+                      ["Online", openTicket.context.online ? "Ja" : "Nej"],
+                    ].map(([k, v]) => (
+                      <div key={k} style={{ background:"#fff", borderRadius:8, padding:"8px 10px" }}>
+                        <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:".4px" }}>{k}</div>
+                        <div style={{ fontSize:12, fontWeight:600, color:"var(--ink)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{v ?? "—"}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Kopi til Claude */}
+              <div style={{ background:"var(--ink)", borderRadius:12, padding:"14px", marginBottom:10 }}>
+                <div style={{ fontSize:12, fontWeight:700, color:"#fff", marginBottom:6 }}>📋 Send til Claude til fejlretning</div>
+                <div style={{ fontSize:11, color:"rgba(255,255,255,.6)", lineHeight:1.6, marginBottom:10 }}>
+                  Kopiér nedenstående og indsæt direkte i Claude-chatten:
+                </div>
+                <button onClick={() => {
+                  const txt = `EatSafe Beta Bug Report #${openTicket.id?.slice(0,8)}
+Type: ${openTicket.type}
+Skærm: ${openTicket.context?.screen}
+Bruger: ${openTicket.context?.user_name} (${openTicket.context?.user_email})
+Enhed: ${openTicket.context?.user_agent?.slice(0,80)}
+Viewport: ${openTicket.context?.viewport}
+Tidspunkt: ${new Date(openTicket.created_at).toLocaleString("da-DK")}
+
+BESKRIVELSE:
+${openTicket.description}`;
+                  navigator.clipboard?.writeText(txt).then(() => alert("Kopieret!")).catch(() => alert(txt));
+                }}
+                  style={{ width:"100%", background:"rgba(255,255,255,.15)", border:"1px solid rgba(255,255,255,.2)", borderRadius:10, padding:"10px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#fff", cursor:"pointer" }}>
+                  📋 Kopiér til Claude
+                </button>
+              </div>
+
+              <button onClick={() => setOpenTicket(null)}
+                style={{ width:"100%", background:"none", border:"none", padding:"10px", fontFamily:"var(--f)", fontSize:13, color:"var(--muted)", cursor:"pointer" }}>
+                Luk
+              </button>
+            </div>
           </div>
         )}
 
@@ -5007,163 +6238,463 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         )}
 
         {/* ══ ADMIN ══ */}
-        {screen === SCREENS.ADMIN && !openSubmission && (
+        {screen === SCREENS.ADMIN && !openSubmission && !openTicket && (
           <div className="screen fade-in">
-            <div className="screen-title">️ Admin</div>
 
-            {/* Statistik */}
-            {adminStats && (
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:12 }}>
-                {[
-                  [adminStats.total_users,"family","Brugere"],
-                  [adminStats.total_products,"list","Produkter"],
-                  [adminStats.total_scans,"camera","Scanninger"],
-                  [adminStats.pending_submissions,"warning","Afventer"],
-                  [adminStats.total_families,"family","Familier"],
-                ].map(([n,ic,lbl]) => (
-                  <div key={lbl} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"10px 6px", textAlign:"center", boxShadow:"var(--sh)" }}>
-                    <div style={{ display:"flex", justifyContent:"center" }}><Icon name={ic} size={18} color="var(--ink2)" /></div>
-                    <div style={{ fontWeight:900, fontSize:20, color:"var(--ink)" }}>{n ?? "—"}</div>
-                    <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, textTransform:"uppercase", letterSpacing:".4px" }}>{lbl}</div>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Header */}
+            <div style={{ display:"flex", alignItems:"center", gap:12, padding:"16px 0 14px" }}>
+              <button onClick={() => setScreen(SCREENS.PROFILE)}
+                style={{ background:"none", border:"none", cursor:"pointer", padding:4 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2"><path strokeLinecap="round" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <div style={{ flex:1, fontSize:18, fontWeight:900, color:"var(--ink)" }}>🛡️ Admin</div>
+              <button onClick={() => { loadAdminStats(); if (adminSection==="submissions") loadSubmissions(submissionFilter); if (adminSection==="tickets") loadTickets(); }}
+                style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:10, padding:"6px 12px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                🔄
+              </button>
+            </div>
 
-            {/* Filter tabs */}
-            <div style={{ display:"flex", gap:6, marginBottom:12 }}>
-              {[["pending","Afventer"],["approved","Godkendt"],["rejected","Afvist"]].map(([val,lbl]) => (
-                <button key={val} className="btn btn-sm" onClick={() => { setSubmissionFilter(val); loadSubmissions(); }}
-                  style={{ flex:1, fontSize:11, fontWeight:700,
-                    background: submissionFilter===val ? "var(--ink)" : "var(--paper2)",
-                    color: submissionFilter===val ? "#fff" : "var(--muted)",
-                    border:"1px solid var(--border)" }}>
-                  {lbl}
+            {/* Sektion tabs */}
+            <div style={{ display:"flex", gap:4, marginBottom:16, background:"var(--paper2)", padding:4, borderRadius:12 }}>
+              {[
+                { id:"dashboard",   label:"📊" },
+                { id:"users",       label:"👥" },
+                { id:"submissions", label:"📦" },
+                { id:"tickets",     label:"🐛" },
+              ].map(s => (
+                <button key={s.id} onClick={() => {
+                  setAdminSection(s.id);
+                  if (s.id === "submissions") loadSubmissions(submissionFilter);
+                  if (s.id === "tickets") loadTickets();
+                  if (s.id === "dashboard") loadAdminStats();
+                  if (s.id === "users") loadAdminUsers();
+                }}
+                  style={{ flex:1, padding:"10px 4px", borderRadius:9, border:"none",
+                    background: adminSection===s.id ? "#fff" : "transparent",
+                    boxShadow: adminSection===s.id ? "0 1px 4px rgba(0,0,0,.08)" : "none",
+                    fontFamily:"var(--f)", fontSize:16, fontWeight:700,
+                    color: adminSection===s.id ? "var(--ink)" : "var(--muted)", cursor:"pointer" }}>
+                  {s.label}
                 </button>
               ))}
             </div>
 
-            {/* Indsendelser liste */}
-            <div className="card">
-              <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
-                <span>Indsendelser ({submissions.length})</span>
-                <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:12 }} onClick={() => { loadSubmissions(); loadAdminStats(); }}>🔄</span>
-              </div>
-              {submissionsLoading && <div className="loader"><div className="spinner"/><div className="loader-txt">Henter…</div></div>}
-              {!submissionsLoading && submissions.length === 0 && (
-                <div className="empty-state" style={{ padding:"20px 0" }}>
-                  <div className="empty-txt">Ingen indsendelser</div>
-                </div>
-              )}
-              {submissions.map(s => {
-                const allergens = s.ai_parsed_data ? Object.entries(s.ai_parsed_data).filter(([k,v]) => (v==="yes"||v==="traces") && ALLERGENS.find(a=>a.id===k)) : [];
-                return (
-                  <div key={s.id} style={{ borderTop:"1px solid var(--border)", paddingTop:12, marginTop:12, cursor:"pointer" }}
-                    onClick={() => { setOpenSubmission(s); setEditingSubmission({ name: s.ai_parsed_data?.name || "", brand: s.ai_parsed_data?.brand || "", allergen_flags: s.ai_parsed_data || {} }); }}>
-                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-                      <div style={{ flex:1 }}>
-                        <div style={{ fontWeight:700, fontSize:14 }}>{s.ai_parsed_data?.name || "Ukendt produkt"}</div>
-                        <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>EAN: {s.ean} · {new Date(s.created_at).toLocaleDateString("da-DK")}</div>
-                        {s.user_confirmed && <div style={{ fontSize:11, color:"var(--green)", fontWeight:600, marginTop:2 }}>✓ Bruger bekræftet</div>}
-                      </div>
-                      <div style={{ fontSize:18, color:"var(--muted)", marginLeft:8 }}>›</div>
+            {/* ── DASHBOARD ── */}
+            {adminSection === "dashboard" && (
+              <div className="fade-in">
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Brugere</div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14 }}>
+                  {[
+                    { n:adminStats?.total_users,     emoji:"👤", label:"Brugere i alt",   color:"var(--ink)" },
+                    { n:adminStats?.new_users_today,  emoji:"🆕", label:"Nye i dag",        color:"var(--green)" },
+                    { n:adminStats?.total_scans,      emoji:"📱", label:"Scanninger i alt", color:"var(--ink)" },
+                    { n:adminStats?.scans_today,      emoji:"⚡", label:"Scanninger i dag", color:"var(--amber)" },
+                  ].map(({ n, emoji, label, color }) => (
+                    <div key={label} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"16px 14px", boxShadow:"var(--sh)" }}>
+                      <div style={{ fontSize:24, marginBottom:4 }}>{emoji}</div>
+                      <div style={{ fontSize:28, fontWeight:900, color, lineHeight:1 }}>{n ?? "—"}</div>
+                      <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, marginTop:4 }}>{label}</div>
                     </div>
-                    {allergens.length > 0 && (
-                      <div className="tags" style={{ marginTop:6 }}>
-                        {allergens.slice(0,4).map(([k,v]) => {
-                          const a = ALLERGENS.find(x=>x.id===k);
-                          return a ? <div key={k} className="tag" style={{ fontSize:10, background:v==="yes"?"var(--red-lt)":"var(--amber-lt)", color:v==="yes"?"var(--red)":"var(--amber)", borderColor:v==="yes"?"var(--red-md)":"var(--amber-md)" }}>{a.emoji} {a.label}</div> : null;
-                        })}
-                        {allergens.length > 4 && <div className="tag" style={{ fontSize:10 }}>+{allergens.length-4} mere</div>}
+                  ))}
+                </div>
+
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Database & opgaver</div>
+                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, overflow:"hidden", marginBottom:14, boxShadow:"var(--sh)" }}>
+                  {[
+                    { emoji:"📦", label:"Produkter i databasen",   n:adminStats?.total_products,        color:"var(--ink)" },
+                    { emoji:"👨‍👩‍👧", label:"Familiemedlemmer oprettet", n:adminStats?.total_families,         color:"var(--ink)" },
+                    { emoji:"⏳", label:"Indsendelser afventer",   n:adminStats?.pending_submissions,    color:"var(--amber)", action:() => { setAdminSection("submissions"); setSubmissionFilter("pending"); loadSubmissions("pending"); } },
+                    { emoji:"🐛", label:"Åbne tickets",             n:adminStats?.open_tickets,           color:"var(--red)",   action:() => { setAdminSection("tickets"); loadTickets(); } },
+                  ].map(({ emoji, label, n, color, action }, i, arr) => (
+                    <div key={label} onClick={action}
+                      style={{ display:"flex", alignItems:"center", gap:12, padding:"13px 16px", borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", cursor: action ? "pointer" : "default" }}>
+                      <span style={{ fontSize:20 }}>{emoji}</span>
+                      <span style={{ flex:1, fontSize:13, color:"var(--ink2)", fontWeight:500 }}>{label}</span>
+                      <span style={{ fontSize:18, fontWeight:900, color }}>{n ?? "—"}</span>
+                      {action && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>}
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Hurtige handlinger</div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+                  {[
+                    { emoji:"📦", label:"Godkend indsendelser", color:"var(--amber)", fn:() => { setAdminSection("submissions"); setSubmissionFilter("pending"); loadSubmissions("pending"); } },
+                    { emoji:"🐛", label:"Gennemse tickets",     color:"var(--red)",   fn:() => { setAdminSection("tickets"); loadTickets(); } },
+                    { emoji:"✅", label:"Godkendte produkter",  color:"var(--green)", fn:() => { setAdminSection("submissions"); setSubmissionFilter("approved"); loadSubmissions("approved"); } },
+                    { emoji:"👥", label:"Administrér brugere",  color:"var(--ink)",   fn:() => { setAdminSection("users"); loadAdminUsers(); } },
+                  ].map(({ emoji, label, color, fn }) => (
+                    <button key={label} onClick={fn}
+                      style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:6, padding:"14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
+                      <span style={{ fontSize:24 }}>{emoji}</span>
+                      <span style={{ fontSize:12, fontWeight:700, color }}>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── BRUGERE ── */}
+            {adminSection === "users" && (
+              <div className="fade-in">
+
+                {/* Søgebar */}
+                <div style={{ display:"flex", gap:6, marginBottom:8 }}>
+                  <input
+                    value={userSearch}
+                    onChange={e => setUserSearch(e.target.value)}
+                    placeholder="Søg bruger…"
+                    style={{ flex:1, padding:"10px 14px", border:"1.5px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:14, background:"#fff", outline:"none", color:"var(--ink)" }}
+                  />
+                  {userSearch && (
+                    <button onClick={() => setUserSearch("")}
+                      style={{ padding:"0 12px", border:"1px solid var(--border)", borderRadius:10, background:"var(--paper2)", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", cursor:"pointer" }}>
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Søge-parameter filter */}
+                <div style={{ display:"flex", gap:5, overflowX:"auto", marginBottom:12, paddingBottom:2 }}>
+                  {[
+                    { id:"all",         label:"Alle felter" },
+                    { id:"name",        label:"Navn" },
+                    { id:"email",       label:"Email" },
+                    { id:"role",        label:"Rolle" },
+                    { id:"onboarding",  label:"Onboarding" },
+                    { id:"admin",       label:"Kun admins" },
+                    { id:"incomplete",  label:"Ufærdig onboarding" },
+                  ].map(p => (
+                    <button key={p.id} onClick={() => setUserSearchParam(p.id)}
+                      style={{ flexShrink:0, padding:"5px 12px", borderRadius:100, border:`1.5px solid ${userSearchParam===p.id ? "var(--ink)" : "var(--border)"}`,
+                        background: userSearchParam===p.id ? "var(--ink)" : "#fff",
+                        fontFamily:"var(--f)", fontSize:11, fontWeight:700,
+                        color: userSearchParam===p.id ? "#fff" : "var(--muted)", cursor:"pointer" }}>
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tæller */}
+                {(() => {
+                  const filtered = adminUsers.filter(u => {
+                    if (userSearchParam === "admin") return u.role === "admin";
+                    if (userSearchParam === "incomplete") return u.onboarding_completed === false;
+                    if (!userSearch.trim()) return true;
+                    const q = userSearch.toLowerCase();
+                    if (userSearchParam === "name") return (u.name||"").toLowerCase().includes(q);
+                    if (userSearchParam === "email") return (u.email||"").toLowerCase().includes(q);
+                    if (userSearchParam === "role") return (u.role||"").toLowerCase().includes(q);
+                    if (userSearchParam === "onboarding") return String(u.onboarding_completed).includes(q);
+                    return (u.name||"").toLowerCase().includes(q) || (u.email||"").toLowerCase().includes(q);
+                  });
+                  return (
+                    <>
+                      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>
+                        {filtered.length} af {adminUsers.length} brugere
                       </div>
-                    )}
+                      {adminUsersLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
+                      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                        {filtered.map(u => (
+                          <div key={u.id} onClick={() => setOpenAdminUser(u)}
+                            style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", boxShadow:"var(--sh)", cursor:"pointer" }}>
+                            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                              <div style={{ width:38, height:38, borderRadius:"50%", background: u.role==="admin" ? "var(--ink)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, color:"#fff", flexShrink:0 }}>
+                                {(u.name||u.email||"?").charAt(0).toUpperCase()}
+                              </div>
+                              <div style={{ flex:1, minWidth:0 }}>
+                                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.name || "Ingen navn"}</div>
+                                <div style={{ fontSize:11, color:"var(--muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</div>
+                              </div>
+                              <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0 }}>
+                                <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: u.role==="admin" ? "var(--ink)" : "var(--paper2)", color: u.role==="admin" ? "#fff" : "var(--muted)" }}>
+                                  {u.role==="admin" ? "Admin" : "Bruger"}
+                                </span>
+                                {u.onboarding_completed === false && <span style={{ fontSize:9, color:"var(--amber)", fontWeight:700 }}>Onboarding ufærdig</span>}
+                                {u.id === userId && <span style={{ fontSize:9, color:"var(--green)", fontWeight:700 }}>← Dig</span>}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* ── BRUGER DETALJE MODAL ── */}
+            {openAdminUser && (
+              <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
+                onClick={e => e.target === e.currentTarget && setOpenAdminUser(null)}>
+                <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"85vh", overflowY:"auto" }}
+                  onClick={e => e.stopPropagation()}>
+
+                  {/* Header */}
+                  <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+                    <div style={{ width:48, height:48, borderRadius:"50%", background: openAdminUser.role==="admin" ? "var(--ink)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, fontWeight:800, color:"#fff", flexShrink:0 }}>
+                      {(openAdminUser.name||openAdminUser.email||"?").charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)" }}>{openAdminUser.name || "Ingen navn"}</div>
+                      <div style={{ fontSize:12, color:"var(--muted)" }}>{openAdminUser.email}</div>
+                    </div>
+                    <button onClick={() => setOpenAdminUser(null)}
+                      style={{ background:"var(--paper2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
                   </div>
-                );
-              })}
-            </div>
+
+                  {/* Info grid */}
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14 }}>
+                    {[
+                      ["Rolle", openAdminUser.role === "admin" ? "🛡️ Admin" : "👤 Bruger"],
+                      ["Oprettet", new Date(openAdminUser.created_at).toLocaleDateString("da-DK")],
+                      ["Onboarding", openAdminUser.onboarding_completed ? "✅ Færdig" : "⏳ Ikke færdig"],
+                      ["Bruger-ID", openAdminUser.id?.slice(0,8) + "…"],
+                    ].map(([label, val]) => (
+                      <div key={label} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
+                        <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", marginBottom:3 }}>{label}</div>
+                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{val}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Handlinger */}
+                  {openAdminUser.id !== userId && (
+                    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                      <button onClick={() => { updateUserRole(openAdminUser.id, openAdminUser.role==="admin" ? "user" : "admin"); setOpenAdminUser(u => ({ ...u, role: u.role==="admin" ? "user" : "admin" })); }}
+                        style={{ width:"100%", padding:"13px", background:"var(--ink)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer" }}>
+                        {openAdminUser.role==="admin" ? "→ Skift til Bruger" : "→ Skift til Admin"}
+                      </button>
+                      <button onClick={() => { deleteUser(openAdminUser.id); setOpenAdminUser(null); }}
+                        style={{ width:"100%", padding:"13px", background:"var(--red-lt)", border:"1.5px solid var(--red-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
+                        🗑️ Slet bruger
+                      </button>
+                    </div>
+                  )}
+                  {openAdminUser.id === userId && (
+                    <div style={{ padding:"12px", background:"var(--green-lt)", borderRadius:10, fontSize:13, color:"var(--green)", fontWeight:700, textAlign:"center" }}>
+                      Dette er din egen konto — kan ikke ændres
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── SUBMISSIONS ── */}
+            {adminSection === "submissions" && (
+              <div className="fade-in">
+                <div style={{ display:"flex", gap:6, marginBottom:12 }}>
+                  {[
+                    { val:"pending",  label:"⏳ Afventer", color:"var(--amber)" },
+                    { val:"approved", label:"✅ Godkendt",  color:"var(--green)" },
+                    { val:"rejected", label:"❌ Afvist",    color:"var(--red)" },
+                  ].map(({ val, label, color }) => (
+                    <button key={val} onClick={() => { setSubmissionFilter(val); loadSubmissions(val); }}
+                      style={{ flex:1, padding:"9px 4px", borderRadius:10, border:`1.5px solid ${submissionFilter===val ? color : "var(--border)"}`,
+                        background: submissionFilter===val ? (val==="pending"?"var(--amber-lt)":val==="approved"?"var(--green-lt)":"var(--red-lt)") : "#fff",
+                        fontFamily:"var(--f)", fontSize:11, fontWeight:700,
+                        color: submissionFilter===val ? color : "var(--muted)", cursor:"pointer" }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {submissionsLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
+                {!submissionsLoading && submissions.length === 0 && (
+                  <div style={{ textAlign:"center", padding:"48px 0" }}>
+                    <div style={{ fontSize:48, marginBottom:12 }}>{submissionFilter==="pending"?"🎉":"📭"}</div>
+                    <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>{submissionFilter==="pending" ? "Ingen afventer" : "Ingen indsendelser"}</div>
+                  </div>
+                )}
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  {submissions.map(s => {
+                    const flags = s.ai_parsed_data || {};
+                    const dangerAllergens = ALLERGENS.filter(a => flags[a.id]==="yes" || flags[a.id]===true);
+                    const daysSince = Math.floor((Date.now() - new Date(s.created_at).getTime()) / 86400000);
+                    return (
+                      <div key={s.id} onClick={() => { setOpenSubmission(s); setEditingSubmission({ name: s.ai_parsed_data?.name || s.product_name || "", brand: s.ai_parsed_data?.brand || s.brand || "", allergen_flags: s.ai_parsed_data || {} }); }}
+                        style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", cursor:"pointer", boxShadow:"var(--sh)" }}>
+                        <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
+                          <div style={{ width:48, height:48, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>📦</div>
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</div>
+                            <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6, fontFamily:"monospace" }}>EAN: {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`}</div>
+                            <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                              {dangerAllergens.slice(0,3).map(a => <span key={a.id} style={{ fontSize:10, padding:"2px 7px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", fontWeight:700 }}>{a.emoji} {a.label}</span>)}
+                              {dangerAllergens.length === 0 && <span style={{ fontSize:10, color:"var(--muted)" }}>Ingen allergener</span>}
+                            </div>
+                          </div>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── TICKETS ── */}
+            {adminSection === "tickets" && (
+              <div className="fade-in">
+                {/* Status tæller grid — klikbar filter */}
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:6, marginBottom:12 }}>
+                  {[
+                    { status:"all",         label:"Alle",   color:"var(--ink)" },
+                    { status:"open",        label:"Åbne",   color:"var(--red)" },
+                    { status:"in_progress", label:"I gang", color:"var(--amber)" },
+                    { status:"resolved",    label:"Løst",   color:"var(--green)" },
+                    { status:"closed",      label:"Lukket", color:"var(--muted)" },
+                  ].map(s => {
+                    const count = s.status === "all" ? adminTickets.length : adminTickets.filter(t => t.status === s.status).length;
+                    const isActive = adminTicketFilter === s.status;
+                    return (
+                      <div key={s.status} onClick={() => setAdminTicketFilter(s.status)}
+                        style={{ background: isActive ? s.color : "#fff", border:`1.5px solid ${isActive ? s.color : "var(--border)"}`, borderRadius:10, padding:"10px 6px", textAlign:"center", cursor:"pointer", transition:"all .15s",
+                          gridColumn: s.status === "all" ? "1 / -1" : "auto" }}>
+                        <div style={{ fontSize:18, fontWeight:900, color: isActive ? "#fff" : s.color }}>{count}</div>
+                        <div style={{ fontSize:9, color: isActive ? "rgba(255,255,255,.8)" : "var(--muted)", fontWeight:700, textTransform:"uppercase" }}>{s.label}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {ticketsLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
+                {!ticketsLoading && adminTickets.length === 0 && <div style={{ textAlign:"center", padding:"48px 0" }}><div style={{ fontSize:48, marginBottom:12 }}>🎉</div><div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>Ingen tickets</div></div>}
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  {adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter).map(t => {
+                    const typeConfig = { bug:{emoji:"🐛",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{emoji:"🎨",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{emoji:"💡",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{emoji:"📦",color:"var(--ink2)",bg:"var(--paper2)",label:"Indhold"}, crash:{emoji:"💥",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{emoji:"✨",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
+                    const cfg = typeConfig[t.type] || typeConfig.bug;
+                    const statusColor = t.status==="open"?"var(--red)":t.status==="in_progress"?"var(--amber)":t.status==="resolved"?"var(--green)":"var(--muted)";
+                    const statusLabel = t.status==="open"?"Åben":t.status==="in_progress"?"I gang":t.status==="resolved"?"Løst":"Lukket";
+                    return (
+                      <div key={t.id} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
+                        <div style={{ display:"flex", alignItems:"flex-start", gap:10 }} onClick={() => setOpenTicket(t)}>
+                          <div style={{ width:38, height:38, borderRadius:10, background:cfg.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{cfg.emoji}</div>
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
+                              <span style={{ fontSize:11, fontWeight:700, color:cfg.color, background:cfg.bg, padding:"2px 8px", borderRadius:100 }}>{cfg.label}</span>
+                            </div>
+                            <div style={{ fontSize:13, color:"var(--ink)", lineHeight:1.4, marginBottom:4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{t.description}</div>
+                            <div style={{ fontSize:10, color:"var(--muted)" }}>{t.context?.user_name || "Anonym"} · {t.context?.screen} · {new Date(t.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</div>
+                          </div>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:4 }}><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
+                        </div>
+                        {/* Status toggle direkte på kortet */}
+                        <div style={{ display:"flex", gap:5, marginTop:10, paddingTop:10, borderTop:"1px solid var(--border)" }}>
+                          {[
+                            { val:"open",        label:"Åben",   color:"var(--red)" },
+                            { val:"in_progress", label:"I gang", color:"var(--amber)" },
+                            { val:"resolved",    label:"Løst",   color:"var(--green)" },
+                            { val:"closed",      label:"Lukket", color:"var(--muted)" },
+                          ].map(s => (
+                            <button key={s.val} onClick={() => updateTicketStatus(t.id, s.val)}
+                              style={{ flex:1, padding:"5px 2px", borderRadius:8, border:`1px solid ${t.status===s.val ? s.color : "var(--border)"}`,
+                                background: t.status===s.val ? s.color : "#fff",
+                                fontFamily:"var(--f)", fontSize:9, fontWeight:700,
+                                color: t.status===s.val ? "#fff" : "var(--muted)", cursor:"pointer" }}>
+                              {s.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
           </div>
         )}
 
         {/* ══ ADMIN — ÅBEN SUBMISSION ══ */}
         {screen === SCREENS.ADMIN && openSubmission && editingSubmission && (
           <div className="screen fade-in">
-            <button className="btn btn-ghost btn-sm" style={{ marginTop:16, marginBottom:12 }} onClick={() => { setOpenSubmission(null); setEditingSubmission(null); }}>← Tilbage</button>
 
-            {/* Produkt hero */}
-            <div className="product-hero">
-              {openSubmission.ai_parsed_data?.product_image_base64
-                ? <img src={`data:image/jpeg;base64,${openSubmission.ai_parsed_data.product_image_base64}`} className="product-hero-img" alt="Produkt" />
-                : <div className="product-hero-img-placeholder">{getProductIcon({ name: editingSubmission.name })}</div>
-              }
-              <div className="product-hero-body">
-                <div style={{ fontSize:10, fontWeight:700, color:"var(--amber)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:6 }}>⏳ Afventer godkendelse</div>
-                <div style={{ fontSize:11, color:"var(--muted)", marginBottom:4 }}>EAN: {openSubmission.ean}</div>
-                <div style={{ fontSize:11, color:"var(--muted)" }}>Indsendt: {new Date(openSubmission.created_at).toLocaleDateString("da-DK")}</div>
+            {/* Header */}
+            <div style={{ display:"flex", alignItems:"center", gap:12, padding:"16px 0 14px" }}>
+              <button onClick={() => { setOpenSubmission(null); setEditingSubmission(null); }}
+                style={{ background:"none", border:"none", cursor:"pointer", padding:4 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2"><path strokeLinecap="round" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Gennemse indsendelse</div>
+                <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>{new Date(openSubmission.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"long", year:"numeric" })}</div>
+              </div>
+              {/* Hurtig-godkend/afvis */}
+              <div style={{ display:"flex", gap:6 }}>
+                <button onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}
+                  style={{ background:"var(--green)", border:"none", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:800, color:"#fff", cursor:"pointer" }}>
+                  ✓ Godkend
+                </button>
+                <button onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}
+                  style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:800, color:"var(--red)", cursor:"pointer" }}>
+                  ✗
+                </button>
               </div>
             </div>
 
-            {/* OCR billede hvis tilgængeligt */}
+            {/* Produktkort */}
+            <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
+                {openSubmission.ai_parsed_data?.product_image_base64
+                  ? <img src={`data:image/jpeg;base64,${openSubmission.ai_parsed_data.product_image_base64}`}
+                      style={{ width:64, height:64, borderRadius:10, objectFit:"contain", border:"1px solid var(--border)", flexShrink:0 }} alt="" />
+                  : <div style={{ width:64, height:64, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>📦</div>
+                }
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, marginBottom:4 }}>Produktnavn</div>
+                  <input value={editingSubmission.name} onChange={e => setEditingSubmission(s => ({ ...s, name: e.target.value }))}
+                    placeholder="Produktnavn…"
+                    style={{ width:"100%", border:"none", outline:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--ink)", background:"transparent", padding:0 }} />
+                </div>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+                <div>
+                  <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, marginBottom:4 }}>BRAND</div>
+                  <input value={editingSubmission.brand} onChange={e => setEditingSubmission(s => ({ ...s, brand: e.target.value }))}
+                    placeholder="Brand / Mærke…" className="field" style={{ padding:"8px 10px", fontSize:13 }} />
+                </div>
+                <div>
+                  <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, marginBottom:4 }}>EAN</div>
+                  <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", padding:"8px 10px", background:"var(--paper2)", borderRadius:8, fontFamily:"monospace" }}>{openSubmission.ean}</div>
+                </div>
+              </div>
+              {openSubmission.notes && (
+                <div style={{ marginTop:10, padding:"8px 10px", background:"var(--amber-lt)", borderRadius:8 }}>
+                  <div style={{ fontSize:10, color:"var(--amber)", fontWeight:700, marginBottom:2 }}>BRUGER-BEMÆRKNING</div>
+                  <div style={{ fontSize:12, color:"var(--ink2)" }}>{openSubmission.notes}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Foto af ingredienslisten */}
             {openSubmission.raw_label_image && (
-              <div className="card">
-                <div className="card-lbl">Foto af ingrediensliste</div>
-                <img
-                  src={`data:image/jpeg;base64,${openSubmission.raw_label_image}`}
-                  alt="Ingrediensliste"
-                  style={{ width:"100%", borderRadius:8, objectFit:"contain", maxHeight:220 }}
-                />
+              <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
+                <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>📸 Foto af ingredienslisten</div>
+                <img src={`data:image/jpeg;base64,${openSubmission.raw_label_image}`} alt="Ingrediensliste"
+                  style={{ width:"100%", borderRadius:10, objectFit:"contain", maxHeight:240 }} />
               </div>
             )}
 
-            {/* Redigérbart produktnavn og brand */}
-            <div className="card">
-              <div className="card-lbl">Produktinfo — kan redigeres</div>
-              <div style={{ marginBottom:8 }}>
-                <div style={{ fontSize:11, color:"var(--muted)", marginBottom:4, fontWeight:600 }}>Produktnavn</div>
-                <input className="field" placeholder="Produktnavn…" value={editingSubmission.name}
-                  onChange={e => setEditingSubmission(s => ({ ...s, name: e.target.value }))} />
-              </div>
-              <div>
-                <div style={{ fontSize:11, color:"var(--muted)", marginBottom:4, fontWeight:600 }}>Brand</div>
-                <input className="field" placeholder="Brand / Mærke…" value={editingSubmission.brand}
-                  onChange={e => setEditingSubmission(s => ({ ...s, brand: e.target.value }))} />
-              </div>
-            </div>
-
-            {/* Ingredienser fra OCR */}
+            {/* OCR tekst */}
             {openSubmission.ocr_raw_text && (
-              <div className="card">
-                <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                  <span>Ingredienser fra OCR</span>
-                  <button
-                    className="btn btn-sm"
-                    style={{ fontSize:11, background:"var(--green-lt)", color:"var(--green)", border:"1px solid var(--green-mid)" }}
-                    onClick={() => cleanOcrWithAI(openSubmission.ocr_raw_text)}
-                    disabled={cleaningOcr}
-                  >
-                    {cleaningOcr ? "Renskriver…" : "Renskiv med AI"}
+              <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+                  <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>📄 Ingredienser fra OCR</div>
+                  <button onClick={() => cleanOcrWithAI(openSubmission.ocr_raw_text)} disabled={cleaningOcr}
+                    style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:8, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--green)", cursor:"pointer" }}>
+                    {cleaningOcr ? "🤖 Renskriver…" : "🤖 Renskiv med AI"}
                   </button>
                 </div>
-
-                {/* Rå OCR tekst */}
-                <div style={{ marginBottom: cleanedOcrText ? 12 : 0 }}>
-                  <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Rå OCR tekst</div>
-                  <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.7, background:"var(--paper2)", borderRadius:8, padding:"10px", maxHeight:120, overflowY:"auto" }}>
-                    {openSubmission.ocr_raw_text}
-                  </div>
+                <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.7, background:"var(--paper2)", borderRadius:8, padding:"10px", maxHeight:120, overflowY:"auto" }}>
+                  {openSubmission.ocr_raw_text}
                 </div>
-
-                {/* AI renskrivet tekst */}
                 {cleanedOcrText && (
-                  <div style={{ borderTop:"1px solid var(--border)", paddingTop:12 }}>
-                    <div style={{ fontSize:10, fontWeight:700, color:"var(--green)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>🤖 AI renskrivet — tjek at intet er fjernet eller tilføjet</div>
-                    <div style={{ background:"var(--green-lt)", borderRadius:8, padding:"10px", marginBottom:8 }}>
-                      <IngredientsList text={cleanedOcrText} allergenFlags={editingSubmission.allergen_flags} />
+                  <div style={{ marginTop:10, borderTop:"1px solid var(--border)", paddingTop:10 }}>
+                    <div style={{ fontSize:11, fontWeight:700, color:"var(--green)", marginBottom:6 }}>✓ AI renskrivet — tjek at intet er fjernet</div>
+                    <div style={{ background:"var(--green-lt)", borderRadius:8, padding:"10px", marginBottom:8, fontSize:12, color:"var(--ink2)", lineHeight:1.7 }}>
+                      {cleanedOcrText}
                     </div>
-                    <button
-                      className="btn btn-sm"
-                      style={{ fontSize:11, width:"100%", background:"var(--green)", color:"#fff", border:"none" }}
-                      onClick={() => setEditingSubmission(s => ({ ...s, ingredients_text: cleanedOcrText }))}
-                    >
+                    <button onClick={() => setEditingSubmission(s => ({ ...s, ingredients_text: cleanedOcrText }))}
+                      style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:10, padding:"10px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#fff", cursor:"pointer" }}>
                       ✓ Brug denne version
                     </button>
                   </div>
@@ -5171,97 +6702,51 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               </div>
             )}
 
-            {/* Allergenflags — redigérbare */}
-            <div className="card">
-              <div className="card-lbl">Allergener — klik for at ændre</div>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+            {/* Allergener — toggle grid */}
+            <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+                <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Allergener</div>
+                <div style={{ fontSize:10, color:"var(--muted)" }}>Ja → Spor → Nej</div>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
                 {ALLERGENS.map(a => {
                   const val = editingSubmission.allergen_flags[a.id] || "no";
                   const next = val==="no" ? "yes" : val==="yes" ? "traces" : "no";
-                  const style = val==="yes"
-                    ? { background:"var(--red-lt)", color:"var(--red)", border:"1.5px solid var(--red-md)", fontWeight:700 }
-                    : val==="traces"
-                    ? { background:"var(--amber-lt)", color:"var(--amber)", border:"1.5px solid var(--amber-md)", fontWeight:700 }
-                    : { background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" };
+                  const isYes = val === "yes";
+                  const isTrace = val === "traces";
                   return (
                     <button key={a.id} onClick={() => setEditingSubmission(s => ({ ...s, allergen_flags: { ...s.allergen_flags, [a.id]: next } }))}
-                      style={{ ...style, borderRadius:8, padding:"8px 10px", fontSize:12, cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:6 }}>
-                      <span>{a.emoji}</span>
-                      <span style={{ flex:1 }}>{a.label}</span>
-                      <span style={{ fontSize:10, opacity:.7 }}>{val==="yes"?"✓ Ja":val==="traces"?"~ Spor":"✗ Nej"}</span>
+                      style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", borderRadius:10, cursor:"pointer",
+                        border:`1.5px solid ${isYes?"var(--red-md)":isTrace?"var(--amber-md)":"var(--border)"}`,
+                        background: isYes?"var(--red-lt)":isTrace?"var(--amber-lt)":"var(--paper2)",
+                        fontFamily:"var(--f)" }}>
+                      <span style={{ fontSize:16 }}>{a.emoji}</span>
+                      <span style={{ flex:1, fontSize:12, fontWeight:700, color:isYes?"var(--red)":isTrace?"var(--amber)":"var(--muted2)", textAlign:"left" }}>{a.label}</span>
+                      <span style={{ fontSize:10, fontWeight:800, color:isYes?"var(--red)":isTrace?"var(--amber)":"var(--muted)" }}>
+                        {isYes?"JA":isTrace?"SPOR":"NEJ"}
+                      </span>
                     </button>
                   );
                 })}
               </div>
-              <div style={{ fontSize:11, color:"var(--muted)", marginTop:8, fontStyle:"italic" }}>Klik én gang = Ja, igen = Spor, igen = Nej</div>
             </div>
 
-            {/* Næringsindhold */}
-            {scanResult.nutrition && (() => {
-              const n = scanResult.nutrition;
-              const rows = [
-                ["Energi", n.energy_kcal ? `${n.energy_kcal} kcal` : null],
-                ["Fedt", n.fat != null ? `${n.fat} g` : null],
-                ["— heraf mættet", n.saturated_fat != null ? `${n.saturated_fat} g` : null],
-                ["Kulhydrat", n.carbohydrates != null ? `${n.carbohydrates} g` : null],
-                ["— heraf sukker", n.sugars != null ? `${n.sugars} g` : null],
-                ["Kostfibre", n.fiber != null ? `${n.fiber} g` : null],
-                ["Protein", n.protein != null ? `${n.protein} g` : null],
-                ["Salt", n.salt != null ? `${n.salt} g` : null],
-              ].filter(([,v]) => v !== null);
-              if (!rows.length) return null;
-              return (
-                <div className="card">
-                  <div className="card-lbl">Næringsindhold pr. 100g</div>
-                  <div style={{ display:"flex", flexDirection:"column" }}>
-                    {rows.map(([label, value], i) => (
-                      <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"7px 0", borderBottom: i < rows.length-1 ? "1px solid var(--border)" : "none" }}>
-                        <span style={{ fontSize:13, color: label.startsWith("—") ? "var(--muted)" : "var(--ink2)", paddingLeft: label.startsWith("—") ? 12 : 0 }}>{label}</span>
-                        <span style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Diæt-tags */}
-            {scanResult.tags && scanResult.tags.length > 0 && (
-              <div className="card">
-                <div className="card-lbl">Egnet til</div>
-                <div className="tags">
-                  {scanResult.tags.map((tag, i) => {
-                    const tagLabels = { vegan:"🌱 Vegansk", vegetarian:"🥦 Vegetarisk", "palm-oil-free":"Uden palmeolie", "gluten-free":"Glutenfri", organic:"🌿 Økologisk" };
-                    return <div key={i} className="tag" style={{ background:"var(--green-lt)", color:"var(--green)", borderColor:"var(--green-mid)" }}>{tagLabels[tag] || tag}</div>;
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Ansvarsfraskrivelse */}
-            <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 14px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:10, marginBottom:10 }}>
-              <span style={{ fontSize:14, flexShrink:0 }}>⚠️</span>
-              <div style={{ fontSize:11, color:"var(--amber)", lineHeight:1.5, fontWeight:600 }}>
-                Resultater er vejledende og kan indeholde fejl. Tjek altid selv ved alvorlige allergier.
-              </div>
+            {/* Handlings-knapper */}
+            <div style={{ display:"flex", flexDirection:"column", gap:8, paddingBottom:16 }}>
+              <button onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}
+                style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"#fff", cursor:"pointer", boxShadow:"0 4px 16px rgba(34,197,94,.3)" }}>
+                ✅ Godkend og opret produkt
+              </button>
+              <button onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}
+                style={{ width:"100%", background:"var(--red-lt)", border:"1.5px solid var(--red-md)", borderRadius:12, padding:"13px", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
+                ❌ Afvis indsendelse
+              </button>
+              <button onClick={() => { setOpenSubmission(null); setEditingSubmission(null); }}
+                style={{ width:"100%", background:"none", border:"none", padding:"10px", fontFamily:"var(--f)", fontSize:13, color:"var(--muted)", cursor:"pointer" }}>
+                Annullér
+              </button>
             </div>
 
-            {/* Handlinger */}
-            <div className="card">
-              <div className="card-lbl">Handlinger</div>
-              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                <button className="btn btn-primary btn-full" onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}>
-                  ✅ Godkend og opret produkt
-                </button>
-                <button className="btn btn-outline btn-full" style={{ color:"var(--red)", borderColor:"var(--red)" }}
-                  onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}>
-                  ❌ Afvis indsendelse
-                </button>
-                <button className="btn btn-ghost btn-full btn-sm" onClick={() => { setOpenSubmission(null); setEditingSubmission(null); }}>
-                  Annullér
-                </button>
-              </div>
-            </div>
           </div>
         )}
 
@@ -5337,8 +6822,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         {screen === SCREENS.MADPAS && (
           <div className="mp-page fade-in">
 
-            {/* TJENER-VISNING — fullscreen overlay, identisk med madpas */}
-            {madpasWaiterView && (() => {
+            {/* Beregn aktive allergener baseret på valgt profil */}
+            {(() => {
               const lang = madpasLang;
               const rtl = MADPAS_LANGUAGES.find(l => l.code === lang)?.rtl;
               const helloText = { en:"I have food allergies.", de:"Ich habe Lebensmittelallergien.", fr:"J'ai des allergies alimentaires.", es:"Tengo alergias alimentarias.", it:"Ho allergie alimentari.", nl:"Ik heb voedselallergieën.", pt:"Tenho alergias alimentares.", pl:"Mam alergie pokarmowe.", ja:"食物アレルギーがあります。", zh:"我有食物过敏。", ar:"لدي حساسية غذائية.", tr:"Gıda alerjilerim var.", sv:"Jag har matallergier.", no:"Jeg har matallergier.", th:"ฉันมีอาการแพ้อาหาร", el:"Έχω αλλεργίες τροφίμων.", da:"Jeg har fødevareallergier." };
@@ -5393,7 +6878,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                       lines.push(<span key="hello" style={sIntro}>{introText[lang] || introText.en}</span>);
 
                       // Allergener
-                      [...allergens, ...customAllerg.filter(c => !c.endsWith("_intolerance") && !allergens.includes(c))].forEach((item, i) => {
+                      [...mpAllergens, ...mpCustom.filter(c => !c.endsWith("_intolerance") && !mpAllergens.includes(c))].forEach((item, i) => {
                         if (typeof item !== "string") return;
                         const a = ALLERGENS.find(x => x.id === item);
                         const label = a ? (ALLERGEN_T[item]?.[lang]?.n || ALLERGEN_T[item]?.en?.n || a.label) : item;
@@ -5480,6 +6965,41 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 <div className="mp-title">Madpas</div>
                 <div className="mp-subtitle">Vis dit madpas til din tjener/ekspedient for at forklare dine ønsker.</div>
 
+                {/* Profilvælger — selv + familie */}
+                {family.length > 0 && (
+                  <div style={{ marginBottom:14 }}>
+                    <div className="mp-section-lbl">VIS MADPAS FOR</div>
+                    <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:4 }}>
+                      {/* Brugeren selv */}
+                      <button onClick={() => setMadpasProfileId("self")}
+                        style={{ flexShrink:0, display:"flex", alignItems:"center", gap:7, padding:"8px 14px", borderRadius:100,
+                          border:`1.5px solid ${madpasProfileId==="self" ? "var(--ink)" : "var(--border)"}`,
+                          background: madpasProfileId==="self" ? "var(--ink)" : "#fff",
+                          fontFamily:"var(--f)", fontSize:12, fontWeight:700,
+                          color: madpasProfileId==="self" ? "#fff" : "var(--ink2)", cursor:"pointer" }}>
+                        <div style={{ width:22, height:22, borderRadius:"50%", background: madpasProfileId==="self" ? "rgba(255,255,255,.25)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:800, color:"#fff" }}>
+                          {initials(user.name || "?")}
+                        </div>
+                        {user.name?.split(" ")[0] || "Mig"}
+                      </button>
+                      {/* Familiemedlemmer */}
+                      {family.map(m => (
+                        <button key={m.id} onClick={() => setMadpasProfileId(m.id)}
+                          style={{ flexShrink:0, display:"flex", alignItems:"center", gap:7, padding:"8px 14px", borderRadius:100,
+                            border:`1.5px solid ${madpasProfileId===m.id ? "var(--ink)" : "var(--border)"}`,
+                            background: madpasProfileId===m.id ? "var(--ink)" : "#fff",
+                            fontFamily:"var(--f)", fontSize:12, fontWeight:700,
+                            color: madpasProfileId===m.id ? "#fff" : "var(--ink2)", cursor:"pointer" }}>
+                          <div style={{ width:22, height:22, borderRadius:"50%", background: madpasProfileId===m.id ? "rgba(255,255,255,.25)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:800, color:"#fff" }}>
+                            {initials(m.name || "?")}
+                          </div>
+                          {m.name?.split(" ")[0] || "Familiemedlem"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Sprog-dropdown */}
                 <div className="mp-section-lbl">VÆLG SPROG</div>
                 {!langOpen ? (
@@ -5503,16 +7023,16 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
               </div>
 
               {/* Tom state */}
-              {allergens.length === 0 && customAllerg.length === 0 && (
+              {mpAllergens.length === 0 && mpCustom.length === 0 && (
                 <div className="empty-state" style={{ paddingTop:32 }}>
                   <span className="empty-icon">🌾</span>
                   <div className="empty-txt">Ingen allergier registreret</div>
-                  <div className="empty-sub">Tilføj dine allergier under Profil → Mine allergier</div>
+                  <div className="empty-sub">Tilføj dine allergier, intoleranser og diæter under Profil → Mine præferencer</div>
                 </div>
               )}
 
               {/* ALLERGEN LISTE */}
-              {(allergens.length > 0 || customAllerg.length > 0) && (() => {
+              {(mpAllergens.length > 0 || mpCustom.length > 0) && (() => {
                 const lang = madpasLang;
                 const rtl = MADPAS_LANGUAGES.find(l => l.code === lang)?.rtl;
                 const helloText = { en:"I have food allergies.", de:"Ich habe Lebensmittelallergien.", fr:"J'ai des allergies alimentaires.", es:"Tengo alergias alimentarias.", it:"Ho allergie alimentari.", nl:"Ik heb voedselallergieën.", pt:"Tenho alergias alimentares.", pl:"Mam alergie pokarmowe.", ja:"食物アレルギーがあります。", zh:"我有食物过敏。", ar:"لدي حساسية غذائية.", tr:"Gıda alerjilerim var.", sv:"Jag har matallergier.", no:"Jeg har matallergier.", th:"ฉันมีอาการแพ้อาหาร", el:"Έχω αλλεργίες τροφίμων.", da:"Jeg har fødevareallergier." };
@@ -5523,7 +7043,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
                     {/* Allergen liste — ren, ingen labels */}
                     <div style={{ display:"flex", flexDirection:"column" }}>
-                      {[...allergens, ...customAllerg.filter(c => !c.endsWith("_intolerance") && !allergens.includes(c))].map((item, i, arr) => {
+                      {[...mpAllergens, ...mpCustom.filter(c => !c.endsWith("_intolerance") && !mpAllergens.includes(c))].map((item, i, arr) => {
                         const isLast = i === arr.length - 1;
                         if (typeof item !== "string") return null;
                         const a = ALLERGENS.find(x => x.id === item);
@@ -5545,7 +7065,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                           </div>
                         );
                       })}
-                      {customAllerg.filter(c => !c.endsWith("_intolerance") && !allergens.includes(c)).map((c, i) => (
+                      {mpCustom.filter(c => !c.endsWith("_intolerance") && !mpAllergens.includes(c)).map((c, i) => (
                         <div key={`custom${i}`} style={{ padding:"14px 0", borderBottom:"1px solid var(--border)" }}>
                           <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)" }}>{c}</div>
                         </div>
@@ -5567,225 +7087,438 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
             </div>
           </div>
-        )}
-        {/* ══ OPSKRIFTER — LISTE ══ */}
-        {screen === SCREENS.RECIPES && !selectedRecipe && !showSubmitRecipe && (
-          <div className="screen fade-in">
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 0 12px" }}>
-              <div style={{ fontSize:21, fontWeight:900, color:"var(--ink)", letterSpacing:"-.4px" }}>Opskrifter</div>
-              <button className="btn btn-green btn-sm" onClick={() => { setShowSubmitRecipe(true); }}>+ Indsend</button>
-            </div>
-
-            {/* Kategori filter */}
-            <div style={{ marginBottom:10, display:"flex", alignItems:"center", gap:8 }}>
-              <CategorySelect
-                value={recipeFilter}
-                onChange={(v) => { setRecipeFilter(v); if (v !== "favoritter") loadRecipes(v); }}
-                options={[
-                  {id:"alle",       label:"Alle opskrifter"},
-                  {id:"favoritter", label:"❤️ Favoritter"},
-                  {id:"morgenmad",  label:"Morgenmad"},
-                  {id:"frokost",    label:"Frokost"},
-                  {id:"aftensmad",  label:"Aftensmad"},
-                  {id:"dessert",    label:"Dessert"},
-                  {id:"tilbehør",   label:"Tilbehør"},
-                ]}
-              />
-            </div>
-
-            {/* Load knap første gang */}
-            {recipes.length === 0 && !recipesLoading && (
-              <div style={{ textAlign:"center", padding:"40px 0" }}>
-                <button className="btn btn-primary btn-full" onClick={() => loadRecipes(recipeFilter)}>
-                  Hent opskrifter
+        )}  {/* ← lukker IIFE og screen === MADPAS */}
+        {screen === SCREENS.RECIPES && !selectedRecipe && !showSubmitRecipe && (() => {
+          const categories = [
+            { id:"alle", label:"🍽️ Alle" }, { id:"favoritter", label:"❤️ Favoritter" },
+            { id:"morgenmad", label:"☕ Morgenmad" }, { id:"frokost", label:"🥗 Frokost" },
+            { id:"aftensmad", label:"🍝 Aftensmad" }, { id:"dessert", label:"🍰 Dessert" },
+            { id:"tilbehør", label:"🥦 Tilbehør" },
+          ];
+          const getCatEmoji = c => ({ morgenmad:"☕",frokost:"🥗",aftensmad:"🍝",dessert:"🍰",tilbehør:"🥦",snack:"🍿" })[c] || "🍽️";
+          const profiles = [
+            { id:"me", name: user.name||"Dig", allergens },
+            ...family.filter(m => activeProfiles.includes(m.id)),
+          ];
+          const filtered = (recipeFilter === "favoritter" ? recipes.filter(r => favoriteRecipes.includes(r.id)) : recipes).filter(r => {
+            if (recipeSearch && !r.title.toLowerCase().includes(recipeSearch.toLowerCase())) return false;
+            if (recipeSafeOnly && compareAllergens(r.allergen_flags || {}, activeIds).status === "danger") return false;
+            return true;
+          });
+          return (
+            <div className="screen fade-in">
+              {/* Header */}
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 0 14px" }}>
+                <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", letterSpacing:"-.4px" }}>Opskrifter</div>
+                <button onClick={() => setShowSubmitRecipe(true)}
+                  style={{ background:"var(--green)", color:"#fff", border:"none", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                  + Indsend
                 </button>
               </div>
-            )}
 
-            {recipesLoading && <div className="loader fade-in"><div className="spinner"/><div className="loader-txt">Henter opskrifter…</div></div>}
+              {/* Søgefelt */}
+              <div className="recipe-search-wrap">
+                <div className="recipe-search-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path strokeLinecap="round" d="M21 21l-4.35-4.35"/></svg>
+                </div>
+                <input className="recipe-search-input" placeholder="Søg opskrifter…" value={recipeSearch} onChange={e => setRecipeSearch(e.target.value)} />
+              </div>
 
-            {/* Opskrift kort */}
-            {(recipeFilter === "favoritter" ? recipes.filter(r => favoriteRecipes.includes(r.id)) : recipes).map(r => {
-              const flags = r.allergen_flags || {};
-              const { status, matchedDanger, matchedWarning } = compareAllergens(flags, activeIds);
-              const safeColor = status==="safe" ? "var(--green)" : status==="danger" ? "var(--red)" : "var(--amber)";
-              const safeBg = status==="safe" ? "var(--green-lt)" : status==="danger" ? "var(--red-lt)" : "var(--amber-lt)";
-              const safeText = status==="safe" ? "Sikker" : status==="danger" ? "Indeholder allergen" : "Mulige spor";
-              return (
-                <div key={r.id} className="card" style={{ padding:0, overflow:"hidden", marginBottom:10, position:"relative" }}>
-                  <div style={{ position:"absolute", top:10, right:10, zIndex:2 }}
-                    onClick={e => { e.stopPropagation(); setFavoriteRecipes(f => f.includes(r.id) ? f.filter(x=>x!==r.id) : [...f,r.id]); }}>
-                    <div style={{ background:"rgba(0,0,0,.35)", borderRadius:"50%", width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, cursor:"pointer" }}>
-                      {favoriteRecipes.includes(r.id) ? "❤️" : "🤍"}
-                    </div>
+              {/* Kategori chips — 2-kolonne grid så alle ses */}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:14 }}>
+                {categories.map(c => (
+                  <div key={c.id} className={`recipe-filter-chip${recipeFilter === c.id ? " active" : ""}`}
+                    style={{ textAlign:"center" }}
+                    onClick={() => {
+                      if (c.id === recipeFilter) return;
+                      setRecipeFilter(c.id);
+                      setRecipeSearch("");
+                      if (c.id !== "favoritter") {
+                        setRecipes([]); // ryd gamle resultater
+                        loadRecipes(c.id);
+                      }
+                    }}>
+                    {c.label}
                   </div>
-                  <div onClick={() => { setSelectedRecipe(r); loadRecipeIngredients(r.id); }} style={{ cursor:"pointer" }}>
-                  {r.image_url && <img src={r.image_url} alt={r.title} style={{ width:"100%", height:160, objectFit:"cover", display:"block" }} />}
+                ))}
+              </div>
+
+              {/* Kun-sikre + tæller */}
+              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
+                <div onClick={() => setRecipeSafeOnly(v => !v)} style={{
+                  display:"flex", alignItems:"center", gap:6, padding:"5px 12px",
+                  borderRadius:100, border:`1.5px solid ${recipeSafeOnly ? "var(--green)" : "var(--border2)"}`,
+                  background: recipeSafeOnly ? "var(--green-lt)" : "#fff", cursor:"pointer",
+                  fontSize:12, fontWeight:700, color: recipeSafeOnly ? "var(--green)" : "var(--muted2)" }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                  Kun sikre
+                </div>
+                {recipes.length > 0 && <div style={{ fontSize:12, color:"var(--muted)", marginLeft:"auto" }}>{filtered.length} opskrift{filtered.length !== 1 ? "er" : ""}</div>}
+              </div>
+
+              {/* Skeleton loader */}
+              {recipesLoading && [1,2,3].map(i => (
+                <div key={i} className="recipe-skeleton">
+                  <div className="skeleton-img" />
                   <div style={{ padding:"12px 14px" }}>
-                    <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:8, marginBottom:6 }}>
-                      <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)", lineHeight:1.3, flex:1 }}>{r.title}</div>
-                      <div style={{ fontSize:11, fontWeight:700, color:safeColor, background:safeBg, border:`1px solid ${safeColor}`, borderRadius:20, padding:"2px 9px", flexShrink:0 }}>{safeText}</div>
-                    </div>
-                    {r.description && <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5, marginBottom:8 }}>{r.description}</div>}
-                    <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-                      {r.category && <span style={{ fontSize:10, fontWeight:700, color:"var(--muted)", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:100, padding:"2px 8px" }}>{r.category}</span>}
-                      {(r.tags||[]).map(t => <span key={t} style={{ fontSize:10, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:100, padding:"2px 8px" }}>{t}</span>)}
-                      {r.cook_time_minutes && <span style={{ fontSize:10, color:"var(--muted)", padding:"2px 0" }}>{r.prep_time_minutes+r.cook_time_minutes} min</span>}
-                    </div>
-                  </div>
+                    <div className="skeleton-line" style={{ width:"70%" }} />
+                    <div className="skeleton-line" style={{ width:"45%" }} />
                   </div>
                 </div>
-              );
-            })}
+              ))}
 
-            {recipes.length > 0 && (
-              <div style={{ fontSize:11, color:"var(--muted)", textAlign:"center", padding:"8px 0 16px" }}>
-                Allergener er vejledende — tjek altid ingrediensernes emballage
+              {/* Startside — ingen filter, ingen opskrifter endnu */}
+              {!recipesLoading && recipes.length === 0 && recipeFilter === "alle" && (
+                <div>
+                  <div style={{ background:"var(--ink)", borderRadius:16, padding:"22px 20px", marginBottom:16, display:"flex", alignItems:"center", gap:16 }}>
+                    <div style={{ fontSize:44, flexShrink:0 }}>🍳</div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:18, fontWeight:900, color:"#fff", letterSpacing:"-.3px", marginBottom:4 }}>Over 600 opskrifter</div>
+                      <div style={{ fontSize:12, color:"rgba(255,255,255,.55)", marginBottom:12 }}>Filtreret til dig og din familie</div>
+                      <button onClick={() => loadRecipes("alle")}
+                        style={{ background:"var(--green)", color:"#fff", border:"none", borderRadius:10, padding:"9px 18px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                        Vis opskrifter →
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:10 }}>Hop direkte til</div>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:20 }}>
+                    {[
+                      { id:"aftensmad", label:"Aftensmad", emoji:"🍝", desc:"Hverdagens klassikere" },
+                      { id:"morgenmad", label:"Morgenmad", emoji:"☕", desc:"Start dagen godt" },
+                      { id:"dessert",   label:"Dessert",   emoji:"🍰", desc:"Søde sager" },
+                      { id:"frokost",   label:"Frokost",   emoji:"🥗", desc:"Let og lækker" },
+                    ].map(cat => (
+                      <div key={cat.id} onClick={() => { setRecipeFilter(cat.id); setRecipes([]); loadRecipes(cat.id); }}
+                        style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"14px", cursor:"pointer", boxShadow:"var(--sh)" }}>
+                        <div style={{ fontSize:28, marginBottom:6 }}>{cat.emoji}</div>
+                        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:2 }}>{cat.label}</div>
+                        <div style={{ fontSize:11, color:"var(--muted)" }}>{cat.desc}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tom favorit-liste */}
+              {!recipesLoading && recipeFilter === "favoritter" && recipes.filter(r => favoriteRecipes.includes(r.id)).length === 0 && (
+                <div style={{ textAlign:"center", padding:"48px 0" }}>
+                  <div style={{ fontSize:52, marginBottom:12 }}>🤍</div>
+                  <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)", marginBottom:6 }}>Ingen favoritter endnu</div>
+                  <div style={{ fontSize:13, color:"var(--muted)" }}>Tryk ❤️ på en opskrift for at gemme den</div>
+                </div>
+              )}
+
+              {/* Label over kortene */}
+              {!recipesLoading && filtered.length > 0 && (
+                <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:10 }}>
+                  {recipeFilter === "alle" ? "⭐ Mest populære" :
+                   recipeFilter === "favoritter" ? "❤️ Dine favoritter" :
+                   `🍽️ ${recipeFilter.charAt(0).toUpperCase() + recipeFilter.slice(1)}`}
+                  {" "}· {filtered.length} opskrift{filtered.length !== 1 ? "er" : ""}
+                </div>
+              )}
+
+              {/* Ingen søgeresultater */}
+              {!recipesLoading && recipes.length > 0 && filtered.length === 0 && recipeFilter !== "favoritter" && recipeSearch && (
+                <div style={{ textAlign:"center", padding:"32px 0" }}>
+                  <div style={{ fontSize:13, color:"var(--muted)", marginBottom:10 }}>Ingen opskrifter matcher "{recipeSearch}"</div>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setRecipeSearch("")}>Ryd søgning</button>
+                </div>
+              )}
+
+              {/* Opskrift-kort */}
+              <div className="recipe-grid">
+                {filtered.map(r => {
+                  // allergen_flags kan være string eller objekt
+                  let rFlags = {};
+                  try { rFlags = typeof r.allergen_flags === "string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags || {}); } catch {}
+                  const { status } = compareAllergens(rFlags, activeIds);
+                  const isFav = favoriteRecipes.includes(r.id);
+                  const totalMins = (r.prep_time_minutes||0) + (r.cook_time_minutes||0);
+                  return (
+                    <div key={r.id} className="recipe-card"
+                      onClick={() => { setSelectedRecipe(r); loadRecipeIngredients(r.id); setCompletedSteps({}); setRecipeServings(r.servings || 4); }}>
+                      <button className="recipe-fav-btn"
+                        onClick={e => { e.stopPropagation(); setFavoriteRecipes(f => isFav ? f.filter(x=>x!==r.id) : [...f,r.id]); }}>
+                        {isFav ? "❤️" : "🤍"}
+                      </button>
+                      {r.image_url
+                        ? <img src={r.image_url} alt={r.title} className="recipe-card-img" loading="lazy" />
+                        : <div className="recipe-card-img-placeholder">{getCatEmoji(r.category)}</div>
+                      }
+                      <div className="recipe-card-body">
+                        <div className="recipe-card-title">{r.title}</div>
+                        {r.description && (
+                          <div className="recipe-card-desc" style={{ display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>
+                            {r.description}
+                          </div>
+                        )}
+                        <div className="recipe-card-meta">
+                          {r.category && <span className="recipe-pill" style={{ background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" }}>{getCatEmoji(r.category)} {r.category}</span>}
+                          {totalMins > 0 && <span className="recipe-pill" style={{ background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" }}>⏱ {totalMins} min</span>}
+                          {r.servings && <span className="recipe-pill" style={{ background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" }}>👤 {r.servings} pers.</span>}
+                          {(r.tags||[]).filter(t=>t==="vegetarisk"||t==="vegan").map(t => (
+                            <span key={t} className="recipe-pill" style={{ background:"var(--green-lt)", color:"var(--green)", borderColor:"var(--green-mid)" }}>
+                              {t==="vegan"?"🌱":"🥦"} {t}
+                            </span>
+                          ))}
+                        </div>
+                        {/* Sikkerhed per profil */}
+                        <div className="recipe-safe-bar">
+                          {profiles.map(p => {
+                            const { status: ps } = compareAllergens(rFlags, p.allergens||[]);
+                            const color = ps==="safe"?"var(--green)":ps==="danger"?"var(--red)":"var(--amber)";
+                            const bg = ps==="safe"?"var(--green-lt)":ps==="danger"?"var(--red-lt)":"var(--amber-lt)";
+                            return (
+                              <div key={p.id} style={{ display:"flex", alignItems:"center", gap:4, padding:"3px 8px", borderRadius:100, border:`1px solid ${color}`, background:bg, fontSize:10, fontWeight:700, color }}>
+                                <span>{ps==="safe"?"✓":ps==="danger"?"✗":"!"}</span>
+                                <span>{p.id==="me"?"Dig":p.name.split(" ")[0]}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            )}
-          </div>
-        )}
+
+              {filtered.length > 0 && (
+                <div style={{ display:"flex", gap:8, alignItems:"center", padding:"12px", background:"var(--paper2)", borderRadius:10, marginTop:4 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2"><path strokeLinecap="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                  <div style={{ fontSize:10, color:"var(--muted)", lineHeight:1.5 }}>Allergener er vejledende. Tjek altid ingrediensernes emballage.</div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* ══ OPSKRIFT DETALJE ══ */}
-        {screen === SCREENS.RECIPES && selectedRecipe && !showSubmitRecipe && (
-          <div className="screen fade-in">
-            
+        {screen === SCREENS.RECIPES && selectedRecipe && !showSubmitRecipe && (() => {
+          const isFav = favoriteRecipes.includes(selectedRecipe.id);
+          const getCatEmoji = c => ({ morgenmad:"☕",frokost:"🥗",aftensmad:"🍝",dessert:"🍰",tilbehør:"🥦",snack:"🍿" })[c] || "🍽️";
 
-            {/* Billede */}
-            {selectedRecipe.image_url && (
-              <img src={selectedRecipe.image_url} alt={selectedRecipe.title}
-                style={{ width:"100%", height:200, objectFit:"cover", borderRadius:14, marginBottom:10 }} />
-            )}
+          // Parse trin — håndter JSON-array, string-array og plain tekst
+          let steps = [];
+          try {
+            const raw = selectedRecipe.instructions;
+            if (typeof raw === "string") {
+              const parsed = JSON.parse(raw);
+              steps = Array.isArray(parsed) ? parsed.filter(s => s?.trim()) : [raw];
+            } else if (Array.isArray(raw)) {
+              steps = raw.filter(s => s?.trim());
+            }
+          } catch {
+            steps = (selectedRecipe.instructions||"").split("\n").filter(s => s.trim());
+          }
 
-            {/* Titel og meta */}
-            <div style={{ marginBottom:10 }}>
-              <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:10, marginBottom:6 }}>
-                <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", letterSpacing:"-.4px", flex:1 }}>{selectedRecipe.title}</div>
-                <div onClick={() => setFavoriteRecipes(f => f.includes(selectedRecipe.id) ? f.filter(x=>x!==selectedRecipe.id) : [...f,selectedRecipe.id])}
-                  style={{ fontSize:24, cursor:"pointer", flexShrink:0, marginTop:2 }}>
-                  {favoriteRecipes.includes(selectedRecipe.id) ? "❤️" : "🤍"}
-                </div>
-              </div>
-              <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:6 }}>
-                {selectedRecipe.category && <span style={{ fontSize:11, fontWeight:700, color:"var(--muted)", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:100, padding:"3px 10px" }}>{selectedRecipe.category}</span>}
-                {(selectedRecipe.tags||[]).map(t => <span key={t} style={{ fontSize:11, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:100, padding:"3px 10px" }}>{t}</span>)}
-                {selectedRecipe.cook_time_minutes && <span style={{ fontSize:11, color:"var(--muted)", padding:"3px 0" }}>{(selectedRecipe.prep_time_minutes||0)+(selectedRecipe.cook_time_minutes||0)} min · {selectedRecipe.servings} pers.</span>}
-              </div>
-              {selectedRecipe.description && <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6 }}>{selectedRecipe.description}</div>}
-            </div>
+          // Parse tags
+          let recipeTags = [];
+          try { recipeTags = Array.isArray(selectedRecipe.tags) ? selectedRecipe.tags : (typeof selectedRecipe.tags === "string" ? JSON.parse(selectedRecipe.tags) : []); } catch {}
 
-            {/* Sikkerhed for familien */}
-            {(() => {
-              const flags = selectedRecipe.allergen_flags || {};
-              const profiles = [
-                { id:"me", name: user.name||"Dig", allergens },
-                ...family.filter(m => activeProfiles.includes(m.id)),
-              ];
-              return (
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:10 }}>
-                  {profiles.map(p => {
-                    const danger = p.allergens.filter(a => flags[a]==="yes");
-                    const warning = p.allergens.filter(a => flags[a]==="traces");
-                    const color = danger.length>0?"var(--red)":warning.length>0?"var(--amber)":"var(--green)";
-                    const bg = danger.length>0?"var(--red-lt)":warning.length>0?"var(--amber-lt)":"var(--green-lt)";
-                    const border = danger.length>0?"var(--red-md)":warning.length>0?"var(--amber-md)":"var(--green-mid)";
-                    const icon = danger.length>0?"×":warning.length>0?"!":"✓";
-                    const txt = danger.length>0?danger.map(id=>ALLERGENS.find(a=>a.id===id)?.label).join(", "):warning.length>0?"Spor":"Sikker";
-                    return (
-                      <div key={p.id} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"6px 10px", background:bg, border:`1px solid ${border}`, borderRadius:8, gap:6 }}>
-                        <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", flex:1 }}>{p.id==="me"?"Dig":p.name}</div>
-                        <div style={{ fontSize:11, fontWeight:800, color, flexShrink:0 }}>{icon} {txt}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
+          // Ingredienser: brug ingredients_raw fra recipes-tabellen
+          let rawIngs = [];
+          try {
+            const ri = selectedRecipe.ingredients_raw;
+            rawIngs = Array.isArray(ri) ? ri : (typeof ri === "string" ? JSON.parse(ri) : []);
+          } catch {}
 
-            {/* Ingredienser */}
-            <div className="card" style={{ marginBottom:10 }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                <div className="card-lbl" style={{ margin:0 }}>Ingredienser</div>
-                <button className="btn btn-green btn-sm" style={{ fontSize:11 }}
-                  onClick={() => {
-                    recipeIngredients.forEach(ing => {
-                      const txt = [ing.amount, ing.unit, ing.name].filter(Boolean).join(" ").trim();
-                      if (txt) addToList(txt);
-                    });
-                    setScreen(SCREENS.LIST);
-                  }}>
-                  + Indkøbsliste
+          // Brug ingredients_raw (altid) — recipeIngredients er tom da vi ikke bruger den tabellen
+          const displayIngs = rawIngs.length > 0
+            ? rawIngs.map(i => ({ name: i.name, amount: i.amount, unit: i.unit, nameEn: i.name_en, measure: i.measure }))
+            : recipeIngredients.map(i => ({ name: i.name, amount: i.amount, unit: i.unit, nameEn: i.name_en }));
+
+          // YouTube fra metadata
+          let youtubeUrl = null;
+          try { const m = typeof selectedRecipe.metadata==="string" ? JSON.parse(selectedRecipe.metadata) : selectedRecipe.metadata; youtubeUrl = m?.youtube||null; } catch {}
+
+          // Servings — bruger component-level state
+          const servings = recipeServings;
+          const setServings = setRecipeServings;
+          const ratio = servings / (selectedRecipe.servings || 4);
+
+          const scaleAmt = (amt) => {
+            if (!amt || isNaN(amt)) return null;
+            const s = amt * ratio;
+            return s === Math.floor(s) ? s : Math.round(s * 10) / 10;
+          };
+          const fmtUnit = u => {
+            if (!u || u==="null") return "";
+            const m = { spsk:"spsk",tsk:"tsk",dl:"dl",g:"g",kg:"kg",l:"l",ml:"ml",stk:"stk" };
+            return m[u.trim().toLowerCase()] || u;
+          };
+
+          // Allergen-detektion på ingrediensnavn
+          const allergenKeywords = { gluten:["wheat","flour","bread","rye","barley","oat","spelt","hvede","hvedemel","rug","byg","havre"], laktose:["milk","cream","butter","cheese","yogurt","mælk","fløde","smør","ost"], aeg:["egg","æg"], noedder:["almond","walnut","cashew","hazel","pistachio","pecan","nut","mandel","valnød","nødder"], jordnoedder:["peanut","jordnød"], soja:["soy","tofu","soja"], fisk:["fish","salmon","tuna","cod","anchov","sardine","laks","torsk","tun"], skaldyr:["shrimp","prawn","crab","lobster","mussel","clam","rejer","krabbe","musling"], selleri:["celery","selleri"], sennep:["mustard","sennep"], sesam:["sesame","tahini","sesam"] };
+          const isAllergenIng = (ing) => allergens.some(a => (allergenKeywords[a]||[]).some(kw => (ing.nameEn||ing.name||"").toLowerCase().includes(kw)));
+
+          // Parse allergen_flags (kan være string eller objekt)
+          let recipeFlags = {};
+          try { recipeFlags = typeof selectedRecipe.allergen_flags === "string" ? JSON.parse(selectedRecipe.allergen_flags) : (selectedRecipe.allergen_flags || {}); } catch {}
+
+          const profiles = [{ id:"me", name:user.name||"Dig", allergens }, ...family.filter(m => activeProfiles.includes(m.id))];
+          const doneTrin = steps.filter((_,i) => completedSteps[`${selectedRecipe.id}_${i}`]).length;
+          const pct = steps.length ? Math.round((doneTrin/steps.length)*100) : 0;
+
+          return (
+            <div className="screen fade-in" style={{ paddingTop:0 }}>
+              {/* Hero */}
+              <div className="recipe-detail-hero">
+                {selectedRecipe.image_url
+                  ? <img src={selectedRecipe.image_url} alt={selectedRecipe.title} className="recipe-detail-img" />
+                  : <div className="recipe-detail-img-placeholder">{getCatEmoji(selectedRecipe.category)}</div>
+                }
+                <button className="recipe-detail-back" onClick={() => setSelectedRecipe(null)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path strokeLinecap="round" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <button className="recipe-detail-fav"
+                  onClick={() => setFavoriteRecipes(f => isFav ? f.filter(x=>x!==selectedRecipe.id) : [...f,selectedRecipe.id])}>
+                  {isFav ? "❤️" : "🤍"}
                 </button>
               </div>
-              {recipeIngredients.map((ing, i) => {
-                const hasAllergen = (ing.allergen_ids||[]).some(a => allergens.includes(a));
-                return (
-                  <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"7px 0", borderBottom: i<recipeIngredients.length-1?"1px solid var(--border)":"none" }}>
-                    <div style={{ flex:1 }}>
-                      <span style={{ fontSize:13, fontWeight: hasAllergen?700:400, color: hasAllergen?"var(--red)":"var(--ink)" }}>{ing.name}</span>
-                    </div>
-                    <div style={{ fontSize:12, color:"var(--muted)", flexShrink:0 }}>{ing.amount} {ing.unit}</div>
-                  </div>
-                );
-              })}
-            </div>
 
-            {/* Fremgangsmåde — trin med afkrydsning */}
-            {selectedRecipe.instructions && (() => {
-              let steps = [];
-              try {
-                const parsed = JSON.parse(selectedRecipe.instructions);
-                steps = Array.isArray(parsed) ? parsed : [selectedRecipe.instructions];
-              } catch {
-                // Gammel format — split på linjeskift eller punktum+enter
-                steps = selectedRecipe.instructions.split("\n").filter(s => s.trim());
-              }
-              return (
-                <div className="card" style={{ marginBottom:10 }}>
-                  <div className="card-lbl">Fremgangsmåde</div>
-                  {steps.map((step, i) => {
-                    const doneKey = `${selectedRecipe.id}_${i}`;
-                    const done = !!completedSteps[doneKey];
+              <div style={{ padding:"0 16px" }}>
+                {/* Titel */}
+                <div style={{ paddingTop:16, marginBottom:6 }}>
+                  <div className="recipe-detail-title">{selectedRecipe.title}</div>
+                </div>
+
+                {/* Meta */}
+                <div className="recipe-meta-row">
+                  {selectedRecipe.category && <div className="recipe-meta-pill">{getCatEmoji(selectedRecipe.category)} {selectedRecipe.category}</div>}
+                  {((selectedRecipe.prep_time_minutes||0)+(selectedRecipe.cook_time_minutes||0)) > 0 && (
+                    <div className="recipe-meta-pill">⏱ {(selectedRecipe.prep_time_minutes||0)+(selectedRecipe.cook_time_minutes||0)} min</div>
+                  )}
+                  {recipeTags.filter(t=>t==="vegetarisk"||t==="vegan").map(t => (
+                    <div key={t} className="recipe-meta-pill" style={{ color:"var(--green)", borderColor:"var(--green-mid)", background:"var(--green-lt)" }}>
+                      {t==="vegan"?"🌱":"🥦"} {t}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Beskrivelse */}
+                {selectedRecipe.description && <div style={{ fontSize:14, color:"var(--muted2)", lineHeight:1.65, marginBottom:14 }}>{selectedRecipe.description}</div>}
+
+                {/* Sikkerhed per profil */}
+                <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:16 }}>
+                  {profiles.map(p => {
+                    const { status:ps, matchedDanger } = compareAllergens(recipeFlags, p.allergens||[]);
+                    const color = ps==="safe"?"var(--green)":ps==="danger"?"var(--red)":"var(--amber)";
+                    const bg = ps==="safe"?"var(--green-lt)":ps==="danger"?"var(--red-lt)":"var(--amber-lt)";
+                    const border = ps==="safe"?"var(--green-mid)":ps==="danger"?"var(--red-md)":"var(--amber-md)";
+                    const label = ps==="safe"?"Sikker":ps==="danger"?matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label).join(", "):"Mulige spor";
                     return (
-                      <div key={i} onClick={() => setCompletedSteps(s => ({ ...s, [doneKey]: !s[doneKey] }))} style={{
-                        display:"flex", gap:12, alignItems:"flex-start",
-                        padding:"12px 0",
-                        borderBottom: i < steps.length-1 ? "1px solid var(--border)" : "none",
-                        cursor:"pointer",
-                        opacity: done ? 0.45 : 1,
-                        transition:"opacity .2s",
-                      }}>
-                        <div style={{
-                          width:28, height:28, borderRadius:"50%", flexShrink:0, marginTop:1,
-                          background: done ? "var(--green)" : "var(--paper2)",
-                          border: `2px solid ${done ? "var(--green)" : "var(--border2)"}`,
-                          display:"flex", alignItems:"center", justifyContent:"center",
-                          transition:"all .2s",
-                        }}>
-                          {done
-                            ? <Icon name="check" size={14} color="#fff" />
-                            : <span style={{ fontSize:11, fontWeight:800, color:"var(--muted)" }}>{i+1}</span>
-                          }
-                        </div>
-                        <div style={{ flex:1, fontSize:13, color:"var(--ink2)", lineHeight:1.7, textDecoration: done ? "line-through" : "none" }}>
-                          {step}
-                        </div>
+                      <div key={p.id} style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", background:bg, border:`1px solid ${border}`, borderRadius:100, fontSize:12, fontWeight:700, color }}>
+                        <span>{ps==="safe"?"✓":ps==="danger"?"✗":"!"}</span>
+                        <span>{p.id==="me"?"Dig":p.name.split(" ")[0]}</span>
+                        <span style={{ fontWeight:400, opacity:.8 }}>· {label}</span>
                       </div>
                     );
                   })}
                 </div>
-              );
-            })()}
 
-            {/* Disclaimer */}
-            <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"8px 12px", background:"var(--paper2)", borderRadius:8, marginBottom:16 }}>
-              <Icon name="warning" size={14} color="var(--amber)" />
-              <div style={{ fontSize:10, color:"var(--muted)", lineHeight:1.5 }}>
-                {selectedRecipe.disclaimer || "Allergener er vejledende. Tjek altid ingrediensernes emballage ved alvorlige allergier."}
+                {/* ── INGREDIENSER ── */}
+                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, marginBottom:12, overflow:"hidden", boxShadow:"var(--sh)" }}>
+                  <div style={{ padding:"14px 16px", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                    <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>Ingredienser</div>
+                    <div className="servings-ctrl">
+                      <button className="servings-btn" onClick={() => setServings(s => Math.max(1,s-1))}>−</button>
+                      <div className="servings-num">{servings}</div>
+                      <button className="servings-btn" onClick={() => setServings(s => s+1)}>+</button>
+                      <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600 }}>pers.</div>
+                    </div>
+                  </div>
+                  <div style={{ padding:"8px 16px" }}>
+                    {displayIngs.length === 0 && <div style={{ fontSize:13, color:"var(--muted)", padding:"12px 0" }}>Ingen ingredienser fundet</div>}
+                    {displayIngs.map((ing, i) => {
+                      const isAllerg = isAllergenIng(ing);
+                      const scaledAmt = scaleAmt(ing.amount);
+                      return (
+                        <div key={i} className="ingredient-row">
+                          <div className="ingredient-dot" style={{ background: isAllerg ? "var(--red)" : "var(--border2)" }} />
+                          <div style={{ flex:1, fontSize:13, color: isAllerg?"var(--red)":"var(--ink)", fontWeight: isAllerg?700:400, lineHeight:1.4 }}>{ing.name}</div>
+                          <div style={{ fontSize:12, fontWeight:700, color:"var(--muted2)", flexShrink:0 }}>
+                            {scaledAmt}{scaledAmt && ing.unit ? " " : ""}{fmtUnit(ing.unit)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ padding:"12px 16px", borderTop:"1px solid var(--border)" }}>
+                    <button onClick={() => {
+                      displayIngs.forEach(ing => {
+                        const a = scaleAmt(ing.amount);
+                        const txt = [a, fmtUnit(ing.unit), ing.name].filter(Boolean).join(" ").trim();
+                        if (txt) addToList(txt);
+                      });
+                      setScreen(SCREENS.LIST);
+                    }} style={{ width:"100%", background:"var(--ink)", color:"#fff", border:"none", borderRadius:10, padding:"10px 16px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path strokeLinecap="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                      Tilføj til indkøbsliste ({servings} pers.)
+                    </button>
+                  </div>
+                </div>
+
+                {/* ── FREMGANGSMÅDE ── */}
+                {steps.length > 0 && (
+                  <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, marginBottom:12, overflow:"hidden", boxShadow:"var(--sh)" }}>
+                    <div style={{ padding:"14px 16px", borderBottom:"1px solid var(--border)" }}>
+                      <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>Fremgangsmåde</div>
+                      <div style={{ fontSize:11, color:"var(--muted)", marginTop:3 }}>Tryk på hvert trin for at afkrydse det</div>
+                    </div>
+                    <div style={{ padding:"0 16px" }}>
+                      {steps.map((step, i) => {
+                        const key = `${selectedRecipe.id}_${i}`;
+                        const done = !!completedSteps[key];
+                        return (
+                          <div key={i} className="step-row" style={{ opacity: done ? 0.45 : 1 }}
+                            onClick={() => setCompletedSteps(s => ({ ...s, [key]: !s[key] }))}>
+                            <div className="step-circle" style={{ background: done?"var(--green)":"var(--paper2)", border:`2px solid ${done?"var(--green)":"var(--border2)"}` }}>
+                              {done
+                                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                                : <span style={{ fontSize:12, fontWeight:800, color:"var(--muted)" }}>{i+1}</span>
+                              }
+                            </div>
+                            <div style={{ flex:1, fontSize:13, color:"var(--ink2)", lineHeight:1.7, textDecoration: done?"line-through":"none" }}>{step}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Fremskridtsbar */}
+                    <div style={{ padding:"12px 16px", borderTop:"1px solid var(--border)" }}>
+                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+                        <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)" }}>Fremgang</div>
+                        <div style={{ fontSize:11, fontWeight:800, color: doneTrin===steps.length?"var(--green)":"var(--ink)" }}>
+                          {doneTrin}/{steps.length} trin {doneTrin===steps.length&&"🎉"}
+                        </div>
+                      </div>
+                      <div style={{ height:6, background:"var(--paper2)", borderRadius:6, overflow:"hidden" }}>
+                        <div style={{ height:"100%", width:(pct)+"%", background: doneTrin===steps.length?"var(--green)":"var(--ink)", borderRadius:6, transition:"width .4s" }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* YouTube */}
+                {youtubeUrl && (
+                  <button className="youtube-btn" onClick={() => window.open(youtubeUrl, "_blank")}>
+                    <svg width="20" height="14" viewBox="0 0 20 14" fill="#fff"><path d="M19.582 2.186A2.506 2.506 0 0017.822.425C16.254 0 10 0 10 0S3.747 0 2.178.425A2.506 2.506 0 00.418 2.186C0 3.756 0 7 0 7s0 3.244.418 4.814A2.506 2.506 0 002.178 13.575C3.747 14 10 14 10 14s6.254 0 7.822-.425a2.506 2.506 0 001.76-1.761C20 10.244 20 7 20 7s0-3.244-.418-4.814z"/><path d="M8 10l5.25-3L8 4v6z" fill="red"/></svg>
+                    Se video på YouTube
+                  </button>
+                )}
+
+                {/* Disclaimer */}
+                <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 14px", background:"var(--paper2)", borderRadius:10, marginBottom:16 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}><path strokeLinecap="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                  <div style={{ fontSize:10, color:"var(--muted)", lineHeight:1.5 }}>
+                    {selectedRecipe.disclaimer || "Allergener er vejledende. Tjek altid ingrediensernes emballage ved alvorlige allergier."}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ══ INDSEND OPSKRIFT ══ */}
         {screen === SCREENS.RECIPES && showSubmitRecipe && (
@@ -6107,125 +7840,325 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         )}
 
         {/* ══ FORESLÅ ÆNDRING ══ */}
-        {screen === SCREENS.SUGGEST_EDIT && scanResult && (
-          <div className="screen fade-in">
-            <div style={{ textAlign:"center", padding:"20px 0 16px", borderBottom:"1px solid var(--border)", marginBottom:16 }}>
-              <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)" }}>Foreslå ændring</div>
-              <div style={{ fontSize:12, color:"var(--muted)", marginTop:4 }}>{scanResult.name}</div>
-            </div>
+        {screen === SCREENS.SUGGEST_EDIT && scanResult && (() => {
 
-            {/* Produktoplysninger */}
-            <div className="card" style={{ marginBottom:10 }}>
-              <div className="card-lbl">Produktoplysninger</div>
-              {[["Navn","suggestName",scanResult.name],["Brand","suggestBrand",scanResult.brand],["Kategori","suggestCategory",scanResult.category]].map(([lbl,id,val]) => (
-                <div key={id} style={{ marginBottom:10 }}>
-                  <label className="field-lbl">{lbl}</label>
-                  <input className="field" id={id} defaultValue={val||""} />
-                </div>
-              ))}
-            </div>
+          const runOcr = async (file) => {
+            setEditStep("scanning");
+            try {
+              const b64 = await new Promise((res, rej) => {
+                const r = new FileReader();
+                r.onload = () => res(r.result.split(",")[1]);
+                r.onerror = rej;
+                r.readAsDataURL(file);
+              });
+              // Brug Supabase OCR edge function
+              const resp = await fetch(`${SUPABASE_URL}/functions/v1/ocr`, {
+                method: "POST",
+                headers: makeHeaders(accessToken),
+                body: JSON.stringify({ image_base64: b64 }),
+              });
+              const data = await resp.json();
+              if (data.success && data.text) {
+                setEditIngText(data.text);
+                setEditStep("review");
+              } else {
+                // OCR fejlede — lad brugeren skrive manuelt
+                setEditStep("review");
+              }
+            } catch {
+              setEditStep("review");
+            }
+          };
 
-            {/* Produktbillede */}
-            <div className="card" style={{ marginBottom:10 }}>
-              <div className="card-lbl">Produktbillede</div>
-              {(editProductImage || scanResult.image_url) && (
-                <div style={{ marginBottom:10, textAlign:"center" }}>
-                  <img src={editProductImage || scanResult.image_url} alt="Produkt"
-                    style={{ maxWidth:"100%", maxHeight:150, borderRadius:8, objectFit:"contain" }} />
+          const submit = async () => {
+            setEditStep("sending");
+            try {
+              await apiCall(`${SUPABASE_URL}/rest/v1/product_submissions`, {
+                method: "POST",
+                headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+                body: JSON.stringify({
+                  product_id: scanResult.id || null,
+                  ean: scanResult.code || scanResult.ean,
+                  product_name: scanResult.name,
+                  brand: scanResult.brand,
+                  ingredients: editType === "ingredients" ? editIngText : null,
+                  notes: `Type: ${editType}. ${editNote}`.trim(),
+                  submitted_by: userId,
+                  status: "pending",
+                  type: "edit",
+                }),
+              });
+              setEditStep("done");
+            } catch (e) {
+              alert("Fejl: " + e.message);
+              setEditStep("review");
+            }
+          };
+
+          return (
+            <div className="screen fade-in">
+
+              {/* Header */}
+              <div style={{ display:"flex", alignItems:"center", gap:12, padding:"16px 0 14px" }}>
+                <button onClick={() => setScreen(SCREENS.RESULT)}
+                  style={{ background:"none", border:"none", cursor:"pointer", padding:4 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
+                    <path strokeLinecap="round" d="M15 19l-7-7 7-7"/>
+                  </svg>
+                </button>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Hjælp os med at forbedre</div>
+                  <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{scanResult.name}</div>
                 </div>
-              )}
-              <div style={{ display:"flex", gap:8 }}>
-                <label className="btn btn-ghost btn-sm" style={{ flex:1, cursor:"pointer", textAlign:"center" }}>
-                  Kamera
-                  <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleEditProductCapture} />
-                </label>
-                <label className="btn btn-ghost btn-sm" style={{ flex:1, cursor:"pointer", textAlign:"center" }}>
-                  Vælg fil
-                  <input type="file" accept="image/*" style={{ display:"none" }} onChange={handleEditProductCapture} />
-                </label>
               </div>
-            </div>
 
-            {/* Ingrediensliste — scan eller skriv */}
-            <div className="card" style={{ marginBottom:10 }}>
-              <div className="card-lbl">Ingrediensliste</div>
-              {editOcrLoading && (
-                <div className="loader fade-in" style={{ padding:"20px 0" }}>
-                  <div className="spinner"/><div className="loader-txt">Analyserer billede…</div>
+              {/* Produkt-chip — vises på alle trin */}
+              <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12, marginBottom:16, boxShadow:"var(--sh)" }}>
+                <ProductImage product={scanResult} size={40} />
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{scanResult.name}</div>
+                  {scanResult.brand && <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>{scanResult.brand}</div>}
+                  <div style={{ fontSize:10, color:"var(--muted)", marginTop:1, fontFamily:"monospace" }}>EAN: {scanResult.code}</div>
+                </div>
+              </div>
+
+              {/* ── TRIN 1: Vælg hvad der mangler ── */}
+              {editStep === "start" && (
+                <div className="fade-in">
+                  <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6, marginBottom:16 }}>
+                    Hvad mangler eller er forkert på dette produkt?
+                  </div>
+                  {[
+                    { id:"ingredients", emoji:"🥦", title:"Ingrediensliste mangler", desc:"Fotografér bagsiden af pakken med ingredienserne" },
+                    { id:"nutrition",   emoji:"📊", title:"Næringsindhold mangler",  desc:"Fotografér næringstabellen på pakken" },
+                    { id:"image",       emoji:"📸", title:"Produktbilledet er forkert", desc:"Tag et nyt billede af produktets forside" },
+                    { id:"other",       emoji:"✏️", title:"Andet er forkert",         desc:"Skriv hvad der skal rettes" },
+                  ].map(opt => (
+                    <div key={opt.id} onClick={() => { setEditType(opt.id); setEditStep(opt.id === "other" ? "review" : "guide"); }}
+                      style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px",
+                        background:"#fff", border:"1px solid var(--border)", borderRadius:14,
+                        marginBottom:8, cursor:"pointer", boxShadow:"var(--sh)" }}>
+                      <div style={{ fontSize:28, flexShrink:0 }}>{opt.emoji}</div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>{opt.title}</div>
+                        <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{opt.desc}</div>
+                      </div>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2">
+                        <path strokeLinecap="round" d="M9 5l7 7-7 7"/>
+                      </svg>
+                    </div>
+                  ))}
                 </div>
               )}
-              {!editOcrLoading && (
-                <>
-                  <textarea className="field" rows={4} id="suggestIngredients"
-                    value={editOcrText || scanResult.ingredients || ""}
-                    onChange={e => setEditOcrText(e.target.value)}
-                    style={{ resize:"none", fontFamily:"var(--f)", fontSize:12, marginBottom:8 }} />
-                  <div style={{ display:"flex", gap:8 }}>
-                    <label className="btn btn-outline btn-sm" style={{ flex:1, cursor:"pointer", textAlign:"center", fontSize:12 }}>
-                      Skan ingredienser (kamera)
-                      <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleEditIngredientCapture} />
-                    </label>
-                    <label className="btn btn-outline btn-sm" style={{ flex:1, cursor:"pointer", textAlign:"center", fontSize:12 }}>
-                      Upload billede
-                      <input type="file" accept="image/*" style={{ display:"none" }} onChange={handleEditIngredientCapture} />
-                    </label>
+
+              {/* ── TRIN 2: Guide til foto ── */}
+              {editStep === "guide" && (
+                <div className="fade-in">
+                  {/* Visuel guide */}
+                  <div style={{ background:"var(--ink)", borderRadius:16, padding:"20px", marginBottom:16, textAlign:"center" }}>
+                    <div style={{ fontSize:48, marginBottom:10 }}>
+                      {editType === "ingredients" ? "🥫" : editType === "nutrition" ? "📋" : "📦"}
+                    </div>
+                    <div style={{ fontSize:16, fontWeight:800, color:"#fff", marginBottom:8 }}>
+                      {editType === "ingredients" ? "Fotografér ingredienslisten" :
+                       editType === "nutrition" ? "Fotografér næringstabellen" :
+                       "Fotografér produktets forside"}
+                    </div>
+                    <div style={{ fontSize:12, color:"rgba(255,255,255,.6)", lineHeight:1.7 }}>
+                      {editType === "ingredients"
+                        ? "Vend pakken om og find listen der starter med 'Ingredienser:'. Hold telefonen stille og sørg for god belysning."
+                        : editType === "nutrition"
+                        ? "Find tabellen med energi, fedt, protein osv. Hold telefonen parallelt med pakken for skarpest billede."
+                        : "Hold produktet mod en lys baggrund. Sørg for at stregkoden og produktnavnet er synlige."}
+                    </div>
                   </div>
-                </>
+
+                  {/* Tips */}
+                  <div style={{ background:"var(--paper2)", borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
+                    <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>💡 Tips til et godt billede</div>
+                    {["Hold telefonen vandret og i armslængde", "Sørg for god belysning — undgå skygger", "Hold billedet skarpt — vent til kameraet fokuserer"].map((tip, i) => (
+                      <div key={i} style={{ display:"flex", gap:8, alignItems:"center", marginBottom: i < 2 ? 6 : 0 }}>
+                        <div style={{ width:18, height:18, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                        <div style={{ fontSize:12, color:"var(--muted2)" }}>{tip}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Foto-knap — stor og tydelig */}
+                  <label style={{
+                    display:"flex", alignItems:"center", justifyContent:"center", gap:10,
+                    width:"100%", padding:"16px", borderRadius:14, cursor:"pointer",
+                    background:"var(--green)", border:"none", color:"#fff",
+                    fontSize:16, fontWeight:800, boxShadow:"0 4px 16px rgba(34,197,94,.3)",
+                    marginBottom:10,
+                  }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+                      <path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    Tag billede med kamera
+                    <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
+                  </label>
+
+                  <label style={{
+                    display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                    width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
+                    background:"#fff", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                    fontSize:14, fontWeight:600, marginBottom:10,
+                  }}>
+                    📁 Vælg billede fra galleri
+                    <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
+                  </label>
+
+                  <button className="btn btn-ghost btn-full btn-sm" onClick={() => { setEditStep("review"); }}>
+                    Skriv manuelt i stedet
+                  </button>
+                </div>
               )}
-            </div>
 
-            {/* EAN */}
-            <div className="card" style={{ marginBottom:10 }}>
-              <div className="card-lbl">Stregkode (EAN)</div>
-              <input className="field" id="suggestEan" defaultValue={scanResult.code||scanResult.ean||""} placeholder="Fx. 5701234567890" type="number" />
-            </div>
+              {/* ── TRIN 3: Scanner ── */}
+              {editStep === "scanning" && (
+                <div className="fade-in" style={{ textAlign:"center", padding:"60px 20px" }}>
+                  <div style={{ width:64, height:64, border:"4px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 20px" }} />
+                  <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>Analyserer billede…</div>
+                  <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6 }}>
+                    Vores AI læser teksten fra dit billede.<br/>Det tager et par sekunder.
+                  </div>
+                </div>
+              )}
 
-            {/* Bemærkning */}
-            <div className="card" style={{ marginBottom:10 }}>
-              <div className="card-lbl">Bemærkning til redaktionen</div>
-              <textarea className="field" rows={2} id="suggestNote" placeholder="Fx. Billedet er forkert, nyt produkt..."
-                style={{ resize:"none", fontFamily:"var(--f)" }} />
-            </div>
+              {/* ── TRIN 4: Gennemse og send ── */}
+              {editStep === "review" && (
+                <div className="fade-in">
 
-            <div style={{ padding:"8px 12px", background:"var(--paper2)", borderRadius:8, marginBottom:12, fontSize:11, color:"var(--muted)" }}>
-              Dine forslag gennemgås af EatSafes team inden de publiceres.
-            </div>
+                  {/* Ingrediensliste / tekst */}
+                  {(editType === "ingredients" || editType === "nutrition") && (
+                    <div className="card" style={{ marginBottom:12 }}>
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>
+                          {editType === "ingredients" ? "Ingrediensliste" : "Næringsindhold"}
+                        </div>
+                        {editIngText && (
+                          <div style={{ fontSize:11, color:"var(--green)", fontWeight:700 }}>✓ Tekst fundet</div>
+                        )}
+                      </div>
+                      {editIngText ? (
+                        <div style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, padding:"10px 12px", marginBottom:10 }}>
+                          <div style={{ fontSize:11, color:"var(--green)", fontWeight:700, marginBottom:6 }}>📖 Tekst fra billedet — ret hvis nødvendigt:</div>
+                          <textarea
+                            value={editIngText}
+                            onChange={e => setEditIngText(e.target.value)}
+                            rows={6}
+                            style={{ width:"100%", background:"transparent", border:"none", outline:"none", fontFamily:"var(--f)", fontSize:12, color:"var(--ink2)", resize:"vertical", lineHeight:1.6, boxSizing:"border-box" }}
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          <div style={{ fontSize:12, color:"var(--muted)", marginBottom:8 }}>
+                            Billedet kunne ikke læses automatisk. Skriv teksten manuelt:
+                          </div>
+                          <textarea
+                            value={editIngText}
+                            onChange={e => setEditIngText(e.target.value)}
+                            rows={5}
+                            placeholder={editType === "ingredients" ? "Fx. Vand, hvede, salt, gær..." : "Fx. Energi: 250 kcal, Fedt: 5g..."}
+                            className="field"
+                            style={{ resize:"vertical", fontFamily:"var(--f)", fontSize:13, lineHeight:1.6 }}
+                          />
+                        </div>
+                      )}
+                      {/* Tag nyt billede */}
+                      <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"var(--muted)", cursor:"pointer", marginTop:4 }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        Tag nyt billede
+                        <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
+                      </label>
+                    </div>
+                  )}
 
-            <button className="btn btn-primary btn-full" disabled={editSubmitting} onClick={async () => {
-              setEditSubmitting(true);
-              try {
-                const name = document.getElementById("suggestName")?.value;
-                const brand = document.getElementById("suggestBrand")?.value;
-                const category = document.getElementById("suggestCategory")?.value;
-                const ean = document.getElementById("suggestEan")?.value;
-                const note = document.getElementById("suggestNote")?.value;
-                const ingredients = editOcrText || document.getElementById("suggestIngredients")?.value;
-                await apiCall(`${SUPABASE_URL}/rest/v1/product_submissions`, {
-                  method:"POST",
-                  headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" },
-                  body: JSON.stringify({
-                    product_id: scanResult.id || null,
-                    ean: ean || scanResult.code,
-                    product_name: name,
-                    brand, category, ingredients,
-                    notes: note,
-                    submitted_by: userId,
-                    status: "pending",
-                    type: "edit",
-                    ai_parsed_data: editProductImageB64 ? { product_image_base64: editProductImageB64 } : undefined,
-                  }),
-                });
-                setEditOcrText(""); setEditProductImage(null); setEditProductImageB64(null);
-                alert("Tak! Din ændring er sendt til godkendelse.");
-                setScreen(SCREENS.RESULT);
-              } catch (e) { alert("Fejl: " + e.message); }
-              setEditSubmitting(false);
-            }}>{editSubmitting ? "Sender…" : "Send forslag"}</button>
-            <button className="btn btn-ghost btn-full" style={{ marginTop:8 }} onClick={() => setScreen(SCREENS.RESULT)}>
-              Annuller
-            </button>
-          </div>
-        )}
+                  {/* Produktbillede */}
+                  {editType === "image" && (
+                    <div className="card" style={{ marginBottom:12 }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>Nyt produktbillede</div>
+                      {editProductImage && (
+                        <img src={editProductImage} alt="Produkt"
+                          style={{ width:"100%", maxHeight:180, objectFit:"contain", borderRadius:10, marginBottom:10 }} />
+                      )}
+                      <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"12px", background:"var(--paper2)", border:"1.5px dashed var(--border2)", borderRadius:10, cursor:"pointer", fontSize:13, color:"var(--muted2)" }}>
+                        {editProductImage ? "📸 Tag nyt billede" : "📸 Tag billede af produktet"}
+                        <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleEditProductCapture} />
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Bemærkning */}
+                  <div className="card" style={{ marginBottom:12 }}>
+                    <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Bemærkning (valgfrit)</div>
+                    <textarea
+                      value={editNote}
+                      onChange={e => setEditNote(e.target.value)}
+                      rows={2}
+                      placeholder="Fx. Ny udgave af produktet, fejl i allergen-info..."
+                      className="field"
+                      style={{ resize:"none", fontFamily:"var(--f)", fontSize:13 }}
+                    />
+                  </div>
+
+                  {/* Info */}
+                  <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 12px", background:"var(--paper2)", borderRadius:10, marginBottom:14 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}>
+                      <circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M12 16v-4M12 8h.01"/>
+                    </svg>
+                    <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>
+                      Dit forslag gennemgås af vores team inden det publiceres. Tak for din hjælp!
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={submit}
+                    disabled={editType === "ingredients" && !editIngText.trim()}
+                    style={{ width:"100%", background:"var(--ink)", color:"#fff", border:"none",
+                      borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15,
+                      fontWeight:800, cursor:"pointer", marginBottom:8,
+                      opacity: (editType === "ingredients" && !editIngText.trim()) ? 0.4 : 1 }}>
+                    Send forslag ✓
+                  </button>
+                  <button className="btn btn-ghost btn-full" onClick={() => setScreen(SCREENS.RESULT)}>Annuller</button>
+                </div>
+              )}
+
+              {/* ── TRIN 5: Sender ── */}
+              {editStep === "sending" && (
+                <div className="fade-in" style={{ textAlign:"center", padding:"60px 20px" }}>
+                  <div style={{ width:64, height:64, border:"4px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 20px" }} />
+                  <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Sender…</div>
+                </div>
+              )}
+
+              {/* ── TRIN 6: Tak! ── */}
+              {editStep === "done" && (
+                <div className="fade-in" style={{ textAlign:"center", padding:"48px 20px" }}>
+                  <div style={{ width:72, height:72, borderRadius:"50%", background:"var(--green-lt)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5">
+                      <path strokeLinecap="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  </div>
+                  <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Tak for din hjælp! 🙏</div>
+                  <div style={{ fontSize:14, color:"var(--muted2)", lineHeight:1.7, marginBottom:28 }}>
+                    Dit forslag er modtaget og vil blive gennemgået af vores team snarest.
+                    Du hjælper andre med allergi med at spise trygt.
+                  </div>
+                  <button className="btn btn-primary btn-full" onClick={() => setScreen(SCREENS.RESULT)}>
+                    Tilbage til produktet
+                  </button>
+                </div>
+              )}
+
+            </div>
+          );
+        })()}
 
         {/* ALLERGEN SUBTYPE MODAL */}
         {activeSubtypeModal && (
@@ -6242,7 +8175,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
         {/* BUNDNAVIGATION */}
         {!isOnboard && !madpasWaiterView && (
-          <nav className="bottom-nav">
+          <nav className="bottom-nav" role="navigation" aria-label="Hovednavigation">
             {[
               [SCREENS.RECIPES, "recipes",  "Opskrifter"],
               [SCREENS.LIST,    "cart",     "Indkøbsliste"],
@@ -6260,7 +8193,13 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 (screen===SCREENS.FAVORITES && s===SCREENS.PROFILE) ||
                 (screen===SCREENS.FAMILY && s===SCREENS.PROFILE) ||
                 (screen===SCREENS.ADMIN && s===SCREENS.PROFILE)
-              )?" active":""}`} onClick={() => setScreen(s)}>
+              )?" active":""}`}
+                onClick={() => setScreen(s)}
+                role="button"
+                aria-label={lbl}
+                aria-current={screen===s ? "page" : undefined}
+                tabIndex={0}
+                onKeyDown={e => e.key === "Enter" && setScreen(s)}>
                 <div className="nav-icon"><Icon name={icon} size={22} /></div>
                 <div className="nav-lbl">{lbl}</div>
               </div>
