@@ -3885,7 +3885,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                     <div style={{ background:f.bg, borderRadius:18, padding:"20px", marginBottom:10 }}>
                       <div style={{ fontSize:36, marginBottom:8 }}>{f.emoji}</div>
                       <div style={{ fontSize:18, fontWeight:900, color:f.color, marginBottom:6 }}>{f.title}</div>
-                      <div style={{ fontSize:13, color:`${f.color}CC`, lineHeight:1.65, marginBottom:8 }}>{f.desc}</div>
+                      <div style={{ fontSize:13, color:f.color, opacity:0.8, lineHeight:1.65, marginBottom:8 }}>{f.desc}</div>
                       <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
                         {f.tags.map(t => <span key={t} style={{ fontSize:10, fontWeight:700, padding:"3px 9px", borderRadius:100, background:"rgba(255,255,255,.15)", color:f.color }}>{t}</span>)}
                       </div>
@@ -3925,8 +3925,6 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 ) : null)}
               </div>
             )}
-
-            {/* ── TRIN 2: Datakvalitet og ansvar ── */}
             {onboardStep === 2 && (
               <div className="fade-in">
                 <div className="card" style={{ textAlign:"center", padding:"20px 20px 14px" }}>
