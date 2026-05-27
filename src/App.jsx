@@ -2792,6 +2792,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}`, { method: "DELETE", headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}` } });
     setAdminUsers(u => u.filter(x => x.id !== uid));
   };
+
+  const loadTickets = async () => {
     setTicketsLoading(true);
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?order=created_at.desc&limit=100`, {
