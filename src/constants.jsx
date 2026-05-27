@@ -2,7 +2,14 @@
 // ─── EATSAFE KONSTANTER ─────────────────────────────────────────────────────
 
 export const SUPABASE_URL = "https://jegrpcflyguadyxialkm.supabase.co";
+
 export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplZ3JwY2ZseWd1YWR5eGlhbGttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNjY5NjQsImV4cCI6MjA5NDc0Mjk2NH0.QErfbw2xmsdYjTZCS1WUOUwQHv6G2PKQRldyj8rdGq8";
+
+// ─── KONSTANTER ──────────────────────────────────────────────────────────────
+
+
+
+// ─── EATSAFE LOGO KOMPONENT ──────────────────────────────────────────────────
 
 export const E_CATEGORIES = [
   { id:"farve",    label:"Farvestoffer",          range:"E100–E199", min:100,  max:199,  popular:["E102","E110","E122","E129","E150d","E171","E120","E127"] },
@@ -343,7 +350,6 @@ export const INCOMPATIBLE_SUBTYPES = {
 };
 
 // ─── ALLERGEN SUBTYPE MODAL ───────────────────────────────────────────────────
-const SubtypeModal = ({ allergenId, selectedSubtypes = [], onToggle, onClose }) => {
 
 export const ALLERGEN_SUBTYPES = {
   laktose: {
@@ -425,7 +431,6 @@ export const ALLERGEN_SUBTYPES = {
     ]
   },
 };
-
 
 export const ALLERGENS = [
   { id:"gluten",      label:"Gluten",         emoji:"🌾" },
@@ -514,6 +519,7 @@ export const DUMMY_PRODUCT = {
 };
 
 // Mock produkter med fuld data til test
+
 export const MOCK_PRODUCTS = [
   {
     id: "mock-1", ean: "5701029015306", name: "Lurpak Smør", brand: "Lurpak",
@@ -543,7 +549,6 @@ export const MOCK_PRODUCTS = [
     tags: ["vegan", "vegetarian"],
   },
 ];
-
 
 export const ALLERGEN_EXAMPLES = {
   gluten: {
@@ -627,8 +632,10 @@ export const HOME_TIPS = [
 ];
 
 // ─── HJÆLPEFUNKTIONER ────────────────────────────────────────────────────────
+
 export const uid = () => Math.random().toString(36).slice(2,9);
 
+// Pæn ingrediensliste — fremhæver allergener med STORE BOGSTAVER
 
 export const MADPAS_LANGUAGES = [
   { code:"da", flag:"🇩🇰", name:"Dansk",      bcp:"da-DK" },

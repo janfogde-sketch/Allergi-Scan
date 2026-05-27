@@ -99,7 +99,6 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
 
 // ─── KONSTANTER ──────────────────────────────────────────────────────────────
 
-
 export function IngredientsList({ text, allergenFlags = {} }) {
   if (!text) return null;
 
@@ -265,6 +264,7 @@ export function IngredientsList({ text, allergenFlags = {} }) {
 }
 
 // Viser profilbadges (bruger + familie) baseret på allergen flags
+
 export function ProfileBadges({ allergenFlags, allergens, customAllerg, family, activeProfiles, size = 22 }) {
   if (!allergenFlags) return null;
   const profiles = [
@@ -294,7 +294,39 @@ export function ProfileBadges({ allergenFlags, allergens, customAllerg, family, 
   );
 }
 
-function PageID({ screen }) {
+export function PageID({ screen }) {
+  const id = PAGE_IDS[screen] || "SCR-??";
+  const [copied, setCopied] = React.useState(false);
+  const copy = () => {
+    navigator.clipboard?.writeText(id).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <div
+      onClick={copy}
+      title="Klik for at kopiere side-ID"
+      style={{
+        position:"fixed", top:8, left:"50%", transform:"translateX(-50%)",
+        zIndex:9999,
+        fontSize:10, fontWeight:800,
+        color: copied ? "#fff" : "#1F2733",
+        background: copied ? "#22C55E" : "rgba(255,255,255,0.95)",
+        border: copied ? "1.5px solid #22C55E" : "1.5px solid #D0D0C8",
+        borderRadius:20, padding:"3px 12px", cursor:"pointer",
+        letterSpacing:"1px", fontFamily:"monospace",
+        boxShadow:"0 2px 10px rgba(0,0,0,0.15)",
+        transition:"all .15s",
+        userSelect:"none",
+        whiteSpace:"nowrap",
+      }}
+    >
+      {copied ? "✓ kopieret" : id}
+    </div>
+  );
+}
+
+// Kategori-ikoner når produktbillede mangler
 
 export function getProductIcon(product) {
   if (!product) return "🛒";
@@ -341,4 +373,3 @@ export function ProductImage({ product, size = 64 }) {
     </div>
   );
 }
-const initials = n => (n||"").split(" ").filter(Boolean).map(w=>w[0]).join("").toUpperCase().slice(0,2)||"?";

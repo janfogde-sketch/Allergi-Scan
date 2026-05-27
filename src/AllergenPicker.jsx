@@ -120,48 +120,6 @@ export const ENumberPicker = ({ selected, onChange }) => {
 
 
 // Selvmodsigende subtype-kombinationer — disse kan ikke vælges samtidig
-const INCOMPATIBLE_SUBTYPES = {
-  // Gluten: "alle" udelukker de mere specifikke (cøliaki+sensitivitet er ok, men "alle" + specifik er redundant)
-  gluten_alle:     ["gluten_coeliaki", "gluten_allergi", "gluten_sensitiv"],
-  gluten_coeliaki: ["gluten_alle"],
-  gluten_allergi:  ["gluten_alle"],
-  gluten_sensitiv: ["gluten_alle"],
-  // Mælk: "alle" udelukker de specifikke
-  laktose_alle:    ["laktose_protein", "laktose_sukker", "laktose_valle"],
-  laktose_protein: ["laktose_alle"],
-  laktose_sukker:  ["laktose_alle"],
-  laktose_valle:   ["laktose_alle"],
-  // Nødder: "alle" udelukker specifikke
-  noedder_alle:    ["noedder_hassel","noedder_mandel","noedder_valnoed","noedder_cashew","noedder_kokos"],
-  noedder_hassel:  ["noedder_alle"],
-  noedder_mandel:  ["noedder_alle"],
-  noedder_valnoed: ["noedder_alle"],
-  noedder_cashew:  ["noedder_alle"],
-  noedder_kokos:   ["noedder_alle"],
-  // Æg: "alle" udelukker specifikke
-  aeg_alle:        ["aeg_hvid", "aeg_bagt"],
-  aeg_hvid:        ["aeg_alle"],
-  aeg_bagt:        ["aeg_alle"],
-  // Fisk: "alle" udelukker specifikke
-  fisk_alle:       ["fisk_hvid", "fisk_fed", "fisk_skjult"],
-  fisk_hvid:       ["fisk_alle"],
-  fisk_fed:        ["fisk_alle"],
-  fisk_skjult:     ["fisk_alle"],
-  // Soja: "alle" udelukker specifikke
-  soja_alle:       ["soja_protein", "soja_lecitin"],
-  soja_protein:    ["soja_alle"],
-  soja_lecitin:    ["soja_alle"],
-  // Skaldyr: "alle" udelukker specifikke
-  skaldyr_alle:    ["skaldyr_krebs", "skaldyr_bloeddyr"],
-  skaldyr_krebs:   ["skaldyr_alle"],
-  skaldyr_bloeddyr:["skaldyr_alle"],
-  // Sesam: "alle" udelukker specifikke
-  sesam_alle:      ["sesam_froe", "sesam_olie"],
-  sesam_froe:      ["sesam_alle"],
-  sesam_olie:      ["sesam_alle"],
-};
-
-// ─── ALLERGEN SUBTYPE MODAL ───────────────────────────────────────────────────
 
 export const SubtypeModal = ({ allergenId, selectedSubtypes = [], onToggle, onClose }) => {
   const data = ALLERGEN_SUBTYPES[allergenId];
@@ -358,4 +316,3 @@ export const AllergyForm = ({ allergens, setAllergens, customAllerg, setCustomAl
 
 // ─── FÆLLES FAMILIE FORMULAR ─────────────────────────────────────────────────
 // Bruges 1-1 identisk i onboarding trin 6, familie-skærm og redigering af familiemedlem
-const MemberForm = ({

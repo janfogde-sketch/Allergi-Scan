@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { ALLERGENS, DIETS, AVATAR_COLORS, ALLERGEN_SUBTYPES } from "./constants.jsx";
+import { ALLERGENS, DIETS, AVATAR_COLORS, ALLERGEN_SUBTYPES, INCOMPATIBLE_SUBTYPES } from "./constants.jsx";
 import { ENumberPicker, SubtypeModal, AllergyForm } from "./AllergenPicker.jsx";
 
 export const MemberForm = ({
@@ -257,4 +257,3 @@ export const CategorySelect = ({ value, onChange, options, placeholder="Alle kat
 };
 
 // ─── ALLERGEN UNDERKATEGORIER ────────────────────────────────────────────────
-const ALLERGEN_SUBTYPES = {

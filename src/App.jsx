@@ -1,7 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback, useRef } from "react";
 
-// ─── IMPORTS ─────────────────────────────────────────────────────────────────
 import {
   SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS, SCREENS, DIETS,
   AVATAR_COLORS, HOME_TIPS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
@@ -23,7 +22,6 @@ import {
 import { ENumberPicker, SubtypeModal, AllergyForm } from "./AllergenPicker.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 
-// ─── CSS ─────────────────────────────────────────────────────────────────────
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700;1,800&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -400,6 +398,9 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
   .field{font-size:16px;} /* Undgår iOS zoom ved focus */
 }
 `;
+
+
+// ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
 
 export default function EatSafe() {
   // Auth state
@@ -6685,4 +6686,3 @@ ${openTicket.description}`;
     </>
   );
 }
-

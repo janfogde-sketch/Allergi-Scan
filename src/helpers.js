@@ -1,11 +1,12 @@
 // @ts-nocheck
 import { ALLERGENS, SUPABASE_ANON_KEY } from "./constants.jsx";
 
-// ─── HJÆLPEFUNKTIONER ────────────────────────────────────────────────────────
-
 export const initials = n => (n||"").split(" ").filter(Boolean).map(w=>w[0]).join("").toUpperCase().slice(0,2)||"?";
+
 export const timeAgo = ts => { const d=Date.now()-new Date(ts).getTime(); if(d<60000)return"Lige nu"; if(d<3600000)return`${Math.floor(d/60000)} min siden`; if(d<86400000)return`${Math.floor(d/3600000)} t siden`; return`${Math.floor(d/86400000)} d siden`; };
+
 export const getAllergenLabels = (ids,custom=[]) => [...ids.map(id=>ALLERGENS.find(a=>a.id===id)).filter(Boolean).map(a=>`${a.emoji} ${a.label}`),...custom.map(c=>`✏️ ${c}`)];
+
 export const verifiedBadge = (v, source) => {
   if (v==="verified"||v===true) return {label:"✓ Verificeret",bg:"rgba(34,197,94,.1)",color:"#16a34a"};
   if (v==="partial") return {label:"⚡ Delvist verificeret",bg:"rgba(217,119,6,.08)",color:"#d97706"};
@@ -13,6 +14,7 @@ export const verifiedBadge = (v, source) => {
 };
 
 // ─── SUPABASE API-HJÆLPER ────────────────────────────────────────────────────
+
 export function makeHeaders(token) {
   return {
     "Content-Type": "application/json",
@@ -32,6 +34,7 @@ export async function apiCall(url, options = {}) {
 }
 
 // ─── ALLERGEN SAMMENLIGNING ──────────────────────────────────────────────────
+
 export function compareAllergens(flags, activeAllergenIds) {
   if (!flags || activeAllergenIds.length === 0) return { status:"safe", matchedDanger:[], matchedWarning:[], hasUnknown:false, confidence:"high", explanation:[] };
   const matchedDanger = [];
@@ -65,3 +68,7 @@ export function compareAllergens(flags, activeAllergenIds) {
 
   return { status, matchedDanger, matchedWarning, hasUnknown, confidence, explanation };
 }
+
+// ─── CSS ─────────────────────────────────────────────────────────────────────
+
+// ─── MADPAS — BUNDLED OVERSÆTTELSER ─────────────────────────────────────────
