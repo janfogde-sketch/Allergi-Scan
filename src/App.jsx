@@ -3875,123 +3875,54 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                 </div>
 
                 {/* Feature tour — swipeable kort */}
-                {(() => {
-                  const features = [
-                    {
-                      emoji:"📷", bg:"#1F2733", color:"#fff",
-                      title:"Skan på sekunder",
-                      desc:"Hold kameraet over en stregkode. EatSafe fortæller dig øjeblikkeligt om produktet er sikkert for dig.",
-                      tags:["Øjeblikkelig scanning","Vibration ved fund","Historik"],
-                      mockup: (
-                        <div style={{ background:"#fff", borderRadius:12, padding:"10px 14px", marginTop:10, display:"flex", alignItems:"center", gap:10 }}>
-                          <div style={{ fontSize:28 }}>🥛</div>
-                          <div style={{ flex:1 }}>
-                            <div style={{ fontSize:12, fontWeight:800, color:"#1F2733" }}>Karolines Køkken mælk</div>
-                            <div style={{ fontSize:10, color:"#6B7280" }}>EAN: 5701234567890</div>
-                          </div>
-                          <div style={{ background:"#FEE2E2", border:"1px solid #FCA5A5", borderRadius:8, padding:"4px 10px", fontSize:10, fontWeight:800, color:"#EF4444" }}>⚠ Farlig</div>
-                        </div>
-                      ),
-                    },
-                    {
-                      emoji:"👨‍👩‍👧", bg:"#22C55E", color:"#fff",
-                      title:"Hele familien",
-                      desc:"Opret profiler for børn, partner og andre. Se på ét blik hvem der kan spise hvad.",
-                      tags:["Individuelle profiler","Fælles oversigt","Børnevenlig"],
-                      mockup: (
-                        <div style={{ background:"rgba(255,255,255,.15)", borderRadius:12, padding:"10px 14px", marginTop:10 }}>
-                          {[["Anna","✓ Sikker","#fff"],["Mikkel","✗ Gluten","#FEE2E2"],["Sofie","✓ Sikker","#fff"]].map(([name,status,bg]) => (
-                            <div key={name} style={{ display:"flex", alignItems:"center", gap:8, padding:"5px 0", borderBottom:"1px solid rgba(255,255,255,.15)" }}>
-                              <div style={{ width:24, height:24, borderRadius:"50%", background:"rgba(255,255,255,.3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:800, color:"#fff" }}>{name[0]}</div>
-                              <div style={{ flex:1, fontSize:11, fontWeight:700, color:"#fff" }}>{name}</div>
-                              <div style={{ fontSize:10, fontWeight:700, background:bg, color: bg==="#fff"?"#22C55E":"#EF4444", padding:"2px 8px", borderRadius:100 }}>{status}</div>
-                            </div>
-                          ))}
-                        </div>
-                      ),
-                    },
-                    {
-                      emoji:"🍝", bg:"#6366F1", color:"#fff",
-                      title:"Sikre opskrifter",
-                      desc:"Over 600 opskrifter filtreret til netop din families præferencer. Med ingrediensliste og fremgangsmåde.",
-                      tags:["600+ opskrifter","Allergenfiltreret","Skalerbar portion"],
-                      mockup: (
-                        <div style={{ background:"rgba(255,255,255,.15)", borderRadius:12, padding:"10px 14px", marginTop:10 }}>
-                          {[["Spaghetti Bolognese","aftensmad","✓"],["Bananpandekager","morgenmad","✓"],["Nødde-granola","morgenmad","✗"]].map(([name,cat,safe]) => (
-                            <div key={name} style={{ display:"flex", alignItems:"center", gap:8, padding:"5px 0", borderBottom:"1px solid rgba(255,255,255,.15)" }}>
-                              <div style={{ fontSize:18 }}>{cat==="morgenmad"?"☕":"🍝"}</div>
-                              <div style={{ flex:1, fontSize:11, fontWeight:700, color:"#fff" }}>{name}</div>
-                              <div style={{ fontSize:12, color: safe==="✓"?"#86EFAC":"#FCA5A5" }}>{safe==="✓"?"✓":"✗"}</div>
-                            </div>
-                          ))}
-                        </div>
-                      ),
-                    },
-                    {
-                      emoji:"🌍", bg:"#F59E0B", color:"#fff",
-                      title:"Madpas til udlandet",
-                      desc:"Vis tjenere dine allergier på 17 sprog. Med udtale og forklaring på det lokale sprog.",
-                      tags:["17 sprog","Tekst-til-tale","Offline"],
-                      mockup: (
-                        <div style={{ background:"rgba(255,255,255,.15)", borderRadius:12, padding:"10px 14px", marginTop:10 }}>
-                          <div style={{ fontSize:11, color:"rgba(255,255,255,.7)", marginBottom:6 }}>🇫🇷 Français</div>
-                          <div style={{ fontSize:13, fontWeight:800, color:"#fff", lineHeight:1.5 }}>"Je suis allergique au gluten et aux œufs"</div>
-                          <div style={{ fontSize:10, color:"rgba(255,255,255,.6)", marginTop:4 }}>Jeg er allergisk over for gluten og æg</div>
-                        </div>
-                      ),
-                    },
-                  ];
-                  const f = features[tourIdx];
-                  return (
-                    <div style={{ marginBottom:4 }}>
-                      {/* Feature kort */}
-                      <div style={{ background:f.bg, borderRadius:18, padding:"20px", marginBottom:10 }}>
-                        <div style={{ fontSize:36, marginBottom:8 }}>{f.emoji}</div>
-                        <div style={{ fontSize:18, fontWeight:900, color:f.color, marginBottom:6 }}>{f.title}</div>
-                        <div style={{ fontSize:13, color:`${f.color}CC`, lineHeight:1.65, marginBottom:8 }}>{f.desc}</div>
-                        <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:4 }}>
-                          {f.tags.map(t => <span key={t} style={{ fontSize:10, fontWeight:700, padding:"3px 9px", borderRadius:100, background:"rgba(255,255,255,.15)", color:f.color }}>{t}</span>)}
-                        </div>
-                        {f.mockup}
+                {[
+                  { emoji:"📷", bg:"#1F2733", color:"#fff", title:"Skan på sekunder", desc:"Hold kameraet over en stregkode. EatSafe fortæller dig øjeblikkeligt om produktet er sikkert for dig.", tags:["Øjeblikkelig scanning","Vibration ved fund","Historik"] },
+                  { emoji:"👨‍👩‍👧", bg:"#22C55E", color:"#fff", title:"Hele familien", desc:"Opret profiler for børn, partner og andre. Se på ét blik hvem der kan spise hvad.", tags:["Individuelle profiler","Fælles oversigt","Børnevenlig"] },
+                  { emoji:"🍝", bg:"#6366F1", color:"#fff", title:"Sikre opskrifter", desc:"Over 600 opskrifter filtreret til netop din families præferencer. Med ingrediensliste og fremgangsmåde.", tags:["600+ opskrifter","Allergenfiltreret","Skalerbar portion"] },
+                  { emoji:"🌍", bg:"#F59E0B", color:"#fff", title:"Madpas til udlandet", desc:"Vis tjenere dine allergier på 17 sprog. Med udtale og forklaring på det lokale sprog.", tags:["17 sprog","Tekst-til-tale","Offline"] },
+                ].map((f, i) => i === tourIdx ? (
+                  <div key={i} style={{ marginBottom:4 }}>
+                    <div style={{ background:f.bg, borderRadius:18, padding:"20px", marginBottom:10 }}>
+                      <div style={{ fontSize:36, marginBottom:8 }}>{f.emoji}</div>
+                      <div style={{ fontSize:18, fontWeight:900, color:f.color, marginBottom:6 }}>{f.title}</div>
+                      <div style={{ fontSize:13, color:`${f.color}CC`, lineHeight:1.65, marginBottom:8 }}>{f.desc}</div>
+                      <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
+                        {f.tags.map(t => <span key={t} style={{ fontSize:10, fontWeight:700, padding:"3px 9px", borderRadius:100, background:"rgba(255,255,255,.15)", color:f.color }}>{t}</span>)}
                       </div>
-
-                      {/* Dots navigation */}
-                      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10 }}>
-                        {features.map((_, i) => (
-                          <div key={i} onClick={() => setTourIdx(i)}
-                            style={{ width: tourIdx===i ? 20 : 7, height:7, borderRadius:4, background: tourIdx===i ? "var(--ink)" : "var(--border2)", cursor:"pointer", transition:"all .25s" }} />
-                        ))}
-                      </div>
-
-                      {/* Navigation */}
-                      <div style={{ display:"flex", gap:8 }}>
-                        {tourIdx > 0 && (
-                          <button onClick={() => setTourIdx(i => i-1)}
-                            style={{ flex:1, padding:"12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
-                            ← Forrige
-                          </button>
-                        )}
-                        {tourIdx < features.length - 1 ? (
-                          <button onClick={() => setTourIdx(i => i+1)}
-                            style={{ flex:1, padding:"12px", background:"var(--ink)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#fff", cursor:"pointer" }}>
-                            Næste →
-                          </button>
-                        ) : (
-                          <button onClick={() => setOnboardStep(2)}
-                            style={{ flex:1, padding:"12px", background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"#fff", cursor:"pointer" }}>
-                            Kom i gang →
-                          </button>
-                        )}
-                      </div>
-                      {tourIdx < features.length - 1 && (
+                    </div>
+                    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10 }}>
+                      {[0,1,2,3].map(idx => (
+                        <div key={idx} onClick={() => setTourIdx(idx)}
+                          style={{ width: tourIdx===idx ? 20 : 7, height:7, borderRadius:4, background: tourIdx===idx ? "var(--ink)" : "var(--border2)", cursor:"pointer", transition:"all .25s" }} />
+                      ))}
+                    </div>
+                    <div style={{ display:"flex", gap:8 }}>
+                      {tourIdx > 0 && (
+                        <button onClick={() => setTourIdx(v => v-1)}
+                          style={{ flex:1, padding:"12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                          ← Forrige
+                        </button>
+                      )}
+                      {tourIdx < 3 ? (
+                        <button onClick={() => setTourIdx(v => v+1)}
+                          style={{ flex:1, padding:"12px", background:"var(--ink)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#fff", cursor:"pointer" }}>
+                          Næste →
+                        </button>
+                      ) : (
                         <button onClick={() => setOnboardStep(2)}
-                          style={{ width:"100%", background:"none", border:"none", padding:"10px", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", cursor:"pointer", marginTop:4 }}>
-                          Spring over
+                          style={{ flex:1, padding:"12px", background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"#fff", cursor:"pointer" }}>
+                          Kom i gang →
                         </button>
                       )}
                     </div>
-                  );
-                })()}
+                    {tourIdx < 3 && (
+                      <button onClick={() => setOnboardStep(2)}
+                        style={{ width:"100%", background:"none", border:"none", padding:"10px", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", cursor:"pointer", marginTop:4 }}>
+                        Spring over
+                      </button>
+                    )}
+                  </div>
+                ) : null)}
               </div>
             )}
 
