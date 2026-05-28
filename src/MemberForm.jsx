@@ -28,12 +28,12 @@ export const MemberForm = ({
         onChange={e => setName(e.target.value)}
         style={{ marginBottom:10, borderColor: name?.trim() ? "var(--border2)" : "" }} />
 
-      {/* Alder * */}
-      <label className="field-lbl">Fødselsår <span style={ color:"var(--red)" }>*</span></label>
+      {/* Fødselsår * */}
+      <label className="field-lbl">Fødselsår <span style={{ color:"var(--red)" }}>*</span></label>
       <input className="field" type="number" placeholder="Fx. 2016" min="1906" max="2026"
         value={birthYear || ""}
         onChange={e => setBirthYear(e.target.value)}
-        style={ marginBottom:10 } />
+        style={{ marginBottom:10 }} />
 
       {/* Køn * */}
       <label className="field-lbl">Køn <span style={{ color:"var(--red)" }}>*</span></label>
