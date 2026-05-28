@@ -310,10 +310,10 @@ export const E_NUMBERS = {
 
 
 export const ALLERGENS = [
-  { id:"gluten",        label:"Gluten",           emoji:"🌾" },
-  { id:"hvede",         label:"Hvedeallergi",      emoji:"🫓" },
-  { id:"maelkeallergi", label:"Mælkeallergi",      emoji:"🥛" },
-  { id:"laktose",       label:"Laktoseintolerance",emoji:"🫙" },
+  { id:"gluten",        label:"Gluten",           emoji:"🥖" },
+  { id:"hvede",         label:"Hvede",             emoji:"🌾" },
+  { id:"maelkeallergi", label:"Mælk",              emoji:"🥛" },
+  { id:"laktose",       label:"Laktoseintolerance",emoji:"🍬" },
   { id:"aeg",           label:"Æg",               emoji:"🥚" },
   { id:"noedder",       label:"Nødder",            emoji:"🌰" },
   { id:"jordnoedder",   label:"Jordnødder",        emoji:"🥜" },

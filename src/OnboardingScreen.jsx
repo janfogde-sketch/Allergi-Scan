@@ -381,7 +381,7 @@ export default function OnboardingScreen({
                     color:"var(--red)",
                     bg:"var(--red-lt)",
                     border:"var(--red-md)",
-                    title:"Allergier / intoleranser",
+                    title:"Allergier / intolerancer",
                     desc:"Reaktioner på fødevarer — fra livstruende allergier til ubehag ved intolerance. Vi viser tydeligt om et produkt indeholder eller kan indeholde dine allergener.",
                     examples:["Mælkeallergi","Hvedeallergi","Laktoseintolerance","Nøddeallergi","Skaldyrsallergi"],
                   },
@@ -410,11 +410,6 @@ export default function OnboardingScreen({
                       <div style={{ fontSize:14, fontWeight:800, color:cat.color }}>{cat.title}</div>
                     </div>
                     <div style={{ fontSize:12, color:"var(--ink2)", lineHeight:1.6, marginBottom:8 }}>{cat.desc}</div>
-                    <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
-                      {cat.examples.map(e => (
-                        <span key={e} style={{ fontSize:10, fontWeight:700, padding:"3px 9px", borderRadius:100, background:"rgba(255,255,255,.6)", color:"var(--ink2)" }}>{e}</span>
-                      ))}
-                    </div>
                   </div>
                 ))}
 
@@ -506,7 +501,7 @@ export default function OnboardingScreen({
 
                   {/* Skriv selv */}
                   <div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid var(--border)" }}>
-                    <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Kan ikke finde din allergi?</div>
+                    <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Kan ikke finde din allergi eller din intolerance?</div>
                     <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8, lineHeight:1.6 }}>
                       Tilføj selv — enten en hel allergikategori (fx. "Fructose") eller en specifik ingrediens du reagerer på (fx. "Kasein", "Sorbitol", "Hvede-kimolie"). Vi fremhæver det i ingredienslister.
                     </div>

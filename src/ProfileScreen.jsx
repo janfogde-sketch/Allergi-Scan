@@ -131,7 +131,7 @@ export default function ProfileScreen({
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
                 <div>
                   <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Mine præferencer</div>
-                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>Allergier · Intoleranser · Diæter · E-numre</div>
+                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>Allergier · Intolerancer · Diæter · E-numre</div>
                 </div>
                 <button onClick={() => setScreen(SCREENS.EDITPROFILE)}
                   style={{ background:"var(--green-lt)", border:"none", borderRadius:8, padding:"4px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--green)", cursor:"pointer" }}>
@@ -151,7 +151,7 @@ export default function ProfileScreen({
                     )}
                     {customAllerg.length > 0 && (
                       <div style={{ marginBottom:8 }}>
-                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Intoleranser & diæter</div>
+                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Intolerancer & diæter</div>
                         <div className="tags">{customAllerg.map((c,i) => <div key={i} className="tag" style={{ background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>✏️ {c}</div>)}</div>
                       </div>
                     )}
