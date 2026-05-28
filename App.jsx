@@ -2035,6 +2035,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             newMemberCustomInput={newMemberCustomInput} setNewMemberCustomInput={setNewMemberCustomInput}
             customInput={customInput} setCustomInput={setCustomInput}
             handleLogin={handleLogin} handleSignup={handleSignup} handleOAuth={handleOAuth}
+            saveAllergensStep2={saveAllergensStep2}
             saveProfileStep1={saveProfileStep1} finishOnboard={finishOnboard}
           />
         )}
@@ -2301,7 +2302,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             searchQuery={searchQuery} setSearchQuery={setSearchQuery}
             searchResults={searchResults} setSearchResults={setSearchResults}
             searchCategory={searchCategory} setSearchCategory={setSearchCategory}
-            searching={searching} scanError={scanError}
+            scanError={scanError}
             shoppingList={shoppingList} newItemName={newItemName} setNewItemName={setNewItemName}
             history={history} favorites={favorites}
             family={family} activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
@@ -2322,14 +2323,45 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             showManualEan={showManualEan} setShowManualEan={setShowManualEan}
             showSafeOnly={showSafeOnly} setShowSafeOnly={setShowSafeOnly}
             profilePopup={profilePopup} setProfilePopup={setProfilePopup}
+            greeting={greeting}
+            cameraActive={cameraActive} setCameraActive={setCameraActive}
+            galleryInputRef={galleryInputRef}
+            lastScannedRef={lastScannedRef}
+            addToList={addToList}
+            handleEditProductCapture={handleEditProductCapture}
             handleImageCapture={handleImageCapture}
             handleProductImageCapture={handleProductImageCapture}
             toggleFavorite={toggleFavorite}
+            clearDone={clearDone}
+            editProductImage={editProductImage}
+            isFavorite={isFavorite}
+            removeItem={removeItem}
+            scanFromGallery={scanFromGallery}
+            searchLoading={searchLoading}
+            startCamera={startCamera}
+            stopCamera={stopCamera}
+            toggleItem={toggleItem}
+            toggleTorch={toggleTorch}
+            torchOn={torchOn}
           />
         )}
 
-        {/* ══ RECIPES SCREEN ══ */}
-        {screen === SCREENS.RECIPES && (
+        {/* ══ MADPAS SCREEN ══ */}
+        {(screen === SCREENS.MADPAS || madpasWaiterView) && (
+          <MadpasScreen
+            screen={screen}
+            madpasLang={madpasLang} setMadpasLang={setMadpasLang}
+            madpasProfileId={madpasProfileId} setMadpasProfileId={setMadpasProfileId}
+            madpasSpeaking={madpasSpeaking} setMadpasSpeaking={setMadpasSpeaking}
+            madpasBig={madpasBig}
+            madpasWaiterView={madpasWaiterView} setMadpasWaiterView={setMadpasWaiterView}
+            mpAllergens={mpAllergens} mpCustom={mpCustom}
+            family={family} user={user}
+            langOpen={langOpen} setLangOpen={setLangOpen}
+            madpasSpeak={madpasSpeak}
+            selectedENumbers={selectedENumbers}
+          />
+        )}
 
         {/* ══ PROFILE SCREENS ══ */}
         {(screen === SCREENS.HISTORY || screen === SCREENS.PROFILE ||
@@ -2350,6 +2382,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             clearAuth={clearAuth}
             eSearch={eSearch} setESearch={setESearch}
             eCategory={eCategory} setECategory={setECategory}
+            allergenSubtypes={allergenSubtypes} setAllergenSubtypes={setAllergenSubtypes}
+            loadHistory={loadHistory}
             selectedENumbers={selectedENumbers} setSelectedENumbers={setSelectedENumbers}
             activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
             customInput={customInput} setCustomInput={setCustomInput}
@@ -2361,6 +2395,9 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             newMemberSubtypes={newMemberSubtypes} setNewMemberSubtypes={setNewMemberSubtypes}
             newMemberCustomInput={newMemberCustomInput} setNewMemberCustomInput={setNewMemberCustomInput}
             addMember={addMember} removeMember={removeMember}
+            ticketsLoading={ticketsLoading}
+            setScanResult={setScanResult}
+            historyLoading={historyLoading}
             loadAdminStats={loadAdminStats} loadSubmissions={loadSubmissions} loadTickets={loadTickets}
             setAdminSection={setAdminSection} setSubmissionFilter={setSubmissionFilter}
           />
@@ -2383,7 +2420,17 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             submitIngredients={submitIngredients} setSubmitIngredients={setSubmitIngredients}
             submittingRecipe={submittingRecipe}
             loadRecipes={loadRecipes} loadRecipeIngredients={loadRecipeIngredients}
+            loading={loading}
             toggleFavorite={toggleFavorite}
+            user={user}
+            recipeFilter={recipeFilter} setRecipeFilter={setRecipeFilter}
+            recipeSafeOnly={recipeSafeOnly} setRecipeSafeOnly={setRecipeSafeOnly}
+            favoriteRecipes={favoriteRecipes} setFavoriteRecipes={setFavoriteRecipes}
+            activeIds={allActive().ids}
+            completedSteps={completedSteps} setCompletedSteps={setCompletedSteps}
+            recipeServings={recipeServings} setRecipeServings={setRecipeServings}
+            setRecipes={setRecipes}
+            addToList={addToList}
           />
         )}
 
