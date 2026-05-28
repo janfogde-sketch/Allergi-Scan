@@ -20,6 +20,7 @@ export default function RecipesScreen({
   submitIngredients, setSubmitIngredients,
   submittingRecipe,
   loadRecipes, loadRecipeIngredients,
+  user,
   toggleFavorite,
 
   loading,

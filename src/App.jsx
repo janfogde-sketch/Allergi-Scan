@@ -2401,6 +2401,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             newMemberCustomInput={newMemberCustomInput} setNewMemberCustomInput={setNewMemberCustomInput}
             addMember={addMember} removeMember={removeMember}
             ticketsLoading={ticketsLoading}
+            setScanResult={setScanResult}
+            historyLoading={historyLoading}
             loadAdminStats={loadAdminStats} loadSubmissions={loadSubmissions} loadTickets={loadTickets}
             setAdminSection={setAdminSection} setSubmissionFilter={setSubmissionFilter}
           />

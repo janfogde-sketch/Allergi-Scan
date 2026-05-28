@@ -36,6 +36,7 @@ export default function ScannerScreen({
   cameraActive, setCameraActive,
   galleryInputRef,
   lastScannedRef,
+  selectedENumbers,
   addToList,
   handleEditProductCapture,
   handleImageCapture, handleProductImageCapture,
