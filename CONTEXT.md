@@ -178,8 +178,8 @@ bloeddyr       Bløddyr             🦑
 ### Primære tabeller
 | Tabel | Indhold |
 |-------|---------|
-| `users` | Brugerprofiler (name, email, role, age, gender, allergens, custom_allerg, e_numbers, diets) |
-| `family_members` | Familiemedlemmer (name, **age INTEGER**, **gender TEXT**, allergens, custom_allergens, diets, e_numbers, color, user_id) |
+| `users` | Brugerprofiler (name, email, role, **birth_year INTEGER**, gender, allergens, custom_allerg, e_numbers, diets) |
+| `family_members` | Familiemedlemmer (name, **birth_year INTEGER**, **gender TEXT**, allergens, custom_allergens, diets, e_numbers, color, user_id) |
 | `products` | Produktdatabase (ean, name, brand, allergen_flags, verified_status) |
 | `feedback_tickets` | Brugerfeedback (type, description, context JSON, image_base64, status) |
 | `product_submissions` | Bruger-indsendte produkter (ean, ocr_raw_text, ai_parsed_data, status) |
@@ -189,16 +189,23 @@ bloeddyr       Bløddyr             🦑
 ### Obligatoriske felter (validering i frontend)
 | Entitet | Obligatoriske felter |
 |---------|----------------------|
-| Bruger | `name`, `age`, `gender` (mail er krav fra Supabase Auth) |
-| Familiemedlem | `name`, `age`, `gender` |
+| Bruger | `name`, `birth_year`, `gender` (mail er krav fra Supabase Auth) |
+| Familiemedlem | `name`, `birth_year`, `gender` |
 Gem-knapper er deaktiveret indtil alle obligatoriske felter er udfyldt.
 
 ### SQL-migrationer kørt
 ```sql
--- 2026-05-28: Tilføj age + gender til family_members
+-- 2026-05-28: Tilføj age + gender til family_members (siden omdøbt til birth_year)
+-- 2026-05-28: Omdøb age → birth_year på både users og family_members
 ALTER TABLE family_members
-  ADD COLUMN IF NOT EXISTS age    INTEGER,
-  ADD COLUMN IF NOT EXISTS gender TEXT CHECK (gender IN ('Mand', 'Kvinde', 'Andet'));
+  DROP COLUMN IF EXISTS age,
+  ADD COLUMN IF NOT EXISTS birth_year INTEGER,
+  ADD COLUMN IF NOT EXISTS gender     TEXT CHECK (gender IN ('Mand', 'Kvinde', 'Andet'));
+
+ALTER TABLE users
+  DROP COLUMN IF EXISTS age,
+  ADD COLUMN IF NOT EXISTS birth_year INTEGER,
+  ADD COLUMN IF NOT EXISTS gender     TEXT CHECK (gender IN ('Mand', 'Kvinde', 'Andet'));
 ```
 
 ### Auth

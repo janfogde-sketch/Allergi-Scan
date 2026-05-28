@@ -28,7 +28,7 @@ export default function OnboardingScreen({
   history, setHistory,
   shoppingList, setShoppingList,
   newMemberName, setNewMemberName,
-  newMemberAge, setNewMemberAge,
+  newMemberBirthYear, setNewMemberBirthYear,
   newMemberGender, setNewMemberGender,
   newMemberAllerg, setNewMemberAllerg,
   newMemberCustomAllerg, setNewMemberCustomAllerg,
@@ -220,7 +220,7 @@ export default function OnboardingScreen({
               <div style={{ flex:1, height:1, background:"var(--border)" }} />
             </div>
             <button className="btn btn-ghost btn-full" onClick={() => {
-              setUser({ name:"Jan", age:"", email:"jan@preview.dk", phone:"" });
+              setUser({ name:"Jan", birth_year:"", email:"jan@preview.dk", phone:"" });
               setAllergens(["gluten", "laktose"]);
               setCustomAllerg(["Fructose"]);
               setActiveProfiles(["me", "f1", "f2", "f3", "f4"]);
@@ -246,7 +246,7 @@ export default function OnboardingScreen({
                 setAllergens([]);
                 setCustomAllerg([]);
                 setFamily([]);
-                setUser({ name:"", age:"", email:"", phone:"" });
+                setUser({ name:"", birth_year:"", email:"", phone:"" });
                 setScreen(SCREENS.ONBOARD);
               }}>
               🧪 Test onboarding
@@ -439,7 +439,7 @@ export default function OnboardingScreen({
                     ["Dit fulde navn *","text","Fx. Anna Hansen","name"],
                     ["Email *","email","din@email.dk","email"],
                     ["Telefon","tel","+45 12 34 56 78","phone"],
-                    ["Alder","number","Fx. 32","age"],
+                    ["Fødselsår *","number","Fx. 1990","birth_year"],
                   ].map(([lbl,type,ph,key]) => (
                     <div key={key} style={{ marginBottom:10 }}>
                       <label className="field-lbl">{lbl}</label>
@@ -455,7 +455,7 @@ export default function OnboardingScreen({
                       )}
                     </div>
                   ))}
-                  <label className="field-lbl">Køn</label>
+                  <label className="field-lbl">Køn <span style={{ color:"var(--red)" }}>*</span></label>
                   <div style={{ display:"flex", gap:8, marginBottom:4 }}>
                     {["Mand","Kvinde","Andet"].map(g => (
                       <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
@@ -470,12 +470,12 @@ export default function OnboardingScreen({
                   </div>
                 </div>
                 <button className="btn btn-primary btn-full" onClick={saveProfileStep1}
-                  disabled={!(user.name||"").trim() || !(user.email||loginEmail||"").trim()}>
+                  disabled={!(user.name||"").trim() || !(user.email||loginEmail||"").trim() || !user.birth_year || !user.gender}>
                   Fortsæt →
                 </button>
-                {(!(user.name||"").trim() || !(user.email||loginEmail||"").trim()) && (
+                {(!(user.name||"").trim() || !(user.email||loginEmail||"").trim() || !user.birth_year || !user.gender) && (
                   <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", marginTop:6 }}>
-                    {!(user.name||"").trim() ? "Navn er påkrævet" : "Email er påkrævet"}
+                    {!(user.name||"").trim() ? "Navn er påkrævet" : !(user.email||loginEmail||"").trim() ? "Email er påkrævet" : !user.birth_year ? "Fødselsår er påkrævet" : "Køn er påkrævet"}
                   </div>
                 )}
               </div>
@@ -611,7 +611,7 @@ export default function OnboardingScreen({
                   <div className="card-lbl" style={{ marginBottom:12 }}>Tilføj nyt familiemedlem</div>
                   <MemberForm
                     name={newMemberName} setName={setNewMemberName}
-                    age={newMemberAge} setAge={setNewMemberAge}
+                    birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
                     gender={newMemberGender} setGender={setNewMemberGender}
                     allergens={newMemberAllerg} setAllergens={setNewMemberAllerg}
                     customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}

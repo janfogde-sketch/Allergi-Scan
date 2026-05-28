@@ -29,7 +29,7 @@ export default function ProfileScreen({
   loadAdminStats, loadSubmissions, loadTickets,
   setAdminSection, setSubmissionFilter,
   newMemberName, setNewMemberName,
-  newMemberAge, setNewMemberAge,
+  newMemberBirthYear, setNewMemberBirthYear,
   newMemberGender, setNewMemberGender,
   newMemberAllerg, setNewMemberAllerg,
   newMemberCustomAllerg, setNewMemberCustomAllerg,
@@ -276,10 +276,10 @@ export default function ProfileScreen({
             {/* Navn og kontakt */}
             <div className="card" style={{ marginBottom:10 }}>
               <div className="card-lbl">Personlige oplysninger</div>
-              {[["Dit navn","text","Fx. Anna Hansen","name"],["Telefon","tel","+45 12 34 56 78","phone"],["Alder","number","Fx. 32","age"]].map(([lbl,type,ph,key]) => (
+              {[["Dit navn","text","Fx. Anna Hansen","name"],["Telefon","tel","+45 12 34 56 78","phone"],["Fødselsår","number","Fx. 1990","birth_year"]].map(([lbl,type,ph,key]) => (
                 <div key={key} style={{ marginBottom:10 }}>
                   <label className="field-lbl">
-                    {lbl} {(key==="name"||key==="age") && <span style={{ color:"var(--red)" }}>*</span>}
+                    {lbl} {(key==="name"||key==="birth_year") && <span style={{ color:"var(--red)" }}>*</span>}
                   </label>
                   <input className="field" type={type} placeholder={ph} value={user[key]||""} onChange={e => setUser(u => ({ ...u, [key]: e.target.value }))} />
                 </div>
@@ -293,19 +293,19 @@ export default function ProfileScreen({
                   </div>
                 ))}
               </div>
-              {(!user.name?.trim() || !user.age || !user.gender) && (
+              {(!user.name?.trim() || !user.birth_year || !user.gender) && (
                 <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10 }}>
-                  <span style={{ color:"var(--red)" }}>*</span> Navn, alder og køn er obligatoriske
+                  <span style={{ color:"var(--red)" }}>*</span> Navn, fødselsår og køn er obligatoriske
                 </div>
               )}
               <button className="btn btn-primary btn-full"
-                disabled={!user.name?.trim() || !user.age || !user.gender}
+                disabled={!user.name?.trim() || !user.birth_year || !user.gender}
                 onClick={async () => {
                 try {
                   await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
                     method:"PATCH",
                     headers:{ ...makeHeaders(accessToken), "Prefer":"return=representation" },
-                    body:JSON.stringify({ name:user.name, phone:user.phone||null, age:user.age?parseInt(user.age):null, gender:user.gender||null }),
+                    body:JSON.stringify({ name:user.name, phone:user.phone||null, birth_year:user.birth_year?parseInt(user.birth_year):null, gender:user.gender||null }),
                   });
                 } catch {}
               }}>Gem</button>
@@ -442,7 +442,7 @@ export default function ProfileScreen({
                   <div style={{ flex:1 }}>
                     <div style={{ fontWeight:800, fontSize:15 }}>{m.name}</div>
                     <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>
-                      {[m.age && `${m.age} år`, m.gender, m.allergens.length && `${m.allergens.length} allergi${m.allergens.length!==1?"er":""}`].filter(Boolean).join(" · ")}
+                      {[m.birth_year && `f. ${m.birth_year}`, m.gender, m.allergens.length && `${m.allergens.length} allergi${m.allergens.length!==1?"er":""}`].filter(Boolean).join(" · ")}
                     </div>
                   </div>
                   <span style={{ cursor:"pointer", opacity:.35, fontSize:18, padding:4 }} onClick={() => removeMember(m.id)}><Icon name="trash" size={18} color="var(--muted)" /></span>
@@ -454,7 +454,7 @@ export default function ProfileScreen({
               <div className="card-title">+ Tilføj familiemedlem</div>
               <MemberForm
                 name={newMemberName} setName={setNewMemberName}
-                age={newMemberAge} setAge={setNewMemberAge}
+                birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
                 gender={newMemberGender} setGender={setNewMemberGender}
                 allergens={newMemberAllerg} setAllergens={setNewMemberAllerg}
                 customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
