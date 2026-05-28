@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { ALLERGENS, SCREENS, MADPAS_LANGUAGES, ALLERGEN_T, MADPAS_INTRO } from "./constants.jsx";
+import { ALLERGENS, SCREENS, MADPAS_LANGUAGES, ALLERGEN_T, MADPAS_INTRO, ALLERGEN_EXAMPLES, DIETS } from "./constants.jsx";
 import { initials, getAllergenLabels } from "./helpers.js";
 
 export default function MadpasScreen({

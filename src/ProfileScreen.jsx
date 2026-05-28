@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { ALLERGENS, SCREENS, DIETS, ALLERGEN_SUBTYPES, INCOMPATIBLE_SUBTYPES,
-         E_NUMBERS, E_CATEGORIES } from "./constants.jsx";
+         E_NUMBERS, E_CATEGORIES, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { initials, getAllergenLabels } from "./helpers.js";
 import { EatSafeLogo, Icon } from "./SharedComponents.jsx";
 import { ENumberPicker, SubtypeModal, AllergyForm } from "./AllergenPicker.jsx";
