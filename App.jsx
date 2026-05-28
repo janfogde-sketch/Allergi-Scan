@@ -800,21 +800,28 @@ export default function EatSafe() {
 
   const loadShoppingList = async () => {
     try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/shopping?user_id=${userId}`, {
-        headers: makeHeaders(accessToken),
-      });
-      if (data.success && data.lists && data.lists.length > 0) {
-        const list = data.lists[0];
-        setShoppingListId(list.id);
-        setShoppingList(list.items || []);
-      } else {
-        // Opret en standardliste
-        const newList = await apiCall(`${SUPABASE_URL}/functions/v1/shopping`, {
+      // Hent eller opret indkøbsliste direkte via REST
+      const lists = await apiCall(
+        `${SUPABASE_URL}/rest/v1/shopping_lists?owner_id=eq.${userId}&select=id,name&limit=1`,
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+      );
+      let listId = lists?.[0]?.id;
+      if (!listId) {
+        // Opret liste hvis ingen findes
+        const created = await apiCall(`${SUPABASE_URL}/rest/v1/shopping_lists`, {
           method: "POST",
-          headers: makeHeaders(accessToken),
-          body: JSON.stringify({ owner_id: userId, name: "Min indkøbsliste", type: "personal" }),
+          headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+          body: JSON.stringify({ owner_id: userId, name: "Min indkøbsliste" }),
         });
-        if (newList.success) { setShoppingListId(newList.list?.id); setShoppingList([]); }
+        listId = Array.isArray(created) ? created[0]?.id : created?.id;
+      }
+      if (listId) {
+        setShoppingListId(listId);
+        const items = await apiCall(
+          `${SUPABASE_URL}/rest/v1/shopping_list_items?list_id=eq.${listId}&order=created_at.asc`,
+          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+        );
+        setShoppingList(Array.isArray(items) ? items.map(i => ({ id: i.id, name: i.name, checked: i.checked || false })) : []);
       }
     } catch { /* silent */ }
   };
@@ -1089,7 +1096,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         throw new Error(msg || "Oprettelse fejlede. Prøv igen.");
       }
       if (data.access_token) {
-        saveTokens(data.access_token, data.refresh_token, data.user.id);
+        const newUserId = data.user.id;
+        saveTokens(data.access_token, data.refresh_token, newUserId);
         setUser(u => ({ ...u, email: loginEmail }));
         setScreen(SCREENS.ONBOARD);
         setOnboardStep(1);
@@ -1208,7 +1216,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
         method: "PATCH",
-        headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
         body: JSON.stringify({
           name: user.name,
           email: emailToSave || null,
@@ -1217,7 +1225,9 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         }),
       });
       if (emailToSave) setUser(u => ({ ...u, email: emailToSave }));
-    } catch { /* silent */ }
+    } catch (e) {
+      console.error("saveProfileStep1 fejl:", e);
+    }
     setOnboardStep(4);
   };
 
@@ -1768,12 +1778,13 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     setNewItemName("");
     try {
       if (shoppingListId) {
-        const data = await apiCall(`${SUPABASE_URL}/functions/v1/shopping/${shoppingListId}/items`, {
+        const data = await apiCall(`${SUPABASE_URL}/rest/v1/shopping_list_items`, {
           method: "POST",
-          headers: makeHeaders(accessToken),
-          body: JSON.stringify({ name: name.trim(), quantity: 1, added_by: userId }),
+          headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+          body: JSON.stringify({ list_id: shoppingListId, name: name.trim(), checked: false }),
         });
-        if (data.item?.id) setShoppingList(l => l.map(i => i.id === tempId ? { ...i, id: data.item.id } : i));
+        const saved = Array.isArray(data) ? data[0] : data;
+        if (saved?.id) setShoppingList(l => l.map(i => i.id === tempId ? { ...i, id: saved.id } : i));
       }
     } catch { /* silent — keep optimistic update */ }
   };
@@ -1782,25 +1793,21 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     const item = shoppingList.find(i => i.id === id);
     setShoppingList(l => l.map(i => i.id === id ? { ...i, checked: !i.checked } : i));
     try {
-      if (shoppingListId) {
-        await apiCall(`${SUPABASE_URL}/functions/v1/shopping/${shoppingListId}/items/${id}`, {
-          method: "PATCH",
-          headers: makeHeaders(accessToken),
-          body: JSON.stringify({ checked: !item?.checked }),
-        });
-      }
+      await apiCall(`${SUPABASE_URL}/rest/v1/shopping_list_items?id=eq.${id}`, {
+        method: "PATCH",
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+        body: JSON.stringify({ checked: !item?.checked }),
+      });
     } catch { /* silent */ }
   };
 
   const removeItem = async (id) => {
     setShoppingList(l => l.filter(i => i.id !== id));
     try {
-      if (shoppingListId) {
-        await apiCall(`${SUPABASE_URL}/functions/v1/shopping/${shoppingListId}/items/${id}`, {
-          method: "DELETE",
-          headers: makeHeaders(accessToken),
-        });
-      }
+      await apiCall(`${SUPABASE_URL}/rest/v1/shopping_list_items?id=eq.${id}`, {
+        method: "DELETE",
+        headers: makeHeaders(accessToken),
+      });
     } catch { /* silent */ }
   };
 
