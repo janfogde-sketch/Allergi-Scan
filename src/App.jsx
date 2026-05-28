@@ -2153,6 +2153,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             saveProfileStep1={saveProfileStep1} finishOnboard={finishOnboard}
             StepBar={StepBar}
             buildLabel={formatBuildTime()}
+            lookupProduct={lookupProduct}
           />
         )}
         {/* TOPBAR */}
@@ -2486,6 +2487,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             toggleTorch={toggleTorch}
             torchOn={torchOn}
             buildLabel={formatBuildTime()}
+            lookupProduct={lookupProduct}
           />
         )}
 
@@ -2539,7 +2541,6 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             newMemberENumbers={newMemberENumbers} setNewMemberENumbers={setNewMemberENumbers}
             newMemberSubtypes={newMemberSubtypes} setNewMemberSubtypes={setNewMemberSubtypes}
             newMemberCustomInput={newMemberCustomInput} setNewMemberCustomInput={setNewMemberCustomInput}
-            loginEmail={loginEmail}
             addMember={addMember} removeMember={removeMember}
             ticketsLoading={ticketsLoading}
             setScanResult={setScanResult}

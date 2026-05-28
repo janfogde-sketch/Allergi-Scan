@@ -54,6 +54,7 @@ export default function ScannerScreen({
   toggleTorch,
   torchOn,
   buildLabel,
+  lookupProduct,
 }) {
   // ── Ingrediensliste editor state (bruges i NOTFOUND trin 3 og SUGGEST_EDIT) ──
   const [ingItems, setIngItems] = React.useState([]);
