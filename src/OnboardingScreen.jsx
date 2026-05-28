@@ -41,6 +41,7 @@ export default function OnboardingScreen({
   saveAllergensStep2,
   saveProfileStep1, finishOnboard,
   StepBar,
+  buildLabel,
 }) {
   return (
     <>
@@ -78,6 +79,11 @@ export default function OnboardingScreen({
             <div style={{ marginTop:24, fontSize:11, color:"var(--muted)", lineHeight:1.6 }}>
               Ved at oprette en konto accepterer du vores{" "}
               <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:600 }}>privatlivspolitik</a>
+            </div>
+
+            {/* Build-tidspunkt */}
+            <div style={{ marginTop:16, fontSize:10, color:"var(--muted)", opacity:.6, letterSpacing:".3px" }}>
+              Sidst opdateret {buildLabel}
             </div>
           </div>
         )}
@@ -244,6 +250,10 @@ export default function OnboardingScreen({
               🧪 Test onboarding
             </button>
             
+            {/* Build-tidspunkt — login */}
+            <div style={{ marginTop:20, textAlign:"center", fontSize:10, color:"var(--muted)", opacity:.6, letterSpacing:".3px" }}>
+              Sidst opdateret {buildLabel}
+            </div>
           </div>
         )}
 

@@ -1,6 +1,23 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback, useRef } from "react";
 
+// ─── BUILD INFO (injiceres af Vite ved build-tid) ─────────────────────────────
+// __BUILD_TIME__ og __COMMIT_SHA__ defineres i vite.config.ts via define: {}
+// og indsættes som compile-time konstanter ved hvert Vercel-deploy.
+/* global __BUILD_TIME__, __COMMIT_SHA__ */
+const BUILD_TIME = (typeof __BUILD_TIME__ !== "undefined") ? __BUILD_TIME__ : new Date().toISOString();
+const COMMIT_SHA = (typeof __COMMIT_SHA__ !== "undefined") ? __COMMIT_SHA__ : "local";
+
+const formatBuildTime = () => {
+  try {
+    const d = new Date(BUILD_TIME);
+    return d.toLocaleString("da-DK", {
+      day: "numeric", month: "long", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  } catch(e) { return BUILD_TIME; }
+};
+
 import {
   SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS, SCREENS, DIETS,
   AVATAR_COLORS, HOME_TIPS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
@@ -1117,8 +1134,51 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     setFeedbackSending(true);
     try {
       // Saml al diagnostisk info automatisk
+      // ── Byg præcis skærmbeskrivelse ─────────────────────────────────────────
+      const screenLabels = {
+        [SCREENS.WELCOME]:     "Velkomstskærm",
+        [SCREENS.LOGIN]:       `Login / Opret konto (fane: ${authTab === "login" ? "Log ind" : "Ny bruger"})`,
+        [SCREENS.ONBOARD]:     `Onboarding — trin ${onboardStep} af 7`,
+        [SCREENS.HOME]:        "Hjemskærm",
+        [SCREENS.SEARCH]:      "Søg produkter",
+        [SCREENS.LIST]:        "Indkøbsliste",
+        [SCREENS.PROFILE]:     "Profil",
+        [SCREENS.FAMILY]:      "Familie",
+        [SCREENS.FAVORITES]:   "Favoritter",
+        [SCREENS.HISTORY]:     "Scanningshistorik",
+        [SCREENS.RESULT]:      scanResult
+          ? `Produktresultat — ${scanResult.name || "ukendt"} (${scanResult.status || "?"}) [EAN: ${scanResult.ean || scanResult.code || "–"}]`
+          : "Produktresultat",
+        [SCREENS.NOTFOUND]:    "Produkt ikke fundet",
+        [SCREENS.SUBMITTED]:   "Produkt indsendt",
+        [SCREENS.SUGGEST_EDIT]:`Foreslå rettelse${scanResult ? ` — ${scanResult.name}` : ""}`,
+        [SCREENS.MADPAS]:      madpasWaiterView
+          ? `Madpas — Tjenervisning (sprog: ${madpasLang})`
+          : `Madpas (sprog: ${madpasLang})`,
+        [SCREENS.RECIPES]:     selectedRecipe
+          ? `Opskrifter — ${selectedRecipe.name || "ukendt opskrift"}`
+          : "Opskrifter — liste",
+        [SCREENS.EDITPROFILE]: `Rediger profil${editMode ? " (onboarding-flow)" : ""}`,
+        [SCREENS.ADMIN]:       "Admin dashboard",
+      };
+
+      // Tillaeg yderligere tilstand til skærmbeskrivelse
+      const screenExtras = [];
+      if (showManualEan) screenExtras.push("Manuel EAN-input åben");
+      if (madpasWaiterView) screenExtras.push("Madpas tjenervisning");
+      if (editMode) screenExtras.push("Redigeringstilstand");
+      if (profilePopup) screenExtras.push(`Profil-popup: ${profilePopup}`);
+      if (selectedRecipe) screenExtras.push(`Opskrift valgt: ${selectedRecipe.name}`);
+
+      const screenDescription = [
+        screenLabels[screen] || screen,
+        ...screenExtras,
+      ].join(" · ");
+
       const ctx = {
-        screen,
+        screen_id: screen,
+        screen_label: screenDescription,
+        page_id: PAGE_IDS[screen] || "–",
         url: window.location.href,
         user_agent: navigator.userAgent,
         platform: navigator.platform,
@@ -1127,14 +1187,22 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         viewport: `${window.innerWidth}x${window.innerHeight}`,
         online: navigator.onLine,
         timestamp: new Date().toISOString(),
+        build_time: BUILD_TIME,
+        commit_sha: COMMIT_SHA,
         user_id: userId || null,
         user_name: user?.name || null,
         user_email: user?.email || loginEmail || null,
         user_role: user?.role || null,
+        allergens: allergens,
         allergens_count: allergens.length,
         family_count: family.length,
         history_count: history.length,
         active_profiles: activeProfiles,
+        scan_result_ean: scanResult?.ean || scanResult?.code || null,
+        scan_result_name: scanResult?.name || null,
+        madpas_lang: madpasLang || null,
+        selected_recipe: selectedRecipe?.name || null,
+        onboard_step: screen === SCREENS.ONBOARD ? onboardStep : null,
         app_version: "beta-1.0",
       };
       const headers = {
@@ -2074,6 +2142,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             saveAllergensStep2={saveAllergensStep2}
             saveProfileStep1={saveProfileStep1} finishOnboard={finishOnboard}
             StepBar={StepBar}
+            buildLabel={formatBuildTime()}
           />
         )}
         {/* TOPBAR */}
@@ -2380,6 +2449,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             toggleItem={toggleItem}
             toggleTorch={toggleTorch}
             torchOn={torchOn}
+            buildLabel={formatBuildTime()}
           />
         )}
 

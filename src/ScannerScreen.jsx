@@ -53,6 +53,7 @@ export default function ScannerScreen({
   toggleItem,
   toggleTorch,
   torchOn,
+  buildLabel,
 }) {
   // ── Ingrediensliste editor state (bruges i NOTFOUND trin 3 og SUGGEST_EDIT) ──
   const [ingItems, setIngItems] = React.useState([]);
@@ -213,9 +214,14 @@ export default function ScannerScreen({
 
             {/* Hilsen + Profil-bar */}
             <div style={{ padding:"16px 2px 12px" }}>
-              <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px", marginBottom:10 }}>
+              <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px", marginBottom:4 }}>
                 {greeting} {user.name?.split(" ")[0] || "der"}
               </div>
+              {buildLabel && (
+                <div style={{ fontSize:10, color:"var(--muted)", marginBottom:10, opacity:.7, letterSpacing:".2px" }}>
+                  Sidst opdateret {buildLabel}
+                </div>
+              )}
 
               {/* Vælg alle / fravælg alle */}
               <div style={{ display:"flex", gap:6, marginBottom:10 }}>
