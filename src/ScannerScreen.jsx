@@ -4,8 +4,8 @@ import { ALLERGENS, SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
          ALLERGEN_EXAMPLES, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { compareAllergens, initials, getAllergenLabels } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage } from "./SharedComponents.jsx";
-import { CategorySelect } from "./MemberForm.jsx";
 
+import { CategorySelect } from "./MemberForm.jsx";
 export default function ScannerScreen({
   screen, setScreen,
   scanResult, notFoundEan,
@@ -54,6 +54,51 @@ export default function ScannerScreen({
   toggleTorch,
   torchOn,
 }) {
+  // ── Ingrediensliste editor state (bruges i NOTFOUND trin 3 og SUGGEST_EDIT) ──
+  const [ingItems, setIngItems] = React.useState([]);
+  const [ingInput, setIngInput] = React.useState("");
+
+  // Parser OCR-tekst til liste af ingredienser
+  const parseIngredients = (text) => {
+    if (!text) return [];
+    // Fjern "Ingredienser:", "Indeholder:" prefix
+    let cleaned = text.replace(/^(ingredienser|indeholder|ingredients)[\s:：]*/i, "").trim();
+    // Split på komma men respekter parenteser
+    const items = [];
+    let depth = 0, current = "";
+    for (const ch of cleaned) {
+      if (ch === "(" || ch === "[") { depth++; current += ch; }
+      else if (ch === ")" || ch === "]") { depth--; current += ch; }
+      else if ((ch === "," || ch === ";" || ch === "·") && depth === 0) {
+        const t = current.trim();
+        if (t) items.push(t);
+        current = "";
+      } else { current += ch; }
+    }
+    if (current.trim()) items.push(current.trim());
+    return items.filter(i => i.length > 0);
+  };
+
+  const addIngItem = () => {
+    const v = ingInput.trim();
+    if (v) { setIngItems(p => [...p, v]); setIngInput(""); }
+  };
+
+  const ingToText = (items) => items.join(", ");
+
+  // Når OCR returnerer tekst: parse til ingredienser automatisk
+  React.useEffect(() => {
+    if (ocrText && ocrText.trim()) {
+      const parsed = parseIngredients(ocrText);
+      if (parsed.length > 0) setIngItems(parsed);
+    }
+  }, [ocrText]);
+
+  // Ryd ingrediensliste når man starter en ny indsendelse
+  React.useEffect(() => {
+    if (notFoundStep === 2) { setIngItems([]); setIngInput(""); }
+  }, [notFoundStep]);
+
   return (
     <>
         {screen === SCREENS.HOME && (
@@ -954,28 +999,59 @@ export default function ScannerScreen({
                   </label>
                 </div>
 
-                {/* Ingredienser */}
-                {ocrText ? (
-                  <div style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
-                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
-                      <div style={{ fontSize:12, fontWeight:700, color:"var(--green)" }}>✓ Ingredienser hentet</div>
-                      <label style={{ fontSize:11, color:"var(--green)", cursor:"pointer", fontWeight:600 }}>
-                        Nyt billede
-                        <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleImageCapture} />
+                {/* ── Ingrediensliste editor ── */}
+                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+                    <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Ingredienser</div>
+                    <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                      {ocrText && <div style={{ fontSize:11, color:"var(--green)", fontWeight:700 }}>✓ {ingItems.length} fundet</div>}
+                      <label style={{ fontSize:11, color:"var(--muted)", cursor:"pointer", fontWeight:600, display:"flex", alignItems:"center", gap:4 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        {ocrText ? "Nyt billede" : "Tag billede"}
+                        <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={e => {
+                          if (!e.target.files[0]) return;
+                          handleImageCapture(e);
+                          // Parse OCR result when it arrives (via ocrText update)
+                        }} />
                       </label>
                     </div>
-                    <div style={{ fontSize:11, color:"var(--muted2)", lineHeight:1.6, maxHeight:80, overflowY:"auto" }}>{ocrText}</div>
                   </div>
-                ) : (
-                  <div style={{ background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
-                    <div style={{ fontSize:12, fontWeight:700, color:"var(--amber)", marginBottom:6 }}>⚠ Ingen ingredienser endnu</div>
-                    <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"var(--amber)", cursor:"pointer", fontWeight:600 }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                      Fotografér ingredienslisten nu
-                      <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleImageCapture} />
-                    </label>
+
+                  {!ocrText && ingItems.length === 0 && (
+                    <div style={{ fontSize:12, color:"var(--amber)", fontWeight:600, padding:"8px 10px", background:"var(--amber-lt)", borderRadius:8, marginBottom:10 }}>
+                      ⚠ Ingen ingredienser endnu — tag et billede eller skriv dem herunder
+                    </div>
+                  )}
+
+                  {/* Liste af ingredienser som redigerbare chips */}
+                  {ingItems.length > 0 && (
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
+                      {ingItems.map((item, i) => (
+                        <div key={i} style={{ display:"flex", alignItems:"center", gap:5, padding:"5px 10px",
+                          background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:20 }}>
+                          <span style={{ fontSize:12, color:"var(--ink)" }}>{item}</span>
+                          <div onClick={() => setIngItems(p => p.filter((_,j)=>j!==i))}
+                            style={{ cursor:"pointer", color:"var(--muted)", fontSize:14, lineHeight:1, marginLeft:2 }}>×</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Tilføj ingrediens */}
+                  <div style={{ display:"flex", gap:8 }}>
+                    <input className="field" placeholder="Tilføj ingrediens…" value={ingInput}
+                      onChange={e => setIngInput(e.target.value)}
+                      onKeyDown={e => e.key==="Enter" && addIngItem()}
+                      style={{ flex:1, fontSize:12 }} />
+                    <button className="btn btn-outline btn-sm" onClick={addIngItem}
+                      style={{ flexShrink:0 }}>+</button>
                   </div>
-                )}
+                  {ingItems.length > 0 && (
+                    <div style={{ fontSize:10, color:"var(--muted)", marginTop:8, lineHeight:1.5 }}>
+                      Tryk × for at fjerne en ingrediens. Rå tekst: <span style={{ fontFamily:"monospace" }}>{ingToText(ingItems).slice(0,80)}{ingToText(ingItems).length>80?"…":""}</span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Detekterede allergener — toggle */}
                 <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12, boxShadow:"var(--sh)" }}>
@@ -1035,7 +1111,11 @@ export default function ScannerScreen({
                 {scanError && <div className="error-box" style={{ marginBottom:10 }}>⚠️ {scanError}</div>}
 
                 <button
-                  onClick={submitProduct}
+                  onClick={() => {
+                    // Sync ingItems back to ocrText before submitting
+                    if (ingItems.length > 0) setOcrText(ingToText(ingItems));
+                    submitProduct();
+                  }}
                   disabled={submitting || !proposedName.trim()}
                   style={{ width:"100%", background: proposedName.trim() ? "var(--ink)" : "var(--border2)", color:"#fff", border:"none",
                     borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15,
@@ -1518,48 +1598,70 @@ export default function ScannerScreen({
               {editStep === "review" && (
                 <div className="fade-in">
 
-                  {/* Ingrediensliste / tekst */}
-                  {(editType === "ingredients" || editType === "nutrition") && (
+                  {/* ── Ingrediensliste editor (samme som ny produkt) ── */}
+                  {editType === "ingredients" && (
                     <div className="card" style={{ marginBottom:12 }}>
-                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
-                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>
-                          {editType === "ingredients" ? "Ingrediensliste" : "Næringsindhold"}
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+                        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Ingredienser</div>
+                        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                          {ingItems.length > 0 && <div style={{ fontSize:11, color:"var(--green)", fontWeight:700 }}>✓ {ingItems.length} ingredienser</div>}
+                          <label style={{ fontSize:11, color:"var(--muted)", cursor:"pointer", fontWeight:600, display:"flex", alignItems:"center", gap:4 }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            {editIngText ? "Nyt billede" : "Tag billede"}
+                            <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
+                          </label>
                         </div>
-                        {editIngText && (
-                          <div style={{ fontSize:11, color:"var(--green)", fontWeight:700 }}>✓ Tekst fundet</div>
-                        )}
                       </div>
-                      {editIngText ? (
-                        <div style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, padding:"10px 12px", marginBottom:10 }}>
-                          <div style={{ fontSize:11, color:"var(--green)", fontWeight:700, marginBottom:6 }}>📖 Tekst fra billedet — ret hvis nødvendigt:</div>
-                          <textarea
-                            value={editIngText}
-                            onChange={e => setEditIngText(e.target.value)}
-                            rows={6}
-                            style={{ width:"100%", background:"transparent", border:"none", outline:"none", fontFamily:"var(--f)", fontSize:12, color:"var(--ink2)", resize:"vertical", lineHeight:1.6, boxSizing:"border-box" }}
-                          />
-                        </div>
-                      ) : (
-                        <div>
-                          <div style={{ fontSize:12, color:"var(--muted)", marginBottom:8 }}>
-                            Billedet kunne ikke læses automatisk. Skriv teksten manuelt:
-                          </div>
-                          <textarea
-                            value={editIngText}
-                            onChange={e => setEditIngText(e.target.value)}
-                            rows={5}
-                            placeholder={editType === "ingredients" ? "Fx. Vand, hvede, salt, gær..." : "Fx. Energi: 250 kcal, Fedt: 5g..."}
-                            className="field"
-                            style={{ resize:"vertical", fontFamily:"var(--f)", fontSize:13, lineHeight:1.6 }}
-                          />
+
+                      {!editIngText && ingItems.length === 0 && (
+                        <div style={{ fontSize:12, color:"var(--amber)", fontWeight:600, padding:"8px 10px", background:"var(--amber-lt)", borderRadius:8, marginBottom:10 }}>
+                          ⚠ Fotografér ingredienslisten eller skriv dem herunder
                         </div>
                       )}
-                      {/* Tag nyt billede */}
-                      <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"var(--muted)", cursor:"pointer", marginTop:4 }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                        Tag nyt billede
-                        <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
-                      </label>
+
+                      {/* Chips */}
+                      {ingItems.length > 0 && (
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
+                          {ingItems.map((item, i) => (
+                            <div key={i} style={{ display:"flex", alignItems:"center", gap:5, padding:"5px 10px",
+                              background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:20 }}>
+                              <span style={{ fontSize:12, color:"var(--ink)" }}>{item}</span>
+                              <div onClick={() => setIngItems(p => p.filter((_,j)=>j!==i))}
+                                style={{ cursor:"pointer", color:"var(--muted)", fontSize:14, lineHeight:1, marginLeft:2 }}>×</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div style={{ display:"flex", gap:8 }}>
+                        <input className="field" placeholder="Tilføj ingrediens…" value={ingInput}
+                          onChange={e => setIngInput(e.target.value)}
+                          onKeyDown={e => e.key==="Enter" && addIngItem()}
+                          style={{ flex:1, fontSize:12 }} />
+                        <button className="btn btn-outline btn-sm" onClick={addIngItem}>+</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Næringsindhold — beholder textarea */}
+                  {editType === "nutrition" && (
+                    <div className="card" style={{ marginBottom:12 }}>
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>Næringsindhold</div>
+                        <label style={{ fontSize:11, color:"var(--muted)", cursor:"pointer", fontWeight:600, display:"flex", alignItems:"center", gap:4 }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                          Nyt billede
+                          <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
+                        </label>
+                      </div>
+                      <textarea
+                        value={editIngText}
+                        onChange={e => setEditIngText(e.target.value)}
+                        rows={5}
+                        placeholder="Fx. Energi: 250 kcal, Fedt: 5g, Kulhydrater: 30g..."
+                        className="field"
+                        style={{ resize:"vertical", fontFamily:"var(--f)", fontSize:13, lineHeight:1.6 }}
+                      />
                     </div>
                   )}
 
@@ -1602,8 +1704,11 @@ export default function ScannerScreen({
                   </div>
 
                   <button
-                    onClick={submit}
-                    disabled={editType === "ingredients" && !editIngText.trim()}
+                    onClick={() => {
+                      if (editType === "ingredients" && ingItems.length > 0) setEditIngText(ingToText(ingItems));
+                      submit();
+                    }}
+                    disabled={editType === "ingredients" && !editIngText.trim() && ingItems.length === 0}
                     style={{ width:"100%", background:"var(--ink)", color:"#fff", border:"none",
                       borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15,
                       fontWeight:800, cursor:"pointer", marginBottom:8,
