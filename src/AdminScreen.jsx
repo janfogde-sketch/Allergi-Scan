@@ -46,7 +46,6 @@ export default function AdminScreen({
                   { val:"open",        label:"🔴 Åben" },
                   { val:"in_progress", label:"🟡 I gang" },
                   { val:"resolved",    label:"🟢 Løst" },
-                  { val:"closed",      label:"⚫ Lukket" },
                 ].map(s => (
                   <button key={s.val} onClick={() => updateTicketStatus(openTicket.id, s.val)}
                     style={{ flex:1, padding:"8px 4px", borderRadius:10, border:`1.5px solid ${openTicket.status===s.val?"var(--ink)":"var(--border)"}`,
@@ -416,7 +415,6 @@ ${openTicket.description}`;
                     { status:"open",        label:"Åbne",   color:"var(--red)" },
                     { status:"in_progress", label:"I gang", color:"var(--amber)" },
                     { status:"resolved",    label:"Løst",   color:"var(--green)" },
-                    { status:"closed",      label:"Lukket", color:"var(--muted)" },
                   ].map(s => {
                     const count = s.status === "all" ? adminTickets.length : adminTickets.filter(t => t.status === s.status).length;
                     const isActive = adminTicketFilter === s.status;
@@ -457,7 +455,6 @@ ${openTicket.description}`;
                             { val:"open",        label:"Åben",   color:"var(--red)" },
                             { val:"in_progress", label:"I gang", color:"var(--amber)" },
                             { val:"resolved",    label:"Løst",   color:"var(--green)" },
-                            { val:"closed",      label:"Lukket", color:"var(--muted)" },
                           ].map(s => (
                             <button key={s.val} onClick={() => updateTicketStatus(t.id, s.val)}
                               style={{ flex:1, padding:"5px 2px", borderRadius:8, border:`1px solid ${t.status===s.val ? s.color : "var(--border)"}`,
