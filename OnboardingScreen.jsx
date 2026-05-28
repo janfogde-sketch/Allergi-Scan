@@ -1,10 +1,9 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { ALLERGENS, SCREENS, DIETS, ALLERGEN_SUBTYPES, INCOMPATIBLE_SUBTYPES,
-         AVATAR_COLORS, E_NUMBERS, E_CATEGORIES } from "./constants.jsx";
+import { ALLERGENS, SCREENS, DIETS, AVATAR_COLORS, E_NUMBERS, E_CATEGORIES } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { EatSafeLogo, Icon } from "./SharedComponents.jsx";
-import { ENumberPicker, SubtypeModal, AllergyForm } from "./AllergenPicker.jsx";
+import { ENumberPicker } from "./AllergenPicker.jsx";
 import { MemberForm } from "./MemberForm.jsx";
 
 export default function OnboardingScreen({
@@ -16,13 +15,13 @@ export default function OnboardingScreen({
   loginPassword, setLoginPassword,
   user, setUser,
   onboardStep, setOnboardStep,
-  allergens, setAllergens,
-  customAllerg, setCustomAllerg,
-  selectedENumbers, setSelectedENumbers,
+  allergens = [], setAllergens,
+  customAllerg = [], setCustomAllerg,
+  selectedENumbers = [], setSelectedENumbers,
   activeSubtypeModal, setActiveSubtypeModal,
-  allergenSubtypes, setAllergenSubtypes,
-  family, setFamily,
-  activeProfiles, setActiveProfiles,
+  allergenSubtypes = {}, setAllergenSubtypes,
+  family = [], setFamily,
+  activeProfiles = [], setActiveProfiles,
   isOAuth,
   tourIdx, setTourIdx,
   editMode, setEditMode,
@@ -41,15 +40,8 @@ export default function OnboardingScreen({
   removeMember,
   saveAllergensStep2,
   saveProfileStep1, finishOnboard,
+  StepBar,
 }) {
-  const StepBar = ({ total, current }) => (
-    <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:22 }}>
-      {Array.from({ length: total }).map((_, i) => (
-        <div key={i} className={`step-seg${i <= current-1 ? " done" : ""}`} />
-      ))}
-      <span className="step-num">{current}/{total}</span>
-    </div>
-  );
   return (
     <>
         {screen === SCREENS.WELCOME && (
@@ -491,97 +483,40 @@ export default function OnboardingScreen({
                 <div className="card">
                   <div className="step-title">Allergier / intolerancer</div>
 
-                  {/* Forklaring på farver */}
-                  <div style={{ display:"flex", gap:6, marginBottom:14 }}>
-                    {[["var(--border)","var(--ink)","Ingen"],["var(--amber)","var(--amber)","Intolerance"],["var(--red)","var(--red)","Allergi"]].map(([border,color,label]) => (
-                      <div key={label} style={{ flex:1, display:"flex", alignItems:"center", gap:5, padding:"5px 8px", border:`1.5px solid ${border}`, borderRadius:8, background: color==="var(--ink)"?"var(--paper2)":color==="var(--amber)"?"var(--amber-lt)":"var(--red-lt)" }}>
-                        <div style={{ width:8, height:8, borderRadius:"50%", background:color, flexShrink:0 }}/>
-                        <span style={{ fontSize:10, fontWeight:700, color }}>{label}</span>
-                      </div>
-                    ))}
-                  </div>
                   <div style={{ fontSize:11, color:"var(--muted)", marginBottom:12, lineHeight:1.4 }}>
-                    Tryk 1x = Intolerance &nbsp;·&nbsp; 2x = Allergi &nbsp;·&nbsp; 3x = Fjern
+                    Tryk for at markere en allergi eller intolerance
                   </div>
 
                   <div className="chip-grid">
                     {ALLERGENS.map(a => {
-                      const isAllergen = allergens.includes(a.id) && !customAllerg.includes(a.id+"_intolerance");
-                      const isIntolerance = allergens.includes(a.id) && customAllerg.includes(a.id+"_intolerance");
-                      const state = isAllergen ? "allergen" : isIntolerance ? "intolerance" : "none";
-                      const bg = state==="allergen"?"var(--red-lt)":state==="intolerance"?"var(--amber-lt)":"var(--paper2)";
-                      const border = state==="allergen"?"var(--red)":state==="intolerance"?"var(--amber)":"var(--border)";
-                      const color = state==="allergen"?"var(--red)":state==="intolerance"?"var(--amber)":"var(--ink)";
+                      const on = allergens.includes(a.id);
                       return (
-                        <div key={a.id} className="chip" style={{ background:bg, border:`1.5px solid ${border}`, color }}
-                          onClick={() => {
-                            if (state==="none") {
-                              setAllergens(p => [...p, a.id]);
-                              setCustomAllerg(p => [...p, a.id+"_intolerance"]);
-                            } else if (state==="intolerance") {
-                              setCustomAllerg(p => p.filter(x => x !== a.id+"_intolerance"));
-                            } else {
-                              setAllergens(p => p.filter(x => x !== a.id));
-                            }
-                          }}>
-                          <span style={{ flex:1 }}>{a.label}</span>
-                          {state!=="none" && allergenSubtypes[a.id] && (
-                            <div style={{ fontSize:8, fontWeight:800, color, opacity:0.8 }}>✓ Præciseret</div>
-                          )}
-                          {state!=="none" && !allergenSubtypes[a.id] && (
-                            <div style={{ fontSize:8, fontWeight:800, color }}>{state==="allergen"?"Allergi":"Intolerance"}</div>
-                          )}
+                        <div key={a.id} className="chip" style={{
+                          background: on ? "var(--red-lt)" : "var(--paper2)",
+                          border: `1.5px solid ${on ? "var(--red)" : "var(--border)"}`,
+                          color: on ? "var(--red)" : "var(--ink)",
+                        }}
+                          onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
+                          <span style={{ flex:1 }}>{a.emoji} {a.label}</span>
+                          {on && <div style={{ fontSize:9, fontWeight:800, color:"var(--red)" }}>✓</div>}
                         </div>
                       );
                     })}
                   </div>
 
-                  {/* Præciser valgte allergier */}
-                  {allergens.length > 0 && allergens.some(id => ALLERGEN_SUBTYPES[id]) && (
-                    <div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid var(--border)" }}>
-                      <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>Tilpas din allergi præcist til dig selv</div>
-                      <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10, lineHeight:1.5 }}>
-                        For størst mulig tryghed kan du præcisere hvad du reagerer på inden for hver kategori.
-                      </div>
-                      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                        {allergens.filter(id => ALLERGEN_SUBTYPES[id]).map(id => {
-                          const data = ALLERGEN_SUBTYPES[id];
-                          const subtype = allergenSubtypes[id];
-                          const subtypeLabel = subtype && subtype.length > 0 ? subtype.map(id => data.options.find(o=>o.id===id)?.label).filter(Boolean).join(", ") : null;
-                          return (
-                            <div key={id} onClick={() => setActiveSubtypeModal(id)}
-                              style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px",
-                                border:"1.5px solid var(--green)", background:"var(--green-lt)",
-                                borderRadius:10, cursor:"pointer" }}>
-                              <div style={{ flex:1 }}>
-                                <div style={{ fontSize:12, fontWeight:700, color:"var(--green)" }}>{data.label}</div>
-                                <div style={{ fontSize:11, color:"var(--muted2)", marginTop:2 }}>
-                                  {subtypeLabel || "Tryk for at præcisere →"}
-                                </div>
-                              </div>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2">
-                                <path strokeLinecap="round" d="M9 5l7 7-7 7"/>
-                              </svg>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
                   {/* Skriv selv */}
                   <div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid var(--border)" }}>
                     <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Kan ikke finde din allergi?</div>
                     <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8, lineHeight:1.5 }}>Skriv det selv herunder. Vi tilføjer løbende flere valgmuligheder med større sikkerhed.</div>
-                    <div className="input-row" style={{ marginBottom: customAllerg.filter(c=>!c.endsWith("_intolerance")).length ? 8 : 0 }}>
+                    <div className="input-row" style={{ marginBottom: customAllerg.length ? 8 : 0 }}>
                       <input className="field" placeholder="Fx. Fructose…" value={customInput}
                         onChange={e => setCustomInput(e.target.value)}
                         onKeyDown={e => { if (e.key==="Enter"&&customInput.trim()) { setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}} />
                       <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}}>+</button>
                     </div>
-                    {customAllerg.filter(c=>!c.endsWith("_intolerance")).length > 0 && (
+                    {customAllerg.length > 0 && (
                       <div className="tags">
-                        {customAllerg.filter(c=>!c.endsWith("_intolerance")).map((a,i) => (
+                        {customAllerg.map((a,i) => (
                           <div key={i} className="tag">{a}<span className="tag-x" onClick={() => setCustomAllerg(c=>c.filter(x=>x!==a))}>×</span></div>
                         ))}
                       </div>
@@ -782,23 +717,15 @@ export default function OnboardingScreen({
                       <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
                         {allergens.map(id => {
                           const a = ALLERGENS.find(x=>x.id===id);
-                          const isAllergen = !customAllerg.includes(id+"_intolerance");
-                          const subtypeIds = allergenSubtypes[id] || [];
-                          const subtypeData = ALLERGEN_SUBTYPES[id];
-                          const subtypeLabel = subtypeIds.length > 0 && subtypeData
-                            ? subtypeIds.map(sid => subtypeData.options.find(o=>o.id===sid)?.label).filter(Boolean).join(", ")
-                            : null;
                           return (
                             <div key={id} style={{ padding:"5px 10px", borderRadius:20, fontSize:12, fontWeight:700,
-                              background:isAllergen?"var(--red-lt)":"var(--amber-lt)",
-                              color:isAllergen?"var(--red)":"var(--amber)",
-                              border:`1px solid ${isAllergen?"var(--red-md)":"var(--amber-md)"}` }}>
-                              {a?.label}
-                              {subtypeLabel && <span style={{ fontWeight:400, fontSize:10 }}> · {subtypeLabel}</span>}
+                              background:"var(--red-lt)", color:"var(--red)",
+                              border:"1px solid var(--red-md)" }}>
+                              {a?.emoji} {a?.label}
                             </div>
                           );
                         })}
-                        {customAllerg.filter(c=>!c.endsWith("_intolerance")).map((c,i) => (
+                        {customAllerg.map((c,i) => (
                           <div key={i} style={{ padding:"5px 10px", borderRadius:20, fontSize:12, fontWeight:700,
                             background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" }}>
                             {c}
@@ -884,6 +811,7 @@ export default function OnboardingScreen({
               </div>
             )}
 
+                    </div>
         )}
 
     </>
