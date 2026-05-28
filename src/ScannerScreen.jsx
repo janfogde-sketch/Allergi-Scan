@@ -618,29 +618,57 @@ export default function ScannerScreen({
             })()}
 
             {/* ── 2. PRODUKT HERO ── */}
-            <div className="product-hero">
-              {scanResult.image_url
-                ? <img src={scanResult.image_url} alt={scanResult.name} className="product-hero-img" onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
-                : null}
-              <div className="product-hero-img-placeholder" style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"column", gap:8, background:"var(--paper2)", borderRadius:12, padding:20, margin:"0 0 10px" }}>
-                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="var(--border2)" strokeWidth="1.5">
-                  <rect x="4" y="10" width="40" height="30" rx="3"/>
-                  <circle cx="16" cy="20" r="4"/>
-                  <path strokeLinecap="round" d="M4 34l10-8 8 6 6-4 16 12"/>
-                </svg>
-                <div style={{ fontSize:11, color:"var(--muted)", fontWeight:500 }}>Ingen produktbillede</div>
-              </div>
-              <div className="product-hero-body">
-                <div className="product-hero-name">{scanResult.name}</div>
-                {scanResult.brand && <div className="product-hero-brand">{scanResult.brand}</div>}
-                <div className="product-hero-meta">
-                  <span style={{ fontSize:10, color:"var(--muted)", fontWeight:500 }}>EAN: {scanResult.code}</span>
-                  {scanResult.source && (() => {
-                    const vb = verifiedBadge(scanResult.verified_status, scanResult.source);
-                    return <span className="product-hero-source" style={{ background:vb.bg, color:vb.color, fontSize:9, opacity:0.75 }}>{vb.label}</span>;
-                  })()}
+            {(() => {
+              const vb = verifiedBadge(scanResult.verified_status, scanResult.source);
+              return (
+                <div className="product-hero">
+                  {scanResult.image_url
+                    ? <img src={scanResult.image_url} alt={scanResult.name} className="product-hero-img" onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
+                    : null}
+                  <div className="product-hero-img-placeholder" style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"column", gap:8, background:"var(--paper2)", borderRadius:12, padding:20, margin:"0 0 10px" }}>
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="var(--border2)" strokeWidth="1.5">
+                      <rect x="4" y="10" width="40" height="30" rx="3"/>
+                      <circle cx="16" cy="20" r="4"/>
+                      <path strokeLinecap="round" d="M4 34l10-8 8 6 6-4 16 12"/>
+                    </svg>
+                    <div style={{ fontSize:11, color:"var(--muted)", fontWeight:500 }}>Ingen produktbillede</div>
+                  </div>
+                  <div className="product-hero-body">
+                    <div className="product-hero-name">{scanResult.name}</div>
+                    {scanResult.brand && <div className="product-hero-brand">{scanResult.brand}</div>}
+                    <div className="product-hero-meta">
+                      <span style={{ fontSize:10, color:"var(--muted)", fontWeight:500 }}>EAN: {scanResult.code}</span>
+                      {/* Verificeringsbadge i hero */}
+                      <span style={{ display:"inline-flex", alignItems:"center",
+                        background:vb.bg, color:vb.color,
+                        fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20,
+                        border:`1px solid ${vb.color}22` }}>
+                        {vb.label}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              );
+            })()}
+
+            {/* ── 2b. HANDLINGSKNAPPER (under hero) ── */}
+            <div style={{ display:"flex", gap:8, marginBottom:10 }}>
+              <button className="btn btn-sm" style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+                  background: isFavorite(scanResult.code) ? "var(--amber-lt)" : "var(--paper2)",
+                  color: isFavorite(scanResult.code) ? "var(--amber)" : "var(--ink2)",
+                  border:"1px solid var(--border)" }}
+                onClick={() => toggleFavorite(scanResult)}>
+                <Icon name="heart" size={15} color={isFavorite(scanResult.code) ? "var(--amber)" : "var(--muted)"} />
+                {isFavorite(scanResult.code) ? "Fjern favorit" : "Favorit"}
+              </button>
+              <button className="btn btn-ghost btn-sm" style={{ flex:1 }}
+                onClick={() => { if(navigator.share) navigator.share({title:scanResult.name, text:scanResult.headline}); }}>
+                <Icon name="share" size={15} color="var(--muted)" /> Del
+              </button>
+              <button className="btn btn-outline btn-sm" style={{ flex:1 }}
+                onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients || ""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
+                Ret data
+              </button>
             </div>
 
             {/* ── 3. ANDRE ALLERGENER I PRODUKTET ── */}
@@ -664,24 +692,18 @@ export default function ScannerScreen({
 
             {/* ── 4. INGREDIENSLISTE ── */}
             <div className="card">
-              <div className="ing-toggle" onClick={() => scanResult.ingredients && setShowIng(v => !v)}
-                style={{ cursor: scanResult.ingredients ? "pointer" : "default" }}>
-                <span>Ingrediensliste</span>
-                {scanResult.ingredients && <span>{showIng?"▲":"▼"}</span>}
-              </div>
+              <div className="card-lbl">Ingrediensliste</div>
               {scanResult.ingredients ? (
-                showIng && (
-                  <div style={{ marginTop:10 }}>
-                    <div style={{ padding:"10px", background:"var(--paper2)", borderRadius:8, marginBottom:8 }}>
-                      <IngredientsList text={scanResult.ingredients} allergenFlags={scanResult.allergen_flags||{}} />
-                    </div>
-                    <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
-                      Fremhævet = allergen · Listen kan være på originalsprog — tjek altid selv
-                    </div>
+                <div>
+                  <div style={{ padding:"10px", background:"var(--paper2)", borderRadius:8, marginBottom:8 }}>
+                    <IngredientsList text={scanResult.ingredients} allergenFlags={scanResult.allergen_flags||{}} />
                   </div>
-                )
+                  <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
+                    Fremhævet = allergen · Listen kan være på originalsprog — tjek altid selv
+                  </div>
+                </div>
               ) : (
-                <div style={{ padding:"8px 0" }}>
+                <div style={{ paddingTop:4 }}>
                   <div style={{ fontSize:13, color:"var(--muted2)", marginBottom:8 }}>Vi mangler ingredienslisten for dette produkt.</div>
                   <button className="btn btn-outline btn-sm" onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients || ""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
                     Hjælp os — indsend ingrediensliste
@@ -721,46 +743,18 @@ export default function ScannerScreen({
               if (!rows.length) return null;
               return (
                 <div className="card">
-                  <div className="ing-toggle" onClick={() => setShowNutrition(v => !v)}>
-                    <span>Næringsindhold pr. 100g</span>
-                    <span>{showNutrition?"▲":"▼"}</span>
+                  <div className="card-lbl">Næringsindhold pr. 100g</div>
+                  <div style={{ display:"flex", flexDirection:"column" }}>
+                    {rows.map(([label, value], i) => (
+                      <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"7px 0", borderBottom: i < rows.length-1 ? "1px solid var(--border)" : "none" }}>
+                        <span style={{ fontSize:13, color: label.startsWith("—") ? "var(--muted)" : "var(--ink2)", paddingLeft: label.startsWith("—") ? 12 : 0 }}>{label}</span>
+                        <span style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{value}</span>
+                      </div>
+                    ))}
                   </div>
-                  {showNutrition && (
-                    <div style={{ display:"flex", flexDirection:"column", marginTop:10 }}>
-                      {rows.map(([label, value], i) => (
-                        <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"7px 0", borderBottom: i < rows.length-1 ? "1px solid var(--border)" : "none" }}>
-                          <span style={{ fontSize:13, color: label.startsWith("—") ? "var(--muted)" : "var(--ink2)", paddingLeft: label.startsWith("—") ? 12 : 0 }}>{label}</span>
-                          <span style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               );
             })()}
-
-            {/* ── 6. HANDLINGER ── */}
-            <div className="card">
-              <div className="card-lbl">Handlinger</div>
-              <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                <button className="btn btn-sm" style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-                    background: isFavorite(scanResult.code) ? "var(--amber-lt)" : "var(--paper2)",
-                    color: isFavorite(scanResult.code) ? "var(--amber)" : "var(--ink2)",
-                    border:"1px solid var(--border)" }}
-                  onClick={() => toggleFavorite(scanResult)}>
-                  <Icon name="heart" size={15} color={isFavorite(scanResult.code) ? "var(--amber)" : "var(--muted)"} />
-                  {isFavorite(scanResult.code) ? "Fjern" : "Favorit"}
-                </button>
-                <button className="btn btn-ghost btn-sm" style={{ flex:1 }}
-                  onClick={() => { if(navigator.share) navigator.share({title:scanResult.name, text:scanResult.headline}); }}>
-                  Del
-                </button>
-                <button className="btn btn-outline btn-sm" style={{ flex:1 }}
-                  onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients || ""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
-                  Foreslå ændring
-                </button>
-              </div>
-            </div>
 
             {/* ── 7. TRUST-LAG — confidence score og verifikation ── */}
             {(() => {
