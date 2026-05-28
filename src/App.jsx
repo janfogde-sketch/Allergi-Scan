@@ -2316,7 +2316,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
                     <div>
                       <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)" }}>Send feedback</div>
-                      <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>Skærm: {screen} · Beta v1.0</div>
+                      <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>{PAGE_IDS[screen] || "—"} · Beta v1.0</div>
                     </div>
                     <button onClick={() => setFeedbackOpen(false)}
                       style={{ background:"var(--paper2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
@@ -2383,9 +2383,35 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
                   {/* Auto-context info */}
                   <div style={{ background:"var(--paper2)", borderRadius:10, padding:"10px 12px", marginBottom:14 }}>
-                    <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:4 }}>📊 Automatisk inkluderet diagnostik</div>
-                    <div style={{ fontSize:10, color:"var(--muted)", lineHeight:1.7 }}>
-                      Skærm: <b>{screen}</b> · Bruger: <b>{user?.name || "anonym"}</b> · Enhed: <b>{/iPhone|iPad/.test(navigator.userAgent)?"iOS":/Android/.test(navigator.userAgent)?"Android":"Desktop"}</b> · Viewport: <b>{window.innerWidth}×{window.innerHeight}</b>
+                    <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:6 }}>📊 Automatisk inkluderet diagnostik</div>
+                    <div style={{ fontSize:10, color:"var(--muted2)", lineHeight:1.85 }}>
+                      <b style={{ color:"var(--ink)" }}>Skærm:</b> {(() => {
+                        const labels = {
+                          [SCREENS.HOME]: "Hjemskærm",
+                          [SCREENS.SEARCH]: "Søg produkter",
+                          [SCREENS.LIST]: "Indkøbsliste",
+                          [SCREENS.PROFILE]: "Profil",
+                          [SCREENS.FAMILY]: "Familie",
+                          [SCREENS.FAVORITES]: "Favoritter",
+                          [SCREENS.HISTORY]: "Scanningshistorik",
+                          [SCREENS.RESULT]: scanResult ? `Produktresultat — ${scanResult.name || "ukendt"}` : "Produktresultat",
+                          [SCREENS.NOTFOUND]: "Produkt ikke fundet",
+                          [SCREENS.SUBMITTED]: "Produkt indsendt",
+                          [SCREENS.SUGGEST_EDIT]: "Foreslå rettelse",
+                          [SCREENS.MADPAS]: madpasWaiterView ? `Madpas Tjenervisning (${madpasLang})` : `Madpas (${madpasLang})`,
+                          [SCREENS.RECIPES]: selectedRecipe ? `Opskrifter — ${selectedRecipe.name}` : "Opskrifter",
+                          [SCREENS.EDITPROFILE]: "Rediger profil",
+                          [SCREENS.ADMIN]: "Admin dashboard",
+                          [SCREENS.WELCOME]: "Velkomstskærm",
+                          [SCREENS.LOGIN]: `Login (${authTab})`,
+                          [SCREENS.ONBOARD]: `Onboarding trin ${onboardStep}/7`,
+                        };
+                        return labels[screen] || screen;
+                      })()} ({PAGE_IDS[screen] || "—"})
+                      <br/><b style={{ color:"var(--ink)" }}>Bruger:</b> {user?.name || "anonym"} · <b style={{ color:"var(--ink)" }}>Rolle:</b> {user?.role || "—"}
+                      <br/><b style={{ color:"var(--ink)" }}>Enhed:</b> {/iPhone|iPad/.test(navigator.userAgent)?"iOS":/Android/.test(navigator.userAgent)?"Android":"Desktop"} · <b style={{ color:"var(--ink)" }}>Viewport:</b> {window.innerWidth}×{window.innerHeight}
+                      <br/><b style={{ color:"var(--ink)" }}>Build:</b> {formatBuildTime()} ({COMMIT_SHA})
+                      {scanResult && <><br/><b style={{ color:"var(--ink)" }}>Produkt:</b> {scanResult.name} [EAN: {scanResult.ean || scanResult.code || "—"}]</>}
                     </div>
                   </div>
 

@@ -103,16 +103,23 @@ export default function AdminScreen({
                   <div style={{ fontSize:11, color:"var(--muted)", fontWeight:700, marginBottom:8 }}>📊 DIAGNOSTISK INFO</div>
                   <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
                     {[
-                      ["Bruger", openTicket.context.user_name || "Anonym"],
-                      ["Email", openTicket.context.user_email || "—"],
-                      ["Skærm", openTicket.context.screen],
-                      ["Enhed", /iPhone|iPad/.test(openTicket.context.user_agent||"")?"iOS":/Android/.test(openTicket.context.user_agent||"")?"Android":"Desktop"],
-                      ["Viewport", openTicket.context.viewport],
-                      ["Version", openTicket.context.app_version],
-                      ["Allergener", openTicket.context.allergens_count],
-                      ["Familie", openTicket.context.family_count],
-                      ["Scanninger", openTicket.context.history_count],
-                      ["Online", openTicket.context.online ? "Ja" : "Nej"],
+                      ["Bruger",      openTicket.context.user_name || "Anonym"],
+                      ["Email",       openTicket.context.user_email || "—"],
+                      ["Skærm",       openTicket.context.screen_label || openTicket.context.screen || "—"],
+                      ["Side-ID",     openTicket.context.page_id || "—"],
+                      ["Enhed",       /iPhone|iPad/.test(openTicket.context.user_agent||"")?"iOS":/Android/.test(openTicket.context.user_agent||"")?"Android":"Desktop"],
+                      ["Viewport",    openTicket.context.viewport || "—"],
+                      ["Skærmstørrelse", openTicket.context.screen_size || "—"],
+                      ["Rolle",       openTicket.context.user_role || "—"],
+                      ["Version",     openTicket.context.app_version || "—"],
+                      ["Build",       openTicket.context.build_time
+                        ? new Date(openTicket.context.build_time).toLocaleString("da-DK", { day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" })
+                        : "—"],
+                      ["Commit",      openTicket.context.commit_sha || "—"],
+                      ["Allergener",  openTicket.context.allergens_count ?? "—"],
+                      ["Familie",     openTicket.context.family_count ?? "—"],
+                      ["Scanninger",  openTicket.context.history_count ?? "—"],
+                      ["Online",      openTicket.context.online ? "Ja" : "Nej"],
                     ].map(([k, v]) => (
                       <div key={k} style={{ background:"#fff", borderRadius:8, padding:"8px 10px" }}>
                         <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:".4px" }}>{k}</div>
@@ -120,6 +127,32 @@ export default function AdminScreen({
                       </div>
                     ))}
                   </div>
+
+                  {/* Aktive allergener — bred celle */}
+                  {openTicket.context.allergens?.length > 0 && (
+                    <div style={{ background:"#fff", borderRadius:8, padding:"8px 10px", marginTop:6 }}>
+                      <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>ALLERGENER</div>
+                      <div style={{ fontSize:11, color:"var(--ink)", fontWeight:600 }}>{openTicket.context.allergens.join(", ")}</div>
+                    </div>
+                  )}
+
+                  {/* Produkt-kontekst hvis tilgængelig */}
+                  {(openTicket.context.scan_result_name || openTicket.context.scan_result_ean) && (
+                    <div style={{ background:"#fff", borderRadius:8, padding:"8px 10px", marginTop:6 }}>
+                      <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>PRODUKT VED FEEDBACK</div>
+                      <div style={{ fontSize:11, color:"var(--ink)", fontWeight:600 }}>
+                        {openTicket.context.scan_result_name || "—"} {openTicket.context.scan_result_ean ? `[EAN: ${openTicket.context.scan_result_ean}]` : ""}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Madpas-sprog hvis relevant */}
+                  {openTicket.context.madpas_lang && (
+                    <div style={{ background:"#fff", borderRadius:8, padding:"8px 10px", marginTop:6 }}>
+                      <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>MADPAS SPROG</div>
+                      <div style={{ fontSize:11, color:"var(--ink)", fontWeight:600 }}>{openTicket.context.madpas_lang}</div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -130,17 +163,53 @@ export default function AdminScreen({
                   Kopiér nedenstående og indsæt direkte i Claude-chatten:
                 </div>
                 <button onClick={() => {
-                  const txt = `EatSafe Beta Bug Report #${openTicket.id?.slice(0,8)}
+                  const ctx = openTicket.context || {};
+                  const buildStr = ctx.build_time
+                    ? new Date(ctx.build_time).toLocaleString("da-DK", { day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" })
+                    : "—";
+                  const txt = `EatSafe Beta — Bug Report #${openTicket.id?.slice(0,8)}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Type: ${openTicket.type}
-Skærm: ${openTicket.context?.screen}
-Bruger: ${openTicket.context?.user_name} (${openTicket.context?.user_email})
-Enhed: ${openTicket.context?.user_agent?.slice(0,80)}
-Viewport: ${openTicket.context?.viewport}
 Tidspunkt: ${new Date(openTicket.created_at).toLocaleString("da-DK")}
 
-BESKRIVELSE:
-${openTicket.description}`;
-                  navigator.clipboard?.writeText(txt).then(() => alert("Kopieret!")).catch(() => alert(txt));
+SKÆRM
+  Beskrivelse: ${ctx.screen_label || ctx.screen || "—"}
+  Side-ID:     ${ctx.page_id || "—"}
+  URL:         ${ctx.url || "—"}
+
+BRUGER
+  Navn:        ${ctx.user_name || "Anonym"}
+  Email:       ${ctx.user_email || "—"}
+  Rolle:       ${ctx.user_role || "—"}
+  Allergener:  ${ctx.allergens?.join(", ") || `${ctx.allergens_count ?? "—"} stk`}
+  Familie:     ${ctx.family_count ?? "—"} profiler
+  Scanninger:  ${ctx.history_count ?? "—"}
+
+ENHED
+  Platform:    ${ctx.platform || "—"}
+  Viewport:    ${ctx.viewport || "—"}
+  Skærm:       ${ctx.screen_size || "—"}
+  Enhed:       ${/iPhone|iPad/.test(ctx.user_agent||"")?"iOS":/Android/.test(ctx.user_agent||"")?"Android":"Desktop"}
+  Online:      ${ctx.online ? "Ja" : "Nej"}
+  Sprog:       ${ctx.language || "—"}
+
+BUILD
+  Version:     ${ctx.app_version || "—"}
+  Build:       ${buildStr}
+  Commit:      ${ctx.commit_sha || "—"}
+${ctx.scan_result_name ? `
+PRODUKT VED FEEDBACK
+  Navn:        ${ctx.scan_result_name}
+  EAN:         ${ctx.scan_result_ean || "—"}` : ""}${ctx.madpas_lang ? `
+MADPAS
+  Sprog:       ${ctx.madpas_lang}` : ""}${ctx.selected_recipe ? `
+OPSKRIFT
+  Navn:        ${ctx.selected_recipe}` : ""}
+
+BESKRIVELSE
+${openTicket.description}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+                  navigator.clipboard?.writeText(txt).then(() => alert("Kopieret til udklipsholder!")).catch(() => alert(txt));
                 }}
                   style={{ width:"100%", background:"rgba(255,255,255,.15)", border:"1px solid rgba(255,255,255,.2)", borderRadius:10, padding:"10px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#fff", cursor:"pointer" }}>
                   📋 Kopiér til Claude
@@ -470,7 +539,7 @@ ${openTicket.description}`;
                               <span style={{ fontSize:11, fontWeight:700, color:cfg.color, background:cfg.bg, padding:"2px 8px", borderRadius:100 }}>{cfg.label}</span>
                             </div>
                             <div style={{ fontSize:13, color:"var(--ink)", lineHeight:1.4, marginBottom:4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{t.description}</div>
-                            <div style={{ fontSize:10, color:"var(--muted)" }}>{t.context?.user_name || "Anonym"} · {t.context?.screen} · {new Date(t.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</div>
+                            <div style={{ fontSize:10, color:"var(--muted)" }}>{t.context?.user_name || "Anonym"} · {t.context?.screen_label || t.context?.screen || "—"} · {new Date(t.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</div>
                           </div>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:4 }}><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
                         </div>
