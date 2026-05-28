@@ -36,7 +36,36 @@ export default function ProfileScreen({
   newMemberSubtypes, setNewMemberSubtypes,
   newMemberCustomInput, setNewMemberCustomInput,
   addMember, removeMember,
+  historyLoading,
+  setScanResult,
+  ticketsLoading,
 }) {
+  // FamilyChips — lokal kopi der bruger modtagne props
+  const FamilyChips = () => {
+    const allIds = ["me", ...family.map(m => m.id)];
+    const isAll = allIds.every(id => activeProfiles.includes(id));
+    const toggleAll = () => setActiveProfiles(isAll ? ["me"] : allIds);
+    const toggleOne = (id) => {
+      if (isAll) { setActiveProfiles([id]); return; }
+      const next = activeProfiles.includes(id) ? activeProfiles.filter(x => x !== id) : [...activeProfiles, id];
+      setActiveProfiles(next.length === 0 ? [id] : next);
+    };
+    return (
+      <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+        <div className={`ap-chip${isAll?" on":""}`} onClick={toggleAll}>Hele familien</div>
+        <div className={`ap-chip${!isAll&&activeProfiles.includes("me")?" on":""}`} onClick={() => toggleOne("me")}>
+          <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(user.name||"Mig")}</div>
+          {(user.name||"Mig").split(" ")[0]}
+        </div>
+        {family.map(m => (
+          <div key={m.id} className={`ap-chip${!isAll&&activeProfiles.includes(m.id)?" on":""}`} onClick={() => toggleOne(m.id)}>
+            <div style={{width:20,height:20,borderRadius:"50%",background:m.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(m.name)}</div>
+            {m.name.split(" ")[0]}
+          </div>
+        ))}
+      </div>
+    );
+  };
   return (
     <>
         {screen === SCREENS.HISTORY && (

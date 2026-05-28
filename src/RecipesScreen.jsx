@@ -24,6 +24,13 @@ export default function RecipesScreen({
   toggleFavorite,
 
   loading,
+  recipeFilter, setRecipeFilter,
+  recipeSafeOnly, setRecipeSafeOnly,
+  favoriteRecipes, setFavoriteRecipes,
+  activeIds,
+  completedSteps, setCompletedSteps,
+  recipeServings, setRecipeServings,
+  setRecipes,
 }) {
   return (
     <>

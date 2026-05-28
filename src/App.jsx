@@ -2365,6 +2365,14 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             loadRecipes={loadRecipes} loadRecipeIngredients={loadRecipeIngredients}
             loading={loading}
             toggleFavorite={toggleFavorite}
+            user={user}
+            recipeFilter={recipeFilter} setRecipeFilter={setRecipeFilter}
+            recipeSafeOnly={recipeSafeOnly} setRecipeSafeOnly={setRecipeSafeOnly}
+            favoriteRecipes={favoriteRecipes} setFavoriteRecipes={setFavoriteRecipes}
+            activeIds={allActive().ids}
+            completedSteps={completedSteps} setCompletedSteps={setCompletedSteps}
+            recipeServings={recipeServings} setRecipeServings={setRecipeServings}
+            setRecipes={setRecipes}
           />
         )}
 
@@ -2427,6 +2435,14 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             loadRecipes={loadRecipes} loadRecipeIngredients={loadRecipeIngredients}
             loading={loading}
             toggleFavorite={toggleFavorite}
+            user={user}
+            recipeFilter={recipeFilter} setRecipeFilter={setRecipeFilter}
+            recipeSafeOnly={recipeSafeOnly} setRecipeSafeOnly={setRecipeSafeOnly}
+            favoriteRecipes={favoriteRecipes} setFavoriteRecipes={setFavoriteRecipes}
+            activeIds={allActive().ids}
+            completedSteps={completedSteps} setCompletedSteps={setCompletedSteps}
+            recipeServings={recipeServings} setRecipeServings={setRecipeServings}
+            setRecipes={setRecipes}
           />
         )}
 
