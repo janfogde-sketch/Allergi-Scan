@@ -2,22 +2,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 
 // ─── BUILD INFO (injiceres af Vite ved build-tid) ─────────────────────────────
-// __BUILD_TIME__ og __COMMIT_SHA__ defineres i vite.config.ts via define: {}
-// og indsættes som compile-time konstanter ved hvert Vercel-deploy.
-/* global __BUILD_TIME__, __COMMIT_SHA__ */
-const BUILD_TIME = (typeof __BUILD_TIME__ !== "undefined") ? __BUILD_TIME__ : new Date().toISOString();
-const COMMIT_SHA = (typeof __COMMIT_SHA__ !== "undefined") ? __COMMIT_SHA__ : "local";
-
-const formatBuildTime = () => {
-  try {
-    const d = new Date(BUILD_TIME);
-    return d.toLocaleString("da-DK", {
-      day: "numeric", month: "long", year: "numeric",
-      hour: "2-digit", minute: "2-digit",
-    });
-  } catch(e) { return BUILD_TIME; }
-};
-
 import {
   SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS, SCREENS, DIETS,
   AVATAR_COLORS, HOME_TIPS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
@@ -46,6 +30,7 @@ import ScannerScreen from './ScannerScreen.jsx';
 import RecipesScreen from './RecipesScreen.jsx';
 
 import { appCss } from './theme.jsx';
+import { BUILD_TIME, COMMIT_SHA, formatBuildTime, getGreeting, buildScreenLabel } from './utils.jsx';
 
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
@@ -762,45 +747,11 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     try {
       // Saml al diagnostisk info automatisk
       // ── Byg præcis skærmbeskrivelse ─────────────────────────────────────────
-      const screenLabels = {
-        [SCREENS.WELCOME]:     "Velkomstskærm",
-        [SCREENS.LOGIN]:       `Login / Opret konto (fane: ${authTab === "login" ? "Log ind" : "Ny bruger"})`,
-        [SCREENS.ONBOARD]:     `Onboarding — trin ${onboardStep} af 7`,
-        [SCREENS.HOME]:        "Hjemskærm",
-        [SCREENS.SEARCH]:      "Søg produkter",
-        [SCREENS.LIST]:        "Indkøbsliste",
-        [SCREENS.PROFILE]:     "Profil",
-        [SCREENS.FAMILY]:      "Familie",
-        [SCREENS.FAVORITES]:   "Favoritter",
-        [SCREENS.HISTORY]:     "Scanningshistorik",
-        [SCREENS.RESULT]:      scanResult
-          ? `Produktresultat — ${scanResult.name || "ukendt"} (${scanResult.status || "?"}) [EAN: ${scanResult.ean || scanResult.code || "–"}]`
-          : "Produktresultat",
-        [SCREENS.NOTFOUND]:    "Produkt ikke fundet",
-        [SCREENS.SUBMITTED]:   "Produkt indsendt",
-        [SCREENS.SUGGEST_EDIT]:`Foreslå rettelse${scanResult ? ` — ${scanResult.name}` : ""}`,
-        [SCREENS.MADPAS]:      madpasWaiterView
-          ? `Madpas — Tjenervisning (sprog: ${madpasLang})`
-          : `Madpas (sprog: ${madpasLang})`,
-        [SCREENS.RECIPES]:     selectedRecipe
-          ? `Opskrifter — ${selectedRecipe.name || "ukendt opskrift"}`
-          : "Opskrifter — liste",
-        [SCREENS.EDITPROFILE]: `Rediger profil${editMode ? " (onboarding-flow)" : ""}`,
-        [SCREENS.ADMIN]:       "Admin dashboard",
-      };
-
-      // Tillaeg yderligere tilstand til skærmbeskrivelse
-      const screenExtras = [];
-      if (showManualEan) screenExtras.push("Manuel EAN-input åben");
-      if (madpasWaiterView) screenExtras.push("Madpas tjenervisning");
-      if (editMode) screenExtras.push("Redigeringstilstand");
-      if (profilePopup) screenExtras.push(`Profil-popup: ${profilePopup}`);
-      if (selectedRecipe) screenExtras.push(`Opskrift valgt: ${selectedRecipe.name}`);
-
-      const screenDescription = [
-        screenLabels[screen] || screen,
-        ...screenExtras,
-      ].join(" · ");
+      const screenDescription = buildScreenLabel({
+        screen, authTab, onboardStep, scanResult,
+        madpasWaiterView, madpasLang, selectedRecipe,
+        editMode, showManualEan, profilePopup,
+      });
 
       const ctx = {
         screen_id: screen,
@@ -1729,8 +1680,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     </div>
   );
 
-  const hour = new Date().getHours();
-  const greeting = hour<5?"God nat":hour<10?"God morgen":hour<12?"God formiddag":hour<17?"God dag":hour<22?"God aften":"God nat";
+  const greeting = getGreeting();
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
   return (
