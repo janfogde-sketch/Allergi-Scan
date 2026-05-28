@@ -2,9 +2,10 @@
 import React, { useState } from "react";
 import { ALLERGENS, SCREENS, DIETS, ALLERGEN_SUBTYPES, INCOMPATIBLE_SUBTYPES,
          E_NUMBERS, E_CATEGORIES, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { initials, getAllergenLabels } from "./helpers.js";
-import { EatSafeLogo, Icon } from "./SharedComponents.jsx";
+import { initials, timeAgo, getAllergenLabels } from "./helpers.js";
+import { EatSafeLogo, Icon, ProductImage } from "./SharedComponents.jsx";
 import { ENumberPicker, SubtypeModal, AllergyForm } from "./AllergenPicker.jsx";
+import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 
 export default function ProfileScreen({
   screen, setScreen,

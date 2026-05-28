@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { ALLERGENS, SCREENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { getAllergenLabels, initials } from "./helpers.js";
+import { MemberForm } from "./MemberForm.jsx";
 
 export default function AdminScreen({
   // State

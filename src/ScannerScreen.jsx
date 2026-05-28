@@ -4,6 +4,7 @@ import { ALLERGENS, SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
          ALLERGEN_EXAMPLES, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { compareAllergens, initials, getAllergenLabels } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage } from "./SharedComponents.jsx";
+import { CategorySelect } from "./MemberForm.jsx";
 
 export default function ScannerScreen({
   screen, setScreen,

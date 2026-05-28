@@ -2346,6 +2346,23 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
           />
         )}
 
+        {/* ══ MADPAS SCREEN ══ */}
+        {(screen === SCREENS.MADPAS || madpasWaiterView) && (
+          <MadpasScreen
+            screen={screen}
+            madpasLang={madpasLang} setMadpasLang={setMadpasLang}
+            madpasProfileId={madpasProfileId} setMadpasProfileId={setMadpasProfileId}
+            madpasSpeaking={madpasSpeaking} setMadpasSpeaking={setMadpasSpeaking}
+            madpasBig={madpasBig}
+            madpasWaiterView={madpasWaiterView} setMadpasWaiterView={setMadpasWaiterView}
+            mpAllergens={mpAllergens} mpCustom={mpCustom}
+            family={family} user={user}
+            langOpen={langOpen} setLangOpen={setLangOpen}
+            madpasSpeak={madpasSpeak}
+            selectedENumbers={selectedENumbers}
+          />
+        )}
+
         {/* ══ RECIPES SCREEN ══ */}
         {screen === SCREENS.RECIPES && (
           <RecipesScreen
