@@ -877,6 +877,7 @@ export default function OnboardingScreen({
               </div>
             )}
 
+                    </div>
         )}
 
     </>
