@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
 import { compareAllergens, getAllergenLabels } from "./helpers.js";
-import { Icon, IngredientsList } from "./SharedComponents.jsx";
+import { Icon, IngredientsList, ProfileBadges } from "./SharedComponents.jsx";
 
 export default function RecipesScreen({
   screen, setScreen,
@@ -30,7 +30,9 @@ export default function RecipesScreen({
   completedSteps, setCompletedSteps,
   recipeServings, setRecipeServings,
   setRecipes,
+  addToList,
 }) {
+  const [listAdded, setListAdded] = React.useState({});
   return (
     <>
         {/* ── OPSKRIFT DETALJESIDE ── */}
@@ -41,9 +43,6 @@ export default function RecipesScreen({
           let rFlags = {};
           try { rFlags = typeof r.allergen_flags === "string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags || {}); } catch {}
           const { status } = compareAllergens(rFlags, activeIds);
-          const statusColor = status==="safe"?"var(--green)":status==="danger"?"var(--red)":"var(--amber)";
-          const statusBg = status==="safe"?"var(--green-lt)":status==="danger"?"var(--red-lt)":"var(--amber-lt)";
-          const statusLabel = status==="safe"?"✓ Sikkert for dig":status==="danger"?"✗ Indeholder allergen":"⚠️ Mulige spor";
 
           // Parse instruktioner
           let steps = [];
@@ -78,10 +77,44 @@ export default function RecipesScreen({
               </div>
 
               <div style={{ padding:"18px 16px 0" }}>
-                {/* Status badge */}
-                <div style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"4px 10px", borderRadius:100, background:statusBg, border:`1px solid ${statusColor}`, fontSize:11, fontWeight:800, color:statusColor, marginBottom:10 }}>
-                  {statusLabel}
-                </div>
+                {/* ── FAMILIE SIKKERHEDSGRID (samme som produktresultat) ── */}
+                {(() => {
+                  const profiles = [
+                    { id:"me", name: user?.name||"Dig", allergens: allergens||[] },
+                    ...(family||[]).filter(m => (activeProfiles||[]).includes(m.id)),
+                  ];
+                  return (
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:12 }}>
+                      {profiles.map(p => {
+                        const danger = (p.allergens||[]).filter(a => rFlags[a] === "yes" || rFlags[a] === true);
+                        const warning = (p.allergens||[]).filter(a => rFlags[a] === "traces");
+                        const finalColor = danger.length > 0 ? "var(--red)" : warning.length > 0 ? "var(--amber)" : "var(--green)";
+                        const finalBg = danger.length > 0 ? "var(--red-lt)" : warning.length > 0 ? "var(--amber-lt)" : "var(--green-lt)";
+                        const finalBorder = danger.length > 0 ? "var(--red-md)" : warning.length > 0 ? "var(--amber-md)" : "var(--green-mid)";
+                        const finalIcon = danger.length > 0 ? "×" : warning.length > 0 ? "!" : "✓";
+                        const statusText = danger.length > 0
+                          ? danger.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
+                          : warning.length > 0
+                          ? "Spor: " + warning.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
+                          : "Sikkert";
+                        return (
+                          <div key={p.id} style={{
+                            display:"flex", alignItems:"center", justifyContent:"space-between",
+                            padding:"6px 10px",
+                            background: finalBg,
+                            border:`1px solid ${finalBorder}`,
+                            borderRadius:8, gap:6,
+                          }}>
+                            <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", flex:1 }}>
+                              {p.id==="me" ? "Dig" : p.name}
+                            </div>
+                            <div style={{ fontSize:11, fontWeight:700, color:finalColor, flexShrink:0 }}>{finalIcon} {statusText}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
 
                 {/* Titel */}
                 <div className="recipe-detail-title">{r.title}</div>
@@ -118,9 +151,129 @@ export default function RecipesScreen({
                 {/* ── INGREDIENSER ── */}
                 {r.ingredients_raw && (
                   <div style={{ marginBottom:20 }}>
-                    <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>Ingredienser</div>
+                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+                      <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Ingredienser</div>
+                      {(() => {
+                        let items = null;
+                        try {
+                          const raw = r.ingredients_raw;
+                          const p = Array.isArray(raw) ? raw : JSON.parse(raw);
+                          if (Array.isArray(p) && p[0]?.name) items = p;
+                        } catch {}
+                        if (!items || !addToList) return null;
+                        const allAdded = items.every((_,i) => listAdded[i]);
+                        return (
+                          <button
+                            onClick={() => {
+                              const baseServings = r.servings || 4;
+                              const scale = recipeServings / baseServings;
+                              items.forEach((ing, i) => {
+                                if (!listAdded[i]) {
+                                  const amt = ing.amount ? Math.round(ing.amount * scale * 10) / 10 : null;
+                                  const unit = ing.unit || ing.measure || "";
+                                  const label = [amt, unit, ing.name].filter(Boolean).join(" ");
+                                  addToList(label);
+                                }
+                              });
+                              const map = {};
+                              items.forEach((_,i) => map[i] = true);
+                              setListAdded(map);
+                            }}
+                            style={{
+                              display:"flex", alignItems:"center", gap:5,
+                              padding:"5px 12px", borderRadius:100,
+                              border:`1.5px solid ${allAdded ? "var(--green)" : "var(--border2)"}`,
+                              background: allAdded ? "var(--green-lt)" : "var(--paper2)",
+                              color: allAdded ? "var(--green)" : "var(--muted2)",
+                              fontSize:11, fontWeight:700, cursor:"pointer",
+                              fontFamily:"var(--f)", transition:"all .15s",
+                            }}>
+                            {allAdded ? "✓ Alle tilføjet" : "+ Tilføj alle"}
+                          </button>
+                        );
+                      })()}
+                    </div>
                     <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, overflow:"hidden" }}>
-                      <IngredientsList text={r.ingredients_raw} allergenFlags={rFlags} />
+                      {(() => {
+                        let items = null;
+                        try {
+                          const raw = r.ingredients_raw;
+                          const parsed = Array.isArray(raw) ? raw : JSON.parse(raw);
+                          if (Array.isArray(parsed) && parsed[0]?.name) items = parsed;
+                        } catch {}
+
+                        if (items) {
+                          const baseServings = r.servings || 4;
+                          const scale = recipeServings / baseServings;
+                          return items
+                            .sort((a,b) => (a.sort_order||0) - (b.sort_order||0))
+                            .map((ing, i) => {
+                              const isAllergen = Object.entries(rFlags).some(([k,v]) =>
+                                (v === "yes" || v === true) &&
+                                (ing.name?.toLowerCase().includes(k) || (ing.name_en||"").toLowerCase().includes(k))
+                              );
+                              const isTrace = !isAllergen && Object.entries(rFlags).some(([k,v]) =>
+                                v === "traces" &&
+                                (ing.name?.toLowerCase().includes(k) || (ing.name_en||"").toLowerCase().includes(k))
+                              );
+                              const dotColor = isAllergen ? "var(--red)" : isTrace ? "var(--amber)" : "var(--border2)";
+                              const nameColor = isAllergen ? "var(--red)" : isTrace ? "var(--amber)" : "var(--ink)";
+                              const added = !!listAdded[i];
+
+                              let amtDisplay = "";
+                              if (ing.amount) {
+                                const scaled = Math.round(ing.amount * scale * 10) / 10;
+                                amtDisplay = String(scaled);
+                              }
+                              const unit = ing.unit || ing.measure || "";
+
+                              return (
+                                <div key={i} className="ingredient-row" style={{ padding:"9px 14px", opacity: added ? 0.5 : 1, transition:"opacity .2s" }}>
+                                  <div className="ingredient-dot" style={{ background: dotColor }} />
+                                  <div style={{ flex:1, fontSize:13, color: nameColor, fontWeight: isAllergen ? 700 : 500 }}>
+                                    {ing.name}
+                                    {isAllergen && <span style={{ fontSize:10, fontWeight:700, color:"var(--red)", marginLeft:6, textTransform:"uppercase", letterSpacing:".5px" }}>allergen</span>}
+                                    {isTrace && <span style={{ fontSize:10, fontWeight:700, color:"var(--amber)", marginLeft:6, textTransform:"uppercase", letterSpacing:".5px" }}>spor</span>}
+                                  </div>
+                                  <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
+                                    {(amtDisplay || unit) && (
+                                      <div style={{ fontSize:12, fontWeight:700, color:"var(--muted2)", textAlign:"right" }}>
+                                        {amtDisplay}{amtDisplay && unit ? " " : ""}{unit}
+                                      </div>
+                                    )}
+                                    {addToList && (
+                                      <button
+                                        onClick={() => {
+                                          if (added) return;
+                                          const label = [amtDisplay, unit, ing.name].filter(Boolean).join(" ");
+                                          addToList(label);
+                                          setListAdded(s => ({ ...s, [i]: true }));
+                                        }}
+                                        title={added ? "Tilføjet" : "Tilføj til indkøbsliste"}
+                                        style={{
+                                          width:26, height:26, borderRadius:"50%",
+                                          border:`1.5px solid ${added ? "var(--green)" : "var(--border2)"}`,
+                                          background: added ? "var(--green-lt)" : "var(--paper2)",
+                                          color: added ? "var(--green)" : "var(--muted2)",
+                                          cursor: added ? "default" : "pointer",
+                                          display:"flex", alignItems:"center", justifyContent:"center",
+                                          fontSize:13, fontFamily:"var(--f)", fontWeight:700,
+                                          transition:"all .15s", flexShrink:0,
+                                        }}>
+                                        {added ? "✓" : "+"}
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            });
+                        } else {
+                          const txt = typeof r.ingredients_raw === 'string'
+                            ? r.ingredients_raw
+                            : JSON.stringify(r.ingredients_raw);
+                          return <IngredientsList text={txt} allergenFlags={rFlags} />;
+                        }
+                      })()}
                     </div>
                   </div>
                 )}
@@ -317,7 +470,7 @@ export default function RecipesScreen({
                   const totalMins = (r.prep_time_minutes||0) + (r.cook_time_minutes||0);
                   return (
                     <div key={r.id} className="recipe-card"
-                      onClick={() => { setSelectedRecipe(r); loadRecipeIngredients(r.id); setCompletedSteps({}); setRecipeServings(r.servings || 4); }}>
+                      onClick={() => { setSelectedRecipe(r); loadRecipeIngredients(r.id); setCompletedSteps({}); setRecipeServings(r.servings || 4); setListAdded({}); }}>
                       <button className="recipe-fav-btn"
                         onClick={e => { e.stopPropagation(); setFavoriteRecipes(f => isFav ? f.filter(x=>x!==r.id) : [...f,r.id]); }}>
                         {isFav ? "❤️" : "🤍"}

@@ -2363,36 +2363,6 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
           />
         )}
 
-        {/* ══ RECIPES SCREEN ══ */}
-        {screen === SCREENS.RECIPES && (
-          <RecipesScreen
-            screen={screen} setScreen={setScreen}
-            recipes={recipes} recipesLoading={recipesLoading}
-            selectedRecipe={selectedRecipe} setSelectedRecipe={setSelectedRecipe}
-            recipeSearch={recipeSearch} setRecipeSearch={setRecipeSearch}
-            showSafeOnly={showSafeOnly} setShowSafeOnly={setShowSafeOnly}
-            allergens={allergens} customAllerg={customAllerg}
-            family={family} activeProfiles={activeProfiles}
-            favorites={favorites} accessToken={accessToken}
-            showSubmitRecipe={showSubmitRecipe} setShowSubmitRecipe={setShowSubmitRecipe}
-            submitRecipe={submitRecipe} setSubmitRecipe={setSubmitRecipe}
-            submitSteps={submitSteps} setSubmitSteps={setSubmitSteps}
-            submitIngredients={submitIngredients} setSubmitIngredients={setSubmitIngredients}
-            submittingRecipe={submittingRecipe}
-            loadRecipes={loadRecipes} loadRecipeIngredients={loadRecipeIngredients}
-            loading={loading}
-            toggleFavorite={toggleFavorite}
-            user={user}
-            recipeFilter={recipeFilter} setRecipeFilter={setRecipeFilter}
-            recipeSafeOnly={recipeSafeOnly} setRecipeSafeOnly={setRecipeSafeOnly}
-            favoriteRecipes={favoriteRecipes} setFavoriteRecipes={setFavoriteRecipes}
-            activeIds={allActive().ids}
-            completedSteps={completedSteps} setCompletedSteps={setCompletedSteps}
-            recipeServings={recipeServings} setRecipeServings={setRecipeServings}
-            setRecipes={setRecipes}
-          />
-        )}
-
         {/* ══ PROFILE SCREENS ══ */}
         {(screen === SCREENS.HISTORY || screen === SCREENS.PROFILE ||
           screen === SCREENS.FAVORITES || screen === SCREENS.EDITPROFILE ||
@@ -2460,6 +2430,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             completedSteps={completedSteps} setCompletedSteps={setCompletedSteps}
             recipeServings={recipeServings} setRecipeServings={setRecipeServings}
             setRecipes={setRecipes}
+            addToList={addToList}
           />
         )}
 
