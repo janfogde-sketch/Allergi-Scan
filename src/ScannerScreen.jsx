@@ -638,11 +638,10 @@ export default function ScannerScreen({
                     {scanResult.brand && <div className="product-hero-brand">{scanResult.brand}</div>}
                     <div className="product-hero-meta">
                       <span style={{ fontSize:10, color:"var(--muted)", fontWeight:500 }}>EAN: {scanResult.code}</span>
-                      {/* Verificeringsbadge i hero */}
-                      <span style={{ display:"inline-flex", alignItems:"center",
-                        background:vb.bg, color:vb.color,
-                        fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20,
-                        border:`1px solid ${vb.color}22` }}>
+                      <span style={{ display:"inline-flex", alignItems:"center", gap:4,
+                        fontSize:10, fontWeight:700, padding:"2px 9px", borderRadius:20,
+                        background:vb.bg, color:vb.color, border:`1px solid ${vb.dot}22` }}>
+                        <span style={{ width:5, height:5, borderRadius:"50%", background:vb.dot, flexShrink:0, display:"inline-block" }} />
                         {vb.label}
                       </span>
                     </div>
@@ -756,40 +755,7 @@ export default function ScannerScreen({
               );
             })()}
 
-            {/* ── 7. TRUST-LAG — confidence score og verifikation ── */}
-            {(() => {
-              const { confidence } = compareAllergens(scanResult.allergen_flags||{}, activeIds);
-              const verifiedAt = scanResult.verified_at || scanResult.updated_at;
-              const daysSince = verifiedAt ? Math.floor((Date.now() - new Date(verifiedAt).getTime()) / 86400000) : null;
 
-              const confidenceConfig = {
-                high:   { color:"var(--green)", bg:"var(--green-lt)",  border:"var(--green-mid)", icon:"✓", label:"Høj sikkerhed",    desc:"Allergendata er verificeret og pålidelig." },
-                medium: { color:"var(--amber)", bg:"var(--amber-lt)",  border:"var(--amber-md)",  icon:"⚠", label:"Middel sikkerhed", desc:"Visse allergener kunne ikke bekræftes fuldt ud." },
-                low:    { color:"var(--muted)", bg:"var(--paper2)",    border:"var(--border2)",   icon:"?", label:"Lav sikkerhed",    desc:"Begrænsede allergendata — tjek altid emballagen." },
-              };
-              const cfg = confidenceConfig[confidence] || confidenceConfig.low;
-
-              return (
-                <div style={{ background:cfg.bg, border:`1px solid ${cfg.border}`, borderRadius:12, padding:"12px 14px", marginBottom:16 }}>
-                  <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom: daysSince !== null ? 6 : 0 }}>
-                    <div style={{ fontSize:16, fontWeight:800, color:cfg.color, flexShrink:0 }}>{cfg.icon}</div>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontSize:12, fontWeight:700, color:cfg.color }}>{cfg.label}</div>
-                      <div style={{ fontSize:11, color:"var(--muted)", marginTop:1, lineHeight:1.4 }}>{cfg.desc}</div>
-                    </div>
-                    {scanResult.verified_status === "verified" && (
-                      <div style={{ fontSize:10, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:20, padding:"2px 8px", flexShrink:0 }}>Verificeret</div>
-                    )}
-                  </div>
-                  {daysSince !== null && (
-                    <div style={{ fontSize:10, color:"var(--muted)", paddingTop:6, borderTop:`1px solid ${cfg.border}` }}>
-                      Sidst opdateret: {daysSince === 0 ? "i dag" : daysSince === 1 ? "i går" : `for ${daysSince} dage siden`}
-                      {daysSince > 180 && " · Data kan være forældet"}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
           </div>
         )}
 

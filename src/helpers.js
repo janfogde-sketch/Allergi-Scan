@@ -7,10 +7,15 @@ export const timeAgo = ts => { const d=Date.now()-new Date(ts).getTime(); if(d<6
 
 export const getAllergenLabels = (ids,custom=[]) => [...ids.map(id=>ALLERGENS.find(a=>a.id===id)).filter(Boolean).map(a=>`${a.emoji} ${a.label}`),...custom.map(c=>`✏️ ${c}`)];
 
-export const verifiedBadge = (v, source) => {
-  if (v==="verified"||v===true) return {label:"✓ Verificeret",bg:"rgba(34,197,94,.1)",color:"#16a34a"};
-  if (v==="partial") return {label:"⚡ Delvist verificeret",bg:"rgba(217,119,6,.08)",color:"#d97706"};
-  return {label:"Open Food Facts",bg:"rgba(37,99,235,.06)",color:"#2563eb"};
+export const verifiedBadge = (verified_status, source) => {
+  // Producent-data — højeste troværdighed
+  if (verified_status === "verified" || source === "producer")
+    return { label:"Fra producent", bg:"rgba(34,197,94,.1)", color:"#16a34a", dot:"#16a34a" };
+  // Open Food Facts — crowd-sourced
+  if (source === "off" || source === "open_food_facts")
+    return { label:"Open Food Facts", bg:"rgba(37,99,235,.06)", color:"#2563eb", dot:"#2563eb" };
+  // Bruger-indsendt
+  return { label:"Bruger-indsendt", bg:"rgba(138,144,153,.08)", color:"#6B7280", dot:"#6B7280" };
 };
 
 // ─── SUPABASE API-HJÆLPER ────────────────────────────────────────────────────
