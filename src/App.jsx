@@ -2324,6 +2324,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             profilePopup={profilePopup} setProfilePopup={setProfilePopup}
             greeting={greeting}
             cameraActive={cameraActive} setCameraActive={setCameraActive}
+            galleryInputRef={galleryInputRef}
+            lastScannedRef={lastScannedRef}
             addToList={addToList}
             handleEditProductCapture={handleEditProductCapture}
             handleImageCapture={handleImageCapture}

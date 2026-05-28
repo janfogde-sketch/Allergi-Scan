@@ -34,6 +34,8 @@ export default function ScannerScreen({
   profilePopup, setProfilePopup,
   greeting,
   cameraActive, setCameraActive,
+  galleryInputRef,
+  lastScannedRef,
   addToList,
   handleEditProductCapture,
   handleImageCapture, handleProductImageCapture,
