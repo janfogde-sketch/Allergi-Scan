@@ -269,7 +269,7 @@ export default function OnboardingScreen({
                 </button>
               )}
               <div style={{ flex:1 }}>
-                <StepBar total={10} current={onboardStep === 25 ? 3 : onboardStep > 25 ? onboardStep - 1 : onboardStep} />
+                <StepBar total={10} current={onboardStep === 25 ? 3 : onboardStep < 3 ? onboardStep : onboardStep + 1} />
               </div>
             </div>
 
@@ -429,8 +429,8 @@ export default function OnboardingScreen({
             {onboardStep === 3 && (
               <div className="fade-in">
                 <div className="card">
-                  <div className="step-title">Din profil</div>
-                  <div className="step-sub">Fortæl os lidt om dig.</div>
+                  <div className="step-title">Hvem er du?</div>
+                  <div className="step-sub">Disse oplysninger bruges til din personlige allergiprofil. Du kan altid redigere dem senere.</div>
                   {[
                     ["Dit fulde navn *","text","Fx. Anna Hansen","name"],
                     ["Email *","email","din@email.dk","email"],
@@ -507,7 +507,9 @@ export default function OnboardingScreen({
                   {/* Skriv selv */}
                   <div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid var(--border)" }}>
                     <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Kan ikke finde din allergi?</div>
-                    <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8, lineHeight:1.5 }}>Skriv det selv herunder. Vi tilføjer løbende flere valgmuligheder med større sikkerhed.</div>
+                    <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8, lineHeight:1.6 }}>
+                      Tilføj selv — enten en hel allergikategori (fx. "Fructose") eller en specifik ingrediens du reagerer på (fx. "Kasein", "Sorbitol", "Hvede-kimolie"). Vi fremhæver det i ingredienslister.
+                    </div>
                     <div className="input-row" style={{ marginBottom: customAllerg.length ? 8 : 0 }}>
                       <input className="field" placeholder="Fx. Fructose…" value={customInput}
                         onChange={e => setCustomInput(e.target.value)}

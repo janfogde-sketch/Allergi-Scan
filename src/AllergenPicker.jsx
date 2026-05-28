@@ -53,35 +53,20 @@ export const ENumberPicker = ({ selected, onChange }) => {
         <option value="sode">Sødestoffer (E900–E999)</option>
       </select>
 
-      {/* Farveforklaring */}
-      <div style={{ display:"flex", gap:6, marginBottom:8 }}>
-        {[["var(--border)","var(--ink)","Ingen"],["var(--amber)","var(--amber)","Intolerance"],["var(--red)","var(--red)","Allergi"]].map(([border,color,label]) => (
-          <div key={label} style={{ flex:1, display:"flex", alignItems:"center", gap:5, padding:"4px 8px", border:`1.5px solid ${border}`, borderRadius:8, background:color==="var(--ink)"?"var(--paper2)":color==="var(--amber)"?"var(--amber-lt)":"var(--red-lt)" }}>
-            <div style={{ width:7, height:7, borderRadius:"50%", background:color, flexShrink:0 }}/>
-            <span style={{ fontSize:10, fontWeight:700, color }}>{label}</span>
-          </div>
-        ))}
-      </div>
-      <div style={{ fontSize:10, color:"var(--muted)", marginBottom:8 }}>Tryk 1x = Intolerance · 2x = Allergi · 3x = Fjern</div>
+
 
       {/* Liste */}
       <div style={{ maxHeight:320, overflowY:"auto", border:"1px solid var(--border)", borderRadius:8 }}>
         {filtered.map(([e, name], i, arr) => {
-          const state = selected.includes(e+"_intolerance") ? "intolerance" : selected.includes(e) ? "allergen" : "none";
-          const bg = state==="allergen"?"var(--red-lt)":state==="intolerance"?"var(--amber-lt)":"#fff";
-          const col = state==="allergen"?"var(--red)":state==="intolerance"?"var(--amber)":"var(--ink)";
-          const colMuted = state==="allergen"?"var(--red)":state==="intolerance"?"var(--amber)":"var(--muted2)";
+          const on = selected.includes(e);
           return (
-            <div key={e} onClick={() => {
-              if (state==="none") onChange([...selected, e+"_intolerance"]);
-              else if (state==="intolerance") onChange([...selected.filter(x=>x!==e+"_intolerance"), e]);
-              else onChange(selected.filter(x=>x!==e));
-            }} style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"8px 12px",
-              borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none",
-              background: bg, cursor:"pointer" }}>
-              <div style={{ fontSize:12, fontWeight:800, color:col, width:48, flexShrink:0, paddingTop:1 }}>{e}</div>
-              <div style={{ fontSize:12, color:colMuted, flex:1, lineHeight:1.4 }}>{name}</div>
-              {state!=="none" && <div style={{ fontSize:9, fontWeight:800, color:col, flexShrink:0, paddingTop:2 }}>{state==="allergen"?"Allergi":"Intolerance"}</div>}
+            <div key={e} onClick={() => onChange(on ? selected.filter(x=>x!==e) : [...selected, e])}
+              style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"8px 12px",
+                borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none",
+                background: on?"var(--red-lt)":"#fff", cursor:"pointer" }}>
+              <div style={{ fontSize:12, fontWeight:800, color:on?"var(--red)":"var(--ink)", width:48, flexShrink:0, paddingTop:1 }}>{e}</div>
+              <div style={{ fontSize:12, color:on?"var(--red)":"var(--muted2)", flex:1, lineHeight:1.4 }}>{name}</div>
+              {on && <div style={{ fontSize:9, fontWeight:800, color:"var(--red)", flexShrink:0, paddingTop:2 }}>✓</div>}
             </div>
           );
         })}
@@ -92,24 +77,16 @@ export const ENumberPicker = ({ selected, onChange }) => {
       {selected.length > 0 && (
         <div style={{ marginTop:10 }}>
           <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Valgte ({selected.length})</div>
-          <div style={{ display:"flex", flexDirection:"column", gap:3 }}>
-            {selected.map(e => {
-              const isIntolerance = e.endsWith("_intolerance");
-              const eId = isIntolerance ? e.replace("_intolerance","") : e;
-              const col = isIntolerance ? "var(--amber)" : "var(--red)";
-              const bg = isIntolerance ? "var(--amber-lt)" : "var(--red-lt)";
-              const border = isIntolerance ? "var(--amber-md)" : "var(--red-md)";
-              return (
-                <div key={e} style={{ display:"flex", alignItems:"center", gap:8, padding:"5px 10px", background:bg, border:`1px solid ${border}`, borderRadius:6 }}>
-                  <div style={{ fontSize:11, fontWeight:800, color:col, width:44, flexShrink:0 }}>{eId}</div>
-                  <div style={{ fontSize:11, color:col, flex:1, lineHeight:1.3 }}>{(E_NUMBERS[eId]||"").split(" — ")[0]}</div>
-                  <div style={{ fontSize:9, fontWeight:700, color:col }}>{isIntolerance?"Intolerance":"Allergi"}</div>
-                  <div onClick={() => onChange(selected.filter(x=>x!==e))} style={{ cursor:"pointer", flexShrink:0 }}>
-                    <Icon name="x" size={12} color={col} />
-                  </div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+            {selected.map(e => (
+              <div key={e} style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 10px",
+                background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:20 }}>
+                <div style={{ fontSize:11, fontWeight:800, color:"var(--red)" }}>{e}</div>
+                <div onClick={() => onChange(selected.filter(x=>x!==e))} style={{ cursor:"pointer", lineHeight:0 }}>
+                  <Icon name="x" size={11} color="var(--red)" />
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
       )}
