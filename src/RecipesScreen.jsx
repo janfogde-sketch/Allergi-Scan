@@ -22,7 +22,6 @@ export default function RecipesScreen({
   loadRecipes, loadRecipeIngredients,
   user,
   toggleFavorite,
-
   loading,
   recipeFilter, setRecipeFilter,
   recipeSafeOnly, setRecipeSafeOnly,
@@ -34,6 +33,140 @@ export default function RecipesScreen({
 }) {
   return (
     <>
+        {/* ── OPSKRIFT DETALJESIDE ── */}
+        {screen === SCREENS.RECIPES && selectedRecipe && !showSubmitRecipe && (() => {
+          const r = selectedRecipe;
+          const isFav = favoriteRecipes.includes(r.id);
+          const totalMins = (r.prep_time_minutes||0) + (r.cook_time_minutes||0);
+          let rFlags = {};
+          try { rFlags = typeof r.allergen_flags === "string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags || {}); } catch {}
+          const { status } = compareAllergens(rFlags, activeIds);
+          const statusColor = status==="safe"?"var(--green)":status==="danger"?"var(--red)":"var(--amber)";
+          const statusBg = status==="safe"?"var(--green-lt)":status==="danger"?"var(--red-lt)":"var(--amber-lt)";
+          const statusLabel = status==="safe"?"✓ Sikkert for dig":status==="danger"?"✗ Indeholder allergen":"⚠️ Mulige spor";
+
+          // Parse instruktioner
+          let steps = [];
+          try {
+            const raw = r.instructions;
+            if (typeof raw === "string") {
+              const parsed = JSON.parse(raw);
+              steps = Array.isArray(parsed) ? parsed : [raw];
+            } else if (Array.isArray(raw)) {
+              steps = raw;
+            }
+          } catch { if (r.instructions) steps = [r.instructions]; }
+
+          // Skaler portioner
+          const baseServings = r.servings || 4;
+          const scale = recipeServings / baseServings;
+
+          return (
+            <div className="screen fade-in" style={{ paddingLeft:0, paddingRight:0, paddingBottom:110 }}>
+              {/* Hero billede */}
+              <div className="recipe-detail-hero">
+                {r.image_url
+                  ? <img src={r.image_url} alt={r.title} className="recipe-detail-img" />
+                  : <div className="recipe-detail-img-placeholder">🍽️</div>
+                }
+                <button className="recipe-detail-back" onClick={() => setSelectedRecipe(null)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path strokeLinecap="round" d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </button>
+                <button className="recipe-detail-fav" onClick={() => setFavoriteRecipes(f => isFav ? f.filter(x=>x!==r.id) : [...f,r.id])}>
+                  {isFav ? "❤️" : "🤍"}
+                </button>
+              </div>
+
+              <div style={{ padding:"18px 16px 0" }}>
+                {/* Status badge */}
+                <div style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"4px 10px", borderRadius:100, background:statusBg, border:`1px solid ${statusColor}`, fontSize:11, fontWeight:800, color:statusColor, marginBottom:10 }}>
+                  {statusLabel}
+                </div>
+
+                {/* Titel */}
+                <div className="recipe-detail-title">{r.title}</div>
+
+                {/* Meta-info */}
+                <div className="recipe-meta-row">
+                  {r.category && <span className="recipe-meta-pill">🍽️ {r.category}</span>}
+                  {r.prep_time_minutes > 0 && <span className="recipe-meta-pill">🔪 {r.prep_time_minutes} min forberedelse</span>}
+                  {r.cook_time_minutes > 0 && <span className="recipe-meta-pill">🔥 {r.cook_time_minutes} min tilberedning</span>}
+                  {totalMins > 0 && <span className="recipe-meta-pill">⏱ {totalMins} min i alt</span>}
+                  {r.difficulty && <span className="recipe-meta-pill">📊 {r.difficulty}</span>}
+                  {(r.tags||[]).filter(t=>t==="vegetarisk"||t==="vegan").map(t => (
+                    <span key={t} className="recipe-meta-pill" style={{ background:"var(--green-lt)", color:"var(--green)", borderColor:"var(--green-mid)" }}>{t==="vegan"?"🌱":"🥦"} {t}</span>
+                  ))}
+                </div>
+
+                {/* Beskrivelse */}
+                {r.description && (
+                  <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6, marginBottom:16, padding:"12px 14px", background:"var(--paper2)", borderRadius:10 }}>
+                    {r.description}
+                  </div>
+                )}
+
+                {/* ── PORTIONER KONTROL ── */}
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:18 }}>
+                  <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Portioner</div>
+                  <div className="servings-ctrl">
+                    <button className="servings-btn" onClick={() => setRecipeServings(s => Math.max(1, s-1))}>−</button>
+                    <div className="servings-num">{recipeServings}</div>
+                    <button className="servings-btn" onClick={() => setRecipeServings(s => s+1)}>+</button>
+                  </div>
+                </div>
+
+                {/* ── INGREDIENSER ── */}
+                {r.ingredients_raw && (
+                  <div style={{ marginBottom:20 }}>
+                    <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>Ingredienser</div>
+                    <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, overflow:"hidden" }}>
+                      <IngredientsList text={r.ingredients_raw} allergenFlags={rFlags} />
+                    </div>
+                  </div>
+                )}
+
+                {/* ── TRIN-FOR-TRIN ── */}
+                {steps.length > 0 && (
+                  <div style={{ marginBottom:20 }}>
+                    <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>Fremgangsmåde</div>
+                    <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, overflow:"hidden" }}>
+                      {steps.map((step, i) => {
+                        const done = !!completedSteps[i];
+                        return (
+                          <div key={i} className="step-row" style={{ opacity: done ? 0.45 : 1 }}
+                            onClick={() => setCompletedSteps(s => ({ ...s, [i]: !s[i] }))}>
+                            <div className="step-circle" style={{ background: done ? "var(--green)" : "var(--paper2)", border: done ? "none" : "1.5px solid var(--border2)" }}>
+                              {done
+                                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                                : <span style={{ fontSize:12, fontWeight:800, color:"var(--muted2)" }}>{i+1}</span>
+                              }
+                            </div>
+                            <div style={{ flex:1, fontSize:13, color:"var(--ink)", lineHeight:1.6, paddingRight:8, textDecoration: done ? "line-through" : "none" }}>
+                              {typeof step === "object" ? step.text || step.description || JSON.stringify(step) : step}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {Object.keys(completedSteps).filter(k => completedSteps[k]).length === steps.length && steps.length > 0 && (
+                      <div style={{ textAlign:"center", padding:"20px 0", fontSize:18, fontWeight:800, color:"var(--green)" }}>
+                        🎉 Alle trin gennemført!
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Allergen advarsel */}
+                <div style={{ display:"flex", gap:8, alignItems:"center", padding:"12px 14px", background:"var(--paper2)", borderRadius:10, marginBottom:16 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2"><path strokeLinecap="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                  <div style={{ fontSize:10, color:"var(--muted)", lineHeight:1.5 }}>Allergener er vejledende. Tjek altid ingrediensernes emballage.</div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── OPSKRIFT LISTE ── */}
         {screen === SCREENS.RECIPES && !selectedRecipe && !showSubmitRecipe && (() => {
           const categories = [
             { id:"alle", label:"🍽️ Alle" }, { id:"favoritter", label:"❤️ Favoritter" },

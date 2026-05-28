@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { ALLERGENS, SCREENS, MADPAS_LANGUAGES, ALLERGEN_T, MADPAS_INTRO, ALLERGEN_EXAMPLES, DIETS } from "./constants.jsx";
 import { initials, getAllergenLabels } from "./helpers.js";
+import { Icon } from "./SharedComponents.jsx";
 
 export default function MadpasScreen({
   screen,
