@@ -444,4 +444,4 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-
 // Bruges til at hente en token direkte i inline styles hvis nødvendigt.
 // Eksempel: color('green') → "#22C55E"
 
-export const color = (key) => THEME[key] ?? \`var(--\${key})\`;
+export const color = (key) => THEME[key] ?? `var(--${key})`;
