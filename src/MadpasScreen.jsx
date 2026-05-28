@@ -14,6 +14,8 @@ export default function MadpasScreen({
   family, user,
   langOpen, setLangOpen,
   madpasSpeak,
+
+  selectedENumbers,
 }) {
   return (
     <>

@@ -21,6 +21,8 @@ export default function RecipesScreen({
   submittingRecipe,
   loadRecipes, loadRecipeIngredients,
   toggleFavorite,
+
+  loading,
 }) {
   return (
     <>

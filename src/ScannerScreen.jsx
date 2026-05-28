@@ -40,6 +40,17 @@ export default function ScannerScreen({
   handleEditProductCapture,
   handleImageCapture, handleProductImageCapture,
   toggleFavorite,
+  clearDone,
+  editProductImage,
+  isFavorite,
+  removeItem,
+  scanFromGallery,
+  searchLoading,
+  startCamera,
+  stopCamera,
+  toggleItem,
+  toggleTorch,
+  torchOn,
 }) {
   return (
     <>

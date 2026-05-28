@@ -37,6 +37,9 @@ export default function OnboardingScreen({
   newMemberCustomInput, setNewMemberCustomInput,
   customInput, setCustomInput,
   handleLogin, handleSignup, handleOAuth,
+  addMember,
+  removeMember,
+  saveAllergensStep2,
   saveProfileStep1, finishOnboard,
 }) {
   return (

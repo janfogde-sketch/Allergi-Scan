@@ -2035,6 +2035,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             newMemberCustomInput={newMemberCustomInput} setNewMemberCustomInput={setNewMemberCustomInput}
             customInput={customInput} setCustomInput={setCustomInput}
             handleLogin={handleLogin} handleSignup={handleSignup} handleOAuth={handleOAuth}
+            saveAllergensStep2={saveAllergensStep2}
             saveProfileStep1={saveProfileStep1} finishOnboard={finishOnboard}
           />
         )}
@@ -2331,6 +2332,17 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             handleImageCapture={handleImageCapture}
             handleProductImageCapture={handleProductImageCapture}
             toggleFavorite={toggleFavorite}
+            clearDone={clearDone}
+            editProductImage={editProductImage}
+            isFavorite={isFavorite}
+            removeItem={removeItem}
+            scanFromGallery={scanFromGallery}
+            searchLoading={searchLoading}
+            startCamera={startCamera}
+            stopCamera={stopCamera}
+            toggleItem={toggleItem}
+            toggleTorch={toggleTorch}
+            torchOn={torchOn}
           />
         )}
 
@@ -2351,6 +2363,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             submitIngredients={submitIngredients} setSubmitIngredients={setSubmitIngredients}
             submittingRecipe={submittingRecipe}
             loadRecipes={loadRecipes} loadRecipeIngredients={loadRecipeIngredients}
+            loading={loading}
             toggleFavorite={toggleFavorite}
           />
         )}
@@ -2387,6 +2400,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             newMemberSubtypes={newMemberSubtypes} setNewMemberSubtypes={setNewMemberSubtypes}
             newMemberCustomInput={newMemberCustomInput} setNewMemberCustomInput={setNewMemberCustomInput}
             addMember={addMember} removeMember={removeMember}
+            ticketsLoading={ticketsLoading}
             loadAdminStats={loadAdminStats} loadSubmissions={loadSubmissions} loadTickets={loadTickets}
             setAdminSection={setAdminSection} setSubmissionFilter={setSubmissionFilter}
           />
@@ -2409,6 +2423,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             submitIngredients={submitIngredients} setSubmitIngredients={setSubmitIngredients}
             submittingRecipe={submittingRecipe}
             loadRecipes={loadRecipes} loadRecipeIngredients={loadRecipeIngredients}
+            loading={loading}
             toggleFavorite={toggleFavorite}
           />
         )}
