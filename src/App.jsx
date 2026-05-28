@@ -2017,9 +2017,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             onboardStep={onboardStep} setOnboardStep={setOnboardStep}
             allergens={allergens} setAllergens={setAllergens}
             customAllerg={customAllerg} setCustomAllerg={setCustomAllerg}
-            diets={diets} setDiets={setDiets}
-            eNumbers={eNumbers} setENumbers={setENumbers}
-            subtypes={subtypes} setSubtypes={setSubtypes}
+            selectedENumbers={selectedENumbers} setSelectedENumbers={setSelectedENumbers}
+            activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
             family={family} setFamily={setFamily}
             activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
             isOAuth={isOAuth}
@@ -2034,9 +2033,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             newMemberENumbers={newMemberENumbers} setNewMemberENumbers={setNewMemberENumbers}
             newMemberSubtypes={newMemberSubtypes} setNewMemberSubtypes={setNewMemberSubtypes}
             newMemberCustomInput={newMemberCustomInput} setNewMemberCustomInput={setNewMemberCustomInput}
-            activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
             customInput={customInput} setCustomInput={setCustomInput}
-            selectedENumbers={selectedENumbers} setSelectedENumbers={setSelectedENumbers}
             handleLogin={handleLogin} handleSignup={handleSignup} handleOAuth={handleOAuth}
             saveProfileStep1={saveProfileStep1} finishOnboard={finishOnboard}
           />
@@ -2328,6 +2325,44 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             handleImageCapture={handleImageCapture}
             handleProductImageCapture={handleProductImageCapture}
             toggleFavorite={toggleFavorite}
+          />
+        )}
+
+        {/* ══ RECIPES SCREEN ══ */}
+        {screen === SCREENS.RECIPES && (
+
+        {/* ══ PROFILE SCREENS ══ */}
+        {(screen === SCREENS.HISTORY || screen === SCREENS.PROFILE ||
+          screen === SCREENS.FAVORITES || screen === SCREENS.EDITPROFILE ||
+          screen === SCREENS.FAMILY) && (
+          <ProfileScreen
+            screen={screen} setScreen={setScreen}
+            user={user} setUser={setUser}
+            allergens={allergens} setAllergens={setAllergens}
+            customAllerg={customAllerg} setCustomAllerg={setCustomAllerg}
+            family={family} setFamily={setFamily}
+            activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
+            history={history} favorites={favorites}
+            userId={userId} accessToken={accessToken}
+            showDeleteAccount={showDeleteAccount} setShowDeleteAccount={setShowDeleteAccount}
+            deleteConfirmText={deleteConfirmText} setDeleteConfirmText={setDeleteConfirmText}
+            deletingAccount={deletingAccount} deleteOwnAccount={deleteOwnAccount}
+            clearAuth={clearAuth}
+            eSearch={eSearch} setESearch={setESearch}
+            eCategory={eCategory} setECategory={setECategory}
+            selectedENumbers={selectedENumbers} setSelectedENumbers={setSelectedENumbers}
+            activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
+            customInput={customInput} setCustomInput={setCustomInput}
+            newMemberName={newMemberName} setNewMemberName={setNewMemberName}
+            newMemberAllerg={newMemberAllerg} setNewMemberAllerg={setNewMemberAllerg}
+            newMemberCustomAllerg={newMemberCustomAllerg} setNewMemberCustomAllerg={setNewMemberCustomAllerg}
+            newMemberDiets={newMemberDiets} setNewMemberDiets={setNewMemberDiets}
+            newMemberENumbers={newMemberENumbers} setNewMemberENumbers={setNewMemberENumbers}
+            newMemberSubtypes={newMemberSubtypes} setNewMemberSubtypes={setNewMemberSubtypes}
+            newMemberCustomInput={newMemberCustomInput} setNewMemberCustomInput={setNewMemberCustomInput}
+            addMember={addMember} removeMember={removeMember}
+            loadAdminStats={loadAdminStats} loadSubmissions={loadSubmissions} loadTickets={loadTickets}
+            setAdminSection={setAdminSection} setSubmissionFilter={setSubmissionFilter}
           />
         )}
 
