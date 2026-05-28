@@ -308,145 +308,24 @@ export const E_NUMBERS = {
   "E161g": "Canthaxanthin — orange farve, bruges i lakseopdræt",
 };
 
-export const INCOMPATIBLE_SUBTYPES = {
-  // Gluten: "alle" udelukker de mere specifikke (cøliaki+sensitivitet er ok, men "alle" + specifik er redundant)
-  gluten_alle:     ["gluten_coeliaki", "gluten_allergi", "gluten_sensitiv"],
-  gluten_coeliaki: ["gluten_alle"],
-  gluten_allergi:  ["gluten_alle"],
-  gluten_sensitiv: ["gluten_alle"],
-  // Mælk: "alle" udelukker de specifikke
-  laktose_alle:    ["laktose_protein", "laktose_sukker", "laktose_valle"],
-  laktose_protein: ["laktose_alle"],
-  laktose_sukker:  ["laktose_alle"],
-  laktose_valle:   ["laktose_alle"],
-  // Nødder: "alle" udelukker specifikke
-  noedder_alle:    ["noedder_hassel","noedder_mandel","noedder_valnoed","noedder_cashew","noedder_kokos"],
-  noedder_hassel:  ["noedder_alle"],
-  noedder_mandel:  ["noedder_alle"],
-  noedder_valnoed: ["noedder_alle"],
-  noedder_cashew:  ["noedder_alle"],
-  noedder_kokos:   ["noedder_alle"],
-  // Æg: "alle" udelukker specifikke
-  aeg_alle:        ["aeg_hvid", "aeg_bagt"],
-  aeg_hvid:        ["aeg_alle"],
-  aeg_bagt:        ["aeg_alle"],
-  // Fisk: "alle" udelukker specifikke
-  fisk_alle:       ["fisk_hvid", "fisk_fed", "fisk_skjult"],
-  fisk_hvid:       ["fisk_alle"],
-  fisk_fed:        ["fisk_alle"],
-  fisk_skjult:     ["fisk_alle"],
-  // Soja: "alle" udelukker specifikke
-  soja_alle:       ["soja_protein", "soja_lecitin"],
-  soja_protein:    ["soja_alle"],
-  soja_lecitin:    ["soja_alle"],
-  // Skaldyr: "alle" udelukker specifikke
-  skaldyr_alle:    ["skaldyr_krebs", "skaldyr_bloeddyr"],
-  skaldyr_krebs:   ["skaldyr_alle"],
-  skaldyr_bloeddyr:["skaldyr_alle"],
-  // Sesam: "alle" udelukker specifikke
-  sesam_alle:      ["sesam_froe", "sesam_olie"],
-  sesam_froe:      ["sesam_alle"],
-  sesam_olie:      ["sesam_alle"],
-};
-
-// ─── ALLERGEN SUBTYPE MODAL ───────────────────────────────────────────────────
-
-export const ALLERGEN_SUBTYPES = {
-  laktose: {
-    label: "Mælk / Laktose",
-    intro: "Mælkereaktioner kan variere meget. Præciser din reaktion for størst mulig tryghed.",
-    options: [
-      { id: "laktose_alle",    label: "Alle mælkeprodukter",        desc: "Undgår alt fra mælk — strengest", icon: "🥛" },
-      { id: "laktose_protein", label: "Mælkeprotein (kasein/valle)", desc: "Allergi mod mælkeprotein — også i smør og hård ost", icon: "🧀" },
-      { id: "laktose_sukker",  label: "Laktose (mælkesukker)",      desc: "Tåler ofte smør og hård ost med lavt laktoseindhold", icon: "🫙" },
-      { id: "laktose_valle",   label: "Valle-protein",               desc: "Relevant i sportsprodukter og proteinbarer", icon: "💪" },
-    ]
-  },
-  gluten: {
-    label: "Gluten / Hvede",
-    intro: "Glutenreaktioner varierer fra mild sensitivitet til svær cøliaki. Din præcisering hjælper os med at filtrere korrekt.",
-    options: [
-      { id: "gluten_coeliaki",   label: "Cøliaki",                    desc: "Autoimmun reaktion — ingen spor tolereres", icon: "🚫" },
-      { id: "gluten_allergi",    label: "Hvedeallergi",                desc: "Allergi specifikt mod hvede — rug og byg muligvis ok", icon: "🌾" },
-      { id: "gluten_sensitiv",   label: "Glutensensitivitet",          desc: "Ikke-cøliaki — spormængder kan tolereres", icon: "⚠️" },
-      { id: "gluten_alle",       label: "Alt med gluten",              desc: "Undgår alt gluten inkl. spor — strengest", icon: "❌" },
-    ]
-  },
-  noedder: {
-    label: "Nødder",
-    intro: "Mange er kun allergiske over for specifikke nødder. Præciser hvilke for bedre filtrering.",
-    options: [
-      { id: "noedder_alle",      label: "Alle nødder",                desc: "Undgår samtlige nøddetyper — strengest", icon: "🥜" },
-      { id: "noedder_hassel",    label: "Hasselnødder",               desc: "Specifikt hasselnød (pollenallergi)", icon: "🌰" },
-      { id: "noedder_mandel",    label: "Mandler",                    desc: "Specifikt mandel", icon: "🫘" },
-      { id: "noedder_valnoed",   label: "Valnødder",                  desc: "Specifikt valnød", icon: "🌰" },
-      { id: "noedder_cashew",    label: "Cashew & Pistacie",          desc: "Anacardiaceae-familien", icon: "🫘" },
-      { id: "noedder_kokos",     label: "Kokos",                      desc: "Botanisk frugt — ikke altid inkluderet i nødder", icon: "🥥" },
-    ]
-  },
-  aeg: {
-    label: "Æg",
-    intro: "Ægallergi kan være mod hvide, blomme eller begge. Mange tåler velbagt æg.",
-    options: [
-      { id: "aeg_alle",          label: "Alle æggeprodukter",         desc: "Undgår alt — inkl. spor i bagværk", icon: "🥚" },
-      { id: "aeg_hvid",          label: "Kun æggehvide",              desc: "Tåler æggeblomme", icon: "⚪" },
-      { id: "aeg_bagt",          label: "Rå/let tilberedt",           desc: "Tåler velbagt æg (f.eks. i kager)", icon: "🎂" },
-    ]
-  },
-  fisk: {
-    label: "Fisk",
-    intro: "Fiskeallergier er ofte artspecifikke. Præciser hvilken type.",
-    options: [
-      { id: "fisk_alle",         label: "Alle fisk",                  desc: "Undgår alle fiskearter — strengest", icon: "🐟" },
-      { id: "fisk_hvid",         label: "Hvidfisk",                   desc: "Torsk, sej, kuller, pighvar", icon: "🐠" },
-      { id: "fisk_fed",          label: "Fed fisk",                   desc: "Laks, makrel, sild, ørred", icon: "🍣" },
-      { id: "fisk_skjult",       label: "Skjulte kilder",             desc: "Worcestershiresauce, ansjoser, fiskeextrakt", icon: "⚠️" },
-    ]
-  },
-  soja: {
-    label: "Soja",
-    intro: "Sojaprotein og sojalecithin reagerer forskelligt. Mange tåler sojalecithin.",
-    options: [
-      { id: "soja_alle",         label: "Al soja",                    desc: "Undgår alt fra soja inkl. lecithin", icon: "🫘" },
-      { id: "soja_protein",      label: "Sojaprotein",                desc: "Tåler sojalecithin (E322) — brugt i chokolade", icon: "🍫" },
-      { id: "soja_lecitin",      label: "Sojalecithin (E322)",        desc: "Specifikt sojalecithin som tilsætningsstof", icon: "⚗️" },
-    ]
-  },
-  skaldyr: {
-    label: "Skaldyr",
-    intro: "Krebsdyr og bløddyr er forskellige allergener. Mange reagerer kun på det ene.",
-    options: [
-      { id: "skaldyr_alle",      label: "Alle skaldyr",               desc: "Undgår krebsdyr, muslinger og bløddyr", icon: "🦐" },
-      { id: "skaldyr_krebs",     label: "Krebsdyr",                   desc: "Rejer, krabbe, hummer, languster", icon: "🦞" },
-      { id: "skaldyr_bloeddyr",  label: "Bløddyr / Muslinger",        desc: "Muslinger, østers, blæksprutte", icon: "🦑" },
-    ]
-  },
-  sesam: {
-    label: "Sesam",
-    intro: "Sesam kan skjule sig under mange navne på etiketter.",
-    options: [
-      { id: "sesam_alle",        label: "Al sesam",                   desc: "Inkl. tahini, sesamolie og sesammel", icon: "🌱" },
-      { id: "sesam_froe",        label: "Sesamfrø",                   desc: "Primært hele eller knuste frø", icon: "·" },
-      { id: "sesam_olie",        label: "Sesamolie",                  desc: "Koldpresset — mest allergen. Raffineret muligvis ok", icon: "🫗" },
-    ]
-  },
-};
 
 export const ALLERGENS = [
-  { id:"gluten",      label:"Gluten",         emoji:"🌾" },
-  { id:"laktose",     label:"Laktose / Mælk", emoji:"🥛" },
-  { id:"aeg",         label:"Æg",             emoji:"🥚" },
-  { id:"noedder",     label:"Nødder",         emoji:"🌰" },
-  { id:"jordnoedder", label:"Jordnødder",     emoji:"🥜" },
-  { id:"soja",        label:"Soja",           emoji:"🫘" },
-  { id:"fisk",        label:"Fisk",           emoji:"🐟" },
-  { id:"skaldyr",     label:"Skaldyr",        emoji:"🦐" },
-  { id:"selleri",     label:"Selleri",        emoji:"🥬" },
-  { id:"sennep",      label:"Sennep",         emoji:"🌶️" },
-  { id:"sesam",       label:"Sesam",          emoji:"🌿" },
-  { id:"svovl",       label:"Sulfitter",      emoji:"🍷" },
-  { id:"lupin",       label:"Lupin",          emoji:"🌸" },
-  { id:"bloeddyr",    label:"Bløddyr",        emoji:"🦑" },
+  { id:"gluten",        label:"Gluten",           emoji:"🌾" },
+  { id:"hvede",         label:"Hvedeallergi",      emoji:"🫓" },
+  { id:"maelkeallergi", label:"Mælkeallergi",      emoji:"🥛" },
+  { id:"laktose",       label:"Laktoseintolerance",emoji:"🫙" },
+  { id:"aeg",           label:"Æg",               emoji:"🥚" },
+  { id:"noedder",       label:"Nødder",            emoji:"🌰" },
+  { id:"jordnoedder",   label:"Jordnødder",        emoji:"🥜" },
+  { id:"soja",          label:"Soja",              emoji:"🫛" },
+  { id:"fisk",          label:"Fisk",              emoji:"🐟" },
+  { id:"skaldyr",       label:"Skaldyr",           emoji:"🦐" },
+  { id:"selleri",       label:"Selleri",           emoji:"🥬" },
+  { id:"sennep",        label:"Sennep",            emoji:"🟡" },
+  { id:"sesam",         label:"Sesam",             emoji:"🌿" },
+  { id:"svovl",         label:"Sulfitter",         emoji:"🍷" },
+  { id:"lupin",         label:"Lupin",             emoji:"🌸" },
+  { id:"bloeddyr",      label:"Bløddyr",           emoji:"🦑" },
 ];
 
 export const DEMO_CODES = [

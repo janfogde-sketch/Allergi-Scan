@@ -1,11 +1,11 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { ALLERGENS, SCREENS, DIETS, ALLERGEN_SUBTYPES, INCOMPATIBLE_SUBTYPES,
-         E_NUMBERS, E_CATEGORIES, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
+import { ALLERGENS, SCREENS, DIETS, E_NUMBERS, E_CATEGORIES, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { initials, timeAgo, getAllergenLabels } from "./helpers.js";
 import { EatSafeLogo, Icon, ProductImage } from "./SharedComponents.jsx";
-import { ENumberPicker, SubtypeModal, AllergyForm } from "./AllergenPicker.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
+import { EatSafeLogo, Icon } from "./SharedComponents.jsx";
+import { ENumberPicker, SubtypeModal, AllergyForm } from "./AllergenPicker.jsx";
 
 export default function ProfileScreen({
   screen, setScreen,
@@ -41,7 +41,6 @@ export default function ProfileScreen({
   setScanResult,
   ticketsLoading,
 }) {
-  // FamilyChips — lokal kopi der bruger modtagne props
   const FamilyChips = () => {
     const allIds = ["me", ...family.map(m => m.id)];
     const isAll = allIds.every(id => activeProfiles.includes(id));
@@ -338,76 +337,38 @@ export default function ProfileScreen({
 
             <div className="card" style={{ marginBottom:10 }}>
               <div className="card-lbl">Mine allergier / intolerancer</div>
+              <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10, lineHeight:1.4 }}>
+                Tryk for at markere en allergi eller intolerance
+              </div>
               <div className="chip-grid" style={{ marginBottom:10 }}>
-                <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10, padding:"6px 10px", background:"var(--paper2)", borderRadius:8, lineHeight:1.5 }}>
-                  Tryk 1x = Intolerance (spor kan være problem) · 2x = Allergi (farlig) · 3x = Fjern
-                </div>
                 {ALLERGENS.map(a => {
-                  const state = allergens.includes(a.id) ? (customAllerg.includes(a.id+"_intolerance") ? "intolerance" : "allergen") : "none";
-                  const bg = state==="allergen" ? "var(--red-lt)" : state==="intolerance" ? "var(--amber-lt)" : "var(--paper2)";
-                  const border = state==="allergen" ? "var(--red)" : state==="intolerance" ? "var(--amber)" : "var(--border)";
-                  const color = state==="allergen" ? "var(--red)" : state==="intolerance" ? "var(--amber)" : "var(--ink)";
-                  const label = state==="allergen" ? "Allergi" : state==="intolerance" ? "Intolerance" : "";
+                  const on = allergens.includes(a.id);
                   return (
-                    <div key={a.id} className="chip" style={{ background:bg, border:`1.5px solid ${border}`, color }}
-                      onClick={() => {
-                        if (state==="none") {
-                          setAllergens(p => [...p, a.id]);
-                          setCustomAllerg(p => [...p, a.id+"_intolerance"]);
-                        } else if (state==="intolerance") {
-                          setCustomAllerg(p => p.filter(x => x !== a.id+"_intolerance"));
-                        } else {
-                          setAllergens(p => p.filter(x => x !== a.id));
-                        }
-                      }}>
-                      <span style={{ flex:1 }}>{a.label}</span>
-                      {label && <div style={{ fontSize:9, fontWeight:800, color }}>{label}</div>}
+                    <div key={a.id} className="chip" style={{
+                      background: on ? "var(--red-lt)" : "var(--paper2)",
+                      border: `1.5px solid ${on ? "var(--red)" : "var(--border)"}`,
+                      color: on ? "var(--red)" : "var(--ink)",
+                    }}
+                      onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
+                      <span style={{ flex:1 }}>{a.emoji} {a.label}</span>
+                      {on && <div style={{ fontSize:9, fontWeight:800, color:"var(--red)" }}>✓</div>}
                     </div>
                   );
                 })}
               </div>
-              <div className="card-lbl">Andre intoleranser</div>
+              <div className="card-lbl">Andre allergier</div>
               <div className="input-row" style={{ marginBottom: customAllerg.length ? 8 : 0 }}>
                 <input className="field" placeholder="Fx. Fructose…" value={customInput} onChange={e => setCustomInput(e.target.value)}
                   onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}} />
                 <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}}>+</button>
               </div>
               {customAllerg.length > 0 && <div className="tags">{customAllerg.map((a,i) => <div key={i} className="tag">✏️ {a}<span className="tag-x" onClick={() => setCustomAllerg(c=>c.filter((_,j)=>j!==i))}>×</span></div>)}</div>}
-              {/* Præciser allergier */}
-              {allergens.some(id => ALLERGEN_SUBTYPES[id]) && (
-                <div style={{ marginTop:12, paddingTop:12, borderTop:"1px solid var(--border)" }}>
-                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>Tilpas din allergi præcist til dig selv</div>
-                  <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8, lineHeight:1.5 }}>For størst mulig tryghed kan du præcisere hvad du reagerer på.</div>
-                  <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                    {allergens.filter(id => ALLERGEN_SUBTYPES[id]).map(id => {
-                      const data = ALLERGEN_SUBTYPES[id];
-                      const subtype = allergenSubtypes[id];
-                      const subtypeLabel = subtype && subtype.length > 0 ? subtype.map(id => data.options.find(o=>o.id===id)?.label).filter(Boolean).join(", ") : null;
-                      return (
-                        <div key={id} onClick={() => setActiveSubtypeModal(id)}
-                          style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px",
-                            border:"1.5px solid var(--green)", background:"var(--green-lt)",
-                            borderRadius:10, cursor:"pointer" }}>
-                          <div style={{ flex:1 }}>
-                            <div style={{ fontSize:12, fontWeight:700, color:"var(--green)" }}>{data.label}</div>
-                            <div style={{ fontSize:11, color:"var(--muted2)", marginTop:2 }}>{subtypeLabel || "Tryk for at præcisere →"}</div>
-                          </div>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2">
-                            <path strokeLinecap="round" d="M9 5l7 7-7 7"/>
-                          </svg>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
 
               <button className="btn btn-primary btn-full" style={{ marginTop:12 }} onClick={async () => {
                 try {
                   await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, { method:"DELETE", headers:makeHeaders(accessToken) });
                   for(const a of allergens) await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, { method:"POST", headers:makeHeaders(accessToken), body:JSON.stringify({user_id:userId,allergen:a,type:"allergen"}) });
-                  const realCustom = customAllerg.filter(c => !c.endsWith("_intolerance"));
-                  for(const c of realCustom) await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, { method:"POST", headers:makeHeaders(accessToken), body:JSON.stringify({user_id:userId,allergen:c,type:"custom"}) });
+                  for(const c of customAllerg) await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, { method:"POST", headers:makeHeaders(accessToken), body:JSON.stringify({user_id:userId,allergen:c,type:"custom"}) });
                   setScreen(SCREENS.PROFILE);
                 } catch (e) { alert("Fejl: " + e.message); }
               }}>Gem</button>

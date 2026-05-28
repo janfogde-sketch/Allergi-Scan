@@ -129,25 +129,40 @@ export function IngredientsList({ text, allergenFlags = {} }) {
   const allergenLabels = {
     gluten: [
       // Direkte
-      "gluten","hvede","rug","byg","havre","spelt","kamut","einkorn","emmer","khorasanhvede",
+      "gluten","rug","byg","havre","spelt","kamut","einkorn","emmer","khorasanhvede",
       // Engelsk
-      "wheat","rye","barley","oats","oat","spelt","semolina","bulgur","couscous","farro","freekeh",
+      "rye","barley","oats","oat","semolina","bulgur","couscous","farro","freekeh",
       // Skjulte/forarbejdede
-      "hvedemel","hvedestivelse","hvedeklid","hvedekerne","hvedeprotein","hvedegluten","seitan",
       "maltekstrakt","malteddike","maltsirup","øleddike","bryggersgær","dinkelhvede",
-      "breadcrumbs","rasp","panko","croutons","mel","stivelse af hvede",
+      "breadcrumbs","rasp","panko","croutons","stivelse af hvede",
+    ],
+    hvede: [
+      // Hvedeallergi — specifikt hvede (ikke det samme som cøliaki/glutenintolerance)
+      "hvede","hvedemel","hvedestivelse","hvedeklid","hvedekerne","hvedeprotein","hvedegluten",
+      "wheat","wheat flour","wheat starch","wheat germ","wheat bran","wheat protein","seitan",
+      "mel","mel af hvede","hvedekimolie","hvedegryn",
+    ],
+    maelkeallergi: [
+      // Mælkeallergi = reaktion på mælkeprotein (kasein, valle)
+      // Fra ekspert — ingredienser der indeholder eller KAN indeholde mælkeprotein:
+      "animalsk fedtstof","mælkepulver","kaliumkaseinat","animalsk olie","skummetmælkspulver",
+      "valleprotein","margarine","natriumkaseinat","tørmælk","minarine","kasein",
+      "inddampet mælk","mælkebestanddele","kalciumkaseinat","valle","mælketørstof",
+      "kaseinat","lactalbumin","smøraroma","mælkeprotein","smørolie","sødmælkspulver","vallepulver",
+      // Standard mælkebetegnelser
+      "mælk","fløde","smør","ost","mælkefedt","creme fraiche","yoghurt","kefir",
+      "kvark","mascarpone","ricotta","skyr","ghee","laktoglobulin",
+      // Engelsk
+      "milk","cream","butter","cheese","whey","casein","dairy","lactalbumin",
+      "milk solids","milk powder","non-fat dry milk","buttermilk","milk fat","milk protein",
+      "whey protein","sodium caseinate","potassium caseinate","calcium caseinate",
+      "skimmed milk powder","condensed milk","evaporated milk",
+      // OBS: mælkesyre og kakaosmør tåles - de er IKKE i listen
     ],
     laktose: [
-      // Direkte
-      "mælk","laktose","fløde","smør","ost","valle","kasein","laktalbumin","laktoglobulin",
-      // Engelsk
-      "milk","cream","butter","cheese","whey","casein","dairy","lactose","lactalbumin",
-      // Skjulte
-      "mælkepulver","skummetmælkspulver","mælkefedt","mælkeprotein","mælkesucker",
-      "creme fraiche","yoghurt","kefir","kvark","mascarpone","ricotta","skyr","ghee",
-      "kondenseret mælk","kokosmælk erstatter","lactoferrin","lactoperoxidase",
-      // Forkortet på etiketter
-      "milk solids","milk powder","non-fat dry milk","buttermilk","milk fat",
+      // Laktoseintolerance — kun laktose (mælkesukker), ikke mælkeprotein
+      "laktose","lactose","laktosefri","lactose-free",
+      // Laktose kan indeholde spor af mælkeprotein i særlige tilfælde
     ],
     aeg: [
       "æg","æggehvide","æggeblomme","egg","eggs","albumin","ovalbumin","ovomucin",
