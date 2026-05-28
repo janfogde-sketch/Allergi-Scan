@@ -4,8 +4,8 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS, SCREENS, DIETS,
   AVATAR_COLORS, HOME_TIPS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
-  ALLERGEN_EXAMPLES, E_NUMBERS, E_CATEGORIES, ALLERGEN_SUBTYPES,
-  INCOMPATIBLE_SUBTYPES, MADPAS_LANGUAGES, ALLERGEN_T, MADPAS_INTRO,
+  ALLERGEN_EXAMPLES, E_NUMBERS, E_CATEGORIES,
+  MADPAS_LANGUAGES, ALLERGEN_T, MADPAS_INTRO,
   PAGE_IDS, uid
 } from "./constants.jsx";
 
@@ -19,7 +19,7 @@ import {
   getProductIcon, ProductImage
 } from "./SharedComponents.jsx";
 
-import { ENumberPicker, SubtypeModal, AllergyForm } from "./AllergenPicker.jsx";
+import { ENumberPicker } from "./AllergenPicker.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import AdminScreen from './AdminScreen.jsx';
 import OnboardingScreen from './OnboardingScreen.jsx';
@@ -2471,18 +2471,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
           />
         )}
 
-        {/* ALLERGEN SUBTYPE MODAL */}
-        {activeSubtypeModal && (
-          <SubtypeModal
-            allergenId={activeSubtypeModal}
-            selectedSubtypes={allergenSubtypes[activeSubtypeModal] || []}
-            onToggle={(id) => setAllergenSubtypes(s => {
-              const cur = s[activeSubtypeModal] || [];
-              return { ...s, [activeSubtypeModal]: cur.includes(id) ? cur.filter(x=>x!==id) : [...cur, id] };
-            })}
-            onClose={() => setActiveSubtypeModal(null)}
-          />
-        )}
+
 
         {/* BUNDNAVIGATION */}
         {!isOnboard && !madpasWaiterView && (
