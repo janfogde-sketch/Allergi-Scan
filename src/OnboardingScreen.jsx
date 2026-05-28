@@ -371,8 +371,8 @@ export default function OnboardingScreen({
               <div className="fade-in">
                 <div style={{ textAlign:"center", marginBottom:20 }}>
                   <div style={{ fontSize:48, marginBottom:8 }}>✨</div>
-                  <div className="step-title">EatSafe kan mere end allergier</div>
-                  <div className="step-sub">Appen dækker tre typer fødevarepræferencer</div>
+                  <div className="step-title">EatSafe dækker tre områder</div>
+                  <div className="step-sub">Fortæl os hvad der gælder for dig — vi holder øje med det hele</div>
                 </div>
 
                 {[
@@ -381,27 +381,27 @@ export default function OnboardingScreen({
                     color:"var(--red)",
                     bg:"var(--red-lt)",
                     border:"var(--red-md)",
-                    title:"Allergier",
-                    desc:"Livstruende reaktioner på fx gluten, nødder, skaldyr og mælk. Vi advarer tydeligt og kategorisk.",
-                    examples:["Glutenallergi (cøliaki)","Nøddeallergi","Laktoseallergi","Skaldyrsallergi"],
+                    title:"Allergier / intoleranser",
+                    desc:"Reaktioner på fødevarer — fra livstruende allergier til ubehag ved intolerance. Vi viser tydeligt om et produkt indeholder eller kan indeholde dine allergener.",
+                    examples:["Mælkeallergi","Hvedeallergi","Laktoseintolerance","Nøddeallergi","Skaldyrsallergi"],
                   },
                   {
-                    emoji:"⚠️",
+                    emoji:"🔬",
                     color:"var(--amber)",
                     bg:"var(--amber-lt)",
                     border:"var(--amber-md)",
-                    title:"Intoleranser & E-numre",
-                    desc:"Ubehag uden livstruende reaktion. Vi viser advarsler og fremhæver relevante E-numre i ingredienslister.",
-                    examples:["Laktoseintolerance","Fruktoseintolerance","E-numre som E621 (MSG)","Histaminintolerance"],
+                    title:"E-numre",
+                    desc:"Tilsætningsstoffer i forarbejdede fødevarer. Vi markerer dine valgte E-numre direkte i ingredienslisten, så du nemt kan spotte dem.",
+                    examples:["E621 (MSG)","E102 (Tartrazin)","E211 (Natriumbenzoat)","E951 (Aspartam)"],
                   },
                   {
                     emoji:"🌱",
                     color:"var(--green)",
                     bg:"var(--green-lt)",
                     border:"var(--green-mid)",
-                    title:"Diæter & valg",
-                    desc:"Personlige valg og livsstil. Vi filtrerer produkter og opskrifter der passer til dig.",
-                    examples:["Vegansk","Vegetarisk","Halal / Kosher","Lavkulhydrat / Keto"],
+                    title:"Diæter",
+                    desc:"Personlige kostvaner og livsstilsvalg. Vi filtrerer opskrifter og produkter så de passer til dig.",
+                    examples:["Vegansk","Vegetarisk","Glutenfri","Keto / Lavkulhydrat"],
                   },
                 ].map(cat => (
                   <div key={cat.title} style={{ background:cat.bg, border:`1px solid ${cat.border}`, borderRadius:14, padding:"14px 16px", marginBottom:10 }}>
