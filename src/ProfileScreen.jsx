@@ -4,8 +4,7 @@ import { ALLERGENS, SCREENS, DIETS, E_NUMBERS, E_CATEGORIES, SUPABASE_URL, SUPAB
 import { initials, timeAgo, getAllergenLabels } from "./helpers.js";
 import { EatSafeLogo, Icon, ProductImage } from "./SharedComponents.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
-import { EatSafeLogo, Icon } from "./SharedComponents.jsx";
-import { ENumberPicker, SubtypeModal, AllergyForm } from "./AllergenPicker.jsx";
+import { ENumberPicker } from "./AllergenPicker.jsx";
 
 export default function ProfileScreen({
   screen, setScreen,
