@@ -1,8 +1,8 @@
 // @ts-nocheck
 import React, { useState, useRef } from "react";
 import { ALLERGENS, SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
-         ALLERGEN_EXAMPLES, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compareAllergens, initials, getAllergenLabels } from "./helpers.js";
+         ALLERGEN_EXAMPLES, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
+import { compareAllergens, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage } from "./SharedComponents.jsx";
 
 import { CategorySelect } from "./MemberForm.jsx";
