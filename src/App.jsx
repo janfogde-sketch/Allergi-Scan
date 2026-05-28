@@ -681,7 +681,7 @@ export default function EatSafe() {
   const loadFamily = async () => {
     try {
       const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/family_members?user_id=eq.${userId}&select=id,name,color,allergens,custom_allergens,diets,e_numbers&order=created_at.asc`,
+        `${SUPABASE_URL}/rest/v1/family_members?user_id=eq.${userId}&select=id,name,color,allergens,custom_allergens,diets,e_numbers`,
         { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
       );
       if (Array.isArray(data)) {
@@ -802,7 +802,7 @@ export default function EatSafe() {
     try {
       // Hent eller opret indkøbsliste direkte via REST
       const lists = await apiCall(
-        `${SUPABASE_URL}/rest/v1/shopping_lists?owner_id=eq.${userId}&select=id,name&limit=1`,
+        `${SUPABASE_URL}/rest/v1/shopping_lists?owner_id=eq.${userId}&select=id&limit=1`,
         { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
       );
       let listId = lists?.[0]?.id;
