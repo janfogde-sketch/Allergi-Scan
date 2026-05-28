@@ -20,6 +20,7 @@ export default function OnboardingScreen({
   customAllerg, setCustomAllerg,
   selectedENumbers, setSelectedENumbers,
   activeSubtypeModal, setActiveSubtypeModal,
+  allergenSubtypes, setAllergenSubtypes,
   family, setFamily,
   activeProfiles, setActiveProfiles,
   isOAuth,
@@ -36,8 +37,19 @@ export default function OnboardingScreen({
   newMemberCustomInput, setNewMemberCustomInput,
   customInput, setCustomInput,
   handleLogin, handleSignup, handleOAuth,
+  addMember,
+  removeMember,
+  saveAllergensStep2,
   saveProfileStep1, finishOnboard,
 }) {
+  const StepBar = ({ total, current }) => (
+    <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:22 }}>
+      {Array.from({ length: total }).map((_, i) => (
+        <div key={i} className={`step-seg${i <= current-1 ? " done" : ""}`} />
+      ))}
+      <span className="step-num">{current}/{total}</span>
+    </div>
+  );
   return (
     <>
         {screen === SCREENS.WELCOME && (
@@ -107,7 +119,7 @@ export default function OnboardingScreen({
                     onChange={e => setLoginEmail(e.target.value)} style={{ marginBottom:12 }}
                     onKeyDown={e => e.key==="Enter" && handleSignup()} />
                   <label className="field-lbl">Vælg kodeord</label>
-                  <input className="field" type="password" placeholder="Minimum 8 tegn" value={loginPassword}
+                  <input className="field" type="password" placeholder="Minimum 6 tegn" value={loginPassword}
                     onChange={e => setLoginPassword(e.target.value)}
                     onKeyDown={e => e.key==="Enter" && handleSignup()} />
                   <div style={{ fontSize:11, color:"var(--muted)", marginTop:8, lineHeight:1.5 }}>
@@ -872,7 +884,6 @@ export default function OnboardingScreen({
               </div>
             )}
 
-                    </div>
         )}
 
     </>
