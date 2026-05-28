@@ -680,20 +680,20 @@ export default function EatSafe() {
 
   const loadFamily = async () => {
     try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/family?user_id=${userId}`, {
-        headers: makeHeaders(accessToken),
-      });
-      if (data.success && data.families) {
-        const members = data.families.flatMap(f =>
-          (f.managed_members || []).map(m => ({
-            id: m.id,
-            name: m.name,
-            color: m.color || AVATAR_COLORS[0],
-            allergens: m.allergens || [],
-            custom: m.custom_allergens || [],
-          }))
-        );
-        setFamily(members);
+      const data = await apiCall(
+        `${SUPABASE_URL}/rest/v1/family_members?user_id=eq.${userId}&select=id,name,color,allergens,custom_allergens,diets,e_numbers&order=created_at.asc`,
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+      );
+      if (Array.isArray(data)) {
+        setFamily(data.map(m => ({
+          id: m.id,
+          name: m.name,
+          color: m.color || AVATAR_COLORS[0],
+          allergens: m.allergens || [],
+          custom: m.custom_allergens || [],
+          diets: m.diets || [],
+          eNumbers: m.e_numbers || [],
+        })));
       }
     } catch { /* silent */ }
   };
@@ -800,21 +800,28 @@ export default function EatSafe() {
 
   const loadShoppingList = async () => {
     try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/shopping?user_id=${userId}`, {
-        headers: makeHeaders(accessToken),
-      });
-      if (data.success && data.lists && data.lists.length > 0) {
-        const list = data.lists[0];
-        setShoppingListId(list.id);
-        setShoppingList(list.items || []);
-      } else {
-        // Opret en standardliste
-        const newList = await apiCall(`${SUPABASE_URL}/functions/v1/shopping`, {
+      // Hent eller opret indkøbsliste direkte via REST
+      const lists = await apiCall(
+        `${SUPABASE_URL}/rest/v1/shopping_lists?owner_id=eq.${userId}&select=id,name&limit=1`,
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+      );
+      let listId = lists?.[0]?.id;
+      if (!listId) {
+        // Opret liste hvis ingen findes
+        const created = await apiCall(`${SUPABASE_URL}/rest/v1/shopping_lists`, {
           method: "POST",
-          headers: makeHeaders(accessToken),
-          body: JSON.stringify({ owner_id: userId, name: "Min indkøbsliste", type: "personal" }),
+          headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+          body: JSON.stringify({ owner_id: userId, name: "Min indkøbsliste" }),
         });
-        if (newList.success) { setShoppingListId(newList.list?.id); setShoppingList([]); }
+        listId = Array.isArray(created) ? created[0]?.id : created?.id;
+      }
+      if (listId) {
+        setShoppingListId(listId);
+        const items = await apiCall(
+          `${SUPABASE_URL}/rest/v1/shopping_list_items?list_id=eq.${listId}&order=created_at.asc`,
+          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+        );
+        setShoppingList(Array.isArray(items) ? items.map(i => ({ id: i.id, name: i.name, checked: i.checked || false })) : []);
       }
     } catch { /* silent */ }
   };
@@ -1026,6 +1033,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
   const handleLogin = async () => {
     if (!loginEmail || !loginPassword) return;
+    if (!loginEmail.includes("@")) { setAuthError("Indtast en gyldig email-adresse."); return; }
     setAuthLoading(true); setAuthError("");
     try {
       const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
@@ -1034,27 +1042,35 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         body: JSON.stringify({ email: loginEmail, password: loginPassword }),
       });
       const text = await res.text();
-      // Tjek for allowlist-fejl (returneres som plain text, ikke JSON)
       if (text === "Host not in allowlist") {
         setAuthError("⚙️ Supabase er ikke konfigureret til dette domæne. Jan skal tilføje denne sides URL i Supabase → Authentication → URL Configuration → Allowed Origins.");
         setAuthLoading(false); return;
       }
       const data = JSON.parse(text);
-      if (!res.ok) throw new Error(data.error_description || data.message || "Login fejlede");
+      if (!res.ok) {
+        // Supabase v2 bruger "msg", ældre bruger "error_description" eller "message"
+        const msg = data.msg || data.error_description || data.message || "";
+        if (msg.toLowerCase().includes("invalid login") || msg.toLowerCase().includes("invalid credentials")) {
+          throw new Error("Forkert email eller kodeord.");
+        }
+        throw new Error(msg || "Login fejlede.");
+      }
       saveTokens(data.access_token, data.refresh_token, data.user.id);
       setScreen(SCREENS.HOME);
     } catch (e) {
       if (e.message?.includes("allowlist") || e.message?.includes("Host")) {
         setAuthError("⚙️ Supabase er ikke konfigureret til dette domæne. Jan skal tilføje URL'en i Supabase → Authentication → URL Configuration.");
       } else {
-        setAuthError("Forkert email eller kodeord. Prøv igen. (" + (e.message||"") + ")");
+        setAuthError(e.message || "Forkert email eller kodeord. Prøv igen.");
       }
     }
     setAuthLoading(false);
   };
 
   const handleSignup = async () => {
-    if (!loginEmail || !loginPassword) return;
+    // Klient-validering først
+    if (!loginEmail || !loginEmail.includes("@")) { setAuthError("Indtast en gyldig email-adresse."); return; }
+    if (!loginPassword || loginPassword.length < 6) { setAuthError("Kodeordet skal være mindst 6 tegn."); return; }
     setAuthLoading(true); setAuthError("");
     try {
       const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
@@ -1068,14 +1084,26 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         setAuthLoading(false); return;
       }
       const data = JSON.parse(text);
-      if (!res.ok) throw new Error(data.error_description || data.message || "Oprettelse fejlede");
+      if (!res.ok) {
+        // Supabase v2 bruger "msg", ældre bruger "error_description" eller "message"
+        const msg = data.msg || data.error_description || data.message || "";
+        if (msg.toLowerCase().includes("already registered") || msg.toLowerCase().includes("email_exists") || data.error_code === "email_exists") {
+          throw new Error("Denne email er allerede registreret. Prøv at logge ind i stedet.");
+        }
+        if (msg.toLowerCase().includes("password") || msg.toLowerCase().includes("weak")) {
+          throw new Error("Kodeordet er for svagt. Brug mindst 6 tegn.");
+        }
+        throw new Error(msg || "Oprettelse fejlede. Prøv igen.");
+      }
       if (data.access_token) {
-        saveTokens(data.access_token, data.refresh_token, data.user.id);
+        const newUserId = data.user.id;
+        saveTokens(data.access_token, data.refresh_token, newUserId);
         setUser(u => ({ ...u, email: loginEmail }));
         setScreen(SCREENS.ONBOARD);
         setOnboardStep(1);
       } else {
-        setAuthError("Tjek din email for bekræftelse — eller prøv at logge ind.");
+        // Email-bekræftelse krævet
+        setAuthError("✉️ Tjek din email og klik på bekræftelseslinket — log derefter ind her.");
       }
     } catch (e) {
       setAuthError(e.message || "Oprettelse fejlede. Prøv igen.");
@@ -1188,7 +1216,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
         method: "PATCH",
-        headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
         body: JSON.stringify({
           name: user.name,
           email: emailToSave || null,
@@ -1197,7 +1225,9 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         }),
       });
       if (emailToSave) setUser(u => ({ ...u, email: emailToSave }));
-    } catch { /* silent */ }
+    } catch (e) {
+      console.error("saveProfileStep1 fejl:", e);
+    }
     setOnboardStep(4);
   };
 
@@ -1748,12 +1778,13 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     setNewItemName("");
     try {
       if (shoppingListId) {
-        const data = await apiCall(`${SUPABASE_URL}/functions/v1/shopping/${shoppingListId}/items`, {
+        const data = await apiCall(`${SUPABASE_URL}/rest/v1/shopping_list_items`, {
           method: "POST",
-          headers: makeHeaders(accessToken),
-          body: JSON.stringify({ name: name.trim(), quantity: 1, added_by: userId }),
+          headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+          body: JSON.stringify({ list_id: shoppingListId, name: name.trim(), checked: false }),
         });
-        if (data.item?.id) setShoppingList(l => l.map(i => i.id === tempId ? { ...i, id: data.item.id } : i));
+        const saved = Array.isArray(data) ? data[0] : data;
+        if (saved?.id) setShoppingList(l => l.map(i => i.id === tempId ? { ...i, id: saved.id } : i));
       }
     } catch { /* silent — keep optimistic update */ }
   };
@@ -1762,25 +1793,21 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     const item = shoppingList.find(i => i.id === id);
     setShoppingList(l => l.map(i => i.id === id ? { ...i, checked: !i.checked } : i));
     try {
-      if (shoppingListId) {
-        await apiCall(`${SUPABASE_URL}/functions/v1/shopping/${shoppingListId}/items/${id}`, {
-          method: "PATCH",
-          headers: makeHeaders(accessToken),
-          body: JSON.stringify({ checked: !item?.checked }),
-        });
-      }
+      await apiCall(`${SUPABASE_URL}/rest/v1/shopping_list_items?id=eq.${id}`, {
+        method: "PATCH",
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+        body: JSON.stringify({ checked: !item?.checked }),
+      });
     } catch { /* silent */ }
   };
 
   const removeItem = async (id) => {
     setShoppingList(l => l.filter(i => i.id !== id));
     try {
-      if (shoppingListId) {
-        await apiCall(`${SUPABASE_URL}/functions/v1/shopping/${shoppingListId}/items/${id}`, {
-          method: "DELETE",
-          headers: makeHeaders(accessToken),
-        });
-      }
+      await apiCall(`${SUPABASE_URL}/rest/v1/shopping_list_items?id=eq.${id}`, {
+        method: "DELETE",
+        headers: makeHeaders(accessToken),
+      });
     } catch { /* silent */ }
   };
 
@@ -1809,12 +1836,21 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     setNewMemberSubtypes({});
     setNewMemberCustomInput("");
     try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/family/members`, {
+      const data = await apiCall(`${SUPABASE_URL}/rest/v1/family_members`, {
         method: "POST",
-        headers: makeHeaders(accessToken),
-        body: JSON.stringify({ user_id: userId, name: tempMember.name, color }),
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+        body: JSON.stringify({
+          user_id: userId,
+          name: tempMember.name,
+          color,
+          allergens: newMemberAllerg,
+          custom_allergens: newMemberCustomAllerg.filter(c => !c.endsWith("_intolerance")),
+          diets: newMemberDiets,
+          e_numbers: newMemberENumbers,
+        }),
       });
-      if (data.member?.id) setFamily(f => f.map(m => m.id === tempMember.id ? { ...m, id: data.member.id } : m));
+      const saved = Array.isArray(data) ? data[0] : data;
+      if (saved?.id) setFamily(f => f.map(m => m.id === tempMember.id ? { ...m, id: saved.id } : m));
     } catch { /* silent */ }
   };
 
@@ -1822,7 +1858,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     setFamily(f => f.filter(m => m.id !== id));
     setActiveProfiles(a => a.filter(x => x !== id));
     try {
-      await apiCall(`${SUPABASE_URL}/functions/v1/family/members/${id}`, {
+      await apiCall(`${SUPABASE_URL}/rest/v1/family_members?id=eq.${id}`, {
         method: "DELETE",
         headers: makeHeaders(accessToken),
       });
@@ -2037,6 +2073,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             handleLogin={handleLogin} handleSignup={handleSignup} handleOAuth={handleOAuth}
             saveAllergensStep2={saveAllergensStep2}
             saveProfileStep1={saveProfileStep1} finishOnboard={finishOnboard}
+            StepBar={StepBar}
           />
         )}
         {/* TOPBAR */}

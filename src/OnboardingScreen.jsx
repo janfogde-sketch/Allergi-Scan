@@ -41,6 +41,7 @@ export default function OnboardingScreen({
   removeMember,
   saveAllergensStep2,
   saveProfileStep1, finishOnboard,
+  StepBar,
 }) {
   return (
     <>
@@ -111,7 +112,7 @@ export default function OnboardingScreen({
                     onChange={e => setLoginEmail(e.target.value)} style={{ marginBottom:12 }}
                     onKeyDown={e => e.key==="Enter" && handleSignup()} />
                   <label className="field-lbl">Vælg kodeord</label>
-                  <input className="field" type="password" placeholder="Minimum 8 tegn" value={loginPassword}
+                  <input className="field" type="password" placeholder="Minimum 6 tegn" value={loginPassword}
                     onChange={e => setLoginPassword(e.target.value)}
                     onKeyDown={e => e.key==="Enter" && handleSignup()} />
                   <div style={{ fontSize:11, color:"var(--muted)", marginTop:8, lineHeight:1.5 }}>
@@ -876,7 +877,6 @@ export default function OnboardingScreen({
               </div>
             )}
 
-                    </div>
         )}
 
     </>
