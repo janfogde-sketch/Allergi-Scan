@@ -680,20 +680,20 @@ export default function EatSafe() {
 
   const loadFamily = async () => {
     try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/family?user_id=${userId}`, {
-        headers: makeHeaders(accessToken),
-      });
-      if (data.success && data.families) {
-        const members = data.families.flatMap(f =>
-          (f.managed_members || []).map(m => ({
-            id: m.id,
-            name: m.name,
-            color: m.color || AVATAR_COLORS[0],
-            allergens: m.allergens || [],
-            custom: m.custom_allergens || [],
-          }))
-        );
-        setFamily(members);
+      const data = await apiCall(
+        `${SUPABASE_URL}/rest/v1/family_members?user_id=eq.${userId}&select=id,name,color,allergens,custom_allergens,diets,e_numbers&order=created_at.asc`,
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+      );
+      if (Array.isArray(data)) {
+        setFamily(data.map(m => ({
+          id: m.id,
+          name: m.name,
+          color: m.color || AVATAR_COLORS[0],
+          allergens: m.allergens || [],
+          custom: m.custom_allergens || [],
+          diets: m.diets || [],
+          eNumbers: m.e_numbers || [],
+        })));
       }
     } catch { /* silent */ }
   };
@@ -1829,12 +1829,21 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     setNewMemberSubtypes({});
     setNewMemberCustomInput("");
     try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/family/members`, {
+      const data = await apiCall(`${SUPABASE_URL}/rest/v1/family_members`, {
         method: "POST",
-        headers: makeHeaders(accessToken),
-        body: JSON.stringify({ user_id: userId, name: tempMember.name, color }),
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+        body: JSON.stringify({
+          user_id: userId,
+          name: tempMember.name,
+          color,
+          allergens: newMemberAllerg,
+          custom_allergens: newMemberCustomAllerg.filter(c => !c.endsWith("_intolerance")),
+          diets: newMemberDiets,
+          e_numbers: newMemberENumbers,
+        }),
       });
-      if (data.member?.id) setFamily(f => f.map(m => m.id === tempMember.id ? { ...m, id: data.member.id } : m));
+      const saved = Array.isArray(data) ? data[0] : data;
+      if (saved?.id) setFamily(f => f.map(m => m.id === tempMember.id ? { ...m, id: saved.id } : m));
     } catch { /* silent */ }
   };
 
@@ -1842,7 +1851,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     setFamily(f => f.filter(m => m.id !== id));
     setActiveProfiles(a => a.filter(x => x !== id));
     try {
-      await apiCall(`${SUPABASE_URL}/functions/v1/family/members/${id}`, {
+      await apiCall(`${SUPABASE_URL}/rest/v1/family_members?id=eq.${id}`, {
         method: "DELETE",
         headers: makeHeaders(accessToken),
       });
