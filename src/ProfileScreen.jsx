@@ -37,6 +37,7 @@ export default function ProfileScreen({
   newMemberENumbers, setNewMemberENumbers,
   newMemberSubtypes, setNewMemberSubtypes,
   newMemberCustomInput, setNewMemberCustomInput,
+  loginEmail,
   addMember, removeMember,
   historyLoading,
   setScanResult,

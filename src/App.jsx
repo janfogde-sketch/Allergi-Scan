@@ -2539,6 +2539,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             newMemberENumbers={newMemberENumbers} setNewMemberENumbers={setNewMemberENumbers}
             newMemberSubtypes={newMemberSubtypes} setNewMemberSubtypes={setNewMemberSubtypes}
             newMemberCustomInput={newMemberCustomInput} setNewMemberCustomInput={setNewMemberCustomInput}
+            loginEmail={loginEmail}
             addMember={addMember} removeMember={removeMember}
             ticketsLoading={ticketsLoading}
             setScanResult={setScanResult}
