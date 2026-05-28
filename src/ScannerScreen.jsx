@@ -11,7 +11,6 @@ export default function ScannerScreen({
   searchQuery, setSearchQuery,
   searchResults, setSearchResults,
   searchCategory, setSearchCategory,
-  searching,
   scanError,
   shoppingList, newItemName, setNewItemName,
   history, favorites,

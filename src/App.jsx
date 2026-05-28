@@ -2301,7 +2301,7 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             searchQuery={searchQuery} setSearchQuery={setSearchQuery}
             searchResults={searchResults} setSearchResults={setSearchResults}
             searchCategory={searchCategory} setSearchCategory={setSearchCategory}
-            searching={searching} scanError={scanError}
+            scanError={scanError}
             shoppingList={shoppingList} newItemName={newItemName} setNewItemName={setNewItemName}
             history={history} favorites={favorites}
             family={family} activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
