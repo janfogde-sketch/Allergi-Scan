@@ -313,7 +313,7 @@ export const ALLERGENS = [
   { id:"gluten",        label:"Gluten",           emoji:"🥖" },
   { id:"hvede",         label:"Hvede",             emoji:"🌾" },
   { id:"maelkeallergi", label:"Mælk",              emoji:"🥛" },
-  { id:"laktose",       label:"Laktoseintolerance",emoji:"🍬" },
+  { id:"laktose",       label:"Laktoseintolerance",emoji:"🧀" },
   { id:"aeg",           label:"Æg",               emoji:"🥚" },
   { id:"noedder",       label:"Nødder",            emoji:"🌰" },
   { id:"jordnoedder",   label:"Jordnødder",        emoji:"🥜" },

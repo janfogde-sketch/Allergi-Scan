@@ -294,19 +294,16 @@ export default function OnboardingScreen({
 
                 {/* Feature tour — swipeable kort */}
                 {[
-                  { emoji:"📷", bg:"#1F2733", color:"#fff", title:"Skan på sekunder", desc:"Hold kameraet over en stregkode. EatSafe fortæller dig øjeblikkeligt om produktet er sikkert for dig.", tags:["Øjeblikkelig scanning","Vibration ved fund","Historik"] },
-                  { emoji:"👨‍👩‍👧", bg:"#22C55E", color:"#fff", title:"Hele familien", desc:"Opret profiler for børn, partner og andre. Se på ét blik hvem der kan spise hvad.", tags:["Individuelle profiler","Fælles oversigt","Børnevenlig"] },
-                  { emoji:"🍝", bg:"#6366F1", color:"#fff", title:"Sikre opskrifter", desc:"Over 600 opskrifter filtreret til netop din families præferencer. Med ingrediensliste og fremgangsmåde.", tags:["600+ opskrifter","Allergenfiltreret","Skalerbar portion"] },
-                  { emoji:"🌍", bg:"#F59E0B", color:"#fff", title:"Madpas til udlandet", desc:"Vis tjenere dine allergier på 17 sprog. Med udtale og forklaring på det lokale sprog.", tags:["17 sprog","Tekst-til-tale","Offline"] },
+                  { emoji:"📷", bg:"#1F2733", color:"#fff", title:"Skan på sekunder", desc:"Hold kameraet over en stregkode. EatSafe fortæller dig øjeblikkeligt om produktet er sikkert for dig." },
+                  { emoji:"👨‍👩‍👧", bg:"#22C55E", color:"#fff", title:"Hele familien", desc:"Opret profiler for børn, partner og andre. Se på ét blik hvem der kan spise hvad." },
+                  { emoji:"🍝", bg:"#6366F1", color:"#fff", title:"Sikre opskrifter", desc:"Over 600 opskrifter filtreret til netop din families præferencer. Med ingrediensliste og fremgangsmåde." },
+                  { emoji:"🌍", bg:"#F59E0B", color:"#fff", title:"Madpas til udlandet", desc:"Vis tjenere dine allergier på 17 sprog. Med udtale og forklaring på det lokale sprog." },
                 ].map((f, i) => i === tourIdx ? (
                   <div key={i} style={{ marginBottom:4 }}>
                     <div style={{ background:f.bg, borderRadius:18, padding:"20px", marginBottom:10 }}>
                       <div style={{ fontSize:36, marginBottom:8 }}>{f.emoji}</div>
                       <div style={{ fontSize:18, fontWeight:900, color:f.color, marginBottom:6 }}>{f.title}</div>
-                      <div style={{ fontSize:13, color:f.color, opacity:0.8, lineHeight:1.65, marginBottom:8 }}>{f.desc}</div>
-                      <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
-                        {f.tags.map(t => <span key={t} style={{ fontSize:10, fontWeight:700, padding:"3px 9px", borderRadius:100, background:"rgba(255,255,255,.15)", color:f.color }}>{t}</span>)}
-                      </div>
+                      <div style={{ fontSize:13, color:f.color, opacity:0.8, lineHeight:1.65 }}>{f.desc}</div>
                     </div>
                     <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10 }}>
                       {[0,1,2,3].map(idx => (
