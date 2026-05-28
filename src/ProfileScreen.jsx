@@ -22,6 +22,8 @@ export default function ProfileScreen({
   customInput, setCustomInput,
   eSearch, setESearch,
   eCategory, setECategory,
+  allergenSubtypes, setAllergenSubtypes,
+  loadHistory,
   selectedENumbers, setSelectedENumbers,
   activeSubtypeModal, setActiveSubtypeModal,
   loadAdminStats, loadSubmissions, loadTickets,

@@ -32,6 +32,10 @@ export default function ScannerScreen({
   showManualEan, setShowManualEan,
   showSafeOnly, setShowSafeOnly,
   profilePopup, setProfilePopup,
+  greeting,
+  cameraActive, setCameraActive,
+  addToList,
+  handleEditProductCapture,
   handleImageCapture, handleProductImageCapture,
   toggleFavorite,
 }) {

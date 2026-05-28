@@ -2322,6 +2322,10 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             showManualEan={showManualEan} setShowManualEan={setShowManualEan}
             showSafeOnly={showSafeOnly} setShowSafeOnly={setShowSafeOnly}
             profilePopup={profilePopup} setProfilePopup={setProfilePopup}
+            greeting={greeting}
+            cameraActive={cameraActive} setCameraActive={setCameraActive}
+            addToList={addToList}
+            handleEditProductCapture={handleEditProductCapture}
             handleImageCapture={handleImageCapture}
             handleProductImageCapture={handleProductImageCapture}
             toggleFavorite={toggleFavorite}
@@ -2368,6 +2372,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             clearAuth={clearAuth}
             eSearch={eSearch} setESearch={setESearch}
             eCategory={eCategory} setECategory={setECategory}
+            allergenSubtypes={allergenSubtypes} setAllergenSubtypes={setAllergenSubtypes}
+            loadHistory={loadHistory}
             selectedENumbers={selectedENumbers} setSelectedENumbers={setSelectedENumbers}
             activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
             customInput={customInput} setCustomInput={setCustomInput}

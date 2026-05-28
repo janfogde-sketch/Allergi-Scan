@@ -13,6 +13,7 @@ export default function MadpasScreen({
   mpAllergens, mpCustom,
   family, user,
   langOpen, setLangOpen,
+  madpasSpeak,
 }) {
   return (
     <>

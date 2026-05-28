@@ -20,6 +20,7 @@ export default function OnboardingScreen({
   customAllerg, setCustomAllerg,
   selectedENumbers, setSelectedENumbers,
   activeSubtypeModal, setActiveSubtypeModal,
+  allergenSubtypes, setAllergenSubtypes,
   family, setFamily,
   activeProfiles, setActiveProfiles,
   isOAuth,
