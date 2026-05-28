@@ -536,6 +536,8 @@ export default function EatSafe() {
 
   // Family form
   const [newMemberName, setNewMemberName] = useState("");
+  const [newMemberAge, setNewMemberAge] = useState("");
+  const [newMemberGender, setNewMemberGender] = useState("");
   const [newMemberAllerg, setNewMemberAllerg] = useState([]);
   const [newMemberCustomAllerg, setNewMemberCustomAllerg] = useState([]);
   const [newMemberDiets, setNewMemberDiets] = useState([]);
@@ -1883,11 +1885,13 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
 
   // ── FAMILIE ────────────────────────────────────────────────────────────────
   const addMember = async () => {
-    if (!newMemberName.trim()) return;
+    if (!newMemberName.trim() || !newMemberAge || !newMemberGender) return;
     const color = AVATAR_COLORS[family.length % AVATAR_COLORS.length];
     const tempMember = {
       id: uid(),
       name: newMemberName.trim(),
+      age: parseInt(newMemberAge) || null,
+      gender: newMemberGender,
       allergens: newMemberAllerg,
       custom: newMemberCustomAllerg.filter(c => !c.endsWith("_intolerance")),
       diets: newMemberDiets,
@@ -1897,6 +1901,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
     };
     setFamily(f => [...f, tempMember]);
     setNewMemberName("");
+    setNewMemberAge("");
+    setNewMemberGender("");
     setNewMemberAllerg([]);
     setNewMemberCustomAllerg([]);
     setNewMemberDiets([]);
@@ -1910,6 +1916,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
         body: JSON.stringify({
           user_id: userId,
           name: tempMember.name,
+          age: tempMember.age,
+          gender: tempMember.gender,
           color,
           allergens: newMemberAllerg,
           custom_allergens: newMemberCustomAllerg.filter(c => !c.endsWith("_intolerance")),
@@ -2131,6 +2139,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             history={history} setHistory={setHistory}
             shoppingList={shoppingList} setShoppingList={setShoppingList}
             newMemberName={newMemberName} setNewMemberName={setNewMemberName}
+            newMemberAge={newMemberAge} setNewMemberAge={setNewMemberAge}
+            newMemberGender={newMemberGender} setNewMemberGender={setNewMemberGender}
             newMemberAllerg={newMemberAllerg} setNewMemberAllerg={setNewMemberAllerg}
             newMemberCustomAllerg={newMemberCustomAllerg} setNewMemberCustomAllerg={setNewMemberCustomAllerg}
             newMemberDiets={newMemberDiets} setNewMemberDiets={setNewMemberDiets}
@@ -2521,6 +2531,8 @@ Svar KUN med den renskrevne ingrediensliste — ingen forklaring, ingen kommenta
             activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
             customInput={customInput} setCustomInput={setCustomInput}
             newMemberName={newMemberName} setNewMemberName={setNewMemberName}
+            newMemberAge={newMemberAge} setNewMemberAge={setNewMemberAge}
+            newMemberGender={newMemberGender} setNewMemberGender={setNewMemberGender}
             newMemberAllerg={newMemberAllerg} setNewMemberAllerg={setNewMemberAllerg}
             newMemberCustomAllerg={newMemberCustomAllerg} setNewMemberCustomAllerg={setNewMemberCustomAllerg}
             newMemberDiets={newMemberDiets} setNewMemberDiets={setNewMemberDiets}

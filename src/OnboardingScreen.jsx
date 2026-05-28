@@ -28,6 +28,8 @@ export default function OnboardingScreen({
   history, setHistory,
   shoppingList, setShoppingList,
   newMemberName, setNewMemberName,
+  newMemberAge, setNewMemberAge,
+  newMemberGender, setNewMemberGender,
   newMemberAllerg, setNewMemberAllerg,
   newMemberCustomAllerg, setNewMemberCustomAllerg,
   newMemberDiets, setNewMemberDiets,
@@ -609,6 +611,8 @@ export default function OnboardingScreen({
                   <div className="card-lbl" style={{ marginBottom:12 }}>Tilføj nyt familiemedlem</div>
                   <MemberForm
                     name={newMemberName} setName={setNewMemberName}
+                    age={newMemberAge} setAge={setNewMemberAge}
+                    gender={newMemberGender} setGender={setNewMemberGender}
                     allergens={newMemberAllerg} setAllergens={setNewMemberAllerg}
                     customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
                     subtypes={newMemberSubtypes} setSubtypes={setNewMemberSubtypes}

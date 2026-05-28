@@ -29,6 +29,8 @@ export default function ProfileScreen({
   loadAdminStats, loadSubmissions, loadTickets,
   setAdminSection, setSubmissionFilter,
   newMemberName, setNewMemberName,
+  newMemberAge, setNewMemberAge,
+  newMemberGender, setNewMemberGender,
   newMemberAllerg, setNewMemberAllerg,
   newMemberCustomAllerg, setNewMemberCustomAllerg,
   newMemberDiets, setNewMemberDiets,
@@ -276,11 +278,13 @@ export default function ProfileScreen({
               <div className="card-lbl">Personlige oplysninger</div>
               {[["Dit navn","text","Fx. Anna Hansen","name"],["Telefon","tel","+45 12 34 56 78","phone"],["Alder","number","Fx. 32","age"]].map(([lbl,type,ph,key]) => (
                 <div key={key} style={{ marginBottom:10 }}>
-                  <label className="field-lbl">{lbl}</label>
+                  <label className="field-lbl">
+                    {lbl} {(key==="name"||key==="age") && <span style={{ color:"var(--red)" }}>*</span>}
+                  </label>
                   <input className="field" type={type} placeholder={ph} value={user[key]||""} onChange={e => setUser(u => ({ ...u, [key]: e.target.value }))} />
                 </div>
               ))}
-              <label className="field-lbl">Køn</label>
+              <label className="field-lbl">Køn <span style={{ color:"var(--red)" }}>*</span></label>
               <div style={{ display:"flex", gap:8, marginBottom:10 }}>
                 {["Mand","Kvinde","Andet"].map(g => (
                   <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
@@ -289,7 +293,14 @@ export default function ProfileScreen({
                   </div>
                 ))}
               </div>
-              <button className="btn btn-primary btn-full" onClick={async () => {
+              {(!user.name?.trim() || !user.age || !user.gender) && (
+                <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10 }}>
+                  <span style={{ color:"var(--red)" }}>*</span> Navn, alder og køn er obligatoriske
+                </div>
+              )}
+              <button className="btn btn-primary btn-full"
+                disabled={!user.name?.trim() || !user.age || !user.gender}
+                onClick={async () => {
                 try {
                   await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
                     method:"PATCH",
@@ -430,7 +441,9 @@ export default function ProfileScreen({
                   <div className="fm-avatar" style={{ background:m.color, color:"#fff" }}>{initials(m.name)}</div>
                   <div style={{ flex:1 }}>
                     <div style={{ fontWeight:800, fontSize:15 }}>{m.name}</div>
-                    <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>{m.allergens.length} allergi{m.allergens.length!==1?"er":""}</div>
+                    <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>
+                      {[m.age && `${m.age} år`, m.gender, m.allergens.length && `${m.allergens.length} allergi${m.allergens.length!==1?"er":""}`].filter(Boolean).join(" · ")}
+                    </div>
                   </div>
                   <span style={{ cursor:"pointer", opacity:.35, fontSize:18, padding:4 }} onClick={() => removeMember(m.id)}><Icon name="trash" size={18} color="var(--muted)" /></span>
                 </div>
@@ -439,10 +452,10 @@ export default function ProfileScreen({
             ))}
             <div className="card">
               <div className="card-title">+ Tilføj familiemedlem</div>
-              <label className="field-lbl" style={{ marginTop:8 }}>Navn</label>
-              <input className="field" placeholder="Fx. Peter (12 år)" value={newMemberName} onChange={e => setNewMemberName(e.target.value)} style={{ marginBottom:12 }} />
               <MemberForm
                 name={newMemberName} setName={setNewMemberName}
+                age={newMemberAge} setAge={setNewMemberAge}
+                gender={newMemberGender} setGender={setNewMemberGender}
                 allergens={newMemberAllerg} setAllergens={setNewMemberAllerg}
                 customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
                 subtypes={newMemberSubtypes} setSubtypes={setNewMemberSubtypes}

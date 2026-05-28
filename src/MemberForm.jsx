@@ -5,6 +5,8 @@ import { ENumberPicker } from "./AllergenPicker.jsx";
 
 export const MemberForm = ({
   name, setName,
+  age, setAge,
+  gender, setGender,
   allergens, setAllergens,
   customAllerg, setCustomAllerg,
   diets, setDiets,
@@ -15,13 +17,39 @@ export const MemberForm = ({
   const [eSearch, setESearch] = React.useState("");
   const [eCat, setECat] = React.useState("alle");
 
+  const isValid = name?.trim() && age && gender;
+
   return (
     <div>
 
-      {/* Navn */}
-      <label className="field-lbl">Navn</label>
-      <input className="field" placeholder="Fx. Mia (8 år)" value={name}
-        onChange={e => setName(e.target.value)} style={{ marginBottom:14 }} />
+      {/* Navn * */}
+      <label className="field-lbl">Navn <span style={{ color:"var(--red)" }}>*</span></label>
+      <input className="field" placeholder="Fx. Mia" value={name}
+        onChange={e => setName(e.target.value)}
+        style={{ marginBottom:10, borderColor: name?.trim() ? "var(--border2)" : "" }} />
+
+      {/* Alder * */}
+      <label className="field-lbl">Alder <span style={{ color:"var(--red)" }}>*</span></label>
+      <input className="field" type="number" placeholder="Fx. 8" min="0" max="120"
+        value={age || ""}
+        onChange={e => setAge(e.target.value)}
+        style={{ marginBottom:10 }} />
+
+      {/* Køn * */}
+      <label className="field-lbl">Køn <span style={{ color:"var(--red)" }}>*</span></label>
+      <div style={{ display:"flex", gap:8, marginBottom:14 }}>
+        {["Mand","Kvinde","Andet"].map(g => (
+          <div key={g} onClick={() => setGender(g)}
+            style={{ flex:1, padding:"9px 0", textAlign:"center", borderRadius:8,
+              border:`1.5px solid ${gender===g?"var(--green)":"var(--border)"}`,
+              background: gender===g ? "var(--green-lt)" : "#fff",
+              fontSize:13, fontWeight:700,
+              color: gender===g ? "var(--green)" : "var(--muted2)",
+              cursor:"pointer", transition:"all .15s" }}>
+            {g}
+          </div>
+        ))}
+      </div>
 
       {/* Allergier / intolerancer — 3-state identisk med egen profil */}
       <div className="card-lbl" style={{ marginBottom:6 }}>Allergier / intolerancer</div>
@@ -130,9 +158,16 @@ export const MemberForm = ({
         </div>
       )}
 
+      {/* Obligatoriske felter — hjælpetekst */}
+      {!isValid && (
+        <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10, lineHeight:1.5 }}>
+          <span style={{ color:"var(--red)" }}>*</span> Navn, alder og køn er obligatoriske
+        </div>
+      )}
+
       {/* Gem knap */}
       <button className="btn btn-primary btn-full" onClick={onAdd}
-        disabled={!name.trim()}>
+        disabled={!isValid}>
         {addLabel || "+ Tilføj familiemedlem"}
       </button>
     </div>
