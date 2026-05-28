@@ -100,6 +100,14 @@ export default function ScannerScreen({
     if (notFoundStep === 2) { setIngItems([]); setIngInput(""); }
   }, [notFoundStep]);
 
+  // ── Kombinerede allergen-IDs for alle aktive profiler ──────────────────────
+  const activeIds = [
+    ...(activeProfiles.includes("me") ? allergens : []),
+    ...family
+      .filter(m => activeProfiles.includes(m.id))
+      .flatMap(m => Array.isArray(m.allergens) ? m.allergens : Object.keys(m.allergens||{}).filter(k => m.allergens[k])),
+  ].filter((v, i, a) => a.indexOf(v) === i); // deduplicate
+
   return (
     <>
         {screen === SCREENS.HOME && (
