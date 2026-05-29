@@ -8,8 +8,8 @@
 
 export const THEME = {
   // Baggrunde
-  paper:   "#0D2117",
-  paper2:  "#112B1C",
+  paper:   "#1a3012",
+  paper2:  "#233d18",
 
   // Primær tekst
   ink:     "#EDF5EE",
@@ -69,8 +69,8 @@ export const appCss = `
   --ink:#EDF5EE;
   --ink2:rgba(237,245,238,.7);
   --ink3:rgba(237,245,238,.58);
-  --paper:#0D2117;
-  --paper2:#112B1C;
+  --paper:#1a3012;
+  --paper2:#233d18;
   --green:#4ADE80;
   --green-glow:#6EE89C;
   --green-lt:rgba(74,222,128,.13);
@@ -94,20 +94,20 @@ export const appCss = `
   --sh3:0 8px 32px rgba(0,0,0,.4);
 }
 body{
-  background:linear-gradient(160deg,#0b1f12 0%,#071510 100%);
+  background:linear-gradient(160deg,#253d1a 0%,#1a2e12 100%);
   color:var(--ink);font-family:var(--f);-webkit-font-smoothing:antialiased;
   min-height:100vh;
 }
 .app{
   max-width:390px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
   width:100%;position:relative;overflow-x:hidden;
-  background:radial-gradient(ellipse 120% 55% at 50% 0%,rgba(74,222,128,.1) 0%,transparent 65%),
-             linear-gradient(175deg,#142B1C 0%,#0D2019 30%,#091710 60%,#071210 100%);
+  background:radial-gradient(ellipse 120% 55% at 50% 0%,rgba(74,222,128,.15) 0%,transparent 65%),
+             linear-gradient(175deg,#2d5220 0%,#234018 40%,#1a3012 70%,#162a10 100%);
 }
 
 /* ── TOPBAR ── */
 .topbar{
-  background:rgba(10,22,14,.8);border-bottom:1px solid var(--border);
+  background:rgba(22,42,14,.85);border-bottom:1px solid var(--border);
   padding:12px 20px 10px;display:flex;align-items:center;justify-content:space-between;
   position:sticky;top:0;z-index:60;backdrop-filter:blur(20px);
 }
@@ -123,7 +123,7 @@ body{
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
   width:100%;max-width:390px;
-  background:rgba(10,22,14,.88);border-top:1px solid var(--border);
+  background:rgba(20,38,12,.9);border-top:1px solid var(--border);
   display:flex;padding:10px 4px 24px;z-index:100;
   backdrop-filter:blur(20px);
 }
