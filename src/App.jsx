@@ -628,7 +628,6 @@ export default function EatSafe() {
         );
         if (Array.isArray(profile) && profile[0]) {
           const p = profile[0];
-          console.log("✅ Profil hentet:", p);
           setUser(u => ({
             ...u,
             name: p.name || u.name || "",
@@ -812,6 +811,13 @@ export default function EatSafe() {
   const mpCustom = madpasActiveProfile ? (madpasActiveProfile.customAllerg || []) : customAllerg;
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
+  // Load admin stats when entering admin screen
+  React.useEffect(() => {
+    if (screen === SCREENS.ADMIN && user?.role === "admin") {
+      loadAdminStats();
+    }
+  }, [screen, user?.role]);
+
   return (
     <>
       <style>{appCss}</style>
