@@ -41,10 +41,10 @@ import FeedbackModal from './FeedbackModal.jsx';
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
 
 export default function EatSafe() {
-  // Auth state
+  // Auth state → useAuth hook
 
   // UI state
-  const [screen, setScreen] = useState(accessToken ? SCREENS.HOME : SCREENS.WELCOME);
+  const [screen, setScreen] = useState(() => localStorage.getItem("as_token") ? SCREENS.HOME : SCREENS.WELCOME);
   const [onboardStep, setOnboardStep] = useState(1);
   const [editMode, setEditMode] = useState(false);
 
