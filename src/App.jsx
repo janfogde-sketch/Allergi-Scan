@@ -140,6 +140,8 @@ export default function EatSafe() {
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [betaIntroSeen, setBetaIntroSeen] = useState(() => localStorage.getItem("as_beta_intro") === "1");
+  const [betaIntroStep, setBetaIntroStep] = useState(0);
 
   const [adminTickets, setAdminTickets] = useState([]);
   const [openTicket, setOpenTicket] = useState(null);
@@ -1107,6 +1109,87 @@ ${text}` }],
           </div>
         )}
 
+        {/* ══ BETA INTRO ══ */}
+        {!betaIntroSeen && (() => {
+          const steps = [
+            {
+              emoji: "🧪",
+              title: "Velkommen til EatSafe Beta",
+              body: "Du er en af de første til at prøve EatSafe. Vi er glade for at have dig med — og vi er ærlige: appen er ikke færdig endnu.
+
+Som beta-bruger hjælper du os med at finde fejl, forbedre brugeroplevelsen og sikre at appen virker for rigtige allergiramte.",
+            },
+            {
+              emoji: "💬",
+              title: "Giv os din mening",
+              body: "Tryk på Feedback-knappen øverst i appen når du støder på noget — en fejl, noget der ser mærkeligt ud, eller en idé til forbedring.
+
+Vi læser alt. Din feedback er det vigtigste redskab vi har i denne fase.",
+            },
+            {
+              emoji: "❓",
+              title: "Brug hjælp-knappen",
+              body: "Er du i tvivl om hvordan noget virker? Tryk på ? øverst — der finder du en kort guide til den skærm du står på.
+
+Hvis du stadig er i tvivl, brug Feedback og skriv til os.",
+            },
+            {
+              emoji: "⚠️",
+              title: "En vigtig bemærkning",
+              body: "EatSafe er under udvikling. Allergendata kan mangle eller være ukorrekte.
+
+Tjek ALTID den fysiske emballage — appen er et hjælpeværktøj, ikke en garanti. Vi arbejder på at gøre dataene så præcise som muligt.",
+            },
+          ];
+          const step = steps[betaIntroStep];
+          const isLast = betaIntroStep === steps.length - 1;
+          const dismiss = () => { localStorage.setItem("as_beta_intro", "1"); setBetaIntroSeen(true); };
+          return (
+            <div style={{ position:"fixed", inset:0, zIndex:10000, background:"rgba(0,0,0,.92)",
+              display:"flex", alignItems:"center", justifyContent:"center", padding:"20px" }}>
+              <div style={{ background:"#1a3012", borderRadius:20, padding:"28px 22px 24px",
+                width:"100%", maxWidth:400, boxSizing:"border-box" }}>
+
+                {/* Progress dots */}
+                <div style={{ display:"flex", gap:6, justifyContent:"center", marginBottom:24 }}>
+                  {steps.map((_, i) => (
+                    <div key={i} style={{ width: i === betaIntroStep ? 20 : 6, height:6, borderRadius:3,
+                      background: i === betaIntroStep ? "var(--green)" : "rgba(255,255,255,.2)",
+                      transition:"all .3s" }} />
+                  ))}
+                </div>
+
+                {/* Content */}
+                <div style={{ textAlign:"center", marginBottom:28 }}>
+                  <div style={{ fontSize:52, marginBottom:16 }}>{step.emoji}</div>
+                  <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)", marginBottom:14,
+                    letterSpacing:"-.3px" }}>{step.title}</div>
+                  <div style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.7,
+                    whiteSpace:"pre-line" }}>{step.body}</div>
+                </div>
+
+                {/* Buttons */}
+                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                  <button onClick={() => isLast ? dismiss() : setBetaIntroStep(s => s + 1)}
+                    style={{ width:"100%", padding:"14px", background:"var(--green)",
+                      border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15,
+                      fontWeight:800, color:"#071510", cursor:"pointer" }}>
+                    {isLast ? "Kom i gang →" : "Næste →"}
+                  </button>
+                  {!isLast && (
+                    <button onClick={dismiss}
+                      style={{ width:"100%", padding:"10px", background:"transparent",
+                        border:"none", fontFamily:"var(--f)", fontSize:12,
+                        color:"rgba(255,255,255,.3)", cursor:"pointer" }}>
+                      Spring over
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* ══ FEEDBACK MODAL ══ */}
         <FeedbackModal
           open={feedbackOpen} onClose={() => setFeedbackOpen(false)}
@@ -1171,6 +1254,8 @@ ${text}` }],
             toggleTorch={toggleTorch}
             torchOn={torchOn}
             buildLabel={formatBuildTime()}
+            lookupProduct={lookupProduct}
+            onBetaClick={() => { localStorage.removeItem("as_beta_intro"); setBetaIntroSeen(false); setBetaIntroStep(0); }}
           />
         )}
 
