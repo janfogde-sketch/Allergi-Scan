@@ -170,7 +170,7 @@ export default function ScannerScreen({
                           })}
                           {pCustom.filter(c => !c.endsWith("_intolerance")).map((c,i) => (
                             <div key={i} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
-                              background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" }}>
+                              background:"var(--surface)", color:"var(--muted)", border:"1px solid var(--border)" }}>
                               {c}
                             </div>
                           ))}
@@ -523,7 +523,7 @@ export default function ScannerScreen({
                   {scanResult.image_url
                     ? <img src={scanResult.image_url} alt={scanResult.name} className="product-hero-img" onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
                     : null}
-                  <div className="product-hero-img-placeholder" style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"column", gap:8, background:"var(--paper2)", borderRadius:12, padding:20, margin:"0 0 10px" }}>
+                  <div className="product-hero-img-placeholder" style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"column", gap:8, background:"var(--surface2)", borderRadius:12, padding:20, margin:"0 0 10px" }}>
                     <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="var(--border2)" strokeWidth="1.5">
                       <rect x="4" y="10" width="40" height="30" rx="3"/>
                       <circle cx="16" cy="20" r="4"/>
@@ -551,7 +551,7 @@ export default function ScannerScreen({
             {/* ── 2b. HANDLINGSKNAPPER (under hero) ── */}
             <div style={{ display:"flex", gap:8, marginBottom:10 }}>
               <button className="btn btn-sm" style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-                  background: isFavorite(scanResult.code) ? "var(--amber-lt)" : "var(--paper2)",
+                  background: isFavorite(scanResult.code) ? "var(--amber-lt)" : "var(--surface)",
                   color: isFavorite(scanResult.code) ? "var(--amber)" : "var(--ink2)",
                   border:"1px solid var(--border)" }}
                 onClick={() => toggleFavorite(scanResult)}>
@@ -581,8 +581,8 @@ export default function ScannerScreen({
                 <div className="card">
                   <div className="card-lbl">Andre allergener i produktet</div>
                   <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8 }}>Ikke registreret på dine profiler</div>
-                  {otherPresent.length > 0 && <div className="tags" style={{ marginBottom:6 }}>{otherPresent.map(([k]) => { const a=ALLERGENS.find(x=>x.id===k); return a ? <div key={k} className="tag" style={{ background:"var(--paper2)", color:"var(--ink2)", borderColor:"var(--border2)" }}>{a.emoji} {a.label}</div> : null; })}</div>}
-                  {otherTraces.length > 0 && <div className="tags">{otherTraces.map(([k]) => { const a=ALLERGENS.find(x=>x.id===k); return a ? <div key={k} className="tag" style={{ background:"var(--paper2)", color:"var(--muted)", borderColor:"var(--border2)" }}>spor: {a.emoji} {a.label}</div> : null; })}</div>}
+                  {otherPresent.length > 0 && <div className="tags" style={{ marginBottom:6 }}>{otherPresent.map(([k]) => { const a=ALLERGENS.find(x=>x.id===k); return a ? <div key={k} className="tag" style={{ background:"var(--surface2)", color:"var(--ink)", borderColor:"var(--border2)" }}>{a.emoji} {a.label}</div> : null; })}</div>}
+                  {otherTraces.length > 0 && <div className="tags">{otherTraces.map(([k]) => { const a=ALLERGENS.find(x=>x.id===k); return a ? <div key={k} className="tag" style={{ background:"var(--surface2)", color:"var(--muted)", borderColor:"var(--border2)" }}>spor: {a.emoji} {a.label}</div> : null; })}</div>}
                 </div>
               );
             })()}
@@ -592,10 +592,10 @@ export default function ScannerScreen({
               <div className="card-lbl">Ingrediensliste</div>
               {scanResult.ingredients ? (
                 <div>
-                  <div style={{ padding:"10px", background:"var(--paper2)", borderRadius:8, marginBottom:8 }}>
+                  <div style={{ padding:"10px", background:"var(--surface)", borderRadius:8, marginBottom:8 }}>
                     <IngredientsList text={scanResult.ingredients} allergenFlags={scanResult.allergen_flags||{}} />
                   </div>
-                  <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
+                  <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", background:"var(--surface)", borderRadius:6, lineHeight:1.4 }}>
                     Fremhævet = allergen · Listen kan være på originalsprog — tjek altid selv
                   </div>
                 </div>
@@ -722,8 +722,8 @@ export default function ScannerScreen({
                 <label style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:10,
                   width:"100%", padding:"16px", borderRadius:14, cursor:"pointer",
-                  background:"var(--ink)", border:"none", color:"#fff",
-                  fontSize:15, fontWeight:800, boxShadow:"0 4px 16px rgba(31,39,51,.25)",
+                  background:"var(--green)", border:"none", color:"#071510",
+                  fontSize:15, fontWeight:600, boxShadow:"0 4px 16px rgba(74,222,128,.25)",
                   marginBottom:10,
                 }}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
@@ -790,7 +790,7 @@ export default function ScannerScreen({
                 </div>
 
                 {/* Visuel guide */}
-                <div style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:14 }}>
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:14 }}>
                   <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:10 }}>Sådan finder du ingredienslisten:</div>
                   <div style={{ display:"flex", gap:10, alignItems:"flex-start", marginBottom:8 }}>
                     <div style={{ width:28, height:28, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
@@ -851,7 +851,7 @@ export default function ScannerScreen({
                   <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
                     {productImagePreview
                       ? <img src={productImagePreview} alt="Produkt" style={{ width:60, height:60, objectFit:"contain", borderRadius:10, border:"1px solid var(--border)", flexShrink:0 }} />
-                      : <div style={{ width:60, height:60, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>📦</div>
+                      : <div style={{ width:60, height:60, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>📦</div>
                     }
                     <div style={{ flex:1 }}>
                       <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, marginBottom:4 }}>Produktnavn</div>
@@ -901,7 +901,7 @@ export default function ScannerScreen({
                     <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
                       {ingItems.map((item, i) => (
                         <div key={i} style={{ display:"flex", alignItems:"center", gap:5, padding:"5px 10px",
-                          background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:20 }}>
+                          background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:20 }}>
                           <span style={{ fontSize:12, color:"var(--ink)" }}>{item}</span>
                           <div onClick={() => setIngItems(p => p.filter((_,j)=>j!==i))}
                             style={{ cursor:"pointer", color:"var(--muted)", fontSize:14, lineHeight:1, marginLeft:2 }}>×</div>
@@ -953,7 +953,7 @@ export default function ScannerScreen({
                             display:"flex", alignItems:"center", gap:5,
                             padding:"6px 11px", borderRadius:100, cursor:"pointer",
                             border:`1.5px solid ${isOn ? "var(--red-md)" : isTrace ? "var(--amber-md)" : "var(--border2)"}`,
-                            background: isOn ? "var(--red-lt)" : isTrace ? "var(--amber-lt)" : "var(--paper2)",
+                            background: isOn ? "var(--red-lt)" : isTrace ? "var(--amber-lt)" : "var(--surface)",
                             transition:"all .15s",
                           }}>
                           <span style={{ fontSize:14 }}>{a.emoji}</span>
@@ -972,7 +972,7 @@ export default function ScannerScreen({
                 </div>
 
                 {/* Info */}
-                <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 12px", background:"var(--paper2)", borderRadius:10, marginBottom:14 }}>
+                <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 12px", background:"var(--surface2)", borderRadius:10, marginBottom:14 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}>
                     <circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M12 16v-4M12 8h.01"/>
                   </svg>
@@ -990,9 +990,9 @@ export default function ScannerScreen({
                     submitProduct();
                   }}
                   disabled={submitting || !proposedName.trim()}
-                  style={{ width:"100%", background: proposedName.trim() ? "var(--ink)" : "var(--border2)", color:"#fff", border:"none",
+                  style={{ width:"100%", background: proposedName.trim() ? "var(--green)" : "var(--surface2)", color: proposedName.trim() ? "#071510" : "var(--muted)", border:"none",
                     borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15,
-                    fontWeight:800, cursor: proposedName.trim() ? "pointer" : "not-allowed", marginBottom:8,
+                    fontWeight:700, cursor: proposedName.trim() ? "pointer" : "not-allowed", marginBottom:8,
                     opacity: submitting ? 0.6 : 1 }}>
                   {submitting ? "Sender…" : "Send produkt ind ✓"}
                 </button>
@@ -1007,7 +1007,7 @@ export default function ScannerScreen({
           <div className="screen fade-in">
             <div className="card" style={{ textAlign:"center", padding:"40px 24px", marginTop:32 }}>
               <div style={{ marginBottom:16 }}><Icon name="check" size={56} color="var(--green)" /></div>
-              <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Tak for dit bidrag!</div>
+              <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", marginBottom:8, fontWeight:700 }}>Tak for dit bidrag!</div>
               <div style={{ fontSize:14, color:"var(--muted)", lineHeight:1.7, marginBottom:20 }}>
                 Din indsendelse er modtaget og afventer godkendelse af vores team. Når produktet er godkendt, vil det være tilgængeligt for alle brugere.
               </div>
@@ -1045,13 +1045,13 @@ export default function ScannerScreen({
                         style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20,
                           border:"1.5px solid var(--green)",
                           background: allActive ? "var(--green)" : "var(--green-lt)",
-                          color: allActive ? "#fff" : "var(--green)", cursor:"pointer", fontFamily:"var(--f)" }}>
+                          color: allActive ? "#071510" : "var(--green)", cursor:"pointer", fontFamily:"var(--f)" }}>
                         Vælg alle
                       </button>
                       <button onClick={() => setActiveProfiles([])}
                         style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20,
                           border:"1.5px solid var(--border)",
-                          background:"var(--paper2)", color:"var(--muted)", cursor:"pointer", fontFamily:"var(--f)" }}>
+                          background:"var(--surface)", color:"var(--muted)", cursor:"pointer", fontFamily:"var(--f)" }}>
                         Fravælg alle
                       </button>
                     </>
@@ -1161,16 +1161,22 @@ export default function ScannerScreen({
               const { status, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(p.allergen_flags||{}, activeIds);
               const statusColor = status==="safe" ? "var(--green)" : status==="danger" ? "var(--red)" : "var(--amber)";
               const statusLabel = status==="safe" ? "Sikker" : status==="danger" ? "Farlig" : "Advarsel";
+              const handleClick = () => { const ean = p.ean || p.code || p.barcode; if (ean) lookupProduct(String(ean)); };
               return (
-                <div key={p.id} style={{ display:"flex", alignItems:"center", gap:10,
-                  padding:"10px 0", borderBottom:"1px solid var(--border)", cursor:"pointer" }}
-                  onClick={() => { const ean = p.ean || p.code || p.barcode; if (ean) lookupProduct(String(ean)); }}>
+                <div key={p.id}
+                  onClick={handleClick}
+                  style={{ display:"flex", alignItems:"center", gap:12,
+                    padding:"12px 14px", marginBottom:8,
+                    background:"var(--surface)", border:"1px solid var(--border)",
+                    borderRadius:14, cursor:"pointer", transition:"border-color .15s" }}
+                  onMouseOver={e => e.currentTarget.style.borderColor="var(--border2)"}
+                  onMouseOut={e => e.currentTarget.style.borderColor="var(--border)"}>
                   <ProductImage product={p} size={44} />
                   <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{p.name}</div>
+                    <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{p.name}</div>
                     <div style={{ fontSize:11, color:"var(--muted)" }}>{p.brand}{p.category ? ` · ${p.category}` : ""}</div>
                     {p.tags && p.tags.length > 0 && (
-                      <div style={{ display:"flex", gap:4, marginTop:3, flexWrap:"wrap" }}>
+                      <div style={{ display:"flex", gap:4, marginTop:4, flexWrap:"wrap" }}>
                         {p.tags.map((t,i) => {
                           const tagLabels = { vegan:"🌱 Vegansk", vegetarian:"🥦 Vegetarisk" };
                           return <span key={i} style={{ fontSize:10, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:100, padding:"1px 7px" }}>{tagLabels[t]||t}</span>;
@@ -1412,7 +1418,7 @@ export default function ScannerScreen({
                   </div>
 
                   {/* Tips */}
-                  <div style={{ background:"var(--paper2)", borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
+                  <div style={{ background:"var(--surface)", borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
                     <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>💡 Tips til et godt billede</div>
                     {["Hold telefonen vandret og i armslængde", "Sørg for god belysning — undgå skygger", "Hold billedet skarpt — vent til kameraet fokuserer"].map((tip, i) => (
                       <div key={i} style={{ display:"flex", gap:8, alignItems:"center", marginBottom: i < 2 ? 6 : 0 }}>
@@ -1497,7 +1503,7 @@ export default function ScannerScreen({
                         <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
                           {ingItems.map((item, i) => (
                             <div key={i} style={{ display:"flex", alignItems:"center", gap:5, padding:"5px 10px",
-                              background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:20 }}>
+                              background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:20 }}>
                               <span style={{ fontSize:12, color:"var(--ink)" }}>{item}</span>
                               <div onClick={() => setIngItems(p => p.filter((_,j)=>j!==i))}
                                 style={{ cursor:"pointer", color:"var(--muted)", fontSize:14, lineHeight:1, marginLeft:2 }}>×</div>
@@ -1567,7 +1573,7 @@ export default function ScannerScreen({
                   </div>
 
                   {/* Info */}
-                  <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 12px", background:"var(--paper2)", borderRadius:10, marginBottom:14 }}>
+                  <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 12px", background:"var(--surface2)", borderRadius:10, marginBottom:14 }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}>
                       <circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M12 16v-4M12 8h.01"/>
                     </svg>
@@ -1582,9 +1588,9 @@ export default function ScannerScreen({
                       submit();
                     }}
                     disabled={editType === "ingredients" && !editIngText.trim() && ingItems.length === 0}
-                    style={{ width:"100%", background:"var(--ink)", color:"#fff", border:"none",
+                    style={{ width:"100%", background:"var(--green)", color:"#071510", border:"none",
                       borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15,
-                      fontWeight:800, cursor:"pointer", marginBottom:8,
+                      fontWeight:700, cursor:"pointer", marginBottom:8,
                       opacity: (editType === "ingredients" && !editIngText.trim()) ? 0.4 : 1 }}>
                     Send forslag ✓
                   </button>
