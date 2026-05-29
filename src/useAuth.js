@@ -59,41 +59,39 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         const payload = JSON.parse(atob(access.split(".")[1]));
         const uid = payload.sub;
         saveTokens(access, refresh, uid);
-        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,email,role,allergens,custom_allerg,e_numbers,diets,created_at,onboarding_completed`, {
+        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,email,role,diets,onboarding_completed`, {
           headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${access}`, "Accept": "application/json" },
         })
           .then(r => r.json())
           .then(data => {
-            console.log("OAuth profile data:", JSON.stringify(data));
-            console.log("JWT payload:", JSON.stringify(payload));
             const profile = data?.[0];
-            // Kun send til onboarding hvis profil mangler ELLER onboarding eksplicit ikke er fuldført
+            const meta = payload.user_metadata || {};
+            const jwtRole = payload.app_metadata?.role || "user";
+            // Kun onboarding hvis onboarding_completed eksplicit er false
             const isNew = !profile || profile.onboarding_completed === false;
             if (isNew) {
-              const meta = payload.user_metadata || {};
-              setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "" }));
+              setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "", role: jwtRole }));
               if (onSignupSuccess) onSignupSuccess();
               setIsOAuth(true);
               setScreen(SCREENS.ONBOARD);
             } else {
-              // Eksisterende bruger — indlæs fuld profil
-              const meta = payload.user_metadata || {};
-              const jwtRole = payload.app_metadata?.role || payload.user_role || payload.role || "user";
               setUser(u => ({
                 ...u,
-                name:  profile.name  || meta.full_name || meta.name || "",
-                email: profile.email || payload.email  || "",
-                role:  profile.role  || jwtRole,
-                diets: Array.isArray(profile.diets) ? profile.diets : [],
+                name:  profile?.name  || meta.full_name || meta.name || "",
+                email: profile?.email || payload.email  || "",
+                role:  jwtRole || profile?.role || "user",
+                diets: Array.isArray(profile?.diets) ? profile.diets : [],
               }));
-              if (Array.isArray(profile.allergens) && profile.allergens.length > 0)
-                setAllergens(profile.allergens);
-              if (Array.isArray(profile.custom_allerg) && profile.custom_allerg.length > 0)
-                setCustomAllerg(profile.custom_allerg);
               setScreen(SCREENS.HOME);
             }
           })
-          .catch(() => setScreen(SCREENS.HOME));
+          .catch(() => {
+            // Selv ved fejl — sæt rolle fra JWT og gå til HOME
+            const meta = payload.user_metadata || {};
+            const jwtRole = payload.app_metadata?.role || "user";
+            setUser(u => ({ ...u, email: payload.email || "", name: meta.full_name || meta.name || "", role: jwtRole }));
+            setScreen(SCREENS.HOME);
+          });
         window.history.replaceState({}, document.title, window.location.pathname);
       } catch (e) {
         console.error("OAuth callback fejl:", e);

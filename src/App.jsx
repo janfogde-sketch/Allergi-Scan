@@ -626,7 +626,7 @@ export default function EatSafe() {
     };
 
     // 1. Brugerprofil inkl. rolle og allergier
-    fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,allergens,custom_allerg,e_numbers,diets,onboarding_completed`, { headers: h })
+    fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,diets,onboarding_completed`, { headers: h })
       .then(r => r.json())
       .then(data => {
         const profile = data?.[0];
@@ -652,12 +652,7 @@ export default function EatSafe() {
           role:       resolvedRole,
           diets:      Array.isArray(profile.diets) ? profile.diets : [],
         }));
-        if (Array.isArray(profile.allergens) && profile.allergens.length > 0)
-          setAllergens(profile.allergens);
-        if (Array.isArray(profile.custom_allerg) && profile.custom_allerg.length > 0)
-          setCustomAllerg(profile.custom_allerg);
-        if (Array.isArray(profile.e_numbers) && profile.e_numbers.length > 0)
-          setSelectedENumbers(profile.e_numbers);
+
       })
       .catch(e => console.error("Load profil fejl:", e));
 
