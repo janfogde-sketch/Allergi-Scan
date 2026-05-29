@@ -817,22 +817,18 @@ export default function EatSafe() {
         {!isOnboard && (
           <header className="topbar">
             <div className="topbar-logo">
-              <div className="topbar-shield" style={{background:"none",padding:0}}><EatSafeLogo size={34} variant="light" /></div>
-              <div className="topbar-name">Eat<span>Safe</span></div>
-              <div style={{ background:"var(--amber)", color:"#fff", fontSize:9, fontWeight:800, padding:"2px 7px", borderRadius:100, letterSpacing:".5px", marginLeft:4, marginTop:2 }}>BETA</div>
+              <div className="topbar-shield"><EatSafeLogo size={17} variant="dark" /></div>
+              <span className="topbar-name">EatSafe</span>
             </div>
             <div style={{ display:"flex", gap:6, alignItems:"center" }}>
-              {/* Hjælp-knap */}
               <button onClick={() => setHelpOpen(true)}
-                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:32, height:32, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:"50%", width:32, height:32, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--muted)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
                 ?
               </button>
-              {/* Feedback-knap */}
-              <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
-                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                Feedback
-              </button>
+              <div className="topbar-avatar"
+                onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}>
+                {initials(user.name || "?")}
+              </div>
             </div>
           </header>
         )}
