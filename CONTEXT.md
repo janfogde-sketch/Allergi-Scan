@@ -1,6 +1,6 @@
 # EatSafe — CONTEXT.md
 > Upload denne fil i starten af hver Claude-session for fuldt overblik uden at uploade kildefiler.
-> **Opdateres af:** Bjørn (frontend) eller Jan (backend) ved større ændringer.
+> **Opdateres af:** Den der arbejder på appen ved større ændringer.
 > **Sidst opdateret:** 29. maj 2026
 
 ---
@@ -11,15 +11,6 @@ PWA-app der hjælper allergiramte med at scanne produkter, tjekke allergener og 
 
 **Live:** https://eatsafe.dk · **Repo:** GitHub → Vercel auto-deploy · **Status:** Åben beta  
 **Branch:** `Refracktor` (aktiv arbejdsbranch)
-
----
-
-## 2. Roller
-
-| Person | Ansvar |
-|--------|--------|
-| Bjørn | Frontend — React/JSX, UI, komponenter, CSS |
-| Jan | Backend — Supabase, API, database, auth, Vercel deploy |
 
 ---
 
@@ -401,22 +392,3 @@ Typer: bug 🐛 · ui 🎨 · missing 💡 · content 📦 · crash 💥 · sugg
 - [ ] Supabase allowlist til alle preview-URLer
 - [ ] Debug role-visning i ProfileScreen fjernes (linje der viser "role: admin")
 - [ ] Fase 3 theme-refaktor: gennemgå alle hardcodede farver der stadig måske er tilbage
-
----
-
-## 19. Prompt til Jan (backend)
-
-```
-📋 PROMPT TIL JAN (BACKEND)
-Du er backend-udvikler på EatSafe (Supabase).
-
-KONTEKST: [hvad der er bygget]
-OPGAVE: [hvad der skal ændres]
-
-DETALJER:
-- Endpoint: [URL]
-- Request body: [JSON]
-- Response: [format]
-- Tabel: [navn]
-- RLS: [sikkerhedshensyn]
-```
