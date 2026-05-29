@@ -97,7 +97,7 @@ export default function OnboardingScreen({
             {/* Logo */}
             <div className="login-header">
               <div className="login-shield" style={{background:"none",padding:0,width:56,height:56}}><EatSafeLogo size={56} variant="light" /></div>
-              <div className="login-title">Eat<span style={{color:"#22C55E",fontStyle:"italic"}}>Safe</span></div>
+              <div className="login-title">EatSafe</div>
             </div>
 
             {/* Tab vælger */}
@@ -254,7 +254,7 @@ export default function OnboardingScreen({
             {!editMode && (
               <div style={{ textAlign:"center", padding:"4px 0 20px" }}>
                 <div style={{ marginBottom:6 }}><EatSafeLogo size={40} variant="light" /></div>
-                <div style={{ fontSize:20, fontWeight:800, color:"var(--text)" }}>Opsæt din profil</div>
+                <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)" }}>Opsæt din profil</div>
                 <div style={{ fontSize:13, color:"var(--muted)", marginTop:4 }}>Tager under 2 minutter</div>
               </div>
             )}
@@ -299,24 +299,24 @@ export default function OnboardingScreen({
                     <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10 }}>
                       {[0,1,2,3].map(idx => (
                         <div key={idx} onClick={() => setTourIdx(idx)}
-                          style={{ width: tourIdx===idx ? 20 : 7, height:7, borderRadius:4, background: tourIdx===idx ? "var(--ink)" : "var(--border2)", cursor:"pointer", transition:"all .25s" }} />
+                          style={{ width: tourIdx===idx ? 20 : 7, height:7, borderRadius:4, background: tourIdx===idx ? "var(--green)" : "var(--surface2)", cursor:"pointer", transition:"all .25s" }} />
                       ))}
                     </div>
                     <div style={{ display:"flex", gap:8 }}>
                       {tourIdx > 0 && (
                         <button onClick={() => setTourIdx(v => v-1)}
-                          style={{ flex:1, padding:"12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                          style={{ flex:1, padding:"12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
                           ← Forrige
                         </button>
                       )}
                       {tourIdx < 3 ? (
                         <button onClick={() => setTourIdx(v => v+1)}
-                          style={{ flex:1, padding:"12px", background:"var(--ink)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#fff", cursor:"pointer" }}>
+                          style={{ flex:1, padding:"12px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
                           Næste →
                         </button>
                       ) : (
                         <button onClick={() => setOnboardStep(2)}
-                          style={{ flex:1, padding:"12px", background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"#fff", cursor:"pointer" }}>
+                          style={{ flex:1, padding:"12px", background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"#071510", cursor:"pointer" }}>
                           Kom i gang →
                         </button>
                       )}
@@ -353,7 +353,7 @@ export default function OnboardingScreen({
                     </div>
                   ))}
                 </div>
-                <div style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, padding:"12px", marginTop:8 }}>
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px", marginTop:8 }}>
                   <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>Vigtigt</div>
                   <div style={{ fontSize:11, color:"var(--muted2)", lineHeight:1.6 }}>EatSafe <strong>erstatter ikke lægehjælp</strong>. Tjek altid den originale emballage ved alvorlige allergier. <strong>Brug på eget ansvar.</strong></div>
                 </div>
@@ -450,7 +450,7 @@ export default function OnboardingScreen({
                       <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
                         style={{ flex:1, padding:"9px 0", textAlign:"center", borderRadius:8,
                           border:`1.5px solid ${user.gender===g?"var(--green)":"var(--border)"}`,
-                          background:user.gender===g?"var(--green-lt)":"#fff",
+                          background:user.gender===g?"var(--green-lt)":"var(--surface)",
                           fontSize:13, fontWeight:700,
                           color:user.gender===g?"var(--green)":"var(--muted)", cursor:"pointer" }}>
                         {g}
@@ -458,7 +458,7 @@ export default function OnboardingScreen({
                     ))}
                   </div>
                 </div>
-                <button className="btn btn-primary btn-full" onClick={saveProfileStep1}
+                <button className="btn btn-primary btn-full" style={{color:"#071510"}} onClick={saveProfileStep1}
                   disabled={!(user.name||"").trim() || !(user.email||loginEmail||"").trim() || !user.birth_year || !user.gender}>
                   Fortsæt →
                 </button>
@@ -661,7 +661,7 @@ export default function OnboardingScreen({
                     ["4️⃣","Admin godkender","En administrator gennemgår produktet."],
                     ["5️⃣","Alle får glæde af det","Produktet er nu tilgængeligt for alle brugere."],
                   ].map(([num, title, text]) => (
-                    <div key={title} style={{ display:"flex", gap:10, alignItems:"flex-start", background:"#fff", border:"1px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
+                    <div key={title} style={{ display:"flex", gap:10, alignItems:"flex-start", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
                       <div style={{ fontSize:15, fontWeight:800, color:"var(--green)", flexShrink:0, width:20 }}>{num}</div>
                       <div>
                         <div style={{ fontWeight:700, fontSize:13, color:"var(--ink)", marginBottom:2 }}>{title}</div>
@@ -724,7 +724,7 @@ export default function OnboardingScreen({
                         })}
                         {customAllerg.map((c,i) => (
                           <div key={i} style={{ padding:"5px 10px", borderRadius:20, fontSize:12, fontWeight:700,
-                            background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" }}>
+                            background:"var(--surface)", color:"var(--muted)", border:"1px solid var(--border)" }}>
                             {c}
                           </div>
                         ))}

@@ -61,7 +61,7 @@ export default function AdminScreen({
               {/* Header */}
               <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
                 <button onClick={() => setOpenTicket(null)}
-                  style={{ background:"var(--paper2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
+                  style={{ background:"var(--surface2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
                 <div style={{ flex:1, fontSize:16, fontWeight:800, color:"var(--ink)" }}>🐛 Ticket #{openTicket.id?.slice(0,8)}</div>
               </div>
 
@@ -83,14 +83,14 @@ export default function AdminScreen({
               </div>
 
               {/* Beskrivelse */}
-              <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
+              <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
                 <div style={{ fontSize:11, color:"var(--muted)", fontWeight:700, marginBottom:6 }}>BESKRIVELSE</div>
                 <div style={{ fontSize:14, color:"var(--ink)", lineHeight:1.7 }}>{openTicket.description}</div>
               </div>
 
               {/* Skærmbillede */}
               {openTicket.image_base64 && (
-                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
                   <div style={{ fontSize:11, color:"var(--muted)", fontWeight:700, marginBottom:8 }}>SKÆRMBILLEDE</div>
                   <img src={`data:image/jpeg;base64,${openTicket.image_base64}`} alt="Screenshot"
                     style={{ width:"100%", borderRadius:8, objectFit:"contain" }} />
@@ -99,7 +99,7 @@ export default function AdminScreen({
 
               {/* Diagnostisk info */}
               {openTicket.context && (
-                <div style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
+                <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
                   <div style={{ fontSize:11, color:"var(--muted)", fontWeight:700, marginBottom:8 }}>📊 DIAGNOSTISK INFO</div>
                   <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
                     {[
@@ -121,7 +121,7 @@ export default function AdminScreen({
                       ["Scanninger",  openTicket.context.history_count ?? "—"],
                       ["Online",      openTicket.context.online ? "Ja" : "Nej"],
                     ].map(([k, v]) => (
-                      <div key={k} style={{ background:"#fff", borderRadius:8, padding:"8px 10px" }}>
+                      <div key={k} style={{ background:"var(--surface)", borderRadius:8, padding:"8px 10px" }}>
                         <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:".4px" }}>{k}</div>
                         <div style={{ fontSize:12, fontWeight:600, color:"var(--ink)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{v ?? "—"}</div>
                       </div>
@@ -130,7 +130,7 @@ export default function AdminScreen({
 
                   {/* Aktive allergener — bred celle */}
                   {openTicket.context.allergens?.length > 0 && (
-                    <div style={{ background:"#fff", borderRadius:8, padding:"8px 10px", marginTop:6 }}>
+                    <div style={{ background:"var(--surface)", borderRadius:8, padding:"8px 10px", marginTop:6 }}>
                       <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>ALLERGENER</div>
                       <div style={{ fontSize:11, color:"var(--ink)", fontWeight:600 }}>{openTicket.context.allergens.join(", ")}</div>
                     </div>
@@ -138,7 +138,7 @@ export default function AdminScreen({
 
                   {/* Produkt-kontekst hvis tilgængelig */}
                   {(openTicket.context.scan_result_name || openTicket.context.scan_result_ean) && (
-                    <div style={{ background:"#fff", borderRadius:8, padding:"8px 10px", marginTop:6 }}>
+                    <div style={{ background:"var(--surface)", borderRadius:8, padding:"8px 10px", marginTop:6 }}>
                       <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>PRODUKT VED FEEDBACK</div>
                       <div style={{ fontSize:11, color:"var(--ink)", fontWeight:600 }}>
                         {openTicket.context.scan_result_name || "—"} {openTicket.context.scan_result_ean ? `[EAN: ${openTicket.context.scan_result_ean}]` : ""}
@@ -148,7 +148,7 @@ export default function AdminScreen({
 
                   {/* Madpas-sprog hvis relevant */}
                   {openTicket.context.madpas_lang && (
-                    <div style={{ background:"#fff", borderRadius:8, padding:"8px 10px", marginTop:6 }}>
+                    <div style={{ background:"var(--surface)", borderRadius:8, padding:"8px 10px", marginTop:6 }}>
                       <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>MADPAS SPROG</div>
                       <div style={{ fontSize:11, color:"var(--ink)", fontWeight:600 }}>{openTicket.context.madpas_lang}</div>
                     </div>
@@ -278,7 +278,7 @@ ${openTicket.description}
               </button>
               <div style={{ flex:1, fontSize:18, fontWeight:900, color:"var(--ink)" }}>🛡️ Admin</div>
               <button onClick={() => { loadAdminStats(); if (adminSection==="submissions") loadSubmissions(submissionFilter); if (adminSection==="tickets") loadTickets(); }}
-                style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:10, padding:"6px 12px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:10, padding:"6px 12px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
                 🔄
               </button>
             </div>
@@ -320,7 +320,7 @@ ${openTicket.description}
                     { n:adminStats?.total_scans,      emoji:"📱", label:"Scanninger i alt", color:"var(--ink)" },
                     { n:adminStats?.scans_today,      emoji:"⚡", label:"Scanninger i dag", color:"var(--amber)" },
                   ].map(({ n, emoji, label, color }) => (
-                    <div key={label} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"16px 14px", boxShadow:"var(--sh)" }}>
+                    <div key={label} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"16px 14px", boxShadow:"var(--sh)" }}>
                       <div style={{ fontSize:24, marginBottom:4 }}>{emoji}</div>
                       <div style={{ fontSize:28, fontWeight:900, color, lineHeight:1 }}>{n ?? "—"}</div>
                       <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, marginTop:4 }}>{label}</div>
@@ -329,7 +329,7 @@ ${openTicket.description}
                 </div>
 
                 <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Database & opgaver</div>
-                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, overflow:"hidden", marginBottom:14, boxShadow:"var(--sh)" }}>
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, overflow:"hidden", marginBottom:14, boxShadow:"var(--sh)" }}>
                   {[
                     { emoji:"📦", label:"Produkter i databasen",   n:adminStats?.total_products,        color:"var(--ink)" },
                     { emoji:"👨‍👩‍👧", label:"Familiemedlemmer oprettet", n:adminStats?.total_families,         color:"var(--ink)" },
@@ -339,7 +339,7 @@ ${openTicket.description}
                     <div key={label} onClick={action}
                       style={{ display:"flex", alignItems:"center", gap:12, padding:"13px 16px", borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", cursor: action ? "pointer" : "default" }}>
                       <span style={{ fontSize:20 }}>{emoji}</span>
-                      <span style={{ flex:1, fontSize:13, color:"var(--ink2)", fontWeight:500 }}>{label}</span>
+                      <span style={{ flex:1, fontSize:13, color:"var(--ink)", fontWeight:500 }}>{label}</span>
                       <span style={{ fontSize:18, fontWeight:900, color }}>{n ?? "—"}</span>
                       {action && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>}
                     </div>
@@ -355,7 +355,7 @@ ${openTicket.description}
                     { emoji:"👥", label:"Administrér brugere",  color:"var(--ink)",   fn:() => { setAdminSection("users"); loadAdminUsers(); } },
                   ].map(({ emoji, label, color, fn }) => (
                     <button key={label} onClick={fn}
-                      style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:6, padding:"14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
+                      style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:6, padding:"14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
                       <span style={{ fontSize:24 }}>{emoji}</span>
                       <span style={{ fontSize:12, fontWeight:700, color }}>{label}</span>
                     </button>
@@ -374,11 +374,11 @@ ${openTicket.description}
                     value={userSearch}
                     onChange={e => setUserSearch(e.target.value)}
                     placeholder="Søg bruger…"
-                    style={{ flex:1, padding:"10px 14px", border:"1.5px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:14, background:"#fff", outline:"none", color:"var(--ink)" }}
+                    style={{ flex:1, padding:"10px 14px", border:"1.5px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:14, background:"var(--surface)", outline:"none", color:"var(--ink)" }}
                   />
                   {userSearch && (
                     <button onClick={() => setUserSearch("")}
-                      style={{ padding:"0 12px", border:"1px solid var(--border)", borderRadius:10, background:"var(--paper2)", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", cursor:"pointer" }}>
+                      style={{ padding:"0 12px", border:"1px solid var(--border)", borderRadius:10, background:"var(--surface2)", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", cursor:"pointer" }}>
                       ✕
                     </button>
                   )}
@@ -387,7 +387,7 @@ ${openTicket.description}
                 {/* Søge-parameter — dropdown */}
                 <div style={{ marginBottom:12 }}>
                   <select value={userSearchParam} onChange={e => setUserSearchParam(e.target.value)}
-                    style={{ width:"100%", padding:"10px 14px", border:"1.5px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:14, background:"#fff", color:"var(--ink)", outline:"none", cursor:"pointer" }}>
+                    style={{ width:"100%", padding:"10px 14px", border:"1.5px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:14, background:"var(--surface)", color:"var(--ink)", outline:"none", cursor:"pointer" }}>
                     <option value="all">🔍 Alle felter</option>
                     <option value="name">👤 Søg på navn</option>
                     <option value="email">📧 Søg på email</option>
@@ -419,7 +419,7 @@ ${openTicket.description}
                       <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
                         {filtered.map(u => (
                           <div key={u.id} onClick={() => setOpenAdminUser(u)}
-                            style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", boxShadow:"var(--sh)", cursor:"pointer" }}>
+                            style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", boxShadow:"var(--sh)", cursor:"pointer" }}>
                             <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                               <div style={{ width:38, height:38, borderRadius:"50%", background: u.role==="admin" ? "var(--ink)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, color:"#fff", flexShrink:0 }}>
                                 {(u.name||u.email||"?").charAt(0).toUpperCase()}
@@ -479,9 +479,9 @@ ${openTicket.description}
                     const daysSince = Math.floor((Date.now() - new Date(s.created_at).getTime()) / 86400000);
                     return (
                       <div key={s.id} onClick={() => { setOpenSubmission(s); setEditingSubmission({ name: s.ai_parsed_data?.name || s.product_name || "", brand: s.ai_parsed_data?.brand || s.brand || "", allergen_flags: s.ai_parsed_data || {} }); }}
-                        style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", cursor:"pointer", boxShadow:"var(--sh)" }}>
+                        style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", cursor:"pointer", boxShadow:"var(--sh)" }}>
                         <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
-                          <div style={{ width:48, height:48, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>📦</div>
+                          <div style={{ width:48, height:48, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>📦</div>
                           <div style={{ flex:1, minWidth:0 }}>
                             <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</div>
                             <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6, fontFamily:"monospace" }}>EAN: {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`}</div>
@@ -526,12 +526,12 @@ ${openTicket.description}
                 {!ticketsLoading && adminTickets.length === 0 && <div style={{ textAlign:"center", padding:"48px 0" }}><div style={{ fontSize:48, marginBottom:12 }}>🎉</div><div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>Ingen tickets</div></div>}
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                   {adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter).map(t => {
-                    const typeConfig = { bug:{emoji:"🐛",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{emoji:"🎨",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{emoji:"💡",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{emoji:"📦",color:"var(--ink2)",bg:"var(--paper2)",label:"Indhold"}, crash:{emoji:"💥",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{emoji:"✨",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
+                    const typeConfig = { bug:{emoji:"🐛",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{emoji:"🎨",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{emoji:"💡",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{emoji:"📦",color:"var(--ink)",bg:"var(--paper2)",label:"Indhold"}, crash:{emoji:"💥",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{emoji:"✨",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
                     const cfg = typeConfig[t.type] || typeConfig.bug;
                     const statusColor = t.status==="open"?"var(--red)":t.status==="in_progress"?"var(--amber)":t.status==="resolved"?"var(--green)":"var(--muted)";
                     const statusLabel = t.status==="open"?"Åben":t.status==="in_progress"?"I gang":t.status==="resolved"?"Løst":"Lukket";
                     return (
-                      <div key={t.id} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
+                      <div key={t.id} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
                         <div style={{ display:"flex", alignItems:"flex-start", gap:10 }} onClick={() => setOpenTicket(t)}>
                           <div style={{ width:38, height:38, borderRadius:10, background:cfg.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{cfg.emoji}</div>
                           <div style={{ flex:1, minWidth:0 }}>
@@ -594,7 +594,7 @@ ${openTicket.description}
                       </div>
                     </div>
                     <button onClick={() => setOpenAdminUser(null)}
-                      style={{ background:"var(--paper2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
+                      style={{ background:"var(--surface2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
                   </div>
 
                   {/* Info grid */}
@@ -608,7 +608,7 @@ ${openTicket.description}
                       ["🆔 Bruger-ID", openAdminUser.id?.slice(0,12) + "…"],
                       ["📋 Plan", openAdminUser.plan_id ? "Premium" : "Gratis"],
                     ].map(([label, val]) => (
-                      <div key={label} style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
+                      <div key={label} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
                         <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:3 }}>{label}</div>
                         <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{val}</div>
                       </div>
@@ -634,7 +634,7 @@ ${openTicket.description}
                       <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Foretrukne butikker</div>
                       <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:14 }}>
                         {openAdminUser.preferred_stores.map((s,i) => (
-                          <span key={i} style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:100, background:"var(--paper2)", color:"var(--ink2)", border:"1px solid var(--border)" }}>🛒 {s}</span>
+                          <span key={i} style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:100, background:"var(--surface2)", color:"var(--ink)", border:"1px solid var(--border)" }}>🛒 {s}</span>
                         ))}
                       </div>
                     </>
@@ -680,7 +680,7 @@ ${openTicket.description}
                           const data = await res.json();
                           alert(`Seneste scanninger (${data.length}):\n\n${data.map(s => `${s.product_name||s.ean} — ${new Date(s.scanned_at).toLocaleDateString("da-DK")}`).join("\n") || "Ingen scanninger"}`);
                         }}
-                          style={{ width:"100%", padding:"11px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                          style={{ width:"100%", padding:"11px", background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
                           📱 Se scanningshistorik
                         </button>
 
@@ -691,7 +691,7 @@ ${openTicket.description}
                           setSubmissionFilter("pending");
                           loadSubmissions("pending");
                         }}
-                          style={{ width:"100%", padding:"11px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                          style={{ width:"100%", padding:"11px", background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
                           📦 Se indsendelser
                         </button>
 
@@ -748,12 +748,12 @@ ${openTicket.description}
             </div>
 
             {/* Produktkort */}
-            <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
+            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
               <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
                 {openSubmission.ai_parsed_data?.product_image_base64
                   ? <img src={`data:image/jpeg;base64,${openSubmission.ai_parsed_data.product_image_base64}`}
                       style={{ width:64, height:64, borderRadius:10, objectFit:"contain", border:"1px solid var(--border)", flexShrink:0 }} alt="" />
-                  : <div style={{ width:64, height:64, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>📦</div>
+                  : <div style={{ width:64, height:64, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>📦</div>
                 }
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, marginBottom:4 }}>Produktnavn</div>
@@ -770,20 +770,20 @@ ${openTicket.description}
                 </div>
                 <div>
                   <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, marginBottom:4 }}>EAN</div>
-                  <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", padding:"8px 10px", background:"var(--paper2)", borderRadius:8, fontFamily:"monospace" }}>{openSubmission.ean}</div>
+                  <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", padding:"8px 10px", background:"var(--surface2)", borderRadius:8, fontFamily:"monospace" }}>{openSubmission.ean}</div>
                 </div>
               </div>
               {openSubmission.notes && (
                 <div style={{ marginTop:10, padding:"8px 10px", background:"var(--amber-lt)", borderRadius:8 }}>
                   <div style={{ fontSize:10, color:"var(--amber)", fontWeight:700, marginBottom:2 }}>BRUGER-BEMÆRKNING</div>
-                  <div style={{ fontSize:12, color:"var(--ink2)" }}>{openSubmission.notes}</div>
+                  <div style={{ fontSize:12, color:"var(--ink)" }}>{openSubmission.notes}</div>
                 </div>
               )}
             </div>
 
             {/* Foto af ingredienslisten */}
             {openSubmission.raw_label_image && (
-              <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
+              <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
                 <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>📸 Foto af ingredienslisten</div>
                 <img src={`data:image/jpeg;base64,${openSubmission.raw_label_image}`} alt="Ingrediensliste"
                   style={{ width:"100%", borderRadius:10, objectFit:"contain", maxHeight:240 }} />
@@ -792,7 +792,7 @@ ${openTicket.description}
 
             {/* OCR tekst */}
             {openSubmission.ocr_raw_text && (
-              <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
+              <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
                   <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>📄 Ingredienser fra OCR</div>
                   <button onClick={() => cleanOcrWithAI(openSubmission.ocr_raw_text)} disabled={cleaningOcr}
@@ -800,13 +800,13 @@ ${openTicket.description}
                     {cleaningOcr ? "🤖 Renskriver…" : "🤖 Renskiv med AI"}
                   </button>
                 </div>
-                <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.7, background:"var(--paper2)", borderRadius:8, padding:"10px", maxHeight:120, overflowY:"auto" }}>
+                <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.7, background:"var(--surface2)", borderRadius:8, padding:"10px", maxHeight:120, overflowY:"auto" }}>
                   {openSubmission.ocr_raw_text}
                 </div>
                 {cleanedOcrText && (
                   <div style={{ marginTop:10, borderTop:"1px solid var(--border)", paddingTop:10 }}>
                     <div style={{ fontSize:11, fontWeight:700, color:"var(--green)", marginBottom:6 }}>✓ AI renskrivet — tjek at intet er fjernet</div>
-                    <div style={{ background:"var(--green-lt)", borderRadius:8, padding:"10px", marginBottom:8, fontSize:12, color:"var(--ink2)", lineHeight:1.7 }}>
+                    <div style={{ background:"var(--green-lt)", borderRadius:8, padding:"10px", marginBottom:8, fontSize:12, color:"var(--ink)", lineHeight:1.7 }}>
                       {cleanedOcrText}
                     </div>
                     <button onClick={() => setEditingSubmission(s => ({ ...s, ingredients_text: cleanedOcrText }))}
@@ -819,7 +819,7 @@ ${openTicket.description}
             )}
 
             {/* Allergener — toggle grid */}
-            <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
+            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
                 <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Allergener</div>
                 <div style={{ fontSize:10, color:"var(--muted)" }}>Ja → Spor → Nej</div>

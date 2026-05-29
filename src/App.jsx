@@ -139,6 +139,7 @@ export default function EatSafe() {
   // NOT FOUND flow
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackDone, setFeedbackDone] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
 
   const [adminTickets, setAdminTickets] = useState([]);

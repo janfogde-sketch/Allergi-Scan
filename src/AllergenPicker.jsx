@@ -28,8 +28,8 @@ export const ENumberPicker = ({ selected, onChange }) => {
           return (
             <div key={e} onClick={() => onChange(on ? selected.filter(x=>x!==e) : [...selected,e])}
               style={{ fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:20, cursor:"pointer",
-                background: on?"var(--red-lt)":"var(--paper2)",
-                color: on?"var(--red)":"var(--ink2)",
+                background: on?"var(--red-lt)":"var(--surface)",
+                color: on?"var(--red)":"var(--ink)",
                 border:`1.5px solid ${on?"var(--red)":"var(--border)"}` }}>
               {e}{on?" ✓":""}
             </div>
@@ -38,11 +38,11 @@ export const ENumberPicker = ({ selected, onChange }) => {
       </div>
 
       {/* Søg */}
-      <input style={{ width:"100%", padding:"8px 12px", border:"1.5px solid var(--border2)", borderRadius:8, fontSize:13, fontFamily:"var(--f)", marginBottom:8, boxSizing:"border-box" }}
+      <input style={{ width:"100%", padding:"8px 12px", border:"1.5px solid var(--border2)", borderRadius:8, fontSize:13, fontFamily:"var(--f)", marginBottom:8, boxSizing:"border-box", background:"var(--surface)", color:"var(--ink)" }}
         placeholder="Søg E-nummer eller navn..." value={search} onChange={e => setSearch(e.target.value)} />
 
       {/* Kategori */}
-      <select style={{ width:"100%", padding:"8px 12px", border:"1.5px solid var(--border2)", borderRadius:8, fontSize:13, fontFamily:"var(--f)", marginBottom:8, background:"#fff", boxSizing:"border-box" }}
+      <select style={{ width:"100%", padding:"8px 12px", border:"1.5px solid var(--border2)", borderRadius:8, fontSize:13, fontFamily:"var(--f)", marginBottom:8, background:"var(--surface)", color:"var(--ink)", boxSizing:"border-box" }}
         value={cat} onChange={e => setCat(e.target.value)}>
         <option value="alle">Alle kategorier</option>
         <option value="farve">Farvestoffer (E100–E199)</option>
@@ -63,7 +63,7 @@ export const ENumberPicker = ({ selected, onChange }) => {
             <div key={e} onClick={() => onChange(on ? selected.filter(x=>x!==e) : [...selected, e])}
               style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"8px 12px",
                 borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none",
-                background: on?"var(--red-lt)":"#fff", cursor:"pointer" }}>
+                background: on?"var(--red-lt)":"var(--surface)", cursor:"pointer" }}>
               <div style={{ fontSize:12, fontWeight:800, color:on?"var(--red)":"var(--ink)", width:48, flexShrink:0, paddingTop:1 }}>{e}</div>
               <div style={{ fontSize:12, color:on?"var(--red)":"var(--muted2)", flex:1, lineHeight:1.4 }}>{name}</div>
               {on && <div style={{ fontSize:9, fontWeight:800, color:"var(--red)", flexShrink:0, paddingTop:2 }}>✓</div>}
