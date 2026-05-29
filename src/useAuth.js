@@ -59,7 +59,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         const payload = JSON.parse(atob(access.split(".")[1]));
         const uid = payload.sub;
         saveTokens(access, refresh, uid);
-        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,created_at,onboarding_completed`, {
+        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,email,role,allergens,custom_allerg,e_numbers,diets,created_at,onboarding_completed`, {
           headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${access}`, "Accept": "application/json" },
         })
           .then(r => r.json())
@@ -74,6 +74,19 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
               setIsOAuth(true);
               setScreen(SCREENS.ONBOARD);
             } else {
+              // Eksisterende bruger — indlæs fuld profil
+              const meta = payload.user_metadata || {};
+              setUser(u => ({
+                ...u,
+                name:  profile.name  || meta.full_name || meta.name || "",
+                email: profile.email || payload.email  || "",
+                role:  profile.role  || "user",
+                diets: Array.isArray(profile.diets) ? profile.diets : [],
+              }));
+              if (Array.isArray(profile.allergens) && profile.allergens.length > 0)
+                setAllergens(profile.allergens);
+              if (Array.isArray(profile.custom_allerg) && profile.custom_allerg.length > 0)
+                setCustomAllerg(profile.custom_allerg);
               setScreen(SCREENS.HOME);
             }
           })

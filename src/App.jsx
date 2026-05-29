@@ -616,6 +616,50 @@ export default function EatSafe() {
     }
   }, [accessToken]);
 
+  // ── Load brugerprofil + allergier + familie når man logger ind ───────────
+  React.useEffect(() => {
+    if (!accessToken || !userId) return;
+    const h = {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${accessToken}`,
+      "Accept": "application/json",
+    };
+
+    // 1. Brugerprofil inkl. rolle og allergier
+    fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,allergens,custom_allerg,e_numbers,diets,onboarding_completed`, { headers: h })
+      .then(r => r.json())
+      .then(data => {
+        const profile = data?.[0];
+        if (!profile) return;
+        setUser(u => ({
+          ...u,
+          name:   profile.name   || u.name   || "",
+          email:  profile.email  || u.email  || "",
+          phone:  profile.phone  || u.phone  || "",
+          birth_year: profile.birth_year || u.birth_year || "",
+          gender: profile.gender || u.gender || "",
+          role:   profile.role   || "user",
+          diets:  Array.isArray(profile.diets) ? profile.diets : [],
+        }));
+        if (Array.isArray(profile.allergens) && profile.allergens.length > 0)
+          setAllergens(profile.allergens);
+        if (Array.isArray(profile.custom_allerg) && profile.custom_allerg.length > 0)
+          setCustomAllerg(profile.custom_allerg);
+        if (Array.isArray(profile.e_numbers) && profile.e_numbers.length > 0)
+          setSelectedENumbers(profile.e_numbers);
+      })
+      .catch(e => console.error("Load profil fejl:", e));
+
+    // 2. Familie
+    loadFamily();
+
+    // 3. Indkøbsliste
+    loadShoppingList();
+
+    // 4. Historik (kun seneste 20)
+    loadHistory();
+  }, [accessToken, userId]);
+
   // Stop kamera automatisk når man forlader HOME
   React.useEffect(() => {
     if (screen !== SCREENS.HOME && cameraActive) {
