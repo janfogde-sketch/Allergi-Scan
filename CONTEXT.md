@@ -32,7 +32,7 @@ PWA-app der hjælper allergiramte med at scanne produkter, tjekke allergener og 
 | Styling | Vanilla CSS-in-JS — CSS-streng i `theme.jsx` + inline styles |
 | Backend | Supabase (PostgreSQL + Auth + Storage) — **ingen SDK, kun rå fetch() mod REST API** |
 | Kamera | html5-qrcode |
-| Font | Inter (Google Fonts, i theme.jsx) |
+| Font | **DM Sans + DM Mono** (Google Fonts, i theme.jsx) — skiftet fra Inter |
 | Deploy | Vercel (auto-deploy ved push til Refracktor-branch) |
 
 ---
@@ -41,7 +41,7 @@ PWA-app der hjælper allergiramte med at scanne produkter, tjekke allergener og 
 
 ```
 src/
-├── App.jsx              # Router, global state, bundnav — ~1160 linjer
+├── App.jsx              # Router, global state, bundnav — ~1200+ linjer
 ├── theme.jsx            # appCss (CSS-streng) + THEME-tokens + color() helper
 ├── utils.jsx            # BUILD_TIME, COMMIT_SHA, formatBuildTime(), getGreeting(), buildScreenLabel()
 ├── FeedbackModal.jsx    # Feedback-modal — selvstændig komponent med egen state + submit
@@ -56,8 +56,8 @@ src/
 ├── constants.jsx        # ALLERGENS, SCREENS, DIETS, E_NUMBERS, PAGE_IDS, uid m.fl.
 ├── constants.js         # Ældre duplikat — udfases
 ├── helpers.js           # initials(), timeAgo(), compareAllergens(), makeHeaders(), apiCall(), verifiedBadge()
-├── SharedComponents.jsx # EatSafeLogo, Icon, IngredientsList, ProfileBadges, ProductImage
-├── AllergenPicker.jsx   # ENumberPicker (SubtypeModal fjernet)
+├── SharedComponents.jsx # EatSafeLogo, Icon, IngredientsList, ProfileBadges, ProductImage, getProductIcon
+├── AllergenPicker.jsx   # ENumberPicker
 ├── MemberForm.jsx       # MemberForm, CategorySelect
 ├── OnboardingScreen.jsx # WELCOME, LOGIN, ONBOARD (10 trin)
 ├── ScannerScreen.jsx    # HOME, RESULT, SEARCH, LIST, NOTFOUND, SUBMITTED, SUGGEST_EDIT
@@ -74,7 +74,7 @@ src/
 ### Fil-relationer
 - `App.jsx` importerer `appCss` fra `theme.jsx` → `<style>{appCss}</style>`
 - `App.jsx` importerer alle hooks og screen-komponenter
-- `App.jsx` renderer `<FeedbackModal>` med kontekst-props
+- `App.jsx` renderer `<FeedbackModal>` i bunden af app-div (zIndex:9999)
 - Screen-filer importerer fra `constants.jsx`, `helpers.js`, `SharedComponents.jsx`
 
 ---
@@ -82,8 +82,6 @@ src/
 ## 5. Hook-arkitektur
 
 ### Initialiserings-rækkefølge i App.jsx (KRITISK)
-
-Hooks skal initialiseres i denne rækkefølge — en hook må ALDRIG modtage en setter der returneres af en hook der initialiseres senere:
 
 ```
 1. useState (screen, user, allergens, activeProfiles osv.) — lokale
@@ -97,16 +95,8 @@ Hooks skal initialiseres i denne rækkefølge — en hook må ALDRIG modtage en 
 9. [Effects]     cleanup useEffect, søge-useEffect
 ```
 
-### TDZ-regel (vigtigst lært)
-**Hook A må ikke modtage en setter der returneres af hook B, hvis B initialiseres efter A.**  
-Løsning: brug en callback-lambda i stedet:
-```js
-// ❌ TDZ fejl: setOnboardStep kommer fra useOnboarding der initialiseres efter useAuth
-useAuth({ setOnboardStep })
-
-// ✅ Korrekt: lambda evalueres ved kaldtidspunkt, ikke ved definition
-useAuth({ onSignupSuccess: () => setOnboardStep(1) })
-```
+### TDZ-regel
+**Hook A må ikke modtage en setter der returneres af hook B, hvis B initialiseres efter A.**
 
 ### Hook-exports oversigt
 
@@ -117,7 +107,7 @@ useAuth({ onSignupSuccess: () => setOnboardStep(1) })
 | `useFamily` | `family`, `newMemberName/BirthYear/Gender/Allerg/...` | `loadFamily`, `addMember`, `removeMember` |
 | `useHistory` | `history`, `historyLoading`, `favorites` | `loadHistory`, `saveHistoryEntry`, `toggleFavorite`, `isFavorite` |
 | `useOnboarding` | `onboardStep`, `editMode`, `tourIdx`, `customInput` | `saveProfileStep1`, `saveAllergensStep2`, `finishOnboard` |
-| `useProduct` | `scanResult`, `loading`, `scanError`, `ocrText`, `proposedName/Flags`, `editStep/IngText/Note/Type`, `notFoundStep`, `submitting`, alle image-states | `handleImageCapture`, `handleProductImageCapture`, `handleEditProductCapture`, `submitProduct` |
+| `useProduct` | `scanResult`, `loading`, `scanError`, `setScanError`, `ocrText`, `proposedName/Flags`, `editStep/IngText/Note/Type`, `notFoundStep`, `submitting`, alle image-states | `handleImageCapture`, `handleProductImageCapture`, `handleEditProductCapture`, `submitProduct` |
 
 ---
 
@@ -163,8 +153,9 @@ useAuth({ onSignupSuccess: () => setOnboardStep(1) })
 | 8 | Hjælp fællesskabet |
 | 9 | Oversigt + "Gå til appen" |
 
-**StepBar:** defineret i App.jsx, sendt som prop til OnboardingScreen.  
-Tæller: `step===25 ? 3 : step<3 ? step : step+1`
+**StepBar:** defineret i App.jsx, sendt som prop til OnboardingScreen.
+
+**VIGTIGT:** Admin-brugere sendes ALDRIG til onboarding — tjekkes via `payload.app_metadata.role` i OAuth-callback.
 
 ---
 
@@ -173,9 +164,9 @@ Tæller: `step===25 ? 3 : step<3 ? step : step+1`
 ```
 id             label               emoji
 gluten         Gluten              🥖
-hvede          Hvede               🌾   hvedeprotein — separat fra gluten
-maelkeallergi  Mælk                🥛   mælkeprotein (kasein/valle)
-laktose        Laktoseintolerance  🍬   mælkesukker
+hvede          Hvede               🌾
+maelkeallergi  Mælk                🥛
+laktose        Laktoseintolerance  🍬
 aeg            Æg                  🥚
 noedder        Nødder              🌰
 jordnoedder    Jordnødder          🥜
@@ -190,8 +181,7 @@ lupin          Lupin               🌸
 bloeddyr       Bløddyr             🦑
 ```
 
-**Chip-logik:** 2-state toggle — ingen `_intolerance`-suffiks, ingen 3-state.  
-**ALLERGEN_SUBTYPES fjernet** — ingen undertype-UI.
+**Chip-logik:** 2-state toggle — ingen `_intolerance`-suffiks, ingen 3-state.
 
 ---
 
@@ -222,27 +212,63 @@ const activeIds = allActive().ids;
 | `source === "off"` / `"open_food_facts"` | Open Food Facts | Blå |
 | Alt andet | Bruger-indsendt | Grå |
 
-Ingen datakvalitetsbadge — kun kilde.
-
 ---
 
-## 11. Designsystem
+## 11. Designsystem — MØRKT TEMA
 
-**CSS i `theme.jsx`:** `export const appCss` + `export const THEME` + `export const color(key)`  
-App.jsx: `<style>{appCss}</style>`
+**CSS i `theme.jsx`:** `export const appCss` + `export const THEME` + `export const color(key)`
 
 ```css
---ink:#1F2733  --ink2:#2d3a48  --paper:#FAFAF7  --paper2:#F2F2EE
---green:#22C55E  --green-lt:rgba(34,197,94,.1)  --green-mid:rgba(34,197,94,.18)
---red:#E63946  --red-lt:rgba(230,57,70,.08)  --red-md:rgba(230,57,70,.15)
---amber:#D97706  --amber-lt:rgba(217,119,6,.08)  --amber-md:rgba(217,119,6,.14)
---blue:#2563EB  --border:#E4E4DF  --border2:#D0D0C8
---muted:#8A9099  --muted2:#6B7280  --f:'Inter',system-ui,sans-serif
+/* Baggrunde */
+--paper:#1a3012       /* primær baggrund */
+--paper2:#233d18      /* sekundær baggrund */
+--surface:rgba(255,255,255,.055)
+--surface2:rgba(255,255,255,.09)
+--surface3:rgba(255,255,255,.04)
+
+/* Tekst */
+--ink:#EDF5EE          /* primær tekst */
+--ink2:rgba(237,245,238,.7)
+--ink3:rgba(237,245,238,.58)
+--muted:rgba(237,245,238,.62)
+--muted2:rgba(237,245,238,.48)
+
+/* Accent */
+--green:#4ADE80
+--green-lt:rgba(74,222,128,.13)
+--green-mid:rgba(74,222,128,.22)
+--green-text:#2FB865
+
+/* Fare/advarsel */
+--red:#FF5252   --red-lt:rgba(255,82,82,.1)   --red-md:rgba(255,82,82,.18)
+--amber:#FFBA3B --amber-lt:rgba(255,186,59,.1) --amber-md:rgba(255,186,59,.18)
+--blue:#60A5FA  --blue-lt:rgba(96,165,250,.1)
+
+/* Borders */
+--border:rgba(255,255,255,.08)
+--border2:rgba(255,255,255,.14)
+
+/* Font */
+--f:'DM Sans',system-ui,sans-serif
+--mono:'DM Mono',monospace
 ```
 
-**CSS-klasser:** `.screen`, `.fade-in`, `.btn`, `.btn-primary`, `.btn-ghost`, `.btn-outline`, `.btn-danger`, `.btn-full`, `.btn-sm`, `.card`, `.card-lbl`, `.field`, `.field-lbl`, `.input-row`, `.tags`, `.tag`, `.tag-x`, `.chip`, `.chip-grid`, `.ap-chip`, `.product-hero`
+**Baggrunds-gradient:**
+```css
+body: linear-gradient(160deg, #253d1a 0%, #1a2e12 100%)
+.app: radial-gradient(ellipse 120% 55% at 50% 0%, rgba(74,222,128,.15) 0%, transparent 65%),
+      linear-gradient(175deg, #2d5220 0%, #234018 40%, #1a3012 70%, #162a10 100%)
+```
 
-**Komponenter:** `<EatSafeLogo size={N} variant="light"|"dark" />` · `<Icon name="..." size={N} color="..." />`
+**Topbar + bundmenu:** Transparente — flyder ind i gradienten. Bundmenu har fade-gradient.
+
+**Knap-konvention:** `btn-primary` = grøn baggrund (`var(--green)`) med mørk tekst (`#071510`). ALDRIG hvid tekst på grøn knap.
+
+**CSS-klasser (nye):** `.scan-card`, `.scan-barcode-wrap`, `.scan-barcode-svg`, `.reticle-corner`, `.reticle-line`, `.home-chip`, `.home-tip`, `.recent-list`, `.recent-dot`, `.home-mini-card`, `.section-lbl`, `.version-str`, `.greeting-eyebrow`, `.greeting-main`
+
+**Komponenter:** `<EatSafeLogo size={N} variant="light" />` · `<Icon name="..." size={N} color="..." />`
+
+**VIGTIGT:** Brug aldrig `var(--ink)` som baggrund — det er nu lys grøn tekst-farve. Brug `var(--surface)` eller `var(--surface2)` til kortbaggrunde.
 
 ---
 
@@ -254,9 +280,9 @@ App.jsx: `<style>{appCss}</style>`
 ### Tabeller
 | Tabel | Kolonner |
 |-------|---------|
-| `users` | id, name, email, role, birth_year, gender, allergens jsonb, custom_allerg jsonb, e_numbers jsonb, diets jsonb, onboarding_completed |
+| `users` | id, name, email, role, birth_year, gender, diets jsonb, onboarding_completed *(NB: allergens/custom_allerg/e_numbers er IKKE kolonner her — disse er i separate tabeller eller håndteres separat)* |
 | `family_members` | id, user_id, name, birth_year, gender, color, allergens jsonb, custom_allergens jsonb, diets jsonb, e_numbers jsonb |
-| `products` | ean, name, brand, allergen_flags jsonb, ingredients, nutrition jsonb, verified_status, source, image_url |
+| `products` | id, ean, name, brand, category, allergen_flags jsonb, ingredients_text, nutrition jsonb, verified_status, source, image_url, tags array |
 | `feedback_tickets` | id, type, description, context jsonb, image_base64, status, submitted_by |
 | `product_submissions` | id, ean, proposed_name, ocr_raw_text, allergen_flags jsonb, submitted_by, status |
 | `scan_history` | id, user_id, ean_scanned, result_status |
@@ -267,7 +293,13 @@ App.jsx: `<style>{appCss}</style>`
 ### Auth
 Tokens i localStorage: `as_token`, `as_refresh`, `as_user_id`  
 Auto-refresh hvert 45 min · Roller: `user`, `admin`  
-Postgres trigger opretter `public.users` ved signup
+**Admin-rolle sættes i `auth.users.raw_app_meta_data → {"role":"admin"}`**  
+Læses fra JWT: `payload.app_metadata.role`  
+Trigger synkroniserer rolle fra `public.users.role` → `auth.users.raw_app_meta_data`
+
+### Search Edge Function (`/functions/v1/search`)
+Returnerer: `{ success, products: [{ id, ean, name, brand, category, image_url, verified_status, allergen_flags, tags }] }`  
+EAN-feltet hedder `ean` i products-tabellen.
 
 ---
 
@@ -287,6 +319,12 @@ define: {
 
 ## 14. FeedbackModal
 
+Placeret i **bunden af app-div** i App.jsx (sikrer zIndex:9999 over alt).
+
+Åbnes via:
+- Feedback-knap i topbar (synlig på alle skærme inkl. onboarding)
+- Avatar i topbar → navigerer til profil (IKKE feedback længere)
+
 ```jsx
 <FeedbackModal
   open={feedbackOpen} onClose={() => setFeedbackOpen(false)}
@@ -303,45 +341,56 @@ Typer: bug 🐛 · ui 🎨 · missing 💡 · content 📦 · crash 💥 · sugg
 
 ---
 
-## 15. Konventioner
+## 15. AdminScreen
+
+**Tilgås via:** Profil → Admin panel (kun synlig hvis `user.role === "admin"`)
+
+**Funktioner defineret i App.jsx:**
+- `loadAdminUsers()` — henter alle brugere
+- `updateUserRole(uid, role)` — skifter rolle
+- `deleteUser(uid)` — sletter bruger
+- `updateSubmissionAndApprove(submission, edited)` — godkender indsendelse
+- `rejectSubmission(id)` — afviser indsendelse
+- `updateTicketStatus(id, status)` — opdaterer ticket
+- `cleanOcrWithAI(text)` — renser OCR-tekst via Claude API
+
+**Props sendt til AdminScreen:** screen, setScreen, adminSection, adminStats, adminUsers, adminUsersLoading, adminTickets, adminTicketFilter, submissions, submissionsLoading, submissionFilter, openSubmission, editingSubmission, openAdminUser, openTicket, cleanedOcrText, cleaningOcr, userId, accessToken, user, + alle ovenstående funktioner
+
+---
+
+## 16. Konventioner
 
 - `App.jsx` = routing + global state. Navigation via `setScreen(SCREENS.X)`
 - `// @ts-nocheck` øverst i alle `.jsx`-filer
 - **Ingen ALLERGEN_SUBTYPES** — fjernet
 - **Ingen 3-state chips** — kun 2-state toggle
 - **Ingen datakvalitetsbadge** — kun kilde
-- **Spor vises altid**
 - CSS i `theme.jsx`, ikke App.jsx
 - Supabase REST — `makeHeaders()` + `apiCall()` fra `helpers.js`
+- **Mørkt tema overalt** — ingen `#fff` eller `var(--paper)` baggrunde i komponenter
+- **Grønne primærknapper** har altid `color:#071510` (mørk tekst)
+- Kamera stoppes automatisk ved navigation væk fra HOME (useEffect på screen)
+- Brugerdata loades automatisk ved login via useEffect på accessToken+userId
 
 ---
 
-## 16. Kendte fejl løst
+## 17. Kendte fejl løst
 
 | Fejl | Løsning |
 |------|---------|
 | `loginEmail is not defined` | Tilføjet som prop til ProfileScreen |
 | `activeIds is not defined` | Beregnes lokalt i ScannerScreen |
-| `lookupProduct is not defined` | Tilføjet som prop + defineret efter hooks |
-| `Cannot access X before initialization` (TDZ) | Hook-rækkefølge: A må ikke modtage setter fra B der initialiseres efter A |
-| `screen` TDZ | `useState(() => localStorage.getItem("as_token") ? ...)` i stedet for `useState(accessToken ? ...)` |
-| `madpasActiveProfile` TDZ | Moved fra komponent-root til efter hooks |
-| `FamilyChips/StepBar/isOnboard` TDZ | Moved til efter hooks-sektionen |
-| Søge-useEffect TDZ | Moved til efter hooks |
-| `setScanError` cirkulær reference | useProduct bruger intern `setScanError_`, ikke param |
-| `setOnboardStep` cirkulær reference | Erstattet med `onSignupSuccess: () => setOnboardStep(1)` callback |
-
----
-
-## 17. Refaktor-regel
-
-**Første gang vi arbejder på en fil ikke rørt siden refaktoren**, kør import-tjek:
-
-Fra `helpers.js`: `verifiedBadge`, `makeHeaders`, `apiCall`, `timeAgo`, `compareAllergens`, `initials`, `getAllergenLabels`  
-Fra `constants.jsx`: `uid`, `PAGE_IDS`, `SCREENS`, `ALLERGENS`  
-Props: tjek at alle brugte props sendes fra App.jsx
-
-**Allerede tjekket:** ScannerScreen, ProfileScreen, OnboardingScreen, MemberForm, AllergenPicker, SharedComponents, constants, FeedbackModal, utils, theme, alle hooks
+| `lookupProduct is not defined` | Tilføjet som prop til ScannerScreen + defineret efter hooks |
+| `scanError is not defined` | `scanError, setScanError` destructureret fra useProduct i App.jsx |
+| `lastScannedRef is not defined` | `const lastScannedRef = useRef(null)` tilføjet i App.jsx |
+| `feedbackDone is not defined` | `const [feedbackDone, setFeedbackDone]` tilføjet i App.jsx |
+| TDZ-fejl generelt | Hook-rækkefølge: A må ikke modtage setter fra B der initialiseres efter A |
+| OAuth sender admin til onboarding | Admin tjekkes via JWT `app_metadata.role` — går altid til HOME |
+| `column users.allergens does not exist` | Fjernet fra REST select — kun `name,email,role,diets,onboarding_completed` |
+| Søgning åbner ikke produkter | `lookupProduct` manglede som prop til ScannerScreen |
+| AdminScreen vises ikke | `<AdminScreen>` manglede i App.jsx render-træ |
+| Admin-funktioner undefined | `loadAdminUsers`, `updateUserRole` m.fl. defineret i App.jsx |
+| `scanError is not a function` | `p.ean || p.code || p.barcode` guard i søgeklik-handler |
 
 ---
 
@@ -350,8 +399,8 @@ Props: tjek at alle brugte props sendes fra App.jsx
 - [ ] `constants.js` udfases
 - [ ] Opskrifter-backend mangler data
 - [ ] Supabase allowlist til alle preview-URLer
-- [ ] Mørkt mørkegrønt tema implementeres
-- [ ] Fase 3 theme-refaktor: hardcodede farver i komponentfilerne
+- [ ] Debug role-visning i ProfileScreen fjernes (linje der viser "role: admin")
+- [ ] Fase 3 theme-refaktor: gennemgå alle hardcodede farver der stadig måske er tilbage
 
 ---
 
