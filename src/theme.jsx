@@ -237,24 +237,17 @@ body{
 .scan-barcode-wrap{
   width:85%;height:64px;position:relative;flex-shrink:0;margin:0 auto;
 }
-.scan-barcode-bars{
-  position:absolute;left:8px;right:8px;top:50%;transform:translateY(-50%);
-  height:28px;display:flex;align-items:stretch;gap:0;
+.scan-barcode-svg{
+  position:absolute;left:10px;right:10px;top:50%;transform:translateY(-50%);
+  height:38px;width:calc(100% - 20px);
 }
-.scan-bar{
-  flex:1;margin:0 1.5px;
-  background:rgba(74,222,128,.3);
-  border-radius:1px;
-}
-.scan-bar.wide{flex:2.2;}
-.scan-bar.narrow{flex:.5;}
 .reticle-corner{position:absolute;width:18px;height:18px;border-color:var(--green);border-style:solid;opacity:.85;}
 .reticle-corner.tl{top:0;left:0;border-width:2px 0 0 2px;border-radius:4px 0 0 0;}
 .reticle-corner.tr{top:0;right:0;border-width:2px 2px 0 0;border-radius:0 4px 0 0;}
 .reticle-corner.bl{bottom:0;left:0;border-width:0 0 2px 2px;border-radius:0 0 0 4px;}
 .reticle-corner.br{bottom:0;right:0;border-width:0 2px 2px 0;border-radius:0 0 4px 0;}
 .reticle-line{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 0%,var(--green) 15%,var(--green) 85%,transparent 100%);animation:scanline 2.2s ease-in-out infinite;box-shadow:0 0 8px var(--green),0 0 2px var(--green);}
-@keyframes scanline{0%{top:16px;opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{top:48px;opacity:0;}}
+@keyframes scanline{0%{top:13px;opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{top:51px;opacity:0;}}
 
 /* Mini cards */
 .home-cards-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}

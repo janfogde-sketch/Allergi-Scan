@@ -321,14 +321,19 @@ export default function ScannerScreen({
                     <div className="reticle-corner tr" />
                     <div className="reticle-corner bl" />
                     <div className="reticle-corner br" />
-                    {/* Barcode streger */}
-                    <div className="scan-barcode-bars">
-                      {[2,1,3,1,2,1,1,3,1,2,1,1,2,1,3,1,1,2,1,2,1,3,1,1,2].map((w,i) => (
-                        <div key={i} className={`scan-bar${w===3?" wide":w===1?" narrow":""}`} />
-                      ))}
-                    </div>
-                    {/* Scan-linje der bevæger sig */}
+                    {/* Scan-linje */}
                     <div className="reticle-line" />
+                    {/* EAN-8 barcode SVG */}
+                    <svg className="scan-barcode-svg" viewBox="0 0 67 38" preserveAspectRatio="none"
+                      xmlns="http://www.w3.org/2000/svg">
+                      {/* bit-pattern: 1010010011000110100100110110001010101110010100111011011001110100101 */}
+                      {"1010010011000110100100110110001010101110010100111011011001110100101".split("").map((bit, i) => (
+                        bit === "1" ? <rect key={i} x={i} y={0} width={1} height={28} fill="rgba(74,222,128,.55)" /> : null
+                      ))}
+                      {/* Tal under barcode */}
+                      <text x={3}  y={36} fontSize={5} fill="rgba(74,222,128,.7)" fontFamily="monospace" letterSpacing={0}>2025</text>
+                      <text x={36} y={36} fontSize={5} fill="rgba(74,222,128,.7)" fontFamily="monospace" letterSpacing={0}>0529</text>
+                    </svg>
                   </div>
                   <div className="scan-card-text">
                     <div className="scan-card-title">Scan produkt</div>
