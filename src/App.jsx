@@ -67,7 +67,6 @@ export default function EatSafe() {
   const torchTrackRef = useRef(null);
   const qrRef = useRef(null);
   const html5QrRef = useRef(null);
-  const lastScannedRef = useRef(null);
 
   // History → useHistory hook
 
@@ -139,7 +138,6 @@ export default function EatSafe() {
   // NOT FOUND flow
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackDone, setFeedbackDone] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
 
   const [adminTickets, setAdminTickets] = useState([]);
@@ -225,101 +223,6 @@ export default function EatSafe() {
       setAdminTickets(Array.isArray(data) ? data : []);
     } catch { setAdminTickets([]); }
     setTicketsLoading(false);
-  };
-
-  const loadAdminUsers = async () => {
-    setAdminUsersLoading(true);
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,name,email,role,onboarding_completed,created_at&order=created_at.desc&limit=200`, {
-        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" },
-      });
-      const data = await res.json();
-      setAdminUsers(Array.isArray(data) ? data : []);
-    } catch { setAdminUsers([]); }
-    setAdminUsersLoading(false);
-  };
-
-  const updateUserRole = async (uid, role) => {
-    try {
-      await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}`, {
-        method: "PATCH",
-        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
-        body: JSON.stringify({ role }),
-      });
-      setAdminUsers(prev => prev.map(u => u.id === uid ? { ...u, role } : u));
-    } catch (e) { alert("Fejl: " + e.message); }
-  };
-
-  const deleteUser = async (uid) => {
-    if (!window.confirm("Slet bruger permanent?")) return;
-    try {
-      await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}`, {
-        method: "DELETE",
-        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}` },
-      });
-      setAdminUsers(prev => prev.filter(u => u.id !== uid));
-    } catch (e) { alert("Fejl: " + e.message); }
-  };
-
-  const updateSubmissionAndApprove = async (submission, edited) => {
-    try {
-      const flags = edited?.allergen_flags || submission.allergen_flags || {};
-      await fetch(`${SUPABASE_URL}/rest/v1/products`, {
-        method: "POST",
-        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
-        body: JSON.stringify({ ean: submission.ean, name: edited?.proposed_name || submission.proposed_name, allergen_flags: flags, ingredients_text: edited?.ocr_raw_text || submission.ocr_raw_text, source: "user", verified_status: "partial" }),
-      });
-      await fetch(`${SUPABASE_URL}/rest/v1/product_submissions?id=eq.${submission.id}`, {
-        method: "PATCH",
-        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
-        body: JSON.stringify({ status: "approved" }),
-      });
-      setSubmissions(prev => prev.filter(s => s.id !== submission.id));
-      setOpenSubmission(null); setEditingSubmission(null);
-    } catch (e) { alert("Fejl: " + e.message); }
-  };
-
-  const rejectSubmission = async (id) => {
-    try {
-      await fetch(`${SUPABASE_URL}/rest/v1/product_submissions?id=eq.${id}`, {
-        method: "PATCH",
-        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
-        body: JSON.stringify({ status: "rejected" }),
-      });
-      setSubmissions(prev => prev.filter(s => s.id !== id));
-    } catch (e) { alert("Fejl: " + e.message); }
-  };
-
-  const updateTicketStatus = async (id, status) => {
-    try {
-      await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?id=eq.${id}`, {
-        method: "PATCH",
-        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
-        body: JSON.stringify({ status }),
-      });
-      setAdminTickets(prev => prev.map(t => t.id === id ? { ...t, status } : t));
-      if (openTicket?.id === id) setOpenTicket(t => ({ ...t, status }));
-    } catch (e) { alert("Fejl: " + e.message); }
-  };
-
-  const cleanOcrWithAI = async (text) => {
-    setCleaningOcr(true);
-    try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{ role: "user", content: `Rens og strukturer denne ingrediensliste. Returner kun den rensede liste, intet andet:
-
-${text}` }],
-        }),
-      });
-      const data = await res.json();
-      setCleanedOcrText(data.content?.[0]?.text || text);
-    } catch { setCleanedOcrText(text); }
-    setCleaningOcr(false);
   };
 
   // ── KAMERA + SCANNING ──────────────────────────────────────────────────────
@@ -676,7 +579,6 @@ ${text}` }],
   const {
     scanResult, setScanResult,
     loading, setLoading,
-    scanError, setScanError,
     notFoundStep, setNotFoundStep,
     submitting,
     ocrText, setOcrText,
@@ -711,62 +613,50 @@ ${text}` }],
     }
   }, [accessToken]);
 
-  // ── Load brugerprofil + allergier + familie når man logger ind ───────────
+  // ── Load brugerdata ved login ─────────────────────────────────────────────
   React.useEffect(() => {
     if (!accessToken || !userId) return;
-    const h = {
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": `Bearer ${accessToken}`,
-      "Accept": "application/json",
+
+    const loadAll = async () => {
+      try {
+        // Brugerprofil
+        const profile = await apiCall(
+          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,diets,onboarding_completed&limit=1`,
+          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+        );
+        if (Array.isArray(profile) && profile[0]) {
+          const p = profile[0];
+          setUser(u => ({
+            ...u,
+            name: p.name || u.name || "",
+            email: p.email || u.email || "",
+            phone: p.phone || "",
+            age: p.birth_year ? String(p.birth_year) : "",
+            gender: p.gender || "",
+            role: p.role || "user",
+          }));
+        }
+
+        // Allergener
+        const allergenData = await apiCall(
+          `${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}&select=allergen,type`,
+          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+        );
+        if (Array.isArray(allergenData)) {
+          setAllergens(allergenData.filter(a => a.type === "allergen").map(a => a.allergen));
+          setCustomAllerg(allergenData.filter(a => a.type === "custom").map(a => a.allergen));
+        }
+
+        // Familie + indkøb
+        loadFamily();
+        loadShoppingList();
+      } catch (e) {
+        console.error("loadAll fejl:", e);
+      }
     };
 
-    // 1. Brugerprofil inkl. rolle og allergier
-    fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,diets,onboarding_completed`, { headers: h })
-      .then(r => r.json())
-      .then(data => {
-        const profile = data?.[0];
-        if (!profile) return;
-        // Læs role fra JWT app_metadata (mest pålidelig kilde)
-        let jwtRole = "user";
-        try {
-          const tok = localStorage.getItem("as_token");
-          if (tok) {
-            const p = JSON.parse(atob(tok.split(".")[1]));
-            jwtRole = p.app_metadata?.role || p.user_role || p.role || "user";
-          }
-        } catch {}
-        const resolvedRole = profile.role || jwtRole;
-
-        setUser(u => ({
-          ...u,
-          name:       profile.name       || u.name       || "",
-          email:      profile.email      || u.email      || "",
-          phone:      profile.phone      || u.phone      || "",
-          birth_year: profile.birth_year || u.birth_year || "",
-          gender:     profile.gender     || u.gender     || "",
-          role:       resolvedRole,
-          diets:      Array.isArray(profile.diets) ? profile.diets : [],
-        }));
-
-      })
-      .catch(e => console.error("Load profil fejl:", e));
-
-    // 2. Familie
-    loadFamily();
-
-    // 3. Indkøbsliste
-    loadShoppingList();
-
-    // 4. Historik (kun seneste 20)
-    loadHistory();
+    loadAll();
   }, [accessToken, userId]);
-
-  // Stop kamera automatisk når man forlader HOME
-  React.useEffect(() => {
-    if (screen !== SCREENS.HOME && cameraActive) {
-      stopCamera();
-    }
-  }, [screen]);
 
   const isOnboard = screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode;
 
@@ -901,7 +791,7 @@ ${text}` }],
         );
         const data = await res.json();
         if (data.success) {
-          setSearchResults((data.products || []).map(p => ({ ...p, ean: p.ean || p.barcode || null, source:"local", verified:p.verified_status, conflicts:[] })));
+          setSearchResults((data.products || []).map(p => ({ ...p, source:"local", verified:p.verified_status, conflicts:[] })));
         }
       } catch {
         // silent
@@ -970,23 +860,22 @@ ${text}` }],
         {!isOnboard && (
           <header className="topbar">
             <div className="topbar-logo">
-              <div className="topbar-shield"><EatSafeLogo size={17} variant="light" /></div>
-              <span className="topbar-name">EatSafe</span>
+              <div className="topbar-shield" style={{background:"none",padding:0}}><EatSafeLogo size={34} variant="light" /></div>
+              <div className="topbar-name">Eat<span>Safe</span></div>
+              <div style={{ background:"var(--amber)", color:"#fff", fontSize:9, fontWeight:800, padding:"2px 7px", borderRadius:100, letterSpacing:".5px", marginLeft:4, marginTop:2 }}>BETA</div>
             </div>
             <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+              {/* Hjælp-knap */}
               <button onClick={() => setHelpOpen(true)}
-                style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:"50%", width:32, height:32, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--muted)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:32, height:32, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
                 ?
               </button>
+              {/* Feedback-knap */}
               <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
-                style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:100, padding:"0 12px", height:32, fontFamily:"var(--f)", fontSize:11, fontWeight:600, color:"var(--muted)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                 Feedback
               </button>
-              <div className="topbar-avatar"
-                onClick={() => setScreen(SCREENS.PROFILE)}>
-                {initials(user.name || "?")}
-              </div>
             </div>
           </header>
         )}
@@ -995,8 +884,8 @@ ${text}` }],
         {isOnboard && (
           <div style={{ position:"fixed", top:12, right:12, zIndex:1000 }}>
             <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
-              style={{ background:"var(--surface2)", backdropFilter:"blur(12px)", border:"1px solid var(--border2)", borderRadius:100, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:600, color:"var(--muted)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              style={{ background:"rgba(255,255,255,.85)", backdropFilter:"blur(8px)", border:"1px solid var(--border2)", borderRadius:100, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", gap:5, boxShadow:"0 2px 8px rgba(0,0,0,.08)" }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
               Feedback
             </button>
           </div>
@@ -1039,26 +928,26 @@ ${text}` }],
           return (
             <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
               onClick={e => e.target === e.currentTarget && setHelpOpen(false)}>
-              <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto", border:"1px solid rgba(255,255,255,.1)", backdropFilter:"blur(20px)" }}
+              <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
                 onClick={e => e.stopPropagation()}>
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
-                  <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)" }}>{content.title}</div>
+                  <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>{content.title}</div>
                   <button onClick={() => setHelpOpen(false)}
-                    style={{ background:"var(--surface2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
+                    style={{ background:"var(--paper2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
                 </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:14 }}>
+                <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
                   {content.tips.map((tip, i) => (
-                    <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
+                    <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12 }}>
                       <div style={{ fontSize:22, flexShrink:0 }}>{tip.icon}</div>
                       <div>
-                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:3 }}>{tip.title}</div>
-                        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6 }}>{tip.desc}</div>
+                        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:3 }}>{tip.title}</div>
+                        <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>{tip.desc}</div>
                       </div>
                     </div>
                   ))}
                 </div>
                 <button onClick={() => { setHelpOpen(false); setFeedbackOpen(true); setFeedbackDone(false); }}
-                  style={{ width:"100%", padding:"12px", background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#071510", cursor:"pointer" }}>
+                  style={{ width:"100%", padding:"12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted2)", cursor:"pointer" }}>
                   💬 Send feedback eller rapportér fejl
                 </button>
               </div>
@@ -1070,7 +959,7 @@ ${text}` }],
         {showDeleteAccount && (
           <div style={{ position:"fixed", inset:0, zIndex:9997, background:"rgba(0,0,0,.6)", display:"flex", alignItems:"flex-end" }}
             onClick={e => e.target === e.currentTarget && setShowDeleteAccount(false)}>
-            <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"24px 16px 40px", width:"100%", border:"1px solid rgba(255,255,255,.1)" }}
+            <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"24px 16px 40px", width:"100%" }}
               onClick={e => e.stopPropagation()}>
 
               <div style={{ textAlign:"center", marginBottom:20 }}>
@@ -1101,7 +990,7 @@ ${text}` }],
                   onChange={e => setDeleteConfirmText(e.target.value)}
                   placeholder="slet"
                   autoCapitalize="none"
-                  style={{ width:"100%", padding:"13px 14px", border:`1.5px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"var(--surface)", color:"var(--ink)" }}
+                  style={{ width:"100%", padding:"13px 14px", border:`1.5px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"#fff", color:"var(--ink)" }}
                 />
               </div>
 
@@ -1119,6 +1008,19 @@ ${text}` }],
             </div>
           </div>
         )}
+
+        {/* ══ FEEDBACK MODAL ══ */}
+        <FeedbackModal
+          open={feedbackOpen} onClose={() => setFeedbackOpen(false)}
+          screen={screen} authTab={authTab} onboardStep={onboardStep}
+          scanResult={scanResult} madpasWaiterView={madpasWaiterView}
+          madpasLang={madpasLang} selectedRecipe={selectedRecipe}
+          editMode={editMode} showManualEan={showManualEan}
+          profilePopup={profilePopup}
+          user={user} userId={userId} accessToken={accessToken}
+          loginEmail={loginEmail} allergens={allergens}
+          family={family} history={history} activeProfiles={activeProfiles}
+        />
 
         {/* ══ HJEM ══ */}        {/* ══ HJEM ══ */}
         {/* ══ SCANNER SCREENS ══ */}
@@ -1171,7 +1073,6 @@ ${text}` }],
             toggleTorch={toggleTorch}
             torchOn={torchOn}
             buildLabel={formatBuildTime()}
-            lookupProduct={lookupProduct}
           />
         )}
 
@@ -1231,47 +1132,6 @@ ${text}` }],
             historyLoading={historyLoading}
             loadAdminStats={loadAdminStats} loadSubmissions={loadSubmissions} loadTickets={loadTickets}
             setAdminSection={setAdminSection} setSubmissionFilter={setSubmissionFilter}
-          />
-        )}
-
-        {/* ══ ADMIN SCREEN ══ */}
-        {screen === SCREENS.ADMIN && (
-          <AdminScreen
-            screen={screen} setScreen={setScreen}
-            adminSection={adminSection} setAdminSection={setAdminSection}
-            adminStats={adminStats}
-            adminUsers={adminUsers} adminUsersLoading={adminUsersLoading}
-            adminTickets={adminTickets} adminTicketFilter={adminTicketFilter} setAdminTicketFilter={setAdminTicketFilter}
-            submissions={submissions} submissionsLoading={submissionsLoading}
-            submissionFilter={submissionFilter} setSubmissionFilter={setSubmissionFilter}
-            openSubmission={openSubmission} setOpenSubmission={setOpenSubmission}
-            editingSubmission={editingSubmission} setEditingSubmission={setEditingSubmission}
-            openAdminUser={openAdminUser} setOpenAdminUser={setOpenAdminUser}
-            openTicket={openTicket} setOpenTicket={setOpenTicket}
-            cleanedOcrText={cleanedOcrText} cleaningOcr={cleaningOcr}
-            userId={userId} accessToken={accessToken} user={user}
-            allergens={allergens} setAllergens={setAllergens}
-            customAllerg={customAllerg} setCustomAllerg={setCustomAllerg}
-            customInput={customInput} setCustomInput={setCustomInput}
-            family={family}
-            newMemberName={newMemberName} setNewMemberName={setNewMemberName}
-            newMemberAllerg={newMemberAllerg} setNewMemberAllerg={setNewMemberAllerg}
-            newMemberCustomAllerg={newMemberCustomAllerg} setNewMemberCustomAllerg={setNewMemberCustomAllerg}
-            newMemberCustomInput={newMemberCustomInput} setNewMemberCustomInput={setNewMemberCustomInput}
-            newMemberDiets={newMemberDiets} setNewMemberDiets={setNewMemberDiets}
-            newMemberENumbers={newMemberENumbers} setNewMemberENumbers={setNewMemberENumbers}
-            newMemberSubtypes={newMemberSubtypes} setNewMemberSubtypes={setNewMemberSubtypes}
-            addMember={addMember} removeMember={removeMember}
-            ticketsLoading={ticketsLoading}
-            userSearch={userSearch} setUserSearch={setUserSearch}
-            userSearchParam={userSearchParam} setUserSearchParam={setUserSearchParam}
-            loadAdminStats={loadAdminStats} loadAdminUsers={loadAdminUsers}
-            loadSubmissions={loadSubmissions} loadTickets={loadTickets}
-            updateUserRole={updateUserRole} deleteUser={deleteUser}
-            updateSubmissionAndApprove={updateSubmissionAndApprove}
-            rejectSubmission={rejectSubmission}
-            updateTicketStatus={updateTicketStatus}
-            cleanOcrWithAI={cleanOcrWithAI}
           />
         )}
 
@@ -1341,18 +1201,6 @@ ${text}` }],
             ))}
           </nav>
         )}
-        {/* ══ FEEDBACK MODAL ══ */}
-        <FeedbackModal
-          open={feedbackOpen} onClose={() => setFeedbackOpen(false)}
-          screen={screen} authTab={authTab} onboardStep={onboardStep}
-          scanResult={scanResult} madpasWaiterView={madpasWaiterView}
-          madpasLang={madpasLang} selectedRecipe={selectedRecipe}
-          editMode={editMode} showManualEan={showManualEan}
-          profilePopup={profilePopup}
-          user={user} userId={userId} accessToken={accessToken}
-          loginEmail={loginEmail} allergens={allergens}
-          family={family} history={history} activeProfiles={activeProfiles}
-        />
       </div>
     </>
   );
