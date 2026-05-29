@@ -382,19 +382,23 @@ export default function ScannerScreen({
               <>
                 <div className="section-lbl">Seneste</div>
                 <div className="recent-list">
-                  {history.slice(0, 3).map((item, i) => (
-                    <div key={i} className="recent-item"
-                      onClick={() => { /* TODO: navigér til resultat */ }}>
-                      <div className="recent-thumb">
-                        {getProductIcon(item.name || "")}
+                  {history.slice(0, 3).map((item, i) => {
+                    const ean = item.ean_scanned || item.code;
+                    return (
+                      <div key={i} className="recent-item"
+                        onClick={() => { if (ean) lookupProduct(String(ean)); }}
+                        style={{ cursor: ean ? "pointer" : "default" }}>
+                        <div className="recent-thumb">
+                          {getProductIcon(item.name || "")}
+                        </div>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div className="recent-name">{item.name || item.code || "Ukendt"}</div>
+                          <div className="recent-meta">{item.brand || ""}{item.brand && " · "}{timeAgo(item.timestamp)}</div>
+                        </div>
+                        <div className={`recent-dot ${item.status || "not_found"}`} />
                       </div>
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div className="recent-name">{item.name || item.code || "Ukendt"}</div>
-                        <div className="recent-meta">{item.brand || ""}{item.brand && " · "}{timeAgo(item.timestamp)}</div>
-                      </div>
-                      <div className={`recent-dot ${item.status || "not_found"}`} />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}

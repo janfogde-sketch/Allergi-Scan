@@ -123,9 +123,8 @@ body{
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
   width:100%;max-width:390px;
-  background:rgba(20,38,12,.9);border-top:1px solid var(--border);
+  background:transparent;border-top:none;
   display:flex;padding:10px 4px 24px;z-index:100;
-  backdrop-filter:blur(20px);
 }
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.3;transition:all .15s;}
 .nav-item.active{opacity:1;}

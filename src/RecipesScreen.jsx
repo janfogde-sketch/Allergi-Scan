@@ -380,7 +380,7 @@ export default function RecipesScreen({
                 <div onClick={() => setRecipeSafeOnly(v => !v)} style={{
                   display:"flex", alignItems:"center", gap:6, padding:"5px 12px",
                   borderRadius:100, border:`1.5px solid ${recipeSafeOnly ? "var(--green)" : "var(--border2)"}`,
-                  background: recipeSafeOnly ? "var(--green-lt)" : "#fff", cursor:"pointer",
+                  background: recipeSafeOnly ? "var(--green-lt)" : "var(--surface)", cursor:"pointer",
                   fontSize:12, fontWeight:700, color: recipeSafeOnly ? "var(--green)" : "var(--muted2)" }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
                   Kun sikre
@@ -402,13 +402,13 @@ export default function RecipesScreen({
               {/* Startside — ingen filter, ingen opskrifter endnu */}
               {!recipesLoading && recipes.length === 0 && recipeFilter === "alle" && (
                 <div>
-                  <div style={{ background:"var(--ink)", borderRadius:16, padding:"22px 20px", marginBottom:16, display:"flex", alignItems:"center", gap:16 }}>
+                  <div style={{ background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:16, padding:"22px 20px", marginBottom:16, display:"flex", alignItems:"center", gap:16 }}>
                     <div style={{ fontSize:44, flexShrink:0 }}>🍳</div>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:18, fontWeight:900, color:"#fff", letterSpacing:"-.3px", marginBottom:4 }}>Over 600 opskrifter</div>
-                      <div style={{ fontSize:12, color:"rgba(255,255,255,.55)", marginBottom:12 }}>Filtreret til dig og din familie</div>
+                      <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)", letterSpacing:"-.3px", marginBottom:4 }}>Over 600 opskrifter</div>
+                      <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12 }}>Filtreret til dig og din familie</div>
                       <button onClick={() => loadRecipes("alle")}
-                        style={{ background:"var(--green)", color:"#fff", border:"none", borderRadius:10, padding:"9px 18px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                        style={{ background:"var(--green)", color:"#071510", border:"none", borderRadius:10, padding:"9px 18px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
                         Vis opskrifter →
                       </button>
                     </div>
