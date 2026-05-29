@@ -35,6 +35,8 @@ import { useShoppingList } from './useShoppingList.js';
 import { useFamily } from './useFamily.js';
 import { useHistory } from './useHistory.js';
 import { useAuth } from './useAuth.js';
+import { useOnboarding } from './useOnboarding.js';
+import { useProduct } from './useProduct.js';
 import FeedbackModal from './FeedbackModal.jsx';
 
 
@@ -45,8 +47,6 @@ export default function EatSafe() {
 
   // UI state
   const [screen, setScreen] = useState(() => localStorage.getItem("as_token") ? SCREENS.HOME : SCREENS.WELCOME);
-  const [onboardStep, setOnboardStep] = useState(1);
-  const [editMode, setEditMode] = useState(false);
 
   // User data
   const [user, setUser] = useState({ name:"", age:"", email:"", phone:"", password:"", role:"" });
@@ -56,9 +56,6 @@ export default function EatSafe() {
   const [activeProfiles, setActiveProfiles] = useState(["me"]);
 
   // Scan state
-  const [loading, setLoading] = useState(false);
-  const [scanResult, setScanResult] = useState(null);
-  const [scanError, setScanError] = useState("");
   const [showIng, setShowIng] = useState(true); // Automatisk åben
   const [showNutrition, setShowNutrition] = useState(false);
   const [barcodeInput, setBarcodeInput] = useState("");
@@ -131,39 +128,23 @@ export default function EatSafe() {
   const [langOpen, setLangOpen] = useState(false);
   const [showSafeOnly, setShowSafeOnly] = useState(false);
   const [recipeServings, setRecipeServings] = useState(4);
-  const [editStep, setEditStep] = useState("start");
-  const [editIngText, setEditIngText] = useState("");
-  const [editNote, setEditNote] = useState("");
-  const [editType, setEditType] = useState(null);
   const [recipeSearch, setRecipeSearch] = useState("");
   const [recipeSafeOnly, setRecipeSafeOnly] = useState(false);
 
   // Family form → useFamily hook
-  const [customInput, setCustomInput] = useState("");
 
   // Auth form
 
   // NOT FOUND flow
-  const [notFoundEan, setNotFoundEan] = useState("");
-  const [ocrText, setOcrText] = useState("");
   const [editOcrText, setEditOcrText] = useState("");
   const [editOcrLoading, setEditOcrLoading] = useState(false);
-  const [editProductImage, setEditProductImage] = useState(null);
-  const [editProductImageB64, setEditProductImageB64] = useState(null);
   const [editSubmitting, setEditSubmitting] = useState(false);
-  const [ocrLoading, setOcrLoading] = useState(false);
-  const [proposedFlags, setProposedFlags] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [notFoundStep, setNotFoundStep] = useState(1); // 1=forside, 2=ingredienser, 3=bekræft
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [tourIdx, setTourIdx] = useState(0);
 
   const [adminTickets, setAdminTickets] = useState([]);
   const [openTicket, setOpenTicket] = useState(null);
   const [ticketsLoading, setTicketsLoading] = useState(false);
-  const [proposedName, setProposedName] = useState("");
-  const [productImageBase64, setProductImageBase64] = useState(null);
   const [productImagePreview, setProductImagePreview] = useState(null);
   const [ocrImageBase64, setOcrImageBase64] = useState(null);
   const [ocrImagePreview, setOcrImagePreview] = useState(null);
@@ -348,133 +329,14 @@ export default function EatSafe() {
   };
 
   // ── OCR + INDSEND PRODUKT ─────────────────────────────────────────────────
-  const extractProductName = (text) => {
-    if (!text) return "";
-    const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 2 && l.length < 50);
-    const candidates = lines.filter(l =>
-      !/^[0-9\s\.,gkJ%]+$/.test(l) &&
-      !/^(ingredienser|næringsindhold|opbevaring|bedst|energi|fedt|protein|salt|kulhydrat)/i.test(l) &&
-      l.length > 3
-    );
-    return candidates[0] || "";
-  };
 
-  const handleProductImageCapture = async (e) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    setOcrLoading(true);
-    try {
-      const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); });
-      setProductImageBase64(base64);
-      setProductImagePreview(URL.createObjectURL(file));
-      try {
-        const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ image_base64: base64, mode:"product_name" }) });
-        if (ocrData.success && ocrData.text) { const name = extractProductName(ocrData.text); if (name) setProposedName(name); }
-      } catch {}
-    } catch { setScanError("Billedet kunne ikke læses. Prøv igen."); }
-    setOcrLoading(false);
-    setNotFoundStep(2);
-  };
 
-  const handleImageCapture = async (e) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    setOcrLoading(true);
-    try {
-      const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); });
-      setOcrImageBase64(base64);
-      const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ image_base64: base64 }) });
-      if (ocrData.success) {
-        setOcrText(ocrData.text);
-        if (!proposedName) setProposedName(extractProductName(ocrData.text));
-        const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ text: ocrData.text }) });
-        if (allergenData.success) setProposedFlags(allergenData.allergen_flags);
-        setNotFoundStep(3);
-      } else { setScanError("Billedet kunne ikke læses. Prøv et klarere billede."); }
-    } catch { setScanError("Billedet kunne ikke analyseres. Prøv igen."); }
-    setOcrLoading(false);
-  };
 
-  const handleEditProductCapture = async (e) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    const url = URL.createObjectURL(file);
-    setEditProductImage(url);
-    const b64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = () => rej(); r.readAsDataURL(file); });
-    setEditProductImageB64(b64);
-  };
 
-  const submitProduct = async () => {
-    setSubmitting(true);
-    try {
-      await apiCall(`${SUPABASE_URL}/functions/v1/submissions`, {
-        method: "POST",
-        headers: makeHeaders(accessToken),
-        body: JSON.stringify({
-          ean: notFoundEan, submitted_by: userId,
-          ocr_raw_text: ocrText, raw_label_image: ocrImageBase64 || null,
-          ai_parsed_data: { ...proposedFlags, name: proposedName, product_image_base64: productImageBase64 },
-          user_confirmed: true,
-        }),
-      });
-      setScreen(SCREENS.SUBMITTED);
-    } catch { setScanError("Indsendelse fejlede. Prøv igen."); }
-    setSubmitting(false);
-  };
 
-  // ── ONBOARDING GEM ────────────────────────────────────────────────────────
-  const saveProfileStep1 = async () => {
-    if (!(user.name || "").trim()) return;
-    const emailToSave = user.email || loginEmail || "";
-    try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
-        method: "PATCH",
-        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-        body: JSON.stringify({
-          name: user.name,
-          email: emailToSave || null,
-          phone: user.phone || null,
-          age: user.age ? parseInt(user.age) : null,
-        }),
-      });
-      if (emailToSave) setUser(u => ({ ...u, email: emailToSave }));
-    } catch (e) { console.error("saveProfileStep1 fejl:", e); }
-    setOnboardStep(4);
-  };
 
-  const saveAllergensStep2 = async () => {
-    try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, {
-        method: "DELETE",
-        headers: makeHeaders(accessToken),
-      });
-      for (const a of allergens) {
-        await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, {
-          method: "POST",
-          headers: makeHeaders(accessToken),
-          body: JSON.stringify({ user_id: userId, allergen: a, type: "allergen" }),
-        });
-      }
-      for (const c of customAllerg) {
-        await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, {
-          method: "POST",
-          headers: makeHeaders(accessToken),
-          body: JSON.stringify({ user_id: userId, allergen: c, type: "custom" }),
-        });
-      }
-    } catch { /* silent */ }
-  };
 
-  const finishOnboard = async () => {
-    try {
-      await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${accessToken}`, "Prefer": "return=minimal" },
-        body: JSON.stringify({ onboarding_completed: true }),
-      });
-    } catch {}
-    setScreen(SCREENS.HOME);
-    setEditMode(false);
-    setIsOAuth(false);
-  };
+
 
 
   const loadRecipes = async (filter = "alle") => {
@@ -706,6 +568,45 @@ export default function EatSafe() {
     favorites, setFavorites,
     loadHistory, saveHistoryEntry, toggleFavorite, isFavorite,
   } = useHistory({ accessToken, userId });
+
+  const {
+    onboardStep, setOnboardStep,
+    editMode, setEditMode,
+    tourIdx, setTourIdx,
+    customInput, setCustomInput,
+    saveProfileStep1, saveAllergensStep2, finishOnboard,
+  } = useOnboarding({ accessToken, userId, user, loginEmail,
+                      allergens, customAllerg,
+                      setUser, setScreen, setEditMode: () => {}, setIsOAuth });
+
+  const [notFoundEan, setNotFoundEan] = useState("");
+  const {
+    scanResult, setScanResult,
+    loading, setLoading,
+    notFoundStep, setNotFoundStep,
+    submitting,
+    ocrText, setOcrText,
+    ocrLoading, setOcrLoading,
+    ocrImageBase64, setOcrImageBase64,
+    productImagePreview, setProductImagePreview,
+    productImageBase64, setProductImageBase64,
+    proposedName, setProposedName,
+    proposedFlags, setProposedFlags,
+    editStep, setEditStep,
+    editIngText, setEditIngText,
+    editNote, setEditNote,
+    editType, setEditType,
+    editProductImage, setEditProductImage,
+    editProductImageB64, setEditProductImageB64,
+    editOcrLoading, setEditOcrLoading,
+    editOcrText, setEditOcrText,
+    handleProductImageCapture,
+    handleImageCapture,
+    handleEditProductCapture,
+    submitProduct,
+  } = useProduct({ accessToken, userId, activeProfiles,
+                   notFoundEan, setNotFoundEan,
+                   setScreen, setScanError });
 
   // Ryd familie/historik/indkøb når auth cleares (accessToken → null)
   React.useEffect(() => {
