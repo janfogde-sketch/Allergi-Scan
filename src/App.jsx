@@ -602,7 +602,7 @@ export default function EatSafe() {
     submitProduct,
   } = useProduct({ accessToken, userId, activeProfiles,
                    notFoundEan, setNotFoundEan,
-                   setScreen, setScanError });
+                   setScreen });
 
   // Ryd familie/historik/indkøb når auth cleares (accessToken → null)
   React.useEffect(() => {

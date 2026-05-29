@@ -10,7 +10,7 @@ import { makeHeaders, apiCall, compareAllergens } from "./helpers.js";
 
 export function useProduct({ accessToken, userId, activeProfiles,
                               notFoundEan, setNotFoundEan,
-                              setScreen, setScanError }) {
+                              setScreen }) {
 
   // Scan-resultat state
   const [scanResult, setScanResult]           = useState(null);
@@ -61,7 +61,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
         const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ image_base64: base64, mode:"product_name" }) });
         if (ocrData.success && ocrData.text) { const name = extractProductName(ocrData.text); if (name) setProposedName(name); }
       } catch {}
-    } catch { setScanError("Billedet kunne ikke læses. Prøv igen."); }
+    } catch { setScanError_("Billedet kunne ikke læses. Prøv igen."); }
     setOcrLoading(false);
     setNotFoundStep(2);
   };
@@ -79,8 +79,8 @@ export function useProduct({ accessToken, userId, activeProfiles,
         const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ text: ocrData.text }) });
         if (allergenData.success) setProposedFlags(allergenData.allergen_flags);
         setNotFoundStep(3);
-      } else { setScanError("Billedet kunne ikke læses. Prøv et klarere billede."); }
-    } catch { setScanError("Billedet kunne ikke analyseres. Prøv igen."); }
+      } else { setScanError_("Billedet kunne ikke læses. Prøv et klarere billede."); }
+    } catch { setScanError_("Billedet kunne ikke analyseres. Prøv igen."); }
     setOcrLoading(false);
   };
 
@@ -105,7 +105,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
         }),
       });
       setScreen(SCREENS.SUBMITTED);
-    } catch { setScanError("Indsendelse fejlede. Prøv igen."); }
+    } catch { setScanError_("Indsendelse fejlede. Prøv igen."); }
     setSubmitting(false);
   };
 
