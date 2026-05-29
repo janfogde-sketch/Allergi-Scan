@@ -76,11 +76,12 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
             } else {
               // Eksisterende bruger — indlæs fuld profil
               const meta = payload.user_metadata || {};
+              const jwtRole = payload.app_metadata?.role || payload.user_role || payload.role || "user";
               setUser(u => ({
                 ...u,
                 name:  profile.name  || meta.full_name || meta.name || "",
                 email: profile.email || payload.email  || "",
-                role:  profile.role  || "user",
+                role:  profile.role  || jwtRole,
                 diets: Array.isArray(profile.diets) ? profile.diets : [],
               }));
               if (Array.isArray(profile.allergens) && profile.allergens.length > 0)

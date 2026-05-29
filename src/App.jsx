@@ -638,7 +638,17 @@ export default function EatSafe() {
           phone:  profile.phone  || u.phone  || "",
           birth_year: profile.birth_year || u.birth_year || "",
           gender: profile.gender || u.gender || "",
-          role:   profile.role   || "user",
+          role:   profile.role   || (() => {
+          // Fallback: læs role fra JWT custom claims
+          try {
+            const tok = localStorage.getItem("as_token");
+            if (tok) {
+              const payload = JSON.parse(atob(tok.split(".")[1]));
+              return payload.app_metadata?.role || payload.user_role || payload.role || "user";
+            }
+          } catch {}
+          return "user";
+        })(),
           diets:  Array.isArray(profile.diets) ? profile.diets : [],
         }));
         if (Array.isArray(profile.allergens) && profile.allergens.length > 0)
