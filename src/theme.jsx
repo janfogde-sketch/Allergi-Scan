@@ -14,7 +14,7 @@ export const THEME = {
   // Primær tekst
   ink:     "#EDF5EE",
   ink2:    "rgba(237,245,238,.7)",
-  ink3:    "rgba(237,245,238,.45)",
+  ink3:    "rgba(237,245,238,.58)",
 
   // Accent — grøn
   green:      "#4ADE80",
@@ -38,8 +38,8 @@ export const THEME = {
   blueLt: "rgba(96,165,250,.1)",
 
   // Neutrale
-  muted:  "rgba(237,245,238,.45)",
-  muted2: "rgba(237,245,238,.28)",
+  muted:  "rgba(237,245,238,.62)",
+  muted2: "rgba(237,245,238,.48)",
 
   // Borders
   border:  "rgba(255,255,255,.08)",
@@ -68,7 +68,7 @@ export const appCss = `
 :root{
   --ink:#EDF5EE;
   --ink2:rgba(237,245,238,.7);
-  --ink3:rgba(237,245,238,.45);
+  --ink3:rgba(237,245,238,.58);
   --paper:#0D2117;
   --paper2:#112B1C;
   --green:#4ADE80;
@@ -84,8 +84,8 @@ export const appCss = `
   --red:#FF5252;--red-lt:rgba(255,82,82,.1);--red-md:rgba(255,82,82,.18);
   --amber:#FFBA3B;--amber-lt:rgba(255,186,59,.1);--amber-md:rgba(255,186,59,.18);
   --blue:#60A5FA;--blue-lt:rgba(96,165,250,.1);
-  --muted:rgba(237,245,238,.45);
-  --muted2:rgba(237,245,238,.28);
+  --muted:rgba(237,245,238,.62);
+  --muted2:rgba(237,245,238,.48);
   --r:12px;
   --f:'DM Sans',system-ui,sans-serif;
   --mono:'DM Mono',monospace;
