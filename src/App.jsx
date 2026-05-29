@@ -336,6 +336,95 @@ export default function EatSafe() {
 
 
 
+  // ── ADMIN FUNKTIONER ─────────────────────────────────────────────────────
+  const loadAdminUsers = async () => {
+    try {
+      const data = await apiCall(
+        `${SUPABASE_URL}/rest/v1/users?select=id,name,email,role,created_at,onboarding_completed&order=created_at.desc&limit=200`,
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+      );
+      if (Array.isArray(data)) setAdminUsers(data);
+    } catch (e) { console.error("loadAdminUsers:", e); }
+  };
+
+  const updateUserRole = async (uid, role) => {
+    try {
+      await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}`, {
+        method: "PATCH",
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+        body: JSON.stringify({ role }),
+      });
+      setAdminUsers(u => u.map(x => x.id === uid ? { ...x, role } : x));
+    } catch (e) { console.error("updateUserRole:", e); }
+  };
+
+  const deleteUser = async (uid) => {
+    try {
+      await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}`, {
+        method: "DELETE", headers: makeHeaders(accessToken),
+      });
+      setAdminUsers(u => u.filter(x => x.id !== uid));
+    } catch (e) { console.error("deleteUser:", e); }
+  };
+
+  const updateSubmissionAndApprove = async (submission, edited) => {
+    try {
+      await apiCall(`${SUPABASE_URL}/rest/v1/product_submissions?id=eq.${submission.id}`, {
+        method: "PATCH",
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+        body: JSON.stringify({ status: "approved", ai_parsed_data: edited }),
+      });
+      loadSubmissions(submissionFilter);
+      setOpenSubmission(null); setEditingSubmission(null);
+    } catch (e) { console.error("updateSubmissionAndApprove:", e); }
+  };
+
+  const rejectSubmission = async (id) => {
+    try {
+      await apiCall(`${SUPABASE_URL}/rest/v1/product_submissions?id=eq.${id}`, {
+        method: "PATCH",
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+        body: JSON.stringify({ status: "rejected" }),
+      });
+      loadSubmissions(submissionFilter);
+    } catch (e) { console.error("rejectSubmission:", e); }
+  };
+
+  const updateTicketStatus = async (id, status) => {
+    try {
+      await apiCall(`${SUPABASE_URL}/rest/v1/feedback_tickets?id=eq.${id}`, {
+        method: "PATCH",
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+        body: JSON.stringify({ status }),
+      });
+      loadTickets();
+      setOpenTicket(null);
+    } catch (e) { console.error("updateTicketStatus:", e); }
+  };
+
+  const cleanOcrWithAI = async (text) => {
+    if (!text) return;
+    setCleaningOcr(true);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: `Rens denne OCR-tekst fra en produktetikette til en kommasepareret ingrediensliste på originalsproget. Fjern labels, næringsindhold og unødvendig tekst. Returner KUN ingredienslisten:
+
+${text}` }],
+        }),
+      });
+      const data = await res.json();
+      const cleaned = data.content?.[0]?.text || text;
+      setCleanedOcrText(cleaned);
+      setEditingSubmission(s => ({ ...s, ocr_raw_text: cleaned }));
+    } catch (e) { console.error("cleanOcrWithAI:", e); }
+    setCleaningOcr(false);
+  };
+
   const loadRecipes = async (filter = "alle") => {
     setRecipesLoading(true);
     try {
@@ -1176,6 +1265,40 @@ export default function EatSafe() {
         )}
 
 
+
+        {/* ADMIN PANEL */}
+        {screen === SCREENS.ADMIN && user?.role === "admin" && (
+          <AdminScreen
+            screen={screen} setScreen={setScreen}
+            adminSection={adminSection} setAdminSection={setAdminSection}
+            adminStats={adminStats}
+            adminUsers={adminUsers} adminUsersLoading={adminUsersLoading}
+            adminTickets={adminTickets} adminTicketFilter={adminTicketFilter} setAdminTicketFilter={setAdminTicketFilter}
+            submissions={submissions} submissionsLoading={submissionsLoading}
+            submissionFilter={submissionFilter} setSubmissionFilter={setSubmissionFilter}
+            openSubmission={openSubmission} setOpenSubmission={setOpenSubmission}
+            editingSubmission={editingSubmission} setEditingSubmission={setEditingSubmission}
+            openAdminUser={openAdminUser} setOpenAdminUser={setOpenAdminUser}
+            openTicket={openTicket} setOpenTicket={setOpenTicket}
+            cleanedOcrText={cleanedOcrText} cleaningOcr={cleaningOcr}
+            userId={userId} accessToken={accessToken} user={user}
+            setAllergens={setAllergens} setCustomAllerg={setCustomAllerg}
+            setCustomInput={setCustomInput}
+            setNewMemberAllerg={setNewMemberAllerg} setNewMemberCustomAllerg={setNewMemberCustomAllerg}
+            setNewMemberCustomInput={setNewMemberCustomInput} setNewMemberDiets={setNewMemberDiets}
+            setNewMemberENumbers={setNewMemberENumbers} setNewMemberName={setNewMemberName}
+            setNewMemberSubtypes={setNewMemberSubtypes}
+            loadAdminUsers={loadAdminUsers} loadAdminStats={loadAdminStats}
+            loadSubmissions={loadSubmissions} loadTickets={loadTickets}
+            updateUserRole={updateUserRole} deleteUser={deleteUser}
+            updateSubmissionAndApprove={updateSubmissionAndApprove}
+            rejectSubmission={rejectSubmission}
+            updateTicketStatus={updateTicketStatus}
+            cleanOcrWithAI={cleanOcrWithAI}
+            ticketsLoading={ticketsLoading}
+            userSearch={userSearch} setUserSearch={setUserSearch}
+          />
+        )}
 
         {/* BUNDNAVIGATION */}
         {!isOnboard && !madpasWaiterView && (
