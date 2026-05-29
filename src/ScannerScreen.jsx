@@ -538,10 +538,10 @@ export default function ScannerScreen({
               <button onClick={onBetaClick}
                 style={{ display:"inline-flex", alignItems:"center", gap:6,
                   padding:"5px 14px", borderRadius:100,
-                  background:"rgba(74,222,128,.08)",
-                  border:"1px solid rgba(74,222,128,.2)",
+                  background:"rgba(74,222,128,.1)",
+                  border:"1px solid rgba(74,222,128,.25)",
                   fontFamily:"var(--f)", fontSize:11, fontWeight:700,
-                  color:"var(--green-text)", cursor:"pointer",
+                  color:"var(--green)", cursor:"pointer",
                   letterSpacing:".3px" }}>
                 🧪 Beta-information
               </button>
