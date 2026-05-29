@@ -1115,30 +1115,22 @@ ${text}` }],
             {
               emoji: "🧪",
               title: "Velkommen til EatSafe Beta",
-              body: "Du er en af de første til at prøve EatSafe. Vi er glade for at have dig med — og vi er ærlige: appen er ikke færdig endnu.
-
-Som beta-bruger hjælper du os med at finde fejl, forbedre brugeroplevelsen og sikre at appen virker for rigtige allergiramte.",
+              body: "Du er en af de første til at prøve EatSafe. Vi er glade for at have dig med — og vi er ærlige: appen er ikke færdig endnu.\n\nSom beta-bruger hjælper du os med at finde fejl, forbedre brugeroplevelsen og sikre at appen virker for rigtige allergiramte.",
             },
             {
               emoji: "💬",
               title: "Giv os din mening",
-              body: "Tryk på Feedback-knappen øverst i appen når du støder på noget — en fejl, noget der ser mærkeligt ud, eller en idé til forbedring.
-
-Vi læser alt. Din feedback er det vigtigste redskab vi har i denne fase.",
+              body: "Tryk på Feedback-knappen øverst i appen når du støder på noget — en fejl, noget der ser mærkeligt ud, eller en idé til forbedring.\n\nVi læser alt. Din feedback er det vigtigste redskab vi har i denne fase.",
             },
             {
               emoji: "❓",
               title: "Brug hjælp-knappen",
-              body: "Er du i tvivl om hvordan noget virker? Tryk på ? øverst — der finder du en kort guide til den skærm du står på.
-
-Hvis du stadig er i tvivl, brug Feedback og skriv til os.",
+              body: "Er du i tvivl om hvordan noget virker? Tryk på ? øverst — der finder du en kort guide til den skærm du står på.\n\nHvis du stadig er i tvivl, brug Feedback og skriv til os.",
             },
             {
               emoji: "⚠️",
               title: "En vigtig bemærkning",
-              body: "EatSafe er under udvikling. Allergendata kan mangle eller være ukorrekte.
-
-Tjek ALTID den fysiske emballage — appen er et hjælpeværktøj, ikke en garanti. Vi arbejder på at gøre dataene så præcise som muligt.",
+              body: "EatSafe er under udvikling. Allergendata kan mangle eller være ukorrekte.\n\nTjek ALTID den fysiske emballage — appen er et hjælpeværktøj, ikke en garanti. Vi arbejder på at gøre dataene så præcise som muligt.",
             },
           ];
           const step = steps[betaIntroStep];
