@@ -42,7 +42,7 @@ export const MemberForm = ({
           <div key={g} onClick={() => setGender(g)}
             style={{ flex:1, padding:"9px 0", textAlign:"center", borderRadius:8,
               border:`1.5px solid ${gender===g?"var(--green)":"var(--border)"}`,
-              background: gender===g ? "var(--green-lt)" : "#fff",
+              background: gender===g ? "var(--green-lt)" : "var(--surface)",
               fontSize:13, fontWeight:700,
               color: gender===g ? "var(--green)" : "var(--muted2)",
               cursor:"pointer", transition:"all .15s" }}>
@@ -61,8 +61,8 @@ export const MemberForm = ({
           const on = allergens.includes(a.id);
           return (
             <div key={a.id} className="chip" style={{
-              background: on ? "var(--red-lt)" : "var(--paper2)",
-              border: `1.5px solid ${on ? "var(--red)" : "var(--border)"}`,
+              background: on ? "var(--red-lt)" : "var(--surface)",
+              border: `1.5px solid ${on ? "var(--red)" : "var(--border2)"}`,
               color: on ? "var(--red)" : "var(--ink)",
             }}
               onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
@@ -133,7 +133,7 @@ export const MemberForm = ({
             <div key={e} onClick={() => setENumbers(p => on ? p.filter(x=>x!==e) : [...p,e])}
               style={{ display:"flex", gap:8, padding:"7px 12px",
                 borderBottom:i<arr.length-1?"1px solid var(--border)":"none",
-                background:on?"var(--red-lt)":"#fff", cursor:"pointer" }}>
+                background:on?"var(--red-lt)":"var(--surface)", cursor:"pointer" }}>
               <div style={{ fontSize:11, fontWeight:800, color:on?"var(--red)":"var(--ink)", width:44, flexShrink:0 }}>{e}</div>
               <div style={{ fontSize:11, color:on?"var(--red)":"var(--muted2)", flex:1, lineHeight:1.3 }}>{name}</div>
               {on && <div style={{ fontSize:9, fontWeight:800, color:"var(--red)" }}>✓</div>}
@@ -166,7 +166,7 @@ export const MemberForm = ({
       )}
 
       {/* Gem knap */}
-      <button className="btn btn-primary btn-full" onClick={onAdd}
+      <button className="btn btn-primary btn-full" style={{color:"#071510"}} onClick={onAdd}
         disabled={!isValid}>
         {addLabel || "+ Tilføj familiemedlem"}
       </button>
@@ -188,7 +188,7 @@ export const CategorySelect = ({ value, onChange, options, placeholder="Alle kat
           appearance:"none", WebkitAppearance:"none",
           padding:"8px 36px 8px 14px",
           borderRadius:24, border:"1.5px solid var(--border)",
-          background:"var(--paper2)", fontSize:13, fontWeight:600,
+          background:"var(--surface)", color:"var(--ink)", fontSize:13, fontWeight:600,
           color: value === "alle" ? "var(--muted2)" : "var(--ink)",
           cursor:"pointer", fontFamily:"var(--f)",
           outline:"none", width:"100%",

@@ -131,11 +131,12 @@ export default function FeedbackModal({
     : /Android/.test(navigator.userAgent) ? "Android" : "Desktop";
 
   return (
-    <div style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,.5)",
+    <div style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,.7)",
       display:"flex", alignItems:"flex-end" }}
       onClick={e => e.target === e.currentTarget && close()}>
-      <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0",
-        padding:"20px 16px 32px", width:"100%", maxHeight:"85vh", overflowY:"auto" }}
+      <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0",
+        padding:"20px 16px 32px", width:"100%", maxHeight:"85vh", overflowY:"auto",
+        backdropFilter:"blur(20px)", border:"1px solid rgba(255,255,255,.1)" }}
         onClick={e => e.stopPropagation()}>
 
         {done ? (
@@ -155,8 +156,8 @@ export default function FeedbackModal({
                 </div>
               </div>
               <button onClick={close}
-                style={{ background:"var(--paper2)", border:"none", borderRadius:"50%",
-                  width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
+                style={{ background:"var(--surface2)", border:"none", borderRadius:"50%",
+                  width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
             </div>
 
             {/* Type */}
@@ -167,11 +168,11 @@ export default function FeedbackModal({
                   <div key={t.id} onClick={() => setType(t.id)}
                     style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px",
                       borderRadius:10, cursor:"pointer",
-                      border:`1.5px solid ${type===t.id?"var(--ink)":"var(--border)"}`,
-                      background: type===t.id ? "var(--ink)" : "#fff" }}>
+                      border:`1.5px solid ${type===t.id?"var(--green)":"var(--border)"}`,
+                      background: type===t.id ? "var(--green-lt)" : "var(--surface)" }}>
                     <span style={{ fontSize:16 }}>{t.emoji}</span>
                     <span style={{ fontSize:12, fontWeight:700,
-                      color: type===t.id ? "#fff" : "var(--ink2)" }}>{t.label}</span>
+                      color: type===t.id ? "var(--green)" : "var(--ink)" }}>{t.label}</span>
                   </div>
                 ))}
               </div>
@@ -183,7 +184,7 @@ export default function FeedbackModal({
               <textarea value={text} onChange={e => setText(e.target.value)} rows={4}
                 placeholder="Fx. 'Når jeg trykker på X sker der Y…' — jo mere detail, jo bedre"
                 style={{ width:"100%", padding:"12px 14px", border:"1.5px solid var(--border2)",
-                  borderRadius:12, background:"var(--paper2)", fontFamily:"var(--f)",
+                  borderRadius:12, background:"var(--surface)", fontFamily:"var(--f)",
                   fontSize:14, color:"var(--ink)", resize:"none", outline:"none",
                   lineHeight:1.6, boxSizing:"border-box" }} />
             </div>
@@ -204,7 +205,7 @@ export default function FeedbackModal({
               ) : (
                 <label style={{ display:"flex", alignItems:"center", gap:8, padding:"12px 14px",
                   border:"1.5px dashed var(--border2)", borderRadius:12,
-                  cursor:"pointer", background:"var(--paper2)" }}>
+                  cursor:"pointer", background:"var(--surface)" }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2">
                     <path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
                     <circle cx="12" cy="13" r="4"/>
@@ -228,7 +229,7 @@ export default function FeedbackModal({
             </div>
 
             {/* Diagnostik */}
-            <div style={{ background:"var(--paper2)", borderRadius:10,
+            <div style={{ background:"var(--surface)", borderRadius:10,
               padding:"10px 12px", marginBottom:14 }}>
               <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:6 }}>📊 Automatisk inkluderet diagnostik</div>
               <div style={{ fontSize:10, color:"var(--muted2)", lineHeight:1.85 }}>
@@ -242,9 +243,9 @@ export default function FeedbackModal({
 
             {/* Send */}
             <button onClick={submit} disabled={sending || !text.trim()}
-              style={{ width:"100%", background: text.trim() ? "var(--ink)" : "var(--border2)",
+              style={{ width:"100%", background: text.trim() ? "var(--green)" : "var(--surface2)",
                 border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)",
-                fontSize:15, fontWeight:800, color:"#fff",
+                fontSize:15, fontWeight:700, color: text.trim() ? "#071510" : "var(--muted)",
                 cursor: text.trim() ? "pointer" : "not-allowed" }}>
               {sending ? "Sender…" : "Send feedback →"}
             </button>

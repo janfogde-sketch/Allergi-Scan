@@ -97,7 +97,7 @@ export default function OnboardingScreen({
             {/* Logo */}
             <div className="login-header">
               <div className="login-shield" style={{background:"none",padding:0,width:56,height:56}}><EatSafeLogo size={56} variant="light" /></div>
-              <div className="login-title">Eat<span style={{color:"#22C55E",fontStyle:"italic"}}>Safe</span></div>
+              <div className="login-title">EatSafe</div>
             </div>
 
             {/* Tab vælger */}
@@ -189,10 +189,10 @@ export default function OnboardingScreen({
               {/* Google */}
               <button onClick={() => handleOAuth("google")} disabled={authLoading}
                 style={{ display:"flex", alignItems:"center", gap:12, width:"100%", padding:"13px 16px",
-                  background:"#fff", border:"1.5px solid var(--border2)", borderRadius:12,
+                  background:"var(--surface2)", border:"1.5px solid var(--border2)", borderRadius:12,
                   cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:600, color:"var(--ink)",
-                  boxShadow:"var(--sh)", transition:"all .15s" }}>
-                <svg width="20" height="20" viewBox="0 0 24 24">
+                  transition:"all .15s" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" style={{flexShrink:0}}>
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                   <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
@@ -201,17 +201,6 @@ export default function OnboardingScreen({
                 Fortsæt med Google
               </button>
 
-              {/* Facebook */}
-              <button onClick={() => handleOAuth("facebook")} disabled={authLoading}
-                style={{ display:"flex", alignItems:"center", gap:12, width:"100%", padding:"13px 16px",
-                  background:"#1877F2", border:"1.5px solid #1877F2", borderRadius:12,
-                  cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:600, color:"#fff",
-                  boxShadow:"var(--sh)", transition:"all .15s" }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-                Fortsæt med Facebook
-              </button>
             </div>
 
             <div style={{ display:"flex", alignItems:"center", gap:10, margin:"4px 0 8px" }}>
@@ -265,7 +254,7 @@ export default function OnboardingScreen({
             {!editMode && (
               <div style={{ textAlign:"center", padding:"4px 0 20px" }}>
                 <div style={{ marginBottom:6 }}><EatSafeLogo size={40} variant="light" /></div>
-                <div style={{ fontSize:20, fontWeight:800, color:"var(--text)" }}>Opsæt din profil</div>
+                <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)" }}>Opsæt din profil</div>
                 <div style={{ fontSize:13, color:"var(--muted)", marginTop:4 }}>Tager under 2 minutter</div>
               </div>
             )}
@@ -310,24 +299,24 @@ export default function OnboardingScreen({
                     <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10 }}>
                       {[0,1,2,3].map(idx => (
                         <div key={idx} onClick={() => setTourIdx(idx)}
-                          style={{ width: tourIdx===idx ? 20 : 7, height:7, borderRadius:4, background: tourIdx===idx ? "var(--ink)" : "var(--border2)", cursor:"pointer", transition:"all .25s" }} />
+                          style={{ width: tourIdx===idx ? 20 : 7, height:7, borderRadius:4, background: tourIdx===idx ? "var(--green)" : "var(--surface2)", cursor:"pointer", transition:"all .25s" }} />
                       ))}
                     </div>
                     <div style={{ display:"flex", gap:8 }}>
                       {tourIdx > 0 && (
                         <button onClick={() => setTourIdx(v => v-1)}
-                          style={{ flex:1, padding:"12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                          style={{ flex:1, padding:"12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
                           ← Forrige
                         </button>
                       )}
                       {tourIdx < 3 ? (
                         <button onClick={() => setTourIdx(v => v+1)}
-                          style={{ flex:1, padding:"12px", background:"var(--ink)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#fff", cursor:"pointer" }}>
+                          style={{ flex:1, padding:"12px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
                           Næste →
                         </button>
                       ) : (
                         <button onClick={() => setOnboardStep(2)}
-                          style={{ flex:1, padding:"12px", background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"#fff", cursor:"pointer" }}>
+                          style={{ flex:1, padding:"12px", background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"#071510", cursor:"pointer" }}>
                           Kom i gang →
                         </button>
                       )}
@@ -364,7 +353,7 @@ export default function OnboardingScreen({
                     </div>
                   ))}
                 </div>
-                <div style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, padding:"12px", marginTop:8 }}>
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px", marginTop:8 }}>
                   <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>Vigtigt</div>
                   <div style={{ fontSize:11, color:"var(--muted2)", lineHeight:1.6 }}>EatSafe <strong>erstatter ikke lægehjælp</strong>. Tjek altid den originale emballage ved alvorlige allergier. <strong>Brug på eget ansvar.</strong></div>
                 </div>
@@ -461,7 +450,7 @@ export default function OnboardingScreen({
                       <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
                         style={{ flex:1, padding:"9px 0", textAlign:"center", borderRadius:8,
                           border:`1.5px solid ${user.gender===g?"var(--green)":"var(--border)"}`,
-                          background:user.gender===g?"var(--green-lt)":"#fff",
+                          background:user.gender===g?"var(--green-lt)":"var(--surface)",
                           fontSize:13, fontWeight:700,
                           color:user.gender===g?"var(--green)":"var(--muted)", cursor:"pointer" }}>
                         {g}
@@ -469,7 +458,7 @@ export default function OnboardingScreen({
                     ))}
                   </div>
                 </div>
-                <button className="btn btn-primary btn-full" onClick={saveProfileStep1}
+                <button className="btn btn-primary btn-full" style={{color:"#071510"}} onClick={saveProfileStep1}
                   disabled={!(user.name||"").trim() || !(user.email||loginEmail||"").trim() || !user.birth_year || !user.gender}>
                   Fortsæt →
                 </button>
@@ -672,7 +661,7 @@ export default function OnboardingScreen({
                     ["4️⃣","Admin godkender","En administrator gennemgår produktet."],
                     ["5️⃣","Alle får glæde af det","Produktet er nu tilgængeligt for alle brugere."],
                   ].map(([num, title, text]) => (
-                    <div key={title} style={{ display:"flex", gap:10, alignItems:"flex-start", background:"#fff", border:"1px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
+                    <div key={title} style={{ display:"flex", gap:10, alignItems:"flex-start", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
                       <div style={{ fontSize:15, fontWeight:800, color:"var(--green)", flexShrink:0, width:20 }}>{num}</div>
                       <div>
                         <div style={{ fontWeight:700, fontSize:13, color:"var(--ink)", marginBottom:2 }}>{title}</div>
@@ -735,7 +724,7 @@ export default function OnboardingScreen({
                         })}
                         {customAllerg.map((c,i) => (
                           <div key={i} style={{ padding:"5px 10px", borderRadius:20, fontSize:12, fontWeight:700,
-                            background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" }}>
+                            background:"var(--surface)", color:"var(--muted)", border:"1px solid var(--border)" }}>
                             {c}
                           </div>
                         ))}

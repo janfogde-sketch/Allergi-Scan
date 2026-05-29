@@ -139,6 +139,7 @@ export default function EatSafe() {
   // NOT FOUND flow
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackDone, setFeedbackDone] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
 
   const [adminTickets, setAdminTickets] = useState([]);
@@ -615,6 +616,13 @@ export default function EatSafe() {
     }
   }, [accessToken]);
 
+  // Stop kamera automatisk når man forlader HOME
+  React.useEffect(() => {
+    if (screen !== SCREENS.HOME && cameraActive) {
+      stopCamera();
+    }
+  }, [screen]);
+
   const isOnboard = screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode;
 
   const FamilyChips = () => {
@@ -748,7 +756,7 @@ export default function EatSafe() {
         );
         const data = await res.json();
         if (data.success) {
-          setSearchResults((data.products || []).map(p => ({ ...p, source:"local", verified:p.verified_status, conflicts:[] })));
+          setSearchResults((data.products || []).map(p => ({ ...p, ean: p.ean || p.barcode || null, source:"local", verified:p.verified_status, conflicts:[] })));
         }
       } catch {
         // silent
@@ -817,7 +825,7 @@ export default function EatSafe() {
         {!isOnboard && (
           <header className="topbar">
             <div className="topbar-logo">
-              <div className="topbar-shield"><EatSafeLogo size={17} variant="dark" /></div>
+              <div className="topbar-shield"><EatSafeLogo size={17} variant="light" /></div>
               <span className="topbar-name">EatSafe</span>
             </div>
             <div style={{ display:"flex", gap:6, alignItems:"center" }}>
@@ -825,8 +833,13 @@ export default function EatSafe() {
                 style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:"50%", width:32, height:32, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--muted)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
                 ?
               </button>
+              <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
+                style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:100, padding:"0 12px", height:32, fontFamily:"var(--f)", fontSize:11, fontWeight:600, color:"var(--muted)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                Feedback
+              </button>
               <div className="topbar-avatar"
-                onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}>
+                onClick={() => setScreen(SCREENS.PROFILE)}>
                 {initials(user.name || "?")}
               </div>
             </div>
@@ -837,8 +850,8 @@ export default function EatSafe() {
         {isOnboard && (
           <div style={{ position:"fixed", top:12, right:12, zIndex:1000 }}>
             <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
-              style={{ background:"rgba(255,255,255,.85)", backdropFilter:"blur(8px)", border:"1px solid var(--border2)", borderRadius:100, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", gap:5, boxShadow:"0 2px 8px rgba(0,0,0,.08)" }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              style={{ background:"var(--surface2)", backdropFilter:"blur(12px)", border:"1px solid var(--border2)", borderRadius:100, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:600, color:"var(--muted)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
               Feedback
             </button>
           </div>
@@ -881,26 +894,26 @@ export default function EatSafe() {
           return (
             <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
               onClick={e => e.target === e.currentTarget && setHelpOpen(false)}>
-              <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
+              <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto", border:"1px solid rgba(255,255,255,.1)", backdropFilter:"blur(20px)" }}
                 onClick={e => e.stopPropagation()}>
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
-                  <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>{content.title}</div>
+                  <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)" }}>{content.title}</div>
                   <button onClick={() => setHelpOpen(false)}
-                    style={{ background:"var(--paper2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
+                    style={{ background:"var(--surface2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
                 </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
+                <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:14 }}>
                   {content.tips.map((tip, i) => (
-                    <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12 }}>
+                    <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
                       <div style={{ fontSize:22, flexShrink:0 }}>{tip.icon}</div>
                       <div>
-                        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:3 }}>{tip.title}</div>
-                        <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>{tip.desc}</div>
+                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:3 }}>{tip.title}</div>
+                        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6 }}>{tip.desc}</div>
                       </div>
                     </div>
                   ))}
                 </div>
                 <button onClick={() => { setHelpOpen(false); setFeedbackOpen(true); setFeedbackDone(false); }}
-                  style={{ width:"100%", padding:"12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted2)", cursor:"pointer" }}>
+                  style={{ width:"100%", padding:"12px", background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#071510", cursor:"pointer" }}>
                   💬 Send feedback eller rapportér fejl
                 </button>
               </div>
@@ -912,7 +925,7 @@ export default function EatSafe() {
         {showDeleteAccount && (
           <div style={{ position:"fixed", inset:0, zIndex:9997, background:"rgba(0,0,0,.6)", display:"flex", alignItems:"flex-end" }}
             onClick={e => e.target === e.currentTarget && setShowDeleteAccount(false)}>
-            <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"24px 16px 40px", width:"100%" }}
+            <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"24px 16px 40px", width:"100%", border:"1px solid rgba(255,255,255,.1)" }}
               onClick={e => e.stopPropagation()}>
 
               <div style={{ textAlign:"center", marginBottom:20 }}>
@@ -943,7 +956,7 @@ export default function EatSafe() {
                   onChange={e => setDeleteConfirmText(e.target.value)}
                   placeholder="slet"
                   autoCapitalize="none"
-                  style={{ width:"100%", padding:"13px 14px", border:`1.5px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"#fff", color:"var(--ink)" }}
+                  style={{ width:"100%", padding:"13px 14px", border:`1.5px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"var(--surface)", color:"var(--ink)" }}
                 />
               </div>
 
@@ -961,19 +974,6 @@ export default function EatSafe() {
             </div>
           </div>
         )}
-
-        {/* ══ FEEDBACK MODAL ══ */}
-        <FeedbackModal
-          open={feedbackOpen} onClose={() => setFeedbackOpen(false)}
-          screen={screen} authTab={authTab} onboardStep={onboardStep}
-          scanResult={scanResult} madpasWaiterView={madpasWaiterView}
-          madpasLang={madpasLang} selectedRecipe={selectedRecipe}
-          editMode={editMode} showManualEan={showManualEan}
-          profilePopup={profilePopup}
-          user={user} userId={userId} accessToken={accessToken}
-          loginEmail={loginEmail} allergens={allergens}
-          family={family} history={history} activeProfiles={activeProfiles}
-        />
 
         {/* ══ HJEM ══ */}        {/* ══ HJEM ══ */}
         {/* ══ SCANNER SCREENS ══ */}
@@ -1026,6 +1026,7 @@ export default function EatSafe() {
             toggleTorch={toggleTorch}
             torchOn={torchOn}
             buildLabel={formatBuildTime()}
+            lookupProduct={lookupProduct}
           />
         )}
 
@@ -1154,6 +1155,18 @@ export default function EatSafe() {
             ))}
           </nav>
         )}
+        {/* ══ FEEDBACK MODAL ══ */}
+        <FeedbackModal
+          open={feedbackOpen} onClose={() => setFeedbackOpen(false)}
+          screen={screen} authTab={authTab} onboardStep={onboardStep}
+          scanResult={scanResult} madpasWaiterView={madpasWaiterView}
+          madpasLang={madpasLang} selectedRecipe={selectedRecipe}
+          editMode={editMode} showManualEan={showManualEan}
+          profilePopup={profilePopup}
+          user={user} userId={userId} accessToken={accessToken}
+          loginEmail={loginEmail} allergens={allergens}
+          family={family} history={history} activeProfiles={activeProfiles}
+        />
       </div>
     </>
   );
