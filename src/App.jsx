@@ -623,18 +623,12 @@ export default function EatSafe() {
       try {
         // Brugerprofil
         const profile = await apiCall(
-          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,diets,onboarding_completed&limit=1`,
+          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,onboarding_completed&limit=1`,
           { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
         );
         if (Array.isArray(profile) && profile[0]) {
           const p = profile[0];
-          // Læs admin-rolle fra JWT app_metadata (sættes af Supabase trigger)
-          const jwtPayload = (() => {
-            try {
-              return JSON.parse(atob(accessToken.split(".")[1]));
-            } catch { return {}; }
-          })();
-          const jwtRole = jwtPayload?.app_metadata?.role || null;
+          console.log("✅ Profil hentet:", p);
           setUser(u => ({
             ...u,
             name: p.name || u.name || "",
@@ -642,7 +636,7 @@ export default function EatSafe() {
             phone: p.phone || "",
             age: p.birth_year ? String(p.birth_year) : "",
             gender: p.gender || "",
-            role: jwtRole || p.role || "user",
+            role: p.role || "user",
           }));
         }
 
