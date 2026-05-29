@@ -61,6 +61,7 @@ export default function EatSafe() {
   const [barcodeInput, setBarcodeInput] = useState("");
   const [cameraActive, setCameraActive] = useState(false);
   const productCacheRef = useRef({}); // Cache af seneste 50 scannede produkter
+  const lastScannedRef = useRef(null); // Forhindrer dobbelt-scan
   const [torchOn, setTorchOn] = useState(false);
   const [profilePopup, setProfilePopup] = useState(null); // id af profil der vises popup for
   const galleryInputRef = useRef(null);
