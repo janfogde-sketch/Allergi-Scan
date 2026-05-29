@@ -292,6 +292,88 @@ export default function EatSafe() {
 
   // loadFamily → useFamily
   // loadHistory → useHistory
+  // ── AUTH ───────────────────────────────────────────────────────────────────
+  const handleOAuth = async (provider) => {
+    setAuthLoading(true); setAuthError("");
+    try {
+      const redirectTo = "https://eatsafe.dk/";
+      const params = new URLSearchParams({
+        provider, redirect_to: redirectTo,
+        ...(provider === "google" ? { prompt: "select_account" } : {}),
+      });
+      window.location.href = `${SUPABASE_URL}/auth/v1/authorize?${params.toString()}`;
+    } catch (e) {
+      setAuthError(`${provider} login fejlede: ${e.message}`);
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogin = async () => {
+    if (!loginEmail || !loginPassword) return;
+    if (!loginEmail.includes("@")) { setAuthError("Indtast en gyldig email-adresse."); return; }
+    setAuthLoading(true); setAuthError("");
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
+      const text = await res.text();
+      if (text === "Host not in allowlist") {
+        setAuthError("⚙️ Supabase er ikke konfigureret til dette domæne."); setAuthLoading(false); return;
+      }
+      const data = JSON.parse(text);
+      if (!res.ok) {
+        const msg = data.msg || data.error_description || data.message || "";
+        if (msg.toLowerCase().includes("invalid login") || msg.toLowerCase().includes("invalid credentials"))
+          throw new Error("Forkert email eller kodeord.");
+        throw new Error(msg || "Login fejlede.");
+      }
+      saveTokens(data.access_token, data.refresh_token, data.user.id);
+      setScreen(SCREENS.HOME);
+    } catch (e) {
+      setAuthError(e.message || "Forkert email eller kodeord. Prøv igen.");
+    }
+    setAuthLoading(false);
+  };
+
+  const handleSignup = async () => {
+    if (!loginEmail || !loginEmail.includes("@")) { setAuthError("Indtast en gyldig email-adresse."); return; }
+    if (!loginPassword || loginPassword.length < 6) { setAuthError("Kodeordet skal være mindst 6 tegn."); return; }
+    setAuthLoading(true); setAuthError("");
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
+      const text = await res.text();
+      if (text === "Host not in allowlist") {
+        setAuthError("⚙️ Supabase er ikke konfigureret til dette domæne."); setAuthLoading(false); return;
+      }
+      const data = JSON.parse(text);
+      if (!res.ok) {
+        const msg = data.msg || data.error_description || data.message || "";
+        if (msg.toLowerCase().includes("already registered") || data.error_code === "email_exists")
+          throw new Error("Denne email er allerede registreret. Prøv at logge ind i stedet.");
+        if (msg.toLowerCase().includes("password") || msg.toLowerCase().includes("weak"))
+          throw new Error("Kodeordet er for svagt. Brug mindst 6 tegn.");
+        throw new Error(msg || "Oprettelse fejlede. Prøv igen.");
+      }
+      if (data.access_token) {
+        saveTokens(data.access_token, data.refresh_token, data.user.id);
+        setUser(u => ({ ...u, email: loginEmail }));
+        setScreen(SCREENS.ONBOARD);
+        setOnboardStep(1);
+      } else {
+        setAuthError("✉️ Tjek din email og klik på bekræftelseslinket — log derefter ind her.");
+      }
+    } catch (e) {
+      setAuthError(e.message || "Oprettelse fejlede. Prøv igen.");
+    }
+    setAuthLoading(false);
+  };
+
   const loadRecipes = async (filter = "alle") => {
     setRecipesLoading(true);
     try {
