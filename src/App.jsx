@@ -175,15 +175,6 @@ export default function EatSafe() {
 
 
 
-  // Ryd familie/historik/indkøb når auth cleares (accessToken → null)
-  React.useEffect(() => {
-    if (!accessToken) {
-      setFamily([]);
-      setHistory([]);
-      setShoppingList([]);
-    }
-  }, [accessToken]);
-
   // ── ADMIN ─────────────────────────────────────────────────────────────────
   const loadSubmissions = async (filter) => {
     const f = filter || submissionFilter;
@@ -787,6 +778,15 @@ export default function EatSafe() {
     favorites, setFavorites,
     loadHistory, saveHistoryEntry, toggleFavorite, isFavorite,
   } = useHistory({ accessToken, userId });
+
+  // Ryd familie/historik/indkøb når auth cleares (accessToken → null)
+  React.useEffect(() => {
+    if (!accessToken) {
+      setFamily([]);
+      setHistory([]);
+      setShoppingList([]);
+    }
+  }, [accessToken]);
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
   return (
