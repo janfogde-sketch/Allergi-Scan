@@ -292,6 +292,309 @@ export default function EatSafe() {
 
   // loadFamily → useFamily
   // loadHistory → useHistory
+  // ── ADMIN ─────────────────────────────────────────────────────────────────
+  const loadSubmissions = async (filter) => {
+    const f = filter || submissionFilter;
+    if (f === "tickets") return;
+    setSubmissionsLoading(true);
+    try {
+      const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
+      const url = `${SUPABASE_URL}/rest/v1/product_submissions?status=eq.${f}&order=created_at.desc&limit=100`;
+      const res = await fetch(url, { headers });
+      const data = await res.json();
+      setSubmissions(Array.isArray(data) ? data : []);
+    } catch { setSubmissions([]); }
+    setSubmissionsLoading(false);
+  };
+
+  const deleteOwnAccount = async () => {
+    if (deleteConfirmText.toLowerCase() !== "slet") return;
+    setDeletingAccount(true);
+    try {
+      const h = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}` };
+      await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/shopping_lists?owner_id=eq.${userId}`, { method:"DELETE", headers:h }),
+        fetch(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, { method:"DELETE", headers:h }),
+        fetch(`${SUPABASE_URL}/rest/v1/family_members?user_id=eq.${userId}`, { method:"DELETE", headers:h }),
+        fetch(`${SUPABASE_URL}/rest/v1/scan_history?user_id=eq.${userId}`, { method:"DELETE", headers:h }),
+        fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?submitted_by=eq.${userId}`, { method:"DELETE", headers:h }),
+      ]);
+      await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, { method:"DELETE", headers:h });
+      clearAuth();
+      setShowDeleteAccount(false);
+    } catch (e) { alert("Fejl: " + e.message + "\nKontakt support@eatsafe.dk"); }
+    setDeletingAccount(false);
+  };
+
+  const loadAdminStats = async () => {
+    try {
+      const h = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json", "Prefer": "count=exact" };
+      const hNoCount = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
+      const today = new Date(); today.setHours(0,0,0,0);
+      const todayISO = today.toISOString();
+      const [users, products, scans, submissions, families, tickets, scansToday, newUsersToday] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/users?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
+        fetch(`${SUPABASE_URL}/rest/v1/products?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
+        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
+        fetch(`${SUPABASE_URL}/rest/v1/product_submissions?status=eq.pending&select=id`, { headers: hNoCount }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/family_members?select=id`, { headers: hNoCount }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?status=eq.open&select=id`, { headers: hNoCount }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id&scanned_at=gte.${todayISO}`, { headers: hNoCount }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/users?select=id&created_at=gte.${todayISO}`, { headers: hNoCount }).then(r => r.json()),
+      ]);
+      setAdminStats({
+        total_users: typeof users === "number" ? users : (Array.isArray(users) ? users.length : 0),
+        total_products: typeof products === "number" ? products : (Array.isArray(products) ? products.length : 0),
+        total_scans: typeof scans === "number" ? scans : (Array.isArray(scans) ? scans.length : 0),
+        pending_submissions: Array.isArray(submissions) ? submissions.length : 0,
+        total_families: Array.isArray(families) ? families.length : 0,
+        open_tickets: Array.isArray(tickets) ? tickets.length : 0,
+        scans_today: Array.isArray(scansToday) ? scansToday.length : 0,
+        new_users_today: Array.isArray(newUsersToday) ? newUsersToday.length : 0,
+      });
+    } catch (e) { console.error("loadAdminStats fejl:", e.message); }
+  };
+
+  const loadTickets = async () => {
+    setTicketsLoading(true);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?order=created_at.desc&limit=100`, {
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" },
+      });
+      const data = await res.json();
+      setAdminTickets(Array.isArray(data) ? data : []);
+    } catch { setAdminTickets([]); }
+    setTicketsLoading(false);
+  };
+
+  // ── KAMERA + SCANNING ──────────────────────────────────────────────────────
+  const startCamera = async () => {
+    if (cameraActive) return;
+    setScanError(""); setTorchOn(false);
+    torchTrackRef.current = null; lastScannedRef.current = null;
+    if (!navigator.mediaDevices?.getUserMedia) { setScanError("Kamera ikke understøttet. Prøv Chrome eller Safari."); return; }
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const constraints = isIOS
+      ? { video: { facingMode: { exact: "environment" } } }
+      : { video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } };
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const track = stream.getVideoTracks()[0];
+      if (track) torchTrackRef.current = track;
+      stream.getTracks().forEach(t => t.stop());
+    } catch (e) {
+      if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
+        setScanError("Kamera-adgang nægtet. Gå til telefonens indstillinger og tillad kamera for denne app.");
+      } else if (e.name === "NotFoundError") {
+        setScanError("Intet kamera fundet på denne enhed.");
+      } else if (e.name === "OverconstrainedError" && isIOS) {
+        try { const s2 = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); s2.getTracks().forEach(t => t.stop()); }
+        catch { setScanError("Kunne ikke starte kamera. Prøv at genindlæse siden."); return; }
+      } else { setScanError("Kamera fejl: " + e.message); return; }
+    }
+    setCameraActive(true);
+    await new Promise(r => setTimeout(r, isIOS ? 300 : 150));
+    try {
+      const { Html5Qrcode } = await import("html5-qrcode");
+      const readerId = "qr-reader-home";
+      if (html5QrRef.current) { try { await html5QrRef.current.stop(); } catch {} html5QrRef.current = null; }
+      const readerEl = document.getElementById(readerId);
+      if (!readerEl) { setScanError("Kamera-element ikke fundet. Genindlæs siden."); setCameraActive(false); return; }
+      html5QrRef.current = new Html5Qrcode(readerId, { verbose: false });
+      const qrConfig = {
+        fps: isIOS ? 10 : 20,
+        qrbox: (w, h) => { const side = Math.min(w, h) * 0.8; return { width: Math.round(side), height: Math.round(side * 0.45) }; },
+        aspectRatio: isIOS ? undefined : 1.0, disableFlip: false,
+        formatsToSupport: [0,1,2,3,4,5,6,7,8,9,10,11],
+        videoConstraints: isIOS ? { facingMode: { exact: "environment" } } : { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 }, focusMode: "continuous", exposureMode: "continuous" },
+      };
+      await html5QrRef.current.start(
+        { facingMode: isIOS ? { exact: "environment" } : "environment" }, qrConfig,
+        (code) => {
+          const now = Date.now();
+          if (lastScannedRef.current?.code === code && now - lastScannedRef.current.time < 2000) return;
+          lastScannedRef.current = { code, time: now };
+          if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
+          try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator(); const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.frequency.value = 1800; gain.gain.setValueAtTime(0.25, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.12);
+          } catch {}
+          stopCamera(); lookupProduct(code);
+        }, () => {}
+      );
+      await new Promise(r => setTimeout(r, 500));
+      const videoEl = document.querySelector("#qr-reader-home video");
+      if (videoEl?.srcObject) { const track = videoEl.srcObject.getVideoTracks()[0]; if (track) torchTrackRef.current = track; }
+    } catch (e) {
+      setCameraActive(false);
+      if (e.message?.includes("constraint") || e.message?.includes("Constraint")) setTimeout(() => startCamera(), 500);
+      else setScanError("Kamera kunne ikke starte. Prøv at lukke andre apps og prøv igen.");
+    }
+  };
+
+  const scanFromGallery = async (file) => {
+    if (!file) return;
+    setScanError(""); setLoading(true);
+    try {
+      const { Html5Qrcode } = await import("html5-qrcode");
+      const scanner = new Html5Qrcode("qr-reader-gallery");
+      const result = await scanner.scanFile(file, true);
+      scanner.clear(); lookupProduct(result);
+    } catch { setLoading(false); setScanError("Ingen stregkode fundet i billedet. Prøv et klarere billede."); }
+  };
+
+  const toggleTorch = async () => {
+    try {
+      const videoEl = document.querySelector("#qr-reader-home video");
+      const track = videoEl?.srcObject?.getVideoTracks?.()?.[0] || torchTrackRef.current;
+      if (!track) return;
+      const capabilities = track.getCapabilities?.();
+      if (!capabilities?.torch) { setScanError("Lygte ikke understøttet på denne enhed."); return; }
+      const newState = !torchOn;
+      await track.applyConstraints({ advanced: [{ torch: newState }] });
+      setTorchOn(newState);
+    } catch (e) { setScanError("Kunne ikke tænde lygte: " + e.message); }
+  };
+
+  const stopCamera = () => {
+    if (html5QrRef.current) { html5QrRef.current.stop().catch(() => {}); html5QrRef.current = null; }
+    if (torchTrackRef.current) { try { torchTrackRef.current.applyConstraints({ advanced: [{ torch: false }] }); } catch {} torchTrackRef.current = null; }
+    setCameraActive(false); setTorchOn(false);
+  };
+
+  // ── OCR + INDSEND PRODUKT ─────────────────────────────────────────────────
+  const extractProductName = (text) => {
+    if (!text) return "";
+    const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 2 && l.length < 50);
+    const candidates = lines.filter(l =>
+      !/^[0-9\s\.,gkJ%]+$/.test(l) &&
+      !/^(ingredienser|næringsindhold|opbevaring|bedst|energi|fedt|protein|salt|kulhydrat)/i.test(l) &&
+      l.length > 3
+    );
+    return candidates[0] || "";
+  };
+
+  const handleProductImageCapture = async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setOcrLoading(true);
+    try {
+      const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); });
+      setProductImageBase64(base64);
+      setProductImagePreview(URL.createObjectURL(file));
+      try {
+        const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ image_base64: base64, mode:"product_name" }) });
+        if (ocrData.success && ocrData.text) { const name = extractProductName(ocrData.text); if (name) setProposedName(name); }
+      } catch {}
+    } catch { setScanError("Billedet kunne ikke læses. Prøv igen."); }
+    setOcrLoading(false);
+    setNotFoundStep(2);
+  };
+
+  const handleImageCapture = async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setOcrLoading(true);
+    try {
+      const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); });
+      setOcrImageBase64(base64);
+      const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ image_base64: base64 }) });
+      if (ocrData.success) {
+        setOcrText(ocrData.text);
+        if (!proposedName) setProposedName(extractProductName(ocrData.text));
+        const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ text: ocrData.text }) });
+        if (allergenData.success) setProposedFlags(allergenData.allergen_flags);
+        setNotFoundStep(3);
+      } else { setScanError("Billedet kunne ikke læses. Prøv et klarere billede."); }
+    } catch { setScanError("Billedet kunne ikke analyseres. Prøv igen."); }
+    setOcrLoading(false);
+  };
+
+  const handleEditProductCapture = async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    const url = URL.createObjectURL(file);
+    setEditProductImage(url);
+    const b64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = () => rej(); r.readAsDataURL(file); });
+    setEditProductImageB64(b64);
+  };
+
+  const submitProduct = async () => {
+    setSubmitting(true);
+    try {
+      await apiCall(`${SUPABASE_URL}/functions/v1/submissions`, {
+        method: "POST",
+        headers: makeHeaders(accessToken),
+        body: JSON.stringify({
+          ean: notFoundEan, submitted_by: userId,
+          ocr_raw_text: ocrText, raw_label_image: ocrImageBase64 || null,
+          ai_parsed_data: { ...proposedFlags, name: proposedName, product_image_base64: productImageBase64 },
+          user_confirmed: true,
+        }),
+      });
+      setScreen(SCREENS.SUBMITTED);
+    } catch { setScanError("Indsendelse fejlede. Prøv igen."); }
+    setSubmitting(false);
+  };
+
+  // ── ONBOARDING GEM ────────────────────────────────────────────────────────
+  const saveProfileStep1 = async () => {
+    if (!(user.name || "").trim()) return;
+    const emailToSave = user.email || loginEmail || "";
+    try {
+      await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+        method: "PATCH",
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+        body: JSON.stringify({
+          name: user.name,
+          email: emailToSave || null,
+          phone: user.phone || null,
+          age: user.age ? parseInt(user.age) : null,
+        }),
+      });
+      if (emailToSave) setUser(u => ({ ...u, email: emailToSave }));
+    } catch (e) { console.error("saveProfileStep1 fejl:", e); }
+    setOnboardStep(4);
+  };
+
+  const saveAllergensStep2 = async () => {
+    try {
+      await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, {
+        method: "DELETE",
+        headers: makeHeaders(accessToken),
+      });
+      for (const a of allergens) {
+        await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, {
+          method: "POST",
+          headers: makeHeaders(accessToken),
+          body: JSON.stringify({ user_id: userId, allergen: a, type: "allergen" }),
+        });
+      }
+      for (const c of customAllerg) {
+        await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, {
+          method: "POST",
+          headers: makeHeaders(accessToken),
+          body: JSON.stringify({ user_id: userId, allergen: c, type: "custom" }),
+        });
+      }
+    } catch { /* silent */ }
+  };
+
+  const finishOnboard = async () => {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${accessToken}`, "Prefer": "return=minimal" },
+        body: JSON.stringify({ onboarding_completed: true }),
+      });
+    } catch {}
+    setScreen(SCREENS.HOME);
+    setEditMode(false);
+    setIsOAuth(false);
+  };
+
   // ── AUTH ───────────────────────────────────────────────────────────────────
   const handleOAuth = async (provider) => {
     setAuthLoading(true); setAuthError("");
