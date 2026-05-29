@@ -10,7 +10,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { apiCall } from "./helpers.js";
 
 export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
-                          setOnboardStep }) {
+                          onSignupSuccess }) {
 
   // ── Token state — persisteret i localStorage ──────────────────────────────
   const [accessToken, setAccessToken]   = useState(() => localStorage.getItem("as_token") || null);
@@ -70,7 +70,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
             if (isNew) {
               const meta = payload.user_metadata || {};
               setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "" }));
-              setOnboardStep(1);
+              if (onSignupSuccess) onSignupSuccess();
               setIsOAuth(true);
               setScreen(SCREENS.ONBOARD);
             } else {
@@ -161,7 +161,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         saveTokens(data.access_token, data.refresh_token, data.user.id);
         setUser(u => ({ ...u, email: loginEmail }));
         setScreen(SCREENS.ONBOARD);
-        setOnboardStep(1);
+        if (onSignupSuccess) onSignupSuccess();
       } else {
         setAuthError("✉️ Tjek din email og klik på bekræftelseslinket — log derefter ind her.");
       }
