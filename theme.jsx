@@ -238,10 +238,11 @@ body{
   width:85%;height:64px;position:relative;flex-shrink:0;margin:0 auto;
 }
 .scan-barcode-bars{
-  position:absolute;inset:0;display:flex;align-items:stretch;gap:0;padding:8px 2px;
+  position:absolute;inset:0;display:flex;align-items:center;gap:0;padding:0 2px;
 }
 .scan-bar{
   flex:1;margin:0 1px;
+  height:48%;
   background:rgba(74,222,128,.22);
   border-radius:1px;
 }
