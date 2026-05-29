@@ -67,8 +67,12 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
             const profile = data?.[0];
             const meta = payload.user_metadata || {};
             const jwtRole = payload.app_metadata?.role || "user";
-            // Kun onboarding hvis onboarding_completed eksplicit er false
-            const isNew = !profile || profile.onboarding_completed === false;
+            // Send til onboarding KUN hvis profil mangler eller eksplicit markeret som ikke fuldført
+            // null = gammel bruger der aldrig fik sat flaget = behandl som fuldført
+            // admin er aldrig ny bruger
+            const jwtRoleCheck = payload.app_metadata?.role || "user";
+            const isNew = !profile 
+              || (profile.onboarding_completed === false && jwtRoleCheck !== "admin");
             if (isNew) {
               setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "", role: jwtRole }));
               if (onSignupSuccess) onSignupSuccess();
