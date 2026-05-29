@@ -136,8 +136,6 @@ export default function EatSafe() {
   // Auth form
 
   // NOT FOUND flow
-  const [editOcrText, setEditOcrText] = useState("");
-  const [editOcrLoading, setEditOcrLoading] = useState(false);
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -145,8 +143,6 @@ export default function EatSafe() {
   const [adminTickets, setAdminTickets] = useState([]);
   const [openTicket, setOpenTicket] = useState(null);
   const [ticketsLoading, setTicketsLoading] = useState(false);
-  const [productImagePreview, setProductImagePreview] = useState(null);
-  const [ocrImageBase64, setOcrImageBase64] = useState(null);
   const [ocrImagePreview, setOcrImagePreview] = useState(null);
 
   // ── TOKEN HELPERS ──────────────────────────────────────────────────────────
