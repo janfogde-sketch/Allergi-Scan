@@ -107,9 +107,9 @@ body{
 
 /* ── TOPBAR ── */
 .topbar{
-  background:rgba(22,42,14,.85);border-bottom:1px solid var(--border);
+  background:transparent;border-bottom:none;
   padding:12px 20px 10px;display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:60;backdrop-filter:blur(20px);
+  position:sticky;top:0;z-index:60;
 }
 .topbar-logo{display:flex;align-items:center;gap:8px;}
 .topbar-shield{width:30px;height:30px;background:linear-gradient(135deg,#3DCC6E,#2BA855);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(61,204,110,.35);overflow:hidden;flex-shrink:0;}
@@ -234,7 +234,8 @@ body{
 
 /* Reticle */
 .reticle{width:80px;height:80px;position:relative;flex-shrink:0;}
-.reticle-corner{position:absolute;width:18px;height:18px;border-color:var(--green);border-style:solid;opacity:.75;}
+.scan-barcode-wrap{width:100%;height:56px;position:relative;flex-shrink:0;}
+.reticle-corner{position:absolute;width:18px;height:18px;border-color:var(--green);border-style:solid;opacity:.85;}
 .reticle-corner.tl{top:0;left:0;border-width:2px 0 0 2px;border-radius:4px 0 0 0;}
 .reticle-corner.tr{top:0;right:0;border-width:2px 2px 0 0;border-radius:0 4px 0 0;}
 .reticle-corner.bl{bottom:0;left:0;border-width:0 0 2px 2px;border-radius:0 0 0 4px;}

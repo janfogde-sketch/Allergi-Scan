@@ -37,14 +37,14 @@ export default function MadpasScreen({
                 <div style={{ position:"fixed", inset:0, zIndex:9999, background:"#fff", display:"flex", flexDirection:"column" }} dir={rtl ? "rtl" : "ltr"}>
 
                   {/* Header — sprog + kryds */}
-                  <div style={{ padding:"14px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid var(--border)", flexShrink:0 }}>
+                  <div style={{ padding:"14px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid #e5e7eb", flexShrink:0 }}>
                     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                       <span style={{ fontSize:20 }}>{langInfo?.flag}</span>
-                      <span style={{ fontSize:13, color:"var(--muted)", fontWeight:600 }}>{langInfo?.name}</span>
+                      <span style={{ fontSize:13, color:"#6b7280", fontWeight:600 }}>{langInfo?.name}</span>
                     </div>
                     <button onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }}
                       style={{ background:"none", border:"none", padding:4, cursor:"pointer" }}>
-                      <Icon name="x" size={22} color="var(--ink2)" />
+                      <Icon name="x" size={22} color="#374151" />
                     </button>
                   </div>
 
@@ -53,7 +53,7 @@ export default function MadpasScreen({
 
                     {/* Alle linjer samme font, størrelse og vægt */}
                     {(() => {
-                      const s = { fontSize:17, fontWeight:400, color:"var(--ink)", margin:"0 0 16px", lineHeight:1.7, display:"block" };
+                      const s = { fontSize:17, fontWeight:400, color:"#1f2937", margin:"0 0 16px", lineHeight:1.7, display:"block" };
                       const sIntro = { ...s, margin:"0 0 32px" };
                       const lines = [];
 

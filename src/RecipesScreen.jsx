@@ -193,7 +193,7 @@ export default function RecipesScreen({
                         );
                       })()}
                     </div>
-                    <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, overflow:"hidden" }}>
+                    <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, overflow:"hidden" }}>
                       {(() => {
                         let items = null;
                         try {
@@ -253,7 +253,7 @@ export default function RecipesScreen({
                                         style={{
                                           width:26, height:26, borderRadius:"50%",
                                           border:`1.5px solid ${added ? "var(--green)" : "var(--border2)"}`,
-                                          background: added ? "var(--green-lt)" : "var(--paper2)",
+                                          background: added ? "var(--green-lt)" : "var(--surface2)",
                                           color: added ? "var(--green)" : "var(--muted2)",
                                           cursor: added ? "default" : "pointer",
                                           display:"flex", alignItems:"center", justifyContent:"center",
@@ -282,13 +282,13 @@ export default function RecipesScreen({
                 {steps.length > 0 && (
                   <div style={{ marginBottom:20 }}>
                     <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>Fremgangsmåde</div>
-                    <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, overflow:"hidden" }}>
+                    <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, overflow:"hidden" }}>
                       {steps.map((step, i) => {
                         const done = !!completedSteps[i];
                         return (
                           <div key={i} className="step-row" style={{ opacity: done ? 0.45 : 1 }}
                             onClick={() => setCompletedSteps(s => ({ ...s, [i]: !s[i] }))}>
-                            <div className="step-circle" style={{ background: done ? "var(--green)" : "var(--paper2)", border: done ? "none" : "1.5px solid var(--border2)" }}>
+                            <div className="step-circle" style={{ background: done ? "var(--green)" : "var(--surface2)", border: done ? "none" : "1.5px solid var(--border2)" }}>
                               {done
                                 ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
                                 : <span style={{ fontSize:12, fontWeight:800, color:"var(--muted2)" }}>{i+1}</span>
@@ -310,7 +310,7 @@ export default function RecipesScreen({
                 )}
 
                 {/* Allergen advarsel */}
-                <div style={{ display:"flex", gap:8, alignItems:"center", padding:"12px 14px", background:"var(--paper2)", borderRadius:10, marginBottom:16 }}>
+                <div style={{ display:"flex", gap:8, alignItems:"center", padding:"12px 14px", background:"var(--surface2)", borderRadius:10, marginBottom:16 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2"><path strokeLinecap="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                   <div style={{ fontSize:10, color:"var(--muted)", lineHeight:1.5 }}>Allergener er vejledende. Tjek altid ingrediensernes emballage.</div>
                 </div>
@@ -343,7 +343,7 @@ export default function RecipesScreen({
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 0 14px" }}>
                 <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", letterSpacing:"-.4px" }}>Opskrifter</div>
                 <button onClick={() => setShowSubmitRecipe(true)}
-                  style={{ background:"var(--green)", color:"#fff", border:"none", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                  style={{ background:"var(--green)", color:"#071510", border:"none", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
                   + Indsend
                 </button>
               </div>
@@ -422,7 +422,7 @@ export default function RecipesScreen({
                       { id:"frokost",   label:"Frokost",   emoji:"🥗", desc:"Let og lækker" },
                     ].map(cat => (
                       <div key={cat.id} onClick={() => { setRecipeFilter(cat.id); setRecipes([]); loadRecipes(cat.id); }}
-                        style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"14px", cursor:"pointer", boxShadow:"var(--sh)" }}>
+                        style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", cursor:"pointer", boxShadow:"var(--sh)" }}>
                         <div style={{ fontSize:28, marginBottom:6 }}>{cat.emoji}</div>
                         <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:2 }}>{cat.label}</div>
                         <div style={{ fontSize:11, color:"var(--muted)" }}>{cat.desc}</div>

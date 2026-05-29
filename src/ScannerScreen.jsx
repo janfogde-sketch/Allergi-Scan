@@ -225,9 +225,7 @@ export default function ScannerScreen({
             <div className="greeting">
               <div className="greeting-eyebrow">{greeting}</div>
               <div className="greeting-main"><strong>{user.name?.split(" ")[0] || "der"}</strong></div>
-              {buildLabel && (
-                <div className="greeting-sub">Sidst opdateret {buildLabel}</div>
-              )}
+
             </div>
 
             {/* ── PROFIL-CHIPS (ny stil) ── */}
@@ -316,8 +314,8 @@ export default function ScannerScreen({
                 </div>
               ) : (
                 <>
-                  {/* Reticle-animation */}
-                  <div className="reticle">
+                  {/* Bred stregkode-animation */}
+                  <div className="scan-barcode-wrap">
                     <div className="reticle-corner tl" />
                     <div className="reticle-corner tr" />
                     <div className="reticle-corner bl" />
@@ -417,7 +415,7 @@ export default function ScannerScreen({
             })()}
 
             {/* Version */}
-            <div className="version-str">v1.0.6 · beta</div>
+            <div className="version-str">v1.0.6 · beta{buildLabel ? ` · ${buildLabel}` : ""}</div>
 
           </div>
         )}
@@ -484,7 +482,7 @@ export default function ScannerScreen({
                     <div style={{
                       display:"flex", gap:6, flexWrap:"wrap",
                       padding:"8px 14px",
-                      background:"#fff",
+                      background:"var(--surface)",
                       border:"1px solid var(--border)",
                       borderTop:"none",
                       borderRadius:"0 0 12px 12px",
@@ -689,7 +687,7 @@ export default function ScannerScreen({
                     { num:2, emoji:"🔍", label:"Ingredienser", desc:"Allergenanalyse" },
                     { num:3, emoji:"✓", label:"Bekræft", desc:"Send ind" },
                   ].map(s => (
-                    <div key={s.num} style={{ flex:1, background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 8px", textAlign:"center", boxShadow:"var(--sh)" }}>
+                    <div key={s.num} style={{ flex:1, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 8px", textAlign:"center", boxShadow:"var(--sh)" }}>
                       <div style={{ fontSize:22, marginBottom:4 }}>{s.emoji}</div>
                       <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{s.label}</div>
                       <div style={{ fontSize:10, color:"var(--muted)", marginTop:2 }}>{s.desc}</div>
@@ -721,7 +719,7 @@ export default function ScannerScreen({
                 <label style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                   width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
-                  background:"#fff", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                  background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
                   fontSize:13, fontWeight:600, marginBottom:10,
                 }}>
                   📁 Vælg fra galleri
@@ -755,7 +753,7 @@ export default function ScannerScreen({
               <div className="fade-in">
                 {/* Vis produktbillede + navn hvis hentet */}
                 {productImagePreview && (
-                  <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12, marginBottom:14, boxShadow:"var(--sh)" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:14, boxShadow:"var(--sh)" }}>
                     <img src={productImagePreview} alt="Produkt"
                       style={{ width:52, height:52, objectFit:"contain", borderRadius:8, border:"1px solid var(--border)", flexShrink:0 }} />
                     <div style={{ flex:1 }}>
@@ -814,7 +812,7 @@ export default function ScannerScreen({
                 <label style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                   width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
-                  background:"#fff", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                  background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
                   fontSize:13, fontWeight:600, marginBottom:10,
                 }}>
                   📁 Vælg fra galleri
@@ -832,7 +830,7 @@ export default function ScannerScreen({
             {notFoundStep === 3 && !ocrLoading && (
               <div className="fade-in">
                 {/* Produktkort */}
-                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
                   <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
                     {productImagePreview
                       ? <img src={productImagePreview} alt="Produkt" style={{ width:60, height:60, objectFit:"contain", borderRadius:10, border:"1px solid var(--border)", flexShrink:0 }} />
@@ -858,7 +856,7 @@ export default function ScannerScreen({
                 </div>
 
                 {/* ── Ingrediensliste editor ── */}
-                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
                     <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Ingredienser</div>
                     <div style={{ display:"flex", gap:8, alignItems:"center" }}>
@@ -912,7 +910,7 @@ export default function ScannerScreen({
                 </div>
 
                 {/* Detekterede allergener — toggle */}
-                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12, boxShadow:"var(--sh)" }}>
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12, boxShadow:"var(--sh)" }}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
                     <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Allergener</div>
                     <div style={{ fontSize:11, color:"var(--muted)" }}>Tryk for at til/fra</div>
@@ -992,7 +990,7 @@ export default function ScannerScreen({
           <div className="screen fade-in">
             <div className="card" style={{ textAlign:"center", padding:"40px 24px", marginTop:32 }}>
               <div style={{ marginBottom:16 }}><Icon name="check" size={56} color="var(--green)" /></div>
-              <div style={{ fontSize:22, fontWeight:900, color:"var(--text)", marginBottom:8 }}>Tak for dit bidrag!</div>
+              <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Tak for dit bidrag!</div>
               <div style={{ fontSize:14, color:"var(--muted)", lineHeight:1.7, marginBottom:20 }}>
                 Din indsendelse er modtaget og afventer godkendelse af vores team. Når produktet er godkendt, vil det være tilgængeligt for alle brugere.
               </div>
@@ -1149,7 +1147,7 @@ export default function ScannerScreen({
               return (
                 <div key={p.id} style={{ display:"flex", alignItems:"center", gap:10,
                   padding:"10px 0", borderBottom:"1px solid var(--border)", cursor:"pointer" }}
-                  onClick={() => lookupProduct(p.ean||p.id)}>
+                  onClick={() => { const ean = p.ean || p.code; if (ean) lookupProduct(String(ean)); }}>
                   <ProductImage product={p} size={44} />
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{p.name}</div>
@@ -1191,7 +1189,7 @@ export default function ScannerScreen({
                   return (
                     <div key={p.ean||p.id} style={{ display:"flex", alignItems:"center", gap:10,
                       padding:"10px 0", borderBottom:"1px solid var(--border)", cursor:"pointer" }}
-                      onClick={() => lookupProduct(p.ean||p.code||p.id)}>
+                      onClick={() => { const ean = p.ean || p.code; if (ean) lookupProduct(String(ean)); }}>
                       <ProductImage product={p} size={44} />
                       <div style={{ flex:1, minWidth:0 }}>
                         <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{p.name}</div>
@@ -1336,7 +1334,7 @@ export default function ScannerScreen({
               </div>
 
               {/* Produkt-chip — vises på alle trin */}
-              <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12, marginBottom:16, boxShadow:"var(--sh)" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:16, boxShadow:"var(--sh)" }}>
                 <ProductImage product={scanResult} size={40} />
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{scanResult.name}</div>
@@ -1359,7 +1357,7 @@ export default function ScannerScreen({
                   ].map(opt => (
                     <div key={opt.id} onClick={() => { setEditType(opt.id); setEditStep(opt.id === "other" ? "review" : "guide"); }}
                       style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px",
-                        background:"#fff", border:"1px solid var(--border)", borderRadius:14,
+                        background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14,
                         marginBottom:8, cursor:"pointer", boxShadow:"var(--sh)" }}>
                       <div style={{ fontSize:28, flexShrink:0 }}>{opt.emoji}</div>
                       <div style={{ flex:1 }}>
@@ -1428,7 +1426,7 @@ export default function ScannerScreen({
                   <label style={{
                     display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                     width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
-                    background:"#fff", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                    background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
                     fontSize:14, fontWeight:600, marginBottom:10,
                   }}>
                     📁 Vælg billede fra galleri
