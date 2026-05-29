@@ -10,7 +10,6 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { apiCall } from "./helpers.js";
 
 export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
-                          setFamily, setHistory, setShoppingList,
                           setOnboardStep }) {
 
   // ── Token state — persisteret i localStorage ──────────────────────────────
@@ -43,10 +42,10 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     localStorage.removeItem("as_refresh");
     localStorage.removeItem("as_user_id");
     setUser({ name:"", age:"", email:"", phone:"", password:"", role:"" });
-    setAllergens([]); setCustomAllerg([]); setFamily([]);
-    setHistory([]); setShoppingList([]);
+    setAllergens([]); setCustomAllerg([]);
+    // App.jsx rydder family/history/shopping via useEffect på accessToken
     setScreen(SCREENS.WELCOME);
-  }, [setScreen, setUser, setAllergens, setCustomAllerg, setFamily, setHistory, setShoppingList]);
+  }, [setScreen, setUser, setAllergens, setCustomAllerg]);
 
   // ── OAuth callback — fang access_token fra URL hash ──────────────────────
   useEffect(() => {

@@ -175,6 +175,15 @@ export default function EatSafe() {
 
 
 
+  // Ryd familie/historik/indkøb når auth cleares (accessToken → null)
+  React.useEffect(() => {
+    if (!accessToken) {
+      setFamily([]);
+      setHistory([]);
+      setShoppingList([]);
+    }
+  }, [accessToken]);
+
   // ── ADMIN ─────────────────────────────────────────────────────────────────
   const loadSubmissions = async (filter) => {
     const f = filter || submissionFilter;
@@ -749,7 +758,6 @@ export default function EatSafe() {
     authTab, setAuthTab, isOAuth, setIsOAuth,
     saveTokens, clearAuth, handleLogin, handleSignup, handleOAuth,
   } = useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
-                setFamily, setHistory, setShoppingList,
                 setOnboardStep });
 
   const {
