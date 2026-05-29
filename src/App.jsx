@@ -631,25 +631,26 @@ export default function EatSafe() {
       .then(data => {
         const profile = data?.[0];
         if (!profile) return;
+        // Læs role fra JWT app_metadata (mest pålidelig kilde)
+        let jwtRole = "user";
+        try {
+          const tok = localStorage.getItem("as_token");
+          if (tok) {
+            const p = JSON.parse(atob(tok.split(".")[1]));
+            jwtRole = p.app_metadata?.role || p.user_role || p.role || "user";
+          }
+        } catch {}
+        const resolvedRole = profile.role || jwtRole;
+
         setUser(u => ({
           ...u,
-          name:   profile.name   || u.name   || "",
-          email:  profile.email  || u.email  || "",
-          phone:  profile.phone  || u.phone  || "",
+          name:       profile.name       || u.name       || "",
+          email:      profile.email      || u.email      || "",
+          phone:      profile.phone      || u.phone      || "",
           birth_year: profile.birth_year || u.birth_year || "",
-          gender: profile.gender || u.gender || "",
-          role:   profile.role   || (() => {
-          // Fallback: læs role fra JWT custom claims
-          try {
-            const tok = localStorage.getItem("as_token");
-            if (tok) {
-              const payload = JSON.parse(atob(tok.split(".")[1]));
-              return payload.app_metadata?.role || payload.user_role || payload.role || "user";
-            }
-          } catch {}
-          return "user";
-        })(),
-          diets:  Array.isArray(profile.diets) ? profile.diets : [],
+          gender:     profile.gender     || u.gender     || "",
+          role:       resolvedRole,
+          diets:      Array.isArray(profile.diets) ? profile.diets : [],
         }));
         if (Array.isArray(profile.allergens) && profile.allergens.length > 0)
           setAllergens(profile.allergens);

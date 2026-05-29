@@ -65,8 +65,8 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
           .then(r => r.json())
           .then(data => {
             const profile = data?.[0];
-            const createdAt = profile?.created_at ? new Date(profile.created_at) : null;
-            const isNew = !profile || profile.onboarding_completed === false || !createdAt || (Date.now() - createdAt.getTime() < 120000);
+            // Kun send til onboarding hvis profil mangler ELLER onboarding eksplicit ikke er fuldført
+            const isNew = !profile || profile.onboarding_completed === false;
             if (isNew) {
               const meta = payload.user_metadata || {};
               setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "" }));
