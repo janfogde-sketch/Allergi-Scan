@@ -579,6 +579,7 @@ export default function EatSafe() {
   const {
     scanResult, setScanResult,
     loading, setLoading,
+    scanError, setScanError,
     notFoundStep, setNotFoundStep,
     submitting,
     ocrText, setOcrText,
