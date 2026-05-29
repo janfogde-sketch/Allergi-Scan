@@ -108,6 +108,7 @@ export default function ProfileScreen({
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px" }}>{user.name||"Din profil"}</div>
                   <div style={{ fontSize:12, color:"var(--muted)", marginTop:3 }}>{user.email||loginEmail||""}</div>
+                  <div style={{ fontSize:10, color:"var(--green)", marginTop:2 }}>role: {user.role||"(ingen)"}</div>
                 </div>
                 <button onClick={() => setScreen(SCREENS.EDITPROFILE)}
                   style={{ background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10, padding:"7px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>

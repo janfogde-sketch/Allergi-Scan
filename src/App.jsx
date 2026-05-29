@@ -227,6 +227,101 @@ export default function EatSafe() {
     setTicketsLoading(false);
   };
 
+  const loadAdminUsers = async () => {
+    setAdminUsersLoading(true);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,name,email,role,onboarding_completed,created_at&order=created_at.desc&limit=200`, {
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" },
+      });
+      const data = await res.json();
+      setAdminUsers(Array.isArray(data) ? data : []);
+    } catch { setAdminUsers([]); }
+    setAdminUsersLoading(false);
+  };
+
+  const updateUserRole = async (uid, role) => {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}`, {
+        method: "PATCH",
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+        body: JSON.stringify({ role }),
+      });
+      setAdminUsers(prev => prev.map(u => u.id === uid ? { ...u, role } : u));
+    } catch (e) { alert("Fejl: " + e.message); }
+  };
+
+  const deleteUser = async (uid) => {
+    if (!window.confirm("Slet bruger permanent?")) return;
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}`, {
+        method: "DELETE",
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}` },
+      });
+      setAdminUsers(prev => prev.filter(u => u.id !== uid));
+    } catch (e) { alert("Fejl: " + e.message); }
+  };
+
+  const updateSubmissionAndApprove = async (submission, edited) => {
+    try {
+      const flags = edited?.allergen_flags || submission.allergen_flags || {};
+      await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+        method: "POST",
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+        body: JSON.stringify({ ean: submission.ean, name: edited?.proposed_name || submission.proposed_name, allergen_flags: flags, ingredients_text: edited?.ocr_raw_text || submission.ocr_raw_text, source: "user", verified_status: "partial" }),
+      });
+      await fetch(`${SUPABASE_URL}/rest/v1/product_submissions?id=eq.${submission.id}`, {
+        method: "PATCH",
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+        body: JSON.stringify({ status: "approved" }),
+      });
+      setSubmissions(prev => prev.filter(s => s.id !== submission.id));
+      setOpenSubmission(null); setEditingSubmission(null);
+    } catch (e) { alert("Fejl: " + e.message); }
+  };
+
+  const rejectSubmission = async (id) => {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/product_submissions?id=eq.${id}`, {
+        method: "PATCH",
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+        body: JSON.stringify({ status: "rejected" }),
+      });
+      setSubmissions(prev => prev.filter(s => s.id !== id));
+    } catch (e) { alert("Fejl: " + e.message); }
+  };
+
+  const updateTicketStatus = async (id, status) => {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?id=eq.${id}`, {
+        method: "PATCH",
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+        body: JSON.stringify({ status }),
+      });
+      setAdminTickets(prev => prev.map(t => t.id === id ? { ...t, status } : t));
+      if (openTicket?.id === id) setOpenTicket(t => ({ ...t, status }));
+    } catch (e) { alert("Fejl: " + e.message); }
+  };
+
+  const cleanOcrWithAI = async (text) => {
+    setCleaningOcr(true);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: `Rens og strukturer denne ingrediensliste. Returner kun den rensede liste, intet andet:
+
+${text}` }],
+        }),
+      });
+      const data = await res.json();
+      setCleanedOcrText(data.content?.[0]?.text || text);
+    } catch { setCleanedOcrText(text); }
+    setCleaningOcr(false);
+  };
+
   // ── KAMERA + SCANNING ──────────────────────────────────────────────────────
   const startCamera = async () => {
     if (cameraActive) return;
@@ -615,6 +710,56 @@ export default function EatSafe() {
       setShoppingList([]);
     }
   }, [accessToken]);
+
+  // ── Load brugerprofil + allergier + familie når man logger ind ───────────
+  React.useEffect(() => {
+    if (!accessToken || !userId) return;
+    const h = {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${accessToken}`,
+      "Accept": "application/json",
+    };
+
+    // 1. Brugerprofil inkl. rolle og allergier
+    fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,diets,onboarding_completed`, { headers: h })
+      .then(r => r.json())
+      .then(data => {
+        const profile = data?.[0];
+        if (!profile) return;
+        // Læs role fra JWT app_metadata (mest pålidelig kilde)
+        let jwtRole = "user";
+        try {
+          const tok = localStorage.getItem("as_token");
+          if (tok) {
+            const p = JSON.parse(atob(tok.split(".")[1]));
+            jwtRole = p.app_metadata?.role || p.user_role || p.role || "user";
+          }
+        } catch {}
+        const resolvedRole = profile.role || jwtRole;
+
+        setUser(u => ({
+          ...u,
+          name:       profile.name       || u.name       || "",
+          email:      profile.email      || u.email      || "",
+          phone:      profile.phone      || u.phone      || "",
+          birth_year: profile.birth_year || u.birth_year || "",
+          gender:     profile.gender     || u.gender     || "",
+          role:       resolvedRole,
+          diets:      Array.isArray(profile.diets) ? profile.diets : [],
+        }));
+
+      })
+      .catch(e => console.error("Load profil fejl:", e));
+
+    // 2. Familie
+    loadFamily();
+
+    // 3. Indkøbsliste
+    loadShoppingList();
+
+    // 4. Historik (kun seneste 20)
+    loadHistory();
+  }, [accessToken, userId]);
 
   // Stop kamera automatisk når man forlader HOME
   React.useEffect(() => {
@@ -1086,6 +1231,47 @@ export default function EatSafe() {
             historyLoading={historyLoading}
             loadAdminStats={loadAdminStats} loadSubmissions={loadSubmissions} loadTickets={loadTickets}
             setAdminSection={setAdminSection} setSubmissionFilter={setSubmissionFilter}
+          />
+        )}
+
+        {/* ══ ADMIN SCREEN ══ */}
+        {screen === SCREENS.ADMIN && (
+          <AdminScreen
+            screen={screen} setScreen={setScreen}
+            adminSection={adminSection} setAdminSection={setAdminSection}
+            adminStats={adminStats}
+            adminUsers={adminUsers} adminUsersLoading={adminUsersLoading}
+            adminTickets={adminTickets} adminTicketFilter={adminTicketFilter} setAdminTicketFilter={setAdminTicketFilter}
+            submissions={submissions} submissionsLoading={submissionsLoading}
+            submissionFilter={submissionFilter} setSubmissionFilter={setSubmissionFilter}
+            openSubmission={openSubmission} setOpenSubmission={setOpenSubmission}
+            editingSubmission={editingSubmission} setEditingSubmission={setEditingSubmission}
+            openAdminUser={openAdminUser} setOpenAdminUser={setOpenAdminUser}
+            openTicket={openTicket} setOpenTicket={setOpenTicket}
+            cleanedOcrText={cleanedOcrText} cleaningOcr={cleaningOcr}
+            userId={userId} accessToken={accessToken} user={user}
+            allergens={allergens} setAllergens={setAllergens}
+            customAllerg={customAllerg} setCustomAllerg={setCustomAllerg}
+            customInput={customInput} setCustomInput={setCustomInput}
+            family={family}
+            newMemberName={newMemberName} setNewMemberName={setNewMemberName}
+            newMemberAllerg={newMemberAllerg} setNewMemberAllerg={setNewMemberAllerg}
+            newMemberCustomAllerg={newMemberCustomAllerg} setNewMemberCustomAllerg={setNewMemberCustomAllerg}
+            newMemberCustomInput={newMemberCustomInput} setNewMemberCustomInput={setNewMemberCustomInput}
+            newMemberDiets={newMemberDiets} setNewMemberDiets={setNewMemberDiets}
+            newMemberENumbers={newMemberENumbers} setNewMemberENumbers={setNewMemberENumbers}
+            newMemberSubtypes={newMemberSubtypes} setNewMemberSubtypes={setNewMemberSubtypes}
+            addMember={addMember} removeMember={removeMember}
+            ticketsLoading={ticketsLoading}
+            userSearch={userSearch} setUserSearch={setUserSearch}
+            userSearchParam={userSearchParam} setUserSearchParam={setUserSearchParam}
+            loadAdminStats={loadAdminStats} loadAdminUsers={loadAdminUsers}
+            loadSubmissions={loadSubmissions} loadTickets={loadTickets}
+            updateUserRole={updateUserRole} deleteUser={deleteUser}
+            updateSubmissionAndApprove={updateSubmissionAndApprove}
+            rejectSubmission={rejectSubmission}
+            updateTicketStatus={updateTicketStatus}
+            cleanOcrWithAI={cleanOcrWithAI}
           />
         )}
 
