@@ -55,7 +55,7 @@ export default function AdminScreen({
         {openTicket && (
           <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
             onClick={e => e.target === e.currentTarget && setOpenTicket(null)}>
-            <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
+            <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
               onClick={e => e.stopPropagation()}>
 
               {/* Header */}
@@ -73,10 +73,10 @@ export default function AdminScreen({
                   { val:"resolved",    label:"🟢 Løst" },
                 ].map(s => (
                   <button key={s.val} onClick={() => updateTicketStatus(openTicket.id, s.val)}
-                    style={{ flex:1, padding:"8px 4px", borderRadius:10, border:`1.5px solid ${openTicket.status===s.val?"var(--ink)":"var(--border)"}`,
-                      background: openTicket.status===s.val ? "var(--ink)" : "#fff",
+                    style={{ flex:1, padding:"8px 4px", borderRadius:10, border:`1.5px solid ${openTicket.status===s.val?"var(--green)":"var(--border)"}`,
+                      background: openTicket.status===s.val ? "var(--green-lt)" : "var(--surface)",
                       fontFamily:"var(--f)", fontSize:10, fontWeight:700,
-                      color: openTicket.status===s.val ? "#fff" : "var(--muted)", cursor:"pointer" }}>
+                      color: openTicket.status===s.val ? "var(--green)" : "var(--muted)", cursor:"pointer" }}>
                     {s.label}
                   </button>
                 ))}
@@ -300,11 +300,11 @@ ${openTicket.description}
                     if (s.id === "users") loadAdminUsers();
                   }}
                   style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:4, padding:"14px 16px",
-                    background: adminSection===s.id ? "var(--ink)" : "#fff",
-                    border: `1.5px solid ${adminSection===s.id ? "var(--ink)" : "var(--border)"}`,
+                    background: adminSection===s.id ? "var(--green-lt)" : "var(--surface)",
+                    border: `1.5px solid ${adminSection===s.id ? "var(--green)" : "var(--border)"}`,
                     borderRadius:14, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
                   <span style={{ fontSize:22 }}>{s.emoji}</span>
-                  <span style={{ fontSize:13, fontWeight:800, color: adminSection===s.id ? "#fff" : "var(--ink)" }}>{s.label}</span>
+                  <span style={{ fontSize:13, fontWeight:800, color: adminSection===s.id ? "var(--green)" : "var(--ink)" }}>{s.label}</span>
                 </button>
               ))}
             </div>
@@ -573,7 +573,7 @@ ${openTicket.description}
         {screen === SCREENS.ADMIN && openAdminUser && (
           <div style={{ position:"fixed", inset:0, zIndex:9992, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
             onClick={e => e.target === e.currentTarget && setOpenAdminUser(null)}>
-            <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
+            <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
               onClick={e => e.stopPropagation()}>
 
                   {/* Header */}
