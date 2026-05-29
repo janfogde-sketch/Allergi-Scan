@@ -1033,6 +1033,7 @@ export default function EatSafe() {
             toggleTorch={toggleTorch}
             torchOn={torchOn}
             buildLabel={formatBuildTime()}
+            lookupProduct={lookupProduct}
           />
         )}
 
