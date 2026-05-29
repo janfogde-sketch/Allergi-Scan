@@ -59,53 +59,21 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         const payload = JSON.parse(atob(access.split(".")[1]));
         const uid = payload.sub;
         saveTokens(access, refresh, uid);
-        // Sæt rolle og brugerinfo fra JWT øjeblikkeligt
-        const meta = payload.user_metadata || {};
-        const jwtRole = payload.app_metadata?.role || "user";
-        setUser(u => ({
-          ...u,
-          email: payload.email || meta.email || "",
-          name:  meta.full_name || meta.name || "",
-          role:  jwtRole,
-        }));
-
-        // Hent profil for at tjekke onboarding — men gå aldrig til onboarding hvis admin
-        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,email,role,diets,onboarding_completed`, {
+        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,created_at,onboarding_completed`, {
           headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${access}`, "Accept": "application/json" },
         })
           .then(r => r.json())
           .then(data => {
-            const profile = Array.isArray(data) ? data[0] : null;
-            // Admin går ALTID til HOME
-            if (jwtRole === "admin") {
-              if (profile) {
-                setUser(u => ({
-                  ...u,
-                  name:  profile.name  || u.name,
-                  email: profile.email || u.email,
-                  role:  jwtRole,
-                  diets: Array.isArray(profile.diets) ? profile.diets : [],
-                }));
-              }
-              setScreen(SCREENS.HOME);
-              return;
-            }
-            // Ny bruger = ingen profil ELLER onboarding eksplicit sat til false
-            const isNew = !profile || profile.onboarding_completed === false;
+            const profile = data?.[0];
+            const createdAt = profile?.created_at ? new Date(profile.created_at) : null;
+            const isNew = !profile || profile.onboarding_completed === false || !createdAt || (Date.now() - createdAt.getTime() < 120000);
             if (isNew) {
+              const meta = payload.user_metadata || {};
+              setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "" }));
               if (onSignupSuccess) onSignupSuccess();
               setIsOAuth(true);
               setScreen(SCREENS.ONBOARD);
             } else {
-              if (profile) {
-                setUser(u => ({
-                  ...u,
-                  name:  profile.name  || u.name,
-                  email: profile.email || u.email,
-                  role:  jwtRole,
-                  diets: Array.isArray(profile.diets) ? profile.diets : [],
-                }));
-              }
               setScreen(SCREENS.HOME);
             }
           })
@@ -208,7 +176,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     setAuthLoading(true); setAuthError("");
     try {
       const params = new URLSearchParams({
-        provider, redirect_to: "https://eatsafe.dk/",
+        provider, redirect_to: window.location.origin + "/",
         ...(provider === "google" ? { prompt: "select_account" } : {}),
       });
       window.location.href = `${SUPABASE_URL}/auth/v1/authorize?${params.toString()}`;

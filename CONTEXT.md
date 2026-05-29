@@ -1,6 +1,6 @@
 # EatSafe — CONTEXT.md
 > Upload denne fil i starten af hver Claude-session for fuldt overblik uden at uploade kildefiler.
-> **Opdateres af:** Bjørn (frontend) eller Jan (backend) ved større ændringer.
+> **Opdateres af:** Den der arbejder på appen ved større ændringer.
 > **Sidst opdateret:** 29. maj 2026
 
 ---
@@ -11,15 +11,6 @@ PWA-app der hjælper allergiramte med at scanne produkter, tjekke allergener og 
 
 **Live:** https://eatsafe.dk · **Repo:** GitHub → Vercel auto-deploy · **Status:** Åben beta  
 **Branch:** `Refracktor` (aktiv arbejdsbranch)
-
----
-
-## 2. Roller
-
-| Person | Ansvar |
-|--------|--------|
-| Bjørn | Frontend — React/JSX, UI, komponenter, CSS |
-| Jan | Backend — Supabase, API, database, auth, Vercel deploy |
 
 ---
 
@@ -74,7 +65,8 @@ src/
 ### Fil-relationer
 - `App.jsx` importerer `appCss` fra `theme.jsx` → `<style>{appCss}</style>`
 - `App.jsx` importerer alle hooks og screen-komponenter
-- `App.jsx` renderer `<FeedbackModal>` i bunden af app-div (zIndex:9999)
+- `App.jsx` renderer `<FeedbackModal>` og `<AdminScreen>` i JSX-træet
+- `App.jsx` renderer beta-intro overlay (zIndex:10000) før alt andet ved første besøg
 - Screen-filer importerer fra `constants.jsx`, `helpers.js`, `SharedComponents.jsx`
 
 ---
@@ -156,6 +148,8 @@ src/
 **StepBar:** defineret i App.jsx, sendt som prop til OnboardingScreen.
 
 **VIGTIGT:** Admin-brugere sendes ALDRIG til onboarding — tjekkes via `payload.app_metadata.role` i OAuth-callback.
+
+**Beta-intro:** Vises én gang ved første besøg (før alt andet, zIndex:10000). Gemmes i `localStorage("as_beta_intro")`. Kan genåbnes via 🧪 Beta-information-knap på hjemskærm. 4 trin: Velkommen · Feedback · Hjælp · Advarsel om datakvalitet.
 
 ---
 
@@ -294,8 +288,14 @@ body: linear-gradient(160deg, #253d1a 0%, #1a2e12 100%)
 Tokens i localStorage: `as_token`, `as_refresh`, `as_user_id`  
 Auto-refresh hvert 45 min · Roller: `user`, `admin`  
 **Admin-rolle sættes i `auth.users.raw_app_meta_data → {"role":"admin"}`**  
-Læses fra JWT: `payload.app_metadata.role`  
-Trigger synkroniserer rolle fra `public.users.role` → `auth.users.raw_app_meta_data`
+Læses fra `public.users.role` via `loadAll` useEffect.
+
+### loadAll (App.jsx useEffect på accessToken+userId)
+Kører automatisk ved login. Henter:
+1. `public.users` → `name, email, phone, birth_year, gender, role, onboarding_completed`
+2. `user_allergens` → `allergen, type` (type: `"allergen"` eller `"custom"`)
+3. `loadFamily()` → familie-medlemmer
+4. `loadShoppingList()` → indkøbsliste
 
 ### Search Edge Function (`/functions/v1/search`)
 Returnerer: `{ success, products: [{ id, ean, name, brand, category, image_url, verified_status, allergen_flags, tags }] }`  
@@ -354,6 +354,8 @@ Typer: bug 🐛 · ui 🎨 · missing 💡 · content 📦 · crash 💥 · sugg
 - `updateTicketStatus(id, status)` — opdaterer ticket
 - `cleanOcrWithAI(text)` — renser OCR-tekst via Claude API
 
+**Auto-load:** `useEffect` på `screen === SCREENS.ADMIN` kalder `loadAdminStats()` automatisk.
+
 **Props sendt til AdminScreen:** screen, setScreen, adminSection, adminStats, adminUsers, adminUsersLoading, adminTickets, adminTicketFilter, submissions, submissionsLoading, submissionFilter, openSubmission, editingSubmission, openAdminUser, openTicket, cleanedOcrText, cleaningOcr, userId, accessToken, user, + alle ovenstående funktioner
 
 ---
@@ -391,6 +393,15 @@ Typer: bug 🐛 · ui 🎨 · missing 💡 · content 📦 · crash 💥 · sugg
 | AdminScreen vises ikke | `<AdminScreen>` manglede i App.jsx render-træ |
 | Admin-funktioner undefined | `loadAdminUsers`, `updateUserRole` m.fl. defineret i App.jsx |
 | `scanError is not a function` | `p.ean || p.code || p.barcode` guard i søgeklik-handler |
+| `column users.diets does not exist` | `diets` kolonne tilføjet via `ALTER TABLE public.users ADD COLUMN diets jsonb` |
+| `family_members` 400 Bad Request | Kolonner `allergens/custom_allergens/diets/e_numbers` tilføjet via SQL migration |
+| `shopping_lists` 500 fejl | `shopping_list_access`-tabel eksisterer — RLS policies er korrekte |
+| `<AdminScreen>` tom | Komponent manglede i JSX-render-træet + 7 admin-funktioner gendannet |
+| Admin-rolle vises ikke | `loadAll` useEffect læser nu `role` fra `public.users` via REST |
+| Profil/allergener loades ikke | `useEffect` på `accessToken+userId` tilføjet i App.jsx der kalder `loadAll` |
+| OAuth redirect til main | `redirect_to: window.location.origin + "/"` i `useAuth.js` |
+| Hjælp-modal gennemsigtig | `backdropFilter` fjernet, `background:#1a3012` sat |
+| Scan-kort lyst baggrund | `var(--surface)` + `backdrop-filter:blur` erstattet med `rgba(255,255,255,.04)` |
 
 ---
 
@@ -399,24 +410,6 @@ Typer: bug 🐛 · ui 🎨 · missing 💡 · content 📦 · crash 💥 · sugg
 - [ ] `constants.js` udfases
 - [ ] Opskrifter-backend mangler data
 - [ ] Supabase allowlist til alle preview-URLer
-- [ ] Debug role-visning i ProfileScreen fjernes (linje der viser "role: admin")
-- [ ] Fase 3 theme-refaktor: gennemgå alle hardcodede farver der stadig måske er tilbage
-
----
-
-## 19. Prompt til Jan (backend)
-
-```
-📋 PROMPT TIL JAN (BACKEND)
-Du er backend-udvikler på EatSafe (Supabase).
-
-KONTEKST: [hvad der er bygget]
-OPGAVE: [hvad der skal ændres]
-
-DETALJER:
-- Endpoint: [URL]
-- Request body: [JSON]
-- Response: [format]
-- Tabel: [navn]
-- RLS: [sikkerhedshensyn]
-```
+- [ ] Debug role-visning i ProfileScreen fjernes
+- [ ] Gennemgå alle `var(--paper)`, `var(--paper2)`, `var(--ink)` brugt som baggrund i komponenter
+- [ ] Allergener på familiemedlemmer vises som tomme (kolonner eksisterer nu, men data mangler flow)

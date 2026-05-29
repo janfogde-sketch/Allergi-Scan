@@ -339,7 +339,7 @@ export default function ScannerScreen({
 
             {/* Scan-boks — viser kamera når aktivt, animation ellers */}
             <div style={{
-              background:"rgba(255,255,255,.04)", borderRadius:20, marginBottom:10,
+              background:"var(--surface)", borderRadius:20, marginBottom:10,
               overflow:"hidden", position:"relative", border:"1px solid var(--border2)",
               boxShadow:"0 4px 20px rgba(0,0,0,.3)",
             }}>
@@ -487,7 +487,7 @@ export default function ScannerScreen({
 
             {/* Søg — fremhævet på forsiden */}
             <div className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:10,
-              background:"rgba(255,255,255,.04)", border:"1px solid var(--border2)" }}
+              background:"var(--surface)", border:"1px solid var(--border)" }}
               onClick={() => setScreen(SCREENS.SEARCH)}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                 <div style={{ width:40, height:40, background:"var(--surface2)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="search" size={20} color="var(--ink)" /></div>

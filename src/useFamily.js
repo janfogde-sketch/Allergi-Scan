@@ -38,7 +38,7 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
   const loadFamily = async () => {
     try {
       const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/family_members?user_id=eq.${userId}&select=id,name,color,allergens,custom_allergens,diets,e_numbers`,
+        `${SUPABASE_URL}/rest/v1/family_members?user_id=eq.${userId}&select=id,name,color,birth_year,gender`,
         { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
       );
       if (Array.isArray(data)) {
@@ -46,10 +46,12 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
           id: m.id,
           name: m.name,
           color: m.color || AVATAR_COLORS[0],
-          allergens: m.allergens || [],
-          custom: m.custom_allergens || [],
-          diets: m.diets || [],
-          eNumbers: m.e_numbers || [],
+          birth_year: m.birth_year || null,
+          gender: m.gender || "",
+          allergens: [],
+          custom: [],
+          diets: [],
+          eNumbers: [],
         })));
       }
     } catch { /* silent */ }
