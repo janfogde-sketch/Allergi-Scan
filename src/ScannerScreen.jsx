@@ -223,7 +223,6 @@ export default function ScannerScreen({
 
             {/* Hilsen + Profil-bar */}
             <div style={{ padding:"16px 2px 12px" }}>
-              <div style={{ fontSize:24, fontWeight:900, color:"var(--red)", marginBottom:8 }}>TEST</div>
               <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px", marginBottom:4 }}>
                 {greeting} {user.name?.split(" ")[0] || "der"}
               </div>
