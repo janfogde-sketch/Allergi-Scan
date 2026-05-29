@@ -34,19 +34,21 @@ import { BUILD_TIME, COMMIT_SHA, formatBuildTime, getGreeting, buildScreenLabel 
 import { useShoppingList } from './useShoppingList.js';
 import { useFamily } from './useFamily.js';
 import { useHistory } from './useHistory.js';
-import { useAuth } from './useAuth.js';
-import { useOnboarding } from './useOnboarding.js';
-import { useProduct } from './useProduct.js';
 import FeedbackModal from './FeedbackModal.jsx';
 
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
 
 export default function EatSafe() {
-  // Auth state → useAuth hook
+  // Auth state
+  const [accessToken, setAccessToken] = useState(() => localStorage.getItem("as_token") || null);
+  const [refreshToken, setRefreshToken] = useState(() => localStorage.getItem("as_refresh") || null);
+  const [userId, setUserId] = useState(() => localStorage.getItem("as_user_id") || null);
 
   // UI state
-  const [screen, setScreen] = useState(() => localStorage.getItem("as_token") ? SCREENS.HOME : SCREENS.WELCOME);
+  const [screen, setScreen] = useState(accessToken ? SCREENS.HOME : SCREENS.WELCOME);
+  const [onboardStep, setOnboardStep] = useState(1);
+  const [editMode, setEditMode] = useState(false);
 
   // User data
   const [user, setUser] = useState({ name:"", age:"", email:"", phone:"", password:"", role:"" });
@@ -56,6 +58,9 @@ export default function EatSafe() {
   const [activeProfiles, setActiveProfiles] = useState(["me"]);
 
   // Scan state
+  const [loading, setLoading] = useState(false);
+  const [scanResult, setScanResult] = useState(null);
+  const [scanError, setScanError] = useState("");
   const [showIng, setShowIng] = useState(true); // Automatisk åben
   const [showNutrition, setShowNutrition] = useState(false);
   const [barcodeInput, setBarcodeInput] = useState("");
@@ -67,7 +72,6 @@ export default function EatSafe() {
   const torchTrackRef = useRef(null);
   const qrRef = useRef(null);
   const html5QrRef = useRef(null);
-  const lastScannedRef = useRef(null);
 
   // History → useHistory hook
 
@@ -102,7 +106,9 @@ export default function EatSafe() {
     // Favorites → useHistory hook
   const [madpasLang, setMadpasLang] = useState(() => localStorage.getItem("as_madpas_lang") || "en");
   const [madpasProfileId, setMadpasProfileId] = useState("self");
-  // madpasActiveProfile → computed after hooks (uses family)
+  const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
+  const mpAllergens = madpasActiveProfile ? (madpasActiveProfile.allergens || []) : allergens;
+  const mpCustom = madpasActiveProfile ? (madpasActiveProfile.customAllerg || []) : customAllerg;
   const [recipes, setRecipes] = useState([]);
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
@@ -129,214 +135,163 @@ export default function EatSafe() {
   const [langOpen, setLangOpen] = useState(false);
   const [showSafeOnly, setShowSafeOnly] = useState(false);
   const [recipeServings, setRecipeServings] = useState(4);
+  const [editStep, setEditStep] = useState("start");
+  const [editIngText, setEditIngText] = useState("");
+  const [editNote, setEditNote] = useState("");
+  const [editType, setEditType] = useState(null);
   const [recipeSearch, setRecipeSearch] = useState("");
   const [recipeSafeOnly, setRecipeSafeOnly] = useState(false);
 
   // Family form → useFamily hook
+  const [customInput, setCustomInput] = useState("");
 
   // Auth form
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authTab, setAuthTab] = useState("signup"); // signup | login
 
   // NOT FOUND flow
+  const [notFoundEan, setNotFoundEan] = useState("");
+  const [ocrText, setOcrText] = useState("");
+  const [editOcrText, setEditOcrText] = useState("");
+  const [editOcrLoading, setEditOcrLoading] = useState(false);
+  const [editProductImage, setEditProductImage] = useState(null);
+  const [editProductImageB64, setEditProductImageB64] = useState(null);
   const [editSubmitting, setEditSubmitting] = useState(false);
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [proposedFlags, setProposedFlags] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [notFoundStep, setNotFoundStep] = useState(1); // 1=forside, 2=ingredienser, 3=bekræft
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackDone, setFeedbackDone] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [tourIdx, setTourIdx] = useState(0);
+  const [isOAuth, setIsOAuth] = useState(false);
 
   const [adminTickets, setAdminTickets] = useState([]);
   const [openTicket, setOpenTicket] = useState(null);
   const [ticketsLoading, setTicketsLoading] = useState(false);
+  const [proposedName, setProposedName] = useState("");
+  const [productImageBase64, setProductImageBase64] = useState(null);
+  const [productImagePreview, setProductImagePreview] = useState(null);
+  const [ocrImageBase64, setOcrImageBase64] = useState(null);
   const [ocrImagePreview, setOcrImagePreview] = useState(null);
 
   // ── TOKEN HELPERS ──────────────────────────────────────────────────────────
+  const saveTokens = useCallback((access, refresh, uid) => {
+    setAccessToken(access);
+    setRefreshToken(refresh);
+    setUserId(uid);
+    localStorage.setItem("as_token", access);
+    localStorage.setItem("as_refresh", refresh);
+    localStorage.setItem("as_user_id", uid);
+  }, []);
 
+  // Håndter OAuth callback — fang access_token fra URL hash
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash) return;
+    const params = new URLSearchParams(hash.replace("#", "?").replace("#", "&"));
+    const access = params.get("access_token");
+    const refresh = params.get("refresh_token");
+    if (access && refresh) {
+      try {
+        const payload = JSON.parse(atob(access.split(".")[1]));
+        const uid = payload.sub;
+        saveTokens(access, refresh, uid);
 
+        // Tjek om brugeren er ny — hent profil fra Supabase
+        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,created_at,onboarding_completed`, {
+          headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${access}`, "Accept": "application/json" },
+        })
+          .then(r => r.json())
+          .then(data => {
+            const profile = data?.[0];
+            const createdAt = profile?.created_at ? new Date(profile.created_at) : null;
+            // Ny bruger = onboarding ikke gennemført ELLER oprettet inden for 2 min
+            const isNew = !profile || profile.onboarding_completed === false || !createdAt || (Date.now() - createdAt.getTime() < 120000);
+            if (isNew) {
+              const meta = payload.user_metadata || {};
+              setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "" }));
+              setOnboardStep(1);
+              setIsOAuth(true);
+              setScreen(SCREENS.ONBOARD);
+            } else {
+              setScreen(SCREENS.HOME);
+            }
+          })
+          .catch(() => setScreen(SCREENS.HOME));
 
-
-  // ── ADMIN ─────────────────────────────────────────────────────────────────
-  const loadSubmissions = async (filter) => {
-    const f = filter || submissionFilter;
-    if (f === "tickets") return;
-    setSubmissionsLoading(true);
-    try {
-      const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
-      const url = `${SUPABASE_URL}/rest/v1/product_submissions?status=eq.${f}&order=created_at.desc&limit=100`;
-      const res = await fetch(url, { headers });
-      const data = await res.json();
-      setSubmissions(Array.isArray(data) ? data : []);
-    } catch { setSubmissions([]); }
-    setSubmissionsLoading(false);
-  };
-
-  const deleteOwnAccount = async () => {
-    if (deleteConfirmText.toLowerCase() !== "slet") return;
-    setDeletingAccount(true);
-    try {
-      const h = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}` };
-      await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/shopping_lists?owner_id=eq.${userId}`, { method:"DELETE", headers:h }),
-        fetch(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, { method:"DELETE", headers:h }),
-        fetch(`${SUPABASE_URL}/rest/v1/family_members?user_id=eq.${userId}`, { method:"DELETE", headers:h }),
-        fetch(`${SUPABASE_URL}/rest/v1/scan_history?user_id=eq.${userId}`, { method:"DELETE", headers:h }),
-        fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?submitted_by=eq.${userId}`, { method:"DELETE", headers:h }),
-      ]);
-      await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, { method:"DELETE", headers:h });
-      clearAuth();
-      setShowDeleteAccount(false);
-    } catch (e) { alert("Fejl: " + e.message + "\nKontakt support@eatsafe.dk"); }
-    setDeletingAccount(false);
-  };
-
-  const loadAdminStats = async () => {
-    try {
-      const h = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json", "Prefer": "count=exact" };
-      const hNoCount = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
-      const today = new Date(); today.setHours(0,0,0,0);
-      const todayISO = today.toISOString();
-      const [users, products, scans, submissions, families, tickets, scansToday, newUsersToday] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/users?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
-        fetch(`${SUPABASE_URL}/rest/v1/products?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
-        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
-        fetch(`${SUPABASE_URL}/rest/v1/product_submissions?status=eq.pending&select=id`, { headers: hNoCount }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/family_members?select=id`, { headers: hNoCount }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?status=eq.open&select=id`, { headers: hNoCount }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id&scanned_at=gte.${todayISO}`, { headers: hNoCount }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/users?select=id&created_at=gte.${todayISO}`, { headers: hNoCount }).then(r => r.json()),
-      ]);
-      setAdminStats({
-        total_users: typeof users === "number" ? users : (Array.isArray(users) ? users.length : 0),
-        total_products: typeof products === "number" ? products : (Array.isArray(products) ? products.length : 0),
-        total_scans: typeof scans === "number" ? scans : (Array.isArray(scans) ? scans.length : 0),
-        pending_submissions: Array.isArray(submissions) ? submissions.length : 0,
-        total_families: Array.isArray(families) ? families.length : 0,
-        open_tickets: Array.isArray(tickets) ? tickets.length : 0,
-        scans_today: Array.isArray(scansToday) ? scansToday.length : 0,
-        new_users_today: Array.isArray(newUsersToday) ? newUsersToday.length : 0,
-      });
-    } catch (e) { console.error("loadAdminStats fejl:", e.message); }
-  };
-
-  const loadTickets = async () => {
-    setTicketsLoading(true);
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?order=created_at.desc&limit=100`, {
-        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" },
-      });
-      const data = await res.json();
-      setAdminTickets(Array.isArray(data) ? data : []);
-    } catch { setAdminTickets([]); }
-    setTicketsLoading(false);
-  };
-
-  // ── KAMERA + SCANNING ──────────────────────────────────────────────────────
-  const startCamera = async () => {
-    if (cameraActive) return;
-    setScanError(""); setTorchOn(false);
-    torchTrackRef.current = null; lastScannedRef.current = null;
-    if (!navigator.mediaDevices?.getUserMedia) { setScanError("Kamera ikke understøttet. Prøv Chrome eller Safari."); return; }
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const constraints = isIOS
-      ? { video: { facingMode: { exact: "environment" } } }
-      : { video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } };
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      const track = stream.getVideoTracks()[0];
-      if (track) torchTrackRef.current = track;
-      stream.getTracks().forEach(t => t.stop());
-    } catch (e) {
-      if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
-        setScanError("Kamera-adgang nægtet. Gå til telefonens indstillinger og tillad kamera for denne app.");
-      } else if (e.name === "NotFoundError") {
-        setScanError("Intet kamera fundet på denne enhed.");
-      } else if (e.name === "OverconstrainedError" && isIOS) {
-        try { const s2 = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); s2.getTracks().forEach(t => t.stop()); }
-        catch { setScanError("Kunne ikke starte kamera. Prøv at genindlæse siden."); return; }
-      } else { setScanError("Kamera fejl: " + e.message); return; }
+        // Ryd URL hash
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch (e) {
+        console.error("OAuth callback fejl:", e);
+        setScreen(SCREENS.HOME);
+      }
     }
-    setCameraActive(true);
-    await new Promise(r => setTimeout(r, isIOS ? 300 : 150));
+  }, [saveTokens]);
+
+  const clearAuth = useCallback(() => {
+    setAccessToken(null); setRefreshToken(null); setUserId(null);
+    localStorage.removeItem("as_token");
+    localStorage.removeItem("as_refresh");
+    localStorage.removeItem("as_user_id");
+    setUser({ name:"", age:"", email:"", phone:"", password:"", role:"" });
+    setAllergens([]); setCustomAllerg([]); setFamily([]); setHistory([]); setShoppingList([]);
+    setScreen(SCREENS.WELCOME);
+  }, []);
+
+  // Auto-refresh token every 45 minutes
+  useEffect(() => {
+    if (!refreshToken) return;
+    const refresh = async () => {
+      try {
+        const data = await apiCall(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method: "POST",
+          headers: makeHeaders(null),
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+        if (data.access_token) saveTokens(data.access_token, data.refresh_token, data.user?.id);
+      } catch { /* silent */ }
+    };
+    const interval = setInterval(refresh, 45 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [refreshToken, saveTokens]);
+
+  // ── LOAD USER DATA PÅ LOGIN ────────────────────────────────────────────────
+  useEffect(() => {
+    if (!accessToken || !userId) return;
+    loadUserProfile();
+    loadAllergens();
+    loadFamily();
+    loadHistory();
+    loadShoppingList();
+  }, [accessToken, userId]);
+
+  const loadUserProfile = async () => {
     try {
-      const { Html5Qrcode } = await import("html5-qrcode");
-      const readerId = "qr-reader-home";
-      if (html5QrRef.current) { try { await html5QrRef.current.stop(); } catch {} html5QrRef.current = null; }
-      const readerEl = document.getElementById(readerId);
-      if (!readerEl) { setScanError("Kamera-element ikke fundet. Genindlæs siden."); setCameraActive(false); return; }
-      html5QrRef.current = new Html5Qrcode(readerId, { verbose: false });
-      const qrConfig = {
-        fps: isIOS ? 10 : 20,
-        qrbox: (w, h) => { const side = Math.min(w, h) * 0.8; return { width: Math.round(side), height: Math.round(side * 0.45) }; },
-        aspectRatio: isIOS ? undefined : 1.0, disableFlip: false,
-        formatsToSupport: [0,1,2,3,4,5,6,7,8,9,10,11],
-        videoConstraints: isIOS ? { facingMode: { exact: "environment" } } : { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 }, focusMode: "continuous", exposureMode: "continuous" },
-      };
-      await html5QrRef.current.start(
-        { facingMode: isIOS ? { exact: "environment" } : "environment" }, qrConfig,
-        (code) => {
-          const now = Date.now();
-          if (lastScannedRef.current?.code === code && now - lastScannedRef.current.time < 2000) return;
-          lastScannedRef.current = { code, time: now };
-          if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
-          try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator(); const gain = ctx.createGain();
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.frequency.value = 1800; gain.gain.setValueAtTime(0.25, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.12);
-          } catch {}
-          stopCamera(); lookupProduct(code);
-        }, () => {}
-      );
-      await new Promise(r => setTimeout(r, 500));
-      const videoEl = document.querySelector("#qr-reader-home video");
-      if (videoEl?.srcObject) { const track = videoEl.srcObject.getVideoTracks()[0]; if (track) torchTrackRef.current = track; }
-    } catch (e) {
-      setCameraActive(false);
-      if (e.message?.includes("constraint") || e.message?.includes("Constraint")) setTimeout(() => startCamera(), 500);
-      else setScanError("Kamera kunne ikke starte. Prøv at lukke andre apps og prøv igen.");
-    }
+      const data = await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=*`, {
+        headers: { ...makeHeaders(accessToken), "Accept": "application/json" },
+      });
+      if (data[0]) setUser(u => ({ ...u, ...data[0] }));
+    } catch { /* silent */ }
   };
 
-  const scanFromGallery = async (file) => {
-    if (!file) return;
-    setScanError(""); setLoading(true);
+  const loadAllergens = async () => {
     try {
-      const { Html5Qrcode } = await import("html5-qrcode");
-      const scanner = new Html5Qrcode("qr-reader-gallery");
-      const result = await scanner.scanFile(file, true);
-      scanner.clear(); lookupProduct(result);
-    } catch { setLoading(false); setScanError("Ingen stregkode fundet i billedet. Prøv et klarere billede."); }
+      const data = await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}&select=*`, {
+        headers: { ...makeHeaders(accessToken), "Accept": "application/json" },
+      });
+      const standard = data.filter(a => a.type === "allergen").map(a => a.allergen);
+      const custom = data.filter(a => a.type === "custom").map(a => a.allergen);
+      setAllergens(standard);
+      setCustomAllerg(custom);
+    } catch { /* silent */ }
   };
 
-  const toggleTorch = async () => {
-    try {
-      const videoEl = document.querySelector("#qr-reader-home video");
-      const track = videoEl?.srcObject?.getVideoTracks?.()?.[0] || torchTrackRef.current;
-      if (!track) return;
-      const capabilities = track.getCapabilities?.();
-      if (!capabilities?.torch) { setScanError("Lygte ikke understøttet på denne enhed."); return; }
-      const newState = !torchOn;
-      await track.applyConstraints({ advanced: [{ torch: newState }] });
-      setTorchOn(newState);
-    } catch (e) { setScanError("Kunne ikke tænde lygte: " + e.message); }
-  };
-
-  const stopCamera = () => {
-    if (html5QrRef.current) { html5QrRef.current.stop().catch(() => {}); html5QrRef.current = null; }
-    if (torchTrackRef.current) { try { torchTrackRef.current.applyConstraints({ advanced: [{ torch: false }] }); } catch {} torchTrackRef.current = null; }
-    setCameraActive(false); setTorchOn(false);
-  };
-
-  // ── OCR + INDSEND PRODUKT ─────────────────────────────────────────────────
-
-
-
-
-
-
-
-
-
-
+  // loadFamily → useFamily
+  // loadHistory → useHistory
   const loadRecipes = async (filter = "alle") => {
     setRecipesLoading(true);
     try {
@@ -433,7 +388,38 @@ export default function EatSafe() {
   // ── FAMILIE ────────────────────────────────────────────────────────────────
   // addMember → useFamily
   // removeMember → useFamily
+  // ── SØGNING via Edge Function ───────────────────────────────────────────────
 
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      setSearchResults([]);
+      const q = searchQuery.trim();
+
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(q)}`,
+          { headers: { "apikey": SUPABASE_ANON_KEY, ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) } }
+        );
+        const data = await res.json();
+        if (data.success) {
+          setSearchResults((data.products || []).map(p => ({ ...p, source:"local", verified:p.verified_status, conflicts:[] })));
+        }
+      } catch {
+        // silent
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, accessToken]);
 
     // ── HJÆLPEKOMPONENTER ──────────────────────────────────────────────────────
 
@@ -528,101 +514,6 @@ export default function EatSafe() {
     window.speechSynthesis.speak(utter);
   };
 
-  // ── CUSTOM HOOKS ──────────────────────────────────────────────────────────
-  const {
-    accessToken, setAccessToken, refreshToken, setRefreshToken,
-    userId, setUserId,
-    loginEmail, setLoginEmail, loginPassword, setLoginPassword,
-    authError, setAuthError, authLoading, setAuthLoading,
-    authTab, setAuthTab, isOAuth, setIsOAuth,
-    saveTokens, clearAuth, handleLogin, handleSignup, handleOAuth,
-  } = useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
-                onSignupSuccess: () => setOnboardStep(1) });
-
-  const {
-    shoppingList, setShoppingList,
-    shoppingListId, setShoppingListId,
-    newItemName, setNewItemName,
-    loadShoppingList, addToList, toggleItem, removeItem, clearDone,
-  } = useShoppingList({ accessToken, userId });
-
-  const {
-    family, setFamily,
-    newMemberName, setNewMemberName,
-    newMemberBirthYear, setNewMemberBirthYear,
-    newMemberGender, setNewMemberGender,
-    newMemberAllerg, setNewMemberAllerg,
-    newMemberCustomAllerg, setNewMemberCustomAllerg,
-    newMemberDiets, setNewMemberDiets,
-    newMemberENumbers, setNewMemberENumbers,
-    newMemberSubtypes, setNewMemberSubtypes,
-    newMemberCustomInput, setNewMemberCustomInput,
-    loadFamily, addMember, removeMember,
-  } = useFamily({ accessToken, userId, setActiveProfiles });
-
-  const {
-    history, setHistory,
-    historyLoading,
-    favorites, setFavorites,
-    loadHistory, saveHistoryEntry, toggleFavorite, isFavorite,
-  } = useHistory({ accessToken, userId });
-
-  const {
-    onboardStep, setOnboardStep,
-    editMode, setEditMode,
-    tourIdx, setTourIdx,
-    customInput, setCustomInput,
-    saveProfileStep1, saveAllergensStep2, finishOnboard,
-  } = useOnboarding({ accessToken, userId, user, loginEmail,
-                      allergens, customAllerg,
-                      setUser, setScreen, setEditMode: () => {}, setIsOAuth });
-
-  const [notFoundEan, setNotFoundEan] = useState("");
-  const {
-    scanResult, setScanResult,
-    loading, setLoading,
-    scanError, setScanError,
-    notFoundStep, setNotFoundStep,
-    submitting,
-    ocrText, setOcrText,
-    ocrLoading, setOcrLoading,
-    ocrImageBase64, setOcrImageBase64,
-    productImagePreview, setProductImagePreview,
-    productImageBase64, setProductImageBase64,
-    proposedName, setProposedName,
-    proposedFlags, setProposedFlags,
-    editStep, setEditStep,
-    editIngText, setEditIngText,
-    editNote, setEditNote,
-    editType, setEditType,
-    editProductImage, setEditProductImage,
-    editProductImageB64, setEditProductImageB64,
-    editOcrLoading, setEditOcrLoading,
-    editOcrText, setEditOcrText,
-    handleProductImageCapture,
-    handleImageCapture,
-    handleEditProductCapture,
-    submitProduct,
-  } = useProduct({ accessToken, userId, activeProfiles,
-                   notFoundEan, setNotFoundEan,
-                   setScreen });
-
-  // Ryd familie/historik/indkøb når auth cleares (accessToken → null)
-  React.useEffect(() => {
-    if (!accessToken) {
-      setFamily([]);
-      setHistory([]);
-      setShoppingList([]);
-    }
-  }, [accessToken]);
-
-  // Stop kamera automatisk når man forlader HOME
-  React.useEffect(() => {
-    if (screen !== SCREENS.HOME && cameraActive) {
-      stopCamera();
-    }
-  }, [screen]);
-
   const isOnboard = screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode;
 
   const FamilyChips = () => {
@@ -662,116 +553,34 @@ export default function EatSafe() {
 
   const greeting = getGreeting();
 
-  // ── SCANNER CORE ──────────────────────────────────────────────────────────
-  const allActive = useCallback(() => {
-    const ids = new Set(activeProfiles.includes("me") ? allergens : []);
-    family.filter(m => activeProfiles.includes(m.id)).forEach(m => m.allergens.forEach(a => ids.add(a)));
-    return { ids: [...ids], custom: [...customAllerg] };
-  }, [allergens, customAllerg, family, activeProfiles]);
+  // ── CUSTOM HOOKS ──────────────────────────────────────────────────────────
+  const {
+    shoppingList, setShoppingList,
+    shoppingListId, setShoppingListId,
+    newItemName, setNewItemName,
+    loadShoppingList, addToList, toggleItem, removeItem, clearDone,
+  } = useShoppingList({ accessToken, userId });
 
-  const activeIds = allActive().ids;
+  const {
+    family, setFamily,
+    newMemberName, setNewMemberName,
+    newMemberBirthYear, setNewMemberBirthYear,
+    newMemberGender, setNewMemberGender,
+    newMemberAllerg, setNewMemberAllerg,
+    newMemberCustomAllerg, setNewMemberCustomAllerg,
+    newMemberDiets, setNewMemberDiets,
+    newMemberENumbers, setNewMemberENumbers,
+    newMemberSubtypes, setNewMemberSubtypes,
+    newMemberCustomInput, setNewMemberCustomInput,
+    loadFamily, addMember, removeMember,
+  } = useFamily({ accessToken, userId, setActiveProfiles });
 
-  const lookupProduct = useCallback(async (ean) => {
-    if (!ean?.trim()) return;
-    if (navigator.vibrate) navigator.vibrate(40);
-    const cached = productCacheRef.current[ean.trim()];
-    if (cached) { setScanResult(cached); setScreen(SCREENS.RESULT); return; }
-    setLoading(true); setScanResult(null); setScanError(""); setShowIng(false);
-    try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/products/${ean.trim()}`, {
-        headers: makeHeaders(accessToken),
-      });
-      if (!data.found) {
-        setNotFoundEan(ean.trim());
-        await saveHistoryEntry(ean.trim(), null, "not_found", {}, activeProfiles);
-        setLoading(false); setScreen(SCREENS.NOTFOUND); setNotFoundStep(1);
-        setOcrText(""); setProposedName("");
-        setProposedFlags(Object.fromEntries(ALLERGENS.map(a => [a.id, false])));
-        setProductImagePreview(null); setProductImageBase64(null);
-        return;
-      }
-      const product = data.product;
-      const flags = data.allergen_flags || {};
-      const { status, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(flags, activeIds);
-      const flagList = [
-        ...matchedDanger.map(id => ({ type:"bad", text:`Indeholder ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
-        ...matchedWarning.map(id => ({ type:"maybe", text:`Kan indeholde spor af ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
-        ...(hasUnknown ? [{ type:"maybe", text:"Visse allergener er ukendte — tjek altid pakken" }] : []),
-        ...(matchedDanger.length===0 && matchedWarning.length===0 && !hasUnknown ? [{ type:"good", text:"Ingen af dine allergener fundet" }] : []),
-      ];
-      const headlines = { safe:"Sikkert produkt", danger:"Indeholder allergen", warn:"Mulige spor" };
-      const summaries = {
-        safe:"Ingen af dine registrerede allergener er fundet i dette produkt.",
-        danger:`Produktet indeholder ${matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
-        warn:`Produktet kan indeholde spor af ${matchedWarning.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
-      };
-      const familyImpact = [];
-      if (family.length > 0) {
-        for (const member of family.filter(m => activeProfiles.includes(m.id))) {
-          const memberResult = compareAllergens(flags, member.allergens || []);
-          if (memberResult.matchedDanger.length > 0 || memberResult.matchedWarning.length > 0) {
-            familyImpact.push({ name:member.name, color:member.color, danger:memberResult.matchedDanger, warning:memberResult.matchedWarning });
-          }
-        }
-      }
-      const result = {
-        code: ean.trim(), name: product.name || "Ukendt produkt", brand: product.brand || "",
-        image_url: product.image_url || null, category: product.category || null,
-        ingredients: data.ingredients?.raw_text || product.ingredients_text || "",
-        nutrition: data.nutrition || product.nutrition || null,
-        verified_status: product.verified_status || "unverified", source: data.source,
-        status, headline: headlines[status], summary: summaries[status],
-        flags: flagList, allergen_flags: flags, matchedDanger, matchedWarning, familyImpact, hasUnknown,
-        timestamp: Date.now(),
-      };
-      productCacheRef.current[ean.trim()] = result;
-      const cacheKeys = Object.keys(productCacheRef.current);
-      if (cacheKeys.length > 50) delete productCacheRef.current[cacheKeys[0]];
-      setScanResult(result);
-      setHistory(h => [result, ...h].slice(0, 50));
-      await saveHistoryEntry(ean.trim(), product.id, status, flags, activeProfiles);
-      setScreen(SCREENS.RESULT);
-    } catch (e) { setScanError("Der opstod en fejl. Tjek din forbindelse og prøv igen."); }
-    setLoading(false);
-  }, [accessToken, activeIds]);
-
-// ── SØGNING via Edge Function ───────────────────────────────────────────────
-
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setSearchLoading(false);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setSearchLoading(true);
-      setSearchResults([]);
-      const q = searchQuery.trim();
-
-      try {
-        const res = await fetch(
-          `${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(q)}`,
-          { headers: { "apikey": SUPABASE_ANON_KEY, ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) } }
-        );
-        const data = await res.json();
-        if (data.success) {
-          setSearchResults((data.products || []).map(p => ({ ...p, ean: p.ean || p.barcode || null, source:"local", verified:p.verified_status, conflicts:[] })));
-        }
-      } catch {
-        // silent
-      } finally {
-        setSearchLoading(false);
-      }
-    }, 350);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery, accessToken]);
-
-  // ── COMPUTED (afhænger af hooks) ─────────────────────────────────────────
-  const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
-  const mpAllergens = madpasActiveProfile ? (madpasActiveProfile.allergens || []) : allergens;
-  const mpCustom = madpasActiveProfile ? (madpasActiveProfile.customAllerg || []) : customAllerg;
+  const {
+    history, setHistory,
+    historyLoading,
+    favorites, setFavorites,
+    loadHistory, saveHistoryEntry, toggleFavorite, isFavorite,
+  } = useHistory({ accessToken, userId });
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
   return (
@@ -825,23 +634,22 @@ export default function EatSafe() {
         {!isOnboard && (
           <header className="topbar">
             <div className="topbar-logo">
-              <div className="topbar-shield"><EatSafeLogo size={17} variant="light" /></div>
-              <span className="topbar-name">EatSafe</span>
+              <div className="topbar-shield" style={{background:"none",padding:0}}><EatSafeLogo size={34} variant="light" /></div>
+              <div className="topbar-name">Eat<span>Safe</span></div>
+              <div style={{ background:"var(--amber)", color:"#fff", fontSize:9, fontWeight:800, padding:"2px 7px", borderRadius:100, letterSpacing:".5px", marginLeft:4, marginTop:2 }}>BETA</div>
             </div>
             <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+              {/* Hjælp-knap */}
               <button onClick={() => setHelpOpen(true)}
-                style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:"50%", width:32, height:32, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--muted)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:32, height:32, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
                 ?
               </button>
+              {/* Feedback-knap */}
               <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
-                style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:100, padding:"0 12px", height:32, fontFamily:"var(--f)", fontSize:11, fontWeight:600, color:"var(--muted)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                 Feedback
               </button>
-              <div className="topbar-avatar"
-                onClick={() => setScreen(SCREENS.PROFILE)}>
-                {initials(user.name || "?")}
-              </div>
             </div>
           </header>
         )}
@@ -850,8 +658,8 @@ export default function EatSafe() {
         {isOnboard && (
           <div style={{ position:"fixed", top:12, right:12, zIndex:1000 }}>
             <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
-              style={{ background:"var(--surface2)", backdropFilter:"blur(12px)", border:"1px solid var(--border2)", borderRadius:100, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:600, color:"var(--muted)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              style={{ background:"rgba(255,255,255,.85)", backdropFilter:"blur(8px)", border:"1px solid var(--border2)", borderRadius:100, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", gap:5, boxShadow:"0 2px 8px rgba(0,0,0,.08)" }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
               Feedback
             </button>
           </div>
@@ -894,26 +702,26 @@ export default function EatSafe() {
           return (
             <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
               onClick={e => e.target === e.currentTarget && setHelpOpen(false)}>
-              <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto", border:"1px solid rgba(255,255,255,.1)", backdropFilter:"blur(20px)" }}
+              <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
                 onClick={e => e.stopPropagation()}>
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
-                  <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)" }}>{content.title}</div>
+                  <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>{content.title}</div>
                   <button onClick={() => setHelpOpen(false)}
-                    style={{ background:"var(--surface2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
+                    style={{ background:"var(--paper2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
                 </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:14 }}>
+                <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
                   {content.tips.map((tip, i) => (
-                    <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
+                    <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12 }}>
                       <div style={{ fontSize:22, flexShrink:0 }}>{tip.icon}</div>
                       <div>
-                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:3 }}>{tip.title}</div>
-                        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6 }}>{tip.desc}</div>
+                        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:3 }}>{tip.title}</div>
+                        <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>{tip.desc}</div>
                       </div>
                     </div>
                   ))}
                 </div>
                 <button onClick={() => { setHelpOpen(false); setFeedbackOpen(true); setFeedbackDone(false); }}
-                  style={{ width:"100%", padding:"12px", background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#071510", cursor:"pointer" }}>
+                  style={{ width:"100%", padding:"12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted2)", cursor:"pointer" }}>
                   💬 Send feedback eller rapportér fejl
                 </button>
               </div>
@@ -925,7 +733,7 @@ export default function EatSafe() {
         {showDeleteAccount && (
           <div style={{ position:"fixed", inset:0, zIndex:9997, background:"rgba(0,0,0,.6)", display:"flex", alignItems:"flex-end" }}
             onClick={e => e.target === e.currentTarget && setShowDeleteAccount(false)}>
-            <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"24px 16px 40px", width:"100%", border:"1px solid rgba(255,255,255,.1)" }}
+            <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"24px 16px 40px", width:"100%" }}
               onClick={e => e.stopPropagation()}>
 
               <div style={{ textAlign:"center", marginBottom:20 }}>
@@ -956,7 +764,7 @@ export default function EatSafe() {
                   onChange={e => setDeleteConfirmText(e.target.value)}
                   placeholder="slet"
                   autoCapitalize="none"
-                  style={{ width:"100%", padding:"13px 14px", border:`1.5px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"var(--surface)", color:"var(--ink)" }}
+                  style={{ width:"100%", padding:"13px 14px", border:`1.5px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"#fff", color:"var(--ink)" }}
                 />
               </div>
 
@@ -974,6 +782,19 @@ export default function EatSafe() {
             </div>
           </div>
         )}
+
+        {/* ══ FEEDBACK MODAL ══ */}
+        <FeedbackModal
+          open={feedbackOpen} onClose={() => setFeedbackOpen(false)}
+          screen={screen} authTab={authTab} onboardStep={onboardStep}
+          scanResult={scanResult} madpasWaiterView={madpasWaiterView}
+          madpasLang={madpasLang} selectedRecipe={selectedRecipe}
+          editMode={editMode} showManualEan={showManualEan}
+          profilePopup={profilePopup}
+          user={user} userId={userId} accessToken={accessToken}
+          loginEmail={loginEmail} allergens={allergens}
+          family={family} history={history} activeProfiles={activeProfiles}
+        />
 
         {/* ══ HJEM ══ */}        {/* ══ HJEM ══ */}
         {/* ══ SCANNER SCREENS ══ */}
@@ -1026,7 +847,6 @@ export default function EatSafe() {
             toggleTorch={toggleTorch}
             torchOn={torchOn}
             buildLabel={formatBuildTime()}
-            lookupProduct={lookupProduct}
           />
         )}
 
@@ -1112,7 +932,7 @@ export default function EatSafe() {
             recipeFilter={recipeFilter} setRecipeFilter={setRecipeFilter}
             recipeSafeOnly={recipeSafeOnly} setRecipeSafeOnly={setRecipeSafeOnly}
             favoriteRecipes={favoriteRecipes} setFavoriteRecipes={setFavoriteRecipes}
-            activeIds={activeIds}
+            activeIds={allActive().ids}
             completedSteps={completedSteps} setCompletedSteps={setCompletedSteps}
             recipeServings={recipeServings} setRecipeServings={setRecipeServings}
             setRecipes={setRecipes}
@@ -1155,18 +975,6 @@ export default function EatSafe() {
             ))}
           </nav>
         )}
-        {/* ══ FEEDBACK MODAL ══ */}
-        <FeedbackModal
-          open={feedbackOpen} onClose={() => setFeedbackOpen(false)}
-          screen={screen} authTab={authTab} onboardStep={onboardStep}
-          scanResult={scanResult} madpasWaiterView={madpasWaiterView}
-          madpasLang={madpasLang} selectedRecipe={selectedRecipe}
-          editMode={editMode} showManualEan={showManualEan}
-          profilePopup={profilePopup}
-          user={user} userId={userId} accessToken={accessToken}
-          loginEmail={loginEmail} allergens={allergens}
-          family={family} history={history} activeProfiles={activeProfiles}
-        />
       </div>
     </>
   );
