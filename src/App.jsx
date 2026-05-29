@@ -573,38 +573,7 @@ export default function EatSafe() {
   // ── FAMILIE ────────────────────────────────────────────────────────────────
   // addMember → useFamily
   // removeMember → useFamily
-  // ── SØGNING via Edge Function ───────────────────────────────────────────────
 
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setSearchLoading(false);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setSearchLoading(true);
-      setSearchResults([]);
-      const q = searchQuery.trim();
-
-      try {
-        const res = await fetch(
-          `${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(q)}`,
-          { headers: { "apikey": SUPABASE_ANON_KEY, ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) } }
-        );
-        const data = await res.json();
-        if (data.success) {
-          setSearchResults((data.products || []).map(p => ({ ...p, source:"local", verified:p.verified_status, conflicts:[] })));
-        }
-      } catch {
-        // silent
-      } finally {
-        setSearchLoading(false);
-      }
-    }, 350);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery, accessToken]);
 
     // ── HJÆLPEKOMPONENTER ──────────────────────────────────────────────────────
 
@@ -858,6 +827,39 @@ export default function EatSafe() {
     } catch (e) { setScanError("Der opstod en fejl. Tjek din forbindelse og prøv igen."); }
     setLoading(false);
   }, [accessToken, activeIds]);
+
+// ── SØGNING via Edge Function ───────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      setSearchResults([]);
+      const q = searchQuery.trim();
+
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(q)}`,
+          { headers: { "apikey": SUPABASE_ANON_KEY, ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) } }
+        );
+        const data = await res.json();
+        if (data.success) {
+          setSearchResults((data.products || []).map(p => ({ ...p, source:"local", verified:p.verified_status, conflicts:[] })));
+        }
+      } catch {
+        // silent
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, accessToken]);
 
   // ── COMPUTED (afhænger af hooks) ─────────────────────────────────────────
   const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
