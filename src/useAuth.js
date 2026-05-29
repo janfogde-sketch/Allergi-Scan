@@ -64,6 +64,8 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         })
           .then(r => r.json())
           .then(data => {
+            console.log("OAuth profile data:", JSON.stringify(data));
+            console.log("JWT payload:", JSON.stringify(payload));
             const profile = data?.[0];
             // Kun send til onboarding hvis profil mangler ELLER onboarding eksplicit ikke er fuldført
             const isNew = !profile || profile.onboarding_completed === false;
