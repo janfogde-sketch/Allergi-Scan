@@ -503,9 +503,9 @@ ${openTicket.description}
             {adminSection === "tickets" && (
               <div className="fade-in">
                 {/* Status tæller grid — klikbar filter */}
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:6, marginBottom:12 }}>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6, marginBottom:12 }}>
                   {[
-                    { status:"all",         label:"Alle",   color:"var(--ink)" },
+                    { status:"all",         label:"Alle",   color:"var(--ink3)" },
                     { status:"open",        label:"Åbne",   color:"var(--red)" },
                     { status:"in_progress", label:"I gang", color:"var(--amber)" },
                     { status:"resolved",    label:"Løst",   color:"var(--green)" },
@@ -526,7 +526,7 @@ ${openTicket.description}
                 {!ticketsLoading && adminTickets.length === 0 && <div style={{ textAlign:"center", padding:"48px 0" }}><div style={{ fontSize:48, marginBottom:12 }}>🎉</div><div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>Ingen tickets</div></div>}
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                   {adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter).map(t => {
-                    const typeConfig = { bug:{emoji:"🐛",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{emoji:"🎨",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{emoji:"💡",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{emoji:"📦",color:"var(--ink)",bg:"var(--paper2)",label:"Indhold"}, crash:{emoji:"💥",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{emoji:"✨",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
+                    const typeConfig = { bug:{emoji:"🐛",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{emoji:"🎨",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{emoji:"💡",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{emoji:"📦",color:"var(--ink3)",bg:"var(--surface2)",label:"Indhold"}, crash:{emoji:"💥",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{emoji:"✨",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
                     const cfg = typeConfig[t.type] || typeConfig.bug;
                     const statusColor = t.status==="open"?"var(--red)":t.status==="in_progress"?"var(--amber)":t.status==="resolved"?"var(--green)":"var(--muted)";
                     const statusLabel = t.status==="open"?"Åben":t.status==="in_progress"?"I gang":t.status==="resolved"?"Løst":"Lukket";
