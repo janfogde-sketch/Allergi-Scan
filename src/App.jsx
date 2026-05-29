@@ -1024,9 +1024,9 @@ ${text}` }],
             { icon:"💬", title:"Send feedback", desc:"Brug Feedback-knappen øverst til at rapportere problemer eller forslag." },
           ]};
           return (
-            <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
+            <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.85)", display:"flex", alignItems:"flex-end" }}
               onClick={e => e.target === e.currentTarget && setHelpOpen(false)}>
-              <div style={{ background:"var(--surface2)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
+              <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
                 onClick={e => e.stopPropagation()}>
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
                   <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>{content.title}</div>
