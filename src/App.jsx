@@ -34,6 +34,7 @@ import { BUILD_TIME, COMMIT_SHA, formatBuildTime, getGreeting, buildScreenLabel 
 import { useShoppingList } from './useShoppingList.js';
 import { useFamily } from './useFamily.js';
 import { useHistory } from './useHistory.js';
+import { useAuth } from './useAuth.js';
 import FeedbackModal from './FeedbackModal.jsx';
 
 
@@ -41,9 +42,6 @@ import FeedbackModal from './FeedbackModal.jsx';
 
 export default function EatSafe() {
   // Auth state
-  const [accessToken, setAccessToken] = useState(() => localStorage.getItem("as_token") || null);
-  const [refreshToken, setRefreshToken] = useState(() => localStorage.getItem("as_refresh") || null);
-  const [userId, setUserId] = useState(() => localStorage.getItem("as_user_id") || null);
 
   // UI state
   const [screen, setScreen] = useState(accessToken ? SCREENS.HOME : SCREENS.WELCOME);
@@ -146,11 +144,6 @@ export default function EatSafe() {
   const [customInput, setCustomInput] = useState("");
 
   // Auth form
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [authError, setAuthError] = useState("");
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authTab, setAuthTab] = useState("signup"); // signup | login
 
   // NOT FOUND flow
   const [notFoundEan, setNotFoundEan] = useState("");
@@ -167,7 +160,6 @@ export default function EatSafe() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [tourIdx, setTourIdx] = useState(0);
-  const [isOAuth, setIsOAuth] = useState(false);
 
   const [adminTickets, setAdminTickets] = useState([]);
   const [openTicket, setOpenTicket] = useState(null);
@@ -179,119 +171,10 @@ export default function EatSafe() {
   const [ocrImagePreview, setOcrImagePreview] = useState(null);
 
   // ── TOKEN HELPERS ──────────────────────────────────────────────────────────
-  const saveTokens = useCallback((access, refresh, uid) => {
-    setAccessToken(access);
-    setRefreshToken(refresh);
-    setUserId(uid);
-    localStorage.setItem("as_token", access);
-    localStorage.setItem("as_refresh", refresh);
-    localStorage.setItem("as_user_id", uid);
-  }, []);
 
-  // Håndter OAuth callback — fang access_token fra URL hash
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (!hash) return;
-    const params = new URLSearchParams(hash.replace("#", "?").replace("#", "&"));
-    const access = params.get("access_token");
-    const refresh = params.get("refresh_token");
-    if (access && refresh) {
-      try {
-        const payload = JSON.parse(atob(access.split(".")[1]));
-        const uid = payload.sub;
-        saveTokens(access, refresh, uid);
 
-        // Tjek om brugeren er ny — hent profil fra Supabase
-        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,created_at,onboarding_completed`, {
-          headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${access}`, "Accept": "application/json" },
-        })
-          .then(r => r.json())
-          .then(data => {
-            const profile = data?.[0];
-            const createdAt = profile?.created_at ? new Date(profile.created_at) : null;
-            // Ny bruger = onboarding ikke gennemført ELLER oprettet inden for 2 min
-            const isNew = !profile || profile.onboarding_completed === false || !createdAt || (Date.now() - createdAt.getTime() < 120000);
-            if (isNew) {
-              const meta = payload.user_metadata || {};
-              setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "" }));
-              setOnboardStep(1);
-              setIsOAuth(true);
-              setScreen(SCREENS.ONBOARD);
-            } else {
-              setScreen(SCREENS.HOME);
-            }
-          })
-          .catch(() => setScreen(SCREENS.HOME));
 
-        // Ryd URL hash
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } catch (e) {
-        console.error("OAuth callback fejl:", e);
-        setScreen(SCREENS.HOME);
-      }
-    }
-  }, [saveTokens]);
 
-  const clearAuth = useCallback(() => {
-    setAccessToken(null); setRefreshToken(null); setUserId(null);
-    localStorage.removeItem("as_token");
-    localStorage.removeItem("as_refresh");
-    localStorage.removeItem("as_user_id");
-    setUser({ name:"", age:"", email:"", phone:"", password:"", role:"" });
-    setAllergens([]); setCustomAllerg([]); setFamily([]); setHistory([]); setShoppingList([]);
-    setScreen(SCREENS.WELCOME);
-  }, []);
-
-  // Auto-refresh token every 45 minutes
-  useEffect(() => {
-    if (!refreshToken) return;
-    const refresh = async () => {
-      try {
-        const data = await apiCall(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-          method: "POST",
-          headers: makeHeaders(null),
-          body: JSON.stringify({ refresh_token: refreshToken }),
-        });
-        if (data.access_token) saveTokens(data.access_token, data.refresh_token, data.user?.id);
-      } catch { /* silent */ }
-    };
-    const interval = setInterval(refresh, 45 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [refreshToken, saveTokens]);
-
-  // ── LOAD USER DATA PÅ LOGIN ────────────────────────────────────────────────
-  useEffect(() => {
-    if (!accessToken || !userId) return;
-    loadUserProfile();
-    loadAllergens();
-    loadFamily();
-    loadHistory();
-    loadShoppingList();
-  }, [accessToken, userId]);
-
-  const loadUserProfile = async () => {
-    try {
-      const data = await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=*`, {
-        headers: { ...makeHeaders(accessToken), "Accept": "application/json" },
-      });
-      if (data[0]) setUser(u => ({ ...u, ...data[0] }));
-    } catch { /* silent */ }
-  };
-
-  const loadAllergens = async () => {
-    try {
-      const data = await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}&select=*`, {
-        headers: { ...makeHeaders(accessToken), "Accept": "application/json" },
-      });
-      const standard = data.filter(a => a.type === "allergen").map(a => a.allergen);
-      const custom = data.filter(a => a.type === "custom").map(a => a.allergen);
-      setAllergens(standard);
-      setCustomAllerg(custom);
-    } catch { /* silent */ }
-  };
-
-  // loadFamily → useFamily
-  // loadHistory → useHistory
   // ── ADMIN ─────────────────────────────────────────────────────────────────
   const loadSubmissions = async (filter) => {
     const f = filter || submissionFilter;
@@ -595,87 +478,6 @@ export default function EatSafe() {
     setIsOAuth(false);
   };
 
-  // ── AUTH ───────────────────────────────────────────────────────────────────
-  const handleOAuth = async (provider) => {
-    setAuthLoading(true); setAuthError("");
-    try {
-      const redirectTo = "https://eatsafe.dk/";
-      const params = new URLSearchParams({
-        provider, redirect_to: redirectTo,
-        ...(provider === "google" ? { prompt: "select_account" } : {}),
-      });
-      window.location.href = `${SUPABASE_URL}/auth/v1/authorize?${params.toString()}`;
-    } catch (e) {
-      setAuthError(`${provider} login fejlede: ${e.message}`);
-      setAuthLoading(false);
-    }
-  };
-
-  const handleLogin = async () => {
-    if (!loginEmail || !loginPassword) return;
-    if (!loginEmail.includes("@")) { setAuthError("Indtast en gyldig email-adresse."); return; }
-    setAuthLoading(true); setAuthError("");
-    try {
-      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
-      });
-      const text = await res.text();
-      if (text === "Host not in allowlist") {
-        setAuthError("⚙️ Supabase er ikke konfigureret til dette domæne."); setAuthLoading(false); return;
-      }
-      const data = JSON.parse(text);
-      if (!res.ok) {
-        const msg = data.msg || data.error_description || data.message || "";
-        if (msg.toLowerCase().includes("invalid login") || msg.toLowerCase().includes("invalid credentials"))
-          throw new Error("Forkert email eller kodeord.");
-        throw new Error(msg || "Login fejlede.");
-      }
-      saveTokens(data.access_token, data.refresh_token, data.user.id);
-      setScreen(SCREENS.HOME);
-    } catch (e) {
-      setAuthError(e.message || "Forkert email eller kodeord. Prøv igen.");
-    }
-    setAuthLoading(false);
-  };
-
-  const handleSignup = async () => {
-    if (!loginEmail || !loginEmail.includes("@")) { setAuthError("Indtast en gyldig email-adresse."); return; }
-    if (!loginPassword || loginPassword.length < 6) { setAuthError("Kodeordet skal være mindst 6 tegn."); return; }
-    setAuthLoading(true); setAuthError("");
-    try {
-      const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
-      });
-      const text = await res.text();
-      if (text === "Host not in allowlist") {
-        setAuthError("⚙️ Supabase er ikke konfigureret til dette domæne."); setAuthLoading(false); return;
-      }
-      const data = JSON.parse(text);
-      if (!res.ok) {
-        const msg = data.msg || data.error_description || data.message || "";
-        if (msg.toLowerCase().includes("already registered") || data.error_code === "email_exists")
-          throw new Error("Denne email er allerede registreret. Prøv at logge ind i stedet.");
-        if (msg.toLowerCase().includes("password") || msg.toLowerCase().includes("weak"))
-          throw new Error("Kodeordet er for svagt. Brug mindst 6 tegn.");
-        throw new Error(msg || "Oprettelse fejlede. Prøv igen.");
-      }
-      if (data.access_token) {
-        saveTokens(data.access_token, data.refresh_token, data.user.id);
-        setUser(u => ({ ...u, email: loginEmail }));
-        setScreen(SCREENS.ONBOARD);
-        setOnboardStep(1);
-      } else {
-        setAuthError("✉️ Tjek din email og klik på bekræftelseslinket — log derefter ind her.");
-      }
-    } catch (e) {
-      setAuthError(e.message || "Oprettelse fejlede. Prøv igen.");
-    }
-    setAuthLoading(false);
-  };
 
   const loadRecipes = async (filter = "alle") => {
     setRecipesLoading(true);
@@ -939,6 +741,17 @@ export default function EatSafe() {
   const greeting = getGreeting();
 
   // ── CUSTOM HOOKS ──────────────────────────────────────────────────────────
+  const {
+    accessToken, setAccessToken, refreshToken, setRefreshToken,
+    userId, setUserId,
+    loginEmail, setLoginEmail, loginPassword, setLoginPassword,
+    authError, setAuthError, authLoading, setAuthLoading,
+    authTab, setAuthTab, isOAuth, setIsOAuth,
+    saveTokens, clearAuth, handleLogin, handleSignup, handleOAuth,
+  } = useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
+                setFamily, setHistory, setShoppingList,
+                setOnboardStep });
+
   const {
     shoppingList, setShoppingList,
     shoppingListId, setShoppingListId,
