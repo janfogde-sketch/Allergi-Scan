@@ -1164,7 +1164,7 @@ export default function ScannerScreen({
               return (
                 <div key={p.id} style={{ display:"flex", alignItems:"center", gap:10,
                   padding:"10px 0", borderBottom:"1px solid var(--border)", cursor:"pointer" }}
-                  onClick={() => { const ean = p.ean || p.code; if (ean) lookupProduct(String(ean)); }}>
+                  onClick={() => { const ean = p.ean || p.code || p.barcode; if (ean) lookupProduct(String(ean)); }}>
                   <ProductImage product={p} size={44} />
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{p.name}</div>
@@ -1206,7 +1206,7 @@ export default function ScannerScreen({
                   return (
                     <div key={p.ean||p.id} style={{ display:"flex", alignItems:"center", gap:10,
                       padding:"10px 0", borderBottom:"1px solid var(--border)", cursor:"pointer" }}
-                      onClick={() => { const ean = p.ean || p.code; if (ean) lookupProduct(String(ean)); }}>
+                      onClick={() => { const ean = p.ean || p.code || p.barcode; if (ean) lookupProduct(String(ean)); }}>
                       <ProductImage product={p} size={44} />
                       <div style={{ flex:1, minWidth:0 }}>
                         <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{p.name}</div>

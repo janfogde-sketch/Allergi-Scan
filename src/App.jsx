@@ -615,6 +615,13 @@ export default function EatSafe() {
     }
   }, [accessToken]);
 
+  // Stop kamera automatisk når man forlader HOME
+  React.useEffect(() => {
+    if (screen !== SCREENS.HOME && cameraActive) {
+      stopCamera();
+    }
+  }, [screen]);
+
   const isOnboard = screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode;
 
   const FamilyChips = () => {
@@ -748,7 +755,7 @@ export default function EatSafe() {
         );
         const data = await res.json();
         if (data.success) {
-          setSearchResults((data.products || []).map(p => ({ ...p, source:"local", verified:p.verified_status, conflicts:[] })));
+          setSearchResults((data.products || []).map(p => ({ ...p, ean: p.ean || p.barcode || null, source:"local", verified:p.verified_status, conflicts:[] })));
         }
       } catch {
         // silent
@@ -817,7 +824,7 @@ export default function EatSafe() {
         {!isOnboard && (
           <header className="topbar">
             <div className="topbar-logo">
-              <div className="topbar-shield"><EatSafeLogo size={17} variant="dark" /></div>
+              <div className="topbar-shield"><EatSafeLogo size={17} variant="light" /></div>
               <span className="topbar-name">EatSafe</span>
             </div>
             <div style={{ display:"flex", gap:6, alignItems:"center" }}>
