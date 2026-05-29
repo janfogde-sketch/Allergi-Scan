@@ -314,12 +314,20 @@ export default function ScannerScreen({
                 </div>
               ) : (
                 <>
-                  {/* Bred stregkode-animation */}
+                  {/* Stregkode-scanner animation */}
                   <div className="scan-barcode-wrap">
+                    {/* Hjørner */}
                     <div className="reticle-corner tl" />
                     <div className="reticle-corner tr" />
                     <div className="reticle-corner bl" />
                     <div className="reticle-corner br" />
+                    {/* Barcode streger */}
+                    <div className="scan-barcode-bars">
+                      {[2,1,3,1,2,1,1,3,1,2,1,1,2,1,3,1,1,2,1,2,1,3,1,1,2].map((w,i) => (
+                        <div key={i} className={`scan-bar${w===3?" wide":w===1?" narrow":""}`} />
+                      ))}
+                    </div>
+                    {/* Scan-linje der bevæger sig */}
                     <div className="reticle-line" />
                   </div>
                   <div className="scan-card-text">

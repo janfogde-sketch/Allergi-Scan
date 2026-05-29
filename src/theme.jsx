@@ -123,7 +123,8 @@ body{
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
   width:100%;max-width:390px;
-  background:transparent;border-top:none;
+  background:linear-gradient(to bottom,transparent 0%,#162a10 38%,#162a10 100%);
+  border-top:none;
   display:flex;padding:10px 4px 24px;z-index:100;
 }
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.3;transition:all .15s;}
@@ -233,14 +234,26 @@ body{
 
 /* Reticle */
 .reticle{width:80px;height:80px;position:relative;flex-shrink:0;}
-.scan-barcode-wrap{width:100%;height:56px;position:relative;flex-shrink:0;}
+.scan-barcode-wrap{
+  width:85%;height:64px;position:relative;flex-shrink:0;margin:0 auto;
+}
+.scan-barcode-bars{
+  position:absolute;inset:0;display:flex;align-items:stretch;gap:0;padding:0 2px;
+}
+.scan-bar{
+  flex:1;margin:0 1px;
+  background:rgba(74,222,128,.25);
+  border-radius:1px;
+}
+.scan-bar.wide{flex:2;}
+.scan-bar.narrow{flex:.6;}
 .reticle-corner{position:absolute;width:18px;height:18px;border-color:var(--green);border-style:solid;opacity:.85;}
 .reticle-corner.tl{top:0;left:0;border-width:2px 0 0 2px;border-radius:4px 0 0 0;}
 .reticle-corner.tr{top:0;right:0;border-width:2px 2px 0 0;border-radius:0 4px 0 0;}
 .reticle-corner.bl{bottom:0;left:0;border-width:0 0 2px 2px;border-radius:0 0 0 4px;}
 .reticle-corner.br{bottom:0;right:0;border-width:0 2px 2px 0;border-radius:0 0 4px 0;}
-.reticle-line{position:absolute;left:6px;right:6px;height:1px;background:linear-gradient(90deg,transparent,var(--green),transparent);animation:scanline 2.2s ease-in-out infinite;box-shadow:0 0 6px var(--green);}
-@keyframes scanline{0%{top:12px;opacity:0;}15%{opacity:.8;}85%{opacity:.8;}100%{top:68px;opacity:0;}}
+.reticle-line{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 0%,var(--green) 15%,var(--green) 85%,transparent 100%);animation:scanline 2.2s ease-in-out infinite;box-shadow:0 0 8px var(--green),0 0 2px var(--green);}
+@keyframes scanline{0%{top:2px;opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{top:62px;opacity:0;}}
 
 /* Mini cards */
 .home-cards-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
