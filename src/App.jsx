@@ -67,6 +67,7 @@ export default function EatSafe() {
   const torchTrackRef = useRef(null);
   const qrRef = useRef(null);
   const html5QrRef = useRef(null);
+  const lastScannedRef = useRef(null);
 
   // History → useHistory hook
 
