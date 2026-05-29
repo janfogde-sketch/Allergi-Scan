@@ -104,9 +104,7 @@ export default function EatSafe() {
     // Favorites → useHistory hook
   const [madpasLang, setMadpasLang] = useState(() => localStorage.getItem("as_madpas_lang") || "en");
   const [madpasProfileId, setMadpasProfileId] = useState("self");
-  const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
-  const mpAllergens = madpasActiveProfile ? (madpasActiveProfile.allergens || []) : allergens;
-  const mpCustom = madpasActiveProfile ? (madpasActiveProfile.customAllerg || []) : customAllerg;
+  // madpasActiveProfile → computed after hooks (uses family)
   const [recipes, setRecipes] = useState([]);
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
@@ -701,45 +699,6 @@ export default function EatSafe() {
     window.speechSynthesis.speak(utter);
   };
 
-  const isOnboard = screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode;
-
-  const FamilyChips = () => {
-    const allIds = ["me", ...family.map(m => m.id)];
-    const isAll = allIds.every(id => activeProfiles.includes(id));
-    const toggleAll = () => setActiveProfiles(isAll ? ["me"] : allIds);
-    const toggleOne = (id) => {
-      if (isAll) { setActiveProfiles([id]); return; }
-      const next = activeProfiles.includes(id) ? activeProfiles.filter(x => x !== id) : [...activeProfiles, id];
-      setActiveProfiles(next.length === 0 ? [id] : next);
-    };
-    return (
-      <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
-        <div className={`ap-chip${isAll?" on":""}`} onClick={toggleAll}>Hele familien</div>
-        <div className={`ap-chip${!isAll&&activeProfiles.includes("me")?" on":""}`} onClick={() => toggleOne("me")}>
-          <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(user.name||"Mig")}</div>
-          {(user.name||"Mig").split(" ")[0]}
-        </div>
-        {family.map(m => (
-          <div key={m.id} className={`ap-chip${!isAll&&activeProfiles.includes(m.id)?" on":""}`} onClick={() => toggleOne(m.id)}>
-            <div style={{width:20,height:20,borderRadius:"50%",background:m.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(m.name)}</div>
-            {m.name.split(" ")[0]}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const StepBar = ({ total, current }) => (
-    <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:22 }}>
-      {Array.from({ length: total }).map((_, i) => (
-        <div key={i} className={`step-seg${i <= current-1 ? " done" : ""}`} />
-      ))}
-      <span className="step-num">{current}/{total}</span>
-    </div>
-  );
-
-  const greeting = getGreeting();
-
   // ── CUSTOM HOOKS ──────────────────────────────────────────────────────────
   const {
     accessToken, setAccessToken, refreshToken, setRefreshToken,
@@ -787,6 +746,123 @@ export default function EatSafe() {
       setShoppingList([]);
     }
   }, [accessToken]);
+
+  const isOnboard = screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode;
+
+  const FamilyChips = () => {
+    const allIds = ["me", ...family.map(m => m.id)];
+    const isAll = allIds.every(id => activeProfiles.includes(id));
+    const toggleAll = () => setActiveProfiles(isAll ? ["me"] : allIds);
+    const toggleOne = (id) => {
+      if (isAll) { setActiveProfiles([id]); return; }
+      const next = activeProfiles.includes(id) ? activeProfiles.filter(x => x !== id) : [...activeProfiles, id];
+      setActiveProfiles(next.length === 0 ? [id] : next);
+    };
+    return (
+      <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+        <div className={`ap-chip${isAll?" on":""}`} onClick={toggleAll}>Hele familien</div>
+        <div className={`ap-chip${!isAll&&activeProfiles.includes("me")?" on":""}`} onClick={() => toggleOne("me")}>
+          <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(user.name||"Mig")}</div>
+          {(user.name||"Mig").split(" ")[0]}
+        </div>
+        {family.map(m => (
+          <div key={m.id} className={`ap-chip${!isAll&&activeProfiles.includes(m.id)?" on":""}`} onClick={() => toggleOne(m.id)}>
+            <div style={{width:20,height:20,borderRadius:"50%",background:m.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(m.name)}</div>
+            {m.name.split(" ")[0]}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const StepBar = ({ total, current }) => (
+    <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:22 }}>
+      {Array.from({ length: total }).map((_, i) => (
+        <div key={i} className={`step-seg${i <= current-1 ? " done" : ""}`} />
+      ))}
+      <span className="step-num">{current}/{total}</span>
+    </div>
+  );
+
+  const greeting = getGreeting();
+
+  // ── SCANNER CORE ──────────────────────────────────────────────────────────
+  const allActive = useCallback(() => {
+    const ids = new Set(activeProfiles.includes("me") ? allergens : []);
+    family.filter(m => activeProfiles.includes(m.id)).forEach(m => m.allergens.forEach(a => ids.add(a)));
+    return { ids: [...ids], custom: [...customAllerg] };
+  }, [allergens, customAllerg, family, activeProfiles]);
+
+  const activeIds = allActive().ids;
+
+  const lookupProduct = useCallback(async (ean) => {
+    if (!ean?.trim()) return;
+    if (navigator.vibrate) navigator.vibrate(40);
+    const cached = productCacheRef.current[ean.trim()];
+    if (cached) { setScanResult(cached); setScreen(SCREENS.RESULT); return; }
+    setLoading(true); setScanResult(null); setScanError(""); setShowIng(false);
+    try {
+      const data = await apiCall(`${SUPABASE_URL}/functions/v1/products/${ean.trim()}`, {
+        headers: makeHeaders(accessToken),
+      });
+      if (!data.found) {
+        setNotFoundEan(ean.trim());
+        await saveHistoryEntry(ean.trim(), null, "not_found", {}, activeProfiles);
+        setLoading(false); setScreen(SCREENS.NOTFOUND); setNotFoundStep(1);
+        setOcrText(""); setProposedName("");
+        setProposedFlags(Object.fromEntries(ALLERGENS.map(a => [a.id, false])));
+        setProductImagePreview(null); setProductImageBase64(null);
+        return;
+      }
+      const product = data.product;
+      const flags = data.allergen_flags || {};
+      const { status, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(flags, activeIds);
+      const flagList = [
+        ...matchedDanger.map(id => ({ type:"bad", text:`Indeholder ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
+        ...matchedWarning.map(id => ({ type:"maybe", text:`Kan indeholde spor af ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
+        ...(hasUnknown ? [{ type:"maybe", text:"Visse allergener er ukendte — tjek altid pakken" }] : []),
+        ...(matchedDanger.length===0 && matchedWarning.length===0 && !hasUnknown ? [{ type:"good", text:"Ingen af dine allergener fundet" }] : []),
+      ];
+      const headlines = { safe:"Sikkert produkt", danger:"Indeholder allergen", warn:"Mulige spor" };
+      const summaries = {
+        safe:"Ingen af dine registrerede allergener er fundet i dette produkt.",
+        danger:`Produktet indeholder ${matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
+        warn:`Produktet kan indeholde spor af ${matchedWarning.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
+      };
+      const familyImpact = [];
+      if (family.length > 0) {
+        for (const member of family.filter(m => activeProfiles.includes(m.id))) {
+          const memberResult = compareAllergens(flags, member.allergens || []);
+          if (memberResult.matchedDanger.length > 0 || memberResult.matchedWarning.length > 0) {
+            familyImpact.push({ name:member.name, color:member.color, danger:memberResult.matchedDanger, warning:memberResult.matchedWarning });
+          }
+        }
+      }
+      const result = {
+        code: ean.trim(), name: product.name || "Ukendt produkt", brand: product.brand || "",
+        image_url: product.image_url || null, category: product.category || null,
+        ingredients: data.ingredients?.raw_text || product.ingredients_text || "",
+        nutrition: data.nutrition || product.nutrition || null,
+        verified_status: product.verified_status || "unverified", source: data.source,
+        status, headline: headlines[status], summary: summaries[status],
+        flags: flagList, allergen_flags: flags, matchedDanger, matchedWarning, familyImpact, hasUnknown,
+        timestamp: Date.now(),
+      };
+      productCacheRef.current[ean.trim()] = result;
+      const cacheKeys = Object.keys(productCacheRef.current);
+      if (cacheKeys.length > 50) delete productCacheRef.current[cacheKeys[0]];
+      setScanResult(result);
+      setHistory(h => [result, ...h].slice(0, 50));
+      await saveHistoryEntry(ean.trim(), product.id, status, flags, activeProfiles);
+      setScreen(SCREENS.RESULT);
+    } catch (e) { setScanError("Der opstod en fejl. Tjek din forbindelse og prøv igen."); }
+    setLoading(false);
+  }, [accessToken, activeIds]);
+
+  // ── COMPUTED (afhænger af hooks) ─────────────────────────────────────────
+  const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
+  const mpAllergens = madpasActiveProfile ? (madpasActiveProfile.allergens || []) : allergens;
+  const mpCustom = madpasActiveProfile ? (madpasActiveProfile.customAllerg || []) : customAllerg;
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
   return (
@@ -1138,7 +1214,7 @@ export default function EatSafe() {
             recipeFilter={recipeFilter} setRecipeFilter={setRecipeFilter}
             recipeSafeOnly={recipeSafeOnly} setRecipeSafeOnly={setRecipeSafeOnly}
             favoriteRecipes={favoriteRecipes} setFavoriteRecipes={setFavoriteRecipes}
-            activeIds={allActive().ids}
+            activeIds={activeIds}
             completedSteps={completedSteps} setCompletedSteps={setCompletedSteps}
             recipeServings={recipeServings} setRecipeServings={setRecipeServings}
             setRecipes={setRecipes}
