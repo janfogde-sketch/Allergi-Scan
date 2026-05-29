@@ -131,7 +131,7 @@ export default function ScannerScreen({
                 <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)" }}
                   onClick={() => setProfilePopup(null)}>
                   <div style={{ position:"absolute", top:80, left:16, right:16,
-                    background:"var(--paper)", borderRadius:20, padding:"20px 18px",
+                    background:"#1a3012", borderRadius:20, padding:"20px 18px",
                     boxShadow:"0 8px 40px rgba(0,0,0,.2)" }}
                     onClick={e => e.stopPropagation()}>
 
@@ -339,9 +339,9 @@ export default function ScannerScreen({
 
             {/* Scan-boks — viser kamera når aktivt, animation ellers */}
             <div style={{
-              background:"var(--ink)", borderRadius:20, marginBottom:10,
-              overflow:"hidden", position:"relative",
-              boxShadow:"0 4px 20px rgba(31,39,51,.18)",
+              background:"rgba(255,255,255,.04)", borderRadius:20, marginBottom:10,
+              overflow:"hidden", position:"relative", border:"1px solid var(--border2)",
+              boxShadow:"0 4px 20px rgba(0,0,0,.3)",
             }}>
               {/* Kamera container — altid i DOM men skjult når ikke aktiv */}
               <div style={{ position:"relative", display: cameraActive ? "block" : "none" }}>
@@ -486,10 +486,11 @@ export default function ScannerScreen({
             )}
 
             {/* Søg — fremhævet på forsiden */}
-            <div className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:10 }}
+            <div className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:10,
+              background:"rgba(255,255,255,.04)", border:"1px solid var(--border2)" }}
               onClick={() => setScreen(SCREENS.SEARCH)}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <div style={{ width:40, height:40, background:"var(--paper2)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="search" size={20} color="var(--ink2)" /></div>
+                <div style={{ width:40, height:40, background:"var(--surface2)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="search" size={20} color="var(--ink)" /></div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13, fontWeight:700 }}>Søg produkter</div>
                   <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>Find varer der er sikre for dig</div>
