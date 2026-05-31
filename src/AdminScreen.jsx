@@ -522,10 +522,10 @@ ${openTicket.description}
                     );
                   })}
                 </div>
-                {/* Download alle tickets */}
-                {!ticketsLoading && adminTickets.length > 0 && (
+                {/* Download åbne tickets */}
+                {!ticketsLoading && adminTickets.filter(t => t.status === "open").length > 0 && (
                   <button onClick={() => {
-                    const filtered = adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter);
+                    const filtered = adminTickets.filter(t => t.status === "open");
                     const typeLabels = { bug:"Fejl", ui:"Design", missing:"Mangler", content:"Indhold", crash:"Crash", suggestion:"Forslag" };
                     const statusLabels = { open:"Åben", in_progress:"I gang", resolved:"Løst" };
                     const lines = filtered.map((t, i) => {
@@ -543,11 +543,11 @@ ${openTicket.description}
                         ``,
                       ].join("\n");
                     });
-                    const text = `EatSafe Tickets — ${adminTicketFilter === "all" ? "Alle" : statusLabels[adminTicketFilter]} (${filtered.length} stk)\nEksporteret: ${new Date().toLocaleString("da-DK")}\n\n` + lines.join("\n");
+                    const text = `EatSafe Tickets — Åbne (${filtered.length} stk)\nEksporteret: ${new Date().toLocaleString("da-DK")}\n\n` + lines.join("\n");
                     const blob = new Blob([text], { type:"text/plain;charset=utf-8" });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement("a");
-                    a.href = url; a.download = `eatsafe-tickets-${adminTicketFilter}-${new Date().toISOString().slice(0,10)}.txt`;
+                    a.href = url; a.download = `eatsafe-tickets-open-${new Date().toISOString().slice(0,10)}.txt`;
                     a.click(); URL.revokeObjectURL(url);
                   }} style={{
                     width:"100%", padding:"10px", marginBottom:12, borderRadius:10,
@@ -556,7 +556,7 @@ ${openTicket.description}
                     color:"var(--ink2)", cursor:"pointer",
                     display:"flex", alignItems:"center", justifyContent:"center", gap:6,
                   }}>
-                    📥 Download {adminTicketFilter === "all" ? "alle" : adminTicketFilter === "open" ? "åbne" : adminTicketFilter === "in_progress" ? "igangværende" : "løste"} tickets ({adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter).length})
+                    📥 Download åbne tickets ({adminTickets.filter(t => t.status === "open").length})
                   </button>
                 )}
 
