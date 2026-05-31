@@ -1,8 +1,8 @@
 // @ts-nocheck
 import React, { useState, useRef } from "react";
 import { ALLERGENS, SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
-         ALLERGEN_EXAMPLES, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
-import { compareAllergens, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo } from "./helpers.js";
+         ALLERGEN_EXAMPLES, E_NUMBERS, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
+import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage } from "./SharedComponents.jsx";
 
 import { CategorySelect } from "./MemberForm.jsx";
@@ -38,6 +38,7 @@ export default function ScannerScreen({
   galleryInputRef,
   lastScannedRef,
   selectedENumbers,
+  activeENumbers,
   addToList,
   handleEditProductCapture,
   handleImageCapture, handleProductImageCapture,
@@ -159,7 +160,7 @@ export default function ScannerScreen({
                         <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
                           {pAllergens.map(id => {
                             const a = ALLERGENS.find(x => x.id === id);
-                            const isInt = pCustom.includes(id + "_intolerance");
+                            const isInt = false; // intolerance-suffiks fjernet
                             return (
                               <div key={id} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
                                 background: isInt ? "var(--amber-lt)" : "var(--red-lt)",
@@ -169,7 +170,7 @@ export default function ScannerScreen({
                               </div>
                             );
                           })}
-                          {pCustom.filter(c => !c.endsWith("_intolerance")).map((c,i) => (
+                          {pCustom.map((c,i) => (
                             <div key={i} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
                               background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" }}>
                               {c}
@@ -339,7 +340,7 @@ export default function ScannerScreen({
 
             {/* Scan-boks — viser kamera når aktivt, animation ellers */}
             <div style={{
-              background:"var(--surface)", borderRadius:20, marginBottom:10,
+              background:"rgba(255,255,255,.04)", borderRadius:20, marginBottom:10,
               overflow:"hidden", position:"relative", border:"1px solid var(--border2)",
               boxShadow:"0 4px 20px rgba(0,0,0,.3)",
             }}>
@@ -446,13 +447,7 @@ export default function ScannerScreen({
                     </g>
                   </svg>
                   {/* Laser linje */}
-                  <div style={{
-                    position:"absolute", left:0, right:0, height:2,
-                    background:"linear-gradient(90deg, transparent, #22C55E, #4ADE80, #22C55E, transparent)",
-                    animation:"laserMove 2s ease-in-out infinite",
-                    filter:"drop-shadow(0 0 6px #22C55E)",
-                    boxShadow:"0 0 8px #22C55E",
-                  }}/>
+                  <div className="scan-laser" />
                   {/* Hjørnemarkører */}
                   {[["0","0","top","left"],["0","0","top","right"],["0","0","bottom","left"],["0","0","bottom","right"]].map((_,i) => {
                     const pos = [{top:8,left:8},{top:8,right:8},{bottom:8,left:8},{bottom:8,right:8}][i];
@@ -487,7 +482,7 @@ export default function ScannerScreen({
 
             {/* Søg — fremhævet på forsiden */}
             <div className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:10,
-              background:"var(--surface)", border:"1px solid var(--border)" }}
+              background:"rgba(255,255,255,.04)", border:"1px solid var(--border2)" }}
               onClick={() => setScreen(SCREENS.SEARCH)}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                 <div style={{ width:40, height:40, background:"var(--surface2)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="search" size={20} color="var(--ink)" /></div>
@@ -558,8 +553,10 @@ export default function ScannerScreen({
             {(() => {
               const flags = scanResult.allergen_flags || {};
               const profiles = [
-                { id:"me", name: user.name||"Dig", allergens },
-                ...family.filter(m => activeProfiles.includes(m.id)),
+                { id:"me", name: user.name||"Dig", allergens, diets: user.diets || [], eNumbers: selectedENumbers || [] },
+                ...family.filter(m => activeProfiles.includes(m.id)).map(m => ({
+                  ...m, allergens: m.allergens || [], diets: m.diets || [], eNumbers: m.eNumbers || [],
+                })),
               ];
               const tagLabels = { vegan:"Vegansk", vegetarian:"Vegetarisk", "palm-oil-free":"Uden palmeolie", "gluten-free":"Glutenfri", organic:"Økologisk" };
               const hasTags = scanResult.tags && scanResult.tags.length > 0;
@@ -575,15 +572,20 @@ export default function ScannerScreen({
                     const statusBg = danger.length > 0 ? "var(--red-lt)" : warning.length > 0 ? "var(--amber-lt)" : "var(--green-lt)";
                     const statusBorder = danger.length > 0 ? "var(--red-md)" : warning.length > 0 ? "var(--amber-md)" : "var(--green-mid)";
                     const statusIcon = danger.length > 0 ? "×" : warning.length > 0 ? "!" : "✓";
-                    const productTags = scanResult.tags || [];
+                    // Diæt-matching via allergen_flags + ingrediens-scanning
+                    const dietResults = (p.diets || []).map(d => ({
+                      id: d,
+                      ...checkDietCompatibility(d, flags, scanResult.ingredients, scanResult.nutrition),
+                    }));
+                    const dietFails = dietResults.filter(r => r.ok === false);
                     const dietMatch = p.diets && p.diets.length > 0
-                      ? p.diets.every(d => productTags.includes(d))
+                      ? dietFails.length === 0
                       : null; // null = ingen diæt registreret
                     const statusText = danger.length > 0
                       ? danger.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
                       : warning.length > 0
                       ? "Spor: " + warning.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
-                      : dietMatch === false ? "Passer ikke til diæt"
+                      : dietMatch === false ? dietFails[0]?.reasons?.[0] || "Passer ikke til diæt"
                       : "Sikkert";
                     const finalColor = danger.length > 0 ? "var(--red)" : warning.length > 0 ? "var(--amber)" : dietMatch === false ? "var(--amber)" : "var(--green)";
                     const finalBg = danger.length > 0 ? "var(--red-lt)" : warning.length > 0 ? "var(--amber-lt)" : dietMatch === false ? "var(--amber-lt)" : "var(--green-lt)";
@@ -608,12 +610,88 @@ export default function ScannerScreen({
                   })}
                   </div>
 
+                  {/* E-nummer advarsler */}
+                  {scanResult.productENumbers && scanResult.productENumbers.length > 0 && activeENumbers && activeENumbers.length > 0 && (() => {
+                    const { matched } = compareENumbers(scanResult.productENumbers, activeENumbers);
+                    if (matched.length === 0) return null;
+                    return (
+                      <div style={{
+                        padding:"8px 12px", marginBottom:6,
+                        background:"var(--amber-lt)", border:"1px solid var(--amber-md)",
+                        borderRadius:10,
+                      }}>
+                        <div style={{ fontSize:11, fontWeight:800, color:"var(--amber)", marginBottom:4 }}>
+                          ⚠️ E-numre fundet som du overvåger
+                        </div>
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                          {matched.map(e => (
+                            <span key={e} style={{
+                              fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:6,
+                              background:"rgba(255,180,0,.15)", color:"var(--amber)",
+                              border:"1px solid var(--amber-md)",
+                            }}>
+                              {e} {E_NUMBERS[e] ? "— " + E_NUMBERS[e].split("—")[0].trim() : ""}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Diæt-detaljer */}
+                  {(() => {
+                    // Saml alle diæter fra aktive profiler
+                    const allDiets = new Set();
+                    profiles.forEach(p => (p.diets || []).forEach(d => allDiets.add(d)));
+                    if (allDiets.size === 0) return null;
+                    const results = [...allDiets].map(d => ({
+                      id: d,
+                      label: DIETS.find(x => x.id === d)?.label || d,
+                      ...checkDietCompatibility(d, scanResult.allergen_flags, scanResult.ingredients, scanResult.nutrition),
+                    }));
+                    const fails = results.filter(r => r.ok === false);
+                    const unknowns = results.filter(r => r.ok === null);
+                    const passes = results.filter(r => r.ok === true);
+                    if (fails.length === 0 && unknowns.length === 0 && passes.length === 0) return null;
+                    return (
+                      <div style={{
+                        padding:"10px 12px", marginBottom:6,
+                        background: fails.length > 0 ? "var(--amber-lt)" : "var(--green-lt)",
+                        border: `1px solid ${fails.length > 0 ? "var(--amber-md)" : "var(--green-mid)"}`,
+                        borderRadius:10,
+                      }}>
+                        <div style={{ fontSize:11, fontWeight:800, color: fails.length > 0 ? "var(--amber)" : "var(--green)", marginBottom:6 }}>
+                          {fails.length > 0 ? "⚠️ Diæt-advarsler" : "✅ Kompatibel med dine diæter"}
+                        </div>
+                        <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                          {fails.map(r => (
+                            <div key={r.id} style={{ fontSize:11, color:"var(--amber)" }}>
+                              <strong>{r.label}:</strong> {r.reasons[0]}
+                              {r.confidence === "low" && <span style={{ opacity:.6 }}> (usikker)</span>}
+                            </div>
+                          ))}
+                          {passes.map(r => (
+                            <div key={r.id} style={{ fontSize:11, color:"var(--green)" }}>
+                              ✓ {r.label}
+                              {r.confidence === "low" && <span style={{ opacity:.6 }}> (usikker)</span>}
+                            </div>
+                          ))}
+                          {unknowns.map(r => (
+                            <div key={r.id} style={{ fontSize:11, color:"var(--muted)" }}>
+                              ? {r.label}: {r.reasons[0]}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Diæt-tags — sømløst under profilerne */}
                   {hasTags && (
                     <div style={{
                       display:"flex", gap:6, flexWrap:"wrap",
                       padding:"8px 14px",
-                      background:"#fff",
+                      background:"var(--surface)",
                       border:"1px solid var(--border)",
                       borderTop:"none",
                       borderRadius:"0 0 12px 12px",
@@ -818,7 +896,7 @@ export default function ScannerScreen({
                     { num:2, emoji:"🔍", label:"Ingredienser", desc:"Allergenanalyse" },
                     { num:3, emoji:"✓", label:"Bekræft", desc:"Send ind" },
                   ].map(s => (
-                    <div key={s.num} style={{ flex:1, background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 8px", textAlign:"center", boxShadow:"var(--sh)" }}>
+                    <div key={s.num} style={{ flex:1, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 8px", textAlign:"center" }}>
                       <div style={{ fontSize:22, marginBottom:4 }}>{s.emoji}</div>
                       <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{s.label}</div>
                       <div style={{ fontSize:10, color:"var(--muted)", marginTop:2 }}>{s.desc}</div>
@@ -850,7 +928,7 @@ export default function ScannerScreen({
                 <label style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                   width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
-                  background:"#fff", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                  background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
                   fontSize:13, fontWeight:600, marginBottom:10,
                 }}>
                   📁 Vælg fra galleri
@@ -884,7 +962,7 @@ export default function ScannerScreen({
               <div className="fade-in">
                 {/* Vis produktbillede + navn hvis hentet */}
                 {productImagePreview && (
-                  <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12, marginBottom:14, boxShadow:"var(--sh)" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:14 }}>
                     <img src={productImagePreview} alt="Produkt"
                       style={{ width:52, height:52, objectFit:"contain", borderRadius:8, border:"1px solid var(--border)", flexShrink:0 }} />
                     <div style={{ flex:1 }}>
@@ -943,7 +1021,7 @@ export default function ScannerScreen({
                 <label style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                   width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
-                  background:"#fff", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                  background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
                   fontSize:13, fontWeight:600, marginBottom:10,
                 }}>
                   📁 Vælg fra galleri
@@ -961,7 +1039,7 @@ export default function ScannerScreen({
             {notFoundStep === 3 && !ocrLoading && (
               <div className="fade-in">
                 {/* Produktkort */}
-                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
                     {productImagePreview
                       ? <img src={productImagePreview} alt="Produkt" style={{ width:60, height:60, objectFit:"contain", borderRadius:10, border:"1px solid var(--border)", flexShrink:0 }} />
@@ -987,7 +1065,7 @@ export default function ScannerScreen({
                 </div>
 
                 {/* ── Ingrediensliste editor ── */}
-                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
                     <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Ingredienser</div>
                     <div style={{ display:"flex", gap:8, alignItems:"center" }}>
@@ -1041,7 +1119,7 @@ export default function ScannerScreen({
                 </div>
 
                 {/* Detekterede allergener — toggle */}
-                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12, boxShadow:"var(--sh)" }}>
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12, boxShadow:"var(--sh)" }}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
                     <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Allergener</div>
                     <div style={{ fontSize:11, color:"var(--muted)" }}>Tryk for at til/fra</div>
@@ -1465,7 +1543,7 @@ export default function ScannerScreen({
               </div>
 
               {/* Produkt-chip — vises på alle trin */}
-              <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12, marginBottom:16, boxShadow:"var(--sh)" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:16 }}>
                 <ProductImage product={scanResult} size={40} />
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{scanResult.name}</div>
@@ -1488,8 +1566,8 @@ export default function ScannerScreen({
                   ].map(opt => (
                     <div key={opt.id} onClick={() => { setEditType(opt.id); setEditStep(opt.id === "other" ? "review" : "guide"); }}
                       style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px",
-                        background:"#fff", border:"1px solid var(--border)", borderRadius:14,
-                        marginBottom:8, cursor:"pointer", boxShadow:"var(--sh)" }}>
+                        background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14,
+                        marginBottom:8, cursor:"pointer" }}>
                       <div style={{ fontSize:28, flexShrink:0 }}>{opt.emoji}</div>
                       <div style={{ flex:1 }}>
                         <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>{opt.title}</div>
@@ -1507,16 +1585,16 @@ export default function ScannerScreen({
               {editStep === "guide" && (
                 <div className="fade-in">
                   {/* Visuel guide */}
-                  <div style={{ background:"var(--ink)", borderRadius:16, padding:"20px", marginBottom:16, textAlign:"center" }}>
+                  <div style={{ background:"var(--surface2)", borderRadius:16, padding:"20px", marginBottom:16, textAlign:"center", border:"1px solid var(--border)" }}>
                     <div style={{ fontSize:48, marginBottom:10 }}>
                       {editType === "ingredients" ? "🥫" : editType === "nutrition" ? "📋" : "📦"}
                     </div>
-                    <div style={{ fontSize:16, fontWeight:800, color:"#fff", marginBottom:8 }}>
+                    <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>
                       {editType === "ingredients" ? "Fotografér ingredienslisten" :
                        editType === "nutrition" ? "Fotografér næringstabellen" :
                        "Fotografér produktets forside"}
                     </div>
-                    <div style={{ fontSize:12, color:"rgba(255,255,255,.6)", lineHeight:1.7 }}>
+                    <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.7 }}>
                       {editType === "ingredients"
                         ? "Vend pakken om og find listen der starter med 'Ingredienser:'. Hold telefonen stille og sørg for god belysning."
                         : editType === "nutrition"
@@ -1557,7 +1635,7 @@ export default function ScannerScreen({
                   <label style={{
                     display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                     width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
-                    background:"#fff", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                    background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
                     fontSize:14, fontWeight:600, marginBottom:10,
                   }}>
                     📁 Vælg billede fra galleri
@@ -1696,7 +1774,7 @@ export default function ScannerScreen({
                       submit();
                     }}
                     disabled={editType === "ingredients" && !editIngText.trim() && ingItems.length === 0}
-                    style={{ width:"100%", background:"var(--ink)", color:"#fff", border:"none",
+                    style={{ width:"100%", background:"var(--green)", color:"#071510", border:"none",
                       borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15,
                       fontWeight:800, cursor:"pointer", marginBottom:8,
                       opacity: (editType === "ingredients" && !editIngText.trim()) ? 0.4 : 1 }}>
