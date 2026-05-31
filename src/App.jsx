@@ -141,7 +141,7 @@ export default function EatSafe() {
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [betaIntroSeen, setBetaIntroSeen] = useState(() => localStorage.getItem("as_beta_intro") === "1");
+  const [betaIntroSeen, setBetaIntroSeen] = useState(true); // Beta-info er nu i onboarding, overlay kun via knap
   const [betaIntroStep, setBetaIntroStep] = useState(0);
 
   const [adminTickets, setAdminTickets] = useState([]);
@@ -628,7 +628,7 @@ ${text}` }],
     authTab, setAuthTab, isOAuth, setIsOAuth,
     saveTokens, clearAuth, handleLogin, handleSignup, handleOAuth,
   } = useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
-                onSignupSuccess: () => setOnboardStep(1) });
+                onSignupSuccess: () => setOnboardStep(0) });
 
   const {
     shoppingList, setShoppingList,
@@ -940,6 +940,30 @@ ${text}` }],
   const mpAllergens = madpasActiveProfile ? (madpasActiveProfile.allergens || []) : allergens;
   const mpCustom = madpasActiveProfile ? (madpasActiveProfile.customAllerg || []) : customAllerg;
 
+  // ── Android tilbageknap ─────────────────────────────────────────────────────
+  React.useEffect(() => {
+    // Push en state så vi kan fange tilbageknap
+    window.history.pushState({ screen: "app" }, "");
+    const handleBack = (e) => {
+      // Forhindre at vi navigerer væk fra appen
+      e.preventDefault();
+      window.history.pushState({ screen: "app" }, "");
+      // Navigér inden i appen i stedet
+      if (helpOpen) { setHelpOpen(false); return; }
+      if (feedbackOpen) { setFeedbackOpen(false); return; }
+      if (profilePopup) { setProfilePopup(null); return; }
+      if (cameraActive) { stopCamera(); return; }
+      if (screen === SCREENS.RESULT || screen === SCREENS.NOTFOUND || screen === SCREENS.SUGGEST_EDIT || screen === SCREENS.SEARCH) {
+        setScreen(SCREENS.HOME);
+        return;
+      }
+      if (screen === SCREENS.ADMIN) { setScreen(SCREENS.PROFILE); return; }
+      // På HOME — gør ingenting (forhindrer logout)
+    };
+    window.addEventListener("popstate", handleBack);
+    return () => window.removeEventListener("popstate", handleBack);
+  }, [screen, helpOpen, feedbackOpen, profilePopup, cameraActive]);
+
   // ── RENDER ─────────────────────────────────────────────────────────────────
   // Load admin stats when entering admin screen
   React.useEffect(() => {
@@ -1174,7 +1198,7 @@ ${text}` }],
           ];
           const step = steps[betaIntroStep];
           const isLast = betaIntroStep === steps.length - 1;
-          const dismiss = () => { localStorage.setItem("as_beta_intro", "1"); setBetaIntroSeen(true); };
+          const dismiss = () => setBetaIntroSeen(true);
           return (
             <div style={{ position:"fixed", inset:0, zIndex:10000, background:"rgba(0,0,0,.92)",
               display:"flex", alignItems:"center", justifyContent:"center", padding:"20px" }}>
@@ -1288,7 +1312,7 @@ ${text}` }],
             lookupProduct={lookupProduct}
             selectedENumbers={selectedENumbers}
             activeENumbers={activeENumbers}
-            onBetaClick={() => { localStorage.removeItem("as_beta_intro"); setBetaIntroSeen(false); setBetaIntroStep(0); }}
+            onBetaClick={() => { setBetaIntroSeen(false); setBetaIntroStep(0); }}
           />
         )}
 
