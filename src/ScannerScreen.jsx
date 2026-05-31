@@ -447,13 +447,7 @@ export default function ScannerScreen({
                     </g>
                   </svg>
                   {/* Laser linje */}
-                  <div style={{
-                    position:"absolute", left:0, right:0, height:2, top:10,
-                    background:"linear-gradient(90deg, transparent, #22C55E, #4ADE80, #22C55E, transparent)",
-                    animation:"laserMove 2s ease-in-out infinite",
-                    filter:"drop-shadow(0 0 6px #22C55E)",
-                    boxShadow:"0 0 8px #22C55E",
-                  }}/>
+                  <div className="scan-laser" />
                   {/* Hjørnemarkører */}
                   {[["0","0","top","left"],["0","0","top","right"],["0","0","bottom","left"],["0","0","bottom","right"]].map((_,i) => {
                     const pos = [{top:8,left:8},{top:8,right:8},{bottom:8,left:8},{bottom:8,right:8}][i];
@@ -902,7 +896,7 @@ export default function ScannerScreen({
                     { num:2, emoji:"🔍", label:"Ingredienser", desc:"Allergenanalyse" },
                     { num:3, emoji:"✓", label:"Bekræft", desc:"Send ind" },
                   ].map(s => (
-                    <div key={s.num} style={{ flex:1, background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 8px", textAlign:"center", boxShadow:"var(--sh)" }}>
+                    <div key={s.num} style={{ flex:1, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 8px", textAlign:"center" }}>
                       <div style={{ fontSize:22, marginBottom:4 }}>{s.emoji}</div>
                       <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{s.label}</div>
                       <div style={{ fontSize:10, color:"var(--muted)", marginTop:2 }}>{s.desc}</div>
@@ -934,7 +928,7 @@ export default function ScannerScreen({
                 <label style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                   width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
-                  background:"#fff", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                  background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
                   fontSize:13, fontWeight:600, marginBottom:10,
                 }}>
                   📁 Vælg fra galleri
@@ -968,7 +962,7 @@ export default function ScannerScreen({
               <div className="fade-in">
                 {/* Vis produktbillede + navn hvis hentet */}
                 {productImagePreview && (
-                  <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12, marginBottom:14, boxShadow:"var(--sh)" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:14 }}>
                     <img src={productImagePreview} alt="Produkt"
                       style={{ width:52, height:52, objectFit:"contain", borderRadius:8, border:"1px solid var(--border)", flexShrink:0 }} />
                     <div style={{ flex:1 }}>
@@ -1027,7 +1021,7 @@ export default function ScannerScreen({
                 <label style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                   width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
-                  background:"#fff", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                  background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
                   fontSize:13, fontWeight:600, marginBottom:10,
                 }}>
                   📁 Vælg fra galleri
@@ -1045,7 +1039,7 @@ export default function ScannerScreen({
             {notFoundStep === 3 && !ocrLoading && (
               <div className="fade-in">
                 {/* Produktkort */}
-                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
                     {productImagePreview
                       ? <img src={productImagePreview} alt="Produkt" style={{ width:60, height:60, objectFit:"contain", borderRadius:10, border:"1px solid var(--border)", flexShrink:0 }} />
@@ -1071,7 +1065,7 @@ export default function ScannerScreen({
                 </div>
 
                 {/* ── Ingrediensliste editor ── */}
-                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
                     <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Ingredienser</div>
                     <div style={{ display:"flex", gap:8, alignItems:"center" }}>
@@ -1125,7 +1119,7 @@ export default function ScannerScreen({
                 </div>
 
                 {/* Detekterede allergener — toggle */}
-                <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12, boxShadow:"var(--sh)" }}>
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12, boxShadow:"var(--sh)" }}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
                     <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Allergener</div>
                     <div style={{ fontSize:11, color:"var(--muted)" }}>Tryk for at til/fra</div>
@@ -1549,7 +1543,7 @@ export default function ScannerScreen({
               </div>
 
               {/* Produkt-chip — vises på alle trin */}
-              <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"#fff", border:"1px solid var(--border)", borderRadius:12, marginBottom:16, boxShadow:"var(--sh)" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:16 }}>
                 <ProductImage product={scanResult} size={40} />
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{scanResult.name}</div>
@@ -1572,8 +1566,8 @@ export default function ScannerScreen({
                   ].map(opt => (
                     <div key={opt.id} onClick={() => { setEditType(opt.id); setEditStep(opt.id === "other" ? "review" : "guide"); }}
                       style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px",
-                        background:"#fff", border:"1px solid var(--border)", borderRadius:14,
-                        marginBottom:8, cursor:"pointer", boxShadow:"var(--sh)" }}>
+                        background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14,
+                        marginBottom:8, cursor:"pointer" }}>
                       <div style={{ fontSize:28, flexShrink:0 }}>{opt.emoji}</div>
                       <div style={{ flex:1 }}>
                         <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>{opt.title}</div>
@@ -1591,16 +1585,16 @@ export default function ScannerScreen({
               {editStep === "guide" && (
                 <div className="fade-in">
                   {/* Visuel guide */}
-                  <div style={{ background:"var(--ink)", borderRadius:16, padding:"20px", marginBottom:16, textAlign:"center" }}>
+                  <div style={{ background:"var(--surface2)", borderRadius:16, padding:"20px", marginBottom:16, textAlign:"center", border:"1px solid var(--border)" }}>
                     <div style={{ fontSize:48, marginBottom:10 }}>
                       {editType === "ingredients" ? "🥫" : editType === "nutrition" ? "📋" : "📦"}
                     </div>
-                    <div style={{ fontSize:16, fontWeight:800, color:"#fff", marginBottom:8 }}>
+                    <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>
                       {editType === "ingredients" ? "Fotografér ingredienslisten" :
                        editType === "nutrition" ? "Fotografér næringstabellen" :
                        "Fotografér produktets forside"}
                     </div>
-                    <div style={{ fontSize:12, color:"rgba(255,255,255,.6)", lineHeight:1.7 }}>
+                    <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.7 }}>
                       {editType === "ingredients"
                         ? "Vend pakken om og find listen der starter med 'Ingredienser:'. Hold telefonen stille og sørg for god belysning."
                         : editType === "nutrition"
@@ -1641,7 +1635,7 @@ export default function ScannerScreen({
                   <label style={{
                     display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                     width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
-                    background:"#fff", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                    background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
                     fontSize:14, fontWeight:600, marginBottom:10,
                   }}>
                     📁 Vælg billede fra galleri
@@ -1780,7 +1774,7 @@ export default function ScannerScreen({
                       submit();
                     }}
                     disabled={editType === "ingredients" && !editIngText.trim() && ingItems.length === 0}
-                    style={{ width:"100%", background:"var(--ink)", color:"#fff", border:"none",
+                    style={{ width:"100%", background:"var(--green)", color:"#071510", border:"none",
                       borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15,
                       fontWeight:800, cursor:"pointer", marginBottom:8,
                       opacity: (editType === "ingredients" && !editIngText.trim()) ? 0.4 : 1 }}>

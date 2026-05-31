@@ -27,8 +27,9 @@ export default function MadpasScreen({
             {madpasWaiterView && (() => {
               const lang = madpasLang;
               const rtl = MADPAS_LANGUAGES.find(l => l.code === lang)?.rtl;
-              const helloText = { en:"I have food allergies.", de:"Ich habe Lebensmittelallergien.", fr:"J'ai des allergies alimentaires.", es:"Tengo alergias alimentarias.", it:"Ho allergie alimentari.", nl:"Ik heb voedselallergieën.", pt:"Tenho alergias alimentares.", pl:"Mam alergie pokarmowe.", ja:"食物アレルギーがあります。", zh:"我有食物过敏。", ar:"لدي حساسية غذائية.", tr:"Gıda alerjilerim var.", sv:"Jag har matallergier.", no:"Jeg har matallergier.", th:"ฉันมีอาการแพ้อาหาร", el:"Έχω αλλεργίες τροφίμων.", da:"Jeg har fødevareallergier." };
-              const cannotLabel = { en:"I cannot eat:", de:"Ich kann nicht essen:", fr:"Je ne peux pas manger :", es:"No puedo comer:", it:"Non posso mangiare:", nl:"Ik kan niet eten:", pt:"Não posso comer:", pl:"Nie mogę jeść:", ja:"食べられません：", zh:"我不能吃：", ar:"لا أستطيع تناول:", tr:"Yiyemiyorum:", sv:"Jag kan inte äta:", no:"Jeg kan ikke spise:", th:"ฉันไม่สามารถกิน:", el:"Δεν μπορώ να φάω:", da:"Jeg kan ikke spise:" };
+              const allergenCount = mpAllergens.length + (mpCustom?.length || 0);
+              const helloText = { en: allergenCount === 1 ? "I have a food allergy." : "I have food allergies.", da: allergenCount === 1 ? "Jeg har en fødevareallergi." : "Jeg har fødevareallergier.", de: allergenCount === 1 ? "Ich habe eine Lebensmittelallergie." : "Ich habe Lebensmittelallergien.", fr: allergenCount === 1 ? "J'ai une allergie alimentaire." : "J'ai des allergies alimentaires.", es:"Tengo alergias alimentarias.", it:"Ho allergie alimentari.", nl:"Ik heb voedselallergieën.", pt:"Tenho alergias alimentares.", pl:"Mam alergie pokarmowe.", sv:"Jag har matallergier.", no:"Jeg har matallergier.", ja:"食物アレルギーがあります。", zh:"我有食物过敏。", ar:"لدي حساسية غذائية.", tr:"Gıda alerjilerim var.", th:"ฉันมีอาการแพ้อาหาร", el:"Έχω αλλεργίες τροφίμων." };
+              const cannotLabel = { en:"I cannot eat:", de:"Ich kann nicht essen:", fr:"Je ne peux pas manger :", es:"No puedo comer:", it:"Non posso mangiare:", nl:"Ik kan niet eten:", pt:"Não posso comer:", pl:"Nie mogę jeść:", ja:"食べられません：", zh:"我不能吃：", ar:"لا أستطيع تناول:", tr:"Yiyemiyorum:", sv:"Jag kan inte äta:", no:"Jeg kan ikke spise:", th:"ฉันไม่สามารถกิน:", el:"Δεν μπορώ να φάω:", da:"Jeg har allergi over for:" };
               const helpText = { en:"Can you help me find something safe?", de:"Können Sie mir helfen?", fr:"Pouvez-vous m'aider ?", es:"¿Puede ayudarme?", it:"Può aiutarmi?", nl:"Kunt u mij helpen?", pt:"Pode ajudar-me?", pl:"Czy może mi pomóc?", ja:"手伝っていただけますか？", zh:"您能帮助我吗？", ar:"هل يمكنك مساعدتي؟", tr:"Yardım edebilir misiniz?", sv:"Kan du hjälpa mig?", no:"Kan du hjelpe meg?", th:"คุณช่วยฉันได้ไหม?", el:"Μπορείτε να με βοηθήσετε;", da:"Kan du hjælpe mig?" };
               const productLabel = { da:"Fx i", en:"E.g. in", de:"Z.B. in", fr:"Ex. dans", es:"Ej. en", it:"Es. in", nl:"Bijv. in", pt:"Ex. em", pl:"Np. w", sv:"T.ex. i", no:"F.eks. i", ja:"例えば", zh:"例如", ar:"مثلاً في", tr:"Örn.", th:"เช่นใน", el:"Π.χ." };
               const ingredientLabel = { da:"Se efter", en:"Look for", de:"Achten auf", fr:"Chercher", es:"Buscar", it:"Cercare", nl:"Let op", pt:"Procurar", pl:"Szukaj", sv:"Se efter", no:"Se etter", ja:"確認を", zh:"注意", ar:"ابحث عن", tr:"Ara", th:"ดูหา", el:"Ψάξτε" };
@@ -37,14 +38,14 @@ export default function MadpasScreen({
                 <div style={{ position:"fixed", inset:0, zIndex:9999, background:"#fff", display:"flex", flexDirection:"column" }} dir={rtl ? "rtl" : "ltr"}>
 
                   {/* Header — sprog + kryds */}
-                  <div style={{ padding:"14px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid #e5e7eb", flexShrink:0 }}>
+                  <div style={{ padding:"14px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid var(--border)", flexShrink:0 }}>
                     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                       <span style={{ fontSize:20 }}>{langInfo?.flag}</span>
-                      <span style={{ fontSize:13, color:"#6b7280", fontWeight:600 }}>{langInfo?.name}</span>
+                      <span style={{ fontSize:13, color:"var(--muted)", fontWeight:600 }}>{langInfo?.name}</span>
                     </div>
                     <button onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }}
                       style={{ background:"none", border:"none", padding:4, cursor:"pointer" }}>
-                      <Icon name="x" size={22} color="#374151" />
+                      <Icon name="x" size={22} color="var(--ink2)" />
                     </button>
                   </div>
 
@@ -53,13 +54,13 @@ export default function MadpasScreen({
 
                     {/* Alle linjer samme font, størrelse og vægt */}
                     {(() => {
-                      const s = { fontSize:17, fontWeight:400, color:"#1f2937", margin:"0 0 16px", lineHeight:1.7, display:"block" };
+                      const s = { fontSize:17, fontWeight:400, color:"var(--ink)", margin:"0 0 16px", lineHeight:1.7, display:"block" };
                       const sIntro = { ...s, margin:"0 0 32px" };
                       const lines = [];
 
                       // Intro
                       const introText = {
-                        da: "Hej! Jeg har nogle fødevareallergier og ønsker gerne din hjælp til at finde noget, jeg kan spise trygt.",
+                        da: allergenCount === 1 ? "Hej! Jeg har en fødevareallergi og ønsker gerne din hjælp til at finde noget, jeg kan spise trygt." : "Hej! Jeg har fødevareallergier og ønsker gerne din hjælp til at finde noget, jeg kan spise trygt.",
                         en: "Hi! I have some food allergies and would love your help finding something safe for me to eat.",
                         de: "Hallo! Ich habe einige Lebensmittelallergien und würde mich über Ihre Hilfe freuen.",
                         fr: "Bonjour ! J'ai des allergies alimentaires et j'aurais besoin de votre aide.",
@@ -92,7 +93,7 @@ export default function MadpasScreen({
                         ].filter(Boolean).join(" · ");
 
                         const cannotText = {
-                          da:"Jeg kan ikke spise", en:"I cannot eat", de:"Ich kann nicht essen",
+                          da:"Jeg har allergi over for", en:"I cannot eat", de:"Ich kann nicht essen",
                           fr:"Je ne peux pas manger", es:"No puedo comer", it:"Non posso mangiare",
                           nl:"Ik kan niet eten", pt:"Não posso comer", pl:"Nie mogę jeść",
                           sv:"Jag kan inte äta", no:"Jeg kan ikke spise", ja:"食べられません",
@@ -218,8 +219,9 @@ export default function MadpasScreen({
               {(mpAllergens.length > 0 || mpCustom.length > 0) && (() => {
                 const lang = madpasLang;
                 const rtl = MADPAS_LANGUAGES.find(l => l.code === lang)?.rtl;
-                const helloText = { en:"I have food allergies.", de:"Ich habe Lebensmittelallergien.", fr:"J'ai des allergies alimentaires.", es:"Tengo alergias alimentarias.", it:"Ho allergie alimentari.", nl:"Ik heb voedselallergieën.", pt:"Tenho alergias alimentares.", pl:"Mam alergie pokarmowe.", ja:"食物アレルギーがあります。", zh:"我有食物过敏。", ar:"لدي حساسية غذائية.", tr:"Gıda alerjilerim var.", sv:"Jag har matallergier.", no:"Jeg har matallergier.", th:"ฉันมีอาการแพ้อาหาร", el:"Έχω αλλεργίες τροφίμων.", da:"Jeg har fødevareallergier." };
-                const cannotLabel = { en:"I cannot eat:", de:"Ich kann nicht essen:", fr:"Je ne peux pas manger :", es:"No puedo comer:", it:"Non posso mangiare:", nl:"Ik kan niet eten:", pt:"Não posso comer:", pl:"Nie mogę jeść:", ja:"食べられません：", zh:"我不能吃：", ar:"لا أستطيع تناول:", tr:"Yiyemiyorum:", sv:"Jag kan inte äta:", no:"Jeg kan ikke spise:", th:"ฉันไม่สามารถกิน:", el:"Δεν μπορώ να φάω:", da:"Jeg kan ikke spise:" };
+                const allergenCount = mpAllergens.length + (mpCustom?.length || 0);
+              const helloText = { en: allergenCount === 1 ? "I have a food allergy." : "I have food allergies.", da: allergenCount === 1 ? "Jeg har en fødevareallergi." : "Jeg har fødevareallergier.", de: allergenCount === 1 ? "Ich habe eine Lebensmittelallergie." : "Ich habe Lebensmittelallergien.", fr: allergenCount === 1 ? "J'ai une allergie alimentaire." : "J'ai des allergies alimentaires.", es:"Tengo alergias alimentarias.", it:"Ho allergie alimentari.", nl:"Ik heb voedselallergieën.", pt:"Tenho alergias alimentares.", pl:"Mam alergie pokarmowe.", sv:"Jag har matallergier.", no:"Jeg har matallergier.", ja:"食物アレルギーがあります。", zh:"我有食物过敏。", ar:"لدي حساسية غذائية.", tr:"Gıda alerjilerim var.", th:"ฉันมีอาการแพ้อาหาร", el:"Έχω αλλεργίες τροφίμων." };
+                const cannotLabel = { en:"I cannot eat:", de:"Ich kann nicht essen:", fr:"Je ne peux pas manger :", es:"No puedo comer:", it:"Non posso mangiare:", nl:"Ik kan niet eten:", pt:"Não posso comer:", pl:"Nie mogę jeść:", ja:"食べられません：", zh:"我不能吃：", ar:"لا أستطيع تناول:", tr:"Yiyemiyorum:", sv:"Jag kan inte äta:", no:"Jeg kan ikke spise:", th:"ฉันไม่สามารถกิน:", el:"Δεν μπορώ να φάω:", da:"Jeg har allergi over for:" };
                 const helpText = { en:"Can you help me find something safe?", de:"Können Sie mir helfen?", fr:"Pouvez-vous m'aider ?", es:"¿Puede ayudarme?", it:"Può aiutarmi?", nl:"Kunt u mij helpen?", pt:"Pode ajudar-me?", pl:"Czy może mi pomóc?", ja:"手伝っていただけますか？", zh:"您能帮助我吗？", ar:"هل يمكنك مساعدتي؟", tr:"Yardım edebilir misiniz?", sv:"Kan du hjälpa mig?", no:"Kan du hjelpe meg?", th:"คุณช่วยฉันได้ไหม?", el:"Μπορείτε να με βοηθήσετε;", da:"Kan du hjælpe mig?" };
                 return (
                   <div style={{ paddingBottom:8 }} dir={rtl ? "rtl" : "ltr"}>
