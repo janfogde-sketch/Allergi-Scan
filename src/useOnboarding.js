@@ -12,7 +12,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail,
                                 allergens, customAllerg,
                                 setUser, setScreen, setEditMode, setIsOAuth }) {
 
-  const [onboardStep, setOnboardStep] = useState(1);
+  const [onboardStep, setOnboardStep] = useState(0);
   const [editMode, setEditModeLocal]  = useState(false);
   const [tourIdx, setTourIdx]         = useState(0);
   const [customInput, setCustomInput] = useState("");

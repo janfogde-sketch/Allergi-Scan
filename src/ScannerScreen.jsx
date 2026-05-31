@@ -1,8 +1,8 @@
 // @ts-nocheck
 import React, { useState, useRef } from "react";
 import { ALLERGENS, SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
-         ALLERGEN_EXAMPLES, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
-import { compareAllergens, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo } from "./helpers.js";
+         ALLERGEN_EXAMPLES, E_NUMBERS, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
+import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage } from "./SharedComponents.jsx";
 
 import { CategorySelect } from "./MemberForm.jsx";
@@ -38,6 +38,7 @@ export default function ScannerScreen({
   galleryInputRef,
   lastScannedRef,
   selectedENumbers,
+  activeENumbers,
   addToList,
   handleEditProductCapture,
   handleImageCapture, handleProductImageCapture,
@@ -159,7 +160,7 @@ export default function ScannerScreen({
                         <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
                           {pAllergens.map(id => {
                             const a = ALLERGENS.find(x => x.id === id);
-                            const isInt = pCustom.includes(id + "_intolerance");
+                            const isInt = false; // intolerance-suffiks fjernet
                             return (
                               <div key={id} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
                                 background: isInt ? "var(--amber-lt)" : "var(--red-lt)",
@@ -169,7 +170,7 @@ export default function ScannerScreen({
                               </div>
                             );
                           })}
-                          {pCustom.filter(c => !c.endsWith("_intolerance")).map((c,i) => (
+                          {pCustom.map((c,i) => (
                             <div key={i} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
                               background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" }}>
                               {c}
@@ -447,7 +448,7 @@ export default function ScannerScreen({
                   </svg>
                   {/* Laser linje */}
                   <div style={{
-                    position:"absolute", left:0, right:0, height:2,
+                    position:"absolute", left:0, right:0, height:2, top:10,
                     background:"linear-gradient(90deg, transparent, #22C55E, #4ADE80, #22C55E, transparent)",
                     animation:"laserMove 2s ease-in-out infinite",
                     filter:"drop-shadow(0 0 6px #22C55E)",
@@ -558,8 +559,10 @@ export default function ScannerScreen({
             {(() => {
               const flags = scanResult.allergen_flags || {};
               const profiles = [
-                { id:"me", name: user.name||"Dig", allergens },
-                ...family.filter(m => activeProfiles.includes(m.id)),
+                { id:"me", name: user.name||"Dig", allergens, diets: user.diets || [], eNumbers: selectedENumbers || [] },
+                ...family.filter(m => activeProfiles.includes(m.id)).map(m => ({
+                  ...m, allergens: m.allergens || [], diets: m.diets || [], eNumbers: m.eNumbers || [],
+                })),
               ];
               const tagLabels = { vegan:"Vegansk", vegetarian:"Vegetarisk", "palm-oil-free":"Uden palmeolie", "gluten-free":"Glutenfri", organic:"Økologisk" };
               const hasTags = scanResult.tags && scanResult.tags.length > 0;
@@ -575,15 +578,20 @@ export default function ScannerScreen({
                     const statusBg = danger.length > 0 ? "var(--red-lt)" : warning.length > 0 ? "var(--amber-lt)" : "var(--green-lt)";
                     const statusBorder = danger.length > 0 ? "var(--red-md)" : warning.length > 0 ? "var(--amber-md)" : "var(--green-mid)";
                     const statusIcon = danger.length > 0 ? "×" : warning.length > 0 ? "!" : "✓";
-                    const productTags = scanResult.tags || [];
+                    // Diæt-matching via allergen_flags + ingrediens-scanning
+                    const dietResults = (p.diets || []).map(d => ({
+                      id: d,
+                      ...checkDietCompatibility(d, flags, scanResult.ingredients, scanResult.nutrition),
+                    }));
+                    const dietFails = dietResults.filter(r => r.ok === false);
                     const dietMatch = p.diets && p.diets.length > 0
-                      ? p.diets.every(d => productTags.includes(d))
+                      ? dietFails.length === 0
                       : null; // null = ingen diæt registreret
                     const statusText = danger.length > 0
                       ? danger.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
                       : warning.length > 0
                       ? "Spor: " + warning.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
-                      : dietMatch === false ? "Passer ikke til diæt"
+                      : dietMatch === false ? dietFails[0]?.reasons?.[0] || "Passer ikke til diæt"
                       : "Sikkert";
                     const finalColor = danger.length > 0 ? "var(--red)" : warning.length > 0 ? "var(--amber)" : dietMatch === false ? "var(--amber)" : "var(--green)";
                     const finalBg = danger.length > 0 ? "var(--red-lt)" : warning.length > 0 ? "var(--amber-lt)" : dietMatch === false ? "var(--amber-lt)" : "var(--green-lt)";
@@ -608,12 +616,88 @@ export default function ScannerScreen({
                   })}
                   </div>
 
+                  {/* E-nummer advarsler */}
+                  {scanResult.productENumbers && scanResult.productENumbers.length > 0 && activeENumbers && activeENumbers.length > 0 && (() => {
+                    const { matched } = compareENumbers(scanResult.productENumbers, activeENumbers);
+                    if (matched.length === 0) return null;
+                    return (
+                      <div style={{
+                        padding:"8px 12px", marginBottom:6,
+                        background:"var(--amber-lt)", border:"1px solid var(--amber-md)",
+                        borderRadius:10,
+                      }}>
+                        <div style={{ fontSize:11, fontWeight:800, color:"var(--amber)", marginBottom:4 }}>
+                          ⚠️ E-numre fundet som du overvåger
+                        </div>
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                          {matched.map(e => (
+                            <span key={e} style={{
+                              fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:6,
+                              background:"rgba(255,180,0,.15)", color:"var(--amber)",
+                              border:"1px solid var(--amber-md)",
+                            }}>
+                              {e} {E_NUMBERS[e] ? "— " + E_NUMBERS[e].split("—")[0].trim() : ""}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Diæt-detaljer */}
+                  {(() => {
+                    // Saml alle diæter fra aktive profiler
+                    const allDiets = new Set();
+                    profiles.forEach(p => (p.diets || []).forEach(d => allDiets.add(d)));
+                    if (allDiets.size === 0) return null;
+                    const results = [...allDiets].map(d => ({
+                      id: d,
+                      label: DIETS.find(x => x.id === d)?.label || d,
+                      ...checkDietCompatibility(d, scanResult.allergen_flags, scanResult.ingredients, scanResult.nutrition),
+                    }));
+                    const fails = results.filter(r => r.ok === false);
+                    const unknowns = results.filter(r => r.ok === null);
+                    const passes = results.filter(r => r.ok === true);
+                    if (fails.length === 0 && unknowns.length === 0 && passes.length === 0) return null;
+                    return (
+                      <div style={{
+                        padding:"10px 12px", marginBottom:6,
+                        background: fails.length > 0 ? "var(--amber-lt)" : "var(--green-lt)",
+                        border: `1px solid ${fails.length > 0 ? "var(--amber-md)" : "var(--green-mid)"}`,
+                        borderRadius:10,
+                      }}>
+                        <div style={{ fontSize:11, fontWeight:800, color: fails.length > 0 ? "var(--amber)" : "var(--green)", marginBottom:6 }}>
+                          {fails.length > 0 ? "⚠️ Diæt-advarsler" : "✅ Kompatibel med dine diæter"}
+                        </div>
+                        <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                          {fails.map(r => (
+                            <div key={r.id} style={{ fontSize:11, color:"var(--amber)" }}>
+                              <strong>{r.label}:</strong> {r.reasons[0]}
+                              {r.confidence === "low" && <span style={{ opacity:.6 }}> (usikker)</span>}
+                            </div>
+                          ))}
+                          {passes.map(r => (
+                            <div key={r.id} style={{ fontSize:11, color:"var(--green)" }}>
+                              ✓ {r.label}
+                              {r.confidence === "low" && <span style={{ opacity:.6 }}> (usikker)</span>}
+                            </div>
+                          ))}
+                          {unknowns.map(r => (
+                            <div key={r.id} style={{ fontSize:11, color:"var(--muted)" }}>
+                              ? {r.label}: {r.reasons[0]}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Diæt-tags — sømløst under profilerne */}
                   {hasTags && (
                     <div style={{
                       display:"flex", gap:6, flexWrap:"wrap",
                       padding:"8px 14px",
-                      background:"#fff",
+                      background:"var(--surface)",
                       border:"1px solid var(--border)",
                       borderTop:"none",
                       borderRadius:"0 0 12px 12px",

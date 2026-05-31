@@ -313,7 +313,7 @@ export const ALLERGENS = [
   { id:"gluten",        label:"Gluten",           emoji:"🥖" },
   { id:"hvede",         label:"Hvede",             emoji:"🌾" },
   { id:"maelkeallergi", label:"Mælk",              emoji:"🥛" },
-  { id:"laktose",       label:"Laktoseintolerance",emoji:"🧀" },
+  { id:"laktose",       label:"Laktoseintolerance",emoji:"🍬" },
   { id:"aeg",           label:"Æg",               emoji:"🥚" },
   { id:"noedder",       label:"Nødder",            emoji:"🌰" },
   { id:"jordnoedder",   label:"Jordnødder",        emoji:"🥜" },
@@ -494,7 +494,6 @@ export const DIETS = [
   { id:"pescetarian", label:"Pescetarisk",   desc:"Ingen kød, men fisk ok" },
   { id:"gluten-free", label:"Glutenfri",     desc:"Ingen gluten" },
   { id:"keto",        label:"Keto",          desc:"Lavt kulhydratindhold" },
-  { id:"paleo",       label:"Paleo",         desc:"Ingen forarbejdede fødevarer" },
 ];
 
 export const AVATAR_COLORS = ["#52b788","#74c69d","#40916c","#b7e4c7","#2d6a4f","#95d5b2","#f4a261","#e76f51"];

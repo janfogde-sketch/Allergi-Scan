@@ -522,6 +522,44 @@ ${openTicket.description}
                     );
                   })}
                 </div>
+                {/* Download alle tickets */}
+                {!ticketsLoading && adminTickets.length > 0 && (
+                  <button onClick={() => {
+                    const filtered = adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter);
+                    const typeLabels = { bug:"Fejl", ui:"Design", missing:"Mangler", content:"Indhold", crash:"Crash", suggestion:"Forslag" };
+                    const statusLabels = { open:"Åben", in_progress:"I gang", resolved:"Løst" };
+                    const lines = filtered.map((t, i) => {
+                      const dato = new Date(t.created_at).toLocaleString("da-DK", { day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" });
+                      return [
+                        `── Ticket ${i + 1} ──────────────────────────────`,
+                        `Type:    ${typeLabels[t.type] || t.type}`,
+                        `Status:  ${statusLabels[t.status] || t.status}`,
+                        `Bruger:  ${t.context?.user_name || "Anonym"} (${t.context?.user_email || "—"})`,
+                        `Skærm:   ${t.context?.screen_label || t.context?.screen || "—"}`,
+                        `Enhed:   ${/iPhone|iPad/.test(t.context?.user_agent||"")?"iOS":/Android/.test(t.context?.user_agent||"")?"Android":"Desktop"}`,
+                        `Dato:    ${dato}`,
+                        ``,
+                        t.description || "(ingen beskrivelse)",
+                        ``,
+                      ].join("\n");
+                    });
+                    const text = `EatSafe Tickets — ${adminTicketFilter === "all" ? "Alle" : statusLabels[adminTicketFilter]} (${filtered.length} stk)\nEksporteret: ${new Date().toLocaleString("da-DK")}\n\n` + lines.join("\n");
+                    const blob = new Blob([text], { type:"text/plain;charset=utf-8" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url; a.download = `eatsafe-tickets-${adminTicketFilter}-${new Date().toISOString().slice(0,10)}.txt`;
+                    a.click(); URL.revokeObjectURL(url);
+                  }} style={{
+                    width:"100%", padding:"10px", marginBottom:12, borderRadius:10,
+                    background:"var(--surface2)", border:"1px solid var(--border)",
+                    fontFamily:"var(--f)", fontSize:12, fontWeight:700,
+                    color:"var(--ink2)", cursor:"pointer",
+                    display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+                  }}>
+                    📥 Download {adminTicketFilter === "all" ? "alle" : adminTicketFilter === "open" ? "åbne" : adminTicketFilter === "in_progress" ? "igangværende" : "løste"} tickets ({adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter).length})
+                  </button>
+                )}
+
                 {ticketsLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
                 {!ticketsLoading && adminTickets.length === 0 && <div style={{ textAlign:"center", padding:"48px 0" }}><div style={{ fontSize:48, marginBottom:12 }}>🎉</div><div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>Ingen tickets</div></div>}
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
