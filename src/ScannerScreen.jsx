@@ -1,8 +1,8 @@
 // @ts-nocheck
 import React, { useState, useRef } from "react";
 import { ALLERGENS, SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
-         ALLERGEN_EXAMPLES, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
-import { compareAllergens, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo } from "./helpers.js";
+         ALLERGEN_EXAMPLES, E_NUMBERS, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
+import { compareAllergens, extractENumbers, compareENumbers, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage } from "./SharedComponents.jsx";
 
 import { CategorySelect } from "./MemberForm.jsx";
@@ -38,6 +38,7 @@ export default function ScannerScreen({
   galleryInputRef,
   lastScannedRef,
   selectedENumbers,
+  activeENumbers,
   addToList,
   handleEditProductCapture,
   handleImageCapture, handleProductImageCapture,
@@ -159,7 +160,7 @@ export default function ScannerScreen({
                         <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
                           {pAllergens.map(id => {
                             const a = ALLERGENS.find(x => x.id === id);
-                            const isInt = pCustom.includes(id + "_intolerance");
+                            const isInt = false; // intolerance-suffiks fjernet
                             return (
                               <div key={id} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
                                 background: isInt ? "var(--amber-lt)" : "var(--red-lt)",
@@ -169,7 +170,7 @@ export default function ScannerScreen({
                               </div>
                             );
                           })}
-                          {pCustom.filter(c => !c.endsWith("_intolerance")).map((c,i) => (
+                          {pCustom.map((c,i) => (
                             <div key={i} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
                               background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" }}>
                               {c}
@@ -558,8 +559,10 @@ export default function ScannerScreen({
             {(() => {
               const flags = scanResult.allergen_flags || {};
               const profiles = [
-                { id:"me", name: user.name||"Dig", allergens },
-                ...family.filter(m => activeProfiles.includes(m.id)),
+                { id:"me", name: user.name||"Dig", allergens, diets: user.diets || [], eNumbers: selectedENumbers || [] },
+                ...family.filter(m => activeProfiles.includes(m.id)).map(m => ({
+                  ...m, allergens: m.allergens || [], diets: m.diets || [], eNumbers: m.eNumbers || [],
+                })),
               ];
               const tagLabels = { vegan:"Vegansk", vegetarian:"Vegetarisk", "palm-oil-free":"Uden palmeolie", "gluten-free":"Glutenfri", organic:"Økologisk" };
               const hasTags = scanResult.tags && scanResult.tags.length > 0;
@@ -608,12 +611,40 @@ export default function ScannerScreen({
                   })}
                   </div>
 
+                  {/* E-nummer advarsler */}
+                  {scanResult.productENumbers && scanResult.productENumbers.length > 0 && activeENumbers && activeENumbers.length > 0 && (() => {
+                    const { matched } = compareENumbers(scanResult.productENumbers, activeENumbers);
+                    if (matched.length === 0) return null;
+                    return (
+                      <div style={{
+                        padding:"8px 12px", marginBottom:6,
+                        background:"var(--amber-lt)", border:"1px solid var(--amber-md)",
+                        borderRadius:10,
+                      }}>
+                        <div style={{ fontSize:11, fontWeight:800, color:"var(--amber)", marginBottom:4 }}>
+                          ⚠️ E-numre fundet som du overvåger
+                        </div>
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                          {matched.map(e => (
+                            <span key={e} style={{
+                              fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:6,
+                              background:"rgba(255,180,0,.15)", color:"var(--amber)",
+                              border:"1px solid var(--amber-md)",
+                            }}>
+                              {e} {E_NUMBERS[e] ? "— " + E_NUMBERS[e].split("—")[0].trim() : ""}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Diæt-tags — sømløst under profilerne */}
                   {hasTags && (
                     <div style={{
                       display:"flex", gap:6, flexWrap:"wrap",
                       padding:"8px 14px",
-                      background:"#fff",
+                      background:"var(--surface)",
                       border:"1px solid var(--border)",
                       borderTop:"none",
                       borderRadius:"0 0 12px 12px",

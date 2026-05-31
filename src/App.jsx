@@ -12,7 +12,8 @@ import {
 
 import {
   initials, timeAgo, getAllergenLabels, verifiedBadge,
-  makeHeaders, apiCall, compareAllergens
+  makeHeaders, apiCall, compareAllergens,
+  extractENumbers, compareENumbers
 } from "./helpers.js";
 
 import {
@@ -583,7 +584,7 @@ ${text}` }],
     parts.push(introText[lang] || introText.en);
 
     // Allergener — samme rækkefølge og tekst som på skærmen
-    const allItems = [...allergens, ...customAllerg.filter(c => !c.endsWith("_intolerance") && !allergens.includes(c))];
+    const allItems = [...allergens, ...customAllerg.filter(c => !allergens.includes(c))];
     allItems.forEach((item, i) => {
       if (typeof item !== "string") return;
       const a = ALLERGENS.find(x => x.id === item);
@@ -793,11 +794,16 @@ ${text}` }],
   // ── SCANNER CORE ──────────────────────────────────────────────────────────
   const allActive = useCallback(() => {
     const ids = new Set(activeProfiles.includes("me") ? allergens : []);
-    family.filter(m => activeProfiles.includes(m.id)).forEach(m => m.allergens.forEach(a => ids.add(a)));
-    return { ids: [...ids], custom: [...customAllerg] };
-  }, [allergens, customAllerg, family, activeProfiles]);
+    const eNums = new Set(activeProfiles.includes("me") ? selectedENumbers : []);
+    family.filter(m => activeProfiles.includes(m.id)).forEach(m => {
+      (m.allergens || []).forEach(a => ids.add(a));
+      (m.eNumbers || []).forEach(e => eNums.add(e));
+    });
+    return { ids: [...ids], custom: [...customAllerg], eNumbers: [...eNums] };
+  }, [allergens, customAllerg, selectedENumbers, family, activeProfiles]);
 
   const activeIds = allActive().ids;
+  const activeENumbers = allActive().eNumbers;
 
   const lookupProduct = useCallback(async (ean) => {
     if (!ean?.trim()) return;
@@ -818,14 +824,45 @@ ${text}` }],
         setProductImagePreview(null); setProductImageBase64(null);
         return;
       }
-      const product = data.product;
-      const flags = data.allergen_flags || {};
+      let product = data.product;
+      const variantLabel = product.variant_label || null;
+
+      // ── Canonical opslag: hent allergen-data fra master-produkt ──────────
+      if (product.canonical_ean) {
+        try {
+          const canonicalData = await apiCall(
+            `${SUPABASE_URL}/rest/v1/products?ean=eq.${product.canonical_ean}&select=allergen_flags,ingredients,nutrition,verified_status,source&limit=1`,
+            { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+          );
+          if (Array.isArray(canonicalData) && canonicalData[0]) {
+            const c = canonicalData[0];
+            // Behold variant-navn men brug canonical allergen-data
+            product = {
+              ...product,
+              allergen_flags: c.allergen_flags || product.allergen_flags,
+              ingredients: c.ingredients || product.ingredients,
+              nutrition: c.nutrition || product.nutrition,
+              verified_status: c.verified_status || product.verified_status,
+              source: c.source || product.source,
+            };
+          }
+        } catch { /* Brug variant-data som fallback */ }
+      }
+
+      const flags = product.allergen_flags || data.allergen_flags || {};
       const { status, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(flags, activeIds);
+
+      // Udtræk E-numre fra ingredienstekst
+      const ingredientsText = product.ingredients || data.ingredients?.raw_text || product.ingredients_text || "";
+      const productENumbers = extractENumbers(ingredientsText);
+      const { matched: matchedENumbers } = compareENumbers(productENumbers, activeENumbers);
+
       const flagList = [
         ...matchedDanger.map(id => ({ type:"bad", text:`Indeholder ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
         ...matchedWarning.map(id => ({ type:"maybe", text:`Kan indeholde spor af ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
         ...(hasUnknown ? [{ type:"maybe", text:"Visse allergener er ukendte — tjek altid pakken" }] : []),
         ...(matchedDanger.length===0 && matchedWarning.length===0 && !hasUnknown ? [{ type:"good", text:"Ingen af dine allergener fundet" }] : []),
+        ...(matchedENumbers.length > 0 ? [{ type:"maybe", text:`Indeholder overvågede E-numre: ${matchedENumbers.join(", ")}` }] : []),
       ];
       const headlines = { safe:"Sikkert produkt", danger:"Indeholder allergen", warn:"Mulige spor" };
       const summaries = {
@@ -844,12 +881,14 @@ ${text}` }],
       }
       const result = {
         code: ean.trim(), name: product.name || "Ukendt produkt", brand: product.brand || "",
+        variant_label: variantLabel,
         image_url: product.image_url || null, category: product.category || null,
-        ingredients: data.ingredients?.raw_text || product.ingredients_text || "",
-        nutrition: data.nutrition || product.nutrition || null,
-        verified_status: product.verified_status || "unverified", source: data.source,
+        ingredients: ingredientsText,
+        productENumbers,
+        nutrition: product.nutrition || data.nutrition || null,
+        verified_status: product.verified_status || "unverified", source: product.source || data.source,
         status, headline: headlines[status], summary: summaries[status],
-        flags: flagList, allergen_flags: flags, matchedDanger, matchedWarning, familyImpact, hasUnknown,
+        flags: flagList, allergen_flags: flags, matchedDanger, matchedWarning, matchedENumbers, familyImpact, hasUnknown,
         timestamp: Date.now(),
       };
       productCacheRef.current[ean.trim()] = result;
@@ -1247,6 +1286,8 @@ ${text}` }],
             torchOn={torchOn}
             buildLabel={formatBuildTime()}
             lookupProduct={lookupProduct}
+            selectedENumbers={selectedENumbers}
+            activeENumbers={activeENumbers}
             onBetaClick={() => { localStorage.removeItem("as_beta_intro"); setBetaIntroSeen(false); setBetaIntroStep(0); }}
           />
         )}
