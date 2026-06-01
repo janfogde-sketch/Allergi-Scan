@@ -72,6 +72,7 @@ export const appCss = `
   --paper:#1a3012;
   --paper2:#233d18;
   --green:#4ADE80;
+  --green-logo:#3DCC6E;
   --green-glow:#6EE89C;
   --green-lt:rgba(74,222,128,.13);
   --green-mid:rgba(74,222,128,.22);
@@ -226,8 +227,8 @@ body{
   position:relative;overflow:hidden;display:flex;flex-direction:column;
   align-items:center;gap:16px;backdrop-filter:blur(12px);
 }
-.scan-card::before{content:'';position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);width:180px;height:80px;background:radial-gradient(ellipse,rgba(74,222,128,.18) 0%,transparent 70%);pointer-events:none;}
-.scan-card::after{content:'';position:absolute;top:0;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(74,222,128,.4),transparent);}
+.scan-card::before{content:'';position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);width:180px;height:80px;background:radial-gradient(ellipse,rgba(61,204,110,.22) 0%,transparent 70%);pointer-events:none;}
+.scan-card::after{content:'';position:absolute;top:0;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(61,204,110,.5),transparent);}
 .scan-card-text{text-align:center;}
 .scan-card-title{font-size:17px;font-weight:600;color:var(--ink);letter-spacing:-.4px;margin-bottom:4px;}
 .scan-card-sub{font-size:11px;color:var(--muted2);font-weight:400;line-height:1.5;}
@@ -241,12 +242,12 @@ body{
   position:absolute;left:10px;right:10px;top:50%;transform:translateY(-50%);
   height:38px;width:calc(100% - 20px);
 }
-.reticle-corner{position:absolute;width:18px;height:18px;border-color:var(--green);border-style:solid;opacity:.85;}
+.reticle-corner{position:absolute;width:18px;height:18px;border-color:var(--green-logo);border-style:solid;opacity:1;}
 .reticle-corner.tl{top:0;left:0;border-width:2px 0 0 2px;border-radius:4px 0 0 0;}
 .reticle-corner.tr{top:0;right:0;border-width:2px 2px 0 0;border-radius:0 4px 0 0;}
 .reticle-corner.bl{bottom:0;left:0;border-width:0 0 2px 2px;border-radius:0 0 0 4px;}
 .reticle-corner.br{bottom:0;right:0;border-width:0 2px 2px 0;border-radius:0 0 4px 0;}
-.reticle-line{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 0%,var(--green) 15%,var(--green) 85%,transparent 100%);animation:scanline 2.2s ease-in-out infinite;box-shadow:0 0 8px var(--green),0 0 2px var(--green);}
+.reticle-line{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 0%,var(--green-logo) 15%,var(--green-logo) 85%,transparent 100%);animation:scanline 2.2s ease-in-out infinite;box-shadow:0 0 10px var(--green-logo),0 0 3px var(--green-logo);}
 @keyframes scanline{0%{top:13px;opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{top:51px;opacity:0;}}
 
 /* Mini cards */
