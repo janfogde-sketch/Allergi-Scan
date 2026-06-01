@@ -870,7 +870,7 @@ export default function ScannerScreen({
                   <div key={s} style={{
                     width: notFoundStep === s ? 20 : 8,
                     height:8, borderRadius:4, transition:"all .3s",
-                    background: s < notFoundStep ? "var(--green)" : s === notFoundStep ? "var(--ink)" : "var(--border2)"
+                    background: s < notFoundStep ? "var(--green)" : s === notFoundStep ? "var(--green)" : "var(--border2)"
                   }} />
                 ))}
               </div>
@@ -879,7 +879,7 @@ export default function ScannerScreen({
             {/* ── TRIN 1: Fotografér forsiden ── */}
             {notFoundStep === 1 && !ocrLoading && (
               <div className="fade-in">
-                <div style={{ background:"var(--ink)", borderRadius:16, padding:"24px 20px", marginBottom:16, textAlign:"center" }}>
+                <div style={{ background:"var(--surface2)", borderRadius:16, padding:"24px 20px", marginBottom:16, textAlign:"center", border:"1px solid var(--border)" }}>
                   <div style={{ fontSize:52, marginBottom:10 }}>📦</div>
                   <div style={{ fontSize:18, fontWeight:900, color:"#fff", marginBottom:8 }}>
                     Vi kender ikke dette produkt
@@ -914,11 +914,11 @@ export default function ScannerScreen({
                 <label style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:10,
                   width:"100%", padding:"16px", borderRadius:14, cursor:"pointer",
-                  background:"var(--ink)", border:"none", color:"#fff",
+                  background:"var(--green)", border:"none", color:"#071510",
                   fontSize:15, fontWeight:800, boxShadow:"0 4px 16px rgba(31,39,51,.25)",
                   marginBottom:10,
                 }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#071510" strokeWidth="2">
                     <path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
                     <circle cx="12" cy="13" r="4"/>
                   </svg>
@@ -1182,16 +1182,27 @@ export default function ScannerScreen({
                     submitProduct();
                   }}
                   disabled={submitting || !proposedName.trim()}
-                  style={{ width:"100%", background: proposedName.trim() ? "var(--ink)" : "var(--border2)", color:"#fff", border:"none",
+                  style={{ width:"100%", background: proposedName.trim() ? "var(--green)" : "var(--border2)", color: proposedName.trim() ? "#071510" : "var(--muted)", border:"none",
                     borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15,
                     fontWeight:800, cursor: proposedName.trim() ? "pointer" : "not-allowed", marginBottom:8,
                     opacity: submitting ? 0.6 : 1 }}>
-                  {submitting ? "Sender…" : "Send produkt ind ✓"}
+                  {submitting ? <><div style={{ width:16, height:16, border:"2px solid rgba(0,0,0,.2)", borderTopColor:"#071510", borderRadius:"50%", animation:"spin .7s linear infinite", display:"inline-block", marginRight:8 }} />Sender…</> : "Send produkt ind ✓"}
                 </button>
                 <button className="btn btn-ghost btn-full" onClick={() => setNotFoundStep(2)}>← Tilbage</button>
               </div>
             )}
 
+          </div>
+        )}
+
+        {/* Fuld-skærm loading ved submit */}
+        {submitting && (
+          <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.7)",
+            display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:16 }}>
+            <div style={{ width:48, height:48, border:"3px solid var(--border2)", borderTopColor:"var(--green)",
+              borderRadius:"50%", animation:"spin .8s linear infinite" }} />
+            <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>Sender produkt…</div>
+            <div style={{ fontSize:12, color:"var(--muted)" }}>Vent venligst</div>
           </div>
         )}
 
