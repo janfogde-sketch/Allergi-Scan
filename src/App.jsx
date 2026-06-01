@@ -239,7 +239,8 @@ export default function EatSafe() {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const constraints = isIOS
       ? { video: { facingMode: { exact: "environment" } } }
-      : { video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } };
+      : { video: { facingMode: "environment", width: { min: 1280, ideal: 1920 }, height: { min: 720, ideal: 1080 },
+          advanced: [{ focusMode: "continuous" }, { exposureMode: "continuous" }] } };
     try {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       const track = stream.getVideoTracks()[0];
@@ -264,12 +265,37 @@ export default function EatSafe() {
       const readerEl = document.getElementById(readerId);
       if (!readerEl) { setScanError("Kamera-element ikke fundet. Genindlæs siden."); setCameraActive(false); return; }
       html5QrRef.current = new Html5Qrcode(readerId, { verbose: false });
+      // Kun stregkode-formater (ikke QR, Aztec osv.) — markant hurtigere decode
+      // 0=QR_CODE, 1=AZTEC, 2=CODABAR, 3=CODE_39, 4=CODE_93, 5=CODE_128,
+      // 6=DATA_MATRIX, 7=MAXICODE, 8=ITF, 9=EAN_13, 10=EAN_8, 11=PDF_417, 12=RSS_14, 13=RSS_EXPANDED, 14=UPC_A, 15=UPC_E, 16=UPC_EAN_EXTENSION
+      const barcodeFormats = [3, 5, 8, 9, 10, 14, 15]; // CODE_39, CODE_128, ITF, EAN_13, EAN_8, UPC_A, UPC_E
       const qrConfig = {
-        fps: isIOS ? 10 : 20,
-        qrbox: (w, h) => { const side = Math.min(w, h) * 0.8; return { width: Math.round(side), height: Math.round(side * 0.45) }; },
-        aspectRatio: isIOS ? undefined : 1.0, disableFlip: false,
-        formatsToSupport: [0,1,2,3,4,5,6,7,8,9,10,11],
-        videoConstraints: isIOS ? { facingMode: { exact: "environment" } } : { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 }, focusMode: "continuous", exposureMode: "continuous" },
+        fps: isIOS ? 25 : 30,
+        // Smal vandret stribe — stregkoder er vandrette og kortere boks = hurtigere decode
+        qrbox: (w, h) => ({ width: Math.round(Math.min(w, h) * 0.85), height: Math.round(Math.min(w, h) * 0.28) }),
+        aspectRatio: isIOS ? 1.7778 : 1.7778,
+        disableFlip: true,
+        formatsToSupport: barcodeFormats,
+        // experimentalFeatures: brug BarcodeDetector API hvis tilgængelig (native + meget hurtigere)
+        experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+        videoConstraints: isIOS
+          ? {
+              facingMode: { exact: "environment" },
+              width:  { min: 1280, ideal: 1920 },
+              height: { min: 720,  ideal: 1080 },
+            }
+          : {
+              facingMode: "environment",
+              width:  { min: 1280, ideal: 1920, max: 3840 },
+              height: { min: 720,  ideal: 1080, max: 2160 },
+              frameRate: { ideal: 30, max: 60 },
+              advanced: [
+                { focusMode: "continuous" },
+                { exposureMode: "continuous" },
+                { whiteBalanceMode: "continuous" },
+                { zoom: 1.0 },
+              ],
+            },
       };
       await html5QrRef.current.start(
         { facingMode: isIOS ? { exact: "environment" } : "environment" }, qrConfig,
@@ -291,7 +317,35 @@ export default function EatSafe() {
       );
       await new Promise(r => setTimeout(r, 500));
       const videoEl = document.querySelector("#qr-reader-home video");
-      if (videoEl?.srcObject) { const track = videoEl.srcObject.getVideoTracks()[0]; if (track) torchTrackRef.current = track; }
+      if (videoEl?.srcObject) {
+        const track = videoEl.srcObject.getVideoTracks()[0];
+        if (track) {
+          torchTrackRef.current = track;
+          // Forsøg at anvende avancerede constraints (virker på Android Chrome)
+          try {
+            const caps = track.getCapabilities?.() || {};
+            const adv = [];
+            if (caps.focusMode?.includes("continuous")) adv.push({ focusMode: "continuous" });
+            if (caps.exposureMode?.includes("continuous")) adv.push({ exposureMode: "continuous" });
+            if (caps.whiteBalanceMode?.includes("continuous")) adv.push({ whiteBalanceMode: "continuous" });
+            if (adv.length) await track.applyConstraints({ advanced: adv });
+          } catch {}
+          // Tap-to-focus: når brugeren tapper video-feltet
+          videoEl.onclick = async (ev) => {
+            try {
+              const caps = track.getCapabilities?.() || {};
+              if (caps.focusMode?.includes("manual") && caps.pointsOfInterest !== undefined) {
+                const rect = videoEl.getBoundingClientRect();
+                const x = (ev.clientX - rect.left) / rect.width;
+                const y = (ev.clientY - rect.top) / rect.height;
+                await track.applyConstraints({ advanced: [{ pointsOfInterest: [{ x, y }], focusMode: "single-shot" }] });
+                // Skift tilbage til continuous efter 1.5s
+                setTimeout(() => track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {}), 1500);
+              }
+            } catch {}
+          };
+        }
+      }
     } catch (e) {
       setCameraActive(false);
       if (e.message?.includes("constraint") || e.message?.includes("Constraint")) setTimeout(() => startCamera(), 500);
@@ -695,6 +749,8 @@ ${text}` }],
     editOcrText, setEditOcrText,
     handleProductImageCapture,
     handleImageCapture,
+    nutritionOcrLoading,
+    handleNutritionCapture,
     handleEditProductCapture,
     submitProduct,
   } = useProduct({ accessToken, userId, activeProfiles,
@@ -1294,6 +1350,7 @@ ${text}` }],
             proposedNutrition={proposedNutrition} setProposedNutrition={setProposedNutrition}
             proposedNotes={proposedNotes} setProposedNotes={setProposedNotes}
             ocrLoading={ocrLoading} ocrText={ocrText} setOcrText={setOcrText}
+            nutritionOcrLoading={nutritionOcrLoading} handleNutritionCapture={handleNutritionCapture}
             productImagePreview={productImagePreview}
             submitting={submitting} submitProduct={submitProduct}
             editStep={editStep} setEditStep={setEditStep}

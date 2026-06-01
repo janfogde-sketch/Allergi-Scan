@@ -24,6 +24,7 @@ export default function ScannerScreen({
   proposedNutrition, setProposedNutrition,
   proposedNotes, setProposedNotes,
   ocrLoading, ocrText, setOcrText,
+  nutritionOcrLoading, handleNutritionCapture,
   productImagePreview,
   submitting, submitProduct,
   editStep, setEditStep,
@@ -970,17 +971,24 @@ export default function ScannerScreen({
             )}
 
             {/* ── SCANNING-LOADER ── */}
-            {ocrLoading && (
+            {(ocrLoading || nutritionOcrLoading) && (
               <div className="fade-in" style={{ textAlign:"center", padding:"60px 20px" }}>
                 <div style={{ width:64, height:64, border:"4px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 20px" }} />
                 <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>
-                  {notFoundStep === 1 ? "Henter produktnavn…" : "Analyserer ingredienser…"}
+                  {notFoundStep === 1 ? "Henter produktnavn…"
+                    : notFoundStep === 3 ? "Læser næringsindhold…"
+                    : "Analyserer ingredienser…"}
                 </div>
-                <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6 }}>
+                <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6, marginBottom:20 }}>
                   {notFoundStep === 1
                     ? "Vores AI læser produktnavnet fra billedet"
+                    : notFoundStep === 3
+                    ? "Vi udtrækker energi, fedt, kulhydrat og protein automatisk"
                     : "Vi finder allergener og ingredienser automatisk"
                   }
+                </div>
+                <div style={{ fontSize:11, color:"var(--muted)", opacity:0.7 }}>
+                  Det tager typisk 5-10 sekunder ☕
                 </div>
               </div>
             )}
@@ -1070,7 +1078,7 @@ export default function ScannerScreen({
             )}
 
             {/* ── TRIN 3: Næringsindhold ── */}
-            {notFoundStep === 3 && !ocrLoading && (
+            {notFoundStep === 3 && !ocrLoading && !nutritionOcrLoading && (
               <div className="fade-in">
                 <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>
                   Trin 3 — Næringsindhold (valgfrit)
@@ -1081,19 +1089,35 @@ export default function ScannerScreen({
 
                 {/* Foto af næringsindhold */}
                 <label style={{
-                  display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-                  width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
-                  background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
-                  fontSize:13, fontWeight:600, marginBottom:14,
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:10,
+                  width:"100%", padding:"16px", borderRadius:14, cursor:"pointer",
+                  background:"var(--green)", border:"none", color:"#071510",
+                  fontSize:15, fontWeight:800, marginBottom:8, boxShadow:"0 4px 16px rgba(74,222,128,.25)",
                 }}>
-                  📸 Fotografér næringsdeklaration
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#071510" strokeWidth="2">
+                    <path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                  Fotografér næringsdeklarationen
                   <input type="file" accept="image/*" capture="environment" style={{ display:"none" }}
-                    onChange={async e => {
-                      if (!e.target.files?.[0]) return;
-                      // OCR til næringsindhold — parse tal fra tekst
-                      handleImageCapture(e);
-                    }} />
+                    onChange={handleNutritionCapture} />
                 </label>
+                <label style={{
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                  width:"100%", padding:"11px", borderRadius:12, cursor:"pointer",
+                  background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                  fontSize:12, fontWeight:600, marginBottom:14,
+                }}>
+                  📁 Vælg fra galleri
+                  <input type="file" accept="image/*" style={{ display:"none" }}
+                    onChange={handleNutritionCapture} />
+                </label>
+                {/* Vis hvis noget allerede er udfyldt */}
+                {proposedNutrition && Object.values(proposedNutrition).some(v => v) && (
+                  <div style={{ padding:"8px 12px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, marginBottom:10, fontSize:12, color:"var(--green)", fontWeight:700 }}>
+                    ✓ Næringsindhold delvist udfyldt — tjek og ret felterne herunder
+                  </div>
+                )}
 
                 {/* Manuel input */}
                 <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:14 }}>
@@ -1182,11 +1206,19 @@ export default function ScannerScreen({
               </div>
             )}
 
-            {/* ── TRIN 5: Bekræft og send ── */}
             {notFoundStep === 5 && !ocrLoading && (
               <div className="fade-in">
+                {/* Oversigt header */}
+                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:12 }}>
+                  Trin 5 — Gennemse og send
+                </div>
+
                 {/* Produktkort */}
                 <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12 }}>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+                    <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)" }}>📸 Forside og navn</div>
+                    <button onClick={() => setNotFoundStep(1)} style={{ background:"none", border:"none", cursor:"pointer", fontSize:11, color:"var(--muted)", fontFamily:"var(--f)", padding:"2px 8px" }}>← Ret</button>
+                  </div>
                   <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
                     {productImagePreview
                       ? <img src={productImagePreview} alt="Produkt" style={{ width:60, height:60, objectFit:"contain", borderRadius:10, border:"1px solid var(--border)", flexShrink:0 }} />
@@ -1214,7 +1246,7 @@ export default function ScannerScreen({
                 {/* ── Ingrediensliste editor ── */}
                 <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-                    <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Ingredienser</div>
+                    <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>🔍 Ingredienser</div>
                     <div style={{ display:"flex", gap:8, alignItems:"center" }}>
                       {ocrText && <div style={{ fontSize:11, color:"var(--green)", fontWeight:700 }}>✓ {ingItems.length} fundet</div>}
                       <label style={{ fontSize:11, color:"var(--muted)", cursor:"pointer", fontWeight:600, display:"flex", alignItems:"center", gap:4 }}>
@@ -1263,12 +1295,16 @@ export default function ScannerScreen({
                       Tryk × for at fjerne en ingrediens. Rå tekst: <span style={{ fontFamily:"monospace" }}>{ingToText(ingItems).slice(0,80)}{ingToText(ingItems).length>80?"…":""}</span>
                     </div>
                   )}
+                  <button style={{ marginTop:8, fontSize:11, color:"var(--muted)", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", padding:0 }}
+                    onClick={() => setNotFoundStep(2)}>
+                    ← Ret ingredienser
+                  </button>
                 </div>
 
                 {/* Detekterede allergener — toggle */}
-                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12, boxShadow:"var(--sh)" }}>
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-                    <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Allergener</div>
+                    <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>⚠️ Allergener</div>
                     <div style={{ fontSize:11, color:"var(--muted)" }}>Tryk for at til/fra</div>
                   </div>
                   <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
@@ -1309,6 +1345,47 @@ export default function ScannerScreen({
                     Ét tryk = indeholder · To tryk = spor · Tre tryk = fjern
                   </div>
                 </div>
+
+                {/* Næringsindhold opsummering */}
+                {proposedNutrition && Object.values(proposedNutrition).some(v => v) && (
+                  <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
+                    <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>
+                      Næringsindhold <span style={{ fontSize:10, color:"var(--muted)", fontWeight:400 }}>per 100g/ml</span>
+                    </div>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px 14px" }}>
+                      {[
+                        { key:"energy", label:"Energi" },
+                        { key:"fat", label:"Fedt" },
+                        { key:"saturated", label:"Mættet fedt" },
+                        { key:"carbs", label:"Kulhydrat" },
+                        { key:"sugars", label:"Sukker" },
+                        { key:"protein", label:"Protein" },
+                        { key:"salt", label:"Salt" },
+                      ].filter(({ key }) => proposedNutrition[key]).map(({ key, label }) => (
+                        <div key={key} style={{ display:"flex", justifyContent:"space-between", fontSize:11 }}>
+                          <span style={{ color:"var(--muted)" }}>{label}</span>
+                          <span style={{ color:"var(--ink)", fontWeight:700 }}>{proposedNutrition[key]}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <button style={{ marginTop:10, fontSize:11, color:"var(--muted)", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", padding:0 }}
+                      onClick={() => setNotFoundStep(3)}>
+                      ← Ret næringsindhold
+                    </button>
+                  </div>
+                )}
+
+                {/* Mærkninger/noter */}
+                {proposedNotes && (
+                  <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
+                    <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:6 }}>Mærkninger</div>
+                    <div style={{ fontSize:12, color:"var(--ink2)", lineHeight:1.6 }}>{proposedNotes}</div>
+                    <button style={{ marginTop:6, fontSize:11, color:"var(--muted)", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", padding:0 }}
+                      onClick={() => setNotFoundStep(4)}>
+                      ← Ret mærkninger
+                    </button>
+                  </div>
+                )}
 
                 {/* Info */}
                 <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 12px", background:"var(--paper2)", borderRadius:10, marginBottom:14 }}>
