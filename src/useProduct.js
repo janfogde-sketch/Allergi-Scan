@@ -28,6 +28,8 @@ export function useProduct({ accessToken, userId, activeProfiles,
 
   // Ny produkt form
   const [proposedName, setProposedName]       = useState("");
+  const [proposedNutrition, setProposedNutrition] = useState({ energy:"", fat:"", saturated:"", carbs:"", sugars:"", protein:"", salt:"" });
+  const [proposedNotes, setProposedNotes]     = useState("");
   const [proposedFlags, setProposedFlags]     = useState(null);
 
   // Suggest-edit state
@@ -87,7 +89,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
         const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ text: ocrData.text }) });
         traceLog(tid, "ocr:allergen-response", { success: allergenData.success, method: allergenData.method, flags: allergenData.allergen_flags });
         if (allergenData.success) setProposedFlags(allergenData.allergen_flags);
-        setNotFoundStep(3);
+        setNotFoundStep(3); // → Næringsindhold
       } else {
         traceLog(tid, "ocr:empty", { error: "OCR returnerede tom tekst eller fejl", raw: JSON.stringify(ocrData).substring(0, 200) });
         setScanError_("Billedet kunne ikke læses. Prøv et klarere billede.");
@@ -117,7 +119,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
         body: JSON.stringify({
           ean: notFoundEan, submitted_by: userId,
           ocr_raw_text: ocrText, raw_label_image: ocrImageBase64 || null,
-          ai_parsed_data: { ...proposedFlags, name: proposedName, product_image_base64: productImageBase64 },
+          ai_parsed_data: { ...proposedFlags, name: proposedName, product_image_base64: productImageBase64, nutrition: proposedNutrition, notes: proposedNotes },
           user_confirmed: true,
         }),
       });
@@ -143,6 +145,8 @@ export function useProduct({ accessToken, userId, activeProfiles,
     productImageBase64, setProductImageBase64,
     proposedName, setProposedName,
     proposedFlags, setProposedFlags,
+    proposedNutrition, setProposedNutrition,
+    proposedNotes, setProposedNotes,
     editStep, setEditStep,
     editIngText, setEditIngText,
     editNote, setEditNote,

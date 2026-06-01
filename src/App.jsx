@@ -683,6 +683,8 @@ ${text}` }],
     productImageBase64, setProductImageBase64,
     proposedName, setProposedName,
     proposedFlags, setProposedFlags,
+    proposedNutrition, setProposedNutrition,
+    proposedNotes, setProposedNotes,
     editStep, setEditStep,
     editIngText, setEditIngText,
     editNote, setEditNote,
@@ -1289,6 +1291,8 @@ ${text}` }],
             notFoundStep={notFoundStep} setNotFoundStep={setNotFoundStep}
             proposedName={proposedName} setProposedName={setProposedName}
             proposedFlags={proposedFlags} setProposedFlags={setProposedFlags}
+            proposedNutrition={proposedNutrition} setProposedNutrition={setProposedNutrition}
+            proposedNotes={proposedNotes} setProposedNotes={setProposedNotes}
             ocrLoading={ocrLoading} ocrText={ocrText} setOcrText={setOcrText}
             productImagePreview={productImagePreview}
             submitting={submitting} submitProduct={submitProduct}
