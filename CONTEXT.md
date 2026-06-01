@@ -130,7 +130,7 @@ src/
 
 ---
 
-## 7. Onboarding-flow (10 trin)
+## 7. Onboarding-flow (trin 0 = beta-info, derefter 1-9)
 
 | `onboardStep` | Indhold |
 |---|---|
@@ -179,20 +179,59 @@ bloeddyr       Bløddyr             🦑
 
 ---
 
-## 9. Allergen-matching
+## 9. Detektion og matching (KERNEN)
 
+### Detektion sker i Supabase Edge Functions, IKKE frontend
+- `/functions/v1/allergens` — keyword-engine + Claude-fallback (hybrid)
+- `/functions/v1/ocr` — Claude Haiku vision læser ingredienser fra foto
+- Frontend sender tekst, modtager `allergen_flags`
+
+### allergens Edge Function (allergens.ts)
+Hybrid-arkitektur:
+1. **Keyword-engine kører altid** (gratis). 16 allergener korrekt opdelt: maelkeallergi=protein (kasein/valle/ost), laktose=kun mælkesukker, hvede separat fra gluten, gluten uden mel/starch.
+2. `keywordMatch`: SUBSTRING_KEYWORDS (mælk/soja/kasein) bruger substring (fanger "komælk"); resten bruger `wordBoundaryMatch` (æøå-grænser).
+3. `isNegated`: "laktosefri/uden mælk/under 0/free" → springer over.
+4. Global laktose-override: laktosefri → laktose=no, men maelkeallergi forbliver yes.
+5. ENUMBER_ALLERGENS: E322→soja(traces), E471/E472→maelkeallergi(traces), E966→laktose(yes), E220-228→svovl(yes).
+6. **Claude-fallback** (`claude-haiku-4-5-20251001`): kun ved negation / >15 kommaer / mange ukendte E-numre / `force_ai:true`. Kræver ANTHROPIC_API_KEY secret. Ved konflikt vinder mest forsigtige værdi (yes>traces>no). Returnerer `method: "keyword"` eller `"keyword+claude"`.
+
+### Allergen-matching (frontend, helpers.js)
 `compareAllergens(flags, activeAllergenIds)` → `{ status, matchedDanger, matchedWarning, hasUnknown }`
+- `flags[id]==="yes"` → danger, `"traces"` → warn, ukendt → hasUnknown
 
-`activeIds` beregnes i App.jsx efter hooks:
+### E-nummer-matching (helpers.js)
+- `extractENumbers(text)` — regex finder E100-E1599 i ingredienstekst
+- `compareENumbers(productENumbers, userENumbers)` → `{ matched, status }`
+- Vises som gul advarsel i RESULT-skærm
+
+### Diæt-matching (helpers.js)
+`checkDietCompatibility(dietId, allergenFlags, ingredientsText, nutrition)` → `{ ok, reasons, confidence }`
+- Vegansk/Vegetarisk/Pescetarisk: allergen_flags + ANIMAL_KEYWORDS/MEAT_KEYWORDS ingrediens-scanning
+- Glutenfri: allergen_flags (gluten+hvede)
+- Keto: næringsdata (kulhydrater) eller keto-breakers
+- Baseret på allergen_flags, IKKE tags (gammel tags-metode var upålidelig)
+- Paleo FJERNET (for upålideligt)
+
+### Aggregering på tværs af profiler (App.jsx)
 ```js
 const allActive = useCallback(() => {
   const ids = new Set(activeProfiles.includes("me") ? allergens : []);
-  family.filter(m => activeProfiles.includes(m.id))
-    .forEach(m => m.allergens.forEach(a => ids.add(a)));
-  return { ids: [...ids], custom: [...customAllerg] };
-}, [allergens, customAllerg, family, activeProfiles]);
+  const eNums = new Set(activeProfiles.includes("me") ? selectedENumbers : []);
+  family.filter(m => activeProfiles.includes(m.id)).forEach(m => {
+    (m.allergens||[]).forEach(a => ids.add(a));
+    (m.eNumbers||[]).forEach(e => eNums.add(e));
+  });
+  return { ids:[...ids], custom:[...customAllerg], eNumbers:[...eNums] };
+}, [allergens, customAllerg, selectedENumbers, family, activeProfiles]);
 const activeIds = allActive().ids;
+const activeENumbers = allActive().eNumbers;
 ```
+
+### Database-genparsing
+- `reparse_allergens.mjs` (Node ESM): henter produkter i batches af 50, sender ingredients_text til allergens Edge Function, skriver flags tilbage via PATCH.
+- Flags: `DRY_RUN=1` (ingen skrivning), `FORCE_ALL=1` (genparser alt). Windows: `set DRY_RUN=1` osv.
+- Kræver SERVICE_KEY. Pris-tracking: COST_PER_CLAUDE=0.00138.
+- Kørt: 16.095 produkter, 15.568 opdateret, ~$1.08. Backup: products_backup.
 
 ---
 
@@ -376,6 +415,39 @@ Typer: bug 🐛 · ui 🎨 · missing 💡 · content 📦 · crash 💥 · sugg
 
 ---
 
+## Edge Functions (Supabase)
+
+| Funktion | Formål |
+|----------|--------|
+| `allergens` | Keyword + Claude hybrid allergen-detektion. Body: `{text, force_ai?, save?, product_id?}` |
+| `ocr` | Claude Haiku vision. Body: `{image_base64, mode?}`. mode: "ingredients" (default) / "product_name" |
+| `search` | Produktsøgning. Query: `?q=` |
+| `products/{ean}` | Produktopslag på EAN |
+| `submissions` | Bruger-indsendelser |
+
+Secret: `ANTHROPIC_API_KEY` (bruges af allergens + ocr).
+
+---
+
+## Debug Trace System (helpers.js)
+
+- `traceId(prefix)` → unikt ID per operation (scan/search/ocr/submit)
+- `traceLog(id, step, data)` → logger til console + in-memory array (max 200)
+- `getTraceLog()` → henter alle traces
+- Synlig i **Admin → Debug** faneblad med "Kopier JSON"-knap
+- Flows der tracker: scan (EAN), search, ocr (foto→tekst→allergen), submit
+
+---
+
+## Canonical EAN (varianter)
+
+Kolonner: `products.canonical_ean` (FK til products.ean) + `variant_label`.
+- Varianter peger på master-produkt der ejer allergen-data
+- `lookupProduct` henter master-data hvis canonical_ean sat, viser variantens navn+label
+- **Auto-population virker IKKE** på nuværende data (Nemlig-rod, få ægte varianter). Udfyldes manuelt efter behov.
+
+---
+
 ## 17. Kendte fejl løst
 
 | Fejl | Løsning |
@@ -402,14 +474,26 @@ Typer: bug 🐛 · ui 🎨 · missing 💡 · content 📦 · crash 💥 · sugg
 | OAuth redirect til main | `redirect_to: window.location.origin + "/"` i `useAuth.js` |
 | Hjælp-modal gennemsigtig | `backdropFilter` fjernet, `background:#1a3012` sat |
 | Scan-kort lyst baggrund | `var(--surface)` + `backdrop-filter:blur` erstattet med `rgba(255,255,255,.04)` |
+| maelkeallergi vs laktose sammenblandet | Ny allergens Edge Function splitter protein fra mælkesukker |
+| Rismel falsk-flagget som gluten | mel/flour/starch fjernet fra gluten-ordbog |
+| "æg" matcher i "lægemiddel" | wordBoundaryMatch med æøå-grænser |
+| E-numre matches ikke mod produkter | extractENumbers + compareENumbers + aggregering i allActive |
+| Diæt-matching upålidelig (tags) | checkDietCompatibility baseret på allergen_flags |
+| Android tilbageknap logger ud | popstate-handler navigerer inden i appen |
+| Scanner-animation står stille | Inline styles → className="scan-laser" CSS-klasse |
+| OCR returnerer blankt | Ny ocr Edge Function (Claude vision) + trace-system til debug |
+| Beta-info vises ikke konsekvent | Flyttet til onboarding trin 0 |
+| Submit står længe uden feedback | Fuldskærms loading-overlay + spinner |
+| Hvide elementer i NOTFOUND/SUGGEST_EDIT | var(--ink)/var(--paper)/#fff → var(--surface)/var(--green) |
+| Madpas "kan ikke spise mælkeallergi" | "Jeg har allergi over for" + singular/plural |
 
 ---
 
 ## 18. Åbne opgaver
 
+- [ ] Test OCR i appen (ny Claude vision-funktion)
+- [ ] 4.061 produkter uden ingredienser → hent fra Open Food Facts
+- [ ] Canonical EAN: udfyld manuelt efter behov (auto-matching virker ikke)
 - [ ] `constants.js` udfases
-- [ ] Opskrifter-backend mangler data
-- [ ] Supabase allowlist til alle preview-URLer
-- [ ] Debug role-visning i ProfileScreen fjernes
-- [ ] Gennemgå alle `var(--paper)`, `var(--paper2)`, `var(--ink)` brugt som baggrund i komponenter
-- [ ] Allergener på familiemedlemmer vises som tomme (kolonner eksisterer nu, men data mangler flow)
+- [ ] Verificér scanner-animation kører efter className-fix
+- [ ] Submissions Edge Function: tjek at den gemmer alle felter (ingrediensliste, allergener)
