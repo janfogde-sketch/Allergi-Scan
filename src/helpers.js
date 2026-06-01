@@ -1,22 +1,6 @@
 // @ts-nocheck
 import { ALLERGENS, SUPABASE_ANON_KEY } from "./constants.jsx";
 
-// ─── DEBUG TRACE ──────────────────────────────────────────────────────────────
-let _traceLog = [];
-export function traceId(prefix = "op") {
-  const id = prefix + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  return id;
-}
-export function traceLog(id, step, data = {}) {
-  const entry = { id, step, ts: new Date().toISOString(), ...data };
-  _traceLog.push(entry);
-  if (_traceLog.length > 200) _traceLog = _traceLog.slice(-100);
-  const status = data.error ? "❌" : data.ok === false ? "⚠️" : "✅";
-  console.log(`[${id}] ${status} ${step}`, data.error || data.detail || "");
-  return entry;
-}
-export function getTraceLog() { return [..._traceLog]; }
-
 export const initials = n => (n||"").split(" ").filter(Boolean).map(w=>w[0]).join("").toUpperCase().slice(0,2)||"?";
 
 export const timeAgo = ts => { const d=Date.now()-new Date(ts).getTime(); if(d<60000)return"Lige nu"; if(d<3600000)return`${Math.floor(d/60000)} min siden`; if(d<86400000)return`${Math.floor(d/3600000)} t siden`; return`${Math.floor(d/86400000)} d siden`; };
@@ -234,6 +218,42 @@ export function checkDietCompatibility(dietId, allergenFlags, ingredientsText, n
     default:
       return { ok: null, reasons: ["Ukendt diæt"], confidence: "low" };
   }
+}
+
+
+// ─── DEBUG TRACE SYSTEM ──────────────────────────────────────────────────────
+// traceId(prefix) → unikt ID per operation (scan/search/ocr/submit)
+// traceLog(id, step, data) → logger til console + in-memory array (max 200)
+// getTraceLog() → henter alle traces som array
+// clearTraceLog() → rydder alle traces
+
+const _traceLog = [];
+
+export function traceId(prefix = "op") {
+  return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,6)}`;
+}
+
+export function traceLog(id, step, data = {}) {
+  const entry = {
+    id,
+    step,
+    ts: new Date().toISOString(),
+    ms: Date.now(),
+    ...data,
+  };
+  _traceLog.push(entry);
+  if (_traceLog.length > 200) _traceLog.shift();
+  console.log(`[trace:${id}] ${step}`, data);
+  return entry;
+}
+
+export function getTraceLog(id = null) {
+  if (id) return _traceLog.filter(e => e.id === id);
+  return [..._traceLog];
+}
+
+export function clearTraceLog() {
+  _traceLog.length = 0;
 }
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────

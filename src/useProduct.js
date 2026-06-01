@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { SUPABASE_URL, ALLERGENS, SCREENS } from "./constants.jsx";
-import { makeHeaders, apiCall, compareAllergens } from "./helpers.js";
+import { makeHeaders, apiCall, compareAllergens, traceId, traceLog } from "./helpers.js";
 
 export function useProduct({ accessToken, userId, activeProfiles,
                               notFoundEan, setNotFoundEan,
@@ -77,6 +77,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
       const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); });
       traceLog(tid, "ocr:base64-ready", { length: base64.length });
       setOcrImageBase64(base64);
+      traceLog(tid, "ocr:image_ready", { size: Math.round(base64.length * 0.75 / 1024) + "kb" });
       const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ image_base64: base64 }) });
       traceLog(tid, "ocr:response", { success: ocrData.success, textLength: ocrData.text?.length || 0, text: (ocrData.text || "").substring(0, 80) });
       if (ocrData.success && ocrData.text) {
@@ -120,8 +121,12 @@ export function useProduct({ accessToken, userId, activeProfiles,
           user_confirmed: true,
         }),
       });
+      traceLog(tid, "submit:success", { ean: notFoundEan });
       setScreen(SCREENS.SUBMITTED);
-    } catch { setScanError_("Indsendelse fejlede. Prøv igen."); }
+    } catch (e) {
+      traceLog(tid, "submit:error", { error: e.message });
+      setScanError_("Indsendelse fejlede. Prøv igen.");
+    }
     setSubmitting(false);
   };
 
