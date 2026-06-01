@@ -100,17 +100,17 @@ export default function ProfileScreen({
           <div className="screen fade-in">
 
             {/* Hero */}
-            <div style={{ background:"var(--ink)", borderRadius:20, padding:"22px 20px", marginBottom:14 }}>
+            <div style={{ background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:20, padding:"22px 20px", marginBottom:14 }}>
               <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:16 }}>
                 <div style={{ width:56, height:56, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800, color:"#fff", flexShrink:0 }}>
                   {initials(user.name||"?")}
                 </div>
                 <div style={{ flex:1 }}>
-                  <div style={{ fontSize:19, fontWeight:900, color:"#fff", letterSpacing:"-.3px" }}>{user.name||"Din profil"}</div>
-                  <div style={{ fontSize:12, color:"rgba(255,255,255,.5)", marginTop:3 }}>{user.email||loginEmail||""}</div>
+                  <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px" }}>{user.name||"Din profil"}</div>
+                  <div style={{ fontSize:12, color:"var(--muted)", marginTop:3 }}>{user.email||loginEmail||""}</div>
                 </div>
                 <button onClick={() => setScreen(SCREENS.EDITPROFILE)}
-                  style={{ background:"rgba(255,255,255,.1)", border:"1px solid rgba(255,255,255,.15)", borderRadius:10, padding:"7px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"#fff", cursor:"pointer" }}>
+                  style={{ background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10, padding:"7px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
                   Rediger
                 </button>
               </div>
@@ -121,9 +121,9 @@ export default function ProfileScreen({
                   [family.length, "Familie"],
                   [history.length, "Scanninger"],
                 ].map(([n, lbl]) => (
-                  <div key={lbl} style={{ background:"rgba(255,255,255,.08)", borderRadius:10, padding:"10px 8px", textAlign:"center" }}>
-                    <div style={{ fontSize:20, fontWeight:900, color:"#fff" }}>{n}</div>
-                    <div style={{ fontSize:10, color:"rgba(255,255,255,.45)", fontWeight:600, marginTop:2 }}>{lbl}</div>
+                  <div key={lbl} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"10px 8px", textAlign:"center" }}>
+                    <div style={{ fontSize:20, fontWeight:700, color:"var(--ink)" }}>{n}</div>
+                    <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, marginTop:2 }}>{lbl}</div>
                   </div>
                 ))}
               </div>
@@ -173,7 +173,7 @@ export default function ProfileScreen({
               ].map((item, i, arr) => (
                 <div key={item.label} onClick={item.fn}
                   style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 16px", borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", cursor:"pointer" }}>
-                  <div style={{ width:40, height:40, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
+                  <div style={{ width:40, height:40, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
                     {item.icon}
                   </div>
                   <div style={{ flex:1 }}>
@@ -190,7 +190,7 @@ export default function ProfileScreen({
               <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:12 }}>Konto</div>
               <div style={{ display:"flex", gap:8 }}>
                 <button onClick={clearAuth}
-                  style={{ flex:1, padding:"11px", background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                  style={{ flex:1, padding:"11px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
                   Log ud
                 </button>
                 <button onClick={() => { setShowDeleteAccount(true); setDeleteConfirmText(""); }}
@@ -356,7 +356,7 @@ export default function ProfileScreen({
                   const on = allergens.includes(a.id);
                   return (
                     <div key={a.id} className="chip" style={{
-                      background: on ? "var(--red-lt)" : "var(--paper2)",
+                      background: on ? "var(--red-lt)" : "var(--surface)",
                       border: `1.5px solid ${on ? "var(--red)" : "var(--border)"}`,
                       color: on ? "var(--red)" : "var(--ink)",
                     }}
