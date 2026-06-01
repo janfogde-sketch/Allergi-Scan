@@ -424,7 +424,7 @@ export default function ScannerScreen({
                 <div style={{ position:"relative", width:180, height:90 }}>
                   {/* Stregkode streger */}
                   <svg viewBox="0 0 180 90" width="180" height="90">
-                    <g fill="rgba(255,255,255,0.15)">
+                    <g fill="rgba(74,222,128,0.25)">
                       <rect x="10" y="0" width="7" height="90" rx="1"/>
                       <rect x="22" y="0" width="3" height="90" rx="1"/>
                       <rect x="29" y="0" width="5" height="90" rx="1"/>
@@ -447,15 +447,29 @@ export default function ScannerScreen({
                     </g>
                   </svg>
                   {/* Laser linje */}
-                  <div className="scan-laser" />
+                  <div style={{
+                    position:"absolute",
+                    left:0, right:0,
+                    height:3,
+                    borderRadius:2,
+                    background:"linear-gradient(90deg, transparent, #4ADE80, #86EFAC, #4ADE80, transparent)",
+                    boxShadow:"0 0 8px #4ADE80, 0 0 16px rgba(74,222,128,.4)",
+                    animation:"scanLaser 2s ease-in-out infinite",
+                  }} />
+                  <style>{`
+                    @keyframes scanLaser {
+                      0%, 100% { top: 8px; opacity: 0.5; }
+                      50% { top: calc(100% - 8px); opacity: 1; }
+                    }
+                  `}</style>
                   {/* Hjørnemarkører */}
                   {[["0","0","top","left"],["0","0","top","right"],["0","0","bottom","left"],["0","0","bottom","right"]].map((_,i) => {
                     const pos = [{top:8,left:8},{top:8,right:8},{bottom:8,left:8},{bottom:8,right:8}][i];
                     const borders = [
-                      {borderTop:"2px solid rgba(255,255,255,.6)",borderLeft:"2px solid rgba(255,255,255,.6)"},
-                      {borderTop:"2px solid rgba(255,255,255,.6)",borderRight:"2px solid rgba(255,255,255,.6)"},
-                      {borderBottom:"2px solid rgba(255,255,255,.6)",borderLeft:"2px solid rgba(255,255,255,.6)"},
-                      {borderBottom:"2px solid rgba(255,255,255,.6)",borderRight:"2px solid rgba(255,255,255,.6)"},
+                      {borderTop:"2px solid rgba(74,222,128,.7)",borderLeft:"2px solid rgba(74,222,128,.7)"},
+                      {borderTop:"2px solid rgba(74,222,128,.7)",borderRight:"2px solid rgba(74,222,128,.7)"},
+                      {borderBottom:"2px solid rgba(74,222,128,.7)",borderLeft:"2px solid rgba(74,222,128,.7)"},
+                      {borderBottom:"2px solid rgba(74,222,128,.7)",borderRight:"2px solid rgba(74,222,128,.7)"},
                     ][i];
                     return <div key={i} style={{ position:"absolute", width:16, height:16, ...pos, ...borders, borderRadius:2 }}/>;
                   })}
