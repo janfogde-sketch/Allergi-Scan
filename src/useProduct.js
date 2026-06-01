@@ -52,6 +52,8 @@ export function useProduct({ accessToken, userId, activeProfiles,
 
   const handleProductImageCapture = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
+    const tid = traceId("photo-product");
+    traceLog(tid, "photo:start", { size: file.size, type: file.type });
     setOcrLoading(true);
     try {
       const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); });
@@ -68,19 +70,31 @@ export function useProduct({ accessToken, userId, activeProfiles,
 
   const handleImageCapture = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
+    const tid = traceId("ocr");
+    traceLog(tid, "ocr:start", { size: file.size, type: file.type });
     setOcrLoading(true);
     try {
       const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); });
+      traceLog(tid, "ocr:base64-ready", { length: base64.length });
       setOcrImageBase64(base64);
       const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ image_base64: base64 }) });
-      if (ocrData.success) {
+      traceLog(tid, "ocr:response", { success: ocrData.success, textLength: ocrData.text?.length || 0, text: (ocrData.text || "").substring(0, 80) });
+      if (ocrData.success && ocrData.text) {
         setOcrText(ocrData.text);
         if (!proposedName) setProposedName(extractProductName(ocrData.text));
+        traceLog(tid, "ocr:allergen-call", { textLength: ocrData.text.length });
         const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ text: ocrData.text }) });
+        traceLog(tid, "ocr:allergen-response", { success: allergenData.success, method: allergenData.method, flags: allergenData.allergen_flags });
         if (allergenData.success) setProposedFlags(allergenData.allergen_flags);
         setNotFoundStep(3);
-      } else { setScanError_("Billedet kunne ikke læses. Prøv et klarere billede."); }
-    } catch { setScanError_("Billedet kunne ikke analyseres. Prøv igen."); }
+      } else {
+        traceLog(tid, "ocr:empty", { error: "OCR returnerede tom tekst eller fejl", raw: JSON.stringify(ocrData).substring(0, 200) });
+        setScanError_("Billedet kunne ikke læses. Prøv et klarere billede.");
+      }
+    } catch (e) {
+      traceLog(tid, "ocr:error", { error: e?.message || String(e) });
+      setScanError_("Billedet kunne ikke analyseres. Prøv igen.");
+    }
     setOcrLoading(false);
   };
 
@@ -92,6 +106,8 @@ export function useProduct({ accessToken, userId, activeProfiles,
   };
 
   const submitProduct = async () => {
+    const tid = traceId("submit");
+    traceLog(tid, "submit:start", { ean: notFoundEan, name: proposedName, hasOcr: !!ocrText, hasImage: !!productImageBase64 });
     setSubmitting(true);
     try {
       await apiCall(`${SUPABASE_URL}/functions/v1/submissions`, {
