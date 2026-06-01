@@ -55,7 +55,7 @@ export default function AdminScreen({
         {openTicket && (
           <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
             onClick={e => e.target === e.currentTarget && setOpenTicket(null)}>
-            <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 100px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
+            <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 140px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
               onClick={e => e.stopPropagation()}>
 
               {/* Header */}
@@ -226,7 +226,7 @@ ${openTicket.description}
 
         {/* ══ FAMILIE ══ */}
         {screen === SCREENS.FAMILY && (
-          <div className="screen fade-in">
+          <div className="screen fade-in" style={{ paddingBottom:120 }}>
             <div className="screen-title">Familie</div>
             <div className="screen-sub">Administrér familiemedlemmers allergiprofiler.</div>
             <div className="card" style={{ padding:"12px 14px" }}>
@@ -612,7 +612,7 @@ ${openTicket.description}
         {screen === SCREENS.ADMIN && openAdminUser && (
           <div style={{ position:"fixed", inset:0, zIndex:9992, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
             onClick={e => e.target === e.currentTarget && setOpenAdminUser(null)}>
-            <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 100px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
+            <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 140px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
               onClick={e => e.stopPropagation()}>
 
                   {/* Header */}
@@ -761,7 +761,7 @@ ${openTicket.description}
 
         {/* ══ ADMIN — ÅBEN SUBMISSION ══ */}
         {screen === SCREENS.ADMIN && openSubmission && editingSubmission && (
-          <div className="screen fade-in">
+          <div className="screen fade-in" style={{ paddingBottom:120 }}>
 
             {/* Header */}
             <div style={{ display:"flex", alignItems:"center", gap:12, padding:"16px 0 14px" }}>
@@ -887,7 +887,7 @@ ${openTicket.description}
             </div>
 
             {/* Handlings-knapper */}
-            <div style={{ display:"flex", flexDirection:"column", gap:8, paddingBottom:16 }}>
+            <div style={{ display:"flex", flexDirection:"column", gap:8, paddingBottom:120 }}>
               <button onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}
                 style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:700, color:"#071510", cursor:"pointer", boxShadow:"0 4px 16px rgba(34,197,94,.3)" }}>
                 ✅ Godkend og opret produkt
