@@ -65,6 +65,9 @@ export default function EatSafe() {
   const productCacheRef = useRef({}); // Cache af seneste 50 scannede produkter
   const lastScannedRef = useRef(null); // Forhindrer dobbelt-scan
   const [torchOn, setTorchOn] = useState(false);
+  const [scanZoom, setScanZoom] = useState(1.0);
+  const scanZoomRef = React.useRef(1.0);
+  const noScanTimerRef = React.useRef(null);
   const [profilePopup, setProfilePopup] = useState(null); // id af profil der vises popup for
   const galleryInputRef = useRef(null);
   const torchTrackRef = useRef(null);
@@ -233,7 +236,8 @@ export default function EatSafe() {
   // ── KAMERA + SCANNING ──────────────────────────────────────────────────────
   const startCamera = async () => {
     if (cameraActive) return;
-    setScanError(""); setTorchOn(false);
+    setScanError(""); setTorchOn(false); setScanZoom(1.0); scanZoomRef.current = 1.0;
+    if (noScanTimerRef.current) { clearTimeout(noScanTimerRef.current); noScanTimerRef.current = null; }
     torchTrackRef.current = null; lastScannedRef.current = null;
     if (!navigator.mediaDevices?.getUserMedia) { setScanError("Kamera ikke understøttet. Prøv Chrome eller Safari."); return; }
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -340,6 +344,23 @@ export default function EatSafe() {
             }
             if (adv.length) await track.applyConstraints({ advanced: adv });
           } catch (e) { console.warn("Camera constraints fejlede:", e); }
+          // Auto-zoom: hvis ingen kode fanges efter 3s, prøv 1.5x zoom
+          const applyZoom = async (zoomLevel) => {
+            try {
+              const caps = track.getCapabilities?.() || {};
+              if (caps.zoom && caps.zoom.max >= zoomLevel) {
+                await track.applyConstraints({ advanced: [{ zoom: zoomLevel }] });
+                scanZoomRef.current = zoomLevel;
+                setScanZoom(zoomLevel);
+              }
+            } catch {}
+          };
+          noScanTimerRef.current = setTimeout(async () => {
+            if (scanZoomRef.current === 1.0) await applyZoom(1.5);
+            noScanTimerRef.current = setTimeout(async () => {
+              if (scanZoomRef.current === 1.5) await applyZoom(2.0);
+            }, 4000);
+          }, 3000);
           // Tap-to-focus: når brugeren tapper video-feltet
           videoEl.onclick = async (ev) => {
             try {
@@ -388,6 +409,7 @@ export default function EatSafe() {
   };
 
   const stopCamera = () => {
+    if (noScanTimerRef.current) { clearTimeout(noScanTimerRef.current); noScanTimerRef.current = null; }
     if (html5QrRef.current) { html5QrRef.current.stop().catch(() => {}); html5QrRef.current = null; }
     if (torchTrackRef.current) { try { torchTrackRef.current.applyConstraints({ advanced: [{ torch: false }] }); } catch {} torchTrackRef.current = null; }
     setCameraActive(false); setTorchOn(false);
@@ -1392,6 +1414,7 @@ ${text}` }],
             toggleItem={toggleItem}
             toggleTorch={toggleTorch}
             torchOn={torchOn}
+            scanZoom={scanZoom}
             buildLabel={formatBuildTime()}
             lookupProduct={lookupProduct}
             selectedENumbers={selectedENumbers}

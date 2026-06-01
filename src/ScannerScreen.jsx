@@ -57,6 +57,7 @@ export default function ScannerScreen({
   toggleItem,
   toggleTorch,
   torchOn,
+  scanZoom,
   buildLabel,
   lookupProduct,
   onBetaClick,
@@ -401,7 +402,11 @@ export default function ScannerScreen({
               {/* Stop-knap når kamera er aktivt */}
               {cameraActive && (
                 <div style={{ padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                  <span style={{ color:"rgba(255,255,255,.6)", fontSize:12, fontWeight:600 }}>Hold stregkoden ind i rammen</span>
+                  <span style={{ fontSize:11, fontWeight:600 }}>
+                    {scanZoom > 1.0
+                      ? <span style={{ color:"var(--green)" }}>🔍 {scanZoom}× zoom</span>
+                      : <span style={{ color:"rgba(255,255,255,.6)" }}>Hold stregkoden ind i rammen</span>}
+                  </span>
                   <div style={{ display:"flex", gap:6 }}>
                     <button onClick={() => galleryInputRef.current?.click()} style={{ background:"rgba(255,255,255,.15)", border:"none", borderRadius:6, padding:"5px 10px", color:"#fff", fontSize:16, cursor:"pointer", lineHeight:1 }}>🖼️</button>
                     <button onClick={toggleTorch} style={{
