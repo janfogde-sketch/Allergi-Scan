@@ -65,6 +65,9 @@ export default function EatSafe() {
   const productCacheRef = useRef({}); // Cache af seneste 50 scannede produkter
   const lastScannedRef = useRef(null); // Forhindrer dobbelt-scan
   const [torchOn, setTorchOn] = useState(false);
+  const [scanZoom, setScanZoom] = useState(1.0);
+  const scanZoomRef = React.useRef(1.0);
+  const noScanTimerRef = React.useRef(null);
   const [profilePopup, setProfilePopup] = useState(null); // id af profil der vises popup for
   const galleryInputRef = useRef(null);
   const torchTrackRef = useRef(null);
@@ -233,7 +236,8 @@ export default function EatSafe() {
   // ── KAMERA + SCANNING ──────────────────────────────────────────────────────
   const startCamera = async () => {
     if (cameraActive) return;
-    setScanError(""); setTorchOn(false);
+    setScanError(""); setTorchOn(false); setScanZoom(1.0); scanZoomRef.current = 1.0;
+    if (noScanTimerRef.current) { clearTimeout(noScanTimerRef.current); noScanTimerRef.current = null; }
     torchTrackRef.current = null; lastScannedRef.current = null;
     if (!navigator.mediaDevices?.getUserMedia) { setScanError("Kamera ikke understøttet. Prøv Chrome eller Safari."); return; }
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -269,39 +273,39 @@ export default function EatSafe() {
       // 0=QR_CODE, 1=AZTEC, 2=CODABAR, 3=CODE_39, 4=CODE_93, 5=CODE_128,
       // 6=DATA_MATRIX, 7=MAXICODE, 8=ITF, 9=EAN_13, 10=EAN_8, 11=PDF_417, 12=RSS_14, 13=RSS_EXPANDED, 14=UPC_A, 15=UPC_E, 16=UPC_EAN_EXTENSION
       const barcodeFormats = [3, 5, 8, 9, 10, 14, 15]; // CODE_39, CODE_128, ITF, EAN_13, EAN_8, UPC_A, UPC_E
+      // Stort scan-område: dækker næsten hele kameraet — markant højere succesrate
+      // Performance er ikke et problem længere takket være BarcodeDetector API
       const qrConfig = {
-        fps: isIOS ? 25 : 30,
-        // Smal vandret stribe — stregkoder er vandrette og kortere boks = hurtigere decode
-        qrbox: (w, h) => ({ width: Math.round(Math.min(w, h) * 0.85), height: Math.round(Math.min(w, h) * 0.28) }),
-        aspectRatio: isIOS ? 1.7778 : 1.7778,
-        disableFlip: true,
+        fps: isIOS ? 25 : 24,
+        qrbox: (w, h) => ({
+          width:  Math.round(w * 0.92),
+          height: Math.round(h * 0.55),
+        }),
+        // Lad kameraet bruge sit native aspect ratio i stedet for at tvinge 16:9
+        // Det giver ofte højere reel opløsning på Android
+        aspectRatio: undefined,
+        disableFlip: false, // Tillad flip — fanger flere koder, ringe ydelses-cost
         formatsToSupport: barcodeFormats,
-        // experimentalFeatures: brug BarcodeDetector API hvis tilgængelig (native + meget hurtigere)
         experimentalFeatures: { useBarCodeDetectorIfSupported: true },
         videoConstraints: isIOS
           ? {
               facingMode: { exact: "environment" },
-              width:  { min: 1280, ideal: 1920 },
-              height: { min: 720,  ideal: 1080 },
+              width:  { ideal: 1920 },
+              height: { ideal: 1080 },
             }
           : {
-              facingMode: "environment",
-              width:  { min: 1280, ideal: 1920, max: 3840 },
-              height: { min: 720,  ideal: 1080, max: 2160 },
-              frameRate: { ideal: 30, max: 60 },
-              advanced: [
-                { focusMode: "continuous" },
-                { exposureMode: "continuous" },
-                { whiteBalanceMode: "continuous" },
-                { zoom: 1.0 },
-              ],
+              facingMode: { ideal: "environment" },
+              // Højere opløsning = bedre decode af små/utydelige koder
+              width:  { ideal: 1920 },
+              height: { ideal: 1080 },
+              frameRate: { ideal: 30 },
             },
       };
       await html5QrRef.current.start(
         { facingMode: isIOS ? { exact: "environment" } : "environment" }, qrConfig,
         (code) => {
           const now = Date.now();
-          if (lastScannedRef.current?.code === code && now - lastScannedRef.current.time < 2000) return;
+          if (lastScannedRef.current?.code === code && now - lastScannedRef.current.time < 1500) return;
           lastScannedRef.current = { code, time: now };
           if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
           try {
@@ -321,15 +325,42 @@ export default function EatSafe() {
         const track = videoEl.srcObject.getVideoTracks()[0];
         if (track) {
           torchTrackRef.current = track;
-          // Forsøg at anvende avancerede constraints (virker på Android Chrome)
           try {
             const caps = track.getCapabilities?.() || {};
             const adv = [];
+            // Continuous autofokus — KRITISK for stregkode-scanning
             if (caps.focusMode?.includes("continuous")) adv.push({ focusMode: "continuous" });
             if (caps.exposureMode?.includes("continuous")) adv.push({ exposureMode: "continuous" });
             if (caps.whiteBalanceMode?.includes("continuous")) adv.push({ whiteBalanceMode: "continuous" });
+            // Macro focus distance hvis tilgængelig — hjælper close-up scanning
+            if (caps.focusDistance) {
+              adv.push({ focusDistance: caps.focusDistance.min });
+            }
+            // Hardware zoom 1.5x — gør stregkoden større = bedre decode
+            // Kun hvis brugeren ikke selv har zoomet
+            if (caps.zoom && caps.zoom.max >= 1.5) {
+              // Lille zoom hjælper ofte med små stregkoder, men ikke for meget
+              // (vi gør det optionelt — brugeren kan tappe for at fokusere i stedet)
+            }
             if (adv.length) await track.applyConstraints({ advanced: adv });
-          } catch {}
+          } catch (e) { console.warn("Camera constraints fejlede:", e); }
+          // Auto-zoom: hvis ingen kode fanges efter 3s, prøv 1.5x zoom
+          const applyZoom = async (zoomLevel) => {
+            try {
+              const caps = track.getCapabilities?.() || {};
+              if (caps.zoom && caps.zoom.max >= zoomLevel) {
+                await track.applyConstraints({ advanced: [{ zoom: zoomLevel }] });
+                scanZoomRef.current = zoomLevel;
+                setScanZoom(zoomLevel);
+              }
+            } catch {}
+          };
+          noScanTimerRef.current = setTimeout(async () => {
+            if (scanZoomRef.current === 1.0) await applyZoom(1.5);
+            noScanTimerRef.current = setTimeout(async () => {
+              if (scanZoomRef.current === 1.5) await applyZoom(2.0);
+            }, 4000);
+          }, 3000);
           // Tap-to-focus: når brugeren tapper video-feltet
           videoEl.onclick = async (ev) => {
             try {
@@ -378,6 +409,7 @@ export default function EatSafe() {
   };
 
   const stopCamera = () => {
+    if (noScanTimerRef.current) { clearTimeout(noScanTimerRef.current); noScanTimerRef.current = null; }
     if (html5QrRef.current) { html5QrRef.current.stop().catch(() => {}); html5QrRef.current = null; }
     if (torchTrackRef.current) { try { torchTrackRef.current.applyConstraints({ advanced: [{ torch: false }] }); } catch {} torchTrackRef.current = null; }
     setCameraActive(false); setTorchOn(false);
@@ -1382,6 +1414,7 @@ ${text}` }],
             toggleItem={toggleItem}
             toggleTorch={toggleTorch}
             torchOn={torchOn}
+            scanZoom={scanZoom}
             buildLabel={formatBuildTime()}
             lookupProduct={lookupProduct}
             selectedENumbers={selectedENumbers}
