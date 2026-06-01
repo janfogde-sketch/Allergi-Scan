@@ -810,12 +810,15 @@ ${text}` }],
     if (navigator.vibrate) navigator.vibrate(40);
     const cached = productCacheRef.current[ean.trim()];
     if (cached) { setScanResult(cached); setScreen(SCREENS.RESULT); return; }
+    const tid = traceId("scan");
+    traceLog(tid, "scan:start", { ean: ean.trim() });
     setLoading(true); setScanResult(null); setScanError(""); setShowIng(false);
     try {
       const data = await apiCall(`${SUPABASE_URL}/functions/v1/products/${ean.trim()}`, {
         headers: makeHeaders(accessToken),
       });
       if (!data.found) {
+        traceLog(tid, "scan:not_found", { ean: ean.trim() });
         setNotFoundEan(ean.trim());
         await saveHistoryEntry(ean.trim(), null, "not_found", {}, activeProfiles);
         setLoading(false); setScreen(SCREENS.NOTFOUND); setNotFoundStep(1);
@@ -894,11 +897,12 @@ ${text}` }],
       productCacheRef.current[ean.trim()] = result;
       const cacheKeys = Object.keys(productCacheRef.current);
       if (cacheKeys.length > 50) delete productCacheRef.current[cacheKeys[0]];
+      traceLog(tid, "scan:result", { ean: ean.trim(), name: result.name, status, matchedDanger, matchedWarning });
       setScanResult(result);
       setHistory(h => [result, ...h].slice(0, 50));
       await saveHistoryEntry(ean.trim(), product.id, status, flags, activeProfiles);
       setScreen(SCREENS.RESULT);
-    } catch (e) { setScanError("Der opstod en fejl. Tjek din forbindelse og prøv igen."); }
+    } catch (e) { traceLog(tid, "scan:error", { error: e.message }); setScanError("Der opstod en fejl. Tjek din forbindelse og prøv igen."); }
     setLoading(false);
   }, [accessToken, activeIds]);
 
@@ -915,6 +919,8 @@ ${text}` }],
       setSearchLoading(true);
       setSearchResults([]);
       const q = searchQuery.trim();
+      const tid = traceId("search");
+      traceLog(tid, "search:start", { q });
 
       try {
         const res = await fetch(
@@ -923,10 +929,12 @@ ${text}` }],
         );
         const data = await res.json();
         if (data.success) {
-          setSearchResults((data.products || []).map(p => ({ ...p, source:"local", verified:p.verified_status, conflicts:[] })));
+          const results = (data.products || []).map(p => ({ ...p, source:"local", verified:p.verified_status, conflicts:[] }));
+          traceLog(tid, "search:results", { q, count: results.length });
+          setSearchResults(results);
         }
-      } catch {
-        // silent
+      } catch (e) {
+        traceLog(tid, "search:error", { error: e.message });
       } finally {
         setSearchLoading(false);
       }

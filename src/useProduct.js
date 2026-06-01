@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { SUPABASE_URL, ALLERGENS, SCREENS } from "./constants.jsx";
-import { makeHeaders, apiCall, compareAllergens } from "./helpers.js";
+import { makeHeaders, apiCall, compareAllergens, traceId, traceLog } from "./helpers.js";
 
 export function useProduct({ accessToken, userId, activeProfiles,
                               notFoundEan, setNotFoundEan,
@@ -68,19 +68,32 @@ export function useProduct({ accessToken, userId, activeProfiles,
 
   const handleImageCapture = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
+    const tid = traceId("ocr");
+    traceLog(tid, "ocr:start", { ean: notFoundEan });
     setOcrLoading(true);
     try {
       const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); });
       setOcrImageBase64(base64);
+      traceLog(tid, "ocr:image_ready", { size: Math.round(base64.length * 0.75 / 1024) + "kb" });
       const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ image_base64: base64 }) });
       if (ocrData.success) {
+        traceLog(tid, "ocr:text_extracted", { chars: ocrData.text?.length || 0 });
         setOcrText(ocrData.text);
         if (!proposedName) setProposedName(extractProductName(ocrData.text));
         const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ text: ocrData.text }) });
-        if (allergenData.success) setProposedFlags(allergenData.allergen_flags);
+        if (allergenData.success) {
+          traceLog(tid, "ocr:allergens_parsed", { flags: allergenData.allergen_flags });
+          setProposedFlags(allergenData.allergen_flags);
+        }
         setNotFoundStep(3);
-      } else { setScanError_("Billedet kunne ikke læses. Prøv et klarere billede."); }
-    } catch { setScanError_("Billedet kunne ikke analyseres. Prøv igen."); }
+      } else {
+        traceLog(tid, "ocr:failed", { reason: "ocr not success" });
+        setScanError_("Billedet kunne ikke læses. Prøv et klarere billede.");
+      }
+    } catch (e) {
+      traceLog(tid, "ocr:error", { error: e.message });
+      setScanError_("Billedet kunne ikke analyseres. Prøv igen.");
+    }
     setOcrLoading(false);
   };
 
@@ -92,6 +105,8 @@ export function useProduct({ accessToken, userId, activeProfiles,
   };
 
   const submitProduct = async () => {
+    const tid = traceId("submit");
+    traceLog(tid, "submit:start", { ean: notFoundEan, name: proposedName });
     setSubmitting(true);
     try {
       await apiCall(`${SUPABASE_URL}/functions/v1/submissions`, {
@@ -104,8 +119,12 @@ export function useProduct({ accessToken, userId, activeProfiles,
           user_confirmed: true,
         }),
       });
+      traceLog(tid, "submit:success", { ean: notFoundEan });
       setScreen(SCREENS.SUBMITTED);
-    } catch { setScanError_("Indsendelse fejlede. Prøv igen."); }
+    } catch (e) {
+      traceLog(tid, "submit:error", { error: e.message });
+      setScanError_("Indsendelse fejlede. Prøv igen.");
+    }
     setSubmitting(false);
   };
 

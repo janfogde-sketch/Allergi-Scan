@@ -55,7 +55,7 @@ export default function AdminScreen({
         {openTicket && (
           <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
             onClick={e => e.target === e.currentTarget && setOpenTicket(null)}>
-            <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
+            <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 100px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
               onClick={e => e.stopPropagation()}>
 
               {/* Header */}
@@ -268,7 +268,7 @@ ${openTicket.description}
 
         {/* ══ ADMIN ══ */}
         {screen === SCREENS.ADMIN && !openSubmission && !openTicket && (
-          <div className="screen fade-in">
+          <div className="screen fade-in" style={{ paddingBottom:120 }}>
 
             {/* Header */}
             <div style={{ display:"flex", alignItems:"center", gap:12, padding:"16px 0 14px" }}>
@@ -611,7 +611,7 @@ ${openTicket.description}
         {screen === SCREENS.ADMIN && openAdminUser && (
           <div style={{ position:"fixed", inset:0, zIndex:9992, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
             onClick={e => e.target === e.currentTarget && setOpenAdminUser(null)}>
-            <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
+            <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 100px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
               onClick={e => e.stopPropagation()}>
 
                   {/* Header */}

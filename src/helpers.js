@@ -220,6 +220,42 @@ export function checkDietCompatibility(dietId, allergenFlags, ingredientsText, n
   }
 }
 
+
+// ─── DEBUG TRACE SYSTEM ──────────────────────────────────────────────────────
+// traceId(prefix) → unikt ID per operation (scan/search/ocr/submit)
+// traceLog(id, step, data) → logger til console + in-memory array (max 200)
+// getTraceLog() → henter alle traces som array
+// clearTraceLog() → rydder alle traces
+
+const _traceLog = [];
+
+export function traceId(prefix = "op") {
+  return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,6)}`;
+}
+
+export function traceLog(id, step, data = {}) {
+  const entry = {
+    id,
+    step,
+    ts: new Date().toISOString(),
+    ms: Date.now(),
+    ...data,
+  };
+  _traceLog.push(entry);
+  if (_traceLog.length > 200) _traceLog.shift();
+  console.log(`[trace:${id}] ${step}`, data);
+  return entry;
+}
+
+export function getTraceLog(id = null) {
+  if (id) return _traceLog.filter(e => e.id === id);
+  return [..._traceLog];
+}
+
+export function clearTraceLog() {
+  _traceLog.length = 0;
+}
+
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 
 // ─── MADPAS — BUNDLED OVERSÆTTELSER ─────────────────────────────────────────

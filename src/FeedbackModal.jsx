@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { SCREENS, PAGE_IDS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { BUILD_TIME, COMMIT_SHA, formatBuildTime, buildScreenLabel } from "./utils.jsx";
+import { getTraceLog } from "./helpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FeedbackModal.jsx
@@ -91,6 +92,7 @@ export default function FeedbackModal({
         selected_recipe:  selectedRecipe?.name || null,
         onboard_step:     screen === SCREENS.ONBOARD ? onboardStep : null,
         app_version:      "beta-1.0",
+        debug_trace:      getTraceLog().slice(-50), // Seneste 50 trace-entries
       };
 
       const headers = {
@@ -231,14 +233,48 @@ export default function FeedbackModal({
             {/* Diagnostik */}
             <div style={{ background:"var(--surface)", borderRadius:10,
               padding:"10px 12px", marginBottom:14 }}>
-              <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:6 }}>📊 Automatisk inkluderet diagnostik</div>
-              <div style={{ fontSize:10, color:"var(--muted2)", lineHeight:1.85 }}>
-                <b style={{ color:"var(--ink)" }}>Skærm:</b> {buildScreenLabel({ screen, authTab, onboardStep, scanResult, madpasWaiterView, madpasLang, selectedRecipe, editMode, showManualEan, profilePopup })} ({PAGE_IDS[screen] || "—"})
-                <br/><b style={{ color:"var(--ink)" }}>Bruger:</b> {user?.name || "anonym"} · <b style={{ color:"var(--ink)" }}>Rolle:</b> {user?.role || "—"}
-                <br/><b style={{ color:"var(--ink)" }}>Enhed:</b> {device} · <b style={{ color:"var(--ink)" }}>Viewport:</b> {window.innerWidth}×{window.innerHeight}
-                <br/><b style={{ color:"var(--ink)" }}>Build:</b> {formatBuildTime()} ({COMMIT_SHA})
-                {scanResult && <><br/><b style={{ color:"var(--ink)" }}>Produkt:</b> {scanResult.name} [EAN: {scanResult.ean || scanResult.code || "—"}]</>}
+              <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:8 }}>📊 Automatisk inkluderet diagnostik</div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"4px 12px", marginBottom:8 }}>
+                {[
+                  ["Skærm",       `${buildScreenLabel({ screen, authTab, onboardStep, scanResult, madpasWaiterView, madpasLang, selectedRecipe, editMode, showManualEan, profilePopup })} (${PAGE_IDS[screen] || "—"})`],
+                  ["Bruger",      user?.name || "anonym"],
+                  ["Email",       user?.email || loginEmail || "—"],
+                  ["Rolle",       user?.role || "—"],
+                  ["Allergener",  allergens?.length ? allergens.join(", ") : "ingen"],
+                  ["Familie",     `${family?.length || 0} profiler`],
+                  ["Enhed",       device],
+                  ["Viewport",    `${window.innerWidth}×${window.innerHeight}`],
+                  ["Online",      navigator.onLine ? "Ja" : "Nej"],
+                  ["Build",       `${formatBuildTime()} (${COMMIT_SHA})`],
+                  ...(scanResult ? [["Produkt", `${scanResult.name || "—"} [${scanResult.ean || scanResult.code || "—"}]`]] : []),
+                ].map(([label, value]) => (
+                  <div key={label} style={{ fontSize:10, lineHeight:1.7 }}>
+                    <span style={{ color:"var(--muted)", fontWeight:700 }}>{label}: </span>
+                    <span style={{ color:"var(--ink)" }}>{value}</span>
+                  </div>
+                ))}
               </div>
+              {/* Debug trace */}
+              {(() => {
+                const traces = getTraceLog().slice(-10);
+                if (!traces.length) return null;
+                return (
+                  <div style={{ borderTop:"1px solid var(--border)", paddingTop:8, marginTop:4 }}>
+                    <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:4 }}>
+                      🔍 Debug trace ({getTraceLog().length} entries)
+                    </div>
+                    <div style={{ fontFamily:"var(--mono)", fontSize:9, color:"var(--muted)", lineHeight:1.7, maxHeight:80, overflowY:"auto" }}>
+                      {traces.map((t, i) => (
+                        <div key={i}>
+                          <span style={{ color:"var(--green-text)" }}>[{t.id}]</span>{" "}
+                          <span style={{ color:"var(--ink)" }}>{t.step}</span>{" "}
+                          <span style={{ color:"var(--muted2)" }}>{t.ts?.slice(11,19)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Send */}
