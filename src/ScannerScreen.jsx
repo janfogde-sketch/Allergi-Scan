@@ -1078,7 +1078,6 @@ export default function ScannerScreen({
             )}
 
             {/* ── TRIN 3: Næringsindhold ── */}
-<<<<<<< HEAD
             {notFoundStep === 3 && !ocrLoading && !nutritionOcrLoading && (
               <div className="fade-in">
                 <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>
@@ -1209,9 +1208,6 @@ export default function ScannerScreen({
 
             {/* ── TRIN 5: Bekræft og send ── */}
             {notFoundStep === 5 && !ocrLoading && (
-=======
-            {notFoundStep === 3 && !ocrLoading && (
->>>>>>> cf5bb966196026199b9fd73d14070df29b2bad5b
               <div className="fade-in">
                 <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>
                   Trin 3 — Næringsindhold (valgfrit)
