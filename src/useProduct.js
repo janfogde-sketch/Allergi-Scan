@@ -28,7 +28,12 @@ export function useProduct({ accessToken, userId, activeProfiles,
 
   // Ny produkt form
   const [proposedName, setProposedName]       = useState("");
+  const [proposedNutrition, setProposedNutrition] = useState({ energy:"", fat:"", saturated:"", carbs:"", sugars:"", protein:"", salt:"" });
+  const [proposedNotes, setProposedNotes]     = useState("");
   const [proposedFlags, setProposedFlags]     = useState(null);
+
+  // Næringsindhold OCR
+  const [nutritionOcrLoading, setNutritionOcrLoading] = useState(false);
 
   // Suggest-edit state
   const [editStep, setEditStep]               = useState("start");
@@ -87,7 +92,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
         const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ text: ocrData.text }) });
         traceLog(tid, "ocr:allergen-response", { success: allergenData.success, method: allergenData.method, flags: allergenData.allergen_flags });
         if (allergenData.success) setProposedFlags(allergenData.allergen_flags);
-        setNotFoundStep(3);
+        setNotFoundStep(3); // → Næringsindhold
       } else {
         traceLog(tid, "ocr:empty", { error: "OCR returnerede tom tekst eller fejl", raw: JSON.stringify(ocrData).substring(0, 200) });
         setScanError_("Billedet kunne ikke læses. Prøv et klarere billede.");
@@ -97,6 +102,52 @@ export function useProduct({ accessToken, userId, activeProfiles,
       setScanError_("Billedet kunne ikke analyseres. Prøv igen.");
     }
     setOcrLoading(false);
+  };
+
+  // Parse næringsindhold fra OCR tekst
+  const parseNutritionFromText = (text) => {
+    const find = (patterns) => {
+      for (const p of patterns) {
+        const m = text.match(p);
+        if (m) return m[1]?.replace(",", ".").trim();
+      }
+      return "";
+    };
+    return {
+      energy:    find([/energi[^0-9]*([0-9][0-9,.\/ kJ]+)/i, /energy[^0-9]*([0-9][0-9,.\/ kJ]+)/i]),
+      fat:       find([/fedt[^0-9]*([0-9][0-9,.]*)\s*g/i, /fat[^0-9]*([0-9][0-9,.]*)\s*g/i]),
+      saturated: find([/mættet[^0-9]*([0-9][0-9,.]*)\s*g/i, /saturated[^0-9]*([0-9][0-9,.]*)\s*g/i]),
+      carbs:     find([/kulhydrat[^0-9]*([0-9][0-9,.]*)\s*g/i, /carbohydrate[^0-9]*([0-9][0-9,.]*)\s*g/i]),
+      sugars:    find([/sukker[^0-9]*([0-9][0-9,.]*)\s*g/i, /sugar[^0-9]*([0-9][0-9,.]*)\s*g/i]),
+      protein:   find([/protein[^0-9]*([0-9][0-9,.]*)\s*g/i]),
+      salt:      find([/salt[^0-9]*([0-9][0-9,.]*)\s*g/i]),
+    };
+  };
+
+  const handleNutritionCapture = async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    const tid = traceId("ocr-nutrition");
+    traceLog(tid, "nutrition-ocr:start", { size: file.size });
+    setNutritionOcrLoading(true);
+    try {
+      const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); });
+      const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, {
+        method: "POST",
+        headers: makeHeaders(accessToken),
+        body: JSON.stringify({ image_base64: base64, mode: "nutrition" }),
+      });
+      traceLog(tid, "nutrition-ocr:response", { success: ocrData.success, textLength: ocrData.text?.length || 0 });
+      if (ocrData.success && ocrData.text) {
+        const parsed = parseNutritionFromText(ocrData.text);
+        setProposedNutrition(parsed);
+        traceLog(tid, "nutrition-ocr:parsed", parsed);
+      } else {
+        traceLog(tid, "nutrition-ocr:empty", { raw: JSON.stringify(ocrData).substring(0, 100) });
+      }
+    } catch (err) {
+      traceLog(tid, "nutrition-ocr:error", { error: err?.message });
+    }
+    setNutritionOcrLoading(false);
   };
 
   const handleEditProductCapture = async (e) => {
@@ -117,7 +168,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
         body: JSON.stringify({
           ean: notFoundEan, submitted_by: userId,
           ocr_raw_text: ocrText, raw_label_image: ocrImageBase64 || null,
-          ai_parsed_data: { ...proposedFlags, name: proposedName, product_image_base64: productImageBase64 },
+          ai_parsed_data: { ...proposedFlags, name: proposedName, product_image_base64: productImageBase64, nutrition: proposedNutrition, notes: proposedNotes },
           user_confirmed: true,
         }),
       });
@@ -143,12 +194,16 @@ export function useProduct({ accessToken, userId, activeProfiles,
     productImageBase64, setProductImageBase64,
     proposedName, setProposedName,
     proposedFlags, setProposedFlags,
+    proposedNutrition, setProposedNutrition,
+    proposedNotes, setProposedNotes,
     editStep, setEditStep,
     editIngText, setEditIngText,
     editNote, setEditNote,
     editType, setEditType,
     editProductImage, setEditProductImage,
     editProductImageB64, setEditProductImageB64,
+    nutritionOcrLoading,
+    handleNutritionCapture,
     editOcrLoading, setEditOcrLoading,
     editOcrText, setEditOcrText,
     handleProductImageCapture,
