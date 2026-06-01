@@ -1078,6 +1078,7 @@ export default function ScannerScreen({
             )}
 
             {/* ── TRIN 3: Næringsindhold ── */}
+<<<<<<< HEAD
             {notFoundStep === 3 && !ocrLoading && !nutritionOcrLoading && (
               <div className="fade-in">
                 <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>
@@ -1118,6 +1119,122 @@ export default function ScannerScreen({
                     ✓ Næringsindhold delvist udfyldt — tjek og ret felterne herunder
                   </div>
                 )}
+
+                {/* Manuel input */}
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:14 }}>
+                  <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)", marginBottom:12 }}>Per 100g/ml</div>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"10px 14px" }}>
+                    {[
+                      { key:"energy", label:"Energi (kJ/kcal)", placeholder:"fx 1560/373" },
+                      { key:"fat", label:"Fedt (g)", placeholder:"fx 20,3" },
+                      { key:"saturated", label:"- heraf mættet (g)", placeholder:"fx 12,1" },
+                      { key:"carbs", label:"Kulhydrat (g)", placeholder:"fx 44,2" },
+                      { key:"sugars", label:"- heraf sukker (g)", placeholder:"fx 38,5" },
+                      { key:"protein", label:"Protein (g)", placeholder:"fx 5,4" },
+                      { key:"salt", label:"Salt (g)", placeholder:"fx 0,12" },
+                    ].map(({ key, label, placeholder }) => (
+                      <div key={key}>
+                        <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:4 }}>{label}</div>
+                        <input
+                          className="field"
+                          placeholder={placeholder}
+                          value={proposedNutrition?.[key] || ""}
+                          onChange={e => setProposedNutrition(prev => ({ ...prev, [key]: e.target.value }))}
+                          style={{ padding:"8px 10px", fontSize:12 }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button className="btn btn-primary btn-full"
+                  onClick={() => setNotFoundStep(4)}>
+                  Fortsæt → Andet</button>
+                <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, color:"var(--muted)", padding:"10px 0", fontFamily:"var(--f)" }}
+                  onClick={() => setNotFoundStep(4)}>
+                  Spring næring over →</button>
+              </div>
+            )}
+
+            {/* ── TRIN 4: Andet / noter ── */}
+            {notFoundStep === 4 && !ocrLoading && (
+              <div className="fade-in">
+                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>
+                  Trin 4 — Yderligere oplysninger (valgfrit)
+                </div>
+                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:16, lineHeight:1.5 }}>
+                  Tilføj ekstra information om produktet — fx opbevaringsinstruktioner, certifikater (Ø, Halal, Vegan) eller andet.
+                </div>
+
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:14 }}>
+                  <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>Mærkninger / certifikater</div>
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:12 }}>
+                    {["Ø Økologisk","Vegansk","Vegetarisk","Glutenfri","Laktosefri","Halal","Kosher","Fairtrade"].map(tag => {
+                      const active = (proposedNotes || "").includes(tag);
+                      return (
+                        <div key={tag} onClick={() => {
+                          setProposedNotes(prev => {
+                            const tags = (prev||"").split(",").map(t=>t.trim()).filter(Boolean);
+                            if (active) return tags.filter(t=>t!==tag).join(", ");
+                            return [...tags, tag].join(", ");
+                          });
+                        }} style={{
+                          padding:"6px 12px", borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700,
+                          border:`1.5px solid ${active ? "var(--green)" : "var(--border2)"}`,
+                          background: active ? "var(--green-lt)" : "var(--surface)",
+                          color: active ? "var(--green)" : "var(--muted2)",
+                        }}>{tag}</div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ fontSize:11, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Fri tekst</div>
+                  <textarea
+                    className="field"
+                    rows={3}
+                    placeholder="Fx: 'Opbevares køligt', 'Vegansk certificeret', 'Sæsonvare'…"
+                    value={proposedNotes || ""}
+                    onChange={e => setProposedNotes(e.target.value)}
+                    style={{ resize:"none", fontSize:12 }}
+                  />
+                </div>
+
+                <button className="btn btn-primary btn-full"
+                  onClick={() => setNotFoundStep(5)}>
+                  Fortsæt → Gennemse og send</button>
+                <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, color:"var(--muted)", padding:"10px 0", fontFamily:"var(--f)" }}
+                  onClick={() => setNotFoundStep(5)}>
+                  Spring over →</button>
+              </div>
+            )}
+
+            {/* ── TRIN 5: Bekræft og send ── */}
+            {notFoundStep === 5 && !ocrLoading && (
+=======
+            {notFoundStep === 3 && !ocrLoading && (
+>>>>>>> cf5bb966196026199b9fd73d14070df29b2bad5b
+              <div className="fade-in">
+                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>
+                  Trin 3 — Næringsindhold (valgfrit)
+                </div>
+                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:16, lineHeight:1.5 }}>
+                  Fotografér eller skriv næringsdeklarationen. Alle felter er valgfri — udfyld det du kan se.
+                </div>
+
+                {/* Foto af næringsindhold */}
+                <label style={{
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                  width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
+                  background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                  fontSize:13, fontWeight:600, marginBottom:14,
+                }}>
+                  📸 Fotografér næringsdeklaration
+                  <input type="file" accept="image/*" capture="environment" style={{ display:"none" }}
+                    onChange={async e => {
+                      if (!e.target.files?.[0]) return;
+                      // OCR til næringsindhold — parse tal fra tekst
+                      handleImageCapture(e);
+                    }} />
+                </label>
 
                 {/* Manuel input */}
                 <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:14 }}>
