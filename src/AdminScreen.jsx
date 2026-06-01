@@ -907,7 +907,7 @@ ${openTicket.description}
 
 
             {adminSection === "debug" && (
-              <div>
+              <div style={{ paddingBottom:120 }}>
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
                   <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>Debug Trace Log</div>
                   <button onClick={() => { navigator.clipboard.writeText(JSON.stringify(getTraceLog(), null, 2)); }}
