@@ -200,8 +200,8 @@ bloeddyr       Bløddyr             🦑
 
 ```css
 /* Baggrunde */
---paper:#1a3012       /* primær baggrund */
---paper2:#233d18      /* sekundær baggrund */
+--paper:#1a3012
+--paper2:#233d18
 --surface:rgba(255,255,255,.055)
 --surface2:rgba(255,255,255,.09)
 --surface3:rgba(255,255,255,.04)
@@ -278,15 +278,12 @@ Kører automatisk ved login:
 2. `user_allergens` → `allergen, type`
 3. `loadFamily()`, `loadShoppingList()`, `loadHistory()`
 
-### Search Edge Function (`/functions/v1/search`)
-Returnerer: `{ success, products: [{ id, ean, name, brand, category, image_url, verified_status, allergen_flags, tags }] }`
-
 ### Edge Functions
 | Funktion | Formål |
 |----------|--------|
 | `allergens` | Keyword + Claude hybrid allergen-detektion |
 | `ocr` | Claude Haiku vision. mode: "ingredients" / "product_name" |
-| `search` | Produktsøgning. Query: `?q=` |
+| `search` | Produktsøgning. Query: `?q=`. Scorer på navn-match + datakomplethed (allergen_flags +15, ingredients_text +10, image_url +5) |
 | `products/{ean}` | Produktopslag på EAN |
 | `submissions` | Bruger-indsendelser |
 
@@ -298,9 +295,10 @@ Returnerer: `{ success, products: [{ id, ean, name, brand, category, image_url, 
 - `traceLog(id, step, data)` → logger til console + in-memory array (max 200)
 - `getTraceLog(id?)` → henter alle eller filtreret på ét ID
 - `clearTraceLog()` → rydder alle traces
-- Synlig i **Admin → Debug** faneblad
+- Synlig i **Admin → Debug** faneblad med "Kopier JSON"-knap
 - Flows der tracker: scan (EAN), search, ocr (foto→tekst→allergen), submit
 - Inkluderes i FeedbackModal context (`debug_trace`: seneste 50 entries)
+- **NB:** Må ikke tilføjes dobbelt til helpers.js — eksisterer allerede i main-branch
 
 ---
 
@@ -314,6 +312,8 @@ define: {
 }
 ```
 
+`utils.jsx` eksporterer: `BUILD_TIME`, `COMMIT_SHA`, `formatBuildTime()`, `getGreeting()`, `buildScreenLabel()`
+
 ---
 
 ## 14. FeedbackModal
@@ -321,7 +321,7 @@ define: {
 Placeret i **bunden af app-div** i App.jsx (zIndex:9999 over alt).  
 Åbnes via Feedback-knap i topbar (synlig overalt inkl. onboarding).
 
-Inkluderer automatisk: skærm, bruger, enhed, build, allergener, familie, debug trace (seneste 50 entries).
+Inkluderer automatisk i context: skærm, bruger, email, rolle, allergener, familie, enhed, viewport, build, debug trace (seneste 50 entries).
 
 ---
 
@@ -337,6 +337,8 @@ Inkluderer automatisk: skærm, bruger, enhed, build, allergener, familie, debug 
 - `updateTicketStatus(id, status)`, `cleanOcrWithAI(text)`
 
 **Auto-load:** `useEffect` på `screen === SCREENS.ADMIN` kalder `loadAdminStats()`.
+
+**Scroll:** Alle screen-divs og debug-container har `paddingBottom:120`. Modale popups har `padding:"20px 16px 140px"`.
 
 ---
 
@@ -359,7 +361,7 @@ Varianter peger på master-produkt der ejer allergen-data.
 - **Grønne primærknapper** har altid `color:#071510`
 - Kamera stoppes automatisk ved navigation væk fra HOME
 - Brugerdata loades automatisk ved login (useEffect på accessToken+userId)
-- `paddingBottom:120` på alle `.screen` divs i AdminScreen
+- `paddingBottom:120` på alle `.screen` divs i AdminScreen + debug-container
 
 ---
 
@@ -378,10 +380,12 @@ Varianter peger på master-produkt der ejer allergen-data.
 | Søgning åbner ikke produkter | `lookupProduct` manglede som prop |
 | AdminScreen tom | Manglede i JSX-render-træet |
 | Admin-rolle vises ikke | JWT `app_metadata.role` sættes via SQL på `auth.users` |
-| `_traceLog` duplicate declaration | Trace-system eksisterede allerede i main — ikke tilføje igen |
+| `_traceLog` duplicate declaration | Trace-system eksisterede allerede i main — tilføj IKKE igen til helpers.js |
 | Profil hero hvid | `var(--ink)` → `var(--surface2)` som baggrund |
 | Scanner animation forkert farve | Bruger nu `--green-logo:#3DCC6E` = logoets grønne |
-| Debug trace bag bundmenu | `paddingBottom:120` på debug-sektionens container |
+| Debug trace bag bundmenu | `paddingBottom:120` på debug-sektionens container i AdminScreen |
+| Admin modale popups afskæres | `padding:"20px 16px 140px"` på popup-containere |
+| Søgning prioriterede ufuldstændige produkter | Search Edge Function: +15 for allergen_flags, +10 for ingredients_text, +5 for image_url |
 
 ---
 
@@ -390,7 +394,6 @@ Varianter peger på master-produkt der ejer allergen-data.
 - [ ] `constants.js` udfases
 - [ ] Opskrifter-backend mangler data
 - [ ] Supabase allowlist til alle preview-URLer
-- [ ] Debug role-visning i ProfileScreen fjernes
-- [ ] Search Edge Function: prioritér produkter med komplet data (allergen_flags, ingredients_text, image_url giver bonus-point)
+- [ ] Debug role-visning i ProfileScreen fjernes (midlertidig debug-linje)
 - [ ] Allergener på familiemedlemmer: data-flow mangler
 - [ ] Canonical EAN: udfyld manuelt efter behov

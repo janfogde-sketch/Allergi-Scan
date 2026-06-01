@@ -100,7 +100,7 @@ export default function ProfileScreen({
           <div className="screen fade-in">
 
             {/* Hero */}
-            <div style={{ background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:20, padding:"22px 20px", marginBottom:14 }}>
+            <div style={{ background:"rgba(255,255,255,.06)", border:"1px solid rgba(255,255,255,.1)", borderRadius:20, padding:"22px 20px", marginBottom:14 }}>
               <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:16 }}>
                 <div style={{ width:56, height:56, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800, color:"#fff", flexShrink:0 }}>
                   {initials(user.name||"?")}
@@ -121,7 +121,7 @@ export default function ProfileScreen({
                   [family.length, "Familie"],
                   [history.length, "Scanninger"],
                 ].map(([n, lbl]) => (
-                  <div key={lbl} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"10px 8px", textAlign:"center" }}>
+                  <div key={lbl} style={{ background:"rgba(255,255,255,.05)", border:"1px solid rgba(255,255,255,.08)", borderRadius:10, padding:"10px 8px", textAlign:"center" }}>
                     <div style={{ fontSize:20, fontWeight:700, color:"var(--ink)" }}>{n}</div>
                     <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, marginTop:2 }}>{lbl}</div>
                   </div>

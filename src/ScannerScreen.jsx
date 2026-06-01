@@ -21,6 +21,8 @@ export default function ScannerScreen({
   notFoundStep, setNotFoundStep,
   proposedName, setProposedName,
   proposedFlags, setProposedFlags,
+  proposedNutrition, setProposedNutrition,
+  proposedNotes, setProposedNotes,
   ocrLoading, ocrText, setOcrText,
   productImagePreview,
   submitting, submitProduct,
@@ -424,7 +426,7 @@ export default function ScannerScreen({
                 <div style={{ position:"relative", width:180, height:90 }}>
                   {/* Stregkode streger */}
                   <svg viewBox="0 0 180 90" width="180" height="90">
-                    <g fill="rgba(255,255,255,0.15)">
+                    <g fill="rgba(74,222,128,0.25)">
                       <rect x="10" y="0" width="7" height="90" rx="1"/>
                       <rect x="22" y="0" width="3" height="90" rx="1"/>
                       <rect x="29" y="0" width="5" height="90" rx="1"/>
@@ -447,15 +449,29 @@ export default function ScannerScreen({
                     </g>
                   </svg>
                   {/* Laser linje */}
-                  <div className="scan-laser" />
+                  <div style={{
+                    position:"absolute",
+                    left:0, right:0,
+                    height:3,
+                    borderRadius:2,
+                    background:"linear-gradient(90deg, transparent, #4ADE80, #86EFAC, #4ADE80, transparent)",
+                    boxShadow:"0 0 8px #4ADE80, 0 0 16px rgba(74,222,128,.4)",
+                    animation:"scanLaser 2s ease-in-out infinite",
+                  }} />
+                  <style>{`
+                    @keyframes scanLaser {
+                      0%, 100% { top: 8px; opacity: 0.5; }
+                      50% { top: calc(100% - 8px); opacity: 1; }
+                    }
+                  `}</style>
                   {/* Hjørnemarkører */}
                   {[["0","0","top","left"],["0","0","top","right"],["0","0","bottom","left"],["0","0","bottom","right"]].map((_,i) => {
                     const pos = [{top:8,left:8},{top:8,right:8},{bottom:8,left:8},{bottom:8,right:8}][i];
                     const borders = [
-                      {borderTop:"2px solid rgba(255,255,255,.6)",borderLeft:"2px solid rgba(255,255,255,.6)"},
-                      {borderTop:"2px solid rgba(255,255,255,.6)",borderRight:"2px solid rgba(255,255,255,.6)"},
-                      {borderBottom:"2px solid rgba(255,255,255,.6)",borderLeft:"2px solid rgba(255,255,255,.6)"},
-                      {borderBottom:"2px solid rgba(255,255,255,.6)",borderRight:"2px solid rgba(255,255,255,.6)"},
+                      {borderTop:"2px solid rgba(74,222,128,.7)",borderLeft:"2px solid rgba(74,222,128,.7)"},
+                      {borderTop:"2px solid rgba(74,222,128,.7)",borderRight:"2px solid rgba(74,222,128,.7)"},
+                      {borderBottom:"2px solid rgba(74,222,128,.7)",borderLeft:"2px solid rgba(74,222,128,.7)"},
+                      {borderBottom:"2px solid rgba(74,222,128,.7)",borderRight:"2px solid rgba(74,222,128,.7)"},
                     ][i];
                     return <div key={i} style={{ position:"absolute", width:16, height:16, ...pos, ...borders, borderRadius:2 }}/>;
                   })}
@@ -734,6 +750,16 @@ export default function ScannerScreen({
                         <span style={{ width:5, height:5, borderRadius:"50%", background:vb.dot, flexShrink:0, display:"inline-block" }} />
                         {vb.label}
                       </span>
+                      {scanResult.verified_status === "pending" && (
+                        <span style={{
+                          display:"inline-flex", alignItems:"center", gap:4,
+                          padding:"2px 9px", borderRadius:20,
+                          background:"var(--amber-lt)", border:"1px solid rgba(251,191,36,.3)",
+                          fontSize:10, fontWeight:700, color:"var(--amber)",
+                        }}>
+                          ⏳ Afventer godkendelse
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -866,7 +892,7 @@ export default function ScannerScreen({
               </div>
               {/* Fremgangsindikator */}
               <div style={{ display:"flex", gap:5, alignItems:"center" }}>
-                {[1,2,3].map(s => (
+                {[1,2,3,4,5].map(s => (
                   <div key={s} style={{
                     width: notFoundStep === s ? 20 : 8,
                     height:8, borderRadius:4, transition:"all .3s",
@@ -892,9 +918,11 @@ export default function ScannerScreen({
                 {/* Trin-oversigt */}
                 <div style={{ display:"flex", gap:8, marginBottom:20 }}>
                   {[
-                    { num:1, emoji:"📸", label:"Forside", desc:"Produktnavn" },
-                    { num:2, emoji:"🔍", label:"Ingredienser", desc:"Allergenanalyse" },
-                    { num:3, emoji:"✓", label:"Bekræft", desc:"Send ind" },
+                    { num:1, emoji:"📸", label:"Forside", desc:"Navn" },
+                    { num:2, emoji:"🔍", label:"Ingredienser", desc:"Allergener" },
+                    { num:3, emoji:"🥗", label:"Næring", desc:"Indhold" },
+                    { num:4, emoji:"📝", label:"Andet", desc:"Noter" },
+                    { num:5, emoji:"✓", label:"Send", desc:"Bekræft" },
                   ].map(s => (
                     <div key={s.num} style={{ flex:1, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 8px", textAlign:"center" }}>
                       <div style={{ fontSize:22, marginBottom:4 }}>{s.emoji}</div>
@@ -1028,15 +1056,134 @@ export default function ScannerScreen({
                   <input type="file" accept="image/*" style={{ display:"none" }} onChange={handleImageCapture} />
                 </label>
                 {scanError && <div className="error-box" style={{ marginBottom:10 }}>⚠️ {scanError}</div>}
+                {ocrText && (
+                  <button className="btn btn-primary btn-full"
+                    onClick={() => setNotFoundStep(3)}>
+                    Fortsæt → Næringsindhold
+                  </button>
+                )}
                 <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, color:"var(--muted)", padding:"8px 0", fontFamily:"var(--f)" }}
-                  onClick={() => { setProposedFlags({}); setNotFoundStep(3); }}>
-                  Spring ingredienser over →
+                  onClick={() => { if (!ocrText) setProposedFlags({}); setNotFoundStep(3); }}>
+                  {ocrText ? "Spring næring over →" : "Spring ingredienser over →"}
                 </button>
               </div>
             )}
 
-            {/* ── TRIN 3: Bekræft og send ── */}
+            {/* ── TRIN 3: Næringsindhold ── */}
             {notFoundStep === 3 && !ocrLoading && (
+              <div className="fade-in">
+                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>
+                  Trin 3 — Næringsindhold (valgfrit)
+                </div>
+                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:16, lineHeight:1.5 }}>
+                  Fotografér eller skriv næringsdeklarationen. Alle felter er valgfri — udfyld det du kan se.
+                </div>
+
+                {/* Foto af næringsindhold */}
+                <label style={{
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                  width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
+                  background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                  fontSize:13, fontWeight:600, marginBottom:14,
+                }}>
+                  📸 Fotografér næringsdeklaration
+                  <input type="file" accept="image/*" capture="environment" style={{ display:"none" }}
+                    onChange={async e => {
+                      if (!e.target.files?.[0]) return;
+                      // OCR til næringsindhold — parse tal fra tekst
+                      handleImageCapture(e);
+                    }} />
+                </label>
+
+                {/* Manuel input */}
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:14 }}>
+                  <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)", marginBottom:12 }}>Per 100g/ml</div>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"10px 14px" }}>
+                    {[
+                      { key:"energy", label:"Energi (kJ/kcal)", placeholder:"fx 1560/373" },
+                      { key:"fat", label:"Fedt (g)", placeholder:"fx 20,3" },
+                      { key:"saturated", label:"- heraf mættet (g)", placeholder:"fx 12,1" },
+                      { key:"carbs", label:"Kulhydrat (g)", placeholder:"fx 44,2" },
+                      { key:"sugars", label:"- heraf sukker (g)", placeholder:"fx 38,5" },
+                      { key:"protein", label:"Protein (g)", placeholder:"fx 5,4" },
+                      { key:"salt", label:"Salt (g)", placeholder:"fx 0,12" },
+                    ].map(({ key, label, placeholder }) => (
+                      <div key={key}>
+                        <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:4 }}>{label}</div>
+                        <input
+                          className="field"
+                          placeholder={placeholder}
+                          value={proposedNutrition?.[key] || ""}
+                          onChange={e => setProposedNutrition(prev => ({ ...prev, [key]: e.target.value }))}
+                          style={{ padding:"8px 10px", fontSize:12 }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button className="btn btn-primary btn-full"
+                  onClick={() => setNotFoundStep(4)}>
+                  Fortsæt → Andet</button>
+                <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, color:"var(--muted)", padding:"10px 0", fontFamily:"var(--f)" }}
+                  onClick={() => setNotFoundStep(4)}>
+                  Spring næring over →</button>
+              </div>
+            )}
+
+            {/* ── TRIN 4: Andet / noter ── */}
+            {notFoundStep === 4 && !ocrLoading && (
+              <div className="fade-in">
+                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>
+                  Trin 4 — Yderligere oplysninger (valgfrit)
+                </div>
+                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:16, lineHeight:1.5 }}>
+                  Tilføj ekstra information om produktet — fx opbevaringsinstruktioner, certifikater (Ø, Halal, Vegan) eller andet.
+                </div>
+
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:14 }}>
+                  <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>Mærkninger / certifikater</div>
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:12 }}>
+                    {["Ø Økologisk","Vegansk","Vegetarisk","Glutenfri","Laktosefri","Halal","Kosher","Fairtrade"].map(tag => {
+                      const active = (proposedNotes || "").includes(tag);
+                      return (
+                        <div key={tag} onClick={() => {
+                          setProposedNotes(prev => {
+                            const tags = (prev||"").split(",").map(t=>t.trim()).filter(Boolean);
+                            if (active) return tags.filter(t=>t!==tag).join(", ");
+                            return [...tags, tag].join(", ");
+                          });
+                        }} style={{
+                          padding:"6px 12px", borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700,
+                          border:`1.5px solid ${active ? "var(--green)" : "var(--border2)"}`,
+                          background: active ? "var(--green-lt)" : "var(--surface)",
+                          color: active ? "var(--green)" : "var(--muted2)",
+                        }}>{tag}</div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ fontSize:11, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Fri tekst</div>
+                  <textarea
+                    className="field"
+                    rows={3}
+                    placeholder="Fx: 'Opbevares køligt', 'Vegansk certificeret', 'Sæsonvare'…"
+                    value={proposedNotes || ""}
+                    onChange={e => setProposedNotes(e.target.value)}
+                    style={{ resize:"none", fontSize:12 }}
+                  />
+                </div>
+
+                <button className="btn btn-primary btn-full"
+                  onClick={() => setNotFoundStep(5)}>
+                  Fortsæt → Gennemse og send</button>
+                <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, color:"var(--muted)", padding:"10px 0", fontFamily:"var(--f)" }}
+                  onClick={() => setNotFoundStep(5)}>
+                  Spring over →</button>
+              </div>
+            )}
+
+            {/* ── TRIN 5: Bekræft og send ── */}
+            {notFoundStep === 5 && !ocrLoading && (
               <div className="fade-in">
                 {/* Produktkort */}
                 <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12 }}>
