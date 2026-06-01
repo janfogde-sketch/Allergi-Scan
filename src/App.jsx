@@ -13,7 +13,8 @@ import {
 import {
   initials, timeAgo, getAllergenLabels, verifiedBadge,
   makeHeaders, apiCall, compareAllergens,
-  extractENumbers, compareENumbers
+  extractENumbers, compareENumbers,
+  traceId, traceLog, getTraceLog
 } from "./helpers.js";
 
 import {
@@ -808,17 +809,18 @@ ${text}` }],
   const lookupProduct = useCallback(async (ean) => {
     if (!ean?.trim()) return;
     if (navigator.vibrate) navigator.vibrate(40);
-    const cached = productCacheRef.current[ean.trim()];
-    if (cached) { setScanResult(cached); setScreen(SCREENS.RESULT); return; }
     const tid = traceId("scan");
     traceLog(tid, "scan:start", { ean: ean.trim() });
+    const cached = productCacheRef.current[ean.trim()];
+    if (cached) { traceLog(tid, "scan:cache-hit"); setScanResult(cached); setScreen(SCREENS.RESULT); return; }
     setLoading(true); setScanResult(null); setScanError(""); setShowIng(false);
     try {
       const data = await apiCall(`${SUPABASE_URL}/functions/v1/products/${ean.trim()}`, {
         headers: makeHeaders(accessToken),
       });
+      traceLog(tid, "scan:product-response", { found: data.found, name: data.product?.name });
       if (!data.found) {
-        traceLog(tid, "scan:not_found", { ean: ean.trim() });
+        traceLog(tid, "scan:not-found");
         setNotFoundEan(ean.trim());
         await saveHistoryEntry(ean.trim(), null, "not_found", {}, activeProfiles);
         setLoading(false); setScreen(SCREENS.NOTFOUND); setNotFoundStep(1);
@@ -922,19 +924,22 @@ ${text}` }],
       const tid = traceId("search");
       traceLog(tid, "search:start", { q });
 
+      const stid = traceId("search");
+      traceLog(stid, "search:start", { query: q });
       try {
         const res = await fetch(
           `${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(q)}`,
           { headers: { "apikey": SUPABASE_ANON_KEY, ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) } }
         );
         const data = await res.json();
+        traceLog(stid, "search:response", { found: data.products?.length || 0 });
         if (data.success) {
           const results = (data.products || []).map(p => ({ ...p, source:"local", verified:p.verified_status, conflicts:[] }));
           traceLog(tid, "search:results", { q, count: results.length });
           setSearchResults(results);
         }
       } catch (e) {
-        traceLog(tid, "search:error", { error: e.message });
+        traceLog(stid, "search:error", { error: e?.message || String(e) });
       } finally {
         setSearchLoading(false);
       }

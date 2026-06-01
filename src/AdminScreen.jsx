@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { ALLERGENS, SCREENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { getAllergenLabels, initials } from "./helpers.js";
+import { getAllergenLabels, initials, getTraceLog } from "./helpers.js";
 import { MemberForm } from "./MemberForm.jsx";
 
 export default function AdminScreen({
@@ -290,6 +290,7 @@ ${openTicket.description}
                 { id:"users",       emoji:"👥", label:"Brugere" },
                 { id:"submissions", emoji:"📦", label:"Indsendelser" },
                 { id:"tickets",     emoji:"🐛", label:"Tickets" },
+                { id:"debug",       emoji:"🔍", label:"Debug" },
               ].map(s => (
                 <button key={s.id}
                   onClick={() => {
@@ -903,6 +904,52 @@ ${openTicket.description}
 
           </div>
         )}
+
+
+            {adminSection === "debug" && (
+              <div>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+                  <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>Debug Trace Log</div>
+                  <button onClick={() => { navigator.clipboard.writeText(JSON.stringify(getTraceLog(), null, 2)); }}
+                    style={{ padding:"6px 12px", borderRadius:8, background:"var(--surface2)", border:"1px solid var(--border)",
+                      fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                    Kopier JSON
+                  </button>
+                </div>
+                <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10 }}>
+                  Seneste {getTraceLog().length} operationer (scan, sog, OCR, submit). Nyeste forst.
+                </div>
+                {getTraceLog().slice().reverse().map((entry, i) => {
+                  const isError = !!entry.error || entry.ok === false;
+                  return (
+                    <div key={i} style={{
+                      padding:"8px 10px", marginBottom:4, borderRadius:8,
+                      background: isError ? "rgba(239,68,68,.08)" : "var(--surface)",
+                      border: `1px solid ${isError ? "var(--red-md)" : "var(--border)"}`,
+                      fontSize:11, fontFamily:"monospace",
+                    }}>
+                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:2 }}>
+                        <span style={{ fontWeight:700, color: isError ? "var(--red)" : "var(--green)" }}>{entry.id}</span>
+                        <span style={{ color:"var(--muted)", fontSize:10 }}>{new Date(entry.ts).toLocaleTimeString("da-DK")}</span>
+                      </div>
+                      <div style={{ color:"var(--ink2)" }}>
+                        {entry.step}
+                        {entry.error && <span style={{ color:"var(--red)" }}> — {entry.error}</span>}
+                        {entry.detail && <span style={{ color:"var(--muted)" }}> — {String(entry.detail)}</span>}
+                        {entry.textLength !== undefined && <span style={{ color:"var(--muted)" }}> ({entry.textLength} tegn)</span>}
+                        {entry.found !== undefined && <span style={{ color:"var(--muted)" }}> (found: {String(entry.found)})</span>}
+                        {entry.text && <span style={{ color:"var(--muted)" }}> "{entry.text}"</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+                {getTraceLog().length === 0 && (
+                  <div style={{ textAlign:"center", padding:"32px 0", color:"var(--muted)" }}>
+                    Ingen operationer logget endnu. Scan, sog eller tag billede for at se trace.
+                  </div>
+                )}
+              </div>
+            )}
 
     </>
   );
