@@ -246,12 +246,12 @@ export default function ScannerScreen({
                   return (
                     <>
                       <button onClick={() => setActiveProfiles(allIds)}
-                        style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20, border:"1.5px solid var(--green)",
+                        style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20, border:"1px solid var(--green)",
                           background: allActive ? "var(--green)" : "var(--green-lt)", color: allActive ? "#fff" : "var(--green)", cursor:"pointer", fontFamily:"var(--f)" }}>
                         Vælg alle
                       </button>
                       <button onClick={() => setActiveProfiles([])}
-                        style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20, border:"1.5px solid var(--border)",
+                        style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20, border:"1px solid var(--border)",
                           background:"var(--paper2)", color:"var(--muted)", cursor:"pointer", fontFamily:"var(--f)" }}>
                         Fravælg alle
                       </button>
@@ -1012,7 +1012,7 @@ export default function ScannerScreen({
                 <label style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                   width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
-                  background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                  background:"var(--surface)", border:"1px solid var(--border2)", color:"var(--ink2)",
                   fontSize:13, fontWeight:600, marginBottom:10,
                 }}>
                   📁 Vælg fra galleri
@@ -1112,7 +1112,7 @@ export default function ScannerScreen({
                 <label style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                   width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
-                  background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                  background:"var(--surface)", border:"1px solid var(--border2)", color:"var(--ink2)",
                   fontSize:13, fontWeight:600, marginBottom:10,
                 }}>
                   📁 Vælg fra galleri
@@ -1160,7 +1160,7 @@ export default function ScannerScreen({
                 <label style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                   width:"100%", padding:"11px", borderRadius:12, cursor:"pointer",
-                  background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                  background:"var(--surface)", border:"1px solid var(--border2)", color:"var(--ink2)",
                   fontSize:12, fontWeight:600, marginBottom:14,
                 }}>
                   📁 Vælg fra galleri
@@ -1234,7 +1234,7 @@ export default function ScannerScreen({
                           });
                         }} style={{
                           padding:"6px 12px", borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700,
-                          border:`1.5px solid ${active ? "var(--green)" : "var(--border2)"}`,
+                          border:`1px solid ${active ? "var(--green)" : "var(--border2)"}`,
                           background: active ? "var(--green-lt)" : "var(--surface)",
                           color: active ? "var(--green)" : "var(--muted2)",
                         }}>{tag}</div>
@@ -1382,7 +1382,7 @@ export default function ScannerScreen({
                           style={{
                             display:"flex", alignItems:"center", gap:5,
                             padding:"6px 11px", borderRadius:100, cursor:"pointer",
-                            border:`1.5px solid ${isOn ? "var(--red-md)" : isTrace ? "var(--amber-md)" : "var(--border2)"}`,
+                            border:`1px solid ${isOn ? "var(--red-md)" : isTrace ? "var(--amber-md)" : "var(--border2)"}`,
                             background: isOn ? "var(--red-lt)" : isTrace ? "var(--amber-lt)" : "var(--paper2)",
                             transition:"all .15s",
                           }}>
@@ -1525,14 +1525,14 @@ export default function ScannerScreen({
                     <>
                       <button onClick={() => setActiveProfiles(allIds)}
                         style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20,
-                          border:"1.5px solid var(--green)",
+                          border:"1px solid var(--green)",
                           background: allActive ? "var(--green)" : "var(--green-lt)",
                           color: allActive ? "#fff" : "var(--green)", cursor:"pointer", fontFamily:"var(--f)" }}>
                         Vælg alle
                       </button>
                       <button onClick={() => setActiveProfiles([])}
                         style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20,
-                          border:"1.5px solid var(--border)",
+                          border:"1px solid var(--border)",
                           background:"var(--paper2)", color:"var(--muted)", cursor:"pointer", fontFamily:"var(--f)" }}>
                         Fravælg alle
                       </button>
@@ -1925,7 +1925,7 @@ export default function ScannerScreen({
                   <label style={{
                     display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                     width:"100%", padding:"13px", borderRadius:12, cursor:"pointer",
-                    background:"var(--surface)", border:"1.5px solid var(--border2)", color:"var(--ink2)",
+                    background:"var(--surface)", border:"1px solid var(--border2)", color:"var(--ink2)",
                     fontSize:14, fontWeight:600, marginBottom:10,
                   }}>
                     📁 Vælg billede fra galleri

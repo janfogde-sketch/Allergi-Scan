@@ -301,7 +301,7 @@ export default function ProfileScreen({
               <div style={{ display:"flex", gap:8, marginBottom:10 }}>
                 {["Mand","Kvinde","Andet"].map(g => (
                   <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
-                    style={{ flex:1, padding:"8px 0", textAlign:"center", borderRadius:8, border:`1.5px solid ${user.gender===g?"var(--green)":"var(--border)"}`, background:user.gender===g?"var(--green-lt)":"var(--surface)", fontSize:13, fontWeight:700, color:user.gender===g?"var(--green)":"var(--muted)", cursor:"pointer" }}>
+                    style={{ flex:1, padding:"8px 0", textAlign:"center", borderRadius:8, border:`1px solid ${user.gender===g?"var(--green)":"var(--border)"}`, background:user.gender===g?"var(--green-lt)":"var(--surface)", fontSize:13, fontWeight:700, color:user.gender===g?"var(--green)":"var(--muted)", cursor:"pointer" }}>
                     {g}
                   </div>
                 ))}
@@ -369,7 +369,7 @@ export default function ProfileScreen({
                   return (
                     <div key={a.id} className="chip" style={{
                       background: on ? "var(--red-lt)" : "var(--surface)",
-                      border: `1.5px solid ${on ? "var(--red)" : "var(--border)"}`,
+                      border: `1px solid ${on ? "var(--red)" : "var(--border)"}`,
                       color: on ? "var(--red)" : "var(--ink)",
                     }}
                       onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>

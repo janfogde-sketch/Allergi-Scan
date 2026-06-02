@@ -181,7 +181,7 @@ export default function OnboardingScreen({
               {/* Google */}
               <button onClick={() => handleOAuth("google")} disabled={authLoading}
                 style={{ display:"flex", alignItems:"center", gap:12, width:"100%", padding:"13px 16px",
-                  background:"var(--surface)", border:"1.5px solid var(--border2)", borderRadius:12,
+                  background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:12,
                   cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:600, color:"var(--ink)",
                   transition:"all .15s" }}>
                 <svg width="20" height="20" viewBox="0 0 24 24">
@@ -196,7 +196,7 @@ export default function OnboardingScreen({
               {/* Facebook */}
               <button onClick={() => handleOAuth("facebook")} disabled={authLoading}
                 style={{ display:"flex", alignItems:"center", gap:12, width:"100%", padding:"13px 16px",
-                  background:"#1877F2", border:"1.5px solid #1877F2", borderRadius:12,
+                  background:"#1877F2", border:"1px solid #1877F2", borderRadius:12,
                   cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:600, color:"#fff",
                   boxShadow:"var(--sh)", transition:"all .15s" }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff">
@@ -494,7 +494,7 @@ export default function OnboardingScreen({
                     {["Mand","Kvinde","Andet"].map(g => (
                       <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
                         style={{ flex:1, padding:"9px 0", textAlign:"center", borderRadius:8,
-                          border:`1.5px solid ${user.gender===g?"var(--green)":"var(--border)"}`,
+                          border:`1px solid ${user.gender===g?"var(--green)":"var(--border)"}`,
                           background:user.gender===g?"var(--green-lt)":"var(--surface)",
                           fontSize:13, fontWeight:700,
                           color:user.gender===g?"var(--green)":"var(--muted)", cursor:"pointer" }}>
@@ -531,7 +531,7 @@ export default function OnboardingScreen({
                       return (
                         <div key={a.id} className="chip" style={{
                           background: on ? "var(--red-lt)" : "var(--paper2)",
-                          border: `1.5px solid ${on ? "var(--red)" : "var(--border)"}`,
+                          border: `1px solid ${on ? "var(--red)" : "var(--border)"}`,
                           color: on ? "var(--red)" : "var(--ink)",
                         }}
                           onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
@@ -594,7 +594,7 @@ export default function OnboardingScreen({
                             style={{ padding:"6px 12px", borderRadius:20, cursor:"pointer", fontSize:12, fontWeight:700,
                               background: on?"var(--red-lt)":"var(--paper2)",
                               color: on?"var(--red)":"var(--ink2)",
-                              border:`1.5px solid ${on?"var(--red)":"var(--border)"}` }}>
+                              border:`1px solid ${on?"var(--red)":"var(--border)"}` }}>
                             {e} {on?"✓":""}
                             <div style={{ fontSize:10, fontWeight:400, color: on?"var(--red)":"var(--muted)" }}>{n}</div>
                           </div>
