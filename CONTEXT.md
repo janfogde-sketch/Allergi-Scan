@@ -293,10 +293,48 @@ Planen er at splitte `App.jsx` op:
 | `constants.js` skal udfases (erstattet af `constants.jsx`) | Planlagt |
 | Opskrifter-backend mangler data (recipe_ingredients tom) | Mangler SQL migrations |
 | Hardcodede farver i komponentfiler | Tema-refaktor fase 3 |
+| Produkter uden ingredienser/flags | `enrich_products.mjs` bygget — kør trin 1-3 |
 
 ---
 
-## 16. Admin-panel
+## 16. Email-flow
+
+**Udbyder:** Resend (resend.com) — gratis op til 3.000 mails/måned  
+**Afsender:** noreply@eatsafe.dk  
+**DNS:** Verificeret via one.com (DKIM, SPF, MX på send.eatsafe.dk)  
+**API-key:** Gemt som Supabase Edge Function secret `RESEND_API_KEY`  
+**Edge Function:** `send-email` (deployed, `--no-verify-jwt`)
+
+### Email-typer
+
+| Type | Trigger | Template |
+|------|---------|---------|
+| `welcome` | DB trigger `on_user_created` på `public.users` INSERT | `welcomeTemplate()` i send-email/index.ts |
+| `otp` | Supabase Auth built-in | Authentication → Emails → Magic link or OTP |
+| `submission_approved` | DB trigger `on_submission_status_changed` på `product_submissions` UPDATE | `submissionApprovedTemplate()` |
+| `submission_rejected` | DB trigger `on_submission_status_changed` på `product_submissions` UPDATE | `submissionRejectedTemplate()` |
+| `ticket_update` | DB trigger `on_ticket_status_changed` på `feedback_tickets` UPDATE | `ticketUpdateTemplate()` |
+
+### Redigér mails
+
+| Mail | Placering |
+|------|-----------|
+| OTP login-kode | Supabase Dashboard → Authentication → Emails → Magic link or OTP |
+| Alle andre | `supabase/functions/send-email/index.ts` → rediger template → `supabase functions deploy send-email` |
+| DB triggers | Supabase Dashboard → Database → Functions: `send_welcome_email`, `send_submission_email`, `send_ticket_email` |
+| Logs/statistik | resend.com → Emails |
+
+### Kald manuelt (test)
+```bash
+curl -X POST https://jegrpcflyguadyxialkm.supabase.co/functions/v1/send-email \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ANON_KEY" \
+  -d '{"type":"welcome","to":"email@example.com","data":{"name":"Jan"}}'
+```
+
+---
+
+## 17. Admin-panel
 
 7 funktioner i ProfileScreen (ADMIN-skærm):
 1. `loadAdminUsers` — vis alle brugere
@@ -311,7 +349,7 @@ Plus: ticket-export knap (download åbne tickets som .txt).
 
 ---
 
-## 17. Nøgle-URL'er
+## 18. Nøgle-URL'er
 
 | Hvad | URL |
 |------|-----|
