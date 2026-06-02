@@ -502,6 +502,56 @@ export default function ScannerScreen({
               </div>
             )}
 
+            {/* Manuel EAN-input */}
+            {!showManualEan && (
+              <button onClick={() => setShowManualEan(true)}
+                style={{ width:"100%", background:"none", border:"none", cursor:"pointer",
+                  fontSize:12, color:"var(--muted)", fontFamily:"var(--f)", padding:"4px 0 12px",
+                  textDecoration:"underline", textUnderlineOffset:3 }}>
+                Indtast EAN-nummer manuelt
+              </button>
+            )}
+
+            {showManualEan && (
+              <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12 }}>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+                  <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Indtast EAN-nummer</div>
+                  <button onClick={() => setShowManualEan(false)}
+                    style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--muted)", lineHeight:1 }}>×</button>
+                </div>
+                <div style={{ display:"flex", gap:8 }}>
+                  <input
+                    id="manual-ean-input"
+                    type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="fx 5712873099443"
+                    autoFocus
+                    className="field"
+                    style={{ flex:1, fontSize:16, letterSpacing:1 }}
+                    onKeyDown={e => {
+                      if (e.key === "Enter" && e.target.value.trim().length >= 8) {
+                        setShowManualEan(false);
+                        lookupProduct(e.target.value.trim());
+                      }
+                    }}
+                  />
+                  <button
+                    style={{ padding:"0 16px", borderRadius:10, background:"var(--green)", border:"none",
+                      color:"#071510", fontWeight:800, fontSize:14, cursor:"pointer", fontFamily:"var(--f)", flexShrink:0 }}
+                    onClick={() => {
+                      const val = document.getElementById("manual-ean-input")?.value?.trim();
+                      if (val && val.length >= 8) { setShowManualEan(false); lookupProduct(val); }
+                    }}>
+                    Søg
+                  </button>
+                </div>
+                <div style={{ fontSize:10, color:"var(--muted)", marginTop:8 }}>
+                  EAN-nummeret er stregkodens tal — typisk 8 eller 13 cifre.
+                </div>
+              </div>
+            )}
+
             {/* Søg — fremhævet på forsiden */}
             <div className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:10,
               background:"rgba(255,255,255,.04)", border:"1px solid var(--border2)" }}

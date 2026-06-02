@@ -1,7 +1,7 @@
 # EatSafe — CONTEXT.md
 > Upload denne fil i starten af hver Claude-session for fuldt overblik uden at uploade kildefiler.
 > **Opdateres ved større ændringer.**
-> **Sidst opdateret:** 1. juni 2026
+> **Sidst opdateret:** 2. juni 2026
 
 ---
 
@@ -362,6 +362,7 @@ Varianter peger på master-produkt der ejer allergen-data.
 - Kamera stoppes automatisk ved navigation væk fra HOME
 - Brugerdata loades automatisk ved login (useEffect på accessToken+userId)
 - `paddingBottom:120` på alle `.screen` divs i AdminScreen + debug-container
+- Scanner bruger `experimentalFeatures.useBarCodeDetectorIfSupported` + auto-zoom (1×→1.5×→2×) + tap-to-focus
 
 ---
 
@@ -383,6 +384,7 @@ Varianter peger på master-produkt der ejer allergen-data.
 | `_traceLog` duplicate declaration | Trace-system eksisterede allerede i main — tilføj IKKE igen til helpers.js |
 | Profil hero hvid | `var(--ink)` → `var(--surface2)` som baggrund |
 | Scanner animation forkert farve | Bruger nu `--green-logo:#3DCC6E` = logoets grønne |
+| Smal/svær stregkode scanner ikke | Auto-zoom 1.5×→2.0× efter 3/7s + tap-to-focus + 92%×55% scan-område |
 | Debug trace bag bundmenu | `paddingBottom:120` på debug-sektionens container i AdminScreen |
 | Admin modale popups afskæres | `padding:"20px 16px 140px"` på popup-containere |
 | Søgning prioriterede ufuldstændige produkter | Search Edge Function: +15 for allergen_flags, +10 for ingredients_text, +5 for image_url |
@@ -397,3 +399,5 @@ Varianter peger på master-produkt der ejer allergen-data.
 - [ ] Debug role-visning i ProfileScreen fjernes (midlertidig debug-linje)
 - [ ] Allergener på familiemedlemmer: data-flow mangler
 - [ ] Canonical EAN: udfyld manuelt efter behov
+- [ ] Foto-scanning fallback: hvis auto-scan fejler, kan bruger tage stillbillede → Claude Vision aflæser EAN-tal → direkte produktopslag (OCR Edge Function + ny mode "ean_from_image")
+- [ ] Scanner: auto-zoom 1.5×→2.0× efter 3/7 sek ingen scan (implementeret i App.jsx) — overvej også manuel zoom-slider
