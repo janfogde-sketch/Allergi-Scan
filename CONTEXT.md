@@ -1,16 +1,25 @@
 # EatSafe — CONTEXT.md
-> Upload denne fil i starten af hver Claude-session for fuldt overblik uden at uploade kildefiler.
-> **Opdateres ved større ændringer.**
-> **Sidst opdateret:** 2. juni 2026
+
+> **Sidst opdateret:** 2. juni 2026  
+> **Opdateres af:** Jan ved større ændringer. Deles med AI-assistenter som sessionskontekst.
 
 ---
 
-## 1. Hvad er EatSafe?
+## 1. Projekt-overblik
 
-PWA-app der hjælper allergiramte med at scanne produkter, tjekke allergener og vise allergier til restaurantpersonale i udlandet.
+**EatSafe** er en dansk allergen-scanning PWA (Progressive Web App) rettet mod forbrugere med fødevareallergier og -intolerancer. Brugere scanner stregkoder, og appen matcher ingredienser mod deres allergiprofil og viser klare advarsler.
 
-**Live:** https://eatsafe.dk · **Repo:** GitHub → Vercel auto-deploy · **Status:** Åben beta  
-**Branch:** `Dev` (aktiv arbejdsbranch) → merges til `main`
+| Nøgle | Værdi |
+|-------|-------|
+| URL | https://eatsafe.dk |
+| GitHub | janfogde-sketch/Allergi-Scan |
+| Branches | `main` (produktion) · `dev` (udvikling) |
+| Supabase projekt-ID | jegrpcflyguadyxialkm |
+| Supabase URL | https://jegrpcflyguadyxialkm.supabase.co |
+| Vercel | Auto-deploy på både `main` og `dev` |
+| Admin bruger | janfogde@gmail.com (`404caa7f-91b0-4bad-a2a8-bcb6a396d35f`) |
+| Collaborator | Bjørn (GitHub: bjangst) |
+| Version | ~v1.0.6+ |
 
 ---
 
@@ -18,13 +27,13 @@ PWA-app der hjælper allergiramte med at scanne produkter, tjekke allergener og 
 
 | Lag | Teknologi |
 |-----|-----------|
-| Frontend | React 18 + JSX (`// @ts-nocheck` øverst i alle .jsx-filer) |
-| Bundler | Vite 5 |
-| Styling | Vanilla CSS-in-JS — CSS-streng i `theme.jsx` + inline styles |
-| Backend | Supabase (PostgreSQL + Auth + Storage) — **ingen SDK, kun rå fetch() mod REST API** |
-| Kamera | html5-qrcode |
-| Font | **DM Sans + DM Mono** (Google Fonts, i theme.jsx) |
-| Deploy | Vercel (auto-deploy ved push til Dev-branch) |
+| Frontend | React 18 + Vite 5, JSX (ikke TSX) |
+| Hosting | Vercel (auto-deploy fra GitHub) |
+| Backend | Supabase (PostgreSQL, Edge Functions, Auth, Storage) |
+| Edge Functions | Deno/TypeScript — JWT verification DISABLED (ES256-inkompatibilitet) |
+| AI | Claude Haiku 4.5 (allergen-fallback + OCR), ANTHROPIC_API_KEY som Supabase secret |
+| Ekstern data | Open Food Facts API v2, TheMealDB |
+| Lokal dev | Windows, `C:\Users\janfo`, GitHub Desktop, `set`-syntaks for env vars |
 
 ---
 
@@ -32,372 +41,284 @@ PWA-app der hjælper allergiramte med at scanne produkter, tjekke allergener og 
 
 ```
 src/
-├── App.jsx              # Router, global state, bundnav — ~1400+ linjer
-├── theme.jsx            # appCss (CSS-streng) + THEME-tokens + color() helper
-├── utils.jsx            # BUILD_TIME, COMMIT_SHA, formatBuildTime(), getGreeting(), buildScreenLabel()
-├── FeedbackModal.jsx    # Feedback-modal — selvstændig komponent med egen state + submit
-│
-├── useAuth.js           # Tokens, login, signup, OAuth, clearAuth
-├── useShoppingList.js   # Indkøbsliste: load, add, toggle, remove, clear
-├── useFamily.js         # Familie: load, addMember, removeMember + nyt-medlem form-state
-├── useHistory.js        # Historik + favoritter (localStorage)
-├── useOnboarding.js     # onboardStep, editMode, tourIdx + saveProfileStep1/2, finishOnboard
-├── useProduct.js        # scanResult, OCR-state, suggest-edit + handleImageCapture, submitProduct
-│
-├── constants.jsx        # ALLERGENS, SCREENS, DIETS, E_NUMBERS, PAGE_IDS, uid m.fl.
-├── constants.js         # Ældre duplikat — udfases
-├── helpers.js           # initials(), timeAgo(), compareAllergens(), makeHeaders(), apiCall(), verifiedBadge(), traceId(), traceLog(), getTraceLog(), clearTraceLog()
-├── SharedComponents.jsx # EatSafeLogo, Icon, IngredientsList, ProfileBadges, ProductImage, getProductIcon
-├── AllergenPicker.jsx   # ENumberPicker
-├── MemberForm.jsx       # MemberForm, CategorySelect
-├── OnboardingScreen.jsx # WELCOME, LOGIN, ONBOARD (trin 0-9) — LOGIN/SIGNUP-skærm er HER, ikke i App.jsx
-├── ScannerScreen.jsx    # HOME, RESULT, SEARCH, LIST, NOTFOUND, SUBMITTED, SUGGEST_EDIT
-├── ProfileScreen.jsx    # PROFILE, FAMILY, FAVORITES, HISTORY, EDITPROFILE
-├── MadpasScreen.jsx     # MADPAS (17 sprog)
-├── RecipesScreen.jsx    # RECIPES
-├── AdminScreen.jsx      # ADMIN
-├── styles.css           # Supplerende CSS
-├── index.css            # Reset
-├── main.tsx             # React root
-└── vite.config.ts       # __BUILD_TIME__ + __COMMIT_SHA__
+├── App.jsx                 # Routing, global state, lookupProduct, saveHistory, alle handlers
+├── constants.jsx           # ALLERGENS, SCREENS, DIETS, E_NUMBERS, SUPABASE_URL, SUPABASE_ANON_KEY, uid
+├── helpers.js              # compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility,
+│                           #   initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo
+├── theme.jsx               # CSS-variabler, injectTheme(), ThemeStyle komponent
+├── utils.jsx               # traceId, traceLog (debug trace system)
+├── SharedComponents.jsx    # Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage, EatSafeLogo
+├── ScannerScreen.jsx       # HOME, SEARCH, RESULT, NOTFOUND, SUBMITTED, SUGGEST_EDIT, LIST
+├── ProfileScreen.jsx       # PROFILE, EDITPROFILE, FAMILY, ADMIN, HISTORY, FAVORITES
+├── OnboardingScreen.jsx    # WELCOME, LOGIN, ONBOARD (trin 0-9) — LOGIN/SIGNUP er HER
+├── MemberForm.jsx          # MemberForm (shared), CategorySelect dropdown
+├── AllergenPicker.jsx      # AllergenPicker, ENumberPicker
+├── FeedbackModal.jsx       # FeedbackModal (type, skærm, enhed, besked)
+├── RecipeScreen.jsx        # Opskrifter, søgning, filtrering, favoritter
+├── styles.css              # Globale CSS-klasser (topbar, bottom-nav, card, field, btn, osv.)
+└── index.css               # Vite default (ikke relevant)
+
+scripts/ (lokale)
+├── reparse_allergens.mjs   # Batch-reparse af allergen_flags via Edge Function
+├── csv_import.js           # Bilka/Nemlig CSV-import
+├── nemlig_scraper.js       # Playwright-scraper til Nemlig API
+├── mealdb_import.js        # TheMealDB recipe-import med oversættelse
+└── off_import.py           # Open Food Facts bulk-import (GitHub Action)
 ```
 
-### Fil-relationer
-- `App.jsx` importerer `appCss` fra `theme.jsx` → `<style>{appCss}</style>`
-- `App.jsx` importerer alle hooks og screen-komponenter
-- `App.jsx` renderer `<FeedbackModal>` i bunden af app-div (zIndex:9999)
-- `App.jsx` renderer beta-intro overlay (zIndex:10000) ved første besøg
-- Screen-filer importerer fra `constants.jsx`, `helpers.js`, `SharedComponents.jsx`
+---
+
+## 4. Screens / Navigation
+
+Navigation via `setScreen(SCREENS.X)` i App.jsx.
+
+| SCREENS-konstant | Fil | Beskrivelse |
+|-----------------|-----|-------------|
+| WELCOME | OnboardingScreen | Velkomst-splash |
+| LOGIN | OnboardingScreen | Login/signup med email OTP + Google OAuth |
+| ONBOARD | OnboardingScreen | 10-trins onboarding (0-9) |
+| HOME | ScannerScreen | Hjem — profil-bar, scan-boks, historik, tips |
+| SEARCH | ScannerScreen | Produktsøgning (Enter-trigger, parallel Supabase + OFF) |
+| RESULT | ScannerScreen | Scan-resultat med allergen-match |
+| NOTFOUND | ScannerScreen | 5-trins produkt-indsendelse |
+| SUBMITTED | ScannerScreen | Bekræftelse efter indsendelse |
+| SUGGEST_EDIT | ScannerScreen | Foreslå rettelser til eksisterende produkt |
+| LIST | ScannerScreen | Indkøbsliste |
+| PROFILE | ProfileScreen | Min profil med præferencer |
+| EDITPROFILE | ProfileScreen | Rediger allergier/diæt/E-numre |
+| FAMILY | ProfileScreen | Familiemedlemmer |
+| HISTORY | ProfileScreen | Scanningshistorik |
+| FAVORITES | ProfileScreen | Favoritprodukter |
+| ADMIN | ProfileScreen | Admin-panel (7 funktioner + ticket-export) |
+| RECIPES | RecipeScreen | Opskrifter |
 
 ---
 
-## 4. Hook-arkitektur
+## 5. Database — vigtigste tabeller
 
-### Initialiserings-rækkefølge i App.jsx (KRITISK)
+| Tabel | Nøglefelter | Noter |
+|-------|-------------|-------|
+| `public.users` | id, name, email, role, diets (jsonb), created_at | role: "user" \| "admin" |
+| `user_allergens` | user_id, allergen_id | Mange-til-mange |
+| `family_members` | id, user_id, name, color, allergens (jsonb), custom_allergens, diets, e_numbers | Jsonb-felter |
+| `products` | id, ean, name, brand, category, image_url, ingredients_text, allergen_flags (jsonb), nutrition (jsonb), verified_status, source, canonical_ean, variant_label | ~16.000+ produkter |
+| `products_backup` | Kopi af products | Taget før FORCE_ALL reparse |
+| `scan_history` | id, user_id, ean, product_id, status, scanned_at | |
+| `product_submissions` | id, ean, name, status, submitted_by | status: pending/approved/rejected |
+| `feedback_tickets` | id, type, status, screen, device, message, submitted_by | Ticket-system |
+| `shopping_lists` | id, owner_id, items (jsonb) | |
+| `recipes` | id, title, instructions, image_url, source | ~627 fra TheMealDB |
+| `recipe_ingredients` | id, recipe_id, name, amount, unit | |
+| `ingredients` | product_id, raw_text | Legacy fallback |
+| `allergen_flags` | product_id, gluten, laktose, ... | Legacy fallback |
+
+---
+
+## 6. Edge Functions (Supabase)
+
+| Funktion | Metode | Beskrivelse |
+|----------|--------|-------------|
+| `products` | GET `/products/:ean` | Hent produkt — lokal DB → OFF fallback. UUID = id-opslag, alt andet = ean-opslag |
+| `products` | POST | Opret produkt |
+| `products` | PATCH `/products/:id` | Opdater produkt |
+| `products` | DELETE `/products/:id` | Slet produkt |
+| `allergens` | POST `{text}` | Hybrid allergen-detektion: keyword-engine + Claude Haiku fallback |
+| `ocr` | POST `{image_base64, mode}` | OCR via Claude Haiku vision |
+
+### Allergen-detection (allergens.ts)
+- Keyword-engine (gratis, kører altid): 16 allergener, word-boundary med æøå, negation-detektion, substring-matching, E-nummer→allergen mapping
+- Claude Haiku fallback: trigges ved negation, lange ingredienslister, ukendte E-numre, eller `force_ai:true`
+- Maelkeallergi (protein) og laktose (mælkesukker) er korrekt splittet
+- Hvede er separat fra gluten; gluten matcher ikke mel/stivelse
+- Global laktose-override for "laktosefri"-produkter
+
+### Products Edge Function (products/index.ts)
+- Field-detection: `UUID-format → id`, `alt andet → ean` (understøtter Nemlig-prefixede EAN som "Nemlig-5056172")
+- OFF-fallback kun for rene numeriske EAN'er
+- `normalizeAllergenFlags()` håndterer boolean→string konvertering
+
+---
+
+## 7. Frontend — allergen-matching flow
 
 ```
-1. useState (screen, user, allergens, activeProfiles osv.) — lokale
-2. useAuth       → accessToken, userId, loginEmail, handleLogin/Signup/OAuth, saveTokens, clearAuth
-3. useShoppingList { accessToken, userId }
-4. useFamily     { accessToken, userId, setActiveProfiles }
-5. useHistory    { accessToken, userId }
-6. useOnboarding { accessToken, userId, user, loginEmail, allergens, customAllerg, setUser, setScreen, setIsOAuth, onSignupSuccess: () => setOnboardStep(1) }
-7. useProduct    { accessToken, userId, activeProfiles, notFoundEan, setNotFoundEan, setScreen }
-8. [Computed]    allActive, activeIds, lookupProduct (useCallback)
-9. [Effects]     cleanup useEffect, søge-useEffect
+1. Scanner/søgning → lookupProduct(ean) i App.jsx
+2. Edge Function /products/:ean → produkt + allergen_flags
+3. Canonical-opslag hvis product.canonical_ean findes
+4. compareAllergens(flags, activeIds) → status: safe/danger/warn
+5. extractENumbers() + compareENumbers() → E-nummer advarsler
+6. checkDietCompatibility() → diæt-advarsler
+7. familyImpact[] → berørte familiemedlemmer
+8. setScanResult() → RESULT-skærm
 ```
 
-### TDZ-regel
-**Hook A må ikke modtage en setter der returneres af hook B, hvis B initialiseres efter A.**
-
-### Hook-exports oversigt
-
-| Hook | State | Funktioner |
-|------|-------|-----------|
-| `useAuth` | `accessToken`, `refreshToken`, `userId`, `loginEmail`, `loginPassword`, `authError`, `authLoading`, `authTab`, `isOAuth` | `saveTokens`, `clearAuth`, `handleLogin`, `handleSignup`, `handleOAuth` |
-| `useShoppingList` | `shoppingList`, `shoppingListId`, `newItemName` | `loadShoppingList`, `addToList`, `toggleItem`, `removeItem`, `clearDone` |
-| `useFamily` | `family`, `newMemberName/BirthYear/Gender/Allerg/...` | `loadFamily`, `addMember`, `removeMember` |
-| `useHistory` | `history`, `historyLoading`, `favorites` | `loadHistory`, `saveHistoryEntry`, `toggleFavorite`, `isFavorite` |
-| `useOnboarding` | `onboardStep`, `editMode`, `tourIdx`, `customInput` | `saveProfileStep1`, `saveAllergensStep2`, `finishOnboard` |
-| `useProduct` | `scanResult`, `loading`, `scanError`, `setScanError`, `ocrText`, `proposedName/Flags`, `editStep/IngText/Note/Type`, `notFoundStep`, `submitting`, alle image-states | `handleImageCapture`, `handleProductImageCapture`, `handleEditProductCapture`, `submitProduct` |
+### Aktive profiler
+- `activeProfiles[]` indeholder "user" og/eller familiemedlems-id'er
+- `activeIds[]` = deduplikeret union af alle aktives allergen-id'er
+- `activeENumbers[]` = union af alle aktives E-numre
+- `allActive()` aggregerer på tværs af alle aktive profiler
 
 ---
 
-## 5. Screens og navigation
+## 8. Onboarding (10 trin)
 
-| Konstant | Streng | Page ID | Komponent |
-|----------|--------|---------|-----------|
-| SCREENS.WELCOME | `welcome` | SCR-01 | OnboardingScreen |
-| SCREENS.LOGIN | `login` | SCR-02 | OnboardingScreen |
-| SCREENS.ONBOARD | `onboard` | SCR-03 | OnboardingScreen |
-| SCREENS.HOME | `home` | SCR-04 | ScannerScreen |
-| SCREENS.SEARCH | `search` | SCR-06 | ScannerScreen |
-| SCREENS.LIST | `list` | SCR-07 | ScannerScreen |
-| SCREENS.PROFILE | `profile` | SCR-08 | ProfileScreen |
-| SCREENS.FAMILY | `family` | SCR-09 | ProfileScreen |
-| SCREENS.RESULT | `result` | SCR-10 | ScannerScreen |
-| SCREENS.HISTORY | `history` | SCR-11 | ProfileScreen |
-| SCREENS.NOTFOUND | `notfound` | SCR-12 | ScannerScreen |
-| SCREENS.SUBMITTED | `submitted` | SCR-13 | ScannerScreen |
-| SCREENS.ADMIN | `admin` | SCR-14 | AdminScreen |
-| SCREENS.FAVORITES | `favorites` | SCR-15 | ProfileScreen |
-| SCREENS.MADPAS | `madpas` | SCR-16 | MadpasScreen |
-| SCREENS.RECIPES | `recipes` | SCR-17 | RecipesScreen |
-| SCREENS.EDITPROFILE | `editprofile` | SCR-18 | ProfileScreen |
-| SCREENS.SUGGEST_EDIT | `suggest_edit` | — | ScannerScreen |
-
-**Bundnavigation:** Opskrifter → Indkøbsliste → Hjem → Madpas → Profil (5 punkter)
+| Trin | Indhold |
+|------|---------|
+| 0 | Beta-information |
+| 1 | Datadisklaimer |
+| 2 | Profil (navn, fødselsår, køn) |
+| 3 | Allergier (AllergenPicker) |
+| 4 | E-numre (ENumberPicker) |
+| 5 | Diæt |
+| 6 | Familiemedlemmer |
+| 7 | Community/bidrag |
+| 8 | Opsummeringsskærm (profil + familie med redigeringslinks) |
+| 9 | Færdig |
 
 ---
 
-## 6. Onboarding-flow
+## 9. Dataimport — kilder og scripts
 
-| `onboardStep` | Indhold |
-|---|---|
-| 0 | Beta-intro (vises én gang, localStorage `as_beta_intro`) |
-| 1 | Feature-tour (swipeable) |
-| 2 | Datakvalitet |
-| 25 | Tre kategorier: Allergier/intolerancer · E-numre · Diæter |
-| 3 | Hvem er du? (navn, email, fødselssår, køn) |
-| 4 | Allergier / intolerancer (2-state chips) |
-| 5 | E-numre (2-state liste) |
-| 6 | Diæt |
-| 7 | Familie |
-| 8 | Hjælp fællesskabet |
-| 9 | Oversigt + "Gå til appen" |
+| Kilde | Antal | Script | Format |
+|-------|-------|--------|--------|
+| Open Food Facts | ~77 GB JSONL (dansk dump) | `off_import.py` + GitHub Action (månedlig) | Bulk JSONL |
+| Bilka | ~10.271 produkter | `csv_import.js` | CSV |
+| Nemlig | ~8.543 produkter | `csv_import.js` + `nemlig_scraper.js` | CSV / Playwright |
+| TheMealDB | ~627 opskrifter | `mealdb_import.js` + `mealdb_save.js` | API → oversæt → Supabase |
 
-**VIGTIGT:** Admin-brugere sendes ALDRIG til onboarding — tjekkes via `payload.app_metadata.role` i OAuth-callback.
+### Batch reparse (reparse_allergens.mjs)
+- Kører lokalt på Windows: `set SUPABASE_URL=... && set SERVICE_KEY=... && node reparse_allergens.mjs`
+- Batch 50, pause 250ms, viser løbende pris per batch
+- `FORCE_ALL=1` genparser alle, ellers kun dem med tomme/dårlige flags
+- `DRY_RUN=1` for test uden skrivning
+- Første kørsel: 16.095 produkter → 4.976 opdateret (~$1,08)
+- FORCE_ALL kørsel: 16.095 → 15.568 opdateret (~$6,63)
+- Pris per Claude-kald: ~$0,00138–0,00225
 
 ---
 
-## 7. Allergener (16 stk)
+## 10. Designsystem
 
+### CSS-variabler (theme.jsx)
 ```
-id             label               emoji
-gluten         Gluten              🥖
-hvede          Hvede               🌾
-maelkeallergi  Mælk                🥛
-laktose        Laktoseintolerance  🍬
-aeg            Æg                  🥚
-noedder        Nødder              🌰
-jordnoedder    Jordnødder          🥜
-soja           Soja                🫛
-fisk           Fisk                🐟
-skaldyr        Skaldyr             🦐
-selleri        Selleri             🥬
-sennep         Sennep              🟡
-sesam          Sesam               🌿
-svovl          Sulfitter           🍷
-lupin          Lupin               🌸
-bloeddyr       Bløddyr             🦑
+--paper: #FAFAF7          --ink: #1F2733
+--paper2: #F2F2EE         --ink2: #3D4654
+--green: #22C55E          --green-lt: rgba(34,197,94,.08)
+--red: #E63946            --red-lt: rgba(230,57,70,.08)
+--amber: #F59E0B          --amber-lt: rgba(245,158,11,.08)
+--border: #E8E8E4         --border2: #D4D4CE
+--muted: #8B8F96          --muted2: #6B7280
+--surface: rgba(255,255,255,.6)  --surface2: rgba(31,39,51,.6)
+--r: 14px (border-radius)  --f: 'Inter', system-ui, sans-serif
 ```
 
-**Chip-logik:** 2-state toggle — ingen `_intolerance`-suffiks, ingen 3-state.
+### CSS-regler
+- **Ingen `1.5px` borders** — bruger `1px` for at undgå sub-pixel renderingsartefakter på mobil
+- **Ingen `backdrop-filter:blur()`** på fixed/sticky elementer
+- **Ingen dobbelt-borders** (border + box-shadow 0 -1px)
+- `backface-visibility:hidden` på `.topbar` og `.bottom-nav` for GPU-compositing
+- `background:#fff` i klasser bør være `var(--surface)` for tema-kompatibilitet
 
 ---
 
-## 8. Allergen-matching
+## 11. Konventioner
 
-`compareAllergens(flags, activeAllergenIds)` → `{ status, matchedDanger, matchedWarning, hasUnknown }`
-
----
-
-## 9. Produkt-kildebadge
-
-`verifiedBadge(verified_status, source)` → `{ label, bg, color, dot }`
-
-| Betingelse | Label | Farve |
-|---|---|---|
-| `verified_status === "verified"` eller `source === "producer"` | Fra producent | Grøn |
-| `source === "off"` / `"open_food_facts"` | Open Food Facts | Blå |
-| Alt andet | Bruger-indsendt | Grå |
+- **`App.jsx`** = routing + global state. Navigation via `setScreen(SCREENS.X)`
+- **`// @ts-nocheck`** øverst i alle `.jsx`-filer
+- **Ingen `_intolerance`-suffiks** — kun 2-state allergen toggle
+- **Ingen `ALLERGEN_SUBTYPES`** — fjernet helt
+- **Supabase REST** via `makeHeaders()` + `apiCall()` fra `helpers.js`
+- **CSS-variabler** defineres i `theme.jsx`, globale klasser i `styles.css`
+- **Ingredienser og næring** altid udfoldet på produktsiden
+- **Spor vises altid** (traces)
+- **Windows-syntaks** for miljøvariabler: `set KEY=value && node script.mjs`
+- **Branch-workflow**: develop på `dev`, merge til `main` via pull request
 
 ---
 
-## 10. Designsystem — MØRKT TEMA
+## 12. Refaktor-regel
 
-**CSS i `theme.jsx`:** `export const appCss` + `export const THEME` + `export const color(key)`
+**Første gang der arbejdes på en fil ikke rørt siden refaktoren**, køres import-tjek:
 
-```css
-/* Baggrunde */
---paper:#1a3012
---paper2:#233d18
---surface:rgba(255,255,255,.055)
---surface2:rgba(255,255,255,.09)
---surface3:rgba(255,255,255,.04)
+**Fra `helpers.js`:** `verifiedBadge`, `makeHeaders`, `apiCall`, `timeAgo`, `compareAllergens`, `initials`, `getAllergenLabels`  
+**Fra `constants.jsx`:** `uid`, `PAGE_IDS`, `SCREENS`, `ALLERGENS`, `DIETS`, `E_NUMBERS`  
+**Props:** tjek om alle brugte props faktisk sendes fra App.jsx
 
-/* Tekst */
---ink:#EDF5EE
---ink2:rgba(237,245,238,.7)
---ink3:rgba(237,245,238,.58)
---muted:rgba(237,245,238,.62)
---muted2:rgba(237,245,238,.48)
-
-/* Accent */
---green:#4ADE80
---green-logo:#3DCC6E   /* logoets grønne — bruges til scan-animation */
---green-lt:rgba(74,222,128,.13)
---green-mid:rgba(74,222,128,.22)
---green-text:#2FB865
-
-/* Fare/advarsel */
---red:#FF5252   --red-lt:rgba(255,82,82,.1)   --red-md:rgba(255,82,82,.18)
---amber:#FFBA3B --amber-lt:rgba(255,186,59,.1) --amber-md:rgba(255,186,59,.18)
---blue:#60A5FA  --blue-lt:rgba(96,165,250,.1)
-
-/* Borders */
---border:rgba(255,255,255,.08)
---border2:rgba(255,255,255,.14)
-
-/* Font */
---f:'DM Sans',system-ui,sans-serif
---mono:'DM Mono',monospace
-```
-
-**Topbar + bundmenu:** Transparente — flyder ind i gradienten. Bundmenu har fade-gradient.
-
-**Knap-konvention:** `btn-primary` = grøn baggrund (`var(--green)`) med mørk tekst (`#071510`). ALDRIG hvid tekst på grøn knap.
-
-**VIGTIGT:** Brug aldrig `var(--ink)` som baggrund — det er lys grøn tekst-farve. Brug `var(--surface)` eller `var(--surface2)` til kortbaggrunde.
-
-**CSS-klasser (nye):** `.scan-card`, `.scan-barcode-wrap`, `.scan-barcode-svg`, `.reticle-corner`, `.reticle-line`, `.home-chip`, `.home-tip`, `.recent-list`, `.recent-dot`, `.home-mini-card`, `.section-lbl`, `.version-str`, `.greeting-eyebrow`, `.greeting-main`
-
-**Komponenter:** `<EatSafeLogo size={N} variant="light" />` · `<Icon name="..." size={N} color="..." />`
+**Allerede tjekket:** ScannerScreen, ProfileScreen, OnboardingScreen, MemberForm, AllergenPicker, SharedComponents, constants, FeedbackModal, utils, theme
 
 ---
 
-## 11. Supabase
+## 13. Planlagt refaktor (næste session)
 
-**URL:** `https://jegrpcflyguadyxialkm.supabase.co` · **Anon key:** i `constants.jsx`  
-**Alle kald:** rå `fetch()` via `makeHeaders(token)` + `apiCall(url, opts)` fra `helpers.js`
-
-### Tabeller
-| Tabel | Kolonner |
-|-------|---------|
-| `users` | id, name, email, role, birth_year, gender, diets jsonb, onboarding_completed |
-| `family_members` | id, user_id, name, birth_year, gender, color, allergens jsonb, custom_allergens jsonb, diets jsonb, e_numbers jsonb |
-| `products` | id, ean, name, brand, category, allergen_flags jsonb, ingredients_text, nutrition jsonb, verified_status, source, image_url, tags array, canonical_ean, variant_label |
-| `feedback_tickets` | id, type, description, context jsonb, image_base64, status, submitted_by |
-| `product_submissions` | id, ean, proposed_name, ocr_raw_text, allergen_flags jsonb, submitted_by, status |
-| `scan_history` | id, user_id, ean_scanned, result_status |
-| `shopping_lists` | id, owner_id, name |
-| `shopping_list_items` | id, list_id, name, checked |
-| `recipes` | id, title, category, allergen_flags jsonb, ingredients_raw jsonb, instructions jsonb |
-
-**NB:** `users`-tabellen har IKKE allergens/custom_allerg/e_numbers kolonner — disse håndteres separat.
-
-### Auth
-Tokens i localStorage: `as_token`, `as_refresh`, `as_user_id`  
-Auto-refresh hvert 45 min · Roller: `user`, `admin`  
-**Admin-rolle:** `auth.users.raw_app_meta_data → {"role":"admin"}` — læses fra JWT `payload.app_metadata.role`  
-Trigger synkroniserer `public.users.role` → `auth.users.raw_app_meta_data`
-
-### loadAll (App.jsx useEffect på accessToken+userId)
-Kører automatisk ved login:
-1. `public.users` → `name, email, phone, birth_year, gender, role, onboarding_completed`
-2. `user_allergens` → `allergen, type`
-3. `loadFamily()`, `loadShoppingList()`, `loadHistory()`
-
-### Edge Functions
-| Funktion | Formål |
-|----------|--------|
-| `allergens` | Keyword + Claude hybrid allergen-detektion |
-| `ocr` | Claude Haiku vision. mode: "ingredients" / "product_name" |
-| `search` | Produktsøgning. Query: `?q=`. Scorer på navn-match + datakomplethed (allergen_flags +15, ingredients_text +10, image_url +5) |
-| `products/{ean}` | Produktopslag på EAN |
-| `submissions` | Bruger-indsendelser |
+Planen er at splitte `App.jsx` op:
+- `constants.js` — alle konstanter ud af App.jsx
+- `AppContext.jsx` — React Context for global state
+- Individuelle komponent-filer for genbrugte UI-dele
+- Screens som selvstændige filer (allerede delvist gjort)
+- GitHub Desktop setup + Vercel environment variables
+- Supabase migrations-mappe
+- Central error logger
+- Test efter hvert trin
 
 ---
 
-## 12. Debug Trace System (helpers.js)
-
-- `traceId(prefix)` → unikt ID per operation (scan/search/ocr/submit)
-- `traceLog(id, step, data)` → logger til console + in-memory array (max 200)
-- `getTraceLog(id?)` → henter alle eller filtreret på ét ID
-- `clearTraceLog()` → rydder alle traces
-- Synlig i **Admin → Debug** faneblad med "Kopier JSON"-knap
-- Flows der tracker: scan (EAN), search, ocr (foto→tekst→allergen), submit
-- Inkluderes i FeedbackModal context (`debug_trace`: seneste 50 entries)
-- **NB:** Må ikke tilføjes dobbelt til helpers.js — eksisterer allerede i main-branch
-
----
-
-## 13. Build-system
-
-```ts
-// vite.config.ts
-define: {
-  __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
-  __COMMIT_SHA__: JSON.stringify(process.env.VERCEL_GIT_COMMIT_SHA?.slice(0,7) || "local"),
-}
-```
-
-`utils.jsx` eksporterer: `BUILD_TIME`, `COMMIT_SHA`, `formatBuildTime()`, `getGreeting()`, `buildScreenLabel()`
-
----
-
-## 14. FeedbackModal
-
-Placeret i **bunden af app-div** i App.jsx (zIndex:9999 over alt).  
-Åbnes via Feedback-knap i topbar (synlig overalt inkl. onboarding).
-
-Inkluderer automatisk i context: skærm, bruger, email, rolle, allergener, familie, enhed, viewport, build, debug trace (seneste 50 entries).
-
----
-
-## 15. AdminScreen
-
-**Tilgås via:** Profil → Admin panel (kun `user.role === "admin"`)
-
-**Sektioner:** Dashboard · Brugere · Indsendelser · Tickets · Debug
-
-**Funktioner i App.jsx:**
-- `loadAdminUsers()`, `updateUserRole(uid, role)`, `deleteUser(uid)`
-- `updateSubmissionAndApprove(submission, edited)`, `rejectSubmission(id)`
-- `updateTicketStatus(id, status)`, `cleanOcrWithAI(text)`
-
-**Auto-load:** `useEffect` på `screen === SCREENS.ADMIN` kalder `loadAdminStats()`.
-
-**Scroll:** Alle screen-divs og debug-container har `paddingBottom:120`. Modale popups har `padding:"20px 16px 140px"`.
-
----
-
-## 16. Canonical EAN (varianter)
-
-Kolonner: `products.canonical_ean` + `variant_label`.  
-Varianter peger på master-produkt der ejer allergen-data.  
-`lookupProduct` henter master-data hvis `canonical_ean` sat.
-
----
-
-## 17. Konventioner
-
-- `App.jsx` = routing + global state. Navigation via `setScreen(SCREENS.X)`
-- `// @ts-nocheck` øverst i alle `.jsx`-filer
-- **Ingen ALLERGEN_SUBTYPES**, ingen 3-state chips, ingen datakvalitetsbadge
-- CSS i `theme.jsx`, ikke i komponentfiler
-- Supabase REST — `makeHeaders()` + `apiCall()` fra `helpers.js`
-- **Mørkt tema overalt** — ingen `#fff`, `var(--paper)`, `var(--ink)` som baggrund
-- **Grønne primærknapper** har altid `color:#071510`
-- Kamera stoppes automatisk ved navigation væk fra HOME
-- Brugerdata loades automatisk ved login (useEffect på accessToken+userId)
-- `paddingBottom:120` på alle `.screen` divs i AdminScreen + debug-container
-- Scanner bruger `experimentalFeatures.useBarCodeDetectorIfSupported` + auto-zoom (1×→1.5×→2×) + tap-to-focus
-
----
-
-## 18. Kendte fejl løst
+## 14. Kendte fejl — løst
 
 | Fejl | Løsning |
 |------|---------|
+| Nemlig-produkter "ikke fundet" | Edge Function brugte `isEan = /^\d+$/` → ændret til UUID-detection |
+| Diæt vises ikke under præferencer | Tilføjet `user.diets` rendering i ProfileScreen |
+| Feedback-knap hvid/ulæselig på login | `rgba(255,255,255,.85)` → `var(--paper2)`, `color:var(--ink2)` |
+| Scroll-artefakter (streger) | `1.5px solid` → `1px solid` (31 steder), `backdrop-filter` fjernet fra topbar |
 | `loginEmail is not defined` | Tilføjet som prop til ProfileScreen |
+| `activeIds is not defined` | Beregnes lokalt i ScannerScreen |
 | `lookupProduct is not defined` | Tilføjet som prop til ScannerScreen |
-| `scanError is not defined` | Destructureret fra useProduct i App.jsx |
-| `lastScannedRef is not defined` | `useRef(null)` tilføjet i App.jsx |
-| `feedbackDone is not defined` | `useState` tilføjet i App.jsx |
-| TDZ-fejl | Hook-rækkefølge overholdes strengt |
-| OAuth sender admin til onboarding | JWT `app_metadata.role` tjekkes — admin → HOME altid |
-| `column users.allergens does not exist` | Fjernet fra REST select |
-| Søgning åbner ikke produkter | `lookupProduct` manglede som prop |
-| AdminScreen tom | Manglede i JSX-render-træet |
-| Admin-rolle vises ikke | JWT `app_metadata.role` sættes via SQL på `auth.users` |
-| `_traceLog` duplicate declaration | Trace-system eksisterede allerede i main — tilføj IKKE igen til helpers.js |
-| Profil hero hvid | `var(--ink)` → `var(--surface2)` som baggrund |
-| Scanner animation forkert farve | Bruger nu `--green-logo:#3DCC6E` = logoets grønne |
-| Smal/svær stregkode scanner ikke | Auto-zoom 1.5×→2.0× efter 3/7s + tap-to-focus + 92%×55% scan-område |
-| Debug trace bag bundmenu | `paddingBottom:120` på debug-sektionens container i AdminScreen |
-| Admin modale popups afskæres | `padding:"20px 16px 140px"` på popup-containere |
-| Søgning prioriterede ufuldstændige produkter | Search Edge Function: +15 for allergen_flags, +10 for ingredients_text, +5 for image_url |
+| `verifiedBadge/makeHeaders/apiCall/uid` not defined | Tilføjet til imports |
+| Google-knap hvid i dark theme | `background:"#fff"` → `var(--surface)` |
+| Onboarding "Næste"-knap hvid | `var(--ink)` → `var(--green)` |
+| E-numre mangler i præferencer | Tilføjet `selectedENumbers`-sektion |
+| Login-skærm lokation ukendt | Dokumenteret: ligger i OnboardingScreen.jsx |
+| reparse_allergens URL-fejl | Mellemrum i URL-strengbygning → sat på én linje |
+| allergen_flags boolean vs string | `normalizeAllergenFlags()` i Edge Function + SQL migration |
+| OFF API CORS | Går via Edge Function, ikke direkte fra frontend |
 
 ---
 
-## 19. Åbne opgaver
+## 15. Kendte fejl — åbne
 
-- [ ] `constants.js` udfases
-- [ ] Opskrifter-backend mangler data
-- [ ] Supabase allowlist til alle preview-URLer
-- [ ] Debug role-visning i ProfileScreen fjernes (midlertidig debug-linje)
-- [ ] Allergener på familiemedlemmer: data-flow mangler
-- [ ] Canonical EAN: udfyld manuelt efter behov
-- [ ] Foto-scanning fallback: hvis auto-scan fejler, kan bruger tage stillbillede → Claude Vision aflæser EAN-tal → direkte produktopslag (OCR Edge Function + ny mode "ean_from_image")
-- [ ] Scanner: auto-zoom 1.5×→2.0× efter 3/7 sek ingen scan (implementeret i App.jsx) — overvej også manuel zoom-slider
+| Fejl | Status |
+|------|--------|
+| Streger i UI ved scroll (inde i bokse) | `1.5px`-fix ikke nok — afventer yderligere debugging |
+| Scanner-animation kan stå stille | Uløst |
+| `constants.js` skal udfases (erstattet af `constants.jsx`) | Planlagt |
+| Opskrifter-backend mangler data (recipe_ingredients tom) | Mangler SQL migrations |
+| Hardcodede farver i komponentfiler | Tema-refaktor fase 3 |
+
+---
+
+## 16. Admin-panel
+
+7 funktioner i ProfileScreen (ADMIN-skærm):
+1. `loadAdminUsers` — vis alle brugere
+2. `updateUserRole` — ændr brugerrolle
+3. `deleteUser` — slet bruger
+4. `updateSubmissionAndApprove` — godkend produkt-indsendelse
+5. `rejectSubmission` — afvis indsendelse
+6. `updateTicketStatus` — opdater ticket-status
+7. `cleanOcrWithAI` — rens OCR-tekst med Claude
+
+Plus: ticket-export knap (download åbne tickets som .txt).
+
+---
+
+## 17. Nøgle-URL'er
+
+| Hvad | URL |
+|------|-----|
+| App (prod) | https://eatsafe.dk |
+| Supabase Dashboard | https://supabase.com/dashboard/project/jegrpcflyguadyxialkm |
+| Supabase REST | https://jegrpcflyguadyxialkm.supabase.co/rest/v1/ |
+| Edge Functions | https://jegrpcflyguadyxialkm.supabase.co/functions/v1/ |
+| GitHub repo | https://github.com/janfogde-sketch/Allergi-Scan |
+| Vercel | Auto-deploy fra GitHub |
+| OFF API | https://world.openfoodfacts.org/api/v2/product/{ean}.json |
