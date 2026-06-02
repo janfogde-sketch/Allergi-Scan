@@ -141,7 +141,7 @@ export default function ProfileScreen({
                   Rediger
                 </button>
               </div>
-              {allergens.length + customAllerg.length + (selectedENumbers?.length || 0) === 0
+              {allergens.length + customAllerg.length + (selectedENumbers?.length || 0) + (user?.diets?.length || 0) === 0
                 ? <div style={{ fontSize:13, color:"var(--muted)", padding:"8px 0" }}>Ingen præferencer registreret endnu</div>
                 : (
                   <div>
@@ -154,8 +154,14 @@ export default function ProfileScreen({
                     )}
                     {customAllerg.length > 0 && (
                       <div style={{ marginBottom:8 }}>
-                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Intolerancer & diæter</div>
+                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Intolerancer</div>
                         <div className="tags">{customAllerg.map((c,i) => <div key={i} className="tag" style={{ background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>✏️ {c}</div>)}</div>
+                      </div>
+                    )}
+                    {(user?.diets?.length > 0) && (
+                      <div style={{ marginBottom:8 }}>
+                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Diæter</div>
+                        <div className="tags">{user.diets.map(d => { const diet = DIETS.find(x=>x.id===d); return diet ? <div key={d} className="tag" style={{ background:"var(--green-lt)", color:"var(--green)", borderColor:"var(--green-mid)" }}>{diet.emoji || "🥗"} {diet.label}</div> : null; })}</div>
                       </div>
                     )}
                     {selectedENumbers && selectedENumbers.length > 0 && (
