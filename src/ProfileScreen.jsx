@@ -141,7 +141,7 @@ export default function ProfileScreen({
                   Rediger
                 </button>
               </div>
-              {allergens.length + customAllerg.length === 0
+              {allergens.length + customAllerg.length + (selectedENumbers?.length || 0) === 0
                 ? <div style={{ fontSize:13, color:"var(--muted)", padding:"8px 0" }}>Ingen præferencer registreret endnu</div>
                 : (
                   <div>
@@ -156,6 +156,12 @@ export default function ProfileScreen({
                       <div style={{ marginBottom:8 }}>
                         <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Intolerancer & diæter</div>
                         <div className="tags">{customAllerg.map((c,i) => <div key={i} className="tag" style={{ background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>✏️ {c}</div>)}</div>
+                      </div>
+                    )}
+                    {selectedENumbers && selectedENumbers.length > 0 && (
+                      <div style={{ marginBottom:8 }}>
+                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>E-numre</div>
+                        <div className="tags">{selectedENumbers.map((e,i) => <div key={i} className="tag" style={{ background:"rgba(99,102,241,.1)", color:"#818cf8", borderColor:"rgba(99,102,241,.3)" }}>⚗️ {e}</div>)}</div>
                       </div>
                     )}
                   </div>

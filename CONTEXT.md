@@ -50,7 +50,7 @@ src/
 ├── SharedComponents.jsx # EatSafeLogo, Icon, IngredientsList, ProfileBadges, ProductImage, getProductIcon
 ├── AllergenPicker.jsx   # ENumberPicker
 ├── MemberForm.jsx       # MemberForm, CategorySelect
-├── OnboardingScreen.jsx # WELCOME, LOGIN, ONBOARD (10 trin)
+├── OnboardingScreen.jsx # WELCOME, LOGIN, ONBOARD (trin 0-9) — LOGIN/SIGNUP-skærm er HER, ikke i App.jsx
 ├── ScannerScreen.jsx    # HOME, RESULT, SEARCH, LIST, NOTFOUND, SUBMITTED, SUGGEST_EDIT
 ├── ProfileScreen.jsx    # PROFILE, FAMILY, FAVORITES, HISTORY, EDITPROFILE
 ├── MadpasScreen.jsx     # MADPAS (17 sprog)
