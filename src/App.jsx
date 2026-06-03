@@ -450,9 +450,12 @@ export default function EatSafe() {
 
   const deleteUser = async (uid) => {
     try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}`, {
-        method: "DELETE", headers: makeHeaders(accessToken),
+      const res = await apiCall(`${SUPABASE_URL}/functions/v1/delete-user`, {
+        method: "POST",
+        headers: makeHeaders(accessToken),
+        body: JSON.stringify({ uid }),
       });
+      if (res?.error) throw new Error(res.error);
       setAdminUsers(u => u.filter(x => x.id !== uid));
     } catch (e) { console.error("deleteUser:", e); }
   };
