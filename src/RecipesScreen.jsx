@@ -182,7 +182,7 @@ export default function RecipesScreen({
                             style={{
                               display:"flex", alignItems:"center", gap:5,
                               padding:"5px 12px", borderRadius:100,
-                              border:`1.5px solid ${allAdded ? "var(--green)" : "var(--border2)"}`,
+                              border:`1px solid ${allAdded ? "var(--green)" : "var(--border2)"}`,
                               background: allAdded ? "var(--green-lt)" : "var(--paper2)",
                               color: allAdded ? "var(--green)" : "var(--muted2)",
                               fontSize:11, fontWeight:700, cursor:"pointer",
@@ -252,7 +252,7 @@ export default function RecipesScreen({
                                         title={added ? "Tilføjet" : "Tilføj til indkøbsliste"}
                                         style={{
                                           width:26, height:26, borderRadius:"50%",
-                                          border:`1.5px solid ${added ? "var(--green)" : "var(--border2)"}`,
+                                          border:`1px solid ${added ? "var(--green)" : "var(--border2)"}`,
                                           background: added ? "var(--green-lt)" : "var(--surface2)",
                                           color: added ? "var(--green)" : "var(--muted2)",
                                           cursor: added ? "default" : "pointer",
@@ -288,7 +288,7 @@ export default function RecipesScreen({
                         return (
                           <div key={i} className="step-row" style={{ opacity: done ? 0.45 : 1 }}
                             onClick={() => setCompletedSteps(s => ({ ...s, [i]: !s[i] }))}>
-                            <div className="step-circle" style={{ background: done ? "var(--green)" : "var(--surface2)", border: done ? "none" : "1.5px solid var(--border2)" }}>
+                            <div className="step-circle" style={{ background: done ? "var(--green)" : "var(--surface2)", border: done ? "none" : "1px solid var(--border2)" }}>
                               {done
                                 ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
                                 : <span style={{ fontSize:12, fontWeight:800, color:"var(--muted2)" }}>{i+1}</span>
@@ -379,7 +379,7 @@ export default function RecipesScreen({
               <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
                 <div onClick={() => setRecipeSafeOnly(v => !v)} style={{
                   display:"flex", alignItems:"center", gap:6, padding:"5px 12px",
-                  borderRadius:100, border:`1.5px solid ${recipeSafeOnly ? "var(--green)" : "var(--border2)"}`,
+                  borderRadius:100, border:`1px solid ${recipeSafeOnly ? "var(--green)" : "var(--border2)"}`,
                   background: recipeSafeOnly ? "var(--green-lt)" : "var(--surface)", cursor:"pointer",
                   fontSize:12, fontWeight:700, color: recipeSafeOnly ? "var(--green)" : "var(--muted2)" }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>

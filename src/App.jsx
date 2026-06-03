@@ -1259,7 +1259,7 @@ ${text}` }],
                   onChange={e => setDeleteConfirmText(e.target.value)}
                   placeholder="slet"
                   autoCapitalize="none"
-                  style={{ width:"100%", padding:"13px 14px", border:`1px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"#fff", color:"var(--ink)" }}
+                  style={{ width:"100%", padding:"13px 14px", border:`1px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"var(--paper)", color:"var(--ink)" }}
                 />
               </div>
 

@@ -73,7 +73,7 @@ export default function AdminScreen({
                   { val:"resolved",    label:"🟢 Løst" },
                 ].map(s => (
                   <button key={s.val} onClick={() => updateTicketStatus(openTicket.id, s.val)}
-                    style={{ flex:1, padding:"8px 4px", borderRadius:10, border:`1.5px solid ${openTicket.status===s.val?"var(--green)":"var(--border)"}`,
+                    style={{ flex:1, padding:"8px 4px", borderRadius:10, border:`1px solid ${openTicket.status===s.val?"var(--green)":"var(--border)"}`,
                       background: openTicket.status===s.val ? "var(--green-lt)" : "var(--surface)",
                       fontFamily:"var(--f)", fontSize:10, fontWeight:700,
                       color: openTicket.status===s.val ? "var(--green)" : "var(--muted)", cursor:"pointer" }}>
@@ -302,7 +302,7 @@ ${openTicket.description}
                   }}
                   style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:4, padding:"14px 16px",
                     background: adminSection===s.id ? "var(--green-lt)" : "var(--surface)",
-                    border: `1.5px solid ${adminSection===s.id ? "var(--green)" : "var(--border)"}`,
+                    border: `1px solid ${adminSection===s.id ? "var(--green)" : "var(--border)"}`,
                     borderRadius:14, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
                   <span style={{ fontSize:22 }}>{s.emoji}</span>
                   <span style={{ fontSize:13, fontWeight:800, color: adminSection===s.id ? "var(--green)" : "var(--ink)" }}>{s.label}</span>
@@ -375,7 +375,7 @@ ${openTicket.description}
                     value={userSearch}
                     onChange={e => setUserSearch(e.target.value)}
                     placeholder="Søg bruger…"
-                    style={{ flex:1, padding:"10px 14px", border:"1.5px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:14, background:"var(--surface)", outline:"none", color:"var(--ink)" }}
+                    style={{ flex:1, padding:"10px 14px", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:14, background:"var(--surface)", outline:"none", color:"var(--ink)" }}
                   />
                   {userSearch && (
                     <button onClick={() => setUserSearch("")}
@@ -388,7 +388,7 @@ ${openTicket.description}
                 {/* Søge-parameter — dropdown */}
                 <div style={{ marginBottom:12 }}>
                   <select value={userSearchParam} onChange={e => setUserSearchParam(e.target.value)}
-                    style={{ width:"100%", padding:"10px 14px", border:"1.5px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:14, background:"var(--surface)", color:"var(--ink)", outline:"none", cursor:"pointer" }}>
+                    style={{ width:"100%", padding:"10px 14px", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:14, background:"var(--surface)", color:"var(--ink)", outline:"none", cursor:"pointer" }}>
                     <option value="all">🔍 Alle felter</option>
                     <option value="name">👤 Søg på navn</option>
                     <option value="email">📧 Søg på email</option>
@@ -458,7 +458,7 @@ ${openTicket.description}
                     { val:"rejected", label:"❌ Afvist",    color:"var(--red)" },
                   ].map(({ val, label, color }) => (
                     <button key={val} onClick={() => { setSubmissionFilter(val); loadSubmissions(val); }}
-                      style={{ flex:1, padding:"9px 4px", borderRadius:10, border:`1.5px solid ${submissionFilter===val ? color : "var(--border)"}`,
+                      style={{ flex:1, padding:"9px 4px", borderRadius:10, border:`1px solid ${submissionFilter===val ? color : "var(--border)"}`,
                         background: submissionFilter===val ? (val==="pending"?"var(--amber-lt)":val==="approved"?"var(--green-lt)":"var(--red-lt)") : "var(--surface)",
                         fontFamily:"var(--f)", fontSize:11, fontWeight:700,
                         color: submissionFilter===val ? color : "var(--muted)", cursor:"pointer" }}>
@@ -515,7 +515,7 @@ ${openTicket.description}
                     const isActive = adminTicketFilter === s.status;
                     return (
                       <div key={s.status} onClick={() => setAdminTicketFilter(s.status)}
-                        style={{ background: isActive ? s.color : "var(--surface)", border:`1.5px solid ${isActive ? s.color : "var(--border)"}`, borderRadius:10, padding:"10px 6px", textAlign:"center", cursor:"pointer", transition:"all .15s",
+                        style={{ background: isActive ? s.color : "var(--surface)", border:`1px solid ${isActive ? s.color : "var(--border)"}`, borderRadius:10, padding:"10px 6px", textAlign:"center", cursor:"pointer", transition:"all .15s",
                           gridColumn: s.status === "all" ? "1 / -1" : "auto" }}>
                         <div style={{ fontSize:18, fontWeight:900, color: isActive ? "#071510" : s.color }}>{count}</div>
                         <div style={{ fontSize:9, color: isActive ? "rgba(255,255,255,.8)" : "var(--muted)", fontWeight:700, textTransform:"uppercase" }}>{s.label}</div>
@@ -745,7 +745,7 @@ ${openTicket.description}
 
                         {/* Slet */}
                         <button onClick={() => { deleteUser(openAdminUser.id); setOpenAdminUser(null); }}
-                          style={{ width:"100%", padding:"13px", background:"var(--red-lt)", border:"1.5px solid var(--red-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
+                          style={{ width:"100%", padding:"13px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
                           🗑️ Slet bruger permanent
                         </button>
                       </div>
@@ -872,7 +872,7 @@ ${openTicket.description}
                   return (
                     <button key={a.id} onClick={() => setEditingSubmission(s => ({ ...s, allergen_flags: { ...s.allergen_flags, [a.id]: next } }))}
                       style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", borderRadius:10, cursor:"pointer",
-                        border:`1.5px solid ${isYes?"var(--red-md)":isTrace?"var(--amber-md)":"var(--border)"}`,
+                        border:`1px solid ${isYes?"var(--red-md)":isTrace?"var(--amber-md)":"var(--border)"}`,
                         background: isYes?"var(--red-lt)":isTrace?"var(--amber-lt)":"var(--paper2)",
                         fontFamily:"var(--f)" }}>
                       <span style={{ fontSize:16 }}>{a.emoji}</span>
@@ -893,7 +893,7 @@ ${openTicket.description}
                 ✅ Godkend og opret produkt
               </button>
               <button onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}
-                style={{ width:"100%", background:"var(--red-lt)", border:"1.5px solid var(--red-md)", borderRadius:12, padding:"13px", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
+                style={{ width:"100%", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, padding:"13px", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
                 ❌ Afvis indsendelse
               </button>
               <button onClick={() => { setOpenSubmission(null); setEditingSubmission(null); }}

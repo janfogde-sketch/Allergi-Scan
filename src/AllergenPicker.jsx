@@ -30,7 +30,7 @@ export const ENumberPicker = ({ selected, onChange }) => {
               style={{ fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:20, cursor:"pointer",
                 background: on?"var(--red-lt)":"var(--surface)",
                 color: on?"var(--red)":"var(--ink)",
-                border:`1.5px solid ${on?"var(--red)":"var(--border)"}` }}>
+                border:`1px solid ${on?"var(--red)":"var(--border)"}` }}>
               {e}{on?" ✓":""}
             </div>
           );
@@ -38,11 +38,11 @@ export const ENumberPicker = ({ selected, onChange }) => {
       </div>
 
       {/* Søg */}
-      <input style={{ width:"100%", padding:"8px 12px", border:"1.5px solid var(--border2)", borderRadius:8, fontSize:13, fontFamily:"var(--f)", marginBottom:8, boxSizing:"border-box", background:"var(--surface)", color:"var(--ink)" }}
+      <input style={{ width:"100%", padding:"8px 12px", border:"1px solid var(--border2)", borderRadius:8, fontSize:13, fontFamily:"var(--f)", marginBottom:8, boxSizing:"border-box", background:"var(--surface)", color:"var(--ink)" }}
         placeholder="Søg E-nummer eller navn..." value={search} onChange={e => setSearch(e.target.value)} />
 
       {/* Kategori */}
-      <select style={{ width:"100%", padding:"8px 12px", border:"1.5px solid var(--border2)", borderRadius:8, fontSize:13, fontFamily:"var(--f)", marginBottom:8, background:"var(--surface)", color:"var(--ink)", boxSizing:"border-box" }}
+      <select style={{ width:"100%", padding:"8px 12px", border:"1px solid var(--border2)", borderRadius:8, fontSize:13, fontFamily:"var(--f)", marginBottom:8, background:"var(--surface)", color:"var(--ink)", boxSizing:"border-box" }}
         value={cat} onChange={e => setCat(e.target.value)}>
         <option value="alle">Alle kategorier</option>
         <option value="farve">Farvestoffer (E100–E199)</option>

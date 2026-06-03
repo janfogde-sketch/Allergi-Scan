@@ -89,7 +89,7 @@ export default function OnboardingScreen({
             {/* Logo */}
             <div className="login-header">
               <div className="login-shield" style={{background:"none",padding:0,width:56,height:56}}><EatSafeLogo size={56} variant="light" /></div>
-              <div className="login-title">Eat<span style={{color:"#22C55E",fontStyle:"italic"}}>Safe</span></div>
+              <div className="login-title">Eat<span style={{color:"var(--green)",fontStyle:"italic"}}>Safe</span></div>
             </div>
 
             {/* Tab vælger */}
