@@ -77,22 +77,7 @@ export default function EatSafe() {
 
   // History → useHistory hook
 
-  // Admin → useAdmin hook
-  const {
-    submissions, setSubmissions, submissionsLoading, adminStats,
-    adminSection, setAdminSection, adminUsers, setAdminUsers, adminUsersLoading,
-    adminTicketFilter, setAdminTicketFilter, showDeleteAccount, setShowDeleteAccount,
-    deleteConfirmText, setDeleteConfirmText, deletingAccount,
-    openAdminUser, setOpenAdminUser, userSearch, setUserSearch,
-    userSearchParam, setUserSearchParam, openSubmission, setOpenSubmission,
-    submissionFilter, setSubmissionFilter, editingSubmission, setEditingSubmission,
-    cleaningOcr, cleanedOcrText, setCleanedOcrText,
-    adminTickets, openTicket, setOpenTicket, ticketsLoading,
-    ocrImagePreview, setOcrImagePreview,
-    loadSubmissions, deleteOwnAccount, loadAdminStats, loadTickets,
-    loadAdminUsers, updateUserRole, deleteUser,
-    updateSubmissionAndApprove, rejectSubmission, updateTicketStatus, cleanOcrWithAI,
-  } = useAdmin(accessToken, userId, clearAuth);
+  // Admin → useAdmin hook (kaldet efter useAuth nedenfor)
 
   // Shopping list
   // → useShoppingList hook
@@ -589,6 +574,23 @@ export default function EatSafe() {
   } = useOnboarding({ accessToken, userId, user, loginEmail,
                       allergens, customAllerg,
                       setUser, setScreen, setEditMode: () => {}, setIsOAuth });
+
+  // Admin → useAdmin hook
+  const {
+    submissions, setSubmissions, submissionsLoading, adminStats,
+    adminSection, setAdminSection, adminUsers, setAdminUsers, adminUsersLoading,
+    adminTicketFilter, setAdminTicketFilter, showDeleteAccount, setShowDeleteAccount,
+    deleteConfirmText, setDeleteConfirmText, deletingAccount,
+    openAdminUser, setOpenAdminUser, userSearch, setUserSearch,
+    userSearchParam, setUserSearchParam, openSubmission, setOpenSubmission,
+    submissionFilter, setSubmissionFilter, editingSubmission, setEditingSubmission,
+    cleaningOcr, cleanedOcrText, setCleanedOcrText,
+    adminTickets, openTicket, setOpenTicket, ticketsLoading,
+    ocrImagePreview, setOcrImagePreview,
+    loadSubmissions, deleteOwnAccount, loadAdminStats, loadTickets,
+    loadAdminUsers, updateUserRole, deleteUser,
+    updateSubmissionAndApprove, rejectSubmission, updateTicketStatus, cleanOcrWithAI,
+  } = useAdmin(accessToken, userId, clearAuth);
 
   const [notFoundEan, setNotFoundEan] = useState("");
   const {
