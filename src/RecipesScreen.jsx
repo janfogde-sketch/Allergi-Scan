@@ -61,7 +61,7 @@ export default function RecipesScreen({
           const scale = recipeServings / baseServings;
 
           return (
-            <div className="screen fade-in" style={{ paddingLeft:0, paddingRight:0, paddingBottom:110 }}>
+            <div className="screen screen-recipes fade-in" style={{ paddingLeft:0, paddingRight:0, paddingBottom:110 }}>
               {/* Hero billede */}
               <div className="recipe-detail-hero">
                 {r.image_url
@@ -338,7 +338,7 @@ export default function RecipesScreen({
             return true;
           });
           return (
-            <div className="screen fade-in">
+            <div className="screen screen-recipes fade-in">
               {/* Header */}
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 0 14px" }}>
                 <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", letterSpacing:"-.4px" }}>Opskrifter</div>
