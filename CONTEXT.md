@@ -1,6 +1,6 @@
 # EatSafe — CONTEXT.md
 
-> **Sidst opdateret:** 2. juni 2026  
+> **Sidst opdateret:** 3. juni 2026  
 > **Opdateres af:** Jan ved større ændringer. Deles med AI-assistenter som sessionskontekst.
 
 ---
@@ -281,6 +281,13 @@ Planen er at splitte `App.jsx` op:
 | reparse_allergens URL-fejl | Mellemrum i URL-strengbygning → sat på én linje |
 | allergen_flags boolean vs string | `normalizeAllergenFlags()` i Edge Function + SQL migration |
 | OFF API CORS | Går via Edge Function, ikke direkte fra frontend |
+| Streger i UI (Android) | `1.5px`→`1px` (13 steder CSS) + `-webkit-backface-visibility:hidden` på 18 boks-elementer |
+| Scanner-animation stå stille | Løst |
+| Produkter uden ingredienser/flags | `enrich_products.mjs` kørt — trin 1-3 |
+| Email-flow | Resend + Edge Function + DB triggers. Templates redigeres på resend.com |
+| delete-user Edge Function | Kaskade-sletning inkl. auth.users, admin-verificeret |
+| Supabase CLI | Installeret, linked til projekt, bruges til Edge Function deploy |
+| DB triggers (net.http_post) | `send_welcome_email`, `send_submission_email`, `send_ticket_email` med EXCEPTION handler |
 
 ---
 
@@ -288,12 +295,13 @@ Planen er at splitte `App.jsx` op:
 
 | Fejl | Status |
 |------|--------|
-| Streger i UI ved scroll (inde i bokse) | `1.5px`-fix ikke nok — afventer yderligere debugging |
-| Scanner-animation kan stå stille | Uløst |
 | `constants.js` skal udfases (erstattet af `constants.jsx`) | Planlagt |
 | Opskrifter-backend mangler data (recipe_ingredients tom) | Mangler SQL migrations |
-| Hardcodede farver i komponentfiler | Tema-refaktor fase 3 |
-| Produkter uden ingredienser/flags | `enrich_products.mjs` bygget — kør trin 1-3 |
+| Hardcodede farver i komponentfiler | ✅ Løst — 23× background:#fff→var(--paper), 16× 1.5px→1px, 1× #22C55E→var(--green) |
+| App.jsx refaktor (Context/komponenter) | Planlagt |
+| Gradient baggrund på opskrifter | Ikke tilfredsstillende — skal redesignes så gradient fungerer konsistent på lange sider |
+| Produkt-submissions mangler i admin | ✅ Løst — Edge Function gemte i `submissions`, admin læste fra `product_submissions`. useAdmin.js rettet |
+| Opskrift-ingredienser kvalitet | Mængder, enheder og navne er upræcise pga. TheMealDB-oversættelse (imperial→metrisk, engelske mål). Kræver gennemgang/oprydning |
 
 ---
 
