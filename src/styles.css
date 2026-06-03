@@ -24,8 +24,10 @@
   --sh2:0 4px 16px rgba(31,39,51,.12);
   --sh3:0 8px 32px rgba(31,39,51,.16);
 }
-body{background:var(--paper);color:var(--ink);font-family:var(--f);-webkit-font-smoothing:antialiased;}
-.app{max-width:390px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--paper);width:100%;position:relative;overflow-x:hidden;}
+body{background:var(--paper2);color:var(--ink);font-family:var(--f);-webkit-font-smoothing:antialiased;}
+.app{max-width:390px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--paper2);width:100%;position:relative;overflow-x:hidden;}
+.app::before{content:'';position:fixed;top:0;left:0;right:0;height:350px;background:linear-gradient(to bottom, var(--paper) 0%, var(--paper2) 100%);pointer-events:none;z-index:0;}
+.app>*{position:relative;z-index:1;}
 
 /* ── TOPBAR ── */
 .topbar{background:var(--paper);border-bottom:1px solid var(--border);padding:12px 18px 10px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:60;-webkit-backface-visibility:hidden;backface-visibility:hidden;}
