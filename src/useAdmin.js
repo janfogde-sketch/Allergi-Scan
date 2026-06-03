@@ -35,7 +35,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
     setSubmissionsLoading(true);
     try {
       const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
-      const url = `${SUPABASE_URL}/rest/v1/product_submissions?status=eq.${f}&order=created_at.desc&limit=100`;
+      const url = `${SUPABASE_URL}/rest/v1/submissions?status=eq.${f}&order=created_at.desc&limit=100`;
       const res = await fetch(url, { headers });
       const data = await res.json();
       setSubmissions(Array.isArray(data) ? data : []);
@@ -138,7 +138,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
 
   const updateSubmissionAndApprove = async (submission, edited) => {
     try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/product_submissions?id=eq.${submission.id}`, {
+      await apiCall(`${SUPABASE_URL}/rest/v1/submissions?id=eq.${submission.id}`, {
         method: "PATCH",
         headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
         body: JSON.stringify({ status: "approved", ai_parsed_data: edited }),
@@ -150,7 +150,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
 
   const rejectSubmission = async (id) => {
     try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/product_submissions?id=eq.${id}`, {
+      await apiCall(`${SUPABASE_URL}/rest/v1/submissions?id=eq.${id}`, {
         method: "PATCH",
         headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
         body: JSON.stringify({ status: "rejected" }),
