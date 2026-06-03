@@ -39,6 +39,7 @@ import { useHistory } from './useHistory.js';
 import { useAuth } from './useAuth.js';
 import { useOnboarding } from './useOnboarding.js';
 import { useAdmin } from './useAdmin.js';
+import { useRecipes } from './useRecipes.js';
 import { useProduct } from './useProduct.js';
 import FeedbackModal from './FeedbackModal.jsx';
 
@@ -91,34 +92,21 @@ export default function EatSafe() {
   const [madpasLang, setMadpasLang] = useState(() => localStorage.getItem("as_madpas_lang") || "en");
   const [madpasProfileId, setMadpasProfileId] = useState("self");
   // madpasActiveProfile → computed after hooks (uses family)
-  const [recipes, setRecipes] = useState([]);
-  const [recipesLoading, setRecipesLoading] = useState(false);
-  const [selectedRecipe, setSelectedRecipe] = useState(null);
-  const [recipeIngredients, setRecipeIngredients] = useState([]);
-  const [recipeFilter, setRecipeFilter] = useState("alle");
-  const [favoriteRecipes, setFavoriteRecipes] = useState([]);
-  const [showSubmitRecipe, setShowSubmitRecipe] = useState(false);
-  const [submitRecipe, setSubmitRecipe] = useState({ title:"", description:"", category:"aftensmad", tags:[] });
-  const [submitSteps, setSubmitSteps] = useState([""]);
-  const [submitIngredients, setSubmitIngredients] = useState([{ name:"", amount:"", unit:"" }]);
-  const [submittingRecipe, setSubmittingRecipe] = useState(false);
-  const [recipeTermsOpen, setRecipeTermsOpen] = useState(false);
-  const [completedSteps, setCompletedSteps] = useState({});
+  // Recipes → useRecipes hook (kaldet efter useAuth nedenfor)
+
   const [showManualEan, setShowManualEan] = useState(false);
   const [selectedENumbers, setSelectedENumbers] = useState([]);
   const [allergenSubtypes, setAllergenSubtypes] = useState({}); // { "laktose": "laktose_protein", ... }
   const [activeSubtypeModal, setActiveSubtypeModal] = useState(null); // allergen id der vises modal for
   const [eSearch, setESearch] = useState("");
   const [eCategory, setECategory] = useState("alle");
-  const [recipeTermsAccepted, setRecipeTermsAccepted] = useState(false);
+
   const [madpasSpeaking, setMadpasSpeaking] = useState(false);
   const [madpasBig, setMadpasBig] = useState(false);
   const [madpasWaiterView, setMadpasWaiterView] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [showSafeOnly, setShowSafeOnly] = useState(false);
-  const [recipeServings, setRecipeServings] = useState(4);
-  const [recipeSearch, setRecipeSearch] = useState("");
-  const [recipeSafeOnly, setRecipeSafeOnly] = useState(false);
+
 
   // Family form → useFamily hook
 
@@ -335,96 +323,9 @@ export default function EatSafe() {
 
   // ── ADMIN FUNKTIONER → useAdmin hook ──
 
-    const loadRecipes = async (filter = "alle") => {
-    setRecipesLoading(true);
-    try {
-      let url = `${SUPABASE_URL}/rest/v1/recipes?select=id,title,category,image_url,tags,allergen_flags,servings,prep_time_minutes,cook_time_minutes,description&limit=50`;
-      // Prøv med status filter først
-      url += `&status=eq.approved`;
-      if (filter !== "alle") {
-        url += `&category=eq.${filter}`;
-      }
-      const headers = {
-        "apikey": SUPABASE_ANON_KEY,
-        "Accept": "application/json",
-        ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
-      };
-      const res = await fetch(url, { headers });
-      const text = await res.text();
-      if (!res.ok) {
-        console.error("loadRecipes fejl:", res.status, text.slice(0, 200));
-        // Fallback: prøv uden status filter
-        const url2 = `${SUPABASE_URL}/rest/v1/recipes?select=id,title,category,image_url,tags,allergen_flags,servings,description&limit=50${filter !== "alle" ? `&category=eq.${filter}` : ""}`;
-        const res2 = await fetch(url2, { headers });
-        const data2 = await res2.json();
-        setRecipes(Array.isArray(data2) ? data2 : []);
-        return;
-      }
-      const data = JSON.parse(text);
-      setRecipes(Array.isArray(data) ? data : []);
-    } catch (e) {
-      console.error("loadRecipes fejl:", e.message);
-      setRecipes([]);
-    }
-    setRecipesLoading(false);
-  };
+  // loadRecipes, loadRecipeIngredients, submitUserRecipe → useRecipes hook
 
-  const loadRecipeIngredients = async (recipeId) => {
-    try {
-      const headers = {
-        "apikey": SUPABASE_ANON_KEY,
-        "Accept": "application/json",
-        ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
-      };
-      // Hent fuld opskrift inkl. ingredients_raw og instructions
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/recipes?id=eq.${recipeId}&select=id,ingredients_raw,instructions`,
-        { headers }
-      );
-      const data = await res.json();
-      if (Array.isArray(data) && data[0]) {
-        setSelectedRecipe(prev => prev ? { ...prev, ...data[0] } : prev);
-      }
-    } catch {}
-    setRecipeIngredients([]);
-  };
-
-  const submitUserRecipe = async () => {
-    if (!submitRecipe.title.trim() || submitIngredients.filter(i => i.name.trim()).length === 0) return;
-    setSubmittingRecipe(true);
-    try {
-      const [recipe] = await apiCall(`${SUPABASE_URL}/rest/v1/recipes`, {
-        method: "POST",
-        headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
-        body: JSON.stringify({
-          ...submitRecipe,
-          instructions: JSON.stringify(submitSteps.filter(s => s.trim())),
-          submitted_by: userId,
-          source: "user",
-          language: "da",
-          status: "pending",
-          disclaimer: "Allergener er vejledende. Tjek altid ingrediensernes emballage ved alvorlige allergier.",
-        }),
-      });
-      for (let i = 0; i < submitIngredients.length; i++) {
-        const ing = submitIngredients[i];
-        if (!ing.name.trim()) continue;
-        await apiCall(`${SUPABASE_URL}/rest/v1/recipe_ingredients`, {
-          method: "POST",
-          headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-          body: JSON.stringify({ recipe_id: recipe.id, name: ing.name, amount: ing.amount, unit: ing.unit, sort_order: i }),
-        });
-      }
-      setShowSubmitRecipe(false);
-      setSubmitRecipe({ title:"", description:"", category:"aftensmad", tags:[] });
-      setSubmitSteps([""]);
-      setSubmitIngredients([{ name:"", amount:"", unit:"" }]);
-      alert("Tak! Din opskrift er sendt til godkendelse.");
-    } catch (e) { alert("Fejl: " + e.message); }
-    setSubmittingRecipe(false);
-  };
-
-  // loadShoppingList → useShoppingList
+    // loadShoppingList → useShoppingList
   // addToList → useShoppingList
   // toggleItem → useShoppingList
   // removeItem → useShoppingList
@@ -591,6 +492,27 @@ export default function EatSafe() {
     loadAdminUsers, updateUserRole, deleteUser,
     updateSubmissionAndApprove, rejectSubmission, updateTicketStatus, cleanOcrWithAI,
   } = useAdmin(accessToken, userId, clearAuth);
+
+  // Recipes → useRecipes hook
+  const {
+    recipes, setRecipes, recipesLoading,
+    selectedRecipe, setSelectedRecipe,
+    recipeIngredients, setRecipeIngredients,
+    recipeFilter, setRecipeFilter,
+    favoriteRecipes, setFavoriteRecipes,
+    showSubmitRecipe, setShowSubmitRecipe,
+    submitRecipe, setSubmitRecipe,
+    submitSteps, setSubmitSteps,
+    submitIngredients, setSubmitIngredients,
+    submittingRecipe,
+    recipeTermsOpen, setRecipeTermsOpen,
+    completedSteps, setCompletedSteps,
+    recipeTermsAccepted, setRecipeTermsAccepted,
+    recipeServings, setRecipeServings,
+    recipeSearch, setRecipeSearch,
+    recipeSafeOnly, setRecipeSafeOnly,
+    loadRecipes, loadRecipeIngredients, submitUserRecipe,
+  } = useRecipes(accessToken, userId);
 
   const [notFoundEan, setNotFoundEan] = useState("");
   const {
