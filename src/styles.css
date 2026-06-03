@@ -320,10 +320,10 @@ body{background:var(--paper2);color:var(--ink);font-family:var(--f);-webkit-font
 .recipe-fav-btn{position:absolute;top:10px;right:10px;z-index:2;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.35);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .15s;}
 .recipe-filter-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none;}
 .recipe-filter-row::-webkit-scrollbar{display:none;}
-.recipe-filter-chip{flex-shrink:0;padding:7px 14px;border-radius:100px;border:1px solid var(--border2);background:var(--paper);font-size:12px;font-weight:700;cursor:pointer;color:var(--muted2);transition:all .15s;white-space:nowrap;}
+.recipe-filter-chip{flex-shrink:0;padding:7px 14px;border-radius:100px;border:1px solid var(--border2);background:var(--paper2);font-size:12px;font-weight:700;cursor:pointer;color:var(--muted2);transition:all .15s;white-space:nowrap;}
 .recipe-filter-chip.active{border-color:var(--green);background:var(--green-lt);color:var(--ink);box-shadow:0 0 0 2px var(--green-lt);}
 .recipe-search-wrap{position:relative;margin-bottom:12px;}
-.recipe-search-input{width:100%;padding:11px 14px 11px 42px;border:1px solid var(--border2);border-radius:12px;background:var(--paper2);font-family:var(--f);font-size:14px;color:var(--ink);outline:none;box-sizing:border-box;transition:border-color .15s,background .15s;}
+.recipe-search-input{width:100%;padding:11px 14px 11px 42px;border:1px solid var(--border2);border-radius:12px;background:var(--paper);font-family:var(--f);font-size:14px;color:var(--ink);outline:none;box-sizing:border-box;transition:border-color .15s,background .15s;}
 .recipe-search-input:focus{border-color:var(--green);background:var(--paper);box-shadow:0 0 0 3px var(--green-lt);}
 .recipe-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;}
 .recipe-detail-hero{position:relative;margin:-1px -16px 0;}
@@ -344,7 +344,7 @@ body{background:var(--paper2);color:var(--ink);font-family:var(--f);-webkit-font
 .servings-btn{width:26px;height:26px;border-radius:50%;border:1px solid var(--border2);background:var(--paper);cursor:pointer;font-size:16px;font-weight:700;color:var(--ink);display:flex;align-items:center;justify-content:center;line-height:1;transition:all .15s;font-family:var(--f);}
 .servings-btn:hover{border-color:var(--green);color:var(--green);}
 .servings-num{font-size:15px;font-weight:800;color:var(--ink);min-width:22px;text-align:center;}
-.recipe-skeleton{background:var(--paper);border-radius:16px;overflow:hidden;border:1px solid var(--border);margin-bottom:12px;}
+.recipe-skeleton{background:var(--paper2);border-radius:16px;overflow:hidden;border:1px solid var(--border);margin-bottom:12px;}
 .skeleton-img{width:100%;height:140px;background:linear-gradient(90deg,var(--paper2) 25%,var(--border) 50%,var(--paper2) 75%);background-size:400% 100%;animation:shimmer 1.4s ease-in-out infinite;}
 .skeleton-line{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--paper2) 25%,var(--border) 50%,var(--paper2) 75%);background-size:400% 100%;animation:shimmer 1.4s ease-in-out infinite;margin-bottom:8px;}
 @keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
