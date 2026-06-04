@@ -1768,11 +1768,14 @@ export default function ScannerScreen({
                   {id:"Færdigretter",  label:"Færdigretter"},
                 ]}
               />
-              <div className={`filter-chip${showSafeOnly?" active":""}`}
-                onClick={() => setShowSafeOnly(v => !v)}
-                style={{ whiteSpace:"nowrap" }}>
-                {showSafeOnly ? "✓ Kun sikre" : "Kun sikre"}
-              </div>
+              {/* Kun sikre vises kun når ingen profil-filter er aktiv */}
+              {effectiveIds.length === 0 && (
+                <div className={`filter-chip${showSafeOnly?" active":""}`}
+                  onClick={() => setShowSafeOnly(v => !v)}
+                  style={{ whiteSpace:"nowrap" }}>
+                  {showSafeOnly ? "✓ Kun sikre" : "Kun sikre"}
+                </div>
+              )}
               <div style={{ fontSize:12, color:"var(--muted)", marginLeft:"auto" }}>
                 {visibleResults.length} resultat{visibleResults.length!==1?"er":""}
               </div>
