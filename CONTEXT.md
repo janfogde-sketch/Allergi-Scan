@@ -1,6 +1,6 @@
 # EatSafe — CONTEXT.md
 
-> **Sidst opdateret:** 4. juni 2026  
+> **Sidst opdateret:** 4. juni 2026 (opdateret)  
 > **Opdateres ved større ændringer. Deles med AI-assistenter som sessionskontekst.**
 
 ---
@@ -169,6 +169,10 @@ Søgning har tre filtre der kombineres:
 
 **State i ScannerScreen:** `allergenFilterOpen`, `manualAllergens` — deklareres øverst i komponenten (ikke i IIFE — ville bryde Hook-regler).
 
+**Filterlogik:**
+- `effectiveIds.length > 0` (profil eller manuel) → kun sikre vises automatisk
+- Ingen filter aktiv → "Kun sikre"-knap vises og bestemmer
+
 **Produktkort i søgning** viser:
 - Farvet kant (rød/amber) ved allergen-match
 - Konkrete allergen-chips med emoji + label direkte på kortet
@@ -243,6 +247,9 @@ Søgning har tre filtre der kombineres:
 | `lookupProduct is not defined` | Tilføjet som prop til ScannerScreen |
 | allergen_flags boolean vs string | `normalizeAllergenFlags()` i Edge Function |
 | React error #310 (Hooks i IIFE) | `allergenFilterOpen`/`manualAllergens` flyttet til komponent-top |
+| SEARCH viste farlige produkter med profil aktiv | `effectiveIds.length > 0` → automatisk kun-sikre filter |
+| Dropdown hvid tekst på hvid baggrund | `<option>` hardkodede farver (`#1a2e12`/`#EDF5EE`) |
+| "Kun sikre" vist selvom profil filtrerede | Knap skjult når `effectiveIds.length > 0` |
 | Produkter uden ingredienser/flags | `enrich_products.mjs` kørt |
 | Email-flow | Resend + Edge Function + DB triggers |
 | delete-user Edge Function | Kaskade-sletning inkl. auth.users |
