@@ -181,6 +181,7 @@ export default function ProfileScreen({
                 { icon:"⭐", label:"Favoritter", sub:"Gemte produkter og opskrifter", fn:() => setScreen(SCREENS.FAVORITES) },
                 { icon:"👨‍👩‍👧", label:"Familie", sub:`${family.length} ${family.length===1?"profil":"profiler"} oprettet`, fn:() => setScreen(SCREENS.FAMILY) },
                 { icon:"📋", label:"Scanningshistorik", sub:`${history.length} produkter scannet`, fn:() => setScreen(SCREENS.HISTORY) },
+                { icon:"🌍", label:"Madpas", sub:"Vis allergier til restaurantpersonale", fn:() => setScreen(SCREENS.MADPAS) },
                 ...(user.role==="admin" ? [{ icon:"🛡️", label:"Admin panel", sub:"Godkend og administrér produkter", fn:() => { loadSubmissions(); loadAdminStats(); setScreen(SCREENS.ADMIN); } }] : []),
               ].map((item, i, arr) => (
                 <div key={item.label} onClick={item.fn}

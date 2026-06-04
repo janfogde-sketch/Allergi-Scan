@@ -30,6 +30,7 @@ import MadpasScreen from './MadpasScreen.jsx';
 import ProfileScreen from './ProfileScreen.jsx';
 import ScannerScreen from './ScannerScreen.jsx';
 import RecipesScreen from './RecipesScreen.jsx';
+import KnowledgeScreen from './KnowledgeScreen.jsx';
 
 import { appCss } from './theme.jsx';
 import { BUILD_TIME, COMMIT_SHA, formatBuildTime, getGreeting, buildScreenLabel } from './utils.jsx';
@@ -1199,6 +1200,14 @@ export default function EatSafe() {
           />
         )}
 
+        {/* ══ KNOWLEDGE / LEKSIKON SCREEN ══ */}
+        {screen === SCREENS.KNOWLEDGE && (
+          <KnowledgeScreen
+            screen={screen} setScreen={setScreen}
+            accessToken={accessToken}
+          />
+        )}
+
         {/* ══ PROFILE SCREENS ══ */}
         {(screen === SCREENS.HISTORY || screen === SCREENS.PROFILE ||
           screen === SCREENS.FAVORITES || screen === SCREENS.EDITPROFILE ||
@@ -1315,7 +1324,7 @@ export default function EatSafe() {
               [SCREENS.RECIPES, "recipes",  "Opskrifter"],
               [SCREENS.LIST,    "cart",     "Indkøbsliste"],
               [SCREENS.HOME,    "home",     "Hjem"],
-              [SCREENS.MADPAS,  "globe",    "Madpas"],
+              [SCREENS.KNOWLEDGE, "book",   "Viden"],
               [SCREENS.PROFILE, "profile",  "Profil"],
             ].map(([s,icon,lbl]) => (
               <div key={s} className={`nav-item${(
@@ -1327,7 +1336,8 @@ export default function EatSafe() {
                 (screen===SCREENS.HISTORY && s===SCREENS.PROFILE) ||
                 (screen===SCREENS.FAVORITES && s===SCREENS.PROFILE) ||
                 (screen===SCREENS.FAMILY && s===SCREENS.PROFILE) ||
-                (screen===SCREENS.ADMIN && s===SCREENS.PROFILE)
+                (screen===SCREENS.ADMIN && s===SCREENS.PROFILE) ||
+                (screen===SCREENS.MADPAS && s===SCREENS.PROFILE)
               )?" active":""}`}
                 onClick={() => setScreen(s)}
                 role="button"

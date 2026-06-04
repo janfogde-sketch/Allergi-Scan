@@ -111,6 +111,7 @@ Navigation via `setScreen(SCREENS.X)` i App.jsx.
 | `recipe_ingredients` | id, recipe_id, name, amount, unit | |
 | `ingredients` | product_id, raw_text | Legacy fallback |
 | `allergen_flags` | product_id, gluten, laktose, ... | Legacy fallback |
+| `knowledge_base` | id, category, title, slug, emoji, summary, description, found_in, alternatives, health_notes, allergen_ids, diet_tags, risk_level, aliases, tags | 292 entries: 247 E-numre, 15 allergener, 12 fun facts, 8 FAQ, 6 diæter, 4 krydsreaktioner |
 
 ---
 
@@ -300,8 +301,14 @@ Planen er at splitte `App.jsx` op:
 | Hardcodede farver i komponentfiler | ✅ Løst — 23× background:#fff→var(--paper), 16× 1.5px→1px, 1× #22C55E→var(--green) |
 | App.jsx refaktor (Context/komponenter) | Planlagt |
 | Gradient baggrund på opskrifter | Ikke tilfredsstillende — skal redesignes så gradient fungerer konsistent på lange sider |
+| **Viden/Leksikon — frontend** | Database klar (292 entries). Mangler: KnowledgeScreen.jsx, søgning, kategori-filtrering, detaljevisning |
+| **Viden/Leksikon — navigation** | Erstat Madpas i bundmenu med Viden-tab. Flyt Madpas til profilsiden |
+| **Viden/Leksikon — links fra scan** | Klik på allergen/E-nummer i scan-resultat → åbn leksikon-entry |
+| **Viden/Leksikon — mere indhold** | ~150 ingrediens-entries, flere krydsreaktioner, flere FAQ/fun facts. Kan genereres med Claude |
+| Ticket 4 — Brand-navn sjældent fundet | OCR prompt opdateret (BRAND/NAME format) + useProduct parser — afventer test |
+| Ticket 6 — Søg E-numre/ingredienser | Dækkes af Viden/Leksikon-feature |
 | Produkt-submissions mangler i admin | ✅ Løst — Edge Function gemte i `submissions`, admin læste fra `product_submissions`. useAdmin.js rettet |
-| Opskrift-ingredienser kvalitet | Mængder, enheder og navne er upræcise pga. TheMealDB-oversættelse (imperial→metrisk, engelske mål). Kræver gennemgang/oprydning |
+| Opskrift-ingredienser kvalitet | ✅ Løst — translate_measure() oversatte 50+ engelske enheder til dansk, RecipesScreen fix for duplikerede mængder |
 
 ---
 
