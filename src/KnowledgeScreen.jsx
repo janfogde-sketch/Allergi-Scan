@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useMemo } from "react";
-import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS, ALLERGENS, DIETS } from "./constants.jsx";
 import { Icon } from "./SharedComponents.jsx";
 
 const CATEGORIES = [
@@ -161,35 +161,55 @@ export default function KnowledgeScreen({ screen, setScreen, accessToken }) {
           </div>
         )}
 
-        {/* Related allergens */}
-        {selected.allergen_ids?.length > 0 && (
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 14, marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8 }}>🔗 Relaterede allergener</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-              {selected.allergen_ids.map((id, i) => (
-                <div key={i}
-                  onClick={() => { const e = entries.find(x => x.slug === id || x.allergen_ids?.includes(id)); if (e) setSelected(e); }}
-                  style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 100, background: "var(--blue-lt)", color: "var(--blue)", cursor: "pointer" }}>
-                  {id}
-                </div>
-              ))}
+        {/* Relaterede allergener — kun vis hvis vi kan finde entries med labels */}
+        {(() => {
+          if (!selected.allergen_ids?.length) return null;
+          const linked = selected.allergen_ids.map(id => {
+            const entry = entries.find(e => e.slug === id);
+            const allergen = ALLERGENS.find(a => a.id === id);
+            return { id, entry, label: entry?.title || allergen?.label || null, emoji: entry?.emoji || allergen?.emoji || null };
+          }).filter(x => x.label);
+          if (!linked.length) return null;
+          return (
+            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 14, marginBottom: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8 }}>🔗 Relaterede allergener</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                {linked.map((x, i) => (
+                  <div key={i}
+                    onClick={() => { if (x.entry) setSelected(x.entry); }}
+                    style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 100, background: "var(--red-lt)", color: "var(--red)", border: "1px solid var(--red-md)", cursor: x.entry ? "pointer" : "default" }}>
+                    {x.emoji} {x.label}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
-        {/* Diet tags */}
-        {selected.diet_tags?.length > 0 && (
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 14, marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8 }}>🥗 Relevant for</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-              {selected.diet_tags.map((d, i) => (
-                <div key={i} style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 100, background: "var(--green-lt)", color: "var(--green)" }}>
-                  {d}
-                </div>
-              ))}
+        {/* Relevant for diæter — kun vis hvis vi kan finde labels */}
+        {(() => {
+          if (!selected.diet_tags?.length) return null;
+          const linked = selected.diet_tags.map(id => {
+            const entry = entries.find(e => e.slug === id);
+            const diet = DIETS.find(d => d.id === id);
+            return { id, entry, label: entry?.title || diet?.label || null, emoji: entry?.emoji || diet?.emoji || "🥗" };
+          }).filter(x => x.label);
+          if (!linked.length) return null;
+          return (
+            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 14, marginBottom: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8 }}>🥗 Relevant for disse diæter</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                {linked.map((x, i) => (
+                  <div key={i}
+                    onClick={() => { if (x.entry) setSelected(x.entry); }}
+                    style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 100, background: "var(--green-lt)", color: "var(--green)", border: "1px solid var(--green-mid)", cursor: x.entry ? "pointer" : "default" }}>
+                    {x.emoji} {x.label}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     );
   }
