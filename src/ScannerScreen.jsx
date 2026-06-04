@@ -103,6 +103,8 @@ export default function ScannerScreen({
   // ── Ingrediensliste editor state (bruges i NOTFOUND trin 3 og SUGGEST_EDIT) ──
   const [ingItems, setIngItems] = React.useState([]);
   const [ingInput, setIngInput] = React.useState("");
+  const [allergenFilterOpen, setAllergenFilterOpen] = React.useState(false);
+  const [manualAllergens, setManualAllergens] = React.useState([]);
 
   // Parser OCR-tekst til liste af ingredienser
   const parseIngredients = (text) => {
@@ -1550,10 +1552,6 @@ export default function ScannerScreen({
         )}
 
         {screen === SCREENS.SEARCH && (() => {
-          // ── Lokalt state via refs (undgår re-render loop) ──────────────────
-          const [allergenFilterOpen, setAllergenFilterOpen] = React.useState(false);
-          const [manualAllergens, setManualAllergens] = React.useState([]);
-
           // Aktive profiler og deres allergener
           const profiles = [
             { id:"user", name: user.name||"Mig", allergens, color:"var(--green)" },
