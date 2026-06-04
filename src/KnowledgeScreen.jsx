@@ -195,56 +195,80 @@ export default function KnowledgeScreen({ screen, setScreen, accessToken }) {
   }
 
   // ── LIST VIEW ──
+  const showingAll = category === "all" && !search.trim();
+
   return (
     <div className="screen fade-in" style={{ paddingBottom: 120 }}>
       {/* Header */}
       <div style={{ paddingTop: 16, marginBottom: 14 }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)", letterSpacing: "-.4px" }}>📚 Viden</div>
+        <div style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)", letterSpacing: "-.4px" }}>Viden</div>
         <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 3 }}>
           Lær om allergener, E-numre, diæter og ingredienser
         </div>
       </div>
 
       {/* Search */}
-      <div style={{ position: "relative", marginBottom: 12 }}>
+      <div style={{ position: "relative", marginBottom: 14 }}>
         <div style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
           <Icon name="search" size={16} color="var(--muted)" />
         </div>
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Søg allergener, E-numre, ingredienser..."
+          placeholder="Søg i leksikon..."
           style={{ width: "100%", padding: "12px 14px 12px 42px", border: "1px solid var(--border)", borderRadius: 12, background: "var(--surface)", fontFamily: "var(--f)", fontSize: 14, color: "var(--ink)", outline: "none", boxSizing: "border-box" }}
         />
       </div>
 
-      {/* Category chips */}
-      <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, marginBottom: 14, scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
-        {CATEGORIES.map(c => {
-          const isActive = category === c.id;
-          const count = counts[c.id] || 0;
-          return (
-            <div key={c.id}
-              onClick={() => setCategory(c.id)}
-              style={{
-                flexShrink: 0, padding: "7px 12px", borderRadius: 100, cursor: "pointer",
-                border: `1px solid ${isActive ? "var(--green)" : "var(--border)"}`,
-                background: isActive ? "var(--green-lt)" : "var(--surface)",
-                color: isActive ? "var(--green)" : "var(--ink)",
-                fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 5,
-                transition: "all .15s", whiteSpace: "nowrap",
-              }}>
-              {c.emoji} {c.label}
-              {count > 0 && <span style={{ fontSize: 10, opacity: .6 }}>({count})</span>}
-            </div>
-          );
-        })}
-      </div>
+      {/* ── Kategorier som grid (når ingen søgning/filter er aktiv) ── */}
+      {showingAll && !loading && (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 20 }}>
+            {CATEGORIES.filter(c => c.id !== "all").map(c => {
+              const count = counts[c.id] || 0;
+              return (
+                <div key={c.id}
+                  onClick={() => setCategory(c.id)}
+                  style={{
+                    background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14,
+                    padding: "16px 14px", cursor: "pointer", transition: "border-color .15s",
+                  }}>
+                  <div style={{ fontSize: 24, marginBottom: 8 }}>{c.emoji}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 2 }}>{c.label}</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)" }}>{count} {count === 1 ? "artikel" : "artikler"}</div>
+                </div>
+              );
+            })}
+          </div>
 
-      {/* Results count */}
-      {search && (
-        <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10 }}>
-          {filtered.length} resultat{filtered.length !== 1 ? "er" : ""} {category !== "all" && `i ${CATEGORIES.find(c => c.id === category)?.label}`}
+          {/* Fun fact of the day */}
+          {(() => {
+            const facts = entries.filter(e => e.category === "fun_fact");
+            if (!facts.length) return null;
+            const today = facts[new Date().getDate() % facts.length];
+            return (
+              <div style={{ background: "var(--surface)", borderLeft: "3px solid var(--green)", borderRadius: 14, padding: "14px 16px", marginBottom: 16 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--green)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 4 }}>💡 Vidste du</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", marginBottom: 3 }}>{today.title}</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.55 }}>{today.summary}</div>
+              </div>
+            );
+          })()}
+        </>
+      )}
+
+      {/* ── Aktiv kategori header + nulstil ── */}
+      {!showingAll && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>
+            {search.trim()
+              ? `${filtered.length} resultat${filtered.length !== 1 ? "er" : ""}`
+              : `${CATEGORIES.find(c => c.id === category)?.emoji || ""} ${CATEGORIES.find(c => c.id === category)?.label || "Alle"}`}
+          </div>
+          <div onClick={() => { setCategory("all"); setSearch(""); }}
+            style={{ fontSize: 12, fontWeight: 600, color: "var(--green)", cursor: "pointer" }}>
+            ← Alle kategorier
+          </div>
         </div>
       )}
 
@@ -257,7 +281,7 @@ export default function KnowledgeScreen({ screen, setScreen, accessToken }) {
       )}
 
       {/* Empty state */}
-      {!loading && filtered.length === 0 && (
+      {!loading && !showingAll && filtered.length === 0 && (
         <div style={{ textAlign: "center", padding: "40px 20px" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
           <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>Ingen resultater</div>
@@ -267,46 +291,30 @@ export default function KnowledgeScreen({ screen, setScreen, accessToken }) {
         </div>
       )}
 
-      {/* Entry list */}
-      {!loading && filtered.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {/* Entry list — kun når en kategori er valgt eller der søges */}
+      {!loading && !showingAll && filtered.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {filtered.map(entry => {
             const risk = RISK_COLORS[entry.risk_level] || null;
-            const catInfo = CATEGORIES.find(c => c.id === entry.category);
             return (
               <div key={entry.id}
                 onClick={() => setSelected(entry)}
                 style={{
-                  background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14,
-                  padding: "14px 16px", cursor: "pointer", transition: "border-color .15s",
-                  display: "flex", gap: 12, alignItems: "flex-start",
+                  background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12,
+                  padding: "12px 14px", cursor: "pointer",
+                  display: "flex", gap: 10, alignItems: "center",
                 }}>
-                {/* Emoji */}
-                <div style={{ fontSize: 24, flexShrink: 0, marginTop: 2 }}>
-                  {entry.emoji || catInfo?.emoji || "📄"}
-                </div>
-                {/* Content */}
+                <div style={{ fontSize: 20, flexShrink: 0 }}>{entry.emoji || "📄"}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", letterSpacing: "-.2px" }}>
-                      {entry.title}
-                    </div>
-                    {risk && (
-                      <div style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 100, background: risk.bg, color: risk.color, flexShrink: 0 }}>
-                        {risk.label}
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{entry.title}</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {entry.summary}
                   </div>
-                  {/* Category badge */}
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 6, fontSize: 10, fontWeight: 600, color: "var(--muted)", padding: "2px 8px", borderRadius: 100, background: "var(--surface)" }}>
-                    {catInfo?.emoji} {catInfo?.label}
-                  </div>
                 </div>
-                {/* Chevron */}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink: 0, marginTop: 8 }}>
+                {risk && (
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: risk.color, flexShrink: 0 }} />
+                )}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink: 0 }}>
                   <path strokeLinecap="round" d="M9 5l7 7-7 7"/>
                 </svg>
               </div>
