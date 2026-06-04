@@ -1568,9 +1568,14 @@ export default function ScannerScreen({
           // Filtrerede resultater
           const visibleResults = searchResults.filter(p => {
             if (searchCategory !== "alle" && p.category !== searchCategory) return false;
-            if (showSafeOnly || activeProfiles.length > 0) {
+            // Når profil/allergener er aktive → vis KUN sikre (ingen farlige eller advarsler)
+            // Når ingen filter → showSafeOnly bestemmer
+            if (effectiveIds.length > 0) {
               const { status } = compareAllergens(p.allergen_flags||{}, effectiveIds);
-              if (showSafeOnly && status !== "safe") return false;
+              if (status !== "safe") return false;
+            } else if (showSafeOnly) {
+              const { status } = compareAllergens(p.allergen_flags||{}, effectiveIds);
+              if (status !== "safe") return false;
             }
             return true;
           });
