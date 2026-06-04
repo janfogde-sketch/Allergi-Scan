@@ -4,6 +4,74 @@ import { ALLERGENS, SCREENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants
 import { getAllergenLabels, initials, getTraceLog } from "./helpers.js";
 import { MemberForm } from "./MemberForm.jsx";
 
+// Fremhæv allergener og E-numre i ingredienstekst
+const ALLERGEN_KEYWORDS = {
+  gluten: ["gluten","hvede","rug","byg","havre","spelt","kamut","wheat","barley","rye","oat"],
+  laktose: ["mælk","laktose","fløde","smør","ost","yoghurt","valle","kasein","milk","cream","butter","cheese","whey","lactose"],
+  aeg: ["æg","egg","ægge"],
+  noedder: ["nødder","mandel","hassel","valn","cashew","pistacie","pecan","macadamia","nuts","almond","hazelnut","walnut"],
+  jordnoedder: ["jordnød","peanut","peanøt"],
+  soja: ["soja","soy","lecithin"],
+  fisk: ["fisk","fish","laks","torsk","tun","sild","makrel"],
+  skaldyr: ["reje","hummer","krabbe","shrimp","prawn","crab","lobster"],
+  selleri: ["selleri","celery"],
+  sennep: ["sennep","mustard"],
+  sesam: ["sesam","sesame"],
+  svovl: ["sulfit","svovl","sulfite","sulfur"],
+  lupin: ["lupin"],
+  bloeddyr: ["blæksprutte","musling","østers","mussel","oyster","squid","bløddy"],
+};
+const ALL_ALLERGEN_WORDS = Object.values(ALLERGEN_KEYWORDS).flat();
+const E_NUMBER_RE = /\b(E\d{3,4}[a-z]?)\b/gi;
+
+function HighlightText({ text }) {
+  if (!text) return null;
+  const parts = [];
+  let remaining = text;
+  let key = 0;
+
+  while (remaining.length > 0) {
+    // Find earliest match: allergen word or E-number
+    let earliestIdx = remaining.length;
+    let matchLen = 0;
+    let matchType = null; // "allergen" or "enumber"
+
+    // Check E-numbers
+    const eMatch = E_NUMBER_RE.exec(remaining);
+    E_NUMBER_RE.lastIndex = 0;
+    if (eMatch && eMatch.index < earliestIdx) {
+      earliestIdx = eMatch.index;
+      matchLen = eMatch[0].length;
+      matchType = "enumber";
+    }
+
+    // Check allergen keywords (case-insensitive)
+    const lower = remaining.toLowerCase();
+    for (const word of ALL_ALLERGEN_WORDS) {
+      const idx = lower.indexOf(word.toLowerCase());
+      if (idx !== -1 && idx < earliestIdx) {
+        earliestIdx = idx;
+        matchLen = word.length;
+        matchType = "allergen";
+      }
+    }
+
+    if (matchType) {
+      if (earliestIdx > 0) parts.push(<span key={key++}>{remaining.slice(0, earliestIdx)}</span>);
+      const matched = remaining.slice(earliestIdx, earliestIdx + matchLen);
+      const color = matchType === "allergen" ? "var(--red)" : "var(--amber)";
+      const bg = matchType === "allergen" ? "var(--red-lt)" : "var(--amber-lt)";
+      parts.push(<span key={key++} style={{ color, background:bg, fontWeight:700, borderRadius:3, padding:"0 3px" }}>{matched}</span>);
+      remaining = remaining.slice(earliestIdx + matchLen);
+    } else {
+      parts.push(<span key={key++}>{remaining}</span>);
+      break;
+    }
+  }
+  return <>{parts}</>;
+}
+
+
 export default function AdminScreen({
   // State
   screen, setScreen,
@@ -840,13 +908,13 @@ ${openTicket.description}
                   </button>
                 </div>
                 <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.7, background:"var(--surface2)", borderRadius:8, padding:"10px", maxHeight:120, overflowY:"auto" }}>
-                  {openSubmission.ocr_raw_text}
+                  <HighlightText text={openSubmission.ocr_raw_text} />
                 </div>
                 {cleanedOcrText && (
                   <div style={{ marginTop:10, borderTop:"1px solid var(--border)", paddingTop:10 }}>
                     <div style={{ fontSize:11, fontWeight:700, color:"var(--green)", marginBottom:6 }}>✓ AI renskrivet — tjek at intet er fjernet</div>
                     <div style={{ background:"var(--green-lt)", borderRadius:8, padding:"10px", marginBottom:8, fontSize:12, color:"var(--ink)", lineHeight:1.7 }}>
-                      {cleanedOcrText}
+                      <HighlightText text={cleanedOcrText} />
                     </div>
                     <button onClick={() => setEditingSubmission(s => ({ ...s, ingredients_text: cleanedOcrText }))}
                       style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:10, padding:"10px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#071510", cursor:"pointer" }}>

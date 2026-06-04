@@ -66,7 +66,22 @@ export function useProduct({ accessToken, userId, activeProfiles,
       setProductImagePreview(URL.createObjectURL(file));
       try {
         const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ image_base64: base64, mode:"product_name" }) });
-        if (ocrData.success && ocrData.text) { const name = extractProductName(ocrData.text); if (name) setProposedName(name); }
+        if (ocrData.success && ocrData.text) {
+          const text = ocrData.text;
+          // Parse BRAND: og NAME: fra OCR-svar
+          const brandMatch = text.match(/BRAND:\s*(.+)/i);
+          const nameMatch = text.match(/NAME:\s*(.+)/i);
+          if (nameMatch && nameMatch[1] && nameMatch[1].toLowerCase() !== "ukendt") {
+            const brand = brandMatch?.[1]?.trim();
+            const name = nameMatch[1].trim();
+            const fullName = (brand && brand.toLowerCase() !== "ukendt") ? `${brand} ${name}` : name;
+            setProposedName(fullName);
+          } else {
+            // Fallback til gammel metode
+            const name = extractProductName(text);
+            if (name) setProposedName(name);
+          }
+        }
       } catch {}
     } catch { setScanError_("Billedet kunne ikke læses. Prøv igen."); }
     setOcrLoading(false);

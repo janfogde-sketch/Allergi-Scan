@@ -32,14 +32,16 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const loadSubmissions = async (filter) => {
     const f = filter || submissionFilter;
     if (f === "tickets") return;
+    if (!accessToken) { console.warn("loadSubmissions: ingen accessToken"); return; }
     setSubmissionsLoading(true);
     try {
       const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
       const url = `${SUPABASE_URL}/rest/v1/submissions?status=eq.${f}&order=created_at.desc&limit=100`;
       const res = await fetch(url, { headers });
+      if (!res.ok) { console.error("loadSubmissions fejl:", res.status); setSubmissionsLoading(false); return; }
       const data = await res.json();
       setSubmissions(Array.isArray(data) ? data : []);
-    } catch { setSubmissions([]); }
+    } catch (e) { console.error("loadSubmissions:", e); setSubmissions([]); }
     setSubmissionsLoading(false);
   };
 
@@ -137,26 +139,34 @@ export function useAdmin(accessToken, userId, clearAuth) {
   };
 
   const updateSubmissionAndApprove = async (submission, edited) => {
+    // Optimistisk UI — luk og fjern med det samme
+    setOpenSubmission(null); setEditingSubmission(null);
+    setSubmissions(s => s.filter(x => x.id !== submission.id));
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/submissions?id=eq.${submission.id}`, {
         method: "PATCH",
         headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
         body: JSON.stringify({ status: "approved", ai_parsed_data: edited }),
       });
-      loadSubmissions(submissionFilter);
-      setOpenSubmission(null); setEditingSubmission(null);
-    } catch (e) { console.error("updateSubmissionAndApprove:", e); }
+    } catch (e) {
+      console.error("updateSubmissionAndApprove:", e);
+      loadSubmissions(submissionFilter); // Genindlæs ved fejl
+    }
   };
 
   const rejectSubmission = async (id) => {
+    setSubmissions(s => s.filter(x => x.id !== id));
+    setOpenSubmission(null);
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/submissions?id=eq.${id}`, {
         method: "PATCH",
         headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
         body: JSON.stringify({ status: "rejected" }),
       });
+    } catch (e) {
+      console.error("rejectSubmission:", e);
       loadSubmissions(submissionFilter);
-    } catch (e) { console.error("rejectSubmission:", e); }
+    }
   };
 
   const updateTicketStatus = async (id, status) => {
@@ -175,19 +185,25 @@ export function useAdmin(accessToken, userId, clearAuth) {
     if (!text) return;
     setCleaningOcr(true);
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      // Brug allergens Edge Function med force_ai for AI-rensning
+      const data = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{ role: "user", content: `Rens denne OCR-tekst fra en produktetikette til en kommasepareret ingrediensliste på originalsproget. Fjern labels, næringsindhold og unødvendig tekst. Returner KUN ingredienslisten:\n\n${text}` }],
-        }),
+        headers: makeHeaders(accessToken),
+        body: JSON.stringify({ text, force_ai: true }),
       });
-      const data = await res.json();
-      const cleaned = data.content?.[0]?.text || text;
-      setCleanedOcrText(cleaned);
-      setEditingSubmission(s => ({ ...s, ocr_raw_text: cleaned }));
+      if (data.success && data.allergen_flags) {
+        // Opdater flags fra AI-analyse
+        setEditingSubmission(s => ({ ...s, ...data.allergen_flags }));
+      }
+      // Rens teksten: fjern næringsindhold, labels, og behold kun ingredienser
+      const lines = text.split(/\n/).map(l => l.trim()).filter(l => l.length > 3);
+      const ingLines = lines.filter(l =>
+        !/^(energi|fedt|protein|salt|kulhydrat|næringsindhold|opbevaring|bedst|pr\.?\s*100|kj|kcal)/i.test(l) &&
+        !/^\d+[\s]*(g|mg|kj|kcal|%)/i.test(l)
+      );
+      const cleaned = ingLines.join(", ").replace(/,\s*,/g, ",").replace(/^[,\s]+|[,\s]+$/g, "");
+      setCleanedOcrText(cleaned || text);
+      setEditingSubmission(s => ({ ...s, ocr_raw_text: cleaned || text }));
     } catch (e) { console.error("cleanOcrWithAI:", e); }
     setCleaningOcr(false);
   };
