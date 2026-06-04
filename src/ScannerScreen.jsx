@@ -6,6 +6,44 @@ import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibil
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage } from "./SharedComponents.jsx";
 
 import { CategorySelect } from "./MemberForm.jsx";
+
+// ── Performance: Styles som konstanter (undgår nye objekter per render) ──────
+const S = {
+  none: { display:"none" },
+  flex1: { flex:1 },
+  flexMin: { flex:1, minWidth:0 },
+  rel: { position:"relative" },
+  mb8: { marginBottom:8 },
+  mb10: { marginBottom:10 },
+  mb12: { marginBottom:12 },
+  mb16: { marginBottom:16 },
+  center60: { textAlign:"center", padding:"60px 20px" },
+  row: { display:"flex", alignItems:"center" },
+  rowBetween: { display:"flex", alignItems:"center", justifyContent:"space-between" },
+  rowBetweenMb10: { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 },
+  rowGap8: { display:"flex", gap:8 },
+  rowGap6: { display:"flex", gap:6 },
+  colCenter: { display:"flex", flexDirection:"column", alignItems:"center" },
+  card: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 },
+  cardMb10: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:10 },
+  h17: { fontSize:17, fontWeight:800, color:"var(--ink)" },
+  h17mb: { fontSize:17, fontWeight:800, color:"var(--ink)", marginBottom:8 },
+  h13: { fontSize:13, fontWeight:800, color:"var(--ink)" },
+  h13b: { fontSize:13, fontWeight:700, color:"var(--ink)" },
+  h13bMb: { fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 },
+  sub11: { fontSize:11, color:"var(--muted)" },
+  sub11mt: { fontSize:11, color:"var(--muted)", marginTop:1 },
+  sub11lh: { fontSize:11, color:"var(--muted)", lineHeight:1.5 },
+  body12: { fontSize:12, color:"var(--muted2)", lineHeight:1.5 },
+  body13: { fontSize:13, color:"var(--muted2)", lineHeight:1.5 },
+  label: { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 },
+  spinner: { width:64, height:64, border:"4px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 20px" },
+  dot: { width:28, height:28, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
+  opacity6: { opacity:.6 },
+  linkBtn: { width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, fontWeight:700, color:"var(--muted2)", fontFamily:"var(--f)" },
+};
+
+
 export default function ScannerScreen({
   screen, setScreen,
   scanResult, notFoundEan,
@@ -148,7 +186,7 @@ export default function ScannerScreen({
                         fontSize:16, fontWeight:800, flexShrink:0 }}>
                         {initials(pName)}
                       </div>
-                      <div style={{ flex:1 }}>
+                      <div style={S.flex1}>
                         <div style={{ fontWeight:800, fontSize:16, color:"var(--ink)" }}>{pName}</div>
                         <div style={{ fontSize:12, color:"var(--muted)", marginTop:1 }}>
                           {isActive ? "✅ Aktiv i søgning" : "⬜ Ikke aktiv i søgning"}
@@ -159,8 +197,8 @@ export default function ScannerScreen({
 
                     {/* Allergier */}
                     {pAllergens.length > 0 ? (
-                      <div style={{ marginBottom:12 }}>
-                        <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Allergier / intolerancer</div>
+                      <div style={S.mb12}>
+                        <div style={S.label}>Allergier / intolerancer</div>
                         <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
                           {pAllergens.map(id => {
                             const a = ALLERGENS.find(x => x.id === id);
@@ -188,8 +226,8 @@ export default function ScannerScreen({
 
                     {/* Diæt */}
                     {pDiets.length > 0 && (
-                      <div style={{ marginBottom:12 }}>
-                        <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Diæt</div>
+                      <div style={S.mb12}>
+                        <div style={S.label}>Diæt</div>
                         <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
                           {pDiets.map(d => (
                             <div key={d} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
@@ -203,8 +241,8 @@ export default function ScannerScreen({
 
                     {/* E-numre */}
                     {pENumbers.length > 0 && (
-                      <div style={{ marginBottom:12 }}>
-                        <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>E-numre</div>
+                      <div style={S.mb12}>
+                        <div style={S.label}>E-numre</div>
                         <div style={{ fontSize:12, color:"var(--muted2)" }}>{pENumbers.length} E-numre overvåges</div>
                       </div>
                     )}
@@ -267,7 +305,7 @@ export default function ScannerScreen({
                   const isActive = activeProfiles.includes("user");
                   return (
                     <div onClick={() => setProfilePopup("user")} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer" }}>
-                      <div style={{ position:"relative" }}>
+                      <div style={S.rel}>
                         <div style={{ width:46, height:46, borderRadius:"50%",
                           background: isActive ? "var(--green)" : "var(--paper2)",
                           color: isActive ? "#fff" : "var(--muted)",
@@ -302,7 +340,7 @@ export default function ScannerScreen({
                   return (
                     <div key={m.id} onClick={() => setProfilePopup(m.id)}
                       style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer" }}>
-                      <div style={{ position:"relative" }}>
+                      <div style={S.rel}>
                         <div style={{ width:46, height:46, borderRadius:"50%",
                           background: isActive ? "var(--green)" : "var(--paper2)",
                           color: isActive ? "#fff" : "var(--muted)",
@@ -395,8 +433,8 @@ export default function ScannerScreen({
                   </div>
                 </div>
               </div>
-              <div id="qr-reader-gallery" style={{ display:"none" }} />
-              <input ref={galleryInputRef} type="file" accept="image/*" style={{ display:"none" }}
+              <div id="qr-reader-gallery" style={S.none} />
+              <input ref={galleryInputRef} type="file" accept="image/*" style={S.none}
                 onChange={e => { if (e.target.files[0]) scanFromGallery(e.target.files[0]); e.target.value=""; }} />
 
               {/* Stop-knap når kamera er aktivt */}
@@ -407,7 +445,7 @@ export default function ScannerScreen({
                       ? <span style={{ color:"var(--green)" }}>🔍 {scanZoom}× zoom</span>
                       : <span style={{ color:"rgba(255,255,255,.6)" }}>Hold stregkoden ind i rammen</span>}
                   </span>
-                  <div style={{ display:"flex", gap:6 }}>
+                  <div style={S.rowGap6}>
                     <button onClick={() => galleryInputRef.current?.click()} style={{ background:"rgba(255,255,255,.15)", border:"none", borderRadius:6, padding:"5px 10px", color:"#fff", fontSize:16, cursor:"pointer", lineHeight:1 }}>🖼️</button>
                     <button onClick={toggleTorch} style={{
                       background: torchOn ? "rgba(251,191,36,.3)" : "rgba(255,255,255,.15)",
@@ -514,12 +552,12 @@ export default function ScannerScreen({
 
             {showManualEan && (
               <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12 }}>
-                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-                  <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Indtast EAN-nummer</div>
+                <div style={S.rowBetweenMb10}>
+                  <div style={S.h13}>Indtast EAN-nummer</div>
                   <button onClick={() => setShowManualEan(false)}
                     style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--muted)", lineHeight:1 }}>×</button>
                 </div>
-                <div style={{ display:"flex", gap:8 }}>
+                <div style={S.rowGap8}>
                   <input
                     id="manual-ean-input"
                     type="number"
@@ -558,9 +596,9 @@ export default function ScannerScreen({
               onClick={() => setScreen(SCREENS.SEARCH)}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                 <div style={{ width:40, height:40, background:"var(--surface2)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="search" size={20} color="var(--ink)" /></div>
-                <div style={{ flex:1 }}>
+                <div style={S.flex1}>
                   <div style={{ fontSize:13, fontWeight:700 }}>Søg produkter</div>
-                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>Find varer der er sikre for dig</div>
+                  <div style={S.sub11mt}>Find varer der er sikre for dig</div>
                 </div>
                 <div style={{ fontSize:18, color:"var(--muted)" }}>›</div>
               </div>
@@ -572,9 +610,9 @@ export default function ScannerScreen({
                 onClick={() => setScreen(SCREENS.LIST)}>
                 <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                   <div style={{ width:40, height:40, background:"var(--green-lt)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="cart" size={20} color="var(--green)" /></div>
-                  <div style={{ flex:1 }}>
+                  <div style={S.flex1}>
                     <div style={{ fontSize:13, fontWeight:700 }}>Indkøbsliste</div>
-                    <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>
+                    <div style={S.sub11mt}>
                       {shoppingList.filter(i => !i.checked).length} vare{shoppingList.filter(i => !i.checked).length !== 1 ? "r" : ""} mangler
                     </div>
                   </div>
@@ -590,10 +628,10 @@ export default function ScannerScreen({
               return (
                 <div style={{ display:"flex", gap:10, alignItems:"flex-start", padding:"10px 0", borderTop:"1px solid var(--border)", marginTop:4 }}>
                   <div style={{ flexShrink:0 }}><Icon name="bulb" size={20} color="#F59E0B" /></div>
-                  <div style={{ flex:1 }}>
+                  <div style={S.flex1}>
                     <div style={{ fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:3 }}>Vidste du at</div>
                     <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{tip.title}</div>
-                    <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>{tip.text}</div>
+                    <div style={S.sub11lh}>{tip.text}</div>
                   </div>
                   
                 </div>
@@ -634,7 +672,7 @@ export default function ScannerScreen({
               const hasTags = scanResult.tags && scanResult.tags.length > 0;
 
               return (
-                <div style={{ marginBottom:10 }}>
+                <div style={S.mb10}>
                   {/* 2 kolonner */}
                   <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom: hasTags ? 8 : 0 }}>
                   {profiles.map((p, pi) => {
@@ -739,17 +777,17 @@ export default function ScannerScreen({
                           {fails.map(r => (
                             <div key={r.id} style={{ fontSize:11, color:"var(--amber)" }}>
                               <strong>{r.label}:</strong> {r.reasons[0]}
-                              {r.confidence === "low" && <span style={{ opacity:.6 }}> (usikker)</span>}
+                              {r.confidence === "low" && <span style={S.opacity6}> (usikker)</span>}
                             </div>
                           ))}
                           {passes.map(r => (
                             <div key={r.id} style={{ fontSize:11, color:"var(--green)" }}>
                               ✓ {r.label}
-                              {r.confidence === "low" && <span style={{ opacity:.6 }}> (usikker)</span>}
+                              {r.confidence === "low" && <span style={S.opacity6}> (usikker)</span>}
                             </div>
                           ))}
                           {unknowns.map(r => (
-                            <div key={r.id} style={{ fontSize:11, color:"var(--muted)" }}>
+                            <div key={r.id} style={S.sub11}>
                               ? {r.label}: {r.reasons[0]}
                             </div>
                           ))}
@@ -785,7 +823,7 @@ export default function ScannerScreen({
               return (
                 <div className="product-hero">
                   {scanResult.image_url
-                    ? <img src={scanResult.image_url} alt={scanResult.name} className="product-hero-img" onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
+                    ? <img loading="lazy" src={scanResult.image_url} alt={scanResult.name} className="product-hero-img" onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
                     : null}
                   <div className="product-hero-img-placeholder" style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"column", gap:8, background:"var(--paper2)", borderRadius:12, padding:20, margin:"0 0 10px" }}>
                     <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="var(--border2)" strokeWidth="1.5">
@@ -832,11 +870,11 @@ export default function ScannerScreen({
                 <Icon name="heart" size={15} color={isFavorite(scanResult.code) ? "var(--amber)" : "var(--muted)"} />
                 {isFavorite(scanResult.code) ? "Fjern favorit" : "Favorit"}
               </button>
-              <button className="btn btn-ghost btn-sm" style={{ flex:1 }}
+              <button className="btn btn-ghost btn-sm" style={S.flex1}
                 onClick={() => { if(navigator.share) navigator.share({title:scanResult.name, text:scanResult.headline}); }}>
                 <Icon name="share" size={15} color="var(--muted)" /> Del
               </button>
-              <button className="btn btn-outline btn-sm" style={{ flex:1 }}
+              <button className="btn btn-outline btn-sm" style={S.flex1}
                 onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients || ""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
                 Ret data
               </button>
@@ -890,7 +928,7 @@ export default function ScannerScreen({
                   <span>Næringsindhold pr. 100g</span>
                 </div>
                 <div style={{ padding:"12px 0", display:"flex", alignItems:"center", gap:10 }}>
-                  <div style={{ flex:1 }}>
+                  <div style={S.flex1}>
                     <div style={{ fontSize:13, color:"var(--muted2)", marginBottom:6 }}>Vi mangler næringsdata for dette produkt.</div>
                     <button className="btn btn-outline btn-sm" onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients || ""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
                       Hjælp os — indsend næringsdata
@@ -919,7 +957,7 @@ export default function ScannerScreen({
                     {rows.map(([label, value], i) => (
                       <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"7px 0", borderBottom: i < rows.length-1 ? "1px solid var(--border)" : "none" }}>
                         <span style={{ fontSize:13, color: label.startsWith("—") ? "var(--muted)" : "var(--ink2)", paddingLeft: label.startsWith("—") ? 12 : 0 }}>{label}</span>
-                        <span style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{value}</span>
+                        <span style={S.h13b}>{value}</span>
                       </div>
                     ))}
                   </div>
@@ -942,8 +980,8 @@ export default function ScannerScreen({
                   <path strokeLinecap="round" d="M15 19l-7-7 7-7"/>
                 </svg>
               </button>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Nyt produkt</div>
+              <div style={S.flex1}>
+                <div style={S.h17}>Nyt produkt</div>
                 <div style={{ fontSize:12, color:"var(--muted)", marginTop:1, fontFamily:"monospace" }}>EAN: {notFoundEan}</div>
               </div>
               {/* Fremgangsindikator */}
@@ -988,7 +1026,7 @@ export default function ScannerScreen({
                   ))}
                 </div>
 
-                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>
+                <div style={S.h13bMb}>
                   Trin 1 — Fotografér produktets forside
                 </div>
                 <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6, marginBottom:16 }}>
@@ -1007,7 +1045,7 @@ export default function ScannerScreen({
                     <circle cx="12" cy="13" r="4"/>
                   </svg>
                   Fotografér forsiden
-                  <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleProductImageCapture} />
+                  <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleProductImageCapture} />
                 </label>
                 <label style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:8,
@@ -1016,7 +1054,7 @@ export default function ScannerScreen({
                   fontSize:13, fontWeight:600, marginBottom:10,
                 }}>
                   📁 Vælg fra galleri
-                  <input type="file" accept="image/*" style={{ display:"none" }} onChange={handleProductImageCapture} />
+                  <input type="file" accept="image/*" style={S.none} onChange={handleProductImageCapture} />
                 </label>
                 <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, color:"var(--muted)", padding:"8px 0", fontFamily:"var(--f)" }}
                   onClick={() => setNotFoundStep(2)}>
@@ -1027,9 +1065,9 @@ export default function ScannerScreen({
 
             {/* ── SCANNING-LOADER ── */}
             {(ocrLoading || nutritionOcrLoading) && (
-              <div className="fade-in" style={{ textAlign:"center", padding:"60px 20px" }}>
-                <div style={{ width:64, height:64, border:"4px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 20px" }} />
-                <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>
+              <div className="fade-in" style={S.center60}>
+                <div style={S.spinner} />
+                <div style={S.h17mb}>
                   {notFoundStep === 1 ? "Henter produktnavn…"
                     : notFoundStep === 3 ? "Læser næringsindhold…"
                     : "Analyserer ingredienser…"}
@@ -1054,9 +1092,9 @@ export default function ScannerScreen({
                 {/* Vis produktbillede + navn hvis hentet */}
                 {productImagePreview && (
                   <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:14 }}>
-                    <img src={productImagePreview} alt="Produkt"
+                    <img loading="lazy" src={productImagePreview} alt="Produkt"
                       style={{ width:52, height:52, objectFit:"contain", borderRadius:8, border:"1px solid var(--border)", flexShrink:0 }} />
-                    <div style={{ flex:1 }}>
+                    <div style={S.flex1}>
                       <input
                         value={proposedName}
                         onChange={e => setProposedName(e.target.value)}
@@ -1068,7 +1106,7 @@ export default function ScannerScreen({
                   </div>
                 )}
 
-                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>
+                <div style={S.h13bMb}>
                   Trin 2 — Fotografér ingredienslisten
                 </div>
 
@@ -1076,22 +1114,22 @@ export default function ScannerScreen({
                 <div style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:14 }}>
                   <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:10 }}>Sådan finder du ingredienslisten:</div>
                   <div style={{ display:"flex", gap:10, alignItems:"flex-start", marginBottom:8 }}>
-                    <div style={{ width:28, height:28, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                    <div style={S.dot}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
                     </div>
-                    <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5 }}>Vend pakken om — ingredienslisten starter typisk med "Ingredienser:" eller "Indeholder:"</div>
+                    <div style={S.body12}>Vend pakken om — ingredienslisten starter typisk med "Ingredienser:" eller "Indeholder:"</div>
                   </div>
                   <div style={{ display:"flex", gap:10, alignItems:"flex-start", marginBottom:8 }}>
-                    <div style={{ width:28, height:28, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                    <div style={S.dot}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
                     </div>
-                    <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5 }}>Hold telefonen stille og vent til teksten er skarp</div>
+                    <div style={S.body12}>Hold telefonen stille og vent til teksten er skarp</div>
                   </div>
                   <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
-                    <div style={{ width:28, height:28, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                    <div style={S.dot}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
                     </div>
-                    <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5 }}>God belysning giver bedre resultat — undgå skygger</div>
+                    <div style={S.body12}>God belysning giver bedre resultat — undgå skygger</div>
                   </div>
                 </div>
 
@@ -1107,7 +1145,7 @@ export default function ScannerScreen({
                     <circle cx="12" cy="13" r="4"/>
                   </svg>
                   Fotografér ingredienslisten
-                  <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleImageCapture} />
+                  <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleImageCapture} />
                 </label>
                 <label style={{
                   display:"flex", alignItems:"center", justifyContent:"center", gap:8,
@@ -1116,9 +1154,9 @@ export default function ScannerScreen({
                   fontSize:13, fontWeight:600, marginBottom:10,
                 }}>
                   📁 Vælg fra galleri
-                  <input type="file" accept="image/*" style={{ display:"none" }} onChange={handleImageCapture} />
+                  <input type="file" accept="image/*" style={S.none} onChange={handleImageCapture} />
                 </label>
-                {scanError && <div className="error-box" style={{ marginBottom:10 }}>⚠️ {scanError}</div>}
+                {scanError && <div className="error-box" style={S.mb10}>⚠️ {scanError}</div>}
                 {ocrText && (
                   <button className="btn btn-primary btn-full"
                     onClick={() => setNotFoundStep(3)}>
@@ -1154,7 +1192,7 @@ export default function ScannerScreen({
                     <circle cx="12" cy="13" r="4"/>
                   </svg>
                   Fotografér næringsdeklarationen
-                  <input type="file" accept="image/*" capture="environment" style={{ display:"none" }}
+                  <input type="file" accept="image/*" capture="environment" style={S.none}
                     onChange={handleNutritionCapture} />
                 </label>
                 <label style={{
@@ -1164,7 +1202,7 @@ export default function ScannerScreen({
                   fontSize:12, fontWeight:600, marginBottom:14,
                 }}>
                   📁 Vælg fra galleri
-                  <input type="file" accept="image/*" style={{ display:"none" }}
+                  <input type="file" accept="image/*" style={S.none}
                     onChange={handleNutritionCapture} />
                 </label>
                 {/* Vis hvis noget allerede er udfyldt */}
@@ -1270,16 +1308,16 @@ export default function ScannerScreen({
 
                 {/* Produktkort */}
                 <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12 }}>
-                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+                  <div style={S.rowBetweenMb10}>
                     <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)" }}>📸 Forside og navn</div>
                     <button onClick={() => setNotFoundStep(1)} style={{ background:"none", border:"none", cursor:"pointer", fontSize:11, color:"var(--muted)", fontFamily:"var(--f)", padding:"2px 8px" }}>← Ret</button>
                   </div>
                   <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
                     {productImagePreview
-                      ? <img src={productImagePreview} alt="Produkt" style={{ width:60, height:60, objectFit:"contain", borderRadius:10, border:"1px solid var(--border)", flexShrink:0 }} />
+                      ? <img loading="lazy" src={productImagePreview} alt="Produkt" style={{ width:60, height:60, objectFit:"contain", borderRadius:10, border:"1px solid var(--border)", flexShrink:0 }} />
                       : <div style={{ width:60, height:60, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>📦</div>
                     }
-                    <div style={{ flex:1 }}>
+                    <div style={S.flex1}>
                       <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, marginBottom:4 }}>Produktnavn</div>
                       <input
                         value={proposedName}
@@ -1294,20 +1332,20 @@ export default function ScannerScreen({
                   <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, color:"var(--muted)", cursor:"pointer" }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                     Skift forsidebillede
-                    <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleProductImageCapture} />
+                    <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleProductImageCapture} />
                   </label>
                 </div>
 
                 {/* ── Ingrediensliste editor ── */}
-                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
-                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-                    <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>🔍 Ingredienser</div>
+                <div style={S.card}>
+                  <div style={S.rowBetweenMb10}>
+                    <div style={S.h13}>🔍 Ingredienser</div>
                     <div style={{ display:"flex", gap:8, alignItems:"center" }}>
                       {ocrText && <div style={{ fontSize:11, color:"var(--green)", fontWeight:700 }}>✓ {ingItems.length} fundet</div>}
                       <label style={{ fontSize:11, color:"var(--muted)", cursor:"pointer", fontWeight:600, display:"flex", alignItems:"center", gap:4 }}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                         {ocrText ? "Nyt billede" : "Tag billede"}
-                        <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={e => {
+                        <input type="file" accept="image/*" capture="environment" style={S.none} onChange={e => {
                           if (!e.target.files[0]) return;
                           handleImageCapture(e);
                           // Parse OCR result when it arrives (via ocrText update)
@@ -1337,7 +1375,7 @@ export default function ScannerScreen({
                   )}
 
                   {/* Tilføj ingrediens */}
-                  <div style={{ display:"flex", gap:8 }}>
+                  <div style={S.rowGap8}>
                     <input className="field" placeholder="Tilføj ingrediens…" value={ingInput}
                       onChange={e => setIngInput(e.target.value)}
                       onKeyDown={e => e.key==="Enter" && addIngItem()}
@@ -1357,10 +1395,10 @@ export default function ScannerScreen({
                 </div>
 
                 {/* Detekterede allergener — toggle */}
-                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
-                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-                    <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>⚠️ Allergener</div>
-                    <div style={{ fontSize:11, color:"var(--muted)" }}>Tryk for at til/fra</div>
+                <div style={S.card}>
+                  <div style={S.rowBetweenMb10}>
+                    <div style={S.h13}>⚠️ Allergener</div>
+                    <div style={S.sub11}>Tryk for at til/fra</div>
                   </div>
                   <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
                     {ALLERGENS.filter(a => !["svovl","lupin","bloeddyr"].includes(a.id)).map(a => {
@@ -1403,7 +1441,7 @@ export default function ScannerScreen({
 
                 {/* Næringsindhold opsummering */}
                 {proposedNutrition && Object.values(proposedNutrition).some(v => v) && (
-                  <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
+                  <div style={S.card}>
                     <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>
                       Næringsindhold <span style={{ fontSize:10, color:"var(--muted)", fontWeight:400 }}>per 100g/ml</span>
                     </div>
@@ -1432,7 +1470,7 @@ export default function ScannerScreen({
 
                 {/* Mærkninger/noter */}
                 {proposedNotes && (
-                  <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 }}>
+                  <div style={S.card}>
                     <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:6 }}>Mærkninger</div>
                     <div style={{ fontSize:12, color:"var(--ink2)", lineHeight:1.6 }}>{proposedNotes}</div>
                     <button style={{ marginTop:6, fontSize:11, color:"var(--muted)", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", padding:0 }}
@@ -1447,12 +1485,12 @@ export default function ScannerScreen({
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}>
                     <circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M12 16v-4M12 8h.01"/>
                   </svg>
-                  <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>
+                  <div style={S.sub11lh}>
                     Dit bidrag gennemgås af EatSafe-teamet inden publicering. Tak fordi du hjælper!
                   </div>
                 </div>
 
-                {scanError && <div className="error-box" style={{ marginBottom:10 }}>⚠️ {scanError}</div>}
+                {scanError && <div className="error-box" style={S.mb10}>⚠️ {scanError}</div>}
 
                 <button
                   onClick={() => {
@@ -1488,7 +1526,7 @@ export default function ScannerScreen({
         {screen === SCREENS.SUBMITTED && (
           <div className="screen fade-in">
             <div className="card" style={{ textAlign:"center", padding:"40px 24px", marginTop:32 }}>
-              <div style={{ marginBottom:16 }}><Icon name="check" size={56} color="var(--green)" /></div>
+              <div style={S.mb16}><Icon name="check" size={56} color="var(--green)" /></div>
               <div style={{ fontSize:22, fontWeight:900, color:"var(--text)", marginBottom:8 }}>Tak for dit bidrag!</div>
               <div style={{ fontSize:14, color:"var(--muted)", lineHeight:1.7, marginBottom:20 }}>
                 Din indsendelse er modtaget og afventer godkendelse af vores team. Når produktet er godkendt, vil det være tilgængeligt for alle brugere.
@@ -1516,7 +1554,7 @@ export default function ScannerScreen({
             <div className="screen-title">Søg varer</div>
 
             {/* Profil-bar — samme som hjem */}
-            <div style={{ marginBottom:12 }}>
+            <div style={S.mb12}>
               <div style={{ display:"flex", gap:6, marginBottom:8 }}>
                 {(() => {
                   const allIds = ["user", ...family.map(m => m.id)];
@@ -1546,7 +1584,7 @@ export default function ScannerScreen({
                   return (
                     <div key={p.id} onClick={() => setProfilePopup(p.id)}
                       style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, cursor:"pointer" }}>
-                      <div style={{ position:"relative" }}>
+                      <div style={S.rel}>
                         <div style={{ width:38, height:38, borderRadius:"50%",
                           background: isActive ? "var(--green)" : "var(--paper2)",
                           color: isActive ? "#fff" : "var(--muted)",
@@ -1595,7 +1633,7 @@ export default function ScannerScreen({
               </button>
             </div>
             {/* Kategori filter */}
-            <div style={{ marginBottom:10 }}>
+            <div style={S.mb10}>
               <CategorySelect
                 value={searchCategory}
                 onChange={setSearchCategory}
@@ -1648,9 +1686,9 @@ export default function ScannerScreen({
                   padding:"10px 0", borderBottom:"1px solid var(--border)", cursor:"pointer" }}
                   onClick={() => lookupProduct(p.ean||p.id)}>
                   <ProductImage product={p} size={44} />
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{p.name}</div>
-                    <div style={{ fontSize:11, color:"var(--muted)" }}>{p.brand}{p.category ? ` · ${p.category}` : ""}</div>
+                  <div style={S.flexMin}>
+                    <div style={S.h13b}>{p.name}</div>
+                    <div style={S.sub11}>{p.brand}{p.category ? ` · ${p.category}` : ""}</div>
                     {p.tags && p.tags.length > 0 && (
                       <div style={{ display:"flex", gap:4, marginTop:3, flexWrap:"wrap" }}>
                         {p.tags.map((t,i) => {
@@ -1679,8 +1717,8 @@ export default function ScannerScreen({
 
             {/* Favoritter */}
             {favorites.length > 0 && (
-              <div className="card" style={{ marginBottom:12 }}>
-                <div className="card-lbl" style={{ marginBottom:10 }}>Dine favoritter</div>
+              <div className="card" style={S.mb12}>
+                <div className="card-lbl" style={S.mb10}>Dine favoritter</div>
                 {favorites.slice(0,10).map(p => {
                   const { status } = compareAllergens(p.allergen_flags||{}, activeIds);
                   const statusColor = status==="safe" ? "var(--green)" : status==="danger" ? "var(--red)" : "var(--amber)";
@@ -1690,9 +1728,9 @@ export default function ScannerScreen({
                       padding:"10px 0", borderBottom:"1px solid var(--border)", cursor:"pointer" }}
                       onClick={() => lookupProduct(p.ean||p.code||p.id)}>
                       <ProductImage product={p} size={44} />
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{p.name}</div>
-                        <div style={{ fontSize:11, color:"var(--muted)" }}>{p.brand}</div>
+                      <div style={S.flexMin}>
+                        <div style={S.h13b}>{p.name}</div>
+                        <div style={S.sub11}>{p.brand}</div>
                         {p.tags && p.tags.length > 0 && (
                           <div style={{ display:"flex", gap:4, marginTop:3, flexWrap:"wrap" }}>
                             {p.tags.map((t,i) => {
@@ -1826,8 +1864,8 @@ export default function ScannerScreen({
                     <path strokeLinecap="round" d="M15 19l-7-7 7-7"/>
                   </svg>
                 </button>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Hjælp os med at forbedre</div>
+                <div style={S.flexMin}>
+                  <div style={S.h17}>Hjælp os med at forbedre</div>
                   <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{scanResult.name}</div>
                 </div>
               </div>
@@ -1835,9 +1873,9 @@ export default function ScannerScreen({
               {/* Produkt-chip — vises på alle trin */}
               <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:16 }}>
                 <ProductImage product={scanResult} size={40} />
-                <div style={{ flex:1, minWidth:0 }}>
+                <div style={S.flexMin}>
                   <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{scanResult.name}</div>
-                  {scanResult.brand && <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>{scanResult.brand}</div>}
+                  {scanResult.brand && <div style={S.sub11mt}>{scanResult.brand}</div>}
                   <div style={{ fontSize:10, color:"var(--muted)", marginTop:1, fontFamily:"monospace" }}>EAN: {scanResult.code}</div>
                 </div>
               </div>
@@ -1859,7 +1897,7 @@ export default function ScannerScreen({
                         background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14,
                         marginBottom:8, cursor:"pointer" }}>
                       <div style={{ fontSize:28, flexShrink:0 }}>{opt.emoji}</div>
-                      <div style={{ flex:1 }}>
+                      <div style={S.flex1}>
                         <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>{opt.title}</div>
                         <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{opt.desc}</div>
                       </div>
@@ -1919,7 +1957,7 @@ export default function ScannerScreen({
                       <circle cx="12" cy="13" r="4"/>
                     </svg>
                     Tag billede med kamera
-                    <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
+                    <input type="file" accept="image/*" capture="environment" style={S.none} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
                   </label>
 
                   <label style={{
@@ -1929,7 +1967,7 @@ export default function ScannerScreen({
                     fontSize:14, fontWeight:600, marginBottom:10,
                   }}>
                     📁 Vælg billede fra galleri
-                    <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
+                    <input type="file" accept="image/*" style={S.none} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
                   </label>
 
                   <button className="btn btn-ghost btn-full btn-sm" onClick={() => { setEditStep("review"); }}>
@@ -1940,9 +1978,9 @@ export default function ScannerScreen({
 
               {/* ── TRIN 3: Scanner ── */}
               {editStep === "scanning" && (
-                <div className="fade-in" style={{ textAlign:"center", padding:"60px 20px" }}>
-                  <div style={{ width:64, height:64, border:"4px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 20px" }} />
-                  <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>Analyserer billede…</div>
+                <div className="fade-in" style={S.center60}>
+                  <div style={S.spinner} />
+                  <div style={S.h17mb}>Analyserer billede…</div>
                   <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6 }}>
                     Vores AI læser teksten fra dit billede.<br/>Det tager et par sekunder.
                   </div>
@@ -1955,15 +1993,15 @@ export default function ScannerScreen({
 
                   {/* ── Ingrediensliste editor (samme som ny produkt) ── */}
                   {editType === "ingredients" && (
-                    <div className="card" style={{ marginBottom:12 }}>
-                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-                        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Ingredienser</div>
+                    <div className="card" style={S.mb12}>
+                      <div style={S.rowBetweenMb10}>
+                        <div style={S.h13}>Ingredienser</div>
                         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
                           {ingItems.length > 0 && <div style={{ fontSize:11, color:"var(--green)", fontWeight:700 }}>✓ {ingItems.length} ingredienser</div>}
                           <label style={{ fontSize:11, color:"var(--muted)", cursor:"pointer", fontWeight:600, display:"flex", alignItems:"center", gap:4 }}>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                             {editIngText ? "Nyt billede" : "Tag billede"}
-                            <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
+                            <input type="file" accept="image/*" capture="environment" style={S.none} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
                           </label>
                         </div>
                       </div>
@@ -1988,7 +2026,7 @@ export default function ScannerScreen({
                         </div>
                       )}
 
-                      <div style={{ display:"flex", gap:8 }}>
+                      <div style={S.rowGap8}>
                         <input className="field" placeholder="Tilføj ingrediens…" value={ingInput}
                           onChange={e => setIngInput(e.target.value)}
                           onKeyDown={e => e.key==="Enter" && addIngItem()}
@@ -2000,13 +2038,13 @@ export default function ScannerScreen({
 
                   {/* Næringsindhold — beholder textarea */}
                   {editType === "nutrition" && (
-                    <div className="card" style={{ marginBottom:12 }}>
+                    <div className="card" style={S.mb12}>
                       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
-                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>Næringsindhold</div>
+                        <div style={S.h13b}>Næringsindhold</div>
                         <label style={{ fontSize:11, color:"var(--muted)", cursor:"pointer", fontWeight:600, display:"flex", alignItems:"center", gap:4 }}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                           Nyt billede
-                          <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
+                          <input type="file" accept="image/*" capture="environment" style={S.none} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
                         </label>
                       </div>
                       <textarea
@@ -2022,21 +2060,21 @@ export default function ScannerScreen({
 
                   {/* Produktbillede */}
                   {editType === "image" && (
-                    <div className="card" style={{ marginBottom:12 }}>
-                      <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>Nyt produktbillede</div>
+                    <div className="card" style={S.mb12}>
+                      <div style={S.h13bMb}>Nyt produktbillede</div>
                       {editProductImage && (
-                        <img src={editProductImage} alt="Produkt"
+                        <img loading="lazy" src={editProductImage} alt="Produkt"
                           style={{ width:"100%", maxHeight:180, objectFit:"contain", borderRadius:10, marginBottom:10 }} />
                       )}
                       <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"12px", background:"var(--paper2)", border:"1.5px dashed var(--border2)", borderRadius:10, cursor:"pointer", fontSize:13, color:"var(--muted2)" }}>
                         {editProductImage ? "📸 Tag nyt billede" : "📸 Tag billede af produktet"}
-                        <input type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={handleEditProductCapture} />
+                        <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleEditProductCapture} />
                       </label>
                     </div>
                   )}
 
                   {/* Bemærkning */}
-                  <div className="card" style={{ marginBottom:12 }}>
+                  <div className="card" style={S.mb12}>
                     <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Bemærkning (valgfrit)</div>
                     <textarea
                       value={editNote}
@@ -2053,7 +2091,7 @@ export default function ScannerScreen({
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}>
                       <circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M12 16v-4M12 8h.01"/>
                     </svg>
-                    <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>
+                    <div style={S.sub11lh}>
                       Dit forslag gennemgås af vores team inden det publiceres. Tak for din hjælp!
                     </div>
                   </div>
@@ -2076,9 +2114,9 @@ export default function ScannerScreen({
 
               {/* ── TRIN 5: Sender ── */}
               {editStep === "sending" && (
-                <div className="fade-in" style={{ textAlign:"center", padding:"60px 20px" }}>
-                  <div style={{ width:64, height:64, border:"4px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 20px" }} />
-                  <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Sender…</div>
+                <div className="fade-in" style={S.center60}>
+                  <div style={S.spinner} />
+                  <div style={S.h17}>Sender…</div>
                 </div>
               )}
 
