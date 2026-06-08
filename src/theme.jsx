@@ -86,8 +86,8 @@ export const appCss = `
   --green-mid:rgba(74,222,128,.20);
   --green-text:#2FB865;
   /* Borders — lidt mere synlige */
-  --border:rgba(255,255,255,.09);
-  --border2:rgba(255,255,255,.17);
+  --border:rgba(255,255,255,.22);
+  --border2:rgba(255,255,255,.32);
   /* Surfaces — neutrale glaslag */
   --surface:rgba(255,255,255,.10);
   --surface2:rgba(255,255,255,.16);
