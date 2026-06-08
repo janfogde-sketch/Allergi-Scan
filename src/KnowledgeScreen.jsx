@@ -230,19 +230,23 @@ export default function KnowledgeScreen({ screen, setScreen, accessToken, openSl
   useEffect(() => {
     async function loadCounts() {
       try {
-        const data = await fetchKB(
-          `${SUPABASE_URL}/rest/v1/knowledge_base?select=category`,
-          accessToken
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/knowledge_base?select=category&limit=1000`,
+          { headers: { "apikey": SUPABASE_ANON_KEY, "Accept": "application/json",
+              ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) } }
         );
+        const data = await res.json();
         const c = {};
         if (Array.isArray(data)) {
-          data.forEach(r => { c[r.category] = (c[r.category] || 0) + 1; });
+          data.forEach(r => { if (r.category) c[r.category] = (c[r.category] || 0) + 1; });
+          setCounts(c);
+        } else {
+          console.error("KB counts fejl:", data);
         }
-        setCounts(c);
-      } catch {}
+      } catch (e) { console.error("KB counts fejl:", e); }
     }
     loadCounts();
-  }, []);
+  }, [accessToken]);
 
   // Håndter openSlug (fra scan-links)
   useEffect(() => {

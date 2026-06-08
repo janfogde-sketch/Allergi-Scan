@@ -1391,7 +1391,7 @@ export default function EatSafe() {
               [SCREENS.RECIPES, "recipes",  "Opskrifter"],
               [SCREENS.LIST,    "cart",     "Indkøbsliste"],
               [SCREENS.HOME,    "home",     "Hjem"],
-              [SCREENS.KNOWLEDGE, "book",   "Viden"],
+              [SCREENS.KNOWLEDGE, "book",   "Leksikon"],
               [SCREENS.PROFILE, "profile",  "Profil"],
             ].map(([s,icon,lbl]) => (
               <div key={s} className={`nav-item${(
