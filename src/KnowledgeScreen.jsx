@@ -53,16 +53,16 @@ export default function KnowledgeScreen({ screen, setScreen, accessToken, openSl
   const [funFacts, setFunFacts]             = useState([]);
 
   const doFetch = useCallback(async (url) => {
-    const headers = { "apikey": SUPABASE_ANON_KEY, "Accept": "application/json" };
-    if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
-    const res = await fetch(url, { headers });
+    // knowledge_base er public (USING true) — brug kun anon key, aldrig JWT
+    const res = await fetch(url, {
+      headers: { "apikey": SUPABASE_ANON_KEY, "Accept": "application/json" },
+    });
     if (!res.ok) throw new Error(`${res.status}: ${(await res.text()).slice(0,120)}`);
     return res.json();
-  }, [accessToken]);
+  }, []);
 
   // Load counts + fun facts on mount
   useEffect(() => {
-    if (!accessToken) return;
     setError(null);
     (async () => {
       try {
@@ -82,7 +82,7 @@ export default function KnowledgeScreen({ screen, setScreen, accessToken, openSl
 
   // Handle openSlug
   useEffect(() => {
-    if (!openSlug || !accessToken) return;
+    if (!openSlug) return;
     (async () => {
       try {
         const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?slug=eq.${openSlug}&limit=1`);
@@ -93,7 +93,7 @@ export default function KnowledgeScreen({ screen, setScreen, accessToken, openSl
   }, [openSlug, accessToken, doFetch]);
 
   const loadCategory = useCallback(async (cat) => {
-    if (!cat || !accessToken) { setEntries([]); return; }
+    if (!cat) { setEntries([]); return; }
     setLoading(true); setError(null);
     try {
       const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?category=eq.${cat}&order=sort_order.asc,title.asc&limit=200`);
@@ -103,7 +103,7 @@ export default function KnowledgeScreen({ screen, setScreen, accessToken, openSl
   }, [accessToken, doFetch]);
 
   const doSearch = useCallback(async (q) => {
-    if (!q || q.length < 2 || !accessToken) { if(!selectedCategory) setEntries([]); return; }
+    if (!q || q.length < 2) { if(!selectedCategory) setEntries([]); return; }
     setLoading(true); setError(null);
     try {
       const enc = encodeURIComponent(`%${q}%`);
