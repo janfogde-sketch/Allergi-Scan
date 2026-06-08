@@ -42,11 +42,6 @@ export const THEME = {
   neutral:   "#94A3B8",
   neutralLt: "rgba(148,163,184,.12)",
 
-  // Varm accent — highlights, tips, madkultur
-  warm:   "#E8A87C",
-  warmLt: "rgba(232,168,124,.10)",
-  warmMd: "rgba(232,168,124,.18)",
-
   // Tekst-muted — neutral grå (ikke grønstemt)
   muted:  "rgba(240,240,238,.55)",
   muted2: "rgba(240,240,238,.38)",
@@ -81,8 +76,8 @@ export const appCss = `
   --ink2:rgba(240,240,238,.72);
   --ink3:rgba(240,240,238,.50);
   /* Baggrunde — neutral mørk med svag grøn undertone */
-  --paper:#151d1a;
-  --paper2:#1c2620;
+  --paper:#161E2A;
+  --paper2:#1D2638;
   /* Grøn — KUN sikker/success/primær CTA */
   --green:#4ADE80;
   --green-logo:#3DCC6E;
@@ -104,8 +99,6 @@ export const appCss = `
   --blue:#60A5FA;--blue-lt:rgba(96,165,250,.12);--blue-md:rgba(96,165,250,.22);
   /* Neutral grå — labels, metadata */
   --neutral:#94A3B8;--neutral-lt:rgba(148,163,184,.12);
-  /* Varm accent — highlights, tips */
-  --warm:#E8A87C;--warm-lt:rgba(232,168,124,.10);--warm-md:rgba(232,168,124,.18);
   /* Muted — neutral grå tekst */
   --muted:rgba(240,240,238,.55);
   --muted2:rgba(240,240,238,.38);
@@ -119,30 +112,20 @@ export const appCss = `
   --fs-lg:17px;
   --fs-xl:22px;
   --fs-2xl:28px;
-  /* Font-weight tokens */
-  --fw-normal:400;
-  --fw-medium:500;
-  --fw-semi:600;
-  --fw-bold:700;
-  --fw-black:800;
-  /* Line-height tokens */
-  --lh-tight:1.2;
-  --lh-snug:1.4;
-  --lh-normal:1.55;
   --sh:0 1px 3px rgba(0,0,0,.2),0 2px 8px rgba(0,0,0,.15);
   --sh2:0 4px 16px rgba(0,0,0,.3);
   --sh3:0 8px 32px rgba(0,0,0,.4);
 }
 body{
-  background:linear-gradient(160deg,#1a2520 0%,#111815 100%);
+  background:linear-gradient(160deg,#1a2235 0%,#111825 100%);
   color:var(--ink);font-family:var(--f);-webkit-font-smoothing:antialiased;
   min-height:100vh;
 }
 .app{
   max-width:390px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
   width:100%;position:relative;overflow-x:hidden;
-  background:radial-gradient(ellipse 100% 45% at 50% 0%,rgba(74,222,128,.07) 0%,transparent 60%),
-             linear-gradient(175deg,#1e2d24 0%,#182019 40%,#141c18 70%,#111815 100%);
+  background:radial-gradient(ellipse 100% 45% at 50% 0%,rgba(74,222,128,.06) 0%,transparent 60%),
+             linear-gradient(175deg,#1e2a38 0%,#192030 40%,#151C2A 70%,#111825 100%);
 }
 
 /* ── TOPBAR ── */
