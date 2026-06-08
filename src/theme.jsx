@@ -125,7 +125,7 @@ body{
   max-width:390px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
   width:100%;position:relative;overflow-x:hidden;
   background:radial-gradient(ellipse 100% 45% at 50% 0%,rgba(74,222,128,.08) 0%,transparent 55%),
-             linear-gradient(175deg,#283f62 0%,#1e3050 40%,#1a2844 70%,#17243C 100%);
+             linear-gradient(175deg,#2a4268 0%,#1e3050 40%,#1d2f52 70%,#1a2c4e 100%);
 }
 
 /* ── TOPBAR ── */
