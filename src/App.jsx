@@ -315,9 +315,9 @@ export default function EatSafe() {
       } catch { /* html5-qrcode fejlede — prøv Claude Vision */ }
 
       // Trin 2: Send billede til Claude Vision via OCR Edge Function
-      const base64 = await new Promise<string>((res, rej) => {
+      const base64 = await new Promise((res, rej) => {
         const r = new FileReader();
-        r.onload = () => res((r.result as string).split(",")[1]);
+        r.onload = () => res(r.result.split(",")[1]);
         r.onerror = rej;
         r.readAsDataURL(file);
       });
