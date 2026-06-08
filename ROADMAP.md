@@ -29,7 +29,7 @@
 
 | # | Opgave | Status | Noter |
 |---|--------|--------|-------|
-| 2.1 | Farvesystem redesign | ✅ | `--warm` (#E8A87C), `--fw-*`, `--lh-*` tokens tilføjet. home-tip → warm accent |
+| 2.1 | Farvesystem redesign | ✅ | Grøn tema lysnet ~20%. --warm, --navy tokens. Bottom-nav opaque. Borders/tekst lysere |
 | 2.2 | Baggrund og gradient | ✅ | Fast gradient i `.app`, paper/paper2 justeret |
 | 2.3 | Typografi-hierarki | ✅ | `--fs-xs`→`--fs-2xl`, `--fw-normal`→`--fw-black`, `--lh-tight`→`--lh-normal` |
 | 2.4 | **Scan-resultat redesign** | 🔲 | Vigtigste skærm. Behov: ScannerScreen.jsx |
@@ -73,9 +73,9 @@
 | Fun facts (12) | ✅ | Engagerende viden-nuggets |
 | Ingredienser (104) | ✅ | 3 runder: fedtstoffer, korn, bælgfrugter, krydderier, mejeriprodukter, fisk, vitaminer m.fl. |
 | CSS-klasser (kb-*) | ✅ | Alle styles klar i styles.css |
-| **KnowledgeScreen.jsx** | 🔲 | Søgebar, kategori-grid, kortliste, detaljevisning — CSS er klar |
-| **Bundmenu: Madpas → Viden** | 🔲 | Afventer KnowledgeScreen |
-| **Madpas flyttes til profil** | 🔲 | Afventer KnowledgeScreen |
+| **KnowledgeScreen.jsx** | ✅ | Inline styles, 2-kolonne grid, søg, kategorier, detaljer, fun facts. Kun anon key |
+| **Bundmenu → Leksikon** | ✅ | "Leksikon" tab aktiv i bundmenu |
+| **Madpas til profil** | ✅ | Tilgængelig via profilsiden |
 | **Scan → Leksikon links** | 🔲 | Klik allergen/E-nummer i scan-resultat → åbn leksikon-entry |
 | **Leksikon udvidelse** | 🔲 | Mål: 300+ ingredienser. Tilføj: alkohol, eksotiske ingredienser, japansk/mexicansk/indisk køkken |
 
