@@ -21,16 +21,17 @@ const RISK_CLASS = { high: "high", medium: "medium", low: "low", none: "none" };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 async function fetchKB(url, accessToken) {
+  // Samme mønster som useAdmin.js der virker
   const headers = {
     "apikey": SUPABASE_ANON_KEY,
+    "Authorization": `Bearer ${accessToken}`,
     "Accept": "application/json",
-    "Content-Type": "application/json",
   };
-  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
   const res = await fetch(url, { headers });
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`KB ${res.status}: ${err.slice(0,100)}`);
+    console.error("KB fetch fejl:", res.status, err.slice(0,200));
+    throw new Error(`KB ${res.status}`);
   }
   return res.json();
 }
@@ -226,6 +227,7 @@ export default function KnowledgeScreen({ screen, setScreen, accessToken, openSl
   // Hent kategoritælling ved mount
   useEffect(() => {
     async function loadCounts() {
+      if (!accessToken) return;
       try {
         const data = await fetchKB(
           `${SUPABASE_URL}/rest/v1/knowledge_base?select=category&limit=1000`,
@@ -263,7 +265,7 @@ export default function KnowledgeScreen({ screen, setScreen, accessToken, openSl
 
   // Indlæs entries baseret på kategori
   const loadCategory = useCallback(async (cat) => {
-    if (!cat) { setEntries([]); return; }
+    if (!cat || !accessToken) { setEntries([]); return; }
     setLoading(true);
     try {
       const data = await fetchKB(
