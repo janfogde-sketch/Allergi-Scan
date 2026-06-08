@@ -20,21 +20,18 @@ const RISK_LABEL = { high: "Høj risiko", medium: "Moderat", low: "Lav", none: "
 const RISK_CLASS = { high: "high", medium: "medium", low: "low", none: "none" };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function buildUrl(params) {
-  const base = `${SUPABASE_URL}/rest/v1/knowledge_base`;
-  const q = Object.entries(params).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&");
-  return `${base}?${q}`;
-}
-
 async function fetchKB(url, accessToken) {
-  const res = await fetch(url, {
-    headers: {
-      "apikey": SUPABASE_ANON_KEY,
-      "Accept": "application/json",
-      ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
-    },
-  });
-  if (!res.ok) throw new Error(`KB fetch fejl: ${res.status}`);
+  const headers = {
+    "apikey": SUPABASE_ANON_KEY,
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+  };
+  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+  const res = await fetch(url, { headers });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`KB ${res.status}: ${err.slice(0,100)}`);
+  }
   return res.json();
 }
 
@@ -230,12 +227,10 @@ export default function KnowledgeScreen({ screen, setScreen, accessToken, openSl
   useEffect(() => {
     async function loadCounts() {
       try {
-        const res = await fetch(
+        const data = await fetchKB(
           `${SUPABASE_URL}/rest/v1/knowledge_base?select=category&limit=1000`,
-          { headers: { "apikey": SUPABASE_ANON_KEY, "Accept": "application/json",
-              ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) } }
+          accessToken
         );
-        const data = await res.json();
         const c = {};
         if (Array.isArray(data)) {
           data.forEach(r => { if (r.category) c[r.category] = (c[r.category] || 0) + 1; });
@@ -243,7 +238,7 @@ export default function KnowledgeScreen({ screen, setScreen, accessToken, openSl
         } else {
           console.error("KB counts fejl:", data);
         }
-      } catch (e) { console.error("KB counts fejl:", e); }
+      } catch (e) { console.error("KB counts:", e.message); }
     }
     loadCounts();
   }, [accessToken]);
