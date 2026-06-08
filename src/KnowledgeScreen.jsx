@@ -1,354 +1,431 @@
 // @ts-nocheck
-import React, { useState, useEffect, useMemo } from "react";
-import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS, ALLERGENS, DIETS } from "./constants.jsx";
+import React, { useState, useEffect, useCallback } from "react";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { Icon } from "./SharedComponents.jsx";
 
+// ── Kategori-config ───────────────────────────────────────────────────────────
 const CATEGORIES = [
-  { id: "all",             label: "Alle",            emoji: "📚" },
-  { id: "allergen",        label: "Allergener",      emoji: "⚠️" },
-  { id: "e_number",        label: "E-numre",         emoji: "🧪" },
-  { id: "diet",            label: "Diæter",          emoji: "🥗" },
-  { id: "ingredient",      label: "Ingredienser",    emoji: "🧈" },
-  { id: "cross_reaction",  label: "Krydsreaktioner", emoji: "🔄" },
-  { id: "faq",             label: "FAQ",             emoji: "❓" },
-  { id: "fun_fact",        label: "Vidste du",       emoji: "💡" },
+  { id: "allergen",       emoji: "🌾", label: "Allergener",      color: "var(--red)",    bg: "var(--red-lt)",    border: "var(--red-md)" },
+  { id: "ingredient",     emoji: "🫙", label: "Ingredienser",    color: "var(--blue)",   bg: "var(--blue-lt)",   border: "rgba(96,165,250,.2)" },
+  { id: "e_number",       emoji: "🔢", label: "E-numre",         color: "var(--amber)",  bg: "var(--amber-lt)",  border: "var(--amber-md)" },
+  { id: "diet",           emoji: "🥗", label: "Diæter",          color: "var(--green)",  bg: "var(--green-lt)",  border: "rgba(74,222,128,.2)" },
+  { id: "cross_reaction", emoji: "🔄", label: "Krydsreaktioner", color: "var(--warm)",   bg: "var(--warm-lt)",   border: "var(--warm-md)" },
+  { id: "faq",            emoji: "❓", label: "FAQ",             color: "var(--neutral)", bg: "var(--surface2)", border: "var(--border)" },
+  { id: "fun_fact",       emoji: "💡", label: "Vidste du at",    color: "var(--warm)",   bg: "var(--warm-lt)",   border: "var(--warm-md)" },
 ];
 
-const RISK_COLORS = {
-  high:   { bg: "var(--red-lt)",   color: "var(--red)",   label: "Høj risiko" },
-  medium: { bg: "var(--amber-lt)", color: "var(--amber)", label: "Moderat" },
-  low:    { bg: "var(--green-lt)", color: "var(--green)", label: "Lav risiko" },
-  none:   { bg: "var(--green-lt)", color: "var(--green)", label: "Ingen risiko" },
-};
+const CAT_MAP = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
 
-export default function KnowledgeScreen({ screen, setScreen, accessToken, openSlug, onSlugHandled }) {
-  const [entries, setEntries]       = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [search, setSearch]         = useState("");
-  const [category, setCategory]     = useState("all");
-  const [selected, setSelected]     = useState(null); // detail view
+const RISK_LABEL = { high: "Høj risiko", medium: "Moderat", low: "Lav", none: "Ingen" };
+const RISK_CLASS = { high: "high", medium: "medium", low: "low", none: "none" };
 
-  // ── Åbn entry via deep-link (fra scan-resultat) ──
-  useEffect(() => {
-    if (!openSlug || entries.length === 0) return;
-    const entry = entries.find(e => e.slug === openSlug || e.allergen_ids?.includes(openSlug));
-    if (entry) { setSelected(entry); onSlugHandled?.(); }
-  }, [openSlug, entries]);
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function buildUrl(params) {
+  const base = `${SUPABASE_URL}/rest/v1/knowledge_base`;
+  const q = Object.entries(params).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&");
+  return `${base}?${q}`;
+}
 
-  // ── Load all entries on mount ──
-  useEffect(() => {
-    if (entries.length > 0) return; // allerede loadet
-    setLoading(true);
-    fetch(`${SUPABASE_URL}/rest/v1/knowledge_base?select=id,category,title,slug,emoji,summary,description,found_in,alternatives,health_notes,allergen_ids,diet_tags,risk_level,aliases,tags,sort_order&order=sort_order.asc,title.asc&limit=1000`, {
-      headers: { "apikey": SUPABASE_ANON_KEY, "Accept": "application/json" },
-    })
-      .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setEntries(data); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+async function fetchKB(url, accessToken) {
+  const res = await fetch(url, {
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+      "Accept": "application/json",
+      ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
+    },
+  });
+  if (!res.ok) throw new Error(`KB fetch fejl: ${res.status}`);
+  return res.json();
+}
 
-  // ── Filter + search ──
-  const filtered = useMemo(() => {
-    let results = entries;
-    if (category !== "all") results = results.filter(e => e.category === category);
-    if (search.trim()) {
-      const q = search.toLowerCase().trim();
-      results = results.filter(e =>
-        (e.title || "").toLowerCase().includes(q) ||
-        (e.summary || "").toLowerCase().includes(q) ||
-        (e.aliases || []).some(a => a.toLowerCase().includes(q)) ||
-        (e.tags || []).some(t => t.toLowerCase().includes(q))
-      );
-    }
-    return results;
-  }, [entries, category, search]);
+// ── Sub-komponenter ──────────────────────────────────────────────────────────
+function SearchBar({ value, onChange, onClear }) {
+  return (
+    <div className="kb-search-wrap">
+      <svg className="kb-search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input
+        className="kb-search-input"
+        placeholder="Søg ingredienser, E-numre, allergener..."
+        value={value}
+        onChange={e => onChange(e.target.value)}
+      />
+      {value && (
+        <button onClick={onClear} style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", padding:4, color:"var(--muted)", lineHeight:0 }}>
+          <Icon name="x" size={14} color="var(--muted)" />
+        </button>
+      )}
+    </div>
+  );
+}
 
-  // ── Category counts ──
-  const counts = useMemo(() => {
-    const c = { all: entries.length };
-    entries.forEach(e => { c[e.category] = (c[e.category] || 0) + 1; });
-    return c;
-  }, [entries]);
+function CategoryGrid({ selected, onSelect, counts }) {
+  return (
+    <div className="kb-cat-grid">
+      {CATEGORIES.map(cat => {
+        const isActive = selected === cat.id;
+        return (
+          <button
+            key={cat.id}
+            className={`kb-cat-btn${isActive ? " active" : ""}`}
+            onClick={() => onSelect(isActive ? null : cat.id)}
+            style={isActive ? { background: cat.bg, borderColor: cat.border } : {}}
+          >
+            <span className="kb-cat-emoji">{cat.emoji}</span>
+            <div>
+              <div className="kb-cat-label" style={isActive ? { color: cat.color } : {}}>{cat.label}</div>
+              {counts[cat.id] !== undefined && (
+                <div className="kb-cat-count">{counts[cat.id]} entries</div>
+              )}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
-  // ── Open entry by slug (for deep-links from scan results) ──
-  const openBySlug = (slug) => {
-    const entry = entries.find(e => e.slug === slug);
-    if (entry) setSelected(entry);
+function EntryCard({ entry, onClick }) {
+  const cat = CAT_MAP[entry.category] || {};
+  return (
+    <div className="kb-entry-card" onClick={() => onClick(entry)}>
+      <div className="kb-entry-emoji">{entry.emoji || cat.emoji || "📄"}</div>
+      <div style={{ flex:1, minWidth:0 }}>
+        <div className="kb-entry-title">{entry.title}</div>
+        {entry.summary && <div className="kb-entry-summary">{entry.summary}</div>}
+      </div>
+      {entry.risk_level && entry.risk_level !== "none" && (
+        <div className={`kb-risk-dot ${RISK_CLASS[entry.risk_level] || "none"}`} />
+      )}
+    </div>
+  );
+}
+
+function DetailView({ entry, onBack }) {
+  const cat = CAT_MAP[entry.category] || {};
+  const allergenNames = {
+    gluten:"Gluten", laktose:"Laktose/Mælk", aeg:"Æg", noedder:"Nødder",
+    jordnoedder:"Jordnødder", soja:"Soja", fisk:"Fisk", skaldyr:"Skaldyr",
+    selleri:"Selleri", sennep:"Sennep", sesam:"Sesam", svovl:"Svovl/Sulfitter",
+    lupin:"Lupin", bloeddyr:"Bløddyr",
   };
 
-  // ── DETAIL VIEW ──
-  if (selected) {
-    const risk = RISK_COLORS[selected.risk_level] || null;
-    return (
-      <div className="screen fade-in" style={{ paddingBottom: 120 }}>
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, paddingTop: 16 }}>
-          <button onClick={() => setSelected(null)}
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2"><path strokeLinecap="round" d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          </button>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "1px" }}>
-              {CATEGORIES.find(c => c.id === selected.category)?.label || selected.category}
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", letterSpacing: "-.4px" }}>
-              {selected.emoji} {selected.title}
-            </div>
-          </div>
-          {risk && (
-            <div style={{ padding: "4px 10px", borderRadius: 100, background: risk.bg, border: `1px solid ${risk.color}22`, fontSize: 10, fontWeight: 700, color: risk.color }}>
-              {risk.label}
-            </div>
-          )}
+  return (
+    <div className="screen fade-in">
+      {/* Header */}
+      <div style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 0 8px" }}>
+        <button onClick={onBack} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, flexShrink:0 }}>
+          <Icon name="arrow-left" size={18} color="var(--ink)" />
+        </button>
+        <div style={{ fontSize:11, fontWeight:700, color: cat.color || "var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px" }}>
+          {cat.emoji} {cat.label}
         </div>
-
-        {/* Summary */}
-        {selected.summary && (
-          <div style={{ fontSize: 14, color: "var(--ink)", lineHeight: 1.65, marginBottom: 16, fontWeight: 500 }}>
-            {selected.summary}
-          </div>
-        )}
-
-        {/* Description */}
-        {selected.description && (
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 16, marginBottom: 12 }}>
-            <div style={{ fontSize: 13, color: "var(--ink)", lineHeight: 1.7, fontWeight: 400 }}>
-              {selected.description}
-            </div>
-          </div>
-        )}
-
-        {/* Health notes */}
-        {selected.health_notes && (
-          <div style={{ background: "var(--amber-lt)", border: "1px solid var(--amber-md)", borderRadius: 14, padding: 14, marginBottom: 12, display: "flex", gap: 10 }}>
-            <div style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>⚕️</div>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--amber)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 4 }}>Sundhedsnoter</div>
-              <div style={{ fontSize: 12, color: "var(--ink)", lineHeight: 1.65 }}>{selected.health_notes}</div>
-            </div>
-          </div>
-        )}
-
-        {/* Found in */}
-        {selected.found_in?.length > 0 && (
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 14, marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--red)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8 }}>🔍 Findes typisk i</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-              {selected.found_in.map((f, i) => (
-                <div key={i} style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 100, background: "var(--red-lt)", color: "var(--red)", border: "1px solid var(--red-md)" }}>
-                  {f}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Alternatives */}
-        {selected.alternatives?.length > 0 && (
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 14, marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--green)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8 }}>✅ Alternativer</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-              {selected.alternatives.map((a, i) => (
-                <div key={i} style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 100, background: "var(--green-lt)", color: "var(--green)", border: "1px solid var(--green-mid)" }}>
-                  {a}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Aliases */}
-        {selected.aliases?.length > 0 && (
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 14, marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8 }}>📝 Også kendt som</div>
-            <div style={{ fontSize: 12, color: "var(--ink)", lineHeight: 1.6 }}>
-              {selected.aliases.join(" · ")}
-            </div>
-          </div>
-        )}
-
-        {/* Relaterede allergener — kun vis hvis vi kan finde entries med labels */}
-        {(() => {
-          if (!selected.allergen_ids?.length) return null;
-          const linked = selected.allergen_ids.map(id => {
-            const entry = entries.find(e => e.slug === id);
-            const allergen = ALLERGENS.find(a => a.id === id);
-            return { id, entry, label: entry?.title || allergen?.label || null, emoji: entry?.emoji || allergen?.emoji || null };
-          }).filter(x => x.label);
-          if (!linked.length) return null;
-          return (
-            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 14, marginBottom: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8 }}>🔗 Relaterede allergener</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                {linked.map((x, i) => (
-                  <div key={i}
-                    onClick={() => { if (x.entry) setSelected(x.entry); }}
-                    style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 100, background: "var(--red-lt)", color: "var(--red)", border: "1px solid var(--red-md)", cursor: x.entry ? "pointer" : "default" }}>
-                    {x.emoji} {x.label}
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* Relevant for diæter — kun vis hvis vi kan finde labels */}
-        {(() => {
-          if (!selected.diet_tags?.length) return null;
-          const linked = selected.diet_tags.map(id => {
-            const entry = entries.find(e => e.slug === id);
-            const diet = DIETS.find(d => d.id === id);
-            return { id, entry, label: entry?.title || diet?.label || null, emoji: entry?.emoji || diet?.emoji || "🥗" };
-          }).filter(x => x.label);
-          if (!linked.length) return null;
-          return (
-            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 14, marginBottom: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8 }}>🥗 Relevant for disse diæter</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                {linked.map((x, i) => (
-                  <div key={i}
-                    onClick={() => { if (x.entry) setSelected(x.entry); }}
-                    style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 100, background: "var(--green-lt)", color: "var(--green)", border: "1px solid var(--green-mid)", cursor: x.entry ? "pointer" : "default" }}>
-                    {x.emoji} {x.label}
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
       </div>
-    );
+
+      {/* Titel og emoji */}
+      <div className="kb-detail-header">
+        <div style={{ fontSize:36, marginBottom:10 }}>{entry.emoji || cat.emoji}</div>
+        <div className="kb-detail-title">{entry.title}</div>
+        {entry.summary && <div className="kb-detail-summary">{entry.summary}</div>}
+
+        {/* Risk badge */}
+        {entry.risk_level && entry.risk_level !== "none" && (
+          <span className={`kb-risk-badge ${RISK_CLASS[entry.risk_level]}`}>
+            {entry.risk_level === "high" ? "⚠️" : entry.risk_level === "medium" ? "⚡" : "✓"} {RISK_LABEL[entry.risk_level]}
+          </span>
+        )}
+      </div>
+
+      {/* Beskrivelse */}
+      {entry.description && (
+        <div className="kb-detail-section">
+          <div className="kb-detail-label">Beskrivelse</div>
+          <div className="kb-detail-text">{entry.description}</div>
+        </div>
+      )}
+
+      {/* Sundhedsnote */}
+      {entry.health_notes && (
+        <div className="kb-detail-section" style={{ background:"var(--warm-lt)", border:"1px solid var(--warm-md)", borderRadius:12, padding:"12px 14px" }}>
+          <div className="kb-detail-label" style={{ color:"var(--warm)" }}>⚕️ Sundhedsnote</div>
+          <div className="kb-detail-text">{entry.health_notes}</div>
+        </div>
+      )}
+
+      {/* Allergener */}
+      {Array.isArray(entry.allergen_ids) && entry.allergen_ids.length > 0 && (
+        <div className="kb-detail-section">
+          <div className="kb-detail-label">Allergener</div>
+          <div className="kb-pill-row">
+            {entry.allergen_ids.map(a => (
+              <span key={a} className="kb-pill allergen">🌾 {allergenNames[a] || a}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Findes i */}
+      {Array.isArray(entry.found_in) && entry.found_in.length > 0 && (
+        <div className="kb-detail-section">
+          <div className="kb-detail-label">Findes i</div>
+          <div className="kb-pill-row">
+            {entry.found_in.map((f, i) => (
+              <span key={i} className="kb-pill found">{f}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Alternativer */}
+      {Array.isArray(entry.alternatives) && entry.alternatives.length > 0 && (
+        <div className="kb-detail-section">
+          <div className="kb-detail-label">Alternativer</div>
+          <div className="kb-pill-row">
+            {entry.alternatives.map((a, i) => (
+              <span key={i} className="kb-pill alt">✓ {a}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Aliasser */}
+      {Array.isArray(entry.aliases) && entry.aliases.length > 0 && (
+        <div className="kb-detail-section">
+          <div className="kb-detail-label">Kendes også som</div>
+          <div className="kb-pill-row">
+            {entry.aliases.map((a, i) => (
+              <span key={i} className="kb-pill found">{a}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Diæt-tags */}
+      {Array.isArray(entry.diet_tags) && entry.diet_tags.length > 0 && (
+        <div className="kb-detail-section">
+          <div className="kb-detail-label">Diæt</div>
+          <div className="kb-pill-row">
+            {entry.diet_tags.map((d, i) => (
+              <span key={i} className="kb-pill alt">{d}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{ height:40 }} />
+    </div>
+  );
+}
+
+// ── Hoved-komponent ───────────────────────────────────────────────────────────
+export default function KnowledgeScreen({ screen, setScreen, accessToken, openSlug, onSlugHandled }) {
+  const [searchQuery, setSearchQuery]       = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [entries, setEntries]               = useState([]);
+  const [selectedEntry, setSelectedEntry]   = useState(null);
+  const [loading, setLoading]               = useState(false);
+  const [counts, setCounts]                 = useState({});
+  const [searchTimeout, setSearchTimeout]   = useState(null);
+
+  // Hent kategoritælling ved mount
+  useEffect(() => {
+    async function loadCounts() {
+      try {
+        const data = await fetchKB(
+          `${SUPABASE_URL}/rest/v1/knowledge_base?select=category`,
+          accessToken
+        );
+        const c = {};
+        if (Array.isArray(data)) {
+          data.forEach(r => { c[r.category] = (c[r.category] || 0) + 1; });
+        }
+        setCounts(c);
+      } catch {}
+    }
+    loadCounts();
+  }, []);
+
+  // Håndter openSlug (fra scan-links)
+  useEffect(() => {
+    if (!openSlug) return;
+    async function fetchBySlug() {
+      try {
+        const data = await fetchKB(
+          `${SUPABASE_URL}/rest/v1/knowledge_base?slug=eq.${openSlug}&limit=1`,
+          accessToken
+        );
+        if (Array.isArray(data) && data[0]) {
+          setSelectedEntry(data[0]);
+        }
+      } catch {}
+      onSlugHandled?.();
+    }
+    fetchBySlug();
+  }, [openSlug]);
+
+  // Indlæs entries baseret på kategori
+  const loadCategory = useCallback(async (cat) => {
+    if (!cat) { setEntries([]); return; }
+    setLoading(true);
+    try {
+      const data = await fetchKB(
+        `${SUPABASE_URL}/rest/v1/knowledge_base?category=eq.${cat}&order=sort_order.asc,title.asc&limit=200`,
+        accessToken
+      );
+      setEntries(Array.isArray(data) ? data : []);
+    } catch { setEntries([]); }
+    setLoading(false);
+  }, [accessToken]);
+
+  // Søgning med debounce
+  const doSearch = useCallback(async (q) => {
+    if (!q || q.length < 2) { if (!selectedCategory) setEntries([]); else loadCategory(selectedCategory); return; }
+    setLoading(true);
+    try {
+      const encoded = encodeURIComponent(`%${q}%`);
+      const url = `${SUPABASE_URL}/rest/v1/knowledge_base?or=(title.ilike.${encoded},summary.ilike.${encoded})&order=category.asc,sort_order.asc&limit=50`;
+      const data = await fetchKB(url, accessToken);
+      setEntries(Array.isArray(data) ? data : []);
+    } catch { setEntries([]); }
+    setLoading(false);
+  }, [accessToken, selectedCategory, loadCategory]);
+
+  useEffect(() => {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    if (!searchQuery) {
+      if (selectedCategory) loadCategory(selectedCategory);
+      else setEntries([]);
+      return;
+    }
+    const t = setTimeout(() => doSearch(searchQuery), 300);
+    setSearchTimeout(t);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  const handleCategorySelect = (cat) => {
+    setSelectedCategory(cat);
+    setSearchQuery("");
+    if (cat) loadCategory(cat);
+    else setEntries([]);
+  };
+
+  // Detaljevisning
+  if (selectedEntry) {
+    return <DetailView entry={selectedEntry} onBack={() => setSelectedEntry(null)} />;
   }
 
-  // ── LIST VIEW ──
-  const showingAll = category === "all" && !search.trim();
+  const showList = searchQuery.length >= 2 || selectedCategory;
 
   return (
-    <div className="screen fade-in" style={{ paddingBottom: 120 }}>
-      {/* Header */}
-      <div style={{ paddingTop: 16, marginBottom: 14 }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)", letterSpacing: "-.4px" }}>Viden</div>
-        <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 3 }}>
-          Lær om allergener, E-numre, diæter og ingredienser
+    <div className="screen fade-in">
+      {/* Topbar-titel */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", paddingTop:4, marginBottom:16 }}>
+        <div>
+          <div style={{ fontSize:22, fontWeight:800, color:"var(--ink)", letterSpacing:"-.4px" }}>📚 Leksikon</div>
+          <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{Object.values(counts).reduce((a,b)=>a+b,0)} entries</div>
         </div>
       </div>
 
-      {/* Search */}
-      <div style={{ position: "relative", marginBottom: 14 }}>
-        <div style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-          <Icon name="search" size={16} color="var(--muted)" />
-        </div>
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Søg i leksikon..."
-          style={{ width: "100%", padding: "12px 14px 12px 42px", border: "1px solid var(--border)", borderRadius: 12, background: "var(--surface)", fontFamily: "var(--f)", fontSize: 14, color: "var(--ink)", outline: "none", boxSizing: "border-box" }}
-        />
-      </div>
+      {/* Søgebar */}
+      <SearchBar
+        value={searchQuery}
+        onChange={setSearchQuery}
+        onClear={() => { setSearchQuery(""); if (!selectedCategory) setEntries([]); else loadCategory(selectedCategory); }}
+      />
 
-      {/* ── Kategorier som grid (når ingen søgning/filter er aktiv) ── */}
-      {showingAll && !loading && (
+      {/* Kategori-grid — altid synlig */}
+      {!showList && (
         <>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 20 }}>
-            {CATEGORIES.filter(c => c.id !== "all").map(c => {
-              const count = counts[c.id] || 0;
-              return (
-                <div key={c.id}
-                  onClick={() => setCategory(c.id)}
-                  style={{
-                    background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14,
-                    padding: "16px 14px", cursor: "pointer", transition: "border-color .15s",
-                  }}>
-                  <div style={{ fontSize: 24, marginBottom: 8 }}>{c.emoji}</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 2 }}>{c.label}</div>
-                  <div style={{ fontSize: 11, color: "var(--muted)" }}>{count} {count === 1 ? "artikel" : "artikler"}</div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Fun fact of the day */}
-          {(() => {
-            const facts = entries.filter(e => e.category === "fun_fact");
-            if (!facts.length) return null;
-            const today = facts[new Date().getDate() % facts.length];
-            return (
-              <div style={{ background: "var(--surface)", borderLeft: "3px solid var(--green)", borderRadius: 14, padding: "14px 16px", marginBottom: 16 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--green)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 4 }}>💡 Vidste du</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", marginBottom: 3 }}>{today.title}</div>
-                <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.55 }}>{today.summary}</div>
-              </div>
-            );
-          })()}
+          <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:10 }}>Kategorier</div>
+          <CategoryGrid selected={selectedCategory} onSelect={handleCategorySelect} counts={counts} />
         </>
       )}
 
-      {/* ── Aktiv kategori header + nulstil ── */}
-      {!showingAll && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>
-            {search.trim()
-              ? `${filtered.length} resultat${filtered.length !== 1 ? "er" : ""}`
-              : `${CATEGORIES.find(c => c.id === category)?.emoji || ""} ${CATEGORIES.find(c => c.id === category)?.label || "Alle"}`}
-          </div>
-          <div onClick={() => { setCategory("all"); setSearch(""); }}
-            style={{ fontSize: 12, fontWeight: 600, color: "var(--green)", cursor: "pointer" }}>
-            ← Alle kategorier
-          </div>
+      {/* Søg/kategori-header */}
+      {showList && (
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+          {selectedCategory && (
+            <button
+              onClick={() => handleCategorySelect(null)}
+              style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", background: CAT_MAP[selectedCategory]?.bg || "var(--surface)", border:`1px solid ${CAT_MAP[selectedCategory]?.border || "var(--border)"}`, borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700, color: CAT_MAP[selectedCategory]?.color || "var(--ink)", fontFamily:"var(--f)" }}>
+              {CAT_MAP[selectedCategory]?.emoji} {CAT_MAP[selectedCategory]?.label}
+              <Icon name="x" size={12} color={CAT_MAP[selectedCategory]?.color || "var(--ink)"} />
+            </button>
+          )}
+          {!selectedCategory && searchQuery && (
+            <div style={{ fontSize:12, color:"var(--muted)" }}>{entries.length} resultater for "{searchQuery}"</div>
+          )}
+          {selectedCategory && !searchQuery && (
+            <div style={{ fontSize:12, color:"var(--muted)" }}>{entries.length} entries</div>
+          )}
         </div>
       )}
 
-      {/* Loading */}
-      {loading && (
-        <div style={{ textAlign: "center", padding: "40px 0" }}>
-          <div className="spinner" style={{ margin: "0 auto 10px" }} />
-          <div style={{ fontSize: 13, color: "var(--muted)" }}>Indlæser leksikon...</div>
+      {/* Entry-liste */}
+      {showList && (
+        loading ? (
+          <div style={{ textAlign:"center", padding:"40px 0" }}>
+            <div style={{ width:32, height:32, border:"3px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 12px" }} />
+            <div style={{ fontSize:13, color:"var(--muted)" }}>Henter...</div>
+          </div>
+        ) : entries.length === 0 ? (
+          <div style={{ textAlign:"center", padding:"60px 20px" }}>
+            <div style={{ fontSize:48, marginBottom:12 }}>🔍</div>
+            <div style={{ fontSize:16, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>Ingen resultater</div>
+            <div style={{ fontSize:13, color:"var(--muted)" }}>
+              {searchQuery ? `Prøv et andet søgeord` : "Ingen entries i denne kategori endnu"}
+            </div>
+          </div>
+        ) : (
+          <div>
+            {entries.map(entry => (
+              <EntryCard key={entry.id} entry={entry} onClick={setSelectedEntry} />
+            ))}
+          </div>
+        )
+      )}
+
+      {/* Forsiden — ingen kategori valgt, ingen søgning */}
+      {!showList && (
+        <div style={{ marginTop:8 }}>
+          <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:10 }}>💡 Vidste du at...</div>
+          <RandomFacts accessToken={accessToken} onSelect={setSelectedEntry} />
         </div>
       )}
 
-      {/* Empty state */}
-      {!loading && !showingAll && filtered.length === 0 && (
-        <div style={{ textAlign: "center", padding: "40px 20px" }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>Ingen resultater</div>
-          <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
-            Prøv et andet søgeord eller vælg en anden kategori
+      <div style={{ height:20 }} />
+    </div>
+  );
+}
+
+// ── Random fun facts på forsiden ─────────────────────────────────────────────
+function RandomFacts({ accessToken, onSelect }) {
+  const [facts, setFacts] = useState([]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await fetchKB(
+          `${SUPABASE_URL}/rest/v1/knowledge_base?category=eq.fun_fact&limit=3`,
+          accessToken
+        );
+        setFacts(Array.isArray(data) ? data : []);
+      } catch {}
+    }
+    load();
+  }, []);
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+      {facts.map(f => (
+        <div key={f.id} onClick={() => onSelect(f)}
+          style={{ background:"var(--warm-lt)", border:"1px solid var(--warm-md)", borderRadius:12, padding:"12px 14px", cursor:"pointer", display:"flex", gap:10, alignItems:"flex-start" }}>
+          <div style={{ fontSize:22, flexShrink:0 }}>{f.emoji || "💡"}</div>
+          <div>
+            <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:3 }}>{f.title}</div>
+            <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.45 }}>{f.summary}</div>
           </div>
         </div>
-      )}
-
-      {/* Entry list — kun når en kategori er valgt eller der søges */}
-      {!loading && !showingAll && filtered.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {filtered.map(entry => {
-            const risk = RISK_COLORS[entry.risk_level] || null;
-            return (
-              <div key={entry.id}
-                onClick={() => setSelected(entry)}
-                style={{
-                  background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12,
-                  padding: "12px 14px", cursor: "pointer",
-                  display: "flex", gap: 10, alignItems: "center",
-                }}>
-                <div style={{ fontSize: 20, flexShrink: 0 }}>{entry.emoji || "📄"}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{entry.title}</div>
-                  <div style={{ fontSize: 11, color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {entry.summary}
-                  </div>
-                </div>
-                {risk && (
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: risk.color, flexShrink: 0 }} />
-                )}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink: 0 }}>
-                  <path strokeLinecap="round" d="M9 5l7 7-7 7"/>
-                </svg>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      ))}
     </div>
   );
 }
