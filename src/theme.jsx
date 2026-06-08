@@ -74,7 +74,7 @@ export const appCss = `
   /* Tekst — neutral, ikke grønstemt */
   --ink:#F0F0EE;
   --ink2:rgba(240,240,238,.72);
-  --ink3:rgba(240,240,238,.50);
+  --ink3:rgba(240,240,238,.62);
   /* Baggrunde — neutral mørk med svag grøn undertone */
   --paper:#1E3050;
   --paper2:#253A5C;
@@ -100,8 +100,8 @@ export const appCss = `
   /* Neutral grå — labels, metadata */
   --neutral:#94A3B8;--neutral-lt:rgba(148,163,184,.12);
   /* Muted — neutral grå tekst */
-  --muted:rgba(240,240,238,.55);
-  --muted2:rgba(240,240,238,.38);
+  --muted:rgba(240,240,238,.70);
+  --muted2:rgba(240,240,238,.52);
   --r:12px;
   --f:'DM Sans',system-ui,sans-serif;
   --mono:'DM Mono',monospace;
