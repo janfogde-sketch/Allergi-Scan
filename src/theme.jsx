@@ -76,8 +76,8 @@ export const appCss = `
   --ink2:rgba(240,240,238,.72);
   --ink3:rgba(240,240,238,.50);
   /* Baggrunde — neutral mørk med svag grøn undertone */
-  --paper:#161E2A;
-  --paper2:#1D2638;
+  --paper:#1E3050;
+  --paper2:#253A5C;
   /* Grøn — KUN sikker/success/primær CTA */
   --green:#4ADE80;
   --green-logo:#3DCC6E;
@@ -89,9 +89,9 @@ export const appCss = `
   --border:rgba(255,255,255,.09);
   --border2:rgba(255,255,255,.17);
   /* Surfaces — neutrale glaslag */
-  --surface:rgba(255,255,255,.058);
-  --surface2:rgba(255,255,255,.095);
-  --surface3:rgba(255,255,255,.035);
+  --surface:rgba(255,255,255,.10);
+  --surface2:rgba(255,255,255,.16);
+  --surface3:rgba(255,255,255,.07);
   /* Semantiske farver */
   --red:#FF5252;--red-lt:rgba(255,82,82,.1);--red-md:rgba(255,82,82,.18);
   --amber:#FFBA3B;--amber-lt:rgba(255,186,59,.1);--amber-md:rgba(255,186,59,.18);
@@ -117,15 +117,15 @@ export const appCss = `
   --sh3:0 8px 32px rgba(0,0,0,.4);
 }
 body{
-  background:linear-gradient(160deg,#1a2235 0%,#111825 100%);
+  background:linear-gradient(160deg,#243660 0%,#1a2848 100%);
   color:var(--ink);font-family:var(--f);-webkit-font-smoothing:antialiased;
   min-height:100vh;
 }
 .app{
   max-width:390px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
   width:100%;position:relative;overflow-x:hidden;
-  background:radial-gradient(ellipse 100% 45% at 50% 0%,rgba(74,222,128,.06) 0%,transparent 60%),
-             linear-gradient(175deg,#1e2a38 0%,#192030 40%,#151C2A 70%,#111825 100%);
+  background:radial-gradient(ellipse 100% 45% at 50% 0%,rgba(74,222,128,.08) 0%,transparent 55%),
+             linear-gradient(175deg,#283f62 0%,#1e3050 40%,#1a2844 70%,#17243C 100%);
 }
 
 /* ── TOPBAR ── */
