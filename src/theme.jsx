@@ -76,8 +76,8 @@ export const appCss = `
   --ink2:rgba(240,240,238,.72);
   --ink3:rgba(240,240,238,.62);
   /* Baggrunde — neutral mørk med svag grøn undertone */
-  --paper:#1E3050;
-  --paper2:#253A5C;
+  --paper:#1A2E24;
+  --paper2:#213828;
   /* Grøn — KUN sikker/success/primær CTA */
   --green:#4ADE80;
   --green-logo:#3DCC6E;
@@ -117,15 +117,15 @@ export const appCss = `
   --sh3:0 8px 32px rgba(0,0,0,.4);
 }
 body{
-  background:linear-gradient(160deg,#243660 0%,#1a2848 100%);
+  background:linear-gradient(160deg,#1e3328 0%,#162820 100%);
   color:var(--ink);font-family:var(--f);-webkit-font-smoothing:antialiased;
   min-height:100vh;
 }
 .app{
   max-width:390px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
   width:100%;position:relative;overflow-x:hidden;
-  background:radial-gradient(ellipse 100% 45% at 50% 0%,rgba(74,222,128,.08) 0%,transparent 55%),
-             linear-gradient(175deg,#2a4268 0%,#1e3050 40%,#1d2f52 70%,#1a2c4e 100%);
+  background:radial-gradient(ellipse 100% 45% at 50% 0%,rgba(74,222,128,.10) 0%,transparent 55%),
+             linear-gradient(175deg,#243D2C 0%,#1E3226 40%,#1A2E22 70%,#182820 100%);
 }
 
 /* ── TOPBAR ── */
@@ -146,7 +146,7 @@ body{
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
   width:100%;max-width:390px;
-  background:linear-gradient(to bottom,transparent 0%,#111815 38%,#111815 100%);
+  background:linear-gradient(to bottom,transparent 0%,#182820 38%,#182820 100%);
   border-top:none;
   display:flex;padding:10px 4px 24px;z-index:100;
 }
