@@ -27,6 +27,8 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const [openTicket, setOpenTicket] = useState(null);
   const [ticketsLoading, setTicketsLoading] = useState(false);
   const [ocrImagePreview, setOcrImagePreview] = useState(null);
+  const [missingEans, setMissingEans] = useState([]);
+  const [missingEansLoading, setMissingEansLoading] = useState(false);
 
   // Functions
   const loadSubmissions = async (filter) => {
@@ -74,7 +76,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
         fetch(`${SUPABASE_URL}/rest/v1/users?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
         fetch(`${SUPABASE_URL}/rest/v1/products?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
         fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
-        fetch(`${SUPABASE_URL}/rest/v1/product_submissions?status=eq.pending&select=id`, { headers: hNoCount }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/submissions?status=eq.pending&select=id`, { headers: hNoCount }).then(r => r.json()),
         fetch(`${SUPABASE_URL}/rest/v1/family_members?select=id`, { headers: hNoCount }).then(r => r.json()),
         fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?status=eq.open&select=id`, { headers: hNoCount }).then(r => r.json()),
         fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id&scanned_at=gte.${todayISO}`, { headers: hNoCount }).then(r => r.json()),
@@ -208,6 +210,30 @@ export function useAdmin(accessToken, userId, clearAuth) {
     setCleaningOcr(false);
   };
 
+  const loadMissingEans = async () => {
+    if (!accessToken) return;
+    setMissingEansLoading(true);
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/missing_ean_log?order=count.desc&limit=50`,
+        { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" } }
+      );
+      const data = await res.json();
+      setMissingEans(Array.isArray(data) ? data : []);
+    } catch (e) { console.error("loadMissingEans:", e); }
+    setMissingEansLoading(false);
+  };
+
+  const deleteMissingEan = async (ean) => {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/missing_ean_log?ean=eq.${ean}`, {
+        method: "DELETE",
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}` },
+      });
+      setMissingEans(m => m.filter(x => x.ean !== ean));
+    } catch (e) { console.error("deleteMissingEan:", e); }
+  };
+
   return {
     // State
     submissions, setSubmissions,
@@ -244,5 +270,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
     rejectSubmission,
     updateTicketStatus,
     cleanOcrWithAI,
+    missingEans, missingEansLoading,
+    loadMissingEans, deleteMissingEan,
   };
 }

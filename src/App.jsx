@@ -73,6 +73,10 @@ export default function EatSafe() {
   const noScanTimerRef = React.useRef(null);
   const [profilePopup, setProfilePopup] = useState(null); // id af profil der vises popup for
   const galleryInputRef = useRef(null);
+  const photoFallbackRef = useRef(null);
+  const [showPhotoHint, setShowPhotoHint] = useState(false);
+  const [knowledgeSlug, setKnowledgeSlug] = useState(null);
+  const [photoScanLoading, setPhotoScanLoading] = useState(false);
   const torchTrackRef = useRef(null);
   const qrRef = useRef(null);
   const html5QrRef = useRef(null);
@@ -132,7 +136,7 @@ export default function EatSafe() {
     // ── KAMERA + SCANNING ──────────────────────────────────────────────────────
   const startCamera = async () => {
     if (cameraActive) return;
-    setScanError(""); setTorchOn(false); setScanZoom(1.0); scanZoomRef.current = 1.0;
+    setScanError(""); setTorchOn(false); setScanZoom(1.0); scanZoomRef.current = 1.0; setShowPhotoHint(false);
     if (noScanTimerRef.current) { clearTimeout(noScanTimerRef.current); noScanTimerRef.current = null; }
     torchTrackRef.current = null; lastScannedRef.current = null;
     if (!navigator.mediaDevices?.getUserMedia) { setScanError("Kamera ikke understøttet. Prøv Chrome eller Safari."); return; }
@@ -251,6 +255,8 @@ export default function EatSafe() {
               }
             } catch {}
           };
+          // Vis photo-hint efter 5s
+          setTimeout(() => setShowPhotoHint(true), 5000);
           noScanTimerRef.current = setTimeout(async () => {
             if (scanZoomRef.current === 1.0) await applyZoom(1.5);
             noScanTimerRef.current = setTimeout(async () => {
@@ -289,6 +295,60 @@ export default function EatSafe() {
       const result = await scanner.scanFile(file, true);
       scanner.clear(); lookupProduct(result);
     } catch { setLoading(false); setScanError("Ingen stregkode fundet i billedet. Prøv et klarere billede."); }
+  };
+
+  // ── Foto-fallback: tag billede → Claude Vision aflæser EAN ──────────────────
+  const scanPhotoForEan = async (file) => {
+    if (!file) return;
+    setPhotoScanLoading(true); setScanError(""); setShowPhotoHint(false);
+    stopCamera();
+    try {
+      // Trin 1: Prøv html5-qrcode direkte
+      try {
+        const { Html5Qrcode } = await import("html5-qrcode");
+        const scanner = new Html5Qrcode("qr-reader-gallery");
+        const result = await scanner.scanFile(file, true);
+        scanner.clear();
+        setPhotoScanLoading(false);
+        lookupProduct(result);
+        return;
+      } catch { /* html5-qrcode fejlede — prøv Claude Vision */ }
+
+      // Trin 2: Send billede til Claude Vision via OCR Edge Function
+      const base64 = await new Promise<string>((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res((r.result as string).split(",")[1]);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+
+      const ocrRes = await fetch(`${SUPABASE_URL}/functions/v1/ocr`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({ image_base64: base64, mode: "ean_from_image" }),
+      });
+
+      const ocrData = await ocrRes.json();
+      const rawText = ocrData.text || ocrData.ean || "";
+
+      // Udtræk EAN: find 8-14 cifrede tal i svaret
+      const eanMatch = rawText.match(/(\d{8,14})/);
+      if (eanMatch) {
+        setPhotoScanLoading(false);
+        lookupProduct(eanMatch[1]);
+        return;
+      }
+
+      // Intet fundet
+      setScanError("Kunne ikke aflæse stregkode fra billede. Prøv at holde kameraet tæt på og i god belysning.");
+    } catch (e) {
+      setScanError("Foto-scan fejlede. Prøv igen.");
+    }
+    setPhotoScanLoading(false);
   };
 
   const toggleTorch = async () => {
@@ -1175,6 +1235,11 @@ export default function EatSafe() {
             toggleTorch={toggleTorch}
             torchOn={torchOn}
             scanZoom={scanZoom}
+            showPhotoHint={showPhotoHint}
+            photoScanLoading={photoScanLoading}
+            photoFallbackRef={photoFallbackRef}
+            scanPhotoForEan={scanPhotoForEan}
+            setKnowledgeSlug={setKnowledgeSlug}
             buildLabel={formatBuildTime()}
             lookupProduct={lookupProduct}
             selectedENumbers={selectedENumbers}
@@ -1205,6 +1270,8 @@ export default function EatSafe() {
           <KnowledgeScreen
             screen={screen} setScreen={setScreen}
             accessToken={accessToken}
+            openSlug={knowledgeSlug}
+            onSlugHandled={() => setKnowledgeSlug(null)}
           />
         )}
 

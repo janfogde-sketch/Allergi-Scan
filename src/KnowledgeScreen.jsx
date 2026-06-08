@@ -21,12 +21,19 @@ const RISK_COLORS = {
   none:   { bg: "var(--green-lt)", color: "var(--green)", label: "Ingen risiko" },
 };
 
-export default function KnowledgeScreen({ screen, setScreen, accessToken }) {
+export default function KnowledgeScreen({ screen, setScreen, accessToken, openSlug, onSlugHandled }) {
   const [entries, setEntries]       = useState([]);
   const [loading, setLoading]       = useState(true);
   const [search, setSearch]         = useState("");
   const [category, setCategory]     = useState("all");
   const [selected, setSelected]     = useState(null); // detail view
+
+  // ── Åbn entry via deep-link (fra scan-resultat) ──
+  useEffect(() => {
+    if (!openSlug || entries.length === 0) return;
+    const entry = entries.find(e => e.slug === openSlug || e.allergen_ids?.includes(openSlug));
+    if (entry) { setSelected(entry); onSlugHandled?.(); }
+  }, [openSlug, entries]);
 
   // ── Load all entries on mount ──
   useEffect(() => {

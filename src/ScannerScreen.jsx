@@ -96,6 +96,11 @@ export default function ScannerScreen({
   toggleTorch,
   torchOn,
   scanZoom,
+  showPhotoHint,
+  photoScanLoading,
+  photoFallbackRef,
+  scanPhotoForEan,
+  setKnowledgeSlug,
   buildLabel,
   lookupProduct,
   onBetaClick,
@@ -438,6 +443,9 @@ export default function ScannerScreen({
               <div id="qr-reader-gallery" style={S.none} />
               <input ref={galleryInputRef} type="file" accept="image/*" style={S.none}
                 onChange={e => { if (e.target.files[0]) scanFromGallery(e.target.files[0]); e.target.value=""; }} />
+              {/* Foto-fallback: åbner kamera direkte */}
+              <input ref={photoFallbackRef} type="file" accept="image/*" capture="environment" style={S.none}
+                onChange={e => { if (e.target.files[0]) scanPhotoForEan(e.target.files[0]); e.target.value=""; }} />
 
               {/* Stop-knap når kamera er aktivt */}
               {cameraActive && (
@@ -895,8 +903,18 @@ export default function ScannerScreen({
                 <div className="card">
                   <div className="card-lbl">Andre allergener i produktet</div>
                   <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8 }}>Ikke registreret på dine profiler</div>
-                  {otherPresent.length > 0 && <div className="tags" style={{ marginBottom:6 }}>{otherPresent.map(([k]) => { const a=ALLERGENS.find(x=>x.id===k); return a ? <div key={k} className="tag" style={{ background:"var(--paper2)", color:"var(--ink2)", borderColor:"var(--border2)" }}>{a.emoji} {a.label}</div> : null; })}</div>}
-                  {otherTraces.length > 0 && <div className="tags">{otherTraces.map(([k]) => { const a=ALLERGENS.find(x=>x.id===k); return a ? <div key={k} className="tag" style={{ background:"var(--paper2)", color:"var(--muted)", borderColor:"var(--border2)" }}>spor: {a.emoji} {a.label}</div> : null; })}</div>}
+                  {otherPresent.length > 0 && <div className="tags" style={{ marginBottom:6 }}>{otherPresent.map(([k]) => { const a=ALLERGENS.find(x=>x.id===k); return a ? (
+                    <div key={k} className="tag" onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
+                      style={{ background:"var(--surface2)", color:"var(--ink)", borderColor:"var(--border2)", cursor:"pointer" }}>
+                      {a.emoji} {a.label} <span style={{ fontSize:9, opacity:.6 }}>›</span>
+                    </div>
+                  ) : null; })}</div>}
+                  {otherTraces.length > 0 && <div className="tags">{otherTraces.map(([k]) => { const a=ALLERGENS.find(x=>x.id===k); return a ? (
+                    <div key={k} className="tag" onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
+                      style={{ background:"var(--surface)", color:"var(--muted)", borderColor:"var(--border2)", cursor:"pointer" }}>
+                      spor: {a.emoji} {a.label} <span style={{ fontSize:9, opacity:.6 }}>›</span>
+                    </div>
+                  ) : null; })}</div>}
                 </div>
               );
             })()}

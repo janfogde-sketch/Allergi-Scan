@@ -115,6 +115,7 @@ export default function AdminScreen({
   // Functions
   loadAdminStats, loadAdminUsers, loadSubmissions, loadTickets,
   updateUserRole, deleteUser,
+  missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
   updateSubmissionAndApprove, rejectSubmission,
   updateTicketStatus, cleanOcrWithAI,
 }) {
@@ -345,7 +346,7 @@ ${openTicket.description}
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2"><path strokeLinecap="round" d="M15 19l-7-7 7-7"/></svg>
               </button>
               <div style={{ flex:1, fontSize:18, fontWeight:900, color:"var(--ink)" }}>🛡️ Admin</div>
-              <button onClick={() => { loadAdminStats(); if (adminSection==="submissions") loadSubmissions(submissionFilter); if (adminSection==="tickets") loadTickets(); }}
+              <button onClick={() => { loadAdminStats(); if (adminSection==="submissions") loadSubmissions(submissionFilter); if (adminSection==="tickets") loadTickets(); if (adminSection==="missing") loadMissingEans(); }}
                 style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:10, padding:"6px 12px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
                 🔄
               </button>
@@ -359,10 +360,11 @@ ${openTicket.description}
                 { id:"submissions", emoji:"📦", label:"Indsendelser" },
                 { id:"tickets",     emoji:"🐛", label:"Tickets" },
                 { id:"debug",       emoji:"🔍", label:"Debug" },
+                { id:"missing",    emoji:"❓", label:"Manglende" },
               ].map(s => (
                 <button key={s.id}
                   onClick={() => {
-                    setAdminSection(s.id);
+                    setAdminSection(s.id); if (s.id==="missing") loadMissingEans();
                     if (s.id === "submissions") loadSubmissions(submissionFilter);
                     if (s.id === "tickets") loadTickets();
                     if (s.id === "dashboard") loadAdminStats();
@@ -973,6 +975,51 @@ ${openTicket.description}
           </div>
         )}
 
+
+                        {adminSection === "missing" && (
+              <div>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+                  <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>❓ Efterspurgte manglende produkter</div>
+                  <button onClick={loadMissingEans} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer" }}>
+                    🔄 Opdater
+                  </button>
+                </div>
+                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:16, lineHeight:1.5 }}>
+                  Produkter som brugere har forsøgt at scanne men ikke fundet i databasen. Sorteret efter antal opslag.
+                </div>
+                {missingEansLoading ? (
+                  <div style={{ textAlign:"center", padding:"40px 0", color:"var(--muted)" }}>Indlæser...</div>
+                ) : missingEans.length === 0 ? (
+                  <div style={{ textAlign:"center", padding:"40px 0", color:"var(--muted)" }}>Ingen manglende EAN'er endnu</div>
+                ) : (
+                  <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                    {missingEans.map((row, i) => (
+                      <div key={row.ean} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", display:"flex", alignItems:"center", gap:12 }}>
+                        <div style={{ fontSize:13, fontWeight:800, color:"var(--muted)", width:24, textAlign:"right", flexShrink:0 }}>#{i+1}</div>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)", fontFamily:"monospace" }}>{row.ean}</div>
+                          <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>
+                            {row.count} opslag · sidst set {new Date(row.last_seen).toLocaleDateString("da-DK")}
+                          </div>
+                        </div>
+                        <div style={{ display:"flex", gap:6 }}>
+                          <button
+                            onClick={() => navigator.clipboard?.writeText(row.ean)}
+                            style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer" }}>
+                            📋
+                          </button>
+                          <button
+                            onClick={() => deleteMissingEan(row.ean)}
+                            style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--red)", fontFamily:"var(--f)", cursor:"pointer" }}>
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {adminSection === "debug" && (
               <div style={{ paddingBottom:120 }}>

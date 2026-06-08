@@ -351,6 +351,44 @@ body{background:var(--paper2);color:var(--ink);font-family:var(--f);-webkit-font
 .youtube-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#FF0000;border:none;border-radius:10px;cursor:pointer;font-family:var(--f);font-size:13px;font-weight:700;color:#fff;width:100%;justify-content:center;transition:background .15s;margin-bottom:10px;}
 .youtube-btn:hover{background:#CC0000;}
 
+
+/* ── LEKSIKON / VIDEN ── */
+.kb-search-wrap{position:relative;margin-bottom:14px;}
+.kb-search-input{width:100%;padding:12px 14px 12px 42px;border:1px solid var(--border2);border-radius:12px;background:var(--surface);font-family:var(--f);font-size:14px;color:var(--ink);outline:none;box-sizing:border-box;transition:border-color .15s;}
+.kb-search-input:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-lt);}
+.kb-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;}
+.kb-cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;}
+.kb-cat-btn{display:flex;align-items:center;gap:8px;padding:12px 13px;background:var(--surface);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .15s;font-family:var(--f);}
+.kb-cat-btn.active{background:var(--green-lt);border-color:rgba(74,222,128,.25);}
+.kb-cat-emoji{font-size:18px;flex-shrink:0;}
+.kb-cat-label{font-size:12px;font-weight:700;color:var(--ink);letter-spacing:-.1px;}
+.kb-cat-count{font-size:10px;color:var(--muted);margin-top:1px;}
+.kb-cat-btn.active .kb-cat-label{color:var(--green);}
+.kb-entry-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:border-color .15s;}
+.kb-entry-card:hover{border-color:var(--border2);}
+.kb-entry-emoji{font-size:22px;flex-shrink:0;width:36px;text-align:center;}
+.kb-entry-title{font-size:14px;font-weight:700;color:var(--ink);letter-spacing:-.2px;margin-bottom:3px;}
+.kb-entry-summary{font-size:12px;color:var(--muted2);line-height:1.45;}
+.kb-risk-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.kb-risk-dot.high{background:var(--red);}
+.kb-risk-dot.medium{background:var(--amber);}
+.kb-risk-dot.low,.kb-risk-dot.none{background:var(--green);}
+.kb-detail-header{padding:20px 0 14px;}
+.kb-detail-title{font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-.4px;margin-bottom:6px;}
+.kb-detail-summary{font-size:14px;color:var(--ink2);line-height:1.55;margin-bottom:16px;}
+.kb-detail-section{margin-bottom:16px;}
+.kb-detail-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--neutral);margin-bottom:7px;}
+.kb-detail-text{font-size:13px;color:var(--ink2);line-height:1.6;}
+.kb-pill-row{display:flex;flex-wrap:wrap;gap:5px;}
+.kb-pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:100px;border:1px solid;}
+.kb-pill.allergen{background:var(--red-lt);color:var(--red);border-color:var(--red-md);}
+.kb-pill.found{background:var(--surface);color:var(--muted);border-color:var(--border);}
+.kb-pill.alt{background:var(--green-lt);color:var(--green-text);border-color:rgba(74,222,128,.2);}
+.kb-risk-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700;}
+.kb-risk-badge.high{background:var(--red-lt);color:var(--red);border:1px solid var(--red-md);}
+.kb-risk-badge.medium{background:var(--amber-lt);color:var(--amber);border:1px solid var(--amber-md);}
+.kb-risk-badge.low,.kb-risk-badge.none{background:var(--green-lt);color:var(--green);border:1px solid rgba(74,222,128,.2);}
+
 /* ── ACCESSIBILITY ── */
 /* Minimum touch target 44x44px */
 .btn{min-height:44px;}
