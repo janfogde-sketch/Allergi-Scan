@@ -33,6 +33,12 @@ export default function RecipesScreen({
   addToList,
 }) {
   const [listAdded, setListAdded] = React.useState({});
+
+  // Auto-load alle opskrifter ved mount
+  React.useEffect(() => {
+    if (screen === SCREENS.RECIPES) loadRecipes();
+  }, [screen]);
+
   return (
     <>
         {/* ── OPSKRIFT DETALJESIDE ── */}
@@ -322,10 +328,14 @@ export default function RecipesScreen({
         {/* ── OPSKRIFT LISTE ── */}
         {screen === SCREENS.RECIPES && !selectedRecipe && !showSubmitRecipe && (() => {
           const categories = [
-            { id:"alle", label:"🍽️ Alle" }, { id:"favoritter", label:"❤️ Favoritter" },
-            { id:"morgenmad", label:"☕ Morgenmad" }, { id:"frokost", label:"🥗 Frokost" },
-            { id:"aftensmad", label:"🍝 Aftensmad" }, { id:"dessert", label:"🍰 Dessert" },
+            { id:"alle", label:`🍽️ Alle${recipes.length > 0 ? ` (${recipes.length})` : ""}` },
+            { id:"favoritter", label:"❤️ Favoritter" },
+            { id:"morgenmad", label:"☕ Morgenmad" },
+            { id:"frokost", label:"🥗 Frokost" },
+            { id:"aftensmad", label:"🍝 Aftensmad" },
+            { id:"dessert", label:"🍰 Dessert" },
             { id:"tilbehør", label:"🥦 Tilbehør" },
+            { id:"snack", label:"🍿 Snack" },
           ];
           const getCatEmoji = c => ({ morgenmad:"☕",frokost:"🥗",aftensmad:"🍝",dessert:"🍰",tilbehør:"🥦",snack:"🍿" })[c] || "🍽️";
           const profiles = [
@@ -356,19 +366,17 @@ export default function RecipesScreen({
                 <input className="recipe-search-input" placeholder="Søg opskrifter…" value={recipeSearch} onChange={e => setRecipeSearch(e.target.value)} />
               </div>
 
-              {/* Kategori chips — 2-kolonne grid så alle ses */}
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:14 }}>
+              {/* Kategori chips — horizontal scroll */}
+              <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:4, marginBottom:12, scrollbarWidth:"none" }}>
                 {categories.map(c => (
-                  <div key={c.id} className={`recipe-filter-chip${recipeFilter === c.id ? " active" : ""}`}
-                    style={{ textAlign:"center" }}
-                    onClick={() => {
-                      if (c.id === recipeFilter) return;
-                      setRecipeFilter(c.id);
-                      setRecipeSearch("");
-                      if (c.id !== "favoritter") {
-                        setRecipes([]); // ryd gamle resultater
-                        loadRecipes(c.id);
-                      }
+                  <div key={c.id}
+                    onClick={() => { setRecipeFilter(c.id === recipeFilter ? "alle" : c.id); setRecipeSearch(""); }}
+                    style={{
+                      flexShrink:0, padding:"7px 14px", borderRadius:100, cursor:"pointer", fontSize:13, fontWeight:700,
+                      fontFamily:"var(--f)", whiteSpace:"nowrap", transition:"all .15s",
+                      background: recipeFilter === c.id ? "var(--green-lt)" : "var(--surface)",
+                      color: recipeFilter === c.id ? "var(--green)" : "var(--muted2)",
+                      border: `1px solid ${recipeFilter === c.id ? "rgba(74,222,128,.25)" : "var(--border)"}`,
                     }}>
                     {c.label}
                   </div>
@@ -399,17 +407,17 @@ export default function RecipesScreen({
                 </div>
               ))}
 
-              {/* Startside — ingen filter, ingen opskrifter endnu */}
-              {!recipesLoading && recipes.length === 0 && recipeFilter === "alle" && (
+              {/* Ingen opskrifter loaded + ikke loading — retry */}
+              {!recipesLoading && recipes.length === 0 && (
                 <div>
                   <div style={{ background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:16, padding:"22px 20px", marginBottom:16, display:"flex", alignItems:"center", gap:16 }}>
                     <div style={{ fontSize:44, flexShrink:0 }}>🍳</div>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)", letterSpacing:"-.3px", marginBottom:4 }}>Over 600 opskrifter</div>
-                      <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12 }}>Filtreret til dig og din familie</div>
-                      <button onClick={() => loadRecipes("alle")}
+                      <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)", letterSpacing:"-.3px", marginBottom:4 }}>Kunne ikke indlæse</div>
+                      <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12 }}>Tjek din forbindelse og prøv igen</div>
+                      <button onClick={() => loadRecipes()}
                         style={{ background:"var(--green)", color:"#071510", border:"none", borderRadius:10, padding:"9px 18px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
-                        Vis opskrifter →
+                        Prøv igen →
                       </button>
                     </div>
                   </div>

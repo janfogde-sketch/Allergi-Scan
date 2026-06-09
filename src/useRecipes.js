@@ -22,31 +22,25 @@ export function useRecipes(accessToken, userId) {
   const [recipeSearch, setRecipeSearch] = useState("");
   const [recipeSafeOnly, setRecipeSafeOnly] = useState(false);
 
-  const loadRecipes = async (filter = "alle") => {
+  const loadRecipes = async () => {
+    if (recipes.length > 0) return; // allerede indlæst
     setRecipesLoading(true);
     try {
-      let url = `${SUPABASE_URL}/rest/v1/recipes?select=id,title,category,image_url,tags,allergen_flags,servings,prep_time_minutes,cook_time_minutes,description&limit=50`;
-      url += `&status=eq.approved`;
-      if (filter !== "alle") {
-        url += `&category=eq.${filter}`;
-      }
+      // Indlæs ALLE godkendte opskrifter én gang — filtrer client-side (627 poster er hurtigt)
       const headers = {
         "apikey": SUPABASE_ANON_KEY,
         "Accept": "application/json",
         ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
       };
+      const url = `${SUPABASE_URL}/rest/v1/recipes?select=id,title,category,image_url,tags,allergen_flags,servings,prep_time_minutes,cook_time_minutes,description&order=title.asc&limit=1000`;
       const res = await fetch(url, { headers });
-      const text = await res.text();
       if (!res.ok) {
-        console.error("loadRecipes fejl:", res.status, text.slice(0, 200));
-        const url2 = `${SUPABASE_URL}/rest/v1/recipes?select=id,title,category,image_url,tags,allergen_flags,servings,description&limit=50${filter !== "alle" ? `&category=eq.${filter}` : ""}`;
-        const res2 = await fetch(url2, { headers });
-        const data2 = await res2.json();
-        setRecipes(Array.isArray(data2) ? data2 : []);
-        return;
+        console.error("loadRecipes fejl:", res.status);
+        setRecipes([]);
+      } else {
+        const data = await res.json();
+        setRecipes(Array.isArray(data) ? data : []);
       }
-      const data = JSON.parse(text);
-      setRecipes(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error("loadRecipes fejl:", e.message);
       setRecipes([]);
