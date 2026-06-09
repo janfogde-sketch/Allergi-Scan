@@ -958,7 +958,7 @@ export default function EatSafe() {
             StepBar={StepBar}
             buildLabel={formatBuildTime()}
           />
-        }
+        )}
         {/* TOPBAR */}
         {!isOnboard && (
           <header className="topbar">
@@ -1451,7 +1451,7 @@ export default function EatSafe() {
               [SCREENS.RECIPES, "recipes",  "Opskrifter"],
               [SCREENS.LIST,    "cart",     "Indkøbsliste"],
               [SCREENS.HOME,    "home",     "Hjem"],
-              [SCREENS.KNOWLEDGE, "book",   "Leksikon"],
+              [SCREENS.KNOWLEDGE, "book",   "Viden"],
               [SCREENS.PROFILE, "profile",  "Profil"],
             ].map(([s,icon,lbl]) => (
               <div key={s} className={`nav-item${(
