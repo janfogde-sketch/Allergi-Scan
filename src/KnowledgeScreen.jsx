@@ -231,9 +231,16 @@ export default function KnowledgeScreen({ screen, setScreen, accessToken, openSl
 
       {/* Entry-liste */}
       {showList && (loading ? (
-        <div style={{ textAlign:"center", padding:"40px 0" }}>
-          <div style={{ width:32, height:32, border:"3px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 12px" }} />
-          <div style={{ fontSize:13, color:"var(--muted)" }}>Henter...</div>
+        <div className="fade-in">
+          {[1,2,3,4,5].map(i => (
+            <div key={i} className="skeleton-card" style={{ display:"flex", gap:10, marginBottom:8 }}>
+              <div className="skeleton-block" style={{ width:36, height:36, borderRadius:8, flexShrink:0 }} />
+              <div style={{ flex:1 }}>
+                <div className="skeleton-block skeleton-title" />
+                <div className="skeleton-block skeleton-sub" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : entries.length === 0 ? (
         <div style={{ textAlign:"center", padding:"60px 20px" }}>
