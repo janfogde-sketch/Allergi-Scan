@@ -33,6 +33,8 @@ export default function RecipesScreen({
   addToList,
 }) {
   const [listAdded, setListAdded] = React.useState({});
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const [localSafeProfiles, setLocalSafeProfiles] = React.useState(null); // null = brug activeProfiles
 
   // Auto-load alle opskrifter ved mount
   React.useEffect(() => {
@@ -342,9 +344,23 @@ export default function RecipesScreen({
             { id:"me", name: user.name||"Dig", allergens },
             ...family.filter(m => activeProfiles.includes(m.id)),
           ];
+          // Beregn aktive allergen-IDs baseret på valgte profiler
+          const safeProfiles = localSafeProfiles ?? [
+            "me",
+            ...(family||[]).filter(m => (activeProfiles||[]).includes(m.id)).map(m => m.id),
+          ];
+          const safeAllergenIds = [
+            ...(safeProfiles.includes("me") ? [...allergens, ...(customAllerg||[])] : []),
+            ...(family||[]).filter(m => safeProfiles.includes(m.id)).flatMap(m => [...(m.allergens||[]), ...(m.customAllerg||[])]),
+          ];
+
           const filtered = (recipeFilter === "favoritter" ? recipes.filter(r => favoriteRecipes.includes(r.id)) : recipes).filter(r => {
             if (recipeSearch && !r.title.toLowerCase().includes(recipeSearch.toLowerCase())) return false;
-            if (recipeSafeOnly && compareAllergens(r.allergen_flags || {}, activeIds).status === "danger") return false;
+            if (recipeSafeOnly) {
+              let rFlags = {};
+              try { rFlags = typeof r.allergen_flags === "string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags||{}); } catch {}
+              if (compareAllergens(rFlags, safeAllergenIds).status === "danger") return false;
+            }
             return true;
           });
           return (
@@ -366,23 +382,43 @@ export default function RecipesScreen({
                 <input className="recipe-search-input" placeholder="Søg opskrifter…" value={recipeSearch} onChange={e => setRecipeSearch(e.target.value)} />
               </div>
 
-              {/* Kategori dropdown */}
-              <div style={{ display:"flex", gap:8, marginBottom:12, alignItems:"center" }}>
+              {/* Kategori dropdown + Kun sikre */}
+              <div style={{ display:"flex", gap:8, marginBottom:8, alignItems:"center" }}>
+                {/* Custom dropdown */}
                 <div style={{ position:"relative", flex:1 }}>
-                  <select
-                    value={recipeFilter}
-                    onChange={e => { setRecipeFilter(e.target.value); setRecipeSearch(""); }}
+                  <button
+                    onClick={() => setDropdownOpen(v => !v)}
                     style={{
-                      width:"100%", padding:"10px 36px 10px 14px", borderRadius:12,
+                      width:"100%", padding:"10px 36px 10px 14px", borderRadius:12, textAlign:"left",
                       border:"1px solid var(--border2)", background:"var(--surface)",
                       color:"var(--ink)", fontFamily:"var(--f)", fontSize:14, fontWeight:600,
-                      cursor:"pointer", appearance:"none", outline:"none",
+                      cursor:"pointer", display:"flex", alignItems:"center", gap:8,
                     }}>
-                    {categories.map(c => (
-                      <option key={c.id} value={c.id}>{c.label}</option>
-                    ))}
-                  </select>
-                  <div style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", color:"var(--muted)" }}>▾</div>
+                    <span>{categories.find(c => c.id === recipeFilter)?.label || "🍽️ Alle"}</span>
+                    <span style={{ marginLeft:"auto", color:"var(--muted)", fontSize:12 }}>▾</span>
+                  </button>
+                  {dropdownOpen && (
+                    <div style={{
+                      position:"absolute", top:"calc(100% + 4px)", left:0, right:0, zIndex:50,
+                      background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:12,
+                      overflow:"hidden", boxShadow:"0 8px 24px rgba(0,0,0,.3)",
+                    }}>
+                      {categories.map(c => (
+                        <div key={c.id}
+                          onClick={() => { setRecipeFilter(c.id); setRecipeSearch(""); setDropdownOpen(false); }}
+                          style={{
+                            padding:"11px 14px", cursor:"pointer", fontSize:13, fontWeight:600,
+                            color: recipeFilter === c.id ? "var(--green)" : "var(--ink)",
+                            background: recipeFilter === c.id ? "var(--green-lt)" : "transparent",
+                            display:"flex", alignItems:"center", gap:8,
+                            borderBottom:"1px solid var(--border)",
+                          }}>
+                          {c.label}
+                          {recipeFilter === c.id && <span style={{ marginLeft:"auto", fontSize:11 }}>✓</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 {/* Kun-sikre toggle */}
                 <div onClick={() => setRecipeSafeOnly(v => !v)} style={{
@@ -396,12 +432,55 @@ export default function RecipesScreen({
                   Kun sikre
                 </div>
               </div>
+
+              {/* Profil-chips når kun-sikre er aktiv */}
+              {recipeSafeOnly && (() => {
+                const allProfiles = [
+                  { id:"me", name: user?.name || "Dig", initials:(user?.name||"D")[0].toUpperCase(), allergens: allergens },
+                  ...(family||[]).map(m => ({ id:m.id, name:m.name, initials:(m.name||"?")[0].toUpperCase(), allergens: m.allergens||[] })),
+                ];
+                return (
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
+                    {allProfiles.map(p => {
+                      const isActive = localSafeProfiles === null ? (activeProfiles||[]).includes(p.id) || p.id === "me" : localSafeProfiles.includes(p.id);
+                      return (
+                        <div key={p.id}
+                          onClick={() => {
+                            const current = localSafeProfiles === null
+                              ? allProfiles.map(x => x.id)
+                              : localSafeProfiles;
+                            setLocalSafeProfiles(
+                              current.includes(p.id) && current.length > 1
+                                ? current.filter(id => id !== p.id)
+                                : [...new Set([...current, p.id])]
+                            );
+                          }}
+                          style={{
+                            display:"flex", alignItems:"center", gap:6, padding:"5px 10px",
+                            borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700,
+                            background: isActive ? "var(--green-lt)" : "var(--surface2)",
+                            color: isActive ? "var(--green)" : "var(--muted)",
+                            border:`1px solid ${isActive ? "rgba(74,222,128,.3)" : "var(--border)"}`,
+                          }}>
+                          <div style={{
+                            width:20, height:20, borderRadius:"50%", background: isActive ? "var(--green)" : "var(--surface3)",
+                            color: isActive ? "#071510" : "var(--muted)", display:"flex", alignItems:"center",
+                            justifyContent:"center", fontSize:10, fontWeight:800, flexShrink:0,
+                          }}>{p.initials}</div>
+                          {p.name}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+
               {/* Resultat-tæller */}
               {recipes.length > 0 && !recipesLoading && (
                 <div style={{ fontSize:12, color:"var(--muted)", marginBottom:10 }}>
                   {filtered.length} opskrift{filtered.length !== 1 ? "er" : ""}
-                  {recipeFilter !== "alle" && ` i ${categories.find(c=>c.id===recipeFilter)?.label?.replace(/^[^\s]+\s/,"") || recipeFilter}`}
-                  {recipeSafeOnly && " — kun sikre"}
+                  {recipeFilter !== "alle" && ` · ${categories.find(c=>c.id===recipeFilter)?.label?.split(" ").slice(1).join(" ") || recipeFilter}`}
+                  {recipeSafeOnly && " · kun sikre"}
                 </div>
               )}
 
