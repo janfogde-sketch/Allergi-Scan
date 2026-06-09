@@ -34,7 +34,29 @@ export default function RecipesScreen({
 }) {
   const [listAdded, setListAdded] = React.useState({});
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
-  const [localSafeProfiles, setLocalSafeProfiles] = React.useState(null); // null = brug activeProfiles
+  const [localSafeProfiles, setLocalSafeProfiles] = React.useState(null);
+
+  // Submit-form states — skal være her pga. React hooks-regler
+  const [imgFile, setImgFile] = React.useState(null);
+  const [imgPreview, setImgPreview] = React.useState(null);
+  const [imgUploading, setImgUploading] = React.useState(false);
+  const [manualAllergens, setManualAllergens] = React.useState([]);
+  const [removedAuto, setRemovedAuto] = React.useState([]);
+
+  // Hjælpefunktioner til allergen-detektion
+  const detectAllergens = (name) => {
+    const n = name.toLowerCase();
+    const found = [];
+    ALLERGENS.forEach(a => {
+      if ((a.keywords||[]).some(k => n.includes(k.toLowerCase()))) found.push(a.id);
+    });
+    return found;
+  };
+  const recomputeAllergens = (ings) => {
+    const all = new Set();
+    ings.forEach(i => { if(i.name) detectAllergens(i.name).forEach(id => all.add(id)); });
+    return [...all];
+  };
 
   // Auto-load alle opskrifter ved mount
   React.useEffect(() => {
@@ -649,9 +671,6 @@ export default function RecipesScreen({
             return [...all];
           };
 
-          const [imgFile, setImgFile] = React.useState(null);
-          const [imgPreview, setImgPreview] = React.useState(null);
-          const [imgUploading, setImgUploading] = React.useState(false);
 
           const handleImg = (e) => {
             const f = e.target.files[0];
@@ -661,8 +680,6 @@ export default function RecipesScreen({
           };
 
           const autoAllergens = recomputeAllergens(submitIngredients);
-          const [manualAllergens, setManualAllergens] = React.useState([]);
-          const [removedAuto, setRemovedAuto] = React.useState([]);
           const finalAllergens = [
             ...autoAllergens.filter(id => !removedAuto.includes(id)),
             ...manualAllergens.filter(id => !autoAllergens.includes(id)),
@@ -703,7 +720,7 @@ export default function RecipesScreen({
 
               {/* ── 1. Billede ── */}
               <div style={{ marginBottom:20 }}>
-                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Billede</div>
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--ink3)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Billede</div>
                 <label style={{ display:"block", cursor:"pointer" }}>
                   <input type="file" accept="image/*" onChange={handleImg} style={{ display:"none" }} />
                   <div style={{
@@ -725,11 +742,11 @@ export default function RecipesScreen({
 
               {/* ── 2. Grundinfo ── */}
               <div style={{ marginBottom:20 }}>
-                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Grundinfo</div>
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--ink3)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Grundinfo</div>
                 <input placeholder="Titel *" value={submitRecipe.title} onChange={e => setSubmitRecipe(r => ({...r, title:e.target.value}))}
-                  style={{ width:"100%", padding:"11px 14px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:14, boxSizing:"border-box", marginBottom:8, outline:"none" }} />
+                  style={{ width:"100%", padding:"11px 14px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface2)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:14, boxSizing:"border-box", marginBottom:8, outline:"none" }} />
                 <textarea placeholder="Kort beskrivelse (valgfrit)" value={submitRecipe.description||""} onChange={e => setSubmitRecipe(r => ({...r, description:e.target.value}))} rows={2}
-                  style={{ width:"100%", padding:"11px 14px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, boxSizing:"border-box", resize:"none", marginBottom:8, outline:"none" }} />
+                  style={{ width:"100%", padding:"11px 14px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface2)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, boxSizing:"border-box", resize:"none", marginBottom:8, outline:"none" }} />
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:8 }}>
                   <select value={submitRecipe.category} onChange={e => setSubmitRecipe(r => ({...r, category:e.target.value}))}
                     style={{ padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }}>
@@ -760,7 +777,7 @@ export default function RecipesScreen({
 
               {/* ── 3. Ingredienser ── */}
               <div style={{ marginBottom:20 }}>
-                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Ingredienser</div>
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--ink3)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Ingredienser</div>
                 {submitIngredients.map((ing, idx) => (
                   <div key={idx} style={{ display:"grid", gridTemplateColumns:"1fr 80px 80px 32px", gap:6, marginBottom:6 }}>
                     <input placeholder="Ingrediens *" value={ing.name} onChange={e => {
@@ -804,7 +821,7 @@ export default function RecipesScreen({
 
               {/* ── 4. Fremgangsmåde ── */}
               <div style={{ marginBottom:20 }}>
-                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Fremgangsmåde</div>
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--ink3)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Fremgangsmåde</div>
                 {submitSteps.map((step, idx) => (
                   <div key={idx} style={{ display:"flex", gap:8, marginBottom:8, alignItems:"flex-start" }}>
                     <div style={{ width:26, height:26, borderRadius:"50%", background:"var(--green-lt)", border:"1px solid rgba(74,222,128,.3)", color:"var(--green)", fontWeight:800, fontSize:12, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:8 }}>{idx+1}</div>
@@ -826,10 +843,10 @@ export default function RecipesScreen({
 
               {/* ── 5. Diæter & manuelle allergener ── */}
               <div style={{ marginBottom:20 }}>
-                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Diæt & allergener</div>
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--ink3)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Diæt & allergener</div>
 
                 {/* Diæter */}
-                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:8 }}>Passer opskriften til:</div>
+                <div style={{ fontSize:12, color:"var(--ink3)", marginBottom:8 }}>Passer opskriften til:</div>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:14 }}>
                   {(DIETS||[]).map(d => {
                     const active = (submitRecipe.tags||[]).includes(d.id);
@@ -847,7 +864,7 @@ export default function RecipesScreen({
                 </div>
 
                 {/* Manuelle allergener */}
-                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:8 }}>Manuelle allergener (hvis ikke auto-detekteret):</div>
+                <div style={{ fontSize:12, color:"var(--ink3)", marginBottom:8 }}>Manuelle allergener (hvis ikke auto-detekteret):</div>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
                   {ALLERGENS.map(a => {
                     const isAuto = autoAllergens.includes(a.id) && !removedAuto.includes(a.id);
