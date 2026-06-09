@@ -55,7 +55,7 @@
 | 4.1 | Offline-basic | ✅ | useOffline.js — localStorage cache max 20 produkter, offline banner, offline fetch guard |
 | 4.2 | Onboarding-forenkling | ✅ | 10→5 trin. E-numre kollapsibel. Fællesskab-card + disclaimer på trin 5 |
 | 4.3 | Performance: lazy-load screens | ✅ | React.lazy + Suspense for KnowledgeScreen, RecipesScreen, AdminScreen |
-| 4.4 | App Store metadata | 🔲 |
+| 4.4 | App Store metadata | ✅ | APP_STORE_METADATA.md — beskrivelser, søgeord, screenshots |
 | 4.5 | Brugertest (5-10 brugere) | 🔲 |
 
 ---
@@ -93,6 +93,9 @@
 | T6 | Forslag | Søgefunktion E-numre/ingredienser | ✅ Dækkes af Leksikon |
 | T7 | Fejl | Produkt "ikke fundet" men i DB | ✅ UUID-detektion i products Edge Fn |
 | T8 | Mangler | Diæt mangler under præferencer | ✅ ProfileScreen fix |
+| T9 | Fejl | submitUserRecipe sendes ikke som prop til RecipesScreen | ✅ Fixet — App.jsx + RecipesScreen props |
+| T10 | Fejl | Admin opskrifter forsvinder bag bundmenu | ✅ paddingBottom:120 tilføjet |
+| T11 | Fejl | JWT expired fejl ved opskrift-indsendelse | ✅ Klar fejlbesked + tak-skærm ved succes |
 | T9 | Design | Feedback-knap hvid | ✅ Farve-fix |
 | — | Design | Gradient baggrund på opskrifter | 🔲 Utilfredsstillende løsning |
 
@@ -132,3 +135,28 @@
 - **submissions** er aktiv tabel — `product_submissions` er slettet
 - **Refaktor-regel**: første gang en screen-fil åbnes, tjek for manglende imports fra `helpers.js` og `constants.jsx`
 - **App.jsx hooks-rækkefølge**: useAuth → useShoppingList → useFamily → useHistory → useOnboarding → useAdmin → useRecipes
+
+---
+
+## Fase 5 — Refaktor og optimering ⏳ PLANLAGT
+
+| # | Opgave | Status | Noter |
+|---|--------|--------|-------|
+| 5.1 | ScannerScreen refaktor | 🔲 | useScanner hook — tæt koblet til App.jsx. Mål: <800 linjer per fil |
+| 5.2 | App.jsx split | 🔲 | 1483 linjer → useScanner + evt. useShoppingList udtrukket |
+| 5.3 | ProfileScreen optimering | 🔲 | Historik og favoritter i egne hooks |
+| 5.4 | AdminScreen optimering | 🔲 | Opdel i sub-komponenter (submissions, tickets, stats) |
+| 5.5 | Billede-optimering | ✅ | lazy-load + onError fallback + fade-in animation |
+| 5.6 | Search debounce audit | ✅ | Alle søgninger har debounce eller er client-side |
+
+---
+
+## Fase 6 — Opskrifter redesign ⏳ PLANLAGT
+
+| # | Opgave | Status | Noter |
+|---|--------|--------|-------|
+| 6.1 | Fix opskrifter loader ikke | ✅ | JWT fjernet + auto-load ved mount + status=approved filter gendannet |
+| 6.2 | Redesign oversigt + filtrering | ✅ | Custom dropdown, "Kun sikre" med profil-chips, client-side filter |
+| 6.3 | Indsend opskrift flow | ✅ | Komplet formular: billede, ingredienser m. live allergen-detektion, trin, diæter |
+| 6.4 | Admin: opskrift-godkendelse | ✅ | Ny tab i admin — pending/godkendt/afvist, redigér, godkend/afvis |
+
