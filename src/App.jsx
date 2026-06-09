@@ -1325,6 +1325,7 @@ export default function EatSafe() {
             onSlugHandled={() => setKnowledgeSlug(null)}
           />
           </ErrorBoundary>
+          </Suspense>
         )}
 
         {/* ══ PROFILE SCREENS ══ */}
@@ -1403,6 +1404,7 @@ export default function EatSafe() {
             addToList={addToList}
           />
           </ErrorBoundary>
+          </Suspense>
         )}
 
 
@@ -1442,6 +1444,7 @@ export default function EatSafe() {
             userSearch={userSearch} setUserSearch={setUserSearch}
           />
           </ErrorBoundary>
+          </Suspense>
         )}
 
         {/* BUNDNAVIGATION */}
