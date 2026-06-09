@@ -29,7 +29,7 @@ export function useRecipes(accessToken, userId) {
       // Indlæs ALLE godkendte opskrifter én gang — filtrer client-side (627 poster er hurtigt)
       // Opskrifter er public — brug kun anon key (JWT kan være udløbet)
       const headers = { "apikey": SUPABASE_ANON_KEY, "Accept": "application/json" };
-      const url = `${SUPABASE_URL}/rest/v1/recipes?select=id,title,category,image_url,tags,allergen_flags,servings,prep_time_minutes,cook_time_minutes,description&order=title.asc&limit=1000`;
+      const url = `${SUPABASE_URL}/rest/v1/recipes?select=id,title,category,image_url,tags,allergen_flags,servings,prep_time_minutes,cook_time_minutes,description&status=eq.approved&order=title.asc&limit=1000`;
       const res = await fetch(url, { headers });
       if (!res.ok) {
         console.error("loadRecipes fejl:", res.status);

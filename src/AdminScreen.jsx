@@ -119,6 +119,55 @@ export default function AdminScreen({
   updateSubmissionAndApprove, rejectSubmission,
   updateTicketStatus, cleanOcrWithAI,
 }) {
+  // ── Admin opskrifter — lokal state ──────────────────────────────────────────
+  const [adminRecipes, setAdminRecipes] = useState([]);
+  const [adminRecipesLoading, setAdminRecipesLoading] = useState(false);
+  const [adminRecipeFilter, setAdminRecipeFilter] = useState("pending");
+  const [editingRecipe, setEditingRecipe] = useState(null);
+  const [recipeActionLoading, setRecipeActionLoading] = useState(false);
+
+  const loadAdminRecipes = async (filter = adminRecipeFilter) => {
+    setAdminRecipesLoading(true);
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/recipes?status=eq.${filter}&order=created_at.desc&limit=100&select=id,title,category,status,submitted_by,created_at,allergen_flags,description,servings,prep_time_minutes,cook_time_minutes,tags,instructions,image_url`,
+        { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" } }
+      );
+      const data = await res.json();
+      setAdminRecipes(Array.isArray(data) ? data : []);
+    } catch (e) { console.error("loadAdminRecipes:", e); }
+    setAdminRecipesLoading(false);
+  };
+
+  const updateRecipeStatus = async (id, status) => {
+    setRecipeActionLoading(true);
+    try {
+      await fetch(
+        `${SUPABASE_URL}/rest/v1/recipes?id=eq.${id}`,
+        { method: "PATCH", headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+          body: JSON.stringify({ status }) }
+      );
+      setAdminRecipes(prev => prev.filter(r => r.id !== id));
+      setEditingRecipe(null);
+    } catch (e) { alert("Fejl: " + e.message); }
+    setRecipeActionLoading(false);
+  };
+
+  const saveRecipeEdit = async () => {
+    if (!editingRecipe) return;
+    setRecipeActionLoading(true);
+    try {
+      const { id, ...fields } = editingRecipe;
+      await fetch(
+        `${SUPABASE_URL}/rest/v1/recipes?id=eq.${id}`,
+        { method: "PATCH", headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+          body: JSON.stringify(fields) }
+      );
+      alert("Gemt ✓");
+    } catch (e) { alert("Fejl: " + e.message); }
+    setRecipeActionLoading(false);
+  };
+
   return (
     <>
         {openTicket && (
@@ -361,6 +410,7 @@ ${openTicket.description}
                 { id:"tickets",     emoji:"🐛", label:"Tickets" },
                 { id:"debug",       emoji:"🔍", label:"Debug" },
                 { id:"missing",    emoji:"❓", label:"Manglende" },
+                { id:"recipes",    emoji:"📋", label:"Opskrifter" },
               ].map(s => (
                 <button key={s.id}
                   onClick={() => {
@@ -369,6 +419,7 @@ ${openTicket.description}
                     if (s.id === "tickets") loadTickets();
                     if (s.id === "dashboard") loadAdminStats();
                     if (s.id === "users") loadAdminUsers();
+                    if (s.id === "recipes") loadAdminRecipes();
                   }}
                   style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:4, padding:"14px 16px",
                     background: adminSection===s.id ? "var(--green-lt)" : "var(--surface)",
@@ -1063,6 +1114,121 @@ ${openTicket.description}
                     Ingen operationer logget endnu. Scan, sog eller tag billede for at se trace.
                   </div>
                 )}
+              </div>
+            )}
+
+            {adminSection === "recipes" && (
+              <div>
+                {/* Filter tabs */}
+                <div style={{ display:"flex", gap:6, marginBottom:14 }}>
+                  {[{val:"pending",label:"⏳ Afventer"},{val:"approved",label:"✅ Godkendte"},{val:"rejected",label:"❌ Afviste"}].map(f => (
+                    <button key={f.val} onClick={() => { setAdminRecipeFilter(f.val); loadAdminRecipes(f.val); }}
+                      style={{ padding:"7px 14px", borderRadius:100, border:`1px solid ${adminRecipeFilter===f.val?"var(--green)":"var(--border)"}`,
+                        background:adminRecipeFilter===f.val?"var(--green-lt)":"var(--surface)", color:adminRecipeFilter===f.val?"var(--green)":"var(--muted)",
+                        fontFamily:"var(--f)", fontSize:12, fontWeight:700, cursor:"pointer" }}>
+                      {f.label}
+                    </button>
+                  ))}
+                  <button onClick={() => loadAdminRecipes()} style={{ marginLeft:"auto", padding:"7px 12px", borderRadius:100, border:"1px solid var(--border)", background:"var(--surface)", color:"var(--muted)", fontFamily:"var(--f)", fontSize:12, cursor:"pointer" }}>↺</button>
+                </div>
+
+                {/* Detail-visning */}
+                {editingRecipe && (
+                  <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:16, marginBottom:16 }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+                      <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)" }}>Redigér opskrift</div>
+                      <button onClick={() => setEditingRecipe(null)} style={{ background:"none", border:"none", color:"var(--muted)", cursor:"pointer", fontSize:18 }}>×</button>
+                    </div>
+                    <input value={editingRecipe.title||""} onChange={e => setEditingRecipe(r=>({...r,title:e.target.value}))} placeholder="Titel"
+                      style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:14, boxSizing:"border-box", marginBottom:8, outline:"none" }} />
+                    <textarea value={editingRecipe.description||""} onChange={e => setEditingRecipe(r=>({...r,description:e.target.value}))} placeholder="Beskrivelse" rows={3}
+                      style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, boxSizing:"border-box", resize:"none", marginBottom:8, outline:"none" }} />
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:8 }}>
+                      <select value={editingRecipe.category||"aftensmad"} onChange={e => setEditingRecipe(r=>({...r,category:e.target.value}))}
+                        style={{ padding:"8px 10px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }}>
+                        {["aftensmad","morgenmad","frokost","dessert","tilbehør","snack"].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      <input type="number" value={editingRecipe.servings||4} onChange={e => setEditingRecipe(r=>({...r,servings:+e.target.value}))} placeholder="Portioner"
+                        style={{ padding:"8px 10px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
+                    </div>
+                    {/* Allergen flags */}
+                    <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Allergener</div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:12 }}>
+                      {ALLERGENS.map(a => {
+                        let flags = {};
+                        try { flags = typeof editingRecipe.allergen_flags==="string" ? JSON.parse(editingRecipe.allergen_flags) : (editingRecipe.allergen_flags||{}); } catch {}
+                        const isOn = flags[a.id] === true || flags[a.id] === "yes";
+                        return (
+                          <div key={a.id} onClick={() => {
+                            let f = {};
+                            try { f = typeof editingRecipe.allergen_flags==="string" ? JSON.parse(editingRecipe.allergen_flags) : (editingRecipe.allergen_flags||{}); } catch {}
+                            const next = {...f, [a.id]: !isOn};
+                            setEditingRecipe(r => ({...r, allergen_flags: JSON.stringify(next)}));
+                          }}
+                          style={{ padding:"3px 9px", borderRadius:100, cursor:"pointer", fontSize:11, fontWeight:700,
+                            background: isOn?"var(--red-lt)":"var(--surface2)", color:isOn?"var(--red)":"var(--muted2)",
+                            border:`1px solid ${isOn?"var(--red-md)":"var(--border)"}` }}>
+                            {a.emoji} {a.label}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Handlinger */}
+                    <div style={{ display:"flex", gap:8 }}>
+                      <button onClick={saveRecipeEdit} disabled={recipeActionLoading}
+                        style={{ flex:1, padding:"10px", borderRadius:10, background:"var(--blue-lt)", border:"1px solid var(--blue)", color:"var(--blue)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                        💾 Gem ændringer
+                      </button>
+                      <button onClick={() => updateRecipeStatus(editingRecipe.id, "approved")} disabled={recipeActionLoading}
+                        style={{ flex:1, padding:"10px", borderRadius:10, background:"var(--green-lt)", border:"1px solid var(--green)", color:"var(--green)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                        ✅ Godkend & publicér
+                      </button>
+                      <button onClick={() => updateRecipeStatus(editingRecipe.id, "rejected")} disabled={recipeActionLoading}
+                        style={{ flex:1, padding:"10px", borderRadius:10, background:"var(--red-lt)", border:"1px solid var(--red)", color:"var(--red)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                        ❌ Afvis
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Liste */}
+                {adminRecipesLoading ? (
+                  <div style={{ textAlign:"center", padding:"40px 0", color:"var(--muted)" }}>Henter…</div>
+                ) : adminRecipes.length === 0 ? (
+                  <div style={{ textAlign:"center", padding:"48px 20px" }}>
+                    <div style={{ fontSize:48, marginBottom:10 }}>📭</div>
+                    <div style={{ fontSize:15, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Ingen {adminRecipeFilter === "pending" ? "afventende" : adminRecipeFilter === "approved" ? "godkendte" : "afviste"} opskrifter</div>
+                  </div>
+                ) : adminRecipes.map(r => {
+                  let flags = {};
+                  try { flags = typeof r.allergen_flags==="string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags||{}); } catch {}
+                  const flaggedAllergens = ALLERGENS.filter(a => flags[a.id]===true||flags[a.id]==="yes");
+                  return (
+                    <div key={r.id} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:8, cursor:"pointer" }}
+                      onClick={() => setEditingRecipe(r)}>
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:4 }}>
+                        <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>{r.title}</div>
+                        <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100,
+                          background:r.status==="pending"?"var(--amber-lt)":r.status==="approved"?"var(--green-lt)":"var(--red-lt)",
+                          color:r.status==="pending"?"var(--amber)":r.status==="approved"?"var(--green)":"var(--red)",
+                          border:`1px solid ${r.status==="pending"?"var(--amber-md)":r.status==="approved"?"rgba(74,222,128,.3)":"var(--red-md)"}`,
+                          flexShrink:0, marginLeft:8 }}>
+                          {r.status==="pending"?"⏳ Afventer":r.status==="approved"?"✅ Godkendt":"❌ Afvist"}
+                        </span>
+                      </div>
+                      <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6 }}>
+                        {r.category} · {r.servings||"?"} pers. · {new Date(r.created_at).toLocaleDateString("da-DK")}
+                      </div>
+                      {flaggedAllergens.length > 0 && (
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                          {flaggedAllergens.map(a => (
+                            <span key={a.id} style={{ fontSize:10, padding:"2px 7px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", border:"1px solid var(--red-md)", fontWeight:700 }}>{a.emoji} {a.label}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 
