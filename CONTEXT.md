@@ -304,8 +304,8 @@ Planen er at splitte `App.jsx` op:
 | **Leksikon udvidelse** | 396 entries i alt (104 ingredienser, 247 E-numre, 15 allergener, 12 fun facts, 8 FAQ, 6 diæter, 4 krydsreaktioner). Mål: 300 ingredienser. Tilføj: alkohol og gærprodukter, krydderiblandinger, eksotiske ingredienser, flerestærke madkulturer (japansk, mexikansk, indisk nøgle-ingredienser) |
 | **Fase 2.1 — Farver** | ✅ Grøn tema lysnet ~20%. --warm, --navy, --fw-*, --lh-* tokens. Bottom-nav opaque #2A4835. Borders lysere (22%/32%). Muted/ink3 tekst lysere |
 | **Fase 2.2 — Baggrund** | ✅ Gradient baggrund i .app og body |
-| **Fase 2.4 — Scan-resultat redesign** | Afventer — behov: ScannerScreen.jsx |
-| **Fase 2.5 — Tomme tilstande** | Afventer — behov: screen-filer |
+| **Fase 2.4 — Scan-resultat redesign** | ✅ Produkt→Sikkerhed→Allergener→Ingredienser→Handlinger→Næring |
+| **Fase 2.5 — Tomme tilstande** | ✅ 6 tilstande forbedret på tværs af ProfileScreen, RecipesScreen |
 | Gradient baggrund på opskrifter | Ikke tilfredsstillende — skal redesignes så gradient fungerer konsistent på lange sider |
 | **Viden/Leksikon — frontend** | ✅ KnowledgeScreen.jsx færdig — inline styles, 2-kolonne grid, søgning, kategori-filtrering, detaljevisning, fun facts, risk badges. Bruger kun anon key (ingen JWT) |
 | **Viden/Leksikon — navigation** | ✅ Bundmenu: "Leksikon" tab aktiv. Madpas flyttet til profilsiden |

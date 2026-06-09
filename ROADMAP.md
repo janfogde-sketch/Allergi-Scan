@@ -32,8 +32,8 @@
 | 2.1 | Farvesystem redesign | ✅ | Grøn tema lysnet ~20%. --warm, --navy tokens. Bottom-nav opaque. Borders/tekst lysere |
 | 2.2 | Baggrund og gradient | ✅ | Fast gradient i `.app`, paper/paper2 justeret |
 | 2.3 | Typografi-hierarki | ✅ | `--fs-xs`→`--fs-2xl`, `--fw-normal`→`--fw-black`, `--lh-tight`→`--lh-normal` |
-| 2.4 | **Scan-resultat redesign** | 🔲 | Vigtigste skærm. Behov: ScannerScreen.jsx |
-| 2.5 | **Tomme tilstande** | 🔲 | Alle "ingen data" skærme. Behov: screen-filer |
+| 2.4 | Scan-resultat redesign | ✅ | Ny rækkefølge: Produkt → Sikkerhed → Allergener → Ingredienser → Handlinger → Næring |
+| 2.5 | Tomme tilstande | ✅ | 6 tilstande forbedret: scan-historik, præferencer, favoritter, familie, opskrift-favoritter, søgeresultater |
 
 ---
 
@@ -42,9 +42,9 @@
 | # | Opgave | Status | Noter |
 |---|--------|--------|-------|
 | 3.1 | App.jsx split | 🔄 | useAdmin.js ✅, useRecipes.js ✅, useScanner for tæt koblet |
-| 3.2 | Router | 🔲 | Overvej react-router eller useScreen hook |
-| 3.3 | Error boundaries | 🔲 | Wrap screens i `<ErrorBoundary>` |
-| 3.4 | Loading states | 🔲 | Skeleton-screens i stedet for spinner |
+| 3.2 | Router | ✅ | useNavigation.js — browser back-knap via pushState/popstate. navigate(), goBack(), canGoBack() |
+| 3.3 | Error boundaries | ✅ | ErrorBoundary.jsx — wrapper 6 screens. "Prøv igen"-knap ved crash |
+| 3.4 | Loading states | ✅ | Skeleton rows (profil-historik), skeleton cards (leksikon). Opskrifter havde allerede skeleton |
 
 ---
 
@@ -52,9 +52,9 @@
 
 | # | Opgave | Status |
 |---|--------|--------|
-| 4.1 | Offline-basic | 🔲 |
-| 4.2 | Onboarding-forenkling | 🔲 |
-| 4.3 | Performance: lazy-load screens | 🔲 |
+| 4.1 | Offline-basic | ✅ | useOffline.js — localStorage cache max 20 produkter, offline banner, offline fetch guard |
+| 4.2 | Onboarding-forenkling | ✅ | 10→5 trin. E-numre kollapsibel. Fællesskab-card + disclaimer på trin 5 |
+| 4.3 | Performance: lazy-load screens | ✅ | React.lazy + Suspense for KnowledgeScreen, RecipesScreen, AdminScreen |
 | 4.4 | App Store metadata | 🔲 |
 | 4.5 | Brugertest (5-10 brugere) | 🔲 |
 
@@ -76,7 +76,7 @@
 | **KnowledgeScreen.jsx** | ✅ | Inline styles, 2-kolonne grid, søg, kategorier, detaljer, fun facts. Kun anon key |
 | **Bundmenu → Leksikon** | ✅ | "Leksikon" tab aktiv i bundmenu |
 | **Madpas til profil** | ✅ | Tilgængelig via profilsiden |
-| **Scan → Leksikon links** | 🔲 | Klik allergen/E-nummer i scan-resultat → åbn leksikon-entry |
+| **Scan → Leksikon links** | ✅ | E-numre klikbare (slug: e-{nr}). Allergen-status tekst klikbar. Andre allergener-tags klikbare |
 | **Leksikon udvidelse** | 🔲 | Mål: 300+ ingredienser. Tilføj: alkohol, eksotiske ingredienser, japansk/mexicansk/indisk køkken |
 
 ---
