@@ -366,35 +366,46 @@ export default function RecipesScreen({
                 <input className="recipe-search-input" placeholder="Søg opskrifter…" value={recipeSearch} onChange={e => setRecipeSearch(e.target.value)} />
               </div>
 
-              {/* Kategori chips — horizontal scroll */}
-              <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:4, marginBottom:12, scrollbarWidth:"none" }}>
-                {categories.map(c => (
-                  <div key={c.id}
-                    onClick={() => { setRecipeFilter(c.id === recipeFilter ? "alle" : c.id); setRecipeSearch(""); }}
+              {/* Kategori dropdown */}
+              <div style={{ display:"flex", gap:8, marginBottom:12, alignItems:"center" }}>
+                <div style={{ position:"relative", flex:1 }}>
+                  <select
+                    value={recipeFilter}
+                    onChange={e => { setRecipeFilter(e.target.value); setRecipeSearch(""); }}
                     style={{
-                      flexShrink:0, padding:"7px 14px", borderRadius:100, cursor:"pointer", fontSize:13, fontWeight:700,
-                      fontFamily:"var(--f)", whiteSpace:"nowrap", transition:"all .15s",
-                      background: recipeFilter === c.id ? "var(--green-lt)" : "var(--surface)",
-                      color: recipeFilter === c.id ? "var(--green)" : "var(--muted2)",
-                      border: `1px solid ${recipeFilter === c.id ? "rgba(74,222,128,.25)" : "var(--border)"}`,
+                      width:"100%", padding:"10px 36px 10px 14px", borderRadius:12,
+                      border:"1px solid var(--border2)", background:"var(--surface)",
+                      color:"var(--ink)", fontFamily:"var(--f)", fontSize:14, fontWeight:600,
+                      cursor:"pointer", appearance:"none", outline:"none",
                     }}>
-                    {c.label}
-                  </div>
-                ))}
-              </div>
-
-              {/* Kun-sikre + tæller */}
-              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id}>{c.label}</option>
+                    ))}
+                  </select>
+                  <div style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", color:"var(--muted)" }}>▾</div>
+                </div>
+                {/* Kun-sikre toggle */}
                 <div onClick={() => setRecipeSafeOnly(v => !v)} style={{
-                  display:"flex", alignItems:"center", gap:6, padding:"5px 12px",
-                  borderRadius:100, border:`1.5px solid ${recipeSafeOnly ? "var(--green)" : "var(--border2)"}`,
+                  flexShrink:0, display:"flex", alignItems:"center", gap:5, padding:"10px 12px",
+                  borderRadius:12, border:`1px solid ${recipeSafeOnly ? "var(--green)" : "var(--border2)"}`,
                   background: recipeSafeOnly ? "var(--green-lt)" : "var(--surface)", cursor:"pointer",
-                  fontSize:12, fontWeight:700, color: recipeSafeOnly ? "var(--green)" : "var(--muted2)" }}>
+                  fontSize:12, fontWeight:700, color: recipeSafeOnly ? "var(--green)" : "var(--muted2)",
+                  whiteSpace:"nowrap",
+                }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
                   Kun sikre
                 </div>
-                {recipes.length > 0 && <div style={{ fontSize:12, color:"var(--muted)", marginLeft:"auto" }}>{filtered.length} opskrift{filtered.length !== 1 ? "er" : ""}</div>}
               </div>
+              {/* Resultat-tæller */}
+              {recipes.length > 0 && !recipesLoading && (
+                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:10 }}>
+                  {filtered.length} opskrift{filtered.length !== 1 ? "er" : ""}
+                  {recipeFilter !== "alle" && ` i ${categories.find(c=>c.id===recipeFilter)?.label?.replace(/^[^\s]+\s/,"") || recipeFilter}`}
+                  {recipeSafeOnly && " — kun sikre"}
+                </div>
+              )}
+
+
 
               {/* Skeleton loader */}
               {recipesLoading && [1,2,3].map(i => (
