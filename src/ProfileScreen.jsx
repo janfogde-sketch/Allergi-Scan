@@ -75,9 +75,21 @@ export default function ProfileScreen({
             <div className="screen-title">Scanningshistorik</div>
             <div className="screen-sub">Alle dine tidligere scanninger.</div>
             <button className="btn btn-ghost btn-sm" style={{ marginBottom:14 }} onClick={() => { loadHistory(); }}>Opdater</button>
-            {historyLoading && <div className="loader fade-in"><div className="spinner" /><div className="loader-txt">Henter historik…</div></div>}
+            {historyLoading && (
+              <div className="fade-in">
+                {[1,2,3,4].map(i => (
+                  <div key={i} className="skeleton-row">
+                    <div className="skeleton-block skeleton-avatar" />
+                    <div style={{ flex:1 }}>
+                      <div className="skeleton-block skeleton-title" />
+                      <div className="skeleton-block skeleton-sub" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             {!historyLoading && history.length===0 && (
-              <div className="empty-state"><div className="empty-txt">Ingen scanninger endnu</div><div className="empty-sub">Skan dit første produkt</div></div>
+              <div className="empty-state"><span className="empty-icon">🔍</span><div className="empty-txt">Ingen scanninger endnu</div><div className="empty-sub">Skan dit første produkt for at se din historik her</div><button className="btn btn-outline btn-sm" style={{ marginTop:12 }} onClick={() => setScreen("SCANNER")}>Skan nu</button></div>
             )}
             {history.map((h,i) => {
               const s = h.result||h.status;
@@ -142,7 +154,7 @@ export default function ProfileScreen({
                 </button>
               </div>
               {allergens.length + customAllerg.length + (selectedENumbers?.length || 0) + (user?.diets?.length || 0) === 0
-                ? <div style={{ fontSize:13, color:"var(--muted)", padding:"8px 0" }}>Ingen præferencer registreret endnu</div>
+                ? <div style={{ textAlign:"center", padding:"16px 0" }}><div style={{ fontSize:36, marginBottom:8 }}>⚙️</div><div style={{ fontSize:13, color:"var(--muted)", marginBottom:10 }}>Ingen præferencer registreret endnu</div><button className="btn btn-outline btn-sm" onClick={() => setScreen("PREFERENCES")}>Tilføj allergener</button></div>
                 : (
                   <div>
                     {/* Gruppér: allergener, intoleranser, diæter */}
@@ -253,9 +265,7 @@ export default function ProfileScreen({
             {/* Gemte favoritter */}
             {favorites.length > 0 && <div className="card-lbl" style={{ marginBottom:6 }}>Gemte produkter</div>}
             {favorites.length === 0 && (
-              <div className="empty-state">
-                <div className="empty-txt">Ingen favoritter endnu</div>
-                <div className="empty-sub">Tryk ❤️ på et produkt for at gemme det her</div>
+              <div className="empty-state"><span className="empty-icon">🤍</span><div className="empty-txt">Ingen favoritter endnu</div><div className="empty-sub">Tryk ❤️ på et produkt under scanning for at gemme det her</div>
               </div>
             )}
             {favorites.map((f,i) => (
@@ -448,7 +458,7 @@ export default function ProfileScreen({
               <div className="card-lbl">Aktive profiler ved scanning</div>
               <FamilyChips />
             </div>
-            {family.length===0 && <div className="empty-state"><div className="empty-txt">Ingen familiemedlemmer endnu</div><div className="empty-sub">Tilføj nedenfor</div></div>}
+            {family.length===0 && <div className="empty-state"><span className="empty-icon">👨‍👩‍👧</span><div className="empty-txt">Ingen familiemedlemmer endnu</div><div className="empty-sub">Tilføj familiemedlemmer for at scanne for dem</div></div>}
             {family.map(m => (
               <div key={m.id} className="family-member">
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:m.allergens.length?10:0 }}>

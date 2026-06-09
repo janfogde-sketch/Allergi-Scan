@@ -269,7 +269,7 @@ export default function OnboardingScreen({
                 </button>
               )}
               <div style={{ flex:1 }}>
-                {onboardStep > 0 && <StepBar total={10} current={onboardStep === 25 ? 3 : onboardStep < 3 ? onboardStep : onboardStep + 1} />}
+                {onboardStep > 0 && <StepBar total={5} current={onboardStep} />}
               </div>
             </div>
 
@@ -376,7 +376,7 @@ export default function OnboardingScreen({
                 ) : null)}
               </div>
             )}
-            {onboardStep === 2 && (
+            {onboardStep === 97 && (
               <div className="fade-in">
                 <div className="card" style={{ textAlign:"center", padding:"20px 20px 14px" }}>
                   <div style={{ marginBottom:8 }}><Icon name="info" size={44} color="var(--ink2)" /></div>
@@ -410,7 +410,7 @@ export default function OnboardingScreen({
             )}
 
             {/* ── TRIN 2.5: Hvad kan EatSafe? ── */}
-            {onboardStep === 25 && (
+            {onboardStep === 96 && (
               <div className="fade-in">
                 <div style={{ textAlign:"center", marginBottom:20 }}>
                   <div style={{ fontSize:48, marginBottom:8 }}>✨</div>
@@ -458,13 +458,13 @@ export default function OnboardingScreen({
 
                 <div style={{ display:"flex", gap:8, marginTop:14 }}>
                   <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(2)}>← Tilbage</button>
-                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(3)}>Fortsæt →</button>
+                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(1)}>Fortsæt →</button>
                 </div>
               </div>
             )}
 
             {/* ── TRIN 3: Din profil ── */}
-            {onboardStep === 3 && (
+            {onboardStep === 1 && (
               <div className="fade-in">
                 <div className="card">
                   <div className="step-title">Hvem er du?</div>
@@ -503,7 +503,7 @@ export default function OnboardingScreen({
                     ))}
                   </div>
                 </div>
-                <button className="btn btn-primary btn-full" onClick={saveProfileStep1}
+                <button className="btn btn-primary btn-full" onClick={() => saveProfileStep1().then(() => setOnboardStep(2))}
                   disabled={!(user.name||"").trim() || !(user.email||loginEmail||"").trim()}>
                   Fortsæt →
                 </button>
@@ -515,8 +515,8 @@ export default function OnboardingScreen({
               </div>
             )}
 
-            {/* ── TRIN 4: Dine allergier / intolerancer ── */}
-            {onboardStep === 4 && (
+            {/* ── TRIN 2: Dine allergier / intolerancer ── */}
+            {onboardStep === 2 && (
               <div className="fade-in">
                 <div className="card">
                   <div className="step-title">Allergier / intolerancer</div>
@@ -564,13 +564,37 @@ export default function OnboardingScreen({
                   </div>
                 </div>
 
-                <button className="btn btn-primary btn-full" onClick={async () => { await saveAllergensStep2(); setOnboardStep(5); }}>Fortsæt →</button>
+                {/* ── E-numre: kollapsibel ── */}
+                <div style={{ marginTop:12, borderTop:"1px solid var(--border)", paddingTop:12 }}>
+                  <button
+                    onClick={() => setShowENumbersInOnboard(s => !s)}
+                    style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", background:"none", border:"none", cursor:"pointer", padding:"4px 0", fontFamily:"var(--f)" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                      <span style={{ fontSize:16 }}>🔢</span>
+                      <div style={{ textAlign:"left" }}>
+                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>
+                          Overvåg specifikke E-numre
+                          {selectedENumbers.length > 0 && <span style={{ fontSize:11, color:"var(--amber)", marginLeft:6 }}>{selectedENumbers.length} valgt</span>}
+                        </div>
+                        <div style={{ fontSize:11, color:"var(--muted)" }}>Valgfrit — kan altid tilføjes senere</div>
+                      </div>
+                    </div>
+                    <span style={{ fontSize:18, color:"var(--muted)", transform: showENumbersInOnboard ? "rotate(180deg)" : "none", transition:".2s" }}>⌄</span>
+                  </button>
+                  {showENumbersInOnboard && (
+                    <div style={{ marginTop:12 }}>
+                      <ENumberPicker selected={selectedENumbers} onChange={setSelectedENumbers} />
+                    </div>
+                  )}
+                </div>
+
+                <button className="btn btn-primary btn-full" style={{ marginTop:12 }} onClick={async () => { await saveAllergensStep2(); setOnboardStep(3); }}>Fortsæt →</button>
                 <div className="onboard-skip">Kan springes over</div>
               </div>
             )}
 
-            {/* ── TRIN 5: E-numre ── */}
-            {onboardStep === 5 && (
+            {/* ── TRIN 5 (gammel): E-numre — udgået, integreret i trin 2 ── */}
+            {onboardStep === 94 && (
               <div className="fade-in">
                 <div className="card">
                   <div className="step-title">E-numre</div>
@@ -615,7 +639,7 @@ export default function OnboardingScreen({
             )}
 
             {/* ── TRIN 7: Familie ── */}
-            {onboardStep === 7 && (
+            {onboardStep === 4 && (
               <div className="fade-in">
                 <div className="step-title" style={{ textAlign:"center" }}>Familiemedlemmer</div>
                 <div style={{ fontSize:13, color:"var(--muted2)", textAlign:"center", marginBottom:16 }}>Tilføj familiemedlemmer med egne allergier. Valgfrit.</div>
@@ -656,13 +680,13 @@ export default function OnboardingScreen({
                   />
                 </div>
 
-                <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(8)}>Fortsæt →</button>
+                <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(5)}>Fortsæt →</button>
                 <div className="onboard-skip">Kan springes over</div>
               </div>
             )}
 
             {/* ── TRIN 6: Diæt ── */}
-            {onboardStep === 6 && (
+            {onboardStep === 3 && (
               <div className="step fade-in">
                 <div className="step-title">Din diæt</div>
                 <div style={{ fontSize:13, color:"var(--muted2)", marginBottom:16, lineHeight:1.5 }}>
@@ -683,13 +707,13 @@ export default function OnboardingScreen({
                 <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5, marginBottom:20 }}>
                   Diæt-tjek er vejledende og baseret på produkttags. Tjek altid ingredienserne selv.
                 </div>
-                <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(7)}>Fortsæt →</button>
-                <button className="btn btn-ghost btn-full btn-sm" style={{ marginTop:8 }} onClick={() => { setUser(u => ({...u, diets:[]})); setOnboardStep(7); }}>Ingen særlig diæt</button>
+                <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(4)}>Fortsæt →</button>
+                <button className="btn btn-ghost btn-full btn-sm" style={{ marginTop:8 }} onClick={() => { setUser(u => ({...u, diets:[]})); setOnboardStep(4); }}>Ingen særlig diæt</button>
               </div>
             )}
 
             {/* ── TRIN 8: Fællesskabet ── */}
-            {onboardStep === 8 && (
+            {onboardStep === 95 && (
               <div className="fade-in">
                 <div className="card" style={{ textAlign:"center", padding:"20px 20px 14px" }}>
                   <div style={{ marginBottom:8 }}><Icon name="heart" size={44} color="var(--ink2)" /></div>
@@ -714,14 +738,14 @@ export default function OnboardingScreen({
                   ))}
                 </div>
                 <div style={{ display:"flex", gap:8, marginTop:14 }}>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(7)}>← Tilbage</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(4)}>← Tilbage</button>
                   <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(9)}>Fortsæt →</button>
                 </div>
               </div>
             )}
 
             {/* ── TRIN 9: Oversigt & Klar! ── */}
-            {onboardStep === 9 && (
+            {onboardStep === 5 && (
               <div className="fade-in">
 
                 {/* Header */}
@@ -743,7 +767,7 @@ export default function OnboardingScreen({
                       {user.name || "Din profil"}
                     </div>
                     <button className="btn btn-ghost btn-sm" style={{ fontSize:12, padding:"4px 10px" }}
-                      onClick={() => setOnboardStep(3)}>
+                      onClick={() => setOnboardStep(1)}>
                       Rediger
                     </button>
                   </div>
@@ -832,11 +856,25 @@ export default function OnboardingScreen({
                 {family.length === 0 && (
                   <div className="card" style={{ marginBottom:12, textAlign:"center", padding:"14px" }}>
                     <div style={{ fontSize:13, color:"var(--muted2)", marginBottom:8 }}>Ingen familiemedlemmer tilføjet</div>
-                    <button className="btn btn-outline btn-sm" onClick={() => setOnboardStep(7)}>
+                    <button className="btn btn-outline btn-sm" onClick={() => setOnboardStep(4)}>
                       + Tilføj familiemedlem
                     </button>
                   </div>
                 )}
+
+                {/* Fællesskab-card */}
+                <div style={{ background:"var(--warm-lt)", border:"1px solid var(--warm-md)", borderRadius:14, padding:"16px 18px", marginBottom:12, display:"flex", gap:12, alignItems:"flex-start" }}>
+                  <div style={{ fontSize:28, flexShrink:0 }}>🤝</div>
+                  <div>
+                    <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>Du er nu en del af fællesskabet</div>
+                    <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5 }}>Når du scanner ukendte produkter og indsender data, hjælper du alle andre med de samme allergier. Tak!</div>
+                  </div>
+                </div>
+
+                {/* Disclaimer */}
+                <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5, marginBottom:16, textAlign:"center", padding:"0 8px" }}>
+                  ⚕️ EatSafe er vejledende og erstatter ikke medicinsk rådgivning. Tjek altid produktets emballage.
+                </div>
 
                 {/* Afslut */}
                 <button className="btn btn-primary btn-full" style={{ marginTop:4 }} onClick={finishOnboard}>

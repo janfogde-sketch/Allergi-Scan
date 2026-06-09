@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, Suspense, useEffect, useCallback, useRef } from "react";
 
 // ─── BUILD INFO (injiceres af Vite ved build-tid) ─────────────────────────────
 import {
@@ -24,13 +24,16 @@ import {
 
 import { ENumberPicker } from "./AllergenPicker.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
-import AdminScreen from './AdminScreen.jsx';
+const AdminScreen = React.lazy(() => import('./AdminScreen.jsx'));
 import OnboardingScreen from './OnboardingScreen.jsx';
 import MadpasScreen from './MadpasScreen.jsx';
 import ProfileScreen from './ProfileScreen.jsx';
 import ScannerScreen from './ScannerScreen.jsx';
-import RecipesScreen from './RecipesScreen.jsx';
-import KnowledgeScreen from './KnowledgeScreen.jsx';
+const RecipesScreen = React.lazy(() => import('./RecipesScreen.jsx'));
+const KnowledgeScreen = React.lazy(() => import('./KnowledgeScreen.jsx'));
+import ErrorBoundary from './ErrorBoundary.jsx';
+import { useNavigation } from './useNavigation.js';
+import { useOffline, saveToOfflineCache, getFromOfflineCache } from './useOffline.js';
 
 import { appCss } from './theme.jsx';
 import { BUILD_TIME, COMMIT_SHA, formatBuildTime, getGreeting, buildScreenLabel } from './utils.jsx';
@@ -315,9 +318,9 @@ export default function EatSafe() {
       } catch { /* html5-qrcode fejlede — prøv Claude Vision */ }
 
       // Trin 2: Send billede til Claude Vision via OCR Edge Function
-      const base64 = await new Promise<string>((res, rej) => {
+      const base64 = await new Promise((res, rej) => {
         const r = new FileReader();
-        r.onload = () => res((r.result as string).split(",")[1]);
+        r.onload = () => res(r.result.split(",")[1]);
         r.onerror = rej;
         r.readAsDataURL(file);
       });
@@ -575,6 +578,10 @@ export default function EatSafe() {
     loadRecipes, loadRecipeIngredients, submitUserRecipe,
   } = useRecipes(accessToken, userId);
 
+  // ── Router — browser back-knap support ──────────────────────────────────
+  const { navigate, goBack, canGoBack } = useNavigation(screen, setScreen, SCREENS);
+  const isOffline = useOffline();
+
   const [notFoundEan, setNotFoundEan] = useState("");
   const {
     scanResult, setScanResult,
@@ -721,8 +728,17 @@ export default function EatSafe() {
     if (navigator.vibrate) navigator.vibrate(40);
     const tid = traceId("scan");
     traceLog(tid, "scan:start", { ean: ean.trim() });
-    const cached = productCacheRef.current[ean.trim()];
-    if (cached) { traceLog(tid, "scan:cache-hit"); setScanResult(cached); setScreen(SCREENS.RESULT); return; }
+    const cached = productCacheRef.current[ean.trim()] || getFromOfflineCache(ean.trim());
+    if (cached) {
+      traceLog(tid, "scan:cache-hit");
+      setScanResult(cached); setScreen(SCREENS.RESULT);
+      return;
+    }
+    // Offline uden cache — vis besked
+    if (!navigator.onLine) {
+      setScanError("Du er offline og dette produkt er ikke i den lokale cache.");
+      setLoading(false); return;
+    }
     setLoading(true); setScanResult(null); setScanError(""); setShowIng(false);
     try {
       const data = await apiCall(`${SUPABASE_URL}/functions/v1/products/${ean.trim()}`, {
@@ -807,6 +823,7 @@ export default function EatSafe() {
         timestamp: Date.now(),
       };
       productCacheRef.current[ean.trim()] = result;
+      saveToOfflineCache(ean.trim(), result);
       const cacheKeys = Object.keys(productCacheRef.current);
       if (cacheKeys.length > 50) delete productCacheRef.current[cacheKeys[0]];
       traceLog(tid, "scan:result", { ean: ean.trim(), name: result.name, status, matchedDanger, matchedWarning });
@@ -941,7 +958,7 @@ export default function EatSafe() {
             StepBar={StepBar}
             buildLabel={formatBuildTime()}
           />
-        )}
+        }
         {/* TOPBAR */}
         {!isOnboard && (
           <header className="topbar">
@@ -1181,9 +1198,38 @@ export default function EatSafe() {
           family={family} history={history} activeProfiles={activeProfiles}
         />
 
-        {/* ══ HJEM ══ */}        {/* ══ HJEM ══ */}
+        {/* ── OFFLINE BANNER ── */}
+        {isOffline && (
+          <div style={{
+            position:"sticky", top:0, zIndex:200,
+            background:"var(--amber)", color:"#000",
+            fontSize:12, fontWeight:700,
+            padding:"8px 16px",
+            display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+            textAlign:"center",
+          }}>
+            📵 Offline — viser lokalt cachede data
+          </div>
+        )}
+
+        {/* ══ HJEM ══ */}        {/* ── OFFLINE BANNER ── */}
+        {isOffline && (
+          <div style={{
+            position:"sticky", top:0, zIndex:200,
+            background:"var(--amber)", color:"#000",
+            fontSize:12, fontWeight:700,
+            padding:"8px 16px",
+            display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+            textAlign:"center",
+          }}>
+            📵 Offline — viser lokalt cachede data
+          </div>
+        )}
+
+        {/* ══ HJEM ══ */}
         {/* ══ SCANNER SCREENS ══ */}
         {(screen === SCREENS.HOME || screen === SCREENS.RESULT || screen === SCREENS.NOTFOUND || screen === SCREENS.SUBMITTED || screen === SCREENS.SEARCH || screen === SCREENS.LIST || screen === SCREENS.SUGGEST_EDIT) && (
+          <ErrorBoundary screen="Scanner">
           <ScannerScreen
             screen={screen} setScreen={setScreen}
             scanResult={scanResult} notFoundEan={notFoundEan}
@@ -1246,10 +1292,12 @@ export default function EatSafe() {
             activeENumbers={activeENumbers}
             onBetaClick={() => { setBetaIntroSeen(false); setBetaIntroStep(0); }}
           />
-        )}
+          </ErrorBoundary>
+        }
 
         {/* ══ MADPAS SCREEN ══ */}
         {(screen === SCREENS.MADPAS || madpasWaiterView) && (
+          <ErrorBoundary screen="Madpas">
           <MadpasScreen
             screen={screen}
             madpasLang={madpasLang} setMadpasLang={setMadpasLang}
@@ -1263,22 +1311,27 @@ export default function EatSafe() {
             madpasSpeak={madpasSpeak}
             selectedENumbers={selectedENumbers}
           />
-        )}
+          </ErrorBoundary>
+        }
 
         {/* ══ KNOWLEDGE / LEKSIKON SCREEN ══ */}
         {screen === SCREENS.KNOWLEDGE && (
+          <Suspense fallback={<div style={{padding:"40px 16px",textAlign:"center"}}><div style={{width:28,height:28,border:"3px solid var(--border2)",borderTopColor:"var(--green)",borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto"}} /></div>}>
+          <ErrorBoundary screen="Leksikon">
           <KnowledgeScreen
             screen={screen} setScreen={setScreen}
             accessToken={accessToken}
             openSlug={knowledgeSlug}
             onSlugHandled={() => setKnowledgeSlug(null)}
           />
-        )}
+          </ErrorBoundary>
+        }
 
         {/* ══ PROFILE SCREENS ══ */}
         {(screen === SCREENS.HISTORY || screen === SCREENS.PROFILE ||
           screen === SCREENS.FAVORITES || screen === SCREENS.EDITPROFILE ||
           screen === SCREENS.FAMILY) && (
+          <ErrorBoundary screen="Profil">
           <ProfileScreen
             screen={screen} setScreen={setScreen}
             user={user} setUser={setUser}
@@ -1315,10 +1368,13 @@ export default function EatSafe() {
             loadAdminStats={loadAdminStats} loadSubmissions={loadSubmissions} loadTickets={loadTickets}
             setAdminSection={setAdminSection} setSubmissionFilter={setSubmissionFilter}
           />
-        )}
+          </ErrorBoundary>
+        }
 
         {/* ══ RECIPES SCREEN ══ */}
         {screen === SCREENS.RECIPES && (
+          <Suspense fallback={<div style={{padding:"40px 16px",textAlign:"center"}}><div style={{width:28,height:28,border:"3px solid var(--border2)",borderTopColor:"var(--green)",borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto"}} /></div>}>
+          <ErrorBoundary screen="Opskrifter">
           <RecipesScreen
             screen={screen} setScreen={setScreen}
             recipes={recipes} recipesLoading={recipesLoading}
@@ -1346,12 +1402,15 @@ export default function EatSafe() {
             setRecipes={setRecipes}
             addToList={addToList}
           />
-        )}
+          </ErrorBoundary>
+        }
 
 
 
         {/* ADMIN PANEL */}
         {screen === SCREENS.ADMIN && user?.role === "admin" && (
+          <Suspense fallback={null}>
+          <ErrorBoundary screen="Admin">
           <AdminScreen
             screen={screen} setScreen={setScreen}
             adminSection={adminSection} setAdminSection={setAdminSection}
@@ -1382,7 +1441,8 @@ export default function EatSafe() {
             ticketsLoading={ticketsLoading}
             userSearch={userSearch} setUserSearch={setUserSearch}
           />
-        )}
+          </ErrorBoundary>
+        }
 
         {/* BUNDNAVIGATION */}
         {!isOnboard && !madpasWaiterView && (

@@ -437,6 +437,8 @@ export default function RecipesScreen({
                 <div style={{ textAlign:"center", padding:"48px 0" }}>
                   <div style={{ fontSize:52, marginBottom:12 }}>🤍</div>
                   <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)", marginBottom:6 }}>Ingen favoritter endnu</div>
+                  <div style={{ fontSize:13, color:"var(--muted)", marginBottom:14 }}>Tryk ❤️ på opskrifter for at gemme dem her</div>
+                  <button className="btn btn-outline btn-sm" onClick={() => setRecipeFilter("alle")}>Se alle opskrifter</button>
                   <div style={{ fontSize:13, color:"var(--muted)" }}>Tryk ❤️ på en opskrift for at gemme den</div>
                 </div>
               )}
@@ -454,7 +456,7 @@ export default function RecipesScreen({
               {/* Ingen søgeresultater */}
               {!recipesLoading && recipes.length > 0 && filtered.length === 0 && recipeFilter !== "favoritter" && recipeSearch && (
                 <div style={{ textAlign:"center", padding:"32px 0" }}>
-                  <div style={{ fontSize:13, color:"var(--muted)", marginBottom:10 }}>Ingen opskrifter matcher "{recipeSearch}"</div>
+                  <div style={{ textAlign:"center", padding:"40px 16px" }}><div style={{ fontSize:48, marginBottom:12 }}>🔍</div><div style={{ fontSize:17, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>Ingen resultater</div><div style={{ fontSize:13, color:"var(--muted)", marginBottom:14 }}>Ingen opskrifter matcher "{recipeSearch}"</div><button className="btn btn-outline btn-sm" onClick={() => setRecipeSearch("")}>Ryd søgning</button></div>
                   <button className="btn btn-ghost btn-sm" onClick={() => setRecipeSearch("")}>Ryd søgning</button>
                 </div>
               )}

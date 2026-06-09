@@ -669,7 +669,50 @@ export default function ScannerScreen({
         {screen === SCREENS.RESULT && scanResult && (
           <div className="screen fade-in">
 
-            {/* ── 1. SIKKERHED + DIÆT ── */}
+            {/* ── 1. PRODUKT ── */}
+            {(() => {
+              const vb = verifiedBadge(scanResult.verified_status, scanResult.source);
+              return (
+                <div className="product-hero">
+                  {scanResult.image_url
+                    ? <img loading="lazy" src={scanResult.image_url} alt={scanResult.name} className="product-hero-img" onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
+                    : null}
+                  <div className="product-hero-img-placeholder" style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"column", gap:8, background:"var(--paper2)", borderRadius:12, padding:20, margin:"0 0 10px" }}>
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="var(--border2)" strokeWidth="1.5">
+                      <rect x="4" y="10" width="40" height="30" rx="3"/>
+                      <circle cx="16" cy="20" r="4"/>
+                      <path strokeLinecap="round" d="M4 34l10-8 8 6 6-4 16 12"/>
+                    </svg>
+                    <div style={{ fontSize:11, color:"var(--muted)", fontWeight:500 }}>Ingen produktbillede</div>
+                  </div>
+                  <div className="product-hero-body">
+                    <div className="product-hero-name">{scanResult.name}</div>
+                    {scanResult.brand && <div className="product-hero-brand">{scanResult.brand}</div>}
+                    <div className="product-hero-meta">
+                      <span style={{ fontSize:10, color:"var(--muted)", fontWeight:500 }}>EAN: {scanResult.code}</span>
+                      <span style={{ display:"inline-flex", alignItems:"center", gap:4,
+                        fontSize:10, fontWeight:700, padding:"2px 9px", borderRadius:20,
+                        background:vb.bg, color:vb.color, border:`1px solid ${vb.dot}22` }}>
+                        <span style={{ width:5, height:5, borderRadius:"50%", background:vb.dot, flexShrink:0, display:"inline-block" }} />
+                        {vb.label}
+                      </span>
+                      {scanResult.verified_status === "pending" && (
+                        <span style={{
+                          display:"inline-flex", alignItems:"center", gap:4,
+                          padding:"2px 9px", borderRadius:20,
+                          background:"var(--amber-lt)", border:"1px solid rgba(251,191,36,.3)",
+                          fontSize:10, fontWeight:700, color:"var(--amber)",
+                        }}>
+                          ⏳ Afventer godkendelse
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── 2. SIKKERHED + DIÆT ── */}
             {(() => {
               const flags = scanResult.allergen_flags || {};
               const profiles = [
@@ -724,7 +767,14 @@ export default function ScannerScreen({
                         <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", flex:1 }}>
                           {p.id==="me" ? "Dig" : p.name}
                         </div>
-                        <div style={{ fontSize:11, fontWeight:700, color:finalColor, flexShrink:0 }}>{finalIcon} {statusText}</div>
+                        <div
+                          style={{ fontSize:11, fontWeight:700, color:finalColor, flexShrink:0, cursor: danger.length > 0 || warning.length > 0 ? "pointer" : "default" }}
+                          onClick={() => {
+                            const first = [...danger, ...warning][0];
+                            if (first) { setKnowledgeSlug(first); setScreen(SCREENS.KNOWLEDGE); }
+                          }}>
+                          {finalIcon} {statusText}{(danger.length > 0 || warning.length > 0) ? " ›" : ""}
+                        </div>
                       </div>
                     );
                   })}
@@ -745,12 +795,15 @@ export default function ScannerScreen({
                         </div>
                         <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
                           {matched.map(e => (
-                            <span key={e} style={{
-                              fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:6,
-                              background:"rgba(255,180,0,.15)", color:"var(--amber)",
-                              border:"1px solid var(--amber-md)",
-                            }}>
-                              {e} {E_NUMBERS[e] ? "— " + E_NUMBERS[e].split("—")[0].trim() : ""}
+                            <span key={e}
+                              onClick={() => { const slug = "e-" + e.toLowerCase().replace("e",""); setKnowledgeSlug(slug); setScreen(SCREENS.KNOWLEDGE); }}
+                              style={{
+                                fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:6,
+                                background:"rgba(255,180,0,.15)", color:"var(--amber)",
+                                border:"1px solid var(--amber-md)",
+                                cursor:"pointer", display:"inline-flex", alignItems:"center", gap:4,
+                              }}>
+                              {e} {E_NUMBERS[e] ? "— " + E_NUMBERS[e].split("—")[0].trim() : ""} <span style={{ fontSize:9, opacity:.6 }}>›</span>
                             </span>
                           ))}
                         </div>
@@ -827,70 +880,7 @@ export default function ScannerScreen({
               );
             })()}
 
-            {/* ── 2. PRODUKT HERO ── */}
-            {(() => {
-              const vb = verifiedBadge(scanResult.verified_status, scanResult.source);
-              return (
-                <div className="product-hero">
-                  {scanResult.image_url
-                    ? <img loading="lazy" src={scanResult.image_url} alt={scanResult.name} className="product-hero-img" onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
-                    : null}
-                  <div className="product-hero-img-placeholder" style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"column", gap:8, background:"var(--paper2)", borderRadius:12, padding:20, margin:"0 0 10px" }}>
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="var(--border2)" strokeWidth="1.5">
-                      <rect x="4" y="10" width="40" height="30" rx="3"/>
-                      <circle cx="16" cy="20" r="4"/>
-                      <path strokeLinecap="round" d="M4 34l10-8 8 6 6-4 16 12"/>
-                    </svg>
-                    <div style={{ fontSize:11, color:"var(--muted)", fontWeight:500 }}>Ingen produktbillede</div>
-                  </div>
-                  <div className="product-hero-body">
-                    <div className="product-hero-name">{scanResult.name}</div>
-                    {scanResult.brand && <div className="product-hero-brand">{scanResult.brand}</div>}
-                    <div className="product-hero-meta">
-                      <span style={{ fontSize:10, color:"var(--muted)", fontWeight:500 }}>EAN: {scanResult.code}</span>
-                      <span style={{ display:"inline-flex", alignItems:"center", gap:4,
-                        fontSize:10, fontWeight:700, padding:"2px 9px", borderRadius:20,
-                        background:vb.bg, color:vb.color, border:`1px solid ${vb.dot}22` }}>
-                        <span style={{ width:5, height:5, borderRadius:"50%", background:vb.dot, flexShrink:0, display:"inline-block" }} />
-                        {vb.label}
-                      </span>
-                      {scanResult.verified_status === "pending" && (
-                        <span style={{
-                          display:"inline-flex", alignItems:"center", gap:4,
-                          padding:"2px 9px", borderRadius:20,
-                          background:"var(--amber-lt)", border:"1px solid rgba(251,191,36,.3)",
-                          fontSize:10, fontWeight:700, color:"var(--amber)",
-                        }}>
-                          ⏳ Afventer godkendelse
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* ── 2b. HANDLINGSKNAPPER (under hero) ── */}
-            <div style={{ display:"flex", gap:8, marginBottom:10 }}>
-              <button className="btn btn-sm" style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-                  background: isFavorite(scanResult.code) ? "var(--amber-lt)" : "var(--paper2)",
-                  color: isFavorite(scanResult.code) ? "var(--amber)" : "var(--ink2)",
-                  border:"1px solid var(--border)" }}
-                onClick={() => toggleFavorite(scanResult)}>
-                <Icon name="heart" size={15} color={isFavorite(scanResult.code) ? "var(--amber)" : "var(--muted)"} />
-                {isFavorite(scanResult.code) ? "Fjern favorit" : "Favorit"}
-              </button>
-              <button className="btn btn-ghost btn-sm" style={S.flex1}
-                onClick={() => { if(navigator.share) navigator.share({title:scanResult.name, text:scanResult.headline}); }}>
-                <Icon name="share" size={15} color="var(--muted)" /> Del
-              </button>
-              <button className="btn btn-outline btn-sm" style={S.flex1}
-                onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients || ""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
-                Ret data
-              </button>
-            </div>
-
-            {/* ── 3. ANDRE ALLERGENER I PRODUKTET ── */}
+            {/* ── 3. ALLERGENER ── */}
             {scanResult.allergen_flags && (() => {
               const flags = scanResult.allergen_flags;
               const present = Object.entries(flags).filter(([k,v]) => v==="yes" && ALLERGENS.find(a=>a.id===k));
@@ -941,7 +931,28 @@ export default function ScannerScreen({
               )}
             </div>
 
-            {/* ── 5. NÆRINGSINDHOLD — kollapsibel ── */}
+            {/* ── 5. HANDLINGER ── */}
+            <div style={{ display:"flex", gap:8, marginBottom:10 }}>
+              <button className="btn btn-sm" style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+                  background: isFavorite(scanResult.code) ? "var(--amber-lt)" : "var(--paper2)",
+                  color: isFavorite(scanResult.code) ? "var(--amber)" : "var(--ink2)",
+                  border:"1px solid var(--border)" }}
+                onClick={() => toggleFavorite(scanResult)}>
+                <Icon name="heart" size={15} color={isFavorite(scanResult.code) ? "var(--amber)" : "var(--muted)"} />
+                {isFavorite(scanResult.code) ? "Fjern favorit" : "Favorit"}
+              </button>
+              <button className="btn btn-ghost btn-sm" style={S.flex1}
+                onClick={() => { if(navigator.share) navigator.share({title:scanResult.name, text:scanResult.headline}); }}>
+                <Icon name="share" size={15} color="var(--muted)" /> Del
+              </button>
+              <button className="btn btn-outline btn-sm" style={S.flex1}
+                onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients || ""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
+                Ret data
+              </button>
+            </div>
+
+
+            {/* ── 6. NÆRINGSINDHOLD — kollapsibel ── */}
             {!scanResult.nutrition && (
               <div className="card">
                 <div className="ing-toggle" style={{ cursor:"default" }}>
