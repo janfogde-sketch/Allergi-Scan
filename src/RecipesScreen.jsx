@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { ALLERGENS, SCREENS } from "./constants.jsx";
+import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { compareAllergens, getAllergenLabels } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges } from "./SharedComponents.jsx";
 
@@ -625,6 +625,271 @@ export default function RecipesScreen({
             </div>
           );
         })()}
+
+        {/* ── INDSEND OPSKRIFT ── */}
+        {screen === SCREENS.RECIPES && showSubmitRecipe && (() => {
+
+          const UNITS = ["g","kg","ml","l","dl","spsk","tsk","stk","fed","nip","bundt","dåse","pose","pakke"];
+          const CATS  = ["aftensmad","morgenmad","frokost","dessert","tilbehør","snack"];
+
+          // Auto-detect allergener fra ingrediensnavn
+          const detectAllergens = (name) => {
+            const n = name.toLowerCase();
+            const found = [];
+            ALLERGENS.forEach(a => {
+              if ((a.keywords||[]).some(k => n.includes(k.toLowerCase()))) found.push(a.id);
+            });
+            return found;
+          };
+
+          // Genberegn allergener fra alle ingredienser
+          const recomputeAllergens = (ings) => {
+            const all = new Set();
+            ings.forEach(i => { if(i.name) detectAllergens(i.name).forEach(id => all.add(id)); });
+            return [...all];
+          };
+
+          const [imgFile, setImgFile] = React.useState(null);
+          const [imgPreview, setImgPreview] = React.useState(null);
+          const [imgUploading, setImgUploading] = React.useState(false);
+
+          const handleImg = (e) => {
+            const f = e.target.files[0];
+            if (!f) return;
+            setImgFile(f);
+            setImgPreview(URL.createObjectURL(f));
+          };
+
+          const autoAllergens = recomputeAllergens(submitIngredients);
+          const [manualAllergens, setManualAllergens] = React.useState([]);
+          const [removedAuto, setRemovedAuto] = React.useState([]);
+          const finalAllergens = [
+            ...autoAllergens.filter(id => !removedAuto.includes(id)),
+            ...manualAllergens.filter(id => !autoAllergens.includes(id)),
+          ];
+
+          const handleSubmit = async () => {
+            if (submittingRecipe) return;
+            let imageUrl = null;
+            if (imgFile) {
+              setImgUploading(true);
+              try {
+                const ext = imgFile.name.split(".").pop();
+                const path = `recipes/${Date.now()}.${ext}`;
+                const res = await fetch(
+                  `${SUPABASE_URL}/storage/v1/object/product-images/${path}`,
+                  { method:"POST", headers:{ "apikey":SUPABASE_ANON_KEY, "Authorization":`Bearer ${accessToken}`, "Content-Type":imgFile.type }, body:imgFile }
+                );
+                if (res.ok) imageUrl = `${SUPABASE_URL}/storage/v1/object/public/product-images/${path}`;
+              } catch {}
+              setImgUploading(false);
+            }
+            await submitUserRecipe(imageUrl, finalAllergens);
+          };
+
+          return (
+            <div className="screen fade-in">
+              {/* Header */}
+              <div style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 0 16px" }}>
+                <button onClick={() => setShowSubmitRecipe(false)}
+                  style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", lineHeight:0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+                </button>
+                <div>
+                  <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)" }}>Indsend opskrift</div>
+                  <div style={{ fontSize:11, color:"var(--muted)" }}>Sendes til gennemgang før publicering</div>
+                </div>
+              </div>
+
+              {/* ── 1. Billede ── */}
+              <div style={{ marginBottom:20 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Billede</div>
+                <label style={{ display:"block", cursor:"pointer" }}>
+                  <input type="file" accept="image/*" onChange={handleImg} style={{ display:"none" }} />
+                  <div style={{
+                    width:"100%", height:160, borderRadius:14, border:`2px dashed var(--border2)`,
+                    background:"var(--surface)", display:"flex", alignItems:"center", justifyContent:"center",
+                    overflow:"hidden", position:"relative",
+                  }}>
+                    {imgPreview
+                      ? <img src={imgPreview} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                      : <div style={{ textAlign:"center" }}>
+                          <div style={{ fontSize:32, marginBottom:6 }}>📷</div>
+                          <div style={{ fontSize:13, color:"var(--muted)" }}>Tryk for at vælge billede</div>
+                          <div style={{ fontSize:11, color:"var(--muted2)" }}>Valgfrit</div>
+                        </div>
+                    }
+                  </div>
+                </label>
+              </div>
+
+              {/* ── 2. Grundinfo ── */}
+              <div style={{ marginBottom:20 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Grundinfo</div>
+                <input placeholder="Titel *" value={submitRecipe.title} onChange={e => setSubmitRecipe(r => ({...r, title:e.target.value}))}
+                  style={{ width:"100%", padding:"11px 14px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:14, boxSizing:"border-box", marginBottom:8, outline:"none" }} />
+                <textarea placeholder="Kort beskrivelse (valgfrit)" value={submitRecipe.description||""} onChange={e => setSubmitRecipe(r => ({...r, description:e.target.value}))} rows={2}
+                  style={{ width:"100%", padding:"11px 14px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, boxSizing:"border-box", resize:"none", marginBottom:8, outline:"none" }} />
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:8 }}>
+                  <select value={submitRecipe.category} onChange={e => setSubmitRecipe(r => ({...r, category:e.target.value}))}
+                    style={{ padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }}>
+                    {CATS.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase()+c.slice(1)}</option>)}
+                  </select>
+                  <div style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 12px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10 }}>
+                    <span style={{ fontSize:12, color:"var(--muted)", flexShrink:0 }}>👤</span>
+                    <input type="number" min={1} max={20} value={submitRecipe.servings||4} onChange={e => setSubmitRecipe(r => ({...r, servings:+e.target.value}))}
+                      style={{ width:"100%", background:"none", border:"none", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
+                    <span style={{ fontSize:11, color:"var(--muted)", flexShrink:0 }}>pers.</span>
+                  </div>
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 12px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10 }}>
+                    <span style={{ fontSize:12, color:"var(--muted)", flexShrink:0 }}>⏱ Forb.</span>
+                    <input type="number" min={0} placeholder="0" value={submitRecipe.prep_time_minutes||""} onChange={e => setSubmitRecipe(r => ({...r, prep_time_minutes:+e.target.value}))}
+                      style={{ width:"100%", background:"none", border:"none", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
+                    <span style={{ fontSize:11, color:"var(--muted)" }}>min</span>
+                  </div>
+                  <div style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 12px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10 }}>
+                    <span style={{ fontSize:12, color:"var(--muted)", flexShrink:0 }}>🍳 Tilb.</span>
+                    <input type="number" min={0} placeholder="0" value={submitRecipe.cook_time_minutes||""} onChange={e => setSubmitRecipe(r => ({...r, cook_time_minutes:+e.target.value}))}
+                      style={{ width:"100%", background:"none", border:"none", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
+                    <span style={{ fontSize:11, color:"var(--muted)" }}>min</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── 3. Ingredienser ── */}
+              <div style={{ marginBottom:20 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Ingredienser</div>
+                {submitIngredients.map((ing, idx) => (
+                  <div key={idx} style={{ display:"grid", gridTemplateColumns:"1fr 80px 80px 32px", gap:6, marginBottom:6 }}>
+                    <input placeholder="Ingrediens *" value={ing.name} onChange={e => {
+                      const next = submitIngredients.map((x,i) => i===idx ? {...x, name:e.target.value} : x);
+                      setSubmitIngredients(next);
+                    }}
+                    style={{ padding:"9px 10px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
+                    <input placeholder="Mængde" value={ing.amount} onChange={e => setSubmitIngredients(submitIngredients.map((x,i)=>i===idx?{...x,amount:e.target.value}:x))}
+                      style={{ padding:"9px 8px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, textAlign:"center", outline:"none" }} />
+                    <select value={ing.unit||""} onChange={e => setSubmitIngredients(submitIngredients.map((x,i)=>i===idx?{...x,unit:e.target.value}:x))}
+                      style={{ padding:"9px 6px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:12, outline:"none" }}>
+                      <option value="">enhed</option>
+                      {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                    <button onClick={() => setSubmitIngredients(submitIngredients.filter((_,i)=>i!==idx))}
+                      style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, cursor:"pointer", color:"var(--red)", fontSize:16, display:"flex", alignItems:"center", justifyContent:"center" }}>×</button>
+                  </div>
+                ))}
+                {/* Auto-detekterede allergener */}
+                {autoAllergens.filter(id => !removedAuto.includes(id)).length > 0 && (
+                  <div style={{ padding:"10px 12px", background:"rgba(255,186,59,.08)", border:"1px solid rgba(255,186,59,.2)", borderRadius:10, marginBottom:8 }}>
+                    <div style={{ fontSize:11, fontWeight:700, color:"var(--amber)", marginBottom:6 }}>⚠️ Auto-detekterede allergener — tryk × for at fjerne fejl</div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                      {autoAllergens.filter(id => !removedAuto.includes(id)).map(id => {
+                        const a = ALLERGENS.find(x=>x.id===id);
+                        return (
+                          <div key={id} style={{ display:"flex", alignItems:"center", gap:4, padding:"3px 8px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:100, fontSize:11, fontWeight:700, color:"var(--amber)" }}>
+                            {a?.emoji} {a?.label||id}
+                            <span style={{ cursor:"pointer", opacity:.7, marginLeft:2 }} onClick={() => setRemovedAuto(r=>[...r,id])}>×</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                <button onClick={() => setSubmitIngredients([...submitIngredients, {name:"",amount:"",unit:""}])}
+                  style={{ width:"100%", padding:"9px", borderRadius:10, border:"1px dashed var(--border2)", background:"none", color:"var(--muted)", fontFamily:"var(--f)", fontSize:13, cursor:"pointer" }}>
+                  ＋ Tilføj ingrediens
+                </button>
+              </div>
+
+              {/* ── 4. Fremgangsmåde ── */}
+              <div style={{ marginBottom:20 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Fremgangsmåde</div>
+                {submitSteps.map((step, idx) => (
+                  <div key={idx} style={{ display:"flex", gap:8, marginBottom:8, alignItems:"flex-start" }}>
+                    <div style={{ width:26, height:26, borderRadius:"50%", background:"var(--green-lt)", border:"1px solid rgba(74,222,128,.3)", color:"var(--green)", fontWeight:800, fontSize:12, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:8 }}>{idx+1}</div>
+                    <textarea
+                      placeholder={`Trin ${idx+1}…`} value={step} rows={2}
+                      onChange={e => setSubmitSteps(submitSteps.map((s,i)=>i===idx?e.target.value:s))}
+                      style={{ flex:1, padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, resize:"none", outline:"none" }} />
+                    {submitSteps.length > 1 && (
+                      <button onClick={() => setSubmitSteps(submitSteps.filter((_,i)=>i!==idx))}
+                        style={{ marginTop:8, background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, cursor:"pointer", color:"var(--red)", fontSize:14, width:28, height:28, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>×</button>
+                    )}
+                  </div>
+                ))}
+                <button onClick={() => setSubmitSteps([...submitSteps, ""])}
+                  style={{ width:"100%", padding:"9px", borderRadius:10, border:"1px dashed var(--border2)", background:"none", color:"var(--muted)", fontFamily:"var(--f)", fontSize:13, cursor:"pointer" }}>
+                  ＋ Tilføj trin {submitSteps.length + 1}
+                </button>
+              </div>
+
+              {/* ── 5. Diæter & manuelle allergener ── */}
+              <div style={{ marginBottom:20 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Diæt & allergener</div>
+
+                {/* Diæter */}
+                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:8 }}>Passer opskriften til:</div>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:14 }}>
+                  {(DIETS||[]).map(d => {
+                    const active = (submitRecipe.tags||[]).includes(d.id);
+                    return (
+                      <div key={d.id} onClick={() => setSubmitRecipe(r => ({ ...r, tags: active ? (r.tags||[]).filter(t=>t!==d.id) : [...(r.tags||[]),d.id] }))}
+                        style={{ padding:"6px 12px", borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700,
+                          background: active ? "var(--green-lt)" : "var(--surface)",
+                          color: active ? "var(--green)" : "var(--muted2)",
+                          border:`1px solid ${active ? "rgba(74,222,128,.3)" : "var(--border)"}`,
+                        }}>
+                        {d.emoji||"🥗"} {d.label}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Manuelle allergener */}
+                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:8 }}>Manuelle allergener (hvis ikke auto-detekteret):</div>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                  {ALLERGENS.map(a => {
+                    const isAuto = autoAllergens.includes(a.id) && !removedAuto.includes(a.id);
+                    const isManual = manualAllergens.includes(a.id);
+                    if (isAuto) return null;
+                    return (
+                      <div key={a.id} onClick={() => setManualAllergens(m => isManual ? m.filter(id=>id!==a.id) : [...m,a.id])}
+                        style={{ padding:"5px 10px", borderRadius:100, cursor:"pointer", fontSize:11, fontWeight:700,
+                          background: isManual ? "var(--red-lt)" : "var(--surface)",
+                          color: isManual ? "var(--red)" : "var(--muted2)",
+                          border:`1px solid ${isManual ? "var(--red-md)" : "var(--border)"}`,
+                        }}>
+                        {a.emoji} {a.label}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* ── 6. Send ── */}
+              <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:20 }}>
+                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>Opsummering</div>
+                <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6 }}>
+                  <div>📌 {submitRecipe.title || "Ingen titel endnu"}</div>
+                  <div>🍽️ {submitRecipe.category} · 👤 {submitRecipe.servings||4} pers.</div>
+                  <div>🥕 {submitIngredients.filter(i=>i.name).length} ingredienser · 📋 {submitSteps.filter(s=>s.trim()).length} trin</div>
+                  {finalAllergens.length > 0 && <div>⚠️ Allergener: {finalAllergens.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}</div>}
+                </div>
+              </div>
+
+              <div style={{ fontSize:11, color:"var(--muted)", textAlign:"center", lineHeight:1.5, marginBottom:14 }}>
+                ⚕️ Allergener er vejledende. Admins gennemgår opskriften inden publicering.
+              </div>
+
+              <button onClick={handleSubmit} disabled={!submitRecipe.title.trim() || submitIngredients.filter(i=>i.name.trim()).length===0 || submittingRecipe || imgUploading}
+                style={{ width:"100%", padding:"14px", borderRadius:12, background: submitRecipe.title.trim() ? "var(--green)" : "var(--surface2)", color: submitRecipe.title.trim() ? "#071510" : "var(--muted)", border:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor: submitRecipe.title.trim() ? "pointer" : "default", marginBottom:40 }}>
+                {submittingRecipe || imgUploading ? "Sender…" : "Send til godkendelse →"}
+              </button>
+            </div>
+          );
+        })()}
+
     </>
   );
 }

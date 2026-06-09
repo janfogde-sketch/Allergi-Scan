@@ -60,7 +60,7 @@ export function useRecipes(accessToken, userId) {
     setRecipeIngredients([]);
   };
 
-  const submitUserRecipe = async () => {
+  const submitUserRecipe = async (imageUrl = null, allergenFlags = []) => {
     if (!submitRecipe.title.trim() || submitIngredients.filter(i => i.name.trim()).length === 0) return;
     setSubmittingRecipe(true);
     try {
@@ -74,6 +74,8 @@ export function useRecipes(accessToken, userId) {
           source: "user",
           language: "da",
           status: "pending",
+          image_url: imageUrl || null,
+          allergen_flags: allergenFlags.length > 0 ? JSON.stringify(Object.fromEntries(allergenFlags.map(id=>[id,true]))) : null,
           disclaimer: "Allergener er vejledende. Tjek altid ingrediensernes emballage ved alvorlige allergier.",
         }),
       });
