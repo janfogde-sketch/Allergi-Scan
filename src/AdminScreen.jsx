@@ -1118,7 +1118,7 @@ ${openTicket.description}
             )}
 
             {adminSection === "recipes" && (
-              <div>
+              <div style={{ paddingBottom:120 }}>
                 {/* Filter tabs */}
                 <div style={{ display:"flex", gap:6, marginBottom:14 }}>
                   {[{val:"pending",label:"⏳ Afventer"},{val:"approved",label:"✅ Godkendte"},{val:"rejected",label:"❌ Afviste"}].map(f => (
