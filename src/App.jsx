@@ -1293,7 +1293,7 @@ export default function EatSafe() {
             onBetaClick={() => { setBetaIntroSeen(false); setBetaIntroStep(0); }}
           />
           </ErrorBoundary>
-        }
+        )}
 
         {/* ══ MADPAS SCREEN ══ */}
         {(screen === SCREENS.MADPAS || madpasWaiterView) && (
@@ -1312,7 +1312,7 @@ export default function EatSafe() {
             selectedENumbers={selectedENumbers}
           />
           </ErrorBoundary>
-        }
+        )}
 
         {/* ══ KNOWLEDGE / LEKSIKON SCREEN ══ */}
         {screen === SCREENS.KNOWLEDGE && (
@@ -1325,7 +1325,7 @@ export default function EatSafe() {
             onSlugHandled={() => setKnowledgeSlug(null)}
           />
           </ErrorBoundary>
-        }
+        )}
 
         {/* ══ PROFILE SCREENS ══ */}
         {(screen === SCREENS.HISTORY || screen === SCREENS.PROFILE ||
@@ -1369,7 +1369,7 @@ export default function EatSafe() {
             setAdminSection={setAdminSection} setSubmissionFilter={setSubmissionFilter}
           />
           </ErrorBoundary>
-        }
+        )}
 
         {/* ══ RECIPES SCREEN ══ */}
         {screen === SCREENS.RECIPES && (
@@ -1403,7 +1403,7 @@ export default function EatSafe() {
             addToList={addToList}
           />
           </ErrorBoundary>
-        }
+        )}
 
 
 
@@ -1442,7 +1442,7 @@ export default function EatSafe() {
             userSearch={userSearch} setUserSearch={setUserSearch}
           />
           </ErrorBoundary>
-        }
+        )}
 
         {/* BUNDNAVIGATION */}
         {!isOnboard && !madpasWaiterView && (
