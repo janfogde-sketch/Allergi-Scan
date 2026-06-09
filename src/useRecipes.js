@@ -111,8 +111,7 @@ export function useRecipes(accessToken, userId) {
           body: JSON.stringify({ recipe_id: recipe.id, name: ing.name, amount: ing.amount, unit: ing.unit, sort_order: i }),
         });
       }
-      // Nulstil form
-      setShowSubmitRecipe(false);
+      // Nulstil form (form lukkes af RecipesScreen ved success)
       setSubmitRecipe({ title:"", description:"", category:"aftensmad", tags:[] });
       setSubmitSteps([""]);
       setSubmitIngredients([{ name:"", amount:"", unit:"" }]);

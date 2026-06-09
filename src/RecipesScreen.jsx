@@ -39,6 +39,7 @@ export default function RecipesScreen({
   // Submit-form states — skal være her pga. React hooks-regler
   const [imgFile, setImgFile] = React.useState(null);
   const [submitError, setSubmitError] = React.useState(null);
+  const [submitSuccess, setSubmitSuccess] = React.useState(false);
   const [imgPreview, setImgPreview] = React.useState(null);
   const [imgUploading, setImgUploading] = React.useState(false);
   const [manualAllergens, setManualAllergens] = React.useState([]);
@@ -669,7 +670,31 @@ export default function RecipesScreen({
         })()}
 
         {/* ── INDSEND OPSKRIFT ── */}
-        {screen === SCREENS.RECIPES && showSubmitRecipe && (() => {
+        {screen === SCREENS.RECIPES && showSubmitRecipe && submitSuccess && (
+          <div className="screen fade-in" style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"70vh", padding:"40px 24px", textAlign:"center" }}>
+            <div style={{ fontSize:72, marginBottom:20 }}>🎉</div>
+            <div style={{ fontSize:24, fontWeight:800, color:"var(--ink)", marginBottom:12, letterSpacing:"-.4px" }}>Tak for din opskrift!</div>
+            <div style={{ fontSize:15, color:"var(--ink2)", lineHeight:1.7, marginBottom:8, maxWidth:300 }}>
+              Din opskrift er nu sendt til vores team, som gennemgår og godkender den.
+            </div>
+            <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6, marginBottom:32, maxWidth:300 }}>
+              Når den er godkendt, dukker den op i opskriftsoversigten — til glæde for alle med de samme allergier som dig. 🙌
+            </div>
+            <div style={{ background:"var(--warm-lt)", border:"1px solid var(--warm-md)", borderRadius:14, padding:"16px 20px", marginBottom:32, display:"flex", gap:12, alignItems:"flex-start", maxWidth:320, textAlign:"left" }}>
+              <span style={{ fontSize:24, flexShrink:0 }}>🤝</span>
+              <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.5 }}>
+                Du hjælper andre med de samme allergier ved at dele din viden. Det betyder meget!
+              </div>
+            </div>
+            <button
+              onClick={() => { setShowSubmitRecipe(false); setSubmitSuccess(false); }}
+              style={{ padding:"14px 32px", borderRadius:12, background:"var(--green)", color:"#071510", border:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", width:"100%", maxWidth:300 }}>
+              Tilbage til opskrifter →
+            </button>
+          </div>
+        )}
+
+        {screen === SCREENS.RECIPES && showSubmitRecipe && !submitSuccess && (() => {
 
           const UNITS = ["g","kg","ml","l","dl","spsk","tsk","stk","fed","nip","bundt","dåse","pose","pakke"];
           const CATS  = ["aftensmad","morgenmad","frokost","dessert","tilbehør","snack"];
@@ -724,6 +749,7 @@ export default function RecipesScreen({
             }
             const result = await submitUserRecipe(imageUrl, finalAllergens);
             if (result?.error) setSubmitError(result.error);
+            else if (result?.success) setSubmitSuccess(true);
           };
 
           return (
