@@ -61,40 +61,67 @@ export function useRecipes(accessToken, userId) {
   };
 
   const submitUserRecipe = async (imageUrl = null, allergenFlags = []) => {
-    if (!submitRecipe.title.trim() || submitIngredients.filter(i => i.name.trim()).length === 0) return;
+    if (!submitRecipe.title.trim() || submitIngredients.filter(i => i.name.trim()).length === 0) {
+      return { error: "Udfyld venligst titel og mindst én ingrediens." };
+    }
     setSubmittingRecipe(true);
     try {
-      const [recipe] = await apiCall(`${SUPABASE_URL}/rest/v1/recipes`, {
-        method: "POST",
-        headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
-        body: JSON.stringify({
-          ...submitRecipe,
-          instructions: JSON.stringify(submitSteps.filter(s => s.trim())),
-          submitted_by: userId,
-          source: "user",
-          language: "da",
-          status: "pending",
-          image_url: imageUrl || null,
-          allergen_flags: allergenFlags.length > 0 ? JSON.stringify(Object.fromEntries(allergenFlags.map(id=>[id,true]))) : null,
-          disclaimer: "Allergener er vejledende. Tjek altid ingrediensernes emballage ved alvorlige allergier.",
-        }),
+      // Direkte fetch — undgå apiCall der kan skjule fejl
+      const headers = {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+        "Prefer": "return=representation",
+      };
+      const body = JSON.stringify({
+        ...submitRecipe,
+        instructions: JSON.stringify(submitSteps.filter(s => s.trim())),
+        submitted_by: userId,
+        source: "user",
+        language: "da",
+        status: "pending",
+        image_url: imageUrl || null,
+        allergen_flags: allergenFlags.length > 0
+          ? JSON.stringify(Object.fromEntries(allergenFlags.map(id => [id, true])))
+          : null,
+        disclaimer: "Allergener er vejledende. Tjek altid ingrediensernes emballage ved alvorlige allergier.",
       });
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/recipes`, { method:"POST", headers, body });
+      if (!res.ok) {
+        const errText = await res.text();
+        setSubmittingRecipe(false);
+        if (res.status === 401 || errText.includes("JWT")) {
+          return { error: "Din session er udløbet. Log ud og ind igen for at indsende opskrifter." };
+        }
+        return { error: `Server fejl ${res.status}: ${errText.slice(0,120)}` };
+      }
+      const data = await res.json();
+      const recipe = Array.isArray(data) ? data[0] : data;
+      if (!recipe?.id) {
+        setSubmittingRecipe(false);
+        return { error: "Opskrift gemt, men kunne ikke hente ID til ingredienser." };
+      }
+      // Gem ingredienser
       for (let i = 0; i < submitIngredients.length; i++) {
         const ing = submitIngredients[i];
         if (!ing.name.trim()) continue;
-        await apiCall(`${SUPABASE_URL}/rest/v1/recipe_ingredients`, {
+        await fetch(`${SUPABASE_URL}/rest/v1/recipe_ingredients`, {
           method: "POST",
-          headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+          headers: { ...headers, "Prefer": "return=minimal" },
           body: JSON.stringify({ recipe_id: recipe.id, name: ing.name, amount: ing.amount, unit: ing.unit, sort_order: i }),
         });
       }
+      // Nulstil form
       setShowSubmitRecipe(false);
       setSubmitRecipe({ title:"", description:"", category:"aftensmad", tags:[] });
       setSubmitSteps([""]);
       setSubmitIngredients([{ name:"", amount:"", unit:"" }]);
-      alert("Tak! Din opskrift er sendt til godkendelse.");
-    } catch (e) { alert("Fejl: " + e.message); }
-    setSubmittingRecipe(false);
+      setSubmittingRecipe(false);
+      return { success: true };
+    } catch (e) {
+      setSubmittingRecipe(false);
+      return { error: e.message || "Ukendt fejl" };
+    }
   };
 
   return {

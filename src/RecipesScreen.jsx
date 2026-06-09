@@ -38,6 +38,7 @@ export default function RecipesScreen({
 
   // Submit-form states — skal være her pga. React hooks-regler
   const [imgFile, setImgFile] = React.useState(null);
+  const [submitError, setSubmitError] = React.useState(null);
   const [imgPreview, setImgPreview] = React.useState(null);
   const [imgUploading, setImgUploading] = React.useState(false);
   const [manualAllergens, setManualAllergens] = React.useState([]);
@@ -705,7 +706,8 @@ export default function RecipesScreen({
           ];
 
           const handleSubmit = async () => {
-            if (submittingRecipe) return;
+            if (submittingRecipe || imgUploading) return;
+            setSubmitError(null);
             let imageUrl = null;
             if (imgFile) {
               setImgUploading(true);
@@ -720,7 +722,8 @@ export default function RecipesScreen({
               } catch {}
               setImgUploading(false);
             }
-            await submitUserRecipe(imageUrl, finalAllergens);
+            const result = await submitUserRecipe(imageUrl, finalAllergens);
+            if (result?.error) setSubmitError(result.error);
           };
 
           return (
@@ -978,8 +981,20 @@ export default function RecipesScreen({
                 ⚕️ Allergener er vejledende. Admins gennemgår opskriften inden publicering.
               </div>
 
-              <button onClick={handleSubmit} disabled={!submitRecipe.title.trim() || submitIngredients.filter(i=>i.name.trim()).length===0 || submittingRecipe || imgUploading}
-                style={{ width:"100%", padding:"14px", borderRadius:12, background: submitRecipe.title.trim() ? "var(--green)" : "var(--surface2)", color: submitRecipe.title.trim() ? "#071510" : "var(--muted)", border:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor: submitRecipe.title.trim() ? "pointer" : "default", marginBottom:40 }}>
+              {submitError && (
+                <div style={{ padding:"12px 14px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, color:"var(--red)", fontSize:13, marginBottom:12 }}>
+                  ⚠️ {submitError}
+                </div>
+              )}
+
+              <button
+                onClick={async () => {
+                  if (submittingRecipe || imgUploading) return;
+                  if (!submitRecipe.title.trim()) { setSubmitError("Titel er påkrævet."); return; }
+                  if (submitIngredients.filter(i=>i.name.trim()).length === 0) { setSubmitError("Tilføj mindst én ingrediens."); return; }
+                  await handleSubmit();
+                }}
+                style={{ width:"100%", padding:"14px", borderRadius:12, background:"var(--green)", color:"#071510", border:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:40, opacity: submittingRecipe||imgUploading ? .6 : 1 }}>
                 {submittingRecipe || imgUploading ? "Sender…" : "Send til godkendelse →"}
               </button>
             </div>
