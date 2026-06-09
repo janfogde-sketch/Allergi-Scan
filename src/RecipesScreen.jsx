@@ -43,18 +43,37 @@ export default function RecipesScreen({
   const [manualAllergens, setManualAllergens] = React.useState([]);
   const [removedAuto, setRemovedAuto] = React.useState([]);
 
-  // Hjælpefunktioner til allergen-detektion
+  // Dansk keyword-map til allergen auto-detektion (ALLERGENS har ingen keywords)
+  const ALLERGEN_KW = {
+    gluten:      ["hvede","mel","pasta","brød","spelt","rug","byg","havre","semulje","bulgur","couscous","farro","kamut","gluten","kage","pizza"],
+    laktose:     ["mælk","fløde","smør","ost","yoghurt","kefir","skyr","valle","kasein","laktos","parmesan","mozzarella","ricotta","brie","cheddar","hytteost"],
+    aeg:         ["æg","æggehvide","æggeblomme","mayo","mayonnaise"],
+    noedder:     ["mandel","cashew","valnød","hasselnød","pistacie","macadamia","pekan","paranød","nødder","nøddesmør"],
+    jordnoedder: ["jordnød","peanut","jordnøddesmør","arachis"],
+    soja:        ["soja","tofu","tempeh","miso","edamame","sojamælk","sojakød"],
+    fisk:        ["fisk","laks","tun","torsk","makrel","sild","ansjos","sardine","ørred","hellefisk","rødspætte"],
+    skaldyr:     ["reje","hummer","krabbe","krebs","musling","østers","blæksprutte","kammusling","scampi"],
+    selleri:     ["selleri","celeriac"],
+    sennep:      ["sennep","mustard"],
+    sesam:       ["sesam","tahini","sesamolie"],
+    svovl:       ["svovl","sulfit","sulfite"],
+    lupin:       ["lupin","lupinmel"],
+    bloeddyr:    ["blæksprutte","snegl","musling","østers"],
+  };
   const detectAllergens = (name) => {
     const n = name.toLowerCase();
-    const found = [];
-    ALLERGENS.forEach(a => {
-      if ((a.keywords||[]).some(k => n.includes(k.toLowerCase()))) found.push(a.id);
-    });
-    return found;
+    return Object.entries(ALLERGEN_KW)
+      .filter(([, kws]) => kws.some(k => n.includes(k)))
+      .map(([id]) => id);
   };
   const recomputeAllergens = (ings) => {
     const all = new Set();
-    ings.forEach(i => { if(i.name) detectAllergens(i.name).forEach(id => all.add(id)); });
+    ings.forEach(i => {
+      if (!i.name.trim()) return;
+      const auto = detectAllergens(i.name).filter(id => !(i.removedAutos||[]).includes(id));
+      const manual = i.allergens || [];
+      [...auto, ...manual].forEach(id => all.add(id));
+    });
     return [...all];
   };
 
@@ -778,24 +797,84 @@ export default function RecipesScreen({
               {/* ── 3. Ingredienser ── */}
               <div style={{ marginBottom:20 }}>
                 <div style={{ fontSize:11, fontWeight:700, color:"var(--ink3)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Ingredienser</div>
-                {submitIngredients.map((ing, idx) => (
-                  <div key={idx} style={{ display:"grid", gridTemplateColumns:"1fr 80px 80px 32px", gap:6, marginBottom:6 }}>
-                    <input placeholder="Ingrediens *" value={ing.name} onChange={e => {
-                      const next = submitIngredients.map((x,i) => i===idx ? {...x, name:e.target.value} : x);
-                      setSubmitIngredients(next);
-                    }}
-                    style={{ padding:"9px 10px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
-                    <input placeholder="Mængde" value={ing.amount} onChange={e => setSubmitIngredients(submitIngredients.map((x,i)=>i===idx?{...x,amount:e.target.value}:x))}
-                      style={{ padding:"9px 8px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, textAlign:"center", outline:"none" }} />
-                    <select value={ing.unit||""} onChange={e => setSubmitIngredients(submitIngredients.map((x,i)=>i===idx?{...x,unit:e.target.value}:x))}
-                      style={{ padding:"9px 6px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:12, outline:"none" }}>
-                      <option value="">enhed</option>
-                      {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
-                    </select>
-                    <button onClick={() => setSubmitIngredients(submitIngredients.filter((_,i)=>i!==idx))}
-                      style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, cursor:"pointer", color:"var(--red)", fontSize:16, display:"flex", alignItems:"center", justifyContent:"center" }}>×</button>
-                  </div>
-                ))}
+                {submitIngredients.map((ing, idx) => {
+                  const ingAutoAllergens = ing.name ? detectAllergens(ing.name).filter(id => !(ing.removedAutos||[]).includes(id)) : [];
+                  const ingAllergens = ing.allergens || [];
+                  const allIngAllergens = [...new Set([...ingAutoAllergens, ...ingAllergens])];
+                  const showAllergenPicker = ing.showPicker;
+                  return (
+                    <div key={idx} style={{ marginBottom:10, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"10px 12px" }}>
+                      {/* Linje: navn + mængde + enhed + slet */}
+                      <div style={{ display:"grid", gridTemplateColumns:"1fr 72px 72px 28px", gap:6, marginBottom: allIngAllergens.length > 0 || showAllergenPicker ? 8 : 0 }}>
+                        <input placeholder="Ingrediens *" value={ing.name} onChange={e => {
+                          setSubmitIngredients(submitIngredients.map((x,i) => i===idx ? {...x, name:e.target.value} : x));
+                        }}
+                        style={{ padding:"7px 10px", borderRadius:8, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
+                        <input placeholder="Mængde" value={ing.amount} onChange={e => setSubmitIngredients(submitIngredients.map((x,i)=>i===idx?{...x,amount:e.target.value}:x))}
+                          style={{ padding:"7px 6px", borderRadius:8, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, textAlign:"center", outline:"none" }} />
+                        <select value={ing.unit||""} onChange={e => setSubmitIngredients(submitIngredients.map((x,i)=>i===idx?{...x,unit:e.target.value}:x))}
+                          style={{ padding:"7px 4px", borderRadius:8, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:11, outline:"none" }}>
+                          <option value="">enhed</option>
+                          {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                        <button onClick={() => setSubmitIngredients(submitIngredients.filter((_,i)=>i!==idx))}
+                          style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, cursor:"pointer", color:"var(--red)", fontSize:14, display:"flex", alignItems:"center", justifyContent:"center" }}>×</button>
+                      </div>
+
+                      {/* Allergen-tags for denne ingrediens */}
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:5, alignItems:"center" }}>
+                        {allIngAllergens.map(id => {
+                          const a = ALLERGENS.find(x=>x.id===id);
+                          const isAuto = ingAutoAllergens.includes(id);
+                          return (
+                            <div key={id} style={{
+                              display:"flex", alignItems:"center", gap:3, padding:"2px 7px",
+                              borderRadius:100, fontSize:10, fontWeight:700,
+                              background: isAuto ? "var(--amber-lt)" : "var(--red-lt)",
+                              color: isAuto ? "var(--amber)" : "var(--red)",
+                              border:`1px solid ${isAuto ? "var(--amber-md)" : "var(--red-md)"}`,
+                            }}>
+                              {a?.emoji} {a?.label||id}
+                              <span style={{ cursor:"pointer", marginLeft:1, opacity:.7 }}
+                                onClick={() => {
+                                  // Fjern: hvis auto → tilføj til removed, hvis manuel → fjern fra allergens
+                                  if (isAuto) {
+                                    setSubmitIngredients(submitIngredients.map((x,i) =>
+                                      i===idx ? {...x, removedAutos:[...(x.removedAutos||[]),id]} : x
+                                    ));
+                                  } else {
+                                    setSubmitIngredients(submitIngredients.map((x,i) =>
+                                      i===idx ? {...x, allergens:(x.allergens||[]).filter(a=>a!==id)} : x
+                                    ));
+                                  }
+                                }}>×</span>
+                            </div>
+                          );
+                        })}
+                        {/* Tilføj allergen-knap */}
+                        <button onClick={() => setSubmitIngredients(submitIngredients.map((x,i)=>i===idx?{...x,showPicker:!x.showPicker}:x))}
+                          style={{ padding:"2px 8px", borderRadius:100, border:"1px dashed var(--border2)", background:"none", color:"var(--muted)", fontFamily:"var(--f)", fontSize:10, cursor:"pointer" }}>
+                          {showAllergenPicker ? "✕ Luk" : "＋ Allergen"}
+                        </button>
+                      </div>
+
+                      {/* Mini allergen-picker */}
+                      {showAllergenPicker && (
+                        <div style={{ marginTop:8, display:"flex", flexWrap:"wrap", gap:5 }}>
+                          {ALLERGENS.filter(a => !allIngAllergens.includes(a.id)).map(a => (
+                            <div key={a.id}
+                              onClick={() => setSubmitIngredients(submitIngredients.map((x,i) =>
+                                i===idx ? {...x, allergens:[...(x.allergens||[]),a.id], showPicker:false} : x
+                              ))}
+                              style={{ padding:"3px 9px", borderRadius:100, border:"1px solid var(--border)", background:"var(--surface2)", color:"var(--muted2)", fontSize:10, fontWeight:700, cursor:"pointer" }}>
+                              {a.emoji} {a.label}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
                 {/* Auto-detekterede allergener */}
                 {autoAllergens.filter(id => !removedAuto.includes(id)).length > 0 && (
                   <div style={{ padding:"10px 12px", background:"rgba(255,186,59,.08)", border:"1px solid rgba(255,186,59,.2)", borderRadius:10, marginBottom:8 }}>

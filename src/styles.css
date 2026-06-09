@@ -422,6 +422,6 @@ body{background:var(--paper2);color:var(--ink);font-family:var(--f);-webkit-font
 .skeleton-row{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);}
 
 /* ── PLACEHOLDERS — globalt lysere ── */
-input::placeholder,textarea::placeholder{color:rgba(240,240,238,.55);opacity:1;}
-input::-webkit-input-placeholder,textarea::-webkit-input-placeholder{color:rgba(240,240,238,.55);opacity:1;}
-input::-moz-placeholder,textarea::-moz-placeholder{color:rgba(240,240,238,.55);opacity:1;}
+input::placeholder,textarea::placeholder{color:rgba(240,240,238,.70)!important;opacity:1!important;}
+input::-webkit-input-placeholder,textarea::-webkit-input-placeholder{color:rgba(240,240,238,.70)!important;opacity:1!important;}
+input::-moz-placeholder,textarea::-moz-placeholder{color:rgba(240,240,238,.70)!important;opacity:1!important;}
