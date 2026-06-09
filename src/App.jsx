@@ -1390,7 +1390,7 @@ export default function EatSafe() {
             submitSteps={submitSteps} setSubmitSteps={setSubmitSteps}
             submitIngredients={submitIngredients} setSubmitIngredients={setSubmitIngredients}
             submittingRecipe={submittingRecipe}
-            loadRecipes={loadRecipes} loadRecipeIngredients={loadRecipeIngredients}
+            loadRecipes={loadRecipes} loadRecipeIngredients={loadRecipeIngredients} submitUserRecipe={submitUserRecipe}
             loading={loading}
             toggleFavorite={toggleFavorite}
             user={user}

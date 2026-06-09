@@ -19,7 +19,7 @@ export default function RecipesScreen({
   submitSteps, setSubmitSteps,
   submitIngredients, setSubmitIngredients,
   submittingRecipe,
-  loadRecipes, loadRecipeIngredients,
+  loadRecipes, loadRecipeIngredients, submitUserRecipe,
   user,
   toggleFavorite,
   loading,
@@ -114,7 +114,7 @@ export default function RecipesScreen({
               {/* Hero billede */}
               <div className="recipe-detail-hero">
                 {r.image_url
-                  ? <img src={r.image_url} alt={r.title} className="recipe-detail-img" />
+                  ? <img src={r.image_url} alt={r.title} className="recipe-detail-img" loading="lazy" onError={e => { e.currentTarget.style.display="none"; }} />
                   : <div className="recipe-detail-img-placeholder">🍽️</div>
                 }
                 <button className="recipe-detail-back" onClick={() => setSelectedRecipe(null)}>
@@ -617,7 +617,7 @@ export default function RecipesScreen({
                         {isFav ? "❤️" : "🤍"}
                       </button>
                       {r.image_url
-                        ? <img src={r.image_url} alt={r.title} className="recipe-card-img" loading="lazy" />
+                        ? <img src={r.image_url} alt={r.title} className="recipe-card-img" loading="lazy" onError={e => { e.currentTarget.style.display="none"; e.currentTarget.nextSibling?.style && (e.currentTarget.nextSibling.style.display="flex"); }} />
                         : <div className="recipe-card-img-placeholder">{getCatEmoji(r.category)}</div>
                       }
                       <div className="recipe-card-body">

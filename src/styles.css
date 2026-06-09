@@ -425,3 +425,12 @@ body{background:var(--paper2);color:var(--ink);font-family:var(--f);-webkit-font
 input::placeholder,textarea::placeholder{color:rgba(240,240,238,.70)!important;opacity:1!important;}
 input::-webkit-input-placeholder,textarea::-webkit-input-placeholder{color:rgba(240,240,238,.70)!important;opacity:1!important;}
 input::-moz-placeholder,textarea::-moz-placeholder{color:rgba(240,240,238,.70)!important;opacity:1!important;}
+
+/* ── BILLEDE-OPTIMERING ── */
+img{content-visibility:auto;}
+.recipe-card-img,.recipe-detail-img,.product-hero-img{
+  animation:imgFadeIn .3s ease;
+}
+@keyframes imgFadeIn{from{opacity:0}to{opacity:1}}
+/* Lazy-load blur-up effekt */
+img[loading="lazy"]{transition:opacity .25s ease;}
