@@ -43,6 +43,7 @@ import { useHistory } from './useHistory.js';
 import { useAuth } from './useAuth.js';
 import { useOnboarding } from './useOnboarding.js';
 import { useAdmin } from './useAdmin.js';
+import { useScanner } from './useScanner.js';
 import { useRecipes } from './useRecipes.js';
 import { useProduct } from './useProduct.js';
 import FeedbackModal from './FeedbackModal.jsx';
@@ -67,22 +68,9 @@ export default function EatSafe() {
   const [showIng, setShowIng] = useState(true); // Automatisk åben
   const [showNutrition, setShowNutrition] = useState(false);
   const [barcodeInput, setBarcodeInput] = useState("");
-  const [cameraActive, setCameraActive] = useState(false);
   const productCacheRef = useRef({}); // Cache af seneste 50 scannede produkter
-  const lastScannedRef = useRef(null); // Forhindrer dobbelt-scan
-  const [torchOn, setTorchOn] = useState(false);
-  const [scanZoom, setScanZoom] = useState(1.0);
-  const scanZoomRef = React.useRef(1.0);
-  const noScanTimerRef = React.useRef(null);
   const [profilePopup, setProfilePopup] = useState(null); // id af profil der vises popup for
-  const galleryInputRef = useRef(null);
-  const photoFallbackRef = useRef(null);
-  const [showPhotoHint, setShowPhotoHint] = useState(false);
   const [knowledgeSlug, setKnowledgeSlug] = useState(null);
-  const [photoScanLoading, setPhotoScanLoading] = useState(false);
-  const torchTrackRef = useRef(null);
-  const qrRef = useRef(null);
-  const html5QrRef = useRef(null);
 
   // History → useHistory hook
 
@@ -137,242 +125,6 @@ export default function EatSafe() {
   // ── ADMIN → useAdmin hook ──
 
     // ── KAMERA + SCANNING ──────────────────────────────────────────────────────
-  const startCamera = async () => {
-    if (cameraActive) return;
-    setScanError(""); setTorchOn(false); setScanZoom(1.0); scanZoomRef.current = 1.0; setShowPhotoHint(false);
-    if (noScanTimerRef.current) { clearTimeout(noScanTimerRef.current); noScanTimerRef.current = null; }
-    torchTrackRef.current = null; lastScannedRef.current = null;
-    if (!navigator.mediaDevices?.getUserMedia) { setScanError("Kamera ikke understøttet. Prøv Chrome eller Safari."); return; }
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const constraints = isIOS
-      ? { video: { facingMode: { exact: "environment" } } }
-      : { video: { facingMode: "environment", width: { min: 1280, ideal: 1920 }, height: { min: 720, ideal: 1080 },
-          advanced: [{ focusMode: "continuous" }, { exposureMode: "continuous" }] } };
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      const track = stream.getVideoTracks()[0];
-      if (track) torchTrackRef.current = track;
-      stream.getTracks().forEach(t => t.stop());
-    } catch (e) {
-      if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
-        setScanError("Kamera-adgang nægtet. Gå til telefonens indstillinger og tillad kamera for denne app.");
-      } else if (e.name === "NotFoundError") {
-        setScanError("Intet kamera fundet på denne enhed.");
-      } else if (e.name === "OverconstrainedError" && isIOS) {
-        try { const s2 = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); s2.getTracks().forEach(t => t.stop()); }
-        catch { setScanError("Kunne ikke starte kamera. Prøv at genindlæse siden."); return; }
-      } else { setScanError("Kamera fejl: " + e.message); return; }
-    }
-    setCameraActive(true);
-    await new Promise(r => setTimeout(r, isIOS ? 300 : 150));
-    try {
-      const { Html5Qrcode } = await import("html5-qrcode");
-      const readerId = "qr-reader-home";
-      if (html5QrRef.current) { try { await html5QrRef.current.stop(); } catch {} html5QrRef.current = null; }
-      const readerEl = document.getElementById(readerId);
-      if (!readerEl) { setScanError("Kamera-element ikke fundet. Genindlæs siden."); setCameraActive(false); return; }
-      html5QrRef.current = new Html5Qrcode(readerId, { verbose: false });
-      // Kun stregkode-formater (ikke QR, Aztec osv.) — markant hurtigere decode
-      // 0=QR_CODE, 1=AZTEC, 2=CODABAR, 3=CODE_39, 4=CODE_93, 5=CODE_128,
-      // 6=DATA_MATRIX, 7=MAXICODE, 8=ITF, 9=EAN_13, 10=EAN_8, 11=PDF_417, 12=RSS_14, 13=RSS_EXPANDED, 14=UPC_A, 15=UPC_E, 16=UPC_EAN_EXTENSION
-      const barcodeFormats = [3, 5, 8, 9, 10, 14, 15]; // CODE_39, CODE_128, ITF, EAN_13, EAN_8, UPC_A, UPC_E
-      // Stort scan-område: dækker næsten hele kameraet — markant højere succesrate
-      // Performance er ikke et problem længere takket være BarcodeDetector API
-      const qrConfig = {
-        fps: isIOS ? 25 : 24,
-        qrbox: (w, h) => ({
-          width:  Math.round(w * 0.92),
-          height: Math.round(h * 0.55),
-        }),
-        // Lad kameraet bruge sit native aspect ratio i stedet for at tvinge 16:9
-        // Det giver ofte højere reel opløsning på Android
-        aspectRatio: undefined,
-        disableFlip: false, // Tillad flip — fanger flere koder, ringe ydelses-cost
-        formatsToSupport: barcodeFormats,
-        experimentalFeatures: { useBarCodeDetectorIfSupported: true },
-        videoConstraints: isIOS
-          ? {
-              facingMode: { exact: "environment" },
-              width:  { ideal: 1920 },
-              height: { ideal: 1080 },
-            }
-          : {
-              facingMode: { ideal: "environment" },
-              // Højere opløsning = bedre decode af små/utydelige koder
-              width:  { ideal: 1920 },
-              height: { ideal: 1080 },
-              frameRate: { ideal: 30 },
-            },
-      };
-      await html5QrRef.current.start(
-        { facingMode: isIOS ? { exact: "environment" } : "environment" }, qrConfig,
-        (code) => {
-          const now = Date.now();
-          if (lastScannedRef.current?.code === code && now - lastScannedRef.current.time < 1500) return;
-          lastScannedRef.current = { code, time: now };
-          if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
-          try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator(); const gain = ctx.createGain();
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.frequency.value = 1800; gain.gain.setValueAtTime(0.25, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.12);
-          } catch {}
-          stopCamera(); lookupProduct(code);
-        }, () => {}
-      );
-      await new Promise(r => setTimeout(r, 500));
-      const videoEl = document.querySelector("#qr-reader-home video");
-      if (videoEl?.srcObject) {
-        const track = videoEl.srcObject.getVideoTracks()[0];
-        if (track) {
-          torchTrackRef.current = track;
-          try {
-            const caps = track.getCapabilities?.() || {};
-            const adv = [];
-            // Continuous autofokus — KRITISK for stregkode-scanning
-            if (caps.focusMode?.includes("continuous")) adv.push({ focusMode: "continuous" });
-            if (caps.exposureMode?.includes("continuous")) adv.push({ exposureMode: "continuous" });
-            if (caps.whiteBalanceMode?.includes("continuous")) adv.push({ whiteBalanceMode: "continuous" });
-            // Macro focus distance hvis tilgængelig — hjælper close-up scanning
-            if (caps.focusDistance) {
-              adv.push({ focusDistance: caps.focusDistance.min });
-            }
-            // Hardware zoom 1.5x — gør stregkoden større = bedre decode
-            // Kun hvis brugeren ikke selv har zoomet
-            if (caps.zoom && caps.zoom.max >= 1.5) {
-              // Lille zoom hjælper ofte med små stregkoder, men ikke for meget
-              // (vi gør det optionelt — brugeren kan tappe for at fokusere i stedet)
-            }
-            if (adv.length) await track.applyConstraints({ advanced: adv });
-          } catch (e) { console.warn("Camera constraints fejlede:", e); }
-          // Auto-zoom: hvis ingen kode fanges efter 3s, prøv 1.5x zoom
-          const applyZoom = async (zoomLevel) => {
-            try {
-              const caps = track.getCapabilities?.() || {};
-              if (caps.zoom && caps.zoom.max >= zoomLevel) {
-                await track.applyConstraints({ advanced: [{ zoom: zoomLevel }] });
-                scanZoomRef.current = zoomLevel;
-                setScanZoom(zoomLevel);
-              }
-            } catch {}
-          };
-          // Vis photo-hint efter 5s
-          setTimeout(() => setShowPhotoHint(true), 5000);
-          noScanTimerRef.current = setTimeout(async () => {
-            if (scanZoomRef.current === 1.0) await applyZoom(1.5);
-            noScanTimerRef.current = setTimeout(async () => {
-              if (scanZoomRef.current === 1.5) await applyZoom(2.0);
-            }, 4000);
-          }, 3000);
-          // Tap-to-focus: når brugeren tapper video-feltet
-          videoEl.onclick = async (ev) => {
-            try {
-              const caps = track.getCapabilities?.() || {};
-              if (caps.focusMode?.includes("manual") && caps.pointsOfInterest !== undefined) {
-                const rect = videoEl.getBoundingClientRect();
-                const x = (ev.clientX - rect.left) / rect.width;
-                const y = (ev.clientY - rect.top) / rect.height;
-                await track.applyConstraints({ advanced: [{ pointsOfInterest: [{ x, y }], focusMode: "single-shot" }] });
-                // Skift tilbage til continuous efter 1.5s
-                setTimeout(() => track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {}), 1500);
-              }
-            } catch {}
-          };
-        }
-      }
-    } catch (e) {
-      setCameraActive(false);
-      if (e.message?.includes("constraint") || e.message?.includes("Constraint")) setTimeout(() => startCamera(), 500);
-      else setScanError("Kamera kunne ikke starte. Prøv at lukke andre apps og prøv igen.");
-    }
-  };
-
-  const scanFromGallery = async (file) => {
-    if (!file) return;
-    setScanError(""); setLoading(true);
-    try {
-      const { Html5Qrcode } = await import("html5-qrcode");
-      const scanner = new Html5Qrcode("qr-reader-gallery");
-      const result = await scanner.scanFile(file, true);
-      scanner.clear(); lookupProduct(result);
-    } catch { setLoading(false); setScanError("Ingen stregkode fundet i billedet. Prøv et klarere billede."); }
-  };
-
-  // ── Foto-fallback: tag billede → Claude Vision aflæser EAN ──────────────────
-  const scanPhotoForEan = async (file) => {
-    if (!file) return;
-    setPhotoScanLoading(true); setScanError(""); setShowPhotoHint(false);
-    stopCamera();
-    try {
-      // Trin 1: Prøv html5-qrcode direkte
-      try {
-        const { Html5Qrcode } = await import("html5-qrcode");
-        const scanner = new Html5Qrcode("qr-reader-gallery");
-        const result = await scanner.scanFile(file, true);
-        scanner.clear();
-        setPhotoScanLoading(false);
-        lookupProduct(result);
-        return;
-      } catch { /* html5-qrcode fejlede — prøv Claude Vision */ }
-
-      // Trin 2: Send billede til Claude Vision via OCR Edge Function
-      const base64 = await new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(r.result.split(",")[1]);
-        r.onerror = rej;
-        r.readAsDataURL(file);
-      });
-
-      const ocrRes = await fetch(`${SUPABASE_URL}/functions/v1/ocr`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": SUPABASE_ANON_KEY,
-          ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
-        },
-        body: JSON.stringify({ image_base64: base64, mode: "ean_from_image" }),
-      });
-
-      const ocrData = await ocrRes.json();
-      const rawText = ocrData.text || ocrData.ean || "";
-
-      // Udtræk EAN: find 8-14 cifrede tal i svaret
-      const eanMatch = rawText.match(/(\d{8,14})/);
-      if (eanMatch) {
-        setPhotoScanLoading(false);
-        lookupProduct(eanMatch[1]);
-        return;
-      }
-
-      // Intet fundet
-      setScanError("Kunne ikke aflæse stregkode fra billede. Prøv at holde kameraet tæt på og i god belysning.");
-    } catch (e) {
-      setScanError("Foto-scan fejlede. Prøv igen.");
-    }
-    setPhotoScanLoading(false);
-  };
-
-  const toggleTorch = async () => {
-    try {
-      const videoEl = document.querySelector("#qr-reader-home video");
-      const track = videoEl?.srcObject?.getVideoTracks?.()?.[0] || torchTrackRef.current;
-      if (!track) return;
-      const capabilities = track.getCapabilities?.();
-      if (!capabilities?.torch) { setScanError("Lygte ikke understøttet på denne enhed."); return; }
-      const newState = !torchOn;
-      await track.applyConstraints({ advanced: [{ torch: newState }] });
-      setTorchOn(newState);
-    } catch (e) { setScanError("Kunne ikke tænde lygte: " + e.message); }
-  };
-
-  const stopCamera = () => {
-    if (noScanTimerRef.current) { clearTimeout(noScanTimerRef.current); noScanTimerRef.current = null; }
-    if (html5QrRef.current) { html5QrRef.current.stop().catch(() => {}); html5QrRef.current = null; }
-    if (torchTrackRef.current) { try { torchTrackRef.current.applyConstraints({ advanced: [{ torch: false }] }); } catch {} torchTrackRef.current = null; }
-    setCameraActive(false); setTorchOn(false);
-  };
 
   // ── OCR + INDSEND PRODUKT ─────────────────────────────────────────────────
 
@@ -723,7 +475,33 @@ export default function EatSafe() {
   const activeIds = allActive().ids;
   const activeENumbers = allActive().eNumbers;
 
-  const lookupProduct = useCallback(async (ean) => {
+  
+  // ── SCANNER ───────────────────────────────────────────────────────────────
+  const {
+    cameraActive, setCameraActive,
+    torchOn, setTorchOn,
+    scanZoom,
+    showPhotoHint, setShowPhotoHint,
+    photoScanLoading,
+    galleryInputRef,
+    photoFallbackRef,
+    lastScannedRef,
+    startCamera,
+    stopCamera,
+    scanFromGallery,
+    scanPhotoForEan,
+    toggleTorch,
+  } = useScanner({
+    setScanError,
+    setLoading,
+    onScanSuccess: (code) => lookupProductRef.current?.(code),
+    accessToken,
+  });
+
+  // Ref der altid peger på den seneste lookupProduct (undgår TDZ-cirkulær afhænighed)
+  const lookupProductRef = useRef(null);
+
+const lookupProduct = useCallback(async (ean) => {
     if (!ean?.trim()) return;
     if (navigator.vibrate) navigator.vibrate(40);
     const tid = traceId("scan");
@@ -834,6 +612,7 @@ export default function EatSafe() {
     } catch (e) { traceLog(tid, "scan:error", { error: e.message }); setScanError("Der opstod en fejl. Tjek din forbindelse og prøv igen."); }
     setLoading(false);
   }, [accessToken, activeIds]);
+  lookupProductRef.current = lookupProduct;
 
 // ── SØGNING via Edge Function ───────────────────────────────────────────────
 
