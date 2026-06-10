@@ -111,6 +111,7 @@ export default function EatSafe() {
   // NOT FOUND flow
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackDone, setFeedbackDone] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [betaIntroSeen, setBetaIntroSeen] = useState(true); // Beta-info er nu i onboarding, overlay kun via knap
   const [betaIntroStep, setBetaIntroStep] = useState(0);
