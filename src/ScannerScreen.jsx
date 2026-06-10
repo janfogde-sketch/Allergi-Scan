@@ -694,7 +694,8 @@ export default function ScannerScreen({
             setEditNote={setEditNote}
             setEditType={setEditType}
           />
-   
+        )}
+
         {screen === SCREENS.SUGGEST_EDIT && scanResult && (
           <SuggestEditScreen
             scanResult={scanResult}
