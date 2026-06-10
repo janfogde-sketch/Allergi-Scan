@@ -647,11 +647,6 @@ export default function ScannerScreen({
             setEditType={setEditType}
           />
         )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
 
             {/* ── 2. SIKKERHED + DIÆT ── */}
             {(() => {

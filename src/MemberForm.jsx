@@ -188,7 +188,7 @@ export const CategorySelect = ({ value, onChange, options, placeholder="Alle kat
           appearance:"none", WebkitAppearance:"none",
           padding:"8px 36px 8px 14px",
           borderRadius:24, border:"1.5px solid var(--border)",
-          background:"var(--surface)", color:"var(--ink)", fontSize:13, fontWeight:600,
+          background:"var(--surface)", fontSize:13, fontWeight:600,
           color: value === "alle" ? "var(--muted2)" : "var(--ink)",
           cursor:"pointer", fontFamily:"var(--f)",
           outline:"none", width:"100%",
