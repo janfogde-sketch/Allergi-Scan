@@ -310,6 +310,32 @@ export default function EatSafe() {
     updateSubmissionAndApprove, rejectSubmission, updateTicketStatus, cleanOcrWithAI,
   } = useAdmin(accessToken, userId, clearAuth);
 
+  // ── Manglende EAN'er ──────────────────────────────────────────────────────
+  const [missingEans, setMissingEans] = useState([]);
+  const [missingEansLoading, setMissingEansLoading] = useState(false);
+
+  const loadMissingEans = async () => {
+    setMissingEansLoading(true);
+    try {
+      const data = await apiCall(
+        `${SUPABASE_URL}/rest/v1/missing_ean_log?select=ean,count,first_seen,last_seen&order=count.desc&limit=100`,
+        { headers: makeHeaders(accessToken) }
+      );
+      if (Array.isArray(data)) setMissingEans(data);
+    } catch {}
+    setMissingEansLoading(false);
+  };
+
+  const deleteMissingEan = async (ean) => {
+    try {
+      await apiCall(
+        `${SUPABASE_URL}/rest/v1/missing_ean_log?ean=eq.${encodeURIComponent(ean)}`,
+        { method: "DELETE", headers: makeHeaders(accessToken) }
+      );
+      setMissingEans(prev => prev.filter(r => r.ean !== ean));
+    } catch {}
+  };
+
   // Recipes → useRecipes hook
   const {
     recipes, setRecipes, recipesLoading,
@@ -1222,6 +1248,8 @@ const lookupProduct = useCallback(async (ean) => {
             cleanOcrWithAI={cleanOcrWithAI}
             ticketsLoading={ticketsLoading}
             userSearch={userSearch} setUserSearch={setUserSearch}
+            missingEans={missingEans} missingEansLoading={missingEansLoading}
+            loadMissingEans={loadMissingEans} deleteMissingEan={deleteMissingEan}
           />
           </ErrorBoundary>
           </Suspense>

@@ -1046,22 +1046,38 @@ ${openTicket.description}
                   <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                     {missingEans.map((row, i) => (
                       <div key={row.ean} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", display:"flex", alignItems:"center", gap:12 }}>
+                        {/* Rang */}
                         <div style={{ fontSize:13, fontWeight:800, color:"var(--muted)", width:24, textAlign:"right", flexShrink:0 }}>#{i+1}</div>
+                        {/* EAN + meta */}
                         <div style={{ flex:1, minWidth:0 }}>
                           <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)", fontFamily:"monospace" }}>{row.ean}</div>
-                          <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>
-                            {row.count} opslag · sidst set {new Date(row.last_seen).toLocaleDateString("da-DK")}
+                          <div style={{ display:"flex", gap:8, alignItems:"center", marginTop:3, flexWrap:"wrap" }}>
+                            <span style={{ fontSize:11, fontWeight:700, color:"var(--red)", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:100, padding:"1px 7px" }}>
+                              {row.count}× søgt
+                            </span>
+                            <span style={{ fontSize:11, color:"var(--muted)" }}>
+                              første {new Date(row.first_seen).toLocaleDateString("da-DK")} · sidst {new Date(row.last_seen).toLocaleDateString("da-DK")}
+                            </span>
                           </div>
                         </div>
-                        <div style={{ display:"flex", gap:6 }}>
+                        {/* Handlinger */}
+                        <div style={{ display:"flex", gap:6, flexShrink:0 }}>
+                          <button
+                            onClick={() => window.open(`https://world.openfoodfacts.org/product/${row.ean}`, "_blank")}
+                            style={{ background:"var(--blue-lt)", border:"1px solid var(--blue-md)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--blue)", fontFamily:"var(--f)", cursor:"pointer" }}
+                            title="Søg på Open Food Facts">
+                            🔍 OFF
+                          </button>
                           <button
                             onClick={() => navigator.clipboard?.writeText(row.ean)}
-                            style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer" }}>
+                            style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer" }}
+                            title="Kopiér EAN">
                             📋
                           </button>
                           <button
                             onClick={() => deleteMissingEan(row.ean)}
-                            style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--red)", fontFamily:"var(--f)", cursor:"pointer" }}>
+                            style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--red)", fontFamily:"var(--f)", cursor:"pointer" }}
+                            title="Slet fra liste">
                             ✕
                           </button>
                         </div>
