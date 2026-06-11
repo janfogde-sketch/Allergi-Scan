@@ -50,6 +50,182 @@ const S = {
 };
 
 
+// ── Demo-kort til ikke-loggede brugere ─────────────────────────────────────
+const DEMO_SLIDES = [
+  {
+    title: "Skan stregkoder på sekunder",
+    sub: "Hold kameraet over en stregkode og få svar med det samme — grøn, gul eller rød.",
+    bg: "#1F2733",
+    accent: "#4ADE80",
+    mockup: (
+      <div style={{ background:"#111a11", borderRadius:14, padding:"14px 16px", marginTop:12, border:"1px solid rgba(74,222,128,.2)" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+          <div style={{ width:38, height:38, background:"var(--green-lt)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>🥛</div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:13, fontWeight:800, color:"#fff" }}>Arla Mælk 1L</div>
+            <div style={{ fontSize:11, color:"rgba(255,255,255,.5)" }}>Arla Foods</div>
+          </div>
+          <div style={{ padding:"4px 10px", borderRadius:20, background:"rgba(239,68,68,.15)", border:"1px solid rgba(239,68,68,.4)", fontSize:11, fontWeight:800, color:"#f87171" }}>⚠ FARE</div>
+        </div>
+        <div style={{ background:"rgba(239,68,68,.08)", border:"1px solid rgba(239,68,68,.2)", borderRadius:8, padding:"8px 10px", fontSize:11, color:"#fca5a5", lineHeight:1.5 }}>
+          Indeholder laktose — reagerer Anna
+        </div>
+      </div>
+    ),
+  },
+  {
+    title: "Profiler til hele familien",
+    sub: "Opret individuelle allergiprofiler. Én scanning tjekker alle på én gang.",
+    bg: "#1a1232",
+    accent: "#818cf8",
+    mockup: (
+      <div style={{ display:"flex", gap:8, marginTop:12, justifyContent:"center", flexWrap:"wrap" }}>
+        {[["A","#4ADE80","Gluten, Mælk"],["T","#f59e0b","Nødder"],["S","#818cf8","Sesam, Soja"],["M","#34d399","Ingen"]].map(([name, color, allergies]) => (
+          <div key={name} style={{ background:"rgba(255,255,255,.05)", borderRadius:12, padding:"10px 12px", textAlign:"center", border:"1px solid rgba(255,255,255,.1)", minWidth:68 }}>
+            <div style={{ width:34, height:34, borderRadius:"50%", background:color, color:"#000", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, margin:"0 auto 6px" }}>{name}</div>
+            <div style={{ fontSize:10, fontWeight:700, color:"#fff" }}>Profil {name}</div>
+            <div style={{ fontSize:9, color:"rgba(255,255,255,.4)", marginTop:2, lineHeight:1.3 }}>{allergies}</div>
+          </div>
+        ))}
+      </div>
+    ),
+  },
+  {
+    title: "600+ filtrerede opskrifter",
+    sub: "Alle opskrifter er filtreret til din families allergier. Ingen gætteri.",
+    bg: "#1a1032",
+    accent: "#a78bfa",
+    mockup: (
+      <div style={{ display:"flex", flexDirection:"column", gap:7, marginTop:12 }}>
+        {[["🍝","Spaghetti Bolognese","Glutenfri · Mælkefri","✅ Sikker"],["🥗","Caesar Salat","Glutenfri","⚠ Tjek dressing"],["🍛","Chicken Tikka","Mælkefri · Nøddefri","✅ Sikker"]].map(([e,name,tags,status]) => (
+          <div key={name} style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(255,255,255,.05)", borderRadius:10, padding:"9px 12px", border:"1px solid rgba(255,255,255,.07)" }}>
+            <div style={{ fontSize:22 }}>{e}</div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:"#fff" }}>{name}</div>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,.4)" }}>{tags}</div>
+            </div>
+            <div style={{ fontSize:10, fontWeight:700, color: status.startsWith("✅") ? "#4ADE80" : "#fbbf24" }}>{status}</div>
+          </div>
+        ))}
+      </div>
+    ),
+  },
+  {
+    title: "Madpas til udlandet",
+    sub: "Vis dine allergier på 17 sprog — med udtale til tjenerne.",
+    bg: "#1a1208",
+    accent: "#fbbf24",
+    mockup: (
+      <div style={{ background:"rgba(251,191,36,.07)", borderRadius:14, padding:"14px 16px", marginTop:12, border:"1px solid rgba(251,191,36,.2)" }}>
+        <div style={{ fontSize:11, fontWeight:700, color:"rgba(251,191,36,.7)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>🇮🇹 Italiensk</div>
+        <div style={{ fontSize:14, fontWeight:800, color:"#fff", marginBottom:4 }}>Sono allergico al latte e al glutine</div>
+        <div style={{ fontSize:12, color:"rgba(255,255,255,.5)", fontStyle:"italic", marginBottom:10 }}>"so-no al-ler-ji-ko al lat-te e al glu-ti-ne"</div>
+        <div style={{ display:"flex", gap:6 }}>
+          {["🇫🇷","🇩🇪","🇪🇸","🇯🇵","🇺🇸"].map(f => <span key={f} style={{ fontSize:20 }}>{f}</span>)}
+          <span style={{ fontSize:12, color:"rgba(255,255,255,.3)", alignSelf:"center" }}>+12 mere</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    title: "Klar til at prøve?",
+    sub: "Opret en gratis konto og kom i gang med det samme.",
+    bg: "#0d1f12",
+    accent: "#4ADE80",
+    cta: true,
+    mockup: null,
+  },
+];
+
+// mode: "welcome" = CTA-knapper på sidste slide | "modal" = luk-knap øverst
+function DemoSlider({ setScreen, mode = "welcome", onClose }) {
+  const [idx, setIdx] = React.useState(0);
+  const slide = DEMO_SLIDES[idx];
+  const isModal = mode === "modal";
+
+  return (
+    <div style={{ borderRadius: isModal ? 0 : 20, overflow:"hidden", border: isModal ? "none" : "1px solid var(--border2)", marginBottom: isModal ? 0 : 10 }}>
+      <div style={{ background:slide.bg, padding:"20px 20px 18px", minHeight:260, transition:"background .4s", position:"relative" }}>
+
+        {/* Modal: luk-knap */}
+        {isModal && (
+          <button onClick={onClose}
+            style={{ position:"absolute", top:14, right:14, background:"rgba(255,255,255,.12)", border:"none", borderRadius:"50%",
+              width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", fontSize:16, color:"#fff", lineHeight:1 }}>
+            ✕
+          </button>
+        )}
+
+        {/* Dots */}
+        <div style={{ display:"flex", gap:5, justifyContent:"center", marginBottom:16 }}>
+          {DEMO_SLIDES.map((_,i) => (
+            <div key={i} onClick={() => setIdx(i)}
+              style={{ width: i===idx ? 22 : 7, height:7, borderRadius:4, background: i===idx ? slide.accent : "rgba(255,255,255,.2)", cursor:"pointer", transition:"all .25s" }} />
+          ))}
+        </div>
+
+        {/* Indhold */}
+        <div style={{ fontSize:19, fontWeight:900, color:"#fff", marginBottom:6, letterSpacing:"-.3px" }}>{slide.title}</div>
+        <div style={{ fontSize:13, color:"rgba(255,255,255,.6)", lineHeight:1.6 }}>{slide.sub}</div>
+        {slide.mockup}
+
+        {/* Sidste slide: welcome-CTA eller modal-luk */}
+        {slide.cta && (
+          <div style={{ marginTop:20, display:"flex", flexDirection:"column", gap:10 }}>
+            {isModal ? (
+              <button className="btn btn-primary btn-full" onClick={onClose}
+                style={{ fontSize:14, fontWeight:800 }}>
+                Luk guide ✓
+              </button>
+            ) : (
+              <>
+                <button className="btn btn-primary btn-full" onClick={() => setScreen(SCREENS.LOGIN)}
+                  style={{ fontSize:15, fontWeight:800 }}>
+                  Opret gratis konto →
+                </button>
+                <button className="btn btn-ghost btn-full" onClick={() => { setScreen(SCREENS.LOGIN); }}
+                  style={{ fontSize:13 }}>
+                  Jeg har allerede en konto
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Frem/tilbage */}
+      <div style={{ display:"flex", gap:8, padding:"12px 14px", background:"rgba(255,255,255,.03)", borderTop:"1px solid rgba(255,255,255,.08)" }}>
+        <button disabled={idx===0} onClick={() => setIdx(i => i-1)}
+          style={{ flex:1, padding:"10px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:10,
+            fontFamily:"var(--f)", fontSize:13, fontWeight:700, color: idx===0 ? "var(--muted)" : "var(--ink2)",
+            cursor: idx===0 ? "default" : "pointer", opacity: idx===0 ? 0.4 : 1 }}>
+          ← Forrige
+        </button>
+        {idx < DEMO_SLIDES.length - 1 ? (
+          <button onClick={() => setIdx(i => i+1)}
+            style={{ flex:1, padding:"10px", background:"var(--green)", border:"none", borderRadius:10,
+              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"#071510", cursor:"pointer" }}>
+            Næste →
+          </button>
+        ) : isModal ? (
+          <button onClick={onClose}
+            style={{ flex:1, padding:"10px", background:"var(--green)", border:"none", borderRadius:10,
+              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"#071510", cursor:"pointer" }}>
+            Luk guide ✓
+          </button>
+        ) : (
+          <button onClick={() => setScreen(SCREENS.LOGIN)}
+            style={{ flex:1, padding:"10px", background:"var(--green)", border:"none", borderRadius:10,
+              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"#071510", cursor:"pointer" }}>
+            Opret konto →
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ScannerScreen({
   screen, setScreen,
   scanResult, notFoundEan,
@@ -116,6 +292,9 @@ export default function ScannerScreen({
 
   // Parser OCR-tekst til liste af ingredienser
 
+
+  // ── Guide modal state ─────────────────────────────────────────────────────
+  const [showGuide, setShowGuide] = React.useState(false);
 
   // ── Kombinerede allergen-IDs for alle aktive profiler ──────────────────────
   const activeIds = [
@@ -237,16 +416,22 @@ export default function ScannerScreen({
               );
             })()}
 
-            {/* Hilsen + Profil-bar */}
-            <div style={{ padding:"16px 2px 12px" }}>
+            {/* Guide modal — vises ved klik på "App-guide" */}
+            {showGuide && (
+              <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.7)", display:"flex", flexDirection:"column", justifyContent:"flex-end" }}
+                onClick={() => setShowGuide(false)}>
+                <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", overflow:"hidden", maxHeight:"90vh", overflowY:"auto" }}
+                  onClick={e => e.stopPropagation()}>
+                  <DemoSlider setScreen={setScreen} mode="modal" onClose={() => setShowGuide(false)} />
+                </div>
+              </div>
+            )}
+
+            {/* Hilsen + Profil-bar — kun til loggede */}
+            {!!userId && <div style={{ padding:"16px 2px 12px" }}>
               <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px", marginBottom:4 }}>
                 {greeting} {user.name?.split(" ")[0] || "der"}
               </div>
-              {buildLabel && (
-                <div style={{ fontSize:10, color:"var(--muted)", marginBottom:10, opacity:.7, letterSpacing:".2px" }}>
-                  Sidst opdateret {buildLabel}
-                </div>
-              )}
 
               {/* Vælg alle / fravælg alle */}
               <div style={{ display:"flex", gap:6, marginBottom:10 }}>
@@ -350,10 +535,10 @@ export default function ScannerScreen({
                   <div style={{ fontSize:10, color:"var(--muted2)", fontWeight:600 }}>Tilføj</div>
                 </div>
               </div>
-            </div>
+            </div>}
 
-            {/* Scan-boks — viser kamera når aktivt, animation ellers */}
-            <div style={{
+            {/* Scan-boks — kun til loggede */}
+            {!!userId && <div style={{
               background:"rgba(255,255,255,.04)", borderRadius:20, marginBottom:10,
               overflow:"hidden", position:"relative", border:"1px solid var(--border2)",
               boxShadow:"0 4px 20px rgba(0,0,0,.3)",
@@ -506,8 +691,10 @@ export default function ScannerScreen({
                 </div>
               </div>
               )}
-            </div>
+            </div>}
 
+            {/* Fejlbesked + Manuel EAN — kun til loggede */}
+            {!!userId && <>
             {/* Fejlbesked fra kamera */}
             {scanError && (
               <div style={{ fontSize:12, color:"var(--red)", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, padding:"8px 12px", marginBottom:8 }}>
@@ -565,6 +752,8 @@ export default function ScannerScreen({
               </div>
             )}
 
+            </>}
+
             {/* Søg — fremhævet på forsiden */}
             <div className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:10,
               background:"rgba(255,255,255,.04)", border:"1px solid var(--border2)" }}
@@ -616,16 +805,28 @@ export default function ScannerScreen({
             {/* Version + Beta knap */}
             <div style={{ textAlign:"center", paddingTop:8, paddingBottom:12, display:"flex", flexDirection:"column", alignItems:"center", gap:8 }}>
               <div style={{ fontSize:10, color:"var(--muted)", opacity:0.4 }}>v1.0.6 · beta</div>
-              <button onClick={onBetaClick}
-                style={{ display:"inline-flex", alignItems:"center", gap:6,
-                  padding:"5px 14px", borderRadius:100,
-                  background:"rgba(74,222,128,.1)",
-                  border:"1px solid rgba(74,222,128,.25)",
-                  fontFamily:"var(--f)", fontSize:11, fontWeight:700,
-                  color:"var(--green)", cursor:"pointer",
-                  letterSpacing:".3px" }}>
-                🧪 Beta-information
-              </button>
+              <div style={{ display:"flex", gap:8, justifyContent:"center", flexWrap:"wrap" }}>
+                <button onClick={onBetaClick}
+                  style={{ display:"inline-flex", alignItems:"center", gap:6,
+                    padding:"5px 14px", borderRadius:100,
+                    background:"rgba(74,222,128,.1)",
+                    border:"1px solid rgba(74,222,128,.25)",
+                    fontFamily:"var(--f)", fontSize:11, fontWeight:700,
+                    color:"var(--green)", cursor:"pointer",
+                    letterSpacing:".3px" }}>
+                  🧪 Beta-information
+                </button>
+                <button onClick={() => setShowGuide(true)}
+                  style={{ display:"inline-flex", alignItems:"center", gap:6,
+                    padding:"5px 14px", borderRadius:100,
+                    background:"rgba(99,102,241,.1)",
+                    border:"1px solid rgba(99,102,241,.25)",
+                    fontFamily:"var(--f)", fontSize:11, fontWeight:700,
+                    color:"#818cf8", cursor:"pointer",
+                    letterSpacing:".3px" }}>
+                  📖 App-guide
+                </button>
+              </div>
             </div>
 
           </div>

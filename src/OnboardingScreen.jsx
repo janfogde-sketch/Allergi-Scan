@@ -6,6 +6,142 @@ import { EatSafeLogo, Icon } from "./SharedComponents.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
 import { MemberForm } from "./MemberForm.jsx";
 
+// ── Welcome demo-slider ────────────────────────────────────────────────────
+const WELCOME_SLIDES = [
+  {
+    title: "Skan stregkoder på sekunder",
+    sub: "Hold kameraet over en stregkode og få svar med det samme — grøn, gul eller rød.",
+    bg: "#1F2733", accent: "#4ADE80",
+    mockup: (
+      <div style={{ background:"#111a11", borderRadius:14, padding:"14px 16px", marginTop:12, border:"1px solid rgba(74,222,128,.2)" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+          <div style={{ width:38, height:38, background:"rgba(74,222,128,.15)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>🥛</div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:13, fontWeight:800, color:"#fff" }}>Arla Mælk 1L</div>
+            <div style={{ fontSize:11, color:"rgba(255,255,255,.4)" }}>Arla Foods</div>
+          </div>
+          <div style={{ padding:"4px 10px", borderRadius:20, background:"rgba(239,68,68,.15)", border:"1px solid rgba(239,68,68,.4)", fontSize:11, fontWeight:800, color:"#f87171" }}>⚠ FARE</div>
+        </div>
+        <div style={{ background:"rgba(239,68,68,.08)", border:"1px solid rgba(239,68,68,.2)", borderRadius:8, padding:"8px 10px", fontSize:11, color:"#fca5a5", lineHeight:1.5 }}>
+          Indeholder laktose — reagerer Anna
+        </div>
+      </div>
+    ),
+  },
+  {
+    title: "Profiler til hele familien",
+    sub: "Opret individuelle allergiprofiler. Én scanning tjekker alle på én gang.",
+    bg: "#1a1232", accent: "#818cf8",
+    mockup: (
+      <div style={{ display:"flex", gap:8, marginTop:12, justifyContent:"center", flexWrap:"wrap" }}>
+        {[["A","#4ADE80","Gluten, Mælk"],["T","#f59e0b","Nødder"],["S","#818cf8","Sesam"],["M","#34d399","Ingen"]].map(([n,c,a]) => (
+          <div key={n} style={{ background:"rgba(255,255,255,.05)", borderRadius:12, padding:"10px 12px", textAlign:"center", border:"1px solid rgba(255,255,255,.1)", minWidth:68 }}>
+            <div style={{ width:34, height:34, borderRadius:"50%", background:c, color:"#000", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, margin:"0 auto 6px" }}>{n}</div>
+            <div style={{ fontSize:10, fontWeight:700, color:"#fff" }}>Profil {n}</div>
+            <div style={{ fontSize:9, color:"rgba(255,255,255,.4)", marginTop:2, lineHeight:1.3 }}>{a}</div>
+          </div>
+        ))}
+      </div>
+    ),
+  },
+  {
+    title: "600+ filtrerede opskrifter",
+    sub: "Opskrifter filtreret til netop din families allergier. Ingen gætteri.",
+    bg: "#1a1032", accent: "#a78bfa",
+    mockup: (
+      <div style={{ display:"flex", flexDirection:"column", gap:7, marginTop:12 }}>
+        {[["🍝","Spaghetti Bolognese","Glutenfri · Mælkefri","✅"],["🥗","Caesar Salat","Glutenfri","⚠"],["🍛","Chicken Tikka","Mælkefri · Nøddefri","✅"]].map(([e,name,tags,s]) => (
+          <div key={name} style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(255,255,255,.05)", borderRadius:10, padding:"9px 12px", border:"1px solid rgba(255,255,255,.07)" }}>
+            <div style={{ fontSize:20 }}>{e}</div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:"#fff" }}>{name}</div>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,.4)" }}>{tags}</div>
+            </div>
+            <div style={{ fontSize:14 }}>{s}</div>
+          </div>
+        ))}
+      </div>
+    ),
+  },
+  {
+    title: "Madpas til udlandet",
+    sub: "Vis dine allergier på 17 sprog — med udtale til tjenerne.",
+    bg: "#1a1208", accent: "#fbbf24",
+    mockup: (
+      <div style={{ background:"rgba(251,191,36,.07)", borderRadius:14, padding:"14px 16px", marginTop:12, border:"1px solid rgba(251,191,36,.2)" }}>
+        <div style={{ fontSize:11, fontWeight:700, color:"rgba(251,191,36,.7)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>🇮🇹 Italiensk</div>
+        <div style={{ fontSize:13, fontWeight:800, color:"#fff", marginBottom:3 }}>Sono allergico al latte e al glutine</div>
+        <div style={{ fontSize:11, color:"rgba(255,255,255,.4)", fontStyle:"italic", marginBottom:10 }}>"so-no al-ler-ji-ko al lat-te..."</div>
+        <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+          {["🇫🇷","🇩🇪","🇪🇸","🇯🇵","🇺🇸"].map(f => <span key={f} style={{ fontSize:18 }}>{f}</span>)}
+          <span style={{ fontSize:11, color:"rgba(255,255,255,.3)" }}>+12</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    title: "Klar til at komme i gang?",
+    sub: "Gratis at oprette. Ingen kreditkort. Kom i gang på under 2 minutter.",
+    bg: "#0d1f12", accent: "#4ADE80",
+    cta: true, mockup: null,
+  },
+];
+
+function WelcomeDemoSlider({ setScreen, setAuthTab }) {
+  const [idx, setIdx] = useState(0);
+  const slide = WELCOME_SLIDES[idx];
+  return (
+    <div style={{ borderRadius:20, overflow:"hidden", border:"1px solid rgba(255,255,255,.08)", marginBottom:8 }}>
+      <div style={{ background:slide.bg, padding:"20px 18px 18px", minHeight:240, transition:"background .35s", position:"relative" }}>
+        {/* Dots */}
+        <div style={{ display:"flex", gap:5, justifyContent:"center", marginBottom:14 }}>
+          {WELCOME_SLIDES.map((_,i) => (
+            <div key={i} onClick={() => setIdx(i)}
+              style={{ width: i===idx ? 22 : 7, height:7, borderRadius:4,
+                background: i===idx ? slide.accent : "rgba(255,255,255,.2)",
+                cursor:"pointer", transition:"all .25s" }} />
+          ))}
+        </div>
+        <div style={{ fontSize:18, fontWeight:900, color:"#fff", marginBottom:6, letterSpacing:"-.3px" }}>{slide.title}</div>
+        <div style={{ fontSize:13, color:"rgba(255,255,255,.6)", lineHeight:1.55 }}>{slide.sub}</div>
+        {slide.mockup}
+        {slide.cta && (
+          <div style={{ marginTop:20, display:"flex", flexDirection:"column", gap:10 }}>
+            <button className="welcome-btn" onClick={() => { setAuthTab("signup"); setScreen(SCREENS.LOGIN); }}>
+              Opret gratis konto →
+            </button>
+            <button className="welcome-btn-ghost" onClick={() => { setAuthTab("login"); setScreen(SCREENS.LOGIN); }}>
+              Jeg har allerede en konto
+            </button>
+          </div>
+        )}
+      </div>
+      {/* Nav */}
+      <div style={{ display:"flex", gap:8, padding:"10px 14px", background:"rgba(255,255,255,.03)", borderTop:"1px solid rgba(255,255,255,.07)" }}>
+        <button disabled={idx===0} onClick={() => setIdx(i => i-1)}
+          style={{ flex:1, padding:"9px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:10,
+            fontFamily:"var(--f)", fontSize:13, fontWeight:700, color: idx===0 ? "var(--muted)" : "var(--ink2)",
+            cursor: idx===0 ? "default" : "pointer", opacity: idx===0 ? 0.4 : 1 }}>
+          ← Forrige
+        </button>
+        {idx < WELCOME_SLIDES.length - 1 ? (
+          <button onClick={() => setIdx(i => i+1)}
+            style={{ flex:1, padding:"9px", background:"var(--green)", border:"none", borderRadius:10,
+              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"#071510", cursor:"pointer" }}>
+            Næste →
+          </button>
+        ) : (
+          <button onClick={() => { setAuthTab("signup"); setScreen(SCREENS.LOGIN); }}
+            style={{ flex:1, padding:"9px", background:"var(--green)", border:"none", borderRadius:10,
+              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"#071510", cursor:"pointer" }}>
+            Opret konto →
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function OnboardingScreen({
   screen, setScreen,
   authTab, setAuthTab,
@@ -46,36 +182,20 @@ export default function OnboardingScreen({
     <>
         {screen === SCREENS.WELCOME && (
           <div className="welcome-screen fade-in">
-            {/* Logo + wordmark som splash */}
-            <div className="welcome-logo-wrap">
-              <EatSafeLogo size={96} variant="light" />
+            {/* Logo + tagline */}
+            <div className="welcome-logo-wrap" style={{ marginBottom:16 }}>
+              <EatSafeLogo size={72} variant="light" />
               <div className="welcome-wordmark">
                 <span className="welcome-wordmark-text">Eat<span>Safe</span></span>
               </div>
               <div className="welcome-tagline">Scan. Tjek. Spis trygt.</div>
             </div>
 
-            <div className="welcome-divider" />
+            {/* Demo-slider — kombineret feature-visning + CTA */}
+            <WelcomeDemoSlider setScreen={setScreen} setAuthTab={setAuthTab} />
 
-            {/* Features */}
-            <div className="welcome-features">
-              {[
-                ["camera","Skan på sekunder","Hold kameraet over stregkoden og få svar med det samme"],
-                ["family","Hele familien","Administrér allergiprofiler for alle i familien på ét sted"],
-                ["cart","Smarte indkøbslister","Delte lister med allergencheck for hele familien"],
-              ].map(([icon,title,text]) => (
-                <div key={title} className="welcome-feat">
-                  <div className="welcome-feat-icon"><Icon name={icon} size={20} color="var(--ink)" /></div>
-                  <div className="welcome-feat-text"><strong>{title}</strong>{text}</div>
-                </div>
-              ))}
-            </div>
-
-            <button className="welcome-btn" onClick={() => { setAuthTab("signup"); setScreen(SCREENS.LOGIN); }}>Opret gratis konto →</button>
-            <button className="welcome-btn-ghost" onClick={() => { setAuthTab("login"); setScreen(SCREENS.LOGIN); }}>Jeg har allerede en konto</button>
-
-            {/* Privacy policy link */}
-            <div style={{ marginTop:24, fontSize:11, color:"var(--muted)", lineHeight:1.6 }}>
+            {/* Privacy */}
+            <div style={{ marginTop:16, fontSize:11, color:"var(--muted)", lineHeight:1.6, textAlign:"center" }}>
               Ved at oprette en konto accepterer du vores{" "}
               <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:600 }}>privatlivspolitik</a>
             </div>
@@ -211,38 +331,7 @@ export default function OnboardingScreen({
               <span style={{ fontSize:11, color:"var(--muted)", fontWeight:500 }}>eller</span>
               <div style={{ flex:1, height:1, background:"var(--border)" }} />
             </div>
-            <button className="btn btn-ghost btn-full" onClick={() => {
-              setUser({ name:"Jan", age:"", email:"jan@preview.dk", phone:"" });
-              setAllergens(["gluten", "laktose"]);
-              setCustomAllerg(["Fructose"]);
-              setActiveProfiles(["me", "f1", "f2", "f3", "f4"]);
-              setFamily([
-                { id:"f1", name:"Frederikke", allergens:["laktose","aeg"], custom:[], diets:["vegetarian"], color:"#74c69d" },
-                { id:"f2", name:"Tage", allergens:["jordnoedder","noedder"], custom:[], diets:[], color:"#40916c" },
-                { id:"f3", name:"Sofie", allergens:["sesam","soja","fisk"], custom:["Kiwi"], diets:["vegan","gluten-free"], color:"#f4a261" },
-                { id:"f4", name:"Mads", allergens:[], custom:["Sukker"], diets:["keto"], color:"#2d6a4f" },
-              ]);
-              setHistory([
-                {code:"3017620422003",name:"Nutella",brand:"Ferrero",status:"danger",result:"danger",headline:"Indeholder nødder!",summary:"Produktet indeholder hasselnødder.",flags:[{type:"bad",text:"Indeholder hasselnødder"}],timestamp:Date.now()-180000,scanned_at:new Date(Date.now()-180000).toISOString()},
-                {code:"5449000054227",name:"Coca-Cola",brand:"Coca-Cola",status:"safe",result:"safe",headline:"Sikkert produkt",summary:"Ingen allergener fundet.",flags:[{type:"good",text:"Ingen kendte allergener"}],timestamp:Date.now()-7200000,scanned_at:new Date(Date.now()-7200000).toISOString()},
-              ]);
-              setShoppingList([{id:"s1",name:"Glutenfri pasta",checked:false},{id:"s2",name:"Havremælk",checked:true}]);
-              setScreen(SCREENS.HOME);
-            }}>
-              Prøv app uden login (preview)
-            </button>
 
-            <button className="btn btn-ghost btn-full btn-sm" style={{ marginTop:8, opacity:0.5, fontSize:12 }}
-              onClick={() => {
-                setOnboardStep(1);
-                setAllergens([]);
-                setCustomAllerg([]);
-                setFamily([]);
-                setUser({ name:"", age:"", email:"", phone:"" });
-                setScreen(SCREENS.ONBOARD);
-              }}>
-              🧪 Test onboarding
-            </button>
             
           </div>
         )}
@@ -316,66 +405,105 @@ export default function OnboardingScreen({
               </div>
             )}
 
-            {/* ── TRIN 1: Hvad er EatSafe ── */}
-            {onboardStep === 1 && (
-              <div className="fade-in">
-                <div className="card" style={{ textAlign:"center", padding:"24px 20px 16px" }}>
-                  <div style={{ marginBottom:10 }}><Icon name="list" size={48} color="var(--ink2)" /></div>
-                  <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Velkommen til EatSafe</div>
-                  <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6 }}>Din personlige allergiguide — til dig og hele familien.</div>
-                </div>
+            {/* ── TRIN 1: Din profil (obligatorisk) ── */}
+            {onboardStep === 1 && (() => {
+              const nameOk = (user.name||"").trim().length > 0;
+              const emailOk = (user.email||loginEmail||"").trim().length > 0;
+              const ageOk = (user.age||"").toString().trim().length > 0 && Number(user.age) > 0;
+              const genderOk = !!(user.gender);
+              const phoneOk = (user.phone||"").trim().length > 0;
+              const allOk = nameOk && emailOk && ageOk && genderOk && phoneOk;
+              const missingFields = [
+                !nameOk && "navn",
+                !emailOk && "email",
+                !ageOk && "alder",
+                !genderOk && "køn",
+                !phoneOk && "telefon",
+              ].filter(Boolean);
+              return (
+                <div className="fade-in">
+                  <div style={{ marginBottom:14 }}>
+                    <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", marginBottom:4 }}>Hvem er du?</div>
+                    <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.5 }}>Oplysningerne bruges til din personlige allergiprofil og kan redigeres senere.</div>
+                  </div>
 
-                {/* Feature tour — swipeable kort */}
-                {[
-                  { emoji:"📷", bg:"#1F2733", color:"#fff", title:"Skan på sekunder", desc:"Hold kameraet over en stregkode. EatSafe fortæller dig øjeblikkeligt om produktet er sikkert for dig.", tags:["Øjeblikkelig scanning","Vibration ved fund","Historik"] },
-                  { emoji:"👨‍👩‍👧", bg:"#22C55E", color:"#fff", title:"Hele familien", desc:"Opret profiler for børn, partner og andre. Se på ét blik hvem der kan spise hvad.", tags:["Individuelle profiler","Fælles oversigt","Børnevenlig"] },
-                  { emoji:"🍝", bg:"#6366F1", color:"#fff", title:"Sikre opskrifter", desc:"Over 600 opskrifter filtreret til netop din families præferencer. Med ingrediensliste og fremgangsmåde.", tags:["600+ opskrifter","Allergenfiltreret","Skalerbar portion"] },
-                  { emoji:"🌍", bg:"#F59E0B", color:"#fff", title:"Madpas til udlandet", desc:"Vis tjenere dine allergier på 17 sprog. Med udtale og forklaring på det lokale sprog.", tags:["17 sprog","Tekst-til-tale","Offline"] },
-                ].map((f, i) => i === tourIdx ? (
-                  <div key={i} style={{ marginBottom:4 }}>
-                    <div style={{ background:f.bg, borderRadius:18, padding:"20px", marginBottom:10 }}>
-                      <div style={{ fontSize:36, marginBottom:8 }}>{f.emoji}</div>
-                      <div style={{ fontSize:18, fontWeight:900, color:f.color, marginBottom:6 }}>{f.title}</div>
-                      <div style={{ fontSize:13, color:f.color, opacity:0.8, lineHeight:1.65, marginBottom:8 }}>{f.desc}</div>
-                      <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
-                        {f.tags.map(t => <span key={t} style={{ fontSize:10, fontWeight:700, padding:"3px 9px", borderRadius:100, background:"rgba(255,255,255,.15)", color:f.color }}>{t}</span>)}
+                  <div className="card" style={{ marginBottom:12 }}>
+                    {/* Navn */}
+                    <div style={{ marginBottom:12 }}>
+                      <label className="field-lbl">Fulde navn <span style={{ color:"var(--red)" }}>*</span></label>
+                      <input className="field" type="text" placeholder="Fx. Anna Hansen"
+                        value={user.name||""} onChange={e => setUser(u => ({...u, name:e.target.value}))}
+                        style={{ borderColor: !nameOk && (user.name !== undefined) ? "var(--red-md)" : undefined }} />
+                    </div>
+
+                    {/* Email */}
+                    <div style={{ marginBottom:12 }}>
+                      <label className="field-lbl">Email <span style={{ color:"var(--red)" }}>*</span></label>
+                      <input className="field" type="email" placeholder="din@email.dk"
+                        value={user.email||loginEmail||""}
+                        onChange={e => setUser(u => ({...u, email:e.target.value}))}
+                        readOnly={!!(loginEmail || isOAuth)}
+                        style={{ opacity: (loginEmail || isOAuth) ? 0.6 : 1 }} />
+                      {isOAuth && (
+                        <div style={{ fontSize:10, color:"var(--green)", marginTop:3, display:"flex", alignItems:"center", gap:4 }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                          Bekræftet via Google
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Telefon */}
+                    <div style={{ marginBottom:12 }}>
+                      <label className="field-lbl">Telefonnummer <span style={{ color:"var(--red)" }}>*</span></label>
+                      <input className="field" type="tel" placeholder="+45 12 34 56 78"
+                        value={user.phone||""} onChange={e => setUser(u => ({...u, phone:e.target.value}))} />
+                    </div>
+
+                    {/* Alder */}
+                    <div style={{ marginBottom:14 }}>
+                      <label className="field-lbl">Alder <span style={{ color:"var(--red)" }}>*</span></label>
+                      <input className="field" type="number" inputMode="numeric" placeholder="Fx. 32" min="1" max="120"
+                        value={user.age||""} onChange={e => setUser(u => ({...u, age:e.target.value}))}
+                        style={{ maxWidth:120 }} />
+                    </div>
+
+                    {/* Køn */}
+                    <div>
+                      <label className="field-lbl">Køn <span style={{ color:"var(--red)" }}>*</span></label>
+                      <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                        {["Mand","Kvinde","Andet","Vil ikke oplyse"].map(g => (
+                          <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
+                            style={{
+                              padding:"9px 14px", borderRadius:8, cursor:"pointer",
+                              border:`1px solid ${user.gender===g ? "var(--green)" : "var(--border)"}`,
+                              background: user.gender===g ? "var(--green-lt)" : "var(--surface)",
+                              fontSize:13, fontWeight:700,
+                              color: user.gender===g ? "var(--green)" : "var(--muted)",
+                              transition:"all .15s",
+                            }}>
+                            {g}
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10 }}>
-                      {[0,1,2,3].map(idx => (
-                        <div key={idx} onClick={() => setTourIdx(idx)}
-                          style={{ width: tourIdx===idx ? 20 : 7, height:7, borderRadius:4, background: tourIdx===idx ? "var(--ink)" : "var(--border2)", cursor:"pointer", transition:"all .25s" }} />
-                      ))}
-                    </div>
-                    <div style={{ display:"flex", gap:8 }}>
-                      {tourIdx > 0 && (
-                        <button onClick={() => setTourIdx(v => v-1)}
-                          style={{ flex:1, padding:"12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
-                          ← Forrige
-                        </button>
-                      )}
-                      {tourIdx < 3 ? (
-                        <button onClick={() => setTourIdx(v => v+1)}
-                          style={{ flex:1, padding:"12px", background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#071510", cursor:"pointer" }}>
-                          Næste →
-                        </button>
-                      ) : (
-                        <button onClick={() => setOnboardStep(2)}
-                          style={{ flex:1, padding:"12px", background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"#fff", cursor:"pointer" }}>
-                          Kom i gang →
-                        </button>
-                      )}
-                    </div>
-                    {tourIdx < 3 && (
-                      <button onClick={() => setOnboardStep(2)}
-                        style={{ width:"100%", background:"none", border:"none", padding:"10px", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", cursor:"pointer", marginTop:4 }}>
-                        Spring over
-                      </button>
-                    )}
                   </div>
-                ) : null)}
-              </div>
-            )}
+
+                  {/* Validering */}
+                  {!allOk && missingFields.length > 0 && (
+                    <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", marginBottom:10 }}>
+                      Mangler: {missingFields.join(", ")}
+                    </div>
+                  )}
+
+                  <button className="btn btn-primary btn-full"
+                    disabled={!allOk}
+                    style={{ opacity: allOk ? 1 : 0.45 }}
+                    onClick={() => allOk && saveProfileStep1().then(() => setOnboardStep(2))}>
+                    Fortsæt →
+                  </button>
+                </div>
+              );
+            })()}
             {onboardStep === 97 && (
               <div className="fade-in">
                 <div className="card" style={{ textAlign:"center", padding:"20px 20px 14px" }}>
@@ -463,57 +591,7 @@ export default function OnboardingScreen({
               </div>
             )}
 
-            {/* ── TRIN 3: Din profil ── */}
-            {onboardStep === 1 && (
-              <div className="fade-in">
-                <div className="card">
-                  <div className="step-title">Hvem er du?</div>
-                  <div className="step-sub">Disse oplysninger bruges til din personlige allergiprofil. Du kan altid redigere dem senere.</div>
-                  {[
-                    ["Dit fulde navn *","text","Fx. Anna Hansen","name"],
-                    ["Email *","email","din@email.dk","email"],
-                    ["Telefon","tel","+45 12 34 56 78","phone"],
-                    ["Alder","number","Fx. 32","age"],
-                  ].map(([lbl,type,ph,key]) => (
-                    <div key={key} style={{ marginBottom:10 }}>
-                      <label className="field-lbl">{lbl}</label>
-                      <input className="field" type={type} placeholder={ph} value={user[key]||""} onChange={e => setUser(u => ({ ...u, [key]: e.target.value }))}
-                        style={key==="email" ? { background: user.email ? "var(--paper2)" : "var(--paper2)", opacity: loginEmail ? 0.6 : 1 } : {}} 
-                        readOnly={key === "email" && (!!loginEmail || isOAuth)}
-                      />
-                      {key === "email" && isOAuth && (
-                        <div style={{ fontSize:10, color:"var(--green)", marginTop:3, display:"flex", alignItems:"center", gap:4 }}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
-                          Bekræftet via Google
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  <label className="field-lbl">Køn</label>
-                  <div style={{ display:"flex", gap:8, marginBottom:4 }}>
-                    {["Mand","Kvinde","Andet"].map(g => (
-                      <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
-                        style={{ flex:1, padding:"9px 0", textAlign:"center", borderRadius:8,
-                          border:`1px solid ${user.gender===g?"var(--green)":"var(--border)"}`,
-                          background:user.gender===g?"var(--green-lt)":"var(--surface)",
-                          fontSize:13, fontWeight:700,
-                          color:user.gender===g?"var(--green)":"var(--muted)", cursor:"pointer" }}>
-                        {g}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <button className="btn btn-primary btn-full" onClick={() => saveProfileStep1().then(() => setOnboardStep(2))}
-                  disabled={!(user.name||"").trim() || !(user.email||loginEmail||"").trim()}>
-                  Fortsæt →
-                </button>
-                {(!(user.name||"").trim() || !(user.email||loginEmail||"").trim()) && (
-                  <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", marginTop:6 }}>
-                    {!(user.name||"").trim() ? "Navn er påkrævet" : "Email er påkrævet"}
-                  </div>
-                )}
-              </div>
-            )}
+
 
             {/* ── TRIN 2: Dine allergier / intolerancer ── */}
             {onboardStep === 2 && (
@@ -589,7 +667,20 @@ export default function OnboardingScreen({
                 </div>
 
                 <button className="btn btn-primary btn-full" style={{ marginTop:12 }} onClick={async () => { await saveAllergensStep2(); setOnboardStep(3); }}>Fortsæt →</button>
-                <div className="onboard-skip">Kan springes over</div>
+                {allergens.length === 0 && customAllerg.length === 0 ? (
+                  <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", padding:"10px 0", marginTop:2 }}
+                    onClick={() => {
+                      if (window.confirm("Er du sikker på, at du ingen allergier eller intolerancer har? Du kan altid tilføje dem senere under Profil.")) {
+                        saveAllergensStep2().then(() => setOnboardStep(3));
+                      }
+                    }}>
+                    Spring over — jeg har ingen allergier
+                  </button>
+                ) : (
+                  <div style={{ textAlign:"center", fontSize:12, color:"var(--muted)", marginTop:6 }}>
+                    {allergens.length + customAllerg.length} allergi{allergens.length + customAllerg.length !== 1 ? "er" : ""} valgt
+                  </div>
+                )}
               </div>
             )}
 
