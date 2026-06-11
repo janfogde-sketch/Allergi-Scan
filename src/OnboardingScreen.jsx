@@ -5,6 +5,7 @@ import { initials } from "./helpers.js";
 import { EatSafeLogo, Icon } from "./SharedComponents.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
 import { MemberForm } from "./MemberForm.jsx";
+import { usePush } from "./usePush.js";
 
 // ── Welcome demo-slider ────────────────────────────────────────────────────
 const WELCOME_SLIDES = [
@@ -273,6 +274,7 @@ export default function OnboardingScreen({
   family = [], setFamily,
   activeProfiles = [], setActiveProfiles,
   isOAuth,
+  accessToken,
   tourIdx, setTourIdx,
   editMode, setEditMode,
   history, setHistory,
@@ -890,6 +892,73 @@ export default function OnboardingScreen({
               </div>
             )}
 
+            {/* ── TRIN 5: Push-notifikationer ── */}
+            {onboardStep === 5 && (() => {
+              const { supported, permission, subscribe } = usePush();
+              const [pushDone, setPushDone] = React.useState(false);
+              const [pushLoading, setPushLoading] = React.useState(false);
+              const [pushDeclined, setPushDeclined] = React.useState(false);
+
+              const handleEnable = async () => {
+                setPushLoading(true);
+                const result = await subscribe(accessToken);
+                setPushLoading(false);
+                if (result.ok || result.reason === "Tilladelse afvist") {
+                  setPushDone(true);
+                  setTimeout(() => setOnboardStep(6), 800);
+                }
+              };
+
+              return (
+                <div className="fade-in">
+                  <div style={{ textAlign:"center", padding:"16px 0 20px" }}>
+                    <div style={{ fontSize:48, marginBottom:12 }}>🔔</div>
+                    <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Bliv opdateret</div>
+                    <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.65 }}>
+                      Få en notifikation når dine produktindsendelser godkendes, og når familiemedlemmer tilslutter sig.
+                    </div>
+                  </div>
+
+                  <div className="card" style={{ marginBottom:16 }}>
+                    {[
+                      ["✅","Produktet er godkendt","Når admin godkender dit indsendte produkt"],
+                      ["👨‍👩‍👧","Familie tilslutter sig","Når nogen accepterer dit invitationslink"],
+                      ["🎉","Nyt i databasen","Når et produkt du søgte efter nu er tilgængeligt"],
+                    ].map(([e, title, sub]) => (
+                      <div key={title} style={{ display:"flex", gap:12, padding:"10px 0", borderBottom:"1px solid var(--border)" }}>
+                        <div style={{ fontSize:22, lineHeight:1 }}>{e}</div>
+                        <div>
+                          <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{title}</div>
+                          <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>{sub}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {!supported ? (
+                    <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(6)}>
+                      Fortsæt →
+                    </button>
+                  ) : pushDone ? (
+                    <button className="btn btn-primary btn-full" disabled style={{ opacity:.7 }}>
+                      ✓ Notifikationer aktiveret
+                    </button>
+                  ) : (
+                    <>
+                      <button className="btn btn-primary btn-full" onClick={handleEnable} disabled={pushLoading}
+                        style={{ opacity: pushLoading ? .6 : 1 }}>
+                        {pushLoading ? "Aktiverer…" : "🔔 Slå notifikationer til"}
+                      </button>
+                      <button className="btn btn-ghost btn-full" style={{ marginTop:8 }}
+                        onClick={() => setOnboardStep(6)}>
+                        Ikke nu
+                      </button>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* ── TRIN 6: Diæt ── */}
             {onboardStep === 3 && (
               <div className="step fade-in">
@@ -950,7 +1019,7 @@ export default function OnboardingScreen({
             )}
 
             {/* ── TRIN 9: Oversigt & Klar! ── */}
-            {onboardStep === 5 && (
+            {onboardStep === 6 && (
               <div className="fade-in">
 
                 {/* Header */}

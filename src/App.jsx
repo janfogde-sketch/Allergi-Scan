@@ -283,6 +283,16 @@ export default function EatSafe() {
     // Accepter invitation via RPC
     const acceptInvite = async () => {
       try {
+        // Hent invited_by inden accept så vi kan sende push
+        let invitedBy = null;
+        try {
+          const inviteData = await apiCall(
+            `${SUPABASE_URL}/rest/v1/family_invites?token=eq.${inviteToken}&select=invited_by`,
+            { headers: makeHeaders(accessToken) }
+          );
+          invitedBy = Array.isArray(inviteData) ? inviteData[0]?.invited_by : null;
+        } catch { /* silent */ }
+
         const data = await apiCall(
           `${SUPABASE_URL}/rest/v1/rpc/accept_family_invite`,
           {
@@ -295,6 +305,23 @@ export default function EatSafe() {
           // Genindlæs familie-data
           loadFamily();
           alert("🎉 Invitation accepteret! Jeres familieoplysninger er nu delt.");
+
+          // Send push til den der inviterede
+          if (invitedBy && invitedBy !== userId) {
+            const acceptorName = user?.name?.split(" ")[0] || "Et familiemedlem";
+            try {
+              await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+                method: "POST",
+                headers: { ...makeHeaders(accessToken), "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  user_id: invitedBy,
+                  title: "👨‍👩‍👧 Familie tilsluttet!",
+                  body: `${acceptorName} har accepteret din invitation og er nu en del af din familie i EatSafe.`,
+                  url: "https://eatsafe.dk",
+                }),
+              });
+            } catch { /* silent — push er ikke kritisk */ }
+          }
         } else if (data?.error) {
           alert("Invitation fejlede: " + data.error);
         }
@@ -686,6 +713,7 @@ const lookupProduct = useCallback(async (ean) => {
             family={family} setFamily={setFamily}
             activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
             isOAuth={isOAuth}
+            accessToken={accessToken}
             tourIdx={tourIdx} setTourIdx={setTourIdx}
             editMode={editMode} setEditMode={setEditMode}
             history={history} setHistory={setHistory}

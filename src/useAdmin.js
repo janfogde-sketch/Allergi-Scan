@@ -152,7 +152,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
         body: JSON.stringify({ status: "approved", ai_parsed_data: edited }),
       });
 
-      // Send push-notifikation til indsender hvis vi kender deres user_id
+      // Send push til indsender
       if (submission.submitted_by) {
         const produktnavn = edited?.name || submission.name || "Dit produkt";
         await sendPushToUser(
@@ -162,6 +162,36 @@ export function useAdmin(accessToken, userId, clearAuth) {
           "https://eatsafe.dk",
           accessToken,
         );
+      }
+
+      // Send push til brugere der har scannet samme EAN som NOTFOUND
+      const ean = submission.ean;
+      if (ean) {
+        try {
+          const notFoundScanners = await apiCall(
+            `${SUPABASE_URL}/rest/v1/scan_history?ean=eq.${ean}&status=eq.not_found&select=user_id`,
+            { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+          );
+          if (Array.isArray(notFoundScanners)) {
+            const uniqueUserIds = [...new Set(
+              notFoundScanners
+                .map(s => s.user_id)
+                .filter(id => id && id !== submission.submitted_by) // undgå dobbelt push til indsender
+            )];
+            const produktnavn = edited?.name || submission.name || "Et produkt";
+            for (const uid of uniqueUserIds) {
+              await sendPushToUser(
+                uid,
+                "🎉 Produkt nu tilgængeligt!",
+                `${produktnavn} er nu i EatSafe-databasen — prøv at scanne igen.`,
+                "https://eatsafe.dk",
+                accessToken,
+              );
+            }
+          }
+        } catch (e) {
+          console.warn("NOTFOUND push fejl:", e);
+        }
       }
     } catch (e) {
       console.error("updateSubmissionAndApprove:", e);
