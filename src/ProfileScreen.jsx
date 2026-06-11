@@ -5,6 +5,7 @@ import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall } from "./he
 import { EatSafeLogo, Icon, ProductImage } from "./SharedComponents.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
+import { usePush } from "./usePush.js";
 
 export default function ProfileScreen({
   screen, setScreen,
@@ -224,6 +225,65 @@ export default function ProfileScreen({
                 </button>
               </div>
             </div>
+
+            {/* ── Push-notifikationer ── */}
+            {(() => {
+              const { supported, permission, subscribe, unsubscribe } = usePush();
+              const [pushLoading, setPushLoading] = React.useState(false);
+              const [pushStatus, setPushStatus] = React.useState(permission);
+
+              const handleToggle = async () => {
+                setPushLoading(true);
+                if (pushStatus === "granted") {
+                  await unsubscribe(accessToken);
+                  setPushStatus("default");
+                } else {
+                  const result = await subscribe(accessToken);
+                  setPushStatus(result.ok ? "granted" : "denied");
+                }
+                setPushLoading(false);
+              };
+
+              if (!supported) return null;
+
+              return (
+                <div className="card" style={{ marginBottom:12 }}>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                    <div>
+                      <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2 }}>🔔 Push-notifikationer</div>
+                      <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>
+                        {pushStatus === "granted"
+                          ? "Du får besked når dine indsendelser godkendes"
+                          : pushStatus === "denied"
+                          ? "Blokeret i browserindstillinger"
+                          : "Få besked når dine produkter godkendes"}
+                      </div>
+                    </div>
+                    {pushStatus !== "denied" && (
+                      <button onClick={handleToggle} disabled={pushLoading}
+                        style={{
+                          width:48, height:28, borderRadius:14, border:"none", cursor:"pointer",
+                          background: pushStatus === "granted" ? "var(--green)" : "var(--border2)",
+                          position:"relative", transition:"background .2s", flexShrink:0,
+                          opacity: pushLoading ? 0.6 : 1,
+                        }}>
+                        <div style={{
+                          width:22, height:22, borderRadius:"50%", background:"#fff",
+                          position:"absolute", top:3,
+                          left: pushStatus === "granted" ? 23 : 3,
+                          transition:"left .2s", boxShadow:"0 1px 3px rgba(0,0,0,.3)"
+                        }} />
+                      </button>
+                    )}
+                  </div>
+                  {pushStatus === "denied" && (
+                    <div style={{ marginTop:8, fontSize:11, color:"var(--amber)", background:"var(--amber-lt)", borderRadius:8, padding:"6px 10px" }}>
+                      Tilladelse er blokeret. Aktivér push i din browsers indstillinger.
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* ── Footer: kontakt + privatlivspolitik ── */}
             <div style={{ marginTop:24, paddingBottom:8, textAlign:"center" }}>

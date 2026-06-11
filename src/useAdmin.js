@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
+import { sendPushToUser } from "./usePush.js";
 
 export function useAdmin(accessToken, userId, clearAuth) {
   // State
@@ -150,6 +151,18 @@ export function useAdmin(accessToken, userId, clearAuth) {
         headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
         body: JSON.stringify({ status: "approved", ai_parsed_data: edited }),
       });
+
+      // Send push-notifikation til indsender hvis vi kender deres user_id
+      if (submission.submitted_by) {
+        const produktnavn = edited?.name || submission.name || "Dit produkt";
+        await sendPushToUser(
+          submission.submitted_by,
+          "✅ Produkt godkendt!",
+          `${produktnavn} er nu tilgængeligt i EatSafe-databasen.`,
+          "https://eatsafe.dk",
+          accessToken,
+        );
+      }
     } catch (e) {
       console.error("updateSubmissionAndApprove:", e);
       loadSubmissions(submissionFilter); // Genindlæs ved fejl
