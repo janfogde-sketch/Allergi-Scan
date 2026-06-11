@@ -148,13 +148,6 @@ export default function EatSafe() {
 
     // ── HJÆLPEKOMPONENTER ──────────────────────────────────────────────────────
 
-  // ── MADPAS SPEAK → useMadpas hook ──────────────────────────────────────────
-  const { madpasSpeaking, setMadpasSpeaking, madpasBig, setMadpasBig,
-          madpasWaiterView, setMadpasWaiterView, langOpen, setLangOpen,
-          madpasSpeak } = useMadpas({
-    allergens, customAllerg, selectedENumbers, user, madpasLang, family, madpasProfileId
-  });
-
   // ── CUSTOM HOOKS ──────────────────────────────────────────────────────────
   const {
     accessToken, setAccessToken, refreshToken, setRefreshToken,
@@ -186,6 +179,13 @@ export default function EatSafe() {
     newMemberCustomInput, setNewMemberCustomInput,
     loadFamily, addMember, removeMember,
   } = useFamily({ accessToken, userId, setActiveProfiles });
+
+  // ── MADPAS SPEAK → useMadpas hook (placeret efter useFamily pga. family-dependency) ──
+  const { madpasSpeaking, setMadpasSpeaking, madpasBig, setMadpasBig,
+          madpasWaiterView, setMadpasWaiterView, langOpen, setLangOpen,
+          madpasSpeak } = useMadpas({
+    allergens, customAllerg, selectedENumbers, user, madpasLang, family, madpasProfileId
+  });
 
   const {
     history, setHistory,
