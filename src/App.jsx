@@ -1060,6 +1060,7 @@ const lookupProduct = useCallback(async (ean) => {
             langOpen={langOpen} setLangOpen={setLangOpen}
             madpasSpeak={madpasSpeak}
             selectedENumbers={selectedENumbers}
+            userId={userId}
           />
           </ErrorBoundary>
         )}
