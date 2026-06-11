@@ -48,6 +48,7 @@ import { useRecipes } from './useRecipes.js';
 import { useProduct } from './useProduct.js';
 import { useMadpas } from './useMadpas.js';
 import { useSearch } from './useSearch.js';
+import { useAlternatives } from './useAlternatives.js';
 import FeedbackModal from './FeedbackModal.jsx';
 
 
@@ -266,6 +267,65 @@ export default function EatSafe() {
     recipeSafeOnly, setRecipeSafeOnly,
     loadRecipes, loadRecipeIngredients, submitUserRecipe,
   } = useRecipes(accessToken, userId);
+
+  // ── Familie-invitation accept ────────────────────────────────────────────
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const inviteToken = params.get("invite");
+    if (!inviteToken || !accessToken || !userId) return;
+
+    // Fjern token fra URL uden reload
+    const url = new URL(window.location.href);
+    url.searchParams.delete("invite");
+    url.searchParams.delete("login");
+    window.history.replaceState({}, "", url.toString());
+
+    // Accepter invitation via RPC
+    const acceptInvite = async () => {
+      try {
+        const data = await apiCall(
+          `${SUPABASE_URL}/rest/v1/rpc/accept_family_invite`,
+          {
+            method: "POST",
+            headers: makeHeaders(accessToken),
+            body: JSON.stringify({ p_token: inviteToken }),
+          }
+        );
+        if (data?.success) {
+          // Genindlæs familie-data
+          loadFamily();
+          alert("🎉 Invitation accepteret! Jeres familieoplysninger er nu delt.");
+        } else if (data?.error) {
+          alert("Invitation fejlede: " + data.error);
+        }
+      } catch { /* ignorer */ }
+    };
+    acceptInvite();
+  }, [accessToken, userId]);
+
+  // ── OFF Import ───────────────────────────────────────────────────────────────
+  const [importLog, setImportLog] = useState(null);
+  const [importLoading, setImportLoading] = useState(false);
+
+  const runImport = async (execute = true) => {
+    if (!execute) return; // ved tab-skift viser vi bare UI uden at køre
+    setImportLoading(true);
+    setImportLog(null);
+    try {
+      const data = await apiCall(
+        `${SUPABASE_URL}/functions/v1/auto-import-off`,
+        {
+          method: "POST",
+          headers: makeHeaders(accessToken),
+          body: JSON.stringify({}),
+        }
+      );
+      setImportLog(data);
+    } catch (e) {
+      setImportLog({ ok: false, error: e.message, stats: { imported:0, not_on_off:0, error:1 }, log: [] });
+    }
+    setImportLoading(false);
+  };
 
   // ── Router — browser back-knap support ──────────────────────────────────
   const { navigate, goBack, canGoBack } = useNavigation(screen, setScreen, SCREENS);
@@ -545,6 +605,12 @@ const lookupProduct = useCallback(async (ean) => {
       setScanResult(result);
       setHistory(h => [result, ...h].slice(0, 50));
       await saveHistoryEntry(ean.trim(), product.id, status, flags, activeProfiles);
+      // Hent alternativer hvis produktet er farligt eller har spor
+      if (status === "danger" || status === "warn") {
+        loadAlternatives(result.category, ean.trim());
+      } else {
+        clearAlternatives();
+      }
       setScreen(SCREENS.RESULT);
     } catch (e) { traceLog(tid, "scan:error", { error: e.message }); setScanError("Der opstod en fejl. Tjek din forbindelse og prøv igen."); }
     setLoading(false);
@@ -554,6 +620,8 @@ const lookupProduct = useCallback(async (ean) => {
 // ── SØGNING → useSearch hook ────────────────────────────────────────────────
   const { searchQuery, setSearchQuery, searchCategory, setSearchCategory,
           searchResults, setSearchResults, searchLoading } = useSearch({ accessToken });
+
+  const { alternatives, altLoading, loadAlternatives, clearAlternatives } = useAlternatives({ accessToken, activeIds });
 
   // ── COMPUTED (afhænger af hooks) ─────────────────────────────────────────
   const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
@@ -971,6 +1039,8 @@ const lookupProduct = useCallback(async (ean) => {
             selectedENumbers={selectedENumbers}
             activeENumbers={activeENumbers}
             onBetaClick={() => { setBetaIntroSeen(false); setBetaIntroStep(0); }}
+            alternatives={alternatives}
+            altLoading={altLoading}
           />
           </ErrorBoundary>
         )}
@@ -1124,6 +1194,7 @@ const lookupProduct = useCallback(async (ean) => {
             userSearch={userSearch} setUserSearch={setUserSearch}
             missingEans={missingEans} missingEansLoading={missingEansLoading}
             loadMissingEans={loadMissingEans} deleteMissingEan={deleteMissingEan}
+            importLog={importLog} importLoading={importLoading} runImport={runImport}
           />
           </ErrorBoundary>
           </Suspense>

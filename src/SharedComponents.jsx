@@ -100,7 +100,7 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
 
 // ─── KONSTANTER ──────────────────────────────────────────────────────────────
 
-export function IngredientsList({ text, allergenFlags = {} }) {
+export function IngredientsList({ text, allergenFlags = {}, onIngredientTap }) {
   if (!text) return null;
 
   // Rens teksten — fjern linjeskift og ekstra mellemrum
@@ -257,16 +257,27 @@ export function IngredientsList({ text, allergenFlags = {} }) {
     <div style={{ display:"flex", flexWrap:"wrap", gap:"4px 2px", lineHeight:1.6 }}>
       {parts.map((part, i) => {
         const highlighted = isHighlighted(part);
+        const clickable = !!onIngredientTap;
+        // Rens ingrediens-tekst for opslag (fjern parenteser og ekstra tegn)
+        const cleanPart = part.replace(/\(.*?\)/g, "").replace(/[*%]/g, "").trim();
         return (
           <span key={i} style={{ display:"inline-flex", alignItems:"baseline" }}>
-            <span style={{
-              fontSize: 12,
-              fontWeight: highlighted ? 700 : 400,
-              color: highlighted ? "var(--red)" : "var(--muted2)",
-              background: highlighted ? "var(--red-lt)" : "transparent",
-              borderRadius: highlighted ? 4 : 0,
-              padding: highlighted ? "1px 4px" : "0",
-            }}>
+            <span
+              onClick={clickable ? () => onIngredientTap(cleanPart) : undefined}
+              style={{
+                fontSize: 12,
+                fontWeight: highlighted ? 700 : 400,
+                color: highlighted ? "var(--red)" : "var(--muted2)",
+                background: highlighted ? "var(--red-lt)" : "transparent",
+                borderRadius: highlighted ? 4 : 0,
+                padding: highlighted ? "1px 4px" : "1px 2px",
+                cursor: clickable ? "pointer" : "default",
+                textDecoration: clickable && !highlighted ? "underline dotted var(--border2)" : "none",
+                textUnderlineOffset: 3,
+                transition: "background .1s",
+              }}
+              title={clickable ? `Søg "${cleanPart}" i leksikon` : undefined}
+            >
               {part}
             </span>
             {i < parts.length - 1 && (

@@ -116,6 +116,7 @@ export default function AdminScreen({
   loadAdminStats, loadAdminUsers, loadSubmissions, loadTickets,
   updateUserRole, deleteUser,
   missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
+  importLog, importLoading, runImport,
   updateSubmissionAndApprove, rejectSubmission,
   updateTicketStatus, cleanOcrWithAI,
 }) {
@@ -410,11 +411,12 @@ ${openTicket.description}
                 { id:"tickets",     emoji:"🐛", label:"Tickets" },
                 { id:"debug",       emoji:"🔍", label:"Debug" },
                 { id:"missing",    emoji:"❓", label:"Manglende" },
+                { id:"import",     emoji:"⬇️", label:"Import" },
                 { id:"recipes",    emoji:"📋", label:"Opskrifter" },
               ].map(s => (
                 <button key={s.id}
                   onClick={() => {
-                    setAdminSection(s.id); if (s.id==="missing") loadMissingEans();
+                    setAdminSection(s.id); if (s.id==="missing") loadMissingEans(); if (s.id==="import") runImport(false);
                     if (s.id === "submissions") loadSubmissions(submissionFilter);
                     if (s.id === "tickets") loadTickets();
                     if (s.id === "dashboard") loadAdminStats();
@@ -1129,6 +1131,86 @@ ${openTicket.description}
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {adminSection === "import" && (
+              <div>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+                  <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>⬇️ OFF Auto-import</div>
+                  <button
+                    onClick={() => runImport(true)}
+                    disabled={importLoading}
+                    style={{ background: importLoading ? "var(--border2)" : "var(--green)", color: importLoading ? "var(--muted)" : "#071510", border:"none", borderRadius:8, padding:"8px 16px", fontSize:12, fontWeight:800, fontFamily:"var(--f)", cursor: importLoading ? "not-allowed" : "pointer", display:"flex", alignItems:"center", gap:6 }}>
+                    {importLoading
+                      ? <><div style={{ width:12, height:12, border:"2px solid rgba(0,0,0,.2)", borderTopColor:"#071510", borderRadius:"50%", animation:"spin .7s linear infinite" }} /> Importerer…</>
+                      : "▶ Kør import nu"}
+                  </button>
+                </div>
+
+                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:16, lineHeight:1.6 }}>
+                  Henter top-50 manglende EAN'er fra <code>missing_ean_log</code>, slår op på Open Food Facts og importerer automatisk.
+                  Kører også automatisk hver nat kl. 02:00 UTC.
+                </div>
+
+                {/* Status */}
+                {importLoading && (
+                  <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:12 }}>
+                    <div style={{ width:16, height:16, border:"2px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .7s linear infinite", flexShrink:0 }} />
+                    <div style={{ fontSize:13, color:"var(--muted)" }}>Importerer produkter fra Open Food Facts…</div>
+                  </div>
+                )}
+
+                {/* Statistik */}
+                {importLog?.stats && !importLoading && (
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14 }}>
+                    {[
+                      { label:"✅ Importeret",    value: importLog.stats.imported,       color:"var(--green)" },
+                      { label:"🔍 Fundet på OFF", value: importLog.stats.found ?? (importLog.stats.imported + importLog.stats.not_on_off), color:"var(--blue)" },
+                      { label:"❌ Ikke på OFF",   value: importLog.stats.not_on_off,     color:"var(--muted)" },
+                      { label:"⚠️ Fejl",          value: importLog.stats.error,          color:"var(--amber)" },
+                    ].map(s => (
+                      <div key={s.label} style={{ padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, textAlign:"center" }}>
+                        <div style={{ fontSize:22, fontWeight:900, color:s.color, marginBottom:2 }}>{s.value ?? 0}</div>
+                        <div style={{ fontSize:11, color:"var(--muted)" }}>{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Log */}
+                {importLog?.log?.length > 0 && !importLoading && (
+                  <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, overflow:"hidden" }}>
+                    <div style={{ padding:"10px 14px", borderBottom:"1px solid var(--border)", fontSize:12, fontWeight:800, color:"var(--ink)" }}>
+                      Importeret ({importLog.log.length})
+                    </div>
+                    <div style={{ maxHeight:300, overflowY:"auto" }}>
+                      {importLog.log.map((line, i) => (
+                        <div key={i} style={{ padding:"8px 14px", borderBottom: i < importLog.log.length-1 ? "1px solid var(--border)" : "none", fontSize:12, color:"var(--ink2)", fontFamily:"monospace" }}>
+                          {line}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {importLog && !importLoading && (!importLog.log || importLog.log.length === 0) && (
+                  <div style={{ textAlign:"center", padding:"32px 0", color:"var(--muted)", fontSize:13 }}>
+                    {importLog.stats?.imported === 0
+                      ? "Ingen nye produkter fundet — prøv igen senere når missing_ean_log er fyldt op"
+                      : "Import fuldført"}
+                  </div>
+                )}
+
+                {!importLog && !importLoading && (
+                  <div style={{ textAlign:"center", padding:"40px 0" }}>
+                    <div style={{ fontSize:36, marginBottom:12 }}>⬇️</div>
+                    <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Klar til import</div>
+                    <div style={{ fontSize:12, color:"var(--muted)" }}>
+                      Tryk "Kør import nu" for at importere manglende produkter fra Open Food Facts
+                    </div>
                   </div>
                 )}
               </div>

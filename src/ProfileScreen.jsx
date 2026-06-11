@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { ALLERGENS, SCREENS, DIETS, E_NUMBERS, E_CATEGORIES, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { initials, timeAgo, getAllergenLabels } from "./helpers.js";
+import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall } from "./helpers.js";
 import { EatSafeLogo, Icon, ProductImage } from "./SharedComponents.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
@@ -222,6 +222,29 @@ export default function ProfileScreen({
                   style={{ flex:1, padding:"11px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
                   Slet konto
                 </button>
+              </div>
+            </div>
+
+            {/* ── Footer: kontakt + privatlivspolitik ── */}
+            <div style={{ marginTop:24, paddingBottom:8, textAlign:"center" }}>
+              <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8 }}>
+                Spørgsmål eller feedback?
+              </div>
+              <a href="mailto:hej@eatsafe.dk"
+                style={{ display:"inline-flex", alignItems:"center", gap:6, fontSize:12, fontWeight:700, color:"var(--green)", textDecoration:"none", marginBottom:14 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,12 2,6"/>
+                </svg>
+                hej@eatsafe.dk
+              </a>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:12, fontSize:11, color:"var(--muted)" }}>
+                <a href="https://eatsafe.dk/privacy" target="_blank" rel="noopener noreferrer"
+                  style={{ color:"var(--muted)", textDecoration:"underline", textUnderlineOffset:3 }}>
+                  Privatlivspolitik
+                </a>
+                <span>·</span>
+                <span>EatSafe Beta</span>
               </div>
             </div>
 
@@ -474,6 +497,82 @@ export default function ProfileScreen({
                 {m.allergens.length>0 && <div className="tags">{getAllergenLabels(m.allergens,m.custom||[]).map((a,j) => <div key={j} className="tag" style={{ fontSize:11 }}>{a}</div>)}</div>}
               </div>
             ))}
+            {/* ── Invitér familiemedlem via link ── */}
+            <div className="card" style={{ marginBottom:12 }}>
+              <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>
+                🔗 Invitér via link
+              </div>
+              <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12, lineHeight:1.5 }}>
+                Send et link til et familiemedlem. Når de opretter en konto via linket, deles jeres familieprofiler automatisk.
+              </div>
+
+              {!inviteLink && (
+                <button
+                  onClick={async () => {
+                    setInviteLoading(true);
+                    setInviteError("");
+                    try {
+                      const data = await apiCall(
+                        `${SUPABASE_URL}/rest/v1/family_invites`,
+                        {
+                          method: "POST",
+                          headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+                          body: JSON.stringify({ invited_by: userId }),
+                        }
+                      );
+                      if (Array.isArray(data) && data[0]?.token) {
+                        setInviteLink(`https://eatsafe.dk/invite/${data[0].token}`);
+                      } else {
+                        setInviteError("Kunne ikke oprette invitation. Prøv igen.");
+                      }
+                    } catch {
+                      setInviteError("Noget gik galt. Tjek din forbindelse.");
+                    }
+                    setInviteLoading(false);
+                  }}
+                  disabled={inviteLoading}
+                  style={{ width:"100%", padding:"12px", background:"var(--green)", color:"#071510", border:"none", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:800, cursor:"pointer", opacity: inviteLoading ? .6 : 1 }}>
+                  {inviteLoading ? "Opretter link…" : "Opret invitationslink"}
+                </button>
+              )}
+
+              {inviteError && (
+                <div style={{ fontSize:12, color:"var(--red)", marginTop:8 }}>{inviteError}</div>
+              )}
+
+              {inviteLink && (
+                <div>
+                  <div style={{ padding:"10px 12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:8, fontFamily:"monospace", fontSize:11, color:"var(--ink)", wordBreak:"break-all", marginBottom:8 }}>
+                    {inviteLink}
+                  </div>
+                  <div style={{ display:"flex", gap:8 }}>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard?.writeText(inviteLink);
+                        setInviteCopied(true);
+                        setTimeout(() => setInviteCopied(false), 2000);
+                      }}
+                      style={{ flex:1, padding:"10px", background: inviteCopied ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${inviteCopied ? "var(--green)" : "var(--border2)"}`, borderRadius:8, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color: inviteCopied ? "var(--green)" : "var(--ink)", cursor:"pointer" }}>
+                      {inviteCopied ? "✓ Kopieret!" : "📋 Kopiér link"}
+                    </button>
+                    <button
+                      onClick={() => navigator.share?.({ title:"EatSafe invitation", url: inviteLink })}
+                      style={{ flex:1, padding:"10px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:8, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
+                      ↗ Del
+                    </button>
+                    <button
+                      onClick={() => { setInviteLink(null); setInviteCopied(false); }}
+                      style={{ padding:"10px 12px", background:"none", border:"1px solid var(--border)", borderRadius:8, fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", cursor:"pointer" }}>
+                      ×
+                    </button>
+                  </div>
+                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:8 }}>
+                    ⏱ Linket udløber om 24 timer
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="card">
               <div className="card-title">+ Tilføj familiemedlem</div>
               <MemberForm

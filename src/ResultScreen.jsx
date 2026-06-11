@@ -1,8 +1,8 @@
 // @ts-nocheck
 import React from "react";
-import { ALLERGENS, SCREENS, E_NUMBERS, DIETS } from "./constants.jsx";
-import { compareENumbers, checkDietCompatibility, verifiedBadge } from "./helpers.js";
-import { Icon, IngredientsList } from "./SharedComponents.jsx";
+import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
+import { compareENumbers, checkDietCompatibility, verifiedBadge, makeHeaders } from "./helpers.js";
+import { Icon, IngredientsList, ProductImage } from "./SharedComponents.jsx";
 
 const S = {
   flex1:    { flex:1 },
@@ -29,8 +29,33 @@ export default function ResultScreen({
   setEditIngText,
   setEditNote,
   setEditType,
+  alternatives,
+  altLoading,
+  lookupProduct,
 }) {
   if (!scanResult) return null;
+
+  // Tryk på ingrediens → søg i knowledge_base → åbn leksikon
+  const handleIngredientTap = async (ingredientText) => {
+    if (!ingredientText?.trim()) return;
+    const q = ingredientText.trim().toLowerCase().slice(0, 50);
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/knowledge_base?or=(title.ilike.*${encodeURIComponent(q)}*,aliases.cs.{${encodeURIComponent(q)}})`
+        + `&select=slug&limit=1`,
+        { headers: { apikey: SUPABASE_ANON_KEY } }
+      );
+      const data = await res.json();
+      if (Array.isArray(data) && data[0]?.slug) {
+        setKnowledgeSlug(data[0].slug);
+        setScreen(SCREENS.KNOWLEDGE);
+        return;
+      }
+    } catch {}
+    // Ingen direkte match — åbn leksikon med søgeterm
+    setKnowledgeSlug(q);
+    setScreen(SCREENS.KNOWLEDGE);
+  };
 
   return (
     <div className="screen fade-in">
@@ -72,6 +97,54 @@ export default function ResultScreen({
           </div>
         );
       })()}
+
+      {/* ── 1b. SIKRE ALTERNATIVER ── */}
+      {(scanResult.status === "danger" || scanResult.status === "warn") && (
+        <div style={{ marginBottom:10 }}>
+          {altLoading && (
+            <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
+              <div style={{ width:16, height:16, border:"2px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .7s linear infinite", flexShrink:0 }} />
+              <div style={{ fontSize:13, color:"var(--muted)" }}>Finder sikre alternativer…</div>
+            </div>
+          )}
+          {!altLoading && alternatives.length > 0 && (
+            <div style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:14, padding:"14px 16px" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+                <div style={{ fontSize:18 }}>✅</div>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:800, color:"var(--green)" }}>Prøv disse i stedet</div>
+                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>Sikre for din profil · samme kategori</div>
+                </div>
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {alternatives.map(p => (
+                  <div key={p.ean} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}
+                    onClick={() => lookupProduct?.(p.ean)}>
+                    <ProductImage product={p} size={40} />
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</div>
+                      <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>{p.brand}</div>
+                    </div>
+                    <div style={{ fontSize:11, fontWeight:700, color:"var(--green)", flexShrink:0 }}>✓ Sikkert</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {!altLoading && alternatives.length === 0 && (scanResult.status === "danger" || scanResult.status === "warn") && (
+            <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
+              <div style={{ fontSize:16 }}>🔍</div>
+              <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>
+                Ingen kendte alternativer i samme kategori endnu.{" "}
+                <span style={{ color:"var(--green)", fontWeight:700, cursor:"pointer" }}
+                  onClick={() => {}}>
+                  Hjælp os ved at scanne alternativer.
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── 2. SIKKERHED + DIÆT ── */}
       {(() => {
@@ -249,7 +322,7 @@ export default function ResultScreen({
         {scanResult.ingredients ? (
           <div>
             <div style={{ padding:"10px", background:"var(--paper2)", borderRadius:8, marginBottom:8 }}>
-              <IngredientsList text={scanResult.ingredients} allergenFlags={scanResult.allergen_flags||{}} />
+              <IngredientsList text={scanResult.ingredients} allergenFlags={scanResult.allergen_flags||{}} onIngredientTap={handleIngredientTap} />
             </div>
             <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
               Fremhævet = allergen · Listen kan være på originalsprog — tjek altid selv
@@ -265,6 +338,50 @@ export default function ResultScreen({
           </div>
         )}
       </div>
+
+      {/* ── 4b. E-NUMRE ── */}
+      {scanResult.productENumbers?.length > 0 && (() => {
+        const eNums = scanResult.productENumbers;
+        return (
+          <div className="card">
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+              <div className="card-lbl" style={{ marginBottom:0 }}>E-numre i produktet</div>
+              <div style={{ fontSize:10, color:"var(--muted)" }}>{eNums.length} fundet</div>
+            </div>
+            <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+              {eNums.map(e => {
+                const info = E_NUMBERS[e];
+                const name = info ? info.split("—")[0].trim() : null;
+                const isWatched = activeENumbers?.includes(e);
+                return (
+                  <span key={e}
+                    onClick={() => {
+                      const slug = "e-" + e.toLowerCase().replace(/^e/, "");
+                      setKnowledgeSlug(slug);
+                      setScreen(SCREENS.KNOWLEDGE);
+                    }}
+                    style={{
+                      display:"inline-flex", alignItems:"center", gap:4,
+                      fontSize:11, fontWeight:700, padding:"4px 9px", borderRadius:8,
+                      cursor:"pointer", transition:"all .1s",
+                      background: isWatched ? "var(--amber-lt)" : "var(--paper2)",
+                      color: isWatched ? "var(--amber)" : "var(--ink2)",
+                      border: `1px solid ${isWatched ? "var(--amber-md)" : "var(--border2)"}`,
+                    }}>
+                    <span style={{ fontFamily:"monospace" }}>{e}</span>
+                    {name && <span style={{ fontWeight:400, color: isWatched ? "var(--amber)" : "var(--muted)" }}>— {name.slice(0,20)}{name.length>20?"…":""}</span>}
+                    {isWatched && <span style={{ fontSize:9 }}>⚠️</span>}
+                    <span style={{ fontSize:9, opacity:.5 }}>›</span>
+                  </span>
+                );
+              })}
+            </div>
+            <div style={{ fontSize:10, color:"var(--muted)", marginTop:8 }}>
+              Tryk på et E-nummer for at læse mere i leksikonet
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── 5. HANDLINGER ── */}
       <div style={{ display:"flex", gap:8, marginBottom:10 }}>

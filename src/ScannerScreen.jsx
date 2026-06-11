@@ -7,6 +7,7 @@ import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage } fr
 
 import { CategorySelect } from "./MemberForm.jsx";
 import NotFoundScreen from "./NotFoundScreen.jsx";
+import SubmittedScreen from "./SubmittedScreen.jsx";
 import ResultScreen from "./ResultScreen.jsx";
 import SearchScreen from "./SearchScreen.jsx";
 import ListScreen from "./ListScreen.jsx";
@@ -109,6 +110,8 @@ export default function ScannerScreen({
   buildLabel,
   lookupProduct,
   onBetaClick,
+  alternatives,
+  altLoading,
 }) {
 
   // Parser OCR-tekst til liste af ingredienser
@@ -675,6 +678,20 @@ export default function ScannerScreen({
           />
         )}
 
+        {screen === SCREENS.SUBMITTED && (
+          <SubmittedScreen
+            notFoundEan={notFoundEan}
+            proposedName={proposedName}
+            setScreen={setScreen}
+            setNotFoundStep={setNotFoundStep}
+            setProposedName={setProposedName}
+            setProposedFlags={setProposedFlags}
+            setProposedNutrition={setProposedNutrition}
+            setProposedNotes={setProposedNotes}
+            setOcrText={setOcrText}
+          />
+        )}
+
         {screen === SCREENS.RESULT && scanResult && (
           <ResultScreen
             scanResult={scanResult}
@@ -693,6 +710,9 @@ export default function ScannerScreen({
             setEditIngText={setEditIngText}
             setEditNote={setEditNote}
             setEditType={setEditType}
+            alternatives={alternatives}
+            altLoading={altLoading}
+            lookupProduct={lookupProduct}
           />
         )}
 

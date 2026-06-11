@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EatSafe — Familie-invitation</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0e1812; color: #e8f0e9;
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    .card {
+      background: #162318; border: 1px solid #1f3024;
+      border-radius: 20px; padding: 32px 28px;
+      max-width: 400px; width: 100%; text-align: center;
+    }
+    .logo { font-size: 24px; font-weight: 900; color: #4ade80; margin-bottom: 24px; }
+    .logo span { color: #e8f0e9; }
+    .icon { font-size: 56px; margin-bottom: 16px; }
+    h1 { font-size: 22px; font-weight: 900; color: #e8f0e9; margin-bottom: 8px; }
+    p { font-size: 14px; color: #8aab8e; line-height: 1.6; margin-bottom: 24px; }
+    .btn {
+      display: block; width: 100%; padding: 15px;
+      background: #4ade80; color: #071510;
+      border: none; border-radius: 12px;
+      font-size: 16px; font-weight: 800; cursor: pointer;
+      font-family: inherit; text-decoration: none;
+      margin-bottom: 10px;
+    }
+    .btn:hover { background: #22c55e; }
+    .btn-ghost {
+      background: transparent; color: #8aab8e;
+      border: 1px solid #1f3024; font-size: 14px;
+      font-weight: 600; padding: 12px;
+    }
+    .btn-ghost:hover { background: #162318; }
+    .error { color: #ef4444; font-size: 13px; margin-top: 12px; }
+    .success { color: #4ade80; font-size: 14px; font-weight: 700; margin-top: 12px; }
+    .spinner {
+      width: 32px; height: 32px; border: 3px solid #1f3024;
+      border-top-color: #4ade80; border-radius: 50%;
+      animation: spin .8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="logo">Eat<span>Safe</span></div>
+    <div class="spinner" id="spinner"></div>
+    <div id="content" style="display:none"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://jegrpcflyguadyxialkm.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplZ3JwY2ZseWd1YWR5eGlhbGttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDA0ODYwMTIsImV4cCI6MjAxNjA2MjAxMn0.placeholder";
+
+    const token = window.location.pathname.split("/invite/")[1]?.split("/")[0];
+    const spinner = document.getElementById("spinner");
+    const content = document.getElementById("content");
+
+    function show(html) {
+      spinner.style.display = "none";
+      content.style.display = "block";
+      content.innerHTML = html;
+    }
+
+    async function checkToken() {
+      if (!token) {
+        show(`
+          <div class="icon">❌</div>
+          <h1>Ugyldigt link</h1>
+          <p>Dette invitationslink er ikke gyldigt.</p>
+          <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
+        `);
+        return;
+      }
+
+      // Tjek om token eksisterer og er gyldigt
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/family_invites?token=eq.${token}&select=status,expires_at,invited_by`,
+          { headers: { "apikey": SUPABASE_ANON_KEY } }
+        );
+        const data = await res.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+          show(`
+            <div class="icon">❌</div>
+            <h1>Ugyldigt link</h1>
+            <p>Dette invitationslink findes ikke.</p>
+            <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
+          `);
+          return;
+        }
+
+        const invite = data[0];
+        if (invite.status === "accepted") {
+          show(`
+            <div class="icon">✅</div>
+            <h1>Allerede accepteret</h1>
+            <p>Dette invitationslink er allerede brugt.</p>
+            <a href="https://eatsafe.dk" class="btn">Åbn EatSafe</a>
+          `);
+          return;
+        }
+
+        if (invite.status !== "pending" || new Date(invite.expires_at) < new Date()) {
+          show(`
+            <div class="icon">⏱</div>
+            <h1>Linket er udløbet</h1>
+            <p>Bed familiemedlemmet om at sende et nyt invitationslink.</p>
+            <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
+          `);
+          return;
+        }
+
+        // Gyldigt link — vis accept-flow
+        show(`
+          <div class="icon">👨‍👩‍👧</div>
+          <h1>Du er inviteret!</h1>
+          <p>Et EatSafe-familiemedlem har inviteret dig til at dele allergiprofiler. Opret en konto for at acceptere.</p>
+          <a href="https://eatsafe.dk?invite=${token}" class="btn">Acceptér og opret konto</a>
+          <a href="https://eatsafe.dk?invite=${token}&login=1" class="btn btn-ghost">Jeg har allerede en konto</a>
+          <p style="font-size:12px; margin-top:16px; color:#6b8f72">
+            Invitationen udløber ${new Date(invite.expires_at).toLocaleDateString("da-DK")}
+          </p>
+        `);
+      } catch {
+        show(`
+          <div class="icon">⚠️</div>
+          <h1>Noget gik galt</h1>
+          <p>Tjek din internetforbindelse og prøv igen.</p>
+          <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
+        `);
+      }
+    }
+
+    checkToken();
+  </script>
+</body>
+</html>
