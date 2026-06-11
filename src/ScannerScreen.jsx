@@ -53,87 +53,164 @@ const S = {
 // ── Demo-kort til ikke-loggede brugere ─────────────────────────────────────
 const DEMO_SLIDES = [
   {
-    title: "Skan stregkoder på sekunder",
-    sub: "Hold kameraet over en stregkode og få svar med det samme — grøn, gul eller rød.",
-    bg: "#1F2733",
-    accent: "#4ADE80",
+    title: "Skan — og få svar på 2 sekunder",
+    sub: "Hold kameraet over stregkoden. EatSafe slår op i 20.000+ produkter og fortæller dig præcist om varen er sikker for dig og din familie.",
+    bg: "#111d13", accent: "#4ADE80",
     mockup: (
-      <div style={{ background:"#111a11", borderRadius:14, padding:"14px 16px", marginTop:12, border:"1px solid rgba(74,222,128,.2)" }}>
+      <div style={{ background:"#0d160e", borderRadius:14, padding:"12px 14px", marginTop:12, border:"1px solid rgba(74,222,128,.15)" }}>
         <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
-          <div style={{ width:38, height:38, background:"var(--green-lt)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>🥛</div>
+          <div style={{ width:40, height:40, background:"rgba(74,222,128,.1)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20 }}>🥛</div>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:13, fontWeight:800, color:"#fff" }}>Arla Mælk 1L</div>
-            <div style={{ fontSize:11, color:"rgba(255,255,255,.5)" }}>Arla Foods</div>
+            <div style={{ fontSize:13, fontWeight:800, color:"#fff" }}>Arla Letmælk 1L</div>
+            <div style={{ fontSize:10, color:"rgba(255,255,255,.35)" }}>Arla Foods</div>
           </div>
-          <div style={{ padding:"4px 10px", borderRadius:20, background:"rgba(239,68,68,.15)", border:"1px solid rgba(239,68,68,.4)", fontSize:11, fontWeight:800, color:"#f87171" }}>⚠ FARE</div>
+          <div style={{ padding:"5px 11px", borderRadius:20, background:"rgba(239,68,68,.2)", border:"1px solid rgba(239,68,68,.5)", fontSize:11, fontWeight:800, color:"#f87171" }}>⚠ FARE</div>
         </div>
-        <div style={{ background:"rgba(239,68,68,.08)", border:"1px solid rgba(239,68,68,.2)", borderRadius:8, padding:"8px 10px", fontSize:11, color:"#fca5a5", lineHeight:1.5 }}>
-          Indeholder laktose — reagerer Anna
+        <div style={{ background:"rgba(239,68,68,.07)", border:"1px solid rgba(239,68,68,.18)", borderRadius:8, padding:"8px 10px", fontSize:11, color:"#fca5a5", lineHeight:1.6 }}>
+          <strong>Laktose</strong> — reagerer: Anna, Sofie
+        </div>
+        <div style={{ marginTop:8, display:"flex", gap:6 }}>
+          <div style={{ padding:"3px 9px", borderRadius:20, background:"rgba(74,222,128,.1)", border:"1px solid rgba(74,222,128,.2)", fontSize:10, color:"#4ADE80", fontWeight:700 }}>✓ Mads ok</div>
+          <div style={{ padding:"3px 9px", borderRadius:20, background:"rgba(74,222,128,.1)", border:"1px solid rgba(74,222,128,.2)", fontSize:10, color:"#4ADE80", fontWeight:700 }}>✓ Tage ok</div>
         </div>
       </div>
     ),
   },
   {
-    title: "Profiler til hele familien",
-    sub: "Opret individuelle allergiprofiler. Én scanning tjekker alle på én gang.",
-    bg: "#1a1232",
-    accent: "#818cf8",
+    title: "Én app — hele familiens allergier",
+    sub: "Opret en profil for hvert familiemedlem. Når du scanner, ser du med det samme hvem der kan spise varen — og hvem der ikke kan.",
+    bg: "#0f0d1f", accent: "#818cf8",
     mockup: (
-      <div style={{ display:"flex", gap:8, marginTop:12, justifyContent:"center", flexWrap:"wrap" }}>
-        {[["A","#4ADE80","Gluten, Mælk"],["T","#f59e0b","Nødder"],["S","#818cf8","Sesam, Soja"],["M","#34d399","Ingen"]].map(([name, color, allergies]) => (
-          <div key={name} style={{ background:"rgba(255,255,255,.05)", borderRadius:12, padding:"10px 12px", textAlign:"center", border:"1px solid rgba(255,255,255,.1)", minWidth:68 }}>
-            <div style={{ width:34, height:34, borderRadius:"50%", background:color, color:"#000", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, margin:"0 auto 6px" }}>{name}</div>
-            <div style={{ fontSize:10, fontWeight:700, color:"#fff" }}>Profil {name}</div>
-            <div style={{ fontSize:9, color:"rgba(255,255,255,.4)", marginTop:2, lineHeight:1.3 }}>{allergies}</div>
+      <div style={{ marginTop:12 }}>
+        <div style={{ display:"flex", gap:8, justifyContent:"center", marginBottom:10 }}>
+          {[["Jan","#4ADE80","Laktose · Gluten"],["Anna","#818cf8","Laktose"],["Sofie","#f59e0b","Nødder"],["Mads","#34d399","Ingen"]].map(([n,c,a]) => (
+            <div key={n} style={{ background:"rgba(255,255,255,.05)", borderRadius:10, padding:"9px 10px", textAlign:"center", border:"1px solid rgba(255,255,255,.08)", flex:1 }}>
+              <div style={{ width:30, height:30, borderRadius:"50%", background:c, color:"#000", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, margin:"0 auto 5px" }}>{n[0]}</div>
+              <div style={{ fontSize:9, fontWeight:700, color:"#fff", marginBottom:2 }}>{n}</div>
+              <div style={{ fontSize:8, color:"rgba(255,255,255,.35)", lineHeight:1.3 }}>{a}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ background:"rgba(99,102,241,.08)", border:"1px solid rgba(99,102,241,.2)", borderRadius:8, padding:"8px 10px", fontSize:11, color:"rgba(255,255,255,.6)", lineHeight:1.5 }}>
+          💡 Alle profiler tjekkes samtidig ved hver scanning
+        </div>
+      </div>
+    ),
+  },
+  {
+    title: "Find sikre alternativer automatisk",
+    sub: "Hvis et produkt indeholder noget du reagerer på, finder EatSafe automatisk lignende produkter fra samme kategori — som er sikre for dig.",
+    bg: "#1a0d0d", accent: "#f87171",
+    mockup: (
+      <div style={{ marginTop:12 }}>
+        <div style={{ background:"rgba(239,68,68,.07)", border:"1px solid rgba(239,68,68,.18)", borderRadius:10, padding:"9px 12px", marginBottom:8, display:"flex", alignItems:"center", gap:8 }}>
+          <span style={{ fontSize:18 }}>🥛</span>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:12, fontWeight:700, color:"#f87171" }}>Arla Letmælk — FARE</div>
+            <div style={{ fontSize:10, color:"rgba(255,255,255,.35)" }}>Indeholder laktose</div>
+          </div>
+        </div>
+        <div style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,.4)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>✓ Sikre alternativer</div>
+        {[["Oatly Havregrød","Havredrik · Laktosefri"],["Alpro Soya","Soyadrik · Laktosefri"]].map(([name,tag]) => (
+          <div key={name} style={{ background:"rgba(74,222,128,.06)", border:"1px solid rgba(74,222,128,.15)", borderRadius:8, padding:"8px 10px", marginBottom:6, display:"flex", alignItems:"center", gap:8 }}>
+            <span style={{ fontSize:16 }}>✅</span>
+            <div>
+              <div style={{ fontSize:12, fontWeight:700, color:"#fff" }}>{name}</div>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,.35)" }}>{tag}</div>
+            </div>
           </div>
         ))}
       </div>
     ),
   },
   {
-    title: "600+ filtrerede opskrifter",
-    sub: "Alle opskrifter er filtreret til din families allergier. Ingen gætteri.",
-    bg: "#1a1032",
-    accent: "#a78bfa",
+    title: "Delt indkøbsliste i realtid",
+    sub: "Fælles indkøbsliste med familien — alle ser ændringer live. Produkter tilføjes direkte fra et scan-resultat.",
+    bg: "#0d1520", accent: "#38bdf8",
     mockup: (
-      <div style={{ display:"flex", flexDirection:"column", gap:7, marginTop:12 }}>
-        {[["🍝","Spaghetti Bolognese","Glutenfri · Mælkefri","✅ Sikker"],["🥗","Caesar Salat","Glutenfri","⚠ Tjek dressing"],["🍛","Chicken Tikka","Mælkefri · Nøddefri","✅ Sikker"]].map(([e,name,tags,status]) => (
+      <div style={{ marginTop:12 }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+          <div style={{ fontSize:12, fontWeight:800, color:"#fff" }}>Familiens indkøbsliste</div>
+          <div style={{ fontSize:10, color:"#38bdf8", fontWeight:700 }}>● Live</div>
+        </div>
+        {[["Oatly Havregrød 1L",false,"Jan"],["Glutenfri pasta",false,"Anna"],["Alpro Soya",true,"Købt"],["Havregryns-cookies",false,"Sofie"]].map(([name,done,who]) => (
+          <div key={name} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 10px", borderRadius:8, marginBottom:5, background:"rgba(255,255,255,.04)", border:"1px solid rgba(255,255,255,.07)", opacity:done?0.45:1 }}>
+            <div style={{ width:18, height:18, borderRadius:4, border:`2px solid ${done?"#38bdf8":"rgba(255,255,255,.2)"}`, background:done?"#38bdf8":"transparent", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+              {done && <span style={{ fontSize:11, color:"#000", fontWeight:800 }}>✓</span>}
+            </div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:"#fff", textDecoration:done?"line-through":"none" }}>{name}</div>
+              <div style={{ fontSize:9, color:"rgba(255,255,255,.3)" }}>{who} tilføjede</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
+  },
+  {
+    title: "600+ opskrifter — filtreret til jer",
+    sub: "Alle opskrifter filtreret ud fra familiens samlede allergiprofil. Du ser kun opskrifter der er sikre for alle.",
+    bg: "#120d20", accent: "#a78bfa",
+    mockup: (
+      <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:12 }}>
+        {[["🍝","Spaghetti Bolognese","Glutenfri · Mælkefri","✅ Sikker"],["🥗","Nikkei Ceviche","Glutenfri · Laktosefri","✅ Sikker"],["🍛","Chicken Tikka","Nøddefri · Sesamfri","⚠ Tjek mælk"]].map(([e,name,tags,status]) => (
           <div key={name} style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(255,255,255,.05)", borderRadius:10, padding:"9px 12px", border:"1px solid rgba(255,255,255,.07)" }}>
-            <div style={{ fontSize:22 }}>{e}</div>
+            <div style={{ fontSize:20 }}>{e}</div>
             <div style={{ flex:1 }}>
               <div style={{ fontSize:12, fontWeight:700, color:"#fff" }}>{name}</div>
-              <div style={{ fontSize:10, color:"rgba(255,255,255,.4)" }}>{tags}</div>
+              <div style={{ fontSize:9, color:"rgba(255,255,255,.35)" }}>{tags}</div>
             </div>
-            <div style={{ fontSize:10, fontWeight:700, color: status.startsWith("✅") ? "#4ADE80" : "#fbbf24" }}>{status}</div>
+            <div style={{ fontSize:10, fontWeight:700, color:status.startsWith("✅")?"#4ADE80":"#fbbf24", textAlign:"right", maxWidth:70 }}>{status}</div>
           </div>
         ))}
+      </div>
+    ),
+  },
+  {
+    title: "Leksikon & E-numre",
+    sub: "Tap på en ingrediens og få øjeblikkelig forklaring. Overvåg specifikke E-numre og få advarsel hver gang de dukker op i et produkt.",
+    bg: "#131a10", accent: "#86efac",
+    mockup: (
+      <div style={{ marginTop:12 }}>
+        <div style={{ background:"rgba(134,239,172,.07)", border:"1px solid rgba(134,239,172,.18)", borderRadius:10, padding:"10px 12px", marginBottom:8 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+            <div style={{ padding:"3px 9px", borderRadius:20, background:"rgba(251,191,36,.15)", border:"1px solid rgba(251,191,36,.3)", fontSize:11, fontWeight:800, color:"#fbbf24" }}>E621</div>
+            <div style={{ fontSize:12, fontWeight:700, color:"#fff" }}>MSG · Smagsforstærker</div>
+          </div>
+          <div style={{ fontSize:11, color:"rgba(255,255,255,.5)", lineHeight:1.6 }}>Glutamat-baseret smagsforstærker. Kan give hovedpine og hjertebanken hos følsomme. Hyppig i chips og færdigretter.</div>
+        </div>
+        <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+          {["E211 Natriumbenzoat","E102 Tartrazin","E951 Aspartam"].map(e => (
+            <div key={e} style={{ padding:"4px 10px", borderRadius:20, background:"rgba(251,191,36,.08)", border:"1px solid rgba(251,191,36,.2)", fontSize:10, fontWeight:700, color:"#fbbf24" }}>{e}</div>
+          ))}
+        </div>
       </div>
     ),
   },
   {
     title: "Madpas til udlandet",
-    sub: "Vis dine allergier på 17 sprog — med udtale til tjenerne.",
-    bg: "#1a1208",
-    accent: "#fbbf24",
+    sub: "Rejser du? Vis tjenere dine allergier på 17 sprog — med lokal udtale. Virker offline.",
+    bg: "#1a1208", accent: "#fbbf24",
     mockup: (
-      <div style={{ background:"rgba(251,191,36,.07)", borderRadius:14, padding:"14px 16px", marginTop:12, border:"1px solid rgba(251,191,36,.2)" }}>
-        <div style={{ fontSize:11, fontWeight:700, color:"rgba(251,191,36,.7)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>🇮🇹 Italiensk</div>
-        <div style={{ fontSize:14, fontWeight:800, color:"#fff", marginBottom:4 }}>Sono allergico al latte e al glutine</div>
-        <div style={{ fontSize:12, color:"rgba(255,255,255,.5)", fontStyle:"italic", marginBottom:10 }}>"so-no al-ler-ji-ko al lat-te e al glu-ti-ne"</div>
-        <div style={{ display:"flex", gap:6 }}>
-          {["🇫🇷","🇩🇪","🇪🇸","🇯🇵","🇺🇸"].map(f => <span key={f} style={{ fontSize:20 }}>{f}</span>)}
-          <span style={{ fontSize:12, color:"rgba(255,255,255,.3)", alignSelf:"center" }}>+12 mere</span>
+      <div style={{ background:"rgba(251,191,36,.07)", borderRadius:14, padding:"12px 14px", marginTop:12, border:"1px solid rgba(251,191,36,.18)" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
+          <span style={{ fontSize:20 }}>🇮🇹</span>
+          <div style={{ fontSize:11, fontWeight:800, color:"rgba(251,191,36,.8)", textTransform:"uppercase", letterSpacing:"1px" }}>Italiensk</div>
+        </div>
+        <div style={{ fontSize:13, fontWeight:800, color:"#fff", marginBottom:3 }}>Sono allergico al latte e al glutine.</div>
+        <div style={{ fontSize:11, color:"rgba(255,255,255,.4)", fontStyle:"italic", marginBottom:10 }}>"so-no al-ler-JI-ko al LAT-te..."</div>
+        <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
+          {["🇩🇰","🇬🇧","🇩🇪","🇫🇷","🇪🇸","🇵🇹","🇳🇱","🇸🇪"].map(f => <span key={f} style={{ fontSize:18 }}>{f}</span>)}
+          <span style={{ fontSize:11, color:"rgba(255,255,255,.25)", alignSelf:"center" }}>+9</span>
         </div>
       </div>
     ),
   },
   {
     title: "Klar til at prøve?",
-    sub: "Opret en gratis konto og kom i gang med det samme.",
-    bg: "#0d1f12",
-    accent: "#4ADE80",
-    cta: true,
-    mockup: null,
+    sub: "Gratis at oprette. Ingen kreditkort. Kom i gang på under 2 minutter.",
+    bg: "#0d1f12", accent: "#4ADE80",
+    cta: true, mockup: null,
   },
 ];
 
@@ -145,17 +222,21 @@ function DemoSlider({ setScreen, mode = "welcome", onClose }) {
 
   return (
     <div style={{ borderRadius: isModal ? 0 : 20, overflow:"hidden", border: isModal ? "none" : "1px solid var(--border2)", marginBottom: isModal ? 0 : 10 }}>
-      <div style={{ background:slide.bg, padding:"20px 20px 18px", minHeight:260, transition:"background .4s", position:"relative" }}>
 
-        {/* Modal: luk-knap */}
-        {isModal && (
+      {/* Modal-header med overskrift + luk */}
+      {isModal && (
+        <div style={{ background:"var(--paper)", borderBottom:"1px solid var(--border)", padding:"14px 18px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div style={{ fontSize:13, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1.5px" }}>Det kan EatSafe</div>
           <button onClick={onClose}
-            style={{ position:"absolute", top:14, right:14, background:"rgba(255,255,255,.12)", border:"none", borderRadius:"50%",
-              width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center",
-              cursor:"pointer", fontSize:16, color:"#fff", lineHeight:1 }}>
+            style={{ background:"rgba(255,255,255,.08)", border:"none", borderRadius:"50%",
+              width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", fontSize:15, color:"var(--ink)", lineHeight:1 }}>
             ✕
           </button>
-        )}
+        </div>
+      )}
+
+      <div style={{ background:slide.bg, padding:"20px 20px 18px", minHeight:260, transition:"background .4s", position:"relative" }}>
 
         {/* Dots */}
         <div style={{ display:"flex", gap:5, justifyContent:"center", marginBottom:16 }}>
