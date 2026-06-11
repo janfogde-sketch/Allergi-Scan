@@ -23,6 +23,7 @@ export default function MadpasScreen({
   const qrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shareUrl)}&bgcolor=0d1f12&color=4ADE80&qzone=2` : null;
   const [qrError, setQrError] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+  const [qrOpen, setQrOpen] = React.useState(false);
   const copyLink = () => {
     if (!shareUrl) return;
     navigator.clipboard?.writeText(shareUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
@@ -280,27 +281,66 @@ export default function MadpasScreen({
                           <span style={{ fontSize:16 }}>📱</span>
                           <div>
                             <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Del dit madpas</div>
-                            <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>Scan QR-koden eller send linket</div>
+                            <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>Tjeneren scanner QR-koden og ser dine allergier direkte i sin browser — uden at installere noget</div>
                           </div>
                         </div>
 
+                        {/* QR popup — fullscreen overlay */}
+                        {qrOpen && (
+                          <div onClick={() => setQrOpen(false)}
+                            style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.85)",
+                              display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:32 }}>
+                            <div onClick={e => e.stopPropagation()}
+                              style={{ background:"#0d1f12", borderRadius:24, padding:"28px 24px", maxWidth:320, width:"100%", textAlign:"center" }}>
+                              <div style={{ fontSize:13, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:4 }}>Dit madpas</div>
+                              <div style={{ fontSize:11, color:"var(--muted)", marginBottom:20, lineHeight:1.5 }}>
+                                Bed tjeneren om at scanne denne QR-kode med sin telefon — så åbner dit madpas direkte i deres browser uden at de behøver installere noget.
+                              </div>
+                              <img
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(shareUrl)}&bgcolor=0d1f12&color=4ADE80&qzone=2`}
+                                alt="QR-kode til madpas"
+                                width={220} height={220}
+                                style={{ borderRadius:16, border:"3px solid rgba(74,222,128,.3)", display:"block", margin:"0 auto 20px" }}
+                              />
+                              <div style={{ fontSize:11, color:"rgba(255,255,255,.35)", marginBottom:16, wordBreak:"break-all" }}>{shareUrl}</div>
+                              <button onClick={() => setQrOpen(false)}
+                                style={{ width:"100%", padding:"12px", borderRadius:12, background:"var(--green)", border:"none",
+                                  fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"#071510", cursor:"pointer" }}>
+                                Luk
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
                         {/* QR + link side om side */}
                         <div style={{ padding:"16px", display:"flex", gap:16, alignItems:"center" }}>
-                          {/* QR */}
+                          {/* QR — klikbar */}
                           <div style={{ flexShrink:0 }}>
                             {!qrError ? (
-                              <img
-                                src={qrUrl}
-                                alt="QR-kode til madpas"
-                                width={100} height={100}
-                                onError={() => setQrError(true)}
-                                style={{ borderRadius:10, display:"block", border:"2px solid rgba(74,222,128,.2)" }}
-                              />
+                              <div onClick={() => setQrOpen(true)} style={{ cursor:"pointer", position:"relative" }}>
+                                <img
+                                  src={qrUrl}
+                                  alt="QR-kode til madpas"
+                                  width={100} height={100}
+                                  onError={() => setQrError(true)}
+                                  style={{ borderRadius:10, display:"block", border:"2px solid rgba(74,222,128,.2)" }}
+                                />
+                                <div style={{ position:"absolute", inset:0, borderRadius:10, background:"rgba(0,0,0,.45)",
+                                  display:"flex", alignItems:"center", justifyContent:"center",
+                                  fontSize:20, opacity:0, transition:"opacity .15s" }}
+                                  onMouseEnter={e => e.currentTarget.style.opacity=1}
+                                  onMouseLeave={e => e.currentTarget.style.opacity=0}>
+                                  🔍
+                                </div>
+                              </div>
                             ) : (
                               <div style={{ width:100, height:100, borderRadius:10, background:"var(--surface)", border:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, color:"var(--muted)", textAlign:"center", padding:8 }}>
                                 QR ikke tilgængelig
                               </div>
                             )}
+                            <div style={{ fontSize:9, color:"var(--muted)", textAlign:"center", marginTop:5, fontWeight:600 }}>
+                              Tryk for at forstørre
+                            </div>
                           </div>
 
                           {/* Link + knapper */}
