@@ -17,7 +17,16 @@ export default function MadpasScreen({
   madpasSpeak,
 
   selectedENumbers,
+  userId,
 }) {
+  const shareUrl = userId ? `https://eatsafe.dk/madpas/${userId}` : null;
+  const qrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shareUrl)}&bgcolor=0d1f12&color=4ADE80&qzone=2` : null;
+  const [qrError, setQrError] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
+  const copyLink = () => {
+    if (!shareUrl) return;
+    navigator.clipboard?.writeText(shareUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  };
   return (
     <>
         {screen === SCREENS.MADPAS && (
@@ -35,7 +44,7 @@ export default function MadpasScreen({
               const ingredientLabel = { da:"Se efter", en:"Look for", de:"Achten auf", fr:"Chercher", es:"Buscar", it:"Cercare", nl:"Let op", pt:"Procurar", pl:"Szukaj", sv:"Se efter", no:"Se etter", ja:"確認を", zh:"注意", ar:"ابحث عن", tr:"Ara", th:"ดูหา", el:"Ψάξτε" };
               const langInfo = MADPAS_LANGUAGES.find(l => l.code === lang);
               return (
-                <div style={{ position:"fixed", inset:0, zIndex:9999, background:"#fff", display:"flex", flexDirection:"column" }} dir={rtl ? "rtl" : "ltr"}>
+                <div style={{ position:"fixed", inset:0, zIndex:9999, background:"var(--paper)", display:"flex", flexDirection:"column" }} dir={rtl ? "rtl" : "ltr"}>
 
                   {/* Header — sprog + kryds */}
                   <div style={{ padding:"14px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid var(--border)", flexShrink:0 }}>
@@ -263,7 +272,73 @@ export default function MadpasScreen({
                       Vis til tjener
                     </button>
 
-                    <div style={{ textAlign:"center", fontSize:11, color:"var(--muted)", marginTop:10 }}>
+                    {/* QR-kode + del-link */}
+                    {shareUrl && (
+                      <div style={{ marginTop:16, background:"rgba(255,255,255,.04)", border:"1px solid var(--border2)", borderRadius:16, overflow:"hidden" }}>
+                        {/* Header */}
+                        <div style={{ padding:"12px 16px", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", gap:8 }}>
+                          <span style={{ fontSize:16 }}>📱</span>
+                          <div>
+                            <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Del dit madpas</div>
+                            <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>Scan QR-koden eller send linket</div>
+                          </div>
+                        </div>
+
+                        {/* QR + link side om side */}
+                        <div style={{ padding:"16px", display:"flex", gap:16, alignItems:"center" }}>
+                          {/* QR */}
+                          <div style={{ flexShrink:0 }}>
+                            {!qrError ? (
+                              <img
+                                src={qrUrl}
+                                alt="QR-kode til madpas"
+                                width={100} height={100}
+                                onError={() => setQrError(true)}
+                                style={{ borderRadius:10, display:"block", border:"2px solid rgba(74,222,128,.2)" }}
+                              />
+                            ) : (
+                              <div style={{ width:100, height:100, borderRadius:10, background:"var(--surface)", border:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, color:"var(--muted)", textAlign:"center", padding:8 }}>
+                                QR ikke tilgængelig
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Link + knapper */}
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ fontSize:10, color:"var(--muted)", marginBottom:6, fontWeight:700, textTransform:"uppercase", letterSpacing:"1px" }}>Dit madpas-link</div>
+                            <div style={{ fontSize:11, color:"var(--green)", wordBreak:"break-all", marginBottom:10, lineHeight:1.4, fontWeight:600 }}>
+                              {shareUrl}
+                            </div>
+                            <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+                              <button onClick={copyLink}
+                                style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:"1px solid var(--border2)",
+                                  background: copied ? "var(--green-lt)" : "var(--surface)",
+                                  fontFamily:"var(--f)", fontSize:12, fontWeight:700,
+                                  color: copied ? "var(--green)" : "var(--ink2)", cursor:"pointer",
+                                  display:"flex", alignItems:"center", justifyContent:"center", gap:6, transition:"all .2s" }}>
+                                {copied ? "✓ Kopieret!" : "📋 Kopiér link"}
+                              </button>
+                              {navigator.share && (
+                                <button onClick={() => navigator.share({ title:"Mit EatSafe madpas", url:shareUrl })}
+                                  style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:"none",
+                                    background:"var(--green)", fontFamily:"var(--f)", fontSize:12, fontWeight:800,
+                                    color:"#071510", cursor:"pointer",
+                                    display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                                  ↗ Del via...
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Info */}
+                        <div style={{ padding:"10px 16px 14px", fontSize:11, color:"var(--muted)", lineHeight:1.5, borderTop:"1px solid var(--border)" }}>
+                          💡 Andre kan se dit madpas uden at have EatSafe installeret. Siden er offentlig tilgængelig via linket.
+                        </div>
+                      </div>
+                    )}
+
+                    <div style={{ textAlign:"center", fontSize:11, color:"var(--muted)", marginTop:12 }}>
                       🇩🇰 EatSafe · {new Date().toLocaleDateString("da-DK")}
                     </div>
                   </div>
