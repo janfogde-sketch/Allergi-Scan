@@ -1,101 +1,164 @@
 <!DOCTYPE html>
 <html lang="da">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Privatlivspolitik — EatSafe</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #FAFAF7; color: #1F2733; line-height: 1.7; }
-    .container { max-width: 680px; margin: 0 auto; padding: 48px 24px; }
-    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 48px; }
-    .logo-text { font-size: 22px; font-weight: 900; color: #1F2733; }
-    .logo-text span { color: #22C55E; }
-    .badge { background: #F59E0B; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 100px; }
-    h1 { font-size: 32px; font-weight: 900; margin-bottom: 8px; letter-spacing: -0.5px; }
-    .date { font-size: 13px; color: #6B7280; margin-bottom: 40px; }
-    h2 { font-size: 18px; font-weight: 800; margin: 32px 0 12px; }
-    p { font-size: 15px; color: #374151; margin-bottom: 12px; }
-    ul { padding-left: 20px; margin-bottom: 12px; }
-    li { font-size: 15px; color: #374151; margin-bottom: 6px; }
-    a { color: #22C55E; text-decoration: none; }
-    .divider { height: 1px; background: #E5E7EB; margin: 40px 0; }
-    .contact { background: #fff; border: 1px solid #E5E7EB; border-radius: 16px; padding: 24px; margin-top: 40px; }
-    .contact h3 { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
-    footer { text-align: center; font-size: 13px; color: #9CA3AF; margin-top: 48px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0e1812;
+      color: #e8f0e9;
+      line-height: 1.7;
+      padding: 0 0 60px;
+    }
+    .header {
+      background: #162318;
+      border-bottom: 1px solid #1f3024;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo {
+      font-size: 22px;
+      font-weight: 900;
+      color: #4ade80;
+    }
+    .logo span { color: #e8f0e9; }
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 900;
+      color: #e8f0e9;
+      margin-bottom: 6px;
+    }
+    .updated {
+      font-size: 13px;
+      color: #6b8f72;
+      margin-bottom: 36px;
+    }
+    h2 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #4ade80;
+      margin: 32px 0 10px;
+    }
+    p {
+      font-size: 14px;
+      color: #b0c9b3;
+      margin-bottom: 12px;
+    }
+    ul {
+      font-size: 14px;
+      color: #b0c9b3;
+      padding-left: 20px;
+      margin-bottom: 12px;
+    }
+    li { margin-bottom: 6px; }
+    a { color: #4ade80; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .contact-box {
+      background: #162318;
+      border: 1px solid #1f3024;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-top: 40px;
+    }
+    .contact-box p { margin: 0; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="logo">
-      <div class="logo-text">Eat<span>Safe</span></div>
-      <div class="badge">BETA</div>
-    </div>
 
-    <h1>Privatlivspolitik</h1>
-    <div class="date">Senest opdateret: 27. maj 2026</div>
-
-    <p>EatSafe ("vi", "os", "vores") er en app der hjælper brugere med allergi og fødevareintolerance med at scanne produkter og tjekke allergener. Vi tager dit privatliv alvorligt.</p>
-
-    <h2>1. Hvilke data indsamler vi?</h2>
-    <p>Vi indsamler følgende oplysninger:</p>
-    <ul>
-      <li><strong>Kontooplysninger:</strong> Navn, e-mailadresse og adgangskode (eller Google-konto ved OAuth-login)</li>
-      <li><strong>Allergenoplysninger:</strong> De allergener og fødevareintoleranser du registrerer for dig selv og din familie</li>
-      <li><strong>Scanningshistorik:</strong> Produkter du har skannet</li>
-      <li><strong>Enhedsoplysninger:</strong> Enhedstype, browser og skærmstørrelse (til fejlhåndtering)</li>
-      <li><strong>Billeder:</strong> Billeder du uploader til produktindsendelse (ingredienslister og produktfotos)</li>
-    </ul>
-
-    <h2>2. Hvordan bruger vi dine data?</h2>
-    <ul>
-      <li>At vise relevante allergenadvarsler for dig og din familie</li>
-      <li>At forbedre vores produktdatabase via brugerindsendelser</li>
-      <li>At sende dig vigtige servicemeddelelser</li>
-      <li>At fejlsøge og forbedre appen</li>
-    </ul>
-
-    <h2>3. Deling af data</h2>
-    <p>Vi sælger aldrig dine personlige oplysninger. Vi deler kun data med:</p>
-    <ul>
-      <li><strong>Supabase:</strong> Vores database- og autentificeringsudbyder (EU-baseret)</li>
-      <li><strong>Google:</strong> Ved brug af Google-login (OAuth)</li>
-    </ul>
-
-    <h2>4. Opbevaring og sletning</h2>
-    <p>Dine data opbevares så længe din konto er aktiv. Du kan til enhver tid slette din konto og alle tilknyttede data direkte i appen under Profil → Slet konto.</p>
-
-    <h2>5. Cookies og tracking</h2>
-    <p>EatSafe bruger ikke tracking-cookies eller tredjeparts annoncering. Vi bruger udelukkende teknisk nødvendige cookies til session-håndtering.</p>
-
-    <h2>6. Dine rettigheder (GDPR)</h2>
-    <p>Som bruger har du ret til:</p>
-    <ul>
-      <li>Indsigt i dine personoplysninger</li>
-      <li>Berigtigelse af ukorrekte oplysninger</li>
-      <li>Sletning af dine oplysninger ("retten til at blive glemt")</li>
-      <li>Dataportabilitet</li>
-      <li>Indsigelse mod behandling</li>
-    </ul>
-
-    <h2>7. Børn</h2>
-    <p>EatSafe er ikke rettet mod børn under 13 år. Forældre kan oprette familiemedlemmer på vegne af mindreårige børn.</p>
-
-    <h2>8. Ændringer i privatlivspolitikken</h2>
-    <p>Vi vil informere dig om væsentlige ændringer via e-mail eller notifikation i appen.</p>
-
-    <div class="divider"></div>
-
-    <div class="contact">
-      <h3>Kontakt os</h3>
-      <p>Har du spørgsmål til vores behandling af personoplysninger, kan du kontakte os på:</p>
-      <p><a href="mailto:privacy@eatsafe.dk">privacy@eatsafe.dk</a></p>
-      <p style="margin-top: 8px; font-size: 13px; color: #6B7280;">EatSafe · eatsafe.dk · Danmark</p>
-    </div>
-
-    <footer>
-      <p>© 2026 EatSafe · <a href="/">Tilbage til appen</a></p>
-    </footer>
+  <div class="header">
+    <div class="logo">Eat<span>Safe</span></div>
   </div>
+
+  <div class="container">
+    <h1>Privatlivspolitik</h1>
+    <div class="updated">Sidst opdateret: juni 2026</div>
+
+    <p>
+      EatSafe ("vi", "os", "appen") respekterer dit privatliv. Denne politik beskriver, hvilke personoplysninger vi indsamler, hvordan vi bruger dem, og dine rettigheder.
+    </p>
+
+    <h2>1. Hvem er vi?</h2>
+    <p>
+      EatSafe er en dansk app til allergen-scanning. Kontakt os på <a href="mailto:hej@eatsafe.dk">hej@eatsafe.dk</a> ved spørgsmål til behandling af dine personoplysninger.
+    </p>
+
+    <h2>2. Hvilke oplysninger indsamler vi?</h2>
+    <ul>
+      <li><strong>Konto:</strong> Email-adresse og eventuelt navn</li>
+      <li><strong>Allergiprofil:</strong> De allergier og intoleranser du selv registrerer</li>
+      <li><strong>Familie:</strong> Navne og allergiprofiler på familiemedlemmer du selv tilføjer</li>
+      <li><strong>Scanningshistorik:</strong> Stregkoder du har scannet og resultater heraf</li>
+      <li><strong>Indsendelser:</strong> Produktdata du frivilligt bidrager med</li>
+      <li><strong>Tekniske data:</strong> Grundlæggende app-brug til fejlfinding (ingen tracking på tværs af apps)</li>
+    </ul>
+
+    <h2>3. Hvordan bruger vi dine oplysninger?</h2>
+    <ul>
+      <li>For at vise allergenadvarslerne i appen</li>
+      <li>For at gemme din profil og historik på tværs af enheder</li>
+      <li>For at forbedre produktdatabasen baseret på indsendelser</li>
+      <li>For at sende transaktionelle emails (bekræftelse, godkendelse af indsendelse)</li>
+    </ul>
+    <p>Vi sælger <strong>aldrig</strong> dine oplysninger til tredjeparter.</p>
+
+    <h2>4. Retsgrundlag (GDPR)</h2>
+    <p>
+      Vi behandler dine oplysninger på grundlag af <strong>aftale</strong> (art. 6(1)(b)) — for at levere den tjeneste du har oprettet konto til — og <strong>legitim interesse</strong> (art. 6(1)(f)) for teknisk fejlfinding.
+    </p>
+    <p>
+      Allergier betragtes som følsomme helbredsoplysninger (art. 9 GDPR). Vi behandler dem udelukkende på baggrund af dit <strong>udtrykkelige samtykke</strong>, som du giver når du opretter din allergiprofil.
+    </p>
+
+    <h2>5. Dataopbevaring</h2>
+    <p>
+      Vi gemmer dine oplysninger så længe din konto er aktiv. Sletter du din konto, slettes alle dine personoplysninger inden for 30 dage.
+    </p>
+
+    <h2>6. Dine rettigheder</h2>
+    <ul>
+      <li><strong>Indsigt:</strong> Du kan til enhver tid se dine oplysninger i appen</li>
+      <li><strong>Sletning:</strong> Du kan slette din konto direkte i appen under Profil → Konto → Slet konto</li>
+      <li><strong>Berigtigelse:</strong> Du kan rette dine oplysninger i appen</li>
+      <li><strong>Portabilitet:</strong> Kontakt os for eksport af dine data</li>
+      <li><strong>Klage:</strong> Du kan klage til Datatilsynet på <a href="https://www.datatilsynet.dk" target="_blank">datatilsynet.dk</a></li>
+    </ul>
+
+    <h2>7. Cookies og lokal lagring</h2>
+    <p>
+      EatSafe bruger lokal lagring (localStorage) til at gemme din session og præferencer på din enhed. Vi bruger ikke tredjeparts tracking-cookies.
+    </p>
+
+    <h2>8. Tredjeparts tjenester</h2>
+    <ul>
+      <li><strong>Supabase</strong> — database og autentificering (EU-servere)</li>
+      <li><strong>Open Food Facts</strong> — produktdata (open source, ingen persondata deles)</li>
+      <li><strong>Anthropic Claude</strong> — OCR og allergen-analyse (ingen persondata sendes, kun produktbilleder)</li>
+      <li><strong>Vercel</strong> — hosting (EU-region)</li>
+    </ul>
+
+    <h2>9. Ændringer</h2>
+    <p>
+      Vi kan opdatere denne politik. Væsentlige ændringer meddeles via appen. Den gældende version er altid tilgængelig på <a href="https://eatsafe.dk/privacy">eatsafe.dk/privacy</a>.
+    </p>
+
+    <div class="contact-box">
+      <p>
+        Spørgsmål til vores behandling af dine oplysninger?<br/>
+        Skriv til os på <a href="mailto:hej@eatsafe.dk">hej@eatsafe.dk</a>
+      </p>
+    </div>
+
+  </div>
+
 </body>
 </html>

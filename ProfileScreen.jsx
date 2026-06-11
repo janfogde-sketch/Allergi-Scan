@@ -75,9 +75,21 @@ export default function ProfileScreen({
             <div className="screen-title">Scanningshistorik</div>
             <div className="screen-sub">Alle dine tidligere scanninger.</div>
             <button className="btn btn-ghost btn-sm" style={{ marginBottom:14 }} onClick={() => { loadHistory(); }}>Opdater</button>
-            {historyLoading && <div className="loader fade-in"><div className="spinner" /><div className="loader-txt">Henter historik…</div></div>}
+            {historyLoading && (
+              <div className="fade-in">
+                {[1,2,3,4].map(i => (
+                  <div key={i} className="skeleton-row">
+                    <div className="skeleton-block skeleton-avatar" />
+                    <div style={{ flex:1 }}>
+                      <div className="skeleton-block skeleton-title" />
+                      <div className="skeleton-block skeleton-sub" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             {!historyLoading && history.length===0 && (
-              <div className="empty-state"><div className="empty-txt">Ingen scanninger endnu</div><div className="empty-sub">Skan dit første produkt</div></div>
+              <div className="empty-state"><span className="empty-icon">🔍</span><div className="empty-txt">Ingen scanninger endnu</div><div className="empty-sub">Skan dit første produkt for at se din historik her</div><button className="btn btn-outline btn-sm" style={{ marginTop:12 }} onClick={() => setScreen("SCANNER")}>Skan nu</button></div>
             )}
             {history.map((h,i) => {
               const s = h.result||h.status;
@@ -100,17 +112,17 @@ export default function ProfileScreen({
           <div className="screen fade-in">
 
             {/* Hero */}
-            <div style={{ background:"var(--ink)", borderRadius:20, padding:"22px 20px", marginBottom:14 }}>
+            <div style={{ background:"rgba(255,255,255,.06)", border:"1px solid rgba(255,255,255,.1)", borderRadius:20, padding:"22px 20px", marginBottom:14 }}>
               <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:16 }}>
                 <div style={{ width:56, height:56, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800, color:"#fff", flexShrink:0 }}>
                   {initials(user.name||"?")}
                 </div>
                 <div style={{ flex:1 }}>
-                  <div style={{ fontSize:19, fontWeight:900, color:"#fff", letterSpacing:"-.3px" }}>{user.name||"Din profil"}</div>
-                  <div style={{ fontSize:12, color:"rgba(255,255,255,.5)", marginTop:3 }}>{user.email||loginEmail||""}</div>
+                  <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px" }}>{user.name||"Din profil"}</div>
+                  <div style={{ fontSize:12, color:"var(--muted)", marginTop:3 }}>{user.email||loginEmail||""}</div>
                 </div>
                 <button onClick={() => setScreen(SCREENS.EDITPROFILE)}
-                  style={{ background:"rgba(255,255,255,.1)", border:"1px solid rgba(255,255,255,.15)", borderRadius:10, padding:"7px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"#fff", cursor:"pointer" }}>
+                  style={{ background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10, padding:"7px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
                   Rediger
                 </button>
               </div>
@@ -121,16 +133,16 @@ export default function ProfileScreen({
                   [family.length, "Familie"],
                   [history.length, "Scanninger"],
                 ].map(([n, lbl]) => (
-                  <div key={lbl} style={{ background:"rgba(255,255,255,.08)", borderRadius:10, padding:"10px 8px", textAlign:"center" }}>
-                    <div style={{ fontSize:20, fontWeight:900, color:"#fff" }}>{n}</div>
-                    <div style={{ fontSize:10, color:"rgba(255,255,255,.45)", fontWeight:600, marginTop:2 }}>{lbl}</div>
+                  <div key={lbl} style={{ background:"rgba(255,255,255,.05)", border:"1px solid rgba(255,255,255,.08)", borderRadius:10, padding:"10px 8px", textAlign:"center" }}>
+                    <div style={{ fontSize:20, fontWeight:700, color:"var(--ink)" }}>{n}</div>
+                    <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, marginTop:2 }}>{lbl}</div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Mine præferencer */}
-            <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:10, boxShadow:"var(--sh)" }}>
+            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:10 }}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
                 <div>
                   <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Mine præferencer</div>
@@ -141,8 +153,8 @@ export default function ProfileScreen({
                   Rediger
                 </button>
               </div>
-              {allergens.length + customAllerg.length === 0
-                ? <div style={{ fontSize:13, color:"var(--muted)", padding:"8px 0" }}>Ingen præferencer registreret endnu</div>
+              {allergens.length + customAllerg.length + (selectedENumbers?.length || 0) + (user?.diets?.length || 0) === 0
+                ? <div style={{ textAlign:"center", padding:"16px 0" }}><div style={{ fontSize:36, marginBottom:8 }}>⚙️</div><div style={{ fontSize:13, color:"var(--muted)", marginBottom:10 }}>Ingen præferencer registreret endnu</div><button className="btn btn-outline btn-sm" onClick={() => setScreen("PREFERENCES")}>Tilføj allergener</button></div>
                 : (
                   <div>
                     {/* Gruppér: allergener, intoleranser, diæter */}
@@ -154,8 +166,20 @@ export default function ProfileScreen({
                     )}
                     {customAllerg.length > 0 && (
                       <div style={{ marginBottom:8 }}>
-                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Intolerancer & diæter</div>
+                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Intolerancer</div>
                         <div className="tags">{customAllerg.map((c,i) => <div key={i} className="tag" style={{ background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>✏️ {c}</div>)}</div>
+                      </div>
+                    )}
+                    {(user?.diets?.length > 0) && (
+                      <div style={{ marginBottom:8 }}>
+                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Diæter</div>
+                        <div className="tags">{user.diets.map(d => { const diet = DIETS.find(x=>x.id===d); return diet ? <div key={d} className="tag" style={{ background:"var(--green-lt)", color:"var(--green)", borderColor:"var(--green-mid)" }}>{diet.emoji || "🥗"} {diet.label}</div> : null; })}</div>
+                      </div>
+                    )}
+                    {selectedENumbers && selectedENumbers.length > 0 && (
+                      <div style={{ marginBottom:8 }}>
+                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>E-numre</div>
+                        <div className="tags">{selectedENumbers.map((e,i) => <div key={i} className="tag" style={{ background:"rgba(99,102,241,.1)", color:"#818cf8", borderColor:"rgba(99,102,241,.3)" }}>⚗️ {e}</div>)}</div>
                       </div>
                     )}
                   </div>
@@ -164,16 +188,17 @@ export default function ProfileScreen({
             </div>
 
             {/* Menu */}
-            <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, overflow:"hidden", marginBottom:10, boxShadow:"var(--sh)" }}>
+            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, overflow:"hidden", marginBottom:10 }}>
               {[
                 { icon:"⭐", label:"Favoritter", sub:"Gemte produkter og opskrifter", fn:() => setScreen(SCREENS.FAVORITES) },
                 { icon:"👨‍👩‍👧", label:"Familie", sub:`${family.length} ${family.length===1?"profil":"profiler"} oprettet`, fn:() => setScreen(SCREENS.FAMILY) },
                 { icon:"📋", label:"Scanningshistorik", sub:`${history.length} produkter scannet`, fn:() => setScreen(SCREENS.HISTORY) },
+                { icon:"🌍", label:"Madpas", sub:"Vis allergier til restaurantpersonale", fn:() => setScreen(SCREENS.MADPAS) },
                 ...(user.role==="admin" ? [{ icon:"🛡️", label:"Admin panel", sub:"Godkend og administrér produkter", fn:() => { loadSubmissions(); loadAdminStats(); setScreen(SCREENS.ADMIN); } }] : []),
               ].map((item, i, arr) => (
                 <div key={item.label} onClick={item.fn}
                   style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 16px", borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", cursor:"pointer" }}>
-                  <div style={{ width:40, height:40, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
+                  <div style={{ width:40, height:40, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
                     {item.icon}
                   </div>
                   <div style={{ flex:1 }}>
@@ -186,17 +211,40 @@ export default function ProfileScreen({
             </div>
 
             {/* Konto */}
-            <div style={{ background:"#fff", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
+            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px" }}>
               <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:12 }}>Konto</div>
               <div style={{ display:"flex", gap:8 }}>
                 <button onClick={clearAuth}
-                  style={{ flex:1, padding:"11px", background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                  style={{ flex:1, padding:"11px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
                   Log ud
                 </button>
                 <button onClick={() => { setShowDeleteAccount(true); setDeleteConfirmText(""); }}
                   style={{ flex:1, padding:"11px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
                   Slet konto
                 </button>
+              </div>
+            </div>
+
+            {/* ── Footer: kontakt + privatlivspolitik ── */}
+            <div style={{ marginTop:24, paddingBottom:8, textAlign:"center" }}>
+              <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8 }}>
+                Spørgsmål eller feedback?
+              </div>
+              <a href="mailto:hej@eatsafe.dk"
+                style={{ display:"inline-flex", alignItems:"center", gap:6, fontSize:12, fontWeight:700, color:"var(--green)", textDecoration:"none", marginBottom:14 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,12 2,6"/>
+                </svg>
+                hej@eatsafe.dk
+              </a>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:12, fontSize:11, color:"var(--muted)" }}>
+                <a href="https://eatsafe.dk/privacy" target="_blank" rel="noopener noreferrer"
+                  style={{ color:"var(--muted)", textDecoration:"underline", textUnderlineOffset:3 }}>
+                  Privatlivspolitik
+                </a>
+                <span>·</span>
+                <span>EatSafe Beta</span>
               </div>
             </div>
 
@@ -240,9 +288,7 @@ export default function ProfileScreen({
             {/* Gemte favoritter */}
             {favorites.length > 0 && <div className="card-lbl" style={{ marginBottom:6 }}>Gemte produkter</div>}
             {favorites.length === 0 && (
-              <div className="empty-state">
-                <div className="empty-txt">Ingen favoritter endnu</div>
-                <div className="empty-sub">Tryk ❤️ på et produkt for at gemme det her</div>
+              <div className="empty-state"><span className="empty-icon">🤍</span><div className="empty-txt">Ingen favoritter endnu</div><div className="empty-sub">Tryk ❤️ på et produkt under scanning for at gemme det her</div>
               </div>
             )}
             {favorites.map((f,i) => (
@@ -289,7 +335,7 @@ export default function ProfileScreen({
               <div style={{ display:"flex", gap:8, marginBottom:10 }}>
                 {["Mand","Kvinde","Andet"].map(g => (
                   <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
-                    style={{ flex:1, padding:"8px 0", textAlign:"center", borderRadius:8, border:`1.5px solid ${user.gender===g?"var(--green)":"var(--border)"}`, background:user.gender===g?"var(--green-lt)":"#fff", fontSize:13, fontWeight:700, color:user.gender===g?"var(--green)":"var(--muted)", cursor:"pointer" }}>
+                    style={{ flex:1, padding:"8px 0", textAlign:"center", borderRadius:8, border:`1px solid ${user.gender===g?"var(--green)":"var(--border)"}`, background:user.gender===g?"var(--green-lt)":"var(--surface)", fontSize:13, fontWeight:700, color:user.gender===g?"var(--green)":"var(--muted)", cursor:"pointer" }}>
                     {g}
                   </div>
                 ))}
@@ -356,8 +402,8 @@ export default function ProfileScreen({
                   const on = allergens.includes(a.id);
                   return (
                     <div key={a.id} className="chip" style={{
-                      background: on ? "var(--red-lt)" : "var(--paper2)",
-                      border: `1.5px solid ${on ? "var(--red)" : "var(--border)"}`,
+                      background: on ? "var(--red-lt)" : "var(--surface)",
+                      border: `1px solid ${on ? "var(--red)" : "var(--border)"}`,
                       color: on ? "var(--red)" : "var(--ink)",
                     }}
                       onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
@@ -435,7 +481,7 @@ export default function ProfileScreen({
               <div className="card-lbl">Aktive profiler ved scanning</div>
               <FamilyChips />
             </div>
-            {family.length===0 && <div className="empty-state"><div className="empty-txt">Ingen familiemedlemmer endnu</div><div className="empty-sub">Tilføj nedenfor</div></div>}
+            {family.length===0 && <div className="empty-state"><span className="empty-icon">👨‍👩‍👧</span><div className="empty-txt">Ingen familiemedlemmer endnu</div><div className="empty-sub">Tilføj familiemedlemmer for at scanne for dem</div></div>}
             {family.map(m => (
               <div key={m.id} className="family-member">
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:m.allergens.length?10:0 }}>

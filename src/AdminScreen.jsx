@@ -1038,6 +1038,52 @@ ${openTicket.description}
                 <div style={{ fontSize:12, color:"var(--muted)", marginBottom:16, lineHeight:1.5 }}>
                   Produkter som brugere har forsøgt at scanne men ikke fundet i databasen. Sorteret efter antal opslag.
                 </div>
+
+                {/* Brand-aggregering */}
+                {missingEans.length > 0 && (() => {
+                  // Udtræk brand fra EAN-præfiks (GS1 landekoder er vejledende — vi bruger bare som grupperingshjælp)
+                  // I stedet aggregerer vi på EAN-præfiks (første 4 cifre) som proxy for brand
+                  const prefixMap = {};
+                  missingEans.forEach(row => {
+                    const prefix = row.ean?.slice(0, 4) || "????";
+                    if (!prefixMap[prefix]) prefixMap[prefix] = { count: 0, scans: 0, eans: [] };
+                    prefixMap[prefix].count++;
+                    prefixMap[prefix].scans += (row.count || 1);
+                    prefixMap[prefix].eans.push(row.ean);
+                  });
+                  const topPrefixes = Object.entries(prefixMap)
+                    .sort(([,a],[,b]) => b.scans - a.scans)
+                    .slice(0, 5);
+                  return (
+                    <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
+                      <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>
+                        📊 Top EAN-præfikser <span style={{ fontSize:10, fontWeight:400, color:"var(--muted)" }}>(proxy for brand/producent)</span>
+                      </div>
+                      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                        {topPrefixes.map(([prefix, data]) => (
+                          <div key={prefix} style={{ display:"flex", alignItems:"center", gap:10 }}>
+                            <div style={{ fontFamily:"monospace", fontSize:12, fontWeight:700, color:"var(--ink)", width:48 }}>{prefix}…</div>
+                            <div style={{ flex:1, height:6, background:"var(--border2)", borderRadius:3, overflow:"hidden" }}>
+                              <div style={{ height:"100%", borderRadius:3, background:"var(--green)", width:`${Math.round((data.scans / missingEans.reduce((s,r) => s+(r.count||1), 0)) * 100)}%` }} />
+                            </div>
+                            <div style={{ fontSize:11, color:"var(--muted)", whiteSpace:"nowrap" }}>
+                              {data.count} produkt{data.count!==1?"er":""} · {data.scans} opslag
+                            </div>
+                            <button
+                              onClick={() => navigator.clipboard?.writeText(data.eans.join("\n"))}
+                              style={{ fontSize:10, color:"var(--muted)", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", padding:"2px 6px" }}
+                              title="Kopiér alle EAN'er med dette præfiks">
+                              📋
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ fontSize:10, color:"var(--muted)", marginTop:10 }}>
+                        Brug præfikset til at identificere producenten på <a href="https://www.gs1.dk" target="_blank" rel="noopener noreferrer" style={{ color:"var(--green)" }}>gs1.dk</a>
+                      </div>
+                    </div>
+                  );
+                })()}
                 {missingEansLoading ? (
                   <div style={{ textAlign:"center", padding:"40px 0", color:"var(--muted)" }}>Indlæser...</div>
                 ) : missingEans.length === 0 ? (
