@@ -1,6 +1,6 @@
 # EatSafe — CONTEXT.md
 
-> **Sidst opdateret:** 11. juni 2026
+> **Sidst opdateret:** 11. juni 2026 (session 3)
 > **Opdateres ved større ændringer. Deles med AI-assistenter som sessionskontekst.**
 
 ---
@@ -17,8 +17,8 @@
 | Supabase projekt-ID | jegrpcflyguadyxialkm |
 | Supabase URL | https://jegrpcflyguadyxialkm.supabase.co |
 | Vercel | Auto-deploy på både `main` og `dev` |
-| Admin bruger | janfogde@gmail.com (`404caa7f-91b0-4bad-a2a8-bcb6a396d35f`) |
-| Kontakt email | hej@eatsafe.dk (oprettes hos One.com) |
+| Admin bruger | janfogde@gmail.com (`6a759160-9bde-43bf-8619-e19e454323a5`) |
+| Kontakt email | hej@eatsafe.dk (oprettet hos One.com) |
 
 ---
 
@@ -156,7 +156,9 @@ Bundmenu: `Opskrifter → Indkøbsliste → Hjem → Viden → Profil`
 | `ocr` | OCR: `ingredients` / `product_name` / `nutrition` / `ean_from_image` |
 | `search` | Fuldtekst-søgning med scoring |
 | `send-email` | Resend email |
-| `auto-import-off` | **NY** — importerer fra OFF dagligt kl. 02:00 UTC via pg_cron |
+| `auto-import-off` | Importerer fra OFF dagligt kl. 02:00 UTC via pg_cron |
+| `send-push` | **NY** — Web Push notifikation via VAPID (ES256) |
+| `weekly-digest` | **NY** — Ugentlig push om nye opskrifter (kræver pg_cron setup) |
 
 ---
 
@@ -210,7 +212,28 @@ Bundmenu: `Opskrifter → Indkøbsliste → Hjem → Viden → Profil`
 
 | Punkt | Note |
 |-------|------|
-| hej@eatsafe.dk | Oprettes hos One.com inden beta |
+| auth.uid() = NULL (ECC P-256 bug) | Support ticket åben hos Supabase. Midlertidig workaround: temp_read + temp_write policies på alle tabeller (user_allergens, family_invites, family_members, users, scan_history, shopping_lists, shopping_list_items, submissions, feedback_tickets, push_tokens). Kendt bug: GitHub #42244, Discussion #45812 |
+| sw.js deploy | Service worker skal pushes til `public/` mappen |
+| weekly-digest pg_cron | SQL cron-job skal køres i SQL Editor |
 | Leksikon 1000+ entries | Planlagt — separat session |
-| Push-notifikationer (12.1) | Fase 12 — næste session |
-| SubmittedScreen.jsx | Skal pushes til GitHub repo |
+
+---
+
+## 14. Push-notifikationer (infrastruktur)
+
+| Komponent | Status |
+|-----------|--------|
+| `push_tokens` tabel + RLS | ✅ |
+| `send-push` Edge Function (VAPID) | ✅ |
+| `weekly-digest` Edge Function | ✅ (mangler pg_cron) |
+| `sw.js` service worker | Klar (mangler push til public/) |
+| `usePush.js` hook | ✅ |
+| VAPID keys i Supabase secrets | ✅ |
+| Push toggle i ProfileScreen | ✅ |
+| Push-trin i onboarding (trin 5) | ✅ |
+
+**Push-triggers:**
+1. Admin godkender indsendelse → push til indsender (useAdmin.js)
+2. NOTFOUND-produkt tilgængeligt → push til scannere (useAdmin.js)
+3. Familie accepterer invitation → push til inviter (App.jsx)
+4. Ugentlig digest → push til alle med tokens (weekly-digest)

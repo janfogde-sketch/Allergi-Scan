@@ -1,4 +1,4 @@
-# EatSafe — Roadmap (opdateret 11. juni 2026)
+# EatSafe — Roadmap (opdateret 11. juni 2026, session 3)
 
 > **Kernespørgsmål ved al prioritering:**
 > *Gør denne feature brugeren hurtigere, tryggere eller mere sikker i købsøjeblikket?*
@@ -36,8 +36,8 @@ Fase 0 (kritiske fixes), 1 (datavækst), 2 (design), 3 (arkitektur),
 
 ## ✅ FULDFØRT — Fase 9 — Madpas 2.0
 
-- 9.1 QR-kode til madpas ✅ (dual: QR offline + eatsafe.dk/madpas/[id] link)
-- 9.2 Del madpas via link ✅ (inkluderet i 9.1)
+- 9.1 QR-kode til madpas ✅ (dual: QR offline + eatsafe.dk/madpas/[id] link + popup forstørrelse)
+- 9.2 Del madpas via link ✅ (kopiér-link + Web Share API + QR)
 - 9.3 PDF-eksport 🔲
 
 ---
@@ -60,23 +60,33 @@ Fase 0 (kritiske fixes), 1 (datavækst), 2 (design), 3 (arkitektur),
 
 ---
 
-## Fase 7b — UX-polish 🔲
+## ✅ FULDFØRT — Fase 7b — UX-polish
 
-| # | Opgave | Prioritet | Note |
-|---|--------|-----------|------|
-| 7b.1 | Onboarding: fjern velkomst/forklaring (trin 1) | 🔴 | Kortere onboarding = flere gennemfører |
-| 7b.2 | Demo-funktion på HOME | 🔴 | Flyt app-forklaringer fra onboarding til en interaktiv demo på hjemmeskærmen |
-| 7b.3 | HOME: fjern "Sidst opdateret"-linje | 🟡 | Støj i UI |
+- 7b.1 Onboarding: feature-tour fjernet ✅ — trin 1 er nu obligatorisk profiludfyldning (navn, email, tlf, alder, køn). Allergi-trin: spring-over kræver bekræftelse via dialog.
+- 7b.2 Demo-funktion ✅ — WelcomeDemoSlider (8 slides + CTA) på WELCOME-skærm erstatter statisk feature-liste. Modal via 📖 App-guide knap på HOME (ved beta-badge). Faste "Opret konto" + "Log ind" knapper altid synlige under slideren.
+- 7b.3 HOME: "Sidst opdateret"-linje fjernet ✅
+
+**MadpasScreen fixes (samme session):**
+- Hvid baggrund fixet → `var(--paper)` ✅
+- QR-kode + del-link sektion tilføjet ✅ (klik på QR åbner forstørret popup med forklaring)
+- userId prop tilføjet i App.jsx ✅
 
 ---
 
-## Fase 12 — Engagement & push-notifikationer 🔲 NÆSTE
+## ✅ FULDFØRT — Fase 12 — Engagement & push-notifikationer
 
-| # | Opgave | Prioritet | Note |
-|---|--------|-----------|------|
-| 12.1 | Push-notifikation ved godkendt indsendelse | 🔴 | Kræver push_tokens tabel + Edge Function + Web Push API |
-| 12.2 | Ugentlig admin-digest email | 🟡 | "X indsendelser afventer godkendelse" |
-| 12.3 | Scanning-streak / gamification | 🟢 | Lav prioritet |
+- 12.1 Push-notifikation ved godkendt indsendelse ✅
+  - `push_tokens` tabel + RLS ✅
+  - `send-push` Edge Function (VAPID/Web Push) ✅
+  - `sw.js` service worker ✅
+  - `usePush.js` hook (subscribe/unsubscribe) ✅
+  - VAPID-nøgler genereret og sat som Supabase secrets ✅
+  - Push toggle i ProfileScreen ✅
+  - Push-trin i onboarding (trin 5) ✅
+- 12.1b NOTFOUND-push ✅ — brugere der scannede et produkt som NOTFOUND får push når det godkendes
+- 12.1c Familie-push ✅ — inviter modtager push når nogen accepterer invitation (i App.jsx)
+- 12.2 Ugentlig digest ✅ — `weekly-digest` Edge Function klar (kræver pg_cron setup)
+- 12.3 Scanning-streak / gamification 🔲 — lav prioritet
 
 ---
 
@@ -123,9 +133,22 @@ Fase 0 (kritiske fixes), 1 (datavækst), 2 (design), 3 (arkitektur),
 | Familie-deling via link (10.1) | ✅ |
 | Realtime indkøbsliste (10.2) | ✅ |
 | Auto-import pipeline (11.4) | ✅ |
-| Push-notifikation ved godkendelse (12.1) | 🔲 |
-| hej@eatsafe.dk oprettet hos One.com | 🔲 |
-| Build grøn uden console-fejl | 🔲 |
+| Onboarding obligatoriske felter (7b.1) | ✅ |
+| Demo-slider på WELCOME (7b.2) | ✅ |
+| Push-notifikation ved godkendelse (12.1) | ✅ |
+| hej@eatsafe.dk oprettet hos One.com | ✅ |
+| Build grøn uden console-fejl | ✅ (midlertidig RLS workaround) |
+
+---
+
+## Kendte issues
+
+| Issue | Status | Note |
+|-------|--------|------|
+| auth.uid() = NULL efter JWT key rotation til ECC P-256 | ⏳ Support ticket åben | Midlertidig workaround: temp_read + temp_write policies på alle tabeller. Supabase bug: GitHub #42244, Discussion #45812 |
+| sw.js 404 | ✅ | Pushet til public/ |
+| weekly-digest pg_cron | 🔲 | SQL cron-job skal køres i SQL Editor |
+| Admin user ID opdateret | ✅ | Ny auth UID: 6a759160-9bde-43bf-8619-e19e454323a5 |
 
 ---
 
