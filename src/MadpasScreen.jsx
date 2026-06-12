@@ -28,6 +28,24 @@ export default function MadpasScreen({
     if (!shareUrl) return;
     navigator.clipboard?.writeText(shareUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   };
+  const handlePrint = () => {
+    const style = document.createElement("style");
+    style.id = "madpas-print-style";
+    style.textContent = `
+      @media print {
+        body > * { display: none !important; }
+        #madpas-print { display: block !important; }
+        @page { margin: 20mm; size: A4; }
+      }
+    `;
+    document.head.appendChild(style);
+    window.print();
+    setTimeout(() => {
+      const el = document.getElementById("madpas-print-style");
+      if (el) el.remove();
+    }, 1000);
+  };
+
   return (
     <>
         {screen === SCREENS.MADPAS && (
@@ -371,6 +389,19 @@ export default function MadpasScreen({
                           </div>
                         </div>
 
+                        {/* PDF-eksport */}
+                        <button
+                          onClick={handlePrint}
+                          style={{ width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"12px 16px", background:"var(--paper2)", border:"none", borderTop:"1px solid var(--border)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="12" y1="18" x2="12" y2="12"/>
+                            <line x1="9" y1="15" x2="15" y2="15"/>
+                          </svg>
+                          Gem som PDF / Print
+                        </button>
+
                         {/* Info */}
                         <div style={{ padding:"10px 16px 14px", fontSize:11, color:"var(--muted)", lineHeight:1.5, borderTop:"1px solid var(--border)" }}>
                           💡 Andre kan se dit madpas uden at have EatSafe installeret. Siden er offentlig tilgængelig via linket.
@@ -388,6 +419,84 @@ export default function MadpasScreen({
             </div>
           </div>
         )}  {/* ← lukker IIFE og screen === MADPAS */}
+      {/* ── PRINT-VENLIG DIV (skjult i app, vises ved print) ── */}
+      {(() => {
+        const allergenLabels = [
+          ...mpAllergens.map(id => {
+            const a = ALLERGENS.find(x => x.id === id);
+            return a ? `${a.emoji} ${ALLERGEN_T[id]?.[madpasLang]?.n || a.label}` : id;
+          }),
+          ...(mpCustom||[]).filter(c => !mpAllergens.includes(c)).map(c => `• ${c}`),
+        ];
+        const profileName = madpasProfileId === "self"
+          ? user?.name || "Mig"
+          : family?.find(m => m.id === madpasProfileId)?.name || "Familiemedlem";
+        const lang = MADPAS_LANGUAGES.find(l => l.code === madpasLang);
+        const dietLabels = (user?.diets||[]).map(d => DIETS.find(x=>x.id===d)?.label).filter(Boolean);
+
+        return (
+          <div id="madpas-print" style={{ display:"none", fontFamily:"Georgia, serif", color:"#111", padding:40, maxWidth:600, margin:"0 auto" }}>
+            {/* Header */}
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"3px solid #111", paddingBottom:16, marginBottom:24 }}>
+              <div>
+                <div style={{ fontSize:28, fontWeight:900, letterSpacing:"-1px" }}>EatSafe</div>
+                <div style={{ fontSize:13, color:"#555", marginTop:2 }}>Madpas · Meal Passport</div>
+              </div>
+              <div style={{ textAlign:"right" }}>
+                <div style={{ fontSize:16, fontWeight:700 }}>{profileName}</div>
+                <div style={{ fontSize:12, color:"#555" }}>{new Date().toLocaleDateString("da-DK")}</div>
+                {lang && <div style={{ fontSize:12, color:"#555" }}>{lang.flag} {lang.name}</div>}
+              </div>
+            </div>
+
+            {/* Intro */}
+            {MADPAS_INTRO?.[madpasLang] && (
+              <div style={{ fontSize:14, lineHeight:1.7, marginBottom:24, padding:"14px 18px", border:"1px solid #ddd", borderRadius:8, color:"#333" }}>
+                {MADPAS_INTRO[madpasLang]}
+              </div>
+            )}
+
+            {/* Allergener */}
+            {allergenLabels.length > 0 && (
+              <div style={{ marginBottom:24 }}>
+                <div style={{ fontSize:13, fontWeight:700, textTransform:"uppercase", letterSpacing:"1px", color:"#555", marginBottom:12 }}>
+                  Allergener / Allergens
+                </div>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                  {allergenLabels.map((label, i) => (
+                    <div key={i} style={{ padding:"8px 16px", border:"2px solid #111", borderRadius:100, fontSize:15, fontWeight:700 }}>
+                      {label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Diæter */}
+            {dietLabels.length > 0 && (
+              <div style={{ marginBottom:24 }}>
+                <div style={{ fontSize:13, fontWeight:700, textTransform:"uppercase", letterSpacing:"1px", color:"#555", marginBottom:12 }}>
+                  Diæt / Diet
+                </div>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                  {dietLabels.map((label, i) => (
+                    <div key={i} style={{ padding:"6px 14px", border:"1px solid #111", borderRadius:100, fontSize:14 }}>
+                      {label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Footer */}
+            <div style={{ marginTop:40, paddingTop:16, borderTop:"1px solid #ddd", display:"flex", justifyContent:"space-between", fontSize:11, color:"#888" }}>
+              <span>Genereret via EatSafe · eatsafe.dk</span>
+              <span>Dette dokument må ikke erstatte lægelig rådgivning</span>
+            </div>
+          </div>
+        );
+      })()}
+
     </>
   );
 }

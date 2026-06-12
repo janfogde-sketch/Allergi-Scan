@@ -117,6 +117,7 @@ export default function AdminScreen({
   updateUserRole, deleteUser,
   missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
   importLog, importLoading, runImport,
+  reparseLog, reparseLoading, runReparse,
   updateSubmissionAndApprove, rejectSubmission,
   updateTicketStatus, cleanOcrWithAI,
 }) {
@@ -1213,6 +1214,64 @@ ${openTicket.description}
                     </div>
                   </div>
                 )}
+
+                {/* ── Allergen Reparsing ── */}
+                <div style={{ marginTop:24, paddingTop:20, borderTop:"1px solid var(--border)" }}>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+                    <div>
+                      <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)" }}>🧠 Allergen reparsing</div>
+                      <div style={{ fontSize:11, color:"var(--muted)", marginTop:2, lineHeight:1.6 }}>
+                        Kører allergen-engine (keyword + Claude Haiku) på produkter med lav kvalitet.
+                        Kører automatisk hver nat kl. 03:00 UTC.
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => reparseLoading ? null : runReparse(true)}
+                      disabled={reparseLoading}
+                      style={{ background: reparseLoading ? "var(--border2)" : "var(--blue)", color: reparseLoading ? "var(--muted)" : "#fff",
+                        border:"none", borderRadius:8, padding:"8px 14px", fontSize:12, fontWeight:800,
+                        fontFamily:"var(--f)", cursor: reparseLoading ? "not-allowed" : "pointer",
+                        display:"flex", alignItems:"center", gap:6, flexShrink:0, marginLeft:12 }}>
+                      {reparseLoading
+                        ? <><div style={{ width:12, height:12, border:"2px solid rgba(255,255,255,.2)", borderTopColor:"#fff", borderRadius:"50%", animation:"spin .7s linear infinite" }} /> Reparserer…</>
+                        : "▶ Kør nu"}
+                    </button>
+                  </div>
+
+                  {reparseLoading && (
+                    <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:12 }}>
+                      <div style={{ width:16, height:16, border:"2px solid var(--border2)", borderTopColor:"var(--blue)", borderRadius:"50%", animation:"spin .7s linear infinite", flexShrink:0 }} />
+                      <div style={{ fontSize:13, color:"var(--muted)" }}>Reparserer allergen-flags med Claude Haiku…</div>
+                    </div>
+                  )}
+
+                  {reparseLog && !reparseLoading && (
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:10 }}>
+                      {[
+                        { label:"✅ Reparseret",    value: reparseLog.reparsed, color:"var(--green)" },
+                        { label:"⏭ Sprunget over", value: reparseLog.skipped,  color:"var(--muted)" },
+                        { label:"❌ Fejl",           value: reparseLog.errors,  color:"var(--amber)" },
+                      ].map(s => (
+                        <div key={s.label} style={{ padding:"10px 12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, textAlign:"center" }}>
+                          <div style={{ fontSize:20, fontWeight:900, color:s.color, marginBottom:2 }}>{s.value ?? 0}</div>
+                          <div style={{ fontSize:10, color:"var(--muted)" }}>{s.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {reparseLog?.error && (
+                    <div style={{ padding:"10px 14px", background:"rgba(239,68,68,.08)", border:"1px solid rgba(239,68,68,.2)", borderRadius:10, fontSize:12, color:"var(--red)" }}>
+                      Fejl: {reparseLog.error}
+                    </div>
+                  )}
+
+                  {!reparseLog && !reparseLoading && (
+                    <div style={{ textAlign:"center", padding:"16px 0", color:"var(--muted)", fontSize:12 }}>
+                      Reparserer 100 produkter ad gangen — gratis keyword-engine + Haiku på de svære
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

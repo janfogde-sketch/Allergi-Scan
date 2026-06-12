@@ -12,6 +12,7 @@ import ResultScreen from "./ResultScreen.jsx";
 import SearchScreen from "./SearchScreen.jsx";
 import ListScreen from "./ListScreen.jsx";
 import SuggestEditScreen from "./SuggestEditScreen.jsx";
+import RestaurantGuideScreen from "./RestaurantGuideScreen.jsx";
 
 // ── Performance: Styles som konstanter (undgår nye objekter per render) ──────
 const S = {
@@ -510,8 +511,39 @@ export default function ScannerScreen({
 
             {/* Hilsen + Profil-bar — kun til loggede */}
             {!!userId && <div style={{ padding:"16px 2px 12px" }}>
-              <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px", marginBottom:4 }}>
-                {greeting} {user.name?.split(" ")[0] || "der"}
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
+                <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px" }}>
+                  {greeting} {user.name?.split(" ")[0] || "der"}
+                </div>
+                {(() => {
+                  // Mini streak-badge
+                  if (!history?.length) return null;
+                  const days = new Set(history.map(h => {
+                    const d = new Date(h.scanned_at || h.timestamp);
+                    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+                  }));
+                  let streak = 0;
+                  const today = new Date();
+                  for (let i = 0; i < 365; i++) {
+                    const d = new Date(today);
+                    d.setDate(today.getDate() - i);
+                    if (days.has(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`)) streak++;
+                    else if (i > 0) break;
+                  }
+                  if (streak < 2) return null;
+                  return (
+                    <div style={{
+                      display:"flex", alignItems:"center", gap:4,
+                      background:"rgba(249,115,22,.12)",
+                      border:"1px solid rgba(249,115,22,.3)",
+                      borderRadius:20, padding:"4px 10px",
+                      fontSize:12, fontWeight:800, color:"#f97316",
+                      flexShrink:0,
+                    }}>
+                      🔥 {streak}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Vælg alle / fravælg alle */}
@@ -1012,6 +1044,13 @@ export default function ScannerScreen({
             setScreen={setScreen}
           />
         )}
+
+        <RestaurantGuideScreen
+          screen={screen}
+          setScreen={setScreen}
+          allergens={allergens}
+          customAllerg={customAllerg}
+        />
 
     </>
   );

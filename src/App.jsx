@@ -219,6 +219,7 @@ export default function EatSafe() {
     loadSubmissions, deleteOwnAccount, loadAdminStats, loadTickets,
     loadAdminUsers, updateUserRole, deleteUser,
     updateSubmissionAndApprove, rejectSubmission, updateTicketStatus, cleanOcrWithAI,
+    reparseLog, reparseLoading, runReparse,
   } = useAdmin(accessToken, userId, clearAuth);
 
   // ── Manglende EAN'er ──────────────────────────────────────────────────────
@@ -1224,6 +1225,7 @@ const lookupProduct = useCallback(async (ean) => {
             missingEans={missingEans} missingEansLoading={missingEansLoading}
             loadMissingEans={loadMissingEans} deleteMissingEan={deleteMissingEan}
             importLog={importLog} importLoading={importLoading} runImport={runImport}
+            reparseLog={reparseLog} reparseLoading={reparseLoading} runReparse={runReparse}
           />
           </ErrorBoundary>
           </Suspense>

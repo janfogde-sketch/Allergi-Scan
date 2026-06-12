@@ -35,6 +35,58 @@ export default function ResultScreen({
 }) {
   if (!scanResult) return null;
 
+  // ── Småbørn-advarsler (under 3 år) ──────────────────────────────────────────
+  const currentYear = new Date().getFullYear();
+
+  const INFANT_WARNINGS = [
+    {
+      id: "honey",
+      label: "Honning",
+      keywords: ["honning", "honey", "miel", "mel"],
+      reason: "Honning frarådes til børn under 1 år pga. risiko for botulisme. Vær forsigtig under 3 år.",
+    },
+    {
+      id: "salt",
+      label: "Højt saltindhold",
+      check: (n) => n?.salt != null && parseFloat(n.salt) > 1.5,
+      reason: "Produktet indeholder over 1,5g salt per 100g. Høj saltindhold er ikke anbefalet til småbørn.",
+    },
+    {
+      id: "additives",
+      label: "E-numre der frarådes til småbørn",
+      eNumbers: ["E102","E104","E110","E122","E123","E124","E129","E131","E132","E133","E142","E151","E154","E155","E211","E621"],
+      reason: "Produktet indeholder farvestoffer eller tilsætningsstoffer der frarådes til børn under 3 år.",
+    },
+  ];
+
+  const getInfantWarnings = (product) => {
+    const warnings = [];
+    const ingredients = (product.ingredients_text || product.ingredients || "").toLowerCase();
+    const nutrition = product.nutrition;
+    const eNums = product.productENumbers || [];
+
+    for (const w of INFANT_WARNINGS) {
+      if (w.keywords && w.keywords.some(k => ingredients.includes(k))) {
+        warnings.push(w);
+      } else if (w.check && w.check(nutrition)) {
+        warnings.push(w);
+      } else if (w.eNumbers && w.eNumbers.some(e => eNums.includes(e))) {
+        warnings.push(w);
+      }
+    }
+    return warnings;
+  };
+
+  // Find aktive profiler der er børn under 3
+  const infantProfiles = [
+    ...(family || []).filter(m =>
+      activeProfiles.includes(m.id) &&
+      m.birth_year &&
+      (currentYear - m.birth_year) < 3
+    )
+  ];
+  const infantWarnings = infantProfiles.length > 0 ? getInfantWarnings(scanResult) : [];
+
   // Tryk på ingrediens → søg i knowledge_base → åbn leksikon
   const handleIngredientTap = async (ingredientText) => {
     if (!ingredientText?.trim()) return;
@@ -197,6 +249,23 @@ export default function ResultScreen({
                 );
               })}
             </div>
+
+            {/* ── Småbørn-advarsler ── */}
+            {infantWarnings.length > 0 && (
+              <div style={{ padding:"10px 12px", marginBottom:6, background:"#fff7ed", border:"1px solid #fed7aa", borderRadius:10 }}>
+                <div style={{ fontSize:11, fontWeight:800, color:"#c2410c", marginBottom:6, display:"flex", alignItems:"center", gap:6 }}>
+                  <span>🍼</span>
+                  Advarsel for småbørn — {infantProfiles.map(m => m.name?.split(" ")[0]).join(", ")} (under 3 år)
+                </div>
+                <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                  {infantWarnings.map(w => (
+                    <div key={w.id} style={{ fontSize:11, color:"#7c2d12", lineHeight:1.5 }}>
+                      <strong>{w.label}:</strong> {w.reason}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* E-nummer advarsler */}
             {scanResult.productENumbers?.length > 0 && activeENumbers?.length > 0 && (() => {

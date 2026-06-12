@@ -7,6 +7,119 @@ import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
 import { usePush } from "./usePush.js";
 
+// ── Gamification helpers ──────────────────────────────────────────────────────
+function computeStreak(history) {
+  if (!history?.length) return 0;
+  const days = new Set(
+    history.map(h => {
+      const d = new Date(h.scanned_at || h.timestamp);
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    })
+  );
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    if (days.has(key)) streak++;
+    else if (i > 0) break; // tillad at i dag mangler (streak brækker kun ved gap > 1)
+  }
+  return streak;
+}
+
+function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS }) {
+  const streak        = computeStreak(history);
+  const total         = history.length;
+  const dangers       = history.filter(h => (h.result || h.status) === "danger").length;
+  const safes         = history.filter(h => (h.result || h.status) === "safe").length;
+  const familyActive  = activeProfiles.filter(id => id !== "me" && id !== "user").length;
+
+  const metrics = [
+    { icon:"🔥", value: streak,       label:"Dages streak",       color:"#f97316", bg:"rgba(249,115,22,.12)", border:"rgba(249,115,22,.25)" },
+    { icon:"🔍", value: total,        label:"Scanninger i alt",   color:"var(--green)", bg:"var(--green-lt)", border:"var(--green-mid)" },
+    { icon:"⚠️",  value: dangers,     label:"Advarsler fanget",   color:"var(--red)", bg:"var(--red-lt)", border:"var(--red-md)" },
+    { icon:"✅", value: safes,        label:"Sikre opdagelser",   color:"var(--green)", bg:"var(--green-lt)", border:"var(--green-mid)" },
+    { icon:"👨‍👩‍👧", value: familyActive, label:"Familie aktive",    color:"#818cf8", bg:"rgba(129,140,248,.12)", border:"rgba(129,140,248,.25)" },
+  ];
+
+  return (
+    <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:10 }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+        <div>
+          <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Din aktivitet</div>
+          <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>Streak · Scanninger · Opdagelser</div>
+        </div>
+        {streak >= 3 && (
+          <div style={{ fontSize:11, fontWeight:800, color:"#f97316", background:"rgba(249,115,22,.12)", border:"1px solid rgba(249,115,22,.25)", borderRadius:20, padding:"3px 10px" }}>
+            🔥 {streak} dage!
+          </div>
+        )}
+      </div>
+
+      {/* Streak progress-bar */}
+      {streak > 0 && (
+        <div style={{ marginBottom:12 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, color:"var(--muted)", marginBottom:4, fontWeight:600 }}>
+            <span>Ugentlig streak</span>
+            <span>{Math.min(streak, 7)}/7 dage</span>
+          </div>
+          <div style={{ display:"flex", gap:4 }}>
+            {Array.from({ length: 7 }).map((_, i) => {
+              const active = i < Math.min(streak, 7);
+              return (
+                <div key={i} style={{
+                  flex:1, height:6, borderRadius:3,
+                  background: active ? "#f97316" : "var(--border2)",
+                  transition:"background .3s",
+                  boxShadow: active ? "0 0 4px rgba(249,115,22,.5)" : "none",
+                }} />
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Metrics grid */}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+        {metrics.map(m => (
+          <div key={m.label} style={{
+            background: m.bg,
+            border:`1px solid ${m.border}`,
+            borderRadius:10,
+            padding:"10px 12px",
+            display:"flex",
+            alignItems:"center",
+            gap:10,
+          }}>
+            <div style={{ fontSize:22, lineHeight:1, flexShrink:0 }}>{m.icon}</div>
+            <div>
+              <div style={{ fontSize:20, fontWeight:900, color: m.color, lineHeight:1 }}>{m.value}</div>
+              <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, marginTop:2, lineHeight:1.2 }}>{m.label}</div>
+            </div>
+          </div>
+        ))}
+        {/* Fuld bredde: Se historik */}
+        <div onClick={() => setScreen(SCREENS.HISTORY)}
+          style={{
+            gridColumn:"1 / -1",
+            background:"rgba(255,255,255,.04)",
+            border:"1px solid var(--border2)",
+            borderRadius:10,
+            padding:"10px 14px",
+            display:"flex",
+            alignItems:"center",
+            justifyContent:"space-between",
+            cursor:"pointer",
+          }}>
+          <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>Se fuld scanningshistorik</div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProfileScreen({
   screen, setScreen,
   user, setUser,
@@ -44,6 +157,28 @@ export default function ProfileScreen({
   setScanResult,
   ticketsLoading,
 }) {
+  // ── Invite state ────────────────────────────────────────────────────────────
+  const [inviteLink, setInviteLink] = useState(null);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+  const [inviteCopied, setInviteCopied] = useState(false);
+
+  // ── Push-notifikationer (hooks skal være på komponent-niveau) ────────────────
+  const { supported: pushSupported, permission: pushPermission, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePush();
+  const [pushLoading, setPushLoading] = useState(false);
+  const [pushStatus, setPushStatus] = useState(pushPermission);
+
+  const handlePushToggle = async () => {
+    setPushLoading(true);
+    if (pushStatus === "granted") {
+      await pushUnsubscribe(accessToken);
+      setPushStatus("default");
+    } else {
+      const result = await pushSubscribe(accessToken);
+      setPushStatus(result.ok ? "granted" : "denied");
+    }
+    setPushLoading(false);
+  };
   const FamilyChips = () => {
     const allIds = ["me", ...family.map(m => m.id)];
     const isAll = allIds.every(id => activeProfiles.includes(id));
@@ -142,6 +277,15 @@ export default function ProfileScreen({
               </div>
             </div>
 
+            {/* Gamification */}
+            <GamificationCard
+              history={history}
+              family={family}
+              activeProfiles={activeProfiles}
+              setScreen={setScreen}
+              SCREENS={SCREENS}
+            />
+
             {/* Mine præferencer */}
             <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:10 }}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
@@ -195,6 +339,7 @@ export default function ProfileScreen({
                 { icon:"👨‍👩‍👧", label:"Familie", sub:`${family.length} ${family.length===1?"profil":"profiler"} oprettet`, fn:() => setScreen(SCREENS.FAMILY) },
                 { icon:"📋", label:"Scanningshistorik", sub:`${history.length} produkter scannet`, fn:() => setScreen(SCREENS.HISTORY) },
                 { icon:"🌍", label:"Madpas", sub:"Vis allergier til restaurantpersonale", fn:() => setScreen(SCREENS.MADPAS) },
+                { icon:"🍽️", label:"Restaurantguide", sub:"Spis trygt ude — tips & rettigheder", fn:() => setScreen(SCREENS.RESTAURANTGUIDE) },
                 ...(user.role==="admin" ? [{ icon:"🛡️", label:"Admin panel", sub:"Godkend og administrér produkter", fn:() => { loadSubmissions(); loadAdminStats(); setScreen(SCREENS.ADMIN); } }] : []),
               ].map((item, i, arr) => (
                 <div key={item.label} onClick={item.fn}
@@ -227,26 +372,7 @@ export default function ProfileScreen({
             </div>
 
             {/* ── Push-notifikationer ── */}
-            {(() => {
-              const { supported, permission, subscribe, unsubscribe } = usePush();
-              const [pushLoading, setPushLoading] = React.useState(false);
-              const [pushStatus, setPushStatus] = React.useState(permission);
-
-              const handleToggle = async () => {
-                setPushLoading(true);
-                if (pushStatus === "granted") {
-                  await unsubscribe(accessToken);
-                  setPushStatus("default");
-                } else {
-                  const result = await subscribe(accessToken);
-                  setPushStatus(result.ok ? "granted" : "denied");
-                }
-                setPushLoading(false);
-              };
-
-              if (!supported) return null;
-
-              return (
+            {pushSupported && (
                 <div className="card" style={{ marginBottom:12 }}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                     <div>
@@ -260,7 +386,7 @@ export default function ProfileScreen({
                       </div>
                     </div>
                     {pushStatus !== "denied" && (
-                      <button onClick={handleToggle} disabled={pushLoading}
+                      <button onClick={handlePushToggle} disabled={pushLoading}
                         style={{
                           width:48, height:28, borderRadius:14, border:"none", cursor:"pointer",
                           background: pushStatus === "granted" ? "var(--green)" : "var(--border2)",
@@ -282,8 +408,7 @@ export default function ProfileScreen({
                     </div>
                   )}
                 </div>
-              );
-            })()}
+            )}
 
             {/* ── Footer: kontakt + privatlivspolitik ── */}
             <div style={{ marginTop:24, paddingBottom:8, textAlign:"center" }}>

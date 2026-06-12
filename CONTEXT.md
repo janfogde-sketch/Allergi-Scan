@@ -1,6 +1,6 @@
 # EatSafe — CONTEXT.md
 
-> **Sidst opdateret:** 11. juni 2026 (session 3)
+> **Sidst opdateret:** 12. juni 2026 (session 4)
 > **Opdateres ved større ændringer. Deles med AI-assistenter som sessionskontekst.**
 
 ---
@@ -32,7 +32,7 @@
 | Edge Functions | Deno/TypeScript — JWT verification DISABLED (ES256-inkompatibilitet) |
 | AI | Claude Haiku 4.5 (allergen-fallback + OCR), ANTHROPIC_API_KEY som Supabase secret |
 | Ekstern data | Open Food Facts API v2, TheMealDB |
-| Lokal dev | Windows, `C:\Users\janfo`, `set`-syntaks for env vars |
+| Lokal dev | Windows, `set`-syntaks for env vars (ikke `export`) |
 
 ---
 
@@ -54,31 +54,29 @@ src/
 ├── useScanner.js             # Kamera, auto-zoom, tap-to-focus, lommelygte,
 │                             #   scanFromGallery, scanPhotoForEan (foto-fallback)
 ├── useAlternatives.js        # Sikre alternativer ved farlige produkter
-│                             #   Kategori-match → overkategori fallback → filtrér allergen-profil
-├── useMadpas.js              # Madpas speak-funktion + madpasSpeaking/Big/WaiterView state
+├── useMadpas.js              # Madpas speak-funktion + state
 ├── useSearch.js              # Søgning via Edge Function med 350ms debounce
 ├── useAdmin.js               # Admin CRUD (brugere, submissions, tickets)
 ├── useRecipes.js             # Opskrifter CRUD
 ├── useShoppingList.js        # Indkøbsliste + Supabase Realtime WebSocket sync
+├── usePush.js                # Web Push subscribe/unsubscribe
 │
-├── — Screens (routing via App.jsx) —
+├── — Screens —
 ├── ScannerScreen.jsx         # Router + HOME screen
-├── ResultScreen.jsx          # RESULT — scan-resultat, alternativer, allergen-match,
-│                             #   ingrediens-tap→leksikon, E-nummer chips, næring
+├── ResultScreen.jsx          # RESULT — scan-resultat, alternativer, allergen-match
 ├── NotFoundScreen.jsx        # NOTFOUND — 5-trins produkt-indsend flow
 ├── SubmittedScreen.jsx       # SUBMITTED — tak-skærm efter indsendelse
-├── SearchScreen.jsx          # SEARCH — søgning + profil/manuel allergen-filter
+├── SearchScreen.jsx          # SEARCH — søgning + allergen-filter
 ├── ListScreen.jsx            # LIST — indkøbsliste + favoritter
-├── SuggestEditScreen.jsx     # SUGGEST_EDIT — foreslå rettelse til produkt
-├── ProfileScreen.jsx         # PROFILE, EDITPROFILE, FAMILY, HISTORY, FAVORITES, ADMIN
-│                             #   Footer: hej@eatsafe.dk + privatlivspolitik link
+├── SuggestEditScreen.jsx     # SUGGEST_EDIT — foreslå rettelse
+├── ProfileScreen.jsx         # PROFILE, EDITPROFILE, FAMILY, HISTORY, FAVORITES
+│                             #   Inkl. GamificationCard (streak, scanninger, advarsler)
 ├── OnboardingScreen.jsx      # WELCOME, LOGIN, ONBOARD
 ├── KnowledgeScreen.jsx       # KNOWLEDGE — Leksikon
-├── RecipesScreen.jsx         # RECIPES — opskrifter (gradient header)
-├── MadpasScreen.jsx          # MADPAS (17 sprog) — QR-kode + del-link
-├── AdminScreen.jsx           # Admin-panel (via ProfileScreen)
-│                             #   Tabs: Dashboard, Brugere, Indsendelser, Tickets,
-│                             #         Debug, Manglende, Import
+├── RecipesScreen.jsx         # RECIPES — opskrifter
+├── MadpasScreen.jsx          # MADPAS (17 sprog) — QR-kode + del-link + PDF-eksport
+├── AdminScreen.jsx           # Admin-panel
+├── RestaurantGuideScreen.jsx # RESTAURANTGUIDE — tips til restaurantbesøg (SCR-20)
 │
 ├── — Delte komponenter —
 ├── MemberForm.jsx            # MemberForm, CategorySelect
@@ -86,8 +84,9 @@ src/
 ├── FeedbackModal.jsx         # FeedbackModal med debug trace
 │
 ├── — Statiske sider (public/) —
-├── privacy.html              # Privatlivspolitik på eatsafe.dk/privacy
-├── invite.html               # Familie-invitation på eatsafe.dk/invite/[token]
+├── privacy.html              # Privatlivspolitik
+├── invite.html               # Familie-invitation
+├── sw.js                     # Service worker (Web Push)
 │
 └── styles.css                # Globale CSS-klasser
 ```
@@ -95,8 +94,6 @@ src/
 ---
 
 ## 4. ⚡ ARKITEKTUR-REGEL — NYE SKÆRME BYGGES ALTID SOM EGNE FILER
-
-**Alle nye skærme og større UI-sektioner skal fra starten bygges som selvstændige komponenter i egne filer.**
 
 1. **Én screen = én fil.** Ny screen oprettes som `XxxScreen.jsx` fra dag ét
 2. **Props frem for masse-state.** Lokalt state lever i screen-komponenten selv
@@ -118,11 +115,12 @@ src/
 | SEARCH | SearchScreen | Søgning |
 | LIST | ListScreen | Indkøbsliste |
 | SUGGEST_EDIT | SuggestEditScreen | Foreslå rettelse |
-| PROFILE | ProfileScreen | Profil |
+| PROFILE | ProfileScreen | Profil + gamification |
 | FAMILY | ProfileScreen | Familie + invitationslink |
 | KNOWLEDGE | KnowledgeScreen | Leksikon |
 | RECIPES | RecipesScreen | Opskrifter |
-| MADPAS | MadpasScreen | Madpas + QR |
+| MADPAS | MadpasScreen | Madpas + QR + PDF |
+| RESTAURANTGUIDE | RestaurantGuideScreen | Restaurantguide (SCR-20) |
 
 Bundmenu: `Opskrifter → Indkøbsliste → Hjem → Viden → Profil`
 
@@ -141,9 +139,10 @@ Bundmenu: `Opskrifter → Indkøbsliste → Hjem → Viden → Profil`
 | `product_submissions` | id, ean, name, status, submitted_by | |
 | `shopping_lists` | id, owner_id, name, family_id | Realtime aktiveret |
 | `shopping_list_items` | id, list_id, name, checked, added_by, added_at | Realtime aktiveret |
-| `knowledge_base` | id, category, slug, title, summary, description, allergen_ids, risk_level | ~700 entries |
+| `knowledge_base` | id, category, slug, title, summary, description, allergen_ids, risk_level | ~800+ entries |
 | `missing_ean_log` | ean, count, first_seen, last_seen | Auto-logget + auto-importeret |
 | `recipes` | id, title, instructions, image_url | ~627 |
+| `push_tokens` | user_id, token, endpoint | Web Push |
 
 ---
 
@@ -157,8 +156,8 @@ Bundmenu: `Opskrifter → Indkøbsliste → Hjem → Viden → Profil`
 | `search` | Fuldtekst-søgning med scoring |
 | `send-email` | Resend email |
 | `auto-import-off` | Importerer fra OFF dagligt kl. 02:00 UTC via pg_cron |
-| `send-push` | **NY** — Web Push notifikation via VAPID (ES256) |
-| `weekly-digest` | **NY** — Ugentlig push om nye opskrifter (kræver pg_cron setup) |
+| `send-push` | Web Push notifikation via VAPID (ES256) |
+| `weekly-digest` | Ugentlig push (kræver pg_cron setup i SQL Editor) |
 
 ---
 
@@ -169,7 +168,6 @@ Bundmenu: `Opskrifter → Indkøbsliste → Hjem → Viden → Profil`
 - **Manuel kørsel:** Admin → Import-tab → "Kør import nu"
 - **Lokalt script:** `import_missing_eans.py` — kør med `--limit N` eller `--test-eans "EAN1,EAN2"`
 - **Flow:** missing_ean_log → OFF API → products tabel → slet fra log
-- **Pris:** $0 (ingen AI, ren OFF-import)
 
 ---
 
@@ -177,19 +175,42 @@ Bundmenu: `Opskrifter → Indkøbsliste → Hjem → Viden → Profil`
 
 - **Tabel:** `family_invites` (token, 24t expiry, to-vejs)
 - **Flow:** Profil → Familie → "Opret invitationslink" → send link → modtager åbner `eatsafe.dk/invite/[token]` → opretter konto → tilknyttes via `accept_family_invite()` RPC
-- **Realtime indkøbsliste:** WebSocket på `shopping_list_items` — alle familiemedlemmer ser ændringer live
+- **Realtime indkøbsliste:** WebSocket på `shopping_list_items`
 
 ---
 
-## 10. Madpas QR-kode
+## 10. Madpas
 
-- **QR:** Allergen-tekst kodet direkte ind via `api.qrserver.com` — virker offline og i udlandet
-- **Link:** `eatsafe.dk/madpas/[userId]` — offentlig webside som backup
-- **Offline fallback:** Tekst-boks med allergennavne vises hvis QR API er utilgængeligt
+- **QR:** `api.qrserver.com` — allergen-tekst kodet direkte ind, virker offline
+- **Link:** `eatsafe.dk/madpas/[userId]` — offentlig webside
+- **PDF-eksport:** `window.print()` med dedikeret print-CSS
+- **17 sprog** med TTS (Web Speech API)
 
 ---
 
-## 11. CSS-konventioner
+## 11. Gamification (ProfileScreen)
+
+`GamificationCard` i PROFILE-skærmen beregner fra eksisterende props:
+- 🔥 Streak (dage i træk med scanning)
+- 🔍 Scanninger i alt
+- ⚠️ Advarsler fanget
+- ✅ Sikre opdagelser
+- 👨‍👩‍👧 Aktive familiemedlemmer
+
+Streak-badge vises også i hilsenen på HOME-skærmen (≥2 dage).
+
+---
+
+## 12. Restaurantguide (RestaurantGuideScreen)
+
+- **SCR-20** — `SCREENS.RESTAURANTGUIDE`
+- **Adgang:** ProfileScreen menu → "🍽️ Restaurantguide"
+- **Indhold:** 6 accordion-sektioner (forberedelse, ankomst, bestilling, udlandet, kantiner, rettigheder) + hurtige sætninger DA/EN + EU-forordning 1169/2011
+- **Viser** brugerens egne allergener øverst som kontekst
+
+---
+
+## 13. CSS-konventioner
 
 - CSS-variabler i `theme.jsx`, globale klasser i `styles.css`
 - **Ingen hardkodede farver i screen-komponenter** — kun CSS-variabler
@@ -199,7 +220,7 @@ Bundmenu: `Opskrifter → Indkøbsliste → Hjem → Viden → Profil`
 
 ---
 
-## 12. Konventioner
+## 14. Konventioner
 
 - **`// @ts-nocheck`** øverst i alle `.jsx`-filer
 - **React Hooks** — aldrig i IIFE, betinget kode eller loops
@@ -208,32 +229,30 @@ Bundmenu: `Opskrifter → Indkøbsliste → Hjem → Viden → Profil`
 
 ---
 
-## 13. Kendte åbne punkter
+## 15. Kendte åbne punkter
 
 | Punkt | Note |
 |-------|------|
-| auth.uid() = NULL (ECC P-256 bug) | Support ticket åben hos Supabase. Midlertidig workaround: temp_read + temp_write policies på alle tabeller (user_allergens, family_invites, family_members, users, scan_history, shopping_lists, shopping_list_items, submissions, feedback_tickets, push_tokens). Kendt bug: GitHub #42244, Discussion #45812 |
-| sw.js deploy | Service worker skal pushes til `public/` mappen |
+| auth.uid() = NULL (ECC P-256 bug) | Support ticket åben hos Supabase. Midlertidig workaround: temp_read + temp_write policies på alle tabeller. Kendt bug: GitHub #42244, Discussion #45812 |
 | weekly-digest pg_cron | SQL cron-job skal køres i SQL Editor |
-| Leksikon 1000+ entries | Planlagt — separat session |
 
 ---
 
-## 14. Push-notifikationer (infrastruktur)
+## 16. Push-notifikationer
 
 | Komponent | Status |
 |-----------|--------|
 | `push_tokens` tabel + RLS | ✅ |
 | `send-push` Edge Function (VAPID) | ✅ |
 | `weekly-digest` Edge Function | ✅ (mangler pg_cron) |
-| `sw.js` service worker | Klar (mangler push til public/) |
+| `sw.js` service worker | ✅ (`public/`) |
 | `usePush.js` hook | ✅ |
 | VAPID keys i Supabase secrets | ✅ |
 | Push toggle i ProfileScreen | ✅ |
 | Push-trin i onboarding (trin 5) | ✅ |
 
 **Push-triggers:**
-1. Admin godkender indsendelse → push til indsender (useAdmin.js)
-2. NOTFOUND-produkt tilgængeligt → push til scannere (useAdmin.js)
-3. Familie accepterer invitation → push til inviter (App.jsx)
-4. Ugentlig digest → push til alle med tokens (weekly-digest)
+1. Admin godkender indsendelse → push til indsender
+2. NOTFOUND-produkt tilgængeligt → push til scannere
+3. Familie accepterer invitation → push til inviter
+4. Ugentlig digest → push til alle med tokens

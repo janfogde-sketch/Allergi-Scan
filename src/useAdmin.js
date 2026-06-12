@@ -30,6 +30,8 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const [ocrImagePreview, setOcrImagePreview] = useState(null);
   const [missingEans, setMissingEans] = useState([]);
   const [missingEansLoading, setMissingEansLoading] = useState(false);
+  const [reparseLoading, setReparseLoading] = useState(false);
+  const [reparseLog, setReparseLog] = useState(null);
 
   // Functions
   const loadSubmissions = async (filter) => {
@@ -152,6 +154,32 @@ export function useAdmin(accessToken, userId, clearAuth) {
         body: JSON.stringify({ status: "approved", ai_parsed_data: edited }),
       });
 
+      // Repars allergen-flags på det godkendte produkt
+      if (submission.ean || edited?.ean) {
+        const ean = edited?.ean || submission.ean;
+        const ingredientsText = edited?.ingredients_text || submission.ocr_raw_text || "";
+        if (ingredientsText) {
+          try {
+            const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, {
+              method: "POST",
+              headers: makeHeaders(accessToken),
+              body: JSON.stringify({ text: ingredientsText, force_ai: true }),
+            });
+            if (allergenData?.allergen_flags) {
+              await apiCall(`${SUPABASE_URL}/rest/v1/products?ean=eq.${ean}`, {
+                method: "PATCH",
+                headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+                body: JSON.stringify({
+                  allergen_flags: allergenData.allergen_flags,
+                  allergen_quality: "high",
+                  reparsed_at: new Date().toISOString(),
+                }),
+              });
+            }
+          } catch (e) { console.warn("Reparse fejl efter godkendelse:", e); }
+        }
+      }
+
       // Send push til indsender
       if (submission.submitted_by) {
         const produktnavn = edited?.name || submission.name || "Dit produkt";
@@ -176,7 +204,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
             const uniqueUserIds = [...new Set(
               notFoundScanners
                 .map(s => s.user_id)
-                .filter(id => id && id !== submission.submitted_by) // undgå dobbelt push til indsender
+                .filter(id => id && id !== submission.submitted_by)
             )];
             const produktnavn = edited?.name || submission.name || "Et produkt";
             for (const uid of uniqueUserIds) {
@@ -189,13 +217,11 @@ export function useAdmin(accessToken, userId, clearAuth) {
               );
             }
           }
-        } catch (e) {
-          console.warn("NOTFOUND push fejl:", e);
-        }
+        } catch (e) { console.warn("NOTFOUND push fejl:", e); }
       }
     } catch (e) {
       console.error("updateSubmissionAndApprove:", e);
-      loadSubmissions(submissionFilter); // Genindlæs ved fejl
+      loadSubmissions(submissionFilter);
     }
   };
 
@@ -277,6 +303,25 @@ export function useAdmin(accessToken, userId, clearAuth) {
     } catch (e) { console.error("deleteMissingEan:", e); }
   };
 
+  const runReparse = async (manual = false) => {
+    if (reparseLoading) return;
+    setReparseLoading(true);
+    setReparseLog(null);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/auto-reparse`, {
+        method: "POST",
+        headers: { ...makeHeaders(accessToken), "Content-Type": "application/json" },
+        body: JSON.stringify({ manual, limit: manual ? 100 : 50 }),
+      });
+      const data = await res.json();
+      setReparseLog(data);
+    } catch (e) {
+      console.error("runReparse fejl:", e);
+      setReparseLog({ error: e.message });
+    }
+    setReparseLoading(false);
+  };
+
   return {
     // State
     submissions, setSubmissions,
@@ -315,5 +360,6 @@ export function useAdmin(accessToken, userId, clearAuth) {
     cleanOcrWithAI,
     missingEans, missingEansLoading,
     loadMissingEans, deleteMissingEan,
+    reparseLoading, reparseLog, runReparse,
   };
 }
