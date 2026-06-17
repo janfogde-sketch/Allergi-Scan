@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EatSafe — Admin Dashboard</title>
+<style>
+  :root {
+    --green: #4ADE80;
+    --green-lt: rgba(74,222,128,.1);
+    --green-mid: rgba(74,222,128,.25);
+    --red: #f87171;
+    --red-lt: rgba(248,113,113,.1);
+    --red-md: rgba(248,113,113,.25);
+    --amber: #fbbf24;
+    --amber-lt: rgba(251,191,36,.1);
+    --blue: #60a5fa;
+    --blue-lt: rgba(96,165,250,.1);
+    --bg: #0a0e0c;
+    --surface: #121714;
+    --surface2: #1a211c;
+    --border: rgba(255,255,255,.08);
+    --border2: rgba(255,255,255,.14);
+    --ink: #eef2ef;
+    --muted: #8a978f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── Login screen ── */
+  #login-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+  }
+  .login-box .logo {
+    font-size: 40px;
+    margin-bottom: 8px;
+  }
+  .login-box h1 {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .login-box p {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  .login-box input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--ink);
+    font-size: 14px;
+    margin-bottom: 12px;
+    outline: none;
+  }
+  .login-box input:focus { border-color: var(--green); }
+  .login-box button {
+    width: 100%;
+    background: var(--green);
+    color: #071510;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .login-box button:hover { opacity: .9; }
+  .login-error {
+    color: var(--red);
+    font-size: 12px;
+    margin-top: 10px;
+    min-height: 16px;
+  }
+
+  /* ── Dashboard layout ── */
+  #dashboard { display: none; padding: 24px; max-width: 1400px; margin: 0 auto; }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  header .title-group { display: flex; align-items: center; gap: 12px; }
+  header .title-group .emoji { font-size: 28px; }
+  header h1 { font-size: 20px; font-weight: 800; }
+  header .subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  header .actions { display: flex; gap: 10px; align-items: center; }
+  #last-updated { font-size: 11px; color: var(--muted); }
+  .btn {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--ink);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn:hover { border-color: var(--green); }
+  .btn.primary { background: var(--green); color: #071510; border: none; }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin: 28px 0 12px;
+  }
+  .section-title:first-of-type { margin-top: 0; }
+
+  /* ── Metric cards grid ── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .metric-card .icon { font-size: 22px; margin-bottom: 10px; }
+  .metric-card .value { font-size: 28px; font-weight: 900; line-height: 1; }
+  .metric-card .label { font-size: 12px; color: var(--muted); margin-top: 6px; font-weight: 600; }
+  .metric-card .delta { font-size: 11px; margin-top: 8px; font-weight: 700; }
+  .metric-card .delta.up { color: var(--green); }
+  .metric-card .delta.down { color: var(--red); }
+  .metric-card.loading .value { color: var(--muted); }
+
+  /* ── Two-column layout for charts/tables ── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .panel h3 {
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .panel h3 .count-badge {
+    background: var(--green-lt);
+    color: var(--green);
+    border: 1px solid var(--green-mid);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  /* Category bars */
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 12px;
+  }
+  .bar-row .bar-label { width: 110px; flex-shrink: 0; color: var(--muted); font-weight: 600; }
+  .bar-row .bar-track {
+    flex: 1;
+    height: 10px;
+    background: var(--surface2);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .bar-row .bar-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 5px;
+    transition: width .6s ease;
+  }
+  .bar-row .bar-value { width: 40px; text-align: right; font-weight: 800; flex-shrink: 0; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th {
+    text-align: left;
+    color: var(--muted);
+    font-weight: 700;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: .3px;
+  }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  .pill {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 800;
+  }
+  .pill.safe { background: var(--green-lt); color: var(--green); border: 1px solid var(--green-mid); }
+  .pill.danger { background: var(--red-lt); color: var(--red); border: 1px solid var(--red-md); }
+  .pill.notfound { background: var(--amber-lt); color: var(--amber); border: 1px solid rgba(251,191,36,.25); }
+  .pill.pending { background: var(--blue-lt); color: var(--blue); border: 1px solid rgba(96,165,250,.25); }
+
+  .empty-state {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 30px 10px;
+  }
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface2) 25%, var(--border2) 50%, var(--surface2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px;
+    height: 14px;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  .error-banner {
+    background: var(--red-lt);
+    border: 1px solid var(--red-md);
+    color: var(--red);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 12px;
+    margin-bottom: 20px;
+    display: none;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 40px;
+    padding-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ LOGIN SCREEN ═══════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">🔍</div>
+    <h1>EatSafe Admin</h1>
+    <p>Indtast adgangskode for at se dashboardet</p>
+    <input type="password" id="password-input" placeholder="Adgangskode" autocomplete="off">
+    <button onclick="tryLogin()">Log ind</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ DASHBOARD ═══════════════════════════════════════ -->
+<div id="dashboard">
+  <header>
+    <div class="title-group">
+      <div class="emoji">🔍</div>
+      <div>
+        <h1>EatSafe Admin Dashboard</h1>
+        <div class="subtitle">Live data fra Supabase</div>
+      </div>
+    </div>
+    <div class="actions">
+      <span id="last-updated"></span>
+      <button class="btn" onclick="loadAll()">↻ Opdater</button>
+      <button class="btn" onclick="logout()">Log ud</button>
+    </div>
+  </header>
+
+  <div class="error-banner" id="error-banner"></div>
+
+  <!-- KPI cards -->
+  <div class="section-title">Overblik</div>
+  <div class="metrics-grid" id="kpi-grid">
+    <div class="metric-card loading"><div class="icon">👥</div><div class="value">—</div><div class="label">Brugere i alt</div></div>
+    <div class="metric-card loading"><div class="icon">🔍</div><div class="value">—</div><div class="label">Scanninger i alt</div></div>
+    <div class="metric-card loading"><div class="icon">📦</div><div class="value">—</div><div class="label">Produkter i database</div></div>
+    <div class="metric-card loading"><div class="icon">⚠️</div><div class="value">—</div><div class="label">Afventende indsendelser</div></div>
+    <div class="metric-card loading"><div class="icon">👨‍👩‍👧</div><div class="value">—</div><div class="label">Familiemedlemmer</div></div>
+    <div class="metric-card loading"><div class="icon">📚</div><div class="value">—</div><div class="label">Leksikon-entries</div></div>
+  </div>
+
+  <div class="section-title">Aktivitet</div>
+  <div class="grid-2">
+    <div class="panel">
+      <h3>Scan-resultater (seneste 200)</h3>
+      <div id="scan-breakdown"><div class="skeleton" style="width:100%;height:120px;"></div></div>
+    </div>
+    <div class="panel">
+      <h3>Leksikon — kategorier <span class="count-badge" id="kb-total-badge">—</span></h3>
+      <div id="kb-breakdown"><div class="skeleton" style="width:100%;height:120px;"></div></div>
+    </div>
+  </div>
+
+  <div class="section-title">Seneste indsendelser</div>
+  <div class="panel">
+    <h3>Produkt-indsendelser <span class="count-badge" id="submissions-badge">—</span></h3>
+    <div id="submissions-table"><div class="skeleton" style="width:100%;height:100px;"></div></div>
+  </div>
+
+  <div class="section-title">Seneste scanninger</div>
+  <div class="panel">
+    <h3>Scan-historik <span class="count-badge" id="history-badge">—</span></h3>
+    <div id="history-table"><div class="skeleton" style="width:100%;height:100px;"></div></div>
+  </div>
+
+  <footer>EatSafe Admin Dashboard · eatsafe.dk</footer>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIG — Supabase
+// ═══════════════════════════════════════════════════════════════
+const SUPABASE_URL = "https://jegrpcflyguadyxialkm.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplZ3JwY2ZseWd1YWR5eGlhbGttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNjY5NjQsImV4cCI6MjA5NDc0Mjk2NH0.QErfbw2xmsdYjTZCS1WUOUwQHv6G2PKQRldyj8rdGq8";
+
+// ⚠️ Skift denne adgangskode! Dette er KUN en client-side UI-lås,
+// ikke reel sikkerhed. Alle med linket og lidt teknisk indsigt kan
+// se HTML/JS-koden og omgå den. Den ægte sikkerhed kommer fra jeres
+// Supabase Row Level Security (RLS) policies, ikke fra denne adgangskode.
+const DASHBOARD_PASSWORD = "eatsafe2026";
+
+const headers = {
+  "apikey": SUPABASE_ANON_KEY,
+  "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+  "Content-Type": "application/json"
+};
+
+// ═══════════════════════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════════════════════
+function tryLogin() {
+  const input = document.getElementById("password-input").value;
+  const errorEl = document.getElementById("login-error");
+  if (input === DASHBOARD_PASSWORD) {
+    sessionStorage.setItem("eatsafe_admin_auth", "true");
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    loadAll();
+  } else {
+    errorEl.textContent = "Forkert adgangskode.";
+  }
+}
+document.getElementById("password-input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") tryLogin();
+});
+
+function logout() {
+  sessionStorage.removeItem("eatsafe_admin_auth");
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("login-screen").style.display = "flex";
+  document.getElementById("password-input").value = "";
+}
+
+// Auto-login if session already verified (survives page refresh, not new tab/browser)
+window.addEventListener("DOMContentLoaded", () => {
+  if (sessionStorage.getItem("eatsafe_admin_auth") === "true") {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    loadAll();
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// DATA FETCHING
+// ═══════════════════════════════════════════════════════════════
+function showError(msg) {
+  const banner = document.getElementById("error-banner");
+  banner.innerHTML = "⚠️ " + msg;
+  banner.style.display = "block";
+}
+function clearError() {
+  document.getElementById("error-banner").style.display = "none";
+}
+
+async function fetchCount(table, filterQuery = "") {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*${filterQuery}`, {
+      headers: { ...headers, "Prefer": "count=exact", "Range": "0-0" }
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(`fetchCount [${table}] HTTP ${res.status}:`, body);
+      recordError(table, res.status, body);
+      return null;
+    }
+    const range = res.headers.get("content-range");
+    if (range && range.includes("/")) {
+      return parseInt(range.split("/")[1], 10) || 0;
+    }
+    const data = await res.json();
+    return Array.isArray(data) ? data.length : 0;
+  } catch (e) {
+    console.error("fetchCount network error:", table, e);
+    recordError(table, "network", e.message);
+    return null;
+  }
+}
+
+async function fetchRows(table, query) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, { headers });
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(`fetchRows [${table}] HTTP ${res.status}:`, body);
+      recordError(table, res.status, body);
+      return null;
+    }
+    return await res.json();
+  } catch (e) {
+    console.error("fetchRows network error:", table, e);
+    recordError(table, "network", e.message);
+    return null;
+  }
+}
+
+// Collects detailed errors to show in the banner instead of a generic message
+let detailedErrors = [];
+function recordError(table, status, body) {
+  let detail = body;
+  try {
+    const parsed = JSON.parse(body);
+    detail = parsed.message || parsed.hint || parsed.error || body;
+  } catch (_) { /* body wasn't JSON, use as-is */ }
+  detailedErrors.push(`${table} (${status}): ${detail}`);
+}
+
+function setKpi(index, value, sub = null) {
+  const cards = document.querySelectorAll(".metric-card");
+  const card = cards[index];
+  if (!card) return;
+  card.classList.remove("loading");
+  const valueEl = card.querySelector(".value");
+  valueEl.textContent = value === null ? "Fejl" : value.toLocaleString("da-DK");
+  if (value === null) valueEl.style.color = "var(--red)";
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN LOAD FUNCTION
+// ═══════════════════════════════════════════════════════════════
+async function loadAll() {
+  clearError();
+  detailedErrors = [];
+  let anyError = false;
+
+  // ── KPI cards ──
+  const [
+    userCount,
+    scanCount,
+    productCount,
+    pendingSubmissions,
+    familyCount,
+    kbCount
+  ] = await Promise.all([
+    fetchCount("users"),
+    fetchCount("scan_history"),
+    fetchCount("products"),
+    fetchCount("submissions", "&status=eq.pending"),
+    fetchCount("family_members"),
+    fetchCount("knowledge_base")
+  ]);
+
+  [userCount, scanCount, productCount, pendingSubmissions, familyCount, kbCount].forEach((v, i) => {
+    if (v === null) anyError = true;
+    setKpi(i, v);
+  });
+
+  // ── Scan breakdown (last 200) ──
+  let recentScans = await fetchRows("scan_history", "select=status&order=scanned_at.desc&limit=200");
+  if (recentScans === null) {
+    // Fallback: try without ordering, in case the column name differs
+    recentScans = await fetchRows("scan_history", "select=status&limit=200");
+  }
+  renderScanBreakdown(recentScans);
+
+  // ── Knowledge base category breakdown ──
+  const kbRows = await fetchRows("knowledge_base", "select=category");
+  renderKbBreakdown(kbRows);
+
+  // ── Recent submissions table ──
+  const submissions = await fetchRows("submissions", "select=name,ean,status,submitted_by&order=created_at.desc&limit=10");
+  renderSubmissionsTable(submissions);
+
+  // ── Recent scan history table ──
+  let historyRows = await fetchRows("scan_history", "select=ean,status,scanned_at&order=scanned_at.desc&limit=10");
+  if (historyRows === null) {
+    historyRows = await fetchRows("scan_history", "select=ean,status,scanned_at&limit=10");
+  }
+  renderHistoryTable(historyRows);
+
+  if (anyError) {
+    showError("Problemer ved indlæsning:<br>" + detailedErrors.map(e => "• " + escapeHtml(e)).join("<br>"));
+  }
+
+  document.getElementById("last-updated").textContent = "Opdateret " + new Date().toLocaleTimeString("da-DK");
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
+function renderScanBreakdown(rows) {
+  const el = document.getElementById("scan-breakdown");
+  if (!rows) {
+    el.innerHTML = `<div class="empty-state">Kunne ikke indlæse scan-historik.</div>`;
+    return;
+  }
+  if (rows.length === 0) {
+    el.innerHTML = `<div class="empty-state">Ingen scanninger registreret endnu.</div>`;
+    return;
+  }
+  const counts = {};
+  rows.forEach(r => { counts[r.status || "ukendt"] = (counts[r.status || "ukendt"] || 0) + 1; });
+  const total = rows.length;
+  const labels = { safe: "✅ Sikre", danger: "⚠️ Advarsler", notfound: "❓ Ikke fundet", warning: "🟡 Forsigtighed" };
+  let html = "";
+  Object.entries(counts).sort((a,b) => b[1]-a[1]).forEach(([status, count]) => {
+    const pct = Math.round((count / total) * 100);
+    html += `
+      <div class="bar-row">
+        <div class="bar-label">${labels[status] || status}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <div class="bar-value">${count}</div>
+      </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function renderKbBreakdown(rows) {
+  const badge = document.getElementById("kb-total-badge");
+  const el = document.getElementById("kb-breakdown");
+  if (!rows) {
+    el.innerHTML = `<div class="empty-state">Kunne ikke indlæse leksikon-data.</div>`;
+    badge.textContent = "Fejl";
+    return;
+  }
+  badge.textContent = rows.length.toLocaleString("da-DK");
+  const counts = {};
+  rows.forEach(r => { counts[r.category] = (counts[r.category] || 0) + 1; });
+  const max = Math.max(...Object.values(counts), 1);
+  let html = "";
+  Object.entries(counts).sort((a,b) => b[1]-a[1]).forEach(([cat, count]) => {
+    const pct = Math.round((count / max) * 100);
+    html += `
+      <div class="bar-row">
+        <div class="bar-label">${cat}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <div class="bar-value">${count}</div>
+      </div>`;
+  });
+  el.innerHTML = html || `<div class="empty-state">Ingen data.</div>`;
+}
+
+function statusPill(status) {
+  const map = {
+    pending: ["pending", "Afventer"],
+    approved: ["safe", "Godkendt"],
+    rejected: ["danger", "Afvist"],
+    safe: ["safe", "Sikker"],
+    danger: ["danger", "Fare"],
+    notfound: ["notfound", "Ikke fundet"]
+  };
+  const [cls, label] = map[status] || ["pending", status || "—"];
+  return `<span class="pill ${cls}">${label}</span>`;
+}
+
+function renderSubmissionsTable(rows) {
+  const badge = document.getElementById("submissions-badge");
+  const el = document.getElementById("submissions-table");
+  if (!rows) {
+    el.innerHTML = `<div class="empty-state">Kunne ikke indlæse indsendelser.</div>`;
+    badge.textContent = "Fejl";
+    return;
+  }
+  badge.textContent = rows.length.toLocaleString("da-DK");
+  if (rows.length === 0) {
+    el.innerHTML = `<div class="empty-state">Ingen indsendelser endnu.</div>`;
+    return;
+  }
+  let html = `<table><thead><tr><th>Produkt</th><th>EAN</th><th>Status</th></tr></thead><tbody>`;
+  rows.forEach(r => {
+    html += `<tr><td>${escapeHtml(r.name || "—")}</td><td>${escapeHtml(r.ean || "—")}</td><td>${statusPill(r.status)}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  el.innerHTML = html;
+}
+
+function renderHistoryTable(rows) {
+  const badge = document.getElementById("history-badge");
+  const el = document.getElementById("history-table");
+  if (!rows) {
+    el.innerHTML = `<div class="empty-state">Kunne ikke indlæse scan-historik.</div>`;
+    badge.textContent = "Fejl";
+    return;
+  }
+  badge.textContent = rows.length.toLocaleString("da-DK");
+  if (rows.length === 0) {
+    el.innerHTML = `<div class="empty-state">Ingen scanninger endnu.</div>`;
+    return;
+  }
+  let html = `<table><thead><tr><th>EAN</th><th>Resultat</th><th>Tidspunkt</th></tr></thead><tbody>`;
+  rows.forEach(r => {
+    const time = r.scanned_at ? new Date(r.scanned_at).toLocaleString("da-DK") : "—";
+    html += `<tr><td>${escapeHtml(r.ean || "—")}</td><td>${statusPill(r.status)}</td><td>${time}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  el.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
