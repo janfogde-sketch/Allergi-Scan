@@ -12,7 +12,10 @@
     --blue: #60a5fa; --blue-lt: rgba(96,165,250,.1);
     --bg: #0a0e0c; --surface: #121714; --surface2: #1a211c;
     --border: rgba(255,255,255,.08); --border2: rgba(255,255,255,.14);
-    --ink: #eef2ef; --muted: #8a978f;
+    --ink: #eef2ef; --muted: #8a978f; --muted2: #6b7670;
+    --green-text: #6ee7a0;
+    --f: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
@@ -168,6 +171,7 @@
       <div class="nav-item" data-page="push" onclick="switchPage('push')">🔔 Push-status</div>
 
       <div class="nav-section-label">System</div>
+      <div class="nav-item" onclick="openFeedbackModal()">💬 Send feedback</div>
       <div class="nav-item" data-page="auditlog" onclick="switchPage('auditlog')">📋 Audit-log</div>
       <div class="nav-item" data-page="export" onclick="switchPage('export')">⬇️ Eksport</div>
       <div class="nav-item" onclick="logout()">🚪 Log ud</div>
@@ -181,7 +185,7 @@
       <div class="page active" id="page-overview">
         <div class="page-header">
           <div><h1>Dashboard</h1><div class="subtitle">Live overblik over EatSafe</div></div>
-          <div class="page-actions"><span id="last-updated"></span><button class="btn" onclick="loadOverview()">↻ Opdater</button></div>
+          <div class="page-actions"><span id="last-updated"></span><button class="btn" onclick="loadOverview()">↻ Opdater</button><button class="btn" onclick="openFeedbackModal()">💬 Feedback</button></div>
         </div>
 
         <div class="metrics-grid" id="kpi-grid">
@@ -397,6 +401,73 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- ═══════════════════════════════════ FEEDBACK MODAL (matcher app-stil) ═══════════════════════════════════ -->
+<div id="feedback-overlay" style="position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.7); display:none; align-items:flex-end; justify-content:center;" onclick="if(event.target===this) closeFeedbackModal()">
+  <div style="background:#1a3012; border-radius:20px 20px 0 0; padding:20px 16px 32px; width:100%; max-width:520px; max-height:85vh; overflow-y:auto; backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,.1);" onclick="event.stopPropagation()">
+
+    <!-- Done state -->
+    <div id="feedback-done" style="display:none; text-align:center; padding:32px 0;">
+      <div style="font-size:48px; margin-bottom:12px;">🙏</div>
+      <div style="font-size:18px; font-weight:900; color:var(--ink);">Tak for din feedback!</div>
+      <div style="font-size:13px; color:var(--muted); margin-top:6px;">Vi kigger på det hurtigst muligt.</div>
+    </div>
+
+    <!-- Form state -->
+    <div id="feedback-form-wrap">
+      <!-- Header -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <div>
+          <div style="font-size:17px; font-weight:900; color:var(--ink);">Send feedback</div>
+          <div id="feedback-subtitle" style="font-size:11px; color:var(--muted); margin-top:2px;">Admin Dashboard · v1.0</div>
+        </div>
+        <button onclick="closeFeedbackModal()" style="background:var(--surface2); border:none; border-radius:50%; width:32px; height:32px; cursor:pointer; font-size:18px; color:var(--ink);">×</button>
+      </div>
+
+      <!-- Type -->
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">Type</label>
+        <div id="feedback-type-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:6px;"></div>
+      </div>
+
+      <!-- Beskrivelse -->
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">Beskriv problemet</label>
+        <textarea id="feedback-text" rows="4" placeholder="Fx. 'Når jeg klikker godkend på en indsendelse sker der X…' — jo mere detalje, jo bedre" style="width:100%; padding:12px 14px; border:1.5px solid var(--border2); border-radius:12px; background:var(--surface); font-family:var(--f); font-size:14px; color:var(--ink); resize:none; outline:none; line-height:1.6; box-sizing:border-box;" oninput="updateFeedbackSendButton()"></textarea>
+      </div>
+
+      <!-- Billede -->
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">Skærmbillede (valgfrit)</label>
+        <div id="feedback-image-empty">
+          <label style="display:flex; align-items:center; gap:8px; padding:12px 14px; border:1.5px dashed var(--border2); border-radius:12px; cursor:pointer; background:var(--surface);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path stroke-linecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span style="font-size:13px; color:var(--muted);">Vælg billede fra computer</span>
+            <input type="file" accept="image/*" style="display:none;" id="feedback-image-input" onchange="handleFeedbackImageSelect(event)">
+          </label>
+        </div>
+        <div id="feedback-image-preview" style="display:none; position:relative; display:inline-block;">
+          <img id="feedback-image-tag" src="" alt="Screenshot" style="max-width:100%; max-height:160px; border-radius:10px; object-fit:contain; border:1px solid var(--border);">
+          <button onclick="clearFeedbackImage()" style="position:absolute; top:4px; right:4px; background:rgba(0,0,0,.6); border:none; border-radius:50%; width:24px; height:24px; color:#fff; cursor:pointer; font-size:14px;">×</button>
+        </div>
+      </div>
+
+      <!-- Diagnostik -->
+      <div style="background:var(--surface); border-radius:10px; padding:10px 12px; margin-bottom:14px;">
+        <div style="font-size:10px; color:var(--muted); font-weight:700; margin-bottom:8px;">📊 Automatisk inkluderet diagnostik</div>
+        <div id="feedback-diagnostics-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:4px 12px; margin-bottom:8px;"></div>
+        <div id="feedback-error-trace" style="border-top:1px solid var(--border); padding-top:8px; margin-top:4px; display:none;">
+          <div style="font-size:10px; color:var(--muted); font-weight:700; margin-bottom:4px;">🔍 Seneste fejl i denne session</div>
+          <div id="feedback-error-list" style="font-family:var(--mono); font-size:9px; color:var(--muted); line-height:1.7; max-height:80px; overflow-y:auto;"></div>
+        </div>
+      </div>
+
+      <!-- Send -->
+      <button id="feedback-send-btn" onclick="submitFeedback()" disabled style="width:100%; background:var(--surface2); border:none; border-radius:12px; padding:15px; font-family:var(--f); font-size:15px; font-weight:700; color:var(--muted); cursor:not-allowed;">Send feedback →</button>
+    </div>
+  </div>
+</div>
+
+
 <script>
 // ═══════════════════════════════════════════════════════════════
 // CONFIG
@@ -417,6 +488,7 @@ const headers = {
   "Content-Type": "application/json"
 };
 const writeHeaders = { ...headers, "Prefer": "return=representation" };
+let lastSessionErrors = []; // accumulates errors across the session for feedback diagnostics
 
 // ═══════════════════════════════════════════════════════════════
 // LOGIN
@@ -483,7 +555,9 @@ let detailedErrors = [];
 function recordError(table, status, body) {
   let detail = body;
   try { const parsed = JSON.parse(body); detail = parsed.message || parsed.hint || parsed.error || body; } catch (_) {}
-  detailedErrors.push(`${table} (${status}): ${detail}`);
+  const entry = `${table} (${status}): ${detail}`;
+  detailedErrors.push(entry);
+  lastSessionErrors.push(`[${new Date().toLocaleTimeString("da-DK")}] ${entry}`);
   console.error(`[${table}] ${status}:`, detail);
 }
 
@@ -1187,6 +1261,176 @@ async function loadAuditLog() {
   el.innerHTML = html;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// FEEDBACK MODAL (matcher app's FeedbackModal.jsx stil og adfærd)
+// ═══════════════════════════════════════════════════════════════
+const FEEDBACK_TYPES = [
+  { id: "bug", emoji: "🐛", label: "Fejl / bug" },
+  { id: "ui", emoji: "🎨", label: "Design / UI" },
+  { id: "missing", emoji: "💡", label: "Mangler noget" },
+  { id: "content", emoji: "📦", label: "Forkert indhold" },
+  { id: "crash", emoji: "💥", label: "Dashboard crasher" },
+  { id: "suggestion", emoji: "✨", label: "Forslag" },
+];
+
+let feedbackType = "bug";
+let feedbackImageB64 = null;
+
+function getCurrentPageId() {
+  const active = document.querySelector(".nav-item.active");
+  return active ? active.dataset.page : "overview";
+}
+function getCurrentPageLabel() {
+  const labels = {
+    overview: "Dashboard / Overblik", submissions: "Indsendelser", products: "Produkter",
+    knowledge: "Leksikon", feedback: "Feedback", users: "Brugere", families: "Familier",
+    scans: "Scan-historik", push: "Push-status", auditlog: "Audit-log", export: "Eksport"
+  };
+  const id = getCurrentPageId();
+  return labels[id] || id;
+}
+function getDeviceType() {
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad/.test(ua)) return "iOS";
+  if (/Android/.test(ua)) return "Android";
+  return "Desktop";
+}
+
+function renderFeedbackTypeGrid() {
+  const grid = document.getElementById("feedback-type-grid");
+  grid.innerHTML = FEEDBACK_TYPES.map(t => `
+    <div onclick="selectFeedbackType('${t.id}')"
+      style="display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:10px; cursor:pointer;
+      border:1.5px solid ${feedbackType===t.id ? "var(--green)" : "var(--border)"};
+      background:${feedbackType===t.id ? "var(--green-lt)" : "var(--surface)"};">
+      <span style="font-size:16px;">${t.emoji}</span>
+      <span style="font-size:12px; font-weight:700; color:${feedbackType===t.id ? "var(--green)" : "var(--ink)"};">${t.label}</span>
+    </div>`).join("");
+}
+function selectFeedbackType(id) { feedbackType = id; renderFeedbackTypeGrid(); }
+
+function renderFeedbackDiagnostics() {
+  const pendingBadge = document.getElementById("nav-badge-submissions")?.textContent || "—";
+  const rows = [
+    ["Side", `${getCurrentPageLabel()} (${getCurrentPageId()})`],
+    ["Bruger", "admin (dashboard)"],
+    ["Enhed", getDeviceType()],
+    ["Viewport", `${window.innerWidth}×${window.innerHeight}`],
+    ["Online", navigator.onLine ? "Ja" : "Nej"],
+    ["Browser", navigator.userAgent.slice(0, 40) + "…"],
+    ["Afventende indsendelser", pendingBadge],
+    ["Tidspunkt", new Date().toLocaleString("da-DK")],
+  ];
+  document.getElementById("feedback-diagnostics-grid").innerHTML = rows.map(([label, value]) => `
+    <div style="font-size:10px; line-height:1.7;">
+      <span style="color:var(--muted); font-weight:700;">${label}: </span>
+      <span style="color:var(--ink);">${escapeHtml(String(value))}</span>
+    </div>`).join("");
+
+  const errorTraceEl = document.getElementById("feedback-error-trace");
+  const errorListEl = document.getElementById("feedback-error-list");
+  if (lastSessionErrors.length > 0) {
+    errorTraceEl.style.display = "block";
+    errorListEl.innerHTML = lastSessionErrors.slice(-10).map(e => `<div>${escapeHtml(e)}</div>`).join("");
+  } else {
+    errorTraceEl.style.display = "none";
+  }
+}
+
+function openFeedbackModal() {
+  feedbackType = "bug";
+  feedbackImageB64 = null;
+  document.getElementById("feedback-text").value = "";
+  document.getElementById("feedback-image-empty").style.display = "block";
+  document.getElementById("feedback-image-preview").style.display = "none";
+  document.getElementById("feedback-done").style.display = "none";
+  document.getElementById("feedback-form-wrap").style.display = "block";
+  document.getElementById("feedback-subtitle").textContent = `${getCurrentPageLabel()} · Admin v1.0`;
+  renderFeedbackTypeGrid();
+  renderFeedbackDiagnostics();
+  updateFeedbackSendButton();
+  document.getElementById("feedback-overlay").style.display = "flex";
+}
+function closeFeedbackModal() { document.getElementById("feedback-overlay").style.display = "none"; }
+
+function updateFeedbackSendButton() {
+  const text = document.getElementById("feedback-text").value;
+  const btn = document.getElementById("feedback-send-btn");
+  const hasText = text.trim().length > 0;
+  btn.disabled = !hasText;
+  btn.style.background = hasText ? "var(--green)" : "var(--surface2)";
+  btn.style.color = hasText ? "#071510" : "var(--muted)";
+  btn.style.cursor = hasText ? "pointer" : "not-allowed";
+}
+
+async function handleFeedbackImageSelect(event) {
+  const f = event.target.files?.[0];
+  if (!f) return;
+  document.getElementById("feedback-image-tag").src = URL.createObjectURL(f);
+  document.getElementById("feedback-image-empty").style.display = "none";
+  document.getElementById("feedback-image-preview").style.display = "inline-block";
+  feedbackImageB64 = await new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(",")[1]);
+    r.onerror = rej;
+    r.readAsDataURL(f);
+  });
+}
+function clearFeedbackImage() {
+  feedbackImageB64 = null;
+  document.getElementById("feedback-image-empty").style.display = "block";
+  document.getElementById("feedback-image-preview").style.display = "none";
+}
+
+async function submitFeedback() {
+  const text = document.getElementById("feedback-text").value;
+  if (!text.trim()) return;
+  const btn = document.getElementById("feedback-send-btn");
+  btn.disabled = true;
+  btn.textContent = "Sender…";
+
+  const ctx = {
+    source: "admin_dashboard",
+    page_id: getCurrentPageId(),
+    page_label: getCurrentPageLabel(),
+    url: window.location.href,
+    user_agent: navigator.userAgent,
+    platform: navigator.platform,
+    language: navigator.language,
+    screen_size: `${window.screen.width}x${window.screen.height}`,
+    viewport: `${window.innerWidth}x${window.innerHeight}`,
+    online: navigator.onLine,
+    timestamp: new Date().toISOString(),
+    dashboard_version: "admin-v2",
+    pending_submissions: document.getElementById("nav-badge-submissions")?.textContent || null,
+    open_tickets: document.getElementById("nav-badge-feedback")?.textContent || null,
+    recent_errors: lastSessionErrors.slice(-20),
+  };
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets`, {
+      method: "POST",
+      headers: { ...headers, "Prefer": "return=minimal" },
+      body: JSON.stringify({
+        type: feedbackType,
+        description: text,
+        context: ctx,
+        image_base64: feedbackImageB64 || null,
+        status: "open",
+        submitted_by: null,
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+
+    document.getElementById("feedback-form-wrap").style.display = "none";
+    document.getElementById("feedback-done").style.display = "block";
+    setTimeout(closeFeedbackModal, 2200);
+  } catch (e) {
+    showToast("Kunne ikke sende feedback: " + e.message, "error");
+    btn.disabled = false;
+    btn.textContent = "Send feedback →";
+  }
+}
 
 async function exportCsv(table, columns) {
   showToast("Henter data til eksport...", "success");
