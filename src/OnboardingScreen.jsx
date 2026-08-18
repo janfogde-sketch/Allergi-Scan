@@ -294,6 +294,10 @@ export default function OnboardingScreen({
   saveProfileStep1, finishOnboard,
   StepBar,
 }) {
+  // FIX: denne state manglede — brugtes i trin 2 (E-numre kollapsibel), men
+  // var aldrig defineret, hvilket crashede hele onboarding-skærmen med
+  // "showENumbersInOnboard is not defined" så snart man nåede dertil.
+  const [showENumbersInOnboard, setShowENumbersInOnboard] = useState(false);
   return (
     <>
         {screen === SCREENS.WELCOME && (
