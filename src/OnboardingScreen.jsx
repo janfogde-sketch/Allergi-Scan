@@ -298,6 +298,28 @@ export default function OnboardingScreen({
   // var aldrig defineret, hvilket crashede hele onboarding-skærmen med
   // "showENumbersInOnboard is not defined" så snart man nåede dertil.
   const [showENumbersInOnboard, setShowENumbersInOnboard] = useState(false);
+
+  // FIX: disse hooks lå tidligere INDE i en betinget IIFE, som kun blev kaldt
+  // når onboardStep === 5. Det bryder Reacts "Rules of Hooks" (hooks skal
+  // altid kaldes i samme rækkefølge, uanset betingelser) og gav en
+  // "Minified React error #310"-crash så snart man nåede til trin 5.
+  // Løsningen er at flytte dem op på komponentens top-niveau, så de altid
+  // kaldes, uanset hvilket trin man er på.
+  const { supported: pushSupported, permission: pushPermission, subscribe: pushSubscribe } = usePush();
+  const [pushDone, setPushDone] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+  const [pushDeclined, setPushDeclined] = useState(false);
+
+  const handleEnablePush = async () => {
+    setPushLoading(true);
+    const result = await pushSubscribe(accessToken);
+    setPushLoading(false);
+    if (result.ok || result.reason === "Tilladelse afvist") {
+      setPushDone(true);
+      setTimeout(() => setOnboardStep(6), 800);
+    }
+  };
+
   return (
     <>
         {screen === SCREENS.WELCOME && (
@@ -897,23 +919,7 @@ export default function OnboardingScreen({
             )}
 
             {/* ── TRIN 5: Push-notifikationer ── */}
-            {onboardStep === 5 && (() => {
-              const { supported, permission, subscribe } = usePush();
-              const [pushDone, setPushDone] = React.useState(false);
-              const [pushLoading, setPushLoading] = React.useState(false);
-              const [pushDeclined, setPushDeclined] = React.useState(false);
-
-              const handleEnable = async () => {
-                setPushLoading(true);
-                const result = await subscribe(accessToken);
-                setPushLoading(false);
-                if (result.ok || result.reason === "Tilladelse afvist") {
-                  setPushDone(true);
-                  setTimeout(() => setOnboardStep(6), 800);
-                }
-              };
-
-              return (
+            {onboardStep === 5 && (
                 <div className="fade-in">
                   <div style={{ textAlign:"center", padding:"16px 0 20px" }}>
                     <div style={{ fontSize:48, marginBottom:12 }}>🔔</div>
@@ -939,7 +945,7 @@ export default function OnboardingScreen({
                     ))}
                   </div>
 
-                  {!supported ? (
+                  {!pushSupported ? (
                     <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(6)}>
                       Fortsæt →
                     </button>
@@ -949,7 +955,7 @@ export default function OnboardingScreen({
                     </button>
                   ) : (
                     <>
-                      <button className="btn btn-primary btn-full" onClick={handleEnable} disabled={pushLoading}
+                      <button className="btn btn-primary btn-full" onClick={handleEnablePush} disabled={pushLoading}
                         style={{ opacity: pushLoading ? .6 : 1 }}>
                         {pushLoading ? "Aktiverer…" : "🔔 Slå notifikationer til"}
                       </button>
@@ -960,8 +966,7 @@ export default function OnboardingScreen({
                     </>
                   )}
                 </div>
-              );
-            })()}
+            )}
 
             {/* ── TRIN 6: Diæt ── */}
             {onboardStep === 3 && (
