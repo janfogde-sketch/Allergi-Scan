@@ -54,7 +54,9 @@ export function useHistory({ accessToken, userId }) {
       const updated = exists
         ? prev.filter(f => f.ean !== product.ean && f.code !== product.code)
         : [...prev, { ...product, savedAt: Date.now() }];
-      localStorage.setItem("as_favorites", JSON.stringify(updated));
+      // Kan fejle i privat browsing (Safari ITP) eller ved fyldt storage-kvote —
+      // må ikke vælte selve favorit-toggle'et, selvom persisteringen så ikke lykkes
+      try { localStorage.setItem("as_favorites", JSON.stringify(updated)); } catch {}
       return updated;
     });
   };
