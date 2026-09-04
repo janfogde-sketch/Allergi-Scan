@@ -54,7 +54,7 @@ serve(async (req) => {
       });
     }
 
-    const uniqueUserIds = [...new Set(tokenRows.map((r: any) => r.user_id))];
+    const uniqueUserIds = [...new Set(tokenRows.map((r: { user_id: string }) => r.user_id))];
     const count = newRecipes.length;
     const exampleTitle = newRecipes[0]?.title ?? "nye retter";
 

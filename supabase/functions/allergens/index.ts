@@ -227,6 +227,15 @@ function analyzeIngredients(text: string): Record<string, string> {
       // Spring over hvis allergenet er negeret (laktosefri, uden mælk)
       if (isNegated(text, keyword)) continue;
 
+      // EU-krav (1169/2011): allergener i ingredienslisten SKAL fremhæves
+      // (fed/versaler). Fremhævning bruges kun for direkte ingredienser,
+      // aldrig for "kan indeholde spor af"-advarsler — så et fremhævet
+      // match er altid "yes", uanset omkringliggende spor-tekst.
+      if (isEmphasized(text, keyword)) {
+        status = "yes";
+        break;
+      }
+
       // Match fundet — bestem om det er yes eller traces
       if (isTracesContext(text, keyword)) {
         if (status !== "yes") status = "traces";
