@@ -808,12 +808,16 @@ export default function OnboardingScreen({
                   )}
                 </div>
 
-                <button className="btn btn-primary btn-full" style={{ marginTop:12 }} onClick={async () => { await saveAllergensStep2(); setOnboardStep(3); }}>Fortsæt →</button>
+                <button className="btn btn-primary btn-full" style={{ marginTop:12 }} onClick={async () => {
+                  try { await saveAllergensStep2(); setOnboardStep(3); }
+                  catch { alert("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen."); }
+                }}>Fortsæt →</button>
                 {allergens.length === 0 && customAllerg.length === 0 ? (
                   <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", padding:"10px 0", marginTop:2 }}
                     onClick={() => {
                       if (window.confirm("Er du sikker på, at du ingen allergier eller intolerancer har? Du kan altid tilføje dem senere under Profil.")) {
-                        saveAllergensStep2().then(() => setOnboardStep(3));
+                        saveAllergensStep2().then(() => setOnboardStep(3))
+                          .catch(() => alert("Kunne ikke gemme. Tjek din forbindelse og prøv igen."));
                       }
                     }}>
                     Spring over — jeg har ingen allergier
