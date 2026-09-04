@@ -12,7 +12,7 @@ const WELCOME_SLIDES = [
   {
     title: "Skan — og få svar på 2 sekunder",
     sub: "Hold kameraet over stregkoden. EatSafe slår op i 20.000+ produkter og fortæller dig præcist om varen er sikker for dig og din familie — med farvekodet resultat og forklaring.",
-    bg: "#111d13", accent: "#4ADE80",
+    bg: "#111d13", accent: "var(--green)",
     mockup: (
       <div style={{ background:"#0d160e", borderRadius:14, padding:"12px 14px", marginTop:12, border:"1px solid rgba(74,222,128,.15)" }}>
         <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
@@ -27,8 +27,8 @@ const WELCOME_SLIDES = [
           <strong>Laktose</strong> — reagerer på dette: Anna, Sofie
         </div>
         <div style={{ marginTop:8, display:"flex", gap:6 }}>
-          <div style={{ padding:"3px 9px", borderRadius:20, background:"rgba(74,222,128,.1)", border:"1px solid rgba(74,222,128,.2)", fontSize:10, color:"#4ADE80", fontWeight:700 }}>✓ Mads ok</div>
-          <div style={{ padding:"3px 9px", borderRadius:20, background:"rgba(74,222,128,.1)", border:"1px solid rgba(74,222,128,.2)", fontSize:10, color:"#4ADE80", fontWeight:700 }}>✓ Tage ok</div>
+          <div style={{ padding:"3px 9px", borderRadius:20, background:"rgba(74,222,128,.1)", border:"1px solid rgba(74,222,128,.2)", fontSize:10, color:"var(--green)", fontWeight:700 }}>✓ Mads ok</div>
+          <div style={{ padding:"3px 9px", borderRadius:20, background:"rgba(74,222,128,.1)", border:"1px solid rgba(74,222,128,.2)", fontSize:10, color:"var(--green)", fontWeight:700 }}>✓ Tage ok</div>
         </div>
       </div>
     ),
@@ -40,7 +40,7 @@ const WELCOME_SLIDES = [
     mockup: (
       <div style={{ marginTop:12 }}>
         <div style={{ display:"flex", gap:8, justifyContent:"center", marginBottom:10 }}>
-          {[["Jan","#4ADE80","Laktose · Gluten"],["Anna","#818cf8","Laktose"],["Sofie","#f59e0b","Nødder · Sesam"],["Mads","#34d399","Ingen"]].map(([n,c,a]) => (
+          {[["Jan","var(--green)","Laktose · Gluten"],["Anna","#818cf8","Laktose"],["Sofie","#f59e0b","Nødder · Sesam"],["Mads","#34d399","Ingen"]].map(([n,c,a]) => (
             <div key={n} style={{ background:"rgba(255,255,255,.05)", borderRadius:10, padding:"9px 10px", textAlign:"center", border:"1px solid rgba(255,255,255,.08)", flex:1 }}>
               <div style={{ width:30, height:30, borderRadius:"50%", background:c, color:"#000", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, margin:"0 auto 5px" }}>{n[0]}</div>
               <div style={{ fontSize:9, fontWeight:700, color:"#fff", marginBottom:2 }}>{n}</div>
@@ -68,7 +68,7 @@ const WELCOME_SLIDES = [
           </div>
         </div>
         <div style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,.4)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>✓ Sikre alternativer</div>
-        {[["Oatly Havregrød","Havredrik · Laktosefri","#4ADE80"],["Alpro Soya","Soyadrik · Laktosefri","#4ADE80"]].map(([name,tag,c]) => (
+        {[["Oatly Havregrød","Havredrik · Laktosefri","var(--green)"],["Alpro Soya","Soyadrik · Laktosefri","var(--green)"]].map(([name,tag,c]) => (
           <div key={name} style={{ background:"rgba(74,222,128,.06)", border:"1px solid rgba(74,222,128,.15)", borderRadius:8, padding:"8px 10px", marginBottom:6, display:"flex", alignItems:"center", gap:8 }}>
             <span style={{ fontSize:16 }}>✅</span>
             <div>
@@ -126,7 +126,7 @@ const WELCOME_SLIDES = [
               <div style={{ fontSize:12, fontWeight:700, color:"#fff" }}>{name}</div>
               <div style={{ fontSize:9, color:"rgba(255,255,255,.35)" }}>{tags}</div>
             </div>
-            <div style={{ fontSize:10, fontWeight:700, color: status.startsWith("✅") ? "#4ADE80" : "#fbbf24", textAlign:"right", maxWidth:70 }}>{status}</div>
+            <div style={{ fontSize:10, fontWeight:700, color: status.startsWith("✅") ? "var(--green)" : "#fbbf24", textAlign:"right", maxWidth:70 }}>{status}</div>
           </div>
         ))}
       </div>
@@ -176,7 +176,7 @@ const WELCOME_SLIDES = [
   {
     title: "Klar til at prøve?",
     sub: "Gratis at oprette. Ingen kreditkort. Kom i gang på under 2 minutter.",
-    bg: "#0d1f12", accent: "#4ADE80",
+    bg: "#0d1f12", accent: "var(--green)",
     cta: true, mockup: null,
   },
 ];
@@ -228,13 +228,13 @@ function WelcomeDemoSlider({ setScreen, setAuthTab }) {
         {idx < WELCOME_SLIDES.length - 1 ? (
           <button onClick={() => setIdx(i => i+1)}
             style={{ flex:1, padding:"9px", background:"var(--green)", border:"none", borderRadius:10,
-              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"#071510", cursor:"pointer" }}>
+              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
             Næste →
           </button>
         ) : (
           <button onClick={goSignup}
             style={{ flex:1, padding:"9px", background:"var(--green)", border:"none", borderRadius:10,
-              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"#071510", cursor:"pointer" }}>
+              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
             Opret konto →
           </button>
         )}
@@ -244,7 +244,7 @@ function WelcomeDemoSlider({ setScreen, setAuthTab }) {
       <div style={{ padding:"12px 14px 14px", background:"rgba(0,0,0,.2)", borderTop:"1px solid rgba(255,255,255,.05)", display:"flex", gap:8 }}>
         <button onClick={goSignup}
           style={{ flex:2, padding:"11px", background:"var(--green)", border:"none", borderRadius:12,
-            fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"#071510", cursor:"pointer" }}>
+            fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
           Opret gratis konto →
         </button>
         <button onClick={goLogin}

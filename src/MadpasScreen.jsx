@@ -323,7 +323,7 @@ export default function MadpasScreen({
                               <div style={{ fontSize:11, color:"rgba(255,255,255,.35)", marginBottom:16, wordBreak:"break-all" }}>{shareUrl}</div>
                               <button onClick={() => setQrOpen(false)}
                                 style={{ width:"100%", padding:"12px", borderRadius:12, background:"var(--green)", border:"none",
-                                  fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"#071510", cursor:"pointer" }}>
+                                  fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
                                 Luk
                               </button>
                             </div>
@@ -380,7 +380,7 @@ export default function MadpasScreen({
                                 <button onClick={() => navigator.share({ title:"Mit EatSafe madpas", url:shareUrl })}
                                   style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:"none",
                                     background:"var(--green)", fontFamily:"var(--f)", fontSize:12, fontWeight:800,
-                                    color:"#071510", cursor:"pointer",
+                                    color:"var(--on-green)", cursor:"pointer",
                                     display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                                   ↗ Del via...
                                 </button>

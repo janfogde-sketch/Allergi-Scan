@@ -326,7 +326,7 @@ export default function SuggestEditScreen({
               submit();
             }}
             disabled={editType === "ingredients" && !editIngText.trim() && ingItems.length === 0}
-            style={{ width:"100%", background:"var(--green)", color:"#071510", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:8, opacity: (editType === "ingredients" && !editIngText.trim()) ? 0.4 : 1 }}>
+            style={{ width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:8, opacity: (editType === "ingredients" && !editIngText.trim()) ? 0.4 : 1 }}>
             Send forslag ✓
           </button>
           <button className="btn btn-ghost btn-full" onClick={() => setScreen(SCREENS.RESULT)}>Annuller</button>

@@ -331,7 +331,7 @@ ${openTicket.description}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
                   navigator.clipboard?.writeText(txt).then(() => alert("Kopieret til udklipsholder!")).catch(() => alert(txt));
                 }}
-                  style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:10, padding:"10px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#071510", cursor:"pointer" }}>
+                  style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:10, padding:"10px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--on-green)", cursor:"pointer" }}>
                   📋 Kopiér til Claude
                 </button>
               </div>
@@ -641,7 +641,7 @@ ${openTicket.description}
                       <div key={s.status} onClick={() => setAdminTicketFilter(s.status)}
                         style={{ background: isActive ? s.color : "var(--surface)", border:`1px solid ${isActive ? s.color : "var(--border)"}`, borderRadius:10, padding:"10px 6px", textAlign:"center", cursor:"pointer", transition:"all .15s",
                           gridColumn: s.status === "all" ? "1 / -1" : "auto" }}>
-                        <div style={{ fontSize:18, fontWeight:900, color: isActive ? "#071510" : s.color }}>{count}</div>
+                        <div style={{ fontSize:18, fontWeight:900, color: isActive ? "var(--on-green)" : s.color }}>{count}</div>
                         <div style={{ fontSize:9, color: isActive ? "rgba(255,255,255,.8)" : "var(--muted)", fontWeight:700, textTransform:"uppercase" }}>{s.label}</div>
                       </div>
                     );
@@ -717,7 +717,7 @@ ${openTicket.description}
                               style={{ flex:1, padding:"5px 2px", borderRadius:8, border:`1px solid ${t.status===s.val ? s.color : "var(--border)"}`,
                                 background: t.status===s.val ? s.color : "var(--surface2)",
                                 fontFamily:"var(--f)", fontSize:9, fontWeight:700,
-                                color: t.status===s.val ? "#071510" : "var(--muted)", cursor:"pointer" }}>
+                                color: t.status===s.val ? "var(--on-green)" : "var(--muted)", cursor:"pointer" }}>
                               {s.label}
                             </button>
                           ))}
@@ -900,7 +900,7 @@ ${openTicket.description}
               {/* Hurtig-godkend/afvis */}
               <div style={{ display:"flex", gap:6 }}>
                 <button onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}
-                  style={{ background:"var(--green)", border:"none", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"#071510", cursor:"pointer" }}>
+                  style={{ background:"var(--green)", border:"none", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--on-green)", cursor:"pointer" }}>
                   ✓ Godkend
                 </button>
                 <button onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}
@@ -973,7 +973,7 @@ ${openTicket.description}
                       <HighlightText text={cleanedOcrText} />
                     </div>
                     <button onClick={() => setEditingSubmission(s => ({ ...s, ingredients_text: cleanedOcrText }))}
-                      style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:10, padding:"10px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"#071510", cursor:"pointer" }}>
+                      style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:10, padding:"10px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--on-green)", cursor:"pointer" }}>
                       ✓ Brug denne version
                     </button>
                   </div>
@@ -1013,7 +1013,7 @@ ${openTicket.description}
             {/* Handlings-knapper */}
             <div style={{ display:"flex", flexDirection:"column", gap:8, paddingBottom:120 }}>
               <button onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}
-                style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:700, color:"#071510", cursor:"pointer", boxShadow:"0 4px 16px rgba(34,197,94,.3)" }}>
+                style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:700, color:"var(--on-green)", cursor:"pointer", boxShadow:"0 4px 16px rgba(34,197,94,.3)" }}>
                 ✅ Godkend og opret produkt
               </button>
               <button onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}
@@ -1144,9 +1144,9 @@ ${openTicket.description}
                   <button
                     onClick={() => runImport(true)}
                     disabled={importLoading}
-                    style={{ background: importLoading ? "var(--border2)" : "var(--green)", color: importLoading ? "var(--muted)" : "#071510", border:"none", borderRadius:8, padding:"8px 16px", fontSize:12, fontWeight:800, fontFamily:"var(--f)", cursor: importLoading ? "not-allowed" : "pointer", display:"flex", alignItems:"center", gap:6 }}>
+                    style={{ background: importLoading ? "var(--border2)" : "var(--green)", color: importLoading ? "var(--muted)" : "var(--on-green)", border:"none", borderRadius:8, padding:"8px 16px", fontSize:12, fontWeight:800, fontFamily:"var(--f)", cursor: importLoading ? "not-allowed" : "pointer", display:"flex", alignItems:"center", gap:6 }}>
                     {importLoading
-                      ? <><div style={{ width:12, height:12, border:"2px solid rgba(0,0,0,.2)", borderTopColor:"#071510", borderRadius:"50%", animation:"spin .7s linear infinite" }} /> Importerer…</>
+                      ? <><div style={{ width:12, height:12, border:"2px solid rgba(0,0,0,.2)", borderTopColor:"var(--on-green)", borderRadius:"50%", animation:"spin .7s linear infinite" }} /> Importerer…</>
                       : "▶ Kør import nu"}
                   </button>
                 </div>

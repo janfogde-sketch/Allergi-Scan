@@ -716,7 +716,7 @@ export default function ProfileScreen({
                     setInviteLoading(false);
                   }}
                   disabled={inviteLoading}
-                  style={{ width:"100%", padding:"12px", background:"var(--green)", color:"#071510", border:"none", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:800, cursor:"pointer", opacity: inviteLoading ? .6 : 1 }}>
+                  style={{ width:"100%", padding:"12px", background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:800, cursor:"pointer", opacity: inviteLoading ? .6 : 1 }}>
                   {inviteLoading ? "Opretter link…" : "Opret invitationslink"}
                 </button>
               )}

@@ -23,7 +23,7 @@ export function EatSafeLogo({ size = 32, variant = "light" }) {
         </filter>
         <linearGradient id={"gline-"+uid} x1="0" x2="1" y1="0" y2="0">
           <stop offset="0%" stopColor="#22C55E" stopOpacity="0.9" />
-          <stop offset="60%" stopColor="#4ADE80" />
+          <stop offset="60%" stopColor="var(--green)" />
           <stop offset="100%" stopColor="#22C55E" />
         </linearGradient>
       </defs>
@@ -44,7 +44,7 @@ export function EatSafeLogo({ size = 32, variant = "light" }) {
           <path
             d="M 20 58 L 70 58 L 76 64 L 86 50"
             fill="none"
-            stroke={isDark ? "#4ADE80" : "url(#gline-"+uid+")"}
+            stroke={isDark ? "var(--green)" : "url(#gline-"+uid+")"}
             strokeWidth="4.6"
             strokeLinecap="round"
             strokeLinejoin="round"

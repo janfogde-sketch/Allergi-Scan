@@ -22,7 +22,7 @@ const TIPS = [
     id: "ankom",
     icon: "🚪",
     title: "Når du ankommer",
-    color: "#4ADE80",
+    color: "var(--green)",
     bg: "rgba(74,222,128,.08)",
     border: "rgba(74,222,128,.2)",
     tips: [

@@ -945,7 +945,7 @@ const lookupProduct = useCallback(async (ean) => {
                   <button onClick={() => isLast ? dismiss() : setBetaIntroStep(s => s + 1)}
                     style={{ width:"100%", padding:"14px", background:"var(--green)",
                       border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15,
-                      fontWeight:800, color:"#071510", cursor:"pointer" }}>
+                      fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
                     {isLast ? "Kom i gang →" : "Næste →"}
                   </button>
                   {!isLast && (
