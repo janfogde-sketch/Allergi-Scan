@@ -1,0 +1,16 @@
+# Supabase CLI-projektkonfiguration.
+# Kør `supabase link --project-ref jegrpcflyguadyxialkm` lokalt for at
+# forbinde denne repo-checkout til det rigtige Supabase-projekt (kræver
+# `supabase login` med din egen konto først).
+project_id = "jegrpcflyguadyxialkm"
+
+# JWT-verifikation er slået fra på alle funktioner pga. ES256-inkompatibilitet
+# (se CONTEXT.md, afsnit 2). Samme indstilling som i dag i Dashboard.
+[functions.allergens]
+verify_jwt = false
+
+[functions.ocr]
+verify_jwt = false
+
+[functions.weekly-digest]
+verify_jwt = false
