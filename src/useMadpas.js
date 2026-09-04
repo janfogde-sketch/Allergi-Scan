@@ -58,10 +58,20 @@ export function useMadpas({ allergens, customAllerg, selectedENumbers, user, mad
       el:"Σας ευχαριστώ πολύ για τη βοήθειά σας — σημαίνει πολλά για μένα.",
     };
 
+    // Tal for den madpas-profil der reelt er valgt (kan være et familiemedlem),
+    // ikke altid den loggede bruger selv — ellers fortæller talefunktionen
+    // tjeneren OM DEN FORKERTE PERSONS allergier, mens tekst-kortet på skærmen
+    // (App.jsx' mpAllergens/mpCustom) korrekt viser den valgte profil
+    const activeProfile = madpasProfileId && madpasProfileId !== "self"
+      ? family?.find(m => m.id === madpasProfileId)
+      : null;
+    const speakAllergens = activeProfile ? (activeProfile.allergens || []) : allergens;
+    const speakCustom = activeProfile ? (activeProfile.customAllerg || []) : customAllerg;
+
     const parts = [];
     parts.push(introText[lang] || introText.en);
 
-    const allItems = [...allergens, ...customAllerg.filter(c => !allergens.includes(c))];
+    const allItems = [...speakAllergens, ...speakCustom.filter(c => !speakAllergens.includes(c))];
     allItems.forEach((item, i) => {
       if (typeof item !== "string") return;
       const a = ALLERGENS.find(x => x.id === item);
