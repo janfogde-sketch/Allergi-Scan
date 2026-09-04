@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
-import { apiCall } from "./helpers.js";
+import { apiCall, decodeJwtPayload } from "./helpers.js";
 
 export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
                           onSignupSuccess }) {
@@ -56,7 +56,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     const refresh = params.get("refresh_token");
     if (access && refresh) {
       try {
-        const payload = JSON.parse(atob(access.split(".")[1]));
+        const payload = decodeJwtPayload(access);
         const uid = payload.sub;
         saveTokens(access, refresh, uid);
         fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,created_at,onboarding_completed`, {
@@ -86,22 +86,42 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     }
   }, [saveTokens]);
 
-  // ── Auto-refresh token hvert 45 min ──────────────────────────────────────
+  // ── Auto-refresh token — planlagt efter tokenets faktiske udløbstid ──────
+  // (ikke en blind fast timer: en genindlæsning midt i en session, eller et
+  // enkelt fejlet forsøg, må ikke kunne efterlade et udløbet token i op til
+  // 45 min før næste forsøg)
   useEffect(() => {
-    if (!refreshToken) return;
-    const refresh = async () => {
+    if (!refreshToken || !accessToken) return;
+    let cancelled = false;
+    let timeoutId;
+
+    const refresh = async (retry = 0) => {
       try {
         const data = await apiCall(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
           body: JSON.stringify({ refresh_token: refreshToken }),
         });
-        if (data.access_token) saveTokens(data.access_token, data.refresh_token, data.user?.id);
-      } catch { /* silent */ }
+        if (!cancelled && data.access_token) saveTokens(data.access_token, data.refresh_token, data.user?.id);
+      } catch {
+        // Prøv igen efter kort stigende ventetid, i stedet for at vente til næste planlagte refresh
+        if (!cancelled && retry < 3) {
+          timeoutId = setTimeout(() => refresh(retry + 1), Math.min(30000 * (retry + 1), 120000));
+        }
+      }
     };
-    const interval = setInterval(refresh, 45 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [refreshToken, saveTokens]);
+
+    let delay;
+    try {
+      const { exp } = decodeJwtPayload(accessToken);
+      // Forny 2 min før udløb (aldrig under 5 sek, aldrig over 45 min)
+      delay = Math.min(Math.max(exp * 1000 - Date.now() - 120000, 5000), 45 * 60 * 1000);
+    } catch {
+      delay = 45 * 60 * 1000; // Kunne ikke afkode udløbstid — fald tilbage til gammel adfærd
+    }
+    timeoutId = setTimeout(() => refresh(), delay);
+    return () => { cancelled = true; clearTimeout(timeoutId); };
+  }, [refreshToken, accessToken, saveTokens]);
 
   // ── Login ─────────────────────────────────────────────────────────────────
   const handleLogin = async () => {
