@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, Suspense } from "react";
 import { ALLERGENS, SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
          ALLERGEN_EXAMPLES, E_NUMBERS, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
 import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo } from "./helpers.js";
@@ -9,10 +9,17 @@ import { CategorySelect } from "./MemberForm.jsx";
 import NotFoundScreen from "./NotFoundScreen.jsx";
 import SubmittedScreen from "./SubmittedScreen.jsx";
 import ResultScreen from "./ResultScreen.jsx";
-import SearchScreen from "./SearchScreen.jsx";
-import ListScreen from "./ListScreen.jsx";
-import SuggestEditScreen from "./SuggestEditScreen.jsx";
-import RestaurantGuideScreen from "./RestaurantGuideScreen.jsx";
+// Lazy: skærme brugeren ikke nødvendigvis besøger hver session, holdes ude af hoved-bundlet
+const SearchScreen = React.lazy(() => import("./SearchScreen.jsx"));
+const ListScreen = React.lazy(() => import("./ListScreen.jsx"));
+const SuggestEditScreen = React.lazy(() => import("./SuggestEditScreen.jsx"));
+const RestaurantGuideScreen = React.lazy(() => import("./RestaurantGuideScreen.jsx"));
+
+const LazyFallback = (
+  <div style={{padding:"40px 16px",textAlign:"center"}}>
+    <div style={{width:28,height:28,border:"3px solid var(--border2)",borderTopColor:"var(--green)",borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto"}} />
+  </div>
+);
 
 // ── Performance: Styles som konstanter (undgår nye objekter per render) ──────
 const S = {
@@ -962,6 +969,7 @@ export default function ScannerScreen({
           />
         )}
         {screen === SCREENS.SEARCH && (
+          <Suspense fallback={LazyFallback}>
           <SearchScreen
             user={user}
             family={family}
@@ -976,8 +984,10 @@ export default function ScannerScreen({
             addToList={addToList}
             lookupProduct={lookupProduct}
           />
+          </Suspense>
         )}
         {screen === SCREENS.LIST && (
+          <Suspense fallback={LazyFallback}>
           <ListScreen
             shoppingList={shoppingList}
             newItemName={newItemName} setNewItemName={setNewItemName}
@@ -990,6 +1000,7 @@ export default function ScannerScreen({
             lookupProduct={lookupProduct}
             setScreen={setScreen}
           />
+          </Suspense>
         )}
 
         {screen === SCREENS.SUBMITTED && (
@@ -1031,6 +1042,7 @@ export default function ScannerScreen({
         )}
 
         {screen === SCREENS.SUGGEST_EDIT && scanResult && (
+          <Suspense fallback={LazyFallback}>
           <SuggestEditScreen
             scanResult={scanResult}
             accessToken={accessToken}
@@ -1043,14 +1055,19 @@ export default function ScannerScreen({
             handleEditProductCapture={handleEditProductCapture}
             setScreen={setScreen}
           />
+          </Suspense>
         )}
 
-        <RestaurantGuideScreen
-          screen={screen}
-          setScreen={setScreen}
-          allergens={allergens}
-          customAllerg={customAllerg}
-        />
+        {screen === SCREENS.RESTAURANTGUIDE && (
+          <Suspense fallback={LazyFallback}>
+          <RestaurantGuideScreen
+            screen={screen}
+            setScreen={setScreen}
+            allergens={allergens}
+            customAllerg={customAllerg}
+          />
+          </Suspense>
+        )}
 
     </>
   );
