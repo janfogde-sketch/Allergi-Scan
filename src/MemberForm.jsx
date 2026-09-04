@@ -166,7 +166,7 @@ export const MemberForm = ({
       )}
 
       {/* Gem knap */}
-      <button className="btn btn-primary btn-full" style={{color:"#071510"}} onClick={onAdd}
+      <button className="btn btn-primary btn-full" style={{color:"var(--on-green)"}} onClick={onAdd}
         disabled={!isValid}>
         {addLabel || "+ Tilføj familiemedlem"}
       </button>

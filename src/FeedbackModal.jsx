@@ -202,7 +202,7 @@ export default function FeedbackModal({
                   <button onClick={() => { setImage(null); setImageB64(null); }}
                     style={{ position:"absolute", top:4, right:4, background:"rgba(0,0,0,.6)",
                       border:"none", borderRadius:"50%", width:24, height:24,
-                      color:"#fff", cursor:"pointer", fontSize:14 }}>×</button>
+                      color:"var(--ink)", cursor:"pointer", fontSize:14 }}>×</button>
                 </div>
               ) : (
                 <label style={{ display:"flex", alignItems:"center", gap:8, padding:"12px 14px",
@@ -281,7 +281,7 @@ export default function FeedbackModal({
             <button onClick={submit} disabled={sending || !text.trim()}
               style={{ width:"100%", background: text.trim() ? "var(--green)" : "var(--surface2)",
                 border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)",
-                fontSize:15, fontWeight:700, color: text.trim() ? "#071510" : "var(--muted)",
+                fontSize:15, fontWeight:700, color: text.trim() ? "var(--on-green)" : "var(--muted)",
                 cursor: text.trim() ? "pointer" : "not-allowed" }}>
               {sending ? "Sender…" : "Send feedback →"}
             </button>

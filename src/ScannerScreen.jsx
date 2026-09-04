@@ -56,23 +56,23 @@ const DEMO_SLIDES = [
   {
     title: "Skan — og få svar på 2 sekunder",
     sub: "Hold kameraet over stregkoden. EatSafe slår op i 20.000+ produkter og fortæller dig præcist om varen er sikker for dig og din familie.",
-    bg: "#111d13", accent: "#4ADE80",
+    bg: "#111d13", accent: "var(--green)",
     mockup: (
       <div style={{ background:"#0d160e", borderRadius:14, padding:"12px 14px", marginTop:12, border:"1px solid rgba(74,222,128,.15)" }}>
         <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
           <div style={{ width:40, height:40, background:"rgba(74,222,128,.1)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20 }}>🥛</div>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:13, fontWeight:800, color:"#fff" }}>Arla Letmælk 1L</div>
+            <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Arla Letmælk 1L</div>
             <div style={{ fontSize:10, color:"rgba(255,255,255,.35)" }}>Arla Foods</div>
           </div>
-          <div style={{ padding:"5px 11px", borderRadius:20, background:"rgba(239,68,68,.2)", border:"1px solid rgba(239,68,68,.5)", fontSize:11, fontWeight:800, color:"#f87171" }}>⚠ FARE</div>
+          <div style={{ padding:"5px 11px", borderRadius:20, background:"var(--red-md)", border:"1px solid rgba(255,82,82,.5)", fontSize:11, fontWeight:800, color:"var(--red)" }}>⚠ FARE</div>
         </div>
-        <div style={{ background:"rgba(239,68,68,.07)", border:"1px solid rgba(239,68,68,.18)", borderRadius:8, padding:"8px 10px", fontSize:11, color:"#fca5a5", lineHeight:1.6 }}>
+        <div style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, padding:"8px 10px", fontSize:11, color:"var(--red)", lineHeight:1.6 }}>
           <strong>Laktose</strong> — reagerer: Anna, Sofie
         </div>
         <div style={{ marginTop:8, display:"flex", gap:6 }}>
-          <div style={{ padding:"3px 9px", borderRadius:20, background:"rgba(74,222,128,.1)", border:"1px solid rgba(74,222,128,.2)", fontSize:10, color:"#4ADE80", fontWeight:700 }}>✓ Mads ok</div>
-          <div style={{ padding:"3px 9px", borderRadius:20, background:"rgba(74,222,128,.1)", border:"1px solid rgba(74,222,128,.2)", fontSize:10, color:"#4ADE80", fontWeight:700 }}>✓ Tage ok</div>
+          <div style={{ padding:"3px 9px", borderRadius:20, background:"rgba(74,222,128,.1)", border:"1px solid rgba(74,222,128,.2)", fontSize:10, color:"var(--green)", fontWeight:700 }}>✓ Mads ok</div>
+          <div style={{ padding:"3px 9px", borderRadius:20, background:"rgba(74,222,128,.1)", border:"1px solid rgba(74,222,128,.2)", fontSize:10, color:"var(--green)", fontWeight:700 }}>✓ Tage ok</div>
         </div>
       </div>
     ),
@@ -84,10 +84,10 @@ const DEMO_SLIDES = [
     mockup: (
       <div style={{ marginTop:12 }}>
         <div style={{ display:"flex", gap:8, justifyContent:"center", marginBottom:10 }}>
-          {[["Jan","#4ADE80","Laktose · Gluten"],["Anna","#818cf8","Laktose"],["Sofie","#f59e0b","Nødder"],["Mads","#34d399","Ingen"]].map(([n,c,a]) => (
+          {[["Jan","var(--green)","Laktose · Gluten"],["Anna","#818cf8","Laktose"],["Sofie","#f59e0b","Nødder"],["Mads","#34d399","Ingen"]].map(([n,c,a]) => (
             <div key={n} style={{ background:"rgba(255,255,255,.05)", borderRadius:10, padding:"9px 10px", textAlign:"center", border:"1px solid rgba(255,255,255,.08)", flex:1 }}>
-              <div style={{ width:30, height:30, borderRadius:"50%", background:c, color:"#000", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, margin:"0 auto 5px" }}>{n[0]}</div>
-              <div style={{ fontSize:9, fontWeight:700, color:"#fff", marginBottom:2 }}>{n}</div>
+              <div style={{ width:30, height:30, borderRadius:"50%", background:c, color:"var(--on-green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, margin:"0 auto 5px" }}>{n[0]}</div>
+              <div style={{ fontSize:9, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{n}</div>
               <div style={{ fontSize:8, color:"rgba(255,255,255,.35)", lineHeight:1.3 }}>{a}</div>
             </div>
           ))}
@@ -101,13 +101,13 @@ const DEMO_SLIDES = [
   {
     title: "Find sikre alternativer automatisk",
     sub: "Hvis et produkt indeholder noget du reagerer på, finder EatSafe automatisk lignende produkter fra samme kategori — som er sikre for dig.",
-    bg: "#1a0d0d", accent: "#f87171",
+    bg: "#1a0d0d", accent: "var(--red)",
     mockup: (
       <div style={{ marginTop:12 }}>
-        <div style={{ background:"rgba(239,68,68,.07)", border:"1px solid rgba(239,68,68,.18)", borderRadius:10, padding:"9px 12px", marginBottom:8, display:"flex", alignItems:"center", gap:8 }}>
+        <div style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, padding:"9px 12px", marginBottom:8, display:"flex", alignItems:"center", gap:8 }}>
           <span style={{ fontSize:18 }}>🥛</span>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:12, fontWeight:700, color:"#f87171" }}>Arla Letmælk — FARE</div>
+            <div style={{ fontSize:12, fontWeight:700, color:"var(--red)" }}>Arla Letmælk — FARE</div>
             <div style={{ fontSize:10, color:"rgba(255,255,255,.35)" }}>Indeholder laktose</div>
           </div>
         </div>
@@ -116,7 +116,7 @@ const DEMO_SLIDES = [
           <div key={name} style={{ background:"rgba(74,222,128,.06)", border:"1px solid rgba(74,222,128,.15)", borderRadius:8, padding:"8px 10px", marginBottom:6, display:"flex", alignItems:"center", gap:8 }}>
             <span style={{ fontSize:16 }}>✅</span>
             <div>
-              <div style={{ fontSize:12, fontWeight:700, color:"#fff" }}>{name}</div>
+              <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{name}</div>
               <div style={{ fontSize:10, color:"rgba(255,255,255,.35)" }}>{tag}</div>
             </div>
           </div>
@@ -131,16 +131,16 @@ const DEMO_SLIDES = [
     mockup: (
       <div style={{ marginTop:12 }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
-          <div style={{ fontSize:12, fontWeight:800, color:"#fff" }}>Familiens indkøbsliste</div>
+          <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)" }}>Familiens indkøbsliste</div>
           <div style={{ fontSize:10, color:"#38bdf8", fontWeight:700 }}>● Live</div>
         </div>
         {[["Oatly Havregrød 1L",false,"Jan"],["Glutenfri pasta",false,"Anna"],["Alpro Soya",true,"Købt"],["Havregryns-cookies",false,"Sofie"]].map(([name,done,who]) => (
           <div key={name} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 10px", borderRadius:8, marginBottom:5, background:"rgba(255,255,255,.04)", border:"1px solid rgba(255,255,255,.07)", opacity:done?0.45:1 }}>
             <div style={{ width:18, height:18, borderRadius:4, border:`2px solid ${done?"#38bdf8":"rgba(255,255,255,.2)"}`, background:done?"#38bdf8":"transparent", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
-              {done && <span style={{ fontSize:11, color:"#000", fontWeight:800 }}>✓</span>}
+              {done && <span style={{ fontSize:11, color:"var(--on-green)", fontWeight:800 }}>✓</span>}
             </div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:"#fff", textDecoration:done?"line-through":"none" }}>{name}</div>
+              <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", textDecoration:done?"line-through":"none" }}>{name}</div>
               <div style={{ fontSize:9, color:"rgba(255,255,255,.3)" }}>{who} tilføjede</div>
             </div>
           </div>
@@ -158,10 +158,10 @@ const DEMO_SLIDES = [
           <div key={name} style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(255,255,255,.05)", borderRadius:10, padding:"9px 12px", border:"1px solid rgba(255,255,255,.07)" }}>
             <div style={{ fontSize:20 }}>{e}</div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:"#fff" }}>{name}</div>
+              <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{name}</div>
               <div style={{ fontSize:9, color:"rgba(255,255,255,.35)" }}>{tags}</div>
             </div>
-            <div style={{ fontSize:10, fontWeight:700, color:status.startsWith("✅")?"#4ADE80":"#fbbf24", textAlign:"right", maxWidth:70 }}>{status}</div>
+            <div style={{ fontSize:10, fontWeight:700, color:status.startsWith("✅")?"var(--green)":"#fbbf24", textAlign:"right", maxWidth:70 }}>{status}</div>
           </div>
         ))}
       </div>
@@ -176,7 +176,7 @@ const DEMO_SLIDES = [
         <div style={{ background:"rgba(134,239,172,.07)", border:"1px solid rgba(134,239,172,.18)", borderRadius:10, padding:"10px 12px", marginBottom:8 }}>
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
             <div style={{ padding:"3px 9px", borderRadius:20, background:"rgba(251,191,36,.15)", border:"1px solid rgba(251,191,36,.3)", fontSize:11, fontWeight:800, color:"#fbbf24" }}>E621</div>
-            <div style={{ fontSize:12, fontWeight:700, color:"#fff" }}>MSG · Smagsforstærker</div>
+            <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>MSG · Smagsforstærker</div>
           </div>
           <div style={{ fontSize:11, color:"rgba(255,255,255,.5)", lineHeight:1.6 }}>Glutamat-baseret smagsforstærker. Kan give hovedpine og hjertebanken hos følsomme. Hyppig i chips og færdigretter.</div>
         </div>
@@ -198,7 +198,7 @@ const DEMO_SLIDES = [
           <span style={{ fontSize:20 }}>🇮🇹</span>
           <div style={{ fontSize:11, fontWeight:800, color:"rgba(251,191,36,.8)", textTransform:"uppercase", letterSpacing:"1px" }}>Italiensk</div>
         </div>
-        <div style={{ fontSize:13, fontWeight:800, color:"#fff", marginBottom:3 }}>Sono allergico al latte e al glutine.</div>
+        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:3 }}>Sono allergico al latte e al glutine.</div>
         <div style={{ fontSize:11, color:"rgba(255,255,255,.4)", fontStyle:"italic", marginBottom:10 }}>"so-no al-ler-JI-ko al LAT-te..."</div>
         <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
           {["🇩🇰","🇬🇧","🇩🇪","🇫🇷","🇪🇸","🇵🇹","🇳🇱","🇸🇪"].map(f => <span key={f} style={{ fontSize:18 }}>{f}</span>)}
@@ -210,7 +210,7 @@ const DEMO_SLIDES = [
   {
     title: "Klar til at prøve?",
     sub: "Gratis at oprette. Ingen kreditkort. Kom i gang på under 2 minutter.",
-    bg: "#0d1f12", accent: "#4ADE80",
+    bg: "#0d1f12", accent: "var(--green)",
     cta: true, mockup: null,
   },
 ];
@@ -248,7 +248,7 @@ function DemoSlider({ setScreen, mode = "welcome", onClose }) {
         </div>
 
         {/* Indhold */}
-        <div style={{ fontSize:19, fontWeight:900, color:"#fff", marginBottom:6, letterSpacing:"-.3px" }}>{slide.title}</div>
+        <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", marginBottom:6, letterSpacing:"-.3px" }}>{slide.title}</div>
         <div style={{ fontSize:13, color:"rgba(255,255,255,.6)", lineHeight:1.6 }}>{slide.sub}</div>
         {slide.mockup}
 
@@ -287,19 +287,19 @@ function DemoSlider({ setScreen, mode = "welcome", onClose }) {
         {idx < DEMO_SLIDES.length - 1 ? (
           <button onClick={() => setIdx(i => i+1)}
             style={{ flex:1, padding:"10px", background:"var(--green)", border:"none", borderRadius:10,
-              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"#071510", cursor:"pointer" }}>
+              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
             Næste →
           </button>
         ) : isModal ? (
           <button onClick={onClose}
             style={{ flex:1, padding:"10px", background:"var(--green)", border:"none", borderRadius:10,
-              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"#071510", cursor:"pointer" }}>
+              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
             Luk guide ✓
           </button>
         ) : (
           <button onClick={() => setScreen(SCREENS.LOGIN)}
             style={{ flex:1, padding:"10px", background:"var(--green)", border:"none", borderRadius:10,
-              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"#071510", cursor:"pointer" }}>
+              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
             Opret konto →
           </button>
         )}
@@ -415,7 +415,7 @@ export default function ScannerScreen({
                     <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
                       <div style={{ width:44, height:44, borderRadius:"50%",
                         background: isUser ? "var(--green)" : (member?.color || "var(--ink)"),
-                        color:"#fff", display:"flex", alignItems:"center", justifyContent:"center",
+                        color:"var(--ink)", display:"flex", alignItems:"center", justifyContent:"center",
                         fontSize:16, fontWeight:800, flexShrink:0 }}>
                         {initials(pName)}
                       </div>
@@ -484,7 +484,7 @@ export default function ScannerScreen({
                     <button className="btn btn-full" style={{
                       marginTop:4,
                       background: isActive ? "var(--paper2)" : "var(--green)",
-                      color: isActive ? "var(--muted)" : "#fff",
+                      color: isActive ? "var(--muted)" : "var(--ink)",
                       border: `1px solid ${isActive ? "var(--border)" : "var(--green)"}`,
                     }} onClick={() => {
                       const pid = isUser ? "user" : profilePopup;
@@ -555,7 +555,7 @@ export default function ScannerScreen({
                     <>
                       <button onClick={() => setActiveProfiles(allIds)}
                         style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20, border:"1px solid var(--green)",
-                          background: allActive ? "var(--green)" : "var(--green-lt)", color: allActive ? "#fff" : "var(--green)", cursor:"pointer", fontFamily:"var(--f)" }}>
+                          background: allActive ? "var(--green)" : "var(--green-lt)", color: allActive ? "var(--ink)" : "var(--green)", cursor:"pointer", fontFamily:"var(--f)" }}>
                         Vælg alle
                       </button>
                       <button onClick={() => setActiveProfiles([])}
@@ -578,7 +578,7 @@ export default function ScannerScreen({
                       <div style={S.rel}>
                         <div style={{ width:46, height:46, borderRadius:"50%",
                           background: isActive ? "var(--green)" : "var(--paper2)",
-                          color: isActive ? "#fff" : "var(--muted)",
+                          color: isActive ? "var(--ink)" : "var(--muted)",
                           display:"flex", alignItems:"center", justifyContent:"center",
                           fontSize:15, fontWeight:800,
                           border: `2.5px solid ${isActive ? "var(--green)" : "var(--border)"}`,
@@ -590,7 +590,7 @@ export default function ScannerScreen({
                           <div style={{ position:"absolute", bottom:-1, right:-1, width:16, height:16,
                             background:"var(--red)", borderRadius:"50%", border:"2px solid var(--paper)",
                             display:"flex", alignItems:"center", justifyContent:"center",
-                            fontSize:9, color:"#fff", fontWeight:800 }}>
+                            fontSize:9, color:"var(--ink)", fontWeight:800 }}>
                             {allergens.length}
                           </div>
                         )}
@@ -613,7 +613,7 @@ export default function ScannerScreen({
                       <div style={S.rel}>
                         <div style={{ width:46, height:46, borderRadius:"50%",
                           background: isActive ? "var(--green)" : "var(--paper2)",
-                          color: isActive ? "#fff" : "var(--muted)",
+                          color: isActive ? "var(--ink)" : "var(--muted)",
                           display:"flex", alignItems:"center", justifyContent:"center",
                           fontSize:15, fontWeight:800,
                           border: `2.5px solid ${isActive ? "var(--green)" : "var(--border)"}`,
@@ -625,7 +625,7 @@ export default function ScannerScreen({
                           <div style={{ position:"absolute", bottom:-1, right:-1, width:16, height:16,
                             background:"var(--red)", borderRadius:"50%", border:"2px solid var(--paper)",
                             display:"flex", alignItems:"center", justifyContent:"center",
-                            fontSize:9, color:"#fff", fontWeight:800 }}>
+                            fontSize:9, color:"var(--ink)", fontWeight:800 }}>
                             {(m.allergens||[]).length}
                           </div>
                         )}
@@ -719,14 +719,14 @@ export default function ScannerScreen({
                       : <span style={{ color:"rgba(255,255,255,.6)" }}>Hold stregkoden ind i rammen</span>}
                   </span>
                   <div style={S.rowGap6}>
-                    <button onClick={() => galleryInputRef.current?.click()} style={{ background:"rgba(255,255,255,.15)", border:"none", borderRadius:6, padding:"5px 10px", color:"#fff", fontSize:16, cursor:"pointer", lineHeight:1 }}>🖼️</button>
+                    <button onClick={() => galleryInputRef.current?.click()} style={{ background:"rgba(255,255,255,.15)", border:"none", borderRadius:6, padding:"5px 10px", color:"var(--ink)", fontSize:16, cursor:"pointer", lineHeight:1 }}>🖼️</button>
                     <button onClick={toggleTorch} style={{
                       background: torchOn ? "rgba(251,191,36,.3)" : "rgba(255,255,255,.15)",
                       border: torchOn ? "1px solid rgba(251,191,36,.6)" : "none",
-                      borderRadius:6, padding:"5px 10px", color: torchOn ? "#FBB" : "#fff",
+                      borderRadius:6, padding:"5px 10px", color: torchOn ? "#FBB" : "var(--ink)",
                       fontSize:16, cursor:"pointer", lineHeight:1
                     }}>🔦</button>
-                    <button onClick={stopCamera} style={{ background:"rgba(255,255,255,.15)", border:"none", borderRadius:6, padding:"5px 12px", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"var(--f)" }}>Stop</button>
+                    <button onClick={stopCamera} style={{ background:"rgba(255,255,255,.15)", border:"none", borderRadius:6, padding:"5px 12px", color:"var(--ink)", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"var(--f)" }}>Stop</button>
                   </div>
                 </div>
               )}
@@ -771,8 +771,8 @@ export default function ScannerScreen({
                     left:0, right:0,
                     height:3,
                     borderRadius:2,
-                    background:"linear-gradient(90deg, transparent, #4ADE80, #86EFAC, #4ADE80, transparent)",
-                    boxShadow:"0 0 8px #4ADE80, 0 0 16px rgba(74,222,128,.4)",
+                    background:"linear-gradient(90deg, transparent, var(--green), #86EFAC, var(--green), transparent)",
+                    boxShadow:"0 0 8px var(--green), 0 0 16px rgba(74,222,128,.4)",
                     animation:"scanLaser 2s ease-in-out infinite",
                   }} />
                   <style>{`
@@ -795,7 +795,7 @@ export default function ScannerScreen({
                 </div>
                 {/* Tekst */}
                 <div style={{ textAlign:"center" }}>
-                  <div style={{ fontSize:20, fontWeight:900, color:"#fff", letterSpacing:"-.4px" }}>Skan produkt</div>
+                  <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", letterSpacing:"-.4px" }}>Skan produkt</div>
                   <div style={{ fontSize:13, color:"rgba(255,255,255,.5)", marginTop:4 }}>Tryk for at starte kamera</div>
                   <div onClick={e => { e.stopPropagation(); galleryInputRef.current?.click(); }}
                     style={{ fontSize:11, color:"rgba(255,255,255,.35)", marginTop:8, textDecoration:"underline", cursor:"pointer" }}>
@@ -851,7 +851,7 @@ export default function ScannerScreen({
                   />
                   <button
                     style={{ padding:"0 16px", borderRadius:10, background:"var(--green)", border:"none",
-                      color:"#071510", fontWeight:800, fontSize:14, cursor:"pointer", fontFamily:"var(--f)", flexShrink:0 }}
+                      color:"var(--on-green)", fontWeight:800, fontSize:14, cursor:"pointer", fontFamily:"var(--f)", flexShrink:0 }}
                     onClick={() => {
                       const val = document.getElementById("manual-ean-input")?.value?.trim();
                       if (val && val.length >= 8) { setShowManualEan(false); lookupProduct(val); }

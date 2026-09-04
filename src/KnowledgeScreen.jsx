@@ -4,12 +4,12 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { Icon } from "./SharedComponents.jsx";
 
 const CATEGORIES = [
-  { id:"allergen",       emoji:"🌾", label:"Allergener",      color:"#FF5252",  bg:"rgba(255,82,82,.10)" },
-  { id:"ingredient",     emoji:"🫙", label:"Ingredienser",    color:"#60A5FA",  bg:"rgba(96,165,250,.10)" },
-  { id:"e_number",       emoji:"🔢", label:"E-numre",         color:"#FFBA3B",  bg:"rgba(255,186,59,.10)" },
-  { id:"diet",           emoji:"🥗", label:"Diæter",          color:"#4ADE80",  bg:"rgba(74,222,128,.10)" },
+  { id:"allergen",       emoji:"🌾", label:"Allergener",      color:"var(--red)",  bg:"rgba(255,82,82,.10)" },
+  { id:"ingredient",     emoji:"🫙", label:"Ingredienser",    color:"var(--blue)",  bg:"rgba(96,165,250,.10)" },
+  { id:"e_number",       emoji:"🔢", label:"E-numre",         color:"var(--amber)",  bg:"rgba(255,186,59,.10)" },
+  { id:"diet",           emoji:"🥗", label:"Diæter",          color:"var(--green)",  bg:"rgba(74,222,128,.10)" },
   { id:"cross_reaction", emoji:"🔄", label:"Krydsreaktioner", color:"#E8A87C",  bg:"rgba(232,168,124,.10)" },
-  { id:"faq",            emoji:"❓", label:"FAQ",             color:"#94A3B8",  bg:"rgba(148,163,184,.10)" },
+  { id:"faq",            emoji:"❓", label:"FAQ",             color:"var(--neutral)",  bg:"rgba(148,163,184,.10)" },
   { id:"fun_fact",       emoji:"💡", label:"Vidste du at",    color:"#E8A87C",  bg:"rgba(232,168,124,.10)" },
 ];
 const CAT_MAP = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
@@ -39,7 +39,7 @@ const S = {
   pillRow: { display:"flex", flexWrap:"wrap", gap:5 },
   pill: (bg, color, border) => ({ fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:100, background:bg, color, border:`1px solid ${border}` }),
   healthBox: { background:"rgba(232,168,124,.10)", border:"1px solid rgba(232,168,124,.18)", borderRadius:12, padding:"12px 14px", marginBottom:16 },
-  error: { background:"rgba(255,82,82,.12)", border:"1px solid rgba(255,82,82,.25)", borderRadius:12, padding:"14px", marginBottom:12, color:"#FF5252", fontSize:13 },
+  error: { background:"rgba(255,82,82,.12)", border:"1px solid rgba(255,82,82,.25)", borderRadius:12, padding:"14px", marginBottom:12, color:"var(--red)", fontSize:13 },
 };
 
 export default function KnowledgeScreen({ screen, setScreen, accessToken, openSlug, onSlugHandled }) {

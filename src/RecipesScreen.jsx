@@ -120,7 +120,7 @@ export default function RecipesScreen({
                   : <div className="recipe-detail-img-placeholder">🍽️</div>
                 }
                 <button className="recipe-detail-back" onClick={() => setSelectedRecipe(null)}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path strokeLinecap="round" d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2.5"><path strokeLinecap="round" d="M19 12H5M12 19l-7-7 7-7"/></svg>
                 </button>
                 <button className="recipe-detail-fav" onClick={() => setFavoriteRecipes(f => isFav ? f.filter(x=>x!==r.id) : [...f,r.id])}>
                   {isFav ? "❤️" : "🤍"}
@@ -341,7 +341,7 @@ export default function RecipesScreen({
                             onClick={() => setCompletedSteps(s => ({ ...s, [i]: !s[i] }))}>
                             <div className="step-circle" style={{ background: done ? "var(--green)" : "var(--surface2)", border: done ? "none" : "1.5px solid var(--border2)" }}>
                               {done
-                                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
                                 : <span style={{ fontSize:12, fontWeight:800, color:"var(--muted2)" }}>{i+1}</span>
                               }
                             </div>
@@ -416,13 +416,13 @@ export default function RecipesScreen({
               }}>
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                   <div>
-                    <div style={{ fontSize:24, fontWeight:900, color:"#fff", letterSpacing:"-.4px", marginBottom:2 }}>Opskrifter</div>
+                    <div style={{ fontSize:24, fontWeight:900, color:"var(--ink)", letterSpacing:"-.4px", marginBottom:2 }}>Opskrifter</div>
                     <div style={{ fontSize:12, color:"rgba(255,255,255,.65)" }}>
                       {recipes.length > 0 ? `${recipes.length} opskrifter` : "Indlæser…"}
                     </div>
                   </div>
                   <button onClick={() => setShowSubmitRecipe(true)}
-                    style={{ background:"rgba(255,255,255,.15)", color:"#fff", border:"1px solid rgba(255,255,255,.25)", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", backdropFilter:"none" }}>
+                    style={{ background:"rgba(255,255,255,.15)", color:"var(--ink)", border:"1px solid rgba(255,255,255,.25)", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", backdropFilter:"none" }}>
                     + Indsend
                   </button>
                 </div>
@@ -518,7 +518,7 @@ export default function RecipesScreen({
                           }}>
                           <div style={{
                             width:20, height:20, borderRadius:"50%", background: isActive ? "var(--green)" : "var(--surface3)",
-                            color: isActive ? "#071510" : "var(--muted)", display:"flex", alignItems:"center",
+                            color: isActive ? "var(--on-green)" : "var(--muted)", display:"flex", alignItems:"center",
                             justifyContent:"center", fontSize:10, fontWeight:800, flexShrink:0,
                           }}>{p.initials}</div>
                           {p.name}
@@ -560,7 +560,7 @@ export default function RecipesScreen({
                       <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)", letterSpacing:"-.3px", marginBottom:4 }}>Kunne ikke indlæse</div>
                       <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12 }}>Tjek din forbindelse og prøv igen</div>
                       <button onClick={() => loadRecipes()}
-                        style={{ background:"var(--green)", color:"#071510", border:"none", borderRadius:10, padding:"9px 18px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                        style={{ background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:10, padding:"9px 18px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
                         Prøv igen →
                       </button>
                     </div>
@@ -699,7 +699,7 @@ export default function RecipesScreen({
             </div>
             <button
               onClick={() => { setShowSubmitRecipe(false); setSubmitSuccess(false); }}
-              style={{ padding:"14px 32px", borderRadius:12, background:"var(--green)", color:"#071510", border:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", width:"100%", maxWidth:300 }}>
+              style={{ padding:"14px 32px", borderRadius:12, background:"var(--green)", color:"var(--on-green)", border:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", width:"100%", maxWidth:300 }}>
               Tilbage til opskrifter →
             </button>
           </div>
@@ -1031,7 +1031,7 @@ export default function RecipesScreen({
                   if (submitIngredients.filter(i=>i.name.trim()).length === 0) { setSubmitError("Tilføj mindst én ingrediens."); return; }
                   await handleSubmit();
                 }}
-                style={{ width:"100%", padding:"14px", borderRadius:12, background:"var(--green)", color:"#071510", border:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:40, opacity: submittingRecipe||imgUploading ? .6 : 1 }}>
+                style={{ width:"100%", padding:"14px", borderRadius:12, background:"var(--green)", color:"var(--on-green)", border:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:40, opacity: submittingRecipe||imgUploading ? .6 : 1 }}>
                 {submittingRecipe || imgUploading ? "Sender…" : "Send til godkendelse →"}
               </button>
             </div>

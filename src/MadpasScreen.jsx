@@ -176,10 +176,10 @@ export default function MadpasScreen({
                       <button onClick={madpasSpeak} style={{
                         background: madpasSpeaking ? "var(--amber)" : "var(--green)",
                         border:"none", borderRadius:8, padding:"8px 16px", fontSize:13, fontWeight:700,
-                        color:"#fff", cursor:"pointer", fontFamily:"var(--f)",
+                        color:"var(--ink)", cursor:"pointer", fontFamily:"var(--f)",
                         display:"flex", alignItems:"center", gap:7,
                       }}>
-                        <Icon name={madpasSpeaking ? "speakerOff" : "speaker"} size={15} color="#fff" />
+                        <Icon name={madpasSpeaking ? "speakerOff" : "speaker"} size={15} color="var(--ink)" />
                         {madpasSpeaking ? "Stop" : "Oplæs"}
                       </button>
                     )}
@@ -200,12 +200,12 @@ export default function MadpasScreen({
                   <div className="mp-section-lbl">VIS MADPAS FOR</div>
                   <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
                     <div className={`ap-chip${madpasProfileId==="self" ? " on" : ""}`} onClick={() => setMadpasProfileId("self")}>
-                      <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(user.name||"Mig")}</div>
+                      <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(user.name||"Mig")}</div>
                       {(user.name||"Mig").split(" ")[0]}
                     </div>
                     {family.map(m => (
                       <div key={m.id} className={`ap-chip${madpasProfileId===m.id ? " on" : ""}`} onClick={() => setMadpasProfileId(m.id)}>
-                        <div style={{width:20,height:20,borderRadius:"50%",background:m.color||"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(m.name)}</div>
+                        <div style={{width:20,height:20,borderRadius:"50%",background:m.color||"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(m.name)}</div>
                         {m.name.split(" ")[0]}
                       </div>
                     ))}
@@ -323,7 +323,7 @@ export default function MadpasScreen({
                               <div style={{ fontSize:11, color:"rgba(255,255,255,.35)", marginBottom:16, wordBreak:"break-all" }}>{shareUrl}</div>
                               <button onClick={() => setQrOpen(false)}
                                 style={{ width:"100%", padding:"12px", borderRadius:12, background:"var(--green)", border:"none",
-                                  fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"#071510", cursor:"pointer" }}>
+                                  fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
                                 Luk
                               </button>
                             </div>
@@ -380,7 +380,7 @@ export default function MadpasScreen({
                                 <button onClick={() => navigator.share({ title:"Mit EatSafe madpas", url:shareUrl })}
                                   style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:"none",
                                     background:"var(--green)", fontFamily:"var(--f)", fontSize:12, fontWeight:800,
-                                    color:"#071510", cursor:"pointer",
+                                    color:"var(--on-green)", cursor:"pointer",
                                     display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                                   ↗ Del via...
                                 </button>
