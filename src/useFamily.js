@@ -91,10 +91,15 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
       });
       const saved = Array.isArray(data) ? data[0] : data;
       if (saved?.id) setFamily(f => f.map(m => m.id === tempMember.id ? { ...m, id: saved.id } : m));
-    } catch { /* silent */ }
+    } catch {
+      // Gemning fejlede — fjern det optimistiske medlem igen, ellers står
+      // brugeren med et familiemedlem i UI'et der aldrig blev gemt i databasen
+      setFamily(f => f.filter(m => m.id !== tempMember.id));
+    }
   };
 
   const removeMember = async (id) => {
+    const removed = family.find(m => m.id === id);
     setFamily(f => f.filter(m => m.id !== id));
     setActiveProfiles(a => a.filter(x => x !== id));
     try {
@@ -102,7 +107,11 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
         method: "DELETE",
         headers: makeHeaders(accessToken),
       });
-    } catch { /* silent */ }
+    } catch {
+      // Sletning fejlede — læg medlemmet tilbage, ellers forsvinder det fra UI'et
+      // uden at faktisk være slettet i databasen
+      if (removed) setFamily(f => [...f, removed]);
+    }
   };
 
   return {
