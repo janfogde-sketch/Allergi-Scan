@@ -58,7 +58,7 @@ async function fetchByCategory(category, excludeEan, accessToken, activeIds) {
     + `&verified_status=in.(verified,auto_verified)`
     + `&select=id,ean,name,brand,image_url,allergen_flags,category,verified_status`
     + `&limit=50`
-    + `&order=verified_status.asc`; // verified først
+    + `&order=verified_status.desc`; // "verified" > "auto_verified" alfabetisk — desc viser verified først
 
   const res = await fetch(url, {
     headers: { ...makeHeaders(accessToken), "Accept": "application/json" },
