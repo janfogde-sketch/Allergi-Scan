@@ -62,10 +62,21 @@ export default function RecipesScreen({
     lupin:       ["lupin","lupinmel"],
     bloeddyr:    ["blæksprutte","snegl","musling","østers"],
   };
+  // Ordgrænse-tjek for korte nøgleord (<=4 tegn) — ellers matcher fx "mel" (gluten)
+  // som understreng i "rismel"/"majsmel" (som er GLUTENFRI), eller "ost" i "kost"
+  const keywordMatches = (text, keyword) => {
+    if (keyword.length > 4) return text.includes(keyword);
+    const idx = text.indexOf(keyword);
+    if (idx === -1) return false;
+    const before = idx > 0 ? text[idx - 1] : " ";
+    const after = idx + keyword.length < text.length ? text[idx + keyword.length] : " ";
+    const isWordChar = c => /[a-zæøå0-9]/i.test(c);
+    return !isWordChar(before) && !isWordChar(after);
+  };
   const detectAllergens = (name) => {
     const n = name.toLowerCase();
     return Object.entries(ALLERGEN_KW)
-      .filter(([, kws]) => kws.some(k => n.includes(k)))
+      .filter(([, kws]) => kws.some(k => keywordMatches(n, k)))
       .map(([id]) => id);
   };
   const recomputeAllergens = (ings) => {
@@ -710,23 +721,16 @@ export default function RecipesScreen({
           const UNITS = ["g","kg","ml","l","dl","spsk","tsk","stk","fed","nip","bundt","dåse","pose","pakke"];
           const CATS  = ["aftensmad","morgenmad","frokost","dessert","tilbehør","snack"];
 
-          // Auto-detect allergener fra ingrediensnavn
-          const detectAllergens = (name) => {
-            const n = name.toLowerCase();
-            const found = [];
-            ALLERGENS.forEach(a => {
-              if ((a.keywords||[]).some(k => n.includes(k.toLowerCase()))) found.push(a.id);
-            });
-            return found;
-          };
-
-          // Genberegn allergener fra alle ingredienser
-          const recomputeAllergens = (ings) => {
+          // detectAllergens/recomputeAllergens til selve formularen genbruger de
+          // komponent-niveau-funktioner der allerede findes øverst i filen —
+          // denne lokale kopi læste et "keywords"-felt der ikke findes på
+          // ALLERGENS i constants.jsx og returnerede derfor altid en tom liste,
+          // så opskrift-indsendelsesformularen aldrig foreslog nogen allergener
+          const recomputeAllergensForm = (ings) => {
             const all = new Set();
             ings.forEach(i => { if(i.name) detectAllergens(i.name).forEach(id => all.add(id)); });
             return [...all];
           };
-
 
           const handleImg = (e) => {
             const f = e.target.files[0];
@@ -735,7 +739,7 @@ export default function RecipesScreen({
             setImgPreview(URL.createObjectURL(f));
           };
 
-          const autoAllergens = recomputeAllergens(submitIngredients);
+          const autoAllergens = recomputeAllergensForm(submitIngredients);
           const finalAllergens = [
             ...autoAllergens.filter(id => !removedAuto.includes(id)),
             ...manualAllergens.filter(id => !autoAllergens.includes(id)),
