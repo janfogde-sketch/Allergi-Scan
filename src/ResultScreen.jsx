@@ -42,7 +42,10 @@ export default function ResultScreen({
     {
       id: "honey",
       label: "Honning",
-      keywords: ["honning", "honey", "miel", "mel"],
+      // "mel" fjernet: "mel" er dansk for mel/flour og optræder som understreng i
+      // hvedemel/rismel/majsmel osv. — udløste en falsk honning-advarsel på næsten
+      // ethvert produkt med mel i ingredienslisten
+      keywords: ["honning", "honey", "miel"],
       reason: "Honning frarådes til børn under 1 år pga. risiko for botulisme. Vær forsigtig under 3 år.",
     },
     {
