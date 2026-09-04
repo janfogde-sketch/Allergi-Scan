@@ -357,7 +357,7 @@ ${openTicket.description}
             {family.map(m => (
               <div key={m.id} className="family-member">
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:m.allergens.length?10:0 }}>
-                  <div className="fm-avatar" style={{ background:m.color, color:"#fff" }}>{initials(m.name)}</div>
+                  <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)" }}>{initials(m.name)}</div>
                   <div style={{ flex:1 }}>
                     <div style={{ fontWeight:800, fontSize:15 }}>{m.name}</div>
                     <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>{m.allergens.length} allergi{m.allergens.length!==1?"er":""}</div>
@@ -546,7 +546,7 @@ ${openTicket.description}
                           <div key={u.id} onClick={() => setOpenAdminUser(u)}
                             style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", boxShadow:"var(--sh)", cursor:"pointer" }}>
                             <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                              <div style={{ width:38, height:38, borderRadius:"50%", background: u.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, color:"#fff", flexShrink:0 }}>
+                              <div style={{ width:38, height:38, borderRadius:"50%", background: u.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
                                 {(u.name||u.email||"?").charAt(0).toUpperCase()}
                               </div>
                               <div style={{ flex:1, minWidth:0 }}>
@@ -741,7 +741,7 @@ ${openTicket.description}
 
                   {/* Header */}
                   <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
-                    <div style={{ width:52, height:52, borderRadius:"50%", background: openAdminUser.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800, color:"#fff", flexShrink:0 }}>
+                    <div style={{ width:52, height:52, borderRadius:"50%", background: openAdminUser.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
                       {(openAdminUser.name||openAdminUser.email||"?").charAt(0).toUpperCase()}
                     </div>
                     <div style={{ flex:1 }}>
@@ -1228,12 +1228,12 @@ ${openTicket.description}
                     <button
                       onClick={() => reparseLoading ? null : runReparse(true)}
                       disabled={reparseLoading}
-                      style={{ background: reparseLoading ? "var(--border2)" : "var(--blue)", color: reparseLoading ? "var(--muted)" : "#fff",
+                      style={{ background: reparseLoading ? "var(--border2)" : "var(--blue)", color: reparseLoading ? "var(--muted)" : "var(--ink)",
                         border:"none", borderRadius:8, padding:"8px 14px", fontSize:12, fontWeight:800,
                         fontFamily:"var(--f)", cursor: reparseLoading ? "not-allowed" : "pointer",
                         display:"flex", alignItems:"center", gap:6, flexShrink:0, marginLeft:12 }}>
                       {reparseLoading
-                        ? <><div style={{ width:12, height:12, border:"2px solid rgba(255,255,255,.2)", borderTopColor:"#fff", borderRadius:"50%", animation:"spin .7s linear infinite" }} /> Reparserer…</>
+                        ? <><div style={{ width:12, height:12, border:"2px solid rgba(255,255,255,.2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .7s linear infinite" }} /> Reparserer…</>
                         : "▶ Kør nu"}
                     </button>
                   </div>

@@ -18,12 +18,12 @@ const WELCOME_SLIDES = [
         <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
           <div style={{ width:40, height:40, background:"rgba(74,222,128,.1)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20 }}>🥛</div>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:13, fontWeight:800, color:"#fff" }}>Arla Letmælk 1L</div>
+            <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Arla Letmælk 1L</div>
             <div style={{ fontSize:10, color:"rgba(255,255,255,.35)" }}>EAN 5710085008001 · Arla Foods</div>
           </div>
-          <div style={{ padding:"5px 11px", borderRadius:20, background:"rgba(239,68,68,.2)", border:"1px solid rgba(239,68,68,.5)", fontSize:11, fontWeight:800, color:"#f87171" }}>⚠ FARE</div>
+          <div style={{ padding:"5px 11px", borderRadius:20, background:"var(--red-md)", border:"1px solid rgba(255,82,82,.5)", fontSize:11, fontWeight:800, color:"var(--red)" }}>⚠ FARE</div>
         </div>
-        <div style={{ background:"rgba(239,68,68,.07)", border:"1px solid rgba(239,68,68,.18)", borderRadius:8, padding:"8px 10px", fontSize:11, color:"#fca5a5", lineHeight:1.6 }}>
+        <div style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, padding:"8px 10px", fontSize:11, color:"var(--red)", lineHeight:1.6 }}>
           <strong>Laktose</strong> — reagerer på dette: Anna, Sofie
         </div>
         <div style={{ marginTop:8, display:"flex", gap:6 }}>
@@ -42,8 +42,8 @@ const WELCOME_SLIDES = [
         <div style={{ display:"flex", gap:8, justifyContent:"center", marginBottom:10 }}>
           {[["Jan","var(--green)","Laktose · Gluten"],["Anna","#818cf8","Laktose"],["Sofie","#f59e0b","Nødder · Sesam"],["Mads","#34d399","Ingen"]].map(([n,c,a]) => (
             <div key={n} style={{ background:"rgba(255,255,255,.05)", borderRadius:10, padding:"9px 10px", textAlign:"center", border:"1px solid rgba(255,255,255,.08)", flex:1 }}>
-              <div style={{ width:30, height:30, borderRadius:"50%", background:c, color:"#000", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, margin:"0 auto 5px" }}>{n[0]}</div>
-              <div style={{ fontSize:9, fontWeight:700, color:"#fff", marginBottom:2 }}>{n}</div>
+              <div style={{ width:30, height:30, borderRadius:"50%", background:c, color:"var(--on-green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, margin:"0 auto 5px" }}>{n[0]}</div>
+              <div style={{ fontSize:9, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{n}</div>
               <div style={{ fontSize:8, color:"rgba(255,255,255,.35)", lineHeight:1.3 }}>{a}</div>
             </div>
           ))}
@@ -57,13 +57,13 @@ const WELCOME_SLIDES = [
   {
     title: "Find sikre alternativer automatisk",
     sub: "Hvis et produkt indeholder noget du reagerer på, finder EatSafe automatisk lignende produkter fra samme kategori — som er sikre for dig. Ingen manuel søgning.",
-    bg: "#1a0d0d", accent: "#f87171",
+    bg: "#1a0d0d", accent: "var(--red)",
     mockup: (
       <div style={{ marginTop:12 }}>
-        <div style={{ background:"rgba(239,68,68,.07)", border:"1px solid rgba(239,68,68,.18)", borderRadius:10, padding:"9px 12px", marginBottom:8, display:"flex", alignItems:"center", gap:8 }}>
+        <div style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, padding:"9px 12px", marginBottom:8, display:"flex", alignItems:"center", gap:8 }}>
           <span style={{ fontSize:18 }}>🥛</span>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:12, fontWeight:700, color:"#f87171" }}>Arla Letmælk — FARE</div>
+            <div style={{ fontSize:12, fontWeight:700, color:"var(--red)" }}>Arla Letmælk — FARE</div>
             <div style={{ fontSize:10, color:"rgba(255,255,255,.35)" }}>Indeholder laktose</div>
           </div>
         </div>
@@ -72,7 +72,7 @@ const WELCOME_SLIDES = [
           <div key={name} style={{ background:"rgba(74,222,128,.06)", border:"1px solid rgba(74,222,128,.15)", borderRadius:8, padding:"8px 10px", marginBottom:6, display:"flex", alignItems:"center", gap:8 }}>
             <span style={{ fontSize:16 }}>✅</span>
             <div>
-              <div style={{ fontSize:12, fontWeight:700, color:"#fff" }}>{name}</div>
+              <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{name}</div>
               <div style={{ fontSize:10, color:"rgba(255,255,255,.35)" }}>{tag}</div>
             </div>
           </div>
@@ -87,7 +87,7 @@ const WELCOME_SLIDES = [
     mockup: (
       <div style={{ marginTop:12 }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
-          <div style={{ fontSize:12, fontWeight:800, color:"#fff" }}>Familiens indkøbsliste</div>
+          <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)" }}>Familiens indkøbsliste</div>
           <div style={{ fontSize:10, color:"#38bdf8", fontWeight:700 }}>● Live</div>
         </div>
         {[
@@ -98,10 +98,10 @@ const WELCOME_SLIDES = [
         ].map(([name, done, sub]) => (
           <div key={name} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 10px", borderRadius:8, marginBottom:5, background:"rgba(255,255,255,.04)", border:"1px solid rgba(255,255,255,.07)", opacity: done ? 0.45 : 1 }}>
             <div style={{ width:18, height:18, borderRadius:4, border:`2px solid ${done?"#38bdf8":"rgba(255,255,255,.2)"}`, background: done?"#38bdf8":"transparent", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
-              {done && <span style={{ fontSize:11, color:"#000", fontWeight:800 }}>✓</span>}
+              {done && <span style={{ fontSize:11, color:"var(--on-green)", fontWeight:800 }}>✓</span>}
             </div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:"#fff", textDecoration: done?"line-through":"none" }}>{name}</div>
+              <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", textDecoration: done?"line-through":"none" }}>{name}</div>
               <div style={{ fontSize:9, color:"rgba(255,255,255,.3)" }}>{sub}</div>
             </div>
           </div>
@@ -123,7 +123,7 @@ const WELCOME_SLIDES = [
           <div key={name} style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(255,255,255,.05)", borderRadius:10, padding:"9px 12px", border:"1px solid rgba(255,255,255,.07)" }}>
             <div style={{ fontSize:22 }}>{e}</div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:"#fff" }}>{name}</div>
+              <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{name}</div>
               <div style={{ fontSize:9, color:"rgba(255,255,255,.35)" }}>{tags}</div>
             </div>
             <div style={{ fontSize:10, fontWeight:700, color: status.startsWith("✅") ? "var(--green)" : "#fbbf24", textAlign:"right", maxWidth:70 }}>{status}</div>
@@ -141,7 +141,7 @@ const WELCOME_SLIDES = [
         <div style={{ background:"rgba(134,239,172,.07)", border:"1px solid rgba(134,239,172,.18)", borderRadius:10, padding:"10px 12px", marginBottom:8 }}>
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
             <div style={{ padding:"3px 9px", borderRadius:20, background:"rgba(251,191,36,.15)", border:"1px solid rgba(251,191,36,.3)", fontSize:11, fontWeight:800, color:"#fbbf24" }}>E621</div>
-            <div style={{ fontSize:12, fontWeight:700, color:"#fff" }}>MSG · Smagsforstærker</div>
+            <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>MSG · Smagsforstærker</div>
           </div>
           <div style={{ fontSize:11, color:"rgba(255,255,255,.5)", lineHeight:1.6 }}>Glutamat-baseret smagsforstærker. Kan give hovedpine og hjertebanken hos følsomme personer. Hyppig i chips, nudler og færdigretter.</div>
         </div>
@@ -163,7 +163,7 @@ const WELCOME_SLIDES = [
           <span style={{ fontSize:20 }}>🇮🇹</span>
           <div style={{ fontSize:11, fontWeight:800, color:"rgba(251,191,36,.8)", textTransform:"uppercase", letterSpacing:"1px" }}>Italiensk</div>
         </div>
-        <div style={{ fontSize:13, fontWeight:800, color:"#fff", marginBottom:3 }}>Sono allergico al latte e al glutine.</div>
+        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:3 }}>Sono allergico al latte e al glutine.</div>
         <div style={{ fontSize:11, color:"rgba(255,255,255,.4)", fontStyle:"italic", marginBottom:10 }}>"so-no al-ler-JI-ko al LAT-te e al glu-TI-ne"</div>
         <div style={{ fontSize:10, color:"rgba(255,255,255,.3)", marginBottom:6 }}>Tilgængeligt på:</div>
         <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
@@ -206,7 +206,7 @@ function WelcomeDemoSlider({ setScreen, setAuthTab }) {
                 cursor:"pointer", transition:"all .25s" }} />
           ))}
         </div>
-        <div style={{ fontSize:17, fontWeight:900, color:"#fff", marginBottom:6, letterSpacing:"-.3px", lineHeight:1.3 }}>{slide.title}</div>
+        <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)", marginBottom:6, letterSpacing:"-.3px", lineHeight:1.3 }}>{slide.title}</div>
         <div style={{ fontSize:12, color:"rgba(255,255,255,.55)", lineHeight:1.65 }}>{slide.sub}</div>
         {slide.mockup}
         {slide.cta && (
@@ -459,9 +459,9 @@ export default function OnboardingScreen({
               <button onClick={() => handleOAuth("facebook")} disabled={authLoading}
                 style={{ display:"flex", alignItems:"center", gap:12, width:"100%", padding:"13px 16px",
                   background:"#1877F2", border:"1px solid #1877F2", borderRadius:12,
-                  cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:600, color:"#fff",
+                  cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:600, color:"var(--ink)",
                   boxShadow:"var(--sh)", transition:"all .15s" }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--ink)">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                 </svg>
                 Fortsæt med Facebook
@@ -882,7 +882,7 @@ export default function OnboardingScreen({
                   <div className="card" style={{ marginBottom:12 }}>
                     {family.map(m => (
                       <div key={m.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 0", borderBottom:"1px solid var(--border)" }}>
-                        <div className="fm-avatar" style={{ background:m.color, color:"#fff" }}>{initials(m.name)}</div>
+                        <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)" }}>{initials(m.name)}</div>
                         <div style={{ flex:1 }}>
                           <div style={{ fontWeight:800, fontSize:14 }}>{m.name}</div>
                           <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>
@@ -1115,7 +1115,7 @@ export default function OnboardingScreen({
                     {family.map(m => (
                       <div key={m.id} className="card" style={{ marginBottom:8, padding:"12px 14px" }}>
                         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                          <div className="fm-avatar" style={{ background:m.color, color:"#fff", flexShrink:0 }}>
+                          <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)", flexShrink:0 }}>
                             {initials(m.name)}
                           </div>
                           <div style={{ flex:1 }}>

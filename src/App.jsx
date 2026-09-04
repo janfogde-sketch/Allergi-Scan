@@ -462,12 +462,12 @@ export default function EatSafe() {
       <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
         <div className={`ap-chip${isAll?" on":""}`} onClick={toggleAll}>Hele familien</div>
         <div className={`ap-chip${!isAll&&activeProfiles.includes("me")?" on":""}`} onClick={() => toggleOne("me")}>
-          <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(user.name||"Mig")}</div>
+          <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(user.name||"Mig")}</div>
           {(user.name||"Mig").split(" ")[0]}
         </div>
         {family.map(m => (
           <div key={m.id} className={`ap-chip${!isAll&&activeProfiles.includes(m.id)?" on":""}`} onClick={() => toggleOne(m.id)}>
-            <div style={{width:20,height:20,borderRadius:"50%",background:m.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(m.name)}</div>
+            <div style={{width:20,height:20,borderRadius:"50%",background:m.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(m.name)}</div>
             {m.name.split(" ")[0]}
           </div>
         ))}
@@ -742,7 +742,7 @@ const lookupProduct = useCallback(async (ean) => {
             <div className="topbar-logo">
               <div className="topbar-shield" style={{background:"none",padding:0}}><EatSafeLogo size={34} variant="light" /></div>
               <div className="topbar-name">Eat<span>Safe</span></div>
-              <div style={{ background:"var(--amber)", color:"#fff", fontSize:9, fontWeight:800, padding:"2px 7px", borderRadius:100, letterSpacing:".5px", marginLeft:4, marginTop:2 }}>BETA</div>
+              <div style={{ background:"var(--amber)", color:"var(--ink)", fontSize:9, fontWeight:800, padding:"2px 7px", borderRadius:100, letterSpacing:".5px", marginLeft:4, marginTop:2 }}>BETA</div>
             </div>
             <div style={{ display:"flex", gap:6, alignItems:"center" }}>
               {/* Hjælp-knap */}
@@ -870,13 +870,13 @@ const lookupProduct = useCallback(async (ean) => {
                   onChange={e => setDeleteConfirmText(e.target.value)}
                   placeholder="slet"
                   autoCapitalize="none"
-                  style={{ width:"100%", padding:"13px 14px", border:`1px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"#fff", color:"var(--ink)" }}
+                  style={{ width:"100%", padding:"13px 14px", border:`1px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"var(--ink)", color:"var(--ink)" }}
                 />
               </div>
 
               <button onClick={deleteOwnAccount}
                 disabled={deleteConfirmText.toLowerCase() !== "slet" || deletingAccount}
-                style={{ width:"100%", padding:"15px", background: deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"#fff", cursor: deleteConfirmText.toLowerCase()==="slet" ? "pointer" : "not-allowed", marginBottom:10 }}>
+                style={{ width:"100%", padding:"15px", background: deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--ink)", cursor: deleteConfirmText.toLowerCase()==="slet" ? "pointer" : "not-allowed", marginBottom:10 }}>
                 {deletingAccount ? "Sletter…" : "🗑️ Slet min konto permanent"}
               </button>
 
@@ -979,21 +979,7 @@ const lookupProduct = useCallback(async (ean) => {
         {isOffline && (
           <div style={{
             position:"sticky", top:0, zIndex:200,
-            background:"var(--amber)", color:"#000",
-            fontSize:12, fontWeight:700,
-            padding:"8px 16px",
-            display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-            textAlign:"center",
-          }}>
-            📵 Offline — viser lokalt cachede data
-          </div>
-        )}
-
-        {/* ══ HJEM ══ */}        {/* ── OFFLINE BANNER ── */}
-        {isOffline && (
-          <div style={{
-            position:"sticky", top:0, zIndex:200,
-            background:"var(--amber)", color:"#000",
+            background:"var(--amber)", color:"var(--on-green)",
             fontSize:12, fontWeight:700,
             padding:"8px 16px",
             display:"flex", alignItems:"center", justifyContent:"center", gap:8,

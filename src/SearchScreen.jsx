@@ -108,7 +108,7 @@ export default function SearchScreen({
                   prev.includes(p.id) ? prev.filter(x=>x!==p.id) : [...prev, p.id]
                 )}>
                 <div style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 10px 6px 6px", borderRadius:100, border:`1.5px solid ${isActive ? "var(--green)" : "var(--border)"}`, background: isActive ? "var(--green-lt)" : "var(--paper2)", transition:"all .15s" }}>
-                  <div style={{ width:24, height:24, borderRadius:"50%", background: isActive ? "var(--green)" : "var(--muted)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:800, color:"#fff", flexShrink:0 }}>
+                  <div style={{ width:24, height:24, borderRadius:"50%", background: isActive ? "var(--green)" : "var(--muted)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
                     {initials(p.name)}
                   </div>
                   <div>
@@ -127,7 +127,7 @@ export default function SearchScreen({
                   </div>
                   {isActive && (
                     <div style={{ width:14, height:14, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
                     </div>
                   )}
                 </div>
@@ -201,7 +201,7 @@ export default function SearchScreen({
                     </div>
                     {(on || inActive) && (
                       <div style={{ width:14, height:14, borderRadius:"50%", background:"var(--red)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
                       </div>
                     )}
                   </div>

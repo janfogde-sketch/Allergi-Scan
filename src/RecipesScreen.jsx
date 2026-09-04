@@ -120,7 +120,7 @@ export default function RecipesScreen({
                   : <div className="recipe-detail-img-placeholder">🍽️</div>
                 }
                 <button className="recipe-detail-back" onClick={() => setSelectedRecipe(null)}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path strokeLinecap="round" d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2.5"><path strokeLinecap="round" d="M19 12H5M12 19l-7-7 7-7"/></svg>
                 </button>
                 <button className="recipe-detail-fav" onClick={() => setFavoriteRecipes(f => isFav ? f.filter(x=>x!==r.id) : [...f,r.id])}>
                   {isFav ? "❤️" : "🤍"}
@@ -341,7 +341,7 @@ export default function RecipesScreen({
                             onClick={() => setCompletedSteps(s => ({ ...s, [i]: !s[i] }))}>
                             <div className="step-circle" style={{ background: done ? "var(--green)" : "var(--surface2)", border: done ? "none" : "1.5px solid var(--border2)" }}>
                               {done
-                                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
                                 : <span style={{ fontSize:12, fontWeight:800, color:"var(--muted2)" }}>{i+1}</span>
                               }
                             </div>
@@ -416,13 +416,13 @@ export default function RecipesScreen({
               }}>
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                   <div>
-                    <div style={{ fontSize:24, fontWeight:900, color:"#fff", letterSpacing:"-.4px", marginBottom:2 }}>Opskrifter</div>
+                    <div style={{ fontSize:24, fontWeight:900, color:"var(--ink)", letterSpacing:"-.4px", marginBottom:2 }}>Opskrifter</div>
                     <div style={{ fontSize:12, color:"rgba(255,255,255,.65)" }}>
                       {recipes.length > 0 ? `${recipes.length} opskrifter` : "Indlæser…"}
                     </div>
                   </div>
                   <button onClick={() => setShowSubmitRecipe(true)}
-                    style={{ background:"rgba(255,255,255,.15)", color:"#fff", border:"1px solid rgba(255,255,255,.25)", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", backdropFilter:"none" }}>
+                    style={{ background:"rgba(255,255,255,.15)", color:"var(--ink)", border:"1px solid rgba(255,255,255,.25)", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", backdropFilter:"none" }}>
                     + Indsend
                   </button>
                 </div>

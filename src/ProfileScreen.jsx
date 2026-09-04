@@ -192,12 +192,12 @@ export default function ProfileScreen({
       <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
         <div className={`ap-chip${isAll?" on":""}`} onClick={toggleAll}>Hele familien</div>
         <div className={`ap-chip${!isAll&&activeProfiles.includes("me")?" on":""}`} onClick={() => toggleOne("me")}>
-          <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(user.name||"Mig")}</div>
+          <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(user.name||"Mig")}</div>
           {(user.name||"Mig").split(" ")[0]}
         </div>
         {family.map(m => (
           <div key={m.id} className={`ap-chip${!isAll&&activeProfiles.includes(m.id)?" on":""}`} onClick={() => toggleOne(m.id)}>
-            <div style={{width:20,height:20,borderRadius:"50%",background:m.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff"}}>{initials(m.name)}</div>
+            <div style={{width:20,height:20,borderRadius:"50%",background:m.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(m.name)}</div>
             {m.name.split(" ")[0]}
           </div>
         ))}
@@ -250,7 +250,7 @@ export default function ProfileScreen({
             {/* Hero */}
             <div style={{ background:"rgba(255,255,255,.06)", border:"1px solid rgba(255,255,255,.1)", borderRadius:20, padding:"22px 20px", marginBottom:14 }}>
               <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:16 }}>
-                <div style={{ width:56, height:56, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800, color:"#fff", flexShrink:0 }}>
+                <div style={{ width:56, height:56, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
                   {initials(user.name||"?")}
                 </div>
                 <div style={{ flex:1 }}>
@@ -394,7 +394,7 @@ export default function ProfileScreen({
                           opacity: pushLoading ? 0.6 : 1,
                         }}>
                         <div style={{
-                          width:22, height:22, borderRadius:"50%", background:"#fff",
+                          width:22, height:22, borderRadius:"50%", background:"var(--ink)",
                           position:"absolute", top:3,
                           left: pushStatus === "granted" ? 23 : 3,
                           transition:"left .2s", boxShadow:"0 1px 3px rgba(0,0,0,.3)"
@@ -670,7 +670,7 @@ export default function ProfileScreen({
             {family.map(m => (
               <div key={m.id} className="family-member">
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:m.allergens.length?10:0 }}>
-                  <div className="fm-avatar" style={{ background:m.color, color:"#fff" }}>{initials(m.name)}</div>
+                  <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)" }}>{initials(m.name)}</div>
                   <div style={{ flex:1 }}>
                     <div style={{ fontWeight:800, fontSize:15 }}>{m.name}</div>
                     <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>

@@ -22,9 +22,9 @@ export function EatSafeLogo({ size = 32, variant = "light" }) {
           </feMerge>
         </filter>
         <linearGradient id={"gline-"+uid} x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0%" stopColor="#22C55E" stopOpacity="0.9" />
+          <stop offset="0%" stopColor="var(--green)" stopOpacity="0.9" />
           <stop offset="60%" stopColor="var(--green)" />
-          <stop offset="100%" stopColor="#22C55E" />
+          <stop offset="100%" stopColor="var(--green)" />
         </linearGradient>
       </defs>
       <g clipPath={"url(#sq-"+uid+")"}>
@@ -303,8 +303,8 @@ export function ProfileBadges({ allergenFlags, allergens, customAllerg, family, 
       {profiles.map(p => {
         const hasDanger = p.allergens.some(a => allergenFlags[a] === "yes");
         const hasWarning = p.allergens.some(a => allergenFlags[a] === "traces");
-        const color = hasDanger ? "#E63946" : hasWarning ? "#D97706" : "#22C55E";
-        const bg = hasDanger ? "rgba(230,57,70,.12)" : hasWarning ? "rgba(217,119,6,.1)" : "rgba(34,197,94,.12)";
+        const color = hasDanger ? "var(--red)" : hasWarning ? "var(--amber)" : "var(--green)";
+        const bg = hasDanger ? "var(--red-lt)" : hasWarning ? "var(--amber-lt)" : "var(--green-lt)";
         return (
           <div key={p.id} title={p.id==="me"?"Din profil":p.name} style={{
             width:size, height:size, borderRadius:"50%",
@@ -337,9 +337,9 @@ export function PageID({ screen }) {
         position:"fixed", top:8, left:"50%", transform:"translateX(-50%)",
         zIndex:9999,
         fontSize:10, fontWeight:800,
-        color: copied ? "#fff" : "#1F2733",
-        background: copied ? "#22C55E" : "rgba(255,255,255,0.95)",
-        border: copied ? "1.5px solid #22C55E" : "1.5px solid #D0D0C8",
+        color: copied ? "var(--ink)" : "#1F2733",
+        background: copied ? "var(--green)" : "rgba(255,255,255,0.95)",
+        border: copied ? "1.5px solid var(--green)" : "1.5px solid #D0D0C8",
         borderRadius:20, padding:"3px 12px", cursor:"pointer",
         letterSpacing:"1px", fontFamily:"monospace",
         boxShadow:"0 2px 10px rgba(0,0,0,0.15)",

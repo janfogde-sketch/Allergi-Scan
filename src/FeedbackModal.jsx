@@ -202,7 +202,7 @@ export default function FeedbackModal({
                   <button onClick={() => { setImage(null); setImageB64(null); }}
                     style={{ position:"absolute", top:4, right:4, background:"rgba(0,0,0,.6)",
                       border:"none", borderRadius:"50%", width:24, height:24,
-                      color:"#fff", cursor:"pointer", fontSize:14 }}>×</button>
+                      color:"var(--ink)", cursor:"pointer", fontSize:14 }}>×</button>
                 </div>
               ) : (
                 <label style={{ display:"flex", alignItems:"center", gap:8, padding:"12px 14px",
