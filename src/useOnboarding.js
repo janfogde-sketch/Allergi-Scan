@@ -43,26 +43,26 @@ export function useOnboarding({ accessToken, userId, user, loginEmail,
   };
 
   const saveAllergensStep2 = async () => {
-    try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, {
-        method: "DELETE",
-        headers: makeHeaders(accessToken),
-      });
-      for (const a of allergens) {
-        await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, {
-          method: "POST",
-          headers: makeHeaders(accessToken),
-          body: JSON.stringify({ user_id: userId, allergen: a, type: "allergen" }),
-        });
-      }
-      for (const c of customAllerg) {
-        await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, {
-          method: "POST",
-          headers: makeHeaders(accessToken),
-          body: JSON.stringify({ user_id: userId, allergen: c, type: "custom" }),
-        });
-      }
-    } catch { /* silent */ }
+    // Tidligere blev hvert allergen POST'et enkeltvis i et loop efter DELETE —
+    // fejlede ét kald midtvejs (fx netværksudfald), endte brugeren med en
+    // DELVIST gemt allergiliste uden nogen advarsel. Kritisk i en app der skal
+    // advare mod farlige allergener. Nu: DELETE + én samlet POST af alle rækker,
+    // så det enten lykkes helt eller slet ikke — og fejl kastes videre i stedet
+    // for at blive slugt stille.
+    await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, {
+      method: "DELETE",
+      headers: makeHeaders(accessToken),
+    });
+    const rows = [
+      ...allergens.map(a => ({ user_id: userId, allergen: a, type: "allergen" })),
+      ...customAllerg.map(c => ({ user_id: userId, allergen: c, type: "custom" })),
+    ];
+    if (rows.length === 0) return;
+    await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, {
+      method: "POST",
+      headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+      body: JSON.stringify(rows),
+    });
   };
 
   const finishOnboard = async () => {
