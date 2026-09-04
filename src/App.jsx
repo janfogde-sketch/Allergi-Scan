@@ -670,12 +670,18 @@ const lookupProduct = useCallback(async (ean) => {
       if (feedbackOpen) { setFeedbackOpen(false); return; }
       if (profilePopup) { setProfilePopup(null); return; }
       if (cameraActive) { stopCamera(); return; }
-      if (screen === SCREENS.RESULT || screen === SCREENS.NOTFOUND || screen === SCREENS.SUGGEST_EDIT || screen === SCREENS.SEARCH) {
+      if (screen === SCREENS.RESULT || screen === SCREENS.NOTFOUND || screen === SCREENS.SUGGEST_EDIT
+          || screen === SCREENS.SEARCH || screen === SCREENS.SUBMITTED
+          || screen === SCREENS.MADPAS || screen === SCREENS.RESTAURANTGUIDE) {
         setScreen(SCREENS.HOME);
         return;
       }
-      if (screen === SCREENS.ADMIN) { setScreen(SCREENS.PROFILE); return; }
-      // På HOME — gør ingenting (forhindrer logout)
+      if (screen === SCREENS.ADMIN || screen === SCREENS.FAMILY || screen === SCREENS.HISTORY
+          || screen === SCREENS.FAVORITES || screen === SCREENS.EDITPROFILE) {
+        setScreen(SCREENS.PROFILE);
+        return;
+      }
+      // På bundmenu-skærmene (HOME, LIST, RECIPES, KNOWLEDGE, PROFILE) — gør ingenting (forhindrer logout)
     };
     window.addEventListener("popstate", handleBack);
     return () => window.removeEventListener("popstate", handleBack);
