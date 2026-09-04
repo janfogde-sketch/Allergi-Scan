@@ -60,9 +60,9 @@ export function useShoppingList({ accessToken, userId }) {
   useEffect(() => {
     if (!accessToken || !shoppingListId) return;
 
-    // Afmeld tidligere kanal
+    // Afmeld tidligere kanal (rå WebSocket, ikke en Supabase-kanal — .close(), ikke .unsubscribe())
     if (channelRef.current) {
-      channelRef.current.unsubscribe();
+      channelRef.current.close();
       channelRef.current = null;
     }
 
@@ -70,57 +70,77 @@ export function useShoppingList({ accessToken, userId }) {
     const wsUrl = SUPABASE_URL.replace("https://", "wss://") + "/realtime/v1/websocket"
       + `?apikey=${SUPABASE_ANON_KEY}&vsn=1.0.0`;
 
-    let ws;
-    let heartbeat;
-    let joined = false;
-
     const topic = `realtime:public:shopping_list_items:list_id=eq.${shoppingListId}`;
 
-    const send = (msg) => {
-      if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
+    let cancelled = false;
+    let ws;
+    let heartbeat;
+    let reconnectTimer;
+    let reconnectDelay = 1000;
+
+    const connect = () => {
+      if (cancelled) return;
+      let joined = false;
+
+      const send = (msg) => {
+        if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
+      };
+
+      ws = new WebSocket(wsUrl);
+      channelRef.current = ws;
+
+      ws.onopen = () => {
+        reconnectDelay = 1000; // forbindelse lykkedes — nulstil backoff
+        // Join kanal
+        send({ topic, event: "phx_join", payload: { user_token: accessToken }, ref: "1" });
+        // Heartbeat hvert 25s
+        heartbeat = setInterval(() => send({ topic: "phoenix", event: "heartbeat", payload: {}, ref: "hb" }), 25000);
+      };
+
+      ws.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg.event === "phx_reply" && msg.ref === "1") joined = true;
+          if (!joined) return;
+
+          const { type, record, old_record } = msg.payload || {};
+          if (!type) return;
+
+          if (type === "INSERT" && record) {
+            setShoppingList(prev => {
+              if (prev.some(i => i.id === record.id)) return prev; // undgå dubletter
+              return [...prev, { id: record.id, name: record.name, checked: record.checked || false, added_by: record.added_by || null }];
+            });
+          }
+          if (type === "UPDATE" && record) {
+            setShoppingList(prev => prev.map(i => i.id === record.id ? { ...i, checked: record.checked, name: record.name } : i));
+          }
+          if (type === "DELETE" && old_record) {
+            setShoppingList(prev => prev.filter(i => i.id !== old_record.id));
+          }
+        } catch { /* ignorer misdannede beskeder */ }
+      };
+
+      ws.onerror = () => { /* håndteres af onclose herunder */ };
+
+      // Forbindelsen kan tabes uden varsel (mobil i baggrund, netværksskift) —
+      // uden genforbindelse ville realtime-sync stille dø resten af sessionen
+      ws.onclose = () => {
+        clearInterval(heartbeat);
+        if (cancelled) return;
+        reconnectTimer = setTimeout(connect, reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+      };
     };
 
-    ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {
-      // Join kanal
-      send({ topic, event: "phx_join", payload: { user_token: accessToken }, ref: "1" });
-      // Heartbeat hvert 25s
-      heartbeat = setInterval(() => send({ topic: "phoenix", event: "heartbeat", payload: {}, ref: "hb" }), 25000);
-    };
-
-    ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
-        if (msg.event === "phx_reply" && msg.ref === "1") joined = true;
-        if (!joined) return;
-
-        const { commit_timestamp, type, record, old_record } = msg.payload || {};
-        if (!type) return;
-
-        if (type === "INSERT" && record) {
-          setShoppingList(prev => {
-            if (prev.some(i => i.id === record.id)) return prev; // undgå dubletter
-            return [...prev, { id: record.id, name: record.name, checked: record.checked || false, added_by: record.added_by || null }];
-          });
-        }
-        if (type === "UPDATE" && record) {
-          setShoppingList(prev => prev.map(i => i.id === record.id ? { ...i, checked: record.checked, name: record.name } : i));
-        }
-        if (type === "DELETE" && old_record) {
-          setShoppingList(prev => prev.filter(i => i.id !== old_record.id));
-        }
-      } catch { /* ignorer misdannede beskeder */ }
-    };
-
-    ws.onerror = () => { /* silent — REST-opdateringer fungerer stadig */ };
-
-    channelRef.current = ws;
+    connect();
 
     return () => {
+      cancelled = true;
       clearInterval(heartbeat);
-      if (ws.readyState === WebSocket.OPEN) {
-        send({ topic, event: "phx_leave", payload: {}, ref: "leave" });
+      clearTimeout(reconnectTimer);
+      if (ws?.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ topic, event: "phx_leave", payload: {}, ref: "leave" }));
         ws.close();
       }
       channelRef.current = null;
@@ -153,26 +173,39 @@ export function useShoppingList({ accessToken, userId }) {
 
   // ── Toggle ──────────────────────────────────────────────────────────────────
   const toggleItem = async (id) => {
-    const item = shoppingList.find(i => i.id === id);
-    setShoppingList(l => l.map(i => i.id === id ? { ...i, checked: !i.checked } : i));
+    // Læs den nye værdi inde fra state-updateren, ikke fra det ydre "shoppingList"
+    // (som kan være et forældet closure-snapshot ved hurtige dobbelt-tap) —
+    // ellers kan PATCH'en sende den forkerte checked-værdi til serveren
+    let newChecked;
+    setShoppingList(l => l.map(i => {
+      if (i.id !== id) return i;
+      newChecked = !i.checked;
+      return { ...i, checked: newChecked };
+    }));
+    if (newChecked === undefined) return; // id fandtes ikke i listen
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/shopping_list_items?id=eq.${id}`, {
         method: "PATCH",
         headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-        body: JSON.stringify({ checked: !item?.checked }),
+        body: JSON.stringify({ checked: newChecked }),
       });
     } catch { /* silent */ }
   };
 
   // ── Slet ────────────────────────────────────────────────────────────────────
   const removeItem = async (id) => {
+    const removed = shoppingList.find(i => i.id === id);
     setShoppingList(l => l.filter(i => i.id !== id));
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/shopping_list_items?id=eq.${id}`, {
         method: "DELETE",
         headers: makeHeaders(accessToken),
       });
-    } catch { /* silent */ }
+    } catch {
+      // Sletning fejlede — læg varen tilbage, ellers forsvinder den fra UI'et
+      // uden reelt at være slettet i databasen
+      if (removed) setShoppingList(l => [...l, removed]);
+    }
   };
 
   const clearDone = () => shoppingList.filter(i => i.checked).forEach(i => removeItem(i.id));
