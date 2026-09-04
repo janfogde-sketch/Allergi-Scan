@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState } from "react";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 import { sendPushToUser } from "./usePush.js";
 
@@ -148,13 +148,33 @@ export function useAdmin(accessToken, userId, clearAuth) {
     setOpenSubmission(null); setEditingSubmission(null);
     setSubmissions(s => s.filter(x => x.id !== submission.id));
     try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/submissions?id=eq.${submission.id}`, {
+      // editingSubmission.allergen_flags rummer hele det oprindelige ai_parsed_data
+      // (allergen-ids blandet med name/nutrition/notes) — filtrér til kun gyldige
+      // allergen-ids, så vi ikke skriver fremmede felter ind i products.allergen_flags
+      const allergenFlags = {};
+      for (const a of ALLERGENS) {
+        const v = edited?.allergen_flags?.[a.id];
+        if (v) allergenFlags[a.id] = v;
+      }
+      // Godkendelse skal ramme submissions Edge Function — den er den eneste der
+      // rent faktisk OPRETTER produktet i products-tabellen. Et almindeligt PATCH
+      // mod /rest/v1/submissions markerer kun status, uden at oprette produktet,
+      // så brugeren fik en "produktet er tilgængeligt"-push for et produkt der
+      // aldrig blev oprettet.
+      await apiCall(`${SUPABASE_URL}/functions/v1/submissions/${submission.id}`, {
         method: "PATCH",
-        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-        body: JSON.stringify({ status: "approved", ai_parsed_data: edited }),
+        headers: makeHeaders(accessToken),
+        body: JSON.stringify({
+          status: "approved",
+          reviewed_by: userId,
+          name: edited?.name,
+          brand: edited?.brand,
+          ingredients_text: edited?.ingredients_text,
+          allergen_flags: allergenFlags,
+        }),
       });
 
-      // Repars allergen-flags på det godkendte produkt
+      // Reparse allergen-flags med AI-verifikation på det nu oprettede produkt
       if (submission.ean || edited?.ean) {
         const ean = edited?.ean || submission.ean;
         const ingredientsText = edited?.ingredients_text || submission.ocr_raw_text || "";
@@ -229,10 +249,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
     setSubmissions(s => s.filter(x => x.id !== id));
     setOpenSubmission(null);
     try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/submissions?id=eq.${id}`, {
+      await apiCall(`${SUPABASE_URL}/functions/v1/submissions/${id}`, {
         method: "PATCH",
-        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-        body: JSON.stringify({ status: "rejected" }),
+        headers: makeHeaders(accessToken),
+        body: JSON.stringify({ status: "rejected", reviewed_by: userId }),
       });
     } catch (e) {
       console.error("rejectSubmission:", e);
