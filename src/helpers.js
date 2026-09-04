@@ -38,6 +38,14 @@ export async function apiCall(url, options = {}) {
   return text ? JSON.parse(text) : {};
 }
 
+// JWT-payloads er base64url (bruger -/_ i stedet for +// og har ingen padding).
+// Almindelig atob() fejler tilfældigt afhængig af token-indhold — konverter først.
+export function decodeJwtPayload(token) {
+  const b64 = token.split(".")[1];
+  const padded = b64.replace(/-/g, "+").replace(/_/g, "/").padEnd(b64.length + (4 - (b64.length % 4)) % 4, "=");
+  return JSON.parse(atob(padded));
+}
+
 // ─── ALLERGEN SAMMENLIGNING ──────────────────────────────────────────────────
 
 export function compareAllergens(flags, activeAllergenIds) {
