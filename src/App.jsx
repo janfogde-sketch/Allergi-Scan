@@ -879,7 +879,7 @@ const lookupProduct = useCallback(async (ean) => {
                   onChange={e => setDeleteConfirmText(e.target.value)}
                   placeholder="slet"
                   autoCapitalize="none"
-                  style={{ width:"100%", padding:"13px 14px", border:`1px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"var(--ink)", color:"var(--ink)" }}
+                  style={{ width:"100%", padding:"13px 14px", border:`1.5px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"var(--surface2)", color:"var(--ink)" }}
                 />
               </div>
 
