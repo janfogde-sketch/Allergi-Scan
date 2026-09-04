@@ -63,7 +63,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
     try {
       const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); });
       setProductImageBase64(base64);
-      setProductImagePreview(URL.createObjectURL(file));
+      setProductImagePreview(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(file); });
       try {
         const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ image_base64: base64, mode:"product_name" }) });
         if (ocrData.success && ocrData.text) {
@@ -167,9 +167,13 @@ export function useProduct({ accessToken, userId, activeProfiles,
 
   const handleEditProductCapture = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
-    setEditProductImage(URL.createObjectURL(file));
-    const b64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = () => rej(); r.readAsDataURL(file); });
-    setEditProductImageB64(b64);
+    try {
+      const b64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = () => rej(new Error("Kunne ikke læse billedet")); r.readAsDataURL(file); });
+      setEditProductImage(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(file); });
+      setEditProductImageB64(b64);
+    } catch {
+      setScanError_("Billedet kunne ikke læses. Prøv igen.");
+    }
   };
 
   const submitProduct = async () => {
