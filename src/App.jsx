@@ -497,8 +497,9 @@ export default function EatSafe() {
     return { ids: [...ids], custom: [...customAllerg], eNumbers: [...eNums] };
   }, [allergens, customAllerg, selectedENumbers, family, activeProfiles]);
 
-  const activeIds = allActive().ids;
-  const activeENumbers = allActive().eNumbers;
+  // allActive() rebygger Sets og looper family — kaldes kun én gang og
+  // destructures i stedet for to separate kald der hver genberegner det samme
+  const { ids: activeIds, eNumbers: activeENumbers } = allActive();
 
   
   // ── SCANNER ───────────────────────────────────────────────────────────────
