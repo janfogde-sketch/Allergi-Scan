@@ -25,7 +25,7 @@ import {
 import { ENumberPicker } from "./AllergenPicker.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 const AdminScreen = React.lazy(() => import('./AdminScreen.jsx'));
-import OnboardingScreen from './OnboardingScreen.jsx';
+const OnboardingScreen = React.lazy(() => import('./OnboardingScreen.jsx'));
 import MadpasScreen from './MadpasScreen.jsx';
 import ProfileScreen from './ProfileScreen.jsx';
 import ScannerScreen from './ScannerScreen.jsx';
@@ -698,6 +698,7 @@ const lookupProduct = useCallback(async (ean) => {
         {/* ══ VELKOMST ══ */}
         {/* ══ ONBOARDING SCREENS ══ */}
         {(screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode) && (
+          <Suspense fallback={<div style={{padding:"40px 16px",textAlign:"center"}}><div style={{width:28,height:28,border:"3px solid var(--border2)",borderTopColor:"var(--green)",borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto"}} /></div>}>
           <OnboardingScreen
             screen={screen} setScreen={setScreen}
             authTab={authTab} setAuthTab={setAuthTab}
@@ -735,6 +736,7 @@ const lookupProduct = useCallback(async (ean) => {
             StepBar={StepBar}
             buildLabel={formatBuildTime()}
           />
+          </Suspense>
         )}
         {/* TOPBAR */}
         {!isOnboard && (
