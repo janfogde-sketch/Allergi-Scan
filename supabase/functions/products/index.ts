@@ -7,20 +7,25 @@ const corsHeaders = {
 
 function mapAllergenTags(allergenTags: string[], tracesTags: string[]) {
   const allergenMap: Record<string, string> = {
-    "en:gluten": "gluten", "en:milk": "laktose", "en:eggs": "aeg",
+    "en:gluten": "gluten", "en:wheat": "hvede", "en:milk": "maelkeallergi", "en:eggs": "aeg",
     "en:nuts": "noedder", "en:peanuts": "jordnoedder", "en:soybeans": "soja",
     "en:fish": "fisk", "en:crustaceans": "skaldyr", "en:celery": "selleri",
     "en:mustard": "sennep", "en:sesame-seeds": "sesam",
     "en:sulphur-dioxide": "svovl", "en:lupin": "lupin", "en:molluscs": "bloeddyr",
   };
   const flags: Record<string, string> = {
-    gluten:"unknown", laktose:"unknown", aeg:"unknown", noedder:"unknown",
+    gluten:"unknown", hvede:"unknown", maelkeallergi:"unknown", laktose:"unknown", aeg:"unknown", noedder:"unknown",
     jordnoedder:"unknown", soja:"unknown", fisk:"unknown", skaldyr:"unknown",
     selleri:"unknown", sennep:"unknown", sesam:"unknown", svovl:"unknown",
     lupin:"unknown", bloeddyr:"unknown",
   };
   for (const tag of allergenTags) { const k = allergenMap[tag]; if (k) flags[k] = "yes"; }
   for (const tag of tracesTags)   { const k = allergenMap[tag]; if (k && flags[k] !== "yes") flags[k] = "traces"; }
+  // en:milk dækker både mælkeprotein og mælkesukker (laktose) — OFF skelner
+  // ikke mellem dem, så vi sætter konservativt begge ved mælk-indhold
+  // (samme model som allergens-funktionens keyword-engine bruger)
+  if (flags["maelkeallergi"] === "yes") flags["laktose"] = "yes";
+  else if (flags["maelkeallergi"] === "traces" && flags["laktose"] === "unknown") flags["laktose"] = "traces";
   return flags;
 }
 

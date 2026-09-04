@@ -64,10 +64,17 @@ function buildAllergenFlags(product: any): Record<string, string> {
   const flags: Record<string, string> = Object.fromEntries(
     Object.values(ALLERGEN_MAP).map(v => [v, "no"])
   );
+  // laktose har ingen selvstændigt OFF-tag — sæt "no" som default her også,
+  // så nøglen altid findes (i stedet for at mangle helt fra allergen_flags)
+  flags["laktose"] = "no";
   for (const tag of (product.allergens_tags || [])) {
     const key = ALLERGEN_MAP[tag];
     if (key) flags[key] = "yes";
   }
+  // en:milk dækker både mælkeprotein og mælkesukker (laktose) — OFF skelner
+  // ikke mellem dem, så vi sætter konservativt begge ved mælk-indhold
+  // (samme model som allergens-funktionens keyword-engine bruger)
+  if (flags["maelkeallergi"] === "yes") flags["laktose"] = "yes";
   return flags;
 }
 
