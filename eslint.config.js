@@ -6,7 +6,10 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // supabase/functions/** er Deno Edge Functions (server-side, egne konventioner —
+  // fx tilladt @ts-nocheck og any i hurtig JSON-parsing), ikke frontend-koden
+  // denne config er skrevet til. Samme udelukkelse som tsconfig.app.json bruger.
+  globalIgnores(['dist', 'supabase/functions/**']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

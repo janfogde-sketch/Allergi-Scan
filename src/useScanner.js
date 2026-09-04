@@ -27,6 +27,8 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   const noScanTimerRef  = useRef(null);
   const galleryInputRef = useRef(null);
   const photoFallbackRef = useRef(null);
+  const startingRef      = useRef(false); // låser mod dobbelt-tap mens kameraet starter op
+  const startRetriesRef  = useRef(0);
 
   // onScanSuccess gemmes i ref for at undgå TDZ-problemer
   // (lookupProduct defineres efter useScanner initialiseres i App.jsx)
@@ -46,13 +48,16 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
 
   // ── startCamera ────────────────────────────────────────────────────────────
   const startCamera = useCallback(async () => {
-    if (cameraActive) return;
+    // cameraActive opdateres asynkront af React, så et hurtigt dobbelt-tap kan nå at
+    // kalde startCamera igen før første kald har sat state — startingRef lukker det hul
+    if (cameraActive || startingRef.current) return;
+    startingRef.current = true;
     setScanError(""); setTorchOn(false); setScanZoom(1.0); scanZoomRef.current = 1.0; setShowPhotoHint(false);
     if (noScanTimerRef.current) { clearTimeout(noScanTimerRef.current); noScanTimerRef.current = null; }
     torchTrackRef.current = null; lastScannedRef.current = null;
 
     if (!navigator.mediaDevices?.getUserMedia) {
-      setScanError("Kamera ikke understøttet. Prøv Chrome eller Safari."); return;
+      setScanError("Kamera ikke understøttet. Prøv Chrome eller Safari."); startingRef.current = false; return;
     }
 
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -62,6 +67,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
           advanced: [{ focusMode: "continuous" }, { exposureMode: "continuous" }] } };
 
     try {
+    try {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       const track = stream.getVideoTracks()[0];
       if (track) torchTrackRef.current = track;
@@ -69,8 +75,10 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     } catch (e) {
       if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
         setScanError("Kamera-adgang nægtet. Gå til telefonens indstillinger og tillad kamera for denne app.");
+        return;
       } else if (e.name === "NotFoundError") {
         setScanError("Intet kamera fundet på denne enhed.");
+        return;
       } else if (e.name === "OverconstrainedError" && isIOS) {
         try { const s2 = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); s2.getTracks().forEach(t => t.stop()); }
         catch { setScanError("Kunne ikke starte kamera. Prøv at genindlæse siden."); return; }
@@ -180,10 +188,20 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
           };
         }
       }
+      startRetriesRef.current = 0; // kameraet kørte succesfuldt — nulstil retry-tæller
     } catch (e) {
       setCameraActive(false);
-      if (e.message?.includes("constraint") || e.message?.includes("Constraint")) setTimeout(() => startCamera(), 500);
-      else setScanError("Kamera kunne ikke starte. Prøv at lukke andre apps og prøv igen.");
+      const isConstraintError = e.message?.includes("constraint") || e.message?.includes("Constraint");
+      if (isConstraintError && startRetriesRef.current < 3) {
+        startRetriesRef.current++;
+        setTimeout(() => startCamera(), 500); // finally herunder frigiver låsen inden da
+        return;
+      }
+      startRetriesRef.current = 0;
+      setScanError("Kamera kunne ikke starte. Prøv at lukke andre apps og prøv igen.");
+    }
+    } finally {
+      startingRef.current = false;
     }
   }, [cameraActive, setScanError, stopCamera]);
 
