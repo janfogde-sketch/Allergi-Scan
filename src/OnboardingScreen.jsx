@@ -484,7 +484,7 @@ export default function OnboardingScreen({
             {!editMode && (
               <div style={{ textAlign:"center", padding:"4px 0 20px" }}>
                 <div style={{ marginBottom:6 }}><EatSafeLogo size={40} variant="light" /></div>
-                <div style={{ fontSize:20, fontWeight:800, color:"var(--text)" }}>Opsæt din profil</div>
+                <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)" }}>Opsæt din profil</div>
                 <div style={{ fontSize:13, color:"var(--muted)", marginTop:4 }}>Tager under 2 minutter</div>
               </div>
             )}

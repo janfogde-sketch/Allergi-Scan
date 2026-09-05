@@ -97,6 +97,8 @@ export const appCss = `
   /* Semantiske farver */
   --red:#FF5252;--red-lt:rgba(255,82,82,.1);--red-md:rgba(255,82,82,.18);
   --amber:#FFBA3B;--amber-lt:rgba(255,186,59,.1);--amber-md:rgba(255,186,59,.18);
+  /* Varm — venlige/informative kort (fællesskab, sundhedsnoter) */
+  --warm:#E8A87C;--warm-lt:rgba(232,168,124,.1);--warm-md:rgba(232,168,124,.18);
   /* Blå — info, links, navigation */
   --blue:#60A5FA;--blue-lt:rgba(96,165,250,.12);--blue-md:rgba(96,165,250,.22);
   /* Neutral grå — labels, metadata */
