@@ -8,6 +8,7 @@ import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
+import { detectAllergensInText } from "./allergenKeywords.js";
 
 export default function RecipesScreen({
   recipes, recipesLoading,
@@ -47,40 +48,7 @@ export default function RecipesScreen({
   const [manualAllergens, setManualAllergens] = React.useState([]);
   const [removedAuto, setRemovedAuto] = React.useState([]);
 
-  // Dansk keyword-map til allergen auto-detektion (ALLERGENS har ingen keywords)
-  const ALLERGEN_KW = {
-    gluten:      ["hvede","mel","pasta","brød","spelt","rug","byg","havre","semulje","bulgur","couscous","farro","kamut","gluten","kage","pizza"],
-    laktose:     ["mælk","fløde","smør","ost","yoghurt","kefir","skyr","valle","kasein","laktos","parmesan","mozzarella","ricotta","brie","cheddar","hytteost"],
-    aeg:         ["æg","æggehvide","æggeblomme","mayo","mayonnaise"],
-    noedder:     ["mandel","cashew","valnød","hasselnød","pistacie","macadamia","pekan","paranød","nødder","nøddesmør"],
-    jordnoedder: ["jordnød","peanut","jordnøddesmør","arachis"],
-    soja:        ["soja","tofu","tempeh","miso","edamame","sojamælk","sojakød"],
-    fisk:        ["fisk","laks","tun","torsk","makrel","sild","ansjos","sardine","ørred","hellefisk","rødspætte"],
-    skaldyr:     ["reje","hummer","krabbe","krebs","musling","østers","blæksprutte","kammusling","scampi"],
-    selleri:     ["selleri","celeriac"],
-    sennep:      ["sennep","mustard"],
-    sesam:       ["sesam","tahini","sesamolie"],
-    svovl:       ["svovl","sulfit","sulfite"],
-    lupin:       ["lupin","lupinmel"],
-    bloeddyr:    ["blæksprutte","snegl","musling","østers"],
-  };
-  // Ordgrænse-tjek for korte nøgleord (<=4 tegn) — ellers matcher fx "mel" (gluten)
-  // som understreng i "rismel"/"majsmel" (som er GLUTENFRI), eller "ost" i "kost"
-  const keywordMatches = (text, keyword) => {
-    if (keyword.length > 4) return text.includes(keyword);
-    const idx = text.indexOf(keyword);
-    if (idx === -1) return false;
-    const before = idx > 0 ? text[idx - 1] : " ";
-    const after = idx + keyword.length < text.length ? text[idx + keyword.length] : " ";
-    const isWordChar = c => /[a-zæøå0-9]/i.test(c);
-    return !isWordChar(before) && !isWordChar(after);
-  };
-  const detectAllergens = (name) => {
-    const n = name.toLowerCase();
-    return Object.entries(ALLERGEN_KW)
-      .filter(([, kws]) => kws.some(k => keywordMatches(n, k)))
-      .map(([id]) => id);
-  };
+  const detectAllergens = detectAllergensInText;
   const recomputeAllergens = (ings) => {
     const all = new Set();
     ings.forEach(i => {

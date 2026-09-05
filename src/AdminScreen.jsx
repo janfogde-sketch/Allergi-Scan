@@ -8,26 +8,27 @@ import { useProfileContext } from "./ProfileContext.jsx";
 import { useAdminContext } from "./AdminContext.jsx";
 import { useFamilyFormContext } from "./FamilyFormContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
+import { ALL_ALLERGEN_WORDS } from "./allergenKeywords.js";
 
 // Fremhæv allergener og E-numre i ingredienstekst
-const ALLERGEN_KEYWORDS = {
-  gluten: ["gluten","hvede","rug","byg","havre","spelt","kamut","wheat","barley","rye","oat"],
-  laktose: ["mælk","laktose","fløde","smør","ost","yoghurt","valle","kasein","milk","cream","butter","cheese","whey","lactose"],
-  aeg: ["æg","egg","ægge"],
-  noedder: ["nødder","mandel","hassel","valn","cashew","pistacie","pecan","macadamia","nuts","almond","hazelnut","walnut"],
-  jordnoedder: ["jordnød","peanut","peanøt"],
-  soja: ["soja","soy","lecithin"],
-  fisk: ["fisk","fish","laks","torsk","tun","sild","makrel"],
-  skaldyr: ["reje","hummer","krabbe","shrimp","prawn","crab","lobster"],
-  selleri: ["selleri","celery"],
-  sennep: ["sennep","mustard"],
-  sesam: ["sesam","sesame"],
-  svovl: ["sulfit","svovl","sulfite","sulfur"],
-  lupin: ["lupin"],
-  bloeddyr: ["blæksprutte","musling","østers","mussel","oyster","squid","bløddy"],
-};
-const ALL_ALLERGEN_WORDS = Object.values(ALLERGEN_KEYWORDS).flat();
 const E_NUMBER_RE = /\b(E\d{3,4}[a-z]?)\b/gi;
+const isWordChar = c => /[a-zæøå0-9]/i.test(c);
+
+// Ordgrænse-sikret indexOf for korte nøgleord (<=4 tegn) — ellers ville fx
+// "til" (sesam på hindi) eller "ost" (mælk) matche inde i helt almindelige
+// danske ord/sætninger. Længere ord matches som understreng, som hidtil.
+function findWordSafe(haystack, needle) {
+  if (needle.length > 4) return haystack.indexOf(needle);
+  let from = 0;
+  while (true) {
+    const idx = haystack.indexOf(needle, from);
+    if (idx === -1) return -1;
+    const before = idx > 0 ? haystack[idx - 1] : " ";
+    const after = idx + needle.length < haystack.length ? haystack[idx + needle.length] : " ";
+    if (!isWordChar(before) && !isWordChar(after)) return idx;
+    from = idx + 1;
+  }
+}
 
 function HighlightText({ text }) {
   if (!text) return null;
@@ -53,7 +54,7 @@ function HighlightText({ text }) {
     // Check allergen keywords (case-insensitive)
     const lower = remaining.toLowerCase();
     for (const word of ALL_ALLERGEN_WORDS) {
-      const idx = lower.indexOf(word.toLowerCase());
+      const idx = findWordSafe(lower, word.toLowerCase());
       if (idx !== -1 && idx < earliestIdx) {
         earliestIdx = idx;
         matchLen = word.length;
