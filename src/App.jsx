@@ -51,6 +51,7 @@ import { useSearch } from './useSearch.js';
 import { useAlternatives } from './useAlternatives.js';
 import FeedbackModal from './FeedbackModal.jsx';
 import { AuthProvider } from './AuthContext.jsx';
+import { ProfileProvider } from './ProfileContext.jsx';
 
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
@@ -703,8 +704,14 @@ const lookupProduct = useCallback(async (ean) => {
     isOAuth, handleLogin, handleSignup, handleOAuth, clearAuth,
   };
 
+  const profileContextValue = {
+    allergens, setAllergens, customAllerg, setCustomAllerg,
+    family, setFamily, activeProfiles, setActiveProfiles,
+  };
+
   return (
     <AuthProvider value={authContextValue}>
+    <ProfileProvider value={profileContextValue}>
     <>
       <style>{appCss}</style>
       <div className="app" role="application" aria-label="EatSafe">
@@ -718,12 +725,8 @@ const lookupProduct = useCallback(async (ean) => {
           <OnboardingScreen
             screen={screen} setScreen={setScreen}
             onboardStep={onboardStep} setOnboardStep={setOnboardStep}
-            allergens={allergens} setAllergens={setAllergens}
-            customAllerg={customAllerg} setCustomAllerg={setCustomAllerg}
             selectedENumbers={selectedENumbers} setSelectedENumbers={setSelectedENumbers}
             activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
-            family={family} setFamily={setFamily}
-            activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
             tourIdx={tourIdx} setTourIdx={setTourIdx}
             editMode={editMode} setEditMode={setEditMode}
             history={history} setHistory={setHistory}
@@ -979,8 +982,7 @@ const lookupProduct = useCallback(async (ean) => {
           madpasLang={madpasLang} selectedRecipe={selectedRecipe}
           editMode={editMode} showManualEan={showManualEan}
           profilePopup={profilePopup}
-          allergens={allergens}
-          family={family} history={history} activeProfiles={activeProfiles}
+          history={history}
         />
 
         {/* ── OFFLINE BANNER ── */}
@@ -1010,8 +1012,6 @@ const lookupProduct = useCallback(async (ean) => {
             scanError={scanError}
             shoppingList={shoppingList} newItemName={newItemName} setNewItemName={setNewItemName}
             history={history} favorites={favorites}
-            family={family} activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
-            allergens={allergens} customAllerg={customAllerg}
             notFoundStep={notFoundStep} setNotFoundStep={setNotFoundStep}
             proposedName={proposedName} setProposedName={setProposedName}
             proposedFlags={proposedFlags} setProposedFlags={setProposedFlags}
@@ -1078,7 +1078,6 @@ const lookupProduct = useCallback(async (ean) => {
             madpasBig={madpasBig}
             madpasWaiterView={madpasWaiterView} setMadpasWaiterView={setMadpasWaiterView}
             mpAllergens={mpAllergens} mpCustom={mpCustom}
-            family={family}
             langOpen={langOpen} setLangOpen={setLangOpen}
             madpasSpeak={madpasSpeak}
             selectedENumbers={selectedENumbers}
@@ -1106,10 +1105,6 @@ const lookupProduct = useCallback(async (ean) => {
           <ErrorBoundary screen="Profil">
           <ProfileScreen
             screen={screen} setScreen={setScreen}
-            allergens={allergens} setAllergens={setAllergens}
-            customAllerg={customAllerg} setCustomAllerg={setCustomAllerg}
-            family={family} setFamily={setFamily}
-            activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
             history={history} favorites={favorites}
             showDeleteAccount={showDeleteAccount} setShowDeleteAccount={setShowDeleteAccount}
             deleteConfirmText={deleteConfirmText} setDeleteConfirmText={setDeleteConfirmText}
@@ -1152,8 +1147,6 @@ const lookupProduct = useCallback(async (ean) => {
             selectedRecipe={selectedRecipe} setSelectedRecipe={setSelectedRecipe}
             recipeSearch={recipeSearch} setRecipeSearch={setRecipeSearch}
             showSafeOnly={showSafeOnly} setShowSafeOnly={setShowSafeOnly}
-            allergens={allergens} customAllerg={customAllerg}
-            family={family} activeProfiles={activeProfiles}
             favorites={favorites}
             showSubmitRecipe={showSubmitRecipe} setShowSubmitRecipe={setShowSubmitRecipe}
             submitRecipe={submitRecipe} setSubmitRecipe={setSubmitRecipe}
@@ -1255,6 +1248,7 @@ const lookupProduct = useCallback(async (ean) => {
         )}
       </div>
     </>
+    </ProfileProvider>
     </AuthProvider>
   );
 }
