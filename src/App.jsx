@@ -1143,6 +1143,7 @@ const lookupProduct = useCallback(async (ean) => {
             historyLoading={historyLoading}
             loadAdminStats={loadAdminStats} loadSubmissions={loadSubmissions} loadTickets={loadTickets}
             setAdminSection={setAdminSection} setSubmissionFilter={setSubmissionFilter}
+            lookupProduct={lookupProduct}
           />
           </ErrorBoundary>
         )}
