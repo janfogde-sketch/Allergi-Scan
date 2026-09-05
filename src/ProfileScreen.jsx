@@ -156,6 +156,7 @@ export default function ProfileScreen({
   historyLoading,
   setScanResult,
   ticketsLoading,
+  lookupProduct,
 }) {
   // ── Invite state ────────────────────────────────────────────────────────────
   const [inviteLink, setInviteLink] = useState(null);
