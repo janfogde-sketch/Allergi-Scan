@@ -189,7 +189,7 @@ export default function AdminScreen() {
 
               {/* Header */}
               <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
-                <button onClick={() => setOpenTicket(null)}
+                <button onClick={() => setOpenTicket(null)} aria-label="Luk"
                   style={{ background:"var(--surface2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
                 <div style={{ flex:1, fontSize:16, fontWeight:800, color:"var(--ink)" }}>🐛 Ticket #{openTicket.id?.slice(0,8)}</div>
               </div>
@@ -707,7 +707,7 @@ ${openTicket.description}
                         </span>
                       </div>
                     </div>
-                    <button onClick={() => setOpenAdminUser(null)}
+                    <button onClick={() => setOpenAdminUser(null)} aria-label="Luk"
                       style={{ background:"var(--surface2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
                   </div>
 
@@ -1278,7 +1278,8 @@ ${openTicket.description}
                   <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:16, marginBottom:16 }}>
                     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
                       <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)" }}>Redigér opskrift</div>
-                      <button onClick={() => setEditingRecipe(null)} style={{ background:"none", border:"none", color:"var(--muted)", cursor:"pointer", fontSize:18 }}>×</button>
+                      <button onClick={() => setEditingRecipe(null)} aria-label="Luk"
+                        style={{ background:"var(--surface2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
                     </div>
                     <input value={editingRecipe.title||""} onChange={e => setEditingRecipe(r=>({...r,title:e.target.value}))} placeholder="Titel"
                       style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:14, boxSizing:"border-box", marginBottom:8, outline:"none" }} />

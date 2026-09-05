@@ -198,7 +198,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
         <svg style={S.searchIcon} width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input style={S.searchInput} placeholder="Søg ingredienser, E-numre, allergener..." value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)} />
-        {searchQuery && <button onClick={() => { setSearchQuery(""); if(!selectedCategory) setEntries([]); }} style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", padding:4, color:"var(--muted)" }}>✕</button>}
+        {searchQuery && <button onClick={() => { setSearchQuery(""); if(!selectedCategory) setEntries([]); }} aria-label="Ryd søgning" style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", padding:10, color:"var(--muted)" }}>✕</button>}
       </div>
 
       {/* Kategorier — altid synlig når ingen liste vises */}

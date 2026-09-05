@@ -148,8 +148,8 @@ export default function MadpasScreen({
             <span style={{ fontSize:20 }}>{langInfo?.flag}</span>
             <span style={{ fontSize:13, color:"var(--muted)", fontWeight:600 }}>{langInfo?.name}</span>
           </div>
-          <button onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }}
-            style={{ background:"none", border:"none", padding:4, cursor:"pointer" }}>
+          <button onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }} aria-label="Luk"
+            style={{ background:"none", border:"none", padding:8, margin:-4, cursor:"pointer" }}>
             <Icon name="x" size={22} color="var(--ink2)" />
           </button>
         </div>

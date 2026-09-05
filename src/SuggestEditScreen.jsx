@@ -260,8 +260,10 @@ export default function SuggestEditScreen({
                   {ingItems.map((item, i) => (
                     <div key={i} style={{ display:"flex", alignItems:"center", gap:5, padding:"5px 10px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:20 }}>
                       <span style={{ fontSize:12, color:"var(--ink)" }}>{item}</span>
-                      <div onClick={() => setIngItems(p => p.filter((_,j)=>j!==i))}
-                        style={{ cursor:"pointer", color:"var(--muted)", fontSize:14, lineHeight:1, marginLeft:2 }}>×</div>
+                      <div role="button" aria-label={`Fjern "${item}"`} tabIndex={0}
+                        onClick={() => setIngItems(p => p.filter((_,j)=>j!==i))}
+                        onKeyDown={e => e.key === "Enter" && setIngItems(p => p.filter((_,j)=>j!==i))}
+                        style={{ cursor:"pointer", color:"var(--muted)", fontSize:14, lineHeight:1, padding:6, margin:"-6px -6px -6px 2px" }}>×</div>
                     </div>
                   ))}
                 </div>

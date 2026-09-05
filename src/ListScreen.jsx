@@ -112,9 +112,11 @@ export default function ListScreen({
           </div>
           {shoppingList.filter(i => !i.checked).map(item => (
             <div key={item.id} className="list-item">
-              <div className="list-check" onClick={() => toggleItem(item.id)} />
+              <div className="list-check" role="checkbox" aria-checked="false" aria-label={`Markér "${item.name}" som købt`} tabIndex={0}
+                onClick={() => toggleItem(item.id)} onKeyDown={e => e.key === "Enter" && toggleItem(item.id)} />
               <div className="list-name">{item.name}</div>
-              <div className="list-del" onClick={() => removeItem(item.id)}>
+              <div className="list-del" role="button" aria-label={`Slet "${item.name}"`} tabIndex={0}
+                onClick={() => removeItem(item.id)} onKeyDown={e => e.key === "Enter" && removeItem(item.id)}>
                 <Icon name="trash" size={16} color="var(--muted)" />
               </div>
             </div>
@@ -127,13 +129,16 @@ export default function ListScreen({
         <>
           <div className="list-section" style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
             <span>Købt ({shoppingList.filter(i=>i.checked).length})</span>
-            <span style={{ cursor:"pointer", color:"var(--red)", fontWeight:700, fontSize:12 }} onClick={clearDone}>Ryd</span>
+            <span style={{ cursor:"pointer", color:"var(--red)", fontWeight:700, fontSize:12, padding:"4px 2px" }} role="button" aria-label="Ryd alle købte varer" tabIndex={0}
+              onClick={clearDone} onKeyDown={e => e.key === "Enter" && clearDone()}>Ryd</span>
           </div>
           {shoppingList.filter(i => i.checked).map(item => (
             <div key={item.id} className="list-item done">
-              <div className="list-check checked" onClick={() => toggleItem(item.id)}>✓</div>
+              <div className="list-check checked" role="checkbox" aria-checked="true" aria-label={`Fjern "${item.name}" fra købt`} tabIndex={0}
+                onClick={() => toggleItem(item.id)} onKeyDown={e => e.key === "Enter" && toggleItem(item.id)}>✓</div>
               <div className="list-name done">{item.name}</div>
-              <div className="list-del" onClick={() => removeItem(item.id)}>
+              <div className="list-del" role="button" aria-label={`Slet "${item.name}"`} tabIndex={0}
+                onClick={() => removeItem(item.id)} onKeyDown={e => e.key === "Enter" && removeItem(item.id)}>
                 <Icon name="trash" size={16} color="var(--muted)" />
               </div>
             </div>

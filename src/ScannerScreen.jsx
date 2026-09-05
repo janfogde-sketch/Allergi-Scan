@@ -424,7 +424,9 @@ export default function ScannerScreen({
                 {isActive ? "✅ Aktiv i søgning" : "⬜ Ikke aktiv i søgning"}
               </div>
             </div>
-            <div onClick={() => setProfilePopup(null)} style={{ cursor:"pointer", padding:4, opacity:.5 }}>✕</div>
+            <div onClick={() => setProfilePopup(null)} onKeyDown={e => e.key === "Enter" && setProfilePopup(null)}
+              role="button" aria-label="Luk" tabIndex={0}
+              style={{ cursor:"pointer", padding:10, margin:-6, opacity:.5 }}>✕</div>
           </div>
 
           {/* Allergier */}
@@ -747,8 +749,8 @@ export default function ScannerScreen({
                       : <span style={{ color:"rgba(255,255,255,.6)" }}>Hold stregkoden ind i rammen</span>}
                   </span>
                   <div style={S.rowGap6}>
-                    <button onClick={() => galleryInputRef.current?.click()} style={{ background:"rgba(255,255,255,.15)", border:"none", borderRadius:6, padding:"5px 10px", color:"var(--ink)", fontSize:16, cursor:"pointer", lineHeight:1 }}>🖼️</button>
-                    <button onClick={toggleTorch} style={{
+                    <button onClick={() => galleryInputRef.current?.click()} aria-label="Vælg billede fra galleri" style={{ background:"rgba(255,255,255,.15)", border:"none", borderRadius:6, padding:"5px 10px", color:"var(--ink)", fontSize:16, cursor:"pointer", lineHeight:1 }}>🖼️</button>
+                    <button onClick={toggleTorch} aria-label={torchOn ? "Sluk lygte" : "Tænd lygte"} style={{
                       background: torchOn ? "rgba(251,191,36,.3)" : "rgba(255,255,255,.15)",
                       border: torchOn ? "1px solid rgba(251,191,36,.6)" : "none",
                       borderRadius:6, padding:"5px 10px", color: torchOn ? "#FBB" : "var(--ink)",
@@ -857,8 +859,8 @@ export default function ScannerScreen({
               <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12 }}>
                 <div style={S.rowBetweenMb10}>
                   <div style={S.h13}>Indtast EAN-nummer</div>
-                  <button onClick={() => setShowManualEan(false)}
-                    style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--muted)", lineHeight:1 }}>×</button>
+                  <button onClick={() => setShowManualEan(false)} aria-label="Luk"
+                    style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--muted)", lineHeight:1, padding:8, margin:-8 }}>×</button>
                 </div>
                 <div style={S.rowGap8}>
                   <input
