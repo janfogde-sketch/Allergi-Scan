@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { ALLERGENS, SCREENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { getAllergenLabels, initials, getTraceLog } from "./helpers.js";
 import { MemberForm } from "./MemberForm.jsx";
+import { useAuthContext } from "./AuthContext.jsx";
 
 // Fremhæv allergener og E-numre i ingredienstekst
 const ALLERGEN_KEYWORDS = {
@@ -85,7 +86,6 @@ export default function AdminScreen({
   openAdminUser, setOpenAdminUser,
   openTicket, setOpenTicket,
   cleanedOcrText, cleaningOcr,
-  userId, accessToken, user,
   setAllergens,
   setCustomAllerg,
   setCustomInput,
@@ -121,6 +121,8 @@ export default function AdminScreen({
   updateSubmissionAndApprove, rejectSubmission,
   updateTicketStatus, cleanOcrWithAI,
 }) {
+  const { userId, accessToken } = useAuthContext();
+
   // ── Admin opskrifter — lokal state ──────────────────────────────────────────
   const [adminRecipes, setAdminRecipes] = useState([]);
   const [adminRecipesLoading, setAdminRecipesLoading] = useState(false);

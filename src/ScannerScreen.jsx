@@ -4,6 +4,7 @@ import { ALLERGENS, SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
          ALLERGEN_EXAMPLES, E_NUMBERS, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
 import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage } from "./SharedComponents.jsx";
+import { useAuthContext } from "./AuthContext.jsx";
 
 import { CategorySelect } from "./MemberForm.jsx";
 import NotFoundScreen from "./NotFoundScreen.jsx";
@@ -326,7 +327,6 @@ export default function ScannerScreen({
   history, favorites,
   family, activeProfiles, setActiveProfiles,
   allergens, customAllerg,
-  accessToken, userId, user,
   notFoundStep, setNotFoundStep,
   proposedName, setProposedName,
   proposedFlags, setProposedFlags,
@@ -378,6 +378,7 @@ export default function ScannerScreen({
   alternatives,
   altLoading,
 }) {
+  const { user, userId, accessToken } = useAuthContext();
 
   // Parser OCR-tekst til liste af ingredienser
 
@@ -971,7 +972,6 @@ export default function ScannerScreen({
         {screen === SCREENS.SEARCH && (
           <Suspense fallback={LazyFallback}>
           <SearchScreen
-            user={user}
             family={family}
             allergens={allergens}
             activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
@@ -1020,7 +1020,6 @@ export default function ScannerScreen({
         {screen === SCREENS.RESULT && scanResult && (
           <ResultScreen
             scanResult={scanResult}
-            user={user}
             family={family}
             allergens={allergens}
             activeProfiles={activeProfiles}
@@ -1045,8 +1044,6 @@ export default function ScannerScreen({
           <Suspense fallback={LazyFallback}>
           <SuggestEditScreen
             scanResult={scanResult}
-            accessToken={accessToken}
-            userId={userId}
             editStep={editStep} setEditStep={setEditStep}
             editType={editType} setEditType={setEditType}
             editIngText={editIngText} setEditIngText={setEditIngText}

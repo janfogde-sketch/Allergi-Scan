@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 import { ProductImage } from "./SharedComponents.jsx";
+import { useAuthContext } from "./AuthContext.jsx";
 
 const S = {
   none:           { display:"none" },
@@ -25,8 +26,6 @@ const S = {
 
 export default function SuggestEditScreen({
   scanResult,
-  accessToken,
-  userId,
   editStep, setEditStep,
   editType, setEditType,
   editIngText, setEditIngText,
@@ -35,6 +34,7 @@ export default function SuggestEditScreen({
   handleEditProductCapture,
   setScreen,
 }) {
+  const { accessToken, userId } = useAuthContext();
   const [ingItems, setIngItems] = useState([]);
   const [ingInput, setIngInput] = useState("");
 

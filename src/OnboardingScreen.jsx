@@ -6,6 +6,7 @@ import { EatSafeLogo, Icon } from "./SharedComponents.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
 import { MemberForm } from "./MemberForm.jsx";
 import { usePush } from "./usePush.js";
+import { useAuthContext } from "./AuthContext.jsx";
 
 // ── Welcome demo-slider ────────────────────────────────────────────────────
 const WELCOME_SLIDES = [
@@ -259,12 +260,6 @@ function WelcomeDemoSlider({ setScreen, setAuthTab }) {
 
 export default function OnboardingScreen({
   screen, setScreen,
-  authTab, setAuthTab,
-  authError, setAuthError,
-  authLoading,
-  loginEmail, setLoginEmail,
-  loginPassword, setLoginPassword,
-  user, setUser,
   onboardStep, setOnboardStep,
   allergens = [], setAllergens,
   customAllerg = [], setCustomAllerg,
@@ -273,13 +268,13 @@ export default function OnboardingScreen({
   allergenSubtypes = {}, setAllergenSubtypes,
   family = [], setFamily,
   activeProfiles = [], setActiveProfiles,
-  isOAuth,
-  accessToken,
   tourIdx, setTourIdx,
   editMode, setEditMode,
   history, setHistory,
   shoppingList, setShoppingList,
   newMemberName, setNewMemberName,
+  newMemberBirthYear, setNewMemberBirthYear,
+  newMemberGender, setNewMemberGender,
   newMemberAllerg, setNewMemberAllerg,
   newMemberCustomAllerg, setNewMemberCustomAllerg,
   newMemberDiets, setNewMemberDiets,
@@ -287,13 +282,19 @@ export default function OnboardingScreen({
   newMemberSubtypes, setNewMemberSubtypes,
   newMemberCustomInput, setNewMemberCustomInput,
   customInput, setCustomInput,
-  handleLogin, handleSignup, handleOAuth,
   addMember,
   removeMember,
   saveAllergensStep2,
   saveProfileStep1, finishOnboard,
   StepBar,
 }) {
+  const {
+    authTab, setAuthTab, authError, setAuthError, authLoading,
+    loginEmail, setLoginEmail, loginPassword, setLoginPassword,
+    user, setUser, isOAuth, accessToken,
+    handleLogin, handleSignup, handleOAuth,
+  } = useAuthContext();
+
   // FIX: denne state manglede — brugtes i trin 2 (E-numre kollapsibel), men
   // var aldrig defineret, hvilket crashede hele onboarding-skærmen med
   // "showENumbersInOnboard is not defined" så snart man nåede dertil.
@@ -906,6 +907,8 @@ export default function OnboardingScreen({
                   <div className="card-lbl" style={{ marginBottom:12 }}>Tilføj nyt familiemedlem</div>
                   <MemberForm
                     name={newMemberName} setName={setNewMemberName}
+                    birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
+                    gender={newMemberGender} setGender={setNewMemberGender}
                     allergens={newMemberAllerg} setAllergens={setNewMemberAllerg}
                     customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
                     subtypes={newMemberSubtypes} setSubtypes={setNewMemberSubtypes}

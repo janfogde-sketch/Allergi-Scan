@@ -717,12 +717,6 @@ const lookupProduct = useCallback(async (ean) => {
           <Suspense fallback={<div style={{padding:"40px 16px",textAlign:"center"}}><div style={{width:28,height:28,border:"3px solid var(--border2)",borderTopColor:"var(--green)",borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto"}} /></div>}>
           <OnboardingScreen
             screen={screen} setScreen={setScreen}
-            authTab={authTab} setAuthTab={setAuthTab}
-            authError={authError} setAuthError={setAuthError}
-            authLoading={authLoading}
-            loginEmail={loginEmail} setLoginEmail={setLoginEmail}
-            loginPassword={loginPassword} setLoginPassword={setLoginPassword}
-            user={user} setUser={setUser}
             onboardStep={onboardStep} setOnboardStep={setOnboardStep}
             allergens={allergens} setAllergens={setAllergens}
             customAllerg={customAllerg} setCustomAllerg={setCustomAllerg}
@@ -730,8 +724,6 @@ const lookupProduct = useCallback(async (ean) => {
             activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
             family={family} setFamily={setFamily}
             activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
-            isOAuth={isOAuth}
-            accessToken={accessToken}
             tourIdx={tourIdx} setTourIdx={setTourIdx}
             editMode={editMode} setEditMode={setEditMode}
             history={history} setHistory={setHistory}
@@ -746,7 +738,6 @@ const lookupProduct = useCallback(async (ean) => {
             newMemberSubtypes={newMemberSubtypes} setNewMemberSubtypes={setNewMemberSubtypes}
             newMemberCustomInput={newMemberCustomInput} setNewMemberCustomInput={setNewMemberCustomInput}
             customInput={customInput} setCustomInput={setCustomInput}
-            handleLogin={handleLogin} handleSignup={handleSignup} handleOAuth={handleOAuth}
             saveAllergensStep2={saveAllergensStep2}
             saveProfileStep1={saveProfileStep1} finishOnboard={finishOnboard}
             StepBar={StepBar}
@@ -988,8 +979,7 @@ const lookupProduct = useCallback(async (ean) => {
           madpasLang={madpasLang} selectedRecipe={selectedRecipe}
           editMode={editMode} showManualEan={showManualEan}
           profilePopup={profilePopup}
-          user={user} userId={userId} accessToken={accessToken}
-          loginEmail={loginEmail} allergens={allergens}
+          allergens={allergens}
           family={family} history={history} activeProfiles={activeProfiles}
         />
 
@@ -1022,7 +1012,6 @@ const lookupProduct = useCallback(async (ean) => {
             history={history} favorites={favorites}
             family={family} activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
             allergens={allergens} customAllerg={customAllerg}
-            accessToken={accessToken} userId={userId} user={user}
             notFoundStep={notFoundStep} setNotFoundStep={setNotFoundStep}
             proposedName={proposedName} setProposedName={setProposedName}
             proposedFlags={proposedFlags} setProposedFlags={setProposedFlags}
@@ -1089,11 +1078,10 @@ const lookupProduct = useCallback(async (ean) => {
             madpasBig={madpasBig}
             madpasWaiterView={madpasWaiterView} setMadpasWaiterView={setMadpasWaiterView}
             mpAllergens={mpAllergens} mpCustom={mpCustom}
-            family={family} user={user}
+            family={family}
             langOpen={langOpen} setLangOpen={setLangOpen}
             madpasSpeak={madpasSpeak}
             selectedENumbers={selectedENumbers}
-            userId={userId}
           />
           </ErrorBoundary>
         )}
@@ -1104,7 +1092,6 @@ const lookupProduct = useCallback(async (ean) => {
           <ErrorBoundary screen="Leksikon">
           <KnowledgeScreen
             screen={screen} setScreen={setScreen}
-            accessToken={accessToken}
             openSlug={knowledgeSlug}
             onSlugHandled={() => setKnowledgeSlug(null)}
           />
@@ -1119,17 +1106,14 @@ const lookupProduct = useCallback(async (ean) => {
           <ErrorBoundary screen="Profil">
           <ProfileScreen
             screen={screen} setScreen={setScreen}
-            user={user} setUser={setUser}
             allergens={allergens} setAllergens={setAllergens}
             customAllerg={customAllerg} setCustomAllerg={setCustomAllerg}
             family={family} setFamily={setFamily}
             activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
             history={history} favorites={favorites}
-            userId={userId} accessToken={accessToken}
             showDeleteAccount={showDeleteAccount} setShowDeleteAccount={setShowDeleteAccount}
             deleteConfirmText={deleteConfirmText} setDeleteConfirmText={setDeleteConfirmText}
             deletingAccount={deletingAccount} deleteOwnAccount={deleteOwnAccount}
-            clearAuth={clearAuth}
             eSearch={eSearch} setESearch={setESearch}
             eCategory={eCategory} setECategory={setECategory}
             allergenSubtypes={allergenSubtypes} setAllergenSubtypes={setAllergenSubtypes}
@@ -1170,7 +1154,7 @@ const lookupProduct = useCallback(async (ean) => {
             showSafeOnly={showSafeOnly} setShowSafeOnly={setShowSafeOnly}
             allergens={allergens} customAllerg={customAllerg}
             family={family} activeProfiles={activeProfiles}
-            favorites={favorites} accessToken={accessToken}
+            favorites={favorites}
             showSubmitRecipe={showSubmitRecipe} setShowSubmitRecipe={setShowSubmitRecipe}
             submitRecipe={submitRecipe} setSubmitRecipe={setSubmitRecipe}
             submitSteps={submitSteps} setSubmitSteps={setSubmitSteps}
@@ -1179,7 +1163,6 @@ const lookupProduct = useCallback(async (ean) => {
             loadRecipes={loadRecipes} loadRecipeIngredients={loadRecipeIngredients} submitUserRecipe={submitUserRecipe}
             loading={loading}
             toggleFavorite={toggleFavorite}
-            user={user}
             recipeFilter={recipeFilter} setRecipeFilter={setRecipeFilter}
             recipeSafeOnly={recipeSafeOnly} setRecipeSafeOnly={setRecipeSafeOnly}
             favoriteRecipes={favoriteRecipes} setFavoriteRecipes={setFavoriteRecipes}
@@ -1212,7 +1195,6 @@ const lookupProduct = useCallback(async (ean) => {
             openAdminUser={openAdminUser} setOpenAdminUser={setOpenAdminUser}
             openTicket={openTicket} setOpenTicket={setOpenTicket}
             cleanedOcrText={cleanedOcrText} cleaningOcr={cleaningOcr}
-            userId={userId} accessToken={accessToken} user={user}
             setAllergens={setAllergens} setCustomAllerg={setCustomAllerg}
             setCustomInput={setCustomInput}
             setNewMemberAllerg={setNewMemberAllerg} setNewMemberCustomAllerg={setNewMemberCustomAllerg}

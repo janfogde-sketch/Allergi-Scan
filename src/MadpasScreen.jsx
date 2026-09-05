@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { ALLERGENS, SCREENS, MADPAS_LANGUAGES, ALLERGEN_T, MADPAS_INTRO, ALLERGEN_EXAMPLES, DIETS } from "./constants.jsx";
 import { initials, getAllergenLabels } from "./helpers.js";
 import { Icon } from "./SharedComponents.jsx";
+import { useAuthContext } from "./AuthContext.jsx";
 
 export default function MadpasScreen({
   screen,
@@ -12,13 +13,13 @@ export default function MadpasScreen({
   madpasBig,
   madpasWaiterView, setMadpasWaiterView,
   mpAllergens, mpCustom,
-  family, user,
+  family,
   langOpen, setLangOpen,
   madpasSpeak,
 
   selectedENumbers,
-  userId,
 }) {
+  const { user, userId } = useAuthContext();
   const shareUrl = userId ? `https://eatsafe.dk/madpas/${userId}` : null;
   const qrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shareUrl)}&bgcolor=0d1f12&color=4ADE80&qzone=2` : null;
   const [qrError, setQrError] = React.useState(false);
