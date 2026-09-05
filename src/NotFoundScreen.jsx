@@ -510,8 +510,9 @@ export default function NotFoundScreen({
 
             <button
               onClick={() => {
-                if (ingItems.length > 0) setOcrText(ingToText(ingItems));
-                submitProduct();
+                const finalText = ingItems.length > 0 ? ingToText(ingItems) : ocrText;
+                if (ingItems.length > 0) setOcrText(finalText);
+                submitProduct(finalText);
               }}
               disabled={submitting || !proposedName.trim()}
               style={{ width:"100%", background: proposedName.trim() ? "var(--green)" : "var(--border2)", color: proposedName.trim() ? "var(--on-green)" : "var(--muted)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor: proposedName.trim() ? "pointer" : "not-allowed", marginBottom:8, opacity: submitting ? 0.6 : 1 }}>
