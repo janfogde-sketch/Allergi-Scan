@@ -12,6 +12,7 @@ import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 import { useAdminContext } from "./AdminContext.jsx";
 import { useFamilyFormContext } from "./FamilyFormContext.jsx";
+import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 
 // ── Gamification helpers ──────────────────────────────────────────────────────
 function computeStreak(history) {
@@ -131,11 +132,6 @@ export default function ProfileScreen({
   deleteConfirmText, setDeleteConfirmText,
   deletingAccount, deleteOwnAccount,
   customInput, setCustomInput,
-  eSearch, setESearch,
-  eCategory, setECategory,
-  allergenSubtypes, setAllergenSubtypes,
-  selectedENumbers, setSelectedENumbers,
-  activeSubtypeModal, setActiveSubtypeModal,
   setScanResult,
   lookupProduct,
 }) {
@@ -159,6 +155,12 @@ export default function ProfileScreen({
     newMemberCustomInput, setNewMemberCustomInput,
     addMember, removeMember,
   } = useFamilyFormContext();
+  const {
+    eSearch, setESearch, eCategory, setECategory,
+    allergenSubtypes, setAllergenSubtypes,
+    selectedENumbers, setSelectedENumbers,
+    activeSubtypeModal, setActiveSubtypeModal,
+  } = useAllergenPrefsContext();
 
   // ── Invite state ────────────────────────────────────────────────────────────
   const [inviteLink, setInviteLink] = useState(null);

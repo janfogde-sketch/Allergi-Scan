@@ -56,6 +56,7 @@ import { NavigationProvider } from './NavigationContext.jsx';
 import { HistoryProvider } from './HistoryContext.jsx';
 import { ShoppingProvider } from './ShoppingContext.jsx';
 import { FamilyFormProvider } from './FamilyFormContext.jsx';
+import { AllergenPrefsProvider } from './AllergenPrefsContext.jsx';
 
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
@@ -759,6 +760,13 @@ const lookupProduct = useCallback(async (ean) => {
     addMember, removeMember,
   };
 
+  const allergenPrefsContextValue = {
+    eSearch, setESearch, eCategory, setECategory,
+    allergenSubtypes, setAllergenSubtypes,
+    selectedENumbers, setSelectedENumbers,
+    activeSubtypeModal, setActiveSubtypeModal,
+  };
+
   return (
     <AuthProvider value={authContextValue}>
     <ProfileProvider value={profileContextValue}>
@@ -767,6 +775,7 @@ const lookupProduct = useCallback(async (ean) => {
     <HistoryProvider value={historyContextValue}>
     <ShoppingProvider value={shoppingContextValue}>
     <FamilyFormProvider value={familyFormContextValue}>
+    <AllergenPrefsProvider value={allergenPrefsContextValue}>
     <>
       <style>{appCss}</style>
       <div className="app" role="application" aria-label="EatSafe">
@@ -779,8 +788,6 @@ const lookupProduct = useCallback(async (ean) => {
           <Suspense fallback={<div style={{padding:"40px 16px",textAlign:"center"}}><div style={{width:28,height:28,border:"3px solid var(--border2)",borderTopColor:"var(--green)",borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto"}} /></div>}>
           <OnboardingScreen
             onboardStep={onboardStep} setOnboardStep={setOnboardStep}
-            selectedENumbers={selectedENumbers} setSelectedENumbers={setSelectedENumbers}
-            activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
             tourIdx={tourIdx} setTourIdx={setTourIdx}
             editMode={editMode} setEditMode={setEditMode}
             customInput={customInput} setCustomInput={setCustomInput}
@@ -1138,11 +1145,6 @@ const lookupProduct = useCallback(async (ean) => {
             showDeleteAccount={showDeleteAccount} setShowDeleteAccount={setShowDeleteAccount}
             deleteConfirmText={deleteConfirmText} setDeleteConfirmText={setDeleteConfirmText}
             deletingAccount={deletingAccount} deleteOwnAccount={deleteOwnAccount}
-            eSearch={eSearch} setESearch={setESearch}
-            eCategory={eCategory} setECategory={setECategory}
-            allergenSubtypes={allergenSubtypes} setAllergenSubtypes={setAllergenSubtypes}
-            selectedENumbers={selectedENumbers} setSelectedENumbers={setSelectedENumbers}
-            activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
             customInput={customInput} setCustomInput={setCustomInput}
             setScanResult={setScanResult}
             lookupProduct={lookupProduct}
@@ -1227,6 +1229,7 @@ const lookupProduct = useCallback(async (ean) => {
         )}
       </div>
     </>
+    </AllergenPrefsProvider>
     </FamilyFormProvider>
     </ShoppingProvider>
     </HistoryProvider>
