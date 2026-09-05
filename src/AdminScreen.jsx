@@ -144,11 +144,12 @@ export default function AdminScreen({
   const updateRecipeStatus = async (id, status) => {
     setRecipeActionLoading(true);
     try {
-      await fetch(
+      const res = await fetch(
         `${SUPABASE_URL}/rest/v1/recipes?id=eq.${id}`,
         { method: "PATCH", headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
           body: JSON.stringify({ status }) }
       );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setAdminRecipes(prev => prev.filter(r => r.id !== id));
       setEditingRecipe(null);
     } catch (e) { alert("Fejl: " + e.message); }
@@ -160,11 +161,12 @@ export default function AdminScreen({
     setRecipeActionLoading(true);
     try {
       const { id, ...fields } = editingRecipe;
-      await fetch(
+      const res = await fetch(
         `${SUPABASE_URL}/rest/v1/recipes?id=eq.${id}`,
         { method: "PATCH", headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
           body: JSON.stringify(fields) }
       );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       alert("Gemt ✓");
     } catch (e) { alert("Fejl: " + e.message); }
     setRecipeActionLoading(false);
