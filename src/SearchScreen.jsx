@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from "react";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
 import { compareAllergens, initials } from "./helpers.js";
-import { ProductImage, Loader } from "./SharedComponents.jsx";
+import { ProductImage, Loader, safetyStyle } from "./SharedComponents.jsx";
 import { CategorySelect } from "./MemberForm.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -257,8 +257,8 @@ export default function SearchScreen({
 
       {visibleResults.map(p => {
         const { status, matchedDanger, matchedWarning } = compareAllergens(p.allergen_flags||{}, effectiveIds);
-        const statusColor = status==="safe" ? "var(--green)" : status==="danger" ? "var(--red)" : "var(--amber)";
-        const statusLabel = status==="safe" ? "✓ Sikker" : status==="danger" ? "✕ Farlig" : "⚠ Advarsel";
+        const statusColor = safetyStyle(status).color;
+        const statusLabel = `${safetyStyle(status).icon} ${status==="safe" ? "Sikker" : status==="danger" ? "Farlig" : "Advarsel"}`;
         const matchedLabels = [...matchedDanger, ...matchedWarning].map(id => ALLERGENS.find(a=>a.id===id)).filter(Boolean);
         const tagLabels = { vegan:"🌱 Vegansk", vegetarian:"🥦 Vegetarisk" };
         return (

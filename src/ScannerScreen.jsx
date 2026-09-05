@@ -233,11 +233,11 @@ function DemoSlider({ setScreen, mode = "welcome", onClose }) {
       {isModal && (
         <div style={{ background:"var(--paper)", borderBottom:"1px solid var(--border)", padding:"14px 18px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <div style={{ fontSize:13, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1.5px" }}>Det kan EatSafe</div>
-          <button onClick={onClose}
+          <button onClick={onClose} aria-label="Luk"
             style={{ background:"rgba(255,255,255,.08)", border:"none", borderRadius:"50%",
               width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center",
               cursor:"pointer", fontSize:15, color:"var(--ink)", lineHeight:1 }}>
-            ✕
+            ×
           </button>
         </div>
       )}
@@ -419,7 +419,7 @@ export default function ScannerScreen({
             </div>
             <div onClick={() => setProfilePopup(null)} onKeyDown={e => e.key === "Enter" && setProfilePopup(null)}
               role="button" aria-label="Luk" tabIndex={0}
-              style={{ cursor:"pointer", padding:10, margin:-6, opacity:.5 }}>✕</div>
+              style={{ cursor:"pointer", padding:10, margin:-6, opacity:.5 }}>×</div>
           </div>
 
           {/* Allergier */}

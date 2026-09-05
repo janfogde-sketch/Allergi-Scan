@@ -493,9 +493,9 @@ export default function ProfileScreen({
                       <ProfileBadges allergenFlags={f.allergen_flags||{}} allergens={allergens} customAllerg={customAllerg} family={family} activeProfiles={activeProfiles} size={22} />
                     </div>
                   </div>
-                  <button className="btn btn-ghost btn-sm" style={{ fontSize:12, flexShrink:0 }}
+                  <button className="btn btn-ghost btn-sm" style={{ fontSize:12, flexShrink:0 }} aria-label={`Fjern "${f.name || "produkt"}" fra favoritter`}
                     onClick={e => { e.stopPropagation(); toggleFavorite(f); }}>
-                    ✕
+                    ×
                   </button>
                 </div>
               </div>
