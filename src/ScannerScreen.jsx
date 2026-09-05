@@ -3,7 +3,7 @@ import React, { useState, useRef, Suspense } from "react";
 import { ALLERGENS, SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
          ALLERGEN_EXAMPLES, E_NUMBERS, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
 import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo } from "./helpers.js";
-import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage } from "./SharedComponents.jsx";
+import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage, LazyFallback } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -19,12 +19,6 @@ const SearchScreen = React.lazy(() => import("./SearchScreen.jsx"));
 const ListScreen = React.lazy(() => import("./ListScreen.jsx"));
 const SuggestEditScreen = React.lazy(() => import("./SuggestEditScreen.jsx"));
 const RestaurantGuideScreen = React.lazy(() => import("./RestaurantGuideScreen.jsx"));
-
-const LazyFallback = (
-  <div style={{padding:"40px 16px",textAlign:"center"}}>
-    <div style={{width:28,height:28,border:"3px solid var(--border2)",borderTopColor:"var(--green)",borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto"}} />
-  </div>
-);
 
 // ── Performance: Styles som konstanter (undgår nye objekter per render) ──────
 const S = {
@@ -56,7 +50,6 @@ const S = {
   body12: { fontSize:12, color:"var(--muted2)", lineHeight:1.5 },
   body13: { fontSize:13, color:"var(--muted2)", lineHeight:1.5 },
   label: { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 },
-  spinner: { width:64, height:64, border:"4px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 20px" },
   dot: { width:28, height:28, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
   opacity6: { opacity:.6 },
   linkBtn: { width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, fontWeight:700, color:"var(--muted2)", fontFamily:"var(--f)" },

@@ -2,6 +2,7 @@
 import React from "react";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
+import { Loader } from "./SharedComponents.jsx";
 
 const S = {
   none:             { display:"none" },
@@ -9,7 +10,6 @@ const S = {
   mb8:              { marginBottom:8 },
   mb10:             { marginBottom:10 },
   mb16:             { marginBottom:16 },
-  center60:         { textAlign:"center", padding:"60px 20px" },
   rowBetweenMb10:   { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 },
   rowGap8:          { display:"flex", gap:8 },
   card:             { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 },
@@ -17,11 +17,9 @@ const S = {
   h13b:             { fontSize:13, fontWeight:700, color:"var(--ink)" },
   h13bMb:           { fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 },
   h17:              { fontSize:17, fontWeight:800, color:"var(--ink)" },
-  h17mb:            { fontSize:17, fontWeight:800, color:"var(--ink)", marginBottom:8 },
   sub11:            { fontSize:11, color:"var(--muted)" },
   sub11lh:          { fontSize:11, color:"var(--muted)", lineHeight:1.5 },
   body12:           { fontSize:12, color:"var(--muted2)", lineHeight:1.5 },
-  spinner:          { width:64, height:64, border:"4px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 20px" },
   dot:              { width:28, height:28, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
 };
 
@@ -161,22 +159,16 @@ export default function NotFoundScreen({
 
         {/* ── SCANNING-LOADER ── */}
         {(ocrLoading || nutritionOcrLoading) && (
-          <div className="fade-in" style={S.center60}>
-            <div style={S.spinner} />
-            <div style={S.h17mb}>
-              {notFoundStep === 1 ? "Henter produktnavn…"
-                : notFoundStep === 3 ? "Læser næringsindhold…"
-                : "Analyserer ingredienser…"}
-            </div>
-            <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6, marginBottom:20 }}>
-              {notFoundStep === 1
-                ? "Vores AI læser produktnavnet fra billedet"
-                : notFoundStep === 3
-                ? "Vi udtrækker energi, fedt, kulhydrat og protein automatisk"
-                : "Vi finder allergener og ingredienser automatisk"}
-            </div>
-            <div style={{ fontSize:11, color:"var(--muted)", opacity:0.7 }}>Det tager typisk 5-10 sekunder ☕</div>
-          </div>
+          <Loader size="lg"
+            text={notFoundStep === 1 ? "Henter produktnavn…"
+              : notFoundStep === 3 ? "Læser næringsindhold…"
+              : "Analyserer ingredienser…"}
+            sub={notFoundStep === 1
+              ? "Vores AI læser produktnavnet fra billedet"
+              : notFoundStep === 3
+              ? "Vi udtrækker energi, fedt, kulhydrat og protein automatisk"
+              : "Vi finder allergener og ingredienser automatisk"}
+            hint="Det tager typisk 5-10 sekunder ☕" />
         )}
 
         {/* ── TRIN 2: Fotografér ingredienslisten ── */}
