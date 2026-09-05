@@ -607,10 +607,18 @@ export default function ProfileScreen({
               {customAllerg.length > 0 && <div className="tags">{customAllerg.map((a,i) => <div key={i} className="tag">✏️ {a}<span className="tag-x" onClick={() => setCustomAllerg(c=>c.filter((_,j)=>j!==i))}>×</span></div>)}</div>}
 
               <button className="btn btn-primary btn-full" style={{ marginTop:12 }} onClick={async () => {
+                // Samlet DELETE + én bulk-POST i stedet for et loop af enkelt-POSTs —
+                // ellers kan et fejlet kald midtvejs efterlade en delvist gemt liste
+                // (samme fejl som blev rettet i onboarding-flowets saveAllergensStep2)
                 try {
                   await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, { method:"DELETE", headers:makeHeaders(accessToken) });
-                  for(const a of allergens) await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, { method:"POST", headers:makeHeaders(accessToken), body:JSON.stringify({user_id:userId,allergen:a,type:"allergen"}) });
-                  for(const c of customAllerg) await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, { method:"POST", headers:makeHeaders(accessToken), body:JSON.stringify({user_id:userId,allergen:c,type:"custom"}) });
+                  const rows = [
+                    ...allergens.map(a => ({ user_id:userId, allergen:a, type:"allergen" })),
+                    ...customAllerg.map(c => ({ user_id:userId, allergen:c, type:"custom" })),
+                  ];
+                  if (rows.length > 0) {
+                    await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, { method:"POST", headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" }, body:JSON.stringify(rows) });
+                  }
                   setScreen(SCREENS.PROFILE);
                 } catch (e) { alert("Fejl: " + e.message); }
               }}>Gem</button>
