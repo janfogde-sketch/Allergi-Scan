@@ -149,7 +149,7 @@ export function useShoppingList({ accessToken, userId }) {
 
   // ── Tilføj vare ─────────────────────────────────────────────────────────────
   const addToList = async (name) => {
-    if (!name?.trim()) return;
+    if (!name?.trim()) return false;
     const tempId = uid();
     setShoppingList(l => [...l, { id: tempId, name: name.trim(), checked: false }]);
     setNewItemName("");
@@ -168,7 +168,13 @@ export function useShoppingList({ accessToken, userId }) {
         const saved = Array.isArray(data) ? data[0] : data;
         if (saved?.id) setShoppingList(l => l.map(i => i.id === tempId ? { ...i, id: saved.id } : i));
       }
-    } catch { /* behold optimistisk opdatering */ }
+      return true;
+    } catch {
+      // Gemning fejlede — fjern den midlertidige vare igen, ellers tror brugeren
+      // den er gemt, indtil den stille forsvinder ved næste genindlæsning
+      setShoppingList(l => l.filter(i => i.id !== tempId));
+      return false;
+    }
   };
 
   // ── Toggle ──────────────────────────────────────────────────────────────────
@@ -189,7 +195,11 @@ export function useShoppingList({ accessToken, userId }) {
         headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
         body: JSON.stringify({ checked: newChecked }),
       });
-    } catch { /* silent */ }
+    } catch {
+      // Opdatering fejlede — rul afkrydsningen tilbage, ellers viser UI'et en
+      // status serveren ikke er enig i, indtil næste genindlæsning stille retter den
+      setShoppingList(l => l.map(i => i.id === id ? { ...i, checked: !newChecked } : i));
+    }
   };
 
   // ── Slet ────────────────────────────────────────────────────────────────────

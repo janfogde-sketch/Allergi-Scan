@@ -186,20 +186,21 @@ export default function RecipesScreen({
                         const allAdded = items.every((_,i) => listAdded[i]);
                         return (
                           <button
-                            onClick={() => {
+                            onClick={async () => {
                               const baseServings = r.servings || 4;
                               const scale = recipeServings / baseServings;
-                              items.forEach((ing, i) => {
-                                if (!listAdded[i]) {
-                                  const amt = ing.amount ? Math.round(ing.amount * scale * 10) / 10 : null;
-                                  const unit = ing.unit || (ing.measure ? ing.measure.replace(/^[\d.,\/\s]+/, "").trim() : "");
-                                  const label = [amt, unit, ing.name].filter(Boolean).join(" ");
-                                  addToList(label);
-                                }
+                              const results = await Promise.all(items.map(async (ing, i) => {
+                                if (listAdded[i]) return true;
+                                const amt = ing.amount ? Math.round(ing.amount * scale * 10) / 10 : null;
+                                const unit = ing.unit || (ing.measure ? ing.measure.replace(/^[\d.,\/\s]+/, "").trim() : "");
+                                const label = [amt, unit, ing.name].filter(Boolean).join(" ");
+                                return addToList(label);
+                              }));
+                              setListAdded(s => {
+                                const next = { ...s };
+                                items.forEach((_, i) => { if (results[i]) next[i] = true; });
+                                return next;
                               });
-                              const map = {};
-                              items.forEach((_,i) => map[i] = true);
-                              setListAdded(map);
                             }}
                             style={{
                               display:"flex", alignItems:"center", gap:5,
@@ -265,11 +266,11 @@ export default function RecipesScreen({
                                     )}
                                     {addToList && (
                                       <button
-                                        onClick={() => {
+                                        onClick={async () => {
                                           if (added) return;
                                           const label = [amtDisplay, unit, ing.name].filter(Boolean).join(" ");
-                                          addToList(label);
-                                          setListAdded(s => ({ ...s, [i]: true }));
+                                          const ok = await addToList(label);
+                                          if (ok) setListAdded(s => ({ ...s, [i]: true }));
                                         }}
                                         title={added ? "Tilføjet" : "Tilføj til indkøbsliste"}
                                         style={{
