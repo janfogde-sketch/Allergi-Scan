@@ -10,6 +10,7 @@ import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useFamilyFormContext } from "./FamilyFormContext.jsx";
+import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 
 // ── Welcome demo-slider ────────────────────────────────────────────────────
 const WELCOME_SLIDES = [
@@ -263,9 +264,6 @@ function WelcomeDemoSlider({ setScreen, setAuthTab }) {
 
 export default function OnboardingScreen({
   onboardStep, setOnboardStep,
-  selectedENumbers = [], setSelectedENumbers,
-  activeSubtypeModal, setActiveSubtypeModal,
-  allergenSubtypes = {}, setAllergenSubtypes,
   tourIdx, setTourIdx,
   editMode, setEditMode,
   customInput, setCustomInput,
@@ -296,6 +294,9 @@ export default function OnboardingScreen({
     newMemberCustomInput, setNewMemberCustomInput,
     addMember, removeMember,
   } = useFamilyFormContext();
+  const {
+    selectedENumbers = [], setSelectedENumbers,
+  } = useAllergenPrefsContext();
 
   // FIX: denne state manglede — brugtes i trin 2 (E-numre kollapsibel), men
   // var aldrig defineret, hvilket crashede hele onboarding-skærmen med
