@@ -225,7 +225,7 @@ export default function ProfileScreen({
               </div>
             )}
             {!historyLoading && history.length===0 && (
-              <div className="empty-state"><span className="empty-icon">🔍</span><div className="empty-txt">Ingen scanninger endnu</div><div className="empty-sub">Skan dit første produkt for at se din historik her</div><button className="btn btn-outline btn-sm" style={{ marginTop:12 }} onClick={() => setScreen("SCANNER")}>Skan nu</button></div>
+              <div className="empty-state"><span className="empty-icon">🔍</span><div className="empty-txt">Ingen scanninger endnu</div><div className="empty-sub">Skan dit første produkt for at se din historik her</div><button className="btn btn-outline btn-sm" style={{ marginTop:12 }} onClick={() => setScreen(SCREENS.HOME)}>Skan nu</button></div>
             )}
             {history.map((h,i) => {
               const s = h.result||h.status;
@@ -299,7 +299,7 @@ export default function ProfileScreen({
                 </button>
               </div>
               {allergens.length + customAllerg.length + (selectedENumbers?.length || 0) + (user?.diets?.length || 0) === 0
-                ? <div style={{ textAlign:"center", padding:"16px 0" }}><div style={{ fontSize:36, marginBottom:8 }}>⚙️</div><div style={{ fontSize:13, color:"var(--muted)", marginBottom:10 }}>Ingen præferencer registreret endnu</div><button className="btn btn-outline btn-sm" onClick={() => setScreen("PREFERENCES")}>Tilføj allergener</button></div>
+                ? <div style={{ textAlign:"center", padding:"16px 0" }}><div style={{ fontSize:36, marginBottom:8 }}>⚙️</div><div style={{ fontSize:13, color:"var(--muted)", marginBottom:10 }}>Ingen præferencer registreret endnu</div><button className="btn btn-outline btn-sm" onClick={() => setScreen(SCREENS.EDITPROFILE)}>Tilføj allergener</button></div>
                 : (
                   <div>
                     {/* Gruppér: allergener, intoleranser, diæter */}
