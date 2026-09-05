@@ -4,6 +4,7 @@ import { SCREENS, PAGE_IDS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.
 import { BUILD_TIME, COMMIT_SHA, formatBuildTime, buildScreenLabel } from "./utils.jsx";
 import { getTraceLog } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
+import { useProfileContext } from "./ProfileContext.jsx";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FeedbackModal.jsx
@@ -29,12 +30,10 @@ export default function FeedbackModal({
   profilePopup,
 
   // Brugerkontekst
-  allergens,
-  family,
   history,
-  activeProfiles,
 }) {
   const { user, userId, accessToken, loginEmail } = useAuthContext();
+  const { allergens, family, activeProfiles } = useProfileContext();
   const [type, setType]         = useState("bug");
   const [text, setText]         = useState("");
   const [image, setImage]       = useState(null);

@@ -5,6 +5,7 @@ import { compareAllergens, initials } from "./helpers.js";
 import { ProductImage } from "./SharedComponents.jsx";
 import { CategorySelect } from "./MemberForm.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
+import { useProfileContext } from "./ProfileContext.jsx";
 
 const S = {
   flexMin: { flex:1, minWidth:0 },
@@ -26,9 +27,6 @@ const CATEGORIES = [
 ];
 
 export default function SearchScreen({
-  family,
-  allergens,
-  activeProfiles, setActiveProfiles,
   activeIds,
   searchQuery, setSearchQuery,
   searchResults, setSearchResults,
@@ -39,6 +37,7 @@ export default function SearchScreen({
   lookupProduct,
 }) {
   const { user } = useAuthContext();
+  const { family, allergens, activeProfiles, setActiveProfiles } = useProfileContext();
   const [allergenFilterOpen, setAllergenFilterOpen] = useState(false);
   const [manualAllergens, setManualAllergens]       = useState([]);
 

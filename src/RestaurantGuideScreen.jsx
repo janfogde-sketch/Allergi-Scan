@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { SCREENS, ALLERGENS } from "./constants.jsx";
 import { getAllergenLabels } from "./helpers.js";
+import { useProfileContext } from "./ProfileContext.jsx";
 
 const TIPS = [
   {
@@ -101,7 +102,8 @@ const QUICK_PHRASES = [
   { da: "Det er en alvorlig allergi", en: "This is a serious allergy" },
 ];
 
-export default function RestaurantGuideScreen({ screen, setScreen, allergens, customAllerg }) {
+export default function RestaurantGuideScreen({ screen, setScreen }) {
+  const { allergens, customAllerg } = useProfileContext();
   const [openSection, setOpenSection] = useState(null);
 
   if (screen !== SCREENS.RESTAURANTGUIDE) return null;

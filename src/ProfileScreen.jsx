@@ -7,6 +7,7 @@ import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
 import { usePush } from "./usePush.js";
 import { useAuthContext } from "./AuthContext.jsx";
+import { useProfileContext } from "./ProfileContext.jsx";
 
 // ── Gamification helpers ──────────────────────────────────────────────────────
 function computeStreak(history) {
@@ -123,10 +124,6 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
 
 export default function ProfileScreen({
   screen, setScreen,
-  allergens, setAllergens,
-  customAllerg, setCustomAllerg,
-  family, setFamily,
-  activeProfiles, setActiveProfiles,
   history, favorites,
   showDeleteAccount, setShowDeleteAccount,
   deleteConfirmText, setDeleteConfirmText,
@@ -149,7 +146,6 @@ export default function ProfileScreen({
   newMemberENumbers, setNewMemberENumbers,
   newMemberSubtypes, setNewMemberSubtypes,
   newMemberCustomInput, setNewMemberCustomInput,
-  loginEmail,
   addMember, removeMember,
   historyLoading,
   setScanResult,
@@ -157,7 +153,8 @@ export default function ProfileScreen({
   lookupProduct,
   toggleFavorite,
 }) {
-  const { user, setUser, userId, accessToken, clearAuth } = useAuthContext();
+  const { user, setUser, userId, accessToken, clearAuth, loginEmail } = useAuthContext();
+  const { allergens, setAllergens, customAllerg, setCustomAllerg, family, setFamily, activeProfiles, setActiveProfiles } = useProfileContext();
 
   // ── Invite state ────────────────────────────────────────────────────────────
   const [inviteLink, setInviteLink] = useState(null);

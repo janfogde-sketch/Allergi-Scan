@@ -5,6 +5,7 @@ import { ALLERGENS, SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
 import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
+import { useProfileContext } from "./ProfileContext.jsx";
 
 import { CategorySelect } from "./MemberForm.jsx";
 import NotFoundScreen from "./NotFoundScreen.jsx";
@@ -325,8 +326,6 @@ export default function ScannerScreen({
   scanError,
   shoppingList, newItemName, setNewItemName,
   history, favorites,
-  family, activeProfiles, setActiveProfiles,
-  allergens, customAllerg,
   notFoundStep, setNotFoundStep,
   proposedName, setProposedName,
   proposedFlags, setProposedFlags,
@@ -379,6 +378,7 @@ export default function ScannerScreen({
   altLoading,
 }) {
   const { user, userId, accessToken } = useAuthContext();
+  const { family, activeProfiles, setActiveProfiles, allergens, customAllerg } = useProfileContext();
 
   // Parser OCR-tekst til liste af ingredienser
 
@@ -972,9 +972,6 @@ export default function ScannerScreen({
         {screen === SCREENS.SEARCH && (
           <Suspense fallback={LazyFallback}>
           <SearchScreen
-            family={family}
-            allergens={allergens}
-            activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
             activeIds={activeIds}
             searchQuery={searchQuery} setSearchQuery={setSearchQuery}
             searchResults={searchResults} setSearchResults={setSearchResults}
@@ -1020,9 +1017,6 @@ export default function ScannerScreen({
         {screen === SCREENS.RESULT && scanResult && (
           <ResultScreen
             scanResult={scanResult}
-            family={family}
-            allergens={allergens}
-            activeProfiles={activeProfiles}
             activeENumbers={activeENumbers}
             selectedENumbers={selectedENumbers}
             isFavorite={isFavorite}
@@ -1060,8 +1054,6 @@ export default function ScannerScreen({
           <RestaurantGuideScreen
             screen={screen}
             setScreen={setScreen}
-            allergens={allergens}
-            customAllerg={customAllerg}
           />
           </Suspense>
         )}
