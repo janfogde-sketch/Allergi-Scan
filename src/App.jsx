@@ -1144,6 +1144,7 @@ const lookupProduct = useCallback(async (ean) => {
             loadAdminStats={loadAdminStats} loadSubmissions={loadSubmissions} loadTickets={loadTickets}
             setAdminSection={setAdminSection} setSubmissionFilter={setSubmissionFilter}
             lookupProduct={lookupProduct}
+            toggleFavorite={toggleFavorite}
           />
           </ErrorBoundary>
         )}
