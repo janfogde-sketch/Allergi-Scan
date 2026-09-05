@@ -1,7 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { SCREENS, ALLERGENS } from "./constants.jsx";
-import { getAllergenLabels } from "./helpers.js";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 

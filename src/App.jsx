@@ -1186,9 +1186,7 @@ const lookupProduct = useCallback(async (ean) => {
         {screen === SCREENS.ADMIN && user?.role === "admin" && (
           <Suspense fallback={null}>
           <ErrorBoundary screen="Admin">
-          <AdminScreen
-            customInput={customInput}
-          />
+          <AdminScreen />
           </ErrorBoundary>
           </Suspense>
         )}

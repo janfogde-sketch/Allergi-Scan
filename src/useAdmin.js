@@ -28,8 +28,6 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const [openTicket, setOpenTicket] = useState(null);
   const [ticketsLoading, setTicketsLoading] = useState(false);
   const [ocrImagePreview, setOcrImagePreview] = useState(null);
-  const [missingEans, setMissingEans] = useState([]);
-  const [missingEansLoading, setMissingEansLoading] = useState(false);
   const [reparseLoading, setReparseLoading] = useState(false);
   const [reparseLog, setReparseLog] = useState(null);
 
@@ -301,30 +299,6 @@ export function useAdmin(accessToken, userId, clearAuth) {
     setCleaningOcr(false);
   };
 
-  const loadMissingEans = async () => {
-    if (!accessToken) return;
-    setMissingEansLoading(true);
-    try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/missing_ean_log?order=count.desc&limit=50`,
-        { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" } }
-      );
-      const data = await res.json();
-      setMissingEans(Array.isArray(data) ? data : []);
-    } catch (e) { console.error("loadMissingEans:", e); }
-    setMissingEansLoading(false);
-  };
-
-  const deleteMissingEan = async (ean) => {
-    try {
-      await fetch(`${SUPABASE_URL}/rest/v1/missing_ean_log?ean=eq.${ean}`, {
-        method: "DELETE",
-        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}` },
-      });
-      setMissingEans(m => m.filter(x => x.ean !== ean));
-    } catch (e) { console.error("deleteMissingEan:", e); }
-  };
-
   const runReparse = async (manual = false) => {
     if (reparseLoading) return;
     setReparseLoading(true);
@@ -380,8 +354,6 @@ export function useAdmin(accessToken, userId, clearAuth) {
     rejectSubmission,
     updateTicketStatus,
     cleanOcrWithAI,
-    missingEans, missingEansLoading,
-    loadMissingEans, deleteMissingEan,
     reparseLoading, reparseLog, runReparse,
   };
 }

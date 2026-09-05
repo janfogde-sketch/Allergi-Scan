@@ -1,12 +1,9 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { ALLERGENS, SCREENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { getAllergenLabels, initials, getTraceLog } from "./helpers.js";
-import { MemberForm } from "./MemberForm.jsx";
+import { initials, getTraceLog } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
-import { useProfileContext } from "./ProfileContext.jsx";
 import { useAdminContext } from "./AdminContext.jsx";
-import { useFamilyFormContext } from "./FamilyFormContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { ALL_ALLERGEN_WORDS } from "./allergenKeywords.js";
 
@@ -78,21 +75,8 @@ function HighlightText({ text }) {
 }
 
 
-export default function AdminScreen({
-  customInput,
-}) {
+export default function AdminScreen() {
   const { userId, accessToken } = useAuthContext();
-  const { allergens, customAllerg, family } = useProfileContext();
-  const {
-    newMemberAllerg, setNewMemberAllerg,
-    newMemberCustomAllerg, setNewMemberCustomAllerg,
-    newMemberCustomInput, setNewMemberCustomInput,
-    newMemberDiets, setNewMemberDiets,
-    newMemberENumbers, setNewMemberENumbers,
-    newMemberName, setNewMemberName,
-    newMemberSubtypes, setNewMemberSubtypes,
-    addMember, removeMember,
-  } = useFamilyFormContext();
   const {
     adminSection, setAdminSection, adminStats,
     adminUsers, adminUsersLoading,
@@ -340,47 +324,6 @@ ${openTicket.description}
           </div>
         )}
 
-        {/* ══ FAMILIE ══ */}
-        {screen === SCREENS.FAMILY && (
-          <div className="screen fade-in" style={{ paddingBottom:120 }}>
-            <div className="screen-title">Familie</div>
-            <div className="screen-sub">Administrér familiemedlemmers allergiprofiler.</div>
-            <div className="card" style={{ padding:"12px 14px" }}>
-              <div className="card-lbl">Aktive profiler ved scanning</div>
-              <FamilyChips />
-            </div>
-            {family.length===0 && <div className="empty-state"><div className="empty-txt">Ingen familiemedlemmer endnu</div><div className="empty-sub">Tilføj nedenfor</div></div>}
-            {family.map(m => (
-              <div key={m.id} className="family-member">
-                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:m.allergens.length?10:0 }}>
-                  <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)" }}>{initials(m.name)}</div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontWeight:800, fontSize:15 }}>{m.name}</div>
-                    <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>{m.allergens.length} allergi{m.allergens.length!==1?"er":""}</div>
-                  </div>
-                  <span style={{ cursor:"pointer", opacity:.35, fontSize:18, padding:4 }} onClick={() => removeMember(m.id)}><Icon name="trash" size={18} color="var(--muted)" /></span>
-                </div>
-                {m.allergens.length>0 && <div className="tags">{getAllergenLabels(m.allergens,m.custom||[]).map((a,j) => <div key={j} className="tag" style={{ fontSize:11 }}>{a}</div>)}</div>}
-              </div>
-            ))}
-            <div className="card">
-              <div className="card-title">+ Tilføj familiemedlem</div>
-              <label className="field-lbl" style={{ marginTop:8 }}>Navn</label>
-              <input className="field" placeholder="Fx. Peter (12 år)" value={newMemberName} onChange={e => setNewMemberName(e.target.value)} style={{ marginBottom:12 }} />
-              <MemberForm
-                name={newMemberName} setName={setNewMemberName}
-                allergens={newMemberAllerg} setAllergens={setNewMemberAllerg}
-                customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
-                subtypes={newMemberSubtypes} setSubtypes={setNewMemberSubtypes}
-                diets={newMemberDiets} setDiets={setNewMemberDiets}
-                eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
-                customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}
-                onAdd={addMember}
-                addLabel={`+ Tilføj ${newMemberName||"familiemedlem"}`}
-              />
-            </div>
-          </div>
-        )}
 
         {/* ══ ADMIN ══ */}
         {screen === SCREENS.ADMIN && !openSubmission && !openTicket && (
