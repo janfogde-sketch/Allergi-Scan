@@ -4,6 +4,7 @@ import { SCREENS, SUPABASE_URL } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 import { ProductImage } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
+import { useNavigationContext } from "./NavigationContext.jsx";
 
 const S = {
   none:           { display:"none" },
@@ -32,9 +33,9 @@ export default function SuggestEditScreen({
   editNote, setEditNote,
   editProductImage,
   handleEditProductCapture,
-  setScreen,
 }) {
   const { accessToken, userId } = useAuthContext();
+  const { setScreen } = useNavigationContext();
   const [ingItems, setIngItems] = useState([]);
   const [ingInput, setIngInput] = useState("");
 

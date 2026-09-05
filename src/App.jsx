@@ -32,7 +32,6 @@ import ScannerScreen from './ScannerScreen.jsx';
 const RecipesScreen = React.lazy(() => import('./RecipesScreen.jsx'));
 const KnowledgeScreen = React.lazy(() => import('./KnowledgeScreen.jsx'));
 import ErrorBoundary from './ErrorBoundary.jsx';
-import { useNavigation } from './useNavigation.js';
 import { useOffline, saveToOfflineCache, getFromOfflineCache } from './useOffline.js';
 
 import { appCss } from './theme.jsx';
@@ -53,6 +52,7 @@ import FeedbackModal from './FeedbackModal.jsx';
 import { AuthProvider } from './AuthContext.jsx';
 import { ProfileProvider } from './ProfileContext.jsx';
 import { AdminProvider } from './AdminContext.jsx';
+import { NavigationProvider } from './NavigationContext.jsx';
 
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
@@ -359,7 +359,6 @@ export default function EatSafe() {
   };
 
   // ── Router — browser back-knap support ──────────────────────────────────
-  const { navigate, goBack, canGoBack } = useNavigation(screen, setScreen, SCREENS);
   const isOffline = useOffline();
 
   const [notFoundEan, setNotFoundEan] = useState("");
@@ -731,10 +730,13 @@ const lookupProduct = useCallback(async (ean) => {
     reparseLog, reparseLoading, runReparse,
   };
 
+  const navigationContextValue = { screen, setScreen };
+
   return (
     <AuthProvider value={authContextValue}>
     <ProfileProvider value={profileContextValue}>
     <AdminProvider value={adminContextValue}>
+    <NavigationProvider value={navigationContextValue}>
     <>
       <style>{appCss}</style>
       <div className="app" role="application" aria-label="EatSafe">
@@ -746,7 +748,6 @@ const lookupProduct = useCallback(async (ean) => {
         {(screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode) && (
           <Suspense fallback={<div style={{padding:"40px 16px",textAlign:"center"}}><div style={{width:28,height:28,border:"3px solid var(--border2)",borderTopColor:"var(--green)",borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto"}} /></div>}>
           <OnboardingScreen
-            screen={screen} setScreen={setScreen}
             onboardStep={onboardStep} setOnboardStep={setOnboardStep}
             selectedENumbers={selectedENumbers} setSelectedENumbers={setSelectedENumbers}
             activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
@@ -1000,7 +1001,7 @@ const lookupProduct = useCallback(async (ean) => {
         {/* ══ FEEDBACK MODAL ══ */}
         <FeedbackModal
           open={feedbackOpen} onClose={() => setFeedbackOpen(false)}
-          screen={screen} authTab={authTab} onboardStep={onboardStep}
+          authTab={authTab} onboardStep={onboardStep}
           scanResult={scanResult} madpasWaiterView={madpasWaiterView}
           madpasLang={madpasLang} selectedRecipe={selectedRecipe}
           editMode={editMode} showManualEan={showManualEan}
@@ -1027,7 +1028,6 @@ const lookupProduct = useCallback(async (ean) => {
         {(screen === SCREENS.HOME || screen === SCREENS.RESULT || screen === SCREENS.NOTFOUND || screen === SCREENS.SUBMITTED || screen === SCREENS.SEARCH || screen === SCREENS.LIST || screen === SCREENS.SUGGEST_EDIT) && (
           <ErrorBoundary screen="Scanner">
           <ScannerScreen
-            screen={screen} setScreen={setScreen}
             scanResult={scanResult} notFoundEan={notFoundEan}
             searchQuery={searchQuery} setSearchQuery={setSearchQuery}
             searchResults={searchResults} setSearchResults={setSearchResults}
@@ -1094,7 +1094,6 @@ const lookupProduct = useCallback(async (ean) => {
         {(screen === SCREENS.MADPAS || madpasWaiterView) && (
           <ErrorBoundary screen="Madpas">
           <MadpasScreen
-            screen={screen}
             madpasLang={madpasLang} setMadpasLang={setMadpasLang}
             madpasProfileId={madpasProfileId} setMadpasProfileId={setMadpasProfileId}
             madpasSpeaking={madpasSpeaking} setMadpasSpeaking={setMadpasSpeaking}
@@ -1113,7 +1112,6 @@ const lookupProduct = useCallback(async (ean) => {
           <Suspense fallback={<div style={{padding:"40px 16px",textAlign:"center"}}><div style={{width:28,height:28,border:"3px solid var(--border2)",borderTopColor:"var(--green)",borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto"}} /></div>}>
           <ErrorBoundary screen="Leksikon">
           <KnowledgeScreen
-            screen={screen} setScreen={setScreen}
             openSlug={knowledgeSlug}
             onSlugHandled={() => setKnowledgeSlug(null)}
           />
@@ -1127,7 +1125,6 @@ const lookupProduct = useCallback(async (ean) => {
           screen === SCREENS.FAMILY) && (
           <ErrorBoundary screen="Profil">
           <ProfileScreen
-            screen={screen} setScreen={setScreen}
             history={history} favorites={favorites}
             showDeleteAccount={showDeleteAccount} setShowDeleteAccount={setShowDeleteAccount}
             deleteConfirmText={deleteConfirmText} setDeleteConfirmText={setDeleteConfirmText}
@@ -1165,7 +1162,6 @@ const lookupProduct = useCallback(async (ean) => {
           <Suspense fallback={<div style={{padding:"40px 16px",textAlign:"center"}}><div style={{width:28,height:28,border:"3px solid var(--border2)",borderTopColor:"var(--green)",borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto"}} /></div>}>
           <ErrorBoundary screen="Opskrifter">
           <RecipesScreen
-            screen={screen} setScreen={setScreen}
             recipes={recipes} recipesLoading={recipesLoading}
             selectedRecipe={selectedRecipe} setSelectedRecipe={setSelectedRecipe}
             recipeSearch={recipeSearch} setRecipeSearch={setRecipeSearch}
@@ -1199,7 +1195,6 @@ const lookupProduct = useCallback(async (ean) => {
           <Suspense fallback={null}>
           <ErrorBoundary screen="Admin">
           <AdminScreen
-            screen={screen} setScreen={setScreen}
             setNewMemberAllerg={setNewMemberAllerg} setNewMemberCustomAllerg={setNewMemberCustomAllerg}
             setNewMemberCustomInput={setNewMemberCustomInput} setNewMemberDiets={setNewMemberDiets}
             setNewMemberENumbers={setNewMemberENumbers} setNewMemberName={setNewMemberName}
@@ -1251,6 +1246,7 @@ const lookupProduct = useCallback(async (ean) => {
         )}
       </div>
     </>
+    </NavigationProvider>
     </AdminProvider>
     </ProfileProvider>
     </AuthProvider>

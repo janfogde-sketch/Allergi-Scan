@@ -5,6 +5,7 @@ import { compareENumbers, checkDietCompatibility, verifiedBadge, makeHeaders } f
 import { Icon, IngredientsList, ProductImage } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
+import { useNavigationContext } from "./NavigationContext.jsx";
 
 const S = {
   flex1:    { flex:1 },
@@ -21,7 +22,6 @@ export default function ResultScreen({
   isFavorite,
   toggleFavorite,
   addToList,
-  setScreen,
   setKnowledgeSlug,
   setEditStep,
   setEditIngText,
@@ -33,6 +33,7 @@ export default function ResultScreen({
 }) {
   const { user } = useAuthContext();
   const { family, allergens, activeProfiles } = useProfileContext();
+  const { setScreen } = useNavigationContext();
   if (!scanResult) return null;
 
   // ── Småbørn-advarsler (under 3 år) ──────────────────────────────────────────

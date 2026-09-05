@@ -6,6 +6,7 @@ import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibil
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
+import { useNavigationContext } from "./NavigationContext.jsx";
 
 import { CategorySelect } from "./MemberForm.jsx";
 import NotFoundScreen from "./NotFoundScreen.jsx";
@@ -318,7 +319,6 @@ function DemoSlider({ setScreen, mode = "welcome", onClose }) {
 }
 
 export default function ScannerScreen({
-  screen, setScreen,
   scanResult, notFoundEan,
   searchQuery, setSearchQuery,
   searchResults, setSearchResults,
@@ -379,6 +379,7 @@ export default function ScannerScreen({
 }) {
   const { user, userId, accessToken } = useAuthContext();
   const { family, activeProfiles, setActiveProfiles, allergens, customAllerg } = useProfileContext();
+  const { screen, setScreen } = useNavigationContext();
 
   // Parser OCR-tekst til liste af ingredienser
 
@@ -954,7 +955,6 @@ export default function ScannerScreen({
         )}
         {screen === SCREENS.NOTFOUND && (
           <NotFoundScreen
-            setScreen={setScreen}
             notFoundEan={notFoundEan}
             notFoundStep={notFoundStep} setNotFoundStep={setNotFoundStep}
             proposedName={proposedName} setProposedName={setProposedName}
@@ -995,7 +995,6 @@ export default function ScannerScreen({
             removeItem={removeItem}
             clearDone={clearDone}
             lookupProduct={lookupProduct}
-            setScreen={setScreen}
           />
           </Suspense>
         )}
@@ -1004,7 +1003,6 @@ export default function ScannerScreen({
           <SubmittedScreen
             notFoundEan={notFoundEan}
             proposedName={proposedName}
-            setScreen={setScreen}
             setNotFoundStep={setNotFoundStep}
             setProposedName={setProposedName}
             setProposedFlags={setProposedFlags}
@@ -1022,7 +1020,6 @@ export default function ScannerScreen({
             isFavorite={isFavorite}
             toggleFavorite={toggleFavorite}
             addToList={addToList}
-            setScreen={setScreen}
             setKnowledgeSlug={setKnowledgeSlug}
             setEditStep={setEditStep}
             setEditIngText={setEditIngText}
@@ -1044,17 +1041,13 @@ export default function ScannerScreen({
             editNote={editNote} setEditNote={setEditNote}
             editProductImage={editProductImage}
             handleEditProductCapture={handleEditProductCapture}
-            setScreen={setScreen}
           />
           </Suspense>
         )}
 
         {screen === SCREENS.RESTAURANTGUIDE && (
           <Suspense fallback={LazyFallback}>
-          <RestaurantGuideScreen
-            screen={screen}
-            setScreen={setScreen}
-          />
+          <RestaurantGuideScreen />
           </Suspense>
         )}
 

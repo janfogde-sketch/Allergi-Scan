@@ -5,9 +5,9 @@ import { compareAllergens, getAllergenLabels } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
+import { useNavigationContext } from "./NavigationContext.jsx";
 
 export default function RecipesScreen({
-  screen, setScreen,
   recipes, recipesLoading,
   selectedRecipe, setSelectedRecipe,
   recipeSearch, setRecipeSearch,
@@ -32,6 +32,7 @@ export default function RecipesScreen({
 }) {
   const { user, accessToken } = useAuthContext();
   const { allergens, customAllerg, family, activeProfiles } = useProfileContext();
+  const { screen, setScreen } = useNavigationContext();
   const [listAdded, setListAdded] = React.useState({});
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [localSafeProfiles, setLocalSafeProfiles] = React.useState(null);

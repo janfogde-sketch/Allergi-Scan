@@ -3,6 +3,7 @@ import React from "react";
 import { SCREENS } from "./constants.jsx";
 import { compareAllergens } from "./helpers.js";
 import { Icon, ProductImage } from "./SharedComponents.jsx";
+import { useNavigationContext } from "./NavigationContext.jsx";
 
 const S = {
   flexMin: { flex:1, minWidth:0 },
@@ -22,8 +23,8 @@ export default function ListScreen({
   removeItem,
   clearDone,
   lookupProduct,
-  setScreen,
 }) {
+  const { setScreen } = useNavigationContext();
   return (
     <div className="screen fade-in">
       <div className="screen-title">Indkøbsliste</div>
