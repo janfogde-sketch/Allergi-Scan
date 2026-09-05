@@ -204,6 +204,20 @@ export function ProfileBadges({ allergenFlags, allergens, customAllerg, family, 
   );
 }
 
+// ── Fælles "tom liste"-tilstand ───────────────────────────────────────────────
+// Bruger de fælles .empty-state/.empty-icon/.empty-txt/.empty-sub CSS-klasser,
+// så en fuldbredde tom-tilstand ser ens ud uanset hvilken skærm den vises på.
+export function EmptyState({ icon, text, sub, children, style }) {
+  return (
+    <div className="empty-state" style={style}>
+      {icon && <span className="empty-icon">{icon}</span>}
+      <div className="empty-txt">{text}</div>
+      {sub && <div className="empty-sub">{sub}</div>}
+      {children}
+    </div>
+  );
+}
+
 // ── Fælles loading-indikator ──────────────────────────────────────────────────
 // size="sm" (standard): lille inline-kort med spinner + tekst (bruges når data
 // indlæses inde i en liste/skærm, fx søgeresultater).

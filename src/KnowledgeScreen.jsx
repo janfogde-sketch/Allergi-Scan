@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
-import { Icon } from "./SharedComponents.jsx";
+import { Icon, EmptyState } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 
@@ -248,11 +248,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           ))}
         </div>
       ) : entries.length === 0 ? (
-        <div style={{ textAlign:"center", padding:"60px 20px" }}>
-          <div style={{ fontSize:48, marginBottom:12 }}>🔍</div>
-          <div style={{ fontSize:16, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>Ingen resultater</div>
-          <div style={{ fontSize:13, color:"var(--muted)" }}>{searchQuery ? "Prøv et andet søgeord" : "Ingen entries i denne kategori endnu"}</div>
-        </div>
+        <EmptyState icon="🔍" text="Ingen resultater" sub={searchQuery ? "Prøv et andet søgeord" : "Ingen entries i denne kategori endnu"} />
       ) : (
         <div>{entries.map(entry => {
           const cat = CAT_MAP[entry.category] || {};
