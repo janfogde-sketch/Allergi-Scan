@@ -324,6 +324,105 @@ export default function OnboardingScreen({
     }
   };
 
+  const renderStep1 = () => {
+    const nameOk = (user.name||"").trim().length > 0;
+    const emailOk = (user.email||loginEmail||"").trim().length > 0;
+    const ageOk = (user.age||"").toString().trim().length > 0 && Number(user.age) > 0;
+    const genderOk = !!(user.gender);
+    const phoneOk = (user.phone||"").trim().length > 0;
+    const allOk = nameOk && emailOk && ageOk && genderOk && phoneOk;
+    const missingFields = [
+      !nameOk && "navn",
+      !emailOk && "email",
+      !ageOk && "alder",
+      !genderOk && "køn",
+      !phoneOk && "telefon",
+    ].filter(Boolean);
+    return (
+      <div className="fade-in">
+        <div style={{ marginBottom:14 }}>
+          <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", marginBottom:4 }}>Hvem er du?</div>
+          <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.5 }}>Oplysningerne bruges til din personlige allergiprofil og kan redigeres senere.</div>
+        </div>
+
+        <div className="card" style={{ marginBottom:12 }}>
+          {/* Navn */}
+          <div style={{ marginBottom:12 }}>
+            <label className="field-lbl">Fulde navn <span style={{ color:"var(--red)" }}>*</span></label>
+            <input className="field" type="text" placeholder="Fx. Anna Hansen"
+              value={user.name||""} onChange={e => setUser(u => ({...u, name:e.target.value}))}
+              style={{ borderColor: !nameOk && (user.name !== undefined) ? "var(--red-md)" : undefined }} />
+          </div>
+
+          {/* Email */}
+          <div style={{ marginBottom:12 }}>
+            <label className="field-lbl">Email <span style={{ color:"var(--red)" }}>*</span></label>
+            <input className="field" type="email" placeholder="din@email.dk"
+              value={user.email||loginEmail||""}
+              onChange={e => setUser(u => ({...u, email:e.target.value}))}
+              readOnly={!!(loginEmail || isOAuth)}
+              style={{ opacity: (loginEmail || isOAuth) ? 0.6 : 1 }} />
+            {isOAuth && (
+              <div style={{ fontSize:10, color:"var(--green)", marginTop:3, display:"flex", alignItems:"center", gap:4 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+                Bekræftet via Google
+              </div>
+            )}
+          </div>
+
+          {/* Telefon */}
+          <div style={{ marginBottom:12 }}>
+            <label className="field-lbl">Telefonnummer <span style={{ color:"var(--red)" }}>*</span></label>
+            <input className="field" type="tel" placeholder="+45 12 34 56 78"
+              value={user.phone||""} onChange={e => setUser(u => ({...u, phone:e.target.value}))} />
+          </div>
+
+          {/* Alder */}
+          <div style={{ marginBottom:14 }}>
+            <label className="field-lbl">Alder <span style={{ color:"var(--red)" }}>*</span></label>
+            <input className="field" type="number" inputMode="numeric" placeholder="Fx. 32" min="1" max="120"
+              value={user.age||""} onChange={e => setUser(u => ({...u, age:e.target.value}))}
+              style={{ maxWidth:120 }} />
+          </div>
+
+          {/* Køn */}
+          <div>
+            <label className="field-lbl">Køn <span style={{ color:"var(--red)" }}>*</span></label>
+            <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+              {["Mand","Kvinde","Andet","Vil ikke oplyse"].map(g => (
+                <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
+                  style={{
+                    padding:"9px 14px", borderRadius:8, cursor:"pointer",
+                    border:`1px solid ${user.gender===g ? "var(--green)" : "var(--border)"}`,
+                    background: user.gender===g ? "var(--green-lt)" : "var(--surface)",
+                    fontSize:13, fontWeight:700,
+                    color: user.gender===g ? "var(--green)" : "var(--muted)",
+                    transition:"all .15s",
+                  }}>
+                  {g}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Validering */}
+        {!allOk && missingFields.length > 0 && (
+          <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", marginBottom:10 }}>
+            Mangler: {missingFields.join(", ")}
+          </div>
+        )}
+
+        <button className="btn btn-primary btn-full"
+          disabled={!allOk}
+          style={{ opacity: allOk ? 1 : 0.45 }}
+          onClick={() => allOk && saveProfileStep1().then(() => setOnboardStep(2))}>
+          Fortsæt →
+        </button>
+      </div>
+    );
+  };
+
   return (
     <>
         {screen === SCREENS.WELCOME && (
@@ -552,104 +651,7 @@ export default function OnboardingScreen({
             )}
 
             {/* ── TRIN 1: Din profil (obligatorisk) ── */}
-            {onboardStep === 1 && (() => {
-              const nameOk = (user.name||"").trim().length > 0;
-              const emailOk = (user.email||loginEmail||"").trim().length > 0;
-              const ageOk = (user.age||"").toString().trim().length > 0 && Number(user.age) > 0;
-              const genderOk = !!(user.gender);
-              const phoneOk = (user.phone||"").trim().length > 0;
-              const allOk = nameOk && emailOk && ageOk && genderOk && phoneOk;
-              const missingFields = [
-                !nameOk && "navn",
-                !emailOk && "email",
-                !ageOk && "alder",
-                !genderOk && "køn",
-                !phoneOk && "telefon",
-              ].filter(Boolean);
-              return (
-                <div className="fade-in">
-                  <div style={{ marginBottom:14 }}>
-                    <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", marginBottom:4 }}>Hvem er du?</div>
-                    <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.5 }}>Oplysningerne bruges til din personlige allergiprofil og kan redigeres senere.</div>
-                  </div>
-
-                  <div className="card" style={{ marginBottom:12 }}>
-                    {/* Navn */}
-                    <div style={{ marginBottom:12 }}>
-                      <label className="field-lbl">Fulde navn <span style={{ color:"var(--red)" }}>*</span></label>
-                      <input className="field" type="text" placeholder="Fx. Anna Hansen"
-                        value={user.name||""} onChange={e => setUser(u => ({...u, name:e.target.value}))}
-                        style={{ borderColor: !nameOk && (user.name !== undefined) ? "var(--red-md)" : undefined }} />
-                    </div>
-
-                    {/* Email */}
-                    <div style={{ marginBottom:12 }}>
-                      <label className="field-lbl">Email <span style={{ color:"var(--red)" }}>*</span></label>
-                      <input className="field" type="email" placeholder="din@email.dk"
-                        value={user.email||loginEmail||""}
-                        onChange={e => setUser(u => ({...u, email:e.target.value}))}
-                        readOnly={!!(loginEmail || isOAuth)}
-                        style={{ opacity: (loginEmail || isOAuth) ? 0.6 : 1 }} />
-                      {isOAuth && (
-                        <div style={{ fontSize:10, color:"var(--green)", marginTop:3, display:"flex", alignItems:"center", gap:4 }}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
-                          Bekræftet via Google
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Telefon */}
-                    <div style={{ marginBottom:12 }}>
-                      <label className="field-lbl">Telefonnummer <span style={{ color:"var(--red)" }}>*</span></label>
-                      <input className="field" type="tel" placeholder="+45 12 34 56 78"
-                        value={user.phone||""} onChange={e => setUser(u => ({...u, phone:e.target.value}))} />
-                    </div>
-
-                    {/* Alder */}
-                    <div style={{ marginBottom:14 }}>
-                      <label className="field-lbl">Alder <span style={{ color:"var(--red)" }}>*</span></label>
-                      <input className="field" type="number" inputMode="numeric" placeholder="Fx. 32" min="1" max="120"
-                        value={user.age||""} onChange={e => setUser(u => ({...u, age:e.target.value}))}
-                        style={{ maxWidth:120 }} />
-                    </div>
-
-                    {/* Køn */}
-                    <div>
-                      <label className="field-lbl">Køn <span style={{ color:"var(--red)" }}>*</span></label>
-                      <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-                        {["Mand","Kvinde","Andet","Vil ikke oplyse"].map(g => (
-                          <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
-                            style={{
-                              padding:"9px 14px", borderRadius:8, cursor:"pointer",
-                              border:`1px solid ${user.gender===g ? "var(--green)" : "var(--border)"}`,
-                              background: user.gender===g ? "var(--green-lt)" : "var(--surface)",
-                              fontSize:13, fontWeight:700,
-                              color: user.gender===g ? "var(--green)" : "var(--muted)",
-                              transition:"all .15s",
-                            }}>
-                            {g}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Validering */}
-                  {!allOk && missingFields.length > 0 && (
-                    <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", marginBottom:10 }}>
-                      Mangler: {missingFields.join(", ")}
-                    </div>
-                  )}
-
-                  <button className="btn btn-primary btn-full"
-                    disabled={!allOk}
-                    style={{ opacity: allOk ? 1 : 0.45 }}
-                    onClick={() => allOk && saveProfileStep1().then(() => setOnboardStep(2))}>
-                    Fortsæt →
-                  </button>
-                </div>
-              );
-            })()}
+            {onboardStep === 1 && renderStep1()}
             {onboardStep === 97 && (
               <div className="fade-in">
                 <div className="card" style={{ textAlign:"center", padding:"20px 20px 14px" }}>

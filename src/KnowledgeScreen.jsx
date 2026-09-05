@@ -179,6 +179,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
   // ── Main view ────────────────────────────────────────────────────────────
   const showList = searchQuery.length >= 2 || selectedCategory;
   const total = Object.values(counts).reduce((a,b) => a+b, 0);
+  const selectedCat = selectedCategory ? CAT_MAP[selectedCategory] : null;
 
   return (
     <div className="screen fade-in">
@@ -224,11 +225,11 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
       {/* Filter-header */}
       {showList && (
         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
-          {selectedCategory && (() => { const c = CAT_MAP[selectedCategory]; return (
-            <button onClick={() => handleCatSelect(null)} style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", background:c?.bg, border:`1px solid ${c?.color}33`, borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700, color:c?.color, fontFamily:"var(--f)" }}>
-              {c?.emoji} {c?.label} ✕
+          {selectedCategory && (
+            <button onClick={() => handleCatSelect(null)} style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", background:selectedCat?.bg, border:`1px solid ${selectedCat?.color}33`, borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700, color:selectedCat?.color, fontFamily:"var(--f)" }}>
+              {selectedCat?.emoji} {selectedCat?.label} ✕
             </button>
-          );})()}
+          )}
           <div style={{ fontSize:12, color:"var(--muted)" }}>{entries.length} resultater</div>
         </div>
       )}
