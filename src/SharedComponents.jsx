@@ -204,6 +204,44 @@ export function ProfileBadges({ allergenFlags, allergens, customAllerg, family, 
   );
 }
 
+// ── Fælles farve/ikon for sikkerheds-status ──────────────────────────────────
+// status: "safe" | "warn" | "danger" — samme tre-trins skala bruges alle
+// steder appen viser om noget er sikkert for en profil (produkter, opskrifter).
+export function safetyStyle(status) {
+  if (status === "danger") return { color:"var(--red)",   bg:"var(--red-lt)",   border:"var(--red-md)",   icon:"×" };
+  if (status === "warn")   return { color:"var(--amber)", bg:"var(--amber-lt)", border:"var(--amber-md)", icon:"!" };
+  return                          { color:"var(--green)", bg:"var(--green-lt)", border:"var(--green-mid)", icon:"✓" };
+}
+
+// Sikkerheds-række: profilnavn til venstre, status med ikon til højre.
+// Bruges i 2-kolonne sikkerhedsgrids (produktresultat, opskrift-detaljer).
+export function SafetyRow({ name, status, statusText, onClick }) {
+  const s = safetyStyle(status);
+  return (
+    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"6px 10px", background:s.bg, border:`1px solid ${s.border}`, borderRadius:8, gap:6 }}>
+      <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", flex:1 }}>
+        {name}
+      </div>
+      <div style={{ fontSize:11, fontWeight:700, color:s.color, flexShrink:0, cursor: onClick ? "pointer" : "default" }}
+        onClick={onClick}>
+        {s.icon} {statusText}{onClick ? " ›" : ""}
+      </div>
+    </div>
+  );
+}
+
+// Sikkerheds-pille: kompakt chip med ikon + navn. Bruges i kort-gitre
+// (fx opskriftskort), hvor der ikke er plads til den fulde række-variant.
+export function SafetyPill({ name, status }) {
+  const s = safetyStyle(status);
+  return (
+    <div style={{ display:"flex", alignItems:"center", gap:4, padding:"3px 8px", borderRadius:100, border:`1px solid ${s.color}`, background:s.bg, fontSize:10, fontWeight:700, color:s.color }}>
+      <span>{s.icon}</span>
+      <span>{name}</span>
+    </div>
+  );
+}
+
 export function PageID({ screen }) {
   const id = PAGE_IDS[screen] || "SCR-??";
   const [copied, setCopied] = React.useState(false);

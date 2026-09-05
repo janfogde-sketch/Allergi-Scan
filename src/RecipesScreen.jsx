@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { compareAllergens, getAllergenLabels } from "./helpers.js";
-import { Icon, IngredientsList, ProfileBadges } from "./SharedComponents.jsx";
+import { Icon, IngredientsList, ProfileBadges, SafetyRow, SafetyPill } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -180,28 +180,18 @@ export default function RecipesScreen({
             {detailProfiles.map(p => {
               const danger = (p.allergens||[]).filter(a => rFlags[a] === "yes" || rFlags[a] === true);
               const warning = (p.allergens||[]).filter(a => rFlags[a] === "traces");
-              const finalColor = danger.length > 0 ? "var(--red)" : warning.length > 0 ? "var(--amber)" : "var(--green)";
-              const finalBg = danger.length > 0 ? "var(--red-lt)" : warning.length > 0 ? "var(--amber-lt)" : "var(--green-lt)";
-              const finalBorder = danger.length > 0 ? "var(--red-md)" : warning.length > 0 ? "var(--amber-md)" : "var(--green-mid)";
-              const finalIcon = danger.length > 0 ? "×" : warning.length > 0 ? "!" : "✓";
+              const status = danger.length > 0 ? "danger" : warning.length > 0 ? "warn" : "safe";
               const statusText = danger.length > 0
                 ? danger.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
                 : warning.length > 0
                 ? "Spor: " + warning.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
                 : "Sikkert";
               return (
-                <div key={p.id} style={{
-                  display:"flex", alignItems:"center", justifyContent:"space-between",
-                  padding:"6px 10px",
-                  background: finalBg,
-                  border:`1px solid ${finalBorder}`,
-                  borderRadius:8, gap:6,
-                }}>
-                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", flex:1 }}>
-                    {p.id==="me" ? "Dig" : p.name}
-                  </div>
-                  <div style={{ fontSize:11, fontWeight:700, color:finalColor, flexShrink:0 }}>{finalIcon} {statusText}</div>
-                </div>
+                <SafetyRow key={p.id}
+                  name={p.id==="me" ? "Dig" : p.name}
+                  status={status}
+                  statusText={statusText}
+                />
               );
             })}
           </div>
@@ -602,13 +592,11 @@ export default function RecipesScreen({
                   <div className="recipe-safe-bar">
                     {profiles.map(p => {
                       const { status: ps } = compareAllergens(rFlags, p.allergens||[]);
-                      const color = ps==="safe"?"var(--green)":ps==="danger"?"var(--red)":"var(--amber)";
-                      const bg = ps==="safe"?"var(--green-lt)":ps==="danger"?"var(--red-lt)":"var(--amber-lt)";
                       return (
-                        <div key={p.id} style={{ display:"flex", alignItems:"center", gap:4, padding:"3px 8px", borderRadius:100, border:`1px solid ${color}`, background:bg, fontSize:10, fontWeight:700, color }}>
-                          <span>{ps==="safe"?"✓":ps==="danger"?"✗":"!"}</span>
-                          <span>{p.id==="me"?"Dig":p.name.split(" ")[0]}</span>
-                        </div>
+                        <SafetyPill key={p.id}
+                          name={p.id==="me" ? "Dig" : p.name.split(" ")[0]}
+                          status={ps}
+                        />
                       );
                     })}
                   </div>
