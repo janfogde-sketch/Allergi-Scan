@@ -5,6 +5,7 @@ import { BUILD_TIME, COMMIT_SHA, formatBuildTime, buildScreenLabel } from "./uti
 import { getTraceLog } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
+import { useNavigationContext } from "./NavigationContext.jsx";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FeedbackModal.jsx
@@ -18,7 +19,6 @@ export default function FeedbackModal({
   open, onClose,
 
   // Skærmkontekst — bruges til diagnostik
-  screen,
   authTab,
   onboardStep,
   scanResult,
@@ -34,6 +34,7 @@ export default function FeedbackModal({
 }) {
   const { user, userId, accessToken, loginEmail } = useAuthContext();
   const { allergens, family, activeProfiles } = useProfileContext();
+  const { screen } = useNavigationContext();
   const [type, setType]         = useState("bug");
   const [text, setText]         = useState("");
   const [image, setImage]       = useState(null);

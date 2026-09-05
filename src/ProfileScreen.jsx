@@ -8,6 +8,7 @@ import { ENumberPicker } from "./AllergenPicker.jsx";
 import { usePush } from "./usePush.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
+import { useNavigationContext } from "./NavigationContext.jsx";
 
 // ── Gamification helpers ──────────────────────────────────────────────────────
 function computeStreak(history) {
@@ -123,7 +124,6 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
 }
 
 export default function ProfileScreen({
-  screen, setScreen,
   history, favorites,
   showDeleteAccount, setShowDeleteAccount,
   deleteConfirmText, setDeleteConfirmText,
@@ -155,6 +155,7 @@ export default function ProfileScreen({
 }) {
   const { user, setUser, userId, accessToken, clearAuth, loginEmail } = useAuthContext();
   const { allergens, setAllergens, customAllerg, setCustomAllerg, family, setFamily, activeProfiles, setActiveProfiles } = useProfileContext();
+  const { screen, setScreen } = useNavigationContext();
 
   // ── Invite state ────────────────────────────────────────────────────────────
   const [inviteLink, setInviteLink] = useState(null);

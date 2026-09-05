@@ -6,6 +6,7 @@ import { MemberForm } from "./MemberForm.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useAdminContext } from "./AdminContext.jsx";
+import { useNavigationContext } from "./NavigationContext.jsx";
 
 // Fremhæv allergener og E-numre i ingredienstekst
 const ALLERGEN_KEYWORDS = {
@@ -77,7 +78,6 @@ function HighlightText({ text }) {
 
 export default function AdminScreen({
   // State
-  screen, setScreen,
   setNewMemberAllerg,
   setNewMemberCustomAllerg,
   setNewMemberCustomInput,
@@ -118,6 +118,7 @@ export default function AdminScreen({
     ticketsLoading,
     userSearch, setUserSearch, userSearchParam, setUserSearchParam,
   } = useAdminContext();
+  const { screen, setScreen } = useNavigationContext();
 
   // ── Admin opskrifter — lokal state ──────────────────────────────────────────
   const [adminRecipes, setAdminRecipes] = useState([]);

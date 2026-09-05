@@ -1,11 +1,11 @@
 // @ts-nocheck
 import React from "react";
 import { SCREENS } from "./constants.jsx";
+import { useNavigationContext } from "./NavigationContext.jsx";
 
 export default function SubmittedScreen({
   notFoundEan,
   proposedName,
-  setScreen,
   setNotFoundStep,
   setProposedName,
   setProposedFlags,
@@ -13,6 +13,7 @@ export default function SubmittedScreen({
   setProposedNotes,
   setOcrText,
 }) {
+  const { setScreen } = useNavigationContext();
   const reset = () => {
     setNotFoundStep(1);
     setProposedName("");

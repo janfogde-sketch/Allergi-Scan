@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { Icon } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
+import { useNavigationContext } from "./NavigationContext.jsx";
 
 const CATEGORIES = [
   { id:"allergen",       emoji:"🌾", label:"Allergener",      color:"var(--red)",  bg:"rgba(255,82,82,.10)" },
@@ -43,8 +44,9 @@ const S = {
   error: { background:"rgba(255,82,82,.12)", border:"1px solid rgba(255,82,82,.25)", borderRadius:12, padding:"14px", marginBottom:12, color:"var(--red)", fontSize:13 },
 };
 
-export default function KnowledgeScreen({ screen, setScreen, openSlug, onSlugHandled }) {
+export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
   const { accessToken } = useAuthContext();
+  const { screen, setScreen } = useNavigationContext();
   const [searchQuery, setSearchQuery]       = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [entries, setEntries]               = useState([]);

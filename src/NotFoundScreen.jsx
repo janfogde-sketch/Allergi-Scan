@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
+import { useNavigationContext } from "./NavigationContext.jsx";
 
 const S = {
   none:             { display:"none" },
@@ -25,7 +26,6 @@ const S = {
 };
 
 export default function NotFoundScreen({
-  setScreen,
   notFoundEan,
   notFoundStep, setNotFoundStep,
   proposedName, setProposedName,
@@ -39,6 +39,7 @@ export default function NotFoundScreen({
   handleImageCapture, handleProductImageCapture,
   scanError,
 }) {
+  const { setScreen } = useNavigationContext();
   const [ingItems, setIngItems] = React.useState([]);
   const [ingInput, setIngInput] = React.useState("");
 

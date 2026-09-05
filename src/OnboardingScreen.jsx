@@ -8,6 +8,7 @@ import { MemberForm } from "./MemberForm.jsx";
 import { usePush } from "./usePush.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
+import { useNavigationContext } from "./NavigationContext.jsx";
 
 // ── Welcome demo-slider ────────────────────────────────────────────────────
 const WELCOME_SLIDES = [
@@ -260,7 +261,6 @@ function WelcomeDemoSlider({ setScreen, setAuthTab }) {
 }
 
 export default function OnboardingScreen({
-  screen, setScreen,
   onboardStep, setOnboardStep,
   selectedENumbers = [], setSelectedENumbers,
   activeSubtypeModal, setActiveSubtypeModal,
@@ -295,6 +295,7 @@ export default function OnboardingScreen({
     allergens, setAllergens, customAllerg, setCustomAllerg,
     family, setFamily, activeProfiles, setActiveProfiles,
   } = useProfileContext();
+  const { screen, setScreen } = useNavigationContext();
 
   // FIX: denne state manglede — brugtes i trin 2 (E-numre kollapsibel), men
   // var aldrig defineret, hvilket crashede hele onboarding-skærmen med
