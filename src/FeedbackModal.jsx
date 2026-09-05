@@ -99,7 +99,7 @@ export default function FeedbackModal({
         ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
       };
 
-      await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets`, {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets`, {
         method: "POST",
         headers: { ...headers, "Prefer": "return=minimal" },
         body: JSON.stringify({
@@ -111,6 +111,7 @@ export default function FeedbackModal({
           submitted_by: userId || null,
         }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       setDone(true);
       setTimeout(() => { close(); }, 2200);

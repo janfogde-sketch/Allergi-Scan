@@ -544,7 +544,7 @@ export default function ProfileScreen({
                     headers:{ ...makeHeaders(accessToken), "Prefer":"return=representation" },
                     body:JSON.stringify({ name:user.name, phone:user.phone||null, birth_year:user.birth_year?parseInt(user.birth_year):null, gender:user.gender||null }),
                   });
-                } catch {}
+                } catch (e) { alert("Fejl: " + e.message); }
               }}>Gem</button>
             </div>
 
@@ -578,7 +578,7 @@ export default function ProfileScreen({
                     headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" },
                     body:JSON.stringify({ diets: user.diets||[] }),
                   });
-                } catch {}
+                } catch (e) { alert("Fejl: " + e.message); }
               }}>Gem diæt</button>
             </div>
 
