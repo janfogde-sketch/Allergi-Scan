@@ -1,7 +1,6 @@
 // @ts-nocheck
-import React, { useState } from "react";
-import { ALLERGENS, DIETS, AVATAR_COLORS, E_NUMBERS, E_CATEGORIES } from "./constants.jsx";
-import { ENumberPicker } from "./AllergenPicker.jsx";
+import React from "react";
+import { ALLERGENS, DIETS, E_NUMBERS, E_CATEGORIES } from "./constants.jsx";
 
 export const MemberForm = ({
   name, setName,

@@ -49,16 +49,6 @@ export default function RecipesScreen({
   const [removedAuto, setRemovedAuto] = React.useState([]);
 
   const detectAllergens = detectAllergensInText;
-  const recomputeAllergens = (ings) => {
-    const all = new Set();
-    ings.forEach(i => {
-      if (!i.name.trim()) return;
-      const auto = detectAllergens(i.name).filter(id => !(i.removedAutos||[]).includes(id));
-      const manual = i.allergens || [];
-      [...auto, ...manual].forEach(id => all.add(id));
-    });
-    return [...all];
-  };
 
   // Auto-load alle opskrifter ved mount
   React.useEffect(() => {
@@ -691,11 +681,6 @@ export default function RecipesScreen({
           const UNITS = ["g","kg","ml","l","dl","spsk","tsk","stk","fed","nip","bundt","dåse","pose","pakke"];
           const CATS  = ["aftensmad","morgenmad","frokost","dessert","tilbehør","snack"];
 
-          // detectAllergens/recomputeAllergens til selve formularen genbruger de
-          // komponent-niveau-funktioner der allerede findes øverst i filen —
-          // denne lokale kopi læste et "keywords"-felt der ikke findes på
-          // ALLERGENS i constants.jsx og returnerede derfor altid en tom liste,
-          // så opskrift-indsendelsesformularen aldrig foreslog nogen allergener
           const recomputeAllergensForm = (ings) => {
             const all = new Set();
             ings.forEach(i => { if(i.name) detectAllergens(i.name).forEach(id => all.add(id)); });

@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React from "react";
 import { ALLERGENS, PAGE_IDS } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { isAllergenWord } from "./allergenKeywords.js";
