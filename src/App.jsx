@@ -19,7 +19,7 @@ import {
 
 import {
   EatSafeLogo, Icon, IngredientsList, ProfileBadges,
-  getProductIcon, ProductImage
+  getProductIcon, ProductImage, LazyFallback
 } from "./SharedComponents.jsx";
 
 import { ENumberPicker } from "./AllergenPicker.jsx";
@@ -920,7 +920,7 @@ const lookupProduct = useCallback(async (ean) => {
         {/* ══ VELKOMST ══ */}
         {/* ══ ONBOARDING SCREENS ══ */}
         {(screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode) && (
-          <Suspense fallback={<div style={{padding:"40px 16px",textAlign:"center"}}><div style={{width:28,height:28,border:"3px solid var(--border2)",borderTopColor:"var(--green)",borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto"}} /></div>}>
+          <Suspense fallback={LazyFallback}>
           <OnboardingScreen
             onboardStep={onboardStep} setOnboardStep={setOnboardStep}
             tourIdx={tourIdx} setTourIdx={setTourIdx}
@@ -1130,7 +1130,7 @@ const lookupProduct = useCallback(async (ean) => {
 
         {/* ══ KNOWLEDGE / LEKSIKON SCREEN ══ */}
         {screen === SCREENS.KNOWLEDGE && (
-          <Suspense fallback={<div style={{padding:"40px 16px",textAlign:"center"}}><div style={{width:28,height:28,border:"3px solid var(--border2)",borderTopColor:"var(--green)",borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto"}} /></div>}>
+          <Suspense fallback={LazyFallback}>
           <ErrorBoundary screen="Leksikon">
           <KnowledgeScreen
             openSlug={knowledgeSlug}
@@ -1158,7 +1158,7 @@ const lookupProduct = useCallback(async (ean) => {
 
         {/* ══ RECIPES SCREEN ══ */}
         {screen === SCREENS.RECIPES && (
-          <Suspense fallback={<div style={{padding:"40px 16px",textAlign:"center"}}><div style={{width:28,height:28,border:"3px solid var(--border2)",borderTopColor:"var(--green)",borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto"}} /></div>}>
+          <Suspense fallback={LazyFallback}>
           <ErrorBoundary screen="Opskrifter">
           <RecipesScreen
             recipes={recipes} recipesLoading={recipesLoading}

@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from "react";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
 import { compareAllergens, initials } from "./helpers.js";
-import { ProductImage } from "./SharedComponents.jsx";
+import { ProductImage, Loader } from "./SharedComponents.jsx";
 import { CategorySelect } from "./MemberForm.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -236,7 +236,7 @@ export default function SearchScreen({
 
       {/* ── Resultater ── */}
       {searchLoading && (
-        <div className="loader fade-in"><div className="spinner" /><div className="loader-txt">Søger…</div></div>
+        <Loader text="Søger…" />
       )}
       {!searchLoading && searchQuery && visibleResults.length === 0 && (
         <div className="empty-state">

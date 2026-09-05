@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
-import { ProductImage } from "./SharedComponents.jsx";
+import { ProductImage, Loader } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 
@@ -17,12 +17,9 @@ const S = {
   h13b:           { fontSize:13, fontWeight:700, color:"var(--ink)" },
   h13bMb:         { fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 },
   h17:            { fontSize:17, fontWeight:800, color:"var(--ink)" },
-  h17mb:          { fontSize:17, fontWeight:800, color:"var(--ink)", marginBottom:8 },
   sub11:          { fontSize:11, color:"var(--muted)" },
   sub11lh:        { fontSize:11, color:"var(--muted)", lineHeight:1.5 },
   sub11mt:        { fontSize:11, color:"var(--muted)", marginTop:1 },
-  spinner:        { width:64, height:64, border:"4px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 20px" },
-  center60:       { textAlign:"center", padding:"60px 20px" },
 };
 
 export default function SuggestEditScreen({
@@ -221,13 +218,8 @@ export default function SuggestEditScreen({
 
       {/* ── TRIN 3: Scanner ── */}
       {editStep === "scanning" && (
-        <div className="fade-in" style={S.center60}>
-          <div style={S.spinner} />
-          <div style={S.h17mb}>Analyserer billede…</div>
-          <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6 }}>
-            Vores AI læser teksten fra dit billede.<br/>Det tager et par sekunder.
-          </div>
-        </div>
+        <Loader size="lg" text="Analyserer billede…"
+          sub={<>Vores AI læser teksten fra dit billede.<br/>Det tager et par sekunder.</>} />
       )}
 
       {/* ── TRIN 4: Gennemse og send ── */}
@@ -342,10 +334,7 @@ export default function SuggestEditScreen({
 
       {/* ── TRIN 5: Sender ── */}
       {editStep === "sending" && (
-        <div className="fade-in" style={S.center60}>
-          <div style={S.spinner} />
-          <div style={S.h17}>Sender…</div>
-        </div>
+        <Loader size="lg" text="Sender…" />
       )}
 
       {/* ── TRIN 6: Tak! ── */}

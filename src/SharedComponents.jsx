@@ -204,6 +204,35 @@ export function ProfileBadges({ allergenFlags, allergens, customAllerg, family, 
   );
 }
 
+// ── Fælles loading-indikator ──────────────────────────────────────────────────
+// size="sm" (standard): lille inline-kort med spinner + tekst (bruges når data
+// indlæses inde i en liste/skærm, fx søgeresultater).
+// size="lg": stor centreret spinner med overskrift + valgfri undertekst/hint
+// (bruges til fuldskærms trin, fx "Analyserer billede…", "Sender…").
+export function Loader({ text, sub, hint, size = "sm" }) {
+  if (size === "lg") {
+    return (
+      <div className="fade-in" style={{ textAlign:"center", padding:"60px 20px" }}>
+        <div style={{ width:64, height:64, border:"4px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 20px" }} />
+        {text && <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)", marginBottom: (sub || hint) ? 8 : 0 }}>{text}</div>}
+        {sub && <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6, marginBottom: hint ? 20 : 0 }}>{sub}</div>}
+        {hint && <div style={{ fontSize:11, color:"var(--muted)", opacity:0.7 }}>{hint}</div>}
+      </div>
+    );
+  }
+  return (
+    <div className="loader fade-in"><div className="spinner" /><div className="loader-txt">{text}</div></div>
+  );
+}
+
+// Fallback-skærm mens en lazy-loaded skærm-komponent hentes (kodesplitting) —
+// samme lille spinner alle steder appen venter på at en JS-chunk downloades.
+export const LazyFallback = (
+  <div style={{ padding:"40px 16px", textAlign:"center" }}>
+    <div style={{ width:28, height:28, border:"3px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} />
+  </div>
+);
+
 // ── Fælles farve/ikon for sikkerheds-status ──────────────────────────────────
 // status: "safe" | "warn" | "danger" — samme tre-trins skala bruges alle
 // steder appen viser om noget er sikkert for en profil (produkter, opskrifter).

@@ -6,6 +6,7 @@ import { useAuthContext } from "./AuthContext.jsx";
 import { useAdminContext } from "./AdminContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { ALL_ALLERGEN_WORDS } from "./allergenKeywords.js";
+import { Loader } from "./SharedComponents.jsx";
 
 // Fremhæv allergener og E-numre i ingredienstekst
 const E_NUMBER_RE = /\b(E\d{3,4}[a-z]?)\b/gi;
@@ -494,7 +495,7 @@ ${openTicket.description}
                 <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>
                   {filteredAdminUsers.length} af {adminUsers.length} brugere
                 </div>
-                {adminUsersLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
+                {adminUsersLoading && <Loader text="Indlæser…" />}
                 <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
                   {filteredAdminUsers.map(u => (
                     <div key={u.id} onClick={() => setOpenAdminUser(u)}
@@ -541,7 +542,7 @@ ${openTicket.description}
                     </button>
                   ))}
                 </div>
-                {submissionsLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
+                {submissionsLoading && <Loader text="Indlæser…" />}
                 {!submissionsLoading && submissions.length === 0 && (
                   <div style={{ textAlign:"center", padding:"48px 0" }}>
                     <div style={{ fontSize:48, marginBottom:12 }}>{submissionFilter==="pending"?"🎉":"📭"}</div>
@@ -636,7 +637,7 @@ ${openTicket.description}
                   </button>
                 )}
 
-                {ticketsLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
+                {ticketsLoading && <Loader text="Indlæser…" />}
                 {!ticketsLoading && adminTickets.length === 0 && <div style={{ textAlign:"center", padding:"48px 0" }}><div style={{ fontSize:48, marginBottom:12 }}>🎉</div><div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>Ingen tickets</div></div>}
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                   {adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter).map(t => {
@@ -1026,7 +1027,7 @@ ${openTicket.description}
                   </div>
                 )}
                 {missingEansLoading ? (
-                  <div style={{ textAlign:"center", padding:"40px 0", color:"var(--muted)" }}>Indlæser...</div>
+                  <Loader text="Indlæser…" />
                 ) : missingEans.length === 0 ? (
                   <div style={{ textAlign:"center", padding:"40px 0", color:"var(--muted)" }}>Ingen manglende EAN'er endnu</div>
                 ) : (
@@ -1335,7 +1336,7 @@ ${openTicket.description}
 
                 {/* Liste */}
                 {adminRecipesLoading ? (
-                  <div style={{ textAlign:"center", padding:"40px 0", color:"var(--muted)" }}>Henter…</div>
+                  <Loader text="Indlæser…" />
                 ) : adminRecipes.length === 0 ? (
                   <div style={{ textAlign:"center", padding:"48px 20px" }}>
                     <div style={{ fontSize:48, marginBottom:10 }}>📭</div>
