@@ -9,6 +9,8 @@ import { usePush } from "./usePush.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
+import { useHistoryContext } from "./HistoryContext.jsx";
+import { useAdminContext } from "./AdminContext.jsx";
 
 // ── Gamification helpers ──────────────────────────────────────────────────────
 function computeStreak(history) {
@@ -124,7 +126,6 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
 }
 
 export default function ProfileScreen({
-  history, favorites,
   showDeleteAccount, setShowDeleteAccount,
   deleteConfirmText, setDeleteConfirmText,
   deletingAccount, deleteOwnAccount,
@@ -132,11 +133,8 @@ export default function ProfileScreen({
   eSearch, setESearch,
   eCategory, setECategory,
   allergenSubtypes, setAllergenSubtypes,
-  loadHistory,
   selectedENumbers, setSelectedENumbers,
   activeSubtypeModal, setActiveSubtypeModal,
-  loadAdminStats, loadSubmissions, loadTickets,
-  setAdminSection, setSubmissionFilter,
   newMemberName, setNewMemberName,
   newMemberBirthYear, setNewMemberBirthYear,
   newMemberGender, setNewMemberGender,
@@ -147,15 +145,17 @@ export default function ProfileScreen({
   newMemberSubtypes, setNewMemberSubtypes,
   newMemberCustomInput, setNewMemberCustomInput,
   addMember, removeMember,
-  historyLoading,
   setScanResult,
-  ticketsLoading,
   lookupProduct,
-  toggleFavorite,
 }) {
   const { user, setUser, userId, accessToken, clearAuth, loginEmail } = useAuthContext();
   const { allergens, setAllergens, customAllerg, setCustomAllerg, family, setFamily, activeProfiles, setActiveProfiles } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
+  const { history, favorites, historyLoading, loadHistory, toggleFavorite } = useHistoryContext();
+  const {
+    loadAdminStats, loadSubmissions, loadTickets,
+    setAdminSection, setSubmissionFilter,
+  } = useAdminContext();
 
   // ── Invite state ────────────────────────────────────────────────────────────
   const [inviteLink, setInviteLink] = useState(null);

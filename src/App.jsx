@@ -53,6 +53,7 @@ import { AuthProvider } from './AuthContext.jsx';
 import { ProfileProvider } from './ProfileContext.jsx';
 import { AdminProvider } from './AdminContext.jsx';
 import { NavigationProvider } from './NavigationContext.jsx';
+import { HistoryProvider } from './HistoryContext.jsx';
 
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
@@ -732,11 +733,17 @@ const lookupProduct = useCallback(async (ean) => {
 
   const navigationContextValue = { screen, setScreen };
 
+  const historyContextValue = {
+    history, setHistory, historyLoading,
+    favorites, loadHistory, toggleFavorite, isFavorite,
+  };
+
   return (
     <AuthProvider value={authContextValue}>
     <ProfileProvider value={profileContextValue}>
     <AdminProvider value={adminContextValue}>
     <NavigationProvider value={navigationContextValue}>
+    <HistoryProvider value={historyContextValue}>
     <>
       <style>{appCss}</style>
       <div className="app" role="application" aria-label="EatSafe">
@@ -753,7 +760,6 @@ const lookupProduct = useCallback(async (ean) => {
             activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
             tourIdx={tourIdx} setTourIdx={setTourIdx}
             editMode={editMode} setEditMode={setEditMode}
-            history={history} setHistory={setHistory}
             shoppingList={shoppingList} setShoppingList={setShoppingList}
             newMemberName={newMemberName} setNewMemberName={setNewMemberName}
             newMemberBirthYear={newMemberBirthYear} setNewMemberBirthYear={setNewMemberBirthYear}
@@ -1006,7 +1012,6 @@ const lookupProduct = useCallback(async (ean) => {
           madpasLang={madpasLang} selectedRecipe={selectedRecipe}
           editMode={editMode} showManualEan={showManualEan}
           profilePopup={profilePopup}
-          history={history}
         />
 
         {/* ── OFFLINE BANNER ── */}
@@ -1034,7 +1039,6 @@ const lookupProduct = useCallback(async (ean) => {
             searchCategory={searchCategory} setSearchCategory={setSearchCategory}
             scanError={scanError}
             shoppingList={shoppingList} newItemName={newItemName} setNewItemName={setNewItemName}
-            history={history} favorites={favorites}
             notFoundStep={notFoundStep} setNotFoundStep={setNotFoundStep}
             proposedName={proposedName} setProposedName={setProposedName}
             proposedFlags={proposedFlags} setProposedFlags={setProposedFlags}
@@ -1061,10 +1065,8 @@ const lookupProduct = useCallback(async (ean) => {
             handleEditProductCapture={handleEditProductCapture}
             handleImageCapture={handleImageCapture}
             handleProductImageCapture={handleProductImageCapture}
-            toggleFavorite={toggleFavorite}
             clearDone={clearDone}
             editProductImage={editProductImage}
-            isFavorite={isFavorite}
             removeItem={removeItem}
             scanFromGallery={scanFromGallery}
             searchLoading={searchLoading}
@@ -1125,14 +1127,12 @@ const lookupProduct = useCallback(async (ean) => {
           screen === SCREENS.FAMILY) && (
           <ErrorBoundary screen="Profil">
           <ProfileScreen
-            history={history} favorites={favorites}
             showDeleteAccount={showDeleteAccount} setShowDeleteAccount={setShowDeleteAccount}
             deleteConfirmText={deleteConfirmText} setDeleteConfirmText={setDeleteConfirmText}
             deletingAccount={deletingAccount} deleteOwnAccount={deleteOwnAccount}
             eSearch={eSearch} setESearch={setESearch}
             eCategory={eCategory} setECategory={setECategory}
             allergenSubtypes={allergenSubtypes} setAllergenSubtypes={setAllergenSubtypes}
-            loadHistory={loadHistory}
             selectedENumbers={selectedENumbers} setSelectedENumbers={setSelectedENumbers}
             activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
             customInput={customInput} setCustomInput={setCustomInput}
@@ -1146,13 +1146,8 @@ const lookupProduct = useCallback(async (ean) => {
             newMemberSubtypes={newMemberSubtypes} setNewMemberSubtypes={setNewMemberSubtypes}
             newMemberCustomInput={newMemberCustomInput} setNewMemberCustomInput={setNewMemberCustomInput}
             addMember={addMember} removeMember={removeMember}
-            ticketsLoading={ticketsLoading}
             setScanResult={setScanResult}
-            historyLoading={historyLoading}
-            loadAdminStats={loadAdminStats} loadSubmissions={loadSubmissions} loadTickets={loadTickets}
-            setAdminSection={setAdminSection} setSubmissionFilter={setSubmissionFilter}
             lookupProduct={lookupProduct}
-            toggleFavorite={toggleFavorite}
           />
           </ErrorBoundary>
         )}
@@ -1166,7 +1161,6 @@ const lookupProduct = useCallback(async (ean) => {
             selectedRecipe={selectedRecipe} setSelectedRecipe={setSelectedRecipe}
             recipeSearch={recipeSearch} setRecipeSearch={setRecipeSearch}
             showSafeOnly={showSafeOnly} setShowSafeOnly={setShowSafeOnly}
-            favorites={favorites}
             showSubmitRecipe={showSubmitRecipe} setShowSubmitRecipe={setShowSubmitRecipe}
             submitRecipe={submitRecipe} setSubmitRecipe={setSubmitRecipe}
             submitSteps={submitSteps} setSubmitSteps={setSubmitSteps}
@@ -1174,7 +1168,6 @@ const lookupProduct = useCallback(async (ean) => {
             submittingRecipe={submittingRecipe}
             loadRecipes={loadRecipes} loadRecipeIngredients={loadRecipeIngredients} submitUserRecipe={submitUserRecipe}
             loading={loading}
-            toggleFavorite={toggleFavorite}
             recipeFilter={recipeFilter} setRecipeFilter={setRecipeFilter}
             recipeSafeOnly={recipeSafeOnly} setRecipeSafeOnly={setRecipeSafeOnly}
             favoriteRecipes={favoriteRecipes} setFavoriteRecipes={setFavoriteRecipes}
@@ -1246,6 +1239,7 @@ const lookupProduct = useCallback(async (ean) => {
         )}
       </div>
     </>
+    </HistoryProvider>
     </NavigationProvider>
     </AdminProvider>
     </ProfileProvider>

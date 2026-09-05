@@ -7,6 +7,7 @@ import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage } fr
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
+import { useHistoryContext } from "./HistoryContext.jsx";
 
 import { CategorySelect } from "./MemberForm.jsx";
 import NotFoundScreen from "./NotFoundScreen.jsx";
@@ -325,7 +326,6 @@ export default function ScannerScreen({
   searchCategory, setSearchCategory,
   scanError,
   shoppingList, newItemName, setNewItemName,
-  history, favorites,
   notFoundStep, setNotFoundStep,
   proposedName, setProposedName,
   proposedFlags, setProposedFlags,
@@ -353,10 +353,8 @@ export default function ScannerScreen({
   addToList,
   handleEditProductCapture,
   handleImageCapture, handleProductImageCapture,
-  toggleFavorite,
   clearDone,
   editProductImage,
-  isFavorite,
   removeItem,
   scanFromGallery,
   searchLoading,
@@ -380,6 +378,7 @@ export default function ScannerScreen({
   const { user, userId, accessToken } = useAuthContext();
   const { family, activeProfiles, setActiveProfiles, allergens, customAllerg } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
+  const { history, favorites, toggleFavorite, isFavorite } = useHistoryContext();
 
   // Parser OCR-tekst til liste af ingredienser
 
@@ -988,7 +987,6 @@ export default function ScannerScreen({
           <ListScreen
             shoppingList={shoppingList}
             newItemName={newItemName} setNewItemName={setNewItemName}
-            favorites={favorites}
             activeIds={activeIds}
             addToList={addToList}
             toggleItem={toggleItem}
@@ -1017,8 +1015,6 @@ export default function ScannerScreen({
             scanResult={scanResult}
             activeENumbers={activeENumbers}
             selectedENumbers={selectedENumbers}
-            isFavorite={isFavorite}
-            toggleFavorite={toggleFavorite}
             addToList={addToList}
             setKnowledgeSlug={setKnowledgeSlug}
             setEditStep={setEditStep}
