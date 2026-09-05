@@ -138,7 +138,7 @@ export default function FeedbackModal({
     <div style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,.7)",
       display:"flex", alignItems:"flex-end" }}
       onClick={e => e.target === e.currentTarget && close()}>
-      <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0",
+      <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0",
         padding:"20px 16px 32px", width:"100%", maxHeight:"85vh", overflowY:"auto",
         backdropFilter:"blur(20px)", border:"1px solid rgba(255,255,255,.1)" }}
         onClick={e => e.stopPropagation()}>

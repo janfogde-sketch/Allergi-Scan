@@ -79,6 +79,8 @@ export const appCss = `
   /* Baggrunde — neutral mørk med svag grøn undertone */
   --paper:#1F3828;
   --paper2:#254530;
+  /* Bundark/modal-overflader — mørkere end paper, til overlejringer der "svæver" over resten af skærmen */
+  --sheet:#1a3012;
   /* Grøn — KUN sikker/success/primær CTA */
   --green:#4ADE80;
   --green-logo:#3DCC6E;

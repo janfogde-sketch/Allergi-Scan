@@ -185,7 +185,7 @@ export default function AdminScreen() {
         {openTicket && (
           <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
             onClick={e => e.target === e.currentTarget && setOpenTicket(null)}>
-            <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 140px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
+            <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 140px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
               onClick={e => e.stopPropagation()}>
 
               {/* Header */}
@@ -688,7 +688,7 @@ ${openTicket.description}
         {screen === SCREENS.ADMIN && openAdminUser && (
           <div style={{ position:"fixed", inset:0, zIndex:9992, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
             onClick={e => e.target === e.currentTarget && setOpenAdminUser(null)}>
-            <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 140px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
+            <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 140px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
               onClick={e => e.stopPropagation()}>
 
                   {/* Header */}
@@ -869,7 +869,7 @@ ${openTicket.description}
               <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
                 {openSubmission.ai_parsed_data?.product_image_base64
                   ? <img src={`data:image/jpeg;base64,${openSubmission.ai_parsed_data.product_image_base64}`}
-                      style={{ width:64, height:64, borderRadius:10, objectFit:"contain", border:"1px solid var(--border)", flexShrink:0 }} alt="" />
+                      style={{ width:64, height:64, borderRadius:10, objectFit:"contain", border:"1px solid var(--border)", flexShrink:0 }} alt="Indsendt produktbillede" />
                   : <div style={{ width:64, height:64, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>📦</div>
                 }
                 <div style={{ flex:1 }}>

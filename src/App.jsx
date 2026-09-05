@@ -803,7 +803,7 @@ const lookupProduct = useCallback(async (ean) => {
     return (
       <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.85)", display:"flex", alignItems:"flex-end" }}
         onClick={e => e.target === e.currentTarget && setHelpOpen(false)}>
-        <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
+        <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
           onClick={e => e.stopPropagation()}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
             <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>{content.title}</div>
@@ -859,7 +859,7 @@ const lookupProduct = useCallback(async (ean) => {
     return (
       <div style={{ position:"fixed", inset:0, zIndex:10000, background:"rgba(0,0,0,.92)",
         display:"flex", alignItems:"center", justifyContent:"center", padding:"20px" }}>
-        <div style={{ background:"#1a3012", borderRadius:20, padding:"28px 22px 24px",
+        <div style={{ background:"var(--sheet)", borderRadius:20, padding:"28px 22px 24px",
           width:"100%", maxWidth:400, boxSizing:"border-box" }}>
 
           {/* Progress dots */}
