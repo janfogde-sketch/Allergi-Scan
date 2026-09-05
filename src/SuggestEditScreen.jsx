@@ -71,7 +71,11 @@ export default function SuggestEditScreen({
         body: JSON.stringify({ image_base64: b64 }),
       });
       const data = await resp.json();
-      setEditIngText(data.success && data.text ? data.text : "");
+      const text = data.success && data.text ? data.text : "";
+      // Split OCR-teksten op i chips, så senere manuelle tilføjelser lægges oveni
+      // i stedet for at overskrive hele den OCR-læste liste (se sync-effect ovenfor).
+      setIngItems(text ? text.split(",").map(s => s.trim()).filter(Boolean) : []);
+      setEditIngText(text);
       setEditStep("review");
     } catch {
       setEditStep("review");
