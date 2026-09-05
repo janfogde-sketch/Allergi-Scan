@@ -81,13 +81,13 @@ export default function SearchScreen({
           placeholder="Søg på produkt eller mærke…"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter") setSearchResults([]); }}
+          onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
           style={{ flex:1, marginBottom:0 }}
           autoFocus
         />
         <button className="btn btn-primary btn-sm"
           style={{ whiteSpace:"nowrap", padding:"0 16px" }}
-          onClick={() => setSearchResults([])}
+          onClick={() => document.activeElement?.blur?.()}
           disabled={!searchQuery.trim()}>
           Søg
         </button>
