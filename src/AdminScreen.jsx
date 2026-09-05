@@ -6,6 +6,7 @@ import { MemberForm } from "./MemberForm.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useAdminContext } from "./AdminContext.jsx";
+import { useFamilyFormContext } from "./FamilyFormContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 
 // Fremhæv allergener og E-numre i ingredienstekst
@@ -77,27 +78,20 @@ function HighlightText({ text }) {
 
 
 export default function AdminScreen({
-  // State
-  setNewMemberAllerg,
-  setNewMemberCustomAllerg,
-  setNewMemberCustomInput,
-  setNewMemberDiets,
-  setNewMemberENumbers,
-  setNewMemberName,
-  setNewMemberSubtypes,
   customInput,
-  newMemberAllerg,
-  newMemberCustomAllerg,
-  newMemberCustomInput,
-  newMemberDiets,
-  newMemberENumbers,
-  newMemberName,
-  newMemberSubtypes,
-  addMember,
-  removeMember,
 }) {
   const { userId, accessToken } = useAuthContext();
   const { allergens, customAllerg, family } = useProfileContext();
+  const {
+    newMemberAllerg, setNewMemberAllerg,
+    newMemberCustomAllerg, setNewMemberCustomAllerg,
+    newMemberCustomInput, setNewMemberCustomInput,
+    newMemberDiets, setNewMemberDiets,
+    newMemberENumbers, setNewMemberENumbers,
+    newMemberName, setNewMemberName,
+    newMemberSubtypes, setNewMemberSubtypes,
+    addMember, removeMember,
+  } = useFamilyFormContext();
   const {
     adminSection, setAdminSection, adminStats,
     adminUsers, adminUsersLoading,

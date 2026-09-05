@@ -55,6 +55,7 @@ import { AdminProvider } from './AdminContext.jsx';
 import { NavigationProvider } from './NavigationContext.jsx';
 import { HistoryProvider } from './HistoryContext.jsx';
 import { ShoppingProvider } from './ShoppingContext.jsx';
+import { FamilyFormProvider } from './FamilyFormContext.jsx';
 
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
@@ -745,6 +746,19 @@ const lookupProduct = useCallback(async (ean) => {
     addToList, toggleItem, removeItem, clearDone,
   };
 
+  const familyFormContextValue = {
+    newMemberName, setNewMemberName,
+    newMemberBirthYear, setNewMemberBirthYear,
+    newMemberGender, setNewMemberGender,
+    newMemberAllerg, setNewMemberAllerg,
+    newMemberCustomAllerg, setNewMemberCustomAllerg,
+    newMemberDiets, setNewMemberDiets,
+    newMemberENumbers, setNewMemberENumbers,
+    newMemberSubtypes, setNewMemberSubtypes,
+    newMemberCustomInput, setNewMemberCustomInput,
+    addMember, removeMember,
+  };
+
   return (
     <AuthProvider value={authContextValue}>
     <ProfileProvider value={profileContextValue}>
@@ -752,6 +766,7 @@ const lookupProduct = useCallback(async (ean) => {
     <NavigationProvider value={navigationContextValue}>
     <HistoryProvider value={historyContextValue}>
     <ShoppingProvider value={shoppingContextValue}>
+    <FamilyFormProvider value={familyFormContextValue}>
     <>
       <style>{appCss}</style>
       <div className="app" role="application" aria-label="EatSafe">
@@ -768,15 +783,6 @@ const lookupProduct = useCallback(async (ean) => {
             activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
             tourIdx={tourIdx} setTourIdx={setTourIdx}
             editMode={editMode} setEditMode={setEditMode}
-            newMemberName={newMemberName} setNewMemberName={setNewMemberName}
-            newMemberBirthYear={newMemberBirthYear} setNewMemberBirthYear={setNewMemberBirthYear}
-            newMemberGender={newMemberGender} setNewMemberGender={setNewMemberGender}
-            newMemberAllerg={newMemberAllerg} setNewMemberAllerg={setNewMemberAllerg}
-            newMemberCustomAllerg={newMemberCustomAllerg} setNewMemberCustomAllerg={setNewMemberCustomAllerg}
-            newMemberDiets={newMemberDiets} setNewMemberDiets={setNewMemberDiets}
-            newMemberENumbers={newMemberENumbers} setNewMemberENumbers={setNewMemberENumbers}
-            newMemberSubtypes={newMemberSubtypes} setNewMemberSubtypes={setNewMemberSubtypes}
-            newMemberCustomInput={newMemberCustomInput} setNewMemberCustomInput={setNewMemberCustomInput}
             customInput={customInput} setCustomInput={setCustomInput}
             saveAllergensStep2={saveAllergensStep2}
             saveProfileStep1={saveProfileStep1} finishOnboard={finishOnboard}
@@ -1138,16 +1144,6 @@ const lookupProduct = useCallback(async (ean) => {
             selectedENumbers={selectedENumbers} setSelectedENumbers={setSelectedENumbers}
             activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
             customInput={customInput} setCustomInput={setCustomInput}
-            newMemberName={newMemberName} setNewMemberName={setNewMemberName}
-            newMemberBirthYear={newMemberBirthYear} setNewMemberBirthYear={setNewMemberBirthYear}
-            newMemberGender={newMemberGender} setNewMemberGender={setNewMemberGender}
-            newMemberAllerg={newMemberAllerg} setNewMemberAllerg={setNewMemberAllerg}
-            newMemberCustomAllerg={newMemberCustomAllerg} setNewMemberCustomAllerg={setNewMemberCustomAllerg}
-            newMemberDiets={newMemberDiets} setNewMemberDiets={setNewMemberDiets}
-            newMemberENumbers={newMemberENumbers} setNewMemberENumbers={setNewMemberENumbers}
-            newMemberSubtypes={newMemberSubtypes} setNewMemberSubtypes={setNewMemberSubtypes}
-            newMemberCustomInput={newMemberCustomInput} setNewMemberCustomInput={setNewMemberCustomInput}
-            addMember={addMember} removeMember={removeMember}
             setScanResult={setScanResult}
             lookupProduct={lookupProduct}
           />
@@ -1189,16 +1185,7 @@ const lookupProduct = useCallback(async (ean) => {
           <Suspense fallback={null}>
           <ErrorBoundary screen="Admin">
           <AdminScreen
-            setNewMemberAllerg={setNewMemberAllerg} setNewMemberCustomAllerg={setNewMemberCustomAllerg}
-            setNewMemberCustomInput={setNewMemberCustomInput} setNewMemberDiets={setNewMemberDiets}
-            setNewMemberENumbers={setNewMemberENumbers} setNewMemberName={setNewMemberName}
-            setNewMemberSubtypes={setNewMemberSubtypes}
             customInput={customInput}
-            newMemberAllerg={newMemberAllerg} newMemberCustomAllerg={newMemberCustomAllerg}
-            newMemberCustomInput={newMemberCustomInput} newMemberDiets={newMemberDiets}
-            newMemberENumbers={newMemberENumbers} newMemberName={newMemberName}
-            newMemberSubtypes={newMemberSubtypes}
-            addMember={addMember} removeMember={removeMember}
           />
           </ErrorBoundary>
           </Suspense>
@@ -1240,6 +1227,7 @@ const lookupProduct = useCallback(async (ean) => {
         )}
       </div>
     </>
+    </FamilyFormProvider>
     </ShoppingProvider>
     </HistoryProvider>
     </NavigationProvider>
