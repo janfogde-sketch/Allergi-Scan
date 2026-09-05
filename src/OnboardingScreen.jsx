@@ -9,6 +9,7 @@ import { usePush } from "./usePush.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
+import { useFamilyFormContext } from "./FamilyFormContext.jsx";
 
 // ── Welcome demo-slider ────────────────────────────────────────────────────
 const WELCOME_SLIDES = [
@@ -267,18 +268,7 @@ export default function OnboardingScreen({
   allergenSubtypes = {}, setAllergenSubtypes,
   tourIdx, setTourIdx,
   editMode, setEditMode,
-  newMemberName, setNewMemberName,
-  newMemberBirthYear, setNewMemberBirthYear,
-  newMemberGender, setNewMemberGender,
-  newMemberAllerg, setNewMemberAllerg,
-  newMemberCustomAllerg, setNewMemberCustomAllerg,
-  newMemberDiets, setNewMemberDiets,
-  newMemberENumbers, setNewMemberENumbers,
-  newMemberSubtypes, setNewMemberSubtypes,
-  newMemberCustomInput, setNewMemberCustomInput,
   customInput, setCustomInput,
-  addMember,
-  removeMember,
   saveAllergensStep2,
   saveProfileStep1, finishOnboard,
   StepBar,
@@ -294,6 +284,18 @@ export default function OnboardingScreen({
     family, setFamily, activeProfiles, setActiveProfiles,
   } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
+  const {
+    newMemberName, setNewMemberName,
+    newMemberBirthYear, setNewMemberBirthYear,
+    newMemberGender, setNewMemberGender,
+    newMemberAllerg, setNewMemberAllerg,
+    newMemberCustomAllerg, setNewMemberCustomAllerg,
+    newMemberDiets, setNewMemberDiets,
+    newMemberENumbers, setNewMemberENumbers,
+    newMemberSubtypes, setNewMemberSubtypes,
+    newMemberCustomInput, setNewMemberCustomInput,
+    addMember, removeMember,
+  } = useFamilyFormContext();
 
   // FIX: denne state manglede — brugtes i trin 2 (E-numre kollapsibel), men
   // var aldrig defineret, hvilket crashede hele onboarding-skærmen med

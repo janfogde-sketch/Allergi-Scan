@@ -11,6 +11,7 @@ import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 import { useAdminContext } from "./AdminContext.jsx";
+import { useFamilyFormContext } from "./FamilyFormContext.jsx";
 
 // ── Gamification helpers ──────────────────────────────────────────────────────
 function computeStreak(history) {
@@ -135,16 +136,6 @@ export default function ProfileScreen({
   allergenSubtypes, setAllergenSubtypes,
   selectedENumbers, setSelectedENumbers,
   activeSubtypeModal, setActiveSubtypeModal,
-  newMemberName, setNewMemberName,
-  newMemberBirthYear, setNewMemberBirthYear,
-  newMemberGender, setNewMemberGender,
-  newMemberAllerg, setNewMemberAllerg,
-  newMemberCustomAllerg, setNewMemberCustomAllerg,
-  newMemberDiets, setNewMemberDiets,
-  newMemberENumbers, setNewMemberENumbers,
-  newMemberSubtypes, setNewMemberSubtypes,
-  newMemberCustomInput, setNewMemberCustomInput,
-  addMember, removeMember,
   setScanResult,
   lookupProduct,
 }) {
@@ -156,6 +147,18 @@ export default function ProfileScreen({
     loadAdminStats, loadSubmissions, loadTickets,
     setAdminSection, setSubmissionFilter,
   } = useAdminContext();
+  const {
+    newMemberName, setNewMemberName,
+    newMemberBirthYear, setNewMemberBirthYear,
+    newMemberGender, setNewMemberGender,
+    newMemberAllerg, setNewMemberAllerg,
+    newMemberCustomAllerg, setNewMemberCustomAllerg,
+    newMemberDiets, setNewMemberDiets,
+    newMemberENumbers, setNewMemberENumbers,
+    newMemberSubtypes, setNewMemberSubtypes,
+    newMemberCustomInput, setNewMemberCustomInput,
+    addMember, removeMember,
+  } = useFamilyFormContext();
 
   // ── Invite state ────────────────────────────────────────────────────────────
   const [inviteLink, setInviteLink] = useState(null);
