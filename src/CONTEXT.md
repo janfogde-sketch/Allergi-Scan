@@ -85,11 +85,9 @@ src/
 ├── AllergenPicker.jsx        # AllergenPicker, ENumberPicker
 ├── FeedbackModal.jsx         # FeedbackModal med debug trace
 │
-├── — Statiske sider (public/) —
-├── privacy.html              # Privatlivspolitik på eatsafe.dk/privacy
-├── invite.html               # Familie-invitation på eatsafe.dk/invite/[token]
-│
-└── styles.css                # Globale CSS-klasser
+└── — Statiske sider (public/) —
+    privacy.html              # Privatlivspolitik på eatsafe.dk/privacy
+    invite.html               # Familie-invitation på eatsafe.dk/invite/[token]
 ```
 
 ---
@@ -189,7 +187,7 @@ Bundmenu: `Opskrifter → Indkøbsliste → Hjem → Viden → Profil`
 
 ## 11. CSS-konventioner
 
-- CSS-variabler i `theme.jsx`, globale klasser i `styles.css`
+- Al CSS bor i `theme.jsx` (`appCss`-strengen), injiceret via `<style>{appCss}</style>` i `App.jsx` — ingen separate `.css`-filer
 - **Ingen hardkodede farver i screen-komponenter** — kun CSS-variabler
 - `paddingBottom:120` på alle screen-divs
 - Grønne primærknapper: `color:#071510`
