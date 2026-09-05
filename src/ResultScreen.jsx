@@ -3,6 +3,7 @@ import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { compareENumbers, checkDietCompatibility, verifiedBadge, makeHeaders } from "./helpers.js";
 import { Icon, IngredientsList, ProductImage } from "./SharedComponents.jsx";
+import { useAuthContext } from "./AuthContext.jsx";
 
 const S = {
   flex1:    { flex:1 },
@@ -14,7 +15,6 @@ const S = {
 
 export default function ResultScreen({
   scanResult,
-  user,
   family,
   allergens,
   activeProfiles,
@@ -33,6 +33,7 @@ export default function ResultScreen({
   altLoading,
   lookupProduct,
 }) {
+  const { user } = useAuthContext();
   if (!scanResult) return null;
 
   // ── Småbørn-advarsler (under 3 år) ──────────────────────────────────────────

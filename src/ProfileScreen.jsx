@@ -6,6 +6,7 @@ import { EatSafeLogo, Icon, ProductImage } from "./SharedComponents.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
 import { usePush } from "./usePush.js";
+import { useAuthContext } from "./AuthContext.jsx";
 
 // ── Gamification helpers ──────────────────────────────────────────────────────
 function computeStreak(history) {
@@ -122,17 +123,14 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
 
 export default function ProfileScreen({
   screen, setScreen,
-  user, setUser,
   allergens, setAllergens,
   customAllerg, setCustomAllerg,
   family, setFamily,
   activeProfiles, setActiveProfiles,
   history, favorites,
-  userId, accessToken,
   showDeleteAccount, setShowDeleteAccount,
   deleteConfirmText, setDeleteConfirmText,
   deletingAccount, deleteOwnAccount,
-  clearAuth,
   customInput, setCustomInput,
   eSearch, setESearch,
   eCategory, setECategory,
@@ -159,6 +157,8 @@ export default function ProfileScreen({
   lookupProduct,
   toggleFavorite,
 }) {
+  const { user, setUser, userId, accessToken, clearAuth } = useAuthContext();
+
   // ── Invite state ────────────────────────────────────────────────────────────
   const [inviteLink, setInviteLink] = useState(null);
   const [inviteLoading, setInviteLoading] = useState(false);

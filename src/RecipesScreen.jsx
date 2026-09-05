@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { compareAllergens, getAllergenLabels } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges } from "./SharedComponents.jsx";
+import { useAuthContext } from "./AuthContext.jsx";
 
 export default function RecipesScreen({
   screen, setScreen,
@@ -13,14 +14,12 @@ export default function RecipesScreen({
   allergens, customAllerg,
   family, activeProfiles,
   favorites,
-  accessToken,
   showSubmitRecipe, setShowSubmitRecipe,
   submitRecipe, setSubmitRecipe,
   submitSteps, setSubmitSteps,
   submitIngredients, setSubmitIngredients,
   submittingRecipe,
   loadRecipes, loadRecipeIngredients, submitUserRecipe,
-  user,
   toggleFavorite,
   loading,
   recipeFilter, setRecipeFilter,
@@ -32,6 +31,7 @@ export default function RecipesScreen({
   setRecipes,
   addToList,
 }) {
+  const { user, accessToken } = useAuthContext();
   const [listAdded, setListAdded] = React.useState({});
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [localSafeProfiles, setLocalSafeProfiles] = React.useState(null);
