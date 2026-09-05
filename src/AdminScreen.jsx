@@ -4,6 +4,8 @@ import { ALLERGENS, SCREENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants
 import { getAllergenLabels, initials, getTraceLog } from "./helpers.js";
 import { MemberForm } from "./MemberForm.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
+import { useProfileContext } from "./ProfileContext.jsx";
+import { useAdminContext } from "./AdminContext.jsx";
 
 // Fremhæv allergener og E-numre i ingredienstekst
 const ALLERGEN_KEYWORDS = {
@@ -76,19 +78,6 @@ function HighlightText({ text }) {
 export default function AdminScreen({
   // State
   screen, setScreen,
-  adminSection, setAdminSection,
-  adminStats,
-  adminUsers, adminUsersLoading,
-  adminTickets, adminTicketFilter, setAdminTicketFilter,
-  submissions, submissionsLoading, submissionFilter, setSubmissionFilter,
-  openSubmission, setOpenSubmission,
-  editingSubmission, setEditingSubmission,
-  openAdminUser, setOpenAdminUser,
-  openTicket, setOpenTicket,
-  cleanedOcrText, cleaningOcr,
-  setAllergens,
-  setCustomAllerg,
-  setCustomInput,
   setNewMemberAllerg,
   setNewMemberCustomAllerg,
   setNewMemberCustomInput,
@@ -96,10 +85,7 @@ export default function AdminScreen({
   setNewMemberENumbers,
   setNewMemberName,
   setNewMemberSubtypes,
-  allergens,
-  customAllerg,
   customInput,
-  family,
   newMemberAllerg,
   newMemberCustomAllerg,
   newMemberCustomInput,
@@ -109,19 +95,29 @@ export default function AdminScreen({
   newMemberSubtypes,
   addMember,
   removeMember,
-  ticketsLoading,
-  userSearch, setUserSearch,
-  userSearchParam, setUserSearchParam,
-  // Functions
-  loadAdminStats, loadAdminUsers, loadSubmissions, loadTickets,
-  updateUserRole, deleteUser,
-  missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
-  importLog, importLoading, runImport,
-  reparseLog, reparseLoading, runReparse,
-  updateSubmissionAndApprove, rejectSubmission,
-  updateTicketStatus, cleanOcrWithAI,
 }) {
   const { userId, accessToken } = useAuthContext();
+  const { allergens, customAllerg, family } = useProfileContext();
+  const {
+    adminSection, setAdminSection, adminStats,
+    adminUsers, adminUsersLoading,
+    adminTickets, adminTicketFilter, setAdminTicketFilter,
+    submissions, submissionsLoading, submissionFilter, setSubmissionFilter,
+    openSubmission, setOpenSubmission,
+    editingSubmission, setEditingSubmission,
+    openAdminUser, setOpenAdminUser,
+    openTicket, setOpenTicket,
+    cleanedOcrText, cleaningOcr,
+    loadAdminStats, loadAdminUsers, loadSubmissions, loadTickets,
+    updateUserRole, deleteUser,
+    missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
+    importLog, importLoading, runImport,
+    reparseLog, reparseLoading, runReparse,
+    updateSubmissionAndApprove, rejectSubmission,
+    updateTicketStatus, cleanOcrWithAI,
+    ticketsLoading,
+    userSearch, setUserSearch, userSearchParam, setUserSearchParam,
+  } = useAdminContext();
 
   // ── Admin opskrifter — lokal state ──────────────────────────────────────────
   const [adminRecipes, setAdminRecipes] = useState([]);

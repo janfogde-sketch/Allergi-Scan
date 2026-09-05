@@ -52,6 +52,7 @@ import { useAlternatives } from './useAlternatives.js';
 import FeedbackModal from './FeedbackModal.jsx';
 import { AuthProvider } from './AuthContext.jsx';
 import { ProfileProvider } from './ProfileContext.jsx';
+import { AdminProvider } from './AdminContext.jsx';
 
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
@@ -709,9 +710,31 @@ const lookupProduct = useCallback(async (ean) => {
     family, setFamily, activeProfiles, setActiveProfiles,
   };
 
+  const adminContextValue = {
+    adminSection, setAdminSection, adminStats,
+    adminUsers, adminUsersLoading,
+    adminTickets, adminTicketFilter, setAdminTicketFilter,
+    submissions, submissionsLoading, submissionFilter, setSubmissionFilter,
+    openSubmission, setOpenSubmission,
+    editingSubmission, setEditingSubmission,
+    openAdminUser, setOpenAdminUser,
+    openTicket, setOpenTicket,
+    cleanedOcrText, cleaningOcr,
+    loadAdminUsers, loadAdminStats, loadSubmissions, loadTickets,
+    updateUserRole, deleteUser,
+    updateSubmissionAndApprove, rejectSubmission,
+    updateTicketStatus, cleanOcrWithAI,
+    ticketsLoading,
+    userSearch, setUserSearch, userSearchParam, setUserSearchParam,
+    missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
+    importLog, importLoading, runImport,
+    reparseLog, reparseLoading, runReparse,
+  };
+
   return (
     <AuthProvider value={authContextValue}>
     <ProfileProvider value={profileContextValue}>
+    <AdminProvider value={adminContextValue}>
     <>
       <style>{appCss}</style>
       <div className="app" role="application" aria-label="EatSafe">
@@ -1177,36 +1200,16 @@ const lookupProduct = useCallback(async (ean) => {
           <ErrorBoundary screen="Admin">
           <AdminScreen
             screen={screen} setScreen={setScreen}
-            adminSection={adminSection} setAdminSection={setAdminSection}
-            adminStats={adminStats}
-            adminUsers={adminUsers} adminUsersLoading={adminUsersLoading}
-            adminTickets={adminTickets} adminTicketFilter={adminTicketFilter} setAdminTicketFilter={setAdminTicketFilter}
-            submissions={submissions} submissionsLoading={submissionsLoading}
-            submissionFilter={submissionFilter} setSubmissionFilter={setSubmissionFilter}
-            openSubmission={openSubmission} setOpenSubmission={setOpenSubmission}
-            editingSubmission={editingSubmission} setEditingSubmission={setEditingSubmission}
-            openAdminUser={openAdminUser} setOpenAdminUser={setOpenAdminUser}
-            openTicket={openTicket} setOpenTicket={setOpenTicket}
-            cleanedOcrText={cleanedOcrText} cleaningOcr={cleaningOcr}
-            setAllergens={setAllergens} setCustomAllerg={setCustomAllerg}
-            setCustomInput={setCustomInput}
             setNewMemberAllerg={setNewMemberAllerg} setNewMemberCustomAllerg={setNewMemberCustomAllerg}
             setNewMemberCustomInput={setNewMemberCustomInput} setNewMemberDiets={setNewMemberDiets}
             setNewMemberENumbers={setNewMemberENumbers} setNewMemberName={setNewMemberName}
             setNewMemberSubtypes={setNewMemberSubtypes}
-            loadAdminUsers={loadAdminUsers} loadAdminStats={loadAdminStats}
-            loadSubmissions={loadSubmissions} loadTickets={loadTickets}
-            updateUserRole={updateUserRole} deleteUser={deleteUser}
-            updateSubmissionAndApprove={updateSubmissionAndApprove}
-            rejectSubmission={rejectSubmission}
-            updateTicketStatus={updateTicketStatus}
-            cleanOcrWithAI={cleanOcrWithAI}
-            ticketsLoading={ticketsLoading}
-            userSearch={userSearch} setUserSearch={setUserSearch}
-            missingEans={missingEans} missingEansLoading={missingEansLoading}
-            loadMissingEans={loadMissingEans} deleteMissingEan={deleteMissingEan}
-            importLog={importLog} importLoading={importLoading} runImport={runImport}
-            reparseLog={reparseLog} reparseLoading={reparseLoading} runReparse={runReparse}
+            customInput={customInput}
+            newMemberAllerg={newMemberAllerg} newMemberCustomAllerg={newMemberCustomAllerg}
+            newMemberCustomInput={newMemberCustomInput} newMemberDiets={newMemberDiets}
+            newMemberENumbers={newMemberENumbers} newMemberName={newMemberName}
+            newMemberSubtypes={newMemberSubtypes}
+            addMember={addMember} removeMember={removeMember}
           />
           </ErrorBoundary>
           </Suspense>
@@ -1248,6 +1251,7 @@ const lookupProduct = useCallback(async (ean) => {
         )}
       </div>
     </>
+    </AdminProvider>
     </ProfileProvider>
     </AuthProvider>
   );
