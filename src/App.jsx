@@ -767,6 +767,141 @@ const lookupProduct = useCallback(async (ean) => {
     activeSubtypeModal, setActiveSubtypeModal,
   };
 
+  const renderHelpModal = () => {
+    const helpContent = {
+      "home": { title:"📷 Scanner", tips:[
+        { icon:"📱", title:"Skan stregkode", desc:"Tryk på scan-feltet og hold kameraet roligt over stregkoden. Appen scanner automatisk." },
+        { icon:"🔍", title:"Søg manuelt", desc:"Kan du ikke scanne? Brug søgefeltet til at finde produkter ved navn." },
+        { icon:"⚡", title:"Hurtig scanning", desc:"God belysning og rolig hånd giver hurtigere og mere præcist resultat." },
+        { icon:"📜", title:"Historik", desc:"Dine seneste scanninger gemmes automatisk — find dem under Profil." },
+      ]},
+      "recipes": { title:"🍝 Opskrifter", tips:[
+        { icon:"🔍", title:"Søg og filtrer", desc:"Søg på navn eller vælg kategori. Slå 'Kun sikre' til for at skjule opskrifter med dine allergener." },
+        { icon:"❤️", title:"Favoritter", desc:"Tryk hjerte-ikonet for at gemme en opskrift til Favoritter-fanen." },
+        { icon:"👤", title:"Portionsjustering", desc:"Åbn en opskrift og tryk + / − for at skalere ingredienser automatisk." },
+        { icon:"🛒", title:"Indkøbsliste", desc:"Tryk 'Tilføj til indkøbsliste' for at sende ingredienser direkte til din liste." },
+      ]},
+      "list": { title:"🛒 Indkøbsliste", tips:[
+        { icon:"✏️", title:"Tilføj varer", desc:"Skriv en vare og tryk Tilføj — eller tilføj direkte fra en opskrift." },
+        { icon:"✓", title:"Afkryds varer", desc:"Tryk på en vare for at markere den som købt." },
+        { icon:"🗑️", title:"Ryd listen", desc:"Brug 'Ryd' for at fjerne alle afkrydsede varer på én gang." },
+      ]},
+      "profile": { title:"👤 Profil & præferencer", tips:[
+        { icon:"🚨", title:"Allergi vs. intolerance", desc:"Tryk én gang = intolerance (gul advarsel). To gange = allergi (rød advarsel)." },
+        { icon:"👨‍👩‍👧", title:"Familie", desc:"Opret profiler for børn og partner — se allergencheck for alle på én gang." },
+        { icon:"✏️", title:"E-numre og diæter", desc:"Brug 'Tilføj eget' for intoleranser, E-numre eller diæter der ikke er på listen." },
+      ]},
+      "madpas": { title:"🌍 Madpas", tips:[
+        { icon:"🌐", title:"Vælg sprog", desc:"Vælg sproget for landet du besøger. EatSafe oversætter dine allergier automatisk." },
+        { icon:"📋", title:"Vis til tjeneren", desc:"Tryk 'Vis til tjener' for en stor, tydelig skærm du kan vise restaurantpersonalet." },
+        { icon:"🔊", title:"Oplæsning", desc:"Tryk højttalerikonet for at høre udtalen på det lokale sprog." },
+      ]},
+    };
+    const content = helpContent[screen] || { title:"ℹ️ Hjælp", tips:[
+      { icon:"💬", title:"Send feedback", desc:"Brug Feedback-knappen øverst til at rapportere problemer eller forslag." },
+    ]};
+    return (
+      <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.85)", display:"flex", alignItems:"flex-end" }}
+        onClick={e => e.target === e.currentTarget && setHelpOpen(false)}>
+        <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
+          onClick={e => e.stopPropagation()}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+            <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>{content.title}</div>
+            <button onClick={() => setHelpOpen(false)}
+              style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
+            {content.tips.map((tip, i) => (
+              <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
+                <div style={{ fontSize:22, flexShrink:0 }}>{tip.icon}</div>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:3 }}>{tip.title}</div>
+                  <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>{tip.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => { setHelpOpen(false); setFeedbackOpen(true); setFeedbackDone(false); }}
+            style={{ width:"100%", padding:"12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted2)", cursor:"pointer" }}>
+            💬 Send feedback eller rapportér fejl
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderBetaIntro = () => {
+    const steps = [
+      {
+        emoji: "🧪",
+        title: "Velkommen til EatSafe Beta",
+        body: "Du er en af de første til at prøve EatSafe. Vi er glade for at have dig med — og vi er ærlige: appen er ikke færdig endnu.\n\nSom beta-bruger hjælper du os med at finde fejl, forbedre brugeroplevelsen og sikre at appen virker for rigtige allergiramte.",
+      },
+      {
+        emoji: "💬",
+        title: "Giv os din mening",
+        body: "Tryk på Feedback-knappen øverst i appen når du støder på noget — en fejl, noget der ser mærkeligt ud, eller en idé til forbedring.\n\nVi læser alt. Din feedback er det vigtigste redskab vi har i denne fase.",
+      },
+      {
+        emoji: "❓",
+        title: "Brug hjælp-knappen",
+        body: "Er du i tvivl om hvordan noget virker? Tryk på ? øverst — der finder du en kort guide til den skærm du står på.\n\nHvis du stadig er i tvivl, brug Feedback og skriv til os.",
+      },
+      {
+        emoji: "⚠️",
+        title: "En vigtig bemærkning",
+        body: "EatSafe er under udvikling. Allergendata kan mangle eller være ukorrekte.\n\nTjek ALTID den fysiske emballage — appen er et hjælpeværktøj, ikke en garanti. Vi arbejder på at gøre dataene så præcise som muligt.",
+      },
+    ];
+    const step = steps[betaIntroStep];
+    const isLast = betaIntroStep === steps.length - 1;
+    const dismiss = () => setBetaIntroSeen(true);
+    return (
+      <div style={{ position:"fixed", inset:0, zIndex:10000, background:"rgba(0,0,0,.92)",
+        display:"flex", alignItems:"center", justifyContent:"center", padding:"20px" }}>
+        <div style={{ background:"#1a3012", borderRadius:20, padding:"28px 22px 24px",
+          width:"100%", maxWidth:400, boxSizing:"border-box" }}>
+
+          {/* Progress dots */}
+          <div style={{ display:"flex", gap:6, justifyContent:"center", marginBottom:24 }}>
+            {steps.map((_, i) => (
+              <div key={i} style={{ width: i === betaIntroStep ? 20 : 6, height:6, borderRadius:3,
+                background: i === betaIntroStep ? "var(--green)" : "rgba(255,255,255,.2)",
+                transition:"all .3s" }} />
+            ))}
+          </div>
+
+          {/* Content */}
+          <div style={{ textAlign:"center", marginBottom:28 }}>
+            <div style={{ fontSize:52, marginBottom:16 }}>{step.emoji}</div>
+            <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)", marginBottom:14,
+              letterSpacing:"-.3px" }}>{step.title}</div>
+            <div style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.7,
+              whiteSpace:"pre-line" }}>{step.body}</div>
+          </div>
+
+          {/* Buttons */}
+          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+            <button onClick={() => isLast ? dismiss() : setBetaIntroStep(s => s + 1)}
+              style={{ width:"100%", padding:"14px", background:"var(--green)",
+                border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15,
+                fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
+              {isLast ? "Kom i gang →" : "Næste →"}
+            </button>
+            {!isLast && (
+              <button onClick={dismiss}
+                style={{ width:"100%", padding:"10px", background:"transparent",
+                  border:"none", fontFamily:"var(--f)", fontSize:12,
+                  color:"rgba(255,255,255,.3)", cursor:"pointer" }}>
+                Spring over
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <AuthProvider value={authContextValue}>
     <ProfileProvider value={profileContextValue}>
@@ -834,68 +969,7 @@ const lookupProduct = useCallback(async (ean) => {
         )}
 
         {/* ══ HJÆLP MODAL ══ */}
-        {helpOpen && (() => {
-          const helpContent = {
-            "home": { title:"📷 Scanner", tips:[
-              { icon:"📱", title:"Skan stregkode", desc:"Tryk på scan-feltet og hold kameraet roligt over stregkoden. Appen scanner automatisk." },
-              { icon:"🔍", title:"Søg manuelt", desc:"Kan du ikke scanne? Brug søgefeltet til at finde produkter ved navn." },
-              { icon:"⚡", title:"Hurtig scanning", desc:"God belysning og rolig hånd giver hurtigere og mere præcist resultat." },
-              { icon:"📜", title:"Historik", desc:"Dine seneste scanninger gemmes automatisk — find dem under Profil." },
-            ]},
-            "recipes": { title:"🍝 Opskrifter", tips:[
-              { icon:"🔍", title:"Søg og filtrer", desc:"Søg på navn eller vælg kategori. Slå 'Kun sikre' til for at skjule opskrifter med dine allergener." },
-              { icon:"❤️", title:"Favoritter", desc:"Tryk hjerte-ikonet for at gemme en opskrift til Favoritter-fanen." },
-              { icon:"👤", title:"Portionsjustering", desc:"Åbn en opskrift og tryk + / − for at skalere ingredienser automatisk." },
-              { icon:"🛒", title:"Indkøbsliste", desc:"Tryk 'Tilføj til indkøbsliste' for at sende ingredienser direkte til din liste." },
-            ]},
-            "list": { title:"🛒 Indkøbsliste", tips:[
-              { icon:"✏️", title:"Tilføj varer", desc:"Skriv en vare og tryk Tilføj — eller tilføj direkte fra en opskrift." },
-              { icon:"✓", title:"Afkryds varer", desc:"Tryk på en vare for at markere den som købt." },
-              { icon:"🗑️", title:"Ryd listen", desc:"Brug 'Ryd' for at fjerne alle afkrydsede varer på én gang." },
-            ]},
-            "profile": { title:"👤 Profil & præferencer", tips:[
-              { icon:"🚨", title:"Allergi vs. intolerance", desc:"Tryk én gang = intolerance (gul advarsel). To gange = allergi (rød advarsel)." },
-              { icon:"👨‍👩‍👧", title:"Familie", desc:"Opret profiler for børn og partner — se allergencheck for alle på én gang." },
-              { icon:"✏️", title:"E-numre og diæter", desc:"Brug 'Tilføj eget' for intoleranser, E-numre eller diæter der ikke er på listen." },
-            ]},
-            "madpas": { title:"🌍 Madpas", tips:[
-              { icon:"🌐", title:"Vælg sprog", desc:"Vælg sproget for landet du besøger. EatSafe oversætter dine allergier automatisk." },
-              { icon:"📋", title:"Vis til tjeneren", desc:"Tryk 'Vis til tjener' for en stor, tydelig skærm du kan vise restaurantpersonalet." },
-              { icon:"🔊", title:"Oplæsning", desc:"Tryk højttalerikonet for at høre udtalen på det lokale sprog." },
-            ]},
-          };
-          const content = helpContent[screen] || { title:"ℹ️ Hjælp", tips:[
-            { icon:"💬", title:"Send feedback", desc:"Brug Feedback-knappen øverst til at rapportere problemer eller forslag." },
-          ]};
-          return (
-            <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.85)", display:"flex", alignItems:"flex-end" }}
-              onClick={e => e.target === e.currentTarget && setHelpOpen(false)}>
-              <div style={{ background:"#1a3012", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
-                onClick={e => e.stopPropagation()}>
-                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
-                  <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>{content.title}</div>
-                  <button onClick={() => setHelpOpen(false)}
-                    style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
-                </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
-                  {content.tips.map((tip, i) => (
-                    <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
-                      <div style={{ fontSize:22, flexShrink:0 }}>{tip.icon}</div>
-                      <div>
-                        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:3 }}>{tip.title}</div>
-                        <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>{tip.desc}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <button onClick={() => { setHelpOpen(false); setFeedbackOpen(true); setFeedbackDone(false); }}
-                  style={{ width:"100%", padding:"12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted2)", cursor:"pointer" }}>
-                  💬 Send feedback eller rapportér fejl
-                </button>
-              </div>
-            </div>
-          );
-        })()}
+        {helpOpen && renderHelpModal()}
 
         {/* ══ SLET KONTO MODAL ══ */}
         {showDeleteAccount && (
@@ -952,77 +1026,7 @@ const lookupProduct = useCallback(async (ean) => {
         )}
 
         {/* ══ BETA INTRO ══ */}
-        {!betaIntroSeen && (() => {
-          const steps = [
-            {
-              emoji: "🧪",
-              title: "Velkommen til EatSafe Beta",
-              body: "Du er en af de første til at prøve EatSafe. Vi er glade for at have dig med — og vi er ærlige: appen er ikke færdig endnu.\n\nSom beta-bruger hjælper du os med at finde fejl, forbedre brugeroplevelsen og sikre at appen virker for rigtige allergiramte.",
-            },
-            {
-              emoji: "💬",
-              title: "Giv os din mening",
-              body: "Tryk på Feedback-knappen øverst i appen når du støder på noget — en fejl, noget der ser mærkeligt ud, eller en idé til forbedring.\n\nVi læser alt. Din feedback er det vigtigste redskab vi har i denne fase.",
-            },
-            {
-              emoji: "❓",
-              title: "Brug hjælp-knappen",
-              body: "Er du i tvivl om hvordan noget virker? Tryk på ? øverst — der finder du en kort guide til den skærm du står på.\n\nHvis du stadig er i tvivl, brug Feedback og skriv til os.",
-            },
-            {
-              emoji: "⚠️",
-              title: "En vigtig bemærkning",
-              body: "EatSafe er under udvikling. Allergendata kan mangle eller være ukorrekte.\n\nTjek ALTID den fysiske emballage — appen er et hjælpeværktøj, ikke en garanti. Vi arbejder på at gøre dataene så præcise som muligt.",
-            },
-          ];
-          const step = steps[betaIntroStep];
-          const isLast = betaIntroStep === steps.length - 1;
-          const dismiss = () => setBetaIntroSeen(true);
-          return (
-            <div style={{ position:"fixed", inset:0, zIndex:10000, background:"rgba(0,0,0,.92)",
-              display:"flex", alignItems:"center", justifyContent:"center", padding:"20px" }}>
-              <div style={{ background:"#1a3012", borderRadius:20, padding:"28px 22px 24px",
-                width:"100%", maxWidth:400, boxSizing:"border-box" }}>
-
-                {/* Progress dots */}
-                <div style={{ display:"flex", gap:6, justifyContent:"center", marginBottom:24 }}>
-                  {steps.map((_, i) => (
-                    <div key={i} style={{ width: i === betaIntroStep ? 20 : 6, height:6, borderRadius:3,
-                      background: i === betaIntroStep ? "var(--green)" : "rgba(255,255,255,.2)",
-                      transition:"all .3s" }} />
-                  ))}
-                </div>
-
-                {/* Content */}
-                <div style={{ textAlign:"center", marginBottom:28 }}>
-                  <div style={{ fontSize:52, marginBottom:16 }}>{step.emoji}</div>
-                  <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)", marginBottom:14,
-                    letterSpacing:"-.3px" }}>{step.title}</div>
-                  <div style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.7,
-                    whiteSpace:"pre-line" }}>{step.body}</div>
-                </div>
-
-                {/* Buttons */}
-                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-                  <button onClick={() => isLast ? dismiss() : setBetaIntroStep(s => s + 1)}
-                    style={{ width:"100%", padding:"14px", background:"var(--green)",
-                      border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15,
-                      fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
-                    {isLast ? "Kom i gang →" : "Næste →"}
-                  </button>
-                  {!isLast && (
-                    <button onClick={dismiss}
-                      style={{ width:"100%", padding:"10px", background:"transparent",
-                        border:"none", fontFamily:"var(--f)", fontSize:12,
-                        color:"rgba(255,255,255,.3)", cursor:"pointer" }}>
-                      Spring over
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })()}
+        {!betaIntroSeen && renderBetaIntro()}
 
         {/* ══ FEEDBACK MODAL ══ */}
         <FeedbackModal
