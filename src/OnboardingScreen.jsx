@@ -267,7 +267,6 @@ export default function OnboardingScreen({
   allergenSubtypes = {}, setAllergenSubtypes,
   tourIdx, setTourIdx,
   editMode, setEditMode,
-  shoppingList, setShoppingList,
   newMemberName, setNewMemberName,
   newMemberBirthYear, setNewMemberBirthYear,
   newMemberGender, setNewMemberGender,

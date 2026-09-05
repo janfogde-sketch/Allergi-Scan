@@ -20,7 +20,6 @@ export default function ResultScreen({
   scanResult,
   activeENumbers,
   selectedENumbers,
-  addToList,
   setKnowledgeSlug,
   setEditStep,
   setEditIngText,
