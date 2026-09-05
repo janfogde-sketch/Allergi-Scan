@@ -220,14 +220,14 @@ export default function ResultScreen({
 
         {/* ── Småbørn-advarsler ── */}
         {infantWarnings.length > 0 && (
-          <div style={{ padding:"10px 12px", marginBottom:6, background:"#fff7ed", border:"1px solid #fed7aa", borderRadius:10 }}>
-            <div style={{ fontSize:11, fontWeight:800, color:"#c2410c", marginBottom:6, display:"flex", alignItems:"center", gap:6 }}>
+          <div style={{ padding:"10px 12px", marginBottom:6, background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:10 }}>
+            <div style={{ fontSize:11, fontWeight:800, color:"var(--amber)", marginBottom:6, display:"flex", alignItems:"center", gap:6 }}>
               <span>🍼</span>
               Advarsel for småbørn — {infantProfiles.map(m => m.name?.split(" ")[0]).join(", ")} (under 3 år)
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
               {infantWarnings.map(w => (
-                <div key={w.id} style={{ fontSize:11, color:"#7c2d12", lineHeight:1.5 }}>
+                <div key={w.id} style={{ fontSize:11, color:"var(--amber)", lineHeight:1.5 }}>
                   <strong>{w.label}:</strong> {w.reason}
                 </div>
               ))}
