@@ -215,7 +215,7 @@ const DEMO_SLIDES = [
   {
     title: "Klar til at prøve?",
     sub: "Gratis at oprette. Ingen kreditkort. Kom i gang på under 2 minutter.",
-    bg: "#0d1f12", accent: "var(--green)",
+    bg: "var(--sheet)", accent: "var(--green)",
     cta: true, mockup: null,
   },
 ];
@@ -399,7 +399,7 @@ export default function ScannerScreen({
       <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)" }}
         onClick={() => setProfilePopup(null)}>
         <div style={{ position:"absolute", top:80, left:16, right:16,
-          background:"#1a3012", borderRadius:20, padding:"20px 18px",
+          background:"var(--sheet)", borderRadius:20, padding:"20px 18px",
           boxShadow:"0 8px 40px rgba(0,0,0,.2)" }}
           onClick={e => e.stopPropagation()}>
 

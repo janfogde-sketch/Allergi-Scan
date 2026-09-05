@@ -681,7 +681,7 @@ export default function RecipesScreen({
               overflow:"hidden", position:"relative",
             }}>
               {imgPreview
-                ? <img src={imgPreview} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                ? <img src={imgPreview} alt="Forhåndsvisning af opskriftsbillede" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                 : <div style={{ textAlign:"center" }}>
                     <div style={{ fontSize:32, marginBottom:6 }}>📷</div>
                     <div style={{ fontSize:13, color:"var(--muted)" }}>Tryk for at vælge billede</div>

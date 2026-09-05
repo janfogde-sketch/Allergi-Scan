@@ -238,7 +238,7 @@ export default function MadpasScreen({
                 style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.85)",
                   display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:32 }}>
                 <div onClick={e => e.stopPropagation()}
-                  style={{ background:"#0d1f12", borderRadius:24, padding:"28px 24px", maxWidth:320, width:"100%", textAlign:"center" }}>
+                  style={{ background:"var(--sheet)", borderRadius:24, padding:"28px 24px", maxWidth:320, width:"100%", textAlign:"center" }}>
                   <div style={{ fontSize:13, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:4 }}>Dit madpas</div>
                   <div style={{ fontSize:11, color:"var(--muted)", marginBottom:20, lineHeight:1.5 }}>
                     Bed tjeneren om at scanne denne QR-kode med sin telefon — så åbner dit madpas direkte i deres browser uden at de behøver installere noget.
