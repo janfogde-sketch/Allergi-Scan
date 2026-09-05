@@ -176,9 +176,14 @@ export function useProduct({ accessToken, userId, activeProfiles,
     }
   };
 
-  const submitProduct = async () => {
+  // ocrTextOverride: NotFoundScreen kalder setOcrText() og submitProduct() i samme
+  // klik-handler — en almindelig setOcrText()-opdatering slår først igennem ved
+  // næste render, så submitProduct ville ellers sende den GAMLE ocrText, og
+  // brugerens manuelt rettede ingrediensliste ville aldrig nå frem til serveren
+  const submitProduct = async (ocrTextOverride) => {
+    const finalOcrText = ocrTextOverride ?? ocrText;
     const tid = traceId("submit");
-    traceLog(tid, "submit:start", { ean: notFoundEan, name: proposedName, hasOcr: !!ocrText, hasImage: !!productImageBase64 });
+    traceLog(tid, "submit:start", { ean: notFoundEan, name: proposedName, hasOcr: !!finalOcrText, hasImage: !!productImageBase64 });
     setSubmitting(true);
     try {
       await apiCall(`${SUPABASE_URL}/functions/v1/submissions`, {
@@ -186,7 +191,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
         headers: makeHeaders(accessToken),
         body: JSON.stringify({
           ean: notFoundEan, submitted_by: userId,
-          ocr_raw_text: ocrText, raw_label_image: ocrImageBase64 || null,
+          ocr_raw_text: finalOcrText, raw_label_image: ocrImageBase64 || null,
           ai_parsed_data: { ...proposedFlags, name: proposedName, product_image_base64: productImageBase64, nutrition: proposedNutrition, notes: proposedNotes },
           user_confirmed: true,
         }),
