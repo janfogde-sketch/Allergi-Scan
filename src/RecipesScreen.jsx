@@ -800,7 +800,7 @@ export default function RecipesScreen({
                   {/* Tilføj allergen-knap */}
                   <button onClick={() => setSubmitIngredients(submitIngredients.map((x,i)=>i===idx?{...x,showPicker:!x.showPicker}:x))}
                     style={{ padding:"2px 8px", borderRadius:100, border:"1px dashed var(--border2)", background:"none", color:"var(--muted)", fontFamily:"var(--f)", fontSize:10, cursor:"pointer" }}>
-                    {showAllergenPicker ? "✕ Luk" : "＋ Allergen"}
+                    {showAllergenPicker ? "× Luk" : "＋ Allergen"}
                   </button>
                 </div>
 

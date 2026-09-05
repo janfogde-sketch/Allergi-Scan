@@ -471,9 +471,9 @@ ${openTicket.description}
                     style={{ flex:1, padding:"10px 14px", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:14, background:"var(--surface)", outline:"none", color:"var(--ink)" }}
                   />
                   {userSearch && (
-                    <button onClick={() => setUserSearch("")}
+                    <button onClick={() => setUserSearch("")} aria-label="Ryd søgning"
                       style={{ padding:"0 12px", border:"1px solid var(--border)", borderRadius:10, background:"var(--surface2)", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", cursor:"pointer" }}>
-                      ✕
+                      ×
                     </button>
                   )}
                 </div>
@@ -1059,14 +1059,14 @@ ${openTicket.description}
                           <button
                             onClick={() => navigator.clipboard?.writeText(row.ean)}
                             style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer" }}
-                            title="Kopiér EAN">
+                            title="Kopiér EAN" aria-label="Kopiér EAN">
                             📋
                           </button>
                           <button
                             onClick={() => deleteMissingEan(row.ean)}
                             style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--red)", fontFamily:"var(--f)", cursor:"pointer" }}
-                            title="Slet fra liste">
-                            ✕
+                            title="Slet fra liste" aria-label="Slet fra liste">
+                            ×
                           </button>
                         </div>
                       </div>

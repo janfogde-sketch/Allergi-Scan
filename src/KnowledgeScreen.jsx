@@ -198,7 +198,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
         <svg style={S.searchIcon} width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input style={S.searchInput} placeholder="Søg ingredienser, E-numre, allergener..." value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)} />
-        {searchQuery && <button onClick={() => { setSearchQuery(""); if(!selectedCategory) setEntries([]); }} aria-label="Ryd søgning" style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", padding:10, color:"var(--muted)" }}>✕</button>}
+        {searchQuery && <button onClick={() => { setSearchQuery(""); if(!selectedCategory) setEntries([]); }} aria-label="Ryd søgning" style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", padding:10, color:"var(--muted)" }}>×</button>}
       </div>
 
       {/* Kategorier — altid synlig når ingen liste vises */}
@@ -226,8 +226,8 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
       {showList && (
         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
           {selectedCategory && (
-            <button onClick={() => handleCatSelect(null)} style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", background:selectedCat?.bg, border:`1px solid ${selectedCat?.color}33`, borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700, color:selectedCat?.color, fontFamily:"var(--f)" }}>
-              {selectedCat?.emoji} {selectedCat?.label} ✕
+            <button onClick={() => handleCatSelect(null)} aria-label={`Ryd kategori-filter: ${selectedCat?.label}`} style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", background:selectedCat?.bg, border:`1px solid ${selectedCat?.color}33`, borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700, color:selectedCat?.color, fontFamily:"var(--f)" }}>
+              {selectedCat?.emoji} {selectedCat?.label} ×
             </button>
           )}
           <div style={{ fontSize:12, color:"var(--muted)" }}>{entries.length} resultater</div>
