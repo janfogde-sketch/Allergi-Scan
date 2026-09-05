@@ -47,6 +47,7 @@ export default function FeedbackModal({
   if (!open) return null;
 
   const reset = () => {
+    if (image) URL.revokeObjectURL(image);
     setType("bug"); setText(""); setImage(null);
     setImageB64(null); setSending(false); setDone(false);
   };
@@ -199,7 +200,7 @@ export default function FeedbackModal({
                   <img src={image} alt="Screenshot"
                     style={{ maxWidth:"100%", maxHeight:160, borderRadius:10,
                       objectFit:"contain", border:"1px solid var(--border)" }} />
-                  <button onClick={() => { setImage(null); setImageB64(null); }}
+                  <button onClick={() => { URL.revokeObjectURL(image); setImage(null); setImageB64(null); }}
                     style={{ position:"absolute", top:4, right:4, background:"rgba(0,0,0,.6)",
                       border:"none", borderRadius:"50%", width:24, height:24,
                       color:"var(--ink)", cursor:"pointer", fontSize:14 }}>×</button>
@@ -217,6 +218,7 @@ export default function FeedbackModal({
                     onChange={async e => {
                       const f = e.target.files?.[0];
                       if (!f) return;
+                      if (image) URL.revokeObjectURL(image);
                       setImage(URL.createObjectURL(f));
                       const b64 = await new Promise((res,rej) => {
                         const r = new FileReader();
