@@ -391,117 +391,216 @@ export default function ScannerScreen({
       .flatMap(m => Array.isArray(m.allergens) ? m.allergens : Object.keys(m.allergens||{}).filter(k => m.allergens[k])),
   ].filter((v, i, a) => a.indexOf(v) === i); // deduplicate
 
+  const renderProfilePopup = () => {
+    const isUser = profilePopup === "user";
+    const member = isUser ? null : family.find(m => m.id === profilePopup);
+    const pName = isUser ? (user.name || "Din profil") : member?.name;
+    const pAllergens = isUser ? allergens : (member?.allergens || []);
+    const pCustom = isUser ? customAllerg : (member?.customAllerg || []);
+    const pDiets = isUser ? (user.diets || []) : (member?.diets || []);
+    const pENumbers = isUser ? selectedENumbers : (member?.eNumbers || []);
+    const isActive = isUser
+      ? activeProfiles.includes("user")
+      : activeProfiles.includes(profilePopup);
+    return (
+      <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)" }}
+        onClick={() => setProfilePopup(null)}>
+        <div style={{ position:"absolute", top:80, left:16, right:16,
+          background:"#1a3012", borderRadius:20, padding:"20px 18px",
+          boxShadow:"0 8px 40px rgba(0,0,0,.2)" }}
+          onClick={e => e.stopPropagation()}>
+
+          {/* Header */}
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+            <div style={{ width:44, height:44, borderRadius:"50%",
+              background: isUser ? "var(--green)" : (member?.color || "var(--ink)"),
+              color:"var(--ink)", display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:16, fontWeight:800, flexShrink:0 }}>
+              {initials(pName)}
+            </div>
+            <div style={S.flex1}>
+              <div style={{ fontWeight:800, fontSize:16, color:"var(--ink)" }}>{pName}</div>
+              <div style={{ fontSize:12, color:"var(--muted)", marginTop:1 }}>
+                {isActive ? "✅ Aktiv i søgning" : "⬜ Ikke aktiv i søgning"}
+              </div>
+            </div>
+            <div onClick={() => setProfilePopup(null)} style={{ cursor:"pointer", padding:4, opacity:.5 }}>✕</div>
+          </div>
+
+          {/* Allergier */}
+          {pAllergens.length > 0 ? (
+            <div style={S.mb12}>
+              <div style={S.label}>Allergier / intolerancer</div>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                {pAllergens.map(id => {
+                  const a = ALLERGENS.find(x => x.id === id);
+                  const isInt = false; // intolerance-suffiks fjernet
+                  return (
+                    <div key={id} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
+                      background: isInt ? "var(--amber-lt)" : "var(--red-lt)",
+                      color: isInt ? "var(--amber)" : "var(--red)",
+                      border: `1px solid ${isInt ? "var(--amber)" : "var(--red)"}` }}>
+                      {a?.label || id}
+                    </div>
+                  );
+                })}
+                {pCustom.map((c,i) => (
+                  <div key={i} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
+                    background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" }}>
+                    {c}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12 }}>Ingen allergier registreret</div>
+          )}
+
+          {/* Diæt */}
+          {pDiets.length > 0 && (
+            <div style={S.mb12}>
+              <div style={S.label}>Diæt</div>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                {pDiets.map(d => (
+                  <div key={d} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
+                    background:"var(--green-lt)", color:"var(--green)", border:"1px solid var(--green-mid)" }}>
+                    {DIETS.find(x=>x.id===d)?.label || d}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* E-numre */}
+          {pENumbers.length > 0 && (
+            <div style={S.mb12}>
+              <div style={S.label}>E-numre</div>
+              <div style={{ fontSize:12, color:"var(--muted2)" }}>{pENumbers.length} E-numre overvåges</div>
+            </div>
+          )}
+
+          {/* Aktiver/deaktiver */}
+          <button className="btn btn-full" style={{
+            marginTop:4,
+            background: isActive ? "var(--paper2)" : "var(--green)",
+            color: isActive ? "var(--muted)" : "var(--ink)",
+            border: `1px solid ${isActive ? "var(--border)" : "var(--green)"}`,
+          }} onClick={() => {
+            const pid = isUser ? "user" : profilePopup;
+            setActiveProfiles(p => p.includes(pid) ? p.filter(x=>x!==pid) : [...p, pid]);
+            setProfilePopup(null);
+          }}>
+            {isActive ? "Deaktiver i søgning" : "Aktivér i søgning"}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderStreakBadge = () => {
+    // Mini streak-badge
+    if (!history?.length) return null;
+    const days = new Set(history.map(h => {
+      const d = new Date(h.scanned_at || h.timestamp);
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    }));
+    let streak = 0;
+    const today = new Date();
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      if (days.has(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`)) streak++;
+      else if (i > 0) break;
+    }
+    if (streak < 2) return null;
+    return (
+      <div style={{
+        display:"flex", alignItems:"center", gap:4,
+        background:"rgba(249,115,22,.12)",
+        border:"1px solid rgba(249,115,22,.3)",
+        borderRadius:20, padding:"4px 10px",
+        fontSize:12, fontWeight:800, color:"#f97316",
+        flexShrink:0,
+      }}>
+        🔥 {streak}
+      </div>
+    );
+  };
+
+  const renderProfileToggleButtons = () => {
+    const allIds = ["user", ...family.map(m => m.id)];
+    const allActive = allIds.every(id => activeProfiles.includes(id));
+    return (
+      <>
+        <button onClick={() => setActiveProfiles(allIds)}
+          style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20, border:"1px solid var(--green)",
+            background: allActive ? "var(--green)" : "var(--green-lt)", color: allActive ? "var(--ink)" : "var(--green)", cursor:"pointer", fontFamily:"var(--f)" }}>
+          Vælg alle
+        </button>
+        <button onClick={() => setActiveProfiles([])}
+          style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20, border:"1px solid var(--border)",
+            background:"var(--paper2)", color:"var(--muted)", cursor:"pointer", fontFamily:"var(--f)" }}>
+          Fravælg alle
+        </button>
+      </>
+    );
+  };
+
+  const renderUserAvatar = () => {
+    const isActive = activeProfiles.includes("user");
+    return (
+      <div onClick={() => setProfilePopup("user")} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer" }}>
+        <div style={S.rel}>
+          <div style={{ width:46, height:46, borderRadius:"50%",
+            background: isActive ? "var(--green)" : "var(--paper2)",
+            color: isActive ? "var(--ink)" : "var(--muted)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            fontSize:15, fontWeight:800,
+            border: `2.5px solid ${isActive ? "var(--green)" : "var(--border)"}`,
+            boxShadow: isActive ? "0 0 0 3px var(--green-lt)" : "none",
+            transition:"all .2s" }}>
+            {initials(user.name || "?")}
+          </div>
+          {allergens.length > 0 && (
+            <div style={{ position:"absolute", bottom:-1, right:-1, width:16, height:16,
+              background:"var(--red)", borderRadius:"50%", border:"2px solid var(--paper)",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:9, color:"var(--ink)", fontWeight:800 }}>
+              {allergens.length}
+            </div>
+          )}
+        </div>
+        <div style={{ fontSize:10, fontWeight:700,
+          color: isActive ? "var(--ink)" : "var(--muted2)",
+          maxWidth:48, textAlign:"center", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+          {user.name?.split(" ")[0] || "Mig"}
+        </div>
+      </div>
+    );
+  };
+
+  const renderDailyTip = () => {
+    const tip = HOME_TIPS[new Date().getDay() % HOME_TIPS.length];
+    return (
+      <div style={{ display:"flex", gap:10, alignItems:"flex-start", padding:"10px 0", borderTop:"1px solid var(--border)", marginTop:4 }}>
+        <div style={{ flexShrink:0 }}><Icon name="bulb" size={20} color="#F59E0B" /></div>
+        <div style={S.flex1}>
+          <div style={{ fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:3 }}>Vidste du at</div>
+          <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{tip.title}</div>
+          <div style={S.sub11lh}>{tip.text}</div>
+        </div>
+
+      </div>
+    );
+  };
+
   return (
     <>
         {screen === SCREENS.HOME && (
           <div className="screen fade-in" id="main-content" style={{ display:"flex", flexDirection:"column", minHeight:"calc(100vh - 130px)" }}>
 
             {/* Profil popup */}
-            {profilePopup && (() => {
-              const isUser = profilePopup === "user";
-              const member = isUser ? null : family.find(m => m.id === profilePopup);
-              const pName = isUser ? (user.name || "Din profil") : member?.name;
-              const pAllergens = isUser ? allergens : (member?.allergens || []);
-              const pCustom = isUser ? customAllerg : (member?.customAllerg || []);
-              const pDiets = isUser ? (user.diets || []) : (member?.diets || []);
-              const pENumbers = isUser ? selectedENumbers : (member?.eNumbers || []);
-              const isActive = isUser
-                ? activeProfiles.includes("user")
-                : activeProfiles.includes(profilePopup);
-              return (
-                <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)" }}
-                  onClick={() => setProfilePopup(null)}>
-                  <div style={{ position:"absolute", top:80, left:16, right:16,
-                    background:"#1a3012", borderRadius:20, padding:"20px 18px",
-                    boxShadow:"0 8px 40px rgba(0,0,0,.2)" }}
-                    onClick={e => e.stopPropagation()}>
-
-                    {/* Header */}
-                    <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
-                      <div style={{ width:44, height:44, borderRadius:"50%",
-                        background: isUser ? "var(--green)" : (member?.color || "var(--ink)"),
-                        color:"var(--ink)", display:"flex", alignItems:"center", justifyContent:"center",
-                        fontSize:16, fontWeight:800, flexShrink:0 }}>
-                        {initials(pName)}
-                      </div>
-                      <div style={S.flex1}>
-                        <div style={{ fontWeight:800, fontSize:16, color:"var(--ink)" }}>{pName}</div>
-                        <div style={{ fontSize:12, color:"var(--muted)", marginTop:1 }}>
-                          {isActive ? "✅ Aktiv i søgning" : "⬜ Ikke aktiv i søgning"}
-                        </div>
-                      </div>
-                      <div onClick={() => setProfilePopup(null)} style={{ cursor:"pointer", padding:4, opacity:.5 }}>✕</div>
-                    </div>
-
-                    {/* Allergier */}
-                    {pAllergens.length > 0 ? (
-                      <div style={S.mb12}>
-                        <div style={S.label}>Allergier / intolerancer</div>
-                        <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
-                          {pAllergens.map(id => {
-                            const a = ALLERGENS.find(x => x.id === id);
-                            const isInt = false; // intolerance-suffiks fjernet
-                            return (
-                              <div key={id} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
-                                background: isInt ? "var(--amber-lt)" : "var(--red-lt)",
-                                color: isInt ? "var(--amber)" : "var(--red)",
-                                border: `1px solid ${isInt ? "var(--amber)" : "var(--red)"}` }}>
-                                {a?.label || id}
-                              </div>
-                            );
-                          })}
-                          {pCustom.map((c,i) => (
-                            <div key={i} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
-                              background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" }}>
-                              {c}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12 }}>Ingen allergier registreret</div>
-                    )}
-
-                    {/* Diæt */}
-                    {pDiets.length > 0 && (
-                      <div style={S.mb12}>
-                        <div style={S.label}>Diæt</div>
-                        <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
-                          {pDiets.map(d => (
-                            <div key={d} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
-                              background:"var(--green-lt)", color:"var(--green)", border:"1px solid var(--green-mid)" }}>
-                              {DIETS.find(x=>x.id===d)?.label || d}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* E-numre */}
-                    {pENumbers.length > 0 && (
-                      <div style={S.mb12}>
-                        <div style={S.label}>E-numre</div>
-                        <div style={{ fontSize:12, color:"var(--muted2)" }}>{pENumbers.length} E-numre overvåges</div>
-                      </div>
-                    )}
-
-                    {/* Aktiver/deaktiver */}
-                    <button className="btn btn-full" style={{
-                      marginTop:4,
-                      background: isActive ? "var(--paper2)" : "var(--green)",
-                      color: isActive ? "var(--muted)" : "var(--ink)",
-                      border: `1px solid ${isActive ? "var(--border)" : "var(--green)"}`,
-                    }} onClick={() => {
-                      const pid = isUser ? "user" : profilePopup;
-                      setActiveProfiles(p => p.includes(pid) ? p.filter(x=>x!==pid) : [...p, pid]);
-                      setProfilePopup(null);
-                    }}>
-                      {isActive ? "Deaktiver i søgning" : "Aktivér i søgning"}
-                    </button>
-                  </div>
-                </div>
-              );
-            })()}
+            {profilePopup && renderProfilePopup()}
 
             {/* Guide modal — vises ved klik på "App-guide" */}
             {showGuide && (
@@ -520,94 +619,18 @@ export default function ScannerScreen({
                 <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px" }}>
                   {greeting} {user.name?.split(" ")[0] || "der"}
                 </div>
-                {(() => {
-                  // Mini streak-badge
-                  if (!history?.length) return null;
-                  const days = new Set(history.map(h => {
-                    const d = new Date(h.scanned_at || h.timestamp);
-                    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-                  }));
-                  let streak = 0;
-                  const today = new Date();
-                  for (let i = 0; i < 365; i++) {
-                    const d = new Date(today);
-                    d.setDate(today.getDate() - i);
-                    if (days.has(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`)) streak++;
-                    else if (i > 0) break;
-                  }
-                  if (streak < 2) return null;
-                  return (
-                    <div style={{
-                      display:"flex", alignItems:"center", gap:4,
-                      background:"rgba(249,115,22,.12)",
-                      border:"1px solid rgba(249,115,22,.3)",
-                      borderRadius:20, padding:"4px 10px",
-                      fontSize:12, fontWeight:800, color:"#f97316",
-                      flexShrink:0,
-                    }}>
-                      🔥 {streak}
-                    </div>
-                  );
-                })()}
+                {renderStreakBadge()}
               </div>
 
               {/* Vælg alle / fravælg alle */}
               <div style={{ display:"flex", gap:6, marginBottom:10 }}>
-                {(() => {
-                  const allIds = ["user", ...family.map(m => m.id)];
-                  const allActive = allIds.every(id => activeProfiles.includes(id));
-                  return (
-                    <>
-                      <button onClick={() => setActiveProfiles(allIds)}
-                        style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20, border:"1px solid var(--green)",
-                          background: allActive ? "var(--green)" : "var(--green-lt)", color: allActive ? "var(--ink)" : "var(--green)", cursor:"pointer", fontFamily:"var(--f)" }}>
-                        Vælg alle
-                      </button>
-                      <button onClick={() => setActiveProfiles([])}
-                        style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20, border:"1px solid var(--border)",
-                          background:"var(--paper2)", color:"var(--muted)", cursor:"pointer", fontFamily:"var(--f)" }}>
-                        Fravælg alle
-                      </button>
-                    </>
-                  );
-                })()}
+                {renderProfileToggleButtons()}
               </div>
 
               {/* Profil-avatars */}
               <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" }}>
                 {/* Brugeren selv */}
-                {(() => {
-                  const isActive = activeProfiles.includes("user");
-                  return (
-                    <div onClick={() => setProfilePopup("user")} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer" }}>
-                      <div style={S.rel}>
-                        <div style={{ width:46, height:46, borderRadius:"50%",
-                          background: isActive ? "var(--green)" : "var(--paper2)",
-                          color: isActive ? "var(--ink)" : "var(--muted)",
-                          display:"flex", alignItems:"center", justifyContent:"center",
-                          fontSize:15, fontWeight:800,
-                          border: `2.5px solid ${isActive ? "var(--green)" : "var(--border)"}`,
-                          boxShadow: isActive ? "0 0 0 3px var(--green-lt)" : "none",
-                          transition:"all .2s" }}>
-                          {initials(user.name || "?")}
-                        </div>
-                        {allergens.length > 0 && (
-                          <div style={{ position:"absolute", bottom:-1, right:-1, width:16, height:16,
-                            background:"var(--red)", borderRadius:"50%", border:"2px solid var(--paper)",
-                            display:"flex", alignItems:"center", justifyContent:"center",
-                            fontSize:9, color:"var(--ink)", fontWeight:800 }}>
-                            {allergens.length}
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ fontSize:10, fontWeight:700,
-                        color: isActive ? "var(--ink)" : "var(--muted2)",
-                        maxWidth:48, textAlign:"center", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                        {user.name?.split(" ")[0] || "Mig"}
-                      </div>
-                    </div>
-                  );
-                })()}
+                {renderUserAvatar()}
 
                 {/* Familiemedlemmer */}
                 {family.map(m => {
@@ -905,20 +928,7 @@ export default function ScannerScreen({
 
             <div style={{ flex:1, minHeight:20 }} />
             {/* Vidste du at — let, i bunden */}
-            {(() => {
-              const tip = HOME_TIPS[new Date().getDay() % HOME_TIPS.length];
-              return (
-                <div style={{ display:"flex", gap:10, alignItems:"flex-start", padding:"10px 0", borderTop:"1px solid var(--border)", marginTop:4 }}>
-                  <div style={{ flexShrink:0 }}><Icon name="bulb" size={20} color="#F59E0B" /></div>
-                  <div style={S.flex1}>
-                    <div style={{ fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:3 }}>Vidste du at</div>
-                    <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{tip.title}</div>
-                    <div style={S.sub11lh}>{tip.text}</div>
-                  </div>
-                  
-                </div>
-              );
-            })()}
+            {renderDailyTip()}
 
             {/* Version + Beta knap */}
             <div style={{ textAlign:"center", paddingTop:8, paddingBottom:12, display:"flex", flexDirection:"column", alignItems:"center", gap:8 }}>
