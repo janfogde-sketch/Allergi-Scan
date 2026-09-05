@@ -102,14 +102,21 @@ export function useRecipes(accessToken, userId) {
         return { error: "Opskrift gemt, men kunne ikke hente ID til ingredienser." };
       }
       // Gem ingredienser
-      for (let i = 0; i < submitIngredients.length; i++) {
-        const ing = submitIngredients[i];
-        if (!ing.name.trim()) continue;
-        await fetch(`${SUPABASE_URL}/rest/v1/recipe_ingredients`, {
-          method: "POST",
-          headers: { ...headers, "Prefer": "return=minimal" },
-          body: JSON.stringify({ recipe_id: recipe.id, name: ing.name, amount: ing.amount, unit: ing.unit, sort_order: i }),
-        });
+      const ingredientResults = await Promise.all(
+        submitIngredients
+          .map((ing, i) => ({ ing, i }))
+          .filter(({ ing }) => ing.name.trim())
+          .map(({ ing, i }) =>
+            fetch(`${SUPABASE_URL}/rest/v1/recipe_ingredients`, {
+              method: "POST",
+              headers: { ...headers, "Prefer": "return=minimal" },
+              body: JSON.stringify({ recipe_id: recipe.id, name: ing.name, amount: ing.amount, unit: ing.unit, sort_order: i }),
+            })
+          )
+      );
+      if (ingredientResults.some(r => !r.ok)) {
+        setSubmittingRecipe(false);
+        return { error: "Opskriften blev gemt, men nogle ingredienser kunne ikke gemmes. Kontakt support@eatsafe.dk." };
       }
       // Nulstil form (form lukkes af RecipesScreen ved success)
       setSubmitRecipe({ title:"", description:"", category:"aftensmad", tags:[] });
