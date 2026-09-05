@@ -6,20 +6,19 @@ import { Icon, IngredientsList, ProfileBadges } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
+import { useHistoryContext } from "./HistoryContext.jsx";
 
 export default function RecipesScreen({
   recipes, recipesLoading,
   selectedRecipe, setSelectedRecipe,
   recipeSearch, setRecipeSearch,
   showSafeOnly, setShowSafeOnly,
-  favorites,
   showSubmitRecipe, setShowSubmitRecipe,
   submitRecipe, setSubmitRecipe,
   submitSteps, setSubmitSteps,
   submitIngredients, setSubmitIngredients,
   submittingRecipe,
   loadRecipes, loadRecipeIngredients, submitUserRecipe,
-  toggleFavorite,
   loading,
   recipeFilter, setRecipeFilter,
   recipeSafeOnly, setRecipeSafeOnly,
@@ -33,6 +32,7 @@ export default function RecipesScreen({
   const { user, accessToken } = useAuthContext();
   const { allergens, customAllerg, family, activeProfiles } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
+  const { favorites, toggleFavorite } = useHistoryContext();
   const [listAdded, setListAdded] = React.useState({});
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [localSafeProfiles, setLocalSafeProfiles] = React.useState(null);

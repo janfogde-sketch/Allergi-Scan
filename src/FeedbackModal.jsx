@@ -6,6 +6,7 @@ import { getTraceLog } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
+import { useHistoryContext } from "./HistoryContext.jsx";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FeedbackModal.jsx
@@ -28,13 +29,11 @@ export default function FeedbackModal({
   editMode,
   showManualEan,
   profilePopup,
-
-  // Brugerkontekst
-  history,
 }) {
   const { user, userId, accessToken, loginEmail } = useAuthContext();
   const { allergens, family, activeProfiles } = useProfileContext();
   const { screen } = useNavigationContext();
+  const { history } = useHistoryContext();
   const [type, setType]         = useState("bug");
   const [text, setText]         = useState("");
   const [image, setImage]       = useState(null);
