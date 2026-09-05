@@ -50,6 +50,7 @@ import { useMadpas } from './useMadpas.js';
 import { useSearch } from './useSearch.js';
 import { useAlternatives } from './useAlternatives.js';
 import FeedbackModal from './FeedbackModal.jsx';
+import { AuthProvider } from './AuthContext.jsx';
 
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
@@ -695,7 +696,15 @@ const lookupProduct = useCallback(async (ean) => {
     }
   }, [screen, user?.role]);
 
+  const authContextValue = {
+    user, setUser, userId, accessToken,
+    loginEmail, setLoginEmail, loginPassword, setLoginPassword,
+    authError, setAuthError, authLoading, authTab, setAuthTab,
+    isOAuth, handleLogin, handleSignup, handleOAuth, clearAuth,
+  };
+
   return (
+    <AuthProvider value={authContextValue}>
     <>
       <style>{appCss}</style>
       <div className="app" role="application" aria-label="EatSafe">
@@ -1264,5 +1273,6 @@ const lookupProduct = useCallback(async (ean) => {
         )}
       </div>
     </>
+    </AuthProvider>
   );
 }
