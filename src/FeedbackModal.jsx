@@ -131,6 +131,9 @@ export default function FeedbackModal({
   const device = /iPhone|iPad/.test(navigator.userAgent) ? "iOS"
     : /Android/.test(navigator.userAgent) ? "Android" : "Desktop";
 
+  const traceLog = getTraceLog();
+  const recentTraces = traceLog.slice(-10);
+
   return (
     <div style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,.7)",
       display:"flex", alignItems:"flex-end" }}
@@ -255,26 +258,22 @@ export default function FeedbackModal({
                 ))}
               </div>
               {/* Debug trace */}
-              {(() => {
-                const traces = getTraceLog().slice(-10);
-                if (!traces.length) return null;
-                return (
-                  <div style={{ borderTop:"1px solid var(--border)", paddingTop:8, marginTop:4 }}>
-                    <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:4 }}>
-                      🔍 Debug trace ({getTraceLog().length} entries)
-                    </div>
-                    <div style={{ fontFamily:"var(--mono)", fontSize:9, color:"var(--muted)", lineHeight:1.7, maxHeight:80, overflowY:"auto" }}>
-                      {traces.map((t, i) => (
-                        <div key={i}>
-                          <span style={{ color:"var(--green-text)" }}>[{t.id}]</span>{" "}
-                          <span style={{ color:"var(--ink)" }}>{t.step}</span>{" "}
-                          <span style={{ color:"var(--muted2)" }}>{t.ts?.slice(11,19)}</span>
-                        </div>
-                      ))}
-                    </div>
+              {recentTraces.length > 0 && (
+                <div style={{ borderTop:"1px solid var(--border)", paddingTop:8, marginTop:4 }}>
+                  <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:4 }}>
+                    🔍 Debug trace ({traceLog.length} entries)
                   </div>
-                );
-              })()}
+                  <div style={{ fontFamily:"var(--mono)", fontSize:9, color:"var(--muted)", lineHeight:1.7, maxHeight:80, overflowY:"auto" }}>
+                    {recentTraces.map((t, i) => (
+                      <div key={i}>
+                        <span style={{ color:"var(--green-text)" }}>[{t.id}]</span>{" "}
+                        <span style={{ color:"var(--ink)" }}>{t.step}</span>{" "}
+                        <span style={{ color:"var(--muted2)" }}>{t.ts?.slice(11,19)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Send */}

@@ -150,6 +150,18 @@ export default function AdminScreen() {
     setRecipeActionLoading(false);
   };
 
+  const filteredAdminUsers = adminUsers.filter(u => {
+    if (userSearchParam === "admin") return u.role === "admin";
+    if (userSearchParam === "incomplete") return u.onboarding_completed === false;
+    if (!userSearch.trim()) return true;
+    const q = userSearch.toLowerCase();
+    if (userSearchParam === "name") return (u.name||"").toLowerCase().includes(q);
+    if (userSearchParam === "email") return (u.email||"").toLowerCase().includes(q);
+    if (userSearchParam === "role") return (u.role||"").toLowerCase().includes(q);
+    if (userSearchParam === "onboarding") return String(u.onboarding_completed).includes(q);
+    return (u.name||"").toLowerCase().includes(q) || (u.email||"").toLowerCase().includes(q);
+  });
+
   return (
     <>
         {openTicket && (
@@ -462,50 +474,33 @@ ${openTicket.description}
                 </div>
 
                 {/* Tæller */}
-                {(() => {
-                  const filtered = adminUsers.filter(u => {
-                    if (userSearchParam === "admin") return u.role === "admin";
-                    if (userSearchParam === "incomplete") return u.onboarding_completed === false;
-                    if (!userSearch.trim()) return true;
-                    const q = userSearch.toLowerCase();
-                    if (userSearchParam === "name") return (u.name||"").toLowerCase().includes(q);
-                    if (userSearchParam === "email") return (u.email||"").toLowerCase().includes(q);
-                    if (userSearchParam === "role") return (u.role||"").toLowerCase().includes(q);
-                    if (userSearchParam === "onboarding") return String(u.onboarding_completed).includes(q);
-                    return (u.name||"").toLowerCase().includes(q) || (u.email||"").toLowerCase().includes(q);
-                  });
-                  return (
-                    <>
-                      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>
-                        {filtered.length} af {adminUsers.length} brugere
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>
+                  {filteredAdminUsers.length} af {adminUsers.length} brugere
+                </div>
+                {adminUsersLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
+                <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                  {filteredAdminUsers.map(u => (
+                    <div key={u.id} onClick={() => setOpenAdminUser(u)}
+                      style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", boxShadow:"var(--sh)", cursor:"pointer" }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                        <div style={{ width:38, height:38, borderRadius:"50%", background: u.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
+                          {(u.name||u.email||"?").charAt(0).toUpperCase()}
+                        </div>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.name || "Ingen navn"}</div>
+                          <div style={{ fontSize:11, color:"var(--muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</div>
+                        </div>
+                        <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0 }}>
+                          <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: u.role==="admin" ? "rgba(74,222,128,.2)" : "var(--surface2)", color: u.role==="admin" ? "var(--green)" : "var(--muted)", border: `1px solid ${u.role==="admin" ? "var(--green-mid)" : "var(--border)"}` }}>
+                            {u.role==="admin" ? "Admin" : "Bruger"}
+                          </span>
+                          {u.onboarding_completed === false && <span style={{ fontSize:9, color:"var(--amber)", fontWeight:700 }}>Onboarding ufærdig</span>}
+                          {u.id === userId && <span style={{ fontSize:9, color:"var(--green)", fontWeight:700 }}>← Dig</span>}
+                        </div>
                       </div>
-                      {adminUsersLoading && <div style={{ textAlign:"center", padding:"32px 0" }}><div style={{ width:36, height:36, border:"3px solid var(--border2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto" }} /></div>}
-                      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                        {filtered.map(u => (
-                          <div key={u.id} onClick={() => setOpenAdminUser(u)}
-                            style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", boxShadow:"var(--sh)", cursor:"pointer" }}>
-                            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                              <div style={{ width:38, height:38, borderRadius:"50%", background: u.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
-                                {(u.name||u.email||"?").charAt(0).toUpperCase()}
-                              </div>
-                              <div style={{ flex:1, minWidth:0 }}>
-                                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.name || "Ingen navn"}</div>
-                                <div style={{ fontSize:11, color:"var(--muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</div>
-                              </div>
-                              <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0 }}>
-                                <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: u.role==="admin" ? "rgba(74,222,128,.2)" : "var(--surface2)", color: u.role==="admin" ? "var(--green)" : "var(--muted)", border: `1px solid ${u.role==="admin" ? "var(--green-mid)" : "var(--border)"}` }}>
-                                  {u.role==="admin" ? "Admin" : "Bruger"}
-                                </span>
-                                {u.onboarding_completed === false && <span style={{ fontSize:9, color:"var(--amber)", fontWeight:700 }}>Onboarding ufærdig</span>}
-                                {u.id === userId && <span style={{ fontSize:9, color:"var(--green)", fontWeight:700 }}>← Dig</span>}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  );
-                })()}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
