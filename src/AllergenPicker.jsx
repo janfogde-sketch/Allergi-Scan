@@ -17,7 +17,7 @@ export const ENumberPicker = ({ selected, onChange }) => {
     return r ? (num >= r[0] && num <= r[1]) : true;
   });
 
-  const popular = ["E621","E211","E102","E951","E250","E320","E150d","E110","E129","E951"];
+  const popular = ["E621","E211","E102","E951","E250","E320","E150d","E110","E129"];
 
   return (
     <div>
