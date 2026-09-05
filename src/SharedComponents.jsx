@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { ALLERGENS } from "./constants.jsx";
+import { ALLERGENS, PAGE_IDS } from "./constants.jsx";
+import { initials } from "./helpers.js";
 
 export function EatSafeLogo({ size = 32, variant = "light" }) {
   const isDark = variant === "dark";
