@@ -755,7 +755,7 @@ export default function RecipesScreen({
                     <option value="">enhed</option>
                     {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
                   </select>
-                  <button onClick={() => setSubmitIngredients(submitIngredients.filter((_,i)=>i!==idx))}
+                  <button onClick={() => setSubmitIngredients(submitIngredients.filter((_,i)=>i!==idx))} aria-label="Slet ingrediens"
                     style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, cursor:"pointer", color:"var(--red)", fontSize:14, display:"flex", alignItems:"center", justifyContent:"center" }}>×</button>
                 </div>
 
@@ -773,9 +773,22 @@ export default function RecipesScreen({
                         border:`1px solid ${isAuto ? "var(--amber-md)" : "var(--red-md)"}`,
                       }}>
                         {a?.emoji} {a?.label||id}
-                        <span style={{ cursor:"pointer", marginLeft:1, opacity:.7 }}
+                        <span style={{ cursor:"pointer", padding:4, margin:"-4px -4px -4px 1px", opacity:.7 }}
+                          role="button" aria-label={`Fjern ${a?.label||id}`} tabIndex={0}
                           onClick={() => {
                             // Fjern: hvis auto → tilføj til removed, hvis manuel → fjern fra allergens
+                            if (isAuto) {
+                              setSubmitIngredients(submitIngredients.map((x,i) =>
+                                i===idx ? {...x, removedAutos:[...(x.removedAutos||[]),id]} : x
+                              ));
+                            } else {
+                              setSubmitIngredients(submitIngredients.map((x,i) =>
+                                i===idx ? {...x, allergens:(x.allergens||[]).filter(a=>a!==id)} : x
+                              ));
+                            }
+                          }}
+                          onKeyDown={e => {
+                            if (e.key !== "Enter") return;
                             if (isAuto) {
                               setSubmitIngredients(submitIngredients.map((x,i) =>
                                 i===idx ? {...x, removedAutos:[...(x.removedAutos||[]),id]} : x
@@ -823,7 +836,10 @@ export default function RecipesScreen({
                   return (
                     <div key={id} style={{ display:"flex", alignItems:"center", gap:4, padding:"3px 8px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:100, fontSize:11, fontWeight:700, color:"var(--amber)" }}>
                       {a?.emoji} {a?.label||id}
-                      <span style={{ cursor:"pointer", opacity:.7, marginLeft:2 }} onClick={() => setRemovedAuto(r=>[...r,id])}>×</span>
+                      <span style={{ cursor:"pointer", opacity:.7, padding:4, margin:"-4px -4px -4px 2px" }}
+                        role="button" aria-label={`Fjern ${a?.label||id}`} tabIndex={0}
+                        onClick={() => setRemovedAuto(r=>[...r,id])}
+                        onKeyDown={e => e.key === "Enter" && setRemovedAuto(r=>[...r,id])}>×</span>
                     </div>
                   );
                 })}
@@ -847,7 +863,7 @@ export default function RecipesScreen({
                 onChange={e => setSubmitSteps(submitSteps.map((s,i)=>i===idx?e.target.value:s))}
                 style={{ flex:1, padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, resize:"none", outline:"none" }} />
               {submitSteps.length > 1 && (
-                <button onClick={() => setSubmitSteps(submitSteps.filter((_,i)=>i!==idx))}
+                <button onClick={() => setSubmitSteps(submitSteps.filter((_,i)=>i!==idx))} aria-label={`Slet trin ${idx+1}`}
                   style={{ marginTop:8, background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, cursor:"pointer", color:"var(--red)", fontSize:14, width:28, height:28, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>×</button>
               )}
             </div>

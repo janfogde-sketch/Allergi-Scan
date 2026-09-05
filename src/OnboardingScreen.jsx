@@ -783,7 +783,8 @@ export default function OnboardingScreen({
                     {customAllerg.length > 0 && (
                       <div className="tags">
                         {customAllerg.map((a,i) => (
-                          <div key={i} className="tag">{a}<span className="tag-x" onClick={() => setCustomAllerg(c=>c.filter(x=>x!==a))}>×</span></div>
+                          <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
+                            onClick={() => setCustomAllerg(c=>c.filter(x=>x!==a))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(c=>c.filter(x=>x!==a))}>×</span></div>
                         ))}
                       </div>
                     )}

@@ -84,7 +84,8 @@ export const MemberForm = ({
       {customAllerg.length > 0 && (
         <div className="tags" style={{ marginBottom:12 }}>
           {customAllerg.map((a,i) => (
-            <div key={i} className="tag">{a}<span className="tag-x" onClick={() => setCustomAllerg(p=>p.filter(x=>x!==a))}>×</span></div>
+            <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
+              onClick={() => setCustomAllerg(p=>p.filter(x=>x!==a))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(p=>p.filter(x=>x!==a))}>×</span></div>
           ))}
         </div>
       )}

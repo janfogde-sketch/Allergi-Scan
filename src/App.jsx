@@ -807,7 +807,7 @@ const lookupProduct = useCallback(async (ean) => {
           onClick={e => e.stopPropagation()}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
             <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>{content.title}</div>
-            <button onClick={() => setHelpOpen(false)}
+            <button onClick={() => setHelpOpen(false)} aria-label="Luk"
               style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>

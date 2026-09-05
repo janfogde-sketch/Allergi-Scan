@@ -159,7 +159,7 @@ export default function FeedbackModal({
                   {PAGE_IDS[screen] || "—"} · Beta v1.0
                 </div>
               </div>
-              <button onClick={close}
+              <button onClick={close} aria-label="Luk"
                 style={{ background:"var(--surface2)", border:"none", borderRadius:"50%",
                   width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
             </div>
@@ -201,9 +201,9 @@ export default function FeedbackModal({
                   <img src={image} alt="Screenshot"
                     style={{ maxWidth:"100%", maxHeight:160, borderRadius:10,
                       objectFit:"contain", border:"1px solid var(--border)" }} />
-                  <button onClick={() => { URL.revokeObjectURL(image); setImage(null); setImageB64(null); }}
+                  <button onClick={() => { URL.revokeObjectURL(image); setImage(null); setImageB64(null); }} aria-label="Fjern billede"
                     style={{ position:"absolute", top:4, right:4, background:"rgba(0,0,0,.6)",
-                      border:"none", borderRadius:"50%", width:24, height:24,
+                      border:"none", borderRadius:"50%", width:28, height:28,
                       color:"var(--ink)", cursor:"pointer", fontSize:14 }}>×</button>
                 </div>
               ) : (

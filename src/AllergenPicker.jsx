@@ -82,7 +82,10 @@ export const ENumberPicker = ({ selected, onChange }) => {
               <div key={e} style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 10px",
                 background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:20 }}>
                 <div style={{ fontSize:11, fontWeight:800, color:"var(--red)" }}>{e}</div>
-                <div onClick={() => onChange(selected.filter(x=>x!==e))} style={{ cursor:"pointer", lineHeight:0 }}>
+                <div onClick={() => onChange(selected.filter(x=>x!==e))}
+                  onKeyDown={ev => ev.key === "Enter" && onChange(selected.filter(x=>x!==e))}
+                  role="button" aria-label={`Fjern ${e}`} tabIndex={0}
+                  style={{ cursor:"pointer", lineHeight:0, padding:6, margin:-6 }}>
                   <Icon name="x" size={11} color="var(--red)" />
                 </div>
               </div>
