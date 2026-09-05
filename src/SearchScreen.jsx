@@ -6,6 +6,7 @@ import { ProductImage } from "./SharedComponents.jsx";
 import { CategorySelect } from "./MemberForm.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
+import { useShoppingContext } from "./ShoppingContext.jsx";
 
 const S = {
   flexMin: { flex:1, minWidth:0 },
@@ -33,11 +34,11 @@ export default function SearchScreen({
   searchCategory, setSearchCategory,
   searchLoading,
   showSafeOnly, setShowSafeOnly,
-  addToList,
   lookupProduct,
 }) {
   const { user } = useAuthContext();
   const { family, allergens, activeProfiles, setActiveProfiles } = useProfileContext();
+  const { addToList } = useShoppingContext();
   const [allergenFilterOpen, setAllergenFilterOpen] = useState(false);
   const [manualAllergens, setManualAllergens]       = useState([]);
 

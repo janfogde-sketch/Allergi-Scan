@@ -5,6 +5,7 @@ import { compareAllergens } from "./helpers.js";
 import { Icon, ProductImage } from "./SharedComponents.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
+import { useShoppingContext } from "./ShoppingContext.jsx";
 
 const S = {
   flexMin: { flex:1, minWidth:0 },
@@ -15,17 +16,12 @@ const S = {
 };
 
 export default function ListScreen({
-  shoppingList,
-  newItemName, setNewItemName,
   activeIds,
-  addToList,
-  toggleItem,
-  removeItem,
-  clearDone,
   lookupProduct,
 }) {
   const { setScreen } = useNavigationContext();
   const { favorites } = useHistoryContext();
+  const { shoppingList, newItemName, setNewItemName, addToList, toggleItem, removeItem, clearDone } = useShoppingContext();
   return (
     <div className="screen fade-in">
       <div className="screen-title">Indkøbsliste</div>

@@ -54,6 +54,7 @@ import { ProfileProvider } from './ProfileContext.jsx';
 import { AdminProvider } from './AdminContext.jsx';
 import { NavigationProvider } from './NavigationContext.jsx';
 import { HistoryProvider } from './HistoryContext.jsx';
+import { ShoppingProvider } from './ShoppingContext.jsx';
 
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
@@ -738,12 +739,19 @@ const lookupProduct = useCallback(async (ean) => {
     favorites, loadHistory, toggleFavorite, isFavorite,
   };
 
+  const shoppingContextValue = {
+    shoppingList, setShoppingList, shoppingListId, setShoppingListId,
+    newItemName, setNewItemName, loadShoppingList,
+    addToList, toggleItem, removeItem, clearDone,
+  };
+
   return (
     <AuthProvider value={authContextValue}>
     <ProfileProvider value={profileContextValue}>
     <AdminProvider value={adminContextValue}>
     <NavigationProvider value={navigationContextValue}>
     <HistoryProvider value={historyContextValue}>
+    <ShoppingProvider value={shoppingContextValue}>
     <>
       <style>{appCss}</style>
       <div className="app" role="application" aria-label="EatSafe">
@@ -760,7 +768,6 @@ const lookupProduct = useCallback(async (ean) => {
             activeSubtypeModal={activeSubtypeModal} setActiveSubtypeModal={setActiveSubtypeModal}
             tourIdx={tourIdx} setTourIdx={setTourIdx}
             editMode={editMode} setEditMode={setEditMode}
-            shoppingList={shoppingList} setShoppingList={setShoppingList}
             newMemberName={newMemberName} setNewMemberName={setNewMemberName}
             newMemberBirthYear={newMemberBirthYear} setNewMemberBirthYear={setNewMemberBirthYear}
             newMemberGender={newMemberGender} setNewMemberGender={setNewMemberGender}
@@ -1038,7 +1045,6 @@ const lookupProduct = useCallback(async (ean) => {
             searchResults={searchResults} setSearchResults={setSearchResults}
             searchCategory={searchCategory} setSearchCategory={setSearchCategory}
             scanError={scanError}
-            shoppingList={shoppingList} newItemName={newItemName} setNewItemName={setNewItemName}
             notFoundStep={notFoundStep} setNotFoundStep={setNotFoundStep}
             proposedName={proposedName} setProposedName={setProposedName}
             proposedFlags={proposedFlags} setProposedFlags={setProposedFlags}
@@ -1061,18 +1067,14 @@ const lookupProduct = useCallback(async (ean) => {
             cameraActive={cameraActive} setCameraActive={setCameraActive}
             galleryInputRef={galleryInputRef}
             lastScannedRef={lastScannedRef}
-            addToList={addToList}
             handleEditProductCapture={handleEditProductCapture}
             handleImageCapture={handleImageCapture}
             handleProductImageCapture={handleProductImageCapture}
-            clearDone={clearDone}
             editProductImage={editProductImage}
-            removeItem={removeItem}
             scanFromGallery={scanFromGallery}
             searchLoading={searchLoading}
             startCamera={startCamera}
             stopCamera={stopCamera}
-            toggleItem={toggleItem}
             toggleTorch={toggleTorch}
             torchOn={torchOn}
             scanZoom={scanZoom}
@@ -1175,7 +1177,6 @@ const lookupProduct = useCallback(async (ean) => {
             completedSteps={completedSteps} setCompletedSteps={setCompletedSteps}
             recipeServings={recipeServings} setRecipeServings={setRecipeServings}
             setRecipes={setRecipes}
-            addToList={addToList}
           />
           </ErrorBoundary>
           </Suspense>
@@ -1239,6 +1240,7 @@ const lookupProduct = useCallback(async (ean) => {
         )}
       </div>
     </>
+    </ShoppingProvider>
     </HistoryProvider>
     </NavigationProvider>
     </AdminProvider>

@@ -7,6 +7,7 @@ import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
+import { useShoppingContext } from "./ShoppingContext.jsx";
 
 export default function RecipesScreen({
   recipes, recipesLoading,
@@ -27,12 +28,12 @@ export default function RecipesScreen({
   completedSteps, setCompletedSteps,
   recipeServings, setRecipeServings,
   setRecipes,
-  addToList,
 }) {
   const { user, accessToken } = useAuthContext();
   const { allergens, customAllerg, family, activeProfiles } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
   const { favorites, toggleFavorite } = useHistoryContext();
+  const { addToList } = useShoppingContext();
   const [listAdded, setListAdded] = React.useState({});
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [localSafeProfiles, setLocalSafeProfiles] = React.useState(null);

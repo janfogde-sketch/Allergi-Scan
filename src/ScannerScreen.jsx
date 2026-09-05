@@ -8,6 +8,7 @@ import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
+import { useShoppingContext } from "./ShoppingContext.jsx";
 
 import { CategorySelect } from "./MemberForm.jsx";
 import NotFoundScreen from "./NotFoundScreen.jsx";
@@ -325,7 +326,6 @@ export default function ScannerScreen({
   searchResults, setSearchResults,
   searchCategory, setSearchCategory,
   scanError,
-  shoppingList, newItemName, setNewItemName,
   notFoundStep, setNotFoundStep,
   proposedName, setProposedName,
   proposedFlags, setProposedFlags,
@@ -350,17 +350,13 @@ export default function ScannerScreen({
   lastScannedRef,
   selectedENumbers,
   activeENumbers,
-  addToList,
   handleEditProductCapture,
   handleImageCapture, handleProductImageCapture,
-  clearDone,
   editProductImage,
-  removeItem,
   scanFromGallery,
   searchLoading,
   startCamera,
   stopCamera,
-  toggleItem,
   toggleTorch,
   torchOn,
   scanZoom,
@@ -379,6 +375,7 @@ export default function ScannerScreen({
   const { family, activeProfiles, setActiveProfiles, allergens, customAllerg } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
   const { history, favorites, toggleFavorite, isFavorite } = useHistoryContext();
+  const { shoppingList, newItemName, setNewItemName, addToList, toggleItem, removeItem, clearDone } = useShoppingContext();
 
   // Parser OCR-tekst til liste af ingredienser
 
@@ -977,7 +974,6 @@ export default function ScannerScreen({
             searchCategory={searchCategory} setSearchCategory={setSearchCategory}
             searchLoading={searchLoading}
             showSafeOnly={showSafeOnly} setShowSafeOnly={setShowSafeOnly}
-            addToList={addToList}
             lookupProduct={lookupProduct}
           />
           </Suspense>
@@ -985,13 +981,7 @@ export default function ScannerScreen({
         {screen === SCREENS.LIST && (
           <Suspense fallback={LazyFallback}>
           <ListScreen
-            shoppingList={shoppingList}
-            newItemName={newItemName} setNewItemName={setNewItemName}
             activeIds={activeIds}
-            addToList={addToList}
-            toggleItem={toggleItem}
-            removeItem={removeItem}
-            clearDone={clearDone}
             lookupProduct={lookupProduct}
           />
           </Suspense>
@@ -1015,7 +1005,6 @@ export default function ScannerScreen({
             scanResult={scanResult}
             activeENumbers={activeENumbers}
             selectedENumbers={selectedENumbers}
-            addToList={addToList}
             setKnowledgeSlug={setKnowledgeSlug}
             setEditStep={setEditStep}
             setEditIngText={setEditIngText}
