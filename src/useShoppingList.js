@@ -16,6 +16,11 @@ export function useShoppingList({ accessToken, userId }) {
 
   const channelRef = useRef(null);
 
+  // Holder altid den seneste liste synkront tilgængelig — bruges af toggleItem
+  // (se dér) til at læse/opdatere state uden at vente på et React-gen-render.
+  const shoppingListRef = useRef(shoppingList);
+  shoppingListRef.current = shoppingList;
+
   // ── Indlæs liste ────────────────────────────────────────────────────────────
   const loadShoppingList = async () => {
     try {
@@ -179,16 +184,17 @@ export function useShoppingList({ accessToken, userId }) {
 
   // ── Toggle ──────────────────────────────────────────────────────────────────
   const toggleItem = async (id) => {
-    // Læs den nye værdi inde fra state-updateren, ikke fra det ydre "shoppingList"
-    // (som kan være et forældet closure-snapshot ved hurtige dobbelt-tap) —
-    // ellers kan PATCH'en sende den forkerte checked-værdi til serveren
-    let newChecked;
-    setShoppingList(l => l.map(i => {
-      if (i.id !== id) return i;
-      newChecked = !i.checked;
-      return { ...i, checked: newChecked };
-    }));
-    if (newChecked === undefined) return; // id fandtes ikke i listen
+    // Læs og opdater via shoppingListRef (synkron, altid frisk), ikke via en
+    // variabel sat inde i setShoppingList's updater — React kalder ikke
+    // nødvendigvis den updater synkront, så en variabel sat dér kan stadig
+    // være undefined lige efter kaldet. Det betød tidligere at denne funktion
+    // ramte det tomme "id fandtes ikke"-tjek hver eneste gang og ALDRIG
+    // rent faktisk gemte afkrydsningen på serveren.
+    const current = shoppingListRef.current.find(i => i.id === id);
+    if (!current) return; // id fandtes ikke i listen
+    const newChecked = !current.checked;
+    shoppingListRef.current = shoppingListRef.current.map(i => i.id === id ? { ...i, checked: newChecked } : i);
+    setShoppingList(shoppingListRef.current);
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/shopping_list_items?id=eq.${id}`, {
         method: "PATCH",
@@ -198,7 +204,8 @@ export function useShoppingList({ accessToken, userId }) {
     } catch {
       // Opdatering fejlede — rul afkrydsningen tilbage, ellers viser UI'et en
       // status serveren ikke er enig i, indtil næste genindlæsning stille retter den
-      setShoppingList(l => l.map(i => i.id === id ? { ...i, checked: !newChecked } : i));
+      shoppingListRef.current = shoppingListRef.current.map(i => i.id === id ? { ...i, checked: !newChecked } : i);
+      setShoppingList(shoppingListRef.current);
     }
   };
 
