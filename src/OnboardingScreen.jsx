@@ -20,14 +20,14 @@ function WelcomeDemoSlider({ setScreen, setAuthTab }) {
   const goLogin  = () => { setAuthTab("login");  setScreen(SCREENS.LOGIN); };
 
   return (
-    <div style={{ borderRadius:20, overflow:"hidden", border:"1px solid rgba(255,255,255,.08)", marginBottom:8 }}>
+    <div style={{ borderRadius:20, overflow:"hidden", border:"1px solid var(--border)", marginBottom:8, boxShadow:"var(--sh2)" }}>
 
       {/* Overskrift */}
-      <div style={{ background:"rgba(255,255,255,.04)", borderBottom:"1px solid rgba(255,255,255,.07)", padding:"12px 18px", textAlign:"center" }}>
+      <div style={{ background:"var(--surface2)", borderBottom:"1px solid var(--border)", padding:"12px 18px", textAlign:"center" }}>
         <div style={{ fontSize:13, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1.5px" }}>Det kan EatSafe</div>
       </div>
 
-      {/* Slide-indhold */}
+      {/* Slide-indhold — bevidst en mørk "forhåndsvisning" af appen, uafhængig af det lyse tema udenom */}
       <div style={{ background:slide.bg, padding:"18px 18px 16px", transition:"background .35s" }}>
         {/* Dots */}
         <div style={{ display:"flex", gap:4, justifyContent:"center", marginBottom:14, flexWrap:"wrap" }}>
@@ -38,7 +38,7 @@ function WelcomeDemoSlider({ setScreen, setAuthTab }) {
                 cursor:"pointer", transition:"all .25s" }} />
           ))}
         </div>
-        <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)", marginBottom:6, letterSpacing:"-.3px", lineHeight:1.3 }}>{slide.title}</div>
+        <div style={{ fontSize:17, fontWeight:900, color:"#F1F2EE", marginBottom:6, letterSpacing:"-.3px", lineHeight:1.3 }}>{slide.title}</div>
         <div style={{ fontSize:12, color:"rgba(255,255,255,.55)", lineHeight:1.65 }}>{slide.sub}</div>
         {slide.mockup}
         {slide.cta && (
@@ -50,7 +50,7 @@ function WelcomeDemoSlider({ setScreen, setAuthTab }) {
       </div>
 
       {/* Nav */}
-      <div style={{ display:"flex", gap:8, padding:"10px 14px", background:"rgba(255,255,255,.03)", borderTop:"1px solid rgba(255,255,255,.07)" }}>
+      <div style={{ display:"flex", gap:8, padding:"10px 14px", background:"var(--surface2)", borderTop:"1px solid var(--border)" }}>
         <button disabled={idx===0} onClick={() => setIdx(i => i-1)}
           style={{ flex:1, padding:"9px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:10,
             fontFamily:"var(--f)", fontSize:13, fontWeight:700, color: idx===0 ? "var(--muted)" : "var(--ink2)",
@@ -73,15 +73,15 @@ function WelcomeDemoSlider({ setScreen, setAuthTab }) {
       </div>
 
       {/* Faste CTA-knapper — altid synlige */}
-      <div style={{ padding:"12px 14px 14px", background:"rgba(0,0,0,.2)", borderTop:"1px solid rgba(255,255,255,.05)", display:"flex", gap:8 }}>
+      <div style={{ padding:"12px 14px 14px", background:"var(--surface3)", borderTop:"1px solid var(--border)", display:"flex", gap:8 }}>
         <button onClick={goSignup}
           style={{ flex:2, padding:"11px", background:"var(--green)", border:"none", borderRadius:12,
             fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
           Opret gratis konto →
         </button>
         <button onClick={goLogin}
-          style={{ flex:1, padding:"11px", background:"rgba(255,255,255,.07)", border:"1px solid rgba(255,255,255,.12)", borderRadius:12,
-            fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"rgba(255,255,255,.7)", cursor:"pointer" }}>
+          style={{ flex:1, padding:"11px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12,
+            fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
           Log ind
         </button>
       </div>

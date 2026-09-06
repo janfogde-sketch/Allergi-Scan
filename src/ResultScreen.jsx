@@ -114,8 +114,9 @@ export default function ResultScreen({
 
   const renderProductHero = () => {
     const vb = verifiedBadge(scanResult.verified_status, scanResult.source);
+    const fav = isFavorite(scanResult.code);
     return (
-      <div className="product-hero">
+      <div className="product-hero" style={{ position:"relative" }}>
         {scanResult.image_url
           ? <img loading="lazy" src={scanResult.image_url} alt={scanResult.name} className="product-hero-img"
               onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
@@ -129,6 +130,21 @@ export default function ResultScreen({
           </svg>
           <div style={{ fontSize:11, color:"var(--muted)", fontWeight:500 }}>Ingen produktbillede</div>
         </div>
+
+        {/* Sekundære handlinger — små ikon-knapper ovenpå billedet, i tommelfinger-nær placering */}
+        <div style={{ position:"absolute", top:12, right:12, display:"flex", gap:8 }}>
+          <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} onClick={() => toggleFavorite(scanResult)}
+            style={{ width:32, height:32, borderRadius:"50%", background:"rgba(255,255,255,.92)", border:"none", cursor:"pointer",
+              display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 2px 8px rgba(21,32,26,.18)" }}>
+            <Icon name="heart" size={15} color={fav ? "var(--red)" : "var(--ink2)"} />
+          </button>
+          <button aria-label="Del produkt" onClick={() => { if(navigator.share) navigator.share({ title:scanResult.name, text:scanResult.headline }); }}
+            style={{ width:32, height:32, borderRadius:"50%", background:"rgba(255,255,255,.92)", border:"none", cursor:"pointer",
+              display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 2px 8px rgba(21,32,26,.18)" }}>
+            <Icon name="share" size={15} color="var(--ink2)" />
+          </button>
+        </div>
+
         <div className="product-hero-body">
           <div className="product-hero-name">{scanResult.name}</div>
           {scanResult.brand && <div className="product-hero-brand">{scanResult.brand}</div>}
@@ -405,6 +421,26 @@ export default function ResultScreen({
       {/* ── 1. PRODUKT ── */}
       {renderProductHero()}
 
+      {/* ── 1a. VERDIKT — det første og tydeligste man ser, ikke en detalje langt nede ── */}
+      {scanResult.headline && (() => {
+        const verdictColor = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[scanResult.status] || "var(--green)";
+        const verdictBg = { danger:"var(--red-lt)", warn:"var(--amber-lt)", safe:"var(--green-lt)" }[scanResult.status] || "var(--green-lt)";
+        const verdictIcon = scanResult.status === "safe" ? "✓" : "!";
+        return (
+          <div style={{ display:"flex", alignItems:"flex-start", gap:12, padding:"14px 16px", borderRadius:12,
+            borderLeft:`3px solid ${verdictColor}`, background:verdictBg, marginBottom:10 }}>
+            <div style={{ width:28, height:28, borderRadius:"50%", background:verdictColor, color:"#fff", flexShrink:0,
+              display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800 }}>
+              {verdictIcon}
+            </div>
+            <div>
+              <div style={{ fontSize:15, fontWeight:800, color:verdictColor, marginBottom:2 }}>{scanResult.headline}</div>
+              <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.5 }}>{scanResult.summary}</div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── 1b. SIKRE ALTERNATIVER ── */}
       {(scanResult.status === "danger" || scanResult.status === "warn") && (
         <div style={{ marginBottom:10 }}>
@@ -486,20 +522,12 @@ export default function ResultScreen({
       {scanResult.productENumbers?.length > 0 && renderENumbers()}
 
       {/* ── 5. HANDLINGER ── */}
-      <div style={{ display:"flex", gap:8, marginBottom:10 }}>
-        <button className="btn btn-sm"
-          style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:6, background: isFavorite(scanResult.code) ? "var(--amber-lt)" : "var(--paper2)", color: isFavorite(scanResult.code) ? "var(--amber)" : "var(--ink2)", border:"1px solid var(--border)" }}
-          onClick={() => toggleFavorite(scanResult)}>
-          <Icon name="heart" size={15} color={isFavorite(scanResult.code) ? "var(--amber)" : "var(--muted)"} />
-          {isFavorite(scanResult.code) ? "Fjern favorit" : "Favorit"}
-        </button>
-        <button className="btn btn-ghost btn-sm" style={S.flex1}
-          onClick={() => { if(navigator.share) navigator.share({ title:scanResult.name, text:scanResult.headline }); }}>
-          <Icon name="share" size={15} color="var(--muted)" /> Del
-        </button>
-        <button className="btn btn-outline btn-sm" style={S.flex1}
+      {/* Favorit/Del sidder som ikon-knapper på produktbilledet ovenfor — kun den ene
+          resterende, mindre vigtige handling ("Ret data") er tilbage hernede. */}
+      <div style={{ marginBottom:10 }}>
+        <button className="btn btn-outline btn-sm btn-full"
           onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients||""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
-          Ret data
+          Ret forkerte data
         </button>
       </div>
 

@@ -7,54 +7,54 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const THEME = {
-  // Baggrunde — neutral mørk med svag grøn undertone
-  paper:   "#151d1a",
-  paper2:  "#1c2620",
+  // Baggrunde — lys, varm off-white med svag grøn undertone
+  paper:   "#F6F8F3",
+  paper2:  "#EEF1E9",
 
-  // Primær tekst — neutral hvid (ikke grønstemt)
-  ink:     "#F0F0EE",
-  ink2:    "rgba(240,240,238,.72)",
-  ink3:    "rgba(240,240,238,.50)",
+  // Primær tekst — mørk grøn-sort (ikke ren sort)
+  ink:     "#15201A",
+  ink2:    "rgba(21,32,26,.72)",
+  ink3:    "rgba(21,32,26,.52)",
 
-  // Grøn — KUN til sikker/success/primær CTA
-  green:      "#4ADE80",
-  greenGlow:  "#6EE89C",
-  greenLt:    "rgba(74,222,128,.12)",
-  greenMid:   "rgba(74,222,128,.20)",
-  greenText:  "#2FB865",
-  onGreen:    "#071510", // Tekstfarve på grøn baggrund (knapper, badges)
+  // Grøn — appens ene accentfarve: sikker/success/primær CTA
+  green:      "#178A50",
+  greenGlow:  "#1FA25C",
+  greenLt:    "rgba(23,138,80,.10)",
+  greenMid:   "rgba(23,138,80,.18)",
+  greenText:  "#178A50",
+  onGreen:    "#FFFFFF", // Tekstfarve på grøn baggrund (knapper, badges)
 
   // Fare — rød
-  red:    "#FF5252",
-  redLt:  "rgba(255,82,82,.1)",
-  redMd:  "rgba(255,82,82,.18)",
+  red:    "#C8402E",
+  redLt:  "rgba(200,64,46,.08)",
+  redMd:  "rgba(200,64,46,.18)",
 
-  // Advarsel — amber
-  amber:   "#FFBA3B",
-  amberLt: "rgba(255,186,59,.1)",
-  amberMd: "rgba(255,186,59,.18)",
+  // Advarsel — amber (bruges kun til reelle advarsler, ikke dekoration)
+  amber:   "#B5791A",
+  amberLt: "rgba(181,121,26,.08)",
+  amberMd: "rgba(181,121,26,.18)",
 
-  // Info — blå (links, badges, navigation)
-  blue:   "#60A5FA",
-  blueLt: "rgba(96,165,250,.12)",
-  blueMd: "rgba(96,165,250,.22)",
+  // "Info" — alias til grøn, så app'en kun har ét accent-udtryk i stedet for endnu en farve
+  blue:   "#178A50",
+  blueLt: "rgba(23,138,80,.10)",
+  blueMd: "rgba(23,138,80,.18)",
 
   // Neutral — grå til labels og metadata
-  neutral:   "#94A3B8",
-  neutralLt: "rgba(148,163,184,.12)",
+  neutral:   "#6B7A70",
+  neutralLt: "rgba(107,122,112,.12)",
 
   // Tekst-muted — neutral grå (ikke grønstemt)
-  muted:  "rgba(240,240,238,.55)",
-  muted2: "rgba(240,240,238,.38)",
+  muted:  "rgba(21,32,26,.58)",
+  muted2: "rgba(21,32,26,.40)",
 
-  // Borders — lidt mere synlige
-  border:  "rgba(255,255,255,.09)",
-  border2: "rgba(255,255,255,.17)",
+  // Borders — bløde, lyse
+  border:  "rgba(21,32,26,.10)",
+  border2: "rgba(21,32,26,.16)",
 
-  // Surfaces — neutrale glaslag
-  surface:  "rgba(255,255,255,.058)",
-  surface2: "rgba(255,255,255,.095)",
-  surface3: "rgba(255,255,255,.035)",
+  // Surfaces — hvide, ophøjede kort på den lyse baggrund
+  surface:  "#FFFFFF",
+  surface2: "#F1F3EC",
+  surface3: "#FAFBF8",
 
   // Typografi
   font: "'DM Sans',system-ui,sans-serif",
@@ -62,52 +62,52 @@ export const THEME = {
   // Border radius
   radius: "12px",
 
-  // Skygger
-  shadow:  "0 1px 3px rgba(0,0,0,.2),0 2px 8px rgba(0,0,0,.15)",
-  shadow2: "0 4px 16px rgba(0,0,0,.3)",
-  shadow3: "0 8px 32px rgba(0,0,0,.4)",
+  // Skygger — bløde og lyse, ikke sorte
+  shadow:  "0 1px 0 rgba(255,255,255,.7) inset, 0 2px 8px -2px rgba(21,32,26,.10)",
+  shadow2: "0 1px 0 rgba(255,255,255,.7) inset, 0 10px 22px -14px rgba(21,32,26,.18)",
+  shadow3: "0 1px 0 rgba(255,255,255,.7) inset, 0 20px 44px -20px rgba(21,32,26,.24)",
 };
 
 export const appCss = `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,300&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  /* Tekst — neutral, ikke grønstemt */
-  --ink:#F0F0EE;
-  --ink2:rgba(240,240,238,.72);
-  --ink3:rgba(240,240,238,.62);
-  /* Baggrunde — neutral mørk med svag grøn undertone */
-  --paper:#1F3828;
-  --paper2:#254530;
-  /* Bundark/modal-overflader — mørkere end paper, til overlejringer der "svæver" over resten af skærmen */
-  --sheet:#1a3012;
-  /* Grøn — KUN sikker/success/primær CTA */
-  --green:#4ADE80;
-  --green-logo:#3DCC6E;
-  --green-glow:#6EE89C;
-  --green-lt:rgba(74,222,128,.12);
-  --green-mid:rgba(74,222,128,.20);
-  --green-text:#2FB865;
-  --on-green:#071510;
-  /* Borders — lidt mere synlige */
-  --border:rgba(255,255,255,.22);
-  --border2:rgba(255,255,255,.32);
-  /* Surfaces — neutrale glaslag */
-  --surface:rgba(255,255,255,.10);
-  --surface2:rgba(255,255,255,.16);
-  --surface3:rgba(255,255,255,.07);
+  /* Tekst — mørk grøn-sort, ikke ren sort */
+  --ink:#15201A;
+  --ink2:rgba(21,32,26,.78);
+  --ink3:rgba(21,32,26,.62);
+  /* Baggrunde — lys, varm off-white med svag grøn undertone */
+  --paper:#F6F8F3;
+  --paper2:#EEF1E9;
+  /* Bundark/modal-overflader — hvid, til overlejringer der "svæver" over resten af skærmen */
+  --sheet:#FFFFFF;
+  /* Grøn — appens ene accentfarve: sikker/success/primær CTA */
+  --green:#178A50;
+  --green-logo:#178A50;
+  --green-glow:#1FA25C;
+  --green-lt:rgba(23,138,80,.10);
+  --green-mid:rgba(23,138,80,.18);
+  --green-text:#178A50;
+  --on-green:#FFFFFF;
+  /* Borders — bløde, lyse */
+  --border:rgba(21,32,26,.10);
+  --border2:rgba(21,32,26,.16);
+  /* Surfaces — hvide, ophøjede kort på den lyse baggrund */
+  --surface:#FFFFFF;
+  --surface2:#F1F3EC;
+  --surface3:#FAFBF8;
   /* Semantiske farver */
-  --red:#FF5252;--red-lt:rgba(255,82,82,.1);--red-md:rgba(255,82,82,.18);
-  --amber:#FFBA3B;--amber-lt:rgba(255,186,59,.1);--amber-md:rgba(255,186,59,.18);
-  /* Varm — venlige/informative kort (fællesskab, sundhedsnoter) */
-  --warm:#E8A87C;--warm-lt:rgba(232,168,124,.1);--warm-md:rgba(232,168,124,.18);
-  /* Blå — info, links, navigation */
-  --blue:#60A5FA;--blue-lt:rgba(96,165,250,.12);--blue-md:rgba(96,165,250,.22);
+  --red:#C8402E;--red-lt:rgba(200,64,46,.08);--red-md:rgba(200,64,46,.18);
+  --amber:#B5791A;--amber-lt:rgba(181,121,26,.08);--amber-md:rgba(181,121,26,.18);
+  /* Varm — alias til amber, så app'en ikke bærer endnu en dekorativ farve */
+  --warm:#B5791A;--warm-lt:rgba(181,121,26,.08);--warm-md:rgba(181,121,26,.18);
+  /* "Blå" — alias til grøn, så info/navigation ikke tilføjer endnu en farve i paletten */
+  --blue:#178A50;--blue-lt:rgba(23,138,80,.10);--blue-md:rgba(23,138,80,.18);
   /* Neutral grå — labels, metadata */
-  --neutral:#94A3B8;--neutral-lt:rgba(148,163,184,.12);
+  --neutral:#6B7A70;--neutral-lt:rgba(107,122,112,.12);
   /* Muted — neutral grå tekst */
-  --muted:rgba(240,240,238,.70);
-  --muted2:rgba(240,240,238,.52);
+  --muted:rgba(21,32,26,.58);
+  --muted2:rgba(21,32,26,.40);
   --r:12px;
   --f:'DM Sans',system-ui,sans-serif;
   --mono:'DM Mono',monospace;
@@ -118,20 +118,21 @@ export const appCss = `
   --fs-lg:17px;
   --fs-xl:22px;
   --fs-2xl:28px;
-  --sh:0 1px 3px rgba(0,0,0,.2),0 2px 8px rgba(0,0,0,.15);
-  --sh2:0 4px 16px rgba(0,0,0,.3);
-  --sh3:0 8px 32px rgba(0,0,0,.4);
+  /* Skygger — bløde og lyse: et tyndt lys-glimt foroven, en svag grå skygge forneden */
+  --sh:0 1px 0 rgba(255,255,255,.7) inset, 0 2px 8px -2px rgba(21,32,26,.10);
+  --sh2:0 1px 0 rgba(255,255,255,.7) inset, 0 10px 22px -14px rgba(21,32,26,.18);
+  --sh3:0 1px 0 rgba(255,255,255,.7) inset, 0 20px 44px -20px rgba(21,32,26,.24);
 }
 body{
-  background:linear-gradient(160deg,#253E2E 0%,#1C3020 100%);
+  background:#F0F3EB;
   color:var(--ink);font-family:var(--f);-webkit-font-smoothing:antialiased;
   min-height:100vh;
 }
 .app{
   max-width:390px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
   width:100%;position:relative;overflow-x:hidden;
-  background:radial-gradient(ellipse 100% 45% at 50% 0%,rgba(74,222,128,.10) 0%,transparent 55%),
-             linear-gradient(175deg,#2B4A36 0%,#234030 40%,#1F3828 70%,#1C3424 100%);
+  background:radial-gradient(ellipse 100% 40% at 50% 0%,rgba(23,138,80,.06) 0%,transparent 60%),
+             linear-gradient(175deg,#F8FAF5 0%,#F5F7F1 45%,#F1F4EC 100%);
 }
 
 /* ── TOPBAR ── */
@@ -152,16 +153,16 @@ body{
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
   width:100%;max-width:390px;
-  background:linear-gradient(to bottom,transparent 0%,#1F3828 38%,#1F3828 100%);
-  border-top:none;
+  background:linear-gradient(to bottom,rgba(246,248,243,0) 0%,#F6F8F3 38%,#F6F8F3 100%);
+  border-top:1px solid var(--border);
   display:flex;padding:10px 4px 24px;z-index:100;
 }
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.3;transition:all .15s;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.45;transition:all .15s;}
 .nav-item.active{opacity:1;}
 .nav-icon{width:42px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background .15s;}
-.nav-item.active .nav-icon{background:rgba(96,165,250,.12);}
+.nav-item.active .nav-icon{background:var(--green-lt);}
 .nav-lbl{font-size:9px;font-weight:600;color:var(--ink);letter-spacing:.3px;}
-.nav-item.active .nav-lbl{color:var(--blue);}
+.nav-item.active .nav-lbl{color:var(--green);}
 
 /* ── CARDS & COMPONENTS ── */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px;backdrop-filter:blur(8px);}
@@ -196,7 +197,7 @@ body{
 .chip-check{margin-left:auto;width:16px;height:16px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--on-green);flex-shrink:0;}
 .tags{display:flex;flex-wrap:wrap;gap:5px;}
 .tag{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--green-lt);border:1px solid var(--green-mid);border-radius:100px;font-size:12px;color:var(--green);font-weight:600;}
-.tag-x{cursor:pointer;opacity:.4;font-size:13px;padding:4px 6px;margin:-4px -6px -4px 0;border-radius:50%;}.tag-x:hover{opacity:.8;background:rgba(255,255,255,.08);}
+.tag-x{cursor:pointer;opacity:.4;font-size:13px;padding:4px 6px;margin:-4px -6px -4px 0;border-radius:50%;}.tag-x:hover{opacity:.8;background:rgba(21,32,26,.06);}
 
 /* ── BADGES ── */
 .badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap;letter-spacing:.2px;}
@@ -387,9 +388,9 @@ body{
 .loader-txt{font-size:13.5px;font-weight:700;color:var(--ink);letter-spacing:-.1px;}
 .loader-sub{font-size:11.5px;color:var(--muted);}
 .error-box{background:var(--red-lt);border:1px solid var(--red-md);border-radius:10px;padding:11px 14px;font-size:12.5px;color:var(--red);font-weight:600;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px;}
-.info-box{background:var(--blue-lt);border:1px solid rgba(96,165,250,.2);border-radius:10px;padding:11px 14px;font-size:12.5px;color:var(--blue);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.info-box{background:var(--blue-lt);border:1px solid var(--blue-md);border-radius:10px;padding:11px 14px;font-size:12.5px;color:var(--blue);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
 .warn-box{background:var(--amber-lt);border:1px solid var(--amber-md);border-radius:10px;padding:11px 14px;font-size:12.5px;color:var(--amber);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
-.share-bar{display:flex;gap:8px;padding:11px 13px;background:var(--blue-lt);border-radius:10px;margin-bottom:10px;align-items:center;border:1px solid rgba(96,165,250,.12);}
+.share-bar{display:flex;gap:8px;padding:11px 13px;background:var(--blue-lt);border-radius:10px;margin-bottom:10px;align-items:center;border:1px solid var(--blue-md);}
 .share-txt{flex:1;font-size:12.5px;color:var(--blue);font-weight:600;}
 .empty-state{text-align:center;padding:52px 20px;color:var(--muted);}
 .empty-icon{font-size:40px;margin-bottom:12px;display:block;filter:grayscale(1);opacity:.4;}

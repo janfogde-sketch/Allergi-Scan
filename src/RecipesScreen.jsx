@@ -361,13 +361,13 @@ export default function RecipesScreen({
         }}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
             <div>
-              <div style={{ fontSize:24, fontWeight:900, color:"var(--ink)", letterSpacing:"-.4px", marginBottom:2 }}>Opskrifter</div>
+              <div style={{ fontSize:24, fontWeight:900, color:"#fff", letterSpacing:"-.4px", marginBottom:2 }}>Opskrifter</div>
               <div style={{ fontSize:12, color:"rgba(255,255,255,.65)" }}>
                 {recipes.length > 0 ? `${recipes.length} opskrifter` : "Indlæser…"}
               </div>
             </div>
             <button onClick={() => setShowSubmitRecipe(true)}
-              style={{ background:"rgba(255,255,255,.15)", color:"var(--ink)", border:"1px solid rgba(255,255,255,.25)", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", backdropFilter:"none" }}>
+              style={{ background:"rgba(255,255,255,.15)", color:"#fff", border:"1px solid rgba(255,255,255,.25)", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", backdropFilter:"none" }}>
               + Indsend
             </button>
           </div>

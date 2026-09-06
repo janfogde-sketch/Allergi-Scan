@@ -4,7 +4,7 @@ import React, { useState, Suspense, useEffect, useCallback, useRef } from "react
 // ─── BUILD INFO (injiceres af Vite ved build-tid) ─────────────────────────────
 import {
   SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS, SCREENS, DIETS,
-  AVATAR_COLORS, HOME_TIPS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
+  AVATAR_COLORS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
   ALLERGEN_EXAMPLES, E_NUMBERS, E_CATEGORIES,
   MADPAS_LANGUAGES, ALLERGEN_T, MADPAS_INTRO,
   PAGE_IDS, uid
