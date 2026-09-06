@@ -26,11 +26,12 @@ import { ENumberPicker } from "./AllergenPicker.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 const AdminScreen = React.lazy(() => import('./AdminScreen.jsx'));
 const OnboardingScreen = React.lazy(() => import('./OnboardingScreen.jsx'));
-import MadpasScreen from './MadpasScreen.jsx';
-import ProfileScreen from './ProfileScreen.jsx';
+const MadpasScreen = React.lazy(() => import('./MadpasScreen.jsx'));
+const ProfileScreen = React.lazy(() => import('./ProfileScreen.jsx'));
 import ScannerScreen from './ScannerScreen.jsx';
 const RecipesScreen = React.lazy(() => import('./RecipesScreen.jsx'));
 const KnowledgeScreen = React.lazy(() => import('./KnowledgeScreen.jsx'));
+const FeedbackModal = React.lazy(() => import('./FeedbackModal.jsx'));
 import ErrorBoundary from './ErrorBoundary.jsx';
 import { useOffline, saveToOfflineCache, getFromOfflineCache } from './useOffline.js';
 
@@ -48,7 +49,6 @@ import { useProduct } from './useProduct.js';
 import { useMadpas } from './useMadpas.js';
 import { useSearch } from './useSearch.js';
 import { useAlternatives } from './useAlternatives.js';
-import FeedbackModal from './FeedbackModal.jsx';
 import { AuthProvider } from './AuthContext.jsx';
 import { ProfileProvider } from './ProfileContext.jsx';
 import { AdminProvider } from './AdminContext.jsx';
@@ -1029,14 +1029,18 @@ const lookupProduct = useCallback(async (ean) => {
         {!betaIntroSeen && renderBetaIntro()}
 
         {/* ══ FEEDBACK MODAL ══ */}
-        <FeedbackModal
-          open={feedbackOpen} onClose={() => setFeedbackOpen(false)}
-          authTab={authTab} onboardStep={onboardStep}
-          scanResult={scanResult} madpasWaiterView={madpasWaiterView}
-          madpasLang={madpasLang} selectedRecipe={selectedRecipe}
-          editMode={editMode} showManualEan={showManualEan}
-          profilePopup={profilePopup}
-        />
+        {feedbackOpen && (
+          <Suspense fallback={null}>
+          <FeedbackModal
+            open={feedbackOpen} onClose={() => setFeedbackOpen(false)}
+            authTab={authTab} onboardStep={onboardStep}
+            scanResult={scanResult} madpasWaiterView={madpasWaiterView}
+            madpasLang={madpasLang} selectedRecipe={selectedRecipe}
+            editMode={editMode} showManualEan={showManualEan}
+            profilePopup={profilePopup}
+          />
+          </Suspense>
+        )}
 
         {/* ── OFFLINE BANNER ── */}
         {isOffline && (
@@ -1113,6 +1117,7 @@ const lookupProduct = useCallback(async (ean) => {
 
         {/* ══ MADPAS SCREEN ══ */}
         {(screen === SCREENS.MADPAS || madpasWaiterView) && (
+          <Suspense fallback={LazyFallback}>
           <ErrorBoundary screen="Madpas">
           <MadpasScreen
             madpasLang={madpasLang} setMadpasLang={setMadpasLang}
@@ -1126,6 +1131,7 @@ const lookupProduct = useCallback(async (ean) => {
             selectedENumbers={selectedENumbers}
           />
           </ErrorBoundary>
+          </Suspense>
         )}
 
         {/* ══ KNOWLEDGE / LEKSIKON SCREEN ══ */}
@@ -1144,6 +1150,7 @@ const lookupProduct = useCallback(async (ean) => {
         {(screen === SCREENS.HISTORY || screen === SCREENS.PROFILE ||
           screen === SCREENS.FAVORITES || screen === SCREENS.EDITPROFILE ||
           screen === SCREENS.FAMILY) && (
+          <Suspense fallback={LazyFallback}>
           <ErrorBoundary screen="Profil">
           <ProfileScreen
             showDeleteAccount={showDeleteAccount} setShowDeleteAccount={setShowDeleteAccount}
@@ -1154,6 +1161,7 @@ const lookupProduct = useCallback(async (ean) => {
             lookupProduct={lookupProduct}
           />
           </ErrorBoundary>
+          </Suspense>
         )}
 
         {/* ══ RECIPES SCREEN ══ */}
