@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useRef, Suspense } from "react";
 import { ALLERGENS, SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
-         ALLERGEN_EXAMPLES, E_NUMBERS, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
+         ALLERGEN_EXAMPLES, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
 import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage, LazyFallback } from "./SharedComponents.jsx";
 import { DEMO_SLIDES } from "./demoSlides.jsx";
@@ -377,7 +377,7 @@ export default function ScannerScreen({
             <div style={{ position:"absolute", bottom:-1, right:-1, width:16, height:16,
               background:"var(--red)", borderRadius:"50%", border:"2px solid var(--paper)",
               display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize:9, color:"var(--ink)", fontWeight:800 }}>
+              fontSize:9, color:"#fff", fontWeight:800 }}>
               {allergens.length}
             </div>
           )}
@@ -387,21 +387,6 @@ export default function ScannerScreen({
           maxWidth:48, textAlign:"center", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
           {user.name?.split(" ")[0] || "Mig"}
         </div>
-      </div>
-    );
-  };
-
-  const renderDailyTip = () => {
-    const tip = HOME_TIPS[new Date().getDay() % HOME_TIPS.length];
-    return (
-      <div style={{ display:"flex", gap:10, alignItems:"flex-start", padding:"10px 0", borderTop:"1px solid var(--border)", marginTop:4 }}>
-        <div style={{ flexShrink:0 }}><Icon name="bulb" size={20} color="#F59E0B" /></div>
-        <div style={S.flex1}>
-          <div style={{ fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:3 }}>Vidste du at</div>
-          <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{tip.title}</div>
-          <div style={S.sub11lh}>{tip.text}</div>
-        </div>
-
       </div>
     );
   };
@@ -492,9 +477,10 @@ export default function ScannerScreen({
 
             {/* Scan-boks — kun til loggede */}
             {!!userId && <div style={{
-              background:"rgba(255,255,255,.04)", borderRadius:20, marginBottom:10,
-              overflow:"hidden", position:"relative", border:"1px solid var(--border2)",
-              boxShadow:"0 4px 20px rgba(0,0,0,.3)",
+              background: cameraActive ? "var(--surface)" : "linear-gradient(150deg,#22A868 0%,#178A50 60%,#0E6B3B 100%)",
+              borderRadius:20, marginBottom:10,
+              overflow:"hidden", position:"relative", border: cameraActive ? "1px solid var(--border2)" : "none",
+              boxShadow: cameraActive ? "var(--sh2)" : "0 16px 32px -14px rgba(23,138,80,.45)",
             }}>
               {/* Kamera container — altid i DOM men skjult når ikke aktiv */}
               <div style={{ position:"relative", display: cameraActive ? "block" : "none" }}>
@@ -583,7 +569,7 @@ export default function ScannerScreen({
                 <div style={{ position:"relative", width:180, height:90 }}>
                   {/* Stregkode streger */}
                   <svg viewBox="0 0 180 90" width="180" height="90">
-                    <g fill="rgba(74,222,128,0.25)">
+                    <g fill="rgba(255,255,255,.35)">
                       <rect x="10" y="0" width="7" height="90" rx="1"/>
                       <rect x="22" y="0" width="3" height="90" rx="1"/>
                       <rect x="29" y="0" width="5" height="90" rx="1"/>
@@ -611,8 +597,8 @@ export default function ScannerScreen({
                     left:0, right:0,
                     height:3,
                     borderRadius:2,
-                    background:"linear-gradient(90deg, transparent, var(--green), #86EFAC, var(--green), transparent)",
-                    boxShadow:"0 0 8px var(--green), 0 0 16px rgba(74,222,128,.4)",
+                    background:"linear-gradient(90deg, transparent, #fff, #fff, transparent)",
+                    boxShadow:"0 0 8px rgba(255,255,255,.8), 0 0 16px rgba(255,255,255,.4)",
                     animation:"scanLaser 2s ease-in-out infinite",
                   }} />
                   <style>{`
@@ -625,20 +611,20 @@ export default function ScannerScreen({
                   {[["0","0","top","left"],["0","0","top","right"],["0","0","bottom","left"],["0","0","bottom","right"]].map((_,i) => {
                     const pos = [{top:8,left:8},{top:8,right:8},{bottom:8,left:8},{bottom:8,right:8}][i];
                     const borders = [
-                      {borderTop:"2px solid rgba(74,222,128,.7)",borderLeft:"2px solid rgba(74,222,128,.7)"},
-                      {borderTop:"2px solid rgba(74,222,128,.7)",borderRight:"2px solid rgba(74,222,128,.7)"},
-                      {borderBottom:"2px solid rgba(74,222,128,.7)",borderLeft:"2px solid rgba(74,222,128,.7)"},
-                      {borderBottom:"2px solid rgba(74,222,128,.7)",borderRight:"2px solid rgba(74,222,128,.7)"},
+                      {borderTop:"2px solid rgba(255,255,255,.7)",borderLeft:"2px solid rgba(255,255,255,.7)"},
+                      {borderTop:"2px solid rgba(255,255,255,.7)",borderRight:"2px solid rgba(255,255,255,.7)"},
+                      {borderBottom:"2px solid rgba(255,255,255,.7)",borderLeft:"2px solid rgba(255,255,255,.7)"},
+                      {borderBottom:"2px solid rgba(255,255,255,.7)",borderRight:"2px solid rgba(255,255,255,.7)"},
                     ][i];
                     return <div key={i} style={{ position:"absolute", width:16, height:16, ...pos, ...borders, borderRadius:2 }}/>;
                   })}
                 </div>
                 {/* Tekst */}
                 <div style={{ textAlign:"center" }}>
-                  <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", letterSpacing:"-.4px" }}>Skan produkt</div>
-                  <div style={{ fontSize:13, color:"rgba(255,255,255,.5)", marginTop:4 }}>Tryk for at starte kamera</div>
+                  <div style={{ fontSize:20, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Skan produkt</div>
+                  <div style={{ fontSize:13, color:"rgba(255,255,255,.82)", marginTop:4 }}>Tryk for at starte kamera</div>
                   <div onClick={e => { e.stopPropagation(); galleryInputRef.current?.click(); }}
-                    style={{ fontSize:11, color:"rgba(255,255,255,.35)", marginTop:8, textDecoration:"underline", cursor:"pointer" }}>
+                    style={{ fontSize:11, color:"rgba(255,255,255,.68)", marginTop:8, textDecoration:"underline", cursor:"pointer" }}>
                     eller vælg billede fra galleri
                   </div>
                 </div>
@@ -707,40 +693,36 @@ export default function ScannerScreen({
 
             </>}
 
-            {/* Søg — fremhævet på forsiden */}
-            <div className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:10,
-              background:"rgba(255,255,255,.04)", border:"1px solid var(--border2)" }}
-              onClick={() => setScreen(SCREENS.SEARCH)}>
-              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <div style={{ width:40, height:40, background:"var(--surface2)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="search" size={20} color="var(--ink)" /></div>
+            {/* Genveje — én sammenhængende liste i stedet for separate farvede kort */}
+            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, boxShadow:"var(--sh2)", marginBottom:14, overflow:"hidden" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10, padding:"14px 14px", cursor:"pointer",
+                borderBottom: shoppingList.filter(i => !i.checked).length > 0 ? "1px solid var(--border)" : "none" }}
+                onClick={() => setScreen(SCREENS.SEARCH)}>
+                <div style={{ width:34, height:34, background:"var(--surface2)", borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="search" size={17} color="var(--ink2)" /></div>
                 <div style={S.flex1}>
                   <div style={{ fontSize:13, fontWeight:700 }}>Søg produkter</div>
                   <div style={S.sub11mt}>Find varer der er sikre for dig</div>
                 </div>
-                <div style={{ fontSize:18, color:"var(--muted)" }}>›</div>
+                <div style={{ fontSize:16, color:"var(--muted2)" }}>›</div>
               </div>
-            </div>
 
-            {/* Indkøbsliste — kun hvis der er varer */}
-            {shoppingList.filter(i => !i.checked).length > 0 && (
-              <div className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:10 }}
+              {/* Indkøbsliste — kun hvis der er varer */}
+              {shoppingList.filter(i => !i.checked).length > 0 && (
+              <div style={{ display:"flex", alignItems:"center", gap:10, padding:"14px 14px", cursor:"pointer" }}
                 onClick={() => setScreen(SCREENS.LIST)}>
-                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                  <div style={{ width:40, height:40, background:"var(--green-lt)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="cart" size={20} color="var(--green)" /></div>
+                <div style={{ width:34, height:34, background:"var(--surface2)", borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="cart" size={17} color="var(--ink2)" /></div>
                   <div style={S.flex1}>
                     <div style={{ fontSize:13, fontWeight:700 }}>Indkøbsliste</div>
                     <div style={S.sub11mt}>
                       {shoppingList.filter(i => !i.checked).length} vare{shoppingList.filter(i => !i.checked).length !== 1 ? "r" : ""} mangler
                     </div>
                   </div>
-                  <div style={{ fontSize:18, color:"var(--muted)" }}>›</div>
+                  <div style={{ fontSize:16, color:"var(--muted2)" }}>›</div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             <div style={{ flex:1, minHeight:20 }} />
-            {/* Vidste du at — let, i bunden */}
-            {renderDailyTip()}
 
             {/* Version + Beta knap */}
             <div style={{ textAlign:"center", paddingTop:8, paddingBottom:12, display:"flex", flexDirection:"column", alignItems:"center", gap:8 }}>
@@ -749,8 +731,8 @@ export default function ScannerScreen({
                 <button onClick={onBetaClick}
                   style={{ display:"inline-flex", alignItems:"center", gap:6,
                     padding:"5px 14px", borderRadius:100,
-                    background:"rgba(74,222,128,.1)",
-                    border:"1px solid rgba(74,222,128,.25)",
+                    background:"var(--green-lt)",
+                    border:"1px solid var(--green-mid)",
                     fontFamily:"var(--f)", fontSize:11, fontWeight:700,
                     color:"var(--green)", cursor:"pointer",
                     letterSpacing:".3px" }}>
@@ -759,10 +741,10 @@ export default function ScannerScreen({
                 <button onClick={() => setShowGuide(true)}
                   style={{ display:"inline-flex", alignItems:"center", gap:6,
                     padding:"5px 14px", borderRadius:100,
-                    background:"rgba(99,102,241,.1)",
-                    border:"1px solid rgba(99,102,241,.25)",
+                    background:"var(--surface2)",
+                    border:"1px solid var(--border2)",
                     fontFamily:"var(--f)", fontSize:11, fontWeight:700,
-                    color:"#818cf8", cursor:"pointer",
+                    color:"var(--ink2)", cursor:"pointer",
                     letterSpacing:".3px" }}>
                   📖 App-guide
                 </button>

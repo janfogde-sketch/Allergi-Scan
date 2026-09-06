@@ -17,7 +17,7 @@ export const DEMO_SLIDES = [
         <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
           <div style={{ width:40, height:40, background:"rgba(74,222,128,.1)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20 }}>🥛</div>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Arla Letmælk 1L</div>
+            <div style={{ fontSize:13, fontWeight:800, color:"#F1F2EE" }}>Arla Letmælk 1L</div>
             <div style={{ fontSize:10, color:"rgba(255,255,255,.35)" }}>EAN 5710085008001 · Arla Foods</div>
           </div>
           <div style={{ padding:"5px 11px", borderRadius:20, background:"var(--red-md)", border:"1px solid rgba(255,82,82,.5)", fontSize:11, fontWeight:800, color:"var(--red)" }}>⚠ FARE</div>
@@ -42,7 +42,7 @@ export const DEMO_SLIDES = [
           {[["Jan","var(--green)","Laktose · Gluten"],["Anna","#818cf8","Laktose"],["Sofie","#f59e0b","Nødder · Sesam"],["Mads","#34d399","Ingen"]].map(([n,c,a]) => (
             <div key={n} style={{ background:"rgba(255,255,255,.05)", borderRadius:10, padding:"9px 10px", textAlign:"center", border:"1px solid rgba(255,255,255,.08)", flex:1 }}>
               <div style={{ width:30, height:30, borderRadius:"50%", background:c, color:"var(--on-green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, margin:"0 auto 5px" }}>{n[0]}</div>
-              <div style={{ fontSize:9, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{n}</div>
+              <div style={{ fontSize:9, fontWeight:700, color:"#F1F2EE", marginBottom:2 }}>{n}</div>
               <div style={{ fontSize:8, color:"rgba(255,255,255,.35)", lineHeight:1.3 }}>{a}</div>
             </div>
           ))}
@@ -71,7 +71,7 @@ export const DEMO_SLIDES = [
           <div key={name} style={{ background:"rgba(74,222,128,.06)", border:"1px solid rgba(74,222,128,.15)", borderRadius:8, padding:"8px 10px", marginBottom:6, display:"flex", alignItems:"center", gap:8 }}>
             <span style={{ fontSize:16 }}>✅</span>
             <div>
-              <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{name}</div>
+              <div style={{ fontSize:12, fontWeight:700, color:"#F1F2EE" }}>{name}</div>
               <div style={{ fontSize:10, color:"rgba(255,255,255,.35)" }}>{tag}</div>
             </div>
           </div>
@@ -86,7 +86,7 @@ export const DEMO_SLIDES = [
     mockup: (
       <div style={{ marginTop:12 }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
-          <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)" }}>Familiens indkøbsliste</div>
+          <div style={{ fontSize:12, fontWeight:800, color:"#F1F2EE" }}>Familiens indkøbsliste</div>
           <div style={{ fontSize:10, color:"#38bdf8", fontWeight:700 }}>● Live</div>
         </div>
         {[
@@ -100,7 +100,7 @@ export const DEMO_SLIDES = [
               {done && <span style={{ fontSize:11, color:"var(--on-green)", fontWeight:800 }}>✓</span>}
             </div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", textDecoration: done?"line-through":"none" }}>{name}</div>
+              <div style={{ fontSize:12, fontWeight:700, color:"#F1F2EE", textDecoration: done?"line-through":"none" }}>{name}</div>
               <div style={{ fontSize:9, color:"rgba(255,255,255,.3)" }}>{sub}</div>
             </div>
           </div>
@@ -122,7 +122,7 @@ export const DEMO_SLIDES = [
           <div key={name} style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(255,255,255,.05)", borderRadius:10, padding:"9px 12px", border:"1px solid rgba(255,255,255,.07)" }}>
             <div style={{ fontSize:22 }}>{e}</div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{name}</div>
+              <div style={{ fontSize:12, fontWeight:700, color:"#F1F2EE" }}>{name}</div>
               <div style={{ fontSize:9, color:"rgba(255,255,255,.35)" }}>{tags}</div>
             </div>
             <div style={{ fontSize:10, fontWeight:700, color: status.startsWith("✅") ? "var(--green)" : "#fbbf24", textAlign:"right", maxWidth:70 }}>{status}</div>
@@ -140,7 +140,7 @@ export const DEMO_SLIDES = [
         <div style={{ background:"rgba(134,239,172,.07)", border:"1px solid rgba(134,239,172,.18)", borderRadius:10, padding:"10px 12px", marginBottom:8 }}>
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
             <div style={{ padding:"3px 9px", borderRadius:20, background:"rgba(251,191,36,.15)", border:"1px solid rgba(251,191,36,.3)", fontSize:11, fontWeight:800, color:"#fbbf24" }}>E621</div>
-            <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>MSG · Smagsforstærker</div>
+            <div style={{ fontSize:12, fontWeight:700, color:"#F1F2EE" }}>MSG · Smagsforstærker</div>
           </div>
           <div style={{ fontSize:11, color:"rgba(255,255,255,.5)", lineHeight:1.6 }}>Glutamat-baseret smagsforstærker. Kan give hovedpine og hjertebanken hos følsomme personer. Hyppig i chips, nudler og færdigretter.</div>
         </div>
@@ -162,7 +162,7 @@ export const DEMO_SLIDES = [
           <span style={{ fontSize:20 }}>🇮🇹</span>
           <div style={{ fontSize:11, fontWeight:800, color:"rgba(251,191,36,.8)", textTransform:"uppercase", letterSpacing:"1px" }}>Italiensk</div>
         </div>
-        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:3 }}>Sono allergico al latte e al glutine.</div>
+        <div style={{ fontSize:13, fontWeight:800, color:"#F1F2EE", marginBottom:3 }}>Sono allergico al latte e al glutine.</div>
         <div style={{ fontSize:11, color:"rgba(255,255,255,.4)", fontStyle:"italic", marginBottom:10 }}>"so-no al-ler-JI-ko al LAT-te e al glu-TI-ne"</div>
         <div style={{ fontSize:10, color:"rgba(255,255,255,.3)", marginBottom:6 }}>Tilgængeligt på:</div>
         <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
