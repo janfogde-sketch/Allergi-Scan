@@ -13,4 +13,8 @@ export default defineConfig({
       "local"
     ),
   },
+  test: {
+    environment: "node",
+    include: ["src/**/*.test.{js,jsx}"],
+  },
 })
