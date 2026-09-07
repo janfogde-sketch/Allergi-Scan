@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useRef, Suspense } from "react";
 import { ALLERGENS, SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
-         ALLERGEN_EXAMPLES, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
+         ALLERGEN_EXAMPLES, E_NUMBERS, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
 import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage, LazyFallback } from "./SharedComponents.jsx";
 import { DEMO_SLIDES } from "./demoSlides.jsx";
@@ -391,6 +391,21 @@ export default function ScannerScreen({
     );
   };
 
+  const renderDailyTip = () => {
+    const tip = HOME_TIPS[new Date().getDay() % HOME_TIPS.length];
+    return (
+      <div style={{ display:"flex", gap:10, alignItems:"flex-start", padding:"12px 14px",
+        background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, boxShadow:"var(--sh)", marginBottom:10 }}>
+        <div style={{ flexShrink:0 }}><Icon name="bulb" size={18} color="var(--amber)" /></div>
+        <div style={S.flex1}>
+          <div style={{ fontSize:9, fontWeight:800, color:"var(--muted2)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:3 }}>Vidste du at</div>
+          <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{tip.title}</div>
+          <div style={S.sub11lh}>{tip.text}</div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
         {screen === SCREENS.HOME && (
@@ -723,6 +738,9 @@ export default function ScannerScreen({
             </div>
 
             <div style={{ flex:1, minHeight:20 }} />
+
+            {/* Vidste du at */}
+            {renderDailyTip()}
 
             {/* Version + Beta knap */}
             <div style={{ textAlign:"center", paddingTop:8, paddingBottom:12, display:"flex", flexDirection:"column", alignItems:"center", gap:8 }}>

@@ -9,8 +9,8 @@
 
 export const DEMO_SLIDES = [
   {
-    title: "Skan — og få svar på 2 sekunder",
-    sub: "Hold kameraet over stregkoden. EatSafe slår op i 20.000+ produkter og fortæller dig præcist om varen er sikker for dig og din familie — med farvekodet resultat og forklaring.",
+    title: "Skan — svar på 2 sekunder",
+    sub: "Peg kameraet på stregkoden. Vi tjekker 20.000+ produkter.",
     bg: "#111d13", accent: "var(--green)",
     mockup: (
       <div style={{ background:"#0d160e", borderRadius:14, padding:"12px 14px", marginTop:12, border:"1px solid rgba(74,222,128,.15)" }}>
@@ -33,8 +33,8 @@ export const DEMO_SLIDES = [
     ),
   },
   {
-    title: "Én app — hele familiens allergier",
-    sub: "Opret en profil for hvert familiemedlem med deres egne allergier, intolerancer og diæter. Når du scanner, ser du med det samme hvem der kan spise varen — og hvem der ikke kan.",
+    title: "Hele familiens allergier",
+    sub: "Se med det samme hvem der kan spise varen.",
     bg: "#0f0d1f", accent: "#818cf8",
     mockup: (
       <div style={{ marginTop:12 }}>
@@ -54,8 +54,8 @@ export const DEMO_SLIDES = [
     ),
   },
   {
-    title: "Find sikre alternativer automatisk",
-    sub: "Hvis et produkt indeholder noget du reagerer på, finder EatSafe automatisk lignende produkter fra samme kategori — som er sikre for dig. Ingen manuel søgning.",
+    title: "Sikre alternativer",
+    sub: "Finder automatisk andre varer der er sikre for dig.",
     bg: "#1a0d0d", accent: "var(--red)",
     mockup: (
       <div style={{ marginTop:12 }}>
@@ -80,8 +80,8 @@ export const DEMO_SLIDES = [
     ),
   },
   {
-    title: "Delt indkøbsliste i realtid",
-    sub: "Opret en fælles indkøbsliste med familien. Alle ser ændringer live — uanset om mor er i Netto og far er hjemme. Produkter tilføjes direkte fra et scan-resultat.",
+    title: "Delt indkøbsliste",
+    sub: "Hele familien ser ændringer med det samme.",
     bg: "#0d1520", accent: "#38bdf8",
     mockup: (
       <div style={{ marginTop:12 }}>
@@ -109,8 +109,8 @@ export const DEMO_SLIDES = [
     ),
   },
   {
-    title: "600+ opskrifter — filtreret til jer",
-    sub: "Alle opskrifter er automatisk filtreret ud fra familiens samlede allergiprofil. Du ser kun opskrifter der er sikre for alle. Kan skaleres til det antal portioner du skal lave.",
+    title: "600+ opskrifter",
+    sub: "Filtreret så du kun ser dem der er sikre for alle.",
     bg: "#120d20", accent: "#a78bfa",
     mockup: (
       <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:12 }}>
@@ -133,7 +133,7 @@ export const DEMO_SLIDES = [
   },
   {
     title: "Leksikon & E-numre",
-    sub: "Tap på en ingrediens i et scan-resultat og få øjeblikkelig forklaring — hvad er det, og hvem reagerer typisk på det? Overvåg specifikke E-numre og få advarsel hver gang de dukker op.",
+    sub: "Tap en ingrediens for en hurtig forklaring.",
     bg: "#131a10", accent: "#86efac",
     mockup: (
       <div style={{ marginTop:12 }}>
@@ -142,7 +142,7 @@ export const DEMO_SLIDES = [
             <div style={{ padding:"3px 9px", borderRadius:20, background:"rgba(251,191,36,.15)", border:"1px solid rgba(251,191,36,.3)", fontSize:11, fontWeight:800, color:"#fbbf24" }}>E621</div>
             <div style={{ fontSize:12, fontWeight:700, color:"#F1F2EE" }}>MSG · Smagsforstærker</div>
           </div>
-          <div style={{ fontSize:11, color:"rgba(255,255,255,.5)", lineHeight:1.6 }}>Glutamat-baseret smagsforstærker. Kan give hovedpine og hjertebanken hos følsomme personer. Hyppig i chips, nudler og færdigretter.</div>
+          <div style={{ fontSize:11, color:"rgba(255,255,255,.5)", lineHeight:1.6 }}>Kan give hovedpine hos følsomme personer.</div>
         </div>
         <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
           {["E211 Natriumbenzoat","E102 Tartrazin","E951 Aspartam"].map(e => (
@@ -154,7 +154,7 @@ export const DEMO_SLIDES = [
   },
   {
     title: "Madpas til udlandet",
-    sub: "Rejser du? Vis tjenere og butiksansatte dine allergier på 17 sprog — med lokal udtale og forklaring. Virker offline, så det altid er tilgængeligt.",
+    sub: "Vis dine allergier til tjeneren — på 17 sprog.",
     bg: "#1a1208", accent: "#fbbf24",
     mockup: (
       <div style={{ background:"rgba(251,191,36,.07)", borderRadius:14, padding:"12px 14px", marginTop:12, border:"1px solid rgba(251,191,36,.18)" }}>
