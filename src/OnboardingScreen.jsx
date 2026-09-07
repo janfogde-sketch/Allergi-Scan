@@ -27,19 +27,19 @@ function WelcomeDemoSlider({ setScreen, setAuthTab }) {
         <div style={{ fontSize:13, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1.5px" }}>Det kan EatSafe</div>
       </div>
 
-      {/* Slide-indhold — bevidst en mørk "forhåndsvisning" af appen, uafhængig af det lyse tema udenom */}
+      {/* Slide-indhold — samme lyse overflade som resten af appen */}
       <div style={{ background:slide.bg, padding:"18px 18px 16px", transition:"background .35s" }}>
         {/* Dots */}
         <div style={{ display:"flex", gap:4, justifyContent:"center", marginBottom:14, flexWrap:"wrap" }}>
           {DEMO_SLIDES.map((_,i) => (
             <div key={i} onClick={() => setIdx(i)}
               style={{ width: i===idx ? 20 : 6, height:6, borderRadius:3,
-                background: i===idx ? slide.accent : "rgba(255,255,255,.18)",
+                background: i===idx ? slide.accent : "var(--border2)",
                 cursor:"pointer", transition:"all .25s" }} />
           ))}
         </div>
-        <div style={{ fontSize:17, fontWeight:900, color:"#F1F2EE", marginBottom:6, letterSpacing:"-.3px", lineHeight:1.3 }}>{slide.title}</div>
-        <div style={{ fontSize:12, color:"rgba(255,255,255,.55)", lineHeight:1.65 }}>{slide.sub}</div>
+        <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)", marginBottom:6, letterSpacing:"-.3px", lineHeight:1.3 }}>{slide.title}</div>
+        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.65 }}>{slide.sub}</div>
         {slide.mockup}
         {slide.cta && (
           <div style={{ marginTop:20, display:"flex", flexDirection:"column", gap:10 }}>
