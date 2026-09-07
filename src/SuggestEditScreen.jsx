@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
-import { makeHeaders, apiCall } from "./helpers.js";
+import { makeHeaders, apiCall, compressImageToBase64 } from "./helpers.js";
 import { ProductImage, Loader } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -57,12 +57,7 @@ export default function SuggestEditScreen({
   const runOcr = async (file) => {
     setEditStep("scanning");
     try {
-      const b64 = await new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(r.result.split(",")[1]);
-        r.onerror = rej;
-        r.readAsDataURL(file);
-      });
+      const b64 = await compressImageToBase64(file);
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/ocr`, {
         method: "POST",
         headers: makeHeaders(accessToken),

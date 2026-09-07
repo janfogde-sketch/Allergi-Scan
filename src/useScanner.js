@@ -10,6 +10,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
+import { compressImageToBase64 } from "./helpers.js";
 
 export function useScanner({ setScanError, setLoading, onScanSuccess, accessToken }) {
   // ── Kamera-state ──────────────────────────────────────────────────────────
@@ -239,12 +240,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       } catch { /* html5-qrcode fejlede — prøv Claude Vision */ }
 
       // Trin 2: Claude Vision via OCR Edge Function
-      const base64 = await new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(r.result.split(",")[1]);
-        r.onerror = rej;
-        r.readAsDataURL(file);
-      });
+      const base64 = await compressImageToBase64(file);
 
       const ocrRes = await fetch(`${SUPABASE_URL}/functions/v1/ocr`, {
         method: "POST",

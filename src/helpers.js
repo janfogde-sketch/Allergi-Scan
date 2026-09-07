@@ -8,6 +8,35 @@ export const timeAgo = ts => { const d=Date.now()-new Date(ts).getTime(); if(d<6
 
 export const getAllergenLabels = (ids,custom=[]) => [...ids.map(id=>ALLERGENS.find(a=>a.id===id)).filter(Boolean).map(a=>`${a.emoji} ${a.label}`),...custom.map(c=>`✏️ ${c}`)];
 
+// Skaler et kamera-/galleri-billede ned og genkod som JPEG FØR det sendes til
+// en OCR/allergen-Edge Function som base64. Uden dette sendes et fuldt
+// opløst telefonfoto (ofte 5-15MB) rå som base64 (~33% større igen) — det
+// er langsommere at uploade, langsommere for OCR at behandle, og risikerer
+// at ramme Supabase Edge Functions' payload-grænse. maxDim/quality er valgt
+// så tekst i ingredienslisten/stregkoder stadig er let læselige for OCR.
+export function compressImageToBase64(file, maxDim = 1600, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        const scale = maxDim / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", quality).split(",")[1]);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Kunne ikke indlæse billedet")); };
+    img.src = url;
+  });
+}
+
 // Tjek GTIN/EAN-kontrolcifferet (standard mod-10, skiftevis vægt 3/1 fra højre).
 // Bruges til at afvise en åbenlyst forkert manuelt indtastet stregkode (typo)
 // FØR den sendes til serveren — ellers spilder vi en tur til backend på noget
