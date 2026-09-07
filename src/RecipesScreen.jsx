@@ -384,24 +384,18 @@ export default function RecipesScreen({
 
     return (
       <div className="screen fade-in">
-        {/* Gradient header */}
-        <div style={{
-          margin:"0 -16px", padding:"28px 20px 22px", marginBottom:16,
-          background:"linear-gradient(160deg, var(--green) 0%, #0d3320 60%, var(--paper2) 100%)",
-          borderRadius:"0 0 20px 20px",
-        }}>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-            <div>
-              <div style={{ fontSize:24, fontWeight:900, color:"#fff", letterSpacing:"-.4px", marginBottom:2 }}>Opskrifter</div>
-              <div style={{ fontSize:12, color:"rgba(255,255,255,.65)" }}>
-                {recipes.length > 0 ? `${recipes.length} opskrifter` : "Indlæser…"}
-              </div>
+        {/* Header */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", margin:"20px 0 16px" }}>
+          <div>
+            <div style={{ fontSize:21, fontWeight:700, color:"var(--ink)", letterSpacing:"-.4px" }}>Opskrifter</div>
+            <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>
+              {recipes.length > 0 ? `${recipes.length} opskrifter` : "Indlæser…"}
             </div>
-            <button onClick={() => setShowSubmitRecipe(true)}
-              style={{ background:"rgba(255,255,255,.15)", color:"#fff", border:"1px solid rgba(255,255,255,.25)", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", backdropFilter:"none" }}>
-              + Indsend
-            </button>
           </div>
+          <button onClick={() => setShowSubmitRecipe(true)}
+            style={{ background:"var(--green-lt)", color:"var(--green)", border:"1px solid var(--green-mid)", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+            + Indsend
+          </button>
         </div>
 
         {/* Søgefelt */}

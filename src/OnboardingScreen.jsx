@@ -11,68 +11,29 @@ import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useFamilyFormContext } from "./FamilyFormContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
-import { DEMO_SLIDES } from "./demoSlides.jsx";
 
-function WelcomeDemoSlider({ setScreen, setAuthTab }) {
-  const [idx, setIdx] = useState(0);
-  const slide = DEMO_SLIDES[idx];
+function WelcomeIntro({ setScreen, setAuthTab }) {
   const goSignup = () => { setAuthTab("signup"); setScreen(SCREENS.LOGIN); };
   const goLogin  = () => { setAuthTab("login");  setScreen(SCREENS.LOGIN); };
 
+  const points = [
+    { icon:"📷", text:"Skan en stregkode — se med det samme om produktet er sikkert for dig og din familie." },
+    { icon:"🍽️", text:"Find opskrifter og madpakke-idéer, automatisk filtreret efter jeres allergier." },
+    { icon:"👨‍👩‍👧", text:"Opret profiler for hele familien — børn, partner, alle med hver deres allergier." },
+  ];
+
   return (
     <div style={{ borderRadius:20, overflow:"hidden", border:"1px solid var(--border)", marginBottom:8, boxShadow:"var(--sh2)" }}>
-
-      {/* Overskrift */}
-      <div style={{ background:"var(--surface2)", borderBottom:"1px solid var(--border)", padding:"12px 18px", textAlign:"center" }}>
-        <div style={{ fontSize:13, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1.5px" }}>Det kan EatSafe</div>
-      </div>
-
-      {/* Slide-indhold — samme lyse overflade som resten af appen */}
-      <div style={{ background:slide.bg, padding:"18px 18px 16px", transition:"background .35s" }}>
-        {/* Dots */}
-        <div style={{ display:"flex", gap:4, justifyContent:"center", marginBottom:14, flexWrap:"wrap" }}>
-          {DEMO_SLIDES.map((_,i) => (
-            <div key={i} onClick={() => setIdx(i)}
-              style={{ width: i===idx ? 20 : 6, height:6, borderRadius:3,
-                background: i===idx ? slide.accent : "var(--border2)",
-                cursor:"pointer", transition:"all .25s" }} />
-          ))}
-        </div>
-        <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)", marginBottom:6, letterSpacing:"-.3px", lineHeight:1.3 }}>{slide.title}</div>
-        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.65 }}>{slide.sub}</div>
-        {slide.mockup}
-        {slide.cta && (
-          <div style={{ marginTop:20, display:"flex", flexDirection:"column", gap:10 }}>
-            <button className="welcome-btn" onClick={goSignup}>Opret gratis konto →</button>
-            <button className="welcome-btn-ghost" onClick={goLogin}>Jeg har allerede en konto</button>
+      <div style={{ background:"var(--surface)", padding:"20px 18px 18px", display:"flex", flexDirection:"column", gap:14 }}>
+        {points.map((p, i) => (
+          <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
+            <div style={{ fontSize:22, lineHeight:1, flexShrink:0 }}>{p.icon}</div>
+            <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.55, paddingTop:2 }}>{p.text}</div>
           </div>
-        )}
+        ))}
       </div>
 
-      {/* Nav */}
-      <div style={{ display:"flex", gap:8, padding:"10px 14px", background:"var(--surface2)", borderTop:"1px solid var(--border)" }}>
-        <button disabled={idx===0} onClick={() => setIdx(i => i-1)}
-          style={{ flex:1, padding:"9px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:10,
-            fontFamily:"var(--f)", fontSize:13, fontWeight:700, color: idx===0 ? "var(--muted)" : "var(--ink2)",
-            cursor: idx===0 ? "default" : "pointer", opacity: idx===0 ? 0.4 : 1 }}>
-          ← Forrige
-        </button>
-        {idx < DEMO_SLIDES.length - 1 ? (
-          <button onClick={() => setIdx(i => i+1)}
-            style={{ flex:1, padding:"9px", background:"var(--green)", border:"none", borderRadius:10,
-              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
-            Næste →
-          </button>
-        ) : (
-          <button onClick={goSignup}
-            style={{ flex:1, padding:"9px", background:"var(--green)", border:"none", borderRadius:10,
-              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
-            Opret konto →
-          </button>
-        )}
-      </div>
-
-      {/* Faste CTA-knapper — altid synlige */}
+      {/* Faste CTA-knapper */}
       <div style={{ padding:"12px 14px 14px", background:"var(--surface3)", borderTop:"1px solid var(--border)", display:"flex", gap:8 }}>
         <button onClick={goSignup}
           style={{ flex:2, padding:"11px", background:"var(--green)", border:"none", borderRadius:12,
@@ -263,8 +224,8 @@ export default function OnboardingScreen({
               <div className="welcome-tagline">Scan. Tjek. Spis trygt.</div>
             </div>
 
-            {/* Demo-slider — kombineret feature-visning + CTA */}
-            <WelcomeDemoSlider setScreen={setScreen} setAuthTab={setAuthTab} />
+            {/* Kort feature-intro + CTA */}
+            <WelcomeIntro setScreen={setScreen} setAuthTab={setAuthTab} />
 
             {/* Privacy */}
             <div style={{ marginTop:16, fontSize:11, color:"var(--muted)", lineHeight:1.6, textAlign:"center" }}>
