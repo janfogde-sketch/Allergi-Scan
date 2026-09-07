@@ -530,6 +530,24 @@ export default function EatSafe() {
     accessToken,
   });
 
+  // Kameraet må aldrig blive ved med at køre usynligt — det dræner batteriet.
+  // useScanner's egen cleanup-effect stopper kun kameraet når HOOKEN selv
+  // unmountes, men den lever i App.jsx som aldrig unmountes — så et skift til
+  // fx Profil eller Opskrifter mens kameraet kører lod streamen køre videre i
+  // baggrunden for evigt. Stop den eksplicit her, både ved skærmskift væk fra
+  // de skærme kameraet reelt bruges på, og når appen lægges i baggrunden.
+  const SCANNER_SCREENS = [SCREENS.HOME, SCREENS.RESULT, SCREENS.NOTFOUND, SCREENS.SUBMITTED, SCREENS.SEARCH, SCREENS.LIST, SCREENS.SUGGEST_EDIT];
+  useEffect(() => {
+    if (!cameraActive) return;
+    if (!SCANNER_SCREENS.includes(screen)) stopCamera();
+  }, [screen, cameraActive, stopCamera]);
+
+  useEffect(() => {
+    const onVisibilityChange = () => { if (document.hidden) stopCamera(); };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [stopCamera]);
+
   // Ref der altid peger på den seneste lookupProduct (undgår TDZ-cirkulær afhænighed)
   const lookupProductRef = useRef(null);
 

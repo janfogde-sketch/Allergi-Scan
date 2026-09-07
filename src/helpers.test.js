@@ -14,7 +14,23 @@ import {
   extractENumbers,
   compareENumbers,
   verifiedBadge,
+  isValidEanChecksum,
 } from "./helpers.js";
+
+describe("isValidEanChecksum", () => {
+  it("accepts a real EAN-13 with a correct check digit", () => {
+    expect(isValidEanChecksum("4006381333931")).toBe(true);
+  });
+  it("rejects the same code with the check digit changed", () => {
+    expect(isValidEanChecksum("4006381333930")).toBe(false);
+  });
+  it("rejects a code with the wrong length", () => {
+    expect(isValidEanChecksum("123456")).toBe(false);
+  });
+  it("rejects non-numeric input", () => {
+    expect(isValidEanChecksum("400638133393a")).toBe(false);
+  });
+});
 
 describe("compareAllergens", () => {
   it("is safe when the user has no active allergens", () => {
