@@ -155,8 +155,6 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap }) {
                 borderRadius: highlighted ? 4 : 0,
                 padding: highlighted ? "1px 4px" : "1px 2px",
                 cursor: clickable ? "pointer" : "default",
-                textDecoration: clickable && !highlighted ? "underline dotted var(--border2)" : "none",
-                textUnderlineOffset: 3,
                 transition: "background .1s",
               }}
               title={clickable ? `Søg "${cleanPart}" i leksikon` : undefined}
