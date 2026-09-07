@@ -115,8 +115,19 @@ export default function ResultScreen({
   const renderProductHero = () => {
     const vb = verifiedBadge(scanResult.verified_status, scanResult.source);
     const fav = isFavorite(scanResult.code);
+    // Verdikt smeltet ind i selve produktkortet — en farvet ramme om hele kortet plus
+    // en strimmel øverst med ikon + status, i stedet for en selvstændig boks under
+    // kortet der bare gentog det samme. Se SECURITY/DESIGN-diskussion i PR'en for baggrund.
+    const verdictColor = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[scanResult.status] || "var(--green)";
+    const verdictIcon = scanResult.status === "safe" ? "✓" : "!";
     return (
-      <div className="product-hero" style={{ position:"relative" }}>
+      <div className="product-hero" style={{ position:"relative", border:`2px solid ${verdictColor}` }}>
+        {scanResult.headline && (
+          <div style={{ display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:verdictColor, color:"#fff" }}>
+            <span style={{ fontSize:12, fontWeight:800 }}>{verdictIcon}</span>
+            <span style={{ fontSize:12, fontWeight:800, letterSpacing:".01em", textTransform:"uppercase" }}>{scanResult.headline}</span>
+          </div>
+        )}
         {scanResult.image_url
           ? <img loading="lazy" src={scanResult.image_url} alt={scanResult.name} className="product-hero-img"
               onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
@@ -148,6 +159,9 @@ export default function ResultScreen({
         <div className="product-hero-body">
           <div className="product-hero-name">{scanResult.name}</div>
           {scanResult.brand && <div className="product-hero-brand">{scanResult.brand}</div>}
+          {scanResult.summary && scanResult.status !== "safe" && (
+            <div style={{ fontSize:12, color:verdictColor, fontWeight:600, marginTop:4, lineHeight:1.4 }}>{scanResult.summary}</div>
+          )}
           <div className="product-hero-meta">
             <span style={{ fontSize:10, color:"var(--muted)", fontWeight:500 }}>EAN: {scanResult.code}</span>
             <span style={{ display:"inline-flex", alignItems:"center", gap:4, fontSize:10, fontWeight:700, padding:"2px 9px", borderRadius:20, background:vb.bg, color:vb.color, border:`1px solid ${vb.dot}22` }}>
@@ -421,28 +435,8 @@ export default function ResultScreen({
   return (
     <div className="screen fade-in">
 
-      {/* ── 1. PRODUKT ── */}
+      {/* ── 1. PRODUKT — verdikten sidder nu som en ramme + strimmel på selve kortet ── */}
       {renderProductHero()}
-
-      {/* ── 1a. VERDIKT — det første og tydeligste man ser, ikke en detalje langt nede ── */}
-      {scanResult.headline && (() => {
-        const verdictColor = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[scanResult.status] || "var(--green)";
-        const verdictBg = { danger:"var(--red-lt)", warn:"var(--amber-lt)", safe:"var(--green-lt)" }[scanResult.status] || "var(--green-lt)";
-        const verdictIcon = scanResult.status === "safe" ? "✓" : "!";
-        return (
-          <div style={{ display:"flex", alignItems:"flex-start", gap:12, padding:"14px 16px", borderRadius:12,
-            borderLeft:`3px solid ${verdictColor}`, background:verdictBg, marginBottom:10 }}>
-            <div style={{ width:28, height:28, borderRadius:"50%", background:verdictColor, color:"#fff", flexShrink:0,
-              display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800 }}>
-              {verdictIcon}
-            </div>
-            <div>
-              <div style={{ fontSize:15, fontWeight:800, color:verdictColor, marginBottom:2 }}>{scanResult.headline}</div>
-              <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.5 }}>{scanResult.summary}</div>
-            </div>
-          </div>
-        );
-      })()}
 
       {/* ── 1b. SIKRE ALTERNATIVER ── */}
       {(scanResult.status === "danger" || scanResult.status === "warn") && (

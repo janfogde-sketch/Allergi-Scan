@@ -84,6 +84,21 @@ export default function RecipesScreen({
       ...(family||[]).filter(m => (activeProfiles||[]).includes(m.id)),
     ];
 
+    // Samlet verdikt — smeltet ind i hero-billedet som en strimmel, ligesom på
+    // Resultat-skærmen, i stedet for kun at stå i sikkerhedsgridet nedenunder
+    const heroStatus = detailProfiles.reduce((worst, p) => {
+      const danger = (p.allergens||[]).some(a => rFlags[a] === "yes" || rFlags[a] === true);
+      const warn = !danger && (p.allergens||[]).some(a => rFlags[a] === "traces");
+      const s = danger ? "danger" : warn ? "warn" : "safe";
+      const rank = { safe:0, warn:1, danger:2 };
+      return rank[s] > rank[worst] ? s : worst;
+    }, "safe");
+    const heroColor = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[heroStatus];
+    const heroHeadline = detailProfiles.length > 1
+      ? { danger:"Ikke sikker for alle", warn:"Tjek allergener", safe:"Sikker for alle" }[heroStatus]
+      : { danger:"Ikke sikker for dig", warn:"Tjek allergener", safe:"Sikker for dig" }[heroStatus];
+    const heroIcon = heroStatus === "safe" ? "✓" : "!";
+
     // Ingredienser — parses ingredients_raw én gang, deles af "tilføj alle"-knappen og listen
     let ingItems = null;
     try {
@@ -172,10 +187,17 @@ export default function RecipesScreen({
           <button className="recipe-detail-fav" onClick={() => setFavoriteRecipes(f => isFav ? f.filter(x=>x!==r.id) : [...f,r.id])}>
             {isFav ? "❤️" : "🤍"}
           </button>
+          {/* Verdikt-strimmel — samme mønster som Resultat-skærmens produktkort */}
+          <div style={{ position:"absolute", left:0, right:0, bottom:0, zIndex:2, display:"flex", alignItems:"center", gap:7,
+            padding:"8px 14px", background:heroColor, color:"#fff" }}>
+            <span style={{ fontSize:12, fontWeight:800 }}>{heroIcon}</span>
+            <span style={{ fontSize:12, fontWeight:800, letterSpacing:".01em", textTransform:"uppercase" }}>{heroHeadline}</span>
+          </div>
         </div>
 
         <div style={{ padding:"18px 16px 0" }}>
-          {/* ── FAMILIE SIKKERHEDSGRID (samme som produktresultat) ── */}
+          {/* ── FAMILIE SIKKERHEDSGRID — kun relevant når der er nogen at sammenligne på tværs af ── */}
+          {detailProfiles.length > 1 && (
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:12 }}>
             {detailProfiles.map(p => {
               const danger = (p.allergens||[]).filter(a => rFlags[a] === "yes" || rFlags[a] === true);
@@ -195,6 +217,7 @@ export default function RecipesScreen({
               );
             })}
           </div>
+          )}
 
           {/* Titel */}
           <div className="recipe-detail-title">{r.title}</div>
@@ -555,17 +578,33 @@ export default function RecipesScreen({
             try { rFlags = typeof r.allergen_flags === "string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags || {}); } catch {}
             const isFav = favoriteRecipes.includes(r.id);
             const totalMins = (r.prep_time_minutes||0) + (r.cook_time_minutes||0);
+            // Samlet verdikt for kortets ramme + strimmel — samme mønster som Resultat-skærmen
+            const cardStatus = profiles.reduce((worst, p) => {
+              const { status: ps } = compareAllergens(rFlags, p.allergens||[]);
+              const rank = { safe:0, warn:1, danger:2 };
+              return rank[ps] > rank[worst] ? ps : worst;
+            }, "safe");
+            const cardColor = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[cardStatus];
+            const cardHeadline = { danger:"Ikke sikker for alle", warn:"Tjek allergener", safe:"Sikker for alle" }[cardStatus];
+            const cardIcon = cardStatus === "safe" ? "✓" : "!";
             return (
-              <div key={r.id} className="recipe-card"
+              <div key={r.id} className="recipe-card" style={{ border:`2px solid ${cardColor}` }}
                 onClick={() => { setSelectedRecipe(r); loadRecipeIngredients(r.id); setCompletedSteps({}); setRecipeServings(r.servings || 4); setListAdded({}); }}>
                 <button className="recipe-fav-btn"
                   onClick={e => { e.stopPropagation(); setFavoriteRecipes(f => isFav ? f.filter(x=>x!==r.id) : [...f,r.id]); }}>
                   {isFav ? "❤️" : "🤍"}
                 </button>
-                {r.image_url
-                  ? <img src={r.image_url} alt={r.title} className="recipe-card-img" loading="lazy" onError={e => { e.currentTarget.style.display="none"; e.currentTarget.nextSibling?.style && (e.currentTarget.nextSibling.style.display="flex"); }} />
-                  : <div className="recipe-card-img-placeholder">{getCatEmoji(r.category)}</div>
-                }
+                <div style={{ position:"relative" }}>
+                  {r.image_url
+                    ? <img src={r.image_url} alt={r.title} className="recipe-card-img" loading="lazy" onError={e => { e.currentTarget.style.display="none"; e.currentTarget.nextSibling?.style && (e.currentTarget.nextSibling.style.display="flex"); }} />
+                    : <div className="recipe-card-img-placeholder">{getCatEmoji(r.category)}</div>
+                  }
+                  <div style={{ position:"absolute", left:0, right:0, bottom:0, display:"flex", alignItems:"center", gap:7,
+                    padding:"7px 14px", background:cardColor, color:"#fff" }}>
+                    <span style={{ fontSize:11, fontWeight:800 }}>{cardIcon}</span>
+                    <span style={{ fontSize:11, fontWeight:800, letterSpacing:".01em", textTransform:"uppercase" }}>{cardHeadline}</span>
+                  </div>
+                </div>
                 <div className="recipe-card-body">
                   <div className="recipe-card-title">{r.title}</div>
                   {r.description && (
@@ -583,7 +622,8 @@ export default function RecipesScreen({
                       </span>
                     ))}
                   </div>
-                  {/* Sikkerhed per profil */}
+                  {/* Sikkerhed per profil — kun når der er nogen at sammenligne på tværs af */}
+                  {profiles.length > 1 && (
                   <div className="recipe-safe-bar">
                     {profiles.map(p => {
                       const { status: ps } = compareAllergens(rFlags, p.allergens||[]);
@@ -595,6 +635,7 @@ export default function RecipesScreen({
                       );
                     })}
                   </div>
+                  )}
                 </div>
               </div>
             );
