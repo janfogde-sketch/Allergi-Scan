@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { SUPABASE_URL, ALLERGENS, SCREENS } from "./constants.jsx";
-import { makeHeaders, apiCall, compareAllergens, traceId, traceLog } from "./helpers.js";
+import { makeHeaders, apiCall, compareAllergens, traceId, traceLog, compressImageToBase64 } from "./helpers.js";
 
 export function useProduct({ accessToken, userId, activeProfiles,
                               notFoundEan, setNotFoundEan,
@@ -61,7 +61,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
     traceLog(tid, "photo:start", { size: file.size, type: file.type });
     setOcrLoading(true);
     try {
-      const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); });
+      const base64 = await compressImageToBase64(file);
       setProductImageBase64(base64);
       setProductImagePreview(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(file); });
       try {
@@ -94,7 +94,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
     traceLog(tid, "ocr:start", { size: file.size, type: file.type });
     setOcrLoading(true);
     try {
-      const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); });
+      const base64 = await compressImageToBase64(file);
       traceLog(tid, "ocr:base64-ready", { length: base64.length });
       setOcrImageBase64(base64);
       traceLog(tid, "ocr:image_ready", { size: Math.round(base64.length * 0.75 / 1024) + "kb" });
@@ -145,7 +145,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
     traceLog(tid, "nutrition-ocr:start", { size: file.size });
     setNutritionOcrLoading(true);
     try {
-      const base64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); });
+      const base64 = await compressImageToBase64(file);
       const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, {
         method: "POST",
         headers: makeHeaders(accessToken),
@@ -168,7 +168,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
   const handleEditProductCapture = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
     try {
-      const b64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = () => rej(new Error("Kunne ikke læse billedet")); r.readAsDataURL(file); });
+      const b64 = await compressImageToBase64(file);
       setEditProductImage(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(file); });
       setEditProductImageB64(b64);
     } catch {

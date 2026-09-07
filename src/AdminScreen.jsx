@@ -867,8 +867,8 @@ ${openTicket.description}
             {/* Produktkort */}
             <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
               <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
-                {openSubmission.ai_parsed_data?.product_image_base64
-                  ? <img src={`data:image/jpeg;base64,${openSubmission.ai_parsed_data.product_image_base64}`}
+                {openSubmission.ai_parsed_data?.product_image_url
+                  ? <img src={openSubmission.ai_parsed_data.product_image_url}
                       style={{ width:64, height:64, borderRadius:10, objectFit:"contain", border:"1px solid var(--border)", flexShrink:0 }} alt="Indsendt produktbillede" />
                   : <div style={{ width:64, height:64, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>📦</div>
                 }
@@ -902,7 +902,7 @@ ${openTicket.description}
             {openSubmission.raw_label_image && (
               <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
                 <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>📸 Foto af ingredienslisten</div>
-                <img src={`data:image/jpeg;base64,${openSubmission.raw_label_image}`} alt="Ingrediensliste"
+                <img src={openSubmission.raw_label_image} alt="Ingrediensliste"
                   style={{ width:"100%", borderRadius:10, objectFit:"contain", maxHeight:240 }} />
               </div>
             )}
