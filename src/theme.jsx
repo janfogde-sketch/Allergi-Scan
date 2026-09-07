@@ -153,7 +153,11 @@ body{
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
   width:100%;max-width:390px;
-  background:linear-gradient(to bottom,rgba(246,248,243,0) 0%,#F6F8F3 38%,#F6F8F3 100%);
+  /* Helt uigennemsigtig — en gradient med en gennemsigtig top-del lod indhold
+     der var scrollet med skinne igennem bag ikonerne, så baren så "flimrende"
+     ud i stedet for at virke som ét fast lag oven på resten af skærmen. */
+  background:#F6F8F3;
+  box-shadow:0 -8px 16px -12px rgba(21,32,26,.14);
   border-top:1px solid var(--border);
   display:flex;padding:10px 4px 24px;z-index:100;
 }
