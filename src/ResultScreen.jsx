@@ -196,7 +196,9 @@ export default function ResultScreen({
 
     return (
       <div style={S.mb10}>
-        {/* Profil-sikkerhed: 2 kolonner */}
+        {/* Profil-sikkerhed: 2 kolonner — kun relevant når der er nogen at sammenligne på tværs af.
+            Med kun "Dig" aktiv gentager den bare verdikt-banneret ovenfor. */}
+        {profiles.length > 1 && (
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom: hasTags ? 8 : 0 }}>
           {profiles.map((p) => {
             const danger  = p.allergens.filter(a => flags[a] === "yes");
@@ -227,6 +229,7 @@ export default function ResultScreen({
             );
           })}
         </div>
+        )}
 
         {/* ── Småbørn-advarsler ── */}
         {infantWarnings.length > 0 && (
