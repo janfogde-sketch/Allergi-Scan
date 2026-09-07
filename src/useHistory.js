@@ -6,7 +6,7 @@
 // Historik hentes via Supabase Edge Function.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { SUPABASE_URL } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 
@@ -19,7 +19,7 @@ export function useHistory({ accessToken, userId }) {
     } catch { return []; }
   });
 
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     try {
       setHistoryLoading(true);
       const data = await apiCall(
@@ -29,9 +29,9 @@ export function useHistory({ accessToken, userId }) {
       if (data?.success && data.scans) setHistory(data.scans);
     } catch { /* silent */ }
     finally { setHistoryLoading(false); }
-  };
+  }, [userId, accessToken]);
 
-  const saveHistoryEntry = async (ean, productId, result, flags, activeProfiles) => {
+  const saveHistoryEntry = useCallback(async (ean, productId, result, flags, activeProfiles) => {
     try {
       await apiCall(`${SUPABASE_URL}/functions/v1/history`, {
         method: "POST",
@@ -46,9 +46,9 @@ export function useHistory({ accessToken, userId }) {
         }),
       });
     } catch { /* silent */ }
-  };
+  }, [userId, accessToken]);
 
-  const toggleFavorite = (product) => {
+  const toggleFavorite = useCallback((product) => {
     setFavorites(prev => {
       const exists = prev.find(f => f.ean === product.ean || f.code === product.code);
       const updated = exists
@@ -59,9 +59,9 @@ export function useHistory({ accessToken, userId }) {
       try { localStorage.setItem("as_favorites", JSON.stringify(updated)); } catch {}
       return updated;
     });
-  };
+  }, []);
 
-  const isFavorite = (ean) => favorites.some(f => f.ean === ean || f.code === ean);
+  const isFavorite = useCallback((ean) => favorites.some(f => f.ean === ean || f.code === ean), [favorites]);
 
   return {
     history, setHistory,

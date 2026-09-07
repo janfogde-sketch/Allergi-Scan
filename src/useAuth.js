@@ -124,7 +124,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   }, [refreshToken, accessToken, saveTokens]);
 
   // ── Login ─────────────────────────────────────────────────────────────────
-  const handleLogin = async () => {
+  const handleLogin = useCallback(async () => {
     if (!loginEmail || !loginPassword) return;
     if (!loginEmail.includes("@")) { setAuthError("Indtast en gyldig email-adresse."); return; }
     setAuthLoading(true); setAuthError("");
@@ -151,10 +151,10 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       setAuthError(e.message || "Forkert email eller kodeord. Prøv igen.");
     }
     setAuthLoading(false);
-  };
+  }, [loginEmail, loginPassword, saveTokens, setScreen]);
 
   // ── Signup ────────────────────────────────────────────────────────────────
-  const handleSignup = async () => {
+  const handleSignup = useCallback(async () => {
     if (!loginEmail || !loginEmail.includes("@")) { setAuthError("Indtast en gyldig email-adresse."); return; }
     if (!loginPassword || loginPassword.length < 6) { setAuthError("Kodeordet skal være mindst 6 tegn."); return; }
     setAuthLoading(true); setAuthError("");
@@ -189,10 +189,10 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       setAuthError(e.message || "Oprettelse fejlede. Prøv igen.");
     }
     setAuthLoading(false);
-  };
+  }, [loginEmail, loginPassword, saveTokens, setUser, setScreen, onSignupSuccess]);
 
   // ── OAuth redirect ────────────────────────────────────────────────────────
-  const handleOAuth = async (provider) => {
+  const handleOAuth = useCallback(async (provider) => {
     setAuthLoading(true); setAuthError("");
     try {
       const params = new URLSearchParams({
@@ -204,7 +204,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       setAuthError(`${provider} login fejlede: ${e.message}`);
       setAuthLoading(false);
     }
-  };
+  }, []);
 
   return {
     accessToken, setAccessToken,

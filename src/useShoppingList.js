@@ -5,7 +5,7 @@
 // Bruger optimistiske opdateringer + Supabase Realtime for live-sync.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 
@@ -22,7 +22,24 @@ export function useShoppingList({ accessToken, userId }) {
   shoppingListRef.current = shoppingList;
 
   // ── Indlæs liste ────────────────────────────────────────────────────────────
-  const loadShoppingList = async () => {
+  const fetchItems = useCallback(async (listId) => {
+    try {
+      const items = await apiCall(
+        `${SUPABASE_URL}/rest/v1/shopping_list_items?list_id=eq.${listId}&order=added_at.asc`,
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+      );
+      setShoppingList(Array.isArray(items)
+        ? items.map(i => ({
+            id:       i.id,
+            name:     i.name,
+            checked:  i.checked || false,
+            added_by: i.added_by || null,
+          }))
+        : []);
+    } catch { /* silent */ }
+  }, [accessToken]);
+
+  const loadShoppingList = useCallback(async () => {
     try {
       const lists = await apiCall(
         `${SUPABASE_URL}/rest/v1/shopping_lists?owner_id=eq.${userId}&select=id&limit=1`,
@@ -42,24 +59,7 @@ export function useShoppingList({ accessToken, userId }) {
         await fetchItems(listId);
       }
     } catch { /* silent */ }
-  };
-
-  const fetchItems = async (listId) => {
-    try {
-      const items = await apiCall(
-        `${SUPABASE_URL}/rest/v1/shopping_list_items?list_id=eq.${listId}&order=added_at.asc`,
-        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-      );
-      setShoppingList(Array.isArray(items)
-        ? items.map(i => ({
-            id:       i.id,
-            name:     i.name,
-            checked:  i.checked || false,
-            added_by: i.added_by || null,
-          }))
-        : []);
-    } catch { /* silent */ }
-  };
+  }, [userId, accessToken, fetchItems]);
 
   // ── Realtime subscription ────────────────────────────────────────────────────
   useEffect(() => {
@@ -153,7 +153,7 @@ export function useShoppingList({ accessToken, userId }) {
   }, [accessToken, shoppingListId]);
 
   // ── Tilføj vare ─────────────────────────────────────────────────────────────
-  const addToList = async (name) => {
+  const addToList = useCallback(async (name) => {
     if (!name?.trim()) return false;
     const tempId = uid();
     setShoppingList(l => [...l, { id: tempId, name: name.trim(), checked: false }]);
@@ -180,10 +180,10 @@ export function useShoppingList({ accessToken, userId }) {
       setShoppingList(l => l.filter(i => i.id !== tempId));
       return false;
     }
-  };
+  }, [shoppingListId, accessToken, userId]);
 
   // ── Toggle ──────────────────────────────────────────────────────────────────
-  const toggleItem = async (id) => {
+  const toggleItem = useCallback(async (id) => {
     // Læs og opdater via shoppingListRef (synkron, altid frisk), ikke via en
     // variabel sat inde i setShoppingList's updater — React kalder ikke
     // nødvendigvis den updater synkront, så en variabel sat dér kan stadig
@@ -207,11 +207,11 @@ export function useShoppingList({ accessToken, userId }) {
       shoppingListRef.current = shoppingListRef.current.map(i => i.id === id ? { ...i, checked: !newChecked } : i);
       setShoppingList(shoppingListRef.current);
     }
-  };
+  }, [accessToken]);
 
   // ── Slet ────────────────────────────────────────────────────────────────────
-  const removeItem = async (id) => {
-    const removed = shoppingList.find(i => i.id === id);
+  const removeItem = useCallback(async (id) => {
+    const removed = shoppingListRef.current.find(i => i.id === id);
     setShoppingList(l => l.filter(i => i.id !== id));
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/shopping_list_items?id=eq.${id}`, {
@@ -223,9 +223,11 @@ export function useShoppingList({ accessToken, userId }) {
       // uden reelt at være slettet i databasen
       if (removed) setShoppingList(l => [...l, removed]);
     }
-  };
+  }, [accessToken]);
 
-  const clearDone = () => shoppingList.filter(i => i.checked).forEach(i => removeItem(i.id));
+  const clearDone = useCallback(() => {
+    shoppingListRef.current.filter(i => i.checked).forEach(i => removeItem(i.id));
+  }, [removeItem]);
 
   return {
     shoppingList, setShoppingList,
