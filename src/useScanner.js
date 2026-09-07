@@ -10,7 +10,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compressImageToBase64 } from "./helpers.js";
+import { compressImageToBase64, isValidEanChecksum } from "./helpers.js";
 
 export function useScanner({ setScanError, setLoading, onScanSuccess, accessToken }) {
   // ── Kamera-state ──────────────────────────────────────────────────────────
@@ -254,14 +254,18 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
 
       const ocrData = await ocrRes.json();
       const rawText = ocrData.text || ocrData.ean || "";
-      const eanMatch = rawText.match(/(\d{8,14})/);
-      if (eanMatch) {
+      // Vision-OCR kan fejllæse et enkelt ciffer, så tjek EAN-checksummen
+      // før vi bruger tallet — ellers risikerer vi et opslag på et forkert
+      // (men tilfældigt eksisterende) produkt.
+      const candidates = rawText.match(/\d{8,14}/g) || [];
+      const validEan = candidates.find(isValidEanChecksum);
+      if (validEan) {
         setPhotoScanLoading(false);
-        onScanSuccessRef.current?.(eanMatch[1]);
+        onScanSuccessRef.current?.(validEan);
         return;
       }
 
-      setScanError("Kunne ikke aflæse stregkode fra billede. Prøv tæt på og i god belysning.");
+      setScanError("Kunne ikke aflæse en gyldig stregkode fra billede. Prøv tæt på og i god belysning.");
     } catch {
       setScanError("Foto-scan fejlede. Prøv igen.");
     }
