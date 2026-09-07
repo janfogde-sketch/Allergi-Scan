@@ -68,10 +68,10 @@ function DemoSlider({ onClose }) {
     <div style={{ borderRadius:0, overflow:"hidden", border:"none" }}>
 
       {/* Modal-header med overskrift + luk */}
-      <div style={{ background:"var(--paper)", borderBottom:"1px solid var(--border)", padding:"14px 18px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+      <div style={{ background:"var(--surface2)", borderBottom:"1px solid var(--border)", padding:"14px 18px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
         <div style={{ fontSize:13, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1.5px" }}>Det kan EatSafe</div>
         <button onClick={onClose} aria-label="Luk"
-          style={{ background:"rgba(255,255,255,.08)", border:"none", borderRadius:"50%",
+          style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"50%",
             width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center",
             cursor:"pointer", fontSize:15, color:"var(--ink)", lineHeight:1 }}>
           ×
@@ -84,13 +84,13 @@ function DemoSlider({ onClose }) {
         <div style={{ display:"flex", gap:5, justifyContent:"center", marginBottom:16 }}>
           {DEMO_SLIDES.map((_,i) => (
             <div key={i} onClick={() => setIdx(i)}
-              style={{ width: i===idx ? 22 : 7, height:7, borderRadius:4, background: i===idx ? slide.accent : "rgba(255,255,255,.2)", cursor:"pointer", transition:"all .25s" }} />
+              style={{ width: i===idx ? 22 : 7, height:7, borderRadius:4, background: i===idx ? slide.accent : "var(--border2)", cursor:"pointer", transition:"all .25s" }} />
           ))}
         </div>
 
         {/* Indhold */}
         <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", marginBottom:6, letterSpacing:"-.3px" }}>{slide.title}</div>
-        <div style={{ fontSize:13, color:"rgba(255,255,255,.6)", lineHeight:1.6 }}>{slide.sub}</div>
+        <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6 }}>{slide.sub}</div>
         {slide.mockup}
 
         {/* Sidste slide: luk guiden */}
@@ -105,7 +105,7 @@ function DemoSlider({ onClose }) {
       </div>
 
       {/* Frem/tilbage */}
-      <div style={{ display:"flex", gap:8, padding:"12px 14px", background:"rgba(255,255,255,.03)", borderTop:"1px solid rgba(255,255,255,.08)" }}>
+      <div style={{ display:"flex", gap:8, padding:"12px 14px", background:"var(--surface2)", borderTop:"1px solid var(--border)" }}>
         <button disabled={idx===0} onClick={() => setIdx(i => i-1)}
           style={{ flex:1, padding:"10px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:10,
             fontFamily:"var(--f)", fontSize:13, fontWeight:700, color: idx===0 ? "var(--muted)" : "var(--ink2)",
