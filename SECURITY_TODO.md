@@ -16,6 +16,17 @@ de påstår at være.
 - **`shopping`** og **`submissions`** (brugt af appen): samme mønster —
   `owner_id`/`added_by`/`submitted_by` tages direkte fra request-body uden
   verifikation.
+- **Opdatering (fundet 2026-09-07, under gennemgang af
+  produkt-opret/redigér-flowet):** `submissions` og `allergens` har det
+  ikke bare "utjekket" — der er **intet `Authorization`-tjek overhovedet**
+  i koden, ikke engang et forsøg på at læse en header. `allergens` (kaldes
+  fra `useProduct.js` og `SuggestEditScreen.jsx` med rå ingrediens-tekst)
+  eksponerer ikke andre brugeres data direkte, men er et helt åbent,
+  ubegrænset kald ind til en betalt Vision/LLM-baseret Edge Function —
+  hvem som helst kan spamme den og generere regning, uden login. Samme
+  rettelse som nedenfor (tilføj `auth.getUser()`-verifikation, og for
+  `allergens`: overvej minimum rate-limiting selv med login) lukker
+  begge dele.
 - **`family`** (ikke kaldt af nuværende klientkode, men stadig deployeret og
   offentligt tilgængelig hvis den ligger live på Supabase): **intet
   adgangstjek overhovedet** — læs/opret/redigér/slet familiedata for

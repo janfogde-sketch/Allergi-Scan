@@ -55,6 +55,7 @@ Farvesystem, OFF-import, fotoscanning, leksikon, search-overhaul, useScanner-ref
 |-------|--------|------|
 | auth.uid() = NULL (ECC P-256) | ⏳ | Support ticket åben. Workaround: temp_read/write policies. GitHub #42244 |
 | weekly-digest pg_cron | 🔲 | Kør SQL cron-job i SQL Editor (2 min) |
+| "Foreslå rettelse" har intet backend-flow | 🔲 | `SuggestEditScreen.jsx` poster til `product_submissions`-tabellen, som intet i admin-godkendelsesflowet læser (kun `submissions` er aktiv, jf. CONTEXT.md). Selv hvis den postede til `submissions`, ville Edge Functionens POST-handler afvise den med 409, fordi den er skrevet udelukkende til *nye* produkter og eksplicit afviser en EAN der allerede findes i `products` — hvilket den altid gør ved en rettelse. Kræver enten en Edge Function-ændring med `type:"edit"`-håndtering (kan ikke deployes fra denne sandbox, se SECURITY_TODO.md) eller en ny admin-UI-vej. Fundet 2026-09-07 under gennemgang af produkt-opret/redigér-flowet. |
 
 ---
 
