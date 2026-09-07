@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { compareAllergens, getAllergenLabels } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, SafetyRow, SafetyPill, EmptyState } from "./SharedComponents.jsx";
@@ -62,6 +62,15 @@ export default function RecipesScreen({
       return true;
     });
   }, [recipes, recipeFilter, favoriteRecipes, recipeSearch, recipeSafeOnly, safeAllergenIds]);
+
+  // Renderer kun de første N kort ad gangen i stedet for op til 1000 på
+  // samme tid — hvert kort beregner selv sit allergen-verdikt (compareAllergens
+  // per profil) og indeholder et billede, så at montere alle på én gang var
+  // en markant tung DOM/layout-operation. Nulstilles når søgning/filter
+  // ændrer sig, men IKKE når man blot favoritmarkerer et kort.
+  const RECIPES_PAGE_SIZE = 30;
+  const [visibleRecipeCount, setVisibleRecipeCount] = useState(RECIPES_PAGE_SIZE);
+  useEffect(() => { setVisibleRecipeCount(RECIPES_PAGE_SIZE); }, [recipeSearch, recipeFilter, recipeSafeOnly]);
 
   // Submit-form states — skal være her pga. React hooks-regler
   const [imgFile, setImgFile] = React.useState(null);
@@ -574,7 +583,7 @@ export default function RecipesScreen({
 
         {/* Opskrift-kort */}
         <div className="recipe-grid">
-          {filtered.map(r => {
+          {filtered.slice(0, visibleRecipeCount).map(r => {
             // allergen_flags kan være string eller objekt
             let rFlags = {};
             try { rFlags = typeof r.allergen_flags === "string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags || {}); } catch {}
@@ -643,6 +652,13 @@ export default function RecipesScreen({
             );
           })}
         </div>
+
+        {filtered.length > visibleRecipeCount && (
+          <button className="btn btn-outline btn-full" style={{ marginTop:12 }}
+            onClick={() => setVisibleRecipeCount(c => c + RECIPES_PAGE_SIZE)}>
+            Indlæs flere ({filtered.length - visibleRecipeCount} tilbage)
+          </button>
+        )}
 
         {filtered.length > 0 && (
           <div style={{ display:"flex", gap:8, alignItems:"center", padding:"12px", background:"var(--paper2)", borderRadius:10, marginTop:4 }}>
