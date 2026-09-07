@@ -92,6 +92,18 @@ describe("checkDietCompatibility", () => {
   it("gluten-free: passes when neither gluten nor hvede flags are set", () => {
     const result = checkDietCompatibility("gluten-free", { gluten: "no" }, "", null);
     expect(result.ok).toBe(true);
+    expect(result.confidence).toBe("high");
+  });
+
+  it("gluten-free: falls back to ingredient text when the gluten/hvede flags are missing (bekymring fra sikkerhedsgennemgang)", () => {
+    const result = checkDietCompatibility("gluten-free", {}, "Hvedemel, vand, salt, gær", null);
+    expect(result.ok).toBe(false);
+  });
+
+  it("gluten-free: does NOT claim high confidence when the flags are unknown and there's no ingredient text to fall back on", () => {
+    const result = checkDietCompatibility("gluten-free", { gluten: "unknown" }, "", null);
+    expect(result.ok).toBe(true);
+    expect(result.confidence).not.toBe("high");
   });
 
   it("keto: uses nutrition data when available instead of guessing from text", () => {
