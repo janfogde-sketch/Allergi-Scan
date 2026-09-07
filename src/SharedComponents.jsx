@@ -347,6 +347,7 @@ export function ProductImage({ product, size = 64 }) {
         <img
           src={product.image_url}
           alt={product.name}
+          loading="lazy"
           style={{ width:size, height:size, objectFit:"contain", borderRadius:8 }}
           onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }}
         />

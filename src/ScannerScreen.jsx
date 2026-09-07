@@ -12,10 +12,13 @@ import { useHistoryContext } from "./HistoryContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
 
 import { CategorySelect } from "./MemberForm.jsx";
-import NotFoundScreen from "./NotFoundScreen.jsx";
-import SubmittedScreen from "./SubmittedScreen.jsx";
 import ResultScreen from "./ResultScreen.jsx";
-// Lazy: skærme brugeren ikke nødvendigvis besøger hver session, holdes ude af hoved-bundlet
+// Lazy: skærme brugeren ikke nødvendigvis besøger hver session, holdes ude af hoved-bundlet.
+// ResultScreen er IKKE med her — den vises efter stort set hvert scan (hoved-flowet),
+// så at lazy-loade den ville tilføje en indlæsnings-forsinkelse lige der hvor brugeren
+// forventer et øjeblikkeligt svar. NotFoundScreen/SubmittedScreen rammes langt sjældnere.
+const NotFoundScreen = React.lazy(() => import("./NotFoundScreen.jsx"));
+const SubmittedScreen = React.lazy(() => import("./SubmittedScreen.jsx"));
 const SearchScreen = React.lazy(() => import("./SearchScreen.jsx"));
 const ListScreen = React.lazy(() => import("./ListScreen.jsx"));
 const SuggestEditScreen = React.lazy(() => import("./SuggestEditScreen.jsx"));
@@ -783,6 +786,7 @@ export default function ScannerScreen({
           </div>
         )}
         {screen === SCREENS.NOTFOUND && (
+          <Suspense fallback={LazyFallback}>
           <NotFoundScreen
             notFoundEan={notFoundEan}
             notFoundStep={notFoundStep} setNotFoundStep={setNotFoundStep}
@@ -797,6 +801,7 @@ export default function ScannerScreen({
             handleImageCapture={handleImageCapture} handleProductImageCapture={handleProductImageCapture}
             scanError={scanError}
           />
+          </Suspense>
         )}
         {screen === SCREENS.SEARCH && (
           <Suspense fallback={LazyFallback}>
@@ -821,6 +826,7 @@ export default function ScannerScreen({
         )}
 
         {screen === SCREENS.SUBMITTED && (
+          <Suspense fallback={LazyFallback}>
           <SubmittedScreen
             notFoundEan={notFoundEan}
             proposedName={proposedName}
@@ -831,6 +837,7 @@ export default function ScannerScreen({
             setProposedNotes={setProposedNotes}
             setOcrText={setOcrText}
           />
+          </Suspense>
         )}
 
         {screen === SCREENS.RESULT && scanResult && (
