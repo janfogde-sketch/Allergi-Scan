@@ -10,6 +10,77 @@ import { useHistoryContext } from "./HistoryContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
 import { detectAllergensInText } from "./allergenKeywords.js";
 
+const getCatEmoji = c => ({ morgenmad:"☕",frokost:"🥗",aftensmad:"🍝",dessert:"🍰",tilbehør:"🥦",snack:"🍿" })[c] || "🍽️";
+
+// Udtrukket til en selvstændig, memoized komponent, så et re-render af
+// RecipesScreen (fx et tastetryk i søgefeltet, før filtreringen slår
+// igennem) ikke tvinger alle synlige kort til at genberegne deres
+// allergen-verdikt og re-rendere — kun de kort hvis props reelt ændrer sig.
+const RecipeCard = React.memo(function RecipeCard({ recipe: r, profiles, isFav, onOpen, onToggleFavorite }) {
+  let rFlags = {};
+  try { rFlags = typeof r.allergen_flags === "string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags || {}); } catch {}
+  const totalMins = (r.prep_time_minutes||0) + (r.cook_time_minutes||0);
+  // Samlet verdikt for kortets ramme + strimmel — samme mønster som Resultat-skærmen
+  const cardStatus = profiles.reduce((worst, p) => {
+    const { status: ps } = compareAllergens(rFlags, p.allergens||[]);
+    const rank = { safe:0, warn:1, danger:2 };
+    return rank[ps] > rank[worst] ? ps : worst;
+  }, "safe");
+  const cardColor = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[cardStatus];
+  const cardHeadline = { danger:"Ikke sikker for alle", warn:"Tjek allergener", safe:"Sikker for alle" }[cardStatus];
+  const cardIcon = cardStatus === "safe" ? "✓" : "!";
+  return (
+    <div className="recipe-card" style={{ border:`2px solid ${cardColor}` }} onClick={onOpen}>
+      <button className="recipe-fav-btn" onClick={e => { e.stopPropagation(); onToggleFavorite(); }}>
+        {isFav ? "❤️" : "🤍"}
+      </button>
+      <div style={{ position:"relative" }}>
+        {r.image_url
+          ? <img src={r.image_url} alt={r.title} className="recipe-card-img" loading="lazy" onError={e => { e.currentTarget.style.display="none"; e.currentTarget.nextSibling?.style && (e.currentTarget.nextSibling.style.display="flex"); }} />
+          : <div className="recipe-card-img-placeholder">{getCatEmoji(r.category)}</div>
+        }
+        <div style={{ position:"absolute", left:0, right:0, bottom:0, display:"flex", alignItems:"center", gap:7,
+          padding:"7px 14px", background:cardColor, color:"#fff" }}>
+          <span style={{ fontSize:11, fontWeight:800 }}>{cardIcon}</span>
+          <span style={{ fontSize:11, fontWeight:800, letterSpacing:".01em", textTransform:"uppercase" }}>{cardHeadline}</span>
+        </div>
+      </div>
+      <div className="recipe-card-body">
+        <div className="recipe-card-title">{r.title}</div>
+        {r.description && (
+          <div className="recipe-card-desc" style={{ display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>
+            {r.description}
+          </div>
+        )}
+        <div className="recipe-card-meta">
+          {r.category && <span className="recipe-pill" style={{ background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" }}>{getCatEmoji(r.category)} {r.category}</span>}
+          {totalMins > 0 && <span className="recipe-pill" style={{ background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" }}>⏱ {totalMins} min</span>}
+          {r.servings && <span className="recipe-pill" style={{ background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" }}>👤 {r.servings} pers.</span>}
+          {(r.tags||[]).filter(t=>t==="vegetarisk"||t==="vegan").map(t => (
+            <span key={t} className="recipe-pill" style={{ background:"var(--green-lt)", color:"var(--green)", borderColor:"var(--green-mid)" }}>
+              {t==="vegan"?"🌱":"🥦"} {t}
+            </span>
+          ))}
+        </div>
+        {/* Sikkerhed per profil — kun når der er nogen at sammenligne på tværs af */}
+        {profiles.length > 1 && (
+        <div className="recipe-safe-bar">
+          {profiles.map(p => {
+            const { status: ps } = compareAllergens(rFlags, p.allergens||[]);
+            return (
+              <SafetyPill key={p.id}
+                name={p.id==="me" ? "Dig" : p.name.split(" ")[0]}
+                status={ps}
+              />
+            );
+          })}
+        </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
 export default function RecipesScreen({
   recipes, recipesLoading,
   selectedRecipe, setSelectedRecipe,
@@ -376,7 +447,6 @@ export default function RecipesScreen({
       { id:"tilbehør", label:"🥦 Tilbehør" },
       { id:"snack", label:"🍿 Snack" },
     ];
-    const getCatEmoji = c => ({ morgenmad:"☕",frokost:"🥗",aftensmad:"🍝",dessert:"🍰",tilbehør:"🥦",snack:"🍿" })[c] || "🍽️";
     const profiles = [
       { id:"me", name: user.name||"Dig", allergens },
       ...family.filter(m => activeProfiles.includes(m.id)),
@@ -583,74 +653,13 @@ export default function RecipesScreen({
 
         {/* Opskrift-kort */}
         <div className="recipe-grid">
-          {filtered.slice(0, visibleRecipeCount).map(r => {
-            // allergen_flags kan være string eller objekt
-            let rFlags = {};
-            try { rFlags = typeof r.allergen_flags === "string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags || {}); } catch {}
-            const isFav = favoriteRecipes.includes(r.id);
-            const totalMins = (r.prep_time_minutes||0) + (r.cook_time_minutes||0);
-            // Samlet verdikt for kortets ramme + strimmel — samme mønster som Resultat-skærmen
-            const cardStatus = profiles.reduce((worst, p) => {
-              const { status: ps } = compareAllergens(rFlags, p.allergens||[]);
-              const rank = { safe:0, warn:1, danger:2 };
-              return rank[ps] > rank[worst] ? ps : worst;
-            }, "safe");
-            const cardColor = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[cardStatus];
-            const cardHeadline = { danger:"Ikke sikker for alle", warn:"Tjek allergener", safe:"Sikker for alle" }[cardStatus];
-            const cardIcon = cardStatus === "safe" ? "✓" : "!";
-            return (
-              <div key={r.id} className="recipe-card" style={{ border:`2px solid ${cardColor}` }}
-                onClick={() => { setSelectedRecipe(r); loadRecipeIngredients(r.id); setCompletedSteps({}); setRecipeServings(r.servings || 4); setListAdded({}); }}>
-                <button className="recipe-fav-btn"
-                  onClick={e => { e.stopPropagation(); setFavoriteRecipes(f => isFav ? f.filter(x=>x!==r.id) : [...f,r.id]); }}>
-                  {isFav ? "❤️" : "🤍"}
-                </button>
-                <div style={{ position:"relative" }}>
-                  {r.image_url
-                    ? <img src={r.image_url} alt={r.title} className="recipe-card-img" loading="lazy" onError={e => { e.currentTarget.style.display="none"; e.currentTarget.nextSibling?.style && (e.currentTarget.nextSibling.style.display="flex"); }} />
-                    : <div className="recipe-card-img-placeholder">{getCatEmoji(r.category)}</div>
-                  }
-                  <div style={{ position:"absolute", left:0, right:0, bottom:0, display:"flex", alignItems:"center", gap:7,
-                    padding:"7px 14px", background:cardColor, color:"#fff" }}>
-                    <span style={{ fontSize:11, fontWeight:800 }}>{cardIcon}</span>
-                    <span style={{ fontSize:11, fontWeight:800, letterSpacing:".01em", textTransform:"uppercase" }}>{cardHeadline}</span>
-                  </div>
-                </div>
-                <div className="recipe-card-body">
-                  <div className="recipe-card-title">{r.title}</div>
-                  {r.description && (
-                    <div className="recipe-card-desc" style={{ display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>
-                      {r.description}
-                    </div>
-                  )}
-                  <div className="recipe-card-meta">
-                    {r.category && <span className="recipe-pill" style={{ background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" }}>{getCatEmoji(r.category)} {r.category}</span>}
-                    {totalMins > 0 && <span className="recipe-pill" style={{ background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" }}>⏱ {totalMins} min</span>}
-                    {r.servings && <span className="recipe-pill" style={{ background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" }}>👤 {r.servings} pers.</span>}
-                    {(r.tags||[]).filter(t=>t==="vegetarisk"||t==="vegan").map(t => (
-                      <span key={t} className="recipe-pill" style={{ background:"var(--green-lt)", color:"var(--green)", borderColor:"var(--green-mid)" }}>
-                        {t==="vegan"?"🌱":"🥦"} {t}
-                      </span>
-                    ))}
-                  </div>
-                  {/* Sikkerhed per profil — kun når der er nogen at sammenligne på tværs af */}
-                  {profiles.length > 1 && (
-                  <div className="recipe-safe-bar">
-                    {profiles.map(p => {
-                      const { status: ps } = compareAllergens(rFlags, p.allergens||[]);
-                      return (
-                        <SafetyPill key={p.id}
-                          name={p.id==="me" ? "Dig" : p.name.split(" ")[0]}
-                          status={ps}
-                        />
-                      );
-                    })}
-                  </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {filtered.slice(0, visibleRecipeCount).map(r => (
+            <RecipeCard key={r.id} recipe={r} profiles={profiles}
+              isFav={favoriteRecipes.includes(r.id)}
+              onOpen={() => { setSelectedRecipe(r); loadRecipeIngredients(r.id); setCompletedSteps({}); setRecipeServings(r.servings || 4); setListAdded({}); }}
+              onToggleFavorite={() => setFavoriteRecipes(f => f.includes(r.id) ? f.filter(x=>x!==r.id) : [...f,r.id])}
+            />
+          ))}
         </div>
 
         {filtered.length > visibleRecipeCount && (

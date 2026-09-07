@@ -27,6 +27,50 @@ const CATEGORIES = [
   {id:"Færdigretter",   label:"Færdigretter"},
 ];
 
+// Udtrukket til en selvstændig, memoized komponent så et re-render af
+// SearchScreen (fx et tastetryk før det debouncede søgekald slår
+// igennem) ikke tvinger alle synlige resultat-rækker til at re-rendere.
+const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, onOpen, onAddToList }) {
+  const { status, matchedDanger, matchedWarning } = compareAllergens(p.allergen_flags||{}, effectiveIds);
+  const statusColor = safetyStyle(status).color;
+  const statusLabel = `${safetyStyle(status).icon} ${status==="safe" ? "Sikker" : status==="danger" ? "Farlig" : "Advarsel"}`;
+  const matchedLabels = [...matchedDanger, ...matchedWarning].map(id => ALLERGENS.find(a=>a.id===id)).filter(Boolean);
+  const tagLabels = { vegan:"🌱 Vegansk", vegetarian:"🥦 Vegetarisk" };
+  return (
+    <div onClick={onOpen}
+      style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", marginBottom:8, background:"var(--surface)", border:`1px solid ${status==="danger" ? "var(--red-md)" : status==="warn" ? "var(--amber-md)" : "var(--border)"}`, borderRadius:12, cursor:"pointer" }}>
+      <ProductImage product={p} size={44} />
+      <div style={S.flexMin}>
+        <div style={S.h13b}>{p.name}</div>
+        <div style={S.sub11}>{p.brand}{p.category ? ` · ${p.category}` : ""}</div>
+        {matchedLabels.length > 0 && (
+          <div style={{ display:"flex", gap:3, marginTop:4, flexWrap:"wrap" }}>
+            {matchedLabels.map(a => (
+              <span key={a.id} style={{ fontSize:10, fontWeight:700, color: matchedDanger.includes(a.id) ? "var(--red)" : "var(--amber)", background: matchedDanger.includes(a.id) ? "var(--red-lt)" : "var(--amber-lt)", border:`1px solid ${matchedDanger.includes(a.id) ? "var(--red-md)" : "var(--amber-md)"}`, borderRadius:100, padding:"1px 6px" }}>
+                {a.emoji} {a.label}
+              </span>
+            ))}
+          </div>
+        )}
+        {p.tags?.length > 0 && (
+          <div style={{ display:"flex", gap:3, marginTop:3, flexWrap:"wrap" }}>
+            {p.tags.map((t,i) => (
+              <span key={i} style={{ fontSize:10, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:100, padding:"1px 7px" }}>
+                {tagLabels[t]||t}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
+        <div style={{ fontSize:11, fontWeight:700, color:statusColor }}>{statusLabel}</div>
+        <button className="btn btn-ghost btn-sm" style={{ fontSize:11, padding:"3px 8px" }}
+          onClick={e => { e.stopPropagation(); onAddToList(); }}>+ Liste</button>
+      </div>
+    </div>
+  );
+});
+
 export default function SearchScreen({
   activeIds,
   searchQuery, setSearchQuery,
@@ -256,47 +300,12 @@ export default function SearchScreen({
         </div>
       )}
 
-      {visibleResults.map(p => {
-        const { status, matchedDanger, matchedWarning } = compareAllergens(p.allergen_flags||{}, effectiveIds);
-        const statusColor = safetyStyle(status).color;
-        const statusLabel = `${safetyStyle(status).icon} ${status==="safe" ? "Sikker" : status==="danger" ? "Farlig" : "Advarsel"}`;
-        const matchedLabels = [...matchedDanger, ...matchedWarning].map(id => ALLERGENS.find(a=>a.id===id)).filter(Boolean);
-        const tagLabels = { vegan:"🌱 Vegansk", vegetarian:"🥦 Vegetarisk" };
-        return (
-          <div key={p.id}
-            onClick={() => lookupProduct(p.ean||p.id)}
-            style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", marginBottom:8, background:"var(--surface)", border:`1px solid ${status==="danger" ? "var(--red-md)" : status==="warn" ? "var(--amber-md)" : "var(--border)"}`, borderRadius:12, cursor:"pointer" }}>
-            <ProductImage product={p} size={44} />
-            <div style={S.flexMin}>
-              <div style={S.h13b}>{p.name}</div>
-              <div style={S.sub11}>{p.brand}{p.category ? ` · ${p.category}` : ""}</div>
-              {matchedLabels.length > 0 && (
-                <div style={{ display:"flex", gap:3, marginTop:4, flexWrap:"wrap" }}>
-                  {matchedLabels.map(a => (
-                    <span key={a.id} style={{ fontSize:10, fontWeight:700, color: matchedDanger.includes(a.id) ? "var(--red)" : "var(--amber)", background: matchedDanger.includes(a.id) ? "var(--red-lt)" : "var(--amber-lt)", border:`1px solid ${matchedDanger.includes(a.id) ? "var(--red-md)" : "var(--amber-md)"}`, borderRadius:100, padding:"1px 6px" }}>
-                      {a.emoji} {a.label}
-                    </span>
-                  ))}
-                </div>
-              )}
-              {p.tags?.length > 0 && (
-                <div style={{ display:"flex", gap:3, marginTop:3, flexWrap:"wrap" }}>
-                  {p.tags.map((t,i) => (
-                    <span key={i} style={{ fontSize:10, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:100, padding:"1px 7px" }}>
-                      {tagLabels[t]||t}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
-              <div style={{ fontSize:11, fontWeight:700, color:statusColor }}>{statusLabel}</div>
-              <button className="btn btn-ghost btn-sm" style={{ fontSize:11, padding:"3px 8px" }}
-                onClick={e => { e.stopPropagation(); addToList(p.name); }}>+ Liste</button>
-            </div>
-          </div>
-        );
-      })}
+      {visibleResults.map(p => (
+        <SearchResultRow key={p.id} product={p} effectiveIds={effectiveIds}
+          onOpen={() => lookupProduct(p.ean||p.id)}
+          onAddToList={() => addToList(p.name)}
+        />
+      ))}
     </div>
   );
 }
