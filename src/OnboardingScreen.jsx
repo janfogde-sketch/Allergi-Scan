@@ -16,36 +16,10 @@ function WelcomeIntro({ setScreen, setAuthTab }) {
   const goSignup = () => { setAuthTab("signup"); setScreen(SCREENS.LOGIN); };
   const goLogin  = () => { setAuthTab("login");  setScreen(SCREENS.LOGIN); };
 
-  const points = [
-    { icon:"📷", text:"Skan — og se det med det samme" },
-    { icon:"🍽️", text:"Opskrifter tilpasset jeres allergier" },
-    { icon:"👨‍👩‍👧", text:"Hele familien i én app" },
-  ];
-
   return (
-    <div style={{ borderRadius:20, overflow:"hidden", border:"1px solid var(--border)", marginBottom:8, boxShadow:"var(--sh2)" }}>
-      <div style={{ background:"var(--surface)", padding:"18px", display:"flex", flexDirection:"column", gap:12 }}>
-        {points.map((p, i) => (
-          <div key={i} style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ fontSize:19, lineHeight:1, flexShrink:0 }}>{p.icon}</div>
-            <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>{p.text}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Faste CTA-knapper */}
-      <div style={{ padding:"12px 14px 14px", background:"var(--surface3)", borderTop:"1px solid var(--border)", display:"flex", gap:8 }}>
-        <button onClick={goSignup}
-          style={{ flex:2, padding:"11px", background:"var(--green)", border:"none", borderRadius:12,
-            fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
-          Opret gratis konto →
-        </button>
-        <button onClick={goLogin}
-          style={{ flex:1, padding:"11px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12,
-            fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
-          Log ind
-        </button>
-      </div>
+    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+      <button className="welcome-btn" onClick={goSignup}>Opret gratis konto →</button>
+      <button className="welcome-btn-ghost" onClick={goLogin}>Jeg har allerede en konto</button>
     </div>
   );
 }
@@ -224,7 +198,7 @@ export default function OnboardingScreen({
               <div className="welcome-tagline">Scan. Tjek. Spis trygt.</div>
             </div>
 
-            {/* Kort feature-intro + CTA */}
+            {/* CTA */}
             <WelcomeIntro setScreen={setScreen} setAuthTab={setAuthTab} />
 
             {/* Privacy */}
