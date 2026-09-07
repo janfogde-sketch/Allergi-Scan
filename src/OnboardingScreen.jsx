@@ -17,18 +17,18 @@ function WelcomeIntro({ setScreen, setAuthTab }) {
   const goLogin  = () => { setAuthTab("login");  setScreen(SCREENS.LOGIN); };
 
   const points = [
-    { icon:"📷", text:"Skan en stregkode — se med det samme om produktet er sikkert for dig og din familie." },
-    { icon:"🍽️", text:"Find opskrifter og madpakke-idéer, automatisk filtreret efter jeres allergier." },
-    { icon:"👨‍👩‍👧", text:"Opret profiler for hele familien — børn, partner, alle med hver deres allergier." },
+    { icon:"📷", text:"Skan — og se det med det samme" },
+    { icon:"🍽️", text:"Opskrifter tilpasset jeres allergier" },
+    { icon:"👨‍👩‍👧", text:"Hele familien i én app" },
   ];
 
   return (
     <div style={{ borderRadius:20, overflow:"hidden", border:"1px solid var(--border)", marginBottom:8, boxShadow:"var(--sh2)" }}>
-      <div style={{ background:"var(--surface)", padding:"20px 18px 18px", display:"flex", flexDirection:"column", gap:14 }}>
+      <div style={{ background:"var(--surface)", padding:"18px", display:"flex", flexDirection:"column", gap:12 }}>
         {points.map((p, i) => (
-          <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
-            <div style={{ fontSize:22, lineHeight:1, flexShrink:0 }}>{p.icon}</div>
-            <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.55, paddingTop:2 }}>{p.text}</div>
+          <div key={i} style={{ display:"flex", alignItems:"center", gap:10 }}>
+            <div style={{ fontSize:19, lineHeight:1, flexShrink:0 }}>{p.icon}</div>
+            <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>{p.text}</div>
           </div>
         ))}
       </div>
