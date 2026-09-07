@@ -4,6 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { Icon, EmptyState } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
+import { UI } from "./styleUtils.js";
 
 const CATEGORIES = [
   { id:"allergen",       emoji:"🌾", label:"Allergener",      color:"var(--red)",  bg:"rgba(255,82,82,.10)" },
@@ -186,7 +187,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", paddingTop:4, marginBottom:16 }}>
         <div>
           <div style={{ fontSize:22, fontWeight:800, color:"var(--ink)" }}>📚 Leksikon</div>
-          <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{total} entries</div>
+          <div style={UI.muted12mt2}>{total} entries</div>
         </div>
       </div>
 
@@ -240,7 +241,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           {[1,2,3,4,5].map(i => (
             <div key={i} className="skeleton-card" style={{ display:"flex", gap:10, marginBottom:8 }}>
               <div className="skeleton-block" style={{ width:36, height:36, borderRadius:8, flexShrink:0 }} />
-              <div style={{ flex:1 }}>
+              <div style={UI.flex1}>
                 <div className="skeleton-block skeleton-title" />
                 <div className="skeleton-block skeleton-sub" />
               </div>
@@ -255,7 +256,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           return (
             <div key={entry.id} style={S.card} onClick={() => setSelectedEntry(entry)}>
               <div style={S.cardEmoji}>{entry.emoji||cat.emoji||"📄"}</div>
-              <div style={{ flex:1, minWidth:0 }}>
+              <div style={UI.flexMin}>
                 <div style={S.cardTitle}>{entry.title}</div>
                 {entry.summary && <div style={S.cardSummary}>{entry.summary}</div>}
               </div>
@@ -267,7 +268,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
 
       {/* Fun facts på forsiden */}
       {!showList && funFacts.length > 0 && (
-        <div style={{ marginTop:8 }}>
+        <div style={UI.mt8}>
           <div style={S.label}>💡 Vidste du at...</div>
           {funFacts.map(f => (
             <div key={f.id} onClick={() => setSelectedEntry(f)}

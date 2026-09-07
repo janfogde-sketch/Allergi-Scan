@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { SCREENS, ALLERGENS } from "./constants.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
+import { UI } from "./styleUtils.js";
 
 const TIPS = [
   {
@@ -124,7 +125,7 @@ export default function RestaurantGuideScreen() {
         </button>
         <div>
           <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)" }}>Restaurantguide</div>
-          <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>Sådan spiser du trygt ude</div>
+          <div style={UI.muted11mt1}>Sådan spiser du trygt ude</div>
         </div>
       </div>
 
@@ -146,7 +147,7 @@ export default function RestaurantGuideScreen() {
 
       {/* Tip til madpas */}
       <div style={{ background:"rgba(74,222,128,.07)", border:"1px solid rgba(74,222,128,.2)", borderRadius:12, padding:"12px 14px", marginBottom:16, display:"flex", gap:10, alignItems:"flex-start" }}>
-        <div style={{ fontSize:20, flexShrink:0 }}>💡</div>
+        <div style={UI.fs20Shrink0}>💡</div>
         <div>
           <div style={{ fontSize:13, fontWeight:700, color:"var(--green)", marginBottom:3 }}>Brug dit madpas</div>
           <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>
@@ -168,10 +169,10 @@ export default function RestaurantGuideScreen() {
                 <div style={{ width:38, height:38, borderRadius:10, background: section.bg, border:`1px solid ${section.border}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
                   {section.icon}
                 </div>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>{section.title}</div>
+                <div style={UI.flex1}>
+                  <div style={UI.boldInk14}>{section.title}</div>
                   {!isOpen && (
-                    <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>{section.tips.length} tips</div>
+                    <div style={UI.muted11mt1}>{section.tips.length} tips</div>
                   )}
                 </div>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2.5"
@@ -207,7 +208,7 @@ export default function RestaurantGuideScreen() {
         <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
           {QUICK_PHRASES.map((p, i) => (
             <div key={i} style={{ padding:"10px 0", borderBottom: i < QUICK_PHRASES.length - 1 ? "1px solid var(--border)" : "none" }}>
-              <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{p.da}</div>
+              <div style={UI.boldInk13mb2}>{p.da}</div>
               <div style={{ fontSize:12, color:"var(--muted)", fontStyle:"italic" }}>{p.en}</div>
             </div>
           ))}

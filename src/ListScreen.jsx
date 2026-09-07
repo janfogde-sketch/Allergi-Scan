@@ -6,6 +6,7 @@ import { Icon, ProductImage } from "./SharedComponents.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
+import { UI } from "./styleUtils.js";
 
 const S = {
   flexMin: { flex:1, minWidth:0 },
@@ -74,7 +75,7 @@ export default function ListScreen({
 
       {/* ── Del-bar ── */}
       <div className="share-bar">
-        <span style={{ fontSize:18 }}></span>
+        <span style={UI.fs18}></span>
         <span className="share-txt">Del listen med familie via link</span>
         <button className="btn btn-ghost btn-sm" style={{ fontSize:12 }}
           onClick={() => { navigator.clipboard?.writeText(window.location.href); alert("Link kopieret! 📋"); }}>

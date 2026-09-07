@@ -11,6 +11,7 @@ import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useFamilyFormContext } from "./FamilyFormContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
+import { UI } from "./styleUtils.js";
 
 function WelcomeIntro({ setScreen, setAuthTab }) {
   const goSignup = () => { setAuthTab("signup"); setScreen(SCREENS.LOGIN); };
@@ -102,23 +103,23 @@ export default function OnboardingScreen({
     ].filter(Boolean);
     return (
       <div className="fade-in">
-        <div style={{ marginBottom:14 }}>
+        <div style={UI.mb14}>
           <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", marginBottom:4 }}>Hvem er du?</div>
           <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.5 }}>Oplysningerne bruges til din personlige allergiprofil og kan redigeres senere.</div>
         </div>
 
-        <div className="card" style={{ marginBottom:12 }}>
+        <div className="card" style={UI.mb12}>
           {/* Navn */}
-          <div style={{ marginBottom:12 }}>
-            <label className="field-lbl">Fulde navn <span style={{ color:"var(--red)" }}>*</span></label>
+          <div style={UI.mb12}>
+            <label className="field-lbl">Fulde navn <span style={UI.red}>*</span></label>
             <input className="field" type="text" placeholder="Fx. Anna Hansen"
               value={user.name||""} onChange={e => setUser(u => ({...u, name:e.target.value}))}
               style={{ borderColor: !nameOk && (user.name !== undefined) ? "var(--red-md)" : undefined }} />
           </div>
 
           {/* Email */}
-          <div style={{ marginBottom:12 }}>
-            <label className="field-lbl">Email <span style={{ color:"var(--red)" }}>*</span></label>
+          <div style={UI.mb12}>
+            <label className="field-lbl">Email <span style={UI.red}>*</span></label>
             <input className="field" type="email" placeholder="din@email.dk"
               value={user.email||loginEmail||""}
               onChange={e => setUser(u => ({...u, email:e.target.value}))}
@@ -133,15 +134,15 @@ export default function OnboardingScreen({
           </div>
 
           {/* Telefon */}
-          <div style={{ marginBottom:12 }}>
-            <label className="field-lbl">Telefonnummer <span style={{ color:"var(--red)" }}>*</span></label>
+          <div style={UI.mb12}>
+            <label className="field-lbl">Telefonnummer <span style={UI.red}>*</span></label>
             <input className="field" type="tel" placeholder="+45 12 34 56 78"
               value={user.phone||""} onChange={e => setUser(u => ({...u, phone:e.target.value}))} />
           </div>
 
           {/* Alder */}
-          <div style={{ marginBottom:14 }}>
-            <label className="field-lbl">Alder <span style={{ color:"var(--red)" }}>*</span></label>
+          <div style={UI.mb14}>
+            <label className="field-lbl">Alder <span style={UI.red}>*</span></label>
             <input className="field" type="number" inputMode="numeric" placeholder="Fx. 32" min="1" max="120"
               value={user.age||""} onChange={e => setUser(u => ({...u, age:e.target.value}))}
               style={{ maxWidth:120 }} />
@@ -149,7 +150,7 @@ export default function OnboardingScreen({
 
           {/* Køn */}
           <div>
-            <label className="field-lbl">Køn <span style={{ color:"var(--red)" }}>*</span></label>
+            <label className="field-lbl">Køn <span style={UI.red}>*</span></label>
             <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
               {["Mand","Kvinde","Andet","Vil ikke oplyse"].map(g => (
                 <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
@@ -190,7 +191,7 @@ export default function OnboardingScreen({
         {screen === SCREENS.WELCOME && (
           <div className="welcome-screen fade-in">
             {/* Logo + tagline */}
-            <div className="welcome-logo-wrap" style={{ marginBottom:16 }}>
+            <div className="welcome-logo-wrap" style={UI.mb16}>
               <EatSafeLogo size={72} variant="light" />
               <div className="welcome-wordmark">
                 <span className="welcome-wordmark-text">Eat<span>Safe</span></span>
@@ -235,7 +236,7 @@ export default function OnboardingScreen({
                 <div className="card">
                   <label className="field-lbl">Email</label>
                   <input className="field" type="email" placeholder="din@email.dk" value={loginEmail}
-                    onChange={e => setLoginEmail(e.target.value)} style={{ marginBottom:12 }}
+                    onChange={e => setLoginEmail(e.target.value)} style={UI.mb12}
                     onKeyDown={e => e.key==="Enter" && handleSignup()} />
                   <label className="field-lbl">Vælg kodeord</label>
                   <input className="field" type="password" placeholder="Minimum 6 tegn" value={loginPassword}
@@ -273,7 +274,7 @@ export default function OnboardingScreen({
                 <div className="card">
                   <label className="field-lbl">Email</label>
                   <input className="field" type="email" placeholder="din@email.dk" value={loginEmail}
-                    onChange={e => setLoginEmail(e.target.value)} style={{ marginBottom:12 }}
+                    onChange={e => setLoginEmail(e.target.value)} style={UI.mb12}
                     onKeyDown={e => e.key==="Enter" && handleLogin()} />
                   <label className="field-lbl">Kodeord</label>
                   <input className="field" type="password" placeholder="Dit kodeord" value={loginPassword}
@@ -298,9 +299,9 @@ export default function OnboardingScreen({
               </div>
             )}
             <div style={{ display:"flex", alignItems:"center", gap:10, margin:"14px 0 10px" }}>
-              <div style={{ flex:1, height:1, background:"var(--border)" }} />
+              <div style={UI.hr} />
               <span style={{ fontSize:12, color:"var(--muted)", fontWeight:600 }}>eller log ind med</span>
-              <div style={{ flex:1, height:1, background:"var(--border)" }} />
+              <div style={UI.hr} />
             </div>
 
             {/* Social login knapper */}
@@ -334,9 +335,9 @@ export default function OnboardingScreen({
             </div>
 
             <div style={{ display:"flex", alignItems:"center", gap:10, margin:"4px 0 8px" }}>
-              <div style={{ flex:1, height:1, background:"var(--border)" }} />
+              <div style={UI.hr} />
               <span style={{ fontSize:11, color:"var(--muted)", fontWeight:500 }}>eller</span>
-              <div style={{ flex:1, height:1, background:"var(--border)" }} />
+              <div style={UI.hr} />
             </div>
 
             
@@ -348,7 +349,7 @@ export default function OnboardingScreen({
           <div className="onboard-wrap fade-in">
             {!editMode && (
               <div style={{ textAlign:"center", padding:"4px 0 20px" }}>
-                <div style={{ marginBottom:6 }}><EatSafeLogo size={40} variant="light" /></div>
+                <div style={UI.mb6}><EatSafeLogo size={40} variant="light" /></div>
                 <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)" }}>Opsæt din profil</div>
                 <div style={{ fontSize:13, color:"var(--muted)", marginTop:4 }}>Tager under 2 minutter</div>
               </div>
@@ -364,7 +365,7 @@ export default function OnboardingScreen({
                   </svg>
                 </button>
               )}
-              <div style={{ flex:1 }}>
+              <div style={UI.flex1}>
                 {onboardStep > 0 && <StepBar total={5} current={onboardStep} />}
               </div>
             </div>
@@ -383,24 +384,24 @@ export default function OnboardingScreen({
 
                   <div style={{ display:"flex", flexDirection:"column", gap:12, textAlign:"left", marginBottom:20 }}>
                     <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
-                      <span style={{ fontSize:20, flexShrink:0 }}>💬</span>
+                      <span style={UI.fs20Shrink0}>💬</span>
                       <div>
-                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>Giv os feedback</div>
-                        <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5 }}>Tryk på Feedback-knappen når du støder på fejl eller har idéer. Vi læser alt.</div>
+                        <div style={UI.boldInk13mb2}>Giv os feedback</div>
+                        <div style={UI.muted2_12lh}>Tryk på Feedback-knappen når du støder på fejl eller har idéer. Vi læser alt.</div>
                       </div>
                     </div>
                     <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
-                      <span style={{ fontSize:20, flexShrink:0 }}>❓</span>
+                      <span style={UI.fs20Shrink0}>❓</span>
                       <div>
-                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>Brug hjælp-knappen</div>
-                        <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5 }}>Tryk på ? øverst for en guide til den skærm du står på.</div>
+                        <div style={UI.boldInk13mb2}>Brug hjælp-knappen</div>
+                        <div style={UI.muted2_12lh}>Tryk på ? øverst for en guide til den skærm du står på.</div>
                       </div>
                     </div>
                     <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
-                      <span style={{ fontSize:20, flexShrink:0 }}>⚠️</span>
+                      <span style={UI.fs20Shrink0}>⚠️</span>
                       <div>
-                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>Tjek altid emballagen</div>
-                        <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5 }}>Allergendata kan mangle eller være ukorrekte. Appen er et hjælpeværktøj, ikke en garanti.</div>
+                        <div style={UI.boldInk13mb2}>Tjek altid emballagen</div>
+                        <div style={UI.muted2_12lh}>Allergendata kan mangle eller være ukorrekte. Appen er et hjælpeværktøj, ikke en garanti.</div>
                       </div>
                     </div>
                   </div>
@@ -417,18 +418,18 @@ export default function OnboardingScreen({
             {onboardStep === 97 && (
               <div className="fade-in">
                 <div className="card" style={{ textAlign:"center", padding:"20px 20px 14px" }}>
-                  <div style={{ marginBottom:8 }}><Icon name="info" size={44} color="var(--ink2)" /></div>
+                  <div style={UI.mb8}><Icon name="info" size={44} color="var(--ink2)" /></div>
                   <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)", marginBottom:6 }}>Forstå vores data</div>
                   <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>Vi arbejder hårdt for at give dig pålidelig information — men det er vigtigt du forstår kilden.</div>
                 </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                <div style={UI.colGap8}>
                   {[
                     ["check","Verificerede produkter","Gennemgået og godkendt af vores team.","var(--green-lt)","var(--green)"],
                     ["globe","Open Food Facts","Global frivillig database. Ikke garanteret korrekt.","var(--amber-lt)","var(--amber)"],
                     ["warning","Bruger-indsendte","Afventer godkendelse. Brug med forsigtighed.","var(--red-lt)","var(--red)"],
                   ].map(([icon, title, text, bg, color]) => (
                     <div key={title} style={{ background:bg, border:`1px solid ${color}`, borderRadius:12, padding:"10px 14px", display:"flex", gap:10, alignItems:"flex-start" }}>
-                      <div style={{ flexShrink:0 }}><Icon name={icon} size={18} color={color} /></div>
+                      <div style={UI.shrink0}><Icon name={icon} size={18} color={color} /></div>
                       <div>
                         <div style={{ fontWeight:700, fontSize:13, color, marginBottom:2 }}>{title}</div>
                         <div style={{ fontSize:11, color:"var(--muted2)", lineHeight:1.4 }}>{text}</div>
@@ -442,7 +443,7 @@ export default function OnboardingScreen({
                 </div>
                 <div style={{ display:"flex", gap:8, marginTop:14 }}>
                   <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(1)}>← Tilbage</button>
-                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(25)}>Jeg forstår →</button>
+                  <button className="btn btn-primary" style={UI.flex1} onClick={() => setOnboardStep(25)}>Jeg forstår →</button>
                 </div>
               </div>
             )}
@@ -496,7 +497,7 @@ export default function OnboardingScreen({
 
                 <div style={{ display:"flex", gap:8, marginTop:14 }}>
                   <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(2)}>← Tilbage</button>
-                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(1)}>Fortsæt →</button>
+                  <button className="btn btn-primary" style={UI.flex1} onClick={() => setOnboardStep(1)}>Fortsæt →</button>
                 </div>
               </div>
             )}
@@ -523,8 +524,8 @@ export default function OnboardingScreen({
                           color: on ? "var(--red)" : "var(--ink)",
                         }}
                           onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
-                          <span style={{ flex:1 }}>{a.emoji} {a.label}</span>
-                          {on && <div style={{ fontSize:9, fontWeight:800, color:"var(--red)" }}>✓</div>}
+                          <span style={UI.flex1}>{a.emoji} {a.label}</span>
+                          {on && <div style={UI.redBadge9}>✓</div>}
                         </div>
                       );
                     })}
@@ -532,7 +533,7 @@ export default function OnboardingScreen({
 
                   {/* Skriv selv */}
                   <div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid var(--border)" }}>
-                    <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Kan ikke finde din allergi eller din intolerance?</div>
+                    <div style={UI.sectionLbl6}>Kan ikke finde din allergi eller din intolerance?</div>
                     <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8, lineHeight:1.6 }}>
                       Tilføj selv — enten en hel allergikategori (fx. "Fructose") eller en specifik ingrediens du reagerer på (fx. "Kasein", "Sorbitol", "Hvede-kimolie"). Vi fremhæver det i ingredienslister.
                     </div>
@@ -559,25 +560,25 @@ export default function OnboardingScreen({
                     onClick={() => setShowENumbersInOnboard(s => !s)}
                     style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", background:"none", border:"none", cursor:"pointer", padding:"4px 0", fontFamily:"var(--f)" }}>
                     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                      <span style={{ fontSize:16 }}>🔢</span>
+                      <span style={UI.fs16}>🔢</span>
                       <div style={{ textAlign:"left" }}>
                         <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>
                           Overvåg specifikke E-numre
                           {selectedENumbers.length > 0 && <span style={{ fontSize:11, color:"var(--amber)", marginLeft:6 }}>{selectedENumbers.length} valgt</span>}
                         </div>
-                        <div style={{ fontSize:11, color:"var(--muted)" }}>Valgfrit — kan altid tilføjes senere</div>
+                        <div style={UI.muted11}>Valgfrit — kan altid tilføjes senere</div>
                       </div>
                     </div>
                     <span style={{ fontSize:18, color:"var(--muted)", transform: showENumbersInOnboard ? "rotate(180deg)" : "none", transition:".2s" }}>⌄</span>
                   </button>
                   {showENumbersInOnboard && (
-                    <div style={{ marginTop:12 }}>
+                    <div style={UI.mt12}>
                       <ENumberPicker selected={selectedENumbers} onChange={setSelectedENumbers} />
                     </div>
                   )}
                 </div>
 
-                <button className="btn btn-primary btn-full" style={{ marginTop:12 }} onClick={async () => {
+                <button className="btn btn-primary btn-full" style={UI.mt12} onClick={async () => {
                   try { await saveAllergensStep2(); setOnboardStep(3); }
                   catch { alert("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen."); }
                 }}>Fortsæt →</button>
@@ -607,8 +608,8 @@ export default function OnboardingScreen({
                   <div className="step-sub">Vælg E-numre du ønsker at undgå. Vi markerer dem i ingredienslister.</div>
 
                   {/* Mest valgte */}
-                  <div style={{ marginBottom:14 }}>
-                    <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Mest valgte</div>
+                  <div style={UI.mb14}>
+                    <div style={UI.sectionLbl8}>Mest valgte</div>
                     <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
                       {[
                         {e:"E621",n:"MSG - Smagsforstærker"},
@@ -652,13 +653,13 @@ export default function OnboardingScreen({
 
                 {/* Allerede tilføjede */}
                 {family.length > 0 && (
-                  <div className="card" style={{ marginBottom:12 }}>
+                  <div className="card" style={UI.mb12}>
                     {family.map(m => (
                       <div key={m.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 0", borderBottom:"1px solid var(--border)" }}>
                         <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)" }}>{initials(m.name)}</div>
-                        <div style={{ flex:1 }}>
+                        <div style={UI.flex1}>
                           <div style={{ fontWeight:800, fontSize:14 }}>{m.name}</div>
-                          <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>
+                          <div style={UI.muted11mt2}>
                             {m.allergens.length ? m.allergens.map(id => ALLERGENS.find(a=>a.id===id)?.label).join(", ") : "Ingen allergier"}
                           </div>
                         </div>
@@ -671,8 +672,8 @@ export default function OnboardingScreen({
                 )}
 
                 {/* Tilføj nyt medlem */}
-                <div className="card" style={{ marginBottom:12 }}>
-                  <div className="card-lbl" style={{ marginBottom:12 }}>Tilføj nyt familiemedlem</div>
+                <div className="card" style={UI.mb12}>
+                  <div className="card-lbl" style={UI.mb12}>Tilføj nyt familiemedlem</div>
                   <MemberForm
                     name={newMemberName} setName={setNewMemberName}
                     birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
@@ -697,14 +698,14 @@ export default function OnboardingScreen({
             {onboardStep === 5 && (
                 <div className="fade-in">
                   <div style={{ textAlign:"center", padding:"16px 0 20px" }}>
-                    <div style={{ fontSize:48, marginBottom:12 }}>🔔</div>
+                    <div style={UI.emoji48mb12}>🔔</div>
                     <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Bliv opdateret</div>
                     <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.65 }}>
                       Få en notifikation når dine produktindsendelser godkendes, og når familiemedlemmer tilslutter sig.
                     </div>
                   </div>
 
-                  <div className="card" style={{ marginBottom:16 }}>
+                  <div className="card" style={UI.mb16}>
                     {[
                       ["✅","Produktet er godkendt","Når admin godkender dit indsendte produkt"],
                       ["👨‍👩‍👧","Familie tilslutter sig","Når nogen accepterer dit invitationslink"],
@@ -714,7 +715,7 @@ export default function OnboardingScreen({
                         <div style={{ fontSize:22, lineHeight:1 }}>{e}</div>
                         <div>
                           <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{title}</div>
-                          <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>{sub}</div>
+                          <div style={UI.muted11mt2}>{sub}</div>
                         </div>
                       </div>
                     ))}
@@ -734,7 +735,7 @@ export default function OnboardingScreen({
                         style={{ opacity: pushLoading ? .6 : 1 }}>
                         {pushLoading ? "Aktiverer…" : "🔔 Slå notifikationer til"}
                       </button>
-                      <button className="btn btn-ghost btn-full" style={{ marginTop:8 }}
+                      <button className="btn btn-ghost btn-full" style={UI.mt8}
                         onClick={() => setOnboardStep(6)}>
                         Ikke nu
                       </button>
@@ -750,13 +751,13 @@ export default function OnboardingScreen({
                 <div style={{ fontSize:13, color:"var(--muted2)", marginBottom:16, lineHeight:1.5 }}>
                   Vælg din diæt så vi kan filtrere produkter og opskrifter til dig.
                 </div>
-                <div className="chip-grid" style={{ marginBottom:12 }}>
+                <div className="chip-grid" style={UI.mb12}>
                   {DIETS.map(d => { const on = (user.diets||[]).includes(d.id); return (
                     <div key={d.id} className={`chip${on?" on":""}`}
                       onClick={() => setUser(u => ({ ...u, diets: on ? (u.diets||[]).filter(x=>x!==d.id) : [...(u.diets||[]), d.id] }))}>
-                      <div style={{ flex:1 }}>
+                      <div style={UI.flex1}>
                         <div style={{ fontWeight:700 }}>{d.label}</div>
-                        <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>{d.desc}</div>
+                        <div style={UI.muted11mt2}>{d.desc}</div>
                       </div>
                       {on && <div className="chip-check">✓</div>}
                     </div>
@@ -766,7 +767,7 @@ export default function OnboardingScreen({
                   Diæt-tjek er vejledende og baseret på produkttags. Tjek altid ingredienserne selv.
                 </div>
                 <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(4)}>Fortsæt →</button>
-                <button className="btn btn-ghost btn-full btn-sm" style={{ marginTop:8 }} onClick={() => { setUser(u => ({...u, diets:[]})); setOnboardStep(4); }}>Ingen særlig diæt</button>
+                <button className="btn btn-ghost btn-full btn-sm" style={UI.mt8} onClick={() => { setUser(u => ({...u, diets:[]})); setOnboardStep(4); }}>Ingen særlig diæt</button>
               </div>
             )}
 
@@ -774,11 +775,11 @@ export default function OnboardingScreen({
             {onboardStep === 95 && (
               <div className="fade-in">
                 <div className="card" style={{ textAlign:"center", padding:"20px 20px 14px" }}>
-                  <div style={{ marginBottom:8 }}><Icon name="heart" size={44} color="var(--ink2)" /></div>
+                  <div style={UI.mb8}><Icon name="heart" size={44} color="var(--ink2)" /></div>
                   <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)", marginBottom:6 }}>Hjælp fællesskabet</div>
                   <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>Når du scanner et ukendt produkt kan du indsende det og hjælpe andre.</div>
                 </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                <div style={UI.colGap8}>
                   {[
                     ["1️⃣","Skan stregkoden","Hold kameraet over stregkoden på produktet."],
                     ["2️⃣","Fotografér ingredienslisten","Tag et billede af bagsiden af pakken."],
@@ -797,7 +798,7 @@ export default function OnboardingScreen({
                 </div>
                 <div style={{ display:"flex", gap:8, marginTop:14 }}>
                   <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(4)}>← Tilbage</button>
-                  <button className="btn btn-primary" style={{ flex:1 }} onClick={() => setOnboardStep(9)}>Fortsæt →</button>
+                  <button className="btn btn-primary" style={UI.flex1} onClick={() => setOnboardStep(9)}>Fortsæt →</button>
                 </div>
               </div>
             )}
@@ -819,7 +820,7 @@ export default function OnboardingScreen({
                 </div>
 
                 {/* Din profil */}
-                <div className="card" style={{ marginBottom:12 }}>
+                <div className="card" style={UI.mb12}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
                     <div style={{ fontWeight:800, fontSize:15, color:"var(--ink)" }}>
                       {user.name || "Din profil"}
@@ -832,11 +833,11 @@ export default function OnboardingScreen({
 
                   {/* Allergier */}
                   {allergens.length > 0 ? (
-                    <div style={{ marginBottom:10 }}>
-                      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>
+                    <div style={UI.mb10}>
+                      <div style={UI.sectionLbl6}>
                         Allergier / intolerancer
                       </div>
-                      <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                      <div style={UI.wrapGap5}>
                         {allergens.map(id => {
                           const a = ALLERGENS.find(x=>x.id===id);
                           return (
@@ -861,9 +862,9 @@ export default function OnboardingScreen({
 
                   {/* Diæt */}
                   {user.diets && user.diets.length > 0 && (
-                    <div style={{ marginBottom:10 }}>
-                      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Diæt</div>
-                      <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                    <div style={UI.mb10}>
+                      <div style={UI.sectionLbl6}>Diæt</div>
+                      <div style={UI.wrapGap5}>
                         {user.diets.map(d => (
                           <div key={d} style={{ padding:"5px 10px", borderRadius:20, fontSize:12, fontWeight:700,
                             background:"var(--green-lt)", color:"var(--green)", border:"1px solid var(--green-mid)" }}>
@@ -877,7 +878,7 @@ export default function OnboardingScreen({
                   {/* E-numre */}
                   {selectedENumbers.length > 0 && (
                     <div>
-                      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>E-numre der undgås</div>
+                      <div style={UI.sectionLbl6}>E-numre der undgås</div>
                       <div style={{ fontSize:12, color:"var(--muted2)" }}>{selectedENumbers.length} E-numre valgt</div>
                     </div>
                   )}
@@ -885,7 +886,7 @@ export default function OnboardingScreen({
 
                 {/* Familiemedlemmer */}
                 {family.length > 0 && (
-                  <div style={{ marginBottom:12 }}>
+                  <div style={UI.mb12}>
                     <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>Familiemedlemmer</div>
                     {family.map(m => (
                       <div key={m.id} className="card" style={{ marginBottom:8, padding:"12px 14px" }}>
@@ -893,9 +894,9 @@ export default function OnboardingScreen({
                           <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)", flexShrink:0 }}>
                             {initials(m.name)}
                           </div>
-                          <div style={{ flex:1 }}>
+                          <div style={UI.flex1}>
                             <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>{m.name}</div>
-                            <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>
+                            <div style={UI.muted11mt2}>
                               {m.allergens.length
                                 ? m.allergens.map(id=>ALLERGENS.find(a=>a.id===id)?.label).join(", ")
                                 : "Ingen allergier"}
@@ -925,7 +926,7 @@ export default function OnboardingScreen({
                   <div style={{ fontSize:28, flexShrink:0 }}>🤝</div>
                   <div>
                     <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>Du er nu en del af fællesskabet</div>
-                    <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5 }}>Når du scanner ukendte produkter og indsender data, hjælper du alle andre med de samme allergier. Tak!</div>
+                    <div style={UI.muted2_12lh}>Når du scanner ukendte produkter og indsender data, hjælper du alle andre med de samme allergier. Tak!</div>
                   </div>
                 </div>
 
@@ -939,7 +940,7 @@ export default function OnboardingScreen({
                   {editMode ? "Gem ændringer ✓" : "Gå til appen →"}
                 </button>
                 {editMode && (
-                  <button className="btn btn-outline btn-full" style={{ marginTop:8 }}
+                  <button className="btn btn-outline btn-full" style={UI.mt8}
                     onClick={() => { setEditMode(false); setScreen(SCREENS.PROFILE); }}>
                     Annuller
                   </button>

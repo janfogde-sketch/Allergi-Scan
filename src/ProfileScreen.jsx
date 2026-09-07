@@ -13,6 +13,7 @@ import { useHistoryContext } from "./HistoryContext.jsx";
 import { useAdminContext } from "./AdminContext.jsx";
 import { useFamilyFormContext } from "./FamilyFormContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
+import { UI } from "./styleUtils.js";
 
 // ── Gamification helpers ──────────────────────────────────────────────────────
 function computeStreak(history) {
@@ -54,8 +55,8 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
     <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:10 }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
         <div>
-          <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Din aktivitet</div>
-          <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>Streak · Scanninger · Opdagelser</div>
+          <div style={UI.boldInk13}>Din aktivitet</div>
+          <div style={UI.muted11mt2}>Streak · Scanninger · Opdagelser</div>
         </div>
         {streak >= 3 && (
           <div style={{ fontSize:11, fontWeight:800, color:"#f97316", background:"rgba(249,115,22,.12)", border:"1px solid rgba(249,115,22,.25)", borderRadius:20, padding:"3px 10px" }}>
@@ -66,7 +67,7 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
 
       {/* Streak progress-bar */}
       {streak > 0 && (
-        <div style={{ marginBottom:12 }}>
+        <div style={UI.mb12}>
           <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, color:"var(--muted)", marginBottom:4, fontWeight:600 }}>
             <span>Ugentlig streak</span>
             <span>{Math.min(streak, 7)}/7 dage</span>
@@ -88,7 +89,7 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
       )}
 
       {/* Metrics grid */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+      <div style={UI.grid2gap8}>
         {metrics.map(m => (
           <div key={m.label} style={{
             background: m.bg,
@@ -119,7 +120,7 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
             justifyContent:"space-between",
             cursor:"pointer",
           }}>
-          <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>Se fuld scanningshistorik</div>
+          <div style={UI.boldInk12}>Se fuld scanningshistorik</div>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
         </div>
       </div>
@@ -194,7 +195,7 @@ export default function ProfileScreen({
       setActiveProfiles(next.length === 0 ? [id] : next);
     };
     return (
-      <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+      <div style={UI.wrapGap7}>
         <div className={`ap-chip${isAll?" on":""}`} onClick={toggleAll}>Hele familien</div>
         <div className={`ap-chip${!isAll&&activeProfiles.includes("me")?" on":""}`} onClick={() => toggleOne("me")}>
           <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(user.name||"Mig")}</div>
@@ -215,13 +216,13 @@ export default function ProfileScreen({
           <div className="screen fade-in">
             <div className="screen-title">Scanningshistorik</div>
             <div className="screen-sub">Alle dine tidligere scanninger.</div>
-            <button className="btn btn-ghost btn-sm" style={{ marginBottom:14 }} onClick={() => { loadHistory(); }}>Opdater</button>
+            <button className="btn btn-ghost btn-sm" style={UI.mb14} onClick={() => { loadHistory(); }}>Opdater</button>
             {historyLoading && (
               <div className="fade-in">
                 {[1,2,3,4].map(i => (
                   <div key={i} className="skeleton-row">
                     <div className="skeleton-block skeleton-avatar" />
-                    <div style={{ flex:1 }}>
+                    <div style={UI.flex1}>
                       <div className="skeleton-block skeleton-title" />
                       <div className="skeleton-block skeleton-sub" />
                     </div>
@@ -230,7 +231,7 @@ export default function ProfileScreen({
               </div>
             )}
             {!historyLoading && history.length===0 && (
-              <div className="empty-state"><span className="empty-icon">🔍</span><div className="empty-txt">Ingen scanninger endnu</div><div className="empty-sub">Skan dit første produkt for at se din historik her</div><button className="btn btn-outline btn-sm" style={{ marginTop:12 }} onClick={() => setScreen(SCREENS.HOME)}>Skan nu</button></div>
+              <div className="empty-state"><span className="empty-icon">🔍</span><div className="empty-txt">Ingen scanninger endnu</div><div className="empty-sub">Skan dit første produkt for at se din historik her</div><button className="btn btn-outline btn-sm" style={UI.mt12} onClick={() => setScreen(SCREENS.HOME)}>Skan nu</button></div>
             )}
             {history.map((h,i) => {
               const s = h.result||h.status;
@@ -258,7 +259,7 @@ export default function ProfileScreen({
                 <div style={{ width:56, height:56, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
                   {initials(user.name||"?")}
                 </div>
-                <div style={{ flex:1 }}>
+                <div style={UI.flex1}>
                   <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px" }}>{user.name||"Din profil"}</div>
                   <div style={{ fontSize:12, color:"var(--muted)", marginTop:3 }}>{user.email||loginEmail||""}</div>
                 </div>
@@ -293,10 +294,10 @@ export default function ProfileScreen({
 
             {/* Mine præferencer */}
             <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:10 }}>
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+              <div style={UI.rowBetweenMb10}>
                 <div>
-                  <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Mine præferencer</div>
-                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>Allergier · Intolerancer · Diæter · E-numre</div>
+                  <div style={UI.boldInk13}>Mine præferencer</div>
+                  <div style={UI.muted11mt2}>Allergier · Intolerancer · Diæter · E-numre</div>
                 </div>
                 <button onClick={() => setScreen(SCREENS.EDITPROFILE)}
                   style={{ background:"var(--green-lt)", border:"none", borderRadius:8, padding:"4px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--green)", cursor:"pointer" }}>
@@ -309,26 +310,26 @@ export default function ProfileScreen({
                   <div>
                     {/* Gruppér: allergener, intoleranser, diæter */}
                     {allergens.filter(id => ["gluten","laktose","aeg","noedder","jordnoedder","soja","fisk","skaldyr","selleri","sennep","sesam","svovl","lupin","bloeddyr"].includes(id)).length > 0 && (
-                      <div style={{ marginBottom:8 }}>
-                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Allergier</div>
+                      <div style={UI.mb8}>
+                        <div style={UI.sectionLbl4Ink}>Allergier</div>
                         <div className="tags">{allergens.filter(id => ["gluten","laktose","aeg","noedder","jordnoedder","soja","fisk","skaldyr","selleri","sennep","sesam","svovl","lupin","bloeddyr"].includes(id)).map(id => { const a = ALLERGENS.find(x=>x.id===id); return a ? <div key={id} className="tag" style={{ background:"var(--red-lt)", color:"var(--red)", borderColor:"var(--red-md)" }}>{a.emoji} {a.label}</div> : null; })}</div>
                       </div>
                     )}
                     {customAllerg.length > 0 && (
-                      <div style={{ marginBottom:8 }}>
-                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Intolerancer</div>
+                      <div style={UI.mb8}>
+                        <div style={UI.sectionLbl4Ink}>Intolerancer</div>
                         <div className="tags">{customAllerg.map((c,i) => <div key={i} className="tag" style={{ background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>✏️ {c}</div>)}</div>
                       </div>
                     )}
                     {(user?.diets?.length > 0) && (
-                      <div style={{ marginBottom:8 }}>
-                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>Diæter</div>
+                      <div style={UI.mb8}>
+                        <div style={UI.sectionLbl4Ink}>Diæter</div>
                         <div className="tags">{user.diets.map(d => { const diet = DIETS.find(x=>x.id===d); return diet ? <div key={d} className="tag" style={{ background:"var(--green-lt)", color:"var(--green)", borderColor:"var(--green-mid)" }}>{diet.emoji || "🥗"} {diet.label}</div> : null; })}</div>
                       </div>
                     )}
                     {selectedENumbers && selectedENumbers.length > 0 && (
-                      <div style={{ marginBottom:8 }}>
-                        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:4 }}>E-numre</div>
+                      <div style={UI.mb8}>
+                        <div style={UI.sectionLbl4Ink}>E-numre</div>
                         <div className="tags">{selectedENumbers.map((e,i) => <div key={i} className="tag" style={{ background:"rgba(99,102,241,.1)", color:"#818cf8", borderColor:"rgba(99,102,241,.3)" }}>⚗️ {e}</div>)}</div>
                       </div>
                     )}
@@ -352,9 +353,9 @@ export default function ProfileScreen({
                   <div style={{ width:40, height:40, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
                     {item.icon}
                   </div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>{item.label}</div>
-                    <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>{item.sub}</div>
+                  <div style={UI.flex1}>
+                    <div style={UI.boldInk14}>{item.label}</div>
+                    <div style={UI.muted11mt1}>{item.sub}</div>
                   </div>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
                 </div>
@@ -364,7 +365,7 @@ export default function ProfileScreen({
             {/* Konto */}
             <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px" }}>
               <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:12 }}>Konto</div>
-              <div style={{ display:"flex", gap:8 }}>
+              <div style={UI.rowGap8}>
                 <button onClick={clearAuth}
                   style={{ flex:1, padding:"11px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
                   Log ud
@@ -378,7 +379,7 @@ export default function ProfileScreen({
 
             {/* ── Push-notifikationer ── */}
             {pushSupported && (
-                <div className="card" style={{ marginBottom:12 }}>
+                <div className="card" style={UI.mb12}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                     <div>
                       <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2 }}>🔔 Push-notifikationer</div>
@@ -447,7 +448,7 @@ export default function ProfileScreen({
 
             {/* Seneste scanninger */}
             {history.filter(h => h.result !== "not_found" && (h.products?.name || h.name)).length > 0 && (
-              <div className="card" style={{ marginBottom:10 }}>
+              <div className="card" style={UI.mb10}>
                 <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
                   <span>Senest scannet</span>
                   <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:11 }} onClick={() => { loadHistory(); setScreen(SCREENS.HISTORY); }}>Se alle</span>
@@ -476,7 +477,7 @@ export default function ProfileScreen({
             )}
 
             {/* Gemte favoritter */}
-            {favorites.length > 0 && <div className="card-lbl" style={{ marginBottom:6 }}>Gemte produkter</div>}
+            {favorites.length > 0 && <div className="card-lbl" style={UI.mb6}>Gemte produkter</div>}
             {favorites.length === 0 && (
               <div className="empty-state"><span className="empty-icon">🤍</span><div className="empty-txt">Ingen favoritter endnu</div><div className="empty-sub">Tryk ❤️ på et produkt under scanning for at gemme det her</div>
               </div>
@@ -486,7 +487,7 @@ export default function ProfileScreen({
                 onClick={() => lookupProduct(f.ean || f.code || f.id)}>
                 <div style={{ display:"flex", alignItems:"center", gap:12 }}>
                   <ProductImage product={f} size={48} />
-                  <div style={{ flex:1, minWidth:0 }}>
+                  <div style={UI.flexMin}>
                     <div style={{ fontWeight:700, fontSize:14 }}>{f.name || "Ukendt"}</div>
                     {f.brand && <div style={{ fontSize:12, color:"var(--muted)", marginTop:1 }}>{f.brand}</div>}
                     <div style={{ marginTop:6 }}>
@@ -511,17 +512,17 @@ export default function ProfileScreen({
             </div>
 
             {/* Navn og kontakt */}
-            <div className="card" style={{ marginBottom:10 }}>
+            <div className="card" style={UI.mb10}>
               <div className="card-lbl">Personlige oplysninger</div>
               {[["Dit navn","text","Fx. Anna Hansen","name"],["Telefon","tel","+45 12 34 56 78","phone"],["Fødselsår","number","Fx. 1990","birth_year"]].map(([lbl,type,ph,key]) => (
-                <div key={key} style={{ marginBottom:10 }}>
+                <div key={key} style={UI.mb10}>
                   <label className="field-lbl">
-                    {lbl} {(key==="name"||key==="birth_year") && <span style={{ color:"var(--red)" }}>*</span>}
+                    {lbl} {(key==="name"||key==="birth_year") && <span style={UI.red}>*</span>}
                   </label>
                   <input className="field" type={type} placeholder={ph} value={user[key]||""} onChange={e => setUser(u => ({ ...u, [key]: e.target.value }))} />
                 </div>
               ))}
-              <label className="field-lbl">Køn <span style={{ color:"var(--red)" }}>*</span></label>
+              <label className="field-lbl">Køn <span style={UI.red}>*</span></label>
               <div style={{ display:"flex", gap:8, marginBottom:10 }}>
                 {["Mand","Kvinde","Andet"].map(g => (
                   <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
@@ -532,7 +533,7 @@ export default function ProfileScreen({
               </div>
               {(!user.name?.trim() || !user.birth_year || !user.gender) && (
                 <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10 }}>
-                  <span style={{ color:"var(--red)" }}>*</span> Navn, fødselsår og køn er obligatoriske
+                  <span style={UI.red}>*</span> Navn, fødselsår og køn er obligatoriske
                 </div>
               )}
               <button className="btn btn-primary btn-full"
@@ -550,16 +551,16 @@ export default function ProfileScreen({
 
             {/* Allergier */}
             {/* Diæt */}
-            <div className="card" style={{ marginBottom:10 }}>
+            <div className="card" style={UI.mb10}>
               <div className="card-lbl">Diæt</div>
               <div style={{ fontSize:12, color:"var(--muted)", marginBottom:10, lineHeight:1.5 }}>Vælg din diæt — bruges til filtrering af produkter og opskrifter.</div>
-              <div className="chip-grid" style={{ marginBottom:8 }}>
+              <div className="chip-grid" style={UI.mb8}>
                 {DIETS.map(d => {
                   const on = (user.diets||[]).includes(d.id);
                   return (
                     <div key={d.id} className={`chip${on?" on":""}`}
                       onClick={() => setUser(u => ({ ...u, diets: on ? (u.diets||[]).filter(x=>x!==d.id) : [...(u.diets||[]), d.id] }))}>
-                      <div style={{ flex:1 }}>
+                      <div style={UI.flex1}>
                         <div style={{ fontWeight:700 }}>{d.label}</div>
                         <div style={{ fontSize:10, color:"var(--muted)", marginTop:1 }}>{d.desc}</div>
                       </div>
@@ -569,7 +570,7 @@ export default function ProfileScreen({
                 })}
               </div>
               {(user.diets||[]).length > 0 && (
-                <button className="btn btn-ghost btn-sm" style={{ marginBottom:8 }} onClick={() => setUser(u => ({...u, diets:[]}))}>Nulstil diæt</button>
+                <button className="btn btn-ghost btn-sm" style={UI.mb8} onClick={() => setUser(u => ({...u, diets:[]}))}>Nulstil diæt</button>
               )}
               <button className="btn btn-primary btn-full" onClick={async () => {
                 try {
@@ -582,12 +583,12 @@ export default function ProfileScreen({
               }}>Gem diæt</button>
             </div>
 
-            <div className="card" style={{ marginBottom:10 }}>
+            <div className="card" style={UI.mb10}>
               <div className="card-lbl">Mine allergier / intolerancer</div>
               <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10, lineHeight:1.4 }}>
                 Tryk for at markere en allergi eller intolerance
               </div>
-              <div className="chip-grid" style={{ marginBottom:10 }}>
+              <div className="chip-grid" style={UI.mb10}>
                 {ALLERGENS.map(a => {
                   const on = allergens.includes(a.id);
                   return (
@@ -597,8 +598,8 @@ export default function ProfileScreen({
                       color: on ? "var(--red)" : "var(--ink)",
                     }}
                       onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
-                      <span style={{ flex:1 }}>{a.emoji} {a.label}</span>
-                      {on && <div style={{ fontSize:9, fontWeight:800, color:"var(--red)" }}>✓</div>}
+                      <span style={UI.flex1}>{a.emoji} {a.label}</span>
+                      {on && <div style={UI.redBadge9}>✓</div>}
                     </div>
                   );
                 })}
@@ -612,7 +613,7 @@ export default function ProfileScreen({
               {customAllerg.length > 0 && <div className="tags">{customAllerg.map((a,i) => <div key={i} className="tag">✏️ {a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
                 onClick={() => setCustomAllerg(c=>c.filter((_,j)=>j!==i))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(c=>c.filter((_,j)=>j!==i))}>×</span></div>)}</div>}
 
-              <button className="btn btn-primary btn-full" style={{ marginTop:12 }} onClick={async () => {
+              <button className="btn btn-primary btn-full" style={UI.mt12} onClick={async () => {
                 // Samlet DELETE + én bulk-POST i stedet for et loop af enkelt-POSTs —
                 // ellers kan et fejlet kald midtvejs efterlade en delvist gemt liste
                 // (samme fejl som blev rettet i onboarding-flowets saveAllergensStep2)
@@ -631,11 +632,11 @@ export default function ProfileScreen({
             </div>
 
             {/* E-numre i rediger profil */}
-            <div className="card" style={{ marginBottom:10 }}>
+            <div className="card" style={UI.mb10}>
               <div className="card-lbl">E-numre der undgås</div>
               <input className="field" placeholder="Søg E-nummer..." value={eSearch}
-                onChange={e => setESearch(e.target.value)} style={{ marginBottom:8 }} />
-              <select className="field" value={eCategory} onChange={e => setECategory(e.target.value)} style={{ marginBottom:8 }}>
+                onChange={e => setESearch(e.target.value)} style={UI.mb8} />
+              <select className="field" value={eCategory} onChange={e => setECategory(e.target.value)} style={UI.mb8}>
                 <option value="alle">Alle kategorier</option>
                 {E_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label} ({c.range})</option>)}
               </select>
@@ -668,7 +669,7 @@ export default function ProfileScreen({
               )}
             </div>
 
-            <button className="btn btn-ghost btn-full" style={{ marginBottom:16 }} onClick={() => setScreen(SCREENS.PROFILE)}>Færdig</button>
+            <button className="btn btn-ghost btn-full" style={UI.mb16} onClick={() => setScreen(SCREENS.PROFILE)}>Færdig</button>
           </div>
         )}
 
@@ -685,9 +686,9 @@ export default function ProfileScreen({
               <div key={m.id} className="family-member">
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:m.allergens.length?10:0 }}>
                   <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)" }}>{initials(m.name)}</div>
-                  <div style={{ flex:1 }}>
+                  <div style={UI.flex1}>
                     <div style={{ fontWeight:800, fontSize:15 }}>{m.name}</div>
-                    <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>
+                    <div style={UI.muted11mt2}>
                       {[m.birth_year && `f. ${m.birth_year}`, m.gender, m.allergens.length && `${m.allergens.length} allergi${m.allergens.length!==1?"er":""}`].filter(Boolean).join(" · ")}
                     </div>
                   </div>
@@ -697,7 +698,7 @@ export default function ProfileScreen({
               </div>
             ))}
             {/* ── Invitér familiemedlem via link ── */}
-            <div className="card" style={{ marginBottom:12 }}>
+            <div className="card" style={UI.mb12}>
               <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>
                 🔗 Invitér via link
               </div>
@@ -744,7 +745,7 @@ export default function ProfileScreen({
                   <div style={{ padding:"10px 12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:8, fontFamily:"monospace", fontSize:11, color:"var(--ink)", wordBreak:"break-all", marginBottom:8 }}>
                     {inviteLink}
                   </div>
-                  <div style={{ display:"flex", gap:8 }}>
+                  <div style={UI.rowGap8}>
                     <button
                       onClick={() => {
                         navigator.clipboard?.writeText(inviteLink);

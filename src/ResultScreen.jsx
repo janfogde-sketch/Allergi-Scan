@@ -7,6 +7,7 @@ import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
+import { UI } from "./styleUtils.js";
 
 const S = {
   flex1:    { flex:1 },
@@ -266,7 +267,7 @@ export default function ResultScreen({
         {matchedENumbers.length > 0 && (
           <div style={{ padding:"8px 12px", marginBottom:6, background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:10 }}>
             <div style={{ fontSize:11, fontWeight:800, color:"var(--amber)", marginBottom:4 }}>⚠️ E-numre fundet som du overvåger</div>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+            <div style={UI.wrapGap4}>
               {matchedENumbers.map(e => (
                 <span key={e}
                   onClick={() => { const slug = "e-" + e.toLowerCase().replace("e",""); setKnowledgeSlug(slug); setScreen(SCREENS.KNOWLEDGE); }}
@@ -330,7 +331,7 @@ export default function ResultScreen({
         <div className="card-lbl">Andre allergener i produktet</div>
         <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8 }}>Ikke registreret på dine profiler</div>
         {otherPresent.length > 0 && (
-          <div className="tags" style={{ marginBottom:6 }}>
+          <div className="tags" style={UI.mb6}>
             {otherPresent.map(([k]) => {
               const a = ALLERGENS.find(x=>x.id===k);
               return a ? (
@@ -367,9 +368,9 @@ export default function ResultScreen({
       <div className="card">
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
           <div className="card-lbl" style={{ marginBottom:0 }}>E-numre i produktet</div>
-          <div style={{ fontSize:10, color:"var(--muted)" }}>{eNums.length} fundet</div>
+          <div style={UI.muted10}>{eNums.length} fundet</div>
         </div>
-        <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+        <div style={UI.wrapGap5}>
           {eNums.map(e => {
             const info = E_NUMBERS[e];
             const name = info ? info.split("—")[0].trim() : null;
@@ -440,30 +441,30 @@ export default function ResultScreen({
 
       {/* ── 1b. SIKRE ALTERNATIVER ── */}
       {(scanResult.status === "danger" || scanResult.status === "warn") && (
-        <div style={{ marginBottom:10 }}>
+        <div style={UI.mb10}>
           {altLoading && (
             <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
               <div style={{ width:16, height:16, border:"2px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .7s linear infinite", flexShrink:0 }} />
-              <div style={{ fontSize:13, color:"var(--muted)" }}>Finder sikre alternativer…</div>
+              <div style={UI.muted13}>Finder sikre alternativer…</div>
             </div>
           )}
           {!altLoading && alternatives.length > 0 && (
             <div style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:14, padding:"14px 16px" }}>
               <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
-                <div style={{ fontSize:18 }}>✅</div>
+                <div style={UI.fs18}>✅</div>
                 <div>
                   <div style={{ fontSize:13, fontWeight:800, color:"var(--green)" }}>Prøv disse i stedet</div>
-                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>Sikre for din profil · samme kategori</div>
+                  <div style={UI.muted11mt1}>Sikre for din profil · samme kategori</div>
                 </div>
               </div>
-              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              <div style={UI.colGap8}>
                 {alternatives.map(p => (
                   <div key={p.ean} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}
                     onClick={() => lookupProduct?.(p.ean)}>
                     <ProductImage product={p} size={40} />
-                    <div style={{ flex:1, minWidth:0 }}>
+                    <div style={UI.flexMin}>
                       <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</div>
-                      <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>{p.brand}</div>
+                      <div style={UI.muted11mt1}>{p.brand}</div>
                     </div>
                     <div style={{ fontSize:11, fontWeight:700, color:"var(--green)", flexShrink:0 }}>✓ Sikkert</div>
                   </div>
@@ -473,7 +474,7 @@ export default function ResultScreen({
           )}
           {!altLoading && alternatives.length === 0 && (scanResult.status === "danger" || scanResult.status === "warn") && (
             <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
-              <div style={{ fontSize:16 }}>🔍</div>
+              <div style={UI.fs16}>🔍</div>
               <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>
                 Ingen kendte alternativer i samme kategori endnu.{" "}
                 <span style={{ color:"var(--green)", fontWeight:700, cursor:"pointer" }}
@@ -521,7 +522,7 @@ export default function ResultScreen({
       {/* ── 5. HANDLINGER ── */}
       {/* Favorit/Del sidder som ikon-knapper på produktbilledet ovenfor — kun den ene
           resterende, mindre vigtige handling ("Ret data") er tilbage hernede. */}
-      <div style={{ marginBottom:10 }}>
+      <div style={UI.mb10}>
         <button className="btn btn-outline btn-sm btn-full"
           onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients||""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
           Ret forkerte data

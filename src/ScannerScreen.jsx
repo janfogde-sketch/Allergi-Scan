@@ -13,6 +13,7 @@ import { useShoppingContext } from "./ShoppingContext.jsx";
 
 import { CategorySelect } from "./MemberForm.jsx";
 import ResultScreen from "./ResultScreen.jsx";
+import { UI } from "./styleUtils.js";
 // Lazy: skærme brugeren ikke nødvendigvis besøger hver session, holdes ude af hoved-bundlet.
 // ResultScreen er IKKE med her — den vises efter stort set hvert scan (hoved-flowet),
 // så at lazy-loade den ville tilføje en indlæsnings-forsinkelse lige der hvor brugeren
@@ -247,7 +248,7 @@ export default function ScannerScreen({
           {pAllergens.length > 0 ? (
             <div style={S.mb12}>
               <div style={S.label}>Allergier / intolerancer</div>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+              <div style={UI.wrapGap5}>
                 {pAllergens.map(id => {
                   const a = ALLERGENS.find(x => x.id === id);
                   const isInt = false; // intolerance-suffiks fjernet
@@ -276,7 +277,7 @@ export default function ScannerScreen({
           {pDiets.length > 0 && (
             <div style={S.mb12}>
               <div style={S.label}>Diæt</div>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+              <div style={UI.wrapGap5}>
                 {pDiets.map(d => (
                   <div key={d} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
                     background:"var(--green-lt)", color:"var(--green)", border:"1px solid var(--green-mid)" }}>
@@ -400,7 +401,7 @@ export default function ScannerScreen({
     return (
       <div style={{ display:"flex", gap:10, alignItems:"flex-start", padding:"12px 14px",
         background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, boxShadow:"var(--sh)", marginBottom:10 }}>
-        <div style={{ flexShrink:0 }}><Icon name="bulb" size={18} color="var(--amber)" /></div>
+        <div style={UI.shrink0}><Icon name="bulb" size={18} color="var(--amber)" /></div>
         <div style={S.flex1}>
           <div style={{ fontSize:9, fontWeight:800, color:"var(--muted2)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:3 }}>Vidste du at</div>
           <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{tip.title}</div>

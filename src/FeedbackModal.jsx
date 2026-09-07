@@ -7,6 +7,7 @@ import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
+import { UI } from "./styleUtils.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FeedbackModal.jsx
@@ -145,17 +146,17 @@ export default function FeedbackModal({
 
         {done ? (
           <div style={{ textAlign:"center", padding:"32px 0" }}>
-            <div style={{ fontSize:48, marginBottom:12 }}>🙏</div>
+            <div style={UI.emoji48mb12}>🙏</div>
             <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>Tak for din feedback!</div>
             <div style={{ fontSize:13, color:"var(--muted)", marginTop:6 }}>Vi kigger på det hurtigst muligt.</div>
           </div>
         ) : (
           <>
             {/* Header */}
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+            <div style={UI.rowBetweenMb16}>
               <div>
                 <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)" }}>Send feedback</div>
-                <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>
+                <div style={UI.muted11mt2}>
                   {PAGE_IDS[screen] || "—"} · Beta v1.0
                 </div>
               </div>
@@ -165,16 +166,16 @@ export default function FeedbackModal({
             </div>
 
             {/* Type */}
-            <div style={{ marginBottom:12 }}>
+            <div style={UI.mb12}>
               <label style={{ fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 }}>Type</label>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
+              <div style={UI.grid2gap6}>
                 {TYPES.map(t => (
                   <div key={t.id} onClick={() => setType(t.id)}
                     style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px",
                       borderRadius:10, cursor:"pointer",
                       border:`1.5px solid ${type===t.id?"var(--green)":"var(--border)"}`,
                       background: type===t.id ? "var(--green-lt)" : "var(--surface)" }}>
-                    <span style={{ fontSize:16 }}>{t.emoji}</span>
+                    <span style={UI.fs16}>{t.emoji}</span>
                     <span style={{ fontSize:12, fontWeight:700,
                       color: type===t.id ? "var(--green)" : "var(--ink)" }}>{t.label}</span>
                   </div>
@@ -183,7 +184,7 @@ export default function FeedbackModal({
             </div>
 
             {/* Beskrivelse */}
-            <div style={{ marginBottom:12 }}>
+            <div style={UI.mb12}>
               <label style={{ fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 }}>Beskriv problemet</label>
               <textarea value={text} onChange={e => setText(e.target.value)} rows={4}
                 placeholder="Fx. 'Når jeg trykker på X sker der Y…' — jo mere detail, jo bedre"
@@ -194,7 +195,7 @@ export default function FeedbackModal({
             </div>
 
             {/* Billede */}
-            <div style={{ marginBottom:16 }}>
+            <div style={UI.mb16}>
               <label style={{ fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 }}>Skærmbillede (valgfrit)</label>
               {image ? (
                 <div style={{ position:"relative", display:"inline-block" }}>
@@ -214,7 +215,7 @@ export default function FeedbackModal({
                     <path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
                     <circle cx="12" cy="13" r="4"/>
                   </svg>
-                  <span style={{ fontSize:13, color:"var(--muted)" }}>Tag skærmbillede eller vælg fra galleri</span>
+                  <span style={UI.muted13}>Tag skærmbillede eller vælg fra galleri</span>
                   <input type="file" accept="image/*" style={{ display:"none" }}
                     onChange={async e => {
                       const f = e.target.files?.[0];

@@ -6,6 +6,7 @@ import { Icon } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
+import { UI } from "./styleUtils.js";
 
 export default function MadpasScreen({
   madpasLang, setMadpasLang,
@@ -145,7 +146,7 @@ export default function MadpasScreen({
         {/* Header — sprog + kryds */}
         <div style={{ padding:"14px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid var(--border)", flexShrink:0 }}>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            <span style={{ fontSize:20 }}>{langInfo?.flag}</span>
+            <span style={UI.fs20}>{langInfo?.flag}</span>
             <span style={{ fontSize:13, color:"var(--muted)", fontWeight:600 }}>{langInfo?.name}</span>
           </div>
           <button onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }} aria-label="Luk"
@@ -216,7 +217,7 @@ export default function MadpasScreen({
 
         {/* VIS TIL TJENER */}
         <button className="mp-big-btn" onClick={() => setMadpasWaiterView(true)}>
-          <span style={{ fontSize:18 }}>⤢</span>
+          <span style={UI.fs18}>⤢</span>
           Vis til tjener
         </button>
 
@@ -225,10 +226,10 @@ export default function MadpasScreen({
           <div style={{ marginTop:16, background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:16, overflow:"hidden" }}>
             {/* Header */}
             <div style={{ padding:"12px 16px", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{ fontSize:16 }}>📱</span>
+              <span style={UI.fs16}>📱</span>
               <div>
-                <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Del dit madpas</div>
-                <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>Tjeneren scanner QR-koden og ser dine allergier direkte i sin browser — uden at installere noget</div>
+                <div style={UI.boldInk13}>Del dit madpas</div>
+                <div style={UI.muted11mt1}>Tjeneren scanner QR-koden og ser dine allergier direkte i sin browser — uden at installere noget</div>
               </div>
             </div>
 
@@ -262,7 +263,7 @@ export default function MadpasScreen({
             {/* QR + link side om side */}
             <div style={{ padding:"16px", display:"flex", gap:16, alignItems:"center" }}>
               {/* QR — klikbar */}
-              <div style={{ flexShrink:0 }}>
+              <div style={UI.shrink0}>
                 {!qrError ? (
                   <div onClick={() => setQrOpen(true)} style={{ cursor:"pointer", position:"relative" }}>
                     <img
@@ -291,7 +292,7 @@ export default function MadpasScreen({
               </div>
 
               {/* Link + knapper */}
-              <div style={{ flex:1, minWidth:0 }}>
+              <div style={UI.flexMin}>
                 <div style={{ fontSize:10, color:"var(--muted)", marginBottom:6, fontWeight:700, textTransform:"uppercase", letterSpacing:"1px" }}>Dit madpas-link</div>
                 <div style={{ fontSize:11, color:"var(--green)", wordBreak:"break-all", marginBottom:10, lineHeight:1.4, fontWeight:600 }}>
                   {shareUrl}
@@ -438,9 +439,9 @@ export default function MadpasScreen({
                 <div className="mp-subtitle">Vis dit madpas til din tjener/ekspedient for at forklare dine ønsker.</div>
 
                 {/* Profilvælger — samme stil som hjemskærmen */}
-                <div style={{ marginBottom:14 }}>
+                <div style={UI.mb14}>
                   <div className="mp-section-lbl">VIS MADPAS FOR</div>
-                  <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+                  <div style={UI.wrapGap7}>
                     <div className={`ap-chip${madpasProfileId==="self" ? " on" : ""}`} onClick={() => setMadpasProfileId("self")}>
                       <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(user.name||"Mig")}</div>
                       {(user.name||"Mig").split(" ")[0]}
@@ -467,7 +468,7 @@ export default function MadpasScreen({
                     {MADPAS_LANGUAGES.map(l => (
                       <div key={l.code} className={`mp-lang-opt${madpasLang===l.code?" on":""}`}
                         onClick={() => { setMadpasLang(l.code); localStorage.setItem("as_madpas_lang", l.code); setLangOpen(false); if (madpasSpeaking) { window.speechSynthesis.cancel(); setMadpasSpeaking(false); }}}>
-                        <span style={{ fontSize:20 }}>{l.flag}</span>
+                        <span style={UI.fs20}>{l.flag}</span>
                         <span style={{ fontSize:14, fontWeight:madpasLang===l.code?800:600, color:madpasLang===l.code?"var(--green)":"var(--ink)" }}>{l.name}</span>
                         {madpasLang===l.code && <span style={{ marginLeft:"auto", color:"var(--green)" }}>✓</span>}
                       </div>
