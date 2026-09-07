@@ -222,7 +222,7 @@ export default function MadpasScreen({
 
         {/* QR-kode + del-link */}
         {shareUrl && (
-          <div style={{ marginTop:16, background:"rgba(255,255,255,.04)", border:"1px solid var(--border2)", borderRadius:16, overflow:"hidden" }}>
+          <div style={{ marginTop:16, background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:16, overflow:"hidden" }}>
             {/* Header */}
             <div style={{ padding:"12px 16px", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", gap:8 }}>
               <span style={{ fontSize:16 }}>📱</span>
@@ -244,12 +244,12 @@ export default function MadpasScreen({
                     Bed tjeneren om at scanne denne QR-kode med sin telefon — så åbner dit madpas direkte i deres browser uden at de behøver installere noget.
                   </div>
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(shareUrl)}&bgcolor=0d1f12&color=4ADE80&qzone=2`}
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(shareUrl)}&bgcolor=ffffff&color=0d3320&qzone=2`}
                     alt="QR-kode til madpas"
                     width={220} height={220}
-                    style={{ borderRadius:16, border:"3px solid rgba(74,222,128,.3)", display:"block", margin:"0 auto 20px" }}
+                    style={{ borderRadius:16, border:"3px solid var(--green-mid)", display:"block", margin:"0 auto 20px" }}
                   />
-                  <div style={{ fontSize:11, color:"rgba(255,255,255,.35)", marginBottom:16, wordBreak:"break-all" }}>{shareUrl}</div>
+                  <div style={{ fontSize:11, color:"var(--muted)", marginBottom:16, wordBreak:"break-all" }}>{shareUrl}</div>
                   <button onClick={() => setQrOpen(false)}
                     style={{ width:"100%", padding:"12px", borderRadius:12, background:"var(--green)", border:"none",
                       fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
