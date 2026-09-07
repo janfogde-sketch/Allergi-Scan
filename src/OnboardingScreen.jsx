@@ -18,7 +18,7 @@ function WelcomeIntro({ setScreen, setAuthTab }) {
   const goLogin  = () => { setAuthTab("login");  setScreen(SCREENS.LOGIN); };
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+    <div style={UI.udflex_fdcolumn_g10}>
       <button className="welcome-btn" onClick={goSignup}>Opret gratis konto →</button>
       <button className="welcome-btn-ghost" onClick={goLogin}>Jeg har allerede en konto</button>
     </div>
@@ -105,7 +105,7 @@ export default function OnboardingScreen({
       <div className="fade-in">
         <div style={UI.mb14}>
           <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", marginBottom:4 }}>Hvem er du?</div>
-          <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.5 }}>Oplysningerne bruges til din personlige allergiprofil og kan redigeres senere.</div>
+          <div style={UI.ufs13_cmuted2_lh15}>Oplysningerne bruges til din personlige allergiprofil og kan redigeres senere.</div>
         </div>
 
         <div className="card" style={UI.mb12}>
@@ -151,7 +151,7 @@ export default function OnboardingScreen({
           {/* Køn */}
           <div>
             <label className="field-lbl">Køn <span style={UI.red}>*</span></label>
-            <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+            <div style={UI.udflex_g6_flewrap}>
               {["Mand","Kvinde","Andet","Vil ikke oplyse"].map(g => (
                 <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
                   style={{
@@ -229,9 +229,9 @@ export default function OnboardingScreen({
             {/* SIGNUP flow */}
             {authTab === "signup" && (
               <div className="fade-in">
-                <div style={{ textAlign:"center", marginBottom:16 }}>
-                  <div style={{ fontSize:15, fontWeight:700, color:"var(--ink)" }}>Opret din gratis konto</div>
-                  <div style={{ fontSize:12, color:"var(--muted)", marginTop:4 }}>Du opsætter dine allergier i næste trin</div>
+                <div style={UI.utacenter_mb16}>
+                  <div style={UI.ufs15_fw700_cink}>Opret din gratis konto</div>
+                  <div style={UI.ufs12_cmuted_mt4}>Du opsætter dine allergier i næste trin</div>
                 </div>
                 <div className="card">
                   <label className="field-lbl">Email</label>
@@ -247,17 +247,17 @@ export default function OnboardingScreen({
                   </div>
                 </div>
                 {authError && (
-                  <div className="error-box" style={{ flexDirection:"column", alignItems:"flex-start", gap:4 }}>
-                    <span style={{ fontWeight:800 }}>⚠️ Fejl</span>
-                    <span style={{ fontWeight:500, fontSize:12, lineHeight:1.5 }}>{authError}</span>
+                  <div className="error-box" style={UI.ufdcolumn_aiflexstar_g4}>
+                    <span style={UI.ufw800}>⚠️ Fejl</span>
+                    <span style={UI.ufw500_fs12_lh15}>{authError}</span>
                   </div>
                 )}
                 <button className="btn btn-primary btn-full" onClick={handleSignup} disabled={authLoading}>
                   {authLoading ? "Opretter konto…" : "Opret konto og fortsæt →"}
                 </button>
-                <div style={{ textAlign:"center", marginTop:12, fontSize:12, color:"var(--muted)" }}>
+                <div style={UI.utacenter_mt12_fs12_cmuted}>
                   Har du allerede en konto?{" "}
-                  <span style={{ color:"var(--green)", fontWeight:700, cursor:"pointer" }} onClick={() => { setAuthTab("login"); setAuthError(""); }}>
+                  <span style={UI.ucgreen_fw700_curpointer} onClick={() => { setAuthTab("login"); setAuthError(""); }}>
                     Log ind her
                   </span>
                 </div>
@@ -267,9 +267,9 @@ export default function OnboardingScreen({
             {/* LOGIN flow */}
             {authTab === "login" && (
               <div className="fade-in">
-                <div style={{ textAlign:"center", marginBottom:16 }}>
-                  <div style={{ fontSize:15, fontWeight:700, color:"var(--ink)" }}>Velkommen tilbage</div>
-                  <div style={{ fontSize:12, color:"var(--muted)", marginTop:4 }}>Log ind med din email og kodeord</div>
+                <div style={UI.utacenter_mb16}>
+                  <div style={UI.ufs15_fw700_cink}>Velkommen tilbage</div>
+                  <div style={UI.ufs12_cmuted_mt4}>Log ind med din email og kodeord</div>
                 </div>
                 <div className="card">
                   <label className="field-lbl">Email</label>
@@ -282,17 +282,17 @@ export default function OnboardingScreen({
                     onKeyDown={e => e.key==="Enter" && handleLogin()} />
                 </div>
                 {authError && (
-                  <div className="error-box" style={{ flexDirection:"column", alignItems:"flex-start", gap:4 }}>
-                    <span style={{ fontWeight:800 }}>⚠️ Fejl</span>
-                    <span style={{ fontWeight:500, fontSize:12, lineHeight:1.5 }}>{authError}</span>
+                  <div className="error-box" style={UI.ufdcolumn_aiflexstar_g4}>
+                    <span style={UI.ufw800}>⚠️ Fejl</span>
+                    <span style={UI.ufw500_fs12_lh15}>{authError}</span>
                   </div>
                 )}
                 <button className="btn btn-primary btn-full" onClick={handleLogin} disabled={authLoading}>
                   {authLoading ? "Logger ind…" : "Log ind →"}
                 </button>
-                <div style={{ textAlign:"center", marginTop:12, fontSize:12, color:"var(--muted)" }}>
+                <div style={UI.utacenter_mt12_fs12_cmuted}>
                   Har du ikke en konto?{" "}
-                  <span style={{ color:"var(--green)", fontWeight:700, cursor:"pointer" }} onClick={() => { setAuthTab("signup"); setAuthError(""); }}>
+                  <span style={UI.ucgreen_fw700_curpointer} onClick={() => { setAuthTab("signup"); setAuthError(""); }}>
                     Opret en her
                   </span>
                 </div>
@@ -336,7 +336,7 @@ export default function OnboardingScreen({
 
             <div style={{ display:"flex", alignItems:"center", gap:10, margin:"4px 0 8px" }}>
               <div style={UI.hr} />
-              <span style={{ fontSize:11, color:"var(--muted)", fontWeight:500 }}>eller</span>
+              <span style={UI.ufs11_cmuted_fw500}>eller</span>
               <div style={UI.hr} />
             </div>
 
@@ -356,7 +356,7 @@ export default function OnboardingScreen({
             )}
             {editMode && <div style={{ height:4 }} />}
             {/* Step header med tilbage og fremgang */}
-            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+            <div style={UI.udflex_aicenter_g10_mb8}>
               {onboardStep > 1 && (
                 <button onClick={() => setOnboardStep(onboardStep - 1)}
                   style={{ background:"none", border:"none", cursor:"pointer", padding:"4px 0", flexShrink:0 }}>
@@ -374,7 +374,7 @@ export default function OnboardingScreen({
             {onboardStep === 0 && (
               <div className="fade-in">
                 <div className="card" style={{ textAlign:"center", padding:"28px 20px 20px" }}>
-                  <div style={{ fontSize:52, marginBottom:16 }}>🧪</div>
+                  <div style={UI.ufs52_mb16}>🧪</div>
                   <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", marginBottom:10, letterSpacing:"-.3px" }}>
                     Velkommen til EatSafe Beta
                   </div>
@@ -383,21 +383,21 @@ export default function OnboardingScreen({
                   </div>
 
                   <div style={{ display:"flex", flexDirection:"column", gap:12, textAlign:"left", marginBottom:20 }}>
-                    <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+                    <div style={UI.udflex_g10_aiflexstar}>
                       <span style={UI.fs20Shrink0}>💬</span>
                       <div>
                         <div style={UI.boldInk13mb2}>Giv os feedback</div>
                         <div style={UI.muted2_12lh}>Tryk på Feedback-knappen når du støder på fejl eller har idéer. Vi læser alt.</div>
                       </div>
                     </div>
-                    <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+                    <div style={UI.udflex_g10_aiflexstar}>
                       <span style={UI.fs20Shrink0}>❓</span>
                       <div>
                         <div style={UI.boldInk13mb2}>Brug hjælp-knappen</div>
                         <div style={UI.muted2_12lh}>Tryk på ? øverst for en guide til den skærm du står på.</div>
                       </div>
                     </div>
-                    <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+                    <div style={UI.udflex_g10_aiflexstar}>
                       <span style={UI.fs20Shrink0}>⚠️</span>
                       <div>
                         <div style={UI.boldInk13mb2}>Tjek altid emballagen</div>
@@ -417,10 +417,10 @@ export default function OnboardingScreen({
             {onboardStep === 1 && renderStep1()}
             {onboardStep === 97 && (
               <div className="fade-in">
-                <div className="card" style={{ textAlign:"center", padding:"20px 20px 14px" }}>
+                <div className="card" style={UI.utacenter_p20px20px}>
                   <div style={UI.mb8}><Icon name="info" size={44} color="var(--ink2)" /></div>
-                  <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)", marginBottom:6 }}>Forstå vores data</div>
-                  <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>Vi arbejder hårdt for at give dig pålidelig information — men det er vigtigt du forstår kilden.</div>
+                  <div style={UI.ufs17_fw900_cink_mb6}>Forstå vores data</div>
+                  <div style={UI.ufs12_cmuted2_lh16}>Vi arbejder hårdt for at give dig pålidelig information — men det er vigtigt du forstår kilden.</div>
                 </div>
                 <div style={UI.colGap8}>
                   {[
@@ -441,7 +441,7 @@ export default function OnboardingScreen({
                   <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>Vigtigt</div>
                   <div style={{ fontSize:11, color:"var(--muted2)", lineHeight:1.6 }}>EatSafe <strong>erstatter ikke lægehjælp</strong>. Tjek altid den originale emballage ved alvorlige allergier. <strong>Brug på eget ansvar.</strong></div>
                 </div>
-                <div style={{ display:"flex", gap:8, marginTop:14 }}>
+                <div style={UI.udflex_g8_mt14}>
                   <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(1)}>← Tilbage</button>
                   <button className="btn btn-primary" style={UI.flex1} onClick={() => setOnboardStep(25)}>Jeg forstår →</button>
                 </div>
@@ -451,7 +451,7 @@ export default function OnboardingScreen({
             {/* ── TRIN 2.5: Hvad kan EatSafe? ── */}
             {onboardStep === 96 && (
               <div className="fade-in">
-                <div style={{ textAlign:"center", marginBottom:20 }}>
+                <div style={UI.utacenter_mb20}>
                   <div style={{ fontSize:48, marginBottom:8 }}>✨</div>
                   <div className="step-title">EatSafe dækker tre områder</div>
                   <div className="step-sub">Fortæl os hvad der gælder for dig — vi holder øje med det hele</div>
@@ -487,15 +487,15 @@ export default function OnboardingScreen({
                   },
                 ].map(cat => (
                   <div key={cat.title} style={{ background:cat.bg, border:`1px solid ${cat.border}`, borderRadius:14, padding:"14px 16px", marginBottom:10 }}>
-                    <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
-                      <span style={{ fontSize:24 }}>{cat.emoji}</span>
+                    <div style={UI.udflex_aicenter_g10_mb8}>
+                      <span style={UI.ufs24}>{cat.emoji}</span>
                       <div style={{ fontSize:14, fontWeight:800, color:cat.color }}>{cat.title}</div>
                     </div>
                     <div style={{ fontSize:12, color:"var(--ink2)", lineHeight:1.6, marginBottom:8 }}>{cat.desc}</div>
                   </div>
                 ))}
 
-                <div style={{ display:"flex", gap:8, marginTop:14 }}>
+                <div style={UI.udflex_g8_mt14}>
                   <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(2)}>← Tilbage</button>
                   <button className="btn btn-primary" style={UI.flex1} onClick={() => setOnboardStep(1)}>Fortsæt →</button>
                 </div>
@@ -559,10 +559,10 @@ export default function OnboardingScreen({
                   <button
                     onClick={() => setShowENumbersInOnboard(s => !s)}
                     style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", background:"none", border:"none", cursor:"pointer", padding:"4px 0", fontFamily:"var(--f)" }}>
-                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                    <div style={UI.udflex_aicenter_g8}>
                       <span style={UI.fs16}>🔢</span>
                       <div style={{ textAlign:"left" }}>
-                        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>
+                        <div style={UI.ufs13_fw700_cink}>
                           Overvåg specifikke E-numre
                           {selectedENumbers.length > 0 && <span style={{ fontSize:11, color:"var(--amber)", marginLeft:6 }}>{selectedENumbers.length} valgt</span>}
                         </div>
@@ -610,7 +610,7 @@ export default function OnboardingScreen({
                   {/* Mest valgte */}
                   <div style={UI.mb14}>
                     <div style={UI.sectionLbl8}>Mest valgte</div>
-                    <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                    <div style={UI.udflex_flewrap_g6}>
                       {[
                         {e:"E621",n:"MSG - Smagsforstærker"},
                         {e:"E211",n:"Natriumbenzoat (konservering)"},
@@ -648,7 +648,7 @@ export default function OnboardingScreen({
             {/* ── TRIN 7: Familie ── */}
             {onboardStep === 4 && (
               <div className="fade-in">
-                <div className="step-title" style={{ textAlign:"center" }}>Familiemedlemmer</div>
+                <div className="step-title" style={UI.utacenter}>Familiemedlemmer</div>
                 <div style={{ fontSize:13, color:"var(--muted2)", textAlign:"center", marginBottom:16 }}>Tilføj familiemedlemmer med egne allergier. Valgfrit.</div>
 
                 {/* Allerede tilføjede */}
@@ -714,7 +714,7 @@ export default function OnboardingScreen({
                       <div key={title} style={{ display:"flex", gap:12, padding:"10px 0", borderBottom:"1px solid var(--border)" }}>
                         <div style={{ fontSize:22, lineHeight:1 }}>{e}</div>
                         <div>
-                          <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{title}</div>
+                          <div style={UI.ufs13_fw700_cink}>{title}</div>
                           <div style={UI.muted11mt2}>{sub}</div>
                         </div>
                       </div>
@@ -756,7 +756,7 @@ export default function OnboardingScreen({
                     <div key={d.id} className={`chip${on?" on":""}`}
                       onClick={() => setUser(u => ({ ...u, diets: on ? (u.diets||[]).filter(x=>x!==d.id) : [...(u.diets||[]), d.id] }))}>
                       <div style={UI.flex1}>
-                        <div style={{ fontWeight:700 }}>{d.label}</div>
+                        <div style={UI.ufw700}>{d.label}</div>
                         <div style={UI.muted11mt2}>{d.desc}</div>
                       </div>
                       {on && <div className="chip-check">✓</div>}
@@ -774,10 +774,10 @@ export default function OnboardingScreen({
             {/* ── TRIN 8: Fællesskabet ── */}
             {onboardStep === 95 && (
               <div className="fade-in">
-                <div className="card" style={{ textAlign:"center", padding:"20px 20px 14px" }}>
+                <div className="card" style={UI.utacenter_p20px20px}>
                   <div style={UI.mb8}><Icon name="heart" size={44} color="var(--ink2)" /></div>
-                  <div style={{ fontSize:17, fontWeight:900, color:"var(--ink)", marginBottom:6 }}>Hjælp fællesskabet</div>
-                  <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>Når du scanner et ukendt produkt kan du indsende det og hjælpe andre.</div>
+                  <div style={UI.ufs17_fw900_cink_mb6}>Hjælp fællesskabet</div>
+                  <div style={UI.ufs12_cmuted2_lh16}>Når du scanner et ukendt produkt kan du indsende det og hjælpe andre.</div>
                 </div>
                 <div style={UI.colGap8}>
                   {[
@@ -796,7 +796,7 @@ export default function OnboardingScreen({
                     </div>
                   ))}
                 </div>
-                <div style={{ display:"flex", gap:8, marginTop:14 }}>
+                <div style={UI.udflex_g8_mt14}>
                   <button className="btn btn-ghost btn-sm" onClick={() => setOnboardStep(4)}>← Tilbage</button>
                   <button className="btn btn-primary" style={UI.flex1} onClick={() => setOnboardStep(9)}>Fortsæt →</button>
                 </div>
@@ -821,7 +821,7 @@ export default function OnboardingScreen({
 
                 {/* Din profil */}
                 <div className="card" style={UI.mb12}>
-                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+                  <div style={UI.udflex_aicenter_jcspacebet_mb12}>
                     <div style={{ fontWeight:800, fontSize:15, color:"var(--ink)" }}>
                       {user.name || "Din profil"}
                     </div>
@@ -879,7 +879,7 @@ export default function OnboardingScreen({
                   {selectedENumbers.length > 0 && (
                     <div>
                       <div style={UI.sectionLbl6}>E-numre der undgås</div>
-                      <div style={{ fontSize:12, color:"var(--muted2)" }}>{selectedENumbers.length} E-numre valgt</div>
+                      <div style={UI.ufs12_cmuted2}>{selectedENumbers.length} E-numre valgt</div>
                     </div>
                   )}
                 </div>
@@ -887,10 +887,10 @@ export default function OnboardingScreen({
                 {/* Familiemedlemmer */}
                 {family.length > 0 && (
                   <div style={UI.mb12}>
-                    <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>Familiemedlemmer</div>
+                    <div style={UI.ufs13_fw700_cink_mb8}>Familiemedlemmer</div>
                     {family.map(m => (
                       <div key={m.id} className="card" style={{ marginBottom:8, padding:"12px 14px" }}>
-                        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                        <div style={UI.udflex_aicenter_g10}>
                           <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)", flexShrink:0 }}>
                             {initials(m.name)}
                           </div>
@@ -914,7 +914,7 @@ export default function OnboardingScreen({
 
                 {family.length === 0 && (
                   <div className="card" style={{ marginBottom:12, textAlign:"center", padding:"14px" }}>
-                    <div style={{ fontSize:13, color:"var(--muted2)", marginBottom:8 }}>Ingen familiemedlemmer tilføjet</div>
+                    <div style={UI.ufs13_cmuted2_mb8}>Ingen familiemedlemmer tilføjet</div>
                     <button className="btn btn-outline btn-sm" onClick={() => setOnboardStep(4)}>
                       + Tilføj familiemedlem
                     </button>
@@ -923,7 +923,7 @@ export default function OnboardingScreen({
 
                 {/* Fællesskab-card */}
                 <div style={{ background:"var(--warm-lt)", border:"1px solid var(--warm-md)", borderRadius:14, padding:"16px 18px", marginBottom:12, display:"flex", gap:12, alignItems:"flex-start" }}>
-                  <div style={{ fontSize:28, flexShrink:0 }}>🤝</div>
+                  <div style={UI.ufs28_shr0}>🤝</div>
                   <div>
                     <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>Du er nu en del af fællesskabet</div>
                     <div style={UI.muted2_12lh}>Når du scanner ukendte produkter og indsender data, hjælper du alle andre med de samme allergier. Tak!</div>

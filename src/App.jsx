@@ -469,7 +469,7 @@ export default function EatSafe() {
       <div style={UI.wrapGap7}>
         <div className={`ap-chip${isAll?" on":""}`} onClick={toggleAll}>Hele familien</div>
         <div className={`ap-chip${!isAll&&activeProfiles.includes("me")?" on":""}`} onClick={() => toggleOne("me")}>
-          <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(user.name||"Mig")}</div>
+          <div style={UI.uw20_h20_br50_bggreen_dflex_aicenter_jccenter_fs10_fw800_cin}>{initials(user.name||"Mig")}</div>
           {(user.name||"Mig").split(" ")[0]}
         </div>
         {family.map(m => (
@@ -851,17 +851,17 @@ const lookupProduct = useCallback(async (ean) => {
         <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
           onClick={e => e.stopPropagation()}>
           <div style={UI.rowBetweenMb16}>
-            <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>{content.title}</div>
+            <div style={UI.ufs18_fw900_cink}>{content.title}</div>
             <button onClick={() => setHelpOpen(false)} aria-label="Luk"
               style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
             {content.tips.map((tip, i) => (
               <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
-                <div style={{ fontSize:22, flexShrink:0 }}>{tip.icon}</div>
+                <div style={UI.ufs22_shr0}>{tip.icon}</div>
                 <div>
-                  <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:3 }}>{tip.title}</div>
-                  <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>{tip.desc}</div>
+                  <div style={UI.ufs13_fw800_cink_mb3}>{tip.title}</div>
+                  <div style={UI.ufs12_cmuted2_lh16}>{tip.desc}</div>
                 </div>
               </div>
             ))}
@@ -918,7 +918,7 @@ const lookupProduct = useCallback(async (ean) => {
 
           {/* Content */}
           <div style={{ textAlign:"center", marginBottom:28 }}>
-            <div style={{ fontSize:52, marginBottom:16 }}>{step.emoji}</div>
+            <div style={UI.ufs52_mb16}>{step.emoji}</div>
             <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)", marginBottom:14,
               letterSpacing:"-.3px" }}>{step.title}</div>
             <div style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.7,
@@ -926,7 +926,7 @@ const lookupProduct = useCallback(async (ean) => {
           </div>
 
           {/* Buttons */}
-          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          <div style={UI.udflex_fdcolumn_g10}>
             <button onClick={() => isLast ? dismiss() : setBetaIntroStep(s => s + 1)}
               style={{ width:"100%", padding:"14px", background:"var(--green)",
                 border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15,
@@ -1023,8 +1023,8 @@ const lookupProduct = useCallback(async (ean) => {
             <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"24px 16px 40px", width:"100%" }}
               onClick={e => e.stopPropagation()}>
 
-              <div style={{ textAlign:"center", marginBottom:20 }}>
-                <div style={{ fontSize:48, marginBottom:10 }}>⚠️</div>
+              <div style={UI.utacenter_mb20}>
+                <div style={UI.ufs48_mb10}>⚠️</div>
                 <div style={{ fontSize:19, fontWeight:900, color:"var(--red)", marginBottom:8 }}>Slet din konto</div>
                 <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.7 }}>
                   Dette sletter permanent alle dine data — allergier, familie, historik og præferencer. Handlingen kan ikke fortrydes.
@@ -1043,7 +1043,7 @@ const lookupProduct = useCallback(async (ean) => {
 
               {/* Bekræftelse */}
               <div style={UI.mb14}>
-                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>
+                <div style={UI.ufs13_fw700_cink_mb8}>
                   Skriv <strong>"slet"</strong> for at bekræfte:
                 </div>
                 <input

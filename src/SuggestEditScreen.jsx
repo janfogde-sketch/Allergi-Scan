@@ -127,7 +127,7 @@ export default function SuggestEditScreen({
       <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:16 }}>
         <ProductImage product={scanResult} size={40} />
         <div style={S.flexMin}>
-          <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{scanResult.name}</div>
+          <div style={UI.ufs13_fw700_cink_ovhidden_toellipsis_wsnowrap}>{scanResult.name}</div>
           {scanResult.brand && <div style={S.sub11mt}>{scanResult.brand}</div>}
           <div style={{ fontSize:10, color:"var(--muted)", marginTop:1, fontFamily:"monospace" }}>EAN: {scanResult.code}</div>
         </div>
@@ -148,7 +148,7 @@ export default function SuggestEditScreen({
             <div key={opt.id}
               onClick={() => { setEditType(opt.id); setEditStep(opt.id === "other" ? "review" : "guide"); }}
               style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, marginBottom:8, cursor:"pointer" }}>
-              <div style={{ fontSize:28, flexShrink:0 }}>{opt.emoji}</div>
+              <div style={UI.ufs28_shr0}>{opt.emoji}</div>
               <div style={S.flex1}>
                 <div style={UI.boldInk14}>{opt.title}</div>
                 <div style={UI.muted12mt2}>{opt.desc}</div>
@@ -165,7 +165,7 @@ export default function SuggestEditScreen({
       {editStep === "guide" && (
         <div className="fade-in">
           <div style={{ background:"var(--surface2)", borderRadius:16, padding:"20px", marginBottom:16, textAlign:"center", border:"1px solid var(--border)" }}>
-            <div style={{ fontSize:48, marginBottom:10 }}>
+            <div style={UI.ufs48_mb10}>
               {editType === "ingredients" ? "🥫" : editType === "nutrition" ? "📋" : "📦"}
             </div>
             <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>
@@ -189,7 +189,7 @@ export default function SuggestEditScreen({
                 <div style={{ width:18, height:18, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
                 </div>
-                <div style={{ fontSize:12, color:"var(--muted2)" }}>{tip}</div>
+                <div style={UI.ufs12_cmuted2}>{tip}</div>
               </div>
             ))}
           </div>
@@ -227,9 +227,9 @@ export default function SuggestEditScreen({
             <div className="card" style={S.mb12}>
               <div style={S.rowBetweenMb10}>
                 <div style={S.h13}>Ingredienser</div>
-                <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-                  {ingItems.length > 0 && <div style={{ fontSize:11, color:"var(--green)", fontWeight:700 }}>✓ {ingItems.length} ingredienser</div>}
-                  <label style={{ fontSize:11, color:"var(--muted)", cursor:"pointer", fontWeight:600, display:"flex", alignItems:"center", gap:4 }}>
+                <div style={UI.udflex_g8_aicenter}>
+                  {ingItems.length > 0 && <div style={UI.ufs11_cgreen_fw700}>✓ {ingItems.length} ingredienser</div>}
+                  <label style={UI.ufs11_cmuted_curpointer_fw600_dflex_aicenter_g4}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                     {editIngText ? "Nyt billede" : "Tag billede"}
                     <input type="file" accept="image/*" capture="environment" style={S.none} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
@@ -238,20 +238,20 @@ export default function SuggestEditScreen({
               </div>
 
               {!editIngText && ingItems.length === 0 && (
-                <div style={{ fontSize:12, color:"var(--amber)", fontWeight:600, padding:"8px 10px", background:"var(--amber-lt)", borderRadius:8, marginBottom:10 }}>
+                <div style={UI.ufs12_camber_fw600_p8px10px_bgamberlt_br8_mb10}>
                   ⚠ Fotografér ingredienslisten eller skriv dem herunder
                 </div>
               )}
 
               {ingItems.length > 0 && (
-                <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
+                <div style={UI.udflex_flewrap_g6_mb10}>
                   {ingItems.map((item, i) => (
-                    <div key={i} style={{ display:"flex", alignItems:"center", gap:5, padding:"5px 10px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:20 }}>
-                      <span style={{ fontSize:12, color:"var(--ink)" }}>{item}</span>
+                    <div key={i} style={UI.udflex_aicenter_g5_p5px10px_bgpaper2_bd1pxsolid_br20}>
+                      <span style={UI.ufs12_cink}>{item}</span>
                       <div role="button" aria-label={`Fjern "${item}"`} tabIndex={0}
                         onClick={() => setIngItems(p => p.filter((_,j)=>j!==i))}
                         onKeyDown={e => e.key === "Enter" && setIngItems(p => p.filter((_,j)=>j!==i))}
-                        style={{ cursor:"pointer", color:"var(--muted)", fontSize:14, lineHeight:1, padding:6, margin:"-6px -6px -6px 2px" }}>×</div>
+                        style={UI.ucurpointer_cmuted_fs14_lh1_p6_m6px6px6p}>×</div>
                     </div>
                   ))}
                 </div>
@@ -261,7 +261,7 @@ export default function SuggestEditScreen({
                 <input className="field" placeholder="Tilføj ingrediens…" value={ingInput}
                   onChange={e => setIngInput(e.target.value)}
                   onKeyDown={e => e.key==="Enter" && addIngItem()}
-                  style={{ flex:1, fontSize:12 }} />
+                  style={UI.uflex1_fs12} />
                 <button className="btn btn-outline btn-sm" onClick={addIngItem}>+</button>
               </div>
             </div>
@@ -270,9 +270,9 @@ export default function SuggestEditScreen({
           {/* Næringsindhold */}
           {editType === "nutrition" && (
             <div className="card" style={S.mb12}>
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+              <div style={UI.udflex_aicenter_jcspacebet_mb8}>
                 <div style={S.h13b}>Næringsindhold</div>
-                <label style={{ fontSize:11, color:"var(--muted)", cursor:"pointer", fontWeight:600, display:"flex", alignItems:"center", gap:4 }}>
+                <label style={UI.ufs11_cmuted_curpointer_fw600_dflex_aicenter_g4}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                   Nyt billede
                   <input type="file" accept="image/*" capture="environment" style={S.none} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
@@ -308,8 +308,8 @@ export default function SuggestEditScreen({
           </div>
 
           {/* Info */}
-          <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 12px", background:"var(--paper2)", borderRadius:10, marginBottom:14 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}>
+          <div style={UI.udflex_g8_aiflexstar_p10px12px_bgpaper2_br10_mb14}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={UI.ushr0_mt1}>
               <circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M12 16v-4M12 8h.01"/>
             </svg>
             <div style={S.sub11lh}>Dit forslag gennemgås af vores team inden det publiceres. Tak for din hjælp!</div>
@@ -335,7 +335,7 @@ export default function SuggestEditScreen({
 
       {/* ── TRIN 6: Tak! ── */}
       {editStep === "done" && (
-        <div className="fade-in" style={{ textAlign:"center", padding:"48px 20px" }}>
+        <div className="fade-in" style={UI.utacenter_p48px20px}>
           <div style={{ width:72, height:72, borderRadius:"50%", background:"var(--green-lt)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5">
               <path strokeLinecap="round" d="M5 13l4 4L19 7"/>

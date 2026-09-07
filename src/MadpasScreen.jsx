@@ -145,7 +145,7 @@ export default function MadpasScreen({
 
         {/* Header — sprog + kryds */}
         <div style={{ padding:"14px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid var(--border)", flexShrink:0 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <div style={UI.udflex_aicenter_g8}>
             <span style={UI.fs20}>{langInfo?.flag}</span>
             <span style={{ fontSize:13, color:"var(--muted)", fontWeight:600 }}>{langInfo?.name}</span>
           </div>
@@ -185,7 +185,7 @@ export default function MadpasScreen({
       <div style={{ paddingBottom:8 }} dir={rtl ? "rtl" : "ltr"}>
 
         {/* Allergen liste — ren, ingen labels */}
-        <div style={{ display:"flex", flexDirection:"column" }}>
+        <div style={UI.udflex_fdcolumn}>
           {[...mpAllergens, ...mpCustom.filter(c => !c.endsWith("_intolerance") && !mpAllergens.includes(c))].map((item, i, arr) => {
             const isLast = i === arr.length - 1;
             if (typeof item !== "string") return null;
@@ -201,7 +201,7 @@ export default function MadpasScreen({
                   {t?.n || a.label}
                 </div>
                 {(exProducts.length > 0 || exIngredients.length > 0) && (
-                  <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.5 }}>
+                  <div style={UI.ufs13_cmuted2_lh15}>
                     {[...exProducts.slice(0,3), ...exIngredients.slice(0,4)].join(", ")}
                   </div>
                 )}
@@ -370,8 +370,8 @@ export default function MadpasScreen({
           </div>
           <div style={{ textAlign:"right" }}>
             <div style={{ fontSize:16, fontWeight:700 }}>{profileName}</div>
-            <div style={{ fontSize:12, color:"#555" }}>{new Date().toLocaleDateString("da-DK")}</div>
-            {lang && <div style={{ fontSize:12, color:"#555" }}>{lang.flag} {lang.name}</div>}
+            <div style={UI.ufs12_c555}>{new Date().toLocaleDateString("da-DK")}</div>
+            {lang && <div style={UI.ufs12_c555}>{lang.flag} {lang.name}</div>}
           </div>
         </div>
 
@@ -384,11 +384,11 @@ export default function MadpasScreen({
 
         {/* Allergener */}
         {allergenLabels.length > 0 && (
-          <div style={{ marginBottom:24 }}>
-            <div style={{ fontSize:13, fontWeight:700, textTransform:"uppercase", letterSpacing:"1px", color:"#555", marginBottom:12 }}>
+          <div style={UI.umb24}>
+            <div style={UI.ufs13_fw700_ttuppercas_ls1px_c555_mb12}>
               Allergener / Allergens
             </div>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+            <div style={UI.udflex_flewrap_g8}>
               {allergenLabels.map((label, i) => (
                 <div key={i} style={{ padding:"8px 16px", border:"2px solid #111", borderRadius:100, fontSize:15, fontWeight:700 }}>
                   {label}
@@ -400,11 +400,11 @@ export default function MadpasScreen({
 
         {/* Diæter */}
         {dietLabels.length > 0 && (
-          <div style={{ marginBottom:24 }}>
-            <div style={{ fontSize:13, fontWeight:700, textTransform:"uppercase", letterSpacing:"1px", color:"#555", marginBottom:12 }}>
+          <div style={UI.umb24}>
+            <div style={UI.ufs13_fw700_ttuppercas_ls1px_c555_mb12}>
               Diæt / Diet
             </div>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+            <div style={UI.udflex_flewrap_g8}>
               {dietLabels.map((label, i) => (
                 <div key={i} style={{ padding:"6px 14px", border:"1px solid #111", borderRadius:100, fontSize:14 }}>
                   {label}
@@ -443,7 +443,7 @@ export default function MadpasScreen({
                   <div className="mp-section-lbl">VIS MADPAS FOR</div>
                   <div style={UI.wrapGap7}>
                     <div className={`ap-chip${madpasProfileId==="self" ? " on" : ""}`} onClick={() => setMadpasProfileId("self")}>
-                      <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(user.name||"Mig")}</div>
+                      <div style={UI.uw20_h20_br50_bggreen_dflex_aicenter_jccenter_fs10_fw800_cin}>{initials(user.name||"Mig")}</div>
                       {(user.name||"Mig").split(" ")[0]}
                     </div>
                     {family.map(m => (

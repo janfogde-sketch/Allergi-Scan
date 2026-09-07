@@ -118,14 +118,12 @@ function DemoSlider({ onClose }) {
         </button>
         {idx < DEMO_SLIDES.length - 1 ? (
           <button onClick={() => setIdx(i => i+1)}
-            style={{ flex:1, padding:"10px", background:"var(--green)", border:"none", borderRadius:10,
-              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
+            style={UI.uflex1_p10px_bggreen_bdnone_br10_fff_fs13_fw800_congreen_cur}>
             Næste →
           </button>
         ) : (
           <button onClick={onClose}
-            style={{ flex:1, padding:"10px", background:"var(--green)", border:"none", borderRadius:10,
-              fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
+            style={UI.uflex1_p10px_bggreen_bdnone_br10_fff_fs13_fw800_congreen_cur}>
             Luk guide ✓
           </button>
         )}
@@ -226,7 +224,7 @@ export default function ScannerScreen({
           onClick={e => e.stopPropagation()}>
 
           {/* Header */}
-          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+          <div style={UI.udflex_aicenter_g12_mb16}>
             <div style={{ width:44, height:44, borderRadius:"50%",
               background: isUser ? "var(--green)" : (member?.color || "var(--ink)"),
               color:"var(--ink)", display:"flex", alignItems:"center", justifyContent:"center",
@@ -235,7 +233,7 @@ export default function ScannerScreen({
             </div>
             <div style={S.flex1}>
               <div style={{ fontWeight:800, fontSize:16, color:"var(--ink)" }}>{pName}</div>
-              <div style={{ fontSize:12, color:"var(--muted)", marginTop:1 }}>
+              <div style={UI.ufs12_cmuted_mt1}>
                 {isActive ? "✅ Aktiv i søgning" : "⬜ Ikke aktiv i søgning"}
               </div>
             </div>
@@ -270,7 +268,7 @@ export default function ScannerScreen({
               </div>
             </div>
           ) : (
-            <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12 }}>Ingen allergier registreret</div>
+            <div style={UI.ufs12_cmuted_mb12}>Ingen allergier registreret</div>
           )}
 
           {/* Diæt */}
@@ -292,7 +290,7 @@ export default function ScannerScreen({
           {pENumbers.length > 0 && (
             <div style={S.mb12}>
               <div style={S.label}>E-numre</div>
-              <div style={{ fontSize:12, color:"var(--muted2)" }}>{pENumbers.length} E-numre overvåges</div>
+              <div style={UI.ufs12_cmuted2}>{pENumbers.length} E-numre overvåges</div>
             </div>
           )}
 
@@ -366,7 +364,7 @@ export default function ScannerScreen({
   const renderUserAvatar = () => {
     const isActive = activeProfiles.includes("user");
     return (
-      <div onClick={() => setProfilePopup("user")} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer" }}>
+      <div onClick={() => setProfilePopup("user")} style={UI.udflex_fdcolumn_aicenter_g4_curpointer}>
         <div style={S.rel}>
           <div style={{ width:46, height:46, borderRadius:"50%",
             background: isActive ? "var(--green)" : "var(--paper2)",
@@ -454,7 +452,7 @@ export default function ScannerScreen({
                   const isActive = activeProfiles.includes(m.id);
                   return (
                     <div key={m.id} onClick={() => setProfilePopup(m.id)}
-                      style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer" }}>
+                      style={UI.udflex_fdcolumn_aicenter_g4_curpointer}>
                       <div style={S.rel}>
                         <div style={{ width:46, height:46, borderRadius:"50%",
                           background: isActive ? "var(--green)" : "var(--paper2)",
@@ -486,7 +484,7 @@ export default function ScannerScreen({
 
                 {/* Tilføj-knap */}
                 <div onClick={() => setScreen(SCREENS.FAMILY)}
-                  style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer" }}>
+                  style={UI.udflex_fdcolumn_aicenter_g4_curpointer}>
                   <div style={{ width:46, height:46, borderRadius:"50%", background:"var(--paper2)",
                     border:"2px dashed var(--border)", display:"flex", alignItems:"center", justifyContent:"center",
                     fontSize:22, color:"var(--muted)", lineHeight:1 }}>+</div>
@@ -561,7 +559,7 @@ export default function ScannerScreen({
                 <div style={{ padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                   <span style={{ fontSize:11, fontWeight:600 }}>
                     {scanZoom > 1.0
-                      ? <span style={{ color:"var(--green)" }}>🔍 {scanZoom}× zoom</span>
+                      ? <span style={UI.ucgreen}>🔍 {scanZoom}× zoom</span>
                       : <span style={{ color:"rgba(255,255,255,.6)" }}>Hold stregkoden ind i rammen</span>}
                   </span>
                   <div style={S.rowGap6}>
@@ -640,7 +638,7 @@ export default function ScannerScreen({
                   })}
                 </div>
                 {/* Tekst */}
-                <div style={{ textAlign:"center" }}>
+                <div style={UI.utacenter}>
                   <div style={{ fontSize:20, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Skan produkt</div>
                   <div style={{ fontSize:13, color:"rgba(255,255,255,.82)", marginTop:4 }}>Tryk for at starte kamera</div>
                   <div onClick={e => { e.stopPropagation(); galleryInputRef.current?.click(); }}
@@ -672,7 +670,7 @@ export default function ScannerScreen({
             )}
 
             {showManualEan && (
-              <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12 }}>
+              <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb12}>
                 <div style={S.rowBetweenMb10}>
                   <div style={S.h13}>Indtast EAN-nummer</div>
                   <button onClick={() => setShowManualEan(false)} aria-label="Luk"
@@ -714,7 +712,7 @@ export default function ScannerScreen({
                 {manualEanError ? (
                   <div style={{ fontSize:11, color:"var(--red)", marginTop:8, fontWeight:600 }}>{manualEanError}</div>
                 ) : (
-                  <div style={{ fontSize:10, color:"var(--muted)", marginTop:8 }}>
+                  <div style={UI.ufs10_cmuted_mt8}>
                     EAN-nummeret er stregkodens tal — typisk 8 eller 13 cifre.
                   </div>
                 )}
@@ -728,26 +726,26 @@ export default function ScannerScreen({
               <div style={{ display:"flex", alignItems:"center", gap:10, padding:"14px 14px", cursor:"pointer",
                 borderBottom: shoppingList.filter(i => !i.checked).length > 0 ? "1px solid var(--border)" : "none" }}
                 onClick={() => setScreen(SCREENS.SEARCH)}>
-                <div style={{ width:34, height:34, background:"var(--surface2)", borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="search" size={17} color="var(--ink2)" /></div>
+                <div style={UI.uw34_h34_bgsurface2_br9_dflex_aicenter_jccenter_shr0}><Icon name="search" size={17} color="var(--ink2)" /></div>
                 <div style={S.flex1}>
-                  <div style={{ fontSize:13, fontWeight:700 }}>Søg produkter</div>
+                  <div style={UI.ufs13_fw700}>Søg produkter</div>
                   <div style={S.sub11mt}>Find varer der er sikre for dig</div>
                 </div>
-                <div style={{ fontSize:16, color:"var(--muted2)" }}>›</div>
+                <div style={UI.ufs16_cmuted2}>›</div>
               </div>
 
               {/* Indkøbsliste — kun hvis der er varer */}
               {shoppingList.filter(i => !i.checked).length > 0 && (
               <div style={{ display:"flex", alignItems:"center", gap:10, padding:"14px 14px", cursor:"pointer" }}
                 onClick={() => setScreen(SCREENS.LIST)}>
-                <div style={{ width:34, height:34, background:"var(--surface2)", borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="cart" size={17} color="var(--ink2)" /></div>
+                <div style={UI.uw34_h34_bgsurface2_br9_dflex_aicenter_jccenter_shr0}><Icon name="cart" size={17} color="var(--ink2)" /></div>
                   <div style={S.flex1}>
-                    <div style={{ fontSize:13, fontWeight:700 }}>Indkøbsliste</div>
+                    <div style={UI.ufs13_fw700}>Indkøbsliste</div>
                     <div style={S.sub11mt}>
                       {shoppingList.filter(i => !i.checked).length} vare{shoppingList.filter(i => !i.checked).length !== 1 ? "r" : ""} mangler
                     </div>
                   </div>
-                  <div style={{ fontSize:16, color:"var(--muted2)" }}>›</div>
+                  <div style={UI.ufs16_cmuted2}>›</div>
                 </div>
               )}
             </div>

@@ -125,8 +125,8 @@ export default function ResultScreen({
       <div className="product-hero" style={{ position:"relative", border:`2px solid ${verdictColor}` }}>
         {scanResult.headline && (
           <div style={{ display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:verdictColor, color:"#fff" }}>
-            <span style={{ fontSize:12, fontWeight:800 }}>{verdictIcon}</span>
-            <span style={{ fontSize:12, fontWeight:800, letterSpacing:".01em", textTransform:"uppercase" }}>{scanResult.headline}</span>
+            <span style={UI.ufs12_fw800}>{verdictIcon}</span>
+            <span style={UI.ufs12_fw800_ls01em_ttuppercas}>{scanResult.headline}</span>
           </div>
         )}
         {scanResult.image_url
@@ -140,19 +140,17 @@ export default function ResultScreen({
             <circle cx="16" cy="20" r="4"/>
             <path strokeLinecap="round" d="M4 34l10-8 8 6 6-4 16 12"/>
           </svg>
-          <div style={{ fontSize:11, color:"var(--muted)", fontWeight:500 }}>Ingen produktbillede</div>
+          <div style={UI.ufs11_cmuted_fw500}>Ingen produktbillede</div>
         </div>
 
         {/* Sekundære handlinger — små ikon-knapper ovenpå billedet, i tommelfinger-nær placering */}
         <div style={{ position:"absolute", top:12, right:12, display:"flex", gap:8 }}>
           <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} onClick={() => toggleFavorite(scanResult)}
-            style={{ width:32, height:32, borderRadius:"50%", background:"rgba(255,255,255,.92)", border:"none", cursor:"pointer",
-              display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 2px 8px rgba(21,32,26,.18)" }}>
+            style={UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc}>
             <Icon name="heart" size={15} color={fav ? "var(--red)" : "var(--ink2)"} />
           </button>
           <button aria-label="Del produkt" onClick={() => { if(navigator.share) navigator.share({ title:scanResult.name, text:scanResult.headline }); }}
-            style={{ width:32, height:32, borderRadius:"50%", background:"rgba(255,255,255,.92)", border:"none", cursor:"pointer",
-              display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 2px 8px rgba(21,32,26,.18)" }}>
+            style={UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc}>
             <Icon name="share" size={15} color="var(--ink2)" />
           </button>
         </div>
@@ -253,7 +251,7 @@ export default function ResultScreen({
               <span>🍼</span>
               Advarsel for småbørn — {infantProfiles.map(m => m.name?.split(" ")[0]).join(", ")} (under 3 år)
             </div>
-            <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+            <div style={UI.udflex_fdcolumn_g4}>
               {infantWarnings.map(w => (
                 <div key={w.id} style={{ fontSize:11, color:"var(--amber)", lineHeight:1.5 }}>
                   <strong>{w.label}:</strong> {w.reason}
@@ -272,7 +270,7 @@ export default function ResultScreen({
                 <span key={e}
                   onClick={() => { const slug = "e-" + e.toLowerCase().replace("e",""); setKnowledgeSlug(slug); setScreen(SCREENS.KNOWLEDGE); }}
                   style={{ fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:6, background:"rgba(255,180,0,.15)", color:"var(--amber)", border:"1px solid var(--amber-md)", cursor:"pointer", display:"inline-flex", alignItems:"center", gap:4 }}>
-                  {e} {E_NUMBERS[e] ? "— " + E_NUMBERS[e].split("—")[0].trim() : ""} <span style={{ fontSize:9, opacity:.6 }}>›</span>
+                  {e} {E_NUMBERS[e] ? "— " + E_NUMBERS[e].split("—")[0].trim() : ""} <span style={UI.ufs9_op06}>›</span>
                 </span>
               ))}
             </div>
@@ -285,7 +283,7 @@ export default function ResultScreen({
             <div style={{ fontSize:11, fontWeight:800, color: dietFailsAll.length > 0 ? "var(--amber)" : "var(--green)", marginBottom:6 }}>
               {dietFailsAll.length > 0 ? "⚠️ Diæt-advarsler" : "✅ Kompatibel med dine diæter"}
             </div>
-            <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+            <div style={UI.udflex_fdcolumn_g4}>
               {dietFailsAll.map(r => (
                 <div key={r.id} style={{ fontSize:11, color:"var(--amber)" }}>
                   <strong>{r.label}:</strong> {r.reasons[0]}
@@ -329,7 +327,7 @@ export default function ResultScreen({
     return (
       <div className="card">
         <div className="card-lbl">Andre allergener i produktet</div>
-        <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8 }}>Ikke registreret på dine profiler</div>
+        <div style={UI.ufs11_cmuted_mb8}>Ikke registreret på dine profiler</div>
         {otherPresent.length > 0 && (
           <div className="tags" style={UI.mb6}>
             {otherPresent.map(([k]) => {
@@ -338,7 +336,7 @@ export default function ResultScreen({
                 <div key={k} className="tag"
                   onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
                   style={{ background:"var(--surface2)", color:"var(--ink)", borderColor:"var(--border2)", cursor:"pointer" }}>
-                  {a.emoji} {a.label} <span style={{ fontSize:9, opacity:.6 }}>›</span>
+                  {a.emoji} {a.label} <span style={UI.ufs9_op06}>›</span>
                 </div>
               ) : null;
             })}
@@ -352,7 +350,7 @@ export default function ResultScreen({
                 <div key={k} className="tag"
                   onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
                   style={{ background:"var(--surface)", color:"var(--muted)", borderColor:"var(--border2)", cursor:"pointer" }}>
-                  spor: {a.emoji} {a.label} <span style={{ fontSize:9, opacity:.6 }}>›</span>
+                  spor: {a.emoji} {a.label} <span style={UI.ufs9_op06}>›</span>
                 </div>
               ) : null;
             })}
@@ -366,7 +364,7 @@ export default function ResultScreen({
     const eNums = scanResult.productENumbers;
     return (
       <div className="card">
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+        <div style={UI.udflex_aicenter_jcspacebet_mb8}>
           <div className="card-lbl" style={{ marginBottom:0 }}>E-numre i produktet</div>
           <div style={UI.muted10}>{eNums.length} fundet</div>
         </div>
@@ -390,7 +388,7 @@ export default function ResultScreen({
                   color: isWatched ? "var(--amber)" : "var(--ink2)",
                   border: `1px solid ${isWatched ? "var(--amber-md)" : "var(--border2)"}`,
                 }}>
-                <span style={{ fontFamily:"monospace" }}>{e}</span>
+                <span style={UI.uffmonospac}>{e}</span>
                 {name && <span style={{ fontWeight:400, color: isWatched ? "var(--amber)" : "var(--muted)" }}>— {name.slice(0,20)}{name.length>20?"…":""}</span>}
                 {isWatched && <span style={{ fontSize:9 }}>⚠️</span>}
                 <span style={{ fontSize:9, opacity:.5 }}>›</span>
@@ -398,7 +396,7 @@ export default function ResultScreen({
             );
           })}
         </div>
-        <div style={{ fontSize:10, color:"var(--muted)", marginTop:8 }}>
+        <div style={UI.ufs10_cmuted_mt8}>
           Tryk på et E-nummer for at læse mere i leksikonet
         </div>
       </div>
@@ -421,7 +419,7 @@ export default function ResultScreen({
     return (
       <div className="card">
         <div className="card-lbl">Næringsindhold pr. 100g</div>
-        <div style={{ display:"flex", flexDirection:"column" }}>
+        <div style={UI.udflex_fdcolumn}>
           {rows.map(([label, value], i) => (
             <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"7px 0", borderBottom: i < rows.length-1 ? "1px solid var(--border)" : "none" }}>
               <span style={{ fontSize:13, color: label.startsWith("—") ? "var(--muted)" : "var(--ink2)", paddingLeft: label.startsWith("—") ? 12 : 0 }}>{label}</span>
@@ -443,14 +441,14 @@ export default function ResultScreen({
       {(scanResult.status === "danger" || scanResult.status === "warn") && (
         <div style={UI.mb10}>
           {altLoading && (
-            <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
-              <div style={{ width:16, height:16, border:"2px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .7s linear infinite", flexShrink:0 }} />
+            <div style={UI.udflex_aicenter_g10_p12px14px_bgsurface_bd1pxsolid_br12}>
+              <div style={UI.uw16_h16_bd2pxsolid_borgreen_br50_anspin7sli_shr0} />
               <div style={UI.muted13}>Finder sikre alternativer…</div>
             </div>
           )}
           {!altLoading && alternatives.length > 0 && (
             <div style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:14, padding:"14px 16px" }}>
-              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+              <div style={UI.udflex_aicenter_g8_mb12}>
                 <div style={UI.fs18}>✅</div>
                 <div>
                   <div style={{ fontSize:13, fontWeight:800, color:"var(--green)" }}>Prøv disse i stedet</div>
@@ -463,7 +461,7 @@ export default function ResultScreen({
                     onClick={() => lookupProduct?.(p.ean)}>
                     <ProductImage product={p} size={40} />
                     <div style={UI.flexMin}>
-                      <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</div>
+                      <div style={UI.ufs13_fw700_cink_ovhidden_toellipsis_wsnowrap}>{p.name}</div>
                       <div style={UI.muted11mt1}>{p.brand}</div>
                     </div>
                     <div style={{ fontSize:11, fontWeight:700, color:"var(--green)", flexShrink:0 }}>✓ Sikkert</div>
@@ -473,11 +471,11 @@ export default function ResultScreen({
             </div>
           )}
           {!altLoading && alternatives.length === 0 && (scanResult.status === "danger" || scanResult.status === "warn") && (
-            <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
+            <div style={UI.udflex_aicenter_g10_p12px14px_bgsurface_bd1pxsolid_br12}>
               <div style={UI.fs16}>🔍</div>
-              <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>
+              <div style={UI.ufs12_cmuted_lh15}>
                 Ingen kendte alternativer i samme kategori endnu.{" "}
-                <span style={{ color:"var(--green)", fontWeight:700, cursor:"pointer" }}
+                <span style={UI.ucgreen_fw700_curpointer}
                   onClick={() => {}}>
                   Hjælp os ved at scanne alternativer.
                 </span>
@@ -507,7 +505,7 @@ export default function ResultScreen({
           </div>
         ) : (
           <div style={{ paddingTop:4 }}>
-            <div style={{ fontSize:13, color:"var(--muted2)", marginBottom:8 }}>Vi mangler ingredienslisten for dette produkt.</div>
+            <div style={UI.ufs13_cmuted2_mb8}>Vi mangler ingredienslisten for dette produkt.</div>
             <button className="btn btn-outline btn-sm"
               onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients||""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
               Hjælp os — indsend ingrediensliste

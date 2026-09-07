@@ -225,13 +225,13 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
 
       {/* Filter-header */}
       {showList && (
-        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+        <div style={UI.udflex_aicenter_g8_mb12}>
           {selectedCategory && (
             <button onClick={() => handleCatSelect(null)} aria-label={`Ryd kategori-filter: ${selectedCat?.label}`} style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", background:selectedCat?.bg, border:`1px solid ${selectedCat?.color}33`, borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700, color:selectedCat?.color, fontFamily:"var(--f)" }}>
               {selectedCat?.emoji} {selectedCat?.label} ×
             </button>
           )}
-          <div style={{ fontSize:12, color:"var(--muted)" }}>{entries.length} resultater</div>
+          <div style={UI.ufs12_cmuted}>{entries.length} resultater</div>
         </div>
       )}
 
@@ -273,7 +273,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           {funFacts.map(f => (
             <div key={f.id} onClick={() => setSelectedEntry(f)}
               style={{ background:"rgba(232,168,124,.10)", border:"1px solid rgba(232,168,124,.18)", borderRadius:12, padding:"12px 14px", cursor:"pointer", display:"flex", gap:10, alignItems:"flex-start", marginBottom:8 }}>
-              <div style={{ fontSize:22, flexShrink:0 }}>{f.emoji||"💡"}</div>
+              <div style={UI.ufs22_shr0}>{f.emoji||"💡"}</div>
               <div>
                 <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:3 }}>{f.title}</div>
                 <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.45 }}>{f.summary}</div>

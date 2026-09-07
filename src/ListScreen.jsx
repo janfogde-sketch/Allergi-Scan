@@ -47,7 +47,7 @@ export default function ListScreen({
                   {p.tags?.length > 0 && (
                     <div style={{ display:"flex", gap:4, marginTop:3, flexWrap:"wrap" }}>
                       {p.tags.map((t,i) => (
-                        <span key={i} style={{ fontSize:10, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:100, padding:"1px 7px" }}>
+                        <span key={i} style={UI.ufs10_fw700_cgreen_bggreenlt_bd1pxsolid_br100_p1px7px}>
                           {tagLabels[t]||t}
                         </span>
                       ))}
@@ -56,7 +56,7 @@ export default function ListScreen({
                 </div>
                 <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6 }}>
                   <div style={{ fontSize:11, fontWeight:700, color:statusColor }}>{statusLabel}</div>
-                  <button className="btn btn-ghost btn-sm" style={{ fontSize:11, padding:"3px 8px" }}
+                  <button className="btn btn-ghost btn-sm" style={UI.ufs11_p3px8px}
                     onClick={e => { e.stopPropagation(); addToList(p.name); }}>
                     + Liste
                   </button>
@@ -90,7 +90,7 @@ export default function ListScreen({
           <input className="field" placeholder="Fx. Glutenfri pasta…"
             value={newItemName} onChange={e => setNewItemName(e.target.value)}
             onKeyDown={e => e.key==="Enter" && addToList(newItemName)} />
-          <button className="btn btn-primary btn-sm" style={{ whiteSpace:"nowrap" }}
+          <button className="btn btn-primary btn-sm" style={UI.uwsnowrap}
             onClick={() => addToList(newItemName)}>
             Tilføj
           </button>

@@ -100,8 +100,8 @@ export const MemberForm = ({
             <div key={d.id} className={`chip${on?" on":""}`}
               onClick={() => setDiets(p => on ? p.filter(x=>x!==d.id) : [...p,d.id])}>
               <div style={UI.flex1}>
-                <div style={{ fontWeight:700 }}>{d.label}</div>
-                <div style={{ fontSize:10, color:"var(--muted)", marginTop:1 }}>{d.desc}</div>
+                <div style={UI.ufw700}>{d.label}</div>
+                <div style={UI.ufs10_cmuted_mt1}>{d.desc}</div>
               </div>
               {on && <div className="chip-check">✓</div>}
             </div>

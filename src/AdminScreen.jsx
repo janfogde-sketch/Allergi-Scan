@@ -186,18 +186,18 @@ export default function AdminScreen() {
         {openTicket && (
           <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
             onClick={e => e.target === e.currentTarget && setOpenTicket(null)}>
-            <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 140px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
+            <div style={UI.ubgsheet_br20px20px_p20px16px_w100_mxh90vh_ovyauto}
               onClick={e => e.stopPropagation()}>
 
               {/* Header */}
-              <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+              <div style={UI.udflex_aicenter_g12_mb16}>
                 <button onClick={() => setOpenTicket(null)} aria-label="Luk"
-                  style={{ background:"var(--surface2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
+                  style={UI.ubgsurface2_bdnone_br50_w32_h32_curpointer_fs18_cmuted}>×</button>
                 <div style={{ flex:1, fontSize:16, fontWeight:800, color:"var(--ink)" }}>🐛 Ticket #{openTicket.id?.slice(0,8)}</div>
               </div>
 
               {/* Status knapper */}
-              <div style={{ display:"flex", gap:6, marginBottom:14 }}>
+              <div style={UI.udflex_g6_mb14}>
                 {[
                   { val:"open",        label:"🔴 Åben" },
                   { val:"in_progress", label:"🟡 I gang" },
@@ -214,15 +214,15 @@ export default function AdminScreen() {
               </div>
 
               {/* Beskrivelse */}
-              <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
+              <div style={UI.ubgsurface_bd1pxsolid_br12_p14px_mb10}>
                 <div style={{ fontSize:11, color:"var(--muted)", fontWeight:700, marginBottom:6 }}>BESKRIVELSE</div>
                 <div style={{ fontSize:14, color:"var(--ink)", lineHeight:1.7 }}>{openTicket.description}</div>
               </div>
 
               {/* Skærmbillede */}
               {openTicket.image_base64 && (
-                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
-                  <div style={{ fontSize:11, color:"var(--muted)", fontWeight:700, marginBottom:8 }}>SKÆRMBILLEDE</div>
+                <div style={UI.ubgsurface_bd1pxsolid_br12_p14px_mb10}>
+                  <div style={UI.ufs11_cmuted_fw700_mb8}>SKÆRMBILLEDE</div>
                   <img src={`data:image/jpeg;base64,${openTicket.image_base64}`} alt="Screenshot"
                     style={{ width:"100%", borderRadius:8, objectFit:"contain" }} />
                 </div>
@@ -231,7 +231,7 @@ export default function AdminScreen() {
               {/* Diagnostisk info */}
               {openTicket.context && (
                 <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
-                  <div style={{ fontSize:11, color:"var(--muted)", fontWeight:700, marginBottom:8 }}>📊 DIAGNOSTISK INFO</div>
+                  <div style={UI.ufs11_cmuted_fw700_mb8}>📊 DIAGNOSTISK INFO</div>
                   <div style={UI.grid2gap6}>
                     {[
                       ["Bruger",      openTicket.context.user_name || "Anonym"],
@@ -261,17 +261,17 @@ export default function AdminScreen() {
 
                   {/* Aktive allergener — bred celle */}
                   {openTicket.context.allergens?.length > 0 && (
-                    <div style={{ background:"var(--surface)", borderRadius:8, padding:"8px 10px", marginTop:6 }}>
-                      <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>ALLERGENER</div>
-                      <div style={{ fontSize:11, color:"var(--ink)", fontWeight:600 }}>{openTicket.context.allergens.join(", ")}</div>
+                    <div style={UI.ubgsurface_br8_p8px10px_mt6}>
+                      <div style={UI.ufs9_cmuted_fw700_ttuppercas_ls4px_mb4}>ALLERGENER</div>
+                      <div style={UI.ufs11_cink_fw600}>{openTicket.context.allergens.join(", ")}</div>
                     </div>
                   )}
 
                   {/* Produkt-kontekst hvis tilgængelig */}
                   {(openTicket.context.scan_result_name || openTicket.context.scan_result_ean) && (
-                    <div style={{ background:"var(--surface)", borderRadius:8, padding:"8px 10px", marginTop:6 }}>
-                      <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>PRODUKT VED FEEDBACK</div>
-                      <div style={{ fontSize:11, color:"var(--ink)", fontWeight:600 }}>
+                    <div style={UI.ubgsurface_br8_p8px10px_mt6}>
+                      <div style={UI.ufs9_cmuted_fw700_ttuppercas_ls4px_mb4}>PRODUKT VED FEEDBACK</div>
+                      <div style={UI.ufs11_cink_fw600}>
                         {openTicket.context.scan_result_name || "—"} {openTicket.context.scan_result_ean ? `[EAN: ${openTicket.context.scan_result_ean}]` : ""}
                       </div>
                     </div>
@@ -279,9 +279,9 @@ export default function AdminScreen() {
 
                   {/* Madpas-sprog hvis relevant */}
                   {openTicket.context.madpas_lang && (
-                    <div style={{ background:"var(--surface)", borderRadius:8, padding:"8px 10px", marginTop:6 }}>
-                      <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>MADPAS SPROG</div>
-                      <div style={{ fontSize:11, color:"var(--ink)", fontWeight:600 }}>{openTicket.context.madpas_lang}</div>
+                    <div style={UI.ubgsurface_br8_p8px10px_mt6}>
+                      <div style={UI.ufs9_cmuted_fw700_ttuppercas_ls4px_mb4}>MADPAS SPROG</div>
+                      <div style={UI.ufs11_cink_fw600}>{openTicket.context.madpas_lang}</div>
                     </div>
                   )}
                 </div>
@@ -342,7 +342,7 @@ ${openTicket.description}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
                   navigator.clipboard?.writeText(txt).then(() => alert("Kopieret til udklipsholder!")).catch(() => alert(txt));
                 }}
-                  style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:10, padding:"10px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--on-green)", cursor:"pointer" }}>
+                  style={UI.uw100_bggreen_bdnone_br10_p10px_fff_fs13_fw700_congreen_curp}>
                   📋 Kopiér til Claude
                 </button>
               </div>
@@ -398,7 +398,7 @@ ${openTicket.description}
                     background: adminSection===s.id ? "var(--green-lt)" : "var(--surface)",
                     border: `1px solid ${adminSection===s.id ? "var(--green)" : "var(--border)"}`,
                     borderRadius:14, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
-                  <span style={{ fontSize:22 }}>{s.emoji}</span>
+                  <span style={UI.ufs22}>{s.emoji}</span>
                   <span style={{ fontSize:13, fontWeight:800, color: adminSection===s.id ? "var(--green)" : "var(--ink)" }}>{s.label}</span>
                 </button>
               ))}
@@ -408,7 +408,7 @@ ${openTicket.description}
             {adminSection === "dashboard" && (
               <div className="fade-in">
                 <div style={UI.sectionLbl8}>Brugere</div>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14 }}>
+                <div style={UI.udgrid_gri1fr1fr_g8_mb14}>
                   {[
                     { n:adminStats?.total_users,     emoji:"👤", label:"Brugere i alt",   color:"var(--ink)" },
                     { n:adminStats?.new_users_today,  emoji:"🆕", label:"Nye i dag",        color:"var(--green)" },
@@ -451,7 +451,7 @@ ${openTicket.description}
                   ].map(({ emoji, label, color, fn }) => (
                     <button key={label} onClick={fn}
                       style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:6, padding:"14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
-                      <span style={{ fontSize:24 }}>{emoji}</span>
+                      <span style={UI.ufs24}>{emoji}</span>
                       <span style={{ fontSize:12, fontWeight:700, color }}>{label}</span>
                     </button>
                   ))}
@@ -497,16 +497,16 @@ ${openTicket.description}
                   {filteredAdminUsers.length} af {adminUsers.length} brugere
                 </div>
                 {adminUsersLoading && <Loader text="Indlæser…" />}
-                <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                <div style={UI.udflex_fdcolumn_g6}>
                   {filteredAdminUsers.map(u => (
                     <div key={u.id} onClick={() => setOpenAdminUser(u)}
                       style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", boxShadow:"var(--sh)", cursor:"pointer" }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                      <div style={UI.udflex_aicenter_g10}>
                         <div style={{ width:38, height:38, borderRadius:"50%", background: u.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
                           {(u.name||u.email||"?").charAt(0).toUpperCase()}
                         </div>
                         <div style={UI.flexMin}>
-                          <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.name || "Ingen navn"}</div>
+                          <div style={UI.ufs13_fw700_cink_ovhidden_toellipsis_wsnowrap}>{u.name || "Ingen navn"}</div>
                           <div style={{ fontSize:11, color:"var(--muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</div>
                         </div>
                         <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0 }}>
@@ -545,9 +545,9 @@ ${openTicket.description}
                 </div>
                 {submissionsLoading && <Loader text="Indlæser…" />}
                 {!submissionsLoading && submissions.length === 0 && (
-                  <div style={{ textAlign:"center", padding:"48px 0" }}>
+                  <div style={UI.utacenter_p48px0}>
                     <div style={UI.emoji48mb12}>{submissionFilter==="pending"?"🎉":"📭"}</div>
-                    <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>{submissionFilter==="pending" ? "Ingen afventer" : "Ingen indsendelser"}</div>
+                    <div style={UI.ufs16_fw800_cink}>{submissionFilter==="pending" ? "Ingen afventer" : "Ingen indsendelser"}</div>
                   </div>
                 )}
                 <div style={UI.colGap8}>
@@ -639,7 +639,7 @@ ${openTicket.description}
                 )}
 
                 {ticketsLoading && <Loader text="Indlæser…" />}
-                {!ticketsLoading && adminTickets.length === 0 && <div style={{ textAlign:"center", padding:"48px 0" }}><div style={UI.emoji48mb12}>🎉</div><div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>Ingen tickets</div></div>}
+                {!ticketsLoading && adminTickets.length === 0 && <div style={UI.utacenter_p48px0}><div style={UI.emoji48mb12}>🎉</div><div style={UI.ufs16_fw800_cink}>Ingen tickets</div></div>}
                 <div style={UI.colGap8}>
                   {adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter).map(t => {
                     const typeConfig = { bug:{emoji:"🐛",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{emoji:"🎨",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{emoji:"💡",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{emoji:"📦",color:"var(--ink3)",bg:"var(--surface2)",label:"Indhold"}, crash:{emoji:"💥",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{emoji:"✨",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
@@ -689,16 +689,16 @@ ${openTicket.description}
         {screen === SCREENS.ADMIN && openAdminUser && (
           <div style={{ position:"fixed", inset:0, zIndex:9992, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
             onClick={e => e.target === e.currentTarget && setOpenAdminUser(null)}>
-            <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 140px", width:"100%", maxHeight:"90vh", overflowY:"auto" }}
+            <div style={UI.ubgsheet_br20px20px_p20px16px_w100_mxh90vh_ovyauto}
               onClick={e => e.stopPropagation()}>
 
                   {/* Header */}
-                  <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+                  <div style={UI.udflex_aicenter_g12_mb16}>
                     <div style={{ width:52, height:52, borderRadius:"50%", background: openAdminUser.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
                       {(openAdminUser.name||openAdminUser.email||"?").charAt(0).toUpperCase()}
                     </div>
                     <div style={UI.flex1}>
-                      <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>{openAdminUser.name || "Ingen navn"}</div>
+                      <div style={UI.ufs18_fw900_cink}>{openAdminUser.name || "Ingen navn"}</div>
                       <div style={UI.muted12mt2}>{openAdminUser.email}</div>
                       <div style={{ display:"flex", gap:6, marginTop:5 }}>
                         <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: openAdminUser.role==="admin" ? "rgba(74,222,128,.2)" : "var(--surface2)", color: openAdminUser.role==="admin" ? "var(--green)" : "var(--muted)" }}>
@@ -710,7 +710,7 @@ ${openTicket.description}
                       </div>
                     </div>
                     <button onClick={() => setOpenAdminUser(null)} aria-label="Luk"
-                      style={{ background:"var(--surface2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
+                      style={UI.ubgsurface2_bdnone_br50_w32_h32_curpointer_fs18_cmuted}>×</button>
                   </div>
 
                   {/* Info grid */}
@@ -735,7 +735,7 @@ ${openTicket.description}
                   {openAdminUser.allergens?.length > 0 && (
                     <>
                       <div style={UI.sectionLbl8}>Allergener & præferencer</div>
-                      <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:14 }}>
+                      <div style={UI.udflex_flewrap_g5_mb14}>
                         {openAdminUser.allergens.map(id => {
                           const a = ALLERGENS.find(x => x.id === id);
                           return a ? <span key={id} style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", border:"1px solid var(--red-md)" }}>{a.emoji} {a.label}</span> : null;
@@ -748,7 +748,7 @@ ${openTicket.description}
                   {openAdminUser.preferred_stores?.length > 0 && (
                     <>
                       <div style={UI.sectionLbl8}>Foretrukne butikker</div>
-                      <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:14 }}>
+                      <div style={UI.udflex_flewrap_g5_mb14}>
                         {openAdminUser.preferred_stores.map((s,i) => (
                           <span key={i} style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:100, background:"var(--surface2)", color:"var(--ink)", border:"1px solid var(--border)" }}>🛒 {s}</span>
                         ))}
@@ -798,7 +798,7 @@ ${openTicket.description}
                           const data = await res.json();
                           alert(`Seneste scanninger (${data.length}):\n\n${data.map(s => `${s.product_name||s.ean} — ${new Date(s.scanned_at).toLocaleDateString("da-DK")}`).join("\n") || "Ingen scanninger"}`);
                         }}
-                          style={{ width:"100%", padding:"11px", background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
+                          style={UI.uw100_p11px_bgsurface2_bd1pxsolid_br12_fff_fs12_fw700_cink_c}>
                           📱 Se scanningshistorik
                         </button>
 
@@ -809,7 +809,7 @@ ${openTicket.description}
                           setSubmissionFilter("pending");
                           loadSubmissions("pending");
                         }}
-                          style={{ width:"100%", padding:"11px", background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
+                          style={UI.uw100_p11px_bgsurface2_bd1pxsolid_br12_fff_fs12_fw700_cink_c}>
                           📦 Se indsendelser
                         </button>
 
@@ -849,7 +849,7 @@ ${openTicket.description}
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2"><path strokeLinecap="round" d="M15 19l-7-7 7-7"/></svg>
               </button>
               <div style={UI.flex1}>
-                <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Gennemse indsendelse</div>
+                <div style={UI.ufs17_fw800_cink}>Gennemse indsendelse</div>
                 <div style={UI.muted11mt1}>{new Date(openSubmission.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"long", year:"numeric" })}</div>
               </div>
               {/* Hurtig-godkend/afvis */}
@@ -867,14 +867,14 @@ ${openTicket.description}
 
             {/* Produktkort */}
             <div style={UI.card}>
-              <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
+              <div style={UI.udflex_aicenter_g12_mb12}>
                 {openSubmission.ai_parsed_data?.product_image_url
                   ? <img src={openSubmission.ai_parsed_data.product_image_url}
                       style={{ width:64, height:64, borderRadius:10, objectFit:"contain", border:"1px solid var(--border)", flexShrink:0 }} alt="Indsendt produktbillede" />
                   : <div style={{ width:64, height:64, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>📦</div>
                 }
                 <div style={UI.flex1}>
-                  <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, marginBottom:4 }}>Produktnavn</div>
+                  <div style={UI.ufs11_cmuted_fw600_mb4}>Produktnavn</div>
                   <input value={editingSubmission.name} onChange={e => setEditingSubmission(s => ({ ...s, name: e.target.value }))}
                     placeholder="Produktnavn…"
                     style={{ width:"100%", border:"none", outline:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--ink)", background:"transparent", padding:0 }} />
@@ -882,19 +882,19 @@ ${openTicket.description}
               </div>
               <div style={UI.grid2gap8}>
                 <div>
-                  <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, marginBottom:4 }}>BRAND</div>
+                  <div style={UI.ufs10_cmuted_fw600_mb4}>BRAND</div>
                   <input value={editingSubmission.brand} onChange={e => setEditingSubmission(s => ({ ...s, brand: e.target.value }))}
                     placeholder="Brand / Mærke…" className="field" style={{ padding:"8px 10px", fontSize:13 }} />
                 </div>
                 <div>
-                  <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, marginBottom:4 }}>EAN</div>
+                  <div style={UI.ufs10_cmuted_fw600_mb4}>EAN</div>
                   <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", padding:"8px 10px", background:"var(--surface2)", borderRadius:8, fontFamily:"monospace" }}>{openSubmission.ean}</div>
                 </div>
               </div>
               {openSubmission.notes && (
                 <div style={{ marginTop:10, padding:"8px 10px", background:"var(--amber-lt)", borderRadius:8 }}>
                   <div style={{ fontSize:10, color:"var(--amber)", fontWeight:700, marginBottom:2 }}>BRUGER-BEMÆRKNING</div>
-                  <div style={{ fontSize:12, color:"var(--ink)" }}>{openSubmission.notes}</div>
+                  <div style={UI.ufs12_cink}>{openSubmission.notes}</div>
                 </div>
               )}
             </div>
@@ -902,7 +902,7 @@ ${openTicket.description}
             {/* Foto af ingredienslisten */}
             {openSubmission.raw_label_image && (
               <div style={UI.card}>
-                <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>📸 Foto af ingredienslisten</div>
+                <div style={UI.ufs13_fw800_cink_mb10}>📸 Foto af ingredienslisten</div>
                 <img src={openSubmission.raw_label_image} alt="Ingrediensliste"
                   style={{ width:"100%", borderRadius:10, objectFit:"contain", maxHeight:240 }} />
               </div>
@@ -928,7 +928,7 @@ ${openTicket.description}
                       <HighlightText text={cleanedOcrText} />
                     </div>
                     <button onClick={() => setEditingSubmission(s => ({ ...s, ingredients_text: cleanedOcrText }))}
-                      style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:10, padding:"10px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--on-green)", cursor:"pointer" }}>
+                      style={UI.uw100_bggreen_bdnone_br10_p10px_fff_fs13_fw700_congreen_curp}>
                       ✓ Brug denne version
                     </button>
                   </div>
@@ -988,12 +988,12 @@ ${openTicket.description}
                         {adminSection === "missing" && (
               <div>
                 <div style={UI.rowBetweenMb16}>
-                  <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>❓ Efterspurgte manglende produkter</div>
+                  <div style={UI.ufs17_fw800_cink}>❓ Efterspurgte manglende produkter</div>
                   <button onClick={loadMissingEans} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer" }}>
                     🔄 Opdater
                   </button>
                 </div>
-                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:16, lineHeight:1.5 }}>
+                <div style={UI.ufs12_cmuted_mb16_lh15}>
                   Produkter som brugere har forsøgt at scanne men ikke fundet i databasen. Sorteret efter antal opslag.
                 </div>
 
@@ -1003,9 +1003,9 @@ ${openTicket.description}
                     <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>
                       📊 Top EAN-præfikser <span style={{ fontSize:10, fontWeight:400, color:"var(--muted)" }}>(proxy for brand/producent)</span>
                     </div>
-                    <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                    <div style={UI.udflex_fdcolumn_g6}>
                       {missingEanTopPrefixes.map(([prefix, data]) => (
-                        <div key={prefix} style={{ display:"flex", alignItems:"center", gap:10 }}>
+                        <div key={prefix} style={UI.udflex_aicenter_g10}>
                           <div style={{ fontFamily:"monospace", fontSize:12, fontWeight:700, color:"var(--ink)", width:48 }}>{prefix}…</div>
                           <div style={{ flex:1, height:6, background:"var(--border2)", borderRadius:3, overflow:"hidden" }}>
                             <div style={{ height:"100%", borderRadius:3, background:"var(--green)", width:`${Math.round((data.scans / missingEansTotalScans) * 100)}%` }} />
@@ -1023,7 +1023,7 @@ ${openTicket.description}
                       ))}
                     </div>
                     <div style={{ fontSize:10, color:"var(--muted)", marginTop:10 }}>
-                      Brug præfikset til at identificere producenten på <a href="https://www.gs1.dk" target="_blank" rel="noopener noreferrer" style={{ color:"var(--green)" }}>gs1.dk</a>
+                      Brug præfikset til at identificere producenten på <a href="https://www.gs1.dk" target="_blank" rel="noopener noreferrer" style={UI.ucgreen}>gs1.dk</a>
                     </div>
                   </div>
                 )}
@@ -1080,7 +1080,7 @@ ${openTicket.description}
             {adminSection === "import" && (
               <div>
                 <div style={UI.rowBetweenMb16}>
-                  <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>⬇️ OFF Auto-import</div>
+                  <div style={UI.ufs17_fw800_cink}>⬇️ OFF Auto-import</div>
                   <button
                     onClick={() => runImport(true)}
                     disabled={importLoading}
@@ -1098,15 +1098,15 @@ ${openTicket.description}
 
                 {/* Status */}
                 {importLoading && (
-                  <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:12 }}>
-                    <div style={{ width:16, height:16, border:"2px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .7s linear infinite", flexShrink:0 }} />
+                  <div style={UI.udflex_aicenter_g10_p12px14px_bgsurface_bd1pxsolid_br12_mb12}>
+                    <div style={UI.uw16_h16_bd2pxsolid_borgreen_br50_anspin7sli_shr0} />
                     <div style={UI.muted13}>Importerer produkter fra Open Food Facts…</div>
                   </div>
                 )}
 
                 {/* Statistik */}
                 {importLog?.stats && !importLoading && (
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14 }}>
+                  <div style={UI.udgrid_gri1fr1fr_g8_mb14}>
                     {[
                       { label:"✅ Importeret",    value: importLog.stats.imported,       color:"var(--green)" },
                       { label:"🔍 Fundet på OFF", value: importLog.stats.found ?? (importLog.stats.imported + importLog.stats.not_on_off), color:"var(--blue)" },
@@ -1123,7 +1123,7 @@ ${openTicket.description}
 
                 {/* Log */}
                 {importLog?.log?.length > 0 && !importLoading && (
-                  <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, overflow:"hidden" }}>
+                  <div style={UI.ubgsurface_bd1pxsolid_br12_ovhidden}>
                     <div style={{ padding:"10px 14px", borderBottom:"1px solid var(--border)", fontSize:12, fontWeight:800, color:"var(--ink)" }}>
                       Importeret ({importLog.log.length})
                     </div>
@@ -1149,7 +1149,7 @@ ${openTicket.description}
                   <div style={{ textAlign:"center", padding:"40px 0" }}>
                     <div style={{ fontSize:36, marginBottom:12 }}>⬇️</div>
                     <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Klar til import</div>
-                    <div style={{ fontSize:12, color:"var(--muted)" }}>
+                    <div style={UI.ufs12_cmuted}>
                       Tryk "Kør import nu" for at importere manglende produkter fra Open Food Facts
                     </div>
                   </div>
@@ -1159,7 +1159,7 @@ ${openTicket.description}
                 <div style={{ marginTop:24, paddingTop:20, borderTop:"1px solid var(--border)" }}>
                   <div style={UI.rowBetweenMb10}>
                     <div>
-                      <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)" }}>🧠 Allergen reparsing</div>
+                      <div style={UI.ufs15_fw800_cink}>🧠 Allergen reparsing</div>
                       <div style={{ fontSize:11, color:"var(--muted)", marginTop:2, lineHeight:1.6 }}>
                         Kører allergen-engine (keyword + Claude Haiku) på produkter med lav kvalitet.
                         Kører automatisk hver nat kl. 03:00 UTC.
@@ -1179,7 +1179,7 @@ ${openTicket.description}
                   </div>
 
                   {reparseLoading && (
-                    <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:12 }}>
+                    <div style={UI.udflex_aicenter_g10_p12px14px_bgsurface_bd1pxsolid_br12_mb12}>
                       <div style={{ width:16, height:16, border:"2px solid var(--border2)", borderTopColor:"var(--blue)", borderRadius:"50%", animation:"spin .7s linear infinite", flexShrink:0 }} />
                       <div style={UI.muted13}>Reparserer allergen-flags med Claude Haiku…</div>
                     </div>
@@ -1217,15 +1217,15 @@ ${openTicket.description}
 
             {adminSection === "debug" && (
               <div style={UI.pb120}>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-                  <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>Debug Trace Log</div>
+                <div style={UI.udflex_jcspacebet_aicenter_mb12}>
+                  <div style={UI.ufs14_fw800_cink}>Debug Trace Log</div>
                   <button onClick={() => { navigator.clipboard.writeText(JSON.stringify(getTraceLog(), null, 2)); }}
                     style={{ padding:"6px 12px", borderRadius:8, background:"var(--surface2)", border:"1px solid var(--border)",
                       fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
                     Kopier JSON
                   </button>
                 </div>
-                <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10 }}>
+                <div style={UI.ufs11_cmuted_mb10}>
                   Seneste {getTraceLog().length} operationer (scan, sog, OCR, submit). Nyeste forst.
                 </div>
                 {getTraceLog().slice().reverse().map((entry, i) => {
@@ -1263,7 +1263,7 @@ ${openTicket.description}
             {adminSection === "recipes" && (
               <div style={UI.pb120}>
                 {/* Filter tabs */}
-                <div style={{ display:"flex", gap:6, marginBottom:14 }}>
+                <div style={UI.udflex_g6_mb14}>
                   {[{val:"pending",label:"⏳ Afventer"},{val:"approved",label:"✅ Godkendte"},{val:"rejected",label:"❌ Afviste"}].map(f => (
                     <button key={f.val} onClick={() => { setAdminRecipeFilter(f.val); loadAdminRecipes(f.val); }}
                       style={{ padding:"7px 14px", borderRadius:100, border:`1px solid ${adminRecipeFilter===f.val?"var(--green)":"var(--border)"}`,
@@ -1278,22 +1278,22 @@ ${openTicket.description}
                 {/* Detail-visning */}
                 {editingRecipe && (
                   <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:16, marginBottom:16 }}>
-                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-                      <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)" }}>Redigér opskrift</div>
+                    <div style={UI.udflex_jcspacebet_aicenter_mb12}>
+                      <div style={UI.ufs15_fw800_cink}>Redigér opskrift</div>
                       <button onClick={() => setEditingRecipe(null)} aria-label="Luk"
-                        style={{ background:"var(--surface2)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--muted)" }}>×</button>
+                        style={UI.ubgsurface2_bdnone_br50_w32_h32_curpointer_fs18_cmuted}>×</button>
                     </div>
                     <input value={editingRecipe.title||""} onChange={e => setEditingRecipe(r=>({...r,title:e.target.value}))} placeholder="Titel"
                       style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:14, boxSizing:"border-box", marginBottom:8, outline:"none" }} />
                     <textarea value={editingRecipe.description||""} onChange={e => setEditingRecipe(r=>({...r,description:e.target.value}))} placeholder="Beskrivelse" rows={3}
                       style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, boxSizing:"border-box", resize:"none", marginBottom:8, outline:"none" }} />
-                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:8 }}>
+                    <div style={UI.udgrid_gri1fr1fr_g8_mb8}>
                       <select value={editingRecipe.category||"aftensmad"} onChange={e => setEditingRecipe(r=>({...r,category:e.target.value}))}
-                        style={{ padding:"8px 10px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }}>
+                        style={UI.up8px10px_br10_bd1pxsolid_bgpaper_cink_fff_fs13_outnone}>
                         {["aftensmad","morgenmad","frokost","dessert","tilbehør","snack"].map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                       <input type="number" value={editingRecipe.servings||4} onChange={e => setEditingRecipe(r=>({...r,servings:+e.target.value}))} placeholder="Portioner"
-                        style={{ padding:"8px 10px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
+                        style={UI.up8px10px_br10_bd1pxsolid_bgpaper_cink_fff_fs13_outnone} />
                     </div>
                     {/* Allergen flags */}
                     <div style={UI.sectionLbl6}>Allergener</div>
@@ -1339,8 +1339,8 @@ ${openTicket.description}
                 {adminRecipesLoading ? (
                   <Loader text="Indlæser…" />
                 ) : adminRecipes.length === 0 ? (
-                  <div style={{ textAlign:"center", padding:"48px 20px" }}>
-                    <div style={{ fontSize:48, marginBottom:10 }}>📭</div>
+                  <div style={UI.utacenter_p48px20px}>
+                    <div style={UI.ufs48_mb10}>📭</div>
                     <div style={{ fontSize:15, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Ingen {adminRecipeFilter === "pending" ? "afventende" : adminRecipeFilter === "approved" ? "godkendte" : "afviste"} opskrifter</div>
                   </div>
                 ) : adminRecipes.map(r => {
@@ -1351,7 +1351,7 @@ ${openTicket.description}
                     <div key={r.id} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:8, cursor:"pointer" }}
                       onClick={() => setEditingRecipe(r)}>
                       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:4 }}>
-                        <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>{r.title}</div>
+                        <div style={UI.ufs14_fw800_cink}>{r.title}</div>
                         <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100,
                           background:r.status==="pending"?"var(--amber-lt)":r.status==="approved"?"var(--green-lt)":"var(--red-lt)",
                           color:r.status==="pending"?"var(--amber)":r.status==="approved"?"var(--green)":"var(--red)",
