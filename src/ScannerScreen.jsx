@@ -2,7 +2,7 @@
 import React, { useState, useRef, Suspense } from "react";
 import { ALLERGENS, SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
          ALLERGEN_EXAMPLES, E_NUMBERS, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
-import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo } from "./helpers.js";
+import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo, isValidEanChecksum } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage, LazyFallback } from "./SharedComponents.jsx";
 import { DEMO_SLIDES } from "./demoSlides.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -192,6 +192,7 @@ export default function ScannerScreen({
 
   // ── Guide modal state ─────────────────────────────────────────────────────
   const [showGuide, setShowGuide] = React.useState(false);
+  const [manualEanError, setManualEanError] = React.useState("");
 
   // ── Kombinerede allergen-IDs for alle aktive profiler ──────────────────────
   const activeIds = [
@@ -682,12 +683,15 @@ export default function ScannerScreen({
                     placeholder="fx 5712873099443"
                     autoFocus
                     className="field"
-                    style={{ flex:1, fontSize:16, letterSpacing:1 }}
+                    style={{ flex:1, fontSize:16, letterSpacing:1, borderColor: manualEanError ? "var(--red)" : undefined }}
+                    onChange={() => manualEanError && setManualEanError("")}
                     onKeyDown={e => {
-                      if (e.key === "Enter" && e.target.value.trim().length >= 8) {
-                        setShowManualEan(false);
-                        lookupProduct(e.target.value.trim());
-                      }
+                      if (e.key !== "Enter") return;
+                      const val = e.target.value.trim();
+                      if (val.length < 8) return;
+                      if (!isValidEanChecksum(val)) { setManualEanError("Det ligner ikke en gyldig stregkode — tjek cifrene."); return; }
+                      setShowManualEan(false); setManualEanError("");
+                      lookupProduct(val);
                     }}
                   />
                   <button
@@ -695,14 +699,21 @@ export default function ScannerScreen({
                       color:"var(--on-green)", fontWeight:800, fontSize:14, cursor:"pointer", fontFamily:"var(--f)", flexShrink:0 }}
                     onClick={() => {
                       const val = document.getElementById("manual-ean-input")?.value?.trim();
-                      if (val && val.length >= 8) { setShowManualEan(false); lookupProduct(val); }
+                      if (!val || val.length < 8) return;
+                      if (!isValidEanChecksum(val)) { setManualEanError("Det ligner ikke en gyldig stregkode — tjek cifrene."); return; }
+                      setShowManualEan(false); setManualEanError("");
+                      lookupProduct(val);
                     }}>
                     Søg
                   </button>
                 </div>
-                <div style={{ fontSize:10, color:"var(--muted)", marginTop:8 }}>
-                  EAN-nummeret er stregkodens tal — typisk 8 eller 13 cifre.
-                </div>
+                {manualEanError ? (
+                  <div style={{ fontSize:11, color:"var(--red)", marginTop:8, fontWeight:600 }}>{manualEanError}</div>
+                ) : (
+                  <div style={{ fontSize:10, color:"var(--muted)", marginTop:8 }}>
+                    EAN-nummeret er stregkodens tal — typisk 8 eller 13 cifre.
+                  </div>
+                )}
               </div>
             )}
 

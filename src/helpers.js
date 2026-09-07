@@ -8,6 +8,20 @@ export const timeAgo = ts => { const d=Date.now()-new Date(ts).getTime(); if(d<6
 
 export const getAllergenLabels = (ids,custom=[]) => [...ids.map(id=>ALLERGENS.find(a=>a.id===id)).filter(Boolean).map(a=>`${a.emoji} ${a.label}`),...custom.map(c=>`✏️ ${c}`)];
 
+// Tjek GTIN/EAN-kontrolcifferet (standard mod-10, skiftevis vægt 3/1 fra højre).
+// Bruges til at afvise en åbenlyst forkert manuelt indtastet stregkode (typo)
+// FØR den sendes til serveren — ellers spilder vi en tur til backend på noget
+// der aldrig kan matche et rigtigt produkt.
+export function isValidEanChecksum(code) {
+  if (!/^\d+$/.test(code)) return false;
+  if (![8, 12, 13, 14].includes(code.length)) return false;
+  const digits = code.split("").map(Number);
+  const check = digits.pop();
+  let sum = 0;
+  digits.reverse().forEach((d, i) => { sum += d * (i % 2 === 0 ? 3 : 1); });
+  return (10 - (sum % 10)) % 10 === check;
+}
+
 export const verifiedBadge = (verified_status, source) => {
   // Producent-data — højeste troværdighed
   if (verified_status === "verified" || source === "producer")
