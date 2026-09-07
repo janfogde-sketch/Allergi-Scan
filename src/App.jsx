@@ -591,7 +591,14 @@ const lookupProduct = useCallback(async (ean) => {
       }
 
       const flags = product.allergen_flags || data.allergen_flags || {};
-      const { status, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(flags, activeIds);
+      const { status: rawStatus, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(flags, activeIds);
+      // Data mangler for ét eller flere af dine allergener ("unknown"-felter) — vis
+      // det IKKE som et trygt grønt "sikkert produkt". Uden dette nedgraderes en
+      // reel datamangel aldrig til noget brugeren faktisk ser (fundet ved en
+      // sikkerhedsgennemgang: samme UI blev vist for "bekræftet sikkert" og
+      // "vi ved det faktisk ikke").
+      const isUnsafeUnknown = rawStatus === "safe" && hasUnknown;
+      const status = isUnsafeUnknown ? "warn" : rawStatus;
 
       // Udtræk E-numre fra ingredienstekst
       const ingredientsText = product.ingredients || data.ingredients?.raw_text || product.ingredients_text || "";
@@ -605,11 +612,13 @@ const lookupProduct = useCallback(async (ean) => {
         ...(matchedDanger.length===0 && matchedWarning.length===0 && !hasUnknown ? [{ type:"good", text:"Ingen af dine allergener fundet" }] : []),
         ...(matchedENumbers.length > 0 ? [{ type:"maybe", text:`Indeholder overvågede E-numre: ${matchedENumbers.join(", ")}` }] : []),
       ];
-      const headlines = { safe:"Sikkert produkt", danger:"Indeholder allergen", warn:"Mulige spor" };
+      const headlines = { safe:"Sikkert produkt", danger:"Indeholder allergen", warn: isUnsafeUnknown ? "Kan ikke bekræftes sikkert" : "Mulige spor" };
       const summaries = {
         safe:"Ingen af dine registrerede allergener er fundet i dette produkt.",
         danger:`Produktet indeholder ${matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
-        warn:`Produktet kan indeholde spor af ${matchedWarning.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
+        warn: isUnsafeUnknown
+          ? "Vi mangler data for ét eller flere af dine allergener i dette produkt — tjek selv emballagen før du spiser det."
+          : `Produktet kan indeholde spor af ${matchedWarning.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
       };
       const familyImpact = [];
       if (family.length > 0) {

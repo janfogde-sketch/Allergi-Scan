@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { ALLERGENS, SUPABASE_ANON_KEY } from "./constants.jsx";
+import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 
 export const initials = n => (n||"").split(" ").filter(Boolean).map(w=>w[0]).join("").toUpperCase().slice(0,2)||"?";
 
@@ -134,6 +135,11 @@ const DAIRY_EGG_KEYWORDS = [
   "lanolin", "animalsk fedt", "svinefedt", "talg", "tallow",
 ];
 
+// "hvede" er en egen ALLERGENS-kategori (specifik hvedeallergi), men hvede
+// indeholder selvfølgelig gluten — så et glutenfri-tjek skal fange begge lister,
+// ikke kun "gluten"-nøgleordene, ellers overses fx "hvedemel" i ingredienslisten
+const GLUTEN_KEYWORDS = [...ALLERGEN_KEYWORDS.gluten, ...ALLERGEN_KEYWORDS.hvede];
+
 // Tjek om et produkt er kompatibelt med en diæt
 // Returnerer: { ok: true/false/null, reasons: string[], confidence: "high"/"medium"/"low" }
 export function checkDietCompatibility(dietId, allergenFlags, ingredientsText, nutrition) {
@@ -203,7 +209,18 @@ export function checkDietCompatibility(dietId, allergenFlags, ingredientsText, n
       else if (flags.gluten === "traces") reasons.push("Kan indeholde spor af gluten");
       if (flags.hvede === "yes") reasons.push("Indeholder hvede");
       else if (flags.hvede === "traces") reasons.push("Kan indeholde spor af hvede");
-      return { ok: reasons.length === 0, reasons, confidence: "high" };
+      // Strukturerede allergen-flags mangler tit (bruger-indsendte/delvist
+      // verificerede produkter) — uden dette tjek ville et sådant produkt
+      // fremstå "glutenfri, høj sikkerhed" selvom ingredienslisten fx siger
+      // "hvedemel". Samme mønster som vegansk/vegetarisk herover.
+      if (reasons.length === 0) {
+        for (const kw of GLUTEN_KEYWORDS) {
+          if (hasIngredient(kw)) { reasons.push("Indeholder " + kw); break; }
+        }
+      }
+      const flagsKnown = ["yes","no","traces"].includes(flags.gluten) || ["yes","no","traces"].includes(flags.hvede);
+      const confidence = flagsKnown ? "high" : (lower.length > 10 ? "medium" : "low");
+      return { ok: reasons.length === 0, reasons, confidence };
     }
 
     case "keto": {

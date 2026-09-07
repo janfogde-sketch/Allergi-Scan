@@ -75,25 +75,6 @@ export default function SearchScreen({
     <div className="screen fade-in" style={{ paddingBottom:120 }}>
       <div className="screen-title">Søg varer</div>
 
-      {/* ── Søgefelt ── */}
-      <div style={{ display:"flex", gap:8, marginBottom:12 }}>
-        <input
-          className="field"
-          placeholder="Søg på produkt eller mærke…"
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
-          style={{ flex:1, marginBottom:0 }}
-          autoFocus
-        />
-        <button className="btn btn-primary btn-sm"
-          style={{ whiteSpace:"nowrap", padding:"0 16px" }}
-          onClick={() => document.activeElement?.blur?.()}
-          disabled={!searchQuery.trim()}>
-          Søg
-        </button>
-      </div>
-
       {/* ── Profil-filter ── */}
       <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"12px 14px", marginBottom:10 }}>
         <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:10 }}>
@@ -220,7 +201,7 @@ export default function SearchScreen({
       </div>
 
       {/* ── Kategori + kun-sikre ── */}
-      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12, flexWrap:"wrap" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:16, flexWrap:"wrap" }}>
         <CategorySelect value={searchCategory} onChange={setSearchCategory} options={CATEGORIES} />
         {effectiveIds.length === 0 && (
           <div className={`filter-chip${showSafeOnly?" active":""}`}
@@ -229,10 +210,30 @@ export default function SearchScreen({
             {showSafeOnly ? "✓ Kun sikre" : "Kun sikre"}
           </div>
         )}
-        <div style={{ fontSize:12, color:"var(--muted)", marginLeft:"auto" }}>
+      </div>
+
+      {/* ── Søgefelt — lige over resultaterne, ingen filtre i vejen ── */}
+      <div style={{ display:"flex", gap:8, marginBottom:8 }}>
+        <input
+          className="field"
+          placeholder="Søg på produkt eller mærke…"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
+          style={{ flex:1, marginBottom:0 }}
+        />
+        <button className="btn btn-primary btn-sm"
+          style={{ whiteSpace:"nowrap", padding:"0 16px" }}
+          onClick={() => document.activeElement?.blur?.()}
+          disabled={!searchQuery.trim()}>
+          Søg
+        </button>
+      </div>
+      {searchQuery && (
+        <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12, textAlign:"right" }}>
           {visibleResults.length} resultat{visibleResults.length!==1?"er":""}
         </div>
-      </div>
+      )}
 
       {/* ── Resultater ── */}
       {searchLoading && (
