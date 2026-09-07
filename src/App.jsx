@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, Suspense, useEffect, useCallback, useRef } from "react";
+import React, { useState, Suspense, useEffect, useCallback, useRef, useMemo } from "react";
 
 // ─── BUILD INFO (injiceres af Vite ved build-tid) ─────────────────────────────
 import {
@@ -728,19 +728,22 @@ const lookupProduct = useCallback(async (ean) => {
     }
   }, [screen, user?.role]);
 
-  const authContextValue = {
+  // Context-værdierne memoiseres, så et Provider ikke sender et nyt objekt
+  // videre (og dermed tvinger ALLE dets consumers til at re-rendere) ved
+  // hver App-render — kun når noget de faktisk indeholder ændrer sig.
+  const authContextValue = useMemo(() => ({
     user, setUser, userId, accessToken,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
     authError, setAuthError, authLoading, authTab, setAuthTab,
     isOAuth, handleLogin, handleSignup, handleOAuth, clearAuth,
-  };
+  }), [user, userId, accessToken, loginEmail, loginPassword, authError, authLoading, authTab, isOAuth, handleLogin, handleSignup, handleOAuth, clearAuth]);
 
-  const profileContextValue = {
+  const profileContextValue = useMemo(() => ({
     allergens, setAllergens, customAllerg, setCustomAllerg,
     family, setFamily, activeProfiles, setActiveProfiles,
-  };
+  }), [allergens, customAllerg, family, activeProfiles]);
 
-  const adminContextValue = {
+  const adminContextValue = useMemo(() => ({
     adminSection, setAdminSection, adminStats,
     adminUsers, adminUsersLoading,
     adminTickets, adminTicketFilter, setAdminTicketFilter,
@@ -759,22 +762,32 @@ const lookupProduct = useCallback(async (ean) => {
     missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
     importLog, importLoading, runImport,
     reparseLog, reparseLoading, runReparse,
-  };
+  }), [
+    adminSection, adminStats, adminUsers, adminUsersLoading,
+    adminTickets, adminTicketFilter, submissions, submissionsLoading, submissionFilter,
+    openSubmission, editingSubmission, openAdminUser, openTicket,
+    cleanedOcrText, cleaningOcr,
+    loadAdminUsers, loadAdminStats, loadSubmissions, loadTickets,
+    updateUserRole, deleteUser, updateSubmissionAndApprove, rejectSubmission,
+    updateTicketStatus, cleanOcrWithAI, ticketsLoading,
+    userSearch, userSearchParam, missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
+    importLog, importLoading, runImport, reparseLog, reparseLoading, runReparse,
+  ]);
 
-  const navigationContextValue = { screen, setScreen };
+  const navigationContextValue = useMemo(() => ({ screen, setScreen }), [screen]);
 
-  const historyContextValue = {
+  const historyContextValue = useMemo(() => ({
     history, setHistory, historyLoading,
     favorites, loadHistory, toggleFavorite, isFavorite,
-  };
+  }), [history, historyLoading, favorites, loadHistory, toggleFavorite, isFavorite]);
 
-  const shoppingContextValue = {
+  const shoppingContextValue = useMemo(() => ({
     shoppingList, setShoppingList, shoppingListId, setShoppingListId,
     newItemName, setNewItemName, loadShoppingList,
     addToList, toggleItem, removeItem, clearDone,
-  };
+  }), [shoppingList, shoppingListId, newItemName, loadShoppingList, addToList, toggleItem, removeItem, clearDone]);
 
-  const familyFormContextValue = {
+  const familyFormContextValue = useMemo(() => ({
     newMemberName, setNewMemberName,
     newMemberBirthYear, setNewMemberBirthYear,
     newMemberGender, setNewMemberGender,
@@ -785,14 +798,18 @@ const lookupProduct = useCallback(async (ean) => {
     newMemberSubtypes, setNewMemberSubtypes,
     newMemberCustomInput, setNewMemberCustomInput,
     addMember, removeMember,
-  };
+  }), [
+    newMemberName, newMemberBirthYear, newMemberGender, newMemberAllerg,
+    newMemberCustomAllerg, newMemberDiets, newMemberENumbers, newMemberSubtypes,
+    newMemberCustomInput, addMember, removeMember,
+  ]);
 
-  const allergenPrefsContextValue = {
+  const allergenPrefsContextValue = useMemo(() => ({
     eSearch, setESearch, eCategory, setECategory,
     allergenSubtypes, setAllergenSubtypes,
     selectedENumbers, setSelectedENumbers,
     activeSubtypeModal, setActiveSubtypeModal,
-  };
+  }), [eSearch, eCategory, allergenSubtypes, selectedENumbers, activeSubtypeModal]);
 
   const renderHelpModal = () => {
     const helpContent = {
