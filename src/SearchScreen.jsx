@@ -56,7 +56,7 @@ const SearchResultRow = React.memo(function SearchResultRow({ product: p, effect
         {p.tags?.length > 0 && (
           <div style={{ display:"flex", gap:3, marginTop:3, flexWrap:"wrap" }}>
             {p.tags.map((t,i) => (
-              <span key={i} style={{ fontSize:10, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:100, padding:"1px 7px" }}>
+              <span key={i} style={UI.ufs10_fw700_cgreen_bggreenlt_bd1pxsolid_br100_p1px7px}>
                 {tagLabels[t]||t}
               </span>
             ))}
@@ -65,7 +65,7 @@ const SearchResultRow = React.memo(function SearchResultRow({ product: p, effect
       </div>
       <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
         <div style={{ fontSize:11, fontWeight:700, color:statusColor }}>{statusLabel}</div>
-        <button className="btn btn-ghost btn-sm" style={{ fontSize:11, padding:"3px 8px" }}
+        <button className="btn btn-ghost btn-sm" style={UI.ufs11_p3px8px}
           onClick={e => { e.stopPropagation(); onAddToList(); }}>+ Liste</button>
       </div>
     </div>
@@ -130,7 +130,7 @@ export default function SearchScreen({
             const isActive = activeProfiles.includes(p.id);
             const allergenLabels = p.allergens.map(id => ALLERGENS.find(a=>a.id===id)).filter(Boolean);
             return (
-              <div key={p.id} style={{ cursor:"pointer" }}
+              <div key={p.id} style={UI.ucurpointer}
                 onClick={() => setActiveProfiles(prev =>
                   prev.includes(p.id) ? prev.filter(x=>x!==p.id) : [...prev, p.id]
                 )}>
@@ -194,8 +194,8 @@ export default function SearchScreen({
       <div style={UI.mb10}>
         <div onClick={() => setAllergenFilterOpen(v=>!v)}
           style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius: allergenFilterOpen ? "12px 12px 0 0" : 12, cursor:"pointer" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            <span style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>Tilføj allergener manuelt</span>
+          <div style={UI.udflex_aicenter_g8}>
+            <span style={UI.ufs13_fw700_cink}>Tilføj allergener manuelt</span>
             {manualAllergens.length > 0 && (
               <div style={{ fontSize:10, fontWeight:700, padding:"2px 7px", borderRadius:100, background:"var(--amber-lt)", color:"var(--amber)", border:"1px solid var(--amber-md)" }}>
                 {manualAllergens.length} valgt
@@ -251,7 +251,7 @@ export default function SearchScreen({
         {effectiveIds.length === 0 && (
           <div className={`filter-chip${showSafeOnly?" active":""}`}
             onClick={() => setShowSafeOnly(v => !v)}
-            style={{ whiteSpace:"nowrap" }}>
+            style={UI.uwsnowrap}>
             {showSafeOnly ? "✓ Kun sikre" : "Kun sikre"}
           </div>
         )}

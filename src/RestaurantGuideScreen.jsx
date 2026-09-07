@@ -124,7 +124,7 @@ export default function RestaurantGuideScreen() {
           ‹
         </button>
         <div>
-          <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)" }}>Restaurantguide</div>
+          <div style={UI.ufs18_fw800_cink}>Restaurantguide</div>
           <div style={UI.muted11mt1}>Sådan spiser du trygt ude</div>
         </div>
       </div>
@@ -135,7 +135,7 @@ export default function RestaurantGuideScreen() {
           <div style={{ fontSize:11, fontWeight:700, color:"var(--red)", textTransform:"uppercase", letterSpacing:".5px", marginBottom:6 }}>
             Dine allergener — husk at nævne disse
           </div>
-          <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+          <div style={UI.udflex_flewrap_g6}>
             {allergenNames.map((name, i) => (
               <div key={i} style={{ padding:"3px 10px", borderRadius:20, background:"var(--red-lt)", border:"1px solid var(--red-md)", fontSize:12, fontWeight:700, color:"var(--red)" }}>
                 {name}
@@ -150,7 +150,7 @@ export default function RestaurantGuideScreen() {
         <div style={UI.fs20Shrink0}>💡</div>
         <div>
           <div style={{ fontSize:13, fontWeight:700, color:"var(--green)", marginBottom:3 }}>Brug dit madpas</div>
-          <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>
+          <div style={UI.ufs12_cmuted_lh15}>
             Vis dit madpas direkte til tjeneren — på dansk eller 16 andre sprog. Tryk på Madpas i menuen.
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function RestaurantGuideScreen() {
 
       {/* Hurtige sætninger */}
       <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:16 }}>
-        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>💬 Nyttige sætninger</div>
+        <div style={UI.ufs13_fw800_cink_mb4}>💬 Nyttige sætninger</div>
         <div style={{ fontSize:11, color:"var(--muted)", marginBottom:12, lineHeight:1.5 }}>
           Brug disse sætninger direkte — på dansk og engelsk.
         </div>

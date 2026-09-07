@@ -57,7 +57,7 @@ export const ENumberPicker = ({ selected, onChange }) => {
 
 
       {/* Liste */}
-      <div style={{ maxHeight:320, overflowY:"auto", border:"1px solid var(--border)", borderRadius:8 }}>
+      <div style={UI.umxh320_ovyauto_bd1pxsolid_br8}>
         {filtered.map(([e, name], i, arr) => {
           const on = selected.includes(e);
           return (

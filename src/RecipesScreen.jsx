@@ -54,11 +54,11 @@ const RecipeCard = React.memo(function RecipeCard({ recipe: r, profiles, isFav, 
           </div>
         )}
         <div className="recipe-card-meta">
-          {r.category && <span className="recipe-pill" style={{ background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" }}>{getCatEmoji(r.category)} {r.category}</span>}
-          {totalMins > 0 && <span className="recipe-pill" style={{ background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" }}>⏱ {totalMins} min</span>}
-          {r.servings && <span className="recipe-pill" style={{ background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" }}>👤 {r.servings} pers.</span>}
+          {r.category && <span className="recipe-pill" style={UI.ubgpaper2_cmuted2_bdcborder}>{getCatEmoji(r.category)} {r.category}</span>}
+          {totalMins > 0 && <span className="recipe-pill" style={UI.ubgpaper2_cmuted2_bdcborder}>⏱ {totalMins} min</span>}
+          {r.servings && <span className="recipe-pill" style={UI.ubgpaper2_cmuted2_bdcborder}>👤 {r.servings} pers.</span>}
           {(r.tags||[]).filter(t=>t==="vegetarisk"||t==="vegan").map(t => (
-            <span key={t} className="recipe-pill" style={{ background:"var(--green-lt)", color:"var(--green)", borderColor:"var(--green-mid)" }}>
+            <span key={t} className="recipe-pill" style={UI.ubggreenlt_cgreen_bdcgreenmid}>
               {t==="vegan"?"🌱":"🥦"} {t}
             </span>
           ))}
@@ -295,8 +295,8 @@ export default function RecipesScreen({
           {/* Verdikt-strimmel — samme mønster som Resultat-skærmens produktkort */}
           <div style={{ position:"absolute", left:0, right:0, bottom:0, zIndex:2, display:"flex", alignItems:"center", gap:7,
             padding:"8px 14px", background:heroColor, color:"#fff" }}>
-            <span style={{ fontSize:12, fontWeight:800 }}>{heroIcon}</span>
-            <span style={{ fontSize:12, fontWeight:800, letterSpacing:".01em", textTransform:"uppercase" }}>{heroHeadline}</span>
+            <span style={UI.ufs12_fw800}>{heroIcon}</span>
+            <span style={UI.ufs12_fw800_ls01em_ttuppercas}>{heroHeadline}</span>
           </div>
         </div>
 
@@ -335,7 +335,7 @@ export default function RecipesScreen({
             {totalMins > 0 && <span className="recipe-meta-pill">⏱ {totalMins} min i alt</span>}
             {r.difficulty && <span className="recipe-meta-pill">📊 {r.difficulty}</span>}
             {(r.tags||[]).filter(t=>t==="vegetarisk"||t==="vegan").map(t => (
-              <span key={t} className="recipe-meta-pill" style={{ background:"var(--green-lt)", color:"var(--green)", borderColor:"var(--green-mid)" }}>{t==="vegan"?"🌱":"🥦"} {t}</span>
+              <span key={t} className="recipe-meta-pill" style={UI.ubggreenlt_cgreen_bdcgreenmid}>{t==="vegan"?"🌱":"🥦"} {t}</span>
             ))}
           </div>
 
@@ -390,7 +390,7 @@ export default function RecipesScreen({
                   </button>
                 )}
               </div>
-              <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, overflow:"hidden" }}>
+              <div style={UI.ubgsurface_bd1pxsolid_br12_ovhidden}>
                 {ingredientRows}
               </div>
             </div>
@@ -399,8 +399,8 @@ export default function RecipesScreen({
           {/* ── TRIN-FOR-TRIN ── */}
           {steps.length > 0 && (
             <div style={UI.mb20}>
-              <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>Fremgangsmåde</div>
-              <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, overflow:"hidden" }}>
+              <div style={UI.ufs13_fw800_cink_mb10}>Fremgangsmåde</div>
+              <div style={UI.ubgsurface_bd1pxsolid_br12_ovhidden}>
                 {steps.map((step, i) => {
                   const done = !!completedSteps[i];
                   return (
@@ -430,7 +430,7 @@ export default function RecipesScreen({
           {/* Allergen advarsel */}
           <div style={{ display:"flex", gap:8, alignItems:"center", padding:"12px 14px", background:"var(--surface2)", borderRadius:10, marginBottom:16 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2"><path strokeLinecap="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-            <div style={{ fontSize:10, color:"var(--muted)", lineHeight:1.5 }}>Allergener er vejledende. Tjek altid ingrediensernes emballage.</div>
+            <div style={UI.ufs10_cmuted_lh15}>Allergener er vejledende. Tjek altid ingrediensernes emballage.</div>
           </div>
         </div>
       </div>
@@ -539,7 +539,7 @@ export default function RecipesScreen({
 
         {/* Profil-chips når kun-sikre er aktiv */}
         {recipeSafeOnly && (
-          <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
+          <div style={UI.udflex_flewrap_g6_mb10}>
             {allSafeProfiles.map(p => {
               const isActive = localSafeProfiles === null ? (activeProfiles||[]).includes(p.id) || p.id === "me" : localSafeProfiles.includes(p.id);
               return (
@@ -588,7 +588,7 @@ export default function RecipesScreen({
         {recipesLoading && [1,2,3].map(i => (
           <div key={i} className="recipe-skeleton">
             <div className="skeleton-img" />
-            <div style={{ padding:"12px 14px" }}>
+            <div style={UI.up12px14px}>
               <div className="skeleton-line" style={{ width:"70%" }} />
               <div className="skeleton-line" style={{ width:"45%" }} />
             </div>
@@ -602,14 +602,14 @@ export default function RecipesScreen({
               <div style={{ fontSize:44, flexShrink:0 }}>🍳</div>
               <div style={UI.flex1}>
                 <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)", letterSpacing:"-.3px", marginBottom:4 }}>Kunne ikke indlæse</div>
-                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12 }}>Tjek din forbindelse og prøv igen</div>
+                <div style={UI.ufs12_cmuted_mb12}>Tjek din forbindelse og prøv igen</div>
                 <button onClick={() => loadRecipes()}
                   style={{ background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:10, padding:"9px 18px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
                   Prøv igen →
                 </button>
               </div>
             </div>
-            <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:10 }}>Hop direkte til</div>
+            <div style={UI.ufs12_fw700_cmuted_ttuppercas_ls1px_mb10}>Hop direkte til</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:20 }}>
               {[
                 { id:"aftensmad", label:"Aftensmad", emoji:"🍝", desc:"Hverdagens klassikere" },
@@ -637,7 +637,7 @@ export default function RecipesScreen({
 
         {/* Label over kortene */}
         {!recipesLoading && filtered.length > 0 && (
-          <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:10 }}>
+          <div style={UI.ufs12_fw700_cmuted_ttuppercas_ls1px_mb10}>
             {recipeFilter === "alle" ? "⭐ Mest populære" :
              recipeFilter === "favoritter" ? "❤️ Dine favoritter" :
              `🍽️ ${recipeFilter.charAt(0).toUpperCase() + recipeFilter.slice(1)}`}
@@ -673,7 +673,7 @@ export default function RecipesScreen({
         {filtered.length > 0 && (
           <div style={{ display:"flex", gap:8, alignItems:"center", padding:"12px", background:"var(--paper2)", borderRadius:10, marginTop:4 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2"><path strokeLinecap="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-            <div style={{ fontSize:10, color:"var(--muted)", lineHeight:1.5 }}>Allergener er vejledende. Tjek altid ingrediensernes emballage.</div>
+            <div style={UI.ufs10_cmuted_lh15}>Allergener er vejledende. Tjek altid ingrediensernes emballage.</div>
           </div>
         )}
       </div>
@@ -734,7 +734,7 @@ export default function RecipesScreen({
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
           </button>
           <div>
-            <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)" }}>Indsend opskrift</div>
+            <div style={UI.ufs18_fw800_cink}>Indsend opskrift</div>
             <div style={UI.muted11}>Sendes til gennemgang før publicering</div>
           </div>
         </div>
@@ -743,7 +743,7 @@ export default function RecipesScreen({
         <div style={UI.mb20}>
           <div style={UI.sectionLblInk3}>Billede</div>
           <label style={{ display:"block", cursor:"pointer" }}>
-            <input type="file" accept="image/*" onChange={handleImg} style={{ display:"none" }} />
+            <input type="file" accept="image/*" onChange={handleImg} style={UI.udnone} />
             <div style={{
               width:"100%", height:160, borderRadius:14, border:`2px dashed var(--border2)`,
               background:"var(--surface)", display:"flex", alignItems:"center", justifyContent:"center",
@@ -751,7 +751,7 @@ export default function RecipesScreen({
             }}>
               {imgPreview
                 ? <img src={imgPreview} alt="Forhåndsvisning af opskriftsbillede" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                : <div style={{ textAlign:"center" }}>
+                : <div style={UI.utacenter}>
                     <div style={{ fontSize:32, marginBottom:6 }}>📷</div>
                     <div style={UI.muted13}>Tryk for at vælge billede</div>
                     <div style={{ fontSize:11, color:"var(--muted2)" }}>Valgfrit</div>
@@ -768,29 +768,29 @@ export default function RecipesScreen({
             style={{ width:"100%", padding:"11px 14px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface2)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:14, boxSizing:"border-box", marginBottom:8, outline:"none" }} />
           <textarea placeholder="Kort beskrivelse (valgfrit)" value={submitRecipe.description||""} onChange={e => setSubmitRecipe(r => ({...r, description:e.target.value}))} rows={2}
             style={{ width:"100%", padding:"11px 14px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface2)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, boxSizing:"border-box", resize:"none", marginBottom:8, outline:"none" }} />
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:8 }}>
+          <div style={UI.udgrid_gri1fr1fr_g8_mb8}>
             <select value={submitRecipe.category} onChange={e => setSubmitRecipe(r => ({...r, category:e.target.value}))}
               style={{ padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }}>
               {CATS.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase()+c.slice(1)}</option>)}
             </select>
-            <div style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 12px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10 }}>
-              <span style={{ fontSize:12, color:"var(--muted)", flexShrink:0 }}>👤</span>
+            <div style={UI.udflex_aicenter_g6_p8px12px_bgsurface_bd1pxsolid_br10}>
+              <span style={UI.ufs12_cmuted_shr0}>👤</span>
               <input type="number" min={1} max={20} value={submitRecipe.servings||4} onChange={e => setSubmitRecipe(r => ({...r, servings:+e.target.value}))}
-                style={{ width:"100%", background:"none", border:"none", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
+                style={UI.uw100_bgnone_bdnone_cink_fff_fs13_outnone} />
               <span style={{ fontSize:11, color:"var(--muted)", flexShrink:0 }}>pers.</span>
             </div>
           </div>
           <div style={UI.grid2gap8}>
-            <div style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 12px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10 }}>
-              <span style={{ fontSize:12, color:"var(--muted)", flexShrink:0 }}>⏱ Forb.</span>
+            <div style={UI.udflex_aicenter_g6_p8px12px_bgsurface_bd1pxsolid_br10}>
+              <span style={UI.ufs12_cmuted_shr0}>⏱ Forb.</span>
               <input type="number" min={0} placeholder="0" value={submitRecipe.prep_time_minutes||""} onChange={e => setSubmitRecipe(r => ({...r, prep_time_minutes:+e.target.value}))}
-                style={{ width:"100%", background:"none", border:"none", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
+                style={UI.uw100_bgnone_bdnone_cink_fff_fs13_outnone} />
               <span style={UI.muted11}>min</span>
             </div>
-            <div style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 12px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10 }}>
-              <span style={{ fontSize:12, color:"var(--muted)", flexShrink:0 }}>🍳 Tilb.</span>
+            <div style={UI.udflex_aicenter_g6_p8px12px_bgsurface_bd1pxsolid_br10}>
+              <span style={UI.ufs12_cmuted_shr0}>🍳 Tilb.</span>
               <input type="number" min={0} placeholder="0" value={submitRecipe.cook_time_minutes||""} onChange={e => setSubmitRecipe(r => ({...r, cook_time_minutes:+e.target.value}))}
-                style={{ width:"100%", background:"none", border:"none", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
+                style={UI.uw100_bgnone_bdnone_cink_fff_fs13_outnone} />
               <span style={UI.muted11}>min</span>
             </div>
           </div>
@@ -911,7 +911,7 @@ export default function RecipesScreen({
             </div>
           )}
           <button onClick={() => setSubmitIngredients([...submitIngredients, {name:"",amount:"",unit:""}])}
-            style={{ width:"100%", padding:"9px", borderRadius:10, border:"1px dashed var(--border2)", background:"none", color:"var(--muted)", fontFamily:"var(--f)", fontSize:13, cursor:"pointer" }}>
+            style={UI.uw100_p9px_br10_bd1pxdashe_bgnone_cmuted_fff_fs13_curpointer}>
             ＋ Tilføj ingrediens
           </button>
         </div>
@@ -933,7 +933,7 @@ export default function RecipesScreen({
             </div>
           ))}
           <button onClick={() => setSubmitSteps([...submitSteps, ""])}
-            style={{ width:"100%", padding:"9px", borderRadius:10, border:"1px dashed var(--border2)", background:"none", color:"var(--muted)", fontFamily:"var(--f)", fontSize:13, cursor:"pointer" }}>
+            style={UI.uw100_p9px_br10_bd1pxdashe_bgnone_cmuted_fff_fs13_curpointer}>
             ＋ Tilføj trin {submitSteps.length + 1}
           </button>
         </div>
@@ -943,7 +943,7 @@ export default function RecipesScreen({
           <div style={UI.sectionLblInk3}>Diæt & allergener</div>
 
           {/* Diæter */}
-          <div style={{ fontSize:12, color:"var(--ink3)", marginBottom:8 }}>Passer opskriften til:</div>
+          <div style={UI.ufs12_cink3_mb8}>Passer opskriften til:</div>
           <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:14 }}>
             {(DIETS||[]).map(d => {
               const active = (submitRecipe.tags||[]).includes(d.id);
@@ -961,8 +961,8 @@ export default function RecipesScreen({
           </div>
 
           {/* Manuelle allergener */}
-          <div style={{ fontSize:12, color:"var(--ink3)", marginBottom:8 }}>Manuelle allergener (hvis ikke auto-detekteret):</div>
-          <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+          <div style={UI.ufs12_cink3_mb8}>Manuelle allergener (hvis ikke auto-detekteret):</div>
+          <div style={UI.udflex_flewrap_g6}>
             {ALLERGENS.map(a => {
               const isAuto = autoAllergens.includes(a.id) && !removedAuto.includes(a.id);
               const isManual = manualAllergens.includes(a.id);
@@ -983,7 +983,7 @@ export default function RecipesScreen({
 
         {/* ── 6. Send ── */}
         <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:20 }}>
-          <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>Opsummering</div>
+          <div style={UI.ufs13_fw700_cink_mb4}>Opsummering</div>
           <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6 }}>
             <div>📌 {submitRecipe.title || "Ingen titel endnu"}</div>
             <div>🍽️ {submitRecipe.category} · 👤 {submitRecipe.servings||4} pers.</div>

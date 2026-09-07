@@ -18,7 +18,7 @@ export const DEMO_SLIDES = [
     sub: "Ét kamera-tryk, og du ved det med det samme.",
     bg: "var(--surface2)", accent: "var(--green)",
     mockup: (
-      <div style={{ background:"var(--surface)", borderRadius:14, padding:"12px 14px", marginTop:12, border:"1px solid var(--border)" }}>
+      <div style={UI.ubgsurface_br14_p12px14px_mt12_bd1pxsolid}>
         <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
           <div style={{ width:40, height:40, background:"var(--surface2)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20 }}>🥛</div>
           <div style={UI.flex1}>
@@ -31,8 +31,8 @@ export const DEMO_SLIDES = [
           <strong>Laktose</strong> — reagerer på dette: Anna, Sofie
         </div>
         <div style={{ marginTop:8, display:"flex", gap:6 }}>
-          <div style={{ padding:"3px 9px", borderRadius:20, background:"var(--green-lt)", border:"1px solid var(--green-mid)", fontSize:10, color:"var(--green)", fontWeight:700 }}>✓ Mads ok</div>
-          <div style={{ padding:"3px 9px", borderRadius:20, background:"var(--green-lt)", border:"1px solid var(--green-mid)", fontSize:10, color:"var(--green)", fontWeight:700 }}>✓ Tage ok</div>
+          <div style={UI.up3px9px_br20_bggreenlt_bd1pxsolid_fs10_cgreen_fw700}>✓ Mads ok</div>
+          <div style={UI.up3px9px_br20_bggreenlt_bd1pxsolid_fs10_cgreen_fw700}>✓ Tage ok</div>
         </div>
       </div>
     ),
@@ -90,8 +90,8 @@ export const DEMO_SLIDES = [
     bg: "var(--surface2)", accent: "var(--green)",
     mockup: (
       <div style={UI.mt12}>
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
-          <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)" }}>Familiens indkøbsliste</div>
+        <div style={UI.udflex_aicenter_jcspacebet_mb8}>
+          <div style={UI.ufs12_fw800_cink}>Familiens indkøbsliste</div>
           <div style={{ fontSize:10, color:"var(--green)", fontWeight:700 }}>● Live</div>
         </div>
         {[
@@ -106,7 +106,7 @@ export const DEMO_SLIDES = [
             </div>
             <div style={UI.flex1}>
               <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", textDecoration: done?"line-through":"none" }}>{name}</div>
-              <div style={{ fontSize:9, color:"var(--muted2)" }}>{sub}</div>
+              <div style={UI.ufs9_cmuted2}>{sub}</div>
             </div>
           </div>
         ))}
@@ -125,10 +125,10 @@ export const DEMO_SLIDES = [
           ["🍛","Chicken Tikka Masala","Nøddefri · Sesamfri","⚠ Tjek: mælk i sauce"],
         ].map(([e,name,tags,status]) => (
           <div key={name} style={{ display:"flex", alignItems:"center", gap:10, background:"var(--surface)", borderRadius:10, padding:"9px 12px", border:"1px solid var(--border)" }}>
-            <div style={{ fontSize:22 }}>{e}</div>
+            <div style={UI.ufs22}>{e}</div>
             <div style={UI.flex1}>
               <div style={UI.boldInk12}>{name}</div>
-              <div style={{ fontSize:9, color:"var(--muted2)" }}>{tags}</div>
+              <div style={UI.ufs9_cmuted2}>{tags}</div>
             </div>
             <div style={{ fontSize:10, fontWeight:700, color: status.startsWith("✅") ? "var(--green)" : "var(--amber)", textAlign:"right", maxWidth:70 }}>{status}</div>
           </div>
@@ -149,7 +149,7 @@ export const DEMO_SLIDES = [
           </div>
           <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.6 }}>Kan give hovedpine hos følsomme personer.</div>
         </div>
-        <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+        <div style={UI.udflex_g6_flewrap}>
           {["E211 Natriumbenzoat","E102 Tartrazin","E951 Aspartam"].map(e => (
             <div key={e} style={{ padding:"4px 10px", borderRadius:20, background:"var(--amber-lt)", border:"1px solid var(--amber-md)", fontSize:10, fontWeight:700, color:"var(--amber)" }}>{e}</div>
           ))}
@@ -162,12 +162,12 @@ export const DEMO_SLIDES = [
     sub: "Vis dine allergier på stedets sprog — også offline.",
     bg: "var(--surface2)", accent: "var(--green)",
     mockup: (
-      <div style={{ background:"var(--surface)", borderRadius:14, padding:"12px 14px", marginTop:12, border:"1px solid var(--border)" }}>
+      <div style={UI.ubgsurface_br14_p12px14px_mt12_bd1pxsolid}>
         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
           <span style={UI.fs20}>🇮🇹</span>
           <div style={{ fontSize:11, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1px" }}>Italiensk</div>
         </div>
-        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:3 }}>Sono allergico al latte e al glutine.</div>
+        <div style={UI.ufs13_fw800_cink_mb3}>Sono allergico al latte e al glutine.</div>
         <div style={{ fontSize:11, color:"var(--muted)", fontStyle:"italic", marginBottom:10 }}>"so-no al-ler-JI-ko al LAT-te e al glu-TI-ne"</div>
         <div style={{ fontSize:10, color:"var(--muted2)", marginBottom:6 }}>Tilgængeligt på:</div>
         <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>

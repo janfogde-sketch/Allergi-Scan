@@ -52,8 +52,8 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
   ];
 
   return (
-    <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:10 }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+    <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10}>
+      <div style={UI.udflex_aicenter_jcspacebet_mb12}>
         <div>
           <div style={UI.boldInk13}>Din aktivitet</div>
           <div style={UI.muted11mt2}>Streak · Scanninger · Opdagelser</div>
@@ -198,7 +198,7 @@ export default function ProfileScreen({
       <div style={UI.wrapGap7}>
         <div className={`ap-chip${isAll?" on":""}`} onClick={toggleAll}>Hele familien</div>
         <div className={`ap-chip${!isAll&&activeProfiles.includes("me")?" on":""}`} onClick={() => toggleOne("me")}>
-          <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(user.name||"Mig")}</div>
+          <div style={UI.uw20_h20_br50_bggreen_dflex_aicenter_jccenter_fs10_fw800_cin}>{initials(user.name||"Mig")}</div>
           {(user.name||"Mig").split(" ")[0]}
         </div>
         {family.map(m => (
@@ -293,7 +293,7 @@ export default function ProfileScreen({
             />
 
             {/* Mine præferencer */}
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:10 }}>
+            <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10}>
               <div style={UI.rowBetweenMb10}>
                 <div>
                   <div style={UI.boldInk13}>Mine præferencer</div>
@@ -324,7 +324,7 @@ export default function ProfileScreen({
                     {(user?.diets?.length > 0) && (
                       <div style={UI.mb8}>
                         <div style={UI.sectionLbl4Ink}>Diæter</div>
-                        <div className="tags">{user.diets.map(d => { const diet = DIETS.find(x=>x.id===d); return diet ? <div key={d} className="tag" style={{ background:"var(--green-lt)", color:"var(--green)", borderColor:"var(--green-mid)" }}>{diet.emoji || "🥗"} {diet.label}</div> : null; })}</div>
+                        <div className="tags">{user.diets.map(d => { const diet = DIETS.find(x=>x.id===d); return diet ? <div key={d} className="tag" style={UI.ubggreenlt_cgreen_bdcgreenmid}>{diet.emoji || "🥗"} {diet.label}</div> : null; })}</div>
                       </div>
                     )}
                     {selectedENumbers && selectedENumbers.length > 0 && (
@@ -418,7 +418,7 @@ export default function ProfileScreen({
 
             {/* ── Footer: kontakt + privatlivspolitik ── */}
             <div style={{ marginTop:24, paddingBottom:8, textAlign:"center" }}>
-              <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8 }}>
+              <div style={UI.ufs11_cmuted_mb8}>
                 Spørgsmål eller feedback?
               </div>
               <a href="mailto:hej@eatsafe.dk"
@@ -460,7 +460,7 @@ export default function ProfileScreen({
                   const color = s==="safe" ? "var(--green)" : s==="danger" ? "var(--red)" : "var(--amber)";
                   const bg = s==="safe" ? "var(--green-lt)" : s==="danger" ? "var(--red-lt)" : "var(--amber-lt)";
                   return (
-                    <div key={i} className="hist-row" style={{ cursor:"pointer" }}
+                    <div key={i} className="hist-row" style={UI.ucurpointer}
                       onClick={() => lookupProduct(h.ean_scanned || h.code)}>
                       <ProductImage product={prod} size={36} />
                       <div className="hist-info" style={{ marginLeft:8 }}>
@@ -489,7 +489,7 @@ export default function ProfileScreen({
                   <ProductImage product={f} size={48} />
                   <div style={UI.flexMin}>
                     <div style={{ fontWeight:700, fontSize:14 }}>{f.name || "Ukendt"}</div>
-                    {f.brand && <div style={{ fontSize:12, color:"var(--muted)", marginTop:1 }}>{f.brand}</div>}
+                    {f.brand && <div style={UI.ufs12_cmuted_mt1}>{f.brand}</div>}
                     <div style={{ marginTop:6 }}>
                       <ProfileBadges allergenFlags={f.allergen_flags||{}} allergens={allergens} customAllerg={customAllerg} family={family} activeProfiles={activeProfiles} size={22} />
                     </div>
@@ -508,7 +508,7 @@ export default function ProfileScreen({
           <div className="screen fade-in">
             <div style={{ display:"flex", alignItems:"center", gap:10, padding:"16px 0 20px" }}>
               
-              <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)" }}>Rediger profil</div>
+              <div style={UI.ufs18_fw800_cink}>Rediger profil</div>
             </div>
 
             {/* Navn og kontakt */}
@@ -532,7 +532,7 @@ export default function ProfileScreen({
                 ))}
               </div>
               {(!user.name?.trim() || !user.birth_year || !user.gender) && (
-                <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10 }}>
+                <div style={UI.ufs11_cmuted_mb10}>
                   <span style={UI.red}>*</span> Navn, fødselsår og køn er obligatoriske
                 </div>
               )}
@@ -561,8 +561,8 @@ export default function ProfileScreen({
                     <div key={d.id} className={`chip${on?" on":""}`}
                       onClick={() => setUser(u => ({ ...u, diets: on ? (u.diets||[]).filter(x=>x!==d.id) : [...(u.diets||[]), d.id] }))}>
                       <div style={UI.flex1}>
-                        <div style={{ fontWeight:700 }}>{d.label}</div>
-                        <div style={{ fontSize:10, color:"var(--muted)", marginTop:1 }}>{d.desc}</div>
+                        <div style={UI.ufw700}>{d.label}</div>
+                        <div style={UI.ufs10_cmuted_mt1}>{d.desc}</div>
                       </div>
                       {on && <div className="chip-check">✓</div>}
                     </div>
@@ -640,7 +640,7 @@ export default function ProfileScreen({
                 <option value="alle">Alle kategorier</option>
                 {E_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label} ({c.range})</option>)}
               </select>
-              <div style={{ maxHeight:320, overflowY:"auto", border:"1px solid var(--border)", borderRadius:8 }}>
+              <div style={UI.umxh320_ovyauto_bd1pxsolid_br8}>
                 {Object.entries(E_NUMBERS).filter(([e,name]) => {
                   const matchSearch = !eSearch || e.toLowerCase().includes(eSearch.toLowerCase()) || name.toLowerCase().includes(eSearch.toLowerCase());
                   if (!matchSearch) return false;
@@ -677,7 +677,7 @@ export default function ProfileScreen({
           <div className="screen fade-in">
             <div className="screen-title">Familie</div>
             <div className="screen-sub">Administrér familiemedlemmers allergiprofiler.</div>
-            <div className="card" style={{ padding:"12px 14px" }}>
+            <div className="card" style={UI.up12px14px}>
               <div className="card-lbl">Aktive profiler ved scanning</div>
               <FamilyChips />
             </div>
@@ -699,7 +699,7 @@ export default function ProfileScreen({
             ))}
             {/* ── Invitér familiemedlem via link ── */}
             <div className="card" style={UI.mb12}>
-              <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>
+              <div style={UI.ufs13_fw800_cink_mb4}>
                 🔗 Invitér via link
               </div>
               <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12, lineHeight:1.5 }}>

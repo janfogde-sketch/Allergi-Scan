@@ -147,7 +147,7 @@ export default function FeedbackModal({
         {done ? (
           <div style={{ textAlign:"center", padding:"32px 0" }}>
             <div style={UI.emoji48mb12}>🙏</div>
-            <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>Tak for din feedback!</div>
+            <div style={UI.ufs18_fw900_cink}>Tak for din feedback!</div>
             <div style={{ fontSize:13, color:"var(--muted)", marginTop:6 }}>Vi kigger på det hurtigst muligt.</div>
           </div>
         ) : (
@@ -167,7 +167,7 @@ export default function FeedbackModal({
 
             {/* Type */}
             <div style={UI.mb12}>
-              <label style={{ fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 }}>Type</label>
+              <label style={UI.ufs12_fw700_cink_dblock_mb6}>Type</label>
               <div style={UI.grid2gap6}>
                 {TYPES.map(t => (
                   <div key={t.id} onClick={() => setType(t.id)}
@@ -185,7 +185,7 @@ export default function FeedbackModal({
 
             {/* Beskrivelse */}
             <div style={UI.mb12}>
-              <label style={{ fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 }}>Beskriv problemet</label>
+              <label style={UI.ufs12_fw700_cink_dblock_mb6}>Beskriv problemet</label>
               <textarea value={text} onChange={e => setText(e.target.value)} rows={4}
                 placeholder="Fx. 'Når jeg trykker på X sker der Y…' — jo mere detail, jo bedre"
                 style={{ width:"100%", padding:"12px 14px", border:"1.5px solid var(--border2)",
@@ -196,7 +196,7 @@ export default function FeedbackModal({
 
             {/* Billede */}
             <div style={UI.mb16}>
-              <label style={{ fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 }}>Skærmbillede (valgfrit)</label>
+              <label style={UI.ufs12_fw700_cink_dblock_mb6}>Skærmbillede (valgfrit)</label>
               {image ? (
                 <div style={{ position:"relative", display:"inline-block" }}>
                   <img src={image} alt="Screenshot"
@@ -216,7 +216,7 @@ export default function FeedbackModal({
                     <circle cx="12" cy="13" r="4"/>
                   </svg>
                   <span style={UI.muted13}>Tag skærmbillede eller vælg fra galleri</span>
-                  <input type="file" accept="image/*" style={{ display:"none" }}
+                  <input type="file" accept="image/*" style={UI.udnone}
                     onChange={async e => {
                       const f = e.target.files?.[0];
                       if (!f) return;
@@ -254,21 +254,21 @@ export default function FeedbackModal({
                 ].map(([label, value]) => (
                   <div key={label} style={{ fontSize:10, lineHeight:1.7 }}>
                     <span style={{ color:"var(--muted)", fontWeight:700 }}>{label}: </span>
-                    <span style={{ color:"var(--ink)" }}>{value}</span>
+                    <span style={UI.ucink}>{value}</span>
                   </div>
                 ))}
               </div>
               {/* Debug trace */}
               {recentTraces.length > 0 && (
                 <div style={{ borderTop:"1px solid var(--border)", paddingTop:8, marginTop:4 }}>
-                  <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:4 }}>
+                  <div style={UI.ufs10_cmuted_fw700_mb4}>
                     🔍 Debug trace ({traceLog.length} entries)
                   </div>
                   <div style={{ fontFamily:"var(--mono)", fontSize:9, color:"var(--muted)", lineHeight:1.7, maxHeight:80, overflowY:"auto" }}>
                     {recentTraces.map((t, i) => (
                       <div key={i}>
                         <span style={{ color:"var(--green-text)" }}>[{t.id}]</span>{" "}
-                        <span style={{ color:"var(--ink)" }}>{t.step}</span>{" "}
+                        <span style={UI.ucink}>{t.step}</span>{" "}
                         <span style={{ color:"var(--muted2)" }}>{t.ts?.slice(11,19)}</span>
                       </div>
                     ))}

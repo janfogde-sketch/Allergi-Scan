@@ -147,11 +147,11 @@ export default function NotFoundScreen({
               Fotografér forsiden
               <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleProductImageCapture} />
             </label>
-            <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, width:"100%", padding:"13px", borderRadius:12, cursor:"pointer", background:"var(--surface)", border:"1px solid var(--border2)", color:"var(--ink2)", fontSize:13, fontWeight:600, marginBottom:10 }}>
+            <label style={UI.udflex_aicenter_jccenter_g8_w100_p13px_br12_curpointer_bgsur}>
               📁 Vælg fra galleri
               <input type="file" accept="image/*" style={S.none} onChange={handleProductImageCapture} />
             </label>
-            <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, color:"var(--muted)", padding:"8px 0", fontFamily:"var(--f)" }}
+            <button style={UI.uw100_bgnone_bdnone_curpointer_fs12_cmuted_p8px0_fff}
               onClick={() => setNotFoundStep(2)}>
               Spring forside over →
             </button>
@@ -214,7 +214,7 @@ export default function NotFoundScreen({
               Fotografér ingredienslisten
               <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleImageCapture} />
             </label>
-            <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, width:"100%", padding:"13px", borderRadius:12, cursor:"pointer", background:"var(--surface)", border:"1px solid var(--border2)", color:"var(--ink2)", fontSize:13, fontWeight:600, marginBottom:10 }}>
+            <label style={UI.udflex_aicenter_jccenter_g8_w100_p13px_br12_curpointer_bgsur}>
               📁 Vælg fra galleri
               <input type="file" accept="image/*" style={S.none} onChange={handleImageCapture} />
             </label>
@@ -224,7 +224,7 @@ export default function NotFoundScreen({
                 Fortsæt → Næringsindhold
               </button>
             )}
-            <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, color:"var(--muted)", padding:"8px 0", fontFamily:"var(--f)" }}
+            <button style={UI.uw100_bgnone_bdnone_curpointer_fs12_cmuted_p8px0_fff}
               onClick={() => { if (!ocrText) setProposedFlags({}); setNotFoundStep(3); }}>
               {ocrText ? "Spring næring over →" : "Spring ingredienser over →"}
             </button>
@@ -234,10 +234,10 @@ export default function NotFoundScreen({
         {/* ── TRIN 3: Næringsindhold ── */}
         {notFoundStep === 3 && !ocrLoading && !nutritionOcrLoading && (
           <div className="fade-in">
-            <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>
+            <div style={UI.ufs13_fw700_cink_mb4}>
               Trin 3 — Næringsindhold (valgfrit)
             </div>
-            <div style={{ fontSize:12, color:"var(--muted)", marginBottom:16, lineHeight:1.5 }}>
+            <div style={UI.ufs12_cmuted_mb16_lh15}>
               Fotografér eller skriv næringsdeklarationen. Alle felter er valgfri.
             </div>
 
@@ -260,7 +260,7 @@ export default function NotFoundScreen({
               </div>
             )}
 
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:14 }}>
+            <div style={UI.ubgsurface_bd1pxsolid_br12_p14px_mb14}>
               <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)", marginBottom:12 }}>Per 100g/ml</div>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"10px 14px" }}>
                 {[
@@ -273,7 +273,7 @@ export default function NotFoundScreen({
                   { key:"salt",      label:"Salt (g)",         placeholder:"fx 0,12" },
                 ].map(({ key, label, placeholder }) => (
                   <div key={key}>
-                    <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:4 }}>{label}</div>
+                    <div style={UI.ufs10_cmuted_fw700_mb4}>{label}</div>
                     <input className="field" placeholder={placeholder}
                       value={proposedNutrition?.[key] || ""}
                       onChange={e => setProposedNutrition(prev => ({ ...prev, [key]: e.target.value }))}
@@ -286,7 +286,7 @@ export default function NotFoundScreen({
             <button className="btn btn-primary btn-full" onClick={() => setNotFoundStep(4)}>
               Fortsæt → Andet
             </button>
-            <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, color:"var(--muted)", padding:"10px 0", fontFamily:"var(--f)" }}
+            <button style={UI.uw100_bgnone_bdnone_curpointer_fs12_cmuted_p10px0_fff}
               onClick={() => setNotFoundStep(4)}>
               Spring næring over →
             </button>
@@ -296,14 +296,14 @@ export default function NotFoundScreen({
         {/* ── TRIN 4: Andet / noter ── */}
         {notFoundStep === 4 && !ocrLoading && (
           <div className="fade-in">
-            <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>
+            <div style={UI.ufs13_fw700_cink_mb4}>
               Trin 4 — Yderligere oplysninger (valgfrit)
             </div>
-            <div style={{ fontSize:12, color:"var(--muted)", marginBottom:16, lineHeight:1.5 }}>
+            <div style={UI.ufs12_cmuted_mb16_lh15}>
               Tilføj ekstra information — fx opbevaringsinstruktioner, certifikater (Ø, Halal, Vegan) eller andet.
             </div>
 
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:14 }}>
+            <div style={UI.ubgsurface_bd1pxsolid_br12_p14px_mb14}>
               <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>Mærkninger / certifikater</div>
               <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:12 }}>
                 {["Ø Økologisk","Vegansk","Vegetarisk","Glutenfri","Laktosefri","Halal","Kosher","Fairtrade"].map(tag => {
@@ -334,7 +334,7 @@ export default function NotFoundScreen({
             <button className="btn btn-primary btn-full" onClick={() => setNotFoundStep(5)}>
               Fortsæt → Gennemse og send
             </button>
-            <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, color:"var(--muted)", padding:"10px 0", fontFamily:"var(--f)" }}
+            <button style={UI.uw100_bgnone_bdnone_curpointer_fs12_cmuted_p10px0_fff}
               onClick={() => setNotFoundStep(5)}>
               Spring over →
             </button>
@@ -349,18 +349,18 @@ export default function NotFoundScreen({
             </div>
 
             {/* Produktkort */}
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12 }}>
+            <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb12}>
               <div style={S.rowBetweenMb10}>
-                <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)" }}>📸 Forside og navn</div>
+                <div style={UI.ufs12_fw800_cink}>📸 Forside og navn</div>
                 <button onClick={() => setNotFoundStep(1)} style={{ background:"none", border:"none", cursor:"pointer", fontSize:11, color:"var(--muted)", fontFamily:"var(--f)", padding:"2px 8px" }}>← Ret</button>
               </div>
-              <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
+              <div style={UI.udflex_aicenter_g12_mb12}>
                 {productImagePreview
                   ? <img loading="lazy" src={productImagePreview} alt="Produkt" style={{ width:60, height:60, objectFit:"contain", borderRadius:10, border:"1px solid var(--border)", flexShrink:0 }} />
                   : <div style={{ width:60, height:60, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>📦</div>
                 }
                 <div style={S.flex1}>
-                  <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, marginBottom:4 }}>Produktnavn</div>
+                  <div style={UI.ufs11_cmuted_fw600_mb4}>Produktnavn</div>
                   <input value={proposedName} onChange={e => setProposedName(e.target.value)}
                     placeholder="Skriv produktnavn…" className="field"
                     style={{ padding:"8px 12px", fontSize:14 }} />
@@ -377,9 +377,9 @@ export default function NotFoundScreen({
             <div style={S.card}>
               <div style={S.rowBetweenMb10}>
                 <div style={S.h13}>🔍 Ingredienser</div>
-                <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-                  {ocrText && <div style={{ fontSize:11, color:"var(--green)", fontWeight:700 }}>✓ {ingItems.length} fundet</div>}
-                  <label style={{ fontSize:11, color:"var(--muted)", cursor:"pointer", fontWeight:600, display:"flex", alignItems:"center", gap:4 }}>
+                <div style={UI.udflex_g8_aicenter}>
+                  {ocrText && <div style={UI.ufs11_cgreen_fw700}>✓ {ingItems.length} fundet</div>}
+                  <label style={UI.ufs11_cmuted_curpointer_fw600_dflex_aicenter_g4}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                     {ocrText ? "Nyt billede" : "Tag billede"}
                     <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleImageCapture} />
@@ -388,20 +388,20 @@ export default function NotFoundScreen({
               </div>
 
               {!ocrText && ingItems.length === 0 && (
-                <div style={{ fontSize:12, color:"var(--amber)", fontWeight:600, padding:"8px 10px", background:"var(--amber-lt)", borderRadius:8, marginBottom:10 }}>
+                <div style={UI.ufs12_camber_fw600_p8px10px_bgamberlt_br8_mb10}>
                   ⚠ Ingen ingredienser endnu — tag et billede eller skriv dem herunder
                 </div>
               )}
 
               {ingItems.length > 0 && (
-                <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
+                <div style={UI.udflex_flewrap_g6_mb10}>
                   {ingItems.map((item, i) => (
-                    <div key={i} style={{ display:"flex", alignItems:"center", gap:5, padding:"5px 10px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:20 }}>
-                      <span style={{ fontSize:12, color:"var(--ink)" }}>{item}</span>
+                    <div key={i} style={UI.udflex_aicenter_g5_p5px10px_bgpaper2_bd1pxsolid_br20}>
+                      <span style={UI.ufs12_cink}>{item}</span>
                       <div role="button" aria-label={`Fjern "${item}"`} tabIndex={0}
                         onClick={() => setIngItems(p => p.filter((_,j)=>j!==i))}
                         onKeyDown={e => e.key === "Enter" && setIngItems(p => p.filter((_,j)=>j!==i))}
-                        style={{ cursor:"pointer", color:"var(--muted)", fontSize:14, lineHeight:1, padding:6, margin:"-6px -6px -6px 2px" }}>×</div>
+                        style={UI.ucurpointer_cmuted_fs14_lh1_p6_m6px6px6p}>×</div>
                     </div>
                   ))}
                 </div>
@@ -411,12 +411,12 @@ export default function NotFoundScreen({
                 <input className="field" placeholder="Tilføj ingrediens…" value={ingInput}
                   onChange={e => setIngInput(e.target.value)}
                   onKeyDown={e => e.key==="Enter" && addIngItem()}
-                  style={{ flex:1, fontSize:12 }} />
+                  style={UI.uflex1_fs12} />
                 <button className="btn btn-outline btn-sm" onClick={addIngItem} style={UI.shrink0}>+</button>
               </div>
               {ingItems.length > 0 && (
                 <div style={{ fontSize:10, color:"var(--muted)", marginTop:8, lineHeight:1.5 }}>
-                  Tryk × for at fjerne. Rå tekst: <span style={{ fontFamily:"monospace" }}>{ingToText(ingItems).slice(0,80)}{ingToText(ingItems).length>80?"…":""}</span>
+                  Tryk × for at fjerne. Rå tekst: <span style={UI.uffmonospac}>{ingToText(ingItems).slice(0,80)}{ingToText(ingItems).length>80?"…":""}</span>
                 </div>
               )}
               <button style={{ marginTop:8, fontSize:11, color:"var(--muted)", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", padding:0 }}
@@ -462,7 +462,7 @@ export default function NotFoundScreen({
             {/* Næringsindhold */}
             {proposedNutrition && Object.values(proposedNutrition).some(v => v) && (
               <div style={S.card}>
-                <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>
+                <div style={UI.ufs13_fw800_cink_mb10}>
                   Næringsindhold <span style={{ fontSize:10, color:"var(--muted)", fontWeight:400 }}>per 100g/ml</span>
                 </div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px 14px" }}>
@@ -493,8 +493,8 @@ export default function NotFoundScreen({
               </div>
             )}
 
-            <div style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"10px 12px", background:"var(--paper2)", borderRadius:10, marginBottom:14 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}>
+            <div style={UI.udflex_g8_aiflexstar_p10px12px_bgpaper2_br10_mb14}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={UI.ushr0_mt1}>
                 <circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M12 16v-4M12 8h.01"/>
               </svg>
               <div style={S.sub11lh}>
@@ -526,7 +526,7 @@ export default function NotFoundScreen({
         <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.7)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:16 }}>
           <div style={{ width:48, height:48, border:"3px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite" }} />
           <div style={UI.boldInk14}>Sender produkt…</div>
-          <div style={{ fontSize:12, color:"var(--muted)" }}>Vent venligst</div>
+          <div style={UI.ufs12_cmuted}>Vent venligst</div>
         </div>
       )}
     </>
