@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { compareAllergens, getAllergenLabels } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, SafetyRow, SafetyPill, EmptyState } from "./SharedComponents.jsx";
@@ -38,6 +38,30 @@ export default function RecipesScreen({
   const [listAdded, setListAdded] = React.useState({});
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [localSafeProfiles, setLocalSafeProfiles] = React.useState(null);
+
+  // Opskrift-filtrering — flyttet op på øverste niveau og memoized, da den
+  // ellers (inkl. JSON.parse af allergen_flags for op til 1000 opskrifter)
+  // kørte helt forfra ved hvert eneste render, inklusive hvert tastetryk i
+  // søgefeltet. Fundet ved en performance-gennemgang af appen.
+  const recipeSafeProfiles = localSafeProfiles ?? [
+    "me",
+    ...(family||[]).filter(m => (activeProfiles||[]).includes(m.id)).map(m => m.id),
+  ];
+  const safeAllergenIds = useMemo(() => [
+    ...(recipeSafeProfiles.includes("me") ? [...allergens, ...(customAllerg||[])] : []),
+    ...(family||[]).filter(m => recipeSafeProfiles.includes(m.id)).flatMap(m => [...(m.allergens||[]), ...(m.customAllerg||[])]),
+  ], [recipeSafeProfiles, family, allergens, customAllerg]);
+  const filteredRecipes = useMemo(() => {
+    return (recipeFilter === "favoritter" ? recipes.filter(r => favoriteRecipes.includes(r.id)) : recipes).filter(r => {
+      if (recipeSearch && !r.title.toLowerCase().includes(recipeSearch.toLowerCase())) return false;
+      if (recipeSafeOnly) {
+        let rFlags = {};
+        try { rFlags = typeof r.allergen_flags === "string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags||{}); } catch {}
+        if (compareAllergens(rFlags, safeAllergenIds).status === "danger") return false;
+      }
+      return true;
+    });
+  }, [recipes, recipeFilter, favoriteRecipes, recipeSearch, recipeSafeOnly, safeAllergenIds]);
 
   // Submit-form states — skal være her pga. React hooks-regler
   const [imgFile, setImgFile] = React.useState(null);
@@ -348,25 +372,9 @@ export default function RecipesScreen({
       { id:"me", name: user.name||"Dig", allergens },
       ...family.filter(m => activeProfiles.includes(m.id)),
     ];
-    // Beregn aktive allergen-IDs baseret på valgte profiler
-    const safeProfiles = localSafeProfiles ?? [
-      "me",
-      ...(family||[]).filter(m => (activeProfiles||[]).includes(m.id)).map(m => m.id),
-    ];
-    const safeAllergenIds = [
-      ...(safeProfiles.includes("me") ? [...allergens, ...(customAllerg||[])] : []),
-      ...(family||[]).filter(m => safeProfiles.includes(m.id)).flatMap(m => [...(m.allergens||[]), ...(m.customAllerg||[])]),
-    ];
-
-    const filtered = (recipeFilter === "favoritter" ? recipes.filter(r => favoriteRecipes.includes(r.id)) : recipes).filter(r => {
-      if (recipeSearch && !r.title.toLowerCase().includes(recipeSearch.toLowerCase())) return false;
-      if (recipeSafeOnly) {
-        let rFlags = {};
-        try { rFlags = typeof r.allergen_flags === "string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags||{}); } catch {}
-        if (compareAllergens(rFlags, safeAllergenIds).status === "danger") return false;
-      }
-      return true;
-    });
+    // filtered opskrifter er beregnet (memoized) på øverste niveau af
+    // komponenten — se filteredRecipes ovenfor.
+    const filtered = filteredRecipes;
 
     // Profil-chips når kun-sikre er aktiv
     const allSafeProfiles = [
