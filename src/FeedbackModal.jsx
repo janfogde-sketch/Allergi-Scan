@@ -140,7 +140,7 @@ export default function FeedbackModal({
       onClick={e => e.target === e.currentTarget && close()}>
       <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0",
         padding:"20px 16px 32px", width:"100%", maxHeight:"85vh", overflowY:"auto",
-        backdropFilter:"blur(20px)", border:"1px solid rgba(255,255,255,.1)" }}
+        backdropFilter:"blur(20px)", border:"1px solid var(--border)" }}
         onClick={e => e.stopPropagation()}>
 
         {done ? (

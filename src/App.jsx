@@ -910,7 +910,7 @@ const lookupProduct = useCallback(async (ean) => {
           <div style={{ display:"flex", gap:6, justifyContent:"center", marginBottom:24 }}>
             {steps.map((_, i) => (
               <div key={i} style={{ width: i === betaIntroStep ? 20 : 6, height:6, borderRadius:3,
-                background: i === betaIntroStep ? "var(--green)" : "rgba(255,255,255,.2)",
+                background: i === betaIntroStep ? "var(--green)" : "var(--border2)",
                 transition:"all .3s" }} />
             ))}
           </div>
@@ -936,7 +936,7 @@ const lookupProduct = useCallback(async (ean) => {
               <button onClick={dismiss}
                 style={{ width:"100%", padding:"10px", background:"transparent",
                   border:"none", fontFamily:"var(--f)", fontSize:12,
-                  color:"rgba(255,255,255,.3)", cursor:"pointer" }}>
+                  color:"var(--muted)", cursor:"pointer" }}>
                 Spring over
               </button>
             )}
