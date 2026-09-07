@@ -7,6 +7,7 @@ import { useAdminContext } from "./AdminContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { ALL_ALLERGEN_WORDS } from "./allergenKeywords.js";
 import { Loader } from "./SharedComponents.jsx";
+import { UI } from "./styleUtils.js";
 
 // Fremhæv allergener og E-numre i ingredienstekst
 const E_NUMBER_RE = /\b(E\d{3,4}[a-z]?)\b/gi;
@@ -231,7 +232,7 @@ export default function AdminScreen() {
               {openTicket.context && (
                 <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
                   <div style={{ fontSize:11, color:"var(--muted)", fontWeight:700, marginBottom:8 }}>📊 DIAGNOSTISK INFO</div>
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
+                  <div style={UI.grid2gap6}>
                     {[
                       ["Bruger",      openTicket.context.user_name || "Anonym"],
                       ["Email",       openTicket.context.user_email || "—"],
@@ -357,12 +358,12 @@ ${openTicket.description}
 
         {/* ══ ADMIN ══ */}
         {screen === SCREENS.ADMIN && !openSubmission && !openTicket && (
-          <div className="screen fade-in" style={{ paddingBottom:120 }}>
+          <div className="screen fade-in" style={UI.pb120}>
 
             {/* Header */}
-            <div style={{ display:"flex", alignItems:"center", gap:12, padding:"16px 0 14px" }}>
+            <div style={UI.avatarRow}>
               <button onClick={() => setScreen(SCREENS.PROFILE)}
-                style={{ background:"none", border:"none", cursor:"pointer", padding:4 }}>
+                style={UI.iconBtn}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2"><path strokeLinecap="round" d="M15 19l-7-7 7-7"/></svg>
               </button>
               <div style={{ flex:1, fontSize:18, fontWeight:900, color:"var(--ink)" }}>🛡️ Admin</div>
@@ -406,7 +407,7 @@ ${openTicket.description}
             {/* ── DASHBOARD ── */}
             {adminSection === "dashboard" && (
               <div className="fade-in">
-                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Brugere</div>
+                <div style={UI.sectionLbl8}>Brugere</div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14 }}>
                   {[
                     { n:adminStats?.total_users,     emoji:"👤", label:"Brugere i alt",   color:"var(--ink)" },
@@ -422,7 +423,7 @@ ${openTicket.description}
                   ))}
                 </div>
 
-                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Database & opgaver</div>
+                <div style={UI.sectionLbl8}>Database & opgaver</div>
                 <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, overflow:"hidden", marginBottom:14, boxShadow:"var(--sh)" }}>
                   {[
                     { emoji:"📦", label:"Produkter i databasen",   n:adminStats?.total_products,        color:"var(--ink)" },
@@ -432,7 +433,7 @@ ${openTicket.description}
                   ].map(({ emoji, label, n, color, action }, i, arr) => (
                     <div key={label} onClick={action}
                       style={{ display:"flex", alignItems:"center", gap:12, padding:"13px 16px", borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", cursor: action ? "pointer" : "default" }}>
-                      <span style={{ fontSize:20 }}>{emoji}</span>
+                      <span style={UI.fs20}>{emoji}</span>
                       <span style={{ flex:1, fontSize:13, color:"var(--ink)", fontWeight:500 }}>{label}</span>
                       <span style={{ fontSize:18, fontWeight:900, color }}>{n ?? "—"}</span>
                       {action && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>}
@@ -440,8 +441,8 @@ ${openTicket.description}
                   ))}
                 </div>
 
-                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Hurtige handlinger</div>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+                <div style={UI.sectionLbl8}>Hurtige handlinger</div>
+                <div style={UI.grid2gap8}>
                   {[
                     { emoji:"📦", label:"Godkend indsendelser", color:"var(--amber)", fn:() => { setAdminSection("submissions"); setSubmissionFilter("pending"); loadSubmissions("pending"); } },
                     { emoji:"🐛", label:"Gennemse tickets",     color:"var(--red)",   fn:() => { setAdminSection("tickets"); loadTickets(); } },
@@ -479,7 +480,7 @@ ${openTicket.description}
                 </div>
 
                 {/* Søge-parameter — dropdown */}
-                <div style={{ marginBottom:12 }}>
+                <div style={UI.mb12}>
                   <select value={userSearchParam} onChange={e => setUserSearchParam(e.target.value)}
                     style={{ width:"100%", padding:"10px 14px", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:14, background:"var(--surface)", color:"var(--ink)", outline:"none", cursor:"pointer" }}>
                     <option value="all">🔍 Alle felter</option>
@@ -492,7 +493,7 @@ ${openTicket.description}
                 </div>
 
                 {/* Tæller */}
-                <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>
+                <div style={UI.sectionLbl8}>
                   {filteredAdminUsers.length} af {adminUsers.length} brugere
                 </div>
                 {adminUsersLoading && <Loader text="Indlæser…" />}
@@ -504,7 +505,7 @@ ${openTicket.description}
                         <div style={{ width:38, height:38, borderRadius:"50%", background: u.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
                           {(u.name||u.email||"?").charAt(0).toUpperCase()}
                         </div>
-                        <div style={{ flex:1, minWidth:0 }}>
+                        <div style={UI.flexMin}>
                           <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.name || "Ingen navn"}</div>
                           <div style={{ fontSize:11, color:"var(--muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</div>
                         </div>
@@ -545,11 +546,11 @@ ${openTicket.description}
                 {submissionsLoading && <Loader text="Indlæser…" />}
                 {!submissionsLoading && submissions.length === 0 && (
                   <div style={{ textAlign:"center", padding:"48px 0" }}>
-                    <div style={{ fontSize:48, marginBottom:12 }}>{submissionFilter==="pending"?"🎉":"📭"}</div>
+                    <div style={UI.emoji48mb12}>{submissionFilter==="pending"?"🎉":"📭"}</div>
                     <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>{submissionFilter==="pending" ? "Ingen afventer" : "Ingen indsendelser"}</div>
                   </div>
                 )}
-                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                <div style={UI.colGap8}>
                   {submissions.map(s => {
                     const flags = s.ai_parsed_data || {};
                     const dangerAllergens = ALLERGENS.filter(a => flags[a.id]==="yes" || flags[a.id]===true);
@@ -559,12 +560,12 @@ ${openTicket.description}
                         style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", cursor:"pointer", boxShadow:"var(--sh)" }}>
                         <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
                           <div style={{ width:48, height:48, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>📦</div>
-                          <div style={{ flex:1, minWidth:0 }}>
+                          <div style={UI.flexMin}>
                             <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</div>
                             <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6, fontFamily:"monospace" }}>EAN: {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`}</div>
-                            <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                            <div style={UI.wrapGap4}>
                               {dangerAllergens.slice(0,3).map(a => <span key={a.id} style={{ fontSize:10, padding:"2px 7px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", fontWeight:700 }}>{a.emoji} {a.label}</span>)}
-                              {dangerAllergens.length === 0 && <span style={{ fontSize:10, color:"var(--muted)" }}>Ingen allergener</span>}
+                              {dangerAllergens.length === 0 && <span style={UI.muted10}>Ingen allergener</span>}
                             </div>
                           </div>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
@@ -638,8 +639,8 @@ ${openTicket.description}
                 )}
 
                 {ticketsLoading && <Loader text="Indlæser…" />}
-                {!ticketsLoading && adminTickets.length === 0 && <div style={{ textAlign:"center", padding:"48px 0" }}><div style={{ fontSize:48, marginBottom:12 }}>🎉</div><div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>Ingen tickets</div></div>}
-                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {!ticketsLoading && adminTickets.length === 0 && <div style={{ textAlign:"center", padding:"48px 0" }}><div style={UI.emoji48mb12}>🎉</div><div style={{ fontSize:16, fontWeight:800, color:"var(--ink)" }}>Ingen tickets</div></div>}
+                <div style={UI.colGap8}>
                   {adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter).map(t => {
                     const typeConfig = { bug:{emoji:"🐛",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{emoji:"🎨",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{emoji:"💡",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{emoji:"📦",color:"var(--ink3)",bg:"var(--surface2)",label:"Indhold"}, crash:{emoji:"💥",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{emoji:"✨",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
                     const cfg = typeConfig[t.type] || typeConfig.bug;
@@ -649,12 +650,12 @@ ${openTicket.description}
                       <div key={t.id} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
                         <div style={{ display:"flex", alignItems:"flex-start", gap:10 }} onClick={() => setOpenTicket(t)}>
                           <div style={{ width:38, height:38, borderRadius:10, background:cfg.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{cfg.emoji}</div>
-                          <div style={{ flex:1, minWidth:0 }}>
+                          <div style={UI.flexMin}>
                             <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
                               <span style={{ fontSize:11, fontWeight:700, color:cfg.color, background:cfg.bg, padding:"2px 8px", borderRadius:100 }}>{cfg.label}</span>
                             </div>
                             <div style={{ fontSize:13, color:"var(--ink)", lineHeight:1.4, marginBottom:4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{t.description}</div>
-                            <div style={{ fontSize:10, color:"var(--muted)" }}>{t.context?.user_name || "Anonym"} · {t.context?.screen_label || t.context?.screen || "—"} · {new Date(t.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</div>
+                            <div style={UI.muted10}>{t.context?.user_name || "Anonym"} · {t.context?.screen_label || t.context?.screen || "—"} · {new Date(t.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</div>
                           </div>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:4 }}><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
                         </div>
@@ -696,9 +697,9 @@ ${openTicket.description}
                     <div style={{ width:52, height:52, borderRadius:"50%", background: openAdminUser.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
                       {(openAdminUser.name||openAdminUser.email||"?").charAt(0).toUpperCase()}
                     </div>
-                    <div style={{ flex:1 }}>
+                    <div style={UI.flex1}>
                       <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>{openAdminUser.name || "Ingen navn"}</div>
-                      <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{openAdminUser.email}</div>
+                      <div style={UI.muted12mt2}>{openAdminUser.email}</div>
                       <div style={{ display:"flex", gap:6, marginTop:5 }}>
                         <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: openAdminUser.role==="admin" ? "rgba(74,222,128,.2)" : "var(--surface2)", color: openAdminUser.role==="admin" ? "var(--green)" : "var(--muted)" }}>
                           {openAdminUser.role==="admin" ? "🛡️ Admin" : "👤 Bruger"}
@@ -713,7 +714,7 @@ ${openTicket.description}
                   </div>
 
                   {/* Info grid */}
-                  <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Kontoinfo</div>
+                  <div style={UI.sectionLbl8}>Kontoinfo</div>
                   <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:14 }}>
                     {[
                       ["📅 Oprettet", new Date(openAdminUser.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", year:"numeric" })],
@@ -733,7 +734,7 @@ ${openTicket.description}
                   {/* Allergener */}
                   {openAdminUser.allergens?.length > 0 && (
                     <>
-                      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Allergener & præferencer</div>
+                      <div style={UI.sectionLbl8}>Allergener & præferencer</div>
                       <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:14 }}>
                         {openAdminUser.allergens.map(id => {
                           const a = ALLERGENS.find(x => x.id === id);
@@ -746,7 +747,7 @@ ${openTicket.description}
                   {/* Preferred stores */}
                   {openAdminUser.preferred_stores?.length > 0 && (
                     <>
-                      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Foretrukne butikker</div>
+                      <div style={UI.sectionLbl8}>Foretrukne butikker</div>
                       <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:14 }}>
                         {openAdminUser.preferred_stores.map((s,i) => (
                           <span key={i} style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:100, background:"var(--surface2)", color:"var(--ink)", border:"1px solid var(--border)" }}>🛒 {s}</span>
@@ -758,8 +759,8 @@ ${openTicket.description}
                   {/* Handlinger */}
                   {openAdminUser.id !== userId ? (
                     <>
-                      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>Handlinger</div>
-                      <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                      <div style={UI.sectionLbl8}>Handlinger</div>
+                      <div style={UI.colGap8}>
 
                         {/* Rolle */}
                         <button onClick={() => {
@@ -772,7 +773,7 @@ ${openTicket.description}
                         </button>
 
                         {/* Onboarding */}
-                        <div style={{ display:"flex", gap:8 }}>
+                        <div style={UI.rowGap8}>
                           <button onClick={async () => {
                             const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${openAdminUser.id}`, { method:"PATCH", headers:{ "Content-Type":"application/json", "apikey":SUPABASE_ANON_KEY, "Authorization":`Bearer ${accessToken}`, "Prefer":"return=minimal" }, body: JSON.stringify({ onboarding_completed: true }) });
                             if (!res.ok) { alert(`Fejl: HTTP ${res.status}`); return; }
@@ -839,17 +840,17 @@ ${openTicket.description}
 
         {/* ══ ADMIN — ÅBEN SUBMISSION ══ */}
         {screen === SCREENS.ADMIN && openSubmission && editingSubmission && (
-          <div className="screen fade-in" style={{ paddingBottom:120 }}>
+          <div className="screen fade-in" style={UI.pb120}>
 
             {/* Header */}
-            <div style={{ display:"flex", alignItems:"center", gap:12, padding:"16px 0 14px" }}>
+            <div style={UI.avatarRow}>
               <button onClick={() => { setOpenSubmission(null); setEditingSubmission(null); }}
-                style={{ background:"none", border:"none", cursor:"pointer", padding:4 }}>
+                style={UI.iconBtn}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2"><path strokeLinecap="round" d="M15 19l-7-7 7-7"/></svg>
               </button>
-              <div style={{ flex:1 }}>
+              <div style={UI.flex1}>
                 <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Gennemse indsendelse</div>
-                <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>{new Date(openSubmission.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"long", year:"numeric" })}</div>
+                <div style={UI.muted11mt1}>{new Date(openSubmission.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"long", year:"numeric" })}</div>
               </div>
               {/* Hurtig-godkend/afvis */}
               <div style={{ display:"flex", gap:6 }}>
@@ -865,21 +866,21 @@ ${openTicket.description}
             </div>
 
             {/* Produktkort */}
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
+            <div style={UI.card}>
               <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
                 {openSubmission.ai_parsed_data?.product_image_url
                   ? <img src={openSubmission.ai_parsed_data.product_image_url}
                       style={{ width:64, height:64, borderRadius:10, objectFit:"contain", border:"1px solid var(--border)", flexShrink:0 }} alt="Indsendt produktbillede" />
                   : <div style={{ width:64, height:64, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>📦</div>
                 }
-                <div style={{ flex:1 }}>
+                <div style={UI.flex1}>
                   <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, marginBottom:4 }}>Produktnavn</div>
                   <input value={editingSubmission.name} onChange={e => setEditingSubmission(s => ({ ...s, name: e.target.value }))}
                     placeholder="Produktnavn…"
                     style={{ width:"100%", border:"none", outline:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--ink)", background:"transparent", padding:0 }} />
                 </div>
               </div>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+              <div style={UI.grid2gap8}>
                 <div>
                   <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, marginBottom:4 }}>BRAND</div>
                   <input value={editingSubmission.brand} onChange={e => setEditingSubmission(s => ({ ...s, brand: e.target.value }))}
@@ -900,7 +901,7 @@ ${openTicket.description}
 
             {/* Foto af ingredienslisten */}
             {openSubmission.raw_label_image && (
-              <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
+              <div style={UI.card}>
                 <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>📸 Foto af ingredienslisten</div>
                 <img src={openSubmission.raw_label_image} alt="Ingrediensliste"
                   style={{ width:"100%", borderRadius:10, objectFit:"contain", maxHeight:240 }} />
@@ -909,9 +910,9 @@ ${openTicket.description}
 
             {/* OCR tekst */}
             {openSubmission.ocr_raw_text && (
-              <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
-                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-                  <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>📄 Ingredienser fra OCR</div>
+              <div style={UI.card}>
+                <div style={UI.rowBetweenMb10}>
+                  <div style={UI.boldInk13}>📄 Ingredienser fra OCR</div>
                   <button onClick={() => cleanOcrWithAI(openSubmission.ocr_raw_text)} disabled={cleaningOcr}
                     style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:8, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--green)", cursor:"pointer" }}>
                     {cleaningOcr ? "🤖 Renskriver…" : "🤖 Renskiv med AI"}
@@ -936,12 +937,12 @@ ${openTicket.description}
             )}
 
             {/* Allergener — toggle grid */}
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:12, boxShadow:"var(--sh)" }}>
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-                <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Allergener</div>
-                <div style={{ fontSize:10, color:"var(--muted)" }}>Ja → Spor → Nej</div>
+            <div style={UI.card}>
+              <div style={UI.rowBetweenMb10}>
+                <div style={UI.boldInk13}>Allergener</div>
+                <div style={UI.muted10}>Ja → Spor → Nej</div>
               </div>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
+              <div style={UI.grid2gap6}>
                 {ALLERGENS.map(a => {
                   const val = editingSubmission.allergen_flags[a.id] || "no";
                   const next = val==="no" ? "yes" : val==="yes" ? "traces" : "no";
@@ -953,7 +954,7 @@ ${openTicket.description}
                         border:`1px solid ${isYes?"var(--red-md)":isTrace?"var(--amber-md)":"var(--border)"}`,
                         background: isYes?"var(--red-lt)":isTrace?"var(--amber-lt)":"var(--paper2)",
                         fontFamily:"var(--f)" }}>
-                      <span style={{ fontSize:16 }}>{a.emoji}</span>
+                      <span style={UI.fs16}>{a.emoji}</span>
                       <span style={{ flex:1, fontSize:12, fontWeight:700, color:isYes?"var(--red)":isTrace?"var(--amber)":"var(--muted2)", textAlign:"left" }}>{a.label}</span>
                       <span style={{ fontSize:10, fontWeight:800, color:isYes?"var(--red)":isTrace?"var(--amber)":"var(--muted)" }}>
                         {isYes?"JA":isTrace?"SPOR":"NEJ"}
@@ -986,7 +987,7 @@ ${openTicket.description}
 
                         {adminSection === "missing" && (
               <div>
-                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+                <div style={UI.rowBetweenMb16}>
                   <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>❓ Efterspurgte manglende produkter</div>
                   <button onClick={loadMissingEans} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer" }}>
                     🔄 Opdater
@@ -1031,19 +1032,19 @@ ${openTicket.description}
                 ) : missingEans.length === 0 ? (
                   <div style={{ textAlign:"center", padding:"40px 0", color:"var(--muted)" }}>Ingen manglende EAN'er endnu</div>
                 ) : (
-                  <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  <div style={UI.colGap8}>
                     {missingEans.map((row, i) => (
                       <div key={row.ean} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", display:"flex", alignItems:"center", gap:12 }}>
                         {/* Rang */}
                         <div style={{ fontSize:13, fontWeight:800, color:"var(--muted)", width:24, textAlign:"right", flexShrink:0 }}>#{i+1}</div>
                         {/* EAN + meta */}
-                        <div style={{ flex:1, minWidth:0 }}>
+                        <div style={UI.flexMin}>
                           <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)", fontFamily:"monospace" }}>{row.ean}</div>
                           <div style={{ display:"flex", gap:8, alignItems:"center", marginTop:3, flexWrap:"wrap" }}>
                             <span style={{ fontSize:11, fontWeight:700, color:"var(--red)", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:100, padding:"1px 7px" }}>
                               {row.count}× søgt
                             </span>
-                            <span style={{ fontSize:11, color:"var(--muted)" }}>
+                            <span style={UI.muted11}>
                               første {new Date(row.first_seen).toLocaleDateString("da-DK")} · sidst {new Date(row.last_seen).toLocaleDateString("da-DK")}
                             </span>
                           </div>
@@ -1078,7 +1079,7 @@ ${openTicket.description}
 
             {adminSection === "import" && (
               <div>
-                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+                <div style={UI.rowBetweenMb16}>
                   <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>⬇️ OFF Auto-import</div>
                   <button
                     onClick={() => runImport(true)}
@@ -1099,7 +1100,7 @@ ${openTicket.description}
                 {importLoading && (
                   <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:12 }}>
                     <div style={{ width:16, height:16, border:"2px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .7s linear infinite", flexShrink:0 }} />
-                    <div style={{ fontSize:13, color:"var(--muted)" }}>Importerer produkter fra Open Food Facts…</div>
+                    <div style={UI.muted13}>Importerer produkter fra Open Food Facts…</div>
                   </div>
                 )}
 
@@ -1114,7 +1115,7 @@ ${openTicket.description}
                     ].map(s => (
                       <div key={s.label} style={{ padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, textAlign:"center" }}>
                         <div style={{ fontSize:22, fontWeight:900, color:s.color, marginBottom:2 }}>{s.value ?? 0}</div>
-                        <div style={{ fontSize:11, color:"var(--muted)" }}>{s.label}</div>
+                        <div style={UI.muted11}>{s.label}</div>
                       </div>
                     ))}
                   </div>
@@ -1156,7 +1157,7 @@ ${openTicket.description}
 
                 {/* ── Allergen Reparsing ── */}
                 <div style={{ marginTop:24, paddingTop:20, borderTop:"1px solid var(--border)" }}>
-                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+                  <div style={UI.rowBetweenMb10}>
                     <div>
                       <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)" }}>🧠 Allergen reparsing</div>
                       <div style={{ fontSize:11, color:"var(--muted)", marginTop:2, lineHeight:1.6 }}>
@@ -1180,7 +1181,7 @@ ${openTicket.description}
                   {reparseLoading && (
                     <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:12 }}>
                       <div style={{ width:16, height:16, border:"2px solid var(--border2)", borderTopColor:"var(--blue)", borderRadius:"50%", animation:"spin .7s linear infinite", flexShrink:0 }} />
-                      <div style={{ fontSize:13, color:"var(--muted)" }}>Reparserer allergen-flags med Claude Haiku…</div>
+                      <div style={UI.muted13}>Reparserer allergen-flags med Claude Haiku…</div>
                     </div>
                   )}
 
@@ -1193,7 +1194,7 @@ ${openTicket.description}
                       ].map(s => (
                         <div key={s.label} style={{ padding:"10px 12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, textAlign:"center" }}>
                           <div style={{ fontSize:20, fontWeight:900, color:s.color, marginBottom:2 }}>{s.value ?? 0}</div>
-                          <div style={{ fontSize:10, color:"var(--muted)" }}>{s.label}</div>
+                          <div style={UI.muted10}>{s.label}</div>
                         </div>
                       ))}
                     </div>
@@ -1215,7 +1216,7 @@ ${openTicket.description}
             )}
 
             {adminSection === "debug" && (
-              <div style={{ paddingBottom:120 }}>
+              <div style={UI.pb120}>
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
                   <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>Debug Trace Log</div>
                   <button onClick={() => { navigator.clipboard.writeText(JSON.stringify(getTraceLog(), null, 2)); }}
@@ -1242,11 +1243,11 @@ ${openTicket.description}
                       </div>
                       <div style={{ color:"var(--ink2)" }}>
                         {entry.step}
-                        {entry.error && <span style={{ color:"var(--red)" }}> — {entry.error}</span>}
-                        {entry.detail && <span style={{ color:"var(--muted)" }}> — {String(entry.detail)}</span>}
-                        {entry.textLength !== undefined && <span style={{ color:"var(--muted)" }}> ({entry.textLength} tegn)</span>}
-                        {entry.found !== undefined && <span style={{ color:"var(--muted)" }}> (found: {String(entry.found)})</span>}
-                        {entry.text && <span style={{ color:"var(--muted)" }}> "{entry.text}"</span>}
+                        {entry.error && <span style={UI.red}> — {entry.error}</span>}
+                        {entry.detail && <span style={UI.muted}> — {String(entry.detail)}</span>}
+                        {entry.textLength !== undefined && <span style={UI.muted}> ({entry.textLength} tegn)</span>}
+                        {entry.found !== undefined && <span style={UI.muted}> (found: {String(entry.found)})</span>}
+                        {entry.text && <span style={UI.muted}> "{entry.text}"</span>}
                       </div>
                     </div>
                   );
@@ -1260,7 +1261,7 @@ ${openTicket.description}
             )}
 
             {adminSection === "recipes" && (
-              <div style={{ paddingBottom:120 }}>
+              <div style={UI.pb120}>
                 {/* Filter tabs */}
                 <div style={{ display:"flex", gap:6, marginBottom:14 }}>
                   {[{val:"pending",label:"⏳ Afventer"},{val:"approved",label:"✅ Godkendte"},{val:"rejected",label:"❌ Afviste"}].map(f => (
@@ -1295,7 +1296,7 @@ ${openTicket.description}
                         style={{ padding:"8px 10px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
                     </div>
                     {/* Allergen flags */}
-                    <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Allergener</div>
+                    <div style={UI.sectionLbl6}>Allergener</div>
                     <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:12 }}>
                       {ALLERGENS.map(a => {
                         let flags = {};
@@ -1317,7 +1318,7 @@ ${openTicket.description}
                       })}
                     </div>
                     {/* Handlinger */}
-                    <div style={{ display:"flex", gap:8 }}>
+                    <div style={UI.rowGap8}>
                       <button onClick={saveRecipeEdit} disabled={recipeActionLoading}
                         style={{ flex:1, padding:"10px", borderRadius:10, background:"var(--blue-lt)", border:"1px solid var(--blue)", color:"var(--blue)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
                         💾 Gem ændringer
@@ -1363,7 +1364,7 @@ ${openTicket.description}
                         {r.category} · {r.servings||"?"} pers. · {new Date(r.created_at).toLocaleDateString("da-DK")}
                       </div>
                       {flaggedAllergens.length > 0 && (
-                        <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                        <div style={UI.wrapGap4}>
                           {flaggedAllergens.map(a => (
                             <span key={a.id} style={{ fontSize:10, padding:"2px 7px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", border:"1px solid var(--red-md)", fontWeight:700 }}>{a.emoji} {a.label}</span>
                           ))}

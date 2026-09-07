@@ -5,6 +5,7 @@ import { makeHeaders, apiCall, compressImageToBase64 } from "./helpers.js";
 import { ProductImage, Loader } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
+import { UI } from "./styleUtils.js";
 
 const S = {
   none:           { display:"none" },
@@ -107,9 +108,9 @@ export default function SuggestEditScreen({
     <div className="screen fade-in">
 
       {/* Header */}
-      <div style={{ display:"flex", alignItems:"center", gap:12, padding:"16px 0 14px" }}>
+      <div style={UI.avatarRow}>
         <button onClick={() => setScreen(SCREENS.RESULT)}
-          style={{ background:"none", border:"none", cursor:"pointer", padding:4 }}>
+          style={UI.iconBtn}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
             <path strokeLinecap="round" d="M15 19l-7-7 7-7"/>
           </svg>
@@ -149,8 +150,8 @@ export default function SuggestEditScreen({
               style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, marginBottom:8, cursor:"pointer" }}>
               <div style={{ fontSize:28, flexShrink:0 }}>{opt.emoji}</div>
               <div style={S.flex1}>
-                <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>{opt.title}</div>
-                <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{opt.desc}</div>
+                <div style={UI.boldInk14}>{opt.title}</div>
+                <div style={UI.muted12mt2}>{opt.desc}</div>
               </div>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2">
                 <path strokeLinecap="round" d="M9 5l7 7-7 7"/>

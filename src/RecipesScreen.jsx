@@ -9,6 +9,7 @@ import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
 import { detectAllergensInText } from "./allergenKeywords.js";
+import { UI } from "./styleUtils.js";
 
 const getCatEmoji = c => ({ morgenmad:"☕",frokost:"🥗",aftensmad:"🍝",dessert:"🍰",tilbehør:"🥦",snack:"🍿" })[c] || "🍽️";
 
@@ -347,7 +348,7 @@ export default function RecipesScreen({
 
           {/* ── PORTIONER KONTROL ── */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:18 }}>
-            <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Portioner</div>
+            <div style={UI.boldInk13}>Portioner</div>
             <div className="servings-ctrl">
               <button className="servings-btn" onClick={() => setRecipeServings(s => Math.max(1, s-1))}>−</button>
               <div className="servings-num">{recipeServings}</div>
@@ -357,9 +358,9 @@ export default function RecipesScreen({
 
           {/* ── INGREDIENSER ── */}
           {r.ingredients_raw && (
-            <div style={{ marginBottom:20 }}>
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-                <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>Ingredienser</div>
+            <div style={UI.mb20}>
+              <div style={UI.rowBetweenMb10}>
+                <div style={UI.boldInk13}>Ingredienser</div>
                 {ingItems && addToList && (
                   <button
                     onClick={async () => {
@@ -397,7 +398,7 @@ export default function RecipesScreen({
 
           {/* ── TRIN-FOR-TRIN ── */}
           {steps.length > 0 && (
-            <div style={{ marginBottom:20 }}>
+            <div style={UI.mb20}>
               <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>Fremgangsmåde</div>
               <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, overflow:"hidden" }}>
                 {steps.map((step, i) => {
@@ -467,7 +468,7 @@ export default function RecipesScreen({
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", margin:"20px 0 16px" }}>
           <div>
             <div style={{ fontSize:21, fontWeight:700, color:"var(--ink)", letterSpacing:"-.4px" }}>Opskrifter</div>
-            <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>
+            <div style={UI.muted12mt2}>
               {recipes.length > 0 ? `${recipes.length} opskrifter` : "Indlæser…"}
             </div>
           </div>
@@ -599,7 +600,7 @@ export default function RecipesScreen({
           <div>
             <div style={{ background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:16, padding:"22px 20px", marginBottom:16, display:"flex", alignItems:"center", gap:16 }}>
               <div style={{ fontSize:44, flexShrink:0 }}>🍳</div>
-              <div style={{ flex:1 }}>
+              <div style={UI.flex1}>
                 <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)", letterSpacing:"-.3px", marginBottom:4 }}>Kunne ikke indlæse</div>
                 <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12 }}>Tjek din forbindelse og prøv igen</div>
                 <button onClick={() => loadRecipes()}
@@ -620,7 +621,7 @@ export default function RecipesScreen({
                   style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", cursor:"pointer", boxShadow:"var(--sh)" }}>
                   <div style={{ fontSize:28, marginBottom:6 }}>{cat.emoji}</div>
                   <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:2 }}>{cat.label}</div>
-                  <div style={{ fontSize:11, color:"var(--muted)" }}>{cat.desc}</div>
+                  <div style={UI.muted11}>{cat.desc}</div>
                 </div>
               ))}
             </div>
@@ -630,7 +631,7 @@ export default function RecipesScreen({
         {/* Tom favorit-liste */}
         {!recipesLoading && recipeFilter === "favoritter" && recipes.filter(r => favoriteRecipes.includes(r.id)).length === 0 && (
           <EmptyState icon="🤍" text="Ingen favoritter endnu" sub="Tryk ❤️ på opskrifter for at gemme dem her">
-            <button className="btn btn-outline btn-sm" style={{ marginTop:12 }} onClick={() => setRecipeFilter("alle")}>Se alle opskrifter</button>
+            <button className="btn btn-outline btn-sm" style={UI.mt12} onClick={() => setRecipeFilter("alle")}>Se alle opskrifter</button>
           </EmptyState>
         )}
 
@@ -647,7 +648,7 @@ export default function RecipesScreen({
         {/* Ingen søgeresultater */}
         {!recipesLoading && recipes.length > 0 && filtered.length === 0 && recipeFilter !== "favoritter" && recipeSearch && (
           <EmptyState icon="🔍" text="Ingen resultater" sub={`Ingen opskrifter matcher "${recipeSearch}"`}>
-            <button className="btn btn-outline btn-sm" style={{ marginTop:12 }} onClick={() => setRecipeSearch("")}>Ryd søgning</button>
+            <button className="btn btn-outline btn-sm" style={UI.mt12} onClick={() => setRecipeSearch("")}>Ryd søgning</button>
           </EmptyState>
         )}
 
@@ -663,7 +664,7 @@ export default function RecipesScreen({
         </div>
 
         {filtered.length > visibleRecipeCount && (
-          <button className="btn btn-outline btn-full" style={{ marginTop:12 }}
+          <button className="btn btn-outline btn-full" style={UI.mt12}
             onClick={() => setVisibleRecipeCount(c => c + RECIPES_PAGE_SIZE)}>
             Indlæs flere ({filtered.length - visibleRecipeCount} tilbage)
           </button>
@@ -734,13 +735,13 @@ export default function RecipesScreen({
           </button>
           <div>
             <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)" }}>Indsend opskrift</div>
-            <div style={{ fontSize:11, color:"var(--muted)" }}>Sendes til gennemgang før publicering</div>
+            <div style={UI.muted11}>Sendes til gennemgang før publicering</div>
           </div>
         </div>
 
         {/* ── 1. Billede ── */}
-        <div style={{ marginBottom:20 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:"var(--ink3)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Billede</div>
+        <div style={UI.mb20}>
+          <div style={UI.sectionLblInk3}>Billede</div>
           <label style={{ display:"block", cursor:"pointer" }}>
             <input type="file" accept="image/*" onChange={handleImg} style={{ display:"none" }} />
             <div style={{
@@ -752,7 +753,7 @@ export default function RecipesScreen({
                 ? <img src={imgPreview} alt="Forhåndsvisning af opskriftsbillede" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                 : <div style={{ textAlign:"center" }}>
                     <div style={{ fontSize:32, marginBottom:6 }}>📷</div>
-                    <div style={{ fontSize:13, color:"var(--muted)" }}>Tryk for at vælge billede</div>
+                    <div style={UI.muted13}>Tryk for at vælge billede</div>
                     <div style={{ fontSize:11, color:"var(--muted2)" }}>Valgfrit</div>
                   </div>
               }
@@ -761,8 +762,8 @@ export default function RecipesScreen({
         </div>
 
         {/* ── 2. Grundinfo ── */}
-        <div style={{ marginBottom:20 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:"var(--ink3)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Grundinfo</div>
+        <div style={UI.mb20}>
+          <div style={UI.sectionLblInk3}>Grundinfo</div>
           <input placeholder="Titel *" value={submitRecipe.title} onChange={e => setSubmitRecipe(r => ({...r, title:e.target.value}))}
             style={{ width:"100%", padding:"11px 14px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface2)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:14, boxSizing:"border-box", marginBottom:8, outline:"none" }} />
           <textarea placeholder="Kort beskrivelse (valgfrit)" value={submitRecipe.description||""} onChange={e => setSubmitRecipe(r => ({...r, description:e.target.value}))} rows={2}
@@ -779,25 +780,25 @@ export default function RecipesScreen({
               <span style={{ fontSize:11, color:"var(--muted)", flexShrink:0 }}>pers.</span>
             </div>
           </div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+          <div style={UI.grid2gap8}>
             <div style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 12px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10 }}>
               <span style={{ fontSize:12, color:"var(--muted)", flexShrink:0 }}>⏱ Forb.</span>
               <input type="number" min={0} placeholder="0" value={submitRecipe.prep_time_minutes||""} onChange={e => setSubmitRecipe(r => ({...r, prep_time_minutes:+e.target.value}))}
                 style={{ width:"100%", background:"none", border:"none", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
-              <span style={{ fontSize:11, color:"var(--muted)" }}>min</span>
+              <span style={UI.muted11}>min</span>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 12px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10 }}>
               <span style={{ fontSize:12, color:"var(--muted)", flexShrink:0 }}>🍳 Tilb.</span>
               <input type="number" min={0} placeholder="0" value={submitRecipe.cook_time_minutes||""} onChange={e => setSubmitRecipe(r => ({...r, cook_time_minutes:+e.target.value}))}
                 style={{ width:"100%", background:"none", border:"none", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
-              <span style={{ fontSize:11, color:"var(--muted)" }}>min</span>
+              <span style={UI.muted11}>min</span>
             </div>
           </div>
         </div>
 
         {/* ── 3. Ingredienser ── */}
-        <div style={{ marginBottom:20 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:"var(--ink3)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Ingredienser</div>
+        <div style={UI.mb20}>
+          <div style={UI.sectionLblInk3}>Ingredienser</div>
           {submitIngredients.map((ing, idx) => {
             const ingAutoAllergens = ing.name ? detectAllergens(ing.name).filter(id => !(ing.removedAutos||[]).includes(id)) : [];
             const ingAllergens = ing.allergens || [];
@@ -893,7 +894,7 @@ export default function RecipesScreen({
           {autoAllergens.filter(id => !removedAuto.includes(id)).length > 0 && (
             <div style={{ padding:"10px 12px", background:"rgba(255,186,59,.08)", border:"1px solid rgba(255,186,59,.2)", borderRadius:10, marginBottom:8 }}>
               <div style={{ fontSize:11, fontWeight:700, color:"var(--amber)", marginBottom:6 }}>⚠️ Auto-detekterede allergener — tryk × for at fjerne fejl</div>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+              <div style={UI.wrapGap5}>
                 {autoAllergens.filter(id => !removedAuto.includes(id)).map(id => {
                   const a = ALLERGENS.find(x=>x.id===id);
                   return (
@@ -916,8 +917,8 @@ export default function RecipesScreen({
         </div>
 
         {/* ── 4. Fremgangsmåde ── */}
-        <div style={{ marginBottom:20 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:"var(--ink3)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Fremgangsmåde</div>
+        <div style={UI.mb20}>
+          <div style={UI.sectionLblInk3}>Fremgangsmåde</div>
           {submitSteps.map((step, idx) => (
             <div key={idx} style={{ display:"flex", gap:8, marginBottom:8, alignItems:"flex-start" }}>
               <div style={{ width:26, height:26, borderRadius:"50%", background:"var(--green-lt)", border:"1px solid rgba(74,222,128,.3)", color:"var(--green)", fontWeight:800, fontSize:12, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:8 }}>{idx+1}</div>
@@ -938,8 +939,8 @@ export default function RecipesScreen({
         </div>
 
         {/* ── 5. Diæter & manuelle allergener ── */}
-        <div style={{ marginBottom:20 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:"var(--ink3)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>Diæt & allergener</div>
+        <div style={UI.mb20}>
+          <div style={UI.sectionLblInk3}>Diæt & allergener</div>
 
           {/* Diæter */}
           <div style={{ fontSize:12, color:"var(--ink3)", marginBottom:8 }}>Passer opskriften til:</div>

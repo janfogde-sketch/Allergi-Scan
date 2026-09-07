@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, DIETS, E_NUMBERS, E_CATEGORIES } from "./constants.jsx";
+import { UI } from "./styleUtils.js";
 
 export const MemberForm = ({
   name, setName,
@@ -22,20 +23,20 @@ export const MemberForm = ({
     <div>
 
       {/* Navn * */}
-      <label className="field-lbl">Navn <span style={{ color:"var(--red)" }}>*</span></label>
+      <label className="field-lbl">Navn <span style={UI.red}>*</span></label>
       <input className="field" placeholder="Fx. Mia" value={name}
         onChange={e => setName(e.target.value)}
         style={{ marginBottom:10, borderColor: name?.trim() ? "var(--border2)" : "" }} />
 
       {/* Fødselsår * */}
-      <label className="field-lbl">Fødselsår <span style={{ color:"var(--red)" }}>*</span></label>
+      <label className="field-lbl">Fødselsår <span style={UI.red}>*</span></label>
       <input className="field" type="number" placeholder="Fx. 2016" min="1906" max="2026"
         value={birthYear || ""}
         onChange={e => setBirthYear(e.target.value)}
-        style={{ marginBottom:10 }} />
+        style={UI.mb10} />
 
       {/* Køn * */}
-      <label className="field-lbl">Køn <span style={{ color:"var(--red)" }}>*</span></label>
+      <label className="field-lbl">Køn <span style={UI.red}>*</span></label>
       <div style={{ display:"flex", gap:8, marginBottom:14 }}>
         {["Mand","Kvinde","Andet"].map(g => (
           <div key={g} onClick={() => setGender(g)}
@@ -51,11 +52,11 @@ export const MemberForm = ({
       </div>
 
       {/* Allergier / intolerancer — 3-state identisk med egen profil */}
-      <div className="card-lbl" style={{ marginBottom:6 }}>Allergier / intolerancer</div>
+      <div className="card-lbl" style={UI.mb6}>Allergier / intolerancer</div>
 
 
 
-      <div className="chip-grid" style={{ marginBottom:10 }}>
+      <div className="chip-grid" style={UI.mb10}>
         {ALLERGENS.map(a => {
           const on = allergens.includes(a.id);
           return (
@@ -65,8 +66,8 @@ export const MemberForm = ({
               color: on ? "var(--red)" : "var(--ink)",
             }}
               onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
-              <span style={{ flex:1 }}>{a.emoji} {a.label}</span>
-              {on && <div style={{ fontSize:9, fontWeight:800, color:"var(--red)" }}>✓</div>}
+              <span style={UI.flex1}>{a.emoji} {a.label}</span>
+              {on && <div style={UI.redBadge9}>✓</div>}
             </div>
           );
         })}
@@ -82,7 +83,7 @@ export const MemberForm = ({
         <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(p=>[...p,customInput.trim()]); setCustomInput(""); }}}>+</button>
       </div>
       {customAllerg.length > 0 && (
-        <div className="tags" style={{ marginBottom:12 }}>
+        <div className="tags" style={UI.mb12}>
           {customAllerg.map((a,i) => (
             <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
               onClick={() => setCustomAllerg(p=>p.filter(x=>x!==a))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(p=>p.filter(x=>x!==a))}>×</span></div>
@@ -91,14 +92,14 @@ export const MemberForm = ({
       )}
 
       {/* Diæt */}
-      <div className="card-lbl" style={{ marginBottom:8 }}>Diæt</div>
-      <div className="chip-grid" style={{ marginBottom:12 }}>
+      <div className="card-lbl" style={UI.mb8}>Diæt</div>
+      <div className="chip-grid" style={UI.mb12}>
         {DIETS.map(d => {
           const on = diets.includes(d.id);
           return (
             <div key={d.id} className={`chip${on?" on":""}`}
               onClick={() => setDiets(p => on ? p.filter(x=>x!==d.id) : [...p,d.id])}>
-              <div style={{ flex:1 }}>
+              <div style={UI.flex1}>
                 <div style={{ fontWeight:700 }}>{d.label}</div>
                 <div style={{ fontSize:10, color:"var(--muted)", marginTop:1 }}>{d.desc}</div>
               </div>
@@ -109,10 +110,10 @@ export const MemberForm = ({
       </div>
 
       {/* E-numre */}
-      <div className="card-lbl" style={{ marginBottom:6 }}>E-numre der undgås</div>
+      <div className="card-lbl" style={UI.mb6}>E-numre der undgås</div>
       <input className="field" placeholder="Søg E-nummer..." value={eSearch}
-        onChange={e => setESearch(e.target.value)} style={{ marginBottom:6 }} />
-      <select className="field" value={eCat} onChange={e => setECat(e.target.value)} style={{ marginBottom:8 }}>
+        onChange={e => setESearch(e.target.value)} style={UI.mb6} />
+      <select className="field" value={eCat} onChange={e => setECat(e.target.value)} style={UI.mb8}>
         <option value="alle">Alle kategorier</option>
         {E_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label} ({c.range})</option>)}
       </select>
@@ -136,16 +137,16 @@ export const MemberForm = ({
                 background:on?"var(--red-lt)":"var(--surface)", cursor:"pointer" }}>
               <div style={{ fontSize:11, fontWeight:800, color:on?"var(--red)":"var(--ink)", width:44, flexShrink:0 }}>{e}</div>
               <div style={{ fontSize:11, color:on?"var(--red)":"var(--muted2)", flex:1, lineHeight:1.3 }}>{name}</div>
-              {on && <div style={{ fontSize:9, fontWeight:800, color:"var(--red)" }}>✓</div>}
+              {on && <div style={UI.redBadge9}>✓</div>}
             </div>
           );
         })}
       </div>
 
       {eNumbers.length > 0 && (
-        <div style={{ marginBottom:12 }}>
+        <div style={UI.mb12}>
           <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", marginBottom:4 }}>Valgte ({eNumbers.length})</div>
-          <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+          <div style={UI.wrapGap4}>
             {eNumbers.map(e => (
               <div key={e} style={{ fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20,
                 background:"var(--red-lt)", color:"var(--red)",
@@ -161,7 +162,7 @@ export const MemberForm = ({
       {/* Obligatoriske felter — hjælpetekst */}
       {!isValid && (
         <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10, lineHeight:1.5 }}>
-          <span style={{ color:"var(--red)" }}>*</span> Navn, alder og køn er obligatoriske
+          <span style={UI.red}>*</span> Navn, alder og køn er obligatoriske
         </div>
       )}
 

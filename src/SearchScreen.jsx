@@ -7,6 +7,7 @@ import { CategorySelect } from "./MemberForm.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
+import { UI } from "./styleUtils.js";
 
 const S = {
   flexMin: { flex:1, minWidth:0 },
@@ -116,7 +117,7 @@ export default function SearchScreen({
   }), [searchResults, searchCategory, effectiveIds, showSafeOnly]);
 
   return (
-    <div className="screen fade-in" style={{ paddingBottom:120 }}>
+    <div className="screen fade-in" style={UI.pb120}>
       <div className="screen-title">Søg varer</div>
 
       {/* ── Profil-filter ── */}
@@ -148,7 +149,7 @@ export default function SearchScreen({
                         {" "}{p.allergens.length} allergen{p.allergens.length!==1?"er":""}
                       </div>
                     ) : (
-                      <div style={{ fontSize:10, color:"var(--muted)" }}>Ingen allergener</div>
+                      <div style={UI.muted10}>Ingen allergener</div>
                     )}
                   </div>
                   {isActive && (
@@ -169,7 +170,7 @@ export default function SearchScreen({
               Filtrerer på {effectiveIds.length} allergen{effectiveIds.length!==1?"er":""}
               {" · "}{activeProfileObjs.map(p=>p.name?.split(" ")[0]).join(", ")}
             </div>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+            <div style={UI.wrapGap4}>
               {effectiveIds.map(id => {
                 const a = ALLERGENS.find(x=>x.id===id);
                 const fromManual = manualAllergens.includes(id);
@@ -190,7 +191,7 @@ export default function SearchScreen({
       </div>
 
       {/* ── Manuel allergen-filter ── */}
-      <div style={{ marginBottom:10 }}>
+      <div style={UI.mb10}>
         <div onClick={() => setAllergenFilterOpen(v=>!v)}
           style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius: allergenFilterOpen ? "12px 12px 0 0" : 12, cursor:"pointer" }}>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
@@ -208,7 +209,7 @@ export default function SearchScreen({
         </div>
         {allergenFilterOpen && (
           <div style={{ border:"1px solid var(--border)", borderTop:"none", borderRadius:"0 0 12px 12px", background:"var(--surface)", padding:14 }}>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
+            <div style={UI.grid2gap6}>
               {ALLERGENS.map(a => {
                 const on      = manualAllergens.includes(a.id);
                 const inActive = activeIds.includes(a.id);
@@ -218,8 +219,8 @@ export default function SearchScreen({
                       prev.includes(a.id) ? prev.filter(x=>x!==a.id) : [...prev, a.id]
                     )}
                     style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 10px", borderRadius:10, cursor: inActive ? "default" : "pointer", border:`1.5px solid ${on||inActive ? "var(--red)" : "var(--border)"}`, background: inActive ? "var(--red-lt)" : on ? "var(--red-lt)" : "var(--paper2)", opacity: inActive ? .6 : 1 }}>
-                    <span style={{ fontSize:16 }}>{a.emoji}</span>
-                    <div style={{ flex:1, minWidth:0 }}>
+                    <span style={UI.fs16}>{a.emoji}</span>
+                    <div style={UI.flexMin}>
                       <div style={{ fontSize:12, fontWeight:700, color: on||inActive ? "var(--red)" : "var(--ink)" }}>
                         {a.label}
                       </div>

@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Icon } from "./SharedComponents.jsx";
 import { ALLERGENS, E_NUMBERS, E_CATEGORIES, DIETS } from "./constants.jsx";
+import { UI } from "./styleUtils.js";
 
 export const ENumberPicker = ({ selected, onChange }) => {
   const [search, setSearch] = React.useState("");
@@ -76,8 +77,8 @@ export const ENumberPicker = ({ selected, onChange }) => {
       {/* Valgte */}
       {selected.length > 0 && (
         <div style={{ marginTop:10 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>Valgte ({selected.length})</div>
-          <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+          <div style={UI.sectionLbl6}>Valgte ({selected.length})</div>
+          <div style={UI.wrapGap4}>
             {selected.map(e => (
               <div key={e} style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 10px",
                 background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:20 }}>

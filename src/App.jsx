@@ -57,6 +57,7 @@ import { HistoryProvider } from './HistoryContext.jsx';
 import { ShoppingProvider } from './ShoppingContext.jsx';
 import { FamilyFormProvider } from './FamilyFormContext.jsx';
 import { AllergenPrefsProvider } from './AllergenPrefsContext.jsx';
+import { UI } from "./styleUtils.js";
 
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
@@ -465,7 +466,7 @@ export default function EatSafe() {
       setActiveProfiles(next.length === 0 ? [id] : next);
     };
     return (
-      <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+      <div style={UI.wrapGap7}>
         <div className={`ap-chip${isAll?" on":""}`} onClick={toggleAll}>Hele familien</div>
         <div className={`ap-chip${!isAll&&activeProfiles.includes("me")?" on":""}`} onClick={() => toggleOne("me")}>
           <div style={{width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(user.name||"Mig")}</div>
@@ -849,7 +850,7 @@ const lookupProduct = useCallback(async (ean) => {
         onClick={e => e.target === e.currentTarget && setHelpOpen(false)}>
         <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
           onClick={e => e.stopPropagation()}>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+          <div style={UI.rowBetweenMb16}>
             <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)" }}>{content.title}</div>
             <button onClick={() => setHelpOpen(false)} aria-label="Luk"
               style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
@@ -1041,7 +1042,7 @@ const lookupProduct = useCallback(async (ean) => {
               </div>
 
               {/* Bekræftelse */}
-              <div style={{ marginBottom:14 }}>
+              <div style={UI.mb14}>
                 <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>
                   Skriv <strong>"slet"</strong> for at bekræfte:
                 </div>

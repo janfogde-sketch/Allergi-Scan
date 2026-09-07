@@ -3,6 +3,7 @@ import React from "react";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { Loader } from "./SharedComponents.jsx";
+import { UI } from "./styleUtils.js";
 
 const S = {
   none:             { display:"none" },
@@ -81,9 +82,9 @@ export default function NotFoundScreen({
     <>
       <div className="screen fade-in">
         {/* Header */}
-        <div style={{ display:"flex", alignItems:"center", gap:12, padding:"16px 0 14px" }}>
+        <div style={UI.avatarRow}>
           <button onClick={() => setScreen(SCREENS.HOME)}
-            style={{ background:"none", border:"none", cursor:"pointer", padding:4 }}>
+            style={UI.iconBtn}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
               <path strokeLinecap="round" d="M15 19l-7-7 7-7"/>
             </svg>
@@ -127,7 +128,7 @@ export default function NotFoundScreen({
               ].map(s => (
                 <div key={s.num} style={{ flex:1, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 8px", textAlign:"center" }}>
                   <div style={{ fontSize:22, marginBottom:4 }}>{s.emoji}</div>
-                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{s.label}</div>
+                  <div style={UI.boldInk12}>{s.label}</div>
                   <div style={{ fontSize:10, color:"var(--muted)", marginTop:2 }}>{s.desc}</div>
                 </div>
               ))}
@@ -411,7 +412,7 @@ export default function NotFoundScreen({
                   onChange={e => setIngInput(e.target.value)}
                   onKeyDown={e => e.key==="Enter" && addIngItem()}
                   style={{ flex:1, fontSize:12 }} />
-                <button className="btn btn-outline btn-sm" onClick={addIngItem} style={{ flexShrink:0 }}>+</button>
+                <button className="btn btn-outline btn-sm" onClick={addIngItem} style={UI.shrink0}>+</button>
               </div>
               {ingItems.length > 0 && (
                 <div style={{ fontSize:10, color:"var(--muted)", marginTop:8, lineHeight:1.5 }}>
@@ -430,7 +431,7 @@ export default function NotFoundScreen({
                 <div style={S.h13}>⚠️ Allergener</div>
                 <div style={S.sub11}>Tryk for at til/fra</div>
               </div>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+              <div style={UI.wrapGap7}>
                 {ALLERGENS.filter(a => !["svovl","lupin","bloeddyr"].includes(a.id)).map(a => {
                   const val = proposedFlags?.[a.id];
                   const isOn = val === "yes" || val === true;
@@ -472,7 +473,7 @@ export default function NotFoundScreen({
                     { key:"salt", label:"Salt" },
                   ].filter(({ key }) => proposedNutrition[key]).map(({ key, label }) => (
                     <div key={key} style={{ display:"flex", justifyContent:"space-between", fontSize:11 }}>
-                      <span style={{ color:"var(--muted)" }}>{label}</span>
+                      <span style={UI.muted}>{label}</span>
                       <span style={{ color:"var(--ink)", fontWeight:700 }}>{proposedNutrition[key]}</span>
                     </div>
                   ))}
@@ -524,7 +525,7 @@ export default function NotFoundScreen({
       {submitting && (
         <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.7)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:16 }}>
           <div style={{ width:48, height:48, border:"3px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite" }} />
-          <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>Sender produkt…</div>
+          <div style={UI.boldInk14}>Sender produkt…</div>
           <div style={{ fontSize:12, color:"var(--muted)" }}>Vent venligst</div>
         </div>
       )}
