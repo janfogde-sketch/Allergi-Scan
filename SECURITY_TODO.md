@@ -1,7 +1,15 @@
 # 🚨 TOP PRIORITET — ubeskyttede Supabase Edge Functions
 
 **Status:** Uløst. Fundet under en Supabase-sikkerhedsgennemgang, endnu ikke rettet
-eller deployet. Skal løses i en kommende session.
+eller deployet.
+
+**Opdatering 2026-09-08:** en Supabase MCP-forbindelse er nu koblet til
+sessionen med adgang til det live projekt (`jegrpcflyguadyxialkm`) —
+inklusive `deploy_edge_function`. Punkt 4 nedenfor (deploy krævede
+`supabase login`, kunne ikke gøres fra sandboxen) er derfor **ikke
+længere en blokering** — jeg kan skrive og deploye rettelsen direkte,
+når du siger til. Det eneste der mangler er din accept, da det er en
+ændring af live, produktionskørende funktioner.
 
 ## Problemet
 
@@ -65,9 +73,9 @@ mod Supabase Auth — først derefter stoles der på hvem brugeren er.
 3. Overvej at slå `verify_jwt` til i `supabase/config.toml` (og i
    Dashboard) for funktioner der ikke specifikt har brug for at være
    offentligt tilgængelige uden login.
-4. Efter rettelse: deploy ændringerne til det live Supabase-projekt med
-   `supabase functions deploy <navn>` (kræver `supabase login` + adgang
-   til projektet — kunne ikke gøres fra denne session).
+4. Efter rettelse: deploy ændringerne til det live Supabase-projekt.
+   **Kan nu gøres direkte fra en session med Supabase MCP-adgang** (se
+   opdatering øverst) — kræver ikke længere `supabase login` fra sandboxen.
 5. Overvej samtidig: `useAdmin.js`'s `deleteOwnAccount()` sletter kun
    rækker i `public.*`-tabeller — den kalder aldrig noget der reelt
    sletter `auth.users`-identiteten. En bruger der "sletter sin konto"
@@ -119,6 +127,9 @@ og opdatere, og optræder i klartekst i eventuelle backups/logs af funktionsdefi
 Flyt nøglen til en Supabase Vault-secret (`vault.create_secret(...)`) eller
 en projekt-secret tilgået via `current_setting('app.settings.anon_key')`,
 og opdatér de tre funktioner til at læse derfra i stedet for at have værdien
-i klartekst. Bør gøres samtidig med at dev-miljøet sættes op (samme session
-hvor skemaet alligevel skal gennemgås), men er ikke i sig selv blokerende
-for noget andet arbejde.
+i klartekst.
+
+**Opdatering 2026-09-08:** kan nu rettes direkte via Supabase MCP'ens
+`apply_migration`/`execute_sql` — kræver ikke længere at afvente
+dev-miljøet. Afventer kun din accept, da det ændrer live
+databasefunktioner.
