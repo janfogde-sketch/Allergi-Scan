@@ -16,6 +16,26 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
+  // Verificér at den kaldende bruger faktisk er logget ind, og at det
+  // JWT'en beviser matcher det user_id anmodningen forsøger at tilgå —
+  // ellers kan enhver læse/slette en hvilken som helst brugers historik
+  // ved blot at sende deres user_id som query-param.
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) return new Response(
+    JSON.stringify({ error: "Ikke autoriseret" }),
+    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+  const userClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    { global: { headers: { Authorization: authHeader } } }
+  );
+  const { data: { user: caller } } = await userClient.auth.getUser();
+  if (!caller) return new Response(
+    JSON.stringify({ error: "Ikke autoriseret" }),
+    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+
   const url = new URL(req.url);
   const parts = url.pathname.split("/").filter(Boolean);
   const identifier = parts[parts.length - 1] === "history" ? null : parts[parts.length - 1];
@@ -31,6 +51,10 @@ Deno.serve(async (req) => {
       if (!userId) return new Response(
         JSON.stringify({ error: "user_id er påkrævet" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+      if (userId !== caller.id) return new Response(
+        JSON.stringify({ error: "Ikke autoriseret til denne brugers historik" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
 
       const { data: scans, error, count } = await supabase
@@ -63,6 +87,10 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "Scanning ikke fundet" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+      if (scan.user_id !== caller.id) return new Response(
+        JSON.stringify({ error: "Ikke autoriseret til denne scanning" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
 
       return new Response(
         JSON.stringify({ success: true, scan }),
@@ -80,6 +108,10 @@ Deno.serve(async (req) => {
       if (!user_id || !ean_scanned || !result) return new Response(
         JSON.stringify({ error: "user_id, ean_scanned og result er påkrævet" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+      if (user_id !== caller.id) return new Response(
+        JSON.stringify({ error: "Ikke autoriseret til denne bruger" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
 
       const { data: scan, error } = await supabase
@@ -113,6 +145,10 @@ Deno.serve(async (req) => {
       if (!userId) return new Response(
         JSON.stringify({ error: "user_id er påkrævet" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+      if (userId !== caller.id) return new Response(
+        JSON.stringify({ error: "Ikke autoriseret til denne brugers historik" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
 
       const { error } = await supabase

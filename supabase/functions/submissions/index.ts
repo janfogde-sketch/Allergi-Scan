@@ -54,6 +54,29 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
+  // Verificér at den kaldende bruger faktisk er logget ind — indsendelser,
+  // godkendelse/afvisning og admin-listen skal ikke være tilgængelige uden
+  // login, og en bruger skal ikke kunne indsende på vegne af en anden.
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) return new Response(
+    JSON.stringify({ error: "Ikke autoriseret" }),
+    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+  const userClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    { global: { headers: { Authorization: authHeader } } }
+  );
+  const { data: { user: caller } } = await userClient.auth.getUser();
+  if (!caller) return new Response(
+    JSON.stringify({ error: "Ikke autoriseret" }),
+    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+  async function callerIsAdmin() {
+    const { data } = await supabase.from("users").select("role").eq("id", caller.id).single();
+    return data?.role === "admin";
+  }
+
   const url = new URL(req.url);
   const parts = url.pathname.split("/").filter(Boolean);
   const identifier = parts[parts.length - 1];
@@ -70,6 +93,12 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ error: "ean og submitted_by er påkrævet" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (submitted_by !== caller.id) {
+        return new Response(
+          JSON.stringify({ error: "Kan ikke indsende på vegne af en anden bruger" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -137,6 +166,10 @@ Deno.serve(async (req) => {
 
     // ── GET — hent alle submissions (admin) ────────────────────────────────
     if (method === "GET" && identifier === "submissions") {
+      if (!(await callerIsAdmin())) return new Response(
+        JSON.stringify({ error: "Kun admins kan se alle indsendelser" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
       const status = url.searchParams.get("status") ?? "pending";
       const { data: submissions, error } = await supabase
         .from("submissions").select("*").eq("status", status)
@@ -150,11 +183,19 @@ Deno.serve(async (req) => {
     if (method === "GET" && identifier !== "submissions") {
       const { data: submission, error } = await supabase.from("submissions").select("*").eq("id", identifier).single();
       if (error || !submission) return new Response(JSON.stringify({ error: "Indsendelse ikke fundet" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (submission.submitted_by !== caller.id && !(await callerIsAdmin())) return new Response(
+        JSON.stringify({ error: "Ikke autoriseret til denne indsendelse" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
       return new Response(JSON.stringify({ success: true, submission }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // ── PATCH — godkend eller afvis (admin) ────────────────────────────────
     if (method === "PATCH" && identifier !== "submissions") {
+      if (!(await callerIsAdmin())) return new Response(
+        JSON.stringify({ error: "Kun admins kan godkende eller afvise indsendelser" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
       const body = await req.json();
       const { status, reviewed_by, review_note } = body;
 
