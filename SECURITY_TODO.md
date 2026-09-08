@@ -94,8 +94,15 @@ samme.
 
 # Hardcoded anon-nøgle i tre database-funktioner
 
-**Status:** Uløst. Fundet 2026-09-07 under kortlægning af databaseskemaet
-(i forbindelse med planlægning af et separat dev-miljø, se ROADMAP.md).
+**Status:** ✅ Løst og deployet 2026-09-08. Nøglen er flyttet til en Vault-secret
+(`SUPABASE_ANON_KEY`) og alle tre funktioner (`send_welcome_email`,
+`send_submission_email`, `send_ticket_email`) er opdateret til at læse den
+derfra via `vault.decrypted_secrets`. Verificeret: ingen af de tre
+funktioner indeholder længere nøglen i klartekst
+(`pg_get_functiondef()` tjekket efter ændringen).
+
+Fundet 2026-09-07 under kortlægning af databaseskemaet (i forbindelse med
+planlægning af et separat dev-miljø, se ROADMAP.md).
 
 ## Problemet
 

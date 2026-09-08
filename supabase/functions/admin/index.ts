@@ -6,19 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-function decodeJWT(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const payload = parts[1];
-    const padded = payload + "=".repeat((4 - payload.length % 4) % 4);
-    const decoded = atob(padded.replace(/-/g, "+").replace(/_/g, "/"));
-    return JSON.parse(decoded);
-  } catch {
-    return null;
-  }
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -29,31 +16,30 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
+  // Verificér at den kaldende bruger faktisk er logget ind, og at det er
+  // Supabase Auth der har verificeret det — ikke bare et uverificeret
+  // base64-decode af JWT-payloaden, som enhver kan forfalske med et
+  // kendt admin-ID.
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) return new Response(
     JSON.stringify({ error: "Authorization header mangler" }),
     { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
-
-  const token = authHeader.replace("Bearer ", "");
-  const payload = decodeJWT(token);
-
-  if (!payload || !payload.sub) return new Response(
-    JSON.stringify({
-      error: "Ugyldig token",
-      payload: payload,
-      token_parts: token.split(".").length,
-      token_start: token.substring(0, 30)
-    }),
+  const userClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    { global: { headers: { Authorization: authHeader } } }
+  );
+  const { data: { user: caller } } = await userClient.auth.getUser();
+  if (!caller) return new Response(
+    JSON.stringify({ error: "Ugyldig token" }),
     { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
-
-  const userId = payload.sub as string;
 
   const { data: profile } = await supabase
     .from("users")
     .select("role")
-    .eq("id", userId)
+    .eq("id", caller.id)
     .single();
 
   if (!profile || profile.role !== "admin") return new Response(
