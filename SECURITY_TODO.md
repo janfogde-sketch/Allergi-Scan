@@ -1,15 +1,19 @@
 # 🚨 TOP PRIORITET — ubeskyttede Supabase Edge Functions
 
-**Status:** Uløst. Fundet under en Supabase-sikkerhedsgennemgang, endnu ikke rettet
-eller deployet.
+**Status:** ✅ Løst og deployet 2026-09-08. Alle fem funktioner
+(`history`, `shopping`, `submissions`, `family`, `admin`) har fået
+`auth.getUser()`-verifikation plus ejerskabs-/medlemskabs-/rolletjek,
+er merget via [PR #123](https://github.com/janfogde-sketch/Allergi-Scan/pull/123)
+og deployet live til `jegrpcflyguadyxialkm`
+(`history` v6, `shopping` v7, `submissions` v9, `family` v6, `admin` v13).
+Verificeret ved at hente hver funktions kildekode direkte fra Supabase
+efter deploy.
 
-**Opdatering 2026-09-08:** en Supabase MCP-forbindelse er nu koblet til
-sessionen med adgang til det live projekt (`jegrpcflyguadyxialkm`) —
-inklusive `deploy_edge_function`. Punkt 4 nedenfor (deploy krævede
-`supabase login`, kunne ikke gøres fra sandboxen) er derfor **ikke
-længere en blokering** — jeg kan skrive og deploye rettelsen direkte,
-når du siger til. Det eneste der mangler er din accept, da det er en
-ændring af live, produktionskørende funktioner.
+**Ikke lukket i denne omgang:** punkt 3 (`verify_jwt` er stadig `false`
+på alle fem — gateway-niveau-tjekket er bevidst ladet urørt, da
+config.toml-noten om at slå det til projektbredt ikke er undersøgt her)
+og punkt 5 (`deleteOwnAccount()` sletter stadig ikke `auth.users`).
+Begge står som separate, ikke-akutte punkter nedenfor.
 
 ## Problemet
 
@@ -62,20 +66,22 @@ mod Supabase Auth — først derefter stoles der på hvem brugeren er.
 
 ## Hvad der mangler for at lukke hullet
 
-1. Tilføj samme `auth.getUser()`-verifikation til `history`, `shopping`,
-   `submissions`, `family` og `admin` — og tjek desuden at det
+1. ✅ Tilføjet samme `auth.getUser()`-verifikation til `history`, `shopping`,
+   `submissions`, `family` og `admin` — samt tjek af at det
    verificerede bruger-ID matcher det ressource-ejer-ID der forsøges
    tilgået (eller at brugeren har `role === "admin"`, hvor det er
    relevant).
-2. Ret `admin/index.ts`'s `decodeJWT()` til at bruge samme
+2. ✅ Rettet `admin/index.ts`'s `decodeJWT()` til at bruge samme
    `auth.getUser()`-mønster i stedet for at stole på en uverificeret
    base64-decode.
 3. Overvej at slå `verify_jwt` til i `supabase/config.toml` (og i
    Dashboard) for funktioner der ikke specifikt har brug for at være
-   offentligt tilgængelige uden login.
-4. Efter rettelse: deploy ændringerne til det live Supabase-projekt.
-   **Kan nu gøres direkte fra en session med Supabase MCP-adgang** (se
-   opdatering øverst) — kræver ikke længere `supabase login` fra sandboxen.
+   offentligt tilgængelige uden login. **Ikke gjort endnu** — alle fem
+   funktioner kører stadig med `verify_jwt: false` på gateway-niveau;
+   det er nu udelukkende funktionens egen `auth.getUser()`-kode der
+   beskytter dem.
+4. ✅ Deployet til det live Supabase-projekt via Supabase MCP'ens
+   `deploy_edge_function` (2026-09-08).
 5. Overvej samtidig: `useAdmin.js`'s `deleteOwnAccount()` sletter kun
    rækker i `public.*`-tabeller — den kalder aldrig noget der reelt
    sletter `auth.users`-identiteten. En bruger der "sletter sin konto"
