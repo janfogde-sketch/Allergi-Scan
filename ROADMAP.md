@@ -54,8 +54,8 @@ Farvesystem, OFF-import, fotoscanning, leksikon, search-overhaul, useScanner-ref
 | Issue | Status | Note |
 |-------|--------|------|
 | auth.uid() = NULL (ECC P-256) | ⏳ | Support ticket åben. Workaround: temp_read/write policies. GitHub #42244 |
-| weekly-digest pg_cron | 🔲 | SQL cron-job klar i `supabase/functions/weekly-digest/index.ts` (linje 6-8). **Opdatering 2026-09-08:** kan nu køres direkte via Supabase MCP (`execute_sql`) i stedet for manuelt i Dashboard — afventer din accept. |
-| "Foreslå rettelse" har intet backend-flow | 🔲 | `SuggestEditScreen.jsx` poster til `product_submissions`-tabellen, som intet i admin-godkendelsesflowet læser (kun `submissions` er aktiv, jf. CONTEXT.md). Selv hvis den postede til `submissions`, ville Edge Functionens POST-handler afvise den med 409, fordi den er skrevet udelukkende til *nye* produkter og eksplicit afviser en EAN der allerede findes i `products` — hvilket den altid gør ved en rettelse. Kræver en Edge Function-ændring med `type:"edit"`-håndtering (eller en ny admin-UI-vej). **Opdatering 2026-09-08:** deploy er ikke længere blokeret — en Supabase MCP-forbindelse med `deploy_edge_function` er nu tilgængelig. Fundet 2026-09-07 under gennemgang af produkt-opret/redigér-flowet. |
+| weekly-digest pg_cron | ✅ | Verificeret 2026-09-08 via `cron.job`/`cron.job_run_details`: jobbet findes, er aktivt og kører succesfuldt på sit skema. Ingen handling var nødvendig. |
+| "Foreslå rettelse" har intet backend-flow | ✅ | Løst 2026-09-08 ([PR #125](https://github.com/janfogde-sketch/Allergi-Scan/pull/125)). `SuggestEditScreen.jsx` postede til `product_submissions`-tabellen, som **slet ikke eksisterede** — alle forslag fejlede synligt for brugeren. Rettet: `submissions`-tabellen fik `type`/`product_id`/`notes`-kolonner, Edge Functionen skelner nu mellem nye produkter og rettelser (springer "EAN findes allerede"-afvisningen over og OPDATERER det eksisterende produkt ved godkendelse), `SuggestEditScreen.jsx` sender nu til `/functions/v1/submissions`, og `AdminScreen.jsx` viser rettelsesforslag med et badge og forudfylder gennemsynet med produktets nuværende data. Deployet live samme dag. |
 
 ---
 
