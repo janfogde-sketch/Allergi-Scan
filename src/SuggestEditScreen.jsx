@@ -30,6 +30,7 @@ export default function SuggestEditScreen({
   editIngText, setEditIngText,
   editNote, setEditNote,
   editProductImage,
+  editProductImageB64,
   handleEditProductCapture,
 }) {
   const { accessToken, userId } = useAuthContext();
@@ -80,19 +81,24 @@ export default function SuggestEditScreen({
   const submit = async () => {
     setEditStep("sending");
     try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/product_submissions`, {
+      await apiCall(`${SUPABASE_URL}/functions/v1/submissions`, {
         method: "POST",
-        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+        headers: makeHeaders(accessToken),
         body: JSON.stringify({
+          type:         "edit",
           product_id:   scanResult.id || null,
           ean:          scanResult.code || scanResult.ean,
-          product_name: scanResult.name,
-          brand:        scanResult.brand,
-          ingredients:  editType === "ingredients" ? editIngText : null,
-          notes:        `Type: ${editType}. ${editNote}`.trim(),
           submitted_by: userId,
-          status:       "pending",
-          type:         "edit",
+          ocr_raw_text: editType === "ingredients" ? editIngText : null,
+          ai_parsed_data: {
+            name:  scanResult.name,
+            brand: scanResult.brand,
+            edit_type: editType,
+            ...(editType === "nutrition" ? { nutrition_text: editIngText } : {}),
+            ...(editType === "image" && editProductImageB64 ? { product_image_base64: editProductImageB64 } : {}),
+          },
+          notes:        `Type: ${editType}. ${editNote}`.trim(),
+          user_confirmed: true,
         }),
       });
       setEditStep("done");

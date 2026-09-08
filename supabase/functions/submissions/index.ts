@@ -84,10 +84,12 @@ Deno.serve(async (req) => {
 
   try {
 
-    // ── POST — indsend nyt produkt ─────────────────────────────────────────
+    // ── POST — indsend nyt produkt eller rettelsesforslag ───────────────────
     if (method === "POST" && identifier === "submissions") {
       const body = await req.json();
-      const { ean, submitted_by, raw_label_image, ocr_raw_text, ai_parsed_data, user_confirmed } = body;
+      const { ean, submitted_by, raw_label_image, ocr_raw_text, ai_parsed_data, user_confirmed, notes } = body;
+      const type = body.type === "edit" ? "edit" : "new_product";
+      const product_id = type === "edit" ? body.product_id : null;
 
       if (!ean || !submitted_by) {
         return new Response(
@@ -101,18 +103,27 @@ Deno.serve(async (req) => {
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-
-      // Tjek om produktet allerede eksisterer
-      const { data: existing } = await supabase.from("products").select("id").eq("ean", ean).single();
-      if (existing) {
+      if (type === "edit" && !product_id) {
         return new Response(
-          JSON.stringify({ error: "Produkt med denne EAN findes allerede", product_id: existing.id }),
-          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "product_id er påkrævet for et rettelsesforslag" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      // Tjek om der allerede er en pending indsendelse
-      const { data: pendingSubmission } = await supabase.from("submissions").select("id").eq("ean", ean).eq("status", "pending").single();
+      // Et rettelsesforslag er per definition til et produkt der allerede
+      // findes, så "findes allerede"-tjekket gælder kun nye produkter.
+      if (type === "new_product") {
+        const { data: existing } = await supabase.from("products").select("id").eq("ean", ean).single();
+        if (existing) {
+          return new Response(
+            JSON.stringify({ error: "Produkt med denne EAN findes allerede", product_id: existing.id }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
+      // Tjek om der allerede er en pending indsendelse af samme type
+      const { data: pendingSubmission } = await supabase.from("submissions").select("id").eq("ean", ean).eq("type", type).eq("status", "pending").single();
       if (pendingSubmission) {
         return new Response(
           JSON.stringify({ error: "Der er allerede en afventende indsendelse for denne EAN", submission_id: pendingSubmission.id }),
@@ -147,6 +158,9 @@ Deno.serve(async (req) => {
           ai_parsed_data: parsedData,
           user_confirmed: user_confirmed ?? false,
           status: "pending",
+          type,
+          product_id,
+          notes: notes ?? null,
         })
         .select()
         .single();
@@ -215,6 +229,52 @@ Deno.serve(async (req) => {
         review_note: review_note ?? null,
         reviewed_at: new Date(),
       }).eq("id", identifier);
+
+      if (status === "approved" && submission.type === "edit") {
+        // Et rettelsesforslag OPDATERER et eksisterende produkt i stedet for
+        // at oprette et nyt — og kun de felter admin faktisk har udfyldt,
+        // så vi ikke ved et uheld overskriver navn/brand med tomme værdier.
+        if (!submission.product_id) {
+          return new Response(
+            JSON.stringify({ error: "Rettelsesforslaget mangler product_id" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        const updateFields: Record<string, unknown> = {};
+        if (body.name?.trim()) updateFields.name = body.name.trim();
+        if (body.brand?.trim()) updateFields.brand = body.brand.trim();
+        if (body.ingredients_text?.trim()) updateFields.ingredients_text = body.ingredients_text.trim();
+        if (body.image_url) updateFields.image_url = body.image_url;
+        if (body.allergen_flags && Object.keys(body.allergen_flags).length > 0) updateFields.allergen_flags = body.allergen_flags;
+
+        const { data: product, error: productError } = await supabase
+          .from("products")
+          .update(updateFields)
+          .eq("id", submission.product_id)
+          .select()
+          .single();
+
+        if (productError) {
+          return new Response(
+            JSON.stringify({ error: productError.message }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        await supabase.from("revision_log").insert({
+          product_id:    product.id,
+          changed_by:    reviewed_by,
+          change_type:   "updated",
+          field_changed: Object.keys(updateFields).join(", ") || "none",
+          new_value:     submission.notes ?? "Opdateret via brugerens rettelsesforslag",
+        });
+
+        return new Response(
+          JSON.stringify({ success: true, message: "Rettelsesforslag godkendt og produkt opdateret", product_id: product.id }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       if (status === "approved") {
         const parsed = submission.ai_parsed_data ?? {};

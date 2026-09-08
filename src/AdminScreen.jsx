@@ -101,6 +101,35 @@ export default function AdminScreen() {
   } = useAdminContext();
   const { screen, setScreen } = useNavigationContext();
 
+  // Åbn en indsendelse til gennemsyn. For et rettelsesforslag (type "edit")
+  // hentes det eksisterende produkt først, så navn/brand/allergener forudfyldes
+  // med de RIGTIGE nuværende værdier — ellers ville en godkendelse uden ændringer
+  // blanke dem, fordi et rettelsesforslag ikke selv indeholder et fuldt produktnavn.
+  const openSubmissionForReview = async (s) => {
+    setOpenSubmission(s);
+    if (s.type === "edit" && s.product_id) {
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/products?id=eq.${s.product_id}&select=name,brand,allergen_flags`,
+          { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" } }
+        );
+        const rows = await res.json();
+        const product = Array.isArray(rows) ? rows[0] : null;
+        setEditingSubmission({
+          name: product?.name || "",
+          brand: product?.brand || "",
+          allergen_flags: product?.allergen_flags || {},
+          ingredients_text: s.ai_parsed_data?.edit_type === "ingredients" ? (s.ocr_raw_text || "") : "",
+        });
+      } catch (e) {
+        console.error("openSubmissionForReview:", e);
+        setEditingSubmission({ name: "", brand: "", allergen_flags: {} });
+      }
+    } else {
+      setEditingSubmission({ name: s.ai_parsed_data?.name || s.product_name || "", brand: s.ai_parsed_data?.brand || s.brand || "", allergen_flags: s.ai_parsed_data || {} });
+    }
+  };
+
   // ── Admin opskrifter — lokal state ──────────────────────────────────────────
   const [adminRecipes, setAdminRecipes] = useState([]);
   const [adminRecipesLoading, setAdminRecipesLoading] = useState(false);
@@ -555,13 +584,17 @@ ${openTicket.description}
                     const flags = s.ai_parsed_data || {};
                     const dangerAllergens = ALLERGENS.filter(a => flags[a.id]==="yes" || flags[a.id]===true);
                     const daysSince = Math.floor((Date.now() - new Date(s.created_at).getTime()) / 86400000);
+                    const isEdit = s.type === "edit";
                     return (
-                      <div key={s.id} onClick={() => { setOpenSubmission(s); setEditingSubmission({ name: s.ai_parsed_data?.name || s.product_name || "", brand: s.ai_parsed_data?.brand || s.brand || "", allergen_flags: s.ai_parsed_data || {} }); }}
+                      <div key={s.id} onClick={() => openSubmissionForReview(s)}
                         style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", cursor:"pointer", boxShadow:"var(--sh)" }}>
                         <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
-                          <div style={{ width:48, height:48, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>📦</div>
+                          <div style={{ width:48, height:48, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>{isEdit ? "✏️" : "📦"}</div>
                           <div style={UI.flexMin}>
-                            <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</div>
+                            <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:2 }}>
+                              <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</div>
+                              {isEdit && <span style={{ fontSize:9, padding:"2px 6px", borderRadius:100, background:"var(--amber-lt)", color:"var(--amber)", fontWeight:800, flexShrink:0 }}>RETTELSE</span>}
+                            </div>
                             <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6, fontFamily:"monospace" }}>EAN: {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`}</div>
                             <div style={UI.wrapGap4}>
                               {dangerAllergens.slice(0,3).map(a => <span key={a.id} style={{ fontSize:10, padding:"2px 7px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", fontWeight:700 }}>{a.emoji} {a.label}</span>)}
@@ -849,7 +882,7 @@ ${openTicket.description}
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2"><path strokeLinecap="round" d="M15 19l-7-7 7-7"/></svg>
               </button>
               <div style={UI.flex1}>
-                <div style={UI.ufs17_fw800_cink}>Gennemse indsendelse</div>
+                <div style={UI.ufs17_fw800_cink}>{openSubmission.type === "edit" ? "✏️ Gennemse rettelsesforslag" : "Gennemse indsendelse"}</div>
                 <div style={UI.muted11mt1}>{new Date(openSubmission.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"long", year:"numeric" })}</div>
               </div>
               {/* Hurtig-godkend/afvis */}
@@ -969,7 +1002,7 @@ ${openTicket.description}
             <div style={{ display:"flex", flexDirection:"column", gap:8, paddingBottom:120 }}>
               <button onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}
                 style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:700, color:"var(--on-green)", cursor:"pointer", boxShadow:"0 4px 16px rgba(34,197,94,.3)" }}>
-                ✅ Godkend og opret produkt
+                {openSubmission.type === "edit" ? "✅ Godkend og opdater produkt" : "✅ Godkend og opret produkt"}
               </button>
               <button onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}
                 style={{ width:"100%", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, padding:"13px", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
