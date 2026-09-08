@@ -59,6 +59,22 @@ Farvesystem, OFF-import, fotoscanning, leksikon, search-overhaul, useScanner-ref
 
 ---
 
+## Afventer: Supabase Branching (dev-miljø til teamsamarbejde)
+
+**Status:** Ikke i gang — afventer at Supabase-organisationen ("janfogde@gmail.com's Org", free-plan) opgraderes til Pro, da Branching kræver det.
+
+**Baggrund:** App'ens `SUPABASE_URL`/`SUPABASE_ANON_KEY` er hardcoded i `src/constants.jsx` og peger direkte på det live prod-projekt (`jegrpcflyguadyxialkm`) — der er intet adskilt dev-miljø. Når to udviklere (dig + `bjangst`, som allerede har write-adgang på GitHub) begge kører appen lokalt, arbejder de på samme skarpe database. Det blev vurderet som det vigtigste hul i team-opsætningen (2026-09-07).
+
+**Når planen er klar til at blive udført igen:**
+1. Opgradér Supabase-organisationen til Pro-planen.
+2. Slå Branching til på projektet (`jegrpcflyguadyxialkm`) — giver automatisk en isoleret database-kopi pr. git-branch, som kan merges/rebases i takt med koden.
+3. Alternativ, hvis Pro fravælges: opret et separat gratis dev-projekt, generér en baseline-migration af det nuværende skema (24 tabeller, RLS-policies, funktioner/triggers — allerede kortlagt én gang i en tidligere session, kan gøres igen via Supabase MCP-værktøjerne), og flyt `SUPABASE_URL`/`SUPABASE_ANON_KEY` fra hardcoded til en `.env`-fil (tilføj `.env.example` + `.gitignore`-linje).
+4. Opret en `supabase/migrations/`-mappe i repoet så fremtidige skema-ændringer følger med i PR'er i stedet for at blive lavet manuelt i Dashboard.
+
+**Sidegevinst opdaget undervejs (ikke rettet endnu):** tre databasefunktioner (`send_welcome_email`, `send_submission_email`, `send_ticket_email`) har en **hardcoded anon-nøgle direkte i funktionens kildekode** (synlig for alle med databaseadgang via `pg_get_functiondef`). Bør roteres/flyttes til en Vault-secret uanset hvornår dev-miljøet sættes op — se `SECURITY_TODO.md`.
+
+---
+
 ## Beta-klar ✅
 
 Alle beta-krav er opfyldt. Appen er klar til rigtige brugere.

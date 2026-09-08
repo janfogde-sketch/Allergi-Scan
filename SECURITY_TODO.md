@@ -81,3 +81,44 @@ Under en session der bad om et "Supabase-sikkerhedstjek" (2026-09-06).
 Ingen kode blev rettet endnu — brugeren bad eksplicit om at gemme dette
 som topprioritet til en anden session, i stedet for at rette det med det
 samme.
+
+---
+
+# Hardcoded anon-nøgle i tre database-funktioner
+
+**Status:** Uløst. Fundet 2026-09-07 under kortlægning af databaseskemaet
+(i forbindelse med planlægning af et separat dev-miljø, se ROADMAP.md).
+
+## Problemet
+
+`send_welcome_email`, `send_submission_email` og `send_ticket_email` (alle
+tre `SECURITY DEFINER`-funktioner i `public`-schemaet, kaldt som triggers
+ved bruger-oprettelse/statusændringer) kalder appens `send-email` Edge
+Function via `net.http_post(...)` — og har **Supabase anon-nøglen skrevet
+direkte i funktionens kildekode** som `Authorization: Bearer ...`-header,
+i stedet for at læse den fra en secret/miljøvariabel.
+
+Da funktionens kildekode kan læses af enhver med databaseadgang (fx via
+`pg_get_functiondef()` — sådan blev den fundet), er nøglen reelt synlig
+for alle med et connection til projektet, ikke kun for den der oprindeligt
+satte den op.
+
+## Hvorfor det er en risiko
+
+Anon-nøglen er i forvejen offentlig (den ligger også hardcoded klient-side
+i `src/constants.jsx`, hvilket er normalt og sikkert for en anon-nøgle
+beskyttet af RLS) — så denne konkrete forekomst er ikke i sig selv en
+lækage af noget der ikke allerede er offentligt. Men mønstret (hemmeligheder
+skrevet direkte ind i funktionskode i stedet for som secrets) er skrøbeligt:
+hvis nøglen nogensinde roteres, eller hvis et lignende mønster senere bruges
+med en *rigtig* hemmelighed (fx en service-role-nøgle), er den svær at finde
+og opdatere, og optræder i klartekst i eventuelle backups/logs af funktionsdefinitionen.
+
+## Anbefalet rettelse
+
+Flyt nøglen til en Supabase Vault-secret (`vault.create_secret(...)`) eller
+en projekt-secret tilgået via `current_setting('app.settings.anon_key')`,
+og opdatér de tre funktioner til at læse derfra i stedet for at have værdien
+i klartekst. Bør gøres samtidig med at dev-miljøet sættes op (samme session
+hvor skemaet alligevel skal gennemgås), men er ikke i sig selv blokerende
+for noget andet arbejde.
