@@ -1137,6 +1137,7 @@ const lookupProduct = useCallback(async (ean) => {
             handleImageCapture={handleImageCapture}
             handleProductImageCapture={handleProductImageCapture}
             editProductImage={editProductImage}
+            editProductImageB64={editProductImageB64}
             scanFromGallery={scanFromGallery}
             searchLoading={searchLoading}
             startCamera={startCamera}

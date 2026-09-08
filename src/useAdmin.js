@@ -200,21 +200,27 @@ export function useAdmin(accessToken, userId, clearAuth) {
         }
       }
 
+      const isEdit = submission.type === "edit";
+
       // Send push til indsender
       if (submission.submitted_by) {
         const produktnavn = edited?.name || submission.name || "Dit produkt";
         await sendPushToUser(
           submission.submitted_by,
-          "✅ Produkt godkendt!",
-          `${produktnavn} er nu tilgængeligt i EatSafe-databasen.`,
+          isEdit ? "✅ Rettelse godkendt!" : "✅ Produkt godkendt!",
+          isEdit
+            ? `Din rettelse til ${produktnavn} er godkendt. Tak for din hjælp!`
+            : `${produktnavn} er nu tilgængeligt i EatSafe-databasen.`,
           "https://eatsafe.dk",
           accessToken,
         );
       }
 
-      // Send push til brugere der har scannet samme EAN som NOTFOUND
+      // Send push til brugere der har scannet samme EAN som NOTFOUND — kun
+      // relevant for helt nye produkter, en rettelse gælder et produkt der
+      // allerede var fundet.
       const ean = submission.ean;
-      if (ean) {
+      if (ean && !isEdit) {
         try {
           const notFoundScanners = await apiCall(
             `${SUPABASE_URL}/rest/v1/scan_history?ean=eq.${ean}&status=eq.not_found&select=user_id`,

@@ -165,6 +165,7 @@ export default function ScannerScreen({
   handleEditProductCapture,
   handleImageCapture, handleProductImageCapture,
   editProductImage,
+  editProductImageB64,
   scanFromGallery,
   searchLoading,
   startCamera,
@@ -864,6 +865,7 @@ export default function ScannerScreen({
             editIngText={editIngText} setEditIngText={setEditIngText}
             editNote={editNote} setEditNote={setEditNote}
             editProductImage={editProductImage}
+            editProductImageB64={editProductImageB64}
             handleEditProductCapture={handleEditProductCapture}
           />
           </Suspense>
