@@ -2,14 +2,31 @@
 // Reparserer allergen-flags på produkter med allergen_quality = 'pending' eller 'low'
 // Kald: POST { manual?: boolean, limit?: number }
 //
-// pg_cron setup (kør i SQL Editor):
-//   select cron.schedule('auto-reparse', '0 3 * * *', $$
+// pg_cron setup (jobid 3, "auto-reparse"):
+//   select cron.alter_job(3, command := $cmd$
 //     select net.http_post(
 //       url := 'https://jegrpcflyguadyxialkm.supabase.co/functions/v1/auto-reparse',
-//       headers := jsonb_build_object('Authorization', 'Bearer ' || current_setting('app.service_role_key', true)),
-//       body := '{"manual":false,"limit":50}'::jsonb
+//       headers := jsonb_build_object(
+//         'Content-Type', 'application/json',
+//         'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'SUPABASE_SERVICE_ROLE_KEY')
+//       ),
+//       body := '{"manual":false,"limit":50}'::jsonb,
+//       timeout_milliseconds := 30000
 //     );
-//   $$);
+//   $cmd$);
+//
+// OBS (2026-09-09): den oprindelige opsætning brugte
+// current_setting('app.service_role_key', true), som ALDRIG var sat noget
+// sted i databasen — jobbet fejlede derfor hver eneste nat i (formentlig)
+// lang tid med 401 "Missing authorization header" fra Supabases egen
+// gateway, mens cron.job_run_details stadig viste "succeeded" (det
+// afspejler kun at selve net.http_post-kaldet ikke fejlede, ikke at det
+// underliggende HTTP-svar var en succes). Rettet ved at hente
+// service-role-nøglen fra en Vault-secret i stedet. Samtidig blev
+// timeout_milliseconds sat til 30000 — standardværdien på 5000 ms er
+// kortere end funktionen typisk selv tager om at gøre sit arbejde
+// færdigt, hvilket gav en misvisende timeout-fejl i net._http_response
+// selvom arbejdet faktisk blev udført server-side.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
