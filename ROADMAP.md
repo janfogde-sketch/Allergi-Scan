@@ -53,7 +53,7 @@ Farvesystem, OFF-import, fotoscanning, leksikon, search-overhaul, useScanner-ref
 
 | Issue | Status | Note |
 |-------|--------|------|
-| auth.uid() = NULL (ECC P-256) | ⏳ | Support ticket åben. Workaround: temp_read/write policies. GitHub #42244 |
+| auth.uid() = NULL (ECC P-256) | ✅ | Løst 2026-09-09 uden at vente på Supabase support: roterede JWT-signeringsnøglen fra ES256 til RS256 via Dashboard (Project Settings → JWT Keys). Verificeret med testbruger at `auth.uid()` nu virker korrekt. De midlertidige temp_read/temp_write-policies på `family_invites`, `family_members`, `user_allergens` er fjernet og erstattet med rigtige ejerskabs-policies. GitHub #42244 (referencen for selve platformbugget, ikke længere relevant for os). |
 | weekly-digest pg_cron | ✅ | Verificeret 2026-09-08 via `cron.job`/`cron.job_run_details`: jobbet findes, er aktivt og kører succesfuldt på sit skema. Ingen handling var nødvendig. |
 | "Foreslå rettelse" har intet backend-flow | ✅ | Løst 2026-09-08 ([PR #125](https://github.com/janfogde-sketch/Allergi-Scan/pull/125)). `SuggestEditScreen.jsx` postede til `product_submissions`-tabellen, som **slet ikke eksisterede** — alle forslag fejlede synligt for brugeren. Rettet: `submissions`-tabellen fik `type`/`product_id`/`notes`-kolonner, Edge Functionen skelner nu mellem nye produkter og rettelser (springer "EAN findes allerede"-afvisningen over og OPDATERER det eksisterende produkt ved godkendelse), `SuggestEditScreen.jsx` sender nu til `/functions/v1/submissions`, og `AdminScreen.jsx` viser rettelsesforslag med et badge og forudfylder gennemsynet med produktets nuværende data. Deployet live samme dag. |
 

@@ -15,6 +15,16 @@ config.toml-noten om at slå det til projektbredt ikke er undersøgt her)
 og punkt 5 (`deleteOwnAccount()` sletter stadig ikke `auth.users`).
 Begge står som separate, ikke-akutte punkter nedenfor.
 
+**Opdatering 2026-09-09 — relateret fund og løsning:** `auth.uid() = NULL`-bugget
+(se ROADMAP.md "Kendte issues") viste sig at skyldes at projektets JWT-nøgle
+brugte ES256 (P-256), som PostgREST ikke verificerer korrekt. Løst ved at
+rotere til en RS256-signeringsnøgle via Dashboard (Project Settings → JWT
+Keys), verificeret med en engangs-testbruger (`auth.uid()` returnerede nu
+korrekt brugerens ID). De tre tabeller der havde fået midlertidige
+"luk op for alt"-policies (`temp_read`/`temp_write`) som workaround for
+bugget — `family_invites`, `family_members`, `user_allergens` — har nu fået
+rigtige ejerskabs-baserede RLS-policies igen.
+
 ## Problemet
 
 Flere af `supabase/functions/*` bruger `SUPABASE_SERVICE_ROLE_KEY` (fuld
