@@ -32,7 +32,7 @@ serve(async (req) => {
     );
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     // Hent produkter der skal reparseres
     // Prioritér: pending > low > medium (kun ved manuel kørsel)
@@ -68,7 +68,9 @@ serve(async (req) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "apikey": anonKey,
+            // Identificerer dette som et internt system-kald over for
+            // allergens-funktionens auth-tjek — se dens kommentar.
+            "apikey": serviceRoleKey,
           },
           body: JSON.stringify({
             text: product.ingredients_text,

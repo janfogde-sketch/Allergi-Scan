@@ -86,6 +86,55 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     }
   }, [saveTokens]);
 
+  // ── Verificér gemt session ved opstart ────────────────────────────────────
+  // App.jsx viser "Hjem" allerede ved opstart blot fordi der ligger et token
+  // i localStorage — uden nogensinde at tjekke om det stadig er gyldigt hos
+  // Supabase. Et udløbet token (fx efter en JWT-nøglerotation, eller bare
+  // naturligt udløb + fejlet baggrunds-fornyelse) efterlod brugeren på
+  // Hjem-skærmen som om de var logget ind, indtil et API-kald fejlede.
+  useEffect(() => {
+    const tokenFromStorage = localStorage.getItem("as_token");
+    if (!tokenFromStorage) return;
+    let cancelled = false;
+
+    (async () => {
+      let checkRes;
+      try {
+        checkRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${tokenFromStorage}` },
+        });
+      } catch {
+        return; // Netværksfejl — rør ikke ved en session vi ikke kunne verificere
+      }
+      if (cancelled || checkRes.ok) return; // Tokenet er gyldigt
+
+      // Tokenet blev afvist af Supabase — prøv at forny det med det samme
+      const storedRefresh = localStorage.getItem("as_refresh");
+      if (!storedRefresh) { if (!cancelled) clearAuth(); return; }
+
+      let refreshRes;
+      try {
+        refreshRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
+          body: JSON.stringify({ refresh_token: storedRefresh }),
+        });
+      } catch {
+        return; // Netværksfejl under fornyelsesforsøg — log ikke ud pga. det alene
+      }
+      if (cancelled) return;
+      if (refreshRes.ok) {
+        const data = await refreshRes.json();
+        if (data.access_token) saveTokens(data.access_token, data.refresh_token, data.user?.id);
+        else clearAuth();
+      } else {
+        clearAuth(); // Refresh-tokenet er også ugyldigt — sessionen er reelt udløbet
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
+
   // ── Auto-refresh token — planlagt efter tokenets faktiske udløbstid ──────
   // (ikke en blind fast timer: en genindlæsning midt i en session, eller et
   // enkelt fejlet forsøg, må ikke kunne efterlade et udløbet token i op til

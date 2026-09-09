@@ -9,11 +9,25 @@ og deployet live til `jegrpcflyguadyxialkm`
 Verificeret ved at hente hver funktions kildekode direkte fra Supabase
 efter deploy.
 
-**Ikke lukket i denne omgang:** punkt 3 (`verify_jwt` er stadig `false`
-på alle fem — gateway-niveau-tjekket er bevidst ladet urørt, da
-config.toml-noten om at slå det til projektbredt ikke er undersøgt her)
-og punkt 5 (`deleteOwnAccount()` sletter stadig ikke `auth.users`).
-Begge står som separate, ikke-akutte punkter nedenfor.
+**Opdatering 2026-09-09 — resten af listen lukket:**
+- ✅ `allergens` har nu samme `auth.getUser()`-verifikation som de andre
+  fem — med en undtagelse for vores eget `auto-reparse`-cronjob, som
+  identificerer sig med service-role-nøglen (kun kendt af vores egen
+  infrastruktur) i stedet for en bruger-session.
+- ✅ `deleteOwnAccount()` går nu via `delete-user`-funktionen (udvidet til
+  at tillade selv-sletning, ikke kun admin-sletning af andre) i stedet for
+  manuelt at slette tabel for tabel — en "slettet" konto kan derfor ikke
+  længere logge ind bagefter, fordi `auth.users`-identiteten nu rent
+  faktisk slettes med.
+- **Bevidst IKKE gjort:** `verify_jwt` er stadig `false` på gateway-niveau
+  for alle Edge Functions. Vurderet men fravalgt for nu — at slå det til
+  projektbredt kræver at gennemgå hver enkelt funktions faktiske kaldere
+  (inkl. interne server-til-server-kald som `auto-reparse`s kald til
+  `allergens`, og eventuelle helt offentlige funktioner) for ikke at
+  bryde noget live, og det er ikke undersøgt grundigt nok her til at
+  gøre det trygt. Den reelle sårbarhed (data tilgængelig uden login) er
+  lukket via funktionernes egen `auth.getUser()`-kode; `verify_jwt` ville
+  være et ekstra forsvarslag, ikke den primære beskyttelse.
 
 **Opdatering 2026-09-09 — relateret fund og løsning:** `auth.uid() = NULL`-bugget
 (se ROADMAP.md "Kendte issues") viste sig at skyldes at projektets JWT-nøgle
@@ -84,20 +98,20 @@ mod Supabase Auth — først derefter stoles der på hvem brugeren er.
 2. ✅ Rettet `admin/index.ts`'s `decodeJWT()` til at bruge samme
    `auth.getUser()`-mønster i stedet for at stole på en uverificeret
    base64-decode.
-3. Overvej at slå `verify_jwt` til i `supabase/config.toml` (og i
+3. Overvejet at slå `verify_jwt` til i `supabase/config.toml` (og i
    Dashboard) for funktioner der ikke specifikt har brug for at være
-   offentligt tilgængelige uden login. **Ikke gjort endnu** — alle fem
-   funktioner kører stadig med `verify_jwt: false` på gateway-niveau;
-   det er nu udelukkende funktionens egen `auth.getUser()`-kode der
-   beskytter dem.
+   offentligt tilgængelige uden login. **Bevidst fravalgt for nu** — se
+   opdateringsnoten øverst.
 4. ✅ Deployet til det live Supabase-projekt via Supabase MCP'ens
-   `deploy_edge_function` (2026-09-08).
-5. Overvej samtidig: `useAdmin.js`'s `deleteOwnAccount()` sletter kun
-   rækker i `public.*`-tabeller — den kalder aldrig noget der reelt
-   sletter `auth.users`-identiteten. En bruger der "sletter sin konto"
-   kan formentlig stadig logge ind bagefter. Værd at rette i samme omgang
-   (fx udvid `delete-user`-funktionen til at tillade selv-sletning, ikke
-   kun admin-sletning af andre).
+   `deploy_edge_function` (2026-09-08 og 2026-09-09).
+5. ✅ `useAdmin.js`'s `deleteOwnAccount()` går nu via `delete-user`-funktionen
+   (udvidet til at tillade selv-sletning), som også sletter
+   `auth.users`-identiteten — ikke længere kun rækker i `public.*`.
+6. ✅ `allergens` havde intet auth-tjek overhovedet (åbent, ubegrænset kald
+   ind til en betalt AI-funktion). Fået samme `auth.getUser()`-verifikation
+   som de øvrige, med undtagelse for `auto-reparse`s interne kald (se
+   opdateringsnoten øverst). Rate-limiting selv for indloggede brugere er
+   stadig ikke bygget — overvej hvis misbrug bliver et problem i praksis.
 
 ## Hvor dette blev fundet
 
@@ -156,3 +170,32 @@ i klartekst.
 `apply_migration`/`execute_sql` — kræver ikke længere at afvente
 dev-miljøet. Afventer kun din accept, da det ændrer live
 databasefunktioner.
+
+---
+
+# App viser "logget ind" uden reelt at være det
+
+**Status:** ✅ Løst 2026-09-09.
+
+Fundet af brugeren under den igangværende JWT-nøglerotation: appen kunne
+vise Hjem-skærmen som om man var logget ind, selvom sessionen reelt ikke
+var gyldig længere.
+
+## Problemet
+
+`App.jsx` afgjorde hvilken skærm der vises ved opstart udelukkende ud fra
+om der lå en tekststreng i `localStorage` (`as_token`) — uden nogensinde
+at spørge Supabase om tokenet stadig var gyldigt. Kombineret med at den
+automatiske token-fornyelse i `useAuth.js` gav stille op efter 3 fejlede
+forsøg (uden at logge brugeren ud), kunne en bruger med et udløbet/ugyldigt
+token sidde fast på Hjem-skærmen tilsyneladende logget ind, mens alle
+rigtige API-kald i baggrunden fejlede.
+
+## Rettelsen
+
+`useAuth.js` verificerer nu et gemt token ved opstart via et rigtigt kald
+til Supabase (`GET /auth/v1/user`). Hvis det er ugyldigt, forsøges en
+øjeblikkelig fornyelse; lykkes heller ikke det, ryddes sessionen og
+brugeren sendes til Velkomst-skærmen — i stedet for at blive stående på en
+skærm der lyver om login-status. Netværksfejl (fx offline) logger ikke
+brugeren ud — kun et reelt "ugyldigt token"-svar fra Supabase gør.
