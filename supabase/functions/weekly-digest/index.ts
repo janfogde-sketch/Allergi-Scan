@@ -2,14 +2,23 @@
 // Kører ugentligt via pg_cron — sender push til aktive brugere
 // om nye opskrifter der matcher deres allergiprofil
 //
-// pg_cron opsætning (kør i SQL Editor):
-//   select cron.schedule('weekly-digest', '0 9 * * 1', $$
+// pg_cron opsætning (jobid 2, "weekly-digest"):
+//   select cron.alter_job(2, command := $cmd$
 //     select net.http_post(
 //       url := 'https://jegrpcflyguadyxialkm.supabase.co/functions/v1/weekly-digest',
-//       headers := '{"Authorization": "Bearer ' || current_setting('app.service_role_key') || '"}'::jsonb,
-//       body := '{}'::jsonb
+//       headers := jsonb_build_object(
+//         'Content-Type', 'application/json',
+//         'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'SUPABASE_SERVICE_ROLE_KEY')
+//       ),
+//       body := '{}'::jsonb,
+//       timeout_milliseconds := 30000
 //     );
-//   $$);
+//   $cmd$);
+//
+// OBS (2026-09-09): samme fejl som auto-reparse (se dens kommentar) —
+// current_setting('app.service_role_key') var aldrig sat, så jobbet
+// fejlede formentlig hver mandag med 401, uden at cron.job_run_details
+// afslørede det. Rettet til at hente nøglen fra Vault i stedet.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
