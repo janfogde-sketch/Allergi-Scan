@@ -1,6 +1,7 @@
 // supabase/functions/delete-user/index.ts
 // Sletter en bruger komplet — relaterede data, public.users og auth.users.
-// Kræver admin-rolle på den kaldende bruger.
+// En bruger kan altid slette sin egen konto (uid === den kaldende bruger).
+// Sletning af en ANDEN bruger kræver admin-rolle på den kaldende bruger.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -31,14 +32,17 @@ Deno.serve(async (req) => {
     const { data: { user: caller } } = await userClient.auth.getUser();
     if (!caller) throw new Error("Ikke autoriseret");
 
-    const { data: callerProfile } = await supabase
-      .from("users").select("role").eq("id", caller.id).single();
-    if (callerProfile?.role !== "admin") throw new Error("Kun admins kan slette brugere");
-
     const { uid } = await req.json();
     if (!uid) throw new Error("uid er påkrævet");
 
-    if (uid === caller.id) throw new Error("Du kan ikke slette din egen konto");
+    // En bruger må altid slette sin egen konto. Sletning af ANDRE brugere
+    // kræver admin-rolle.
+    const isSelfDelete = uid === caller.id;
+    if (!isSelfDelete) {
+      const { data: callerProfile } = await supabase
+        .from("users").select("role").eq("id", caller.id).single();
+      if (callerProfile?.role !== "admin") throw new Error("Kun admins kan slette andre brugere");
+    }
 
     // Slet afhængige data i korrekt rækkefølge
     await supabase.from("shopping_list_items").delete().eq("added_by", uid);
@@ -47,7 +51,7 @@ Deno.serve(async (req) => {
     await supabase.from("user_allergens").delete().eq("user_id", uid);
     await supabase.from("family_members").delete().eq("user_id", uid);
     await supabase.from("feedback_tickets").delete().eq("submitted_by", uid);
-    await supabase.from("product_submissions").delete().eq("submitted_by", uid);
+    await supabase.from("submissions").delete().eq("submitted_by", uid);
     await supabase.from("users").delete().eq("id", uid);
 
     // Slet fra auth.users (kræver service role)

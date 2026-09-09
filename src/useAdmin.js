@@ -52,17 +52,15 @@ export function useAdmin(accessToken, userId, clearAuth) {
     if (deleteConfirmText.toLowerCase() !== "slet") return;
     setDeletingAccount(true);
     try {
-      const h = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}` };
-      const results = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/shopping_lists?owner_id=eq.${userId}`, { method:"DELETE", headers:h }),
-        fetch(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, { method:"DELETE", headers:h }),
-        fetch(`${SUPABASE_URL}/rest/v1/family_members?user_id=eq.${userId}`, { method:"DELETE", headers:h }),
-        fetch(`${SUPABASE_URL}/rest/v1/scan_history?user_id=eq.${userId}`, { method:"DELETE", headers:h }),
-        fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?submitted_by=eq.${userId}`, { method:"DELETE", headers:h }),
-      ]);
-      if (results.some(r => !r.ok)) throw new Error(`Kunne ikke slette al brugerdata (HTTP ${results.find(r => !r.ok).status})`);
-      const userRes = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, { method:"DELETE", headers:h });
-      if (!userRes.ok) throw new Error(`Kunne ikke slette brugerkontoen (HTTP ${userRes.status})`);
+      // Går via delete-user Edge Function i stedet for at slette tabel for
+      // tabel herfra — den er den eneste der også sletter selve
+      // auth.users-identiteten, så en "slettet" konto ikke stadig kan logge ind.
+      const res = await apiCall(`${SUPABASE_URL}/functions/v1/delete-user`, {
+        method: "POST",
+        headers: makeHeaders(accessToken),
+        body: JSON.stringify({ uid: userId }),
+      });
+      if (res?.error) throw new Error(res.error);
       clearAuth();
       setShowDeleteAccount(false);
     } catch (e) { alert("Fejl: " + e.message + "\nKontakt support@eatsafe.dk"); }
