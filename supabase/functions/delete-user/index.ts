@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Verificer at den kaldende bruger er admin
+    // Verificer at den kaldende bruger faktisk er logget ind
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Ikke autoriseret");
 
