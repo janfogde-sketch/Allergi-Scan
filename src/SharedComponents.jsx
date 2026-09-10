@@ -1,8 +1,9 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, PAGE_IDS } from "./constants.jsx";
-import { initials } from "./helpers.js";
+import { initials, compareAllergens } from "./helpers.js";
 import { isAllergenWord } from "./allergenKeywords.js";
+import { UI } from "./styleUtils.js";
 
 export function EatSafeLogo({ size = 32, variant = "light" }) {
   const isDark = variant === "dark";
@@ -363,3 +364,47 @@ export function ProductImage({ product, size = 64 }) {
     </div>
   );
 }
+
+// ── Fælles søgeresultat-kort ────────────────────────────────────────────────
+// Bruges både på forsidens Søg-skærm og i "Tilføj vare" i indkøbslisten, så
+// et søgeresultat ser ens ud uanset hvor man søger fra.
+export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, onOpen, onAddToList }) {
+  const { status, matchedDanger, matchedWarning } = compareAllergens(p.allergen_flags||{}, effectiveIds);
+  const statusColor = safetyStyle(status).color;
+  const statusLabel = `${safetyStyle(status).icon} ${status==="safe" ? "Sikker" : status==="danger" ? "Farlig" : "Advarsel"}`;
+  const matchedLabels = [...matchedDanger, ...matchedWarning].map(id => ALLERGENS.find(a=>a.id===id)).filter(Boolean);
+  const tagLabels = { vegan:"🌱 Vegansk", vegetarian:"🥦 Vegetarisk" };
+  return (
+    <div onClick={onOpen}
+      style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", marginBottom:8, background:"var(--surface)", border:`1px solid ${status==="danger" ? "var(--red-md)" : status==="warn" ? "var(--amber-md)" : "var(--border)"}`, borderRadius:12, cursor:"pointer" }}>
+      <ProductImage product={p} size={44} />
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{p.name}</div>
+        <div style={{ fontSize:11, color:"var(--muted)" }}>{p.brand}{p.category ? ` · ${p.category}` : ""}</div>
+        {matchedLabels.length > 0 && (
+          <div style={{ display:"flex", gap:3, marginTop:4, flexWrap:"wrap" }}>
+            {matchedLabels.map(a => (
+              <span key={a.id} style={{ fontSize:10, fontWeight:700, color: matchedDanger.includes(a.id) ? "var(--red)" : "var(--amber)", background: matchedDanger.includes(a.id) ? "var(--red-lt)" : "var(--amber-lt)", border:`1px solid ${matchedDanger.includes(a.id) ? "var(--red-md)" : "var(--amber-md)"}`, borderRadius:100, padding:"1px 6px" }}>
+                {a.emoji} {a.label}
+              </span>
+            ))}
+          </div>
+        )}
+        {p.tags?.length > 0 && (
+          <div style={{ display:"flex", gap:3, marginTop:3, flexWrap:"wrap" }}>
+            {p.tags.map((t,i) => (
+              <span key={i} style={UI.ufs10_fw700_cgreen_bggreenlt_bd1pxsolid_br100_p1px7px}>
+                {tagLabels[t]||t}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
+        <div style={{ fontSize:11, fontWeight:700, color:statusColor }}>{statusLabel}</div>
+        <button className="btn btn-ghost btn-sm" style={UI.ufs11_p3px8px}
+          onClick={e => { e.stopPropagation(); onAddToList(); }}>+ Liste</button>
+      </div>
+    </div>
+  );
+});
