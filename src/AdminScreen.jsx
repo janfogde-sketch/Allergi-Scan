@@ -368,7 +368,14 @@ OPSKRIFT
 
 BESKRIVELSE
 ${openTicket.description}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPGAVE TIL CLAUDE
+Analysér denne fejlrapport, før du retter noget:
+1. Forståelse — hvad rapporterer brugeren, og på hvilken skærm/flow sker det?
+2. Analyse — undersøg relevant kode og find den sandsynlige rodårsag.
+3. Løsningsforslag — beskriv kort den påtænkte rettelse, inden den implementeres.
+Implementér derefter løsningen.`;
                   navigator.clipboard?.writeText(txt).then(() => alert("Kopieret til udklipsholder!")).catch(() => alert(txt));
                 }}
                   style={UI.uw100_bggreen_bdnone_br10_p10px_fff_fs13_fw700_congreen_curp}>
