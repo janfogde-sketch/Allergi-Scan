@@ -138,7 +138,7 @@ export default function ProfileScreen({
   const { user, setUser, userId, accessToken, clearAuth, loginEmail } = useAuthContext();
   const { allergens, setAllergens, customAllerg, setCustomAllerg, family, setFamily, activeProfiles, setActiveProfiles } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
-  const { history, favorites, historyLoading, historyScope, favoritesScope, loadHistory, loadFavorites, toggleFavorite } = useHistoryContext();
+  const { history, favorites, historyLoading, historyScope, favoritesScope, loadHistory, loadFavorites, toggleFavorite, setFavoriteCategory } = useHistoryContext();
   const [household, setHousehold] = useState([]);
   const [householdLoading, setHouseholdLoading] = useState(false);
 
@@ -184,6 +184,9 @@ export default function ProfileScreen({
   const [inviteLink, setInviteLink] = useState(null);
   const [inviteLoading, setInviteLoading] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [collapsedCategories, setCollapsedCategories] = useState([]);
+  const [categoryMenuFor, setCategoryMenuFor] = useState(null);
+  const [newCategoryInput, setNewCategoryInput] = useState("");
   const [inviteError, setInviteError] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
 
@@ -547,36 +550,94 @@ export default function ProfileScreen({
               </div>
             )}
 
-            {/* Gemte favoritter */}
-            {favorites.length > 0 && <div className="card-lbl" style={UI.mb6}>Gemte produkter</div>}
+            {/* Gemte favoritter — grupperet i kategorier */}
             {favorites.length === 0 && (
               <div className="empty-state"><span className="empty-icon">🤍</span><div className="empty-txt">Ingen favoritter endnu</div><div className="empty-sub">Tryk ❤️ på et produkt under scanning for at gemme det her</div>
               </div>
             )}
-            {favorites.map((f,i) => (
-              <div key={i} className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:8 }}
-                onClick={() => lookupProduct(f.ean || f.code || f.id)}>
-                <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-                  <ProductImage product={f} size={48} />
-                  <div style={UI.flexMin}>
-                    <div style={{ fontWeight:700, fontSize:14 }}>{f.name || "Ukendt"}</div>
-                    {f.brand && <div style={UI.ufs12_cmuted_mt1}>{f.brand}</div>}
-                    {favoritesScope==="family" && !f.savedByMe && f.savedBy && (
-                      <div style={{ fontSize:11, color:"var(--green)", fontWeight:700, marginTop:2 }}>Gemt af {f.savedBy.split(" ")[0]}</div>
-                    )}
-                    <div style={{ marginTop:6 }}>
-                      <ProfileBadges allergenFlags={f.allergen_flags||{}} allergens={allergens} customAllerg={customAllerg} family={family} activeProfiles={activeProfiles} size={22} />
+            {favorites.length > 0 && (() => {
+              const existingCategories = [...new Set(favorites.map(f => f.category).filter(Boolean))].sort();
+              const groups = {};
+              favorites.forEach(f => {
+                const key = f.category || "Ukategoriseret";
+                (groups[key] = groups[key] || []).push(f);
+              });
+              const orderedKeys = [...existingCategories, ...(groups["Ukategoriseret"] ? ["Ukategoriseret"] : [])];
+              return orderedKeys.map(cat => {
+                const isCollapsed = collapsedCategories.includes(cat);
+                return (
+                  <div key={cat} style={UI.mb10}>
+                    <div onClick={() => setCollapsedCategories(c => isCollapsed ? c.filter(x=>x!==cat) : [...c, cat])}
+                      style={{ display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", padding:"4px 2px", marginBottom:6 }}>
+                      <div className="card-lbl" style={{ marginBottom:0 }}>{cat === "Ukategoriseret" ? "📦 Ukategoriseret" : `🏷️ ${cat}`} ({groups[cat].length})</div>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"
+                        style={{ transform: isCollapsed ? "none" : "rotate(180deg)", transition:"transform .2s" }}>
+                        <path strokeLinecap="round" d="M6 9l6 6 6-6"/>
+                      </svg>
                     </div>
+                    {!isCollapsed && groups[cat].map((f,i) => (
+                      <div key={i} className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:8, position:"relative" }}
+                        onClick={() => lookupProduct(f.ean || f.code || f.id)}>
+                        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                          <ProductImage product={f} size={48} />
+                          <div style={UI.flexMin}>
+                            <div style={{ fontWeight:700, fontSize:14 }}>{f.name || "Ukendt"}</div>
+                            {f.brand && <div style={UI.ufs12_cmuted_mt1}>{f.brand}</div>}
+                            {favoritesScope==="family" && !f.savedByMe && f.savedBy && (
+                              <div style={{ fontSize:11, color:"var(--green)", fontWeight:700, marginTop:2 }}>Gemt af {f.savedBy.split(" ")[0]}</div>
+                            )}
+                            <div style={{ marginTop:6 }}>
+                              <ProfileBadges allergenFlags={f.allergen_flags||{}} allergens={allergens} customAllerg={customAllerg} family={family} activeProfiles={activeProfiles} size={22} />
+                            </div>
+                          </div>
+                          {f.savedByMe !== false && (
+                            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, flexShrink:0 }}>
+                              <button className="btn btn-ghost btn-sm" style={{ fontSize:12, padding:"2px 6px" }} aria-label={`Flyt "${f.name || "produkt"}" til en kategori`}
+                                onClick={e => { e.stopPropagation(); setCategoryMenuFor(categoryMenuFor === f.ean ? null : f.ean); setNewCategoryInput(""); }}>
+                                🏷️
+                              </button>
+                              <button className="btn btn-ghost btn-sm" style={{ fontSize:12 }} aria-label={`Fjern "${f.name || "produkt"}" fra favoritter`}
+                                onClick={e => { e.stopPropagation(); toggleFavorite(f); }}>
+                                ×
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        {categoryMenuFor === f.ean && (
+                          <div onClick={e => e.stopPropagation()}
+                            style={{ marginTop:10, paddingTop:10, borderTop:"1px solid var(--border)" }}>
+                            <div style={UI.ufs11_cmuted_mb8}>Flyt til kategori</div>
+                            <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:8 }}>
+                              {f.category && (
+                                <div onClick={() => { setFavoriteCategory(f.ean, null); setCategoryMenuFor(null); }}
+                                  style={{ padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:700, cursor:"pointer", background:"var(--surface2)", border:"1px solid var(--border2)", color:"var(--muted)" }}>
+                                  📦 Fjern kategori
+                                </div>
+                              )}
+                              {existingCategories.filter(c => c !== f.category).map(c => (
+                                <div key={c} onClick={() => { setFavoriteCategory(f.ean, c); setCategoryMenuFor(null); }}
+                                  style={{ padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:700, cursor:"pointer", background:"var(--green-lt)", border:"1px solid var(--green-mid)", color:"var(--green)" }}>
+                                  🏷️ {c}
+                                </div>
+                              ))}
+                            </div>
+                            <div className="input-row">
+                              <input className="field" placeholder="Ny kategori…" value={newCategoryInput}
+                                onChange={e => setNewCategoryInput(e.target.value)}
+                                onKeyDown={e => { if (e.key === "Enter" && newCategoryInput.trim()) { setFavoriteCategory(f.ean, newCategoryInput.trim()); setCategoryMenuFor(null); } }} />
+                              <button className="btn btn-primary btn-sm" style={UI.uwsnowrap}
+                                onClick={() => { if (newCategoryInput.trim()) { setFavoriteCategory(f.ean, newCategoryInput.trim()); setCategoryMenuFor(null); } }}>
+                                Opret
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                  {f.savedByMe !== false && (
-                    <button className="btn btn-ghost btn-sm" style={{ fontSize:12, flexShrink:0 }} aria-label={`Fjern "${f.name || "produkt"}" fra favoritter`}
-                      onClick={e => { e.stopPropagation(); toggleFavorite(f); }}>
-                      ×
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+                );
+              });
+            })()}
           </div>
         )}
 
