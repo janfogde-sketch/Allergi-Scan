@@ -144,6 +144,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
     const tid = traceId("ocr-nutrition");
     traceLog(tid, "nutrition-ocr:start", { size: file.size });
     setNutritionOcrLoading(true);
+    setScanError_("");
     try {
       const base64 = await compressImageToBase64(file);
       const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, {
@@ -158,9 +159,11 @@ export function useProduct({ accessToken, userId, activeProfiles,
         traceLog(tid, "nutrition-ocr:parsed", parsed);
       } else {
         traceLog(tid, "nutrition-ocr:empty", { raw: JSON.stringify(ocrData).substring(0, 100) });
+        setScanError_("Næringsindholdet kunne ikke læses. Prøv et klarere billede, eller udfyld felterne manuelt.");
       }
     } catch (err) {
       traceLog(tid, "nutrition-ocr:error", { error: err?.message });
+      setScanError_("Billedet kunne ikke analyseres. Prøv igen, eller udfyld felterne manuelt.");
     }
     setNutritionOcrLoading(false);
   };

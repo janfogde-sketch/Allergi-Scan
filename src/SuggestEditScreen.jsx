@@ -108,7 +108,23 @@ export default function SuggestEditScreen({
     }
   };
 
-  if (!scanResult) return null;
+  // Kan ske hvis appen har mistet produkt-konteksten, fx fordi siden er blevet
+  // genindlæst af OS'et mens kameraet var åbent (almindeligt på Android med lav
+  // hukommelse). Uden dette rendere skærmen ingenting — hvilket ser ud som et
+  // nedbrud — i stedet for at give brugeren en vej videre.
+  if (!scanResult) {
+    return (
+      <div className="screen fade-in" style={{ textAlign:"center", padding:"60px 20px" }}>
+        <div style={{ fontSize:40, marginBottom:12 }}>😕</div>
+        <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>Produktet blev væk</div>
+        <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6, marginBottom:20 }}>
+          Vi kunne ikke finde produktet længere — det kan ske hvis appen har været i baggrunden.
+          Scan eller søg produktet igen for at foreslå en rettelse.
+        </div>
+        <button className="btn btn-primary btn-full" onClick={() => setScreen(SCREENS.HOME)}>Til forsiden</button>
+      </div>
+    );
+  }
 
   return (
     <div className="screen fade-in">

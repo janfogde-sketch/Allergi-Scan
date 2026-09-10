@@ -128,6 +128,9 @@ export default function AdminScreen() {
     } else {
       setEditingSubmission({ name: s.ai_parsed_data?.name || s.product_name || "", brand: s.ai_parsed_data?.brand || s.brand || "", allergen_flags: s.ai_parsed_data || {} });
     }
+    // Renskriv automatisk med det samme i stedet for at kræve et ekstra
+    // admin-klik — ingredienslisten fra OCR er sjældent klar til godkendelse som den er.
+    if (s.ocr_raw_text) cleanOcrWithAI(s.ocr_raw_text);
   };
 
   // ── Admin opskrifter — lokal state ──────────────────────────────────────────
@@ -368,7 +371,14 @@ OPSKRIFT
 
 BESKRIVELSE
 ${openTicket.description}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPGAVE TIL CLAUDE
+Analysér denne fejlrapport, før du retter noget:
+1. Forståelse — hvad rapporterer brugeren, og på hvilken skærm/flow sker det?
+2. Analyse — undersøg relevant kode og find den sandsynlige rodårsag.
+3. Løsningsforslag — beskriv kort den påtænkte rettelse, inden den implementeres.
+Implementér derefter løsningen.`;
                   navigator.clipboard?.writeText(txt).then(() => alert("Kopieret til udklipsholder!")).catch(() => alert(txt));
                 }}
                   style={UI.uw100_bggreen_bdnone_br10_p10px_fff_fs13_fw700_congreen_curp}>
@@ -969,6 +979,43 @@ ${openTicket.description}
               </div>
             )}
 
+            {/* E-numre fundet i ingredienslisten */}
+            {(() => {
+              const src = cleanedOcrText || openSubmission.ocr_raw_text || "";
+              const found = [...new Set((src.match(E_NUMBER_RE) || []).map(e => e.toUpperCase()))];
+              if (found.length === 0) return null;
+              return (
+                <div style={UI.card}>
+                  <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>🧪 E-numre fundet</div>
+                  <div style={UI.wrapGap7}>
+                    {found.map(e => (
+                      <div key={e} style={{ padding:"4px 10px", borderRadius:20, background:"rgba(99,102,241,.1)", border:"1px solid rgba(99,102,241,.3)", fontSize:12, fontWeight:700, color:"#818cf8" }}>{e}</div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Næringsindhold — kun til stede for nye produkter (Nyt produkt-flowet) */}
+            {openSubmission.ai_parsed_data?.nutrition && Object.values(openSubmission.ai_parsed_data.nutrition).some(v => v) && (
+              <div style={UI.card}>
+                <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>🥗 Næringsindhold <span style={UI.muted10}>per 100g/ml</span></div>
+                <div style={UI.grid2gap8}>
+                  {[
+                    { key:"energy", label:"Energi" }, { key:"fat", label:"Fedt" },
+                    { key:"saturated", label:"Mættet fedt" }, { key:"carbs", label:"Kulhydrat" },
+                    { key:"sugars", label:"Sukker" }, { key:"protein", label:"Protein" },
+                    { key:"salt", label:"Salt" },
+                  ].filter(({ key }) => openSubmission.ai_parsed_data.nutrition[key]).map(({ key, label }) => (
+                    <div key={key} style={{ display:"flex", justifyContent:"space-between", fontSize:12 }}>
+                      <span style={UI.muted}>{label}</span>
+                      <span style={{ color:"var(--ink)", fontWeight:700 }}>{openSubmission.ai_parsed_data.nutrition[key]}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Allergener — toggle grid */}
             <div style={UI.card}>
               <div style={UI.rowBetweenMb10}>
@@ -983,13 +1030,13 @@ ${openTicket.description}
                   const isTrace = val === "traces";
                   return (
                     <button key={a.id} onClick={() => setEditingSubmission(s => ({ ...s, allergen_flags: { ...s.allergen_flags, [a.id]: next } }))}
-                      style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", borderRadius:10, cursor:"pointer",
+                      style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", borderRadius:10, cursor:"pointer", minWidth:0, width:"100%", boxSizing:"border-box",
                         border:`1px solid ${isYes?"var(--red-md)":isTrace?"var(--amber-md)":"var(--border)"}`,
                         background: isYes?"var(--red-lt)":isTrace?"var(--amber-lt)":"var(--paper2)",
                         fontFamily:"var(--f)" }}>
                       <span style={UI.fs16}>{a.emoji}</span>
-                      <span style={{ flex:1, fontSize:12, fontWeight:700, color:isYes?"var(--red)":isTrace?"var(--amber)":"var(--muted2)", textAlign:"left" }}>{a.label}</span>
-                      <span style={{ fontSize:10, fontWeight:800, color:isYes?"var(--red)":isTrace?"var(--amber)":"var(--muted)" }}>
+                      <span style={{ flex:1, minWidth:0, fontSize:12, fontWeight:700, color:isYes?"var(--red)":isTrace?"var(--amber)":"var(--muted2)", textAlign:"left", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{a.label}</span>
+                      <span style={{ fontSize:10, fontWeight:800, color:isYes?"var(--red)":isTrace?"var(--amber)":"var(--muted)", flexShrink:0 }}>
                         {isYes?"JA":isTrace?"SPOR":"NEJ"}
                       </span>
                     </button>
