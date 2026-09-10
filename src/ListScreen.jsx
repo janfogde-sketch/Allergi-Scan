@@ -175,20 +175,64 @@ export default function ListScreen({
     <div className="screen fade-in">
       <div className="screen-title">Indkøbsliste</div>
 
-      {/* ── Listevælger ── */}
-      <div style={{ display:"flex", gap:8, marginBottom:14 }}>
-        <div onClick={() => setShowListPicker(v => !v)}
-          style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer" }}>
-          <div style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-            <span style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{activeList?.name || "Vælg liste"}</span>
-            {activeList?.type === "family" && <span style={{ marginLeft:6, fontSize:10, fontWeight:700, color:"var(--green)" }}>👨‍👩‍👧 Delt</span>}
+      {/* ── Tilføj vare (øverst, så søgeresultater aldrig kan havne bag andet indhold) ── */}
+      <div className="card" style={{ padding:"13px 14px", marginBottom:14, position:"relative", zIndex:5 }}>
+        <div className="card-lbl">Tilføj vare</div>
+        <div className="input-row">
+          <input className="field" placeholder="Søg produkt, eller skriv en fritekst-vare…"
+            value={newItemName}
+            onChange={e => setNewItemName(e.target.value)}
+            onFocus={() => setItemFocused(true)}
+            onBlur={() => setTimeout(() => setItemFocused(false), 150)}
+            onKeyDown={e => e.key==="Enter" && addToList(newItemName)} />
+          <button className="btn btn-primary btn-sm" style={UI.uwsnowrap}
+            onClick={() => addToList(newItemName)}>
+            Tilføj
+          </button>
+        </div>
+        {itemFocused && newItemName.trim() && (itemSearching || itemResults.length > 0) && (
+          <div style={{ position:"absolute", left:14, right:14, top:"100%", marginTop:2, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh)", zIndex:10, overflow:"hidden" }}>
+            {itemSearching && itemResults.length === 0 && (
+              <div style={{ padding:"10px 12px", fontSize:12, color:"var(--muted)" }}>Søger…</div>
+            )}
+            {itemResults.map(p => (
+              <div key={p.ean||p.id} onMouseDown={() => pickItemProduct(p)}
+                style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px", cursor:"pointer", borderBottom:"1px solid var(--border)" }}>
+                <ProductImage product={p} size={28} />
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</div>
+                  {p.brand && <div style={{ fontSize:10, color:"var(--muted)" }}>{p.brand}</div>}
+                </div>
+              </div>
+            ))}
+            {!itemSearching && (
+              <div onMouseDown={() => addToList(newItemName)}
+                style={{ padding:"8px 12px", fontSize:12, color:"var(--muted)", cursor:"pointer" }}>
+                Tilføj "{newItemName.trim()}" som fritekst-vare
+              </div>
+            )}
           </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, transform: showListPicker ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
+        )}
+      </div>
+
+      {/* ── Listevælger (komprimeret) ── */}
+      <div style={{ display:"flex", gap:6, marginBottom:14 }}>
+        <div onClick={() => setShowListPicker(v => !v)}
+          style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"7px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}>
+          <div style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+            <span style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{activeList?.name || "Vælg liste"}</span>
+            {activeList?.type === "family" && <span style={{ marginLeft:5, fontSize:9, fontWeight:700, color:"var(--green)" }}>👨‍👩‍👧</span>}
+          </div>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, transform: showListPicker ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
             <path strokeLinecap="round" d="M19 9l-7 7-7-7"/>
           </svg>
         </div>
-        <button className="btn btn-outline btn-sm" style={UI.uwsnowrap} onClick={() => setShowShareSheet(true)} disabled={!activeList}>
-          Del
+        <button aria-label="Del liste" onClick={() => setShowShareSheet(true)} disabled={!activeList}
+          style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:"auto", padding:0, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor: activeList ? "pointer" : "not-allowed", opacity: activeList ? 1 : .5, flexShrink:0 }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <path strokeLinecap="round" d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
+          </svg>
         </button>
       </div>
 
@@ -295,46 +339,6 @@ export default function ListScreen({
           )}
         </div>
       )}
-
-      {/* ── Tilføj vare ── */}
-      <div className="card" style={{ padding:"13px 14px", marginBottom:14, position:"relative" }}>
-        <div className="card-lbl">Tilføj vare</div>
-        <div className="input-row">
-          <input className="field" placeholder="Søg produkt, eller skriv en fritekst-vare…"
-            value={newItemName}
-            onChange={e => setNewItemName(e.target.value)}
-            onFocus={() => setItemFocused(true)}
-            onBlur={() => setTimeout(() => setItemFocused(false), 150)}
-            onKeyDown={e => e.key==="Enter" && addToList(newItemName)} />
-          <button className="btn btn-primary btn-sm" style={UI.uwsnowrap}
-            onClick={() => addToList(newItemName)}>
-            Tilføj
-          </button>
-        </div>
-        {itemFocused && newItemName.trim() && (itemSearching || itemResults.length > 0) && (
-          <div style={{ position:"absolute", left:14, right:14, top:"100%", marginTop:2, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh)", zIndex:10, overflow:"hidden" }}>
-            {itemSearching && itemResults.length === 0 && (
-              <div style={{ padding:"10px 12px", fontSize:12, color:"var(--muted)" }}>Søger…</div>
-            )}
-            {itemResults.map(p => (
-              <div key={p.ean||p.id} onMouseDown={() => pickItemProduct(p)}
-                style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px", cursor:"pointer", borderBottom:"1px solid var(--border)" }}>
-                <ProductImage product={p} size={28} />
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</div>
-                  {p.brand && <div style={{ fontSize:10, color:"var(--muted)" }}>{p.brand}</div>}
-                </div>
-              </div>
-            ))}
-            {!itemSearching && (
-              <div onMouseDown={() => addToList(newItemName)}
-                style={{ padding:"8px 12px", fontSize:12, color:"var(--muted)", cursor:"pointer" }}>
-                Tilføj "{newItemName.trim()}" som fritekst-vare
-              </div>
-            )}
-          </div>
-        )}
-      </div>
 
       {/* ── Tom tilstand ── */}
       {shoppingList.length === 0 && (
