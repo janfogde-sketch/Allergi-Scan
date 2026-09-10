@@ -298,7 +298,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
       );
       const cleaned = ingLines.join(", ").replace(/,\s*,/g, ",").replace(/^[,\s]+|[,\s]+$/g, "");
       setCleanedOcrText(cleaned || text);
-      setEditingSubmission(s => ({ ...s, ocr_raw_text: cleaned || text }));
+      // ingredients_text er feltet godkendelsen rent faktisk sender videre
+      // (se updateSubmissionAndApprove) — sæt det med det samme, så rensningen
+      // er anvendt uden at admin skal huske at trykke "Brug denne version" oveni.
+      setEditingSubmission(s => ({ ...s, ocr_raw_text: cleaned || text, ingredients_text: cleaned || text }));
     } catch (e) { console.error("cleanOcrWithAI:", e); }
     setCleaningOcr(false);
   };

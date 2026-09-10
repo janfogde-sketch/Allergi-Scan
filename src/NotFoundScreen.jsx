@@ -254,6 +254,8 @@ export default function NotFoundScreen({
               <input type="file" accept="image/*" style={S.none} onChange={handleNutritionCapture} />
             </label>
 
+            {scanError && <div className="error-box" style={S.mb10}>⚠️ {scanError}</div>}
+
             {proposedNutrition && Object.values(proposedNutrition).some(v => v) && (
               <div style={{ padding:"8px 12px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, marginBottom:10, fontSize:12, color:"var(--green)", fontWeight:700 }}>
                 ✓ Næringsindhold delvist udfyldt — tjek og ret felterne herunder
