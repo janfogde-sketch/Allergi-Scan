@@ -44,6 +44,24 @@ async function uploadImageToStorage(
   }
 }
 
+// ── Klassificér produktets subcategory via classify-categories ──────────────
+// Best-effort: fejler klassificeringen, skal godkendelsen af indsendelsen
+// stadig lykkes — produktet står blot uklassificeret indtil næste backfill.
+async function triggerClassification(productId: string) {
+  try {
+    await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/classify-categories`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+      },
+      body: JSON.stringify({ product_id: productId }),
+    });
+  } catch (e) {
+    console.error("triggerClassification fejl:", e);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -270,6 +288,8 @@ Deno.serve(async (req) => {
           new_value:     submission.notes ?? "Opdateret via brugerens rettelsesforslag",
         });
 
+        if (updateFields.name || updateFields.brand) await triggerClassification(product.id);
+
         return new Response(
           JSON.stringify({ success: true, message: "Rettelsesforslag godkendt og produkt opdateret", product_id: product.id }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -321,6 +341,8 @@ Deno.serve(async (req) => {
           field_changed: "all",
           new_value:     "Oprettet via brugerindsendelse",
         });
+
+        await triggerClassification(product.id);
 
         return new Response(
           JSON.stringify({ success: true, message: "Indsendelse godkendt og produkt oprettet", product_id: product.id }),
