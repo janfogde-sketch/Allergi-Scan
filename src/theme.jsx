@@ -349,7 +349,8 @@ body{
 /* ── LIST ── */
 .list-item{display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--surface);border:1px solid var(--border);border-radius:11px;margin-bottom:7px;backdrop-filter:blur(8px);}
 .list-item.done{opacity:.4;}
-.list-check{width:20px;height:20px;border-radius:6px;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .18s;font-size:11px;color:var(--on-green);}
+.list-check{position:relative;width:20px;height:20px;border-radius:6px;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .18s;font-size:11px;color:var(--on-green);}
+.list-check::before{content:'';position:absolute;inset:-13px;}
 .list-check.checked{background:var(--green);border-color:var(--green);}
 .list-name{font-size:14px;font-weight:600;flex:1;letter-spacing:-.1px;color:var(--ink);}
 .list-name.done{text-decoration:line-through;color:var(--muted);}
