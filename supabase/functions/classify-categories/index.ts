@@ -49,7 +49,7 @@ const TAXONOMY: Record<string, string[]> = {
     "Brød", "Rugbrød", "Boller & bagværk", "Kager & wienerbrød", "Knækbrød & kiks", "Andet brød",
   ],
   "Kød & fisk": [
-    "Oksekød", "Svinekød", "Fjerkræ", "Fisk", "Skaldyr", "Pålæg & charcuteri",
+    "Oksekød", "Svinekød", "Lammekød & vildt", "Fjerkræ", "Fisk", "Skaldyr", "Pålæg & charcuteri",
     "Plantebaseret kød-alternativ", "Andet kød & fisk",
   ],
   "Færdigretter": [
