@@ -751,12 +751,12 @@ export default function ProfileScreen({
         {screen === SCREENS.FAMILY && (
           <div className="screen fade-in">
             <div className="screen-title">Familie</div>
-            <div className="screen-sub">Administrér familiemedlemmers allergiprofiler.</div>
+            <div className="screen-sub">Administrér allergiprofiler for familien.</div>
             <div className="card" style={UI.up12px14px}>
               <div className="card-lbl">Aktive profiler ved scanning</div>
               <FamilyChips />
             </div>
-            {family.length===0 && <div className="empty-state"><span className="empty-icon">👨‍👩‍👧</span><div className="empty-txt">Ingen familiemedlemmer endnu</div><div className="empty-sub">Tilføj familiemedlemmer for at scanne for dem</div></div>}
+            {family.length===0 && <div className="empty-state"><span className="empty-icon">👨‍👩‍👧</span><div className="empty-txt">Ingen allergiprofiler endnu</div><div className="empty-sub">Tilføj fx et barn eller en partner for at scanne for dem</div></div>}
             {family.map(m => (
               <div key={m.id} className="family-member">
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:m.allergens.length?10:0 }}>
@@ -885,7 +885,7 @@ export default function ProfileScreen({
             </div>
 
             <div className="card">
-              <div className="card-title">+ Tilføj familiemedlem</div>
+              <div className="card-title">+ Tilføj allergiprofil</div>
               <MemberForm
                 name={newMemberName} setName={setNewMemberName}
                 birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
