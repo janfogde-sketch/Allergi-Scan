@@ -326,7 +326,7 @@ Deno.serve(async (req) => {
 
     // POST — tilføj punkt til liste
     if (method === "POST" && isItems && listId) {
-      const { name, product_id, quantity, added_by, store } = await req.json();
+      const { name, product_id, ean, quantity, added_by, store } = await req.json();
 
       if (!name || !added_by) return new Response(JSON.stringify({ error: "name og added_by er påkrævet" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       if (added_by !== caller.id) return new Response(JSON.stringify({ error: "Ikke autoriseret til denne bruger" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -341,6 +341,7 @@ Deno.serve(async (req) => {
           list_id: listId,
           name,
           product_id: product_id ?? null,
+          ean: ean ?? null,
           quantity: quantity ?? 1,
           checked: false,
           added_by,

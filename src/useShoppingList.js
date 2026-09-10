@@ -247,17 +247,24 @@ export function useShoppingList({ accessToken, userId }) {
   }, [accessToken, activeListId]);
 
   // ── Tilføj vare ─────────────────────────────────────────────────────────────
-  const addToList = useCallback(async (name) => {
+  // Tager enten en simpel tekststreng (fritekst-vare) eller et produkt-objekt
+  // ({ name, ean, id }, fx fra søgning eller favoritter) — sidstnævnte gemmer
+  // en reel reference til produktet, så varen kan linkes til det i listen.
+  const addToList = useCallback(async (nameOrProduct) => {
+    const isProduct = nameOrProduct && typeof nameOrProduct === "object";
+    const name = isProduct ? nameOrProduct.name : nameOrProduct;
+    const ean = isProduct ? (nameOrProduct.ean || nameOrProduct.code || null) : null;
+    const productId = isProduct ? (nameOrProduct.id || nameOrProduct.product_id || null) : null;
     if (!name?.trim() || !activeListId) return false;
     const tempId = uid();
     const listId = activeListId;
-    setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: [...(x.shopping_list_items||[]), { id: tempId, name: name.trim(), checked: false }] }));
+    setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: [...(x.shopping_list_items||[]), { id: tempId, name: name.trim(), ean, product_id: productId, checked: false }] }));
     setNewItemName("");
     try {
       const data = await apiCall(`${SHOPPING_FN}/${listId}/items`, {
         method: "POST",
         headers: makeHeaders(accessToken),
-        body: JSON.stringify({ name: name.trim(), added_by: userId }),
+        body: JSON.stringify({ name: name.trim(), ean, product_id: productId, added_by: userId }),
       });
       const saved = data?.item;
       if (saved?.id) setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).map(i => i.id === tempId ? { ...i, id: saved.id } : i) }));
