@@ -4,6 +4,7 @@ import { SCREENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { compareAllergens } from "./helpers.js";
 import { Icon, ProductImage } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
+import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
@@ -114,6 +115,7 @@ export default function ListScreen({
   lookupProduct,
 }) {
   const { userId, accessToken } = useAuthContext();
+  const { family, activeProfiles } = useProfileContext();
   const { setScreen } = useNavigationContext();
   const { favorites } = useHistoryContext();
   const {
@@ -146,7 +148,7 @@ export default function ListScreen({
         const res = await fetch(`${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(newItemName.trim())}`,
           { headers: { "apikey": SUPABASE_ANON_KEY, ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) }, signal: controller.signal });
         const data = await res.json();
-        if (data.success) setItemResults((data.products || []).slice(0, 6));
+        if (data.success) setItemResults((data.products || []).slice(0, 12));
       } catch (e) { if (e.name !== "AbortError") setItemResults([]); }
       finally { if (!controller.signal.aborted) setItemSearching(false); }
     }, 300);
@@ -158,6 +160,21 @@ export default function ListScreen({
     setItemResults([]);
     setItemFocused(false);
   };
+
+  // ── Sikker søgning: skjul produkter der er farlige for den valgte profil-
+  // gruppe, og vis den anden slags (spor) med en tydelig advarsel i stedet
+  // for helt at gemme dem ── ─────────────────────────────────────────────────
+  const itemResultsWithSafety = itemResults
+    .map(p => ({ product: p, status: compareAllergens(p.allergen_flags||{}, activeIds).status }))
+    .filter(r => r.status !== "danger");
+  const visibleItemResults = itemResultsWithSafety.slice(0, 6);
+  const hiddenUnsafeCount = itemResults.length - itemResultsWithSafety.length;
+
+  const activeFamily = family.filter(m => activeProfiles.includes(m.id));
+  const meActive = activeProfiles.includes("me");
+  const searchScopeLabel = meActive && family.length > 0 && activeFamily.length === family.length
+    ? "hele familien"
+    : ([meActive && "dig", ...activeFamily.map(m => m.name.split(" ")[0])].filter(Boolean).join(", ") || "dig");
 
   const handleJoin = async () => {
     setJoinLoading(true);
@@ -176,9 +193,8 @@ export default function ListScreen({
       <div className="screen-title">Indkøbsliste</div>
 
       {/* ── Tilføj vare (øverst, så søgeresultater aldrig kan havne bag andet indhold) ── */}
-      <div className="card" style={{ padding:"13px 14px", marginBottom:14, position:"relative", zIndex:5 }}>
-        <div className="card-lbl">Tilføj vare</div>
-        <div className="input-row">
+      <div style={{ marginBottom:10, position:"relative", zIndex:5 }}>
+        <div className="input-row" style={{ marginBottom:0 }}>
           <input className="field" placeholder="Søg produkt, eller skriv en fritekst-vare…"
             value={newItemName}
             onChange={e => setNewItemName(e.target.value)}
@@ -191,11 +207,16 @@ export default function ListScreen({
           </button>
         </div>
         {itemFocused && newItemName.trim() && (itemSearching || itemResults.length > 0) && (
-          <div style={{ position:"absolute", left:14, right:14, top:"100%", marginTop:2, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh)", zIndex:10, overflow:"hidden" }}>
+          <div style={{ position:"absolute", left:0, right:0, top:"100%", marginTop:6, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh)", zIndex:10, overflow:"hidden" }}>
+            {itemResults.length > 0 && (
+              <div style={{ display:"flex", alignItems:"center", gap:5, padding:"6px 12px", background:"var(--green-lt)", borderBottom:"1px solid var(--border)", fontSize:10, fontWeight:700, color:"var(--green)" }}>
+                🛡️ Sikker søgning for {searchScopeLabel}
+              </div>
+            )}
             {itemSearching && itemResults.length === 0 && (
               <div style={{ padding:"10px 12px", fontSize:12, color:"var(--muted)" }}>Søger…</div>
             )}
-            {itemResults.map(p => (
+            {visibleItemResults.map(({ product: p, status }) => (
               <div key={p.ean||p.id} onMouseDown={() => pickItemProduct(p)}
                 style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px", cursor:"pointer", borderBottom:"1px solid var(--border)" }}>
                 <ProductImage product={p} size={28} />
@@ -203,8 +224,16 @@ export default function ListScreen({
                   <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</div>
                   {p.brand && <div style={{ fontSize:10, color:"var(--muted)" }}>{p.brand}</div>}
                 </div>
+                {status === "warn" && (
+                  <span style={{ fontSize:9, fontWeight:800, color:"var(--amber)", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:20, padding:"2px 7px", flexShrink:0 }}>SPOR</span>
+                )}
               </div>
             ))}
+            {hiddenUnsafeCount > 0 && (
+              <div style={{ padding:"6px 12px", fontSize:10, color:"var(--muted)", background:"var(--paper2)" }}>
+                🚫 {hiddenUnsafeCount} produkt{hiddenUnsafeCount!==1?"er":""} skjult — indeholder allergener for {searchScopeLabel}
+              </div>
+            )}
             {!itemSearching && (
               <div onMouseDown={() => addToList(newItemName)}
                 style={{ padding:"8px 12px", fontSize:12, color:"var(--muted)", cursor:"pointer" }}>
@@ -216,7 +245,7 @@ export default function ListScreen({
       </div>
 
       {/* ── Listevælger (komprimeret) ── */}
-      <div style={{ display:"flex", gap:6, marginBottom:14 }}>
+      <div style={{ display:"flex", gap:6, marginBottom:12 }}>
         <div onClick={() => setShowListPicker(v => !v)}
           style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"7px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}>
           <div style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>

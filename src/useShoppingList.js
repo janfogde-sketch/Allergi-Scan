@@ -37,6 +37,20 @@ export function useShoppingList({ accessToken, userId }) {
   const listsRef = useRef(lists);
   listsRef.current = lists;
 
+  // Id'er vi selv lige har afkrydset/slettet/tilføjet optimistisk. Realtime-
+  // beskeder for disse id'er ignoreres i et kort vindue — ellers kan en
+  // Realtime-besked der når frem lige efter vores eget REST-svar (fx en
+  // forsinket INSERT-ekko for en vare der allerede er slettet igen) nulstille
+  // vores egen optimistiske ændring, så varen et kort øjeblik ser ud til at
+  // "komme tilbage" efter at være slettet/afkrydset.
+  const pendingIdsRef = useRef(new Map());
+  const markPending = (id) => {
+    const timeoutId = setTimeout(() => pendingIdsRef.current.delete(id), 4000);
+    const existing = pendingIdsRef.current.get(id);
+    if (existing) clearTimeout(existing);
+    pendingIdsRef.current.set(id, timeoutId);
+  };
+
   // ── Indlæs alle lister ───────────────────────────────────────────────────────
   const loadShoppingList = useCallback(async () => {
     try {
@@ -208,13 +222,13 @@ export function useShoppingList({ accessToken, userId }) {
           const { type, record, old_record } = msg.payload || {};
           if (!type) return;
 
-          if (type === "INSERT" && record) {
+          if (type === "INSERT" && record && !pendingIdsRef.current.has(record.id)) {
             applyToActiveList(items => items.some(i => i.id === record.id) ? items : [...items, record]);
           }
-          if (type === "UPDATE" && record) {
+          if (type === "UPDATE" && record && !pendingIdsRef.current.has(record.id)) {
             applyToActiveList(items => items.map(i => i.id === record.id ? { ...i, ...record } : i));
           }
-          if (type === "DELETE" && old_record) {
+          if (type === "DELETE" && old_record && !pendingIdsRef.current.has(old_record.id)) {
             applyToActiveList(items => items.filter(i => i.id !== old_record.id));
           }
         } catch { /* ignorer misdannede beskeder */ }
@@ -259,6 +273,7 @@ export function useShoppingList({ accessToken, userId }) {
     if (!name?.trim() || !activeListId) return false;
     const tempId = uid();
     const listId = activeListId;
+    markPending(tempId);
     setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: [...(x.shopping_list_items||[]), { id: tempId, name: name.trim(), ean, product_id: productId, image_url: imageUrl, checked: false }] }));
     setNewItemName("");
     try {
@@ -268,7 +283,10 @@ export function useShoppingList({ accessToken, userId }) {
         body: JSON.stringify({ name: name.trim(), ean, product_id: productId, image_url: imageUrl, added_by: userId }),
       });
       const saved = data?.item;
-      if (saved?.id) setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).map(i => i.id === tempId ? { ...i, id: saved.id } : i) }));
+      if (saved?.id) {
+        markPending(saved.id); // undgå at Realtime-INSERT'et for denne vare dubleres oveni id-skiftet herunder
+        setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).map(i => i.id === tempId ? { ...i, id: saved.id } : i) }));
+      }
       return true;
     } catch {
       // Gemning fejlede — fjern den midlertidige vare igen, ellers tror brugeren
@@ -285,6 +303,7 @@ export function useShoppingList({ accessToken, userId }) {
     const current = list?.shopping_list_items?.find(i => i.id === id);
     if (!current) return; // id fandtes ikke i listen
     const newChecked = !current.checked;
+    markPending(id);
     setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).map(i => i.id === id ? { ...i, checked: newChecked } : i) }));
     try {
       await apiCall(`${SHOPPING_FN}/${listId}/items/${id}`, {
@@ -302,6 +321,7 @@ export function useShoppingList({ accessToken, userId }) {
     const listId = activeListId;
     const list = listsRef.current.find(l => l.id === listId);
     const removed = list?.shopping_list_items?.find(i => i.id === id);
+    markPending(id);
     setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).filter(i => i.id !== id) }));
     try {
       await apiCall(`${SHOPPING_FN}/${listId}/items/${id}`, { method: "DELETE", headers: makeHeaders(accessToken) });
