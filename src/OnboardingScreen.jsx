@@ -33,6 +33,7 @@ export default function OnboardingScreen({
   saveAllergensStep2,
   saveProfileStep1, finishOnboard,
   StepBar,
+  hasPendingJoinList,
 }) {
   const {
     authTab, setAuthTab, authError, setAuthError, authLoading,
@@ -199,6 +200,14 @@ export default function OnboardingScreen({
               <div className="welcome-tagline">Scan. Tjek. Spis trygt.</div>
             </div>
 
+            {/* Delt indkøbsliste venter */}
+            {hasPendingJoinList && (
+              <div style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:12, padding:"12px 14px", marginBottom:16, textAlign:"center" }}>
+                <div style={{ fontSize:13, fontWeight:800, color:"var(--green)" }}>🛒 Du er blevet inviteret til en indkøbsliste</div>
+                <div style={{ fontSize:12, color:"var(--green)", marginTop:2 }}>Opret en gratis konto for at få adgang til den</div>
+              </div>
+            )}
+
             {/* CTA */}
             <WelcomeIntro setScreen={setScreen} setAuthTab={setAuthTab} />
 
@@ -229,6 +238,11 @@ export default function OnboardingScreen({
             {/* SIGNUP flow */}
             {authTab === "signup" && (
               <div className="fade-in">
+                {hasPendingJoinList && (
+                  <div style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, padding:"10px 12px", marginBottom:14, textAlign:"center", fontSize:12, fontWeight:700, color:"var(--green)" }}>
+                    🛒 En indkøbsliste venter på dig — den bliver tilføjet, når du er oprettet
+                  </div>
+                )}
                 <div style={UI.utacenter_mb16}>
                   <div style={UI.ufs15_fw700_cink}>Opret din gratis konto</div>
                   <div style={UI.ufs12_cmuted_mt4}>Du opsætter dine allergier i næste trin</div>
