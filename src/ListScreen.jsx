@@ -115,7 +115,7 @@ export default function ListScreen({
   lookupProduct,
 }) {
   const { userId, accessToken } = useAuthContext();
-  const { family, activeProfiles } = useProfileContext();
+  const { family, activeProfiles, setActiveProfiles } = useProfileContext();
   const { setScreen } = useNavigationContext();
   const { favorites } = useHistoryContext();
   const {
@@ -172,9 +172,21 @@ export default function ListScreen({
 
   const activeFamily = family.filter(m => activeProfiles.includes(m.id));
   const meActive = activeProfiles.includes("me");
-  const searchScopeLabel = meActive && family.length > 0 && activeFamily.length === family.length
+  const allProfileIds = ["me", ...family.map(m => m.id)];
+  const isAllActive = allProfileIds.every(id => activeProfiles.includes(id));
+  const searchScopeLabel = isAllActive && family.length > 0
     ? "hele familien"
     : ([meActive && "dig", ...activeFamily.map(m => m.name.split(" ")[0])].filter(Boolean).join(", ") || "dig");
+
+  // Samme "Aktive profiler"-valg som bruges til scanning og favoritter —
+  // så man her kan justere hvem søgningen skal være sikker for uden at
+  // skulle navigere væk fra indkøbslisten.
+  const toggleAllProfiles = () => setActiveProfiles(isAllActive ? ["me"] : allProfileIds);
+  const toggleOneProfile = (id) => {
+    if (isAllActive) { setActiveProfiles([id]); return; }
+    const next = activeProfiles.includes(id) ? activeProfiles.filter(x => x !== id) : [...activeProfiles, id];
+    setActiveProfiles(next.length === 0 ? [id] : next);
+  };
 
   const handleJoin = async () => {
     setJoinLoading(true);
@@ -209,8 +221,31 @@ export default function ListScreen({
         {itemFocused && newItemName.trim() && (itemSearching || itemResults.length > 0) && (
           <div style={{ position:"absolute", left:0, right:0, top:"100%", marginTop:6, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh)", zIndex:10, overflow:"hidden" }}>
             {itemResults.length > 0 && (
-              <div style={{ display:"flex", alignItems:"center", gap:5, padding:"6px 12px", background:"var(--green-lt)", borderBottom:"1px solid var(--border)", fontSize:10, fontWeight:700, color:"var(--green)" }}>
-                🛡️ Sikker søgning for {searchScopeLabel}
+              <div style={{ padding:"6px 10px", background:"var(--green-lt)", borderBottom:"1px solid var(--border)" }}>
+                <div style={{ fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>
+                  🛡️ Sikker søgning for {searchScopeLabel}
+                </div>
+                {family.length > 0 && (
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                    <span onMouseDown={e => { e.preventDefault(); toggleAllProfiles(); }}
+                      style={{ padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:700, cursor:"pointer", background: isAllActive ? "var(--green)" : "var(--surface)", color: isAllActive ? "var(--on-green)" : "var(--muted)", border:`1px solid ${isAllActive ? "var(--green)" : "var(--border2)"}` }}>
+                      Alle
+                    </span>
+                    <span onMouseDown={e => { e.preventDefault(); toggleOneProfile("me"); }}
+                      style={{ padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:700, cursor:"pointer", background: !isAllActive && meActive ? "var(--green)" : "var(--surface)", color: !isAllActive && meActive ? "var(--on-green)" : "var(--muted)", border:`1px solid ${!isAllActive && meActive ? "var(--green)" : "var(--border2)"}` }}>
+                      Mig
+                    </span>
+                    {family.map(m => {
+                      const on = !isAllActive && activeProfiles.includes(m.id);
+                      return (
+                        <span key={m.id} onMouseDown={e => { e.preventDefault(); toggleOneProfile(m.id); }}
+                          style={{ padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:700, cursor:"pointer", background: on ? "var(--green)" : "var(--surface)", color: on ? "var(--on-green)" : "var(--muted)", border:`1px solid ${on ? "var(--green)" : "var(--border2)"}` }}>
+                          {m.name.split(" ")[0]}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
             {itemSearching && itemResults.length === 0 && (
@@ -256,6 +291,12 @@ export default function ListScreen({
             <path strokeLinecap="round" d="M19 9l-7 7-7-7"/>
           </svg>
         </div>
+        {favorites.length > 0 && (
+          <button aria-label="Dine favoritter" onClick={() => setFavoritesOpen(v => !v)}
+            style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:"auto", padding:0, background: favoritesOpen ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${favoritesOpen ? "var(--green)" : "var(--border)"}`, borderRadius:10, cursor:"pointer", flexShrink:0, fontSize:15 }}>
+            ⭐
+          </button>
+        )}
         <button aria-label="Del liste" onClick={() => setShowShareSheet(true)} disabled={!activeList}
           style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:"auto", padding:0, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor: activeList ? "pointer" : "not-allowed", opacity: activeList ? 1 : .5, flexShrink:0 }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2">
@@ -325,19 +366,11 @@ export default function ListScreen({
           onClose={() => setShowShareSheet(false)} />
       )}
 
-      {/* ── Favoritter ── */}
-      {favorites.length > 0 && (
+      {/* ── Favoritter (åbnes via ⭐-ikonet i listevælger-rækken) ── */}
+      {favorites.length > 0 && favoritesOpen && (
         <div className="card" style={S.mb12}>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", marginBottom: favoritesOpen ? 8 : 0 }}
-            onClick={() => setFavoritesOpen(v => !v)}>
-            <div className="card-lbl" style={{ marginBottom:0 }}>Dine favoritter ({favorites.length})</div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"
-              style={{ transform: favoritesOpen ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
-              <path strokeLinecap="round" d="M6 9l6 6 6-6"/>
-            </svg>
-          </div>
-          {favoritesOpen && (
-            <>
+          <div className="card-lbl">Dine favoritter ({favorites.length})</div>
+          <>
               {favorites.slice(0,10).map(p => {
                 const { status } = compareAllergens(p.allergen_flags||{}, activeIds);
                 const statusColor = status==="safe" ? "var(--green)" : status==="danger" ? "var(--red)" : "var(--amber)";
@@ -364,8 +397,7 @@ export default function ListScreen({
                   Se alle {favorites.length} favoritter →
                 </div>
               )}
-            </>
-          )}
+          </>
         </div>
       )}
 
