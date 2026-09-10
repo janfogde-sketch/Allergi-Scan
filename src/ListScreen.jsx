@@ -1,6 +1,6 @@
 // @ts-nocheck
-import React, { useState } from "react";
-import { SCREENS } from "./constants.jsx";
+import React, { useState, useEffect } from "react";
+import { SCREENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { compareAllergens } from "./helpers.js";
 import { Icon, ProductImage } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -113,7 +113,7 @@ export default function ListScreen({
   activeIds,
   lookupProduct,
 }) {
-  const { userId } = useAuthContext();
+  const { userId, accessToken } = useAuthContext();
   const { setScreen } = useNavigationContext();
   const { favorites } = useHistoryContext();
   const {
@@ -131,6 +131,33 @@ export default function ListScreen({
   const [joinCode, setJoinCode]             = useState("");
   const [joinError, setJoinError]           = useState("");
   const [joinLoading, setJoinLoading]       = useState(false);
+  const [favoritesOpen, setFavoritesOpen]   = useState(false);
+
+  // ── Søg blandt produkter mens der tilføjes en vare ──────────────────────────
+  const [itemResults, setItemResults]   = useState([]);
+  const [itemSearching, setItemSearching] = useState(false);
+  const [itemFocused, setItemFocused]   = useState(false);
+  useEffect(() => {
+    if (!newItemName.trim()) { setItemResults([]); setItemSearching(false); return; }
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setItemSearching(true);
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(newItemName.trim())}`,
+          { headers: { "apikey": SUPABASE_ANON_KEY, ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) }, signal: controller.signal });
+        const data = await res.json();
+        if (data.success) setItemResults((data.products || []).slice(0, 6));
+      } catch (e) { if (e.name !== "AbortError") setItemResults([]); }
+      finally { if (!controller.signal.aborted) setItemSearching(false); }
+    }, 300);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [newItemName, accessToken]);
+
+  const pickItemProduct = (p) => {
+    addToList({ name: p.name, ean: p.ean || p.code, id: p.id });
+    setItemResults([]);
+    setItemFocused(false);
+  };
 
   const handleJoin = async () => {
     setJoinLoading(true);
@@ -228,61 +255,85 @@ export default function ListScreen({
       {/* ── Favoritter ── */}
       {favorites.length > 0 && (
         <div className="card" style={S.mb12}>
-          <div className="card-lbl" style={S.mb10}>Dine favoritter</div>
-          {favorites.slice(0,10).map(p => {
-            const { status } = compareAllergens(p.allergen_flags||{}, activeIds);
-            const statusColor = status==="safe" ? "var(--green)" : status==="danger" ? "var(--red)" : "var(--amber)";
-            const statusLabel = status==="safe" ? "Sikker" : status==="danger" ? "Farlig" : "Advarsel";
-            const tagLabels   = { vegan:"🌱 Vegansk", vegetarian:"🥦 Vegetarisk" };
-            return (
-              <div key={p.ean||p.id}
-                style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 0", borderBottom:"1px solid var(--border)", cursor:"pointer" }}
-                onClick={() => lookupProduct(p.ean||p.code||p.id)}>
-                <ProductImage product={p} size={44} />
-                <div style={S.flexMin}>
-                  <div style={S.h13b}>{p.name}</div>
-                  <div style={S.sub11}>{p.brand}</div>
-                  {p.tags?.length > 0 && (
-                    <div style={{ display:"flex", gap:4, marginTop:3, flexWrap:"wrap" }}>
-                      {p.tags.map((t,i) => (
-                        <span key={i} style={UI.ufs10_fw700_cgreen_bggreenlt_bd1pxsolid_br100_p1px7px}>
-                          {tagLabels[t]||t}
-                        </span>
-                      ))}
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", marginBottom: favoritesOpen ? 8 : 0 }}
+            onClick={() => setFavoritesOpen(v => !v)}>
+            <div className="card-lbl" style={{ marginBottom:0 }}>Dine favoritter ({favorites.length})</div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"
+              style={{ transform: favoritesOpen ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
+              <path strokeLinecap="round" d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+          {favoritesOpen && (
+            <>
+              {favorites.slice(0,10).map(p => {
+                const { status } = compareAllergens(p.allergen_flags||{}, activeIds);
+                const statusColor = status==="safe" ? "var(--green)" : status==="danger" ? "var(--red)" : "var(--amber)";
+                return (
+                  <div key={p.ean||p.id}
+                    style={{ display:"flex", alignItems:"center", gap:8, padding:"7px 0", borderBottom:"1px solid var(--border)", cursor:"pointer" }}
+                    onClick={() => lookupProduct(p.ean||p.code||p.id)}>
+                    <ProductImage product={p} size={28} />
+                    <div style={{ ...S.flexMin, display:"flex", alignItems:"baseline", gap:6 }}>
+                      <span style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</span>
+                      {p.brand && <span style={{ fontSize:10, color:"var(--muted)", flexShrink:0 }}>{p.brand}</span>}
                     </div>
-                  )}
+                    <div style={{ width:7, height:7, borderRadius:"50%", background:statusColor, flexShrink:0 }} />
+                    <button className="btn btn-ghost btn-sm" style={{ ...UI.ufs11_p3px8px, flexShrink:0 }}
+                      onClick={e => { e.stopPropagation(); addToList({ name: p.name, ean: p.ean || p.code, id: p.id }); }}>
+                      + Liste
+                    </button>
+                  </div>
+                );
+              })}
+              {favorites.length > 10 && (
+                <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", paddingTop:8, cursor:"pointer" }}
+                  onClick={() => setScreen(SCREENS.FAVORITES)}>
+                  Se alle {favorites.length} favoritter →
                 </div>
-                <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6 }}>
-                  <div style={{ fontSize:11, fontWeight:700, color:statusColor }}>{statusLabel}</div>
-                  <button className="btn btn-ghost btn-sm" style={UI.ufs11_p3px8px}
-                    onClick={e => { e.stopPropagation(); addToList(p.name); }}>
-                    + Liste
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-          {favorites.length > 10 && (
-            <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", paddingTop:8, cursor:"pointer" }}
-              onClick={() => setScreen(SCREENS.FAVORITES)}>
-              Se alle {favorites.length} favoritter →
-            </div>
+              )}
+            </>
           )}
         </div>
       )}
 
       {/* ── Tilføj vare ── */}
-      <div className="card" style={{ padding:"13px 14px", marginBottom:14 }}>
+      <div className="card" style={{ padding:"13px 14px", marginBottom:14, position:"relative" }}>
         <div className="card-lbl">Tilføj vare</div>
         <div className="input-row">
-          <input className="field" placeholder="Fx. Glutenfri pasta…"
-            value={newItemName} onChange={e => setNewItemName(e.target.value)}
+          <input className="field" placeholder="Søg produkt, eller skriv en fritekst-vare…"
+            value={newItemName}
+            onChange={e => setNewItemName(e.target.value)}
+            onFocus={() => setItemFocused(true)}
+            onBlur={() => setTimeout(() => setItemFocused(false), 150)}
             onKeyDown={e => e.key==="Enter" && addToList(newItemName)} />
           <button className="btn btn-primary btn-sm" style={UI.uwsnowrap}
             onClick={() => addToList(newItemName)}>
             Tilføj
           </button>
         </div>
+        {itemFocused && newItemName.trim() && (itemSearching || itemResults.length > 0) && (
+          <div style={{ position:"absolute", left:14, right:14, top:"100%", marginTop:2, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh)", zIndex:10, overflow:"hidden" }}>
+            {itemSearching && itemResults.length === 0 && (
+              <div style={{ padding:"10px 12px", fontSize:12, color:"var(--muted)" }}>Søger…</div>
+            )}
+            {itemResults.map(p => (
+              <div key={p.ean||p.id} onMouseDown={() => pickItemProduct(p)}
+                style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px", cursor:"pointer", borderBottom:"1px solid var(--border)" }}>
+                <ProductImage product={p} size={28} />
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</div>
+                  {p.brand && <div style={{ fontSize:10, color:"var(--muted)" }}>{p.brand}</div>}
+                </div>
+              </div>
+            ))}
+            {!itemSearching && (
+              <div onMouseDown={() => addToList(newItemName)}
+                style={{ padding:"8px 12px", fontSize:12, color:"var(--muted)", cursor:"pointer" }}>
+                Tilføj "{newItemName.trim()}" som fritekst-vare
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Tom tilstand ── */}
@@ -303,7 +354,10 @@ export default function ListScreen({
             <div key={item.id} className="list-item">
               <div className="list-check" role="checkbox" aria-checked="false" aria-label={`Markér "${item.name}" som købt`} tabIndex={0}
                 onClick={() => toggleItem(item.id)} onKeyDown={e => e.key === "Enter" && toggleItem(item.id)} />
-              <div className="list-name">{item.name}</div>
+              {item.ean
+                ? <div className="list-name" role="link" tabIndex={0} style={{ cursor:"pointer", textDecoration:"underline", textDecorationColor:"var(--border2)", textUnderlineOffset:3 }}
+                    onClick={() => lookupProduct(item.ean)} onKeyDown={e => e.key === "Enter" && lookupProduct(item.ean)}>{item.name}</div>
+                : <div className="list-name">{item.name}</div>}
               <div className="list-del" role="button" aria-label={`Slet "${item.name}"`} tabIndex={0}
                 onClick={() => removeItem(item.id)} onKeyDown={e => e.key === "Enter" && removeItem(item.id)}>
                 <Icon name="trash" size={16} color="var(--muted)" />
@@ -325,7 +379,10 @@ export default function ListScreen({
             <div key={item.id} className="list-item done">
               <div className="list-check checked" role="checkbox" aria-checked="true" aria-label={`Fjern "${item.name}" fra købt`} tabIndex={0}
                 onClick={() => toggleItem(item.id)} onKeyDown={e => e.key === "Enter" && toggleItem(item.id)}>✓</div>
-              <div className="list-name done">{item.name}</div>
+              {item.ean
+                ? <div className="list-name done" role="link" tabIndex={0} style={{ cursor:"pointer" }}
+                    onClick={() => lookupProduct(item.ean)} onKeyDown={e => e.key === "Enter" && lookupProduct(item.ean)}>{item.name}</div>
+                : <div className="list-name done">{item.name}</div>}
               <div className="list-del" role="button" aria-label={`Slet "${item.name}"`} tabIndex={0}
                 onClick={() => removeItem(item.id)} onKeyDown={e => e.key === "Enter" && removeItem(item.id)}>
                 <Icon name="trash" size={16} color="var(--muted)" />
