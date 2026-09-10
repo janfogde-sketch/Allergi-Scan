@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { SCREENS, PAGE_IDS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { BUILD_TIME, COMMIT_SHA, formatBuildTime, buildScreenLabel } from "./utils.jsx";
-import { getTraceLog } from "./helpers.js";
+import { getTraceLog, compressImageToBase64 } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -222,13 +222,14 @@ export default function FeedbackModal({
                       if (!f) return;
                       if (image) URL.revokeObjectURL(image);
                       setImage(URL.createObjectURL(f));
-                      const b64 = await new Promise((res,rej) => {
-                        const r = new FileReader();
-                        r.onload = () => res(r.result.split(",")[1]);
-                        r.onerror = rej;
-                        r.readAsDataURL(f);
-                      });
-                      setImageB64(b64);
+                      // Skaleret ned som alle andre billede-uploads i appen — et råt
+                      // telefonskærmbillede kan let være 3-8MB, hvilket er langsomt at
+                      // sende og unødvendigt stort til et fejlrapport-skærmbillede.
+                      try {
+                        setImageB64(await compressImageToBase64(f));
+                      } catch {
+                        setImage(null); setImageB64(null);
+                      }
                     }} />
                 </label>
               )}

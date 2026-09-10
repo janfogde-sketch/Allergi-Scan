@@ -889,20 +889,76 @@ const lookupProduct = useCallback(async (ean) => {
         { icon:"👤", title:"Portionsjustering", desc:"Åbn en opskrift og tryk + / − for at skalere ingredienser automatisk." },
         { icon:"🛒", title:"Indkøbsliste", desc:"Tryk 'Tilføj til indkøbsliste' for at sende ingredienser direkte til din liste." },
       ]},
-      "list": { title:"🛒 Indkøbsliste", tips:[
-        { icon:"✏️", title:"Tilføj varer", desc:"Skriv en vare og tryk Tilføj — eller tilføj direkte fra en opskrift." },
-        { icon:"✓", title:"Afkryds varer", desc:"Tryk på en vare for at markere den som købt." },
-        { icon:"🗑️", title:"Ryd listen", desc:"Brug 'Ryd' for at fjerne alle afkrydsede varer på én gang." },
+      "search": { title:"🔍 Søg produkter", tips:[
+        { icon:"👤", title:"Filtrér efter profil", desc:"Vælg hvilke profiler resultaterne skal tjekkes op imod, øverst på siden." },
+        { icon:"⚙️", title:"Allergener og kategori", desc:"Fold 'Allergener' ud for at tilføje ekstra allergener manuelt, eller indsnævr til én kategori — begge sidder lige over søgefeltet." },
+        { icon:"🛒", title:"Tilføj til liste", desc:"Tryk '+ Liste' på et resultat for at sende det direkte til din indkøbsliste." },
       ]},
-      "profile": { title:"👤 Profil & præferencer", tips:[
-        { icon:"🚨", title:"Allergi vs. intolerance", desc:"Tryk én gang = intolerance (gul advarsel). To gange = allergi (rød advarsel)." },
-        { icon:"👨‍👩‍👧", title:"Familie", desc:"Opret profiler for børn og partner — se allergencheck for alle på én gang." },
-        { icon:"✏️", title:"E-numre og diæter", desc:"Brug 'Tilføj eget' for intoleranser, E-numre eller diæter der ikke er på listen." },
+      "list": { title:"🛒 Indkøbsliste", tips:[
+        { icon:"📋", title:"Flere lister", desc:"Tryk på listenavnet øverst for at skifte mellem lister eller oprette en ny." },
+        { icon:"🔗", title:"Del listen", desc:"Tryk 'Del' for at give hele husstanden, udvalgte personer, eller alle med et link adgang til listen." },
+        { icon:"✏️", title:"Tilføj varer", desc:"Skriv en vare og tryk Tilføj — eller send direkte fra en opskrift eller et søgeresultat." },
+        { icon:"✓", title:"Afkryds og ryd", desc:"Tryk på en vare for at markere den som købt, og brug 'Ryd' for at fjerne alle købte varer på én gang." },
+      ]},
+      "profile": { title:"👤 Profil", tips:[
+        { icon:"⚙️", title:"Mine præferencer", desc:"Allergier, diæter og E-numre du overvåges for — tryk 'Rediger' for at ændre dem." },
+        { icon:"👨‍👩‍👧", title:"Din husstand", desc:"Konti du har inviteret deler automatisk scanningshistorik, favoritter og indkøbslister med dig." },
+        { icon:"📜", title:"Mine / Husstanden", desc:"Under historik og favoritter kan du skifte mellem kun dine egne og hele husstandens." },
+      ]},
+      "family": { title:"👨‍👩‍👧 Familie", tips:[
+        { icon:"👶", title:"Allergiprofiler", desc:"Opret en profil for familiemedlemmer uden egen konto (fx et barn) — aktivér dem for at tjekke deres allergier ved scanning." },
+        { icon:"🏠", title:"Din husstand", desc:"Rigtige konti du har inviteret deler automatisk data. Kun den der sendte invitationen kan fjerne forbindelsen igen." },
+        { icon:"🔗", title:"Invitér via link", desc:"Del linket med en voksen i familien — når de opretter en konto via linket, bliver I automatisk en husstand." },
+      ]},
+      "result": { title:"📦 Scanningsresultat", tips:[
+        { icon:"🚦", title:"Farvet ramme", desc:"Grøn = sikkert, gul = advarsel, rød = farligt — vurderet ud fra dine aktive profiler." },
+        { icon:"✅", title:"Sikre alternativer", desc:"Ved advarsel eller fare foreslår vi sikre alternativer i samme kategori, du kan trykke direkte på." },
+        { icon:"📖", title:"Tryk på en ingrediens", desc:"Åbner leksikonet med forklaring på allergener, E-numre og tilsætningsstoffer." },
+        { icon:"❤️", title:"Favorit og del", desc:"De to runde knapper øverst på billedet gemmer produktet som favorit eller deler det." },
+        { icon:"✏️", title:"Ret forkerte data", desc:"Mangler eller fejler noget? Tryk 'Ret forkerte data' nederst for at foreslå en rettelse." },
+      ]},
+      "history": { title:"📜 Scanningshistorik", tips:[
+        { icon:"👨‍👩‍👧", title:"Mine / Husstanden", desc:"Skift mellem kun dine egne scanninger og hele husstandens, hvis du har en." },
+        { icon:"👆", title:"Åbn en scanning", desc:"Tryk på en linje for at se det fulde resultat igen." },
+      ]},
+      "favorites": { title:"⭐ Favoritter", tips:[
+        { icon:"❤️", title:"Gem favoritter", desc:"Tryk hjerte-ikonet på et produkt under scanning for at gemme det her." },
+        { icon:"👨‍👩‍👧", title:"Mine / Husstanden", desc:"Se dine egne favoritter eller hele husstandens delte favoritter." },
+        { icon:"×", title:"Fjern", desc:"Du kan kun fjerne dine egne favoritter herfra — ikke andres." },
       ]},
       "madpas": { title:"🌍 Madpas", tips:[
         { icon:"🌐", title:"Vælg sprog", desc:"Vælg sproget for landet du besøger. EatSafe oversætter dine allergier automatisk." },
         { icon:"📋", title:"Vis til tjeneren", desc:"Tryk 'Vis til tjener' for en stor, tydelig skærm du kan vise restaurantpersonalet." },
         { icon:"🔊", title:"Oplæsning", desc:"Tryk højttalerikonet for at høre udtalen på det lokale sprog." },
+      ]},
+      "editprofile": { title:"✏️ Rediger profil", tips:[
+        { icon:"🚨", title:"Allergier og intolerancer", desc:"Tryk for at slå en allergi til eller fra. Har du en der ikke står på listen? Tilføj den under 'Andre allergier'." },
+        { icon:"🥗", title:"Diæter", desc:"Vælg diæter (fx vegansk, glutenfri), som produkter og opskrifter tjekkes op imod." },
+        { icon:"🔢", title:"E-numre", desc:"Vælg specifikke E-numre du vil overvåges for, ud over dine allergier." },
+      ]},
+      "suggest_edit": { title:"✏️ Foreslå rettelse", tips:[
+        { icon:"📷", title:"Ingrediensliste", desc:"Fotografér etiketten og lad OCR læse teksten, eller ret ingredienserne manuelt." },
+        { icon:"⏳", title:"Godkendelse", desc:"Dit forslag gennemgås, før ændringen bliver synlig for andre brugere." },
+      ]},
+      "notfound": { title:"📦 Tilføj nyt produkt", tips:[
+        { icon:"📷", title:"Fotografér", desc:"Tag billede af forsiden og ingredienslisten — vi udfylder automatisk navn og allergener med AI." },
+        { icon:"👀", title:"Gennemgå", desc:"Tjek at det udfyldte er korrekt, før du sender produktet ind." },
+        { icon:"⏳", title:"Godkendelse", desc:"Produktet gennemgås, før det er synligt for andre brugere." },
+      ]},
+      "submitted": { title:"✅ Indsendt", tips:[
+        { icon:"🙏", title:"Tak for hjælpen", desc:"Din indsendelse gennemgås snarest og bliver synlig for andre, når den er godkendt." },
+      ]},
+      "knowledge": { title:"📖 Leksikon", tips:[
+        { icon:"🔍", title:"Søg eller filtrér", desc:"Søg efter et emne, eller vælg en kategori som allergener, E-numre eller diæter." },
+        { icon:"👆", title:"Åbnet fra et produkt", desc:"Tryk på en ingrediens eller et E-nummer i et scanningsresultat for at hoppe direkte hertil." },
+      ]},
+      "restaurantguide": { title:"🍽️ Restaurantguide", tips:[
+        { icon:"📋", title:"Tips til hvert trin", desc:"Råd til før, under og efter restaurantbesøg, når du spiser ude med allergier." },
+        { icon:"🌍", title:"Vis til tjeneren", desc:"Brug dit Madpas (under Profil) til at vise dine allergier direkte til personalet." },
+      ]},
+      "admin": { title:"🛡️ Admin", tips:[
+        { icon:"✅", title:"Godkend indsendelser", desc:"Gennemgå og godkend eller afvis nye produkter og rettelsesforslag fra brugere." },
+        { icon:"👥", title:"Brugere og tickets", desc:"Administrér brugerroller og besvar indsendt feedback under de øvrige faner." },
       ]},
     };
     const content = helpContent[screen] || { title:"ℹ️ Hjælp", tips:[
