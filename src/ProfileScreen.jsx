@@ -772,6 +772,42 @@ export default function ProfileScreen({
                 {m.allergens.length>0 && <div className="tags">{getAllergenLabels(m.allergens,m.custom||[]).map((a,j) => <div key={j} className="tag" style={{ fontSize:11 }}>{a}</div>)}</div>}
               </div>
             ))}
+            {/* ── Din husstand — rigtige konti, adskilt fra allergi-profilerne ovenfor ── */}
+            {household.length > 0 && (
+              <div className="card" style={UI.mb12}>
+                <div style={UI.ufs13_fw800_cink_mb4}>👨‍👩‍👧 Din husstand</div>
+                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12, lineHeight:1.5 }}>
+                  Disse konti deler scanningshistorik, favoritter og indkøbslister med dig.
+                </div>
+                {household.map(m => (
+                  <div key={m.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom:"1px solid var(--border)" }}>
+                    <div style={{ width:32, height:32, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
+                      {initials(m.name || m.email)}
+                    </div>
+                    <div style={UI.flex1}>
+                      <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{m.name || m.email}</div>
+                      {!m.canRemove && <div style={{ fontSize:10, color:"var(--muted)", marginTop:1 }}>Inviterede dig</div>}
+                    </div>
+                    {m.canRemove && (
+                      <span style={{ cursor:"pointer", opacity:.5, padding:4 }} aria-label={`Fjern ${m.name || m.email} fra husstanden`} role="button" tabIndex={0}
+                        onClick={async () => {
+                          if (!confirm(`Fjern ${m.name || m.email} fra din husstand? I mister adgang til hinandens delte data.`)) return;
+                          await apiCall(`${SUPABASE_URL}/functions/v1/family/group/${m.id}`, { method: "DELETE", headers: makeHeaders(accessToken) });
+                          setHousehold(h => h.filter(x => x.id !== m.id));
+                        }}
+                        onKeyDown={async e => { if (e.key !== "Enter") return;
+                          if (!confirm(`Fjern ${m.name || m.email} fra din husstand? I mister adgang til hinandens delte data.`)) return;
+                          await apiCall(`${SUPABASE_URL}/functions/v1/family/group/${m.id}`, { method: "DELETE", headers: makeHeaders(accessToken) });
+                          setHousehold(h => h.filter(x => x.id !== m.id));
+                        }}>
+                        <Icon name="trash" size={16} color="var(--muted)" />
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* ── Invitér familiemedlem via link ── */}
             <div className="card" style={UI.mb12}>
               <div style={UI.ufs13_fw800_cink_mb4}>
