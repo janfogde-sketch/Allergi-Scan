@@ -1,239 +1,85 @@
 // @ts-nocheck
-import React, { useState, useMemo } from "react";
-import { ALLERGENS, SCREENS } from "./constants.jsx";
-import { compareAllergens, initials } from "./helpers.js";
+import React from "react";
+import { compareAllergens } from "./helpers.js";
 import { Loader, SearchResultRow } from "./SharedComponents.jsx";
-import { CategorySelect } from "./MemberForm.jsx";
-import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
 import { UI } from "./styleUtils.js";
 
-const CATEGORIES = [
-  {id:"alle",           label:"Alle kategorier"},
-  {id:"Drikkevarer",    label:"Drikkevarer"},
-  {id:"Kolonial",       label:"Kolonial"},
-  {id:"Snacks & slik",  label:"Snacks & slik"},
-  {id:"Mejeri & æg",    label:"Mejeri & æg"},
-  {id:"Frugt & grønt",  label:"Frugt & grønt"},
-  {id:"Frost",          label:"Frost"},
-  {id:"Brød & bagværk", label:"Brød & bagværk"},
-  {id:"Kød & fisk",     label:"Kød & fisk"},
-  {id:"Færdigretter",   label:"Færdigretter"},
-];
-
-
 export default function SearchScreen({
   activeIds,
   searchQuery, setSearchQuery,
-  searchResults, setSearchResults,
-  searchCategory, setSearchCategory,
+  searchResults,
   searchLoading,
-  showSafeOnly, setShowSafeOnly,
   lookupProduct,
 }) {
-  const { user } = useAuthContext();
-  const { family, allergens, activeProfiles, setActiveProfiles } = useProfileContext();
+  const { family, activeProfiles, setActiveProfiles } = useProfileContext();
   const { addToList } = useShoppingContext();
-  const [allergenFilterOpen, setAllergenFilterOpen] = useState(false);
-  const [manualAllergens, setManualAllergens]       = useState([]);
 
-  // Profiler med allergen-info
-  const profiles = useMemo(() => [
-    { id:"user", name: user.name||"Mig", allergens },
-    ...family.map(m => ({
-      id: m.id, name: m.name,
-      allergens: Array.isArray(m.allergens)
-        ? m.allergens
-        : Object.keys(m.allergens||{}).filter(k=>m.allergens[k]),
-    })),
-  ], [user, family, allergens]);
+  // ── Sikker søgning: skjul produkter der er farlige for den valgte profil-
+  // gruppe, og vis spor-produkter i stedet for at gemme dem — samme regel
+  // som i indkøbslistens "Tilføj vare" ── ──────────────────────────────────
+  const resultsWithSafety = searchResults
+    .map(p => ({ product: p, status: compareAllergens(p.allergen_flags||{}, activeIds).status }))
+    .filter(r => r.status !== "danger");
+  const hiddenUnsafeCount = searchResults.length - resultsWithSafety.length;
 
-  const activeProfileObjs = profiles.filter(p => activeProfiles.includes(p.id));
+  const activeFamily = family.filter(m => activeProfiles.includes(m.id));
+  const meActive = activeProfiles.includes("me");
+  const allProfileIds = ["me", ...family.map(m => m.id)];
+  const isAllActive = allProfileIds.every(id => activeProfiles.includes(id));
+  const searchScopeLabel = isAllActive && family.length > 0
+    ? "hele familien"
+    : ([meActive && "dig", ...activeFamily.map(m => m.name.split(" ")[0])].filter(Boolean).join(", ") || "dig");
 
-  // Alle aktive allergen-IDs: fra aktive profiler + manuelle
-  const effectiveIds = useMemo(() => [...new Set([...activeIds, ...manualAllergens])], [activeIds, manualAllergens]);
-
-  // Filtrerede søgeresultater
-  const visibleResults = useMemo(() => searchResults.filter(p => {
-    if (searchCategory !== "alle" && p.category !== searchCategory) return false;
-    if (effectiveIds.length > 0) {
-      const { status } = compareAllergens(p.allergen_flags||{}, effectiveIds);
-      if (status !== "safe") return false;
-    } else if (showSafeOnly) {
-      const { status } = compareAllergens(p.allergen_flags||{}, effectiveIds);
-      if (status !== "safe") return false;
-    }
-    return true;
-  }), [searchResults, searchCategory, effectiveIds, showSafeOnly]);
+  // Samme "Aktive profiler"-valg som bruges til scanning, favoritter og
+  // indkøbslistens søgning — justér her, og det gælder alle steder.
+  const toggleAllProfiles = () => setActiveProfiles(isAllActive ? ["me"] : allProfileIds);
+  const toggleOneProfile = (id) => {
+    if (isAllActive) { setActiveProfiles([id]); return; }
+    const next = activeProfiles.includes(id) ? activeProfiles.filter(x => x !== id) : [...activeProfiles, id];
+    setActiveProfiles(next.length === 0 ? [id] : next);
+  };
 
   return (
     <div className="screen fade-in" style={UI.pb120}>
       <div className="screen-title">Søg varer</div>
 
-      {/* ── Profil-filter ── */}
-      <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"12px 14px", marginBottom:10 }}>
-        <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:10 }}>
-          Filtrér efter profil
-        </div>
-        <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-          {profiles.map(p => {
-            const isActive = activeProfiles.includes(p.id);
-            const allergenLabels = p.allergens.map(id => ALLERGENS.find(a=>a.id===id)).filter(Boolean);
-            return (
-              <div key={p.id} style={UI.ucurpointer}
-                onClick={() => setActiveProfiles(prev =>
-                  prev.includes(p.id) ? prev.filter(x=>x!==p.id) : [...prev, p.id]
-                )}>
-                <div style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 10px 6px 6px", borderRadius:100, border:`1.5px solid ${isActive ? "var(--green)" : "var(--border)"}`, background: isActive ? "var(--green-lt)" : "var(--paper2)", transition:"all .15s" }}>
-                  <div style={{ width:24, height:24, borderRadius:"50%", background: isActive ? "var(--green)" : "var(--muted)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
-                    {initials(p.name)}
-                  </div>
-                  <div>
-                    <div style={{ fontSize:12, fontWeight:700, color: isActive ? "var(--green)" : "var(--ink)" }}>
-                      {p.name?.split(" ")[0] || "Mig"}
-                    </div>
-                    {p.allergens.length > 0 ? (
-                      <div style={{ fontSize:10, color: isActive ? "var(--green)" : "var(--muted)", marginTop:1 }}>
-                        {allergenLabels.slice(0,3).map(a=>a.emoji).join("")}
-                        {allergenLabels.length > 3 ? ` +${allergenLabels.length-3}` : ""}
-                        {" "}{p.allergens.length} allergen{p.allergens.length!==1?"er":""}
-                      </div>
-                    ) : (
-                      <div style={UI.muted10}>Ingen allergener</div>
-                    )}
-                  </div>
-                  {isActive && (
-                    <div style={{ width:14, height:14, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Aktive allergener forklaret */}
-        {activeProfileObjs.length > 0 && effectiveIds.length > 0 && (
-          <div style={{ marginTop:10, padding:"8px 10px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10 }}>
-            <div style={{ fontSize:10, fontWeight:700, color:"var(--red)", marginBottom:4 }}>
-              Filtrerer på {effectiveIds.length} allergen{effectiveIds.length!==1?"er":""}
-              {" · "}{activeProfileObjs.map(p=>p.name?.split(" ")[0]).join(", ")}
-            </div>
-            <div style={UI.wrapGap4}>
-              {effectiveIds.map(id => {
-                const a = ALLERGENS.find(x=>x.id===id);
-                const fromManual = manualAllergens.includes(id);
-                return a ? (
-                  <span key={id} style={{ fontSize:10, fontWeight:600, padding:"2px 7px", borderRadius:100, background: fromManual ? "var(--amber-lt)" : "var(--red-lt)", color: fromManual ? "var(--amber)" : "var(--red)", border:`1px solid ${fromManual ? "var(--amber-md)" : "var(--red-md)"}` }}>
-                    {a.emoji} {a.label}{fromManual ? " ✎" : ""}
-                  </span>
-                ) : null;
-              })}
-            </div>
-          </div>
-        )}
-        {activeProfiles.length === 0 && (
-          <div style={{ marginTop:8, fontSize:11, color:"var(--muted)" }}>
-            Ingen profil valgt — viser alle produkter
-          </div>
-        )}
+      {/* ── Søgefelt ── */}
+      <div className="input-row" style={{ marginBottom:10 }}>
+        <input className="field" placeholder="Søg eller skriv en vare…"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }} />
       </div>
 
-      {/* ── Manuel allergen-filter + kategori — komprimeret på samme linje ── */}
-      <div style={UI.mb10}>
-        <div style={{ display:"flex", gap:8 }}>
-          <div onClick={() => setAllergenFilterOpen(v=>!v)}
-            style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius: allergenFilterOpen ? "12px 12px 0 0" : 12, cursor:"pointer" }}>
-            <div style={{ display:"flex", alignItems:"center", gap:8, minWidth:0, overflow:"hidden" }}>
-              <span style={{ ...UI.ufs13_fw700_cink, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>Allergener</span>
-              {manualAllergens.length > 0 && (
-                <div style={{ fontSize:10, fontWeight:700, padding:"2px 7px", borderRadius:100, background:"var(--amber-lt)", color:"var(--amber)", border:"1px solid var(--amber-md)", flexShrink:0 }}>
-                  {manualAllergens.length}
-                </div>
-              )}
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0,
-              transform: allergenFilterOpen ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
-              <path strokeLinecap="round" d="M19 9l-7 7-7-7"/>
-            </svg>
+      {/* ── Sikker søgning: hvem filtreres der for ── */}
+      {searchResults.length > 0 && (
+        <div style={{ padding:"8px 10px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, marginBottom:10 }}>
+          <div style={{ fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>
+            🛡️ Sikker søgning for {searchScopeLabel}
           </div>
-          <CategorySelect value={searchCategory} onChange={setSearchCategory} options={CATEGORIES}
-            style={{ flex:1, minWidth:0 }} />
-        </div>
-        {allergenFilterOpen && (
-          <div style={{ border:"1px solid var(--border)", borderTop:"none", borderRadius:"0 0 12px 12px", background:"var(--surface)", padding:14 }}>
-            <div style={UI.grid2gap6}>
-              {ALLERGENS.map(a => {
-                const on      = manualAllergens.includes(a.id);
-                const inActive = activeIds.includes(a.id);
+          {family.length > 0 && (
+            <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+              <span onClick={toggleAllProfiles}
+                style={{ padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:700, cursor:"pointer", background: isAllActive ? "var(--green)" : "var(--surface)", color: isAllActive ? "var(--on-green)" : "var(--muted)", border:`1px solid ${isAllActive ? "var(--green)" : "var(--border2)"}` }}>
+                Alle
+              </span>
+              <span onClick={() => toggleOneProfile("me")}
+                style={{ padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:700, cursor:"pointer", background: !isAllActive && meActive ? "var(--green)" : "var(--surface)", color: !isAllActive && meActive ? "var(--on-green)" : "var(--muted)", border:`1px solid ${!isAllActive && meActive ? "var(--green)" : "var(--border2)"}` }}>
+                Mig
+              </span>
+              {family.map(m => {
+                const on = !isAllActive && activeProfiles.includes(m.id);
                 return (
-                  <div key={a.id}
-                    onClick={() => !inActive && setManualAllergens(prev =>
-                      prev.includes(a.id) ? prev.filter(x=>x!==a.id) : [...prev, a.id]
-                    )}
-                    style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 10px", borderRadius:10, cursor: inActive ? "default" : "pointer", border:`1.5px solid ${on||inActive ? "var(--red)" : "var(--border)"}`, background: inActive ? "var(--red-lt)" : on ? "var(--red-lt)" : "var(--paper2)", opacity: inActive ? .6 : 1 }}>
-                    <span style={UI.fs16}>{a.emoji}</span>
-                    <div style={UI.flexMin}>
-                      <div style={{ fontSize:12, fontWeight:700, color: on||inActive ? "var(--red)" : "var(--ink)" }}>
-                        {a.label}
-                      </div>
-                      {inActive && <div style={{ fontSize:9, color:"var(--muted)" }}>Fra profil</div>}
-                    </div>
-                    {(on || inActive) && (
-                      <div style={{ width:14, height:14, borderRadius:"50%", background:"var(--red)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
-                      </div>
-                    )}
-                  </div>
+                  <span key={m.id} onClick={() => toggleOneProfile(m.id)}
+                    style={{ padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:700, cursor:"pointer", background: on ? "var(--green)" : "var(--surface)", color: on ? "var(--on-green)" : "var(--muted)", border:`1px solid ${on ? "var(--green)" : "var(--border2)"}` }}>
+                    {m.name.split(" ")[0]}
+                  </span>
                 );
               })}
             </div>
-            {manualAllergens.length > 0 && (
-              <button onClick={() => setManualAllergens([])}
-                style={{ marginTop:10, fontSize:11, fontWeight:600, color:"var(--muted)", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)" }}>
-                Ryd manuelle filter ×
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* ── Kun-sikre ── */}
-      {effectiveIds.length === 0 && (
-        <div style={{ marginBottom:16 }}>
-          <div className={`filter-chip${showSafeOnly?" active":""}`}
-            onClick={() => setShowSafeOnly(v => !v)}
-            style={UI.uwsnowrap}>
-            {showSafeOnly ? "✓ Kun sikre" : "Kun sikre"}
-          </div>
-        </div>
-      )}
-
-      {/* ── Søgefelt — fremhævet, lige over resultaterne ── */}
-      <div style={{ display:"flex", gap:8, marginBottom:8, padding:10, background:"var(--surface)", border:"1.5px solid var(--green)", borderRadius:16, boxShadow:"var(--sh2)" }}>
-        <div style={{ flex:1, position:"relative", display:"flex", alignItems:"center" }}>
-          <span style={{ position:"absolute", left:12, fontSize:16, pointerEvents:"none", opacity:.6 }}>🔍</span>
-          <input
-            className="field"
-            placeholder="Søg på produkt eller mærke…"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
-            style={{ flex:1, marginBottom:0, padding:"12px 14px 12px 36px", fontSize:15, fontWeight:600, border:"none", background:"var(--paper2)", borderRadius:10 }}
-          />
-        </div>
-        <button className="btn btn-primary"
-          style={{ whiteSpace:"nowrap", padding:"0 20px", fontWeight:800 }}
-          onClick={() => document.activeElement?.blur?.()}
-          disabled={!searchQuery.trim()}>
-          Søg
-        </button>
-      </div>
-      {searchQuery && (
-        <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12, textAlign:"right" }}>
-          {visibleResults.length} resultat{visibleResults.length!==1?"er":""}
+          )}
         </div>
       )}
 
@@ -241,12 +87,12 @@ export default function SearchScreen({
       {searchLoading && (
         <Loader text="Søger…" />
       )}
-      {!searchLoading && searchQuery && visibleResults.length === 0 && (
+      {!searchLoading && searchQuery && resultsWithSafety.length === 0 && (
         <div className="empty-state">
           <div className="empty-txt">Ingen resultater</div>
           <div className="empty-sub">
-            {showSafeOnly || effectiveIds.length > 0
-              ? "Prøv at fjerne filtre eller søg efter noget andet"
+            {hiddenUnsafeCount > 0
+              ? `${hiddenUnsafeCount} produkt${hiddenUnsafeCount!==1?"er":""} skjult — indeholder allergener for ${searchScopeLabel}`
               : "Prøv et andet søgeord"}
           </div>
         </div>
@@ -258,12 +104,17 @@ export default function SearchScreen({
         </div>
       )}
 
-      {visibleResults.map(p => (
-        <SearchResultRow key={p.id} product={p} effectiveIds={effectiveIds}
+      {resultsWithSafety.map(({ product: p }) => (
+        <SearchResultRow key={p.id} product={p} effectiveIds={activeIds}
           onOpen={() => lookupProduct(p.ean||p.id)}
           onAddToList={() => addToList({ name: p.name, ean: p.ean || p.code, id: p.id, image_url: p.image_url })}
         />
       ))}
+      {resultsWithSafety.length > 0 && hiddenUnsafeCount > 0 && (
+        <div style={{ padding:"8px 12px", fontSize:11, color:"var(--muted)", textAlign:"center" }}>
+          🚫 {hiddenUnsafeCount} produkt{hiddenUnsafeCount!==1?"er":""} mere skjult — indeholder allergener for {searchScopeLabel}
+        </div>
+      )}
     </div>
   );
 }
