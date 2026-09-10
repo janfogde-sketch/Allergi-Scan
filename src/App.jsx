@@ -168,9 +168,13 @@ export default function EatSafe() {
                 onSignupSuccess: () => setOnboardStep(0) });
 
   const {
+    lists, activeList, activeListId, setActiveListId,
     shoppingList, setShoppingList,
     shoppingListId, setShoppingListId,
     newItemName, setNewItemName,
+    familyMembers, loadFamilyMembers,
+    createList, renameList, setListType, deleteList, joinByCode,
+    getListAccess, grantAccess, revokeAccess,
     loadShoppingList, addToList, toggleItem, removeItem, clearDone,
   } = useShoppingList({ accessToken, userId });
 
@@ -793,10 +797,16 @@ const lookupProduct = useCallback(async (ean) => {
   }), [history, historyLoading, favorites, loadHistory, toggleFavorite, isFavorite]);
 
   const shoppingContextValue = useMemo(() => ({
+    lists, activeList, activeListId, setActiveListId,
     shoppingList, setShoppingList, shoppingListId, setShoppingListId,
     newItemName, setNewItemName, loadShoppingList,
+    familyMembers, loadFamilyMembers,
+    createList, renameList, setListType, deleteList, joinByCode,
+    getListAccess, grantAccess, revokeAccess,
     addToList, toggleItem, removeItem, clearDone,
-  }), [shoppingList, shoppingListId, newItemName, loadShoppingList, addToList, toggleItem, removeItem, clearDone]);
+  }), [lists, activeList, activeListId, setActiveListId, shoppingList, shoppingListId, newItemName, loadShoppingList,
+       familyMembers, loadFamilyMembers, createList, renameList, setListType, deleteList, joinByCode,
+       getListAccess, grantAccess, revokeAccess, addToList, toggleItem, removeItem, clearDone]);
 
   const familyFormContextValue = useMemo(() => ({
     newMemberName, setNewMemberName,

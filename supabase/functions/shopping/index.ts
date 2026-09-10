@@ -6,6 +6,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // uden forvekslelige tegn (0/O, 1/I/L)
+function generateCode() {
+  let code = "";
+  for (let i = 0; i < 6; i++) code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+  return code;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -35,13 +42,26 @@ Deno.serve(async (req) => {
     { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 
-  // En liste kan tilgås af sin ejer, eller af en bruger med en
+  // Alle brugere caller deler en "familiegruppe" med (sig selv + alle der
+  // har accepteret/sendt en family_invite til/fra caller) — samme gruppe
+  // RLS-politikkerne for type='family'-lister bruger.
+  async function callerFamilyGroup() {
+    const { data } = await supabase.rpc("family_group", { p_uid: caller.id });
+    return (data ?? []).map((r) => (typeof r === "string" ? r : r.family_group));
+  }
+
+  // En liste kan tilgås af sin ejer, af hele ejerens familiegruppe (hvis
+  // listen er type='family'), eller af en bruger med en
   // shopping_list_access-række (permission "edit" kræves for skrivning).
   async function canAccessList(listId, requireEdit) {
     const { data: list } = await supabase
-      .from("shopping_lists").select("owner_id").eq("id", listId).single();
+      .from("shopping_lists").select("owner_id, type").eq("id", listId).single();
     if (!list) return false;
     if (list.owner_id === caller.id) return true;
+    if (list.type === "family") {
+      const group = await callerFamilyGroup();
+      if (group.includes(list.owner_id)) return true;
+    }
     const { data: access } = await supabase
       .from("shopping_list_access").select("permission")
       .eq("list_id", listId).eq("user_id", caller.id).maybeSingle();
@@ -53,22 +73,102 @@ Deno.serve(async (req) => {
   const parts = url.pathname.split("/").filter(Boolean);
   const method = req.method;
 
-  // Identificer om vi arbejder med items eller lister
+  // Identificer om vi arbejder med items, adgang, medlemmer eller lister
   const isItems = parts.includes("items");
+  const isAccess = parts.includes("access");
+  const isJoin = parts[parts.length - 1] === "join";
+  const isFamilyMembers = parts[parts.length - 1] === "family-members";
   const itemId = isItems ? parts[parts.length - 1] : null;
+  const accessUserId = isAccess && parts[parts.length - 1] !== "access" ? parts[parts.length - 1] : null;
   const listId = isItems
     ? parts[parts.indexOf("items") - 1]
-    : parts[parts.length - 1] === "shopping"
+    : isAccess
+    ? parts[parts.indexOf("access") - 1]
+    : (isJoin || isFamilyMembers || parts[parts.length - 1] === "shopping")
     ? null
     : parts[parts.length - 1];
 
   try {
     // ─────────────────────────────────────
+    // FAMILIEGRUPPE (til "vælg personer"-vælgeren)
+    // ─────────────────────────────────────
+
+    if (method === "GET" && isFamilyMembers) {
+      const group = (await callerFamilyGroup()).filter((id) => id !== caller.id);
+      if (group.length === 0) {
+        return new Response(JSON.stringify({ success: true, members: [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { data: members, error } = await supabase
+        .from("users").select("id, name, email").in("id", group);
+      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: true, members }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // ─────────────────────────────────────
+    // TILSLUT VIA KODE
+    // ─────────────────────────────────────
+
+    if (method === "POST" && isJoin) {
+      const { code } = await req.json();
+      if (!code) return new Response(JSON.stringify({ error: "code er påkrævet" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+      const { data: list } = await supabase
+        .from("shopping_lists").select("id, owner_id, name").eq("share_link", code.trim().toUpperCase()).maybeSingle();
+      if (!list) return new Response(JSON.stringify({ error: "Ugyldig kode" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (list.owner_id === caller.id) return new Response(JSON.stringify({ error: "Du er allerede ejer af denne liste" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+      const { error } = await supabase
+        .from("shopping_list_access")
+        .upsert({ list_id: list.id, user_id: caller.id, permission: "edit" }, { onConflict: "list_id,user_id" });
+      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+      return new Response(JSON.stringify({ success: true, list }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // ─────────────────────────────────────
+    // ADGANG (delt med udvalgte personer)
+    // ─────────────────────────────────────
+
+    // GET — hvem har adgang til listen (kun ejeren)
+    if (method === "GET" && isAccess && !accessUserId) {
+      const { data: list } = await supabase.from("shopping_lists").select("owner_id").eq("id", listId).single();
+      if (!list || list.owner_id !== caller.id) return new Response(JSON.stringify({ error: "Kun ejeren kan se listens adgang" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const { data: access, error } = await supabase
+        .from("shopping_list_access").select("user_id, permission, granted_at, users(name, email)").eq("list_id", listId);
+      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: true, access }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // POST — giv en bruger adgang (kun ejeren)
+    if (method === "POST" && isAccess && !accessUserId) {
+      const { user_id, permission } = await req.json();
+      if (!user_id) return new Response(JSON.stringify({ error: "user_id er påkrævet" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const { data: list } = await supabase.from("shopping_lists").select("owner_id").eq("id", listId).single();
+      if (!list || list.owner_id !== caller.id) return new Response(JSON.stringify({ error: "Kun ejeren kan give adgang til listen" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+      const { data: access, error } = await supabase
+        .from("shopping_list_access")
+        .upsert({ list_id: listId, user_id, permission: permission === "read" ? "read" : "edit" }, { onConflict: "list_id,user_id" })
+        .select().single();
+      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: true, access }), { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // DELETE — fjern en brugers adgang (kun ejeren)
+    if (method === "DELETE" && isAccess && accessUserId) {
+      const { data: list } = await supabase.from("shopping_lists").select("owner_id").eq("id", listId).single();
+      if (!list || list.owner_id !== caller.id) return new Response(JSON.stringify({ error: "Kun ejeren kan fjerne adgang til listen" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const { error } = await supabase.from("shopping_list_access").delete().eq("list_id", listId).eq("user_id", accessUserId);
+      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // ─────────────────────────────────────
     // LISTER
     // ─────────────────────────────────────
 
-    // GET — hent alle lister for en bruger
-    if (method === "GET" && !listId && !isItems) {
+    // GET — hent alle lister brugeren har adgang til (egne + familiedelte + eksplicit delte)
+    if (method === "GET" && !listId && !isItems && !isAccess) {
       const userId = url.searchParams.get("user_id");
       if (!userId) {
         return new Response(
@@ -81,11 +181,21 @@ Deno.serve(async (req) => {
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
 
-      const { data: lists, error } = await supabase
+      const group = await callerFamilyGroup();
+      const { data: accessRows } = await supabase.from("shopping_list_access").select("list_id").eq("user_id", userId);
+      const sharedListIds = (accessRows ?? []).map((r) => r.list_id);
+
+      let query = supabase
         .from("shopping_lists")
         .select("*, shopping_list_items(*)")
-        .eq("owner_id", userId)
         .order("created_at", { ascending: false });
+
+      const orParts = [`owner_id.eq.${userId}`];
+      if (group.length > 1) orParts.push(`and(type.eq.family,owner_id.in.(${group.filter((id) => id !== userId).join(",")}))`);
+      if (sharedListIds.length > 0) orParts.push(`id.in.(${sharedListIds.join(",")})`);
+      query = query.or(orParts.join(","));
+
+      const { data: lists, error } = await query;
 
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -116,25 +226,27 @@ Deno.serve(async (req) => {
     }
 
     // POST — opret ny liste
-    if (method === "POST" && !listId && !isItems) {
-      const { owner_id, name, type, family_id } = await req.json();
+    if (method === "POST" && !listId && !isItems && !isAccess && !isJoin) {
+      const { owner_id, name, type } = await req.json();
 
       if (!owner_id || !name) return new Response(JSON.stringify({ error: "owner_id og name er påkrævet" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       if (owner_id !== caller.id) return new Response(JSON.stringify({ error: "Ikke autoriseret til denne bruger" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-      const shareLink = crypto.randomUUID();
-
-      const { data: list, error } = await supabase
-        .from("shopping_lists")
-        .insert({
-          owner_id,
-          name,
-          type: type ?? "personal",
-          family_id: family_id ?? null,
-          share_link: shareLink,
-        })
-        .select()
-        .single();
+      // Prøv et par gange for at undgå kollision med en eksisterende kode
+      let list, error;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        ({ data: list, error } = await supabase
+          .from("shopping_lists")
+          .insert({
+            owner_id,
+            name,
+            type: type === "family" ? "family" : "personal",
+            share_link: generateCode(),
+          })
+          .select()
+          .single());
+        if (!error) break;
+      }
 
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
