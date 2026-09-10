@@ -561,6 +561,16 @@ const lookupProduct = useCallback(async (ean) => {
     if (cached) {
       traceLog(tid, "scan:cache-hit");
       setScanResult(cached); setScreen(SCREENS.RESULT);
+      // Alternativer er IKKE en del af det cachede result-objekt — uden dette
+      // genbruger et cache-hit bare hvad end alternatives-state tilfældigvis
+      // stod på fra en tidligere scanning i samme session (eller intet, hvis
+      // det er appens første scanning), i stedet for at vise de rigtige
+      // alternativer til DETTE produkt.
+      if (cached.status === "danger" || cached.status === "warn") {
+        loadAlternatives(cached.category, ean.trim());
+      } else {
+        clearAlternatives();
+      }
       return;
     }
     // Offline uden cache — vis besked
@@ -1203,7 +1213,6 @@ const lookupProduct = useCallback(async (ean) => {
             deleteConfirmText={deleteConfirmText} setDeleteConfirmText={setDeleteConfirmText}
             deletingAccount={deletingAccount} deleteOwnAccount={deleteOwnAccount}
             customInput={customInput} setCustomInput={setCustomInput}
-            setScanResult={setScanResult}
             lookupProduct={lookupProduct}
           />
           </ErrorBoundary>

@@ -133,7 +133,6 @@ export default function ProfileScreen({
   deleteConfirmText, setDeleteConfirmText,
   deletingAccount, deleteOwnAccount,
   customInput, setCustomInput,
-  setScanResult,
   lookupProduct,
 }) {
   const { user, setUser, userId, accessToken, clearAuth, loginEmail } = useAuthContext();
@@ -237,10 +236,13 @@ export default function ProfileScreen({
               const s = h.result||h.status;
               const name = h.products?.name||h.name||h.ean_scanned||"Ukendt";
               return (
-                <div key={i} className="hist-row" style={{ padding:"12px 0" }} onClick={() => {
-                  setScanResult({ code:h.ean_scanned||h.code, name, brand:h.products?.brand||h.brand||"", status:s, headline:s==="safe"?"Sikkert produkt":s==="danger"?"Indeholder allergen!":"Mulige spor", flags:[], summary:"", timestamp:new Date(h.scanned_at||h.timestamp).getTime() });
-                  setScreen(SCREENS.RESULT);
-                }}>
+                <div key={i} className="hist-row" style={{ padding:"12px 0" }}
+                  // Genbruger samme lookupProduct-kald som "Senest scannet" og
+                  // favoritter — den viser et cachet fuldt resultat øjeblikkeligt
+                  // hvis produktet allerede er set, ellers henter den friske data.
+                  // Et manuelt stub-objekt her (som tidligere) manglede billede,
+                  // kategori, ingredienser og alt andet end navn/status.
+                  onClick={() => lookupProduct(h.ean_scanned || h.code)}>
                   <div className={`hist-dot ${s}`} />
                   <div className="hist-info"><div className="hist-name">{name}</div><div className="hist-time">{timeAgo(h.scanned_at||h.timestamp)}</div></div>
                   <div className={`badge ${s==="safe"?"safe":s==="danger"?"danger":s==="not_found"?"":"warn"}`}>{s==="safe"?"Sikker":s==="danger"?"Farlig":s==="not_found"?"Ikke fundet":"Advarsel"}</div>

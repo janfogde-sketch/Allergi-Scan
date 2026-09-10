@@ -129,30 +129,36 @@ export default function ResultScreen({
             <span style={UI.ufs12_fw800_ls01em_ttuppercas}>{scanResult.headline}</span>
           </div>
         )}
-        {scanResult.image_url
-          ? <img loading="lazy" src={scanResult.image_url} alt={scanResult.name} className="product-hero-img"
-              onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
-          : null}
-        <div className="product-hero-img-placeholder"
-          style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"column", gap:8, background:"var(--paper2)", borderRadius:12, padding:20, margin:"0 0 10px" }}>
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="var(--border2)" strokeWidth="1.5">
-            <rect x="4" y="10" width="40" height="30" rx="3"/>
-            <circle cx="16" cy="20" r="4"/>
-            <path strokeLinecap="round" d="M4 34l10-8 8 6 6-4 16 12"/>
-          </svg>
-          <div style={UI.ufs11_cmuted_fw500}>Ingen produktbillede</div>
-        </div>
+        {/* Billede/placeholder i egen position:relative-boks, så knapperne ovenpå
+            altid forankres til BILLEDET — uafhængigt af om og hvor høj
+            statusbanneret ovenfor er (den blev tidligere positioneret relativt
+            til hele kortet, så knapperne flyttede sig med bannerets højde). */}
+        <div style={{ position:"relative" }}>
+          {scanResult.image_url
+            ? <img loading="lazy" src={scanResult.image_url} alt={scanResult.name} className="product-hero-img"
+                onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
+            : null}
+          <div className="product-hero-img-placeholder"
+            style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"column", gap:8, background:"var(--paper2)", borderRadius:12, padding:20, margin:"0 0 10px" }}>
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="var(--border2)" strokeWidth="1.5">
+              <rect x="4" y="10" width="40" height="30" rx="3"/>
+              <circle cx="16" cy="20" r="4"/>
+              <path strokeLinecap="round" d="M4 34l10-8 8 6 6-4 16 12"/>
+            </svg>
+            <div style={UI.ufs11_cmuted_fw500}>Ingen produktbillede</div>
+          </div>
 
-        {/* Sekundære handlinger — små ikon-knapper ovenpå billedet, i tommelfinger-nær placering */}
-        <div style={{ position:"absolute", top:12, right:12, display:"flex", gap:8 }}>
-          <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} onClick={() => toggleFavorite(scanResult)}
-            style={UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc}>
-            <Icon name="heart" size={15} color={fav ? "var(--red)" : "var(--ink2)"} />
-          </button>
-          <button aria-label="Del produkt" onClick={() => { if(navigator.share) navigator.share({ title:scanResult.name, text:scanResult.headline }); }}
-            style={UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc}>
-            <Icon name="share" size={15} color="var(--ink2)" />
-          </button>
+          {/* Sekundære handlinger — små ikon-knapper ovenpå billedet, i tommelfinger-nær placering */}
+          <div style={{ position:"absolute", top:12, right:12, display:"flex", gap:8 }}>
+            <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} onClick={() => toggleFavorite(scanResult)}
+              style={UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc}>
+              <Icon name="heart" size={15} color={fav ? "var(--red)" : "var(--ink2)"} />
+            </button>
+            <button aria-label="Del produkt" onClick={() => { if(navigator.share) navigator.share({ title:scanResult.name, text:scanResult.headline }); }}
+              style={UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc}>
+              <Icon name="share" size={15} color="var(--ink2)" />
+            </button>
+          </div>
         </div>
 
         <div className="product-hero-body">
