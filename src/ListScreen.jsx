@@ -154,7 +154,7 @@ export default function ListScreen({
   }, [newItemName, accessToken]);
 
   const pickItemProduct = (p) => {
-    addToList({ name: p.name, ean: p.ean || p.code, id: p.id });
+    addToList({ name: p.name, ean: p.ean || p.code, id: p.id, image_url: p.image_url });
     setItemResults([]);
     setItemFocused(false);
   };
@@ -323,7 +323,7 @@ export default function ListScreen({
                     </div>
                     <div style={{ width:7, height:7, borderRadius:"50%", background:statusColor, flexShrink:0 }} />
                     <button className="btn btn-ghost btn-sm" style={{ ...UI.ufs11_p3px8px, flexShrink:0 }}
-                      onClick={e => { e.stopPropagation(); addToList({ name: p.name, ean: p.ean || p.code, id: p.id }); }}>
+                      onClick={e => { e.stopPropagation(); addToList({ name: p.name, ean: p.ean || p.code, id: p.id, image_url: p.image_url }); }}>
                       + Liste
                     </button>
                   </div>
@@ -358,6 +358,7 @@ export default function ListScreen({
             <div key={item.id} className="list-item">
               <div className="list-check" role="checkbox" aria-checked="false" aria-label={`Markér "${item.name}" som købt`} tabIndex={0}
                 onClick={() => toggleItem(item.id)} onKeyDown={e => e.key === "Enter" && toggleItem(item.id)} />
+              {item.ean && <ProductImage product={item} size={22} />}
               {item.ean
                 ? <div className="list-name" role="link" tabIndex={0} style={{ cursor:"pointer", textDecoration:"underline", textDecorationColor:"var(--border2)", textUnderlineOffset:3 }}
                     onClick={() => lookupProduct(item.ean)} onKeyDown={e => e.key === "Enter" && lookupProduct(item.ean)}>{item.name}</div>
@@ -383,6 +384,7 @@ export default function ListScreen({
             <div key={item.id} className="list-item done">
               <div className="list-check checked" role="checkbox" aria-checked="true" aria-label={`Fjern "${item.name}" fra købt`} tabIndex={0}
                 onClick={() => toggleItem(item.id)} onKeyDown={e => e.key === "Enter" && toggleItem(item.id)}>✓</div>
+              {item.ean && <ProductImage product={item} size={22} />}
               {item.ean
                 ? <div className="list-name done" role="link" tabIndex={0} style={{ cursor:"pointer" }}
                     onClick={() => lookupProduct(item.ean)} onKeyDown={e => e.key === "Enter" && lookupProduct(item.ean)}>{item.name}</div>
