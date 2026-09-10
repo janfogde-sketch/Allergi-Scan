@@ -1,8 +1,8 @@
 // @ts-nocheck
 import React, { useState, useRef, Suspense } from "react";
-import { ALLERGENS, SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
-         ALLERGEN_EXAMPLES, E_NUMBERS, HOME_TIPS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
-import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, initials, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo, isValidEanChecksum } from "./helpers.js";
+import { SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
+         ALLERGEN_EXAMPLES, E_NUMBERS, HOME_TIPS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
+import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo, isValidEanChecksum } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage, LazyFallback } from "./SharedComponents.jsx";
 import { DEMO_SLIDES } from "./demoSlides.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -155,7 +155,6 @@ export default function ScannerScreen({
   showNutrition, setShowNutrition,
   showManualEan, setShowManualEan,
   showSafeOnly, setShowSafeOnly,
-  profilePopup, setProfilePopup,
   greeting,
   cameraActive, setCameraActive,
   galleryInputRef,
@@ -185,7 +184,7 @@ export default function ScannerScreen({
   altLoading,
 }) {
   const { user, userId, accessToken } = useAuthContext();
-  const { family, activeProfiles, setActiveProfiles, allergens, customAllerg } = useProfileContext();
+  const { family, activeProfiles, setActiveProfiles, allergens } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
   const { history, favorites, toggleFavorite, isFavorite } = useHistoryContext();
   const { shoppingList, newItemName, setNewItemName, addToList, toggleItem, removeItem, clearDone } = useShoppingContext();
@@ -204,114 +203,6 @@ export default function ScannerScreen({
       .filter(m => activeProfiles.includes(m.id))
       .flatMap(m => Array.isArray(m.allergens) ? m.allergens : Object.keys(m.allergens||{}).filter(k => m.allergens[k])),
   ].filter((v, i, a) => a.indexOf(v) === i); // deduplicate
-
-  const renderProfilePopup = () => {
-    const isUser = profilePopup === "user";
-    const member = isUser ? null : family.find(m => m.id === profilePopup);
-    const pName = isUser ? (user.name || "Din profil") : member?.name;
-    const pAllergens = isUser ? allergens : (member?.allergens || []);
-    const pCustom = isUser ? customAllerg : (member?.customAllerg || []);
-    const pDiets = isUser ? (user.diets || []) : (member?.diets || []);
-    const pENumbers = isUser ? selectedENumbers : (member?.eNumbers || []);
-    const isActive = isUser
-      ? activeProfiles.includes("user")
-      : activeProfiles.includes(profilePopup);
-    return (
-      <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)" }}
-        onClick={() => setProfilePopup(null)}>
-        <div style={{ position:"absolute", top:80, left:16, right:16,
-          background:"var(--sheet)", borderRadius:20, padding:"20px 18px",
-          boxShadow:"0 8px 40px rgba(0,0,0,.2)" }}
-          onClick={e => e.stopPropagation()}>
-
-          {/* Header */}
-          <div style={UI.udflex_aicenter_g12_mb16}>
-            <div style={{ width:44, height:44, borderRadius:"50%",
-              background: isUser ? "var(--green)" : (member?.color || "var(--ink)"),
-              color:"var(--ink)", display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize:16, fontWeight:800, flexShrink:0 }}>
-              {initials(pName)}
-            </div>
-            <div style={S.flex1}>
-              <div style={{ fontWeight:800, fontSize:16, color:"var(--ink)" }}>{pName}</div>
-              <div style={UI.ufs12_cmuted_mt1}>
-                {isActive ? "✅ Aktiv i søgning" : "⬜ Ikke aktiv i søgning"}
-              </div>
-            </div>
-            <div onClick={() => setProfilePopup(null)} onKeyDown={e => e.key === "Enter" && setProfilePopup(null)}
-              role="button" aria-label="Luk" tabIndex={0}
-              style={{ cursor:"pointer", padding:10, margin:-6, opacity:.5 }}>×</div>
-          </div>
-
-          {/* Allergier */}
-          {pAllergens.length > 0 ? (
-            <div style={S.mb12}>
-              <div style={S.label}>Allergier / intolerancer</div>
-              <div style={UI.wrapGap5}>
-                {pAllergens.map(id => {
-                  const a = ALLERGENS.find(x => x.id === id);
-                  const isInt = false; // intolerance-suffiks fjernet
-                  return (
-                    <div key={id} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
-                      background: isInt ? "var(--amber-lt)" : "var(--red-lt)",
-                      color: isInt ? "var(--amber)" : "var(--red)",
-                      border: `1px solid ${isInt ? "var(--amber)" : "var(--red)"}` }}>
-                      {a?.label || id}
-                    </div>
-                  );
-                })}
-                {pCustom.map((c,i) => (
-                  <div key={i} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
-                    background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" }}>
-                    {c}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div style={UI.ufs12_cmuted_mb12}>Ingen allergier registreret</div>
-          )}
-
-          {/* Diæt */}
-          {pDiets.length > 0 && (
-            <div style={S.mb12}>
-              <div style={S.label}>Diæt</div>
-              <div style={UI.wrapGap5}>
-                {pDiets.map(d => (
-                  <div key={d} style={{ padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700,
-                    background:"var(--green-lt)", color:"var(--green)", border:"1px solid var(--green-mid)" }}>
-                    {DIETS.find(x=>x.id===d)?.label || d}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* E-numre */}
-          {pENumbers.length > 0 && (
-            <div style={S.mb12}>
-              <div style={S.label}>E-numre</div>
-              <div style={UI.ufs12_cmuted2}>{pENumbers.length} E-numre overvåges</div>
-            </div>
-          )}
-
-          {/* Aktiver/deaktiver */}
-          <button className="btn btn-full" style={{
-            marginTop:4,
-            background: isActive ? "var(--paper2)" : "var(--green)",
-            color: isActive ? "var(--muted)" : "var(--ink)",
-            border: `1px solid ${isActive ? "var(--border)" : "var(--green)"}`,
-          }} onClick={() => {
-            const pid = isUser ? "user" : profilePopup;
-            setActiveProfiles(p => p.includes(pid) ? p.filter(x=>x!==pid) : [...p, pid]);
-            setProfilePopup(null);
-          }}>
-            {isActive ? "Deaktiver i søgning" : "Aktivér i søgning"}
-          </button>
-        </div>
-      </div>
-    );
-  };
 
   const renderStreakBadge = () => {
     // Mini streak-badge
@@ -343,58 +234,6 @@ export default function ScannerScreen({
     );
   };
 
-  const renderProfileToggleButtons = () => {
-    const allIds = ["user", ...family.map(m => m.id)];
-    const allActive = allIds.every(id => activeProfiles.includes(id));
-    return (
-      <>
-        <button onClick={() => setActiveProfiles(allIds)}
-          style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20, border:"1px solid var(--green)",
-            background: allActive ? "var(--green)" : "var(--green-lt)", color: allActive ? "var(--ink)" : "var(--green)", cursor:"pointer", fontFamily:"var(--f)" }}>
-          Vælg alle
-        </button>
-        <button onClick={() => setActiveProfiles([])}
-          style={{ fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20, border:"1px solid var(--border)",
-            background:"var(--paper2)", color:"var(--muted)", cursor:"pointer", fontFamily:"var(--f)" }}>
-          Fravælg alle
-        </button>
-      </>
-    );
-  };
-
-  const renderUserAvatar = () => {
-    const isActive = activeProfiles.includes("user");
-    return (
-      <div onClick={() => setProfilePopup("user")} style={UI.udflex_fdcolumn_aicenter_g4_curpointer}>
-        <div style={S.rel}>
-          <div style={{ width:46, height:46, borderRadius:"50%",
-            background: isActive ? "var(--green)" : "var(--paper2)",
-            color: isActive ? "var(--ink)" : "var(--muted)",
-            display:"flex", alignItems:"center", justifyContent:"center",
-            fontSize:15, fontWeight:800,
-            border: `2.5px solid ${isActive ? "var(--green)" : "var(--border)"}`,
-            boxShadow: isActive ? "0 0 0 3px var(--green-lt)" : "none",
-            transition:"all .2s" }}>
-            {initials(user.name || "?")}
-          </div>
-          {allergens.length > 0 && (
-            <div style={{ position:"absolute", bottom:-1, right:-1, width:16, height:16,
-              background:"var(--red)", borderRadius:"50%", border:"2px solid var(--paper)",
-              display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize:9, color:"#fff", fontWeight:800 }}>
-              {allergens.length}
-            </div>
-          )}
-        </div>
-        <div style={{ fontSize:10, fontWeight:700,
-          color: isActive ? "var(--ink)" : "var(--muted2)",
-          maxWidth:48, textAlign:"center", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-          {user.name?.split(" ")[0] || "Mig"}
-        </div>
-      </div>
-    );
-  };
-
   const renderDailyTip = () => {
     const tip = HOME_TIPS[new Date().getDay() % HOME_TIPS.length];
     return (
@@ -415,9 +254,6 @@ export default function ScannerScreen({
         {screen === SCREENS.HOME && (
           <div className="screen fade-in" id="main-content" style={{ display:"flex", flexDirection:"column", minHeight:"calc(100vh - 130px)" }}>
 
-            {/* Profil popup */}
-            {profilePopup && renderProfilePopup()}
-
             {/* Guide modal — vises ved klik på "App-guide" */}
             {showGuide && (
               <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.7)", display:"flex", flexDirection:"column", justifyContent:"flex-end" }}
@@ -429,68 +265,13 @@ export default function ScannerScreen({
               </div>
             )}
 
-            {/* Hilsen + Profil-bar — kun til loggede */}
-            {!!userId && <div style={{ padding:"16px 2px 12px" }}>
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
-                <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px" }}>
+            {/* Hilsen — kun til loggede */}
+            {!!userId && <div style={{ padding:"20px 2px 18px" }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px" }}>
                   {greeting} {user.name?.split(" ")[0] || "der"}
                 </div>
                 {renderStreakBadge()}
-              </div>
-
-              {/* Vælg alle / fravælg alle */}
-              <div style={{ display:"flex", gap:6, marginBottom:10 }}>
-                {renderProfileToggleButtons()}
-              </div>
-
-              {/* Profil-avatars */}
-              <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" }}>
-                {/* Brugeren selv */}
-                {renderUserAvatar()}
-
-                {/* Familiemedlemmer */}
-                {family.map(m => {
-                  const isActive = activeProfiles.includes(m.id);
-                  return (
-                    <div key={m.id} onClick={() => setProfilePopup(m.id)}
-                      style={UI.udflex_fdcolumn_aicenter_g4_curpointer}>
-                      <div style={S.rel}>
-                        <div style={{ width:46, height:46, borderRadius:"50%",
-                          background: isActive ? "var(--green)" : "var(--paper2)",
-                          color: isActive ? "var(--ink)" : "var(--muted)",
-                          display:"flex", alignItems:"center", justifyContent:"center",
-                          fontSize:15, fontWeight:800,
-                          border: `2.5px solid ${isActive ? "var(--green)" : "var(--border)"}`,
-                          boxShadow: isActive ? "0 0 0 3px var(--green-lt)" : "none",
-                          transition:"all .2s" }}>
-                          {initials(m.name)}
-                        </div>
-                        {(m.allergens||[]).length > 0 && (
-                          <div style={{ position:"absolute", bottom:-1, right:-1, width:16, height:16,
-                            background:"var(--red)", borderRadius:"50%", border:"2px solid var(--paper)",
-                            display:"flex", alignItems:"center", justifyContent:"center",
-                            fontSize:9, color:"var(--ink)", fontWeight:800 }}>
-                            {(m.allergens||[]).length}
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ fontSize:10, fontWeight:700,
-                        color: isActive ? "var(--ink)" : "var(--muted2)",
-                        maxWidth:48, textAlign:"center", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                        {m.name?.split(" ")[0]}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* Tilføj-knap */}
-                <div onClick={() => setScreen(SCREENS.FAMILY)}
-                  style={UI.udflex_fdcolumn_aicenter_g4_curpointer}>
-                  <div style={{ width:46, height:46, borderRadius:"50%", background:"var(--paper2)",
-                    border:"2px dashed var(--border)", display:"flex", alignItems:"center", justifyContent:"center",
-                    fontSize:22, color:"var(--muted)", lineHeight:1 }}>+</div>
-                  <div style={{ fontSize:10, color:"var(--muted2)", fontWeight:600 }}>Tilføj</div>
-                </div>
               </div>
             </div>}
 

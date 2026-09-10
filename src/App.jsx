@@ -1251,7 +1251,6 @@ const lookupProduct = useCallback(async (ean) => {
             showNutrition={showNutrition} setShowNutrition={setShowNutrition}
             showManualEan={showManualEan} setShowManualEan={setShowManualEan}
             showSafeOnly={showSafeOnly} setShowSafeOnly={setShowSafeOnly}
-            profilePopup={profilePopup} setProfilePopup={setProfilePopup}
             greeting={greeting}
             cameraActive={cameraActive} setCameraActive={setCameraActive}
             galleryInputRef={galleryInputRef}
