@@ -28,6 +28,7 @@ function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, gra
   }, [list.id]);
 
   const sharedIds = new Set(access.map(a => a.user_id));
+  const shareLink = `https://eatsafe.dk/?join-list=${list.share_link}`;
 
   const toggleMember = async (memberId) => {
     if (sharedIds.has(memberId)) {
@@ -84,19 +85,28 @@ function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, gra
           ))}
         </div>
 
-        {/* Del med kode */}
+        {/* Del med link (eller kode, hvis nemmere at sige højt) */}
         <div style={{ padding:"14px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12 }}>
           <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>
-            Eller del med en kode
+            Eller del med et link
           </div>
-          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ flex:1, fontSize:22, fontWeight:900, letterSpacing:"3px", color:"var(--ink)", fontFamily:"monospace" }}>{list.share_link}</div>
-            <button className="btn btn-outline btn-sm"
-              onClick={() => { navigator.clipboard?.writeText(list.share_link); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
-              {copied ? "✓ Kopieret" : "Kopiér"}
+          <div style={{ display:"flex", gap:8, marginBottom:10 }}>
+            <button className="btn btn-primary btn-sm" style={{ flex:1 }}
+              onClick={() => { navigator.clipboard?.writeText(shareLink); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
+              {copied ? "✓ Link kopieret" : "🔗 Kopiér link"}
             </button>
+            {navigator.share && (
+              <button className="btn btn-outline btn-sm"
+                onClick={() => navigator.share({ title: `Indkøbsliste: ${list.name}`, url: shareLink })}>
+                ↗ Del
+              </button>
+            )}
           </div>
-          <div style={{ fontSize:11, color:"var(--muted)", marginTop:8 }}>Alle med denne kode kan tilslutte sig og redigere listen — brug "Tilslut med kode" på Indkøbsliste-skærmen.</div>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+            <span style={{ fontSize:11, color:"var(--muted)" }}>eller kode:</span>
+            <span style={{ fontSize:14, fontWeight:900, letterSpacing:"2px", color:"var(--ink)", fontFamily:"monospace" }}>{list.share_link}</span>
+          </div>
+          <div style={{ fontSize:11, color:"var(--muted)", marginTop:8 }}>Alle med linket eller koden kan tilslutte sig og redigere listen.</div>
         </div>
       </div>
     </div>
