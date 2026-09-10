@@ -138,7 +138,18 @@ export default function ProfileScreen({
   const { user, setUser, userId, accessToken, clearAuth, loginEmail } = useAuthContext();
   const { allergens, setAllergens, customAllerg, setCustomAllerg, family, setFamily, activeProfiles, setActiveProfiles } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
-  const { history, favorites, historyLoading, loadHistory, toggleFavorite } = useHistoryContext();
+  const { history, favorites, historyLoading, historyScope, favoritesScope, loadHistory, loadFavorites, toggleFavorite } = useHistoryContext();
+  const [household, setHousehold] = useState([]);
+  const [householdLoading, setHouseholdLoading] = useState(false);
+
+  useEffect(() => {
+    if (!accessToken) return;
+    setHouseholdLoading(true);
+    apiCall(`${SUPABASE_URL}/functions/v1/family/group`, { headers: makeHeaders(accessToken) })
+      .then(data => { if (data?.success) setHousehold(data.members || []); })
+      .catch(() => {})
+      .finally(() => setHouseholdLoading(false));
+  }, [accessToken]);
   const {
     loadAdminStats, loadSubmissions, loadTickets,
     setAdminSection, setSubmissionFilter,
@@ -221,7 +232,25 @@ export default function ProfileScreen({
         {screen === SCREENS.HISTORY && (
           <div className="screen fade-in">
             <div className="screen-title">Scanningshistorik</div>
-            <div className="screen-sub">Alle dine tidligere scanninger.</div>
+            <div className="screen-sub">
+              {historyScope === "family" ? "Alle scanninger i din husstand." : "Alle dine tidligere scanninger."}
+            </div>
+            {household.length > 0 && (
+              <div style={{ display:"flex", gap:8, marginBottom:10 }}>
+                <div onClick={() => loadHistory("own")}
+                  style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
+                    background: historyScope==="own" ? "var(--green)" : "var(--surface)", color: historyScope==="own" ? "var(--on-green)" : "var(--muted)",
+                    border:`1px solid ${historyScope==="own" ? "var(--green)" : "var(--border)"}` }}>
+                  Mine
+                </div>
+                <div onClick={() => loadHistory("family")}
+                  style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
+                    background: historyScope==="family" ? "var(--green)" : "var(--surface)", color: historyScope==="family" ? "var(--on-green)" : "var(--muted)",
+                    border:`1px solid ${historyScope==="family" ? "var(--green)" : "var(--border)"}` }}>
+                  👨‍👩‍👧 Husstanden
+                </div>
+              </div>
+            )}
             <button className="btn btn-ghost btn-sm" style={UI.mb14} onClick={() => { loadHistory(); }}>Opdater</button>
             {historyLoading && (
               <div className="fade-in">
@@ -251,7 +280,13 @@ export default function ProfileScreen({
                   // kategori, ingredienser og alt andet end navn/status.
                   onClick={() => lookupProduct(h.ean_scanned || h.code)}>
                   <div className={`hist-dot ${s}`} />
-                  <div className="hist-info"><div className="hist-name">{name}</div><div className="hist-time">{timeAgo(h.scanned_at||h.timestamp)}</div></div>
+                  <div className="hist-info">
+                    <div className="hist-name">{name}</div>
+                    <div className="hist-time">
+                      {timeAgo(h.scanned_at||h.timestamp)}
+                      {historyScope==="family" && h.user_id!==userId && h.users?.name && ` · ${h.users.name.split(" ")[0]}`}
+                    </div>
+                  </div>
                   <div className={`badge ${s==="safe"?"safe":s==="danger"?"danger":s==="not_found"?"":"warn"}`}>{s==="safe"?"Sikker":s==="danger"?"Farlig":s==="not_found"?"Ikke fundet":"Advarsel"}</div>
                 </div>
               );
@@ -323,6 +358,28 @@ export default function ProfileScreen({
                   </div>
                 )
               }
+            </div>
+
+            {/* Min husstand — rigtige inviterede konti, adskilt fra allergi-profilerne i "Familie" */}
+            <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10}>
+              <div style={UI.boldInk13}>👨‍👩‍👧 Min husstand</div>
+              <div style={{ ...UI.muted11mt2, marginBottom:10 }}>Konti du deler scanninger, favoritter og indkøbslister med</div>
+              {householdLoading ? (
+                <div style={{ fontSize:12, color:"var(--muted)" }}>Henter…</div>
+              ) : household.length === 0 ? (
+                <div style={{ fontSize:12, color:"var(--muted)" }}>Du har ikke inviteret nogen endnu — gå til "Familie" for at oprette et invitationslink.</div>
+              ) : (
+                <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                  {household.map(m => (
+                    <div key={m.id} style={{ display:"flex", alignItems:"center", gap:6, padding:"5px 10px 5px 5px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:20 }}>
+                      <div style={{ width:24, height:24, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:800, color:"var(--ink)" }}>
+                        {initials(m.name || m.email)}
+                      </div>
+                      <span style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{m.name || m.email}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Gamification */}
@@ -442,6 +499,23 @@ export default function ProfileScreen({
           <div className="screen fade-in">
             <div className="screen-title"> Favoritter</div>
 
+            {household.length > 0 && (
+              <div style={{ display:"flex", gap:8, marginBottom:14 }}>
+                <div onClick={() => loadFavorites("own")}
+                  style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
+                    background: favoritesScope==="own" ? "var(--green)" : "var(--surface)", color: favoritesScope==="own" ? "var(--on-green)" : "var(--muted)",
+                    border:`1px solid ${favoritesScope==="own" ? "var(--green)" : "var(--border)"}` }}>
+                  Mine
+                </div>
+                <div onClick={() => loadFavorites("family")}
+                  style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
+                    background: favoritesScope==="family" ? "var(--green)" : "var(--surface)", color: favoritesScope==="family" ? "var(--on-green)" : "var(--muted)",
+                    border:`1px solid ${favoritesScope==="family" ? "var(--green)" : "var(--border)"}` }}>
+                  👨‍👩‍👧 Husstanden
+                </div>
+              </div>
+            )}
+
             {/* Seneste scanninger */}
             {history.filter(h => h.result !== "not_found" && (h.products?.name || h.name)).length > 0 && (
               <div className="card" style={UI.mb10}>
@@ -486,14 +560,19 @@ export default function ProfileScreen({
                   <div style={UI.flexMin}>
                     <div style={{ fontWeight:700, fontSize:14 }}>{f.name || "Ukendt"}</div>
                     {f.brand && <div style={UI.ufs12_cmuted_mt1}>{f.brand}</div>}
+                    {favoritesScope==="family" && !f.savedByMe && f.savedBy && (
+                      <div style={{ fontSize:11, color:"var(--green)", fontWeight:700, marginTop:2 }}>Gemt af {f.savedBy.split(" ")[0]}</div>
+                    )}
                     <div style={{ marginTop:6 }}>
                       <ProfileBadges allergenFlags={f.allergen_flags||{}} allergens={allergens} customAllerg={customAllerg} family={family} activeProfiles={activeProfiles} size={22} />
                     </div>
                   </div>
-                  <button className="btn btn-ghost btn-sm" style={{ fontSize:12, flexShrink:0 }} aria-label={`Fjern "${f.name || "produkt"}" fra favoritter`}
-                    onClick={e => { e.stopPropagation(); toggleFavorite(f); }}>
-                    ×
-                  </button>
+                  {f.savedByMe !== false && (
+                    <button className="btn btn-ghost btn-sm" style={{ fontSize:12, flexShrink:0 }} aria-label={`Fjern "${f.name || "produkt"}" fra favoritter`}
+                      onClick={e => { e.stopPropagation(); toggleFavorite(f); }}>
+                      ×
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

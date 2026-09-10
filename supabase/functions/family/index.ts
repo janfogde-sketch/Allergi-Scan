@@ -45,13 +45,33 @@ Deno.serve(async (req) => {
   const parts = url.pathname.split("/").filter(Boolean);
   const method = req.method;
 
+  const isGroup = parts[parts.length - 1] === "group";
   const isMembers = parts.includes("members");
   const isInvite = parts.includes("invite");
   const memberId = isMembers ? parts[parts.length - 1] === "members" ? null : parts[parts.length - 1] : null;
   const inviteId = isInvite ? parts[parts.length - 1] === "invite" ? null : parts[parts.length - 1] : null;
-  const familyId = !isMembers && !isInvite ? parts[parts.length - 1] === "family" ? null : parts[parts.length - 1] : null;
+  const familyId = !isMembers && !isInvite && !isGroup ? parts[parts.length - 1] === "family" ? null : parts[parts.length - 1] : null;
 
   try {
+    // ─────────────────────────────────────
+    // HUSSTAND (family_invites-baseret — de rigtige konti, du har inviteret
+    // via invitationslinket, adskilt fra family_members-profilerne)
+    // ─────────────────────────────────────
+
+    // GET — hent min husstand (mig + alle jeg har inviteret/er inviteret af)
+    if (method === "GET" && isGroup) {
+      const { data: groupRows } = await supabase.rpc("family_group", { p_uid: caller.id });
+      const group = (groupRows ?? []).map((r) => (typeof r === "string" ? r : r.family_group)).filter((id) => id !== caller.id);
+
+      if (group.length === 0) {
+        return new Response(JSON.stringify({ success: true, members: [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { data: members, error } = await supabase
+        .from("users").select("id, name, email").in("id", group);
+      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: true, members }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // ─────────────────────────────────────
     // FAMILIE
     // ─────────────────────────────────────

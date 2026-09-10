@@ -36,15 +36,21 @@ Deno.serve(async (req) => {
     { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 
+  async function callerFamilyGroup() {
+    const { data } = await supabase.rpc("family_group", { p_uid: caller.id });
+    return (data ?? []).map((r) => (typeof r === "string" ? r : r.family_group));
+  }
+
   const url = new URL(req.url);
   const parts = url.pathname.split("/").filter(Boolean);
   const identifier = parts[parts.length - 1] === "history" ? null : parts[parts.length - 1];
   const method = req.method;
 
   try {
-    // GET — hent brugerens scanhistorik
+    // GET — hent brugerens scanhistorik (eller hele familiens, scope=family)
     if (method === "GET" && !identifier) {
       const userId = url.searchParams.get("user_id");
+      const scope = url.searchParams.get("scope"); // "family" eller udeladt = kun egen
       const limit = parseInt(url.searchParams.get("limit") ?? "50");
       const offset = parseInt(url.searchParams.get("offset") ?? "0");
 
@@ -57,10 +63,12 @@ Deno.serve(async (req) => {
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
 
+      const ownerIds = scope === "family" ? await callerFamilyGroup() : [userId];
+
       const { data: scans, error, count } = await supabase
         .from("scan_history")
-        .select("*, products(id, name, brand, image_url)", { count: "exact" })
-        .eq("user_id", userId)
+        .select("*, products(id, name, brand, image_url), users(name)", { count: "exact" })
+        .in("user_id", ownerIds)
         .order("scanned_at", { ascending: false })
         .range(offset, offset + limit - 1);
 
