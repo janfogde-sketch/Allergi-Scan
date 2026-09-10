@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ALLERGENS, SCREENS, DIETS, E_NUMBERS, E_CATEGORIES, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall } from "./helpers.js";
 import { EatSafeLogo, Icon, ProductImage } from "./SharedComponents.jsx";
@@ -161,6 +161,13 @@ export default function ProfileScreen({
     selectedENumbers, setSelectedENumbers,
     activeSubtypeModal, setActiveSubtypeModal,
   } = useAllergenPrefsContext();
+
+  // Historik hentes kun ved eksplicit "Opdater"/"Se alle"-klik andre steder i
+  // denne fil — uden dette viser skærmen 0 scanninger ved første besøg, indtil
+  // brugeren selv trykker opdater, selvom historikken reelt findes.
+  useEffect(() => {
+    if (userId && accessToken) loadHistory();
+  }, [userId, accessToken, loadHistory]);
 
   // ── Invite state ────────────────────────────────────────────────────────────
   const [inviteLink, setInviteLink] = useState(null);
