@@ -343,6 +343,28 @@ export default function EatSafe() {
     acceptInvite();
   }, [accessToken, userId]);
 
+  // ── Indkøbsliste-tilslutning via delt link ────────────────────────────────
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const joinListCode = params.get("join-list");
+    if (!joinListCode || !accessToken || !userId) return;
+
+    // Fjern koden fra URL uden reload
+    const url = new URL(window.location.href);
+    url.searchParams.delete("join-list");
+    window.history.replaceState({}, "", url.toString());
+
+    joinByCode(joinListCode).then(res => {
+      if (res.success) {
+        loadShoppingList();
+        setScreen(SCREENS.LIST);
+        alert(`🛒 Du er nu tilsluttet listen "${res.list?.name || ""}"!`);
+      } else {
+        alert("Kunne ikke tilslutte listen: " + (res.error || "Ugyldig kode"));
+      }
+    });
+  }, [accessToken, userId]);
+
   // ── OFF Import ───────────────────────────────────────────────────────────────
   const [importLog, setImportLog] = useState(null);
   const [importLoading, setImportLoading] = useState(false);
