@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
       const { data: favorites, error } = await supabase
         .from("favorites")
-        .select("id, user_id, ean, product_snapshot, added_at, users(name)")
+        .select("id, user_id, ean, product_snapshot, category, added_at, users(name)")
         .in("user_id", ownerIds)
         .order("added_at", { ascending: false });
 
@@ -91,6 +91,31 @@ Deno.serve(async (req) => {
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
       return new Response(JSON.stringify({ success: true, favorite }), { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // PATCH — flyt favorit til en (evt. ny) kategori
+    if (method === "PATCH") {
+      const { user_id, ean, category } = await req.json();
+      if (!user_id || !ean) return new Response(
+        JSON.stringify({ error: "user_id og ean er påkrævet" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+      if (user_id !== caller.id) return new Response(
+        JSON.stringify({ error: "Ikke autoriseret til denne bruger" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+
+      const { data: favorite, error } = await supabase
+        .from("favorites")
+        .update({ category: category?.trim() || null })
+        .eq("user_id", user_id)
+        .eq("ean", ean)
+        .select()
+        .single();
+
+      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+      return new Response(JSON.stringify({ success: true, favorite }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // DELETE — fjern favorit (kun egen)

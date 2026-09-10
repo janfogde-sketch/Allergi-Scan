@@ -61,6 +61,7 @@ export function useHistory({ accessToken, userId }) {
         setFavorites(data.favorites.map(f => ({
           ...f.product_snapshot,
           ean: f.ean,
+          category: f.category || null,
           savedAt: new Date(f.added_at).getTime(),
           savedBy: f.users?.name || null,
           savedByMe: f.user_id === userId,
@@ -68,6 +69,18 @@ export function useHistory({ accessToken, userId }) {
       }
     } catch { /* silent */ }
   }, [userId, accessToken, favoritesScope]);
+
+  // ── Flyt en favorit til en (evt. ny) kategori ────────────────────────────
+  const setFavoriteCategory = useCallback(async (ean, category) => {
+    setFavorites(prev => prev.map(f => f.ean === ean ? { ...f, category: category || null } : f));
+    try {
+      await apiCall(`${SUPABASE_URL}/functions/v1/favorites`, {
+        method: "PATCH",
+        headers: makeHeaders(accessToken),
+        body: JSON.stringify({ user_id: userId, ean, category: category || null }),
+      });
+    } catch { await loadFavorites(); }
+  }, [userId, accessToken, loadFavorites]);
 
   const toggleFavorite = useCallback(async (product) => {
     const ean = product.ean || product.code;
@@ -108,6 +121,7 @@ export function useHistory({ accessToken, userId }) {
     saveHistoryEntry,
     loadFavorites,
     toggleFavorite,
+    setFavoriteCategory,
     isFavorite,
   };
 }
