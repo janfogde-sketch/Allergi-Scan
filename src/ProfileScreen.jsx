@@ -277,29 +277,7 @@ export default function ProfileScreen({
                   Rediger
                 </button>
               </div>
-              {/* Stats */}
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
-                {[
-                  [allergens.length + customAllerg.length, "Allergener"],
-                  [family.length, "Familie"],
-                  [history.length, "Scanninger"],
-                ].map(([n, lbl]) => (
-                  <div key={lbl} style={{ background:"var(--surface3)", border:"1px solid var(--border)", borderRadius:10, padding:"10px 8px", textAlign:"center" }}>
-                    <div style={{ fontSize:20, fontWeight:700, color:"var(--ink)" }}>{n}</div>
-                    <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, marginTop:2 }}>{lbl}</div>
-                  </div>
-                ))}
-              </div>
             </div>
-
-            {/* Gamification */}
-            <GamificationCard
-              history={history}
-              family={family}
-              activeProfiles={activeProfiles}
-              setScreen={setScreen}
-              SCREENS={SCREENS}
-            />
 
             {/* Mine præferencer */}
             <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10}>
@@ -346,6 +324,15 @@ export default function ProfileScreen({
                 )
               }
             </div>
+
+            {/* Gamification */}
+            <GamificationCard
+              history={history}
+              family={family}
+              activeProfiles={activeProfiles}
+              setScreen={setScreen}
+              SCREENS={SCREENS}
+            />
 
             {/* Menu */}
             <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, overflow:"hidden", marginBottom:10 }}>
