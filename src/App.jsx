@@ -168,9 +168,13 @@ export default function EatSafe() {
                 onSignupSuccess: () => setOnboardStep(0) });
 
   const {
+    lists, activeList, activeListId, setActiveListId,
     shoppingList, setShoppingList,
     shoppingListId, setShoppingListId,
     newItemName, setNewItemName,
+    familyMembers, loadFamilyMembers,
+    createList, renameList, setListType, deleteList, joinByCode,
+    getListAccess, grantAccess, revokeAccess,
     loadShoppingList, addToList, toggleItem, removeItem, clearDone,
   } = useShoppingList({ accessToken, userId });
 
@@ -197,9 +201,9 @@ export default function EatSafe() {
 
   const {
     history, setHistory,
-    historyLoading,
-    favorites, setFavorites,
-    loadHistory, saveHistoryEntry, toggleFavorite, isFavorite,
+    historyLoading, historyScope,
+    favorites, setFavorites, favoritesScope,
+    loadHistory, saveHistoryEntry, loadFavorites, toggleFavorite, isFavorite,
   } = useHistory({ accessToken, userId });
 
   const {
@@ -443,9 +447,10 @@ export default function EatSafe() {
           setCustomAllerg(allergenData.filter(a => a.type === "custom").map(a => a.allergen));
         }
 
-        // Familie + indkøb
+        // Familie + indkøb + favoritter
         loadFamily();
         loadShoppingList();
+        loadFavorites();
       } catch (e) {
         console.error("loadAll fejl:", e);
       }
@@ -788,15 +793,21 @@ const lookupProduct = useCallback(async (ean) => {
   const navigationContextValue = useMemo(() => ({ screen, setScreen }), [screen]);
 
   const historyContextValue = useMemo(() => ({
-    history, setHistory, historyLoading,
-    favorites, loadHistory, toggleFavorite, isFavorite,
-  }), [history, historyLoading, favorites, loadHistory, toggleFavorite, isFavorite]);
+    history, setHistory, historyLoading, historyScope,
+    favorites, favoritesScope, loadHistory, loadFavorites, toggleFavorite, isFavorite,
+  }), [history, historyLoading, historyScope, favorites, favoritesScope, loadHistory, loadFavorites, toggleFavorite, isFavorite]);
 
   const shoppingContextValue = useMemo(() => ({
+    lists, activeList, activeListId, setActiveListId,
     shoppingList, setShoppingList, shoppingListId, setShoppingListId,
     newItemName, setNewItemName, loadShoppingList,
+    familyMembers, loadFamilyMembers,
+    createList, renameList, setListType, deleteList, joinByCode,
+    getListAccess, grantAccess, revokeAccess,
     addToList, toggleItem, removeItem, clearDone,
-  }), [shoppingList, shoppingListId, newItemName, loadShoppingList, addToList, toggleItem, removeItem, clearDone]);
+  }), [lists, activeList, activeListId, setActiveListId, shoppingList, shoppingListId, newItemName, loadShoppingList,
+       familyMembers, loadFamilyMembers, createList, renameList, setListType, deleteList, joinByCode,
+       getListAccess, grantAccess, revokeAccess, addToList, toggleItem, removeItem, clearDone]);
 
   const familyFormContextValue = useMemo(() => ({
     newMemberName, setNewMemberName,
@@ -825,8 +836,9 @@ const lookupProduct = useCallback(async (ean) => {
   const renderHelpModal = () => {
     const helpContent = {
       "home": { title:"📷 Scanner", tips:[
-        { icon:"📱", title:"Skan stregkode", desc:"Tryk på scan-feltet og hold kameraet roligt over stregkoden. Appen scanner automatisk." },
-        { icon:"🔍", title:"Søg manuelt", desc:"Kan du ikke scanne? Brug søgefeltet til at finde produkter ved navn." },
+        { icon:"📱", title:"Skan stregkode", desc:"Tryk på det grønne scan-felt for at åbne kameraet, og hold det roligt over stregkoden. Appen scanner automatisk." },
+        { icon:"🔍", title:"Søg produkter", desc:"Kan du ikke scanne? Brug genvejen 'Søg produkter' længere nede på skærmen til at finde varer ved navn." },
+        { icon:"🔢", title:"Indtast manuelt", desc:"Har du kun tallene fra stregkoden? Tryk 'Indtast EAN-nummer manuelt' under scan-feltet." },
         { icon:"⚡", title:"Hurtig scanning", desc:"God belysning og rolig hånd giver hurtigere og mere præcist resultat." },
         { icon:"📜", title:"Historik", desc:"Dine seneste scanninger gemmes automatisk — find dem under Profil." },
       ]},

@@ -1,69 +1,162 @@
 // @ts-nocheck
 // ─────────────────────────────────────────────────────────────────────────────
 // useShoppingList.js
-// Håndterer indkøbsliste — hent, tilføj, toggle, slet.
-// Bruger optimistiske opdateringer + Supabase Realtime for live-sync.
+// Håndterer indkøbslister — flere lister pr. bruger, deling med hele
+// familien (family_group) eller udvalgte personer, og deling via kode.
+// Bruger optimistiske opdateringer + Supabase Realtime for live-sync af den
+// aktive liste.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 
+const ACTIVE_LIST_KEY = "as_active_shopping_list";
+const SHOPPING_FN = `${SUPABASE_URL}/functions/v1/shopping`;
+
 export function useShoppingList({ accessToken, userId }) {
-  const [shoppingList, setShoppingList]     = useState([]);
-  const [shoppingListId, setShoppingListId] = useState(null);
+  const [lists, setLists]                   = useState([]);
+  const [activeListId, setActiveListIdRaw]   = useState(() => {
+    try { return localStorage.getItem(ACTIVE_LIST_KEY) || null; } catch { return null; }
+  });
   const [newItemName, setNewItemName]       = useState("");
+  const [familyMembers, setFamilyMembers]   = useState([]);
 
   const channelRef = useRef(null);
 
+  const setActiveListId = useCallback((id) => {
+    setActiveListIdRaw(id);
+    try { if (id) localStorage.setItem(ACTIVE_LIST_KEY, id); } catch {}
+  }, []);
+
+  const activeList = useMemo(() => lists.find(l => l.id === activeListId) || null, [lists, activeListId]);
+  const shoppingList = activeList?.shopping_list_items || [];
+
   // Holder altid den seneste liste synkront tilgængelig — bruges af toggleItem
   // (se dér) til at læse/opdatere state uden at vente på et React-gen-render.
-  const shoppingListRef = useRef(shoppingList);
-  shoppingListRef.current = shoppingList;
+  const listsRef = useRef(lists);
+  listsRef.current = lists;
 
-  // ── Indlæs liste ────────────────────────────────────────────────────────────
-  const fetchItems = useCallback(async (listId) => {
+  // ── Indlæs alle lister ───────────────────────────────────────────────────────
+  const loadShoppingList = useCallback(async () => {
     try {
-      const items = await apiCall(
-        `${SUPABASE_URL}/rest/v1/shopping_list_items?list_id=eq.${listId}&order=added_at.asc`,
-        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-      );
-      setShoppingList(Array.isArray(items)
-        ? items.map(i => ({
-            id:       i.id,
-            name:     i.name,
-            checked:  i.checked || false,
-            added_by: i.added_by || null,
-          }))
-        : []);
+      const data = await apiCall(`${SHOPPING_FN}?user_id=${userId}`, { headers: makeHeaders(accessToken) });
+      const fetched = Array.isArray(data?.lists) ? data.lists : [];
+      setLists(fetched);
+
+      if (fetched.length === 0) {
+        // Ingen lister endnu — opret en personlig standardliste, som før
+        const created = await apiCall(SHOPPING_FN, {
+          method: "POST",
+          headers: makeHeaders(accessToken),
+          body: JSON.stringify({ owner_id: userId, name: "Min indkøbsliste", type: "personal" }),
+        });
+        if (created?.list) {
+          setLists([{ ...created.list, shopping_list_items: [] }]);
+          setActiveListId(created.list.id);
+        }
+      } else if (!fetched.some(l => l.id === activeListId)) {
+        setActiveListId(fetched[0].id);
+      }
+    } catch { /* silent */ }
+  }, [userId, accessToken, activeListId, setActiveListId]);
+
+  const loadFamilyMembers = useCallback(async () => {
+    try {
+      const data = await apiCall(`${SHOPPING_FN}/family-members`, { headers: makeHeaders(accessToken) });
+      setFamilyMembers(Array.isArray(data?.members) ? data.members : []);
     } catch { /* silent */ }
   }, [accessToken]);
 
-  const loadShoppingList = useCallback(async () => {
+  // ── Lister — opret/omdøb/skift type/slet ─────────────────────────────────────
+  const createList = useCallback(async (name, type = "personal") => {
+    if (!name?.trim()) return null;
     try {
-      const lists = await apiCall(
-        `${SUPABASE_URL}/rest/v1/shopping_lists?owner_id=eq.${userId}&select=id&limit=1`,
-        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-      );
-      let listId = lists?.[0]?.id;
-      if (!listId) {
-        const created = await apiCall(`${SUPABASE_URL}/rest/v1/shopping_lists`, {
-          method: "POST",
-          headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
-          body: JSON.stringify({ owner_id: userId, name: "Min indkøbsliste" }),
-        });
-        listId = Array.isArray(created) ? created[0]?.id : created?.id;
-      }
-      if (listId) {
-        setShoppingListId(listId);
-        await fetchItems(listId);
+      const data = await apiCall(SHOPPING_FN, {
+        method: "POST",
+        headers: makeHeaders(accessToken),
+        body: JSON.stringify({ owner_id: userId, name: name.trim(), type }),
+      });
+      if (data?.list) {
+        setLists(l => [{ ...data.list, shopping_list_items: [] }, ...l]);
+        setActiveListId(data.list.id);
+        return data.list;
       }
     } catch { /* silent */ }
-  }, [userId, accessToken, fetchItems]);
+    return null;
+  }, [userId, accessToken, setActiveListId]);
 
-  // ── Realtime subscription ────────────────────────────────────────────────────
+  const renameList = useCallback(async (listId, name) => {
+    if (!name?.trim()) return;
+    setLists(l => l.map(x => x.id === listId ? { ...x, name: name.trim() } : x));
+    try {
+      await apiCall(`${SHOPPING_FN}/${listId}`, {
+        method: "PATCH", headers: makeHeaders(accessToken), body: JSON.stringify({ name: name.trim() }),
+      });
+    } catch { /* silent — næste loadShoppingList() retter visningen */ }
+  }, [accessToken]);
+
+  const setListType = useCallback(async (listId, type) => {
+    setLists(l => l.map(x => x.id === listId ? { ...x, type } : x));
+    try {
+      await apiCall(`${SHOPPING_FN}/${listId}`, {
+        method: "PATCH", headers: makeHeaders(accessToken), body: JSON.stringify({ type }),
+      });
+    } catch { /* silent */ }
+  }, [accessToken]);
+
+  const deleteList = useCallback(async (listId) => {
+    const removed = listsRef.current.find(l => l.id === listId);
+    const remaining = listsRef.current.filter(l => l.id !== listId);
+    setLists(remaining);
+    if (activeListId === listId) setActiveListId(remaining[0]?.id || null);
+    try {
+      await apiCall(`${SHOPPING_FN}/${listId}`, { method: "DELETE", headers: makeHeaders(accessToken) });
+    } catch {
+      if (removed) setLists(l => [...l, removed]);
+    }
+  }, [accessToken, activeListId, setActiveListId]);
+
+  const joinByCode = useCallback(async (code) => {
+    if (!code?.trim()) return { success: false, error: "Indtast en kode" };
+    try {
+      await apiCall(`${SHOPPING_FN}/join`, {
+        method: "POST", headers: makeHeaders(accessToken), body: JSON.stringify({ code: code.trim() }),
+      });
+      await loadShoppingList();
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message || "Ugyldig kode" };
+    }
+  }, [accessToken, loadShoppingList]);
+
+  // ── Deling med udvalgte personer ─────────────────────────────────────────────
+  const getListAccess = useCallback(async (listId) => {
+    try {
+      const data = await apiCall(`${SHOPPING_FN}/${listId}/access`, { headers: makeHeaders(accessToken) });
+      return Array.isArray(data?.access) ? data.access : [];
+    } catch { return []; }
+  }, [accessToken]);
+
+  const grantAccess = useCallback(async (listId, userIdToGrant, permission = "edit") => {
+    try {
+      await apiCall(`${SHOPPING_FN}/${listId}/access`, {
+        method: "POST", headers: makeHeaders(accessToken), body: JSON.stringify({ user_id: userIdToGrant, permission }),
+      });
+      return true;
+    } catch { return false; }
+  }, [accessToken]);
+
+  const revokeAccess = useCallback(async (listId, userIdToRevoke) => {
+    try {
+      await apiCall(`${SHOPPING_FN}/${listId}/access/${userIdToRevoke}`, { method: "DELETE", headers: makeHeaders(accessToken) });
+      return true;
+    } catch { return false; }
+  }, [accessToken]);
+
+  // ── Realtime subscription (kun den aktive liste) ─────────────────────────────
   useEffect(() => {
-    if (!accessToken || !shoppingListId) return;
+    if (!accessToken || !activeListId) return;
 
     // Afmeld tidligere kanal (rå WebSocket, ikke en Supabase-kanal — .close(), ikke .unsubscribe())
     if (channelRef.current) {
@@ -75,13 +168,17 @@ export function useShoppingList({ accessToken, userId }) {
     const wsUrl = SUPABASE_URL.replace("https://", "wss://") + "/realtime/v1/websocket"
       + `?apikey=${SUPABASE_ANON_KEY}&vsn=1.0.0`;
 
-    const topic = `realtime:public:shopping_list_items:list_id=eq.${shoppingListId}`;
+    const topic = `realtime:public:shopping_list_items:list_id=eq.${activeListId}`;
 
     let cancelled = false;
     let ws;
     let heartbeat;
     let reconnectTimer;
     let reconnectDelay = 1000;
+
+    const applyToActiveList = (updater) => {
+      setLists(prev => prev.map(l => l.id !== activeListId ? l : { ...l, shopping_list_items: updater(l.shopping_list_items || []) }));
+    };
 
     const connect = () => {
       if (cancelled) return;
@@ -112,16 +209,13 @@ export function useShoppingList({ accessToken, userId }) {
           if (!type) return;
 
           if (type === "INSERT" && record) {
-            setShoppingList(prev => {
-              if (prev.some(i => i.id === record.id)) return prev; // undgå dubletter
-              return [...prev, { id: record.id, name: record.name, checked: record.checked || false, added_by: record.added_by || null }];
-            });
+            applyToActiveList(items => items.some(i => i.id === record.id) ? items : [...items, record]);
           }
           if (type === "UPDATE" && record) {
-            setShoppingList(prev => prev.map(i => i.id === record.id ? { ...i, checked: record.checked, name: record.name } : i));
+            applyToActiveList(items => items.map(i => i.id === record.id ? { ...i, ...record } : i));
           }
           if (type === "DELETE" && old_record) {
-            setShoppingList(prev => prev.filter(i => i.id !== old_record.id));
+            applyToActiveList(items => items.filter(i => i.id !== old_record.id));
           }
         } catch { /* ignorer misdannede beskeder */ }
       };
@@ -150,90 +244,80 @@ export function useShoppingList({ accessToken, userId }) {
       }
       channelRef.current = null;
     };
-  }, [accessToken, shoppingListId]);
+  }, [accessToken, activeListId]);
 
   // ── Tilføj vare ─────────────────────────────────────────────────────────────
   const addToList = useCallback(async (name) => {
-    if (!name?.trim()) return false;
+    if (!name?.trim() || !activeListId) return false;
     const tempId = uid();
-    setShoppingList(l => [...l, { id: tempId, name: name.trim(), checked: false }]);
+    const listId = activeListId;
+    setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: [...(x.shopping_list_items||[]), { id: tempId, name: name.trim(), checked: false }] }));
     setNewItemName("");
     try {
-      if (shoppingListId) {
-        const data = await apiCall(`${SUPABASE_URL}/rest/v1/shopping_list_items`, {
-          method: "POST",
-          headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
-          body: JSON.stringify({
-            list_id:  shoppingListId,
-            name:     name.trim(),
-            checked:  false,
-            added_by: userId || null,
-          }),
-        });
-        const saved = Array.isArray(data) ? data[0] : data;
-        if (saved?.id) setShoppingList(l => l.map(i => i.id === tempId ? { ...i, id: saved.id } : i));
-      }
+      const data = await apiCall(`${SHOPPING_FN}/${listId}/items`, {
+        method: "POST",
+        headers: makeHeaders(accessToken),
+        body: JSON.stringify({ name: name.trim(), added_by: userId }),
+      });
+      const saved = data?.item;
+      if (saved?.id) setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).map(i => i.id === tempId ? { ...i, id: saved.id } : i) }));
       return true;
     } catch {
       // Gemning fejlede — fjern den midlertidige vare igen, ellers tror brugeren
       // den er gemt, indtil den stille forsvinder ved næste genindlæsning
-      setShoppingList(l => l.filter(i => i.id !== tempId));
+      setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).filter(i => i.id !== tempId) }));
       return false;
     }
-  }, [shoppingListId, accessToken, userId]);
+  }, [activeListId, accessToken, userId]);
 
   // ── Toggle ──────────────────────────────────────────────────────────────────
   const toggleItem = useCallback(async (id) => {
-    // Læs og opdater via shoppingListRef (synkron, altid frisk), ikke via en
-    // variabel sat inde i setShoppingList's updater — React kalder ikke
-    // nødvendigvis den updater synkront, så en variabel sat dér kan stadig
-    // være undefined lige efter kaldet. Det betød tidligere at denne funktion
-    // ramte det tomme "id fandtes ikke"-tjek hver eneste gang og ALDRIG
-    // rent faktisk gemte afkrydsningen på serveren.
-    const current = shoppingListRef.current.find(i => i.id === id);
+    const listId = activeListId;
+    const list = listsRef.current.find(l => l.id === listId);
+    const current = list?.shopping_list_items?.find(i => i.id === id);
     if (!current) return; // id fandtes ikke i listen
     const newChecked = !current.checked;
-    shoppingListRef.current = shoppingListRef.current.map(i => i.id === id ? { ...i, checked: newChecked } : i);
-    setShoppingList(shoppingListRef.current);
+    setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).map(i => i.id === id ? { ...i, checked: newChecked } : i) }));
     try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/shopping_list_items?id=eq.${id}`, {
-        method: "PATCH",
-        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-        body: JSON.stringify({ checked: newChecked }),
+      await apiCall(`${SHOPPING_FN}/${listId}/items/${id}`, {
+        method: "PATCH", headers: makeHeaders(accessToken), body: JSON.stringify({ checked: newChecked }),
       });
     } catch {
       // Opdatering fejlede — rul afkrydsningen tilbage, ellers viser UI'et en
       // status serveren ikke er enig i, indtil næste genindlæsning stille retter den
-      shoppingListRef.current = shoppingListRef.current.map(i => i.id === id ? { ...i, checked: !newChecked } : i);
-      setShoppingList(shoppingListRef.current);
+      setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).map(i => i.id === id ? { ...i, checked: !newChecked } : i) }));
     }
-  }, [accessToken]);
+  }, [activeListId, accessToken]);
 
   // ── Slet ────────────────────────────────────────────────────────────────────
   const removeItem = useCallback(async (id) => {
-    const removed = shoppingListRef.current.find(i => i.id === id);
-    setShoppingList(l => l.filter(i => i.id !== id));
+    const listId = activeListId;
+    const list = listsRef.current.find(l => l.id === listId);
+    const removed = list?.shopping_list_items?.find(i => i.id === id);
+    setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).filter(i => i.id !== id) }));
     try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/shopping_list_items?id=eq.${id}`, {
-        method: "DELETE",
-        headers: makeHeaders(accessToken),
-      });
+      await apiCall(`${SHOPPING_FN}/${listId}/items/${id}`, { method: "DELETE", headers: makeHeaders(accessToken) });
     } catch {
       // Sletning fejlede — læg varen tilbage, ellers forsvinder den fra UI'et
       // uden reelt at være slettet i databasen
-      if (removed) setShoppingList(l => [...l, removed]);
+      if (removed) setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: [...(x.shopping_list_items||[]), removed] }));
     }
-  }, [accessToken]);
+  }, [activeListId, accessToken]);
 
   const clearDone = useCallback(() => {
-    shoppingListRef.current.filter(i => i.checked).forEach(i => removeItem(i.id));
-  }, [removeItem]);
+    const list = listsRef.current.find(l => l.id === activeListId);
+    (list?.shopping_list_items || []).filter(i => i.checked).forEach(i => removeItem(i.id));
+  }, [activeListId, removeItem]);
 
   return {
-    shoppingList, setShoppingList,
-    shoppingListId, setShoppingListId,
+    lists, activeList, activeListId, setActiveListId,
+    shoppingList, setShoppingList: () => {}, // bagudkompatibel no-op — items styres nu via lists
+    shoppingListId: activeListId, setShoppingListId: setActiveListId,
     newItemName, setNewItemName,
+    familyMembers, loadFamilyMembers,
     loadShoppingList,
+    createList, renameList, setListType, deleteList, joinByCode,
+    getListAccess, grantAccess, revokeAccess,
     addToList,
     toggleItem,
     removeItem,

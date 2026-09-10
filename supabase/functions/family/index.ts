@@ -45,13 +45,59 @@ Deno.serve(async (req) => {
   const parts = url.pathname.split("/").filter(Boolean);
   const method = req.method;
 
+  const isGroup = parts.includes("group");
+  const groupUserId = isGroup && parts[parts.length - 1] !== "group" ? parts[parts.length - 1] : null;
   const isMembers = parts.includes("members");
   const isInvite = parts.includes("invite");
   const memberId = isMembers ? parts[parts.length - 1] === "members" ? null : parts[parts.length - 1] : null;
   const inviteId = isInvite ? parts[parts.length - 1] === "invite" ? null : parts[parts.length - 1] : null;
-  const familyId = !isMembers && !isInvite ? parts[parts.length - 1] === "family" ? null : parts[parts.length - 1] : null;
+  const familyId = !isMembers && !isInvite && !isGroup ? parts[parts.length - 1] === "family" ? null : parts[parts.length - 1] : null;
 
   try {
+    // ─────────────────────────────────────
+    // HUSSTAND (family_invites-baseret — de rigtige konti, du har inviteret
+    // via invitationslinket, adskilt fra family_members-profilerne)
+    // ─────────────────────────────────────
+
+    // GET — hent min husstand (mig + alle jeg har inviteret/er inviteret af).
+    // canRemove er kun true for medlemmer CALLER selv oprindeligt inviterede
+    // — kun den oprindelige "admin" af en given forbindelse kan fjerne den.
+    if (method === "GET" && isGroup && !groupUserId) {
+      const { data: groupRows } = await supabase.rpc("family_group", { p_uid: caller.id });
+      const group = (groupRows ?? []).map((r) => (typeof r === "string" ? r : r.family_group)).filter((id) => id !== caller.id);
+
+      if (group.length === 0) {
+        return new Response(JSON.stringify({ success: true, members: [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { data: members, error } = await supabase
+        .from("users").select("id, name, email").in("id", group);
+      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+      const { data: invitedByMe } = await supabase
+        .from("family_invites").select("accepted_by")
+        .eq("status", "accepted").eq("invited_by", caller.id).in("accepted_by", group);
+      const adminOf = new Set((invitedByMe ?? []).map((r) => r.accepted_by));
+
+      const withPermissions = (members ?? []).map((m) => ({ ...m, canRemove: adminOf.has(m.id) }));
+      return new Response(JSON.stringify({ success: true, members: withPermissions }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // DELETE — fjern et medlem af husstanden. Kun den der oprindeligt sendte
+    // invitationen (husstandens "admin" for den forbindelse) kan gøre dette —
+    // et medlem, der selv blev inviteret, kan ikke fjerne andre.
+    if (method === "DELETE" && isGroup && groupUserId) {
+      const { data: link } = await supabase
+        .from("family_invites").select("id")
+        .eq("status", "accepted").eq("invited_by", caller.id).eq("accepted_by", groupUserId).maybeSingle();
+      if (!link) return new Response(
+        JSON.stringify({ error: "Kun den der inviterede dette medlem kan fjerne det" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+      const { error } = await supabase.from("family_invites").delete().eq("id", link.id);
+      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // ─────────────────────────────────────
     // FAMILIE
     // ─────────────────────────────────────

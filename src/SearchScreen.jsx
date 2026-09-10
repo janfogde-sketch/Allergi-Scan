@@ -190,22 +190,26 @@ export default function SearchScreen({
         )}
       </div>
 
-      {/* ── Manuel allergen-filter ── */}
+      {/* ── Manuel allergen-filter + kategori — komprimeret på samme linje ── */}
       <div style={UI.mb10}>
-        <div onClick={() => setAllergenFilterOpen(v=>!v)}
-          style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius: allergenFilterOpen ? "12px 12px 0 0" : 12, cursor:"pointer" }}>
-          <div style={UI.udflex_aicenter_g8}>
-            <span style={UI.ufs13_fw700_cink}>Tilføj allergener manuelt</span>
-            {manualAllergens.length > 0 && (
-              <div style={{ fontSize:10, fontWeight:700, padding:"2px 7px", borderRadius:100, background:"var(--amber-lt)", color:"var(--amber)", border:"1px solid var(--amber-md)" }}>
-                {manualAllergens.length} valgt
-              </div>
-            )}
+        <div style={{ display:"flex", gap:8 }}>
+          <div onClick={() => setAllergenFilterOpen(v=>!v)}
+            style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius: allergenFilterOpen ? "12px 12px 0 0" : 12, cursor:"pointer" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, minWidth:0, overflow:"hidden" }}>
+              <span style={{ ...UI.ufs13_fw700_cink, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>Allergener</span>
+              {manualAllergens.length > 0 && (
+                <div style={{ fontSize:10, fontWeight:700, padding:"2px 7px", borderRadius:100, background:"var(--amber-lt)", color:"var(--amber)", border:"1px solid var(--amber-md)", flexShrink:0 }}>
+                  {manualAllergens.length}
+                </div>
+              )}
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0,
+              transform: allergenFilterOpen ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
+              <path strokeLinecap="round" d="M19 9l-7 7-7-7"/>
+            </svg>
           </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"
-            style={{ transform: allergenFilterOpen ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
-            <path strokeLinecap="round" d="M19 9l-7 7-7-7"/>
-          </svg>
+          <CategorySelect value={searchCategory} onChange={setSearchCategory} options={CATEGORIES}
+            style={{ flex:1, minWidth:0 }} />
         </div>
         {allergenFilterOpen && (
           <div style={{ border:"1px solid var(--border)", borderTop:"none", borderRadius:"0 0 12px 12px", background:"var(--surface)", padding:14 }}>
@@ -245,30 +249,32 @@ export default function SearchScreen({
         )}
       </div>
 
-      {/* ── Kategori + kun-sikre ── */}
-      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:16, flexWrap:"wrap" }}>
-        <CategorySelect value={searchCategory} onChange={setSearchCategory} options={CATEGORIES} />
-        {effectiveIds.length === 0 && (
+      {/* ── Kun-sikre ── */}
+      {effectiveIds.length === 0 && (
+        <div style={{ marginBottom:16 }}>
           <div className={`filter-chip${showSafeOnly?" active":""}`}
             onClick={() => setShowSafeOnly(v => !v)}
             style={UI.uwsnowrap}>
             {showSafeOnly ? "✓ Kun sikre" : "Kun sikre"}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* ── Søgefelt — lige over resultaterne, ingen filtre i vejen ── */}
-      <div style={{ display:"flex", gap:8, marginBottom:8 }}>
-        <input
-          className="field"
-          placeholder="Søg på produkt eller mærke…"
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
-          style={{ flex:1, marginBottom:0 }}
-        />
-        <button className="btn btn-primary btn-sm"
-          style={{ whiteSpace:"nowrap", padding:"0 16px" }}
+      {/* ── Søgefelt — fremhævet, lige over resultaterne ── */}
+      <div style={{ display:"flex", gap:8, marginBottom:8, padding:10, background:"var(--surface)", border:"1.5px solid var(--green)", borderRadius:16, boxShadow:"var(--sh2)" }}>
+        <div style={{ flex:1, position:"relative", display:"flex", alignItems:"center" }}>
+          <span style={{ position:"absolute", left:12, fontSize:16, pointerEvents:"none", opacity:.6 }}>🔍</span>
+          <input
+            className="field"
+            placeholder="Søg på produkt eller mærke…"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
+            style={{ flex:1, marginBottom:0, padding:"12px 14px 12px 36px", fontSize:15, fontWeight:600, border:"none", background:"var(--paper2)", borderRadius:10 }}
+          />
+        </div>
+        <button className="btn btn-primary"
+          style={{ whiteSpace:"nowrap", padding:"0 20px", fontWeight:800 }}
           onClick={() => document.activeElement?.blur?.()}
           disabled={!searchQuery.trim()}>
           Søg

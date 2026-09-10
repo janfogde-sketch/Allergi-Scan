@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ALLERGENS, SCREENS, DIETS, E_NUMBERS, E_CATEGORIES, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall } from "./helpers.js";
 import { EatSafeLogo, Icon, ProductImage } from "./SharedComponents.jsx";
@@ -138,7 +138,18 @@ export default function ProfileScreen({
   const { user, setUser, userId, accessToken, clearAuth, loginEmail } = useAuthContext();
   const { allergens, setAllergens, customAllerg, setCustomAllerg, family, setFamily, activeProfiles, setActiveProfiles } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
-  const { history, favorites, historyLoading, loadHistory, toggleFavorite } = useHistoryContext();
+  const { history, favorites, historyLoading, historyScope, favoritesScope, loadHistory, loadFavorites, toggleFavorite } = useHistoryContext();
+  const [household, setHousehold] = useState([]);
+  const [householdLoading, setHouseholdLoading] = useState(false);
+
+  useEffect(() => {
+    if (!accessToken) return;
+    setHouseholdLoading(true);
+    apiCall(`${SUPABASE_URL}/functions/v1/family/group`, { headers: makeHeaders(accessToken) })
+      .then(data => { if (data?.success) setHousehold(data.members || []); })
+      .catch(() => {})
+      .finally(() => setHouseholdLoading(false));
+  }, [accessToken]);
   const {
     loadAdminStats, loadSubmissions, loadTickets,
     setAdminSection, setSubmissionFilter,
@@ -161,6 +172,13 @@ export default function ProfileScreen({
     selectedENumbers, setSelectedENumbers,
     activeSubtypeModal, setActiveSubtypeModal,
   } = useAllergenPrefsContext();
+
+  // Historik hentes kun ved eksplicit "Opdater"/"Se alle"-klik andre steder i
+  // denne fil — uden dette viser skærmen 0 scanninger ved første besøg, indtil
+  // brugeren selv trykker opdater, selvom historikken reelt findes.
+  useEffect(() => {
+    if (userId && accessToken) loadHistory();
+  }, [userId, accessToken, loadHistory]);
 
   // ── Invite state ────────────────────────────────────────────────────────────
   const [inviteLink, setInviteLink] = useState(null);
@@ -214,7 +232,25 @@ export default function ProfileScreen({
         {screen === SCREENS.HISTORY && (
           <div className="screen fade-in">
             <div className="screen-title">Scanningshistorik</div>
-            <div className="screen-sub">Alle dine tidligere scanninger.</div>
+            <div className="screen-sub">
+              {historyScope === "family" ? "Alle scanninger i din husstand." : "Alle dine tidligere scanninger."}
+            </div>
+            {household.length > 0 && (
+              <div style={{ display:"flex", gap:8, marginBottom:10 }}>
+                <div onClick={() => loadHistory("own")}
+                  style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
+                    background: historyScope==="own" ? "var(--green)" : "var(--surface)", color: historyScope==="own" ? "var(--on-green)" : "var(--muted)",
+                    border:`1px solid ${historyScope==="own" ? "var(--green)" : "var(--border)"}` }}>
+                  Mine
+                </div>
+                <div onClick={() => loadHistory("family")}
+                  style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
+                    background: historyScope==="family" ? "var(--green)" : "var(--surface)", color: historyScope==="family" ? "var(--on-green)" : "var(--muted)",
+                    border:`1px solid ${historyScope==="family" ? "var(--green)" : "var(--border)"}` }}>
+                  👨‍👩‍👧 Husstanden
+                </div>
+              </div>
+            )}
             <button className="btn btn-ghost btn-sm" style={UI.mb14} onClick={() => { loadHistory(); }}>Opdater</button>
             {historyLoading && (
               <div className="fade-in">
@@ -244,7 +280,13 @@ export default function ProfileScreen({
                   // kategori, ingredienser og alt andet end navn/status.
                   onClick={() => lookupProduct(h.ean_scanned || h.code)}>
                   <div className={`hist-dot ${s}`} />
-                  <div className="hist-info"><div className="hist-name">{name}</div><div className="hist-time">{timeAgo(h.scanned_at||h.timestamp)}</div></div>
+                  <div className="hist-info">
+                    <div className="hist-name">{name}</div>
+                    <div className="hist-time">
+                      {timeAgo(h.scanned_at||h.timestamp)}
+                      {historyScope==="family" && h.user_id!==userId && h.users?.name && ` · ${h.users.name.split(" ")[0]}`}
+                    </div>
+                  </div>
                   <div className={`badge ${s==="safe"?"safe":s==="danger"?"danger":s==="not_found"?"":"warn"}`}>{s==="safe"?"Sikker":s==="danger"?"Farlig":s==="not_found"?"Ikke fundet":"Advarsel"}</div>
                 </div>
               );
@@ -270,29 +312,7 @@ export default function ProfileScreen({
                   Rediger
                 </button>
               </div>
-              {/* Stats */}
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
-                {[
-                  [allergens.length + customAllerg.length, "Allergener"],
-                  [family.length, "Familie"],
-                  [history.length, "Scanninger"],
-                ].map(([n, lbl]) => (
-                  <div key={lbl} style={{ background:"var(--surface3)", border:"1px solid var(--border)", borderRadius:10, padding:"10px 8px", textAlign:"center" }}>
-                    <div style={{ fontSize:20, fontWeight:700, color:"var(--ink)" }}>{n}</div>
-                    <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, marginTop:2 }}>{lbl}</div>
-                  </div>
-                ))}
-              </div>
             </div>
-
-            {/* Gamification */}
-            <GamificationCard
-              history={history}
-              family={family}
-              activeProfiles={activeProfiles}
-              setScreen={setScreen}
-              SCREENS={SCREENS}
-            />
 
             {/* Mine præferencer */}
             <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10}>
@@ -339,6 +359,37 @@ export default function ProfileScreen({
                 )
               }
             </div>
+
+            {/* Min husstand — rigtige inviterede konti, adskilt fra allergi-profilerne i "Familie" */}
+            <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10}>
+              <div style={UI.boldInk13}>👨‍👩‍👧 Min husstand</div>
+              <div style={{ ...UI.muted11mt2, marginBottom:10 }}>Konti du deler scanninger, favoritter og indkøbslister med</div>
+              {householdLoading ? (
+                <div style={{ fontSize:12, color:"var(--muted)" }}>Henter…</div>
+              ) : household.length === 0 ? (
+                <div style={{ fontSize:12, color:"var(--muted)" }}>Du har ikke inviteret nogen endnu — gå til "Familie" for at oprette et invitationslink.</div>
+              ) : (
+                <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                  {household.map(m => (
+                    <div key={m.id} style={{ display:"flex", alignItems:"center", gap:6, padding:"5px 10px 5px 5px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:20 }}>
+                      <div style={{ width:24, height:24, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:800, color:"var(--ink)" }}>
+                        {initials(m.name || m.email)}
+                      </div>
+                      <span style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{m.name || m.email}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Gamification */}
+            <GamificationCard
+              history={history}
+              family={family}
+              activeProfiles={activeProfiles}
+              setScreen={setScreen}
+              SCREENS={SCREENS}
+            />
 
             {/* Menu */}
             <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, overflow:"hidden", marginBottom:10 }}>
@@ -448,6 +499,23 @@ export default function ProfileScreen({
           <div className="screen fade-in">
             <div className="screen-title"> Favoritter</div>
 
+            {household.length > 0 && (
+              <div style={{ display:"flex", gap:8, marginBottom:14 }}>
+                <div onClick={() => loadFavorites("own")}
+                  style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
+                    background: favoritesScope==="own" ? "var(--green)" : "var(--surface)", color: favoritesScope==="own" ? "var(--on-green)" : "var(--muted)",
+                    border:`1px solid ${favoritesScope==="own" ? "var(--green)" : "var(--border)"}` }}>
+                  Mine
+                </div>
+                <div onClick={() => loadFavorites("family")}
+                  style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
+                    background: favoritesScope==="family" ? "var(--green)" : "var(--surface)", color: favoritesScope==="family" ? "var(--on-green)" : "var(--muted)",
+                    border:`1px solid ${favoritesScope==="family" ? "var(--green)" : "var(--border)"}` }}>
+                  👨‍👩‍👧 Husstanden
+                </div>
+              </div>
+            )}
+
             {/* Seneste scanninger */}
             {history.filter(h => h.result !== "not_found" && (h.products?.name || h.name)).length > 0 && (
               <div className="card" style={UI.mb10}>
@@ -492,14 +560,19 @@ export default function ProfileScreen({
                   <div style={UI.flexMin}>
                     <div style={{ fontWeight:700, fontSize:14 }}>{f.name || "Ukendt"}</div>
                     {f.brand && <div style={UI.ufs12_cmuted_mt1}>{f.brand}</div>}
+                    {favoritesScope==="family" && !f.savedByMe && f.savedBy && (
+                      <div style={{ fontSize:11, color:"var(--green)", fontWeight:700, marginTop:2 }}>Gemt af {f.savedBy.split(" ")[0]}</div>
+                    )}
                     <div style={{ marginTop:6 }}>
                       <ProfileBadges allergenFlags={f.allergen_flags||{}} allergens={allergens} customAllerg={customAllerg} family={family} activeProfiles={activeProfiles} size={22} />
                     </div>
                   </div>
-                  <button className="btn btn-ghost btn-sm" style={{ fontSize:12, flexShrink:0 }} aria-label={`Fjern "${f.name || "produkt"}" fra favoritter`}
-                    onClick={e => { e.stopPropagation(); toggleFavorite(f); }}>
-                    ×
-                  </button>
+                  {f.savedByMe !== false && (
+                    <button className="btn btn-ghost btn-sm" style={{ fontSize:12, flexShrink:0 }} aria-label={`Fjern "${f.name || "produkt"}" fra favoritter`}
+                      onClick={e => { e.stopPropagation(); toggleFavorite(f); }}>
+                      ×
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -699,6 +772,42 @@ export default function ProfileScreen({
                 {m.allergens.length>0 && <div className="tags">{getAllergenLabels(m.allergens,m.custom||[]).map((a,j) => <div key={j} className="tag" style={{ fontSize:11 }}>{a}</div>)}</div>}
               </div>
             ))}
+            {/* ── Din husstand — rigtige konti, adskilt fra allergi-profilerne ovenfor ── */}
+            {household.length > 0 && (
+              <div className="card" style={UI.mb12}>
+                <div style={UI.ufs13_fw800_cink_mb4}>👨‍👩‍👧 Din husstand</div>
+                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12, lineHeight:1.5 }}>
+                  Disse konti deler scanningshistorik, favoritter og indkøbslister med dig.
+                </div>
+                {household.map(m => (
+                  <div key={m.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom:"1px solid var(--border)" }}>
+                    <div style={{ width:32, height:32, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
+                      {initials(m.name || m.email)}
+                    </div>
+                    <div style={UI.flex1}>
+                      <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{m.name || m.email}</div>
+                      {!m.canRemove && <div style={{ fontSize:10, color:"var(--muted)", marginTop:1 }}>Inviterede dig</div>}
+                    </div>
+                    {m.canRemove && (
+                      <span style={{ cursor:"pointer", opacity:.5, padding:4 }} aria-label={`Fjern ${m.name || m.email} fra husstanden`} role="button" tabIndex={0}
+                        onClick={async () => {
+                          if (!confirm(`Fjern ${m.name || m.email} fra din husstand? I mister adgang til hinandens delte data.`)) return;
+                          await apiCall(`${SUPABASE_URL}/functions/v1/family/group/${m.id}`, { method: "DELETE", headers: makeHeaders(accessToken) });
+                          setHousehold(h => h.filter(x => x.id !== m.id));
+                        }}
+                        onKeyDown={async e => { if (e.key !== "Enter") return;
+                          if (!confirm(`Fjern ${m.name || m.email} fra din husstand? I mister adgang til hinandens delte data.`)) return;
+                          await apiCall(`${SUPABASE_URL}/functions/v1/family/group/${m.id}`, { method: "DELETE", headers: makeHeaders(accessToken) });
+                          setHousehold(h => h.filter(x => x.id !== m.id));
+                        }}>
+                        <Icon name="trash" size={16} color="var(--muted)" />
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* ── Invitér familiemedlem via link ── */}
             <div className="card" style={UI.mb12}>
               <div style={UI.ufs13_fw800_cink_mb4}>

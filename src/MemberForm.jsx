@@ -178,10 +178,10 @@ export const MemberForm = ({
 
 // ─── KATEGORI VÆLGER ─────────────────────────────────────────────────────────
 
-export const CategorySelect = ({ value, onChange, options, placeholder="Alle kategorier" }) => {
+export const CategorySelect = ({ value, onChange, options, placeholder="Alle kategorier", style }) => {
   const selected = options.find(o => o.id === value);
   return (
-    <div style={{ position:"relative", display:"inline-block", minWidth:160 }}>
+    <div style={{ position:"relative", display:"inline-block", minWidth:160, ...style }}>
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
