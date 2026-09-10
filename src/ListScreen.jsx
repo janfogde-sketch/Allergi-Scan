@@ -85,12 +85,12 @@ function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, gra
           ))}
         </div>
 
-        {/* Del med link (eller kode, hvis nemmere at sige højt) */}
+        {/* Del med link */}
         <div style={{ padding:"14px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12 }}>
           <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>
             Eller del med et link
           </div>
-          <div style={{ display:"flex", gap:8, marginBottom:10 }}>
+          <div style={{ display:"flex", gap:8 }}>
             <button className="btn btn-primary btn-sm" style={{ flex:1 }}
               onClick={() => { navigator.clipboard?.writeText(shareLink); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
               {copied ? "✓ Link kopieret" : "🔗 Kopiér link"}
@@ -102,11 +102,7 @@ function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, gra
               </button>
             )}
           </div>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-            <span style={{ fontSize:11, color:"var(--muted)" }}>eller kode:</span>
-            <span style={{ fontSize:14, fontWeight:900, letterSpacing:"2px", color:"var(--ink)", fontFamily:"monospace" }}>{list.share_link}</span>
-          </div>
-          <div style={{ fontSize:11, color:"var(--muted)", marginTop:8 }}>Alle med linket eller koden kan tilslutte sig og redigere listen.</div>
+          <div style={{ fontSize:11, color:"var(--muted)", marginTop:8 }}>Alle med linket kan tilslutte sig og redigere listen.</div>
         </div>
       </div>
     </div>
@@ -139,7 +135,10 @@ export default function ListScreen({
   const handleJoin = async () => {
     setJoinLoading(true);
     setJoinError("");
-    const res = await joinByCode(joinCode);
+    // Accepter både et fuldt link (?join-list=KODE) og en rå kode indsat direkte
+    let code = joinCode.trim();
+    try { code = new URL(code).searchParams.get("join-list") || code; } catch { /* ikke et link — brug som kode */ }
+    const res = await joinByCode(code);
     setJoinLoading(false);
     if (res.success) { setShowJoin(false); setJoinCode(""); }
     else setJoinError(res.error || "Kunne ikke tilslutte listen");
@@ -189,7 +188,7 @@ export default function ListScreen({
           {!showNewList ? (
             <div style={{ display:"flex", gap:8, marginTop:6 }}>
               <button className="btn btn-ghost btn-sm" style={{ flex:1 }} onClick={() => setShowNewList(true)}>+ Ny liste</button>
-              <button className="btn btn-ghost btn-sm" style={{ flex:1 }} onClick={() => { setShowListPicker(false); setShowJoin(true); }}>Tilslut med kode</button>
+              <button className="btn btn-ghost btn-sm" style={{ flex:1 }} onClick={() => { setShowListPicker(false); setShowJoin(true); }}>Tilslut med link</button>
             </div>
           ) : (
             <div style={{ display:"flex", gap:8, marginTop:8, padding:"0 4px" }}>
@@ -204,12 +203,12 @@ export default function ListScreen({
         </div>
       )}
 
-      {/* ── Tilslut med kode ── */}
+      {/* ── Tilslut med link ── */}
       {showJoin && (
         <div className="card" style={{ marginBottom:14 }}>
-          <div className="card-lbl" style={S.mb10}>Tilslut liste med kode</div>
+          <div className="card-lbl" style={S.mb10}>Tilslut liste med link</div>
           <div className="input-row">
-            <input className="field" placeholder="Fx. AB3XQ9" style={{ textTransform:"uppercase" }}
+            <input className="field" placeholder="Indsæt det delte link"
               value={joinCode} onChange={e => { setJoinCode(e.target.value); setJoinError(""); }}
               onKeyDown={e => e.key === "Enter" && handleJoin()} />
             <button className="btn btn-primary btn-sm" style={UI.uwsnowrap} disabled={joinLoading || !joinCode.trim()} onClick={handleJoin}>
