@@ -462,7 +462,7 @@ export default function EatSafe() {
       try {
         // Brugerprofil
         const profile = await apiCall(
-          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,onboarding_completed&limit=1`,
+          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,onboarding_completed,diets,e_numbers&limit=1`,
           { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
         );
         if (Array.isArray(profile) && profile[0]) {
@@ -473,9 +473,12 @@ export default function EatSafe() {
             email: p.email || u.email || "",
             phone: p.phone || "",
             age: p.birth_year ? String(p.birth_year) : "",
+            birth_year: p.birth_year || "",
             gender: p.gender || "",
             role: p.role || "user",
+            diets: p.diets || [],
           }));
+          setSelectedENumbers(p.e_numbers || []);
         }
 
         // Allergener

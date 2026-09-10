@@ -183,6 +183,7 @@ export default function ProfileScreen({
   // ── Invite state ────────────────────────────────────────────────────────────
   const [inviteLink, setInviteLink] = useState(null);
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
   const [inviteError, setInviteError] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
 
@@ -611,17 +612,6 @@ export default function ProfileScreen({
                   <span style={UI.red}>*</span> Navn, fødselsår og køn er obligatoriske
                 </div>
               )}
-              <button className="btn btn-primary btn-full"
-                disabled={!user.name?.trim() || !user.birth_year || !user.gender}
-                onClick={async () => {
-                try {
-                  await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
-                    method:"PATCH",
-                    headers:{ ...makeHeaders(accessToken), "Prefer":"return=representation" },
-                    body:JSON.stringify({ name:user.name, phone:user.phone||null, birth_year:user.birth_year?parseInt(user.birth_year):null, gender:user.gender||null }),
-                  });
-                } catch (e) { alert("Fejl: " + e.message); }
-              }}>Gem</button>
             </div>
 
             {/* Allergier */}
@@ -645,17 +635,8 @@ export default function ProfileScreen({
                 })}
               </div>
               {(user.diets||[]).length > 0 && (
-                <button className="btn btn-ghost btn-sm" style={UI.mb8} onClick={() => setUser(u => ({...u, diets:[]}))}>Nulstil diæt</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setUser(u => ({...u, diets:[]}))}>Nulstil diæt</button>
               )}
-              <button className="btn btn-primary btn-full" onClick={async () => {
-                try {
-                  await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
-                    method:"PATCH",
-                    headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" },
-                    body:JSON.stringify({ diets: user.diets||[] }),
-                  });
-                } catch (e) { alert("Fejl: " + e.message); }
-              }}>Gem diæt</button>
             </div>
 
             <div className="card" style={UI.mb10}>
@@ -687,23 +668,6 @@ export default function ProfileScreen({
               </div>
               {customAllerg.length > 0 && <div className="tags">{customAllerg.map((a,i) => <div key={i} className="tag">✏️ {a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
                 onClick={() => setCustomAllerg(c=>c.filter((_,j)=>j!==i))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(c=>c.filter((_,j)=>j!==i))}>×</span></div>)}</div>}
-
-              <button className="btn btn-primary btn-full" style={UI.mt12} onClick={async () => {
-                // Samlet DELETE + én bulk-POST i stedet for et loop af enkelt-POSTs —
-                // ellers kan et fejlet kald midtvejs efterlade en delvist gemt liste
-                // (samme fejl som blev rettet i onboarding-flowets saveAllergensStep2)
-                try {
-                  await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, { method:"DELETE", headers:makeHeaders(accessToken) });
-                  const rows = [
-                    ...allergens.map(a => ({ user_id:userId, allergen:a, type:"allergen" })),
-                    ...customAllerg.map(c => ({ user_id:userId, allergen:c, type:"custom" })),
-                  ];
-                  if (rows.length > 0) {
-                    await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, { method:"POST", headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" }, body:JSON.stringify(rows) });
-                  }
-                  setScreen(SCREENS.PROFILE);
-                } catch (e) { alert("Fejl: " + e.message); }
-              }}>Gem</button>
             </div>
 
             {/* E-numre i rediger profil */}
@@ -744,7 +708,44 @@ export default function ProfileScreen({
               )}
             </div>
 
-            <button className="btn btn-ghost btn-full" style={UI.mb16} onClick={() => setScreen(SCREENS.PROFILE)}>Færdig</button>
+            <button className="btn btn-primary btn-full" style={UI.mb16}
+              disabled={!user.name?.trim() || !user.birth_year || !user.gender || savingProfile}
+              onClick={async () => {
+                setSavingProfile(true);
+                try {
+                  // Flush en evt. ikke-tilføjet tekst i "Andre allergier"-feltet, så den ikke går tabt
+                  const pendingCustom = customInput.trim();
+                  const allCustom = pendingCustom ? [...customAllerg, pendingCustom] : customAllerg;
+                  if (pendingCustom) { setCustomAllerg(allCustom); setCustomInput(""); }
+
+                  await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+                    method:"PATCH",
+                    headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" },
+                    body:JSON.stringify({
+                      name:user.name, phone:user.phone||null,
+                      birth_year:user.birth_year?parseInt(user.birth_year):null,
+                      gender:user.gender||null, diets:user.diets||[],
+                      e_numbers:selectedENumbers||[],
+                    }),
+                  });
+
+                  // Samlet DELETE + én bulk-POST i stedet for et loop af enkelt-POSTs —
+                  // ellers kan et fejlet kald midtvejs efterlade en delvist gemt liste
+                  await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, { method:"DELETE", headers:makeHeaders(accessToken) });
+                  const rows = [
+                    ...allergens.map(a => ({ user_id:userId, allergen:a, type:"allergen" })),
+                    ...allCustom.map(c => ({ user_id:userId, allergen:c, type:"custom" })),
+                  ];
+                  if (rows.length > 0) {
+                    await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, { method:"POST", headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" }, body:JSON.stringify(rows) });
+                  }
+                  setScreen(SCREENS.PROFILE);
+                } catch (e) {
+                  alert("Fejl: " + e.message);
+                } finally {
+                  setSavingProfile(false);
+                }
+              }}>{savingProfile ? "Gemmer…" : "Gem ændringer"}</button>
           </div>
         )}
 
