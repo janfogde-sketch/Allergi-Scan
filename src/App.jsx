@@ -344,17 +344,36 @@ export default function EatSafe() {
   }, [accessToken, userId]);
 
   // ── Indkøbsliste-tilslutning via delt link ────────────────────────────────
+  // Koden gemmes i localStorage (ikke kun URL'en), så den overlever hele
+  // signup-flowet — en ny bruger, der åbner linket, skal først igennem
+  // "Opret konto" og allergi-opsætning, før accessToken overhovedet findes.
+  const [pendingJoinList, setPendingJoinList] = useState(() => localStorage.getItem("as_pending_join_list"));
+
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const joinListCode = params.get("join-list");
-    if (!joinListCode || !accessToken || !userId) return;
-
-    // Fjern koden fra URL uden reload
+    const code = params.get("join-list");
+    if (!code) return;
+    localStorage.setItem("as_pending_join_list", code);
+    setPendingJoinList(code);
+    // Fjern koden fra URL uden reload — den lever videre i localStorage
     const url = new URL(window.location.href);
     url.searchParams.delete("join-list");
     window.history.replaceState({}, "", url.toString());
+    // Ikke logget ind endnu — opfordr direkte til at oprette en konto,
+    // fremfor at brugeren lander på den almindelige velkomstskærm
+    if (!localStorage.getItem("as_token")) {
+      setAuthTab("signup");
+      setScreen(SCREENS.LOGIN);
+    }
+  }, []);
 
-    joinByCode(joinListCode).then(res => {
+  React.useEffect(() => {
+    if (!pendingJoinList || !accessToken || !userId) return;
+    const code = pendingJoinList;
+    localStorage.removeItem("as_pending_join_list");
+    setPendingJoinList(null);
+
+    joinByCode(code).then(res => {
       if (res.success) {
         loadShoppingList();
         setScreen(SCREENS.LIST);
@@ -363,7 +382,7 @@ export default function EatSafe() {
         alert("Kunne ikke tilslutte listen: " + (res.error || "Ugyldig kode"));
       }
     });
-  }, [accessToken, userId]);
+  }, [accessToken, userId, pendingJoinList]);
 
   // ── OFF Import ───────────────────────────────────────────────────────────────
   const [importLog, setImportLog] = useState(null);
@@ -1019,6 +1038,7 @@ const lookupProduct = useCallback(async (ean) => {
             saveProfileStep1={saveProfileStep1} finishOnboard={finishOnboard}
             StepBar={StepBar}
             buildLabel={formatBuildTime()}
+            hasPendingJoinList={!!pendingJoinList}
           />
           </Suspense>
         )}
