@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { SCREENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { compareAllergens } from "./helpers.js";
-import { Icon, ProductImage } from "./SharedComponents.jsx";
+import { Icon, ProductImage, SearchResultRow } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -207,7 +207,7 @@ export default function ListScreen({
       {/* ── Tilføj vare (øverst, så søgeresultater aldrig kan havne bag andet indhold) ── */}
       <div style={{ marginBottom:10, position:"relative", zIndex:5 }}>
         <div className="input-row" style={{ marginBottom:0 }}>
-          <input className="field" placeholder="Søg produkt, eller skriv en fritekst-vare…"
+          <input className="field" placeholder="Søg eller skriv en vare…"
             value={newItemName}
             onChange={e => setNewItemName(e.target.value)}
             onFocus={() => setItemFocused(true)}
@@ -251,19 +251,16 @@ export default function ListScreen({
             {itemSearching && itemResults.length === 0 && (
               <div style={{ padding:"10px 12px", fontSize:12, color:"var(--muted)" }}>Søger…</div>
             )}
-            {visibleItemResults.map(({ product: p, status }) => (
-              <div key={p.ean||p.id} onMouseDown={() => pickItemProduct(p)}
-                style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px", cursor:"pointer", borderBottom:"1px solid var(--border)" }}>
-                <ProductImage product={p} size={28} />
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</div>
-                  {p.brand && <div style={{ fontSize:10, color:"var(--muted)" }}>{p.brand}</div>}
-                </div>
-                {status === "warn" && (
-                  <span style={{ fontSize:9, fontWeight:800, color:"var(--amber)", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:20, padding:"2px 7px", flexShrink:0 }}>SPOR</span>
-                )}
+            {visibleItemResults.length > 0 && (
+              <div style={{ padding:"10px 12px 2px" }}>
+                {visibleItemResults.map(({ product: p }) => (
+                  <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds}
+                    onOpen={() => { lookupProduct(p.ean||p.code||p.id); setItemFocused(false); setNewItemName(""); }}
+                    onAddToList={() => pickItemProduct(p)}
+                  />
+                ))}
               </div>
-            ))}
+            )}
             {hiddenUnsafeCount > 0 && (
               <div style={{ padding:"6px 12px", fontSize:10, color:"var(--muted)", background:"var(--paper2)" }}>
                 🚫 {hiddenUnsafeCount} produkt{hiddenUnsafeCount!==1?"er":""} skjult — indeholder allergener for {searchScopeLabel}
@@ -294,7 +291,7 @@ export default function ListScreen({
         {favorites.length > 0 && (
           <button aria-label="Dine favoritter" onClick={() => setFavoritesOpen(v => !v)}
             style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:"auto", padding:0, background: favoritesOpen ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${favoritesOpen ? "var(--green)" : "var(--border)"}`, borderRadius:10, cursor:"pointer", flexShrink:0, fontSize:15 }}>
-            ⭐
+            ❤️
           </button>
         )}
         <button aria-label="Del liste" onClick={() => setShowShareSheet(true)} disabled={!activeList}
@@ -366,7 +363,8 @@ export default function ListScreen({
           onClose={() => setShowShareSheet(false)} />
       )}
 
-      {/* ── Favoritter (åbnes via ⭐-ikonet i listevælger-rækken) ── */}
+      {/* ── Favoritter (åbnes via ❤️-ikonet i listevælger-rækken — hjertet er
+           appens faste favorit-ikon, se fx RecipesScreen/ProfileScreen) ── */}
       {favorites.length > 0 && favoritesOpen && (
         <div className="card" style={S.mb12}>
           <div className="card-lbl">Dine favoritter ({favorites.length})</div>
