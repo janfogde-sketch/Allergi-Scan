@@ -395,7 +395,7 @@ export default function ProfileScreen({
             <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, overflow:"hidden", marginBottom:10 }}>
               {[
                 { icon:"⭐", label:"Favoritter", sub:"Gemte produkter og opskrifter", fn:() => setScreen(SCREENS.FAVORITES) },
-                { icon:"👨‍👩‍👧", label:"Familie", sub:`${family.length} ${family.length===1?"profil":"profiler"} oprettet`, fn:() => setScreen(SCREENS.FAMILY) },
+                { icon:"👨‍👩‍👧", label:"Familie", sub:`${family.length + household.length} ${family.length + household.length===1?"medlem":"medlemmer"}`, fn:() => setScreen(SCREENS.FAMILY) },
                 { icon:"📋", label:"Scanningshistorik", sub:`${history.length} produkter scannet`, fn:() => setScreen(SCREENS.HISTORY) },
                 { icon:"🌍", label:"Madpas", sub:"Vis allergier til restaurantpersonale", fn:() => setScreen(SCREENS.MADPAS) },
                 { icon:"🍽️", label:"Restaurantguide", sub:"Spis trygt ude — tips & rettigheder", fn:() => setScreen(SCREENS.RESTAURANTGUIDE) },
@@ -751,20 +751,20 @@ export default function ProfileScreen({
         {screen === SCREENS.FAMILY && (
           <div className="screen fade-in">
             <div className="screen-title">Familie</div>
-            <div className="screen-sub">Administrér allergiprofiler for familien.</div>
+            <div className="screen-sub">Alle i din familie — dem du har oprettet en allergiprofil for, og dem med egen EatSafe-konto.</div>
             <div className="card" style={UI.up12px14px}>
               <div className="card-lbl">Aktive profiler ved scanning</div>
               <FamilyChips />
             </div>
-            {family.length===0 && <div className="empty-state"><span className="empty-icon">👨‍👩‍👧</span><div className="empty-txt">Ingen allergiprofiler endnu</div><div className="empty-sub">Tilføj fx et barn eller en partner for at scanne for dem</div></div>}
+            {family.length===0 && household.length===0 && <div className="empty-state"><span className="empty-icon">👨‍👩‍👧</span><div className="empty-txt">Ingen i familien endnu</div><div className="empty-sub">Tilføj fx et barn eller en partner for at scanne for dem, eller invitér en med egen konto</div></div>}
             {family.map(m => (
-              <div key={m.id} className="family-member">
+              <div key={`p-${m.id}`} className="family-member">
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:m.allergens.length?10:0 }}>
                   <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)" }}>{initials(m.name)}</div>
                   <div style={UI.flex1}>
                     <div style={{ fontWeight:800, fontSize:15 }}>{m.name}</div>
                     <div style={UI.muted11mt2}>
-                      {[m.birth_year && `f. ${m.birth_year}`, m.gender, m.allergens.length && `${m.allergens.length} allergi${m.allergens.length!==1?"er":""}`].filter(Boolean).join(" · ")}
+                      {[m.birth_year && `f. ${m.birth_year}`, m.gender, m.allergens.length && `${m.allergens.length} allergi${m.allergens.length!==1?"er":""}`, "Ingen egen konto"].filter(Boolean).join(" · ")}
                     </div>
                   </div>
                   <span style={{ cursor:"pointer", opacity:.35, fontSize:18, padding:4 }} onClick={() => removeMember(m.id)}><Icon name="trash" size={18} color="var(--muted)" /></span>
@@ -772,49 +772,42 @@ export default function ProfileScreen({
                 {m.allergens.length>0 && <div className="tags">{getAllergenLabels(m.allergens,m.custom||[]).map((a,j) => <div key={j} className="tag" style={{ fontSize:11 }}>{a}</div>)}</div>}
               </div>
             ))}
-            {/* ── Din husstand — rigtige konti, adskilt fra allergi-profilerne ovenfor ── */}
-            {household.length > 0 && (
-              <div className="card" style={UI.mb12}>
-                <div style={UI.ufs13_fw800_cink_mb4}>👨‍👩‍👧 Din husstand</div>
-                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12, lineHeight:1.5 }}>
-                  Disse konti deler scanningshistorik, favoritter og indkøbslister med dig.
-                </div>
-                {household.map(m => (
-                  <div key={m.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom:"1px solid var(--border)" }}>
-                    <div style={{ width:32, height:32, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
-                      {initials(m.name || m.email)}
+            {household.map(m => (
+              <div key={`h-${m.id}`} className="family-member">
+                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <div className="fm-avatar" style={{ background:"var(--green)", color:"var(--ink)" }}>{initials(m.name || m.email)}</div>
+                  <div style={UI.flex1}>
+                    <div style={{ fontWeight:800, fontSize:15 }}>{m.name || m.email}</div>
+                    <div style={UI.muted11mt2}>
+                      {["Egen EatSafe-konto", !m.canRemove && "Inviterede dig"].filter(Boolean).join(" · ")}
                     </div>
-                    <div style={UI.flex1}>
-                      <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{m.name || m.email}</div>
-                      {!m.canRemove && <div style={{ fontSize:10, color:"var(--muted)", marginTop:1 }}>Inviterede dig</div>}
-                    </div>
-                    {m.canRemove && (
-                      <span style={{ cursor:"pointer", opacity:.5, padding:4 }} aria-label={`Fjern ${m.name || m.email} fra husstanden`} role="button" tabIndex={0}
-                        onClick={async () => {
-                          if (!confirm(`Fjern ${m.name || m.email} fra din husstand? I mister adgang til hinandens delte data.`)) return;
-                          await apiCall(`${SUPABASE_URL}/functions/v1/family/group/${m.id}`, { method: "DELETE", headers: makeHeaders(accessToken) });
-                          setHousehold(h => h.filter(x => x.id !== m.id));
-                        }}
-                        onKeyDown={async e => { if (e.key !== "Enter") return;
-                          if (!confirm(`Fjern ${m.name || m.email} fra din husstand? I mister adgang til hinandens delte data.`)) return;
-                          await apiCall(`${SUPABASE_URL}/functions/v1/family/group/${m.id}`, { method: "DELETE", headers: makeHeaders(accessToken) });
-                          setHousehold(h => h.filter(x => x.id !== m.id));
-                        }}>
-                        <Icon name="trash" size={16} color="var(--muted)" />
-                      </span>
-                    )}
                   </div>
-                ))}
+                  {m.canRemove && (
+                    <span style={{ cursor:"pointer", opacity:.35, fontSize:18, padding:4 }} aria-label={`Fjern ${m.name || m.email} fra familien`} role="button" tabIndex={0}
+                      onClick={async () => {
+                        if (!confirm(`Fjern ${m.name || m.email} fra din familie? I mister adgang til hinandens delte data.`)) return;
+                        await apiCall(`${SUPABASE_URL}/functions/v1/family/group/${m.id}`, { method: "DELETE", headers: makeHeaders(accessToken) });
+                        setHousehold(h => h.filter(x => x.id !== m.id));
+                      }}
+                      onKeyDown={async e => { if (e.key !== "Enter") return;
+                        if (!confirm(`Fjern ${m.name || m.email} fra din familie? I mister adgang til hinandens delte data.`)) return;
+                        await apiCall(`${SUPABASE_URL}/functions/v1/family/group/${m.id}`, { method: "DELETE", headers: makeHeaders(accessToken) });
+                        setHousehold(h => h.filter(x => x.id !== m.id));
+                      }}>
+                      <Icon name="trash" size={18} color="var(--muted)" />
+                    </span>
+                  )}
+                </div>
               </div>
-            )}
+            ))}
 
             {/* ── Invitér familiemedlem via link ── */}
             <div className="card" style={UI.mb12}>
               <div style={UI.ufs13_fw800_cink_mb4}>
-                🔗 Invitér via link
+                🔗 Invitér med egen konto
               </div>
               <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12, lineHeight:1.5 }}>
-                Send et link til et familiemedlem. Når de opretter en konto via linket, deles jeres familieprofiler automatisk.
+                Send et link til et familiemedlem, der skal have sin egen EatSafe-konto. Når de opretter sig via linket, deles I automatisk scanninger, favoritter og indkøbslister.
               </div>
 
               {!inviteLink && (
@@ -885,7 +878,7 @@ export default function ProfileScreen({
             </div>
 
             <div className="card">
-              <div className="card-title">+ Tilføj allergiprofil</div>
+              <div className="card-title">+ Tilføj uden egen konto</div>
               <MemberForm
                 name={newMemberName} setName={setNewMemberName}
                 birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
