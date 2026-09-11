@@ -376,6 +376,11 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
   const tagLabels = { vegan:"🌱 Vegansk", vegetarian:"🥦 Vegetarisk" };
   return (
     <div onClick={onOpen}
+      // Forhindrer at et tap her flytter/fjerner fokus fra et søgefelt ovenover
+      // (fx "Tilføj vare" i indkøbslisten) — ellers kan søgefeltets onBlur nå
+      // at lukke resultatlisten, før klikket på fx "+"-knappen når at blive
+      // registreret, så tryk på mobil kan virke som om de ikke gør noget.
+      onMouseDown={e => e.preventDefault()}
       style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", marginBottom:8, background:"var(--surface)", border:`1px solid ${status==="danger" ? "var(--red-md)" : status==="warn" ? "var(--amber-md)" : "var(--border)"}`, borderRadius:12, cursor:"pointer" }}>
       <ProductImage product={p} size={44} />
       <div style={{ flex:1, minWidth:0 }}>
