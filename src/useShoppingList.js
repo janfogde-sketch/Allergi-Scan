@@ -318,15 +318,15 @@ export function useShoppingList({ accessToken, userId }) {
   // Tager enten en simpel tekststreng (fritekst-vare) eller et produkt-objekt
   // ({ name, ean, id }, fx fra søgning eller favoritter) — sidstnævnte gemmer
   // en reel reference til produktet, så varen kan linkes til det i listen.
-  const addToList = useCallback(async (nameOrProduct) => {
+  const addToList = useCallback(async (nameOrProduct, targetListId) => {
     const isProduct = nameOrProduct && typeof nameOrProduct === "object";
     const name = isProduct ? nameOrProduct.name : nameOrProduct;
     const ean = isProduct ? (nameOrProduct.ean || nameOrProduct.code || null) : null;
     const productId = isProduct ? (nameOrProduct.id || nameOrProduct.product_id || null) : null;
     const imageUrl = isProduct ? (nameOrProduct.image_url || null) : null;
-    if (!name?.trim() || !activeListId) return false;
+    const listId = targetListId || activeListId;
+    if (!name?.trim() || !listId) return false;
     const tempId = uid();
-    const listId = activeListId;
     markPending(tempId);
     let resolveRealId;
     const realIdPromise = new Promise(res => { resolveRealId = res; });
