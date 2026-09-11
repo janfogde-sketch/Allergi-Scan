@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { ALLERGENS, SUPABASE_ANON_KEY } from "./constants.jsx";
+import { ALLERGENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 
 export const initials = n => (n||"").split(" ").filter(Boolean).map(w=>w[0]).join("").toUpperCase().slice(0,2)||"?";
@@ -83,6 +83,22 @@ export function makeHeaders(token) {
     "apikey": SUPABASE_ANON_KEY,
     ...(token ? { "Authorization": `Bearer ${token}` } : {}),
   };
+}
+
+// Logger (fire-and-forget) at en bruger valgte/tilføjede et produkt fra et
+// søgeresultat for en given søgning — bruges af søgefunktionen til at lære
+// sammenhængen mellem søgeord og hvad folk rent faktisk vælger, både til
+// global rangering (mest valgte på tværs af alle) og personlig rangering
+// (hvad denne bruger selv plejer at vælge). Må aldrig blokere eller fejle
+// synligt for brugeren — søgningen/tilføjelsen skal virke uanset.
+export function logSearchSelection(query, product, accessToken) {
+  const ean = product?.ean || product?.code;
+  if (!query?.trim() || !ean) return;
+  fetch(`${SUPABASE_URL}/functions/v1/search`, {
+    method: "POST",
+    headers: makeHeaders(accessToken),
+    body: JSON.stringify({ query: query.trim(), ean, product_id: product.id || null }),
+  }).catch(() => {});
 }
 
 export async function apiCall(url, options = {}) {
