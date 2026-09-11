@@ -1,7 +1,9 @@
 # EatSafe — CONTEXT.md
 
-> **Sidst opdateret:** 11. juni 2026
+> **Sidst opdateret:** 11. september 2026
 > **Opdateres ved større ændringer. Deles med AI-assistenter som sessionskontekst.**
+> **Se også `/CLAUDE.md`** i repo-roden — den samler projektoverblik, arkitektur og
+> vores arbejdsgang ét sted, og linker hertil for fuld teknisk detalje.
 
 ---
 
@@ -72,6 +74,10 @@ src/
 ├── SuggestEditScreen.jsx     # SUGGEST_EDIT — foreslå rettelse til produkt
 ├── ProfileScreen.jsx         # PROFILE, EDITPROFILE, FAMILY, HISTORY, FAVORITES, ADMIN
 │                             #   Footer: hej@eatsafe.dk + privatlivspolitik link
+├── ProfileMenu.jsx           # Slide-out menu fra højre (åbnes via hamburger-ikon i
+│                             #   topbar) — profil-hero + links til Favoritter, Familie,
+│                             #   Scanningshistorik, Opskrifter, Viden, Madpas,
+│                             #   Restaurantguide, Admin. Portal til document.body.
 ├── OnboardingScreen.jsx      # WELCOME, LOGIN, ONBOARD
 ├── KnowledgeScreen.jsx       # KNOWLEDGE — Leksikon
 ├── RecipesScreen.jsx         # RECIPES — opskrifter (gradient header)
@@ -122,7 +128,11 @@ src/
 | RECIPES | RecipesScreen | Opskrifter |
 | MADPAS | MadpasScreen | Madpas + QR |
 
-Bundmenu: `Opskrifter → Indkøbsliste → Hjem → Viden → Profil`
+Bundmenu (opdateret sept. 2026): `Indkøbsliste (venstre) → Scan (midten, barcode-ikon)
+→ Søg (højre)`. Profil, Familie, Favoritter, Historik, Opskrifter, Viden, Madpas,
+Restaurantguide og Admin nås nu via et hamburger-menu-ikon i topbaren th., som åbner
+`ProfileMenu.jsx` (slide-out fra højre). Se `/CLAUDE.md` afsnit 3 for detaljer og
+begrundelse.
 
 ---
 
