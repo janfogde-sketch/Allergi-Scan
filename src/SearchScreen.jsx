@@ -1,8 +1,7 @@
 // @ts-nocheck
 import React from "react";
-import { createPortal } from "react-dom";
 import { compareAllergens, productDisplayName, logSearchSelection } from "./helpers.js";
-import { Loader, SearchResultRow } from "./SharedComponents.jsx";
+import { Loader, SearchResultRow, ListPickerSheet } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
@@ -152,32 +151,9 @@ export default function SearchScreen({
         </div>
       )}
 
-      {/* ── Vælg liste — vises kun når man har mere end én indkøbsliste.
-           Portalet direkte til <body>: "Skærmen" herover har en fade-in-
-           animation på transform, som (selv efter animationen er slut, pga.
-           fill-mode "both") gør den til et "containing block" for position:
-           fixed-børn — så et almindeligt fixed-ark her ville rulle med
-           søgeresultaterne i stedet for at blive stående over bundmenuen. ── */}
-      {pendingAdd && createPortal(
-        <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }}
-          onClick={cancelAddToList}>
-          <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"70vh", overflowY:"auto" }}
-            onClick={e => e.stopPropagation()}>
-            <div style={UI.rowBetweenMb16}>
-              <div style={UI.ufs18_fw900_cink}>Tilføj til hvilken liste?</div>
-              <button onClick={cancelAddToList} aria-label="Luk"
-                style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
-            </div>
-            {lists.map(l => (
-              <div key={l.id} onClick={() => chooseList(l.id)}
-                style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, marginBottom:8, cursor:"pointer" }}>
-                <span style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>{l.name}</span>
-                {l.type === "family" && <span style={{ fontSize:11 }}>👨‍👩‍👧</span>}
-              </div>
-            ))}
-          </div>
-        </div>,
-        document.body
+      {/* ── Vælg liste — vises kun når man har mere end én indkøbsliste ── */}
+      {pendingAdd && (
+        <ListPickerSheet lists={lists} onChoose={chooseList} onCancel={cancelAddToList} />
       )}
     </div>
   );

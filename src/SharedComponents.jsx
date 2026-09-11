@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React from "react";
+import { createPortal } from "react-dom";
 import { ALLERGENS, PAGE_IDS } from "./constants.jsx";
 import { initials, compareAllergens, productDisplayName } from "./helpers.js";
 import { isAllergenWord } from "./allergenKeywords.js";
@@ -417,11 +418,42 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
       <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
         <div style={{ fontSize:11, fontWeight:700, color:statusColor }}>{statusLabel}</div>
         <button type="button" className="btn btn-sm" aria-label={added ? `"${productDisplayName(p)}" er tilføjet` : `Tilføj "${productDisplayName(p)}" til indkøbsliste`}
-          style={{ width:36, padding:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, lineHeight:1,
+          style={{ width:44, height:44, minHeight:44, padding:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, lineHeight:1,
             background: added ? "var(--green)" : "var(--surface2)", color: added ? "var(--on-green)" : "var(--ink2)",
-            border: `1px solid ${added ? "var(--green)" : "var(--border)"}`, transition:"all .15s" }}
+            border: `1px solid ${added ? "var(--green)" : "var(--border)"}`, borderRadius:10, transition:"all .15s" }}
           onClick={handleAddToList}>+</button>
       </div>
     </div>
   );
 });
+
+// ── Fælles "vælg liste"-ark ──────────────────────────────────────────────────
+// Vises når en bruger med mere end én indkøbsliste tilføjer et produkt, så de
+// kan vælge hvilken liste det skal på. Portalet direkte til <body>: skærmen
+// bag har en fade-in-animation på transform, som (selv efter animationen er
+// slut, pga. fill-mode "both") gør den til et "containing block" for
+// position:fixed-børn — et almindeligt fixed-ark ville ellers rulle med
+// resten af siden i stedet for at blive stående over bundmenuen.
+export function ListPickerSheet({ lists, onChoose, onCancel }) {
+  return createPortal(
+    <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }}
+      onClick={onCancel}>
+      <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"70vh", overflowY:"auto" }}
+        onClick={e => e.stopPropagation()}>
+        <div style={UI.rowBetweenMb16}>
+          <div style={UI.ufs18_fw900_cink}>Tilføj til hvilken liste?</div>
+          <button onClick={onCancel} aria-label="Luk"
+            style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
+        </div>
+        {lists.map(l => (
+          <div key={l.id} onClick={() => onChoose(l.id)}
+            style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, marginBottom:8, cursor:"pointer" }}>
+            <span style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>{l.name}</span>
+            {l.type === "family" && <span style={{ fontSize:11 }}>👨‍👩‍👧</span>}
+          </div>
+        ))}
+      </div>
+    </div>,
+    document.body
+  );
+}

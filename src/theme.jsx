@@ -422,7 +422,12 @@ body{
 
 /* ── PRODUKT HERO ── */
 .product-hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px;backdrop-filter:blur(8px);}
-.product-hero-img{width:100%;height:180px;object-fit:contain;background:var(--surface2);display:block;}
+/* En smal/kvadratisk vare (fx en flaske) på "contain" ville ellers efterlade
+   fladt grå tomrum i siderne — en sløret, opskaleret kopi af samme billede
+   som baggrund udfylder boksen elegant uanset billedets facon. */
+.product-hero-imgwrap{position:relative;width:100%;height:180px;overflow:hidden;background:var(--surface2);}
+.product-hero-img-backdrop{position:absolute;inset:-12px;width:calc(100% + 24px);height:calc(100% + 24px);object-fit:cover;filter:blur(22px) saturate(1.3);opacity:.55;transform:scale(1.05);}
+.product-hero-img{position:relative;width:100%;height:100%;object-fit:contain;display:block;}
 .product-hero-img-placeholder{width:100%;height:180px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:72px;}
 .product-hero-body{padding:14px 16px;}
 .product-hero-name{font-size:19px;font-weight:700;color:var(--ink);letter-spacing:-.4px;line-height:1.2;margin-bottom:3px;}
