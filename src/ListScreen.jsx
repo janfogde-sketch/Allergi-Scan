@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { SCREENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compareAllergens, productDisplayName } from "./helpers.js";
+import { compareAllergens, productDisplayName, logSearchSelection } from "./helpers.js";
 import { Icon, ProductImage, SearchResultRow } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -156,6 +156,7 @@ export default function ListScreen({
   }, [newItemName, accessToken]);
 
   const pickItemProduct = (p) => {
+    logSearchSelection(newItemName, p, accessToken);
     addToList({ name: productDisplayName(p), ean: p.ean || p.code, id: p.id, image_url: p.image_url });
     setItemResults([]);
     setItemFocused(false);
@@ -255,7 +256,7 @@ export default function ListScreen({
               <div style={{ padding:"10px 12px 2px" }}>
                 {visibleItemResults.map(({ product: p }) => (
                   <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds}
-                    onOpen={() => { lookupProduct(p.ean||p.code||p.id); setItemFocused(false); setNewItemName(""); }}
+                    onOpen={() => { logSearchSelection(newItemName, p, accessToken); lookupProduct(p.ean||p.code||p.id); setItemFocused(false); setNewItemName(""); }}
                     onAddToList={() => pickItemProduct(p)}
                   />
                 ))}

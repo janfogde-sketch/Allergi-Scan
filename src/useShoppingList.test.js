@@ -124,6 +124,60 @@ describe("toggleItem", () => {
   });
 });
 
+describe("addToList / Realtime race", () => {
+  it("replaces the optimistic item instead of duplicating it when the Realtime INSERT for it arrives before the POST response", async () => {
+    const { result } = renderHook(() => useShoppingList({ accessToken: "tok", userId: "u1" }));
+    await seedList(result, []);
+    await waitFor(() => expect(wsInstances.length).toBeGreaterThan(0));
+
+    // POST never resolves within this test — simulates the Realtime INSERT
+    // winning the race against the HTTP response.
+    let releasePost;
+    global.fetch.mockReturnValue(new Promise(res => { releasePost = res; }));
+
+    let addPromise;
+    act(() => { addPromise = result.current.addToList("Havregryn"); });
+    await waitFor(() => expect(result.current.shoppingList.length).toBe(1));
+    const tempId = result.current.shoppingList[0].id;
+
+    const ws = wsInstances[wsInstances.length - 1];
+    act(() => {
+      ws.onmessage({ data: JSON.stringify({ event: "phx_reply", ref: "1" }) });
+      ws.onmessage({ data: JSON.stringify({ payload: { type: "INSERT", record: { id: "server-item-1", name: "Havregryn", checked: false } } }) });
+    });
+
+    // The temp item was replaced, not duplicated
+    expect(result.current.shoppingList).toEqual([{ id: "server-item-1", name: "Havregryn", ean: null, product_id: null, image_url: null, checked: false }]);
+
+    act(() => releasePost(jsonResponse({ item: { id: "server-item-1" } })));
+    await act(async () => { await addPromise; });
+    expect(result.current.shoppingList).toEqual([{ id: "server-item-1", name: "Havregryn", ean: null, product_id: null, image_url: null, checked: false }]);
+    expect(result.current.shoppingList.find(i => i.id === tempId)).toBeUndefined();
+  });
+
+  it("waits for the real id before toggling an item added moments ago, instead of failing against the temp id", async () => {
+    const { result } = renderHook(() => useShoppingList({ accessToken: "tok", userId: "u1" }));
+    await seedList(result, []);
+
+    let releasePost;
+    global.fetch.mockImplementationOnce(() => new Promise(res => { releasePost = res; }));
+    let addPromise;
+    act(() => { addPromise = result.current.addToList("Havregryn"); });
+    await waitFor(() => expect(result.current.shoppingList.length).toBe(1));
+    const tempId = result.current.shoppingList[0].id;
+
+    global.fetch.mockResolvedValue(jsonResponse({}));
+    let togglePromise;
+    act(() => { togglePromise = result.current.toggleItem(tempId); });
+
+    // The add resolves with the server's real id while the toggle is still waiting
+    act(() => releasePost(jsonResponse({ item: { id: "server-item-1" } })));
+    await act(async () => { await addPromise; await togglePromise; });
+
+    expect(result.current.shoppingList).toEqual([{ id: "server-item-1", name: "Havregryn", ean: null, product_id: null, image_url: null, checked: true }]);
+  });
+});
+
 describe("removeItem", () => {
   it("restores the item if deletion fails", async () => {
     const { result } = renderHook(() => useShoppingList({ accessToken: "tok", userId: "u1" }));

@@ -33,9 +33,22 @@ export function useShoppingList({ accessToken, userId }) {
   const shoppingList = activeList?.shopping_list_items || [];
 
   // Holder altid den seneste liste synkront tilgængelig — bruges af toggleItem
-  // (se dér) til at læse/opdatere state uden at vente på et React-gen-render.
+  // m.fl. til at læse/opdatere state uden at vente på et React-gen-render.
   const listsRef = useRef(lists);
   listsRef.current = lists;
+
+  // Skriver ALTID gennem denne, aldrig setLists direkte: opdaterer listsRef
+  // synkront (så en efterfølgende linje i samme funktion kan læse den nyeste
+  // state med det samme) og kalder så den rigtige setState. Uden dette kan
+  // et await midt i fx toggleItem (se waitForRealId herunder) nå at genoptage
+  // FØR React selv har nået at gen-rendere og opdatere listsRef — så en
+  // handling der lige er sket (fx addToList's skift fra midlertidigt til
+  // rigtigt id) ser ud som om den slet ikke er sket endnu.
+  const updateLists = (updater) => {
+    const next = typeof updater === "function" ? updater(listsRef.current) : updater;
+    listsRef.current = next;
+    setLists(next);
+  };
 
   // Id'er vi selv lige har afkrydset/slettet/tilføjet optimistisk. Realtime-
   // beskeder for disse id'er ignoreres i et kort vindue — ellers kan en
@@ -51,12 +64,37 @@ export function useShoppingList({ accessToken, userId }) {
     pendingIdsRef.current.set(id, timeoutId);
   };
 
+  // ── Midlertidige id'er for varer der lige er tilføjet optimistisk ──────────
+  // addToList giver en ny vare et lokalt id (uid() — en kort streng uden
+  // bindestreg) indtil serverens svar kommer tilbage med det rigtige uuid.
+  // Markerer man varen som købt (eller sletter den) i det tidsrum, ville et
+  // PATCH/DELETE mod det midlertidige id ellers ramme et id der slet ikke
+  // findes på serveren og fejle stille. isTempId skelner de to id-formater
+  // (uuid'er indeholder altid bindestreger, uid() aldrig).
+  const isTempId = (id) => typeof id === "string" && !id.includes("-");
+
+  // tempId -> { promise, resolve } — så toggleItem/removeItem kan vente på
+  // det rigtige id, i stedet for at fejle på det midlertidige.
+  const pendingAddsRef = useRef(new Map());
+  // FIFO af { listId, tempId } for varer der afventer deres rigtige id — så
+  // et Realtime-INSERT for varen (som ofte når frem FØR selve POST-svaret)
+  // kan genkendes som netop denne vare og erstatte det midlertidige id,
+  // i stedet for at blive tilføjet som en ekstra, duplikeret linje.
+  const pendingAddQueueRef = useRef([]);
+
+  const waitForRealId = async (id) => {
+    if (!isTempId(id)) return id;
+    const pending = pendingAddsRef.current.get(id);
+    if (!pending) return id; // allerede afklaret (eller aldrig set) — brug som er
+    return pending.promise;
+  };
+
   // ── Indlæs alle lister ───────────────────────────────────────────────────────
   const loadShoppingList = useCallback(async () => {
     try {
       const data = await apiCall(`${SHOPPING_FN}?user_id=${userId}`, { headers: makeHeaders(accessToken) });
       const fetched = Array.isArray(data?.lists) ? data.lists : [];
-      setLists(fetched);
+      updateLists(fetched);
 
       if (fetched.length === 0) {
         // Ingen lister endnu — opret en personlig standardliste, som før
@@ -66,7 +104,7 @@ export function useShoppingList({ accessToken, userId }) {
           body: JSON.stringify({ owner_id: userId, name: "Min indkøbsliste", type: "personal" }),
         });
         if (created?.list) {
-          setLists([{ ...created.list, shopping_list_items: [] }]);
+          updateLists([{ ...created.list, shopping_list_items: [] }]);
           setActiveListId(created.list.id);
         }
       } else if (!fetched.some(l => l.id === activeListId)) {
@@ -92,7 +130,7 @@ export function useShoppingList({ accessToken, userId }) {
         body: JSON.stringify({ owner_id: userId, name: name.trim(), type }),
       });
       if (data?.list) {
-        setLists(l => [{ ...data.list, shopping_list_items: [] }, ...l]);
+        updateLists(l => [{ ...data.list, shopping_list_items: [] }, ...l]);
         setActiveListId(data.list.id);
         return data.list;
       }
@@ -102,7 +140,7 @@ export function useShoppingList({ accessToken, userId }) {
 
   const renameList = useCallback(async (listId, name) => {
     if (!name?.trim()) return;
-    setLists(l => l.map(x => x.id === listId ? { ...x, name: name.trim() } : x));
+    updateLists(l => l.map(x => x.id === listId ? { ...x, name: name.trim() } : x));
     try {
       await apiCall(`${SHOPPING_FN}/${listId}`, {
         method: "PATCH", headers: makeHeaders(accessToken), body: JSON.stringify({ name: name.trim() }),
@@ -111,7 +149,7 @@ export function useShoppingList({ accessToken, userId }) {
   }, [accessToken]);
 
   const setListType = useCallback(async (listId, type) => {
-    setLists(l => l.map(x => x.id === listId ? { ...x, type } : x));
+    updateLists(l => l.map(x => x.id === listId ? { ...x, type } : x));
     try {
       await apiCall(`${SHOPPING_FN}/${listId}`, {
         method: "PATCH", headers: makeHeaders(accessToken), body: JSON.stringify({ type }),
@@ -122,12 +160,12 @@ export function useShoppingList({ accessToken, userId }) {
   const deleteList = useCallback(async (listId) => {
     const removed = listsRef.current.find(l => l.id === listId);
     const remaining = listsRef.current.filter(l => l.id !== listId);
-    setLists(remaining);
+    updateLists(remaining);
     if (activeListId === listId) setActiveListId(remaining[0]?.id || null);
     try {
       await apiCall(`${SHOPPING_FN}/${listId}`, { method: "DELETE", headers: makeHeaders(accessToken) });
     } catch {
-      if (removed) setLists(l => [...l, removed]);
+      if (removed) updateLists(l => [...l, removed]);
     }
   }, [accessToken, activeListId, setActiveListId]);
 
@@ -191,7 +229,7 @@ export function useShoppingList({ accessToken, userId }) {
     let reconnectDelay = 1000;
 
     const applyToActiveList = (updater) => {
-      setLists(prev => prev.map(l => l.id !== activeListId ? l : { ...l, shopping_list_items: updater(l.shopping_list_items || []) }));
+      updateLists(prev => prev.map(l => l.id !== activeListId ? l : { ...l, shopping_list_items: updater(l.shopping_list_items || []) }));
     };
 
     const connect = () => {
@@ -223,7 +261,23 @@ export function useShoppingList({ accessToken, userId }) {
           if (!type) return;
 
           if (type === "INSERT" && record && !pendingIdsRef.current.has(record.id)) {
-            applyToActiveList(items => items.some(i => i.id === record.id) ? items : [...items, record]);
+            // Hører dette INSERT til en vare vi selv lige har tilføjet, men
+            // hvis rigtige id vi endnu ikke kender (POST-svaret er ikke
+            // kommet tilbage endnu)? Erstat i så fald det midlertidige id
+            // med det rigtige, i stedet for at tilføje varen en gang til.
+            const queueIdx = pendingAddQueueRef.current.findIndex(e => e.listId === activeListId);
+            if (queueIdx !== -1) {
+              const { tempId } = pendingAddQueueRef.current[queueIdx];
+              pendingAddQueueRef.current.splice(queueIdx, 1);
+              markPending(record.id);
+              applyToActiveList(items => items.some(i => i.id === record.id)
+                ? items.filter(i => i.id !== tempId)
+                : items.map(i => i.id === tempId ? { ...i, ...record, id: record.id } : i));
+              pendingAddsRef.current.get(tempId)?.resolve(record.id);
+              pendingAddsRef.current.delete(tempId);
+            } else {
+              applyToActiveList(items => items.some(i => i.id === record.id) ? items : [...items, record]);
+            }
           }
           if (type === "UPDATE" && record && !pendingIdsRef.current.has(record.id)) {
             applyToActiveList(items => items.map(i => i.id === record.id ? { ...i, ...record } : i));
@@ -274,7 +328,11 @@ export function useShoppingList({ accessToken, userId }) {
     const tempId = uid();
     const listId = activeListId;
     markPending(tempId);
-    setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: [...(x.shopping_list_items||[]), { id: tempId, name: name.trim(), ean, product_id: productId, image_url: imageUrl, checked: false }] }));
+    let resolveRealId;
+    const realIdPromise = new Promise(res => { resolveRealId = res; });
+    pendingAddsRef.current.set(tempId, { promise: realIdPromise, resolve: resolveRealId });
+    pendingAddQueueRef.current.push({ listId, tempId });
+    updateLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: [...(x.shopping_list_items||[]), { id: tempId, name: name.trim(), ean, product_id: productId, image_url: imageUrl, checked: false }] }));
     setNewItemName("");
     try {
       const data = await apiCall(`${SHOPPING_FN}/${listId}/items`, {
@@ -285,26 +343,42 @@ export function useShoppingList({ accessToken, userId }) {
       const saved = data?.item;
       if (saved?.id) {
         markPending(saved.id); // undgå at Realtime-INSERT'et for denne vare dubleres oveni id-skiftet herunder
-        setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).map(i => i.id === tempId ? { ...i, id: saved.id } : i) }));
+        pendingAddQueueRef.current = pendingAddQueueRef.current.filter(e => e.tempId !== tempId);
+        // Realtime kan allerede have erstattet det midlertidige id (se WS-håndteringen) —
+        // findes tempId ikke længere, er denne opdatering en harmløs no-op.
+        updateLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).map(i => i.id === tempId ? { ...i, id: saved.id } : i) }));
+        pendingAddsRef.current.get(tempId)?.resolve(saved.id);
+      } else {
+        pendingAddsRef.current.get(tempId)?.resolve(null);
       }
+      pendingAddsRef.current.delete(tempId);
       return true;
     } catch {
       // Gemning fejlede — fjern den midlertidige vare igen, ellers tror brugeren
       // den er gemt, indtil den stille forsvinder ved næste genindlæsning
-      setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).filter(i => i.id !== tempId) }));
+      updateLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).filter(i => i.id !== tempId) }));
+      pendingAddQueueRef.current = pendingAddQueueRef.current.filter(e => e.tempId !== tempId);
+      pendingAddsRef.current.get(tempId)?.resolve(null);
+      pendingAddsRef.current.delete(tempId);
       return false;
     }
   }, [activeListId, accessToken, userId]);
 
   // ── Toggle ──────────────────────────────────────────────────────────────────
-  const toggleItem = useCallback(async (id) => {
+  const toggleItem = useCallback(async (rawId) => {
+    // Er varen tilføjet et øjeblik siden og afventer stadig sit rigtige id
+    // fra serveren? Vent på det i stedet for at sende PATCH mod et id der
+    // slet ikke findes endnu — ellers fejler ændringen stille, og en
+    // efterfølgende Realtime-opdatering kan efterlade en duplikeret linje.
+    const id = await waitForRealId(rawId);
+    if (!id) return; // tilføjelsen fejlede undervejs — varen findes ikke længere
     const listId = activeListId;
     const list = listsRef.current.find(l => l.id === listId);
     const current = list?.shopping_list_items?.find(i => i.id === id);
     if (!current) return; // id fandtes ikke i listen
     const newChecked = !current.checked;
     markPending(id);
-    setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).map(i => i.id === id ? { ...i, checked: newChecked } : i) }));
+    updateLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).map(i => i.id === id ? { ...i, checked: newChecked } : i) }));
     try {
       await apiCall(`${SHOPPING_FN}/${listId}/items/${id}`, {
         method: "PATCH", headers: makeHeaders(accessToken), body: JSON.stringify({ checked: newChecked }),
@@ -312,23 +386,26 @@ export function useShoppingList({ accessToken, userId }) {
     } catch {
       // Opdatering fejlede — rul afkrydsningen tilbage, ellers viser UI'et en
       // status serveren ikke er enig i, indtil næste genindlæsning stille retter den
-      setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).map(i => i.id === id ? { ...i, checked: !newChecked } : i) }));
+      updateLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).map(i => i.id === id ? { ...i, checked: !newChecked } : i) }));
     }
   }, [activeListId, accessToken]);
 
   // ── Slet ────────────────────────────────────────────────────────────────────
-  const removeItem = useCallback(async (id) => {
+  const removeItem = useCallback(async (rawId) => {
+    // Se toggleItem ovenfor — samme grund til at vente på det rigtige id.
+    const id = await waitForRealId(rawId);
+    if (!id) return;
     const listId = activeListId;
     const list = listsRef.current.find(l => l.id === listId);
     const removed = list?.shopping_list_items?.find(i => i.id === id);
     markPending(id);
-    setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).filter(i => i.id !== id) }));
+    updateLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).filter(i => i.id !== id) }));
     try {
       await apiCall(`${SHOPPING_FN}/${listId}/items/${id}`, { method: "DELETE", headers: makeHeaders(accessToken) });
     } catch {
       // Sletning fejlede — læg varen tilbage, ellers forsvinder den fra UI'et
       // uden reelt at være slettet i databasen
-      if (removed) setLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: [...(x.shopping_list_items||[]), removed] }));
+      if (removed) updateLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: [...(x.shopping_list_items||[]), removed] }));
     }
   }, [activeListId, accessToken]);
 

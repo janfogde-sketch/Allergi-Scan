@@ -1,7 +1,8 @@
 // @ts-nocheck
 import React from "react";
-import { compareAllergens, productDisplayName } from "./helpers.js";
+import { compareAllergens, productDisplayName, logSearchSelection } from "./helpers.js";
 import { Loader, SearchResultRow } from "./SharedComponents.jsx";
+import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
 import { UI } from "./styleUtils.js";
@@ -13,6 +14,7 @@ export default function SearchScreen({
   searchLoading,
   lookupProduct,
 }) {
+  const { accessToken } = useAuthContext();
   const { family, activeProfiles, setActiveProfiles } = useProfileContext();
   const { addToList } = useShoppingContext();
 
@@ -106,8 +108,8 @@ export default function SearchScreen({
 
       {resultsWithSafety.map(({ product: p }) => (
         <SearchResultRow key={p.id} product={p} effectiveIds={activeIds}
-          onOpen={() => lookupProduct(p.ean||p.id)}
-          onAddToList={() => addToList({ name: productDisplayName(p), ean: p.ean || p.code, id: p.id, image_url: p.image_url })}
+          onOpen={() => { logSearchSelection(searchQuery, p, accessToken); lookupProduct(p.ean||p.id); }}
+          onAddToList={() => { logSearchSelection(searchQuery, p, accessToken); addToList({ name: productDisplayName(p), ean: p.ean || p.code, id: p.id, image_url: p.image_url }); }}
         />
       ))}
       {resultsWithSafety.length > 0 && hiddenUnsafeCount > 0 && (
