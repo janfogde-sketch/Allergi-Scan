@@ -249,6 +249,10 @@ export default function ScannerScreen({
     );
   };
 
+  // Dato-eyebrow til hilsenen, fx "onsdag · 11. september" (CSS gør den uppercase)
+  const todayLabel = new Date().toLocaleDateString("da-DK", { weekday:"long" })
+    + " · " + new Date().toLocaleDateString("da-DK", { day:"numeric", month:"long" });
+
   return (
     <>
         {screen === SCREENS.HOME && (
@@ -266,11 +270,10 @@ export default function ScannerScreen({
             )}
 
             {/* Hilsen — kun til loggede */}
-            {!!userId && <div style={{ padding:"20px 2px 18px" }}>
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", letterSpacing:"-.3px" }}>
-                  {greeting} {user.name?.split(" ")[0] || "der"}
-                </div>
+            {!!userId && <div className="greeting">
+              <div className="greeting-eyebrow">{todayLabel}</div>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+                <div className="greeting-main">{greeting}, <strong>{user.name?.split(" ")[0] || "der"}</strong></div>
                 {renderStreakBadge()}
               </div>
             </div>}
