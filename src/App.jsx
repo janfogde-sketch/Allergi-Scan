@@ -1374,10 +1374,9 @@ const lookupProduct = useCallback(async (ean) => {
         {!isOnboard && !madpasWaiterView && (
           <nav className="bottom-nav" role="navigation" aria-label="Hovednavigation">
             {[
-              [SCREENS.RECIPES, "recipes",  "Opskrifter"],
+              [SCREENS.SEARCH,  "search",   "Søg varer"],
               [SCREENS.LIST,    "cart",     "Indkøbsliste"],
               [SCREENS.HOME,    "home",     "Hjem"],
-              [SCREENS.KNOWLEDGE, "book",   "Viden"],
               [SCREENS.PROFILE, "profile",  "Profil"],
             ].map(([s,icon,lbl]) => (
               <div key={s} className={`nav-item${(
@@ -1385,12 +1384,14 @@ const lookupProduct = useCallback(async (ean) => {
                 (screen===SCREENS.RESULT && s===SCREENS.HOME) ||
                 (screen===SCREENS.NOTFOUND && s===SCREENS.HOME) ||
                 (screen===SCREENS.SUBMITTED && s===SCREENS.HOME) ||
-                (screen===SCREENS.SEARCH && s===SCREENS.HOME) ||
                 (screen===SCREENS.HISTORY && s===SCREENS.PROFILE) ||
                 (screen===SCREENS.FAVORITES && s===SCREENS.PROFILE) ||
                 (screen===SCREENS.FAMILY && s===SCREENS.PROFILE) ||
                 (screen===SCREENS.ADMIN && s===SCREENS.PROFILE) ||
-                (screen===SCREENS.MADPAS && s===SCREENS.PROFILE)
+                (screen===SCREENS.MADPAS && s===SCREENS.PROFILE) ||
+                (screen===SCREENS.RESTAURANTGUIDE && s===SCREENS.PROFILE) ||
+                (screen===SCREENS.RECIPES && s===SCREENS.PROFILE) ||
+                (screen===SCREENS.KNOWLEDGE && s===SCREENS.PROFILE)
               )?" active":""}`}
                 onClick={() => setScreen(s)}
                 role="button"
