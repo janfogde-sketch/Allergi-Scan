@@ -1,12 +1,13 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compareENumbers, checkDietCompatibility, verifiedBadge, makeHeaders } from "./helpers.js";
-import { Icon, IngredientsList, ProductImage, SafetyRow } from "./SharedComponents.jsx";
+import { compareENumbers, checkDietCompatibility, verifiedBadge, makeHeaders, productDisplayName } from "./helpers.js";
+import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
+import { useShoppingContext } from "./ShoppingContext.jsx";
 import { UI } from "./styleUtils.js";
 
 const S = {
@@ -34,7 +35,24 @@ export default function ResultScreen({
   const { family, allergens, activeProfiles } = useProfileContext();
   const { setScreen } = useNavigationContext();
   const { isFavorite, toggleFavorite } = useHistoryContext();
+  const { lists, activeListId, addToList } = useShoppingContext();
+  const [addedToList, setAddedToList] = React.useState(false);
+  const [showListPicker, setShowListPicker] = React.useState(false);
+  // Nulstil "tilføjet"-kvitteringen når man ser et nyt produkt — ResultScreen
+  // forbliver monteret på tværs af scanninger, kun scanResult skifter.
+  React.useEffect(() => { setAddedToList(false); setShowListPicker(false); }, [scanResult?.code]);
   if (!scanResult) return null;
+
+  const handleAddToList = () => {
+    if (lists.length > 1) { setShowListPicker(true); return; }
+    addToList({ name: productDisplayName({ name: scanResult.name, brand: scanResult.brand }), ean: scanResult.code, id: scanResult.id, image_url: scanResult.image_url }, activeListId)
+      .then(ok => { if (ok) setAddedToList(true); });
+  };
+  const chooseListForAdd = (listId) => {
+    setShowListPicker(false);
+    addToList({ name: productDisplayName({ name: scanResult.name, brand: scanResult.brand }), ean: scanResult.code, id: scanResult.id, image_url: scanResult.image_url }, listId)
+      .then(ok => { if (ok) setAddedToList(true); });
+  };
 
   // ── Småbørn-advarsler (under 3 år) ──────────────────────────────────────────
   const currentYear = new Date().getFullYear();
@@ -135,8 +153,11 @@ export default function ResultScreen({
             til hele kortet, så knapperne flyttede sig med bannerets højde). */}
         <div style={{ position:"relative" }}>
           {scanResult.image_url
-            ? <img loading="lazy" src={scanResult.image_url} alt={scanResult.name} className="product-hero-img"
-                onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }} />
+            ? <div className="product-hero-imgwrap">
+                <img aria-hidden="true" alt="" loading="lazy" src={scanResult.image_url} className="product-hero-img-backdrop" />
+                <img loading="lazy" src={scanResult.image_url} alt={scanResult.name} className="product-hero-img"
+                  onError={e => { const wrap = e.target.closest(".product-hero-imgwrap"); wrap.style.display="none"; wrap.nextSibling.style.display="flex"; }} />
+              </div>
             : null}
           <div className="product-hero-img-placeholder"
             style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"column", gap:8, background:"var(--paper2)", borderRadius:12, padding:20, margin:"0 0 10px" }}>
@@ -524,14 +545,20 @@ export default function ResultScreen({
       {scanResult.productENumbers?.length > 0 && renderENumbers()}
 
       {/* ── 5. HANDLINGER ── */}
-      {/* Favorit/Del sidder som ikon-knapper på produktbilledet ovenfor — kun den ene
-          resterende, mindre vigtige handling ("Ret data") er tilbage hernede. */}
-      <div style={UI.mb10}>
+      {/* Favorit/Del sidder som ikon-knapper på produktbilledet ovenfor. */}
+      <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:10 }}>
+        <button className="btn btn-sm btn-full" onClick={handleAddToList}
+          style={{ background:"var(--green)", color:"var(--on-green)", display:"flex", alignItems:"center", justifyContent:"center", gap:7, opacity: addedToList ? .7 : 1 }}>
+          {addedToList ? <>✓ Tilføjet til indkøbsliste</> : <><Icon name="cart" size={15} color="var(--on-green)" /> Tilføj til indkøbsliste</>}
+        </button>
         <button className="btn btn-outline btn-sm btn-full"
           onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients||""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
           Ret forkerte data
         </button>
       </div>
+      {showListPicker && (
+        <ListPickerSheet lists={lists} onChoose={chooseListForAdd} onCancel={() => setShowListPicker(false)} />
+      )}
 
       {/* ── 6. NÆRINGSINDHOLD ── */}
       {!scanResult.nutrition && (
