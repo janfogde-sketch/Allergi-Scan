@@ -157,28 +157,38 @@ export default function ResultScreen({
                 <img aria-hidden="true" alt="" loading="lazy" src={scanResult.image_url} className="product-hero-img-backdrop" />
                 <img loading="lazy" src={scanResult.image_url} alt={scanResult.name} className="product-hero-img"
                   onError={e => { const wrap = e.target.closest(".product-hero-imgwrap"); wrap.style.display="none"; wrap.nextSibling.style.display="flex"; }} />
+                {/* Sekundære handlinger — del af billed-wrapperen, så de altid sidder i billedets eget øverste højre hjørne */}
+                <div style={{ position:"absolute", top:12, right:12, display:"flex", gap:8 }}>
+                  <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} onClick={() => toggleFavorite(scanResult)}
+                    style={UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc}>
+                    <Icon name="heart" size={15} color={fav ? "var(--red)" : "var(--ink2)"} />
+                  </button>
+                  <button aria-label="Del produkt" onClick={() => { if(navigator.share) navigator.share({ title:scanResult.name, text:scanResult.headline }); }}
+                    style={UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc}>
+                    <Icon name="share" size={15} color="var(--ink2)" />
+                  </button>
+                </div>
               </div>
             : null}
           <div className="product-hero-img-placeholder"
-            style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"column", gap:8, background:"var(--paper2)", borderRadius:12, padding:20, margin:"0 0 10px" }}>
+            style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"column", gap:8, background:"var(--paper2)", borderRadius:12, padding:20, margin:"0 0 10px", position:"relative" }}>
             <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="var(--border2)" strokeWidth="1.5">
               <rect x="4" y="10" width="40" height="30" rx="3"/>
               <circle cx="16" cy="20" r="4"/>
               <path strokeLinecap="round" d="M4 34l10-8 8 6 6-4 16 12"/>
             </svg>
             <div style={UI.ufs11_cmuted_fw500}>Ingen produktbillede</div>
-          </div>
-
-          {/* Sekundære handlinger — små ikon-knapper ovenpå billedet, i tommelfinger-nær placering */}
-          <div style={{ position:"absolute", top:12, right:12, display:"flex", gap:8 }}>
-            <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} onClick={() => toggleFavorite(scanResult)}
-              style={UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc}>
-              <Icon name="heart" size={15} color={fav ? "var(--red)" : "var(--ink2)"} />
-            </button>
-            <button aria-label="Del produkt" onClick={() => { if(navigator.share) navigator.share({ title:scanResult.name, text:scanResult.headline }); }}
-              style={UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc}>
-              <Icon name="share" size={15} color="var(--ink2)" />
-            </button>
+            {/* Uden billede er der ingen wrapper at forankre til — knapperne ligger her i stedet, samme hjørne */}
+            <div style={{ position:"absolute", top:12, right:12, display:"flex", gap:8 }}>
+              <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} onClick={() => toggleFavorite(scanResult)}
+                style={UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc}>
+                <Icon name="heart" size={15} color={fav ? "var(--red)" : "var(--ink2)"} />
+              </button>
+              <button aria-label="Del produkt" onClick={() => { if(navigator.share) navigator.share({ title:scanResult.name, text:scanResult.headline }); }}
+                style={UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc}>
+                <Icon name="share" size={15} color="var(--ink2)" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -464,6 +474,14 @@ export default function ResultScreen({
       {/* ── 1. PRODUKT — verdikten sidder nu som en ramme + strimmel på selve kortet ── */}
       {renderProductHero()}
 
+      <button className="btn btn-sm btn-full" onClick={handleAddToList}
+        style={{ marginBottom:10, background:"var(--green)", color:"var(--on-green)", display:"flex", alignItems:"center", justifyContent:"center", gap:7, opacity: addedToList ? .7 : 1 }}>
+        {addedToList ? <>✓ Tilføjet til indkøbsliste</> : <><Icon name="cart" size={15} color="var(--on-green)" /> Tilføj til indkøbsliste</>}
+      </button>
+      {showListPicker && (
+        <ListPickerSheet lists={lists} onChoose={chooseListForAdd} onCancel={() => setShowListPicker(false)} />
+      )}
+
       {/* ── 1b. SIKRE ALTERNATIVER ── */}
       {(scanResult.status === "danger" || scanResult.status === "warn") && (
         <div style={UI.mb10}>
@@ -544,22 +562,6 @@ export default function ResultScreen({
       {/* ── 4b. E-NUMRE ── */}
       {scanResult.productENumbers?.length > 0 && renderENumbers()}
 
-      {/* ── 5. HANDLINGER ── */}
-      {/* Favorit/Del sidder som ikon-knapper på produktbilledet ovenfor. */}
-      <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:10 }}>
-        <button className="btn btn-sm btn-full" onClick={handleAddToList}
-          style={{ background:"var(--green)", color:"var(--on-green)", display:"flex", alignItems:"center", justifyContent:"center", gap:7, opacity: addedToList ? .7 : 1 }}>
-          {addedToList ? <>✓ Tilføjet til indkøbsliste</> : <><Icon name="cart" size={15} color="var(--on-green)" /> Tilføj til indkøbsliste</>}
-        </button>
-        <button className="btn btn-outline btn-sm btn-full"
-          onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients||""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
-          Ret forkerte data
-        </button>
-      </div>
-      {showListPicker && (
-        <ListPickerSheet lists={lists} onChoose={chooseListForAdd} onCancel={() => setShowListPicker(false)} />
-      )}
-
       {/* ── 6. NÆRINGSINDHOLD ── */}
       {!scanResult.nutrition && (
         <div className="card">
@@ -578,6 +580,14 @@ export default function ResultScreen({
         </div>
       )}
       {scanResult.nutrition && renderNutrition()}
+
+      {/* ── 7. RET DATA — mindre vigtig handling, holdt nederst ── */}
+      <div style={UI.mb10}>
+        <button className="btn btn-outline btn-sm btn-full"
+          onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients||""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
+          Ret forkerte data
+        </button>
+      </div>
 
     </div>
   );
