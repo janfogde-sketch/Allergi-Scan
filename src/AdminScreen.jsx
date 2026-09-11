@@ -133,6 +133,11 @@ export default function AdminScreen() {
     if (s.ocr_raw_text) cleanOcrWithAI(s.ocr_raw_text);
   };
 
+  // ── Installations-QR til beta-testere ───────────────────────────────────────
+  const [showInstallQr, setShowInstallQr] = useState(false);
+  const installUrl = "https://eatsafe.dk/?src=beta-qr";
+  const installQrImg = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(installUrl)}&bgcolor=ffffff&color=0d3320&qzone=2`;
+
   // ── Admin opskrifter — lokal state ──────────────────────────────────────────
   const [adminRecipes, setAdminRecipes] = useState([]);
   const [adminRecipesLoading, setAdminRecipesLoading] = useState(false);
@@ -487,6 +492,7 @@ Implementér derefter løsningen.`;
                     { emoji:"🐛", label:"Gennemse tickets",     color:"var(--red)",   fn:() => { setAdminSection("tickets"); loadTickets(); } },
                     { emoji:"✅", label:"Godkendte produkter",  color:"var(--green)", fn:() => { setAdminSection("submissions"); setSubmissionFilter("approved"); loadSubmissions("approved"); } },
                     { emoji:"👥", label:"Administrér brugere",  color:"var(--ink)",   fn:() => { setAdminSection("users"); loadAdminUsers(); } },
+                    { emoji:"📲", label:"Installations-QR til beta", color:"var(--blue)", fn:() => setShowInstallQr(true) },
                   ].map(({ emoji, label, color, fn }) => (
                     <button key={label} onClick={fn}
                       style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:6, padding:"14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
@@ -495,6 +501,35 @@ Implementér derefter løsningen.`;
                     </button>
                   ))}
                 </div>
+
+                {/* QR popup — fullscreen overlay, samme mønster som Madpas-delingen */}
+                {showInstallQr && (
+                  <div onClick={() => setShowInstallQr(false)}
+                    style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,.6)", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+                    <div onClick={e => e.stopPropagation()}
+                      style={{ background:"var(--sheet)", borderRadius:24, padding:"28px 24px", maxWidth:340, width:"100%", textAlign:"center" }}>
+                      <div style={{ fontSize:13, fontWeight:800, color:"var(--blue)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:4 }}>Installér EatSafe</div>
+                      <div style={{ fontSize:11, color:"var(--muted)", marginBottom:18, lineHeight:1.5 }}>
+                        Vis denne kode til beta-testere. Når de scanner den med telefonens kamera, åbner appen med det samme.
+                      </div>
+                      <img src={installQrImg} alt="Installations-QR til EatSafe"
+                        width={220} height={220}
+                        style={{ borderRadius:16, border:"3px solid var(--blue-md)", display:"block", margin:"0 auto 18px" }} />
+                      <div style={{ fontSize:11, color:"var(--muted)", marginBottom:16, wordBreak:"break-all" }}>{installUrl}</div>
+                      <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", textAlign:"left", marginBottom:16 }}>
+                        <div style={{ fontSize:11, fontWeight:800, color:"var(--ink)", marginBottom:6 }}>Sådan installerer de</div>
+                        <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.6 }}>
+                          <strong style={{ color:"var(--ink2)" }}>Android/Chrome:</strong> Browseren viser selv "Installér app" — ét tryk, og EatSafe lander på hjemmeskærmen.<br/>
+                          <strong style={{ color:"var(--ink2)" }}>iPhone/Safari:</strong> Apple tillader ikke automatisk installation — testeren skal selv trykke på Del-ikonet og vælge "Føj til hjemmeskærm".
+                        </div>
+                      </div>
+                      <button onClick={() => setShowInstallQr(false)}
+                        style={{ width:"100%", padding:"12px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
+                        Luk
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
