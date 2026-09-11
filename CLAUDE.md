@@ -211,11 +211,21 @@ godkendelse — resten af appen):
    hvide, og lad "delight"-indhold (dagens tip) bære den nye accent-farve — så det ikke
    bliver ensartet fladt.
 
-**Status:** Undersøgelsesfasen er færdig (relevante linjer i ScannerScreen.jsx og
-theme.jsx er kortlagt). Implementering er i gang. Følg den normale arbejdsgang
-(afsnit 4) når ændringerne er lavet. **Vigtigt:** dette er eksplicit rammesat som
-"preview, inden vi ruller det helt ud" — når Hjem-eksemplet er shippet, STOP og lad
-brugeren godkende, før samme designsprog rulles ud til resten af appen.
+**Status:** Punkt 1-4 er implementeret og shippet på Hjem-skærmen: `--blue` har nu en
+reel, distinkt værdi (`#3A6EA5`, ikke længere aliaset til grøn); streak-badge (🔥),
+galleri-knap (🖼️) og lommelygte-knap (🔦) i kamera-værktøjslinjen er erstattet af SVG-
+ikoner (`flame`, `image`, `flashlight` i `Icon`-komponenten); `renderDailyTip()` bruger
+nu de eksisterende `.home-tip`-klasser (blå venstre-kant-accent) i stedet for inline
+hvide styles; indkøbsliste-genvejskortet på Hjem har fået `.home-shortcut-card` med
+`:active{transform:scale(.99)}`-tryk-feedback (samme mønster som `.recipe-card`).
+Punkt 5 (bevidst hierarki: neutralt funktionskort vs. accent-farvet tip-kort) er
+opnået som sideeffekt af ovenstående.
+
+**Vigtigt:** dette er eksplicit rammesat som "preview, inden vi ruller det helt ud".
+Når brugeren har godkendt Hjem-eksemplet, er næste skridt at rulle samme designsprog
+(SVG frem for emoji, `.home-tip`-mønsteret til andre "delight"-kort, tryk-feedback på
+trykbare kort) ud til resten af appen — men vent på det udtrykkelige go, spring det
+ikke over.
 
 ---
 
