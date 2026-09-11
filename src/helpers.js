@@ -8,6 +8,19 @@ export const timeAgo = ts => { const d=Date.now()-new Date(ts).getTime(); if(d<6
 
 export const getAllergenLabels = (ids,custom=[]) => [...ids.map(id=>ALLERGENS.find(a=>a.id===id)).filter(Boolean).map(a=>`${a.emoji} ${a.label}`),...custom.map(c=>`✏️ ${c}`)];
 
+// En del importerede produkter har et generisk navn der reelt er en kategori/
+// produkttype (fx "Energidrik", "Ice", "Original") frem for et navn der kan
+// skelnes fra andre produkter fra samme mærke. Foran sådan et navn med
+// mærket, så listevisninger viser noget genkendeligt (fx "Faxe Kondi
+// Energidrik") i stedet for bare "Energidrik".
+export function productDisplayName(product) {
+  const name = (product?.name || "").trim();
+  const brand = (product?.brand || "").trim();
+  if (!brand) return name;
+  if (!name) return brand;
+  return name.toLowerCase().includes(brand.toLowerCase()) ? name : `${brand} ${name}`;
+}
+
 // Skaler et kamera-/galleri-billede ned og genkod som JPEG FØR det sendes til
 // en OCR/allergen-Edge Function som base64. Uden dette sendes et fuldt
 // opløst telefonfoto (ofte 5-15MB) rå som base64 (~33% større igen) — det

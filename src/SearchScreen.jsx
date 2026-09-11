@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from "react";
-import { compareAllergens } from "./helpers.js";
+import { compareAllergens, productDisplayName } from "./helpers.js";
 import { Loader, SearchResultRow } from "./SharedComponents.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
@@ -107,7 +107,7 @@ export default function SearchScreen({
       {resultsWithSafety.map(({ product: p }) => (
         <SearchResultRow key={p.id} product={p} effectiveIds={activeIds}
           onOpen={() => lookupProduct(p.ean||p.id)}
-          onAddToList={() => addToList({ name: p.name, ean: p.ean || p.code, id: p.id, image_url: p.image_url })}
+          onAddToList={() => addToList({ name: productDisplayName(p), ean: p.ean || p.code, id: p.id, image_url: p.image_url })}
         />
       ))}
       {resultsWithSafety.length > 0 && hiddenUnsafeCount > 0 && (
