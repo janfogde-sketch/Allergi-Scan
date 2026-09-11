@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { SCREENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compareAllergens } from "./helpers.js";
+import { compareAllergens, productDisplayName } from "./helpers.js";
 import { Icon, ProductImage, SearchResultRow } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -156,7 +156,7 @@ export default function ListScreen({
   }, [newItemName, accessToken]);
 
   const pickItemProduct = (p) => {
-    addToList({ name: p.name, ean: p.ean || p.code, id: p.id, image_url: p.image_url });
+    addToList({ name: productDisplayName(p), ean: p.ean || p.code, id: p.id, image_url: p.image_url });
     setItemResults([]);
     setItemFocused(false);
   };
@@ -219,9 +219,9 @@ export default function ListScreen({
           </button>
         </div>
         {itemFocused && newItemName.trim() && (itemSearching || itemResults.length > 0) && (
-          <div style={{ position:"absolute", left:0, right:0, top:"100%", marginTop:6, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh)", zIndex:10, overflow:"hidden" }}>
+          <div style={{ position:"absolute", left:0, right:0, top:"100%", marginTop:6, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh)", zIndex:10, maxHeight:"min(60vh, 480px)", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
             {itemResults.length > 0 && (
-              <div style={{ padding:"6px 10px", background:"var(--green-lt)", borderBottom:"1px solid var(--border)" }}>
+              <div style={{ position:"sticky", top:0, padding:"6px 10px", background:"var(--green-lt)", borderBottom:"1px solid var(--border)", zIndex:1 }}>
                 <div style={{ fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>
                   🛡️ Sikker søgning for {searchScopeLabel}
                 </div>
@@ -378,13 +378,14 @@ export default function ListScreen({
                     onClick={() => lookupProduct(p.ean||p.code||p.id)}>
                     <ProductImage product={p} size={28} />
                     <div style={{ ...S.flexMin, display:"flex", alignItems:"baseline", gap:6 }}>
-                      <span style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.name}</span>
+                      <span style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{productDisplayName(p)}</span>
                       {p.brand && <span style={{ fontSize:10, color:"var(--muted)", flexShrink:0 }}>{p.brand}</span>}
                     </div>
                     <div style={{ width:7, height:7, borderRadius:"50%", background:statusColor, flexShrink:0 }} />
-                    <button className="btn btn-ghost btn-sm" style={{ ...UI.ufs11_p3px8px, flexShrink:0 }}
-                      onClick={e => { e.stopPropagation(); addToList({ name: p.name, ean: p.ean || p.code, id: p.id, image_url: p.image_url }); }}>
-                      + Liste
+                    <button className="btn btn-ghost btn-sm" aria-label={`Tilføj "${productDisplayName(p)}" til indkøbsliste`}
+                      style={{ ...UI.ufs11_p3px8px, flexShrink:0, width:26, height:26, padding:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, lineHeight:1 }}
+                      onClick={e => { e.stopPropagation(); addToList({ name: productDisplayName(p), ean: p.ean || p.code, id: p.id, image_url: p.image_url }); }}>
+                      +
                     </button>
                   </div>
                 );

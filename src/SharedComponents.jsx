@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, PAGE_IDS } from "./constants.jsx";
-import { initials, compareAllergens } from "./helpers.js";
+import { initials, compareAllergens, productDisplayName } from "./helpers.js";
 import { isAllergenWord } from "./allergenKeywords.js";
 import { UI } from "./styleUtils.js";
 
@@ -379,7 +379,7 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
       style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", marginBottom:8, background:"var(--surface)", border:`1px solid ${status==="danger" ? "var(--red-md)" : status==="warn" ? "var(--amber-md)" : "var(--border)"}`, borderRadius:12, cursor:"pointer" }}>
       <ProductImage product={p} size={44} />
       <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{p.name}</div>
+        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{productDisplayName(p)}</div>
         <div style={{ fontSize:11, color:"var(--muted)" }}>{p.brand}{p.category ? ` · ${p.category}` : ""}</div>
         {matchedLabels.length > 0 && (
           <div style={{ display:"flex", gap:3, marginTop:4, flexWrap:"wrap" }}>
@@ -402,8 +402,9 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
       </div>
       <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
         <div style={{ fontSize:11, fontWeight:700, color:statusColor }}>{statusLabel}</div>
-        <button className="btn btn-ghost btn-sm" style={UI.ufs11_p3px8px}
-          onClick={e => { e.stopPropagation(); onAddToList(); }}>+ Liste</button>
+        <button className="btn btn-ghost btn-sm" aria-label={`Tilføj "${productDisplayName(p)}" til indkøbsliste`}
+          style={{ ...UI.ufs11_p3px8px, width:28, height:28, padding:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, lineHeight:1 }}
+          onClick={e => { e.stopPropagation(); onAddToList(); }}>+</button>
       </div>
     </div>
   );

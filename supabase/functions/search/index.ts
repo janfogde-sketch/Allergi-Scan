@@ -3,6 +3,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
 };
 
 Deno.serve(async (req) => {
@@ -55,7 +56,7 @@ Deno.serve(async (req) => {
     .from("products")
     .select("id, ean, name, brand, category, image_url, verified_status, allergen_flags, tags, ingredients_text")
     .or(orFilters)
-    .limit(100);
+    .limit(150);
 
   if (error) {
     return new Response(JSON.stringify({ success: false, error: error.message }), {
@@ -66,43 +67,60 @@ Deno.serve(async (req) => {
 
   data = textData || [];
 
+  // En rigtig ordmatch: query-ordet er hele ordet, starten af ordet (fx
+  // "øst" -> "østers") eller slutningen af ordet (fx "ost" -> "flødeost",
+  // dækker danske sammensatte ord). En "ost" der blot optræder midt inde i
+  // et helt andet ord (fx et brand som "Costeggiola") tæller IKKE som match
+  // — det var årsagen til at helt urelaterede produkter (fx en vin) kunne
+  // dukke op på en søgning efter "ost".
+  const wordBoundaryMatch = (words: string[], q: string) =>
+    words.some(w => w === q || w.startsWith(q) || w.endsWith(q));
+
   const scored = data.map(p => {
     const name = normalize(p.name || "");
     const brand = normalize(p.brand || "");
-    const combined = `${name} ${brand}`;
-    let score = 0;
+    const nameWords = name.split(" ").filter(Boolean);
+    const brandWords = brand.split(" ").filter(Boolean);
 
-    if (name === qNorm) score += 200;
-    else if (brand === qNorm) score += 150;
-    else if (name.startsWith(qNorm)) score += 120;
-    else if (brand.startsWith(qNorm)) score += 90;
-    else if (name.includes(qNorm)) score += 60;
-    else if (brand.includes(qNorm)) score += 40;
+    let matchScore = 0;
+    let hasRealMatch = false;
 
-    let wordMatches = 0;
+    // Match på hele søgesætningen
+    if (name === qNorm) { matchScore += 200; hasRealMatch = true; }
+    else if (brand === qNorm) { matchScore += 150; hasRealMatch = true; }
+    else if (name.startsWith(qNorm)) { matchScore += 120; hasRealMatch = true; }
+    else if (brand.startsWith(qNorm)) { matchScore += 90; hasRealMatch = true; }
+
+    // Match pr. ord i søgningen — kun ægte ord-match, ikke vilkårlig substring
     for (const word of qWords) {
-      if (name.includes(word)) wordMatches += 15;
-      if (brand.includes(word)) wordMatches += 10;
-      if (name.startsWith(word)) wordMatches += 5;
+      const nameHit = wordBoundaryMatch(nameWords, word);
+      const brandHit = wordBoundaryMatch(brandWords, word);
+      if (nameHit) { matchScore += 15; hasRealMatch = true; }
+      if (brandHit) { matchScore += 10; hasRealMatch = true; }
+      if (nameWords.some(w => w.startsWith(word))) matchScore += 5;
     }
-    score += wordMatches;
 
-    const allWordsMatch = qWords.every(w => combined.includes(w));
-    if (allWordsMatch && qWords.length > 1) score += 50;
+    const allWordsMatch = qWords.every(w => wordBoundaryMatch(nameWords, w) || wordBoundaryMatch(brandWords, w));
+    if (allWordsMatch && qWords.length > 1) matchScore += 50;
 
+    // Uden en ægte ord-match skal produktet aldrig med, uanset hvor
+    // "komplet" dets data ellers er — ellers kan et fyldigt udfyldt, men
+    // helt urelateret produkt overtrumfe et ægte men sparsomt match.
+    if (!hasRealMatch) return { ...p, _score: 0 };
+
+    let qualityBonus = 0;
     const nameLength = (p.name || "").length;
-    if (nameLength < 20) score += 10;
-    else if (nameLength < 35) score += 5;
+    if (nameLength < 20) qualityBonus += 10;
+    else if (nameLength < 35) qualityBonus += 5;
 
-    if (p.verified_status === "verified") score += 20;
-    else if (p.verified_status === "partial") score += 10;
+    if (p.verified_status === "verified") qualityBonus += 20;
+    else if (p.verified_status === "partial") qualityBonus += 10;
 
-    // Komplet data = bonus
-    if (p.allergen_flags && Object.keys(p.allergen_flags).length > 0) score += 15;
-    if (p.ingredients_text && p.ingredients_text.length > 10) score += 10;
-    if (p.image_url) score += 5;
+    if (p.allergen_flags && Object.keys(p.allergen_flags).length > 0) qualityBonus += 15;
+    if (p.ingredients_text && p.ingredients_text.length > 10) qualityBonus += 10;
+    if (p.image_url) qualityBonus += 5;
 
-    return { ...p, _score: score };
+    return { ...p, _score: matchScore * 4 + qualityBonus };
   });
 
   const filtered = scored.filter(p => p._score > 0);
