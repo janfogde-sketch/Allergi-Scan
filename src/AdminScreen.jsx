@@ -134,8 +134,11 @@ export default function AdminScreen() {
   };
 
   // ── Installations-QR til beta-testere ───────────────────────────────────────
+  // Peger på install.html i stedet for direkte på appen: den siden tjekker selv
+  // enheden — iPhone/iPad får en trin-for-trin guide (Apple tillader ikke
+  // automatisk installation), alt andet sendes videre til appen med det samme.
   const [showInstallQr, setShowInstallQr] = useState(false);
-  const installUrl = "https://eatsafe.dk/?src=beta-qr";
+  const installUrl = "https://eatsafe.dk/install.html";
   const installQrImg = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(installUrl)}&bgcolor=ffffff&color=0d3320&qzone=2`;
 
   // ── Admin opskrifter — lokal state ──────────────────────────────────────────
@@ -519,8 +522,7 @@ Implementér derefter løsningen.`;
                       <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", textAlign:"left", marginBottom:16 }}>
                         <div style={{ fontSize:11, fontWeight:800, color:"var(--ink)", marginBottom:6 }}>Sådan installerer de</div>
                         <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.6 }}>
-                          <strong style={{ color:"var(--ink2)" }}>Android/Chrome:</strong> Browseren viser selv "Installér app" — ét tryk, og EatSafe lander på hjemmeskærmen.<br/>
-                          <strong style={{ color:"var(--ink2)" }}>iPhone/Safari:</strong> Apple tillader ikke automatisk installation — testeren skal selv trykke på Del-ikonet og vælge "Føj til hjemmeskærm".
+                          Linket tjekker selv enheden: <strong style={{ color:"var(--ink2)" }}>Android/Chrome</strong> sendes direkte ind i appen, hvor browseren selv kan vise "Installér app". <strong style={{ color:"var(--ink2)" }}>iPhone/iPad</strong> lander på en trin-for-trin guide til "Del → Føj til hjemmeskærm" — Apple tillader ikke automatisk installation, så det trin er ikke til at komme udenom.
                         </div>
                       </div>
                       <button onClick={() => setShowInstallQr(false)}
