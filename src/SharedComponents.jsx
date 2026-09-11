@@ -402,8 +402,8 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
       </div>
       <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
         <div style={{ fontSize:11, fontWeight:700, color:statusColor }}>{statusLabel}</div>
-        <button className="btn btn-ghost btn-sm" aria-label={`Tilføj "${productDisplayName(p)}" til indkøbsliste`}
-          style={{ ...UI.ufs11_p3px8px, width:28, height:28, padding:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, lineHeight:1 }}
+        <button type="button" className="btn btn-ghost btn-sm" aria-label={`Tilføj "${productDisplayName(p)}" til indkøbsliste`}
+          style={{ width:36, padding:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, lineHeight:1 }}
           onClick={e => { e.stopPropagation(); onAddToList(); }}>+</button>
       </div>
     </div>

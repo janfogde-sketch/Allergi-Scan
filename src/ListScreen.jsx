@@ -382,8 +382,8 @@ export default function ListScreen({
                       {p.brand && <span style={{ fontSize:10, color:"var(--muted)", flexShrink:0 }}>{p.brand}</span>}
                     </div>
                     <div style={{ width:7, height:7, borderRadius:"50%", background:statusColor, flexShrink:0 }} />
-                    <button className="btn btn-ghost btn-sm" aria-label={`Tilføj "${productDisplayName(p)}" til indkøbsliste`}
-                      style={{ ...UI.ufs11_p3px8px, flexShrink:0, width:26, height:26, padding:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, lineHeight:1 }}
+                    <button type="button" className="btn btn-ghost btn-sm" aria-label={`Tilføj "${productDisplayName(p)}" til indkøbsliste`}
+                      style={{ flexShrink:0, width:34, padding:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, lineHeight:1 }}
                       onClick={e => { e.stopPropagation(); addToList({ name: productDisplayName(p), ean: p.ean || p.code, id: p.id, image_url: p.image_url }); }}>
                       +
                     </button>
