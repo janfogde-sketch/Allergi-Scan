@@ -67,6 +67,7 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
   const icons = {
     home: <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>,
     scan: <><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h1M4 10h1M4 14h1M7 6h1M7 14h1M10 6h4M10 10h4M10 14h4M16 6h1M16 10h1M16 14h1"/><rect x="2" y="2" width="7" height="7" rx="1" strokeWidth="1.5"/><rect x="11" y="2" width="7" height="7" rx="1" strokeWidth="1.5"/><rect x="2" y="11" width="7" height="7" rx="1" strokeWidth="1.5"/></>,
+    barcode: <><line x1="3" y1="5" x2="3" y2="19" strokeWidth="1.5"/><line x1="6" y1="5" x2="6" y2="19" strokeWidth="1"/><line x1="8.5" y1="5" x2="8.5" y2="19" strokeWidth="2.5"/><line x1="11.5" y1="5" x2="11.5" y2="19" strokeWidth="1"/><line x1="14" y1="5" x2="14" y2="19" strokeWidth="1.5"/><line x1="16.5" y1="5" x2="16.5" y2="19" strokeWidth="2.5"/><line x1="19" y1="5" x2="19" y2="19" strokeWidth="1"/><line x1="21" y1="5" x2="21" y2="19" strokeWidth="1.5"/></>,
     search: <><circle cx="11" cy="11" r="8"/><path strokeLinecap="round" d="M21 21l-4.35-4.35"/></>,
     list: <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>,
     profile: <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>,
