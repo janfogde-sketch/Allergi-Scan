@@ -234,13 +234,21 @@ Yderligere feedback (kort-hierarki + tomme/loading-tilstande) er også implement
 - **`.loader`** (den lille inline-loader, fx "Søger…") fik en kant + let skygge, så den
   ikke længere svæver skyggeløst oven på baggrunden.
 
+Hilsenen øverst på Hjem er også gjort mere elegant: bruger nu de allerede-definerede
+`.greeting`/`.greeting-eyebrow`/`.greeting-main`-klasser (var defineret i theme.jsx,
+men ubrugt) i stedet for en tung, fed 22px-linje. Ny opbygning: en lille blå
+dato-eyebrow ("onsdag · 11. september") over en stor, let (font-weight 300) hilsen
+hvor kun navnet er fremhævet ("God morgen, **Jan**") — mere luftigt og "designet"
+end den gamle ensfarvede fed tekstlinje.
+
 **Vigtigt:** hovedreglen står stadig ved magt — dette er "preview, inden vi ruller det
-helt ud". Kort-vægt-ændringerne ovenfor er bevidst holdt til Hjem-skærmen specifikt;
-`EmptyState`/`.loader`-forbedringerne er delte komponenter og slår derfor automatisk
-igennem alle steder de allerede bruges (det er ikke en fuld re-skin af andre skærme,
-blot en global rettelse af noget der var utvetydigt "dødt" alle steder). En fuld
-udrulning af det øvrige designsprog (kort-hierarki-mønsteret osv.) til resten af
-appens skærme afventer stadig brugerens udtrykkelige go.
+helt ud". Kort-vægt-ændringerne og hilsen-redesignet ovenfor er bevidst holdt til
+Hjem-skærmen specifikt; `EmptyState`/`.loader`-forbedringerne er delte komponenter og
+slår derfor automatisk igennem alle steder de allerede bruges (det er ikke en fuld
+re-skin af andre skærme, blot en global rettelse af noget der var utvetydigt "dødt"
+alle steder). En fuld udrulning af det øvrige designsprog (kort-hierarki-mønsteret,
+hilsen-stilen osv.) til resten af appens skærme afventer stadig brugerens udtrykkelige
+go — bekræftet eksplicit 11. sept. 2026: "vi venter med at bygge i hele appen".
 
 ---
 
