@@ -83,6 +83,7 @@ export default function SearchScreen({
       {/* ── Søgefelt ── */}
       <div className="input-row" style={{ marginBottom:10 }}>
         <input className="field" placeholder="Søg eller skriv en vare…"
+          autoFocus
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }} />
