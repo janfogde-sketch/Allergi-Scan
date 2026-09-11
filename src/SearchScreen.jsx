@@ -28,6 +28,10 @@ export default function SearchScreen({
 
   const handleAddToList = (p) => new Promise(resolve => {
     if (lists.length > 1) {
+      // Luk tastaturet før arket vises — ellers popper det op bag tastaturet
+      // på mobil (søgefeltet er stadig fokuseret), og man kan hverken se det
+      // eller vide at der venter et valg.
+      document.activeElement?.blur?.();
       setPendingAdd({ product: p, resolve });
       return;
     }
