@@ -1125,10 +1125,10 @@ const lookupProduct = useCallback(async (ean) => {
               </button>
               {/* Menu-knap — profil, familie, favoritter, historik, opskrifter, viden m.m. */}
               <button onClick={() => setShowProfileMenu(true)} aria-label="Åbn menu"
-                style={{ position:"relative", background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:32, height:32, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" strokeWidth="2.2"><path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+                style={{ position:"relative", background:"none", border:"none", padding:0, width:32, height:32, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <EatSafeLogo size={26} variant="light" />
                 {[SCREENS.PROFILE, SCREENS.EDITPROFILE, SCREENS.HISTORY, SCREENS.FAVORITES, SCREENS.FAMILY, SCREENS.ADMIN, SCREENS.MADPAS, SCREENS.RESTAURANTGUIDE, SCREENS.RECIPES, SCREENS.KNOWLEDGE].includes(screen) && (
-                  <span style={{ position:"absolute", top:-1, right:-1, width:9, height:9, borderRadius:"50%", background:"var(--green)", border:"1.5px solid var(--paper)" }} />
+                  <span style={{ position:"absolute", top:-2, right:-2, width:9, height:9, borderRadius:"50%", background:"var(--green)", border:"1.5px solid var(--paper)" }} />
                 )}
               </button>
             </div>
