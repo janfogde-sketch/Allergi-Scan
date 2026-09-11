@@ -16,7 +16,35 @@ export default function SearchScreen({
 }) {
   const { accessToken } = useAuthContext();
   const { family, activeProfiles, setActiveProfiles } = useProfileContext();
-  const { addToList } = useShoppingContext();
+  const { lists, activeListId, addToList } = useShoppingContext();
+
+  // ── Vælg liste ved tilføjelse — kun nødvendigt når man har mere end én
+  // indkøbsliste, ellers går det bare direkte på den ene liste man har.
+  // Ventende { product, resolve } indtil brugeren har valgt (eller lukket)
+  // listevælgeren, så "+"-knappen ved siden af kan vente på svaret og først
+  // blive grøn når varen faktisk er lagt på en liste. ─────────────────────
+  const [pendingAdd, setPendingAdd] = React.useState(null);
+
+  const handleAddToList = (p) => new Promise(resolve => {
+    if (lists.length > 1) {
+      setPendingAdd({ product: p, resolve });
+      return;
+    }
+    logSearchSelection(searchQuery, p, accessToken);
+    resolve(addToList({ name: productDisplayName(p), ean: p.ean || p.code, id: p.id, image_url: p.image_url }, activeListId));
+  });
+
+  const chooseList = async (listId) => {
+    const { product: p, resolve } = pendingAdd;
+    setPendingAdd(null);
+    logSearchSelection(searchQuery, p, accessToken);
+    resolve(await addToList({ name: productDisplayName(p), ean: p.ean || p.code, id: p.id, image_url: p.image_url }, listId));
+  };
+
+  const cancelAddToList = () => {
+    pendingAdd?.resolve(false);
+    setPendingAdd(null);
+  };
 
   // ── Sikker søgning: skjul produkter der er farlige for den valgte profil-
   // gruppe, og vis spor-produkter i stedet for at gemme dem — samme regel
@@ -109,12 +137,34 @@ export default function SearchScreen({
       {resultsWithSafety.map(({ product: p }) => (
         <SearchResultRow key={p.id} product={p} effectiveIds={activeIds}
           onOpen={() => { logSearchSelection(searchQuery, p, accessToken); lookupProduct(p.ean||p.id); }}
-          onAddToList={() => { logSearchSelection(searchQuery, p, accessToken); addToList({ name: productDisplayName(p), ean: p.ean || p.code, id: p.id, image_url: p.image_url }); }}
+          onAddToList={() => handleAddToList(p)}
         />
       ))}
       {resultsWithSafety.length > 0 && hiddenUnsafeCount > 0 && (
         <div style={{ padding:"8px 12px", fontSize:11, color:"var(--muted)", textAlign:"center" }}>
           🚫 {hiddenUnsafeCount} produkt{hiddenUnsafeCount!==1?"er":""} mere skjult — indeholder allergener for {searchScopeLabel}
+        </div>
+      )}
+
+      {/* ── Vælg liste — vises kun når man har mere end én indkøbsliste ── */}
+      {pendingAdd && (
+        <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }}
+          onClick={cancelAddToList}>
+          <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"70vh", overflowY:"auto" }}
+            onClick={e => e.stopPropagation()}>
+            <div style={UI.rowBetweenMb16}>
+              <div style={UI.ufs18_fw900_cink}>Tilføj til hvilken liste?</div>
+              <button onClick={cancelAddToList} aria-label="Luk"
+                style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
+            </div>
+            {lists.map(l => (
+              <div key={l.id} onClick={() => chooseList(l.id)}
+                style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, marginBottom:8, cursor:"pointer" }}>
+                <span style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>{l.name}</span>
+                {l.type === "family" && <span style={{ fontSize:11 }}>👨‍👩‍👧</span>}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

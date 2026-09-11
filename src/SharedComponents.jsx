@@ -374,6 +374,14 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
   const statusLabel = `${safetyStyle(status).icon} ${status==="safe" ? "Sikker" : status==="danger" ? "Farlig" : "Advarsel"}`;
   const matchedLabels = [...matchedDanger, ...matchedWarning].map(id => ALLERGENS.find(a=>a.id===id)).filter(Boolean);
   const tagLabels = { vegan:"🌱 Vegansk", vegetarian:"🥦 Vegetarisk" };
+  // Grøn "+"-knap når produktet er lagt på (mindst) en liste — nulstilles
+  // naturligt næste gang der søges, da komponentet så får et nyt produkt/key.
+  const [added, setAdded] = React.useState(false);
+  const handleAddToList = async (e) => {
+    e.stopPropagation();
+    const ok = await onAddToList();
+    if (ok !== false) setAdded(true);
+  };
   return (
     <div onClick={onOpen}
       // Forhindrer at et tap her flytter/fjerner fokus fra et søgefelt ovenover
@@ -407,9 +415,11 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
       </div>
       <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
         <div style={{ fontSize:11, fontWeight:700, color:statusColor }}>{statusLabel}</div>
-        <button type="button" className="btn btn-ghost btn-sm" aria-label={`Tilføj "${productDisplayName(p)}" til indkøbsliste`}
-          style={{ width:36, padding:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, lineHeight:1 }}
-          onClick={e => { e.stopPropagation(); onAddToList(); }}>+</button>
+        <button type="button" className="btn btn-sm" aria-label={added ? `"${productDisplayName(p)}" er tilføjet` : `Tilføj "${productDisplayName(p)}" til indkøbsliste`}
+          style={{ width:36, padding:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, lineHeight:1,
+            background: added ? "var(--green)" : "var(--surface2)", color: added ? "var(--on-green)" : "var(--ink2)",
+            border: `1px solid ${added ? "var(--green)" : "var(--border)"}`, transition:"all .15s" }}
+          onClick={handleAddToList}>+</button>
       </div>
     </div>
   );
