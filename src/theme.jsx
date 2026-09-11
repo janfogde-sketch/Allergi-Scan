@@ -34,10 +34,11 @@ export const THEME = {
   amberLt: "rgba(181,121,26,.08)",
   amberMd: "rgba(181,121,26,.18)",
 
-  // "Info" — alias til grøn, så app'en kun har ét accent-udtryk i stedet for endnu en farve
-  blue:   "#178A50",
-  blueLt: "rgba(23,138,80,.10)",
-  blueMd: "rgba(23,138,80,.18)",
+  // Blå — sekundær accentfarve, adskilt fra grøn: bruges til "info/tip"-indhold
+  // (dagens tip, oplysningsbokse) så det visuelt skiller sig fra sikkerheds-signalet
+  blue:   "#3A6EA5",
+  blueLt: "rgba(58,110,165,.10)",
+  blueMd: "rgba(58,110,165,.20)",
 
   // Neutral — grå til labels og metadata
   neutral:   "#6B7A70",
@@ -101,8 +102,8 @@ export const appCss = `
   --amber:#B5791A;--amber-lt:rgba(181,121,26,.08);--amber-md:rgba(181,121,26,.18);
   /* Varm — alias til amber, så app'en ikke bærer endnu en dekorativ farve */
   --warm:#B5791A;--warm-lt:rgba(181,121,26,.08);--warm-md:rgba(181,121,26,.18);
-  /* "Blå" — alias til grøn, så info/navigation ikke tilføjer endnu en farve i paletten */
-  --blue:#178A50;--blue-lt:rgba(23,138,80,.10);--blue-md:rgba(23,138,80,.18);
+  /* Blå — sekundær accentfarve, adskilt fra grøn: info/tip-indhold */
+  --blue:#3A6EA5;--blue-lt:rgba(58,110,165,.10);--blue-md:rgba(58,110,165,.20);
   /* Neutral grå — labels, metadata */
   --neutral:#6B7A70;--neutral-lt:rgba(107,122,112,.12);
   /* Muted — neutral grå tekst */
@@ -308,6 +309,11 @@ body{
 .recent-dot.warn{background:var(--amber);}
 .recent-dot.danger{background:var(--red);box-shadow:0 0 7px rgba(255,82,82,.5);}
 .recent-dot.not_found{background:var(--muted);}
+
+/* Genvejskort (fx indkøbsliste) — holdt neutral/hvid, kun tryk-feedback for at
+   føles levende, i modsætning til tip-kortet der bærer den blå accentfarve */
+.home-shortcut-card{transition:transform .1s;}
+.home-shortcut-card:active{transform:scale(.99);}
 
 /* Tip card */
 .home-tip{background:var(--surface3);border:1px solid var(--border);border-left:2px solid var(--blue);border-radius:14px;padding:12px 14px;margin-bottom:20px;display:flex;gap:10px;backdrop-filter:blur(8px);}

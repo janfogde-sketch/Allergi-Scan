@@ -230,7 +230,7 @@ export default function ScannerScreen({
         fontSize:12, fontWeight:800, color:"#f97316",
         flexShrink:0,
       }}>
-        🔥 {streak}
+        <Icon name="flame" size={13} color="#f97316" /> {streak}
       </div>
     );
   };
@@ -238,13 +238,12 @@ export default function ScannerScreen({
   const renderDailyTip = () => {
     const tip = HOME_TIPS[new Date().getDay() % HOME_TIPS.length];
     return (
-      <div style={{ display:"flex", gap:10, alignItems:"flex-start", padding:"12px 14px",
-        background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, boxShadow:"var(--sh)", marginBottom:10 }}>
-        <div style={UI.shrink0}><Icon name="bulb" size={18} color="var(--amber)" /></div>
+      <div className="home-tip">
+        <div style={UI.shrink0}><Icon name="bulb" size={18} color="var(--blue)" /></div>
         <div style={S.flex1}>
-          <div style={{ fontSize:9, fontWeight:800, color:"var(--muted2)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:3 }}>Vidste du at</div>
-          <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{tip.title}</div>
-          <div style={S.sub11lh}>{tip.text}</div>
+          <div className="home-tip-tag">Vidste du at</div>
+          <div className="home-tip-title">{tip.title}</div>
+          <div className="home-tip-body">{tip.text}</div>
         </div>
       </div>
     );
@@ -336,12 +335,16 @@ export default function ScannerScreen({
                     <Icon name="x" size={15} color="#fff" />
                   </button>
                   <div style={S.rowGap6}>
-                    <button onClick={() => galleryInputRef.current?.click()} aria-label="Vælg billede fra galleri" style={S.camCtrlBtn}>🖼️</button>
+                    <button onClick={() => galleryInputRef.current?.click()} aria-label="Vælg billede fra galleri" style={S.camCtrlBtn}>
+                      <Icon name="image" size={14} color="#fff" />
+                    </button>
                     <button onClick={() => setShowManualEan(true)} aria-label="Indtast stregkode manuelt" style={S.camCtrlBtn}>
                       <Icon name="edit" size={14} color="#fff" />
                     </button>
                     <button onClick={toggleTorch} aria-label={torchOn ? "Sluk lygte" : "Tænd lygte"}
-                      style={{ ...S.camCtrlBtn, background: torchOn ? "rgba(251,191,36,.4)" : S.camCtrlBtn.background, borderColor: torchOn ? "rgba(251,191,36,.6)" : S.camCtrlBtn.borderColor }}>🔦</button>
+                      style={{ ...S.camCtrlBtn, background: torchOn ? "rgba(251,191,36,.4)" : S.camCtrlBtn.background, borderColor: torchOn ? "rgba(251,191,36,.6)" : S.camCtrlBtn.borderColor }}>
+                      <Icon name="flashlight" size={14} color={torchOn ? "#fbbf24" : "#fff"} />
+                    </button>
                   </div>
                 </div>
 
@@ -493,7 +496,7 @@ export default function ScannerScreen({
 
             {/* Genvej til indkøbslisten — kun hvis der er varer */}
             {shoppingList.filter(i => !i.checked).length > 0 && (
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, boxShadow:"var(--sh2)", marginBottom:14, overflow:"hidden" }}>
+            <div className="home-shortcut-card" style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, boxShadow:"var(--sh2)", marginBottom:14, overflow:"hidden" }}>
               <div style={{ display:"flex", alignItems:"center", gap:10, padding:"14px 14px", cursor:"pointer" }}
                 onClick={() => setScreen(SCREENS.LIST)}>
                 <div style={UI.uw34_h34_bgsurface2_br9_dflex_aicenter_jccenter_shr0}><Icon name="cart" size={17} color="var(--ink2)" /></div>
