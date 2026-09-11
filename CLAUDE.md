@@ -252,6 +252,18 @@ go — bekræftet eksplicit 11. sept. 2026: "vi venter med at bygge i hele appen
 
 ---
 
+### Beta-installation (september 2026)
+
+Admin-dashboardet (Hurtige handlinger) har en "Installations-QR til beta"-knap, der
+viser en QR-kode til `public/install.html`. Den side tjekker selv enheden:
+Android/Chrome/desktop sendes med det samme videre til `eatsafe.dk` (appen har
+allerede manifest + service worker, så browseren kan vise sin egen installations-
+prompt der); iPhone/iPad (Apple tillader ikke programmatisk installation af PWA'er)
+får i stedet en 3-trins visuel guide til "Del → Føj til hjemmeskærm", i samme lyse
+designsprog som resten af appen. `install.html` er en statisk fil i `public/` —
+samme mønster som `privacy.html`/`invite.html`, men bemærk at de to ældre sider
+stadig er i det gamle mørke tema og IKKE er opdateret til det nye lyse designsprog.
+
 ## 6. Hvor finder du mere?
 
 - `src/CONTEXT.md` — fuld teknisk reference: database-tabeller, edge functions,
