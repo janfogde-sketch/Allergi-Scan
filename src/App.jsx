@@ -32,6 +32,7 @@ import ScannerScreen from './ScannerScreen.jsx';
 const RecipesScreen = React.lazy(() => import('./RecipesScreen.jsx'));
 const KnowledgeScreen = React.lazy(() => import('./KnowledgeScreen.jsx'));
 const FeedbackModal = React.lazy(() => import('./FeedbackModal.jsx'));
+const ProfileMenu = React.lazy(() => import('./ProfileMenu.jsx'));
 import ErrorBoundary from './ErrorBoundary.jsx';
 import { useOffline, saveToOfflineCache, getFromOfflineCache } from './useOffline.js';
 
@@ -116,6 +117,7 @@ export default function EatSafe() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackDone, setFeedbackDone] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [betaIntroSeen, setBetaIntroSeen] = useState(true); // Beta-info er nu i onboarding, overlay kun via knap
   const [betaIntroStep, setBetaIntroStep] = useState(0);
 
@@ -1121,6 +1123,14 @@ const lookupProduct = useCallback(async (ean) => {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                 Feedback
               </button>
+              {/* Menu-knap — profil, familie, favoritter, historik, opskrifter, viden m.m. */}
+              <button onClick={() => setShowProfileMenu(true)} aria-label="Åbn menu"
+                style={{ position:"relative", background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:32, height:32, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" strokeWidth="2.2"><path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+                {[SCREENS.PROFILE, SCREENS.EDITPROFILE, SCREENS.HISTORY, SCREENS.FAVORITES, SCREENS.FAMILY, SCREENS.ADMIN, SCREENS.MADPAS, SCREENS.RESTAURANTGUIDE, SCREENS.RECIPES, SCREENS.KNOWLEDGE].includes(screen) && (
+                  <span style={{ position:"absolute", top:-1, right:-1, width:9, height:9, borderRadius:"50%", background:"var(--green)", border:"1.5px solid var(--paper)" }} />
+                )}
+              </button>
             </div>
           </header>
         )}
@@ -1206,6 +1216,16 @@ const lookupProduct = useCallback(async (ean) => {
             madpasLang={madpasLang} selectedRecipe={selectedRecipe}
             editMode={editMode} showManualEan={showManualEan}
             profilePopup={profilePopup}
+          />
+          </Suspense>
+        )}
+
+        {/* ══ MENU (favoritter, familie, historik, opskrifter, viden, profil m.m.) ══ */}
+        {showProfileMenu && (
+          <Suspense fallback={null}>
+          <ProfileMenu
+            open={showProfileMenu} onClose={() => setShowProfileMenu(false)}
+            onNavigate={(s) => { setScreen(s); setShowProfileMenu(false); }}
           />
           </Suspense>
         )}
@@ -1374,24 +1394,15 @@ const lookupProduct = useCallback(async (ean) => {
         {!isOnboard && !madpasWaiterView && (
           <nav className="bottom-nav" role="navigation" aria-label="Hovednavigation">
             {[
-              [SCREENS.SEARCH,  "search",   "Søg varer"],
               [SCREENS.LIST,    "cart",     "Indkøbsliste"],
-              [SCREENS.HOME,    "home",     "Hjem"],
-              [SCREENS.PROFILE, "profile",  "Profil"],
+              [SCREENS.HOME,    "scan",     "Scan"],
+              [SCREENS.SEARCH,  "search",   "Søg"],
             ].map(([s,icon,lbl]) => (
               <div key={s} className={`nav-item${(
                 screen===s ||
                 (screen===SCREENS.RESULT && s===SCREENS.HOME) ||
                 (screen===SCREENS.NOTFOUND && s===SCREENS.HOME) ||
-                (screen===SCREENS.SUBMITTED && s===SCREENS.HOME) ||
-                (screen===SCREENS.HISTORY && s===SCREENS.PROFILE) ||
-                (screen===SCREENS.FAVORITES && s===SCREENS.PROFILE) ||
-                (screen===SCREENS.FAMILY && s===SCREENS.PROFILE) ||
-                (screen===SCREENS.ADMIN && s===SCREENS.PROFILE) ||
-                (screen===SCREENS.MADPAS && s===SCREENS.PROFILE) ||
-                (screen===SCREENS.RESTAURANTGUIDE && s===SCREENS.PROFILE) ||
-                (screen===SCREENS.RECIPES && s===SCREENS.PROFILE) ||
-                (screen===SCREENS.KNOWLEDGE && s===SCREENS.PROFILE)
+                (screen===SCREENS.SUBMITTED && s===SCREENS.HOME)
               )?" active":""}`}
                 onClick={() => setScreen(s)}
                 role="button"

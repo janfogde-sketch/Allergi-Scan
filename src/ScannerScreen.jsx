@@ -41,6 +41,7 @@ const S = {
   rowBetweenMb10: { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 },
   rowGap8: { display:"flex", gap:8 },
   rowGap6: { display:"flex", gap:6 },
+  camCtrlBtn: { width:34, height:34, borderRadius:"50%", background:"rgba(0,0,0,.45)", backdropFilter:"blur(6px)", WebkitBackdropFilter:"blur(6px)", border:"1px solid rgba(255,255,255,.2)", color:"#fff", fontSize:15, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", lineHeight:1 },
   colCenter: { display:"flex", flexDirection:"column", alignItems:"center" },
   card: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 },
   cardMb10: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:10 },
@@ -328,6 +329,28 @@ export default function ScannerScreen({
                     }} />
                   </div>
                 </div>
+
+                {/* Svævende kontroller oven på kameraet — luk, galleri, manuelt, lygte */}
+                <div style={{ position:"absolute", top:10, left:10, right:10, display:"flex", alignItems:"center", justifyContent:"space-between", zIndex:2 }}>
+                  <button onClick={stopCamera} aria-label="Luk kamera" style={S.camCtrlBtn}>
+                    <Icon name="x" size={15} color="#fff" />
+                  </button>
+                  <div style={S.rowGap6}>
+                    <button onClick={() => galleryInputRef.current?.click()} aria-label="Vælg billede fra galleri" style={S.camCtrlBtn}>🖼️</button>
+                    <button onClick={() => setShowManualEan(true)} aria-label="Indtast stregkode manuelt" style={S.camCtrlBtn}>
+                      <Icon name="edit" size={14} color="#fff" />
+                    </button>
+                    <button onClick={toggleTorch} aria-label={torchOn ? "Sluk lygte" : "Tænd lygte"}
+                      style={{ ...S.camCtrlBtn, background: torchOn ? "rgba(251,191,36,.4)" : S.camCtrlBtn.background, borderColor: torchOn ? "rgba(251,191,36,.6)" : S.camCtrlBtn.borderColor }}>🔦</button>
+                  </div>
+                </div>
+
+                {/* Svævende hint/zoom nederst over kameraet */}
+                <div style={{ position:"absolute", bottom:14, left:"50%", transform:"translateX(-50%)", zIndex:2 }}>
+                  <div style={{ background:"rgba(0,0,0,.5)", backdropFilter:"blur(6px)", WebkitBackdropFilter:"blur(6px)", borderRadius:100, padding:"6px 14px", fontSize:11.5, fontWeight:600, whiteSpace:"nowrap", color: scanZoom > 1.0 ? "#86EFAC" : "rgba(255,255,255,.85)" }}>
+                    {scanZoom > 1.0 ? `🔍 ${scanZoom}× zoom` : "Hold stregkoden ind i rammen"}
+                  </div>
+                </div>
               </div>
               <div id="qr-reader-gallery" style={S.none} />
               <input ref={galleryInputRef} type="file" accept="image/*" style={S.none}
@@ -335,27 +358,6 @@ export default function ScannerScreen({
               {/* Foto-fallback: åbner kamera direkte */}
               <input ref={photoFallbackRef} type="file" accept="image/*" capture="environment" style={S.none}
                 onChange={e => { if (e.target.files[0]) scanPhotoForEan(e.target.files[0]); e.target.value=""; }} />
-
-              {/* Stop-knap når kamera er aktivt */}
-              {cameraActive && (
-                <div style={{ padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                  <span style={{ fontSize:11, fontWeight:600 }}>
-                    {scanZoom > 1.0
-                      ? <span style={UI.ucgreen}>🔍 {scanZoom}× zoom</span>
-                      : <span style={{ color:"rgba(255,255,255,.6)" }}>Hold stregkoden ind i rammen</span>}
-                  </span>
-                  <div style={S.rowGap6}>
-                    <button onClick={() => galleryInputRef.current?.click()} aria-label="Vælg billede fra galleri" style={{ background:"rgba(255,255,255,.15)", border:"none", borderRadius:6, padding:"5px 10px", color:"var(--ink)", fontSize:16, cursor:"pointer", lineHeight:1 }}>🖼️</button>
-                    <button onClick={toggleTorch} aria-label={torchOn ? "Sluk lygte" : "Tænd lygte"} style={{
-                      background: torchOn ? "rgba(251,191,36,.3)" : "rgba(255,255,255,.15)",
-                      border: torchOn ? "1px solid rgba(251,191,36,.6)" : "none",
-                      borderRadius:6, padding:"5px 10px", color: torchOn ? "#FBB" : "var(--ink)",
-                      fontSize:16, cursor:"pointer", lineHeight:1
-                    }}>🔦</button>
-                    <button onClick={stopCamera} style={{ background:"rgba(255,255,255,.15)", border:"none", borderRadius:6, padding:"5px 12px", color:"var(--ink)", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"var(--f)" }}>Stop</button>
-                  </div>
-                </div>
-              )}
 
               {/* Animation når kamera ikke er aktivt */}
               {!cameraActive && (
@@ -422,11 +424,6 @@ export default function ScannerScreen({
                 {/* Tekst */}
                 <div style={UI.utacenter}>
                   <div style={{ fontSize:20, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Skan produkt</div>
-                  <div style={{ fontSize:13, color:"rgba(255,255,255,.82)", marginTop:4 }}>Tryk for at starte kamera</div>
-                  <div onClick={e => { e.stopPropagation(); galleryInputRef.current?.click(); }}
-                    style={{ fontSize:11, color:"rgba(255,255,255,.68)", marginTop:8, textDecoration:"underline", cursor:"pointer" }}>
-                    eller vælg billede fra galleri
-                  </div>
                 </div>
               </div>
               )}
@@ -503,21 +500,9 @@ export default function ScannerScreen({
 
             </>}
 
-            {/* Genveje — én sammenhængende liste i stedet for separate farvede kort */}
+            {/* Genvej til indkøbslisten — kun hvis der er varer */}
+            {shoppingList.filter(i => !i.checked).length > 0 && (
             <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, boxShadow:"var(--sh2)", marginBottom:14, overflow:"hidden" }}>
-              <div style={{ display:"flex", alignItems:"center", gap:10, padding:"14px 14px", cursor:"pointer",
-                borderBottom: shoppingList.filter(i => !i.checked).length > 0 ? "1px solid var(--border)" : "none" }}
-                onClick={() => setScreen(SCREENS.SEARCH)}>
-                <div style={UI.uw34_h34_bgsurface2_br9_dflex_aicenter_jccenter_shr0}><Icon name="search" size={17} color="var(--ink2)" /></div>
-                <div style={S.flex1}>
-                  <div style={UI.ufs13_fw700}>Søg produkter</div>
-                  <div style={S.sub11mt}>Find varer der er sikre for dig</div>
-                </div>
-                <div style={UI.ufs16_cmuted2}>›</div>
-              </div>
-
-              {/* Indkøbsliste — kun hvis der er varer */}
-              {shoppingList.filter(i => !i.checked).length > 0 && (
               <div style={{ display:"flex", alignItems:"center", gap:10, padding:"14px 14px", cursor:"pointer" }}
                 onClick={() => setScreen(SCREENS.LIST)}>
                 <div style={UI.uw34_h34_bgsurface2_br9_dflex_aicenter_jccenter_shr0}><Icon name="cart" size={17} color="var(--ink2)" /></div>
@@ -529,8 +514,8 @@ export default function ScannerScreen({
                   </div>
                   <div style={UI.ufs16_cmuted2}>›</div>
                 </div>
-              )}
             </div>
+            )}
 
             <div style={{ flex:1, minHeight:20 }} />
 
