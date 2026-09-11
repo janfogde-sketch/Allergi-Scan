@@ -361,7 +361,7 @@ export default function ScannerScreen({
 
               {/* Animation når kamera ikke er aktivt */}
               {!cameraActive && (
-              <div style={{ cursor:"pointer", padding:"28px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16, position:"relative" }}
+              <div style={{ cursor:"pointer", padding:"38px 24px 42px", display:"flex", flexDirection:"column", alignItems:"center", gap:22, position:"relative" }}
                 onClick={() => startCamera()}
                 role="button"
                 aria-label="Start kamera for at scanne stregkode"
@@ -423,7 +423,7 @@ export default function ScannerScreen({
                 </div>
                 {/* Tekst */}
                 <div style={UI.utacenter}>
-                  <div style={{ fontSize:20, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Skan produkt</div>
+                  <div style={{ fontSize:22, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Skan produkt</div>
                 </div>
               </div>
               )}
@@ -438,16 +438,7 @@ export default function ScannerScreen({
               </div>
             )}
 
-            {/* Manuel EAN-input */}
-            {!showManualEan && (
-              <button onClick={() => setShowManualEan(true)}
-                style={{ width:"100%", background:"none", border:"none", cursor:"pointer",
-                  fontSize:12, color:"var(--muted)", fontFamily:"var(--f)", padding:"4px 0 12px",
-                  textDecoration:"underline", textUnderlineOffset:3 }}>
-                Indtast EAN-nummer manuelt
-              </button>
-            )}
-
+            {/* Manuel EAN-input — åbnes via blyant-ikonet i kamera-kontrollerne, eller herunder ved fejl */}
             {showManualEan && (
               <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb12}>
                 <div style={S.rowBetweenMb10}>
