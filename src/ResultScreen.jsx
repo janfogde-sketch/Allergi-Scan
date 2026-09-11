@@ -141,25 +141,26 @@ export default function ResultScreen({
     const verdictIcon = scanResult.status === "safe" ? "✓" : "!";
     return (
       <div className="product-hero" style={{ position:"relative", border:`2px solid ${verdictColor}` }}>
-        {/* Favorit/del — del af selve sikkerheds-wrapperen (den farvede ramme om
-            hele kortet), ikke billedet. Ligger derfor øverst i kortet, forankret
-            til kortet som helhed, uafhængigt af om der er billede eller banner. */}
-        <div style={{ position:"absolute", top:10, right:10, zIndex:2, display:"flex", gap:8 }}>
-          <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} onClick={() => toggleFavorite(scanResult)}
-            style={UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc}>
-            <Icon name="heart" size={15} color={fav ? "var(--red)" : "var(--ink2)"} />
-          </button>
-          <button aria-label="Del produkt" onClick={() => { if(navigator.share) navigator.share({ title:scanResult.name, text:scanResult.headline }); }}
-            style={UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc}>
-            <Icon name="share" size={15} color="var(--ink2)" />
-          </button>
-        </div>
-        {scanResult.headline && (
-          <div style={{ display:"flex", alignItems:"center", gap:7, padding:"8px 14px", background:verdictColor, color:"#fff" }}>
-            <span style={UI.ufs12_fw800}>{verdictIcon}</span>
-            <span style={UI.ufs12_fw800_ls01em_ttuppercas}>{scanResult.headline}</span>
+        {/* Favorit/del — nu rigtige flex-børn af banneret (eller af en tilsvarende
+            strimmel når der undtagelsesvist ingen headline er), i stedet for
+            absolut positioneret hen over en højde vi gættede på. Banneret er
+            gjort lidt højere, så de større knapper har plads til at sidde pænt. */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding:"12px 14px", background: scanResult.headline ? verdictColor : "var(--surface2)", color: scanResult.headline ? "#fff" : "var(--ink)" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:7, minWidth:0 }}>
+            {scanResult.headline && <><span style={UI.ufs12_fw800}>{verdictIcon}</span>
+            <span style={UI.ufs12_fw800_ls01em_ttuppercas}>{scanResult.headline}</span></>}
           </div>
-        )}
+          <div style={{ display:"flex", gap:8, flexShrink:0 }}>
+            <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} onClick={() => toggleFavorite(scanResult)}
+              style={{ ...UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc, width:36, height:36 }}>
+              <Icon name="heart" size={16} color={fav ? "var(--red)" : "var(--ink2)"} />
+            </button>
+            <button aria-label="Del produkt" onClick={() => { if(navigator.share) navigator.share({ title:scanResult.name, text:scanResult.headline }); }}
+              style={{ ...UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc, width:36, height:36 }}>
+              <Icon name="share" size={16} color="var(--ink2)" />
+            </button>
+          </div>
+        </div>
         <div>
           {scanResult.image_url
             ? <div className="product-hero-imgwrap">
