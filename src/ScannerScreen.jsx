@@ -495,8 +495,10 @@ export default function ScannerScreen({
             </>}
 
             {/* Genvej til indkøbslisten — kun hvis der er varer */}
+            {/* Sekundær vægt (lettere skygge end scan-boksen ovenfor) — genvejen er
+                nyttig, men skal ikke konkurrere visuelt med hoved-handlingen */}
             {shoppingList.filter(i => !i.checked).length > 0 && (
-            <div className="home-shortcut-card" style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, boxShadow:"var(--sh2)", marginBottom:14, overflow:"hidden" }}>
+            <div className="home-shortcut-card" style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, boxShadow:"var(--sh)", marginBottom:14, overflow:"hidden" }}>
               <div style={{ display:"flex", alignItems:"center", gap:10, padding:"14px 14px", cursor:"pointer" }}
                 onClick={() => setScreen(SCREENS.LIST)}>
                 <div style={UI.uw34_h34_bgsurface2_br9_dflex_aicenter_jccenter_shr0}><Icon name="cart" size={17} color="var(--ink2)" /></div>
