@@ -395,32 +395,6 @@ export default function ProfileScreen({
               SCREENS={SCREENS}
             />
 
-            {/* Menu */}
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, overflow:"hidden", marginBottom:10 }}>
-              {[
-                { icon:"⭐", label:"Favoritter", sub:"Gemte produkter og opskrifter", fn:() => setScreen(SCREENS.FAVORITES) },
-                { icon:"👨‍👩‍👧", label:"Familie", sub:`${family.length + household.length} ${family.length + household.length===1?"medlem":"medlemmer"}`, fn:() => setScreen(SCREENS.FAMILY) },
-                { icon:"📋", label:"Scanningshistorik", sub:`${history.length} produkter scannet`, fn:() => setScreen(SCREENS.HISTORY) },
-                { icon:"🍳", label:"Opskrifter", sub:"Find opskrifter der passer til dine allergier", fn:() => setScreen(SCREENS.RECIPES) },
-                { icon:"📚", label:"Viden", sub:"Opslag om allergener, E-numre og diæter", fn:() => setScreen(SCREENS.KNOWLEDGE) },
-                { icon:"🌍", label:"Madpas", sub:"Vis allergier til restaurantpersonale", fn:() => setScreen(SCREENS.MADPAS) },
-                { icon:"🍽️", label:"Restaurantguide", sub:"Spis trygt ude — tips & rettigheder", fn:() => setScreen(SCREENS.RESTAURANTGUIDE) },
-                ...(user.role==="admin" ? [{ icon:"🛡️", label:"Admin panel", sub:"Godkend og administrér produkter", fn:() => { loadSubmissions(); loadAdminStats(); setScreen(SCREENS.ADMIN); } }] : []),
-              ].map((item, i, arr) => (
-                <div key={item.label} onClick={item.fn}
-                  style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 16px", borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", cursor:"pointer" }}>
-                  <div style={{ width:40, height:40, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
-                    {item.icon}
-                  </div>
-                  <div style={UI.flex1}>
-                    <div style={UI.boldInk14}>{item.label}</div>
-                    <div style={UI.muted11mt1}>{item.sub}</div>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
-                </div>
-              ))}
-            </div>
-
             {/* Konto */}
             <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px" }}>
               <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:12 }}>Konto</div>
