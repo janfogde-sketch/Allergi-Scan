@@ -401,6 +401,8 @@ export default function ProfileScreen({
                 { icon:"⭐", label:"Favoritter", sub:"Gemte produkter og opskrifter", fn:() => setScreen(SCREENS.FAVORITES) },
                 { icon:"👨‍👩‍👧", label:"Familie", sub:`${family.length + household.length} ${family.length + household.length===1?"medlem":"medlemmer"}`, fn:() => setScreen(SCREENS.FAMILY) },
                 { icon:"📋", label:"Scanningshistorik", sub:`${history.length} produkter scannet`, fn:() => setScreen(SCREENS.HISTORY) },
+                { icon:"🍳", label:"Opskrifter", sub:"Find opskrifter der passer til dine allergier", fn:() => setScreen(SCREENS.RECIPES) },
+                { icon:"📚", label:"Viden", sub:"Opslag om allergener, E-numre og diæter", fn:() => setScreen(SCREENS.KNOWLEDGE) },
                 { icon:"🌍", label:"Madpas", sub:"Vis allergier til restaurantpersonale", fn:() => setScreen(SCREENS.MADPAS) },
                 { icon:"🍽️", label:"Restaurantguide", sub:"Spis trygt ude — tips & rettigheder", fn:() => setScreen(SCREENS.RESTAURANTGUIDE) },
                 ...(user.role==="admin" ? [{ icon:"🛡️", label:"Admin panel", sub:"Godkend og administrér produkter", fn:() => { loadSubmissions(); loadAdminStats(); setScreen(SCREENS.ADMIN); } }] : []),
