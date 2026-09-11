@@ -221,11 +221,26 @@ hvide styles; indkøbsliste-genvejskortet på Hjem har fået `.home-shortcut-car
 Punkt 5 (bevidst hierarki: neutralt funktionskort vs. accent-farvet tip-kort) er
 opnået som sideeffekt af ovenstående.
 
-**Vigtigt:** dette er eksplicit rammesat som "preview, inden vi ruller det helt ud".
-Når brugeren har godkendt Hjem-eksemplet, er næste skridt at rulle samme designsprog
-(SVG frem for emoji, `.home-tip`-mønsteret til andre "delight"-kort, tryk-feedback på
-trykbare kort) ud til resten af appen — men vent på det udtrykkelige go, spring det
-ikke over.
+Yderligere feedback (kort-hierarki + tomme/loading-tilstande) er også implementeret:
+- **Kort-vægt-hierarki på Hjem:** tre tydelige niveauer nu — scan-boksen (primær
+  handling) har den kraftigste skygge/grønne glød, indkøbsliste-genvejen (sekundær)
+  fik nedgraderet skygge fra `var(--sh2)` til `var(--sh)`, og dagens-tip (tertiær) er
+  fortsat helt fladt med kun kant-accent. Ingen af de tre konkurrerer visuelt længere.
+- **Delt `EmptyState`-komponent** (`SharedComponents.jsx` + `.empty-state`/`.empty-icon`
+  m.fl. i theme.jsx) er redesignet globalt: emoji'et sidder nu i en blødt skygget,
+  cirkulær "brønd" med en langsom svæve-animation i stedet for en gråtonet, flad
+  linje-tekst — slår igennem på alle skærme der bruger komponenten (Søg, Opskrifter,
+  Profil, Viden, Familie, m.fl.), da det er én delt komponent.
+- **`.loader`** (den lille inline-loader, fx "Søger…") fik en kant + let skygge, så den
+  ikke længere svæver skyggeløst oven på baggrunden.
+
+**Vigtigt:** hovedreglen står stadig ved magt — dette er "preview, inden vi ruller det
+helt ud". Kort-vægt-ændringerne ovenfor er bevidst holdt til Hjem-skærmen specifikt;
+`EmptyState`/`.loader`-forbedringerne er delte komponenter og slår derfor automatisk
+igennem alle steder de allerede bruges (det er ikke en fuld re-skin af andre skærme,
+blot en global rettelse af noget der var utvetydigt "dødt" alle steder). En fuld
+udrulning af det øvrige designsprog (kort-hierarki-mønsteret osv.) til resten af
+appens skærme afventer stadig brugerens udtrykkelige go.
 
 ---
 
