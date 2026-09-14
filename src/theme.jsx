@@ -455,6 +455,14 @@ body{
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 .fade-in{animation:fadeUp .18s ease both;}
 @keyframes toast-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.scroll-top-btn{
+  position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:9990;
+  width:44px;height:44px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--border);box-shadow:var(--sh2);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  animation:toast-in .15s ease-out;
+}
+.scroll-top-btn:hover{background:var(--surface2);}
 
 /* ── MADPAS ── */
 .mp-page{display:flex;flex-direction:column;flex:1;}
@@ -541,7 +549,8 @@ body{
 .home-mini-card:active,.scan-hero:active,.hist-row:active,.step-row:active,
 .mp-lang-dropdown:active,.mp-lang-opt:active,.chip:active,.home-chip:active,
 .filter-chip:active,.ap-chip:active,.recipe-filter-chip:active,.tab:active,
-.demo-code:active,.topbar-avatar:active,.menu-item:active,.menu-profile-card:active{
+.demo-code:active,.topbar-avatar:active,.menu-item:active,.menu-profile-card:active,
+.scroll-top-btn:active{
   transform:scale(.97);
 }
 

@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { compareAllergens, getAllergenLabels } from "./helpers.js";
-import { Icon, IngredientsList, ProfileBadges, SafetyRow, SafetyPill, EmptyState } from "./SharedComponents.jsx";
+import { Icon, IngredientsList, ProfileBadges, SafetyRow, SafetyPill, EmptyState, ScrollToTop } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -676,6 +676,7 @@ export default function RecipesScreen({
             <div style={UI.ufs10_cmuted_lh15}>Allergener er vejledende. Tjek altid ingrediensernes emballage.</div>
           </div>
         )}
+        {filtered.length > 6 && <ScrollToTop />}
       </div>
     );
   };

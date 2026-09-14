@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
-import { Icon, EmptyState } from "./SharedComponents.jsx";
+import { Icon, EmptyState, ScrollToTop } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { UI } from "./styleUtils.js";
@@ -142,7 +142,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
       <div className="screen fade-in">
         <div style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 0 8px" }}>
           <button onClick={() => setSelectedEntry(null)} style={S.backBtn}>
-            <Icon name="arrow-left" size={18} color="var(--ink)" />
+            <Icon name="chevronLeft" size={18} color="var(--ink)" />
           </button>
           <div style={{ fontSize:11, fontWeight:700, color:cat.color||"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px" }}>
             {cat.emoji} {cat.label}
@@ -171,6 +171,13 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
         )}
         {Array.isArray(selectedEntry.aliases) && selectedEntry.aliases.length > 0 && (
           <div style={S.section}><div style={S.sectionLabel}>Kendes også som</div><div style={S.pillRow}>{selectedEntry.aliases.map((a,i) => <span key={i} style={S.pill("var(--surface)","var(--muted)","var(--border)")}>{a}</span>)}</div></div>
+        )}
+        {/* Vises kun hvis knowledge_base-tabellen rent faktisk har et updated_at-felt —
+            ingen antagelse om DB-skemaet, bare et defensivt tjek på det hentede data. */}
+        {selectedEntry.updated_at && (
+          <div style={{ fontSize:10.5, color:"var(--muted)", marginTop:2 }}>
+            Sidst opdateret: {new Date(selectedEntry.updated_at).toLocaleDateString("da-DK", { day:"numeric", month:"long", year:"numeric" })}
+          </div>
         )}
         <div style={{ height:40 }} />
       </div>
@@ -284,6 +291,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
       )}
 
       <div style={{ height:20 }} />
+      {showList && <ScrollToTop />}
     </div>
   );
 }
