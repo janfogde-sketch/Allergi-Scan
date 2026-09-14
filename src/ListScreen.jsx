@@ -139,8 +139,13 @@ export default function ListScreen({
   const [itemResults, setItemResults]   = useState([]);
   const [itemSearching, setItemSearching] = useState(false);
   const [itemFocused, setItemFocused]   = useState(false);
+  // Sideinddeling — samme offset/hasMore/total-API som SearchScreens "Indlæs
+  // flere", så listen ikke længere er hårdt afskåret ved den første side.
+  const [itemHasMore, setItemHasMore]         = useState(false);
+  const [itemTotal, setItemTotal]             = useState(0);
+  const [itemLoadingMore, setItemLoadingMore] = useState(false);
   useEffect(() => {
-    if (!newItemName.trim()) { setItemResults([]); setItemSearching(false); return; }
+    if (!newItemName.trim()) { setItemResults([]); setItemSearching(false); setItemHasMore(false); setItemTotal(0); return; }
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       setItemSearching(true);
@@ -148,12 +153,37 @@ export default function ListScreen({
         const res = await fetch(`${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(newItemName.trim())}`,
           { headers: { "apikey": SUPABASE_ANON_KEY, ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) }, signal: controller.signal });
         const data = await res.json();
-        if (data.success) setItemResults((data.products || []).slice(0, 20));
+        if (data.success) {
+          setItemResults(data.products || []);
+          setItemHasMore(!!data.hasMore);
+          setItemTotal(data.total || (data.products || []).length);
+        }
       } catch (e) { if (e.name !== "AbortError") setItemResults([]); }
       finally { if (!controller.signal.aborted) setItemSearching(false); }
     }, 300);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [newItemName, accessToken]);
+
+  // Henter næste side og APPENDER til de eksisterende resultater — samme
+  // mønster som useSearch.js's loadMoreSearchResults. Tjekker at søgeteksten
+  // stadig matcher når svaret kommer tilbage, så et forladt søgeords svar
+  // ikke kan nå at blive hængt på en ny søgnings resultater.
+  const loadMoreItemResults = async () => {
+    const q = newItemName.trim();
+    if (!q || itemLoadingMore || !itemHasMore) return;
+    setItemLoadingMore(true);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(q)}&offset=${itemResults.length}`,
+        { headers: { "apikey": SUPABASE_ANON_KEY, ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) } });
+      const data = await res.json();
+      if (data.success && newItemName.trim() === q) {
+        setItemResults(prev => [...prev, ...(data.products || [])]);
+        setItemHasMore(!!data.hasMore);
+        setItemTotal(data.total || 0);
+      }
+    } catch { /* ignoreres — brugeren kan bare prøve knappen igen */ }
+    finally { setItemLoadingMore(false); }
+  };
 
   const pickItemProduct = (p) => {
     logSearchSelection(newItemName, p, accessToken);
@@ -168,7 +198,7 @@ export default function ListScreen({
   const itemResultsWithSafety = itemResults
     .map(p => ({ product: p, status: compareAllergens(p.allergen_flags||{}, activeIds).status }))
     .filter(r => r.status !== "danger");
-  const visibleItemResults = itemResultsWithSafety.slice(0, 10);
+  const visibleItemResults = itemResultsWithSafety;
   const hiddenUnsafeCount = itemResults.length - itemResultsWithSafety.length;
 
   const activeFamily = family.filter(m => activeProfiles.includes(m.id));
@@ -265,6 +295,15 @@ export default function ListScreen({
             {hiddenUnsafeCount > 0 && (
               <div style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", fontSize:10, color:"var(--muted)", background:"var(--paper2)" }}>
                 <Icon name="block" size={11} color="var(--muted)" /> {hiddenUnsafeCount} produkt{hiddenUnsafeCount!==1?"er":""} skjult — indeholder allergener for {searchScopeLabel}
+              </div>
+            )}
+            {itemHasMore && (
+              <div style={{ padding:"6px 12px 10px" }}>
+                <button className="btn btn-outline btn-full btn-sm"
+                  disabled={itemLoadingMore}
+                  onMouseDown={e => { e.preventDefault(); loadMoreItemResults(); }}>
+                  {itemLoadingMore ? "Indlæser…" : `Indlæs flere (${Math.max(itemTotal - itemResults.length, 0)} tilbage)`}
+                </button>
               </div>
             )}
             {!itemSearching && (
