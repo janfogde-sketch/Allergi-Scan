@@ -668,6 +668,38 @@ kort er "primært" på hver skærm?), så tag dem én skærm ad gangen fremover,
 én stor mekanisk sweep. Emoji→SVG-saneringen er separat og afventer stadig
 brugerens tilvalg, som beskrevet ovenfor.
 
+**14. sept. 2026 — kort-vægt-hierarkiet rullet ud på ProfileScreen.** Brugeren
+spurgte direkte om vi kom "i bund" med Hjem-redesign-opgaven — svaret var nej,
+og det blev taget op med det samme. `ProfileScreen.jsx`s hoveddashboard fik
+samme 3-lags-mønster som Hjem: "Mine præferencer" (primær — den sikkerheds-
+kritiske allergi-/diæt-data) fik `var(--sh2)`; Hero/Min husstand/Konto
+(sekundær) fik standard `var(--sh)`; aktivitets-/gamification-kortet (tertiær,
+"delight") blev gjort fladt med blå kant-accent, samme mønster som dagens-
+tip-kortet. Undervejs fundet og rettet flere flathed-bugs af samme kategori
+som tidligere (delte kort-stilarter uden `box-shadow`): den delte
+`ubgsurface_bd1pxsolid_br14_p14px16px_mb10`-util i `styleUtils.js` (3 kort
+på én gang), samt enkeltstående kort i `RecipesScreen.jsx`, `MadpasScreen.jsx`,
+`NotFoundScreen.jsx` (`S.card`, 4 steder + billed-preview) og
+`SuggestEditScreen.jsx`. Fandt også en fjerde forekomst af "usynligt/missed
+emoji" — en tredje "Vælg fra galleri"-knap i `NotFoundScreen.jsx` (📁) som
+aldrig blev konverteret, selvom fjerde bølge dengang loggede "3 steder"
+rettet (kun 2 var reelt rettet).
+
+**Hilsen-typografien** (`.greeting-main` osv.) forbliver Hjem-specifik —
+ingen anden skærm har en "hilsen" at anvende mønstret på, så det punkt er
+reelt N/A andre steder, ikke en udestående opgave.
+
+**Andre skærme bevidst ikke ændret** (List, Search, Result, Knowledge, Madpas'
+øvrige indhold): deres kort er enten interaktive rækker (flad by design,
+samme mønster som `.hist-row`/`.menu-item`) eller enkelt-formål-sektioner
+uden konkurrerende kort at lave hierarki imellem — hierarki-mønstret giver
+kun mening hvor flere ikke-interaktive indholdskort reelt konkurrerer om
+opmærksomhed på samme skærm, som på Hjem og nu ProfileScreen.
+
+**Den oprindelige Hjem-redesign-opgave (afsnit 5's første punkt-liste) er
+dermed fuldført** — både de globalt udrullede token/klasse-ændringer og de
+per-skærm-vurderede mønstre er nu implementeret hvor de giver mening.
+
 ---
 
 ### Beta-installation (september 2026)
