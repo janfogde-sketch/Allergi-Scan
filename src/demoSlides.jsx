@@ -25,7 +25,7 @@ export const DEMO_SLIDES = [
             <div style={UI.boldInk13}>Arla Letmælk 1L</div>
             <div style={{ fontSize:10, color:"var(--muted2)" }}>EAN 5710085008001 · Arla Foods</div>
           </div>
-          <div style={{ padding:"5px 11px", borderRadius:20, background:"var(--red-md)", border:"1px solid var(--red-md)", fontSize:11, fontWeight:800, color:"var(--red)" }}>⚠ FARE</div>
+          <div style={{ padding:"6px 12px", borderRadius:20, background:"var(--red-md)", border:"1px solid var(--red-md)", fontSize:11, fontWeight:800, color:"var(--red)" }}>⚠ FARE</div>
         </div>
         <div style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, padding:"8px 10px", fontSize:11, color:"var(--red)", lineHeight:1.6 }}>
           <strong>Laktose</strong> — reagerer på dette: Anna, Sofie
@@ -45,8 +45,8 @@ export const DEMO_SLIDES = [
       <div style={UI.mt12}>
         <div style={{ display:"flex", gap:8, justifyContent:"center", marginBottom:10 }}>
           {[["Jan","var(--green)","Laktose · Gluten"],["Anna","#2E8F53","Laktose"],["Sofie","#f59e0b","Nødder · Sesam"],["Mads","#178A50","Ingen"]].map(([n,c,a]) => (
-            <div key={n} style={{ background:"var(--surface)", borderRadius:10, padding:"9px 10px", textAlign:"center", border:"1px solid var(--border)", flex:1 }}>
-              <div style={{ width:30, height:30, borderRadius:"50%", background:c, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, margin:"0 auto 5px" }}>{n[0]}</div>
+            <div key={n} style={{ background:"var(--surface)", borderRadius:10, padding:"10px 10px", textAlign:"center", border:"1px solid var(--border)", flex:1 }}>
+              <div style={{ width:30, height:30, borderRadius:"50%", background:c, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, margin:"0 auto 6px" }}>{n[0]}</div>
               <div style={{ fontSize:9, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{n}</div>
               <div style={{ fontSize:8, color:"var(--muted2)", lineHeight:1.3 }}>{a}</div>
             </div>
@@ -64,7 +64,7 @@ export const DEMO_SLIDES = [
     bg: "var(--surface2)", accent: "var(--red)",
     mockup: (
       <div style={UI.mt12}>
-        <div style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, padding:"9px 12px", marginBottom:8, display:"flex", alignItems:"center", gap:8 }}>
+        <div style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, padding:"10px 12px", marginBottom:8, display:"flex", alignItems:"center", gap:8 }}>
           <span style={UI.fs18}>🥛</span>
           <div style={UI.flex1}>
             <div style={{ fontSize:12, fontWeight:700, color:"var(--red)" }}>Arla Letmælk — FARE</div>
@@ -100,7 +100,7 @@ export const DEMO_SLIDES = [
           ["Alpro Soya", true, "Købt"],
           ["Havregryns-cookies", false, "Sofie tilføjede"],
         ].map(([name, done, sub]) => (
-          <div key={name} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 10px", borderRadius:8, marginBottom:5, background:"var(--surface)", border:"1px solid var(--border)", opacity: done ? 0.5 : 1 }}>
+          <div key={name} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 10px", borderRadius:8, marginBottom:6, background:"var(--surface)", border:"1px solid var(--border)", opacity: done ? 0.5 : 1 }}>
             <div style={{ width:18, height:18, borderRadius:4, border:`2px solid ${done?"var(--green)":"var(--border2)"}`, background: done?"var(--green)":"transparent", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
               {done && <span style={{ fontSize:11, color:"#fff", fontWeight:800 }}>✓</span>}
             </div>
@@ -124,7 +124,7 @@ export const DEMO_SLIDES = [
           ["🥗","Nikkei Ceviche","Glutenfri · Laktosefri","✅ Sikker for alle"],
           ["🍛","Chicken Tikka Masala","Nøddefri · Sesamfri","⚠ Tjek: mælk i sauce"],
         ].map(([e,name,tags,status]) => (
-          <div key={name} style={{ display:"flex", alignItems:"center", gap:10, background:"var(--surface)", borderRadius:10, padding:"9px 12px", border:"1px solid var(--border)" }}>
+          <div key={name} style={{ display:"flex", alignItems:"center", gap:10, background:"var(--surface)", borderRadius:10, padding:"10px 12px", border:"1px solid var(--border)" }}>
             <div style={UI.ufs22}>{e}</div>
             <div style={UI.flex1}>
               <div style={UI.boldInk12}>{name}</div>
@@ -144,7 +144,7 @@ export const DEMO_SLIDES = [
       <div style={UI.mt12}>
         <div style={{ background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:10, padding:"10px 12px", marginBottom:8 }}>
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
-            <div style={{ padding:"3px 9px", borderRadius:20, background:"var(--amber-md)", border:"1px solid var(--amber)", fontSize:11, fontWeight:800, color:"var(--amber)" }}>E621</div>
+            <div style={{ padding:"3px 10px", borderRadius:20, background:"var(--amber-md)", border:"1px solid var(--amber)", fontSize:11, fontWeight:800, color:"var(--amber)" }}>E621</div>
             <div style={UI.boldInk12}>MSG · Smagsforstærker</div>
           </div>
           <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.6 }}>Kan give hovedpine hos følsomme personer.</div>
@@ -170,7 +170,7 @@ export const DEMO_SLIDES = [
         <div style={UI.ufs13_fw800_cink_mb3}>Sono allergico al latte e al glutine.</div>
         <div style={{ fontSize:11, color:"var(--muted)", fontStyle:"italic", marginBottom:10 }}>"so-no al-ler-JI-ko al LAT-te e al glu-TI-ne"</div>
         <div style={{ fontSize:10, color:"var(--muted2)", marginBottom:6 }}>Tilgængeligt på:</div>
-        <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
+        <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
           {["🇩🇰","🇬🇧","🇩🇪","🇫🇷","🇪🇸","🇵🇹","🇳🇱","🇸🇪"].map(f => <span key={f} style={UI.fs18}>{f}</span>)}
           <span style={{ fontSize:11, color:"var(--muted2)", alignSelf:"center" }}>+9 mere</span>
         </div>

@@ -40,8 +40,8 @@ const RecipeCard = React.memo(function RecipeCard({ recipe: r, profiles, isFav, 
           ? <img src={r.image_url} alt={r.title} className="recipe-card-img" loading="lazy" onError={e => { e.currentTarget.style.display="none"; e.currentTarget.nextSibling?.style && (e.currentTarget.nextSibling.style.display="flex"); }} />
           : <div className="recipe-card-img-placeholder">{getCatEmoji(r.category)}</div>
         }
-        <div style={{ position:"absolute", left:0, right:0, bottom:0, display:"flex", alignItems:"center", gap:7,
-          padding:"7px 14px", background:cardColor, color:"#fff" }}>
+        <div style={{ position:"absolute", left:0, right:0, bottom:0, display:"flex", alignItems:"center", gap:8,
+          padding:"8px 14px", background:cardColor, color:"#fff" }}>
           <Icon name={cardIcon} size={12} color="#fff" />
           <span style={{ fontSize:11, fontWeight:800, letterSpacing:".01em", textTransform:"uppercase" }}>{cardHeadline}</span>
         </div>
@@ -237,7 +237,7 @@ export default function RecipesScreen({
             const unit = ing.unit || (ing.measure ? ing.measure.replace(/^[\d.,\/\s]+/, "").trim() : "");
 
             return (
-              <div key={i} className="ingredient-row" style={{ padding:"9px 14px", opacity: added ? 0.5 : 1, transition:"opacity .2s" }}>
+              <div key={i} className="ingredient-row" style={{ padding:"10px 14px", opacity: added ? 0.5 : 1, transition:"opacity .2s" }}>
                 <div className="ingredient-dot" style={{ background: dotColor }} />
                 <div style={{ flex:1, fontSize:13, color: nameColor, fontWeight: isAllergen ? 700 : 500 }}>
                   {ing.name}
@@ -293,7 +293,7 @@ export default function RecipesScreen({
             <Icon name="heart" size={17} color={isFav ? "var(--red)" : "#fff"} />
           </button>
           {/* Verdikt-strimmel — samme mønster som Resultat-skærmens produktkort */}
-          <div style={{ position:"absolute", left:0, right:0, bottom:0, zIndex:2, display:"flex", alignItems:"center", gap:7,
+          <div style={{ position:"absolute", left:0, right:0, bottom:0, zIndex:2, display:"flex", alignItems:"center", gap:8,
             padding:"8px 14px", background:heroColor, color:"#fff" }}>
             <Icon name={heroIcon} size={12} color="#fff" />
             <span style={UI.ufs12_fw800_ls01em_ttuppercas}>{heroHeadline}</span>
@@ -378,8 +378,8 @@ export default function RecipesScreen({
                       });
                     }}
                     style={{
-                      display:"flex", alignItems:"center", gap:5,
-                      padding:"5px 12px", borderRadius:100,
+                      display:"flex", alignItems:"center", gap:6,
+                      padding:"6px 12px", borderRadius:100,
                       border:`1.5px solid ${allIngredientsAdded ? "var(--green)" : "var(--border2)"}`,
                       background: allIngredientsAdded ? "var(--green-lt)" : "var(--paper2)",
                       color: allIngredientsAdded ? "var(--green)" : "var(--muted2)",
@@ -511,7 +511,7 @@ export default function RecipesScreen({
                   <div key={c.id}
                     onClick={() => { setRecipeFilter(c.id); setRecipeSearch(""); setDropdownOpen(false); }}
                     style={{
-                      padding:"11px 14px", cursor:"pointer", fontSize:13, fontWeight:600,
+                      padding:"12px 14px", cursor:"pointer", fontSize:13, fontWeight:600,
                       color: recipeFilter === c.id ? "var(--green)" : "var(--ink)",
                       background: recipeFilter === c.id ? "var(--green-lt)" : "transparent",
                       display:"flex", alignItems:"center", gap:8,
@@ -526,7 +526,7 @@ export default function RecipesScreen({
           </div>
           {/* Kun-sikre toggle */}
           <div onClick={() => setRecipeSafeOnly(v => !v)} style={{
-            flexShrink:0, display:"flex", alignItems:"center", gap:5, padding:"10px 12px",
+            flexShrink:0, display:"flex", alignItems:"center", gap:6, padding:"10px 12px",
             borderRadius:12, border:`1px solid ${recipeSafeOnly ? "var(--green)" : "var(--border2)"}`,
             background: recipeSafeOnly ? "var(--green-lt)" : "var(--surface)", cursor:"pointer",
             fontSize:12, fontWeight:700, color: recipeSafeOnly ? "var(--green)" : "var(--muted2)",
@@ -555,7 +555,7 @@ export default function RecipesScreen({
                     );
                   }}
                   style={{
-                    display:"flex", alignItems:"center", gap:6, padding:"5px 10px",
+                    display:"flex", alignItems:"center", gap:6, padding:"6px 10px",
                     borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700,
                     background: isActive ? "var(--green-lt)" : "var(--surface2)",
                     color: isActive ? "var(--green)" : "var(--muted)",
@@ -604,7 +604,7 @@ export default function RecipesScreen({
                 <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)", letterSpacing:"-.3px", marginBottom:4 }}>Kunne ikke indlæse</div>
                 <div style={UI.ufs12_cmuted_mb12}>Tjek din forbindelse og prøv igen</div>
                 <button onClick={() => loadRecipes()}
-                  style={{ background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:10, padding:"9px 18px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", boxShadow:"0 2px 12px rgba(74,222,128,.25)" }}>
+                  style={{ background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:10, padding:"10px 18px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", boxShadow:"0 2px 12px rgba(74,222,128,.25)" }}>
                   Prøv igen →
                 </button>
               </div>
@@ -766,9 +766,9 @@ export default function RecipesScreen({
         <div style={UI.mb20}>
           <div style={UI.sectionLblInk3}>Grundinfo</div>
           <input placeholder="Titel *" value={submitRecipe.title} onChange={e => setSubmitRecipe(r => ({...r, title:e.target.value}))}
-            style={{ width:"100%", padding:"11px 14px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface2)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:14, boxSizing:"border-box", marginBottom:8, outline:"none" }} />
+            style={{ width:"100%", padding:"12px 14px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface2)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:14, boxSizing:"border-box", marginBottom:8, outline:"none" }} />
           <textarea placeholder="Kort beskrivelse (valgfrit)" value={submitRecipe.description||""} onChange={e => setSubmitRecipe(r => ({...r, description:e.target.value}))} rows={2}
-            style={{ width:"100%", padding:"11px 14px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface2)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, boxSizing:"border-box", resize:"none", marginBottom:8, outline:"none" }} />
+            style={{ width:"100%", padding:"12px 14px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface2)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, boxSizing:"border-box", resize:"none", marginBottom:8, outline:"none" }} />
           <div style={UI.udgrid_gri1fr1fr_g8_mb8}>
             <select value={submitRecipe.category} onChange={e => setSubmitRecipe(r => ({...r, category:e.target.value}))}
               style={{ padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }}>
@@ -812,11 +812,11 @@ export default function RecipesScreen({
                   <input placeholder="Ingrediens *" value={ing.name} onChange={e => {
                     setSubmitIngredients(submitIngredients.map((x,i) => i===idx ? {...x, name:e.target.value} : x));
                   }}
-                  style={{ padding:"7px 10px", borderRadius:8, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
+                  style={{ padding:"8px 10px", borderRadius:8, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" }} />
                   <input placeholder="Mængde" value={ing.amount} onChange={e => setSubmitIngredients(submitIngredients.map((x,i)=>i===idx?{...x,amount:e.target.value}:x))}
-                    style={{ padding:"7px 6px", borderRadius:8, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, textAlign:"center", outline:"none" }} />
+                    style={{ padding:"8px 6px", borderRadius:8, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, textAlign:"center", outline:"none" }} />
                   <select value={ing.unit||""} onChange={e => setSubmitIngredients(submitIngredients.map((x,i)=>i===idx?{...x,unit:e.target.value}:x))}
-                    style={{ padding:"7px 4px", borderRadius:8, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:11, outline:"none" }}>
+                    style={{ padding:"8px 4px", borderRadius:8, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:11, outline:"none" }}>
                     <option value="">enhed</option>
                     {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
                   </select>
@@ -825,13 +825,13 @@ export default function RecipesScreen({
                 </div>
 
                 {/* Allergen-tags for denne ingrediens */}
-                <div style={{ display:"flex", flexWrap:"wrap", gap:5, alignItems:"center" }}>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:6, alignItems:"center" }}>
                   {allIngAllergens.map(id => {
                     const a = ALLERGENS.find(x=>x.id===id);
                     const isAuto = ingAutoAllergens.includes(id);
                     return (
                       <div key={id} style={{
-                        display:"flex", alignItems:"center", gap:3, padding:"2px 7px",
+                        display:"flex", alignItems:"center", gap:3, padding:"2px 8px",
                         borderRadius:100, fontSize:10, fontWeight:700,
                         background: isAuto ? "var(--amber-lt)" : "var(--red-lt)",
                         color: isAuto ? "var(--amber)" : "var(--red)",
@@ -876,13 +876,13 @@ export default function RecipesScreen({
 
                 {/* Mini allergen-picker */}
                 {showAllergenPicker && (
-                  <div style={{ marginTop:8, display:"flex", flexWrap:"wrap", gap:5 }}>
+                  <div style={{ marginTop:8, display:"flex", flexWrap:"wrap", gap:6 }}>
                     {ALLERGENS.filter(a => !allIngAllergens.includes(a.id)).map(a => (
                       <div key={a.id}
                         onClick={() => setSubmitIngredients(submitIngredients.map((x,i) =>
                           i===idx ? {...x, allergens:[...(x.allergens||[]),a.id], showPicker:false} : x
                         ))}
-                        style={{ padding:"3px 9px", borderRadius:100, border:"1px solid var(--border)", background:"var(--surface2)", color:"var(--muted2)", fontSize:10, fontWeight:700, cursor:"pointer" }}>
+                        style={{ padding:"3px 10px", borderRadius:100, border:"1px solid var(--border)", background:"var(--surface2)", color:"var(--muted2)", fontSize:10, fontWeight:700, cursor:"pointer" }}>
                         {a.emoji} {a.label}
                       </div>
                     ))}
@@ -894,7 +894,7 @@ export default function RecipesScreen({
           {/* Auto-detekterede allergener */}
           {autoAllergens.filter(id => !removedAuto.includes(id)).length > 0 && (
             <div style={{ padding:"10px 12px", background:"rgba(255,186,59,.08)", border:"1px solid rgba(255,186,59,.2)", borderRadius:10, marginBottom:8 }}>
-              <div style={{ display:"flex", alignItems:"center", gap:5, fontSize:11, fontWeight:700, color:"var(--amber)", marginBottom:6 }}><Icon name="warning" size={11} color="var(--amber)" /> Auto-detekterede allergener — tryk × for at fjerne fejl</div>
+              <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:700, color:"var(--amber)", marginBottom:6 }}><Icon name="warning" size={11} color="var(--amber)" /> Auto-detekterede allergener — tryk × for at fjerne fejl</div>
               <div style={UI.wrapGap5}>
                 {autoAllergens.filter(id => !removedAuto.includes(id)).map(id => {
                   const a = ALLERGENS.find(x=>x.id===id);
@@ -970,7 +970,7 @@ export default function RecipesScreen({
               if (isAuto) return null;
               return (
                 <div key={a.id} onClick={() => setManualAllergens(m => isManual ? m.filter(id=>id!==a.id) : [...m,a.id])}
-                  style={{ padding:"5px 10px", borderRadius:100, cursor:"pointer", fontSize:11, fontWeight:700,
+                  style={{ padding:"6px 10px", borderRadius:100, cursor:"pointer", fontSize:11, fontWeight:700,
                     background: isManual ? "var(--red-lt)" : "var(--surface)",
                     color: isManual ? "var(--red)" : "var(--muted2)",
                     border:`1px solid ${isManual ? "var(--red-md)" : "var(--border)"}`,
@@ -993,7 +993,7 @@ export default function RecipesScreen({
           </div>
         </div>
 
-        <div style={{ display:"flex", alignItems:"flex-start", gap:5, fontSize:11, color:"var(--muted)", textAlign:"center", lineHeight:1.5, marginBottom:14 }}>
+        <div style={{ display:"flex", alignItems:"flex-start", gap:6, fontSize:11, color:"var(--muted)", textAlign:"center", lineHeight:1.5, marginBottom:14 }}>
           <Icon name="info" size={12} color="var(--muted)" /> Allergener er vejledende. Admins gennemgår opskriften inden publicering.
         </div>
 

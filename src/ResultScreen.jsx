@@ -146,7 +146,7 @@ export default function ResultScreen({
             absolut positioneret hen over en højde vi gættede på. Banneret er
             gjort lidt højere, så de større knapper har plads til at sidde pænt. */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding:"12px 14px", background: scanResult.headline ? verdictColor : "var(--surface2)", color: scanResult.headline ? "#fff" : "var(--ink)" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:7, minWidth:0 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, minWidth:0 }}>
             {scanResult.headline && <><Icon name={verdictIcon} size={13} color="#fff" />
             <span style={UI.ufs12_fw800_ls01em_ttuppercas}>{scanResult.headline}</span></>}
           </div>
@@ -188,12 +188,12 @@ export default function ResultScreen({
           )}
           <div className="product-hero-meta">
             <span style={{ fontSize:10, color:"var(--muted)", fontWeight:500 }}>EAN: {scanResult.code}</span>
-            <span style={{ display:"inline-flex", alignItems:"center", gap:4, fontSize:10, fontWeight:700, padding:"2px 9px", borderRadius:20, background:vb.bg, color:vb.color, border:`1px solid ${vb.dot}22` }}>
+            <span style={{ display:"inline-flex", alignItems:"center", gap:4, fontSize:10, fontWeight:700, padding:"2px 10px", borderRadius:20, background:vb.bg, color:vb.color, border:`1px solid ${vb.dot}22` }}>
               <span style={{ width:5, height:5, borderRadius:"50%", background:vb.dot, flexShrink:0, display:"inline-block" }} />
               {vb.label}
             </span>
             {scanResult.verified_status === "pending" && (
-              <span style={{ display:"inline-flex", alignItems:"center", gap:4, padding:"2px 9px", borderRadius:20, background:"var(--amber-lt)", border:"1px solid rgba(251,191,36,.3)", fontSize:10, fontWeight:700, color:"var(--amber)" }}>
+              <span style={{ display:"inline-flex", alignItems:"center", gap:4, padding:"2px 10px", borderRadius:20, background:"var(--amber-lt)", border:"1px solid rgba(251,191,36,.3)", fontSize:10, fontWeight:700, color:"var(--amber)" }}>
                 ⏳ Afventer godkendelse
               </span>
             )}
@@ -289,7 +289,7 @@ export default function ResultScreen({
         {/* E-nummer advarsler */}
         {matchedENumbers.length > 0 && (
           <div style={{ padding:"8px 12px", marginBottom:6, background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:10 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:5, fontSize:11, fontWeight:800, color:"var(--amber)", marginBottom:4 }}><Icon name="warning" size={12} color="var(--amber)" /> E-numre fundet som du overvåger</div>
+            <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:800, color:"var(--amber)", marginBottom:4 }}><Icon name="warning" size={12} color="var(--amber)" /> E-numre fundet som du overvåger</div>
             <div style={UI.wrapGap4}>
               {matchedENumbers.map(e => (
                 <span key={e}
@@ -305,7 +305,7 @@ export default function ResultScreen({
         {/* Diæt-detaljer */}
         {showDietDetails && (
           <div style={{ padding:"10px 12px", marginBottom:6, background: dietFailsAll.length > 0 ? "var(--amber-lt)" : "var(--green-lt)", border:`1px solid ${dietFailsAll.length > 0 ? "var(--amber-md)" : "var(--green-mid)"}`, borderRadius:10 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:5, fontSize:11, fontWeight:800, color: dietFailsAll.length > 0 ? "var(--amber)" : "var(--green)", marginBottom:6 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:800, color: dietFailsAll.length > 0 ? "var(--amber)" : "var(--green)", marginBottom:6 }}>
               <Icon name={dietFailsAll.length > 0 ? "warning" : "check"} size={12} color={dietFailsAll.length > 0 ? "var(--amber)" : "var(--green)"} />
               {dietFailsAll.length > 0 ? "Diæt-advarsler" : "Kompatibel med dine diæter"}
             </div>
@@ -332,7 +332,7 @@ export default function ResultScreen({
         {hasTags && (
           <div style={{ display:"flex", gap:6, flexWrap:"wrap", padding:"8px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderTop:"none", borderRadius:"0 0 12px 12px" }}>
             {scanResult.tags.map((tag, i) => (
-              <span key={i} style={{ fontSize:11, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:100, padding:"2px 9px" }}>
+              <span key={i} style={{ fontSize:11, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:100, padding:"2px 10px" }}>
                 {tagLabels[tag] || tag}
               </span>
             ))}
@@ -408,7 +408,7 @@ export default function ResultScreen({
                 }}
                 style={{
                   display:"inline-flex", alignItems:"center", gap:4,
-                  fontSize:11, fontWeight:700, padding:"4px 9px", borderRadius:8,
+                  fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:8,
                   cursor:"pointer", transition:"all .1s",
                   background: isWatched ? "var(--amber-lt)" : "var(--paper2)",
                   color: isWatched ? "var(--amber)" : "var(--ink2)",
@@ -447,7 +447,7 @@ export default function ResultScreen({
         <div className="card-lbl">Næringsindhold pr. 100g</div>
         <div style={UI.udflex_fdcolumn}>
           {rows.map(([label, value], i) => (
-            <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"7px 0", borderBottom: i < rows.length-1 ? "1px solid var(--border)" : "none" }}>
+            <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom: i < rows.length-1 ? "1px solid var(--border)" : "none" }}>
               <span style={{ fontSize:13, color: label.startsWith("—") ? "var(--muted)" : "var(--ink2)", paddingLeft: label.startsWith("—") ? 12 : 0 }}>{label}</span>
               <span style={S.h13b}>{value}</span>
             </div>
@@ -464,7 +464,7 @@ export default function ResultScreen({
       {renderProductHero()}
 
       <button className="btn btn-green btn-sm btn-full" onClick={handleAddToList}
-        style={{ marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:7, opacity: addedToList ? .7 : 1 }}>
+        style={{ marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:8, opacity: addedToList ? .7 : 1 }}>
         {addedToList ? <><Icon name="check" size={15} color="var(--on-green)" /> Tilføjet til indkøbsliste</> : <><Icon name="cart" size={15} color="var(--on-green)" /> Tilføj til indkøbsliste</>}
       </button>
       {showListPicker && (

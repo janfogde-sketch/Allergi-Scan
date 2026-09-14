@@ -167,7 +167,7 @@ export default function MadpasScreen({
               background: madpasSpeaking ? "var(--amber)" : "var(--green)",
               border:"none", borderRadius:8, padding:"8px 16px", fontSize:13, fontWeight:700,
               color:"var(--ink)", cursor:"pointer", fontFamily:"var(--f)",
-              display:"flex", alignItems:"center", gap:7,
+              display:"flex", alignItems:"center", gap:8,
             }}>
               <Icon name={madpasSpeaking ? "speakerOff" : "speaker"} size={15} color="var(--ink)" />
               {madpasSpeaking ? "Stop" : "Oplæs"}
@@ -286,7 +286,7 @@ export default function MadpasScreen({
                     QR ikke tilgængelig
                   </div>
                 )}
-                <div style={{ fontSize:9, color:"var(--muted)", textAlign:"center", marginTop:5, fontWeight:600 }}>
+                <div style={{ fontSize:9, color:"var(--muted)", textAlign:"center", marginTop:6, fontWeight:600 }}>
                   Tryk for at forstørre
                 </div>
               </div>
@@ -297,9 +297,9 @@ export default function MadpasScreen({
                 <div style={{ fontSize:11, color:"var(--green)", wordBreak:"break-all", marginBottom:10, lineHeight:1.4, fontWeight:600 }}>
                   {shareUrl}
                 </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                   <button onClick={copyLink}
-                    style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:"1px solid var(--border2)",
+                    style={{ width:"100%", padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)",
                       background: copied ? "var(--green-lt)" : "var(--surface)",
                       fontFamily:"var(--f)", fontSize:12, fontWeight:700,
                       color: copied ? "var(--green)" : "var(--ink2)", cursor:"pointer",
@@ -308,7 +308,7 @@ export default function MadpasScreen({
                   </button>
                   {navigator.share && (
                     <button onClick={() => navigator.share({ title:"Mit EatSafe madpas", url:shareUrl })}
-                      style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:"none",
+                      style={{ width:"100%", padding:"10px 12px", borderRadius:10, border:"none",
                         background:"var(--green)", fontFamily:"var(--f)", fontSize:12, fontWeight:800,
                         color:"var(--on-green)", cursor:"pointer",
                         display:"flex", alignItems:"center", justifyContent:"center", gap:6, boxShadow:"0 2px 12px rgba(74,222,128,.25)" }}>

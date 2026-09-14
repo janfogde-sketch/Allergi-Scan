@@ -246,7 +246,7 @@ export default function AdminScreen() {
                   <button key={s.val} onClick={() => updateTicketStatus(openTicket.id, s.val)}
                     style={{ flex:1, padding:"8px 4px", borderRadius:10, border:`1px solid ${openTicket.status===s.val?"var(--green)":"var(--border)"}`,
                       background: openTicket.status===s.val ? "var(--green-lt)" : "var(--surface)",
-                      display:"flex", alignItems:"center", justifyContent:"center", gap:5,
+                      display:"flex", alignItems:"center", justifyContent:"center", gap:6,
                       fontFamily:"var(--f)", fontSize:10, fontWeight:700,
                       color: openTicket.status===s.val ? "var(--green)" : "var(--muted)", cursor:"pointer" }}>
                     <span style={{ width:7, height:7, borderRadius:"50%", background:s.dot, flexShrink:0 }} />
@@ -273,7 +273,7 @@ export default function AdminScreen() {
               {/* Diagnostisk info */}
               {openTicket.context && (
                 <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
-                  <div style={{ ...UI.ufs11_cmuted_fw700_mb8, display:"flex", alignItems:"center", gap:5 }}><Icon name="chart" size={11} color="var(--muted)" /> DIAGNOSTISK INFO</div>
+                  <div style={{ ...UI.ufs11_cmuted_fw700_mb8, display:"flex", alignItems:"center", gap:6 }}><Icon name="chart" size={11} color="var(--muted)" /> DIAGNOSTISK INFO</div>
                   <div style={UI.grid2gap6}>
                     {[
                       ["Bruger",      openTicket.context.user_name || "Anonym"],
@@ -415,7 +415,7 @@ Implementér derefter løsningen.`;
                 style={UI.iconBtn}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2"><path strokeLinecap="round" d="M15 19l-7-7 7-7"/></svg>
               </button>
-              <div style={{ flex:1, fontSize:18, fontWeight:900, color:"var(--ink)", display:"flex", alignItems:"center", gap:7 }}><Icon name="shield" size={17} color="var(--ink)" /> Admin</div>
+              <div style={{ flex:1, fontSize:18, fontWeight:900, color:"var(--ink)", display:"flex", alignItems:"center", gap:8 }}><Icon name="shield" size={17} color="var(--ink)" /> Admin</div>
               <button onClick={() => { loadAdminStats(); if (adminSection==="submissions") loadSubmissions(submissionFilter); if (adminSection==="tickets") loadTickets(); if (adminSection==="missing") loadMissingEans(); }}
                 style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:10, padding:"6px 12px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex" }}>
                 <Icon name="refresh" size={14} color="var(--ink)" />
@@ -481,7 +481,7 @@ Implementér derefter løsningen.`;
                     { icon:"bug", label:"Åbne tickets",             n:adminStats?.open_tickets,           color:"var(--red)",   action:() => { setAdminSection("tickets"); loadTickets(); } },
                   ].map(({ icon, emoji, label, n, color, action }, i, arr) => (
                     <div key={label} onClick={action}
-                      style={{ display:"flex", alignItems:"center", gap:12, padding:"13px 16px", borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", cursor: action ? "pointer" : "default" }}>
+                      style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 16px", borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", cursor: action ? "pointer" : "default" }}>
                       <span style={UI.fs20}>{icon ? <Icon name={icon} size={18} color={color} /> : emoji}</span>
                       <span style={{ flex:1, fontSize:13, color:"var(--ink)", fontWeight:500 }}>{label}</span>
                       <span style={{ fontSize:18, fontWeight:900, color }}>{n ?? "—"}</span>
@@ -613,9 +613,9 @@ Implementér derefter løsningen.`;
                     { val:"rejected", label:"Afvist",   icon:"x",     color:"var(--red)" },
                   ].map(({ val, label, icon, color }) => (
                     <button key={val} onClick={() => { setSubmissionFilter(val); loadSubmissions(val); }}
-                      style={{ flex:1, padding:"9px 4px", borderRadius:10, border:`1px solid ${submissionFilter===val ? color : "var(--border)"}`,
+                      style={{ flex:1, padding:"10px 4px", borderRadius:10, border:`1px solid ${submissionFilter===val ? color : "var(--border)"}`,
                         background: submissionFilter===val ? (val==="pending"?"var(--amber-lt)":val==="approved"?"var(--green-lt)":"var(--red-lt)") : "var(--surface)",
-                        display:"flex", alignItems:"center", justifyContent:"center", gap:5,
+                        display:"flex", alignItems:"center", justifyContent:"center", gap:6,
                         fontFamily:"var(--f)", fontSize:11, fontWeight:700,
                         color: submissionFilter===val ? color : "var(--muted)", cursor:"pointer" }}>
                       <Icon name={icon} size={12} color={submissionFilter===val ? color : "var(--muted)"} /> {label}
@@ -647,7 +647,7 @@ Implementér derefter løsningen.`;
                             </div>
                             <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6, fontFamily:"monospace" }}>EAN: {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`}</div>
                             <div style={UI.wrapGap4}>
-                              {dangerAllergens.slice(0,3).map(a => <span key={a.id} style={{ fontSize:10, padding:"2px 7px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", fontWeight:700 }}>{a.emoji} {a.label}</span>)}
+                              {dangerAllergens.slice(0,3).map(a => <span key={a.id} style={{ fontSize:10, padding:"2px 8px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", fontWeight:700 }}>{a.emoji} {a.label}</span>)}
                               {dangerAllergens.length === 0 && <span style={UI.muted10}>Ingen allergener</span>}
                             </div>
                           </div>
@@ -743,14 +743,14 @@ Implementér derefter løsningen.`;
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:4 }}><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
                         </div>
                         {/* Status toggle direkte på kortet */}
-                        <div style={{ display:"flex", gap:5, marginTop:10, paddingTop:10, borderTop:"1px solid var(--border)" }}>
+                        <div style={{ display:"flex", gap:6, marginTop:10, paddingTop:10, borderTop:"1px solid var(--border)" }}>
                           {[
                             { val:"open",        label:"Åben",   color:"var(--red)" },
                             { val:"in_progress", label:"I gang", color:"var(--amber)" },
                             { val:"resolved",    label:"Løst",   color:"var(--green)" },
                           ].map(s => (
                             <button key={s.val} onClick={() => updateTicketStatus(t.id, s.val)}
-                              style={{ flex:1, padding:"5px 2px", borderRadius:8, border:`1px solid ${t.status===s.val ? s.color : "var(--border)"}`,
+                              style={{ flex:1, padding:"6px 2px", borderRadius:8, border:`1px solid ${t.status===s.val ? s.color : "var(--border)"}`,
                                 background: t.status===s.val ? s.color : "var(--surface2)",
                                 fontFamily:"var(--f)", fontSize:9, fontWeight:700,
                                 color: t.status===s.val ? "var(--on-green)" : "var(--muted)", cursor:"pointer" }}>
@@ -783,7 +783,7 @@ Implementér derefter løsningen.`;
                     <div style={UI.flex1}>
                       <div style={UI.ufs18_fw900_cink}>{openAdminUser.name || "Ingen navn"}</div>
                       <div style={UI.muted12mt2}>{openAdminUser.email}</div>
-                      <div style={{ display:"flex", gap:6, marginTop:5 }}>
+                      <div style={{ display:"flex", gap:6, marginTop:6 }}>
                         <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: openAdminUser.role==="admin" ? "rgba(74,222,128,.2)" : "var(--surface2)", color: openAdminUser.role==="admin" ? "var(--green)" : "var(--muted)", display:"inline-flex", alignItems:"center", gap:4 }}>
                           <Icon name={openAdminUser.role==="admin" ? "shield" : "profile"} size={10} color={openAdminUser.role==="admin" ? "var(--green)" : "var(--muted)"} /> {openAdminUser.role==="admin" ? "Admin" : "Bruger"}
                         </span>
@@ -851,7 +851,7 @@ Implementér derefter løsningen.`;
                           updateUserRole(openAdminUser.id, newRole);
                           setOpenAdminUser(u => ({ ...u, role: newRole }));
                         }}
-                          style={{ width:"100%", padding:"13px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+                          style={{ width:"100%", padding:"14px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
                           <Icon name={openAdminUser.role==="admin" ? "profile" : "shield"} size={14} color="var(--ink)" /> {openAdminUser.role==="admin" ? "Skift til Bruger" : "Skift til Admin"}
                         </button>
 
@@ -862,7 +862,7 @@ Implementér derefter løsningen.`;
                             if (!res.ok) { showToast(`Fejl: HTTP ${res.status}`, "error"); return; }
                             setOpenAdminUser(u => ({ ...u, onboarding_completed: true }));
                           }}
-                            style={{ flex:1, padding:"11px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--green)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                            style={{ flex:1, padding:"12px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--green)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                             <Icon name="check" size={13} color="var(--green)" /> Markér onboarding færdig
                           </button>
                           <button onClick={async () => {
@@ -870,7 +870,7 @@ Implementér derefter løsningen.`;
                             if (!res.ok) { showToast(`Fejl: HTTP ${res.status}`, "error"); return; }
                             setOpenAdminUser(u => ({ ...u, onboarding_completed: false }));
                           }}
-                            style={{ flex:1, padding:"11px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--amber)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                            style={{ flex:1, padding:"12px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--amber)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                             <Icon name="refresh" size={13} color="var(--amber)" /> Nulstil onboarding
                           </button>
                         </div>
@@ -901,13 +901,13 @@ Implementér derefter løsningen.`;
                           const txt = `Bruger: ${openAdminUser.name} (${openAdminUser.email})\nRolle: ${openAdminUser.role}\nOprettet: ${new Date(openAdminUser.created_at).toLocaleDateString("da-DK")}\nOnboarding: ${openAdminUser.onboarding_completed ? "Færdig" : "Ikke færdig"}\nAllergener: ${openAdminUser.allergens?.join(", ") || "Ingen"}\nID: ${openAdminUser.id}`;
                           navigator.clipboard?.writeText(txt).then(() => showToast("Kopieret!")).catch(() => alert(txt));
                         }}
-                          style={{ width:"100%", padding:"11px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                          style={{ width:"100%", padding:"12px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                           <Icon name="link" size={13} color="var(--ink)" /> Kopiér info til Claude
                         </button>
 
                         {/* Slet */}
                         <button onClick={() => { deleteUser(openAdminUser.id); setOpenAdminUser(null); }}
-                          style={{ width:"100%", padding:"13px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                          style={{ width:"100%", padding:"14px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                           <Icon name="trash" size={14} color="var(--red)" /> Slet bruger permanent
                         </button>
                       </div>
@@ -938,7 +938,7 @@ Implementér derefter løsningen.`;
               {/* Hurtig-godkend/afvis */}
               <div style={{ display:"flex", gap:6 }}>
                 <button onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}
-                  style={{ background:"var(--green)", border:"none", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--on-green)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+                  style={{ background:"var(--green)", border:"none", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--on-green)", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
                   <Icon name="check" size={13} color="var(--on-green)" /> Godkend
                 </button>
                 <button onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}
@@ -997,7 +997,7 @@ Implementér derefter løsningen.`;
                 <div style={UI.rowBetweenMb10}>
                   <div style={{ ...UI.boldInk13, display:"flex", alignItems:"center", gap:6 }}><Icon name="file" size={13} color="var(--ink)" /> Ingredienser fra OCR</div>
                   <button onClick={() => cleanOcrWithAI(openSubmission.ocr_raw_text)} disabled={cleaningOcr}
-                    style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:8, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--green)", cursor:"pointer" }}>
+                    style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:8, padding:"6px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--green)", cursor:"pointer" }}>
                     {cleaningOcr ? "🤖 Renskriver…" : "🤖 Renskiv med AI"}
                   </button>
                 </div>
@@ -1006,7 +1006,7 @@ Implementér derefter løsningen.`;
                 </div>
                 {cleanedOcrText && (
                   <div style={{ marginTop:10, borderTop:"1px solid var(--border)", paddingTop:10 }}>
-                    <div style={{ fontSize:11, fontWeight:700, color:"var(--green)", marginBottom:6, display:"flex", alignItems:"center", gap:5 }}><Icon name="check" size={11} color="var(--green)" /> AI renskrevet — tjek at intet er fjernet</div>
+                    <div style={{ fontSize:11, fontWeight:700, color:"var(--green)", marginBottom:6, display:"flex", alignItems:"center", gap:6 }}><Icon name="check" size={11} color="var(--green)" /> AI renskrevet — tjek at intet er fjernet</div>
                     <div style={{ background:"var(--green-lt)", borderRadius:8, padding:"10px", marginBottom:8, fontSize:12, color:"var(--ink)", lineHeight:1.7 }}>
                       <HighlightText text={cleanedOcrText} />
                     </div>
@@ -1088,11 +1088,11 @@ Implementér derefter løsningen.`;
             {/* Handlings-knapper */}
             <div style={{ display:"flex", flexDirection:"column", gap:8, paddingBottom:120 }}>
               <button onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}
-                style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:700, color:"var(--on-green)", cursor:"pointer", boxShadow:"0 4px 16px rgba(34,197,94,.3)", display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
+                style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:12, padding:"16px", fontFamily:"var(--f)", fontSize:15, fontWeight:700, color:"var(--on-green)", cursor:"pointer", boxShadow:"0 4px 16px rgba(34,197,94,.3)", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
                 <Icon name="check" size={15} color="var(--on-green)" /> {openSubmission.type === "edit" ? "Godkend og opdater produkt" : "Godkend og opret produkt"}
               </button>
               <button onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}
-                style={{ width:"100%", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, padding:"13px", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
+                style={{ width:"100%", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, padding:"14px", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
                 <Icon name="x" size={14} color="var(--red)" /> Afvis indsendelse
               </button>
               <button onClick={() => { setOpenSubmission(null); setEditingSubmission(null); }}
@@ -1108,8 +1108,8 @@ Implementér derefter løsningen.`;
                         {adminSection === "missing" && (
               <div>
                 <div style={UI.rowBetweenMb16}>
-                  <div style={{ ...UI.ufs17_fw800_cink, display:"flex", alignItems:"center", gap:7 }}><Icon name="info" size={16} color="var(--ink)" /> Efterspurgte manglende produkter</div>
-                  <button onClick={loadMissingEans} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+                  <div style={{ ...UI.ufs17_fw800_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name="info" size={16} color="var(--ink)" /> Efterspurgte manglende produkter</div>
+                  <button onClick={loadMissingEans} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
                     <Icon name="refresh" size={12} color="var(--muted)" /> Opdater
                   </button>
                 </div>
@@ -1161,7 +1161,7 @@ Implementér derefter løsningen.`;
                         <div style={UI.flexMin}>
                           <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)", fontFamily:"monospace" }}>{row.ean}</div>
                           <div style={{ display:"flex", gap:8, alignItems:"center", marginTop:3, flexWrap:"wrap" }}>
-                            <span style={{ fontSize:11, fontWeight:700, color:"var(--red)", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:100, padding:"1px 7px" }}>
+                            <span style={{ fontSize:11, fontWeight:700, color:"var(--red)", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:100, padding:"1px 8px" }}>
                               {row.count}× søgt
                             </span>
                             <span style={UI.muted11}>
@@ -1173,19 +1173,19 @@ Implementér derefter løsningen.`;
                         <div style={{ display:"flex", gap:6, flexShrink:0 }}>
                           <button
                             onClick={() => window.open(`https://world.openfoodfacts.org/product/${row.ean}`, "_blank")}
-                            style={{ background:"var(--blue-lt)", border:"1px solid var(--blue-md)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--blue)", fontFamily:"var(--f)", cursor:"pointer", display:"flex", alignItems:"center", gap:4 }}
+                            style={{ background:"var(--blue-lt)", border:"1px solid var(--blue-md)", borderRadius:8, padding:"6px 10px", fontSize:11, fontWeight:700, color:"var(--blue)", fontFamily:"var(--f)", cursor:"pointer", display:"flex", alignItems:"center", gap:4 }}
                             title="Søg på Open Food Facts">
                             <Icon name="search" size={11} color="var(--blue)" /> OFF
                           </button>
                           <button
                             onClick={() => navigator.clipboard?.writeText(row.ean)}
-                            style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer", display:"flex", alignItems:"center" }}
+                            style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"6px 10px", fontSize:11, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer", display:"flex", alignItems:"center" }}
                             title="Kopiér EAN" aria-label="Kopiér EAN">
                             <Icon name="link" size={12} color="var(--muted)" />
                           </button>
                           <button
                             onClick={() => deleteMissingEan(row.ean)}
-                            style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--red)", fontFamily:"var(--f)", cursor:"pointer" }}
+                            style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, padding:"6px 10px", fontSize:11, fontWeight:700, color:"var(--red)", fontFamily:"var(--f)", cursor:"pointer" }}
                             title="Slet fra liste" aria-label="Slet fra liste">
                             ×
                           </button>
@@ -1200,7 +1200,7 @@ Implementér derefter løsningen.`;
             {adminSection === "import" && (
               <div>
                 <div style={UI.rowBetweenMb16}>
-                  <div style={{ ...UI.ufs17_fw800_cink, display:"flex", alignItems:"center", gap:7 }}><Icon name="download" size={15} color="var(--ink)" /> OFF Auto-import</div>
+                  <div style={{ ...UI.ufs17_fw800_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name="download" size={15} color="var(--ink)" /> OFF Auto-import</div>
                   <button
                     onClick={() => runImport(true)}
                     disabled={importLoading}
@@ -1386,14 +1386,14 @@ Implementér derefter løsningen.`;
                 <div style={UI.udflex_g6_mb14}>
                   {[{val:"pending",label:"Afventer",icon:"clock"},{val:"approved",label:"Godkendte",icon:"check"},{val:"rejected",label:"Afviste",icon:"x"}].map(f => (
                     <button key={f.val} onClick={() => { setAdminRecipeFilter(f.val); loadAdminRecipes(f.val); }}
-                      style={{ padding:"7px 14px", borderRadius:100, border:`1px solid ${adminRecipeFilter===f.val?"var(--green)":"var(--border)"}`,
+                      style={{ padding:"8px 14px", borderRadius:100, border:`1px solid ${adminRecipeFilter===f.val?"var(--green)":"var(--border)"}`,
                         background:adminRecipeFilter===f.val?"var(--green-lt)":"var(--surface)", color:adminRecipeFilter===f.val?"var(--green)":"var(--muted)",
-                        display:"flex", alignItems:"center", gap:5,
+                        display:"flex", alignItems:"center", gap:6,
                         fontFamily:"var(--f)", fontSize:12, fontWeight:700, cursor:"pointer" }}>
                       <Icon name={f.icon} size={11} color={adminRecipeFilter===f.val?"var(--green)":"var(--muted)"} /> {f.label}
                     </button>
                   ))}
-                  <button onClick={() => loadAdminRecipes()} style={{ marginLeft:"auto", padding:"7px 12px", borderRadius:100, border:"1px solid var(--border)", background:"var(--surface)", color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer", display:"flex" }}><Icon name="refresh" size={12} color="var(--muted)" /></button>
+                  <button onClick={() => loadAdminRecipes()} style={{ marginLeft:"auto", padding:"8px 12px", borderRadius:100, border:"1px solid var(--border)", background:"var(--surface)", color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer", display:"flex" }}><Icon name="refresh" size={12} color="var(--muted)" /></button>
                 </div>
 
                 {/* Detail-visning */}
@@ -1405,9 +1405,9 @@ Implementér derefter løsningen.`;
                         style={UI.ubgsurface2_bdnone_br50_w32_h32_curpointer_fs18_cmuted}>×</button>
                     </div>
                     <input value={editingRecipe.title||""} onChange={e => setEditingRecipe(r=>({...r,title:e.target.value}))} placeholder="Titel"
-                      style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:14, boxSizing:"border-box", marginBottom:8, outline:"none" }} />
+                      style={{ width:"100%", padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:14, boxSizing:"border-box", marginBottom:8, outline:"none" }} />
                     <textarea value={editingRecipe.description||""} onChange={e => setEditingRecipe(r=>({...r,description:e.target.value}))} placeholder="Beskrivelse" rows={3}
-                      style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, boxSizing:"border-box", resize:"none", marginBottom:8, outline:"none" }} />
+                      style={{ width:"100%", padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, boxSizing:"border-box", resize:"none", marginBottom:8, outline:"none" }} />
                     <div style={UI.udgrid_gri1fr1fr_g8_mb8}>
                       <select value={editingRecipe.category||"aftensmad"} onChange={e => setEditingRecipe(r=>({...r,category:e.target.value}))}
                         style={UI.up8px10px_br10_bd1pxsolid_bgpaper_cink_fff_fs13_outnone}>
@@ -1418,7 +1418,7 @@ Implementér derefter løsningen.`;
                     </div>
                     {/* Allergen flags */}
                     <div style={UI.sectionLbl6}>Allergener</div>
-                    <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:12 }}>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:12 }}>
                       {ALLERGENS.map(a => {
                         let flags = {};
                         try { flags = typeof editingRecipe.allergen_flags==="string" ? JSON.parse(editingRecipe.allergen_flags) : (editingRecipe.allergen_flags||{}); } catch {}
@@ -1430,7 +1430,7 @@ Implementér derefter løsningen.`;
                             const next = {...f, [a.id]: !isOn};
                             setEditingRecipe(r => ({...r, allergen_flags: JSON.stringify(next)}));
                           }}
-                          style={{ padding:"3px 9px", borderRadius:100, cursor:"pointer", fontSize:11, fontWeight:700,
+                          style={{ padding:"3px 10px", borderRadius:100, cursor:"pointer", fontSize:11, fontWeight:700,
                             background: isOn?"var(--red-lt)":"var(--surface2)", color:isOn?"var(--red)":"var(--muted2)",
                             border:`1px solid ${isOn?"var(--red-md)":"var(--border)"}` }}>
                             {a.emoji} {a.label}
@@ -1487,7 +1487,7 @@ Implementér derefter løsningen.`;
                       {flaggedAllergens.length > 0 && (
                         <div style={UI.wrapGap4}>
                           {flaggedAllergens.map(a => (
-                            <span key={a.id} style={{ fontSize:10, padding:"2px 7px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", border:"1px solid var(--red-md)", fontWeight:700 }}>{a.emoji} {a.label}</span>
+                            <span key={a.id} style={{ fontSize:10, padding:"2px 8px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", border:"1px solid var(--red-md)", fontWeight:700 }}>{a.emoji} {a.label}</span>
                           ))}
                         </div>
                       )}

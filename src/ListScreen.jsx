@@ -263,7 +263,7 @@ export default function ListScreen({
               </div>
             )}
             {hiddenUnsafeCount > 0 && (
-              <div style={{ display:"flex", alignItems:"center", gap:5, padding:"6px 12px", fontSize:10, color:"var(--muted)", background:"var(--paper2)" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", fontSize:10, color:"var(--muted)", background:"var(--paper2)" }}>
                 <Icon name="block" size={11} color="var(--muted)" /> {hiddenUnsafeCount} produkt{hiddenUnsafeCount!==1?"er":""} skjult — indeholder allergener for {searchScopeLabel}
               </div>
             )}
@@ -280,10 +280,10 @@ export default function ListScreen({
       {/* ── Listevælger (komprimeret) ── */}
       <div style={{ display:"flex", gap:6, marginBottom:12 }}>
         <div onClick={() => setShowListPicker(v => !v)}
-          style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"7px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}>
+          style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}>
           <div style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
             <span style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{activeList?.name || "Vælg liste"}</span>
-            {activeList?.type === "family" && <span style={{ marginLeft:5, display:"inline-flex", verticalAlign:"middle" }}><Icon name="family" size={11} color="var(--green)" /></span>}
+            {activeList?.type === "family" && <span style={{ marginLeft:6, display:"inline-flex", verticalAlign:"middle" }}><Icon name="family" size={11} color="var(--green)" /></span>}
           </div>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, transform: showListPicker ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
             <path strokeLinecap="round" d="M19 9l-7 7-7-7"/>
@@ -375,7 +375,7 @@ export default function ListScreen({
                 const statusColor = status==="safe" ? "var(--green)" : status==="danger" ? "var(--red)" : "var(--amber)";
                 return (
                   <div key={p.ean||p.id}
-                    style={{ display:"flex", alignItems:"center", gap:8, padding:"7px 0", borderBottom:"1px solid var(--border)", cursor:"pointer" }}
+                    style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 0", borderBottom:"1px solid var(--border)", cursor:"pointer" }}
                     onClick={() => lookupProduct(p.ean||p.code||p.id)}>
                     <ProductImage product={p} size={28} />
                     <div style={{ ...S.flexMin, display:"flex", alignItems:"baseline", gap:6 }}>

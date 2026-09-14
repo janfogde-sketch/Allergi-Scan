@@ -282,7 +282,7 @@ export default function FeedbackModal({
             {/* Send */}
             <button onClick={submit} disabled={sending || !text.trim()}
               style={{ width:"100%", background: text.trim() ? "var(--green)" : "var(--surface2)",
-                border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)",
+                border:"none", borderRadius:12, padding:"16px", fontFamily:"var(--f)",
                 fontSize:15, fontWeight:700, color: text.trim() ? "var(--on-green)" : "var(--muted)",
                 cursor: text.trim() ? "pointer" : "not-allowed" }}>
               {sending ? "Sender…" : "Send feedback →"}

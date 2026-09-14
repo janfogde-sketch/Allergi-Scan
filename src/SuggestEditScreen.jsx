@@ -224,7 +224,7 @@ export default function SuggestEditScreen({
             Tag billede med kamera
             <input type="file" accept="image/*" capture="environment" style={S.none} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
           </label>
-          <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, width:"100%", padding:"13px", borderRadius:12, cursor:"pointer", background:"var(--surface)", border:"1px solid var(--border2)", color:"var(--ink2)", fontSize:14, fontWeight:600, marginBottom:10 }}>
+          <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, width:"100%", padding:"14px", borderRadius:12, cursor:"pointer", background:"var(--surface)", border:"1px solid var(--border2)", color:"var(--ink2)", fontSize:14, fontWeight:600, marginBottom:10 }}>
             <Icon name="image" size={15} color="var(--ink2)" /> Vælg billede fra galleri
             <input type="file" accept="image/*" style={S.none} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
           </label>
@@ -260,7 +260,7 @@ export default function SuggestEditScreen({
               </div>
 
               {!editIngText && ingItems.length === 0 && (
-                <div style={{ ...UI.ufs12_camber_fw600_p8px10px_bgamberlt_br8_mb10, display:"flex", alignItems:"center", gap:5 }}>
+                <div style={{ ...UI.ufs12_camber_fw600_p8px10px_bgamberlt_br8_mb10, display:"flex", alignItems:"center", gap:6 }}>
                   <Icon name="warning" size={12} color="var(--amber)" /> Fotografér ingredienslisten eller skriv dem herunder
                 </div>
               )}
@@ -343,7 +343,7 @@ export default function SuggestEditScreen({
               submit();
             }}
             disabled={editType === "ingredients" && !editIngText.trim() && ingItems.length === 0}
-            style={{ width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:8, opacity: (editType === "ingredients" && !editIngText.trim()) ? 0.4 : 1, boxShadow:"0 2px 12px rgba(74,222,128,.25)", display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
+            style={{ width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:12, padding:"16px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:8, opacity: (editType === "ingredients" && !editIngText.trim()) ? 0.4 : 1, boxShadow:"0 2px 12px rgba(74,222,128,.25)", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
             Send forslag <Icon name="check" size={14} color="var(--on-green)" />
           </button>
           <button className="btn btn-ghost btn-full" onClick={() => setScreen(SCREENS.RESULT)}>Annuller</button>

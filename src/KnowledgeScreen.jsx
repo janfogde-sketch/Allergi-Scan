@@ -20,8 +20,8 @@ const CAT_MAP = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
 // ── Inline styles (så de ALDRIG kan mangle) ──────────────────────────────────
 const S = {
   grid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:18 },
-  catBtn: { display:"flex", alignItems:"center", gap:8, padding:"12px 13px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" },
-  catBtnActive: (c) => ({ display:"flex", alignItems:"center", gap:8, padding:"12px 13px", background:c.bg, border:`1px solid ${c.color}33`, borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" }),
+  catBtn: { display:"flex", alignItems:"center", gap:8, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" },
+  catBtnActive: (c) => ({ display:"flex", alignItems:"center", gap:8, padding:"12px 14px", background:c.bg, border:`1px solid ${c.color}33`, borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" }),
   catEmoji: { fontSize:18, flexShrink:0 },
   catLabel: { fontSize:12, fontWeight:700, color:"var(--ink)" },
   catLabelActive: (c) => ({ fontSize:12, fontWeight:700, color:c.color }),
@@ -33,13 +33,13 @@ const S = {
   cardEmoji: { fontSize:22, flexShrink:0, width:36, textAlign:"center" },
   cardTitle: { fontSize:14, fontWeight:700, color:"var(--ink)", marginBottom:3 },
   cardSummary: { fontSize:12, color:"var(--muted2)", lineHeight:1.45 },
-  riskDot: (level) => ({ width:7, height:7, borderRadius:"50%", flexShrink:0, marginTop:5, background: level==="high"?"var(--red)":level==="medium"?"var(--amber)":"var(--green)" }),
+  riskDot: (level) => ({ width:7, height:7, borderRadius:"50%", flexShrink:0, marginTop:6, background: level==="high"?"var(--red)":level==="medium"?"var(--amber)":"var(--green)" }),
   label: { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:10 },
   backBtn: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, flexShrink:0 },
   section: { marginBottom:16 },
-  sectionLabel: { fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"1.4px", color:"var(--neutral)", marginBottom:7 },
+  sectionLabel: { fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"1.4px", color:"var(--neutral)", marginBottom:8 },
   sectionText: { fontSize:13, color:"var(--ink2)", lineHeight:1.6 },
-  pillRow: { display:"flex", flexWrap:"wrap", gap:5 },
+  pillRow: { display:"flex", flexWrap:"wrap", gap:6 },
   pill: (bg, color, border) => ({ fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:100, background:bg, color, border:`1px solid ${border}` }),
   healthBox: { background:"rgba(232,168,124,.10)", border:"1px solid rgba(232,168,124,.18)", borderRadius:12, padding:"12px 14px", marginBottom:16 },
   error: { background:"rgba(255,82,82,.12)", border:"1px solid rgba(255,82,82,.25)", borderRadius:12, padding:"14px", marginBottom:12, color:"var(--red)", fontSize:13 },
@@ -153,13 +153,13 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           <div style={{ fontSize:22, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>{selectedEntry.title}</div>
           {selectedEntry.summary && <div style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.55, marginBottom:16 }}>{selectedEntry.summary}</div>}
           {selectedEntry.risk_level && selectedEntry.risk_level !== "none" && (
-            <span style={{ ...S.pill(selectedEntry.risk_level==="high"?"var(--red-lt)":"var(--amber-lt)", selectedEntry.risk_level==="high"?"var(--red)":"var(--amber)", selectedEntry.risk_level==="high"?"var(--red-md)":"var(--amber-md)"), display:"inline-flex", alignItems:"center", gap:5 }}>
+            <span style={{ ...S.pill(selectedEntry.risk_level==="high"?"var(--red-lt)":"var(--amber-lt)", selectedEntry.risk_level==="high"?"var(--red)":"var(--amber)", selectedEntry.risk_level==="high"?"var(--red-md)":"var(--amber-md)"), display:"inline-flex", alignItems:"center", gap:6 }}>
               <Icon name="warning" size={11} color={selectedEntry.risk_level==="high"?"var(--red)":"var(--amber)"} /> {selectedEntry.risk_level==="high"?"Høj risiko":"Moderat"}
             </span>
           )}
         </div>
         {selectedEntry.description && <div style={S.section}><div style={S.sectionLabel}>Beskrivelse</div><div style={S.sectionText}>{selectedEntry.description}</div></div>}
-        {selectedEntry.health_notes && <div style={S.healthBox}><div style={{ ...S.sectionLabel, color:"var(--warm)", display:"flex", alignItems:"center", gap:5 }}><Icon name="info" size={12} color="var(--warm)" /> Sundhedsnote</div><div style={S.sectionText}>{selectedEntry.health_notes}</div></div>}
+        {selectedEntry.health_notes && <div style={S.healthBox}><div style={{ ...S.sectionLabel, color:"var(--warm)", display:"flex", alignItems:"center", gap:6 }}><Icon name="info" size={12} color="var(--warm)" /> Sundhedsnote</div><div style={S.sectionText}>{selectedEntry.health_notes}</div></div>}
         {Array.isArray(selectedEntry.allergen_ids) && selectedEntry.allergen_ids.length > 0 && (
           <div style={S.section}><div style={S.sectionLabel}>Allergener</div><div style={S.pillRow}>{selectedEntry.allergen_ids.map(a => <span key={a} style={{ ...S.pill("var(--red-lt)","var(--red)","var(--red-md)"), display:"inline-flex", alignItems:"center", gap:4 }}><Icon name="warning" size={10} color="var(--red)" /> {AN[a]||a}</span>)}</div></div>
         )}
