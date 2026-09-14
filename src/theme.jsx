@@ -176,7 +176,7 @@ body{
 .nav-item.active .nav-lbl{color:var(--green);}
 
 /* ── CARDS & COMPONENTS ── */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px;backdrop-filter:blur(8px);}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px;box-shadow:var(--sh);backdrop-filter:blur(8px);}
 .card-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--neutral);margin-bottom:10px;}
 .card-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;letter-spacing:-.2px;}
 .field{width:100%;background:var(--surface2);border:1.5px solid var(--border2);border-radius:10px;padding:11px 14px;color:var(--ink);font-family:var(--f);font-size:16px;outline:none;transition:border-color .15s,background .15s;}
@@ -434,7 +434,7 @@ body{
 #qr-reader img{display:none!important;}
 
 /* ── PRODUKT HERO ── */
-.product-hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px;backdrop-filter:blur(8px);}
+.product-hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px;box-shadow:var(--sh2);backdrop-filter:blur(8px);}
 /* En smal/kvadratisk vare (fx en flaske) på "contain" ville ellers efterlade
    fladt grå tomrum i siderne — en sløret, opskaleret kopi af samme billede
    som baggrund udfylder boksen elegant uanset billedets facon. */

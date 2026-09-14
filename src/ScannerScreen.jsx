@@ -474,7 +474,8 @@ export default function ScannerScreen({
                   />
                   <button
                     style={{ padding:"0 16px", borderRadius:10, background:"var(--green)", border:"none",
-                      color:"var(--on-green)", fontWeight:800, fontSize:14, cursor:"pointer", fontFamily:"var(--f)", flexShrink:0 }}
+                      color:"var(--on-green)", fontWeight:800, fontSize:14, cursor:"pointer", fontFamily:"var(--f)", flexShrink:0,
+                      boxShadow:"0 2px 12px rgba(74,222,128,.25)" }}
                     onClick={() => {
                       const val = document.getElementById("manual-ean-input")?.value?.trim();
                       if (!val || val.length < 8) return;
