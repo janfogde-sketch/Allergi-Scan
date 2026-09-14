@@ -739,6 +739,46 @@ OCR-tekst, `AdminScreen.jsx`) ikke gav nogen synlig bekræftelse ved klik —
 opdaterer kun stille lokal state. Tilføjet `showToast("Renskrevet tekst
 brugt")`, samme mønster som resten af appens Toast-brug.
 
+**14. sept. 2026 — alder/fødselsår-inkonsistens rettet.** Brugeren
+rapporterede: "Egen bruger bedes om at opgive alder, men når man opretter
+familie medlem selv, skal man opgive fødselsår. Det skal være at opgive
+alder for alle." Undersøgelsen viste at det ikke kun var en tekst-
+inkonsistens, men også en reel datafejl: onboardings egen-bruger-alder blev
+gemt i et `age`-felt i `users`-tabellen, som intet andet sted i kodebasen
+nogensinde læser — alle andre steder (familiemedlemmer, profil-redigering,
+admin-visning) bruger konsekvent `birth_year`. Enten blev PATCH'et stille
+afvist af et ukendt kolonnenavn, eller også blev værdien gemt et sted der
+aldrig læses tilbage — under alle omstændigheder gik den indtastede alder
+reelt tabt. Rettet ved at lade UI'et konsekvent spørge om **alder** overalt
+(egen profil, familiemedlem, admin-visning), mens det underliggende
+databasefelt forbliver `birth_year` alle steder — udregnet begge veje via
+`new Date().getFullYear()`, så det ikke bliver forældet med tiden:
+- `useOnboarding.js`: `saveProfileStep1` gemmer nu `birth_year` (udregnet
+  fra den indtastede alder) i stedet for det virkningsløse `age`-felt.
+- `App.jsx`: profil-indlæsningen udregner nu faktisk alder fra `birth_year`
+  i stedet for at sætte det rå fødselsår direkte i et `age`-felt.
+- `ProfileScreen.jsx`: "Fødselsår" → "Alder" i egen profil-redigering
+  (samme underliggende `user.birth_year`-state, kun input/visning
+  konverteret); familielistens meta-linje viser nu udregnet alder i
+  stedet for `f. <år>`.
+- `MemberForm.jsx` (delt af Onboarding og Profil/Familie): "Fødselsår" →
+  "Alder" ved oprettelse af familiemedlem — `birthYear`/`setBirthYear`-
+  prop-navnene er bevidst uændret, kun selve inputtet konverterer til/fra
+  alder internt, så `useFamily.js`s `addMember()` ikke skulle røres.
+- `useAdmin.js`: `loadAdminUsers`s `select=`-parameter manglede både
+  `birth_year` og `phone` — begge admin-felter viste altid "—" uden fejl.
+  Tilføjet begge.
+- `AdminScreen.jsx`: "Alder" i brugerdetaljer refererede til det aldrig-
+  udfyldte `openAdminUser.age` — udregnes nu fra `birth_year`.
+
+**Lektion:** endnu et eksempel på et "stille forkert" felt-mismatch (samme
+kategori som `<Icon name="...">`-kald til ikke-eksisterende ikonnavne,
+fundet flere gange tidligere i denne session) — en kolonne der er brugt
+ét sted men aldrig matcher det resten af appen faktisk læser/skriver, uden
+at build, runtime eller testsuiten fanger det. Værd at grep'e for den slags
+mismatch (fx `age` vs. `birth_year`) når en bruger rapporterer noget der
+umiddelbart ligner "bare" en tekst-/UI-inkonsistens.
+
 ---
 
 ### Beta-installation (september 2026)

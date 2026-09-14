@@ -475,7 +475,7 @@ export default function EatSafe() {
             name: p.name || u.name || "",
             email: p.email || u.email || "",
             phone: p.phone || "",
-            age: p.birth_year ? String(p.birth_year) : "",
+            age: p.birth_year ? String(new Date().getFullYear() - p.birth_year) : "",
             birth_year: p.birth_year || "",
             gender: p.gender || "",
             role: p.role || "user",

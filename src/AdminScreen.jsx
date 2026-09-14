@@ -803,7 +803,7 @@ Implementér derefter løsningen.`;
                       ["calendar", "Oprettet", new Date(openAdminUser.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", year:"numeric" })],
                       ["key", "Login", openAdminUser.email?.includes("google") || openAdminUser.provider === "google" ? "Google OAuth" : "Email + kode"],
                       [null, "Telefon", openAdminUser.phone || "—"],
-                      [null, "Alder", openAdminUser.age ? openAdminUser.age + " år" : "—"],
+                      [null, "Alder", openAdminUser.birth_year ? (new Date().getFullYear() - openAdminUser.birth_year) + " år" : "—"],
                       [null, "Bruger-ID", openAdminUser.id?.slice(0,12) + "…"],
                       ["package", "Plan", openAdminUser.plan_id ? "Premium" : "Gratis"],
                     ].map(([icon, label, val]) => (
