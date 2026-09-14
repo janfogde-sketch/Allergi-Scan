@@ -280,7 +280,14 @@ kun emoji der fungerer som ren UI-chrome (knapper, badges, status) erstattes —
 IKKE indholds-emoji der bærer reel mening (allergen-glyffer i `constants.jsx`,
 sprogflag i Madpas, opskrift-kategori-ikoner) — de er indhold, ikke pynt, og at
 erstatte dem kræver et helt separat, meget større design-arbejde. Fortsættes
-skærm for skærm i kommende PR'er.
+skærm for skærm i kommende PR'er. **Anden bølge:** `ResultScreen.jsx` (scan-
+resultatet, vist efter stort set hvert scan — appens mest sete skærm efter Hjem).
+Erstattede verdikt-ikonet i produktkortets topstrimmel (var plain-tekst "✓"/"!",
+nu `Icon name="check"/"warning"`), samt ⚠️/✅/✓/🔍 i E-nummer-advarsler, diæt-
+kompatibilitet, "tilføjet til indkøbsliste", "sikre alternativer" og "ingen
+alternativer endnu". `🍼` (småbørns-advarsel) bevidst IKKE erstattet — intet
+tilsvarende SVG-ikon findes, og det er et distinkt, letgenkendeligt visuelt
+signal uden en oplagt streg-ikon-erstatning.
 
 **Tidligere flagget, stadig kun delvist gjort:** en fuld emoji→SVG-ikon-sanering af
 hele appen. En grep viste **flere hundrede** emoji-forekomster på
