@@ -241,6 +241,14 @@ dato-eyebrow ("onsdag · 11. september") over en stor, let (font-weight 300) hil
 hvor kun navnet er fremhævet ("God morgen, **Jan**") — mere luftigt og "designet"
 end den gamle ensfarvede fed tekstlinje.
 
+App-baggrunden (`.app` i theme.jsx) manglede struktur — den var stort set en flad
+farve. Tilføjet et fint punkt-gitter (22px raster, meget lav opacitet — matcher
+scanner/stregkode-branding uden at blive støjende) + en to-vejs glød (grøn foroven,
+blå forneden) for dybde, i stedet for kun den tidligere svage ensfarvede gradient.
+Dette er en global CSS-token-ændring (`.app`-baggrunden er fælles for hele appen,
+ikke Home-specifik kode), men følger stadig "Hjem som testskærm"-aftalen i ånden —
+det er en synlig-men-diskret baggrundstekstur, ikke en re-skin af skærmenes indhold.
+
 **Vigtigt:** hovedreglen står stadig ved magt — dette er "preview, inden vi ruller det
 helt ud". Kort-vægt-ændringerne og hilsen-redesignet ovenfor er bevidst holdt til
 Hjem-skærmen specifikt; `EmptyState`/`.loader`-forbedringerne er delte komponenter og
