@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { compareAllergens, productDisplayName, logSearchSelection } from "./helpers.js";
-import { Loader, SearchResultRow, ListPickerSheet } from "./SharedComponents.jsx";
+import { Icon, Loader, SearchResultRow, ListPickerSheet } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
@@ -91,8 +91,8 @@ export default function SearchScreen({
       {/* ── Sikker søgning: hvem filtreres der for ── */}
       {searchResults.length > 0 && (
         <div style={{ padding:"8px 10px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, marginBottom:10 }}>
-          <div style={{ fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>
-            🛡️ Sikker søgning for {searchScopeLabel}
+          <div style={{ display:"flex", alignItems:"center", gap:4, fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>
+            <Icon name="shield" size={11} color="var(--green)" /> Sikker søgning for {searchScopeLabel}
           </div>
           {family.length > 0 && (
             <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
@@ -146,8 +146,8 @@ export default function SearchScreen({
         />
       ))}
       {resultsWithSafety.length > 0 && hiddenUnsafeCount > 0 && (
-        <div style={{ padding:"8px 12px", fontSize:11, color:"var(--muted)", textAlign:"center" }}>
-          🚫 {hiddenUnsafeCount} produkt{hiddenUnsafeCount!==1?"er":""} mere skjult — indeholder allergener for {searchScopeLabel}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:5, padding:"8px 12px", fontSize:11, color:"var(--muted)", textAlign:"center" }}>
+          <Icon name="block" size={12} color="var(--muted)" /> {hiddenUnsafeCount} produkt{hiddenUnsafeCount!==1?"er":""} mere skjult — indeholder allergener for {searchScopeLabel}
         </div>
       )}
 

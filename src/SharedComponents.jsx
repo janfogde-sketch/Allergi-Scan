@@ -98,6 +98,9 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
     flame: <path strokeLinecap="round" strokeLinejoin="round" d="M12 22c4.418 0 8-3.14 8-7.5 0-3.5-2-5.5-3-7.5-.5 2-1.5 3-2.5 2 1-3-1-6-3.5-7 .5 3-1 5-3 7-1.5 1.5-4 4-4 5.5 0 4.36 3.582 7.5 8 7.5z"/>,
     image: <><rect x="3" y="4" width="18" height="16" rx="2" strokeWidth="1.75"/><circle cx="8.5" cy="9.5" r="1.5" strokeWidth="1.75"/><path strokeLinecap="round" strokeLinejoin="round" d="M21 16l-5.5-5.5a2 2 0 00-2.83 0L4 19"/></>,
     flashlight: <><path strokeLinecap="round" strokeLinejoin="round" d="M9 2h6l1 4-2 2v12a2 2 0 01-2 2h-0a2 2 0 01-2-2V8L8 6l1-4z"/><path strokeLinecap="round" d="M9 10h6"/></>,
+    shield: <><path strokeLinecap="round" strokeLinejoin="round" d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4"/></>,
+    block: <><circle cx="12" cy="12" r="9"/><path strokeLinecap="round" d="M6.5 6.5l11 11"/></>,
+    link: <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5"/>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" style={{ flexShrink:0, display:"block" }}>
