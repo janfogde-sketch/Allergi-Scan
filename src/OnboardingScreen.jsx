@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { ALLERGENS, SCREENS, DIETS, AVATAR_COLORS, E_NUMBERS, E_CATEGORIES } from "./constants.jsx";
 import { initials } from "./helpers.js";
-import { EatSafeLogo, Icon } from "./SharedComponents.jsx";
+import { EatSafeLogo, Icon, showToast } from "./SharedComponents.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
 import { MemberForm } from "./MemberForm.jsx";
 import { usePush } from "./usePush.js";
@@ -66,6 +66,7 @@ export default function OnboardingScreen({
   // var aldrig defineret, hvilket crashede hele onboarding-skærmen med
   // "showENumbersInOnboard is not defined" så snart man nåede dertil.
   const [showENumbersInOnboard, setShowENumbersInOnboard] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // FIX: disse hooks lå tidligere INDE i en betinget IIFE, som kun blev kaldt
   // når onboardStep === 5. Det bryder Reacts "Rules of Hooks" (hooks skal
@@ -253,9 +254,15 @@ export default function OnboardingScreen({
                     onChange={e => setLoginEmail(e.target.value)} style={UI.mb12}
                     onKeyDown={e => e.key==="Enter" && handleSignup()} />
                   <label className="field-lbl">Vælg kodeord</label>
-                  <input className="field" type="password" placeholder="Minimum 6 tegn" value={loginPassword}
-                    onChange={e => setLoginPassword(e.target.value)}
-                    onKeyDown={e => e.key==="Enter" && handleSignup()} />
+                  <div style={{ position:"relative" }}>
+                    <input className="field" type={showPassword ? "text" : "password"} placeholder="Minimum 6 tegn" value={loginPassword}
+                      onChange={e => setLoginPassword(e.target.value)} style={{ paddingRight:40 }}
+                      onKeyDown={e => e.key==="Enter" && handleSignup()} />
+                    <button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? "Skjul kodeord" : "Vis kodeord"}
+                      style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", padding:4, display:"flex" }}>
+                      <Icon name={showPassword ? "eyeOff" : "eye"} size={16} color="var(--muted)" />
+                    </button>
+                  </div>
                   <div style={{ fontSize:11, color:"var(--muted)", marginTop:8, lineHeight:1.5 }}>
                     Ved at oprette en konto accepterer du vores vilkår og bekræfter at du er over 13 år.
                   </div>
@@ -291,9 +298,15 @@ export default function OnboardingScreen({
                     onChange={e => setLoginEmail(e.target.value)} style={UI.mb12}
                     onKeyDown={e => e.key==="Enter" && handleLogin()} />
                   <label className="field-lbl">Kodeord</label>
-                  <input className="field" type="password" placeholder="Dit kodeord" value={loginPassword}
-                    onChange={e => setLoginPassword(e.target.value)}
-                    onKeyDown={e => e.key==="Enter" && handleLogin()} />
+                  <div style={{ position:"relative" }}>
+                    <input className="field" type={showPassword ? "text" : "password"} placeholder="Dit kodeord" value={loginPassword}
+                      onChange={e => setLoginPassword(e.target.value)} style={{ paddingRight:40 }}
+                      onKeyDown={e => e.key==="Enter" && handleLogin()} />
+                    <button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? "Skjul kodeord" : "Vis kodeord"}
+                      style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", padding:4, display:"flex" }}>
+                      <Icon name={showPassword ? "eyeOff" : "eye"} size={16} color="var(--muted)" />
+                    </button>
+                  </div>
                 </div>
                 {authError && (
                   <div className="error-box" style={UI.ufdcolumn_aiflexstar_g4}>
@@ -594,14 +607,14 @@ export default function OnboardingScreen({
 
                 <button className="btn btn-primary btn-full" style={UI.mt12} onClick={async () => {
                   try { await saveAllergensStep2(); setOnboardStep(3); }
-                  catch { alert("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen."); }
+                  catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
                 }}>Fortsæt →</button>
                 {allergens.length === 0 && customAllerg.length === 0 ? (
                   <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", padding:"10px 0", marginTop:2 }}
                     onClick={() => {
                       if (window.confirm("Er du sikker på, at du ingen allergier eller intolerancer har? Du kan altid tilføje dem senere under Profil.")) {
                         saveAllergensStep2().then(() => setOnboardStep(3))
-                          .catch(() => alert("Kunne ikke gemme. Tjek din forbindelse og prøv igen."));
+                          .catch(() => showToast("Kunne ikke gemme. Tjek din forbindelse og prøv igen.", "error"));
                       }
                     }}>
                     Spring over — jeg har ingen allergier

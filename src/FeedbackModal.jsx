@@ -8,6 +8,7 @@ import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 import { UI } from "./styleUtils.js";
+import { showToast } from "./SharedComponents.jsx";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FeedbackModal.jsx
@@ -116,7 +117,7 @@ export default function FeedbackModal({
 
       setDone(true);
       setTimeout(() => { close(); }, 2200);
-    } catch(e) { alert("Fejl: " + e.message); }
+    } catch(e) { showToast("Fejl: " + e.message, "error"); }
     setSending(false);
   };
 

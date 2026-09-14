@@ -19,7 +19,7 @@ import {
 
 import {
   EatSafeLogo, Icon, IngredientsList, ProfileBadges,
-  getProductIcon, ProductImage, LazyFallback
+  getProductIcon, ProductImage, LazyFallback, ToastHost, showToast
 } from "./SharedComponents.jsx";
 
 import { ENumberPicker } from "./AllergenPicker.jsx";
@@ -320,7 +320,7 @@ export default function EatSafe() {
         if (data?.success) {
           // Genindlæs familie-data
           loadFamily();
-          alert("🎉 Invitation accepteret! Jeres familieoplysninger er nu delt.");
+          showToast("🎉 Invitation accepteret! Jeres familieoplysninger er nu delt.");
 
           // Send push til den der inviterede
           if (invitedBy && invitedBy !== userId) {
@@ -339,7 +339,7 @@ export default function EatSafe() {
             } catch { /* silent — push er ikke kritisk */ }
           }
         } else if (data?.error) {
-          alert("Invitation fejlede: " + data.error);
+          showToast("Invitation fejlede: " + data.error, "error");
         }
       } catch { /* ignorer */ }
     };
@@ -380,9 +380,9 @@ export default function EatSafe() {
       if (res.success) {
         loadShoppingList();
         setScreen(SCREENS.LIST);
-        alert(`🛒 Du er nu tilsluttet listen "${res.list?.name || ""}"!`);
+        showToast(`🛒 Du er nu tilsluttet listen "${res.list?.name || ""}"!`);
       } else {
-        alert("Kunne ikke tilslutte listen: " + (res.error || "Ugyldig kode"));
+        showToast("Kunne ikke tilslutte listen: " + (res.error || "Ugyldig kode"), "error");
       }
     });
   }, [accessToken, userId, pendingJoinList]);
@@ -1209,6 +1209,9 @@ const lookupProduct = useCallback(async (ean) => {
 
         {/* ══ BETA INTRO ══ */}
         {!betaIntroSeen && renderBetaIntro()}
+
+        {/* ══ TOAST (delt succes-/fejl-besked, erstatter native alert()) ══ */}
+        <ToastHost />
 
         {/* ══ FEEDBACK MODAL ══ */}
         {feedbackOpen && (
