@@ -887,6 +887,42 @@ brugeren oplevede som "kun 9" kan derfor dels skyldes søge-buggen (nu
 rettet), dels være denne legitime allergi-filtrering — værd at holde
 adskilt i fremtidig fejlsøgning af søgeresultater.
 
+**14. sept. 2026 — sideinddeling af søgeresultater + hævede indkøbsliste-
+grænser.** Brugeren spurgte om der var en begrænsning på antal viste
+resultater (efter kategori-fixet ovenfor) og bad om at gå videre med at
+hæve dem, samt tilføje en "indlæs flere"-knap. Undersøgelsen viste TRE
+lag af hårde grænser, forskellige alt efter hvor man søger:
+1. `search`-edge-functionen selv: hårdt afskåret ved 25 resultater
+   (`filtered.slice(0, 25)`), uanset hvor mange der reelt matchede.
+2. `SearchScreen.jsx` (Søg-skærmen): viste blot API'ets op til 25 direkte.
+3. `ListScreen.jsx`s hurtig-tilføj-dropdown: TO ekstra grænser oven i
+   API'ets 25 — hentede kun de første 12, viste kun de første 6 efter
+   allergi-filtrering. Forklarede præcist brugerens iagttagelse ("en stor
+   håndfuld" i indkøbslisten vs. "flere, men ikke nær så mange" i Søg).
+
+Løst med rigtig sideinddeling frem for blot at hæve et fast tal:
+- `search`-edge-functionen tager nu en `offset`-parameter og returnerer
+  `hasMore`/`total` sammen med `products` — samme scorede/sorterede
+  resultatliste (op til DB-kandidat-loftet på 400, se forrige fix) kan nu
+  hentes side for side (`PAGE_SIZE = 25` pr. side) i stedet for at være
+  hårdt afskåret. Matchning/rangering er uændret — kun slutslicen er ny.
+- `useSearch.js`: ny `loadMoreSearchResults()` der APPENDER næste side til
+  de eksisterende resultater. Tjekker at søgeordet stadig matcher når
+  svaret kommer tilbage, så et svar fra et forladt søgeord ikke kan nå at
+  blive hængt på en ny søgnings resultatliste (en race der ellers kunne
+  opstå hvis brugeren skifter søgeord mens "indlæs flere" er i gang).
+- `SearchScreen.jsx`: ny "Indlæs flere (N tilbage)"-knap — bevidst samme
+  mønster/styling (`btn btn-outline btn-full`, `(N tilbage)`-label) som
+  `RecipesScreen.jsx`s allerede eksisterende "Indlæs flere"-knap, for
+  konsistens med et etableret mønster i appen.
+- `ListScreen.jsx`: hurtig-tilføj-dropdownens grænser hævet fra 12
+  hentede/6 synlige til 20/10. **Bevidst IKKE** givet en "indlæs flere"-
+  knap — det er en kompakt dropdown under et tekstfelt (ikke en fuld
+  skærm), og den slags UX bør forblive hurtig/kort, ikke pagineret.
+
+Deployet direkte fra denne session via `mcp__Supabase__deploy_edge_function`
+(samme metode som forrige fix), `verify_jwt:false` bevaret.
+
 ---
 
 ### Beta-installation (september 2026)
