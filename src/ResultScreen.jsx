@@ -138,7 +138,7 @@ export default function ResultScreen({
     // en strimmel øverst med ikon + status, i stedet for en selvstændig boks under
     // kortet der bare gentog det samme. Se SECURITY/DESIGN-diskussion i PR'en for baggrund.
     const verdictColor = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[scanResult.status] || "var(--green)";
-    const verdictIcon = scanResult.status === "safe" ? "✓" : "!";
+    const verdictIcon = scanResult.status === "safe" ? "check" : "warning";
     return (
       <div className="product-hero" style={{ position:"relative", border:`2px solid ${verdictColor}` }}>
         {/* Favorit/del — nu rigtige flex-børn af banneret (eller af en tilsvarende
@@ -147,7 +147,7 @@ export default function ResultScreen({
             gjort lidt højere, så de større knapper har plads til at sidde pænt. */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding:"12px 14px", background: scanResult.headline ? verdictColor : "var(--surface2)", color: scanResult.headline ? "#fff" : "var(--ink)" }}>
           <div style={{ display:"flex", alignItems:"center", gap:7, minWidth:0 }}>
-            {scanResult.headline && <><span style={UI.ufs12_fw800}>{verdictIcon}</span>
+            {scanResult.headline && <><Icon name={verdictIcon} size={13} color="#fff" />
             <span style={UI.ufs12_fw800_ls01em_ttuppercas}>{scanResult.headline}</span></>}
           </div>
           <div style={{ display:"flex", gap:8, flexShrink:0 }}>
@@ -289,7 +289,7 @@ export default function ResultScreen({
         {/* E-nummer advarsler */}
         {matchedENumbers.length > 0 && (
           <div style={{ padding:"8px 12px", marginBottom:6, background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:10 }}>
-            <div style={{ fontSize:11, fontWeight:800, color:"var(--amber)", marginBottom:4 }}>⚠️ E-numre fundet som du overvåger</div>
+            <div style={{ display:"flex", alignItems:"center", gap:5, fontSize:11, fontWeight:800, color:"var(--amber)", marginBottom:4 }}><Icon name="warning" size={12} color="var(--amber)" /> E-numre fundet som du overvåger</div>
             <div style={UI.wrapGap4}>
               {matchedENumbers.map(e => (
                 <span key={e}
@@ -305,8 +305,9 @@ export default function ResultScreen({
         {/* Diæt-detaljer */}
         {showDietDetails && (
           <div style={{ padding:"10px 12px", marginBottom:6, background: dietFailsAll.length > 0 ? "var(--amber-lt)" : "var(--green-lt)", border:`1px solid ${dietFailsAll.length > 0 ? "var(--amber-md)" : "var(--green-mid)"}`, borderRadius:10 }}>
-            <div style={{ fontSize:11, fontWeight:800, color: dietFailsAll.length > 0 ? "var(--amber)" : "var(--green)", marginBottom:6 }}>
-              {dietFailsAll.length > 0 ? "⚠️ Diæt-advarsler" : "✅ Kompatibel med dine diæter"}
+            <div style={{ display:"flex", alignItems:"center", gap:5, fontSize:11, fontWeight:800, color: dietFailsAll.length > 0 ? "var(--amber)" : "var(--green)", marginBottom:6 }}>
+              <Icon name={dietFailsAll.length > 0 ? "warning" : "check"} size={12} color={dietFailsAll.length > 0 ? "var(--amber)" : "var(--green)"} />
+              {dietFailsAll.length > 0 ? "Diæt-advarsler" : "Kompatibel med dine diæter"}
             </div>
             <div style={UI.udflex_fdcolumn_g4}>
               {dietFailsAll.map(r => (
@@ -415,7 +416,7 @@ export default function ResultScreen({
                 }}>
                 <span style={UI.uffmonospac}>{e}</span>
                 {name && <span style={{ fontWeight:400, color: isWatched ? "var(--amber)" : "var(--muted)" }}>— {name.slice(0,20)}{name.length>20?"…":""}</span>}
-                {isWatched && <span style={{ fontSize:9 }}>⚠️</span>}
+                {isWatched && <Icon name="warning" size={10} color="var(--amber)" />}
                 <span style={{ fontSize:9, opacity:.5 }}>›</span>
               </span>
             );
@@ -464,7 +465,7 @@ export default function ResultScreen({
 
       <button className="btn btn-sm btn-full" onClick={handleAddToList}
         style={{ marginBottom:10, background:"var(--green)", color:"var(--on-green)", display:"flex", alignItems:"center", justifyContent:"center", gap:7, opacity: addedToList ? .7 : 1 }}>
-        {addedToList ? <>✓ Tilføjet til indkøbsliste</> : <><Icon name="cart" size={15} color="var(--on-green)" /> Tilføj til indkøbsliste</>}
+        {addedToList ? <><Icon name="check" size={15} color="var(--on-green)" /> Tilføjet til indkøbsliste</> : <><Icon name="cart" size={15} color="var(--on-green)" /> Tilføj til indkøbsliste</>}
       </button>
       {showListPicker && (
         <ListPickerSheet lists={lists} onChoose={chooseListForAdd} onCancel={() => setShowListPicker(false)} />
@@ -482,7 +483,7 @@ export default function ResultScreen({
           {!altLoading && alternatives.length > 0 && (
             <div style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:14, padding:"14px 16px" }}>
               <div style={UI.udflex_aicenter_g8_mb12}>
-                <div style={UI.fs18}>✅</div>
+                <Icon name="check" size={18} color="var(--green)" />
                 <div>
                   <div style={{ fontSize:13, fontWeight:800, color:"var(--green)" }}>Prøv disse i stedet</div>
                   <div style={UI.muted11mt1}>Sikre for din profil · samme kategori</div>
@@ -497,7 +498,7 @@ export default function ResultScreen({
                       <div style={UI.ufs13_fw700_cink_ovhidden_toellipsis_wsnowrap}>{p.name}</div>
                       <div style={UI.muted11mt1}>{p.brand}</div>
                     </div>
-                    <div style={{ fontSize:11, fontWeight:700, color:"var(--green)", flexShrink:0 }}>✓ Sikkert</div>
+                    <div style={{ display:"flex", alignItems:"center", gap:3, fontSize:11, fontWeight:700, color:"var(--green)", flexShrink:0 }}><Icon name="check" size={11} color="var(--green)" /> Sikkert</div>
                   </div>
                 ))}
               </div>
@@ -505,7 +506,7 @@ export default function ResultScreen({
           )}
           {!altLoading && alternatives.length === 0 && (scanResult.status === "danger" || scanResult.status === "warn") && (
             <div style={UI.udflex_aicenter_g10_p12px14px_bgsurface_bd1pxsolid_br12}>
-              <div style={UI.fs16}>🔍</div>
+              <Icon name="search" size={16} color="var(--muted)" />
               <div style={UI.ufs12_cmuted_lh15}>
                 Ingen kendte alternativer i samme kategori endnu.{" "}
                 <span style={UI.ucgreen_fw700_curpointer}
