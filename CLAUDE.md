@@ -148,11 +148,19 @@ Kendt mønster for "levende" interaktion: `.recipe-card:active{transform:scale(.
 
 ---
 
-## 4. Sådan arbejder vi (arbejdsgang — følges for HVER ændring)
+## 4. Sådan arbejder vi (arbejdsgang)
 
 Dette er den stående, aftalte proces i denne session. Følg den uden at spørge om lov
 først, medmindre ændringen er stor/arkitektonisk/destruktiv (så spørg).
 
+**14. sept. 2026 — ændret til at batche pr. opgave, ikke pr. fil/delændring.**
+Tidligere blev der lavet én PR (= én Vercel-deploy) pr. lille delændring, hvilket
+gav unødvendigt mange deploys for ændringer der reelt hørte sammen. Brugeren bad
+om at batche: lav alle lokale skridt (byg/test/commit) løbende som man plejer, men
+vent med push/PR/merge til hele den samlede opgave er færdig — uanset om opgaven
+består af én fil eller ti.
+
+**Per logisk delændring** (fx én fil, én bølge i en skærm-gennemgang):
 1. **Lav ændringen** i de relevante filer.
 2. **Byg:** `npm run build` — skal være grøn.
 3. **Test:** `npx vitest run` — alle tests skal bestå (pt. 72 stk).
@@ -165,13 +173,28 @@ først, medmindre ændringen er stor/arkitektonisk/destruktiv (så spørg).
 5. **Commit specifikke filer** — ALDRIG `git add -A`. Commit-besked på dansk, kort og
    beskrivende. Afslut altid med attributions-trailere (se system-instruktion for
    nøjagtig ordlyd — de inkluderer `Co-Authored-By` + en `Claude-Session`-linje).
-6. **Push** til den aktive feature-branch.
-7. **Opret PR** via GitHub MCP — dansk PR-body, tjek for PR-template først. Afslut med
+   **Push IKKE endnu** — flere commits kan sagtens ligge lokalt på feature-branchen
+   ukommitteret til fjern-repoet, indtil hele opgaven er færdig.
+
+**Én gang, når HELE den samlede opgave er færdig** (alle filer/bølger/punkter
+brugeren har bedt om i denne omgang):
+6. **Push** alle commits til den aktive feature-branch i én omgang.
+7. **Opret ÉN PR** via GitHub MCP der dækker det hele — dansk PR-body der
+   opsummerer alle commits/ændringer, tjek for PR-template først. Afslut med
    `🤖 Generated with [Claude Code]`-footer + session-link.
 8. **Vent på grøn Vercel-status** på PR'en (poll `pull_request_read`/`get_status`).
 9. **Squash-merge** PR'en.
 10. **Resync branch:** hent nyeste `main`, reset feature-branchen til den, force-push
     med `--force-with-lease`, så branchen er klar til næste opgave.
+
+**Undtagelse — kritiske/blokerende fejl:** en fejl der reelt er i produktion (fx
+crashende skærm) skippes IKKE ind i batchen, men shippes for sig selv med det
+samme som en isoleret hotfix-PR, uanset hvor i en større opgave man er.
+
+**Hvornår er "opgaven" færdig?** Det brugeren bad om i den seneste sammenhængende
+instruktion — fx "gennemgå disse tre skærme" er én opgave (→ én PR ved slutningen,
+selvom det er tre skærme/tre commits), ikke tre. Ved tvivl: hellere for få PR'er
+end for mange — brugeren siger til hvis en batch blev for stor.
 
 Alt dette gøres **uden at spørge brugeren om lov undervejs** — det er en etableret,
 godkendt proces i dette projekt. Brugeren giver typisk korte, uformelle instruktioner
