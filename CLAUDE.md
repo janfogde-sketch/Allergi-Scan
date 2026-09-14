@@ -408,7 +408,50 @@ kode var deployet. Rettet med `self.skipWaiting()` (install-event) +
 lytter i `index.html` der genindlæser siden ÉN gang, så den garanteret kører
 under den nyeste service worker efter en opdatering.
 
-## 6. Hvor finder du mere?
+---
+
+## 6. Design-antimønstre — ting vi bevidst IKKE vil have i appen
+
+> Tilføjet 14. sept. 2026 efter brugeren delte en liste over "20 reasons why your
+> app looks vibecoded" (et velkendt tjekliste-format der cirkulerer om at
+> genkende generisk AI-genereret UI). Brug denne liste som et **checkpoint**, ikke
+> kun en engangs-oprydning — tjek nye skærme/komponenter mod den, før du
+> markerer design-arbejde som færdigt.
+
+| # | Mønster | Status i EatSafe |
+|---|---|---|
+| 1 | Lilla-til-blå gradient | ✅ Ikke brugt — appens paletter er grøn (primær) + en bevidst valgt slate-blå (`#3A6EA5`, sekundær) |
+| 2 | Gradient-tekst i overskrifter | ✅ Ikke brugt — ingen `background-clip:text` i kodebasen |
+| 3 | Emoji i overskrifter/UI-chrome | 🟡 Var udbredt, saneres løbende skærm for skærm (se afsnit 5 ovenfor — sat på pause for denne gennemgang, genoptages) |
+| 4 | Inter-font overalt | ✅ Ikke brugt — DM Sans + DM Mono, bevidst valgt tidligt i projektet |
+| 5 | Farvede kant-kort ("colored border cards") som ren pynt | ✅ Ikke fundet — farvede kanter i appen er funktionelle signaler (fx `product-hero`'s grøn/gul/rød kant = sikkerhedsverdikt), ikke dekorative |
+| 6 | Glassmorphism-kort (`backdrop-filter:blur`) | 🔴 **Fundet og rettet 14. sept.** — 17 forekomster i `theme.jsx` + 2 i `App.jsx`/`FeedbackModal.jsx`, ALLE på fuldt uigennemsigtige baggrunde (`var(--surface)` m.fl.) så blur'en var visuelt virkningsløs — ren død kode der tilfældigvis også ramte antimønstret. Fjernet alle 19. De to resterende forekomster i `ScannerScreen.jsx` (kamera-kontrolknapper + zoom-pille) er bevidst bevaret — de sidder på reelt gennemsigtig sort baggrund oven på det levende kamerabillede, så blur'en har en ægte funktionel grund (læsbarhed oven på video) |
+| 7 | Lavkontrast dark mode | N/A — appen er lys-tema-only |
+| 8 | 3 ikon-bokse på række (generisk feature-grid) | ✅ Ikke fundet — `.stat3` er en 3-kolonne-grid, men viser rigtige tal (scanninger/farer/sikre), ikke generiske feature-claims |
+| 9 | Badge over overskrift (hero-mønster) | ✅ Ikke fundet — BETA-badgen i topbaren er et permanent status-chip, ikke et hero-badge over en marketing-overskrift |
+| 10 | "Lucide-ikoner overalt" (upersonligt standardbibliotek) | ✅ Ikke brugt — `Icon`-komponenten er et selv-tegnet, konsistent SVG-ikonbibliotek specifikt til EatSafe |
+| 11 | Urørt shadcn UI | N/A — bruger ikke shadcn |
+| 12 | Fade-in ved scroll | ✅ Ikke fundet — ingen `IntersectionObserver` i kodebasen. `.fade-in`-klassen er en mount-animation (skærmskift), ikke scroll-baseret |
+| 13 | Cursor-følgende lysstråle | ✅ Ikke fundet |
+| 14 | Knapper der toner ved hover (ren opacity-fade) | ✅ Ikke fundet — `.btn-primary:hover` skifter farve + løfter sig (`translateY`), en bevidst hover-tilstand, ikke en doven opacity-fade |
+| 15 | Inkonsistent spacing | 🟡 Ikke systematisk revideret — kræver en visuel gennemgang skærm for skærm, ikke noget der er grep'et frem |
+| 16 | Em-dashes ("—") alle vegne | 🟢 Tjekket — langt de fleste af de ~600 forekomster i `src/*.jsx` sidder i danske kode-kommentarer (usynlige for brugeren), ikke i UI-tekst. De der ER i bruger-vendt tekst er enkeltstående, funktionelle forbindelses-streger i naturligt dansk (fx "Det ligner ikke en gyldig stregkode — tjek cifrene."), ikke AI-agtig ophobning af flere streger i samme sætning. Vurderet som ikke et reelt problem — men hold øje med nye tekster |
+| 17 | Generisk buzzword-copy | 🟡 Ikke systematisk revideret — dansk UI-tekst er stort set skrevet konkret/funktionelt (fx "Scan produkt", "Sikker søgning for dig"), men ingen formel gennemgang er lavet |
+| 18 | Serif-kursiv-accenter | ✅ Ikke brugt — ingen serif-skrifttype i appen overhovedet |
+| 19 | Space Grotesk + Instrument Serif (typisk AI-font-parring) | ✅ Ikke brugt — DM Sans/DM Mono |
+| 20 | *(ikke synlig i det delte screenshot — spørg brugeren hvis relevant)* | — |
+
+**Konklusion:** Appen var reelt kun ramt af ét konkret punkt (glassmorphism/
+backdrop-filter — nu rettet) plus det i forvejen kendte emoji-punkt (i gang,
+sat på pause). Resten var enten allerede undgået fra projektets start (fonte,
+farver, ikoner) eller ikke reelle problemer ved nærmere eftersyn (em-dashes).
+Punkt 15 (spacing) og 17 (copy) kræver en mere subjektiv, visuel gennemgang og
+er ikke afkrydset — tag dem op hvis brugeren beder om en decideret spacing-
+eller copy-revision.
+
+---
+
+## 7. Hvor finder du mere?
 
 - `src/CONTEXT.md` — fuld teknisk reference: database-tabeller, edge functions,
   familie-deling, Madpas, auto-import-pipeline. Opdatér denne når skema/integrationer
