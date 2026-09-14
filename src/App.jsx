@@ -744,7 +744,8 @@ const lookupProduct = useCallback(async (ean) => {
 
 // ── SØGNING → useSearch hook ────────────────────────────────────────────────
   const { searchQuery, setSearchQuery, searchCategory, setSearchCategory,
-          searchResults, setSearchResults, searchLoading } = useSearch({ accessToken });
+          searchResults, setSearchResults, searchLoading,
+          searchHasMore, searchTotal, searchLoadingMore, loadMoreSearchResults } = useSearch({ accessToken });
 
   const { alternatives, altLoading, loadAlternatives, clearAlternatives } = useAlternatives({ accessToken, activeIds });
 
@@ -1266,6 +1267,8 @@ const lookupProduct = useCallback(async (ean) => {
             searchQuery={searchQuery} setSearchQuery={setSearchQuery}
             searchResults={searchResults} setSearchResults={setSearchResults}
             searchCategory={searchCategory} setSearchCategory={setSearchCategory}
+            searchHasMore={searchHasMore} searchTotal={searchTotal}
+            searchLoadingMore={searchLoadingMore} loadMoreSearchResults={loadMoreSearchResults}
             scanError={scanError}
             notFoundStep={notFoundStep} setNotFoundStep={setNotFoundStep}
             proposedName={proposedName} setProposedName={setProposedName}

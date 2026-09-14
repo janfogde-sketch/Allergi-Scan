@@ -138,6 +138,7 @@ export default function ScannerScreen({
   searchQuery, setSearchQuery,
   searchResults, setSearchResults,
   searchCategory, setSearchCategory,
+  searchHasMore, searchTotal, searchLoadingMore, loadMoreSearchResults,
   scanError,
   notFoundStep, setNotFoundStep,
   proposedName, setProposedName,
@@ -577,6 +578,8 @@ export default function ScannerScreen({
             searchResults={searchResults} setSearchResults={setSearchResults}
             searchCategory={searchCategory} setSearchCategory={setSearchCategory}
             searchLoading={searchLoading}
+            searchHasMore={searchHasMore} searchTotal={searchTotal}
+            searchLoadingMore={searchLoadingMore} loadMoreSearchResults={loadMoreSearchResults}
             showSafeOnly={showSafeOnly} setShowSafeOnly={setShowSafeOnly}
             lookupProduct={lookupProduct}
           />
