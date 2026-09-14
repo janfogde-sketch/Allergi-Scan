@@ -109,7 +109,7 @@ siddende fast på viewporten. **Løsning:** render den slags overlays via
   info, chevronRight, chevronDown, chevronUp, heart, trash, share, cart, camera, bulb,
   speaker, speakerOff, plus, edit, family, madpas, book, flame, image, flashlight, shield,
   block, link, bell, tag, package, message, chart, bug, download, eye, eyeOff, refresh,
-  mail, calendar, key, file, clock, save`. **Ingen emoji i UI'et længere hvor det kan
+  mail, calendar, key, file, clock, save, utensils`. **Ingen emoji i UI'et længere hvor det kan
   undgås** — brug/tilføj SVG-ikoner i stedet (se designsystem-noter nedenfor for kendte
   resterende emoji-steder, primært content-emoji som allergen-glyffer og kategori-ikoner).
 - `showToast(message, type?)` + `<ToastHost/>` — delt, designkonsistent erstatning for
@@ -416,13 +416,30 @@ Import, Opskrift-godkendelse) til `Icon`. Nye delte ikoner: `refresh`,
 `mail`, `calendar`, `key`, `file`, `clock`, `save` (ud over `eye`/`eyeOff`
 fra samme session, se nedenfor). Fandt undervejs 3 flere `alert()`-kald
 (opskrift-gem/godkend/afvis) og erstattede dem med Toast. AdminScreen.jsx
-er nu færdiggjort på samme niveau som resten af appen — emoji-saneringen
-er dermed komplet skærm for skærm på tværs af hele appen.
+er nu færdiggjort på samme niveau som resten af appen.
 
 **Lektion:** når man "fuldfører" en tidligere delvist lavet emoji-sanering
 i en stor, admin-only fil, så tjek om nyligt tilføjede `Icon`-kald rent
 faktisk er importeret — build fanger det ikke, kun runtime gør, og ingen
 test dækkede skærmen.
+
+**14. sept. 2026 — Trettende bølge: `ProfileMenu.jsx`.** Brugeren spurgte
+direkte ("Har vi også gennemgået i menuen?") — hamburger-menuen var ikke
+nævnt i nogen tidligere bølge, på trods af at være en høj-trafik
+navigations-flade (åbnes fra stort set alle skærme). **Lektion herfra:**
+den forrige konklusion om at saneringen var "komplet skærm for skærm på
+tværs af hele appen" var forhastet — bølge-listen dækkede kun `SCREENS`-
+konstanterne, ikke delte overlay-/menu-komponenter som `ProfileMenu.jsx`
+og `ProfileMenu.jsx`'s slægtninge (`FeedbackModal.jsx` er allerede tjekket
+undervejs i Toast-arbejdet ovenfor, men fx `InstallPrompt.jsx` og
+`ListPickerSheet` i `SharedComponents.jsx` er endnu ikke eksplicit tjekket
+— tag dem med i en fremtidig runde). Fund: 8 emoji-ikoner i menulisten
+(⭐👨‍👩‍👧📋🍳📚🌍🍽️🛡️ → star/family/list/recipes/book/madpas/utensils/shield,
+ét nyt delt ikon `utensils`) samt manglende tryk-feedback — filen bruger
+fuldt inline styles, så den tidligere globale `:active`-udrulning (kun
+CSS-klasser med `cursor:pointer`) aldrig fangede den. Nye delte klasser
+`.menu-item`/`.menu-profile-card` i theme.jsx, samme hover/tryk-mønster
+som `.hist-row`.
 
 **14. sept. 2026 — session sat på pause af brugeren** ("Stop for nu. Når vi
 starter igen skal du tilføje disse punkter til arbejdet"), med endnu en
