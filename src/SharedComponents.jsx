@@ -117,6 +117,7 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
     file: <><path strokeLinecap="round" strokeLinejoin="round" d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path strokeLinecap="round" strokeLinejoin="round" d="M14 3v5h5"/></>,
     clock: <><circle cx="12" cy="12" r="9" strokeWidth="1.75"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3.5 2"/></>,
     save: <><path strokeLinecap="round" strokeLinejoin="round" d="M5 4h11l3 3v13a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1z"/><path strokeLinecap="round" strokeLinejoin="round" d="M8 4v5h7V4M8 20v-6h8v6"/></>,
+    utensils: <><path strokeLinecap="round" strokeLinejoin="round" d="M7 3v7a2 2 0 002 2h0a2 2 0 002-2V3M9 12v9M16 3c-1.5 1.5-2 3-2 6s.5 4.5 2 6v6"/></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" style={{ flexShrink:0, display:"block" }}>

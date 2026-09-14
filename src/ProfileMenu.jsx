@@ -13,6 +13,7 @@ import { SCREENS } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
+import { Icon } from "./SharedComponents.jsx";
 
 export default function ProfileMenu({ open, onClose, onNavigate }) {
   const { user } = useAuthContext();
@@ -21,14 +22,14 @@ export default function ProfileMenu({ open, onClose, onNavigate }) {
   if (!open) return null;
 
   const items = [
-    { icon:"⭐", label:"Favoritter", sub:"Gemte produkter og opskrifter", screen: SCREENS.FAVORITES },
-    { icon:"👨‍👩‍👧", label:"Familie", sub:"Allergiprofiler og husstand", screen: SCREENS.FAMILY },
-    { icon:"📋", label:"Scanningshistorik", sub:`${history.length} produkter scannet`, screen: SCREENS.HISTORY },
-    { icon:"🍳", label:"Opskrifter", sub:"Find opskrifter der passer til dine allergier", screen: SCREENS.RECIPES },
-    { icon:"📚", label:"Viden", sub:"Opslag om allergener, E-numre og diæter", screen: SCREENS.KNOWLEDGE },
-    { icon:"🌍", label:"Madpas", sub:"Vis allergier til restaurantpersonale", screen: SCREENS.MADPAS },
-    { icon:"🍽️", label:"Restaurantguide", sub:"Spis trygt ude — tips & rettigheder", screen: SCREENS.RESTAURANTGUIDE },
-    ...(user?.role === "admin" ? [{ icon:"🛡️", label:"Admin panel", sub:"Godkend og administrér produkter", screen: SCREENS.ADMIN }] : []),
+    { icon:"star", label:"Favoritter", sub:"Gemte produkter og opskrifter", screen: SCREENS.FAVORITES },
+    { icon:"family", label:"Familie", sub:"Allergiprofiler og husstand", screen: SCREENS.FAMILY },
+    { icon:"list", label:"Scanningshistorik", sub:`${history.length} produkter scannet`, screen: SCREENS.HISTORY },
+    { icon:"recipes", label:"Opskrifter", sub:"Find opskrifter der passer til dine allergier", screen: SCREENS.RECIPES },
+    { icon:"book", label:"Viden", sub:"Opslag om allergener, E-numre og diæter", screen: SCREENS.KNOWLEDGE },
+    { icon:"madpas", label:"Madpas", sub:"Vis allergier til restaurantpersonale", screen: SCREENS.MADPAS },
+    { icon:"utensils", label:"Restaurantguide", sub:"Spis trygt ude — tips & rettigheder", screen: SCREENS.RESTAURANTGUIDE },
+    ...(user?.role === "admin" ? [{ icon:"shield", label:"Admin panel", sub:"Godkend og administrér produkter", screen: SCREENS.ADMIN }] : []),
   ];
 
   return createPortal(
@@ -42,8 +43,8 @@ export default function ProfileMenu({ open, onClose, onNavigate }) {
         </div>
 
         {/* Profil — går til sin egen side i stedet for at være en del af menuen */}
-        <div onClick={() => onNavigate(SCREENS.PROFILE)}
-          style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", margin:"0 10px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer" }}>
+        <div className="menu-profile-card" onClick={() => onNavigate(SCREENS.PROFILE)}
+          style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", margin:"0 10px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
           <div style={{ width:42, height:42, borderRadius:"50%", background:"var(--green-lt)", border:"1.5px solid var(--green-mid)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, color:"var(--green)", flexShrink:0 }}>
             {initials(user?.name || "?")}
           </div>
@@ -55,11 +56,10 @@ export default function ProfileMenu({ open, onClose, onNavigate }) {
         </div>
 
         <div style={{ padding:"0 10px" }}>
-          {items.map((item, i) => (
-            <div key={item.label} onClick={() => onNavigate(item.screen)}
-              style={{ display:"flex", alignItems:"center", gap:12, padding:"13px 4px", borderBottom: i < items.length-1 ? "1px solid var(--border)" : "none", cursor:"pointer" }}>
-              <div style={{ width:36, height:36, borderRadius:9, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, flexShrink:0 }}>
-                {item.icon}
+          {items.map(item => (
+            <div key={item.label} className="menu-item" onClick={() => onNavigate(item.screen)}>
+              <div style={{ width:36, height:36, borderRadius:9, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                <Icon name={item.icon} size={17} color="var(--ink2)" />
               </div>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{item.label}</div>
