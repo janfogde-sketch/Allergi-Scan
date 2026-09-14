@@ -916,12 +916,29 @@ Løst med rigtig sideinddeling frem for blot at hæve et fast tal:
   `RecipesScreen.jsx`s allerede eksisterende "Indlæs flere"-knap, for
   konsistens med et etableret mønster i appen.
 - `ListScreen.jsx`: hurtig-tilføj-dropdownens grænser hævet fra 12
-  hentede/6 synlige til 20/10. **Bevidst IKKE** givet en "indlæs flere"-
-  knap — det er en kompakt dropdown under et tekstfelt (ikke en fuld
-  skærm), og den slags UX bør forblive hurtig/kort, ikke pagineret.
+  hentede/6 synlige til 20/10.
 
 Deployet direkte fra denne session via `mcp__Supabase__deploy_edge_function`
 (samme metode som forrige fix), `verify_jwt:false` bevaret.
+
+**Samme dag — brugeren bad eksplicit om "indlæs flere"-knappen i
+indkøbslisten også** ("tilføj også knap i indkøbsliste"), hvilket
+overstyrer den lige ovenfor loggede "bevidst ikke"-beslutning — droppet den
+antagelse med det samme uden at diskutere den. `ListScreen.jsx`s hurtig-
+tilføj-dropdown har nu samme sideinddeling som `SearchScreen.jsx`: egen
+`itemHasMore`/`itemTotal`/`itemLoadingMore`-state + `loadMoreItemResults()`,
+samme offset-mønster som `useSearch.js`. De kunstige 20 hentede/10 synlige-
+lofter fra forrige fix er fjernet igen (overflødige nu hvor sideinddelingen
+klarer det). Knappen bruger `onMouseDown` + `e.preventDefault()` (ikke
+`onClick`) — samme mønster som dropdownens profil-toggle-chips — så
+tekstfeltets `onBlur` (som lukker dropdownen efter 150ms) ikke når at lukke
+den, før klikket er registreret.
+
+**Lektion:** en "bevidst ikke gjort sådan"-begrundelse logget i samme PR
+som den løsning den gælder for, kan stadig blive overstyret af brugeren
+minutter senere — det er ikke en fejl i den oprindelige vurdering, bare et
+tegn på at UX-præferencer for et konkret flow er brugerens kald, ikke noget
+der kan færdiggøres ved antagelse alene.
 
 ---
 
