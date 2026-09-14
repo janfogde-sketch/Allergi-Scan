@@ -6,7 +6,7 @@ import { useAuthContext } from "./AuthContext.jsx";
 import { useAdminContext } from "./AdminContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { ALL_ALLERGEN_WORDS } from "./allergenKeywords.js";
-import { Loader } from "./SharedComponents.jsx";
+import { Loader, Icon } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 
 // Fremhæv allergener og E-numre i ingredienstekst
