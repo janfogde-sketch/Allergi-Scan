@@ -79,6 +79,7 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
     x: <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>,
     warning: <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>,
     info: <><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M12 16v-4M12 8h.01"/></>,
+    chevronLeft: <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>,
     chevronRight: <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>,
     chevronDown: <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>,
     chevronUp: <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7"/>,
@@ -479,6 +480,36 @@ export function ListPickerSheet({ lists, onChoose, onCancel }) {
         ))}
       </div>
     </div>,
+    document.body
+  );
+}
+
+// ─── SCROLL TO TOP ────────────────────────────────────────────────────────────
+// Flydende "til toppen"-knap til lange lister (Leksikon, Opskrifter). Appen
+// scroller på window (ingen per-skærm scroll-container, se .app i theme.jsx),
+// så en enkelt delt komponent kan lytte på window-scroll og bruges hvor som
+// helst. Portal-baseret — samme CSS-fælde-grund som ListPickerSheet/ProfileMenu
+// (position:fixed fanges af .screen.fade-in's transform ellers, se CLAUDE.md).
+export function ScrollToTop({ threshold = 500 }) {
+  const [visible, setVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > threshold);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [threshold]);
+
+  if (!visible) return null;
+
+  return createPortal(
+    <button
+      className="scroll-top-btn"
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      aria-label="Til toppen"
+    >
+      <Icon name="chevronUp" size={20} color="var(--ink2)" />
+    </button>,
     document.body
   );
 }
