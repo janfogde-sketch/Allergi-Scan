@@ -12,6 +12,7 @@ export default function SearchScreen({
   searchQuery, setSearchQuery,
   searchResults,
   searchLoading,
+  searchHasMore, searchTotal, searchLoadingMore, loadMoreSearchResults,
   lookupProduct,
 }) {
   const { accessToken } = useAuthContext();
@@ -149,6 +150,18 @@ export default function SearchScreen({
         <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"8px 12px", fontSize:11, color:"var(--muted)", textAlign:"center" }}>
           <Icon name="block" size={12} color="var(--muted)" /> {hiddenUnsafeCount} produkt{hiddenUnsafeCount!==1?"er":""} mere skjult — indeholder allergener for {searchScopeLabel}
         </div>
+      )}
+
+      {/* ── Indlæs flere — søgningen returnerer resultater side for side,
+          samme mønster som RecipesScreen's "Indlæs flere"-knap ── */}
+      {searchHasMore && (
+        <button className="btn btn-outline btn-full" style={UI.mt12}
+          disabled={searchLoadingMore}
+          onClick={loadMoreSearchResults}>
+          {searchLoadingMore
+            ? "Indlæser…"
+            : `Indlæs flere (${Math.max(searchTotal - searchResults.length, 0)} tilbage)`}
+        </button>
       )}
 
       {/* ── Vælg liste — vises kun når man har mere end én indkøbsliste ── */}

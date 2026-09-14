@@ -69,9 +69,16 @@ Deno.serve(async (req) => {
   // ── GET — selve søgningen ────────────────────────────────────────────────
   const url = new URL(req.url);
   const q = url.searchParams.get("q")?.trim();
+  // Sideinddeling: "offset" lader klienten hente næste side af de allerede
+  // scorede/sorterede resultater via en "Indlæs flere"-knap, uden at ændre
+  // selve matchningen/rangeringen — samme forespørgsel køres bare igen med
+  // en anden slice til sidst.
+  const PAGE_SIZE = 25;
+  const offsetParam = parseInt(url.searchParams.get("offset") || "0", 10);
+  const offset = Number.isFinite(offsetParam) && offsetParam > 0 ? offsetParam : 0;
 
   if (!q || q.length < 2) {
-    return new Response(JSON.stringify({ success: true, products: [] }), {
+    return new Response(JSON.stringify({ success: true, products: [], hasMore: false, total: 0 }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -89,7 +96,7 @@ Deno.serve(async (req) => {
       .eq("ean", q.trim())
       .limit(5);
     if (eanData?.length) {
-      return new Response(JSON.stringify({ success: true, products: eanData }), {
+      return new Response(JSON.stringify({ success: true, products: eanData, hasMore: false, total: eanData.length }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -223,9 +230,10 @@ Deno.serve(async (req) => {
     return (a.name || "").localeCompare(b.name || "", "da");
   });
 
-  const products = filtered.slice(0, 25).map(({ _score, ...p }) => p);
+  const products = filtered.slice(offset, offset + PAGE_SIZE).map(({ _score, ...p }) => p);
+  const hasMore = offset + PAGE_SIZE < filtered.length;
 
-  return new Response(JSON.stringify({ success: true, products }), {
+  return new Response(JSON.stringify({ success: true, products, hasMore, total: filtered.length }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });

@@ -148,7 +148,7 @@ export default function ListScreen({
         const res = await fetch(`${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(newItemName.trim())}`,
           { headers: { "apikey": SUPABASE_ANON_KEY, ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) }, signal: controller.signal });
         const data = await res.json();
-        if (data.success) setItemResults((data.products || []).slice(0, 12));
+        if (data.success) setItemResults((data.products || []).slice(0, 20));
       } catch (e) { if (e.name !== "AbortError") setItemResults([]); }
       finally { if (!controller.signal.aborted) setItemSearching(false); }
     }, 300);
@@ -168,7 +168,7 @@ export default function ListScreen({
   const itemResultsWithSafety = itemResults
     .map(p => ({ product: p, status: compareAllergens(p.allergen_flags||{}, activeIds).status }))
     .filter(r => r.status !== "danger");
-  const visibleItemResults = itemResultsWithSafety.slice(0, 6);
+  const visibleItemResults = itemResultsWithSafety.slice(0, 10);
   const hiddenUnsafeCount = itemResults.length - itemResultsWithSafety.length;
 
   const activeFamily = family.filter(m => activeProfiles.includes(m.id));
