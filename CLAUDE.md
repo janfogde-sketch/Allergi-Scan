@@ -842,20 +842,50 @@ signal end et direkte navne-match). Kandidat-loftet på den indledende
 forespørgsel hævet fra 150 til 400, da kategori-baserede søgeord kan matche
 langt flere kandidater end en navne-substring plejede at gøre.
 
-**Vigtigt — kræver manuel deploy, opdaget ved denne lejlighed:** i
-modsætning til frontend-koden i `src/` (som Vercel auto-deployer på hvert
-push til `main`) har repoet **ingen automatiseret deploy-pipeline for
-Supabase Edge Functions** — hverken via Vercel eller GitHub Actions
-(`.github/workflows/ci.yml` kører kun lint/test/build af frontend'en).
-Denne kodeændring træder derfor IKKE i kraft i produktion bare ved at blive
-merget til `main` — nogen med Supabase-adgang (janfogde@gmail.com eller
-bjangst@gmail.com, begge har adgang til Supabase-organisationen) skal
-manuelt køre `supabase functions deploy search`, eller deploye via Supabase-
-dashboardet, for at fixet reelt slår igennem. Sandboxen her har hverken
-Supabase CLI installeret eller netadgang til Supabase (org-policy). **Dette
-gælder generelt for enhver fremtidig ændring i `supabase/functions/*`** —
-værd at huske på i fremtidige opgaver, og at flage eksplicit til brugeren
-hver gang en edge function ændres.
+**Vigtigt — kræver manuel deploy:** i modsætning til frontend-koden i
+`src/` (som Vercel auto-deployer på hvert push til `main`) har repoet
+**ingen automatiseret deploy-pipeline for Supabase Edge Functions** —
+hverken via Vercel eller GitHub Actions (`.github/workflows/ci.yml` kører
+kun lint/test/build af frontend'en). At merge en ændring i
+`supabase/functions/*` til `main` er derfor IKKE nok i sig selv — den skal
+også deployes til selve Supabase-projektet, separat fra git-flowet. **Dette
+gælder generelt for enhver fremtidig ændring i `supabase/functions/*`.**
+
+**Rettelse samme dag — der ER et deploy-værktøj tilgængeligt i sessionen,
+bare ikke som CLI/netadgang:** ovenstående blev først logget som "kan ikke
+gøres herfra" (ingen Supabase CLI, ingen netadgang til `*.supabase.co` —
+org-policy, bekræftet 403). Det er stadig korrekt at CLI'en og direkte
+netkald ikke virker. MEN da brugeren bad om at "tjekke igen", dukkede en
+**Supabase MCP-server** op (`mcp__Supabase__*`-værktøjer) som ikke var
+synlig/loadet ved første forsøg — formentlig fordi den kun blev
+tilgængeliggjort efter et `ToolSearch`-opslag, ikke automatisk fra sessionens
+start. Denne MCP-server har egen, separat adgang til Supabase (uden om
+sandboxens blokerede netværksproxy) og kan bl.a. `list_projects`,
+`get_edge_function`, `deploy_edge_function`, `execute_sql`, `query_logs`,
+`get_advisors`. **Lektion: næste gang en edge function skal deployes, prøv
+`ToolSearch` for Supabase-værktøjer FØRST, før det konkluderes at det
+kræver brugerens manuelle indgriben** — konklusionen om manglende adgang
+var forhastet første gang.
+
+Søgefunktionens fix (afsnit ovenfor) blev deployet direkte fra denne
+session via `mcp__Supabase__deploy_edge_function` — version 12 → 13,
+`verify_jwt:false` bevaret (matcher den eksisterende konfiguration, kritisk
+for at anonym søgning fortsat virker). Verificeret efterfølgende med
+`execute_sql`: 283 produkter matcher "chips" på navn/brand alene, yderligere
+85 via category/subcategory — et konkret bevis på at fixet reelt udvider
+kandidat-poolen markant ud over de oprindelige 9 synlige resultater.
+
+**Vigtig nuance opdaget undervejs — "kun 9 resultater" var IKKE kun en
+søge-bug.** `SearchScreen.jsx` har et "Sikker søgning"-filter
+(`resultsWithSafety` = `searchResults.filter(status !== "danger")`) der
+client-side skjuler ethvert resultat der reelt matcher et aktivt allergen
+for den valgte profil/familie — det er **tilsigtet sikkerhedsadfærd**, ikke
+en fejl, og forklarer hvorfor det synlige antal produkter i søgeresultatet
+kan være lavere end det API'et rent faktisk returnerer (UI'et viser da en
+"X produkter skjult — indeholder allergener for ..."-besked). En del af det
+brugeren oplevede som "kun 9" kan derfor dels skyldes søge-buggen (nu
+rettet), dels være denne legitime allergi-filtrering — værd at holde
+adskilt i fremtidig fejlsøgning af søgeresultater.
 
 ---
 
