@@ -527,6 +527,27 @@ body{
 .youtube-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#FF0000;border:none;border-radius:10px;cursor:pointer;font-family:var(--f);font-size:13px;font-weight:700;color:var(--ink);width:100%;justify-content:center;transition:background .15s;margin-bottom:10px;}
 .youtube-btn:hover{background:#CC0000;}
 
+/* ── DESIGNSPROG FRA HJEM, RULLET UD TIL HELE APPEN ──
+   Tryk-feedback på trykbare kort/rækker/chips — samme mønster som
+   .recipe-card/.home-shortcut-card. Afgrænset til klasser der allerede
+   erklærer cursor:pointer (kodebasens egen konvention for "dette kan trykkes"),
+   så statisk/ikke-trykbart indhold ikke får en vildledende presse-animation. */
+.home-mini-card:active,.scan-hero:active,.hist-row:active,.step-row:active,
+.mp-lang-dropdown:active,.mp-lang-opt:active,.chip:active,.home-chip:active,
+.filter-chip:active,.ap-chip:active,.recipe-filter-chip:active,.tab:active,
+.demo-code:active,.topbar-avatar:active{
+  transform:scale(.97);
+}
+
+/* Løs tekst — ikke inde i et kort/surface — ligger nu direkte oven på
+   baggrundens punkt-gitter. Et fint, lyst "løft" (ikke en blur/glød) holder
+   den læsbar uden at det ligner en fejl. */
+.screen-title,.screen-sub,.section-lbl,.mp-title,.mp-subtitle,.mp-section-lbl,
+.login-title,.login-sub,.welcome-wordmark-text,.welcome-tagline,
+.step-title,.step-sub,.onboard-skip,.greeting-eyebrow,.greeting-main{
+  text-shadow:0 1px 0 rgba(255,255,255,.7);
+}
+
 /* ── ACCESSIBILITY ── */
 .btn{min-height:44px;}
 .nav-item{min-height:44px;min-width:44px;}

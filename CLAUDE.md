@@ -249,14 +249,51 @@ Dette er en global CSS-token-ændring (`.app`-baggrunden er fælles for hele app
 ikke Home-specifik kode), men følger stadig "Hjem som testskærm"-aftalen i ånden —
 det er en synlig-men-diskret baggrundstekstur, ikke en re-skin af skærmenes indhold.
 
-**Vigtigt:** hovedreglen står stadig ved magt — dette er "preview, inden vi ruller det
-helt ud". Kort-vægt-ændringerne og hilsen-redesignet ovenfor er bevidst holdt til
-Hjem-skærmen specifikt; `EmptyState`/`.loader`-forbedringerne er delte komponenter og
-slår derfor automatisk igennem alle steder de allerede bruges (det er ikke en fuld
-re-skin af andre skærme, blot en global rettelse af noget der var utvetydigt "dødt"
-alle steder). En fuld udrulning af det øvrige designsprog (kort-hierarki-mønsteret,
-hilsen-stilen osv.) til resten af appens skærme afventer stadig brugerens udtrykkelige
-go — bekræftet eksplicit 11. sept. 2026: "vi venter med at bygge i hele appen".
+**14. sept. 2026 — første udrulning til hele appen** (brugeren gav udtrykkeligt go:
+"Implimenter nu alle design ændringer fra forsiden til hele appen"). To ting rullet
+ud som globale CSS-regler i `theme.jsx` (ingen per-skærm JSX-ændringer nødvendige,
+da det er token/klasse-niveau):
+- **Tryk-feedback overalt:** `:active{transform:scale(.97)}` tilføjet til alle
+  klasser der allerede erklærer `cursor:pointer` (kodebasens egen konvention for
+  "dette er trykbart") — `.home-mini-card`, `.scan-hero`, `.hist-row`, `.step-row`,
+  `.mp-lang-dropdown`, `.mp-lang-opt`, `.chip`, `.home-chip`, `.filter-chip`,
+  `.ap-chip`, `.recipe-filter-chip`, `.tab`, `.demo-code`, `.topbar-avatar`.
+  Bevidst IKKE tilføjet til `.btn*` (har sit eget hover/translateY-system) eller
+  til klasser uden `cursor:pointer` (ville give en vildledende presse-animation
+  på ikke-trykbart indhold).
+- **Løs tekst-legibilitet:** løst tekst (ikke inde i et `.card`/`.surface`) ligger
+  nu direkte oven på baggrundens punkt-gitter — tilføjet
+  `text-shadow:0 1px 0 rgba(255,255,255,.7)` (et fint løft, ikke en blur/glød) til
+  `.screen-title`, `.screen-sub`, `.section-lbl`, `.mp-title`, `.mp-subtitle`,
+  `.mp-section-lbl`, `.login-title`, `.login-sub`, `.welcome-wordmark-text`,
+  `.welcome-tagline`, `.step-title`, `.step-sub`, `.onboard-skip`,
+  `.greeting-eyebrow`, `.greeting-main`.
+
+**Bevidst UDELADT fra denne udrulning — flagget, ikke glemt:** en fuld emoji→SVG-
+ikon-sanering af hele appen. En grep viste **flere hundrede** emoji-forekomster på
+tværs af stort set alle skærme (`AdminScreen.jsx`, `App.jsx`, `RecipesScreen.jsx`,
+`ProfileScreen.jsx` m.fl.) — langt de fleste er meningsbærende indhold (allergen-
+glyffer i `constants.jsx`, sprogflag, opskrift-kategori-ikoner, status-ikoner i
+admin), ikke blot dekorativt UI-chrome som de 3 der blev skiftet ud på Hjem
+(flame/galleri/lommelygte). At erstatte dem alle er et markant større, selvstændigt
+projekt (nye ikoner skal designes, hver skærm skal verificeres visuelt) — ikke noget
+der kan gøres forsvarligt i samme ombæring som CSS-udrulningen. Kræver et eksplicit
+tilvalg fra brugeren, før det sættes i gang.
+
+**Statusopdatering 14. sept. 2026 — holdet er ophævet for de globale CSS-dele:**
+"vi venter med at bygge i hele appen" (11. sept.) gjaldt indtil brugeren eksplicit
+sagde "Implimenter nu alle design ændringer fra forsiden til hele appen" (14. sept.).
+De ting der ER token/klasse-niveau (tryk-feedback, løs-tekst-legibilitet, baggrunds-
+struktur, `--blue`, `EmptyState`/`.loader`) er nu rullet ud globalt, som beskrevet
+ovenfor. De ting der KRÆVER per-skærm JSX-arbejde og stadig kun findes på Hjem:
+kort-vægt-hierarkiet (scan-boks/genvej/tip-mønsteret er specifikt for Hjems egne tre
+kort, ikke en generisk klasse) og hilsen-typografien (`.greeting-main` osv. bruges
+kun på Hjem — ingen anden skærm har en "hilsen" at anvende det på). Disse to venter
+ikke på yderligere tilladelse i sig selv, men er heller ikke automatisk dækket af
+"implementer alle design ændringer" — de kræver konkret vurdering pr. skærm (hvilket
+kort er "primært" på hver skærm?), så tag dem én skærm ad gangen fremover, ikke som
+én stor mekanisk sweep. Emoji→SVG-saneringen er separat og afventer stadig
+brugerens tilvalg, som beskrevet ovenfor.
 
 ---
 
