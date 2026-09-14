@@ -104,6 +104,7 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
     bell: <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>,
     tag: <><path strokeLinecap="round" strokeLinejoin="round" d="M11.5 3H6a3 3 0 00-3 3v5.5a2 2 0 00.586 1.414l8 8a2 2 0 002.828 0l6.5-6.5a2 2 0 000-2.828l-8-8A2 2 0 0011.5 3z"/><circle cx="8" cy="8" r="1.25" fill="currentColor" stroke="none"/></>,
     package: <><path strokeLinecap="round" strokeLinejoin="round" d="M21 8l-9-5-9 5 9 5 9-5z"/><path strokeLinecap="round" strokeLinejoin="round" d="M3 8v8l9 5 9-5V8"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 13v8"/></>,
+    message: <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" style={{ flexShrink:0, display:"block" }}>

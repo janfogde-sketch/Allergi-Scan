@@ -346,6 +346,13 @@ altid samme glyf uanset allergen, dvs. reelt chrome ikke indhold), ✓→`check`
 specifikke emoji (`entry.emoji`/`cat.emoji`/`f.emoji`) bevidst bevaret —
 ægte, database-drevet indhold, samme begrundelse som opskrift-kategorier.
 
+**Ottende bølge: `RestaurantGuideScreen.jsx`.** Ny delt ikon tilføjet:
+`message` (talebobbel, til "Nyttige sætninger"). Erstattede 💡→bulb
+(madpas-tip) og 💬→message (sætnings-sektion). `TIPS`-emnernes ikoner
+(📋🚪🍽️✈️🏢⚖️) og 🇪🇺 (EU-lovgivnings-note) bevidst bevaret — hvert emne-ikon
+er en distinkt identitet (som kategori-glyffer andre steder), og flaget er
+ægte indhold.
+
 **Tidligere flagget, stadig kun delvist gjort:** en fuld emoji→SVG-ikon-sanering af
 hele appen.
 

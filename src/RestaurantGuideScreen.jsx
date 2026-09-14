@@ -4,6 +4,7 @@ import { SCREENS, ALLERGENS } from "./constants.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { UI } from "./styleUtils.js";
+import { Icon } from "./SharedComponents.jsx";
 
 const TIPS = [
   {
@@ -147,7 +148,7 @@ export default function RestaurantGuideScreen() {
 
       {/* Tip til madpas */}
       <div style={{ background:"rgba(74,222,128,.07)", border:"1px solid rgba(74,222,128,.2)", borderRadius:12, padding:"12px 14px", marginBottom:16, display:"flex", gap:10, alignItems:"flex-start" }}>
-        <div style={UI.fs20Shrink0}>💡</div>
+        <div style={UI.fs20Shrink0}><Icon name="bulb" size={18} color="var(--green)" /></div>
         <div>
           <div style={{ fontSize:13, fontWeight:700, color:"var(--green)", marginBottom:3 }}>Brug dit madpas</div>
           <div style={UI.ufs12_cmuted_lh15}>
@@ -201,7 +202,7 @@ export default function RestaurantGuideScreen() {
 
       {/* Hurtige sætninger */}
       <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:16 }}>
-        <div style={UI.ufs13_fw800_cink_mb4}>💬 Nyttige sætninger</div>
+        <div style={{ ...UI.ufs13_fw800_cink_mb4, display:"flex", alignItems:"center", gap:6 }}><Icon name="message" size={13} color="var(--ink)" /> Nyttige sætninger</div>
         <div style={{ fontSize:11, color:"var(--muted)", marginBottom:12, lineHeight:1.5 }}>
           Brug disse sætninger direkte — på dansk og engelsk.
         </div>
