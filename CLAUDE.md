@@ -779,6 +779,44 @@ at build, runtime eller testsuiten fanger det. Værd at grep'e for den slags
 mismatch (fx `age` vs. `birth_year`) når en bruger rapporterer noget der
 umiddelbart ligner "bare" en tekst-/UI-inkonsistens.
 
+**14. sept. 2026 — spacing-retrofit (antimønster #15) gennemført.** Brugeren
+bad om at tage det tidligere bevidst udskudte punkt op. Startede med en
+præcis opmåling i stedet for et gæt: en grep af alle `padding`/`margin*`/
+`gap`-værdier i `src/*.jsx` + `theme.jsx` viste at det store flertal af de
+"mange forskellige varianter" tidligere logget (`12px 14px`, `10px 12px`,
+`8px 10px` osv.) faktisk allerede var på den anbefalede skala — den reelle
+inkonsistens var afgrænset til enkeltstående "næsten runde" tal: 5, 7, 9,
+11, 13, 15px, som CLAUDE.md selv fremhæver som eksempel på antimønstret.
+Hver af disse ligger nøjagtigt midtvejs mellem to skala-trin (fx 9 er lige
+langt fra 8 og 10), så reglen blev entydig og mekanisk: rund altid op til
+næste skala-trin (5→6, 7→8, 9→10, 11→12, 13→14, 15→16) — ingen skøn
+nødvendige pr. forekomst, i modsætning til hvad der tidligere blev antaget.
+
+Kørt som et Python-script, skarpt afgrænset til kun `padding*`/`margin*`/
+`gap`-egenskaber (matchet på ejendomsnavn før værdien), for at undgå at
+røre `fontSize`/`borderRadius`/`width`/`border`, som tilfældigvis bruger de
+samme tal andre steder i de samme linjer. Kørt fil for fil (`AdminScreen.jsx`,
+`App.jsx`, `FeedbackModal.jsx`, `KnowledgeScreen.jsx`, `ListScreen.jsx`,
+`MadpasScreen.jsx`, `MemberForm.jsx`, `NotFoundScreen.jsx`,
+`OnboardingScreen.jsx`, `ProfileScreen.jsx`, `RecipesScreen.jsx`,
+`ResultScreen.jsx`, `ScannerScreen.jsx`, `SearchScreen.jsx`,
+`SubmittedScreen.jsx`, `SuggestEditScreen.jsx`, `demoSlides.jsx`,
+`styleUtils.js`, `AllergenPicker.jsx`, `theme.jsx`), med `git diff --stat`
+som sikkerhedstjek efter hver fil (185 indsættelser / 185 sletninger totalt
+— fuldstændig symmetrisk, ingen af de utilsigtede store sletninger som
+tidligere scriptede bulk-edits i denne session har været ramt af). Manuel
+gennemgang af de to største diffs (`AdminScreen.jsx`, `theme.jsx`) bekræftede
+at kun de tilsigtede egenskaber blev ændret. Build/test/mojibake-scan grønt
+på alle 20 filer.
+
+**Vurdering af risiko/omfang:** i modsætning til den oprindelige antagelse
+("kræver skærm-for-skærm-visuel-QA, samme omfang som emoji-saneringen") viste
+det sig at være et lavrisiko, mekanisk ±1px-skift uden semantisk tvetydighed
+— ingen visuel pixel-for-pixel-verifikation pr. skærm blev derfor udført,
+kun kode-niveau-verifikation (diff-gennemgang + build/test). Bevidst IKKE
+rørt: layout-niveau-paddings (20/24/32/40px m.fl.) — disse var allerede på
+skalaen og er slet ikke omfattet af antimønstret.
+
 ---
 
 ### Beta-installation (september 2026)
@@ -850,7 +888,7 @@ under den nyeste service worker efter en opdatering.
 | 12 | Fade-in ved scroll | ✅ Ikke fundet — ingen `IntersectionObserver` i kodebasen. `.fade-in`-klassen er en mount-animation (skærmskift), ikke scroll-baseret |
 | 13 | Cursor-følgende lysstråle | ✅ Ikke fundet |
 | 14 | Knapper der toner ved hover (ren opacity-fade) | ✅ Ikke fundet — `.btn-primary:hover` skifter farve + løfter sig (`translateY`), en bevidst hover-tilstand, ikke en doven opacity-fade |
-| 15 | Inkonsistent spacing | 🟡 **Bekræftet reelt 14. sept.** — grep af alle inline `padding`/`gap`/`marginBottom`-værdier i `src/*.jsx` viste stor spredning uden fælles skala (fx padding brugt i mindst 15 forskellige varianter: `12px 14px`, `10px 12px`, `9px 12px`, `8px 10px`, `14px 16px` osv., ofte til visuelt ensartede formål). En blind find/erstat på tværs af appen er for risikabelt uden visuel verificering pr. skærm (se afsnit 4's screenshot-metode) — i stedet er en anbefalet skala dokumenteret i afsnit 3 til brug i nyt arbejde. Fuld retrofit af eksisterende inline-styles er bevidst IKKE lavet i denne omgang — kræver skærm-for-skærm-visuel-QA, samme omfang som emoji-saneringen |
+| 15 | Inkonsistent spacing | ✅ **Retrofittet 14. sept.** — de reelt "næsten runde" element-niveau-værdier (5/7/9/11/13/15px i `padding*`/`margin*`/`gap`) rundet op til nærmeste skala-trin (4/6/8/10/12/14/16/20/24/32px) på tværs af 20 filer, inkl. `theme.jsx`s CSS-streng. Se afsnit 5's log for metode og verifikation. Bemærk: dette var en smallere, mere afgrænset retrofit end først antaget — de fleste eksisterende padding-"varianter" (`12px 14px`, `10px 12px`, `8px 10px` osv.) var faktisk allerede på skalaen; den reelle inkonsistens var kun de enkelte odde tal, ikke hele mønsteret |
 | 16 | Em-dashes ("—") alle vegne | 🟢 Tjekket — langt de fleste af de ~600 forekomster i `src/*.jsx` sidder i danske kode-kommentarer (usynlige for brugeren), ikke i UI-tekst. De der ER i bruger-vendt tekst er enkeltstående, funktionelle forbindelses-streger i naturligt dansk (fx "Det ligner ikke en gyldig stregkode — tjek cifrene."), ikke AI-agtig ophobning af flere streger i samme sætning. Vurderet som ikke et reelt problem — men hold øje med nye tekster |
 | 17 | Generisk buzzword-copy | ✅ **Formelt gennemgået 14. sept.** — grep for typiske AI-marketing-klichéer (da. og en. varianter: "oplev", "din rejse", "tag kontrol", "næste niveau", "revolutioner" osv.) på tværs af `src/*.jsx` gav ingen reelle træf. Stikprøve af de mest synlige tekster (velkomst-tagline "Scan. Tjek. Spis trygt.", skærm-titler) bekræfter konkret/funktionel copy uden generisk fyld. Ingen ændringer nødvendige |
 | 18 | Serif-kursiv-accenter | ✅ Ikke brugt — ingen serif-skrifttype i appen overhovedet |
