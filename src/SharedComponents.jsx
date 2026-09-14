@@ -101,6 +101,9 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
     shield: <><path strokeLinecap="round" strokeLinejoin="round" d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4"/></>,
     block: <><circle cx="12" cy="12" r="9"/><path strokeLinecap="round" d="M6.5 6.5l11 11"/></>,
     link: <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5"/>,
+    bell: <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>,
+    tag: <><path strokeLinecap="round" strokeLinejoin="round" d="M11.5 3H6a3 3 0 00-3 3v5.5a2 2 0 00.586 1.414l8 8a2 2 0 002.828 0l6.5-6.5a2 2 0 000-2.828l-8-8A2 2 0 0011.5 3z"/><circle cx="8" cy="8" r="1.25" fill="currentColor" stroke="none"/></>,
+    package: <><path strokeLinecap="round" strokeLinejoin="round" d="M21 8l-9-5-9 5 9 5 9-5z"/><path strokeLinecap="round" strokeLinejoin="round" d="M3 8v8l9 5 9-5V8"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 13v8"/></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" style={{ flexShrink:0, display:"block" }}>

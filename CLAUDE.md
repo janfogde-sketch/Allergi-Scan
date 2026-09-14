@@ -289,6 +289,18 @@ alternativer endnu". `🍼` (småbørns-advarsel) bevidst IKKE erstattet — int
 tilsvarende SVG-ikon findes, og det er et distinkt, letgenkendeligt visuelt
 signal uden en oplagt streg-ikon-erstatning.
 
+**14. sept. 2026 — brugeren gav fuld fortsæt-tilladelse** ("Forsæt arbejdet
+gennem hele appen. Stop kun hvis jeg beder dig om det.") — arbejdet fortsætter
+nu skærm for skærm uden yderligere opfølgnings-spørgsmål, medmindre noget
+konkret kræver et valg. **Tredje bølge: `ProfileScreen.jsx`.** Tre nye delte
+ikoner tilføjet: `bell` (🔔 push-notifikationer), `tag` (🏷️ favorit-kategorier),
+`package` (📦 "ukategoriseret"/"fjern kategori"). Erstattede desuden
+🔥/🔍/⚠️/✅/👨‍👩‍👧 (aktivitets-stat-kort, samme flame-mønster som Hjem), ✏️
+(custom-allergi-tags), 🤍 (favoritter tom-tilstand), ✓ (to steder: diæt-chip-
+check og allergen-badge), 🔗/📋/↗ (familie-invitationslink: opret/kopiér/del).
+`⚗️` (E-nummer-tags) og `diet.emoji` (kost-typer, fx 🥗) bevidst IKKE rørt —
+sidstnævnte er brugerkonfigurerbart indhold fra `DIETS`-konstanten, ikke chrome.
+
 **Tidligere flagget, stadig kun delvist gjort:** en fuld emoji→SVG-ikon-sanering af
 hele appen.
 
