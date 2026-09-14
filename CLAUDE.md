@@ -314,6 +314,21 @@ SubmittedScreen havde begge inline-styling uden `box-shadow` — samme mønster
 som `.card`/`.product-hero` tidligere. Holder øje med dette mønster fremadrettet
 i hver fil der røres.
 
+**14. sept. 2026 — brugeren bad om fuld gennemgang af ALLE skærme mod ALLE
+retningslinjer** ("Gennemgå alle skærme med alle vores retningslinjer. Stop
+ikke før jeg siger det") — kombinerer emoji-sanering + antimønstre-tjeklisten
+(afsnit 6 nedenfor) + fladhed-bug-tjek, skærm for skærm, uden ophold. Sporet
+via TaskCreate/TaskUpdate i denne session. **Femte bølge: `RecipesScreen.jsx`**
+(stort set alle emoji-forekomster i UI-chrome erstattet): verdikt-ikoner
+(kort + detalje-hero, samme check/warning-mønster som Resultat-skærmen),
+favorit-hjerter, "tilføj/tilføjet"-ikoner, `flame` (tilberedningstid, 2
+steder), `profile` (personer/pers.), `camera` (billede-placeholder),
+`list`/`info`/`warning` i opsummerings-boksen ved indsendelse, søge-/tom-
+tilstande. Kategori-emoji (☕🥗🍝🍰🥦🍿🍽️) og kost-emoji (🌱🥦) bevidst bevaret —
+indhold, ikke chrome, samme begrundelse som tidligere. **Fandt og rettede 3
+flere flathed-bugs** (manglende `box-shadow` på inline-grønne knapper: fejl-
+gendan-knap, "opsummering"-boksen, indsend- og "tilbage"-knapperne).
+
 **Tidligere flagget, stadig kun delvist gjort:** en fuld emoji→SVG-ikon-sanering af
 hele appen.
 
