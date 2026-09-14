@@ -280,9 +280,20 @@ To reelle årsager, begge rettet:
    `InstallPrompt.jsx` (overlay, monteret i `App.jsx` lige under skip-link'en).
    Vises kun når URL'en indeholder `?src=beta-qr` (sat af `install.html`'s
    redirect for ikke-iOS). Falder automatisk tilbage til tekst-instruktioner
-   ("tryk ⋮-menuen → Installer app") efter 2,5 sek. hvis browseren af en eller
+   ("tryk ⋮-menuen → Installer app") efter 4 sek. hvis browseren af en eller
    anden grund ikke sender eventet (fx allerede installeret, eller en tidligere
    afvist prompt som Chrome husker i en periode).
+
+**Endnu en reel årsag fundet ved live-test 14. sept.:** selv med fetch-handleren
+tilføjet udeblev prompten stadig på et testet Android-device — fordi en
+OPDATERET service worker som standard bliver hængende i "waiting"-tilstand og
+ikke overtager allerede-åbne faner, før alle gamle faner er lukket. En bruger
+der havde haft appen åben tidligere i sessionen (fx under test) blev derfor
+ved med at køre den GAMLE service worker (uden fetch-handler) — selvom den nye
+kode var deployet. Rettet med `self.skipWaiting()` (install-event) +
+`self.clients.claim()` (activate-event) i `sw.js`, samt en `controllerchange`-
+lytter i `index.html` der genindlæser siden ÉN gang, så den garanteret kører
+under den nyeste service worker efter en opdatering.
 
 ## 6. Hvor finder du mere?
 

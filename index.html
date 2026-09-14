@@ -26,6 +26,17 @@
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js').catch(() => {});
         });
+        // sw.js bruger skipWaiting + clients.claim() til at overtage med det
+        // samme i stedet for at vente på at gamle faner lukkes. Det udløser et
+        // "controllerchange"-event — genindlæs én gang, så siden er sikker på
+        // at køre under den nyeste service worker (bl.a. relevant for om
+        // browseren regner appen som installerbar).
+        let refreshedForSw = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (refreshedForSw) return;
+          refreshedForSw = true;
+          window.location.reload();
+        });
       }
     </script>
   </body>
