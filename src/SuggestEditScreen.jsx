@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
 import { makeHeaders, apiCall, compressImageToBase64 } from "./helpers.js";
-import { Icon, ProductImage, Loader } from "./SharedComponents.jsx";
+import { Icon, ProductImage, Loader, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { UI } from "./styleUtils.js";
@@ -103,7 +103,7 @@ export default function SuggestEditScreen({
       });
       setEditStep("done");
     } catch (e) {
-      alert("Fejl: " + e.message);
+      showToast("Fejl: " + e.message, "error");
       setEditStep("review");
     }
   };

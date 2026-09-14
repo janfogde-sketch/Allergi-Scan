@@ -108,6 +108,8 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
     chart: <><path strokeLinecap="round" strokeLinejoin="round" d="M3 3v16a2 2 0 002 2h16"/><rect x="7" y="12" width="3" height="6" rx="0.5" strokeWidth="1.75"/><rect x="12.5" y="8" width="3" height="10" rx="0.5" strokeWidth="1.75"/><rect x="18" y="5" width="3" height="13" rx="0.5" strokeWidth="1.75"/></>,
     bug: <><circle cx="12" cy="7" r="2" strokeWidth="1.75"/><path strokeLinecap="round" d="M10.5 5.5L9 4M13.5 5.5L15 4"/><rect x="8" y="9" width="8" height="10" rx="4" strokeWidth="1.75"/><path strokeLinecap="round" d="M8 12H4M16 12h4M8 15H4M16 15h4M8 18H5M16 18h3"/></>,
     download: <><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4"/><path strokeLinecap="round" strokeLinejoin="round" d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></>,
+    eye: <><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><circle cx="12" cy="12" r="3" strokeWidth="1.75"/></>,
+    eyeOff: <><path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12c1.292 4.338 5.31 7.5 10.066 7.5.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.774 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" style={{ flexShrink:0, display:"block" }}>
@@ -466,6 +468,51 @@ export function ListPickerSheet({ lists, onChoose, onCancel }) {
           </div>
         ))}
       </div>
+    </div>,
+    document.body
+  );
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+// Delt, designkonsistent erstatning for native alert() til korte succes-/fejl-
+// beskeder. showToast() kan kaldes fra hvor som helst i appen; <ToastHost/>
+// monteres én gang (i App.jsx) og lytter efter kald.
+let toastListeners = [];
+let toastIdCounter = 0;
+
+export function showToast(message, type = "success") {
+  const toast = { id: ++toastIdCounter, message, type };
+  toastListeners.forEach(fn => fn(toast));
+}
+
+export function ToastHost() {
+  const [toasts, setToasts] = React.useState([]);
+
+  React.useEffect(() => {
+    const handler = (toast) => {
+      setToasts(t => [...t, toast]);
+      setTimeout(() => setToasts(t => t.filter(x => x.id !== toast.id)), 4000);
+    };
+    toastListeners.push(handler);
+    return () => { toastListeners = toastListeners.filter(l => l !== handler); };
+  }, []);
+
+  if (!toasts.length) return null;
+
+  return createPortal(
+    <div style={{ position:"fixed", left:0, right:0, bottom:"calc(84px + env(safe-area-inset-bottom))", zIndex:9998, display:"flex", flexDirection:"column", alignItems:"center", gap:8, pointerEvents:"none", padding:"0 16px" }}>
+      {toasts.map(t => (
+        <div key={t.id} style={{
+          display:"flex", alignItems:"center", gap:8,
+          background:"var(--surface)", border:`1px solid ${t.type === "error" ? "var(--red-md)" : "var(--border)"}`,
+          borderRadius:12, padding:"12px 16px", boxShadow:"var(--sh2)",
+          maxWidth:420, width:"100%", pointerEvents:"auto",
+          animation:"toast-in .2s ease-out",
+        }}>
+          <Icon name={t.type === "error" ? "warning" : "check"} size={16} color={t.type === "error" ? "var(--red)" : "var(--green)"} />
+          <span style={{ fontSize:13, fontWeight:600, color:"var(--ink)", lineHeight:1.4 }}>{t.message}</span>
+        </div>
+      ))}
     </div>,
     document.body
   );
