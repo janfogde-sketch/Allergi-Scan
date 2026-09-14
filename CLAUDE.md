@@ -817,6 +817,46 @@ kun kode-niveau-verifikation (diff-gennemgang + build/test). Bevidst IKKE
 rørt: layout-niveau-paddings (20/24/32/40px m.fl.) — disse var allerede på
 skalaen og er slet ikke omfattet af antimønstret.
 
+**14. sept. 2026 — søgefunktionen ignorerede kategori/underkategori helt.**
+Brugeren rapporterede: "Test af søge funktion. Når jeg søger CHIPS, får jeg
+kun 9 samlede resultater. Jeg må da have LANGT flere chips i min database."
+Undersøgelsen (kode-gennemgang af `supabase/functions/search/index.ts`,
+da sandboxens netværkspolitik blokerer direkte Supabase-kald — bekræftet på
+ny med et 403 fra agent-proxyen, ikke forsøgt omgået) viste at søgningen
+udelukkende matchede på `name`/`brand` (ILIKE substring) og aldrig brugte
+`category`/`subcategory` — på trods af at appen allerede har en fungerende
+AI-baseret kategoriserings-pipeline (`classify-categories`-edge-functionen)
+der tagger produkter med en præcis underkategori som "Chips & snacks" fra en
+fast taksonomi. Et produkt med et rent smags-/brandnavn uden det bogstavelige
+ord "chips" i navnet (fx et flavour-navn som "Flødeost & Peberrod") var derfor
+usynligt for søgningen, uanset hvor korrekt det var kategoriseret — de 9
+resultater brugeren så, var kun de produkter der tilfældigvis også havde
+ordet i selve navnet/brandet.
+
+Rettet i `search`-edge-functionen: OR-filteret i den indledende DB-
+forespørgsel matcher nu også `category`/`subcategory`; `select()` henter nu
+`subcategory` (blev aldrig returneret før); scorings-logikken tæller et
+kategori-ord-match som et reelt match (samme ordgrænse-logik som navn/brand),
+men vægtet lavere (8 point mod navnets 15 — et kategori-match er et svagere
+signal end et direkte navne-match). Kandidat-loftet på den indledende
+forespørgsel hævet fra 150 til 400, da kategori-baserede søgeord kan matche
+langt flere kandidater end en navne-substring plejede at gøre.
+
+**Vigtigt — kræver manuel deploy, opdaget ved denne lejlighed:** i
+modsætning til frontend-koden i `src/` (som Vercel auto-deployer på hvert
+push til `main`) har repoet **ingen automatiseret deploy-pipeline for
+Supabase Edge Functions** — hverken via Vercel eller GitHub Actions
+(`.github/workflows/ci.yml` kører kun lint/test/build af frontend'en).
+Denne kodeændring træder derfor IKKE i kraft i produktion bare ved at blive
+merget til `main` — nogen med Supabase-adgang (janfogde@gmail.com eller
+bjangst@gmail.com, begge har adgang til Supabase-organisationen) skal
+manuelt køre `supabase functions deploy search`, eller deploye via Supabase-
+dashboardet, for at fixet reelt slår igennem. Sandboxen her har hverken
+Supabase CLI installeret eller netadgang til Supabase (org-policy). **Dette
+gælder generelt for enhver fremtidig ændring i `supabase/functions/*`** —
+værd at huske på i fremtidige opgaver, og at flage eksplicit til brugeren
+hver gang en edge function ændres.
+
 ---
 
 ### Beta-installation (september 2026)
