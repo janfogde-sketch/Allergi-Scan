@@ -976,7 +976,7 @@ const lookupProduct = useCallback(async (ean) => {
         <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
           onClick={e => e.stopPropagation()}>
           <div style={UI.rowBetweenMb16}>
-            <div style={{ ...UI.ufs18_fw900_cink, display:"flex", alignItems:"center", gap:7 }}><Icon name={content.titleIcon} size={17} color="var(--ink)" /> {content.title}</div>
+            <div style={{ ...UI.ufs18_fw900_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name={content.titleIcon} size={17} color="var(--ink)" /> {content.title}</div>
             <button onClick={() => setHelpOpen(false)} aria-label="Luk"
               style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
           </div>
@@ -1119,7 +1119,7 @@ const lookupProduct = useCallback(async (ean) => {
             <div className="topbar-logo">
               <div className="topbar-shield" style={{background:"none",padding:0}}><EatSafeLogo size={34} variant="light" /></div>
               <div className="topbar-name">Eat<span>Safe</span></div>
-              <div style={{ background:"var(--amber)", color:"var(--ink)", fontSize:9, fontWeight:800, padding:"2px 7px", borderRadius:100, letterSpacing:".5px", marginLeft:4, marginTop:2 }}>BETA</div>
+              <div style={{ background:"var(--amber)", color:"var(--ink)", fontSize:9, fontWeight:800, padding:"2px 8px", borderRadius:100, letterSpacing:".5px", marginLeft:4, marginTop:2 }}>BETA</div>
             </div>
             <div style={{ display:"flex", gap:6, alignItems:"center" }}>
               {/* Hjælp-knap */}
@@ -1129,7 +1129,7 @@ const lookupProduct = useCallback(async (ean) => {
               </button>
               {/* Feedback-knap */}
               <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
-                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"6px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                 Feedback
               </button>
@@ -1149,7 +1149,7 @@ const lookupProduct = useCallback(async (ean) => {
         {isOnboard && (
           <div style={{ position:"fixed", top:12, right:12, zIndex:1000 }}>
             <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
-              style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--ink2)", cursor:"pointer", display:"flex", alignItems:"center", gap:5, boxShadow:"0 2px 8px rgba(0,0,0,.15)" }}>
+              style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"6px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--ink2)", cursor:"pointer", display:"flex", alignItems:"center", gap:6, boxShadow:"0 2px 8px rgba(0,0,0,.15)" }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
               Feedback
             </button>
@@ -1194,18 +1194,18 @@ const lookupProduct = useCallback(async (ean) => {
                   onChange={e => setDeleteConfirmText(e.target.value)}
                   placeholder="slet"
                   autoCapitalize="none"
-                  style={{ width:"100%", padding:"13px 14px", border:`1.5px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"var(--surface2)", color:"var(--ink)" }}
+                  style={{ width:"100%", padding:"14px 14px", border:`1.5px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"var(--surface2)", color:"var(--ink)" }}
                 />
               </div>
 
               <button onClick={deleteOwnAccount}
                 disabled={deleteConfirmText.toLowerCase() !== "slet" || deletingAccount}
-                style={{ width:"100%", padding:"15px", background: deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--ink)", cursor: deleteConfirmText.toLowerCase()==="slet" ? "pointer" : "not-allowed", marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
+                style={{ width:"100%", padding:"16px", background: deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--ink)", cursor: deleteConfirmText.toLowerCase()==="slet" ? "pointer" : "not-allowed", marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
                 {deletingAccount ? "Sletter…" : <><Icon name="trash" size={14} color="var(--ink)" /> Slet min konto permanent</>}
               </button>
 
               <button onClick={() => setShowDeleteAccount(false)}
-                style={{ width:"100%", padding:"13px", background:"none", border:"none", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--muted)", cursor:"pointer" }}>
+                style={{ width:"100%", padding:"14px", background:"none", border:"none", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--muted)", cursor:"pointer" }}>
                 Annullér — behold min konto
               </button>
 

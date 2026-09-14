@@ -23,7 +23,7 @@ export const ENumberPicker = ({ selected, onChange }) => {
   return (
     <div>
       {/* Populære */}
-      <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:10 }}>
+      <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
         {popular.filter(e => E_NUMBERS[e]).map(e => {
           const on = selected.includes(e);
           return (

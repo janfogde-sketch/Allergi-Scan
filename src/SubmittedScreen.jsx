@@ -89,7 +89,7 @@ export default function SubmittedScreen({
           ].map((step, i) => (
             <div key={i} style={{
               display: "flex", alignItems: "center", gap: 12,
-              padding: "7px 0",
+              padding: "8px 0",
               borderBottom: i < 3 ? "1px solid var(--border)" : "none",
             }}>
               <span style={{ flexShrink: 0 }}><Icon name={step.icon} size={17} color="var(--ink2)" /></span>

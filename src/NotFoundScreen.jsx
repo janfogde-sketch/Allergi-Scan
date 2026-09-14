@@ -94,7 +94,7 @@ export default function NotFoundScreen({
             <div style={{ fontSize:12, color:"var(--muted)", marginTop:1, fontFamily:"monospace" }}>EAN: {notFoundEan}</div>
           </div>
           {/* Fremgangsindikator */}
-          <div style={{ display:"flex", gap:5, alignItems:"center" }}>
+          <div style={{ display:"flex", gap:6, alignItems:"center" }}>
             {[1,2,3,4,5].map(s => (
               <div key={s} style={{
                 width: notFoundStep === s ? 20 : 8,
@@ -249,7 +249,7 @@ export default function NotFoundScreen({
               Fotografér næringsdeklarationen
               <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleNutritionCapture} />
             </label>
-            <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, width:"100%", padding:"11px", borderRadius:12, cursor:"pointer", background:"var(--surface)", border:"1px solid var(--border2)", color:"var(--ink2)", fontSize:12, fontWeight:600, marginBottom:14 }}>
+            <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, width:"100%", padding:"12px", borderRadius:12, cursor:"pointer", background:"var(--surface)", border:"1px solid var(--border2)", color:"var(--ink2)", fontSize:12, fontWeight:600, marginBottom:14 }}>
               <Icon name="image" size={15} color="var(--ink2)" /> Vælg fra galleri
               <input type="file" accept="image/*" style={S.none} onChange={handleNutritionCapture} />
             </label>
@@ -257,7 +257,7 @@ export default function NotFoundScreen({
             {scanError && <div className="error-box" style={S.mb10}><Icon name="warning" size={13} color="var(--red)" /> {scanError}</div>}
 
             {proposedNutrition && Object.values(proposedNutrition).some(v => v) && (
-              <div style={{ display:"flex", alignItems:"center", gap:5, padding:"8px 12px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, marginBottom:10, fontSize:12, color:"var(--green)", fontWeight:700 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 12px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, marginBottom:10, fontSize:12, color:"var(--green)", fontWeight:700 }}>
                 <Icon name="check" size={12} color="var(--green)" /> Næringsindhold delvist udfyldt — tjek og ret felterne herunder
               </div>
             )}
@@ -353,7 +353,7 @@ export default function NotFoundScreen({
             {/* Produktkort */}
             <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb12}>
               <div style={S.rowBetweenMb10}>
-                <div style={{ ...UI.ufs12_fw800_cink, display:"flex", alignItems:"center", gap:5 }}><Icon name="camera" size={12} color="var(--ink)" /> Forside og navn</div>
+                <div style={{ ...UI.ufs12_fw800_cink, display:"flex", alignItems:"center", gap:6 }}><Icon name="camera" size={12} color="var(--ink)" /> Forside og navn</div>
                 <button onClick={() => setNotFoundStep(1)} style={{ background:"none", border:"none", cursor:"pointer", fontSize:11, color:"var(--muted)", fontFamily:"var(--f)", padding:"2px 8px" }}>← Ret</button>
               </div>
               <div style={UI.udflex_aicenter_g12_mb12}>
@@ -378,7 +378,7 @@ export default function NotFoundScreen({
             {/* Ingrediensliste editor */}
             <div style={S.card}>
               <div style={S.rowBetweenMb10}>
-                <div style={{ ...S.h13, display:"flex", alignItems:"center", gap:5 }}><Icon name="search" size={13} color="var(--ink)" /> Ingredienser</div>
+                <div style={{ ...S.h13, display:"flex", alignItems:"center", gap:6 }}><Icon name="search" size={13} color="var(--ink)" /> Ingredienser</div>
                 <div style={UI.udflex_g8_aicenter}>
                   {ocrText && <div style={{ ...UI.ufs11_cgreen_fw700, display:"flex", alignItems:"center", gap:3 }}><Icon name="check" size={10} color="var(--green)" /> {ingItems.length} fundet</div>}
                   <label style={UI.ufs11_cmuted_curpointer_fw600_dflex_aicenter_g4}>
@@ -390,7 +390,7 @@ export default function NotFoundScreen({
               </div>
 
               {!ocrText && ingItems.length === 0 && (
-                <div style={{ ...UI.ufs12_camber_fw600_p8px10px_bgamberlt_br8_mb10, display:"flex", alignItems:"center", gap:5 }}>
+                <div style={{ ...UI.ufs12_camber_fw600_p8px10px_bgamberlt_br8_mb10, display:"flex", alignItems:"center", gap:6 }}>
                   <Icon name="warning" size={12} color="var(--amber)" /> Ingen ingredienser endnu — tag et billede eller skriv dem herunder
                 </div>
               )}
@@ -430,7 +430,7 @@ export default function NotFoundScreen({
             {/* Allergener */}
             <div style={S.card}>
               <div style={S.rowBetweenMb10}>
-                <div style={{ ...S.h13, display:"flex", alignItems:"center", gap:5 }}><Icon name="warning" size={13} color="var(--ink)" /> Allergener</div>
+                <div style={{ ...S.h13, display:"flex", alignItems:"center", gap:6 }}><Icon name="warning" size={13} color="var(--ink)" /> Allergener</div>
                 <div style={S.sub11}>Tryk for at til/fra</div>
               </div>
               <div style={UI.wrapGap7}>
@@ -447,11 +447,11 @@ export default function NotFoundScreen({
                           return { ...prev, [a.id]: next };
                         });
                       }}
-                      style={{ display:"flex", alignItems:"center", gap:5, padding:"6px 11px", borderRadius:100, cursor:"pointer", border:`1px solid ${isOn ? "var(--red-md)" : isTrace ? "var(--amber-md)" : "var(--border2)"}`, background: isOn ? "var(--red-lt)" : isTrace ? "var(--amber-lt)" : "var(--paper2)", transition:"all .15s" }}>
+                      style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", borderRadius:100, cursor:"pointer", border:`1px solid ${isOn ? "var(--red-md)" : isTrace ? "var(--amber-md)" : "var(--border2)"}`, background: isOn ? "var(--red-lt)" : isTrace ? "var(--amber-lt)" : "var(--paper2)", transition:"all .15s" }}>
                       <span style={{ fontSize:14 }}>{a.emoji}</span>
                       <span style={{ fontSize:11, fontWeight:700, color: isOn ? "var(--red)" : isTrace ? "var(--amber)" : "var(--muted2)" }}>{a.label}</span>
-                      {isOn    && <span style={{ fontSize:9, fontWeight:800, color:"var(--red)",   background:"var(--red-lt)",   padding:"1px 5px", borderRadius:4 }}>JA</span>}
-                      {isTrace && <span style={{ fontSize:9, fontWeight:800, color:"var(--amber)", background:"var(--amber-lt)", padding:"1px 5px", borderRadius:4 }}>SPOR</span>}
+                      {isOn    && <span style={{ fontSize:9, fontWeight:800, color:"var(--red)",   background:"var(--red-lt)",   padding:"1px 6px", borderRadius:4 }}>JA</span>}
+                      {isTrace && <span style={{ fontSize:9, fontWeight:800, color:"var(--amber)", background:"var(--amber-lt)", padding:"1px 6px", borderRadius:4 }}>SPOR</span>}
                     </div>
                   );
                 })}
@@ -513,7 +513,7 @@ export default function NotFoundScreen({
                 submitProduct(finalText);
               }}
               disabled={submitting || !proposedName.trim()}
-              style={{ width:"100%", background: proposedName.trim() ? "var(--green)" : "var(--border2)", color: proposedName.trim() ? "var(--on-green)" : "var(--muted)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor: proposedName.trim() ? "pointer" : "not-allowed", marginBottom:8, opacity: submitting ? 0.6 : 1, boxShadow: proposedName.trim() ? "0 2px 12px rgba(74,222,128,.25)" : "none", display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
+              style={{ width:"100%", background: proposedName.trim() ? "var(--green)" : "var(--border2)", color: proposedName.trim() ? "var(--on-green)" : "var(--muted)", border:"none", borderRadius:12, padding:"16px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor: proposedName.trim() ? "pointer" : "not-allowed", marginBottom:8, opacity: submitting ? 0.6 : 1, boxShadow: proposedName.trim() ? "0 2px 12px rgba(74,222,128,.25)" : "none", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
               {submitting
                 ? <><div style={{ width:16, height:16, border:"2px solid rgba(0,0,0,.2)", borderTopColor:"var(--on-green)", borderRadius:"50%", animation:"spin .7s linear infinite", display:"inline-block" }} />Sender…</>
                 : <>Send produkt ind <Icon name="check" size={15} color={proposedName.trim() ? "var(--on-green)" : "var(--muted)"} /></>}

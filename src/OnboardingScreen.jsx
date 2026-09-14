@@ -157,7 +157,7 @@ export default function OnboardingScreen({
               {["Mand","Kvinde","Andet","Vil ikke oplyse"].map(g => (
                 <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
                   style={{
-                    padding:"9px 14px", borderRadius:8, cursor:"pointer",
+                    padding:"10px 14px", borderRadius:8, cursor:"pointer",
                     border:`1px solid ${user.gender===g ? "var(--green)" : "var(--border)"}`,
                     background: user.gender===g ? "var(--green-lt)" : "var(--surface)",
                     fontSize:13, fontWeight:700,
@@ -269,7 +269,7 @@ export default function OnboardingScreen({
                 </div>
                 {authError && (
                   <div className="error-box" style={UI.ufdcolumn_aiflexstar_g4}>
-                    <span style={{ ...UI.ufw800, display:"flex", alignItems:"center", gap:5 }}><Icon name="warning" size={12} color="var(--red)" /> Fejl</span>
+                    <span style={{ ...UI.ufw800, display:"flex", alignItems:"center", gap:6 }}><Icon name="warning" size={12} color="var(--red)" /> Fejl</span>
                     <span style={UI.ufw500_fs12_lh15}>{authError}</span>
                   </div>
                 )}
@@ -310,7 +310,7 @@ export default function OnboardingScreen({
                 </div>
                 {authError && (
                   <div className="error-box" style={UI.ufdcolumn_aiflexstar_g4}>
-                    <span style={{ ...UI.ufw800, display:"flex", alignItems:"center", gap:5 }}><Icon name="warning" size={12} color="var(--red)" /> Fejl</span>
+                    <span style={{ ...UI.ufw800, display:"flex", alignItems:"center", gap:6 }}><Icon name="warning" size={12} color="var(--red)" /> Fejl</span>
                     <span style={UI.ufw500_fs12_lh15}>{authError}</span>
                   </div>
                 )}
@@ -335,7 +335,7 @@ export default function OnboardingScreen({
             <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:12 }}>
               {/* Google */}
               <button onClick={() => handleOAuth("google")} disabled={authLoading}
-                style={{ display:"flex", alignItems:"center", gap:12, width:"100%", padding:"13px 16px",
+                style={{ display:"flex", alignItems:"center", gap:12, width:"100%", padding:"14px 16px",
                   background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:12,
                   cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:600, color:"var(--ink)",
                   transition:"all .15s" }}>
@@ -350,7 +350,7 @@ export default function OnboardingScreen({
 
               {/* Facebook */}
               <button onClick={() => handleOAuth("facebook")} disabled={authLoading}
-                style={{ display:"flex", alignItems:"center", gap:12, width:"100%", padding:"13px 16px",
+                style={{ display:"flex", alignItems:"center", gap:12, width:"100%", padding:"14px 16px",
                   background:"#1877F2", border:"1px solid #1877F2", borderRadius:12,
                   cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:600, color:"var(--ink)",
                   boxShadow:"var(--sh)", transition:"all .15s" }}>
@@ -868,7 +868,7 @@ export default function OnboardingScreen({
                         {allergens.map(id => {
                           const a = ALLERGENS.find(x=>x.id===id);
                           return (
-                            <div key={id} style={{ padding:"5px 10px", borderRadius:20, fontSize:12, fontWeight:700,
+                            <div key={id} style={{ padding:"6px 10px", borderRadius:20, fontSize:12, fontWeight:700,
                               background:"var(--red-lt)", color:"var(--red)",
                               border:"1px solid var(--red-md)" }}>
                               {a?.emoji} {a?.label}
@@ -876,7 +876,7 @@ export default function OnboardingScreen({
                           );
                         })}
                         {customAllerg.map((c,i) => (
-                          <div key={i} style={{ padding:"5px 10px", borderRadius:20, fontSize:12, fontWeight:700,
+                          <div key={i} style={{ padding:"6px 10px", borderRadius:20, fontSize:12, fontWeight:700,
                             background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" }}>
                             {c}
                           </div>
@@ -893,7 +893,7 @@ export default function OnboardingScreen({
                       <div style={UI.sectionLbl6}>Diæt</div>
                       <div style={UI.wrapGap5}>
                         {user.diets.map(d => (
-                          <div key={d} style={{ padding:"5px 10px", borderRadius:20, fontSize:12, fontWeight:700,
+                          <div key={d} style={{ padding:"6px 10px", borderRadius:20, fontSize:12, fontWeight:700,
                             background:"var(--green-lt)", color:"var(--green)", border:"1px solid var(--green-mid)" }}>
                             {DIETS.find(x=>x.id===d)?.label}
                           </div>
@@ -958,7 +958,7 @@ export default function OnboardingScreen({
                 </div>
 
                 {/* Disclaimer */}
-                <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"center", gap:5, fontSize:11, color:"var(--muted)", lineHeight:1.5, marginBottom:16, textAlign:"center", padding:"0 8px" }}>
+                <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"center", gap:6, fontSize:11, color:"var(--muted)", lineHeight:1.5, marginBottom:16, textAlign:"center", padding:"0 8px" }}>
                   <Icon name="info" size={12} color="var(--muted)" /> EatSafe er vejledende og erstatter ikke medicinsk rådgivning. Tjek altid produktets emballage.
                 </div>
 

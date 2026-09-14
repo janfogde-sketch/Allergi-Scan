@@ -86,7 +86,7 @@ function DemoSlider({ onClose }) {
       <div style={{ background:slide.bg, padding:"20px 20px 18px", minHeight:260, transition:"background .4s", position:"relative" }}>
 
         {/* Dots */}
-        <div style={{ display:"flex", gap:5, justifyContent:"center", marginBottom:16 }}>
+        <div style={{ display:"flex", gap:6, justifyContent:"center", marginBottom:16 }}>
           {DEMO_SLIDES.map((_,i) => (
             <div key={i} onClick={() => setIdx(i)}
               style={{ width: i===idx ? 22 : 7, height:7, borderRadius:4, background: i===idx ? slide.accent : "var(--border2)", cursor:"pointer", transition:"all .25s" }} />
@@ -528,7 +528,7 @@ export default function ScannerScreen({
               <div style={{ display:"flex", gap:8, justifyContent:"center", flexWrap:"wrap" }}>
                 <button onClick={onBetaClick}
                   style={{ display:"inline-flex", alignItems:"center", gap:6,
-                    padding:"5px 14px", borderRadius:100,
+                    padding:"6px 14px", borderRadius:100,
                     background:"var(--green-lt)",
                     border:"1px solid var(--green-mid)",
                     fontFamily:"var(--f)", fontSize:11, fontWeight:700,
@@ -538,7 +538,7 @@ export default function ScannerScreen({
                 </button>
                 <button onClick={() => setShowGuide(true)}
                   style={{ display:"inline-flex", alignItems:"center", gap:6,
-                    padding:"5px 14px", borderRadius:100,
+                    padding:"6px 14px", borderRadius:100,
                     background:"var(--surface2)",
                     border:"1px solid var(--border2)",
                     fontFamily:"var(--f)", fontSize:11, fontWeight:700,

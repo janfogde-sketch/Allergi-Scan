@@ -43,7 +43,7 @@ export const MemberForm = ({
       <div style={{ display:"flex", gap:8, marginBottom:14 }}>
         {["Mand","Kvinde","Andet"].map(g => (
           <div key={g} onClick={() => setGender(g)}
-            style={{ flex:1, padding:"9px 0", textAlign:"center", borderRadius:8,
+            style={{ flex:1, padding:"10px 0", textAlign:"center", borderRadius:8,
               border:`1.5px solid ${gender===g?"var(--green)":"var(--border)"}`,
               background: gender===g ? "var(--green-lt)" : "var(--surface)",
               fontSize:13, fontWeight:700,
@@ -135,7 +135,7 @@ export const MemberForm = ({
           const on = eNumbers.includes(e);
           return (
             <div key={e} onClick={() => setENumbers(p => on ? p.filter(x=>x!==e) : [...p,e])}
-              style={{ display:"flex", gap:8, padding:"7px 12px",
+              style={{ display:"flex", gap:8, padding:"8px 12px",
                 borderBottom:i<arr.length-1?"1px solid var(--border)":"none",
                 background:on?"var(--red-lt)":"var(--surface)", cursor:"pointer" }}>
               <div style={{ fontSize:11, fontWeight:800, color:on?"var(--red)":"var(--ink)", width:44, flexShrink:0 }}>{e}</div>

@@ -252,7 +252,7 @@ export default function ProfileScreen({
                 </div>
                 <div onClick={() => loadHistory("family")}
                   style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
-                    display:"flex", alignItems:"center", justifyContent:"center", gap:5,
+                    display:"flex", alignItems:"center", justifyContent:"center", gap:6,
                     background: historyScope==="family" ? "var(--green)" : "var(--surface)", color: historyScope==="family" ? "var(--on-green)" : "var(--muted)",
                     border:`1px solid ${historyScope==="family" ? "var(--green)" : "var(--border)"}` }}>
                   <Icon name="family" size={12} color={historyScope==="family" ? "var(--on-green)" : "var(--muted)"} /> Husstanden
@@ -316,7 +316,7 @@ export default function ProfileScreen({
                   <div style={{ fontSize:12, color:"var(--muted)", marginTop:3 }}>{user.email||loginEmail||""}</div>
                 </div>
                 <button onClick={() => setScreen(SCREENS.EDITPROFILE)}
-                  style={{ background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10, padding:"7px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
+                  style={{ background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
                   Rediger
                 </button>
               </div>
@@ -381,7 +381,7 @@ export default function ProfileScreen({
               ) : (
                 <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
                   {household.map(m => (
-                    <div key={m.id} style={{ display:"flex", alignItems:"center", gap:6, padding:"5px 10px 5px 5px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:20 }}>
+                    <div key={m.id} style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 10px 6px 6px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:20 }}>
                       <div style={{ width:24, height:24, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:800, color:"var(--ink)" }}>
                         {initials(m.name || m.email)}
                       </div>
@@ -406,11 +406,11 @@ export default function ProfileScreen({
               <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:12 }}>Konto</div>
               <div style={UI.rowGap8}>
                 <button onClick={clearAuth}
-                  style={{ flex:1, padding:"11px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
+                  style={{ flex:1, padding:"12px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
                   Log ud
                 </button>
                 <button onClick={() => { setShowDeleteAccount(true); setDeleteConfirmText(""); }}
-                  style={{ flex:1, padding:"11px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
+                  style={{ flex:1, padding:"12px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
                   Slet konto
                 </button>
               </div>
@@ -495,7 +495,7 @@ export default function ProfileScreen({
                 </div>
                 <div onClick={() => loadFavorites("family")}
                   style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
-                    display:"flex", alignItems:"center", justifyContent:"center", gap:5,
+                    display:"flex", alignItems:"center", justifyContent:"center", gap:6,
                     background: favoritesScope==="family" ? "var(--green)" : "var(--surface)", color: favoritesScope==="family" ? "var(--on-green)" : "var(--muted)",
                     border:`1px solid ${favoritesScope==="family" ? "var(--green)" : "var(--border)"}` }}>
                   <Icon name="family" size={12} color={favoritesScope==="family" ? "var(--on-green)" : "var(--muted)"} /> Husstanden
@@ -552,7 +552,7 @@ export default function ProfileScreen({
                   <div key={cat} style={UI.mb10}>
                     <div onClick={() => setCollapsedCategories(c => isCollapsed ? c.filter(x=>x!==cat) : [...c, cat])}
                       style={{ display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", padding:"4px 2px", marginBottom:6 }}>
-                      <div className="card-lbl" style={{ display:"flex", alignItems:"center", gap:5, marginBottom:0 }}>
+                      <div className="card-lbl" style={{ display:"flex", alignItems:"center", gap:6, marginBottom:0 }}>
                         <Icon name={cat === "Ukategoriseret" ? "package" : "tag"} size={11} color="var(--neutral)" />
                         {cat === "Ukategoriseret" ? "Ukategoriseret" : cat} ({groups[cat].length})
                       </div>
@@ -913,12 +913,12 @@ export default function ProfileScreen({
                         setInviteCopied(true);
                         setTimeout(() => setInviteCopied(false), 2000);
                       }}
-                      style={{ flex:1, padding:"10px", background: inviteCopied ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${inviteCopied ? "var(--green)" : "var(--border2)"}`, borderRadius:8, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color: inviteCopied ? "var(--green)" : "var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:5 }}>
+                      style={{ flex:1, padding:"10px", background: inviteCopied ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${inviteCopied ? "var(--green)" : "var(--border2)"}`, borderRadius:8, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color: inviteCopied ? "var(--green)" : "var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                       <Icon name={inviteCopied ? "check" : "link"} size={12} color={inviteCopied ? "var(--green)" : "var(--ink)"} /> {inviteCopied ? "Kopieret!" : "Kopiér link"}
                     </button>
                     <button
                       onClick={() => navigator.share?.({ title:"EatSafe invitation", url: inviteLink })}
-                      style={{ flex:1, padding:"10px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:8, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:5 }}>
+                      style={{ flex:1, padding:"10px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:8, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                       <Icon name="share" size={12} color="var(--ink)" /> Del
                     </button>
                     <button

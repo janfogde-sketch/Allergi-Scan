@@ -146,7 +146,7 @@ export default function SearchScreen({
         />
       ))}
       {resultsWithSafety.length > 0 && hiddenUnsafeCount > 0 && (
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:5, padding:"8px 12px", fontSize:11, color:"var(--muted)", textAlign:"center" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"8px 12px", fontSize:11, color:"var(--muted)", textAlign:"center" }}>
           <Icon name="block" size={12} color="var(--muted)" /> {hiddenUnsafeCount} produkt{hiddenUnsafeCount!==1?"er":""} mere skjult — indeholder allergener for {searchScopeLabel}
         </div>
       )}
