@@ -882,93 +882,93 @@ const lookupProduct = useCallback(async (ean) => {
 
   const renderHelpModal = () => {
     const helpContent = {
-      "home": { title:"📷 Scanner", tips:[
-        { icon:"📱", title:"Skan stregkode", desc:"Tryk på det grønne scan-felt for at åbne kameraet, og hold det roligt over stregkoden. Appen scanner automatisk." },
-        { icon:"🔍", title:"Søg produkter", desc:"Kan du ikke scanne? Brug genvejen 'Søg produkter' længere nede på skærmen til at finde varer ved navn." },
-        { icon:"🔢", title:"Indtast manuelt", desc:"Har du kun tallene fra stregkoden? Tryk 'Indtast EAN-nummer manuelt' under scan-feltet." },
-        { icon:"⚡", title:"Hurtig scanning", desc:"God belysning og rolig hånd giver hurtigere og mere præcist resultat." },
-        { icon:"📜", title:"Historik", desc:"Dine seneste scanninger gemmes automatisk — find dem under Profil." },
+      "home": { title:"Scanner", titleIcon:"camera", tips:[
+        { icon:"barcode", title:"Skan stregkode", desc:"Tryk på det grønne scan-felt for at åbne kameraet, og hold det roligt over stregkoden. Appen scanner automatisk." },
+        { icon:"search", title:"Søg produkter", desc:"Kan du ikke scanne? Brug genvejen 'Søg produkter' længere nede på skærmen til at finde varer ved navn." },
+        { icon:"hash", title:"Indtast manuelt", desc:"Har du kun tallene fra stregkoden? Tryk 'Indtast EAN-nummer manuelt' under scan-feltet." },
+        { icon:"zap", title:"Hurtig scanning", desc:"God belysning og rolig hånd giver hurtigere og mere præcist resultat." },
+        { icon:"list", title:"Historik", desc:"Dine seneste scanninger gemmes automatisk — find dem under Profil." },
       ]},
-      "recipes": { title:"🍝 Opskrifter", tips:[
-        { icon:"🔍", title:"Søg og filtrer", desc:"Søg på navn eller vælg kategori. Slå 'Kun sikre' til for at skjule opskrifter med dine allergener." },
-        { icon:"❤️", title:"Favoritter", desc:"Tryk hjerte-ikonet for at gemme en opskrift til Favoritter-fanen." },
-        { icon:"👤", title:"Portionsjustering", desc:"Åbn en opskrift og tryk + / − for at skalere ingredienser automatisk." },
-        { icon:"🛒", title:"Indkøbsliste", desc:"Tryk 'Tilføj til indkøbsliste' for at sende ingredienser direkte til din liste." },
+      "recipes": { title:"Opskrifter", titleIcon:"recipes", tips:[
+        { icon:"search", title:"Søg og filtrer", desc:"Søg på navn eller vælg kategori. Slå 'Kun sikre' til for at skjule opskrifter med dine allergener." },
+        { icon:"heart", title:"Favoritter", desc:"Tryk hjerte-ikonet for at gemme en opskrift til Favoritter-fanen." },
+        { icon:"profile", title:"Portionsjustering", desc:"Åbn en opskrift og tryk + / − for at skalere ingredienser automatisk." },
+        { icon:"cart", title:"Indkøbsliste", desc:"Tryk 'Tilføj til indkøbsliste' for at sende ingredienser direkte til din liste." },
       ]},
-      "search": { title:"🔍 Søg produkter", tips:[
-        { icon:"👤", title:"Filtrér efter profil", desc:"Vælg hvilke profiler resultaterne skal tjekkes op imod, øverst på siden." },
-        { icon:"⚙️", title:"Allergener og kategori", desc:"Fold 'Allergener' ud for at tilføje ekstra allergener manuelt, eller indsnævr til én kategori — begge sidder lige over søgefeltet." },
-        { icon:"🛒", title:"Tilføj til liste", desc:"Tryk '+ Liste' på et resultat for at sende det direkte til din indkøbsliste." },
+      "search": { title:"Søg produkter", titleIcon:"search", tips:[
+        { icon:"profile", title:"Filtrér efter profil", desc:"Vælg hvilke profiler resultaterne skal tjekkes op imod, øverst på siden." },
+        { icon:"edit", title:"Allergener og kategori", desc:"Fold 'Allergener' ud for at tilføje ekstra allergener manuelt, eller indsnævr til én kategori — begge sidder lige over søgefeltet." },
+        { icon:"cart", title:"Tilføj til liste", desc:"Tryk '+ Liste' på et resultat for at sende det direkte til din indkøbsliste." },
       ]},
-      "list": { title:"🛒 Indkøbsliste", tips:[
-        { icon:"📋", title:"Flere lister", desc:"Tryk på listenavnet øverst for at skifte mellem lister eller oprette en ny." },
-        { icon:"🔗", title:"Del listen", desc:"Tryk 'Del' for at give hele husstanden, udvalgte personer, eller alle med et link adgang til listen." },
-        { icon:"✏️", title:"Tilføj varer", desc:"Skriv en vare og tryk Tilføj — eller send direkte fra en opskrift eller et søgeresultat." },
-        { icon:"✓", title:"Afkryds og ryd", desc:"Tryk på en vare for at markere den som købt, og brug 'Ryd' for at fjerne alle købte varer på én gang." },
+      "list": { title:"Indkøbsliste", titleIcon:"cart", tips:[
+        { icon:"list", title:"Flere lister", desc:"Tryk på listenavnet øverst for at skifte mellem lister eller oprette en ny." },
+        { icon:"link", title:"Del listen", desc:"Tryk 'Del' for at give hele husstanden, udvalgte personer, eller alle med et link adgang til listen." },
+        { icon:"edit", title:"Tilføj varer", desc:"Skriv en vare og tryk Tilføj — eller send direkte fra en opskrift eller et søgeresultat." },
+        { icon:"check", title:"Afkryds og ryd", desc:"Tryk på en vare for at markere den som købt, og brug 'Ryd' for at fjerne alle købte varer på én gang." },
       ]},
-      "profile": { title:"👤 Profil", tips:[
-        { icon:"⚙️", title:"Mine præferencer", desc:"Allergier, diæter og E-numre du overvåges for — tryk 'Rediger' for at ændre dem." },
-        { icon:"👨‍👩‍👧", title:"Din husstand", desc:"Konti du har inviteret deler automatisk scanningshistorik, favoritter og indkøbslister med dig." },
-        { icon:"📜", title:"Mine / Husstanden", desc:"Under historik og favoritter kan du skifte mellem kun dine egne og hele husstandens." },
+      "profile": { title:"Profil", titleIcon:"profile", tips:[
+        { icon:"edit", title:"Mine præferencer", desc:"Allergier, diæter og E-numre du overvåges for — tryk 'Rediger' for at ændre dem." },
+        { icon:"family", title:"Din husstand", desc:"Konti du har inviteret deler automatisk scanningshistorik, favoritter og indkøbslister med dig." },
+        { icon:"list", title:"Mine / Husstanden", desc:"Under historik og favoritter kan du skifte mellem kun dine egne og hele husstandens." },
       ]},
-      "family": { title:"👨‍👩‍👧 Familie", tips:[
+      "family": { title:"Familie", titleIcon:"family", tips:[
         { icon:"👶", title:"Allergiprofiler", desc:"Opret en profil for familiemedlemmer uden egen konto (fx et barn) — aktivér dem for at tjekke deres allergier ved scanning." },
-        { icon:"🏠", title:"Din husstand", desc:"Rigtige konti du har inviteret deler automatisk data. Kun den der sendte invitationen kan fjerne forbindelsen igen." },
-        { icon:"🔗", title:"Invitér via link", desc:"Del linket med en voksen i familien — når de opretter en konto via linket, bliver I automatisk en husstand." },
+        { icon:"home", title:"Din husstand", desc:"Rigtige konti du har inviteret deler automatisk data. Kun den der sendte invitationen kan fjerne forbindelsen igen." },
+        { icon:"link", title:"Invitér via link", desc:"Del linket med en voksen i familien — når de opretter en konto via linket, bliver I automatisk en husstand." },
       ]},
-      "result": { title:"📦 Scanningsresultat", tips:[
+      "result": { title:"Scanningsresultat", titleIcon:"package", tips:[
         { icon:"🚦", title:"Farvet ramme", desc:"Grøn = sikkert, gul = advarsel, rød = farligt — vurderet ud fra dine aktive profiler." },
-        { icon:"✅", title:"Sikre alternativer", desc:"Ved advarsel eller fare foreslår vi sikre alternativer i samme kategori, du kan trykke direkte på." },
-        { icon:"📖", title:"Tryk på en ingrediens", desc:"Åbner leksikonet med forklaring på allergener, E-numre og tilsætningsstoffer." },
-        { icon:"❤️", title:"Favorit og del", desc:"De to runde knapper øverst på billedet gemmer produktet som favorit eller deler det." },
-        { icon:"✏️", title:"Ret forkerte data", desc:"Mangler eller fejler noget? Tryk 'Ret forkerte data' nederst for at foreslå en rettelse." },
+        { icon:"check", title:"Sikre alternativer", desc:"Ved advarsel eller fare foreslår vi sikre alternativer i samme kategori, du kan trykke direkte på." },
+        { icon:"book", title:"Tryk på en ingrediens", desc:"Åbner leksikonet med forklaring på allergener, E-numre og tilsætningsstoffer." },
+        { icon:"heart", title:"Favorit og del", desc:"De to runde knapper øverst på billedet gemmer produktet som favorit eller deler det." },
+        { icon:"edit", title:"Ret forkerte data", desc:"Mangler eller fejler noget? Tryk 'Ret forkerte data' nederst for at foreslå en rettelse." },
       ]},
-      "history": { title:"📜 Scanningshistorik", tips:[
-        { icon:"👨‍👩‍👧", title:"Mine / Husstanden", desc:"Skift mellem kun dine egne scanninger og hele husstandens, hvis du har en." },
+      "history": { title:"Scanningshistorik", titleIcon:"list", tips:[
+        { icon:"family", title:"Mine / Husstanden", desc:"Skift mellem kun dine egne scanninger og hele husstandens, hvis du har en." },
         { icon:"👆", title:"Åbn en scanning", desc:"Tryk på en linje for at se det fulde resultat igen." },
       ]},
-      "favorites": { title:"⭐ Favoritter", tips:[
-        { icon:"❤️", title:"Gem favoritter", desc:"Tryk hjerte-ikonet på et produkt under scanning for at gemme det her." },
-        { icon:"👨‍👩‍👧", title:"Mine / Husstanden", desc:"Se dine egne favoritter eller hele husstandens delte favoritter." },
-        { icon:"×", title:"Fjern", desc:"Du kan kun fjerne dine egne favoritter herfra — ikke andres." },
+      "favorites": { title:"Favoritter", titleIcon:"star", tips:[
+        { icon:"heart", title:"Gem favoritter", desc:"Tryk hjerte-ikonet på et produkt under scanning for at gemme det her." },
+        { icon:"family", title:"Mine / Husstanden", desc:"Se dine egne favoritter eller hele husstandens delte favoritter." },
+        { icon:"x", title:"Fjern", desc:"Du kan kun fjerne dine egne favoritter herfra — ikke andres." },
       ]},
-      "madpas": { title:"🌍 Madpas", tips:[
-        { icon:"🌐", title:"Vælg sprog", desc:"Vælg sproget for landet du besøger. EatSafe oversætter dine allergier automatisk." },
-        { icon:"📋", title:"Vis til tjeneren", desc:"Tryk 'Vis til tjener' for en stor, tydelig skærm du kan vise restaurantpersonalet." },
-        { icon:"🔊", title:"Oplæsning", desc:"Tryk højttalerikonet for at høre udtalen på det lokale sprog." },
+      "madpas": { title:"Madpas", titleIcon:"globe", tips:[
+        { icon:"globe", title:"Vælg sprog", desc:"Vælg sproget for landet du besøger. EatSafe oversætter dine allergier automatisk." },
+        { icon:"list", title:"Vis til tjeneren", desc:"Tryk 'Vis til tjener' for en stor, tydelig skærm du kan vise restaurantpersonalet." },
+        { icon:"speaker", title:"Oplæsning", desc:"Tryk højttalerikonet for at høre udtalen på det lokale sprog." },
       ]},
-      "editprofile": { title:"✏️ Rediger profil", tips:[
-        { icon:"🚨", title:"Allergier og intolerancer", desc:"Tryk for at slå en allergi til eller fra. Har du en der ikke står på listen? Tilføj den under 'Andre allergier'." },
-        { icon:"🥗", title:"Diæter", desc:"Vælg diæter (fx vegansk, glutenfri), som produkter og opskrifter tjekkes op imod." },
-        { icon:"🔢", title:"E-numre", desc:"Vælg specifikke E-numre du vil overvåges for, ud over dine allergier." },
+      "editprofile": { title:"Rediger profil", titleIcon:"edit", tips:[
+        { icon:"warning", title:"Allergier og intolerancer", desc:"Tryk for at slå en allergi til eller fra. Har du en der ikke står på listen? Tilføj den under 'Andre allergier'." },
+        { icon:"package", title:"Diæter", desc:"Vælg diæter (fx vegansk, glutenfri), som produkter og opskrifter tjekkes op imod." },
+        { icon:"hash", title:"E-numre", desc:"Vælg specifikke E-numre du vil overvåges for, ud over dine allergier." },
       ]},
-      "suggest_edit": { title:"✏️ Foreslå rettelse", tips:[
-        { icon:"📷", title:"Ingrediensliste", desc:"Fotografér etiketten og lad OCR læse teksten, eller ret ingredienserne manuelt." },
-        { icon:"⏳", title:"Godkendelse", desc:"Dit forslag gennemgås, før ændringen bliver synlig for andre brugere." },
+      "suggest_edit": { title:"Foreslå rettelse", titleIcon:"edit", tips:[
+        { icon:"camera", title:"Ingrediensliste", desc:"Fotografér etiketten og lad OCR læse teksten, eller ret ingredienserne manuelt." },
+        { icon:"clock", title:"Godkendelse", desc:"Dit forslag gennemgås, før ændringen bliver synlig for andre brugere." },
       ]},
-      "notfound": { title:"📦 Tilføj nyt produkt", tips:[
-        { icon:"📷", title:"Fotografér", desc:"Tag billede af forsiden og ingredienslisten — vi udfylder automatisk navn og allergener med AI." },
-        { icon:"👀", title:"Gennemgå", desc:"Tjek at det udfyldte er korrekt, før du sender produktet ind." },
-        { icon:"⏳", title:"Godkendelse", desc:"Produktet gennemgås, før det er synligt for andre brugere." },
+      "notfound": { title:"Tilføj nyt produkt", titleIcon:"package", tips:[
+        { icon:"camera", title:"Fotografér", desc:"Tag billede af forsiden og ingredienslisten — vi udfylder automatisk navn og allergener med AI." },
+        { icon:"eye", title:"Gennemgå", desc:"Tjek at det udfyldte er korrekt, før du sender produktet ind." },
+        { icon:"clock", title:"Godkendelse", desc:"Produktet gennemgås, før det er synligt for andre brugere." },
       ]},
-      "submitted": { title:"✅ Indsendt", tips:[
+      "submitted": { title:"Indsendt", titleIcon:"check", tips:[
         { icon:"🙏", title:"Tak for hjælpen", desc:"Din indsendelse gennemgås snarest og bliver synlig for andre, når den er godkendt." },
       ]},
-      "knowledge": { title:"📖 Leksikon", tips:[
-        { icon:"🔍", title:"Søg eller filtrér", desc:"Søg efter et emne, eller vælg en kategori som allergener, E-numre eller diæter." },
+      "knowledge": { title:"Leksikon", titleIcon:"book", tips:[
+        { icon:"search", title:"Søg eller filtrér", desc:"Søg efter et emne, eller vælg en kategori som allergener, E-numre eller diæter." },
         { icon:"👆", title:"Åbnet fra et produkt", desc:"Tryk på en ingrediens eller et E-nummer i et scanningsresultat for at hoppe direkte hertil." },
       ]},
-      "restaurantguide": { title:"🍽️ Restaurantguide", tips:[
-        { icon:"📋", title:"Tips til hvert trin", desc:"Råd til før, under og efter restaurantbesøg, når du spiser ude med allergier." },
-        { icon:"🌍", title:"Vis til tjeneren", desc:"Brug dit Madpas (under Profil) til at vise dine allergier direkte til personalet." },
+      "restaurantguide": { title:"Restaurantguide", titleIcon:"utensils", tips:[
+        { icon:"list", title:"Tips til hvert trin", desc:"Råd til før, under og efter restaurantbesøg, når du spiser ude med allergier." },
+        { icon:"globe", title:"Vis til tjeneren", desc:"Brug dit Madpas (under Profil) til at vise dine allergier direkte til personalet." },
       ]},
-      "admin": { title:"🛡️ Admin", tips:[
-        { icon:"✅", title:"Godkend indsendelser", desc:"Gennemgå og godkend eller afvis nye produkter og rettelsesforslag fra brugere." },
-        { icon:"👥", title:"Brugere og tickets", desc:"Administrér brugerroller og besvar indsendt feedback under de øvrige faner." },
+      "admin": { title:"Admin", titleIcon:"shield", tips:[
+        { icon:"check", title:"Godkend indsendelser", desc:"Gennemgå og godkend eller afvis nye produkter og rettelsesforslag fra brugere." },
+        { icon:"family", title:"Brugere og tickets", desc:"Administrér brugerroller og besvar indsendt feedback under de øvrige faner." },
       ]},
     };
-    const content = helpContent[screen] || { title:"ℹ️ Hjælp", tips:[
-      { icon:"💬", title:"Send feedback", desc:"Brug Feedback-knappen øverst til at rapportere problemer eller forslag." },
+    const content = helpContent[screen] || { title:"Hjælp", titleIcon:"info", tips:[
+      { icon:"message", title:"Send feedback", desc:"Brug Feedback-knappen øverst til at rapportere problemer eller forslag." },
     ]};
     return (
       <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.85)", display:"flex", alignItems:"flex-end" }}
@@ -976,14 +976,18 @@ const lookupProduct = useCallback(async (ean) => {
         <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
           onClick={e => e.stopPropagation()}>
           <div style={UI.rowBetweenMb16}>
-            <div style={UI.ufs18_fw900_cink}>{content.title}</div>
+            <div style={{ ...UI.ufs18_fw900_cink, display:"flex", alignItems:"center", gap:7 }}><Icon name={content.titleIcon} size={17} color="var(--ink)" /> {content.title}</div>
             <button onClick={() => setHelpOpen(false)} aria-label="Luk"
               style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
             {content.tips.map((tip, i) => (
               <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
-                <div style={UI.ufs22_shr0}>{tip.icon}</div>
+                <div style={{ ...UI.ufs22_shr0, display:"flex" }}>
+                  {typeof tip.icon === "string" && !["👶","🚦","👆","🙏"].includes(tip.icon)
+                    ? <Icon name={tip.icon} size={20} color="var(--ink2)" />
+                    : <span style={UI.ufs22_shr0}>{tip.icon}</span>}
+                </div>
                 <div>
                   <div style={UI.ufs13_fw800_cink_mb3}>{tip.title}</div>
                   <div style={UI.ufs12_cmuted2_lh16}>{tip.desc}</div>
@@ -992,8 +996,8 @@ const lookupProduct = useCallback(async (ean) => {
             ))}
           </div>
           <button onClick={() => { setHelpOpen(false); setFeedbackOpen(true); setFeedbackDone(false); }}
-            style={{ width:"100%", padding:"12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted2)", cursor:"pointer" }}>
-            💬 Send feedback eller rapportér fejl
+            style={{ width:"100%", padding:"12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+            <Icon name="message" size={13} color="var(--muted2)" /> Send feedback eller rapportér fejl
           </button>
         </div>
       </div>
@@ -1008,17 +1012,17 @@ const lookupProduct = useCallback(async (ean) => {
         body: "Du er en af de første til at prøve EatSafe. Vi er glade for at have dig med — og vi er ærlige: appen er ikke færdig endnu.\n\nSom beta-bruger hjælper du os med at finde fejl, forbedre brugeroplevelsen og sikre at appen virker for rigtige allergiramte.",
       },
       {
-        emoji: "💬",
+        emoji: "message",
         title: "Giv os din mening",
         body: "Tryk på Feedback-knappen øverst i appen når du støder på noget — en fejl, noget der ser mærkeligt ud, eller en idé til forbedring.\n\nVi læser alt. Din feedback er det vigtigste redskab vi har i denne fase.",
       },
       {
-        emoji: "❓",
+        emoji: "info",
         title: "Brug hjælp-knappen",
         body: "Er du i tvivl om hvordan noget virker? Tryk på ? øverst — der finder du en kort guide til den skærm du står på.\n\nHvis du stadig er i tvivl, brug Feedback og skriv til os.",
       },
       {
-        emoji: "⚠️",
+        emoji: "warning",
         title: "En vigtig bemærkning",
         body: "EatSafe er under udvikling. Allergendata kan mangle eller være ukorrekte.\n\nTjek ALTID den fysiske emballage — appen er et hjælpeværktøj, ikke en garanti. Vi arbejder på at gøre dataene så præcise som muligt.",
       },
@@ -1043,7 +1047,9 @@ const lookupProduct = useCallback(async (ean) => {
 
           {/* Content */}
           <div style={{ textAlign:"center", marginBottom:28 }}>
-            <div style={UI.ufs52_mb16}>{step.emoji}</div>
+            <div style={{ marginBottom:16, display:"flex", justifyContent:"center" }}>
+              {step.emoji === "🧪" ? <span style={{ fontSize:52 }}>{step.emoji}</span> : <Icon name={step.emoji} size={44} color="var(--green)" />}
+            </div>
             <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)", marginBottom:14,
               letterSpacing:"-.3px" }}>{step.title}</div>
             <div style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.7,
@@ -1161,7 +1167,7 @@ const lookupProduct = useCallback(async (ean) => {
               onClick={e => e.stopPropagation()}>
 
               <div style={UI.utacenter_mb20}>
-                <div style={UI.ufs48_mb10}>⚠️</div>
+                <div style={{ ...UI.ufs48_mb10, display:"flex", justifyContent:"center" }}><Icon name="warning" size={40} color="var(--red)" /></div>
                 <div style={{ fontSize:19, fontWeight:900, color:"var(--red)", marginBottom:8 }}>Slet din konto</div>
                 <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.7 }}>
                   Dette sletter permanent alle dine data — allergier, familie, historik og præferencer. Handlingen kan ikke fortrydes.
@@ -1172,8 +1178,8 @@ const lookupProduct = useCallback(async (ean) => {
               <div style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, padding:"12px 14px", marginBottom:16 }}>
                 <div style={{ fontSize:11, fontWeight:700, color:"var(--red)", marginBottom:8 }}>FØLGENDE DATA SLETTES:</div>
                 {["Din profil og login","Allergier og præferencer","Familiemedlemmer","Scanningshistorik","Indkøbslister","Feedback og tickets"].map(item => (
-                  <div key={item} style={{ fontSize:12, color:"var(--red)", padding:"3px 0", display:"flex", gap:8 }}>
-                    <span>✗</span><span>{item}</span>
+                  <div key={item} style={{ fontSize:12, color:"var(--red)", padding:"3px 0", display:"flex", alignItems:"center", gap:8 }}>
+                    <Icon name="x" size={11} color="var(--red)" /><span>{item}</span>
                   </div>
                 ))}
               </div>
@@ -1194,8 +1200,8 @@ const lookupProduct = useCallback(async (ean) => {
 
               <button onClick={deleteOwnAccount}
                 disabled={deleteConfirmText.toLowerCase() !== "slet" || deletingAccount}
-                style={{ width:"100%", padding:"15px", background: deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--ink)", cursor: deleteConfirmText.toLowerCase()==="slet" ? "pointer" : "not-allowed", marginBottom:10 }}>
-                {deletingAccount ? "Sletter…" : "🗑️ Slet min konto permanent"}
+                style={{ width:"100%", padding:"15px", background: deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--ink)", cursor: deleteConfirmText.toLowerCase()==="slet" ? "pointer" : "not-allowed", marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
+                {deletingAccount ? "Sletter…" : <><Icon name="trash" size={14} color="var(--ink)" /> Slet min konto permanent</>}
               </button>
 
               <button onClick={() => setShowDeleteAccount(false)}
@@ -1247,7 +1253,7 @@ const lookupProduct = useCallback(async (ean) => {
             display:"flex", alignItems:"center", justifyContent:"center", gap:8,
             textAlign:"center",
           }}>
-            📵 Offline — viser lokalt cachede data
+            <Icon name="block" size={13} color="var(--on-green)" /> Offline — viser lokalt cachede data
           </div>
         )}
 
