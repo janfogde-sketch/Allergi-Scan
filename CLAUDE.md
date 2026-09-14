@@ -353,6 +353,19 @@ specifikke emoji (`entry.emoji`/`cat.emoji`/`f.emoji`) bevidst bevaret —
 er en distinkt identitet (som kategori-glyffer andre steder), og flaget er
 ægte indhold.
 
+**Niende bølge: `OnboardingScreen.jsx`** (første-indtryk-flowet — høj
+prioritet). Erstattede: beta-intro-listen (💬/❓/⚠️→message/info/warning),
+indkøbsliste-invitations-bannere (🛒→cart, 2 steder), fejl-labels (⚠️→warning,
+2 steder), push-notifikations-sektionen (🔔→bell hero-ikon + knap-ikon,
+notifikations-type-listen ✅/👨‍👩‍👧/🎉→check/family/search), diæt- og allergen-
+chip-checkmarks (✓→check, 2 steder), E-nummer-valg-checkmark, afsluttende
+disclaimer (⚕️→info) og "Gem ændringer"-knappen (✓→check). De tre store
+emne-ikoner (🚨/🔬/🌱 for allergi/E-numre/diæt-introduktionen) samt de
+rent emotionelle 🧪/✨/🤝 (beta-hero, "tre områder"-hero, fællesskab-kort)
+bevidst bevaret — hhv. kategori-identitet og fejring, ikke chrome. Ingen
+flathed-bugs fundet i denne fil (bruger konsekvent `.btn btn-primary`, som
+allerede har skygge).
+
 **Tidligere flagget, stadig kun delvist gjort:** en fuld emoji→SVG-ikon-sanering af
 hele appen.
 
