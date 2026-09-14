@@ -109,7 +109,7 @@ siddende fast på viewporten. **Løsning:** render den slags overlays via
   info, chevronRight, chevronDown, chevronUp, heart, trash, share, cart, camera, bulb,
   speaker, speakerOff, plus, edit, family, madpas, book, flame, image, flashlight, shield,
   block, link, bell, tag, package, message, chart, bug, download, eye, eyeOff, refresh,
-  mail, calendar, key, file, clock, save, utensils`. **Ingen emoji i UI'et længere hvor det kan
+  mail, calendar, key, file, clock, save, utensils, hash, zap`. **Ingen emoji i UI'et længere hvor det kan
   undgås** — brug/tilføj SVG-ikoner i stedet (se designsystem-noter nedenfor for kendte
   resterende emoji-steder, primært content-emoji som allergen-glyffer og kategori-ikoner).
 - `showToast(message, type?)` + `<ToastHost/>` — delt, designkonsistent erstatning for
@@ -463,6 +463,42 @@ fuldt inline styles, så den tidligere globale `:active`-udrulning (kun
 CSS-klasser med `cursor:pointer`) aldrig fangede den. Nye delte klasser
 `.menu-item`/`.menu-profile-card` i theme.jsx, samme hover/tryk-mønster
 som `.hist-row`.
+
+**14. sept. 2026 — Fjortende bølge: `App.jsx`, `ProfileScreen.jsx`,
+`SharedComponents.jsx`.** Brugeren spurgte om saneringen var færdig på
+tværs af hele appen — endnu et "nej" blev afdækket ved et hurtigt tjek:
+- **`ProfileScreen.jsx`:** Historik-, Favoritter- og Familie-under-
+  skærmene (bor alle tre i denne fil, ikke i egne filer trods
+  arkitektur-tabellen i afsnit 3 — første Claude-besked i denne omgang
+  fejlagtigt antog de lå i `App.jsx`, rettet undervejs) var kun delvist
+  dækket af tredje bølge. 👨‍👩‍👧/⚙️/✏️ → family/info/edit.
+- **`SharedComponents.jsx`:** `ListPickerSheet` (flagget sidst som ikke
+  tjekket) og debug-komponenten `PageID`s "✓ kopieret". `getProductIcon()`s
+  kategori-emoji og `safetyStyle()`s ×/!/✓ bevidst IKKE rørt — hhv.
+  indhold og et allerede minimalistisk, monokromt tegnsæt.
+- **`App.jsx` — det største fund:** hjælpe-modalens indhold (spørgsmåls-
+  tegns-knappen øverst på hver skærm) er en datastruktur med titel + 2-5
+  tips for samtlige 18 skærme, ca. 50 emoji, aldrig ramt af nogen bølge
+  fordi strukturen ligger i `App.jsx` og ikke i en skærm-fil. Konverteret
+  alt til `Icon` (2 nye delte ikoner: `hash`, `zap`). Desuden beta-intro-
+  carousellen, "Slet konto"-modalen, "hvad slettes"-listen, offline-
+  banneret og slet-knappen. Bevidst bevaret (ingen gode ikon-matches,
+  håndteret af en ny betinget fallback i render-koden): 👶 🚦 👆 🙏 🧪.
+  `InstallPrompt.jsx` (også tidligere flagget) viste sig allerede ren.
+
+**Lektion — teknisk uheld undervejs:** egen manuel indtastning introducerede
+gentagne gange en kyrillisk fejltastning i "købt" (samme mojibake-risiko
+denne fils egen arbejdsgang advarer om) — løst ved at bruge et Python-script
+til tekst-tunge erstatninger i stedet for at genskrive dansk tekst i hånden.
+Første script-forsøg havde en indekseringsfejl (`lines[start:end] = [x]`
+efterfulgt af et nyt slice på den allerede-muterede liste) der stille
+slettede en del af `renderHelpModal`/`renderBetaIntro` uden fejlmelding —
+opdaget ved at sammenligne `git diff --stat`s antal linjer mod det
+forventede omfang (small targeted edit burde IKKE give 150+ sletninger),
+revertede filen med `git checkout HEAD -- <fil>` og lavede det om med en
+sikrere metode (slice på strengen, ikke på linje-listen). **Tjek altid
+`git diff --stat` efter et scriptet bulk-edit, før der committes** — et
+overraskende stort antal sletninger er et rødt flag, ikke støj.
 
 **14. sept. 2026 — session sat på pause af brugeren** ("Stop for nu. Når vi
 starter igen skal du tilføje disse punkter til arbejdet"), med endnu en
