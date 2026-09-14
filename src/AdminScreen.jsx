@@ -6,7 +6,7 @@ import { useAuthContext } from "./AuthContext.jsx";
 import { useAdminContext } from "./AdminContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { ALL_ALLERGEN_WORDS } from "./allergenKeywords.js";
-import { Loader, Icon } from "./SharedComponents.jsx";
+import { Loader, Icon, showToast } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 
 // Fremhæv allergener og E-numre i ingredienstekst
@@ -172,7 +172,7 @@ export default function AdminScreen() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setAdminRecipes(prev => prev.filter(r => r.id !== id));
       setEditingRecipe(null);
-    } catch (e) { alert("Fejl: " + e.message); }
+    } catch (e) { showToast("Fejl: " + e.message, "error"); }
     setRecipeActionLoading(false);
   };
 
@@ -187,8 +187,8 @@ export default function AdminScreen() {
           body: JSON.stringify(fields) }
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      alert("Gemt ✓");
-    } catch (e) { alert("Fejl: " + e.message); }
+      showToast("Gemt");
+    } catch (e) { showToast("Fejl: " + e.message, "error"); }
     setRecipeActionLoading(false);
   };
 
@@ -233,21 +233,23 @@ export default function AdminScreen() {
               <div style={UI.udflex_aicenter_g12_mb16}>
                 <button onClick={() => setOpenTicket(null)} aria-label="Luk"
                   style={UI.ubgsurface2_bdnone_br50_w32_h32_curpointer_fs18_cmuted}>×</button>
-                <div style={{ flex:1, fontSize:16, fontWeight:800, color:"var(--ink)" }}>🐛 Ticket #{openTicket.id?.slice(0,8)}</div>
+                <div style={{ flex:1, fontSize:16, fontWeight:800, color:"var(--ink)", display:"flex", alignItems:"center", gap:6 }}><Icon name="bug" size={15} color="var(--ink)" /> Ticket #{openTicket.id?.slice(0,8)}</div>
               </div>
 
               {/* Status knapper */}
               <div style={UI.udflex_g6_mb14}>
                 {[
-                  { val:"open",        label:"🔴 Åben" },
-                  { val:"in_progress", label:"🟡 I gang" },
-                  { val:"resolved",    label:"🟢 Løst" },
+                  { val:"open",        label:"Åben",   dot:"var(--red)" },
+                  { val:"in_progress", label:"I gang",  dot:"var(--amber)" },
+                  { val:"resolved",    label:"Løst",    dot:"var(--green)" },
                 ].map(s => (
                   <button key={s.val} onClick={() => updateTicketStatus(openTicket.id, s.val)}
                     style={{ flex:1, padding:"8px 4px", borderRadius:10, border:`1px solid ${openTicket.status===s.val?"var(--green)":"var(--border)"}`,
                       background: openTicket.status===s.val ? "var(--green-lt)" : "var(--surface)",
+                      display:"flex", alignItems:"center", justifyContent:"center", gap:5,
                       fontFamily:"var(--f)", fontSize:10, fontWeight:700,
                       color: openTicket.status===s.val ? "var(--green)" : "var(--muted)", cursor:"pointer" }}>
+                    <span style={{ width:7, height:7, borderRadius:"50%", background:s.dot, flexShrink:0 }} />
                     {s.label}
                   </button>
                 ))}
@@ -271,7 +273,7 @@ export default function AdminScreen() {
               {/* Diagnostisk info */}
               {openTicket.context && (
                 <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
-                  <div style={UI.ufs11_cmuted_fw700_mb8}>📊 DIAGNOSTISK INFO</div>
+                  <div style={{ ...UI.ufs11_cmuted_fw700_mb8, display:"flex", alignItems:"center", gap:5 }}><Icon name="chart" size={11} color="var(--muted)" /> DIAGNOSTISK INFO</div>
                   <div style={UI.grid2gap6}>
                     {[
                       ["Bruger",      openTicket.context.user_name || "Anonym"],
@@ -329,7 +331,7 @@ export default function AdminScreen() {
 
               {/* Kopi til Claude */}
               <div style={{ background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12, padding:"14px", marginBottom:10 }}>
-                <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>📋 Send til Claude til fejlretning</div>
+                <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:6, display:"flex", alignItems:"center", gap:6 }}><Icon name="link" size={13} color="var(--ink)" /> Send til Claude til fejlretning</div>
                 <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.6, marginBottom:10 }}>
                   Kopiér nedenstående og indsæt direkte i Claude-chatten:
                 </div>
@@ -387,10 +389,10 @@ Analysér denne fejlrapport, før du retter noget:
 2. Analyse — undersøg relevant kode og find den sandsynlige rodårsag.
 3. Løsningsforslag — beskriv kort den påtænkte rettelse, inden den implementeres.
 Implementér derefter løsningen.`;
-                  navigator.clipboard?.writeText(txt).then(() => alert("Kopieret til udklipsholder!")).catch(() => alert(txt));
+                  navigator.clipboard?.writeText(txt).then(() => showToast("Kopieret til udklipsholder!")).catch(() => alert(txt));
                 }}
-                  style={UI.uw100_bggreen_bdnone_br10_p10px_fff_fs13_fw700_congreen_curp}>
-                  📋 Kopiér til Claude
+                  style={{ ...UI.uw100_bggreen_bdnone_br10_p10px_fff_fs13_fw700_congreen_curp, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                  <Icon name="link" size={14} color="var(--on-green)" /> Kopiér til Claude
                 </button>
               </div>
 
@@ -413,10 +415,10 @@ Implementér derefter løsningen.`;
                 style={UI.iconBtn}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2"><path strokeLinecap="round" d="M15 19l-7-7 7-7"/></svg>
               </button>
-              <div style={{ flex:1, fontSize:18, fontWeight:900, color:"var(--ink)" }}>🛡️ Admin</div>
+              <div style={{ flex:1, fontSize:18, fontWeight:900, color:"var(--ink)", display:"flex", alignItems:"center", gap:7 }}><Icon name="shield" size={17} color="var(--ink)" /> Admin</div>
               <button onClick={() => { loadAdminStats(); if (adminSection==="submissions") loadSubmissions(submissionFilter); if (adminSection==="tickets") loadTickets(); if (adminSection==="missing") loadMissingEans(); }}
-                style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:10, padding:"6px 12px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
-                🔄
+                style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:10, padding:"6px 12px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex" }}>
+                <Icon name="refresh" size={14} color="var(--ink)" />
               </button>
             </div>
 
@@ -606,23 +608,24 @@ Implementér derefter løsningen.`;
               <div className="fade-in">
                 <div style={{ display:"flex", gap:6, marginBottom:12 }}>
                   {[
-                    { val:"pending",  label:"⏳ Afventer", color:"var(--amber)" },
-                    { val:"approved", label:"✅ Godkendt",  color:"var(--green)" },
-                    { val:"rejected", label:"❌ Afvist",    color:"var(--red)" },
-                  ].map(({ val, label, color }) => (
+                    { val:"pending",  label:"Afventer", icon:"clock", color:"var(--amber)" },
+                    { val:"approved", label:"Godkendt", icon:"check", color:"var(--green)" },
+                    { val:"rejected", label:"Afvist",   icon:"x",     color:"var(--red)" },
+                  ].map(({ val, label, icon, color }) => (
                     <button key={val} onClick={() => { setSubmissionFilter(val); loadSubmissions(val); }}
                       style={{ flex:1, padding:"9px 4px", borderRadius:10, border:`1px solid ${submissionFilter===val ? color : "var(--border)"}`,
                         background: submissionFilter===val ? (val==="pending"?"var(--amber-lt)":val==="approved"?"var(--green-lt)":"var(--red-lt)") : "var(--surface)",
+                        display:"flex", alignItems:"center", justifyContent:"center", gap:5,
                         fontFamily:"var(--f)", fontSize:11, fontWeight:700,
                         color: submissionFilter===val ? color : "var(--muted)", cursor:"pointer" }}>
-                      {label}
+                      <Icon name={icon} size={12} color={submissionFilter===val ? color : "var(--muted)"} /> {label}
                     </button>
                   ))}
                 </div>
                 {submissionsLoading && <Loader text="Indlæser…" />}
                 {!submissionsLoading && submissions.length === 0 && (
                   <div style={UI.utacenter_p48px0}>
-                    <div style={UI.emoji48mb12}>{submissionFilter==="pending"?"🎉":"📭"}</div>
+                    <div style={{ ...UI.emoji48mb12, display:"flex", justifyContent:"center" }}>{submissionFilter==="pending" ? "🎉" : <Icon name="package" size={40} color="var(--muted)" />}</div>
                     <div style={UI.ufs16_fw800_cink}>{submissionFilter==="pending" ? "Ingen afventer" : "Ingen indsendelser"}</div>
                   </div>
                 )}
@@ -636,7 +639,7 @@ Implementér derefter løsningen.`;
                       <div key={s.id} onClick={() => openSubmissionForReview(s)}
                         style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", cursor:"pointer", boxShadow:"var(--sh)" }}>
                         <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
-                          <div style={{ width:48, height:48, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>{isEdit ? "✏️" : "📦"}</div>
+                          <div style={{ width:48, height:48, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name={isEdit ? "edit" : "package"} size={22} color="var(--ink2)" /></div>
                           <div style={UI.flexMin}>
                             <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:2 }}>
                               <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</div>
@@ -714,7 +717,7 @@ Implementér derefter løsningen.`;
                     color:"var(--ink2)", cursor:"pointer",
                     display:"flex", alignItems:"center", justifyContent:"center", gap:6,
                   }}>
-                    📥 Download åbne tickets ({adminTickets.filter(t => t.status === "open").length})
+                    <Icon name="download" size={13} color="var(--ink2)" /> Download åbne tickets ({adminTickets.filter(t => t.status === "open").length})
                   </button>
                 )}
 
@@ -781,11 +784,11 @@ Implementér derefter løsningen.`;
                       <div style={UI.ufs18_fw900_cink}>{openAdminUser.name || "Ingen navn"}</div>
                       <div style={UI.muted12mt2}>{openAdminUser.email}</div>
                       <div style={{ display:"flex", gap:6, marginTop:5 }}>
-                        <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: openAdminUser.role==="admin" ? "rgba(74,222,128,.2)" : "var(--surface2)", color: openAdminUser.role==="admin" ? "var(--green)" : "var(--muted)" }}>
-                          {openAdminUser.role==="admin" ? "🛡️ Admin" : "👤 Bruger"}
+                        <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: openAdminUser.role==="admin" ? "rgba(74,222,128,.2)" : "var(--surface2)", color: openAdminUser.role==="admin" ? "var(--green)" : "var(--muted)", display:"inline-flex", alignItems:"center", gap:4 }}>
+                          <Icon name={openAdminUser.role==="admin" ? "shield" : "profile"} size={10} color={openAdminUser.role==="admin" ? "var(--green)" : "var(--muted)"} /> {openAdminUser.role==="admin" ? "Admin" : "Bruger"}
                         </span>
-                        <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: openAdminUser.onboarding_completed ? "var(--green-lt)" : "var(--amber-lt)", color: openAdminUser.onboarding_completed ? "var(--green)" : "var(--amber)" }}>
-                          {openAdminUser.onboarding_completed ? "✓ Onboarding færdig" : "⏳ Onboarding mangler"}
+                        <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: openAdminUser.onboarding_completed ? "var(--green-lt)" : "var(--amber-lt)", color: openAdminUser.onboarding_completed ? "var(--green)" : "var(--amber)", display:"inline-flex", alignItems:"center", gap:4 }}>
+                          <Icon name={openAdminUser.onboarding_completed ? "check" : "clock"} size={10} color={openAdminUser.onboarding_completed ? "var(--green)" : "var(--amber)"} /> {openAdminUser.onboarding_completed ? "Onboarding færdig" : "Onboarding mangler"}
                         </span>
                       </div>
                     </div>
@@ -797,15 +800,15 @@ Implementér derefter løsningen.`;
                   <div style={UI.sectionLbl8}>Kontoinfo</div>
                   <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:14 }}>
                     {[
-                      ["📅 Oprettet", new Date(openAdminUser.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", year:"numeric" })],
-                      ["🔑 Login", openAdminUser.email?.includes("google") || openAdminUser.provider === "google" ? "Google OAuth" : "Email + kode"],
-                      ["📱 Telefon", openAdminUser.phone || "—"],
-                      ["🎂 Alder", openAdminUser.age ? openAdminUser.age + " år" : "—"],
-                      ["🆔 Bruger-ID", openAdminUser.id?.slice(0,12) + "…"],
-                      ["📋 Plan", openAdminUser.plan_id ? "Premium" : "Gratis"],
-                    ].map(([label, val]) => (
+                      ["calendar", "Oprettet", new Date(openAdminUser.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", year:"numeric" })],
+                      ["key", "Login", openAdminUser.email?.includes("google") || openAdminUser.provider === "google" ? "Google OAuth" : "Email + kode"],
+                      [null, "Telefon", openAdminUser.phone || "—"],
+                      [null, "Alder", openAdminUser.age ? openAdminUser.age + " år" : "—"],
+                      [null, "Bruger-ID", openAdminUser.id?.slice(0,12) + "…"],
+                      ["package", "Plan", openAdminUser.plan_id ? "Premium" : "Gratis"],
+                    ].map(([icon, label, val]) => (
                       <div key={label} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
-                        <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:3 }}>{label}</div>
+                        <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:3, display:"flex", alignItems:"center", gap:4 }}>{icon && <Icon name={icon} size={10} color="var(--muted)" />} {label}</div>
                         <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{val}</div>
                       </div>
                     ))}
@@ -830,7 +833,7 @@ Implementér derefter løsningen.`;
                       <div style={UI.sectionLbl8}>Foretrukne butikker</div>
                       <div style={UI.udflex_flewrap_g5_mb14}>
                         {openAdminUser.preferred_stores.map((s,i) => (
-                          <span key={i} style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:100, background:"var(--surface2)", color:"var(--ink)", border:"1px solid var(--border)" }}>🛒 {s}</span>
+                          <span key={i} style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:100, background:"var(--surface2)", color:"var(--ink)", border:"1px solid var(--border)", display:"inline-flex", alignItems:"center", gap:4 }}><Icon name="cart" size={10} color="var(--ink)" /> {s}</span>
                         ))}
                       </div>
                     </>
@@ -849,26 +852,26 @@ Implementér derefter løsningen.`;
                           setOpenAdminUser(u => ({ ...u, role: newRole }));
                         }}
                           style={{ width:"100%", padding:"13px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-                          {openAdminUser.role==="admin" ? "👤 Skift til Bruger" : "🛡️ Skift til Admin"}
+                          <Icon name={openAdminUser.role==="admin" ? "profile" : "shield"} size={14} color="var(--ink)" /> {openAdminUser.role==="admin" ? "Skift til Bruger" : "Skift til Admin"}
                         </button>
 
                         {/* Onboarding */}
                         <div style={UI.rowGap8}>
                           <button onClick={async () => {
                             const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${openAdminUser.id}`, { method:"PATCH", headers:{ "Content-Type":"application/json", "apikey":SUPABASE_ANON_KEY, "Authorization":`Bearer ${accessToken}`, "Prefer":"return=minimal" }, body: JSON.stringify({ onboarding_completed: true }) });
-                            if (!res.ok) { alert(`Fejl: HTTP ${res.status}`); return; }
+                            if (!res.ok) { showToast(`Fejl: HTTP ${res.status}`, "error"); return; }
                             setOpenAdminUser(u => ({ ...u, onboarding_completed: true }));
                           }}
-                            style={{ flex:1, padding:"11px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--green)", cursor:"pointer" }}>
-                            ✅ Markér onboarding færdig
+                            style={{ flex:1, padding:"11px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--green)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                            <Icon name="check" size={13} color="var(--green)" /> Markér onboarding færdig
                           </button>
                           <button onClick={async () => {
                             const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${openAdminUser.id}`, { method:"PATCH", headers:{ "Content-Type":"application/json", "apikey":SUPABASE_ANON_KEY, "Authorization":`Bearer ${accessToken}`, "Prefer":"return=minimal" }, body: JSON.stringify({ onboarding_completed: false }) });
-                            if (!res.ok) { alert(`Fejl: HTTP ${res.status}`); return; }
+                            if (!res.ok) { showToast(`Fejl: HTTP ${res.status}`, "error"); return; }
                             setOpenAdminUser(u => ({ ...u, onboarding_completed: false }));
                           }}
-                            style={{ flex:1, padding:"11px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--amber)", cursor:"pointer" }}>
-                            🔄 Nulstil onboarding
+                            style={{ flex:1, padding:"11px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--amber)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                            <Icon name="refresh" size={13} color="var(--amber)" /> Nulstil onboarding
                           </button>
                         </div>
 
@@ -878,8 +881,8 @@ Implementér derefter løsningen.`;
                           const data = await res.json();
                           alert(`Seneste scanninger (${data.length}):\n\n${data.map(s => `${s.product_name||s.ean} — ${new Date(s.scanned_at).toLocaleDateString("da-DK")}`).join("\n") || "Ingen scanninger"}`);
                         }}
-                          style={UI.uw100_p11px_bgsurface2_bd1pxsolid_br12_fff_fs12_fw700_cink_c}>
-                          📱 Se scanningshistorik
+                          style={{ ...UI.uw100_p11px_bgsurface2_bd1pxsolid_br12_fff_fs12_fw700_cink_c, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                          <Icon name="barcode" size={13} color="var(--ink)" /> Se scanningshistorik
                         </button>
 
                         {/* Se brugerens indsendelser */}
@@ -889,23 +892,23 @@ Implementér derefter løsningen.`;
                           setSubmissionFilter("pending");
                           loadSubmissions("pending");
                         }}
-                          style={UI.uw100_p11px_bgsurface2_bd1pxsolid_br12_fff_fs12_fw700_cink_c}>
-                          📦 Se indsendelser
+                          style={{ ...UI.uw100_p11px_bgsurface2_bd1pxsolid_br12_fff_fs12_fw700_cink_c, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                          <Icon name="package" size={13} color="var(--ink)" /> Se indsendelser
                         </button>
 
                         {/* Kopiér bruger-info til Claude */}
                         <button onClick={() => {
                           const txt = `Bruger: ${openAdminUser.name} (${openAdminUser.email})\nRolle: ${openAdminUser.role}\nOprettet: ${new Date(openAdminUser.created_at).toLocaleDateString("da-DK")}\nOnboarding: ${openAdminUser.onboarding_completed ? "Færdig" : "Ikke færdig"}\nAllergener: ${openAdminUser.allergens?.join(", ") || "Ingen"}\nID: ${openAdminUser.id}`;
-                          navigator.clipboard?.writeText(txt).then(() => alert("Kopieret!")).catch(() => alert(txt));
+                          navigator.clipboard?.writeText(txt).then(() => showToast("Kopieret!")).catch(() => alert(txt));
                         }}
-                          style={{ width:"100%", padding:"11px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
-                          📋 Kopiér info til Claude
+                          style={{ width:"100%", padding:"11px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                          <Icon name="link" size={13} color="var(--ink)" /> Kopiér info til Claude
                         </button>
 
                         {/* Slet */}
                         <button onClick={() => { deleteUser(openAdminUser.id); setOpenAdminUser(null); }}
-                          style={{ width:"100%", padding:"13px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
-                          🗑️ Slet bruger permanent
+                          style={{ width:"100%", padding:"13px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                          <Icon name="trash" size={14} color="var(--red)" /> Slet bruger permanent
                         </button>
                       </div>
                     </>
@@ -929,18 +932,18 @@ Implementér derefter løsningen.`;
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2"><path strokeLinecap="round" d="M15 19l-7-7 7-7"/></svg>
               </button>
               <div style={UI.flex1}>
-                <div style={UI.ufs17_fw800_cink}>{openSubmission.type === "edit" ? "✏️ Gennemse rettelsesforslag" : "Gennemse indsendelse"}</div>
+                <div style={{ ...UI.ufs17_fw800_cink, display:"flex", alignItems:"center", gap:6 }}>{openSubmission.type === "edit" && <Icon name="edit" size={15} color="var(--ink)" />} {openSubmission.type === "edit" ? "Gennemse rettelsesforslag" : "Gennemse indsendelse"}</div>
                 <div style={UI.muted11mt1}>{new Date(openSubmission.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"long", year:"numeric" })}</div>
               </div>
               {/* Hurtig-godkend/afvis */}
               <div style={{ display:"flex", gap:6 }}>
                 <button onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}
-                  style={{ background:"var(--green)", border:"none", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--on-green)", cursor:"pointer" }}>
-                  ✓ Godkend
+                  style={{ background:"var(--green)", border:"none", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--on-green)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+                  <Icon name="check" size={13} color="var(--on-green)" /> Godkend
                 </button>
                 <button onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}
-                  style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:800, color:"var(--red)", cursor:"pointer" }}>
-                  ✗
+                  style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:800, color:"var(--red)", cursor:"pointer", display:"flex" }}>
+                  <Icon name="x" size={13} color="var(--red)" />
                 </button>
               </div>
             </div>
@@ -951,7 +954,7 @@ Implementér derefter løsningen.`;
                 {openSubmission.ai_parsed_data?.product_image_url
                   ? <img src={openSubmission.ai_parsed_data.product_image_url}
                       style={{ width:64, height:64, borderRadius:10, objectFit:"contain", border:"1px solid var(--border)", flexShrink:0 }} alt="Indsendt produktbillede" />
-                  : <div style={{ width:64, height:64, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>📦</div>
+                  : <div style={{ width:64, height:64, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="package" size={26} color="var(--ink2)" /></div>
                 }
                 <div style={UI.flex1}>
                   <div style={UI.ufs11_cmuted_fw600_mb4}>Produktnavn</div>
@@ -982,7 +985,7 @@ Implementér derefter løsningen.`;
             {/* Foto af ingredienslisten */}
             {openSubmission.raw_label_image && (
               <div style={UI.card}>
-                <div style={UI.ufs13_fw800_cink_mb10}>📸 Foto af ingredienslisten</div>
+                <div style={{ ...UI.ufs13_fw800_cink_mb10, display:"flex", alignItems:"center", gap:6 }}><Icon name="camera" size={13} color="var(--ink)" /> Foto af ingredienslisten</div>
                 <img src={openSubmission.raw_label_image} alt="Ingrediensliste"
                   style={{ width:"100%", borderRadius:10, objectFit:"contain", maxHeight:240 }} />
               </div>
@@ -992,7 +995,7 @@ Implementér derefter løsningen.`;
             {openSubmission.ocr_raw_text && (
               <div style={UI.card}>
                 <div style={UI.rowBetweenMb10}>
-                  <div style={UI.boldInk13}>📄 Ingredienser fra OCR</div>
+                  <div style={{ ...UI.boldInk13, display:"flex", alignItems:"center", gap:6 }}><Icon name="file" size={13} color="var(--ink)" /> Ingredienser fra OCR</div>
                   <button onClick={() => cleanOcrWithAI(openSubmission.ocr_raw_text)} disabled={cleaningOcr}
                     style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:8, padding:"5px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--green)", cursor:"pointer" }}>
                     {cleaningOcr ? "🤖 Renskriver…" : "🤖 Renskiv med AI"}
@@ -1003,13 +1006,13 @@ Implementér derefter løsningen.`;
                 </div>
                 {cleanedOcrText && (
                   <div style={{ marginTop:10, borderTop:"1px solid var(--border)", paddingTop:10 }}>
-                    <div style={{ fontSize:11, fontWeight:700, color:"var(--green)", marginBottom:6 }}>✓ AI renskrivet — tjek at intet er fjernet</div>
+                    <div style={{ fontSize:11, fontWeight:700, color:"var(--green)", marginBottom:6, display:"flex", alignItems:"center", gap:5 }}><Icon name="check" size={11} color="var(--green)" /> AI renskrevet — tjek at intet er fjernet</div>
                     <div style={{ background:"var(--green-lt)", borderRadius:8, padding:"10px", marginBottom:8, fontSize:12, color:"var(--ink)", lineHeight:1.7 }}>
                       <HighlightText text={cleanedOcrText} />
                     </div>
                     <button onClick={() => setEditingSubmission(s => ({ ...s, ingredients_text: cleanedOcrText }))}
-                      style={UI.uw100_bggreen_bdnone_br10_p10px_fff_fs13_fw700_congreen_curp}>
-                      ✓ Brug denne version
+                      style={{ ...UI.uw100_bggreen_bdnone_br10_p10px_fff_fs13_fw700_congreen_curp, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                      <Icon name="check" size={13} color="var(--on-green)" /> Brug denne version
                     </button>
                   </div>
                 )}
@@ -1036,7 +1039,7 @@ Implementér derefter løsningen.`;
             {/* Næringsindhold — kun til stede for nye produkter (Nyt produkt-flowet) */}
             {openSubmission.ai_parsed_data?.nutrition && Object.values(openSubmission.ai_parsed_data.nutrition).some(v => v) && (
               <div style={UI.card}>
-                <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>🥗 Næringsindhold <span style={UI.muted10}>per 100g/ml</span></div>
+                <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}><Icon name="package" size={13} color="var(--ink)" /> Næringsindhold <span style={UI.muted10}>per 100g/ml</span></div>
                 <div style={UI.grid2gap8}>
                   {[
                     { key:"energy", label:"Energi" }, { key:"fat", label:"Fedt" },
@@ -1085,12 +1088,12 @@ Implementér derefter løsningen.`;
             {/* Handlings-knapper */}
             <div style={{ display:"flex", flexDirection:"column", gap:8, paddingBottom:120 }}>
               <button onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}
-                style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:700, color:"var(--on-green)", cursor:"pointer", boxShadow:"0 4px 16px rgba(34,197,94,.3)" }}>
-                {openSubmission.type === "edit" ? "✅ Godkend og opdater produkt" : "✅ Godkend og opret produkt"}
+                style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:700, color:"var(--on-green)", cursor:"pointer", boxShadow:"0 4px 16px rgba(34,197,94,.3)", display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
+                <Icon name="check" size={15} color="var(--on-green)" /> {openSubmission.type === "edit" ? "Godkend og opdater produkt" : "Godkend og opret produkt"}
               </button>
               <button onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}
-                style={{ width:"100%", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, padding:"13px", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
-                ❌ Afvis indsendelse
+                style={{ width:"100%", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, padding:"13px", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
+                <Icon name="x" size={14} color="var(--red)" /> Afvis indsendelse
               </button>
               <button onClick={() => { setOpenSubmission(null); setEditingSubmission(null); }}
                 style={{ width:"100%", background:"none", border:"none", padding:"10px", fontFamily:"var(--f)", fontSize:13, color:"var(--muted)", cursor:"pointer" }}>
@@ -1105,9 +1108,9 @@ Implementér derefter løsningen.`;
                         {adminSection === "missing" && (
               <div>
                 <div style={UI.rowBetweenMb16}>
-                  <div style={UI.ufs17_fw800_cink}>❓ Efterspurgte manglende produkter</div>
-                  <button onClick={loadMissingEans} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer" }}>
-                    🔄 Opdater
+                  <div style={{ ...UI.ufs17_fw800_cink, display:"flex", alignItems:"center", gap:7 }}><Icon name="info" size={16} color="var(--ink)" /> Efterspurgte manglende produkter</div>
+                  <button onClick={loadMissingEans} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+                    <Icon name="refresh" size={12} color="var(--muted)" /> Opdater
                   </button>
                 </div>
                 <div style={UI.ufs12_cmuted_mb16_lh15}>
@@ -1117,8 +1120,8 @@ Implementér derefter løsningen.`;
                 {/* Brand-aggregering */}
                 {missingEans.length > 0 && (
                   <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
-                    <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>
-                      📊 Top EAN-præfikser <span style={{ fontSize:10, fontWeight:400, color:"var(--muted)" }}>(proxy for brand/producent)</span>
+                    <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
+                      <Icon name="chart" size={12} color="var(--ink)" /> Top EAN-præfikser <span style={{ fontSize:10, fontWeight:400, color:"var(--muted)" }}>(proxy for brand/producent)</span>
                     </div>
                     <div style={UI.udflex_fdcolumn_g6}>
                       {missingEanTopPrefixes.map(([prefix, data]) => (
@@ -1134,7 +1137,7 @@ Implementér derefter løsningen.`;
                             onClick={() => navigator.clipboard?.writeText(data.eans.join("\n"))}
                             style={{ fontSize:10, color:"var(--muted)", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", padding:"2px 6px" }}
                             title="Kopiér alle EAN'er med dette præfiks">
-                            📋
+                            <Icon name="link" size={12} color="var(--muted)" />
                           </button>
                         </div>
                       ))}
@@ -1170,15 +1173,15 @@ Implementér derefter løsningen.`;
                         <div style={{ display:"flex", gap:6, flexShrink:0 }}>
                           <button
                             onClick={() => window.open(`https://world.openfoodfacts.org/product/${row.ean}`, "_blank")}
-                            style={{ background:"var(--blue-lt)", border:"1px solid var(--blue-md)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--blue)", fontFamily:"var(--f)", cursor:"pointer" }}
+                            style={{ background:"var(--blue-lt)", border:"1px solid var(--blue-md)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--blue)", fontFamily:"var(--f)", cursor:"pointer", display:"flex", alignItems:"center", gap:4 }}
                             title="Søg på Open Food Facts">
-                            🔍 OFF
+                            <Icon name="search" size={11} color="var(--blue)" /> OFF
                           </button>
                           <button
                             onClick={() => navigator.clipboard?.writeText(row.ean)}
-                            style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer" }}
+                            style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer", display:"flex", alignItems:"center" }}
                             title="Kopiér EAN" aria-label="Kopiér EAN">
-                            📋
+                            <Icon name="link" size={12} color="var(--muted)" />
                           </button>
                           <button
                             onClick={() => deleteMissingEan(row.ean)}
@@ -1197,7 +1200,7 @@ Implementér derefter løsningen.`;
             {adminSection === "import" && (
               <div>
                 <div style={UI.rowBetweenMb16}>
-                  <div style={UI.ufs17_fw800_cink}>⬇️ OFF Auto-import</div>
+                  <div style={{ ...UI.ufs17_fw800_cink, display:"flex", alignItems:"center", gap:7 }}><Icon name="download" size={15} color="var(--ink)" /> OFF Auto-import</div>
                   <button
                     onClick={() => runImport(true)}
                     disabled={importLoading}
@@ -1225,14 +1228,14 @@ Implementér derefter løsningen.`;
                 {importLog?.stats && !importLoading && (
                   <div style={UI.udgrid_gri1fr1fr_g8_mb14}>
                     {[
-                      { label:"✅ Importeret",    value: importLog.stats.imported,       color:"var(--green)" },
-                      { label:"🔍 Fundet på OFF", value: importLog.stats.found ?? (importLog.stats.imported + importLog.stats.not_on_off), color:"var(--blue)" },
-                      { label:"❌ Ikke på OFF",   value: importLog.stats.not_on_off,     color:"var(--muted)" },
-                      { label:"⚠️ Fejl",          value: importLog.stats.error,          color:"var(--amber)" },
+                      { icon:"check",   label:"Importeret",    value: importLog.stats.imported,       color:"var(--green)" },
+                      { icon:"search",  label:"Fundet på OFF", value: importLog.stats.found ?? (importLog.stats.imported + importLog.stats.not_on_off), color:"var(--blue)" },
+                      { icon:"x",       label:"Ikke på OFF",   value: importLog.stats.not_on_off,     color:"var(--muted)" },
+                      { icon:"warning", label:"Fejl",          value: importLog.stats.error,          color:"var(--amber)" },
                     ].map(s => (
                       <div key={s.label} style={{ padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, textAlign:"center" }}>
                         <div style={{ fontSize:22, fontWeight:900, color:s.color, marginBottom:2 }}>{s.value ?? 0}</div>
-                        <div style={UI.muted11}>{s.label}</div>
+                        <div style={{ ...UI.muted11, display:"flex", alignItems:"center", justifyContent:"center", gap:4 }}><Icon name={s.icon} size={10} color="var(--muted)" /> {s.label}</div>
                       </div>
                     ))}
                   </div>
@@ -1264,7 +1267,7 @@ Implementér derefter løsningen.`;
 
                 {!importLog && !importLoading && (
                   <div style={{ textAlign:"center", padding:"40px 0" }}>
-                    <div style={{ fontSize:36, marginBottom:12 }}>⬇️</div>
+                    <div style={{ marginBottom:12, display:"flex", justifyContent:"center" }}><Icon name="download" size={32} color="var(--muted)" /></div>
                     <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Klar til import</div>
                     <div style={UI.ufs12_cmuted}>
                       Tryk "Kør import nu" for at importere manglende produkter fra Open Food Facts
@@ -1305,13 +1308,13 @@ Implementér derefter løsningen.`;
                   {reparseLog && !reparseLoading && (
                     <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:10 }}>
                       {[
-                        { label:"✅ Reparseret",    value: reparseLog.reparsed, color:"var(--green)" },
-                        { label:"⏭ Sprunget over", value: reparseLog.skipped,  color:"var(--muted)" },
-                        { label:"❌ Fejl",           value: reparseLog.errors,  color:"var(--amber)" },
+                        { icon:"check",       label:"Reparseret",    value: reparseLog.reparsed, color:"var(--green)" },
+                        { icon:"chevronRight", label:"Sprunget over", value: reparseLog.skipped,  color:"var(--muted)" },
+                        { icon:"x",           label:"Fejl",          value: reparseLog.errors,  color:"var(--amber)" },
                       ].map(s => (
                         <div key={s.label} style={{ padding:"10px 12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, textAlign:"center" }}>
                           <div style={{ fontSize:20, fontWeight:900, color:s.color, marginBottom:2 }}>{s.value ?? 0}</div>
-                          <div style={UI.muted10}>{s.label}</div>
+                          <div style={{ ...UI.muted10, display:"flex", alignItems:"center", justifyContent:"center", gap:3 }}><Icon name={s.icon} size={9} color="var(--muted)" /> {s.label}</div>
                         </div>
                       ))}
                     </div>
@@ -1381,15 +1384,16 @@ Implementér derefter løsningen.`;
               <div style={UI.pb120}>
                 {/* Filter tabs */}
                 <div style={UI.udflex_g6_mb14}>
-                  {[{val:"pending",label:"⏳ Afventer"},{val:"approved",label:"✅ Godkendte"},{val:"rejected",label:"❌ Afviste"}].map(f => (
+                  {[{val:"pending",label:"Afventer",icon:"clock"},{val:"approved",label:"Godkendte",icon:"check"},{val:"rejected",label:"Afviste",icon:"x"}].map(f => (
                     <button key={f.val} onClick={() => { setAdminRecipeFilter(f.val); loadAdminRecipes(f.val); }}
                       style={{ padding:"7px 14px", borderRadius:100, border:`1px solid ${adminRecipeFilter===f.val?"var(--green)":"var(--border)"}`,
                         background:adminRecipeFilter===f.val?"var(--green-lt)":"var(--surface)", color:adminRecipeFilter===f.val?"var(--green)":"var(--muted)",
+                        display:"flex", alignItems:"center", gap:5,
                         fontFamily:"var(--f)", fontSize:12, fontWeight:700, cursor:"pointer" }}>
-                      {f.label}
+                      <Icon name={f.icon} size={11} color={adminRecipeFilter===f.val?"var(--green)":"var(--muted)"} /> {f.label}
                     </button>
                   ))}
-                  <button onClick={() => loadAdminRecipes()} style={{ marginLeft:"auto", padding:"7px 12px", borderRadius:100, border:"1px solid var(--border)", background:"var(--surface)", color:"var(--muted)", fontFamily:"var(--f)", fontSize:12, cursor:"pointer" }}>↺</button>
+                  <button onClick={() => loadAdminRecipes()} style={{ marginLeft:"auto", padding:"7px 12px", borderRadius:100, border:"1px solid var(--border)", background:"var(--surface)", color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer", display:"flex" }}><Icon name="refresh" size={12} color="var(--muted)" /></button>
                 </div>
 
                 {/* Detail-visning */}
@@ -1437,16 +1441,16 @@ Implementér derefter løsningen.`;
                     {/* Handlinger */}
                     <div style={UI.rowGap8}>
                       <button onClick={saveRecipeEdit} disabled={recipeActionLoading}
-                        style={{ flex:1, padding:"10px", borderRadius:10, background:"var(--blue-lt)", border:"1px solid var(--blue)", color:"var(--blue)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
-                        💾 Gem ændringer
+                        style={{ flex:1, padding:"10px", borderRadius:10, background:"var(--blue-lt)", border:"1px solid var(--blue)", color:"var(--blue)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                        <Icon name="save" size={13} color="var(--blue)" /> Gem ændringer
                       </button>
                       <button onClick={() => updateRecipeStatus(editingRecipe.id, "approved")} disabled={recipeActionLoading}
-                        style={{ flex:1, padding:"10px", borderRadius:10, background:"var(--green-lt)", border:"1px solid var(--green)", color:"var(--green)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
-                        ✅ Godkend & publicér
+                        style={{ flex:1, padding:"10px", borderRadius:10, background:"var(--green-lt)", border:"1px solid var(--green)", color:"var(--green)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                        <Icon name="check" size={13} color="var(--green)" /> Godkend & publicér
                       </button>
                       <button onClick={() => updateRecipeStatus(editingRecipe.id, "rejected")} disabled={recipeActionLoading}
-                        style={{ flex:1, padding:"10px", borderRadius:10, background:"var(--red-lt)", border:"1px solid var(--red)", color:"var(--red)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
-                        ❌ Afvis
+                        style={{ flex:1, padding:"10px", borderRadius:10, background:"var(--red-lt)", border:"1px solid var(--red)", color:"var(--red)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                        <Icon name="x" size={13} color="var(--red)" /> Afvis
                       </button>
                     </div>
                   </div>
@@ -1457,7 +1461,7 @@ Implementér derefter løsningen.`;
                   <Loader text="Indlæser…" />
                 ) : adminRecipes.length === 0 ? (
                   <div style={UI.utacenter_p48px20px}>
-                    <div style={UI.ufs48_mb10}>📭</div>
+                    <div style={{ ...UI.ufs48_mb10, display:"flex", justifyContent:"center" }}><Icon name="package" size={40} color="var(--muted)" /></div>
                     <div style={{ fontSize:15, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Ingen {adminRecipeFilter === "pending" ? "afventende" : adminRecipeFilter === "approved" ? "godkendte" : "afviste"} opskrifter</div>
                   </div>
                 ) : adminRecipes.map(r => {
@@ -1473,8 +1477,8 @@ Implementér derefter løsningen.`;
                           background:r.status==="pending"?"var(--amber-lt)":r.status==="approved"?"var(--green-lt)":"var(--red-lt)",
                           color:r.status==="pending"?"var(--amber)":r.status==="approved"?"var(--green)":"var(--red)",
                           border:`1px solid ${r.status==="pending"?"var(--amber-md)":r.status==="approved"?"rgba(74,222,128,.3)":"var(--red-md)"}`,
-                          flexShrink:0, marginLeft:8 }}>
-                          {r.status==="pending"?"⏳ Afventer":r.status==="approved"?"✅ Godkendt":"❌ Afvist"}
+                          flexShrink:0, marginLeft:8, display:"inline-flex", alignItems:"center", gap:4 }}>
+                          <Icon name={r.status==="pending"?"clock":r.status==="approved"?"check":"x"} size={10} color={r.status==="pending"?"var(--amber)":r.status==="approved"?"var(--green)":"var(--red)"} /> {r.status==="pending"?"Afventer":r.status==="approved"?"Godkendt":"Afvist"}
                         </span>
                       </div>
                       <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6 }}>
