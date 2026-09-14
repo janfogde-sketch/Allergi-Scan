@@ -203,7 +203,7 @@ export default function OnboardingScreen({
             {/* Delt indkøbsliste venter */}
             {hasPendingJoinList && (
               <div style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:12, padding:"12px 14px", marginBottom:16, textAlign:"center" }}>
-                <div style={{ fontSize:13, fontWeight:800, color:"var(--green)" }}>🛒 Du er blevet inviteret til en indkøbsliste</div>
+                <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:13, fontWeight:800, color:"var(--green)" }}><Icon name="cart" size={13} color="var(--green)" /> Du er blevet inviteret til en indkøbsliste</div>
                 <div style={{ fontSize:12, color:"var(--green)", marginTop:2 }}>Opret en gratis konto for at få adgang til den</div>
               </div>
             )}
@@ -239,8 +239,8 @@ export default function OnboardingScreen({
             {authTab === "signup" && (
               <div className="fade-in">
                 {hasPendingJoinList && (
-                  <div style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, padding:"10px 12px", marginBottom:14, textAlign:"center", fontSize:12, fontWeight:700, color:"var(--green)" }}>
-                    🛒 En indkøbsliste venter på dig — den bliver tilføjet, når du er oprettet
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, padding:"10px 12px", marginBottom:14, textAlign:"center", fontSize:12, fontWeight:700, color:"var(--green)" }}>
+                    <Icon name="cart" size={13} color="var(--green)" /> En indkøbsliste venter på dig — den bliver tilføjet, når du er oprettet
                   </div>
                 )}
                 <div style={UI.utacenter_mb16}>
@@ -262,7 +262,7 @@ export default function OnboardingScreen({
                 </div>
                 {authError && (
                   <div className="error-box" style={UI.ufdcolumn_aiflexstar_g4}>
-                    <span style={UI.ufw800}>⚠️ Fejl</span>
+                    <span style={{ ...UI.ufw800, display:"flex", alignItems:"center", gap:5 }}><Icon name="warning" size={12} color="var(--red)" /> Fejl</span>
                     <span style={UI.ufw500_fs12_lh15}>{authError}</span>
                   </div>
                 )}
@@ -297,7 +297,7 @@ export default function OnboardingScreen({
                 </div>
                 {authError && (
                   <div className="error-box" style={UI.ufdcolumn_aiflexstar_g4}>
-                    <span style={UI.ufw800}>⚠️ Fejl</span>
+                    <span style={{ ...UI.ufw800, display:"flex", alignItems:"center", gap:5 }}><Icon name="warning" size={12} color="var(--red)" /> Fejl</span>
                     <span style={UI.ufw500_fs12_lh15}>{authError}</span>
                   </div>
                 )}
@@ -398,21 +398,21 @@ export default function OnboardingScreen({
 
                   <div style={{ display:"flex", flexDirection:"column", gap:12, textAlign:"left", marginBottom:20 }}>
                     <div style={UI.udflex_g10_aiflexstar}>
-                      <span style={UI.fs20Shrink0}>💬</span>
+                      <span style={UI.fs20Shrink0}><Icon name="message" size={18} color="var(--ink2)" /></span>
                       <div>
                         <div style={UI.boldInk13mb2}>Giv os feedback</div>
                         <div style={UI.muted2_12lh}>Tryk på Feedback-knappen når du støder på fejl eller har idéer. Vi læser alt.</div>
                       </div>
                     </div>
                     <div style={UI.udflex_g10_aiflexstar}>
-                      <span style={UI.fs20Shrink0}>❓</span>
+                      <span style={UI.fs20Shrink0}><Icon name="info" size={18} color="var(--ink2)" /></span>
                       <div>
                         <div style={UI.boldInk13mb2}>Brug hjælp-knappen</div>
                         <div style={UI.muted2_12lh}>Tryk på ? øverst for en guide til den skærm du står på.</div>
                       </div>
                     </div>
                     <div style={UI.udflex_g10_aiflexstar}>
-                      <span style={UI.fs20Shrink0}>⚠️</span>
+                      <span style={UI.fs20Shrink0}><Icon name="warning" size={18} color="var(--amber)" /></span>
                       <div>
                         <div style={UI.boldInk13mb2}>Tjek altid emballagen</div>
                         <div style={UI.muted2_12lh}>Allergendata kan mangle eller være ukorrekte. Appen er et hjælpeværktøj, ikke en garanti.</div>
@@ -539,7 +539,7 @@ export default function OnboardingScreen({
                         }}
                           onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
                           <span style={UI.flex1}>{a.emoji} {a.label}</span>
-                          {on && <div style={UI.redBadge9}>✓</div>}
+                          {on && <div style={UI.redBadge9}><Icon name="check" size={9} color="#fff" /></div>}
                         </div>
                       );
                     })}
@@ -640,7 +640,7 @@ export default function OnboardingScreen({
                               background: on?"var(--red-lt)":"var(--paper2)",
                               color: on?"var(--red)":"var(--ink2)",
                               border:`1px solid ${on?"var(--red)":"var(--border)"}` }}>
-                            {e} {on?"✓":""}
+                            {e} {on && <Icon name="check" size={9} color="var(--red)" />}
                             <div style={{ fontSize:10, fontWeight:400, color: on?"var(--red)":"var(--muted)" }}>{n}</div>
                           </div>
                         );
@@ -712,7 +712,7 @@ export default function OnboardingScreen({
             {onboardStep === 5 && (
                 <div className="fade-in">
                   <div style={{ textAlign:"center", padding:"16px 0 20px" }}>
-                    <div style={UI.emoji48mb12}>🔔</div>
+                    <div style={{ display:"flex", justifyContent:"center", marginBottom:12 }}><Icon name="bell" size={42} color="var(--green)" /></div>
                     <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Bliv opdateret</div>
                     <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.65 }}>
                       Få en notifikation når dine produktindsendelser godkendes, og når familiemedlemmer tilslutter sig.
@@ -721,12 +721,12 @@ export default function OnboardingScreen({
 
                   <div className="card" style={UI.mb16}>
                     {[
-                      ["✅","Produktet er godkendt","Når admin godkender dit indsendte produkt"],
-                      ["👨‍👩‍👧","Familie tilslutter sig","Når nogen accepterer dit invitationslink"],
-                      ["🎉","Nyt i databasen","Når et produkt du søgte efter nu er tilgængeligt"],
-                    ].map(([e, title, sub]) => (
+                      ["check","Produktet er godkendt","Når admin godkender dit indsendte produkt"],
+                      ["family","Familie tilslutter sig","Når nogen accepterer dit invitationslink"],
+                      ["search","Nyt i databasen","Når et produkt du søgte efter nu er tilgængeligt"],
+                    ].map(([icon, title, sub]) => (
                       <div key={title} style={{ display:"flex", gap:12, padding:"10px 0", borderBottom:"1px solid var(--border)" }}>
-                        <div style={{ fontSize:22, lineHeight:1 }}>{e}</div>
+                        <div style={{ display:"flex", alignItems:"center" }}><Icon name={icon} size={19} color="var(--green)" /></div>
                         <div>
                           <div style={UI.ufs13_fw700_cink}>{title}</div>
                           <div style={UI.muted11mt2}>{sub}</div>
@@ -740,14 +740,14 @@ export default function OnboardingScreen({
                       Fortsæt →
                     </button>
                   ) : pushDone ? (
-                    <button className="btn btn-primary btn-full" disabled style={{ opacity:.7 }}>
-                      ✓ Notifikationer aktiveret
+                    <button className="btn btn-primary btn-full" disabled style={{ opacity:.7, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                      <Icon name="check" size={14} color="var(--on-green)" /> Notifikationer aktiveret
                     </button>
                   ) : (
                     <>
                       <button className="btn btn-primary btn-full" onClick={handleEnablePush} disabled={pushLoading}
-                        style={{ opacity: pushLoading ? .6 : 1 }}>
-                        {pushLoading ? "Aktiverer…" : "🔔 Slå notifikationer til"}
+                        style={{ opacity: pushLoading ? .6 : 1, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                        {pushLoading ? "Aktiverer…" : <><Icon name="bell" size={14} color="var(--on-green)" /> Slå notifikationer til</>}
                       </button>
                       <button className="btn btn-ghost btn-full" style={UI.mt8}
                         onClick={() => setOnboardStep(6)}>
@@ -773,7 +773,7 @@ export default function OnboardingScreen({
                         <div style={UI.ufw700}>{d.label}</div>
                         <div style={UI.muted11mt2}>{d.desc}</div>
                       </div>
-                      {on && <div className="chip-check">✓</div>}
+                      {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
                     </div>
                   );})}
                 </div>
@@ -945,13 +945,13 @@ export default function OnboardingScreen({
                 </div>
 
                 {/* Disclaimer */}
-                <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5, marginBottom:16, textAlign:"center", padding:"0 8px" }}>
-                  ⚕️ EatSafe er vejledende og erstatter ikke medicinsk rådgivning. Tjek altid produktets emballage.
+                <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"center", gap:5, fontSize:11, color:"var(--muted)", lineHeight:1.5, marginBottom:16, textAlign:"center", padding:"0 8px" }}>
+                  <Icon name="info" size={12} color="var(--muted)" /> EatSafe er vejledende og erstatter ikke medicinsk rådgivning. Tjek altid produktets emballage.
                 </div>
 
                 {/* Afslut */}
-                <button className="btn btn-primary btn-full" style={{ marginTop:4 }} onClick={finishOnboard}>
-                  {editMode ? "Gem ændringer ✓" : "Gå til appen →"}
+                <button className="btn btn-primary btn-full" style={{ marginTop:4, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }} onClick={finishOnboard}>
+                  {editMode ? <><Icon name="check" size={14} color="var(--on-green)" /> Gem ændringer</> : "Gå til appen →"}
                 </button>
                 {editMode && (
                   <button className="btn btn-outline btn-full" style={UI.mt8}
