@@ -430,6 +430,53 @@ noget implementeres** — spørg brugeren hvis relevansen er uklar for et
 givent punkt (fx cookie-banner: har appen tracking der kræver samtykke?),
 i stedet for at implementere listen mekanisk.
 
+**14. sept. 2026 — de 20 punkter vurderet ("Forsæt arbejdet"), tre PR'er
+merget.** Gennemgik hvert punkt konkret mod EatSafes struktur (research i
+kodebasen, ikke antagelser):
+- **Allerede dækket, intet arbejde nødvendigt:** #5 mobil-menuer (bundnav +
+  ProfileMenu), #9 kopiér-knap (findes 5 steder), #10 print-stylesheet
+  (`MadpasScreen.jsx` har allerede `@media print` + `window.print()` — det
+  ene sted det giver mening, et fysisk allergikort), #11 sticky headers
+  (topbaren er `position:sticky`), #12 "spring til indhold"-link (findes i
+  `App.jsx`/`theme.jsx`), #7 hover-tilstande (25 `:hover`-regler i theme.jsx).
+- **Vurderet irrelevant for en PWA uden marketingsider, sat i bero (ikke
+  implementeret):** #2 cookie-banner (ingen analytics/tracking-kode findes
+  noget sted i kodebasen — bekræftet med brugeren at intet er slået til
+  udenom koden heller, fx Vercel Analytics), #3 site-søgning (appen har
+  allerede en dedikeret produkt-søgeskærm), #8 scroll-fremgangsbjælke, #14
+  UTM-tracking (findes allerede en let variant via `?src=beta-qr`), #19
+  udvidelig FAQ (Leksikonets FAQ-kategori bruger samme liste→detalje-
+  navigation som resten af appen — konsistent, ikke en mangel), #20
+  flydende kontakt-knap (topbarens permanente Feedback-knap dækker samme
+  formål).
+- **#1 dark mode-toggle:** brugeren valgte eksplicit at vente — for stort et
+  selvstændigt scope (kræver et helt nyt mørkt farvesystem for alle tokens +
+  verificering af hver skærm) til at tage sammen med resten. Tag den op
+  separat hvis/når den prioriteres.
+- **#13 vis/skjul kodeord — implementeret.** Login/opret konto bruger
+  rigtige password-felter (ikke magic link), så det var en reel, lavrisiko
+  mangel. Nye `eye`/`eyeOff`-ikoner i `Icon`-komponenten, øje-knap tilføjet
+  på begge felter i `OnboardingScreen.jsx`.
+- **#15/#16/#17 (formular-succes/-fejl/bekræftelse) — implementeret via et
+  konkret fund, ikke en generisk løsning.** En grep for `alert(` viste at
+  appen bruger native browser-`alert()` til succes- **og** fejl-beskeder 16
+  steder på tværs af 8 filer — et synligt designbrud (grim system-popup) i
+  en ellers gennemført design, samme kategori som tidligere fladhed-bugs.
+  Byggede en delt `Toast`-komponent (`showToast()` + `<ToastHost/>` i
+  `SharedComponents.jsx`, portal-baseret, monteret i `App.jsx` — samme
+  mønster som `ListPickerSheet`) og erstattede alle brugervendte
+  forekomster: familie-invitation, indkøbsliste-tilslutning via delt link,
+  profil-gem, "Ret forkerte data" og feedback-formularen.
+  **`AdminScreen.jsx`/`useAdmin.js` bevidst ikke rørt** — samme lavere
+  prioritering som den delvist gennemførte emoji-sanering af Admin (se
+  ovenfor), tages op i en selvstændig fortsættelse.
+- **#4, #6, #18 (til toppen-knap, loading-animationer, "sidst opdateret"-
+  dato):** endnu ikke vurderet/implementeret i denne runde — kandidater til
+  en kommende fortsættelse, hvis det prioriteres.
+- **#4 og #6 er kun delvist afklaret** (`.loader` findes allerede som
+  basis-mønster) — kræver stadig en konkret gennemgang skærm for skærm
+  ligesom emoji-saneringen, ikke en generisk implementering.
+
 **Tidligere flagget, stadig kun delvist gjort:** en fuld emoji→SVG-ikon-sanering af
 hele appen (mest AdminScreen.jsx's fanebladsindhold retur).
 
