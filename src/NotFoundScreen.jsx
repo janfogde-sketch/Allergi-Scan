@@ -13,7 +13,7 @@ const S = {
   mb16:             { marginBottom:16 },
   rowBetweenMb10:   { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 },
   rowGap8:          { display:"flex", gap:8 },
-  card:             { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 },
+  card:             { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12, boxShadow:"var(--sh)" },
   h13:              { fontSize:13, fontWeight:800, color:"var(--ink)" },
   h13b:             { fontSize:13, fontWeight:700, color:"var(--ink)" },
   h13bMb:           { fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:8 },
@@ -176,7 +176,7 @@ export default function NotFoundScreen({
         {notFoundStep === 2 && !ocrLoading && (
           <div className="fade-in">
             {productImagePreview && (
-              <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:14 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:14, boxShadow:"var(--sh)" }}>
                 <img loading="lazy" src={productImagePreview} alt="Produkt"
                   style={{ width:52, height:52, objectFit:"contain", borderRadius:8, border:"1px solid var(--border)", flexShrink:0 }} />
                 <div style={S.flex1}>
@@ -250,7 +250,7 @@ export default function NotFoundScreen({
               <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleNutritionCapture} />
             </label>
             <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, width:"100%", padding:"11px", borderRadius:12, cursor:"pointer", background:"var(--surface)", border:"1px solid var(--border2)", color:"var(--ink2)", fontSize:12, fontWeight:600, marginBottom:14 }}>
-              📁 Vælg fra galleri
+              <Icon name="image" size={15} color="var(--ink2)" /> Vælg fra galleri
               <input type="file" accept="image/*" style={S.none} onChange={handleNutritionCapture} />
             </label>
 

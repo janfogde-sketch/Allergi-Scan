@@ -223,7 +223,7 @@ export default function MadpasScreen({
 
         {/* QR-kode + del-link */}
         {shareUrl && (
-          <div style={{ marginTop:16, background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:16, overflow:"hidden" }}>
+          <div style={{ marginTop:16, background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:16, overflow:"hidden", boxShadow:"var(--sh)" }}>
             {/* Header */}
             <div style={{ padding:"12px 16px", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", gap:8 }}>
               <span style={UI.fs16}>📱</span>
