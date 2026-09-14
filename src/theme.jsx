@@ -132,7 +132,12 @@ body{
 .app{
   max-width:390px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
   width:100%;position:relative;overflow-x:hidden;
-  background:radial-gradient(ellipse 100% 40% at 50% 0%,rgba(23,138,80,.06) 0%,transparent 60%),
+  /* Fint punkt-gitter (scanner/præcisions-følelse, matcher stregkode-branding)
+     + blød grøn glød foroven og en svag blå glød forneden for dybde — den
+     tidligere baggrund var stort set en flad farve uden nogen struktur. */
+  background:radial-gradient(circle, rgba(21,32,26,.07) 1px, transparent 1.6px) 0 0/22px 22px,
+             radial-gradient(ellipse 100% 35% at 50% 0%, rgba(23,138,80,.09) 0%, transparent 60%),
+             radial-gradient(ellipse 90% 30% at 50% 100%, rgba(58,110,165,.06) 0%, transparent 65%),
              linear-gradient(175deg,#F8FAF5 0%,#F5F7F1 45%,#F1F4EC 100%);
 }
 
