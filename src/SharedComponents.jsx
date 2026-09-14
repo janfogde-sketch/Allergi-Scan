@@ -105,6 +105,9 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
     tag: <><path strokeLinecap="round" strokeLinejoin="round" d="M11.5 3H6a3 3 0 00-3 3v5.5a2 2 0 00.586 1.414l8 8a2 2 0 002.828 0l6.5-6.5a2 2 0 000-2.828l-8-8A2 2 0 0011.5 3z"/><circle cx="8" cy="8" r="1.25" fill="currentColor" stroke="none"/></>,
     package: <><path strokeLinecap="round" strokeLinejoin="round" d="M21 8l-9-5-9 5 9 5 9-5z"/><path strokeLinecap="round" strokeLinejoin="round" d="M3 8v8l9 5 9-5V8"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 13v8"/></>,
     message: <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>,
+    chart: <><path strokeLinecap="round" strokeLinejoin="round" d="M3 3v16a2 2 0 002 2h16"/><rect x="7" y="12" width="3" height="6" rx="0.5" strokeWidth="1.75"/><rect x="12.5" y="8" width="3" height="10" rx="0.5" strokeWidth="1.75"/><rect x="18" y="5" width="3" height="13" rx="0.5" strokeWidth="1.75"/></>,
+    bug: <><circle cx="12" cy="7" r="2" strokeWidth="1.75"/><path strokeLinecap="round" d="M10.5 5.5L9 4M13.5 5.5L15 4"/><rect x="8" y="9" width="8" height="10" rx="4" strokeWidth="1.75"/><path strokeLinecap="round" d="M8 12H4M16 12h4M8 15H4M16 15h4M8 18H5M16 18h3"/></>,
+    download: <><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4"/><path strokeLinecap="round" strokeLinejoin="round" d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" style={{ flexShrink:0, display:"block" }}>
