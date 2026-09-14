@@ -423,14 +423,14 @@ Implementér derefter løsningen.`;
             {/* Sektion tabs — store knapper */}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:16 }}>
               {[
-                { id:"dashboard",   emoji:"📊", label:"Dashboard" },
-                { id:"users",       emoji:"👥", label:"Brugere" },
-                { id:"submissions", emoji:"📦", label:"Indsendelser" },
-                { id:"tickets",     emoji:"🐛", label:"Tickets" },
-                { id:"debug",       emoji:"🔍", label:"Debug" },
-                { id:"missing",    emoji:"❓", label:"Manglende" },
-                { id:"import",     emoji:"⬇️", label:"Import" },
-                { id:"recipes",    emoji:"📋", label:"Opskrifter" },
+                { id:"dashboard",   icon:"chart",  label:"Dashboard" },
+                { id:"users",       icon:"family",  label:"Brugere" },
+                { id:"submissions", icon:"package", label:"Indsendelser" },
+                { id:"tickets",     icon:"bug",     label:"Tickets" },
+                { id:"debug",       icon:"search",  label:"Debug" },
+                { id:"missing",    icon:"info",    label:"Manglende" },
+                { id:"import",     icon:"download",label:"Import" },
+                { id:"recipes",    icon:"book",    label:"Opskrifter" },
               ].map(s => (
                 <button key={s.id}
                   onClick={() => {
@@ -445,7 +445,7 @@ Implementér derefter løsningen.`;
                     background: adminSection===s.id ? "var(--green-lt)" : "var(--surface)",
                     border: `1px solid ${adminSection===s.id ? "var(--green)" : "var(--border)"}`,
                     borderRadius:14, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
-                  <span style={UI.ufs22}>{s.emoji}</span>
+                  <Icon name={s.icon} size={20} color={adminSection===s.id ? "var(--green)" : "var(--ink2)"} />
                   <span style={{ fontSize:13, fontWeight:800, color: adminSection===s.id ? "var(--green)" : "var(--ink)" }}>{s.label}</span>
                 </button>
               ))}
@@ -457,13 +457,13 @@ Implementér derefter løsningen.`;
                 <div style={UI.sectionLbl8}>Brugere</div>
                 <div style={UI.udgrid_gri1fr1fr_g8_mb14}>
                   {[
-                    { n:adminStats?.total_users,     emoji:"👤", label:"Brugere i alt",   color:"var(--ink)" },
-                    { n:adminStats?.new_users_today,  emoji:"🆕", label:"Nye i dag",        color:"var(--green)" },
-                    { n:adminStats?.total_scans,      emoji:"📱", label:"Scanninger i alt", color:"var(--ink)" },
+                    { n:adminStats?.total_users,     icon:"profile", label:"Brugere i alt",   color:"var(--ink)" },
+                    { n:adminStats?.new_users_today,  icon:"plus",    label:"Nye i dag",        color:"var(--green)" },
+                    { n:adminStats?.total_scans,      icon:"barcode", label:"Scanninger i alt", color:"var(--ink)" },
                     { n:adminStats?.scans_today,      emoji:"⚡", label:"Scanninger i dag", color:"var(--amber)" },
-                  ].map(({ n, emoji, label, color }) => (
+                  ].map(({ n, icon, emoji, label, color }) => (
                     <div key={label} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"16px 14px", boxShadow:"var(--sh)" }}>
-                      <div style={{ fontSize:24, marginBottom:4 }}>{emoji}</div>
+                      <div style={{ marginBottom:4 }}>{icon ? <Icon name={icon} size={22} color={color} /> : emoji}</div>
                       <div style={{ fontSize:28, fontWeight:900, color, lineHeight:1 }}>{n ?? "—"}</div>
                       <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, marginTop:4 }}>{label}</div>
                     </div>
@@ -473,14 +473,14 @@ Implementér derefter løsningen.`;
                 <div style={UI.sectionLbl8}>Database & opgaver</div>
                 <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, overflow:"hidden", marginBottom:14, boxShadow:"var(--sh)" }}>
                   {[
-                    { emoji:"📦", label:"Produkter i databasen",   n:adminStats?.total_products,        color:"var(--ink)" },
-                    { emoji:"👨‍👩‍👧", label:"Familiemedlemmer oprettet", n:adminStats?.total_families,         color:"var(--ink)" },
+                    { icon:"package", label:"Produkter i databasen",   n:adminStats?.total_products,        color:"var(--ink)" },
+                    { icon:"family", label:"Familiemedlemmer oprettet", n:adminStats?.total_families,         color:"var(--ink)" },
                     { emoji:"⏳", label:"Indsendelser afventer",   n:adminStats?.pending_submissions,    color:"var(--amber)", action:() => { setAdminSection("submissions"); setSubmissionFilter("pending"); loadSubmissions("pending"); } },
-                    { emoji:"🐛", label:"Åbne tickets",             n:adminStats?.open_tickets,           color:"var(--red)",   action:() => { setAdminSection("tickets"); loadTickets(); } },
-                  ].map(({ emoji, label, n, color, action }, i, arr) => (
+                    { icon:"bug", label:"Åbne tickets",             n:adminStats?.open_tickets,           color:"var(--red)",   action:() => { setAdminSection("tickets"); loadTickets(); } },
+                  ].map(({ icon, emoji, label, n, color, action }, i, arr) => (
                     <div key={label} onClick={action}
                       style={{ display:"flex", alignItems:"center", gap:12, padding:"13px 16px", borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", cursor: action ? "pointer" : "default" }}>
-                      <span style={UI.fs20}>{emoji}</span>
+                      <span style={UI.fs20}>{icon ? <Icon name={icon} size={18} color={color} /> : emoji}</span>
                       <span style={{ flex:1, fontSize:13, color:"var(--ink)", fontWeight:500 }}>{label}</span>
                       <span style={{ fontSize:18, fontWeight:900, color }}>{n ?? "—"}</span>
                       {action && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>}
@@ -491,15 +491,15 @@ Implementér derefter løsningen.`;
                 <div style={UI.sectionLbl8}>Hurtige handlinger</div>
                 <div style={UI.grid2gap8}>
                   {[
-                    { emoji:"📦", label:"Godkend indsendelser", color:"var(--amber)", fn:() => { setAdminSection("submissions"); setSubmissionFilter("pending"); loadSubmissions("pending"); } },
-                    { emoji:"🐛", label:"Gennemse tickets",     color:"var(--red)",   fn:() => { setAdminSection("tickets"); loadTickets(); } },
-                    { emoji:"✅", label:"Godkendte produkter",  color:"var(--green)", fn:() => { setAdminSection("submissions"); setSubmissionFilter("approved"); loadSubmissions("approved"); } },
-                    { emoji:"👥", label:"Administrér brugere",  color:"var(--ink)",   fn:() => { setAdminSection("users"); loadAdminUsers(); } },
-                    { emoji:"📲", label:"Installations-QR til beta", color:"var(--blue)", fn:() => setShowInstallQr(true) },
-                  ].map(({ emoji, label, color, fn }) => (
+                    { icon:"package", label:"Godkend indsendelser", color:"var(--amber)", fn:() => { setAdminSection("submissions"); setSubmissionFilter("pending"); loadSubmissions("pending"); } },
+                    { icon:"bug", label:"Gennemse tickets",     color:"var(--red)",   fn:() => { setAdminSection("tickets"); loadTickets(); } },
+                    { icon:"check", label:"Godkendte produkter",  color:"var(--green)", fn:() => { setAdminSection("submissions"); setSubmissionFilter("approved"); loadSubmissions("approved"); } },
+                    { icon:"family", label:"Administrér brugere",  color:"var(--ink)",   fn:() => { setAdminSection("users"); loadAdminUsers(); } },
+                    { icon:"share", label:"Installations-QR til beta", color:"var(--blue)", fn:() => setShowInstallQr(true) },
+                  ].map(({ icon, label, color, fn }) => (
                     <button key={label} onClick={fn}
                       style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:6, padding:"14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
-                      <span style={UI.ufs24}>{emoji}</span>
+                      <Icon name={icon} size={22} color={color} />
                       <span style={{ fontSize:12, fontWeight:700, color }}>{label}</span>
                     </button>
                   ))}
@@ -722,14 +722,14 @@ Implementér derefter løsningen.`;
                 {!ticketsLoading && adminTickets.length === 0 && <div style={UI.utacenter_p48px0}><div style={UI.emoji48mb12}>🎉</div><div style={UI.ufs16_fw800_cink}>Ingen tickets</div></div>}
                 <div style={UI.colGap8}>
                   {adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter).map(t => {
-                    const typeConfig = { bug:{emoji:"🐛",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{emoji:"🎨",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{emoji:"💡",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{emoji:"📦",color:"var(--ink3)",bg:"var(--surface2)",label:"Indhold"}, crash:{emoji:"💥",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{emoji:"✨",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
+                    const typeConfig = { bug:{icon:"bug",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{emoji:"🎨",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{icon:"bulb",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{icon:"package",color:"var(--ink3)",bg:"var(--surface2)",label:"Indhold"}, crash:{emoji:"💥",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{emoji:"✨",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
                     const cfg = typeConfig[t.type] || typeConfig.bug;
                     const statusColor = t.status==="open"?"var(--red)":t.status==="in_progress"?"var(--amber)":t.status==="resolved"?"var(--green)":"var(--muted)";
                     const statusLabel = t.status==="open"?"Åben":t.status==="in_progress"?"I gang":t.status==="resolved"?"Løst":"Lukket";
                     return (
                       <div key={t.id} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
                         <div style={{ display:"flex", alignItems:"flex-start", gap:10 }} onClick={() => setOpenTicket(t)}>
-                          <div style={{ width:38, height:38, borderRadius:10, background:cfg.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{cfg.emoji}</div>
+                          <div style={{ width:38, height:38, borderRadius:10, background:cfg.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{cfg.icon ? <Icon name={cfg.icon} size={18} color={cfg.color} /> : cfg.emoji}</div>
                           <div style={UI.flexMin}>
                             <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
                               <span style={{ fontSize:11, fontWeight:700, color:cfg.color, background:cfg.bg, padding:"2px 8px", borderRadius:100 }}>{cfg.label}</span>

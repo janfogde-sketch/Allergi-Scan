@@ -376,8 +376,61 @@ fallback-logik som NotFoundScreen's trin-ikoner), guide-skærmens store ikon
 🙏 (tak-besked) bevidst bevaret. **Fandt og rettede 1 flere flathed-bug**
 (manglende `box-shadow` på "Send forslag"-knappen).
 
+**Ellevte bølge (KUN DELVIST): `AdminScreen.jsx`.** Denne fil er langt større
+end de andre (1000+ linjer, ~100 emoji-forekomster) og kun admin-brugere ser
+den, så den er bevidst prioriteret lavere/mindre udtømmende. Tre nye delte
+ikoner tilføjet: `chart` (bar-chart), `bug` (fejl/tickets), `download`.
+Konverteret: de 8 sektions-faneblade (Dashboard/Brugere/Indsendelser/
+Tickets/Debug/Manglende/Import/Opskrifter → chart/family/package/bug/
+search/info/download/book), dashboard-stat-kortene (profile/plus/barcode,
+⚡ bevaret — intet lyn-ikon), "Database & opgaver"-listen (package/family/
+bug, ⏳ bevaret), "Hurtige handlinger"-gitteret (package/bug/check/family/
+share), feedback-ticket type-badges (bug/bulb/package konverteret, 🎨/💥/✨
+bevaret — ingen gode ikon-matches). **IKKE nået endnu:** selve indholdet
+inde i hvert faneblad (Indsendelser-gennemgang, Ticket-detaljer, Debug-
+output, Import-log, Opskrift-godkendelse) — stadig fuld af emoji. Tag dette
+op igen som en selvstændig fortsættelse, screen for screen ligesom resten,
+hvis/når det prioriteres.
+
+**14. sept. 2026 — session sat på pause af brugeren** ("Stop for nu. Når vi
+starter igen skal du tilføje disse punkter til arbejdet"), med endnu en
+delt tjekliste (screenshot, "20 things you can tell Claude to add to your
+website right now Pt.3" — samme TikTok-genre som antimønstre-listen i
+afsnit 6). **Disse 20 punkter er ENDNU IKKE vurderet eller implementeret** —
+de er kun noteret her som næste opgave, når arbejdet genoptages:
+
+1. Dark mode-toggle
+2. Simpel cookie-banner
+3. Side-søgning (site search)
+4. "Til toppen"-knap
+5. Mobil-menuer
+6. Loading-animationer
+7. Hover-tilstande
+8. Scroll-fremgangsbjælker
+9. Kopiér-knap
+10. Print-stylesheet
+11. Sticky headers
+12. "Spring til indhold"-link
+13. Vis/skjul adgangskode-toggle
+14. UTM-tracking
+15. Formular-succes-tilstand
+16. Formular-fejl-tilstand
+17. Bekræftelses-besked (confirmation message)
+18. "Sidst opdateret"-dato
+19. Udvidelig FAQ (expandable FAQ)
+20. Flydende kontakt-knap
+
+**Vigtigt før disse sættes i gang:** dette er en generisk liste til websites/
+marketingsider — mange punkter passer ikke uændret på en indbygget app-
+oplevelse (fx "print-stylesheet", "cookie-banner" eller "UTM-tracking" giver
+ikke nødvendigvis mening i en PWA uden en traditionel marketing-forside).
+**Vurdér hvert punkt konkret op imod EatSafes faktiske struktur, før
+noget implementeres** — spørg brugeren hvis relevansen er uklar for et
+givent punkt (fx cookie-banner: har appen tracking der kræver samtykke?),
+i stedet for at implementere listen mekanisk.
+
 **Tidligere flagget, stadig kun delvist gjort:** en fuld emoji→SVG-ikon-sanering af
-hele appen.
+hele appen (mest AdminScreen.jsx's fanebladsindhold retur).
 
 **14. sept. 2026 — fundet og rettet: fladhed-bug i to bund-klasser.** Brugeren
 sendte et screenshot af ResultScreen og påpegede at kort og knapper var "helt
