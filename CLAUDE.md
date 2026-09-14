@@ -329,6 +329,14 @@ indhold, ikke chrome, samme begrundelse som tidligere. **Fandt og rettede 3
 flere flathed-bugs** (manglende `box-shadow` på inline-grønne knapper: fejl-
 gendan-knap, "opsummering"-boksen, indsend- og "tilbage"-knapperne).
 
+**Sjette bølge: `MadpasScreen.jsx`.** Erstattede 🔍 (QR-forstørrelse-overlay),
+✓/📋→check/link (kopiér-link-knap, samme mønster som List/Profil), ↗→share
+(del-knap), 💡→bulb (info-note), ✓→check (valgt sprog i dropdown), 🌾→shield
+(tom-tilstand "ingen allergier registreret"). 📱 (madpas-header) og 🇩🇰/🌍
+(sprogflag) bevidst bevaret — sidstnævnte er ægte indhold fra
+`MADPAS_LANGUAGES`. Rettede 2 flere flathed-bugs (QR-luk-knap, "Del via…"-
+knappen).
+
 **Tidligere flagget, stadig kun delvist gjort:** en fuld emoji→SVG-ikon-sanering af
 hele appen.
 
