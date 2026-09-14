@@ -55,7 +55,7 @@ function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, gra
         {/* Hele familien */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:10 }}>
           <div>
-            <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>👨‍👩‍👧 Del med hele familien</div>
+            <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:13, fontWeight:700, color:"var(--ink)" }}><Icon name="family" size={14} color="var(--ink)" /> Del med hele familien</div>
             <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>Alle du har inviteret til EatSafe ser og redigerer listen</div>
           </div>
           <div role="switch" aria-checked={list.type === "family"} tabIndex={0}
@@ -80,7 +80,7 @@ function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, gra
               style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, marginBottom:6, cursor:"pointer" }}>
               <div style={{ fontSize:13, fontWeight:600, color:"var(--ink)" }}>{m.name || m.email}</div>
               <div style={{ width:20, height:20, borderRadius:6, border:`1.5px solid ${sharedIds.has(m.id) ? "var(--green)" : "var(--border2)"}`, background: sharedIds.has(m.id) ? "var(--green)" : "transparent", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                {sharedIds.has(m.id) && <span style={{ color:"#fff", fontSize:12, fontWeight:800 }}>✓</span>}
+                {sharedIds.has(m.id) && <Icon name="check" size={12} color="#fff" />}
               </div>
             </div>
           ))}
@@ -94,12 +94,12 @@ function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, gra
           <div style={{ display:"flex", gap:8 }}>
             <button className="btn btn-primary btn-sm" style={{ flex:1 }}
               onClick={() => { navigator.clipboard?.writeText(shareLink); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
-              {copied ? "✓ Link kopieret" : "🔗 Kopiér link"}
+              <Icon name={copied ? "check" : "link"} size={14} color="var(--on-green)" /> {copied ? "Link kopieret" : "Kopiér link"}
             </button>
             {navigator.share && (
               <button className="btn btn-outline btn-sm"
                 onClick={() => navigator.share({ title: `Indkøbsliste: ${list.name}`, url: shareLink })}>
-                ↗ Del
+                <Icon name="share" size={14} color="var(--ink)" /> Del
               </button>
             )}
           </div>
@@ -223,8 +223,8 @@ export default function ListScreen({
           <div style={{ position:"absolute", left:0, right:0, top:"100%", marginTop:6, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh)", zIndex:10, maxHeight:"min(60vh, 480px)", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
             {itemResults.length > 0 && (
               <div style={{ position:"sticky", top:0, padding:"6px 10px", background:"var(--green-lt)", borderBottom:"1px solid var(--border)", zIndex:1 }}>
-                <div style={{ fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>
-                  🛡️ Sikker søgning for {searchScopeLabel}
+                <div style={{ display:"flex", alignItems:"center", gap:4, fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>
+                  <Icon name="shield" size={11} color="var(--green)" /> Sikker søgning for {searchScopeLabel}
                 </div>
                 {family.length > 0 && (
                   <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
@@ -263,8 +263,8 @@ export default function ListScreen({
               </div>
             )}
             {hiddenUnsafeCount > 0 && (
-              <div style={{ padding:"6px 12px", fontSize:10, color:"var(--muted)", background:"var(--paper2)" }}>
-                🚫 {hiddenUnsafeCount} produkt{hiddenUnsafeCount!==1?"er":""} skjult — indeholder allergener for {searchScopeLabel}
+              <div style={{ display:"flex", alignItems:"center", gap:5, padding:"6px 12px", fontSize:10, color:"var(--muted)", background:"var(--paper2)" }}>
+                <Icon name="block" size={11} color="var(--muted)" /> {hiddenUnsafeCount} produkt{hiddenUnsafeCount!==1?"er":""} skjult — indeholder allergener for {searchScopeLabel}
               </div>
             )}
             {!itemSearching && (
@@ -283,7 +283,7 @@ export default function ListScreen({
           style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"7px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}>
           <div style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
             <span style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{activeList?.name || "Vælg liste"}</span>
-            {activeList?.type === "family" && <span style={{ marginLeft:5, fontSize:9, fontWeight:700, color:"var(--green)" }}>👨‍👩‍👧</span>}
+            {activeList?.type === "family" && <span style={{ marginLeft:5, display:"inline-flex", verticalAlign:"middle" }}><Icon name="family" size={11} color="var(--green)" /></span>}
           </div>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, transform: showListPicker ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
             <path strokeLinecap="round" d="M19 9l-7 7-7-7"/>
@@ -291,8 +291,8 @@ export default function ListScreen({
         </div>
         {favorites.length > 0 && (
           <button aria-label="Dine favoritter" onClick={() => setFavoritesOpen(v => !v)}
-            style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:"auto", padding:0, background: favoritesOpen ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${favoritesOpen ? "var(--green)" : "var(--border)"}`, borderRadius:10, cursor:"pointer", flexShrink:0, fontSize:15 }}>
-            ❤️
+            style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:"auto", padding:0, background: favoritesOpen ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${favoritesOpen ? "var(--green)" : "var(--border)"}`, borderRadius:10, cursor:"pointer", flexShrink:0 }}>
+            <Icon name="heart" size={15} color={favoritesOpen ? "var(--green)" : "var(--red)"} />
           </button>
         )}
         <button aria-label="Del liste" onClick={() => setShowShareSheet(true)} disabled={!activeList}
@@ -311,7 +311,7 @@ export default function ListScreen({
               style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 8px", borderRadius:8, cursor:"pointer", background: l.id === activeListId ? "var(--green-lt)" : "transparent" }}>
               <div>
                 <span style={{ fontSize:13, fontWeight:700, color: l.id === activeListId ? "var(--green)" : "var(--ink)" }}>{l.name}</span>
-                {l.type === "family" && <span style={{ marginLeft:6, fontSize:10 }}>👨‍👩‍👧</span>}
+                {l.type === "family" && <span style={{ marginLeft:6, display:"inline-flex", verticalAlign:"middle" }}><Icon name="family" size={12} color="var(--muted)" /></span>}
                 {l.owner_id !== userId && <span style={{ marginLeft:6, fontSize:10, color:"var(--muted)" }}>(delt)</span>}
               </div>
               {l.owner_id === userId && lists.length > 1 && (
@@ -444,7 +444,7 @@ export default function ListScreen({
           {shoppingList.filter(i => i.checked).map(item => (
             <div key={item.id} className="list-item done">
               <div className="list-check checked" role="checkbox" aria-checked="true" aria-label={`Fjern "${item.name}" fra købt`} tabIndex={0}
-                onClick={() => toggleItem(item.id)} onKeyDown={e => e.key === "Enter" && toggleItem(item.id)}>✓</div>
+                onClick={() => toggleItem(item.id)} onKeyDown={e => e.key === "Enter" && toggleItem(item.id)}><Icon name="check" size={12} color="#fff" /></div>
               {item.ean && <ProductImage product={item} size={22} />}
               {item.ean
                 ? <div className="list-name done" role="link" tabIndex={0} style={{ cursor:"pointer" }}

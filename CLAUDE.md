@@ -269,8 +269,21 @@ da det er token/klasse-niveau):
   `.welcome-tagline`, `.step-title`, `.step-sub`, `.onboard-skip`,
   `.greeting-eyebrow`, `.greeting-main`.
 
-**Bevidst UDELADT fra denne udrulning — flagget, ikke glemt:** en fuld emoji→SVG-
-ikon-sanering af hele appen. En grep viste **flere hundrede** emoji-forekomster på
+**14. sept. 2026 — emoji-sanering sat i gang, screen for screen:** brugeren gav
+udtrykkeligt go ("Sæt det hele i gang"). Første bølge: `ListScreen.jsx` +
+`SearchScreen.jsx` (bundmenuens to søskende-skærme til Hjem). Tilføjede tre nye
+delte ikoner til `Icon`-komponenten — `shield` (bruges til "Sikker søgning"-badgen,
+som optræder gentagne gange på tværs af skærme og reelt er UI-chrome, ikke
+indhold), `block` (🚫, "skjulte produkter"), `link` (🔗, "kopiér link"). Erstattede
+🛡️/🚫/🔗/↗️/❤️/✓/👨‍👩‍👧 med `Icon`-kald begge steder. **Metode for resten af appen:**
+kun emoji der fungerer som ren UI-chrome (knapper, badges, status) erstattes —
+IKKE indholds-emoji der bærer reel mening (allergen-glyffer i `constants.jsx`,
+sprogflag i Madpas, opskrift-kategori-ikoner) — de er indhold, ikke pynt, og at
+erstatte dem kræver et helt separat, meget større design-arbejde. Fortsættes
+skærm for skærm i kommende PR'er.
+
+**Tidligere flagget, stadig kun delvist gjort:** en fuld emoji→SVG-ikon-sanering af
+hele appen. En grep viste **flere hundrede** emoji-forekomster på
 tværs af stort set alle skærme (`AdminScreen.jsx`, `App.jsx`, `RecipesScreen.jsx`,
 `ProfileScreen.jsx` m.fl.) — langt de fleste er meningsbærende indhold (allergen-
 glyffer i `constants.jsx`, sprogflag, opskrift-kategori-ikoner, status-ikoner i
