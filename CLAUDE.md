@@ -132,16 +132,30 @@ siddende fast på viewporten. **Løsning:** render den slags overlays via
 --on-green:#FFFFFF
 --red:#C8402E (+lt/md)   fare
 --amber:#B5791A (+lt/md) advarsel
---blue:#178A50 (+lt/md)  ⚠️ pt. aliaset 1:1 til grøn — brugt semantisk til
+--blue:#3A6EA5 (+lt/md)  reel, distinkt slate-blå sekundærfarve (IKKE længere
+                         aliaset til grøn, se afsnit 5) — brugt semantisk til
                          "sekundær info/accent" (.greeting-eyebrow, .home-tip,
-                         .info-box, .share-bar) men ser visuelt identisk ud med
-                         grøn lige nu. Identificeret som forbedringspunkt, se afsnit 5.
+                         .info-box, .share-bar)
 --muted / --muted2
 --surface / -2 / -3
 --border / -2
 --r:12px (default radius), --sh / --sh2 (skygge-tokens)
 --f:'DM Sans',system-ui,sans-serif
 ```
+
+**Anbefalet spacing-skala** (tilføjet 14. sept. efter en grep-bekræftet gennemgang
+af antimønster #15 — se afsnit 6). Eksisterende inline-styles bruger IKKE denne
+skala konsekvent i dag (mindst 15 forskellige padding-varianter fundet på tværs
+af `src/*.jsx`), men den er den anbefalede retning for nyt arbejde, så vi ikke
+tilføjer endnu flere ad hoc-værdier:
+```
+4 / 6 / 8 / 10 / 12 / 14 / 16 / 20 / 24 / 32 (px)
+```
+Foretræk disse værdier (og kombinationer af dem, fx `10px 14px`) frem for
+"næsten runde" tal som 9px/11px/13px/15px, medmindre der er en konkret visuel
+grund til den præcise værdi. En fuld retrofit af eksisterende inline-styles til
+denne skala er et selvstændigt, skærm-for-skærm-visuelt-QA'et projekt — ikke
+noget der er gjort mekanisk i denne omgang.
 
 Kendt mønster for "levende" interaktion: `.recipe-card:active{transform:scale(.99)}`
 — identificeret som pattern der bør genbruges flere steder (tryk-feedback), se afsnit 5.
@@ -556,10 +570,10 @@ kodebasen, ikke antagelser):
   navigation som resten af appen — konsistent, ikke en mangel), #20
   flydende kontakt-knap (topbarens permanente Feedback-knap dækker samme
   formål).
-- **#1 dark mode-toggle:** brugeren valgte eksplicit at vente — for stort et
-  selvstændigt scope (kræver et helt nyt mørkt farvesystem for alle tokens +
-  verificering af hver skærm) til at tage sammen med resten. Tag den op
-  separat hvis/når den prioriteres.
+- **#1 dark mode-toggle — DROPPET 14. sept. 2026, ikke bare udskudt.** Brugeren
+  bad eksplicit om at droppe punktet helt ("Drop helt nr. 1"). App'en er og
+  forbliver lys-tema-only — tag IKKE dette op igen medmindre brugeren selv
+  rejser det på ny.
 - **#13 vis/skjul kodeord — implementeret.** Login/opret konto bruger
   rigtige password-felter (ikke magic link), så det var en reel, lavrisiko
   mangel. Nye `eye`/`eyeOff`-ikoner i `Icon`-komponenten, øje-knap tilføjet
@@ -618,9 +632,6 @@ aldrig-defineret"-ikonnavne giver INGEN fejl (build, runtime eller test) —
 grep'e for `<Icon name="` og krydstjekke mod ikon-listen i afsnit 3, hvis
 en fremtidig gennemgang har tid til det, i stedet for kun at opdage dem
 tilfældigt undervejs.
-
-**Tidligere flagget, stadig kun delvist gjort:** en fuld emoji→SVG-ikon-sanering af
-hele appen (mest AdminScreen.jsx's fanebladsindhold retur).
 
 **14. sept. 2026 — fundet og rettet: fladhed-bug i to bund-klasser.** Brugeren
 sendte et screenshot af ResultScreen og påpegede at kort og knapper var "helt
@@ -700,6 +711,34 @@ opmærksomhed på samme skærm, som på Hjem og nu ProfileScreen.
 dermed fuldført** — både de globalt udrullede token/klasse-ændringer og de
 per-skærm-vurderede mønstre er nu implementeret hvor de giver mening.
 
+**14. sept. 2026 — opfølgning på "nogle åbne opgaver?": #1 droppet, #2/#3
+vurderet, #4/#5 gjort.** Brugeren bad om at droppe dark mode helt og tage de
+resterende fire punkter fra forrige status op med det samme:
+
+- **#1 Dark mode — droppet, ikke udskudt** (se afsnit 5's log ovenfor for
+  eksakt ordlyd).
+- **#2 Spacing-konsistens — bekræftet reelt, dokumenteret, IKKE retrofittet.**
+  Se afsnit 3 (ny anbefalet skala) og afsnit 6 (opdateret status for
+  antimønster #15).
+- **#3 Copy-gennemgang — udført, ingen fund.** Se afsnit 6 (antimønster #17).
+- **#4 `privacy.html` + `invite.html` — reskinnet til det lyse designsprog.**
+  Begge sider brugte stadig det gamle mørke tema (`#0e1812`-baggrund,
+  `#4ade80`-grøn) fra før hvid-baggrund-skiftet. Omskrevet til samme
+  CSS-variabel-sæt som `install.html` (`--paper`/`--green`/`--surface` m.fl.,
+  DM Sans, samme kort-/knap-stil). Indhold og funktionalitet (Supabase-kald i
+  `invite.html`) er uændret — kun visuelt reskin.
+- **#5 Ryddet op i forældede/modstridende noter** i `CLAUDE.md` selv: en gammel
+  linje der stadig sagde AdminScreen.jsx's emoji-sanering var ufuldendt
+  (modsagt af tolvte bølges log), samt en helt separat forældet note om at
+  `--blue` stadig var "aliaset til grøn" (blev rettet for flere bølger siden,
+  men aldrig opdateret i selve token-referencen i afsnit 3).
+
+**Sidegevinst — manglende bekræftelse i Admin fundet og rettet.** Brugeren
+påpegede at "Brug denne version"-knappen i produkt-gennemgangen (AI-renskrevet
+OCR-tekst, `AdminScreen.jsx`) ikke gav nogen synlig bekræftelse ved klik —
+opdaterer kun stille lokal state. Tilføjet `showToast("Renskrevet tekst
+brugt")`, samme mønster som resten af appens Toast-brug.
+
 ---
 
 ### Beta-installation (september 2026)
@@ -759,7 +798,7 @@ under den nyeste service worker efter en opdatering.
 |---|---|---|
 | 1 | Lilla-til-blå gradient | ✅ Ikke brugt — appens paletter er grøn (primær) + en bevidst valgt slate-blå (`#3A6EA5`, sekundær) |
 | 2 | Gradient-tekst i overskrifter | ✅ Ikke brugt — ingen `background-clip:text` i kodebasen |
-| 3 | Emoji i overskrifter/UI-chrome | 🟡 Var udbredt, saneres løbende skærm for skærm (se afsnit 5 ovenfor — sat på pause for denne gennemgang, genoptages) |
+| 3 | Emoji i overskrifter/UI-chrome | ✅ Saneret på tværs af alle skærme og delte komponenter (se afsnit 5) — kun ægte indholds-emoji (allergen-glyffer, sprogflag, kategori-ikoner) står tilbage, bevidst, ikke chrome |
 | 4 | Inter-font overalt | ✅ Ikke brugt — DM Sans + DM Mono, bevidst valgt tidligt i projektet |
 | 5 | Farvede kant-kort ("colored border cards") som ren pynt | ✅ Ikke fundet — farvede kanter i appen er funktionelle signaler (fx `product-hero`'s grøn/gul/rød kant = sikkerhedsverdikt), ikke dekorative |
 | 6 | Glassmorphism-kort (`backdrop-filter:blur`) | 🔴 **Fundet og rettet 14. sept.** — 17 forekomster i `theme.jsx` + 2 i `App.jsx`/`FeedbackModal.jsx`, ALLE på fuldt uigennemsigtige baggrunde (`var(--surface)` m.fl.) så blur'en var visuelt virkningsløs — ren død kode der tilfældigvis også ramte antimønstret. Fjernet alle 19. De to resterende forekomster i `ScannerScreen.jsx` (kamera-kontrolknapper + zoom-pille) er bevidst bevaret — de sidder på reelt gennemsigtig sort baggrund oven på det levende kamerabillede, så blur'en har en ægte funktionel grund (læsbarhed oven på video) |
@@ -771,20 +810,19 @@ under den nyeste service worker efter en opdatering.
 | 12 | Fade-in ved scroll | ✅ Ikke fundet — ingen `IntersectionObserver` i kodebasen. `.fade-in`-klassen er en mount-animation (skærmskift), ikke scroll-baseret |
 | 13 | Cursor-følgende lysstråle | ✅ Ikke fundet |
 | 14 | Knapper der toner ved hover (ren opacity-fade) | ✅ Ikke fundet — `.btn-primary:hover` skifter farve + løfter sig (`translateY`), en bevidst hover-tilstand, ikke en doven opacity-fade |
-| 15 | Inkonsistent spacing | 🟡 Ikke systematisk revideret — kræver en visuel gennemgang skærm for skærm, ikke noget der er grep'et frem |
+| 15 | Inkonsistent spacing | 🟡 **Bekræftet reelt 14. sept.** — grep af alle inline `padding`/`gap`/`marginBottom`-værdier i `src/*.jsx` viste stor spredning uden fælles skala (fx padding brugt i mindst 15 forskellige varianter: `12px 14px`, `10px 12px`, `9px 12px`, `8px 10px`, `14px 16px` osv., ofte til visuelt ensartede formål). En blind find/erstat på tværs af appen er for risikabelt uden visuel verificering pr. skærm (se afsnit 4's screenshot-metode) — i stedet er en anbefalet skala dokumenteret i afsnit 3 til brug i nyt arbejde. Fuld retrofit af eksisterende inline-styles er bevidst IKKE lavet i denne omgang — kræver skærm-for-skærm-visuel-QA, samme omfang som emoji-saneringen |
 | 16 | Em-dashes ("—") alle vegne | 🟢 Tjekket — langt de fleste af de ~600 forekomster i `src/*.jsx` sidder i danske kode-kommentarer (usynlige for brugeren), ikke i UI-tekst. De der ER i bruger-vendt tekst er enkeltstående, funktionelle forbindelses-streger i naturligt dansk (fx "Det ligner ikke en gyldig stregkode — tjek cifrene."), ikke AI-agtig ophobning af flere streger i samme sætning. Vurderet som ikke et reelt problem — men hold øje med nye tekster |
-| 17 | Generisk buzzword-copy | 🟡 Ikke systematisk revideret — dansk UI-tekst er stort set skrevet konkret/funktionelt (fx "Scan produkt", "Sikker søgning for dig"), men ingen formel gennemgang er lavet |
+| 17 | Generisk buzzword-copy | ✅ **Formelt gennemgået 14. sept.** — grep for typiske AI-marketing-klichéer (da. og en. varianter: "oplev", "din rejse", "tag kontrol", "næste niveau", "revolutioner" osv.) på tværs af `src/*.jsx` gav ingen reelle træf. Stikprøve af de mest synlige tekster (velkomst-tagline "Scan. Tjek. Spis trygt.", skærm-titler) bekræfter konkret/funktionel copy uden generisk fyld. Ingen ændringer nødvendige |
 | 18 | Serif-kursiv-accenter | ✅ Ikke brugt — ingen serif-skrifttype i appen overhovedet |
 | 19 | Space Grotesk + Instrument Serif (typisk AI-font-parring) | ✅ Ikke brugt — DM Sans/DM Mono |
 | 20 | *(ikke synlig i det delte screenshot — spørg brugeren hvis relevant)* | — |
 
 **Konklusion:** Appen var reelt kun ramt af ét konkret punkt (glassmorphism/
-backdrop-filter — nu rettet) plus det i forvejen kendte emoji-punkt (i gang,
-sat på pause). Resten var enten allerede undgået fra projektets start (fonte,
-farver, ikoner) eller ikke reelle problemer ved nærmere eftersyn (em-dashes).
-Punkt 15 (spacing) og 17 (copy) kræver en mere subjektiv, visuel gennemgang og
-er ikke afkrydset — tag dem op hvis brugeren beder om en decideret spacing-
-eller copy-revision.
+backdrop-filter — nu rettet) plus det i forvejen kendte emoji-punkt (siden
+gennemført, se afsnit 5). Resten var enten allerede undgået fra projektets
+start (fonte, farver, ikoner) eller ikke reelle problemer ved nærmere
+eftersyn (em-dashes). Punkt 15 (spacing) og 17 (copy) er nu også taget op —
+se opdateringen nedenfor.
 
 ---
 
