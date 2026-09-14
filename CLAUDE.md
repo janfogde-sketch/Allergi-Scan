@@ -256,13 +256,33 @@ go — bekræftet eksplicit 11. sept. 2026: "vi venter med at bygge i hele appen
 
 Admin-dashboardet (Hurtige handlinger) har en "Installations-QR til beta"-knap, der
 viser en QR-kode til `public/install.html`. Den side tjekker selv enheden:
-Android/Chrome/desktop sendes med det samme videre til `eatsafe.dk` (appen har
-allerede manifest + service worker, så browseren kan vise sin egen installations-
-prompt der); iPhone/iPad (Apple tillader ikke programmatisk installation af PWA'er)
-får i stedet en 3-trins visuel guide til "Del → Føj til hjemmeskærm", i samme lyse
-designsprog som resten af appen. `install.html` er en statisk fil i `public/` —
-samme mønster som `privacy.html`/`invite.html`, men bemærk at de to ældre sider
-stadig er i det gamle mørke tema og IKKE er opdateret til det nye lyse designsprog.
+iPhone/iPad (Apple tillader ikke programmatisk installation af PWA'er) får en
+3-trins visuel guide til "Del → Føj til hjemmeskærm", i samme lyse designsprog som
+resten af appen. Alt andet (Android/Chrome/desktop) sendes videre til
+`eatsafe.dk/?src=beta-qr`. `install.html` er en statisk fil i `public/` — samme
+mønster som `privacy.html`/`invite.html`, men bemærk at de to ældre sider stadig
+er i det gamle mørke tema og IKKE er opdateret til det nye lyse designsprog.
+
+**Vigtigt lært 14. sept. 2026:** "browseren viser bare selv sin installations-
+prompt" holdt ikke i praksis — brugeren rapporterede at intet skete på Android.
+To reelle årsager, begge rettet:
+1. **`public/sw.js` manglede en `fetch`-event-handler.** Det er et af Chromes
+   kriterier for at en PWA regnes som "installerbar" og dermed overhovedet
+   udløser `beforeinstallprompt` — uden den kan browseren aldrig tilbyde
+   installation, uanset hvor korrekt manifestet ellers er. Tilføjet en ren
+   gennemstrømnings-handler (ingen caching-strategi, kun for at opfylde
+   kriteriet).
+2. **Ingen browser tilbyder et helt automatisk, tryk-frit install** — det er en
+   bevidst sikkerhedsbegrænsning i alle browsere, ikke noget kode kan omgå. Det
+   tætteste man kan komme: fange `beforeinstallprompt`-eventet selv og vise en
+   tydelig "Installér nu"-knap, der udløser browserens native dialog med ét tryk.
+   Implementeret som `usePwaInstall.js` (hook der fanger/gemmer eventet) +
+   `InstallPrompt.jsx` (overlay, monteret i `App.jsx` lige under skip-link'en).
+   Vises kun når URL'en indeholder `?src=beta-qr` (sat af `install.html`'s
+   redirect for ikke-iOS). Falder automatisk tilbage til tekst-instruktioner
+   ("tryk ⋮-menuen → Installer app") efter 2,5 sek. hvis browseren af en eller
+   anden grund ikke sender eventet (fx allerede installeret, eller en tidligere
+   afvist prompt som Chrome husker i en periode).
 
 ## 6. Hvor finder du mere?
 

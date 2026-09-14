@@ -1,5 +1,13 @@
 // public/sw.js — EatSafe Service Worker (push-notifikationer)
 
+// En kontrolleret fetch-handler er et af Chromes kriterier for at appen regnes
+// som "installerbar" (og dermed sender "beforeinstallprompt") — uden denne
+// kunne browseren i praksis aldrig tilbyde installation, uanset hvor korrekt
+// manifestet ellers er sat op. Ren gennemstrømning, ingen caching-strategi.
+self.addEventListener("fetch", (event) => {
+  event.respondWith(fetch(event.request));
+});
+
 self.addEventListener("push", (event) => {
   if (!event.data) return;
   const data = event.data.json();

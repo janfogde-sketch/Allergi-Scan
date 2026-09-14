@@ -111,9 +111,10 @@
     } else if (isIOS) {
       document.getElementById("ios-guide").classList.remove("hidden");
     } else {
-      // Android/Chrome (og alt andet) håndterer installation selv via browserens
-      // egen prompt, når man lander på selve appen — ingen grund til en guide her.
-      window.location.replace("https://eatsafe.dk/");
+      // Android/Chrome (og alt andet): send videre til selve appen med et
+      // markør-parameter — appen fanger browserens "beforeinstallprompt" og
+      // viser selv en stor "Installér nu"-knap med det samme (se InstallPrompt.jsx).
+      window.location.replace("https://eatsafe.dk/?src=beta-qr");
     }
   </script>
 </body>
