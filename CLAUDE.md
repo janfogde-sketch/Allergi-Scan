@@ -290,7 +290,30 @@ tilsvarende SVG-ikon findes, og det er et distinkt, letgenkendeligt visuelt
 signal uden en oplagt streg-ikon-erstatning.
 
 **Tidligere flagget, stadig kun delvist gjort:** en fuld emoji→SVG-ikon-sanering af
-hele appen. En grep viste **flere hundrede** emoji-forekomster på
+hele appen.
+
+**14. sept. 2026 — fundet og rettet: fladhed-bug i to bund-klasser.** Brugeren
+sendte et screenshot af ResultScreen og påpegede at kort og knapper var "helt
+flat". Root cause: den brede `.card`-klasse (bruges praktisk talt overalt i
+appen til generiske indholdssektioner) og `.product-hero` (ResultScreens
+hovedkort) havde **slet ingen `box-shadow`** — kun en 1px border. Enhver skærm
+der bruger `.card` fik derfor ingen elevation, uanset hvor meget andet
+design-arbejde der var lagt i den. Rettet:
+- `.card` fik `box-shadow:var(--sh)` — slår automatisk igennem alle steder
+  klassen bruges (samme "fix én delt klasse, ramt overalt"-mønster som
+  `EmptyState`/`.loader` tidligere).
+- `.product-hero` fik `box-shadow:var(--sh2)` (kraftigere, da det er skærmens
+  hovedkort — samme hierarki-tanke som Hjems scan-boks).
+- To knapper omgik shadow-klasserne ved at sætte `background`/`color` som
+  inline style i stedet for at bruge `.btn-green`/`.btn-primary` (som allerede
+  havde en skygge defineret) — "Tilføj til indkøbsliste" i `ResultScreen.jsx`
+  og manuel-EAN-knappen i `ScannerScreen.jsx`. Rettet til at bruge klassen
+  (Result) / fået samme `box-shadow` eksplicit (Scanner, da den knap ikke
+  bruger `.btn`-familien overhovedet).
+
+**Lektion for videre arbejde:** når en knap/kort ser "fladt" ud på en given
+skærm, tjek FØRST om det er en delt klasse der mangler skygge (ramt alle
+steder, ét CSS-fix) frem for at antage det er skærm-specifikt. En grep viste **flere hundrede** emoji-forekomster på
 tværs af stort set alle skærme (`AdminScreen.jsx`, `App.jsx`, `RecipesScreen.jsx`,
 `ProfileScreen.jsx` m.fl.) — langt de fleste er meningsbærende indhold (allergen-
 glyffer i `constants.jsx`, sprogflag, opskrift-kategori-ikoner, status-ikoner i

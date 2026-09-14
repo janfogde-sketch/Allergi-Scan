@@ -463,8 +463,8 @@ export default function ResultScreen({
       {/* ── 1. PRODUKT — verdikten sidder nu som en ramme + strimmel på selve kortet ── */}
       {renderProductHero()}
 
-      <button className="btn btn-sm btn-full" onClick={handleAddToList}
-        style={{ marginBottom:10, background:"var(--green)", color:"var(--on-green)", display:"flex", alignItems:"center", justifyContent:"center", gap:7, opacity: addedToList ? .7 : 1 }}>
+      <button className="btn btn-green btn-sm btn-full" onClick={handleAddToList}
+        style={{ marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:7, opacity: addedToList ? .7 : 1 }}>
         {addedToList ? <><Icon name="check" size={15} color="var(--on-green)" /> Tilføjet til indkøbsliste</> : <><Icon name="cart" size={15} color="var(--on-green)" /> Tilføj til indkøbsliste</>}
       </button>
       {showListPicker && (
