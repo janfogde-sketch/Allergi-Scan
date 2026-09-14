@@ -4,44 +4,54 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EatSafe — Familie-invitation</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root{
+      --ink:#15201A; --ink2:rgba(21,32,26,.78); --muted:rgba(21,32,26,.58);
+      --paper:#F6F8F3; --green:#178A50; --green-lt:rgba(23,138,80,.10); --green-mid:rgba(23,138,80,.18);
+      --surface:#FFFFFF; --surface2:#F1F3EC; --border:rgba(21,32,26,.10); --border2:rgba(21,32,26,.16);
+      --red:#C8402E; --f:'DM Sans',system-ui,-apple-system,sans-serif;
+    }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #0e1812; color: #e8f0e9;
+      font-family: var(--f);
+      background: var(--paper); color: var(--ink);
       min-height: 100vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center; padding: 24px;
+      -webkit-font-smoothing: antialiased;
     }
     .card {
-      background: #162318; border: 1px solid #1f3024;
+      background: var(--surface); border: 1px solid var(--border);
       border-radius: 20px; padding: 32px 28px;
       max-width: 400px; width: 100%; text-align: center;
+      box-shadow: 0 1px 0 rgba(255,255,255,.7) inset, 0 2px 8px -2px rgba(21,32,26,.10);
     }
-    .logo { font-size: 24px; font-weight: 900; color: #4ade80; margin-bottom: 24px; }
-    .logo span { color: #e8f0e9; }
-    .icon { font-size: 56px; margin-bottom: 16px; }
-    h1 { font-size: 22px; font-weight: 900; color: #e8f0e9; margin-bottom: 8px; }
-    p { font-size: 14px; color: #8aab8e; line-height: 1.6; margin-bottom: 24px; }
+    .logo { font-size: 20px; font-weight: 800; color: var(--green); letter-spacing: -.3px; margin-bottom: 24px; }
+    .logo span { color: var(--ink); }
+    .icon { font-size: 48px; margin-bottom: 16px; }
+    h1 { font-size: 22px; font-weight: 900; color: var(--ink); letter-spacing: -.4px; margin-bottom: 8px; }
+    p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
     .btn {
       display: block; width: 100%; padding: 15px;
-      background: #4ade80; color: #071510;
+      background: var(--green); color: #fff;
       border: none; border-radius: 12px;
-      font-size: 16px; font-weight: 800; cursor: pointer;
+      font-size: 15px; font-weight: 800; cursor: pointer;
       font-family: inherit; text-decoration: none;
       margin-bottom: 10px;
     }
-    .btn:hover { background: #22c55e; }
+    .btn:hover { background: #146e40; }
     .btn-ghost {
-      background: transparent; color: #8aab8e;
-      border: 1px solid #1f3024; font-size: 14px;
-      font-weight: 600; padding: 12px;
+      background: var(--surface); color: var(--ink2);
+      border: 1.5px solid var(--border2); font-size: 13px;
+      font-weight: 700; padding: 13px;
     }
-    .btn-ghost:hover { background: #162318; }
-    .error { color: #ef4444; font-size: 13px; margin-top: 12px; }
-    .success { color: #4ade80; font-size: 14px; font-weight: 700; margin-top: 12px; }
+    .btn-ghost:hover { background: var(--surface2); }
+    .error { color: var(--red); font-size: 13px; margin-top: 12px; }
+    .success { color: var(--green); font-size: 14px; font-weight: 700; margin-top: 12px; }
     .spinner {
-      width: 32px; height: 32px; border: 3px solid #1f3024;
-      border-top-color: #4ade80; border-radius: 50%;
+      width: 30px; height: 30px; border: 3px solid var(--border2);
+      border-top-color: var(--green); border-radius: 50%;
       animation: spin .8s linear infinite; margin: 0 auto 16px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -125,7 +135,7 @@
           <p>Et EatSafe-familiemedlem har inviteret dig til at dele allergiprofiler. Opret en konto for at acceptere.</p>
           <a href="https://eatsafe.dk?invite=${token}" class="btn">Acceptér og opret konto</a>
           <a href="https://eatsafe.dk?invite=${token}&login=1" class="btn btn-ghost">Jeg har allerede en konto</a>
-          <p style="font-size:12px; margin-top:16px; color:#6b8f72">
+          <p style="font-size:12px; margin-top:16px; color:var(--muted)">
             Invitationen udløber ${new Date(invite.expires_at).toLocaleDateString("da-DK")}
           </p>
         `);

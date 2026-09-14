@@ -1010,7 +1010,7 @@ Implementér derefter løsningen.`;
                     <div style={{ background:"var(--green-lt)", borderRadius:8, padding:"10px", marginBottom:8, fontSize:12, color:"var(--ink)", lineHeight:1.7 }}>
                       <HighlightText text={cleanedOcrText} />
                     </div>
-                    <button onClick={() => setEditingSubmission(s => ({ ...s, ingredients_text: cleanedOcrText }))}
+                    <button onClick={() => { setEditingSubmission(s => ({ ...s, ingredients_text: cleanedOcrText })); showToast("Renskrevet tekst brugt"); }}
                       style={{ ...UI.uw100_bggreen_bdnone_br10_p10px_fff_fs13_fw700_congreen_curp, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                       <Icon name="check" size={13} color="var(--on-green)" /> Brug denne version
                     </button>
