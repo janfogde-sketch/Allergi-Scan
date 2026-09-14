@@ -59,6 +59,7 @@ import { ShoppingProvider } from './ShoppingContext.jsx';
 import { FamilyFormProvider } from './FamilyFormContext.jsx';
 import { AllergenPrefsProvider } from './AllergenPrefsContext.jsx';
 import { UI } from "./styleUtils.js";
+import InstallPrompt from "./InstallPrompt.jsx";
 
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
@@ -1085,6 +1086,9 @@ const lookupProduct = useCallback(async (ean) => {
       <div className="app" role="application" aria-label="EatSafe">
         {/* Skip-link for tastatur/screen reader brugere */}
         <a href="#main-content" className="skip-link">Spring til indhold</a>
+
+        {/* Installations-prompt — kun aktiv når man er landet via beta-QR'en */}
+        <InstallPrompt />
 
         {/* ══ VELKOMST ══ */}
         {/* ══ ONBOARDING SCREENS ══ */}
