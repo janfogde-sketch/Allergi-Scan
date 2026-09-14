@@ -154,20 +154,20 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           {selectedEntry.summary && <div style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.55, marginBottom:16 }}>{selectedEntry.summary}</div>}
           {selectedEntry.risk_level && selectedEntry.risk_level !== "none" && (
             <span style={{ ...S.pill(selectedEntry.risk_level==="high"?"var(--red-lt)":"var(--amber-lt)", selectedEntry.risk_level==="high"?"var(--red)":"var(--amber)", selectedEntry.risk_level==="high"?"var(--red-md)":"var(--amber-md)"), display:"inline-flex", alignItems:"center", gap:5 }}>
-              {selectedEntry.risk_level==="high"?"⚠️":"⚡"} {selectedEntry.risk_level==="high"?"Høj risiko":"Moderat"}
+              <Icon name="warning" size={11} color={selectedEntry.risk_level==="high"?"var(--red)":"var(--amber)"} /> {selectedEntry.risk_level==="high"?"Høj risiko":"Moderat"}
             </span>
           )}
         </div>
         {selectedEntry.description && <div style={S.section}><div style={S.sectionLabel}>Beskrivelse</div><div style={S.sectionText}>{selectedEntry.description}</div></div>}
-        {selectedEntry.health_notes && <div style={S.healthBox}><div style={{ ...S.sectionLabel, color:"var(--warm)" }}>⚕️ Sundhedsnote</div><div style={S.sectionText}>{selectedEntry.health_notes}</div></div>}
+        {selectedEntry.health_notes && <div style={S.healthBox}><div style={{ ...S.sectionLabel, color:"var(--warm)", display:"flex", alignItems:"center", gap:5 }}><Icon name="info" size={12} color="var(--warm)" /> Sundhedsnote</div><div style={S.sectionText}>{selectedEntry.health_notes}</div></div>}
         {Array.isArray(selectedEntry.allergen_ids) && selectedEntry.allergen_ids.length > 0 && (
-          <div style={S.section}><div style={S.sectionLabel}>Allergener</div><div style={S.pillRow}>{selectedEntry.allergen_ids.map(a => <span key={a} style={S.pill("var(--red-lt)","var(--red)","var(--red-md)")}>🌾 {AN[a]||a}</span>)}</div></div>
+          <div style={S.section}><div style={S.sectionLabel}>Allergener</div><div style={S.pillRow}>{selectedEntry.allergen_ids.map(a => <span key={a} style={{ ...S.pill("var(--red-lt)","var(--red)","var(--red-md)"), display:"inline-flex", alignItems:"center", gap:4 }}><Icon name="warning" size={10} color="var(--red)" /> {AN[a]||a}</span>)}</div></div>
         )}
         {Array.isArray(selectedEntry.found_in) && selectedEntry.found_in.length > 0 && (
           <div style={S.section}><div style={S.sectionLabel}>Findes i</div><div style={S.pillRow}>{selectedEntry.found_in.map((f,i) => <span key={i} style={S.pill("var(--surface)","var(--muted)","var(--border)")}>{f}</span>)}</div></div>
         )}
         {Array.isArray(selectedEntry.alternatives) && selectedEntry.alternatives.length > 0 && (
-          <div style={S.section}><div style={S.sectionLabel}>Alternativer</div><div style={S.pillRow}>{selectedEntry.alternatives.map((a,i) => <span key={i} style={S.pill("var(--green-lt)","var(--green)","rgba(74,222,128,.2)")}>✓ {a}</span>)}</div></div>
+          <div style={S.section}><div style={S.sectionLabel}>Alternativer</div><div style={S.pillRow}>{selectedEntry.alternatives.map((a,i) => <span key={i} style={{ ...S.pill("var(--green-lt)","var(--green)","rgba(74,222,128,.2)"), display:"inline-flex", alignItems:"center", gap:4 }}><Icon name="check" size={10} color="var(--green)" /> {a}</span>)}</div></div>
         )}
         {Array.isArray(selectedEntry.aliases) && selectedEntry.aliases.length > 0 && (
           <div style={S.section}><div style={S.sectionLabel}>Kendes også som</div><div style={S.pillRow}>{selectedEntry.aliases.map((a,i) => <span key={i} style={S.pill("var(--surface)","var(--muted)","var(--border)")}>{a}</span>)}</div></div>
@@ -186,13 +186,13 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
     <div className="screen fade-in">
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", paddingTop:4, marginBottom:16 }}>
         <div>
-          <div style={{ fontSize:22, fontWeight:800, color:"var(--ink)" }}>📚 Leksikon</div>
+          <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:22, fontWeight:800, color:"var(--ink)" }}><Icon name="book" size={20} color="var(--ink)" /> Leksikon</div>
           <div style={UI.muted12mt2}>{total} entries</div>
         </div>
       </div>
 
       {/* Fejlbesked — synlig under udvikling */}
-      {error && <div style={S.error}>⚠️ {error}</div>}
+      {error && <div style={{ ...S.error, display:"flex", alignItems:"center", gap:6 }}><Icon name="warning" size={13} color="var(--red)" /> {error}</div>}
 
       {/* Søg */}
       <div style={S.searchWrap}>
@@ -249,7 +249,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           ))}
         </div>
       ) : entries.length === 0 ? (
-        <EmptyState icon="🔍" text="Ingen resultater" sub={searchQuery ? "Prøv et andet søgeord" : "Ingen entries i denne kategori endnu"} />
+        <EmptyState icon={<Icon name="search" size={26} color="var(--muted)" />} text="Ingen resultater" sub={searchQuery ? "Prøv et andet søgeord" : "Ingen entries i denne kategori endnu"} />
       ) : (
         <div>{entries.map(entry => {
           const cat = CAT_MAP[entry.category] || {};
