@@ -253,7 +253,7 @@ export default function MadpasScreen({
                   <div style={{ fontSize:11, color:"var(--muted)", marginBottom:16, wordBreak:"break-all" }}>{shareUrl}</div>
                   <button onClick={() => setQrOpen(false)}
                     style={{ width:"100%", padding:"12px", borderRadius:12, background:"var(--green)", border:"none",
-                      fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
+                      fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer", boxShadow:"0 2px 12px rgba(74,222,128,.25)" }}>
                     Luk
                   </button>
                 </div>
@@ -278,7 +278,7 @@ export default function MadpasScreen({
                       fontSize:20, opacity:0, transition:"opacity .15s" }}
                       onMouseEnter={e => e.currentTarget.style.opacity=1}
                       onMouseLeave={e => e.currentTarget.style.opacity=0}>
-                      🔍
+                      <Icon name="search" size={18} color="#fff" />
                     </div>
                   </div>
                 ) : (
@@ -304,15 +304,15 @@ export default function MadpasScreen({
                       fontFamily:"var(--f)", fontSize:12, fontWeight:700,
                       color: copied ? "var(--green)" : "var(--ink2)", cursor:"pointer",
                       display:"flex", alignItems:"center", justifyContent:"center", gap:6, transition:"all .2s" }}>
-                    {copied ? "✓ Kopieret!" : "📋 Kopiér link"}
+                    <Icon name={copied ? "check" : "link"} size={13} color={copied ? "var(--green)" : "var(--ink2)"} /> {copied ? "Kopieret!" : "Kopiér link"}
                   </button>
                   {navigator.share && (
                     <button onClick={() => navigator.share({ title:"Mit EatSafe madpas", url:shareUrl })}
                       style={{ width:"100%", padding:"9px 12px", borderRadius:10, border:"none",
                         background:"var(--green)", fontFamily:"var(--f)", fontSize:12, fontWeight:800,
                         color:"var(--on-green)", cursor:"pointer",
-                        display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                      ↗ Del via...
+                        display:"flex", alignItems:"center", justifyContent:"center", gap:6, boxShadow:"0 2px 12px rgba(74,222,128,.25)" }}>
+                      <Icon name="share" size={13} color="var(--on-green)" /> Del via...
                     </button>
                   )}
                 </div>
@@ -333,8 +333,8 @@ export default function MadpasScreen({
             </button>
 
             {/* Info */}
-            <div style={{ padding:"10px 16px 14px", fontSize:11, color:"var(--muted)", lineHeight:1.5, borderTop:"1px solid var(--border)" }}>
-              💡 Andre kan se dit madpas uden at have EatSafe installeret. Siden er offentlig tilgængelig via linket.
+            <div style={{ display:"flex", alignItems:"flex-start", gap:6, padding:"10px 16px 14px", fontSize:11, color:"var(--muted)", lineHeight:1.5, borderTop:"1px solid var(--border)" }}>
+              <Icon name="bulb" size={13} color="var(--muted)" /> Andre kan se dit madpas uden at have EatSafe installeret. Siden er offentlig tilgængelig via linket.
             </div>
           </div>
         )}
@@ -470,7 +470,7 @@ export default function MadpasScreen({
                         onClick={() => { setMadpasLang(l.code); localStorage.setItem("as_madpas_lang", l.code); setLangOpen(false); if (madpasSpeaking) { window.speechSynthesis.cancel(); setMadpasSpeaking(false); }}}>
                         <span style={UI.fs20}>{l.flag}</span>
                         <span style={{ fontSize:14, fontWeight:madpasLang===l.code?800:600, color:madpasLang===l.code?"var(--green)":"var(--ink)" }}>{l.name}</span>
-                        {madpasLang===l.code && <span style={{ marginLeft:"auto", color:"var(--green)" }}>✓</span>}
+                        {madpasLang===l.code && <span style={{ marginLeft:"auto", display:"flex" }}><Icon name="check" size={13} color="var(--green)" /></span>}
                       </div>
                     ))}
                   </div>
@@ -480,7 +480,7 @@ export default function MadpasScreen({
               {/* Tom state */}
               {mpAllergens.length === 0 && mpCustom.length === 0 && (
                 <div className="empty-state" style={{ paddingTop:32 }}>
-                  <span className="empty-icon">🌾</span>
+                  <span className="empty-icon"><Icon name="shield" size={26} color="var(--muted)" /></span>
                   <div className="empty-txt">Ingen allergier registreret</div>
                   <div className="empty-sub">Tilføj dine allergier, intoleranser og diæter under Profil → Mine præferencer</div>
                 </div>
