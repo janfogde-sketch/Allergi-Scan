@@ -30,6 +30,7 @@ at tilføje til indkøbsliste.
 | Hosting | Vercel — auto-deploy på push |
 | Backend | Supabase (projekt-id `jegrpcflyguadyxialkm`) — Postgres, Edge Functions, Auth |
 | Ejer/admin | janfogde@gmail.com |
+| Team-adgang | `bjangst@gmail.com` (Jans forretningspartner) — GitHub-collaborator på repoet + Supabase-organisationen (rolle: Developer). **Ikke** medlem på Vercel — Hobby-planen tillader kun én bruger; ville kræve opgradering til Pro for at tilføje flere. Kode-ændringer sker derfor via GitHub, og Vercel auto-deployer som normalt uden at bjangst behøver Vercel-adgang. |
 
 Se `src/CONTEXT.md` for fuld database-skema-reference, edge-function-liste og
 integrationsdetaljer (Madpas, familie-deling, auto-import-pipeline m.m.).
