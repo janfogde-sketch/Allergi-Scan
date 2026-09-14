@@ -107,9 +107,18 @@ siddende fast på viewporten. **Løsning:** render den slags overlays via
 - `Icon` — ét SVG-ikon-bibliotek for hele appen (map fra navn → path). Aktuelle navne:
   `home, scan, barcode, search, list, profile, recipes, star, globe, check, x, warning,
   info, chevronRight, chevronDown, chevronUp, heart, trash, share, cart, camera, bulb,
-  speaker, speakerOff, plus, edit, family, madpas, book`. **Ingen emoji i UI'et længere
-  hvor det kan undgås** — brug/tilføj SVG-ikoner i stedet (se designsystem-noter nedenfor
-  for kendte resterende emoji-steder).
+  speaker, speakerOff, plus, edit, family, madpas, book, flame, image, flashlight, shield,
+  block, link, bell, tag, package, message, chart, bug, download, eye, eyeOff, refresh,
+  mail, calendar, key, file, clock, save`. **Ingen emoji i UI'et længere hvor det kan
+  undgås** — brug/tilføj SVG-ikoner i stedet (se designsystem-noter nedenfor for kendte
+  resterende emoji-steder, primært content-emoji som allergen-glyffer og kategori-ikoner).
+- `showToast(message, type?)` + `<ToastHost/>` — delt, designkonsistent erstatning for
+  native `alert()` til korte succes-/fejl-beskeder. `type` er `"success"` (default) eller
+  `"error"`. `<ToastHost/>` er monteret én gang i `App.jsx`; kald `showToast()` fra hvor
+  som helst i appen. Portal-baseret (samme mønster som `ListPickerSheet`). Brug IKKE
+  native `alert()`/`confirm()` til succes-/fejl-notifikationer længere — kun til de få
+  steder hvor et rigtigt browser-dialogbekræft er tilsigtet, eller til at vise rå
+  tekst-indhold (fx clipboard-fallback, data-viewere).
 - `ListPickerSheet({ lists, onChoose, onCancel })` — delt bottom-sheet til at vælge
   indkøbsliste, portal-baseret, bruges af både SearchScreen og ResultScreen.
 - `productDisplayName(product)` (i `helpers.js`) — sætter mærke foran generisk produktnavn.
@@ -392,6 +401,28 @@ inde i hvert faneblad (Indsendelser-gennemgang, Ticket-detaljer, Debug-
 output, Import-log, Opskrift-godkendelse) — stadig fuld af emoji. Tag dette
 op igen som en selvstændig fortsættelse, screen for screen ligesom resten,
 hvis/når det prioriteres.
+
+**14. sept. 2026 — Tolvte bølge: `AdminScreen.jsx` fuldført.** Tog den
+efterladte fortsættelse op igen ("Forsæt arbejdet"). **Kritisk bug fundet
+og rettet separat først:** `Icon` blev brugt 5 steder (fanebladsikoner,
+dashboard-stat-kort, fra ellevte bølge) uden nogensinde at være importeret
+fra `SharedComponents.jsx` — en `ReferenceError` der crashede hele admin-
+dashboardet ved hver åbning. `// @ts-nocheck` + ingen render-test af
+`AdminScreen.jsx` betød at hverken build eller test-suiten fangede det.
+Rettet som isoleret ét-linje-hotfix, shippet for sig selv før resten af
+sweepet. Derefter konverteret de resterende ~80 emoji i selve
+fanebladsindholdet (Indsendelser, Tickets, brugerdetaljer, Debug,
+Import, Opskrift-godkendelse) til `Icon`. Nye delte ikoner: `refresh`,
+`mail`, `calendar`, `key`, `file`, `clock`, `save` (ud over `eye`/`eyeOff`
+fra samme session, se nedenfor). Fandt undervejs 3 flere `alert()`-kald
+(opskrift-gem/godkend/afvis) og erstattede dem med Toast. AdminScreen.jsx
+er nu færdiggjort på samme niveau som resten af appen — emoji-saneringen
+er dermed komplet skærm for skærm på tværs af hele appen.
+
+**Lektion:** når man "fuldfører" en tidligere delvist lavet emoji-sanering
+i en stor, admin-only fil, så tjek om nyligt tilføjede `Icon`-kald rent
+faktisk er importeret — build fanger det ikke, kun runtime gør, og ingen
+test dækkede skærmen.
 
 **14. sept. 2026 — session sat på pause af brugeren** ("Stop for nu. Når vi
 starter igen skal du tilføje disse punkter til arbejdet"), med endnu en
