@@ -337,6 +337,15 @@ gendan-knap, "opsummering"-boksen, indsend- og "tilbage"-knapperne).
 `MADPAS_LANGUAGES`. Rettede 2 flere flathed-bugs (QR-luk-knap, "Del via…"-
 knappen).
 
+**Syvende bølge: `KnowledgeScreen.jsx`.** Erstattede risiko-niveau-badge
+(⚠️/⚡→`warning`, farve skifter stadig efter høj/moderat), ⚕️→`info`
+(sundhedsnote-label), 🌾→`warning` (allergen-pille i entry-detaljer — var
+altid samme glyf uanset allergen, dvs. reelt chrome ikke indhold), ✓→`check`
+(alternativ-pille), 📚→`book` (sidetitel "Leksikon"), ⚠️→`warning` (fejlboks),
+🔍→search (tom-tilstand). Kategori-vælgerens emoji (🌾🫙🔢🥗🔄❓💡) og entry-
+specifikke emoji (`entry.emoji`/`cat.emoji`/`f.emoji`) bevidst bevaret —
+ægte, database-drevet indhold, samme begrundelse som opskrift-kategorier.
+
 **Tidligere flagget, stadig kun delvist gjort:** en fuld emoji→SVG-ikon-sanering af
 hele appen.
 
