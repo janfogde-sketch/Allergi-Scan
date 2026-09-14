@@ -16,10 +16,12 @@ export default function InstallPrompt() {
   const [waited, setWaited] = React.useState(false);
   const [installing, setInstalling] = React.useState(false);
 
-  // Giv browseren et par sekunder til at nå at sende "beforeinstallprompt", før
-  // vi falder tilbage til manuel vejledning (den kan komme lidt forsinket).
+  // Giv browseren tid til at nå at sende "beforeinstallprompt", før vi falder
+  // tilbage til manuel vejledning — særligt vigtigt lige efter en service
+  // worker-opdatering, hvor siden kan nå at genindlæse én gang undervejs
+  // (se controllerchange-håndteringen i index.html).
   React.useEffect(() => {
-    const t = setTimeout(() => setWaited(true), 2500);
+    const t = setTimeout(() => setWaited(true), 4000);
     return () => clearTimeout(t);
   }, []);
 
