@@ -249,9 +249,10 @@ export default function ProfileScreen({
                 </div>
                 <div onClick={() => loadHistory("family")}
                   style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
+                    display:"flex", alignItems:"center", justifyContent:"center", gap:5,
                     background: historyScope==="family" ? "var(--green)" : "var(--surface)", color: historyScope==="family" ? "var(--on-green)" : "var(--muted)",
                     border:`1px solid ${historyScope==="family" ? "var(--green)" : "var(--border)"}` }}>
-                  👨‍👩‍👧 Husstanden
+                  <Icon name="family" size={12} color={historyScope==="family" ? "var(--on-green)" : "var(--muted)"} /> Husstanden
                 </div>
               </div>
             )}
@@ -331,7 +332,7 @@ export default function ProfileScreen({
                 </button>
               </div>
               {allergens.length + customAllerg.length + (selectedENumbers?.length || 0) + (user?.diets?.length || 0) === 0
-                ? <div style={{ textAlign:"center", padding:"16px 0" }}><div style={{ fontSize:36, marginBottom:8 }}>⚙️</div><div style={{ fontSize:13, color:"var(--muted)", marginBottom:10 }}>Ingen præferencer registreret endnu</div><button className="btn btn-outline btn-sm" onClick={() => setScreen(SCREENS.EDITPROFILE)}>Tilføj allergener</button></div>
+                ? <div style={{ textAlign:"center", padding:"16px 0" }}><div style={{ marginBottom:8, display:"flex", justifyContent:"center" }}><Icon name="info" size={30} color="var(--muted)" /></div><div style={{ fontSize:13, color:"var(--muted)", marginBottom:10 }}>Ingen præferencer registreret endnu</div><button className="btn btn-outline btn-sm" onClick={() => setScreen(SCREENS.EDITPROFILE)}>Tilføj allergener</button></div>
                 : (
                   <div>
                     {/* Gruppér: allergener, intoleranser, diæter */}
@@ -366,7 +367,7 @@ export default function ProfileScreen({
 
             {/* Min husstand — rigtige inviterede konti, adskilt fra allergi-profilerne i "Familie" */}
             <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10}>
-              <div style={UI.boldInk13}>👨‍👩‍👧 Min husstand</div>
+              <div style={{ ...UI.boldInk13, display:"flex", alignItems:"center", gap:6 }}><Icon name="family" size={13} color="var(--ink)" /> Min husstand</div>
               <div style={{ ...UI.muted11mt2, marginBottom:10 }}>Konti du deler scanninger, favoritter og indkøbslister med</div>
               {householdLoading ? (
                 <div style={{ fontSize:12, color:"var(--muted)" }}>Henter…</div>
@@ -489,9 +490,10 @@ export default function ProfileScreen({
                 </div>
                 <div onClick={() => loadFavorites("family")}
                   style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
+                    display:"flex", alignItems:"center", justifyContent:"center", gap:5,
                     background: favoritesScope==="family" ? "var(--green)" : "var(--surface)", color: favoritesScope==="family" ? "var(--on-green)" : "var(--muted)",
                     border:`1px solid ${favoritesScope==="family" ? "var(--green)" : "var(--border)"}` }}>
-                  👨‍👩‍👧 Husstanden
+                  <Icon name="family" size={12} color={favoritesScope==="family" ? "var(--on-green)" : "var(--muted)"} /> Husstanden
                 </div>
               </div>
             )}
@@ -706,7 +708,7 @@ export default function ProfileScreen({
                   onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}} />
                 <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}}>+</button>
               </div>
-              {customAllerg.length > 0 && <div className="tags">{customAllerg.map((a,i) => <div key={i} className="tag">✏️ {a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
+              {customAllerg.length > 0 && <div className="tags">{customAllerg.map((a,i) => <div key={i} className="tag" style={{ display:"inline-flex", alignItems:"center", gap:4 }}><Icon name="edit" size={10} color="currentColor" /> {a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
                 onClick={() => setCustomAllerg(c=>c.filter((_,j)=>j!==i))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(c=>c.filter((_,j)=>j!==i))}>×</span></div>)}</div>}
             </div>
 
@@ -797,7 +799,7 @@ export default function ProfileScreen({
               <div className="card-lbl">Aktive profiler ved scanning</div>
               <FamilyChips />
             </div>
-            {family.length===0 && household.length===0 && <div className="empty-state"><span className="empty-icon">👨‍👩‍👧</span><div className="empty-txt">Ingen i familien endnu</div><div className="empty-sub">Tilføj fx et barn eller en partner for at scanne for dem, eller invitér en med egen konto</div></div>}
+            {family.length===0 && household.length===0 && <div className="empty-state"><span className="empty-icon"><Icon name="family" size={28} color="var(--muted)" /></span><div className="empty-txt">Ingen i familien endnu</div><div className="empty-sub">Tilføj fx et barn eller en partner for at scanne for dem, eller invitér en med egen konto</div></div>}
             {family.map(m => (
               <div key={`p-${m.id}`} className="family-member">
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:m.allergens.length?10:0 }}>
