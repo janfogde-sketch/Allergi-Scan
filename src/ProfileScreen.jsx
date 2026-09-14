@@ -44,11 +44,11 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
   const familyActive  = activeProfiles.filter(id => id !== "me" && id !== "user").length;
 
   const metrics = [
-    { icon:"🔥", value: streak,       label:"Dages streak",       color:"#f97316", bg:"rgba(249,115,22,.12)", border:"rgba(249,115,22,.25)" },
-    { icon:"🔍", value: total,        label:"Scanninger i alt",   color:"var(--green)", bg:"var(--green-lt)", border:"var(--green-mid)" },
-    { icon:"⚠️",  value: dangers,     label:"Advarsler fanget",   color:"var(--red)", bg:"var(--red-lt)", border:"var(--red-md)" },
-    { icon:"✅", value: safes,        label:"Sikre opdagelser",   color:"var(--green)", bg:"var(--green-lt)", border:"var(--green-mid)" },
-    { icon:"👨‍👩‍👧", value: familyActive, label:"Familie aktive",    color:"#818cf8", bg:"rgba(129,140,248,.12)", border:"rgba(129,140,248,.25)" },
+    { icon:"flame",  value: streak,       label:"Dages streak",       color:"#f97316", bg:"rgba(249,115,22,.12)", border:"rgba(249,115,22,.25)" },
+    { icon:"search", value: total,        label:"Scanninger i alt",   color:"var(--green)", bg:"var(--green-lt)", border:"var(--green-mid)" },
+    { icon:"warning",value: dangers,      label:"Advarsler fanget",   color:"var(--red)", bg:"var(--red-lt)", border:"var(--red-md)" },
+    { icon:"check",  value: safes,        label:"Sikre opdagelser",   color:"var(--green)", bg:"var(--green-lt)", border:"var(--green-mid)" },
+    { icon:"family", value: familyActive, label:"Familie aktive",    color:"#818cf8", bg:"rgba(129,140,248,.12)", border:"rgba(129,140,248,.25)" },
   ];
 
   return (
@@ -59,8 +59,8 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
           <div style={UI.muted11mt2}>Streak · Scanninger · Opdagelser</div>
         </div>
         {streak >= 3 && (
-          <div style={{ fontSize:11, fontWeight:800, color:"#f97316", background:"rgba(249,115,22,.12)", border:"1px solid rgba(249,115,22,.25)", borderRadius:20, padding:"3px 10px" }}>
-            🔥 {streak} dage!
+          <div style={{ display:"flex", alignItems:"center", gap:4, fontSize:11, fontWeight:800, color:"#f97316", background:"rgba(249,115,22,.12)", border:"1px solid rgba(249,115,22,.25)", borderRadius:20, padding:"3px 10px" }}>
+            <Icon name="flame" size={11} color="#f97316" /> {streak} dage!
           </div>
         )}
       </div>
@@ -100,7 +100,7 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
             alignItems:"center",
             gap:10,
           }}>
-            <div style={{ fontSize:22, lineHeight:1, flexShrink:0 }}>{m.icon}</div>
+            <div style={{ flexShrink:0 }}><Icon name={m.icon} size={20} color={m.color} /></div>
             <div>
               <div style={{ fontSize:20, fontWeight:900, color: m.color, lineHeight:1 }}>{m.value}</div>
               <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, marginTop:2, lineHeight:1.2 }}>{m.label}</div>
@@ -270,7 +270,7 @@ export default function ProfileScreen({
               </div>
             )}
             {!historyLoading && history.length===0 && (
-              <div className="empty-state"><span className="empty-icon">🔍</span><div className="empty-txt">Ingen scanninger endnu</div><div className="empty-sub">Skan dit første produkt for at se din historik her</div><button className="btn btn-outline btn-sm" style={UI.mt12} onClick={() => setScreen(SCREENS.HOME)}>Skan nu</button></div>
+              <div className="empty-state"><span className="empty-icon"><Icon name="search" size={26} color="var(--muted)" /></span><div className="empty-txt">Ingen scanninger endnu</div><div className="empty-sub">Skan dit første produkt for at se din historik her</div><button className="btn btn-outline btn-sm" style={UI.mt12} onClick={() => setScreen(SCREENS.HOME)}>Skan nu</button></div>
             )}
             {history.map((h,i) => {
               const s = h.result||h.status;
@@ -344,7 +344,7 @@ export default function ProfileScreen({
                     {customAllerg.length > 0 && (
                       <div style={UI.mb8}>
                         <div style={UI.sectionLbl4Ink}>Intolerancer</div>
-                        <div className="tags">{customAllerg.map((c,i) => <div key={i} className="tag" style={{ background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}>✏️ {c}</div>)}</div>
+                        <div className="tags">{customAllerg.map((c,i) => <div key={i} className="tag" style={{ display:"flex", alignItems:"center", gap:4, background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}><Icon name="edit" size={10} color="var(--amber)" /> {c}</div>)}</div>
                       </div>
                     )}
                     {(user?.diets?.length > 0) && (
@@ -415,7 +415,7 @@ export default function ProfileScreen({
                 <div className="card" style={UI.mb12}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                     <div>
-                      <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2 }}>🔔 Push-notifikationer</div>
+                      <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2 }}><Icon name="bell" size={14} color="var(--ink)" /> Push-notifikationer</div>
                       <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>
                         {pushStatus === "granted"
                           ? "Du får besked når dine indsendelser godkendes"
@@ -528,7 +528,7 @@ export default function ProfileScreen({
 
             {/* Gemte favoritter — grupperet i kategorier */}
             {favorites.length === 0 && (
-              <div className="empty-state"><span className="empty-icon">🤍</span><div className="empty-txt">Ingen favoritter endnu</div><div className="empty-sub">Tryk ❤️ på et produkt under scanning for at gemme det her</div>
+              <div className="empty-state"><span className="empty-icon"><Icon name="heart" size={26} color="var(--muted)" /></span><div className="empty-txt">Ingen favoritter endnu</div><div className="empty-sub">Tryk hjertet på et produkt under scanning for at gemme det her</div>
               </div>
             )}
             {favorites.length > 0 && (() => {
@@ -545,7 +545,10 @@ export default function ProfileScreen({
                   <div key={cat} style={UI.mb10}>
                     <div onClick={() => setCollapsedCategories(c => isCollapsed ? c.filter(x=>x!==cat) : [...c, cat])}
                       style={{ display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", padding:"4px 2px", marginBottom:6 }}>
-                      <div className="card-lbl" style={{ marginBottom:0 }}>{cat === "Ukategoriseret" ? "📦 Ukategoriseret" : `🏷️ ${cat}`} ({groups[cat].length})</div>
+                      <div className="card-lbl" style={{ display:"flex", alignItems:"center", gap:5, marginBottom:0 }}>
+                        <Icon name={cat === "Ukategoriseret" ? "package" : "tag"} size={11} color="var(--neutral)" />
+                        {cat === "Ukategoriseret" ? "Ukategoriseret" : cat} ({groups[cat].length})
+                      </div>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"
                         style={{ transform: isCollapsed ? "none" : "rotate(180deg)", transition:"transform .2s" }}>
                         <path strokeLinecap="round" d="M6 9l6 6 6-6"/>
@@ -570,7 +573,7 @@ export default function ProfileScreen({
                             <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, flexShrink:0 }}>
                               <button className="btn btn-ghost btn-sm" style={{ fontSize:12, padding:"2px 6px" }} aria-label={`Flyt "${f.name || "produkt"}" til en kategori`}
                                 onClick={e => { e.stopPropagation(); setCategoryMenuFor(categoryMenuFor === f.ean ? null : f.ean); setNewCategoryInput(""); }}>
-                                🏷️
+                                <Icon name="tag" size={12} color="var(--ink2)" />
                               </button>
                               <button className="btn btn-ghost btn-sm" style={{ fontSize:12 }} aria-label={`Fjern "${f.name || "produkt"}" fra favoritter`}
                                 onClick={e => { e.stopPropagation(); toggleFavorite(f); }}>
@@ -586,14 +589,14 @@ export default function ProfileScreen({
                             <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:8 }}>
                               {f.category && (
                                 <div onClick={() => { setFavoriteCategory(f.ean, null); setCategoryMenuFor(null); }}
-                                  style={{ padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:700, cursor:"pointer", background:"var(--surface2)", border:"1px solid var(--border2)", color:"var(--muted)" }}>
-                                  📦 Fjern kategori
+                                  style={{ display:"flex", alignItems:"center", gap:4, padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:700, cursor:"pointer", background:"var(--surface2)", border:"1px solid var(--border2)", color:"var(--muted)" }}>
+                                  <Icon name="package" size={10} color="var(--muted)" /> Fjern kategori
                                 </div>
                               )}
                               {existingCategories.filter(c => c !== f.category).map(c => (
                                 <div key={c} onClick={() => { setFavoriteCategory(f.ean, c); setCategoryMenuFor(null); }}
-                                  style={{ padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:700, cursor:"pointer", background:"var(--green-lt)", border:"1px solid var(--green-mid)", color:"var(--green)" }}>
-                                  🏷️ {c}
+                                  style={{ display:"flex", alignItems:"center", gap:4, padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:700, cursor:"pointer", background:"var(--green-lt)", border:"1px solid var(--green-mid)", color:"var(--green)" }}>
+                                  <Icon name="tag" size={10} color="var(--green)" /> {c}
                                 </div>
                               ))}
                             </div>
@@ -666,7 +669,7 @@ export default function ProfileScreen({
                         <div style={UI.ufw700}>{d.label}</div>
                         <div style={UI.ufs10_cmuted_mt1}>{d.desc}</div>
                       </div>
-                      {on && <div className="chip-check">✓</div>}
+                      {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
                     </div>
                   );
                 })}
@@ -692,7 +695,7 @@ export default function ProfileScreen({
                     }}
                       onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
                       <span style={UI.flex1}>{a.emoji} {a.label}</span>
-                      {on && <div style={UI.redBadge9}>✓</div>}
+                      {on && <div style={UI.redBadge9}><Icon name="check" size={9} color="#fff" /></div>}
                     </div>
                   );
                 })}
@@ -841,8 +844,8 @@ export default function ProfileScreen({
 
             {/* ── Invitér familiemedlem via link ── */}
             <div className="card" style={UI.mb12}>
-              <div style={UI.ufs13_fw800_cink_mb4}>
-                🔗 Invitér med egen konto
+              <div style={{ ...UI.ufs13_fw800_cink_mb4, display:"flex", alignItems:"center", gap:6 }}>
+                <Icon name="link" size={13} color="var(--ink)" /> Invitér med egen konto
               </div>
               <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12, lineHeight:1.5 }}>
                 Send et link til et familiemedlem, der skal have sin egen EatSafe-konto. Når de opretter sig via linket, deles I automatisk scanninger, favoritter og indkøbslister.
@@ -894,13 +897,13 @@ export default function ProfileScreen({
                         setInviteCopied(true);
                         setTimeout(() => setInviteCopied(false), 2000);
                       }}
-                      style={{ flex:1, padding:"10px", background: inviteCopied ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${inviteCopied ? "var(--green)" : "var(--border2)"}`, borderRadius:8, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color: inviteCopied ? "var(--green)" : "var(--ink)", cursor:"pointer" }}>
-                      {inviteCopied ? "✓ Kopieret!" : "📋 Kopiér link"}
+                      style={{ flex:1, padding:"10px", background: inviteCopied ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${inviteCopied ? "var(--green)" : "var(--border2)"}`, borderRadius:8, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color: inviteCopied ? "var(--green)" : "var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:5 }}>
+                      <Icon name={inviteCopied ? "check" : "link"} size={12} color={inviteCopied ? "var(--green)" : "var(--ink)"} /> {inviteCopied ? "Kopieret!" : "Kopiér link"}
                     </button>
                     <button
                       onClick={() => navigator.share?.({ title:"EatSafe invitation", url: inviteLink })}
-                      style={{ flex:1, padding:"10px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:8, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
-                      ↗ Del
+                      style={{ flex:1, padding:"10px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:8, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:5 }}>
+                      <Icon name="share" size={12} color="var(--ink)" /> Del
                     </button>
                     <button
                       onClick={() => { setInviteLink(null); setInviteCopied(false); }}
