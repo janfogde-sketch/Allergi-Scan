@@ -598,7 +598,7 @@ export default function RecipesScreen({
         {/* Ingen opskrifter loaded + ikke loading — retry */}
         {!recipesLoading && recipes.length === 0 && (
           <div>
-            <div style={{ background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:16, padding:"22px 20px", marginBottom:16, display:"flex", alignItems:"center", gap:16 }}>
+            <div style={{ background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:16, padding:"22px 20px", marginBottom:16, display:"flex", alignItems:"center", gap:16, boxShadow:"var(--sh)" }}>
               <Icon name="warning" size={38} color="var(--muted)" />
               <div style={UI.flex1}>
                 <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)", letterSpacing:"-.3px", marginBottom:4 }}>Kunne ikke indlæse</div>

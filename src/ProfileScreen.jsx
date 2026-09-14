@@ -52,7 +52,10 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
   ];
 
   return (
-    <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10}>
+    // Tertiær: sjove/motiverende tal, ikke sikkerhedskritisk data — holdes bevidst
+    // fladt med kun en accent-kant, samme mønster som dagens-tip-kortet på Hjem,
+    // så det ikke konkurrerer visuelt med "Mine præferencer" ovenfor.
+    <div style={{ ...UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10, boxShadow:"none", borderLeft:"2px solid var(--blue)" }}>
       <div style={UI.udflex_aicenter_jcspacebet_mb12}>
         <div>
           <div style={UI.boldInk13}>Din aktivitet</div>
@@ -303,7 +306,7 @@ export default function ProfileScreen({
           <div className="screen fade-in">
 
             {/* Hero */}
-            <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:20, padding:"22px 20px", marginBottom:14 }}>
+            <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:20, padding:"22px 20px", marginBottom:14, boxShadow:"var(--sh)" }}>
               <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:16 }}>
                 <div style={{ width:56, height:56, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
                   {initials(user.name||"?")}
@@ -319,8 +322,10 @@ export default function ProfileScreen({
               </div>
             </div>
 
-            {/* Mine præferencer */}
-            <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10}>
+            {/* Mine præferencer — primær: den sikkerhedskritiske data der driver
+                hele appens allergi-tjek, så den bærer skærmens kraftigste skygge
+                (samme hierarki-tanke som scan-boksen på Hjem). */}
+            <div style={{ ...UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10, boxShadow:"var(--sh2)" }}>
               <div style={UI.rowBetweenMb10}>
                 <div>
                   <div style={UI.boldInk13}>Mine præferencer</div>
@@ -397,7 +402,7 @@ export default function ProfileScreen({
             />
 
             {/* Konto */}
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px" }}>
+            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
               <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:12 }}>Konto</div>
               <div style={UI.rowGap8}>
                 <button onClick={clearAuth}

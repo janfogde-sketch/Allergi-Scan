@@ -146,7 +146,7 @@ export default function SuggestEditScreen({
       </div>
 
       {/* Produkt-chip */}
-      <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:16 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:16, boxShadow:"var(--sh)" }}>
         <ProductImage product={scanResult} size={40} />
         <div style={S.flexMin}>
           <div style={UI.ufs13_fw700_cink_ovhidden_toellipsis_wsnowrap}>{scanResult.name}</div>

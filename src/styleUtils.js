@@ -189,7 +189,7 @@ export const UI = {
   udflex_aicenter_jcspacebet_mb12: { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 },
   ufs13_cmuted2_mb8: { fontSize:13, color:"var(--muted2)", marginBottom:8 },
   ufs28_shr0: { fontSize:28, flexShrink:0 },
-  ubgsurface_bd1pxsolid_br14_p14px16px_mb10: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:10 },
+  ubgsurface_bd1pxsolid_br14_p14px16px_mb10: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:10, boxShadow:"var(--sh)" },
   ufs11_cmuted_mb8: { fontSize:11, color:"var(--muted)", marginBottom:8 },
   ucurpointer: { cursor:"pointer" },
   ufs12_cmuted_mt1: { fontSize:12, color:"var(--muted)", marginTop:1 },
