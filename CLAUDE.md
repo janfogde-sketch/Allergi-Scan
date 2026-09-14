@@ -106,7 +106,7 @@ siddende fast på viewporten. **Løsning:** render den slags overlays via
 
 - `Icon` — ét SVG-ikon-bibliotek for hele appen (map fra navn → path). Aktuelle navne:
   `home, scan, barcode, search, list, profile, recipes, star, globe, check, x, warning,
-  info, chevronRight, chevronDown, chevronUp, heart, trash, share, cart, camera, bulb,
+  info, chevronLeft, chevronRight, chevronDown, chevronUp, heart, trash, share, cart, camera, bulb,
   speaker, speakerOff, plus, edit, family, madpas, book, flame, image, flashlight, shield,
   block, link, bell, tag, package, message, chart, bug, download, eye, eyeOff, refresh,
   mail, calendar, key, file, clock, save, utensils, hash, zap`. **Ingen emoji i UI'et længere hvor det kan
@@ -583,6 +583,41 @@ kodebasen, ikke antagelser):
 - **#4 og #6 er kun delvist afklaret** (`.loader` findes allerede som
   basis-mønster) — kræver stadig en konkret gennemgang skærm for skærm
   ligesom emoji-saneringen, ikke en generisk implementering.
+
+**14. sept. 2026 — #4 og #18 implementeret, #6 vurderet tilstrækkelig.**
+("forsæt") Alle tre resterende punkter fra 20-punkts-tjeklisten taget op:
+- **#4 "Til toppen"-knap — implementeret.** Ny delt `ScrollToTop`-komponent
+  (`SharedComponents.jsx`, portal-baseret, lytter på `window.scroll` — appen
+  har ingen per-skærm scroll-container, se `.app` i `theme.jsx`). Tilføjet
+  til `KnowledgeScreen.jsx` (søge-/kategori-liste) og `RecipesScreen.jsx`
+  (pagineret liste) — de to skærme med reelt lang, scrollbar liste-indhold.
+- **#18 "Sidst opdateret"-dato — implementeret defensivt.** Tilføjet i
+  Leksikon-detaljevisningen, betinget på at `knowledge_base`-raden rent
+  faktisk har et `updated_at`-felt. Kunne ikke bekræfte databaseskemaet
+  direkte — sandboxens netværkspolitik blokerer udgående kald til Supabase
+  (403 fra agent-proxyen; rapporteret som organisationspolitik, ikke
+  forsøgt omgået, jf. `/root/.ccr/README.md`s egen instruks om ikke at
+  gentage policy-afvisninger). Løsningen er derfor lavet 100% risikofri
+  uanset skema: viser intet hvis feltet mangler.
+- **#6 loading-animationer — vurderet, ingen ny kode.** Stikprøvetjekkede
+  ~11 asynkrone handlinger (`onClick={async`) på tværs af appen. De fleste
+  brugervendte flows (login, feedback, indsendelser) har allerede ordentlig
+  loading-feedback (disabled-tilstand/tekst-skift). Et par mindre, hurtige
+  handlinger (opret liste, fjern familiemedlem) mangler det, men vurderet
+  som for lavrisiko/hurtige til at være en reel mangel — ikke tilføjet
+  mekanisk.
+
+**Sidegevinst — endnu et "usynligt ikon"-fund** (samme kategori som
+AdminScreen-Icon-importbugget i trettende bølge): `KnowledgeScreen.jsx`s
+tilbage-knap brugte `<Icon name="arrow-left"/>`, som aldrig har eksisteret
+i `Icon`-biblioteket — knappen har derfor manglet sit visuelle ikon (virket
+funktionelt som knap, bare uden synlig pil). Tilføjet en ny delt
+`chevronLeft`-ikon og rettet referencen. **Lektion:** disse "brugt-men-
+aldrig-defineret"-ikonnavne giver INGEN fejl (build, runtime eller test) —
+`Icon`-komponenten renderer bare en tom SVG for et ukendt navn. Overvej at
+grep'e for `<Icon name="` og krydstjekke mod ikon-listen i afsnit 3, hvis
+en fremtidig gennemgang har tid til det, i stedet for kun at opdage dem
+tilfældigt undervejs.
 
 **Tidligere flagget, stadig kun delvist gjort:** en fuld emoji→SVG-ikon-sanering af
 hele appen (mest AdminScreen.jsx's fanebladsindhold retur).
