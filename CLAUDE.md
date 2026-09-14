@@ -366,6 +366,16 @@ bevidst bevaret — hhv. kategori-identitet og fejring, ikke chrome. Ingen
 flathed-bugs fundet i denne fil (bruger konsekvent `.btn btn-primary`, som
 allerede har skygge).
 
+**Tiende bølge: `SuggestEditScreen.jsx`** ("Ret forkerte data"-flowet).
+Erstattede "produktet blev væk"-ikonet (😕→warning), de 4 rette-type-
+valgmuligheder (🥦/📊/📸/✏️→list/package/camera/edit — samme mønster/
+fallback-logik som NotFoundScreen's trin-ikoner), guide-skærmens store ikon
+(samme mapping), 💡→bulb (foto-tips), 📁→image (galleri-knap), ✓→check
+(ingredienser fundet), ⚠→warning (manglende ingredienser), 📸→camera
+(produktbillede-knap, 2 varianter), ✓→check ("Send forslag"-knappen).
+🙏 (tak-besked) bevidst bevaret. **Fandt og rettede 1 flere flathed-bug**
+(manglende `box-shadow` på "Send forslag"-knappen).
+
 **Tidligere flagget, stadig kun delvist gjort:** en fuld emoji→SVG-ikon-sanering af
 hele appen.
 

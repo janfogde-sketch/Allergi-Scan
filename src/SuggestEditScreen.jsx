@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
 import { makeHeaders, apiCall, compressImageToBase64 } from "./helpers.js";
-import { ProductImage, Loader } from "./SharedComponents.jsx";
+import { Icon, ProductImage, Loader } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { UI } from "./styleUtils.js";
@@ -115,7 +115,7 @@ export default function SuggestEditScreen({
   if (!scanResult) {
     return (
       <div className="screen fade-in" style={{ textAlign:"center", padding:"60px 20px" }}>
-        <div style={{ fontSize:40, marginBottom:12 }}>😕</div>
+        <div style={{ display:"flex", justifyContent:"center", marginBottom:12 }}><Icon name="warning" size={34} color="var(--muted)" /></div>
         <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>Produktet blev væk</div>
         <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6, marginBottom:20 }}>
           Vi kunne ikke finde produktet længere — det kan ske hvis appen har været i baggrunden.
@@ -162,15 +162,15 @@ export default function SuggestEditScreen({
             Hvad mangler eller er forkert på dette produkt?
           </div>
           {[
-            { id:"ingredients", emoji:"🥦", title:"Ingrediensliste mangler",     desc:"Fotografér bagsiden af pakken med ingredienserne" },
-            { id:"nutrition",   emoji:"📊", title:"Næringsindhold mangler",      desc:"Fotografér næringstabellen på pakken" },
-            { id:"image",       emoji:"📸", title:"Produktbilledet er forkert",  desc:"Tag et nyt billede af produktets forside" },
-            { id:"other",       emoji:"✏️", title:"Andet er forkert",            desc:"Skriv hvad der skal rettes" },
+            { id:"ingredients", icon:"list",    title:"Ingrediensliste mangler",     desc:"Fotografér bagsiden af pakken med ingredienserne" },
+            { id:"nutrition",   icon:"package", title:"Næringsindhold mangler",      desc:"Fotografér næringstabellen på pakken" },
+            { id:"image",       icon:"camera",  title:"Produktbilledet er forkert",  desc:"Tag et nyt billede af produktets forside" },
+            { id:"other",       icon:"edit",    title:"Andet er forkert",            desc:"Skriv hvad der skal rettes" },
           ].map(opt => (
             <div key={opt.id}
               onClick={() => { setEditType(opt.id); setEditStep(opt.id === "other" ? "review" : "guide"); }}
               style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, marginBottom:8, cursor:"pointer" }}>
-              <div style={UI.ufs28_shr0}>{opt.emoji}</div>
+              <div style={UI.ufs28_shr0}><Icon name={opt.icon} size={24} color="var(--ink2)" /></div>
               <div style={S.flex1}>
                 <div style={UI.boldInk14}>{opt.title}</div>
                 <div style={UI.muted12mt2}>{opt.desc}</div>
@@ -187,8 +187,8 @@ export default function SuggestEditScreen({
       {editStep === "guide" && (
         <div className="fade-in">
           <div style={{ background:"var(--surface2)", borderRadius:16, padding:"20px", marginBottom:16, textAlign:"center", border:"1px solid var(--border)" }}>
-            <div style={UI.ufs48_mb10}>
-              {editType === "ingredients" ? "🥫" : editType === "nutrition" ? "📋" : "📦"}
+            <div style={{ display:"flex", justifyContent:"center", marginBottom:10 }}>
+              <Icon name={editType === "ingredients" ? "list" : editType === "nutrition" ? "package" : "camera"} size={40} color="var(--ink2)" />
             </div>
             <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>
               {editType === "ingredients" ? "Fotografér ingredienslisten"
@@ -205,7 +205,7 @@ export default function SuggestEditScreen({
           </div>
 
           <div style={{ background:"var(--paper2)", borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
-            <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:8 }}>💡 Tips til et godt billede</div>
+            <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:8 }}><Icon name="bulb" size={13} color="var(--ink)" /> Tips til et godt billede</div>
             {["Hold telefonen vandret og i armslængde", "Sørg for god belysning — undgå skygger", "Hold billedet skarpt — vent til kameraet fokuserer"].map((tip, i) => (
               <div key={i} style={{ display:"flex", gap:8, alignItems:"center", marginBottom: i < 2 ? 6 : 0 }}>
                 <div style={{ width:18, height:18, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
@@ -225,7 +225,7 @@ export default function SuggestEditScreen({
             <input type="file" accept="image/*" capture="environment" style={S.none} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
           </label>
           <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, width:"100%", padding:"13px", borderRadius:12, cursor:"pointer", background:"var(--surface)", border:"1px solid var(--border2)", color:"var(--ink2)", fontSize:14, fontWeight:600, marginBottom:10 }}>
-            📁 Vælg billede fra galleri
+            <Icon name="image" size={15} color="var(--ink2)" /> Vælg billede fra galleri
             <input type="file" accept="image/*" style={S.none} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
           </label>
           <button className="btn btn-ghost btn-full btn-sm" onClick={() => setEditStep("review")}>
@@ -250,7 +250,7 @@ export default function SuggestEditScreen({
               <div style={S.rowBetweenMb10}>
                 <div style={S.h13}>Ingredienser</div>
                 <div style={UI.udflex_g8_aicenter}>
-                  {ingItems.length > 0 && <div style={UI.ufs11_cgreen_fw700}>✓ {ingItems.length} ingredienser</div>}
+                  {ingItems.length > 0 && <div style={{ ...UI.ufs11_cgreen_fw700, display:"flex", alignItems:"center", gap:3 }}><Icon name="check" size={10} color="var(--green)" /> {ingItems.length} ingredienser</div>}
                   <label style={UI.ufs11_cmuted_curpointer_fw600_dflex_aicenter_g4}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                     {editIngText ? "Nyt billede" : "Tag billede"}
@@ -260,8 +260,8 @@ export default function SuggestEditScreen({
               </div>
 
               {!editIngText && ingItems.length === 0 && (
-                <div style={UI.ufs12_camber_fw600_p8px10px_bgamberlt_br8_mb10}>
-                  ⚠ Fotografér ingredienslisten eller skriv dem herunder
+                <div style={{ ...UI.ufs12_camber_fw600_p8px10px_bgamberlt_br8_mb10, display:"flex", alignItems:"center", gap:5 }}>
+                  <Icon name="warning" size={12} color="var(--amber)" /> Fotografér ingredienslisten eller skriv dem herunder
                 </div>
               )}
 
@@ -315,7 +315,7 @@ export default function SuggestEditScreen({
                   style={{ width:"100%", maxHeight:180, objectFit:"contain", borderRadius:10, marginBottom:10 }} />
               )}
               <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"12px", background:"var(--paper2)", border:"1.5px dashed var(--border2)", borderRadius:10, cursor:"pointer", fontSize:13, color:"var(--muted2)" }}>
-                {editProductImage ? "📸 Tag nyt billede" : "📸 Tag billede af produktet"}
+                <Icon name="camera" size={14} color="var(--muted2)" /> {editProductImage ? "Tag nyt billede" : "Tag billede af produktet"}
                 <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleEditProductCapture} />
               </label>
             </div>
@@ -343,8 +343,8 @@ export default function SuggestEditScreen({
               submit();
             }}
             disabled={editType === "ingredients" && !editIngText.trim() && ingItems.length === 0}
-            style={{ width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:8, opacity: (editType === "ingredients" && !editIngText.trim()) ? 0.4 : 1 }}>
-            Send forslag ✓
+            style={{ width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:8, opacity: (editType === "ingredients" && !editIngText.trim()) ? 0.4 : 1, boxShadow:"0 2px 12px rgba(74,222,128,.25)", display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
+            Send forslag <Icon name="check" size={14} color="var(--on-green)" />
           </button>
           <button className="btn btn-ghost btn-full" onClick={() => setScreen(SCREENS.RESULT)}>Annuller</button>
         </div>
