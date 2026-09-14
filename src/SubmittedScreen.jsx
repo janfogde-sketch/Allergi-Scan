@@ -2,6 +2,7 @@
 import React from "react";
 import { SCREENS } from "./constants.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
+import { Icon } from "./SharedComponents.jsx";
 
 export default function SubmittedScreen({
   notFoundEan,
@@ -75,22 +76,23 @@ export default function SubmittedScreen({
         <div style={{
           background: "var(--surface)", border: "1px solid var(--border)",
           borderRadius: 14, padding: "16px 18px", marginBottom: 28, textAlign: "left",
+          boxShadow: "var(--sh)",
         }}>
           <div style={{ fontSize: 12, fontWeight: 800, color: "var(--ink)", marginBottom: 12 }}>
             Hvad sker der nu?
           </div>
           {[
-            { emoji: "🔍", text: "Vores team gennemgår din indsendelse" },
-            { emoji: "✅", text: "Produktet godkendes og tilføjes til databasen" },
-            { emoji: "🔔", text: "Du får besked når det er godkendt" },
-            { emoji: "🌍", text: "Alle brugere med samme allergi får gavn af dit bidrag" },
+            { icon: "search",  text: "Vores team gennemgår din indsendelse" },
+            { icon: "check",   text: "Produktet godkendes og tilføjes til databasen" },
+            { icon: "bell",    text: "Du får besked når det er godkendt" },
+            { icon: "globe",   text: "Alle brugere med samme allergi får gavn af dit bidrag" },
           ].map((step, i) => (
             <div key={i} style={{
               display: "flex", alignItems: "center", gap: 12,
               padding: "7px 0",
               borderBottom: i < 3 ? "1px solid var(--border)" : "none",
             }}>
-              <span style={{ fontSize: 18, flexShrink: 0 }}>{step.emoji}</span>
+              <span style={{ flexShrink: 0 }}><Icon name={step.icon} size={17} color="var(--ink2)" /></span>
               <span style={{ fontSize: 13, color: "var(--muted2)", lineHeight: 1.5 }}>{step.text}</span>
             </div>
           ))}

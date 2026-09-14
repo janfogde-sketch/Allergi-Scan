@@ -2,7 +2,7 @@
 import React from "react";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
-import { Loader } from "./SharedComponents.jsx";
+import { Icon, Loader } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 
 const S = {
@@ -109,7 +109,7 @@ export default function NotFoundScreen({
         {notFoundStep === 1 && !ocrLoading && (
           <div className="fade-in">
             <div style={{ background:"var(--surface2)", borderRadius:16, padding:"24px 20px", marginBottom:16, textAlign:"center", border:"1px solid var(--border)" }}>
-              <div style={{ fontSize:52, marginBottom:10 }}>📦</div>
+              <div style={{ display:"flex", justifyContent:"center", marginBottom:10 }}><Icon name="package" size={48} color="var(--muted)" /></div>
               <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>
                 Vi kender ikke dette produkt
               </div>
@@ -120,14 +120,14 @@ export default function NotFoundScreen({
 
             <div style={{ display:"flex", gap:8, marginBottom:20 }}>
               {[
-                { num:1, emoji:"📸", label:"Forside",      desc:"Navn" },
-                { num:2, emoji:"🔍", label:"Ingredienser", desc:"Allergener" },
-                { num:3, emoji:"🥗", label:"Næring",       desc:"Indhold" },
-                { num:4, emoji:"📝", label:"Andet",        desc:"Noter" },
-                { num:5, emoji:"✓",  label:"Send",         desc:"Bekræft" },
+                { num:1, icon:"camera", label:"Forside",      desc:"Navn" },
+                { num:2, icon:"search", label:"Ingredienser", desc:"Allergener" },
+                { num:3, icon:"package",label:"Næring",       desc:"Indhold" },
+                { num:4, icon:"edit",   label:"Andet",        desc:"Noter" },
+                { num:5, icon:"check",  label:"Send",         desc:"Bekræft" },
               ].map(s => (
                 <div key={s.num} style={{ flex:1, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 8px", textAlign:"center" }}>
-                  <div style={{ fontSize:22, marginBottom:4 }}>{s.emoji}</div>
+                  <div style={{ display:"flex", justifyContent:"center", marginBottom:4 }}><Icon name={s.icon} size={19} color="var(--ink2)" /></div>
                   <div style={UI.boldInk12}>{s.label}</div>
                   <div style={{ fontSize:10, color:"var(--muted)", marginTop:2 }}>{s.desc}</div>
                 </div>
@@ -148,7 +148,7 @@ export default function NotFoundScreen({
               <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleProductImageCapture} />
             </label>
             <label style={UI.udflex_aicenter_jccenter_g8_w100_p13px_br12_curpointer_bgsur}>
-              📁 Vælg fra galleri
+              <Icon name="image" size={15} color="var(--ink)" /> Vælg fra galleri
               <input type="file" accept="image/*" style={S.none} onChange={handleProductImageCapture} />
             </label>
             <button style={UI.uw100_bgnone_bdnone_curpointer_fs12_cmuted_p8px0_fff}
@@ -183,7 +183,7 @@ export default function NotFoundScreen({
                   <input value={proposedName} onChange={e => setProposedName(e.target.value)}
                     placeholder="Produktnavn…"
                     style={{ width:"100%", border:"none", outline:"none", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--ink)", background:"transparent", padding:0 }} />
-                  <div style={{ fontSize:11, color:"var(--green)", marginTop:2 }}>✓ Forside fotograferet</div>
+                  <div style={{ display:"flex", alignItems:"center", gap:3, fontSize:11, color:"var(--green)", marginTop:2 }}><Icon name="check" size={10} color="var(--green)" /> Forside fotograferet</div>
                 </div>
               </div>
             )}
@@ -215,10 +215,10 @@ export default function NotFoundScreen({
               <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleImageCapture} />
             </label>
             <label style={UI.udflex_aicenter_jccenter_g8_w100_p13px_br12_curpointer_bgsur}>
-              📁 Vælg fra galleri
+              <Icon name="image" size={15} color="var(--ink)" /> Vælg fra galleri
               <input type="file" accept="image/*" style={S.none} onChange={handleImageCapture} />
             </label>
-            {scanError && <div className="error-box" style={S.mb10}>⚠️ {scanError}</div>}
+            {scanError && <div className="error-box" style={S.mb10}><Icon name="warning" size={13} color="var(--red)" /> {scanError}</div>}
             {ocrText && (
               <button className="btn btn-primary btn-full" onClick={() => setNotFoundStep(3)}>
                 Fortsæt → Næringsindhold
@@ -254,11 +254,11 @@ export default function NotFoundScreen({
               <input type="file" accept="image/*" style={S.none} onChange={handleNutritionCapture} />
             </label>
 
-            {scanError && <div className="error-box" style={S.mb10}>⚠️ {scanError}</div>}
+            {scanError && <div className="error-box" style={S.mb10}><Icon name="warning" size={13} color="var(--red)" /> {scanError}</div>}
 
             {proposedNutrition && Object.values(proposedNutrition).some(v => v) && (
-              <div style={{ padding:"8px 12px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, marginBottom:10, fontSize:12, color:"var(--green)", fontWeight:700 }}>
-                ✓ Næringsindhold delvist udfyldt — tjek og ret felterne herunder
+              <div style={{ display:"flex", alignItems:"center", gap:5, padding:"8px 12px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, marginBottom:10, fontSize:12, color:"var(--green)", fontWeight:700 }}>
+                <Icon name="check" size={12} color="var(--green)" /> Næringsindhold delvist udfyldt — tjek og ret felterne herunder
               </div>
             )}
 
@@ -353,7 +353,7 @@ export default function NotFoundScreen({
             {/* Produktkort */}
             <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb12}>
               <div style={S.rowBetweenMb10}>
-                <div style={UI.ufs12_fw800_cink}>📸 Forside og navn</div>
+                <div style={{ ...UI.ufs12_fw800_cink, display:"flex", alignItems:"center", gap:5 }}><Icon name="camera" size={12} color="var(--ink)" /> Forside og navn</div>
                 <button onClick={() => setNotFoundStep(1)} style={{ background:"none", border:"none", cursor:"pointer", fontSize:11, color:"var(--muted)", fontFamily:"var(--f)", padding:"2px 8px" }}>← Ret</button>
               </div>
               <div style={UI.udflex_aicenter_g12_mb12}>
@@ -378,9 +378,9 @@ export default function NotFoundScreen({
             {/* Ingrediensliste editor */}
             <div style={S.card}>
               <div style={S.rowBetweenMb10}>
-                <div style={S.h13}>🔍 Ingredienser</div>
+                <div style={{ ...S.h13, display:"flex", alignItems:"center", gap:5 }}><Icon name="search" size={13} color="var(--ink)" /> Ingredienser</div>
                 <div style={UI.udflex_g8_aicenter}>
-                  {ocrText && <div style={UI.ufs11_cgreen_fw700}>✓ {ingItems.length} fundet</div>}
+                  {ocrText && <div style={{ ...UI.ufs11_cgreen_fw700, display:"flex", alignItems:"center", gap:3 }}><Icon name="check" size={10} color="var(--green)" /> {ingItems.length} fundet</div>}
                   <label style={UI.ufs11_cmuted_curpointer_fw600_dflex_aicenter_g4}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                     {ocrText ? "Nyt billede" : "Tag billede"}
@@ -390,8 +390,8 @@ export default function NotFoundScreen({
               </div>
 
               {!ocrText && ingItems.length === 0 && (
-                <div style={UI.ufs12_camber_fw600_p8px10px_bgamberlt_br8_mb10}>
-                  ⚠ Ingen ingredienser endnu — tag et billede eller skriv dem herunder
+                <div style={{ ...UI.ufs12_camber_fw600_p8px10px_bgamberlt_br8_mb10, display:"flex", alignItems:"center", gap:5 }}>
+                  <Icon name="warning" size={12} color="var(--amber)" /> Ingen ingredienser endnu — tag et billede eller skriv dem herunder
                 </div>
               )}
 
@@ -430,7 +430,7 @@ export default function NotFoundScreen({
             {/* Allergener */}
             <div style={S.card}>
               <div style={S.rowBetweenMb10}>
-                <div style={S.h13}>⚠️ Allergener</div>
+                <div style={{ ...S.h13, display:"flex", alignItems:"center", gap:5 }}><Icon name="warning" size={13} color="var(--ink)" /> Allergener</div>
                 <div style={S.sub11}>Tryk for at til/fra</div>
               </div>
               <div style={UI.wrapGap7}>
@@ -504,7 +504,7 @@ export default function NotFoundScreen({
               </div>
             </div>
 
-            {scanError && <div className="error-box" style={S.mb10}>⚠️ {scanError}</div>}
+            {scanError && <div className="error-box" style={S.mb10}><Icon name="warning" size={13} color="var(--red)" /> {scanError}</div>}
 
             <button
               onClick={() => {
@@ -513,10 +513,10 @@ export default function NotFoundScreen({
                 submitProduct(finalText);
               }}
               disabled={submitting || !proposedName.trim()}
-              style={{ width:"100%", background: proposedName.trim() ? "var(--green)" : "var(--border2)", color: proposedName.trim() ? "var(--on-green)" : "var(--muted)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor: proposedName.trim() ? "pointer" : "not-allowed", marginBottom:8, opacity: submitting ? 0.6 : 1 }}>
+              style={{ width:"100%", background: proposedName.trim() ? "var(--green)" : "var(--border2)", color: proposedName.trim() ? "var(--on-green)" : "var(--muted)", border:"none", borderRadius:12, padding:"15px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor: proposedName.trim() ? "pointer" : "not-allowed", marginBottom:8, opacity: submitting ? 0.6 : 1, boxShadow: proposedName.trim() ? "0 2px 12px rgba(74,222,128,.25)" : "none", display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
               {submitting
-                ? <><div style={{ width:16, height:16, border:"2px solid rgba(0,0,0,.2)", borderTopColor:"var(--on-green)", borderRadius:"50%", animation:"spin .7s linear infinite", display:"inline-block", marginRight:8 }} />Sender…</>
-                : "Send produkt ind ✓"}
+                ? <><div style={{ width:16, height:16, border:"2px solid rgba(0,0,0,.2)", borderTopColor:"var(--on-green)", borderRadius:"50%", animation:"spin .7s linear infinite", display:"inline-block" }} />Sender…</>
+                : <>Send produkt ind <Icon name="check" size={15} color={proposedName.trim() ? "var(--on-green)" : "var(--muted)"} /></>}
             </button>
             <button className="btn btn-ghost btn-full" onClick={() => setNotFoundStep(2)}>← Tilbage</button>
           </div>

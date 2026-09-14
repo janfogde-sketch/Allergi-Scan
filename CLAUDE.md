@@ -301,6 +301,19 @@ check og allergen-badge), 🔗/📋/↗ (familie-invitationslink: opret/kopiér/
 `⚗️` (E-nummer-tags) og `diet.emoji` (kost-typer, fx 🥗) bevidst IKKE rørt —
 sidstnævnte er brugerkonfigurerbart indhold fra `DIETS`-konstanten, ikke chrome.
 
+**Fjerde bølge: `NotFoundScreen.jsx` + `SubmittedScreen.jsx`** (5-trins produkt-
+indsendelsesflowet). Erstattede 📦/📸/🔍/📝/✓ i trin-indikatoren (samme mønster
+som Icon-biblioteket, 🥗 blev også skiftet til `package` her — ingen god
+"næring"-ikon-erstatning fandtes), 📁→`image` (galleri-knapper, 3 steder),
+⚠️/⚠→`warning` (fejlbokse + manglende ingredienser), samt trin-listen på
+kvittering-siden (🔍/✅/🔔/🌍 → search/check/bell/globe). `🙏` (tak-besked) og
+`☕` (ventetids-hint) bevidst bevaret — rent emotionelt/dekorativt, ikke UI-
+chrome. **Fandt og rettede samme fladhed-bug som i forrige PR to steder til:**
+"Send produkt ind"-knappen i NotFoundScreen og "Hvad sker der nu?"-boksen i
+SubmittedScreen havde begge inline-styling uden `box-shadow` — samme mønster
+som `.card`/`.product-hero` tidligere. Holder øje med dette mønster fremadrettet
+i hver fil der røres.
+
 **Tidligere flagget, stadig kun delvist gjort:** en fuld emoji→SVG-ikon-sanering af
 hele appen.
 
