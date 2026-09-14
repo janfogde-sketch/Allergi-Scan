@@ -95,13 +95,17 @@ Deno.serve(async (req) => {
     }
   }
 
-  const orFilters = qWords.map(w => `name.ilike.%${w}%,brand.ilike.%${w}%`).join(",");
+  // Søger også i category/subcategory, ikke kun navn/brand — ellers er et
+  // produkt der er korrekt kategoriseret som fx "Chips & snacks" usynligt
+  // for en søgning på "chips", hvis selve produktnavnet ikke indeholder
+  // ordet (fx et rent smags-/brandnavn som "KiMs Flødeost & Peberrod").
+  const orFilters = qWords.map(w => `name.ilike.%${w}%,brand.ilike.%${w}%,category.ilike.%${w}%,subcategory.ilike.%${w}%`).join(",");
 
   const { data: textData, error } = await supabase
     .from("products")
-    .select("id, ean, name, brand, category, image_url, verified_status, allergen_flags, tags, ingredients_text")
+    .select("id, ean, name, brand, category, subcategory, image_url, verified_status, allergen_flags, tags, ingredients_text")
     .or(orFilters)
-    .limit(150);
+    .limit(400);
 
   if (error) {
     return new Response(JSON.stringify({ success: false, error: error.message }), {
@@ -152,8 +156,10 @@ Deno.serve(async (req) => {
   const scored = data.map(p => {
     const name = normalize(p.name || "");
     const brand = normalize(p.brand || "");
+    const categoryText = normalize(`${p.category || ""} ${p.subcategory || ""}`);
     const nameWords = name.split(" ").filter(Boolean);
     const brandWords = brand.split(" ").filter(Boolean);
+    const categoryWords = categoryText.split(" ").filter(Boolean);
 
     let matchScore = 0;
     let hasRealMatch = false;
@@ -164,16 +170,21 @@ Deno.serve(async (req) => {
     else if (name.startsWith(qNorm)) { matchScore += 120; hasRealMatch = true; }
     else if (brand.startsWith(qNorm)) { matchScore += 90; hasRealMatch = true; }
 
-    // Match pr. ord i søgningen — kun ægte ord-match, ikke vilkårlig substring
+    // Match pr. ord i søgningen — kun ægte ord-match, ikke vilkårlig substring.
+    // Et kategori-match (fx "chips" -> subcategory "Chips & snacks") tæller
+    // også som reelt match, men vægtes lavere end navn/brand — det er et
+    // svagere signal om at PRÆCIS dette produkt er hvad brugeren søgte efter.
     for (const word of qWords) {
       const nameHit = wordBoundaryMatch(nameWords, word);
       const brandHit = wordBoundaryMatch(brandWords, word);
+      const categoryHit = wordBoundaryMatch(categoryWords, word);
       if (nameHit) { matchScore += 15; hasRealMatch = true; }
       if (brandHit) { matchScore += 10; hasRealMatch = true; }
+      if (categoryHit) { matchScore += 8; hasRealMatch = true; }
       if (nameWords.some(w => w.startsWith(word))) matchScore += 5;
     }
 
-    const allWordsMatch = qWords.every(w => wordBoundaryMatch(nameWords, w) || wordBoundaryMatch(brandWords, w));
+    const allWordsMatch = qWords.every(w => wordBoundaryMatch(nameWords, w) || wordBoundaryMatch(brandWords, w) || wordBoundaryMatch(categoryWords, w));
     if (allWordsMatch && qWords.length > 1) matchScore += 50;
 
     // Uden en ægte ord-match skal produktet aldrig med, uanset hvor
