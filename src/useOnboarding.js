@@ -34,7 +34,10 @@ export function useOnboarding({ accessToken, userId, user, loginEmail,
           name: user.name,
           email: emailToSave || null,
           phone: user.phone || null,
-          age: user.age ? parseInt(user.age) : null,
+          // Gemmes som fødselsår (samme skema som familiemedlemmer og resten
+          // af appen) i stedet for rå alder, så det ikke bliver forældet —
+          // "alder" er kun UI-sproget, ikke det lagrede felt.
+          birth_year: user.age ? new Date().getFullYear() - parseInt(user.age) : null,
         }),
       });
       if (emailToSave) setUser(u => ({ ...u, email: emailToSave }));

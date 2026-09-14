@@ -28,11 +28,14 @@ export const MemberForm = ({
         onChange={e => setName(e.target.value)}
         style={{ marginBottom:10, borderColor: name?.trim() ? "var(--border2)" : "" }} />
 
-      {/* Fødselsår * */}
-      <label className="field-lbl">Fødselsår <span style={UI.red}>*</span></label>
-      <input className="field" type="number" placeholder="Fx. 2016" min="1906" max="2026"
-        value={birthYear || ""}
-        onChange={e => setBirthYear(e.target.value)}
+      {/* Alder * — gemmes internt som fødselsår (birthYear-prop uændret) */}
+      <label className="field-lbl">Alder <span style={UI.red}>*</span></label>
+      <input className="field" type="number" placeholder="Fx. 8" min="0" max="120"
+        value={birthYear ? String(new Date().getFullYear() - parseInt(birthYear)) : ""}
+        onChange={e => {
+          const age = e.target.value;
+          setBirthYear(age ? String(new Date().getFullYear() - parseInt(age)) : "");
+        }}
         style={UI.mb10} />
 
       {/* Køn * */}

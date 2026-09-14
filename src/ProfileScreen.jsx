@@ -637,14 +637,23 @@ export default function ProfileScreen({
             {/* Navn og kontakt */}
             <div className="card" style={UI.mb10}>
               <div className="card-lbl">Personlige oplysninger</div>
-              {[["Dit navn","text","Fx. Anna Hansen","name"],["Telefon","tel","+45 12 34 56 78","phone"],["Fødselsår","number","Fx. 1990","birth_year"]].map(([lbl,type,ph,key]) => (
+              {[["Dit navn","text","Fx. Anna Hansen","name"],["Telefon","tel","+45 12 34 56 78","phone"]].map(([lbl,type,ph,key]) => (
                 <div key={key} style={UI.mb10}>
                   <label className="field-lbl">
-                    {lbl} {(key==="name"||key==="birth_year") && <span style={UI.red}>*</span>}
+                    {lbl} {key==="name" && <span style={UI.red}>*</span>}
                   </label>
                   <input className="field" type={type} placeholder={ph} value={user[key]||""} onChange={e => setUser(u => ({ ...u, [key]: e.target.value }))} />
                 </div>
               ))}
+              <div style={UI.mb10}>
+                <label className="field-lbl">Alder <span style={UI.red}>*</span></label>
+                <input className="field" type="number" placeholder="Fx. 34" min="1" max="120"
+                  value={user.birth_year ? String(new Date().getFullYear() - parseInt(user.birth_year)) : ""}
+                  onChange={e => {
+                    const age = e.target.value;
+                    setUser(u => ({ ...u, birth_year: age ? String(new Date().getFullYear() - parseInt(age)) : "" }));
+                  }} />
+              </div>
               <label className="field-lbl">Køn <span style={UI.red}>*</span></label>
               <div style={{ display:"flex", gap:8, marginBottom:10 }}>
                 {["Mand","Kvinde","Andet"].map(g => (
@@ -656,7 +665,7 @@ export default function ProfileScreen({
               </div>
               {(!user.name?.trim() || !user.birth_year || !user.gender) && (
                 <div style={UI.ufs11_cmuted_mb10}>
-                  <span style={UI.red}>*</span> Navn, fødselsår og køn er obligatoriske
+                  <span style={UI.red}>*</span> Navn, alder og køn er obligatoriske
                 </div>
               )}
             </div>
@@ -812,7 +821,7 @@ export default function ProfileScreen({
                   <div style={UI.flex1}>
                     <div style={{ fontWeight:800, fontSize:15 }}>{m.name}</div>
                     <div style={UI.muted11mt2}>
-                      {[m.birth_year && `f. ${m.birth_year}`, m.gender, m.allergens.length && `${m.allergens.length} allergi${m.allergens.length!==1?"er":""}`, "Ingen egen konto"].filter(Boolean).join(" · ")}
+                      {[m.birth_year && `${new Date().getFullYear() - m.birth_year} år`, m.gender, m.allergens.length && `${m.allergens.length} allergi${m.allergens.length!==1?"er":""}`, "Ingen egen konto"].filter(Boolean).join(" · ")}
                     </div>
                   </div>
                   <span style={{ cursor:"pointer", opacity:.35, fontSize:18, padding:4 }} onClick={() => removeMember(m.id)}><Icon name="trash" size={18} color="var(--muted)" /></span>

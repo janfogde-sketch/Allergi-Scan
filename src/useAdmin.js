@@ -111,7 +111,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const loadAdminUsers = async () => {
     try {
       const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/users?select=id,name,email,role,created_at,onboarding_completed&order=created_at.desc&limit=200`,
+        `${SUPABASE_URL}/rest/v1/users?select=id,name,email,role,created_at,onboarding_completed,birth_year,phone&order=created_at.desc&limit=200`,
         { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
       );
       if (Array.isArray(data)) setAdminUsers(data);
