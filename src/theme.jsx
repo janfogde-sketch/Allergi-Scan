@@ -550,9 +550,19 @@ body{
 .mp-lang-dropdown:active,.mp-lang-opt:active,.chip:active,.home-chip:active,
 .filter-chip:active,.ap-chip:active,.recipe-filter-chip:active,.tab:active,
 .demo-code:active,.topbar-avatar:active,.menu-item:active,.menu-profile-card:active,
-.scroll-top-btn:active{
+.scroll-top-btn:active,.admin-tab:active,.admin-action-card:active,
+.admin-list-row:active,.destructive-confirm-btn:active,.plain-cancel-btn:active,
+.enum-chip:active,.enum-row:active,.enum-remove:active,.member-pick:active{
   transform:scale(.97);
 }
+.enum-chip,.enum-row,.enum-remove,.member-pick{cursor:pointer;}
+
+/* AdminScreen.jsx bruger udelukkende inline styles (aldrig CSS-klasser), så
+   ovenstående globale :active-udrulning (14. sept.) aldrig ramte den —
+   disse tre dækker filens tre mest gentagne trykbare mønstre (sektions-
+   faneblade, hurtig-handling-kort, liste-rækker). cursor:pointer sættes
+   her (ikke inline) for at kvalificere til :active-reglen ovenfor. */
+.admin-tab,.admin-action-card,.admin-list-row{cursor:pointer;}
 
 /* Løs tekst — ikke inde i et kort/surface — ligger nu direkte oven på
    baggrundens punkt-gitter. Et fint, lyst "løft" (ikke en blur/glød) holder
