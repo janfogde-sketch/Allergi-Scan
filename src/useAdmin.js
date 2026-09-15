@@ -38,13 +38,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
     if (!accessToken) { console.warn("loadSubmissions: ingen accessToken"); return; }
     setSubmissionsLoading(true);
     try {
-      const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
       const url = `${SUPABASE_URL}/rest/v1/submissions?status=eq.${f}&order=created_at.desc&limit=100`;
-      const res = await fetch(url, { headers });
-      if (!res.ok) { console.error("loadSubmissions fejl:", res.status); setSubmissionsLoading(false); return; }
-      const data = await res.json();
+      const data = await apiCall(url, { headers: makeHeaders(accessToken) });
       setSubmissions(Array.isArray(data) ? data : []);
-    } catch (e) { console.error("loadSubmissions:", e); setSubmissions([]); }
+    } catch (e) { console.error("loadSubmissions:", e.status || "", e.message); setSubmissions([]); }
     setSubmissionsLoading(false);
   };
 
@@ -99,10 +96,9 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const loadTickets = async () => {
     setTicketsLoading(true);
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?order=created_at.desc&limit=100`, {
-        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" },
+      const data = await apiCall(`${SUPABASE_URL}/rest/v1/feedback_tickets?order=created_at.desc&limit=100`, {
+        headers: makeHeaders(accessToken),
       });
-      const data = await res.json();
       setAdminTickets(Array.isArray(data) ? data : []);
     } catch { setAdminTickets([]); }
     setTicketsLoading(false);

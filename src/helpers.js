@@ -104,8 +104,17 @@ export function logSearchSelection(query, product, accessToken) {
 export async function apiCall(url, options = {}) {
   const res = await fetch(url, options);
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || err.error_description || `HTTP ${res.status}`);
+    const bodyText = await res.text().catch(() => "");
+    const parsed = (() => { try { return JSON.parse(bodyText); } catch { return {}; } })();
+    const err = new Error(parsed.message || parsed.error_description || parsed.error || `HTTP ${res.status}`);
+    // Rå status + response-body bevares på fejlen, så kaldere der reelt har
+    // brug for det (fx et 401 der skal give en anden besked end en 500) kan
+    // tjekke e.status/e.body i stedet for at falde tilbage til rå fetch —
+    // det var apiCall's manglende status-info, der i praksis drev denne
+    // divergens tidligere, ikke en reel forskel i behov.
+    err.status = res.status;
+    err.body = bodyText;
+    throw err;
   }
   const text = await res.text();
   return text ? JSON.parse(text) : {};

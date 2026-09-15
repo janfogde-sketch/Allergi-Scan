@@ -1038,14 +1038,71 @@ se opdateringen nedenfor.
   opdaterede efter større UI/navigations-ændringer, så en frisk Claude-session altid
   har et retvisende billede.
 
-### Rescue-audit (15. sept. 2026)
+### Rescue-audit (15. sept. 2026) — alle 3 tier gennemført
 
-En læse-kun arkitektur-, bug- og sikkerhedsgennemgang af hele kodebasen (ingen
-kode ændret) er publiceret som artifact her:
-**https://claude.ai/artifact/NsG75NGKsGsFTugYtwxu9X**
+En læse-kun arkitektur-, bug- og sikkerhedsgennemgang af hele kodebasen er
+publiceret som artifact her: **https://claude.ai/artifact/NsG75NGKsGsFTugYtwxu9X**
+(ingen kode blev ændret i selve audit-turen — status nedenfor er fra de
+efterfølgende gennemførelses-PR'er).
 
-Indeholder bl.a.: kritisk sikkerhedshul i `supabase/functions/products/index.ts`
-(ingen auth på POST/PATCH/DELETE), `customAllerg`-vs-`.custom`-feltnavne-buggen
-(`useMadpas.js`, `App.jsx`, `RecipesScreen.jsx` bruger forkert feltnavn), samt en
-prioriteret 3-trins redningsplan. Ingen af punkterne er rettet endnu — tag fat i
-artiklen næste gang der arbejdes videre, eller spørg brugeren om prioritet.
+**Tier 1 (PR #215, merget):**
+- Kritisk sikkerhedshul lukket i `supabase/functions/products/index.ts` —
+  POST/PATCH/DELETE krævede ingen auth, nu admin-only (`auth.getUser()` +
+  rolle-tjek, samme mønster som `admin`/`delete-user`).
+- `ocr`-funktionen krævede heller ikke login — rettet (samme mønster som
+  `allergens`).
+- `customAllerg`-vs-`.custom`-feltnavne-buggen rettet i `useMadpas.js`,
+  `App.jsx`, `RecipesScreen.jsx` (familiemedlemmers custom-allergier blev
+  stille udeladt fra Madpas og "sikkert for familien"-filteret).
+
+**Tier 2 (PR #216, merget):**
+- 3 flere fuldt ubeskyttede Edge Functions lukket: `auto-import-off` (cron
+  eller admin), `weekly-digest` (kun cron — kunne ellers udløse push-spam
+  til 500 brugere), `send-email` (kun interne DB-triggers — kunne ellers
+  sende vilkårlige emails fra vores Resend-konto). De tre DB-triggers
+  (`send_welcome_email` m.fl.) migreret til at bruge service-role-nøglen
+  fra Vault i stedet for den offentlige anon-nøgle, som ikke kunne skelne
+  et internt kald fra et eksternt.
+- `lookupProduct` (appens centrale scan-pipeline, 135 linjer) udtrukket fra
+  `App.jsx` til `runLookupProduct()` i `useProduct.js` — lukker samtidig en
+  stale-closure-risiko (al afhængigt state sendes nu eksplicit som ctx).
+- Fjernet 2 døde state-variabler i `App.jsx` (`barcodeInput`,
+  `editSubmitting`). `traceLog()` logger nu kun til konsollen i dev.
+
+**Tier 3 (denne PR):**
+- `useRecipes.js`s `loadRecipes()` indlæste opskrifter præcis én gang pr.
+  session, aldrig genindlæst — rettet med en 10-minutters staleness-grænse
+  (selvhelende over en lang session, uden at genindlæse ved hver
+  skærm-navigation).
+- **Fetch-konventioner delvist unificeret.** Roden til at `apiCall()`
+  (helpers.js) blev fravalgt nogle steder var at den skjulte HTTP-status og
+  rå fejl-body på en fejl — rettet: `apiCall` sætter nu `err.status`/
+  `err.body` på den kastede fejl. Alle konkrete steder der eksisterede
+  PGA. denne mangel er migreret til `apiCall` (`useRecipes.js`s
+  `submitUserRecipe`/`loadRecipes`/`loadRecipeIngredients`, `useAdmin.js`s
+  `loadSubmissions`/`loadTickets`, `useScanner.js`s `scanPhotoForEan`).
+  Bevidst IKKE rørt: `useAuth.js`s login/signup (skal læse rå tekst FØR
+  JSON-parse for at opdage et "Host not in allowlist"-svar — en reel,
+  vedvarende grund til rå fetch) og `useAdmin.js`s `loadAdminStats` (3 af 8
+  kald i samme funktion læser `response.headers.get("content-range")`,
+  som `apiCall` ikke eksponerer — at migrere kun de resterende 5 ville
+  give MERE inkonsistens internt i én funktion, ikke mindre).
+- **Hand-rullet Realtime i `useShoppingList.js` — vurderet, bevidst
+  BEVARET.** Overvejede at erstatte den med `@supabase/realtime-js`, men
+  konkluderede at det ville være en regression-risiko uden reel gevinst:
+  frontenden har i forvejen bevidst ingen `@supabase/supabase-js`-
+  afhængighed (alt går via rå fetch + denne håndskrevne WebSocket-klient)
+  — at hente et Realtime-bibliotek ind ville tilføje en ny afhængighed,
+  ikke fjerne én. Biblioteket ville desuden kun erstatte selve WS-
+  protokol-håndteringen (join/heartbeat/reconnect); den sværeste del af
+  koden — optimistisk-opdatering-vs-Realtime-konflikthåndtering via
+  `pendingIdsRef`/midlertidige id'er — er appens egen forretningslogik og
+  skulle stadig bygges oven på biblioteket. Ingen kendte bugs er
+  rapporteret i denne kode gennem hele denne session. **Konklusion: behold
+  som den er.**
+- **Supabase dev/branching-miljø — IKKE sat op.** Brugeren afviste
+  eksplicit ("Lav ikke Set up Supabase dev/branching environment, da det
+  ikke understøttes af mit abb.") — Supabase Branching kræver en højere
+  plan end den nuværende. **Genoptag dette punkt når abonnementet
+  opgraderes** — indtil da går alle skema-/edge-function-ændringer
+  fortsat direkte til produktion, som beskrevet i `src/CONTEXT.md`.
