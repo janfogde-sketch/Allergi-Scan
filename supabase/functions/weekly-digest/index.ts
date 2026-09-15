@@ -31,6 +31,18 @@ const CORS = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
+  // Kaldes udelukkende af vores eget pg_cron-job (se header-kommentaren
+  // ovenfor) — kræver derfor at kalderen identificerer sig med service-
+  // role-nøglen, ikke bare en gyldig bruger-session. Uden dette kunne
+  // enhver udenfra udløse push-spam til op til 500 brugere ad gangen.
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const authHeader = req.headers.get("Authorization") ?? "";
+  if (!serviceRoleKey || authHeader !== `Bearer ${serviceRoleKey}`) {
+    return new Response(JSON.stringify({ error: "Ikke autoriseret" }), {
+      status: 401, headers: { ...CORS, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,

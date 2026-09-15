@@ -340,7 +340,11 @@ export function traceLog(id, step, data = {}) {
   };
   _traceLog.push(entry);
   if (_traceLog.length > 200) _traceLog.shift();
-  console.log(`[trace:${id}] ${step}`, data);
+  // Log kun til konsollen i dev — i produktion ville dette lække scannede
+  // EAN'er, produktnavne og rå OCR-tekst til enhver der åbner devtools.
+  // getTraceLog()/Admin-debug-fanen har stadig fuld adgang til historikken
+  // uanset miljø, kun selve console.log-outputtet er gated.
+  if (import.meta.env.DEV) console.log(`[trace:${id}] ${step}`, data);
   return entry;
 }
 

@@ -12,9 +12,8 @@ import {
 
 import {
   initials, timeAgo, getAllergenLabels, verifiedBadge,
-  makeHeaders, apiCall, compareAllergens,
-  extractENumbers, compareENumbers,
-  traceId, traceLog, getTraceLog
+  makeHeaders, apiCall,
+  getTraceLog
 } from "./helpers.js";
 
 import {
@@ -34,7 +33,7 @@ const KnowledgeScreen = React.lazy(() => import('./KnowledgeScreen.jsx'));
 const FeedbackModal = React.lazy(() => import('./FeedbackModal.jsx'));
 const ProfileMenu = React.lazy(() => import('./ProfileMenu.jsx'));
 import ErrorBoundary from './ErrorBoundary.jsx';
-import { useOffline, saveToOfflineCache, getFromOfflineCache } from './useOffline.js';
+import { useOffline } from './useOffline.js';
 
 import { appCss } from './theme.jsx';
 import { BUILD_TIME, COMMIT_SHA, formatBuildTime, getGreeting, buildScreenLabel } from './utils.jsx';
@@ -46,7 +45,7 @@ import { useOnboarding } from './useOnboarding.js';
 import { useAdmin } from './useAdmin.js';
 import { useScanner } from './useScanner.js';
 import { useRecipes } from './useRecipes.js';
-import { useProduct } from './useProduct.js';
+import { useProduct, runLookupProduct } from './useProduct.js';
 import { useMadpas } from './useMadpas.js';
 import { useSearch } from './useSearch.js';
 import { useAlternatives } from './useAlternatives.js';
@@ -80,8 +79,6 @@ export default function EatSafe() {
   // Scan state
   const [showIng, setShowIng] = useState(true); // Automatisk åben
   const [showNutrition, setShowNutrition] = useState(false);
-  const [barcodeInput, setBarcodeInput] = useState("");
-  const productCacheRef = useRef({}); // Cache af seneste 50 scannede produkter
   const [profilePopup, setProfilePopup] = useState(null); // id af profil der vises popup for
   const [knowledgeSlug, setKnowledgeSlug] = useState(null);
 
@@ -114,7 +111,6 @@ export default function EatSafe() {
   // Auth form
 
   // NOT FOUND flow
-  const [editSubmitting, setEditSubmitting] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackDone, setFeedbackDone] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -416,6 +412,7 @@ export default function EatSafe() {
 
   const [notFoundEan, setNotFoundEan] = useState("");
   const {
+    productCacheRef,
     scanResult, setScanResult,
     loading, setLoading,
     scanError, setScanError,
@@ -604,150 +601,30 @@ export default function EatSafe() {
   // Ref der altid peger på den seneste lookupProduct (undgår TDZ-cirkulær afhænighed)
   const lookupProductRef = useRef(null);
 
-const lookupProduct = useCallback(async (ean) => {
-    if (!ean?.trim()) return;
-    if (navigator.vibrate) navigator.vibrate(40);
-    const tid = traceId("scan");
-    traceLog(tid, "scan:start", { ean: ean.trim() });
-    const cached = productCacheRef.current[ean.trim()] || getFromOfflineCache(ean.trim());
-    if (cached) {
-      traceLog(tid, "scan:cache-hit");
-      setScanResult(cached); setScreen(SCREENS.RESULT);
-      // Alternativer er IKKE en del af det cachede result-objekt — uden dette
-      // genbruger et cache-hit bare hvad end alternatives-state tilfældigvis
-      // stod på fra en tidligere scanning i samme session (eller intet, hvis
-      // det er appens første scanning), i stedet for at vise de rigtige
-      // alternativer til DETTE produkt.
-      if (cached.status === "danger" || cached.status === "warn") {
-        loadAlternatives(cached.category, ean.trim());
-      } else {
-        clearAlternatives();
-      }
-      return;
-    }
-    // Offline uden cache — vis besked
-    if (!navigator.onLine) {
-      setScanError("Du er offline og dette produkt er ikke i den lokale cache.");
-      setLoading(false); return;
-    }
-    setLoading(true); setScanResult(null); setScanError(""); setShowIng(false);
-    try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/products/${ean.trim()}`, {
-        headers: makeHeaders(accessToken),
-      });
-      traceLog(tid, "scan:product-response", { found: data.found, name: data.product?.name });
-      if (!data.found) {
-        traceLog(tid, "scan:not-found");
-        setNotFoundEan(ean.trim());
-        await saveHistoryEntry(ean.trim(), null, "not_found", {}, activeProfiles);
-        setLoading(false); setScreen(SCREENS.NOTFOUND); setNotFoundStep(1);
-        setOcrText(""); setProposedName("");
-        setProposedFlags(Object.fromEntries(ALLERGENS.map(a => [a.id, false])));
-        setProductImagePreview(null); setProductImageBase64(null);
-        return;
-      }
-      let product = data.product;
-      const variantLabel = product.variant_label || null;
-
-      // ── Canonical opslag: hent allergen-data fra master-produkt ──────────
-      if (product.canonical_ean) {
-        try {
-          const canonicalData = await apiCall(
-            `${SUPABASE_URL}/rest/v1/products?ean=eq.${product.canonical_ean}&select=allergen_flags,ingredients,nutrition,verified_status,source&limit=1`,
-            { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-          );
-          if (Array.isArray(canonicalData) && canonicalData[0]) {
-            const c = canonicalData[0];
-            // Behold variant-navn men brug canonical allergen-data
-            product = {
-              ...product,
-              allergen_flags: c.allergen_flags || product.allergen_flags,
-              ingredients: c.ingredients || product.ingredients,
-              nutrition: c.nutrition || product.nutrition,
-              verified_status: c.verified_status || product.verified_status,
-              source: c.source || product.source,
-            };
-          }
-        } catch { /* Brug variant-data som fallback */ }
-      }
-
-      const flags = product.allergen_flags || data.allergen_flags || {};
-      const { status: rawStatus, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(flags, activeIds);
-      // Data mangler for ét eller flere af dine allergener ("unknown"-felter) — vis
-      // det IKKE som et trygt grønt "sikkert produkt". Uden dette nedgraderes en
-      // reel datamangel aldrig til noget brugeren faktisk ser (fundet ved en
-      // sikkerhedsgennemgang: samme UI blev vist for "bekræftet sikkert" og
-      // "vi ved det faktisk ikke").
-      const isUnsafeUnknown = rawStatus === "safe" && hasUnknown;
-      const status = isUnsafeUnknown ? "warn" : rawStatus;
-
-      // Udtræk E-numre fra ingredienstekst
-      const ingredientsText = product.ingredients || data.ingredients?.raw_text || product.ingredients_text || "";
-      const productENumbers = extractENumbers(ingredientsText);
-      const { matched: matchedENumbers } = compareENumbers(productENumbers, activeENumbers);
-
-      const flagList = [
-        ...matchedDanger.map(id => ({ type:"bad", text:`Indeholder ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
-        ...matchedWarning.map(id => ({ type:"maybe", text:`Kan indeholde spor af ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
-        ...(hasUnknown ? [{ type:"maybe", text:"Visse allergener er ukendte — tjek altid pakken" }] : []),
-        ...(matchedDanger.length===0 && matchedWarning.length===0 && !hasUnknown ? [{ type:"good", text:"Ingen af dine allergener fundet" }] : []),
-        ...(matchedENumbers.length > 0 ? [{ type:"maybe", text:`Indeholder overvågede E-numre: ${matchedENumbers.join(", ")}` }] : []),
-      ];
-      const headlines = { safe:"Sikkert produkt", danger:"Indeholder allergen", warn: isUnsafeUnknown ? "Kan ikke bekræftes sikkert" : "Mulige spor" };
-      const summaries = {
-        safe:"Ingen af dine registrerede allergener er fundet i dette produkt.",
-        danger:`Produktet indeholder ${matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
-        warn: isUnsafeUnknown
-          ? "Vi mangler data for ét eller flere af dine allergener i dette produkt — tjek selv emballagen før du spiser det."
-          : `Produktet kan indeholde spor af ${matchedWarning.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
-      };
-      const familyImpact = [];
-      if (family.length > 0) {
-        for (const member of family.filter(m => activeProfiles.includes(m.id))) {
-          const memberResult = compareAllergens(flags, member.allergens || []);
-          if (memberResult.matchedDanger.length > 0 || memberResult.matchedWarning.length > 0) {
-            familyImpact.push({ name:member.name, color:member.color, danger:memberResult.matchedDanger, warning:memberResult.matchedWarning });
-          }
-        }
-      }
-      const result = {
-        code: ean.trim(), name: product.name || "Ukendt produkt", brand: product.brand || "",
-        variant_label: variantLabel,
-        image_url: product.image_url || null, category: product.category || null,
-        ingredients: ingredientsText,
-        productENumbers,
-        nutrition: product.nutrition || data.nutrition || null,
-        verified_status: product.verified_status || "unverified", source: product.source || data.source,
-        status, headline: headlines[status], summary: summaries[status],
-        flags: flagList, allergen_flags: flags, matchedDanger, matchedWarning, matchedENumbers, familyImpact, hasUnknown,
-        timestamp: Date.now(),
-      };
-      productCacheRef.current[ean.trim()] = result;
-      saveToOfflineCache(ean.trim(), result);
-      const cacheKeys = Object.keys(productCacheRef.current);
-      if (cacheKeys.length > 50) delete productCacheRef.current[cacheKeys[0]];
-      traceLog(tid, "scan:result", { ean: ean.trim(), name: result.name, status, matchedDanger, matchedWarning });
-      setScanResult(result);
-      setHistory(h => [result, ...h].slice(0, 50));
-      await saveHistoryEntry(ean.trim(), product.id, status, flags, activeProfiles);
-      // Hent alternativer hvis produktet er farligt eller har spor
-      if (status === "danger" || status === "warn") {
-        loadAlternatives(result.category, ean.trim());
-      } else {
-        clearAlternatives();
-      }
-      setScreen(SCREENS.RESULT);
-    } catch (e) { traceLog(tid, "scan:error", { error: e.message }); setScanError("Der opstod en fejl. Tjek din forbindelse og prøv igen."); }
-    setLoading(false);
-  }, [accessToken, activeIds]);
-  lookupProductRef.current = lookupProduct;
-
 // ── SØGNING → useSearch hook ────────────────────────────────────────────────
   const { searchQuery, setSearchQuery, searchCategory, setSearchCategory,
           searchResults, setSearchResults, searchLoading,
           searchHasMore, searchTotal, searchLoadingMore, loadMoreSearchResults } = useSearch({ accessToken });
 
   const { alternatives, altLoading, loadAlternatives, clearAlternatives } = useAlternatives({ accessToken, activeIds });
+
+  // Selve scan-resultat-pipelinen (opslag/allergen-match/familie-impact/
+  // cache/historik/alternativer) er flyttet til useProduct.js' runLookupProduct
+  // — denne wrapper sender blot alt afhængigt state med som ctx ved hvert kald,
+  // så der (i modsætning til før) ALDRIG kan opstå en stale-closure-bug fra en
+  // ufuldstændig deps-liste.
+  const lookupProduct = useCallback((ean) => runLookupProduct(ean, {
+    accessToken, activeIds, activeENumbers, family, activeProfiles,
+    productCacheRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
+    setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
+    setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
+    setProductImagePreview, setProductImageBase64,
+  }), [accessToken, activeIds, activeENumbers, family, activeProfiles,
+       productCacheRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
+       setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
+       setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
+       setProductImagePreview, setProductImageBase64]);
+  lookupProductRef.current = lookupProduct;
 
   // ── COMPUTED (afhænger af hooks) ─────────────────────────────────────────
   const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
