@@ -35,12 +35,12 @@ const ALLERGEN_KEYWORDS: Record<string, string[]> = {
     "yoghurt", "yogurt", "kefir", "skyr", "kvark", "quark",
     "tørmælk", "mælkepulver", "milk powder", "skummetmælkspulver",
     "sødmælkspulver", "kærnemælk", "buttermilk", "flødepulver",
-    "mælketørstof", "milk solids", "laktoprotein",
+    "mælketørstof", "milk solids", "laktoprotein", "ost", "oste",
   ],
   // Laktose = mælkeSUKKER. Kun laktose-specifikke termer
   laktose: [
     "laktose", "lactose", "mælkesukker", "milk sugar",
-    "mælk", "milk", "fløde", "cream", "ost", "cheese",
+    "mælk", "milk", "fløde", "cream", "ost", "oste", "cheese",
     "yoghurt", "yogurt", "kærnemælk", "buttermilk",
     "valle", "whey", "tørmælk", "mælkepulver", "milk powder",
   ],
@@ -51,10 +51,10 @@ const ALLERGEN_KEYWORDS: Record<string, string[]> = {
     "æggepulver", "egg powder", "pasteuriseret æg",
   ],
   noedder: [
-    "mandel", "almond", "mandler", "hasselnød", "hazelnut", "corylus",
-    "valnød", "walnut", "juglans", "cashew", "cashewnød", "anacardium",
-    "pistacie", "pistachio", "pistacienød", "pekannød", "pecan",
-    "macadamia", "macadamianød", "paranød", "brazil nut", "pinjekerne",
+    "mandel", "almond", "mandler", "hasselnød", "hasselnødder", "hazelnut", "corylus",
+    "valnød", "valnødder", "walnut", "juglans", "cashew", "cashewnød", "cashewnødder", "anacardium",
+    "pistacie", "pistachio", "pistacienød", "pistacienødder", "pekannød", "pekannødder", "pecan",
+    "macadamia", "macadamianød", "macadamianødder", "paranød", "paranødder", "brazil nut", "pinjekerne", "pinjekerner",
     "pine nut", "nøddepasta", "nut paste", "marcipan", "marzipan", "nougat",
   ],
   jordnoedder: [
@@ -69,15 +69,15 @@ const ALLERGEN_KEYWORDS: Record<string, string[]> = {
     "sojasauce", "soy sauce", "sojadrik",
   ],
   fisk: [
-    "fisk", "fish", "ansjos", "anchovy", "torsk", "cod", "gadus",
+    "fisk", "fish", "ansjos", "ansjoser", "anchovy", "torsk", "cod", "gadus",
     "laks", "salmon", "salmo", "tun", "tuna", "thunnus", "sild",
-    "herring", "clupea", "makrel", "mackerel", "rødspætte", "plaice",
+    "herring", "clupea", "makrel", "makreller", "mackerel", "rødspætte", "rødspætter", "plaice",
     "fiskesauce", "fish sauce", "fiskeolie", "fish oil", "surimi",
     "fiskegelatine", "fiskeekstrakt", "rogn", "roe", "kaviar", "caviar",
   ],
   skaldyr: [
     "skaldyr", "crustacean", "rejer", "reje", "shrimp", "prawn",
-    "hummer", "lobster", "krabbe", "crab", "languster", "krebs",
+    "hummer", "lobster", "krabbe", "krabber", "crab", "languster", "langustere", "krebs",
     "crayfish", "krebsdyr", "krabbestang", "krill",
   ],
   selleri: [
@@ -106,7 +106,7 @@ const ALLERGEN_KEYWORDS: Record<string, string[]> = {
   bloeddyr: [
     "bløddyr", "mollusc", "mollusk", "musling", "muslinger", "mussel",
     "østers", "oyster", "blæksprutte", "squid", "octopus", "blæksprutter",
-    "snegl", "snail", "kammusling", "scallop", "abalone", "vongole",
+    "snegl", "snail", "kammusling", "kammuslinger", "scallop", "abalone", "vongole",
   ],
 };
 

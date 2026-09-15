@@ -914,6 +914,48 @@ der kan færdiggøres ved antagelse alene.
 
 ---
 
+**15. sept. 2026 — ticket-fund: nøgleord-motoren matchede kun ental, ikke den
+bøjede flertalsform der reelt står i ingredienslister ("hasselnødder
+spotters ikke som allergen").** En bruger-rapporteret ticket
+(`feedback_tickets`) viste at et produkt med "hakkede HASSELNØDDER" i
+ingredienslisten fik `allergen_flags.noedder = "no"`. Rodårsagen:
+`supabase/functions/allergens/index.ts`s `wordBoundaryMatch()` kræver en
+ikke-bogstav-grænse på BEGGE sider af nøgleordet — kun entalsformen
+"hasselnød" stod i ordlisten, og den matcher aldrig den bøjede
+flertalsform "hasselnødder" (der er bogstaver, ikke en grænse, efter
+"hasselnød" i "hasselnødder"). `jordnoedder`-kategorien havde allerede
+både ental og flertal ("jordnød"+"jordnødder") — det var undtagelsen, ikke
+reglen.
+
+**Stående regel fremadrettet (brugerens eksplicitte instruks: "tag det vi
+lærte herfra og brug det på tværs af det hele. gør altid det"):** enhver
+allergen-nøgleordsliste — nuværende og fremtidig, i
+`supabase/functions/allergens/index.ts` OG i den separate frontend-kopi
+`src/allergenKeywords.js` (som IKKE deler kode med edge-functionen, se dens
+egen header-kommentar) — skal have BÅDE ental- og flertalsform for hvert
+tælleligt dansk substantiv, medmindre ordet er entals=flertal (fx "æg",
+"fisk", grynsorter som "rug"/"byg"/"havre"). Tjek dette som et fast
+checkpoint, ikke kun en engangsoprydning, hver gang en ny nøgleord-liste
+skrives eller redigeres. **Én kendt undtagelse, opdaget under denne
+gennemgang:** dansk "snegle" er tvetydigt — kan betyde både sneglen
+(bløddyr) og en helt almindelig bagværks-betegnelse ("kanelsnegle",
+"wienerbrødssnegle") — tilføj IKKE denne flertalsform mekanisk uden at
+tjekke for den slags reelt tvetydige ord først (edge-functionen har
+bevidst kun singular "snegl"; den ældre frontend-liste havde allerede
+"snegle" i begge kategorier før denne gennemgang — ikke rettet, da det er
+en selvstændig, ikke-relateret risiko uden for denne tickets scope).
+
+Konkret rettet 15. sept. (v13 af `allergens`-edge-functionen, deployet):
+nødder (hasselnødder/valnødder/cashewnødder/pistacienødder/pekannødder/
+macadamianødder/paranødder/pinjekerner), fisk (ansjoser/makreller/
+rødspætter), skaldyr (krabber/langustere), bløddyr (kammuslinger),
+mælkeallergi/laktose (oste). Samme flertalsformer tilføjet parallelt i
+`src/allergenKeywords.js`. **280 allerede-importerede produkter** i
+databasen blev rettet baseret på en nøjagtig Python-gensimulering af
+`analyzeIngredients()`s fulde logik (negation/spor-kontekst/EU-
+fremhævning) — IKKE en blind sætning til "yes" — for at undgå at
+introducere nye fejl under oprydningen.
+
 ### Beta-installation (september 2026)
 
 Admin-dashboardet (Hurtige handlinger) har en "Installations-QR til beta"-knap, der
