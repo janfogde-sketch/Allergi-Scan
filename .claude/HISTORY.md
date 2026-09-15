@@ -861,6 +861,71 @@ lidt indhold lige nu; tag dem op hvis `.claude/`-mappen vokser væsentligt.
 
 ---
 
+## security-check baseline-kørsel (15. sept. 2026)
+
+Den nyoprettede `security-check`-skill blev kørt for første gang som en
+baseline. To fund, begge rettet:
+
+**HØJ — `send-push` havde ingen reel adgangskontrol.** `verify_jwt:true`
+stoppede ikke ret meget, da den offentlige `anon`-nøgle (shipper i
+frontend-bundlen) selv er en gyldig JWT. Funktionen selv havde intet
+caller-identitets-tjek — enhver der kendte et `user_id` kunne sende en
+push-notifikation med frit valgt titel/tekst/link, et oplagt phishing-
+setup. Rettet (PR #225) med samme mønster som `allergens`/`ocr`: kræver
+enten service-role-nøglen (interne kald som `weekly-digest`) eller en
+rigtig indlogget bruger (`auth.getUser()`). Verificeret at eksisterende
+legitime kaldere (weekly-digest, og `App.jsx`s familie-invitation-
+accepteret-notifikation) stadig virker. **Residual risiko, bevidst
+udenfor scope:** en registreret bruger kan stadig sende push med
+selvvalgt indhold til en anden bruger, hvis de kender dennes `user_id` —
+at lukke det fuldt kræver at flytte push-kaldet server-side (samme
+mønster som `send-email`s DB-triggers), en større ændring.
+
+**MEDIUM — 3 `SECURITY DEFINER`-funktioner var direkte kaldbare af den
+offentlige anon-nøgle.** Supabases `get_advisors` flagede at 9 funktioner
+var eksekverbare af `anon`/`authenticated` via `/rest/v1/rpc/`. Gennemgik
+alle 9 enkeltvis:
+- `family_group(p_uid)` og `is_admin(user_id)` — reelle informationslæk:
+  begge er `SECURITY DEFINER` og omgår derfor RLS internt, så enhver med
+  bare anon-nøglen kunne kalde dem direkte og få familiegruppe-
+  medlemskaber hhv. admin-status for en vilkårlig bruger.
+- `accept_family_invite` — en anonym kalder kunne "brænde" en gyldig
+  invitation af (markere den accepteret med `accepted_by = NULL`) uden
+  selv at blive tilknyttet, da `auth.uid()` bare bliver `NULL` for en
+  ikke-logget-ind kalder og funktionen ikke eksplicit tjekkede for det.
+- `handle_new_user`, `send_submission_email`, `send_ticket_email`,
+  `send_welcome_email`, `sync_user_role_to_jwt` — alle `RETURNS trigger`,
+  kun ment til at fyre som database-triggers. Reelt IKKE udnyttelige via
+  direkte RPC-kald (Postgres fejler øjeblikkeligt uden `NEW`/`OLD`-
+  kontekst), men lukket ned alligevel for at fjerne dem fra den
+  eksponerede API-flade.
+- `log_missing_ean` — bevidst offentlig (skal virke for uindloggede
+  scanninger), ikke rørt.
+
+**Vigtig teknisk lektion undervejs:** første forsøg på at rette dette
+(`revoke execute ... from anon, authenticated`) virkede IKKE — verificeret
+efterfølgende med `has_function_privilege()`, som stadig viste `true` for
+`anon`. Årsagen: Postgres giver som standard `EXECUTE` til `PUBLIC` ved
+funktions-oprettelse, og alle roller (inkl. `anon`/`authenticated`) arver
+fra `PUBLIC` medmindre det eksplicit fjernes. At revoke'e kun fra de
+navngivne roller uden også at fjerne `PUBLIC`-grant'en gjorde derfor ingen
+forskel — et klassisk Postgres-privilegie-fælde. Rettet med `revoke
+execute ... from public` + eksplicit re-grant kun til `authenticated`
+(og `service_role`) hvor RLS-policies på `family_members`, `submissions`,
+`feedback_tickets`, `shopping_lists`, `shopping_list_items` og `favorites`
+reelt kræver det (de kalder `family_group()`/`is_admin()` direkte i deres
+`qual`/`with_check`-udtryk). Verificeret efterfølgende med
+`has_function_privilege()` for hver rolle × funktion, ikke kun antaget.
+Anvendt direkte på databasen via `mcp__Supabase__apply_migration` (ingen
+kodefiler ændret — dette var en ren DB-privilegie-ændring).
+
+**Lektion for fremtidige `REVOKE`-fixes:** `REVOKE ... FROM <rolle>` uden
+også `FROM PUBLIC` er en no-op hvis PUBLIC allerede har adgangen. Verificér
+altid en revoke-fix med `has_function_privilege(rolle, funktion, 'EXECUTE')`
+efterfølgende — antag det ikke virkede bare fordi kommandoen ikke fejlede.
+
+---
+
 ## Rescue-audit (15. sept. 2026) — fuld tier-log
 
 En læse-kun arkitektur-, bug- og sikkerhedsgennemgang af hele kodebasen er
