@@ -1,3 +1,5 @@
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -7,6 +9,26 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+
+  // Verificér at den kaldende bruger faktisk er logget ind — ellers er dette
+  // et helt åbent, ubegrænset kald ind til en betalt Vision/LLM-baseret
+  // funktion, som hvem som helst kan spamme uden login (samme mønster som
+  // allergens-funktionen).
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) return new Response(
+    JSON.stringify({ error: "Ikke autoriseret" }),
+    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+  const userClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    { global: { headers: { Authorization: authHeader } } }
+  );
+  const { data: { user: caller } } = await userClient.auth.getUser();
+  if (!caller) return new Response(
+    JSON.stringify({ error: "Ikke autoriseret" }),
+    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
 
   try {
     const body = await req.json();

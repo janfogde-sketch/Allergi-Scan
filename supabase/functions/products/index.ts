@@ -235,6 +235,34 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    if (method === "POST" || method === "PATCH" || method === "DELETE") {
+      // Skriveoperationer kræver admin — verificér via en klient bundet til
+      // den kaldende brugers eget Authorization-token (samme mønster som
+      // admin/delete-user-funktionerne), ikke bare den service-role-klient
+      // der bruges til selve DB-kaldet ovenfor.
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader) return new Response(
+        JSON.stringify({ error: "Authorization header mangler" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: { user: caller } } = await userClient.auth.getUser();
+      if (!caller) return new Response(
+        JSON.stringify({ error: "Ugyldig token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+      const { data: callerProfile } = await supabase
+        .from("users").select("role").eq("id", caller.id).single();
+      if (callerProfile?.role !== "admin") return new Response(
+        JSON.stringify({ error: "Adgang nægtet — kun admin" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (method === "POST") {
       const body = await req.json();
       const { ean, name, brand, category, image_url, label_image_url, source } = body;

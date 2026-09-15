@@ -1037,3 +1037,15 @@ se opdateringen nedenfor.
 - Denne fil (`CLAUDE.md`) — hold "Arkitektur"- og "Igangværende arbejde"-afsnittene
   opdaterede efter større UI/navigations-ændringer, så en frisk Claude-session altid
   har et retvisende billede.
+
+### Rescue-audit (15. sept. 2026)
+
+En læse-kun arkitektur-, bug- og sikkerhedsgennemgang af hele kodebasen (ingen
+kode ændret) er publiceret som artifact her:
+**https://claude.ai/artifact/NsG75NGKsGsFTugYtwxu9X**
+
+Indeholder bl.a.: kritisk sikkerhedshul i `supabase/functions/products/index.ts`
+(ingen auth på POST/PATCH/DELETE), `customAllerg`-vs-`.custom`-feltnavne-buggen
+(`useMadpas.js`, `App.jsx`, `RecipesScreen.jsx` bruger forkert feltnavn), samt en
+prioriteret 3-trins redningsplan. Ingen af punkterne er rettet endnu — tag fat i
+artiklen næste gang der arbejdes videre, eller spørg brugeren om prioritet.

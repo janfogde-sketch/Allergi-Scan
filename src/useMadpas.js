@@ -66,7 +66,7 @@ export function useMadpas({ allergens, customAllerg, selectedENumbers, user, mad
       ? family?.find(m => m.id === madpasProfileId)
       : null;
     const speakAllergens = activeProfile ? (activeProfile.allergens || []) : allergens;
-    const speakCustom = activeProfile ? (activeProfile.customAllerg || []) : customAllerg;
+    const speakCustom = activeProfile ? (activeProfile.custom || []) : customAllerg;
 
     const parts = [];
     parts.push(introText[lang] || introText.en);
