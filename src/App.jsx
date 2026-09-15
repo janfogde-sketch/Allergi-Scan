@@ -1076,13 +1076,13 @@ export default function EatSafe() {
                 />
               </div>
 
-              <button onClick={deleteOwnAccount}
+              <button onClick={deleteOwnAccount} className="destructive-confirm-btn"
                 disabled={deleteConfirmText.toLowerCase() !== "slet" || deletingAccount}
-                style={{ width:"100%", padding:"16px", background: deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--ink)", cursor: deleteConfirmText.toLowerCase()==="slet" ? "pointer" : "not-allowed", marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-                {deletingAccount ? "Sletter…" : <><Icon name="trash" size={14} color="var(--ink)" /> Slet min konto permanent</>}
+                style={{ width:"100%", padding:"16px", background: deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--on-green)", cursor: deleteConfirmText.toLowerCase()==="slet" ? "pointer" : "not-allowed", boxShadow: deleteConfirmText.toLowerCase()==="slet" ? "var(--sh)" : "none", marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+                {deletingAccount ? "Sletter…" : <><Icon name="trash" size={14} color="var(--on-green)" /> Slet min konto permanent</>}
               </button>
 
-              <button onClick={() => setShowDeleteAccount(false)}
+              <button onClick={() => setShowDeleteAccount(false)} className="plain-cancel-btn"
                 style={{ width:"100%", padding:"14px", background:"none", border:"none", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--muted)", cursor:"pointer" }}>
                 Annullér — behold min konto
               </button>

@@ -434,7 +434,7 @@ Implementér derefter løsningen.`;
                 { id:"import",     icon:"download",label:"Import" },
                 { id:"recipes",    icon:"book",    label:"Opskrifter" },
               ].map(s => (
-                <button key={s.id}
+                <button key={s.id} className="admin-tab"
                   onClick={() => {
                     setAdminSection(s.id); if (s.id==="missing") loadMissingEans(); if (s.id==="import") runImport(false);
                     if (s.id === "submissions") loadSubmissions(submissionFilter);
@@ -446,7 +446,7 @@ Implementér derefter løsningen.`;
                   style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:4, padding:"14px 16px",
                     background: adminSection===s.id ? "var(--green-lt)" : "var(--surface)",
                     border: `1px solid ${adminSection===s.id ? "var(--green)" : "var(--border)"}`,
-                    borderRadius:14, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
+                    borderRadius:14, boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
                   <Icon name={s.icon} size={20} color={adminSection===s.id ? "var(--green)" : "var(--ink2)"} />
                   <span style={{ fontSize:13, fontWeight:800, color: adminSection===s.id ? "var(--green)" : "var(--ink)" }}>{s.label}</span>
                 </button>
@@ -462,7 +462,7 @@ Implementér derefter løsningen.`;
                     { n:adminStats?.total_users,     icon:"profile", label:"Brugere i alt",   color:"var(--ink)" },
                     { n:adminStats?.new_users_today,  icon:"plus",    label:"Nye i dag",        color:"var(--green)" },
                     { n:adminStats?.total_scans,      icon:"barcode", label:"Scanninger i alt", color:"var(--ink)" },
-                    { n:adminStats?.scans_today,      emoji:"⚡", label:"Scanninger i dag", color:"var(--amber)" },
+                    { n:adminStats?.scans_today,      icon:"zap", label:"Scanninger i dag", color:"var(--amber)" },
                   ].map(({ n, icon, emoji, label, color }) => (
                     <div key={label} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"16px 14px", boxShadow:"var(--sh)" }}>
                       <div style={{ marginBottom:4 }}>{icon ? <Icon name={icon} size={22} color={color} /> : emoji}</div>
@@ -477,10 +477,10 @@ Implementér derefter løsningen.`;
                   {[
                     { icon:"package", label:"Produkter i databasen",   n:adminStats?.total_products,        color:"var(--ink)" },
                     { icon:"family", label:"Familiemedlemmer oprettet", n:adminStats?.total_families,         color:"var(--ink)" },
-                    { emoji:"⏳", label:"Indsendelser afventer",   n:adminStats?.pending_submissions,    color:"var(--amber)", action:() => { setAdminSection("submissions"); setSubmissionFilter("pending"); loadSubmissions("pending"); } },
+                    { icon:"clock", label:"Indsendelser afventer",   n:adminStats?.pending_submissions,    color:"var(--amber)", action:() => { setAdminSection("submissions"); setSubmissionFilter("pending"); loadSubmissions("pending"); } },
                     { icon:"bug", label:"Åbne tickets",             n:adminStats?.open_tickets,           color:"var(--red)",   action:() => { setAdminSection("tickets"); loadTickets(); } },
                   ].map(({ icon, emoji, label, n, color, action }, i, arr) => (
-                    <div key={label} onClick={action}
+                    <div key={label} onClick={action} className={action ? "admin-list-row" : undefined}
                       style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 16px", borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", cursor: action ? "pointer" : "default" }}>
                       <span style={UI.fs20}>{icon ? <Icon name={icon} size={18} color={color} /> : emoji}</span>
                       <span style={{ flex:1, fontSize:13, color:"var(--ink)", fontWeight:500 }}>{label}</span>
@@ -499,8 +499,8 @@ Implementér derefter løsningen.`;
                     { icon:"family", label:"Administrér brugere",  color:"var(--ink)",   fn:() => { setAdminSection("users"); loadAdminUsers(); } },
                     { icon:"share", label:"Installations-QR til beta", color:"var(--blue)", fn:() => setShowInstallQr(true) },
                   ].map(({ icon, label, color, fn }) => (
-                    <button key={label} onClick={fn}
-                      style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:6, padding:"14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
+                    <button key={label} onClick={fn} className="admin-action-card"
+                      style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:6, padding:"14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
                       <Icon name={icon} size={22} color={color} />
                       <span style={{ fontSize:12, fontWeight:700, color }}>{label}</span>
                     </button>
@@ -577,8 +577,8 @@ Implementér derefter løsningen.`;
                 {adminUsersLoading && <Loader text="Indlæser…" />}
                 <div style={UI.udflex_fdcolumn_g6}>
                   {filteredAdminUsers.map(u => (
-                    <div key={u.id} onClick={() => setOpenAdminUser(u)}
-                      style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", boxShadow:"var(--sh)", cursor:"pointer" }}>
+                    <div key={u.id} onClick={() => setOpenAdminUser(u)} className="admin-list-row"
+                      style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", boxShadow:"var(--sh)" }}>
                       <div style={UI.udflex_aicenter_g10}>
                         <div style={{ width:38, height:38, borderRadius:"50%", background: u.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
                           {(u.name||u.email||"?").charAt(0).toUpperCase()}
@@ -636,8 +636,8 @@ Implementér derefter løsningen.`;
                     const daysSince = Math.floor((Date.now() - new Date(s.created_at).getTime()) / 86400000);
                     const isEdit = s.type === "edit";
                     return (
-                      <div key={s.id} onClick={() => openSubmissionForReview(s)}
-                        style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", cursor:"pointer", boxShadow:"var(--sh)" }}>
+                      <div key={s.id} onClick={() => openSubmissionForReview(s)} className="admin-list-row"
+                        style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
                         <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
                           <div style={{ width:48, height:48, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name={isEdit ? "edit" : "package"} size={22} color="var(--ink2)" /></div>
                           <div style={UI.flexMin}>
@@ -731,7 +731,7 @@ Implementér derefter løsningen.`;
                     const statusLabel = t.status==="open"?"Åben":t.status==="in_progress"?"I gang":t.status==="resolved"?"Løst":"Lukket";
                     return (
                       <div key={t.id} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
-                        <div style={{ display:"flex", alignItems:"flex-start", gap:10 }} onClick={() => setOpenTicket(t)}>
+                        <div className="admin-list-row" style={{ display:"flex", alignItems:"flex-start", gap:10 }} onClick={() => setOpenTicket(t)}>
                           <div style={{ width:38, height:38, borderRadius:10, background:cfg.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{cfg.icon ? <Icon name={cfg.icon} size={18} color={cfg.color} /> : cfg.emoji}</div>
                           <div style={UI.flexMin}>
                             <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
@@ -938,7 +938,7 @@ Implementér derefter løsningen.`;
               {/* Hurtig-godkend/afvis */}
               <div style={{ display:"flex", gap:6 }}>
                 <button onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}
-                  style={{ background:"var(--green)", border:"none", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--on-green)", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
+                  style={{ background:"var(--green)", border:"none", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--on-green)", cursor:"pointer", boxShadow:"var(--sh)", display:"flex", alignItems:"center", gap:6 }}>
                   <Icon name="check" size={13} color="var(--on-green)" /> Godkend
                 </button>
                 <button onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}
@@ -1088,7 +1088,7 @@ Implementér derefter løsningen.`;
             {/* Handlings-knapper */}
             <div style={{ display:"flex", flexDirection:"column", gap:8, paddingBottom:120 }}>
               <button onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}
-                style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:12, padding:"16px", fontFamily:"var(--f)", fontSize:15, fontWeight:700, color:"var(--on-green)", cursor:"pointer", boxShadow:"0 4px 16px rgba(34,197,94,.3)", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+                style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:12, padding:"16px", fontFamily:"var(--f)", fontSize:15, fontWeight:700, color:"var(--on-green)", cursor:"pointer", boxShadow:"var(--sh2)", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
                 <Icon name="check" size={15} color="var(--on-green)" /> {openSubmission.type === "edit" ? "Godkend og opdater produkt" : "Godkend og opret produkt"}
               </button>
               <button onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}
@@ -1119,7 +1119,7 @@ Implementér derefter løsningen.`;
 
                 {/* Brand-aggregering */}
                 {missingEans.length > 0 && (
-                  <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
+                  <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px 16px", marginBottom:16, boxShadow:"var(--sh)" }}>
                     <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
                       <Icon name="chart" size={12} color="var(--ink)" /> Top EAN-præfikser <span style={{ fontSize:10, fontWeight:400, color:"var(--muted)" }}>(proxy for brand/producent)</span>
                     </div>
@@ -1154,7 +1154,7 @@ Implementér derefter løsningen.`;
                 ) : (
                   <div style={UI.colGap8}>
                     {missingEans.map((row, i) => (
-                      <div key={row.ean} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", display:"flex", alignItems:"center", gap:12 }}>
+                      <div key={row.ean} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", display:"flex", alignItems:"center", gap:12, boxShadow:"var(--sh)" }}>
                         {/* Rang */}
                         <div style={{ fontSize:13, fontWeight:800, color:"var(--muted)", width:24, textAlign:"right", flexShrink:0 }}>#{i+1}</div>
                         {/* EAN + meta */}
@@ -1204,7 +1204,7 @@ Implementér derefter løsningen.`;
                   <button
                     onClick={() => runImport(true)}
                     disabled={importLoading}
-                    style={{ background: importLoading ? "var(--border2)" : "var(--green)", color: importLoading ? "var(--muted)" : "var(--on-green)", border:"none", borderRadius:8, padding:"8px 16px", fontSize:12, fontWeight:800, fontFamily:"var(--f)", cursor: importLoading ? "not-allowed" : "pointer", display:"flex", alignItems:"center", gap:6 }}>
+                    style={{ background: importLoading ? "var(--border2)" : "var(--green)", color: importLoading ? "var(--muted)" : "var(--on-green)", border:"none", borderRadius:8, padding:"8px 16px", fontSize:12, fontWeight:800, fontFamily:"var(--f)", cursor: importLoading ? "not-allowed" : "pointer", boxShadow: importLoading ? "none" : "var(--sh)", display:"flex", alignItems:"center", gap:6 }}>
                     {importLoading
                       ? <><div style={{ width:12, height:12, border:"2px solid rgba(0,0,0,.2)", borderTopColor:"var(--on-green)", borderRadius:"50%", animation:"spin .7s linear infinite" }} /> Importerer…</>
                       : "▶ Kør import nu"}
@@ -1233,7 +1233,7 @@ Implementér derefter løsningen.`;
                       { icon:"x",       label:"Ikke på OFF",   value: importLog.stats.not_on_off,     color:"var(--muted)" },
                       { icon:"warning", label:"Fejl",          value: importLog.stats.error,          color:"var(--amber)" },
                     ].map(s => (
-                      <div key={s.label} style={{ padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, textAlign:"center" }}>
+                      <div key={s.label} style={{ padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, textAlign:"center", boxShadow:"var(--sh)" }}>
                         <div style={{ fontSize:22, fontWeight:900, color:s.color, marginBottom:2 }}>{s.value ?? 0}</div>
                         <div style={{ ...UI.muted11, display:"flex", alignItems:"center", justifyContent:"center", gap:4 }}><Icon name={s.icon} size={10} color="var(--muted)" /> {s.label}</div>
                       </div>
@@ -1288,9 +1288,9 @@ Implementér derefter løsningen.`;
                     <button
                       onClick={() => reparseLoading ? null : runReparse(true)}
                       disabled={reparseLoading}
-                      style={{ background: reparseLoading ? "var(--border2)" : "var(--blue)", color: reparseLoading ? "var(--muted)" : "var(--ink)",
+                      style={{ background: reparseLoading ? "var(--border2)" : "var(--blue)", color: reparseLoading ? "var(--muted)" : "var(--on-green)",
                         border:"none", borderRadius:8, padding:"8px 14px", fontSize:12, fontWeight:800,
-                        fontFamily:"var(--f)", cursor: reparseLoading ? "not-allowed" : "pointer",
+                        fontFamily:"var(--f)", cursor: reparseLoading ? "not-allowed" : "pointer", boxShadow: reparseLoading ? "none" : "var(--sh)",
                         display:"flex", alignItems:"center", gap:6, flexShrink:0, marginLeft:12 }}>
                       {reparseLoading
                         ? <><div style={{ width:12, height:12, border:"2px solid rgba(255,255,255,.2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .7s linear infinite" }} /> Reparserer…</>
@@ -1312,7 +1312,7 @@ Implementér derefter løsningen.`;
                         { icon:"chevronRight", label:"Sprunget over", value: reparseLog.skipped,  color:"var(--muted)" },
                         { icon:"x",           label:"Fejl",          value: reparseLog.errors,  color:"var(--amber)" },
                       ].map(s => (
-                        <div key={s.label} style={{ padding:"10px 12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, textAlign:"center" }}>
+                        <div key={s.label} style={{ padding:"10px 12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, textAlign:"center", boxShadow:"var(--sh)" }}>
                           <div style={{ fontSize:20, fontWeight:900, color:s.color, marginBottom:2 }}>{s.value ?? 0}</div>
                           <div style={{ ...UI.muted10, display:"flex", alignItems:"center", justifyContent:"center", gap:3 }}><Icon name={s.icon} size={9} color="var(--muted)" /> {s.label}</div>
                         </div>
@@ -1398,7 +1398,7 @@ Implementér derefter løsningen.`;
 
                 {/* Detail-visning */}
                 {editingRecipe && (
-                  <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:16, marginBottom:16 }}>
+                  <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:16, marginBottom:16, boxShadow:"var(--sh)" }}>
                     <div style={UI.udflex_jcspacebet_aicenter_mb12}>
                       <div style={UI.ufs15_fw800_cink}>Redigér opskrift</div>
                       <button onClick={() => setEditingRecipe(null)} aria-label="Luk"
@@ -1469,7 +1469,7 @@ Implementér derefter løsningen.`;
                   try { flags = typeof r.allergen_flags==="string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags||{}); } catch {}
                   const flaggedAllergens = ALLERGENS.filter(a => flags[a.id]===true||flags[a.id]==="yes");
                   return (
-                    <div key={r.id} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:8, cursor:"pointer" }}
+                    <div key={r.id} className="admin-list-row" style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:8, boxShadow:"var(--sh)" }}
                       onClick={() => setEditingRecipe(r)}>
                       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:4 }}>
                         <div style={UI.ufs14_fw800_cink}>{r.title}</div>
