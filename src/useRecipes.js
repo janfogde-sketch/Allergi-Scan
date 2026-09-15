@@ -1,10 +1,17 @@
 // @ts-nocheck
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 
+// Opskrifter ændrer sig sjældent (kræver admin-godkendelse), men kan ændre
+// sig i løbet af en lang session (fx en admin godkender en ny opskrift
+// mens en anden bruger allerede har appen åben) — reload derfor stille
+// i baggrunden efter denne alder, i stedet for aldrig.
+const STALE_MS = 10 * 60 * 1000; // 10 minutter
+
 export function useRecipes(accessToken, userId) {
   const [recipes, setRecipes] = useState([]);
+  const loadedAtRef = useRef(0);
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [recipeIngredients, setRecipeIngredients] = useState([]);
@@ -22,24 +29,20 @@ export function useRecipes(accessToken, userId) {
   const [recipeSearch, setRecipeSearch] = useState("");
   const [recipeSafeOnly, setRecipeSafeOnly] = useState(false);
 
-  const loadRecipes = async () => {
-    if (recipes.length > 0) return; // allerede indlæst
+  const loadRecipes = async (force = false) => {
+    // Allerede indlæst og stadig frisk — spring over. `force` (fx et
+    // eksplicit "opdatér"-tryk) eller data ældre end STALE_MS tvinger et nyt kald.
+    if (!force && recipes.length > 0 && Date.now() - loadedAtRef.current < STALE_MS) return;
     setRecipesLoading(true);
     try {
-      // Indlæs ALLE godkendte opskrifter én gang — filtrer client-side (627 poster er hurtigt)
+      // Indlæs ALLE godkendte opskrifter — filtrer client-side (627 poster er hurtigt)
       // Opskrifter er public — brug kun anon key (JWT kan være udløbet)
-      const headers = { "apikey": SUPABASE_ANON_KEY, "Accept": "application/json" };
       const url = `${SUPABASE_URL}/rest/v1/recipes?select=id,title,category,image_url,tags,allergen_flags,servings,prep_time_minutes,cook_time_minutes,description&status=eq.approved&order=title.asc&limit=1000`;
-      const res = await fetch(url, { headers });
-      if (!res.ok) {
-        console.error("loadRecipes fejl:", res.status);
-        setRecipes([]);
-      } else {
-        const data = await res.json();
-        setRecipes(Array.isArray(data) ? data : []);
-      }
+      const data = await apiCall(url, { headers: { "apikey": SUPABASE_ANON_KEY } });
+      setRecipes(Array.isArray(data) ? data : []);
+      loadedAtRef.current = Date.now();
     } catch (e) {
-      console.error("loadRecipes fejl:", e.message);
+      console.error("loadRecipes fejl:", e.status || "", e.message);
       setRecipes([]);
     }
     setRecipesLoading(false);
@@ -47,12 +50,10 @@ export function useRecipes(accessToken, userId) {
 
   const loadRecipeIngredients = async (recipeId) => {
     try {
-      const headers = { "apikey": SUPABASE_ANON_KEY, "Accept": "application/json" };
-      const res = await fetch(
+      const data = await apiCall(
         `${SUPABASE_URL}/rest/v1/recipes?id=eq.${recipeId}&select=id,ingredients_raw,instructions`,
-        { headers }
+        { headers: { "apikey": SUPABASE_ANON_KEY } }
       );
-      const data = await res.json();
       if (Array.isArray(data) && data[0]) {
         setSelectedRecipe(prev => prev ? { ...prev, ...data[0] } : prev);
       }
@@ -66,7 +67,9 @@ export function useRecipes(accessToken, userId) {
     }
     setSubmittingRecipe(true);
     try {
-      // Direkte fetch — undgå apiCall der kan skjule fejl
+      // apiCall bevarer nu status+body på fejl (se helpers.js), så den kan
+      // bruges her uden at miste den 401/JWT-særbehandling der tidligere
+      // krævede rå fetch.
       const headers = {
         "apikey": SUPABASE_ANON_KEY,
         "Authorization": `Bearer ${accessToken}`,
@@ -86,35 +89,36 @@ export function useRecipes(accessToken, userId) {
           : null,
         disclaimer: "Allergener er vejledende. Tjek altid ingrediensernes emballage ved alvorlige allergier.",
       });
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/recipes`, { method:"POST", headers, body });
-      if (!res.ok) {
-        const errText = await res.text();
+      let data;
+      try {
+        data = await apiCall(`${SUPABASE_URL}/rest/v1/recipes`, { method:"POST", headers, body });
+      } catch (e) {
         setSubmittingRecipe(false);
-        if (res.status === 401 || errText.includes("JWT")) {
+        if (e.status === 401 || (e.body || "").includes("JWT")) {
           return { error: "Din session er udløbet. Log ud og ind igen for at indsende opskrifter." };
         }
-        return { error: `Server fejl ${res.status}: ${errText.slice(0,120)}` };
+        return { error: `Server fejl ${e.status || ""}: ${(e.body || e.message).slice(0,120)}` };
       }
-      const data = await res.json();
       const recipe = Array.isArray(data) ? data[0] : data;
       if (!recipe?.id) {
         setSubmittingRecipe(false);
         return { error: "Opskrift gemt, men kunne ikke hente ID til ingredienser." };
       }
       // Gem ingredienser
-      const ingredientResults = await Promise.all(
-        submitIngredients
-          .map((ing, i) => ({ ing, i }))
-          .filter(({ ing }) => ing.name.trim())
-          .map(({ ing, i }) =>
-            fetch(`${SUPABASE_URL}/rest/v1/recipe_ingredients`, {
-              method: "POST",
-              headers: { ...headers, "Prefer": "return=minimal" },
-              body: JSON.stringify({ recipe_id: recipe.id, name: ing.name, amount: ing.amount, unit: ing.unit, sort_order: i }),
-            })
-          )
-      );
-      if (ingredientResults.some(r => !r.ok)) {
+      try {
+        await Promise.all(
+          submitIngredients
+            .map((ing, i) => ({ ing, i }))
+            .filter(({ ing }) => ing.name.trim())
+            .map(({ ing, i }) =>
+              apiCall(`${SUPABASE_URL}/rest/v1/recipe_ingredients`, {
+                method: "POST",
+                headers: { ...headers, "Prefer": "return=minimal" },
+                body: JSON.stringify({ recipe_id: recipe.id, name: ing.name, amount: ing.amount, unit: ing.unit, sort_order: i }),
+              })
+            )
+        );
+      } catch {
         setSubmittingRecipe(false);
         return { error: "Opskriften blev gemt, men nogle ingredienser kunne ikke gemmes. Kontakt support@eatsafe.dk." };
       }
