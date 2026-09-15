@@ -22,6 +22,29 @@ const VAPID_SUBJECT     = Deno.env.get("VAPID_SUBJECT") ?? "mailto:hej@eatsafe.d
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
+  // Verificér kalderen: enten vores eget interne kald (weekly-digest,
+  // identificeret via service-role-nøglen) eller en rigtig indlogget bruger.
+  // Uden dette kunne enhver med den offentlige anon-nøgle (som ligger i
+  // frontend-bundlen) sende en push-notifikation med helt selvvalgt
+  // titel/tekst/link til en vilkårlig bruger — et oplagt phishing-setup.
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const isInternalCall = !!serviceRoleKey && authHeader === `Bearer ${serviceRoleKey}`;
+
+  if (!isInternalCall) {
+    const userClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user: caller } } = await userClient.auth.getUser();
+    if (!caller) {
+      return new Response(JSON.stringify({ error: "Ikke autoriseret" }), {
+        status: 401, headers: { ...CORS, "Content-Type": "application/json" },
+      });
+    }
+  }
+
   try {
     const { user_id, title, body, url } = await req.json();
     if (!user_id || !title || !body) {
