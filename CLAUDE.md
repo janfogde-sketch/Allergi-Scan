@@ -203,6 +203,12 @@ nye krav der skal implementeres, ikke som spørgsmål der skal diskuteres først
   fil (kopiér ægte class-navne/inline-styles fra den rigtige komponent) + `playwright-
   core` med `executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'` —
   IKKE `npx playwright screenshot` (version-mismatch med den forudinstallerede browser).
+- **Postgres `REVOKE EXECUTE ... FROM <rolle>` uden også `FROM PUBLIC` er en
+  no-op**, hvis PUBLIC allerede har adgangen (Postgres' standard ved funktions-
+  oprettelse). Verificér altid en revoke-fix bagefter med
+  `has_function_privilege(rolle, funktion, 'EXECUTE')` — antag det ikke
+  virkede bare fordi kommandoen ikke fejlede (fundet under `security-check`s
+  baseline-kørsel, se `.claude/HISTORY.md`).
 
 ---
 
