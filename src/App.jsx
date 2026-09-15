@@ -751,7 +751,7 @@ const lookupProduct = useCallback(async (ean) => {
   // ── COMPUTED (afhænger af hooks) ─────────────────────────────────────────
   const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
   const mpAllergens = madpasActiveProfile ? (madpasActiveProfile.allergens || []) : allergens;
-  const mpCustom = madpasActiveProfile ? (madpasActiveProfile.customAllerg || []) : customAllerg;
+  const mpCustom = madpasActiveProfile ? (madpasActiveProfile.custom || []) : customAllerg;
 
   // ── Android tilbageknap ─────────────────────────────────────────────────────
   React.useEffect(() => {

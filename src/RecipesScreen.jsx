@@ -121,7 +121,7 @@ export default function RecipesScreen({
   ];
   const safeAllergenIds = useMemo(() => [
     ...(recipeSafeProfiles.includes("me") ? [...allergens, ...(customAllerg||[])] : []),
-    ...(family||[]).filter(m => recipeSafeProfiles.includes(m.id)).flatMap(m => [...(m.allergens||[]), ...(m.customAllerg||[])]),
+    ...(family||[]).filter(m => recipeSafeProfiles.includes(m.id)).flatMap(m => [...(m.allergens||[]), ...(m.custom||[])]),
   ], [recipeSafeProfiles, family, allergens, customAllerg]);
   const filteredRecipes = useMemo(() => {
     return (recipeFilter === "favoritter" ? recipes.filter(r => favoriteRecipes.includes(r.id)) : recipes).filter(r => {
