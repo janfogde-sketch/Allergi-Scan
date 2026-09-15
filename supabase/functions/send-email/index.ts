@@ -48,6 +48,18 @@ async function fetchTemplateHtml(templateId: string, apiKey: string, data: Recor
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // Kaldes udelukkende af vores egne DB-triggers (send_welcome_email m.fl.),
+  // aldrig direkte fra klienten — kræver derfor at kalderen identificerer
+  // sig med service-role-nøglen. Uden dette kunne enhver udenfra sende
+  // vilkårlige emails fra vores Resend-konto til en vilkårlig modtager.
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const authHeader = req.headers.get("Authorization") ?? "";
+  if (!serviceRoleKey || authHeader !== `Bearer ${serviceRoleKey}`) {
+    return new Response(JSON.stringify({ error: "Ikke autoriseret" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY mangler");
