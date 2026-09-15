@@ -986,19 +986,39 @@ problemer ved nærmere eftersyn.
   path-scoped til UI-filer (indlæses kun ved arbejde i `src/*.jsx`/`src/theme.jsx`).
 - `.claude/skills/ship/SKILL.md` — kaldbar genvej til det fulde ændrings-workflow
   fra afsnit 4 (byg/test/mojibake/commit/push/PR/merge/resync).
+- `.claude/commands/resync-branch.md`, `.claude/commands/mojibake-scan.md` —
+  genveje til to af ship-workflowets faste trin.
+- `.claude/hooks/mojibake-check.py` — kører automatisk (via `PostToolUse`-hook,
+  se `.claude/settings.json`) efter hver `Write`/`Edit` og advarer hvis
+  den ændrede fil indeholder mulig kyrillisk mojibake.
 
-### Claude Code Setup Audit (15. sept. 2026)
+### Claude Code Setup Audit (15. sept. 2026) — quick wins + hook gennemført
 
 En selv-audit af `.claude/`-konfigurationen (ikke selve app-koden) scorede
-30/100 — primært fordi projektet manglede `.claude/rules/`, `.claude/skills/`
-og en `permissions.deny`-liste. Implementeret samme dag:
-- `.claude/settings.local.json` fik en `deny`-liste (`.env*`, `*.pem`,
-  `**/credentials*`, `**/*service_role*`) — tidligere kun en allow-liste.
+30/100 — primært fordi projektet manglede `.claude/rules/`, `.claude/skills/`,
+`.claude/commands/`, hooks og en `permissions.deny`-liste. Implementeret:
+- **`.claude/settings.json`** (ny, delt/committet fil — IKKE `settings.local.json`,
+  som forbliver personlige tool-godkendelser) fik en `deny`-liste (`.env*`,
+  `*.pem`, `**/credentials*`, `**/*service_role*`) — team-wide guardrails
+  hører til her, ikke i den gitignorede lokale fil.
 - `.claude/rules/design-tokens.md` oprettet (se ovenfor).
 - `.claude/skills/ship/SKILL.md` oprettet (se ovenfor).
-**Ikke gjort:** `.claude/commands/`, `.claude/agents/`, og de dybere audit-
-skills (`token-audit`, `eval-rules` m.fl.) — lavere prioritet, tag op hvis
-det bliver en reel friktion.
+- `.claude/commands/resync-branch.md` + `.claude/commands/mojibake-scan.md`
+  oprettet (se ovenfor).
+- **Reelt håndhævet hook** (ikke kun prosa): `.claude/settings.json`s
+  `PostToolUse`-hook kører `.claude/hooks/mojibake-check.py` efter hver
+  `Write`/`Edit` og advarer automatisk ved fund — kræver mindst 2
+  sammenhængende kyrilliske tegn for at undgå falske positiver fra tekst
+  der selv omtaler mojibake-scan-regex'en (fx denne fil). Verificeret live
+  (sentinel-test bekræftede hook'et faktisk fyrer) før commit.
+
+**Stadig ikke gjort** (lavere prioritet, tag op hvis det bliver en reel
+friktion): `.claude/agents/`, de dybere audit-skills fra det oprindelige
+audit-script (`token-audit`, `eval-rules`, `eval-skills`,
+`audit-agents-skills`, `security-check` — kræver at hente kode fra et
+tredjeparts-GitHub-repo jeg ikke har vurderet), workflow-commands
+(`/investigate`, `/qa`, `/canary`, `/land-and-deploy`, `/review-pr`), og en
+dokumentations-MCP (fx Context7).
 
 ### Rescue-audit (15. sept. 2026) — alle 3 tier gennemført
 

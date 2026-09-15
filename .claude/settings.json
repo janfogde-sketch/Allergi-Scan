@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(.env*)",
+      "Read(*.pem)",
+      "Read(**/credentials*)",
+      "Read(**/*service_role*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/mojibake-check.py 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}
