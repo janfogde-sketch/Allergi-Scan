@@ -1040,6 +1040,12 @@ problemer ved nærmere eftersyn.
   skærme mod antimønstre-tjeklisten, fladhed-bug-mønsteret, emoji/indhold-
   skellet og spacing-skalaen. Encoder den manuelle gennemgangsproces der
   er brugt gentagne gange i designforbedrings-arbejdet (afsnit 5).
+- `.claude/skills/security-check/SKILL.md` — sikkerhedsgennemgang af
+  kodebasen + det live Supabase-projekt (Edge Function auth-mønster,
+  service-role-eksponering, `get_advisors`). `.claude/skills/token-audit/
+  SKILL.md` — måler CLAUDE.md/regel-filers faste context-overhead og
+  foreslår konkrete nedskæringer. Begge er egenskrevne, ikke kopieret fra
+  tredjepart (se Claude Code Setup Audit-afsnittet nedenfor).
 
 ### Claude Code Setup Audit (15. sept. 2026) — quick wins + hook gennemført
 
@@ -1076,14 +1082,26 @@ med to bevidste fravalg:**
   `/review-pr` reviewer en PR/diff specifikt mod EatSafes egne
   konventioner (arkitektur-regler, edge-function-auth-mønster,
   feltnavne-mismatch-mønsteret).
-- **Fravalgt (bevidst, ikke glemt):** de dybere audit-skills fra det
-  oprindelige audit-script (`token-audit`, `eval-rules`, `eval-skills`,
-  `audit-agents-skills`, `security-check`) er IKKE hentet — de kræver at
-  køre uvurderet kode fra et tredjeparts-GitHub-repo
-  (`FlorianBruniaux/claude-code-ultimate-guide`) i et repo med produktions-
-  adgang (Supabase service-role, Vercel-deploy). `design-reviewer`-
-  agenten ovenfor dækker samme reelle behov (Dimension 1's rule-/skill-
-  evaluering) med kode jeg selv har skrevet og kan stå inde for.
+- **Fravalgt oprindeligt, delvist taget op igen 15. sept. 2026:** de dybere
+  audit-skills fra det oprindelige audit-script blev først vurderet som
+  "kræver at køre uvurderet kode fra et tredjeparts-repo" og droppet. Ved
+  nærmere undersøgelse (hentet og læst den faktiske metodik-beskrivelse for
+  `security-check`, `eval-rules`, `audit-agents-skills`, `token-audit` fra
+  `FlorianBruniaux/claude-code-ultimate-guide`) viste det sig at disse er
+  læs-only prompt-baserede tjeklister, ikke eksekverbare scripts der køres
+  direkte — så den oprindelige risikovurdering var for forsigtig. Metoden
+  blev alligevel IKKE kopieret direkte (nogle af repoets skill-mapper
+  indeholder også bash-hooks, som stadig ikke hentes ubeset ind i et repo
+  med produktionsadgang) — i stedet er **`security-check` og `token-audit`
+  genskrevet fra bunden**, specifikt til EatSafes egen arkitektur og
+  faktiske sårbarhedshistorik (samme klasse fund som Tier 1/2 i rescue-
+  audittet), som `.claude/skills/security-check/SKILL.md` og
+  `.claude/skills/token-audit/SKILL.md`. `eval-rules`/`audit-agents-skills`
+  er fortsat ikke lavet — kun 1 fil i `.claude/rules/` og en håndfuld
+  skills/agents/commands i alt gør en dedikeret audit-skill til for meget
+  værktøj for for lidt indhold lige nu; tag dem op hvis `.claude/`-mappen
+  vokser væsentligt. `design-reviewer`-agenten dækker fortsat samme reelle
+  behov for UI-skærme.
 - **Fravalgt (kræver adgang uden for dette repo):** en dokumentations-MCP
   (fx Context7) er ikke sat op — det er ikke en repo-fil-ændring, men enten
   en global MCP-server-konfiguration eller en connector på claude.ai-
