@@ -37,7 +37,7 @@ export const ALLERGEN_KEYWORDS = {
     "inddampet mælk","mælkebestanddele","kalciumkaseinat","valle","mælketørstof",
     "kaseinat","lactalbumin","smøraroma","mælkeprotein","smørolie","sødmælkspulver","vallepulver",
     // Standard mælkebetegnelser
-    "mælk","fløde","smør","ost","mælkefedt","creme fraiche","yoghurt","kefir",
+    "mælk","fløde","smør","ost","oste","mælkefedt","creme fraiche","yoghurt","kefir",
     "kvark","mascarpone","ricotta","skyr","ghee","laktoglobulin",
     // Engelsk
     "milk","cream","butter","cheese","whey","casein","dairy","lactalbumin",
@@ -78,7 +78,7 @@ export const ALLERGEN_KEYWORDS = {
     "lecithin","lecitin","e322", // sojalecithin skjult som e-nummer
   ],
   fisk: [
-    "fisk","ansjos","sardiner","laks","tun","makrel","sild","torsk","rødspætte","helleflynder",
+    "fisk","ansjos","ansjoser","sardin","sardiner","laks","tun","makrel","makreller","sild","torsk","rødspætte","rødspætter","helleflynder",
     "fish","salmon","tuna","anchovy","sardine","mackerel","herring","cod","halibut","tilapia",
     // Skjulte fiskekilder
     "worcestershire sauce","worcestershiresauce","fiskesauce","fish sauce","nam pla",
@@ -86,9 +86,9 @@ export const ALLERGEN_KEYWORDS = {
     "anchovies","anchois","nuoc mam",
   ],
   skaldyr: [
-    "skaldyr","rejer","krabbe","hummer","muslinger","østers","blæksprutte","kammusling",
+    "skaldyr","rejer","krabbe","krabber","hummer","muslinger","østers","blæksprutte","blæksprutter","kammusling","kammuslinger",
     "shrimp","prawn","crab","lobster","mussel","oyster","squid","scallop","langoustine",
-    "krebs","languster","tigerrejer","pilgrimsmusling","snegle","escargot",
+    "krebs","languster","langustere","tigerrejer","pilgrimsmusling","snegle","escargot",
   ],
   selleri: [
     "selleri","celeriac","knoldselleri","sellerisalt","sellerifnug","selleripulver",
@@ -112,7 +112,7 @@ export const ALLERGEN_KEYWORDS = {
     "lupin flour","lupin seed","lupin bean",
   ],
   bloeddyr: [
-    "blæksprutte","østers","muslinger","snegle","kammusling",
+    "blæksprutte","blæksprutter","østers","muslinger","snegle","kammusling","kammuslinger",
     "squid","oyster","mussel","snail","scallop","clam","abalone",
   ],
 };
