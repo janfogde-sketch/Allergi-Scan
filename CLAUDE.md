@@ -125,40 +125,12 @@ siddende fast på viewporten. **Løsning:** render den slags overlays via
 
 ### Designsystem-tokens (`src/theme.jsx`, `:root` CSS-variabler)
 
-```
---ink:#15201A            tekst
---paper:#F6F8F3          baggrund (hvid/lys — IKKE længere grøn baggrund, se afsnit 5)
---green:#178A50 (+lt/mid/glow/text/logo)   succes / primær CTA / navigation
---on-green:#FFFFFF
---red:#C8402E (+lt/md)   fare
---amber:#B5791A (+lt/md) advarsel
---blue:#3A6EA5 (+lt/md)  reel, distinkt slate-blå sekundærfarve (IKKE længere
-                         aliaset til grøn, se afsnit 5) — brugt semantisk til
-                         "sekundær info/accent" (.greeting-eyebrow, .home-tip,
-                         .info-box, .share-bar)
---muted / --muted2
---surface / -2 / -3
---border / -2
---r:12px (default radius), --sh / --sh2 (skygge-tokens)
---f:'DM Sans',system-ui,sans-serif
-```
-
-**Anbefalet spacing-skala** (tilføjet 14. sept. efter en grep-bekræftet gennemgang
-af antimønster #15 — se afsnit 6). Eksisterende inline-styles bruger IKKE denne
-skala konsekvent i dag (mindst 15 forskellige padding-varianter fundet på tværs
-af `src/*.jsx`), men den er den anbefalede retning for nyt arbejde, så vi ikke
-tilføjer endnu flere ad hoc-værdier:
-```
-4 / 6 / 8 / 10 / 12 / 14 / 16 / 20 / 24 / 32 (px)
-```
-Foretræk disse værdier (og kombinationer af dem, fx `10px 14px`) frem for
-"næsten runde" tal som 9px/11px/13px/15px, medmindre der er en konkret visuel
-grund til den præcise værdi. En fuld retrofit af eksisterende inline-styles til
-denne skala er et selvstændigt, skærm-for-skærm-visuelt-QA'et projekt — ikke
-noget der er gjort mekanisk i denne omgang.
-
-Kendt mønster for "levende" interaktion: `.recipe-card:active{transform:scale(.99)}`
-— identificeret som pattern der bør genbruges flere steder (tryk-feedback), se afsnit 5.
+Fuld token-tabel + anbefalet spacing-skala er flyttet til
+`.claude/rules/design-tokens.md` (path-scoped til `src/*.jsx`/`src/theme.jsx`,
+så den kun indlæses ved UI-arbejde). Kort version: `--ink`/`--paper` (tekst/
+baggrund), `--green` (primær), `--red`/`--amber` (fare/advarsel), `--blue`
+(#3A6EA5, reel sekundærfarve — ikke aliaset til grøn), `--muted`/`--surface`/
+`--border`, `--r`/`--sh`/`--sh2` (radius/skygge), `--f` (DM Sans).
 
 ---
 
@@ -989,41 +961,14 @@ under den nyeste service worker efter en opdatering.
 
 ## 6. Design-antimønstre — ting vi bevidst IKKE vil have i appen
 
-> Tilføjet 14. sept. 2026 efter brugeren delte en liste over "20 reasons why your
-> app looks vibecoded" (et velkendt tjekliste-format der cirkulerer om at
-> genkende generisk AI-genereret UI). Brug denne liste som et **checkpoint**, ikke
-> kun en engangs-oprydning — tjek nye skærme/komponenter mod den, før du
-> markerer design-arbejde som færdigt.
-
-| # | Mønster | Status i EatSafe |
-|---|---|---|
-| 1 | Lilla-til-blå gradient | ✅ Ikke brugt — appens paletter er grøn (primær) + en bevidst valgt slate-blå (`#3A6EA5`, sekundær) |
-| 2 | Gradient-tekst i overskrifter | ✅ Ikke brugt — ingen `background-clip:text` i kodebasen |
-| 3 | Emoji i overskrifter/UI-chrome | ✅ Saneret på tværs af alle skærme og delte komponenter (se afsnit 5) — kun ægte indholds-emoji (allergen-glyffer, sprogflag, kategori-ikoner) står tilbage, bevidst, ikke chrome |
-| 4 | Inter-font overalt | ✅ Ikke brugt — DM Sans + DM Mono, bevidst valgt tidligt i projektet |
-| 5 | Farvede kant-kort ("colored border cards") som ren pynt | ✅ Ikke fundet — farvede kanter i appen er funktionelle signaler (fx `product-hero`'s grøn/gul/rød kant = sikkerhedsverdikt), ikke dekorative |
-| 6 | Glassmorphism-kort (`backdrop-filter:blur`) | 🔴 **Fundet og rettet 14. sept.** — 17 forekomster i `theme.jsx` + 2 i `App.jsx`/`FeedbackModal.jsx`, ALLE på fuldt uigennemsigtige baggrunde (`var(--surface)` m.fl.) så blur'en var visuelt virkningsløs — ren død kode der tilfældigvis også ramte antimønstret. Fjernet alle 19. De to resterende forekomster i `ScannerScreen.jsx` (kamera-kontrolknapper + zoom-pille) er bevidst bevaret — de sidder på reelt gennemsigtig sort baggrund oven på det levende kamerabillede, så blur'en har en ægte funktionel grund (læsbarhed oven på video) |
-| 7 | Lavkontrast dark mode | N/A — appen er lys-tema-only |
-| 8 | 3 ikon-bokse på række (generisk feature-grid) | ✅ Ikke fundet — `.stat3` er en 3-kolonne-grid, men viser rigtige tal (scanninger/farer/sikre), ikke generiske feature-claims |
-| 9 | Badge over overskrift (hero-mønster) | ✅ Ikke fundet — BETA-badgen i topbaren er et permanent status-chip, ikke et hero-badge over en marketing-overskrift |
-| 10 | "Lucide-ikoner overalt" (upersonligt standardbibliotek) | ✅ Ikke brugt — `Icon`-komponenten er et selv-tegnet, konsistent SVG-ikonbibliotek specifikt til EatSafe |
-| 11 | Urørt shadcn UI | N/A — bruger ikke shadcn |
-| 12 | Fade-in ved scroll | ✅ Ikke fundet — ingen `IntersectionObserver` i kodebasen. `.fade-in`-klassen er en mount-animation (skærmskift), ikke scroll-baseret |
-| 13 | Cursor-følgende lysstråle | ✅ Ikke fundet |
-| 14 | Knapper der toner ved hover (ren opacity-fade) | ✅ Ikke fundet — `.btn-primary:hover` skifter farve + løfter sig (`translateY`), en bevidst hover-tilstand, ikke en doven opacity-fade |
-| 15 | Inkonsistent spacing | ✅ **Retrofittet 14. sept.** — de reelt "næsten runde" element-niveau-værdier (5/7/9/11/13/15px i `padding*`/`margin*`/`gap`) rundet op til nærmeste skala-trin (4/6/8/10/12/14/16/20/24/32px) på tværs af 20 filer, inkl. `theme.jsx`s CSS-streng. Se afsnit 5's log for metode og verifikation. Bemærk: dette var en smallere, mere afgrænset retrofit end først antaget — de fleste eksisterende padding-"varianter" (`12px 14px`, `10px 12px`, `8px 10px` osv.) var faktisk allerede på skalaen; den reelle inkonsistens var kun de enkelte odde tal, ikke hele mønsteret |
-| 16 | Em-dashes ("—") alle vegne | 🟢 Tjekket — langt de fleste af de ~600 forekomster i `src/*.jsx` sidder i danske kode-kommentarer (usynlige for brugeren), ikke i UI-tekst. De der ER i bruger-vendt tekst er enkeltstående, funktionelle forbindelses-streger i naturligt dansk (fx "Det ligner ikke en gyldig stregkode — tjek cifrene."), ikke AI-agtig ophobning af flere streger i samme sætning. Vurderet som ikke et reelt problem — men hold øje med nye tekster |
-| 17 | Generisk buzzword-copy | ✅ **Formelt gennemgået 14. sept.** — grep for typiske AI-marketing-klichéer (da. og en. varianter: "oplev", "din rejse", "tag kontrol", "næste niveau", "revolutioner" osv.) på tværs af `src/*.jsx` gav ingen reelle træf. Stikprøve af de mest synlige tekster (velkomst-tagline "Scan. Tjek. Spis trygt.", skærm-titler) bekræfter konkret/funktionel copy uden generisk fyld. Ingen ændringer nødvendige |
-| 18 | Serif-kursiv-accenter | ✅ Ikke brugt — ingen serif-skrifttype i appen overhovedet |
-| 19 | Space Grotesk + Instrument Serif (typisk AI-font-parring) | ✅ Ikke brugt — DM Sans/DM Mono |
-| 20 | *(ikke synlig i det delte screenshot — spørg brugeren hvis relevant)* | — |
-
-**Konklusion:** Appen var reelt kun ramt af ét konkret punkt (glassmorphism/
-backdrop-filter — nu rettet) plus det i forvejen kendte emoji-punkt (siden
-gennemført, se afsnit 5). Resten var enten allerede undgået fra projektets
-start (fonte, farver, ikoner) eller ikke reelle problemer ved nærmere
-eftersyn (em-dashes). Punkt 15 (spacing) og 17 (copy) er nu også taget op —
-se opdateringen nedenfor.
+Fuld tjekliste (20 punkter, "20 reasons why your app looks vibecoded") med
+status pr. punkt er flyttet til `.claude/rules/design-tokens.md` (path-scoped
+til `src/*.jsx`/`src/theme.jsx`). Brug den som et **checkpoint** ved
+UI-arbejde, ikke kun en engangs-oprydning. Kort status: appen var reelt kun
+ramt af ét konkret punkt (glassmorphism/`backdrop-filter` — rettet 14. sept.)
+plus det i forvejen kendte emoji-punkt (siden gennemført, se afsnit 5).
+Resten var enten allerede undgået fra projektets start, eller ikke reelle
+problemer ved nærmere eftersyn.
 
 ---
 
@@ -1037,6 +982,23 @@ se opdateringen nedenfor.
 - Denne fil (`CLAUDE.md`) — hold "Arkitektur"- og "Igangværende arbejde"-afsnittene
   opdaterede efter større UI/navigations-ændringer, så en frisk Claude-session altid
   har et retvisende billede.
+- `.claude/rules/design-tokens.md` — designsystem-tokens + antimønstre-tjekliste,
+  path-scoped til UI-filer (indlæses kun ved arbejde i `src/*.jsx`/`src/theme.jsx`).
+- `.claude/skills/ship/SKILL.md` — kaldbar genvej til det fulde ændrings-workflow
+  fra afsnit 4 (byg/test/mojibake/commit/push/PR/merge/resync).
+
+### Claude Code Setup Audit (15. sept. 2026)
+
+En selv-audit af `.claude/`-konfigurationen (ikke selve app-koden) scorede
+30/100 — primært fordi projektet manglede `.claude/rules/`, `.claude/skills/`
+og en `permissions.deny`-liste. Implementeret samme dag:
+- `.claude/settings.local.json` fik en `deny`-liste (`.env*`, `*.pem`,
+  `**/credentials*`, `**/*service_role*`) — tidligere kun en allow-liste.
+- `.claude/rules/design-tokens.md` oprettet (se ovenfor).
+- `.claude/skills/ship/SKILL.md` oprettet (se ovenfor).
+**Ikke gjort:** `.claude/commands/`, `.claude/agents/`, og de dybere audit-
+skills (`token-audit`, `eval-rules` m.fl.) — lavere prioritet, tag op hvis
+det bliver en reel friktion.
 
 ### Rescue-audit (15. sept. 2026) — alle 3 tier gennemført
 
