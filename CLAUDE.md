@@ -986,11 +986,18 @@ problemer ved nærmere eftersyn.
   path-scoped til UI-filer (indlæses kun ved arbejde i `src/*.jsx`/`src/theme.jsx`).
 - `.claude/skills/ship/SKILL.md` — kaldbar genvej til det fulde ændrings-workflow
   fra afsnit 4 (byg/test/mojibake/commit/push/PR/merge/resync).
-- `.claude/commands/resync-branch.md`, `.claude/commands/mojibake-scan.md` —
-  genveje til to af ship-workflowets faste trin.
+- `.claude/commands/resync-branch.md`, `.claude/commands/mojibake-scan.md`,
+  `.claude/commands/qa.md` (byg/test/mojibake uden commit/push),
+  `.claude/commands/review-pr.md` (review mod EatSafes egne konventioner —
+  arkitektur-regler, edge-function-auth-mønster, fladhed-bug, feltnavne-
+  mismatch) — genveje til dele af ship-workflowet + review.
 - `.claude/hooks/mojibake-check.py` — kører automatisk (via `PostToolUse`-hook,
   se `.claude/settings.json`) efter hver `Write`/`Edit` og advarer hvis
   den ændrede fil indeholder mulig kyrillisk mojibake.
+- `.claude/agents/design-reviewer.md` — subagent der gennemgår én/flere
+  skærme mod antimønstre-tjeklisten, fladhed-bug-mønsteret, emoji/indhold-
+  skellet og spacing-skalaen. Encoder den manuelle gennemgangsproces der
+  er brugt gentagne gange i designforbedrings-arbejdet (afsnit 5).
 
 ### Claude Code Setup Audit (15. sept. 2026) — quick wins + hook gennemført
 
@@ -1012,13 +1019,34 @@ En selv-audit af `.claude/`-konfigurationen (ikke selve app-koden) scorede
   der selv omtaler mojibake-scan-regex'en (fx denne fil). Verificeret live
   (sentinel-test bekræftede hook'et faktisk fyrer) før commit.
 
-**Stadig ikke gjort** (lavere prioritet, tag op hvis det bliver en reel
-friktion): `.claude/agents/`, de dybere audit-skills fra det oprindelige
-audit-script (`token-audit`, `eval-rules`, `eval-skills`,
-`audit-agents-skills`, `security-check` — kræver at hente kode fra et
-tredjeparts-GitHub-repo jeg ikke har vurderet), workflow-commands
-(`/investigate`, `/qa`, `/canary`, `/land-and-deploy`, `/review-pr`), og en
-dokumentations-MCP (fx Context7).
+**15. sept. 2026 — resten af listen taget op ("Sæt alt det andet op også"),
+med to bevidste fravalg:**
+- **`.claude/agents/design-reviewer.md` oprettet** — encoder den manuelle
+  "gennemgå skærm mod alle retningslinjer"-proces (fladhed-bug, emoji/
+  indhold-skel, `<Icon name>`-krydstjek, spacing-skala, antimønstre,
+  kort-hierarki) som er brugt gentagne gange gennem hele designforbedrings-
+  arbejdet i afsnit 5.
+- **`.claude/commands/qa.md` + `.claude/commands/review-pr.md` oprettet** —
+  i stedet for de generiske skabelon-navne fra det oprindelige audit-script
+  (`/investigate`, `/canary`, `/land-and-deploy`), som enten ikke passede
+  på EatSafes faktiske deploy-model (ingen canary-koncept) eller allerede
+  var dækket 1:1 af `/ship`. `/qa` er byg/test/mojibake uden commit/push;
+  `/review-pr` reviewer en PR/diff specifikt mod EatSafes egne
+  konventioner (arkitektur-regler, edge-function-auth-mønster,
+  feltnavne-mismatch-mønsteret).
+- **Fravalgt (bevidst, ikke glemt):** de dybere audit-skills fra det
+  oprindelige audit-script (`token-audit`, `eval-rules`, `eval-skills`,
+  `audit-agents-skills`, `security-check`) er IKKE hentet — de kræver at
+  køre uvurderet kode fra et tredjeparts-GitHub-repo
+  (`FlorianBruniaux/claude-code-ultimate-guide`) i et repo med produktions-
+  adgang (Supabase service-role, Vercel-deploy). `design-reviewer`-
+  agenten ovenfor dækker samme reelle behov (Dimension 1's rule-/skill-
+  evaluering) med kode jeg selv har skrevet og kan stå inde for.
+- **Fravalgt (kræver adgang uden for dette repo):** en dokumentations-MCP
+  (fx Context7) er ikke sat op — det er ikke en repo-fil-ændring, men enten
+  en global MCP-server-konfiguration eller en connector på claude.ai-
+  kontoen, begge uden for dette repos/denne sessions kontrol. Sæt den op
+  via claude.ai-connector-indstillinger hvis det bliver relevant.
 
 ### Rescue-audit (15. sept. 2026) — alle 3 tier gennemført
 
