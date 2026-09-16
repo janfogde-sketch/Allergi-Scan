@@ -359,6 +359,7 @@ Deno.serve(async (req) => {
   // aldrig eksponeret til klienter) i stedet for en bruger-Authorization.
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const isInternalCall = !!serviceRoleKey && req.headers.get("apikey") === serviceRoleKey;
+  let caller: { id: string } | null = null;
 
   if (!isInternalCall) {
     const authHeader = req.headers.get("Authorization");
@@ -371,11 +372,12 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       { global: { headers: { Authorization: authHeader } } }
     );
-    const { data: { user: caller } } = await userClient.auth.getUser();
-    if (!caller) return new Response(
+    const { data: { user } } = await userClient.auth.getUser();
+    if (!user) return new Response(
       JSON.stringify({ error: "Ikke autoriseret" }),
       { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+    caller = user;
   }
 
   try {
@@ -416,6 +418,23 @@ Deno.serve(async (req) => {
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
       );
+
+      // save:true skriver direkte til et produkts allergen_flags i
+      // PRODUKTION uden nogen godkendelses-workflow bagved (i modsætning til
+      // submissions-flowet) — det kræver derfor admin, ikke bare login.
+      // Uden dette kunne enhver indlogget bruger overskrive allergendata for
+      // et VILKÅRLIGT produkt, direkte, på en app der findes for at fortælle
+      // allergikere om et produkt er sikkert.
+      if (!isInternalCall) {
+        const { data: callerRow } = await supabase.from("users").select("role").eq("id", caller!.id).single();
+        if (callerRow?.role !== "admin") {
+          return new Response(
+            JSON.stringify({ error: "Kun admins kan gemme allergen-data direkte på et produkt" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
       const { error } = await supabase
         .from("products")
         .update({ allergen_flags: allergenFlags })

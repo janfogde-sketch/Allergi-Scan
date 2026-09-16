@@ -39,17 +39,41 @@ const CORS = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
+  // Kaldes enten af vores eget pg_cron-job (service-role-bearer, se header-
+  // kommentaren) eller manuelt fra AdminScreen (en indlogget admins egen
+  // JWT via useAdmin.js' runReparse) — men af INTET andet. Uden dette tjek
+  // kunne enhver, uden login, POST'e {manual:true, limit:200} og tvinge op
+  // til 200 betalte Claude-kald igennem samt bulk-overskrive
+  // allergen_flags/allergen_quality for vilkårlige produkter, gentagne
+  // gange. auto-reparse var den eneste interne cron-funktion uden dette
+  // tjek — weekly-digest og send-email har det begge allerede.
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const isInternalCall = !!serviceRoleKey && authHeader === `Bearer ${serviceRoleKey}`;
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+  if (!isInternalCall) {
+    const userClient = createClient(
+      supabaseUrl,
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user: caller } } = await userClient.auth.getUser();
+    const { data: callerRow } = caller
+      ? await supabase.from("users").select("role").eq("id", caller.id).single()
+      : { data: null };
+    if (!caller || callerRow?.role !== "admin") {
+      return new Response(JSON.stringify({ error: "Ikke autoriseret" }), {
+        status: 401, headers: { ...CORS, "Content-Type": "application/json" },
+      });
+    }
+  }
+
   try {
     const { manual = false, limit = 50 } = await req.json().catch(() => ({}));
     const batchLimit = Math.min(Number(limit) || 50, 200);
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     // Hent produkter der skal reparseres
     // Prioritér: pending > low > medium (kun ved manuel kørsel)

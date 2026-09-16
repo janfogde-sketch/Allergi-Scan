@@ -368,10 +368,17 @@ Deno.serve(async (req) => {
       );
       const body = await req.json();
 
+      // .eq("list_id", listId) er tilføjet ved siden af .eq("id", itemId) —
+      // uden den bandt kun canAccessList-tjekket ovenfor til listId, mens
+      // selve opdateringen kun filtrerede på itemId. En bruger der ejer EN
+      // vilkårlig liste kunne derfor bestå adgangstjekket med sin egen
+      // listId, og alligevel ramme et punkt der reelt hører til en ANDEN
+      // brugers liste, hvis de kendte/gættede punktets id.
       const { data: item, error } = await supabase
         .from("shopping_list_items")
         .update(body)
         .eq("id", itemId)
+        .eq("list_id", listId)
         .select()
         .single();
 
@@ -389,10 +396,12 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "Ikke autoriseret til at redigere denne liste" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+      // Samme IDOR-fix som PATCH herover — bind sletningen til listId, ikke kun itemId.
       const { error } = await supabase
         .from("shopping_list_items")
         .delete()
-        .eq("id", itemId);
+        .eq("id", itemId)
+        .eq("list_id", listId);
 
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
