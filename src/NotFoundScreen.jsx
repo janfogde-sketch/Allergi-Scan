@@ -74,8 +74,16 @@ export default function NotFoundScreen({
     }
   }, [ocrText]);
 
+  // Ryd kun ingredienslisten ved FREMAD-navigation ind i trin 2 (fra trin 1 —
+  // "spring forside over" eller efter et foto), ikke ved tilbage-navigation
+  // fra et senere trin ("← Ret ingredienser" fra trin 5, "← Tilbage" fra
+  // trin 3) — ellers mistede en bruger der gik tilbage for at RETTE en
+  // allerede indtastet ingrediens i stedet alt hvad de lige havde skrevet.
+  const prevNotFoundStepRef = React.useRef(notFoundStep);
   React.useEffect(() => {
-    if (notFoundStep === 2) { setIngItems([]); setIngInput(""); }
+    const prevStep = prevNotFoundStepRef.current;
+    prevNotFoundStepRef.current = notFoundStep;
+    if (notFoundStep === 2 && prevStep < 2) { setIngItems([]); setIngInput(""); }
   }, [notFoundStep]);
 
   return (

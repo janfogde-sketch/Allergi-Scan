@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 import { sendPushToUser } from "./usePush.js";
@@ -32,17 +32,28 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const [reparseLog, setReparseLog] = useState(null);
 
   // Functions
+  // Værn mod hurtige fane-skift: uden et token-tjek kan et ældre, langsomt
+  // svar (fx "pending") nå at lande EFTER et nyere, hurtigere svar (fx
+  // "approved") og overskrive den liste admin faktisk ser lige nu med data
+  // for en helt anden fane. Samme mønster som runLookupProduct i
+  // useProduct.js.
+  const submissionsLoadToken = useRef(0);
   const loadSubmissions = async (filter) => {
     const f = filter || submissionFilter;
     if (f === "tickets") return;
     if (!accessToken) { console.warn("loadSubmissions: ingen accessToken"); return; }
+    const myToken = ++submissionsLoadToken.current;
     setSubmissionsLoading(true);
     try {
       const url = `${SUPABASE_URL}/rest/v1/submissions?status=eq.${f}&order=created_at.desc&limit=100`;
       const data = await apiCall(url, { headers: makeHeaders(accessToken) });
+      if (submissionsLoadToken.current !== myToken) return;
       setSubmissions(Array.isArray(data) ? data : []);
-    } catch (e) { console.error("loadSubmissions:", e.status || "", e.message); setSubmissions([]); }
-    setSubmissionsLoading(false);
+    } catch (e) {
+      if (submissionsLoadToken.current !== myToken) return;
+      console.error("loadSubmissions:", e.status || "", e.message); setSubmissions([]);
+    }
+    if (submissionsLoadToken.current === myToken) setSubmissionsLoading(false);
   };
 
   const deleteOwnAccount = async () => {

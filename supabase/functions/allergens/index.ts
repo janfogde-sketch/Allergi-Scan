@@ -391,6 +391,17 @@ Deno.serve(async (req) => {
       );
     }
 
+    // En ægte ingrediensliste er aldrig i nærheden af dette lange — uden et
+    // loft kunne en indlogget bruger gentagne gange sende meget lang tekst
+    // med force_ai:true og drive prisen på det betalte Claude-kald op.
+    const MAX_TEXT_LENGTH = 20_000;
+    if (text.length > MAX_TEXT_LENGTH) {
+      return new Response(
+        JSON.stringify({ error: "text er for lang" }),
+        { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // 1. Keyword-engine kører altid (gratis, hurtig)
     let allergenFlags = analyzeIngredients(text);
     let method = "keyword";

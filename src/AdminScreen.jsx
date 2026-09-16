@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { ALLERGENS, SCREENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { initials, getTraceLog } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -148,7 +148,13 @@ export default function AdminScreen() {
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [recipeActionLoading, setRecipeActionLoading] = useState(false);
 
+  // Værn mod hurtige fane-skift — samme mønster som loadSubmissions i
+  // useAdmin.js: uden det kan et ældre svar for en tidligere valgt fane nå
+  // at overskrive listen efter et nyere, hurtigere svar for den fane admin
+  // faktisk ser nu.
+  const adminRecipesLoadToken = useRef(0);
   const loadAdminRecipes = async (filter = adminRecipeFilter) => {
+    const myToken = ++adminRecipesLoadToken.current;
     setAdminRecipesLoading(true);
     try {
       const res = await fetch(
@@ -156,9 +162,13 @@ export default function AdminScreen() {
         { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" } }
       );
       const data = await res.json();
+      if (adminRecipesLoadToken.current !== myToken) return;
       setAdminRecipes(Array.isArray(data) ? data : []);
-    } catch (e) { console.error("loadAdminRecipes:", e); }
-    setAdminRecipesLoading(false);
+    } catch (e) {
+      if (adminRecipesLoadToken.current !== myToken) return;
+      console.error("loadAdminRecipes:", e);
+    }
+    if (adminRecipesLoadToken.current === myToken) setAdminRecipesLoading(false);
   };
 
   const updateRecipeStatus = async (id, status) => {
