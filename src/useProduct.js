@@ -6,8 +6,37 @@
 
 import { useState, useRef } from "react";
 import { SUPABASE_URL, ALLERGENS, SCREENS } from "./constants.jsx";
-import { makeHeaders, apiCall, compareAllergens, compareENumbers, extractENumbers, traceId, traceLog, compressImageToBase64 } from "./helpers.js";
+import { makeHeaders, apiCall, compareAllergens, compareENumbers, extractENumbers, traceId, traceLog, compressImageToBase64, matchCustomAllergens } from "./helpers.js";
 import { saveToOfflineCache, getFromOfflineCache } from "./useOffline.js";
+
+// Lægger et fritekst-match af brugerens EGNE, selv-tilføjede allergier
+// (`activeCustom` — fx "Fructose") oven på et allerede-bygget scan-resultat.
+// Holdes UDENFOR selve `result`-objektet der caches (productCacheRef/
+// saveToOfflineCache) — custom-allergier kan ændre sig mellem to opslag af
+// samme (cachede) produkt, så matchet skal genberegnes hver gang ud fra det
+// cachede produkts rå ingrediensliste, ikke bages ind i den cachede kopi.
+// Ikke lige så pålideligt som de faste allergener (ingen synonymer/negations-
+// kontekst udover selve ordgrænse-/negations-tjekket i matchCustomAllergens)
+// — derfor altid en tydelig disclaimer i teksten der vises.
+function withCustomAllergenMatch(result, customTerms) {
+  const customMatches = matchCustomAllergens(result.ingredients, customTerms);
+  if (customMatches.length === 0) return result;
+  const alreadyDanger = result.status === "danger";
+  const quotedTerms = customMatches.map(t => `"${t}"`).join(", ");
+  const customFlags = customMatches.map(term => ({
+    type: "bad",
+    text: `Ingredienslisten nævner muligvis "${term}" — din egen tilføjede allergi`,
+    custom: true,
+  }));
+  return {
+    ...result,
+    status: "danger",
+    headline: alreadyDanger ? result.headline : "Mulig egen allergi fundet",
+    summary: alreadyDanger ? result.summary : `Ingredienslisten nævner muligvis ${quotedTerms} — en allergi du selv har tilføjet. Vores fritekst-søgning for selv-tilføjede allergier er ikke lige så grundig som for vores faste allergener, så dobbelttjek altid selv emballagen. Vi arbejder løbende på at udvide vores faste allergen-liste.`,
+    flags: [...customFlags, ...result.flags],
+    customAllergenMatches: customMatches,
+  };
+}
 
 // ── Scan-opslag: hele scan-resultat-pipelinen (EAN-opslag, allergen-
 // sammenligning, E-nummer-match, familie-impact, cache, historik,
@@ -18,7 +47,7 @@ import { saveToOfflineCache, getFromOfflineCache } from "./useOffline.js";
 // ufuldstændig deps-liste).
 export async function runLookupProduct(ean, ctx) {
   const {
-    accessToken, activeIds, activeENumbers, family, activeProfiles,
+    accessToken, activeIds, activeCustom, activeENumbers, family, activeProfiles,
     productCacheRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
     setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
     setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
@@ -50,15 +79,16 @@ export async function runLookupProduct(ean, ctx) {
   const cached = productCacheRef.current[ean.trim()] || getFromOfflineCache(ean.trim());
   if (cached) {
     traceLog(tid, "scan:cache-hit");
-    setScanResult(cached); setScreen(SCREENS.RESULT); setLoading(false);
+    const cachedResult = withCustomAllergenMatch(cached, activeCustom);
+    setScanResult(cachedResult); setScreen(SCREENS.RESULT); setLoading(false);
     if (navigator.vibrate) navigator.vibrate(25);
     // Alternativer er IKKE en del af det cachede result-objekt — uden dette
     // genbruger et cache-hit bare hvad end alternatives-state tilfældigvis
     // stod på fra en tidligere scanning i samme session (eller intet, hvis
     // det er appens første scanning), i stedet for at vise de rigtige
     // alternativer til DETTE produkt.
-    if (cached.status === "danger" || cached.status === "warn") {
-      loadAlternatives(cached.category, ean.trim());
+    if (cachedResult.status === "danger" || cachedResult.status === "warn") {
+      loadAlternatives(cachedResult.category, ean.trim());
     } else {
       clearAlternatives();
     }
@@ -169,12 +199,13 @@ export async function runLookupProduct(ean, ctx) {
     const cacheKeys = Object.keys(productCacheRef.current);
     if (cacheKeys.length > 50) delete productCacheRef.current[cacheKeys[0]];
     traceLog(tid, "scan:result", { ean: ean.trim(), name: result.name, status, matchedDanger, matchedWarning });
-    setScanResult(result);
-    setHistory(h => [result, ...h].slice(0, 50));
-    await saveHistoryEntry(ean.trim(), product.id, status, flags, activeProfiles);
+    const finalResult = withCustomAllergenMatch(result, activeCustom);
+    setScanResult(finalResult);
+    setHistory(h => [finalResult, ...h].slice(0, 50));
+    await saveHistoryEntry(ean.trim(), product.id, finalResult.status, flags, activeProfiles);
     // Hent alternativer hvis produktet er farligt eller har spor
-    if (status === "danger" || status === "warn") {
-      loadAlternatives(result.category, ean.trim());
+    if (finalResult.status === "danger" || finalResult.status === "warn") {
+      loadAlternatives(finalResult.category, ean.trim());
     } else {
       clearAlternatives();
     }

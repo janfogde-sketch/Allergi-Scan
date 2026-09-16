@@ -548,16 +548,25 @@ export default function EatSafe() {
   const allActive = useCallback(() => {
     const ids = new Set(activeProfiles.includes("me") ? allergens : []);
     const eNums = new Set(activeProfiles.includes("me") ? selectedENumbers : []);
+    // custom byggedes tidligere altid ud fra customAllerg ("mig"), uanset om
+    // "mig" rent faktisk var en aktiv profil — og familiemedlemmers egne
+    // custom-allergier (m.custom) blev slet aldrig medtaget. Det betyder at
+    // en custom-allergi tilføjet på et familiemedlem aldrig indgik i scan-
+    // verdikten, og "mig"s custom-allergier lækkede ind selv når kun et
+    // familiemedlem var valgt. Rettet så custom nu følger samme
+    // aktiv-profil-logik som allergens/eNumbers herover.
+    const custom = new Set(activeProfiles.includes("me") ? customAllerg : []);
     family.filter(m => activeProfiles.includes(m.id)).forEach(m => {
       (m.allergens || []).forEach(a => ids.add(a));
       (m.eNumbers || []).forEach(e => eNums.add(e));
+      (m.custom || []).forEach(c => custom.add(c));
     });
-    return { ids: [...ids], custom: [...customAllerg], eNumbers: [...eNums] };
+    return { ids: [...ids], custom: [...custom], eNumbers: [...eNums] };
   }, [allergens, customAllerg, selectedENumbers, family, activeProfiles]);
 
   // allActive() rebygger Sets og looper family — kaldes kun én gang og
   // destructures i stedet for to separate kald der hver genberegner det samme
-  const { ids: activeIds, eNumbers: activeENumbers } = allActive();
+  const { ids: activeIds, custom: activeCustom, eNumbers: activeENumbers } = allActive();
 
   
   // ── SCANNER ───────────────────────────────────────────────────────────────
@@ -616,12 +625,12 @@ export default function EatSafe() {
   // så der (i modsætning til før) ALDRIG kan opstå en stale-closure-bug fra en
   // ufuldstændig deps-liste.
   const lookupProduct = useCallback((ean) => runLookupProduct(ean, {
-    accessToken, activeIds, activeENumbers, family, activeProfiles,
+    accessToken, activeIds, activeCustom, activeENumbers, family, activeProfiles,
     productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
     setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
     setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
     setProductImagePreview, setProductImageBase64,
-  }), [accessToken, activeIds, activeENumbers, family, activeProfiles,
+  }), [accessToken, activeIds, activeCustom, activeENumbers, family, activeProfiles,
        productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
        setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
        setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
