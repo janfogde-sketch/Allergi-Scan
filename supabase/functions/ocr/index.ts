@@ -41,6 +41,19 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Frontend komprimerer altid til maxDim 1600px/kvalitet 0.82 før upload
+    // (compressImageToBase64 i helpers.js) — et ægte foto derfra ligger langt
+    // under denne grænse. Uden et loft kunne en indlogget bruger sende
+    // vilkårligt store billeder gentagne gange og drive prisen på det
+    // betalte Claude Vision-kald op.
+    const MAX_BASE64_LENGTH = 8_000_000; // ~6MB rå billeddata
+    if (image_base64.length > MAX_BASE64_LENGTH) {
+      return new Response(
+        JSON.stringify({ error: "Billedet er for stort" }),
+        { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
     if (!apiKey) {
       return new Response(
