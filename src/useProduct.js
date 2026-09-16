@@ -29,10 +29,26 @@ export async function runLookupProduct(ean, ctx) {
   if (navigator.vibrate) navigator.vibrate(40);
   const tid = traceId("scan");
   traceLog(tid, "scan:start", { ean: ean.trim() });
+
+  // Mindste synlige varighed for scan-loading-animationen (ScanLoadingOverlay).
+  // Uden dette springes den helt over ved et cache-hit (øjeblikkeligt, intet
+  // at vente på) og kan i praksis være for kortvarig til at nå at blive
+  // bemærket ved et meget hurtigt netværkssvar — begge dele gør at brugeren
+  // reelt aldrig ser den, selvom den teknisk set "vises".
+  const MIN_LOADING_MS = 450;
+  const loadStartedAt = Date.now();
+  const waitForMinLoading = async () => {
+    const elapsed = Date.now() - loadStartedAt;
+    if (elapsed < MIN_LOADING_MS) await new Promise(r => setTimeout(r, MIN_LOADING_MS - elapsed));
+  };
+
   const cached = productCacheRef.current[ean.trim()] || getFromOfflineCache(ean.trim());
   if (cached) {
     traceLog(tid, "scan:cache-hit");
-    setScanResult(cached); setScreen(SCREENS.RESULT);
+    setLoading(true);
+    await waitForMinLoading();
+    setScanResult(cached); setScreen(SCREENS.RESULT); setLoading(false);
+    if (navigator.vibrate) navigator.vibrate(25);
     // Alternativer er IKKE en del af det cachede result-objekt — uden dette
     // genbruger et cache-hit bare hvad end alternatives-state tilfældigvis
     // stod på fra en tidligere scanning i samme session (eller intet, hvis
@@ -60,6 +76,7 @@ export async function runLookupProduct(ean, ctx) {
       traceLog(tid, "scan:not-found");
       setNotFoundEan(ean.trim());
       await saveHistoryEntry(ean.trim(), null, "not_found", {}, activeProfiles);
+      await waitForMinLoading();
       setLoading(false); setScreen(SCREENS.NOTFOUND); setNotFoundStep(1);
       setOcrText(""); setProposedName("");
       setProposedFlags(Object.fromEntries(ALLERGENS.map(a => [a.id, false])));
@@ -156,7 +173,9 @@ export async function runLookupProduct(ean, ctx) {
     } else {
       clearAlternatives();
     }
+    await waitForMinLoading();
     setScreen(SCREENS.RESULT);
+    if (navigator.vibrate) navigator.vibrate(25);
   } catch (e) { traceLog(tid, "scan:error", { error: e.message }); setScanError("Der opstod en fejl. Tjek din forbindelse og prøv igen."); }
   setLoading(false);
 }
