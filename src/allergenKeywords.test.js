@@ -68,4 +68,17 @@ describe("detectAllergensInText", () => {
   it("returns an empty list for text with no known allergens", () => {
     expect(detectAllergensInText("vand, salt, sukker")).toEqual([]);
   });
+
+  // Regression-tests for ental/flertal-huller fundet ved en allergen-logik-
+  // gennemgang (16. sept. 2026) — se den stående regel i CLAUDE.md om at
+  // enhver allergen-nøgleordsliste skal have BÅDE ental- og flertalsform.
+  it("detects singular nut/soy/shellfish forms, not just the plural", () => {
+    expect(detectAllergensInText("Indeholder mandel")).toContain("noedder");
+    expect(detectAllergensInText("Indeholder hasselnød")).toContain("noedder");
+    expect(detectAllergensInText("Indeholder jordnød")).toContain("jordnoedder");
+    expect(detectAllergensInText("Indeholder sojabønne")).toContain("soja");
+    expect(detectAllergensInText("Indeholder reje")).toContain("skaldyr");
+    expect(detectAllergensInText("Indeholder musling")).toContain("skaldyr");
+    expect(detectAllergensInText("Indeholder sulfit")).toContain("svovl");
+  });
 });
