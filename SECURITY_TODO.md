@@ -1,3 +1,45 @@
+# ✅ 16. sept. 2026 — 4 nye huller fundet ved rescue-audit, rettet samme dag
+
+Fundet under en frisk, uafhængig re-audit (artifact:
+https://claude.ai/artifact/EvHQTrmjF1XjJEbuFzWFed) — ingen af dem dækket af
+den oprindelige gennemgang nedenfor eller af `security-check`s baseline.
+
+- **`allergens`s save-path** (`save && product_id`): krævede kun login, ikke
+  admin, før den overskrev et VILKÅRLIGT produkts `allergen_flags` direkte i
+  produktion. Rettet: kræver nu `role === "admin"` (samme mønster som
+  `submissions`), medmindre kaldet er internt (auto-reparse via
+  service-role). Deployet som `allergens` v12.
+- **`shopping`s IDOR på listepunkter**: PATCH/DELETE tjekkede adgang mod
+  `listId`, men muterede kun på `.eq("id", itemId)` — en bruger med sin egen
+  liste kunne derved ramme et punkt der reelt hørte til en ANDEN brugers
+  liste. Rettet: tilføjet `.eq("list_id", listId)` til begge kald. Deployet
+  som `shopping` v15.
+- **`auto-reparse` manglede helt et auth-tjek** — eneste interne cron-
+  funktion uden det (i modsætning til `weekly-digest`/`send-email`). Enhver
+  kunne uautoriseret POST'e `{manual:true, limit:200}` og tvinge op til 200
+  betalte Claude-kald + bulk-overskrive `allergen_flags`/`allergen_quality`.
+  Rettet: kræver nu enten service-role-bearer (cron) eller en indlogget
+  admin (AdminScreens manuelle "reparse nu"-knap). Deployet som
+  `auto-reparse` v5.
+- **`send-push` tjekkede kun login, ikke push-MÅLET** — enhver indlogget
+  bruger kunne sende vilkårligt indhold til en vilkårlig andens `user_id`
+  (phishing). Rettet med en relations-tjek: tilladt hvis kalderen sender til
+  sig selv, er admin, eller deler familiegruppe med målet (via `family_group`-
+  RPC'en) — dækker de tre reelle brugsflows (selv-notifikation,
+  admin-godkendelse af indsendelser, familie-invitations-accept). Deployet
+  som `send-push` v5.
+- **`log_missing_ean(text)` RPC var `SECURITY DEFINER` og kaldbar af helt
+  anonyme (`anon`) brugere** — fundet via Supabase-advisor-scan, ikke
+  dækket af den tidligere RPC-eksponerings-oprydning nedenfor. Ingen
+  frontend-kode kalder den direkte (kun serverside fra `products`-
+  funktionen via service-role) — revoked fra `public`/`anon`, grant kun til
+  `authenticated`/`service_role`. Verificeret med `has_function_privilege()`.
+
+Roadmap'ets øvrige tre faser (bekræftede bugs, arkitektur-oprydning,
+backlog) er stadig åbne — se artefaktet for fuld status.
+
+---
+
 # 🚨 TOP PRIORITET — ubeskyttede Supabase Edge Functions
 
 **Status:** ✅ Løst og deployet 2026-09-08. Alle fem funktioner
