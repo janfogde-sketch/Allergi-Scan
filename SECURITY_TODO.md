@@ -72,7 +72,7 @@ efter deploy.
   være et ekstra forsvarslag, ikke den primære beskyttelse.
 
 **Opdatering 2026-09-09 — relateret fund og løsning:** `auth.uid() = NULL`-bugget
-(se ROADMAP.md "Kendte issues") viste sig at skyldes at projektets JWT-nøgle
+(se `src/ROADMAP.md` "Kendte issues") viste sig at skyldes at projektets JWT-nøgle
 brugte ES256 (P-256), som PostgREST ikke verificerer korrekt. Løst ved at
 rotere til en RS256-signeringsnøgle via Dashboard (Project Settings → JWT
 Keys), verificeret med en engangs-testbruger (`auth.uid()` returnerede nu
@@ -174,7 +174,7 @@ funktioner indeholder længere nøglen i klartekst
 (`pg_get_functiondef()` tjekket efter ændringen).
 
 Fundet 2026-09-07 under kortlægning af databaseskemaet (i forbindelse med
-planlægning af et separat dev-miljø, se ROADMAP.md).
+planlægning af et separat dev-miljø, se `src/ROADMAP.md`).
 
 ## Problemet
 

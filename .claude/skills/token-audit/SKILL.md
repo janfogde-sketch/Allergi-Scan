@@ -1,6 +1,7 @@
 ---
 description: Mål den faste context-overhead Claude Code læser ved hver session-start i dette repo (CLAUDE.md, altid-loadede regler, hooks) og foreslå konkrete nedskæringer. Kør denne når CLAUDE.md føles for stort/langsomt at læse, eller periodisk (fx hver måned) som sundhedstjek — filen vokser med hver logget arbejdsbølge og har ingen indbygget oprydning.
 effort: low
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # Token-audit — EatSafe

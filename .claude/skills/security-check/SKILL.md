@@ -1,6 +1,7 @@
 ---
 description: Sikkerhedsgennemgang af EatSafe-kodebasen og det live Supabase-projekt — samme klasse af fund som Tier 1/2 i rescue-audittet (ubeskyttede Edge Functions, service-role-nøgle-eksponering, RLS-huller). Kør denne når en ny Edge Function tilføjes, når nogen spørger "er vi sikre?"/"har vi sikkerhedshuller?", eller periodisk som sundhedstjek. Læs-only — foreslår rettelser, udfører dem ikke automatisk.
 effort: medium
+allowed-tools: Read, Grep, Glob, Bash, mcp__Supabase__get_advisors
 ---
 
 # Security-check — EatSafe
