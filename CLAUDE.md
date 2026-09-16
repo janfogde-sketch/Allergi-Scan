@@ -381,7 +381,32 @@ admin, `shopping`s item-PATCH/DELETE IDOR er lukket (`.eq("list_id", ...)`
 tilføjet), `auto-reparse` kræver nu service-role-bearer eller admin-login,
 `send-push` tjekker nu en reel relation mellem kalder og push-mål (selv,
 admin, eller fælles familiegruppe via `family_group`-RPC'en), og
-`log_missing_ean` er revoked fra `public`/`anon`. Fase 2-4 (bekræftede
-bugs som NotFoundScreen's data-tab-bug ved "gå tilbage",
-arkitektur-oprydning i App.jsx/AdminScreen.jsx, og backlog-hygiejne) er
-stadig åbne — se artefaktet for fuld status og rækkefølge.
+`log_missing_ean` er revoked fra `public`/`anon`.
+
+**Fase 2-4 er også nu gennemført** (samme dag, én PR pr. fase): Fase 2
+rettede NotFoundScreen's data-tab-bug ved "gå tilbage" samt to
+abuse-cost-caps (`ocr`/`allergens` tekst-/base64-længde-grænser) og
+udvidede race-guard-mønsteret til `useAdmin.js`/`AdminScreen.jsx`. Fase 3
+samlede dupliceret aktiv-allergen-logik, unificerede rå-`fetch()`-kald til
+`apiCall`/`makeHeaders` i AdminScreen.jsx/ListScreen.jsx, rettede en reel
+FK-constraint-fejl i `delete-user` (manglende oprydning af
+`family_memberships`/`shopping_list_access`/`families.created_by`), og
+tilføjede tests til `useProduct.js`/`useAuth.js` (de to tidligere utestede
+sikkerhedskritiske filer). Fase 4 fjernede forældede rod-dubletter
+(`CONTEXT.md`/`ROADMAP.md`) og kørte en ikke-breaking `npm audit fix`.
+**Bevidst udskudt** (for stort/risikabelt til denne batch uden dedikeret
+gennemgang): AdminScreen.jsx-opsplitning, udtræk af inline-features fra
+App.jsx, RLS-performance-advisories, og `npm audit fix --force` (breaking
+vite/vitest major-opgradering) — tag op hvis brugeren beder om det.
+
+Samtidig blev "Audit My Claude Code Setup"-rapportens 3 forslag
+implementeret: `allowed-tools` på de tre eksisterende skills, en
+PreToolUse-hook (`.claude/hooks/block-dangerous-bash.py`) der beder om
+bekræftelse ved `rm -rf` mod rod/force-push til main uden
+`--force-with-lease`/`git reset --hard`, og
+`.claude/rules/edge-function-auth.md` (path-scoped til
+`supabase/functions/**/*.ts`).
+
+**Resterende, kun brugeren kan gøre det:** aktivér "Leaked Password
+Protection" i Supabase Dashboard (Authentication → Policies) — intet
+tilgængeligt værktøj kan ændre denne indstilling.
