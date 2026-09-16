@@ -366,3 +366,23 @@ Supabase-plan end nuværende abonnement) — genoptag når abonnementet
 opgraderes; indtil da går alle skema-/edge-function-ændringer fortsat
 direkte til produktion, som beskrevet i `src/CONTEXT.md`. Fuld tier-for-
 tier-log er i `.claude/HISTORY.md`.
+
+**Opfølgende gennemgang (16. sept. 2026) — IKKE handlet på endnu:**
+(artifact: https://claude.ai/artifact/EvHQTrmjF1XjJEbuFzWFed) En frisk,
+læse-kun re-audit fandt 4 nye, aktivt udnyttelige sikkerhedshuller i
+produktion — ingen af dem dækket af den oprindelige rescue-audit eller af
+`security-check`s baseline-kørsel: `allergens`-funktionens save-path kan
+overskrive et VILKÅRLIGT produkts allergendata uden admin-tjek,
+`shopping`-funktionens PATCH/DELETE på listepunkter har en IDOR (tjekker
+`listId`, muterer kun på `itemId` uden at binde dem sammen), `auto-reparse`
+mangler helt et auth-tjek (i modsætning til `weekly-digest`/`send-email`'s
+korrekte service-role-tjek), og `send-push` tjekker login men aldrig at
+push-målet (`user_id`) faktisk er relateret til kalderen. Desuden fandt en
+Supabase-advisor-scan at RPC'en `log_missing_ean` er `SECURITY DEFINER` og
+kaldbar af helt anonyme (`anon`) brugere — ikke dækket af den tidligere
+RPC-eksponerings-oprydning. Artefaktet har fuld fil:linje-evidens plus en
+4-fase prioriteret rescue-roadmap (arkitektur-kaos i App.jsx/AdminScreen.jsx,
+et par bekræftede bugs som NotFoundScreen's data-tab-bug ved "gå tilbage",
+og hygiejne-fund). **Næste skridt, når der gives grønt lys:** ret de 4
+sikkerhedshuller først (Fase 1 i roadmap'et), derefter resten i den
+prioriterede rækkefølge artefaktet lægger op til.
