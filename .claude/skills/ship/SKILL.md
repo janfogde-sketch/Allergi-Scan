@@ -1,6 +1,7 @@
 ---
 description: Kør EatSafes fulde ændrings-workflow — byg, test, mojibake-scan, commit, push, PR, vent på grøn Vercel, squash-merge, resync branch. Se CLAUDE.md afsnit 4 for den fulde, altid-opdaterede beskrivelse — denne skill er en kortfattet, kaldbar genvej til samme proces, ikke en erstatning for den.
 effort: medium
+allowed-tools: Read, Edit, Write, Bash, Grep, Glob, mcp__github__create_pull_request, mcp__github__merge_pull_request, mcp__github__pull_request_read, mcp__Supabase__deploy_edge_function, mcp__Supabase__apply_migration
 ---
 
 # Ship — EatSafes standard ændrings-workflow
