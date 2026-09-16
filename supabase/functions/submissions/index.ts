@@ -266,6 +266,18 @@ Deno.serve(async (req) => {
         if (body.image_url) updateFields.image_url = body.image_url;
         if (body.allergen_flags && Object.keys(body.allergen_flags).length > 0) updateFields.allergen_flags = body.allergen_flags;
 
+        // Ingredienslisten ændres uden en ny allergen-analyse ved siden af —
+        // stil produktet tilbage til "pending", så det garanteret bliver
+        // genanalyseret (auto-reparse-cronnet, eller frontendens egen
+        // AI-reparse-kald lige efter godkendelse) i stedet for at blive
+        // stående med allergen_flags der matcher den GAMLE ingrediensliste.
+        // Uden dette kan en ny, forkert ingrediensliste blive godkendt med
+        // flag fra det tidligere (måske helt anderledes) produkt, og aldrig
+        // blive rettet igen hvis den frontend-initierede reparse fejler.
+        if (updateFields.ingredients_text && !updateFields.allergen_flags) {
+          updateFields.allergen_quality = "pending";
+        }
+
         const { data: product, error: productError } = await supabase
           .from("products")
           .update(updateFields)

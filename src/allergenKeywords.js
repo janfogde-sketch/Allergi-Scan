@@ -57,22 +57,26 @@ export const ALLERGEN_KEYWORDS = {
     "egg white","egg yolk","dried egg","whole egg","egg powder","æggepulver",
   ],
   noedder: [
-    // Alle nøddetyper
-    "nødder","mandler","hasselnødder","valnødder","cashew","pekannødder","pistacienødder","macadamia",
-    "paranødder","kokosnød","pinjenødder","chestnuts","kastanjer",
+    // Alle nøddetyper — BÅDE ental og flertal (se stående regel i CLAUDE.md):
+    // "mandel"→"mandler" er en uregelmæssig bøjning (ikke bare +suffiks), og
+    // de øvrige "-nød"/"-nødder"-par matcher kun tekst i samme retning som
+    // det ord der reelt står på listen, så begge former skal med eksplicit.
+    "nødder","mandel","mandler","hasselnød","hasselnødder","valnødder","cashew","pekannød","pekannødder",
+    "pistacienød","pistacienødder","macadamia","paranød","paranødder","kokosnød","kokosnødder",
+    "pinjenød","pinjenødder","chestnuts","kastanje","kastanjer",
     "almond","hazelnut","walnut","cashew","pecan","pistachio","macadamia","brazil nut","pine nut",
     // Afledte
     "marcipan","marzipan","nougat","pesto","praline","gianduja","mandelmel","nøddemel",
     "mandelsmør","nøddeolie","mandelekstrakt","hasselnøddepasta",
   ],
   jordnoedder: [
-    "jordnødder","peanut","peanuts","groundnut","arachis","arachide",
+    "jordnød","jordnødder","peanut","peanuts","groundnut","arachis","arachide",
     "jordnøddeolie","jordnøddesmør","peanut butter","peanut oil","arachis oil",
     // Skjult i asiatiske retter
     "satay","kacang","nut sauce",
   ],
   soja: [
-    "soja","sojabønner","soy","soybeans","tofu","tempeh","miso","edamame","natto",
+    "soja","sojabønne","sojabønner","soy","soybean","soybeans","tofu","tempeh","miso","edamame","natto",
     "sojamel","sojaprotein","sojalecithin","sojamælk","sojasauce","tamari","shoyu",
     "textured vegetable protein","tvp","hydrolyseret sojaprotein","isoleret sojaprotein",
     "lecithin","lecitin","e322", // sojalecithin skjult som e-nummer
@@ -86,7 +90,7 @@ export const ALLERGEN_KEYWORDS = {
     "anchovies","anchois","nuoc mam",
   ],
   skaldyr: [
-    "skaldyr","rejer","krabbe","krabber","hummer","muslinger","østers","blæksprutte","blæksprutter","kammusling","kammuslinger",
+    "skaldyr","reje","rejer","krabbe","krabber","hummer","musling","muslinger","østers","blæksprutte","blæksprutter","kammusling","kammuslinger",
     "shrimp","prawn","crab","lobster","mussel","oyster","squid","scallop","langoustine",
     "krebs","languster","langustere","tigerrejer","pilgrimsmusling","snegle","escargot",
   ],
@@ -104,7 +108,7 @@ export const ALLERGEN_KEYWORDS = {
     "sesame","sesame seed","sesame oil","til","gingelly",
   ],
   svovl: [
-    "sulfitter","svovldioxid","svovl","sulphite","sulfite","sulphur dioxide","so2",
+    "sulfit","sulfitter","svovldioxid","svovl","sulphite","sulfite","sulphur dioxide","so2",
     "e220","e221","e222","e223","e224","e225","e226","e227","e228",
   ],
   lupin: [
@@ -112,7 +116,7 @@ export const ALLERGEN_KEYWORDS = {
     "lupin flour","lupin seed","lupin bean",
   ],
   bloeddyr: [
-    "blæksprutte","blæksprutter","østers","muslinger","snegle","kammusling","kammuslinger",
+    "blæksprutte","blæksprutter","østers","musling","muslinger","snegle","kammusling","kammuslinger",
     "squid","oyster","mussel","snail","scallop","clam","abalone",
   ],
 };
