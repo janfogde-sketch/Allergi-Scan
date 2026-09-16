@@ -30,11 +30,16 @@ export async function runLookupProduct(ean, ctx) {
   const tid = traceId("scan");
   traceLog(tid, "scan:start", { ean: ean.trim() });
 
+  // Værn mod overlappende kald (fx et utålmodigt gen-scan mens forrige
+  // opslag stadig venter på netværket) — uden dette kan et ældre, langsomt
+  // kald nå at overskrive resultatet fra et nyere, hurtigere kald.
+  ctx.scanTokenRef.current = (ctx.scanTokenRef.current || 0) + 1;
+  const myToken = ctx.scanTokenRef.current;
+  const isStale = () => ctx.scanTokenRef.current !== myToken;
+
   // Mindste synlige varighed for scan-loading-animationen (ScanLoadingOverlay).
-  // Uden dette springes den helt over ved et cache-hit (øjeblikkeligt, intet
-  // at vente på) og kan i praksis være for kortvarig til at nå at blive
-  // bemærket ved et meget hurtigt netværkssvar — begge dele gør at brugeren
-  // reelt aldrig ser den, selvom den teknisk set "vises".
+  // Gælder KUN de grene der reelt venter på netværket — et cache-hit har intet
+  // at vente på og skal forblive øjeblikkeligt, som det altid har gjort.
   const MIN_LOADING_MS = 450;
   const loadStartedAt = Date.now();
   const waitForMinLoading = async () => {
@@ -45,8 +50,6 @@ export async function runLookupProduct(ean, ctx) {
   const cached = productCacheRef.current[ean.trim()] || getFromOfflineCache(ean.trim());
   if (cached) {
     traceLog(tid, "scan:cache-hit");
-    setLoading(true);
-    await waitForMinLoading();
     setScanResult(cached); setScreen(SCREENS.RESULT); setLoading(false);
     if (navigator.vibrate) navigator.vibrate(25);
     // Alternativer er IKKE en del af det cachede result-objekt — uden dette
@@ -72,11 +75,13 @@ export async function runLookupProduct(ean, ctx) {
       headers: makeHeaders(accessToken),
     });
     traceLog(tid, "scan:product-response", { found: data.found, name: data.product?.name });
+    if (isStale()) return;
     if (!data.found) {
       traceLog(tid, "scan:not-found");
       setNotFoundEan(ean.trim());
       await saveHistoryEntry(ean.trim(), null, "not_found", {}, activeProfiles);
       await waitForMinLoading();
+      if (isStale()) return;
       setLoading(false); setScreen(SCREENS.NOTFOUND); setNotFoundStep(1);
       setOcrText(""); setProposedName("");
       setProposedFlags(Object.fromEntries(ALLERGENS.map(a => [a.id, false])));
@@ -174,10 +179,11 @@ export async function runLookupProduct(ean, ctx) {
       clearAlternatives();
     }
     await waitForMinLoading();
+    if (isStale()) return;
     setScreen(SCREENS.RESULT);
     if (navigator.vibrate) navigator.vibrate(25);
   } catch (e) { traceLog(tid, "scan:error", { error: e.message }); setScanError("Der opstod en fejl. Tjek din forbindelse og prøv igen."); }
-  setLoading(false);
+  if (!isStale()) setLoading(false);
 }
 
 export function useProduct({ accessToken, userId, activeProfiles,
@@ -186,6 +192,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
 
   // Scan-resultat state
   const productCacheRef = useRef({}); // Cache af seneste 50 scannede produkter
+  const scanTokenRef = useRef(0); // Værn mod overlappende runLookupProduct-kald
   const [scanResult, setScanResult]           = useState(null);
   const [loading, setLoading]                 = useState(false);
   const [scanError_, setScanError_]           = useState("");
@@ -383,6 +390,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
 
   return {
     productCacheRef,
+    scanTokenRef,
     scanResult, setScanResult,
     loading, setLoading,
     scanError: scanError_, setScanError: setScanError_,

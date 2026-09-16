@@ -414,6 +414,7 @@ export default function EatSafe() {
   const [notFoundEan, setNotFoundEan] = useState("");
   const {
     productCacheRef,
+    scanTokenRef,
     scanResult, setScanResult,
     loading, setLoading,
     scanError, setScanError,
@@ -616,12 +617,12 @@ export default function EatSafe() {
   // ufuldstændig deps-liste.
   const lookupProduct = useCallback((ean) => runLookupProduct(ean, {
     accessToken, activeIds, activeENumbers, family, activeProfiles,
-    productCacheRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
+    productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
     setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
     setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
     setProductImagePreview, setProductImageBase64,
   }), [accessToken, activeIds, activeENumbers, family, activeProfiles,
-       productCacheRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
+       productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
        setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
        setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
        setProductImagePreview, setProductImageBase64]);
