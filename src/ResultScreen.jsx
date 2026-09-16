@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compareENumbers, checkDietCompatibility, verifiedBadge, makeHeaders, productDisplayName } from "./helpers.js";
+import { compareENumbers, checkDietCompatibility, verifiedBadge, makeHeaders, productDisplayName, matchCustomAllergens } from "./helpers.js";
 import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -32,7 +32,7 @@ export default function ResultScreen({
   lookupProduct,
 }) {
   const { user } = useAuthContext();
-  const { family, allergens, activeProfiles } = useProfileContext();
+  const { family, allergens, customAllerg, activeProfiles } = useProfileContext();
   const { setScreen } = useNavigationContext();
   const { isFavorite, toggleFavorite } = useHistoryContext();
   const { lists, activeListId, addToList } = useShoppingContext();
@@ -206,9 +206,9 @@ export default function ResultScreen({
   const renderSafetyDiet = () => {
     const flags = scanResult.allergen_flags || {};
     const profiles = [
-      { id:"me", name: user.name||"Dig", allergens, diets: user.diets || [], eNumbers: selectedENumbers || [] },
+      { id:"me", name: user.name||"Dig", allergens, custom: customAllerg || [], diets: user.diets || [], eNumbers: selectedENumbers || [] },
       ...family.filter(m => activeProfiles.includes(m.id)).map(m => ({
-        ...m, allergens: m.allergens || [], diets: m.diets || [], eNumbers: m.eNumbers || [],
+        ...m, allergens: m.allergens || [], custom: m.custom || [], diets: m.diets || [], eNumbers: m.eNumbers || [],
       })),
     ];
     const tagLabels = { vegan:"Vegansk", vegetarian:"Vegetarisk", "palm-oil-free":"Uden palmeolie", "gluten-free":"Glutenfri", organic:"Økologisk" };
@@ -241,15 +241,19 @@ export default function ResultScreen({
           {profiles.map((p) => {
             const danger  = p.allergens.filter(a => flags[a] === "yes");
             const warning = p.allergens.filter(a => flags[a] === "traces");
+            // Fritekst-match af profilens egne tilføjede allergier — se
+            // matchCustomAllergens' egen kommentar for hvorfor dette er mindre
+            // pålideligt end de faste allergener (ingen synonymer).
+            const customMatches = p.custom?.length ? matchCustomAllergens(scanResult.ingredients, p.custom) : [];
             const dietResults = (p.diets || []).map(d => ({
               id: d,
               ...checkDietCompatibility(d, flags, scanResult.ingredients, scanResult.nutrition),
             }));
             const dietFails = dietResults.filter(r => r.ok === false);
             const dietMatch = p.diets && p.diets.length > 0 ? dietFails.length === 0 : null;
-            const status = danger.length > 0 ? "danger" : warning.length > 0 ? "warn" : dietMatch === false ? "warn" : "safe";
-            const statusText = danger.length > 0
-              ? danger.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
+            const status = (danger.length > 0 || customMatches.length > 0) ? "danger" : warning.length > 0 ? "warn" : dietMatch === false ? "warn" : "safe";
+            const statusText = (danger.length > 0 || customMatches.length > 0)
+              ? [...danger.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean), ...customMatches.map(t => `"${t}"?`)].join(", ")
               : warning.length > 0
               ? "Spor: " + warning.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
               : dietMatch === false ? dietFails[0]?.reasons?.[0] || "Passer ikke til diæt"
@@ -536,6 +540,11 @@ export default function ResultScreen({
             <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
               Fremhævet = allergen · Listen kan være på originalsprog — tjek altid selv
             </div>
+            {customAllerg?.length > 0 && (
+              <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", marginTop:6, background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
+                Dine egne tilføjede allergier tjekkes via fritekst-søgning her i ingredienslisten — det kan være sværere for os at fange end vores faste allergener. Dobbelttjek altid selv, og sig endelig til hvis vi overser noget — vi udvider løbende vores allergen-liste.
+              </div>
+            )}
           </div>
         ) : (
           <div style={{ paddingTop:4 }}>

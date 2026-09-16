@@ -1,6 +1,11 @@
 // @ts-nocheck
 import { ALLERGENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
+import { ALLERGEN_KEYWORDS, keywordMatches, matchCustomAllergens } from "./allergenKeywords.js";
+
+// Re-eksporteret så scan-/opskrift-/resultat-koden kan importere den sammen
+// med de øvrige allergen-hjælpefunktioner fra denne fil, fremfor at skulle
+// kende til at den reelt bor i allergenKeywords.js.
+export { matchCustomAllergens };
 
 export const initials = n => (n||"").split(" ").filter(Boolean).map(w=>w[0]).join("").toUpperCase().slice(0,2)||"?";
 
@@ -228,19 +233,14 @@ export function checkDietCompatibility(dietId, allergenFlags, ingredientsText, n
   const lower = (ingredientsText || "").toLowerCase();
   const reasons = [];
 
-  // Hjælpefunktion: tjek om ingredienstekst indeholder et keyword (med ordgrænse for korte ord)
-  const hasIngredient = (keyword) => {
-    if (keyword.length <= 4) {
-      // Kort ord: brug ordgrænse for at undgå falske positiver
-      const idx = lower.indexOf(keyword);
-      if (idx === -1) return false;
-      const before = idx > 0 ? lower[idx - 1] : " ";
-      const after = idx + keyword.length < lower.length ? lower[idx + keyword.length] : " ";
-      const isWordChar = (c) => /[a-zæøå0-9]/i.test(c);
-      return !isWordChar(before) && !isWordChar(after);
-    }
-    return lower.includes(keyword);
-  };
+  // Genbruger allergenKeywords.js' keywordMatches i stedet for en egen kopi
+  // af ordgrænse-logikken — den udgave scanner ALLE forekomster af ordet
+  // (ikke kun den første) og er negations-bevidst ("glutenfri" matcher IKKE
+  // "gluten"), begge dele fundet manglende her ved en allergen-logik-
+  // gennemgang (16. sept. 2026). Uden negations-tjekket ville et produkt der
+  // eksplicit skriver "glutenfri havre" fejlagtigt blive vist som "Indeholder
+  // gluten" — det modsatte af hvad emballagen rent faktisk siger.
+  const hasIngredient = (keyword) => keywordMatches(lower, keyword);
 
   switch (dietId) {
     case "vegan": {

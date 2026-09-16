@@ -116,6 +116,15 @@ describe("checkDietCompatibility", () => {
     expect(result.ok).toBe(false);
   });
 
+  it("gluten-free: does NOT false-positive on a product explicitly labelled gluten-free (allergen-logik-gennemgang, 16. sept. 2026)", () => {
+    // "gluten" er et langt nøgleord (>4 tegn, ren understreng) uden ordgrænse-
+    // beskyttelse — uden negations-tjek matchede det tidligere "glutenfri"
+    // selv, og fortalte en cøliaki-bruger at et EKSPLICIT glutenfrit produkt
+    // "indeholder gluten". Det stik modsatte af hvad emballagen rent faktisk sagde.
+    const result = checkDietCompatibility("gluten-free", {}, "Produktet er 100% glutenfrit. Ingredienser: majsstivelse, vand, salt", null);
+    expect(result.ok).toBe(true);
+  });
+
   it("gluten-free: does NOT claim high confidence when the flags are unknown and there's no ingredient text to fall back on", () => {
     const result = checkDietCompatibility("gluten-free", { gluten: "unknown" }, "", null);
     expect(result.ok).toBe(true);
