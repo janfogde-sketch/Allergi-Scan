@@ -162,6 +162,7 @@ export default function ScannerScreen({
   galleryInputRef,
   lastScannedRef,
   selectedENumbers,
+  activeIds,
   activeENumbers,
   handleEditProductCapture,
   handleImageCapture, handleProductImageCapture,
@@ -186,7 +187,7 @@ export default function ScannerScreen({
   altLoading,
 }) {
   const { user, userId, accessToken } = useAuthContext();
-  const { family, activeProfiles, setActiveProfiles, allergens } = useProfileContext();
+  const { activeProfiles, setActiveProfiles } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
   const { history, favorites, toggleFavorite, isFavorite } = useHistoryContext();
   const { shoppingList, newItemName, setNewItemName, addToList, toggleItem, removeItem, clearDone } = useShoppingContext();
@@ -198,13 +199,11 @@ export default function ScannerScreen({
   const [showGuide, setShowGuide] = React.useState(false);
   const [manualEanError, setManualEanError] = React.useState("");
 
-  // ── Kombinerede allergen-IDs for alle aktive profiler ──────────────────────
-  const activeIds = [
-    ...(activeProfiles.includes("me") ? allergens : []),
-    ...family
-      .filter(m => activeProfiles.includes(m.id))
-      .flatMap(m => Array.isArray(m.allergens) ? m.allergens : Object.keys(m.allergens||{}).filter(k => m.allergens[k])),
-  ].filter((v, i, a) => a.indexOf(v) === i); // deduplicate
+  // activeIds (kombinerede allergen-id'er for alle aktive profiler) kommer nu
+  // som prop fra App.jsx' allActive() i stedet for at blive genberegnet her
+  // — to uafhængige implementationer af samme sikkerhedsrelevante beregning
+  // havde allerede forårsaget mindst én bug (se App.jsx' egen kommentar ved
+  // allActive()).
 
   const renderStreakBadge = () => {
     // Mini streak-badge

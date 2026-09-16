@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useRef } from "react";
-import { ALLERGENS, SCREENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { initials, getTraceLog } from "./helpers.js";
+import { ALLERGENS, SCREENS, SUPABASE_URL } from "./constants.jsx";
+import { initials, getTraceLog, apiCall, makeHeaders } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useAdminContext } from "./AdminContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -109,11 +109,10 @@ export default function AdminScreen() {
     setOpenSubmission(s);
     if (s.type === "edit" && s.product_id) {
       try {
-        const res = await fetch(
+        const rows = await apiCall(
           `${SUPABASE_URL}/rest/v1/products?id=eq.${s.product_id}&select=name,brand,allergen_flags`,
-          { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" } }
+          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
         );
-        const rows = await res.json();
         const product = Array.isArray(rows) ? rows[0] : null;
         setEditingSubmission({
           name: product?.name || "",
@@ -157,11 +156,10 @@ export default function AdminScreen() {
     const myToken = ++adminRecipesLoadToken.current;
     setAdminRecipesLoading(true);
     try {
-      const res = await fetch(
+      const data = await apiCall(
         `${SUPABASE_URL}/rest/v1/recipes?status=eq.${filter}&order=created_at.desc&limit=100&select=id,title,category,status,submitted_by,created_at,allergen_flags,description,servings,prep_time_minutes,cook_time_minutes,tags,instructions,image_url`,
-        { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" } }
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
       );
-      const data = await res.json();
       if (adminRecipesLoadToken.current !== myToken) return;
       setAdminRecipes(Array.isArray(data) ? data : []);
     } catch (e) {
@@ -174,12 +172,11 @@ export default function AdminScreen() {
   const updateRecipeStatus = async (id, status) => {
     setRecipeActionLoading(true);
     try {
-      const res = await fetch(
+      await apiCall(
         `${SUPABASE_URL}/rest/v1/recipes?id=eq.${id}`,
-        { method: "PATCH", headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+        { method: "PATCH", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
           body: JSON.stringify({ status }) }
       );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setAdminRecipes(prev => prev.filter(r => r.id !== id));
       setEditingRecipe(null);
     } catch (e) { showToast("Fejl: " + e.message, "error"); }
@@ -191,12 +188,11 @@ export default function AdminScreen() {
     setRecipeActionLoading(true);
     try {
       const { id, ...fields } = editingRecipe;
-      const res = await fetch(
+      await apiCall(
         `${SUPABASE_URL}/rest/v1/recipes?id=eq.${id}`,
-        { method: "PATCH", headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+        { method: "PATCH", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
           body: JSON.stringify(fields) }
       );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       showToast("Gemt");
     } catch (e) { showToast("Fejl: " + e.message, "error"); }
     setRecipeActionLoading(false);
@@ -868,17 +864,19 @@ Implementér derefter løsningen.`;
                         {/* Onboarding */}
                         <div style={UI.rowGap8}>
                           <button onClick={async () => {
-                            const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${openAdminUser.id}`, { method:"PATCH", headers:{ "Content-Type":"application/json", "apikey":SUPABASE_ANON_KEY, "Authorization":`Bearer ${accessToken}`, "Prefer":"return=minimal" }, body: JSON.stringify({ onboarding_completed: true }) });
-                            if (!res.ok) { showToast(`Fejl: HTTP ${res.status}`, "error"); return; }
-                            setOpenAdminUser(u => ({ ...u, onboarding_completed: true }));
+                            try {
+                              await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${openAdminUser.id}`, { method:"PATCH", headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" }, body: JSON.stringify({ onboarding_completed: true }) });
+                              setOpenAdminUser(u => ({ ...u, onboarding_completed: true }));
+                            } catch (e) { showToast(`Fejl: ${e.message}`, "error"); }
                           }}
                             style={{ flex:1, padding:"12px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--green)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                             <Icon name="check" size={13} color="var(--green)" /> Markér onboarding færdig
                           </button>
                           <button onClick={async () => {
-                            const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${openAdminUser.id}`, { method:"PATCH", headers:{ "Content-Type":"application/json", "apikey":SUPABASE_ANON_KEY, "Authorization":`Bearer ${accessToken}`, "Prefer":"return=minimal" }, body: JSON.stringify({ onboarding_completed: false }) });
-                            if (!res.ok) { showToast(`Fejl: HTTP ${res.status}`, "error"); return; }
-                            setOpenAdminUser(u => ({ ...u, onboarding_completed: false }));
+                            try {
+                              await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${openAdminUser.id}`, { method:"PATCH", headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" }, body: JSON.stringify({ onboarding_completed: false }) });
+                              setOpenAdminUser(u => ({ ...u, onboarding_completed: false }));
+                            } catch (e) { showToast(`Fejl: ${e.message}`, "error"); }
                           }}
                             style={{ flex:1, padding:"12px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--amber)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                             <Icon name="refresh" size={13} color="var(--amber)" /> Nulstil onboarding
@@ -887,8 +885,7 @@ Implementér derefter løsningen.`;
 
                         {/* Se brugerens scanninger */}
                         <button onClick={async () => {
-                          const res = await fetch(`${SUPABASE_URL}/rest/v1/scan_history?user_id=eq.${openAdminUser.id}&select=ean,scanned_at,product_name&order=scanned_at.desc&limit=20`, { headers:{ "apikey":SUPABASE_ANON_KEY, "Authorization":`Bearer ${accessToken}`, "Accept":"application/json" } });
-                          const data = await res.json();
+                          const data = await apiCall(`${SUPABASE_URL}/rest/v1/scan_history?user_id=eq.${openAdminUser.id}&select=ean,scanned_at,product_name&order=scanned_at.desc&limit=20`, { headers:{ ...makeHeaders(accessToken), "Accept":"application/json" } });
                           alert(`Seneste scanninger (${data.length}):\n\n${data.map(s => `${s.product_name||s.ean} — ${new Date(s.scanned_at).toLocaleDateString("da-DK")}`).join("\n") || "Ingen scanninger"}`);
                         }}
                           style={{ ...UI.uw100_p11px_bgsurface2_bd1pxsolid_br12_fff_fs12_fw700_cink_c, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>

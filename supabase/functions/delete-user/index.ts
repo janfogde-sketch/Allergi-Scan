@@ -44,12 +44,27 @@ Deno.serve(async (req) => {
       if (callerProfile?.role !== "admin") throw new Error("Kun admins kan slette andre brugere");
     }
 
-    // Slet afhængige data i korrekt rækkefølge
+    // Slet afhængige data i korrekt rækkefølge.
+    //
+    // favorites/push_tokens/search_selections er BEVIDST ikke nævnt her —
+    // deres user_id-fremmednøgler har ON DELETE CASCADE mod users, så de
+    // ryddes automatisk når users-rækken slettes nedenfor (verificeret i
+    // databaseskemaet). family_memberships og shopping_list_access har
+    // derimod NO ACTION — uden eksplicit oprydning her ville sletningen af
+    // users-rækken simpelthen FEJLE (fremmednøgle-brud) for enhver bruger
+    // der nogensinde har tilsluttet sig en familie eller fået delt en
+    // indkøbsliste, og kontosletning ville se ud til bare ikke at virke.
     await supabase.from("shopping_list_items").delete().eq("added_by", uid);
     await supabase.from("shopping_lists").delete().eq("owner_id", uid);
+    await supabase.from("shopping_list_access").delete().eq("user_id", uid);
     await supabase.from("scan_history").delete().eq("user_id", uid);
     await supabase.from("user_allergens").delete().eq("user_id", uid);
     await supabase.from("family_members").delete().eq("user_id", uid);
+    await supabase.from("family_memberships").delete().eq("user_id", uid);
+    // families.created_by er nullable og har INGEN cascade — nulstil den i
+    // stedet for at slette familien, så resten af familien (og deres delte
+    // data) ikke forsvinder bare fordi opretteren sletter sin konto.
+    await supabase.from("families").update({ created_by: null }).eq("created_by", uid);
     await supabase.from("feedback_tickets").delete().eq("submitted_by", uid);
     await supabase.from("submissions").delete().eq("submitted_by", uid);
     await supabase.from("users").delete().eq("id", uid);

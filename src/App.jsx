@@ -1203,6 +1203,7 @@ export default function EatSafe() {
             buildLabel={formatBuildTime()}
             lookupProduct={lookupProduct}
             selectedENumbers={selectedENumbers}
+            activeIds={activeIds}
             activeENumbers={activeENumbers}
             onBetaClick={() => { setBetaIntroSeen(false); setBetaIntroStep(0); }}
             alternatives={alternatives}
