@@ -14,6 +14,35 @@
 
 ---
 
+## 0. Topprioritet til næste session (16. sept. 2026)
+
+Rescue-audittets fulde 4-fase-roadmap samt Claude Code Setup Audit-
+rapportens 3 forslag er implementeret og merget (se afsnit "Rescue-audit —
+status" nedenfor for fuld detalje). Følgende punkter kræver stadig en
+beslutning eller handling og skal tages op **først** i næste session:
+
+1. **Leaked Password Protection** — skal aktiveres manuelt af brugeren i
+   Supabase Dashboard → Authentication → Policies. Intet tilgængeligt
+   værktøj kan ændre denne indstilling. Spørg om det er gjort; hvis ikke,
+   mind om det igen.
+2. **`npm audit fix --force`** — 5 resterende sårbarheder kræver en
+   breaking major-opgradering af vite (5→8) og vitest (2→5). Ikke kørt
+   automatisk. Afvent eksplicit go fra brugeren før dette gennemføres.
+3. **De bevidst udskudte Fase 4-punkter** — AdminScreen.jsx-opsplitning,
+   udtræk af inline-features fra App.jsx, og RLS-performance-advisories.
+   Alle er vurderet for store/risikable til at tage uden dedikeret
+   gennemgang. Spørg brugeren om de skal tages som en ny, isoleret opgave.
+4. **Tredjeparts audit-skills** (`eval-rules`, `eval-skills`,
+   `audit-agents-skills` fra `FlorianBruniaux/claude-code-ultimate-guide`)
+   — bevidst ikke installeret automatisk. Afklar med brugeren om de
+   ønskes.
+
+Fjern dette afsnit (eller marker punkterne som løst enkeltvis) når de er
+afklaret/gennemført, så det ikke bare akkumulerer som endnu en glemt
+logbog-sektion.
+
+---
+
 ## 1. Hvad er EatSafe?
 
 EatSafe er en dansk PWA (progressive web app) til mennesker med fødevareallergier og
