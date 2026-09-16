@@ -455,6 +455,27 @@ body{
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 .fade-in{animation:fadeUp .18s ease both;}
 @keyframes toast-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── SCAN-LOADING (logo-baseret loading-animation, vist mens et scannet/
+   søgt produkt slås op — fra scan:start til resultatet er klart) ── */
+.scan-loading-overlay{
+  position:fixed;inset:0;z-index:9994;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+  background:var(--paper);opacity:.97;
+  animation:fadeUp .18s ease both;
+}
+.scan-loading-mark{animation:scan-mark-pulse 1.8s ease-in-out infinite;}
+@keyframes scan-mark-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.035);}}
+.scan-loading-beam{animation:scan-beam-sweep 1.6s cubic-bezier(.45,0,.55,1) infinite;}
+@keyframes scan-beam-sweep{
+  0%{transform:translateY(0);opacity:0;}
+  10%{opacity:1;}
+  50%{transform:translateY(68px);opacity:1;}
+  90%{opacity:1;}
+  100%{transform:translateY(0);opacity:0;}
+}
+.scan-loading-txt{font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.1px;text-align:center;}
+.scan-loading-sub{font-size:12.5px;color:var(--muted);text-align:center;margin-top:2px;}
 .scroll-top-btn{
   position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:9990;
   width:44px;height:44px;border-radius:50%;

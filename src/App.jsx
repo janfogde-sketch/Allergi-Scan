@@ -18,7 +18,8 @@ import {
 
 import {
   EatSafeLogo, Icon, IngredientsList, ProfileBadges,
-  getProductIcon, ProductImage, LazyFallback, ToastHost, showToast
+  getProductIcon, ProductImage, LazyFallback, ToastHost, showToast,
+  ScanLoadingOverlay
 } from "./SharedComponents.jsx";
 
 import { ENumberPicker } from "./AllergenPicker.jsx";
@@ -973,6 +974,10 @@ export default function EatSafe() {
 
         {/* Installations-prompt — kun aktiv når man er landet via beta-QR'en */}
         <InstallPrompt />
+
+        {/* Scan-loading — vist mens et scannet/søgt produkt slås op (fra
+            runLookupProduct's setLoading(true) til resultatet er klart) */}
+        <ScanLoadingOverlay show={loading} />
 
         {/* ══ VELKOMST ══ */}
         {/* ══ ONBOARDING SCREENS ══ */}
