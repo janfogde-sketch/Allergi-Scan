@@ -60,12 +60,12 @@ Fase 0 (kritiske fixes), 1 (datavækst), 2 (design), 3 (arkitektur),
 
 ---
 
-## Fase 7b — UX-polish 🔲
+## ✅ FULDFØRT — Fase 7b — UX-polish
 
 | # | Opgave | Prioritet | Note |
 |---|--------|-----------|------|
 | 7b.1 | Onboarding: fjern velkomst/forklaring (trin 1) | ✅ | 17. sept. 2026 — onboarding starter nu direkte på profil-trinnet; indholdet lever videre i BetaIntroModal (BETA-badge, manuel visning) |
-| 7b.2 | Demo-funktion på HOME | 🔴 | Flyt app-forklaringer fra onboarding til en interaktiv demo på hjemmeskærmen — **afventer brugerens design-input** (hvad skal demoen konkret vise/gøre?) før implementering |
+| 7b.2 | Demo-funktion på HOME | ✅ | 17. sept. 2026 — "Prøv en demo-scanning"-knap på HOME viser et statisk demo-produkt gennem den rigtige, delte beregningslogik (personligt + øjeblikkeligt, intet netværkskald) |
 | 7b.3 | HOME: fjern "Sidst opdateret"-linje | ✅ | Allerede fjernet et sted i det tidligere designarbejde (september 2026) — verificeret 17. sept. ved grep, linjen findes ikke længere i kodebasen |
 
 ---

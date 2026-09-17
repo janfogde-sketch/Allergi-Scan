@@ -18,7 +18,69 @@ import { saveToOfflineCache, getFromOfflineCache } from "./useOffline.js";
 // Ikke lige så pålideligt som de faste allergener (ingen synonymer/negations-
 // kontekst udover selve ordgrænse-/negations-tjekket i matchCustomAllergens)
 // — derfor altid en tydelig disclaimer i teksten der vises.
-function withCustomAllergenMatch(result, customTerms) {
+// Bygger et scan-resultat-objekt (status, allergen-match, E-numre,
+// familie-impact) ud fra rå produkt-data og brugerens aktive profiler.
+// Udtrukket til en selvstændig, ren funktion så både det rigtige
+// netværks-opslag (runLookupProduct) og demo-scanningen (buildDemoScanResult)
+// deler PRÆCIS samme beregningslogik — to uafhængige implementationer af
+// samme sikkerhedsrelevante beregning har allerede givet mindst én bug før
+// (se aktiveIds-kommentaren i App.jsx).
+export function buildScanResultFromProductData({ product, data, ean, activeIds, activeENumbers, family, activeProfiles }) {
+  const variantLabel = product.variant_label || null;
+  const flags = product.allergen_flags || data?.allergen_flags || {};
+  const { status: rawStatus, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(flags, activeIds);
+  // Data mangler for ét eller flere af dine allergener ("unknown"-felter) — vis
+  // det IKKE som et trygt grønt "sikkert produkt". Uden dette nedgraderes en
+  // reel datamangel aldrig til noget brugeren faktisk ser (fundet ved en
+  // sikkerhedsgennemgang: samme UI blev vist for "bekræftet sikkert" og
+  // "vi ved det faktisk ikke").
+  const isUnsafeUnknown = rawStatus === "safe" && hasUnknown;
+  const status = isUnsafeUnknown ? "warn" : rawStatus;
+
+  // Udtræk E-numre fra ingredienstekst
+  const ingredientsText = product.ingredients || data?.ingredients?.raw_text || product.ingredients_text || "";
+  const productENumbers = extractENumbers(ingredientsText);
+  const { matched: matchedENumbers } = compareENumbers(productENumbers, activeENumbers);
+
+  const flagList = [
+    ...matchedDanger.map(id => ({ type:"bad", text:`Indeholder ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
+    ...matchedWarning.map(id => ({ type:"maybe", text:`Kan indeholde spor af ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
+    ...(hasUnknown ? [{ type:"maybe", text:"Visse allergener er ukendte — tjek altid pakken" }] : []),
+    ...(matchedDanger.length===0 && matchedWarning.length===0 && !hasUnknown ? [{ type:"good", text:"Ingen af dine allergener fundet" }] : []),
+    ...(matchedENumbers.length > 0 ? [{ type:"maybe", text:`Indeholder overvågede E-numre: ${matchedENumbers.join(", ")}` }] : []),
+  ];
+  const headlines = { safe:"Sikkert produkt", danger:"Indeholder allergen", warn: isUnsafeUnknown ? "Kan ikke bekræftes sikkert" : "Mulige spor" };
+  const summaries = {
+    safe:"Ingen af dine registrerede allergener er fundet i dette produkt.",
+    danger:`Produktet indeholder ${matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
+    warn: isUnsafeUnknown
+      ? "Vi mangler data for ét eller flere af dine allergener i dette produkt — tjek selv emballagen før du spiser det."
+      : `Produktet kan indeholde spor af ${matchedWarning.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
+  };
+  const familyImpact = [];
+  if (family.length > 0) {
+    for (const member of family.filter(m => activeProfiles.includes(m.id))) {
+      const memberResult = compareAllergens(flags, member.allergens || []);
+      if (memberResult.matchedDanger.length > 0 || memberResult.matchedWarning.length > 0) {
+        familyImpact.push({ name:member.name, color:member.color, danger:memberResult.matchedDanger, warning:memberResult.matchedWarning });
+      }
+    }
+  }
+  return {
+    code: ean.trim(), name: product.name || "Ukendt produkt", brand: product.brand || "",
+    variant_label: variantLabel,
+    image_url: product.image_url || null, category: product.category || null,
+    ingredients: ingredientsText,
+    productENumbers,
+    nutrition: product.nutrition || data?.nutrition || null,
+    verified_status: product.verified_status || "unverified", source: product.source || data?.source,
+    status, headline: headlines[status], summary: summaries[status],
+    flags: flagList, allergen_flags: flags, matchedDanger, matchedWarning, matchedENumbers, familyImpact, hasUnknown,
+    timestamp: Date.now(),
+  };
+}
+
+export function withCustomAllergenMatch(result, customTerms) {
   const customMatches = matchCustomAllergens(result.ingredients, customTerms);
   if (customMatches.length === 0) return result;
   const alreadyDanger = result.status === "danger";
@@ -36,6 +98,37 @@ function withCustomAllergenMatch(result, customTerms) {
     flags: [...customFlags, ...result.flags],
     customAllergenMatches: customMatches,
   };
+}
+
+// ── Simuleret scan (Fase 7b.2) ────────────────────────────────────────────
+// Statisk demo-produkt til "Prøv en demo-scanning"-knappen på HOME. Kører
+// gennem PRÆCIS samme beregningslogik som et rigtigt scan
+// (buildScanResultFromProductData + withCustomAllergenMatch) — kun selve
+// produkt-opslaget (netværk, cache, historik-gemning) er sprunget over.
+// Det gør demoen personlig (matcher brugerens faktiske aktive allergener)
+// og øjeblikkelig (ingen netværksventetid).
+const DEMO_PRODUCT = {
+  variant_label: null,
+  name: "Nøddechokolade-creme", brand: "Demo-produkt",
+  category: "Chokolade", image_url: null,
+  ingredients: "Sukker, palmeolie, HASSELNØDDER 13%, skummetmælkspulver, VALLE, æggeblomme, emulgator: lecithiner (SOJA), vanillin.",
+  allergen_flags: {
+    gluten:"no", laktose:"yes", aeg:"yes",
+    noedder:"yes", jordnoedder:"no", soja:"traces",
+    fisk:"no", skaldyr:"no", selleri:"no",
+    sennep:"no", sesam:"no", svovl:"no",
+    lupin:"no", bloeddyr:"no",
+  },
+  nutrition: { energy_kcal:539, fat:30.9, saturated_fat:10.6, carbohydrates:57.5, sugars:56.3, fiber:3.4, protein:6.3, salt:0.11 },
+  verified_status: "verified", source: "demo",
+};
+
+export function buildDemoScanResult({ activeIds, activeCustom, activeENumbers, family, activeProfiles }) {
+  const result = buildScanResultFromProductData({
+    product: DEMO_PRODUCT, data: {}, ean: "demo-0000000000",
+    activeIds, activeENumbers: activeENumbers || [], family: family || [], activeProfiles: activeProfiles || [],
+  });
+  return { ...withCustomAllergenMatch(result, activeCustom || []), isDemo: true };
 }
 
 // ── Scan-opslag: hele scan-resultat-pipelinen (EAN-opslag, allergen-
@@ -143,57 +236,7 @@ export async function runLookupProduct(ean, ctx) {
       } catch { /* Brug variant-data som fallback */ }
     }
 
-    const flags = product.allergen_flags || data.allergen_flags || {};
-    const { status: rawStatus, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(flags, activeIds);
-    // Data mangler for ét eller flere af dine allergener ("unknown"-felter) — vis
-    // det IKKE som et trygt grønt "sikkert produkt". Uden dette nedgraderes en
-    // reel datamangel aldrig til noget brugeren faktisk ser (fundet ved en
-    // sikkerhedsgennemgang: samme UI blev vist for "bekræftet sikkert" og
-    // "vi ved det faktisk ikke").
-    const isUnsafeUnknown = rawStatus === "safe" && hasUnknown;
-    const status = isUnsafeUnknown ? "warn" : rawStatus;
-
-    // Udtræk E-numre fra ingredienstekst
-    const ingredientsText = product.ingredients || data.ingredients?.raw_text || product.ingredients_text || "";
-    const productENumbers = extractENumbers(ingredientsText);
-    const { matched: matchedENumbers } = compareENumbers(productENumbers, activeENumbers);
-
-    const flagList = [
-      ...matchedDanger.map(id => ({ type:"bad", text:`Indeholder ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
-      ...matchedWarning.map(id => ({ type:"maybe", text:`Kan indeholde spor af ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
-      ...(hasUnknown ? [{ type:"maybe", text:"Visse allergener er ukendte — tjek altid pakken" }] : []),
-      ...(matchedDanger.length===0 && matchedWarning.length===0 && !hasUnknown ? [{ type:"good", text:"Ingen af dine allergener fundet" }] : []),
-      ...(matchedENumbers.length > 0 ? [{ type:"maybe", text:`Indeholder overvågede E-numre: ${matchedENumbers.join(", ")}` }] : []),
-    ];
-    const headlines = { safe:"Sikkert produkt", danger:"Indeholder allergen", warn: isUnsafeUnknown ? "Kan ikke bekræftes sikkert" : "Mulige spor" };
-    const summaries = {
-      safe:"Ingen af dine registrerede allergener er fundet i dette produkt.",
-      danger:`Produktet indeholder ${matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
-      warn: isUnsafeUnknown
-        ? "Vi mangler data for ét eller flere af dine allergener i dette produkt — tjek selv emballagen før du spiser det."
-        : `Produktet kan indeholde spor af ${matchedWarning.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
-    };
-    const familyImpact = [];
-    if (family.length > 0) {
-      for (const member of family.filter(m => activeProfiles.includes(m.id))) {
-        const memberResult = compareAllergens(flags, member.allergens || []);
-        if (memberResult.matchedDanger.length > 0 || memberResult.matchedWarning.length > 0) {
-          familyImpact.push({ name:member.name, color:member.color, danger:memberResult.matchedDanger, warning:memberResult.matchedWarning });
-        }
-      }
-    }
-    const result = {
-      code: ean.trim(), name: product.name || "Ukendt produkt", brand: product.brand || "",
-      variant_label: variantLabel,
-      image_url: product.image_url || null, category: product.category || null,
-      ingredients: ingredientsText,
-      productENumbers,
-      nutrition: product.nutrition || data.nutrition || null,
-      verified_status: product.verified_status || "unverified", source: product.source || data.source,
-      status, headline: headlines[status], summary: summaries[status],
-      flags: flagList, allergen_flags: flags, matchedDanger, matchedWarning, matchedENumbers, familyImpact, hasUnknown,
-      timestamp: Date.now(),
-    };
+    const result = buildScanResultFromProductData({ product, data, ean, activeIds, activeENumbers, family, activeProfiles });
     productCacheRef.current[ean.trim()] = result;
     saveToOfflineCache(ean.trim(), result);
     const cacheKeys = Object.keys(productCacheRef.current);

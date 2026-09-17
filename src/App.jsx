@@ -46,7 +46,7 @@ import { useOnboarding } from './useOnboarding.js';
 import { useAdmin } from './useAdmin.js';
 import { useScanner } from './useScanner.js';
 import { useRecipes } from './useRecipes.js';
-import { useProduct, runLookupProduct } from './useProduct.js';
+import { useProduct, runLookupProduct, buildDemoScanResult } from './useProduct.js';
 import { useMadpas } from './useMadpas.js';
 import { useSearch } from './useSearch.js';
 import { useAlternatives } from './useAlternatives.js';
@@ -640,6 +640,17 @@ export default function EatSafe() {
        setProductImagePreview, setProductImageBase64]);
   lookupProductRef.current = lookupProduct;
 
+  // ── Simuleret scan (Fase 7b.2) — "Prøv en demo-scanning" på HOME ────────
+  // Ingen netværk, ingen historik-gemning — kører kun gennem den delte
+  // resultat-beregning (buildDemoScanResult), så resultatet er personligt
+  // (matcher brugerens rigtige aktive allergener) uden at røre rigtige data.
+  const runDemoScan = useCallback(() => {
+    const result = buildDemoScanResult({ activeIds, activeCustom, activeENumbers, family, activeProfiles });
+    setScanResult(result);
+    setScreen(SCREENS.RESULT);
+    if (navigator.vibrate) navigator.vibrate(25);
+  }, [activeIds, activeCustom, activeENumbers, family, activeProfiles, setScanResult, setScreen]);
+
   // ── COMPUTED (afhænger af hooks) ─────────────────────────────────────────
   const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
   const mpAllergens = madpasActiveProfile ? (madpasActiveProfile.allergens || []) : allergens;
@@ -972,6 +983,7 @@ export default function EatSafe() {
             setKnowledgeSlug={setKnowledgeSlug}
             buildLabel={formatBuildTime()}
             lookupProduct={lookupProduct}
+            runDemoScan={runDemoScan}
             selectedENumbers={selectedENumbers}
             activeIds={activeIds}
             activeENumbers={activeENumbers}

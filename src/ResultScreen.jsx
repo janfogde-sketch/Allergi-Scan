@@ -464,6 +464,14 @@ export default function ResultScreen({
   return (
     <div className="screen fade-in">
 
+      {/* Demo-banner — kun for "Prøv en demo-scanning" på HOME, aldrig et rigtigt scan */}
+      {scanResult.isDemo && (
+        <div style={{ display:"flex", alignItems:"center", gap:8, background:"var(--blue-lt)", border:"1px solid var(--blue-md)", borderRadius:10, padding:"8px 12px", marginBottom:10 }}>
+          <Icon name="zap" size={13} color="var(--blue)" />
+          <span style={{ fontSize:11, fontWeight:700, color:"var(--blue)" }}>Demo — dette er ikke et rigtigt scan, men viser hvordan resultatet ser ud for dig</span>
+        </div>
+      )}
+
       {/* ── 1. PRODUKT — verdikten sidder nu som en ramme + strimmel på selve kortet ── */}
       {renderProductHero()}
 
@@ -579,13 +587,16 @@ export default function ResultScreen({
       )}
       {scanResult.nutrition && renderNutrition()}
 
-      {/* ── 7. RET DATA — mindre vigtig handling, holdt nederst ── */}
-      <div style={UI.mb10}>
-        <button className="btn btn-outline btn-sm btn-full"
-          onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients||""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
-          Ret forkerte data
-        </button>
-      </div>
+      {/* ── 7. RET DATA — mindre vigtig handling, holdt nederst. Ikke relevant
+          for demo-scanningen, som ikke er et rigtigt produkt i databasen. ── */}
+      {!scanResult.isDemo && (
+        <div style={UI.mb10}>
+          <button className="btn btn-outline btn-sm btn-full"
+            onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients||""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
+            Ret forkerte data
+          </button>
+        </div>
+      )}
 
     </div>
   );
