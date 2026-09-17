@@ -1,3 +1,46 @@
+# ✅ 17. sept. 2026 — users og feedback_tickets: policies navngivet "admin" gav reelt alle authenticated-brugere adgang
+
+Fundet under samme "Gennemgå de 66"-performance-review som family_invites-
+fundet ovenfor, ved at læse den faktiske `qual`-SQL for hver policy i stedet
+for kun at stole på policy-navnet.
+
+**`users`:** policyen `"Brugere kan læse alle profiler"` havde `qual = true`
+— dvs. enhver logget ind bruger (ikke kun admins, trods de øvrige policy-
+navne der antydede "egen profil"/admin-only) kunne læse ALLE andre brugeres
+fulde profilrække, inklusive `email`, `phone`, `birth_year`, `gender`,
+`diets`. `"Admin kan læse alle profiler"` var samtidig dødt kode — den
+tjekkede `auth.jwt()->>'role' = 'service_role'`, hvilket aldrig er sandt for
+en almindelig `authenticated`-forespørgsel (service-role-kald omgår RLS
+helt og bruger aldrig denne policy-vej).
+
+**`feedback_tickets`:** `"Admin kan læse alle tickets"` og `"Admin kan
+opdatere tickets"` havde begge `qual = true` — enhver logget ind bruger,
+ikke kun admins, kunne læse og ændre alle andre brugeres feedback-tickets
+(som kan indeholde personlige beskeder).
+
+**Rettet:** begge tabellers SELECT/UPDATE-policies konsolideret til reelt at
+bruge den eksisterende `is_admin()`-funktion (`SECURITY DEFINER`, undgår
+RLS-rekursion) — `users`: egen profil ELLER admin; `feedback_tickets`:
+SELECT egne tickets ELLER admin, UPDATE kun admin. Verificeret at ingen
+frontend- eller Edge Function-kald afhang af den brede adgang: alle
+frontend-kald til `/rest/v1/users` læser enten egen `id` eller er i
+admin-gated skærme (`useAdmin.js`, `AdminUserDetailSheet.jsx`); de eneste
+steder der læser FLERE brugeres `users`-rækker på tværs
+(`family/index.ts`, `shopping/index.ts`) bruger Edge Functions'
+service-role-klient og omgår RLS helt, så de er upåvirkede. Build + 98/98
+tests grønne (ingen frontend-filer ændret).
+
+**Lektion (udvider family_invites-lektionen ovenfor):** et policy-navn er
+ikke dokumentation — læs altid den faktiske `qual`/`with_check`-SQL. Et
+navn som "Admin kan X" beskytter intet i sig selv, hvis udtrykket er
+`true`. Dette mønster (navngivet restriktivt, implementeret som `true`)
+optrådte to gange i denne ene gennemgang — værd at grep-tjekke resten af
+skemaet for `qual = 'true'` eller `with_check = 'true'` på policies der
+IKKE bevidst er ment som offentlige/anonyme (fx `products`/`knowledge_base`s
+"Alle kan læse ..."-policies, som er korrekt navngivet og tilsigtet åbne).
+
+---
+
 # ✅ 17. sept. 2026 — Token-enumering i family_invites lukket (fundet under "Gennemgå de 66"-performance-review)
 
 Fundet ved en rutinemæssig gennemgang af Supabases 66
