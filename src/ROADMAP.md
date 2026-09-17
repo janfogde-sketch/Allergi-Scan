@@ -70,13 +70,13 @@ Fase 0 (kritiske fixes), 1 (datavækst), 2 (design), 3 (arkitektur),
 
 ---
 
-## Fase 12 — Engagement & push-notifikationer 🔲 NÆSTE
+## ✅ FULDFØRT — Fase 12 — Engagement & push-notifikationer
 
 | # | Opgave | Prioritet | Note |
 |---|--------|-----------|------|
-| 12.1 | Push-notifikation ved godkendt indsendelse | 🔴 | Kræver push_tokens tabel + Edge Function + Web Push API |
-| 12.2 | Ugentlig admin-digest email | 🟡 | "X indsendelser afventer godkendelse" |
-| 12.3 | Scanning-streak / gamification | 🟢 | Lav prioritet |
+| 12.1 | Push-notifikation ved godkendt indsendelse | ✅ | Var allerede implementeret (fundet 17. sept. 2026 — roadmap var stale) — se `updateSubmissionAndApprove` i `useAdmin.js`: push til indsender + alle der har scannet EAN'et og fået NOTFOUND |
+| 12.2 | Ugentlig admin-digest email | ✅ | 17. sept. 2026 — ny `admin-digest` Edge Function, pg_cron mandag 08:00 UTC. Kun sendt hvis der reelt er afventende indsendelser eller åbne tickets. `send-email` udvidet med `type:"raw"` for at kunne sende dynamisk indhold uden en Resend-skabelon. Testet end-to-end (tomt scenarie + rigtig afsendelse) |
+| 12.3 | Scanning-streak / gamification | ✅ | Var allerede implementeret (fundet 17. sept. 2026 — roadmap var stale) — `renderStreakBadge()` i `ScannerScreen.jsx`, flamme-badge på HOME ved 2+ dages stribe |
 
 ---
 
