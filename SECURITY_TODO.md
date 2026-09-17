@@ -1,3 +1,31 @@
+# ✅ 17. sept. 2026 — recipes' fremmednøgler mod auth.users manglede også en ON DELETE-regel
+
+Opdaget under en manuel oprydning af 7 test-brugere direkte i Supabase (se
+afsnittet nedenfor for den oprindelige `public.users`-fejl). Da brugere
+slettet direkte fra `public.users` IKKE automatisk sletter den tilhørende
+`auth.users`-række (det kræver Admin API'et, `auth.admin.deleteUser()`, som
+kun `delete-user` Edge Function kalder), stod de 7 konti tilbage i
+`auth.users` og blokerede gensignup på samme email ("Denne email er
+allerede registreret"). De blev slettet manuelt fra `auth.users` — men det
+afslørede at `recipes.submitted_by` og `recipes.reviewed_by` referencer
+`auth.users` DIREKTE (ikke `public.users`, i modsætning til stort set alle
+andre tabeller) med `NO ACTION` og ingen oprydning nogen steder.
+
+**Reel konsekvens:** `delete-user` Edge Function'en (app'ens rigtige "Slet
+konto"-flow) rører kun `public.*`-tabeller og slutter med
+`supabase.auth.admin.deleteUser(uid)` — den ville fejle på PRÆCIS samme
+måde for enhver bruger der nogensinde har indsendt eller fået godkendt en
+opskrift, uden nogen af `delete-user`s egne oprydningstrin kunne forhindre
+det (ingen af dem rører `recipes`). Kontosletning ville simpelthen fejle
+uden en oplagt årsag i fejlbeskeden.
+
+Rettet: begge sat til `ON DELETE SET NULL` (verificeret nullable først).
+Ingen af de 7 slettede test-konti havde faktisk nogen `recipes`-rækker, så
+selve oprydningen krævede ikke denne rettelse — men den lukker et reelt,
+tidligere udækket hul i selve kontosletnings-flowet.
+
+---
+
 # ✅ 17. sept. 2026 — Manglende ON DELETE-regler på users-fremmednøgler rettet
 
 Fundet ved at brugeren forsøgte at slette test-brugere direkte i Supabase
