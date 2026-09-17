@@ -11,7 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { runLookupProduct } from "./useProduct.js";
+import { runLookupProduct, buildDemoScanResult } from "./useProduct.js";
 import { SCREENS } from "./constants.jsx";
 
 function jsonResponse(body, ok = true) {
@@ -105,6 +105,34 @@ describe("runLookupProduct — network not-found path", () => {
     expect(ctx.setNotFoundStep).toHaveBeenCalledWith(1);
     expect(ctx.setLoading).toHaveBeenLastCalledWith(false);
   }, 10000);
+});
+
+describe("buildDemoScanResult — 'Prøv en demo-scanning' (Fase 7b.2)", () => {
+  // Demo-produktet indeholder laktose+nødder (yes) og soja (traces) — bruges
+  // til at bekræfte at demoen kører gennem den RIGTIGE beregningslogik
+  // (samme funktion som et ægte scan), i stedet for en separat, potentielt
+  // afvigende kopi.
+  it("marks the result as isDemo and matches the user's own active allergens (danger)", () => {
+    const result = buildDemoScanResult({ activeIds: ["laktose"], activeCustom: [], activeENumbers: [], family: [], activeProfiles: ["me"] });
+
+    expect(result.isDemo).toBe(true);
+    expect(result.status).toBe("danger");
+    expect(result.matchedDanger).toContain("laktose");
+  });
+
+  it("returns safe when none of the user's active allergens match", () => {
+    const result = buildDemoScanResult({ activeIds: ["fisk"], activeCustom: [], activeENumbers: [], family: [], activeProfiles: ["me"] });
+
+    expect(result.status).toBe("safe");
+    expect(result.matchedDanger).toEqual([]);
+  });
+
+  it("still escalates on a custom allergen match, same as a real scan", () => {
+    const result = buildDemoScanResult({ activeIds: [], activeCustom: ["Vanillin"], activeENumbers: [], family: [], activeProfiles: ["me"] });
+
+    expect(result.status).toBe("danger");
+    expect(result.customAllergenMatches).toEqual(["Vanillin"]);
+  });
 });
 
 describe("runLookupProduct — overlapping-scan race guard", () => {

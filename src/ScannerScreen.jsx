@@ -183,6 +183,7 @@ export default function ScannerScreen({
   buildLabel,
   lookupProduct,
   onBetaClick,
+  runDemoScan,
   alternatives,
   altLoading,
 }) {
@@ -434,6 +435,17 @@ export default function ScannerScreen({
               </div>
               )}
             </div>}
+
+            {/* Simuleret scan — prøv appen uden en rigtig stregkode ("Fase 7b.2") */}
+            {!!userId && !cameraActive && (
+              <button onClick={runDemoScan}
+                style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                  width:"100%", padding:"12px 14px", marginBottom:14,
+                  background:"var(--surface)", border:"1px dashed var(--border2)", borderRadius:14,
+                  fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                <Icon name="zap" size={15} color="var(--blue)" /> Prøv en demo-scanning
+              </button>
+            )}
 
             {/* Fejlbesked + Manuel EAN — kun til loggede */}
             {!!userId && <>
