@@ -62,7 +62,7 @@ export const buildScreenLabel = ({
   const labels = {
     [SCREENS.WELCOME]:      "Velkomstskærm",
     [SCREENS.LOGIN]:        `Login / Opret konto (fane: ${authTab === "login" ? "Log ind" : "Ny bruger"})`,
-    [SCREENS.ONBOARD]:      `Onboarding — trin ${onboardStep} af 7`,
+    [SCREENS.ONBOARD]:      `Onboarding — trin ${onboardStep} af 6`,
     [SCREENS.HOME]:         "Hjemskærm",
     [SCREENS.SEARCH]:       "Søg produkter",
     [SCREENS.LIST]:         "Indkøbsliste",

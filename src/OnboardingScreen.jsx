@@ -397,49 +397,6 @@ export default function OnboardingScreen({
               </div>
             </div>
 
-            {/* ── TRIN 0: Beta-information ── */}
-            {onboardStep === 0 && (
-              <div className="fade-in">
-                <div className="card" style={{ textAlign:"center", padding:"28px 20px 20px" }}>
-                  <div style={UI.ufs52_mb16}>🧪</div>
-                  <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", marginBottom:10, letterSpacing:"-.3px" }}>
-                    Velkommen til EatSafe Beta
-                  </div>
-                  <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.7, marginBottom:20, textAlign:"left" }}>
-                    Du er en af de første til at prøve EatSafe. Appen er stadig under udvikling, og vi har brug for din hjælp.
-                  </div>
-
-                  <div style={{ display:"flex", flexDirection:"column", gap:12, textAlign:"left", marginBottom:20 }}>
-                    <div style={UI.udflex_g10_aiflexstar}>
-                      <span style={UI.fs20Shrink0}><Icon name="message" size={18} color="var(--ink2)" /></span>
-                      <div>
-                        <div style={UI.boldInk13mb2}>Giv os feedback</div>
-                        <div style={UI.muted2_12lh}>Tryk på Feedback-knappen når du støder på fejl eller har idéer. Vi læser alt.</div>
-                      </div>
-                    </div>
-                    <div style={UI.udflex_g10_aiflexstar}>
-                      <span style={UI.fs20Shrink0}><Icon name="info" size={18} color="var(--ink2)" /></span>
-                      <div>
-                        <div style={UI.boldInk13mb2}>Brug hjælp-knappen</div>
-                        <div style={UI.muted2_12lh}>Tryk på ? øverst for en guide til den skærm du står på.</div>
-                      </div>
-                    </div>
-                    <div style={UI.udflex_g10_aiflexstar}>
-                      <span style={UI.fs20Shrink0}><Icon name="warning" size={18} color="var(--amber)" /></span>
-                      <div>
-                        <div style={UI.boldInk13mb2}>Tjek altid emballagen</div>
-                        <div style={UI.muted2_12lh}>Allergendata kan mangle eller være ukorrekte. Appen er et hjælpeværktøj, ikke en garanti.</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <button className="btn btn-primary btn-full" style={{ marginTop:14 }}
-                  onClick={() => setOnboardStep(1)}>
-                  Forstået — kom i gang →
-                </button>
-              </div>
-            )}
-
             {/* ── TRIN 1: Din profil (obligatorisk) ── */}
             {onboardStep === 1 && renderStep1()}
 

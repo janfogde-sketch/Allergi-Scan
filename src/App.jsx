@@ -168,7 +168,7 @@ export default function EatSafe() {
     authTab, setAuthTab, isOAuth, setIsOAuth,
     saveTokens, clearAuth, handleLogin, handleSignup, handleOAuth,
   } = useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
-                onSignupSuccess: () => setOnboardStep(0) });
+                onSignupSuccess: () => setOnboardStep(1) });
 
   const {
     lists, activeList, activeListId, setActiveListId,
