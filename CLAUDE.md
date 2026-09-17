@@ -21,10 +21,15 @@ rapportens 3 forslag er implementeret og merget (se afsnit "Rescue-audit —
 status" nedenfor for fuld detalje). Af de fire punkter nedenfor (fra
 16. sept.) er tre nu afklaret/gennemført samme dag brugeren gav go:
 
-1. **Leaked Password Protection** — **stadig åben.** Skal aktiveres manuelt
-   af brugeren i Supabase Dashboard → Authentication → Policies. Intet
-   tilgængeligt værktøj kan ændre denne indstilling. Spørg om det er gjort;
-   hvis ikke, mind om det igen.
+1. **Leaked Password Protection** — **blokeret, ikke bare glemt.** Brugeren
+   forsøgte at slå den til 17. sept. i Supabase Dashboard → Authentication →
+   Sign In/Providers, men fik fejlen "Configuring leaked password protection
+   via HaveIBeenPwned.org is available on Pro Plans and up" — projektet
+   kører på Free-planen. Kræver altså en betalt opgradering til Supabase
+   Pro-planen (~$25/md, medfølger også bl.a. daglige backups og længere
+   log-retention), ikke bare en toggle. **Spørg IKKE længere om det bare er
+   glemt** — spørg i stedet om brugeren ønsker at opgradere Supabase-planen,
+   og lad det være deres beslutning.
 2. ✅ **`npm audit fix --force`** — kørt 17. sept. Opgraderede vite 5→8,
    vitest 2→5, og `@vitejs/plugin-react` 4→6 (nødvendig følgeopgradering).
    0 sårbarheder tilbage. Build + alle 95 tests grønne.
