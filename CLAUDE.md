@@ -16,41 +16,21 @@
 
 ## 0. Topprioritet til næste session (opdateret 17. sept. 2026)
 
-Rescue-audittets fulde 4-fase-roadmap samt Claude Code Setup Audit-
-rapportens 3 forslag er implementeret og merget (se afsnit "Rescue-audit —
-status" nedenfor for fuld detalje). Af de fire punkter nedenfor (fra
-16. sept.) er tre nu afklaret/gennemført samme dag brugeren gav go:
+Rescue-audittets fulde 4-fase-roadmap, Claude Code Setup Audit-rapportens 3
+forslag, og alle "16. sept."-opfølgningspunkter (npm audit fix --force,
+RLS-performance-advisories, tredjeparts audit-skills, AdminScreen.jsx/
+App.jsx-opsplitningen) er nu implementeret og merget — se "Rescue-audit —
+status" nedenfor for fuld detalje.
 
-1. **Leaked Password Protection** — **blokeret, ikke bare glemt.** Brugeren
-   forsøgte at slå den til 17. sept. i Supabase Dashboard → Authentication →
-   Sign In/Providers, men fik fejlen "Configuring leaked password protection
-   via HaveIBeenPwned.org is available on Pro Plans and up" — projektet
-   kører på Free-planen. Kræver altså en betalt opgradering til Supabase
-   Pro-planen (~$25/md, medfølger også bl.a. daglige backups og længere
-   log-retention), ikke bare en toggle. **Spørg IKKE længere om det bare er
-   glemt** — spørg i stedet om brugeren ønsker at opgradere Supabase-planen,
-   og lad det være deres beslutning.
-2. ✅ **`npm audit fix --force`** — kørt 17. sept. Opgraderede vite 5→8,
-   vitest 2→5, og `@vitejs/plugin-react` 4→6 (nødvendig følgeopgradering).
-   0 sårbarheder tilbage. Build + alle 95 tests grønne.
-3. **De bevidst udskudte Fase 4-punkter**:
-   - ✅ **RLS-performance-advisories** — gennemført 17. sept. direkte mod
-     Supabase (ingen kodeændring i repoet). Se `SECURITY_TODO.md`s
-     "17. sept. 2026"-afsnit for fuld detalje: `auth_rls_initplan` (94
-     policies), `unindexed_foreign_keys` (28), `no_primary_key`
-     (`products_backup`) alle rettet. `multiple_permissive_policies` (66)
-     og `unused_index` bevidst IKKE rørt — kræver per-tabel gennemgang.
-   - **AdminScreen.jsx-opsplitning** (1509 linjer) og **udtræk af
-     inline-features fra App.jsx** (1338 linjer) — **stadig åbne.** Vurderet
-     for store/risikable til at tage uden dedikeret gennemgang i denne
-     omgang. Spørg brugeren om de skal tages som en ny, isoleret opgave.
-4. ✅ **Tredjeparts audit-skills** (`eval-rules`, `eval-skills`,
-   `audit-agents-skills` fra `FlorianBruniaux/claude-code-ultimate-guide`)
-   — installeret 17. sept. i `.claude/skills/`.
-
-Fjern dette afsnit (eller marker de sidste punkter som løst) når AdminScreen/
-App.jsx-opsplitningen og Leaked Password Protection også er afklaret, så det
-ikke bare akkumulerer som endnu en glemt logbog-sektion.
+**Eneste resterende punkt: Leaked Password Protection er blokeret, ikke
+glemt.** Brugeren forsøgte at slå den til 17. sept. i Supabase Dashboard →
+Authentication → Sign In/Providers, men fik fejlen "Configuring leaked
+password protection via HaveIBeenPwned.org is available on Pro Plans and
+up" — projektet kører på Free-planen. Kræver en betalt opgradering til
+Supabase Pro-planen (~$25/md, medfølger også bl.a. daglige backups og
+længere log-retention). **Spørg IKKE om det bare er glemt** — spørg i
+stedet om brugeren ønsker at opgradere Supabase-planen, og lad det være
+deres beslutning. Fjern dette afsnit når det er afklaret.
 
 ---
 
@@ -141,6 +121,20 @@ siddende fast på viewporten. **Løsning:** render den slags overlays via
 4. Ingen React hooks i betinget kode eller loops — altid øverst i komponenten
 5. Logik hører til i dedikerede hooks (`useXxx.js`), ikke inlinet i App.jsx
 6. `ScannerScreen.jsx` er både HOME-skærmen og en lille intern router
+
+**AdminScreen.jsx-opsplitning (17. sept. 2026):** var vokset til 1509 linjer
+i én fil — splittet op i `AdminScreen.jsx` (nu kun fane-bar + router, ~280
+linjer) der renderer én sektions-komponent pr. admin-fane:
+`AdminDashboardSection`, `AdminUsersSection` (+ `AdminUserDetailSheet`),
+`AdminSubmissionsSection` (+ navngivet export `AdminSubmissionReview`),
+`AdminTicketsSection` (+ `AdminTicketDetailSheet`), `AdminMissingSection`,
+`AdminImportSection`, `AdminDebugSection`, `AdminRecipesSection`. Følg
+samme mønster hvis en anden skærm vokser sig for stor: bryd op i
+`<ScreenNavn><Sektion>Section.jsx`-filer, der modtager alt som props —
+skærmens hovedfil beholder kun routing/fane-state. Samtidig blev App.jsx's
+tre resterende inline-modaler udtrukket til `HelpModal.jsx`,
+`BetaIntroModal.jsx`, `DeleteAccountModal.jsx` (App.jsx: 1338 → 1108
+linjer — resten er hooks/contexts/effects, ikke JSX til at udtrække).
 
 ### Delte komponenter (`SharedComponents.jsx`)
 
