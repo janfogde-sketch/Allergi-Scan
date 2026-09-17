@@ -299,14 +299,21 @@ export default function EatSafe() {
     // Accepter invitation via RPC
     const acceptInvite = async () => {
       try {
-        // Hent invited_by inden accept så vi kan sende push
+        // Hent invited_by inden accept så vi kan sende push — via
+        // get_invite_preview()-RPC'en, ikke en direkte tabel-læsning (se
+        // RPC'ens egen kommentar: en bred SELECT-policy på family_invites
+        // ville lade enhver dumpe alle aktive invitations-tokens).
         let invitedBy = null;
         try {
           const inviteData = await apiCall(
-            `${SUPABASE_URL}/rest/v1/family_invites?token=eq.${inviteToken}&select=invited_by`,
-            { headers: makeHeaders(accessToken) }
+            `${SUPABASE_URL}/rest/v1/rpc/get_invite_preview`,
+            {
+              method: "POST",
+              headers: makeHeaders(accessToken),
+              body: JSON.stringify({ p_token: inviteToken }),
+            }
           );
-          invitedBy = Array.isArray(inviteData) ? inviteData[0]?.invited_by : null;
+          invitedBy = inviteData?.found ? inviteData.invited_by : null;
         } catch { /* silent */ }
 
         const data = await apiCall(

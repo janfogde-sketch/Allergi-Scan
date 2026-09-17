@@ -89,15 +89,23 @@
         return;
       }
 
-      // Tjek om token eksisterer og er gyldigt
+      // Tjek om token eksisterer og er gyldigt — via get_invite_preview()-RPC'en
+      // (SECURITY DEFINER), IKKE en direkte tabel-læsning. En bred SELECT-policy
+      // ville lade enhver dumpe ALLE aktive invitations-tokens på tværs af hele
+      // appen; RPC'en returnerer kun den ene invitation der matcher det token
+      // man rent faktisk har.
       try {
         const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/family_invites?token=eq.${token}&select=status,expires_at,invited_by`,
-          { headers: { "apikey": SUPABASE_ANON_KEY } }
+          `${SUPABASE_URL}/rest/v1/rpc/get_invite_preview`,
+          {
+            method: "POST",
+            headers: { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+            body: JSON.stringify({ p_token: token }),
+          }
         );
         const data = await res.json();
 
-        if (!Array.isArray(data) || data.length === 0) {
+        if (!data?.found) {
           show(`
             <div class="icon">❌</div>
             <h1>Ugyldigt link</h1>
@@ -107,7 +115,7 @@
           return;
         }
 
-        const invite = data[0];
+        const invite = data;
         if (invite.status === "accepted") {
           show(`
             <div class="icon">✅</div>
