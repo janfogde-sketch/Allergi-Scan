@@ -220,6 +220,4 @@ begrundelse.
 | Punkt | Note |
 |-------|------|
 | hej@eatsafe.dk | Oprettes hos One.com inden beta |
-| Leksikon 1000+ entries | Planlagt — separat session |
-| Push-notifikationer (12.1) | Fase 12 — næste session |
-| SubmittedScreen.jsx | Skal pushes til GitHub repo |
+| Leksikon 1000+ entries | Planlagt — separat session (pt. ~700 entries) |
