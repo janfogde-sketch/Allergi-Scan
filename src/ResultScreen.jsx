@@ -8,7 +8,6 @@ import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
-import { useFoodWaste } from "./useFoodWaste.js";
 import { UI } from "./styleUtils.js";
 
 const S = {
@@ -39,11 +38,9 @@ export default function ResultScreen({
   const { lists, activeListId, addToList } = useShoppingContext();
   const [addedToList, setAddedToList] = React.useState(false);
   const [showListPicker, setShowListPicker] = React.useState(false);
-  const { matches: foodWasteMatches, loading: foodWasteLoading, checked: foodWasteChecked,
-          error: foodWasteError, checkFoodWaste, resetFoodWaste } = useFoodWaste({ accessToken });
   // Nulstil "tilføjet"-kvitteringen når man ser et nyt produkt — ResultScreen
   // forbliver monteret på tværs af scanninger, kun scanResult skifter.
-  React.useEffect(() => { setAddedToList(false); setShowListPicker(false); resetFoodWaste(); }, [scanResult?.code]);
+  React.useEffect(() => { setAddedToList(false); setShowListPicker(false); }, [scanResult?.code]);
   if (!scanResult) return null;
 
   const handleAddToList = () => {
@@ -486,64 +483,7 @@ export default function ResultScreen({
         <ListPickerSheet lists={lists} onChoose={chooseListForAdd} onCancel={() => setShowListPicker(false)} />
       )}
 
-      {/* ── 1b. MADSPILD-TILBUD (PROTOTYPE, 17. sept. 2026) ──
-          Tjekker om produktet er nedsat pga. udløb i en nærliggende Netto/
-          Føtex/Bilka via Salling Groups officielle Anti Food Waste-API.
-          Skjules helt hvis SALLING_API_TOKEN ikke er sat op endnu (Edge
-          Function svarer da med error="not_configured"). ── */}
-      {foodWasteError !== "not_configured" && (
-        <div style={UI.mb10}>
-          {!foodWasteChecked && !foodWasteLoading && (
-            <button
-              onClick={() => checkFoodWaste(scanResult.code)}
-              style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, width:"100%",
-                       padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)",
-                       borderRadius:12, fontSize:13, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
-              <Icon name="tag" size={15} color="var(--blue)" /> Tjek for tilbud i nærheden
-            </button>
-          )}
-          {foodWasteLoading && (
-            <div style={UI.udflex_aicenter_g10_p12px14px_bgsurface_bd1pxsolid_br12}>
-              <div style={UI.uw16_h16_bd2pxsolid_borgreen_br50_anspin7sli_shr0} />
-              <div style={UI.muted13}>Tjekker for tilbud i nærheden…</div>
-            </div>
-          )}
-          {foodWasteChecked && !foodWasteLoading && foodWasteMatches.length > 0 && (
-            <div style={{ background:"var(--blue-lt)", border:"1px solid var(--blue-md)", borderRadius:14, padding:"14px 16px" }}>
-              <div style={UI.udflex_aicenter_g8_mb12}>
-                <Icon name="tag" size={18} color="var(--blue)" />
-                <div>
-                  <div style={{ fontSize:13, fontWeight:800, color:"var(--blue)" }}>Nedsat pga. udløb i nærheden</div>
-                  <div style={UI.muted11mt1}>Kilde: Salling Groups Anti Food Waste-data</div>
-                </div>
-              </div>
-              <div style={UI.colGap8}>
-                {foodWasteMatches.map((m, i) => (
-                  <div key={i} style={{ padding:"10px 12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10 }}>
-                    <div style={UI.ufs13_fw700_cink_ovhidden_toellipsis_wsnowrap}>{m.storeName}</div>
-                    {m.storeAddress && <div style={UI.muted11mt1}>{m.storeAddress}</div>}
-                    <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:6, fontSize:12 }}>
-                      {m.originalPrice != null && <span style={{ color:"var(--muted)", textDecoration:"line-through" }}>{m.originalPrice} kr</span>}
-                      {m.newPrice != null && <span style={{ color:"var(--blue)", fontWeight:800 }}>{m.newPrice} kr</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {foodWasteChecked && !foodWasteLoading && foodWasteMatches.length === 0 && !foodWasteError && (
-            <div style={UI.udflex_aicenter_g10_p12px14px_bgsurface_bd1pxsolid_br12}>
-              <Icon name="tag" size={16} color="var(--muted)" />
-              <div style={UI.ufs12_cmuted_lh15}>Ingen madspild-tilbud fundet i nærheden lige nu.</div>
-            </div>
-          )}
-          {foodWasteChecked && foodWasteError && foodWasteError !== "not_configured" && (
-            <div style={UI.ufs12_cmuted_lh15}>{foodWasteError}</div>
-          )}
-        </div>
-      )}
-
-      {/* ── 1c. SIKRE ALTERNATIVER ── */}
+      {/* ── 1b. SIKRE ALTERNATIVER ── */}
       {(scanResult.status === "danger" || scanResult.status === "warn") && (
         <div style={UI.mb10}>
           {altLoading && (
