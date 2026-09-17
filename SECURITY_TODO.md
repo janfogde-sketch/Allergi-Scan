@@ -1,3 +1,33 @@
+# ✅ 17. sept. 2026 — Manglende ON DELETE-regler på users-fremmednøgler rettet
+
+Fundet ved at brugeren forsøgte at slette test-brugere direkte i Supabase
+Table Editor og fik en fremmednøgle-fejl fra `shopping_list_items` (kolonnen
+`added_by`, som ikke havde nogen `ON DELETE`-regel). Verificeret mod hele
+skemaet (`information_schema.referential_constraints`) at to nullable
+attributions-kolonner (ikke ejerskab) manglede en regel:
+
+- `shopping_list_items.added_by` — hvem tilføjede varen
+- `submissions.reviewed_by` — hvilken admin godkendte/afviste indsendelsen
+
+Begge sat til `ON DELETE SET NULL` (samme mønster som `family_invites.
+accepted_by` allerede brugte) — sletter man den refererede bruger, mister
+rækken kun attributionen, den forsvinder eller blokerer ikke sletningen.
+`delete-user` Edge Function'en sletter selv `shopping_list_items` eksplicit
+før den når `users`-sletningen, så app-flowets adfærd er uændret — dette er
+et sikkerhedsnet for direkte sletning i Supabase Table Editor (som ikke går
+gennem Edge Function'en), og lukker et hul `submissions.reviewed_by` aldrig
+havde dækning for (en admin med gennemgåede indsendelser kunne ikke slettes,
+hverken via appen eller manuelt, uden denne rettelse).
+
+De tre andre allerede-kendte `NO ACTION`-fremmednøgler mod `users`
+(`families.created_by`, `family_memberships.user_id`,
+`shopping_list_access.user_id`) er bevidst IKKE ændret på DB-niveau —
+`delete-user` håndterer dem allerede eksplicit (nulstiller/sletter), og de
+kræver en dedikeret vurdering af om `SET NULL` eller `CASCADE` er den
+rigtige semantik, før DB-skemaet ændres til at matche.
+
+---
+
 # ✅ 17. sept. 2026 — RLS performance-advisories rettet (Supabase, ingen kodeændring)
 
 Del af "Topprioritet til næste session"-punktet om RLS-performance-
