@@ -1,3 +1,35 @@
+# ✅ 17. sept. 2026 — "Gennemgå de 66": resten af multiple_permissive_policies-fundene konsolideret
+
+Afslutter "Gennemgå de 66"-performance-reviewet (de to sikkerhedsfund det
+afdækkede, `family_invites` og `users`/`feedback_tickets`, er dokumenteret
+i deres egne afsnit ovenfor/nedenfor og shippet isoleret som kritiske
+rettelser). De resterende ~12 tabeller (`family_members`, `favorites`,
+`knowledge_base`, `products`, `push_tokens`, `recipe_ingredients`,
+`recipes`, `scan_history`, `shopping_list_items`, `shopping_lists`,
+`submissions`, `user_allergens`) havde reelt kun duplikerede/overlappende
+policies uden sikkerhedsmæssig betydning — Postgres OR'er automatisk flere
+PERMISSIVE-policies for samme rolle+handling sammen ved evaluering, så
+konsolidering til én policy pr. handling med OR'ede betingelser er en ren,
+100% adfærdsbevarende ydelsesgevinst (bekræftet ved at transskribere hver
+original policys `qual`/`with_check` verbatim ind i den samlede
+betingelse, aldrig omskrive logikken).
+
+Mønstre fundet: rene dubletter (fx `push_tokens` havde to byte-for-byte
+identiske ALL-policies), en bred rolle-policy (`public`) der gjorde en
+smallere rolle-specifik policy (`authenticated`) overflødig, og en admin-
+`ALL`-policy der unødigt overlappede en i forvejen dækkende SELECT-policy
+(splittet til kun INSERT/UPDATE/DELETE for `knowledge_base`/
+`recipe_ingredients`/`recipes`, med admin-sigtet flyttet ind i den
+kombinerede SELECT-policy i stedet).
+
+Verificeret: `mcp__Supabase__get_advisors(type=performance)` viser 0
+`multiple_permissive_policies`-fund tilbage (var 66 ved reviewets start,
+2 lukket som sikkerhedsfund, resten konsolideret her) — kun de allerede
+kendte/accepterede `unused_index`-fund (INFO-niveau) står tilbage. Ingen
+frontend-kodeændringer nødvendige. Build + 98/98 tests grønne.
+
+---
+
 # ✅ 17. sept. 2026 — users og feedback_tickets: policies navngivet "admin" gav reelt alle authenticated-brugere adgang
 
 Fundet under samme "Gennemgå de 66"-performance-review som family_invites-
