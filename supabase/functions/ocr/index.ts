@@ -62,10 +62,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Bestem prompt baseret på mode
-    const prompt = mode === "product_name"
-      ? "Læs produktnavnet fra dette billede af en fødevareemballage. Returner KUN produktnavnet, intet andet. Hvis du ikke kan læse det, returner en tom streng."
-      : "Læs ingredienslisten fra dette billede af en fødevareemballage. Returner KUN den rå ingrediensliste præcis som den står — behold originalsproget, store/små bogstaver og tegnsætning. Fjern alt andet (næringsdeklaration, adresser, batchnumre). Hvis du ikke kan finde en ingrediensliste, returner en tom streng.";
+    // Bestem prompt baseret på mode. BEMÆRK: hver mode frontenden rent
+    // faktisk sender (useProduct.js/useScanner.js) skal have sin egen gren
+    // her — en mode der falder igennem til ingrediens-prompten (default)
+    // bliver bedt om at finde en ingrediensliste i et billede der slet
+    // ikke indeholder én (fx en næringsdeklaration eller en stregkode),
+    // hvilket typisk giver tom/ubrugelig tekst tilbage uden at selve
+    // OCR-kaldet fejler — en stille fejl, ikke en synlig én (fundet 17.
+    // sept. 2026: "nutrition" og "ean_from_image" manglede begge deres
+    // egen prompt-gren og faldt igennem til ingrediens-prompten).
+    const PROMPTS: Record<string, string> = {
+      product_name:
+        "Læs produktnavnet fra dette billede af en fødevareemballage. Returner KUN produktnavnet, intet andet. Hvis du ikke kan læse det, returner en tom streng.",
+      nutrition:
+        "Læs næringsdeklarationen fra dette billede af en fødevareemballage. Returner den rå næringstabel-tekst præcis som den står — energi, fedt, mættet fedt, kulhydrat, sukkerarter, protein og salt, med deres tal og enheder. Fjern alt andet (ingrediensliste, adresser, batchnumre). Hvis du ikke kan finde en næringsdeklaration, returner en tom streng.",
+      ean_from_image:
+        "Læs stregkodens tal (EAN/UPC, typisk 8-14 cifre) fra dette billede. Returner KUN tallet, uden mellemrum eller andre tegn. Hvis du ikke kan læse det tydeligt, returner en tom streng.",
+      ingredients:
+        "Læs ingredienslisten fra dette billede af en fødevareemballage. Returner KUN den rå ingrediensliste præcis som den står — behold originalsproget, store/små bogstaver og tegnsætning. Fjern alt andet (næringsdeklaration, adresser, batchnumre). Hvis du ikke kan finde en ingrediensliste, returner en tom streng.",
+    };
+    const prompt = PROMPTS[mode] || PROMPTS.ingredients;
 
     // Detect media type from base64 header or default to jpeg
     let mediaType = "image/jpeg";
