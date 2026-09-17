@@ -409,8 +409,17 @@ export function useProduct({ accessToken, userId, activeProfiles,
       traceLog(tid, "nutrition-ocr:response", { success: ocrData.success, textLength: ocrData.text?.length || 0 });
       if (ocrData.success && ocrData.text) {
         const parsed = parseNutritionFromText(ocrData.text);
-        setProposedNutrition(parsed);
         traceLog(tid, "nutrition-ocr:parsed", parsed);
+        // OCR-teksten kom igennem, men ingen af felterne kunne genkendes af
+        // regex'en — uden dette tjek ville brugeren se helt tomme felter og
+        // ingen antydning af at billedet reelt blev læst og bare ikke gav
+        // noget brugbart (samme "stille fejl"-mønster som selve mode-bug'en).
+        const foundAny = Object.values(parsed).some(v => v);
+        if (foundAny) {
+          setProposedNutrition(parsed);
+        } else {
+          setScanError_("Kunne ikke genkende næringsværdierne i billedet. Prøv et klarere billede, eller udfyld felterne manuelt.");
+        }
       } else {
         traceLog(tid, "nutrition-ocr:empty", { raw: JSON.stringify(ocrData).substring(0, 100) });
         setScanError_("Næringsindholdet kunne ikke læses. Prøv et klarere billede, eller udfyld felterne manuelt.");
