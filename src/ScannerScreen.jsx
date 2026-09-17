@@ -200,6 +200,12 @@ export default function ScannerScreen({
   const [showGuide, setShowGuide] = React.useState(false);
   const [manualEanError, setManualEanError] = React.useState("");
 
+  // "Prøv en demo-scanning" er kun til nye brugere — forsvinder efter 1 døgn
+  // (målt fra kontoens created_at), så den ikke fylder unødigt for alle
+  // fremover. Fejler lukket (skjult) indtil created_at er hentet, for at
+  // undgå et kort glimt af knappen for etablerede brugere før data er inde.
+  const showDemoScan = !!(user.created_at && (Date.now() - new Date(user.created_at).getTime()) < 24 * 60 * 60 * 1000);
+
   // activeIds (kombinerede allergen-id'er for alle aktive profiler) kommer nu
   // som prop fra App.jsx' allActive() i stedet for at blive genberegnet her
   // — to uafhængige implementationer af samme sikkerhedsrelevante beregning
@@ -436,8 +442,9 @@ export default function ScannerScreen({
               )}
             </div>}
 
-            {/* Simuleret scan — prøv appen uden en rigtig stregkode ("Fase 7b.2") */}
-            {!!userId && !cameraActive && (
+            {/* Simuleret scan — prøv appen uden en rigtig stregkode ("Fase 7b.2").
+                Kun til nye brugere, forsvinder efter 1 døgn (se showDemoScan ovenfor). */}
+            {!!userId && !cameraActive && showDemoScan && (
               <button onClick={runDemoScan}
                 style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                   width:"100%", padding:"12px 14px", marginBottom:14,

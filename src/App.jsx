@@ -467,7 +467,7 @@ export default function EatSafe() {
       try {
         // Brugerprofil
         const profile = await apiCall(
-          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,onboarding_completed,diets,e_numbers&limit=1`,
+          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,onboarding_completed,diets,e_numbers,created_at&limit=1`,
           { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
         );
         if (Array.isArray(profile) && profile[0]) {
@@ -482,6 +482,7 @@ export default function EatSafe() {
             gender: p.gender || "",
             role: p.role || "user",
             diets: p.diets || [],
+            created_at: p.created_at || u.created_at || "",
           }));
           setSelectedENumbers(p.e_numbers || []);
         }
