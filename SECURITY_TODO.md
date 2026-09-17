@@ -1,3 +1,41 @@
+# ✅ 17. sept. 2026 — RLS performance-advisories rettet (Supabase, ingen kodeændring)
+
+Del af "Topprioritet til næste session"-punktet om RLS-performance-
+advisories fra CLAUDE.md. Anvendt direkte mod det live Supabase-projekt via
+migrationer (ingen filer i dette repo ændret — se `mcp__Supabase__apply_migration`-
+historikken for de nøjagtige migrationer):
+
+- **`auth_rls_initplan` (94 policies)**: hver policy der kaldte `auth.uid()`/
+  `auth.jwt()` direkte i `USING`/`WITH CHECK` fik funktionskaldet pakket ind i
+  `(select auth.uid())`/`(select auth.jwt())`, så Postgres evaluerer det ÉN
+  gang pr. forespørgsel i stedet for én gang pr. række (Supabase-anbefalet
+  mønster). Genereret automatisk fra `pg_policies` og anvendt som ét samlet
+  `ALTER POLICY`-batch — verificeret ren adfærdsændring (samme autorisation,
+  kun performance), alle 95 tests stadig grønne.
+- **`unindexed_foreign_keys` (28 stk.)**: tilføjet dækkende index på hver
+  fremmednøgle-kolonne uden ét (fx `family_memberships.user_id`,
+  `shopping_list_items.list_id`).
+- **`no_primary_key`**: `products_backup` (19.868 rækker, ubrugt i
+  applikationskoden — ren snapshot-tabel) manglede primærnøgle på `id`.
+  Verificeret ingen NULL/duplikerede `id`-værdier først, derefter tilføjet
+  `PRIMARY KEY (id)`.
+
+**Bevidst IKKE rettet** (for risikabelt til automatisk bulk-fix uden
+per-tabel gennemgang):
+- **`multiple_permissive_policies` (66 stk.)**: flere overlappende
+  permissive policies på samme tabel/rolle/handling (fx `family_invites` har
+  4 forskellige INSERT-policies for `authenticated`). At konsolidere dem
+  kræver at forstå hvorfor de historisk blev duplikeret (er de reelt
+  identiske, eller dækker de subtilt forskellige cases?) — tag denne op som
+  en dedikeret opgave, tabel for tabel.
+- **`unused_index` (37 stk. efter denne omgang — inkl. de 28 nye)**: nye
+  indekser starter altid som "ubrugte" indtil de rammes af en forespørgsel,
+  så tallet er ikke sammenligneligt før om et stykke tid. De oprindelige 9
+  er heller ikke fjernet — kræver længere observationsvindue for at være
+  sikker på de reelt aldrig bruges, fremfor blot sjældent.
+
+---
+
 # ✅ 16. sept. 2026 — 4 nye huller fundet ved rescue-audit, rettet samme dag
 
 Fundet under en frisk, uafhængig re-audit (artifact:

@@ -14,32 +14,38 @@
 
 ---
 
-## 0. Topprioritet til næste session (16. sept. 2026)
+## 0. Topprioritet til næste session (opdateret 17. sept. 2026)
 
 Rescue-audittets fulde 4-fase-roadmap samt Claude Code Setup Audit-
 rapportens 3 forslag er implementeret og merget (se afsnit "Rescue-audit —
-status" nedenfor for fuld detalje). Følgende punkter kræver stadig en
-beslutning eller handling og skal tages op **først** i næste session:
+status" nedenfor for fuld detalje). Af de fire punkter nedenfor (fra
+16. sept.) er tre nu afklaret/gennemført samme dag brugeren gav go:
 
-1. **Leaked Password Protection** — skal aktiveres manuelt af brugeren i
-   Supabase Dashboard → Authentication → Policies. Intet tilgængeligt
-   værktøj kan ændre denne indstilling. Spørg om det er gjort; hvis ikke,
-   mind om det igen.
-2. **`npm audit fix --force`** — 5 resterende sårbarheder kræver en
-   breaking major-opgradering af vite (5→8) og vitest (2→5). Ikke kørt
-   automatisk. Afvent eksplicit go fra brugeren før dette gennemføres.
-3. **De bevidst udskudte Fase 4-punkter** — AdminScreen.jsx-opsplitning,
-   udtræk af inline-features fra App.jsx, og RLS-performance-advisories.
-   Alle er vurderet for store/risikable til at tage uden dedikeret
-   gennemgang. Spørg brugeren om de skal tages som en ny, isoleret opgave.
-4. **Tredjeparts audit-skills** (`eval-rules`, `eval-skills`,
+1. **Leaked Password Protection** — **stadig åben.** Skal aktiveres manuelt
+   af brugeren i Supabase Dashboard → Authentication → Policies. Intet
+   tilgængeligt værktøj kan ændre denne indstilling. Spørg om det er gjort;
+   hvis ikke, mind om det igen.
+2. ✅ **`npm audit fix --force`** — kørt 17. sept. Opgraderede vite 5→8,
+   vitest 2→5, og `@vitejs/plugin-react` 4→6 (nødvendig følgeopgradering).
+   0 sårbarheder tilbage. Build + alle 95 tests grønne.
+3. **De bevidst udskudte Fase 4-punkter**:
+   - ✅ **RLS-performance-advisories** — gennemført 17. sept. direkte mod
+     Supabase (ingen kodeændring i repoet). Se `SECURITY_TODO.md`s
+     "17. sept. 2026"-afsnit for fuld detalje: `auth_rls_initplan` (94
+     policies), `unindexed_foreign_keys` (28), `no_primary_key`
+     (`products_backup`) alle rettet. `multiple_permissive_policies` (66)
+     og `unused_index` bevidst IKKE rørt — kræver per-tabel gennemgang.
+   - **AdminScreen.jsx-opsplitning** (1509 linjer) og **udtræk af
+     inline-features fra App.jsx** (1338 linjer) — **stadig åbne.** Vurderet
+     for store/risikable til at tage uden dedikeret gennemgang i denne
+     omgang. Spørg brugeren om de skal tages som en ny, isoleret opgave.
+4. ✅ **Tredjeparts audit-skills** (`eval-rules`, `eval-skills`,
    `audit-agents-skills` fra `FlorianBruniaux/claude-code-ultimate-guide`)
-   — bevidst ikke installeret automatisk. Afklar med brugeren om de
-   ønskes.
+   — installeret 17. sept. i `.claude/skills/`.
 
-Fjern dette afsnit (eller marker punkterne som løst enkeltvis) når de er
-afklaret/gennemført, så det ikke bare akkumulerer som endnu en glemt
-logbog-sektion.
+Fjern dette afsnit (eller marker de sidste punkter som løst) når AdminScreen/
+App.jsx-opsplitningen og Leaked Password Protection også er afklaret, så det
+ikke bare akkumulerer som endnu en glemt logbog-sektion.
 
 ---
 
