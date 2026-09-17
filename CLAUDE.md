@@ -8,9 +8,8 @@
 >
 > **Hold den opdateret:** Når du (Claude) laver større ændringer — ny skærm, ændret
 > navigation, ny arbejdsgang, nyt design-token — så opdatér denne fil i samme PR.
-> Detaljeret database/edge-function-reference ligger i `src/CONTEXT.md`, og
-> fase-for-fase feature-status ligger i `src/ROADMAP.md` — denne fil linker til dem
-> og opsummerer resten.
+> Detaljeret database/edge-function-reference ligger i `src/CONTEXT.md` — denne fil
+> linker til den og opsummerer resten.
 
 ---
 
@@ -54,7 +53,6 @@ at tilføje til indkøbsliste.
 
 Se `src/CONTEXT.md` for fuld database-skema-reference, edge-function-liste og
 integrationsdetaljer (Madpas, familie-deling, auto-import-pipeline m.m.).
-Se `src/ROADMAP.md` for hvad der er bygget, og hvad der mangler.
 
 ---
 
@@ -337,8 +335,6 @@ problemer ved nærmere eftersyn.
 - `src/CONTEXT.md` — fuld teknisk reference: database-tabeller, edge functions,
   familie-deling, Madpas, auto-import-pipeline. Opdatér denne når skema/integrationer
   ændres.
-- `src/ROADMAP.md` — fase-for-fase feature-historik og hvad der mangler før beta.
-  Opdatér denne når features færdiggøres eller nye planlægges.
 - Denne fil (`CLAUDE.md`) — hold "Arkitektur"- og "Igangværende arbejde"-afsnittene
   opdaterede efter større UI/navigations-ændringer, så en frisk Claude-session altid
   har et retvisende billede.
