@@ -163,8 +163,9 @@ begrundelse.
 | `allergens` | Keyword-engine + Claude Haiku fallback |
 | `ocr` | OCR: `ingredients` / `product_name` / `nutrition` / `ean_from_image` |
 | `search` | Fuldtekst-søgning med scoring |
-| `send-email` | Resend email |
+| `send-email` | Resend email — `type` er enten en Resend-skabelon (`welcome`/`submission_approved`/`submission_rejected`/`ticket_update`) eller `"raw"` (direkte `subject`+`html` i kaldet, ingen skabelon — til interne/dynamiske emails som `admin-digest`) |
 | `auto-import-off` | **NY** — importerer fra OFF dagligt kl. 02:00 UTC via pg_cron |
+| `admin-digest` | **NY** (17. sept. 2026) — ugentlig email til alle admins (`role='admin'`) med antal afventende indsendelser + åbne tickets, kun sendt hvis der reelt er noget. pg_cron mandag kl. 08:00 UTC (jobid 4) |
 
 ---
 
