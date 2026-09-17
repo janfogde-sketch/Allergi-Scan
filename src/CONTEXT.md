@@ -166,6 +166,7 @@ begrundelse.
 | `send-email` | Resend email — `type` er enten en Resend-skabelon (`welcome`/`submission_approved`/`submission_rejected`/`ticket_update`) eller `"raw"` (direkte `subject`+`html` i kaldet, ingen skabelon — til interne/dynamiske emails som `admin-digest`) |
 | `auto-import-off` | **NY** — importerer fra OFF dagligt kl. 02:00 UTC via pg_cron |
 | `admin-digest` | **NY** (17. sept. 2026) — ugentlig email til alle admins (`role='admin'`) med antal afventende indsendelser + åbne tickets, kun sendt hvis der reelt er noget. pg_cron mandag kl. 08:00 UTC (jobid 4) |
+| `food-waste` | **NY, PROTOTYPE** (17. sept. 2026) — tjekker om det viste produkts EAN er nedsat pga. udløb i en nærliggende Netto/Føtex/Bilka, via Salling Groups officielle "Anti Food Waste"-API (`geo`-baseret opslag). Kræver bruger-login. Svarer bevidst `{available:false, reason:"not_configured"}` og skjuler sig selv i UI'et indtil Supabase-secret `SALLING_API_TOKEN` er sat — se punkt 13 |
 
 ---
 
@@ -221,3 +222,4 @@ begrundelse.
 |-------|------|
 | hej@eatsafe.dk | Oprettes hos One.com inden beta |
 | Leksikon 1000+ entries | Planlagt — separat session (pt. ~700 entries) |
+| `SALLING_API_TOKEN` Supabase secret | Skal oprettes for at `food-waste`-prototypen (se afsnit 7) reelt virker — gratis nøgle fra `developer.sallinggroup.com`. Funktionen er allerede deployet og lever i produktion, men er selv-slukket indtil secretten er sat. `food-waste`-Edge Function'ens respons-parsing af Salling-API'et er desuden IKKE verificeret mod et levende svar (ingen API-nøgle var tilgængelig da prototypen blev bygget 17. sept. 2026) — tjek/justér `extractClearances`/`matchesEan`/`normalizeMatch` i `supabase/functions/food-waste/index.ts` mod det faktiske svar første gang der testes med en rigtig nøgle |
