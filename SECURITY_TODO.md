@@ -1,3 +1,45 @@
+# ✅ 17. sept. 2026 — Token-enumering i family_invites lukket (fundet under "Gennemgå de 66"-performance-review)
+
+Fundet ved en rutinemæssig gennemgang af Supabases 66
+`multiple_permissive_policies`-performance-fund (bedt om af brugeren som en
+ren performance-oprydning: flere PERMISSIVE-policies for samme
+rolle+handling OR'es automatisk sammen af Postgres, så konsolidering til
+én policy er normalt en ren, adfærdsbevarende ydelsesgevinst). Ved
+`family_invites` viste de to overlappende SELECT-policies sig dog ikke
+kun at være duplikeret performance-støj — de gav reelt enhver (`anon`
+inkl.) ubegrænset, tabel-bred SELECT-adgang til alle rækker, inklusive
+`token`-kolonnen som er ment som en delt hemmelighed for invitationslinket.
+
+**Reel konsekvens:** en PostgREST-klient kan udelade filtre og hente alle
+rækker. Et scrapet/gættet token kunne dermed bruges til at slå en vilkårlig
+families invitation op og joine den — helt uden om afsenderens kontrol
+over hvem invitationen reelt går til. `accept_family_invite`-flowet stoler
+i forvejen udelukkende på at kende det korrekte token, så bruddet på
+hemmeligholdelsen var det reelle problem, ikke selve accept-logikken.
+
+**Rettet:** ny `get_invite_preview(p_token text)` RPC (`SECURITY DEFINER`,
+`search_path` låst til `public`), der kun returnerer
+`status`/`expires_at`/`invited_by` for det ene token kaldet rent faktisk
+angiver — aldrig en tabel-wide liste. `EXECUTE` revoked fra `PUBLIC`,
+grantet eksplicit til `anon`/`authenticated` (verificeret efterfølgende med
+`has_function_privilege()`, jf. den stående REVOKE-FROM-PUBLIC-lektion
+længere nede i denne fil). De 10 gamle, delvist duplikerede policies på
+`family_invites` konsolideret til 2: `family_invites_insert_own` (INSERT,
+kun egne som `invited_by`) og `family_invites_select_own` (SELECT, kun egne
+som `invited_by` ELLER `accepted_by`) — den brede anonyme
+tjek-status-adgang findes ikke længere som tabel-policy, kun via RPC'en.
+Begge frontend-kaldsteder (`public/invite.html`, `App.jsx`s
+`acceptInvite()`) opdateret til at kalde RPC'en i stedet for at læse
+tabellen direkte. Build + 98/98 tests grønne efter ændringen.
+
+**Lektion:** en "ren performance-konsolidering" af duplikerede RLS-policies
+er ikke altid ren performance — brug lejligheden til at spørge om den
+*samlede* adgang policyerne giver reelt er den tilsigtede, især på tabeller
+med en token/hemmeligheds-kolonne, hvor selv en enkelt for bred SELECT-
+policy er nok til at underminere hele sikkerhedsmodellen.
+
+---
+
 # ✅ 17. sept. 2026 — recipes' fremmednøgler mod auth.users manglede også en ON DELETE-regel
 
 Opdaget under en manuel oprydning af 7 test-brugere direkte i Supabase (se
