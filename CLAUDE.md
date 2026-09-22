@@ -366,77 +366,28 @@ problemer ved nærmere eftersyn.
   session-start (kun `CLAUDE.md` er det) — læs den når du har brug for den
   fulde baggrund bag en beslutning, ikke bare konklusionen.
 
-### Claude Code Setup Audit — status
+### Claude Code Setup Audit & Rescue-audit — status
 
-En selv-audit af `.claude/`-konfigurationen scorede oprindeligt 30/100.
-Alle "quick win"-punkter (`.claude/rules/`, `.claude/skills/ship/`,
-`.claude/commands/`, en reelt håndhævet mojibake-hook, `permissions.deny`-
-liste) samt `design-reviewer`-agenten og `security-check`-/`token-audit`-
-skills er nu implementeret (se filoversigten ovenfor). Bevidst stadig ikke
-lavet: `eval-rules`/`audit-agents-skills` (kun 1 fil i `.claude/rules/` og
-en håndfuld skills/agents/commands i alt gør det til for meget værktøj for
-for lidt indhold lige nu — tag dem op hvis `.claude/`-mappen vokser
-væsentligt) og en dokumentations-MCP (fx Context7 — kræver opsætning uden
-for dette repo, via claude.ai-connector-indstillinger). Fuld log over
-hvert trin, inklusive undersøgelsen af om de dybere audit-skills reelt
-kræver at køre tredjeparts-kode (de gør ikke — de er læs-only prompt-
-baserede tjeklister), er i `.claude/HISTORY.md`.
-
-### Rescue-audit — status
-
-En læse-kun arkitektur-, bug- og sikkerhedsgennemgang af hele kodebasen
-(artifact: https://claude.ai/artifact/NsG75NGKsGsFTugYtwxu9X) blev
-gennemført i tre tiers, alle merget (PR #215, #216, og Tier 3). Fund
-inkluderede kritiske ubeskyttede Edge Functions (nu rettet, admin-only
-auth), et feltnavne-mismatch-mønster (`customAllerg` vs. `.custom`), og
-en vurdering af at beholde den hånd-rullede Realtime-klient i
-`useShoppingList.js` fremfor at hente `@supabase/realtime-js` ind.
+Begge er fuldført og merget. Claude Code Setup Audit-selvevalueringen
+(oprindeligt 30/100) er bragt op med `.claude/rules/`, `.claude/skills/`,
+`.claude/commands/`, en reelt håndhævet mojibake-hook, en
+`permissions.deny`-liste, `design-reviewer`-agenten,
+`security-check`-/`token-audit`-skills, `allowed-tools` på skills, en
+PreToolUse-hook mod farlige bash-kommandoer, og en path-scoped
+`edge-function-auth.md`-regel. Rescue-audittets fulde 4-fase-roadmap
+(to omgange: artifact
+https://claude.ai/artifact/NsG75NGKsGsFTugYtwxu9X og opfølgende
+https://claude.ai/artifact/EvHQTrmjF1XjJEbuFzWFed) er implementeret —
+kritiske ubeskyttede Edge Functions, RPC-eksponering og et
+feltnavne-mismatch-mønster (`customAllerg` vs. `.custom`) er rettet,
+AdminScreen.jsx-/App.jsx-opsplitningen (se afsnit 3) er gennemført, og
+RLS-performance-advisories/`npm audit fix --force` er kørt.
 **Supabase dev/branching-miljø er bevidst IKKE sat op** (kræver en højere
 Supabase-plan end nuværende abonnement) — genoptag når abonnementet
 opgraderes; indtil da går alle skema-/edge-function-ændringer fortsat
-direkte til produktion, som beskrevet i `src/CONTEXT.md`. Fuld tier-for-
-tier-log er i `.claude/HISTORY.md`.
-
-**Opfølgende gennemgang (16. sept. 2026):**
-(artifact: https://claude.ai/artifact/EvHQTrmjF1XjJEbuFzWFed) En frisk,
-læse-kun re-audit fandt 4 nye, aktivt udnyttelige sikkerhedshuller i
-produktion — ingen af dem dækket af den oprindelige rescue-audit eller af
-`security-check`s baseline-kørsel. Artefaktet har fuld fil:linje-evidens
-plus en 4-fase prioriteret rescue-roadmap.
-
-**Fase 1 (de 4 sikkerhedshuller + RPC-eksponering) er nu rettet og
-deployet** (samme dag) — se `.claude/HISTORY.md` og `SECURITY_TODO.md`s
-"16. sept. 2026"-afsnit for fuld detalje: `allergens`s save-path kræver nu
-admin, `shopping`s item-PATCH/DELETE IDOR er lukket (`.eq("list_id", ...)`
-tilføjet), `auto-reparse` kræver nu service-role-bearer eller admin-login,
-`send-push` tjekker nu en reel relation mellem kalder og push-mål (selv,
-admin, eller fælles familiegruppe via `family_group`-RPC'en), og
-`log_missing_ean` er revoked fra `public`/`anon`.
-
-**Fase 2-4 er også nu gennemført** (samme dag, én PR pr. fase): Fase 2
-rettede NotFoundScreen's data-tab-bug ved "gå tilbage" samt to
-abuse-cost-caps (`ocr`/`allergens` tekst-/base64-længde-grænser) og
-udvidede race-guard-mønsteret til `useAdmin.js`/`AdminScreen.jsx`. Fase 3
-samlede dupliceret aktiv-allergen-logik, unificerede rå-`fetch()`-kald til
-`apiCall`/`makeHeaders` i AdminScreen.jsx/ListScreen.jsx, rettede en reel
-FK-constraint-fejl i `delete-user` (manglende oprydning af
-`family_memberships`/`shopping_list_access`/`families.created_by`), og
-tilføjede tests til `useProduct.js`/`useAuth.js` (de to tidligere utestede
-sikkerhedskritiske filer). Fase 4 fjernede forældede rod-dubletter
-(`CONTEXT.md`/`ROADMAP.md`) og kørte en ikke-breaking `npm audit fix`.
-**Bevidst udskudt** (for stort/risikabelt til denne batch uden dedikeret
-gennemgang): AdminScreen.jsx-opsplitning, udtræk af inline-features fra
-App.jsx, RLS-performance-advisories, og `npm audit fix --force` (breaking
-vite/vitest major-opgradering) — tag op hvis brugeren beder om det.
-
-Samtidig blev "Audit My Claude Code Setup"-rapportens 3 forslag
-implementeret: `allowed-tools` på de tre eksisterende skills, en
-PreToolUse-hook (`.claude/hooks/block-dangerous-bash.py`) der beder om
-bekræftelse ved `rm -rf` mod rod/force-push til main uden
-`--force-with-lease`/`git reset --hard`, og
-`.claude/rules/edge-function-auth.md` (path-scoped til
-`supabase/functions/**/*.ts`).
+direkte til produktion, som beskrevet i `src/CONTEXT.md`. Fuld
+dag-for-dag-log for begge audits er i `.claude/HISTORY.md`.
 
 **Resterende, kun brugeren kan gøre det:** aktivér "Leaked Password
 Protection" i Supabase Dashboard (Authentication → Policies) — intet
-tilgængeligt værktøj kan ændre denne indstilling.
+tilgængeligt værktøj kan ændre denne indstilling (se afsnit 0 for detalje).

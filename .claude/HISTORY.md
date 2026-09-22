@@ -859,6 +859,17 @@ ikke lavet — kun 1 fil i `.claude/rules/` og en håndfuld skills/agents/
 commands i alt gør en dedikeret audit-skill til for meget værktøj for for
 lidt indhold lige nu; tag dem op hvis `.claude/`-mappen vokser væsentligt.
 
+**17. sept. 2026 — "Audit My Claude Code Setup"-rapportens resterende 3
+forslag implementeret**, samtidig med rescue-audittets fase 1-4 (se
+"Rescue-audit — opfølgende gennemgang og fase 1-4" nedenfor): `allowed-
+tools` tilføjet til de tre eksisterende skills (`ship`, `security-check`,
+`token-audit`), en ny PreToolUse-hook (`.claude/hooks/block-dangerous-
+bash.py`) der beder om bekræftelse ved `rm -rf` mod rod eller force-push
+til main uden `--force-with-lease`/`git reset --hard`, og en ny path-
+scoped regel `.claude/rules/edge-function-auth.md` (kun indlæst ved
+arbejde i `supabase/functions/**/*.ts`) der dokumenterer det fire-vejs
+auth-mønster rescue-audittets Tier 1/2 gentagne gange fandt manglende.
+
 ---
 
 ## security-check baseline-kørsel (15. sept. 2026)
@@ -994,3 +1005,45 @@ efterfølgende gennemførelses-PR'er).
   plan end den nuværende. **Genoptag dette punkt når abonnementet
   opgraderes** — indtil da går alle skema-/edge-function-ændringer
   fortsat direkte til produktion, som beskrevet i `src/CONTEXT.md`.
+
+---
+
+## Rescue-audit — opfølgende gennemgang og fase 1-4 (16. sept. 2026)
+
+**Opfølgende gennemgang** (artifact:
+https://claude.ai/artifact/EvHQTrmjF1XjJEbuFzWFed): en frisk, læse-kun
+re-audit fandt 4 nye, aktivt udnyttelige sikkerhedshuller i produktion —
+ingen af dem dækket af den oprindelige rescue-audit ovenfor eller af
+`security-check`s baseline-kørsel. Artefaktet har fuld fil:linje-evidens
+plus en 4-fase prioriteret rescue-roadmap.
+
+**Fase 1 (de 4 sikkerhedshuller + RPC-eksponering) rettet og deployet**
+(samme dag) — se `SECURITY_TODO.md`s "16. sept. 2026"-afsnit for fuld
+detalje: `allergens`s save-path kræver nu admin, `shopping`s
+item-PATCH/DELETE IDOR er lukket (`.eq("list_id", ...)` tilføjet),
+`auto-reparse` kræver nu service-role-bearer eller admin-login,
+`send-push` tjekker nu en reel relation mellem kalder og push-mål (selv,
+admin, eller fælles familiegruppe via `family_group`-RPC'en), og
+`log_missing_ean` er revoked fra `public`/`anon`.
+
+**Fase 2-4 gennemført** (samme dag, én PR pr. fase):
+- **Fase 2:** rettede NotFoundScreen's data-tab-bug ved "gå tilbage" samt
+  to abuse-cost-caps (`ocr`/`allergens` tekst-/base64-længde-grænser) og
+  udvidede race-guard-mønsteret til `useAdmin.js`/`AdminScreen.jsx`.
+- **Fase 3:** samlede dupliceret aktiv-allergen-logik, unificerede rå-
+  `fetch()`-kald til `apiCall`/`makeHeaders` i AdminScreen.jsx/
+  ListScreen.jsx, rettede en reel FK-constraint-fejl i `delete-user`
+  (manglende oprydning af `family_memberships`/`shopping_list_access`/
+  `families.created_by`), og tilføjede tests til `useProduct.js`/
+  `useAuth.js` (de to tidligere utestede sikkerhedskritiske filer).
+- **Fase 4:** fjernede forældede rod-dubletter (`CONTEXT.md`/
+  `ROADMAP.md`) og kørte en ikke-breaking `npm audit fix`.
+- **Bevidst udskudt fra denne batch dengang** (for stort/risikabelt uden
+  dedikeret gennemgang): AdminScreen.jsx-opsplitning, udtræk af
+  inline-features fra App.jsx, RLS-performance-advisories, og
+  `npm audit fix --force` (breaking vite/vitest major-opgradering). Alle
+  fire er siden taget op og gennemført 17. sept. 2026 — AdminScreen.jsx-
+  og App.jsx-opsplitningen står nu i `CLAUDE.md` afsnit 3 (arkitektur er
+  nutid, ikke historik); `npm audit fix --force` og RLS-performance-
+  advisories var rene vedligeholdelses-opgraderinger uden funktionel
+  ændring at logge her ud over at de er kørt.
