@@ -130,7 +130,11 @@ body{
   min-height:100vh;
 }
 .app{
-  max-width:390px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
+  /* 480px — ikke 390px — dækker moderne store telefoner (iPhone Air: 402px,
+     Pro Max-modeller: op til 430px), så appen ikke centreres med synlige
+     tomme kanter på rigtige telefoner. Fungerer stadig som et "telefon-
+     mockup"-loft på en reel desktop-browser (bredere vinduer). */
+  max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
   width:100%;position:relative;overflow-x:hidden;
   /* Fint punkt-gitter i grøn (scanner/præcisions-følelse, matcher stregkode-
      og brand-farven) + blød grøn glød foroven og en svag blå glød forneden
@@ -159,7 +163,7 @@ body{
 .screen{flex:1;padding:0 16px 110px;}
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:390px;
+  width:100%;max-width:480px;
   /* Helt uigennemsigtig — en gradient med en gennemsigtig top-del lod indhold
      der var scrollet med skinne igennem bag ikonerne, så baren så "flimrende"
      ud i stedet for at virke som ét fast lag oven på resten af skærmen. */
