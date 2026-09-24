@@ -214,6 +214,10 @@ export default function AdminApp() {
           cleanedOcrText={admin.cleanedOcrText} cleaningOcr={admin.cleaningOcr} cleanOcrWithAI={admin.cleanOcrWithAI}
           updateSubmissionAndApprove={admin.updateSubmissionAndApprove} rejectSubmission={admin.rejectSubmission}
           accessToken={accessToken}
+          selectedSubmissionIds={admin.selectedSubmissionIds} toggleSubmissionSelection={admin.toggleSubmissionSelection}
+          selectAllSubmissions={admin.selectAllSubmissions} clearSubmissionSelection={admin.clearSubmissionSelection}
+          bulkActionLoading={admin.bulkActionLoading} bulkApproveSubmissions={admin.bulkApproveSubmissions}
+          bulkRejectSubmissions={admin.bulkRejectSubmissions}
         />
       )}
       {section === "tickets" && (
