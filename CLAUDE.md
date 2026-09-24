@@ -324,6 +324,28 @@ ellers kolliderede med tidligere valg (ingen fotografi, anden bundmenu).
 Fuld metode (baggrunds-nøgling, iterativ visuel verifikation) i
 `.claude/HISTORY.md`.
 
+**24. sept. 2026 — opfølgning: collagen tættere, demo-knap og prikker
+fjernet.** Brugerfeedback efter forrige runde: frugten så synligt
+beskåret ud, collagen skulle fylde hele skærmen (ikke kun hjørnerne),
+"Prøv en demo"-knappen skulle væk, og forsidens prikgitter-baggrund
+skulle væk. Fandt en reel bug undervejs: den ydre scan-boks-wrapper
+havde ubetinget `overflow:"hidden"` (kun tiltænkt at klippe kameraets
+hjørner), som usynligt klippede collage-billedernes kant-bløder-
+positionering i den rigtige app — nu kun `"hidden"` når kameraet er
+aktivt. Collagen bruger stadig de samme 5 fotos (sandboxen kan ikke
+hente andre/nye billeder eksternt — bekræftet blokeret for både
+generel web-adgang og GitHub-søgning), men nu i ni positioner med
+varieret størrelse/rotation i stedet for fem enkeltstående hjørne-
+billeder. Basilikum-bladet er genskåret med mere baggrundsmargin plus
+en tvungen kant-udtoning (kildefotoet gav ikke nok ren baggrund på
+alle sider — se `.claude/HISTORY.md` for detaljen). "Prøv en demo"-
+knappen er fjernet (App-guiden nås stadig via "App-guide"-knappen
+nederst på forsiden — ikke at forveksle med den urelaterede "Prøv en
+demo-scanning"-knap, som kun vises til brugere <24 timer gamle).
+Forsidens egen baggrund er sat til en flad `--paper`-farve, så
+prikgitter-mønsteret ikke længere ses her specifikt (uændret på
+resten af appens skærme).
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
