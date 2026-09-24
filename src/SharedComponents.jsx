@@ -457,7 +457,7 @@ export function ProductImage({ product, size = 64 }) {
 // ── Fælles søgeresultat-kort ────────────────────────────────────────────────
 // Bruges både på forsidens Søg-skærm og i "Tilføj vare" i indkøbslisten, så
 // et søgeresultat ser ens ud uanset hvor man søger fra.
-export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, onOpen, onAddToList, preserveFocus = true }) {
+export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, onOpen, onAddToList }) {
   const { status, matchedDanger, matchedWarning } = compareAllergens(p.allergen_flags||{}, effectiveIds);
   const statusColor = safetyStyle(status).color;
   const statusLabel = `${safetyStyle(status).icon} ${status==="safe" ? "Sikker" : status==="danger" ? "Farlig" : "Advarsel"}`;
@@ -473,19 +473,15 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
   };
   return (
     <div onClick={onOpen}
-      // Forhindrer at et tap her flytter/fjerner fokus fra et søgefelt ovenover
-      // (fx "Tilføj vare" i indkøbslisten) — ellers kan søgefeltets onBlur nå
-      // at lukke resultatlisten, før klikket på fx "+"-knappen når at blive
-      // registreret, så tryk på mobil kan virke som om de ikke gør noget.
-      // KUN nødvendigt når resultatlisten reelt kan forsvinde ved blur
-      // (preserveFocus=true, default — bruges af ListScreens "Tilføj vare").
-      // På rene søgeskærme uden den slags blur-drevet skjul (SearchScreen)
-      // gør det tværtimod skade: at forhindre blur holder søgefeltets
-      // tastatur åbent, hvilket på mobil kan sluge det FØRSTE tryk på en
-      // resultat-række til at lukke tastaturet i stedet for at åbne
-      // produktet — brugeren skal så trykke to gange. Fundet 24. sept. 2026
-      // ("søgeresultat åbner ikke før andet tryk").
-      onMouseDown={preserveFocus ? e => e.preventDefault() : undefined}
+      // Bevidst INGEN onMouseDown/preventDefault på selve rækken (fjernet 24.
+      // sept. 2026) — at forhindre blur her holder søgefeltets tastatur åbent,
+      // hvilket på mobil kan sluge det FØRSTE tryk på en resultat-række til at
+      // lukke tastaturet i stedet for at åbne produktet ("søgeresultat åbner
+      // ikke før andet tryk"). Både onOpen og onAddToList-callerne (SearchScreen
+      // OG ListScreens "Tilføj vare") lukker allerede selv eksplicit deres
+      // resultatliste i egen handler-kode — ingen af dem er afhængige af at
+      // blur bliver forhindret for at fungere korrekt. "+"-knappen nedenfor
+      // beholder sin egen beskyttelse, se dens kommentar.
       style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", marginBottom:8, background:"var(--surface)", border:`1px solid ${status==="danger" ? "var(--red-md)" : status==="warn" ? "var(--amber-md)" : "var(--border)"}`, borderRadius:12, cursor:"pointer" }}>
       <ProductImage product={p} size={44} />
       <div style={{ flex:1, minWidth:0 }}>
@@ -513,6 +509,12 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
       <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
         <div style={{ fontSize:11, fontWeight:700, color:statusColor }}>{statusLabel}</div>
         <button type="button" className="btn btn-sm" aria-label={added ? `"${productDisplayName(p)}" er tilføjet` : `Tilføj "${productDisplayName(p)}" til indkøbsliste`}
+          // Forhindrer specifikt HER at et tap flytter fokus væk fra et søgefelt
+          // ovenover (fx ListScreens "Tilføj vare") — ellers kan søgefeltets
+          // onBlur nå at lukke resultatlisten, før klikket på selve knappen når
+          // at blive registreret. Harmløst på skærme uden den slags blur-drevet
+          // skjul (SearchScreen) — der er intet at forhindre.
+          onMouseDown={e => e.preventDefault()}
           style={{ width:44, height:44, minHeight:44, padding:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, lineHeight:1,
             background: added ? "var(--green)" : "var(--surface2)", color: added ? "var(--on-green)" : "var(--ink2)",
             border: `1px solid ${added ? "var(--green)" : "var(--border)"}`, borderRadius:10, transition:"all .15s" }}
