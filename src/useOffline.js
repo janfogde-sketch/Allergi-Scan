@@ -10,7 +10,14 @@
 
 import { useState, useEffect } from "react";
 
-const CACHE_KEY  = "eatsafe_product_cache";
+// v2 (24. sept. 2026): scanResult fik et nyt id-felt (se useProduct.js) —
+// gamle cachede kopier uden feltet blev ved med at blive serveret fra
+// localStorage FØR noget netværkskald overhovedet skete, så rettelsen aldrig
+// nåede brugere der allerede havde scannet det pågældende produkt. Bump
+// versionen i nøglen hver gang scanResult's form ændres på en måde en gammel
+// cachet kopi ikke kan opfylde — det er den eneste måde stale entries reelt
+// bliver ugyldige på, da der ikke er nogen TTL, kun en 20-entries LRU.
+const CACHE_KEY  = "eatsafe_product_cache_v2";
 const MAX_CACHED = 20;
 
 // ── Hook: registrer online/offline ────────────────────────────────────────────
