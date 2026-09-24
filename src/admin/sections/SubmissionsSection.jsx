@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { ALLERGENS, SUPABASE_URL } from "../../constants.jsx";
-import { apiCall, makeHeaders, extractENumbers } from "../../helpers.js";
+import { apiCall, makeHeaders, extractENumbers, normalizeENumber, addENumberToText } from "../../helpers.js";
 import { showToast } from "../../SharedComponents.jsx";
 
 const FILTERS = [
@@ -18,6 +18,18 @@ export default function SubmissionsSection({
 }) {
   const [submitterInfo, setSubmitterInfo] = useState(null);
   const [submitterLoading, setSubmitterLoading] = useState(false);
+  const [newENumber, setNewENumber] = useState("");
+
+  const addENumber = () => {
+    const normalized = normalizeENumber(newENumber);
+    if (!normalized) { showToast("Ugyldigt E-nummer — skriv fx \"220\" eller \"E220\"", "error"); return; }
+    setEditingSubmission(s => ({
+      ...s,
+      ingredients_text: addENumberToText(s.ingredients_text, normalized),
+      excluded_enumbers: (s.excluded_enumbers || []).filter(e => e.toUpperCase() !== normalized.toUpperCase()),
+    }));
+    setNewENumber("");
+  };
 
   const openForReview = async (s) => {
     setOpenSubmission(s);
@@ -170,7 +182,6 @@ export default function SubmissionsSection({
                   placeholder="Ingrediensliste…" />
                 {(() => {
                   const found = extractENumbers(editingSubmission.ingredients_text || "");
-                  if (found.length === 0) return null;
                   const excluded = editingSubmission.excluded_enumbers || [];
                   const toggle = (e) => setEditingSubmission(s => {
                     const cur = s.excluded_enumbers || [];
@@ -178,23 +189,34 @@ export default function SubmissionsSection({
                   });
                   return (
                     <div style={{ marginTop: 8 }}>
-                      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6 }}>E-numre fundet — klik for at fravælge en fejlaflæsning</div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                        {found.map(e => {
-                          const isExcluded = excluded.includes(e);
-                          return (
-                            <button key={e} type="button" onClick={() => toggle(e)}
-                              style={{
-                                fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 20, cursor: "pointer", fontFamily: "var(--f)",
-                                background: isExcluded ? "var(--surface3)" : "var(--blue-lt)",
-                                color: isExcluded ? "var(--muted)" : "var(--blue)",
-                                border: `1px solid ${isExcluded ? "var(--border)" : "var(--blue-md)"}`,
-                                textDecoration: isExcluded ? "line-through" : "none",
-                              }}>
-                              {e}
-                            </button>
-                          );
-                        })}
+                      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6 }}>
+                        {found.length === 0 ? "Ingen E-numre fundet i teksten" : "E-numre fundet — klik for at fravælge en fejlaflæsning"}
+                      </div>
+                      {found.length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                          {found.map(e => {
+                            const isExcluded = excluded.includes(e);
+                            return (
+                              <button key={e} type="button" onClick={() => toggle(e)}
+                                style={{
+                                  fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 20, cursor: "pointer", fontFamily: "var(--f)",
+                                  background: isExcluded ? "var(--surface3)" : "var(--blue-lt)",
+                                  color: isExcluded ? "var(--muted)" : "var(--blue)",
+                                  border: `1px solid ${isExcluded ? "var(--border)" : "var(--blue-md)"}`,
+                                  textDecoration: isExcluded ? "line-through" : "none",
+                                }}>
+                                {e}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <input value={newENumber} onChange={e => setNewENumber(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addENumber())}
+                          placeholder="Tilføj E-nummer OCR har misset, fx 220"
+                          style={{ flex: 1, fontSize: 12, padding: "6px 10px", borderRadius: 8, border: "1px solid var(--border2)", fontFamily: "var(--f)" }} />
+                        <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm" onClick={addENumber}>Tilføj</button>
                       </div>
                     </div>
                   );

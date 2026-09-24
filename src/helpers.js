@@ -202,6 +202,27 @@ export function stripExcludedENumbers(text, excluded) {
     .replace(/\s{2,}/g, " ");
 }
 
+// Normaliserer fritekst-input til "E###" (eller "E###a") — bruges når admin
+// selv tilføjer et E-nummer OCR'en er gået glip af. EU-konventionen er stort
+// E + tal + evt. LILLE bogstav-suffiks (fx "E150a", ikke "E150A").
+export function normalizeENumber(input) {
+  if (!input) return null;
+  const m = String(input).trim().match(/^E?[\s-]?(\d{3,4})([a-zA-Z]?)$/i);
+  if (!m) return null;
+  return "E" + m[1] + (m[2] ? m[2].toLowerCase() : "");
+}
+
+// Tilføjer et normaliseret E-nummer til en ingredienstekst, hvis det ikke
+// allerede er nævnt (undgår dubletter når admin tilføjer et E-nummer
+// OCR'en er gået glip af — se normalizeENumber ovenfor).
+export function addENumberToText(text, eNum) {
+  if (!eNum) return text;
+  const existing = extractENumbers(text || "");
+  if (existing.some(e => e.toUpperCase() === eNum.toUpperCase())) return text;
+  const trimmed = (text || "").trim();
+  return trimmed ? `${trimmed}, ${eNum}` : eNum;
+}
+
 // Sammenlign produktets E-numre mod brugerens overvågede E-numre
 export function compareENumbers(productENumbers, userENumbers) {
   if (!productENumbers || !userENumbers || userENumbers.length === 0) {

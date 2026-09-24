@@ -1,9 +1,10 @@
 // @ts-nocheck
-import React from "react";
+import React, { useState } from "react";
 import { ALLERGENS } from "./constants.jsx";
 import { Loader, Icon, showToast } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 import { ALL_ALLERGEN_WORDS } from "./allergenKeywords.js";
+import { normalizeENumber, addENumberToText } from "./helpers.js";
 
 // Fremhæv allergener og E-numre i ingredienstekst
 const E_NUMBER_RE = /\b(E\d{3,4}[a-z]?)\b/gi;
@@ -141,7 +142,19 @@ export function AdminSubmissionReview({
   updateSubmissionAndApprove, rejectSubmission,
   submitterInfo, submitterLoading,
 }) {
+  const [newENumber, setNewENumber] = useState("");
   if (!openSubmission || !editingSubmission) return null;
+
+  const addENumber = () => {
+    const normalized = normalizeENumber(newENumber);
+    if (!normalized) { showToast("Ugyldigt E-nummer — skriv fx \"220\" eller \"E220\"", "error"); return; }
+    setEditingSubmission(s => ({
+      ...s,
+      ingredients_text: addENumberToText(s.ingredients_text, normalized),
+      excluded_enumbers: (s.excluded_enumbers || []).filter(e => e.toUpperCase() !== normalized.toUpperCase()),
+    }));
+    setNewENumber("");
+  };
   return (
     <div className="screen fade-in" style={UI.pb120}>
 
@@ -261,10 +274,8 @@ export function AdminSubmissionReview({
       {/* E-numre fundet i ingredienslisten der rent faktisk bliver godkendt —
           klikbare for at fravælge en fejlaflæsning (fjernes fra teksten ved
           godkendelse, se stripExcludedENumbers i useAdmin.js) */}
-      {(() => {
-        const src = editingSubmission.ingredients_text || cleanedOcrText || openSubmission.ocr_raw_text || "";
-        const found = [...new Set((src.match(E_NUMBER_RE) || []).map(e => e.toUpperCase()))];
-        if (found.length === 0) return null;
+      {editingSubmission.ingredients_text !== undefined && (() => {
+        const found = [...new Set((editingSubmission.ingredients_text.match(E_NUMBER_RE) || []).map(e => e.toUpperCase()))];
         const excluded = editingSubmission.excluded_enumbers || [];
         const toggle = (e) => setEditingSubmission(s => {
           const cur = s.excluded_enumbers || [];
@@ -272,24 +283,38 @@ export function AdminSubmissionReview({
         });
         return (
           <div style={UI.card}>
-            <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>🧪 E-numre fundet</div>
-            <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10 }}>Tryk for at fravælge en fejlaflæsning</div>
-            <div style={UI.wrapGap7}>
-              {found.map(e => {
-                const isExcluded = excluded.includes(e);
-                return (
-                  <button key={e} type="button" onClick={() => toggle(e)}
-                    style={{
-                      padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"var(--f)",
-                      background: isExcluded ? "var(--surface2)" : "rgba(99,102,241,.1)",
-                      border: `1px solid ${isExcluded ? "var(--border)" : "rgba(99,102,241,.3)"}`,
-                      color: isExcluded ? "var(--muted)" : "#818cf8",
-                      textDecoration: isExcluded ? "line-through" : "none",
-                    }}>
-                    {e}
-                  </button>
-                );
-              })}
+            <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>🧪 E-numre</div>
+            <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10 }}>
+              {found.length === 0 ? "Ingen fundet i teksten" : "Tryk for at fravælge en fejlaflæsning"}
+            </div>
+            {found.length > 0 && (
+              <div style={{ ...UI.wrapGap7, marginBottom:10 }}>
+                {found.map(e => {
+                  const isExcluded = excluded.includes(e);
+                  return (
+                    <button key={e} type="button" onClick={() => toggle(e)}
+                      style={{
+                        padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"var(--f)",
+                        background: isExcluded ? "var(--surface2)" : "rgba(99,102,241,.1)",
+                        border: `1px solid ${isExcluded ? "var(--border)" : "rgba(99,102,241,.3)"}`,
+                        color: isExcluded ? "var(--muted)" : "#818cf8",
+                        textDecoration: isExcluded ? "line-through" : "none",
+                      }}>
+                      {e}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <div style={{ display:"flex", gap:6 }}>
+              <input value={newENumber} onChange={e => setNewENumber(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addENumber())}
+                placeholder="Tilføj E-nummer OCR har misset, fx 220"
+                className="field" style={{ flex:1, fontSize:12, padding:"8px 10px" }} />
+              <button type="button" onClick={addENumber}
+                style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:8, padding:"0 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                Tilføj
+              </button>
             </div>
           </div>
         );
