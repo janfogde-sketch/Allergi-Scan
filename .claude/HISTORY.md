@@ -2150,3 +2150,104 @@ visuelt (ingen synlig overlap i skærmbilleder).
 **Verifikation:** `npm run build` grøn (bekræftede at `scan-hero-bg.webp`
 er tilbage i `dist/assets/`), `npm run lint` ren, `npx vitest run` 103/103
 grønne, mojibake-scan ren på alle ændrede filer.
+
+---
+
+## 24. sept. 2026 — opfølgning på mergen: "for stor", "pulserer ikke", "beskåret"
+
+Brugeren delte et skærmbillede af den live, mergede app (fra en rigtig
+telefon, status bar viste "23.21", "God nat, Bjørn") med tre klager: "Hvorfor
+er knappen så stor og pulsere ikke, og hvorfor er baggrunden beskåret? Den
+skal jo dække hele skærmen."
+
+**Klage 1 — knappen for stor.** Den lige mergede kode havde genbrugt main's
+`clamp(168px, 42cqh, 267px)`-størrelse (fra en tidligere, uafhængig "gør
+knappen 50% større"-runde på main). Denne bruger havde ALDRIG bedt om den
+forstørrelse — det var en anden sessions beslutning, arvet via merge-
+reconcileringen uden at blive stillet spørgsmålstegn ved. Rettet ved at
+sætte målene tilbage til de oprindelige `clamp(90px, 23cqh, 150px)` (ydre)
+og tilsvarende mindre ikon/tekst/gap-mål, som var denne PR's egne,
+brugerverificerede tal fra før mergen.
+
+**Klage 2 — pulserer ikke.** Undersøgt grundigt før noget blev rettet, da
+kode-gennemlæsning ikke viste noget åbenlyst galt: `.scan-cta-halo{animation:
+scan-halo-pulse ...}` og knap-wrapperens `animation:"scanCtaBreathe ..."`
+så begge korrekte ud, ingen dubletter eller CSS-specificitets-konflikter
+fundet ved `grep` efter alle forekomster af klassenavnene. I stedet for at
+gætte en kodeændring, blev det verificeret DIREKTE i den faktiske,
+producerede app (ikke endnu en hånd-skrevet mimic-fil, som allerede havde
+givet et falsk positivt tidligere samme dag): bygget med `npx vite build
+--mode artifact-preview` (samme login-bypass-mode main's parallelle session
+tilføjede til Artifact-preview-arbejdet), serveret lokalt med `npx vite
+preview`, åbnet med Playwright, klikket "Se app uden login (preview)"-
+knappen, og kørt `element.getAnimations()` på både halo- og knap-wrapper-
+elementerne. Resultat: begge animationer rapporterede `playState:"running"`
+— koden var og er korrekt. `window.matchMedia('(prefers-reduced-motion:
+reduce)').matches` var også `false` i denne testomgivelse, så det er ikke
+en global reduced-motion-indstilling der forklarer det HER — men kunne
+stadig være årsagen på brugerens EGEN enhed, hvis de har "Reducér bevægelse"
+slået til i tilgængelighedsindstillingerne (ville korrekt undertrykke
+begge animationer, som designet — `@media (prefers-reduced-motion: reduce)`-
+reglen i `theme.jsx` er bevidst, ikke en fejl). Anden sandsynlig forklaring:
+et statisk skærmbillede kan i sagens natur ikke vise en pulserende
+animation, uanset om den kører eller ej — brugerens beskrivelse kan sagtens
+være en fortolkning af screenshottet snarere end en observation fra selve
+den levende app. Tredje mulighed: PWA'ens service worker (se "Beta-
+installation"-afsnittet i CLAUDE.md) havde ikke nået at hente den nyeste
+deploy endnu på brugerens enhed. **Ingen kodeændring lavet for denne klage**
+— hvis brugeren bekræfter problemet fortsætter efter en hård genindlæsning
+OG bekræftet reduced-motion er slået fra, skal der graves videre.
+
+**Klage 3 — baggrunden beskåret, skal dække hele skærmen.** Dette VAR en
+reel arkitekturbegrænsning, ikke en misforståelse. Den daværende løsning
+(en `<img>` direkte i `.home-hero-frame`, fra PR #307) var med vilje
+begrænset til rummet MELLEM topbar og bundnav — samme `calc(100dvh -
+143px)`-budget der giver hero-boksen sin robuste, definitive højde (se den
+tidligere PR #287-hotfix-historik for hvorfor denne beregning eksisterer i
+første omgang). Billedet kunne derfor ALDRIG nå kant-til-kant bag barerne
+uden enten (a) en helt ny, uafprøvet fuldskærms-teknik, eller (b) en
+tilbagevenden til den flex-fill-baserede højde-tilgang der allerede havde
+forårsaget ét produktions-nedbrud tidligere denne session (se PR #287's
+hotfix-historik ovenfor — indefinit-højde-kæde-fejlen). Ingen af delene var
+ønskelige.
+
+**Løsning:** genbrug main's EGEN, allerede-bevist fuldskærms-teknik i stedet
+for at opfinde en ny. Main's app-brede baggrund (`.app-bg` i `theme.jsx`) er
+allerede en `position:fixed;inset:0`-boks, uafhængig af `.screen`s eller
+`.home-hero-frame`s højde-kæde, og topbar/bundnav har allerede frosted-
+glass-`::before`-lag der lader den skinne igennem. Løsningen var derfor at
+gøre `.app-bg`s BILLEDE betinget: en ny `.app-bg-scan`-modifier-klasse
+(samme `background-size:cover`-teknik som `.app-bg` selv) overstyrer kun
+`background-image`, slået til via en ekstra klasse i `App.jsx`
+(`` `app-bg${screen === SCREENS.HOME ? " app-bg-scan" : ""}` ``) — ikke en
+ny fixed-boks, ikke en ny højde-beregning, ingen af de kendte fejlklasser
+denne session allerede har fundet og rettet to gange. `<img>`-tagget i
+`.home-hero-frame` er fjernet helt; `.home-hero-frame` er nu en ren layout-
+container for hilsen/knap/fod, uden eget visuelt indhold.
+
+**Bevidst opgivet princip:** PR #307 havde en eksplicit designregel for
+dette billede — "Vises ALTID i sin fulde helhed (height:100%, width:auto,
+centreret) — aldrig beskåret, kun skaleret" — begrundet i billedets smalle
+liggende format (941×1672, smallere end de fleste telefonskærme) og en
+frygt for at beskære de to fødevare-kolonner i siderne. Denne regel er nu
+OPGIVET til fordel for `background-size:cover` (som kan beskære sider på
+ekstreme skærmforhold), fordi brugeren eksplicit prioriterede "dækker hele
+skærmen" over "aldrig beskåret" i denne runde. Værd at holde øje med ved
+fremtidige ændringer af dette billede — hvis beskæringen bliver for
+aggressiv på bestemte enheder, er det den bevidste afvejning der viser sig,
+ikke en ny bug.
+
+**Genverificeret i den faktiske app (samme artifact-preview-opsætning som
+klage 2):** `app-bg`-elementets `className` var `"app-bg app-bg-scan"` på
+Scan-skærmen, dens `background-image` pegede korrekt på
+`scan-hero-bg-*.webp`, og skærmbilledet viste billedet nu tydeligt
+strækkende sig op bag topbaren (ingen længere synligt "to forskellige
+baggrunde stødt sammen ved en kant"-effekt). Knap-størrelsen målt til
+~112px bred (ned fra ~220px+), matcher den ønskede mindre størrelse.
+
+**Verifikation:** `npm run build` grøn, `npm run lint` ren, `npx vitest run`
+103/103 grønne, mojibake-scan ren på alle ændrede filer, plus den nye
+artifact-preview-baserede live-verifikation beskrevet ovenfor (en mere
+pålidelig metode end håndskrevne mimics, værd at genbruge fremover når en
+skærm kræver visuel efterprøvning og en `--mode artifact-preview`-login-
+bypass findes).

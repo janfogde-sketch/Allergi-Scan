@@ -840,8 +840,12 @@ export default function EatSafe() {
       <div className="app" role="application" aria-label="EatSafe">
         {/* App-bred baggrund — ét fast billede bag alt andet indhold, se
             .app-bg i theme.jsx for hvorfor det er en ægte position:fixed-boks
-            og ikke background-attachment:fixed. */}
-        <div className="app-bg" aria-hidden="true" />
+            og ikke background-attachment:fixed. Scan-forsiden (SCREENS.HOME)
+            får sit EGET baggrundsfoto via app-bg-scan-klassen (.app-bg.app-bg-
+            scan, theme.jsx) — dækker hele skærmen kant-til-kant i stedet for
+            kun rummet mellem topbar/bundnav, som en tidligere <img>-i-hero-
+            frame-udgave var begrænset til. */}
+        <div className={`app-bg${screen === SCREENS.HOME ? " app-bg-scan" : ""}`} aria-hidden="true" />
 
         {/* Skip-link for tastatur/screen reader brugere */}
         <a href="#main-content" className="skip-link">Spring til indhold</a>

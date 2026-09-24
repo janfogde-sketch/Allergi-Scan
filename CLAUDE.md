@@ -490,6 +490,38 @@ se `.claude/HISTORY.md` for mockuppets fulde indhold og screenshots.
   spist main's oprindelige sikkerhedsmargin) — rettet ved at flytte
   knappens `top`-position fra 46% til 48%. Fuld liste over hvad der blev
   auto-merget vs. manuelt reconcileret i `.claude/HISTORY.md`.
+- **Opfølgning, samme dag:** brugeren testede den mergede version live og
+  gav tre stykker feedback: knappen var for stor (main's 50%-forstørrelse,
+  som lige var genbrugt ovenfor, blev IKKE ønsket af denne bruger — sat
+  tilbage til de oprindelige `clamp(90px, 23cqh, 150px)`-mål), knappen
+  pulserede ikke synligt, og baggrundsbilledet var tydeligt beskåret/ikke
+  fuldt skærmdækkende. Undersøgt og rettet:
+  - **Puls-klagen viste sig at være korrekt kode, ikke en bug** — verificeret
+    direkte i den byggede app (ikke en hånd-mimic) via Playwright + et
+    `--mode artifact-preview`-build (se `import.meta.env.MODE ===
+    "artifact-preview"` i `OnboardingScreen.jsx` for login-bypass'en) og
+    `element.getAnimations()`: begge animationer (`scan-halo-pulse`,
+    `scanCtaBreathe`) rapporterede `playState:"running"` i den rigtige,
+    bygget-og-serverede app. Mest sandsynlige forklaring på brugerens
+    oplevelse: et skærmbillede kan i sagens natur ikke vise bevægelse, eller
+    en forsinket PWA-service-worker-opdatering (se afsnit "Beta-installation"
+    nedenfor for den kendte cache-mekanik) — IKKE en kodefejl. Fjern denne
+    note hvis brugeren bekræfter det stadig ikke pulserer efter en hård
+    genindlæsning.
+  - **Baggrunds-beskæringen var en reel arkitekturbegrænsning**, ikke en bug:
+    `<img>`-i-`.home-hero-frame`-tilgangen (fra PR #307/mergen) var af design
+    begrænset til rummet MELLEM topbar og bundnav (samme calc-budget som gav
+    hero-boksen sin definitive højde) — den nåede aldrig kant-til-kant bag
+    barerne. Løst ved at flytte Scan-forsidens baggrundsfoto fra en `<img>`
+    inde i hero-frame'et til et `app-bg-scan`-modifier-lag på selve
+    `.app-bg` (samme mønster som main's app-brede baggrund allerede bruger,
+    kun med et andet billede, betinget på `screen===SCREENS.HOME` i
+    `App.jsx`) — genbruger dermed en allerede-bevist, fuldt-skærmdækkende
+    teknik i stedet for at opfinde en ny. Kendt afvejning: `background-
+    size:cover` kan beskære lidt i siderne på ekstreme skærmforhold (samme
+    afvejning main's eget baggrundsbillede allerede accepterer) — men dette
+    var eksplicit hvad brugeren bad om ("den skal jo dække hele skærmen"),
+    så prioriteret over det tidligere "aldrig beskåret"-princip fra PR #307.
 - Verificeret med Playwright-device-profiler (iPhone SE, iPhone 13) — nul
   overflow, ingen overlap/klipning, farver/puls/knap-type som beskrevet.
 
