@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { id: "missing",     icon: "info",     label: "Manglende EAN'er" },
   { id: "import",      icon: "download", label: "Import" },
   { id: "recipes",     icon: "book",     label: "Opskrifter" },
+  { id: "history",     icon: "clock",    label: "Historik" },
 ];
 
 export default function AdminLayout({ section, setSection, userEmail, userId, accessToken, logout, pendingSubmissions, openTickets, children }) {

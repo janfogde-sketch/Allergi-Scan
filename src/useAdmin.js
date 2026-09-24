@@ -20,6 +20,9 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const [openAdminUser, setOpenAdminUser] = useState(null);
   const [editingAdminUser, setEditingAdminUser] = useState(null);
   const [adminUserActionLoading, setAdminUserActionLoading] = useState(false);
+  const [revisionLog, setRevisionLog] = useState([]);
+  const [revisionLogLoading, setRevisionLogLoading] = useState(false);
+  const [revisionLogFilter, setRevisionLogFilter] = useState("all");
   const [userSearch, setUserSearch] = useState("");
   const [userSearchParam, setUserSearchParam] = useState("all");
   const [openSubmission, setOpenSubmission] = useState(null);
@@ -175,11 +178,20 @@ export function useAdmin(accessToken, userId, clearAuth) {
       );
       const full = Array.isArray(rows) ? rows[0] : null;
       if (!full) throw new Error("Bruger ikke fundet");
+      // Brugerens EGNE allergener (family_member_id er altid null her — familie-
+      // medlemmers allergener ligger på family_members-tabellen, ikke her).
+      const allergenRows = await apiCall(
+        `${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${u.id}&family_member_id=is.null&select=allergen,type`,
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+      ).catch(() => []);
+      const rowsArr = Array.isArray(allergenRows) ? allergenRows : [];
       setEditingAdminUser({
         name: full.name || "", email: full.email || "", phone: full.phone || "",
         role: full.role || "user", birth_year: full.birth_year || "", gender: full.gender || "",
         diets: full.diets || [], e_numbers: (full.e_numbers || []).join(", "),
         onboarding_completed: !!full.onboarding_completed,
+        allergen_ids: rowsArr.filter(r => r.type === "allergen").map(r => r.allergen),
+        custom_allergens: rowsArr.filter(r => r.type === "custom").map(r => r.allergen).join(", "),
       });
     } catch (e) {
       showToast("Kunne ikke hente brugerens fulde data: " + e.message, "error");
@@ -207,6 +219,25 @@ export function useAdmin(accessToken, userId, clearAuth) {
           onboarding_completed: editingAdminUser.onboarding_completed,
         }),
       });
+
+      // Samlet DELETE + én bulk-POST — samme mønster som ProfileScreen bruger
+      // for sig selv — så et fejlet kald midtvejs ikke kan efterlade en
+      // delvist gemt allergen-liste.
+      const customList = editingAdminUser.custom_allergens.split(",").map(s => s.trim()).filter(Boolean);
+      await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${openAdminUser.id}&family_member_id=is.null`, {
+        method: "DELETE", headers: makeHeaders(accessToken),
+      });
+      const allergenRows = [
+        ...editingAdminUser.allergen_ids.map(a => ({ user_id: openAdminUser.id, allergen: a, type: "allergen" })),
+        ...customList.map(c => ({ user_id: openAdminUser.id, allergen: c, type: "custom" })),
+      ];
+      if (allergenRows.length > 0) {
+        await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, {
+          method: "POST", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+          body: JSON.stringify(allergenRows),
+        });
+      }
+
       setAdminUsers(us => us.map(x => x.id === openAdminUser.id ? { ...x, name: editingAdminUser.name, email: editingAdminUser.email, phone: editingAdminUser.phone, role: editingAdminUser.role, birth_year: editingAdminUser.birth_year, onboarding_completed: editingAdminUser.onboarding_completed } : x));
       showToast("Bruger opdateret");
       setOpenAdminUser(null); setEditingAdminUser(null);
@@ -321,6 +352,45 @@ export function useAdmin(accessToken, userId, clearAuth) {
       showToast("Kunne ikke slette produkt: " + e.message, "error");
     }
     setProductActionLoading(false);
+  };
+
+  // ── Ændringshistorik (revision_log) — read-only viewer ─────────────────────
+  // Bliver allerede skrevet til (submissions-godkendelse, produkt-redigering)
+  // men havde ingen visning. Product/bruger-navne på rækkerne findes ikke i
+  // selve revision_log (kun uuid'er), så de slås op i to batch-kald efter
+  // hovedlisten er hentet i stedet for én ekstra roundtrip pr. række.
+  const loadRevisionLog = async (filter) => {
+    setRevisionLogLoading(true);
+    try {
+      const f = filter ?? revisionLogFilter;
+      const typeFilter = f && f !== "all" ? `change_type=eq.${f}&` : "";
+      const rows = await apiCall(
+        `${SUPABASE_URL}/rest/v1/revision_log?${typeFilter}order=created_at.desc&limit=100`,
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+      );
+      const entries = Array.isArray(rows) ? rows : [];
+      const productIds = [...new Set(entries.map(r => r.product_id).filter(Boolean))];
+      const userIds = [...new Set(entries.map(r => r.changed_by).filter(Boolean))];
+      const [productRows, userRows] = await Promise.all([
+        productIds.length
+          ? apiCall(`${SUPABASE_URL}/rest/v1/products?id=in.(${productIds.join(",")})&select=id,name,ean`, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }).catch(() => [])
+          : [],
+        userIds.length
+          ? apiCall(`${SUPABASE_URL}/rest/v1/users?id=in.(${userIds.join(",")})&select=id,name,email`, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }).catch(() => [])
+          : [],
+      ]);
+      const productMap = Object.fromEntries((Array.isArray(productRows) ? productRows : []).map(p => [p.id, p]));
+      const userMap = Object.fromEntries((Array.isArray(userRows) ? userRows : []).map(u => [u.id, u]));
+      setRevisionLog(entries.map(r => ({
+        ...r,
+        product: r.product_id ? productMap[r.product_id] : null,
+        user: r.changed_by ? userMap[r.changed_by] : null,
+      })));
+    } catch (e) {
+      setRevisionLog([]);
+      showToast("Kunne ikke hente ændringshistorik: " + e.message, "error");
+    }
+    setRevisionLogLoading(false);
   };
 
   // ── Leksikon (knowledge_base) — CRUD ───────────────────────────────────────
@@ -710,5 +780,6 @@ export function useAdmin(accessToken, userId, clearAuth) {
     openKnowledgeEntry, setOpenKnowledgeEntry, editingKnowledgeEntry, setEditingKnowledgeEntry,
     knowledgeActionLoading, openKnowledgeEntryForEdit, openNewKnowledgeEntry,
     saveKnowledgeEntry, deleteKnowledgeEntry,
+    revisionLog, revisionLogLoading, revisionLogFilter, setRevisionLogFilter, loadRevisionLog,
   };
 }

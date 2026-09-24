@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { DIETS } from "../../constants.jsx";
+import { DIETS, ALLERGENS } from "../../constants.jsx";
 
 export default function UsersSection({
   adminUsers, adminUsersLoading, userSearch, setUserSearch, currentUserId, updateUserRole, deleteUser,
@@ -25,6 +25,9 @@ export default function UsersSection({
   const close = () => { setOpenAdminUser(null); setEditingAdminUser(null); };
   const toggleDiet = (id) => setEditingAdminUser(s => ({
     ...s, diets: s.diets.includes(id) ? s.diets.filter(x => x !== id) : [...s.diets, id],
+  }));
+  const toggleAllergen = (id) => setEditingAdminUser(s => ({
+    ...s, allergen_ids: s.allergen_ids.includes(id) ? s.allergen_ids.filter(x => x !== id) : [...s.allergen_ids, id],
   }));
 
   return (
@@ -161,6 +164,31 @@ export default function UsersSection({
             </div>
 
             <div className="admin-field">
+              <label className="admin-label">Allergener</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {ALLERGENS.map(a => {
+                  const isOn = editingAdminUser.allergen_ids.includes(a.id);
+                  return (
+                    <button key={a.id} type="button" onClick={() => toggleAllergen(a.id)}
+                      style={{
+                        fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20, cursor: "pointer", fontFamily: "var(--f)",
+                        background: isOn ? "var(--red-lt)" : "var(--surface3)",
+                        color: isOn ? "var(--red)" : "var(--muted2)",
+                        border: `1px solid ${isOn ? "var(--red-md)" : "var(--border)"}`,
+                      }}>
+                      {a.emoji} {a.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="admin-field">
+              <label className="admin-label">Egne tilføjede allergier <span style={{ fontWeight: 400, color: "var(--muted)" }}>(kommasepareret)</span></label>
+              <input value={editingAdminUser.custom_allergens} onChange={e => setEditingAdminUser(s => ({ ...s, custom_allergens: e.target.value }))} placeholder="Fructose, kanel…" />
+            </div>
+
+            <div className="admin-field">
               <label className="admin-label">Overvågede E-numre <span style={{ fontWeight: 400, color: "var(--muted)" }}>(kommasepareret)</span></label>
               <input value={editingAdminUser.e_numbers} onChange={e => setEditingAdminUser(s => ({ ...s, e_numbers: e.target.value }))} placeholder="E220, E250…" />
             </div>
@@ -171,10 +199,6 @@ export default function UsersSection({
                   onChange={e => setEditingAdminUser(s => ({ ...s, onboarding_completed: e.target.checked }))} />
                 Onboarding færdiggjort
               </label>
-            </div>
-
-            <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 14 }}>
-              Allergener redigeres endnu ikke herfra — kun de generelle profil-felter ovenfor.
             </div>
 
             <div style={{ display: "flex", gap: 8 }}>
