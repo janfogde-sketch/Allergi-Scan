@@ -14,11 +14,6 @@ import { CategorySelect } from "./MemberForm.jsx";
 import ResultScreen from "./ResultScreen.jsx";
 import { UI } from "./styleUtils.js";
 import { getGreeting } from "./utils.jsx";
-// Hjem-forsidens baggrundsbillede — udelukkende dekorativt (aria-hidden), se
-// CLAUDE.md afsnit 5. Ét samlet, hvidbalance-korrigeret foto (leveret af
-// brugeren) i stedet for separate foto-udklip — undgår helt tidligere
-// beskærings-artefakter, da billedet aldrig beskæres, kun skaleres.
-import scanHeroBg from "./assets/home/scan-hero-bg.webp";
 // Lazy: skærme brugeren ikke nødvendigvis besøger hver session, holdes ude af hoved-bundlet.
 // ResultScreen er IKKE med her — den vises efter stort set hvert scan (hoved-flowet),
 // så at lazy-loade den ville tilføje en indlæsnings-forsinkelse lige der hvor brugeren
@@ -231,10 +226,10 @@ export default function ScannerScreen({
               </div>
             )}
 
-            {/* Scan-boks — kun til loggede. Forsiden viser en hilsen + det
-                hvidbalance-korrigerede baggrundsbillede + stor scan-CTA — se
-                CLAUDE.md afsnit 5 for baggrunden. Hero-boksens egen højde
-                styres af .home-hero-frame (calc(100dvh - Npx), se theme.jsx)
+            {/* Scan-boks — kun til loggede. Forsiden viser en hilsen + stor
+                scan-CTA oven på appens fælles baggrundsbillede — se CLAUDE.md
+                afsnit 5 for baggrunden. Hero-boksens egen højde styres af
+                .home-hero-frame (calc(100dvh - Npx), se theme.jsx)
                 — IKKE flex:1/height:100% her, som viste sig upålideligt i
                 produktion (afhænger af at hele forældrekæden har en
                 definitiv, ikke bare minimum-, højde — se theme.jsx's
@@ -325,17 +320,14 @@ export default function ScannerScreen({
               <input ref={photoFallbackRef} type="file" accept="image/*" capture="environment" style={S.none}
                 onChange={e => { if (e.target.files[0]) scanPhotoForEan(e.target.files[0]); e.target.value=""; }} />
 
-              {/* Forside-hero når kamera ikke er aktivt: hilsen + baggrundsbillede
-                  + stor scan-knap + "Prøv en demo" + version/beta-fod. .home-
-                  hero-frame (theme.jsx) giver denne boks en DEFINITIV
-                  calc(100dvh - Npx)-højde — billedet fylder den helt
-                  (height:100%, bredden følger automatisk af billedets eget
-                  højde/bredde-forhold — aldrig beskåret, kun skaleret) — se
-                  CLAUDE.md afsnit 5 for baggrunden. Hilsen/knap er positioneret
-                  med %-baserede top-værdier relativt til billedets egen boks
-                  (ikke skærmens), så de rammer billedets blanke midterbånd
-                  uanset skærmhøjde. "Prøv en demo" + version/Beta-info er
-                  slået sammen til ÉN flex-kolonne-gruppe (i stedet for to
+              {/* Forside-hero når kamera ikke er aktivt: hilsen + stor scan-knap +
+                  "Prøv en demo" + version/beta-fod, siddende oven på appens
+                  fælles baggrundsbillede (theme.jsx's .app — ikke længere et
+                  separat billede kun på denne skærm, se CLAUDE.md afsnit 5).
+                  .home-hero-frame (theme.jsx) giver boksen en DEFINITIV
+                  calc(100dvh - Npx)-højde, så hilsen/knap altid er synlige
+                  uden scroll. "Prøv en demo" + version/Beta-info er slået
+                  sammen til ÉN flex-kolonne-gruppe (i stedet for to
                   uafhængigt positionerede lag) så de garanteret ikke kan
                   overlappe hinanden — fundet nødvendigt efter et rigtigt
                   overlap på almindelige enheds-profiler, se .home-hero-frame's
@@ -346,9 +338,6 @@ export default function ScannerScreen({
                   ren redundans der kun kostede plads. */}
               {!cameraActive && (
               <div className="home-hero-frame">
-                <img src={scanHeroBg} alt="" aria-hidden="true" draggable="false"
-                  style={{ display:"block", height:"100%", width:"auto", margin:"0 auto", pointerEvents:"none", userSelect:"none" }} />
-
                 <div style={{ position:"absolute", top:"27%", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
                   <div style={{ fontSize:"clamp(10px, 2cqh, 14px)", fontWeight:500, color:"var(--ink)", letterSpacing:"-.2px" }}>{getGreeting()},</div>
                   <div style={{ fontSize:"clamp(15px, 3.3cqh, 23px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(1px, .3cqh, 2px)" }}>{user.name?.split(" ")[0] || "der"}</div>
@@ -410,7 +399,7 @@ export default function ScannerScreen({
                 tilstande, kun vist ved behov. Pakket i en bund-sikret wrapper
                 (padding matchende den gennemsigtige bundnav) så de ikke kan
                 havne skjult/utrykbare bag den, nu hvor HOME-skærmens normale
-                110px bund-reserve er fjernet til fordel for hero-billedets
+                110px bund-reserve er fjernet til fordel for hero-boksens
                 kant-til-kant-udfyldning ovenfor. */}
             <div style={{ paddingBottom: (showDemoScan || scanError || showManualEan) ? "calc(77px + env(safe-area-inset-bottom) + 12px)" : 0 }}>
             {/* Simuleret scan — prøv appen uden en rigtig stregkode ("Fase 7b.2").

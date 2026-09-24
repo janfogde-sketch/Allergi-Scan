@@ -801,6 +801,11 @@ export default function EatSafe() {
     <>
       <style>{appCss}</style>
       <div className="app" role="application" aria-label="EatSafe">
+        {/* App-bred baggrund — ét fast billede bag alt andet indhold, se
+            .app-bg i theme.jsx for hvorfor det er en ægte position:fixed-boks
+            og ikke background-attachment:fixed. */}
+        <div className="app-bg" aria-hidden="true" />
+
         {/* Skip-link for tastatur/screen reader brugere */}
         <a href="#main-content" className="skip-link">Spring til indhold</a>
 
