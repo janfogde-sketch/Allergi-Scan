@@ -1,6 +1,18 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { DIETS, ALLERGENS } from "../../constants.jsx";
+import { downloadCsv } from "../csvExport.js";
+
+const CSV_COLUMNS = [
+  { key: "name", label: "Navn" },
+  { key: "email", label: "Email" },
+  { key: "phone", label: "Telefon" },
+  { key: "role", label: "Rolle" },
+  { key: "birth_year", label: "Fødselsår" },
+  { key: "onboarding_completed", label: "Onboarding færdig" },
+  { key: "created_at", label: "Oprettet" },
+  { key: "id", label: "Bruger-id" },
+];
 
 export default function UsersSection({
   adminUsers, adminUsersLoading, userSearch, setUserSearch, currentUserId, updateUserRole, deleteUser,
@@ -39,7 +51,13 @@ export default function UsersSection({
             <button key={id} className={`admin-tab-btn${roleFilter === id ? " active" : ""}`} onClick={() => setRoleFilter(id)}>{label}</button>
           ))}
         </div>
-        <div style={{ marginLeft: "auto", fontSize: 12, color: "var(--muted)" }}>{filtered.length} af {adminUsers.length}</div>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 12, color: "var(--muted)" }}>{filtered.length} af {adminUsers.length}</span>
+          <button className="admin-btn admin-btn-ghost admin-btn-sm" disabled={filtered.length === 0}
+            onClick={() => downloadCsv(`eatsafe-brugere-${new Date().toISOString().slice(0, 10)}.csv`, filtered, CSV_COLUMNS)}>
+            Eksportér CSV
+          </button>
+        </div>
       </div>
 
       <div className="admin-table-wrap">

@@ -1,8 +1,19 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS } from "../../constants.jsx";
+import { downloadCsv } from "../csvExport.js";
 
 const VERIFIED_STATUSES = ["unverified", "partial", "verified"];
+const CSV_COLUMNS = [
+  { key: "name", label: "Navn" },
+  { key: "brand", label: "Brand" },
+  { key: "ean", label: "EAN" },
+  { key: "category", label: "Kategori" },
+  { key: "source", label: "Kilde" },
+  { key: "verified_status", label: "Status" },
+  { key: "updated_at", label: "Opdateret" },
+  { key: "id", label: "Produkt-id" },
+];
 
 export default function ProductsSection({
   products, productsLoading, productSearch, setProductSearch, loadProducts,
@@ -25,8 +36,14 @@ export default function ProductsSection({
             value={productSearch} onChange={e => setProductSearch(e.target.value)} style={{ flex: 1 }} />
           <button type="submit" className="admin-btn admin-btn-ghost admin-btn-sm">Søg</button>
         </form>
-        <div style={{ fontSize: 12, color: "var(--muted)" }}>
-          {productSearch.trim() ? `${products.length} resultater` : "Seneste opdaterede"}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 12, color: "var(--muted)" }}>
+            {productSearch.trim() ? `${products.length} resultater` : "Seneste opdaterede"}
+          </span>
+          <button className="admin-btn admin-btn-ghost admin-btn-sm" disabled={products.length === 0}
+            onClick={() => downloadCsv(`eatsafe-produkter-${new Date().toISOString().slice(0, 10)}.csv`, products, CSV_COLUMNS)}>
+            Eksportér CSV
+          </button>
         </div>
       </div>
 
