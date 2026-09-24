@@ -67,6 +67,7 @@ export function buildScanResultFromProductData({ product, data, ean, activeIds, 
     }
   }
   return {
+    id: product.id || null,
     code: ean.trim(), name: product.name || "Ukendt produkt", brand: product.brand || "",
     variant_label: variantLabel,
     image_url: product.image_url || null, category: product.category || null,
