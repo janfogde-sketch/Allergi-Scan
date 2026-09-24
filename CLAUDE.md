@@ -392,9 +392,10 @@ implementeret i `ScannerScreen.jsx`:
   præcist — kildefotoet havde en svag mint-tone der ellers ville give en
   synlig kant mod resten af appen) erstatter den tidligere 9-instans
   frugt-collage. Vises ALTID i sin fulde helhed — aldrig beskåret, kun
-  skaleret til 75% bredde og centreret — hvilket permanent fjerner enhver
-  risiko for beskæringsartefakter (det tilbagevendende problem gennem
-  flere tidligere runder).
+  skaleret — hvilket permanent fjerner enhver risiko for beskærings-
+  artefakter (det tilbagevendende problem gennem flere tidligere runder).
+  **(Opdateret samme dag, se note nedenfor: skaleres nu efter tilgængelig
+  højde — ikke længere en fast 75%-bredde.)**
 - **Hilsen-overskrift er tilbage:** `{getGreeting()} (src/utils.jsx),
   {user.name?.split(" ")[0] || "der"}` — samme mønster som den
   oprindelige (før-14.-sept.) hilsen, ikke en ny opfindelse.
@@ -422,6 +423,40 @@ De 5 gamle foto-udklips-assets (`leaf-mint`, `blueberry-single`,
 af det ene samlede billede. Fuld mockup-iterationshistorik (baggrunds-
 farve-hvidbalance-fix, skalerings-matematik, knap-stil-sammenligning) i
 `.claude/HISTORY.md`.
+
+**24. sept. 2026 — samme dag, opfølgning: fylder altid skærmen + baggrund
+bag top/bund-menuer.** Brugeren bad om to ting: (1) designet skal "passe
+til alle telefoner som en konstant" — nul scroll, også på små telefoner
+som iPhone SE — og (2) det nye baggrundsbillede skal ses "alle steder,
+også bag top og bund menuer". Afklarede først med brugeren (arkitektonisk
+ændring, jf. afsnit 4's regel om at spørge ved tvivl): valgte den mindre
+indgribende løsning — topbarens `sticky`-positionering er IKKE ændret til
+`fixed`/overlay (ville have påvirket topbaren app-bredt ud over det
+nødvendige); i stedet fylder Scan-billedet altid al ledig plads via
+flexbox (`flex:1` + `minHeight:0` på scan-boksen, `height:"100%"` på
+billedet — bredden følger automatisk af billedets eget højde/bredde-
+forhold), og `.bottom-nav` (som ER `position:fixed`) har fået et
+`backdrop-filter:blur`-look i stedet for opak hvid, så billedet reelt ses
+(sløret) bagved — bekræftet ved pixel-sampling i en Playwright-mimic, ikke
+kun antaget. Samme lette gennemsigtighed er lagt på `.topbar` OG
+`.bottom-nav` **app-bredt** (ikke kun Scan-siden), efter brugerens
+eksplicitte valg — på andre skærme skinner det eksisterende prikgitter nu
+blødt igennem begge barer i stedet for en flad hvid baggrund.
+
+Version/Beta-information/App-guide-knapperne er flyttet fra en separat
+sektion nederst til at være bund-forankrede (`bottom:`, ikke `top:%`) oven
+på billedets nederste del, lige over bundnav — de fulgte tidligere efter
+scan-boksen i normal flow, men det rum findes ikke længere nu hvor scan-
+boksen fylder alt. Simuleret-scan/fejlbesked/manuel-EAN (sjældne,
+betingede tilstande) er pakket i en bund-sikret wrapper der KUN har
+padding når de faktisk vises — undgik en reel bug hvor en ubetinget
+padding-reserve stille åd det ekstra rum og forhindrede billedet i
+nogensinde at nå bundnav i det almindelige tilfælde.
+
+Verificeret ved en Playwright-mimic af den faktiske DOM-struktur ved tre
+skærmhøjder (667/iPhone SE, 844/standard, 932/Pro Max) — nul overflow
+bekræftet programmatisk (`scrollHeight <= clientHeight`) ved alle tre,
+ikke kun visuelt. Fuld metode i `.claude/HISTORY.md`.
 
 ### Beta-installation (september 2026) — nuværende arkitektur
 
