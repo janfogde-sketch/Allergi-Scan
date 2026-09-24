@@ -319,270 +319,43 @@ fejlfindingshistorie) er flyttet til `.claude/HISTORY.md` — dette afsnit
 udgjorde tidligere ~70% af hele `CLAUDE.md` (fundet af `token-audit`-
 skillen), og `CLAUDE.md` læses ved hver eneste session-start uanset opgave.
 
-**24. sept. 2026 — Hjem-forsiden redesignet igen, efter et delt
-referencedesign.** `ScannerScreen.jsx`s HOME-blok (idle-tilstanden, før
-kameraet aktiveres) er skiftet fra hilsen+dagens-tip+indkøbsliste-genvej
-til en enkel landing-visning: overskrift + undertekst, en stor cirkulær
-grøn scan-knap med blød glød (samme `startCamera()`-flow som før, kun
-re-skinnet — selve kamera-scanningen er uændret), en "Prøv en demo"-knap,
-og en frugt-/blad-billed-collage i hjørnerne (beskåret fra brugerens eget
-referencebillede, baggrunds-nøglet til alpha så appens prikgitter skinner
-igennem, gemt som WebP). Bundmenuen (Indkøbsliste/Scan/Søg) er bevidst
-UÆNDRET — omfanget blev afklaret eksplicit med brugeren først, da designet
-ellers kolliderede med tidligere valg (ingen fotografi, anden bundmenu).
-Fuld metode (baggrunds-nøgling, iterativ visuel verifikation) i
-`.claude/HISTORY.md`.
+**24. sept. 2026 — Scan-forsiden og app-baggrunden: fuld redesign-runde,
+afsluttet.** Efter flere iterationer (delt referencedesign → frugt-collage
+→ nyt referencefoto → app-bredt baggrundsbillede → en produktions-hotfix
+af en indefinit-højde-bug) landede den nuværende, stabile tilstand:
+- **`.home-hero-frame`** (ScannerScreen.jsx) har en definitiv
+  `calc(100dvh - 143px - env(safe-area-inset-bottom))`-højde + CSS
+  Container Queries (`clamp(min, Ncqh, max)` på alle mål) for
+  proportional skalering — verificeret nul overflow programmatisk på
+  Playwrights rigtige enhedsprofiler (iPhone SE 320×568, iPhone 13/14
+  Pro Max, Pixel 5, bred desktop).
+- **Ét app-bredt baggrundsbillede** (`src/assets/app-background.webp`,
+  via `.app-bg{position:fixed;z-index:0}` + `.screen{position:relative;
+  z-index:1}`) er fælles for ALLE skærme, ikke kun Scan-forsiden.
+- **Topbar/bottom-nav** har et let frostet-glas-look (`backdrop-filter:
+  blur` + `mask-image`-udtoning i stedet for en hård kant) app-bredt.
+- **"Prøv en demo"-knappen er fjernet** — `DemoSlider`/`showGuide` er
+  bevidst ikke slettet, men har ingen synlig UI-indgang længere. Genoptag
+  ved behov (fx en indgang under Profil-menuen), eller fjern dødt-kode-
+  resten, hvis det bekræftes at guiden reelt ikke skal bruges mere.
 
-**24. sept. 2026 — opfølgning: collagen tættere, demo-knap og prikker
-fjernet.** Brugerfeedback efter forrige runde: frugten så synligt
-beskåret ud, collagen skulle fylde hele skærmen (ikke kun hjørnerne),
-"Prøv en demo"-knappen skulle væk, og forsidens prikgitter-baggrund
-skulle væk. Fandt en reel bug undervejs: den ydre scan-boks-wrapper
-havde ubetinget `overflow:"hidden"` (kun tiltænkt at klippe kameraets
-hjørner), som usynligt klippede collage-billedernes kant-bløder-
-positionering i den rigtige app — nu kun `"hidden"` når kameraet er
-aktivt. Collagen bruger stadig de samme 5 fotos (sandboxen kan ikke
-hente andre/nye billeder eksternt — bekræftet blokeret for både
-generel web-adgang og GitHub-søgning), men nu i ni positioner med
-varieret størrelse/rotation i stedet for fem enkeltstående hjørne-
-billeder. Basilikum-bladet er genskåret med mere baggrundsmargin plus
-en tvungen kant-udtoning (kildefotoet gav ikke nok ren baggrund på
-alle sider — se `.claude/HISTORY.md` for detaljen). "Prøv en demo"-
-knappen er fjernet (App-guiden nås stadig via "App-guide"-knappen
-nederst på forsiden — ikke at forveksle med den urelaterede "Prøv en
-demo-scanning"-knap, som kun vises til brugere <24 timer gamle).
-Forsidens egen baggrund er sat til en flad `--paper`-farve, så
-prikgitter-mønsteret ikke længere ses her specifikt (uændret på
-resten af appens skærme).
+**Scan-knappen selv har efterfølgende været igennem flere runder samme
+dag** (fyldt grøn gradient → forsøg på en synlig glans-highlight/lys-
+effekt → brugerfeedback "ligner en gummibold" → fladere, mindre kontrast-
+fyldt gradient → tre forslag til en ny retning, brugeren valgte "ghost/
+outline" med et lyspunkt i kanten → brugerfeedback "ligner en radar" på
+den første, for skarpe udgave af ringen). **Nuværende design:** en let,
+hvid cirkel med grønt ikon/tekst; en bredt blurret, langsomt roterende
+lyskilde i en tynd ring (`scanCtaRingSpin`, 9s — IKKE en skarp/smal bue,
+det gav radar-udtrykket); en blød, jordet ambient-glød bagved; og en
+fler-lags elevation-skygge (nær+fjern) for reel dybde uden glossy-look.
+**Bundnavigationens inaktive ikoner** bruger nu en solid, mørkere farve
+(`--ink2`) i stedet for `opacity:.45`, som gjorde dem svære at se mod
+barens gennemsigtige/slørede baggrund.
 
-**24. sept. 2026 — appens baggrundsfarve skiftet til ren hvid.** Brugeren
-bad om et fuldt redesign: bundnavigation/knapper/tekst/logo skulle blive
-hvor de er, men baggrundsfarven skulle ændres konsekvent gennem hele
-appen. Viste 3 tonede paletteforslag (varm ivory/salvie/fersken) som
-screenshots — brugeren valgte i stedet ren hvid. `--paper`/`--paper2`/
-`--surface2`/`--surface3`/body-baggrunden/bund-navigationens baggrund
-(tidligere hardkodet `#F6F8F3` i stedet for `var(--paper)`) er alle
-ændret; det eksisterende punkt-gitter-dybde-lag (se ovenfor) er bevaret,
-bare omregnet til en hvid base. Kun `src/theme.jsx` — ikke det separate
-`src/admin/adminTheme.js` (desktop admin-panelet er ude af scope for
-denne ændring, ikke en del af den forbruger-vendte oplevelse brugeren
-bad om at redesigne).
-
-Afprøvede desuden en selvtegnet SVG-ingrediens-illustrationsstil til
-Scan-siden (som erstatning for foto-udklippene, for at undgå
-beskærings-artefakter helt) — først flad/cartoon-agtig, så en mere
-glansfuld/skygget "emoji-stil" version efter feedback. Brugeren ville
-efter at have set begge dele hellere have rigtige fotos igen ("det skal
-være realistiske frugter og ikke tegnet"). Da sandboxen ikke kan hente
-fotos eksternt, er Scan-sidens collage forblevet på den allerede
-verificerede foto-udklips-version fra opfølgningen ovenfor — uændret i
-denne runde. Fuld afprøvning (paletteforslag, begge SVG-stilarter) i
-`.claude/HISTORY.md`.
-
-**24. sept. 2026 — Scan-forsiden fik et nyt referencedesign implementeret.**
-Brugeren delte et nyt baggrundsbillede (frugt/blade på ren hvid baggrund,
-leveret direkte af brugeren — ikke beskåret ud af et referencescreenshot
-som tidligere runder) samt et layout-referencebillede (hilsen-overskrift,
-outlinet/senere fyldt scan-knap, en "Prøv en demo"-pille der overlapper
-billedets nederste hjørne). Efter iterativ mockup-godkendelse (baggrunds-
-farve-blend, skalering, knap-stilvalg — se `.claude/HISTORY.md`) er dette
-implementeret i `ScannerScreen.jsx`:
-- **Ét samlet baggrundsfoto** (`src/assets/home/scan-hero-bg.webp`,
-  hvidbalance-korrigeret så dets "hvide" baggrund matcher appens `--paper`
-  præcist — kildefotoet havde en svag mint-tone der ellers ville give en
-  synlig kant mod resten af appen) erstatter den tidligere 9-instans
-  frugt-collage. Vises ALTID i sin fulde helhed — aldrig beskåret, kun
-  skaleret — hvilket permanent fjerner enhver risiko for beskærings-
-  artefakter (det tilbagevendende problem gennem flere tidligere runder).
-  **(Opdateret samme dag, se note nedenfor: skaleres nu efter tilgængelig
-  højde — ikke længere en fast 75%-bredde.)**
-- **Hilsen-overskrift er tilbage:** `{getGreeting()} (src/utils.jsx),
-  {user.name?.split(" ")[0] || "der"}` — samme mønster som den
-  oprindelige (før-14.-sept.) hilsen, ikke en ny opfindelse.
-- **"Prøv en demo"-pillen er tilbage** (`setShowGuide(true)`, åbner den
-  eksisterende `DemoSlider`-guide) — bevidst fjernet i en tidligere runde,
-  nu bevidst genindført efter det nye referencedesign. Ikke at forveksle
-  med den urelaterede "Prøv en demo-scanning" (`showDemoScan`/
-  `runDemoScan`, kun til konti <24 timer gamle) længere nede på siden.
-- **Scan-knappen** er fortsat fyldt grøn gradient med glød — brugeren
-  fik vist 3 knap-stilforslag (fyldt gradient / blødt tonet fyld /
-  forfinet outline) og valgte den fyldte gradient, som allerede var
-  kodens eksisterende stil, så ingen kodeændring var nødvendig der.
-- **%-baseret positionering, ikke fast pixel-værdier:** hilsen/knap/pille
-  er positioneret med `top` i procent relativt til billedets egen boks
-  (ikke faste px beregnet for én bestemt skærmbredde) — forbliver korrekt
-  placeret i billedets blanke midterbånd på tværs af enhedsbredder.
-- **Topbarens ikon er fjernet** (kun "EatSafe"-teksten står tilbage, i
-  større skrift) — gælder hele appen, da topbaren er én delt komponent
-  i `App.jsx`, ikke skærm-specifik. `EatSafeLogo`-komponenten selv er
-  stadig i brug andre steder (Onboarding/ProfilSkærm), kun dens brug i
-  topbaren er fjernet.
-
-De 5 gamle foto-udklips-assets (`leaf-mint`, `blueberry-single`,
-`blueberries-pair`, `strawberry`, `leaf-basil`) er slettet — erstattet
-af det ene samlede billede. Fuld mockup-iterationshistorik (baggrunds-
-farve-hvidbalance-fix, skalerings-matematik, knap-stil-sammenligning) i
-`.claude/HISTORY.md`.
-
-**24. sept. 2026 — samme dag, opfølgning: fylder altid skærmen + baggrund
-bag top/bund-menuer.** Brugeren bad om to ting: (1) designet skal "passe
-til alle telefoner som en konstant" — nul scroll, også på små telefoner
-som iPhone SE — og (2) det nye baggrundsbillede skal ses "alle steder,
-også bag top og bund menuer". Afklarede først med brugeren (arkitektonisk
-ændring, jf. afsnit 4's regel om at spørge ved tvivl): valgte den mindre
-indgribende løsning — topbarens `sticky`-positionering er IKKE ændret til
-`fixed`/overlay (ville have påvirket topbaren app-bredt ud over det
-nødvendige); i stedet fylder Scan-billedet altid al ledig plads via
-flexbox (`flex:1` + `minHeight:0` på scan-boksen, `height:"100%"` på
-billedet — bredden følger automatisk af billedets eget højde/bredde-
-forhold), og `.bottom-nav` (som ER `position:fixed`) har fået et
-`backdrop-filter:blur`-look i stedet for opak hvid, så billedet reelt ses
-(sløret) bagved — bekræftet ved pixel-sampling i en Playwright-mimic, ikke
-kun antaget. Samme lette gennemsigtighed er lagt på `.topbar` OG
-`.bottom-nav` **app-bredt** (ikke kun Scan-siden), efter brugerens
-eksplicitte valg — på andre skærme skinner det eksisterende prikgitter nu
-blødt igennem begge barer i stedet for en flad hvid baggrund.
-
-Version/Beta-information/App-guide-knapperne er flyttet fra en separat
-sektion nederst til at være bund-forankrede (`bottom:`, ikke `top:%`) oven
-på billedets nederste del, lige over bundnav — de fulgte tidligere efter
-scan-boksen i normal flow, men det rum findes ikke længere nu hvor scan-
-boksen fylder alt. Simuleret-scan/fejlbesked/manuel-EAN (sjældne,
-betingede tilstande) er pakket i en bund-sikret wrapper der KUN har
-padding når de faktisk vises — undgik en reel bug hvor en ubetinget
-padding-reserve stille åd det ekstra rum og forhindrede billedet i
-nogensinde at nå bundnav i det almindelige tilfælde.
-
-Verificeret ved en Playwright-mimic af den faktiske DOM-struktur ved tre
-skærmhøjder (667/iPhone SE, 844/standard, 932/Pro Max) — nul overflow
-bekræftet programmatisk (`scrollHeight <= clientHeight`) ved alle tre,
-ikke kun visuelt. Fuld metode i `.claude/HISTORY.md`.
-
-**24. sept. 2026 — samme dag, hotfix: forrige flex-fill-tilgang gik reelt
-i produktion.** Brugeren delte et desktop-skærmbillede af eatsafe.dk hvor
-"Scan produkt"-knappen var synligt afskåret og siden kunne scrolles —
-stik modsat det lige verificerede. Rodårsag: `flex:1`/`minHeight:0` +
-`height:"100%"`-kæden kræver at HELE forældre-kæden har en DEFINITIV
-højde, men `body`/`.app` har kun `min-height:100vh` (et minimum, ikke en
-definitiv højde) — virkede kun i den forrige tests kunstige fast-højde-
-wrapper, som ikke matchede produktionens rigtige CSS. **Fix:** droppet
-flex-fill/procent-højde helt til fordel for en ny `.home-hero-frame`-
-klasse i `theme.jsx` med en direkte `calc(100dvh - 143px -
-env(safe-area-inset-bottom))`-højde (altid definitiv, uanset forældre-
-kædens højde-model). Genverificeret med en mimic der bevidst UDELADER en
-fast-højde-wrapper (matcher produktion præcist) og med Playwrights
-RIGTIGE enhedsprofiler (`devices['iPhone SE']` m.fl., ikke selvvalgte
-viewport-mål — en tidligere antaget iPhone SE-størrelse på 390×667 viste
-sig forkert, den rigtige er 320×568) — nul overflow bekræftet på iPhone
-SE/13/14 Pro Max, Pixel 5 og det oprindelige brede desktop-scenarie.
-
-Samme runde: fast-pixel-størrelser (knap-diameter, skriftstørrelser) på
-Scan-siden skalerede ikke ned på små skærme, hvilket gav synligt overlap
-mellem "Prøv en demo"-pillen og version/Beta-footeren, selv på en helt
-almindelig iPhone 13. Fix: CSS Container Queries (`container-type:size`
-på `.home-hero-frame`) + `clamp(min, Ncqh, max)` på alle overlay-
-størrelser, så de skalerer proportionalt med rammens faktiske højde.
-"Prøv en demo"-pillen og version/Beta-footeren er desuden slået sammen
-til ÉN flex-kolonne (var to uafhængigt positionerede elementer) — flow
-garanterer nu at de aldrig kan overlappe hinanden. Den nu-redundante
-"App-guide"-knap er fjernet (åbnede præcis samme guide som "Prøv en
-demo"). **Kendt, accepteret tradeoff:** i modsætning til opfølgningen
-ovenfor stopper billedet nu FØR bundnav i stedet for at fortsætte bagved
-den slørede bundnav — en bevidst afvejning givet brugerens eksplicitte
-prioritering "vigtigst er det passer til telefoner" frem for den rene
-visuelle effekt. Fuld fejlfindingshistorik (de tre backtick-byggefejl i
-`theme.jsx`s CSS-kommentarer, den fulde årsagsanalyse af indefinit-højde-
-kæder) i `.claude/HISTORY.md`.
-
-**24. sept. 2026 — samme dag, baggrundsbilledet gjort app-bredt (erstatter
-Bjørns Scan-specifikke foto + det gamle prikgitter).** Brugeren (Jan) delte
-et nyt billede (ingredienser/frugt i en dekorativ ramme om et blankt hvidt
-midterfelt) og bad om at bruge DET som appens ene, fælles baggrund på tværs
-af ALLE skærme — ikke kun Scan-forsiden — og fjerne al anden baggrunds-kode
-for at rydde op, efter at have vurderet at Bjørns Scan-specifikke
-fotobaggrund (se de tre log-poster ovenfor) ikke virkede med appens højde/
-bredde på tværs af enheder.
-
-- **`src/assets/app-background.webp`** (nyt, 941×1672, ~215KB) — erstatter
-  både det tidligere prikgitter+farve-glød-lag i `.app` (theme.jsx) OG
-  Scan-forsidens dedikerede `scan-hero-bg.webp` (slettet, ingen andre
-  referencer i kodebasen).
-- **Ægte `position:fixed`-boks, ikke `background-attachment:fixed`:** en ny
-  `.app-bg`-klasse (theme.jsx) renders som absolut første barn i `.app`
-  (App.jsx) — `position:fixed;inset:0;z-index:0;pointer-events:none`.
-  Bevidst IKKE `background-attachment:fixed` direkte på `.app` (afprøvet
-  først, virker fint i en isoleret mimic) — det er en velkendt, langvarig
-  WebKit-begrænsning at `background-attachment:fixed` ikke understøttes
-  pålideligt i mobil Safari/iOS-hjemmeskærm-PWA'er, som er appens primære
-  platform. En ægte `position:fixed`-boks virker konsekvent alle steder.
-- **`.screen{position:relative;z-index:1}`** tilføjet (var tidligere
-  upositioneret/statisk) — nødvendigt fordi CSS' egen maleorden ellers
-  tegner positionerede elementer med z-index 0 (som `.app-bg`) OVEN PÅ
-  almindeligt statisk indhold, ikke under det (CSS 2.1 Appendix E, trin 3
-  vs. trin 6) — uden dette ville baggrundsbilledet dække alt skærmindhold.
-  Verificeret harmløst for eksisterende `position:absolute`-børn af
-  `.screen` (samme fysiske containing-block-rektangel som `.app` før,
-  da `.screen` via flexbox-stretch allerede fyldte `.app`s fulde bredde)
-  og for `position:fixed`-børn (upåvirket — `position:relative` opretter
-  ikke et nyt containing block for `fixed`-elementer).
-- **Scan-forsidens `<img src={scanHeroBg}>` er fjernet** (ScannerScreen.jsx)
-  — hero-boksen (`.home-hero-frame`, uændret calc-højde/container-query-
-  mekanik, se ovenstående log-poster) viser nu blot appens fælles
-  baggrundsbillede gennem sin egen transparente baggrund, samme som alle
-  andre skærme. Hilsen/scan-knap/"Prøv en demo"-pillens %-baserede
-  positionering er bevaret uændret (rammer stadig en fornuftig lodret
-  rytme, uafhængig af det specifikke billede).
-- `.topbar`/`.bottom-nav`s eksisterende `backdrop-filter:blur`-look
-  (fra opfølgningen ovenfor) er UÆNDRET — kommentarerne er opdateret til
-  ikke længere at nævne "prikgitter"/"Scan-sidens fotobaggrund" specifikt,
-  men selve den slørede gennemsigtighed virker nu mere konsekvent end før,
-  siden baggrunden er ens overalt.
-
-Verificeret med en Playwright-mimic af den faktiske `.app-bg`+`.screen`-
-lagdeling ved to skærmhøjder (667/iPhone SE, 844/standard) samt en
-scroll-test (1200px ned i lang kortliste) — baggrunden forbliver pixel-
-identisk fastlåst til viewporten, kort ligger korrekt ovenpå, ingen
-strækning/forvrængning. Fuld metode i `.claude/HISTORY.md`.
-
-**24. sept. 2026 — samme dag, opfølgning: større hero-elementer, "Prøv en
-demo" fjernet, blødere top/bund-bar-kant.** Brugerfeedback efter forrige
-runde: "Alle elementer, herunder tekst er dog for småt på scan skærmen",
-"Prøv en demo"-knappen skulle væk, og top/bund-menuens sløring skulle
-have "mindre blur" og "fade ud, så der ikke er den skarpe kant".
-
-- **Scan-forsidens hero-elementer hævet ~20-25%:** hilsen/navn/undertekst,
-  scan-knappens diameter+ikon+label, og version/Beta-chippen har alle
-  fået hævede `clamp(min, Ncqh, max)`-værdier (fx scan-knappen
-  84-140px → 104-168px). Kun størrelserne er ændret — de %-baserede
-  `top`-positioner er bevidst holdt uændrede (27%/46%) efter et
-  mellemliggende forsøg på at flytte dem opad (25%/45%) gav synligt
-  større overlap mellem hilsenen og billedets øverste, tættere pakkede
-  hjørne-elementer på korte skærme (iPhone SE) — reverteret.
-- **"Prøv en demo"-knappen fjernet.** Den var, siden "App-guide"-knappen
-  blev fjernet som redundant i en tidligere runde, den ENESTE indgang til
-  `DemoSlider`-guiden (`setShowGuide(true)`) — `showGuide`-state og
-  `DemoSlider`-komponenten i `ScannerScreen.jsx` er bevidst IKKE slettet,
-  men har nu ingen synlig indgang i UI'et nogen steder. Genoptag ved
-  behov (fx en indgang under Profil-menuen) eller fjern dødt-kode-resten,
-  hvis brugeren bekræfter guiden reelt ikke skal bruges mere.
-  Version/Beta-info-rækken er nu alene i sin flex-kolonne, bund-forankret
-  (`justify-content:flex-end` i stedet for `flex-start`) i stedet for at
-  sidde i toppen af sin egen sektion med tomrum under.
-- **Blødere top/bund-bar-overgang:** flyttet selve tonen+sløringen fra
-  `.topbar`/`.bottom-nav` til en ny `::before`-pseudo-klasse på hver
-  (`z-index:-1`, inden for barens egen stakke-kontekst som
-  `position:sticky`/`fixed` + eksisterende `z-index` allerede opretter)
-  — nødvendigt fordi en maskeret udtoning direkte på selve baren også
-  ville have tonet dens SYNLIGE indhold (logo/knapper/nav-ikoner) ud,
-  ikke kun baggrundslaget. `mask-image`/`-webkit-mask-image` med en
-  lineær gradient tonet ud over den sidste ~35% (topbar, mod bunden) hhv.
-  ~45% (bottom-nav, mod toppen) af barens højde erstatter den tidligere
-  hårde kant hvor sløringen stoppede brat. Blur reduceret samtidig
-  (topbar 16px→8px, bottom-nav 20px→10px).
-
-Verificeret med en opdateret Playwright-mimic af den fulde hero-sektion
-ved to skærmhøjder. Fuld metode (mellemliggende `top:25%`-forsøg og
-hvorfor det blev reverteret) i `.claude/HISTORY.md`.
+Fuld dag-for-dag-detalje for hele denne redesign-runde (alle mellem-
+liggende forsøg, mockup-iterationer, fejlfindingshistorik, backtick-
+byggefejl-mønsteret) er i `.claude/HISTORY.md`.
 
 ### Beta-installation (september 2026) — nuværende arkitektur
 
