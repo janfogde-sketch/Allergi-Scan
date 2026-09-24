@@ -296,6 +296,7 @@ export default function AdminApp() {
       {section === "family" && (
         <FamilySection
           familyMembers={admin.familyMembers} familyInvites={admin.familyInvites} familyLoading={admin.familyLoading}
+          familyActionLoading={admin.familyActionLoading} adminRemoveFamilyMember={admin.adminRemoveFamilyMember} adminCancelInvite={admin.adminCancelInvite}
         />
       )}
     </AdminLayout>

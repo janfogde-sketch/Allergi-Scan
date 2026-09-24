@@ -9,7 +9,7 @@ function userLabel(u) {
   return u.name || u.email || "Ukendt bruger";
 }
 
-export default function FamilySection({ familyMembers, familyInvites, familyLoading }) {
+export default function FamilySection({ familyMembers, familyInvites, familyLoading, familyActionLoading, adminRemoveFamilyMember, adminCancelInvite }) {
   // Grupperer family_members pr. ejer, så admin ser hele husstanden samlet
   // i stedet for en flad liste af enkeltmedlemmer uden kontekst.
   const groups = {};
@@ -23,6 +23,16 @@ export default function FamilySection({ familyMembers, familyInvites, familyLoad
   if (familyLoading) {
     return <div className="admin-loading-row"><div className="admin-spinner" /> Henter familie-overblik…</div>;
   }
+
+  const handleRemoveMember = (m) => {
+    if (!window.confirm(`Fjern familiemedlemmet "${m.name}" permanent? Dette kan ikke fortrydes.`)) return;
+    adminRemoveFamilyMember(m.id);
+  };
+
+  const handleCancelInvite = (i) => {
+    if (!window.confirm("Annullér denne invitation permanent?")) return;
+    adminCancelInvite(i.id);
+  };
 
   return (
     <>
@@ -44,8 +54,13 @@ export default function FamilySection({ familyMembers, familyInvites, familyLoad
                     <td>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                         {g.members.map(m => (
-                          <span key={m.id} className="admin-pill admin-pill-neutral" title={`Fødselsår: ${m.birth_year || "–"} · ${(m.allergens || []).length} allergener`}>
+                          <span key={m.id} className="admin-pill admin-pill-neutral" title={`Fødselsår: ${m.birth_year || "–"} · ${(m.allergens || []).length} allergener`}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                             {m.name}{m.birth_year ? ` (${new Date().getFullYear() - m.birth_year} år)` : ""}
+                            <button type="button" title="Fjern medlem" disabled={familyActionLoading} onClick={() => handleRemoveMember(m)}
+                              style={{ border: "none", background: "none", cursor: "pointer", color: "var(--red)", fontWeight: 800, fontSize: 13, lineHeight: 1, padding: 0 }}>
+                              ×
+                            </button>
                           </span>
                         ))}
                       </div>
@@ -66,7 +81,7 @@ export default function FamilySection({ familyMembers, familyInvites, familyLoad
         ) : (
           <div className="admin-table-wrap">
             <table className="admin-table">
-              <thead><tr><th>Status</th><th>Inviteret af</th><th>Accepteret af</th><th>Oprettet</th><th>Udløber/accepteret</th></tr></thead>
+              <thead><tr><th>Status</th><th>Inviteret af</th><th>Accepteret af</th><th>Oprettet</th><th>Udløber/accepteret</th><th></th></tr></thead>
               <tbody>
                 {familyInvites.map(i => (
                   <tr key={i.id}>
@@ -75,6 +90,13 @@ export default function FamilySection({ familyMembers, familyInvites, familyLoad
                     <td>{i.accepted_by ? userLabel(i.accepter) : <span style={{ color: "var(--muted)" }}>–</span>}</td>
                     <td>{new Date(i.created_at).toLocaleDateString("da-DK")}</td>
                     <td>{i.accepted_at ? new Date(i.accepted_at).toLocaleDateString("da-DK") : i.expires_at ? new Date(i.expires_at).toLocaleDateString("da-DK") : "–"}</td>
+                    <td>
+                      {i.status === "pending" && (
+                        <button className="admin-btn admin-btn-danger admin-btn-sm" disabled={familyActionLoading} onClick={() => handleCancelInvite(i)}>
+                          Annullér
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

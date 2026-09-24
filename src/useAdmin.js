@@ -26,6 +26,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const [familyMembers, setFamilyMembers] = useState([]);
   const [familyInvites, setFamilyInvites] = useState([]);
   const [familyLoading, setFamilyLoading] = useState(false);
+  const [familyActionLoading, setFamilyActionLoading] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const [globalSearchResults, setGlobalSearchResults] = useState(null);
   const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
@@ -458,6 +459,38 @@ export function useAdmin(accessToken, userId, clearAuth) {
       showToast("Kunne ikke hente familie-overblik: " + e.message, "error");
     }
     setFamilyLoading(false);
+  };
+
+  // Fjerner et familiemedlem (support-værktøj — fx forældet/duplikeret profil).
+  // Krævede admin-bypass på family_members' DELETE-policy (admin_can_manage_family_data).
+  const adminRemoveFamilyMember = async (id) => {
+    setFamilyActionLoading(true);
+    try {
+      await apiCall(`${SUPABASE_URL}/rest/v1/family_members?id=eq.${id}`, {
+        method: "DELETE", headers: makeHeaders(accessToken),
+      });
+      setFamilyMembers(m => m.filter(x => x.id !== id));
+      showToast("Familiemedlem fjernet");
+    } catch (e) {
+      showToast("Kunne ikke fjerne familiemedlem: " + e.message, "error");
+    }
+    setFamilyActionLoading(false);
+  };
+
+  // Annullerer en afventende invitation. family_invites havde slet ingen
+  // DELETE-policy før admin_can_manage_family_data-migrationen.
+  const adminCancelInvite = async (id) => {
+    setFamilyActionLoading(true);
+    try {
+      await apiCall(`${SUPABASE_URL}/rest/v1/family_invites?id=eq.${id}`, {
+        method: "DELETE", headers: makeHeaders(accessToken),
+      });
+      setFamilyInvites(i => i.filter(x => x.id !== id));
+      showToast("Invitation annulleret");
+    } catch (e) {
+      showToast("Kunne ikke annullere invitation: " + e.message, "error");
+    }
+    setFamilyActionLoading(false);
   };
 
   // ── Global søgning ──────────────────────────────────────────────────────────
@@ -973,6 +1006,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
     selectedSubmissionIds, toggleSubmissionSelection, selectAllSubmissions, clearSubmissionSelection,
     bulkActionLoading, bulkApproveSubmissions, bulkRejectSubmissions,
     familyMembers, familyInvites, familyLoading, loadFamilyOverview,
+    familyActionLoading, adminRemoveFamilyMember, adminCancelInvite,
     globalSearch, setGlobalSearch, globalSearchResults, setGlobalSearchResults, globalSearchLoading, runGlobalSearch,
   };
 }
