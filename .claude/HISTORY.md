@@ -2036,3 +2036,117 @@ tom i preview'en skal undersøges for lignende `!!userId`/`!!user`-gates
 (eller lignende "kun for loggede ind"-mønstre) og få tilsvarende mock-
 data tilføjet til bypass-knappens handler i `OnboardingScreen.jsx` —
 ikke antages at være en uløselig konsekvens af manglende rigtig session.
+
+---
+
+## 24. sept. 2026 — mergekonflikt: grøn-fyld-CTA'en mødte 14 parallelle commits på main
+
+**Baggrund.** Efter at PR #307 (Scan-forsidens grønne CTA + nyt baggrunds-
+foto) var mergeret, fortsatte brugeren samtalen i samme session med to
+opfølgende beskeder: først et spørgsmål om hvorfor det viste baggrunds-
+billede "ligner intet" af det uploadede referencefoto ("Det skal være så
+identisk som muligt"), derefter et eksplicit designønske: "Knappen skal
+være grøn, men den må gerne pulsere så man får lyst til at trykke."
+
+**Fejl nr. 1 — mimic-bug, ikke en rigtig kode-fejl.** Da CLAUDE-koden blev
+verificeret tidligere i sessionen (visuel skærmbillede-sammenligning via en
+håndskrevet standalone HTML-fil + Playwright, jf. den stående metode i
+afsnit 4), var den skrevne test-mimic ved en fejl bygget med en ekstra
+`<div class="hero">`-wrapper omkring `<img>`, som IKKE findes i den rigtige
+`ScannerScreen.jsx` (der har billedet som DIREKTE barn af `.home-hero-
+frame`). Den wrapper-div manglede en `height:100%`-regel, så CSS'ens
+`height:100%`-procentregel på billedet ikke kunne opløses — billedet faldt
+tilbage til sin NATURLIGE pixelstørrelse (941×1672) i stedet for at skalere
+ned til rammens højde, hvilket gav et stærkt indzoomet, beskåret udsnit
+(kun mælkekanden synlig) i skærmbilledet der blev vist til brugeren. Roden
+til fejlen var udelukkende i test-værktøjet — retning bekræftet ved at
+fjerne wrapper-div'en fra mimic'en og genmåle: billedet render'er korrekt
+til 293×521px (fuld, uskåret gengivelse af hele to-kolonne-billedet), nul
+overflow på både iPhone SE og iPhone 13. Den RIGTIGE, allerede mergede
+PR #307-kode havde aldrig denne fejl.
+
+**Fejl nr. 2 — reel mergekonflikt med 14 parallelle commits.** Da PR #308
+(den grønne-CTA-opfølgning) skulle oprettes, viste det sig at `main` var
+rykket 14 commits frem siden PR #307 blev mergeret — herunder en fuld,
+uafhængig gentænkning af PRÆCIS samme skærm:
+- **#288**: nyt app-bredt baggrundsbillede (`app-background.webp`,
+  ingredienser/krydderier-flatlay) ERSTATTEDE Scan-forsidens eget foto helt
+  — et nyt `.app-bg`-lag i `theme.jsx`, brugt af ALLE skærme, ikke kun Scan.
+- **#289**: "Prøv en demo"-pillen fjernet efter brugerens (daværende)
+  ønske, hero-elementer gjort større.
+- **#290–295**: scan-knappen redesignet 6 gange (glossy → for "gummibold"-
+  agtig → roterende lyspunkt → "for radar-agtig" → endelig en hvid ghost/
+  outline-knap med et bredt, blurret roterende lyslag + et "åndedræt"
+  (scanCtaBreathe) + knappen gjort 50% større).
+- **#299–302**: mock-data til Artifact-preview (urelateret til Scan-designet).
+- **#303–305**: endnu et nyt app-bredt baggrundsbillede + hvidt slør-lag
+  for tekstlæsbarhed.
+- **#306**: kritisk hotfix — en backtick i en kommentar inde i `appCss`
+  (samme fejlklasse som denne session selv ramte 3 gange under PR #287,
+  se ovenfor) brød hele appen til en hvid skærm for alle brugere.
+
+`git merge origin/main` gav reelle konflikter i `App.jsx` og
+`ScannerScreen.jsx` (button-JSX'en, footer-JSX'en), samt en modify/delete-
+konflikt på `scan-hero-bg.webp` (slettet af main i #288, ændret i denne
+gren). `theme.jsx` og `CLAUDE.md` auto-mergede uden konflikt, men **den
+stille, IKKE-konflikt-flaggede del af diffen fjernede `scanHeroBg`-
+importen og `<img>`-tagget helt** — fordi kun `main` havde rørt de linjer
+(min gren rørte kun linjer LÆNGERE NEDE i samme fil), havde git ingen grund
+til at flagge en konflikt der, og anvendte bare main's sletning. Dette blev
+opdaget ved en efterfølgende `npm run build`, hvor `scan-hero-bg` UDEBLEV
+fra `dist/assets/`-listen — en påmindelse om at "ingen konflikt-markører"
+IKKE er det samme som "hele hensigten er bevaret" ved en stor, mangecommit-
+merge; et `git diff --stat` mod den gamle base + en post-merge build-
+assets-optælling er værd at gøre som fast rutine efter en merge af denne
+størrelse.
+
+**Beslutninger ved reconciliering** (ingen af dem oplagte — afvejet mod
+brugerens forskellige, til tider modstridende signaler fra selve denne
+samtale over for hvad andre parallelle sessioner tydeligvis havde aftalt
+med brugeren):
+1. **App-bredt baggrundssystem (main) beholdt for resten af appen** — ikke
+   rørt, urelateret til denne opgave.
+2. **Scan-forsidens EGET baggrundsfoto genindført** (import + `<img>`-tag)
+   på trods af at main havde fjernet konceptet helt — begrundet i at
+   brugeren, i DENNE samtale, eksplicit havde bedt om at netop dette
+   uploadede foto skulle bruges her, og havde netop bekræftet interesse i
+   at det skulle matche "så identisk som muligt".
+3. **Grøn fyld i stedet for main's hvide ghost/outline-knap** — direkte
+   bedt om ("Knappen skal være grøn"), men main's STØRRELSE (50% forøget)
+   og `scanCtaBreathe`-åndedræt genbrugt uændret, da knap-STØRRELSEN aldrig
+   var omtvistet i denne samtale, kun farven/pulsen. Den nu-ubrugte
+   `scanCtaRingSpin`-keyframe (det roterende lyslag, specifikt til ghost-
+   stilen) er slettet; `scanCtaBreathe` beholdt og eksplicit genbrugt til
+   den grønne knap.
+4. **Halo-pulsen gjort tydeligere** (skala 1→1.12 i stedet for 1→1.08,
+   opacity .8→.35 i stedet for .75→.4, 2.4s i stedet for 2.8s) — direkte
+   svar på "må gerne pulsere så man får lyst til at trykke", en anden
+   vægtning end den oprindelige PR #307-tekst ("meget diskret").
+5. **Main's fjernelse af "Prøv en demo"-pillen OG versionsnummeret
+   respekteret** — PR #307 havde bevidst bevaret "Prøv en demo"-pillen
+   (med en note om at spørge brugeren hvis forkert antaget), men main's
+   commit-historik viste at brugeren allerede havde bedt om den fjernet i
+   en anden, parallel session (#289) — den mere specifikke, senere
+   bekræftede brugerinstruks vinder over denne sessions egen tidligere,
+   mere forsigtige antagelse.
+
+**Ny bug fundet under reconciliering, IKKE en del af hverken PR #307 eller
+main's arbejde:** med main's forstørrede knap (fra 6-rundes-redesignet)
+kombineret med den ORIGINALE `top:"46%"`-placering, var der reelt kun et
+6.75px mellemrum mellem undertekst og knap på iPhone SE — målt til et
+**-1.75px OVERLAP** før fix (undersøgt grundigt: første Playwright-
+skærmbillede SÅ ud som et overlap på iPhone 13 også, men det viste sig at
+være en fejllæsning af skærmbilledet — et `getBoundingClientRect()`-
+opslag med CSS-outlines og alle animationer deaktiveret bekræftede et
+rent, 20px mellemrum på iPhone 13; kun iPhone SE havde et reelt, om end
+minimalt, overlap). Roden: main's knap-forstørrelse (#290-295) blev
+tilsyneladende kun genverificeret på deres daværende, mindre knap-
+størrelse, ikke genkørt efter den efterfølgende 50%-forstørrelse. Rettet
+ved at flytte knap-wrapperens `top` fra 46% til 48% — genskaber en positiv
+margin på tværs af iPhone SE/13/14 Pro Max/Pixel 5, verificeret
+programmatisk (`getBoundingClientRect()`-mellemrum > 0 på alle fire) og
+visuelt (ingen synlig overlap i skærmbilleder).
+
+**Verifikation:** `npm run build` grøn (bekræftede at `scan-hero-bg.webp`
+er tilbage i `dist/assets/`), `npm run lint` ren, `npx vitest run` 103/103
+grønne, mojibake-scan ren på alle ændrede filer.

@@ -429,9 +429,13 @@ se `.claude/HISTORY.md` for mockuppets fulde indhold og screenshots.
   `--green`-token: primær `#0E8F5A`, mørk `#08734A`, halo `#DDF4E8` — kun
   denne ene knap, resten af appens grønne elementer (bundnav, andre
   primærknapper) er urørt.
-- **Halo-gløden bag knappen pulserer diskret i hvile** (`@keyframes
-  scan-halo-pulse`, 2.8s, skala 1→1.08 + opacity .75→.4) — kun haloen
-  pulserer, ikke selve knappen. Respekterer `prefers-reduced-motion`.
+- **To lag levende bevægelse i hvile** (brugerens eksplicitte ønske: "Knappen
+  skal være grøn, men den må gerne pulsere så man får lyst til at trykke") —
+  halo-gløden bag knappen pulserer i skala+opacitet (`@keyframes
+  scan-halo-pulse`, 2.4s, skala 1→1.12 + opacity .8→.35), OG selve
+  knap-wrapperen får et ekstra åndedræt (`scanCtaBreathe`, genbrugt fra en
+  mellemliggende hvid ghost/outline-udgave af knappen — se nedenfor).
+  Respekterer `prefers-reduced-motion`.
 - **Knappen er nu en rigtig `<button>`** (var tidligere en `<div role=
   "button">` med manuel `tabIndex`/`onKeyDown`) — giver native tastatur-
   aktivering gratis og gør `:active{transform:scale(.95)}`-tryk-feedback
@@ -447,11 +451,11 @@ se `.claude/HISTORY.md` for mockuppets fulde indhold og screenshots.
   fjernet fra forsiden, inkl. den nu-ubrugte `runDemoScan`-callback i
   `App.jsx` (den underliggende, testede `buildDemoScanResult`-hjælpefunktion
   i `useProduct.js` er bevaret uændret — bruges/testes uafhængigt).
-  **"Prøv en demo"-pillen** (åbner app-guiden) er bevidst BEVARET, selvom
-  referencedesignet ikke viser den — fjernelse ville have gjort
-  `DemoSlider`-guiden helt utilgængelig (ingen andet indgangspunkt findes),
-  hvilket ikke var eksplicit bedt om. Flag dette til brugeren hvis det ikke
-  var hensigten.
+  **"Prøv en demo"-pillen** (åbnede app-guiden) er også fjernet — oprindeligt
+  bevidst bevaret i denne omgang, men en efterfølgende merge med `main`
+  (se nedenfor) viste at brugeren allerede havde bedt om den fjernet i en
+  parallel session; `DemoSlider`-guiden har nu ingen synlig indgang i UI'et,
+  uændret fra `main`s tilstand.
 - **Bundmenuen er UÆNDRET** (Indkøbsliste/Scan/Søg) — referencedesignets
   billede viste "Historik" som tredje punkt i stedet for "Søg", men
   brugeren bekræftede eksplicit at bundmenuen skal forblive som den er, da
@@ -468,6 +472,24 @@ se `.claude/HISTORY.md` for mockuppets fulde indhold og screenshots.
   gatet laser-linjens rendering på det, i stedet for kun `cameraActive`.
   Matcher brugerens eksplicitte krav: "scannerlinje må først vises, når
   kameraet faktisk scanner."
+- **Mergekonflikt med parallelt arbejde på `main`, løst i samme runde:**
+  mens denne gren arbejdede, nåede `main` 14 uafhængige commits om NETOP
+  denne skærm — en hvid ghost/outline-udgave af scan-knappen (roterende
+  blurret lysring, 50% større end originalen efter brugerens tidligere
+  ønske), et helt app-bredt baggrundsbillede-system der ERSTATTEDE
+  Scan-forsidens eget foto, og en kritisk hvid-skærm-hotfix (samme
+  backtick-i-kommentar-fejlklasse som denne fil selv advarer om andetsteds).
+  Løst ved en rigtig `git merge` (ikke en overskrivning): main's app-brede
+  baggrundssystem (`.app-bg`) beholdes uændret for resten af appen,
+  Scan-forsidens EGET baggrundsfoto genindføres specifikt på denne skærm
+  (brugeren bad eksplicit om netop dette foto her), main's forstørrede
+  knap-størrelse og `scanCtaBreathe`-åndedræt genbruges men med grøn fyld
+  i stedet for hvid ghost-stil, og main's fjernelse af version/demo-pil
+  respekteres. Fandt undervejs et reelt, ellers usynligt 1.75px-overlap
+  mellem undertekst og knap på iPhone SE (button-forstørrelsen havde
+  spist main's oprindelige sikkerhedsmargin) — rettet ved at flytte
+  knappens `top`-position fra 46% til 48%. Fuld liste over hvad der blev
+  auto-merget vs. manuelt reconcileret i `.claude/HISTORY.md`.
 - Verificeret med Playwright-device-profiler (iPhone SE, iPhone 13) — nul
   overflow, ingen overlap/klipning, farver/puls/knap-type som beskrevet.
 
