@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { traceId, traceLog } from "./helpers.js";
+import { PREVIEW_MOCK_PRODUCTS } from "./previewMockData.js";
 
 export function useSearch({ accessToken }) {
   const [searchQuery, setSearchQuery]       = useState("");
@@ -32,6 +33,20 @@ export function useSearch({ accessToken }) {
       const q = searchQuery.trim();
       const tid = traceId("search");
       traceLog(tid, "search:start", { q });
+      // Artifact-preview (se CLAUDE.md afsnit 4) har ingen rigtig session/
+      // domæne Supabase-søgningen kan svare troværdigt fra — søg i stedet i
+      // de faste mock-produkter, så Søg-skærmen kan designgennemgås i preview'en.
+      if (import.meta.env.MODE === "artifact-preview") {
+        const qLower = q.toLowerCase();
+        const results = PREVIEW_MOCK_PRODUCTS
+          .filter(p => p.name.toLowerCase().includes(qLower) || p.brand.toLowerCase().includes(qLower))
+          .map(p => ({ ...p, source:"local", verified:p.verified_status, conflicts:[] }));
+        setSearchResults(results);
+        setSearchHasMore(false);
+        setSearchTotal(results.length);
+        setSearchLoading(false);
+        return;
+      }
       try {
         const res = await fetch(
           `${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(q)}`,
