@@ -170,6 +170,23 @@ begrundelse.
 | `missing_ean_log` | ean, count, first_seen, last_seen | Auto-logget + auto-importeret |
 | `recipes` | id, title, instructions, image_url | ~627 |
 
+**`users.role`-beskyttelse (24. sept. 2026, fundet under admin-audit):**
+`users_update_own_or_admin`-policyen tillader `id = auth.uid()` (selv-
+opdatering af egen profil) uden kolonne-begrænsning — og `authenticated`
+har kolonne-UPDATE-ret på `role`. Uden yderligere beskyttelse kunne enhver
+logget ind bruger derfor sætte sin egen `role` til `admin` via en almindelig
+`PATCH /rest/v1/users?id=eq.<eget-id>`, og `on_user_role_change`-triggeren
+ville automatisk synkronisere det ind i deres JWT `app_metadata.role` oveni.
+Rettet med en `BEFORE UPDATE`-trigger (`prevent_role_self_escalation_trigger`
+→ `prevent_role_self_escalation()`) der blokerer enhver ændring af `role`,
+medmindre den kaldende bruger (`auth.uid()`) allerede er admin — verificeret
+med en JWT-simuleret SQL-test at både blokeringen og admins fortsatte evne
+til at ændre ANDRE brugeres rolle virker. Postgres RLS kan ikke i sig selv
+begrænse per-kolonne, så en tilsvarende trigger bør overvejes for andre
+tabeller med et lignende "selv-ejerskab uden kolonne-begrænsning"-mønster,
+hvis en ny privilegeret kolonne nogensinde tilføjes til `users` eller andre
+selv-redigerbare tabeller.
+
 ---
 
 ## 7. Edge Functions (Supabase)
