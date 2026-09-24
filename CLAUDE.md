@@ -260,6 +260,22 @@ nye krav der skal implementeres, ikke som spørgsmål der skal diskuteres først
   `has_function_privilege(rolle, funktion, 'EXECUTE')` — antag det ikke
   virkede bare fordi kommandoen ikke fejlede (fundet under `security-check`s
   baseline-kørsel, se `.claude/HISTORY.md`).
+- **Vercel Free-planens daglige deployment-grænse (100/dag) — push kun til
+  Vercel når ændringen reelt kræver produktion for at kunne testes/tjekkes**
+  (fx noget der afhænger af det rigtige domæne, PWA-installation, service
+  worker, eller en Supabase-integration der skal verificeres i den ægte
+  browser-kontekst). Ramte grænsen 24. sept. 2026 efter mange småændringer
+  i træk (se `.claude/HISTORY.md`) — en PR blev merget uden ventet grønt
+  Vercel-preview som følge. Til rene UI/visuelle ændringer: byg en delt
+  preview i stedet for at pushe — `npx vite build --base=./ --outDir
+  dist-preview`, publicér `dist-preview/index.html` (+ `files` for
+  `assets/*` og øvrige rod-filer) via Artifact-værktøjet. Ryd `dist-preview/`
+  op bagefter (`rm -rf dist-preview`) — den skal ikke committes. **Kendte
+  begrænsninger ved dette:** kalder samme LIVE Supabase-database som
+  produktion (ikke isoleret testdata), og PWA-specifikke ting (service
+  worker-registrering, "Føj til hjemmeskærm") virker ikke troværdigt uden
+  det rigtige domæne — kun til at verificere UI/layout/funktioner visuelt.
+  Push/PR til Vercel som normalt, når opgaven reelt er klar til at shippes.
 
 ---
 
