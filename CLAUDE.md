@@ -301,8 +301,21 @@ nye krav der skal implementeres, ikke som spørgsmål der skal diskuteres først
   LIVE Supabase-database som produktion (ikke isoleret testdata), og PWA-
   specifikke ting (service worker-registrering, "Føj til hjemmeskærm")
   virker ikke troværdigt uden det rigtige domæne — kun til at verificere
-  UI/layout/funktioner visuelt. Push/PR til Vercel som normalt, når
-  opgaven reelt er klar til at shippes.
+  UI/layout/funktioner visuelt.
+
+  **Stående regel (24. sept. 2026 — brugerens eksplicitte instruks): push/
+  merge til Vercel KUN ved funktions- og dataændringer, ALDRIG ved rene
+  design-/visuelle ændringer** (farver, layout, spacing, baggrundsbilleder,
+  skrifttype/vægt, skygger, ikoner og lignende). Rene design-opgaver
+  afsluttes med byg/test/mojibake-scan/commit som normalt (se trin 1-5
+  ovenfor) og verificeres i en Artifact-preview — men PUSH IKKE, opret IKKE
+  PR, og merge IKKE til `main` for dem. Commits bliver liggende lokalt på
+  feature-branchen til enten (a) en efterfølgende funktions-/dataændring i
+  samme arbejdsomgang bundler dem ind i én PR, eller (b) brugeren eksplicit
+  beder om at få dem shippet. Undtagelsen i afsnit 4 for kritiske/
+  blokerende produktionsfejl (fx et reelt crash) står stadig over denne
+  regel — den slags shippes altid med det samme, uanset om fejlen stammer
+  fra en design- eller funktionsændring.
 
 ---
 
