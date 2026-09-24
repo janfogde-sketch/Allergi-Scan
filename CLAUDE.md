@@ -267,15 +267,42 @@ nye krav der skal implementeres, ikke som spørgsmål der skal diskuteres først
   browser-kontekst). Ramte grænsen 24. sept. 2026 efter mange småændringer
   i træk (se `.claude/HISTORY.md`) — en PR blev merget uden ventet grønt
   Vercel-preview som følge. Til rene UI/visuelle ændringer: byg en delt
-  preview i stedet for at pushe — `npx vite build --base=./ --outDir
-  dist-preview`, publicér `dist-preview/index.html` (+ `files` for
-  `assets/*` og øvrige rod-filer) via Artifact-værktøjet. Ryd `dist-preview/`
-  op bagefter (`rm -rf dist-preview`) — den skal ikke committes. **Kendte
-  begrænsninger ved dette:** kalder samme LIVE Supabase-database som
-  produktion (ikke isoleret testdata), og PWA-specifikke ting (service
-  worker-registrering, "Føj til hjemmeskærm") virker ikke troværdigt uden
-  det rigtige domæne — kun til at verificere UI/layout/funktioner visuelt.
-  Push/PR til Vercel som normalt, når opgaven reelt er klar til at shippes.
+  preview i stedet for at pushe:
+  1. `npx vite build --base=./ --outDir dist-preview --mode artifact-preview`
+  2. `mv dist-preview/index.html dist-preview/app.html`, og skriv en ny,
+     lille `dist-preview/index.html`-wrapper der viser `app.html` i en
+     telefon-ramme (`<iframe src="app.html">` i en 393×852-boks) — centreret
+     på siden, med `@media (max-width:460px)` der fjerner rammen igen
+     (fylder allerede skærmen, hvis linket åbnes på en rigtig telefon).
+     Rammen skaleres ned via `transform:scale()` (beregnet i et lille
+     inline-script ud fra `window.innerWidth/innerHeight`, gentaget på
+     `resize`) i stedet for en fast pixel-størrelse — ellers kan et lille
+     eller bredt-men-lavt Artifact-panel gøre siden scrollbar. `html,body`
+     har `overflow:hidden`, og et hint-tekst-element er `position:fixed`
+     (ikke en del af flex-flowet), så det aldrig skubber rammen ud af syne.
+  3. Publicér `dist-preview/index.html` (+ `files` for `app.html`,
+     `assets/*` og øvrige rod-filer) via Artifact-værktøjet — brug `url` for
+     at genpublicere til det EKSISTERENDE link i stedet for at oprette et
+     nyt, hvis det allerede findes (se dette links URL i `.claude/HISTORY.md`
+     hvis det ikke er kendt).
+  4. Ryd `dist-preview/` op bagefter (`rm -rf dist-preview`) — den skal
+     ikke committes.
+
+  **`--mode artifact-preview` bruges også til en login-bypass-knap:**
+  `OnboardingScreen.jsx`s WELCOME-skærm viser en ekstra knap ("Se app uden
+  login (preview)") KUN når `import.meta.env.MODE === "artifact-preview"`
+  (aldrig i den rigtige produktions-build, som ikke bruger dette mode) —
+  springer login over og går direkte til `SCREENS.HOME`, fordi login mod
+  Supabase er upålideligt fra Artifact-previewens domæne. Data-afhængige
+  dele af Hjem-skærmen kan fremstå tomme uden en rigtig session — kendt,
+  accepteret begrænsning.
+
+  **Kendte begrænsninger ved denne preview-metode generelt:** kalder samme
+  LIVE Supabase-database som produktion (ikke isoleret testdata), og PWA-
+  specifikke ting (service worker-registrering, "Føj til hjemmeskærm")
+  virker ikke troværdigt uden det rigtige domæne — kun til at verificere
+  UI/layout/funktioner visuelt. Push/PR til Vercel som normalt, når
+  opgaven reelt er klar til at shippes.
 
 ---
 
