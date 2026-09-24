@@ -1475,3 +1475,154 @@ struktur (inkl. den delte topbar og scan-boks-wrapperen) for et sidste
 visuelt tjek af den rigtige kode, ikke kun mockuppen — bekræftede
 korrekt gengivelse. `npm run build` grøn, `npm run lint` ren, `npx
 vitest run` 98/98 grønne, mojibake-scan ren på alle tre ændrede filer.
+
+---
+
+## Scan-forsiden gjort skærmhøjde-konstant + baggrund bag top/bund-menuer (24. sept. 2026, samme dag, opfølgning)
+
+Efter implementeringen ovenfor bad brugeren om to yderligere ting i én
+besked: "Sørg for at det nye design passer til alle telefoner som en
+konstant. sørg også for at den nye baggrund vises alle steder, også bag
+top og bund menuer. Hvis du er i tvivl, så spørg mig først."
+
+**Afklaring før implementering (2 runder AskUserQuestion, jf. den
+eksplicitte invitation til at spørge):**
+
+1. Første runde, to spørgsmål på én gang:
+   - "Bag top og bund menuer" — skal topbar/bundnav være gennemsigtige
+     KUN på Scan-siden, eller på ALLE skærme? Brugeren valgte: alle
+     skærme (for konsistens, matcher sessionens gennemgående "hele appen
+     skal være ét system"-tema).
+   - "Passer til alle telefoner som en konstant" — skal HELE skærmen
+     (topbar+billede+knapper+bundnav) altid passe på én skærmhøjde uden
+     scroll, også på iPhone SE (667px)? Brugeren valgte: ja, nul scroll
+     overalt, inkl. de mindste telefoner.
+
+2. Anden runde, ét opfølgende spørgsmål: for at billedet reelt kan ses
+   "bag" menuerne (ikke bare støde op til dem) er der to niveauer —
+   (A) en mindre indgribende løsning: billedet fylder scan-boksen kant-
+   til-kant, og topbar/bundnav får et "frosted glass"-look så farverne
+   skinner blødt igennem, UDEN at ændre topbarens `sticky`-positionering;
+   eller (B) en fuld løsning: topbar ændres til `fixed`/overlay (påvirker
+   ALLE skærme, da topbaren er én delt komponent) så billedet reelt kan
+   ligge bag den. Brugeren valgte (A), den mindre indgribende løsning.
+
+**Hvorfor spurgte jeg to gange i stedet for at gætte:** den fulde
+"billede bag topbar"-effekt kræver at ændre en DELT komponents
+positionerings-model (sticky→fixed) på tværs af HELE appen, med
+potentielle afledte effekter på padding-beregninger og scroll-adfærd på
+alle andre skærme — en reel arkitektonisk risiko, ikke kun en Scan-
+sidespecifik detalje. CLAUDE.md afsnit 4 beder eksplicit om at spørge ved
+den slags, og brugeren gjorde det samme eksplicit i sin besked.
+
+**Teknisk analyse før implementering — hvorfor den valgte løsning
+faktisk virker:**
+
+- **Topbar** er `position:sticky` — i et NUL-SCROLL scenarie (som er
+  selve målet) opfører sticky sig identisk med almindeligt flow (der er
+  intet at scrolle, så "stick"-adfærden udløses aldrig). Derfor kan
+  topbaren IKKE reelt vise fotoet "bagved" sig uden en positionerings-
+  ændring — den får kun det kosmetiske frosted-glass-look, ærligt
+  formidlet til brugeren i dokumentationen, ikke camoufleret som mere end
+  det er.
+- **Bottom-nav** ER allerede `position:fixed` (en overlay, uden for
+  `.screen`/`.app`s normale flow) — det betyder at HVIS indholdet
+  (Scan-billedet) får lov at strække sig ind i den zone bundnav dækker
+  (ved at fjerne den reserverede bund-padding), vil `backdrop-filter:blur`
+  på bundnav rent faktisk sample de underliggende foto-pixels, IKKE bare
+  se pænt ud på ingenting. Dette blev testet og BEKRÆFTET, ikke antaget:
+  en tidlig prototype havde bundnav som et almindeligt (ikke-fixed)
+  flex-element, hvilket fik det til at SE ud som om fotoet skinnede
+  igennem, men reelt var der intet foto bagved (kun `.app`s prikgitter-
+  baggrund) — genopbyggede prototypen med `position:fixed` (matcher den
+  rigtige apps struktur) og zoomede ind på bundnav-området i skærmbilledet
+  for at bekræfte at jordbær-/blad-farver faktisk sivede igennem
+  sløringen. Denne selv-korrektion undervejs er en god påmindelse om at
+  en prototype med en FORENKLET struktur (her: ikke-fixed navbar for
+  nemheds skyld) kan give et falsk-positivt visuelt resultat, der ikke
+  holder når man tester mod den faktiske positionerings-model.
+
+**Højde-beregning — hvorfor flexbox frem for `calc(100dvh - Npx)`:**
+Overvejede først en hardkodet budget-tilgang (`calc(100dvh - 260px)`,
+med en manuelt udregnet chrome-højde fra Playwright-målinger af topbar/
+footer/bundnav) — forkastede den til fordel for en ren flexbox-baseret
+"fyld resterende plads"-tilgang, fordi: (1) den kræver ingen hårdkodede
+tal der skal genberegnes hvis chrome-elementernes højde nogensinde
+ændres, (2) den håndterer automatisk `env(safe-area-inset-bottom)`s
+variation på tværs af enheder (0 på ældre telefoner med fysisk hjemme-
+knap, op til ~34px på notch-/dynamic-island-telefoner) uden manuel
+kompensation i selve budget-tallet, og (3) `.app` og `.screen` var
+allerede sat op som `flex`-containere (`min-height:100vh` / `flex:1`) fra
+tidligere arbejde — kun scan-boksen manglede at deltage korrekt i den
+kæde. Løsningen: `flex:1` + `minHeight:0` på scan-boksens wrapper (det
+klassiske flexbox-"krympe under indholdets naturlige størrelse"-fix,
+virker sammen med den allerede eksisterende `overflow:hidden`), og
+billedet selv `height:"100%"` (resolver korrekt fordi wrapperen nu har en
+DEFINITIV, flexbox-udregnet højde) + `width:"auto"` (bevarer billedets
+eget højde/bredde-forhold automatisk — ingen separat bredde-loft
+nødvendig, da alle realistiske telefon-højder giver en bredde godt under
+skærmens bredde på grund af fotoets aflange 1:2,17-format).
+
+**Reel bug fundet og rettet under selv-verifikation, ikke kun antaget
+korrekt:** Den bund-sikrede wrapper omkring de sjældne/betingede
+elementer (simuleret-scan-knap, fejlbesked, manuel-EAN-input) fik
+oprindeligt en UBETINGET `paddingBottom` (matchende bundnavs højde) — men
+da denne wrapper altid er i DOM'en (uanset om dens indhold rent faktisk
+vises), spiste den padding stille ca. 89px af scan-boksens `flex:1`-plads
+i det ALMINDELIGE tilfælde (ingen fejl, ingen manuel-EAN, etableret
+konto) — hvilket forhindrede billedet i nogensinde at nå helt ned til
+bundnav, og dermed underminerede hele "baggrund bag bundnav"-formålet i
+netop det tilfælde de fleste brugere oplever! Fanget ved at bygge en
+mimic af den PRÆCISE nuværende JSX-struktur og opdage at bundnav-området
+i skærmbilledet ikke viste foto-farver alligevel efter den første
+implementering. Rettet ved at gøre paddingen betinget:
+`(showDemoScan || scanError || showManualEan) ? "calc(...)" : 0` — kun
+til stede når der reelt er noget at beskytte mod overlap med bundnav.
+
+**Flytning af version/Beta-info/App-guide-fodlinjen:** var tidligere en
+separat sektion i normal flow EFTER scan-boksen (med en `{flex:1,
+minHeight:20}`-spacer foran til at skubbe den ned) — men med scan-boksen
+nu `flex:1` er der intet "resterende rum" tilbage til en separat fod-
+sektion i flow. Flyttet ind i selve hero-billedets overlay-lag, bund-
+forankret (`bottom:"calc(77px + env(safe-area-inset-bottom) + 8px)"`,
+IKKE `top:%`) så den altid forbliver lige over bundnav uanset hvor
+høj/lav billedet selv bliver på forskellige skærmstørrelser — en ren %
+fra toppen ville have placeret den forskelligt i forhold til bundnav på
+forskellige enheder (udregnet: 91% af et 516px-højt billede på iPhone SE
+lander INDE i bundnav-zonen, mens samme 91% af et 747px-højt billede på
+Pro Max ikke gør — bund-forankring med en fast px-værdi løser dette
+korrekt uafhængigt af billedets endelige højde). Knapperne fik samtidig
+en halvgennemsigtig hvid pille-baggrund (samme mønster som "Prøv en
+demo"-pillen) for kontrast mod fotoet nedenunder.
+
+**Visuel verifikation, udtømmende:**
+- 3 Playwright-screenshots (SE/standard/Pro Max) af en fuldstændig,
+  DOM-tro mimic af den faktiske `ScannerScreen.jsx`/`theme.jsx`-kode
+  (ikke en forenklet tilnærmelse) — nul overflow bekræftet BÅDE visuelt
+  OG programmatisk via `element.scrollHeight <= element.clientHeight`
+  i browseren, ikke kun ved at antage ud fra skærmbilledet.
+- Zoomet crop af bundnav-området ved standard-højden, som viste
+  jordbær-rødt og blad-grønt tydeligt (om end sløret) blandet ind i den
+  ellers hvide bundnav-baggrund — det konkrete, pixel-niveau-beviste svar
+  på "vises den nye baggrund bag bundnav?".
+- En separat mimic af en ANDEN skærm (en liste-lignende visning med
+  kort, ingen Scan-foto) for at bekræfte at den app-brede gennemsigtige
+  topbar/bundnav-ændring også ser fornuftig ud mod det eksisterende
+  prikgitter (ikke kun mod det nye foto) — prikkerne skinner blødt
+  igennem begge barer, ikonerne forbliver tydeligt læselige.
+
+**Ærligt formidlet begrænsning (ikke skjult):** Topbaren viser IKKE
+bogstaveligt fotoet bagved sig (kun et kosmetisk frosted-glass-look),
+fordi det ville have krævet den mere indgribende `sticky`→`fixed`-ændring
+brugeren eksplicit fravalgte. Bundnav derimod viser fotoet reelt, fordi
+den allerede var `fixed` i forvejen og derfor ikke krævede den samme
+arkitektoniske ændring. Denne asymmetri er bevidst og direkte en
+konsekvens af brugerens eget valg i afklaringsrunden, ikke en overset
+uoverensstemmelse.
+
+**Verifikation:** `npm run build` grøn (fangede og rettede en reel
+syntaksfejl undervejs — et bogstaveligt backtick-tegn i en dansk CSS-
+kommentar inde i `theme.jsx`s `appCss`-template-literal brød strengen
+utilsigtet, rettet ved at fjerne backticken fra kommentarteksten), `npm
+run lint` ren, `npx vitest run` 98/98 grønne, mojibake-scan ren på begge
+ændrede filer (`theme.jsx`, `ScannerScreen.jsx`).

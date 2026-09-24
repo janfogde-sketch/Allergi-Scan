@@ -151,7 +151,12 @@ body{
 
 /* ── TOPBAR ── */
 .topbar{
-  background:transparent;border-bottom:none;
+  /* Let "frosted glass" i stedet for helt gennemsigtig (24. sept. 2026) — så
+     den bagvedliggende baggrund (prikgitteret, eller Scan-sidens fotobaggrund)
+     altid skinner blødt igennem, konsekvent på tværs af alle skærme. */
+  background:rgba(255,255,255,.55);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:none;
   padding:12px 20px 10px;display:flex;align-items:center;justify-content:space-between;
   position:sticky;top:0;z-index:60;
 }
@@ -166,10 +171,17 @@ body{
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
   width:100%;max-width:480px;
-  /* Helt uigennemsigtig — en gradient med en gennemsigtig top-del lod indhold
-     der var scrollet med skinne igennem bag ikonerne, så baren så "flimrende"
-     ud i stedet for at virke som ét fast lag oven på resten af skærmen. */
-  background:var(--paper);
+  /* Var før helt uigennemsigtig (en tidligere gradient med en gennemsigtig
+     top-del lod scrollende indhold skinne skarpt igennem, så baren så
+     "flimrende" ud). Løsning nu (24. sept. 2026): backdrop-filter:blur
+     i stedet for ren gennemsigtighed — sløringen visker scrollende indhold
+     ud til en blød, rolig farve-vask i stedet for skarpe, flimrende former,
+     samtidig med at den statiske baggrund (prikgitter, eller Scan-sidens
+     fotobaggrund som nu bevidst strækker sig helt ned bag denne bar) skinner
+     igennem. Samme "reel funktionel grund til blur"-princip som kamera-
+     kontrolknapperne i ScannerScreen.jsx (se design-tokens.md antimønster #6). */
+  background:rgba(255,255,255,.72);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   box-shadow:0 -8px 16px -12px rgba(21,32,26,.14);
   border-top:1px solid var(--border);
   display:flex;padding:10px 4px calc(24px + env(safe-area-inset-bottom));z-index:100;
