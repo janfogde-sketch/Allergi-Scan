@@ -346,6 +346,30 @@ Forsidens egen baggrund er sat til en flad `--paper`-farve, så
 prikgitter-mønsteret ikke længere ses her specifikt (uændret på
 resten af appens skærme).
 
+**24. sept. 2026 — appens baggrundsfarve skiftet til ren hvid.** Brugeren
+bad om et fuldt redesign: bundnavigation/knapper/tekst/logo skulle blive
+hvor de er, men baggrundsfarven skulle ændres konsekvent gennem hele
+appen. Viste 3 tonede paletteforslag (varm ivory/salvie/fersken) som
+screenshots — brugeren valgte i stedet ren hvid. `--paper`/`--paper2`/
+`--surface2`/`--surface3`/body-baggrunden/bund-navigationens baggrund
+(tidligere hardkodet `#F6F8F3` i stedet for `var(--paper)`) er alle
+ændret; det eksisterende punkt-gitter-dybde-lag (se ovenfor) er bevaret,
+bare omregnet til en hvid base. Kun `src/theme.jsx` — ikke det separate
+`src/admin/adminTheme.js` (desktop admin-panelet er ude af scope for
+denne ændring, ikke en del af den forbruger-vendte oplevelse brugeren
+bad om at redesigne).
+
+Afprøvede desuden en selvtegnet SVG-ingrediens-illustrationsstil til
+Scan-siden (som erstatning for foto-udklippene, for at undgå
+beskærings-artefakter helt) — først flad/cartoon-agtig, så en mere
+glansfuld/skygget "emoji-stil" version efter feedback. Brugeren ville
+efter at have set begge dele hellere have rigtige fotos igen ("det skal
+være realistiske frugter og ikke tegnet"). Da sandboxen ikke kan hente
+fotos eksternt, er Scan-sidens collage forblevet på den allerede
+verificerede foto-udklips-version fra opfølgningen ovenfor — uændret i
+denne runde. Fuld afprøvning (paletteforslag, begge SVG-stilarter) i
+`.claude/HISTORY.md`.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
