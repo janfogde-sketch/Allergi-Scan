@@ -117,6 +117,11 @@ export default function SubmissionsSection({
                 </div>
                 <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>
                   Indsendt af: {submitterLoading ? "henter…" : submitterInfo?.error ? `ukendt (${submitterInfo.error})` : (submitterInfo?.name || submitterInfo?.email) ? `${submitterInfo.name || "—"}${submitterInfo.email ? ` (${submitterInfo.email})` : ""}` : openSubmission.submitted_by ? "ukendt bruger" : "anonym"}
+                  {openSubmission.submitted_by && (
+                    <span style={{ fontFamily: "var(--mono)", marginLeft: 4 }} title={openSubmission.submitted_by}>
+                      (bruger-id: {openSubmission.submitted_by})
+                    </span>
+                  )}
                 </div>
               </div>
               <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={close}>Luk</button>
@@ -166,11 +171,31 @@ export default function SubmissionsSection({
                 {(() => {
                   const found = extractENumbers(editingSubmission.ingredients_text || "");
                   if (found.length === 0) return null;
+                  const excluded = editingSubmission.excluded_enumbers || [];
+                  const toggle = (e) => setEditingSubmission(s => {
+                    const cur = s.excluded_enumbers || [];
+                    return { ...s, excluded_enumbers: cur.includes(e) ? cur.filter(x => x !== e) : [...cur, e] };
+                  });
                   return (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-                      {found.map(e => (
-                        <span key={e} style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 20, background: "var(--blue-lt)", color: "var(--blue)", border: "1px solid var(--blue-md)" }}>{e}</span>
-                      ))}
+                    <div style={{ marginTop: 8 }}>
+                      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6 }}>E-numre fundet — klik for at fravælge en fejlaflæsning</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {found.map(e => {
+                          const isExcluded = excluded.includes(e);
+                          return (
+                            <button key={e} type="button" onClick={() => toggle(e)}
+                              style={{
+                                fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 20, cursor: "pointer", fontFamily: "var(--f)",
+                                background: isExcluded ? "var(--surface3)" : "var(--blue-lt)",
+                                color: isExcluded ? "var(--muted)" : "var(--blue)",
+                                border: `1px solid ${isExcluded ? "var(--border)" : "var(--blue-md)"}`,
+                                textDecoration: isExcluded ? "line-through" : "none",
+                              }}>
+                              {e}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })()}

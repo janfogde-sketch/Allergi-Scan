@@ -157,6 +157,7 @@ export function AdminSubmissionReview({
           <div style={{ fontSize:10.5, color:"var(--muted)", marginTop:3, fontFamily:"monospace" }}>ID: {openSubmission.id}</div>
           <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>
             Indsendt af: {submitterLoading ? "henter…" : submitterInfo?.error ? `ukendt (${submitterInfo.error})` : (submitterInfo?.name || submitterInfo?.email) ? `${submitterInfo.name || "—"}${submitterInfo.email ? ` (${submitterInfo.email})` : ""}` : openSubmission.submitted_by ? "ukendt bruger" : "anonym"}
+            {openSubmission.submitted_by && <span style={{ fontFamily:"monospace" }}> (bruger-id: {openSubmission.submitted_by})</span>}
           </div>
         </div>
         {/* Hurtig-godkend/afvis */}
@@ -257,18 +258,38 @@ export function AdminSubmissionReview({
         </div>
       )}
 
-      {/* E-numre fundet i ingredienslisten der rent faktisk bliver godkendt */}
+      {/* E-numre fundet i ingredienslisten der rent faktisk bliver godkendt —
+          klikbare for at fravælge en fejlaflæsning (fjernes fra teksten ved
+          godkendelse, se stripExcludedENumbers i useAdmin.js) */}
       {(() => {
         const src = editingSubmission.ingredients_text || cleanedOcrText || openSubmission.ocr_raw_text || "";
         const found = [...new Set((src.match(E_NUMBER_RE) || []).map(e => e.toUpperCase()))];
         if (found.length === 0) return null;
+        const excluded = editingSubmission.excluded_enumbers || [];
+        const toggle = (e) => setEditingSubmission(s => {
+          const cur = s.excluded_enumbers || [];
+          return { ...s, excluded_enumbers: cur.includes(e) ? cur.filter(x => x !== e) : [...cur, e] };
+        });
         return (
           <div style={UI.card}>
-            <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>🧪 E-numre fundet</div>
+            <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>🧪 E-numre fundet</div>
+            <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10 }}>Tryk for at fravælge en fejlaflæsning</div>
             <div style={UI.wrapGap7}>
-              {found.map(e => (
-                <div key={e} style={{ padding:"4px 10px", borderRadius:20, background:"rgba(99,102,241,.1)", border:"1px solid rgba(99,102,241,.3)", fontSize:12, fontWeight:700, color:"#818cf8" }}>{e}</div>
-              ))}
+              {found.map(e => {
+                const isExcluded = excluded.includes(e);
+                return (
+                  <button key={e} type="button" onClick={() => toggle(e)}
+                    style={{
+                      padding:"4px 10px", borderRadius:20, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"var(--f)",
+                      background: isExcluded ? "var(--surface2)" : "rgba(99,102,241,.1)",
+                      border: `1px solid ${isExcluded ? "var(--border)" : "rgba(99,102,241,.3)"}`,
+                      color: isExcluded ? "var(--muted)" : "#818cf8",
+                      textDecoration: isExcluded ? "line-through" : "none",
+                    }}>
+                    {e}
+                  </button>
+                );
+              })}
             </div>
           </div>
         );
