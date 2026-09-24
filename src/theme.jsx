@@ -240,6 +240,30 @@ body{
      13 — faste px-størrelser skalerede slet ikke med boksens egen højde. */
   container-type:size;
 }
+/* Hjem-forsidens store scan-CTA (24. sept. 2026-runde, genskinnet fra den
+   mellemliggende hvide ghost/outline-udgave efter brugerens eksplicitte
+   ønske: "Knappen skal være grøn, men den må gerne pulsere så man får lyst
+   til at trykke"): egen farvepalet (primær #0E8F5A, mørk #08734A, halo
+   #DDF4E8) adskilt fra appens generelle --green-token, bevidst — kun selve
+   CTA'en skal bruge denne specifikke nuance, resten af appens grønne
+   elementer (bundnav, andre knapper) rører vi ikke her. To lag levende
+   bevægelse i hvile, begge bevidst tydeligere end et rent kosmetisk "det
+   lever lidt"-pift: haloen (den bløde glød bag knappen) pulserer i skala+
+   opacitet via denne keyframe, OG selve knap-wrapperen får et ekstra
+   åndedræt via scanCtaBreathe (genbrugt fra ghost-udgaven, defineret
+   længere nede) — sammen skal de to lag give en tydelig invitation til at
+   trykke, ikke kun en diskret detalje. Tryk-feedback (:active nedenfor) er
+   et tredje, uafhængigt lag oven i disse to løbende animationer. */
+@keyframes scan-halo-pulse{
+  0%,100%{transform:scale(1);opacity:.8;}
+  50%{transform:scale(1.12);opacity:.35;}
+}
+.scan-cta-halo{animation:scan-halo-pulse 2.4s ease-in-out infinite;}
+.scan-cta-btn{transition:transform .12s cubic-bezier(.34,1.56,.64,1);}
+.scan-cta-btn:active{transform:scale(.95);}
+@media (prefers-reduced-motion: reduce){
+  .scan-cta-halo{animation:none;}
+}
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
   width:100%;max-width:480px;
@@ -392,17 +416,13 @@ body{
 .reticle-line{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 0%,var(--green-logo) 15%,var(--green-logo) 85%,transparent 100%);animation:scanline 2.2s ease-in-out infinite;box-shadow:0 0 10px var(--green-logo),0 0 3px var(--green-logo);}
 @keyframes scanline{0%{top:13px;opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{top:51px;opacity:0;}}
 
-/* Forside-scan-knappens "levende" lys (24. sept. 2026 — knappen er
-   gentænkt to gange efter brugerfeedback: først "ligner en gummibold"
-   (glossy fyld fjernet), så "ligner en radar" (den første udgave af
-   denne roterende ring var for skarp/smal og lignede en radar-sweep).
-   scanCtaRingSpin roterer nu et bredt, kraftigt blurret lyslag (se
-   filter:blur i ScannerScreen.jsx) langsommere (9s i stedet for 5s), så
-   det driver som en blød skæren i stedet for at pege som en stråle.
-   scanCtaBreathe giver hele knappen et meget subtilt åndedræt.
-   Respekterer den globale prefers-reduced-motion-regel nedenfor
-   (ACCESSIBILITY) uden ekstra kode her. */
-@keyframes scanCtaRingSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+/* scanCtaBreathe: et let åndedræt (skala 1 → 1.015) på hele scan-CTA-
+   wrapperen — stammer fra en mellemliggende hvid ghost/outline-udgave af
+   knappen (siden droppet igen til fordel for grøn fyld, se .scan-cta-halo
+   ovenfor), men selve åndedræts-keyframen er genbrugt uændret som ét af
+   de to lag levende bevægelse på den nuværende grønne knap. Respekterer
+   den globale prefers-reduced-motion-regel nedenfor (ACCESSIBILITY) uden
+   ekstra kode her. */
 @keyframes scanCtaBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.015);}}
 
 /* Mini cards */
@@ -579,6 +599,7 @@ body{
   90%{opacity:1;}
   100%{transform:translateY(0);opacity:0;}
 }
+@keyframes laserMove{0%{top:0;}50%{top:96px;}100%{top:0;}}
 .scan-loading-txt{font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.1px;text-align:center;}
 .scan-loading-sub{font-size:12.5px;color:var(--muted);text-align:center;margin-top:2px;}
 .scroll-top-btn{

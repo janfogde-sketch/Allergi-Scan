@@ -15,6 +15,11 @@ import { compressImageToBase64, isValidEanChecksum, apiCall, makeHeaders } from 
 export function useScanner({ setScanError, setLoading, onScanSuccess, accessToken }) {
   // ── Kamera-state ──────────────────────────────────────────────────────────
   const [cameraActive, setCameraActive]       = useState(false);
+  // scanReady: true først når html5-qrcode reelt er i gang med at afkode billeder
+  // (Html5Qrcode.start()'s promise er løst) — IKKE bare når cameraActive er sat,
+  // hvilket sker før kamera-streamen reelt er klar. Bruges til at undgå at vise
+  // scanner-laserlinjen over et endnu-ikke-levende kamerabillede.
+  const [scanReady, setScanReady]             = useState(false);
   const [torchOn, setTorchOn]                 = useState(false);
   const [scanZoom, setScanZoom]               = useState(1.0);
   const [showPhotoHint, setShowPhotoHint]     = useState(false);
@@ -44,7 +49,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       try { torchTrackRef.current.applyConstraints({ advanced: [{ torch: false }] }); } catch {}
       torchTrackRef.current = null;
     }
-    setCameraActive(false); setTorchOn(false);
+    setCameraActive(false); setTorchOn(false); setScanReady(false);
   }, []);
 
   // ── startCamera ────────────────────────────────────────────────────────────
@@ -53,7 +58,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     // kalde startCamera igen før første kald har sat state — startingRef lukker det hul
     if (cameraActive || startingRef.current) return;
     startingRef.current = true;
-    setScanError(""); setTorchOn(false); setScanZoom(1.0); scanZoomRef.current = 1.0; setShowPhotoHint(false);
+    setScanError(""); setTorchOn(false); setScanZoom(1.0); scanZoomRef.current = 1.0; setShowPhotoHint(false); setScanReady(false);
     if (noScanTimerRef.current) { clearTimeout(noScanTimerRef.current); noScanTimerRef.current = null; }
     torchTrackRef.current = null; lastScannedRef.current = null;
 
@@ -137,6 +142,10 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
         },
         () => {}
       );
+
+      // .start()'s promise er nu løst — kameraet er reelt i gang med at afkode,
+      // så scanner-laserlinjen må gerne vises fra nu af.
+      setScanReady(true);
 
       await new Promise(r => setTimeout(r, 500));
       const videoEl = document.querySelector("#qr-reader-home video");
@@ -286,6 +295,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   return {
     // State
     cameraActive, setCameraActive,
+    scanReady,
     torchOn, setTorchOn,
     scanZoom, setScanZoom,
     showPhotoHint, setShowPhotoHint,

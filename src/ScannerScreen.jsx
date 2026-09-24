@@ -14,6 +14,14 @@ import { CategorySelect } from "./MemberForm.jsx";
 import ResultScreen from "./ResultScreen.jsx";
 import { UI } from "./styleUtils.js";
 import { getGreeting } from "./utils.jsx";
+// Scan-forsidens EGET baggrundsbillede (allergen-fødevarer på hvid baggrund,
+// leveret direkte af brugeren 24. sept. 2026) — udelukkende dekorativt
+// (aria-hidden), vises KUN i .home-hero-frame herunder, ikke app-bredt.
+// Adskilt bevidst fra det app-brede baggrundsbillede i theme.jsx's .app-bg
+// (bruges på alle ANDRE skærme) — brugeren bad eksplicit om at Scan-
+// forsiden skal bruge netop dette foto, matchet så tæt som muligt på det
+// uploadede referencebillede.
+import scanHeroBg from "./assets/home/scan-hero-bg.webp";
 // Lazy: skærme brugeren ikke nødvendigvis besøger hver session, holdes ude af hoved-bundlet.
 // ResultScreen er IKKE med her — den vises efter stort set hvert scan (hoved-flowet),
 // så at lazy-loade den ville tilføje en indlæsnings-forsinkelse lige der hvor brugeren
@@ -158,6 +166,7 @@ export default function ScannerScreen({
   showManualEan, setShowManualEan,
   showSafeOnly, setShowSafeOnly,
   cameraActive, setCameraActive,
+  scanReady,
   galleryInputRef,
   lastScannedRef,
   selectedENumbers,
@@ -179,10 +188,8 @@ export default function ScannerScreen({
   photoFallbackRef,
   scanPhotoForEan,
   setKnowledgeSlug,
-  buildLabel,
   lookupProduct,
   onBetaClick,
-  runDemoScan,
   alternatives,
   altLoading,
 }) {
@@ -197,12 +204,6 @@ export default function ScannerScreen({
   // ── Guide modal state ─────────────────────────────────────────────────────
   const [showGuide, setShowGuide] = React.useState(false);
   const [manualEanError, setManualEanError] = React.useState("");
-
-  // "Prøv en demo-scanning" er kun til nye brugere — forsvinder efter 1 døgn
-  // (målt fra kontoens created_at), så den ikke fylder unødigt for alle
-  // fremover. Fejler lukket (skjult) indtil created_at er hentet, for at
-  // undgå et kort glimt af knappen for etablerede brugere før data er inde.
-  const showDemoScan = !!(user.created_at && (Date.now() - new Date(user.created_at).getTime()) < 24 * 60 * 60 * 1000);
 
   // activeIds (kombinerede allergen-id'er for alle aktive profiler) kommer nu
   // som prop fra App.jsx' allActive() i stedet for at blive genberegnet her
@@ -276,14 +277,20 @@ export default function ScannerScreen({
                         borderRadius: key==="tl"?"4px 0 0 0":key==="tr"?"0 4px 0 0":key==="bl"?"0 0 0 4px":"0 0 4px 0",
                       }} />
                     ))}
-                    {/* Laser-linje */}
-                    <div style={{
-                      position:"absolute", left:4, right:4, height:2,
-                      background:"linear-gradient(90deg, transparent, var(--green), rgba(134,239,172,.8), var(--green), transparent)",
-                      boxShadow:"0 0 8px var(--green), 0 0 16px var(--green)",
-                      animation:"laserMove 1.8s ease-in-out infinite",
-                      top:0,
-                    }} />
+                    {/* Laser-linje — vises FØRST når kameraet reelt er i gang med at
+                        afkode (scanReady), ikke bare når cameraActive er sat. cameraActive
+                        bliver sat tidligere i useScanner.js's startCamera, mens html5-qrcode
+                        stadig er ved at åbne kamera-streamen — uden dette gate ville linjen
+                        kunne vises et øjeblik over et endnu ikke-levende kamerabillede. */}
+                    {scanReady && (
+                      <div style={{
+                        position:"absolute", left:4, right:4, height:2,
+                        background:"linear-gradient(90deg, transparent, var(--green), rgba(134,239,172,.8), var(--green), transparent)",
+                        boxShadow:"0 0 8px var(--green), 0 0 16px var(--green)",
+                        animation:"laserMove 1.8s ease-in-out infinite",
+                        top:0,
+                      }} />
+                    )}
                   </div>
                 </div>
 
@@ -320,30 +327,37 @@ export default function ScannerScreen({
               <input ref={photoFallbackRef} type="file" accept="image/*" capture="environment" style={S.none}
                 onChange={e => { if (e.target.files[0]) scanPhotoForEan(e.target.files[0]); e.target.value=""; }} />
 
-              {/* Forside-hero når kamera ikke er aktivt: hilsen + stor scan-knap +
-                  version/beta-fod, siddende oven på appens fælles
-                  baggrundsbillede (theme.jsx's .app — ikke længere et
-                  separat billede kun på denne skærm, se CLAUDE.md afsnit 5).
-                  .home-hero-frame (theme.jsx) giver boksen en DEFINITIV
-                  calc(100dvh - Npx)-højde, så hilsen/knap altid er synlige
-                  uden scroll. Alle mål er clamp(min, Ncqh, max) i stedet for
-                  faste px, så indholdet skalerer NED sammen med boksen på
-                  korte telefoner (og OP på store — hævet 24. sept. 2026 efter
-                  feedback om at hele hero'en virkede for lille). "Prøv en
-                  demo"-knappen er fjernet samme dag efter brugerens ønske —
-                  bemærk at det var DENNE knaps eneste kald til setShowGuide
-                  der åbnede DemoSlider-guiden ("App-guide"-knappen der
-                  gjorde det samme var allerede fjernet som redundant) —
-                  showGuide/DemoSlider herunder er nu urørt, men uden nogen
-                  synlig indgang i UI'et. */}
+              {/* Forside-hero når kamera ikke er aktivt: eget baggrundsfoto
+                  (scanHeroBg, importeret ovenfor) + hilsen + stor scan-knap +
+                  Beta-info-fod. Dette foto er SCAN-SPECIFIKT, adskilt fra det
+                  app-brede baggrundsbillede appens øvrige skærme bruger
+                  (theme.jsx's .app-bg) — brugeren bad eksplicit om at
+                  forsiden skal bruge netop dette foto. .home-hero-frame
+                  (theme.jsx) giver boksen en DEFINITIV calc(100dvh - Npx)-
+                  højde, så hilsen/knap altid er synlige uden scroll. Billedet
+                  vises ALTID i sin fulde helhed (height:100%, width:auto,
+                  centreret) — aldrig beskåret, kun skaleret. Alle mål er
+                  clamp(min, Ncqh, max) i stedet for faste px, så indholdet
+                  skalerer NED sammen med boksen på korte telefoner (og OP på
+                  store — hævet 24. sept. 2026 efter feedback om at hele
+                  hero'en virkede for lille). "Prøv en demo"-knappen er
+                  fjernet efter brugerens tidligere ønske — bemærk at det var
+                  DENNE knaps eneste kald til setShowGuide der åbnede
+                  DemoSlider-guiden ("App-guide"-knappen der gjorde det samme
+                  var allerede fjernet som redundant) — showGuide/DemoSlider
+                  herunder er nu urørt, men uden nogen synlig indgang i
+                  UI'et. */}
               {!cameraActive && (
               <div className="home-hero-frame">
+                <img src={scanHeroBg} alt="" aria-hidden="true" draggable="false"
+                  style={{ display:"block", height:"100%", width:"auto", margin:"0 auto", pointerEvents:"none", userSelect:"none" }} />
+
                 <div style={{ position:"absolute", top:"27%", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
-                  {/* Slørlaget bag baggrundsbilledet (.app-bg, theme.jsx) blev
-                      dæmpet fra .8 til .5 opacitet 24. sept. 2026 (for kraftigt
-                      slør vaskede billedets farve/elegance ud) — læsbarheden her
-                      bæres i stedet af tykkere/større tekst + en blød hvid
-                      text-shadow-glød der "løfter" teksten af baggrunden. */}
+                  {/* Tykkere/større tekst + en blød hvid text-shadow-glød "løfter"
+                      teksten af scanHeroBg-fotoet bagved, samme mønster som appens
+                      øvrige skærme bruger mod det app-brede baggrundsbillede
+                      (.app-bg, theme.jsx) — relevant her fordi fotoets hvide
+                      midterbånd ikke er 100% ensfarvet alle steder. */}
                   <div style={{ fontSize:"clamp(14px, 2.9cqh, 19px)", fontWeight:600, color:"var(--ink)", letterSpacing:"-.2px", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{getGreeting()},</div>
                   <div style={{ fontSize:"clamp(22px, 4.7cqh, 32px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(2px, .4cqh, 4px)", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{user.name?.split(" ")[0] || "der"}</div>
                   <div style={{ fontSize:"clamp(11.5px, 2.1cqh, 15px)", fontWeight:600, color:"var(--ink2)", marginTop:"clamp(5px, 1.1cqh, 9px)", lineHeight:1.5, maxWidth:250, marginLeft:"auto", marginRight:"auto", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 12px rgba(255,255,255,.6)" }}>
@@ -351,85 +365,63 @@ export default function ScannerScreen({
                   </div>
                 </div>
 
-                {/* Stor cirkulær scan-knap — gentænkt fra bunden (24. sept.
-                    2026) efter brugerens feedback om at tidligere glossy-
-                    udgaver lignede en gummibold, og at det efterfølgende
-                    roterende lyspunkt i en tynd, skarp ring lignede en
-                    radar-sweep. Ny, roligere retning: samme ghost/outline-
-                    knap (hvid flade + grønt ikon/tekst), men lyset er nu
-                    bredt og blurret (filter:blur) så det driver som en
-                    blød skæren i stedet for at pege som en radar-stråle,
-                    og roterer langsommere (9s). Dybde tilføjet via tre
-                    lag: en blød, jordet ambient-glød bagved (giver knappen
-                    en "svæve over baggrunden"-fornemmelse), en let dome-
-                    agtig radial-gradient i selve knap-fladen (næsten
-                    umærkelig, ikke glossy), og en Material-inspireret
-                    fler-lags elevation-skygge (nær+fjern skygge i stedet
-                    for én flad skygge). */}
-                <div style={{ position:"absolute", top:"46%", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
+                {/* Stor cirkulær scan-knap — grøn fyld (#0E8F5A → #08734A, ikke
+                    ghost/outline-stilen fra den forrige runde) med en diskret
+                    pulserende halo-glød bagved OG et meget let åndedræt på hele
+                    knappen (samme scanCtaBreathe-keyframe som ghost-versionen
+                    brugte), så knappen virker levende og indbydende at trykke på
+                    uden at blive distraherende. Størrelsen (clamp(168px, 42cqh,
+                    267px)) er bevaret fra den forrige runde, hvor brugeren bad om
+                    at gøre knappen 50% større. Selve knappen er en rigtig
+                    <button> (ikke en div med role="button") for native
+                    tastatur-aktivering + pålidelig :active-tryk-feedback på
+                    touch-enheder (.scan-cta-btn:active, theme.jsx). */}
+                <div style={{ position:"absolute", top:"48%", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
                   <div style={{ position:"relative", width:"clamp(168px, 42cqh, 267px)", height:"clamp(168px, 42cqh, 267px)", display:"flex", alignItems:"center", justifyContent:"center",
                     animation:"scanCtaBreathe 4.5s ease-in-out infinite" }}>
-                    <div aria-hidden="true" style={{ position:"absolute", inset:"clamp(-16px, -2.4cqh, -8px)", borderRadius:"50%",
-                      background:"radial-gradient(circle, rgba(23,138,80,.15) 0%, rgba(23,138,80,0) 72%)" }} />
-                    <div aria-hidden="true" style={{ position:"absolute", inset:0, borderRadius:"50%", overflow:"hidden" }}>
-                      <div style={{ position:"absolute", inset:"-15%", borderRadius:"50%",
-                        background:"conic-gradient(from 0deg, transparent 0deg, transparent 190deg, rgba(23,138,80,.12) 255deg, rgba(40,184,113,.5) 320deg, rgba(31,164,102,.12) 30deg, transparent 80deg), rgba(23,138,80,.13)",
-                        filter:"blur(7px)",
-                        animation:"scanCtaRingSpin 9s linear infinite" }} />
-                    </div>
-                    <div
+                    <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-16px, -2.4cqh, -8px)", borderRadius:"50%",
+                      background:"radial-gradient(circle, #DDF4E8 0%, rgba(221,244,232,0) 70%)" }} aria-hidden="true" />
+                    <button
+                      className="scan-cta-btn"
                       onClick={() => startCamera()}
-                      role="button"
                       aria-label="Start kamera for at scanne stregkode"
-                      tabIndex={0}
-                      onKeyDown={e => e.key === "Enter" && startCamera()}
                       style={{ position:"absolute", inset:"clamp(6px, 1cqh, 9px)", borderRadius:"50%", cursor:"pointer",
-                        background:"radial-gradient(circle at 50% 32%, #FFFFFF 0%, #FAFAF8 100%)",
-                        boxShadow:"0 1px 2px rgba(21,32,26,.05), 0 8px 18px -8px rgba(21,32,26,.12), 0 24px 44px -22px rgba(21,32,26,.22), inset 0 1px 1px rgba(255,255,255,.9), inset 0 -8px 16px -12px rgba(21,32,26,.05)",
+                        border:"none", fontFamily:"var(--f)",
+                        background:"linear-gradient(160deg,#0E8F5A 0%,#08734A 100%)",
+                        boxShadow:"0 14px 28px -12px rgba(8,115,74,.55), inset 0 2px 3px rgba(255,255,255,.3)",
                         display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(8px, 1.8cqh, 14px)" }}>
-                      <Icon name="barcode" size="clamp(38px, 8cqh, 53px)" color="var(--green)" />
-                      <div style={{ fontSize:"clamp(18px, 3.2cqh, 23px)", fontWeight:800, color:"var(--green)", letterSpacing:"-.2px" }}>Scan produkt</div>
-                    </div>
+                      <Icon name="barcode" size="clamp(38px, 8cqh, 53px)" color="#fff" />
+                      <div style={{ fontSize:"clamp(18px, 3.2cqh, 23px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
+                    </button>
                   </div>
                 </div>
 
-                {/* Version/Beta-info — bund-forankret. */}
+                {/* Beta-information — bund-forankret. Versionsnummeret ("v1.0.6 ·
+                    beta") og "Prøv en demo"-pillen er begge fjernet fra forsiden
+                    (hhv. efter det nye referencedesign og efter brugerens
+                    tidligere ønske, se historik) — version er stadig synligt
+                    inde på selve Beta-information-skærmen. */}
                 <div style={{ position:"absolute", top:"71.5%", left:0, right:0, bottom:"clamp(6px, 1.4cqh, 10px)", zIndex:2,
                   display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-end", padding:"0 12px", overflow:"hidden" }}>
-                  <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
-                    <div style={{ fontSize:"clamp(10px, 1.7cqh, 12.5px)", fontWeight:600, color:"var(--ink2)", background:"rgba(255,255,255,.7)", padding:"3px 10px", borderRadius:100 }}>v1.0.6 · beta</div>
-                    <button onClick={onBetaClick}
-                      style={{ display:"inline-flex", alignItems:"center", gap:5,
-                        padding:"clamp(4px, 1cqh, 6px) clamp(9px, 2cqh, 13px)", borderRadius:100,
-                        background:"rgba(255,255,255,.82)", border:"1px solid var(--border)", boxShadow:"0 4px 12px -6px rgba(21,32,26,.3)",
-                        fontFamily:"var(--f)", fontSize:"clamp(10px, 1.7cqh, 12.5px)", fontWeight:700, color:"var(--green)", cursor:"pointer", letterSpacing:".2px" }}>
-                      Beta-information
-                    </button>
-                  </div>
+                  <button onClick={onBetaClick}
+                    style={{ display:"inline-flex", alignItems:"center", gap:5, flexShrink:0,
+                      padding:"clamp(4px, 1cqh, 6px) clamp(9px, 2cqh, 13px)", borderRadius:100,
+                      background:"rgba(255,255,255,.82)", border:"1px solid var(--border)", boxShadow:"0 4px 12px -6px rgba(21,32,26,.3)",
+                      fontFamily:"var(--f)", fontSize:"clamp(10px, 1.7cqh, 12.5px)", fontWeight:700, color:"var(--green)", cursor:"pointer", letterSpacing:".2px" }}>
+                    Beta-information
+                  </button>
                 </div>
               </div>
               )}
             </div>}
 
-            {/* Simuleret scan, fejlbesked og manuel EAN-input — sjældne/betingede
-                tilstande, kun vist ved behov. Pakket i en bund-sikret wrapper
-                (padding matchende den gennemsigtige bundnav) så de ikke kan
-                havne skjult/utrykbare bag den, nu hvor HOME-skærmens normale
-                110px bund-reserve er fjernet til fordel for hero-boksens
+            {/* Fejlbesked og manuel EAN-input — sjældne/betingede tilstande,
+                kun vist ved behov. Pakket i en bund-sikret wrapper (padding
+                matchende den gennemsigtige bundnav) så de ikke kan havne
+                skjult/utrykbare bag den, nu hvor HOME-skærmens normale 110px
+                bund-reserve er fjernet til fordel for hero-boksens
                 kant-til-kant-udfyldning ovenfor. */}
-            <div style={{ paddingBottom: (showDemoScan || scanError || showManualEan) ? "calc(77px + env(safe-area-inset-bottom) + 12px)" : 0 }}>
-            {/* Simuleret scan — prøv appen uden en rigtig stregkode ("Fase 7b.2").
-                Kun til nye brugere, forsvinder efter 1 døgn (se showDemoScan ovenfor). */}
-            {!!userId && !cameraActive && showDemoScan && (
-              <button onClick={runDemoScan}
-                style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-                  width:"100%", padding:"12px 14px", marginBottom:14,
-                  background:"var(--surface)", border:"1px dashed var(--border2)", borderRadius:14,
-                  fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
-                <Icon name="zap" size={15} color="var(--blue)" /> Prøv en demo-scanning
-              </button>
-            )}
-
+            <div style={{ paddingBottom: (scanError || showManualEan) ? "calc(77px + env(safe-area-inset-bottom) + 12px)" : 0 }}>
             {/* Fejlbesked + Manuel EAN — kun til loggede */}
             {!!userId && <>
             {/* Fejlbesked fra kamera */}

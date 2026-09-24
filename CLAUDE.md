@@ -413,6 +413,86 @@ Fuld dag-for-dag-detalje for hele denne redesign-runde (alle mellem-
 liggende forsøg, mockup-iterationer, fejlfindingshistorik, backtick-
 byggefejl-mønsteret) er i `.claude/HISTORY.md`.
 
+**24. sept. 2026 — samme dag, nyt referencefoto + egen CTA-farvepalet til
+scan-knappen.** Brugeren delte et nyt, direkte uploadet baggrundsfoto
+(allergen-fødevarer i to kolonner på ren hvid baggrund — mælk/havre/æg/
+laks/rejer i venstre side, æggeskaller/mel/hvede/mandler/hasselnødder i
+højre side) samt et fuldt UI-referencedesign. Vist først som et interaktivt
+HTML-mockup (Artifact) til godkendelse, før den rigtige app blev ændret —
+se `.claude/HISTORY.md` for mockuppets fulde indhold og screenshots.
+Ændringer i `ScannerScreen.jsx`/`theme.jsx`:
+- **Nyt baggrundsfoto** erstatter det forrige (`src/assets/home/
+  scan-hero-bg.webp` overskrevet in-place, samme import uændret) — allerede
+  tæt på ren hvid i kilden (RGB ~250-254), ingen hvidbalance-korrektion
+  nødvendig denne gang.
+- **Scan-knappen fik sin egen farvepalet**, adskilt fra appens generelle
+  `--green`-token: primær `#0E8F5A`, mørk `#08734A`, halo `#DDF4E8` — kun
+  denne ene knap, resten af appens grønne elementer (bundnav, andre
+  primærknapper) er urørt.
+- **To lag levende bevægelse i hvile** (brugerens eksplicitte ønske: "Knappen
+  skal være grøn, men den må gerne pulsere så man får lyst til at trykke") —
+  halo-gløden bag knappen pulserer i skala+opacitet (`@keyframes
+  scan-halo-pulse`, 2.4s, skala 1→1.12 + opacity .8→.35), OG selve
+  knap-wrapperen får et ekstra åndedræt (`scanCtaBreathe`, genbrugt fra en
+  mellemliggende hvid ghost/outline-udgave af knappen — se nedenfor).
+  Respekterer `prefers-reduced-motion`.
+- **Knappen er nu en rigtig `<button>`** (var tidligere en `<div role=
+  "button">` med manuel `tabIndex`/`onKeyDown`) — giver native tastatur-
+  aktivering gratis og gør `:active{transform:scale(.95)}`-tryk-feedback
+  pålideligt på touch-enheder (virker ikke troværdigt via CSS `:active` på
+  en almindelig div på iOS).
+- **Fjernet versionsnummeret** ("v1.0.6 · beta") fra forsiden. Fandt
+  undervejs at det var et hardkodet tal, ikke den faktiske `buildLabel`-
+  prop (`formatBuildTime()`) — et feltnavne-mismatch-mønster (se afsnit 5's
+  stående lektion) hvor et komponent-prop var beregnet, sendt ind, men
+  aldrig faktisk brugt. `buildLabel`-proppen er fjernet fra `ScannerScreen`
+  (var reelt ubrugt) — OnboardingScreen's egen, separate brug er urørt.
+- **"Prøv en demo-scanning"-knappen** (kun til konti <24 timer gamle) er
+  fjernet fra forsiden, inkl. den nu-ubrugte `runDemoScan`-callback i
+  `App.jsx` (den underliggende, testede `buildDemoScanResult`-hjælpefunktion
+  i `useProduct.js` er bevaret uændret — bruges/testes uafhængigt).
+  **"Prøv en demo"-pillen** (åbnede app-guiden) er også fjernet — oprindeligt
+  bevidst bevaret i denne omgang, men en efterfølgende merge med `main`
+  (se nedenfor) viste at brugeren allerede havde bedt om den fjernet i en
+  parallel session; `DemoSlider`-guiden har nu ingen synlig indgang i UI'et,
+  uændret fra `main`s tilstand.
+- **Bundmenuen er UÆNDRET** (Indkøbsliste/Scan/Søg) — referencedesignets
+  billede viste "Historik" som tredje punkt i stedet for "Søg", men
+  brugeren bekræftede eksplicit at bundmenuen skal forblive som den er, da
+  spørgsmålet blev stillet (hvor skulle Søg så bo, hvis fjernet).
+- **Reel bug fundet og rettet undervejs (ikke en del af denne rundes
+  oprindelige scope, men direkte i vejen):** kamerascanningens laser-linje-
+  animation (`animation:"laserMove ..."`) refererede et `@keyframes
+  laserMove` der aldrig var defineret i `theme.jsx` — linjen "animerede"
+  aldrig, den lå bare stille. Tilføjet den manglende keyframe. Samtidig
+  fundet at laser-linjen kunne nå at vises et øjeblik FØR kameraet reelt
+  var i gang med at afkode (`cameraActive` sættes i `useScanner.js`s
+  `startCamera` før `Html5Qrcode.start()`s promise er løst) — tilføjet et
+  nyt `scanReady`-state (sandt først når `.start()` reelt er løst) og
+  gatet laser-linjens rendering på det, i stedet for kun `cameraActive`.
+  Matcher brugerens eksplicitte krav: "scannerlinje må først vises, når
+  kameraet faktisk scanner."
+- **Mergekonflikt med parallelt arbejde på `main`, løst i samme runde:**
+  mens denne gren arbejdede, nåede `main` 14 uafhængige commits om NETOP
+  denne skærm — en hvid ghost/outline-udgave af scan-knappen (roterende
+  blurret lysring, 50% større end originalen efter brugerens tidligere
+  ønske), et helt app-bredt baggrundsbillede-system der ERSTATTEDE
+  Scan-forsidens eget foto, og en kritisk hvid-skærm-hotfix (samme
+  backtick-i-kommentar-fejlklasse som denne fil selv advarer om andetsteds).
+  Løst ved en rigtig `git merge` (ikke en overskrivning): main's app-brede
+  baggrundssystem (`.app-bg`) beholdes uændret for resten af appen,
+  Scan-forsidens EGET baggrundsfoto genindføres specifikt på denne skærm
+  (brugeren bad eksplicit om netop dette foto her), main's forstørrede
+  knap-størrelse og `scanCtaBreathe`-åndedræt genbruges men med grøn fyld
+  i stedet for hvid ghost-stil, og main's fjernelse af version/demo-pil
+  respekteres. Fandt undervejs et reelt, ellers usynligt 1.75px-overlap
+  mellem undertekst og knap på iPhone SE (button-forstørrelsen havde
+  spist main's oprindelige sikkerhedsmargin) — rettet ved at flytte
+  knappens `top`-position fra 46% til 48%. Fuld liste over hvad der blev
+  auto-merget vs. manuelt reconcileret i `.claude/HISTORY.md`.
+- Verificeret med Playwright-device-profiler (iPhone SE, iPhone 13) — nul
+  overflow, ingen overlap/klipning, farver/puls/knap-type som beskrevet.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,

@@ -46,7 +46,7 @@ import { useOnboarding } from './useOnboarding.js';
 import { useAdmin } from './useAdmin.js';
 import { useScanner } from './useScanner.js';
 import { useRecipes } from './useRecipes.js';
-import { useProduct, runLookupProduct, buildDemoScanResult, buildScanResultFromProductData } from './useProduct.js';
+import { useProduct, runLookupProduct, buildScanResultFromProductData } from './useProduct.js';
 import { PREVIEW_MOCK_PRODUCTS } from './previewMockData.js';
 import { useMadpas } from './useMadpas.js';
 import { useSearch } from './useSearch.js';
@@ -582,6 +582,7 @@ export default function EatSafe() {
   // ── SCANNER ───────────────────────────────────────────────────────────────
   const {
     cameraActive, setCameraActive,
+    scanReady,
     torchOn, setTorchOn,
     scanZoom,
     showPhotoHint, setShowPhotoHint,
@@ -646,17 +647,6 @@ export default function EatSafe() {
        setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
        setProductImagePreview, setProductImageBase64]);
   lookupProductRef.current = lookupProduct;
-
-  // ── Simuleret scan (Fase 7b.2) — "Prøv en demo-scanning" på HOME ────────
-  // Ingen netværk, ingen historik-gemning — kører kun gennem den delte
-  // resultat-beregning (buildDemoScanResult), så resultatet er personligt
-  // (matcher brugerens rigtige aktive allergener) uden at røre rigtige data.
-  const runDemoScan = useCallback(() => {
-    const result = buildDemoScanResult({ activeIds, activeCustom, activeENumbers, family, activeProfiles });
-    setScanResult(result);
-    setScreen(SCREENS.RESULT);
-    if (navigator.vibrate) navigator.vibrate(25);
-  }, [activeIds, activeCustom, activeENumbers, family, activeProfiles, setScanResult, setScreen]);
 
   // ── COMPUTED (afhænger af hooks) ─────────────────────────────────────────
   const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
@@ -1019,6 +1009,7 @@ export default function EatSafe() {
             showManualEan={showManualEan} setShowManualEan={setShowManualEan}
             showSafeOnly={showSafeOnly} setShowSafeOnly={setShowSafeOnly}
             cameraActive={cameraActive} setCameraActive={setCameraActive}
+            scanReady={scanReady}
             galleryInputRef={galleryInputRef}
             lastScannedRef={lastScannedRef}
             handleEditProductCapture={handleEditProductCapture}
@@ -1038,9 +1029,7 @@ export default function EatSafe() {
             photoFallbackRef={photoFallbackRef}
             scanPhotoForEan={scanPhotoForEan}
             setKnowledgeSlug={setKnowledgeSlug}
-            buildLabel={formatBuildTime()}
             lookupProduct={lookupProduct}
-            runDemoScan={runDemoScan}
             selectedENumbers={selectedENumbers}
             activeIds={activeIds}
             activeENumbers={activeENumbers}
