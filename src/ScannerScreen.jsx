@@ -13,13 +13,12 @@ import { useHistoryContext } from "./HistoryContext.jsx";
 import { CategorySelect } from "./MemberForm.jsx";
 import ResultScreen from "./ResultScreen.jsx";
 import { UI } from "./styleUtils.js";
-// Hjem-forsidens frugt-collage — udelukkende dekorativt (aria-hidden), se CLAUDE.md
-// afsnit 5 for baggrunden for hvorfor appen nu bruger rigtige fotos ét sted.
-import leafMint from "./assets/home/leaf-mint.webp";
-import blueberrySingle from "./assets/home/blueberry-single.webp";
-import blueberriesPair from "./assets/home/blueberries-pair.webp";
-import strawberryImg from "./assets/home/strawberry.webp";
-import leafBasil from "./assets/home/leaf-basil.webp";
+import { getGreeting } from "./utils.jsx";
+// Hjem-forsidens baggrundsbillede — udelukkende dekorativt (aria-hidden), se
+// CLAUDE.md afsnit 5. Ét samlet, hvidbalance-korrigeret foto (leveret af
+// brugeren) i stedet for separate foto-udklip — undgår helt tidligere
+// beskærings-artefakter, da billedet aldrig beskæres, kun skaleres.
+import scanHeroBg from "./assets/home/scan-hero-bg.webp";
 // Lazy: skærme brugeren ikke nødvendigvis besøger hver session, holdes ude af hoved-bundlet.
 // ResultScreen er IKKE med her — den vises efter stort set hvert scan (hoved-flowet),
 // så at lazy-loade den ville tilføje en indlæsnings-forsinkelse lige der hvor brugeren
@@ -232,17 +231,13 @@ export default function ScannerScreen({
               </div>
             )}
 
-            {/* Scan-boks — kun til loggede. Forsiden er nu en enkel "landing"-
-                visning (logo + stort scan-CTA) i stedet for hilsen/dagens tip/
-                indkøbsliste-genvej — se CLAUDE.md afsnit 5 for baggrunden. */}
+            {/* Scan-boks — kun til loggede. Forsiden viser en hilsen + det
+                hvidbalance-korrigerede baggrundsbillede + stor scan-CTA — se
+                CLAUDE.md afsnit 5 for baggrunden. */}
             {!!userId && <div style={{
               background: cameraActive ? "var(--surface)" : "transparent",
               borderRadius:20, marginBottom:10,
-              // "hidden" er kun nødvendigt for at klippe kameraets afrundede hjørner
-              // når det er aktivt — i hero-tilstanden skal collage-billederne kunne
-              // bløde ud over kanten, ellers klipper denne wrapper dem usynligt
-              // (fandt dette ved at sammenligne den rigtige app mod mimic-previewet).
-              overflow: cameraActive ? "hidden" : "visible", position:"relative", border: cameraActive ? "1px solid var(--border2)" : "none",
+              overflow:"hidden", position:"relative", border: cameraActive ? "1px solid var(--border2)" : "none",
               boxShadow: cameraActive ? "var(--sh2)" : "none",
             }}>
               {/* Kamera container — altid i DOM men skjult når ikke aktiv */}
@@ -325,59 +320,59 @@ export default function ScannerScreen({
               <input ref={photoFallbackRef} type="file" accept="image/*" capture="environment" style={S.none}
                 onChange={e => { if (e.target.files[0]) scanPhotoForEan(e.target.files[0]); e.target.value=""; }} />
 
-              {/* Forside-hero når kamera ikke er aktivt: overskrift + stor
-                  scan-knap med frugt-collage — matcher det aftalte design. */}
+              {/* Forside-hero når kamera ikke er aktivt: hilsen + baggrundsbillede
+                  + stor scan-knap + "Prøv en demo". Billedet vises i sin helhed
+                  (aldrig beskåret, kun skaleret til 75% bredde, centreret) — se
+                  CLAUDE.md afsnit 5 for baggrunden. Hilsen/knap/demo-pille er
+                  positioneret med %-baserede top-værdier relativt til billedets
+                  egen boks, så det forbliver korrekt placeret i billedets blanke
+                  midterbånd uanset skærmbredde. */}
               {!cameraActive && (
               <div style={{ position:"relative", padding:"14px 0 24px" }}>
-                {/* Frugt-collage — rent dekorativt, ingen semantisk betydning.
-                    Genbruger de 5 fotos i flere størrelser/rotationer/positioner
-                    så collagen fylder hele forsiden i stedet for kun hjørnerne
-                    (sandboxen kan ikke hente andre/nye billeder eksternt, se
-                    CLAUDE.md afsnit 5, 24. sept.-opfølgning). Jordbær-billedet
-                    er kun et delvist udsnit i selve kildefotoet — bruges derfor
-                    udelukkende som ægte kant-bløder, aldrig midt i kompositionen. */}
-                {[
-                  { src: leafMint,        top:-16,  left:-24,  width:104, rotate:-16 },
-                  { src: blueberriesPair, top:-8,   right:-32, width:148, rotate:12 },
-                  { src: blueberrySingle, top:100,  right:14,  width:50,  rotate:26 },
-                  { src: leafBasil,       top:148,  left:-38,  width:116, rotate:-22, flip:true },
-                  { src: blueberrySingle, top:222,  left:26,   width:38,  rotate:-8 },
-                  { src: leafMint,        top:262,  right:-20, width:84,  rotate:30 },
-                  { src: leafBasil,       bottom:104, right:-32, width:102, rotate:16 },
-                  { src: blueberriesPair, bottom:44,  left:-36,  width:126, rotate:-14 },
-                  { src: strawberryImg,   bottom:-14, left:-44,  width:132, rotate:-6 },
-                ].map((it, i) => (
-                  <img key={i} src={it.src} alt="" aria-hidden="true" draggable="false"
-                    style={{ position:"absolute", top:it.top, bottom:it.bottom, left:it.left, right:it.right,
-                      width:it.width, transform:`${it.flip ? "scaleX(-1) " : ""}rotate(${it.rotate}deg)`,
-                      pointerEvents:"none", userSelect:"none" }} />
-                ))}
+                <div style={{ position:"relative", width:"75%", margin:"0 auto" }}>
+                  <img src={scanHeroBg} alt="" aria-hidden="true" draggable="false"
+                    style={{ display:"block", width:"100%", height:"auto", pointerEvents:"none", userSelect:"none" }} />
 
-                <div style={{ position:"relative", zIndex:1, textAlign:"center", padding:"88px 24px 0" }}>
-                  <div style={{ fontSize:28, fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px" }}>Scan produkt</div>
-                  <div style={{ fontSize:14.5, color:"var(--muted)", marginTop:8, lineHeight:1.5, maxWidth:260, marginLeft:"auto", marginRight:"auto" }}>
-                    Se med det samme om varen passer til dine allergier.
-                  </div>
-                </div>
-
-                {/* Stor cirkulær scan-knap med blød glød bagved */}
-                <div style={{ position:"relative", zIndex:1, display:"flex", justifyContent:"center", margin:"30px 0" }}>
-                  <div style={{ position:"relative", width:200, height:200, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                    <div style={{ position:"absolute", inset:-18, borderRadius:"50%",
-                      background:"radial-gradient(circle, rgba(23,138,80,.20) 0%, rgba(23,138,80,0) 72%)" }} aria-hidden="true" />
-                    <div
-                      onClick={() => startCamera()}
-                      role="button"
-                      aria-label="Start kamera for at scanne stregkode"
-                      tabIndex={0}
-                      onKeyDown={e => e.key === "Enter" && startCamera()}
-                      style={{ position:"relative", width:176, height:176, borderRadius:"50%", cursor:"pointer",
-                        background:"linear-gradient(150deg,#22A868 0%,#178A50 60%,#0E6B3B 100%)",
-                        boxShadow:"0 16px 32px -14px rgba(23,138,80,.45)",
-                        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10 }}>
-                      <Icon name="barcode" size={40} color="#fff" />
-                      <div style={{ fontSize:14.5, fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
+                  <div style={{ position:"absolute", top:"27%", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
+                    <div style={{ fontSize:14, fontWeight:500, color:"var(--ink)", letterSpacing:"-.2px" }}>{getGreeting()},</div>
+                    <div style={{ fontSize:23, fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:2 }}>{user.name?.split(" ")[0] || "der"}</div>
+                    <div style={{ fontSize:10.5, color:"var(--muted)", marginTop:7, lineHeight:1.5, maxWidth:203, marginLeft:"auto", marginRight:"auto" }}>
+                      Scan en vare og få hurtigt svar om den passer til dine allergier.
                     </div>
+                  </div>
+
+                  {/* Stor cirkulær scan-knap med blød glød bagved */}
+                  <div style={{ position:"absolute", top:"46%", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
+                    <div style={{ position:"relative", width:150, height:150, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                      <div style={{ position:"absolute", inset:-11, borderRadius:"50%",
+                        background:"radial-gradient(circle, rgba(23,138,80,.28) 0%, rgba(23,138,80,0) 72%)" }} aria-hidden="true" />
+                      <div
+                        onClick={() => startCamera()}
+                        role="button"
+                        aria-label="Start kamera for at scanne stregkode"
+                        tabIndex={0}
+                        onKeyDown={e => e.key === "Enter" && startCamera()}
+                        style={{ position:"relative", width:140, height:140, borderRadius:"50%", cursor:"pointer",
+                          background:"linear-gradient(150deg,#28B871 0%,#178A50 55%,#0C5A32 100%)",
+                          boxShadow:"0 14px 28px -12px rgba(23,138,80,.5)",
+                          display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:7 }}>
+                        <Icon name="barcode" size={29} color="#fff" />
+                        <div style={{ fontSize:11, fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Prøv en demo */}
+                  <div style={{ position:"absolute", top:"71.5%", left:0, right:0, zIndex:2, display:"flex", justifyContent:"center", padding:"0 12px" }}>
+                    <button onClick={() => setShowGuide(true)}
+                      style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+                        width:"100%", maxWidth:210, padding:"10px 15px", borderRadius:100,
+                        background:"var(--paper)", border:"1px solid var(--border)", boxShadow:"0 10px 24px -12px rgba(21,32,26,.25)",
+                        fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
+                      <Icon name="package" size={14} color="var(--green)" />
+                      Prøv en demo
+                      <Icon name="chevronRight" size={12} color="var(--muted2)" />
+                    </button>
                   </div>
                 </div>
               </div>
