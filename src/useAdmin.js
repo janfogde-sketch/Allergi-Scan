@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 import { sendPushToUser } from "./usePush.js";
+import { showToast } from "./SharedComponents.jsx";
 
 export function useAdmin(accessToken, userId, clearAuth) {
   // State
@@ -52,6 +53,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
     } catch (e) {
       if (submissionsLoadToken.current !== myToken) return;
       console.error("loadSubmissions:", e.status || "", e.message); setSubmissions([]);
+      showToast("Kunne ikke hente indsendelser: " + e.message, "error");
     }
     if (submissionsLoadToken.current === myToken) setSubmissionsLoading(false);
   };
@@ -101,7 +103,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
         scans_today: Array.isArray(scansToday) ? scansToday.length : 0,
         new_users_today: Array.isArray(newUsersToday) ? newUsersToday.length : 0,
       });
-    } catch (e) { console.error("loadAdminStats fejl:", e.message); }
+    } catch (e) {
+      console.error("loadAdminStats fejl:", e.message);
+      showToast("Kunne ikke hente statistik: " + e.message, "error");
+    }
   };
 
   const loadTickets = async () => {
@@ -111,7 +116,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
         headers: makeHeaders(accessToken),
       });
       setAdminTickets(Array.isArray(data) ? data : []);
-    } catch { setAdminTickets([]); }
+    } catch (e) {
+      setAdminTickets([]);
+      showToast("Kunne ikke hente tickets: " + e.message, "error");
+    }
     setTicketsLoading(false);
   };
 
@@ -122,7 +130,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
         { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
       );
       if (Array.isArray(data)) setAdminUsers(data);
-    } catch (e) { console.error("loadAdminUsers:", e); }
+    } catch (e) {
+      console.error("loadAdminUsers:", e);
+      showToast("Kunne ikke hente brugere: " + e.message, "error");
+    }
   };
 
   const updateUserRole = async (uid, role) => {
@@ -133,7 +144,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
         body: JSON.stringify({ role }),
       });
       setAdminUsers(u => u.map(x => x.id === uid ? { ...x, role } : x));
-    } catch (e) { console.error("updateUserRole:", e); }
+    } catch (e) {
+      console.error("updateUserRole:", e);
+      showToast("Kunne ikke ændre rolle: " + e.message, "error");
+    }
   };
 
   const deleteUser = async (uid) => {
@@ -145,7 +159,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
       });
       if (res?.error) throw new Error(res.error);
       setAdminUsers(u => u.filter(x => x.id !== uid));
-    } catch (e) { console.error("deleteUser:", e); }
+    } catch (e) {
+      console.error("deleteUser:", e);
+      showToast("Kunne ikke slette bruger: " + e.message, "error");
+    }
   };
 
   const updateSubmissionAndApprove = async (submission, edited) => {
@@ -251,7 +268,13 @@ export function useAdmin(accessToken, userId, clearAuth) {
         } catch (e) { console.warn("NOTFOUND push fejl:", e); }
       }
     } catch (e) {
+      // submission blev fjernet fra listen optimistisk før kaldet ovenfor —
+      // uden en synlig fejl her ville den bare forsvinde fra admins syne,
+      // selvom produktet aldrig blev oprettet/opdateret server-side.
+      // loadSubmissions henter listen frisk igen, så den dukker op igen,
+      // men admin skal vide at godkendelsen reelt fejlede.
       console.error("updateSubmissionAndApprove:", e);
+      showToast("Godkendelse fejlede: " + e.message + " — indsendelsen er ikke godkendt, listen er opdateret", "error");
       loadSubmissions(submissionFilter);
     }
   };
@@ -267,6 +290,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
       });
     } catch (e) {
       console.error("rejectSubmission:", e);
+      showToast("Afvisning fejlede: " + e.message + " — indsendelsen er ikke afvist, listen er opdateret", "error");
       loadSubmissions(submissionFilter);
     }
   };
@@ -280,7 +304,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
       });
       loadTickets();
       setOpenTicket(null);
-    } catch (e) { console.error("updateTicketStatus:", e); }
+    } catch (e) {
+      console.error("updateTicketStatus:", e);
+      showToast("Kunne ikke opdatere ticket-status: " + e.message, "error");
+    }
   };
 
   const cleanOcrWithAI = async (text) => {
@@ -309,7 +336,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
       // (se updateSubmissionAndApprove) — sæt det med det samme, så rensningen
       // er anvendt uden at admin skal huske at trykke "Brug denne version" oveni.
       setEditingSubmission(s => ({ ...s, ocr_raw_text: cleaned || text, ingredients_text: cleaned || text }));
-    } catch (e) { console.error("cleanOcrWithAI:", e); }
+    } catch (e) {
+      console.error("cleanOcrWithAI:", e);
+      showToast("AI-renskrivning fejlede: " + e.message, "error");
+    }
     setCleaningOcr(false);
   };
 
