@@ -14,6 +14,7 @@ import { initials } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 import { Icon } from "./SharedComponents.jsx";
+import menuBackground from "./assets/profile-menu-background.webp";
 
 export default function ProfileMenu({ open, onClose, onNavigate }) {
   const { user } = useAuthContext();
@@ -34,7 +35,15 @@ export default function ProfileMenu({ open, onClose, onNavigate }) {
 
   return createPortal(
     <div style={{ position:"fixed", inset:0, zIndex:9996, background:"rgba(0,0,0,.5)" }} onClick={onClose}>
-      <div style={{ position:"absolute", top:0, right:0, bottom:0, width:"min(320px, 86vw)", background:"var(--sheet)", boxShadow:"-10px 0 28px rgba(0,0,0,.18)", display:"flex", flexDirection:"column", overflowY:"auto" }}
+      {/* Baggrundsbillede tilføjet 24. sept. 2026 (brugerens eget billede —
+          ingredienser/frugt i samme dekorative ramme-stil som app-baggrunden,
+          men et separat, højere-formatet billede specifikt til denne menu).
+          Kortene/rækkerne nedenfor er allerede opake (var(--surface) osv.),
+          samme mønster som resten af appens kort ovenpå det app-brede
+          baggrundsbillede — ingen ekstra styling nødvendig for læsbarhed. */}
+      <div style={{ position:"absolute", top:0, right:0, bottom:0, width:"min(320px, 86vw)",
+          backgroundImage:`url(${menuBackground})`, backgroundSize:"cover", backgroundPosition:"top center", backgroundRepeat:"no-repeat", backgroundColor:"var(--sheet)",
+          boxShadow:"-10px 0 28px rgba(0,0,0,.18)", display:"flex", flexDirection:"column", overflowY:"auto" }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 14px 14px" }}>
           <div style={{ fontSize:16, fontWeight:900, color:"var(--ink)" }}>Menu</div>

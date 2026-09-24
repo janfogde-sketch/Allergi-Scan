@@ -10,6 +10,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
+import { PREVIEW_MOCK_PRODUCTS } from "./previewMockData.js";
 
 const ACTIVE_LIST_KEY = "as_active_shopping_list";
 const SHOPPING_FN = `${SUPABASE_URL}/functions/v1/shopping`;
@@ -91,6 +92,24 @@ export function useShoppingList({ accessToken, userId }) {
 
   // ── Indlæs alle lister ───────────────────────────────────────────────────────
   const loadShoppingList = useCallback(async () => {
+    // Artifact-preview (se CLAUDE.md afsnit 4) har ingen rigtig session, så
+    // det normale API-opslag herunder ville altid fejle stille og efterlade
+    // Indkøbsliste-skærmen tom. Sætter i stedet én fast mock-liste, med varer
+    // fra de samme mock-produkter som Søg/Scan bruger (samme EAN'er → åbner
+    // korrekt i Produkt-view via productCacheRef, se App.jsx's activatePreviewMode).
+    if (import.meta.env.MODE === "artifact-preview") {
+      const mockList = {
+        id: "preview-list-1", name: "Min indkøbsliste", type: "personal", owner_id: userId,
+        shopping_list_items: [
+          { id:"preview-item-1", name:PREVIEW_MOCK_PRODUCTS[0].name, ean:PREVIEW_MOCK_PRODUCTS[0].ean, product_id:PREVIEW_MOCK_PRODUCTS[0].id, image_url:PREVIEW_MOCK_PRODUCTS[0].image_url, checked:false },
+          { id:"preview-item-2", name:PREVIEW_MOCK_PRODUCTS[2].name, ean:PREVIEW_MOCK_PRODUCTS[2].ean, product_id:PREVIEW_MOCK_PRODUCTS[2].id, image_url:PREVIEW_MOCK_PRODUCTS[2].image_url, checked:false },
+          { id:"preview-item-3", name:PREVIEW_MOCK_PRODUCTS[3].name, ean:PREVIEW_MOCK_PRODUCTS[3].ean, product_id:PREVIEW_MOCK_PRODUCTS[3].id, image_url:PREVIEW_MOCK_PRODUCTS[3].image_url, checked:true },
+        ],
+      };
+      updateLists([mockList]);
+      setActiveListId(mockList.id);
+      return;
+    }
     try {
       const data = await apiCall(`${SHOPPING_FN}?user_id=${userId}`, { headers: makeHeaders(accessToken) });
       const fetched = Array.isArray(data?.lists) ? data.lists : [];

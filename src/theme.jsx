@@ -6,6 +6,8 @@
 // Skift tema ved at ændre THEME-objektet herunder — resten følger automatisk.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import appBackground from "./assets/app-background.webp";
+
 export const THEME = {
   // Baggrunde — ren hvid, ingen farvet undertone (24. sept. 2026-redesign)
   paper:   "#FFFFFF",
@@ -137,28 +139,69 @@ body{
      mockup"-loft på en reel desktop-browser (bredere vinduer). */
   max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
   width:100%;position:relative;overflow-x:hidden;
-  /* Fint punkt-gitter i grøn (scanner/præcisions-følelse, matcher stregkode-
-     og brand-farven) + blød grøn glød foroven og en svag blå glød forneden
-     for dybde — en flad farve uden nogen struktur føltes livløs (se
-     CLAUDE.md afsnit 5). Baggrunden er ren hvid (24. sept. 2026-redesign),
-     så gradient-stoppene er nu næsten umærkelige neutrale gråtoner i
-     stedet for den tidligere cremet/grønlige tinting. */
-  background:radial-gradient(circle, rgba(23,138,80,.14) 1px, transparent 1.6px) 0 0/22px 22px,
-             radial-gradient(ellipse 100% 35% at 50% 0%, rgba(23,138,80,.06) 0%, transparent 60%),
-             radial-gradient(ellipse 90% 30% at 50% 100%, rgba(58,110,165,.04) 0%, transparent 65%),
-             linear-gradient(175deg,#FFFFFF 0%,#FDFDFC 45%,#FAFAF9 100%);
+  background:#FFFFFF;
+}
+/* App-bred baggrund: ét fast billede (ingredienser/frugt i en dekorativ ramme
+   om et blankt hvidt midterfelt) i stedet for det tidligere prikgitter+farve-
+   glød-lag — samme billede på tværs af ALLE skærme, ikke kun Scan-forsiden
+   (24. sept. 2026, efter Bjørns design-arbejde på Scan-siden specifikt).
+   Egen ægte position:fixed-boks (ikke background-attachment:fixed på .app)
+   — background-attachment:fixed understøttes ikke pålideligt i mobil Safari/
+   iOS-hjemmeskærm-PWA'er (velkendt, langvarig WebKit-begrænsning), mens en
+   almindelig fixed-positioneret boks virker konsekvent alle steder. Ligger
+   som første barn i .app, bag alt andet indhold via z-index:0 + .screen's
+   z-index:1 nedenfor — IKKE negativ z-index, som i visse browsere kan ende
+   bag body's egen baggrund i stedet for bag skærmens indhold.
+   Hvid slør-wash (24. sept. 2026, efter billedskifte til en tættere fyldt
+   flatlay uden det forrige billedes indbyggede blanke midterfelt) — tekst
+   ligger flere steder direkte oven på dette lag uden kort/boks (Scan-
+   forsidens hilsen, screen-title øverst på flere skærme), og det nye billede
+   er markant tættere/mere farverigt end det forrige, hvilket gjorde den
+   tekst svær at læse. Løst med ÉT globalt, ensartet hvidt slør-lag frem for
+   individuelle bokse bag tekst — billedet bliver en dæmpet, stemningsfuld
+   tekstur i baggrunden i stedet for at konkurrere med indholdet, og løsningen
+   gælder automatisk alle nuværende og fremtidige skærme uden per-skærm-arbejde.
+   Dæmpet fra .8 til .5 samme dag (brugerfeedback: for kraftigt slør vaskede
+   billedets farve/elegance helt ud) — læsbarheden bæres i stedet primært af
+   tekstens egen vægt/størrelse + en blød hvid text-shadow-glød ("løft" væk
+   fra baggrunden), ikke af selve sløret. Se .screen-title nedenfor og
+   Scan-forsidens hilsen (ScannerScreen.jsx) for samme mønster. */
+.app-bg{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)),
+    url(${appBackground});
+  background-size:cover,cover;
+  background-position:top center,top center;
+  background-repeat:no-repeat,no-repeat;
 }
 
 /* ── TOPBAR ── */
 .topbar{
   /* Let "frosted glass" i stedet for helt gennemsigtig (24. sept. 2026) — så
-     den bagvedliggende baggrund (prikgitteret, eller Scan-sidens fotobaggrund)
-     altid skinner blødt igennem, konsekvent på tværs af alle skærme. */
-  background:rgba(255,255,255,.55);
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+     det app-brede baggrundsbillede altid skinner blødt igennem, konsekvent
+     på tværs af alle skærme. Selve sløringen/tonen ligger nu i ::before
+     (næste regel), IKKE direkte her — se dens kommentar for hvorfor. */
   border-bottom:none;
   padding:12px 20px 10px;display:flex;align-items:center;justify-content:space-between;
   position:sticky;top:0;z-index:60;
+}
+/* Baggrundslag for topbaren, adskilt fra selve topbaren (24. sept. 2026,
+   efter feedback om en for hård/tydelig kant hvor sløringen stoppede brat).
+   En ::before ovenpå en maskeret gradient kan tone SELVE tonen+blur'en
+   gradvist ud i bunden i stedet for at klippe den af — ville også maskere
+   topbarens egne synlige knapper/tekst, hvis det lå direkte på .topbar selv.
+   Ligger BAG topbarens indhold (z-index:-1) inden for topbarens egen
+   stakke-kontekst (position:sticky + z-index:60 opretter én), så den aldrig
+   kan synke ned bag resten af sidens indhold. Blur reduceret fra 16px til
+   8px samme dag — mindre udtalt/"vasket ud". */
+.topbar::before{
+  content:"";
+  position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:rgba(255,255,255,.55);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  -webkit-mask-image:linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
+  mask-image:linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
 }
 .topbar-logo{display:flex;align-items:center;gap:8px;}
 .topbar-name{font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.4px;font-family:var(--f);}
@@ -167,11 +210,12 @@ body{
 .topbar-avatar:hover{background:var(--green-mid);}
 
 /* ── LAYOUT ── */
-.screen{flex:1;padding:0 16px 110px;}
+.screen{flex:1;padding:0 16px 110px;position:relative;z-index:1;}
 /* Scan-forsidens hero-boks (idle-tilstand, kamera ikke aktivt) — skal ALTID
-   passe præcis mellem topbar og bundnav, uden scroll, på enhver telefon.
-   Bevidst calc(100vh/100dvh - Npx) i stedet for en flex:1/height:100%-kæde:
-   den slags afhænger af at HELE forældrekæden (body/.app/.screen) har en
+   passe præcis mellem topbar og bundnav, uden scroll, på enhver telefon,
+   så hilsen/scan-knap altid er synlige uden at skulle scrolle. Bevidst
+   calc(100vh/100dvh - Npx) i stedet for en flex:1/height:100%-kæde: den
+   slags afhænger af at HELE forældrekæden (body/.app/.screen) har en
    DEFINITIV højde, men de har kun min-height:100vh (en flad "mindst så høj"-
    grænse, ikke en fast højde) — hvilket viste sig upålideligt i praksis
    (fungerede i en isoleret test med en kunstig fast-højde-wrapper, men
@@ -196,18 +240,25 @@ body{
      13 — faste px-størrelser skalerede slet ikke med boksens egen højde. */
   container-type:size;
 }
-/* Hjem-forsidens store scan-CTA (24. sept. 2026-runde): egen farvepalet
-   (primær #0E8F5A, mørk #08734A, halo #DDF4E8) adskilt fra appens generelle
-   --green-token, bevidst — kun selve CTA'en skal bruge denne specifikke
-   nuance, resten af appens grønne elementer (bundnav, andre knapper) rører
-   vi ikke her. Haloen (den bløde glød bag knappen) pulserer diskret i hvile
-   via denne keyframe; selve knappen får kun tryk-feedback via :active
-   nedenfor, IKKE den løbende puls. */
+/* Hjem-forsidens store scan-CTA (24. sept. 2026-runde, genskinnet fra den
+   mellemliggende hvide ghost/outline-udgave efter brugerens eksplicitte
+   ønske: "Knappen skal være grøn, men den må gerne pulsere så man får lyst
+   til at trykke"): egen farvepalet (primær #0E8F5A, mørk #08734A, halo
+   #DDF4E8) adskilt fra appens generelle --green-token, bevidst — kun selve
+   CTA'en skal bruge denne specifikke nuance, resten af appens grønne
+   elementer (bundnav, andre knapper) rører vi ikke her. To lag levende
+   bevægelse i hvile, begge bevidst tydeligere end et rent kosmetisk "det
+   lever lidt"-pift: haloen (den bløde glød bag knappen) pulserer i skala+
+   opacitet via denne keyframe, OG selve knap-wrapperen får et ekstra
+   åndedræt via scanCtaBreathe (genbrugt fra ghost-udgaven, defineret
+   længere nede) — sammen skal de to lag give en tydelig invitation til at
+   trykke, ikke kun en diskret detalje. Tryk-feedback (:active nedenfor) er
+   et tredje, uafhængigt lag oven i disse to løbende animationer. */
 @keyframes scan-halo-pulse{
-  0%,100%{transform:scale(1);opacity:.75;}
-  50%{transform:scale(1.08);opacity:.4;}
+  0%,100%{transform:scale(1);opacity:.8;}
+  50%{transform:scale(1.12);opacity:.35;}
 }
-.scan-cta-halo{animation:scan-halo-pulse 2.8s ease-in-out infinite;}
+.scan-cta-halo{animation:scan-halo-pulse 2.4s ease-in-out infinite;}
 .scan-cta-btn{transition:transform .12s cubic-bezier(.34,1.56,.64,1);}
 .scan-cta-btn:active{transform:scale(.95);}
 @media (prefers-reduced-motion: reduce){
@@ -218,24 +269,42 @@ body{
   width:100%;max-width:480px;
   /* Var før helt uigennemsigtig (en tidligere gradient med en gennemsigtig
      top-del lod scrollende indhold skinne skarpt igennem, så baren så
-     "flimrende" ud). Løsning nu (24. sept. 2026): backdrop-filter:blur
-     i stedet for ren gennemsigtighed — sløringen visker scrollende indhold
+     "flimrende" ud). Løsning (24. sept. 2026): backdrop-filter:blur i
+     stedet for ren gennemsigtighed — sløringen visker scrollende indhold
      ud til en blød, rolig farve-vask i stedet for skarpe, flimrende former,
-     samtidig med at den statiske baggrund (prikgitter, eller Scan-sidens
-     fotobaggrund som nu bevidst strækker sig helt ned bag denne bar) skinner
+     samtidig med at det faste app-brede baggrundsbillede stadig skinner
      igennem. Samme "reel funktionel grund til blur"-princip som kamera-
-     kontrolknapperne i ScannerScreen.jsx (se design-tokens.md antimønster #6). */
-  background:rgba(255,255,255,.72);
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+     kontrolknapperne i ScannerScreen.jsx (se design-tokens.md antimønster #6).
+     Selve tonen/sløringen ligger i ::before (næste regel), ikke direkte her
+     — samme begrundelse som .topbar::before. */
   box-shadow:0 -8px 16px -12px rgba(21,32,26,.14);
   border-top:1px solid var(--border);
   display:flex;padding:10px 4px calc(24px + env(safe-area-inset-bottom));z-index:100;
 }
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.45;transition:all .15s;}
-.nav-item.active{opacity:1;}
+/* Samme dag, samme begrundelse som .topbar::before: reduceret blur (20px→
+   10px) + en gradvis udtoning i TOPPEN af baren (i stedet for .bottom-nav
+   selv) i stedet for en hård kant, hvor sløringen tidligere stoppede brat
+   mod scrollende indhold. */
+.bottom-nav::before{
+  content:"";
+  position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:rgba(255,255,255,.72);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  -webkit-mask-image:linear-gradient(to top, black 0%, black 55%, transparent 100%);
+  mask-image:linear-gradient(to top, black 0%, black 55%, transparent 100%);
+}
+/* Inaktive nav-punkter var tidligere dæmpet med opacity:.45 — kombineret
+   med barens gennemsigtige/slørede baggrund (se .bottom-nav::before) blev
+   ikonerne for svage til at læses ("knapperne forsvinder lidt i bund-
+   menuen", 24. sept. 2026). Erstattet med en solid, mørkere farve
+   (--ink2, 72% alpha) i stedet for opacity-dæmpning — giver ikon+label
+   fuld kontrast uanset hvad der skinner igennem bagved, mens aktiv-
+   tilstanden stadig skiller sig tydeligt ud via den grønne pille+label. */
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:var(--ink2);transition:color .15s;}
+.nav-item.active{color:var(--ink);}
 .nav-icon{width:42px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background .15s;}
 .nav-item.active .nav-icon{background:var(--green-lt);}
-.nav-lbl{font-size:9px;font-weight:600;color:var(--ink);letter-spacing:.3px;}
+.nav-lbl{font-size:9px;font-weight:600;color:inherit;letter-spacing:.3px;}
 .nav-item.active .nav-lbl{color:var(--green);}
 
 /* ── CARDS & COMPONENTS ── */
@@ -346,6 +415,15 @@ body{
 .reticle-corner.br{bottom:0;right:0;border-width:0 2px 2px 0;border-radius:0 0 4px 0;}
 .reticle-line{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 0%,var(--green-logo) 15%,var(--green-logo) 85%,transparent 100%);animation:scanline 2.2s ease-in-out infinite;box-shadow:0 0 10px var(--green-logo),0 0 3px var(--green-logo);}
 @keyframes scanline{0%{top:13px;opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{top:51px;opacity:0;}}
+
+/* scanCtaBreathe: et let åndedræt (skala 1 → 1.015) på hele scan-CTA-
+   wrapperen — stammer fra en mellemliggende hvid ghost/outline-udgave af
+   knappen (siden droppet igen til fordel for grøn fyld, se .scan-cta-halo
+   ovenfor), men selve åndedræts-keyframen er genbrugt uændret som ét af
+   de to lag levende bevægelse på den nuværende grønne knap. Respekterer
+   den globale prefers-reduced-motion-regel nedenfor (ACCESSIBILITY) uden
+   ekstra kode her. */
+@keyframes scanCtaBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.015);}}
 
 /* Mini cards */
 .home-cards-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
@@ -468,7 +546,7 @@ body{
 .empty-sub{font-size:13px;margin-top:6px;color:var(--muted);font-weight:400;line-height:1.55;max-width:260px;margin-left:auto;margin-right:auto;}
 .demo-code{padding:4px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer;transition:all .15s;display:inline-block;margin:3px;font-family:monospace;}
 .demo-code:hover{border-color:var(--green);color:var(--green);background:var(--green-lt);}
-.screen-title{font-size:15px;font-weight:700;color:var(--ink);margin:10px 0 3px;letter-spacing:-.2px;text-align:center;width:100%;}
+.screen-title{font-size:16px;font-weight:800;color:var(--ink);margin:10px 0 3px;letter-spacing:-.2px;text-align:center;width:100%;text-shadow:0 1px 2px rgba(255,255,255,.85),0 2px 12px rgba(255,255,255,.6);}
 .screen-sub{font-size:11px;color:var(--ink2);margin-bottom:10px;line-height:1.4;font-weight:400;}
 .tab-row{display:flex;gap:3px;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:14px;border:1px solid var(--border);}
 .tab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--muted);transition:all .15s;}

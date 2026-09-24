@@ -14,10 +14,13 @@ import { CategorySelect } from "./MemberForm.jsx";
 import ResultScreen from "./ResultScreen.jsx";
 import { UI } from "./styleUtils.js";
 import { getGreeting } from "./utils.jsx";
-// Hjem-forsidens baggrundsbillede — udelukkende dekorativt (aria-hidden), se
-// CLAUDE.md afsnit 5. Ét samlet, hvidbalance-korrigeret foto (leveret af
-// brugeren) i stedet for separate foto-udklip — undgår helt tidligere
-// beskærings-artefakter, da billedet aldrig beskæres, kun skaleres.
+// Scan-forsidens EGET baggrundsbillede (allergen-fødevarer på hvid baggrund,
+// leveret direkte af brugeren 24. sept. 2026) — udelukkende dekorativt
+// (aria-hidden), vises KUN i .home-hero-frame herunder, ikke app-bredt.
+// Adskilt bevidst fra det app-brede baggrundsbillede i theme.jsx's .app-bg
+// (bruges på alle ANDRE skærme) — brugeren bad eksplicit om at Scan-
+// forsiden skal bruge netop dette foto, matchet så tæt som muligt på det
+// uploadede referencebillede.
 import scanHeroBg from "./assets/home/scan-hero-bg.webp";
 // Lazy: skærme brugeren ikke nødvendigvis besøger hver session, holdes ude af hoved-bundlet.
 // ResultScreen er IKKE med her — den vises efter stort set hvert scan (hoved-flowet),
@@ -224,10 +227,10 @@ export default function ScannerScreen({
               </div>
             )}
 
-            {/* Scan-boks — kun til loggede. Forsiden viser en hilsen + det
-                hvidbalance-korrigerede baggrundsbillede + stor scan-CTA — se
-                CLAUDE.md afsnit 5 for baggrunden. Hero-boksens egen højde
-                styres af .home-hero-frame (calc(100dvh - Npx), se theme.jsx)
+            {/* Scan-boks — kun til loggede. Forsiden viser en hilsen + stor
+                scan-CTA oven på appens fælles baggrundsbillede — se CLAUDE.md
+                afsnit 5 for baggrunden. Hero-boksens egen højde styres af
+                .home-hero-frame (calc(100dvh - Npx), se theme.jsx)
                 — IKKE flex:1/height:100% her, som viste sig upålideligt i
                 produktion (afhænger af at hele forældrekæden har en
                 definitiv, ikke bare minimum-, højde — se theme.jsx's
@@ -324,82 +327,87 @@ export default function ScannerScreen({
               <input ref={photoFallbackRef} type="file" accept="image/*" capture="environment" style={S.none}
                 onChange={e => { if (e.target.files[0]) scanPhotoForEan(e.target.files[0]); e.target.value=""; }} />
 
-              {/* Forside-hero når kamera ikke er aktivt: hilsen + baggrundsbillede
-                  + stor scan-knap + "Prøv en demo" + version/beta-fod. .home-
-                  hero-frame (theme.jsx) giver denne boks en DEFINITIV
-                  calc(100dvh - Npx)-højde — billedet fylder den helt
-                  (height:100%, bredden følger automatisk af billedets eget
-                  højde/bredde-forhold — aldrig beskåret, kun skaleret) — se
-                  CLAUDE.md afsnit 5 for baggrunden. Hilsen/knap er positioneret
-                  med %-baserede top-værdier relativt til billedets egen boks
-                  (ikke skærmens), så de rammer billedets blanke midterbånd
-                  uanset skærmhøjde. "Prøv en demo" + version/Beta-info er
-                  slået sammen til ÉN flex-kolonne-gruppe (i stedet for to
-                  uafhængigt positionerede lag) så de garanteret ikke kan
-                  overlappe hinanden — fundet nødvendigt efter et rigtigt
-                  overlap på almindelige enheds-profiler, se .home-hero-frame's
-                  kommentar. Alle mål er clamp(min, Ncqh, max) i stedet for
-                  faste px, så indholdet skalerer NED sammen med boksen på
-                  korte telefoner. "App-guide"-knappen er droppet — den åbnede
-                  præcis samme guide som "Prøv en demo" (samme handler),
-                  ren redundans der kun kostede plads. */}
+              {/* Forside-hero når kamera ikke er aktivt: eget baggrundsfoto
+                  (scanHeroBg, importeret ovenfor) + hilsen + stor scan-knap +
+                  Beta-info-fod. Dette foto er SCAN-SPECIFIKT, adskilt fra det
+                  app-brede baggrundsbillede appens øvrige skærme bruger
+                  (theme.jsx's .app-bg) — brugeren bad eksplicit om at
+                  forsiden skal bruge netop dette foto. .home-hero-frame
+                  (theme.jsx) giver boksen en DEFINITIV calc(100dvh - Npx)-
+                  højde, så hilsen/knap altid er synlige uden scroll. Billedet
+                  vises ALTID i sin fulde helhed (height:100%, width:auto,
+                  centreret) — aldrig beskåret, kun skaleret. Alle mål er
+                  clamp(min, Ncqh, max) i stedet for faste px, så indholdet
+                  skalerer NED sammen med boksen på korte telefoner (og OP på
+                  store — hævet 24. sept. 2026 efter feedback om at hele
+                  hero'en virkede for lille). "Prøv en demo"-knappen er
+                  fjernet efter brugerens tidligere ønske — bemærk at det var
+                  DENNE knaps eneste kald til setShowGuide der åbnede
+                  DemoSlider-guiden ("App-guide"-knappen der gjorde det samme
+                  var allerede fjernet som redundant) — showGuide/DemoSlider
+                  herunder er nu urørt, men uden nogen synlig indgang i
+                  UI'et. */}
               {!cameraActive && (
               <div className="home-hero-frame">
                 <img src={scanHeroBg} alt="" aria-hidden="true" draggable="false"
                   style={{ display:"block", height:"100%", width:"auto", margin:"0 auto", pointerEvents:"none", userSelect:"none" }} />
 
                 <div style={{ position:"absolute", top:"27%", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
-                  <div style={{ fontSize:"clamp(10px, 2cqh, 14px)", fontWeight:500, color:"var(--ink)", letterSpacing:"-.2px" }}>{getGreeting()},</div>
-                  <div style={{ fontSize:"clamp(15px, 3.3cqh, 23px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(1px, .3cqh, 2px)" }}>{user.name?.split(" ")[0] || "der"}</div>
-                  <div style={{ fontSize:"clamp(8.5px, 1.5cqh, 10.5px)", color:"var(--muted)", marginTop:"clamp(4px, 1cqh, 7px)", lineHeight:1.5, maxWidth:203, marginLeft:"auto", marginRight:"auto" }}>
+                  {/* Tykkere/større tekst + en blød hvid text-shadow-glød "løfter"
+                      teksten af scanHeroBg-fotoet bagved, samme mønster som appens
+                      øvrige skærme bruger mod det app-brede baggrundsbillede
+                      (.app-bg, theme.jsx) — relevant her fordi fotoets hvide
+                      midterbånd ikke er 100% ensfarvet alle steder. */}
+                  <div style={{ fontSize:"clamp(14px, 2.9cqh, 19px)", fontWeight:600, color:"var(--ink)", letterSpacing:"-.2px", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{getGreeting()},</div>
+                  <div style={{ fontSize:"clamp(22px, 4.7cqh, 32px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(2px, .4cqh, 4px)", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{user.name?.split(" ")[0] || "der"}</div>
+                  <div style={{ fontSize:"clamp(11.5px, 2.1cqh, 15px)", fontWeight:600, color:"var(--ink2)", marginTop:"clamp(5px, 1.1cqh, 9px)", lineHeight:1.5, maxWidth:250, marginLeft:"auto", marginRight:"auto", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 12px rgba(255,255,255,.6)" }}>
                     Scan en vare og få hurtigt svar om den passer til dine allergier.
                   </div>
                 </div>
 
-                {/* Stor cirkulær scan-knap med diskret pulserende halo-glød bagved
-                    (.scan-cta-halo, theme.jsx) — haloen pulserer, IKKE selve knappen.
-                    Knappen selv er en rigtig <button> (ikke en div med role="button")
-                    for native tastatur-aktivering + pålidelig :active-tryk-feedback på
+                {/* Stor cirkulær scan-knap — grøn fyld (#0E8F5A → #08734A, ikke
+                    ghost/outline-stilen fra den forrige runde) med en diskret
+                    pulserende halo-glød bagved OG et meget let åndedræt på hele
+                    knappen (samme scanCtaBreathe-keyframe som ghost-versionen
+                    brugte), så knappen virker levende og indbydende at trykke på
+                    uden at blive distraherende. Størrelsen (clamp(168px, 42cqh,
+                    267px)) er bevaret fra den forrige runde, hvor brugeren bad om
+                    at gøre knappen 50% større. Selve knappen er en rigtig
+                    <button> (ikke en div med role="button") for native
+                    tastatur-aktivering + pålidelig :active-tryk-feedback på
                     touch-enheder (.scan-cta-btn:active, theme.jsx). */}
-                <div style={{ position:"absolute", top:"46%", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
-                  <div style={{ position:"relative", width:"clamp(90px, 23cqh, 150px)", height:"clamp(90px, 23cqh, 150px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                    <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-14px, -2.2cqh, -6px)", borderRadius:"50%",
+                <div style={{ position:"absolute", top:"48%", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
+                  <div style={{ position:"relative", width:"clamp(168px, 42cqh, 267px)", height:"clamp(168px, 42cqh, 267px)", display:"flex", alignItems:"center", justifyContent:"center",
+                    animation:"scanCtaBreathe 4.5s ease-in-out infinite" }}>
+                    <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-16px, -2.4cqh, -8px)", borderRadius:"50%",
                       background:"radial-gradient(circle, #DDF4E8 0%, rgba(221,244,232,0) 70%)" }} aria-hidden="true" />
                     <button
                       className="scan-cta-btn"
                       onClick={() => startCamera()}
                       aria-label="Start kamera for at scanne stregkode"
-                      style={{ position:"relative", width:"clamp(84px, 21.5cqh, 140px)", height:"clamp(84px, 21.5cqh, 140px)", borderRadius:"50%", cursor:"pointer",
+                      style={{ position:"absolute", inset:"clamp(6px, 1cqh, 9px)", borderRadius:"50%", cursor:"pointer",
                         border:"none", fontFamily:"var(--f)",
                         background:"linear-gradient(160deg,#0E8F5A 0%,#08734A 100%)",
                         boxShadow:"0 14px 28px -12px rgba(8,115,74,.55), inset 0 2px 3px rgba(255,255,255,.3)",
-                        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(4px, 1cqh, 7px)" }}>
-                      <Icon name="barcode" size="clamp(20px, 4.3cqh, 29px)" color="#fff" />
-                      <div style={{ fontSize:"clamp(9px, 1.6cqh, 11px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
+                        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(8px, 1.8cqh, 14px)" }}>
+                      <Icon name="barcode" size="clamp(38px, 8cqh, 53px)" color="#fff" />
+                      <div style={{ fontSize:"clamp(18px, 3.2cqh, 23px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
                     </button>
                   </div>
                 </div>
 
-                {/* "Prøv en demo" + Beta-information — én flex-kolonne, garanteret
-                    uden indbyrdes overlap uanset boksens højde. Versionsnummeret
-                    (tidligere "v1.0.6 · beta" her) er fjernet fra forsiden efter
-                    det nye referencedesign — stadig synligt inde på selve
-                    Beta-information-skærmen for den der har brug for det. */}
-                <div style={{ position:"absolute", top:"71.5%", left:0, right:0, bottom:"clamp(4px, 1cqh, 8px)", zIndex:2,
-                  display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-start", gap:"clamp(4px, 1cqh, 8px)", padding:"0 12px", overflow:"hidden" }}>
-                  <button onClick={() => setShowGuide(true)}
-                    style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, flexShrink:0,
-                      width:"100%", maxWidth:210, padding:"clamp(6px, 1.4cqh, 10px) clamp(10px, 2.2cqh, 15px)", borderRadius:100,
-                      background:"var(--paper)", border:"1px solid var(--border)", boxShadow:"0 10px 24px -12px rgba(21,32,26,.25)",
-                      fontFamily:"var(--f)", fontSize:"clamp(9px, 1.6cqh, 11px)", fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
-                    <Icon name="package" size="clamp(11px, 2.2cqh, 14px)" color="var(--green)" />
-                    Prøv en demo
-                    <Icon name="chevronRight" size="clamp(10px, 2cqh, 12px)" color="var(--muted2)" />
-                  </button>
-                  <button onClick={onBetaClick} style={{ flexShrink:0, display:"inline-flex", alignItems:"center", gap:5,
-                      padding:"clamp(3px, .8cqh, 5px) clamp(7px, 1.8cqh, 11px)", borderRadius:100,
+                {/* Beta-information — bund-forankret. Versionsnummeret ("v1.0.6 ·
+                    beta") og "Prøv en demo"-pillen er begge fjernet fra forsiden
+                    (hhv. efter det nye referencedesign og efter brugerens
+                    tidligere ønske, se historik) — version er stadig synligt
+                    inde på selve Beta-information-skærmen. */}
+                <div style={{ position:"absolute", top:"71.5%", left:0, right:0, bottom:"clamp(6px, 1.4cqh, 10px)", zIndex:2,
+                  display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-end", padding:"0 12px", overflow:"hidden" }}>
+                  <button onClick={onBetaClick}
+                    style={{ display:"inline-flex", alignItems:"center", gap:5, flexShrink:0,
+                      padding:"clamp(4px, 1cqh, 6px) clamp(9px, 2cqh, 13px)", borderRadius:100,
                       background:"rgba(255,255,255,.82)", border:"1px solid var(--border)", boxShadow:"0 4px 12px -6px rgba(21,32,26,.3)",
-                      fontFamily:"var(--f)", fontSize:"clamp(8px, 1.3cqh, 9.5px)", fontWeight:700, color:"var(--green)", cursor:"pointer", letterSpacing:".2px" }}>
+                      fontFamily:"var(--f)", fontSize:"clamp(10px, 1.7cqh, 12.5px)", fontWeight:700, color:"var(--green)", cursor:"pointer", letterSpacing:".2px" }}>
                     Beta-information
                   </button>
                 </div>
@@ -411,7 +419,7 @@ export default function ScannerScreen({
                 kun vist ved behov. Pakket i en bund-sikret wrapper (padding
                 matchende den gennemsigtige bundnav) så de ikke kan havne
                 skjult/utrykbare bag den, nu hvor HOME-skærmens normale 110px
-                bund-reserve er fjernet til fordel for hero-billedets
+                bund-reserve er fjernet til fordel for hero-boksens
                 kant-til-kant-udfyldning ovenfor. */}
             <div style={{ paddingBottom: (scanError || showManualEan) ? "calc(77px + env(safe-area-inset-bottom) + 12px)" : 0 }}>
             {/* Fejlbesked + Manuel EAN — kun til loggede */}

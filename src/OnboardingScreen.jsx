@@ -34,6 +34,7 @@ export default function OnboardingScreen({
   saveProfileStep1, finishOnboard,
   StepBar,
   hasPendingJoinList,
+  onActivatePreview,
 }) {
   const {
     authTab, setAuthTab, authError, setAuthError, authLoading,
@@ -211,6 +212,20 @@ export default function OnboardingScreen({
 
             {/* CTA */}
             <WelcomeIntro setScreen={setScreen} setAuthTab={setAuthTab} />
+
+            {/* Kun i den delte Artifact-preview-build (se CLAUDE.md), aldrig i
+                den rigtige app — login mod Supabase er upålideligt fra denne
+                kontekst (andet domæne end produktion), så en preview-only
+                genvej springer login over. Selve mock-opsætningen (bruger,
+                allergener, produkt-cache, indkøbsliste) sker i App.jsx's
+                activatePreviewMode — se dens kommentar for hvorfor logikken
+                bor der og ikke her. */}
+            {import.meta.env.MODE === "artifact-preview" && (
+              <button className="welcome-btn-ghost" style={{ marginTop:10 }}
+                onClick={onActivatePreview}>
+                Se app uden login (preview)
+              </button>
+            )}
 
             {/* Privacy */}
             <div style={{ marginTop:16, fontSize:11, color:"var(--muted)", lineHeight:1.6, textAlign:"center" }}>

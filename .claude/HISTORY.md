@@ -1799,3 +1799,240 @@ bogstavelige backticks i kommentartekst inde i `appCss`-strengen.
 **Verifikation:** `npm run build` grøn, `npm run lint` ren, `npx vitest
 run` 103/103 grønne, mojibake-scan ren på begge ændrede filer
 (`theme.jsx`, `ScannerScreen.jsx`).
+
+---
+
+## Baggrundsbilledet gjort app-bredt (24. sept. 2026, samme dag)
+
+Brugeren (Jan) delte et nyt billede (ingredienser/frugt i en dekorativ
+ramme om et blankt hvidt midterfelt) og bad om at bruge DET som appens
+ene, fælles baggrund på tværs af ALLE skærme — ikke kun Scan-forsiden —
+og fjerne al anden baggrunds-kode for at rydde op, efter at have vurderet
+at Bjørns Scan-specifikke fotobaggrund (se de tre log-poster ovenfor)
+ikke virkede med appens højde/bredde på tværs af enheder.
+
+- **`src/assets/app-background.webp`** (nyt, 941×1672, ~215KB) — erstatter
+  både det tidligere prikgitter+farve-glød-lag i `.app` (theme.jsx) OG
+  Scan-forsidens dedikerede `scan-hero-bg.webp` (slettet, ingen andre
+  referencer i kodebasen).
+- **Ægte `position:fixed`-boks, ikke `background-attachment:fixed`:** en ny
+  `.app-bg`-klasse (theme.jsx) renders som absolut første barn i `.app`
+  (App.jsx) — `position:fixed;inset:0;z-index:0;pointer-events:none`.
+  Bevidst IKKE `background-attachment:fixed` direkte på `.app` (afprøvet
+  først, virker fint i en isoleret mimic) — det er en velkendt, langvarig
+  WebKit-begrænsning at `background-attachment:fixed` ikke understøttes
+  pålideligt i mobil Safari/iOS-hjemmeskærm-PWA'er, som er appens primære
+  platform. En ægte `position:fixed`-boks virker konsekvent alle steder.
+- **`.screen{position:relative;z-index:1}`** tilføjet (var tidligere
+  upositioneret/statisk) — nødvendigt fordi CSS' egen maleorden ellers
+  tegner positionerede elementer med z-index 0 (som `.app-bg`) OVEN PÅ
+  almindeligt statisk indhold, ikke under det (CSS 2.1 Appendix E, trin 3
+  vs. trin 6) — uden dette ville baggrundsbilledet dække alt skærmindhold.
+  Verificeret harmløst for eksisterende `position:absolute`-børn af
+  `.screen` (samme fysiske containing-block-rektangel som `.app` før,
+  da `.screen` via flexbox-stretch allerede fyldte `.app`s fulde bredde)
+  og for `position:fixed`-børn (upåvirket — `position:relative` opretter
+  ikke et nyt containing block for `fixed`-elementer).
+- **Scan-forsidens `<img src={scanHeroBg}>` er fjernet** (ScannerScreen.jsx)
+  — hero-boksen (`.home-hero-frame`, uændret calc-højde/container-query-
+  mekanik, se ovenstående log-poster) viser nu blot appens fælles
+  baggrundsbillede gennem sin egen transparente baggrund, samme som alle
+  andre skærme. Hilsen/scan-knap/"Prøv en demo"-pillens %-baserede
+  positionering er bevaret uændret (rammer stadig en fornuftig lodret
+  rytme, uafhængig af det specifikke billede).
+- `.topbar`/`.bottom-nav`s eksisterende `backdrop-filter:blur`-look
+  (fra opfølgningen ovenfor) er UÆNDRET — kommentarerne er opdateret til
+  ikke længere at nævne "prikgitter"/"Scan-sidens fotobaggrund" specifikt,
+  men selve den slørede gennemsigtighed virker nu mere konsekvent end før,
+  siden baggrunden er ens overalt.
+
+Verificeret med en Playwright-mimic af den faktiske `.app-bg`+`.screen`-
+lagdeling ved to skærmhøjder (667/iPhone SE, 844/standard) samt en
+scroll-test (1200px ned i lang kortliste) — baggrunden forbliver pixel-
+identisk fastlåst til viewporten, kort ligger korrekt ovenpå, ingen
+strækning/forvrængning.
+
+---
+
+## Scan-forsiden, opfølgning: større hero-elementer, "Prøv en demo" fjernet, blødere bar-kant (24. sept. 2026, samme dag)
+
+Brugerfeedback efter forrige runde: "Alle elementer, herunder tekst er dog
+for småt på scan skærmen", "Prøv en demo"-knappen skulle væk, og top/
+bund-menuens sløring skulle have "mindre blur" og "fade ud, så der ikke
+er den skarpe kant".
+
+- **Scan-forsidens hero-elementer hævet ~20-25%:** hilsen/navn/undertekst,
+  scan-knappens diameter+ikon+label, og version/Beta-chippen har alle
+  fået hævede `clamp(min, Ncqh, max)`-værdier (fx scan-knappen
+  84-140px → 104-168px). Kun størrelserne er ændret — de %-baserede
+  `top`-positioner er bevidst holdt uændrede (27%/46%) efter et
+  mellemliggende forsøg på at flytte dem opad (25%/45%) gav synligt
+  større overlap mellem hilsenen og billedets øverste, tættere pakkede
+  hjørne-elementer på korte skærme (iPhone SE) — reverteret.
+- **"Prøv en demo"-knappen fjernet.** Den var, siden "App-guide"-knappen
+  blev fjernet som redundant i en tidligere runde, den ENESTE indgang til
+  `DemoSlider`-guiden (`setShowGuide(true)`) — `showGuide`-state og
+  `DemoSlider`-komponenten i `ScannerScreen.jsx` er bevidst IKKE slettet,
+  men har nu ingen synlig indgang i UI'et nogen steder. Genoptag ved
+  behov (fx en indgang under Profil-menuen) eller fjern dødt-kode-resten,
+  hvis brugeren bekræfter guiden reelt ikke skal bruges mere.
+  Version/Beta-info-rækken er nu alene i sin flex-kolonne, bund-forankret
+  (`justify-content:flex-end` i stedet for `flex-start`) i stedet for at
+  sidde i toppen af sin egen sektion med tomrum under.
+- **Blødere top/bund-bar-overgang:** flyttet selve tonen+sløringen fra
+  `.topbar`/`.bottom-nav` til en ny `::before`-pseudo-klasse på hver
+  (`z-index:-1`, inden for barens egen stakke-kontekst som
+  `position:sticky`/`fixed` + eksisterende `z-index` allerede opretter)
+  — nødvendigt fordi en maskeret udtoning direkte på selve baren også
+  ville have tonet dens SYNLIGE indhold (logo/knapper/nav-ikoner) ud,
+  ikke kun baggrundslaget. `mask-image`/`-webkit-mask-image` med en
+  lineær gradient tonet ud over den sidste ~35% (topbar, mod bunden) hhv.
+  ~45% (bottom-nav, mod toppen) af barens højde erstatter den tidligere
+  hårde kant hvor sløringen stoppede brat. Blur reduceret samtidig
+  (topbar 16px→8px, bottom-nav 20px→10px).
+
+Verificeret med en opdateret Playwright-mimic af den fulde hero-sektion
+ved to skærmhøjder.
+
+---
+
+## Scan-knappen gentænkt fire gange: lys/skygge → gummibold → fladt → ghost/outline → radar → dybde (24. sept. 2026, samme dag)
+
+Efter ovenstående redesign-runde fulgte fire hurtige, brugerdrevne
+iterationer på selve scan-knappen samme dag, hver shippet som sin egen
+PR (#291–#295) efter build/test/mojibake-scan + visuel Playwright-mimic-
+verifikation:
+
+1. **"Kan vi tilføje lidt liv med noget lys eller skygger, samt måske
+   lidt animation på skan knappen?"** — tilføjede en glossy inset-
+   highlight, dybere skygge, og to asynkrone keyframe-animationer
+   (`scanCtaGlow` på gløden bagved, `scanCtaBreathe` på selve knappen,
+   forskellig varighed for at undgå et stift/mekanisk synkront udtryk).
+   Samtidig fik et delt billede (`src/assets/profile-menu-background.webp`)
+   ProfileMenu.jsx som baggrund, samme dekorative stil som app-baggrunden
+   men et separat, højere-formatet billede.
+2. **"Synes ikke jeg kan se det glossy. måske også med en lys effekt."**
+   — den oprindelige highlight (svag inset-box-shadow) var for svag til
+   at ses. Erstattet med et rigtigt, synligt lyspunkt direkte i knappens
+   baggrund (`radial-gradient` øverst til venstre, "lit sphere"-teknik) +
+   en lysere/større glød bagved. Brugerfeedback herefter: **"Synes ikke
+   den er pæn knappen. Ligner en gummibold."**
+3. **Rettelse af gummibold-feedbacken:** fjernede den store, tydelige
+   radial-gradient-glossy-plet helt. Erstattede med en subtilere
+   baggrunds-gradient (mindre lys/mørk-kontrast), en tynd 1px lys kant
+   øverst i stedet for en stor hvid plet (flad "elevation"-skygge frem
+   for en glossy sphere), og en roligere/langsommere glød-animation.
+   Samtidig: bundnavigationens inaktive ikoner/labels brugte
+   `opacity:.45` til at dæmpes, hvilket — kombineret med barens
+   gennemsigtige/slørede baggrund — gjorde dem svære at se ("mine
+   knapper forsvinder lidt i bundmenuen"). Erstattet med en solid,
+   mørkere farve (`--ink2`) i stedet for opacity-dæmpning.
+4. **"Gentænkt hele knappen. Den skal være mere elegant. Kom med nogle
+   forslag."** — mockede tre distinkte koncepter op (minimalistisk flad
+   cirkel med halo-ring, "squircle" app-ikon-stil, ghost/outline med
+   hvid flade + grøn kant), screenshottede dem side om side via en
+   Playwright-mimic, og sendte billedet til brugeren med en kort
+   anbefaling pr. koncept. Brugeren valgte **"Nr 3 med lidt lys der
+   bevæger sig rundt i kanten"** — ghost/outline + et roterende lyspunkt.
+   Implementeret som to lag i ét ring-element: en svag, konstant grøn
+   bundfarve (ringen altid synlig) + en roterende `conic-gradient` med et
+   lysere "komethoved" ovenpå (`scanCtaRingSpin`, oprindeligt 5s lineær
+   rotation), knap-fladen ovenpå dækkende det meste af ringen.
+5. **"Ligner en radar. Lav det mere elegant. Skab mere dybde."** — den
+   skarpe, smalle conic-gradient-bue uden blur lignede en radar-sweep.
+   Rettet ved at gøre lyset bredt og kraftigt blurret (`filter:
+   blur(7px)`) og rotere langsommere (9s i stedet for 5s), så det driver
+   som en blød skæren i stedet for at pege som en stråle. Tilføjede
+   samtidig reel dybde i tre lag: en blød, jordet ambient-glød bagved
+   (en "svæve over baggrunden"-fornemmelse), en næsten umærkelig dome-
+   agtig radial-gradient i selve knap-fladen (ikke glossy, kun antydning
+   af krumning), og en Material-inspireret fler-lags elevation-skygge
+   (nær+fjern skygge oveni hinanden) i stedet for én flad skygge.
+
+**Metode-lektion:** når en visuel ændring ikke kan beskrives entydigt i
+ord ("mere elegant"), er det mere effektivt at mocke 2-3 konkrete,
+navngivne koncepter op og lade brugeren vælge/pege, end at gætte på ét
+forslag ad gangen og vente på afvisning — sparede mindst én hel
+iterations-runde i trin 4 ovenfor.
+
+**Driftsnote (ikke kode-relateret):** under denne sessions mange PR'er
+ramte Vercel Free-planens daglige deployment-grænse (100/dag) på PR #295
+— `Resource is limited - try again in 24 hours`. Ikke en kodefejl;
+verificeret ved at `npm run build`/`npx vitest run` begge var grønne
+lokalt uafhængigt af Vercel-status. Brugeren valgte at merge PR #295 uden
+at vente på et grønt Vercel-preview, da produktions-deploy sker separat
+ved merge til `main`.
+
+---
+
+## Delt Artifact-preview oprettet (24. sept. 2026, samme dag)
+
+Efter Vercel-grænsen ovenfor spurgte brugeren efter "et super simpelt
+værktøj" så han og hans forretningspartner kan se appen uden at bruge af
+Vercels daglige deployment-kvote. Afklarede først om det skulle være en
+lokal dev-server hver, eller ét delt browser-link — brugeren valgte det
+delte link, efter at have fået bekræftet at det IKKE påvirker selve
+Vercel-produktionen (separat statisk kopi hostet på Anthropics egen
+infrastruktur), men at det kalder samme live Supabase-database som
+produktion, og at PWA-specifikke ting (service worker/installation) ikke
+kan testes troværdigt derfra.
+
+**Nuværende link (opdatér dette, ikke opret et nyt, ved fremtidige
+republiceringer):** https://claude.ai/artifact/TzA4goSRfzAoSVWvoM94z1
+
+Metoden er dokumenteret i CLAUDE.md's "Andre stående aftaler". Kort
+opsummeret: `vite build --base=./ --mode artifact-preview`, en telefon-
+ramme-wrapper (`index.html` med et `<iframe src="app.html">`, 393×852-boks,
+`@media (max-width:460px)` fjerner rammen på en rigtig telefon), og en
+login-bypass-knap på WELCOME-skærmen der kun findes i `artifact-preview`-
+mode (login virker upålideligt fra Artifact-domænet).
+
+Verificeret ved en lokal `python3 -m http.server`-servering af
+`dist-preview/` + Playwright-screenshots ved både desktop- (1280×900,
+telefon-ramme synlig) og mobil-viewport (390×844, fuld-bredde uden ramme)
+— samt et klik-igennem af login-bypass-knappen, der bekræftede appen
+navigerer til Hjem-skærmen uden at crashe (nogle konsol-fejl fra blokerede
+Supabase-kald i selve sandbox-test-miljøet, forventet der men ikke i en
+rigtig brugers browser).
+
+**Opfølgning samme dag: rammen skal passe uden scroll.** Brugeren bad om
+at telefon-rammen tilpasses siden, så man ikke skal scrolle for at se hele
+den. Den faste 393×852px-boks kunne blive for stor til et lille eller
+bredt-men-lavt Artifact-panel. Rettet med et lille inline-script der
+beregner en `transform:scale()`-faktor ud fra `window.innerWidth`/
+`innerHeight` (mindst af `1`, bredde-baseret og højde-baseret skalering),
+gentaget på `resize`. `html,body` fik `overflow:hidden`, og hint-teksten
+under telefonen blev `position:fixed` (ude af flex-flowet) i stedet for en
+almindelig flex-søskende, så den aldrig skubber rammen ud af syne uanset
+skalering. Verificeret programmatisk (`scrollWidth <= clientWidth` og
+`scrollHeight <= clientHeight`, ikke kun visuelt) ved fire meget
+forskellige viewport-former (bred desktop 1280×900, smalt/højt panel
+480×720, bredt/lavt vindue 900×480, kvadratisk 600×600) — ingen overflow
+i noget scenarie, telefonen centreret og læsbar i alle fire.
+
+**Endnu en opfølgning samme dag: Scan-siden fremstod tom.** Brugeren
+rapporterede at Scan-siden ("pointen" med preview'en) var tom efter klik
+på login-bypass-knappen. Undersøgt via en minimal debug-wrapper (rå
+`<iframe>`, ingen telefon-ramme) + Playwright: `document.querySelector(
+'.home-hero-frame')` returnerede `null` — hele hero-blokken (hilsen,
+scan-knap) manglede fra DOM'et, ikke bare usynlig via CSS. Rodårsag
+fundet ved at læse `ScannerScreen.jsx` linje for linje fra `.screen`-
+wrapperen og nedefter: hele kamera-boksen OG hero-blokken er nested
+inde i `{!!userId && <div>...}` (linje 237) — en gate til "kun for
+loggede ind", som aldrig blev opfyldt, fordi login-bypass-knappen kun
+kaldte `setScreen(SCREENS.HOME)` uden nogensinde at sætte en `userId`.
+
+**Fix:** `setUserId` (fandtes allerede i `useAuth()`s return-værdi, men
+var ikke med i `authContextValue` i App.jsx — tilføjet) + preview-
+bypass-knappen sætter nu en mock `userId` ("preview-demo-bruger"), et
+mock brugernavn ("Mille Nielsen") og to mock-allergener (gluten,
+nødder), før den navigerer til Hjem. Genverificeret med samme debug-
+opsætning: `.home-hero-frame` findes nu i DOM'et, og screenshot viser
+hele hero-blokken (hilsen "God dag, Mille", scan-knap, undertekst)
+korrekt renderet.
+
+**Stående lektion for denne preview-metode:** enhver skærm der viser sig
+tom i preview'en skal undersøges for lignende `!!userId`/`!!user`-gates
+(eller lignende "kun for loggede ind"-mønstre) og få tilsvarende mock-
+data tilføjet til bypass-knappens handler i `OnboardingScreen.jsx` —
+ikke antages at være en uløselig konsekvens af manglende rigtig session.
