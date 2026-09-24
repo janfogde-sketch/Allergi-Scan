@@ -16,6 +16,8 @@ import RecipesSection from "./sections/RecipesSection.jsx";
 import ProductsSection from "./sections/ProductsSection.jsx";
 import KnowledgeSection from "./sections/KnowledgeSection.jsx";
 import HistorySection from "./sections/HistorySection.jsx";
+import FamilySection from "./sections/FamilySection.jsx";
+import GlobalSearchBox from "./GlobalSearchBox.jsx";
 
 export default function AdminApp() {
   const auth = useAdminAuth();
@@ -133,6 +135,7 @@ export default function AdminApp() {
     if (section === "products") admin.loadProducts();
     if (section === "knowledge") admin.loadKnowledgeEntries();
     if (section === "history") admin.loadRevisionLog();
+    if (section === "family") admin.loadFamilyOverview();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section, accessToken, isAdmin]);
 
@@ -189,6 +192,15 @@ export default function AdminApp() {
       userEmail={userEmail} userId={userId} accessToken={accessToken} logout={logout}
       pendingSubmissions={admin.adminStats?.pending_submissions}
       openTickets={admin.adminStats?.open_tickets}
+      topbarExtra={
+        <GlobalSearchBox
+          globalSearch={admin.globalSearch} setGlobalSearch={admin.setGlobalSearch}
+          globalSearchResults={admin.globalSearchResults} setGlobalSearchResults={admin.setGlobalSearchResults}
+          globalSearchLoading={admin.globalSearchLoading} runGlobalSearch={admin.runGlobalSearch}
+          setSection={setSection} setUserSearch={admin.setUserSearch}
+          setProductSearch={admin.setProductSearch} loadProducts={admin.loadProducts}
+        />
+      }
     >
       {section === "dashboard" && (
         <DashboardSection adminStats={admin.adminStats} setSection={setSection} />
@@ -279,6 +291,11 @@ export default function AdminApp() {
           revisionLog={admin.revisionLog} revisionLogLoading={admin.revisionLogLoading}
           revisionLogFilter={admin.revisionLogFilter} setRevisionLogFilter={admin.setRevisionLogFilter}
           loadRevisionLog={admin.loadRevisionLog}
+        />
+      )}
+      {section === "family" && (
+        <FamilySection
+          familyMembers={admin.familyMembers} familyInvites={admin.familyInvites} familyLoading={admin.familyLoading}
         />
       )}
     </AdminLayout>
