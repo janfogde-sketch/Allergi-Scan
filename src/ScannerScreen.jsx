@@ -346,10 +346,12 @@ export default function ScannerScreen({
                   </div>
                 </div>
 
-                {/* Stor cirkulær scan-knap med blød glød bagved */}
+                {/* Stor cirkulær scan-knap med blød glød bagved — 50% større
+                    end forrige runde, efter brugerens eksplicitte ønske
+                    (24. sept. 2026). */}
                 <div style={{ position:"absolute", top:"46%", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
-                  <div style={{ position:"relative", width:"clamp(112px, 28cqh, 178px)", height:"clamp(112px, 28cqh, 178px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                    <div style={{ position:"absolute", inset:"clamp(-16px, -2.4cqh, -7px)", borderRadius:"50%",
+                  <div style={{ position:"relative", width:"clamp(168px, 42cqh, 267px)", height:"clamp(168px, 42cqh, 267px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    <div style={{ position:"absolute", inset:"clamp(-24px, -3.6cqh, -11px)", borderRadius:"50%",
                       background:"radial-gradient(circle, rgba(23,138,80,.28) 0%, rgba(23,138,80,0) 72%)" }} aria-hidden="true" />
                     <div
                       onClick={() => startCamera()}
@@ -357,12 +359,12 @@ export default function ScannerScreen({
                       aria-label="Start kamera for at scanne stregkode"
                       tabIndex={0}
                       onKeyDown={e => e.key === "Enter" && startCamera()}
-                      style={{ position:"relative", width:"clamp(104px, 26.5cqh, 168px)", height:"clamp(104px, 26.5cqh, 168px)", borderRadius:"50%", cursor:"pointer",
+                      style={{ position:"relative", width:"clamp(156px, 40cqh, 252px)", height:"clamp(156px, 40cqh, 252px)", borderRadius:"50%", cursor:"pointer",
                         background:"linear-gradient(150deg,#28B871 0%,#178A50 55%,#0C5A32 100%)",
                         boxShadow:"0 14px 28px -12px rgba(23,138,80,.5)",
-                        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(5px, 1.2cqh, 9px)" }}>
-                      <Icon name="barcode" size="clamp(25px, 5.3cqh, 35px)" color="#fff" />
-                      <div style={{ fontSize:"clamp(12px, 2.1cqh, 15px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
+                        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(8px, 1.8cqh, 14px)" }}>
+                      <Icon name="barcode" size="clamp(38px, 8cqh, 53px)" color="#fff" />
+                      <div style={{ fontSize:"clamp(18px, 3.2cqh, 23px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
                     </div>
                   </div>
                 </div>
