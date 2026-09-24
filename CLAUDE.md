@@ -370,6 +370,50 @@ verificerede foto-udklips-version fra opfølgningen ovenfor — uændret i
 denne runde. Fuld afprøvning (paletteforslag, begge SVG-stilarter) i
 `.claude/HISTORY.md`.
 
+**24. sept. 2026 — Scan-forsiden fik et nyt referencedesign implementeret.**
+Brugeren delte et nyt baggrundsbillede (frugt/blade på ren hvid baggrund,
+leveret direkte af brugeren — ikke beskåret ud af et referencescreenshot
+som tidligere runder) samt et layout-referencebillede (hilsen-overskrift,
+outlinet/senere fyldt scan-knap, en "Prøv en demo"-pille der overlapper
+billedets nederste hjørne). Efter iterativ mockup-godkendelse (baggrunds-
+farve-blend, skalering, knap-stilvalg — se `.claude/HISTORY.md`) er dette
+implementeret i `ScannerScreen.jsx`:
+- **Ét samlet baggrundsfoto** (`src/assets/home/scan-hero-bg.webp`,
+  hvidbalance-korrigeret så dets "hvide" baggrund matcher appens `--paper`
+  præcist — kildefotoet havde en svag mint-tone der ellers ville give en
+  synlig kant mod resten af appen) erstatter den tidligere 9-instans
+  frugt-collage. Vises ALTID i sin fulde helhed — aldrig beskåret, kun
+  skaleret til 75% bredde og centreret — hvilket permanent fjerner enhver
+  risiko for beskæringsartefakter (det tilbagevendende problem gennem
+  flere tidligere runder).
+- **Hilsen-overskrift er tilbage:** `{getGreeting()} (src/utils.jsx),
+  {user.name?.split(" ")[0] || "der"}` — samme mønster som den
+  oprindelige (før-14.-sept.) hilsen, ikke en ny opfindelse.
+- **"Prøv en demo"-pillen er tilbage** (`setShowGuide(true)`, åbner den
+  eksisterende `DemoSlider`-guide) — bevidst fjernet i en tidligere runde,
+  nu bevidst genindført efter det nye referencedesign. Ikke at forveksle
+  med den urelaterede "Prøv en demo-scanning" (`showDemoScan`/
+  `runDemoScan`, kun til konti <24 timer gamle) længere nede på siden.
+- **Scan-knappen** er fortsat fyldt grøn gradient med glød — brugeren
+  fik vist 3 knap-stilforslag (fyldt gradient / blødt tonet fyld /
+  forfinet outline) og valgte den fyldte gradient, som allerede var
+  kodens eksisterende stil, så ingen kodeændring var nødvendig der.
+- **%-baseret positionering, ikke fast pixel-værdier:** hilsen/knap/pille
+  er positioneret med `top` i procent relativt til billedets egen boks
+  (ikke faste px beregnet for én bestemt skærmbredde) — forbliver korrekt
+  placeret i billedets blanke midterbånd på tværs af enhedsbredder.
+- **Topbarens ikon er fjernet** (kun "EatSafe"-teksten står tilbage, i
+  større skrift) — gælder hele appen, da topbaren er én delt komponent
+  i `App.jsx`, ikke skærm-specifik. `EatSafeLogo`-komponenten selv er
+  stadig i brug andre steder (Onboarding/ProfilSkærm), kun dens brug i
+  topbaren er fjernet.
+
+De 5 gamle foto-udklips-assets (`leaf-mint`, `blueberry-single`,
+`blueberries-pair`, `strawberry`, `leaf-basil`) er slettet — erstattet
+af det ene samlede billede. Fuld mockup-iterationshistorik (baggrunds-
+farve-hvidbalance-fix, skalerings-matematik, knap-stil-sammenligning) i
+`.claude/HISTORY.md`.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,

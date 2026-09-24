@@ -1326,3 +1326,152 @@ samme etablerede mimic-HTML + `playwright-core`-metode.
 run` 98/98 grønne, mojibake-scan ren på `src/theme.jsx` (eneste fil
 med reelle indholdsændringer i denne runde — `ScannerScreen.jsx` endte
 uændret fra `HEAD` efter reverteringen).
+
+---
+
+## Scan-forsidens nye referencedesign implementeret (24. sept. 2026, samme dag)
+
+Efter baggrundsfarve-redesignet (se ovenfor) delte brugeren to nye
+referencebilleder i hurtig rækkefølge og bad om et konkret, håndgribeligt
+resultat i stedet for endnu en abstrakt diskussion:
+
+1. Et rent baggrundsfoto (frugt/blade — mynteblad, 3 blåbær, 2 basilikum-
+   lignende blade, en halv jordbær — arrangeret på hvid baggrund, med et
+   stort tomt bånd i midten), leveret direkte som `images/2.webp`. Vigtig
+   forskel fra tidligere runder: brugeren gav nu et FÆRDIGKOMPONERET
+   billede i stedet for at jeg selv skulle udklippe enkeltelementer fra
+   et UI-mockup-screenshot — løste dermed hele "beskæring giver grimme
+   kanter"-problemet strukturelt, ikke kun ved forsigtigere udklipning.
+2. Et layout-referencebillede (`images/3.webp`) der viste: en hilsen-stil
+   overskrift ("God morgen, Bjørn"), en tynd outlinet ring-knap (grøn
+   ikon/tekst på gennemsigtig/hvid baggrund, IKKE fyldt), og en "Prøv en
+   demo"-pille der overlapper det nederste hjørne af frugtbilledet.
+   Instruktion: "layoutet skal gerne se sådan ud".
+
+**Iterativ mockup-udvikling (kun HTML, ingen kodeændringer før sidste
+skridt) — flere runder baseret på brugerfeedback:**
+
+1. **Første mockup:** billedet som CSS `background-image` med
+   `background-size:cover` inde i en fast-højde hero — viste sig forkert:
+   overskriften kolliderede med en blåbær, og billedets bund blev
+   beskåret (cover-skalering matcher ikke automatisk billedets egen
+   indbyggede "tomme bånd" med UI-elementernes plads). Rettet ved i
+   stedet at analysere billedet direkte med `numpy` (finde rækker med
+   INGEN indhold på tværs af hele bredden, `dist>threshold`) for at
+   lokalisere det faktiske blanke midterbånd (unscaled rows 550-1022 af
+   1849, dvs. den fulde 851-brede bredde er fri i det interval) og
+   placere overskrift/knap PRÆCIST der, som et almindeligt `<img>` i
+   naturlig størrelse (intet `background-size:cover`, ingen beskæring
+   mulig per definition).
+
+2. **"Sæt alle knapper/funktioner ind":** byggede topbaren (logo+BETA+
+   hjælp+feedback+menu-ikon med grøn notifikations-prik), footer
+   (version + Beta-information/App-guide-knapper) og bundnav (med ægte
+   ikon-stier hentet direkte fra `SharedComponents.jsx`s `Icon`-
+   komponent for præcis visuel troskab) ind i mockuppen, så brugeren
+   kunne se hele skærmen, ikke kun hero-udsnittet.
+
+3. **Match layoutreferencen:** skiftede overskriften fra statisk "Scan
+   produkt" til en hilsen ("God morgen, Bjørn" — placeholder-navn fra
+   referencebilledet), ændrede knappen fra fyldt gradient til en tynd
+   outlinet ring (matcher referencen), og genindførte en "Prøv en demo"-
+   pille (cube-ikon + chevron) positioneret så den delvist overlapper
+   det øverste hjørne af jordbær-/blad-klyngen nederst — tunet iterativt
+   via to screenshot-runder til overlappet ramte rigtigt.
+
+4. **"få baggrundsfarven til at gå i ét med resten... man kan se farven
+   blive skåret af":** opdagede ved pixel-sampling (`img.getpixel()` i
+   fire hjørner) at kildefotoets egen "hvide" baggrund faktisk var en
+   svag mint-tone (~246,251,247), ikke ren hvid (255,255,255) — gav en
+   synlig kant mod appens faktiske `--paper`. Løst med en global
+   hvidbalance-korrektion: sample baggrundsfarven fra rene hjørne-
+   udsnit, beregn per-kanal skaleringsfaktor (`255/refkanal`), gang hele
+   billedet med den, clip til 255. Efterfølgende sampling bekræftede
+   baggrunden nu læser ~254,254,254 (visuelt identisk med ren hvid),
+   uden at forvrænge frugternes egne farver mærkbart (kun en mild
+   ~1-3% kanal-vis skalering). Fjernede samtidig topbarens logo-ikon
+   efter brugerens ønske ("må gerne fjerne eatsafe ikonet") og forstørrede
+   den resterende "EatSafe"-tekst (15px→20px, vægt 600→800) så den bar
+   sin egen visuelle vægt uden ikonet ved siden af.
+
+5. **"skaler det ind så det passer med en telefon... det hele skal kunne
+   være på en side":** målte via Playwright `getBoundingClientRect()` at
+   den fulde komposition (topbar 54px + hero-billede ved 100% bredde
+   847px + footer 74px + bundnav 77px) blev 1072px — langt over en
+   telefonskærms højde. Beregnede en skaleringsfaktor k=0.75 (target
+   844px total, en almindelig iPhone-referencehøjde), skalerede
+   billedets renderede bredde til 75% (centreret med hvide kanter — usynlige
+   efter hvidbalance-fixet ovenfor) samt alle overlejrede elementers
+   positioner/skriftstørrelser/knapdiameter med samme faktor. Verificerede
+   ved at sætte `.phone`s højde til en FAST 844px med `overflow:hidden`
+   og måle at alt indhold nøjagtigt udfyldte det uden at noget blev
+   klippet (kun 2.4px tilbage i en fleksibel spacer).
+
+   **Selv-korrigeret fejlantagelse undervejs:** troede først at have
+   fundet en beskærings-bug (en blåbær så "afskåret" ud i skærmbilledet),
+   men pixel-for-pixel-sampling af den faktiske farveovergang beviste at
+   det var en korrekt, blød skygge-udtoning i selve fotoet, ikke en
+   hård beskæringskant — den visuelle "afskårne" fornemmelse kom
+   udelukkende af at det usynlige hvide mellemrum omkring det formindskede
+   billede gjorde det svært at se hvor billedets egen kant faktisk lå.
+   God påmindelse om at verificere visuelle antagelser med rå pixel-data
+   frem for kun øjemål på en nedskaleret preview-thumbnail.
+
+6. **"glem det jeg skrev. Kom med forslag til scanningsknappen":**
+   brugeren droppede selv skalerings-diskussionen og bad i stedet om
+   knap-stilforslag. Byggede 3 sammenlignings-varianter side om side
+   (samme metode som palette-sammenligningen i forrige runde): A) fyldt
+   grøn gradient (klassisk, høj kontrast), B) blødt lysegrønt fyld med
+   skygge (venlig, matcher app'ens bløde kort-æstetik), C) en forfinet
+   version af den outlinede ring (tykkere kant, blød glød, let
+   gennemsigtigt fyld). Brugeren valgte A.
+
+**Implementering i rigtig kode (`src/ScannerScreen.jsx`, `src/App.jsx`,
+`src/theme.jsx`):**
+
+- Erstattede de 5 gamle foto-udklips-imports med ét samlet
+  `scan-hero-bg.webp` (den hvidbalance-korrigerede version af
+  brugerens billede, nedskaleret fra 851×1849 til 680×1477 — @2x af den
+  ca. 320px visningsbredde det faktisk vises ved på en typisk telefon,
+  for at holde filstørrelsen nede uden at ofre skarphed på retina-skærme;
+  40KB endeligt).
+- Genopdagede at scan-knappen i den RIGTIGE kode allerede havde den
+  fyldte gradient-stil (fra før outline-eksperimentet, som kun
+  eksisterede i mockuppen) — så "gå med A" krævede ingen kodeændring af
+  selve knappen, kun af det omgivende layout.
+- **Vigtig afvigelse fra mockuppens faste pixel-værdier:** mockuppen
+  brugte faste px (390px-bredde-antagelse), men rigtig kode skal virke
+  på tværs af enhedsbredder (`.app` har `max-width:480px`, reelle
+  telefoner spænder ~360-430px). Løst ved at gøre hilsen/knap/demo-
+  pilles `top`-positionering %-baseret relativt til billedets egen boks
+  (beregnet fra mockuppens k=1-referenceværdier: 230/847=27%,
+  388/847≈46%, 606/847≈71.5%) i stedet for at portere de faste px
+  direkte — mere robust og en reel forbedring over mockup-tilgangen,
+  ikke blot en oversættelse af den.
+  Selve indholds-størrelserne (skrifttyper, knap-diameter) er bevaret
+  som faste px fra k=0.75-beregningen, da tekstlæsbarhed er vigtigere
+  end perfekt proportional skalering på tværs af enhedsbredder.
+- Fjernede `overflow`-betinget kompleksitet på scan-boksens wrapper
+  (var `cameraActive ? "hidden" : "visible"` — kun nødvendigt for den
+  gamle bløde-ud-over-kanten-collage) tilbage til ubetinget `"hidden"`,
+  da intet i det nye design bløder ud over sin egen boks.
+  Genindførte `getGreeting()` (fra `src/utils.jsx`, allerede eksisterende,
+  urørt siden 14. sept.-fjernelsen af hilsenen) + `user.name?.split("
+  ")[0] || "der"` — samme fallback-mønster som den oprindelige,
+  præ-14.-sept. hilsen brugte (bekræftet via `git show` på en ældre
+  commit).
+- Fjernede `EatSafeLogo`-brugen fra `App.jsx`s topbar (kun teksten
+  "EatSafe" + BETA-badge + de tre funktionsknapper står tilbage) —
+  komponenten selv er urørt, da den stadig bruges i Onboarding og
+  ProfileScreen. Fjernede samtidig den nu-ubrugte `.topbar-shield`-CSS-
+  klasse og forstørrede `.topbar-name` (15px/600→20px/800) i
+  `theme.jsx`. Da topbaren er én delt komponent i `App.jsx` (ikke
+  gen-renderet pr. skærm), gælder ikon-fjernelsen hele appen, ikke kun
+  Scan-siden — vurderet som den rigtige tekniske løsning, matcher
+  desuden sessionens gennemgående "hele appen skal være konsekvent"-tema.
+
+**Verifikation:** genbyggede en Playwright-mimic af den FAKTISKE DOM-
+struktur (inkl. den delte topbar og scan-boks-wrapperen) for et sidste
+visuelt tjek af den rigtige kode, ikke kun mockuppen — bekræftede
+korrekt gengivelse. `npm run build` grøn, `npm run lint` ren, `npx
+vitest run` 98/98 grønne, mojibake-scan ren på alle tre ændrede filer.
