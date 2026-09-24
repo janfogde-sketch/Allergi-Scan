@@ -164,7 +164,7 @@ body{
    Dæmpet fra .8 til .5 samme dag (brugerfeedback: for kraftigt slør vaskede
    billedets farve/elegance helt ud) — læsbarheden bæres i stedet primært af
    tekstens egen vægt/størrelse + en blød hvid text-shadow-glød ("løft" væk
-   fra baggrunden), ikke af selve sløret. Se `.screen-title` nedenfor og
+   fra baggrunden), ikke af selve sløret. Se .screen-title nedenfor og
    Scan-forsidens hilsen (ScannerScreen.jsx) for samme mønster. */
 .app-bg{
   position:fixed;inset:0;z-index:0;pointer-events:none;
