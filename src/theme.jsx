@@ -376,18 +376,16 @@ body{
 .reticle-line{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 0%,var(--green-logo) 15%,var(--green-logo) 85%,transparent 100%);animation:scanline 2.2s ease-in-out infinite;box-shadow:0 0 10px var(--green-logo),0 0 3px var(--green-logo);}
 @keyframes scanline{0%{top:13px;opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{top:51px;opacity:0;}}
 
-/* Forside-scan-knappens "levende" glød+åndedræt (24. sept. 2026, efter
-   brugerens ønske om lidt lys/skygge og liv på knappen). To adskilte,
-   asynkrone bevægelser (forskellig varighed) i stedet for én synkron
-   puls — undgår at knap+glød ser ud som ét stift, mekanisk objekt.
-   Respekterer den globale prefers-reduced-motion-regel nedenfor
-   (ACCESSIBILITY) uden ekstra kode her. Opdateret to gange samme dag:
-   først gjort en glossy-highlight mere synlig, men den fik i stedet
-   knappen til at ligne en gummibold — highlighten er fjernet igen (se
-   ScannerScreen.jsx), og amplituden her er dæmpet + varigheden sat op
-   (fra 2.8s til 4s) for et roligere, mere fladt/premium udtryk i stedet
-   for en tydelig puls. */
-@keyframes scanCtaGlow{0%,100%{transform:scale(1);opacity:.7;}50%{transform:scale(1.08);opacity:.95;}}
+/* Forside-scan-knappens "levende" lys-ring (24. sept. 2026 — knappen er
+   gentænkt fra bunden efter brugerens feedback: "ligner en gummibold",
+   se ScannerScreen.jsx for den fulde historik). Ny retning: en rolig,
+   roterende lyspunkt i den tynde ring omkring en let/hvid knap (ghost-
+   stil), i stedet for en glossy/pulserende fyld. scanCtaRingSpin roterer
+   et lag med conic-gradient (en svag konstant bundfarve + et lysere
+   "komethoved") rundt i ringen; scanCtaBreathe giver hele knappen et
+   meget subtilt åndedræt. Respekterer den globale prefers-reduced-
+   motion-regel nedenfor (ACCESSIBILITY) uden ekstra kode her. */
+@keyframes scanCtaRingSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 @keyframes scanCtaBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.015);}}
 
 /* Mini cards */
