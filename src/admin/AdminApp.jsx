@@ -15,6 +15,7 @@ import ImportSection from "./sections/ImportSection.jsx";
 import RecipesSection from "./sections/RecipesSection.jsx";
 import ProductsSection from "./sections/ProductsSection.jsx";
 import KnowledgeSection from "./sections/KnowledgeSection.jsx";
+import HistorySection from "./sections/HistorySection.jsx";
 
 export default function AdminApp() {
   const auth = useAdminAuth();
@@ -131,6 +132,7 @@ export default function AdminApp() {
     if (section === "recipes") loadAdminRecipes();
     if (section === "products") admin.loadProducts();
     if (section === "knowledge") admin.loadKnowledgeEntries();
+    if (section === "history") admin.loadRevisionLog();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section, accessToken, isAdmin]);
 
@@ -266,6 +268,13 @@ export default function AdminApp() {
           knowledgeActionLoading={admin.knowledgeActionLoading}
           openKnowledgeEntryForEdit={admin.openKnowledgeEntryForEdit} openNewKnowledgeEntry={admin.openNewKnowledgeEntry}
           saveKnowledgeEntry={admin.saveKnowledgeEntry} deleteKnowledgeEntry={admin.deleteKnowledgeEntry}
+        />
+      )}
+      {section === "history" && (
+        <HistorySection
+          revisionLog={admin.revisionLog} revisionLogLoading={admin.revisionLogLoading}
+          revisionLogFilter={admin.revisionLogFilter} setRevisionLogFilter={admin.setRevisionLogFilter}
+          loadRevisionLog={admin.loadRevisionLog}
         />
       )}
     </AdminLayout>
