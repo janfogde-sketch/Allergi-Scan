@@ -21,15 +21,24 @@ RLS-performance-advisories, tredjeparts audit-skills, AdminScreen.jsx/
 App.jsx-opsplitningen) er nu implementeret og merget — se "Rescue-audit —
 status" nedenfor for fuld detalje.
 
-**Desktop admin-panel (24. sept. 2026):** et separat, desktop-optimeret
-admin-panel er bygget på `eatsafe.dk/admin.html` — egen Vite-entrypoint
-(`src/admin/`), rører ikke den mobile PWA's bundle. Shellet + alle
-eksisterende admin-funktioner (Dashboard/Brugere/Indsendelser/Tickets/
-Manglende/Import/Opskrifter) er på plads. Nye funktioner (produkt-database
-direkte, Leksikon-CRUD, ændringshistorik, bulk-handlinger, rigere
-analytics, CSV-eksport, familie-overblik, global søgning) bygges én ad
-gangen efter brugerens prioritering — se `src/CONTEXT.md` afsnit 13 for
-den fulde liste og status.
+**Desktop admin-panel (24. sept. 2026) — nye funktioner 8/8 færdige.** Et
+separat, desktop-optimeret admin-panel er bygget på `eatsafe.dk/admin.html`
+— egen Vite-entrypoint (`src/admin/`), rører ikke den mobile PWA's bundle.
+Shellet + alle oprindelige admin-funktioner (Dashboard/Brugere/Indsendelser/
+Tickets/Manglende/Import/Opskrifter) samt hele "nye funktioner"-backloggen
+(produkt-database, Leksikon-CRUD, ændringshistorik, brugere-redigering inkl.
+allergener, bulk-handlinger, dashboard-trends, CSV-eksport, familie-overblik
++ handlingsmuligheder, global søgning) er shippet og live — se
+`src/CONTEXT.md` afsnit 13 for fuld detalje pr. funktion.
+
+**Full admin-audit gennemført 24. sept. 2026** (kode + sikkerhed + token) —
+fandt og rettede ét KRITISK fund: `users`-tabellens selv-opdaterings-policy
+tillod enhver bruger at sætte sin egen `role` til `admin` (ingen kolonne-
+begrænsning i RLS, og en trigger synkroniserede det automatisk ind i JWT'en).
+Rettet med en `BEFORE UPDATE`-trigger, se `src/CONTEXT.md` afsnit 6 for
+detaljen. Øvrige fund var lav-severity/informative (rolle-scope på to
+RLS-policyer, PostgREST-filter-escaping i søgefunktioner) — ingen yderligere
+handling påkrævet.
 
 **Eneste resterende punkt: Leaked Password Protection er blokeret, ikke
 glemt.** Brugeren forsøgte at slå den til 17. sept. i Supabase Dashboard →
