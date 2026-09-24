@@ -166,7 +166,7 @@ body{
   background:#F6F8F3;
   box-shadow:0 -8px 16px -12px rgba(21,32,26,.14);
   border-top:1px solid var(--border);
-  display:flex;padding:10px 4px 24px;z-index:100;
+  display:flex;padding:10px 4px calc(24px + env(safe-area-inset-bottom));z-index:100;
 }
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.45;transition:all .15s;}
 .nav-item.active{opacity:1;}
