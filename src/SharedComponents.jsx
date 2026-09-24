@@ -446,7 +446,7 @@ export function ProductImage({ product, size = 64 }) {
 // ── Fælles søgeresultat-kort ────────────────────────────────────────────────
 // Bruges både på forsidens Søg-skærm og i "Tilføj vare" i indkøbslisten, så
 // et søgeresultat ser ens ud uanset hvor man søger fra.
-export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, onOpen, onAddToList }) {
+export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, onOpen, onAddToList, preserveFocus = true }) {
   const { status, matchedDanger, matchedWarning } = compareAllergens(p.allergen_flags||{}, effectiveIds);
   const statusColor = safetyStyle(status).color;
   const statusLabel = `${safetyStyle(status).icon} ${status==="safe" ? "Sikker" : status==="danger" ? "Farlig" : "Advarsel"}`;
@@ -466,7 +466,15 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
       // (fx "Tilføj vare" i indkøbslisten) — ellers kan søgefeltets onBlur nå
       // at lukke resultatlisten, før klikket på fx "+"-knappen når at blive
       // registreret, så tryk på mobil kan virke som om de ikke gør noget.
-      onMouseDown={e => e.preventDefault()}
+      // KUN nødvendigt når resultatlisten reelt kan forsvinde ved blur
+      // (preserveFocus=true, default — bruges af ListScreens "Tilføj vare").
+      // På rene søgeskærme uden den slags blur-drevet skjul (SearchScreen)
+      // gør det tværtimod skade: at forhindre blur holder søgefeltets
+      // tastatur åbent, hvilket på mobil kan sluge det FØRSTE tryk på en
+      // resultat-række til at lukke tastaturet i stedet for at åbne
+      // produktet — brugeren skal så trykke to gange. Fundet 24. sept. 2026
+      // ("søgeresultat åbner ikke før andet tryk").
+      onMouseDown={preserveFocus ? e => e.preventDefault() : undefined}
       style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", marginBottom:8, background:"var(--surface)", border:`1px solid ${status==="danger" ? "var(--red-md)" : status==="warn" ? "var(--amber-md)" : "var(--border)"}`, borderRadius:12, cursor:"pointer" }}>
       <ProductImage product={p} size={44} />
       <div style={{ flex:1, minWidth:0 }}>

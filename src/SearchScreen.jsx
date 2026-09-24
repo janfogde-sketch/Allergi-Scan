@@ -144,6 +144,7 @@ export default function SearchScreen({
         <SearchResultRow key={p.id} product={p} effectiveIds={activeIds}
           onOpen={() => { logSearchSelection(searchQuery, p, accessToken); lookupProduct(p.ean||p.id); }}
           onAddToList={() => handleAddToList(p)}
+          preserveFocus={false}
         />
       ))}
       {resultsWithSafety.length > 0 && hiddenUnsafeCount > 0 && (
