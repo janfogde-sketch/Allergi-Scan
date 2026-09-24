@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useRef, Suspense } from "react";
 import { SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
-         ALLERGEN_EXAMPLES, E_NUMBERS, HOME_TIPS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
+         ALLERGEN_EXAMPLES, E_NUMBERS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
 import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo, isValidEanChecksum } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage, LazyFallback } from "./SharedComponents.jsx";
 import { DEMO_SLIDES } from "./demoSlides.jsx";
@@ -9,11 +9,17 @@ import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
-import { useShoppingContext } from "./ShoppingContext.jsx";
 
 import { CategorySelect } from "./MemberForm.jsx";
 import ResultScreen from "./ResultScreen.jsx";
 import { UI } from "./styleUtils.js";
+// Hjem-forsidens frugt-collage — udelukkende dekorativt (aria-hidden), se CLAUDE.md
+// afsnit 5 for baggrunden for hvorfor appen nu bruger rigtige fotos ét sted.
+import leafMint from "./assets/home/leaf-mint.webp";
+import blueberrySingle from "./assets/home/blueberry-single.webp";
+import blueberriesPair from "./assets/home/blueberries-pair.webp";
+import strawberryImg from "./assets/home/strawberry.webp";
+import leafBasil from "./assets/home/leaf-basil.webp";
 // Lazy: skærme brugeren ikke nødvendigvis besøger hver session, holdes ude af hoved-bundlet.
 // ResultScreen er IKKE med her — den vises efter stort set hvert scan (hoved-flowet),
 // så at lazy-loade den ville tilføje en indlæsnings-forsinkelse lige der hvor brugeren
@@ -157,7 +163,6 @@ export default function ScannerScreen({
   showNutrition, setShowNutrition,
   showManualEan, setShowManualEan,
   showSafeOnly, setShowSafeOnly,
-  greeting,
   cameraActive, setCameraActive,
   galleryInputRef,
   lastScannedRef,
@@ -188,8 +193,7 @@ export default function ScannerScreen({
   const { user, userId, accessToken } = useAuthContext();
   const { family, activeProfiles, setActiveProfiles, allergens } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
-  const { history, favorites, toggleFavorite, isFavorite } = useHistoryContext();
-  const { shoppingList, newItemName, setNewItemName, addToList, toggleItem, removeItem, clearDone } = useShoppingContext();
+  const { favorites, toggleFavorite, isFavorite } = useHistoryContext();
 
   // Parser OCR-tekst til liste af ingredienser
 
@@ -205,54 +209,6 @@ export default function ScannerScreen({
       .filter(m => activeProfiles.includes(m.id))
       .flatMap(m => Array.isArray(m.allergens) ? m.allergens : Object.keys(m.allergens||{}).filter(k => m.allergens[k])),
   ].filter((v, i, a) => a.indexOf(v) === i); // deduplicate
-
-  const renderStreakBadge = () => {
-    // Mini streak-badge
-    if (!history?.length) return null;
-    const days = new Set(history.map(h => {
-      const d = new Date(h.scanned_at || h.timestamp);
-      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    }));
-    let streak = 0;
-    const today = new Date();
-    for (let i = 0; i < 365; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      if (days.has(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`)) streak++;
-      else if (i > 0) break;
-    }
-    if (streak < 2) return null;
-    return (
-      <div style={{
-        display:"flex", alignItems:"center", gap:4,
-        background:"rgba(249,115,22,.12)",
-        border:"1px solid rgba(249,115,22,.3)",
-        borderRadius:20, padding:"4px 10px",
-        fontSize:12, fontWeight:800, color:"#f97316",
-        flexShrink:0,
-      }}>
-        <Icon name="flame" size={13} color="#f97316" /> {streak}
-      </div>
-    );
-  };
-
-  const renderDailyTip = () => {
-    const tip = HOME_TIPS[new Date().getDay() % HOME_TIPS.length];
-    return (
-      <div className="home-tip">
-        <div style={UI.shrink0}><Icon name="bulb" size={18} color="var(--blue)" /></div>
-        <div style={S.flex1}>
-          <div className="home-tip-tag">Vidste du at</div>
-          <div className="home-tip-title">{tip.title}</div>
-          <div className="home-tip-body">{tip.text}</div>
-        </div>
-      </div>
-    );
-  };
-
-  // Dato-eyebrow til hilsenen, fx "onsdag · 11. september" (CSS gør den uppercase)
-  const todayLabel = new Date().toLocaleDateString("da-DK", { weekday:"long" })
-    + " · " + new Date().toLocaleDateString("da-DK", { day:"numeric", month:"long" });
 
   return (
     <>
@@ -270,21 +226,14 @@ export default function ScannerScreen({
               </div>
             )}
 
-            {/* Hilsen — kun til loggede */}
-            {!!userId && <div className="greeting">
-              <div className="greeting-eyebrow">{todayLabel}</div>
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
-                <div className="greeting-main">{greeting}, <strong>{user.name?.split(" ")[0] || "der"}</strong></div>
-                {renderStreakBadge()}
-              </div>
-            </div>}
-
-            {/* Scan-boks — kun til loggede */}
+            {/* Scan-boks — kun til loggede. Forsiden er nu en enkel "landing"-
+                visning (logo + stort scan-CTA) i stedet for hilsen/dagens tip/
+                indkøbsliste-genvej — se CLAUDE.md afsnit 5 for baggrunden. */}
             {!!userId && <div style={{
-              background: cameraActive ? "var(--surface)" : "linear-gradient(150deg,#22A868 0%,#178A50 60%,#0E6B3B 100%)",
+              background: cameraActive ? "var(--surface)" : "transparent",
               borderRadius:20, marginBottom:10,
               overflow:"hidden", position:"relative", border: cameraActive ? "1px solid var(--border2)" : "none",
-              boxShadow: cameraActive ? "var(--sh2)" : "0 16px 32px -14px rgba(23,138,80,.45)",
+              boxShadow: cameraActive ? "var(--sh2)" : "none",
             }}>
               {/* Kamera container — altid i DOM men skjult når ikke aktiv */}
               <div style={{ position:"relative", display: cameraActive ? "block" : "none" }}>
@@ -366,71 +315,61 @@ export default function ScannerScreen({
               <input ref={photoFallbackRef} type="file" accept="image/*" capture="environment" style={S.none}
                 onChange={e => { if (e.target.files[0]) scanPhotoForEan(e.target.files[0]); e.target.value=""; }} />
 
-              {/* Animation når kamera ikke er aktivt */}
+              {/* Forside-hero når kamera ikke er aktivt: overskrift + stor
+                  scan-knap med frugt-collage — matcher det aftalte design. */}
               {!cameraActive && (
-              <div style={{ cursor:"pointer", padding:"38px 24px 42px", display:"flex", flexDirection:"column", alignItems:"center", gap:22, position:"relative" }}
-                onClick={() => startCamera()}
-                role="button"
-                aria-label="Start kamera for at scanne stregkode"
-                tabIndex={0}
-                onKeyDown={e => e.key === "Enter" && startCamera()}>
-                {/* Stregkode-animation */}
-                <div style={{ position:"relative", width:180, height:90 }}>
-                  {/* Stregkode streger */}
-                  <svg viewBox="0 0 180 90" width="180" height="90">
-                    <g fill="rgba(255,255,255,.35)">
-                      <rect x="10" y="0" width="7" height="90" rx="1"/>
-                      <rect x="22" y="0" width="3" height="90" rx="1"/>
-                      <rect x="29" y="0" width="5" height="90" rx="1"/>
-                      <rect x="38" y="0" width="2" height="90" rx="1"/>
-                      <rect x="44" y="0" width="8" height="90" rx="1"/>
-                      <rect x="56" y="0" width="3" height="90" rx="1"/>
-                      <rect x="63" y="0" width="6" height="90" rx="1"/>
-                      <rect x="73" y="0" width="2" height="90" rx="1"/>
-                      <rect x="79" y="0" width="4" height="90" rx="1"/>
-                      <rect x="87" y="0" width="7" height="90" rx="1"/>
-                      <rect x="98" y="0" width="3" height="90" rx="1"/>
-                      <rect x="105" y="0" width="5" height="90" rx="1"/>
-                      <rect x="114" y="0" width="2" height="90" rx="1"/>
-                      <rect x="120" y="0" width="6" height="90" rx="1"/>
-                      <rect x="130" y="0" width="3" height="90" rx="1"/>
-                      <rect x="137" y="0" width="8" height="90" rx="1"/>
-                      <rect x="149" y="0" width="4" height="90" rx="1"/>
-                      <rect x="157" y="0" width="2" height="90" rx="1"/>
-                      <rect x="163" y="0" width="7" height="90" rx="1"/>
-                    </g>
-                  </svg>
-                  {/* Laser linje */}
-                  <div style={{
-                    position:"absolute",
-                    left:0, right:0,
-                    height:3,
-                    borderRadius:2,
-                    background:"linear-gradient(90deg, transparent, #fff, #fff, transparent)",
-                    boxShadow:"0 0 8px rgba(255,255,255,.8), 0 0 16px rgba(255,255,255,.4)",
-                    animation:"scanLaser 2s ease-in-out infinite",
-                  }} />
-                  <style>{`
-                    @keyframes scanLaser {
-                      0%, 100% { top: 8px; opacity: 0.5; }
-                      50% { top: calc(100% - 8px); opacity: 1; }
-                    }
-                  `}</style>
-                  {/* Hjørnemarkører */}
-                  {[["0","0","top","left"],["0","0","top","right"],["0","0","bottom","left"],["0","0","bottom","right"]].map((_,i) => {
-                    const pos = [{top:8,left:8},{top:8,right:8},{bottom:8,left:8},{bottom:8,right:8}][i];
-                    const borders = [
-                      {borderTop:"2px solid rgba(255,255,255,.7)",borderLeft:"2px solid rgba(255,255,255,.7)"},
-                      {borderTop:"2px solid rgba(255,255,255,.7)",borderRight:"2px solid rgba(255,255,255,.7)"},
-                      {borderBottom:"2px solid rgba(255,255,255,.7)",borderLeft:"2px solid rgba(255,255,255,.7)"},
-                      {borderBottom:"2px solid rgba(255,255,255,.7)",borderRight:"2px solid rgba(255,255,255,.7)"},
-                    ][i];
-                    return <div key={i} style={{ position:"absolute", width:16, height:16, ...pos, ...borders, borderRadius:2 }}/>;
-                  })}
+              <div style={{ position:"relative", padding:"14px 0 8px" }}>
+                {/* Frugt-collage — rent dekorativt, ingen semantisk betydning */}
+                <img src={leafMint} alt="" aria-hidden="true" draggable="false"
+                  style={{ position:"absolute", top:-8, left:-18, width:118, pointerEvents:"none", userSelect:"none" }} />
+                <img src={blueberriesPair} alt="" aria-hidden="true" draggable="false"
+                  style={{ position:"absolute", top:12, right:-38, width:175, pointerEvents:"none", userSelect:"none" }} />
+                <img src={blueberrySingle} alt="" aria-hidden="true" draggable="false"
+                  style={{ position:"absolute", top:52, left:128, width:70, pointerEvents:"none", userSelect:"none" }} />
+                <img src={strawberryImg} alt="" aria-hidden="true" draggable="false"
+                  style={{ position:"absolute", bottom:48, left:-30, width:113, pointerEvents:"none", userSelect:"none" }} />
+                <img src={leafBasil} alt="" aria-hidden="true" draggable="false"
+                  style={{ position:"absolute", bottom:24, right:-34, width:130, pointerEvents:"none", userSelect:"none" }} />
+
+                <div style={{ position:"relative", zIndex:1, textAlign:"center", padding:"88px 24px 0" }}>
+                  <div style={{ fontSize:28, fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px" }}>Scan produkt</div>
+                  <div style={{ fontSize:14.5, color:"var(--muted)", marginTop:8, lineHeight:1.5, maxWidth:260, marginLeft:"auto", marginRight:"auto" }}>
+                    Se med det samme om varen passer til dine allergier.
+                  </div>
                 </div>
-                {/* Tekst */}
-                <div style={UI.utacenter}>
-                  <div style={{ fontSize:22, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Skan produkt</div>
+
+                {/* Stor cirkulær scan-knap med blød glød bagved */}
+                <div style={{ position:"relative", zIndex:1, display:"flex", justifyContent:"center", margin:"30px 0" }}>
+                  <div style={{ position:"relative", width:200, height:200, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    <div style={{ position:"absolute", inset:-18, borderRadius:"50%",
+                      background:"radial-gradient(circle, rgba(23,138,80,.20) 0%, rgba(23,138,80,0) 72%)" }} aria-hidden="true" />
+                    <div
+                      onClick={() => startCamera()}
+                      role="button"
+                      aria-label="Start kamera for at scanne stregkode"
+                      tabIndex={0}
+                      onKeyDown={e => e.key === "Enter" && startCamera()}
+                      style={{ position:"relative", width:176, height:176, borderRadius:"50%", cursor:"pointer",
+                        background:"linear-gradient(150deg,#22A868 0%,#178A50 60%,#0E6B3B 100%)",
+                        boxShadow:"0 16px 32px -14px rgba(23,138,80,.45)",
+                        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10 }}>
+                      <Icon name="barcode" size={40} color="#fff" />
+                      <div style={{ fontSize:14.5, fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Prøv en demo */}
+                <div style={{ position:"relative", zIndex:1, display:"flex", justifyContent:"center", padding:"0 24px 6px" }}>
+                  <button onClick={() => setShowGuide(true)}
+                    style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                      width:"100%", maxWidth:280, padding:"14px 20px", borderRadius:100,
+                      background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"var(--sh)",
+                      fontFamily:"var(--f)", fontSize:14.5, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
+                    <Icon name="package" size={17} color="var(--green)" />
+                    Prøv en demo
+                    <Icon name="chevronRight" size={15} color="var(--muted2)" />
+                  </button>
                 </div>
               </div>
               )}
@@ -499,29 +438,7 @@ export default function ScannerScreen({
 
             </>}
 
-            {/* Genvej til indkøbslisten — kun hvis der er varer */}
-            {/* Sekundær vægt (lettere skygge end scan-boksen ovenfor) — genvejen er
-                nyttig, men skal ikke konkurrere visuelt med hoved-handlingen */}
-            {shoppingList.filter(i => !i.checked).length > 0 && (
-            <div className="home-shortcut-card" style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, boxShadow:"var(--sh)", marginBottom:14, overflow:"hidden" }}>
-              <div style={{ display:"flex", alignItems:"center", gap:10, padding:"14px 14px", cursor:"pointer" }}
-                onClick={() => setScreen(SCREENS.LIST)}>
-                <div style={UI.uw34_h34_bgsurface2_br9_dflex_aicenter_jccenter_shr0}><Icon name="cart" size={17} color="var(--ink2)" /></div>
-                  <div style={S.flex1}>
-                    <div style={UI.ufs13_fw700}>Indkøbsliste</div>
-                    <div style={S.sub11mt}>
-                      {shoppingList.filter(i => !i.checked).length} vare{shoppingList.filter(i => !i.checked).length !== 1 ? "r" : ""} mangler
-                    </div>
-                  </div>
-                  <div style={UI.ufs16_cmuted2}>›</div>
-                </div>
-            </div>
-            )}
-
             <div style={{ flex:1, minHeight:20 }} />
-
-            {/* Vidste du at */}
-            {renderDailyTip()}
 
             {/* Version + Beta knap */}
             <div style={{ textAlign:"center", paddingTop:8, paddingBottom:12, display:"flex", flexDirection:"column", alignItems:"center", gap:8 }}>
