@@ -27,6 +27,8 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const [userSearchParam, setUserSearchParam] = useState("all");
   const [openSubmission, setOpenSubmission] = useState(null);
   const [submissionFilter, setSubmissionFilter] = useState("pending");
+  const [selectedSubmissionIds, setSelectedSubmissionIds] = useState([]);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [editingSubmission, setEditingSubmission] = useState(null);
   const [cleaningOcr, setCleaningOcr] = useState(false);
   const [cleanedOcrText, setCleanedOcrText] = useState(null);
@@ -657,6 +659,101 @@ export function useAdmin(accessToken, userId, clearAuth) {
     }
   };
 
+  const toggleSubmissionSelection = (id) => setSelectedSubmissionIds(ids =>
+    ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
+  );
+  const selectAllSubmissions = (ids) => setSelectedSubmissionIds(ids);
+  const clearSubmissionSelection = () => setSelectedSubmissionIds([]);
+
+  // Bulk-godkendelse/afvisning er en bevidst SLANKERE version af
+  // updateSubmissionAndApprove/rejectSubmission — ikke et loop der genbruger
+  // dem, fordi begge sluger deres egne fejl internt og viser individuelle
+  // toasts/lukker modaler, hvilket ville gøre det umuligt at tælle reelle
+  // succes/fejl på tværs af en bulk-batch. Sender IKKE navn/brand-override
+  // (submissions Edge Function's edit-gren patcher kun felter der rent
+  // faktisk sendes, så et eksisterende produkts data forbliver urørt), og
+  // springer push-notifikationer over for at holde en bulk-handling hurtig —
+  // AI-reparse'en efter hver godkendelse sikrer stadig korrekte
+  // allergen_flags uden manuel gennemgang.
+  const bulkApproveSubmissions = async () => {
+    const ids = [...selectedSubmissionIds];
+    if (ids.length === 0) return;
+    setBulkActionLoading(true);
+    let succeeded = 0, failed = 0;
+    for (const id of ids) {
+      const submission = submissions.find(s => s.id === id);
+      if (!submission) continue;
+      try {
+        const allergenFlags = {};
+        for (const a of ALLERGENS) {
+          const v = submission.ai_parsed_data?.[a.id];
+          if (v) allergenFlags[a.id] = v;
+        }
+        await apiCall(`${SUPABASE_URL}/functions/v1/submissions/${id}`, {
+          method: "PATCH",
+          headers: makeHeaders(accessToken),
+          body: JSON.stringify({
+            status: "approved", reviewed_by: userId,
+            name: submission.ai_parsed_data?.name,
+            brand: submission.ai_parsed_data?.brand,
+            ingredients_text: submission.ocr_raw_text,
+            allergen_flags: allergenFlags,
+          }),
+        });
+        const ean = submission.ean;
+        const ingredientsText = submission.ocr_raw_text || "";
+        if (ean && ingredientsText) {
+          try {
+            const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, {
+              method: "POST", headers: makeHeaders(accessToken),
+              body: JSON.stringify({ text: ingredientsText, force_ai: true }),
+            });
+            if (allergenData?.allergen_flags) {
+              await apiCall(`${SUPABASE_URL}/rest/v1/products?ean=eq.${ean}`, {
+                method: "PATCH", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+                body: JSON.stringify({ allergen_flags: allergenData.allergen_flags, allergen_quality: "high", reparsed_at: new Date().toISOString() }),
+              });
+            }
+          } catch (e) { console.warn("Bulk-reparse fejl:", e); }
+        }
+        succeeded++;
+      } catch (e) {
+        console.error("bulkApproveSubmissions:", id, e);
+        failed++;
+      }
+    }
+    setSubmissions(s => s.filter(x => !ids.includes(x.id)));
+    setSelectedSubmissionIds([]);
+    setBulkActionLoading(false);
+    showToast(failed > 0 ? `${succeeded} af ${ids.length} godkendt — ${failed} fejlede` : `${succeeded} indsendelser godkendt`, failed > 0 ? "error" : "success");
+    if (failed > 0) loadSubmissions(submissionFilter);
+  };
+
+  const bulkRejectSubmissions = async () => {
+    const ids = [...selectedSubmissionIds];
+    if (ids.length === 0) return;
+    setBulkActionLoading(true);
+    let succeeded = 0, failed = 0;
+    for (const id of ids) {
+      try {
+        await apiCall(`${SUPABASE_URL}/functions/v1/submissions/${id}`, {
+          method: "PATCH",
+          headers: makeHeaders(accessToken),
+          body: JSON.stringify({ status: "rejected", reviewed_by: userId }),
+        });
+        succeeded++;
+      } catch (e) {
+        console.error("bulkRejectSubmissions:", id, e);
+        failed++;
+      }
+    }
+    setSubmissions(s => s.filter(x => !ids.includes(x.id)));
+    setSelectedSubmissionIds([]);
+    setBulkActionLoading(false);
+    showToast(failed > 0 ? `${succeeded} af ${ids.length} afvist — ${failed} fejlede` : `${succeeded} indsendelser afvist`, failed > 0 ? "error" : "success");
+    if (failed > 0) loadSubmissions(submissionFilter);
+  };
+
   const updateTicketStatus = async (id, status) => {
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/feedback_tickets?id=eq.${id}`, {
@@ -781,5 +878,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
     knowledgeActionLoading, openKnowledgeEntryForEdit, openNewKnowledgeEntry,
     saveKnowledgeEntry, deleteKnowledgeEntry,
     revisionLog, revisionLogLoading, revisionLogFilter, setRevisionLogFilter, loadRevisionLog,
+    selectedSubmissionIds, toggleSubmissionSelection, selectAllSubmissions, clearSubmissionSelection,
+    bulkActionLoading, bulkApproveSubmissions, bulkRejectSubmissions,
   };
 }

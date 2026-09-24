@@ -15,6 +15,8 @@ export default function SubmissionsSection({
   openSubmission, setOpenSubmission, editingSubmission, setEditingSubmission,
   cleanedOcrText, cleaningOcr, cleanOcrWithAI,
   updateSubmissionAndApprove, rejectSubmission, accessToken,
+  selectedSubmissionIds, toggleSubmissionSelection, selectAllSubmissions, clearSubmissionSelection,
+  bulkActionLoading, bulkApproveSubmissions, bulkRejectSubmissions,
 }) {
   const [submitterInfo, setSubmitterInfo] = useState(null);
   const [submitterLoading, setSubmitterLoading] = useState(false);
@@ -78,13 +80,26 @@ export default function SubmissionsSection({
 
   const close = () => { setOpenSubmission(null); setEditingSubmission(null); setSubmitterInfo(null); };
 
+  const isPendingView = submissionFilter === "pending";
+  const allSelected = isPendingView && submissions.length > 0 && submissions.every(s => selectedSubmissionIds.includes(s.id));
+
   return (
     <>
-      <div className="admin-tabs">
-        {FILTERS.map(f => (
-          <button key={f.val} className={`admin-tab-btn${submissionFilter === f.val ? " active" : ""}`}
-            onClick={() => { setSubmissionFilter(f.val); loadSubmissions(f.val); }}>{f.label}</button>
-        ))}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div className="admin-tabs" style={{ marginBottom: 0 }}>
+          {FILTERS.map(f => (
+            <button key={f.val} className={`admin-tab-btn${submissionFilter === f.val ? " active" : ""}`}
+              onClick={() => { setSubmissionFilter(f.val); loadSubmissions(f.val); clearSubmissionSelection(); }}>{f.label}</button>
+          ))}
+        </div>
+        {isPendingView && selectedSubmissionIds.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 12, color: "var(--muted)" }}>{selectedSubmissionIds.length} valgt</span>
+            <button className="admin-btn admin-btn-primary admin-btn-sm" disabled={bulkActionLoading} onClick={bulkApproveSubmissions}>Godkend valgte</button>
+            <button className="admin-btn admin-btn-danger admin-btn-sm" disabled={bulkActionLoading} onClick={bulkRejectSubmissions}>Afvis valgte</button>
+            <button className="admin-btn admin-btn-ghost admin-btn-sm" disabled={bulkActionLoading} onClick={clearSubmissionSelection}>Ryd valg</button>
+          </div>
+        )}
       </div>
 
       <div className="admin-table-wrap">
@@ -94,7 +109,10 @@ export default function SubmissionsSection({
           <div className="admin-table-empty">Ingen indsendelser her</div>
         ) : (
           <table className="admin-table">
-            <thead><tr><th>ID</th><th>Produkt</th><th>EAN</th><th>Type</th><th>Allergener</th><th>Indsendt</th><th></th></tr></thead>
+            <thead><tr>
+              {isPendingView && <th style={{ width: 28 }}><input type="checkbox" checked={allSelected} onChange={e => selectAllSubmissions(e.target.checked ? submissions.map(s => s.id) : [])} /></th>}
+              <th>ID</th><th>Produkt</th><th>EAN</th><th>Type</th><th>Allergener</th><th>Indsendt</th><th></th>
+            </tr></thead>
             <tbody>
               {submissions.map(s => {
                 const flags = s.ai_parsed_data || {};
@@ -102,6 +120,11 @@ export default function SubmissionsSection({
                 const isEdit = s.type === "edit";
                 return (
                   <tr key={s.id} style={{ cursor: "pointer" }} onClick={() => openForReview(s)}>
+                    {isPendingView && (
+                      <td onClick={e => e.stopPropagation()}>
+                        <input type="checkbox" checked={selectedSubmissionIds.includes(s.id)} onChange={() => toggleSubmissionSelection(s.id)} />
+                      </td>
+                    )}
                     <td style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--muted)" }} title={s.id}>{s.id.slice(0, 8)}</td>
                     <td>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</td>
                     <td style={{ fontFamily: "var(--mono)" }}>{s.ean}</td>
