@@ -494,6 +494,64 @@ visuelle effekt. Fuld fejlfindingshistorik (de tre backtick-byggefejl i
 `theme.jsx`s CSS-kommentarer, den fulde årsagsanalyse af indefinit-højde-
 kæder) i `.claude/HISTORY.md`.
 
+**24. sept. 2026 — samme dag, nyt referencefoto + egen CTA-farvepalet til
+scan-knappen.** Brugeren delte et nyt, direkte uploadet baggrundsfoto
+(allergen-fødevarer i to kolonner på ren hvid baggrund — mælk/havre/æg/
+laks/rejer i venstre side, æggeskaller/mel/hvede/mandler/hasselnødder i
+højre side) samt et fuldt UI-referencedesign. Vist først som et interaktivt
+HTML-mockup (Artifact) til godkendelse, før den rigtige app blev ændret —
+se `.claude/HISTORY.md` for mockuppets fulde indhold og screenshots.
+Ændringer i `ScannerScreen.jsx`/`theme.jsx`:
+- **Nyt baggrundsfoto** erstatter det forrige (`src/assets/home/
+  scan-hero-bg.webp` overskrevet in-place, samme import uændret) — allerede
+  tæt på ren hvid i kilden (RGB ~250-254), ingen hvidbalance-korrektion
+  nødvendig denne gang.
+- **Scan-knappen fik sin egen farvepalet**, adskilt fra appens generelle
+  `--green`-token: primær `#0E8F5A`, mørk `#08734A`, halo `#DDF4E8` — kun
+  denne ene knap, resten af appens grønne elementer (bundnav, andre
+  primærknapper) er urørt.
+- **Halo-gløden bag knappen pulserer diskret i hvile** (`@keyframes
+  scan-halo-pulse`, 2.8s, skala 1→1.08 + opacity .75→.4) — kun haloen
+  pulserer, ikke selve knappen. Respekterer `prefers-reduced-motion`.
+- **Knappen er nu en rigtig `<button>`** (var tidligere en `<div role=
+  "button">` med manuel `tabIndex`/`onKeyDown`) — giver native tastatur-
+  aktivering gratis og gør `:active{transform:scale(.95)}`-tryk-feedback
+  pålideligt på touch-enheder (virker ikke troværdigt via CSS `:active` på
+  en almindelig div på iOS).
+- **Fjernet versionsnummeret** ("v1.0.6 · beta") fra forsiden. Fandt
+  undervejs at det var et hardkodet tal, ikke den faktiske `buildLabel`-
+  prop (`formatBuildTime()`) — et feltnavne-mismatch-mønster (se afsnit 5's
+  stående lektion) hvor et komponent-prop var beregnet, sendt ind, men
+  aldrig faktisk brugt. `buildLabel`-proppen er fjernet fra `ScannerScreen`
+  (var reelt ubrugt) — OnboardingScreen's egen, separate brug er urørt.
+- **"Prøv en demo-scanning"-knappen** (kun til konti <24 timer gamle) er
+  fjernet fra forsiden, inkl. den nu-ubrugte `runDemoScan`-callback i
+  `App.jsx` (den underliggende, testede `buildDemoScanResult`-hjælpefunktion
+  i `useProduct.js` er bevaret uændret — bruges/testes uafhængigt).
+  **"Prøv en demo"-pillen** (åbner app-guiden) er bevidst BEVARET, selvom
+  referencedesignet ikke viser den — fjernelse ville have gjort
+  `DemoSlider`-guiden helt utilgængelig (ingen andet indgangspunkt findes),
+  hvilket ikke var eksplicit bedt om. Flag dette til brugeren hvis det ikke
+  var hensigten.
+- **Bundmenuen er UÆNDRET** (Indkøbsliste/Scan/Søg) — referencedesignets
+  billede viste "Historik" som tredje punkt i stedet for "Søg", men
+  brugeren bekræftede eksplicit at bundmenuen skal forblive som den er, da
+  spørgsmålet blev stillet (hvor skulle Søg så bo, hvis fjernet).
+- **Reel bug fundet og rettet undervejs (ikke en del af denne rundes
+  oprindelige scope, men direkte i vejen):** kamerascanningens laser-linje-
+  animation (`animation:"laserMove ..."`) refererede et `@keyframes
+  laserMove` der aldrig var defineret i `theme.jsx` — linjen "animerede"
+  aldrig, den lå bare stille. Tilføjet den manglende keyframe. Samtidig
+  fundet at laser-linjen kunne nå at vises et øjeblik FØR kameraet reelt
+  var i gang med at afkode (`cameraActive` sættes i `useScanner.js`s
+  `startCamera` før `Html5Qrcode.start()`s promise er løst) — tilføjet et
+  nyt `scanReady`-state (sandt først når `.start()` reelt er løst) og
+  gatet laser-linjens rendering på det, i stedet for kun `cameraActive`.
+  Matcher brugerens eksplicitte krav: "scannerlinje må først vises, når
+  kameraet faktisk scanner."
+- Verificeret med Playwright-device-profiler (iPhone SE, iPhone 13) — nul
+  overflow, ingen overlap/klipning, farver/puls/knap-type som beskrevet.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,

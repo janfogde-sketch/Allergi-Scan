@@ -163,6 +163,7 @@ export default function ScannerScreen({
   showManualEan, setShowManualEan,
   showSafeOnly, setShowSafeOnly,
   cameraActive, setCameraActive,
+  scanReady,
   galleryInputRef,
   lastScannedRef,
   selectedENumbers,
@@ -184,10 +185,8 @@ export default function ScannerScreen({
   photoFallbackRef,
   scanPhotoForEan,
   setKnowledgeSlug,
-  buildLabel,
   lookupProduct,
   onBetaClick,
-  runDemoScan,
   alternatives,
   altLoading,
 }) {
@@ -202,12 +201,6 @@ export default function ScannerScreen({
   // ── Guide modal state ─────────────────────────────────────────────────────
   const [showGuide, setShowGuide] = React.useState(false);
   const [manualEanError, setManualEanError] = React.useState("");
-
-  // "Prøv en demo-scanning" er kun til nye brugere — forsvinder efter 1 døgn
-  // (målt fra kontoens created_at), så den ikke fylder unødigt for alle
-  // fremover. Fejler lukket (skjult) indtil created_at er hentet, for at
-  // undgå et kort glimt af knappen for etablerede brugere før data er inde.
-  const showDemoScan = !!(user.created_at && (Date.now() - new Date(user.created_at).getTime()) < 24 * 60 * 60 * 1000);
 
   // activeIds (kombinerede allergen-id'er for alle aktive profiler) kommer nu
   // som prop fra App.jsx' allActive() i stedet for at blive genberegnet her
@@ -281,14 +274,20 @@ export default function ScannerScreen({
                         borderRadius: key==="tl"?"4px 0 0 0":key==="tr"?"0 4px 0 0":key==="bl"?"0 0 0 4px":"0 0 4px 0",
                       }} />
                     ))}
-                    {/* Laser-linje */}
-                    <div style={{
-                      position:"absolute", left:4, right:4, height:2,
-                      background:"linear-gradient(90deg, transparent, var(--green), rgba(134,239,172,.8), var(--green), transparent)",
-                      boxShadow:"0 0 8px var(--green), 0 0 16px var(--green)",
-                      animation:"laserMove 1.8s ease-in-out infinite",
-                      top:0,
-                    }} />
+                    {/* Laser-linje — vises FØRST når kameraet reelt er i gang med at
+                        afkode (scanReady), ikke bare når cameraActive er sat. cameraActive
+                        bliver sat tidligere i useScanner.js's startCamera, mens html5-qrcode
+                        stadig er ved at åbne kamera-streamen — uden dette gate ville linjen
+                        kunne vises et øjeblik over et endnu ikke-levende kamerabillede. */}
+                    {scanReady && (
+                      <div style={{
+                        position:"absolute", left:4, right:4, height:2,
+                        background:"linear-gradient(90deg, transparent, var(--green), rgba(134,239,172,.8), var(--green), transparent)",
+                        boxShadow:"0 0 8px var(--green), 0 0 16px var(--green)",
+                        animation:"laserMove 1.8s ease-in-out infinite",
+                        top:0,
+                      }} />
+                    )}
                   </div>
                 </div>
 
@@ -357,29 +356,35 @@ export default function ScannerScreen({
                   </div>
                 </div>
 
-                {/* Stor cirkulær scan-knap med blød glød bagved */}
+                {/* Stor cirkulær scan-knap med diskret pulserende halo-glød bagved
+                    (.scan-cta-halo, theme.jsx) — haloen pulserer, IKKE selve knappen.
+                    Knappen selv er en rigtig <button> (ikke en div med role="button")
+                    for native tastatur-aktivering + pålidelig :active-tryk-feedback på
+                    touch-enheder (.scan-cta-btn:active, theme.jsx). */}
                 <div style={{ position:"absolute", top:"46%", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
                   <div style={{ position:"relative", width:"clamp(90px, 23cqh, 150px)", height:"clamp(90px, 23cqh, 150px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                    <div style={{ position:"absolute", inset:"clamp(-14px, -2.2cqh, -6px)", borderRadius:"50%",
-                      background:"radial-gradient(circle, rgba(23,138,80,.28) 0%, rgba(23,138,80,0) 72%)" }} aria-hidden="true" />
-                    <div
+                    <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-14px, -2.2cqh, -6px)", borderRadius:"50%",
+                      background:"radial-gradient(circle, #DDF4E8 0%, rgba(221,244,232,0) 70%)" }} aria-hidden="true" />
+                    <button
+                      className="scan-cta-btn"
                       onClick={() => startCamera()}
-                      role="button"
                       aria-label="Start kamera for at scanne stregkode"
-                      tabIndex={0}
-                      onKeyDown={e => e.key === "Enter" && startCamera()}
                       style={{ position:"relative", width:"clamp(84px, 21.5cqh, 140px)", height:"clamp(84px, 21.5cqh, 140px)", borderRadius:"50%", cursor:"pointer",
-                        background:"linear-gradient(150deg,#28B871 0%,#178A50 55%,#0C5A32 100%)",
-                        boxShadow:"0 14px 28px -12px rgba(23,138,80,.5)",
+                        border:"none", fontFamily:"var(--f)",
+                        background:"linear-gradient(160deg,#0E8F5A 0%,#08734A 100%)",
+                        boxShadow:"0 14px 28px -12px rgba(8,115,74,.55), inset 0 2px 3px rgba(255,255,255,.3)",
                         display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(4px, 1cqh, 7px)" }}>
                       <Icon name="barcode" size="clamp(20px, 4.3cqh, 29px)" color="#fff" />
                       <div style={{ fontSize:"clamp(9px, 1.6cqh, 11px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
-                    </div>
+                    </button>
                   </div>
                 </div>
 
-                {/* "Prøv en demo" + version/Beta-info — én flex-kolonne, garanteret
-                    uden indbyrdes overlap uanset boksens højde. */}
+                {/* "Prøv en demo" + Beta-information — én flex-kolonne, garanteret
+                    uden indbyrdes overlap uanset boksens højde. Versionsnummeret
+                    (tidligere "v1.0.6 · beta" her) er fjernet fra forsiden efter
+                    det nye referencedesign — stadig synligt inde på selve
+                    Beta-information-skærmen for den der har brug for det. */}
                 <div style={{ position:"absolute", top:"71.5%", left:0, right:0, bottom:"clamp(4px, 1cqh, 8px)", zIndex:2,
                   display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-start", gap:"clamp(4px, 1cqh, 8px)", padding:"0 12px", overflow:"hidden" }}>
                   <button onClick={() => setShowGuide(true)}
@@ -391,40 +396,24 @@ export default function ScannerScreen({
                     Prøv en demo
                     <Icon name="chevronRight" size="clamp(10px, 2cqh, 12px)" color="var(--muted2)" />
                   </button>
-                  <div style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
-                    <div style={{ fontSize:"clamp(8px, 1.3cqh, 9.5px)", fontWeight:600, color:"var(--ink2)", background:"rgba(255,255,255,.7)", padding:"2px 8px", borderRadius:100 }}>v1.0.6 · beta</div>
-                    <button onClick={onBetaClick}
-                      style={{ display:"inline-flex", alignItems:"center", gap:5,
-                        padding:"clamp(3px, .8cqh, 5px) clamp(7px, 1.8cqh, 11px)", borderRadius:100,
-                        background:"rgba(255,255,255,.82)", border:"1px solid var(--border)", boxShadow:"0 4px 12px -6px rgba(21,32,26,.3)",
-                        fontFamily:"var(--f)", fontSize:"clamp(8px, 1.3cqh, 9.5px)", fontWeight:700, color:"var(--green)", cursor:"pointer", letterSpacing:".2px" }}>
-                      Beta-information
-                    </button>
-                  </div>
+                  <button onClick={onBetaClick} style={{ flexShrink:0, display:"inline-flex", alignItems:"center", gap:5,
+                      padding:"clamp(3px, .8cqh, 5px) clamp(7px, 1.8cqh, 11px)", borderRadius:100,
+                      background:"rgba(255,255,255,.82)", border:"1px solid var(--border)", boxShadow:"0 4px 12px -6px rgba(21,32,26,.3)",
+                      fontFamily:"var(--f)", fontSize:"clamp(8px, 1.3cqh, 9.5px)", fontWeight:700, color:"var(--green)", cursor:"pointer", letterSpacing:".2px" }}>
+                    Beta-information
+                  </button>
                 </div>
               </div>
               )}
             </div>}
 
-            {/* Simuleret scan, fejlbesked og manuel EAN-input — sjældne/betingede
-                tilstande, kun vist ved behov. Pakket i en bund-sikret wrapper
-                (padding matchende den gennemsigtige bundnav) så de ikke kan
-                havne skjult/utrykbare bag den, nu hvor HOME-skærmens normale
-                110px bund-reserve er fjernet til fordel for hero-billedets
+            {/* Fejlbesked og manuel EAN-input — sjældne/betingede tilstande,
+                kun vist ved behov. Pakket i en bund-sikret wrapper (padding
+                matchende den gennemsigtige bundnav) så de ikke kan havne
+                skjult/utrykbare bag den, nu hvor HOME-skærmens normale 110px
+                bund-reserve er fjernet til fordel for hero-billedets
                 kant-til-kant-udfyldning ovenfor. */}
-            <div style={{ paddingBottom: (showDemoScan || scanError || showManualEan) ? "calc(77px + env(safe-area-inset-bottom) + 12px)" : 0 }}>
-            {/* Simuleret scan — prøv appen uden en rigtig stregkode ("Fase 7b.2").
-                Kun til nye brugere, forsvinder efter 1 døgn (se showDemoScan ovenfor). */}
-            {!!userId && !cameraActive && showDemoScan && (
-              <button onClick={runDemoScan}
-                style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-                  width:"100%", padding:"12px 14px", marginBottom:14,
-                  background:"var(--surface)", border:"1px dashed var(--border2)", borderRadius:14,
-                  fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
-                <Icon name="zap" size={15} color="var(--blue)" /> Prøv en demo-scanning
-              </button>
-            )}
-
+            <div style={{ paddingBottom: (scanError || showManualEan) ? "calc(77px + env(safe-area-inset-bottom) + 12px)" : 0 }}>
             {/* Fejlbesked + Manuel EAN — kun til loggede */}
             {!!userId && <>
             {/* Fejlbesked fra kamera */}

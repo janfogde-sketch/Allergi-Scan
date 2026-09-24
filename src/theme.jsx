@@ -196,6 +196,23 @@ body{
      13 — faste px-størrelser skalerede slet ikke med boksens egen højde. */
   container-type:size;
 }
+/* Hjem-forsidens store scan-CTA (24. sept. 2026-runde): egen farvepalet
+   (primær #0E8F5A, mørk #08734A, halo #DDF4E8) adskilt fra appens generelle
+   --green-token, bevidst — kun selve CTA'en skal bruge denne specifikke
+   nuance, resten af appens grønne elementer (bundnav, andre knapper) rører
+   vi ikke her. Haloen (den bløde glød bag knappen) pulserer diskret i hvile
+   via denne keyframe; selve knappen får kun tryk-feedback via :active
+   nedenfor, IKKE den løbende puls. */
+@keyframes scan-halo-pulse{
+  0%,100%{transform:scale(1);opacity:.75;}
+  50%{transform:scale(1.08);opacity:.4;}
+}
+.scan-cta-halo{animation:scan-halo-pulse 2.8s ease-in-out infinite;}
+.scan-cta-btn{transition:transform .12s cubic-bezier(.34,1.56,.64,1);}
+.scan-cta-btn:active{transform:scale(.95);}
+@media (prefers-reduced-motion: reduce){
+  .scan-cta-halo{animation:none;}
+}
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
   width:100%;max-width:480px;
@@ -504,6 +521,7 @@ body{
   90%{opacity:1;}
   100%{transform:translateY(0);opacity:0;}
 }
+@keyframes laserMove{0%{top:0;}50%{top:96px;}100%{top:0;}}
 .scan-loading-txt{font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.1px;text-align:center;}
 .scan-loading-sub{font-size:12.5px;color:var(--muted);text-align:center;margin-top:2px;}
 .scroll-top-btn{
