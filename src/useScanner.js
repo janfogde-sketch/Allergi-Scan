@@ -9,8 +9,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compressImageToBase64, isValidEanChecksum } from "./helpers.js";
+import { SUPABASE_URL } from "./constants.jsx";
+import { compressImageToBase64, isValidEanChecksum, apiCall, makeHeaders } from "./helpers.js";
 
 export function useScanner({ setScanError, setLoading, onScanSuccess, accessToken }) {
   // ── Kamera-state ──────────────────────────────────────────────────────────
@@ -242,17 +242,11 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       // Trin 2: Claude Vision via OCR Edge Function
       const base64 = await compressImageToBase64(file);
 
-      const ocrRes = await fetch(`${SUPABASE_URL}/functions/v1/ocr`, {
+      const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": SUPABASE_ANON_KEY,
-          ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
-        },
+        headers: makeHeaders(accessToken),
         body: JSON.stringify({ image_base64: base64, mode: "ean_from_image" }),
       });
-
-      const ocrData = await ocrRes.json();
       const rawText = ocrData.text || ocrData.ean || "";
       // Vision-OCR kan fejllæse et enkelt ciffer, så tjek EAN-checksummen
       // før vi bruger tallet — ellers risikerer vi et opslag på et forkert

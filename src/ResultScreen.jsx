@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compareENumbers, checkDietCompatibility, verifiedBadge, makeHeaders, productDisplayName } from "./helpers.js";
+import { compareENumbers, checkDietCompatibility, verifiedBadge, makeHeaders, productDisplayName, matchCustomAllergens } from "./helpers.js";
 import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -31,8 +31,8 @@ export default function ResultScreen({
   altLoading,
   lookupProduct,
 }) {
-  const { user } = useAuthContext();
-  const { family, allergens, activeProfiles } = useProfileContext();
+  const { user, accessToken } = useAuthContext();
+  const { family, allergens, customAllerg, activeProfiles } = useProfileContext();
   const { setScreen } = useNavigationContext();
   const { isFavorite, toggleFavorite } = useHistoryContext();
   const { lists, activeListId, addToList } = useShoppingContext();
@@ -206,9 +206,9 @@ export default function ResultScreen({
   const renderSafetyDiet = () => {
     const flags = scanResult.allergen_flags || {};
     const profiles = [
-      { id:"me", name: user.name||"Dig", allergens, diets: user.diets || [], eNumbers: selectedENumbers || [] },
+      { id:"me", name: user.name||"Dig", allergens, custom: customAllerg || [], diets: user.diets || [], eNumbers: selectedENumbers || [] },
       ...family.filter(m => activeProfiles.includes(m.id)).map(m => ({
-        ...m, allergens: m.allergens || [], diets: m.diets || [], eNumbers: m.eNumbers || [],
+        ...m, allergens: m.allergens || [], custom: m.custom || [], diets: m.diets || [], eNumbers: m.eNumbers || [],
       })),
     ];
     const tagLabels = { vegan:"Vegansk", vegetarian:"Vegetarisk", "palm-oil-free":"Uden palmeolie", "gluten-free":"Glutenfri", organic:"Økologisk" };
@@ -241,15 +241,19 @@ export default function ResultScreen({
           {profiles.map((p) => {
             const danger  = p.allergens.filter(a => flags[a] === "yes");
             const warning = p.allergens.filter(a => flags[a] === "traces");
+            // Fritekst-match af profilens egne tilføjede allergier — se
+            // matchCustomAllergens' egen kommentar for hvorfor dette er mindre
+            // pålideligt end de faste allergener (ingen synonymer).
+            const customMatches = p.custom?.length ? matchCustomAllergens(scanResult.ingredients, p.custom) : [];
             const dietResults = (p.diets || []).map(d => ({
               id: d,
               ...checkDietCompatibility(d, flags, scanResult.ingredients, scanResult.nutrition),
             }));
             const dietFails = dietResults.filter(r => r.ok === false);
             const dietMatch = p.diets && p.diets.length > 0 ? dietFails.length === 0 : null;
-            const status = danger.length > 0 ? "danger" : warning.length > 0 ? "warn" : dietMatch === false ? "warn" : "safe";
-            const statusText = danger.length > 0
-              ? danger.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
+            const status = (danger.length > 0 || customMatches.length > 0) ? "danger" : warning.length > 0 ? "warn" : dietMatch === false ? "warn" : "safe";
+            const statusText = (danger.length > 0 || customMatches.length > 0)
+              ? [...danger.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean), ...customMatches.map(t => `"${t}"?`)].join(", ")
               : warning.length > 0
               ? "Spor: " + warning.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
               : dietMatch === false ? dietFails[0]?.reasons?.[0] || "Passer ikke til diæt"
@@ -460,6 +464,14 @@ export default function ResultScreen({
   return (
     <div className="screen fade-in">
 
+      {/* Demo-banner — kun for "Prøv en demo-scanning" på HOME, aldrig et rigtigt scan */}
+      {scanResult.isDemo && (
+        <div style={{ display:"flex", alignItems:"center", gap:8, background:"var(--blue-lt)", border:"1px solid var(--blue-md)", borderRadius:10, padding:"8px 12px", marginBottom:10 }}>
+          <Icon name="zap" size={13} color="var(--blue)" />
+          <span style={{ fontSize:11, fontWeight:700, color:"var(--blue)" }}>Demo — dette er ikke et rigtigt scan, men viser hvordan resultatet ser ud for dig</span>
+        </div>
+      )}
+
       {/* ── 1. PRODUKT — verdikten sidder nu som en ramme + strimmel på selve kortet ── */}
       {renderProductHero()}
 
@@ -536,6 +548,11 @@ export default function ResultScreen({
             <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
               Fremhævet = allergen · Listen kan være på originalsprog — tjek altid selv
             </div>
+            {customAllerg?.length > 0 && (
+              <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", marginTop:6, background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
+                Dine egne tilføjede allergier tjekkes via fritekst-søgning her i ingredienslisten — det kan være sværere for os at fange end vores faste allergener. Dobbelttjek altid selv, og sig endelig til hvis vi overser noget — vi udvider løbende vores allergen-liste.
+              </div>
+            )}
           </div>
         ) : (
           <div style={{ paddingTop:4 }}>
@@ -570,13 +587,16 @@ export default function ResultScreen({
       )}
       {scanResult.nutrition && renderNutrition()}
 
-      {/* ── 7. RET DATA — mindre vigtig handling, holdt nederst ── */}
-      <div style={UI.mb10}>
-        <button className="btn btn-outline btn-sm btn-full"
-          onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients||""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
-          Ret forkerte data
-        </button>
-      </div>
+      {/* ── 7. RET DATA — mindre vigtig handling, holdt nederst. Ikke relevant
+          for demo-scanningen, som ikke er et rigtigt produkt i databasen. ── */}
+      {!scanResult.isDemo && (
+        <div style={UI.mb10}>
+          <button className="btn btn-outline btn-sm btn-full"
+            onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients||""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
+            Ret forkerte data
+          </button>
+        </div>
+      )}
 
     </div>
   );

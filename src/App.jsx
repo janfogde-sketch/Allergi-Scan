@@ -12,14 +12,14 @@ import {
 
 import {
   initials, timeAgo, getAllergenLabels, verifiedBadge,
-  makeHeaders, apiCall, compareAllergens,
-  extractENumbers, compareENumbers,
-  traceId, traceLog, getTraceLog
+  makeHeaders, apiCall,
+  getTraceLog
 } from "./helpers.js";
 
 import {
   EatSafeLogo, Icon, IngredientsList, ProfileBadges,
-  getProductIcon, ProductImage, LazyFallback, ToastHost, showToast
+  getProductIcon, ProductImage, LazyFallback, ToastHost, showToast,
+  ScanLoadingOverlay
 } from "./SharedComponents.jsx";
 
 import { ENumberPicker } from "./AllergenPicker.jsx";
@@ -34,7 +34,7 @@ const KnowledgeScreen = React.lazy(() => import('./KnowledgeScreen.jsx'));
 const FeedbackModal = React.lazy(() => import('./FeedbackModal.jsx'));
 const ProfileMenu = React.lazy(() => import('./ProfileMenu.jsx'));
 import ErrorBoundary from './ErrorBoundary.jsx';
-import { useOffline, saveToOfflineCache, getFromOfflineCache } from './useOffline.js';
+import { useOffline } from './useOffline.js';
 
 import { appCss } from './theme.jsx';
 import { BUILD_TIME, COMMIT_SHA, formatBuildTime, buildScreenLabel } from './utils.jsx';
@@ -46,7 +46,7 @@ import { useOnboarding } from './useOnboarding.js';
 import { useAdmin } from './useAdmin.js';
 import { useScanner } from './useScanner.js';
 import { useRecipes } from './useRecipes.js';
-import { useProduct } from './useProduct.js';
+import { useProduct, runLookupProduct, buildDemoScanResult } from './useProduct.js';
 import { useMadpas } from './useMadpas.js';
 import { useSearch } from './useSearch.js';
 import { useAlternatives } from './useAlternatives.js';
@@ -60,6 +60,9 @@ import { FamilyFormProvider } from './FamilyFormContext.jsx';
 import { AllergenPrefsProvider } from './AllergenPrefsContext.jsx';
 import { UI } from "./styleUtils.js";
 import InstallPrompt from "./InstallPrompt.jsx";
+import HelpModal from "./HelpModal.jsx";
+import BetaIntroModal from "./BetaIntroModal.jsx";
+import DeleteAccountModal from "./DeleteAccountModal.jsx";
 
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
@@ -80,8 +83,6 @@ export default function EatSafe() {
   // Scan state
   const [showIng, setShowIng] = useState(true); // Automatisk åben
   const [showNutrition, setShowNutrition] = useState(false);
-  const [barcodeInput, setBarcodeInput] = useState("");
-  const productCacheRef = useRef({}); // Cache af seneste 50 scannede produkter
   const [profilePopup, setProfilePopup] = useState(null); // id af profil der vises popup for
   const [knowledgeSlug, setKnowledgeSlug] = useState(null);
 
@@ -114,7 +115,6 @@ export default function EatSafe() {
   // Auth form
 
   // NOT FOUND flow
-  const [editSubmitting, setEditSubmitting] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackDone, setFeedbackDone] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -168,7 +168,7 @@ export default function EatSafe() {
     authTab, setAuthTab, isOAuth, setIsOAuth,
     saveTokens, clearAuth, handleLogin, handleSignup, handleOAuth,
   } = useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
-                onSignupSuccess: () => setOnboardStep(0) });
+                onSignupSuccess: () => setOnboardStep(1) });
 
   const {
     lists, activeList, activeListId, setActiveListId,
@@ -299,14 +299,21 @@ export default function EatSafe() {
     // Accepter invitation via RPC
     const acceptInvite = async () => {
       try {
-        // Hent invited_by inden accept så vi kan sende push
+        // Hent invited_by inden accept så vi kan sende push — via
+        // get_invite_preview()-RPC'en, ikke en direkte tabel-læsning (se
+        // RPC'ens egen kommentar: en bred SELECT-policy på family_invites
+        // ville lade enhver dumpe alle aktive invitations-tokens).
         let invitedBy = null;
         try {
           const inviteData = await apiCall(
-            `${SUPABASE_URL}/rest/v1/family_invites?token=eq.${inviteToken}&select=invited_by`,
-            { headers: makeHeaders(accessToken) }
+            `${SUPABASE_URL}/rest/v1/rpc/get_invite_preview`,
+            {
+              method: "POST",
+              headers: makeHeaders(accessToken),
+              body: JSON.stringify({ p_token: inviteToken }),
+            }
           );
-          invitedBy = Array.isArray(inviteData) ? inviteData[0]?.invited_by : null;
+          invitedBy = inviteData?.found ? inviteData.invited_by : null;
         } catch { /* silent */ }
 
         const data = await apiCall(
@@ -416,6 +423,8 @@ export default function EatSafe() {
 
   const [notFoundEan, setNotFoundEan] = useState("");
   const {
+    productCacheRef,
+    scanTokenRef,
     scanResult, setScanResult,
     loading, setLoading,
     scanError, setScanError,
@@ -465,7 +474,7 @@ export default function EatSafe() {
       try {
         // Brugerprofil
         const profile = await apiCall(
-          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,onboarding_completed,diets,e_numbers&limit=1`,
+          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,onboarding_completed,diets,e_numbers,created_at&limit=1`,
           { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
         );
         if (Array.isArray(profile) && profile[0]) {
@@ -480,6 +489,7 @@ export default function EatSafe() {
             gender: p.gender || "",
             role: p.role || "user",
             diets: p.diets || [],
+            created_at: p.created_at || u.created_at || "",
           }));
           setSelectedENumbers(p.e_numbers || []);
         }
@@ -547,16 +557,25 @@ export default function EatSafe() {
   const allActive = useCallback(() => {
     const ids = new Set(activeProfiles.includes("me") ? allergens : []);
     const eNums = new Set(activeProfiles.includes("me") ? selectedENumbers : []);
+    // custom byggedes tidligere altid ud fra customAllerg ("mig"), uanset om
+    // "mig" rent faktisk var en aktiv profil — og familiemedlemmers egne
+    // custom-allergier (m.custom) blev slet aldrig medtaget. Det betyder at
+    // en custom-allergi tilføjet på et familiemedlem aldrig indgik i scan-
+    // verdikten, og "mig"s custom-allergier lækkede ind selv når kun et
+    // familiemedlem var valgt. Rettet så custom nu følger samme
+    // aktiv-profil-logik som allergens/eNumbers herover.
+    const custom = new Set(activeProfiles.includes("me") ? customAllerg : []);
     family.filter(m => activeProfiles.includes(m.id)).forEach(m => {
       (m.allergens || []).forEach(a => ids.add(a));
       (m.eNumbers || []).forEach(e => eNums.add(e));
+      (m.custom || []).forEach(c => custom.add(c));
     });
-    return { ids: [...ids], custom: [...customAllerg], eNumbers: [...eNums] };
+    return { ids: [...ids], custom: [...custom], eNumbers: [...eNums] };
   }, [allergens, customAllerg, selectedENumbers, family, activeProfiles]);
 
   // allActive() rebygger Sets og looper family — kaldes kun én gang og
   // destructures i stedet for to separate kald der hver genberegner det samme
-  const { ids: activeIds, eNumbers: activeENumbers } = allActive();
+  const { ids: activeIds, custom: activeCustom, eNumbers: activeENumbers } = allActive();
 
   
   // ── SCANNER ───────────────────────────────────────────────────────────────
@@ -602,144 +621,6 @@ export default function EatSafe() {
   // Ref der altid peger på den seneste lookupProduct (undgår TDZ-cirkulær afhænighed)
   const lookupProductRef = useRef(null);
 
-const lookupProduct = useCallback(async (ean) => {
-    if (!ean?.trim()) return;
-    if (navigator.vibrate) navigator.vibrate(40);
-    const tid = traceId("scan");
-    traceLog(tid, "scan:start", { ean: ean.trim() });
-    const cached = productCacheRef.current[ean.trim()] || getFromOfflineCache(ean.trim());
-    if (cached) {
-      traceLog(tid, "scan:cache-hit");
-      setScanResult(cached); setScreen(SCREENS.RESULT);
-      // Alternativer er IKKE en del af det cachede result-objekt — uden dette
-      // genbruger et cache-hit bare hvad end alternatives-state tilfældigvis
-      // stod på fra en tidligere scanning i samme session (eller intet, hvis
-      // det er appens første scanning), i stedet for at vise de rigtige
-      // alternativer til DETTE produkt.
-      if (cached.status === "danger" || cached.status === "warn") {
-        loadAlternatives(cached.category, ean.trim());
-      } else {
-        clearAlternatives();
-      }
-      return;
-    }
-    // Offline uden cache — vis besked
-    if (!navigator.onLine) {
-      setScanError("Du er offline og dette produkt er ikke i den lokale cache.");
-      setLoading(false); return;
-    }
-    setLoading(true); setScanResult(null); setScanError(""); setShowIng(false);
-    try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/products/${ean.trim()}`, {
-        headers: makeHeaders(accessToken),
-      });
-      traceLog(tid, "scan:product-response", { found: data.found, name: data.product?.name });
-      if (!data.found) {
-        traceLog(tid, "scan:not-found");
-        setNotFoundEan(ean.trim());
-        await saveHistoryEntry(ean.trim(), null, "not_found", {}, activeProfiles);
-        setLoading(false); setScreen(SCREENS.NOTFOUND); setNotFoundStep(1);
-        setOcrText(""); setProposedName("");
-        setProposedFlags(Object.fromEntries(ALLERGENS.map(a => [a.id, false])));
-        setProductImagePreview(null); setProductImageBase64(null);
-        return;
-      }
-      let product = data.product;
-      const variantLabel = product.variant_label || null;
-
-      // ── Canonical opslag: hent allergen-data fra master-produkt ──────────
-      if (product.canonical_ean) {
-        try {
-          const canonicalData = await apiCall(
-            `${SUPABASE_URL}/rest/v1/products?ean=eq.${product.canonical_ean}&select=allergen_flags,ingredients,nutrition,verified_status,source&limit=1`,
-            { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-          );
-          if (Array.isArray(canonicalData) && canonicalData[0]) {
-            const c = canonicalData[0];
-            // Behold variant-navn men brug canonical allergen-data
-            product = {
-              ...product,
-              allergen_flags: c.allergen_flags || product.allergen_flags,
-              ingredients: c.ingredients || product.ingredients,
-              nutrition: c.nutrition || product.nutrition,
-              verified_status: c.verified_status || product.verified_status,
-              source: c.source || product.source,
-            };
-          }
-        } catch { /* Brug variant-data som fallback */ }
-      }
-
-      const flags = product.allergen_flags || data.allergen_flags || {};
-      const { status: rawStatus, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(flags, activeIds);
-      // Data mangler for ét eller flere af dine allergener ("unknown"-felter) — vis
-      // det IKKE som et trygt grønt "sikkert produkt". Uden dette nedgraderes en
-      // reel datamangel aldrig til noget brugeren faktisk ser (fundet ved en
-      // sikkerhedsgennemgang: samme UI blev vist for "bekræftet sikkert" og
-      // "vi ved det faktisk ikke").
-      const isUnsafeUnknown = rawStatus === "safe" && hasUnknown;
-      const status = isUnsafeUnknown ? "warn" : rawStatus;
-
-      // Udtræk E-numre fra ingredienstekst
-      const ingredientsText = product.ingredients || data.ingredients?.raw_text || product.ingredients_text || "";
-      const productENumbers = extractENumbers(ingredientsText);
-      const { matched: matchedENumbers } = compareENumbers(productENumbers, activeENumbers);
-
-      const flagList = [
-        ...matchedDanger.map(id => ({ type:"bad", text:`Indeholder ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
-        ...matchedWarning.map(id => ({ type:"maybe", text:`Kan indeholde spor af ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
-        ...(hasUnknown ? [{ type:"maybe", text:"Visse allergener er ukendte — tjek altid pakken" }] : []),
-        ...(matchedDanger.length===0 && matchedWarning.length===0 && !hasUnknown ? [{ type:"good", text:"Ingen af dine allergener fundet" }] : []),
-        ...(matchedENumbers.length > 0 ? [{ type:"maybe", text:`Indeholder overvågede E-numre: ${matchedENumbers.join(", ")}` }] : []),
-      ];
-      const headlines = { safe:"Sikkert produkt", danger:"Indeholder allergen", warn: isUnsafeUnknown ? "Kan ikke bekræftes sikkert" : "Mulige spor" };
-      const summaries = {
-        safe:"Ingen af dine registrerede allergener er fundet i dette produkt.",
-        danger:`Produktet indeholder ${matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
-        warn: isUnsafeUnknown
-          ? "Vi mangler data for ét eller flere af dine allergener i dette produkt — tjek selv emballagen før du spiser det."
-          : `Produktet kan indeholde spor af ${matchedWarning.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
-      };
-      const familyImpact = [];
-      if (family.length > 0) {
-        for (const member of family.filter(m => activeProfiles.includes(m.id))) {
-          const memberResult = compareAllergens(flags, member.allergens || []);
-          if (memberResult.matchedDanger.length > 0 || memberResult.matchedWarning.length > 0) {
-            familyImpact.push({ name:member.name, color:member.color, danger:memberResult.matchedDanger, warning:memberResult.matchedWarning });
-          }
-        }
-      }
-      const result = {
-        code: ean.trim(), name: product.name || "Ukendt produkt", brand: product.brand || "",
-        variant_label: variantLabel,
-        image_url: product.image_url || null, category: product.category || null,
-        ingredients: ingredientsText,
-        productENumbers,
-        nutrition: product.nutrition || data.nutrition || null,
-        verified_status: product.verified_status || "unverified", source: product.source || data.source,
-        status, headline: headlines[status], summary: summaries[status],
-        flags: flagList, allergen_flags: flags, matchedDanger, matchedWarning, matchedENumbers, familyImpact, hasUnknown,
-        timestamp: Date.now(),
-      };
-      productCacheRef.current[ean.trim()] = result;
-      saveToOfflineCache(ean.trim(), result);
-      const cacheKeys = Object.keys(productCacheRef.current);
-      if (cacheKeys.length > 50) delete productCacheRef.current[cacheKeys[0]];
-      traceLog(tid, "scan:result", { ean: ean.trim(), name: result.name, status, matchedDanger, matchedWarning });
-      setScanResult(result);
-      setHistory(h => [result, ...h].slice(0, 50));
-      await saveHistoryEntry(ean.trim(), product.id, status, flags, activeProfiles);
-      // Hent alternativer hvis produktet er farligt eller har spor
-      if (status === "danger" || status === "warn") {
-        loadAlternatives(result.category, ean.trim());
-      } else {
-        clearAlternatives();
-      }
-      setScreen(SCREENS.RESULT);
-    } catch (e) { traceLog(tid, "scan:error", { error: e.message }); setScanError("Der opstod en fejl. Tjek din forbindelse og prøv igen."); }
-    setLoading(false);
-  }, [accessToken, activeIds]);
-  lookupProductRef.current = lookupProduct;
-
 // ── SØGNING → useSearch hook ────────────────────────────────────────────────
   const { searchQuery, setSearchQuery, searchCategory, setSearchCategory,
           searchResults, setSearchResults, searchLoading,
@@ -747,10 +628,39 @@ const lookupProduct = useCallback(async (ean) => {
 
   const { alternatives, altLoading, loadAlternatives, clearAlternatives } = useAlternatives({ accessToken, activeIds });
 
+  // Selve scan-resultat-pipelinen (opslag/allergen-match/familie-impact/
+  // cache/historik/alternativer) er flyttet til useProduct.js' runLookupProduct
+  // — denne wrapper sender blot alt afhængigt state med som ctx ved hvert kald,
+  // så der (i modsætning til før) ALDRIG kan opstå en stale-closure-bug fra en
+  // ufuldstændig deps-liste.
+  const lookupProduct = useCallback((ean) => runLookupProduct(ean, {
+    accessToken, activeIds, activeCustom, activeENumbers, family, activeProfiles,
+    productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
+    setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
+    setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
+    setProductImagePreview, setProductImageBase64,
+  }), [accessToken, activeIds, activeCustom, activeENumbers, family, activeProfiles,
+       productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
+       setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
+       setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
+       setProductImagePreview, setProductImageBase64]);
+  lookupProductRef.current = lookupProduct;
+
+  // ── Simuleret scan (Fase 7b.2) — "Prøv en demo-scanning" på HOME ────────
+  // Ingen netværk, ingen historik-gemning — kører kun gennem den delte
+  // resultat-beregning (buildDemoScanResult), så resultatet er personligt
+  // (matcher brugerens rigtige aktive allergener) uden at røre rigtige data.
+  const runDemoScan = useCallback(() => {
+    const result = buildDemoScanResult({ activeIds, activeCustom, activeENumbers, family, activeProfiles });
+    setScanResult(result);
+    setScreen(SCREENS.RESULT);
+    if (navigator.vibrate) navigator.vibrate(25);
+  }, [activeIds, activeCustom, activeENumbers, family, activeProfiles, setScanResult, setScreen]);
+
   // ── COMPUTED (afhænger af hooks) ─────────────────────────────────────────
   const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
   const mpAllergens = madpasActiveProfile ? (madpasActiveProfile.allergens || []) : allergens;
-  const mpCustom = madpasActiveProfile ? (madpasActiveProfile.customAllerg || []) : customAllerg;
+  const mpCustom = madpasActiveProfile ? (madpasActiveProfile.custom || []) : customAllerg;
 
   // ── Android tilbageknap ─────────────────────────────────────────────────────
   React.useEffect(() => {
@@ -879,204 +789,6 @@ const lookupProduct = useCallback(async (ean) => {
     activeSubtypeModal, setActiveSubtypeModal,
   }), [eSearch, eCategory, allergenSubtypes, selectedENumbers, activeSubtypeModal]);
 
-  const renderHelpModal = () => {
-    const helpContent = {
-      "home": { title:"Scanner", titleIcon:"camera", tips:[
-        { icon:"barcode", title:"Skan stregkode", desc:"Tryk på det grønne scan-felt for at åbne kameraet, og hold det roligt over stregkoden. Appen scanner automatisk." },
-        { icon:"search", title:"Søg produkter", desc:"Kan du ikke scanne? Brug genvejen 'Søg produkter' længere nede på skærmen til at finde varer ved navn." },
-        { icon:"hash", title:"Indtast manuelt", desc:"Har du kun tallene fra stregkoden? Tryk 'Indtast EAN-nummer manuelt' under scan-feltet." },
-        { icon:"zap", title:"Hurtig scanning", desc:"God belysning og rolig hånd giver hurtigere og mere præcist resultat." },
-        { icon:"list", title:"Historik", desc:"Dine seneste scanninger gemmes automatisk — find dem under Profil." },
-      ]},
-      "recipes": { title:"Opskrifter", titleIcon:"recipes", tips:[
-        { icon:"search", title:"Søg og filtrer", desc:"Søg på navn eller vælg kategori. Slå 'Kun sikre' til for at skjule opskrifter med dine allergener." },
-        { icon:"heart", title:"Favoritter", desc:"Tryk hjerte-ikonet for at gemme en opskrift til Favoritter-fanen." },
-        { icon:"profile", title:"Portionsjustering", desc:"Åbn en opskrift og tryk + / − for at skalere ingredienser automatisk." },
-        { icon:"cart", title:"Indkøbsliste", desc:"Tryk 'Tilføj til indkøbsliste' for at sende ingredienser direkte til din liste." },
-      ]},
-      "search": { title:"Søg produkter", titleIcon:"search", tips:[
-        { icon:"profile", title:"Filtrér efter profil", desc:"Vælg hvilke profiler resultaterne skal tjekkes op imod, øverst på siden." },
-        { icon:"edit", title:"Allergener og kategori", desc:"Fold 'Allergener' ud for at tilføje ekstra allergener manuelt, eller indsnævr til én kategori — begge sidder lige over søgefeltet." },
-        { icon:"cart", title:"Tilføj til liste", desc:"Tryk '+ Liste' på et resultat for at sende det direkte til din indkøbsliste." },
-      ]},
-      "list": { title:"Indkøbsliste", titleIcon:"cart", tips:[
-        { icon:"list", title:"Flere lister", desc:"Tryk på listenavnet øverst for at skifte mellem lister eller oprette en ny." },
-        { icon:"link", title:"Del listen", desc:"Tryk 'Del' for at give hele husstanden, udvalgte personer, eller alle med et link adgang til listen." },
-        { icon:"edit", title:"Tilføj varer", desc:"Skriv en vare og tryk Tilføj — eller send direkte fra en opskrift eller et søgeresultat." },
-        { icon:"check", title:"Afkryds og ryd", desc:"Tryk på en vare for at markere den som købt, og brug 'Ryd' for at fjerne alle købte varer på én gang." },
-      ]},
-      "profile": { title:"Profil", titleIcon:"profile", tips:[
-        { icon:"edit", title:"Mine præferencer", desc:"Allergier, diæter og E-numre du overvåges for — tryk 'Rediger' for at ændre dem." },
-        { icon:"family", title:"Din husstand", desc:"Konti du har inviteret deler automatisk scanningshistorik, favoritter og indkøbslister med dig." },
-        { icon:"list", title:"Mine / Husstanden", desc:"Under historik og favoritter kan du skifte mellem kun dine egne og hele husstandens." },
-      ]},
-      "family": { title:"Familie", titleIcon:"family", tips:[
-        { icon:"👶", title:"Allergiprofiler", desc:"Opret en profil for familiemedlemmer uden egen konto (fx et barn) — aktivér dem for at tjekke deres allergier ved scanning." },
-        { icon:"home", title:"Din husstand", desc:"Rigtige konti du har inviteret deler automatisk data. Kun den der sendte invitationen kan fjerne forbindelsen igen." },
-        { icon:"link", title:"Invitér via link", desc:"Del linket med en voksen i familien — når de opretter en konto via linket, bliver I automatisk en husstand." },
-      ]},
-      "result": { title:"Scanningsresultat", titleIcon:"package", tips:[
-        { icon:"🚦", title:"Farvet ramme", desc:"Grøn = sikkert, gul = advarsel, rød = farligt — vurderet ud fra dine aktive profiler." },
-        { icon:"check", title:"Sikre alternativer", desc:"Ved advarsel eller fare foreslår vi sikre alternativer i samme kategori, du kan trykke direkte på." },
-        { icon:"book", title:"Tryk på en ingrediens", desc:"Åbner leksikonet med forklaring på allergener, E-numre og tilsætningsstoffer." },
-        { icon:"heart", title:"Favorit og del", desc:"De to runde knapper øverst på billedet gemmer produktet som favorit eller deler det." },
-        { icon:"edit", title:"Ret forkerte data", desc:"Mangler eller fejler noget? Tryk 'Ret forkerte data' nederst for at foreslå en rettelse." },
-      ]},
-      "history": { title:"Scanningshistorik", titleIcon:"list", tips:[
-        { icon:"family", title:"Mine / Husstanden", desc:"Skift mellem kun dine egne scanninger og hele husstandens, hvis du har en." },
-        { icon:"👆", title:"Åbn en scanning", desc:"Tryk på en linje for at se det fulde resultat igen." },
-      ]},
-      "favorites": { title:"Favoritter", titleIcon:"star", tips:[
-        { icon:"heart", title:"Gem favoritter", desc:"Tryk hjerte-ikonet på et produkt under scanning for at gemme det her." },
-        { icon:"family", title:"Mine / Husstanden", desc:"Se dine egne favoritter eller hele husstandens delte favoritter." },
-        { icon:"x", title:"Fjern", desc:"Du kan kun fjerne dine egne favoritter herfra — ikke andres." },
-      ]},
-      "madpas": { title:"Madpas", titleIcon:"globe", tips:[
-        { icon:"globe", title:"Vælg sprog", desc:"Vælg sproget for landet du besøger. EatSafe oversætter dine allergier automatisk." },
-        { icon:"list", title:"Vis til tjeneren", desc:"Tryk 'Vis til tjener' for en stor, tydelig skærm du kan vise restaurantpersonalet." },
-        { icon:"speaker", title:"Oplæsning", desc:"Tryk højttalerikonet for at høre udtalen på det lokale sprog." },
-      ]},
-      "editprofile": { title:"Rediger profil", titleIcon:"edit", tips:[
-        { icon:"warning", title:"Allergier og intolerancer", desc:"Tryk for at slå en allergi til eller fra. Har du en der ikke står på listen? Tilføj den under 'Andre allergier'." },
-        { icon:"package", title:"Diæter", desc:"Vælg diæter (fx vegansk, glutenfri), som produkter og opskrifter tjekkes op imod." },
-        { icon:"hash", title:"E-numre", desc:"Vælg specifikke E-numre du vil overvåges for, ud over dine allergier." },
-      ]},
-      "suggest_edit": { title:"Foreslå rettelse", titleIcon:"edit", tips:[
-        { icon:"camera", title:"Ingrediensliste", desc:"Fotografér etiketten og lad OCR læse teksten, eller ret ingredienserne manuelt." },
-        { icon:"clock", title:"Godkendelse", desc:"Dit forslag gennemgås, før ændringen bliver synlig for andre brugere." },
-      ]},
-      "notfound": { title:"Tilføj nyt produkt", titleIcon:"package", tips:[
-        { icon:"camera", title:"Fotografér", desc:"Tag billede af forsiden og ingredienslisten — vi udfylder automatisk navn og allergener med AI." },
-        { icon:"eye", title:"Gennemgå", desc:"Tjek at det udfyldte er korrekt, før du sender produktet ind." },
-        { icon:"clock", title:"Godkendelse", desc:"Produktet gennemgås, før det er synligt for andre brugere." },
-      ]},
-      "submitted": { title:"Indsendt", titleIcon:"check", tips:[
-        { icon:"🙏", title:"Tak for hjælpen", desc:"Din indsendelse gennemgås snarest og bliver synlig for andre, når den er godkendt." },
-      ]},
-      "knowledge": { title:"Leksikon", titleIcon:"book", tips:[
-        { icon:"search", title:"Søg eller filtrér", desc:"Søg efter et emne, eller vælg en kategori som allergener, E-numre eller diæter." },
-        { icon:"👆", title:"Åbnet fra et produkt", desc:"Tryk på en ingrediens eller et E-nummer i et scanningsresultat for at hoppe direkte hertil." },
-      ]},
-      "restaurantguide": { title:"Restaurantguide", titleIcon:"utensils", tips:[
-        { icon:"list", title:"Tips til hvert trin", desc:"Råd til før, under og efter restaurantbesøg, når du spiser ude med allergier." },
-        { icon:"globe", title:"Vis til tjeneren", desc:"Brug dit Madpas (under Profil) til at vise dine allergier direkte til personalet." },
-      ]},
-      "admin": { title:"Admin", titleIcon:"shield", tips:[
-        { icon:"check", title:"Godkend indsendelser", desc:"Gennemgå og godkend eller afvis nye produkter og rettelsesforslag fra brugere." },
-        { icon:"family", title:"Brugere og tickets", desc:"Administrér brugerroller og besvar indsendt feedback under de øvrige faner." },
-      ]},
-    };
-    const content = helpContent[screen] || { title:"Hjælp", titleIcon:"info", tips:[
-      { icon:"message", title:"Send feedback", desc:"Brug Feedback-knappen øverst til at rapportere problemer eller forslag." },
-    ]};
-    return (
-      <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.85)", display:"flex", alignItems:"flex-end" }}
-        onClick={e => e.target === e.currentTarget && setHelpOpen(false)}>
-        <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
-          onClick={e => e.stopPropagation()}>
-          <div style={UI.rowBetweenMb16}>
-            <div style={{ ...UI.ufs18_fw900_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name={content.titleIcon} size={17} color="var(--ink)" /> {content.title}</div>
-            <button onClick={() => setHelpOpen(false)} aria-label="Luk"
-              style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
-          </div>
-          <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
-            {content.tips.map((tip, i) => (
-              <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
-                <div style={{ ...UI.ufs22_shr0, display:"flex" }}>
-                  {typeof tip.icon === "string" && !["👶","🚦","👆","🙏"].includes(tip.icon)
-                    ? <Icon name={tip.icon} size={20} color="var(--ink2)" />
-                    : <span style={UI.ufs22_shr0}>{tip.icon}</span>}
-                </div>
-                <div>
-                  <div style={UI.ufs13_fw800_cink_mb3}>{tip.title}</div>
-                  <div style={UI.ufs12_cmuted2_lh16}>{tip.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button onClick={() => { setHelpOpen(false); setFeedbackOpen(true); setFeedbackDone(false); }}
-            style={{ width:"100%", padding:"12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-            <Icon name="message" size={13} color="var(--muted2)" /> Send feedback eller rapportér fejl
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  const renderBetaIntro = () => {
-    const steps = [
-      {
-        emoji: "🧪",
-        title: "Velkommen til EatSafe Beta",
-        body: "Du er en af de første til at prøve EatSafe. Vi er glade for at have dig med — og vi er ærlige: appen er ikke færdig endnu.\n\nSom beta-bruger hjælper du os med at finde fejl, forbedre brugeroplevelsen og sikre at appen virker for rigtige allergiramte.",
-      },
-      {
-        emoji: "message",
-        title: "Giv os din mening",
-        body: "Tryk på Feedback-knappen øverst i appen når du støder på noget — en fejl, noget der ser mærkeligt ud, eller en idé til forbedring.\n\nVi læser alt. Din feedback er det vigtigste redskab vi har i denne fase.",
-      },
-      {
-        emoji: "info",
-        title: "Brug hjælp-knappen",
-        body: "Er du i tvivl om hvordan noget virker? Tryk på ? øverst — der finder du en kort guide til den skærm du står på.\n\nHvis du stadig er i tvivl, brug Feedback og skriv til os.",
-      },
-      {
-        emoji: "warning",
-        title: "En vigtig bemærkning",
-        body: "EatSafe er under udvikling. Allergendata kan mangle eller være ukorrekte.\n\nTjek ALTID den fysiske emballage — appen er et hjælpeværktøj, ikke en garanti. Vi arbejder på at gøre dataene så præcise som muligt.",
-      },
-    ];
-    const step = steps[betaIntroStep];
-    const isLast = betaIntroStep === steps.length - 1;
-    const dismiss = () => setBetaIntroSeen(true);
-    return (
-      <div style={{ position:"fixed", inset:0, zIndex:10000, background:"rgba(0,0,0,.92)",
-        display:"flex", alignItems:"center", justifyContent:"center", padding:"20px" }}>
-        <div style={{ background:"var(--sheet)", borderRadius:20, padding:"28px 22px 24px",
-          width:"100%", maxWidth:400, boxSizing:"border-box" }}>
-
-          {/* Progress dots */}
-          <div style={{ display:"flex", gap:6, justifyContent:"center", marginBottom:24 }}>
-            {steps.map((_, i) => (
-              <div key={i} style={{ width: i === betaIntroStep ? 20 : 6, height:6, borderRadius:3,
-                background: i === betaIntroStep ? "var(--green)" : "var(--border2)",
-                transition:"all .3s" }} />
-            ))}
-          </div>
-
-          {/* Content */}
-          <div style={{ textAlign:"center", marginBottom:28 }}>
-            <div style={{ marginBottom:16, display:"flex", justifyContent:"center" }}>
-              {step.emoji === "🧪" ? <span style={{ fontSize:52 }}>{step.emoji}</span> : <Icon name={step.emoji} size={44} color="var(--green)" />}
-            </div>
-            <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)", marginBottom:14,
-              letterSpacing:"-.3px" }}>{step.title}</div>
-            <div style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.7,
-              whiteSpace:"pre-line" }}>{step.body}</div>
-          </div>
-
-          {/* Buttons */}
-          <div style={UI.udflex_fdcolumn_g10}>
-            <button onClick={() => isLast ? dismiss() : setBetaIntroStep(s => s + 1)}
-              style={{ width:"100%", padding:"14px", background:"var(--green)",
-                border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15,
-                fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
-              {isLast ? "Kom i gang →" : "Næste →"}
-            </button>
-            {!isLast && (
-              <button onClick={dismiss}
-                style={{ width:"100%", padding:"10px", background:"transparent",
-                  border:"none", fontFamily:"var(--f)", fontSize:12,
-                  color:"var(--muted)", cursor:"pointer" }}>
-                Spring over
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <AuthProvider value={authContextValue}>
     <ProfileProvider value={profileContextValue}>
@@ -1094,6 +806,10 @@ const lookupProduct = useCallback(async (ean) => {
 
         {/* Installations-prompt — kun aktiv når man er landet via beta-QR'en */}
         <InstallPrompt />
+
+        {/* Scan-loading — vist mens et scannet/søgt produkt slås op (fra
+            runLookupProduct's setLoading(true) til resultatet er klart) */}
+        <ScanLoadingOverlay show={loading} />
 
         {/* ══ VELKOMST ══ */}
         {/* ══ ONBOARDING SCREENS ══ */}
@@ -1156,64 +872,29 @@ const lookupProduct = useCallback(async (ean) => {
         )}
 
         {/* ══ HJÆLP MODAL ══ */}
-        {helpOpen && renderHelpModal()}
+        {helpOpen && (
+          <HelpModal
+            screen={screen}
+            onClose={() => setHelpOpen(false)}
+            onOpenFeedback={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
+          />
+        )}
 
         {/* ══ SLET KONTO MODAL ══ */}
         {showDeleteAccount && (
-          <div style={{ position:"fixed", inset:0, zIndex:9997, background:"rgba(0,0,0,.6)", display:"flex", alignItems:"flex-end" }}
-            onClick={e => e.target === e.currentTarget && setShowDeleteAccount(false)}>
-            <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", padding:"24px 16px 40px", width:"100%" }}
-              onClick={e => e.stopPropagation()}>
-
-              <div style={UI.utacenter_mb20}>
-                <div style={{ ...UI.ufs48_mb10, display:"flex", justifyContent:"center" }}><Icon name="warning" size={40} color="var(--red)" /></div>
-                <div style={{ fontSize:19, fontWeight:900, color:"var(--red)", marginBottom:8 }}>Slet din konto</div>
-                <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.7 }}>
-                  Dette sletter permanent alle dine data — allergier, familie, historik og præferencer. Handlingen kan ikke fortrydes.
-                </div>
-              </div>
-
-              {/* Hvad slettes */}
-              <div style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, padding:"12px 14px", marginBottom:16 }}>
-                <div style={{ fontSize:11, fontWeight:700, color:"var(--red)", marginBottom:8 }}>FØLGENDE DATA SLETTES:</div>
-                {["Din profil og login","Allergier og præferencer","Familiemedlemmer","Scanningshistorik","Indkøbslister","Feedback og tickets"].map(item => (
-                  <div key={item} style={{ fontSize:12, color:"var(--red)", padding:"3px 0", display:"flex", alignItems:"center", gap:8 }}>
-                    <Icon name="x" size={11} color="var(--red)" /><span>{item}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Bekræftelse */}
-              <div style={UI.mb14}>
-                <div style={UI.ufs13_fw700_cink_mb8}>
-                  Skriv <strong>"slet"</strong> for at bekræfte:
-                </div>
-                <input
-                  value={deleteConfirmText}
-                  onChange={e => setDeleteConfirmText(e.target.value)}
-                  placeholder="slet"
-                  autoCapitalize="none"
-                  style={{ width:"100%", padding:"14px 14px", border:`1.5px solid ${deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)"}`, borderRadius:12, fontFamily:"var(--f)", fontSize:16, outline:"none", boxSizing:"border-box", background:"var(--surface2)", color:"var(--ink)" }}
-                />
-              </div>
-
-              <button onClick={deleteOwnAccount}
-                disabled={deleteConfirmText.toLowerCase() !== "slet" || deletingAccount}
-                style={{ width:"100%", padding:"16px", background: deleteConfirmText.toLowerCase()==="slet" ? "var(--red)" : "var(--border2)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--ink)", cursor: deleteConfirmText.toLowerCase()==="slet" ? "pointer" : "not-allowed", marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-                {deletingAccount ? "Sletter…" : <><Icon name="trash" size={14} color="var(--ink)" /> Slet min konto permanent</>}
-              </button>
-
-              <button onClick={() => setShowDeleteAccount(false)}
-                style={{ width:"100%", padding:"14px", background:"none", border:"none", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--muted)", cursor:"pointer" }}>
-                Annullér — behold min konto
-              </button>
-
-            </div>
-          </div>
+          <DeleteAccountModal
+            setShowDeleteAccount={setShowDeleteAccount}
+            deleteConfirmText={deleteConfirmText} setDeleteConfirmText={setDeleteConfirmText}
+            deletingAccount={deletingAccount} deleteOwnAccount={deleteOwnAccount}
+          />
         )}
 
         {/* ══ BETA INTRO ══ */}
-        {!betaIntroSeen && renderBetaIntro()}
+        {!betaIntroSeen && (
+          <BetaIntroModal
+            betaIntroStep={betaIntroStep} setBetaIntroStep={setBetaIntroStep} setBetaIntroSeen={setBetaIntroSeen}
+          />
+        )}
 
         {/* ══ TOAST (delt succes-/fejl-besked, erstatter native alert()) ══ */}
         <ToastHost />
@@ -1307,7 +988,9 @@ const lookupProduct = useCallback(async (ean) => {
             setKnowledgeSlug={setKnowledgeSlug}
             buildLabel={formatBuildTime()}
             lookupProduct={lookupProduct}
+            runDemoScan={runDemoScan}
             selectedENumbers={selectedENumbers}
+            activeIds={activeIds}
             activeENumbers={activeENumbers}
             onBetaClick={() => { setBetaIntroSeen(false); setBetaIntroStep(0); }}
             alternatives={alternatives}

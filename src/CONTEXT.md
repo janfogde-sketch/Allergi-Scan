@@ -82,7 +82,7 @@ src/
 ├── KnowledgeScreen.jsx       # KNOWLEDGE — Leksikon
 ├── RecipesScreen.jsx         # RECIPES — opskrifter (gradient header)
 ├── MadpasScreen.jsx          # MADPAS (17 sprog) — QR-kode + del-link
-├── AdminScreen.jsx           # Admin-panel (via ProfileScreen)
+├── AdminScreen.jsx           # Mobil admin-panel (via ProfileScreen)
 │                             #   Tabs: Dashboard, Brugere, Indsendelser, Tickets,
 │                             #         Debug, Manglende, Import
 │
@@ -90,6 +90,23 @@ src/
 ├── MemberForm.jsx            # MemberForm, CategorySelect
 ├── AllergenPicker.jsx        # AllergenPicker, ENumberPicker
 ├── FeedbackModal.jsx         # FeedbackModal med debug trace
+│
+├── — Desktop admin-panel (NY, 24. sept. 2026) —
+├── admin/                    # Separat Vite-entrypoint på eatsafe.dk/admin.html
+│   │                         #   (ikke en del af den mobile PWA's SCREENS-routing/
+│   │                         #   bundle — egen React-rod, sidebar+tabel-layout til
+│   │                         #   skærm/computer. Deler localStorage-session
+│   │                         #   (as_token/as_refresh/as_user_id) med hovedappen.
+│   │                         #   Genbruger useAdmin.js's data-lag som-is.
+│   ├── main.jsx               # React-rod, injicerer adminTheme.js
+│   ├── AdminApp.jsx            # Login-gate (rolle-tjek mod users.role) + router
+│   ├── AdminLayout.jsx          # Sidebar-navigation + topbar
+│   ├── useAdminAuth.js          # Standalone login (email+password, ingen signup/OAuth)
+│   ├── adminTheme.js            # Desktop-specifik CSS (egen fra src/theme.jsx)
+│   └── sections/                # DashboardSection, UsersSection, SubmissionsSection,
+│                                 #   TicketsSection, MissingSection, ImportSection,
+│                                 #   RecipesSection — desktop-tabel-versioner af de
+│                                 #   tilsvarende Admin*Section.jsx-filer ovenfor
 │
 └── — Statiske sider (public/) —
     privacy.html              # Privatlivspolitik på eatsafe.dk/privacy
@@ -163,8 +180,10 @@ begrundelse.
 | `allergens` | Keyword-engine + Claude Haiku fallback |
 | `ocr` | OCR: `ingredients` / `product_name` / `nutrition` / `ean_from_image` |
 | `search` | Fuldtekst-søgning med scoring |
-| `send-email` | Resend email |
+| `send-email` | Resend email — `type` er enten en Resend-skabelon (`welcome`/`submission_approved`/`submission_rejected`/`ticket_update`) eller `"raw"` (direkte `subject`+`html` i kaldet, ingen skabelon — til interne/dynamiske emails som `admin-digest`) |
 | `auto-import-off` | **NY** — importerer fra OFF dagligt kl. 02:00 UTC via pg_cron |
+| `admin-digest` | **NY** (17. sept. 2026) — ugentlig email til alle admins (`role='admin'`) med antal afventende indsendelser + åbne tickets, kun sendt hvis der reelt er noget. pg_cron mandag kl. 08:00 UTC (jobid 4) |
+| `food-waste` | **I KØLESKABET** (17. sept. 2026) — tjekker om et EAN er nedsat pga. udløb i en nærliggende Netto/Føtex/Bilka, via Salling Groups officielle "Anti Food Waste"-API (`geo`-baseret opslag). Kræver bruger-login. Deployet og virker (testet live med `SALLING_API_TOKEN` sat) — men UI-knappen på `ResultScreen` er bevidst fjernet igen efter brugerens ønske. `useFoodWaste.js`-hooken ligger stadig i `src/`, klar til at blive genkoblet til en skærm når featuren skal genoptages — se punkt 13 |
 
 ---
 
@@ -219,6 +238,6 @@ begrundelse.
 | Punkt | Note |
 |-------|------|
 | hej@eatsafe.dk | Oprettes hos One.com inden beta |
-| Leksikon 1000+ entries | Planlagt — separat session |
-| Push-notifikationer (12.1) | Fase 12 — næste session |
-| SubmittedScreen.jsx | Skal pushes til GitHub repo |
+| Leksikon 1000+ entries | Planlagt — separat session (pt. ~700 entries) |
+| Madspild-tilbud ("i køleskabet") | `food-waste`-Edge Function virker (verificeret live 17. sept. 2026 med `SALLING_API_TOKEN` sat), men UI-indgangen er bevidst fjernet fra `ResultScreen.jsx` igen efter brugerens ønske ("put den i køleskabet"). Genoptag ved at importere `useFoodWaste` (`src/useFoodWaste.js`) i en skærm igen og gencoble knap+resultat-visning (se git-historik for `src/ResultScreen.jsx` omkring 17. sept. 2026 for den oprindelige UI-kode) |
+| Desktop admin — nye funktioner | Shellet (`src/admin/`) + alle eksisterende faner (Dashboard/Brugere/Indsendelser/Tickets/Manglende/Import/Opskrifter) er bygget og shippet 24. sept. 2026. Bevidst udskudt til senere, én ad gangen efter aftale med brugeren: **produkt-database direkte** (søg/rediger/slet i hele `products`), **Leksikon-CRUD** (`knowledge_base`, ingen admin-UI overhovedet endnu), **ændringshistorik** (`revision_log`-tabellen findes og logges allerede til, men har ingen visning), **bulk-handlinger** (godkend/afvis flere indsendelser ad gangen), **rigere dashboard/analytics** (trends over tid, ikke kun dags-snapshot), **CSV-eksport**, **familie-overblik** (support-værktøj til at se `family_invites`/`family_members`-koblinger), **global søgning** på tværs af brugere/produkter/tickets. Debug-fanen (mobil-appens `getTraceLog()`) er bevidst IKKE porteret — den er session-lokal til den enhed der scanner, og giver ikke mening i et separat desktop-panel |

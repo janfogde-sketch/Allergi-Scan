@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
-import { SCREENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compareAllergens, productDisplayName, logSearchSelection } from "./helpers.js";
+import { SCREENS, SUPABASE_URL } from "./constants.jsx";
+import { compareAllergens, productDisplayName, logSearchSelection, apiCall, makeHeaders } from "./helpers.js";
 import { Icon, ProductImage, SearchResultRow } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -150,9 +150,8 @@ export default function ListScreen({
     const timer = setTimeout(async () => {
       setItemSearching(true);
       try {
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(newItemName.trim())}`,
-          { headers: { "apikey": SUPABASE_ANON_KEY, ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) }, signal: controller.signal });
-        const data = await res.json();
+        const data = await apiCall(`${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(newItemName.trim())}`,
+          { headers: makeHeaders(accessToken), signal: controller.signal });
         if (data.success) {
           setItemResults(data.products || []);
           setItemHasMore(!!data.hasMore);
@@ -173,9 +172,8 @@ export default function ListScreen({
     if (!q || itemLoadingMore || !itemHasMore) return;
     setItemLoadingMore(true);
     try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(q)}&offset=${itemResults.length}`,
-        { headers: { "apikey": SUPABASE_ANON_KEY, ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}) } });
-      const data = await res.json();
+      const data = await apiCall(`${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(q)}&offset=${itemResults.length}`,
+        { headers: makeHeaders(accessToken) });
       if (data.success && newItemName.trim() === q) {
         setItemResults(prev => [...prev, ...(data.products || [])]);
         setItemHasMore(!!data.hasMore);

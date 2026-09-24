@@ -59,6 +59,56 @@ export function EatSafeLogo({ size = 32, variant = "light" }) {
   );
 }
 
+// ─── SCAN-LOADING OVERLAY ─────────────────────────────────────────────────────
+// Logo-baseret loading-animation, vist mens et scannet/søgt produkt slås op
+// (fra scan:start til resultatet er klart, se runLookupProduct i useProduct.js).
+// Genbruger EatSafeLogo's præcise stregkode-bar-koordinater for brand-troskab —
+// kun forskellen er en "scan-laser" der sveje op/ned over barsne i stedet for
+// den statiske grønne tjek-streg (som ville signalere "godkendt" for tidligt).
+// Portal-baseret (samme mønster som ToastHost/ListPickerSheet), monteret i
+// App.jsx, styret af et rent boolean show-flag.
+export function ScanLoadingOverlay({ show, text = "Scanner produkt…", sub = "Tjekker dine allergener" }) {
+  if (!show) return null;
+  return createPortal(
+    <div className="scan-loading-overlay" role="status" aria-live="polite">
+      <svg className="scan-loading-mark" width="88" height="88" viewBox="0 0 100 100" aria-hidden="true">
+        <defs>
+          <clipPath id="scan-loading-sq">
+            <path d="M 50 0 C 85 0, 100 15, 100 50 C 100 85, 85 100, 50 100 C 15 100, 0 85, 0 50 C 0 15, 15 0, 50 0 Z" />
+          </clipPath>
+          <linearGradient id="scan-loading-beam" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stopColor="var(--green)" stopOpacity="0" />
+            <stop offset="50%" stopColor="var(--green)" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="var(--green)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <g clipPath="url(#scan-loading-sq)">
+          <rect width="100" height="100" fill="var(--surface)" />
+          <g fill="var(--ink)">
+            <rect x="18.00" y="16" width="8.31" height="68" rx="1.49" />
+            <rect x="29.05" y="22" width="4.15" height="56" rx="0.75" />
+            <rect x="35.94" y="16" width="5.54" height="68" rx="1.00" />
+            <rect x="44.21" y="22" width="2.77" height="56" rx="0.50" />
+            <rect x="49.71" y="16" width="3.32" height="68" rx="0.60" />
+            <rect x="55.76" y="22" width="6.92" height="56" rx="1.25" />
+            <rect x="65.41" y="16" width="4.43" height="68" rx="0.80" />
+            <rect x="72.57" y="22" width="5.54" height="56" rx="1.00" />
+            <rect x="80.84" y="16" width="3.88" height="68" rx="0.70" />
+          </g>
+          <g className="scan-loading-beam">
+            <rect x="14" y="16" width="72" height="3" fill="url(#scan-loading-beam)" />
+          </g>
+        </g>
+      </svg>
+      <div>
+        <div className="scan-loading-txt">{text}</div>
+        {sub && <div className="scan-loading-sub">{sub}</div>}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 
 
 // ─── E-NUMMER VÆLGER KOMPONENT ───────────────────────────────────────────────

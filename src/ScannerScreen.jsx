@@ -167,6 +167,7 @@ export default function ScannerScreen({
   galleryInputRef,
   lastScannedRef,
   selectedENumbers,
+  activeIds,
   activeENumbers,
   handleEditProductCapture,
   handleImageCapture, handleProductImageCapture,
@@ -187,11 +188,12 @@ export default function ScannerScreen({
   buildLabel,
   lookupProduct,
   onBetaClick,
+  runDemoScan,
   alternatives,
   altLoading,
 }) {
   const { user, userId, accessToken } = useAuthContext();
-  const { family, activeProfiles, setActiveProfiles, allergens } = useProfileContext();
+  const { activeProfiles, setActiveProfiles } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
   const { favorites, toggleFavorite, isFavorite } = useHistoryContext();
 
@@ -202,13 +204,17 @@ export default function ScannerScreen({
   const [showGuide, setShowGuide] = React.useState(false);
   const [manualEanError, setManualEanError] = React.useState("");
 
-  // ── Kombinerede allergen-IDs for alle aktive profiler ──────────────────────
-  const activeIds = [
-    ...(activeProfiles.includes("me") ? allergens : []),
-    ...family
-      .filter(m => activeProfiles.includes(m.id))
-      .flatMap(m => Array.isArray(m.allergens) ? m.allergens : Object.keys(m.allergens||{}).filter(k => m.allergens[k])),
-  ].filter((v, i, a) => a.indexOf(v) === i); // deduplicate
+  // "Prøv en demo-scanning" er kun til nye brugere — forsvinder efter 1 døgn
+  // (målt fra kontoens created_at), så den ikke fylder unødigt for alle
+  // fremover. Fejler lukket (skjult) indtil created_at er hentet, for at
+  // undgå et kort glimt af knappen for etablerede brugere før data er inde.
+  const showDemoScan = !!(user.created_at && (Date.now() - new Date(user.created_at).getTime()) < 24 * 60 * 60 * 1000);
+
+  // activeIds (kombinerede allergen-id'er for alle aktive profiler) kommer nu
+  // som prop fra App.jsx' allActive() i stedet for at blive genberegnet her
+  // — to uafhængige implementationer af samme sikkerhedsrelevante beregning
+  // havde allerede forårsaget mindst én bug (se App.jsx' egen kommentar ved
+  // allActive()).
 
   return (
     <>
@@ -374,6 +380,18 @@ export default function ScannerScreen({
               </div>
               )}
             </div>}
+
+            {/* Simuleret scan — prøv appen uden en rigtig stregkode ("Fase 7b.2").
+                Kun til nye brugere, forsvinder efter 1 døgn (se showDemoScan ovenfor). */}
+            {!!userId && !cameraActive && showDemoScan && (
+              <button onClick={runDemoScan}
+                style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                  width:"100%", padding:"12px 14px", marginBottom:14,
+                  background:"var(--surface)", border:"1px dashed var(--border2)", borderRadius:14,
+                  fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+                <Icon name="zap" size={15} color="var(--blue)" /> Prøv en demo-scanning
+              </button>
+            )}
 
             {/* Fejlbesked + Manuel EAN — kun til loggede */}
             {!!userId && <>

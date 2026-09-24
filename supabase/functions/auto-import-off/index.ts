@@ -107,8 +107,31 @@ function buildCategory(tags: string[]): string {
 }
 
 Deno.serve(async (req) => {
-  // Tillad både cron-kald og manuelt HTTP-kald
+  if (req.method === "OPTIONS") return new Response("ok", {
+    headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" },
+  });
+
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+  // Tillad både vores eget pg_cron-job (identificerer sig med service-role-
+  // nøglen) og manuelt kald fra en indlogget admin (App.jsx' Import-faneblad)
+  // — men ingen andre. Uden dette kunne enhver udenfra udløse gentagne,
+  // ukontrollerede OFF-importer (og OFF-rate-limit-belastning) på vores vegne.
+  const authHeader = req.headers.get("Authorization");
+  const isCron = !!SUPABASE_SERVICE_KEY && authHeader === `Bearer ${SUPABASE_SERVICE_KEY}`;
+  if (!isCron) {
+    if (!authHeader) return Response.json({ error: "Ikke autoriseret" }, { status: 401 });
+    const userClient = createClient(
+      SUPABASE_URL,
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user: caller } } = await userClient.auth.getUser();
+    if (!caller) return Response.json({ error: "Ugyldig token" }, { status: 401 });
+    const { data: callerProfile } = await supabase
+      .from("users").select("role").eq("id", caller.id).single();
+    if (callerProfile?.role !== "admin") return Response.json({ error: "Adgang nægtet — kun admin" }, { status: 403 });
+  }
 
   const stats = { imported: 0, not_on_off: 0, already_exists: 0, error: 0 };
   const log: string[] = [];

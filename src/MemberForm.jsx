@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React from "react";
+import { Icon } from "./SharedComponents.jsx";
 import { ALLERGENS, DIETS, E_NUMBERS, E_CATEGORIES } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
 
@@ -42,13 +43,13 @@ export const MemberForm = ({
       <label className="field-lbl">Køn <span style={UI.red}>*</span></label>
       <div style={{ display:"flex", gap:8, marginBottom:14 }}>
         {["Mand","Kvinde","Andet"].map(g => (
-          <div key={g} onClick={() => setGender(g)}
+          <div key={g} onClick={() => setGender(g)} className="member-pick"
             style={{ flex:1, padding:"10px 0", textAlign:"center", borderRadius:8,
               border:`1.5px solid ${gender===g?"var(--green)":"var(--border)"}`,
               background: gender===g ? "var(--green-lt)" : "var(--surface)",
               fontSize:13, fontWeight:700,
               color: gender===g ? "var(--green)" : "var(--muted2)",
-              cursor:"pointer", transition:"all .15s" }}>
+              transition:"all .15s" }}>
             {g}
           </div>
         ))}
@@ -70,7 +71,7 @@ export const MemberForm = ({
             }}
               onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
               <span style={UI.flex1}>{a.emoji} {a.label}</span>
-              {on && <div style={UI.redBadge9}>✓</div>}
+              {on && <Icon name="check" size={11} color="var(--red)" />}
             </div>
           );
         })}
@@ -106,7 +107,7 @@ export const MemberForm = ({
                 <div style={UI.ufw700}>{d.label}</div>
                 <div style={UI.ufs10_cmuted_mt1}>{d.desc}</div>
               </div>
-              {on && <div className="chip-check">✓</div>}
+              {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
             </div>
           );
         })}
@@ -134,13 +135,13 @@ export const MemberForm = ({
         }).map(([e,name],i,arr) => {
           const on = eNumbers.includes(e);
           return (
-            <div key={e} onClick={() => setENumbers(p => on ? p.filter(x=>x!==e) : [...p,e])}
+            <div key={e} onClick={() => setENumbers(p => on ? p.filter(x=>x!==e) : [...p,e])} className="member-pick"
               style={{ display:"flex", gap:8, padding:"8px 12px",
                 borderBottom:i<arr.length-1?"1px solid var(--border)":"none",
-                background:on?"var(--red-lt)":"var(--surface)", cursor:"pointer" }}>
+                background:on?"var(--red-lt)":"var(--surface)" }}>
               <div style={{ fontSize:11, fontWeight:800, color:on?"var(--red)":"var(--ink)", width:44, flexShrink:0 }}>{e}</div>
               <div style={{ fontSize:11, color:on?"var(--red)":"var(--muted2)", flex:1, lineHeight:1.3 }}>{name}</div>
-              {on && <div style={UI.redBadge9}>✓</div>}
+              {on && <Icon name="check" size={11} color="var(--red)" />}
             </div>
           );
         })}
@@ -151,9 +152,9 @@ export const MemberForm = ({
           <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", marginBottom:4 }}>Valgte ({eNumbers.length})</div>
           <div style={UI.wrapGap4}>
             {eNumbers.map(e => (
-              <div key={e} style={{ fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20,
+              <div key={e} className="member-pick" style={{ fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20,
                 background:"var(--red-lt)", color:"var(--red)",
-                border:"1px solid var(--red)", cursor:"pointer" }}
+                border:"1px solid var(--red)" }}
                 onClick={() => setENumbers(p=>p.filter(x=>x!==e))}>
                 {e} ×
               </div>
@@ -200,7 +201,7 @@ export const CategorySelect = ({ value, onChange, options, placeholder="Alle kat
           borderColor: value !== "alle" ? "var(--green)" : "var(--border)",
         }}>
         {options.map(o => (
-          <option key={o.id} value={o.id} style={{ background:"#1a2e12", color:"#EDF5EE" }}>{o.label}</option>
+          <option key={o.id} value={o.id} style={{ background:"var(--surface)", color:"var(--ink)" }}>{o.label}</option>
         ))}
       </select>
       {/* Pile-ikon */}

@@ -22,6 +22,31 @@ const VAPID_SUBJECT     = Deno.env.get("VAPID_SUBJECT") ?? "mailto:hej@eatsafe.d
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
+  // Verificér kalderen: enten vores eget interne kald (weekly-digest,
+  // identificeret via service-role-nøglen) eller en rigtig indlogget bruger.
+  // Uden dette kunne enhver med den offentlige anon-nøgle (som ligger i
+  // frontend-bundlen) sende en push-notifikation med helt selvvalgt
+  // titel/tekst/link til en vilkårlig bruger — et oplagt phishing-setup.
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const isInternalCall = !!serviceRoleKey && authHeader === `Bearer ${serviceRoleKey}`;
+  let caller: { id: string } | null = null;
+
+  if (!isInternalCall) {
+    const userClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user } } = await userClient.auth.getUser();
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Ikke autoriseret" }), {
+        status: 401, headers: { ...CORS, "Content-Type": "application/json" },
+      });
+    }
+    caller = user;
+  }
+
   try {
     const { user_id, title, body, url } = await req.json();
     if (!user_id || !title || !body) {
@@ -34,6 +59,32 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Autorisation af PUSH-MÅLET: at være logget ind er ikke nok til at
+    // sende push til en VILKÅRLIG anden bruger — det var præcis det forrige
+    // fix kun delvist lukkede (det krævede blot en gyldig session, uanset
+    // hvem user_id var). Tre legitime tilfælde findes i appen: man
+    // notificerer sig selv; en admin notificerer en indsenders/scanners
+    // konto ved godkendelse af indsendelser (useAdmin.js); eller et
+    // familiemedlem notificerer et andet medlem af samme familiegruppe
+    // ved invitations-accept (App.jsx). Alt andet afvises.
+    if (!isInternalCall && caller) {
+      const isSelf = user_id === caller.id;
+      let authorized = isSelf;
+      if (!authorized) {
+        const { data: callerRow } = await supabase.from("users").select("role").eq("id", caller.id).single();
+        authorized = callerRow?.role === "admin";
+      }
+      if (!authorized) {
+        const { data: groupIds } = await supabase.rpc("family_group", { p_uid: caller.id });
+        authorized = Array.isArray(groupIds) && groupIds.includes(user_id);
+      }
+      if (!authorized) {
+        return new Response(JSON.stringify({ error: "Ikke autoriseret til at sende push til denne bruger" }), {
+          status: 403, headers: { ...CORS, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     // Hent push tokens for brugeren
     const { data: tokens, error } = await supabase

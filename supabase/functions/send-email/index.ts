@@ -48,11 +48,23 @@ async function fetchTemplateHtml(templateId: string, apiKey: string, data: Recor
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // Kaldes udelukkende af vores egne DB-triggers (send_welcome_email m.fl.),
+  // aldrig direkte fra klienten — kræver derfor at kalderen identificerer
+  // sig med service-role-nøglen. Uden dette kunne enhver udenfra sende
+  // vilkårlige emails fra vores Resend-konto til en vilkårlig modtager.
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const authHeader = req.headers.get("Authorization") ?? "";
+  if (!serviceRoleKey || authHeader !== `Bearer ${serviceRoleKey}`) {
+    return new Response(JSON.stringify({ error: "Ikke autoriseret" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY mangler");
 
-    const { type, to, data = {} } = await req.json();
+    const { type, to, data = {}, subject: rawSubject, html: rawHtml } = await req.json();
 
     if (!type || !to) {
       return new Response(JSON.stringify({ error: "type og to er påkrævet" }), {
@@ -60,14 +72,30 @@ Deno.serve(async (req) => {
       });
     }
 
-    const template = TEMPLATES[type];
-    if (!template) {
-      return new Response(JSON.stringify({ error: `Ukendt email-type: ${type}` }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // "raw" er til interne, admin-rettede emails (fx admin-digest) hvor
+    // indholdet er dynamisk genereret data (tal/lister), ikke noget en
+    // ikke-teknisk person skal kunne redigere i Resends skabelon-editor —
+    // derfor ingen Resend-skabelon, bare direkte subject+html i selve kaldet.
+    let subject: string;
+    let html: string;
+    if (type === "raw") {
+      if (!rawSubject || !rawHtml) {
+        return new Response(JSON.stringify({ error: "subject og html er påkrævet for type=raw" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      subject = rawSubject;
+      html = rawHtml;
+    } else {
+      const template = TEMPLATES[type];
+      if (!template) {
+        return new Response(JSON.stringify({ error: `Ukendt email-type: ${type}` }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      subject = template.subject;
+      html = await fetchTemplateHtml(template.id, RESEND_API_KEY, data);
     }
-
-    const html = await fetchTemplateHtml(template.id, RESEND_API_KEY, data);
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -75,7 +103,7 @@ Deno.serve(async (req) => {
         "Authorization": `Bearer ${RESEND_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ from: FROM, to: [to], subject: template.subject, html }),
+      body: JSON.stringify({ from: FROM, to: [to], subject, html }),
     });
 
     if (!res.ok) {

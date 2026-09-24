@@ -8,7 +8,7 @@ import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 import { UI } from "./styleUtils.js";
-import { showToast } from "./SharedComponents.jsx";
+import { showToast, Icon } from "./SharedComponents.jsx";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FeedbackModal.jsx
@@ -122,12 +122,12 @@ export default function FeedbackModal({
   };
 
   const TYPES = [
-    { id:"bug",        emoji:"🐛", label:"Fejl / bug" },
-    { id:"ui",         emoji:"🎨", label:"Design / UI" },
-    { id:"missing",    emoji:"💡", label:"Mangler noget" },
-    { id:"content",    emoji:"📦", label:"Forkert indhold" },
-    { id:"crash",      emoji:"💥", label:"App crasher" },
-    { id:"suggestion", emoji:"✨", label:"Forslag" },
+    { id:"bug",        icon:"bug",     label:"Fejl / bug" },
+    { id:"ui",         emoji:"🎨",     label:"Design / UI" },
+    { id:"missing",    icon:"bulb",    label:"Mangler noget" },
+    { id:"content",    icon:"package", label:"Forkert indhold" },
+    { id:"crash",      emoji:"💥",     label:"App crasher" },
+    { id:"suggestion", emoji:"✨",     label:"Forslag" },
   ];
 
   const device = /iPhone|iPad/.test(navigator.userAgent) ? "iOS"
@@ -161,9 +161,9 @@ export default function FeedbackModal({
                   {PAGE_IDS[screen] || "—"} · Beta v1.0
                 </div>
               </div>
-              <button onClick={close} aria-label="Luk"
+              <button onClick={close} aria-label="Luk" className="member-pick"
                 style={{ background:"var(--surface2)", border:"none", borderRadius:"50%",
-                  width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
+                  width:32, height:32, fontSize:18, color:"var(--ink)" }}>×</button>
             </div>
 
             {/* Type */}
@@ -171,12 +171,14 @@ export default function FeedbackModal({
               <label style={UI.ufs12_fw700_cink_dblock_mb6}>Type</label>
               <div style={UI.grid2gap6}>
                 {TYPES.map(t => (
-                  <div key={t.id} onClick={() => setType(t.id)}
+                  <div key={t.id} onClick={() => setType(t.id)} className="member-pick"
                     style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px",
-                      borderRadius:10, cursor:"pointer",
+                      borderRadius:10,
                       border:`1.5px solid ${type===t.id?"var(--green)":"var(--border)"}`,
                       background: type===t.id ? "var(--green-lt)" : "var(--surface)" }}>
-                    <span style={UI.fs16}>{t.emoji}</span>
+                    {t.icon
+                      ? <Icon name={t.icon} size={15} color={type===t.id ? "var(--green)" : "var(--ink2)"} />
+                      : <span style={UI.fs16}>{t.emoji}</span>}
                     <span style={{ fontSize:12, fontWeight:700,
                       color: type===t.id ? "var(--green)" : "var(--ink)" }}>{t.label}</span>
                   </div>
@@ -203,15 +205,15 @@ export default function FeedbackModal({
                   <img src={image} alt="Screenshot"
                     style={{ maxWidth:"100%", maxHeight:160, borderRadius:10,
                       objectFit:"contain", border:"1px solid var(--border)" }} />
-                  <button onClick={() => { URL.revokeObjectURL(image); setImage(null); setImageB64(null); }} aria-label="Fjern billede"
+                  <button onClick={() => { URL.revokeObjectURL(image); setImage(null); setImageB64(null); }} aria-label="Fjern billede" className="member-pick"
                     style={{ position:"absolute", top:4, right:4, background:"rgba(0,0,0,.6)",
                       border:"none", borderRadius:"50%", width:28, height:28,
-                      color:"var(--ink)", cursor:"pointer", fontSize:14 }}>×</button>
+                      color:"var(--ink)", fontSize:14 }}>×</button>
                 </div>
               ) : (
-                <label style={{ display:"flex", alignItems:"center", gap:8, padding:"12px 14px",
+                <label className="member-pick" style={{ display:"flex", alignItems:"center", gap:8, padding:"12px 14px",
                   border:"1.5px dashed var(--border2)", borderRadius:12,
-                  cursor:"pointer", background:"var(--surface)" }}>
+                  background:"var(--surface)" }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2">
                     <path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
                     <circle cx="12" cy="13" r="4"/>
@@ -239,7 +241,7 @@ export default function FeedbackModal({
             {/* Diagnostik */}
             <div style={{ background:"var(--surface)", borderRadius:10,
               padding:"10px 12px", marginBottom:14 }}>
-              <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:8 }}>📊 Automatisk inkluderet diagnostik</div>
+              <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:8, display:"flex", alignItems:"center", gap:4 }}><Icon name="chart" size={10} color="var(--muted)" /> Automatisk inkluderet diagnostik</div>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"4px 12px", marginBottom:8 }}>
                 {[
                   ["Skærm",       `${buildScreenLabel({ screen, authTab, onboardStep, scanResult, madpasWaiterView, madpasLang, selectedRecipe, editMode, showManualEan, profilePopup })} (${PAGE_IDS[screen] || "—"})`],
@@ -263,8 +265,8 @@ export default function FeedbackModal({
               {/* Debug trace */}
               {recentTraces.length > 0 && (
                 <div style={{ borderTop:"1px solid var(--border)", paddingTop:8, marginTop:4 }}>
-                  <div style={UI.ufs10_cmuted_fw700_mb4}>
-                    🔍 Debug trace ({traceLog.length} entries)
+                  <div style={{ ...UI.ufs10_cmuted_fw700_mb4, display:"flex", alignItems:"center", gap:4 }}>
+                    <Icon name="search" size={10} color="var(--muted)" /> Debug trace ({traceLog.length} entries)
                   </div>
                   <div style={{ fontFamily:"var(--mono)", fontSize:9, color:"var(--muted)", lineHeight:1.7, maxHeight:80, overflowY:"auto" }}>
                     {recentTraces.map((t, i) => (
@@ -284,7 +286,7 @@ export default function FeedbackModal({
               style={{ width:"100%", background: text.trim() ? "var(--green)" : "var(--surface2)",
                 border:"none", borderRadius:12, padding:"16px", fontFamily:"var(--f)",
                 fontSize:15, fontWeight:700, color: text.trim() ? "var(--on-green)" : "var(--muted)",
-                cursor: text.trim() ? "pointer" : "not-allowed" }}>
+                cursor: text.trim() ? "pointer" : "not-allowed", boxShadow: text.trim() ? "var(--sh)" : "none" }}>
               {sending ? "Sender…" : "Send feedback →"}
             </button>
           </>

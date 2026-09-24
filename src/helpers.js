@@ -1,6 +1,11 @@
 // @ts-nocheck
 import { ALLERGENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
+import { ALLERGEN_KEYWORDS, keywordMatches, matchCustomAllergens } from "./allergenKeywords.js";
+
+// Re-eksporteret så scan-/opskrift-/resultat-koden kan importere den sammen
+// med de øvrige allergen-hjælpefunktioner fra denne fil, fremfor at skulle
+// kende til at den reelt bor i allergenKeywords.js.
+export { matchCustomAllergens };
 
 export const initials = n => (n||"").split(" ").filter(Boolean).map(w=>w[0]).join("").toUpperCase().slice(0,2)||"?";
 
@@ -104,8 +109,17 @@ export function logSearchSelection(query, product, accessToken) {
 export async function apiCall(url, options = {}) {
   const res = await fetch(url, options);
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || err.error_description || `HTTP ${res.status}`);
+    const bodyText = await res.text().catch(() => "");
+    const parsed = (() => { try { return JSON.parse(bodyText); } catch { return {}; } })();
+    const err = new Error(parsed.message || parsed.error_description || parsed.error || `HTTP ${res.status}`);
+    // Rå status + response-body bevares på fejlen, så kaldere der reelt har
+    // brug for det (fx et 401 der skal give en anden besked end en 500) kan
+    // tjekke e.status/e.body i stedet for at falde tilbage til rå fetch —
+    // det var apiCall's manglende status-info, der i praksis drev denne
+    // divergens tidligere, ikke en reel forskel i behov.
+    err.status = res.status;
+    err.body = bodyText;
+    throw err;
   }
   const text = await res.text();
   return text ? JSON.parse(text) : {};
@@ -166,6 +180,49 @@ export function extractENumbers(text) {
   return [...new Set(matches.map(m => "E" + m.replace(/^E[\s-]?/i, "").trim()))];
 }
 
+// Fjern specifikke, admin-fravalgte E-numre fra en ingrediensteksts rå
+// forekomster (fx "E 270" eller "E270") — bruges når admin under gennemsyn
+// af en indsendelse fravælger et automatisk fundet E-nummer som en
+// fejlaflæsning. E-numre er IKKE et selvstændigt gemt felt på produktet
+// (de udledes altid live fra ingredients_text, se useProduct.js), så et
+// fravalg skal ske i selve teksten for at slå igennem på det færdige
+// produkt. Rydder efterfølgende dobbelt-komma/mellemrum som fjernelsen kan
+// efterlade.
+export function stripExcludedENumbers(text, excluded) {
+  if (!text || !excluded?.length) return text;
+  let result = text;
+  for (const eNum of excluded) {
+    const digits = eNum.replace(/^E/i, "");
+    const re = new RegExp(`\\bE[\\s-]?${digits}\\b`, "gi");
+    result = result.replace(re, "");
+  }
+  return result
+    .replace(/,\s*,/g, ",")
+    .replace(/^[,\s]+|[,\s]+$/g, "")
+    .replace(/\s{2,}/g, " ");
+}
+
+// Normaliserer fritekst-input til "E###" (eller "E###a") — bruges når admin
+// selv tilføjer et E-nummer OCR'en er gået glip af. EU-konventionen er stort
+// E + tal + evt. LILLE bogstav-suffiks (fx "E150a", ikke "E150A").
+export function normalizeENumber(input) {
+  if (!input) return null;
+  const m = String(input).trim().match(/^E?[\s-]?(\d{3,4})([a-zA-Z]?)$/i);
+  if (!m) return null;
+  return "E" + m[1] + (m[2] ? m[2].toLowerCase() : "");
+}
+
+// Tilføjer et normaliseret E-nummer til en ingredienstekst, hvis det ikke
+// allerede er nævnt (undgår dubletter når admin tilføjer et E-nummer
+// OCR'en er gået glip af — se normalizeENumber ovenfor).
+export function addENumberToText(text, eNum) {
+  if (!eNum) return text;
+  const existing = extractENumbers(text || "");
+  if (existing.some(e => e.toUpperCase() === eNum.toUpperCase())) return text;
+  const trimmed = (text || "").trim();
+  return trimmed ? `${trimmed}, ${eNum}` : eNum;
+}
+
 // Sammenlign produktets E-numre mod brugerens overvågede E-numre
 export function compareENumbers(productENumbers, userENumbers) {
   if (!productENumbers || !userENumbers || userENumbers.length === 0) {
@@ -219,19 +276,14 @@ export function checkDietCompatibility(dietId, allergenFlags, ingredientsText, n
   const lower = (ingredientsText || "").toLowerCase();
   const reasons = [];
 
-  // Hjælpefunktion: tjek om ingredienstekst indeholder et keyword (med ordgrænse for korte ord)
-  const hasIngredient = (keyword) => {
-    if (keyword.length <= 4) {
-      // Kort ord: brug ordgrænse for at undgå falske positiver
-      const idx = lower.indexOf(keyword);
-      if (idx === -1) return false;
-      const before = idx > 0 ? lower[idx - 1] : " ";
-      const after = idx + keyword.length < lower.length ? lower[idx + keyword.length] : " ";
-      const isWordChar = (c) => /[a-zæøå0-9]/i.test(c);
-      return !isWordChar(before) && !isWordChar(after);
-    }
-    return lower.includes(keyword);
-  };
+  // Genbruger allergenKeywords.js' keywordMatches i stedet for en egen kopi
+  // af ordgrænse-logikken — den udgave scanner ALLE forekomster af ordet
+  // (ikke kun den første) og er negations-bevidst ("glutenfri" matcher IKKE
+  // "gluten"), begge dele fundet manglende her ved en allergen-logik-
+  // gennemgang (16. sept. 2026). Uden negations-tjekket ville et produkt der
+  // eksplicit skriver "glutenfri havre" fejlagtigt blive vist som "Indeholder
+  // gluten" — det modsatte af hvad emballagen rent faktisk siger.
+  const hasIngredient = (keyword) => keywordMatches(lower, keyword);
 
   switch (dietId) {
     case "vegan": {
@@ -340,7 +392,11 @@ export function traceLog(id, step, data = {}) {
   };
   _traceLog.push(entry);
   if (_traceLog.length > 200) _traceLog.shift();
-  console.log(`[trace:${id}] ${step}`, data);
+  // Log kun til konsollen i dev — i produktion ville dette lække scannede
+  // EAN'er, produktnavne og rå OCR-tekst til enhver der åbner devtools.
+  // getTraceLog()/Admin-debug-fanen har stadig fuld adgang til historikken
+  // uanset miljø, kun selve console.log-outputtet er gated.
+  if (import.meta.env.DEV) console.log(`[trace:${id}] ${step}`, data);
   return entry;
 }
 

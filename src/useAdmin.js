@@ -1,8 +1,9 @@
 // @ts-nocheck
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS } from "./constants.jsx";
-import { makeHeaders, apiCall } from "./helpers.js";
+import { makeHeaders, apiCall, stripExcludedENumbers } from "./helpers.js";
 import { sendPushToUser } from "./usePush.js";
+import { showToast } from "./SharedComponents.jsx";
 
 export function useAdmin(accessToken, userId, clearAuth) {
   // State
@@ -32,20 +33,29 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const [reparseLog, setReparseLog] = useState(null);
 
   // Functions
+  // Værn mod hurtige fane-skift: uden et token-tjek kan et ældre, langsomt
+  // svar (fx "pending") nå at lande EFTER et nyere, hurtigere svar (fx
+  // "approved") og overskrive den liste admin faktisk ser lige nu med data
+  // for en helt anden fane. Samme mønster som runLookupProduct i
+  // useProduct.js.
+  const submissionsLoadToken = useRef(0);
   const loadSubmissions = async (filter) => {
     const f = filter || submissionFilter;
     if (f === "tickets") return;
     if (!accessToken) { console.warn("loadSubmissions: ingen accessToken"); return; }
+    const myToken = ++submissionsLoadToken.current;
     setSubmissionsLoading(true);
     try {
-      const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
       const url = `${SUPABASE_URL}/rest/v1/submissions?status=eq.${f}&order=created_at.desc&limit=100`;
-      const res = await fetch(url, { headers });
-      if (!res.ok) { console.error("loadSubmissions fejl:", res.status); setSubmissionsLoading(false); return; }
-      const data = await res.json();
+      const data = await apiCall(url, { headers: makeHeaders(accessToken) });
+      if (submissionsLoadToken.current !== myToken) return;
       setSubmissions(Array.isArray(data) ? data : []);
-    } catch (e) { console.error("loadSubmissions:", e); setSubmissions([]); }
-    setSubmissionsLoading(false);
+    } catch (e) {
+      if (submissionsLoadToken.current !== myToken) return;
+      console.error("loadSubmissions:", e.status || "", e.message); setSubmissions([]);
+      showToast("Kunne ikke hente indsendelser: " + e.message, "error");
+    }
+    if (submissionsLoadToken.current === myToken) setSubmissionsLoading(false);
   };
 
   const deleteOwnAccount = async () => {
@@ -93,18 +103,23 @@ export function useAdmin(accessToken, userId, clearAuth) {
         scans_today: Array.isArray(scansToday) ? scansToday.length : 0,
         new_users_today: Array.isArray(newUsersToday) ? newUsersToday.length : 0,
       });
-    } catch (e) { console.error("loadAdminStats fejl:", e.message); }
+    } catch (e) {
+      console.error("loadAdminStats fejl:", e.message);
+      showToast("Kunne ikke hente statistik: " + e.message, "error");
+    }
   };
 
   const loadTickets = async () => {
     setTicketsLoading(true);
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?order=created_at.desc&limit=100`, {
-        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" },
+      const data = await apiCall(`${SUPABASE_URL}/rest/v1/feedback_tickets?order=created_at.desc&limit=100`, {
+        headers: makeHeaders(accessToken),
       });
-      const data = await res.json();
       setAdminTickets(Array.isArray(data) ? data : []);
-    } catch { setAdminTickets([]); }
+    } catch (e) {
+      setAdminTickets([]);
+      showToast("Kunne ikke hente tickets: " + e.message, "error");
+    }
     setTicketsLoading(false);
   };
 
@@ -115,7 +130,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
         { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
       );
       if (Array.isArray(data)) setAdminUsers(data);
-    } catch (e) { console.error("loadAdminUsers:", e); }
+    } catch (e) {
+      console.error("loadAdminUsers:", e);
+      showToast("Kunne ikke hente brugere: " + e.message, "error");
+    }
   };
 
   const updateUserRole = async (uid, role) => {
@@ -126,7 +144,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
         body: JSON.stringify({ role }),
       });
       setAdminUsers(u => u.map(x => x.id === uid ? { ...x, role } : x));
-    } catch (e) { console.error("updateUserRole:", e); }
+    } catch (e) {
+      console.error("updateUserRole:", e);
+      showToast("Kunne ikke ændre rolle: " + e.message, "error");
+    }
   };
 
   const deleteUser = async (uid) => {
@@ -138,7 +159,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
       });
       if (res?.error) throw new Error(res.error);
       setAdminUsers(u => u.filter(x => x.id !== uid));
-    } catch (e) { console.error("deleteUser:", e); }
+    } catch (e) {
+      console.error("deleteUser:", e);
+      showToast("Kunne ikke slette bruger: " + e.message, "error");
+    }
   };
 
   const updateSubmissionAndApprove = async (submission, edited) => {
@@ -154,6 +178,11 @@ export function useAdmin(accessToken, userId, clearAuth) {
         const v = edited?.allergen_flags?.[a.id];
         if (v) allergenFlags[a.id] = v;
       }
+      // E-numre er ikke et selvstændigt gemt felt — de udledes altid live fra
+      // ingredients_text (se useProduct.js). Et E-nummer admin har fravalgt
+      // under gennemsyn skal derfor fjernes fra selve teksten HER, ved
+      // godkendelse, så det ikke dukker op igen på det færdige produkt.
+      const finalIngredientsText = stripExcludedENumbers(edited?.ingredients_text, edited?.excluded_enumbers);
       // Godkendelse skal ramme submissions Edge Function — den er den eneste der
       // rent faktisk OPRETTER produktet i products-tabellen. Et almindeligt PATCH
       // mod /rest/v1/submissions markerer kun status, uden at oprette produktet,
@@ -167,7 +196,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
           reviewed_by: userId,
           name: edited?.name,
           brand: edited?.brand,
-          ingredients_text: edited?.ingredients_text,
+          ingredients_text: finalIngredientsText,
           allergen_flags: allergenFlags,
         }),
       });
@@ -175,7 +204,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
       // Reparse allergen-flags med AI-verifikation på det nu oprettede produkt
       if (submission.ean || edited?.ean) {
         const ean = edited?.ean || submission.ean;
-        const ingredientsText = edited?.ingredients_text || submission.ocr_raw_text || "";
+        const ingredientsText = finalIngredientsText || submission.ocr_raw_text || "";
         if (ingredientsText) {
           try {
             const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, {
@@ -244,7 +273,13 @@ export function useAdmin(accessToken, userId, clearAuth) {
         } catch (e) { console.warn("NOTFOUND push fejl:", e); }
       }
     } catch (e) {
+      // submission blev fjernet fra listen optimistisk før kaldet ovenfor —
+      // uden en synlig fejl her ville den bare forsvinde fra admins syne,
+      // selvom produktet aldrig blev oprettet/opdateret server-side.
+      // loadSubmissions henter listen frisk igen, så den dukker op igen,
+      // men admin skal vide at godkendelsen reelt fejlede.
       console.error("updateSubmissionAndApprove:", e);
+      showToast("Godkendelse fejlede: " + e.message + " — indsendelsen er ikke godkendt, listen er opdateret", "error");
       loadSubmissions(submissionFilter);
     }
   };
@@ -260,6 +295,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
       });
     } catch (e) {
       console.error("rejectSubmission:", e);
+      showToast("Afvisning fejlede: " + e.message + " — indsendelsen er ikke afvist, listen er opdateret", "error");
       loadSubmissions(submissionFilter);
     }
   };
@@ -273,7 +309,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
       });
       loadTickets();
       setOpenTicket(null);
-    } catch (e) { console.error("updateTicketStatus:", e); }
+    } catch (e) {
+      console.error("updateTicketStatus:", e);
+      showToast("Kunne ikke opdatere ticket-status: " + e.message, "error");
+    }
   };
 
   const cleanOcrWithAI = async (text) => {
@@ -287,8 +326,17 @@ export function useAdmin(accessToken, userId, clearAuth) {
         body: JSON.stringify({ text, force_ai: true }),
       });
       if (data.success && data.allergen_flags) {
-        // Opdater flags fra AI-analyse
-        setEditingSubmission(s => ({ ...s, ...data.allergen_flags }));
+        // Opdater flags fra AI-analyse. VIGTIGT: skal ind under
+        // .allergen_flags — UI'et og godkendelses-payloaden læser
+        // editingSubmission.allergen_flags[id], IKKE editingSubmission[id]
+        // direkte. Tidligere spredte dette de nye flag-værdier som
+        // top-level-nøgler på editingSubmission i stedet for ind i dets
+        // allergen_flags-objekt, så AI'ens korrekt genkendte allergener
+        // (fx "jordnødder") aldrig nåede hverken toggle-grid'et eller det
+        // der rent faktisk blev godkendt — stille forkert data uden nogen
+        // synlig fejl (samme feltnavne-mismatch-mønster som customAllerg-
+        // fundet, se CLAUDE.md afsnit 5).
+        setEditingSubmission(s => ({ ...s, allergen_flags: { ...s.allergen_flags, ...data.allergen_flags } }));
       }
       // Rens teksten: fjern næringsindhold, labels, og behold kun ingredienser
       const lines = text.split(/\n/).map(l => l.trim()).filter(l => l.length > 3);
@@ -302,7 +350,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
       // (se updateSubmissionAndApprove) — sæt det med det samme, så rensningen
       // er anvendt uden at admin skal huske at trykke "Brug denne version" oveni.
       setEditingSubmission(s => ({ ...s, ocr_raw_text: cleaned || text, ingredients_text: cleaned || text }));
-    } catch (e) { console.error("cleanOcrWithAI:", e); }
+    } catch (e) {
+      console.error("cleanOcrWithAI:", e);
+      showToast("AI-renskrivning fejlede: " + e.message, "error");
+    }
     setCleaningOcr(false);
   };
 

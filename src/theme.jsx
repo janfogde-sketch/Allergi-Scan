@@ -130,7 +130,11 @@ body{
   min-height:100vh;
 }
 .app{
-  max-width:390px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
+  /* 480px — ikke 390px — dækker moderne store telefoner (iPhone Air: 402px,
+     Pro Max-modeller: op til 430px), så appen ikke centreres med synlige
+     tomme kanter på rigtige telefoner. Fungerer stadig som et "telefon-
+     mockup"-loft på en reel desktop-browser (bredere vinduer). */
+  max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
   width:100%;position:relative;overflow-x:hidden;
   /* Fint punkt-gitter i grøn (scanner/præcisions-følelse, matcher stregkode-
      og brand-farven) + blød grøn glød foroven og en svag blå glød forneden
@@ -159,14 +163,14 @@ body{
 .screen{flex:1;padding:0 16px 110px;}
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:390px;
+  width:100%;max-width:480px;
   /* Helt uigennemsigtig — en gradient med en gennemsigtig top-del lod indhold
      der var scrollet med skinne igennem bag ikonerne, så baren så "flimrende"
      ud i stedet for at virke som ét fast lag oven på resten af skærmen. */
   background:#F6F8F3;
   box-shadow:0 -8px 16px -12px rgba(21,32,26,.14);
   border-top:1px solid var(--border);
-  display:flex;padding:10px 4px 24px;z-index:100;
+  display:flex;padding:10px 4px calc(24px + env(safe-area-inset-bottom));z-index:100;
 }
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.45;transition:all .15s;}
 .nav-item.active{opacity:1;}
@@ -439,6 +443,27 @@ body{
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 .fade-in{animation:fadeUp .18s ease both;}
 @keyframes toast-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── SCAN-LOADING (logo-baseret loading-animation, vist mens et scannet/
+   søgt produkt slås op — fra scan:start til resultatet er klart) ── */
+.scan-loading-overlay{
+  position:fixed;inset:0;z-index:9994;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+  background:var(--paper);opacity:.97;
+  animation:fadeUp .18s ease both;
+}
+.scan-loading-mark{animation:scan-mark-pulse 1.8s ease-in-out infinite;}
+@keyframes scan-mark-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.035);}}
+.scan-loading-beam{animation:scan-beam-sweep 1.6s cubic-bezier(.45,0,.55,1) infinite;}
+@keyframes scan-beam-sweep{
+  0%{transform:translateY(0);opacity:0;}
+  10%{opacity:1;}
+  50%{transform:translateY(68px);opacity:1;}
+  90%{opacity:1;}
+  100%{transform:translateY(0);opacity:0;}
+}
+.scan-loading-txt{font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.1px;text-align:center;}
+.scan-loading-sub{font-size:12.5px;color:var(--muted);text-align:center;margin-top:2px;}
 .scroll-top-btn{
   position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:9990;
   width:44px;height:44px;border-radius:50%;
@@ -534,9 +559,19 @@ body{
 .mp-lang-dropdown:active,.mp-lang-opt:active,.chip:active,.home-chip:active,
 .filter-chip:active,.ap-chip:active,.recipe-filter-chip:active,.tab:active,
 .demo-code:active,.topbar-avatar:active,.menu-item:active,.menu-profile-card:active,
-.scroll-top-btn:active{
+.scroll-top-btn:active,.admin-tab:active,.admin-action-card:active,
+.admin-list-row:active,.destructive-confirm-btn:active,.plain-cancel-btn:active,
+.enum-chip:active,.enum-row:active,.enum-remove:active,.member-pick:active{
   transform:scale(.97);
 }
+.enum-chip,.enum-row,.enum-remove,.member-pick{cursor:pointer;}
+
+/* AdminScreen.jsx bruger udelukkende inline styles (aldrig CSS-klasser), så
+   ovenstående globale :active-udrulning (14. sept.) aldrig ramte den —
+   disse tre dækker filens tre mest gentagne trykbare mønstre (sektions-
+   faneblade, hurtig-handling-kort, liste-rækker). cursor:pointer sættes
+   her (ikke inline) for at kvalificere til :active-reglen ovenfor. */
+.admin-tab,.admin-action-card,.admin-list-row{cursor:pointer;}
 
 /* Løs tekst — ikke inde i et kort/surface — ligger nu direkte oven på
    baggrundens punkt-gitter. Et fint, lyst "løft" (ikke en blur/glød) holder

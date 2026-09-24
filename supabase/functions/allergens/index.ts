@@ -35,12 +35,12 @@ const ALLERGEN_KEYWORDS: Record<string, string[]> = {
     "yoghurt", "yogurt", "kefir", "skyr", "kvark", "quark",
     "tørmælk", "mælkepulver", "milk powder", "skummetmælkspulver",
     "sødmælkspulver", "kærnemælk", "buttermilk", "flødepulver",
-    "mælketørstof", "milk solids", "laktoprotein",
+    "mælketørstof", "milk solids", "laktoprotein", "ost", "oste",
   ],
   // Laktose = mælkeSUKKER. Kun laktose-specifikke termer
   laktose: [
     "laktose", "lactose", "mælkesukker", "milk sugar",
-    "mælk", "milk", "fløde", "cream", "ost", "cheese",
+    "mælk", "milk", "fløde", "cream", "ost", "oste", "cheese",
     "yoghurt", "yogurt", "kærnemælk", "buttermilk",
     "valle", "whey", "tørmælk", "mælkepulver", "milk powder",
   ],
@@ -51,10 +51,10 @@ const ALLERGEN_KEYWORDS: Record<string, string[]> = {
     "æggepulver", "egg powder", "pasteuriseret æg",
   ],
   noedder: [
-    "mandel", "almond", "mandler", "hasselnød", "hazelnut", "corylus",
-    "valnød", "walnut", "juglans", "cashew", "cashewnød", "anacardium",
-    "pistacie", "pistachio", "pistacienød", "pekannød", "pecan",
-    "macadamia", "macadamianød", "paranød", "brazil nut", "pinjekerne",
+    "mandel", "almond", "mandler", "hasselnød", "hasselnødder", "hazelnut", "corylus",
+    "valnød", "valnødder", "walnut", "juglans", "cashew", "cashewnød", "cashewnødder", "anacardium",
+    "pistacie", "pistachio", "pistacienød", "pistacienødder", "pekannød", "pekannødder", "pecan",
+    "macadamia", "macadamianød", "macadamianødder", "paranød", "paranødder", "brazil nut", "pinjekerne", "pinjekerner",
     "pine nut", "nøddepasta", "nut paste", "marcipan", "marzipan", "nougat",
   ],
   jordnoedder: [
@@ -69,15 +69,15 @@ const ALLERGEN_KEYWORDS: Record<string, string[]> = {
     "sojasauce", "soy sauce", "sojadrik",
   ],
   fisk: [
-    "fisk", "fish", "ansjos", "anchovy", "torsk", "cod", "gadus",
+    "fisk", "fish", "ansjos", "ansjoser", "anchovy", "torsk", "cod", "gadus",
     "laks", "salmon", "salmo", "tun", "tuna", "thunnus", "sild",
-    "herring", "clupea", "makrel", "mackerel", "rødspætte", "plaice",
+    "herring", "clupea", "makrel", "makreller", "mackerel", "rødspætte", "rødspætter", "plaice",
     "fiskesauce", "fish sauce", "fiskeolie", "fish oil", "surimi",
     "fiskegelatine", "fiskeekstrakt", "rogn", "roe", "kaviar", "caviar",
   ],
   skaldyr: [
     "skaldyr", "crustacean", "rejer", "reje", "shrimp", "prawn",
-    "hummer", "lobster", "krabbe", "crab", "languster", "krebs",
+    "hummer", "lobster", "krabbe", "krabber", "crab", "languster", "langustere", "krebs",
     "crayfish", "krebsdyr", "krabbestang", "krill",
   ],
   selleri: [
@@ -106,7 +106,7 @@ const ALLERGEN_KEYWORDS: Record<string, string[]> = {
   bloeddyr: [
     "bløddyr", "mollusc", "mollusk", "musling", "muslinger", "mussel",
     "østers", "oyster", "blæksprutte", "squid", "octopus", "blæksprutter",
-    "snegl", "snail", "kammusling", "scallop", "abalone", "vongole",
+    "snegl", "snail", "kammusling", "kammuslinger", "scallop", "abalone", "vongole",
   ],
 };
 
@@ -359,6 +359,7 @@ Deno.serve(async (req) => {
   // aldrig eksponeret til klienter) i stedet for en bruger-Authorization.
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const isInternalCall = !!serviceRoleKey && req.headers.get("apikey") === serviceRoleKey;
+  let caller: { id: string } | null = null;
 
   if (!isInternalCall) {
     const authHeader = req.headers.get("Authorization");
@@ -371,11 +372,12 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       { global: { headers: { Authorization: authHeader } } }
     );
-    const { data: { user: caller } } = await userClient.auth.getUser();
-    if (!caller) return new Response(
+    const { data: { user } } = await userClient.auth.getUser();
+    if (!user) return new Response(
       JSON.stringify({ error: "Ikke autoriseret" }),
       { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+    caller = user;
   }
 
   try {
@@ -386,6 +388,17 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "text er påkrævet" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // En ægte ingrediensliste er aldrig i nærheden af dette lange — uden et
+    // loft kunne en indlogget bruger gentagne gange sende meget lang tekst
+    // med force_ai:true og drive prisen på det betalte Claude-kald op.
+    const MAX_TEXT_LENGTH = 20_000;
+    if (text.length > MAX_TEXT_LENGTH) {
+      return new Response(
+        JSON.stringify({ error: "text er for lang" }),
+        { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -416,6 +429,23 @@ Deno.serve(async (req) => {
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
       );
+
+      // save:true skriver direkte til et produkts allergen_flags i
+      // PRODUKTION uden nogen godkendelses-workflow bagved (i modsætning til
+      // submissions-flowet) — det kræver derfor admin, ikke bare login.
+      // Uden dette kunne enhver indlogget bruger overskrive allergendata for
+      // et VILKÅRLIGT produkt, direkte, på en app der findes for at fortælle
+      // allergikere om et produkt er sikkert.
+      if (!isInternalCall) {
+        const { data: callerRow } = await supabase.from("users").select("role").eq("id", caller!.id).single();
+        if (callerRow?.role !== "admin") {
+          return new Response(
+            JSON.stringify({ error: "Kun admins kan gemme allergen-data direkte på et produkt" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
       const { error } = await supabase
         .from("products")
         .update({ allergen_flags: allergenFlags })

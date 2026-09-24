@@ -1,84 +1,27 @@
 // @ts-nocheck
-import React, { useState } from "react";
-import { ALLERGENS, SCREENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { initials, getTraceLog } from "./helpers.js";
+import React, { useState, useRef } from "react";
+import { SCREENS, SUPABASE_URL } from "./constants.jsx";
+import { apiCall, makeHeaders } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useAdminContext } from "./AdminContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
-import { ALL_ALLERGEN_WORDS } from "./allergenKeywords.js";
-import { Loader, Icon, showToast } from "./SharedComponents.jsx";
+import { Icon, showToast } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
-
-// Fremhæv allergener og E-numre i ingredienstekst
-const E_NUMBER_RE = /\b(E\d{3,4}[a-z]?)\b/gi;
-const isWordChar = c => /[a-zæøå0-9]/i.test(c);
-
-// Ordgrænse-sikret indexOf for korte nøgleord (<=4 tegn) — ellers ville fx
-// "til" (sesam på hindi) eller "ost" (mælk) matche inde i helt almindelige
-// danske ord/sætninger. Længere ord matches som understreng, som hidtil.
-function findWordSafe(haystack, needle) {
-  if (needle.length > 4) return haystack.indexOf(needle);
-  let from = 0;
-  while (true) {
-    const idx = haystack.indexOf(needle, from);
-    if (idx === -1) return -1;
-    const before = idx > 0 ? haystack[idx - 1] : " ";
-    const after = idx + needle.length < haystack.length ? haystack[idx + needle.length] : " ";
-    if (!isWordChar(before) && !isWordChar(after)) return idx;
-    from = idx + 1;
-  }
-}
-
-function HighlightText({ text }) {
-  if (!text) return null;
-  const parts = [];
-  let remaining = text;
-  let key = 0;
-
-  while (remaining.length > 0) {
-    // Find earliest match: allergen word or E-number
-    let earliestIdx = remaining.length;
-    let matchLen = 0;
-    let matchType = null; // "allergen" or "enumber"
-
-    // Check E-numbers
-    const eMatch = E_NUMBER_RE.exec(remaining);
-    E_NUMBER_RE.lastIndex = 0;
-    if (eMatch && eMatch.index < earliestIdx) {
-      earliestIdx = eMatch.index;
-      matchLen = eMatch[0].length;
-      matchType = "enumber";
-    }
-
-    // Check allergen keywords (case-insensitive)
-    const lower = remaining.toLowerCase();
-    for (const word of ALL_ALLERGEN_WORDS) {
-      const idx = findWordSafe(lower, word.toLowerCase());
-      if (idx !== -1 && idx < earliestIdx) {
-        earliestIdx = idx;
-        matchLen = word.length;
-        matchType = "allergen";
-      }
-    }
-
-    if (matchType) {
-      if (earliestIdx > 0) parts.push(<span key={key++}>{remaining.slice(0, earliestIdx)}</span>);
-      const matched = remaining.slice(earliestIdx, earliestIdx + matchLen);
-      const color = matchType === "allergen" ? "var(--red)" : "var(--amber)";
-      const bg = matchType === "allergen" ? "var(--red-lt)" : "var(--amber-lt)";
-      parts.push(<span key={key++} style={{ color, background:bg, fontWeight:700, borderRadius:3, padding:"0 3px" }}>{matched}</span>);
-      remaining = remaining.slice(earliestIdx + matchLen);
-    } else {
-      parts.push(<span key={key++}>{remaining}</span>);
-      break;
-    }
-  }
-  return <>{parts}</>;
-}
-
+import AdminTicketDetailSheet from "./AdminTicketDetailSheet.jsx";
+import AdminDashboardSection from "./AdminDashboardSection.jsx";
+import AdminUsersSection from "./AdminUsersSection.jsx";
+import AdminUserDetailSheet from "./AdminUserDetailSheet.jsx";
+import AdminSubmissionsSection, { AdminSubmissionReview } from "./AdminSubmissionsSection.jsx";
+import AdminTicketsSection from "./AdminTicketsSection.jsx";
+import AdminMissingSection from "./AdminMissingSection.jsx";
+import AdminImportSection from "./AdminImportSection.jsx";
+import AdminDebugSection from "./AdminDebugSection.jsx";
+import AdminRecipesSection from "./AdminRecipesSection.jsx";
 
 export default function AdminScreen() {
   const { userId, accessToken } = useAuthContext();
+  const [submitterInfo, setSubmitterInfo] = useState(null);
+  const [submitterLoading, setSubmitterLoading] = useState(false);
   const {
     adminSection, setAdminSection, adminStats,
     adminUsers, adminUsersLoading,
@@ -107,13 +50,13 @@ export default function AdminScreen() {
   // blanke dem, fordi et rettelsesforslag ikke selv indeholder et fuldt produktnavn.
   const openSubmissionForReview = async (s) => {
     setOpenSubmission(s);
+    setSubmitterInfo(null);
     if (s.type === "edit" && s.product_id) {
       try {
-        const res = await fetch(
+        const rows = await apiCall(
           `${SUPABASE_URL}/rest/v1/products?id=eq.${s.product_id}&select=name,brand,allergen_flags`,
-          { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" } }
+          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
         );
-        const rows = await res.json();
         const product = Array.isArray(rows) ? rows[0] : null;
         setEditingSubmission({
           name: product?.name || "",
@@ -122,54 +65,69 @@ export default function AdminScreen() {
           ingredients_text: s.ai_parsed_data?.edit_type === "ingredients" ? (s.ocr_raw_text || "") : "",
         });
       } catch (e) {
-        console.error("openSubmissionForReview:", e);
+        showToast("Kunne ikke hente produktets nuværende data: " + e.message + " — udfyld felterne manuelt før du godkender", "error");
         setEditingSubmission({ name: "", brand: "", allergen_flags: {} });
       }
     } else {
       setEditingSubmission({ name: s.ai_parsed_data?.name || s.product_name || "", brand: s.ai_parsed_data?.brand || s.brand || "", allergen_flags: s.ai_parsed_data || {} });
+    }
+    if (s.submitted_by) {
+      setSubmitterLoading(true);
+      try {
+        const rows = await apiCall(
+          `${SUPABASE_URL}/rest/v1/users?id=eq.${s.submitted_by}&select=name,email`,
+          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+        );
+        setSubmitterInfo(Array.isArray(rows) && rows[0] ? rows[0] : { name: null, email: null });
+      } catch (e) {
+        setSubmitterInfo({ name: null, email: null, error: e.message });
+      }
+      setSubmitterLoading(false);
     }
     // Renskriv automatisk med det samme i stedet for at kræve et ekstra
     // admin-klik — ingredienslisten fra OCR er sjældent klar til godkendelse som den er.
     if (s.ocr_raw_text) cleanOcrWithAI(s.ocr_raw_text);
   };
 
-  // ── Installations-QR til beta-testere ───────────────────────────────────────
-  // Peger på install.html i stedet for direkte på appen: den siden tjekker selv
-  // enheden — iPhone/iPad får en trin-for-trin guide (Apple tillader ikke
-  // automatisk installation), alt andet sendes videre til appen med det samme.
-  const [showInstallQr, setShowInstallQr] = useState(false);
-  const installUrl = "https://eatsafe.dk/install.html";
-  const installQrImg = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(installUrl)}&bgcolor=ffffff&color=0d3320&qzone=2`;
-
   // ── Admin opskrifter — lokal state ──────────────────────────────────────────
+  // Holdt her (i stedet for i AdminRecipesSection) fordi fane-baren nedenfor
+  // skal kunne kalde loadAdminRecipes() direkte ved klik på "Opskrifter"-fanen.
   const [adminRecipes, setAdminRecipes] = useState([]);
   const [adminRecipesLoading, setAdminRecipesLoading] = useState(false);
   const [adminRecipeFilter, setAdminRecipeFilter] = useState("pending");
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [recipeActionLoading, setRecipeActionLoading] = useState(false);
 
+  // Værn mod hurtige fane-skift — samme mønster som loadSubmissions i
+  // useAdmin.js: uden det kan et ældre svar for en tidligere valgt fane nå
+  // at overskrive listen efter et nyere, hurtigere svar for den fane admin
+  // faktisk ser nu.
+  const adminRecipesLoadToken = useRef(0);
   const loadAdminRecipes = async (filter = adminRecipeFilter) => {
+    const myToken = ++adminRecipesLoadToken.current;
     setAdminRecipesLoading(true);
     try {
-      const res = await fetch(
+      const data = await apiCall(
         `${SUPABASE_URL}/rest/v1/recipes?status=eq.${filter}&order=created_at.desc&limit=100&select=id,title,category,status,submitted_by,created_at,allergen_flags,description,servings,prep_time_minutes,cook_time_minutes,tags,instructions,image_url`,
-        { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" } }
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
       );
-      const data = await res.json();
+      if (adminRecipesLoadToken.current !== myToken) return;
       setAdminRecipes(Array.isArray(data) ? data : []);
-    } catch (e) { console.error("loadAdminRecipes:", e); }
-    setAdminRecipesLoading(false);
+    } catch (e) {
+      if (adminRecipesLoadToken.current !== myToken) return;
+      console.error("loadAdminRecipes:", e);
+    }
+    if (adminRecipesLoadToken.current === myToken) setAdminRecipesLoading(false);
   };
 
   const updateRecipeStatus = async (id, status) => {
     setRecipeActionLoading(true);
     try {
-      const res = await fetch(
+      await apiCall(
         `${SUPABASE_URL}/rest/v1/recipes?id=eq.${id}`,
-        { method: "PATCH", headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+        { method: "PATCH", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
           body: JSON.stringify({ status }) }
       );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setAdminRecipes(prev => prev.filter(r => r.id !== id));
       setEditingRecipe(null);
     } catch (e) { showToast("Fejl: " + e.message, "error"); }
@@ -181,229 +139,19 @@ export default function AdminScreen() {
     setRecipeActionLoading(true);
     try {
       const { id, ...fields } = editingRecipe;
-      const res = await fetch(
+      await apiCall(
         `${SUPABASE_URL}/rest/v1/recipes?id=eq.${id}`,
-        { method: "PATCH", headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+        { method: "PATCH", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
           body: JSON.stringify(fields) }
       );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       showToast("Gemt");
     } catch (e) { showToast("Fejl: " + e.message, "error"); }
     setRecipeActionLoading(false);
   };
 
-  const filteredAdminUsers = adminUsers.filter(u => {
-    if (userSearchParam === "admin") return u.role === "admin";
-    if (userSearchParam === "incomplete") return u.onboarding_completed === false;
-    if (!userSearch.trim()) return true;
-    const q = userSearch.toLowerCase();
-    if (userSearchParam === "name") return (u.name||"").toLowerCase().includes(q);
-    if (userSearchParam === "email") return (u.email||"").toLowerCase().includes(q);
-    if (userSearchParam === "role") return (u.role||"").toLowerCase().includes(q);
-    if (userSearchParam === "onboarding") return String(u.onboarding_completed).includes(q);
-    return (u.name||"").toLowerCase().includes(q) || (u.email||"").toLowerCase().includes(q);
-  });
-
-  // Udtræk brand fra EAN-præfiks (GS1 landekoder er vejledende — vi bruger bare som grupperingshjælp)
-  // I stedet aggregerer vi på EAN-præfiks (første 4 cifre) som proxy for brand
-  const missingEanTopPrefixes = (() => {
-    const prefixMap = {};
-    missingEans.forEach(row => {
-      const prefix = row.ean?.slice(0, 4) || "????";
-      if (!prefixMap[prefix]) prefixMap[prefix] = { count: 0, scans: 0, eans: [] };
-      prefixMap[prefix].count++;
-      prefixMap[prefix].scans += (row.count || 1);
-      prefixMap[prefix].eans.push(row.ean);
-    });
-    return Object.entries(prefixMap)
-      .sort(([,a],[,b]) => b.scans - a.scans)
-      .slice(0, 5);
-  })();
-  const missingEansTotalScans = missingEans.reduce((s,r) => s+(r.count||1), 0);
-
   return (
     <>
-        {openTicket && (
-          <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
-            onClick={e => e.target === e.currentTarget && setOpenTicket(null)}>
-            <div style={UI.ubgsheet_br20px20px_p20px16px_w100_mxh90vh_ovyauto}
-              onClick={e => e.stopPropagation()}>
-
-              {/* Header */}
-              <div style={UI.udflex_aicenter_g12_mb16}>
-                <button onClick={() => setOpenTicket(null)} aria-label="Luk"
-                  style={UI.ubgsurface2_bdnone_br50_w32_h32_curpointer_fs18_cmuted}>×</button>
-                <div style={{ flex:1, fontSize:16, fontWeight:800, color:"var(--ink)", display:"flex", alignItems:"center", gap:6 }}><Icon name="bug" size={15} color="var(--ink)" /> Ticket #{openTicket.id?.slice(0,8)}</div>
-              </div>
-
-              {/* Status knapper */}
-              <div style={UI.udflex_g6_mb14}>
-                {[
-                  { val:"open",        label:"Åben",   dot:"var(--red)" },
-                  { val:"in_progress", label:"I gang",  dot:"var(--amber)" },
-                  { val:"resolved",    label:"Løst",    dot:"var(--green)" },
-                ].map(s => (
-                  <button key={s.val} onClick={() => updateTicketStatus(openTicket.id, s.val)}
-                    style={{ flex:1, padding:"8px 4px", borderRadius:10, border:`1px solid ${openTicket.status===s.val?"var(--green)":"var(--border)"}`,
-                      background: openTicket.status===s.val ? "var(--green-lt)" : "var(--surface)",
-                      display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-                      fontFamily:"var(--f)", fontSize:10, fontWeight:700,
-                      color: openTicket.status===s.val ? "var(--green)" : "var(--muted)", cursor:"pointer" }}>
-                    <span style={{ width:7, height:7, borderRadius:"50%", background:s.dot, flexShrink:0 }} />
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Beskrivelse */}
-              <div style={UI.ubgsurface_bd1pxsolid_br12_p14px_mb10}>
-                <div style={{ fontSize:11, color:"var(--muted)", fontWeight:700, marginBottom:6 }}>BESKRIVELSE</div>
-                <div style={{ fontSize:14, color:"var(--ink)", lineHeight:1.7 }}>{openTicket.description}</div>
-              </div>
-
-              {/* Skærmbillede */}
-              {openTicket.image_base64 && (
-                <div style={UI.ubgsurface_bd1pxsolid_br12_p14px_mb10}>
-                  <div style={UI.ufs11_cmuted_fw700_mb8}>SKÆRMBILLEDE</div>
-                  <img src={`data:image/jpeg;base64,${openTicket.image_base64}`} alt="Screenshot"
-                    style={{ width:"100%", borderRadius:8, objectFit:"contain" }} />
-                </div>
-              )}
-
-              {/* Diagnostisk info */}
-              {openTicket.context && (
-                <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 }}>
-                  <div style={{ ...UI.ufs11_cmuted_fw700_mb8, display:"flex", alignItems:"center", gap:6 }}><Icon name="chart" size={11} color="var(--muted)" /> DIAGNOSTISK INFO</div>
-                  <div style={UI.grid2gap6}>
-                    {[
-                      ["Bruger",      openTicket.context.user_name || "Anonym"],
-                      ["Email",       openTicket.context.user_email || "—"],
-                      ["Skærm",       openTicket.context.screen_label || openTicket.context.screen || "—"],
-                      ["Side-ID",     openTicket.context.page_id || "—"],
-                      ["Enhed",       /iPhone|iPad/.test(openTicket.context.user_agent||"")?"iOS":/Android/.test(openTicket.context.user_agent||"")?"Android":"Desktop"],
-                      ["Viewport",    openTicket.context.viewport || "—"],
-                      ["Skærmstørrelse", openTicket.context.screen_size || "—"],
-                      ["Rolle",       openTicket.context.user_role || "—"],
-                      ["Version",     openTicket.context.app_version || "—"],
-                      ["Build",       openTicket.context.build_time
-                        ? new Date(openTicket.context.build_time).toLocaleString("da-DK", { day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" })
-                        : "—"],
-                      ["Commit",      openTicket.context.commit_sha || "—"],
-                      ["Allergener",  openTicket.context.allergens_count ?? "—"],
-                      ["Familie",     openTicket.context.family_count ?? "—"],
-                      ["Scanninger",  openTicket.context.history_count ?? "—"],
-                      ["Online",      openTicket.context.online ? "Ja" : "Nej"],
-                    ].map(([k, v]) => (
-                      <div key={k} style={{ background:"var(--surface)", borderRadius:8, padding:"8px 10px" }}>
-                        <div style={{ fontSize:9, color:"var(--muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:".4px" }}>{k}</div>
-                        <div style={{ fontSize:12, fontWeight:600, color:"var(--ink)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{v ?? "—"}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Aktive allergener — bred celle */}
-                  {openTicket.context.allergens?.length > 0 && (
-                    <div style={UI.ubgsurface_br8_p8px10px_mt6}>
-                      <div style={UI.ufs9_cmuted_fw700_ttuppercas_ls4px_mb4}>ALLERGENER</div>
-                      <div style={UI.ufs11_cink_fw600}>{openTicket.context.allergens.join(", ")}</div>
-                    </div>
-                  )}
-
-                  {/* Produkt-kontekst hvis tilgængelig */}
-                  {(openTicket.context.scan_result_name || openTicket.context.scan_result_ean) && (
-                    <div style={UI.ubgsurface_br8_p8px10px_mt6}>
-                      <div style={UI.ufs9_cmuted_fw700_ttuppercas_ls4px_mb4}>PRODUKT VED FEEDBACK</div>
-                      <div style={UI.ufs11_cink_fw600}>
-                        {openTicket.context.scan_result_name || "—"} {openTicket.context.scan_result_ean ? `[EAN: ${openTicket.context.scan_result_ean}]` : ""}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Madpas-sprog hvis relevant */}
-                  {openTicket.context.madpas_lang && (
-                    <div style={UI.ubgsurface_br8_p8px10px_mt6}>
-                      <div style={UI.ufs9_cmuted_fw700_ttuppercas_ls4px_mb4}>MADPAS SPROG</div>
-                      <div style={UI.ufs11_cink_fw600}>{openTicket.context.madpas_lang}</div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Kopi til Claude */}
-              <div style={{ background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12, padding:"14px", marginBottom:10 }}>
-                <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:6, display:"flex", alignItems:"center", gap:6 }}><Icon name="link" size={13} color="var(--ink)" /> Send til Claude til fejlretning</div>
-                <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.6, marginBottom:10 }}>
-                  Kopiér nedenstående og indsæt direkte i Claude-chatten:
-                </div>
-                <button onClick={() => {
-                  const ctx = openTicket.context || {};
-                  const buildStr = ctx.build_time
-                    ? new Date(ctx.build_time).toLocaleString("da-DK", { day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" })
-                    : "—";
-                  const txt = `EatSafe Beta — Bug Report #${openTicket.id?.slice(0,8)}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Type: ${openTicket.type}
-Tidspunkt: ${new Date(openTicket.created_at).toLocaleString("da-DK")}
-
-SKÆRM
-  Beskrivelse: ${ctx.screen_label || ctx.screen || "—"}
-  Side-ID:     ${ctx.page_id || "—"}
-  URL:         ${ctx.url || "—"}
-
-BRUGER
-  Navn:        ${ctx.user_name || "Anonym"}
-  Email:       ${ctx.user_email || "—"}
-  Rolle:       ${ctx.user_role || "—"}
-  Allergener:  ${ctx.allergens?.join(", ") || `${ctx.allergens_count ?? "—"} stk`}
-  Familie:     ${ctx.family_count ?? "—"} profiler
-  Scanninger:  ${ctx.history_count ?? "—"}
-
-ENHED
-  Platform:    ${ctx.platform || "—"}
-  Viewport:    ${ctx.viewport || "—"}
-  Skærm:       ${ctx.screen_size || "—"}
-  Enhed:       ${/iPhone|iPad/.test(ctx.user_agent||"")?"iOS":/Android/.test(ctx.user_agent||"")?"Android":"Desktop"}
-  Online:      ${ctx.online ? "Ja" : "Nej"}
-  Sprog:       ${ctx.language || "—"}
-
-BUILD
-  Version:     ${ctx.app_version || "—"}
-  Build:       ${buildStr}
-  Commit:      ${ctx.commit_sha || "—"}
-${ctx.scan_result_name ? `
-PRODUKT VED FEEDBACK
-  Navn:        ${ctx.scan_result_name}
-  EAN:         ${ctx.scan_result_ean || "—"}` : ""}${ctx.madpas_lang ? `
-MADPAS
-  Sprog:       ${ctx.madpas_lang}` : ""}${ctx.selected_recipe ? `
-OPSKRIFT
-  Navn:        ${ctx.selected_recipe}` : ""}
-
-BESKRIVELSE
-${openTicket.description}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-OPGAVE TIL CLAUDE
-Analysér denne fejlrapport, før du retter noget:
-1. Forståelse — hvad rapporterer brugeren, og på hvilken skærm/flow sker det?
-2. Analyse — undersøg relevant kode og find den sandsynlige rodårsag.
-3. Løsningsforslag — beskriv kort den påtænkte rettelse, inden den implementeres.
-Implementér derefter løsningen.`;
-                  navigator.clipboard?.writeText(txt).then(() => showToast("Kopieret til udklipsholder!")).catch(() => alert(txt));
-                }}
-                  style={{ ...UI.uw100_bggreen_bdnone_br10_p10px_fff_fs13_fw700_congreen_curp, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                  <Icon name="link" size={14} color="var(--on-green)" /> Kopiér til Claude
-                </button>
-              </div>
-
-              <button onClick={() => setOpenTicket(null)}
-                style={{ width:"100%", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"10px", fontFamily:"var(--f)", fontSize:13, fontWeight:600, color:"var(--ink)", cursor:"pointer" }}>
-                Luk
-              </button>
-            </div>
-          </div>
-        )}
-
+        <AdminTicketDetailSheet openTicket={openTicket} setOpenTicket={setOpenTicket} updateTicketStatus={updateTicketStatus} />
 
         {/* ══ ADMIN ══ */}
         {screen === SCREENS.ADMIN && !openSubmission && !openTicket && (
@@ -434,7 +182,7 @@ Implementér derefter løsningen.`;
                 { id:"import",     icon:"download",label:"Import" },
                 { id:"recipes",    icon:"book",    label:"Opskrifter" },
               ].map(s => (
-                <button key={s.id}
+                <button key={s.id} className="admin-tab"
                   onClick={() => {
                     setAdminSection(s.id); if (s.id==="missing") loadMissingEans(); if (s.id==="import") runImport(false);
                     if (s.id === "submissions") loadSubmissions(submissionFilter);
@@ -446,7 +194,7 @@ Implementér derefter løsningen.`;
                   style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:4, padding:"14px 16px",
                     background: adminSection===s.id ? "var(--green-lt)" : "var(--surface)",
                     border: `1px solid ${adminSection===s.id ? "var(--green)" : "var(--border)"}`,
-                    borderRadius:14, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
+                    borderRadius:14, boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
                   <Icon name={s.icon} size={20} color={adminSection===s.id ? "var(--green)" : "var(--ink2)"} />
                   <span style={{ fontSize:13, fontWeight:800, color: adminSection===s.id ? "var(--green)" : "var(--ink)" }}>{s.label}</span>
                 </button>
@@ -455,314 +203,37 @@ Implementér derefter løsningen.`;
 
             {/* ── DASHBOARD ── */}
             {adminSection === "dashboard" && (
-              <div className="fade-in">
-                <div style={UI.sectionLbl8}>Brugere</div>
-                <div style={UI.udgrid_gri1fr1fr_g8_mb14}>
-                  {[
-                    { n:adminStats?.total_users,     icon:"profile", label:"Brugere i alt",   color:"var(--ink)" },
-                    { n:adminStats?.new_users_today,  icon:"plus",    label:"Nye i dag",        color:"var(--green)" },
-                    { n:adminStats?.total_scans,      icon:"barcode", label:"Scanninger i alt", color:"var(--ink)" },
-                    { n:adminStats?.scans_today,      emoji:"⚡", label:"Scanninger i dag", color:"var(--amber)" },
-                  ].map(({ n, icon, emoji, label, color }) => (
-                    <div key={label} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"16px 14px", boxShadow:"var(--sh)" }}>
-                      <div style={{ marginBottom:4 }}>{icon ? <Icon name={icon} size={22} color={color} /> : emoji}</div>
-                      <div style={{ fontSize:28, fontWeight:900, color, lineHeight:1 }}>{n ?? "—"}</div>
-                      <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, marginTop:4 }}>{label}</div>
-                    </div>
-                  ))}
-                </div>
-
-                <div style={UI.sectionLbl8}>Database & opgaver</div>
-                <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, overflow:"hidden", marginBottom:14, boxShadow:"var(--sh)" }}>
-                  {[
-                    { icon:"package", label:"Produkter i databasen",   n:adminStats?.total_products,        color:"var(--ink)" },
-                    { icon:"family", label:"Familiemedlemmer oprettet", n:adminStats?.total_families,         color:"var(--ink)" },
-                    { emoji:"⏳", label:"Indsendelser afventer",   n:adminStats?.pending_submissions,    color:"var(--amber)", action:() => { setAdminSection("submissions"); setSubmissionFilter("pending"); loadSubmissions("pending"); } },
-                    { icon:"bug", label:"Åbne tickets",             n:adminStats?.open_tickets,           color:"var(--red)",   action:() => { setAdminSection("tickets"); loadTickets(); } },
-                  ].map(({ icon, emoji, label, n, color, action }, i, arr) => (
-                    <div key={label} onClick={action}
-                      style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 16px", borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", cursor: action ? "pointer" : "default" }}>
-                      <span style={UI.fs20}>{icon ? <Icon name={icon} size={18} color={color} /> : emoji}</span>
-                      <span style={{ flex:1, fontSize:13, color:"var(--ink)", fontWeight:500 }}>{label}</span>
-                      <span style={{ fontSize:18, fontWeight:900, color }}>{n ?? "—"}</span>
-                      {action && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>}
-                    </div>
-                  ))}
-                </div>
-
-                <div style={UI.sectionLbl8}>Hurtige handlinger</div>
-                <div style={UI.grid2gap8}>
-                  {[
-                    { icon:"package", label:"Godkend indsendelser", color:"var(--amber)", fn:() => { setAdminSection("submissions"); setSubmissionFilter("pending"); loadSubmissions("pending"); } },
-                    { icon:"bug", label:"Gennemse tickets",     color:"var(--red)",   fn:() => { setAdminSection("tickets"); loadTickets(); } },
-                    { icon:"check", label:"Godkendte produkter",  color:"var(--green)", fn:() => { setAdminSection("submissions"); setSubmissionFilter("approved"); loadSubmissions("approved"); } },
-                    { icon:"family", label:"Administrér brugere",  color:"var(--ink)",   fn:() => { setAdminSection("users"); loadAdminUsers(); } },
-                    { icon:"share", label:"Installations-QR til beta", color:"var(--blue)", fn:() => setShowInstallQr(true) },
-                  ].map(({ icon, label, color, fn }) => (
-                    <button key={label} onClick={fn}
-                      style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:6, padding:"14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
-                      <Icon name={icon} size={22} color={color} />
-                      <span style={{ fontSize:12, fontWeight:700, color }}>{label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* QR popup — fullscreen overlay, samme mønster som Madpas-delingen */}
-                {showInstallQr && (
-                  <div onClick={() => setShowInstallQr(false)}
-                    style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,.6)", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-                    <div onClick={e => e.stopPropagation()}
-                      style={{ background:"var(--sheet)", borderRadius:24, padding:"28px 24px", maxWidth:340, width:"100%", textAlign:"center" }}>
-                      <div style={{ fontSize:13, fontWeight:800, color:"var(--blue)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:4 }}>Installér EatSafe</div>
-                      <div style={{ fontSize:11, color:"var(--muted)", marginBottom:18, lineHeight:1.5 }}>
-                        Vis denne kode til beta-testere. Når de scanner den med telefonens kamera, åbner appen med det samme.
-                      </div>
-                      <img src={installQrImg} alt="Installations-QR til EatSafe"
-                        width={220} height={220}
-                        style={{ borderRadius:16, border:"3px solid var(--blue-md)", display:"block", margin:"0 auto 18px" }} />
-                      <div style={{ fontSize:11, color:"var(--muted)", marginBottom:16, wordBreak:"break-all" }}>{installUrl}</div>
-                      <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", textAlign:"left", marginBottom:16 }}>
-                        <div style={{ fontSize:11, fontWeight:800, color:"var(--ink)", marginBottom:6 }}>Sådan installerer de</div>
-                        <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.6 }}>
-                          Linket tjekker selv enheden: <strong style={{ color:"var(--ink2)" }}>Android/Chrome</strong> sendes direkte ind i appen, hvor browseren selv kan vise "Installér app". <strong style={{ color:"var(--ink2)" }}>iPhone/iPad</strong> lander på en trin-for-trin guide til "Del → Føj til hjemmeskærm" — Apple tillader ikke automatisk installation, så det trin er ikke til at komme udenom.
-                        </div>
-                      </div>
-                      <button onClick={() => setShowInstallQr(false)}
-                        style={{ width:"100%", padding:"12px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
-                        Luk
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <AdminDashboardSection
+                adminStats={adminStats} setAdminSection={setAdminSection} setSubmissionFilter={setSubmissionFilter}
+                loadSubmissions={loadSubmissions} loadTickets={loadTickets} loadAdminUsers={loadAdminUsers}
+              />
             )}
 
             {/* ── BRUGERE ── */}
             {adminSection === "users" && (
-              <div className="fade-in">
-
-                {/* Søgebar */}
-                <div style={{ display:"flex", gap:6, marginBottom:8 }}>
-                  <input
-                    value={userSearch}
-                    onChange={e => setUserSearch(e.target.value)}
-                    placeholder="Søg bruger…"
-                    style={{ flex:1, padding:"10px 14px", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:14, background:"var(--surface)", outline:"none", color:"var(--ink)" }}
-                  />
-                  {userSearch && (
-                    <button onClick={() => setUserSearch("")} aria-label="Ryd søgning"
-                      style={{ padding:"0 12px", border:"1px solid var(--border)", borderRadius:10, background:"var(--surface2)", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", cursor:"pointer" }}>
-                      ×
-                    </button>
-                  )}
-                </div>
-
-                {/* Søge-parameter — dropdown */}
-                <div style={UI.mb12}>
-                  <select value={userSearchParam} onChange={e => setUserSearchParam(e.target.value)}
-                    style={{ width:"100%", padding:"10px 14px", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:14, background:"var(--surface)", color:"var(--ink)", outline:"none", cursor:"pointer" }}>
-                    <option value="all">🔍 Alle felter</option>
-                    <option value="name">👤 Søg på navn</option>
-                    <option value="email">📧 Søg på email</option>
-                    <option value="role">🛡️ Søg på rolle</option>
-                    <option value="admin">🛡️ Kun admins</option>
-                    <option value="incomplete">⏳ Ufærdig onboarding</option>
-                  </select>
-                </div>
-
-                {/* Tæller */}
-                <div style={UI.sectionLbl8}>
-                  {filteredAdminUsers.length} af {adminUsers.length} brugere
-                </div>
-                {adminUsersLoading && <Loader text="Indlæser…" />}
-                <div style={UI.udflex_fdcolumn_g6}>
-                  {filteredAdminUsers.map(u => (
-                    <div key={u.id} onClick={() => setOpenAdminUser(u)}
-                      style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", boxShadow:"var(--sh)", cursor:"pointer" }}>
-                      <div style={UI.udflex_aicenter_g10}>
-                        <div style={{ width:38, height:38, borderRadius:"50%", background: u.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
-                          {(u.name||u.email||"?").charAt(0).toUpperCase()}
-                        </div>
-                        <div style={UI.flexMin}>
-                          <div style={UI.ufs13_fw700_cink_ovhidden_toellipsis_wsnowrap}>{u.name || "Ingen navn"}</div>
-                          <div style={{ fontSize:11, color:"var(--muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</div>
-                        </div>
-                        <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0 }}>
-                          <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: u.role==="admin" ? "rgba(74,222,128,.2)" : "var(--surface2)", color: u.role==="admin" ? "var(--green)" : "var(--muted)", border: `1px solid ${u.role==="admin" ? "var(--green-mid)" : "var(--border)"}` }}>
-                            {u.role==="admin" ? "Admin" : "Bruger"}
-                          </span>
-                          {u.onboarding_completed === false && <span style={{ fontSize:9, color:"var(--amber)", fontWeight:700 }}>Onboarding ufærdig</span>}
-                          {u.id === userId && <span style={{ fontSize:9, color:"var(--green)", fontWeight:700 }}>← Dig</span>}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <AdminUsersSection
+                userId={userId} adminUsers={adminUsers} adminUsersLoading={adminUsersLoading}
+                userSearch={userSearch} setUserSearch={setUserSearch}
+                userSearchParam={userSearchParam} setUserSearchParam={setUserSearchParam}
+                setOpenAdminUser={setOpenAdminUser}
+              />
             )}
 
             {/* ── SUBMISSIONS ── */}
-
-            {/* ── SUBMISSIONS ── */}
             {adminSection === "submissions" && (
-              <div className="fade-in">
-                <div style={{ display:"flex", gap:6, marginBottom:12 }}>
-                  {[
-                    { val:"pending",  label:"Afventer", icon:"clock", color:"var(--amber)" },
-                    { val:"approved", label:"Godkendt", icon:"check", color:"var(--green)" },
-                    { val:"rejected", label:"Afvist",   icon:"x",     color:"var(--red)" },
-                  ].map(({ val, label, icon, color }) => (
-                    <button key={val} onClick={() => { setSubmissionFilter(val); loadSubmissions(val); }}
-                      style={{ flex:1, padding:"10px 4px", borderRadius:10, border:`1px solid ${submissionFilter===val ? color : "var(--border)"}`,
-                        background: submissionFilter===val ? (val==="pending"?"var(--amber-lt)":val==="approved"?"var(--green-lt)":"var(--red-lt)") : "var(--surface)",
-                        display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-                        fontFamily:"var(--f)", fontSize:11, fontWeight:700,
-                        color: submissionFilter===val ? color : "var(--muted)", cursor:"pointer" }}>
-                      <Icon name={icon} size={12} color={submissionFilter===val ? color : "var(--muted)"} /> {label}
-                    </button>
-                  ))}
-                </div>
-                {submissionsLoading && <Loader text="Indlæser…" />}
-                {!submissionsLoading && submissions.length === 0 && (
-                  <div style={UI.utacenter_p48px0}>
-                    <div style={{ ...UI.emoji48mb12, display:"flex", justifyContent:"center" }}>{submissionFilter==="pending" ? "🎉" : <Icon name="package" size={40} color="var(--muted)" />}</div>
-                    <div style={UI.ufs16_fw800_cink}>{submissionFilter==="pending" ? "Ingen afventer" : "Ingen indsendelser"}</div>
-                  </div>
-                )}
-                <div style={UI.colGap8}>
-                  {submissions.map(s => {
-                    const flags = s.ai_parsed_data || {};
-                    const dangerAllergens = ALLERGENS.filter(a => flags[a.id]==="yes" || flags[a.id]===true);
-                    const daysSince = Math.floor((Date.now() - new Date(s.created_at).getTime()) / 86400000);
-                    const isEdit = s.type === "edit";
-                    return (
-                      <div key={s.id} onClick={() => openSubmissionForReview(s)}
-                        style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", cursor:"pointer", boxShadow:"var(--sh)" }}>
-                        <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
-                          <div style={{ width:48, height:48, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name={isEdit ? "edit" : "package"} size={22} color="var(--ink2)" /></div>
-                          <div style={UI.flexMin}>
-                            <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:2 }}>
-                              <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</div>
-                              {isEdit && <span style={{ fontSize:9, padding:"2px 6px", borderRadius:100, background:"var(--amber-lt)", color:"var(--amber)", fontWeight:800, flexShrink:0 }}>RETTELSE</span>}
-                            </div>
-                            <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6, fontFamily:"monospace" }}>EAN: {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`}</div>
-                            <div style={UI.wrapGap4}>
-                              {dangerAllergens.slice(0,3).map(a => <span key={a.id} style={{ fontSize:10, padding:"2px 8px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", fontWeight:700 }}>{a.emoji} {a.label}</span>)}
-                              {dangerAllergens.length === 0 && <span style={UI.muted10}>Ingen allergener</span>}
-                            </div>
-                          </div>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <AdminSubmissionsSection
+                submissions={submissions} submissionsLoading={submissionsLoading}
+                submissionFilter={submissionFilter} setSubmissionFilter={setSubmissionFilter}
+                loadSubmissions={loadSubmissions} openSubmissionForReview={openSubmissionForReview}
+              />
             )}
 
             {/* ── TICKETS ── */}
             {adminSection === "tickets" && (
-              <div className="fade-in">
-                {/* Status tæller grid — klikbar filter */}
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6, marginBottom:12 }}>
-                  {[
-                    { status:"all",         label:"Alle",   color:"var(--ink3)" },
-                    { status:"open",        label:"Åbne",   color:"var(--red)" },
-                    { status:"in_progress", label:"I gang", color:"var(--amber)" },
-                    { status:"resolved",    label:"Løst",   color:"var(--green)" },
-                  ].map(s => {
-                    const count = s.status === "all" ? adminTickets.length : adminTickets.filter(t => t.status === s.status).length;
-                    const isActive = adminTicketFilter === s.status;
-                    return (
-                      <div key={s.status} onClick={() => setAdminTicketFilter(s.status)}
-                        style={{ background: isActive ? s.color : "var(--surface)", border:`1px solid ${isActive ? s.color : "var(--border)"}`, borderRadius:10, padding:"10px 6px", textAlign:"center", cursor:"pointer", transition:"all .15s",
-                          gridColumn: s.status === "all" ? "1 / -1" : "auto" }}>
-                        <div style={{ fontSize:18, fontWeight:900, color: isActive ? "var(--on-green)" : s.color }}>{count}</div>
-                        <div style={{ fontSize:9, color: isActive ? "rgba(255,255,255,.8)" : "var(--muted)", fontWeight:700, textTransform:"uppercase" }}>{s.label}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-                {/* Download åbne tickets */}
-                {!ticketsLoading && adminTickets.filter(t => t.status === "open").length > 0 && (
-                  <button onClick={() => {
-                    const filtered = adminTickets.filter(t => t.status === "open");
-                    const typeLabels = { bug:"Fejl", ui:"Design", missing:"Mangler", content:"Indhold", crash:"Crash", suggestion:"Forslag" };
-                    const statusLabels = { open:"Åben", in_progress:"I gang", resolved:"Løst" };
-                    const lines = filtered.map((t, i) => {
-                      const dato = new Date(t.created_at).toLocaleString("da-DK", { day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" });
-                      return [
-                        `── Ticket ${i + 1} ──────────────────────────────`,
-                        `Type:    ${typeLabels[t.type] || t.type}`,
-                        `Status:  ${statusLabels[t.status] || t.status}`,
-                        `Bruger:  ${t.context?.user_name || "Anonym"} (${t.context?.user_email || "—"})`,
-                        `Skærm:   ${t.context?.screen_label || t.context?.screen || "—"}`,
-                        `Enhed:   ${/iPhone|iPad/.test(t.context?.user_agent||"")?"iOS":/Android/.test(t.context?.user_agent||"")?"Android":"Desktop"}`,
-                        `Dato:    ${dato}`,
-                        ``,
-                        t.description || "(ingen beskrivelse)",
-                        ``,
-                      ].join("\n");
-                    });
-                    const text = `EatSafe Tickets — Åbne (${filtered.length} stk)\nEksporteret: ${new Date().toLocaleString("da-DK")}\n\n` + lines.join("\n");
-                    const blob = new Blob([text], { type:"text/plain;charset=utf-8" });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url; a.download = `eatsafe-tickets-open-${new Date().toISOString().slice(0,10)}.txt`;
-                    a.click(); URL.revokeObjectURL(url);
-                  }} style={{
-                    width:"100%", padding:"10px", marginBottom:12, borderRadius:10,
-                    background:"var(--surface2)", border:"1px solid var(--border)",
-                    fontFamily:"var(--f)", fontSize:12, fontWeight:700,
-                    color:"var(--ink2)", cursor:"pointer",
-                    display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-                  }}>
-                    <Icon name="download" size={13} color="var(--ink2)" /> Download åbne tickets ({adminTickets.filter(t => t.status === "open").length})
-                  </button>
-                )}
-
-                {ticketsLoading && <Loader text="Indlæser…" />}
-                {!ticketsLoading && adminTickets.length === 0 && <div style={UI.utacenter_p48px0}><div style={UI.emoji48mb12}>🎉</div><div style={UI.ufs16_fw800_cink}>Ingen tickets</div></div>}
-                <div style={UI.colGap8}>
-                  {adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter).map(t => {
-                    const typeConfig = { bug:{icon:"bug",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{emoji:"🎨",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{icon:"bulb",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{icon:"package",color:"var(--ink3)",bg:"var(--surface2)",label:"Indhold"}, crash:{emoji:"💥",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{emoji:"✨",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
-                    const cfg = typeConfig[t.type] || typeConfig.bug;
-                    const statusColor = t.status==="open"?"var(--red)":t.status==="in_progress"?"var(--amber)":t.status==="resolved"?"var(--green)":"var(--muted)";
-                    const statusLabel = t.status==="open"?"Åben":t.status==="in_progress"?"I gang":t.status==="resolved"?"Løst":"Lukket";
-                    return (
-                      <div key={t.id} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
-                        <div style={{ display:"flex", alignItems:"flex-start", gap:10 }} onClick={() => setOpenTicket(t)}>
-                          <div style={{ width:38, height:38, borderRadius:10, background:cfg.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{cfg.icon ? <Icon name={cfg.icon} size={18} color={cfg.color} /> : cfg.emoji}</div>
-                          <div style={UI.flexMin}>
-                            <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
-                              <span style={{ fontSize:11, fontWeight:700, color:cfg.color, background:cfg.bg, padding:"2px 8px", borderRadius:100 }}>{cfg.label}</span>
-                            </div>
-                            <div style={{ fontSize:13, color:"var(--ink)", lineHeight:1.4, marginBottom:4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{t.description}</div>
-                            <div style={UI.muted10}>{t.context?.user_name || "Anonym"} · {t.context?.screen_label || t.context?.screen || "—"} · {new Date(t.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</div>
-                          </div>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:4 }}><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
-                        </div>
-                        {/* Status toggle direkte på kortet */}
-                        <div style={{ display:"flex", gap:6, marginTop:10, paddingTop:10, borderTop:"1px solid var(--border)" }}>
-                          {[
-                            { val:"open",        label:"Åben",   color:"var(--red)" },
-                            { val:"in_progress", label:"I gang", color:"var(--amber)" },
-                            { val:"resolved",    label:"Løst",   color:"var(--green)" },
-                          ].map(s => (
-                            <button key={s.val} onClick={() => updateTicketStatus(t.id, s.val)}
-                              style={{ flex:1, padding:"6px 2px", borderRadius:8, border:`1px solid ${t.status===s.val ? s.color : "var(--border)"}`,
-                                background: t.status===s.val ? s.color : "var(--surface2)",
-                                fontFamily:"var(--f)", fontSize:9, fontWeight:700,
-                                color: t.status===s.val ? "var(--on-green)" : "var(--muted)", cursor:"pointer" }}>
-                              {s.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <AdminTicketsSection
+                adminTickets={adminTickets} adminTicketFilter={adminTicketFilter} setAdminTicketFilter={setAdminTicketFilter}
+                ticketsLoading={ticketsLoading} updateTicketStatus={updateTicketStatus} setOpenTicket={setOpenTicket}
+              />
             )}
 
           </div>
@@ -770,732 +241,52 @@ Implementér derefter løsningen.`;
 
 
         {screen === SCREENS.ADMIN && openAdminUser && (
-          <div style={{ position:"fixed", inset:0, zIndex:9992, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
-            onClick={e => e.target === e.currentTarget && setOpenAdminUser(null)}>
-            <div style={UI.ubgsheet_br20px20px_p20px16px_w100_mxh90vh_ovyauto}
-              onClick={e => e.stopPropagation()}>
-
-                  {/* Header */}
-                  <div style={UI.udflex_aicenter_g12_mb16}>
-                    <div style={{ width:52, height:52, borderRadius:"50%", background: openAdminUser.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
-                      {(openAdminUser.name||openAdminUser.email||"?").charAt(0).toUpperCase()}
-                    </div>
-                    <div style={UI.flex1}>
-                      <div style={UI.ufs18_fw900_cink}>{openAdminUser.name || "Ingen navn"}</div>
-                      <div style={UI.muted12mt2}>{openAdminUser.email}</div>
-                      <div style={{ display:"flex", gap:6, marginTop:6 }}>
-                        <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: openAdminUser.role==="admin" ? "rgba(74,222,128,.2)" : "var(--surface2)", color: openAdminUser.role==="admin" ? "var(--green)" : "var(--muted)", display:"inline-flex", alignItems:"center", gap:4 }}>
-                          <Icon name={openAdminUser.role==="admin" ? "shield" : "profile"} size={10} color={openAdminUser.role==="admin" ? "var(--green)" : "var(--muted)"} /> {openAdminUser.role==="admin" ? "Admin" : "Bruger"}
-                        </span>
-                        <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: openAdminUser.onboarding_completed ? "var(--green-lt)" : "var(--amber-lt)", color: openAdminUser.onboarding_completed ? "var(--green)" : "var(--amber)", display:"inline-flex", alignItems:"center", gap:4 }}>
-                          <Icon name={openAdminUser.onboarding_completed ? "check" : "clock"} size={10} color={openAdminUser.onboarding_completed ? "var(--green)" : "var(--amber)"} /> {openAdminUser.onboarding_completed ? "Onboarding færdig" : "Onboarding mangler"}
-                        </span>
-                      </div>
-                    </div>
-                    <button onClick={() => setOpenAdminUser(null)} aria-label="Luk"
-                      style={UI.ubgsurface2_bdnone_br50_w32_h32_curpointer_fs18_cmuted}>×</button>
-                  </div>
-
-                  {/* Info grid */}
-                  <div style={UI.sectionLbl8}>Kontoinfo</div>
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:14 }}>
-                    {[
-                      ["calendar", "Oprettet", new Date(openAdminUser.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", year:"numeric" })],
-                      ["key", "Login", openAdminUser.email?.includes("google") || openAdminUser.provider === "google" ? "Google OAuth" : "Email + kode"],
-                      [null, "Telefon", openAdminUser.phone || "—"],
-                      [null, "Alder", openAdminUser.birth_year ? (new Date().getFullYear() - openAdminUser.birth_year) + " år" : "—"],
-                      [null, "Bruger-ID", openAdminUser.id?.slice(0,12) + "…"],
-                      ["package", "Plan", openAdminUser.plan_id ? "Premium" : "Gratis"],
-                    ].map(([icon, label, val]) => (
-                      <div key={label} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
-                        <div style={{ fontSize:10, color:"var(--muted)", fontWeight:700, marginBottom:3, display:"flex", alignItems:"center", gap:4 }}>{icon && <Icon name={icon} size={10} color="var(--muted)" />} {label}</div>
-                        <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{val}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Allergener */}
-                  {openAdminUser.allergens?.length > 0 && (
-                    <>
-                      <div style={UI.sectionLbl8}>Allergener & præferencer</div>
-                      <div style={UI.udflex_flewrap_g5_mb14}>
-                        {openAdminUser.allergens.map(id => {
-                          const a = ALLERGENS.find(x => x.id === id);
-                          return a ? <span key={id} style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", border:"1px solid var(--red-md)" }}>{a.emoji} {a.label}</span> : null;
-                        })}
-                      </div>
-                    </>
-                  )}
-
-                  {/* Preferred stores */}
-                  {openAdminUser.preferred_stores?.length > 0 && (
-                    <>
-                      <div style={UI.sectionLbl8}>Foretrukne butikker</div>
-                      <div style={UI.udflex_flewrap_g5_mb14}>
-                        {openAdminUser.preferred_stores.map((s,i) => (
-                          <span key={i} style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:100, background:"var(--surface2)", color:"var(--ink)", border:"1px solid var(--border)", display:"inline-flex", alignItems:"center", gap:4 }}><Icon name="cart" size={10} color="var(--ink)" /> {s}</span>
-                        ))}
-                      </div>
-                    </>
-                  )}
-
-                  {/* Handlinger */}
-                  {openAdminUser.id !== userId ? (
-                    <>
-                      <div style={UI.sectionLbl8}>Handlinger</div>
-                      <div style={UI.colGap8}>
-
-                        {/* Rolle */}
-                        <button onClick={() => {
-                          const newRole = openAdminUser.role==="admin" ? "user" : "admin";
-                          updateUserRole(openAdminUser.id, newRole);
-                          setOpenAdminUser(u => ({ ...u, role: newRole }));
-                        }}
-                          style={{ width:"100%", padding:"14px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-                          <Icon name={openAdminUser.role==="admin" ? "profile" : "shield"} size={14} color="var(--ink)" /> {openAdminUser.role==="admin" ? "Skift til Bruger" : "Skift til Admin"}
-                        </button>
-
-                        {/* Onboarding */}
-                        <div style={UI.rowGap8}>
-                          <button onClick={async () => {
-                            const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${openAdminUser.id}`, { method:"PATCH", headers:{ "Content-Type":"application/json", "apikey":SUPABASE_ANON_KEY, "Authorization":`Bearer ${accessToken}`, "Prefer":"return=minimal" }, body: JSON.stringify({ onboarding_completed: true }) });
-                            if (!res.ok) { showToast(`Fejl: HTTP ${res.status}`, "error"); return; }
-                            setOpenAdminUser(u => ({ ...u, onboarding_completed: true }));
-                          }}
-                            style={{ flex:1, padding:"12px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--green)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                            <Icon name="check" size={13} color="var(--green)" /> Markér onboarding færdig
-                          </button>
-                          <button onClick={async () => {
-                            const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${openAdminUser.id}`, { method:"PATCH", headers:{ "Content-Type":"application/json", "apikey":SUPABASE_ANON_KEY, "Authorization":`Bearer ${accessToken}`, "Prefer":"return=minimal" }, body: JSON.stringify({ onboarding_completed: false }) });
-                            if (!res.ok) { showToast(`Fejl: HTTP ${res.status}`, "error"); return; }
-                            setOpenAdminUser(u => ({ ...u, onboarding_completed: false }));
-                          }}
-                            style={{ flex:1, padding:"12px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--amber)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                            <Icon name="refresh" size={13} color="var(--amber)" /> Nulstil onboarding
-                          </button>
-                        </div>
-
-                        {/* Se brugerens scanninger */}
-                        <button onClick={async () => {
-                          const res = await fetch(`${SUPABASE_URL}/rest/v1/scan_history?user_id=eq.${openAdminUser.id}&select=ean,scanned_at,product_name&order=scanned_at.desc&limit=20`, { headers:{ "apikey":SUPABASE_ANON_KEY, "Authorization":`Bearer ${accessToken}`, "Accept":"application/json" } });
-                          const data = await res.json();
-                          alert(`Seneste scanninger (${data.length}):\n\n${data.map(s => `${s.product_name||s.ean} — ${new Date(s.scanned_at).toLocaleDateString("da-DK")}`).join("\n") || "Ingen scanninger"}`);
-                        }}
-                          style={{ ...UI.uw100_p11px_bgsurface2_bd1pxsolid_br12_fff_fs12_fw700_cink_c, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                          <Icon name="barcode" size={13} color="var(--ink)" /> Se scanningshistorik
-                        </button>
-
-                        {/* Se brugerens indsendelser */}
-                        <button onClick={() => {
-                          setOpenAdminUser(null);
-                          setAdminSection("submissions");
-                          setSubmissionFilter("pending");
-                          loadSubmissions("pending");
-                        }}
-                          style={{ ...UI.uw100_p11px_bgsurface2_bd1pxsolid_br12_fff_fs12_fw700_cink_c, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                          <Icon name="package" size={13} color="var(--ink)" /> Se indsendelser
-                        </button>
-
-                        {/* Kopiér bruger-info til Claude */}
-                        <button onClick={() => {
-                          const txt = `Bruger: ${openAdminUser.name} (${openAdminUser.email})\nRolle: ${openAdminUser.role}\nOprettet: ${new Date(openAdminUser.created_at).toLocaleDateString("da-DK")}\nOnboarding: ${openAdminUser.onboarding_completed ? "Færdig" : "Ikke færdig"}\nAllergener: ${openAdminUser.allergens?.join(", ") || "Ingen"}\nID: ${openAdminUser.id}`;
-                          navigator.clipboard?.writeText(txt).then(() => showToast("Kopieret!")).catch(() => alert(txt));
-                        }}
-                          style={{ width:"100%", padding:"12px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                          <Icon name="link" size={13} color="var(--ink)" /> Kopiér info til Claude
-                        </button>
-
-                        {/* Slet */}
-                        <button onClick={() => { deleteUser(openAdminUser.id); setOpenAdminUser(null); }}
-                          style={{ width:"100%", padding:"14px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                          <Icon name="trash" size={14} color="var(--red)" /> Slet bruger permanent
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <div style={{ padding:"12px", background:"var(--green-lt)", borderRadius:10, fontSize:13, color:"var(--green)", fontWeight:700, textAlign:"center" }}>
-                      Dette er din egen konto — kan ikke ændres
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+          <AdminUserDetailSheet
+            openAdminUser={openAdminUser} setOpenAdminUser={setOpenAdminUser} userId={userId} accessToken={accessToken}
+            updateUserRole={updateUserRole} deleteUser={deleteUser}
+            setAdminSection={setAdminSection} setSubmissionFilter={setSubmissionFilter} loadSubmissions={loadSubmissions}
+          />
+        )}
 
         {/* ══ ADMIN — ÅBEN SUBMISSION ══ */}
         {screen === SCREENS.ADMIN && openSubmission && editingSubmission && (
-          <div className="screen fade-in" style={UI.pb120}>
-
-            {/* Header */}
-            <div style={UI.avatarRow}>
-              <button onClick={() => { setOpenSubmission(null); setEditingSubmission(null); }}
-                style={UI.iconBtn}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2"><path strokeLinecap="round" d="M15 19l-7-7 7-7"/></svg>
-              </button>
-              <div style={UI.flex1}>
-                <div style={{ ...UI.ufs17_fw800_cink, display:"flex", alignItems:"center", gap:6 }}>{openSubmission.type === "edit" && <Icon name="edit" size={15} color="var(--ink)" />} {openSubmission.type === "edit" ? "Gennemse rettelsesforslag" : "Gennemse indsendelse"}</div>
-                <div style={UI.muted11mt1}>{new Date(openSubmission.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"long", year:"numeric" })}</div>
-              </div>
-              {/* Hurtig-godkend/afvis */}
-              <div style={{ display:"flex", gap:6 }}>
-                <button onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}
-                  style={{ background:"var(--green)", border:"none", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--on-green)", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-                  <Icon name="check" size={13} color="var(--on-green)" /> Godkend
-                </button>
-                <button onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}
-                  style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:12, fontWeight:800, color:"var(--red)", cursor:"pointer", display:"flex" }}>
-                  <Icon name="x" size={13} color="var(--red)" />
-                </button>
-              </div>
-            </div>
-
-            {/* Produktkort */}
-            <div style={UI.card}>
-              <div style={UI.udflex_aicenter_g12_mb12}>
-                {openSubmission.ai_parsed_data?.product_image_url
-                  ? <img src={openSubmission.ai_parsed_data.product_image_url}
-                      style={{ width:64, height:64, borderRadius:10, objectFit:"contain", border:"1px solid var(--border)", flexShrink:0 }} alt="Indsendt produktbillede" />
-                  : <div style={{ width:64, height:64, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="package" size={26} color="var(--ink2)" /></div>
-                }
-                <div style={UI.flex1}>
-                  <div style={UI.ufs11_cmuted_fw600_mb4}>Produktnavn</div>
-                  <input value={editingSubmission.name} onChange={e => setEditingSubmission(s => ({ ...s, name: e.target.value }))}
-                    placeholder="Produktnavn…"
-                    style={{ width:"100%", border:"none", outline:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--ink)", background:"transparent", padding:0 }} />
-                </div>
-              </div>
-              <div style={UI.grid2gap8}>
-                <div>
-                  <div style={UI.ufs10_cmuted_fw600_mb4}>BRAND</div>
-                  <input value={editingSubmission.brand} onChange={e => setEditingSubmission(s => ({ ...s, brand: e.target.value }))}
-                    placeholder="Brand / Mærke…" className="field" style={{ padding:"8px 10px", fontSize:13 }} />
-                </div>
-                <div>
-                  <div style={UI.ufs10_cmuted_fw600_mb4}>EAN</div>
-                  <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", padding:"8px 10px", background:"var(--surface2)", borderRadius:8, fontFamily:"monospace" }}>{openSubmission.ean}</div>
-                </div>
-              </div>
-              {openSubmission.notes && (
-                <div style={{ marginTop:10, padding:"8px 10px", background:"var(--amber-lt)", borderRadius:8 }}>
-                  <div style={{ fontSize:10, color:"var(--amber)", fontWeight:700, marginBottom:2 }}>BRUGER-BEMÆRKNING</div>
-                  <div style={UI.ufs12_cink}>{openSubmission.notes}</div>
-                </div>
-              )}
-            </div>
-
-            {/* Foto af ingredienslisten */}
-            {openSubmission.raw_label_image && (
-              <div style={UI.card}>
-                <div style={{ ...UI.ufs13_fw800_cink_mb10, display:"flex", alignItems:"center", gap:6 }}><Icon name="camera" size={13} color="var(--ink)" /> Foto af ingredienslisten</div>
-                <img src={openSubmission.raw_label_image} alt="Ingrediensliste"
-                  style={{ width:"100%", borderRadius:10, objectFit:"contain", maxHeight:240 }} />
-              </div>
-            )}
-
-            {/* OCR tekst */}
-            {openSubmission.ocr_raw_text && (
-              <div style={UI.card}>
-                <div style={UI.rowBetweenMb10}>
-                  <div style={{ ...UI.boldInk13, display:"flex", alignItems:"center", gap:6 }}><Icon name="file" size={13} color="var(--ink)" /> Ingredienser fra OCR</div>
-                  <button onClick={() => cleanOcrWithAI(openSubmission.ocr_raw_text)} disabled={cleaningOcr}
-                    style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:8, padding:"6px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--green)", cursor:"pointer" }}>
-                    {cleaningOcr ? "🤖 Renskriver…" : "🤖 Renskiv med AI"}
-                  </button>
-                </div>
-                <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.7, background:"var(--surface2)", borderRadius:8, padding:"10px", maxHeight:120, overflowY:"auto" }}>
-                  <HighlightText text={openSubmission.ocr_raw_text} />
-                </div>
-                {cleanedOcrText && (
-                  <div style={{ marginTop:10, borderTop:"1px solid var(--border)", paddingTop:10 }}>
-                    <div style={{ fontSize:11, fontWeight:700, color:"var(--green)", marginBottom:6, display:"flex", alignItems:"center", gap:6 }}><Icon name="check" size={11} color="var(--green)" /> AI renskrevet — tjek at intet er fjernet</div>
-                    <div style={{ background:"var(--green-lt)", borderRadius:8, padding:"10px", marginBottom:8, fontSize:12, color:"var(--ink)", lineHeight:1.7 }}>
-                      <HighlightText text={cleanedOcrText} />
-                    </div>
-                    <button onClick={() => { setEditingSubmission(s => ({ ...s, ingredients_text: cleanedOcrText })); showToast("Renskrevet tekst brugt"); }}
-                      style={{ ...UI.uw100_bggreen_bdnone_br10_p10px_fff_fs13_fw700_congreen_curp, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                      <Icon name="check" size={13} color="var(--on-green)" /> Brug denne version
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* E-numre fundet i ingredienslisten */}
-            {(() => {
-              const src = cleanedOcrText || openSubmission.ocr_raw_text || "";
-              const found = [...new Set((src.match(E_NUMBER_RE) || []).map(e => e.toUpperCase()))];
-              if (found.length === 0) return null;
-              return (
-                <div style={UI.card}>
-                  <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>🧪 E-numre fundet</div>
-                  <div style={UI.wrapGap7}>
-                    {found.map(e => (
-                      <div key={e} style={{ padding:"4px 10px", borderRadius:20, background:"rgba(99,102,241,.1)", border:"1px solid rgba(99,102,241,.3)", fontSize:12, fontWeight:700, color:"#818cf8" }}>{e}</div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Næringsindhold — kun til stede for nye produkter (Nyt produkt-flowet) */}
-            {openSubmission.ai_parsed_data?.nutrition && Object.values(openSubmission.ai_parsed_data.nutrition).some(v => v) && (
-              <div style={UI.card}>
-                <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}><Icon name="package" size={13} color="var(--ink)" /> Næringsindhold <span style={UI.muted10}>per 100g/ml</span></div>
-                <div style={UI.grid2gap8}>
-                  {[
-                    { key:"energy", label:"Energi" }, { key:"fat", label:"Fedt" },
-                    { key:"saturated", label:"Mættet fedt" }, { key:"carbs", label:"Kulhydrat" },
-                    { key:"sugars", label:"Sukker" }, { key:"protein", label:"Protein" },
-                    { key:"salt", label:"Salt" },
-                  ].filter(({ key }) => openSubmission.ai_parsed_data.nutrition[key]).map(({ key, label }) => (
-                    <div key={key} style={{ display:"flex", justifyContent:"space-between", fontSize:12 }}>
-                      <span style={UI.muted}>{label}</span>
-                      <span style={{ color:"var(--ink)", fontWeight:700 }}>{openSubmission.ai_parsed_data.nutrition[key]}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Allergener — toggle grid */}
-            <div style={UI.card}>
-              <div style={UI.rowBetweenMb10}>
-                <div style={UI.boldInk13}>Allergener</div>
-                <div style={UI.muted10}>Ja → Spor → Nej</div>
-              </div>
-              <div style={UI.grid2gap6}>
-                {ALLERGENS.map(a => {
-                  const val = editingSubmission.allergen_flags[a.id] || "no";
-                  const next = val==="no" ? "yes" : val==="yes" ? "traces" : "no";
-                  const isYes = val === "yes";
-                  const isTrace = val === "traces";
-                  return (
-                    <button key={a.id} onClick={() => setEditingSubmission(s => ({ ...s, allergen_flags: { ...s.allergen_flags, [a.id]: next } }))}
-                      style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", borderRadius:10, cursor:"pointer", minWidth:0, width:"100%", boxSizing:"border-box",
-                        border:`1px solid ${isYes?"var(--red-md)":isTrace?"var(--amber-md)":"var(--border)"}`,
-                        background: isYes?"var(--red-lt)":isTrace?"var(--amber-lt)":"var(--paper2)",
-                        fontFamily:"var(--f)" }}>
-                      <span style={UI.fs16}>{a.emoji}</span>
-                      <span style={{ flex:1, minWidth:0, fontSize:12, fontWeight:700, color:isYes?"var(--red)":isTrace?"var(--amber)":"var(--muted2)", textAlign:"left", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{a.label}</span>
-                      <span style={{ fontSize:10, fontWeight:800, color:isYes?"var(--red)":isTrace?"var(--amber)":"var(--muted)", flexShrink:0 }}>
-                        {isYes?"JA":isTrace?"SPOR":"NEJ"}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Handlings-knapper */}
-            <div style={{ display:"flex", flexDirection:"column", gap:8, paddingBottom:120 }}>
-              <button onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}
-                style={{ width:"100%", background:"var(--green)", border:"none", borderRadius:12, padding:"16px", fontFamily:"var(--f)", fontSize:15, fontWeight:700, color:"var(--on-green)", cursor:"pointer", boxShadow:"0 4px 16px rgba(34,197,94,.3)", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-                <Icon name="check" size={15} color="var(--on-green)" /> {openSubmission.type === "edit" ? "Godkend og opdater produkt" : "Godkend og opret produkt"}
-              </button>
-              <button onClick={() => { rejectSubmission(openSubmission.id); setOpenSubmission(null); setEditingSubmission(null); }}
-                style={{ width:"100%", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, padding:"14px", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--red)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-                <Icon name="x" size={14} color="var(--red)" /> Afvis indsendelse
-              </button>
-              <button onClick={() => { setOpenSubmission(null); setEditingSubmission(null); }}
-                style={{ width:"100%", background:"none", border:"none", padding:"10px", fontFamily:"var(--f)", fontSize:13, color:"var(--muted)", cursor:"pointer" }}>
-                Annullér
-              </button>
-            </div>
-
-          </div>
+          <AdminSubmissionReview
+            openSubmission={openSubmission} setOpenSubmission={setOpenSubmission}
+            editingSubmission={editingSubmission} setEditingSubmission={setEditingSubmission}
+            cleanedOcrText={cleanedOcrText} cleaningOcr={cleaningOcr} cleanOcrWithAI={cleanOcrWithAI}
+            updateSubmissionAndApprove={updateSubmissionAndApprove} rejectSubmission={rejectSubmission}
+            submitterInfo={submitterInfo} submitterLoading={submitterLoading}
+          />
         )}
 
+        {adminSection === "missing" && (
+          <AdminMissingSection
+            missingEans={missingEans} missingEansLoading={missingEansLoading}
+            loadMissingEans={loadMissingEans} deleteMissingEan={deleteMissingEan}
+          />
+        )}
 
-                        {adminSection === "missing" && (
-              <div>
-                <div style={UI.rowBetweenMb16}>
-                  <div style={{ ...UI.ufs17_fw800_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name="info" size={16} color="var(--ink)" /> Efterspurgte manglende produkter</div>
-                  <button onClick={loadMissingEans} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-                    <Icon name="refresh" size={12} color="var(--muted)" /> Opdater
-                  </button>
-                </div>
-                <div style={UI.ufs12_cmuted_mb16_lh15}>
-                  Produkter som brugere har forsøgt at scanne men ikke fundet i databasen. Sorteret efter antal opslag.
-                </div>
+        {adminSection === "import" && (
+          <AdminImportSection
+            importLog={importLog} importLoading={importLoading} runImport={runImport}
+            reparseLog={reparseLog} reparseLoading={reparseLoading} runReparse={runReparse}
+          />
+        )}
 
-                {/* Brand-aggregering */}
-                {missingEans.length > 0 && (
-                  <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
-                    <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
-                      <Icon name="chart" size={12} color="var(--ink)" /> Top EAN-præfikser <span style={{ fontSize:10, fontWeight:400, color:"var(--muted)" }}>(proxy for brand/producent)</span>
-                    </div>
-                    <div style={UI.udflex_fdcolumn_g6}>
-                      {missingEanTopPrefixes.map(([prefix, data]) => (
-                        <div key={prefix} style={UI.udflex_aicenter_g10}>
-                          <div style={{ fontFamily:"monospace", fontSize:12, fontWeight:700, color:"var(--ink)", width:48 }}>{prefix}…</div>
-                          <div style={{ flex:1, height:6, background:"var(--border2)", borderRadius:3, overflow:"hidden" }}>
-                            <div style={{ height:"100%", borderRadius:3, background:"var(--green)", width:`${Math.round((data.scans / missingEansTotalScans) * 100)}%` }} />
-                          </div>
-                          <div style={{ fontSize:11, color:"var(--muted)", whiteSpace:"nowrap" }}>
-                            {data.count} produkt{data.count!==1?"er":""} · {data.scans} opslag
-                          </div>
-                          <button
-                            onClick={() => navigator.clipboard?.writeText(data.eans.join("\n"))}
-                            style={{ fontSize:10, color:"var(--muted)", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", padding:"2px 6px" }}
-                            title="Kopiér alle EAN'er med dette præfiks">
-                            <Icon name="link" size={12} color="var(--muted)" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ fontSize:10, color:"var(--muted)", marginTop:10 }}>
-                      Brug præfikset til at identificere producenten på <a href="https://www.gs1.dk" target="_blank" rel="noopener noreferrer" style={UI.ucgreen}>gs1.dk</a>
-                    </div>
-                  </div>
-                )}
-                {missingEansLoading ? (
-                  <Loader text="Indlæser…" />
-                ) : missingEans.length === 0 ? (
-                  <div style={{ textAlign:"center", padding:"40px 0", color:"var(--muted)" }}>Ingen manglende EAN'er endnu</div>
-                ) : (
-                  <div style={UI.colGap8}>
-                    {missingEans.map((row, i) => (
-                      <div key={row.ean} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", display:"flex", alignItems:"center", gap:12 }}>
-                        {/* Rang */}
-                        <div style={{ fontSize:13, fontWeight:800, color:"var(--muted)", width:24, textAlign:"right", flexShrink:0 }}>#{i+1}</div>
-                        {/* EAN + meta */}
-                        <div style={UI.flexMin}>
-                          <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)", fontFamily:"monospace" }}>{row.ean}</div>
-                          <div style={{ display:"flex", gap:8, alignItems:"center", marginTop:3, flexWrap:"wrap" }}>
-                            <span style={{ fontSize:11, fontWeight:700, color:"var(--red)", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:100, padding:"1px 8px" }}>
-                              {row.count}× søgt
-                            </span>
-                            <span style={UI.muted11}>
-                              første {new Date(row.first_seen).toLocaleDateString("da-DK")} · sidst {new Date(row.last_seen).toLocaleDateString("da-DK")}
-                            </span>
-                          </div>
-                        </div>
-                        {/* Handlinger */}
-                        <div style={{ display:"flex", gap:6, flexShrink:0 }}>
-                          <button
-                            onClick={() => window.open(`https://world.openfoodfacts.org/product/${row.ean}`, "_blank")}
-                            style={{ background:"var(--blue-lt)", border:"1px solid var(--blue-md)", borderRadius:8, padding:"6px 10px", fontSize:11, fontWeight:700, color:"var(--blue)", fontFamily:"var(--f)", cursor:"pointer", display:"flex", alignItems:"center", gap:4 }}
-                            title="Søg på Open Food Facts">
-                            <Icon name="search" size={11} color="var(--blue)" /> OFF
-                          </button>
-                          <button
-                            onClick={() => navigator.clipboard?.writeText(row.ean)}
-                            style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"6px 10px", fontSize:11, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer", display:"flex", alignItems:"center" }}
-                            title="Kopiér EAN" aria-label="Kopiér EAN">
-                            <Icon name="link" size={12} color="var(--muted)" />
-                          </button>
-                          <button
-                            onClick={() => deleteMissingEan(row.ean)}
-                            style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, padding:"6px 10px", fontSize:11, fontWeight:700, color:"var(--red)", fontFamily:"var(--f)", cursor:"pointer" }}
-                            title="Slet fra liste" aria-label="Slet fra liste">
-                            ×
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+        {adminSection === "debug" && (
+          <AdminDebugSection />
+        )}
 
-            {adminSection === "import" && (
-              <div>
-                <div style={UI.rowBetweenMb16}>
-                  <div style={{ ...UI.ufs17_fw800_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name="download" size={15} color="var(--ink)" /> OFF Auto-import</div>
-                  <button
-                    onClick={() => runImport(true)}
-                    disabled={importLoading}
-                    style={{ background: importLoading ? "var(--border2)" : "var(--green)", color: importLoading ? "var(--muted)" : "var(--on-green)", border:"none", borderRadius:8, padding:"8px 16px", fontSize:12, fontWeight:800, fontFamily:"var(--f)", cursor: importLoading ? "not-allowed" : "pointer", display:"flex", alignItems:"center", gap:6 }}>
-                    {importLoading
-                      ? <><div style={{ width:12, height:12, border:"2px solid rgba(0,0,0,.2)", borderTopColor:"var(--on-green)", borderRadius:"50%", animation:"spin .7s linear infinite" }} /> Importerer…</>
-                      : "▶ Kør import nu"}
-                  </button>
-                </div>
-
-                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:16, lineHeight:1.6 }}>
-                  Henter top-50 manglende EAN'er fra <code>missing_ean_log</code>, slår op på Open Food Facts og importerer automatisk.
-                  Kører også automatisk hver nat kl. 02:00 UTC.
-                </div>
-
-                {/* Status */}
-                {importLoading && (
-                  <div style={UI.udflex_aicenter_g10_p12px14px_bgsurface_bd1pxsolid_br12_mb12}>
-                    <div style={UI.uw16_h16_bd2pxsolid_borgreen_br50_anspin7sli_shr0} />
-                    <div style={UI.muted13}>Importerer produkter fra Open Food Facts…</div>
-                  </div>
-                )}
-
-                {/* Statistik */}
-                {importLog?.stats && !importLoading && (
-                  <div style={UI.udgrid_gri1fr1fr_g8_mb14}>
-                    {[
-                      { icon:"check",   label:"Importeret",    value: importLog.stats.imported,       color:"var(--green)" },
-                      { icon:"search",  label:"Fundet på OFF", value: importLog.stats.found ?? (importLog.stats.imported + importLog.stats.not_on_off), color:"var(--blue)" },
-                      { icon:"x",       label:"Ikke på OFF",   value: importLog.stats.not_on_off,     color:"var(--muted)" },
-                      { icon:"warning", label:"Fejl",          value: importLog.stats.error,          color:"var(--amber)" },
-                    ].map(s => (
-                      <div key={s.label} style={{ padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, textAlign:"center" }}>
-                        <div style={{ fontSize:22, fontWeight:900, color:s.color, marginBottom:2 }}>{s.value ?? 0}</div>
-                        <div style={{ ...UI.muted11, display:"flex", alignItems:"center", justifyContent:"center", gap:4 }}><Icon name={s.icon} size={10} color="var(--muted)" /> {s.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Log */}
-                {importLog?.log?.length > 0 && !importLoading && (
-                  <div style={UI.ubgsurface_bd1pxsolid_br12_ovhidden}>
-                    <div style={{ padding:"10px 14px", borderBottom:"1px solid var(--border)", fontSize:12, fontWeight:800, color:"var(--ink)" }}>
-                      Importeret ({importLog.log.length})
-                    </div>
-                    <div style={{ maxHeight:300, overflowY:"auto" }}>
-                      {importLog.log.map((line, i) => (
-                        <div key={i} style={{ padding:"8px 14px", borderBottom: i < importLog.log.length-1 ? "1px solid var(--border)" : "none", fontSize:12, color:"var(--ink2)", fontFamily:"monospace" }}>
-                          {line}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {importLog && !importLoading && (!importLog.log || importLog.log.length === 0) && (
-                  <div style={{ textAlign:"center", padding:"32px 0", color:"var(--muted)", fontSize:13 }}>
-                    {importLog.stats?.imported === 0
-                      ? "Ingen nye produkter fundet — prøv igen senere når missing_ean_log er fyldt op"
-                      : "Import fuldført"}
-                  </div>
-                )}
-
-                {!importLog && !importLoading && (
-                  <div style={{ textAlign:"center", padding:"40px 0" }}>
-                    <div style={{ marginBottom:12, display:"flex", justifyContent:"center" }}><Icon name="download" size={32} color="var(--muted)" /></div>
-                    <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Klar til import</div>
-                    <div style={UI.ufs12_cmuted}>
-                      Tryk "Kør import nu" for at importere manglende produkter fra Open Food Facts
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Allergen Reparsing ── */}
-                <div style={{ marginTop:24, paddingTop:20, borderTop:"1px solid var(--border)" }}>
-                  <div style={UI.rowBetweenMb10}>
-                    <div>
-                      <div style={UI.ufs15_fw800_cink}>🧠 Allergen reparsing</div>
-                      <div style={{ fontSize:11, color:"var(--muted)", marginTop:2, lineHeight:1.6 }}>
-                        Kører allergen-engine (keyword + Claude Haiku) på produkter med lav kvalitet.
-                        Kører automatisk hver nat kl. 03:00 UTC.
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => reparseLoading ? null : runReparse(true)}
-                      disabled={reparseLoading}
-                      style={{ background: reparseLoading ? "var(--border2)" : "var(--blue)", color: reparseLoading ? "var(--muted)" : "var(--ink)",
-                        border:"none", borderRadius:8, padding:"8px 14px", fontSize:12, fontWeight:800,
-                        fontFamily:"var(--f)", cursor: reparseLoading ? "not-allowed" : "pointer",
-                        display:"flex", alignItems:"center", gap:6, flexShrink:0, marginLeft:12 }}>
-                      {reparseLoading
-                        ? <><div style={{ width:12, height:12, border:"2px solid rgba(255,255,255,.2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .7s linear infinite" }} /> Reparserer…</>
-                        : "▶ Kør nu"}
-                    </button>
-                  </div>
-
-                  {reparseLoading && (
-                    <div style={UI.udflex_aicenter_g10_p12px14px_bgsurface_bd1pxsolid_br12_mb12}>
-                      <div style={{ width:16, height:16, border:"2px solid var(--border2)", borderTopColor:"var(--blue)", borderRadius:"50%", animation:"spin .7s linear infinite", flexShrink:0 }} />
-                      <div style={UI.muted13}>Reparserer allergen-flags med Claude Haiku…</div>
-                    </div>
-                  )}
-
-                  {reparseLog && !reparseLoading && (
-                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:10 }}>
-                      {[
-                        { icon:"check",       label:"Reparseret",    value: reparseLog.reparsed, color:"var(--green)" },
-                        { icon:"chevronRight", label:"Sprunget over", value: reparseLog.skipped,  color:"var(--muted)" },
-                        { icon:"x",           label:"Fejl",          value: reparseLog.errors,  color:"var(--amber)" },
-                      ].map(s => (
-                        <div key={s.label} style={{ padding:"10px 12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, textAlign:"center" }}>
-                          <div style={{ fontSize:20, fontWeight:900, color:s.color, marginBottom:2 }}>{s.value ?? 0}</div>
-                          <div style={{ ...UI.muted10, display:"flex", alignItems:"center", justifyContent:"center", gap:3 }}><Icon name={s.icon} size={9} color="var(--muted)" /> {s.label}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {reparseLog?.error && (
-                    <div style={{ padding:"10px 14px", background:"rgba(239,68,68,.08)", border:"1px solid rgba(239,68,68,.2)", borderRadius:10, fontSize:12, color:"var(--red)" }}>
-                      Fejl: {reparseLog.error}
-                    </div>
-                  )}
-
-                  {!reparseLog && !reparseLoading && (
-                    <div style={{ textAlign:"center", padding:"16px 0", color:"var(--muted)", fontSize:12 }}>
-                      Reparserer 100 produkter ad gangen — gratis keyword-engine + Haiku på de svære
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {adminSection === "debug" && (
-              <div style={UI.pb120}>
-                <div style={UI.udflex_jcspacebet_aicenter_mb12}>
-                  <div style={UI.ufs14_fw800_cink}>Debug Trace Log</div>
-                  <button onClick={() => { navigator.clipboard.writeText(JSON.stringify(getTraceLog(), null, 2)); }}
-                    style={{ padding:"6px 12px", borderRadius:8, background:"var(--surface2)", border:"1px solid var(--border)",
-                      fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
-                    Kopier JSON
-                  </button>
-                </div>
-                <div style={UI.ufs11_cmuted_mb10}>
-                  Seneste {getTraceLog().length} operationer (scan, sog, OCR, submit). Nyeste forst.
-                </div>
-                {getTraceLog().slice().reverse().map((entry, i) => {
-                  const isError = !!entry.error || entry.ok === false;
-                  return (
-                    <div key={i} style={{
-                      padding:"8px 10px", marginBottom:4, borderRadius:8,
-                      background: isError ? "rgba(239,68,68,.08)" : "var(--surface)",
-                      border: `1px solid ${isError ? "var(--red-md)" : "var(--border)"}`,
-                      fontSize:11, fontFamily:"monospace",
-                    }}>
-                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:2 }}>
-                        <span style={{ fontWeight:700, color: isError ? "var(--red)" : "var(--green)" }}>{entry.id}</span>
-                        <span style={{ color:"var(--muted)", fontSize:10 }}>{new Date(entry.ts).toLocaleTimeString("da-DK")}</span>
-                      </div>
-                      <div style={{ color:"var(--ink2)" }}>
-                        {entry.step}
-                        {entry.error && <span style={UI.red}> — {entry.error}</span>}
-                        {entry.detail && <span style={UI.muted}> — {String(entry.detail)}</span>}
-                        {entry.textLength !== undefined && <span style={UI.muted}> ({entry.textLength} tegn)</span>}
-                        {entry.found !== undefined && <span style={UI.muted}> (found: {String(entry.found)})</span>}
-                        {entry.text && <span style={UI.muted}> "{entry.text}"</span>}
-                      </div>
-                    </div>
-                  );
-                })}
-                {getTraceLog().length === 0 && (
-                  <div style={{ textAlign:"center", padding:"32px 0", color:"var(--muted)" }}>
-                    Ingen operationer logget endnu. Scan, sog eller tag billede for at se trace.
-                  </div>
-                )}
-              </div>
-            )}
-
-            {adminSection === "recipes" && (
-              <div style={UI.pb120}>
-                {/* Filter tabs */}
-                <div style={UI.udflex_g6_mb14}>
-                  {[{val:"pending",label:"Afventer",icon:"clock"},{val:"approved",label:"Godkendte",icon:"check"},{val:"rejected",label:"Afviste",icon:"x"}].map(f => (
-                    <button key={f.val} onClick={() => { setAdminRecipeFilter(f.val); loadAdminRecipes(f.val); }}
-                      style={{ padding:"8px 14px", borderRadius:100, border:`1px solid ${adminRecipeFilter===f.val?"var(--green)":"var(--border)"}`,
-                        background:adminRecipeFilter===f.val?"var(--green-lt)":"var(--surface)", color:adminRecipeFilter===f.val?"var(--green)":"var(--muted)",
-                        display:"flex", alignItems:"center", gap:6,
-                        fontFamily:"var(--f)", fontSize:12, fontWeight:700, cursor:"pointer" }}>
-                      <Icon name={f.icon} size={11} color={adminRecipeFilter===f.val?"var(--green)":"var(--muted)"} /> {f.label}
-                    </button>
-                  ))}
-                  <button onClick={() => loadAdminRecipes()} style={{ marginLeft:"auto", padding:"8px 12px", borderRadius:100, border:"1px solid var(--border)", background:"var(--surface)", color:"var(--muted)", fontFamily:"var(--f)", cursor:"pointer", display:"flex" }}><Icon name="refresh" size={12} color="var(--muted)" /></button>
-                </div>
-
-                {/* Detail-visning */}
-                {editingRecipe && (
-                  <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:16, marginBottom:16 }}>
-                    <div style={UI.udflex_jcspacebet_aicenter_mb12}>
-                      <div style={UI.ufs15_fw800_cink}>Redigér opskrift</div>
-                      <button onClick={() => setEditingRecipe(null)} aria-label="Luk"
-                        style={UI.ubgsurface2_bdnone_br50_w32_h32_curpointer_fs18_cmuted}>×</button>
-                    </div>
-                    <input value={editingRecipe.title||""} onChange={e => setEditingRecipe(r=>({...r,title:e.target.value}))} placeholder="Titel"
-                      style={{ width:"100%", padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:14, boxSizing:"border-box", marginBottom:8, outline:"none" }} />
-                    <textarea value={editingRecipe.description||""} onChange={e => setEditingRecipe(r=>({...r,description:e.target.value}))} placeholder="Beskrivelse" rows={3}
-                      style={{ width:"100%", padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--paper)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, boxSizing:"border-box", resize:"none", marginBottom:8, outline:"none" }} />
-                    <div style={UI.udgrid_gri1fr1fr_g8_mb8}>
-                      <select value={editingRecipe.category||"aftensmad"} onChange={e => setEditingRecipe(r=>({...r,category:e.target.value}))}
-                        style={UI.up8px10px_br10_bd1pxsolid_bgpaper_cink_fff_fs13_outnone}>
-                        {["aftensmad","morgenmad","frokost","dessert","tilbehør","snack"].map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                      <input type="number" value={editingRecipe.servings||4} onChange={e => setEditingRecipe(r=>({...r,servings:+e.target.value}))} placeholder="Portioner"
-                        style={UI.up8px10px_br10_bd1pxsolid_bgpaper_cink_fff_fs13_outnone} />
-                    </div>
-                    {/* Allergen flags */}
-                    <div style={UI.sectionLbl6}>Allergener</div>
-                    <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:12 }}>
-                      {ALLERGENS.map(a => {
-                        let flags = {};
-                        try { flags = typeof editingRecipe.allergen_flags==="string" ? JSON.parse(editingRecipe.allergen_flags) : (editingRecipe.allergen_flags||{}); } catch {}
-                        const isOn = flags[a.id] === true || flags[a.id] === "yes";
-                        return (
-                          <div key={a.id} onClick={() => {
-                            let f = {};
-                            try { f = typeof editingRecipe.allergen_flags==="string" ? JSON.parse(editingRecipe.allergen_flags) : (editingRecipe.allergen_flags||{}); } catch {}
-                            const next = {...f, [a.id]: !isOn};
-                            setEditingRecipe(r => ({...r, allergen_flags: JSON.stringify(next)}));
-                          }}
-                          style={{ padding:"3px 10px", borderRadius:100, cursor:"pointer", fontSize:11, fontWeight:700,
-                            background: isOn?"var(--red-lt)":"var(--surface2)", color:isOn?"var(--red)":"var(--muted2)",
-                            border:`1px solid ${isOn?"var(--red-md)":"var(--border)"}` }}>
-                            {a.emoji} {a.label}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {/* Handlinger */}
-                    <div style={UI.rowGap8}>
-                      <button onClick={saveRecipeEdit} disabled={recipeActionLoading}
-                        style={{ flex:1, padding:"10px", borderRadius:10, background:"var(--blue-lt)", border:"1px solid var(--blue)", color:"var(--blue)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                        <Icon name="save" size={13} color="var(--blue)" /> Gem ændringer
-                      </button>
-                      <button onClick={() => updateRecipeStatus(editingRecipe.id, "approved")} disabled={recipeActionLoading}
-                        style={{ flex:1, padding:"10px", borderRadius:10, background:"var(--green-lt)", border:"1px solid var(--green)", color:"var(--green)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                        <Icon name="check" size={13} color="var(--green)" /> Godkend & publicér
-                      </button>
-                      <button onClick={() => updateRecipeStatus(editingRecipe.id, "rejected")} disabled={recipeActionLoading}
-                        style={{ flex:1, padding:"10px", borderRadius:10, background:"var(--red-lt)", border:"1px solid var(--red)", color:"var(--red)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                        <Icon name="x" size={13} color="var(--red)" /> Afvis
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Liste */}
-                {adminRecipesLoading ? (
-                  <Loader text="Indlæser…" />
-                ) : adminRecipes.length === 0 ? (
-                  <div style={UI.utacenter_p48px20px}>
-                    <div style={{ ...UI.ufs48_mb10, display:"flex", justifyContent:"center" }}><Icon name="package" size={40} color="var(--muted)" /></div>
-                    <div style={{ fontSize:15, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Ingen {adminRecipeFilter === "pending" ? "afventende" : adminRecipeFilter === "approved" ? "godkendte" : "afviste"} opskrifter</div>
-                  </div>
-                ) : adminRecipes.map(r => {
-                  let flags = {};
-                  try { flags = typeof r.allergen_flags==="string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags||{}); } catch {}
-                  const flaggedAllergens = ALLERGENS.filter(a => flags[a.id]===true||flags[a.id]==="yes");
-                  return (
-                    <div key={r.id} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:8, cursor:"pointer" }}
-                      onClick={() => setEditingRecipe(r)}>
-                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:4 }}>
-                        <div style={UI.ufs14_fw800_cink}>{r.title}</div>
-                        <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100,
-                          background:r.status==="pending"?"var(--amber-lt)":r.status==="approved"?"var(--green-lt)":"var(--red-lt)",
-                          color:r.status==="pending"?"var(--amber)":r.status==="approved"?"var(--green)":"var(--red)",
-                          border:`1px solid ${r.status==="pending"?"var(--amber-md)":r.status==="approved"?"rgba(74,222,128,.3)":"var(--red-md)"}`,
-                          flexShrink:0, marginLeft:8, display:"inline-flex", alignItems:"center", gap:4 }}>
-                          <Icon name={r.status==="pending"?"clock":r.status==="approved"?"check":"x"} size={10} color={r.status==="pending"?"var(--amber)":r.status==="approved"?"var(--green)":"var(--red)"} /> {r.status==="pending"?"Afventer":r.status==="approved"?"Godkendt":"Afvist"}
-                        </span>
-                      </div>
-                      <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6 }}>
-                        {r.category} · {r.servings||"?"} pers. · {new Date(r.created_at).toLocaleDateString("da-DK")}
-                      </div>
-                      {flaggedAllergens.length > 0 && (
-                        <div style={UI.wrapGap4}>
-                          {flaggedAllergens.map(a => (
-                            <span key={a.id} style={{ fontSize:10, padding:"2px 8px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", border:"1px solid var(--red-md)", fontWeight:700 }}>{a.emoji} {a.label}</span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+        {adminSection === "recipes" && (
+          <AdminRecipesSection
+            adminRecipes={adminRecipes} adminRecipesLoading={adminRecipesLoading}
+            adminRecipeFilter={adminRecipeFilter} setAdminRecipeFilter={setAdminRecipeFilter}
+            loadAdminRecipes={loadAdminRecipes}
+            editingRecipe={editingRecipe} setEditingRecipe={setEditingRecipe}
+            recipeActionLoading={recipeActionLoading} saveRecipeEdit={saveRecipeEdit}
+            updateRecipeStatus={updateRecipeStatus}
+          />
+        )}
 
     </>
   );

@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React from "react";
+import { Icon } from "./SharedComponents.jsx";
 
 // ── ErrorBoundary ─────────────────────────────────────────────────────────────
 // Wrap enhver skærm for at fange crashes og vise en brugervenlig fejlside
@@ -32,7 +33,7 @@ export class ErrorBoundary extends React.Component {
 
     return (
       <div className="screen" style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"60vh", padding:"40px 24px", textAlign:"center" }}>
-        <div style={{ fontSize:56, marginBottom:16 }}>⚠️</div>
+        <div style={{ marginBottom:16, display:"flex", justifyContent:"center" }}><Icon name="warning" size={48} color="var(--red)" /></div>
         <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>
           Noget gik galt
         </div>
@@ -46,8 +47,9 @@ export class ErrorBoundary extends React.Component {
             onClick={() => {
               this.setState({ hasError: false, error: null });
               onRetry?.();
-            }}>
-            🔄 Prøv igen
+            }}
+            style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+            <Icon name="refresh" size={14} color="var(--ink)" /> Prøv igen
           </button>
           <button
             className="btn btn-ghost btn-sm"

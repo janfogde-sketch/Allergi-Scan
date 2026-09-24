@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useMemo, useEffect } from "react";
 import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compareAllergens, getAllergenLabels } from "./helpers.js";
+import { compareAllergens, getAllergenLabels, matchCustomAllergens } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, SafetyRow, SafetyPill, EmptyState, ScrollToTop } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -21,9 +21,15 @@ const RecipeCard = React.memo(function RecipeCard({ recipe: r, profiles, isFav, 
   let rFlags = {};
   try { rFlags = typeof r.allergen_flags === "string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags || {}); } catch {}
   const totalMins = (r.prep_time_minutes||0) + (r.cook_time_minutes||0);
+  const ingredientsText = typeof r.ingredients_raw === "string" ? r.ingredients_raw : (r.ingredients_raw ? JSON.stringify(r.ingredients_raw) : "");
+  const profileStatus = (p) => {
+    const { status: ps } = compareAllergens(rFlags, p.allergens||[]);
+    if (ps !== "danger" && p.custom?.length && matchCustomAllergens(ingredientsText, p.custom).length > 0) return "danger";
+    return ps;
+  };
   // Samlet verdikt for kortets ramme + strimmel — samme mønster som Resultat-skærmen
   const cardStatus = profiles.reduce((worst, p) => {
-    const { status: ps } = compareAllergens(rFlags, p.allergens||[]);
+    const ps = profileStatus(p);
     const rank = { safe:0, warn:1, danger:2 };
     return rank[ps] > rank[worst] ? ps : worst;
   }, "safe");
@@ -66,15 +72,12 @@ const RecipeCard = React.memo(function RecipeCard({ recipe: r, profiles, isFav, 
         {/* Sikkerhed per profil — kun når der er nogen at sammenligne på tværs af */}
         {profiles.length > 1 && (
         <div className="recipe-safe-bar">
-          {profiles.map(p => {
-            const { status: ps } = compareAllergens(rFlags, p.allergens||[]);
-            return (
-              <SafetyPill key={p.id}
-                name={p.id==="me" ? "Dig" : p.name.split(" ")[0]}
-                status={ps}
-              />
-            );
-          })}
+          {profiles.map(p => (
+            <SafetyPill key={p.id}
+              name={p.id==="me" ? "Dig" : p.name.split(" ")[0]}
+              status={profileStatus(p)}
+            />
+          ))}
         </div>
         )}
       </div>
@@ -119,10 +122,20 @@ export default function RecipesScreen({
     "me",
     ...(family||[]).filter(m => (activeProfiles||[]).includes(m.id)).map(m => m.id),
   ];
+  // De 16 faste allergener (id'er, matchet mod allergen_flags) og brugerens
+  // egne fritekst-tilføjede allergier (matchet mod rå ingredienstekst) er to
+  // forskellige ting — de blev tidligere slået sammen i én id-liste og sendt
+  // til compareAllergens(), som kun kender de faste id'er. En custom-allergi
+  // som "Fructose" endte derfor aldrig med at blive tjekket mod noget som
+  // helst (fundet ved en allergen-logik-gennemgang, 16. sept. 2026).
   const safeAllergenIds = useMemo(() => [
-    ...(recipeSafeProfiles.includes("me") ? [...allergens, ...(customAllerg||[])] : []),
-    ...(family||[]).filter(m => recipeSafeProfiles.includes(m.id)).flatMap(m => [...(m.allergens||[]), ...(m.customAllerg||[])]),
-  ], [recipeSafeProfiles, family, allergens, customAllerg]);
+    ...(recipeSafeProfiles.includes("me") ? allergens : []),
+    ...(family||[]).filter(m => recipeSafeProfiles.includes(m.id)).flatMap(m => m.allergens||[]),
+  ], [recipeSafeProfiles, family, allergens]);
+  const safeCustomTerms = useMemo(() => [
+    ...(recipeSafeProfiles.includes("me") ? (customAllerg||[]) : []),
+    ...(family||[]).filter(m => recipeSafeProfiles.includes(m.id)).flatMap(m => m.custom||[]),
+  ], [recipeSafeProfiles, family, customAllerg]);
   const filteredRecipes = useMemo(() => {
     return (recipeFilter === "favoritter" ? recipes.filter(r => favoriteRecipes.includes(r.id)) : recipes).filter(r => {
       if (recipeSearch && !r.title.toLowerCase().includes(recipeSearch.toLowerCase())) return false;
@@ -130,10 +143,14 @@ export default function RecipesScreen({
         let rFlags = {};
         try { rFlags = typeof r.allergen_flags === "string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags||{}); } catch {}
         if (compareAllergens(rFlags, safeAllergenIds).status === "danger") return false;
+        if (safeCustomTerms.length > 0) {
+          const ingText = typeof r.ingredients_raw === "string" ? r.ingredients_raw : (r.ingredients_raw ? JSON.stringify(r.ingredients_raw) : "");
+          if (matchCustomAllergens(ingText, safeCustomTerms).length > 0) return false;
+        }
       }
       return true;
     });
-  }, [recipes, recipeFilter, favoriteRecipes, recipeSearch, recipeSafeOnly, safeAllergenIds]);
+  }, [recipes, recipeFilter, favoriteRecipes, recipeSearch, recipeSafeOnly, safeAllergenIds, safeCustomTerms]);
 
   // Renderer kun de første N kort ad gangen i stedet for op til 1000 på
   // samme tid — hvert kort beregner selv sit allergen-verdikt (compareAllergens
@@ -185,14 +202,16 @@ export default function RecipesScreen({
 
     // Familie sikkerhedsgrid
     const detailProfiles = [
-      { id:"me", name: user?.name||"Dig", allergens: allergens||[] },
+      { id:"me", name: user?.name||"Dig", allergens: allergens||[], custom: customAllerg||[] },
       ...(family||[]).filter(m => (activeProfiles||[]).includes(m.id)),
     ];
+    const detailIngredientsText = typeof r.ingredients_raw === "string" ? r.ingredients_raw : (r.ingredients_raw ? JSON.stringify(r.ingredients_raw) : "");
 
     // Samlet verdikt — smeltet ind i hero-billedet som en strimmel, ligesom på
     // Resultat-skærmen, i stedet for kun at stå i sikkerhedsgridet nedenunder
     const heroStatus = detailProfiles.reduce((worst, p) => {
-      const danger = (p.allergens||[]).some(a => rFlags[a] === "yes" || rFlags[a] === true);
+      const danger = (p.allergens||[]).some(a => rFlags[a] === "yes" || rFlags[a] === true)
+        || (p.custom?.length && matchCustomAllergens(detailIngredientsText, p.custom).length > 0);
       const warn = !danger && (p.allergens||[]).some(a => rFlags[a] === "traces");
       const s = danger ? "danger" : warn ? "warn" : "safe";
       const rank = { safe:0, warn:1, danger:2 };
@@ -307,9 +326,10 @@ export default function RecipesScreen({
             {detailProfiles.map(p => {
               const danger = (p.allergens||[]).filter(a => rFlags[a] === "yes" || rFlags[a] === true);
               const warning = (p.allergens||[]).filter(a => rFlags[a] === "traces");
-              const status = danger.length > 0 ? "danger" : warning.length > 0 ? "warn" : "safe";
-              const statusText = danger.length > 0
-                ? danger.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
+              const customMatches = p.custom?.length ? matchCustomAllergens(detailIngredientsText, p.custom) : [];
+              const status = (danger.length > 0 || customMatches.length > 0) ? "danger" : warning.length > 0 ? "warn" : "safe";
+              const statusText = (danger.length > 0 || customMatches.length > 0)
+                ? [...danger.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean), ...customMatches.map(t => `"${t}"?`)].join(", ")
                 : warning.length > 0
                 ? "Spor: " + warning.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
                 : "Sikkert";
@@ -322,6 +342,11 @@ export default function RecipesScreen({
               );
             })}
           </div>
+          )}
+          {customAllerg?.length > 0 && (
+            <div style={{ fontSize:10, color:"var(--muted)", marginBottom:12, lineHeight:1.4 }}>
+              Dine egne tilføjede allergier tjekkes via fritekst-søgning i opskriftens ingrediensliste — det kan være sværere for os at fange end vores faste allergener. Dobbelttjek altid selv, og sig endelig til hvis vi overser noget — vi udvider løbende vores allergen-liste.
+            </div>
           )}
 
           {/* Titel */}
@@ -449,7 +474,7 @@ export default function RecipesScreen({
       { id:"snack", label:"🍿 Snack" },
     ];
     const profiles = [
-      { id:"me", name: user.name||"Dig", allergens },
+      { id:"me", name: user.name||"Dig", allergens, custom: customAllerg||[] },
       ...family.filter(m => activeProfiles.includes(m.id)),
     ];
     // filtered opskrifter er beregnet (memoized) på øverste niveau af

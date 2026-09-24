@@ -114,7 +114,7 @@ export const UI = {
   udflex_fdcolumn_aicenter_g4_curpointer: { display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer" },
   ubgsheet_br20px20px_p20px16px_w100_mxh90vh_ovyauto: { background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 140px", width:"100%", maxHeight:"90vh", overflowY:"auto" },
   udflex_g6_mb14: { display:"flex", gap:6, marginBottom:14 },
-  ubgsurface_bd1pxsolid_br12_p14px_mb10: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10 },
+  ubgsurface_bd1pxsolid_br12_p14px_mb10: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:10, boxShadow:"var(--sh)" },
   ufs11_cmuted_fw700_mb8: { fontSize:11, color:"var(--muted)", fontWeight:700, marginBottom:8 },
   uw100_bggreen_bdnone_br10_p10px_fff_fs13_fw700_congreen_curp: { width:"100%", background:"var(--green)", border:"none", borderRadius:10, padding:"10px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--on-green)", cursor:"pointer" },
   ufs22: { fontSize:22 },
