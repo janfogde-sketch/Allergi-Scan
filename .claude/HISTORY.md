@@ -1215,3 +1215,114 @@ højre-midt, bund-venstre).
 
 **Verifikation:** `npm run build` grøn, `npm run lint` ren, `npx vitest
 run` 98/98 grønne, mojibake-scan ren på `src/ScannerScreen.jsx`.
+
+---
+
+## Appens baggrundsfarve + forsøg på illustreret ingrediens-stil (24. sept. 2026, samme dag)
+
+Efter opfølgningsrunden ovenfor bad brugeren om et markant større skridt:
+"du bliver nød til at starte forfra og bygge gentænke hele designet i
+appen. bundlinje, knapper, tekst og logo skal forblive hvor de er, men
+baggrundsfarven og billeder skal ændres, så det går igen hele appen
+igennem." Med en tilføjelse om Scan-sidens billeder: "må gerne indeholde
+'ingredienser/frugter' [...] men lad vær med at tag direkte fra billedet,
+da de giver unødige og grimme beskæringer."
+
+**Afklaring før implementering (3 spørgsmål via AskUserQuestion, givet
+omfanget — CLAUDE.md afsnit 4 beder eksplicit om at spørge ved
+arkitektoniske/store ændringer):**
+1. Baggrundsfarve-retning → brugeren valgte "jeg foreslår 2-3 forslag".
+2. Billedstil (da vi ikke kan hente nye stockfotos, og direkte udklip gav
+   grimme kanter) → brugeren valgte "tegnede/vektor-illustrationer
+   (anbefalet)".
+3. Omfang af ingrediens-billeder → brugeren valgte "kun Scan-siden".
+
+**Baggrundsfarve — 3 paletteforslag bygget og screenshottet** (mimic-HTML
++ `playwright-core`, samme metode som tidligere runder): "A — Varm
+ivory" (cremet off-white), "B — Blød salvie" (mere mættet, men stadig
+lys grøn), "C — Blød fersken" (lys blush/peach-toning) — alle med
+samme topbar/kort/knap/bundnav-struktur, kun baggrunds-token-værdierne
+ændret, side om side i ét screenshot. Brugeren svarede uden for de 3
+givne muligheder: "hvid" (fri-tekst-svar via AskUserQuestions "Other").
+Implementeret som ren `#FFFFFF` for `--paper`, en neutral (ikke længere
+grøn-tonet) lysegrå `#F3F3F1` for `--paper2`, tilsvarende neutrale
+`--surface2`/`--surface3`, `body`-baggrunden, og bund-navigationens
+baggrund (som tidligere var hardkodet til den gamle `#F6F8F3`-hex i
+stedet for at referere `var(--paper)` — rettet til at referere tokenet,
+så den automatisk følger fremtidige baggrunds-ændringer). Det
+eksisterende punkt-gitter-mønster + top/bund-gløder (tilføjet i den
+oprindelige "appen virker livløs"-designforbedring, se afsnit 5's
+hovedtekst) er bevaret som struktur, kun gradient-stoppene er omregnet
+fra cremet/grøn-tonede farver til næsten umærkelige neutrale gråtoner
+oven på den hvide base — for at undgå at genintroducere "flad livløs
+baggrund"-problemet som punkt-gitteret oprindeligt blev tilføjet for at
+løse.
+
+**Scope bevidst afgrænset til `src/theme.jsx` — ikke `src/admin/
+adminTheme.js`.** Det separate desktop admin-panel (bygget i den 10-dages
+periode der landede på `main` mens denne session kørte, se PR #268's
+merge-konflikt-note ovenfor) har sin egen adskilte theme-fil med de
+samme gamle farve-hex-værdier. Brugerens instruktion nævnte konkret
+"Scanningssiden" og bundnavigationen — klart den forbrugervendte mobil-
+PWA, ikke det interne admin-værktøj. Ændrede ikke admin-panelets tema
+uden at være bedt om det.
+
+**Ingrediens-illustrationer — to stilarter afprøvet, endte tilbage ved
+fotos:**
+
+1. **Første forsøg: flad SVG-cartoon-stil.** Byggede `src/
+   HomeIngredientIcons.jsx` med 5 selvtegnede komponenter (`LeafIcon`,
+   `LeafRoundIcon`, `BlueberrySingleIcon`, `BlueberryClusterIcon`,
+   `StrawberryIcon`) — simple flade former, viewBox 0 0 100 100 for at
+   matche det eksisterende width/top/left-positioneringsmønster fra
+   foto-versionen. Fordelen ved fuldt vektor: jordbærret kunne nu tegnes
+   som et KOMPLET bær (ikke kun det delvise udsnit kildefotoet gav) —
+   løser den tidligere strukturelle begrænsning permanent. Screenshottet
+   (mimic-HTML) og sendt til brugeren sammen med de 3 baggrunds-
+   paletteforslag.
+
+2. **Andet forsøg: glansfuld/skygget "emoji-stil".** Brugeren godkendte
+   ikke den flade stil ("justér illustrationerne" → "det skal være
+   realistiske frugter og ikke tegnet" kom først efter en opfølgende
+   afklaring om HVAD der skulle justeres). Byggede om til gradient-
+   baseret rendering: `radialGradient`/`linearGradient`-fyld (mørk kant →
+   lys glans-punkt), spejlhøjlys-ellipser, bløde ambient-occlusion-
+   skygger under hvert element (ellipse med blur/opacity), mere
+   naturalistiske stier. Brugte `React.useId()` for unikke gradient-ID'er
+   pr. instans (nødvendigt fordi samme ikon-komponent bruges flere gange
+   i collagen — uden unikke ID'er ville flere `<svg>`-instanser dele
+   samme `id`, hvilket er ugyldig SVG/HTML og kan give uforudsigelig
+   gradient-genbrug på tværs af instanser). Resultatet lignede en Apple/
+   Google-emoji-stil frugtillustration — markant mere tredimensionel end
+   første forsøg, men stadig en tegning, ikke et foto.
+
+**Konklusion — brugeren ville tilbage til rigtige fotos.** Efter at have
+set den glansfulde version svarede brugeren "prøv foto-udklip igen, men
+forsøgt bedre". Kommunikerede eksplicit til brugeren (før dette svar)
+at ægte fotorealisme ikke er opnåelig i denne sandbox, da der ikke findes
+nogen vej til at hente rigtige stockfotos (bekræftet blokeret, se
+opfølgningsrundens note ovenfor) — den glansfulde vektor-stil var det
+tætteste opnåelige uden faktisk fotografi. I stedet for at gen-beskære
+fra bunden blev den ALLEREDE verificerede foto-udklips-version fra
+opfølgningsrunden (ni positioner, det feathered/genskårne
+basilikum-blad, jordbær kun som kant-bløder) gendannet fra git (kun
+`git rm` staged, ikke committed endnu på dette tidspunkt i sessionen) —
+`git restore --staged --worktree src/assets/home/` + `git checkout HEAD
+-- src/ScannerScreen.jsx` + sletning af `HomeIngredientIcons.jsx`. Denne
+version var allerede blevet visuelt reverificeret uden synlige
+beskærings-artefakter i opfølgningsrunden, så ingen grund til at gentage
+det arbejde. Genverificerede den kun mod den NYE hvide baggrund (i
+stedet for den gamle `#F6F8F3`) via mimic-HTML — så stadig rent ud, ingen
+nye artefakter fra farveskiftet.
+
+**Visuel verifikation, hele runden:** 3-palette-sammenligning (ét
+screenshot, tre telefon-mockups side om side), fuld app-baggrund-mockup
+(topbar+kort+felt+liste+knap+bundnav på hvid), to runder af ikon-
+preview-screenshots (flad stil, glansfuld stil), og en sidste
+gencheck af den genoprettede foto-collage mod hvid baggrund. Alle via
+samme etablerede mimic-HTML + `playwright-core`-metode.
+
+**Verifikation:** `npm run build` grøn, `npm run lint` ren, `npx vitest
+run` 98/98 grønne, mojibake-scan ren på `src/theme.jsx` (eneste fil
+med reelle indholdsændringer i denne runde — `ScannerScreen.jsx` endte
+uændret fra `HEAD` efter reverteringen).
