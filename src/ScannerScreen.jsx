@@ -219,7 +219,7 @@ export default function ScannerScreen({
   return (
     <>
         {screen === SCREENS.HOME && (
-          <div className="screen fade-in" id="main-content" style={{ display:"flex", flexDirection:"column", minHeight:"calc(100vh - 130px)" }}>
+          <div className="screen fade-in" id="main-content" style={{ display:"flex", flexDirection:"column", minHeight:"calc(100vh - 130px)", background:"var(--paper)" }}>
 
             {/* Guide modal — vises ved klik på "App-guide" */}
             {showGuide && (
@@ -238,7 +238,11 @@ export default function ScannerScreen({
             {!!userId && <div style={{
               background: cameraActive ? "var(--surface)" : "transparent",
               borderRadius:20, marginBottom:10,
-              overflow:"hidden", position:"relative", border: cameraActive ? "1px solid var(--border2)" : "none",
+              // "hidden" er kun nødvendigt for at klippe kameraets afrundede hjørner
+              // når det er aktivt — i hero-tilstanden skal collage-billederne kunne
+              // bløde ud over kanten, ellers klipper denne wrapper dem usynligt
+              // (fandt dette ved at sammenligne den rigtige app mod mimic-previewet).
+              overflow: cameraActive ? "hidden" : "visible", position:"relative", border: cameraActive ? "1px solid var(--border2)" : "none",
               boxShadow: cameraActive ? "var(--sh2)" : "none",
             }}>
               {/* Kamera container — altid i DOM men skjult når ikke aktiv */}
@@ -324,18 +328,30 @@ export default function ScannerScreen({
               {/* Forside-hero når kamera ikke er aktivt: overskrift + stor
                   scan-knap med frugt-collage — matcher det aftalte design. */}
               {!cameraActive && (
-              <div style={{ position:"relative", padding:"14px 0 8px" }}>
-                {/* Frugt-collage — rent dekorativt, ingen semantisk betydning */}
-                <img src={leafMint} alt="" aria-hidden="true" draggable="false"
-                  style={{ position:"absolute", top:-8, left:-18, width:118, pointerEvents:"none", userSelect:"none" }} />
-                <img src={blueberriesPair} alt="" aria-hidden="true" draggable="false"
-                  style={{ position:"absolute", top:12, right:-38, width:175, pointerEvents:"none", userSelect:"none" }} />
-                <img src={blueberrySingle} alt="" aria-hidden="true" draggable="false"
-                  style={{ position:"absolute", top:52, left:128, width:70, pointerEvents:"none", userSelect:"none" }} />
-                <img src={strawberryImg} alt="" aria-hidden="true" draggable="false"
-                  style={{ position:"absolute", bottom:48, left:-30, width:113, pointerEvents:"none", userSelect:"none" }} />
-                <img src={leafBasil} alt="" aria-hidden="true" draggable="false"
-                  style={{ position:"absolute", bottom:24, right:-34, width:130, pointerEvents:"none", userSelect:"none" }} />
+              <div style={{ position:"relative", padding:"14px 0 24px" }}>
+                {/* Frugt-collage — rent dekorativt, ingen semantisk betydning.
+                    Genbruger de 5 fotos i flere størrelser/rotationer/positioner
+                    så collagen fylder hele forsiden i stedet for kun hjørnerne
+                    (sandboxen kan ikke hente andre/nye billeder eksternt, se
+                    CLAUDE.md afsnit 5, 24. sept.-opfølgning). Jordbær-billedet
+                    er kun et delvist udsnit i selve kildefotoet — bruges derfor
+                    udelukkende som ægte kant-bløder, aldrig midt i kompositionen. */}
+                {[
+                  { src: leafMint,        top:-16,  left:-24,  width:104, rotate:-16 },
+                  { src: blueberriesPair, top:-8,   right:-32, width:148, rotate:12 },
+                  { src: blueberrySingle, top:100,  right:14,  width:50,  rotate:26 },
+                  { src: leafBasil,       top:148,  left:-38,  width:116, rotate:-22, flip:true },
+                  { src: blueberrySingle, top:222,  left:26,   width:38,  rotate:-8 },
+                  { src: leafMint,        top:262,  right:-20, width:84,  rotate:30 },
+                  { src: leafBasil,       bottom:104, right:-32, width:102, rotate:16 },
+                  { src: blueberriesPair, bottom:44,  left:-36,  width:126, rotate:-14 },
+                  { src: strawberryImg,   bottom:-14, left:-44,  width:132, rotate:-6 },
+                ].map((it, i) => (
+                  <img key={i} src={it.src} alt="" aria-hidden="true" draggable="false"
+                    style={{ position:"absolute", top:it.top, bottom:it.bottom, left:it.left, right:it.right,
+                      width:it.width, transform:`${it.flip ? "scaleX(-1) " : ""}rotate(${it.rotate}deg)`,
+                      pointerEvents:"none", userSelect:"none" }} />
+                ))}
 
                 <div style={{ position:"relative", zIndex:1, textAlign:"center", padding:"88px 24px 0" }}>
                   <div style={{ fontSize:28, fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px" }}>Scan produkt</div>
@@ -363,19 +379,6 @@ export default function ScannerScreen({
                       <div style={{ fontSize:14.5, fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
                     </div>
                   </div>
-                </div>
-
-                {/* Prøv en demo */}
-                <div style={{ position:"relative", zIndex:1, display:"flex", justifyContent:"center", padding:"0 24px 6px" }}>
-                  <button onClick={() => setShowGuide(true)}
-                    style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-                      width:"100%", maxWidth:280, padding:"14px 20px", borderRadius:100,
-                      background:"var(--surface)", border:"1px solid var(--border)", boxShadow:"var(--sh)",
-                      fontFamily:"var(--f)", fontSize:14.5, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
-                    <Icon name="package" size={17} color="var(--green)" />
-                    Prøv en demo
-                    <Icon name="chevronRight" size={15} color="var(--muted2)" />
-                  </button>
                 </div>
               </div>
               )}

@@ -1118,3 +1118,100 @@ for at rette rektangel-kanterne (se ovenfor), en overlap-bug (overskriften
 "Scan produkt" lå delvist bag frugtbillederne ved første forsøg — rettet
 ved at hæve `.hero-text`s top-padding), og et sidste layout-fix hvor
 blåbær-parret delvist dækkede topbarens "Feedback"-knap.
+
+---
+
+## Forside-collage, opfølgningsrunde (24. sept. 2026)
+
+Efter forrige runde (se ovenfor) gav brugeren ny feedback: "forsiden ser
+ikke lavet pænt. man kan se at frugt osv. er beskåret. du må gerne lave
+det om. du må også gerne finde og hente andre 'ingredienser'. ideen skal
+bare være den samme og det skal fylde hele skærmen. fjern også den
+nederste demoknap. fjern også de så prikker i baggrunden".
+
+**To "demo"-knapper fandtes efter et 10-dages merge-gab** — skulle
+skelnes før noget kunne fjernes: (1) min egen "Prøv en demo"-pille
+(`setShowGuide(true)`, åbner `DemoSlider`) i hero-blokken, og (2) en
+helt urelateret `showDemoScan`/`runDemoScan`-funktion ("Fase 7b.2"),
+tilføjet af andet arbejde i mellemtiden, som viser en stiplet-kant-knap
+"Prøv en demo-scanning" — men KUN til konti under 24 timer gamle. Da
+brugeren (ejeren, en gammel konto) aldrig ville se knap (2), måtte
+"nederste demoknap" i feedbacken være knap (1). Besluttet: fjern kun
+(1), rør ikke (2) — ikke i scope, ikke bedt om.
+
+**Billedsourcing genundersøgt, samme konklusion som sidst — nu udtømmende
+bekræftet:** testede igen `images.unsplash.com`, `images.pexels.com`,
+`upload.wikimedia.org`, `images.freeimages.com`, `cdn.pixabay.com`,
+`picsum.photos`, `user-images.githubusercontent.com` — alle 403 via
+agent-proxyen (org-policy). Testede også `raw.githubusercontent.com`
+(når faktisk, 301) og `api.github.com` (nås, 200) — men et faktisk API-
+kald (`GET /search/repositories`) bekræftede at `api.github.com` i denne
+sandbox er hård-scopet til kun de repos der er eksplicit tilknyttet
+sessionen: "sessions are bound to their configured repositories. Use
+repository-scoped endpoints". Konklusion: der findes ingen vej i denne
+sandbox til at hente NYE/andre ingrediens-fotos, hverken fra det
+generelle web eller fra GitHub-søgning. Løsningen blev derfor at
+genbruge de 5 allerede lovligt beskårne billeder RIGERE (flere
+instanser, varieret størrelse/rotation/position) i stedet for bogstaveligt
+at finde andre ingredienser.
+
+**Reel bug fundet, ikke kun et billedkvalitetsproblem:** ved at
+undersøge hvorfor frugten "så beskåret ud" i den RIGTIGE app (ikke kun i
+mit isolerede mimic-preview), viste det sig at den ydre scan-boks-
+wrapper i `ScannerScreen.jsx` havde ubetinget `overflow:"hidden"` —
+oprindeligt kun nødvendigt for at klippe kameraets afrundede hjørner når
+`cameraActive` er sand. I hero-tilstanden (kamera IKKE aktivt) klippede
+den samme `overflow:hidden` usynligt collage-billedernes kant-bløder-
+positionering (negative top/left/right/bottom-offsets), fordi mit
+tidligere isolerede mimic-HTML ikke efterlignede denne specifikke
+wrappers struktur/overflow-opførsel. Rettet til
+`overflow: cameraActive ? "hidden" : "visible"`. Lektion til fremtidigt
+visuelt arbejde: en mimic skal enten efterligne ALLE relevante
+container-wrappers (inkl. deres `overflow`-værdi), eller det specifikke
+sted skal tjekkes direkte i den rigtige DOM-kontekst, ikke kun isoleret.
+
+**Collage-densitet:** de 5 eksisterende WebP-billeder (`leaf-mint`,
+`blueberry-single`, `blueberries-pair`, `strawberry`, `leaf-basil`) bruges
+nu i ni positioner (nogle billeder optræder to gange) med varieret
+størrelse/rotation via et data-drevet array i stedet for fem hårdkodede
+enkelt-`<img>`-tags — spreder collagen over hele hero-blokkens højde
+(top-hjørner, midt på begge sider, bund-venstre) i stedet for kun de
+fire hjørner. Jordbær-billedet (kun et delvist udsnit i selve kilde-
+fotoet, bekræftet ved en bredere re-beskæring af referencebilledet) er
+bevidst kun placeret som ægte kant-bløder (bund-venstre, bleeder af
+skærmen), aldrig midt i kompositionen.
+
+**Basilikum-bladets kant-artefakt, fundet og rettet:** den oprindelige
+`leaf-basil.webp` (fra forrige runde) viste et synligt lyst rektangulært
+hjørne-mærke mod en almindelig baggrund — en for tæt beskæring uden nok
+baggrundsmargin til at farve-afstand-nøglingen havde noget at arbejde
+med (samme kendte begrænsning som nævnt i forrige rundes note ovenfor,
+men denne gang faktisk observeret i praksis, ikke kun undgået). Løst i to
+trin: (1) genskar bladet fra kilde-referencebilledet
+(`images/1.webp`, region ca. x:640-851, y:1190-1430) med mere margin på
+top/venstre — fjernede rektangel-artefaktet der, men et NYT hårdt
+skære-mærke dukkede op i bund/højre, fordi kildefotoets baggrund der er
+opslugt af hhv. scan-knappens glød (ovenfor) og den gamle "Prøv en
+demo"-pille (nedenfor) i det oprindelige referencebillede — reelt ikke
+nok ren baggrund tilgængelig på den side, uanset beskæringsstørrelse.
+(2) Løst med en tvungen kant-udtoning: alpha-kanalen ganges med en
+lineær fade-maske der går mod 0 over de sidste ~28px på bund- og højre-
+kant, ovenpå den eksisterende farve-afstand-alpha — garanterer en blød
+kant der hvor kildefotoet ikke gav nok baggrund at nøgle mod, uden at
+det går ud over resten af bladets silhuet. Denne ene instans af bladet
+bruges to steder i collagen: naturligt (højre-kant-bløder, uændret
+retning) og spejlvendt via CSS `scaleX(-1)` (venstre-kant-bløder) — så
+det naturlige "afskårne" hjørne fra kildebeskæringen altid vender ud af
+skærmen i begge placeringer, uanset hvilken side det bløder af på.
+
+**Visuel verifikation:** samme mimic-HTML + `playwright-core`-metode som
+tidligere, denne gang 3 iterationer: (1) første version med den tætte
+collage — afslørede basilikum-kant-artefaktet ved nærmere crop-
+inspektion af screenshottet; (2) efter første genbeskæring — afslørede
+det NYE bund/højre-kant-mærke; (3) efter den tvungne kant-udtoning —
+ingen synlige hårde kanter tilbage nogen steder i collagen, bekræftet
+ved targeted crops af alle klynge-områder (top-højre, venstre-midt,
+højre-midt, bund-venstre).
+
+**Verifikation:** `npm run build` grøn, `npm run lint` ren, `npx vitest
+run` 98/98 grønne, mojibake-scan ren på `src/ScannerScreen.jsx`.
