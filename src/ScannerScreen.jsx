@@ -339,9 +339,14 @@ export default function ScannerScreen({
               {!cameraActive && (
               <div className="home-hero-frame">
                 <div style={{ position:"absolute", top:"27%", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
-                  <div style={{ fontSize:"clamp(13px, 2.7cqh, 18px)", fontWeight:500, color:"var(--ink)", letterSpacing:"-.2px" }}>{getGreeting()},</div>
-                  <div style={{ fontSize:"clamp(20px, 4.4cqh, 30px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(2px, .4cqh, 4px)" }}>{user.name?.split(" ")[0] || "der"}</div>
-                  <div style={{ fontSize:"clamp(11px, 2cqh, 14.5px)", color:"var(--muted)", marginTop:"clamp(5px, 1.1cqh, 9px)", lineHeight:1.5, maxWidth:250, marginLeft:"auto", marginRight:"auto" }}>
+                  {/* Slørlaget bag baggrundsbilledet (.app-bg, theme.jsx) blev
+                      dæmpet fra .8 til .5 opacitet 24. sept. 2026 (for kraftigt
+                      slør vaskede billedets farve/elegance ud) — læsbarheden her
+                      bæres i stedet af tykkere/større tekst + en blød hvid
+                      text-shadow-glød der "løfter" teksten af baggrunden. */}
+                  <div style={{ fontSize:"clamp(14px, 2.9cqh, 19px)", fontWeight:600, color:"var(--ink)", letterSpacing:"-.2px", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{getGreeting()},</div>
+                  <div style={{ fontSize:"clamp(22px, 4.7cqh, 32px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(2px, .4cqh, 4px)", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{user.name?.split(" ")[0] || "der"}</div>
+                  <div style={{ fontSize:"clamp(11.5px, 2.1cqh, 15px)", fontWeight:600, color:"var(--ink2)", marginTop:"clamp(5px, 1.1cqh, 9px)", lineHeight:1.5, maxWidth:250, marginLeft:"auto", marginRight:"auto", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 12px rgba(255,255,255,.6)" }}>
                     Scan en vare og få hurtigt svar om den passer til dine allergier.
                   </div>
                 </div>
