@@ -196,6 +196,10 @@ export default function AdminApp() {
           adminUsers={admin.adminUsers} adminUsersLoading={admin.adminUsersLoading}
           userSearch={admin.userSearch} setUserSearch={admin.setUserSearch}
           currentUserId={userId} updateUserRole={admin.updateUserRole} deleteUser={admin.deleteUser}
+          openAdminUser={admin.openAdminUser} setOpenAdminUser={admin.setOpenAdminUser}
+          editingAdminUser={admin.editingAdminUser} setEditingAdminUser={admin.setEditingAdminUser}
+          adminUserActionLoading={admin.adminUserActionLoading}
+          openAdminUserForEdit={admin.openAdminUserForEdit} saveAdminUserEdit={admin.saveAdminUserEdit}
         />
       )}
       {section === "submissions" && (
