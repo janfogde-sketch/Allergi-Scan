@@ -1,24 +1,61 @@
 // @ts-nocheck
 import React from "react";
+import { showToast } from "../../SharedComponents.jsx";
 
 const TYPE_LABELS = { bug: "Fejl", ui: "Design", missing: "Mangler", content: "Indhold", crash: "Crash", suggestion: "Forslag" };
 const STATUS_LABELS = { open: "Åben", in_progress: "I gang", resolved: "Løst" };
 const STATUS_PILL = { open: "admin-pill-red", in_progress: "admin-pill-amber", resolved: "admin-pill-green" };
 
+// Bygger en færdig, indsætbar prompt til Claude Code pr. ticket — så admin
+// kan tage indholdet af en downloadet/kopieret ticket og smide det direkte
+// ind i en session uden selv at skulle formulere opgaven. Inkluderer al
+// kontekst appen faktisk logger (FeedbackModal.jsx/FeedbackButton.jsx),
+// så Claude ikke skal gætte sig til skærm/bruger/enhed.
+function buildTicketPrompt(t) {
+  const ctx = t.context || {};
+  const dato = new Date(t.created_at).toLocaleString("da-DK", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const lines = [
+    `Undersøg og analysér følgende bruger-rapporterede ${(TYPE_LABELS[t.type] || t.type).toLowerCase()} i EatSafe-kodebasen (Allergi-Scan).`,
+    ``,
+    `## Rapport`,
+    `Type: ${TYPE_LABELS[t.type] || t.type}`,
+    `Beskrivelse: ${t.description || "(ingen beskrivelse angivet)"}`,
+    `Indsendt: ${dato}`,
+    `Bruger: ${ctx.user_name || "Anonym"} (${ctx.user_email || "—"}), rolle: ${ctx.user_role || "—"}`,
+    ``,
+    `## Kontekst fra appen på indsendelsestidspunktet`,
+    `Skærm/sektion: ${ctx.screen_label || ctx.admin_section || ctx.screen || "—"}${ctx.page_id ? ` (${ctx.page_id})` : ""}`,
+    `Kilde: ${ctx.source === "desktop-admin" ? "Desktop admin-panel" : "Mobil-app (PWA)"}`,
+    `URL: ${ctx.url || "—"}`,
+    `Enhed/browser: ${ctx.platform || "—"} · ${ctx.user_agent || "—"}`,
+    `Viewport: ${ctx.viewport || "—"} (skærm: ${ctx.screen_size || "—"})`,
+    `Online: ${ctx.online === false ? "Nej" : "Ja"}`,
+    ...(ctx.build_time || ctx.commit_sha ? [`Build: ${ctx.build_time || "—"} (${ctx.commit_sha || "—"})`] : []),
+    ...(ctx.scan_result_ean ? [`Relateret produkt: ${ctx.scan_result_name || "—"} [EAN ${ctx.scan_result_ean}]`] : []),
+    ...(ctx.allergens?.length ? [`Brugerens allergener: ${ctx.allergens.join(", ")}`] : []),
+    ...(ctx.debug_trace?.length ? [``, `## Seneste debug-trace (${ctx.debug_trace.length} entries)`, JSON.stringify(ctx.debug_trace.slice(-15), null, 2)] : []),
+    t.image_base64 ? `\n(Der er vedhæftet et skærmbillede til denne ticket i EatSafe-admin — se ticket-id ${t.id} i Supabase feedback_tickets-tabellen hvis det er relevant for fejlsøgningen.)` : ``,
+    ``,
+    `## Opgave`,
+    `1. Undersøg selv koden i repoet for at finde den sandsynlige rodårsag — gæt ikke, grep/læs de relevante filer først.`,
+    `2. Forklar kort hvad der sker, og hvorfor (den reelle mekanisme, ikke bare symptomet).`,
+    `3. Foreslå en konkret løsning.`,
+    `4. Beskriv hvad løsningen vil betyde — omfang, risiko, og om den bør shippes isoleret eller kan batches.`,
+    `Vent på min bekræftelse før du retter, medmindre det er en klart isoleret, lav-risiko rettelse.`,
+  ];
+  return lines.join("\n");
+}
+
+function copyTicketPrompt(t) {
+  navigator.clipboard?.writeText(buildTicketPrompt(t))
+    .then(() => showToast("Prompt kopieret"))
+    .catch((e) => showToast("Kunne ikke kopiere: " + e.message, "error"));
+}
+
 function exportOpenTickets(tickets) {
   const filtered = tickets.filter(t => t.status === "open");
-  const lines = filtered.map((t, i) => {
-    const dato = new Date(t.created_at).toLocaleString("da-DK", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-    return [
-      `── Ticket ${i + 1} ──`,
-      `Type:    ${TYPE_LABELS[t.type] || t.type}`,
-      `Bruger:  ${t.context?.user_name || "Anonym"} (${t.context?.user_email || "—"})`,
-      `Skærm:   ${t.context?.screen_label || t.context?.screen || "—"}`,
-      `Dato:    ${dato}`,
-      ``, t.description || "(ingen beskrivelse)", ``,
-    ].join("\n");
-  });
-  const text = `EatSafe Tickets — Åbne (${filtered.length} stk)\nEksporteret: ${new Date().toLocaleString("da-DK")}\n\n` + lines.join("\n");
+  const sections = filtered.map((t, i) => `═══ Ticket ${i + 1} af ${filtered.length} (id: ${t.id}) ═══\n\n${buildTicketPrompt(t)}`);
+  const text = `EatSafe Tickets — Åbne (${filtered.length} stk)\nEksporteret: ${new Date().toLocaleString("da-DK")}\n\nHver ticket nedenfor er en færdig, indsætbar prompt — kopiér én sektion ad gangen ind i en Claude Code-session.\n\n` + sections.join("\n\n\n");
   const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -40,7 +77,7 @@ export default function TicketsSection({ adminTickets, ticketsLoading, adminTick
             </button>
           ))}
         </div>
-        {openCount > 0 && <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => exportOpenTickets(adminTickets)}>Download åbne ({openCount})</button>}
+        {openCount > 0 && <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => exportOpenTickets(adminTickets)}>Download åbne + prompts ({openCount})</button>}
       </div>
 
       <div className="admin-table-wrap">
@@ -50,7 +87,7 @@ export default function TicketsSection({ adminTickets, ticketsLoading, adminTick
           <div className="admin-table-empty">Ingen tickets her</div>
         ) : (
           <table className="admin-table">
-            <thead><tr><th>Type</th><th>Beskrivelse</th><th>Bruger</th><th>Skærm</th><th>Dato</th><th>Status</th></tr></thead>
+            <thead><tr><th>Type</th><th>Beskrivelse</th><th>Bruger</th><th>Skærm</th><th>Dato</th><th>Status</th><th></th></tr></thead>
             <tbody>
               {filtered.map(t => (
                 <tr key={t.id} style={{ cursor: "pointer" }} onClick={() => setOpenTicket(t)}>
@@ -65,6 +102,9 @@ export default function TicketsSection({ adminTickets, ticketsLoading, adminTick
                       style={{ fontFamily: "var(--f)", border: "none", cursor: "pointer" }}>
                       {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                     </select>
+                  </td>
+                  <td onClick={e => e.stopPropagation()}>
+                    <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => copyTicketPrompt(t)}>Kopiér prompt</button>
                   </td>
                 </tr>
               ))}
@@ -94,6 +134,10 @@ export default function TicketsSection({ adminTickets, ticketsLoading, adminTick
                 <button key={s} className={`admin-btn admin-btn-sm ${openTicket.status === s ? "admin-btn-primary" : "admin-btn-ghost"}`}
                   onClick={() => updateTicketStatus(openTicket.id, s)}>{STATUS_LABELS[s]}</button>
               ))}
+              <button className="admin-btn admin-btn-ghost admin-btn-sm" style={{ marginLeft: "auto" }}
+                onClick={() => copyTicketPrompt(openTicket)}>
+                Kopiér prompt
+              </button>
             </div>
           </div>
         </div>
