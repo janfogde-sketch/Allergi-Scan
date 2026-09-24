@@ -5,8 +5,17 @@ import { ALLERGENS } from "../../constants.jsx";
 const FILTERS = [["pending", "Afventer"], ["approved", "Godkendte"], ["rejected", "Afviste"]];
 const CATEGORIES = ["aftensmad", "morgenmad", "frokost", "dessert", "tilbehør", "snack"];
 
+// Kaldes ved hver render af hver opskrift-række — bevidst console.warn og
+// ikke en toast her (ville spamme en toast pr. render for en tabel med
+// mange rækker). Faldet tilbage til {} betyder "ingen allergener markeret",
+// ikke "ingen allergener" — hvis dette rammes for en rigtig opskrift, er
+// det et datafejl-signal der bør undersøges i konsollen, ikke stiltiende
+// accepteres.
 function parseFlags(v) {
-  try { return typeof v === "string" ? JSON.parse(v) : (v || {}); } catch { return {}; }
+  try { return typeof v === "string" ? JSON.parse(v) : (v || {}); } catch (e) {
+    console.warn("RecipesSection: kunne ikke parse allergen_flags", v, e);
+    return {};
+  }
 }
 
 export default function RecipesSection({

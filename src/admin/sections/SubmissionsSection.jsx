@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { ALLERGENS, SUPABASE_URL } from "../../constants.jsx";
 import { apiCall, makeHeaders } from "../../helpers.js";
+import { showToast } from "../../SharedComponents.jsx";
 
 const FILTERS = [
   { val: "pending", label: "Afventer" },
@@ -29,7 +30,11 @@ export default function SubmissionsSection({
           allergen_flags: product?.allergen_flags || {},
           ingredients_text: s.ai_parsed_data?.edit_type === "ingredients" ? (s.ocr_raw_text || "") : "",
         });
-      } catch {
+      } catch (e) {
+        // Uden en synlig fejl her ville admin se tomme navn/brand/allergen-felter
+        // uden at vide at det er fordi opslaget på det EKSISTERENDE produkt
+        // fejlede — en godkendelse ovenpå det ville blanke rigtige allergendata.
+        showToast("Kunne ikke hente produktets nuværende data: " + e.message + " — udfyld felterne manuelt før du godkender", "error");
         setEditingSubmission({ name: "", brand: "", allergen_flags: {} });
       }
     } else {

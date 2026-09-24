@@ -10,6 +10,7 @@
 import React, { useState } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../constants.jsx";
 import { compressImageToBase64 } from "../helpers.js";
+import { showToast } from "../SharedComponents.jsx";
 
 const TYPES = [
   { id: "bug", label: "Fejl / bug" },
@@ -69,7 +70,7 @@ export default function FeedbackButton({ accessToken, userId, userEmail, section
       setDone(true);
       setTimeout(close, 1800);
     } catch (e) {
-      alert("Fejl: " + e.message);
+      showToast("Kunne ikke sende feedback: " + e.message, "error");
     }
     setSending(false);
   };
@@ -128,7 +129,10 @@ export default function FeedbackButton({ accessToken, userId, userEmail, section
                         const f = e.target.files?.[0]; if (!f) return;
                         if (image) URL.revokeObjectURL(image);
                         setImage(URL.createObjectURL(f));
-                        try { setImageB64(await compressImageToBase64(f)); } catch { setImage(null); setImageB64(null); }
+                        try { setImageB64(await compressImageToBase64(f)); } catch (err) {
+                          setImage(null); setImageB64(null);
+                          showToast("Kunne ikke læse billedet — prøv et andet, eller send feedback uden skærmbillede.", "error");
+                        }
                       }} />
                     </label>
                   )}

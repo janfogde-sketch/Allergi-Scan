@@ -19,6 +19,7 @@ export function useAdminAuth() {
   const [checkingRole, setCheckingRole] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [roleCheckError, setRoleCheckError] = useState("");
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -49,17 +50,28 @@ export function useAdminAuth() {
     if (!accessToken || !userId) { setCheckingRole(false); setIsAdmin(false); return; }
     let cancelled = false;
     setCheckingRole(true);
+    setRoleCheckError("");
     fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=role,email`, {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
     })
-      .then(r => r.ok ? r.json() : [])
+      .then(async r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then(rows => {
         if (cancelled) return;
         const row = Array.isArray(rows) ? rows[0] : null;
         setIsAdmin(row?.role === "admin");
         setUserEmail(row?.email || "");
       })
-      .catch(() => { if (!cancelled) setIsAdmin(false); })
+      .catch((e) => {
+        // Adskil "kunne ikke tjekke" fra "bekræftet ikke-admin" — ellers ville
+        // en netværksfejl eller udløbet token vise "ingen admin-adgang" til en
+        // reel admin, uden nogen antydning af hvorfor.
+        if (cancelled) return;
+        setIsAdmin(false);
+        setRoleCheckError(e.message || "Ukendt fejl");
+      })
       .finally(() => { if (!cancelled) setCheckingRole(false); });
     return () => { cancelled = true; };
   }, [accessToken, userId]);
@@ -88,7 +100,7 @@ export function useAdminAuth() {
 
   return {
     accessToken, refreshToken, userId, userEmail,
-    checkingRole, isAdmin,
+    checkingRole, isAdmin, roleCheckError,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
     authError, authLoading, handleLogin, logout,
   };

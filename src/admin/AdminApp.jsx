@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { SUPABASE_URL } from "../constants.jsx";
 import { apiCall, makeHeaders } from "../helpers.js";
+import { showToast, ToastHost } from "../SharedComponents.jsx";
 import { useAdmin } from "../useAdmin.js";
 import { useAdminAuth } from "./useAdminAuth.js";
 import AdminLayout from "./AdminLayout.jsx";
@@ -15,7 +16,7 @@ import RecipesSection from "./sections/RecipesSection.jsx";
 
 export default function AdminApp() {
   const auth = useAdminAuth();
-  const { accessToken, userId, checkingRole, isAdmin, userEmail,
+  const { accessToken, userId, checkingRole, isAdmin, roleCheckError, userEmail,
           loginEmail, setLoginEmail, loginPassword, setLoginPassword,
           authError, authLoading, handleLogin, logout } = auth;
 
@@ -33,7 +34,9 @@ export default function AdminApp() {
         { headers: makeHeaders(accessToken) }
       );
       if (Array.isArray(data)) setMissingEans(data);
-    } catch {}
+    } catch (e) {
+      showToast("Kunne ikke hente manglende EAN'er: " + e.message, "error");
+    }
     setMissingEansLoading(false);
   };
   const deleteMissingEan = async (ean) => {
@@ -43,7 +46,9 @@ export default function AdminApp() {
         { method: "DELETE", headers: makeHeaders(accessToken) }
       );
       setMissingEans(prev => prev.filter(r => r.ean !== ean));
-    } catch {}
+    } catch (e) {
+      showToast("Kunne ikke slette EAN: " + e.message, "error");
+    }
   };
 
   // ── OFF-import (porteret fra App.jsx — samme logik) ───────────────────────
@@ -59,6 +64,7 @@ export default function AdminApp() {
       setImportLog(data);
     } catch (e) {
       setImportLog({ ok: false, error: e.message, stats: { imported: 0, not_on_off: 0, error: 1 }, log: [] });
+      showToast("Import fejlede: " + e.message, "error");
     }
     setImportLoading(false);
   };
@@ -77,7 +83,9 @@ export default function AdminApp() {
         { headers: makeHeaders(accessToken) }
       );
       setAdminRecipes(Array.isArray(data) ? data : []);
-    } catch {}
+    } catch (e) {
+      showToast("Kunne ikke hente opskrifter: " + e.message, "error");
+    }
     setAdminRecipesLoading(false);
   };
   const updateRecipeStatus = async (id, status) => {
@@ -89,7 +97,9 @@ export default function AdminApp() {
       });
       setAdminRecipes(prev => prev.filter(r => r.id !== id));
       setEditingRecipe(null);
-    } catch {}
+    } catch (e) {
+      showToast("Kunne ikke opdatere opskrift-status: " + e.message, "error");
+    }
     setRecipeActionLoading(false);
   };
   const saveRecipeEdit = async () => {
@@ -101,7 +111,10 @@ export default function AdminApp() {
         method: "PATCH", headers: { ...makeHeaders(accessToken), Prefer: "return=minimal" },
         body: JSON.stringify(fields),
       });
-    } catch {}
+      showToast("Gemt");
+    } catch (e) {
+      showToast("Kunne ikke gemme ændringer: " + e.message, "error");
+    }
     setRecipeActionLoading(false);
   };
 
@@ -120,6 +133,7 @@ export default function AdminApp() {
   if (!accessToken) {
     return (
       <div className="admin-login-wrap">
+        <ToastHost />
         <form className="admin-login-card" onSubmit={handleLogin}>
           <div className="admin-login-logo">Eat<span>Safe</span> Admin</div>
           <div className="admin-login-sub">Log ind med din admin-konto</div>
@@ -147,9 +161,14 @@ export default function AdminApp() {
   if (!isAdmin) {
     return (
       <div className="admin-login-wrap">
+        <ToastHost />
         <div className="admin-login-card">
           <div className="admin-login-logo">Eat<span>Safe</span> Admin</div>
-          <div className="admin-error">Din konto har ikke admin-adgang.</div>
+          <div className="admin-error">
+            {roleCheckError
+              ? `Kunne ikke bekræfte admin-adgang: ${roleCheckError}. Prøv at logge ind igen.`
+              : "Din konto har ikke admin-adgang."}
+          </div>
           <button className="admin-btn admin-btn-ghost admin-btn-full" onClick={logout}>Log ud</button>
         </div>
       </div>
@@ -157,6 +176,8 @@ export default function AdminApp() {
   }
 
   return (
+    <>
+    <ToastHost />
     <AdminLayout
       section={section} setSection={setSection}
       userEmail={userEmail} userId={userId} accessToken={accessToken} logout={logout}
@@ -215,5 +236,6 @@ export default function AdminApp() {
         />
       )}
     </AdminLayout>
+    </>
   );
 }
