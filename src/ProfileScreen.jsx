@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { ALLERGENS, SCREENS, DIETS, E_NUMBERS, E_CATEGORIES, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall } from "./helpers.js";
-import { EatSafeLogo, Icon, ProductImage, showToast } from "./SharedComponents.jsx";
+import { EatSafeLogo, Icon, ProductImage, ProfileBadges, showToast } from "./SharedComponents.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
 import { usePush } from "./usePush.js";
