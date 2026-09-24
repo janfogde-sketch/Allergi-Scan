@@ -107,6 +107,33 @@ describe("runLookupProduct — network not-found path", () => {
   }, 10000);
 });
 
+describe("runLookupProduct — network found path", () => {
+  // Regressionstest for et fund 24. sept. 2026 (bruger-rapport): scan:result-
+  // og saveHistoryEntry-kaldene refererede status/matchedDanger/matchedWarning/
+  // flags som løse variabler der kun eksisterer INDE i
+  // buildScanResultFromProductData, ikke i runLookupProduct selv — kastede en
+  // ReferenceError på ALLE ikke-cachede, fundne scanninger (kun "status"
+  // undslap stille via window.status), så resultatet aldrig blev vist —
+  // kun et cache-hit ved et efterfølgende gen-scan af samme EAN reddede det.
+  // Denne sti havde ingen coverage overhovedet før dette fund.
+  it("shows the result screen for a freshly fetched (non-cached) product", async () => {
+    global.fetch.mockResolvedValue(jsonResponse({
+      found: true,
+      product: { id: "p1", name: "Chips", brand: "Kims", allergen_flags: { laktose: "yes" }, ingredients_text: "mælk, salt" },
+    }));
+    const ctx = makeCtx({ activeIds: ["laktose"] });
+
+    await runLookupProduct("123456", ctx);
+
+    expect(ctx.setScreen).toHaveBeenCalledWith(SCREENS.RESULT);
+    expect(ctx.setScanError).not.toHaveBeenCalledWith(expect.stringContaining("Der opstod en fejl"));
+    const result = ctx.setScanResult.mock.calls.at(-1)[0];
+    expect(result.status).toBe("danger");
+    expect(result.matchedDanger).toContain("laktose");
+    expect(ctx.saveHistoryEntry).toHaveBeenCalledWith("123456", "p1", "danger", { laktose: "yes" }, ["me"]);
+  }, 10000);
+});
+
 describe("buildDemoScanResult — 'Prøv en demo-scanning' (Fase 7b.2)", () => {
   // Demo-produktet indeholder laktose+nødder (yes) og soja (traces) — bruges
   // til at bekræfte at demoen kører gennem den RIGTIGE beregningslogik

@@ -242,11 +242,11 @@ export async function runLookupProduct(ean, ctx) {
     saveToOfflineCache(ean.trim(), result);
     const cacheKeys = Object.keys(productCacheRef.current);
     if (cacheKeys.length > 50) delete productCacheRef.current[cacheKeys[0]];
-    traceLog(tid, "scan:result", { ean: ean.trim(), name: result.name, status, matchedDanger, matchedWarning });
+    traceLog(tid, "scan:result", { ean: ean.trim(), name: result.name, status: result.status, matchedDanger: result.matchedDanger, matchedWarning: result.matchedWarning });
     const finalResult = withCustomAllergenMatch(result, activeCustom);
     setScanResult(finalResult);
     setHistory(h => [finalResult, ...h].slice(0, 50));
-    await saveHistoryEntry(ean.trim(), product.id, finalResult.status, flags, activeProfiles);
+    await saveHistoryEntry(ean.trim(), product.id, finalResult.status, result.allergen_flags, activeProfiles);
     // Hent alternativer hvis produktet er farligt eller har spor
     if (finalResult.status === "danger" || finalResult.status === "warn") {
       loadAlternatives(finalResult.category, ean.trim());
