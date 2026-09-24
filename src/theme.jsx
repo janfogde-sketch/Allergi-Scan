@@ -168,6 +168,34 @@ body{
 
 /* ── LAYOUT ── */
 .screen{flex:1;padding:0 16px 110px;}
+/* Scan-forsidens hero-boks (idle-tilstand, kamera ikke aktivt) — skal ALTID
+   passe præcis mellem topbar og bundnav, uden scroll, på enhver telefon.
+   Bevidst calc(100vh/100dvh - Npx) i stedet for en flex:1/height:100%-kæde:
+   den slags afhænger af at HELE forældrekæden (body/.app/.screen) har en
+   DEFINITIV højde, men de har kun min-height:100vh (en flad "mindst så høj"-
+   grænse, ikke en fast højde) — hvilket viste sig upålideligt i praksis
+   (fungerede i en isoleret test med en kunstig fast-højde-wrapper, men
+   fejlede reelt i produktion, se HISTORY.md for den fulde fejlfinding).
+   calc(vh) er derimod ALTID definitivt uanset forældrenes egen højde-model.
+   143px = topbar (54px) + bundnav (77px) + lille margin (12px); bundnavs
+   egen env(safe-area-inset-bottom) lægges oveni separat, så notch-/
+   dynamic-island-telefoner får den ekstra plads de faktisk bruger. */
+.home-hero-frame{
+  position:relative;
+  height:calc(100vh - 143px - env(safe-area-inset-bottom));
+  height:calc(100dvh - 143px - env(safe-area-inset-bottom));
+  max-height:820px;
+  /* container-type:size gør 1cqh = 1% af DENNE boks' egen (variable) højde
+     tilgængelig for alt indhold herinde — hilsen/knap/pille/fod bruger
+     clamp(min, Ncqh, max) i stedet for faste px, så de skalerer NED sammen
+     med boksen på korte telefoner (fx iPhone SE, hvor boksen bliver langt
+     kortere end på en Pro Max) i stedet for at flyde ind over hinanden.
+     Fundet nødvendigt efter test med rigtige enheds-profiler (Playwright
+     devices['iPhone SE']/['iPhone 13']) viste tydeligt overlap mellem
+     "Prøv en demo"-pillen og fod-linjen selv på en helt almindelig iPhone
+     13 — faste px-størrelser skalerede slet ikke med boksens egen højde. */
+  container-type:size;
+}
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
   width:100%;max-width:480px;

@@ -1626,3 +1626,176 @@ kommentar inde i `theme.jsx`s `appCss`-template-literal brød strengen
 utilsigtet, rettet ved at fjerne backticken fra kommentarteksten), `npm
 run lint` ren, `npx vitest run` 98/98 grønne, mojibake-scan ren på begge
 ændrede filer (`theme.jsx`, `ScannerScreen.jsx`).
+
+---
+
+## 24. sept. 2026 — hotfix: flex-fill-hero'en fejlede reelt i produktion (den rigtige historie)
+
+**Bug-rapporten:** Brugeren delte et skærmbillede (`images/4.png`) af
+eatsafe.dk åbnet i en almindelig, bred desktop Chrome-browser — synlig
+browser-scrollbar, "Scan produkt"-knappen tydeligt afskåret nederst i
+viewporten. Besked (ordret): "Det er helt forkert. der er ikke flere
+elementer på forsiden, end at det skal kunne være på siden uden man skal
+kunne scrolle. Sørg for at vores nye baggrundsbillede passer til skærmen.
+Brug billedet som baggrund på alle sider." Umiddelbart efter, som et
+afbrydende opfølgningsbesked mens undersøgelsen var i gang: "vigtigst er
+det passer til telefoner." — en eksplicit prioritetsafklaring: telefon-
+korrekthed vejer tungere end desktop-browser-korrekthed, selvom det var
+desktop-skærmbilledet der afslørede fejlen.
+
+Dette stod i skarp kontrast til opfølgningen umiddelbart ovenfor i denne
+fil, hvor præcis samme flex-fill-tilgang lige var blevet "verificeret" med
+nul overflow ved tre skærmhøjder. Bug'en var reel i produktion, ikke en
+fejlrapport ved en misforståelse — hvilket betød at selve testmetoden fra
+sidst havde et hul.
+
+**Rodårsagsanalyse — hvorfor den forrige verifikation gav et falsk positivt
+resultat:** Den forrige tilgang (`scanbox{flex:1, minHeight:0}` + hero-
+elementet `height:"100%"`) afhænger af at HELE forældre-kæden (`body`,
+`.app`, `.screen`) har en DEFINITIV højde for at procent-/flex-beregning
+kan opløses pålideligt. Men `body{min-height:100vh}` og
+`.app{min-height:100vh}` er kun MINIMUMSVÆRDIER, ikke definitive højder —
+en fundamental CSS-mekanik-detalje der blev overset. Den forrige tests
+Playwright-mimic brugte en kunstig `.device{height:844px}`-wrapper uden om
+det hele, som IKKE matcher produktionens rigtige CSS (som ikke har nogen
+sådan fast-højde-forælder) — denne diskrepans mellem testens scaffold og
+den rigtige apps CSS var testmetodens hul, og lod en reel bug nå
+produktion uopdaget.
+
+**Fix — forladt flex-fill/procent-højde helt:** Tilføjet en ny CSS-klasse
+`.home-hero-frame` i `theme.jsx`s `appCss`-streng:
+```
+.home-hero-frame{
+  position:relative;
+  height:calc(100vh - 143px - env(safe-area-inset-bottom));
+  height:calc(100dvh - 143px - env(safe-area-inset-bottom));
+  max-height:820px;
+  container-type:size;
+}
+```
+`calc(100vh/100dvh - Npx)` er ALTID definitiv, uanset forældre-kædens
+egen definitiv/indefinitiv-status — det gør den robust på en måde
+flex-fill/procent-kæden aldrig kunne være. 143px-budgettet er
+topbar (54px) + bundnav (77px) + 12px buffer. `dvh`-varianten (efter
+`vh`-varianten, så den vinder i browsere der understøtter den) håndterer
+mobile browseres dynamiske adressebjælke-højde bedre end statisk `vh`.
+`ScannerScreen.jsx`s hero-wrapper skiftede fra `<div style={{
+position:"relative", height:"100%" }}>` til `<div
+className="home-hero-frame">`, og `scanbox`-wrapperens `flex:1,
+minHeight:0` blev fjernet igen (ikke længere nødvendig).
+
+**Genverifikation — denne gang med rigtige enhedsprofiler, ikke antagne
+mål:** Byggede en ny mimic (`real_min_height.html`) der BEVIDST UDELADER
+`html,body{height:100%}`, for præcist at matche produktionens
+`min-height:100vh`-eneste opsætning. Testede med Playwright-core's
+RIGTIGE `devices`-register (`devices['iPhone SE']`, `devices['iPhone
+13']`, `devices['iPhone 14 Pro Max']`, `devices['Pixel 5']`) via
+`browser.newContext({...device})` — ikke selvvalgte viewport-tal som
+tidligere. Dette afslørede en fejlagtig antagelse fra den forrige runde:
+en "iPhone SE" var tidligere antaget til at være omkring 390×667, men
+Playwrights rigtige profil for iPhone SE er 320×568 — markant mindre.
+Med den nye `.home-hero-frame`-tilgang: nul overflow bekræftet
+programmatisk (`document.documentElement.scrollHeight <=
+clientHeight`) ved alle fem scenarier (iPhone SE, iPhone 13, iPhone 14
+Pro Max, Pixel 5, og det oprindelige brede 1920×1000-desktop-scenarie
+der udløste bug-rapporten).
+
+**Ny bug fundet ved det rigtige, mindre iPhone SE-mål: fast-pixel-UI
+skalerer ikke ned.** Med rammens højde nu korrekt beregnet (og markant
+mindre på en ægte iPhone SE end tidligere antaget), afslørede skærmbilleder
+et tydeligt visuelt overlap mellem "Prøv en demo"-pillen og scan-knappen —
+og selv på en helt almindelig iPhone 13 (390×664 per Playwrights profil)
+overlappede "Prøv en demo"-pillens tekst synligt med "v1.0.6 · beta"-
+footeren. Fast-pixel-størrelser (150px-knap, 11px-skrifter osv.) skalerer
+ikke ned bare fordi deres forældre-ramme bliver kortere.
+
+**Fix — CSS Container Queries + clamp():** `container-type:size` på
+`.home-hero-frame` (allerede i CSS'en ovenfor) gør rammen til et query-
+container, hvilket muliggør `cqh`-enheder (procent af containerens egen
+højde) i børnene. Alle overlay-størrelser (skrifter, knap-diameter, ikon-
+størrelser, mellemrum) konverteret fra faste px til
+`clamp(min, Ncqh, max)` — fx knappens diameter
+`clamp(84px, 21.5cqh, 140px)`, hilsen-navnets skrift `clamp(15px, 3.3cqh,
+23px)`. Dette lader alt skalere proportionalt med rammens FAKTISKE højde,
+mens en nedre grænse sikrer læsbarhed og en øvre grænse forhindrer
+overdreven vækst på store skærme. Verificerede separat (i en isoleret
+`/tmp/svg_test.html`/`svg_test2.html`) at `clamp()` reelt opløses korrekt
+som en RÅ SVG-attributværdi (ikke kun i CSS `style`) — relevant fordi den
+delte `Icon`-komponent sætter `<svg width={size} height={size}>` fra en
+`size`-prop som en rå streng, ikke via en CSS-klasse. Bekræftet med
+`getBoundingClientRect()` ved to forskellige viewport-højder, som gav
+forskellige, proportionalt korrekte resultater — ikke bare et fald
+tilbage til en fast værdi.
+
+**Layout-forenkling: to uafhængigt positionerede elementer slået sammen
+til én flex-gruppe.** "Prøv en demo"-pillen (tidligere `top:"71.5%"`) og
+version/Beta-footeren (tidligere bund-forankret separat) var to
+UAFHÆNGIGT `position:absolute`-forankrede søskende — ingen af dem kendte
+til den andens faktiske renderede størrelse, så de kunne overlappe
+hinanden når rammen blev lavere. Slået sammen til ÉN
+`.demo-footer-group`-flex-kolonne (`display:flex, flexDirection:column,
+gap:clamp(4px,1cqh,8px)`) — flexboxens normale flow garanterer nu at de
+aldrig kan overlappe hinanden, uanset rammens højde. Samtidig fjernet den
+nu-redundante "App-guide"-knap, som kaldte PRÆCIS samme handler
+(`setShowGuide(true)`) som "Prøv en demo" — en bevidst forenkling for at
+frigøre lodret plads, ikke noget brugeren eksplicit bad om, men begrundet
+i reel redundans.
+
+**Den anden, sidste bug: dobbelt-fratrukket bundnav-højde.** Efter
+clamp/cqh-fixet viste et NYT screenshot-check at `.demo-footer-group`s
+indhold stadig blev klippet af (`overflow:hidden` afskar synligt de
+nederste pille-fragmenter) — selvom overlap-bug'en var løst. Årsag:
+gruppens CSS satte BÅDE `top:"71.5%"` OG
+`bottom:"calc(77px + env(safe-area-inset-bottom) + 6px)"` på samme
+`position:absolute`-element, UDEN en eksplicit `height`. Uden en
+eksplicit højde beregner browseren elementets højde som AFSTANDEN mellem
+`top` og `bottom` — på en iPhone SE-ramme på ~425px var den afstand kun
+~38px, alt for lidt til både pillen og footer-rækken, så
+`overflow:"hidden"` klippede indholdet.
+
+Denne `bottom:calc(77px+...)`-værdi var et levn fra den FORRIGE (flex-
+fill) opsætning, hvor hero-billedet strakte sig helt ned bag bundnav via
+flex-fill, og indhold derfor skulle reservere bundnav's højde eksplicit
+for at holde sig fri af den. I den NYE calc-baserede
+`.home-hero-frame`-tilgang har rammens egen højde-formel (`100dvh - 143px
+- env(...)`) ALLEREDE trukket bundnav's højde fra som en del af de 143px
+— rammens egen bundkant (100% inde i rammen) sidder derfor allerede
+præcis der hvor bundnav begynder. At reservere bundnav's højde IGEN inde
+i rammen via `bottom:calc(77px+...)` var en dobbelt-fratrækning, som
+kunstigt klemte det tilgængelige rum ned til en tynd strimmel.
+
+**Fix:** ændrede `bottom`-værdien på `.demo-footer-group` fra
+`"calc(77px + env(safe-area-inset-bottom) + 6px)"` til
+`"clamp(4px, 1cqh, 8px)"` — en lille, skalerende bundmargin i stedet for
+en genberegning af bundnav's højde. Samme fix spejlet i
+`real_min_height.html`-mimic'en. Genverificerede med `shot_devices.js`
+efter fixet: nul overflow OG ingen klipning på alle fem scenarier,
+bekræftet ved visuel inspektion af alle fem screenshots (`dev_iphone_se.
+png`, `dev_iphone_13.png`, `dev_iphone_14_pro_max.png`, `dev_pixel_5.
+png`, `dev_desktop_1920x1000.png`) — det oprindelige brede desktop-
+scenarie viser nu ingen scrollbar og en fuldt synlig, ikke-afskåret
+"Scan produkt"-knap, præcis det bug-rapporten efterspurgte.
+
+**Kendt, accepteret tradeoff (ikke skjult):** i modsætning til den
+forrige runde, hvor billedet fortsatte bag den slørede bundnav (se
+opfølgningen ovenfor), stopper billedet nu FØR bundnav — en direkte
+konsekvens af at `.home-hero-frame`s beregnede højde slutter der.
+Dette er en bevidst afvejning givet brugerens eksplicitte prioritering
+"vigtigst er det passer til telefoner" — den robuste, altid-definitive
+`calc()`-højde vejer tungere end den rene visuelle effekt af fotoet der
+strækker sig bag bundnav.
+
+**Tilbagevendende fejl denne runde (3×): bogstavelig backtick i dansk
+CSS-kommentar inde i `theme.jsx`s `appCss`-template-literal.** Hver gang
+en kommentar refererede til kode ved hjælp af markdown-stil backticks
+(fx `` `backdrop-filter:blur` ``, `` `env(safe-area-inset-bottom)` ``,
+`` `devices['iPhone SE']`/`['iPhone 13']` ``), brød den bogstavelige
+backtick JS-template-literalen og gav en Vite/rolldown-byggefejl
+("Expected a semicolon..."). Fundet hver gang via `grep -n '`'
+src/theme.jsx` og rettet ved at omskrive kommentaren uden backticks. Et
+mønster der bør huskes ved fremtidige `theme.jsx`-redigeringer: aldrig
+bogstavelige backticks i kommentartekst inde i `appCss`-strengen.
+
+**Verifikation:** `npm run build` grøn, `npm run lint` ren, `npx vitest
+run` 103/103 grønne, mojibake-scan ren på begge ændrede filer
+(`theme.jsx`, `ScannerScreen.jsx`).
