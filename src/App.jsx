@@ -46,7 +46,8 @@ import { useOnboarding } from './useOnboarding.js';
 import { useAdmin } from './useAdmin.js';
 import { useScanner } from './useScanner.js';
 import { useRecipes } from './useRecipes.js';
-import { useProduct, runLookupProduct, buildDemoScanResult } from './useProduct.js';
+import { useProduct, runLookupProduct, buildDemoScanResult, buildScanResultFromProductData } from './useProduct.js';
+import { PREVIEW_MOCK_PRODUCTS } from './previewMockData.js';
 import { useMadpas } from './useMadpas.js';
 import { useSearch } from './useSearch.js';
 import { useAlternatives } from './useAlternatives.js';
@@ -700,6 +701,30 @@ export default function EatSafe() {
     }
   }, [screen, user?.role]);
 
+  // ── Artifact-preview: "Se app uden login"-knappen (se OnboardingScreen.jsx)
+  // Kaldes KUN i --mode artifact-preview (login mod Supabase er upålideligt
+  // fra Artifact-domænet, se CLAUDE.md afsnit 4). Sætter en mock-bruger +
+  // mock-allergener, forudfylder produkt-cachen med mock-produkter (samme
+  // EAN'er som Søg og Indkøbsliste bruger, se previewMockData.js — sikrer at
+  // et klik på et søgeresultat eller en vare i indkøbslisten åbner korrekt i
+  // Produkt-view via runLookupProduct's cache-first-gren, helt uden netværk),
+  // og indlæser den samme mock-indkøbsliste som useShoppingList.js's egen
+  // artifact-preview-gren i loadShoppingList.
+  const PREVIEW_MOCK_ALLERGENS = ["gluten", "noedder"];
+  const activatePreviewMode = useCallback(() => {
+    setUserId("preview-demo-bruger");
+    setUser(u => ({ ...u, name: "Mille Nielsen", email: "preview@eatsafe.dk" }));
+    setAllergens(PREVIEW_MOCK_ALLERGENS);
+    for (const product of PREVIEW_MOCK_PRODUCTS) {
+      productCacheRef.current[product.ean] = buildScanResultFromProductData({
+        product, data: {}, ean: product.ean,
+        activeIds: PREVIEW_MOCK_ALLERGENS, activeENumbers: [], family: [], activeProfiles: [],
+      });
+    }
+    loadShoppingList();
+    setScreen(SCREENS.HOME);
+  }, [setUserId, setUser, setAllergens, productCacheRef, loadShoppingList, setScreen]);
+
   // Context-værdierne memoiseres, så et Provider ikke sender et nyt objekt
   // videre (og dermed tvinger ALLE dets consumers til at re-rendere) ved
   // hver App-render — kun når noget de faktisk indeholder ændrer sig.
@@ -830,6 +855,7 @@ export default function EatSafe() {
             StepBar={StepBar}
             buildLabel={formatBuildTime()}
             hasPendingJoinList={!!pendingJoinList}
+            onActivatePreview={activatePreviewMode}
           />
           </Suspense>
         )}

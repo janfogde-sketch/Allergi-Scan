@@ -34,11 +34,12 @@ export default function OnboardingScreen({
   saveProfileStep1, finishOnboard,
   StepBar,
   hasPendingJoinList,
+  onActivatePreview,
 }) {
   const {
     authTab, setAuthTab, authError, setAuthError, authLoading,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
-    user, setUser, isOAuth, accessToken, setUserId,
+    user, setUser, isOAuth, accessToken,
     handleLogin, handleSignup, handleOAuth,
   } = useAuthContext();
   const {
@@ -215,21 +216,13 @@ export default function OnboardingScreen({
             {/* Kun i den delte Artifact-preview-build (se CLAUDE.md), aldrig i
                 den rigtige app — login mod Supabase er upålideligt fra denne
                 kontekst (andet domæne end produktion), så en preview-only
-                genvej springer login over og går direkte til Hjem. Store
-                dele af Hjem-skærmen (hilsen, scan-knap — "pointen" med
-                preview'en) er skjult bag `!!userId` (kun til loggede ind),
-                så et rigtigt tomt userId ville stadig vise en tom side —
-                sætter derfor en mock userId + et mock navn, så UI'et reelt
-                kan ses. Udvid med mere mock-data her efterhånden som flere
-                skærme viser sig tomme uden en rigtig session. */}
+                genvej springer login over. Selve mock-opsætningen (bruger,
+                allergener, produkt-cache, indkøbsliste) sker i App.jsx's
+                activatePreviewMode — se dens kommentar for hvorfor logikken
+                bor der og ikke her. */}
             {import.meta.env.MODE === "artifact-preview" && (
               <button className="welcome-btn-ghost" style={{ marginTop:10 }}
-                onClick={() => {
-                  setUserId("preview-demo-bruger");
-                  setUser(u => ({ ...u, name: "Mille Nielsen", email: "preview@eatsafe.dk" }));
-                  setAllergens(["gluten", "noedder"]);
-                  setScreen(SCREENS.HOME);
-                }}>
+                onClick={onActivatePreview}>
                 Se app uden login (preview)
               </button>
             )}
