@@ -37,6 +37,13 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const [openProduct, setOpenProduct] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
   const [productActionLoading, setProductActionLoading] = useState(false);
+  const [knowledgeEntries, setKnowledgeEntries] = useState([]);
+  const [knowledgeLoading, setKnowledgeLoading] = useState(false);
+  const [knowledgeSearch, setKnowledgeSearch] = useState("");
+  const [knowledgeCategoryFilter, setKnowledgeCategoryFilter] = useState("all");
+  const [openKnowledgeEntry, setOpenKnowledgeEntry] = useState(null);
+  const [editingKnowledgeEntry, setEditingKnowledgeEntry] = useState(null);
+  const [knowledgeActionLoading, setKnowledgeActionLoading] = useState(false);
 
   // Functions
   // Værn mod hurtige fane-skift: uden et token-tjek kan et ældre, langsomt
@@ -259,6 +266,135 @@ export function useAdmin(accessToken, userId, clearAuth) {
       showToast("Kunne ikke slette produkt: " + e.message, "error");
     }
     setProductActionLoading(false);
+  };
+
+  // ── Leksikon (knowledge_base) — CRUD ───────────────────────────────────────
+  // RLS på knowledge_base tillader allerede insert/update/delete for admins
+  // direkte (users.role='admin'-tjek i policyen), så der er ikke brug for en
+  // separat Edge Function her — samme direkte REST-mønster som Produkter.
+  const KB_ARRAY_FIELDS = ["found_in", "alternatives", "diet_tags", "allergen_ids", "aliases", "tags", "sources"];
+
+  const kbArraysToText = (row) => {
+    const out = {};
+    for (const f of KB_ARRAY_FIELDS) out[f] = (row?.[f] || []).join(", ");
+    return out;
+  };
+  const kbTextToArrays = (form) => {
+    const out = {};
+    for (const f of KB_ARRAY_FIELDS) {
+      out[f] = (form[f] || "").split(",").map(s => s.trim()).filter(Boolean);
+    }
+    return out;
+  };
+
+  const loadKnowledgeEntries = async (query, category) => {
+    setKnowledgeLoading(true);
+    try {
+      const q = (query ?? knowledgeSearch).trim();
+      const cat = category ?? knowledgeCategoryFilter;
+      const filters = [];
+      if (q) filters.push(`or=(title.ilike.*${encodeURIComponent(q)}*,slug.ilike.*${encodeURIComponent(q)}*,summary.ilike.*${encodeURIComponent(q)}*)`);
+      if (cat && cat !== "all") filters.push(`category=eq.${cat}`);
+      const filter = filters.length ? filters.join("&") + "&" : "";
+      const data = await apiCall(
+        `${SUPABASE_URL}/rest/v1/knowledge_base?${filter}select=id,category,title,slug,emoji,summary,risk_level,updated_at&order=sort_order.asc,title.asc&limit=100`,
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+      );
+      setKnowledgeEntries(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setKnowledgeEntries([]);
+      showToast("Kunne ikke hente leksikon-entries: " + e.message, "error");
+    }
+    setKnowledgeLoading(false);
+  };
+
+  const openKnowledgeEntryForEdit = async (row) => {
+    setOpenKnowledgeEntry(row);
+    setEditingKnowledgeEntry(null);
+    try {
+      const rows = await apiCall(
+        `${SUPABASE_URL}/rest/v1/knowledge_base?id=eq.${row.id}&select=*`,
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+      );
+      const full = Array.isArray(rows) ? rows[0] : null;
+      if (!full) throw new Error("Entry ikke fundet");
+      setEditingKnowledgeEntry({
+        category: full.category, title: full.title, slug: full.slug, emoji: full.emoji || "",
+        summary: full.summary || "", description: full.description || "", health_notes: full.health_notes || "",
+        risk_level: full.risk_level || "", sort_order: full.sort_order ?? 0,
+        ...kbArraysToText(full),
+      });
+    } catch (e) {
+      showToast("Kunne ikke hente entry: " + e.message, "error");
+      setOpenKnowledgeEntry(null);
+    }
+  };
+
+  const openNewKnowledgeEntry = () => {
+    setOpenKnowledgeEntry({ id: null, isNew: true });
+    setEditingKnowledgeEntry({
+      category: "ingredient", title: "", slug: "", emoji: "", summary: "", description: "", health_notes: "",
+      risk_level: "", sort_order: 0, found_in: "", alternatives: "", diet_tags: "", allergen_ids: "", aliases: "", tags: "", sources: "",
+    });
+  };
+
+  const saveKnowledgeEntry = async () => {
+    if (!openKnowledgeEntry || !editingKnowledgeEntry) return;
+    if (!editingKnowledgeEntry.title.trim() || !editingKnowledgeEntry.slug.trim()) {
+      showToast("Titel og slug er påkrævet", "error"); return;
+    }
+    setKnowledgeActionLoading(true);
+    try {
+      const body = JSON.stringify({
+        category: editingKnowledgeEntry.category,
+        title: editingKnowledgeEntry.title.trim(),
+        slug: editingKnowledgeEntry.slug.trim(),
+        emoji: editingKnowledgeEntry.emoji || null,
+        summary: editingKnowledgeEntry.summary || null,
+        description: editingKnowledgeEntry.description || null,
+        health_notes: editingKnowledgeEntry.health_notes || null,
+        risk_level: editingKnowledgeEntry.risk_level || null,
+        sort_order: editingKnowledgeEntry.sort_order || 0,
+        ...kbTextToArrays(editingKnowledgeEntry),
+      });
+      if (openKnowledgeEntry.isNew) {
+        await apiCall(`${SUPABASE_URL}/rest/v1/knowledge_base`, {
+          method: "POST",
+          headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+          body,
+        });
+      } else {
+        await apiCall(`${SUPABASE_URL}/rest/v1/knowledge_base?id=eq.${openKnowledgeEntry.id}`, {
+          method: "PATCH",
+          headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+          body,
+        });
+      }
+      showToast(openKnowledgeEntry.isNew ? "Entry oprettet" : "Entry opdateret");
+      setOpenKnowledgeEntry(null); setEditingKnowledgeEntry(null);
+      loadKnowledgeEntries();
+    } catch (e) {
+      // Fanger bl.a. en dubleret slug (unique constraint) — vis den reelle
+      // Postgres-fejl i stedet for at lade gemningen fejle stille.
+      showToast("Kunne ikke gemme entry: " + e.message, "error");
+    }
+    setKnowledgeActionLoading(false);
+  };
+
+  const deleteKnowledgeEntry = async (id) => {
+    setKnowledgeActionLoading(true);
+    try {
+      await apiCall(`${SUPABASE_URL}/rest/v1/knowledge_base?id=eq.${id}`, {
+        method: "DELETE",
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+      });
+      setKnowledgeEntries(es => es.filter(e => e.id !== id));
+      setOpenKnowledgeEntry(null); setEditingKnowledgeEntry(null);
+      showToast("Entry slettet");
+    } catch (e) {
+      showToast("Kunne ikke slette entry: " + e.message, "error");
+    }
+    setKnowledgeActionLoading(false);
   };
 
   const updateSubmissionAndApprove = async (submission, edited) => {
@@ -512,5 +648,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
     products, productsLoading, productSearch, setProductSearch, loadProducts,
     openProduct, setOpenProduct, editingProduct, setEditingProduct,
     productActionLoading, openProductForEdit, saveProductEdit, deleteProduct,
+    knowledgeEntries, knowledgeLoading, knowledgeSearch, setKnowledgeSearch,
+    knowledgeCategoryFilter, setKnowledgeCategoryFilter, loadKnowledgeEntries,
+    openKnowledgeEntry, setOpenKnowledgeEntry, editingKnowledgeEntry, setEditingKnowledgeEntry,
+    knowledgeActionLoading, openKnowledgeEntryForEdit, openNewKnowledgeEntry,
+    saveKnowledgeEntry, deleteKnowledgeEntry,
   };
 }
