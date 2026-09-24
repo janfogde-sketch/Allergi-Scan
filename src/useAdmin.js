@@ -18,6 +18,8 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [openAdminUser, setOpenAdminUser] = useState(null);
+  const [editingAdminUser, setEditingAdminUser] = useState(null);
+  const [adminUserActionLoading, setAdminUserActionLoading] = useState(false);
   const [userSearch, setUserSearch] = useState("");
   const [userSearchParam, setUserSearchParam] = useState("all");
   const [openSubmission, setOpenSubmission] = useState(null);
@@ -161,6 +163,59 @@ export function useAdmin(accessToken, userId, clearAuth) {
       console.error("updateUserRole:", e);
       showToast("Kunne ikke ændre rolle: " + e.message, "error");
     }
+  };
+
+  const openAdminUserForEdit = async (u) => {
+    setOpenAdminUser(u);
+    setEditingAdminUser(null);
+    try {
+      const rows = await apiCall(
+        `${SUPABASE_URL}/rest/v1/users?id=eq.${u.id}&select=*`,
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+      );
+      const full = Array.isArray(rows) ? rows[0] : null;
+      if (!full) throw new Error("Bruger ikke fundet");
+      setEditingAdminUser({
+        name: full.name || "", email: full.email || "", phone: full.phone || "",
+        role: full.role || "user", birth_year: full.birth_year || "", gender: full.gender || "",
+        diets: full.diets || [], e_numbers: (full.e_numbers || []).join(", "),
+        onboarding_completed: !!full.onboarding_completed,
+      });
+    } catch (e) {
+      showToast("Kunne ikke hente brugerens fulde data: " + e.message, "error");
+      setOpenAdminUser(null);
+    }
+  };
+
+  const saveAdminUserEdit = async () => {
+    if (!openAdminUser || !editingAdminUser) return;
+    setAdminUserActionLoading(true);
+    try {
+      const eNumbers = editingAdminUser.e_numbers.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
+      await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${openAdminUser.id}`, {
+        method: "PATCH",
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+        body: JSON.stringify({
+          name: editingAdminUser.name || null,
+          email: editingAdminUser.email || null,
+          phone: editingAdminUser.phone || null,
+          role: editingAdminUser.role,
+          birth_year: editingAdminUser.birth_year ? +editingAdminUser.birth_year : null,
+          gender: editingAdminUser.gender || null,
+          diets: editingAdminUser.diets,
+          e_numbers: eNumbers,
+          onboarding_completed: editingAdminUser.onboarding_completed,
+        }),
+      });
+      setAdminUsers(us => us.map(x => x.id === openAdminUser.id ? { ...x, name: editingAdminUser.name, email: editingAdminUser.email, phone: editingAdminUser.phone, role: editingAdminUser.role, birth_year: editingAdminUser.birth_year, onboarding_completed: editingAdminUser.onboarding_completed } : x));
+      showToast("Bruger opdateret");
+      setOpenAdminUser(null); setEditingAdminUser(null);
+    } catch (e) {
+      // Fanger bl.a. hvis admin forsøger at ændre email til én der allerede
+      // er i brug (unique constraint) — vis den reelle årsag.
+      showToast("Kunne ikke gemme bruger: " + e.message, "error");
+    }
+    setAdminUserActionLoading(false);
   };
 
   const deleteUser = async (uid) => {
@@ -621,6 +676,8 @@ export function useAdmin(accessToken, userId, clearAuth) {
     deleteConfirmText, setDeleteConfirmText,
     deletingAccount,
     openAdminUser, setOpenAdminUser,
+    editingAdminUser, setEditingAdminUser, adminUserActionLoading,
+    openAdminUserForEdit, saveAdminUserEdit,
     userSearch, setUserSearch,
     userSearchParam, setUserSearchParam,
     openSubmission, setOpenSubmission,
