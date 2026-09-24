@@ -1962,3 +1962,50 @@ verificeret ved at `npm run build`/`npx vitest run` begge var grønne
 lokalt uafhængigt af Vercel-status. Brugeren valgte at merge PR #295 uden
 at vente på et grønt Vercel-preview, da produktions-deploy sker separat
 ved merge til `main`.
+
+---
+
+## Delt Artifact-preview oprettet (24. sept. 2026, samme dag)
+
+Efter Vercel-grænsen ovenfor spurgte brugeren efter "et super simpelt
+værktøj" så han og hans forretningspartner kan se appen uden at bruge af
+Vercels daglige deployment-kvote. Afklarede først om det skulle være en
+lokal dev-server hver, eller ét delt browser-link — brugeren valgte det
+delte link, efter at have fået bekræftet at det IKKE påvirker selve
+Vercel-produktionen (separat statisk kopi hostet på Anthropics egen
+infrastruktur), men at det kalder samme live Supabase-database som
+produktion, og at PWA-specifikke ting (service worker/installation) ikke
+kan testes troværdigt derfra.
+
+**Nuværende link (opdatér dette, ikke opret et nyt, ved fremtidige
+republiceringer):** https://claude.ai/artifact/TzA4goSRfzAoSVWvoM94z1
+
+Metoden er dokumenteret i CLAUDE.md's "Andre stående aftaler". Kort
+opsummeret: `vite build --base=./ --mode artifact-preview`, en telefon-
+ramme-wrapper (`index.html` med et `<iframe src="app.html">`, 393×852-boks,
+`@media (max-width:460px)` fjerner rammen på en rigtig telefon), og en
+login-bypass-knap på WELCOME-skærmen der kun findes i `artifact-preview`-
+mode (login virker upålideligt fra Artifact-domænet).
+
+Verificeret ved en lokal `python3 -m http.server`-servering af
+`dist-preview/` + Playwright-screenshots ved både desktop- (1280×900,
+telefon-ramme synlig) og mobil-viewport (390×844, fuld-bredde uden ramme)
+— samt et klik-igennem af login-bypass-knappen, der bekræftede appen
+navigerer til Hjem-skærmen uden at crashe (nogle konsol-fejl fra blokerede
+Supabase-kald i selve sandbox-test-miljøet, forventet der men ikke i en
+rigtig brugers browser).
+
+**Opfølgning samme dag: rammen skal passe uden scroll.** Brugeren bad om
+at telefon-rammen tilpasses siden, så man ikke skal scrolle for at se hele
+den. Den faste 393×852px-boks kunne blive for stor til et lille eller
+bredt-men-lavt Artifact-panel. Rettet med et lille inline-script der
+beregner en `transform:scale()`-faktor ud fra `window.innerWidth`/
+`innerHeight` (mindst af `1`, bredde-baseret og højde-baseret skalering),
+gentaget på `resize`. `html,body` fik `overflow:hidden`, og hint-teksten
+under telefonen blev `position:fixed` (ude af flex-flowet) i stedet for en
+almindelig flex-søskende, så den aldrig skubber rammen ud af syne uanset
+skalering. Verificeret programmatisk (`scrollWidth <= clientWidth` og
+`scrollHeight <= clientHeight`, ikke kun visuelt) ved fire meget
+forskellige viewport-former (bred desktop 1280×900, smalt/højt panel
+480×720, bredt/lavt vindue 900×480, kvadratisk 600×600) — ingen overflow
+i noget scenarie, telefonen centreret og læsbar i alle fire.
