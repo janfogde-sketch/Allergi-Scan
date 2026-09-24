@@ -31,6 +31,12 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const [ocrImagePreview, setOcrImagePreview] = useState(null);
   const [reparseLoading, setReparseLoading] = useState(false);
   const [reparseLog, setReparseLog] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [productSearch, setProductSearch] = useState("");
+  const [openProduct, setOpenProduct] = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [productActionLoading, setProductActionLoading] = useState(false);
 
   // Functions
   // Værn mod hurtige fane-skift: uden et token-tjek kan et ældre, langsomt
@@ -163,6 +169,96 @@ export function useAdmin(accessToken, userId, clearAuth) {
       console.error("deleteUser:", e);
       showToast("Kunne ikke slette bruger: " + e.message, "error");
     }
+  };
+
+  // ── Produkt-database (direkte søgning/redigering i products) ──────────────
+  // Uden søgeord vises de senest opdaterede produkter — 20.000+ rækker i
+  // tabellen gør det urealistisk at vise "alle", og en tom liste ville se ud
+  // som en fejl i stedet for "søg for at finde noget".
+  const loadProducts = async (query) => {
+    setProductsLoading(true);
+    try {
+      const q = (query ?? productSearch).trim();
+      const filter = q
+        ? `or=(name.ilike.*${encodeURIComponent(q)}*,brand.ilike.*${encodeURIComponent(q)}*,ean.eq.${encodeURIComponent(q)})&`
+        : "";
+      const data = await apiCall(
+        `${SUPABASE_URL}/rest/v1/products?${filter}select=id,ean,name,brand,category,source,verified_status,updated_at&order=updated_at.desc.nullslast&limit=50`,
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+      );
+      setProducts(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setProducts([]);
+      showToast("Kunne ikke hente produkter: " + e.message, "error");
+    }
+    setProductsLoading(false);
+  };
+
+  // Listen henter kun let-vægt felter (se loadProducts) — ingredients_text kan
+  // være lang, og allergen_flags er ikke nødvendig for tabel-visningen, så
+  // begge hentes først her, når admin rent faktisk åbner produktet.
+  const openProductForEdit = async (p) => {
+    setOpenProduct(p);
+    setEditingProduct(null);
+    try {
+      const rows = await apiCall(
+        `${SUPABASE_URL}/rest/v1/products?id=eq.${p.id}&select=name,brand,category,ingredients_text,allergen_flags,verified_status`,
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+      );
+      const full = Array.isArray(rows) ? rows[0] : null;
+      setEditingProduct({
+        name: full?.name || "", brand: full?.brand || "", category: full?.category || "",
+        ingredients_text: full?.ingredients_text || "",
+        allergen_flags: full?.allergen_flags || {},
+        verified_status: full?.verified_status || "unverified",
+      });
+    } catch (e) {
+      showToast("Kunne ikke hente produktets fulde data: " + e.message, "error");
+      setEditingProduct({ name: p.name || "", brand: p.brand || "", category: p.category || "", ingredients_text: "", allergen_flags: {}, verified_status: p.verified_status || "unverified" });
+    }
+  };
+
+  const saveProductEdit = async () => {
+    if (!openProduct || !editingProduct) return;
+    setProductActionLoading(true);
+    try {
+      const updated = await apiCall(`${SUPABASE_URL}/rest/v1/products?id=eq.${openProduct.id}`, {
+        method: "PATCH",
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+        body: JSON.stringify({
+          name: editingProduct.name, brand: editingProduct.brand, category: editingProduct.category,
+          ingredients_text: editingProduct.ingredients_text,
+          allergen_flags: editingProduct.allergen_flags,
+          verified_status: editingProduct.verified_status,
+        }),
+      });
+      const row = Array.isArray(updated) ? updated[0] : null;
+      if (row) setProducts(ps => ps.map(p => p.id === row.id ? { ...p, ...row } : p));
+      showToast("Produkt opdateret");
+      setOpenProduct(null); setEditingProduct(null);
+    } catch (e) {
+      showToast("Kunne ikke gemme produkt: " + e.message, "error");
+    }
+    setProductActionLoading(false);
+  };
+
+  const deleteProduct = async (id) => {
+    setProductActionLoading(true);
+    try {
+      await apiCall(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
+        method: "DELETE",
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+      });
+      setProducts(ps => ps.filter(p => p.id !== id));
+      setOpenProduct(null); setEditingProduct(null);
+      showToast("Produkt slettet");
+    } catch (e) {
+      // Fanger typisk en FK-fejl (produktet er stadig refereret fra fx en
+      // indkøbsliste, scanningshistorik eller ændringslog) — vis den reelle
+      // årsag i stedet for at lade sletningen fejle stille.
+      showToast("Kunne ikke slette produkt: " + e.message, "error");
+    }
+    setProductActionLoading(false);
   };
 
   const updateSubmissionAndApprove = async (submission, edited) => {
@@ -413,5 +509,8 @@ export function useAdmin(accessToken, userId, clearAuth) {
     updateTicketStatus,
     cleanOcrWithAI,
     reparseLoading, reparseLog, runReparse,
+    products, productsLoading, productSearch, setProductSearch, loadProducts,
+    openProduct, setOpenProduct, editingProduct, setEditingProduct,
+    productActionLoading, openProductForEdit, saveProductEdit, deleteProduct,
   };
 }
