@@ -348,23 +348,30 @@ export default function ScannerScreen({
 
                 {/* Stor cirkulær scan-knap — gentænkt fra bunden (24. sept.
                     2026) efter brugerens feedback om at tidligere glossy-
-                    udgaver lignede en gummibold. Ny retning (brugeren
-                    valgte "ghost/outline"-konceptet blandt tre forslag, +
-                    et lyspunkt der bevæger sig rundt i kanten): en let,
-                    hvid cirkel med grønt ikon/tekst i stedet for en tung
-                    grøn fyld. "Liv"-elementet er nu et roterende lyspunkt
-                    i selve ringen (scanCtaRingSpin i theme.jsx) i stedet
-                    for en pulserende glød/gradient i fladen — ringen har
-                    to lag: en svag, konstant grøn bundfarve (så ringen
-                    altid er synlig) + et lysere "komethoved" der roterer
-                    ovenpå. Knap-fladen ligger ovenpå og dækker det meste
-                    af ringen, så kun en tynd bræmme forbliver synlig. */}
+                    udgaver lignede en gummibold, og at det efterfølgende
+                    roterende lyspunkt i en tynd, skarp ring lignede en
+                    radar-sweep. Ny, roligere retning: samme ghost/outline-
+                    knap (hvid flade + grønt ikon/tekst), men lyset er nu
+                    bredt og blurret (filter:blur) så det driver som en
+                    blød skæren i stedet for at pege som en radar-stråle,
+                    og roterer langsommere (9s). Dybde tilføjet via tre
+                    lag: en blød, jordet ambient-glød bagved (giver knappen
+                    en "svæve over baggrunden"-fornemmelse), en let dome-
+                    agtig radial-gradient i selve knap-fladen (næsten
+                    umærkelig, ikke glossy), og en Material-inspireret
+                    fler-lags elevation-skygge (nær+fjern skygge i stedet
+                    for én flad skygge). */}
                 <div style={{ position:"absolute", top:"46%", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
                   <div style={{ position:"relative", width:"clamp(168px, 42cqh, 267px)", height:"clamp(168px, 42cqh, 267px)", display:"flex", alignItems:"center", justifyContent:"center",
                     animation:"scanCtaBreathe 4.5s ease-in-out infinite" }}>
-                    <div aria-hidden="true" style={{ position:"absolute", inset:0, borderRadius:"50%",
-                      background:"conic-gradient(from 0deg, transparent 0deg, transparent 250deg, rgba(23,138,80,.22) 295deg, #28B871 335deg, #1FA466 350deg, transparent 360deg), rgba(23,138,80,.16)",
-                      animation:"scanCtaRingSpin 5s linear infinite" }} />
+                    <div aria-hidden="true" style={{ position:"absolute", inset:"clamp(-16px, -2.4cqh, -8px)", borderRadius:"50%",
+                      background:"radial-gradient(circle, rgba(23,138,80,.15) 0%, rgba(23,138,80,0) 72%)" }} />
+                    <div aria-hidden="true" style={{ position:"absolute", inset:0, borderRadius:"50%", overflow:"hidden" }}>
+                      <div style={{ position:"absolute", inset:"-15%", borderRadius:"50%",
+                        background:"conic-gradient(from 0deg, transparent 0deg, transparent 190deg, rgba(23,138,80,.12) 255deg, rgba(40,184,113,.5) 320deg, rgba(31,164,102,.12) 30deg, transparent 80deg), rgba(23,138,80,.13)",
+                        filter:"blur(7px)",
+                        animation:"scanCtaRingSpin 9s linear infinite" }} />
+                    </div>
                     <div
                       onClick={() => startCamera()}
                       role="button"
@@ -372,8 +379,8 @@ export default function ScannerScreen({
                       tabIndex={0}
                       onKeyDown={e => e.key === "Enter" && startCamera()}
                       style={{ position:"absolute", inset:"clamp(6px, 1cqh, 9px)", borderRadius:"50%", cursor:"pointer",
-                        background:"rgba(255,255,255,.94)",
-                        boxShadow:"0 12px 26px -14px rgba(21,32,26,.22)",
+                        background:"radial-gradient(circle at 50% 32%, #FFFFFF 0%, #FAFAF8 100%)",
+                        boxShadow:"0 1px 2px rgba(21,32,26,.05), 0 8px 18px -8px rgba(21,32,26,.12), 0 24px 44px -22px rgba(21,32,26,.22), inset 0 1px 1px rgba(255,255,255,.9), inset 0 -8px 16px -12px rgba(21,32,26,.05)",
                         display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(8px, 1.8cqh, 14px)" }}>
                       <Icon name="barcode" size="clamp(38px, 8cqh, 53px)" color="var(--green)" />
                       <div style={{ fontSize:"clamp(18px, 3.2cqh, 23px)", fontWeight:800, color:"var(--green)", letterSpacing:"-.2px" }}>Scan produkt</div>
