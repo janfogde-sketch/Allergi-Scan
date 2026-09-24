@@ -351,26 +351,31 @@ export default function ScannerScreen({
                     et roligt "åndedræt" (glød + knap animerer på hver sin,
                     asynkrone varighed — se scanCtaGlow/scanCtaBreathe i
                     theme.jsx), efter brugerens ønske om "lidt liv" på
-                    knappen. Opfølgning samme dag: den forrige glossy-
-                    highlight (en svag inset-box-shadow) var ikke synlig nok
-                    — erstattet med et rigtigt lyspunkt (radial-gradient
-                    øverst til venstre i selve baggrunden, klassisk "lit
-                    sphere"-teknik) + en større/lysere glød bagved knappen. */}
+                    knappen. Endnu en opfølgning samme dag: den store, klare
+                    radial-gradient-highlight ("lit sphere"-teknikken) fik
+                    knappen til at ligne en gummibold i stedet for et
+                    elegant CTA-element — fjernet helt. I stedet: en
+                    subtilere baggrunds-gradient (mindre kontrast lys/mørk),
+                    en tynd 1px lys kant øverst (i stedet for en stor hvid
+                    plet) for et fladt/moderne "elevation"-udtryk (research-
+                    bekræftet retning: flad fyld + blød skygge frem for
+                    glossy highlights), og en roligere, langsommere
+                    glød+åndedræt-animation. */}
                 <div style={{ position:"absolute", top:"46%", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
                   <div style={{ position:"relative", width:"clamp(168px, 42cqh, 267px)", height:"clamp(168px, 42cqh, 267px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
                     <div style={{ position:"absolute", inset:"clamp(-24px, -3.6cqh, -11px)", borderRadius:"50%",
-                      background:"radial-gradient(circle, rgba(255,255,255,.4) 0%, rgba(23,138,80,.32) 38%, rgba(23,138,80,0) 72%)",
-                      animation:"scanCtaGlow 2.8s ease-in-out infinite" }} aria-hidden="true" />
+                      background:"radial-gradient(circle, rgba(23,138,80,.26) 0%, rgba(23,138,80,0) 72%)",
+                      animation:"scanCtaGlow 4s ease-in-out infinite" }} aria-hidden="true" />
                     <div
                       onClick={() => startCamera()}
                       role="button"
                       aria-label="Start kamera for at scanne stregkode"
                       tabIndex={0}
                       onKeyDown={e => e.key === "Enter" && startCamera()}
-                      style={{ position:"relative", width:"clamp(156px, 40cqh, 252px)", height:"clamp(156px, 40cqh, 252px)", borderRadius:"50%", cursor:"pointer", overflow:"hidden",
-                        background:"radial-gradient(circle at 32% 26%, rgba(255,255,255,.85) 0%, rgba(255,255,255,.15) 22%, rgba(255,255,255,0) 45%), linear-gradient(150deg,#28B871 0%,#178A50 55%,#0C5A32 100%)",
-                        boxShadow:"inset 0 -20px 28px -14px rgba(0,0,0,.28), 0 18px 34px -12px rgba(23,138,80,.6)",
-                        animation:"scanCtaBreathe 3.4s ease-in-out infinite",
+                      style={{ position:"relative", width:"clamp(156px, 40cqh, 252px)", height:"clamp(156px, 40cqh, 252px)", borderRadius:"50%", cursor:"pointer",
+                        background:"linear-gradient(160deg,#1FA466 0%,#178A50 55%,#0F6B3E 100%)",
+                        boxShadow:"inset 0 1.5px 0 rgba(255,255,255,.32), inset 0 -1px 0 rgba(0,0,0,.1), 0 14px 30px -14px rgba(23,138,80,.5)",
+                        animation:"scanCtaBreathe 4.5s ease-in-out infinite",
                         display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(8px, 1.8cqh, 14px)" }}>
                       <Icon name="barcode" size="clamp(38px, 8cqh, 53px)" color="#fff" />
                       <div style={{ fontSize:"clamp(18px, 3.2cqh, 23px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
