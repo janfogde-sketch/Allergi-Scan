@@ -20,6 +20,8 @@ import AdminRecipesSection from "./AdminRecipesSection.jsx";
 
 export default function AdminScreen() {
   const { userId, accessToken } = useAuthContext();
+  const [submitterInfo, setSubmitterInfo] = useState(null);
+  const [submitterLoading, setSubmitterLoading] = useState(false);
   const {
     adminSection, setAdminSection, adminStats,
     adminUsers, adminUsersLoading,
@@ -48,6 +50,7 @@ export default function AdminScreen() {
   // blanke dem, fordi et rettelsesforslag ikke selv indeholder et fuldt produktnavn.
   const openSubmissionForReview = async (s) => {
     setOpenSubmission(s);
+    setSubmitterInfo(null);
     if (s.type === "edit" && s.product_id) {
       try {
         const rows = await apiCall(
@@ -62,11 +65,24 @@ export default function AdminScreen() {
           ingredients_text: s.ai_parsed_data?.edit_type === "ingredients" ? (s.ocr_raw_text || "") : "",
         });
       } catch (e) {
-        console.error("openSubmissionForReview:", e);
+        showToast("Kunne ikke hente produktets nuværende data: " + e.message + " — udfyld felterne manuelt før du godkender", "error");
         setEditingSubmission({ name: "", brand: "", allergen_flags: {} });
       }
     } else {
       setEditingSubmission({ name: s.ai_parsed_data?.name || s.product_name || "", brand: s.ai_parsed_data?.brand || s.brand || "", allergen_flags: s.ai_parsed_data || {} });
+    }
+    if (s.submitted_by) {
+      setSubmitterLoading(true);
+      try {
+        const rows = await apiCall(
+          `${SUPABASE_URL}/rest/v1/users?id=eq.${s.submitted_by}&select=name,email`,
+          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+        );
+        setSubmitterInfo(Array.isArray(rows) && rows[0] ? rows[0] : { name: null, email: null });
+      } catch (e) {
+        setSubmitterInfo({ name: null, email: null, error: e.message });
+      }
+      setSubmitterLoading(false);
     }
     // Renskriv automatisk med det samme i stedet for at kræve et ekstra
     // admin-klik — ingredienslisten fra OCR er sjældent klar til godkendelse som den er.
@@ -239,6 +255,7 @@ export default function AdminScreen() {
             editingSubmission={editingSubmission} setEditingSubmission={setEditingSubmission}
             cleanedOcrText={cleanedOcrText} cleaningOcr={cleaningOcr} cleanOcrWithAI={cleanOcrWithAI}
             updateSubmissionAndApprove={updateSubmissionAndApprove} rejectSubmission={rejectSubmission}
+            submitterInfo={submitterInfo} submitterLoading={submitterLoading}
           />
         )}
 

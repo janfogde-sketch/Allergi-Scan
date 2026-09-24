@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { ALLERGENS, SUPABASE_URL } from "../../constants.jsx";
-import { apiCall, makeHeaders } from "../../helpers.js";
+import { apiCall, makeHeaders, extractENumbers } from "../../helpers.js";
 import { showToast } from "../../SharedComponents.jsx";
 
 const FILTERS = [
@@ -16,8 +16,12 @@ export default function SubmissionsSection({
   cleanedOcrText, cleaningOcr, cleanOcrWithAI,
   updateSubmissionAndApprove, rejectSubmission, accessToken,
 }) {
+  const [submitterInfo, setSubmitterInfo] = useState(null);
+  const [submitterLoading, setSubmitterLoading] = useState(false);
+
   const openForReview = async (s) => {
     setOpenSubmission(s);
+    setSubmitterInfo(null);
     if (s.type === "edit" && s.product_id) {
       try {
         const rows = await apiCall(
@@ -44,10 +48,23 @@ export default function SubmissionsSection({
         allergen_flags: s.ai_parsed_data || {},
       });
     }
+    if (s.submitted_by) {
+      setSubmitterLoading(true);
+      try {
+        const rows = await apiCall(
+          `${SUPABASE_URL}/rest/v1/users?id=eq.${s.submitted_by}&select=name,email`,
+          { headers: makeHeaders(accessToken) }
+        );
+        setSubmitterInfo(Array.isArray(rows) && rows[0] ? rows[0] : { name: null, email: null });
+      } catch (e) {
+        setSubmitterInfo({ name: null, email: null, error: e.message });
+      }
+      setSubmitterLoading(false);
+    }
     if (s.ocr_raw_text) cleanOcrWithAI(s.ocr_raw_text);
   };
 
-  const close = () => { setOpenSubmission(null); setEditingSubmission(null); };
+  const close = () => { setOpenSubmission(null); setEditingSubmission(null); setSubmitterInfo(null); };
 
   return (
     <>
@@ -65,7 +82,7 @@ export default function SubmissionsSection({
           <div className="admin-table-empty">Ingen indsendelser her</div>
         ) : (
           <table className="admin-table">
-            <thead><tr><th>Produkt</th><th>EAN</th><th>Type</th><th>Allergener</th><th>Indsendt</th><th></th></tr></thead>
+            <thead><tr><th>ID</th><th>Produkt</th><th>EAN</th><th>Type</th><th>Allergener</th><th>Indsendt</th><th></th></tr></thead>
             <tbody>
               {submissions.map(s => {
                 const flags = s.ai_parsed_data || {};
@@ -73,6 +90,7 @@ export default function SubmissionsSection({
                 const isEdit = s.type === "edit";
                 return (
                   <tr key={s.id} style={{ cursor: "pointer" }} onClick={() => openForReview(s)}>
+                    <td style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--muted)" }} title={s.id}>{s.id.slice(0, 8)}</td>
                     <td>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</td>
                     <td style={{ fontFamily: "var(--mono)" }}>{s.ean}</td>
                     <td>{isEdit ? <span className="admin-pill admin-pill-amber">Rettelse</span> : <span className="admin-pill admin-pill-neutral">Nyt produkt</span>}</td>
@@ -94,6 +112,12 @@ export default function SubmissionsSection({
               <div>
                 <div style={{ fontSize: 16, fontWeight: 800 }}>{openSubmission.type === "edit" ? "Gennemse rettelsesforslag" : "Gennemse indsendelse"}</div>
                 <div style={{ fontSize: 12, color: "var(--muted)" }}>EAN {openSubmission.ean} · {new Date(openSubmission.created_at).toLocaleDateString("da-DK")}</div>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4, fontFamily: "var(--mono)" }} title={openSubmission.id}>
+                  ID: {openSubmission.id}
+                </div>
+                <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>
+                  Indsendt af: {submitterLoading ? "henter…" : submitterInfo?.error ? `ukendt (${submitterInfo.error})` : (submitterInfo?.name || submitterInfo?.email) ? `${submitterInfo.name || "—"}${submitterInfo.email ? ` (${submitterInfo.email})` : ""}` : openSubmission.submitted_by ? "ukendt bruger" : "anonym"}
+                </div>
               </div>
               <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={close}>Luk</button>
             </div>
@@ -130,6 +154,26 @@ export default function SubmissionsSection({
                     <div style={{ fontSize: 12.5, background: "var(--green-lt)", borderRadius: 8, padding: 10 }}>{cleanedOcrText}</div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {editingSubmission.ingredients_text !== undefined && (
+              <div className="admin-field">
+                <label className="admin-label">Ingredienstekst der bliver godkendt (redigérbar)</label>
+                <textarea className="admin-textarea" rows={3} value={editingSubmission.ingredients_text || ""}
+                  onChange={e => setEditingSubmission(s => ({ ...s, ingredients_text: e.target.value }))}
+                  placeholder="Ingrediensliste…" />
+                {(() => {
+                  const found = extractENumbers(editingSubmission.ingredients_text || "");
+                  if (found.length === 0) return null;
+                  return (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+                      {found.map(e => (
+                        <span key={e} style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 20, background: "var(--blue-lt)", color: "var(--blue)", border: "1px solid var(--blue-md)" }}>{e}</span>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
