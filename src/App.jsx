@@ -17,7 +17,7 @@ import {
 } from "./helpers.js";
 
 import {
-  EatSafeLogo, Icon, IngredientsList, ProfileBadges,
+  Icon, IngredientsList, ProfileBadges,
   getProductIcon, ProductImage, LazyFallback, ToastHost, showToast,
   ScanLoadingOverlay
 } from "./SharedComponents.jsx";
@@ -832,7 +832,6 @@ export default function EatSafe() {
         {!isOnboard && (
           <header className="topbar">
             <div className="topbar-logo">
-              <div className="topbar-shield" style={{background:"none",padding:0}}><EatSafeLogo size={34} variant="light" /></div>
               <div className="topbar-name">Eat<span>Safe</span></div>
               <div style={{ background:"var(--amber)", color:"var(--ink)", fontSize:9, fontWeight:800, padding:"2px 8px", borderRadius:100, letterSpacing:".5px", marginLeft:4, marginTop:2 }}>BETA</div>
             </div>

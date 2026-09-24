@@ -156,8 +156,7 @@ body{
   position:sticky;top:0;z-index:60;
 }
 .topbar-logo{display:flex;align-items:center;gap:8px;}
-.topbar-shield{width:30px;height:30px;background:linear-gradient(135deg,#3DCC6E,#2BA855);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(61,204,110,.35);overflow:hidden;flex-shrink:0;}
-.topbar-name{font-size:15px;font-weight:600;color:var(--ink);letter-spacing:-.3px;font-family:var(--f);}
+.topbar-name{font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.4px;font-family:var(--f);}
 .topbar-name span{color:var(--green);font-style:normal;}
 .topbar-avatar{width:32px;height:32px;background:var(--green-lt);border:1.5px solid var(--green-mid);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--green);cursor:pointer;transition:all .15s;letter-spacing:.3px;}
 .topbar-avatar:hover{background:var(--green-mid);}
