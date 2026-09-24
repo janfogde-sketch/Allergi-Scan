@@ -376,15 +376,16 @@ body{
 .reticle-line{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 0%,var(--green-logo) 15%,var(--green-logo) 85%,transparent 100%);animation:scanline 2.2s ease-in-out infinite;box-shadow:0 0 10px var(--green-logo),0 0 3px var(--green-logo);}
 @keyframes scanline{0%{top:13px;opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{top:51px;opacity:0;}}
 
-/* Forside-scan-knappens "levende" lys-ring (24. sept. 2026 — knappen er
-   gentænkt fra bunden efter brugerens feedback: "ligner en gummibold",
-   se ScannerScreen.jsx for den fulde historik). Ny retning: en rolig,
-   roterende lyspunkt i den tynde ring omkring en let/hvid knap (ghost-
-   stil), i stedet for en glossy/pulserende fyld. scanCtaRingSpin roterer
-   et lag med conic-gradient (en svag konstant bundfarve + et lysere
-   "komethoved") rundt i ringen; scanCtaBreathe giver hele knappen et
-   meget subtilt åndedræt. Respekterer den globale prefers-reduced-
-   motion-regel nedenfor (ACCESSIBILITY) uden ekstra kode her. */
+/* Forside-scan-knappens "levende" lys (24. sept. 2026 — knappen er
+   gentænkt to gange efter brugerfeedback: først "ligner en gummibold"
+   (glossy fyld fjernet), så "ligner en radar" (den første udgave af
+   denne roterende ring var for skarp/smal og lignede en radar-sweep).
+   scanCtaRingSpin roterer nu et bredt, kraftigt blurret lyslag (se
+   filter:blur i ScannerScreen.jsx) langsommere (9s i stedet for 5s), så
+   det driver som en blød skæren i stedet for at pege som en stråle.
+   scanCtaBreathe giver hele knappen et meget subtilt åndedræt.
+   Respekterer den globale prefers-reduced-motion-regel nedenfor
+   (ACCESSIBILITY) uden ekstra kode her. */
 @keyframes scanCtaRingSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 @keyframes scanCtaBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.015);}}
 
