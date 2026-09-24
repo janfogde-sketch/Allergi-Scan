@@ -6,6 +6,8 @@
 // Skift tema ved at ændre THEME-objektet herunder — resten følger automatisk.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import appBackground from "./assets/app-background.webp";
+
 export const THEME = {
   // Baggrunde — ren hvid, ingen farvet undertone (24. sept. 2026-redesign)
   paper:   "#FFFFFF",
@@ -137,23 +139,32 @@ body{
      mockup"-loft på en reel desktop-browser (bredere vinduer). */
   max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
   width:100%;position:relative;overflow-x:hidden;
-  /* Fint punkt-gitter i grøn (scanner/præcisions-følelse, matcher stregkode-
-     og brand-farven) + blød grøn glød foroven og en svag blå glød forneden
-     for dybde — en flad farve uden nogen struktur føltes livløs (se
-     CLAUDE.md afsnit 5). Baggrunden er ren hvid (24. sept. 2026-redesign),
-     så gradient-stoppene er nu næsten umærkelige neutrale gråtoner i
-     stedet for den tidligere cremet/grønlige tinting. */
-  background:radial-gradient(circle, rgba(23,138,80,.14) 1px, transparent 1.6px) 0 0/22px 22px,
-             radial-gradient(ellipse 100% 35% at 50% 0%, rgba(23,138,80,.06) 0%, transparent 60%),
-             radial-gradient(ellipse 90% 30% at 50% 100%, rgba(58,110,165,.04) 0%, transparent 65%),
-             linear-gradient(175deg,#FFFFFF 0%,#FDFDFC 45%,#FAFAF9 100%);
+  background:#FFFFFF;
+}
+/* App-bred baggrund: ét fast billede (ingredienser/frugt i en dekorativ ramme
+   om et blankt hvidt midterfelt) i stedet for det tidligere prikgitter+farve-
+   glød-lag — samme billede på tværs af ALLE skærme, ikke kun Scan-forsiden
+   (24. sept. 2026, efter Bjørns design-arbejde på Scan-siden specifikt).
+   Egen ægte position:fixed-boks (ikke background-attachment:fixed på .app)
+   — background-attachment:fixed understøttes ikke pålideligt i mobil Safari/
+   iOS-hjemmeskærm-PWA'er (velkendt, langvarig WebKit-begrænsning), mens en
+   almindelig fixed-positioneret boks virker konsekvent alle steder. Ligger
+   som første barn i .app, bag alt andet indhold via z-index:0 + .screen's
+   z-index:1 nedenfor — IKKE negativ z-index, som i visse browsere kan ende
+   bag body's egen baggrund i stedet for bag skærmens indhold. */
+.app-bg{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:url(${appBackground});
+  background-size:cover;
+  background-position:top center;
+  background-repeat:no-repeat;
 }
 
 /* ── TOPBAR ── */
 .topbar{
   /* Let "frosted glass" i stedet for helt gennemsigtig (24. sept. 2026) — så
-     den bagvedliggende baggrund (prikgitteret, eller Scan-sidens fotobaggrund)
-     altid skinner blødt igennem, konsekvent på tværs af alle skærme. */
+     det app-brede baggrundsbillede altid skinner blødt igennem, konsekvent
+     på tværs af alle skærme. */
   background:rgba(255,255,255,.55);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border-bottom:none;
@@ -167,11 +178,12 @@ body{
 .topbar-avatar:hover{background:var(--green-mid);}
 
 /* ── LAYOUT ── */
-.screen{flex:1;padding:0 16px 110px;}
+.screen{flex:1;padding:0 16px 110px;position:relative;z-index:1;}
 /* Scan-forsidens hero-boks (idle-tilstand, kamera ikke aktivt) — skal ALTID
-   passe præcis mellem topbar og bundnav, uden scroll, på enhver telefon.
-   Bevidst calc(100vh/100dvh - Npx) i stedet for en flex:1/height:100%-kæde:
-   den slags afhænger af at HELE forældrekæden (body/.app/.screen) har en
+   passe præcis mellem topbar og bundnav, uden scroll, på enhver telefon,
+   så hilsen/scan-knap altid er synlige uden at skulle scrolle. Bevidst
+   calc(100vh/100dvh - Npx) i stedet for en flex:1/height:100%-kæde: den
+   slags afhænger af at HELE forældrekæden (body/.app/.screen) har en
    DEFINITIV højde, men de har kun min-height:100vh (en flad "mindst så høj"-
    grænse, ikke en fast højde) — hvilket viste sig upålideligt i praksis
    (fungerede i en isoleret test med en kunstig fast-højde-wrapper, men
@@ -204,8 +216,7 @@ body{
      "flimrende" ud). Løsning nu (24. sept. 2026): backdrop-filter:blur
      i stedet for ren gennemsigtighed — sløringen visker scrollende indhold
      ud til en blød, rolig farve-vask i stedet for skarpe, flimrende former,
-     samtidig med at den statiske baggrund (prikgitter, eller Scan-sidens
-     fotobaggrund som nu bevidst strækker sig helt ned bag denne bar) skinner
+     samtidig med at det faste app-brede baggrundsbillede stadig skinner
      igennem. Samme "reel funktionel grund til blur"-princip som kamera-
      kontrolknapperne i ScannerScreen.jsx (se design-tokens.md antimønster #6). */
   background:rgba(255,255,255,.72);

@@ -494,6 +494,56 @@ visuelle effekt. Fuld fejlfindingshistorik (de tre backtick-byggefejl i
 `theme.jsx`s CSS-kommentarer, den fulde årsagsanalyse af indefinit-højde-
 kæder) i `.claude/HISTORY.md`.
 
+**24. sept. 2026 — samme dag, baggrundsbilledet gjort app-bredt (erstatter
+Bjørns Scan-specifikke foto + det gamle prikgitter).** Brugeren (Jan) delte
+et nyt billede (ingredienser/frugt i en dekorativ ramme om et blankt hvidt
+midterfelt) og bad om at bruge DET som appens ene, fælles baggrund på tværs
+af ALLE skærme — ikke kun Scan-forsiden — og fjerne al anden baggrunds-kode
+for at rydde op, efter at have vurderet at Bjørns Scan-specifikke
+fotobaggrund (se de tre log-poster ovenfor) ikke virkede med appens højde/
+bredde på tværs af enheder.
+
+- **`src/assets/app-background.webp`** (nyt, 941×1672, ~215KB) — erstatter
+  både det tidligere prikgitter+farve-glød-lag i `.app` (theme.jsx) OG
+  Scan-forsidens dedikerede `scan-hero-bg.webp` (slettet, ingen andre
+  referencer i kodebasen).
+- **Ægte `position:fixed`-boks, ikke `background-attachment:fixed`:** en ny
+  `.app-bg`-klasse (theme.jsx) renders som absolut første barn i `.app`
+  (App.jsx) — `position:fixed;inset:0;z-index:0;pointer-events:none`.
+  Bevidst IKKE `background-attachment:fixed` direkte på `.app` (afprøvet
+  først, virker fint i en isoleret mimic) — det er en velkendt, langvarig
+  WebKit-begrænsning at `background-attachment:fixed` ikke understøttes
+  pålideligt i mobil Safari/iOS-hjemmeskærm-PWA'er, som er appens primære
+  platform. En ægte `position:fixed`-boks virker konsekvent alle steder.
+- **`.screen{position:relative;z-index:1}`** tilføjet (var tidligere
+  upositioneret/statisk) — nødvendigt fordi CSS' egen maleorden ellers
+  tegner positionerede elementer med z-index 0 (som `.app-bg`) OVEN PÅ
+  almindeligt statisk indhold, ikke under det (CSS 2.1 Appendix E, trin 3
+  vs. trin 6) — uden dette ville baggrundsbilledet dække alt skærmindhold.
+  Verificeret harmløst for eksisterende `position:absolute`-børn af
+  `.screen` (samme fysiske containing-block-rektangel som `.app` før,
+  da `.screen` via flexbox-stretch allerede fyldte `.app`s fulde bredde)
+  og for `position:fixed`-børn (upåvirket — `position:relative` opretter
+  ikke et nyt containing block for `fixed`-elementer).
+- **Scan-forsidens `<img src={scanHeroBg}>` er fjernet** (ScannerScreen.jsx)
+  — hero-boksen (`.home-hero-frame`, uændret calc-højde/container-query-
+  mekanik, se ovenstående log-poster) viser nu blot appens fælles
+  baggrundsbillede gennem sin egen transparente baggrund, samme som alle
+  andre skærme. Hilsen/scan-knap/"Prøv en demo"-pillens %-baserede
+  positionering er bevaret uændret (rammer stadig en fornuftig lodret
+  rytme, uafhængig af det specifikke billede).
+- `.topbar`/`.bottom-nav`s eksisterende `backdrop-filter:blur`-look
+  (fra opfølgningen ovenfor) er UÆNDRET — kommentarerne er opdateret til
+  ikke længere at nævne "prikgitter"/"Scan-sidens fotobaggrund" specifikt,
+  men selve den slørede gennemsigtighed virker nu mere konsekvent end før,
+  siden baggrunden er ens overalt.
+
+Verificeret med en Playwright-mimic af den faktiske `.app-bg`+`.screen`-
+lagdeling ved to skærmhøjder (667/iPhone SE, 844/standard) samt en
+scroll-test (1200px ned i lang kortliste) — baggrunden forbliver pixel-
+identisk fastlåst til viewporten, kort ligger korrekt ovenpå, ingen
+strækning/forvrængning. Fuld metode i `.claude/HISTORY.md`.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
