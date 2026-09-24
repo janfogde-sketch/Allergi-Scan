@@ -13,13 +13,23 @@
 
 ---
 
-## 0. Topprioritet til næste session (opdateret 17. sept. 2026)
+## 0. Topprioritet til næste session (opdateret 24. sept. 2026)
 
 Rescue-audittets fulde 4-fase-roadmap, Claude Code Setup Audit-rapportens 3
 forslag, og alle "16. sept."-opfølgningspunkter (npm audit fix --force,
 RLS-performance-advisories, tredjeparts audit-skills, AdminScreen.jsx/
 App.jsx-opsplitningen) er nu implementeret og merget — se "Rescue-audit —
 status" nedenfor for fuld detalje.
+
+**Desktop admin-panel (24. sept. 2026):** et separat, desktop-optimeret
+admin-panel er bygget på `eatsafe.dk/admin.html` — egen Vite-entrypoint
+(`src/admin/`), rører ikke den mobile PWA's bundle. Shellet + alle
+eksisterende admin-funktioner (Dashboard/Brugere/Indsendelser/Tickets/
+Manglende/Import/Opskrifter) er på plads. Nye funktioner (produkt-database
+direkte, Leksikon-CRUD, ændringshistorik, bulk-handlinger, rigere
+analytics, CSV-eksport, familie-overblik, global søgning) bygges én ad
+gangen efter brugerens prioritering — se `src/CONTEXT.md` afsnit 13 for
+den fulde liste og status.
 
 **Eneste resterende punkt: Leaked Password Protection er blokeret, ikke
 glemt.** Brugeren forsøgte at slå den til 17. sept. i Supabase Dashboard →
