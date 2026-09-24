@@ -257,12 +257,6 @@ body{
 .step-sub{font-size:13px;color:var(--ink2);margin-bottom:16px;line-height:1.55;}
 .onboard-skip{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;}
 
-/* ── HOME ── */
-.greeting{padding:20px 0 14px;}
-.greeting-eyebrow{font-size:11px;font-weight:500;color:var(--blue);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:4px;}
-.greeting-main{font-size:28px;font-weight:300;color:var(--ink);letter-spacing:-.8px;line-height:1;}
-.greeting-main strong{font-weight:600;}
-.greeting-sub{font-size:13px;color:var(--muted);margin-top:3px;font-weight:400;}
 
 /* Scan card */
 .scan-card{
@@ -320,16 +314,6 @@ body{
 .recent-dot.danger{background:var(--red);box-shadow:0 0 7px rgba(255,82,82,.5);}
 .recent-dot.not_found{background:var(--muted);}
 
-/* Genvejskort (fx indkøbsliste) — holdt neutral/hvid, kun tryk-feedback for at
-   føles levende, i modsætning til tip-kortet der bærer den blå accentfarve */
-.home-shortcut-card{transition:transform .1s;}
-.home-shortcut-card:active{transform:scale(.99);}
-
-/* Tip card */
-.home-tip{background:var(--surface3);border:1px solid var(--border);border-left:2px solid var(--blue);border-radius:14px;padding:12px 14px;margin-bottom:20px;display:flex;gap:10px;}
-.home-tip-tag{font-size:9px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:3px;}
-.home-tip-title{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:3px;letter-spacing:-.2px;}
-.home-tip-body{font-size:11px;color:var(--muted2);line-height:1.55;font-weight:400;}
 
 /* Profile chips (home) */
 .home-profile-chips{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap;}
@@ -594,7 +578,7 @@ body{
    den læsbar uden at det ligner en fejl. */
 .screen-title,.screen-sub,.section-lbl,.mp-title,.mp-subtitle,.mp-section-lbl,
 .login-title,.login-sub,.welcome-wordmark-text,.welcome-tagline,
-.step-title,.step-sub,.onboard-skip,.greeting-eyebrow,.greeting-main{
+.step-title,.step-sub,.onboard-skip{
   text-shadow:0 1px 0 rgba(255,255,255,.7);
 }
 

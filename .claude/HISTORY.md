@@ -1047,3 +1047,74 @@ admin, eller fælles familiegruppe via `family_group`-RPC'en), og
   nutid, ikke historik); `npm audit fix --force` og RLS-performance-
   advisories var rene vedligeholdelses-opgraderinger uden funktionel
   ændring at logge her ud over at de er kørt.
+
+---
+
+## Hjem-forsiden redesignet efter delt referencedesign (24. sept. 2026)
+
+Brugeren sendte et skærmbillede af en simpel "landing"-udgave af forsiden
+(stor overskrift, cirkulær grøn scan-knap med glød, frugt-/blad-billeder i
+hjørnerne, "Prøv en demo"-knap) og bad om at bruge det som ny forside.
+Designet kolliderede direkte med flere bevidste, tidligere trufne valg
+(ingen fotografi i appen, bundmenu Indkøbsliste/Scan/Søg — ikke Hjem/Scan/
+Historik som i designet), så omfanget blev afklaret eksplicit FØR noget
+blev bygget (tre spørgsmål: bundmenu, fotografi, skærm-struktur). Svar:
+behold nuværende bundmenu, brug rigtige fotos, erstat Hjem-indholdet helt
+med den simple landing-stil.
+
+- **Bundmenuen er UÆNDRET** — kun `ScannerScreen.jsx`s HOME-blok (idle-
+  tilstanden, altså før kameraet er aktivt) er redesignet.
+- **Fjernet:** hilsen (`.greeting`), streak-badge, dagens-tip
+  (`renderDailyTip`), indkøbsliste-genvejskortet. Alle fire var udelukkende
+  brugt i denne ene blok — fjernelsen gjorde `renderStreakBadge`/
+  `renderDailyTip`/`todayLabel` samt hele `useShoppingContext()`-
+  destruktureringen (`shoppingList` var sidste levende brug) fuldt ubrugte,
+  så de er slettet, ikke bare efterladt som dødt kode. Samme for
+  `getGreeting()`-kaldet i `App.jsx` (selve funktionen i `utils.jsx` er
+  bevaret uændret — den har sin egen test-suite i `utils.test.jsx`, og at
+  slette en testet, eksporteret util udelukkende fordi ét kaldested
+  forsvandt er unødvendig scope creep). De nu forældreløse CSS-regler
+  (`.greeting`, `.greeting-eyebrow`, `.greeting-main`, `.greeting-sub`,
+  `.home-tip*`, `.home-shortcut-card`) er også fjernet fra `theme.jsx`,
+  inkl. deres to mentions i de kombinerede `:active`/text-shadow-selektorer
+  fra tidligere bølger.
+- **Bevaret uændret:** selve kamera-scannings-mekanikken (kamera-embed,
+  laser-/scan-zone-overlay, galleri/manuel-EAN/lygte-kontroller, fejlhånd-
+  tering) — kun IDLE-tilstandens (kamera ikke aktivt) visuelle præsentation
+  er skiftet ud, fra den gamle grønne gradient-boks med stregkode-animation
+  til en stor cirkulær grøn knap med blød radial-gradient-glød bagved.
+  "Prøv en demo" genbruger den eksisterende `DemoSlider`-guide
+  (`setShowGuide(true)`, samme handler som den forudgående "App-guide"-
+  fodnote-knap, som er bevaret som den var).
+
+**Billedhåndtering — sandboxen har ikke netadgang til stock-foto-CDN'er**
+(`images.unsplash.com`/`images.pexels.com` begge 403 via agent-proxyen,
+samme org-policy-mønster som Supabase). I stedet for at bede brugeren om
+separate billedfiler blev frugterne (blåbær, jordbær, mynte-/basilikumblad)
+beskåret direkte ud af brugerens EGET referencebillede med Python/PIL —
+en legitim genbrug af billedmateriale brugeren selv delte til præcis dette
+formål. **Iterativ baggrunds-fjernelse var nødvendig, ikke kun en fast
+beskæring:** første forsøg (blød elliptisk alpha-maske, fast margin) gav
+synlige rektangel-kanter mod appens prikgitter-baggrund, fordi enhver
+resterende delvist-opak baggrundsfarve fra kilde-billedet visuelt slører
+prikmønstret under sig. Løsningen der virkede: **farve-afstand-nøgling**
+(sample baggrundsfarven fra et kendt baggrunds-udsnit af beskæringen,
+beregn hver pixels euklidiske afstand til den farve, map afstand → alpha
+via to tærskelværdier, blur alpha-kanalen let for en blød silhuet-kant) —
+efterligner en simpel grøn-skærm/baggrunds-fjernelse, og lader appens eget
+prikgitter skinne helt igennem uden om selve frugten. Krævede også en
+gen-beskæring af tre af de fem billeder (blåbær-par, jordbær, basilikum-
+blad) med mere baggrunds-margin end første forsøg — de oprindelige
+beskæringer var for tætte på selve frugten til at nøglingen havde noget at
+arbejde med, hvilket i praksis gjorde dem til næsten-rektangler igen.
+Gemt som WebP (kvalitet 88) i stedet for PNG — identisk visuel kvalitet,
+men ~380KB → ~50KB i alt for de fem billeder.
+
+**Visuel verifikation:** samme etablerede metode som beskrevet i `CLAUDE.md`
+afsnit 4 (håndskrevet mimic-HTML med ægte klasse-navne/CSS-værdier fra
+`theme.jsx` + `playwright-core` med den forudinstallerede Chromium-sti) —
+men iterativt denne gang, ikke ét skud: seks screenshot-runder undervejs
+for at rette rektangel-kanterne (se ovenfor), en overlap-bug (overskriften
+"Scan produkt" lå delvist bag frugtbillederne ved første forsøg — rettet
+ved at hæve `.hero-text`s top-padding), og et sidste layout-fix hvor
+blåbær-parret delvist dækkede topbarens "Feedback"-knap.

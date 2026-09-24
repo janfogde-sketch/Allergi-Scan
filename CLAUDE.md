@@ -310,6 +310,20 @@ fejlfindingshistorie) er flyttet til `.claude/HISTORY.md` — dette afsnit
 udgjorde tidligere ~70% af hele `CLAUDE.md` (fundet af `token-audit`-
 skillen), og `CLAUDE.md` læses ved hver eneste session-start uanset opgave.
 
+**24. sept. 2026 — Hjem-forsiden redesignet igen, efter et delt
+referencedesign.** `ScannerScreen.jsx`s HOME-blok (idle-tilstanden, før
+kameraet aktiveres) er skiftet fra hilsen+dagens-tip+indkøbsliste-genvej
+til en enkel landing-visning: overskrift + undertekst, en stor cirkulær
+grøn scan-knap med blød glød (samme `startCamera()`-flow som før, kun
+re-skinnet — selve kamera-scanningen er uændret), en "Prøv en demo"-knap,
+og en frugt-/blad-billed-collage i hjørnerne (beskåret fra brugerens eget
+referencebillede, baggrunds-nøglet til alpha så appens prikgitter skinner
+igennem, gemt som WebP). Bundmenuen (Indkøbsliste/Scan/Søg) er bevidst
+UÆNDRET — omfanget blev afklaret eksplicit med brugeren først, da designet
+ellers kolliderede med tidligere valg (ingen fotografi, anden bundmenu).
+Fuld metode (baggrunds-nøgling, iterativ visuel verifikation) i
+`.claude/HISTORY.md`.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,

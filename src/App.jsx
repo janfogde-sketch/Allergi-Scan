@@ -37,7 +37,7 @@ import ErrorBoundary from './ErrorBoundary.jsx';
 import { useOffline } from './useOffline.js';
 
 import { appCss } from './theme.jsx';
-import { BUILD_TIME, COMMIT_SHA, formatBuildTime, getGreeting, buildScreenLabel } from './utils.jsx';
+import { BUILD_TIME, COMMIT_SHA, formatBuildTime, buildScreenLabel } from './utils.jsx';
 import { useShoppingList } from './useShoppingList.js';
 import { useFamily } from './useFamily.js';
 import { useHistory } from './useHistory.js';
@@ -553,8 +553,6 @@ export default function EatSafe() {
     </div>
   );
 
-  const greeting = getGreeting();
-
   // ── SCANNER CORE ──────────────────────────────────────────────────────────
   const allActive = useCallback(() => {
     const ids = new Set(activeProfiles.includes("me") ? allergens : []);
@@ -968,7 +966,6 @@ export default function EatSafe() {
             showNutrition={showNutrition} setShowNutrition={setShowNutrition}
             showManualEan={showManualEan} setShowManualEan={setShowManualEan}
             showSafeOnly={showSafeOnly} setShowSafeOnly={setShowSafeOnly}
-            greeting={greeting}
             cameraActive={cameraActive} setCameraActive={setCameraActive}
             galleryInputRef={galleryInputRef}
             lastScannedRef={lastScannedRef}
