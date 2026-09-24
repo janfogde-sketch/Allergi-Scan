@@ -97,13 +97,35 @@ export function useAdmin(accessToken, userId, clearAuth) {
     setDeletingAccount(false);
   };
 
+  // Bygger dags-buckets for de seneste `days` dage (inkl. i dag) ud fra en
+  // liste af rå rækker med et timestamp-felt — PostgREST har ingen simpel
+  // GROUP BY-dag, så vi henter de rå rækker (kun id+timestamp, billigt) og
+  // bucketter dem selv i JS. Fylder tomme dage med 0 i stedet for at
+  // springe dem over, så en graf altid har præcis `days` punkter.
+  const bucketByDay = (rows, field, days) => {
+    const buckets = {};
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(today); d.setDate(d.getDate() - i);
+      buckets[d.toISOString().slice(0, 10)] = 0;
+    }
+    for (const row of rows) {
+      const key = (row[field] || "").slice(0, 10);
+      if (key in buckets) buckets[key]++;
+    }
+    return Object.entries(buckets).map(([date, count]) => ({ date, count }));
+  };
+
   const loadAdminStats = async () => {
     try {
       const h = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json", "Prefer": "count=exact" };
       const hNoCount = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
       const today = new Date(); today.setHours(0,0,0,0);
       const todayISO = today.toISOString();
-      const [users, products, scans, subs, families, tickets, scansToday, newUsersToday] = await Promise.all([
+      const TREND_DAYS = 14;
+      const trendStart = new Date(today); trendStart.setDate(trendStart.getDate() - (TREND_DAYS - 1));
+      const trendStartISO = trendStart.toISOString();
+      const [users, products, scans, subs, families, tickets, scansToday, newUsersToday, scanTrendRows, userTrendRows] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/users?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
         fetch(`${SUPABASE_URL}/rest/v1/products?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
         fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
@@ -112,6 +134,8 @@ export function useAdmin(accessToken, userId, clearAuth) {
         fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?status=eq.open&select=id`, { headers: hNoCount }).then(r => r.json()),
         fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id&scanned_at=gte.${todayISO}`, { headers: hNoCount }).then(r => r.json()),
         fetch(`${SUPABASE_URL}/rest/v1/users?select=id&created_at=gte.${todayISO}`, { headers: hNoCount }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=scanned_at&scanned_at=gte.${trendStartISO}`, { headers: hNoCount }).then(r => r.json()),
+        fetch(`${SUPABASE_URL}/rest/v1/users?select=created_at&created_at=gte.${trendStartISO}`, { headers: hNoCount }).then(r => r.json()),
       ]);
       setAdminStats({
         total_users: typeof users === "number" ? users : (Array.isArray(users) ? users.length : 0),
@@ -122,6 +146,8 @@ export function useAdmin(accessToken, userId, clearAuth) {
         open_tickets: Array.isArray(tickets) ? tickets.length : 0,
         scans_today: Array.isArray(scansToday) ? scansToday.length : 0,
         new_users_today: Array.isArray(newUsersToday) ? newUsersToday.length : 0,
+        scan_trend: bucketByDay(Array.isArray(scanTrendRows) ? scanTrendRows : [], "scanned_at", TREND_DAYS),
+        user_trend: bucketByDay(Array.isArray(userTrendRows) ? userTrendRows : [], "created_at", TREND_DAYS),
       });
     } catch (e) {
       console.error("loadAdminStats fejl:", e.message);
