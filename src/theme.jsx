@@ -164,12 +164,28 @@ body{
 .topbar{
   /* Let "frosted glass" i stedet for helt gennemsigtig (24. sept. 2026) — så
      det app-brede baggrundsbillede altid skinner blødt igennem, konsekvent
-     på tværs af alle skærme. */
-  background:rgba(255,255,255,.55);
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+     på tværs af alle skærme. Selve sløringen/tonen ligger nu i ::before
+     (næste regel), IKKE direkte her — se dens kommentar for hvorfor. */
   border-bottom:none;
   padding:12px 20px 10px;display:flex;align-items:center;justify-content:space-between;
   position:sticky;top:0;z-index:60;
+}
+/* Baggrundslag for topbaren, adskilt fra selve topbaren (24. sept. 2026,
+   efter feedback om en for hård/tydelig kant hvor sløringen stoppede brat).
+   En ::before ovenpå en maskeret gradient kan tone SELVE tonen+blur'en
+   gradvist ud i bunden i stedet for at klippe den af — ville også maskere
+   topbarens egne synlige knapper/tekst, hvis det lå direkte på .topbar selv.
+   Ligger BAG topbarens indhold (z-index:-1) inden for topbarens egen
+   stakke-kontekst (position:sticky + z-index:60 opretter én), så den aldrig
+   kan synke ned bag resten af sidens indhold. Blur reduceret fra 16px til
+   8px samme dag — mindre udtalt/"vasket ud". */
+.topbar::before{
+  content:"";
+  position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:rgba(255,255,255,.55);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  -webkit-mask-image:linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
+  mask-image:linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
 }
 .topbar-logo{display:flex;align-items:center;gap:8px;}
 .topbar-name{font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.4px;font-family:var(--f);}
@@ -213,17 +229,29 @@ body{
   width:100%;max-width:480px;
   /* Var før helt uigennemsigtig (en tidligere gradient med en gennemsigtig
      top-del lod scrollende indhold skinne skarpt igennem, så baren så
-     "flimrende" ud). Løsning nu (24. sept. 2026): backdrop-filter:blur
-     i stedet for ren gennemsigtighed — sløringen visker scrollende indhold
+     "flimrende" ud). Løsning (24. sept. 2026): backdrop-filter:blur i
+     stedet for ren gennemsigtighed — sløringen visker scrollende indhold
      ud til en blød, rolig farve-vask i stedet for skarpe, flimrende former,
      samtidig med at det faste app-brede baggrundsbillede stadig skinner
      igennem. Samme "reel funktionel grund til blur"-princip som kamera-
-     kontrolknapperne i ScannerScreen.jsx (se design-tokens.md antimønster #6). */
-  background:rgba(255,255,255,.72);
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+     kontrolknapperne i ScannerScreen.jsx (se design-tokens.md antimønster #6).
+     Selve tonen/sløringen ligger i ::before (næste regel), ikke direkte her
+     — samme begrundelse som .topbar::before. */
   box-shadow:0 -8px 16px -12px rgba(21,32,26,.14);
   border-top:1px solid var(--border);
   display:flex;padding:10px 4px calc(24px + env(safe-area-inset-bottom));z-index:100;
+}
+/* Samme dag, samme begrundelse som .topbar::before: reduceret blur (20px→
+   10px) + en gradvis udtoning i TOPPEN af baren (i stedet for .bottom-nav
+   selv) i stedet for en hård kant, hvor sløringen tidligere stoppede brat
+   mod scrollende indhold. */
+.bottom-nav::before{
+  content:"";
+  position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:rgba(255,255,255,.72);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  -webkit-mask-image:linear-gradient(to top, black 0%, black 55%, transparent 100%);
+  mask-image:linear-gradient(to top, black 0%, black 55%, transparent 100%);
 }
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.45;transition:all .15s;}
 .nav-item.active{opacity:1;}

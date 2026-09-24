@@ -544,6 +544,46 @@ scroll-test (1200px ned i lang kortliste) — baggrunden forbliver pixel-
 identisk fastlåst til viewporten, kort ligger korrekt ovenpå, ingen
 strækning/forvrængning. Fuld metode i `.claude/HISTORY.md`.
 
+**24. sept. 2026 — samme dag, opfølgning: større hero-elementer, "Prøv en
+demo" fjernet, blødere top/bund-bar-kant.** Brugerfeedback efter forrige
+runde: "Alle elementer, herunder tekst er dog for småt på scan skærmen",
+"Prøv en demo"-knappen skulle væk, og top/bund-menuens sløring skulle
+have "mindre blur" og "fade ud, så der ikke er den skarpe kant".
+
+- **Scan-forsidens hero-elementer hævet ~20-25%:** hilsen/navn/undertekst,
+  scan-knappens diameter+ikon+label, og version/Beta-chippen har alle
+  fået hævede `clamp(min, Ncqh, max)`-værdier (fx scan-knappen
+  84-140px → 104-168px). Kun størrelserne er ændret — de %-baserede
+  `top`-positioner er bevidst holdt uændrede (27%/46%) efter et
+  mellemliggende forsøg på at flytte dem opad (25%/45%) gav synligt
+  større overlap mellem hilsenen og billedets øverste, tættere pakkede
+  hjørne-elementer på korte skærme (iPhone SE) — reverteret.
+- **"Prøv en demo"-knappen fjernet.** Den var, siden "App-guide"-knappen
+  blev fjernet som redundant i en tidligere runde, den ENESTE indgang til
+  `DemoSlider`-guiden (`setShowGuide(true)`) — `showGuide`-state og
+  `DemoSlider`-komponenten i `ScannerScreen.jsx` er bevidst IKKE slettet,
+  men har nu ingen synlig indgang i UI'et nogen steder. Genoptag ved
+  behov (fx en indgang under Profil-menuen) eller fjern dødt-kode-resten,
+  hvis brugeren bekræfter guiden reelt ikke skal bruges mere.
+  Version/Beta-info-rækken er nu alene i sin flex-kolonne, bund-forankret
+  (`justify-content:flex-end` i stedet for `flex-start`) i stedet for at
+  sidde i toppen af sin egen sektion med tomrum under.
+- **Blødere top/bund-bar-overgang:** flyttet selve tonen+sløringen fra
+  `.topbar`/`.bottom-nav` til en ny `::before`-pseudo-klasse på hver
+  (`z-index:-1`, inden for barens egen stakke-kontekst som
+  `position:sticky`/`fixed` + eksisterende `z-index` allerede opretter)
+  — nødvendigt fordi en maskeret udtoning direkte på selve baren også
+  ville have tonet dens SYNLIGE indhold (logo/knapper/nav-ikoner) ud,
+  ikke kun baggrundslaget. `mask-image`/`-webkit-mask-image` med en
+  lineær gradient tonet ud over den sidste ~35% (topbar, mod bunden) hhv.
+  ~45% (bottom-nav, mod toppen) af barens højde erstatter den tidligere
+  hårde kant hvor sløringen stoppede brat. Blur reduceret samtidig
+  (topbar 16px→8px, bottom-nav 20px→10px).
+
+Verificeret med en opdateret Playwright-mimic af den fulde hero-sektion
+ved to skærmhøjder. Fuld metode (mellemliggende `top:25%`-forsøg og
+hvorfor det blev reverteret) i `.claude/HISTORY.md`.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
