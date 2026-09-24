@@ -14,9 +14,10 @@ const NAV_ITEMS = [
   { id: "import",      icon: "download", label: "Import" },
   { id: "recipes",     icon: "book",     label: "Opskrifter" },
   { id: "history",     icon: "clock",    label: "Historik" },
+  { id: "family",      icon: "heart",    label: "Familie" },
 ];
 
-export default function AdminLayout({ section, setSection, userEmail, userId, accessToken, logout, pendingSubmissions, openTickets, children }) {
+export default function AdminLayout({ section, setSection, userEmail, userId, accessToken, logout, pendingSubmissions, openTickets, topbarExtra, children }) {
   const badges = { pendingSubmissions, openTickets };
   return (
     <div className="admin-shell">
@@ -42,8 +43,9 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
         </div>
       </aside>
       <div className="admin-main">
-        <div className="admin-topbar">
+        <div className="admin-topbar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <h1>{NAV_ITEMS.find(i => i.id === section)?.label || "Admin"}</h1>
+          {topbarExtra}
         </div>
         <div className="admin-content">{children}</div>
       </div>
