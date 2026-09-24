@@ -14,6 +14,7 @@ import MissingSection from "./sections/MissingSection.jsx";
 import ImportSection from "./sections/ImportSection.jsx";
 import RecipesSection from "./sections/RecipesSection.jsx";
 import ProductsSection from "./sections/ProductsSection.jsx";
+import KnowledgeSection from "./sections/KnowledgeSection.jsx";
 
 export default function AdminApp() {
   const auth = useAdminAuth();
@@ -129,6 +130,7 @@ export default function AdminApp() {
     if (section === "missing") loadMissingEans();
     if (section === "recipes") loadAdminRecipes();
     if (section === "products") admin.loadProducts();
+    if (section === "knowledge") admin.loadKnowledgeEntries();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section, accessToken, isAdmin]);
 
@@ -247,6 +249,19 @@ export default function AdminApp() {
           productActionLoading={admin.productActionLoading}
           openProductForEdit={admin.openProductForEdit} saveProductEdit={admin.saveProductEdit}
           deleteProduct={admin.deleteProduct}
+        />
+      )}
+      {section === "knowledge" && (
+        <KnowledgeSection
+          knowledgeEntries={admin.knowledgeEntries} knowledgeLoading={admin.knowledgeLoading}
+          knowledgeSearch={admin.knowledgeSearch} setKnowledgeSearch={admin.setKnowledgeSearch}
+          knowledgeCategoryFilter={admin.knowledgeCategoryFilter} setKnowledgeCategoryFilter={admin.setKnowledgeCategoryFilter}
+          loadKnowledgeEntries={admin.loadKnowledgeEntries}
+          openKnowledgeEntry={admin.openKnowledgeEntry} setOpenKnowledgeEntry={admin.setOpenKnowledgeEntry}
+          editingKnowledgeEntry={admin.editingKnowledgeEntry} setEditingKnowledgeEntry={admin.setEditingKnowledgeEntry}
+          knowledgeActionLoading={admin.knowledgeActionLoading}
+          openKnowledgeEntryForEdit={admin.openKnowledgeEntryForEdit} openNewKnowledgeEntry={admin.openNewKnowledgeEntry}
+          saveKnowledgeEntry={admin.saveKnowledgeEntry} deleteKnowledgeEntry={admin.deleteKnowledgeEntry}
         />
       )}
     </AdminLayout>
