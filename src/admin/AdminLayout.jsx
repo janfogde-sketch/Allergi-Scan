@@ -6,6 +6,7 @@ import FeedbackButton from "./FeedbackButton.jsx";
 const NAV_ITEMS = [
   { id: "dashboard",   icon: "chart",    label: "Dashboard" },
   { id: "users",       icon: "family",   label: "Brugere" },
+  { id: "products",    icon: "tag",      label: "Produkter" },
   { id: "submissions", icon: "package",  label: "Indsendelser", badgeKey: "pendingSubmissions" },
   { id: "tickets",     icon: "bug",      label: "Tickets", badgeKey: "openTickets" },
   { id: "missing",     icon: "info",     label: "Manglende EAN'er" },

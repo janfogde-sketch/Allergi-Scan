@@ -13,6 +13,7 @@ import TicketsSection from "./sections/TicketsSection.jsx";
 import MissingSection from "./sections/MissingSection.jsx";
 import ImportSection from "./sections/ImportSection.jsx";
 import RecipesSection from "./sections/RecipesSection.jsx";
+import ProductsSection from "./sections/ProductsSection.jsx";
 
 export default function AdminApp() {
   const auth = useAdminAuth();
@@ -127,6 +128,7 @@ export default function AdminApp() {
     if (section === "tickets") admin.loadTickets();
     if (section === "missing") loadMissingEans();
     if (section === "recipes") loadAdminRecipes();
+    if (section === "products") admin.loadProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section, accessToken, isAdmin]);
 
@@ -233,6 +235,18 @@ export default function AdminApp() {
           loadAdminRecipes={loadAdminRecipes} updateRecipeStatus={updateRecipeStatus}
           editingRecipe={editingRecipe} setEditingRecipe={setEditingRecipe}
           recipeActionLoading={recipeActionLoading} saveRecipeEdit={saveRecipeEdit}
+        />
+      )}
+      {section === "products" && (
+        <ProductsSection
+          products={admin.products} productsLoading={admin.productsLoading}
+          productSearch={admin.productSearch} setProductSearch={admin.setProductSearch}
+          loadProducts={admin.loadProducts}
+          openProduct={admin.openProduct} setOpenProduct={admin.setOpenProduct}
+          editingProduct={admin.editingProduct} setEditingProduct={admin.setEditingProduct}
+          productActionLoading={admin.productActionLoading}
+          openProductForEdit={admin.openProductForEdit} saveProductEdit={admin.saveProductEdit}
+          deleteProduct={admin.deleteProduct}
         />
       )}
     </AdminLayout>
