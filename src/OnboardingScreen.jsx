@@ -212,6 +212,18 @@ export default function OnboardingScreen({
             {/* CTA */}
             <WelcomeIntro setScreen={setScreen} setAuthTab={setAuthTab} />
 
+            {/* Kun i den delte Artifact-preview-build (se CLAUDE.md), aldrig i
+                den rigtige app — login mod Supabase er upålideligt fra denne
+                kontekst (andet domæne end produktion), så en preview-only
+                genvej springer login over og går direkte til Hjem, så man
+                i det mindste kan se UI/design uden en rigtig session. */}
+            {import.meta.env.MODE === "artifact-preview" && (
+              <button className="welcome-btn-ghost" style={{ marginTop:10 }}
+                onClick={() => setScreen(SCREENS.HOME)}>
+                Se app uden login (preview)
+              </button>
+            )}
+
             {/* Privacy */}
             <div style={{ marginTop:16, fontSize:11, color:"var(--muted)", lineHeight:1.6, textAlign:"center" }}>
               Ved at oprette en konto accepterer du vores{" "}
