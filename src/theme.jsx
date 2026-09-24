@@ -253,11 +253,18 @@ body{
   -webkit-mask-image:linear-gradient(to top, black 0%, black 55%, transparent 100%);
   mask-image:linear-gradient(to top, black 0%, black 55%, transparent 100%);
 }
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.45;transition:all .15s;}
-.nav-item.active{opacity:1;}
+/* Inaktive nav-punkter var tidligere dæmpet med opacity:.45 — kombineret
+   med barens gennemsigtige/slørede baggrund (se .bottom-nav::before) blev
+   ikonerne for svage til at læses ("knapperne forsvinder lidt i bund-
+   menuen", 24. sept. 2026). Erstattet med en solid, mørkere farve
+   (--ink2, 72% alpha) i stedet for opacity-dæmpning — giver ikon+label
+   fuld kontrast uanset hvad der skinner igennem bagved, mens aktiv-
+   tilstanden stadig skiller sig tydeligt ud via den grønne pille+label. */
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:var(--ink2);transition:color .15s;}
+.nav-item.active{color:var(--ink);}
 .nav-icon{width:42px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background .15s;}
 .nav-item.active .nav-icon{background:var(--green-lt);}
-.nav-lbl{font-size:9px;font-weight:600;color:var(--ink);letter-spacing:.3px;}
+.nav-lbl{font-size:9px;font-weight:600;color:inherit;letter-spacing:.3px;}
 .nav-item.active .nav-lbl{color:var(--green);}
 
 /* ── CARDS & COMPONENTS ── */
@@ -374,13 +381,14 @@ body{
    asynkrone bevægelser (forskellig varighed) i stedet for én synkron
    puls — undgår at knap+glød ser ud som ét stift, mekanisk objekt.
    Respekterer den globale prefers-reduced-motion-regel nedenfor
-   (ACCESSIBILITY) uden ekstra kode her. Opdateret samme dag: brugeren
-   kunne ikke se den glossy highlight tydeligt nok — glød-amplituden er
-   øget her, og selve glossy-highlighten er flyttet fra en svag inset-
-   box-shadow til et rigtigt, synligt lyspunkt direkte i knappens
-   baggrund (se ScannerScreen.jsx). */
-@keyframes scanCtaGlow{0%,100%{transform:scale(1);opacity:.8;}50%{transform:scale(1.16);opacity:1;}}
-@keyframes scanCtaBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.025);}}
+   (ACCESSIBILITY) uden ekstra kode her. Opdateret to gange samme dag:
+   først gjort en glossy-highlight mere synlig, men den fik i stedet
+   knappen til at ligne en gummibold — highlighten er fjernet igen (se
+   ScannerScreen.jsx), og amplituden her er dæmpet + varigheden sat op
+   (fra 2.8s til 4s) for et roligere, mere fladt/premium udtryk i stedet
+   for en tydelig puls. */
+@keyframes scanCtaGlow{0%,100%{transform:scale(1);opacity:.7;}50%{transform:scale(1.08);opacity:.95;}}
+@keyframes scanCtaBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.015);}}
 
 /* Mini cards */
 .home-cards-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
