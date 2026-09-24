@@ -317,6 +317,19 @@ nye krav der skal implementeres, ikke som spørgsmål der skal diskuteres først
   regel — den slags shippes altid med det samme, uanset om fejlen stammer
   fra en design- eller funktionsændring.
 
+  **Fundet overtrådt i praksis samme dag (PR #307/#308):** en anden,
+  parallel session mergede to rene design-PR'er (Scan-CTA-farve/-puls +
+  baggrundsbillede) direkte til `main`/Vercel FØR denne regel var skrevet
+  ned af den session der satte den — men opdagede først reglen (via
+  `git merge`s auto-merge af CLAUDE.md) EFTER begge allerede var mergede,
+  og fulgte den ikke retroaktivt. Konsekvens: Vercels daglige kvote blev
+  ramt af de mange hurtige merges, og brugeren så en forældet, ufikset
+  version af appen i flere minutter mens produktions-deploy ventede på
+  kvote-reset. **Læren:** læs hele den mergede CLAUDE.md igennem efter en
+  `git merge` med reelle konflikter — ikke kun de linjer der konfliktede —
+  en stående regel kan være tilføjet i en del af filen der auto-mergede
+  stille og roligt uden at kræve din opmærksomhed.
+
 ---
 
 ## 5. Designforbedring (september 2026) — afsluttet
