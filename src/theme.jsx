@@ -7,6 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import appBackground from "./assets/app-background.webp";
+import scanHeroBg from "./assets/home/scan-hero-bg.webp";
 
 export const THEME = {
   // Baggrunde — ren hvid, ingen farvet undertone (24. sept. 2026-redesign)
@@ -174,6 +175,25 @@ body{
   background-size:cover,cover;
   background-position:top center,top center;
   background-repeat:no-repeat,no-repeat;
+}
+/* Scan-forsidens EGET baggrundsfoto (24. sept. 2026) — overstyrer kun
+   billedet, samme position:fixed-boks, samme cover/wash-teknik som .app-bg
+   ovenfor. Slået til via en ekstra klasse (app-bg-scan) i App.jsx, KUN når
+   screen===SCREENS.HOME, så billedet dækker HELE skærmen kant-til-kant
+   (bag topbar OG bundnav, som allerede har frosted-glass-gennemsigtighed —
+   se .topbar::before/.bottom-nav::before nedenfor), i stedet for kun det
+   smallere rum imellem dem. Tidligere forsøgt som en <img> INDE i
+   .home-hero-frame (height:100%, aldrig beskåret) — men det billede-format
+   (941×1672, smallere end de fleste telefonskærme) betød at boksen aldrig
+   nåede bag topbar/bundnav uden en risikabel tilbagevenden til flex-fill-
+   højde (se HISTORY.md for den fejlklasse, allerede fundet og rettet én
+   gang denne session). background-size:cover her accepterer i stedet en
+   smule beskæring i siderne på ekstreme skærmforhold, samme afvejning som
+   .app-bg allerede gør for det app-brede billede. */
+.app-bg.app-bg-scan{
+  background-image:
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)),
+    url(${scanHeroBg});
 }
 
 /* ── TOPBAR ── */
