@@ -233,18 +233,17 @@ export default function ScannerScreen({
 
             {/* Scan-boks — kun til loggede. Forsiden viser en hilsen + det
                 hvidbalance-korrigerede baggrundsbillede + stor scan-CTA — se
-                CLAUDE.md afsnit 5 for baggrunden. I hero-tilstanden fylder
-                boksen al ledig plads mellem topbar og bundnav (flex:1,
-                minHeight:0 — den klassiske flexbox-krympe-fix, virker sammen
-                med overflow:hidden), så billedet altid går kant-til-kant
-                uanset skærmhøjde, og strækker sig helt ned bag den nu
-                gennemsigtige bundnav (se theme.jsx's .bottom-nav). */}
+                CLAUDE.md afsnit 5 for baggrunden. Hero-boksens egen højde
+                styres af .home-hero-frame (calc(100dvh - Npx), se theme.jsx)
+                — IKKE flex:1/height:100% her, som viste sig upålideligt i
+                produktion (afhænger af at hele forældrekæden har en
+                definitiv, ikke bare minimum-, højde — se theme.jsx's
+                kommentar + HISTORY.md for fejlfindingen). */}
             {!!userId && <div style={{
               background: cameraActive ? "var(--surface)" : "transparent",
               borderRadius: cameraActive ? 20 : 0, marginBottom: cameraActive ? 10 : 0,
-              overflow:"hidden", position:"relative", border: cameraActive ? "1px solid var(--border2)" : "none",
+              overflow: cameraActive ? "hidden" : "visible", position:"relative", border: cameraActive ? "1px solid var(--border2)" : "none",
               boxShadow: cameraActive ? "var(--sh2)" : "none",
-              flex: cameraActive ? "none" : 1, minHeight: 0,
             }}>
               {/* Kamera container — altid i DOM men skjult når ikke aktiv */}
               <div style={{ position:"relative", display: cameraActive ? "block" : "none" }}>
@@ -327,34 +326,41 @@ export default function ScannerScreen({
                 onChange={e => { if (e.target.files[0]) scanPhotoForEan(e.target.files[0]); e.target.value=""; }} />
 
               {/* Forside-hero når kamera ikke er aktivt: hilsen + baggrundsbillede
-                  + stor scan-knap + "Prøv en demo" + version/beta-fod. Billedet
-                  fylder ALTID hele den ledige højde mellem topbar og bundnav
+                  + stor scan-knap + "Prøv en demo" + version/beta-fod. .home-
+                  hero-frame (theme.jsx) giver denne boks en DEFINITIV
+                  calc(100dvh - Npx)-højde — billedet fylder den helt
                   (height:100%, bredden følger automatisk af billedets eget
                   højde/bredde-forhold — aldrig beskåret, kun skaleret) — se
-                  CLAUDE.md afsnit 5 for baggrunden. Hilsen/knap/demo-pille er
-                  positioneret med %-baserede top-værdier relativt til billedets
-                  egen boks (ikke skærmens), så de rammer billedets blanke
-                  midterbånd uanset skærmhøjde. Fod-linjen (version/Beta-info/
-                  App-guide) er bund-forankret (fast px, ikke %) så den altid
-                  forbliver lige over den gennemsigtige bundnav, uanset hvor
-                  højt/lavt billedet selv bliver. */}
+                  CLAUDE.md afsnit 5 for baggrunden. Hilsen/knap er positioneret
+                  med %-baserede top-værdier relativt til billedets egen boks
+                  (ikke skærmens), så de rammer billedets blanke midterbånd
+                  uanset skærmhøjde. "Prøv en demo" + version/Beta-info er
+                  slået sammen til ÉN flex-kolonne-gruppe (i stedet for to
+                  uafhængigt positionerede lag) så de garanteret ikke kan
+                  overlappe hinanden — fundet nødvendigt efter et rigtigt
+                  overlap på almindelige enheds-profiler, se .home-hero-frame's
+                  kommentar. Alle mål er clamp(min, Ncqh, max) i stedet for
+                  faste px, så indholdet skalerer NED sammen med boksen på
+                  korte telefoner. "App-guide"-knappen er droppet — den åbnede
+                  præcis samme guide som "Prøv en demo" (samme handler),
+                  ren redundans der kun kostede plads. */}
               {!cameraActive && (
-              <div style={{ position:"relative", height:"100%" }}>
+              <div className="home-hero-frame">
                 <img src={scanHeroBg} alt="" aria-hidden="true" draggable="false"
                   style={{ display:"block", height:"100%", width:"auto", margin:"0 auto", pointerEvents:"none", userSelect:"none" }} />
 
                 <div style={{ position:"absolute", top:"27%", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
-                  <div style={{ fontSize:14, fontWeight:500, color:"var(--ink)", letterSpacing:"-.2px" }}>{getGreeting()},</div>
-                  <div style={{ fontSize:23, fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:2 }}>{user.name?.split(" ")[0] || "der"}</div>
-                  <div style={{ fontSize:10.5, color:"var(--muted)", marginTop:7, lineHeight:1.5, maxWidth:203, marginLeft:"auto", marginRight:"auto" }}>
+                  <div style={{ fontSize:"clamp(10px, 2cqh, 14px)", fontWeight:500, color:"var(--ink)", letterSpacing:"-.2px" }}>{getGreeting()},</div>
+                  <div style={{ fontSize:"clamp(15px, 3.3cqh, 23px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(1px, .3cqh, 2px)" }}>{user.name?.split(" ")[0] || "der"}</div>
+                  <div style={{ fontSize:"clamp(8.5px, 1.5cqh, 10.5px)", color:"var(--muted)", marginTop:"clamp(4px, 1cqh, 7px)", lineHeight:1.5, maxWidth:203, marginLeft:"auto", marginRight:"auto" }}>
                     Scan en vare og få hurtigt svar om den passer til dine allergier.
                   </div>
                 </div>
 
                 {/* Stor cirkulær scan-knap med blød glød bagved */}
                 <div style={{ position:"absolute", top:"46%", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
-                  <div style={{ position:"relative", width:150, height:150, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                    <div style={{ position:"absolute", inset:-11, borderRadius:"50%",
+                  <div style={{ position:"relative", width:"clamp(90px, 23cqh, 150px)", height:"clamp(90px, 23cqh, 150px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    <div style={{ position:"absolute", inset:"clamp(-14px, -2.2cqh, -6px)", borderRadius:"50%",
                       background:"radial-gradient(circle, rgba(23,138,80,.28) 0%, rgba(23,138,80,0) 72%)" }} aria-hidden="true" />
                     <div
                       onClick={() => startCamera()}
@@ -362,48 +368,37 @@ export default function ScannerScreen({
                       aria-label="Start kamera for at scanne stregkode"
                       tabIndex={0}
                       onKeyDown={e => e.key === "Enter" && startCamera()}
-                      style={{ position:"relative", width:140, height:140, borderRadius:"50%", cursor:"pointer",
+                      style={{ position:"relative", width:"clamp(84px, 21.5cqh, 140px)", height:"clamp(84px, 21.5cqh, 140px)", borderRadius:"50%", cursor:"pointer",
                         background:"linear-gradient(150deg,#28B871 0%,#178A50 55%,#0C5A32 100%)",
                         boxShadow:"0 14px 28px -12px rgba(23,138,80,.5)",
-                        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:7 }}>
-                      <Icon name="barcode" size={29} color="#fff" />
-                      <div style={{ fontSize:11, fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
+                        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(4px, 1cqh, 7px)" }}>
+                      <Icon name="barcode" size="clamp(20px, 4.3cqh, 29px)" color="#fff" />
+                      <div style={{ fontSize:"clamp(9px, 1.6cqh, 11px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Prøv en demo */}
-                <div style={{ position:"absolute", top:"71.5%", left:0, right:0, zIndex:2, display:"flex", justifyContent:"center", padding:"0 12px" }}>
+                {/* "Prøv en demo" + version/Beta-info — én flex-kolonne, garanteret
+                    uden indbyrdes overlap uanset boksens højde. */}
+                <div style={{ position:"absolute", top:"71.5%", left:0, right:0, bottom:"clamp(4px, 1cqh, 8px)", zIndex:2,
+                  display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-start", gap:"clamp(4px, 1cqh, 8px)", padding:"0 12px", overflow:"hidden" }}>
                   <button onClick={() => setShowGuide(true)}
-                    style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-                      width:"100%", maxWidth:210, padding:"10px 15px", borderRadius:100,
+                    style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, flexShrink:0,
+                      width:"100%", maxWidth:210, padding:"clamp(6px, 1.4cqh, 10px) clamp(10px, 2.2cqh, 15px)", borderRadius:100,
                       background:"var(--paper)", border:"1px solid var(--border)", boxShadow:"0 10px 24px -12px rgba(21,32,26,.25)",
-                      fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
-                    <Icon name="package" size={14} color="var(--green)" />
+                      fontFamily:"var(--f)", fontSize:"clamp(9px, 1.6cqh, 11px)", fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
+                    <Icon name="package" size="clamp(11px, 2.2cqh, 14px)" color="var(--green)" />
                     Prøv en demo
-                    <Icon name="chevronRight" size={12} color="var(--muted2)" />
+                    <Icon name="chevronRight" size="clamp(10px, 2cqh, 12px)" color="var(--muted2)" />
                   </button>
-                </div>
-
-                {/* Version + Beta/App-guide-knapper — bund-forankret oven på
-                    billedets nederste del, lige over den gennemsigtige bundnav. */}
-                <div style={{ position:"absolute", bottom:"calc(77px + env(safe-area-inset-bottom) + 8px)", left:0, right:0, zIndex:2,
-                  display:"flex", flexDirection:"column", alignItems:"center", gap:6, padding:"0 12px" }}>
-                  <div style={{ fontSize:9.5, fontWeight:600, color:"var(--ink2)", background:"rgba(255,255,255,.7)", padding:"2px 8px", borderRadius:100 }}>v1.0.6 · beta</div>
-                  <div style={{ display:"flex", gap:6, justifyContent:"center", flexWrap:"wrap" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
+                    <div style={{ fontSize:"clamp(8px, 1.3cqh, 9.5px)", fontWeight:600, color:"var(--ink2)", background:"rgba(255,255,255,.7)", padding:"2px 8px", borderRadius:100 }}>v1.0.6 · beta</div>
                     <button onClick={onBetaClick}
                       style={{ display:"inline-flex", alignItems:"center", gap:5,
-                        padding:"5px 11px", borderRadius:100,
+                        padding:"clamp(3px, .8cqh, 5px) clamp(7px, 1.8cqh, 11px)", borderRadius:100,
                         background:"rgba(255,255,255,.82)", border:"1px solid var(--border)", boxShadow:"0 4px 12px -6px rgba(21,32,26,.3)",
-                        fontFamily:"var(--f)", fontSize:9.5, fontWeight:700, color:"var(--green)", cursor:"pointer", letterSpacing:".2px" }}>
+                        fontFamily:"var(--f)", fontSize:"clamp(8px, 1.3cqh, 9.5px)", fontWeight:700, color:"var(--green)", cursor:"pointer", letterSpacing:".2px" }}>
                       Beta-information
-                    </button>
-                    <button onClick={() => setShowGuide(true)}
-                      style={{ display:"inline-flex", alignItems:"center", gap:5,
-                        padding:"5px 11px", borderRadius:100,
-                        background:"rgba(255,255,255,.82)", border:"1px solid var(--border)", boxShadow:"0 4px 12px -6px rgba(21,32,26,.3)",
-                        fontFamily:"var(--f)", fontSize:9.5, fontWeight:700, color:"var(--ink)", cursor:"pointer", letterSpacing:".2px" }}>
-                      App-guide
                     </button>
                   </div>
                 </div>

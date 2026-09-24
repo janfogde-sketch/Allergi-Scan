@@ -458,6 +458,42 @@ skærmhøjder (667/iPhone SE, 844/standard, 932/Pro Max) — nul overflow
 bekræftet programmatisk (`scrollHeight <= clientHeight`) ved alle tre,
 ikke kun visuelt. Fuld metode i `.claude/HISTORY.md`.
 
+**24. sept. 2026 — samme dag, hotfix: forrige flex-fill-tilgang gik reelt
+i produktion.** Brugeren delte et desktop-skærmbillede af eatsafe.dk hvor
+"Scan produkt"-knappen var synligt afskåret og siden kunne scrolles —
+stik modsat det lige verificerede. Rodårsag: `flex:1`/`minHeight:0` +
+`height:"100%"`-kæden kræver at HELE forældre-kæden har en DEFINITIV
+højde, men `body`/`.app` har kun `min-height:100vh` (et minimum, ikke en
+definitiv højde) — virkede kun i den forrige tests kunstige fast-højde-
+wrapper, som ikke matchede produktionens rigtige CSS. **Fix:** droppet
+flex-fill/procent-højde helt til fordel for en ny `.home-hero-frame`-
+klasse i `theme.jsx` med en direkte `calc(100dvh - 143px -
+env(safe-area-inset-bottom))`-højde (altid definitiv, uanset forældre-
+kædens højde-model). Genverificeret med en mimic der bevidst UDELADER en
+fast-højde-wrapper (matcher produktion præcist) og med Playwrights
+RIGTIGE enhedsprofiler (`devices['iPhone SE']` m.fl., ikke selvvalgte
+viewport-mål — en tidligere antaget iPhone SE-størrelse på 390×667 viste
+sig forkert, den rigtige er 320×568) — nul overflow bekræftet på iPhone
+SE/13/14 Pro Max, Pixel 5 og det oprindelige brede desktop-scenarie.
+
+Samme runde: fast-pixel-størrelser (knap-diameter, skriftstørrelser) på
+Scan-siden skalerede ikke ned på små skærme, hvilket gav synligt overlap
+mellem "Prøv en demo"-pillen og version/Beta-footeren, selv på en helt
+almindelig iPhone 13. Fix: CSS Container Queries (`container-type:size`
+på `.home-hero-frame`) + `clamp(min, Ncqh, max)` på alle overlay-
+størrelser, så de skalerer proportionalt med rammens faktiske højde.
+"Prøv en demo"-pillen og version/Beta-footeren er desuden slået sammen
+til ÉN flex-kolonne (var to uafhængigt positionerede elementer) — flow
+garanterer nu at de aldrig kan overlappe hinanden. Den nu-redundante
+"App-guide"-knap er fjernet (åbnede præcis samme guide som "Prøv en
+demo"). **Kendt, accepteret tradeoff:** i modsætning til opfølgningen
+ovenfor stopper billedet nu FØR bundnav i stedet for at fortsætte bagved
+den slørede bundnav — en bevidst afvejning givet brugerens eksplicitte
+prioritering "vigtigst er det passer til telefoner" frem for den rene
+visuelle effekt. Fuld fejlfindingshistorik (de tre backtick-byggefejl i
+`theme.jsx`s CSS-kommentarer, den fulde årsagsanalyse af indefinit-højde-
+kæder) i `.claude/HISTORY.md`.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
