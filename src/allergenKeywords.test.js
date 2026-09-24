@@ -97,6 +97,18 @@ describe("isAllergenWord", () => {
     expect(isAllergenWord("ost")).toBe(true);
     expect(isAllergenWord("ost", { maelkeallergi: "no" })).toBe(false);
   });
+
+  it("does not flag 'aroma' as a milk allergen word just because it's a substring of 'smøraroma'", () => {
+    // Fundet 24. sept. 2026 — en bruger rapporterede at hele et produkts
+    // ingrediensliste stod fremhævet som allergen. Rodårsagen var delvist
+    // dette: den omvendte substreng-retning (nøgleordet indeholder ordet)
+    // flaggede "aroma" fordi maelkeallergi-listen har "smøraroma".
+    expect(isAllergenWord("aroma", { maelkeallergi: "yes" })).toBe(false);
+  });
+
+  it("still flags a genuine compound ingredient that contains a long keyword", () => {
+    expect(isAllergenWord("hasselnøddepasta", { noedder: "yes" })).toBe(true);
+  });
 });
 
 describe("detectAllergensInText", () => {

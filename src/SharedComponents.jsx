@@ -190,21 +190,32 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap }) {
     .replace(/\s+/g, " ")
     .trim();
 
-  // Split på komma men bevar indhold i parenteser
+  // Split på ALLE kommaer, uanset paren-dybde — en indlejret under-liste (fx
+  // "7% krydderiblanding (sukker, salt, VALLEPULVER (MÆLK), ...)") skal give
+  // individuelt fremhævelige dele, ikke én stor uadskillelig blok. Uden dette
+  // fremhævede en enkelt "mælk" et sted i en lang under-liste HELE blokken —
+  // inkl. ingredienser der intet har med allergenet at gøre (rapporteret af
+  // en bruger 24. sept. 2026: "hele dette produkts ingredienser står som
+  // fremhævet"). Rydder derefter op i de paren-ubalancerede rand-stykker en
+  // sådan blind splitning uundgåeligt giver (gruppe-header-åbningen og den
+  // afsluttende lukning), og klæber en ren, kort forklarings-parentes
+  // ("(MÆLK)" som sin egen del) til den forrige del i stedet for at vise den
+  // isoleret.
+  const rawParts = cleaned.split(",").map(p => p.trim()).filter(Boolean);
   const parts = [];
-  let depth = 0;
-  let current = "";
-  for (const ch of cleaned) {
-    if (ch === "(" || ch === "[") { depth++; current += ch; }
-    else if (ch === ")" || ch === "]") { depth--; current += ch; }
-    else if (ch === "," && depth === 0) {
-      parts.push(current.trim());
-      current = "";
+  for (const raw of rawParts) {
+    const opens = (raw.match(/[([]/g) || []).length;
+    const closes = (raw.match(/[)\]]/g) || []).length;
+    if (/^[([].*[)\]]$/.test(raw) && opens === closes && opens <= 1 && parts.length > 0) {
+      parts[parts.length - 1] += " " + raw;
+    } else if (opens > closes) {
+      parts.push(raw.replace(/[([]/g, "").trim());
+    } else if (opens < closes) {
+      parts.push(raw.replace(/[)\]]/g, "").trim());
     } else {
-      current += ch;
+      parts.push(raw);
     }
   }
-  if (current.trim()) parts.push(current.trim());
 
   const isHighlighted = (part) => {
     // STORE BOGSTAVER = allergen markeret af producent

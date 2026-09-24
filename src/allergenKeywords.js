@@ -222,7 +222,15 @@ export function isAllergenWord(word, allergenFlags = {}) {
     return terms.some(t => {
       const tc = t.toLowerCase().replace(/[^a-zæøå0-9]/g, "");
       if (tc.length <= 4) return w === tc; // ordgrænse for korte ord — undgå "mel" i "rismel"
-      return w.includes(tc) || tc.includes(w);
+      // KUN denne retning: matcher når selve ingrediensordet indeholder
+      // nøgleordet (fx "hasselnøddepasta" indeholder "hasselnød"). Den
+      // omvendte retning (nøgleordet indeholder ordet) blev fjernet 24.
+      // sept. 2026 — den fangede fx det harmløse "aroma" som et
+      // mælkeallergen, fordi "aroma" er en understreng af det langt mere
+      // specifikke "smøraroma". Rammer kun selve VISNINGEN (fremhævning i
+      // IngredientsList) — den reelle farlig/sikker-beregning bruger
+      // findAllKeywordIndices/keywordMatches, ikke denne funktion.
+      return w.includes(tc);
     });
   });
 }
