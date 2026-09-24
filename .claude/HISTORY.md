@@ -2009,3 +2009,30 @@ skalering. Verificeret programmatisk (`scrollWidth <= clientWidth` og
 forskellige viewport-former (bred desktop 1280×900, smalt/højt panel
 480×720, bredt/lavt vindue 900×480, kvadratisk 600×600) — ingen overflow
 i noget scenarie, telefonen centreret og læsbar i alle fire.
+
+**Endnu en opfølgning samme dag: Scan-siden fremstod tom.** Brugeren
+rapporterede at Scan-siden ("pointen" med preview'en) var tom efter klik
+på login-bypass-knappen. Undersøgt via en minimal debug-wrapper (rå
+`<iframe>`, ingen telefon-ramme) + Playwright: `document.querySelector(
+'.home-hero-frame')` returnerede `null` — hele hero-blokken (hilsen,
+scan-knap) manglede fra DOM'et, ikke bare usynlig via CSS. Rodårsag
+fundet ved at læse `ScannerScreen.jsx` linje for linje fra `.screen`-
+wrapperen og nedefter: hele kamera-boksen OG hero-blokken er nested
+inde i `{!!userId && <div>...}` (linje 237) — en gate til "kun for
+loggede ind", som aldrig blev opfyldt, fordi login-bypass-knappen kun
+kaldte `setScreen(SCREENS.HOME)` uden nogensinde at sætte en `userId`.
+
+**Fix:** `setUserId` (fandtes allerede i `useAuth()`s return-værdi, men
+var ikke med i `authContextValue` i App.jsx — tilføjet) + preview-
+bypass-knappen sætter nu en mock `userId` ("preview-demo-bruger"), et
+mock brugernavn ("Mille Nielsen") og to mock-allergener (gluten,
+nødder), før den navigerer til Hjem. Genverificeret med samme debug-
+opsætning: `.home-hero-frame` findes nu i DOM'et, og screenshot viser
+hele hero-blokken (hilsen "God dag, Mille", scan-knap, undertekst)
+korrekt renderet.
+
+**Stående lektion for denne preview-metode:** enhver skærm der viser sig
+tom i preview'en skal undersøges for lignende `!!userId`/`!!user`-gates
+(eller lignende "kun for loggede ind"-mønstre) og få tilsvarende mock-
+data tilføjet til bypass-knappens handler i `OnboardingScreen.jsx` —
+ikke antages at være en uløselig konsekvens af manglende rigtig session.

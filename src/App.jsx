@@ -704,11 +704,11 @@ export default function EatSafe() {
   // videre (og dermed tvinger ALLE dets consumers til at re-rendere) ved
   // hver App-render — kun når noget de faktisk indeholder ændrer sig.
   const authContextValue = useMemo(() => ({
-    user, setUser, userId, accessToken,
+    user, setUser, userId, setUserId, accessToken,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
     authError, setAuthError, authLoading, authTab, setAuthTab,
     isOAuth, handleLogin, handleSignup, handleOAuth, clearAuth,
-  }), [user, userId, accessToken, loginEmail, loginPassword, authError, authLoading, authTab, isOAuth, handleLogin, handleSignup, handleOAuth, clearAuth]);
+  }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, authLoading, authTab, isOAuth, handleLogin, handleSignup, handleOAuth, clearAuth]);
 
   const profileContextValue = useMemo(() => ({
     allergens, setAllergens, customAllerg, setCustomAllerg,
