@@ -180,6 +180,28 @@ export function extractENumbers(text) {
   return [...new Set(matches.map(m => "E" + m.replace(/^E[\s-]?/i, "").trim()))];
 }
 
+// Fjern specifikke, admin-fravalgte E-numre fra en ingrediensteksts rå
+// forekomster (fx "E 270" eller "E270") — bruges når admin under gennemsyn
+// af en indsendelse fravælger et automatisk fundet E-nummer som en
+// fejlaflæsning. E-numre er IKKE et selvstændigt gemt felt på produktet
+// (de udledes altid live fra ingredients_text, se useProduct.js), så et
+// fravalg skal ske i selve teksten for at slå igennem på det færdige
+// produkt. Rydder efterfølgende dobbelt-komma/mellemrum som fjernelsen kan
+// efterlade.
+export function stripExcludedENumbers(text, excluded) {
+  if (!text || !excluded?.length) return text;
+  let result = text;
+  for (const eNum of excluded) {
+    const digits = eNum.replace(/^E/i, "");
+    const re = new RegExp(`\\bE[\\s-]?${digits}\\b`, "gi");
+    result = result.replace(re, "");
+  }
+  return result
+    .replace(/,\s*,/g, ",")
+    .replace(/^[,\s]+|[,\s]+$/g, "")
+    .replace(/\s{2,}/g, " ");
+}
+
 // Sammenlign produktets E-numre mod brugerens overvågede E-numre
 export function compareENumbers(productENumbers, userENumbers) {
   if (!productENumbers || !userENumbers || userENumbers.length === 0) {

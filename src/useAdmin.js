@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS } from "./constants.jsx";
-import { makeHeaders, apiCall } from "./helpers.js";
+import { makeHeaders, apiCall, stripExcludedENumbers } from "./helpers.js";
 import { sendPushToUser } from "./usePush.js";
 import { showToast } from "./SharedComponents.jsx";
 
@@ -178,6 +178,11 @@ export function useAdmin(accessToken, userId, clearAuth) {
         const v = edited?.allergen_flags?.[a.id];
         if (v) allergenFlags[a.id] = v;
       }
+      // E-numre er ikke et selvstændigt gemt felt — de udledes altid live fra
+      // ingredients_text (se useProduct.js). Et E-nummer admin har fravalgt
+      // under gennemsyn skal derfor fjernes fra selve teksten HER, ved
+      // godkendelse, så det ikke dukker op igen på det færdige produkt.
+      const finalIngredientsText = stripExcludedENumbers(edited?.ingredients_text, edited?.excluded_enumbers);
       // Godkendelse skal ramme submissions Edge Function — den er den eneste der
       // rent faktisk OPRETTER produktet i products-tabellen. Et almindeligt PATCH
       // mod /rest/v1/submissions markerer kun status, uden at oprette produktet,
@@ -191,7 +196,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
           reviewed_by: userId,
           name: edited?.name,
           brand: edited?.brand,
-          ingredients_text: edited?.ingredients_text,
+          ingredients_text: finalIngredientsText,
           allergen_flags: allergenFlags,
         }),
       });
@@ -199,7 +204,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
       // Reparse allergen-flags med AI-verifikation på det nu oprettede produkt
       if (submission.ean || edited?.ean) {
         const ean = edited?.ean || submission.ean;
-        const ingredientsText = edited?.ingredients_text || submission.ocr_raw_text || "";
+        const ingredientsText = finalIngredientsText || submission.ocr_raw_text || "";
         if (ingredientsText) {
           try {
             const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, {
