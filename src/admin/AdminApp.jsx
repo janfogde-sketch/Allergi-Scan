@@ -159,7 +159,7 @@ export default function AdminApp() {
   return (
     <AdminLayout
       section={section} setSection={setSection}
-      userEmail={userEmail} logout={logout}
+      userEmail={userEmail} userId={userId} accessToken={accessToken} logout={logout}
       pendingSubmissions={admin.adminStats?.pending_submissions}
       openTickets={admin.adminStats?.open_tickets}
     >

@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { Icon } from "../SharedComponents.jsx";
+import FeedbackButton from "./FeedbackButton.jsx";
 
 const NAV_ITEMS = [
   { id: "dashboard",   icon: "chart",    label: "Dashboard" },
@@ -12,7 +13,7 @@ const NAV_ITEMS = [
   { id: "recipes",     icon: "book",     label: "Opskrifter" },
 ];
 
-export default function AdminLayout({ section, setSection, userEmail, logout, pendingSubmissions, openTickets, children }) {
+export default function AdminLayout({ section, setSection, userEmail, userId, accessToken, logout, pendingSubmissions, openTickets, children }) {
   const badges = { pendingSubmissions, openTickets };
   return (
     <div className="admin-shell">
@@ -33,6 +34,7 @@ export default function AdminLayout({ section, setSection, userEmail, logout, pe
         </nav>
         <div className="admin-sidebar-footer">
           <div className="admin-sidebar-user" title={userEmail}>{userEmail}</div>
+          <FeedbackButton accessToken={accessToken} userId={userId} userEmail={userEmail} section={section} />
           <button className="admin-btn admin-btn-ghost admin-btn-full admin-btn-sm" onClick={logout}>Log ud</button>
         </div>
       </aside>
