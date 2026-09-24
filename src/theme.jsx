@@ -369,6 +369,15 @@ body{
 .reticle-line{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 0%,var(--green-logo) 15%,var(--green-logo) 85%,transparent 100%);animation:scanline 2.2s ease-in-out infinite;box-shadow:0 0 10px var(--green-logo),0 0 3px var(--green-logo);}
 @keyframes scanline{0%{top:13px;opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{top:51px;opacity:0;}}
 
+/* Forside-scan-knappens "levende" glød+åndedræt (24. sept. 2026, efter
+   brugerens ønske om lidt lys/skygge og liv på knappen). To adskilte,
+   asynkrone bevægelser (forskellig varighed) i stedet for én synkron
+   puls — undgår at knap+glød ser ud som ét stift, mekanisk objekt.
+   Respekterer den globale prefers-reduced-motion-regel nedenfor
+   (ACCESSIBILITY) uden ekstra kode her. */
+@keyframes scanCtaGlow{0%,100%{transform:scale(1);opacity:.75;}50%{transform:scale(1.14);opacity:1;}}
+@keyframes scanCtaBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.025);}}
+
 /* Mini cards */
 .home-cards-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
 .home-mini-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px 14px;cursor:pointer;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;transition:border-color .15s;}
