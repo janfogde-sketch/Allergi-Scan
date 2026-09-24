@@ -160,11 +160,16 @@ body{
    tekst svær at læse. Løst med ÉT globalt, ensartet hvidt slør-lag frem for
    individuelle bokse bag tekst — billedet bliver en dæmpet, stemningsfuld
    tekstur i baggrunden i stedet for at konkurrere med indholdet, og løsningen
-   gælder automatisk alle nuværende og fremtidige skærme uden per-skærm-arbejde. */
+   gælder automatisk alle nuværende og fremtidige skærme uden per-skærm-arbejde.
+   Dæmpet fra .8 til .5 samme dag (brugerfeedback: for kraftigt slør vaskede
+   billedets farve/elegance helt ud) — læsbarheden bæres i stedet primært af
+   tekstens egen vægt/størrelse + en blød hvid text-shadow-glød ("løft" væk
+   fra baggrunden), ikke af selve sløret. Se `.screen-title` nedenfor og
+   Scan-forsidens hilsen (ScannerScreen.jsx) for samme mønster. */
 .app-bg{
   position:fixed;inset:0;z-index:0;pointer-events:none;
   background-image:
-    linear-gradient(rgba(255,255,255,.8), rgba(255,255,255,.8)),
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)),
     url(${appBackground});
   background-size:cover,cover;
   background-position:top center,top center;
@@ -521,7 +526,7 @@ body{
 .empty-sub{font-size:13px;margin-top:6px;color:var(--muted);font-weight:400;line-height:1.55;max-width:260px;margin-left:auto;margin-right:auto;}
 .demo-code{padding:4px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer;transition:all .15s;display:inline-block;margin:3px;font-family:monospace;}
 .demo-code:hover{border-color:var(--green);color:var(--green);background:var(--green-lt);}
-.screen-title{font-size:15px;font-weight:700;color:var(--ink);margin:10px 0 3px;letter-spacing:-.2px;text-align:center;width:100%;}
+.screen-title{font-size:16px;font-weight:800;color:var(--ink);margin:10px 0 3px;letter-spacing:-.2px;text-align:center;width:100%;text-shadow:0 1px 2px rgba(255,255,255,.85),0 2px 12px rgba(255,255,255,.6);}
 .screen-sub{font-size:11px;color:var(--ink2);margin-bottom:10px;line-height:1.4;font-weight:400;}
 .tab-row{display:flex;gap:3px;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:14px;border:1px solid var(--border);}
 .tab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--muted);transition:all .15s;}
