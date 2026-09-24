@@ -321,8 +321,17 @@ export function useAdmin(accessToken, userId, clearAuth) {
         body: JSON.stringify({ text, force_ai: true }),
       });
       if (data.success && data.allergen_flags) {
-        // Opdater flags fra AI-analyse
-        setEditingSubmission(s => ({ ...s, ...data.allergen_flags }));
+        // Opdater flags fra AI-analyse. VIGTIGT: skal ind under
+        // .allergen_flags — UI'et og godkendelses-payloaden læser
+        // editingSubmission.allergen_flags[id], IKKE editingSubmission[id]
+        // direkte. Tidligere spredte dette de nye flag-værdier som
+        // top-level-nøgler på editingSubmission i stedet for ind i dets
+        // allergen_flags-objekt, så AI'ens korrekt genkendte allergener
+        // (fx "jordnødder") aldrig nåede hverken toggle-grid'et eller det
+        // der rent faktisk blev godkendt — stille forkert data uden nogen
+        // synlig fejl (samme feltnavne-mismatch-mønster som customAllerg-
+        // fundet, se CLAUDE.md afsnit 5).
+        setEditingSubmission(s => ({ ...s, allergen_flags: { ...s.allergen_flags, ...data.allergen_flags } }));
       }
       // Rens teksten: fjern næringsindhold, labels, og behold kun ingredienser
       const lines = text.split(/\n/).map(l => l.trim()).filter(l => l.length > 3);

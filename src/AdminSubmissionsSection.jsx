@@ -118,7 +118,7 @@ export default function AdminSubmissionsSection({
                     <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</div>
                     {isEdit && <span style={{ fontSize:9, padding:"2px 6px", borderRadius:100, background:"var(--amber-lt)", color:"var(--amber)", fontWeight:800, flexShrink:0 }}>RETTELSE</span>}
                   </div>
-                  <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6, fontFamily:"monospace" }}>EAN: {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`}</div>
+                  <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6, fontFamily:"monospace" }}>EAN: {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`} · #{s.id.slice(0, 8)}</div>
                   <div style={UI.wrapGap4}>
                     {dangerAllergens.slice(0,3).map(a => <span key={a.id} style={{ fontSize:10, padding:"2px 8px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", fontWeight:700 }}>{a.emoji} {a.label}</span>)}
                     {dangerAllergens.length === 0 && <span style={UI.muted10}>Ingen allergener</span>}
@@ -139,6 +139,7 @@ export function AdminSubmissionReview({
   openSubmission, setOpenSubmission, editingSubmission, setEditingSubmission,
   cleanedOcrText, cleaningOcr, cleanOcrWithAI,
   updateSubmissionAndApprove, rejectSubmission,
+  submitterInfo, submitterLoading,
 }) {
   if (!openSubmission || !editingSubmission) return null;
   return (
@@ -153,6 +154,10 @@ export function AdminSubmissionReview({
         <div style={UI.flex1}>
           <div style={{ ...UI.ufs17_fw800_cink, display:"flex", alignItems:"center", gap:6 }}>{openSubmission.type === "edit" && <Icon name="edit" size={15} color="var(--ink)" />} {openSubmission.type === "edit" ? "Gennemse rettelsesforslag" : "Gennemse indsendelse"}</div>
           <div style={UI.muted11mt1}>{new Date(openSubmission.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"long", year:"numeric" })}</div>
+          <div style={{ fontSize:10.5, color:"var(--muted)", marginTop:3, fontFamily:"monospace" }}>ID: {openSubmission.id}</div>
+          <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>
+            Indsendt af: {submitterLoading ? "henter…" : submitterInfo?.error ? `ukendt (${submitterInfo.error})` : (submitterInfo?.name || submitterInfo?.email) ? `${submitterInfo.name || "—"}${submitterInfo.email ? ` (${submitterInfo.email})` : ""}` : openSubmission.submitted_by ? "ukendt bruger" : "anonym"}
+          </div>
         </div>
         {/* Hurtig-godkend/afvis */}
         <div style={{ display:"flex", gap:6 }}>
@@ -238,9 +243,23 @@ export function AdminSubmissionReview({
         </div>
       )}
 
-      {/* E-numre fundet i ingredienslisten */}
+      {/* Ingredienstekst der rent faktisk bliver godkendt — redigérbar, så
+          admin kan rette/tilføje direkte (fx manglende E-numre eller
+          allergener OCR'en er gået glip af) i stedet for kun at kunne
+          acceptere AI-renskrivningen som den er. */}
+      {editingSubmission.ingredients_text !== undefined && (
+        <div style={UI.card}>
+          <div style={{ ...UI.boldInk13, marginBottom:8 }}>Ingredienstekst der bliver godkendt</div>
+          <textarea value={editingSubmission.ingredients_text || ""}
+            onChange={e => setEditingSubmission(s => ({ ...s, ingredients_text: e.target.value }))}
+            rows={3} placeholder="Ingrediensliste…" className="field"
+            style={{ resize:"vertical", fontFamily:"var(--f)", fontSize:13, lineHeight:1.6, width:"100%" }} />
+        </div>
+      )}
+
+      {/* E-numre fundet i ingredienslisten der rent faktisk bliver godkendt */}
       {(() => {
-        const src = cleanedOcrText || openSubmission.ocr_raw_text || "";
+        const src = editingSubmission.ingredients_text || cleanedOcrText || openSubmission.ocr_raw_text || "";
         const found = [...new Set((src.match(E_NUMBER_RE) || []).map(e => e.toUpperCase()))];
         if (found.length === 0) return null;
         return (
