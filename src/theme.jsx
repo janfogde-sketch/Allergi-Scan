@@ -151,13 +151,24 @@ body{
    almindelig fixed-positioneret boks virker konsekvent alle steder. Ligger
    som første barn i .app, bag alt andet indhold via z-index:0 + .screen's
    z-index:1 nedenfor — IKKE negativ z-index, som i visse browsere kan ende
-   bag body's egen baggrund i stedet for bag skærmens indhold. */
+   bag body's egen baggrund i stedet for bag skærmens indhold.
+   Hvid slør-wash (24. sept. 2026, efter billedskifte til en tættere fyldt
+   flatlay uden det forrige billedes indbyggede blanke midterfelt) — tekst
+   ligger flere steder direkte oven på dette lag uden kort/boks (Scan-
+   forsidens hilsen, screen-title øverst på flere skærme), og det nye billede
+   er markant tættere/mere farverigt end det forrige, hvilket gjorde den
+   tekst svær at læse. Løst med ÉT globalt, ensartet hvidt slør-lag frem for
+   individuelle bokse bag tekst — billedet bliver en dæmpet, stemningsfuld
+   tekstur i baggrunden i stedet for at konkurrere med indholdet, og løsningen
+   gælder automatisk alle nuværende og fremtidige skærme uden per-skærm-arbejde. */
 .app-bg{
   position:fixed;inset:0;z-index:0;pointer-events:none;
-  background-image:url(${appBackground});
-  background-size:cover;
-  background-position:top center;
-  background-repeat:no-repeat;
+  background-image:
+    linear-gradient(rgba(255,255,255,.8), rgba(255,255,255,.8)),
+    url(${appBackground});
+  background-size:cover,cover;
+  background-position:top center,top center;
+  background-repeat:no-repeat,no-repeat;
 }
 
 /* ── TOPBAR ── */
