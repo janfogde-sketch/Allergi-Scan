@@ -350,13 +350,16 @@ export default function ScannerScreen({
                     end forrige runde (24. sept. 2026). Samme dag: tilføjet
                     et roligt "åndedræt" (glød + knap animerer på hver sin,
                     asynkrone varighed — se scanCtaGlow/scanCtaBreathe i
-                    theme.jsx) samt en glans-highlight + dybere skygge for
-                    mere lys/rumfornemmelse, efter brugerens ønske om "lidt
-                    liv" på knappen. */}
+                    theme.jsx), efter brugerens ønske om "lidt liv" på
+                    knappen. Opfølgning samme dag: den forrige glossy-
+                    highlight (en svag inset-box-shadow) var ikke synlig nok
+                    — erstattet med et rigtigt lyspunkt (radial-gradient
+                    øverst til venstre i selve baggrunden, klassisk "lit
+                    sphere"-teknik) + en større/lysere glød bagved knappen. */}
                 <div style={{ position:"absolute", top:"46%", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
                   <div style={{ position:"relative", width:"clamp(168px, 42cqh, 267px)", height:"clamp(168px, 42cqh, 267px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
                     <div style={{ position:"absolute", inset:"clamp(-24px, -3.6cqh, -11px)", borderRadius:"50%",
-                      background:"radial-gradient(circle, rgba(23,138,80,.28) 0%, rgba(23,138,80,0) 72%)",
+                      background:"radial-gradient(circle, rgba(255,255,255,.4) 0%, rgba(23,138,80,.32) 38%, rgba(23,138,80,0) 72%)",
                       animation:"scanCtaGlow 2.8s ease-in-out infinite" }} aria-hidden="true" />
                     <div
                       onClick={() => startCamera()}
@@ -364,9 +367,9 @@ export default function ScannerScreen({
                       aria-label="Start kamera for at scanne stregkode"
                       tabIndex={0}
                       onKeyDown={e => e.key === "Enter" && startCamera()}
-                      style={{ position:"relative", width:"clamp(156px, 40cqh, 252px)", height:"clamp(156px, 40cqh, 252px)", borderRadius:"50%", cursor:"pointer",
-                        background:"linear-gradient(150deg,#28B871 0%,#178A50 55%,#0C5A32 100%)",
-                        boxShadow:"inset 0 2px 3px rgba(255,255,255,.4), inset 0 -18px 26px -14px rgba(0,0,0,.22), 0 16px 32px -12px rgba(23,138,80,.55)",
+                      style={{ position:"relative", width:"clamp(156px, 40cqh, 252px)", height:"clamp(156px, 40cqh, 252px)", borderRadius:"50%", cursor:"pointer", overflow:"hidden",
+                        background:"radial-gradient(circle at 32% 26%, rgba(255,255,255,.85) 0%, rgba(255,255,255,.15) 22%, rgba(255,255,255,0) 45%), linear-gradient(150deg,#28B871 0%,#178A50 55%,#0C5A32 100%)",
+                        boxShadow:"inset 0 -20px 28px -14px rgba(0,0,0,.28), 0 18px 34px -12px rgba(23,138,80,.6)",
                         animation:"scanCtaBreathe 3.4s ease-in-out infinite",
                         display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(8px, 1.8cqh, 14px)" }}>
                       <Icon name="barcode" size="clamp(38px, 8cqh, 53px)" color="#fff" />

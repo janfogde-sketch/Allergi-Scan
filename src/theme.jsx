@@ -374,8 +374,12 @@ body{
    asynkrone bevægelser (forskellig varighed) i stedet for én synkron
    puls — undgår at knap+glød ser ud som ét stift, mekanisk objekt.
    Respekterer den globale prefers-reduced-motion-regel nedenfor
-   (ACCESSIBILITY) uden ekstra kode her. */
-@keyframes scanCtaGlow{0%,100%{transform:scale(1);opacity:.75;}50%{transform:scale(1.14);opacity:1;}}
+   (ACCESSIBILITY) uden ekstra kode her. Opdateret samme dag: brugeren
+   kunne ikke se den glossy highlight tydeligt nok — glød-amplituden er
+   øget her, og selve glossy-highlighten er flyttet fra en svag inset-
+   box-shadow til et rigtigt, synligt lyspunkt direkte i knappens
+   baggrund (se ScannerScreen.jsx). */
+@keyframes scanCtaGlow{0%,100%{transform:scale(1);opacity:.8;}50%{transform:scale(1.16);opacity:1;}}
 @keyframes scanCtaBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.025);}}
 
 /* Mini cards */
