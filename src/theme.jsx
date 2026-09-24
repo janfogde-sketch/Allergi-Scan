@@ -7,9 +7,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const THEME = {
-  // Baggrunde — lys, varm off-white med svag grøn undertone
-  paper:   "#F6F8F3",
-  paper2:  "#EEF1E9",
+  // Baggrunde — ren hvid, ingen farvet undertone (24. sept. 2026-redesign)
+  paper:   "#FFFFFF",
+  paper2:  "#F3F3F1",
 
   // Primær tekst — mørk grøn-sort (ikke ren sort)
   ink:     "#15201A",
@@ -54,8 +54,8 @@ export const THEME = {
 
   // Surfaces — hvide, ophøjede kort på den lyse baggrund
   surface:  "#FFFFFF",
-  surface2: "#F1F3EC",
-  surface3: "#FAFBF8",
+  surface2: "#F4F4F2",
+  surface3: "#FAFAF9",
 
   // Typografi
   font: "'DM Sans',system-ui,sans-serif",
@@ -77,9 +77,10 @@ export const appCss = `
   --ink:#15201A;
   --ink2:rgba(21,32,26,.78);
   --ink3:rgba(21,32,26,.62);
-  /* Baggrunde — lys, varm off-white med svag grøn undertone */
-  --paper:#F6F8F3;
-  --paper2:#EEF1E9;
+  /* Baggrunde — ren hvid, ingen farvet undertone (24. sept. 2026-redesign,
+     se CLAUDE.md afsnit 5 — erstatter den tidligere cremet/grønlige --paper) */
+  --paper:#FFFFFF;
+  --paper2:#F3F3F1;
   /* Bundark/modal-overflader — hvid, til overlejringer der "svæver" over resten af skærmen */
   --sheet:#FFFFFF;
   /* Grøn — appens ene accentfarve: sikker/success/primær CTA */
@@ -95,8 +96,8 @@ export const appCss = `
   --border2:rgba(21,32,26,.16);
   /* Surfaces — hvide, ophøjede kort på den lyse baggrund */
   --surface:#FFFFFF;
-  --surface2:#F1F3EC;
-  --surface3:#FAFBF8;
+  --surface2:#F4F4F2;
+  --surface3:#FAFAF9;
   /* Semantiske farver */
   --red:#C8402E;--red-lt:rgba(200,64,46,.08);--red-md:rgba(200,64,46,.18);
   --amber:#B5791A;--amber-lt:rgba(181,121,26,.08);--amber-md:rgba(181,121,26,.18);
@@ -125,7 +126,7 @@ export const appCss = `
   --sh3:0 1px 0 rgba(255,255,255,.7) inset, 0 20px 44px -20px rgba(21,32,26,.24);
 }
 body{
-  background:#F0F3EB;
+  background:#FFFFFF;
   color:var(--ink);font-family:var(--f);-webkit-font-smoothing:antialiased;
   min-height:100vh;
 }
@@ -138,12 +139,14 @@ body{
   width:100%;position:relative;overflow-x:hidden;
   /* Fint punkt-gitter i grøn (scanner/præcisions-følelse, matcher stregkode-
      og brand-farven) + blød grøn glød foroven og en svag blå glød forneden
-     for dybde — den tidligere baggrund var stort set en flad farve uden
-     nogen struktur. */
-  background:radial-gradient(circle, rgba(23,138,80,.16) 1px, transparent 1.6px) 0 0/22px 22px,
-             radial-gradient(ellipse 100% 35% at 50% 0%, rgba(23,138,80,.09) 0%, transparent 60%),
-             radial-gradient(ellipse 90% 30% at 50% 100%, rgba(58,110,165,.06) 0%, transparent 65%),
-             linear-gradient(175deg,#F8FAF5 0%,#F5F7F1 45%,#F1F4EC 100%);
+     for dybde — en flad farve uden nogen struktur føltes livløs (se
+     CLAUDE.md afsnit 5). Baggrunden er ren hvid (24. sept. 2026-redesign),
+     så gradient-stoppene er nu næsten umærkelige neutrale gråtoner i
+     stedet for den tidligere cremet/grønlige tinting. */
+  background:radial-gradient(circle, rgba(23,138,80,.14) 1px, transparent 1.6px) 0 0/22px 22px,
+             radial-gradient(ellipse 100% 35% at 50% 0%, rgba(23,138,80,.06) 0%, transparent 60%),
+             radial-gradient(ellipse 90% 30% at 50% 100%, rgba(58,110,165,.04) 0%, transparent 65%),
+             linear-gradient(175deg,#FFFFFF 0%,#FDFDFC 45%,#FAFAF9 100%);
 }
 
 /* ── TOPBAR ── */
@@ -167,7 +170,7 @@ body{
   /* Helt uigennemsigtig — en gradient med en gennemsigtig top-del lod indhold
      der var scrollet med skinne igennem bag ikonerne, så baren så "flimrende"
      ud i stedet for at virke som ét fast lag oven på resten af skærmen. */
-  background:#F6F8F3;
+  background:var(--paper);
   box-shadow:0 -8px 16px -12px rgba(21,32,26,.14);
   border-top:1px solid var(--border);
   display:flex;padding:10px 4px calc(24px + env(safe-area-inset-bottom));z-index:100;
