@@ -308,6 +308,19 @@ export default function OnboardingScreen({
               <div className={`tab${authTab==="login"?" active":""}`} onClick={() => { setAuthTab("login"); setAuthError(""); setForgotPwError(""); }}>Log ind</div>
             </div>
 
+            {/* Preview-only genvej til onboarding-flowet (25. sept. 2026,
+                samme dag) — springer signup/login helt over og går direkte
+                til SCREENS.ONBOARD trin 1, til at designe/gennemgå
+                onboarding-trinnene uden at skulle oprette en rigtig konto
+                først. Samme mønster/gate som "Se app uden login (preview)"
+                på velkomstskærmen — vises ALDRIG i produktion. */}
+            {import.meta.env.MODE === "artifact-preview" && (
+              <button className="welcome-link" style={{ display:"block", margin:"0 auto 14px", textAlign:"center" }}
+                onClick={() => { setOnboardStep(1); setScreen(SCREENS.ONBOARD); }}>
+                Gå til onboarding (preview)
+              </button>
+            )}
+
             {/* SIGNUP flow */}
             {authTab === "signup" && (
               <div className="fade-in">
