@@ -102,6 +102,12 @@ export default function OnboardingScreen({
   // vælger en allergi/intolerance eller tilføjer en custom-ingrediens.
   const [noAllergiesConfirmed, setNoAllergiesConfirmed] = useState(false);
 
+  // Trin 3: samme mønster som noAllergiesConfirmed ovenfor — "Fortsæt" må
+  // ikke være aktiv ved "0 valgt", for ellers kan appen ikke skelne mellem
+  // "brugeren har bevidst ingen kostpræferencer" og "brugeren glemte bare at
+  // vælge noget" (25. sept. 2026, brugerfeedback).
+  const [noDietConfirmed, setNoDietConfirmed] = useState(false);
+
   // Trin 3 (Kostpræferencer): hvis brugeren allerede har markeret Gluten som
   // allergi/intolerance på trin 2, er det overflødigt at bede dem vælge
   // "Glutenfri" igen her — appen markerer den automatisk, én gang, når
@@ -440,6 +446,7 @@ export default function OnboardingScreen({
   const renderStep3 = () => {
     const diets = user.diets || [];
     const selectedCount = diets.length;
+    const canContinueDiet = selectedCount > 0 || noDietConfirmed;
     return (
       <div className="fade-in">
         <div className="card">
@@ -467,7 +474,10 @@ export default function OnboardingScreen({
                     ...(on ? { borderColor:"var(--green)", borderWidth:1.5 } : {}),
                     ...(isDanglingLast ? { gridColumn:"1 / -1" } : {}),
                   }}
-                  onClick={() => setUser(u => ({ ...u, diets: on ? (u.diets||[]).filter(x=>x!==d.id) : [...(u.diets||[]), d.id] }))}>
+                  onClick={() => {
+                    setUser(u => ({ ...u, diets: on ? (u.diets||[]).filter(x=>x!==d.id) : [...(u.diets||[]), d.id] }));
+                    if (!on && noDietConfirmed) setNoDietConfirmed(false);
+                  }}>
                   <div style={UI.flex1}>
                     <div style={UI.ufw700}>{d.label}</div>
                     {isAutoGluten ? (
@@ -495,7 +505,11 @@ export default function OnboardingScreen({
           <span>Diæt-tjek er vejledende og baseret på produkttags. Tjek altid ingredienserne selv.</span>
         </div>
 
-        <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(4)}>Fortsæt →</button>
+        {/* "Fortsæt" må ikke være aktiv ved "0 valgt" — ellers kan appen
+            ikke skelne "brugeren har bevidst ingen kostpræferencer" fra
+            "brugeren glemte at vælge noget" (25. sept. 2026, brugerfeedback,
+            samme princip som trin 2's noAllergiesConfirmed-gate). */}
+        <button className="btn btn-primary btn-full" disabled={!canContinueDiet} onClick={() => setOnboardStep(4)}>Fortsæt →</button>
         {/* "Ingen særlig diæt" så næsten ud som almindelig tekst med den
             transparente .btn-outline-stil (dens meget lyse border smelter
             sammen med det gennemsigtige baggrundsfoto herude, uden for
@@ -511,6 +525,7 @@ export default function OnboardingScreen({
           onClick={() => {
             if (diets.length > 0 && !window.confirm("Fjern dine valgte kostpræferencer?")) return;
             setUser(u => ({...u, diets:[]}));
+            setNoDietConfirmed(true);
             setOnboardStep(4);
           }}>
           Ingen særlig diæt
