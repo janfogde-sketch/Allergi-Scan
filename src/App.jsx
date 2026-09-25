@@ -166,7 +166,7 @@ export default function EatSafe() {
     accessToken, setAccessToken, refreshToken, setRefreshToken,
     userId, setUserId,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
-    authError, setAuthError, authLoading, setAuthLoading,
+    authError, setAuthError, emailTakenError, setEmailTakenError, authLoading, setAuthLoading,
     authTab, setAuthTab, isOAuth, setIsOAuth,
     rememberMe, setRememberMe,
     saveTokens, clearAuth, handleLogin, handleSignup, handleOAuth, handleForgotPassword,
@@ -743,10 +743,10 @@ export default function EatSafe() {
   const authContextValue = useMemo(() => ({
     user, setUser, userId, setUserId, accessToken,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
-    authError, setAuthError, authLoading, authTab, setAuthTab,
+    authError, setAuthError, emailTakenError, setEmailTakenError, authLoading, authTab, setAuthTab,
     isOAuth, rememberMe, setRememberMe,
     handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth,
-  }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, authLoading, authTab, isOAuth, rememberMe, handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth]);
+  }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, emailTakenError, authLoading, authTab, isOAuth, rememberMe, handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth]);
 
   const profileContextValue = useMemo(() => ({
     allergens, setAllergens, customAllerg, setCustomAllerg,
@@ -903,11 +903,6 @@ export default function EatSafe() {
                 `var(--ink2)` og lagt en let skygge på for at give dem samme
                 kort-vægt de har andre steder i appen, i stedet for at blende ind. */}
             <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-              {/* Hjælp-knap */}
-              <button onClick={() => setHelpOpen(true)}
-                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:38, height:38, fontFamily:"var(--f)", fontSize:17, fontWeight:800, color:"var(--ink2)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"var(--sh)" }}>
-                ?
-              </button>
               {/* Feedback-knap */}
               <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
                 style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"9px 15px", fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color:"var(--ink2)", cursor:"pointer", display:"flex", alignItems:"center", gap:6, boxShadow:"var(--sh)" }}>
@@ -1060,6 +1055,7 @@ export default function EatSafe() {
             onBetaClick={() => { setBetaIntroSeen(false); setBetaIntroStep(0); }}
             alternatives={alternatives}
             altLoading={altLoading}
+            onOpenHelp={() => setHelpOpen(true)}
           />
           </ErrorBoundary>
         )}

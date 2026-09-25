@@ -40,6 +40,25 @@ export const MemberForm = ({
   // genbrugelig komponent uden adgang til onboardingens egen state.
   const [showENumre, setShowENumre] = React.useState(false);
 
+  // Gluten ↔ Glutenfri-synkronisering — samme logik/adfærd som onboarding
+  // trin 2→3 (OnboardingScreen.jsx), så hovedprofil og familiemedlemmer ikke
+  // opfører sig forskelligt (25. sept. 2026, brugerfeedback). Lever her, ikke
+  // i onboarding-/ProfileScreen-laget, fordi MemberForm allerede modtager
+  // allergens/diets + deres settere som props uanset hvilken skærm der
+  // bruger den — én implementering, to steder den gælder.
+  const [glutenFreeAutoApplied, setGlutenFreeAutoApplied] = React.useState(false);
+  React.useEffect(() => {
+    const hasGluten = allergens.includes("gluten");
+    const hasGlutenFree = diets.includes("gluten-free");
+    if (hasGluten && !hasGlutenFree) {
+      setDiets([...diets, "gluten-free"]);
+      setGlutenFreeAutoApplied(true);
+    } else if (!hasGluten && hasGlutenFree && glutenFreeAutoApplied) {
+      setDiets(diets.filter(d => d !== "gluten-free"));
+      setGlutenFreeAutoApplied(false);
+    }
+  }, [allergens]);
+
   return (
     <div>
 
@@ -89,7 +108,12 @@ export const MemberForm = ({
       {/* Kostpræferencer — delt DietChipPicker, samme som trin 3 (grøn
           valgt-state, sidste-ulige-kort spænder hele bredden). */}
       <div className="card-lbl" style={{ marginTop:16, marginBottom:8 }}>Kostpræferencer</div>
-      <DietChipPicker selected={diets} onChange={setDiets} />
+      <DietChipPicker selected={diets}
+        autoNote={glutenFreeAutoApplied ? { id:"gluten-free", text:"Valgt ud fra gluten" } : undefined}
+        onChange={arr => {
+          if (arr.includes("gluten-free") !== diets.includes("gluten-free")) setGlutenFreeAutoApplied(false);
+          setDiets(arr);
+        }} />
 
       {/* E-numre — samme delte ENumberPicker og lukkede-som-standard
           Accordion-mønster som trin 2. Erstatter den tidligere lokale, røde

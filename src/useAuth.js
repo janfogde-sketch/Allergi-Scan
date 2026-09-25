@@ -25,6 +25,11 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   const [loginEmail, setLoginEmail]     = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [authError, setAuthError]       = useState("");
+  // Adskilt fra authError (25. sept. 2026, opfølgning): "denne email er
+  // allerede registreret" skal vises som en felt-specifik inline-fejl ved
+  // selve E-mail-feltet, ikke i den store, globale error-boks — globale
+  // error-alerts er nu forbeholdt fejl der ikke kan knyttes til ét felt.
+  const [emailTakenError, setEmailTakenError] = useState("");
   const [authLoading, setAuthLoading]   = useState(false);
   const [authTab, setAuthTab]           = useState("signup"); // "signup" | "login"
   const [isOAuth, setIsOAuth]           = useState(false);
@@ -226,7 +231,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     // forudsigelige mønstre (fx "Password1!") og øger frafald ved signup uden
     // reel sikkerhedsgevinst — længde er den langt vigtigste faktor.
     if (!loginPassword || loginPassword.length < 10) { setAuthError("Adgangskoden skal være mindst 10 tegn."); return; }
-    setAuthLoading(true); setAuthError("");
+    setAuthLoading(true); setAuthError(""); setEmailTakenError("");
     try {
       const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
         method: "POST",
@@ -240,8 +245,13 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       const data = JSON.parse(text);
       if (!res.ok) {
         const msg = data.msg || data.error_description || data.message || "";
-        if (msg.toLowerCase().includes("already registered") || data.error_code === "email_exists")
-          throw new Error("Denne email er allerede registreret. Prøv at logge ind i stedet.");
+        // Felt-specifik fejl (25. sept. 2026) — vises inline ved E-mail-
+        // feltet, ikke i den globale error-boks, se emailTakenError ovenfor.
+        if (msg.toLowerCase().includes("already registered") || data.error_code === "email_exists") {
+          setEmailTakenError("Denne e-mail er allerede registreret.");
+          setAuthLoading(false);
+          return;
+        }
         if (msg.toLowerCase().includes("password") || msg.toLowerCase().includes("weak"))
           throw new Error("Adgangskoden er for svag. Brug mindst 10 tegn.");
         throw new Error(msg || "Oprettelse fejlede. Prøv igen.");
@@ -306,6 +316,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     loginEmail, setLoginEmail,
     loginPassword, setLoginPassword,
     authError, setAuthError,
+    emailTakenError, setEmailTakenError,
     authLoading, setAuthLoading,
     authTab, setAuthTab,
     isOAuth, setIsOAuth,

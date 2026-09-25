@@ -179,25 +179,35 @@ export const ENumberPicker = ({ selected, onChange }) => {
           const shortName = dashIdx === -1 ? name : name.slice(0, dashIdx);
           const detail = dashIdx === -1 ? "" : name.slice(dashIdx + 3);
           const isExpanded = !!expandedRows[e];
+          // Fast 3-kolonne-struktur (25. sept. 2026, brugerfeedback): en fast
+          // kode-kolonne (76px) til venstre, en tekst-kolonne til navn +
+          // beskrivelse (samme venstre kant for begge, uanset linjeantal —
+          // begge ligger nu i samme grid-celle i stedet for at beskrivelsen
+          // var en selvstændig søskende-boks med sin egen, ikke-matchende
+          // padding-left), og et fast chevron/check-område (36px) til højre.
           return (
             <div key={e} className="enum-row"
               style={{ borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", background: on?"var(--green-lt)":"var(--surface)" }}>
               <div onClick={() => onChange(on ? selected.filter(x=>x!==e) : [...selected, e])}
-                style={{ display:"flex", alignItems:"center", gap:10, padding:"6px 12px", cursor:"pointer" }}>
-                <div style={{ fontSize:12, fontWeight:800, color:on?"var(--green)":"var(--ink)", width:48, flexShrink:0 }}>{e}</div>
-                <div style={{ fontSize:12, color:on?"var(--green)":"var(--ink2)", flex:1, lineHeight:1.4 }}>{shortName}</div>
-                {detail && (
-                  <div role="button" aria-label={isExpanded ? "Skjul detaljer" : "Vis detaljer"}
-                    onClick={ev => { ev.stopPropagation(); setExpandedRows(s => ({...s, [e]: !s[e]})); }}
-                    style={{ flexShrink:0, padding:4, margin:-4, display:"flex", transform: isExpanded ? "rotate(180deg)" : "none", transition:".2s" }}>
-                    <Icon name="chevronDown" size={13} color="var(--muted)" />
-                  </div>
-                )}
-                {on && <div style={{ flexShrink:0 }}><Icon name="check" size={11} color="var(--green)" /></div>}
+                style={{ display:"grid", gridTemplateColumns:"76px 1fr 36px", alignItems:"start", padding:"8px 12px", cursor:"pointer" }}>
+                <div style={{ fontSize:12, fontWeight:800, color:on?"var(--green)":"var(--ink)" }}>{e}</div>
+                <div style={{ minWidth:0, textAlign:"left" }}>
+                  <div style={{ fontSize:12, color:on?"var(--green)":"var(--ink2)", lineHeight:1.4, textAlign:"left" }}>{shortName}</div>
+                  {isExpanded && detail && (
+                    <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.4, marginTop:4, textAlign:"left" }}>{detail}</div>
+                  )}
+                </div>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"flex-end", gap:4 }}>
+                  {detail && (
+                    <div role="button" aria-label={isExpanded ? "Skjul detaljer" : "Vis detaljer"}
+                      onClick={ev => { ev.stopPropagation(); setExpandedRows(s => ({...s, [e]: !s[e]})); }}
+                      style={{ flexShrink:0, padding:4, margin:-4, display:"flex", transform: isExpanded ? "rotate(180deg)" : "none", transition:".2s" }}>
+                      <Icon name="chevronDown" size={13} color="var(--muted)" />
+                    </div>
+                  )}
+                  {on && <div style={{ flexShrink:0, display:"flex" }}><Icon name="check" size={11} color="var(--green)" /></div>}
+                </div>
               </div>
-              {isExpanded && detail && (
-                <div style={{ padding:"0 12px 8px 58px", fontSize:11, color:"var(--muted)", lineHeight:1.4 }}>{detail}</div>
-              )}
             </div>
           );
         })}

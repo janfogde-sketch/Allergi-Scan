@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
 import { compareAllergens, productDisplayName, logSearchSelection, apiCall, makeHeaders } from "./helpers.js";
-import { Icon, ProductImage, SearchResultRow } from "./SharedComponents.jsx";
+import { Icon, ProductImage, SearchResultRow, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -16,7 +16,24 @@ const S = {
   mb10:    { marginBottom:10 },
   h13b:    { fontSize:13, fontWeight:700, color:"var(--ink)" },
   sub11:   { fontSize:11, color:"var(--muted)" },
+  hint:    { fontSize:10.5, color:"var(--muted)", marginTop:4, lineHeight:1.4 },
 };
+
+// Korte, kontekstuelle hints (25. sept. 2026, brugerfeedback: "brug
+// hjælpetekster sparsomt og kun første gang") — vises kun ved brugerens
+// allerførste besøg på Indkøbsliste-skærmen nogensinde (localStorage-flag
+// pr. hint), i stedet for en fuld manual der altid er synlig. Adskilt fra
+// den samlede hjælpesheet (HelpModal, åbnet via "Sådan fungerer listen"
+// nedenfor), som stadig findes for den der aktivt leder efter mere.
+function useFirstTimeHint(key) {
+  const [show] = useState(() => {
+    try { return localStorage.getItem(`as_hint_${key}`) !== "1"; } catch { return true; }
+  });
+  useEffect(() => {
+    if (show) { try { localStorage.setItem(`as_hint_${key}`, "1"); } catch { /* ignoreres */ } }
+  }, []);
+  return show;
+}
 
 function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, grantAccess, revokeAccess, setListType, onClose }) {
   const [access, setAccess]     = useState([]);
@@ -113,6 +130,7 @@ function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, gra
 export default function ListScreen({
   activeIds,
   lookupProduct,
+  onOpenHelp,
 }) {
   const { userId, accessToken } = useAuthContext();
   const { family, activeProfiles, setActiveProfiles } = useProfileContext();
@@ -134,6 +152,18 @@ export default function ListScreen({
   const [joinError, setJoinError]           = useState("");
   const [joinLoading, setJoinLoading]       = useState(false);
   const [favoritesOpen, setFavoritesOpen]   = useState(false);
+
+  const showListPickerHint = useFirstTimeHint("list_picker");
+  const showShareHint = useFirstTimeHint("list_share");
+  const handleToggleItem = (id, wasChecked) => {
+    toggleItem(id);
+    if (wasChecked) return;
+    try {
+      if (localStorage.getItem("as_hint_list_first_check") === "1") return;
+      localStorage.setItem("as_hint_list_first_check", "1");
+    } catch { /* ignoreres */ }
+    showToast("Markeret som købt – ryd købte varer senere", "success");
+  };
 
   // ── Søg blandt produkter mens der tilføjes en vare ──────────────────────────
   const [itemResults, setItemResults]   = useState([]);
@@ -231,7 +261,19 @@ export default function ListScreen({
 
   return (
     <div className="screen fade-in">
-      <div className="screen-title">Indkøbsliste</div>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+        <div className="screen-title" style={{ marginBottom:0 }}>Indkøbsliste</div>
+        {/* Kontekstuel adgang til den samlede hjælpesheet (25. sept. 2026)
+            — erstatter det tidligere globale "?" i topbaren, som blev
+            fjernet til fordel for netop dette: hjælp der hører hjemme der
+            hvor den er relevant, ikke i global navigation. */}
+        {onOpenHelp && (
+          <button type="button" onClick={onOpenHelp}
+            style={{ display:"flex", alignItems:"center", gap:4, background:"none", border:"none", cursor:"pointer", padding:"4px 2px", fontFamily:"var(--f)", fontSize:11.5, fontWeight:600, color:"var(--muted2)", flexShrink:0 }}>
+            <Icon name="info" size={12} color="var(--muted2)" /> Sådan fungerer listen
+          </button>
+        )}
+      </div>
 
       {/* ── Tilføj vare (øverst, så søgeresultater aldrig kan havne bag andet indhold) ── */}
       <div style={{ marginBottom:10, position:"relative", zIndex:5 }}>
@@ -315,30 +357,36 @@ export default function ListScreen({
       </div>
 
       {/* ── Listevælger (komprimeret) ── */}
-      <div style={{ display:"flex", gap:6, marginBottom:12 }}>
-        <div onClick={() => setShowListPicker(v => !v)}
-          style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}>
-          <div style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-            <span style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{activeList?.name || "Vælg liste"}</span>
-            {activeList?.type === "family" && <span style={{ marginLeft:6, display:"inline-flex", verticalAlign:"middle" }}><Icon name="family" size={11} color="var(--green)" /></span>}
+      <div style={{ marginBottom:12 }}>
+        <div style={{ display:"flex", gap:6 }}>
+          <div onClick={() => setShowListPicker(v => !v)}
+            style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}>
+            <div style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+              <span style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{activeList?.name || "Vælg liste"}</span>
+              {activeList?.type === "family" && <span style={{ marginLeft:6, display:"inline-flex", verticalAlign:"middle" }}><Icon name="family" size={11} color="var(--green)" /></span>}
+            </div>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, transform: showListPicker ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
+              <path strokeLinecap="round" d="M19 9l-7 7-7-7"/>
+            </svg>
           </div>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, transform: showListPicker ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
-            <path strokeLinecap="round" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </div>
-        {favorites.length > 0 && (
-          <button aria-label="Dine favoritter" onClick={() => setFavoritesOpen(v => !v)}
-            style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:"auto", padding:0, background: favoritesOpen ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${favoritesOpen ? "var(--green)" : "var(--border)"}`, borderRadius:10, cursor:"pointer", flexShrink:0 }}>
-            <Icon name="heart" size={15} color={favoritesOpen ? "var(--green)" : "var(--red)"} />
+          {favorites.length > 0 && (
+            <button aria-label="Dine favoritter" onClick={() => setFavoritesOpen(v => !v)}
+              style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:"auto", padding:0, background: favoritesOpen ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${favoritesOpen ? "var(--green)" : "var(--border)"}`, borderRadius:10, cursor:"pointer", flexShrink:0 }}>
+              <Icon name="heart" size={15} color={favoritesOpen ? "var(--green)" : "var(--red)"} />
+            </button>
+          )}
+          <button aria-label="Del liste" onClick={() => setShowShareSheet(true)} disabled={!activeList}
+            style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:"auto", padding:0, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor: activeList ? "pointer" : "not-allowed", opacity: activeList ? 1 : .5, flexShrink:0 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <path strokeLinecap="round" d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
+            </svg>
           </button>
-        )}
-        <button aria-label="Del liste" onClick={() => setShowShareSheet(true)} disabled={!activeList}
-          style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:"auto", padding:0, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor: activeList ? "pointer" : "not-allowed", opacity: activeList ? 1 : .5, flexShrink:0 }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2">
-            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-            <path strokeLinecap="round" d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
-          </svg>
-        </button>
+        </div>
+        {/* Kontekstuelle første-gangs-hints (se useFirstTimeHint ovenfor) —
+            korte, diskrete, vises kun ved allerførste besøg. */}
+        {showListPickerHint && <div style={S.hint}>Flere lister</div>}
+        {showShareHint && <div style={S.hint}>Del listen med familie eller via link</div>}
       </div>
 
       {showListPicker && (
@@ -442,7 +490,7 @@ export default function ListScreen({
       {shoppingList.length === 0 && (
         <div className="empty-state">
           <div className="empty-txt">Listen er tom</div>
-          <div className="empty-sub">Tilføj din første vare</div>
+          <div className="empty-sub">Søg efter produkter eller tilføj en vare manuelt</div>
         </div>
       )}
 
@@ -455,7 +503,7 @@ export default function ListScreen({
           {shoppingList.filter(i => !i.checked).map(item => (
             <div key={item.id} className="list-item">
               <div className="list-check" role="checkbox" aria-checked="false" aria-label={`Markér "${item.name}" som købt`} tabIndex={0}
-                onClick={() => toggleItem(item.id)} onKeyDown={e => e.key === "Enter" && toggleItem(item.id)} />
+                onClick={() => handleToggleItem(item.id, false)} onKeyDown={e => e.key === "Enter" && handleToggleItem(item.id, false)} />
               {item.ean && <ProductImage product={item} size={22} />}
               {item.ean
                 ? <div className="list-name" role="link" tabIndex={0} style={{ cursor:"pointer", textDecoration:"underline", textDecorationColor:"var(--border2)", textUnderlineOffset:3 }}
