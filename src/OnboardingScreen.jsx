@@ -124,16 +124,37 @@ export default function OnboardingScreen({
       !genderOk && "køn",
       !phoneOk && "telefon",
     ].filter(Boolean);
+    // Alder-stepper (25. sept. 2026, opfølgning) — erstatter det tidligere
+    // ensomme, smalle talfelt (maxWidth:120), som virkede tilfældigt
+    // smallere end de øvrige felter. "− [tal] +" ser mere bevidst designet
+    // ud og er samtidig lettere at betjene på touch. Starter fra 25 ved
+    // første tryk på en tom værdi — et neutralt udgangspunkt, ikke fra 0/1.
+    const ageNum = Number(user.age) || 0;
+    const stepAge = delta => setUser(u => {
+      const base = Number(u.age) || 25;
+      const next = ageNum === 0 && delta > 0 ? base : Math.min(120, Math.max(1, base + delta));
+      return { ...u, age: String(next) };
+    });
+
     return (
       <div className="fade-in">
         <div style={UI.mb14}>
           <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", marginBottom:4 }}>Hvem er du?</div>
-          <div style={UI.ufs13_cmuted2_lh15}>Oplysningerne bruges til din personlige allergiprofil og kan redigeres senere.</div>
+          {/* Begge undertekster gjort en anelse mørkere (25. sept. 2026,
+              opfølgning) — var hhv. --muted2 og --muted, lidt for lyse til
+              at læse uden anstrengelse ved siden af de mørkere overskrifter. */}
+          <div style={{ ...UI.ufs13_cmuted2_lh15, color:"var(--ink2)" }}>Oplysningerne bruges til din personlige allergiprofil og kan redigeres senere.</div>
         </div>
 
-        <div className="card" style={UI.mb12}>
+        {/* Ekstra, blød hvid glød lige bag kortet (25. sept. 2026,
+            opfølgning: "dæmp ingredienserne 5-10% lige bag formularen...
+            kun så kortet står lidt renere") — lagt oven på .card's
+            eksisterende var(--sh)-skygge, ikke en erstatning af den, og
+            KUN på dette kort, ikke en ændring af den delte .card-klasse
+            (brugt bredt andre steder i appen uden dette behov). */}
+        <div className="card" style={{ ...UI.mb12, boxShadow:"var(--sh), 0 0 46px 26px rgba(255,255,255,.55)" }}>
           {/* Navn */}
-          <div style={UI.mb12}>
+          <div style={{ marginBottom:17 }}>
             <label className="field-lbl">Fulde navn <span style={UI.red}>*</span></label>
             <input className="field" type="text" placeholder="Fx. Anna Hansen"
               value={user.name||""} onChange={e => setUser(u => ({...u, name:e.target.value}))}
@@ -141,7 +162,7 @@ export default function OnboardingScreen({
           </div>
 
           {/* Email */}
-          <div style={UI.mb12}>
+          <div style={{ marginBottom:17 }}>
             <label className="field-lbl">Email <span style={UI.red}>*</span></label>
             <input className="field" type="email" placeholder="din@email.dk"
               value={user.email||loginEmail||""}
@@ -157,30 +178,48 @@ export default function OnboardingScreen({
           </div>
 
           {/* Telefon */}
-          <div style={UI.mb12}>
+          <div style={{ marginBottom:17 }}>
             <label className="field-lbl">Telefonnummer <span style={UI.red}>*</span></label>
             <input className="field" type="tel" placeholder="+45 12 34 56 78"
               value={user.phone||""} onChange={e => setUser(u => ({...u, phone:e.target.value}))} />
           </div>
 
-          {/* Alder */}
-          <div style={UI.mb14}>
+          {/* Alder — kompakt "− tal +"-stepper i stedet for et smalt talfelt */}
+          <div style={{ marginBottom:19 }}>
             <label className="field-lbl">Alder <span style={UI.red}>*</span></label>
-            <input className="field" type="number" inputMode="numeric" placeholder="Fx. 32" min="1" max="120"
-              value={user.age||""} onChange={e => setUser(u => ({...u, age:e.target.value}))}
-              style={{ maxWidth:120 }} />
+            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+              <button type="button" onClick={() => stepAge(-1)} aria-label="Én år yngre"
+                style={{ width:40, height:40, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                −
+              </button>
+              <input className="field" type="number" inputMode="numeric" placeholder="32" min="1" max="120"
+                value={user.age||""} onChange={e => setUser(u => ({...u, age:e.target.value}))}
+                style={{ width:64, flexShrink:0, textAlign:"center", padding:"10px 4px" }} />
+              <button type="button" onClick={() => stepAge(1)} aria-label="Ét år ældre"
+                style={{ width:40, height:40, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                +
+              </button>
+            </div>
           </div>
 
-          {/* Køn */}
+          {/* Køn — 2×2-grid med ens bredde (25. sept. 2026, opfølgning) i
+              stedet for flex-wrap, hvor "Vil ikke oplyse" (længste label)
+              endte alene på sin egen linje. */}
           <div>
             <label className="field-lbl">Køn <span style={UI.red}>*</span></label>
-            <div style={UI.udflex_g6_flewrap}>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
               {["Mand","Kvinde","Andet","Vil ikke oplyse"].map(g => (
                 <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
                   style={{
-                    padding:"10px 14px", borderRadius:8, cursor:"pointer",
+                    padding:"10px 8px", borderRadius:8, cursor:"pointer", textAlign:"center",
                     border:`1px solid ${user.gender===g ? "var(--green)" : "var(--border)"}`,
-                    background: user.gender===g ? "var(--green-lt)" : "var(--surface)",
+                    // Selected-baggrunden hævet en anelse fra --green-lt (10%
+                    // opacity) til 16% (25. sept. 2026, opfølgning: "en
+                    // anelse tydeligere") — et bevidst mellemtrin, ikke
+                    // spring til --green-mid (18%), som app-bredt er
+                    // reserveret til kant-farven i dette mønster (se andre
+                    // grøn-markerede pilller i appen), ikke baggrundsfyld.
+                    background: user.gender===g ? "rgba(23,138,80,.16)" : "var(--surface)",
                     fontSize:13, fontWeight:700,
                     color: user.gender===g ? "var(--green)" : "var(--muted)",
                     transition:"all .15s",
@@ -520,7 +559,7 @@ export default function OnboardingScreen({
               <div style={{ textAlign:"center", padding:"4px 0 20px" }}>
                 <div style={UI.mb6}><EatSafeLogo size={40} variant="light" /></div>
                 <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)" }}>Opsæt din profil</div>
-                <div style={{ fontSize:13, color:"var(--muted)", marginTop:4 }}>Tager under 2 minutter</div>
+                <div style={{ fontSize:13, color:"var(--ink2)", marginTop:4 }}>Tager under 2 minutter</div>
               </div>
             )}
             {editMode && <div style={{ height:4 }} />}

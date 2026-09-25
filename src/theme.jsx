@@ -481,9 +481,16 @@ body::-webkit-scrollbar{display:none;}
 
 /* ── ONBOARDING ── */
 .onboard-wrap{padding:20px 16px 100px;}
+/* flex:1 (= flex-grow:1 flex-shrink:1 flex-basis:0%) på hvert segment
+   sikrer allerede matematisk lige bred fordeling af den tilgængelige
+   plads, og det faste gap:6 på selve rækken (App.jsx's StepBar) giver
+   ensartet afstand mellem alle segmenter — bevidst IKKE ændret her (25.
+   sept. 2026, opfølgning), kun bekræftet/verificeret. */
 .step-seg{height:3px;flex:1;border-radius:2px;background:var(--border2);transition:background .3s;}
 .step-seg.done{background:var(--green);}
-.step-num{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap;}
+/* Hævet fra --muted til --ink2 + en anelse større (25. sept. 2026,
+   opfølgning: "gør 1/5 lidt tydeligere"). */
+.step-num{font-size:12px;font-weight:700;color:var(--ink2);white-space:nowrap;}
 .step-title{font-size:17px;font-weight:700;margin-bottom:6px;color:var(--ink);letter-spacing:-.3px;}
 .step-sub{font-size:13px;color:var(--ink2);margin-bottom:16px;line-height:1.55;}
 .onboard-skip{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;}
@@ -792,14 +799,22 @@ body::-webkit-scrollbar{display:none;}
    Tryk-feedback på trykbare kort/rækker/chips — samme mønster som
    .recipe-card/.home-shortcut-card. Afgrænset til klasser der allerede
    erklærer cursor:pointer (kodebasens egen konvention for "dette kan trykkes"),
-   så statisk/ikke-trykbart indhold ikke får en vildledende presse-animation. */
+   så statisk/ikke-trykbart indhold ikke får en vildledende presse-animation.
+   .btn tilføjet 25. sept. 2026 (opfølgning: "sikr at disabled-state og
+   active-state har tydelig nok forskel" på Onboardings "Fortsæt →") — den
+   delte .btn-klasse manglede hidtil helt visuel tryk-feedback (kun
+   :hover, ikke touch-relevant), i modsætning til stort set alle andre
+   trykbare elementer i appen. .btn:disabled{transform:none!important}
+   (theme.jsx) sikrer at en deaktiveret knap aldrig "presser" ved et
+   forsøgt tryk. */
 .home-mini-card:active,.scan-hero:active,.hist-row:active,.step-row:active,
 .mp-lang-dropdown:active,.mp-lang-opt:active,.chip:active,.home-chip:active,
 .filter-chip:active,.ap-chip:active,.recipe-filter-chip:active,.tab:active,
 .demo-code:active,.topbar-avatar:active,.menu-item:active,.menu-profile-card:active,
 .scroll-top-btn:active,.admin-tab:active,.admin-action-card:active,
 .admin-list-row:active,.destructive-confirm-btn:active,.plain-cancel-btn:active,
-.enum-chip:active,.enum-row:active,.enum-remove:active,.member-pick:active{
+.enum-chip:active,.enum-row:active,.enum-remove:active,.member-pick:active,
+.btn:active{
   transform:scale(.97);
 }
 .enum-chip,.enum-row,.enum-remove,.member-pick{cursor:pointer;}
