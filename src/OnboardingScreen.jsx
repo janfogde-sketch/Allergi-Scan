@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS, AVATAR_COLORS, E_NUMBERS, E_CATEGORIES } from "./constants.jsx";
 import { initials } from "./helpers.js";
@@ -101,6 +101,20 @@ export default function OnboardingScreen({
   // 2026, brugerfeedback). Fravælges automatisk, hvis brugeren derefter
   // vælger en allergi/intolerance eller tilføjer en custom-ingrediens.
   const [noAllergiesConfirmed, setNoAllergiesConfirmed] = useState(false);
+
+  // Trin 3 (Kostpræferencer): hvis brugeren allerede har markeret Gluten som
+  // allergi/intolerance på trin 2, er det overflødigt at bede dem vælge
+  // "Glutenfri" igen her — appen markerer den automatisk, én gang, når
+  // brugeren når trin 3 (25. sept. 2026, brugerfeedback: "undgår
+  // dobbeltarbejde"). Ref'en sikrer det kun sker én gang, så en efterfølgende
+  // manuel fravalg af Glutenfri ikke bliver overskrevet igen ved et re-render.
+  const glutenAutoAppliedRef = useRef(false);
+  useEffect(() => {
+    if (onboardStep === 3 && !glutenAutoAppliedRef.current && allergens.includes("gluten")) {
+      glutenAutoAppliedRef.current = true;
+      setUser(u => (u.diets||[]).includes("gluten-free") ? u : { ...u, diets: [...(u.diets||[]), "gluten-free"] });
+    }
+  }, [onboardStep, allergens]);
 
   // FIX: disse hooks lå tidligere INDE i en betinget IIFE, som kun blev kaldt
   // når onboardStep === 5. Det bryder Reacts "Rules of Hooks" (hooks skal
@@ -413,6 +427,67 @@ export default function OnboardingScreen({
             setNoAllergiesConfirmed(true);
           }}>
           {noAllergiesConfirmed && <Icon name="check" size={13} color="var(--green)" />} Jeg har ingen allergier eller intolerancer
+        </button>
+      </div>
+    );
+  };
+
+  // Trin 3 (Kostpræferencer, tidl. "Din diæt") — redesignet 25. sept. 2026
+  // til at genbruge nøjagtig samme valgt-state/tæller-mønster som trin 2
+  // ("selected-state skal være 100% identisk med trin 2" — brugerens
+  // eksplicitte, vigtigste krav i denne runde). Flere valg er tilladt (fx
+  // Vegetarisk + Glutenfri er en gyldig kombination).
+  const renderStep3 = () => {
+    const diets = user.diets || [];
+    const selectedCount = diets.length;
+    return (
+      <div className="fade-in">
+        <div className="card">
+          <div className="step-title">Kostpræferencer</div>
+          <div style={{ fontSize:11, color:"var(--muted)", marginBottom:4, lineHeight:1.4 }}>
+            Vælg alle der gælder for dig
+          </div>
+          <div style={{ fontSize:12, fontWeight:700, color: selectedCount > 0 ? "var(--green)" : "var(--muted)", marginBottom:14 }}>
+            {selectedCount} valgt
+          </div>
+
+          <div className="chip-grid">
+            {DIETS.map(d => {
+              const on = diets.includes(d.id);
+              const isAutoGluten = d.id === "gluten-free" && allergens.includes("gluten");
+              return (
+                <div key={d.id} className={`chip${on ? " on" : ""}`}
+                  style={on ? { borderColor:"var(--green)", borderWidth:1.5 } : undefined}
+                  onClick={() => setUser(u => ({ ...u, diets: on ? (u.diets||[]).filter(x=>x!==d.id) : [...(u.diets||[]), d.id] }))}>
+                  <div style={UI.flex1}>
+                    <div style={UI.ufw700}>{d.label}</div>
+                    {isAutoGluten ? (
+                      <div style={{ fontSize:9.5, color: on ? "var(--green)" : "var(--muted)", fontWeight:500, marginTop:2, lineHeight:1.3 }}>
+                        Valgt ud fra dine allergier/intolerancer
+                      </div>
+                    ) : (
+                      <div style={UI.muted11mt2}>{d.desc}</div>
+                    )}
+                  </div>
+                  {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Neutral, ikke-alarmerende disclaimer — rød/orange er reserveret
+            til allergener/fejl, ikke en generel vejledende note (25. sept.
+            2026, brugerfeedback). */}
+        <div style={{ display:"flex", alignItems:"flex-start", gap:6, fontSize:11, color:"var(--muted)", lineHeight:1.5, marginBottom:16 }}>
+          <Icon name="info" size={13} color="var(--muted)" />
+          <span>Diæt-tjek er vejledende og baseret på produkttags. Tjek altid ingredienserne selv.</span>
+        </div>
+
+        <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(4)}>Fortsæt →</button>
+        <button className="btn btn-full btn-outline" style={UI.mt8}
+          onClick={() => { setUser(u => ({...u, diets:[]})); setOnboardStep(4); }}>
+          Ingen særlig diæt
         </button>
       </div>
     );
@@ -853,32 +928,8 @@ export default function OnboardingScreen({
                 </div>
             )}
 
-            {/* ── TRIN 6: Diæt ── */}
-            {onboardStep === 3 && (
-              <div className="step fade-in">
-                <div className="step-title">Din diæt</div>
-                <div style={{ fontSize:13, color:"var(--muted2)", marginBottom:16, lineHeight:1.5 }}>
-                  Vælg din diæt så vi kan filtrere produkter og opskrifter til dig.
-                </div>
-                <div className="chip-grid" style={UI.mb12}>
-                  {DIETS.map(d => { const on = (user.diets||[]).includes(d.id); return (
-                    <div key={d.id} className={`chip${on?" on":""}`}
-                      onClick={() => setUser(u => ({ ...u, diets: on ? (u.diets||[]).filter(x=>x!==d.id) : [...(u.diets||[]), d.id] }))}>
-                      <div style={UI.flex1}>
-                        <div style={UI.ufw700}>{d.label}</div>
-                        <div style={UI.muted11mt2}>{d.desc}</div>
-                      </div>
-                      {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
-                    </div>
-                  );})}
-                </div>
-                <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5, marginBottom:20 }}>
-                  Diæt-tjek er vejledende og baseret på produkttags. Tjek altid ingredienserne selv.
-                </div>
-                <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(4)}>Fortsæt →</button>
-                <button className="btn btn-ghost btn-full btn-sm" style={UI.mt8} onClick={() => { setUser(u => ({...u, diets:[]})); setOnboardStep(4); }}>Ingen særlig diæt</button>
-              </div>
-            )}
+            {/* ── TRIN 6: Kostpræferencer ── */}
+            {onboardStep === 3 && renderStep3()}
 
             {/* ── TRIN 9: Oversigt & Klar! ── */}
             {onboardStep === 6 && (
