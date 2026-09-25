@@ -303,19 +303,25 @@ nye krav der skal implementeres, ikke som spørgsmål der skal diskuteres først
   virker ikke troværdigt uden det rigtige domæne — kun til at verificere
   UI/layout/funktioner visuelt.
 
-  **Stående regel (24. sept. 2026 — brugerens eksplicitte instruks): push/
-  merge til Vercel KUN ved funktions- og dataændringer, ALDRIG ved rene
-  design-/visuelle ændringer** (farver, layout, spacing, baggrundsbilleder,
-  skrifttype/vægt, skygger, ikoner og lignende). Rene design-opgaver
-  afsluttes med byg/test/mojibake-scan/commit som normalt (se trin 1-5
-  ovenfor) og verificeres i en Artifact-preview — men PUSH IKKE, opret IKKE
-  PR, og merge IKKE til `main` for dem. Commits bliver liggende lokalt på
-  feature-branchen til enten (a) en efterfølgende funktions-/dataændring i
-  samme arbejdsomgang bundler dem ind i én PR, eller (b) brugeren eksplicit
-  beder om at få dem shippet. Undtagelsen i afsnit 4 for kritiske/
-  blokerende produktionsfejl (fx et reelt crash) står stadig over denne
-  regel — den slags shippes altid med det samme, uanset om fejlen stammer
-  fra en design- eller funktionsændring.
+  **Stående regel (24. sept. 2026 — brugerens eksplicitte instruks, udvidet
+  25. sept. 2026): push/merge til Vercel KUN ved funktions- og
+  dataændringer, ALDRIG ved rene design-/visuelle ændringer** (farver,
+  layout, spacing, baggrundsbilleder, skrifttype/vægt, skygger, ikoner og
+  lignende) **og ALDRIG ved rene dokument-/dokumentationsændringer**
+  (`CLAUDE.md`, `src/CONTEXT.md`, `.claude/HISTORY.md`, `README.md`,
+  kommentarer og lignende — de påvirker ikke den byggede app, så et
+  Vercel-deploy for dem er ren spildt kvote). Rene design- eller
+  dokumentations-opgaver afsluttes med byg/test/mojibake-scan/commit som
+  normalt (se trin 1-5 ovenfor) — design verificeres i en Artifact-preview,
+  dokumentationsændringer kræver ingen verifikation ud over selve
+  commit'en — men PUSH IKKE, opret IKKE PR, og merge IKKE til `main` for
+  dem. Commits bliver liggende lokalt på feature-branchen til enten (a) en
+  efterfølgende funktions-/dataændring i samme arbejdsomgang bundler dem
+  ind i én PR, eller (b) brugeren eksplicit beder om at få dem shippet.
+  Undtagelsen i afsnit 4 for kritiske/blokerende produktionsfejl (fx et
+  reelt crash) står stadig over denne regel — den slags shippes altid med
+  det samme, uanset om fejlen stammer fra en design-, dokumentations- eller
+  funktionsændring.
 
   **Fundet overtrådt i praksis samme dag (PR #307/#308):** en anden,
   parallel session mergede to rene design-PR'er (Scan-CTA-farve/-puls +
