@@ -887,12 +887,19 @@ export default function OnboardingScreen({
                         style={{ opacity: pushLoading ? .6 : 1, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                         {pushLoading ? "Aktiverer…" : <><Icon name="bell" size={14} color="var(--on-green)" /> Slå notifikationer til</>}
                       </button>
-                      {/* Ikke nu — bevidst nedtonet .btn-ghost, ikke en stor
-                          outlined-knap, så notifikationer ikke føles
-                          obligatoriske (25. sept. 2026, brugerfeedback).
-                          Afslutter onboarding direkte, ingen ekstra
-                          "Du er færdig"-skærm. */}
-                      <button className="btn btn-ghost btn-full" style={UI.mt8}
+                      {/* Ikke nu — var en fuld-bredde .btn-ghost der næsten
+                          matchede hovedknappens vægt (25. sept. 2026,
+                          brugerfeedback: "lidt for fremtrædende"). Nu en
+                          simpel tekstknap under CTA'en i stedet for endnu en
+                          knap, så hierarkiet er utvetydigt: notifikationer
+                          er den anbefalede handling, "Ikke nu" er der bare
+                          uden at presse. Afslutter onboarding direkte, ingen
+                          ekstra "Du er færdig"-skærm. */}
+                      <button style={{
+                          display:"block", width:"100%", marginTop:12, background:"none", border:"none",
+                          fontFamily:"var(--f)", fontSize:13, fontWeight:600, color:"var(--muted2)",
+                          textAlign:"center", padding:"6px", cursor:"pointer",
+                        }}
                         onClick={finishOnboard}>
                         Ikke nu
                       </button>
