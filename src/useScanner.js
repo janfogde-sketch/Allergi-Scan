@@ -140,8 +140,17 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
 
       html5QrRef.current = new Html5Qrcode(readerId, { verbose: false });
 
-      // Kun stregkode-formater (hurtigere decode)
-      const barcodeFormats = [3, 5, 8, 9, 10, 14, 15]; // CODE_39, CODE_128, ITF, EAN_13, EAN_8, UPC_A, UPC_E
+      // Kun stregkode-formater (hurtigere decode). Tilføjet RSS_14/RSS_EXPANDED
+      // (GS1 DataBar / DataBar Expanded, 25. sept. 2026) — bruges ofte på
+      // variabel-vægt-varer i danske supermarkeder (løsvægt-frugt/grønt,
+      // slagter-/delikatesse-disk), som appens egne bilka/nemlig-kilder
+      // dækker tungt. Uden disse formater afkodede kameraet aldrig sådan et
+      // produkts stregkode overhovedet — brugeren endte i foto-/OCR-fallback
+      // for noget der reelt burde kunne live-scannes direkte. html5-qrcode
+      // har allerede en dokumenteret afbødning for en kendt ZXing-kvirk med
+      // RSS_14 (ny decoder-instans pr. scan) — ingen ekstra risiko ved at
+      // slå formaterne til.
+      const barcodeFormats = [3, 5, 8, 9, 10, 12, 13, 14, 15]; // CODE_39, CODE_128, ITF, EAN_13, EAN_8, RSS_14, RSS_EXPANDED, UPC_A, UPC_E
 
       const qrConfig = {
         fps: isIOS ? 25 : 24,
