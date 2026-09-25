@@ -187,6 +187,52 @@ tabeller med et lignende "selv-ejerskab uden kolonne-begrænsning"-mønster,
 hvis en ny privilegeret kolonne nogensinde tilføjes til `users` eller andre
 selv-redigerbare tabeller.
 
+**Opfølgende sikkerhedsfund og -fix (25. sept. 2026, `security-check`-gennemgang):**
+`get_advisors` fandt at tre `SECURITY DEFINER`-funktioner var direkte
+kaldbare som RPC'er med et vilkårligt/tredjeparts-argument, ikke kun i den
+tiltænkte interne kontekst (RLS-policies/triggere):
+- **`family_group(p_uid uuid)`** — accepterede et VILKÅRLIGT `p_uid` og var
+  `EXECUTE`-grantet til `authenticated`. Bruges legitimt af RLS-policies
+  (kalder den med RÆKKENS ejer, ikke kalderen — nødvendigt for delt
+  familie-synlighed) og af 5 Edge Functions (`shopping`, `history`,
+  `family`, `send-push`, `favorites`) via en `service_role`-klient (hvor
+  `auth.uid()` er `null`). Problemet: enhver logget-ind bruger kunne kalde
+  `/rest/v1/rpc/family_group` direkte med en VILKÅRLIG andens uid og få
+  deres familiegruppe (UUID-sæt) tilbage, uden selv at være medlem.
+  **Fix:** funktionen filtrerer nu resultatet til kun at blive returneret
+  hvis kalderen (`auth.uid()`) selv reelt er `p_uid` eller medlem af den
+  beregnede gruppe, ELLER kaldet kommer fra `service_role` (Edge Functions).
+  RLS-adfærd og Edge Function-kald er verificeret uændrede (5 JWT-simulerede
+  SQL-tests: legitimt familiemedlem ser stadig gruppen, service_role-kald
+  virker stadig, en urelateret tredjepart der kalder direkte får nu 0 rækker).
+- **`is_admin(user_id uuid)`** — samme mønster, men ALLE faktiske brug
+  (samtlige RLS-policies + `prevent_role_self_escalation`) kalder den kun
+  med `auth.uid()` selv, aldrig en andens id. **Fix:** returnerer nu altid
+  `false` medmindre `user_id` matcher kalderens egen `auth.uid()` — lukker
+  muligheden for at enhver bruger kunne tjekke om en VILKÅRLIG andens konto
+  er admin. Verificeret med to JWT-simulerede tests (self-tjek uændret,
+  tredjeparts-tjek nu blokeret).
+- **`prevent_role_self_escalation()`** — selve trigger-funktionen ovenfor
+  var `EXECUTE`-grantet til `PUBLIC` (inkl. `anon`) og dermed listet som et
+  kaldbart RPC-endpoint, selvom den kun er tiltænkt at køre som `BEFORE
+  UPDATE`-trigger. Et direkte kald udefra ville sandsynligvis bare fejle
+  (NEW/OLD er ikke sat uden for triggerkontekst), men den hørte ikke hjemme
+  i den eksponerede API-overflade. **Fix:** `REVOKE EXECUTE ... FROM PUBLIC`
+  — verificeret med `has_function_privilege` at `anon`/`authenticated`/
+  `service_role` alle mistede direkte kaldeadgang, og at triggeren stadig
+  er tilknyttet og aktiv på `users`-tabellen (triggerudløsning er ikke
+  betinget af `EXECUTE`-grants, kun selve RPC-kaldbarheden er).
+
+**Kendt, accepteret støj i `get_advisors` herefter:** `family_group` og
+`is_admin` vil BLIVE VED med at optræde i `authenticated_security_definer_
+function_executable`-listen — Supabases linter tjekker kun om `EXECUTE`
+er grantet, ikke hvad funktionen reelt returnerer til hvem. `EXECUTE` skal
+forblive grantet til `authenticated` for at RLS-policies (som selv kører
+som denne rolle) kan evaluere dem. Datalækagen er lukket på logik-niveau
+i funktionerne selv, ikke via grant-fjernelse. Antag ikke dette er et
+overset fund ved en fremtidig `security-check`-kørsel uden at læse dette
+afsnit først.
+
 ---
 
 ## 7. Edge Functions (Supabase)
