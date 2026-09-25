@@ -43,6 +43,59 @@ export default function ResultScreen({
   React.useEffect(() => { setAddedToList(false); setShowListPicker(false); }, [scanResult?.code]);
   if (!scanResult) return null;
 
+  // ── Per-profil sikkerhedsvurdering (25. sept. 2026, brugerfeedback) ──────
+  // Hver aktiv profil evalueres SEPARAT mod produktets allergener,
+  // kostpræferencer og overvågede E-numre — profiler slås ikke sammen til
+  // ét anonymt allergisæt. Beregnet her ved render-tid (ikke i selve
+  // scanResult, som useProduct.js bygger ud fra det sammenlagte activeIds-
+  // sæt til appens øvrige, eksisterende brug af det) — et skift af aktive
+  // profiler mens et resultat vises opdaterer dermed visningen øjeblikkeligt
+  // uden et nyt scan.
+  const resultFlags = scanResult.allergen_flags || {};
+  const resultProfilesRaw = [
+    { id:"me", name: user.name || "Dig", allergens, custom: customAllerg || [], diets: user.diets || [], eNumbers: selectedENumbers || [], color: null },
+    ...family.map(m => ({ id:m.id, name:m.name, allergens: m.allergens || [], custom: m.custom || [], diets: m.diets || [], eNumbers: m.eNumbers || [], color: m.color })),
+  ].filter(p => activeProfiles.includes(p.id));
+
+  const profileResults = resultProfilesRaw.map(p => {
+    const danger = p.allergens.filter(a => resultFlags[a] === "yes");
+    const warning = p.allergens.filter(a => resultFlags[a] === "traces");
+    // Fritekst-match af profilens egne tilføjede allergier — se
+    // matchCustomAllergens' egen kommentar for hvorfor dette er mindre
+    // pålideligt end de faste allergener (ingen synonymer).
+    const customMatches = p.custom?.length ? matchCustomAllergens(scanResult.ingredients, p.custom) : [];
+    const dietResults = (p.diets || []).map(d => ({
+      id: d, label: DIETS.find(x => x.id === d)?.label || d,
+      ...checkDietCompatibility(d, resultFlags, scanResult.ingredients, scanResult.nutrition),
+    }));
+    const dietFails = dietResults.filter(r => r.ok === false);
+    const eNumberMatches = (scanResult.productENumbers?.length > 0 && p.eNumbers?.length > 0)
+      ? compareENumbers(scanResult.productENumbers, p.eNumbers).matched
+      : [];
+
+    const reasons = [
+      ...danger.map(id => ALLERGENS.find(a => a.id === id)?.label || id),
+      ...customMatches.map(t => `Muligvis "${t}"`),
+      ...warning.map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id}`),
+      ...dietFails.map(r => `${r.label}: ${r.reasons[0] || "passer ikke"}`),
+      ...eNumberMatches.map(e => `Overvåget E-nummer ${e}`),
+    ];
+    const status = (danger.length > 0 || customMatches.length > 0) ? "danger"
+      : (warning.length > 0 || dietFails.length > 0 || eNumberMatches.length > 0) ? "warn"
+      : "safe";
+    return { ...p, status, reasons, danger, warning };
+  });
+
+  const isMultiProfile = profileResults.length > 1;
+  const overallStatus = !isMultiProfile ? scanResult.status
+    : profileResults.some(r => r.status === "danger") ? "danger"
+    : profileResults.some(r => r.status === "warn") ? "warn"
+    : "safe";
+  const overallHeadline = !isMultiProfile ? scanResult.headline
+    : overallStatus === "safe" ? "Passer til alle"
+    : overallStatus === "danger" ? "Passer ikke til alle"
+    : "Kan ikke afgøres sikkert for alle";
+
   const handleAddToList = () => {
     if (lists.length > 1) { setShowListPicker(true); return; }
     addToList({ name: productDisplayName({ name: scanResult.name, brand: scanResult.brand }), ean: scanResult.code, id: scanResult.id, image_url: scanResult.image_url }, activeListId)
@@ -137,25 +190,30 @@ export default function ResultScreen({
     // Verdikt smeltet ind i selve produktkortet — en farvet ramme om hele kortet plus
     // en strimmel øverst med ikon + status, i stedet for en selvstændig boks under
     // kortet der bare gentog det samme. Se SECURITY/DESIGN-diskussion i PR'en for baggrund.
-    const verdictColor = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[scanResult.status] || "var(--green)";
-    const verdictIcon = scanResult.status === "safe" ? "check" : "warning";
+    // Ved flere aktive profiler viser banneret nu den samlede tre-tilstands-
+    // status (overallStatus/overallHeadline, se profileResults-beregningen
+    // ovenfor) i stedet for scanResult.status/headline, som kun repræsenterer
+    // ét sammenlagt allergisæt — med kun én aktiv profil er de to identiske,
+    // så single-profil-visningen er uændret.
+    const verdictColor = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[overallStatus] || "var(--green)";
+    const verdictIcon = overallStatus === "safe" ? "check" : "warning";
     return (
       <div className="product-hero" style={{ position:"relative", border:`2px solid ${verdictColor}` }}>
         {/* Favorit/del — nu rigtige flex-børn af banneret (eller af en tilsvarende
             strimmel når der undtagelsesvist ingen headline er), i stedet for
             absolut positioneret hen over en højde vi gættede på. Banneret er
             gjort lidt højere, så de større knapper har plads til at sidde pænt. */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding:"12px 14px", background: scanResult.headline ? verdictColor : "var(--surface2)", color: scanResult.headline ? "#fff" : "var(--ink)" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding:"12px 14px", background: overallHeadline ? verdictColor : "var(--surface2)", color: overallHeadline ? "#fff" : "var(--ink)" }}>
           <div style={{ display:"flex", alignItems:"center", gap:8, minWidth:0 }}>
-            {scanResult.headline && <><Icon name={verdictIcon} size={13} color="#fff" />
-            <span style={UI.ufs12_fw800_ls01em_ttuppercas}>{scanResult.headline}</span></>}
+            {overallHeadline && <><Icon name={verdictIcon} size={13} color="#fff" />
+            <span style={UI.ufs12_fw800_ls01em_ttuppercas}>{overallHeadline}</span></>}
           </div>
           <div style={{ display:"flex", gap:8, flexShrink:0 }}>
             <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} onClick={() => toggleFavorite(scanResult)}
               style={{ ...UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc, width:36, height:36 }}>
               <Icon name="heart" size={16} color={fav ? "var(--red)" : "var(--ink2)"} />
             </button>
-            <button aria-label="Del produkt" onClick={() => { if(navigator.share) navigator.share({ title:scanResult.name, text:scanResult.headline }); }}
+            <button aria-label="Del produkt" onClick={() => { if(navigator.share) navigator.share({ title:scanResult.name, text:overallHeadline }); }}
               style={{ ...UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc, width:36, height:36 }}>
               <Icon name="share" size={16} color="var(--ink2)" />
             </button>
@@ -183,7 +241,11 @@ export default function ResultScreen({
         <div className="product-hero-body">
           <div className="product-hero-name">{scanResult.name}</div>
           {scanResult.brand && <div className="product-hero-brand">{scanResult.brand}</div>}
-          {scanResult.summary && scanResult.status !== "safe" && (
+          {/* Ved flere aktive profiler erstatter per-person-oversigten
+              nedenfor (renderSafetyDiet) denne enkeltprofil-sætning — den
+              beskriver kun ÉT sammenlagt allergisæt og ville ellers vise en
+              vildledende "fælles" begrundelse for flere forskellige mennesker. */}
+          {scanResult.summary && !isMultiProfile && overallStatus !== "safe" && (
             <div style={{ fontSize:12, color:verdictColor, fontWeight:600, marginTop:4, lineHeight:1.4 }}>{scanResult.summary}</div>
           )}
           <div className="product-hero-meta">
@@ -205,12 +267,6 @@ export default function ResultScreen({
 
   const renderSafetyDiet = () => {
     const flags = scanResult.allergen_flags || {};
-    const profiles = [
-      { id:"me", name: user.name||"Dig", allergens, custom: customAllerg || [], diets: user.diets || [], eNumbers: selectedENumbers || [] },
-      ...family.filter(m => activeProfiles.includes(m.id)).map(m => ({
-        ...m, allergens: m.allergens || [], custom: m.custom || [], diets: m.diets || [], eNumbers: m.eNumbers || [],
-      })),
-    ];
     const tagLabels = { vegan:"Vegansk", vegetarian:"Vegetarisk", "palm-oil-free":"Uden palmeolie", "gluten-free":"Glutenfri", organic:"Økologisk" };
     const hasTags = scanResult.tags && scanResult.tags.length > 0;
 
@@ -221,7 +277,7 @@ export default function ResultScreen({
 
     // Diæt-detaljer
     const allDiets = new Set();
-    profiles.forEach(p => (p.diets || []).forEach(d => allDiets.add(d)));
+    profileResults.forEach(p => (p.diets || []).forEach(d => allDiets.add(d)));
     const dietResultsAll = allDiets.size > 0 ? [...allDiets].map(d => ({
       id: d,
       label: DIETS.find(x => x.id === d)?.label || d,
@@ -234,42 +290,25 @@ export default function ResultScreen({
 
     return (
       <div style={S.mb10}>
-        {/* Profil-sikkerhed: 2 kolonner — kun relevant når der er nogen at sammenligne på tværs af.
-            Med kun "Dig" aktiv gentager den bare verdikt-banneret ovenfor. */}
-        {profiles.length > 1 && (
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom: hasTags ? 8 : 0 }}>
-          {profiles.map((p) => {
-            const danger  = p.allergens.filter(a => flags[a] === "yes");
-            const warning = p.allergens.filter(a => flags[a] === "traces");
-            // Fritekst-match af profilens egne tilføjede allergier — se
-            // matchCustomAllergens' egen kommentar for hvorfor dette er mindre
-            // pålideligt end de faste allergener (ingen synonymer).
-            const customMatches = p.custom?.length ? matchCustomAllergens(scanResult.ingredients, p.custom) : [];
-            const dietResults = (p.diets || []).map(d => ({
-              id: d,
-              ...checkDietCompatibility(d, flags, scanResult.ingredients, scanResult.nutrition),
-            }));
-            const dietFails = dietResults.filter(r => r.ok === false);
-            const dietMatch = p.diets && p.diets.length > 0 ? dietFails.length === 0 : null;
-            const status = (danger.length > 0 || customMatches.length > 0) ? "danger" : warning.length > 0 ? "warn" : dietMatch === false ? "warn" : "safe";
-            const statusText = (danger.length > 0 || customMatches.length > 0)
-              ? [...danger.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean), ...customMatches.map(t => `"${t}"?`)].join(", ")
-              : warning.length > 0
-              ? "Spor: " + warning.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean).join(", ")
-              : dietMatch === false ? dietFails[0]?.reasons?.[0] || "Passer ikke til diæt"
-              : "Sikkert";
-            return (
-              <SafetyRow key={p.id}
-                name={p.id==="me" ? "Dig" : p.name}
-                status={status}
-                statusText={statusText}
-                onClick={(danger.length > 0 || warning.length > 0) ? () => {
-                  const first = [...danger, ...warning][0];
-                  setKnowledgeSlug(first); setScreen(SCREENS.KNOWLEDGE);
-                } : undefined}
-              />
-            );
-          })}
+        {/* Per-person-oversigt — kun relevant når der er nogen at sammenligne
+            på tværs af. Med kun "Dig" aktiv gentager den bare verdikt-
+            banneret ovenfor. Enkelt-kolonne-liste (25. sept. 2026,
+            brugerfeedback), ikke det tidligere 2-kolonne-grid — hver linje
+            viser navn + status + ALLE fundne årsager (allergener,
+            kostpræferencer, overvågede E-numre), ikke kun den første. */}
+        {isMultiProfile && (
+        <div style={{ display:"flex", flexDirection:"column", gap:6, marginBottom: hasTags ? 8 : 0 }}>
+          {profileResults.map((p) => (
+            <SafetyRow key={p.id}
+              name={p.id==="me" ? "Dig" : p.name}
+              status={p.status}
+              statusText={p.reasons.length > 0 ? p.reasons.join(" · ") : "Matcher profilen"}
+              onClick={(p.danger.length > 0 || p.warning.length > 0) ? () => {
+                const first = [...p.danger, ...p.warning][0];
+                setKnowledgeSlug(first); setScreen(SCREENS.KNOWLEDGE);
+              } : undefined}
+            />
+          ))}
         </div>
         )}
 

@@ -80,7 +80,32 @@ export default function EatSafe() {
   const [allergens, setAllergens] = useState([]);
   const [customAllerg, setCustomAllerg] = useState([]);
   // → useFamily hook (family, setFamily)
-  const [activeProfiles, setActiveProfiles] = useState(["me"]);
+  // Scanner-profilfilteret ("Scanner for: ...") huskes mellem sessioner
+  // (25. sept. 2026, brugerfeedback) — læst én gang ved opstart, IKKE
+  // genlæst efterfølgende. Samme activeProfiles-state driver også Søg/
+  // Liste/Favoritter (allerede sådan før denne ændring — se dens egen
+  // dokumentation i ProfileContext.jsx), så persistensen gælder for dem alle.
+  // Adskilt fra selve activeProfiles-VÆRDIEN (persisteret uanset hvordan den
+  // opstod) — dette er en selvstændig, eksplicit markør for "har standard-
+  // til-Alle-logikken allerede kørt én gang", sat KUN inde i selve effekten
+  // nedenfor, aldrig blot fordi der findes en gemt værdi. Uden denne
+  // adskillelse ville persistens-effektens egen første skrivning af det
+  // initielle ["me"] (før family overhovedet er indlæst) fejlagtigt blive
+  // læst som "brugeren har allerede valgt eksplicit" ved et senere
+  // gen-mount (fx Vite Fast Refresh i dev, men samme race var reelt også
+  // muligt i produktion ved en meget hurtig re-mount) — fundet ved en
+  // Playwright-gennemgang, ikke en antagelse.
+  const hadStoredActiveProfilesRef = useRef(localStorage.getItem("as_active_profiles_default_applied") === "1");
+  const [activeProfiles, setActiveProfiles] = useState(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("as_active_profiles") || "null");
+      if (Array.isArray(stored) && stored.length > 0) return stored;
+    } catch { /* ignoreres — falder tilbage til default */ }
+    return ["me"];
+  });
+  useEffect(() => {
+    try { localStorage.setItem("as_active_profiles", JSON.stringify(activeProfiles)); } catch { /* ignoreres */ }
+  }, [activeProfiles]);
 
   // Scan state
   const [showIng, setShowIng] = useState(true); // Automatisk åben
@@ -198,6 +223,19 @@ export default function EatSafe() {
     editingMemberId,
     loadFamily, addMember, updateMember, removeMember, startEditMember, cancelEditMember,
   } = useFamily({ accessToken, userId, setActiveProfiles });
+
+  // Ingen gemt scanner-profilfilter fra en tidligere session, og husstanden
+  // har (nu) familiemedlemmer — standardvælg "Alle", som brugeren bad om
+  // (25. sept. 2026). Kun relevant ÉN gang, første gang family reelt
+  // indeholder noget efter opstart — aldrig hvis brugeren allerede havde et
+  // gemt, eksplicit valg (se hadStoredActiveProfilesRef ovenfor).
+  useEffect(() => {
+    if (hadStoredActiveProfilesRef.current) return;
+    if (family.length === 0) return;
+    hadStoredActiveProfilesRef.current = true;
+    try { localStorage.setItem("as_active_profiles_default_applied", "1"); } catch { /* ignoreres */ }
+    setActiveProfiles(["me", ...family.map(m => m.id)]);
+  }, [family]);
 
   // ── MADPAS SPEAK → useMadpas hook (placeret efter useFamily pga. family-dependency) ──
   const { madpasSpeaking, setMadpasSpeaking, madpasBig, setMadpasBig,
