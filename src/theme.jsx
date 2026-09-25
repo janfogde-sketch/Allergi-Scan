@@ -154,22 +154,46 @@ body{
    i .app, bag alt andet indhold via z-index:0 + .screen's z-index:1
    nedenfor — IKKE negativ z-index, som i visse browsere kan ende bag
    body's egen baggrund i stedet for bag skærmens indhold.
-   Hvid slør-wash (uændret fra den forrige app-brede baggrund) — tekst
-   ligger flere steder direkte oven på dette lag uden kort/boks (Scan-
-   forsidens hilsen, screen-title øverst på flere skærme). Dæmpet til .5
-   opacitet (brugerfeedback: et kraftigere slør vasker billedets farve/
-   elegance ud) — læsbarheden bæres i stedet primært af tekstens egen
+   Hvid slør-wash — tekst ligger flere steder direkte oven på dette lag
+   uden kort/boks (Scan-forsidens hilsen, screen-title øverst på flere
+   skærme), og billedet er markant tættere/mere farverigt end det
+   oprindelige app-bg-billede, hvilket gjorde teksten svær at læse.
+   Ændret fra et FLADT, ensartet slør (main's oprindelige .5-opacity-wash,
+   se git-historik) til en RADIAL vignet (25. sept. 2026, brugerens
+   design-brief: "Skandinavisk, ren og moderne UI... baggrunden skal være
+   tydelig ude i kanterne, men have en rolig, lys og let tom midterzone")
+   — dæmp der hvor tekst/knapper ligger, lad billedet ånde der hvor der
+   ikke er indhold, med en ellipse centreret på midten i stedet for ét
+   fladt tal for hele billedet: op til 92% hvid nær midten (hvor
+   overskrifter/knapper typisk sidder), glidende ned til kun 10% hvid ude
+   i hjørnerne, så ingredienserne (mælk/æg/havre/fisk/skaldyr/nødder) står
+   tydeligt frem i kanterne uden at det bliver en tung/mørk overlay — kun
+   hvid, aldrig sort/farvet. Læsbarheden bæres desuden af tekstens egen
    vægt/størrelse + en blød hvid text-shadow-glød ("løft" væk fra
-   baggrunden), ikke af selve sløret. Se .screen-title nedenfor og
-   Scan-forsidens hilsen (ScannerScreen.jsx) for samme mønster. */
+   baggrunden). Se .screen-title nedenfor og Scan-forsidens hilsen
+   (ScannerScreen.jsx) for samme mønster.
+   Billedet selv (Scan-forsidens eget foto, allergen-fødevarer i to
+   kolonner på ren hvid baggrund) er allerede det ENE, universelle billede
+   for hele appen (main, 25. sept. 2026) — ingen skærm-specifik modifier-
+   klasse længere (se App.jsx). */
 .app-bg{
   position:fixed;inset:0;z-index:0;pointer-events:none;
   background-image:
-    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)),
+    radial-gradient(ellipse 75% 60% at 50% 40%, rgba(255,255,255,.92) 0%, rgba(255,255,255,.72) 40%, rgba(255,255,255,.32) 72%, rgba(255,255,255,.1) 100%),
     url(${scanHeroBg});
   background-size:cover,cover;
   background-position:top center,top center;
   background-repeat:no-repeat,no-repeat;
+}
+/* Ekstra, let dæmpning specifikt på Log ind/Opret konto-skærmen (25. sept.
+   2026-brief: "Dæmp baggrunden ca. 20-30% på denne side, så formularen
+   bliver vigtigst"). Et selvstændigt, fast lag OVEN PÅ .app-bg (samme
+   z-index:0, men senere i DOM'en — se App.jsx — så det maler ovenpå
+   vignetten uden at ændre den for resten af appen). Ren hvid, ingen
+   mørk/tung overlay, som briefen eksplicit bad om at undgå. */
+.app-bg-dim{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:rgba(255,255,255,.28);
 }
 
 /* ── TOPBAR ── */
@@ -236,42 +260,35 @@ body{
      13 — faste px-størrelser skalerede slet ikke med boksens egen højde. */
   container-type:size;
 }
-/* Hjem-forsidens store scan-CTA (25. sept. 2026-runde: tilbage til
-   ghost/outline-stilen — mockup "C" — efter grøn-fyld-runden i #307/#308).
-   Elegant, let udgave: hvid/næsten-hvid knapflade, tynd grøn kant-ring,
-   grønt ikon/tekst. Tre lag skaber "lysætning, dybde og lys" uden at
-   gentage tidligere fejlslagne forsøg (se HISTORY.md): en tidligere ghost-
-   udgave med en SKARP/smal roterende lysbue om kanten blev afvist som
-   "ligner en radar" — løsningen her er samme afhjælpning som dengang blev
-   fundet: bredt BLURRET, langsomt roterende lys i selve ring-kanten
-   (scanCtaRingSpin, 9s, IKKE en skarp bue), aldrig en tynd, tydelig stråle.
-   Lagene, bagest til forrest: (1) en blød, pulserende ambient-glød bag hele
-   knappen (denne keyframe, uændret fra tidligere runder), (2) den roterende
-   ring-lys-glød i selve kant-ringen (scanCtaRingSpin nedenfor), (3) selve
-   knapfladen — en let dome-agtig radial-gradient (næsten umærkelig, ikke
-   glossy) + en Material-inspireret fler-lags elevation-skygge (nær+fjern
-   skygge i stedet for én flad skygge) for reel dybde. Samme
-   scanCtaBreathe-åndedræt på hele wrapperen (defineret længere nede) som
-   tidligere runder. Tryk-feedback (:active nedenfor) er et uafhængigt,
-   fjerde lag oven i disse tre. */
+/* Hjem-forsidens store scan-CTA: egen farvepalet (primær #0E8F5A, mørk
+   #08734A, halo #DDF4E8) adskilt fra appens generelle --green-token,
+   bevidst — kun selve CTA'en skal bruge denne specifikke nuance, resten af
+   appens grønne elementer (bundnav, andre knapper) rører vi ikke her.
+   Puls-adfærden er justeret to gange: 24. sept. 2026 startede med en
+   tydelig, hurtig puls PÅ BÅDE halo og knap (efter ønsket "må gerne
+   pulsere så man får lyst til at trykke"); 25. sept. 2026 præciseret til
+   "en langsom, subtil puls KUN i ... halo" — knappens eget åndedræt
+   (scanCtaBreathe, stadig defineret længere nede, men ikke længere brugt
+   her) er fjernet, og selve halo-pulsen er dæmpet ned (skala 1→1.06 i
+   stedet for 1.12, opacity .7→.5 i stedet for .8→.35) og sat langsommere
+   (4s i stedet for 2.4s). Tryk-feedback (:active nedenfor) er et separat,
+   uafhængigt lag oven i denne løbende animation.
+   (En parallel session forsøgte samme dag at føre knappen tilbage til en
+   hvid ghost/outline-stil med en roterende ring-lys — den grønne fyld
+   herover er bevidst bevaret ved genforeningen med main, da DENNE session
+   gennem flere eksplicitte brugerrunder har bekræftet grøn fyld + puls,
+   senest ved en fuld velkomst-/login-brandkonsistens-runde bygget netop på
+   denne palet. .scan-cta-ring-light/scanCtaRingSpin fra ghost-forsøget er
+   fjernet igen, samme afgørelse som sidste gang samme konflikt opstod.) */
 @keyframes scan-halo-pulse{
-  0%,100%{transform:scale(1);opacity:.8;}
-  50%{transform:scale(1.12);opacity:.35;}
+  0%,100%{transform:scale(1);opacity:.7;}
+  50%{transform:scale(1.06);opacity:.5;}
 }
-/* Ring-lyset: en blød, bred lysplet der roterer langsomt i selve kant-
-   ringen — samme "bredt blurret, ikke en skarp stråle"-princip som gav
-   den tidligere radar-fejl. inset:-15% + blur(7px) sørger for at lyset
-   flyder blødt ud over ringens bredde i stedet for at tegne en tynd linje. */
-@keyframes scanCtaRingSpin{
-  from{transform:rotate(0deg);}
-  to{transform:rotate(360deg);}
-}
-.scan-cta-halo{animation:scan-halo-pulse 2.4s ease-in-out infinite;}
-.scan-cta-ring-light{animation:scanCtaRingSpin 9s linear infinite;}
+.scan-cta-halo{animation:scan-halo-pulse 4s ease-in-out infinite;}
 .scan-cta-btn{transition:transform .12s cubic-bezier(.34,1.56,.64,1);}
 .scan-cta-btn:active{transform:scale(.95);}
 @media (prefers-reduced-motion: reduce){
-  .scan-cta-halo,.scan-cta-ring-light{animation:none;}
+  .scan-cta-halo{animation:none;}
 }
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
@@ -362,17 +379,46 @@ body{
 
 /* ── WELCOME ── */
 .welcome-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 28px;text-align:center;}
-.welcome-logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:40px;}
+.welcome-logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:32px;}
 .welcome-wordmark{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:20px;}
 .welcome-wordmark-text{font-family:var(--f);font-size:32px;font-weight:700;color:var(--ink);letter-spacing:-.8px;line-height:1;}
 .welcome-wordmark-text span{color:var(--green);}
-.welcome-tagline{font-size:15px;color:var(--muted);margin-top:10px;letter-spacing:.2px;font-weight:400;}
+/* Tydelig value proposition (25. sept. 2026-brief: "kort og tydelig value
+   proposition") — hævet fra en dæmpet, muted tagline til en tydeligere,
+   mørkere sætning, så den reelt fungerer som skærmens hovedbudskab, ikke en
+   sekundær undertekst. Hævet endnu en anelse samme dag (opfølgning) — var
+   stadig for diskret: 15.5px→16.5px, --ink2→--ink (fuld tekstfarve). */
+.welcome-tagline{font-size:16.5px;color:var(--ink);margin-top:12px;letter-spacing:.1px;font-weight:600;line-height:1.5;max-width:280px;}
 .welcome-divider{width:40px;height:2px;background:var(--border2);border-radius:2px;margin:32px auto;}
-.welcome-features{display:flex;flex-direction:column;gap:14px;margin-bottom:44px;width:100%;}
-.welcome-feat{display:flex;align-items:center;gap:14px;text-align:left;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;}
-.welcome-feat-icon{width:38px;height:38px;background:var(--green-lt);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.welcome-feat-text{font-size:13px;color:var(--ink2);font-weight:500;line-height:1.45;}
-.welcome-feat-text strong{color:var(--ink);font-weight:700;display:block;margin-bottom:2px;}
+/* 3 fordele-række (25. sept. 2026-brief) — kort, ikon-båret opsummering,
+   IKKE tunge fuld-bredde feature-kort (erstatter tidligere .welcome-features/
+   .welcome-feat, som aldrig blev taget i brug). Bevidst let/luftig, ingen
+   kant/skygge på selve rækken — kun ikon-cirklerne er "kort" (afrundede,
+   meget lys grøn baggrund #EFF9F4, brugerens egen definerede farvepalet). */
+.welcome-benefits{display:flex;justify-content:center;gap:22px;margin:28px 0 32px;width:100%;}
+.welcome-benefit{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;max-width:100px;}
+.welcome-benefit-icon{width:44px;height:44px;border-radius:14px;background:#EFF9F4;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh);flex-shrink:0;}
+/* Hævet fra 11.5px/--ink2 til 13px/--ink (samme dag, opfølgning) — var på
+   grænsen til for diskret; nu på linje med resten af skærmens tekstvægt. */
+.welcome-benefit-label{font-size:13px;font-weight:700;color:var(--ink);line-height:1.35;}
+/* Primær CTA i EatSafes egen scan-CTA-grøn (#0E8F5A → #08734A), IKKE den
+   generelle --green-token — brugerens 25. sept.-brief navngav netop denne
+   palet ("EatSafes grønne identitet") som knappens farve. Samme rationale
+   som Scan-CTA'en i ScannerScreen.jsx (se dens kommentar): en bevidst,
+   isoleret farve til appens vigtigste handlings-knapper, resten af appens
+   grønne elementer (bundnav, andre --green-baserede knapper) er urørt. */
+.welcome-btn{background:linear-gradient(160deg,#0E8F5A 0%,#08734A 100%);color:#fff;border:none;border-radius:14px;padding:16px 32px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:all .18s;margin-bottom:10px;letter-spacing:-.1px;box-shadow:0 10px 24px -10px rgba(8,115,74,.45);}
+.welcome-btn:hover{transform:translateY(-1px);box-shadow:0 14px 30px -10px rgba(8,115,74,.55);}
+.welcome-btn:active{transform:scale(.98);}
+.welcome-btn-ghost{background:var(--surface);color:var(--ink2);border:1.5px solid var(--border2);border-radius:14px;padding:14px 32px;font-family:var(--f);font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:all .18s;}
+.welcome-btn-ghost:hover{background:var(--surface2);}
+/* Tertiær tekstlink (25. sept. 2026-brief: "skal være et tekstlink, ikke en
+   stor tredje knap") — erstatter den tidligere .welcome-btn-ghost-brug til
+   "Se app uden login (preview)"-genvejen, som visuelt konkurrerede med den
+   rigtige sekundærknap ovenfor. Ingen baggrund/kant/padding-boks, kun
+   understreget tekst. */
+.welcome-link{background:none;border:none;cursor:pointer;font-family:var(--f);font-size:12.5px;font-weight:600;color:var(--ink2);text-decoration:underline;text-underline-offset:2px;padding:8px 0;text-shadow:0 1px 0 rgba(255,255,255,.7);}
+.welcome-link:hover{color:var(--green);}
 .welcome-btn{background:var(--green);color:var(--on-green);border:none;border-radius:12px;padding:16px 32px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:all .18s;margin-bottom:10px;letter-spacing:-.1px;box-shadow:0 2px 12px rgba(74,222,128,.3);}
 .welcome-btn:hover{background:var(--green-glow);transform:translateY(-1px);}
 .welcome-btn-ghost{background:var(--surface);color:var(--ink2);border:1.5px solid var(--border2);border-radius:12px;padding:14px 32px;font-family:var(--f);font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:all .18s;}
@@ -380,10 +426,30 @@ body{
 
 /* ── LOGIN ── */
 .login-wrap{min-height:100vh;display:flex;flex-direction:column;padding:48px 20px 32px;}
-.login-header{text-align:center;margin-bottom:28px;}
-.login-shield{width:64px;height:64px;background:none;border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;overflow:hidden;}
-.login-title{font-size:24px;font-weight:700;color:var(--ink);letter-spacing:-.5px;}
-.login-sub{font-size:13px;color:var(--muted);margin-top:4px;}
+/* Formular-kort (25. sept. 2026-brief): "tydeligt hvidt formular-kort med
+   16-20px radius, diskret skygge, god indvendig padding" — erstatter den
+   generiske .card (12px radius, 16px padding, brugt overalt ellers i appen)
+   specifikt på Opret konto/Log ind, så kortet får mere "luft" og fremstår
+   som skærmens klare fokuspunkt, uden at ændre .card noget andet sted. */
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px 20px;box-shadow:var(--sh2);margin-bottom:10px;}
+/* Segmenteret kontrol — "Ny bruger | Log ind" aktiv-tilstand hævet fra en
+   næsten usynlig markering (samme --surface2-farve som rækkens egen
+   baggrund, kun adskilt af en skygge) til en tydelig, men rolig markering
+   (25. sept. 2026-brief) — hvid pille i EatSafes scan-CTA-grøn tekstfarve
+   (#0E8F5A) på en meget lys grøn baggrund (#EFF9F4), samme palet som resten
+   af onboarding-flowet. */
+.tab-row{display:flex;gap:3px;background:#EFF9F4;border-radius:10px;padding:3px;margin-bottom:14px;border:1px solid var(--green-mid);}
+.tab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink2);transition:all .15s;}
+.tab.active{background:var(--surface);color:#0E8F5A;box-shadow:var(--sh);}
+/* Sociale login-knapper — hvide/neutrale med platformens eget ikon (25.
+   sept. 2026-brief: "undgå en stor blå Facebook-knap, fordi den stjæler
+   fokus fra EatSafe"). Én delt klasse for Google/Apple/Facebook, så alle
+   tre reelt er visuelt lige stærke — og altid svagere end .welcome-btn
+   (den primære CTA), som briefen kræver. */
+.social-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px 16px;background:var(--surface);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-family:var(--f);font-size:14px;font-weight:600;color:var(--ink);transition:all .15s;}
+.social-btn:hover{background:var(--surface2);border-color:var(--ink2);}
+.social-btn:active{transform:scale(.98);}
+.social-btn:disabled{opacity:.5;cursor:not-allowed;}
 
 /* ── ONBOARDING ── */
 .onboard-wrap{padding:20px 16px 100px;}
@@ -426,10 +492,12 @@ body{
 @keyframes scanline{0%{top:13px;opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{top:51px;opacity:0;}}
 
 /* scanCtaBreathe: et let åndedræt (skala 1 → 1.015) på hele scan-CTA-
-   wrapperen — brugt konsekvent på tværs af knappens flere designrunder
-   (ghost/outline → grøn fyld → tilbage til ghost/outline, se .scan-cta-halo
-   ovenfor), uændret hver gang. Respekterer den globale
-   prefers-reduced-motion-regel nedenfor (ACCESSIBILITY) uden ekstra kode her. */
+   wrapperen — stammer fra en mellemliggende hvid ghost/outline-udgave af
+   knappen, og blev kortvarigt genbrugt på den grønne knap (24. sept. 2026).
+   IKKE længere anvendt (25. sept. 2026) — brugeren præciserede at pulsen
+   skal ligge KUN i halo-gløden (.scan-cta-halo ovenfor), ikke på selve
+   knappen. Keyframen er bevaret, ikke slettet, i tilfælde af senere
+   genbrug samme sted i koden. */
 @keyframes scanCtaBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.015);}}
 
 /* Mini cards */
@@ -555,9 +623,6 @@ body{
 .demo-code:hover{border-color:var(--green);color:var(--green);background:var(--green-lt);}
 .screen-title{font-size:16px;font-weight:800;color:var(--ink);margin:10px 0 3px;letter-spacing:-.2px;text-align:center;width:100%;text-shadow:0 1px 2px rgba(255,255,255,.85),0 2px 12px rgba(255,255,255,.6);}
 .screen-sub{font-size:11px;color:var(--ink2);margin-bottom:10px;line-height:1.4;font-weight:400;}
-.tab-row{display:flex;gap:3px;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:14px;border:1px solid var(--border);}
-.tab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--muted);transition:all .15s;}
-.tab.active{background:var(--surface2);color:var(--ink);box-shadow:var(--sh);}
 #qr-reader{width:100%!important;border:none!important;min-height:200px;}
 #qr-reader video{width:100%!important;height:auto!important;border-radius:8px!important;display:block!important;}
 #qr-reader__dashboard{display:none!important;}
@@ -722,7 +787,7 @@ body{
    baggrundens punkt-gitter. Et fint, lyst "løft" (ikke en blur/glød) holder
    den læsbar uden at det ligner en fejl. */
 .screen-title,.screen-sub,.section-lbl,.mp-title,.mp-subtitle,.mp-section-lbl,
-.login-title,.login-sub,.welcome-wordmark-text,.welcome-tagline,
+.welcome-wordmark-text,.welcome-tagline,
 .step-title,.step-sub,.onboard-skip{
   text-shadow:0 1px 0 rgba(255,255,255,.7);
 }

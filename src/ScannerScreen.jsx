@@ -345,57 +345,63 @@ export default function ScannerScreen({
                   synlig indgang i UI'et. */}
               {!cameraActive && (
               <div className="home-hero-frame">
-                <div style={{ position:"absolute", top:"27%", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
+                <div style={{ position:"absolute", top:"calc(27% - 25px)", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
                   {/* Tykkere/større tekst + en blød hvid text-shadow-glød "løfter"
                       teksten af det app-brede baggrundsbillede bagved (.app-bg,
-                      theme.jsx), samme mønster som appens øvrige skærme bruger. */}
+                      theme.jsx — samme billede på tværs af hele appen, se dens
+                      kommentar), samme mønster som appens øvrige skærme bruger.
+                      Flyttet 25px op (25. sept. 2026, opfølgning) sammen med
+                      scan-knappen herunder — brugerens ønske om at rykke
+                      hilsen/hjælpetekst/scanner-område ca. 20-30px op, ren fast
+                      pixel-forskydning (calc) oven på den eksisterende
+                      %-position, ikke en ny %-værdi — brugeren bad specifikt
+                      om px, ikke en proportional flytning. */}
                   <div style={{ fontSize:"clamp(14px, 2.9cqh, 19px)", fontWeight:600, color:"var(--ink)", letterSpacing:"-.2px", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{getGreeting()},</div>
                   <div style={{ fontSize:"clamp(22px, 4.7cqh, 32px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(2px, .4cqh, 4px)", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{user.name?.split(" ")[0] || "der"}</div>
                   <div style={{ fontSize:"clamp(11.5px, 2.1cqh, 15px)", fontWeight:600, color:"var(--ink2)", marginTop:"clamp(5px, 1.1cqh, 9px)", lineHeight:1.5, maxWidth:250, marginLeft:"auto", marginRight:"auto", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 12px rgba(255,255,255,.6)" }}>
-                    Scan en vare og få hurtigt svar om den passer til dine allergier.
+                    Scan et produkt og se straks, om det matcher dine allergier.
                   </div>
                 </div>
 
-                {/* Stor cirkulær scan-knap — ghost/outline-stil (mockup "C",
-                    25. sept. 2026, tilbage fra grøn-fyld-runden i #307/#308):
-                    hvid/næsten-hvid knapflade, tynd grøn kant-ring, grønt
-                    ikon/tekst. Fire samtidige lag, bagest til forrest:
-                    (1) .scan-cta-halo — blød, pulserende ambient-glød bag
-                    hele knappen; (2) .scan-cta-ring-light — et bredt BLURRET,
-                    langsomt roterende lys inde i selve kant-ringen (IKKE en
-                    skarp/smal bue — en tidligere udgave med en tynd roterende
-                    stråle blev afvist som "ligner en radar", se theme.jsx's
-                    kommentar ved @keyframes scanCtaRingSpin); (3) selve
-                    <button> — let dome-agtig radial-gradient-flade + en
-                    Material-inspireret fler-lags elevation-skygge (nær+fjern)
-                    for reel dybde uden glossy-look, samt en tynd grøn
-                    kant-linje der "lysætter" konturen; (4) scanCtaBreathe-
-                    åndedrættet på hele wrapperen (uændret keyframe på tværs
-                    af knappens designrunder). Selve knappen er en rigtig
-                    <button> (ikke en div med role="button") for native
-                    tastatur-aktivering + pålidelig :active-tryk-feedback på
-                    touch-enheder (.scan-cta-btn:active, theme.jsx). */}
-                <div style={{ position:"absolute", top:"46%", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
-                  <div style={{ position:"relative", width:"clamp(90px, 23cqh, 150px)", height:"clamp(90px, 23cqh, 150px)", display:"flex", alignItems:"center", justifyContent:"center",
-                    animation:"scanCtaBreathe 4.5s ease-in-out infinite" }}>
-                    <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-14px, -2.2cqh, -6px)", borderRadius:"50%",
+                {/* Stor cirkulær scan-knap — grøn fyld (#0E8F5A → #08734A). Knappen
+                    selv står nu STILLE (scanCtaBreathe-åndedrættet er fjernet
+                    herfra 25. sept. 2026 — brugeren bad specifikt om puls "kun i"
+                    halo-gløden, ikke selve knappen); al levende bevægelse ligger
+                    nu udelukkende i .scan-cta-halo (langsom, subtil skala+
+                    opacity-puls, se theme.jsx). Størrelsen er øget yderligere
+                    ~12,5% denne runde (op fra clamp(117px, 30cqh, 195px) til
+                    clamp(132px, 34cqh, 219px)) — en mindre, mere præcis
+                    finjustering end forrige rundes ~30%. Ikonet er "scanframe"
+                    (fire scanner-hjørner om stregkode-barer, samme visuelle
+                    sprog som kameraets eget scan-overlay) — bevaret uændret.
+                    Positionen er flyttet 25px op sammen med hilsen-blokken
+                    ovenfor, men 7px mindre end teksten (calc(44% - 18px) i
+                    stedet for calc(44% - 25px)) — en lille ekstra luft-
+                    justering (25. sept. 2026, opfølgning) mellem hjælpe-
+                    teksten og knappen, uden at ændre teksten selv. Selve
+                    knappen er en rigtig <button> (ikke en div med role=
+                    "button") for native tastatur-aktivering + pålidelig
+                    :active-tryk-feedback på touch-enheder
+                    (.scan-cta-btn:active, theme.jsx). En parallel session
+                    forsøgte samme dag et hvidt ghost/outline-design med en
+                    roterende ring-lys (mockup "C") — bevidst ikke genindført
+                    ved sammenlægningen med main, se theme.jsx's kommentar
+                    ved .scan-cta-halo for begrundelsen. */}
+                <div style={{ position:"absolute", top:"calc(44% - 18px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
+                  <div style={{ position:"relative", width:"clamp(132px, 34cqh, 219px)", height:"clamp(132px, 34cqh, 219px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-20px, -3.3cqh, -9px)", borderRadius:"50%",
                       background:"radial-gradient(circle, #DDF4E8 0%, rgba(221,244,232,0) 70%)" }} aria-hidden="true" />
-                    <div aria-hidden="true" style={{ position:"absolute", inset:0, borderRadius:"50%", overflow:"hidden" }}>
-                      <div className="scan-cta-ring-light" style={{ position:"absolute", inset:"-15%", borderRadius:"50%",
-                        background:"conic-gradient(from 0deg, transparent 0deg, transparent 190deg, rgba(14,143,90,.12) 255deg, rgba(14,143,90,.55) 320deg, rgba(14,143,90,.12) 30deg, transparent 80deg), rgba(14,143,90,.07)",
-                        filter:"blur(7px)" }} />
-                    </div>
                     <button
                       className="scan-cta-btn"
                       onClick={() => startCamera()}
                       aria-label="Start kamera for at scanne stregkode"
-                      style={{ position:"absolute", inset:"clamp(6px, 1cqh, 9px)", borderRadius:"50%", cursor:"pointer",
-                        border:"1.5px solid rgba(14,143,90,.28)", fontFamily:"var(--f)",
-                        background:"radial-gradient(circle at 50% 32%, #FFFFFF 0%, #FAFAF8 100%)",
-                        boxShadow:"0 1px 2px rgba(21,32,26,.05), 0 8px 18px -8px rgba(21,32,26,.12), 0 24px 44px -22px rgba(21,32,26,.22), inset 0 1px 1px rgba(255,255,255,.9), inset 0 -8px 16px -12px rgba(21,32,26,.05)",
-                        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(4px, 1cqh, 7px)" }}>
-                      <Icon name="barcode" size="clamp(20px, 4.3cqh, 29px)" color="#0E8F5A" />
-                      <div style={{ fontSize:"clamp(9px, 1.6cqh, 11px)", fontWeight:800, color:"#0E8F5A", letterSpacing:"-.2px" }}>Scan produkt</div>
+                      style={{ position:"absolute", inset:"clamp(5px, 1.1cqh, 7px)", borderRadius:"50%", cursor:"pointer",
+                        border:"none", fontFamily:"var(--f)",
+                        background:"linear-gradient(160deg,#0E8F5A 0%,#08734A 100%)",
+                        boxShadow:"0 14px 28px -12px rgba(8,115,74,.55), inset 0 2px 3px rgba(255,255,255,.3)",
+                        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(6px, 1.5cqh, 10px)" }}>
+                      <Icon name="scanframe" size="clamp(29px, 6.3cqh, 43px)" color="#fff" />
+                      <div style={{ fontSize:"clamp(13px, 2.4cqh, 16px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
                     </button>
                   </div>
                 </div>
@@ -404,8 +410,10 @@ export default function ScannerScreen({
                     beta") og "Prøv en demo"-pillen er begge fjernet fra forsiden
                     (hhv. efter det nye referencedesign og efter brugerens
                     tidligere ønske, se historik) — version er stadig synligt
-                    inde på selve Beta-information-skærmen. */}
-                <div style={{ position:"absolute", top:"71.5%", left:0, right:0, bottom:"clamp(6px, 1.4cqh, 10px)", zIndex:2,
+                    inde på selve Beta-information-skærmen. Flyttet op fra
+                    top:71.5% til top:65% (24. sept. 2026, opfølgning) — for
+                    meget tom luft mellem knappen og bunden. */}
+                <div style={{ position:"absolute", top:"65%", left:0, right:0, bottom:"clamp(6px, 1.4cqh, 10px)", zIndex:2,
                   display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-end", padding:"0 12px", overflow:"hidden" }}>
                   <button onClick={onBetaClick}
                     style={{ display:"inline-flex", alignItems:"center", gap:5, flexShrink:0,

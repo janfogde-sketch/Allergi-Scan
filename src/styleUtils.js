@@ -177,7 +177,9 @@ export const UI = {
   udflex_g6_flewrap: { display:"flex", gap:6, flexWrap:"wrap" },
   utacenter_mb16: { textAlign:"center", marginBottom:16 },
   ufs15_fw700_cink: { fontSize:15, fontWeight:700, color:"var(--ink)" },
-  ufs12_cmuted_mt4: { fontSize:12, color:"var(--muted)", marginTop:4 },
+  // Mørkere end --muted (25. sept. 2026, opfølgning) — kun brugt til de to
+  // undertekster på Opret konto/Log ind, som var lidt for lyse/diskrete.
+  ufs12_cmuted_mt4: { fontSize:12, color:"var(--ink2)", marginTop:4 },
   ufdcolumn_aiflexstar_g4: { flexDirection:"column", alignItems:"flex-start", gap:4 },
   ufw800: { fontWeight:800 },
   ufw500_fs12_lh15: { fontWeight:500, fontSize:12, lineHeight:1.5 },

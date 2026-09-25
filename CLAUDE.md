@@ -337,6 +337,19 @@ nye krav der skal implementeres, ikke som spørgsmål der skal diskuteres først
   en stående regel kan være tilføjet i en del af filen der auto-mergede
   stille og roligt uden at kræve din opmærksomhed.
 
+  **Fundet overtrådt i praksis samme dag (PR #307/#308):** en anden,
+  parallel session mergede to rene design-PR'er (Scan-CTA-farve/-puls +
+  baggrundsbillede) direkte til `main`/Vercel FØR denne regel var skrevet
+  ned af den session der satte den — men opdagede først reglen (via
+  `git merge`s auto-merge af CLAUDE.md) EFTER begge allerede var mergede,
+  og fulgte den ikke retroaktivt. Konsekvens: Vercels daglige kvote blev
+  ramt af de mange hurtige merges, og brugeren så en forældet, ufikset
+  version af appen i flere minutter mens produktions-deploy ventede på
+  kvote-reset. **Læren:** læs hele den mergede CLAUDE.md igennem efter en
+  `git merge` med reelle konflikter — ikke kun de linjer der konfliktede —
+  en stående regel kan være tilføjet i en del af filen der auto-mergede
+  stille og roligt uden at kræve din opmærksomhed.
+
 ---
 
 ## 5. Designforbedring (september 2026) — afsluttet
@@ -544,6 +557,70 @@ se `.claude/HISTORY.md` for mockuppets fulde indhold og screenshots.
     så prioriteret over det tidligere "aldrig beskåret"-princip fra PR #307.
 - Verificeret med Playwright-device-profiler (iPhone SE, iPhone 13) — nul
   overflow, ingen overlap/klipning, farver/puls/knap-type som beskrevet.
+
+**25. sept. 2026 — endnu en opfølgningsrunde (design-only, IKKE pushet/
+merget, se Vercel-kvote-reglen ovenfor).** Brugeren gav seks stykker
+feedback på den delte Artifact-preview:
+- **Scan-knappen ~30% større** — clamp(90px, 23cqh, 150px) →
+  clamp(117px, 30cqh, 195px) (+ tilsvarende ikon/tekst/halo/gap-mål) efter
+  feedback om at knappen, appens vigtigste handling, føltes for lille/
+  sekundær.
+- **Mindre tom luft mellem knap og bund** — knappens `top` rykket fra 46%
+  til 44%, Beta-information-fodens `top` rykket fra 71.5% til 65%.
+- **Bundmenuen ændret til Indkøbsliste | Scan | Historik** — "Søg" fjernet
+  fra bundnavigationen (brugerens begrundelse: søgning hører nu til inde i
+  Indkøbsliste-skærmen, som allerede har en fuld, allergi-filtreret
+  produktsøgning indbygget til "tilføj vare"-feltet). `SCREENS.SEARCH`
+  er IKKE slettet — stadig et gyldigt route, stadig nået fra
+  `SubmittedScreen.jsx`s "søg i stedet"-link, bare uden en dedikeret
+  bundnav-plads længere.
+- **Topbar-knapperne (?, Feedback, hamburger) forstørret** (32px→38px,
+  Feedback-pillens padding øget) og farven skiftet fra `var(--muted2)` til
+  det mørkere `var(--ink2)` + en let skygge (`var(--sh)`) — virkede "småt
+  og anonymt ... næsten disabled" ved den forrige, lysere/mindre stil.
+- **Undertekst-teksten ændret** til "Scan et produkt og se straks, om det
+  matcher dine allergier." (fra "Scan en vare og få hurtigt svar om den
+  passer til dine allergier.") — brugerens vurdering: den stærkere
+  formulering.
+- **Nyt `scanframe`-ikon** (`SharedComponents.jsx`) erstatter den bare
+  `barcode`-ikon på CTA-knappen — fire scanner-hjørne-vinkler (samme
+  visuelle sprog som det rigtige kamera-overlays hjørne-markører) omkring
+  korte stregkode-barer, mere "peg og scan"-intuitivt end en ren stregkode.
+
+Alle seks er rene design-/tekst-ændringer — committet lokalt på
+feature-branchen, IKKE pushet/PR'et/mergt (se den stående Vercel-kvote-
+regel i afsnit 4), og verificeret via en delt Artifact-preview i stedet.
+Genverificeret med Playwright på iPhone SE/13/14 Pro Max efter ændringerne
+— nul overflow, positivt mellemrum (83–122px) mellem knap og Beta-info-
+knap på alle tre (en første, naiv programmatisk måling viste et falsk
+"overlap" ved fejlagtigt at sammenligne knappens bund mod fod-CONTAINERENS
+egen top i stedet for den faktisk synlige, bund-forankrede Beta-info-knap
+selv — rettet ved at måle mod den rigtige knap-element, ikke dens
+forælder-boks).
+
+**25. sept. 2026 — endnu en finjusteringsrunde (design-only, IKKE pushet/
+merget).** Fem præcise justeringer oven på forrige rundes ændringer:
+- **Scan-knappen yderligere ~12,5% større** (clamp(117px, 30cqh, 195px) →
+  clamp(132px, 34cqh, 219px), + tilsvarende ikon/tekst/halo/gap) — en
+  mindre, mere præcis finjustering end forrige rundes ~30%.
+- **Hilsen, hjælpetekst og scan-området flyttet 25px op** — `calc(27% -
+  25px)` og `calc(44% - 25px)` i stedet for rene %-værdier, en bevidst FAST
+  pixel-forskydning (brugeren bad specifikt om px, ikke en proportional
+  flytning). Beta-information-foden er UÆNDRET (top:65%) — kun de tre
+  navngivne elementer skulle rykkes.
+- **Pulsen er nu KUN i halo-gløden, ikke på selve knappen** — `scanCtaBreathe`
+  fjernet fra knap-wrapperen (var tilføjet forrige runde efter "må gerne
+  pulsere så man får lyst til at trykke", men brugeren præciserede denne
+  runde at kun haloen skal pulsere). Halo-pulsen selv er dæmpet og
+  langsommere: skala 1→1.06 (var 1.12), opacity .7→.5 (var .8→.35), 4s
+  (var 2.4s) — "en langsom, subtil puls".
+- **Scanframe-ikonet, bundnavigationen (Indkøbsliste/Scan/Historik) og
+  baggrundens afdæmpede intensitet er bevidst UÆNDREDE** — brugeren bad
+  eksplicit om at bevare dem denne runde.
+- Genverificeret på iPhone SE/13/14 Pro Max: nul overflow, positivt
+  mellemrum (91–123px) mellem knap og Beta-info-knap,
+  `element.getAnimations()` bekræftede halo-animationen kører og
+  knap-wrapperen ikke længere har nogen animation.
 
 ### Beta-installation (september 2026) — nuværende arkitektur
 

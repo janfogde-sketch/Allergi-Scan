@@ -167,7 +167,8 @@ export default function EatSafe() {
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
     authError, setAuthError, authLoading, setAuthLoading,
     authTab, setAuthTab, isOAuth, setIsOAuth,
-    saveTokens, clearAuth, handleLogin, handleSignup, handleOAuth,
+    rememberMe, setRememberMe,
+    saveTokens, clearAuth, handleLogin, handleSignup, handleOAuth, handleForgotPassword,
   } = useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
                 onSignupSuccess: () => setOnboardStep(1) });
 
@@ -744,8 +745,9 @@ export default function EatSafe() {
     user, setUser, userId, setUserId, accessToken,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
     authError, setAuthError, authLoading, authTab, setAuthTab,
-    isOAuth, handleLogin, handleSignup, handleOAuth, clearAuth,
-  }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, authLoading, authTab, isOAuth, handleLogin, handleSignup, handleOAuth, clearAuth]);
+    isOAuth, rememberMe, setRememberMe,
+    handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth,
+  }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, authLoading, authTab, isOAuth, rememberMe, handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth]);
 
   const profileContextValue = useMemo(() => ({
     allergens, setAllergens, customAllerg, setCustomAllerg,
@@ -843,9 +845,20 @@ export default function EatSafe() {
             og ikke background-attachment:fixed. 25. sept. 2026: Scan-forsidens
             EGET baggrundsfoto (tidligere kun vist på SCREENS.HOME via en
             app-bg-scan-modifier-klasse) er gjort til det ENE, universelle
-            billede for hele appen — modifier-klassen er derfor fjernet,
-            .app-bg bruger nu samme billede direkte, se theme.jsx. */}
+            billede for hele appen (main) — modifier-klassen er derfor fjernet,
+            .app-bg bruger nu samme billede direkte, se theme.jsx. Matcher også
+            denne sessions eget mål (brandkonsistens-brief: "match velkomstsiden
+            1:1... samme type ingredienser placeret i kanterne" på tværs af
+            Scan/Velkomst/Login) — billedet viser netop de allergen-kilder
+            briefen bad om (mælk/æg/havre/fisk/skaldyr/nødder). */}
         <div className="app-bg" aria-hidden="true" />
+        {/* Ekstra, let dæmpning af baggrunden KUN på Log ind/Opret konto
+            (25. sept. 2026-brief: "formularen bliver vigtigst", "baggrunden
+            må gerne være let dæmpet på formularsiderne") — se .app-bg-dim i
+            theme.jsx. Selvstændigt lag OVEN PÅ det nu universelle baggrunds-
+            billede, i stedet for at ændre .app-bg selv, så resten af appen
+            beholder sin nuværende intensitet. */}
+        {screen === SCREENS.LOGIN && <div className="app-bg-dim" aria-hidden="true" />}
 
         {/* Skip-link for tastatur/screen reader brugere */}
         <a href="#main-content" className="skip-link">Spring til indhold</a>
@@ -882,22 +895,28 @@ export default function EatSafe() {
               <div className="topbar-name">Eat<span>Safe</span></div>
               <div style={{ background:"var(--amber)", color:"var(--ink)", fontSize:9, fontWeight:800, padding:"2px 8px", borderRadius:100, letterSpacing:".5px", marginLeft:4, marginTop:2 }}>BETA</div>
             </div>
-            <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+            {/* Topbar-knapperne var 32px, `var(--paper2)`-baggrund + `var(--muted2)`-
+                ikonfarve — brugerfeedback (24. sept. 2026, opfølgning): "lidt for
+                småt og anonymt ... ser næsten disabled ud". Forstørret til 38px
+                (44px for Feedback-pillen), skiftet ikonfarven til det mørkere
+                `var(--ink2)` og lagt en let skygge på for at give dem samme
+                kort-vægt de har andre steder i appen, i stedet for at blende ind. */}
+            <div style={{ display:"flex", gap:8, alignItems:"center" }}>
               {/* Hjælp-knap */}
               <button onClick={() => setHelpOpen(true)}
-                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:32, height:32, fontFamily:"var(--f)", fontSize:15, fontWeight:800, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:38, height:38, fontFamily:"var(--f)", fontSize:17, fontWeight:800, color:"var(--ink2)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"var(--sh)" }}>
                 ?
               </button>
               {/* Feedback-knap */}
               <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
-                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"6px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"9px 15px", fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color:"var(--ink2)", cursor:"pointer", display:"flex", alignItems:"center", gap:6, boxShadow:"var(--sh)" }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                 Feedback
               </button>
               {/* Menu-knap — profil, familie, favoritter, historik, opskrifter, viden m.m. */}
               <button onClick={() => setShowProfileMenu(true)} aria-label="Åbn menu"
-                style={{ position:"relative", background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:32, height:32, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" strokeWidth="2.2"><path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+                style={{ position:"relative", background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:38, height:38, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"var(--sh)" }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2.2"><path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
                 {[SCREENS.PROFILE, SCREENS.EDITPROFILE, SCREENS.HISTORY, SCREENS.FAVORITES, SCREENS.FAMILY, SCREENS.ADMIN, SCREENS.MADPAS, SCREENS.RESTAURANTGUIDE, SCREENS.RECIPES, SCREENS.KNOWLEDGE].includes(screen) && (
                   <span style={{ position:"absolute", top:-1, right:-1, width:9, height:9, borderRadius:"50%", background:"var(--green)", border:"1.5px solid var(--paper)" }} />
                 )}
@@ -1136,8 +1155,8 @@ export default function EatSafe() {
           <nav className="bottom-nav" role="navigation" aria-label="Hovednavigation">
             {[
               [SCREENS.LIST,    "cart",     "Indkøbsliste"],
-              [SCREENS.HOME,    "barcode",  "Scan"],
-              [SCREENS.SEARCH,  "search",   "Søg"],
+              [SCREENS.HOME,    "scanframe","Scan"],
+              [SCREENS.HISTORY, "clock",    "Historik"],
             ].map(([s,icon,lbl]) => (
               <div key={s} className={`nav-item${(
                 screen===s ||
