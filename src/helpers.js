@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { ALLERGENS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
+import { ALLERGENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { ALLERGEN_KEYWORDS, keywordMatches, matchCustomAllergens } from "./allergenKeywords.js";
 
 // Re-eksporteret så scan-/opskrift-/resultat-koden kan importere den sammen
@@ -369,6 +369,76 @@ export function checkDietCompatibility(dietId, allergenFlags, ingredientsText, n
   }
 }
 
+// ─── PER-PROFIL SIKKERHEDSVURDERING ──────────────────────────────────────────
+// Delt mellem ResultScreen (efter et scan) og ListScreen (for varer på
+// indkøbslisten med kendt produktdata) — begge skal vurdere et produkt
+// SEPARAT mod hver aktiv profils allergier/kostpræferencer/overvågede
+// E-numre, ikke kun det sammenlagte allergisæt. Udtrukket til én fælles
+// implementation (25. sept. 2026, opfølgning på PR #325) — to uafhængige
+// kopier af samme sikkerhedsrelevante beregning har allerede forårsaget
+// mindst én bug tidligere i dette projekt (se App.jsx' allActive()-kommentar).
+export function buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles }) {
+  return [
+    { id:"me", name: user?.name || "Dig", allergens: allergens || [], custom: customAllerg || [], diets: user?.diets || [], eNumbers: selectedENumbers || [], color: null },
+    ...(family || []).map(m => ({ id:m.id, name:m.name, allergens: m.allergens || [], custom: m.custom || [], diets: m.diets || [], eNumbers: m.eNumbers || [], color: m.color })),
+  ].filter(p => (activeProfiles || []).includes(p.id));
+}
+
+export function computeProfileResults(profiles, { allergen_flags, ingredients, nutrition, productENumbers }) {
+  const resultFlags = allergen_flags || {};
+  const ingredientsText = ingredients || "";
+  return (profiles || []).map(p => {
+    const danger = (p.allergens || []).filter(a => resultFlags[a] === "yes");
+    const warning = (p.allergens || []).filter(a => resultFlags[a] === "traces");
+    // Fritekst-match af profilens egne tilføjede allergier — se
+    // matchCustomAllergens' egen kommentar for hvorfor dette er mindre
+    // pålideligt end de faste allergener (ingen synonymer).
+    const customMatches = p.custom?.length ? matchCustomAllergens(ingredientsText, p.custom) : [];
+    const dietResults = (p.diets || []).map(d => ({
+      id: d, label: DIETS.find(x => x.id === d)?.label || d,
+      ...checkDietCompatibility(d, resultFlags, ingredientsText, nutrition),
+    }));
+    const dietFails = dietResults.filter(r => r.ok === false);
+    const eNumberMatches = (productENumbers?.length > 0 && p.eNumbers?.length > 0)
+      ? compareENumbers(productENumbers, p.eNumbers).matched
+      : [];
+
+    const reasons = [
+      ...danger.map(id => ALLERGENS.find(a => a.id === id)?.label || id),
+      ...customMatches.map(t => `Muligvis "${t}"`),
+      ...warning.map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id}`),
+      ...dietFails.map(r => `${r.label}: ${r.reasons[0] || "passer ikke"}`),
+      ...eNumberMatches.map(e => `Overvåget E-nummer ${e}`),
+    ];
+    const status = (danger.length > 0 || customMatches.length > 0) ? "danger"
+      : (warning.length > 0 || dietFails.length > 0 || eNumberMatches.length > 0) ? "warn"
+      : "safe";
+    return { ...p, status, reasons, danger, warning };
+  });
+}
+
+// ─── SCAN → INDKØBSLISTE-MATCH ───────────────────────────────────────────────
+// Finder en umarkeret vare på den aktive indkøbsliste der sandsynligvis er
+// den samme som det lige scannede produkt — bruges KUN til at foreslå
+// "markér som købt" (ResultScreen), aldrig til automatisk at markere noget.
+// Præcist EAN-/produkt-id-match først; fritekst-varer (intet EAN, fx en
+// brugerskrevet "Mælk") matches i stedet på navnetekst begge veje, men kun
+// ved en rimeligt specifik tekst (≥3 tegn) for at undgå støj-match.
+export function findActiveListMatch(shoppingListItems, scanResult) {
+  const unchecked = (shoppingListItems || []).filter(i => !i.checked);
+  if (unchecked.length === 0 || !scanResult) return null;
+  const scannedName = (scanResult.name || "").toLowerCase().trim();
+  let hit = unchecked.find(i => i.ean && scanResult.code && i.ean === scanResult.code);
+  if (!hit) hit = unchecked.find(i => i.product_id && scanResult.id && i.product_id === scanResult.id);
+  if (!hit) {
+    hit = unchecked.find(i => {
+      if (i.ean) return false;
+      const itemName = (i.name || "").toLowerCase().trim();
+      return itemName.length >= 3 && (scannedName.includes(itemName) || itemName.includes(scannedName));
+    });
+  }
+  return hit || null;
+}
 
 // ─── DEBUG TRACE SYSTEM ──────────────────────────────────────────────────────
 // traceId(prefix) → unikt ID per operation (scan/search/ocr/submit)

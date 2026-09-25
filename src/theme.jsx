@@ -212,6 +212,16 @@ body::-webkit-scrollbar{display:none;}
   position:fixed;inset:0;z-index:0;pointer-events:none;
   background:rgba(255,255,255,.28);
 }
+/* Indkøbsliste-polish (25. sept. 2026, brugerfeedback): "ingrediens-
+   baggrunden skal kun bruges på den primære Scan-forside" — dækker det
+   universelle .app-bg helt opakt på Indkøbsliste-skærmen (se App.jsx),
+   så skærmen igen får EatSafes rene hvid/off-white arbejdsflade i stedet
+   for madvarebilledet, uden at ændre .app-bg selv (som resten af appen,
+   inkl. Scan-forsiden, fortsat bruger uændret). */
+.app-bg-hide{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:var(--paper);
+}
 
 /* ── TOPBAR ── */
 .topbar{
