@@ -214,30 +214,59 @@ består af én fil eller ti.
    **Push IKKE endnu** — flere commits kan sagtens ligge lokalt på feature-branchen
    ukommitteret til fjern-repoet, indtil hele opgaven er færdig.
 
-**Én gang, når HELE den samlede opgave er færdig** (alle filer/bølger/punkter
+**Når HELE den samlede opgave er færdig** (alle filer/bølger/punkter
 brugeren har bedt om i denne omgang):
-6. **Push** alle commits til den aktive feature-branch i én omgang.
-7. **Opret ÉN PR** via GitHub MCP der dækker det hele — dansk PR-body der
+6. **STOP og spørg om godkendelse før push** (stående regel, ændret 25.
+   sept. 2026 — se begrundelsen nedenfor). Opsummér kort hvad der er klar
+   til at blive skibet (hvilke commits/filer, hvad de gør), og vent på et
+   eksplicit "ja"/"push den"/lignende fra brugeren, FØR noget som helst af
+   det følgende sker. Antag ikke at et tidligere "fortsæt"/"gå videre" i
+   samme samtale dækker selve push-godkendelsen — den skal gives eksplicit,
+   hver gang, selv når resten af arbejdsgangen (byg/test/commit) foregår
+   uden at spørge som normalt.
+7. Når godkendt: **Push** alle commits til den aktive feature-branch i én omgang.
+8. **Opret ÉN PR** via GitHub MCP der dækker det hele — dansk PR-body der
    opsummerer alle commits/ændringer, tjek for PR-template først. Afslut med
    `🤖 Generated with [Claude Code]`-footer + session-link.
-8. **Vent på grøn Vercel-status** på PR'en (poll `pull_request_read`/`get_status`).
-9. **Squash-merge** PR'en.
-10. **Resync branch:** hent nyeste `main`, reset feature-branchen til den, force-push
+9. **Vent på grøn Vercel-status** på PR'en, hvis relevant (poll
+   `pull_request_read`/`get_status` — bemærk at preview-deploys er slået
+   fra projekt-bredt siden 25. sept. 2026, se afsnittet om det nedenfor, så
+   der typisk ikke kommer noget statustjek at vente på; verificér i stedet
+   lokalt build/test før du beder om godkendelse i trin 6).
+10. **Squash-merge** PR'en.
+11. **Resync branch:** hent nyeste `main`, reset feature-branchen til den, force-push
     med `--force-with-lease`, så branchen er klar til næste opgave.
 
 **Undtagelse — kritiske/blokerende fejl:** en fejl der reelt er i produktion (fx
 crashende skærm) skippes IKKE ind i batchen, men shippes for sig selv med det
-samme som en isoleret hotfix-PR, uanset hvor i en større opgave man er.
+samme som en isoleret hotfix-PR, uanset hvor i en større opgave man er — denne
+undtagelse gælder STADIG uændret, inklusive at springe godkendelses-trinnet
+(6) over, netop fordi det er en produktions-nødsituation hvor at vente på svar
+er den reelle risiko.
 
 **Hvornår er "opgaven" færdig?** Det brugeren bad om i den seneste sammenhængende
 instruktion — fx "gennemgå disse tre skærme" er én opgave (→ én PR ved slutningen,
 selvom det er tre skærme/tre commits), ikke tre. Ved tvivl: hellere for få PR'er
 end for mange — brugeren siger til hvis en batch blev for stor.
 
-Alt dette gøres **uden at spørge brugeren om lov undervejs** — det er en etableret,
-godkendt proces i dette projekt. Brugeren giver typisk korte, uformelle instruktioner
-på dansk (ofte som hurtige afbrydelser midt i en igangværende opgave) — tag dem som
-nye krav der skal implementeres, ikke som spørgsmål der skal diskuteres først.
+Trin 1-5 (lave ændringen, byg, test, mojibake-scan, commit) gøres **uden at
+spørge brugeren om lov undervejs** — det er en etableret, godkendt proces i
+dette projekt. Brugeren giver typisk korte, uformelle instruktioner på dansk
+(ofte som hurtige afbrydelser midt i en igangværende opgave) — tag dem som nye
+krav der skal implementeres, ikke som spørgsmål der skal diskuteres først.
+**Push (trin 6 og frem) er den ENESTE undtagelse** — det kræver altid eksplicit
+godkendelse, jf. reglen ovenfor.
+
+**Baggrund for godkendelses-kravet (25. sept. 2026):** brugeren spurgte
+eksplicit hvorfor en batch af skan-funktions-rettelser blev pushet/merget uden
+først at blive spurgt — den daværende regel (autonomt push når "opgaven" var
+færdig, uden at spørge) var teknisk fulgt korrekt, men gav en uventet
+oplevelse. Brugeren bad om at ændre selve reglen permanent, ikke bare for den
+ene session, fremfor bare at få et engangs-nej. Løst ved at tilføje et
+eksplicit godkendelses-stop lige før push (trin 6), som den eneste ændring —
+byg/test/commit-delen af arbejdsgangen forbliver uændret autonomt, da det
+kravet specifikt handlede om selve det at skibe/dele ændringer, ikke om at
+lave dem lokalt.
 
 ### Andre stående aftaler
 
