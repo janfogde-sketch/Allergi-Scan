@@ -274,10 +274,11 @@ export default function OnboardingScreen({
             hvidt formular-kort (.login-card), baggrunden dæmpet yderligere
             på denne skærm (.app-bg-dim i App.jsx), "Adgangskode" i stedet
             for "Kodeord" overalt, ét enkelt "Eller fortsæt med"-separator i
-            stedet for to "eller"-linjer, og tre neutrale/hvide sociale
-            login-knapper (Google/Apple/Facebook) — ingen af dem må være
-            visuelt stærkere end den grønne primær-CTA (.welcome-btn,
-            genbrugt her for samme farvepalet/vægt som velkomstskærmen). */}
+            stedet for to "eller"-linjer, og neutrale/hvide sociale
+            login-knapper (Google/Facebook — Apple fjernet igen 25. sept.
+            2026, samme dag) — ingen af dem må være visuelt stærkere end
+            den grønne primær-CTA (.welcome-btn, genbrugt her for samme
+            farvepalet/vægt som velkomstskærmen). */}
         {screen === SCREENS.LOGIN && (
           <div className="login-wrap fade-in">
 
@@ -421,14 +422,6 @@ export default function OnboardingScreen({
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                 </svg>
                 Fortsæt med Google
-              </button>
-
-              {/* Apple */}
-              <button className="social-btn" onClick={() => handleOAuth("apple")} disabled={authLoading}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="#000">
-                  <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zm3.415-3.132c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.817-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.56-1.7z"/>
-                </svg>
-                Fortsæt med Apple
               </button>
 
               {/* Facebook — kun det blå "f"-mærke, ikke en fyldt blå knap

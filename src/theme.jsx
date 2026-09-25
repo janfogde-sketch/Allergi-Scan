@@ -443,9 +443,9 @@ body{
 .tab.active{background:var(--surface);color:#0E8F5A;box-shadow:var(--sh);}
 /* Sociale login-knapper — hvide/neutrale med platformens eget ikon (25.
    sept. 2026-brief: "undgå en stor blå Facebook-knap, fordi den stjæler
-   fokus fra EatSafe"). Én delt klasse for Google/Apple/Facebook, så alle
-   tre reelt er visuelt lige stærke — og altid svagere end .welcome-btn
-   (den primære CTA), som briefen kræver. */
+   fokus fra EatSafe"). Én delt klasse for Google/Facebook (Apple fjernet
+   igen samme dag), så begge reelt er visuelt lige stærke — og altid
+   svagere end .welcome-btn (den primære CTA), som briefen kræver. */
 .social-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px 16px;background:var(--surface);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-family:var(--f);font-size:14px;font-weight:600;color:var(--ink);transition:all .15s;}
 .social-btn:hover{background:var(--surface2);border-color:var(--ink2);}
 .social-btn:active{transform:scale(.98);}
