@@ -447,8 +447,13 @@ body::-webkit-scrollbar{display:none;}
 /* Bund-padding øget fra 32px til 40px + telefonens egen safe-area (25.
    sept. 2026, opfølgning) — den sidste sociale login-knap (Facebook)
    kolliderede med teksten under den, for lidt luft til at være tydeligt
-   adskilt. */
+   adskilt. Yderligere øget specifikt på lave skærme (samme dag, endnu en
+   opfølgning) — 40px var stadig knapt på fx iPhone SE (568px høj), hvor
+   det samlede indhold fylder relativt mere af viewporten. */
 .login-wrap{min-height:100vh;display:flex;flex-direction:column;padding:48px 20px calc(40px + env(safe-area-inset-bottom));}
+@media (max-height:700px){
+  .login-wrap{padding-bottom:calc(64px + env(safe-area-inset-bottom));}
+}
 /* Formular-kort (25. sept. 2026-brief): "tydeligt hvidt formular-kort med
    16-20px radius, diskret skygge, god indvendig padding" — erstatter den
    generiske .card (12px radius, 16px padding, brugt overalt ellers i appen)

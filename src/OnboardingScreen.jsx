@@ -429,10 +429,12 @@ export default function OnboardingScreen({
             )}
 
             {/* Ét enkelt separator (25. sept. 2026 — var tidligere to
-                "eller"-linjer, én før og én efter de sociale knapper). */}
+                "eller"-linjer, én før og én efter de sociale knapper).
+                Gjort en anelse mere diskret (opfølgning samme dag) —
+                --muted2 i stedet for --muted, mindre skrifttykkelse. */}
             <div style={{ display:"flex", alignItems:"center", gap:10, margin:"16px 0 10px" }}>
               <div style={UI.hr} />
-              <span style={{ fontSize:12, color:"var(--muted)", fontWeight:600 }}>Eller fortsæt med</span>
+              <span style={{ fontSize:11.5, color:"var(--muted2)", fontWeight:500 }}>Eller fortsæt med</span>
               <div style={UI.hr} />
             </div>
 
