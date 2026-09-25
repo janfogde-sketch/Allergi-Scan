@@ -6,7 +6,6 @@
 // Skift tema ved at ændre THEME-objektet herunder — resten følger automatisk.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import appBackground from "./assets/app-background.webp";
 import scanHeroBg from "./assets/home/scan-hero-bg.webp";
 
 export const THEME = {
@@ -142,58 +141,35 @@ body{
   width:100%;position:relative;overflow-x:hidden;
   background:#FFFFFF;
 }
-/* App-bred baggrund: ét fast billede (ingredienser/frugt i en dekorativ ramme
-   om et blankt hvidt midterfelt) i stedet for det tidligere prikgitter+farve-
-   glød-lag — samme billede på tværs af ALLE skærme, ikke kun Scan-forsiden
-   (24. sept. 2026, efter Bjørns design-arbejde på Scan-siden specifikt).
-   Egen ægte position:fixed-boks (ikke background-attachment:fixed på .app)
-   — background-attachment:fixed understøttes ikke pålideligt i mobil Safari/
-   iOS-hjemmeskærm-PWA'er (velkendt, langvarig WebKit-begrænsning), mens en
-   almindelig fixed-positioneret boks virker konsekvent alle steder. Ligger
-   som første barn i .app, bag alt andet indhold via z-index:0 + .screen's
-   z-index:1 nedenfor — IKKE negativ z-index, som i visse browsere kan ende
-   bag body's egen baggrund i stedet for bag skærmens indhold.
-   Hvid slør-wash (24. sept. 2026, efter billedskifte til en tættere fyldt
-   flatlay uden det forrige billedes indbyggede blanke midterfelt) — tekst
+/* App-bred baggrund: ét fast billede bag alt andet indhold. 25. sept. 2026:
+   Scan-forsidens eget baggrundsfoto (allergen-fødevarer i to kolonner på
+   ren hvid baggrund, direkte uploadet af brugeren — tidligere kun vist på
+   SCREENS.HOME) er gjort til det ENE, universelle billede for hele appen,
+   ikke kun Scan-forsiden — samme billede, ingen skærm-specifik modifier-
+   klasse længere (se App.jsx). Egen ægte position:fixed-boks (ikke
+   background-attachment:fixed på .app) — background-attachment:fixed
+   understøttes ikke pålideligt i mobil Safari/iOS-hjemmeskærm-PWA'er
+   (velkendt, langvarig WebKit-begrænsning), mens en almindelig fixed-
+   positioneret boks virker konsekvent alle steder. Ligger som første barn
+   i .app, bag alt andet indhold via z-index:0 + .screen's z-index:1
+   nedenfor — IKKE negativ z-index, som i visse browsere kan ende bag
+   body's egen baggrund i stedet for bag skærmens indhold.
+   Hvid slør-wash (uændret fra den forrige app-brede baggrund) — tekst
    ligger flere steder direkte oven på dette lag uden kort/boks (Scan-
-   forsidens hilsen, screen-title øverst på flere skærme), og det nye billede
-   er markant tættere/mere farverigt end det forrige, hvilket gjorde den
-   tekst svær at læse. Løst med ÉT globalt, ensartet hvidt slør-lag frem for
-   individuelle bokse bag tekst — billedet bliver en dæmpet, stemningsfuld
-   tekstur i baggrunden i stedet for at konkurrere med indholdet, og løsningen
-   gælder automatisk alle nuværende og fremtidige skærme uden per-skærm-arbejde.
-   Dæmpet fra .8 til .5 samme dag (brugerfeedback: for kraftigt slør vaskede
-   billedets farve/elegance helt ud) — læsbarheden bæres i stedet primært af
-   tekstens egen vægt/størrelse + en blød hvid text-shadow-glød ("løft" væk
-   fra baggrunden), ikke af selve sløret. Se .screen-title nedenfor og
+   forsidens hilsen, screen-title øverst på flere skærme). Dæmpet til .5
+   opacitet (brugerfeedback: et kraftigere slør vasker billedets farve/
+   elegance ud) — læsbarheden bæres i stedet primært af tekstens egen
+   vægt/størrelse + en blød hvid text-shadow-glød ("løft" væk fra
+   baggrunden), ikke af selve sløret. Se .screen-title nedenfor og
    Scan-forsidens hilsen (ScannerScreen.jsx) for samme mønster. */
 .app-bg{
   position:fixed;inset:0;z-index:0;pointer-events:none;
   background-image:
     linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)),
-    url(${appBackground});
+    url(${scanHeroBg});
   background-size:cover,cover;
   background-position:top center,top center;
   background-repeat:no-repeat,no-repeat;
-}
-/* Scan-forsidens EGET baggrundsfoto (24. sept. 2026) — overstyrer kun
-   billedet, samme position:fixed-boks, samme cover/wash-teknik som .app-bg
-   ovenfor. Slået til via en ekstra klasse (app-bg-scan) i App.jsx, KUN når
-   screen===SCREENS.HOME, så billedet dækker HELE skærmen kant-til-kant
-   (bag topbar OG bundnav, som allerede har frosted-glass-gennemsigtighed —
-   se .topbar::before/.bottom-nav::before nedenfor), i stedet for kun det
-   smallere rum imellem dem. Tidligere forsøgt som en <img> INDE i
-   .home-hero-frame (height:100%, aldrig beskåret) — men det billede-format
-   (941×1672, smallere end de fleste telefonskærme) betød at boksen aldrig
-   nåede bag topbar/bundnav uden en risikabel tilbagevenden til flex-fill-
-   højde (se HISTORY.md for den fejlklasse, allerede fundet og rettet én
-   gang denne session). background-size:cover her accepterer i stedet en
-   smule beskæring i siderne på ekstreme skærmforhold, samme afvejning som
-   .app-bg allerede gør for det app-brede billede. */
-.app-bg.app-bg-scan{
-  background-image:
-    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)),
-    url(${scanHeroBg});
 }
 
 /* ── TOPBAR ── */
@@ -260,29 +236,42 @@ body{
      13 — faste px-størrelser skalerede slet ikke med boksens egen højde. */
   container-type:size;
 }
-/* Hjem-forsidens store scan-CTA (24. sept. 2026-runde, genskinnet fra den
-   mellemliggende hvide ghost/outline-udgave efter brugerens eksplicitte
-   ønske: "Knappen skal være grøn, men den må gerne pulsere så man får lyst
-   til at trykke"): egen farvepalet (primær #0E8F5A, mørk #08734A, halo
-   #DDF4E8) adskilt fra appens generelle --green-token, bevidst — kun selve
-   CTA'en skal bruge denne specifikke nuance, resten af appens grønne
-   elementer (bundnav, andre knapper) rører vi ikke her. To lag levende
-   bevægelse i hvile, begge bevidst tydeligere end et rent kosmetisk "det
-   lever lidt"-pift: haloen (den bløde glød bag knappen) pulserer i skala+
-   opacitet via denne keyframe, OG selve knap-wrapperen får et ekstra
-   åndedræt via scanCtaBreathe (genbrugt fra ghost-udgaven, defineret
-   længere nede) — sammen skal de to lag give en tydelig invitation til at
-   trykke, ikke kun en diskret detalje. Tryk-feedback (:active nedenfor) er
-   et tredje, uafhængigt lag oven i disse to løbende animationer. */
+/* Hjem-forsidens store scan-CTA (25. sept. 2026-runde: tilbage til
+   ghost/outline-stilen — mockup "C" — efter grøn-fyld-runden i #307/#308).
+   Elegant, let udgave: hvid/næsten-hvid knapflade, tynd grøn kant-ring,
+   grønt ikon/tekst. Tre lag skaber "lysætning, dybde og lys" uden at
+   gentage tidligere fejlslagne forsøg (se HISTORY.md): en tidligere ghost-
+   udgave med en SKARP/smal roterende lysbue om kanten blev afvist som
+   "ligner en radar" — løsningen her er samme afhjælpning som dengang blev
+   fundet: bredt BLURRET, langsomt roterende lys i selve ring-kanten
+   (scanCtaRingSpin, 9s, IKKE en skarp bue), aldrig en tynd, tydelig stråle.
+   Lagene, bagest til forrest: (1) en blød, pulserende ambient-glød bag hele
+   knappen (denne keyframe, uændret fra tidligere runder), (2) den roterende
+   ring-lys-glød i selve kant-ringen (scanCtaRingSpin nedenfor), (3) selve
+   knapfladen — en let dome-agtig radial-gradient (næsten umærkelig, ikke
+   glossy) + en Material-inspireret fler-lags elevation-skygge (nær+fjern
+   skygge i stedet for én flad skygge) for reel dybde. Samme
+   scanCtaBreathe-åndedræt på hele wrapperen (defineret længere nede) som
+   tidligere runder. Tryk-feedback (:active nedenfor) er et uafhængigt,
+   fjerde lag oven i disse tre. */
 @keyframes scan-halo-pulse{
   0%,100%{transform:scale(1);opacity:.8;}
   50%{transform:scale(1.12);opacity:.35;}
 }
+/* Ring-lyset: en blød, bred lysplet der roterer langsomt i selve kant-
+   ringen — samme "bredt blurret, ikke en skarp stråle"-princip som gav
+   den tidligere radar-fejl. inset:-15% + blur(7px) sørger for at lyset
+   flyder blødt ud over ringens bredde i stedet for at tegne en tynd linje. */
+@keyframes scanCtaRingSpin{
+  from{transform:rotate(0deg);}
+  to{transform:rotate(360deg);}
+}
 .scan-cta-halo{animation:scan-halo-pulse 2.4s ease-in-out infinite;}
+.scan-cta-ring-light{animation:scanCtaRingSpin 9s linear infinite;}
 .scan-cta-btn{transition:transform .12s cubic-bezier(.34,1.56,.64,1);}
 .scan-cta-btn:active{transform:scale(.95);}
 @media (prefers-reduced-motion: reduce){
-  .scan-cta-halo{animation:none;}
+  .scan-cta-halo,.scan-cta-ring-light{animation:none;}
 }
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
@@ -437,12 +426,10 @@ body{
 @keyframes scanline{0%{top:13px;opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{top:51px;opacity:0;}}
 
 /* scanCtaBreathe: et let åndedræt (skala 1 → 1.015) på hele scan-CTA-
-   wrapperen — stammer fra en mellemliggende hvid ghost/outline-udgave af
-   knappen (siden droppet igen til fordel for grøn fyld, se .scan-cta-halo
-   ovenfor), men selve åndedræts-keyframen er genbrugt uændret som ét af
-   de to lag levende bevægelse på den nuværende grønne knap. Respekterer
-   den globale prefers-reduced-motion-regel nedenfor (ACCESSIBILITY) uden
-   ekstra kode her. */
+   wrapperen — brugt konsekvent på tværs af knappens flere designrunder
+   (ghost/outline → grøn fyld → tilbage til ghost/outline, se .scan-cta-halo
+   ovenfor), uændret hver gang. Respekterer den globale
+   prefers-reduced-motion-regel nedenfor (ACCESSIBILITY) uden ekstra kode her. */
 @keyframes scanCtaBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.015);}}
 
 /* Mini cards */

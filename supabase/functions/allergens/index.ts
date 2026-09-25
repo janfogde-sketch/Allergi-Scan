@@ -183,34 +183,47 @@ function keywordMatch(haystack: string, keyword: string): boolean {
   return wordBoundaryMatch(haystack, keyword);
 }
 
-// Tjek om et match er i "spor"-kontekst
+// Tjek om et match er i "spor"-kontekst. Sætnings-scoped (finder tilbage til
+// forrige punktum/udråbstegn/spørgsmålstegn, IKKE bare et fast antal tegn) —
+// en "kan indeholde spor af A, B, C, D, E"-opremsning kan sagtens være
+// længere end 60 tegn, og et fast tegn-vindue overser da de sidste allergener
+// i opremsningen (fundet ved en gennemgang af rigtige produkter i databasen,
+// 25. sept. 2026: "Kan indeholde spor af SESAMFRØ, SENNEP, HASSELNØDDER,
+// SELLERI, SULFITTER, SOJA og JORDNØDDER" — JORDNØDDER lå uden for det
+// gamle 60-tegns vindue).
 function isTracesContext(text: string, keyword: string): boolean {
-  const idx = text.toLowerCase().indexOf(keyword.toLowerCase());
+  const lower = text.toLowerCase();
+  const idx = lower.indexOf(keyword.toLowerCase());
   if (idx === -1) return false;
-  const surrounding = text.toLowerCase().substring(
-    Math.max(0, idx - 60),
-    Math.min(text.length, idx + keyword.length + 20)
-  );
+  let sentenceStart = 0;
+  for (const p of [".", "!", "?"]) {
+    const pos = lower.lastIndexOf(p, idx);
+    if (pos > sentenceStart) sentenceStart = pos + 1;
+  }
+  // Lookahead-vinduet (+20 tegn) må IKKE bløde ind i NÆSTE sætning — ellers
+  // kan et direkte, fremhævet ingrediens-match (fx "CASHEWNØDDER.") fejlagtigt
+  // blive slået sammen med en efterfølgende "Kan indeholde spor af..."-sætning
+  // og selv blive markeret som spor. Afgrænset af det først følgende
+  // punktum/udråbstegn/spørgsmålstegn efter selve nøgleordet (eller
+  // tekstens slutning, hvis der ikke er ét).
+  let sentenceEnd = lower.length;
+  for (const p of [".", "!", "?"]) {
+    const pos = lower.indexOf(p, idx);
+    if (pos !== -1 && pos < sentenceEnd) sentenceEnd = pos;
+  }
+  const windowEnd = Math.min(idx + keyword.length + 20, sentenceEnd);
+  const sentence = lower.substring(sentenceStart, windowEnd);
   return (
-    surrounding.includes("spor") ||
-    surrounding.includes("trace") ||
-    surrounding.includes("kan indeholde") ||
-    surrounding.includes("may contain") ||
-    surrounding.includes("fremstillet") ||
-    surrounding.includes("produced in") ||
-    surrounding.includes("samme fabrik") ||
-    surrounding.includes("same facility") ||
-    surrounding.includes("samme produktionsudstyr")
+    sentence.includes("spor") ||
+    sentence.includes("trace") ||
+    sentence.includes("kan indeholde") ||
+    sentence.includes("may contain") ||
+    sentence.includes("fremstillet") ||
+    sentence.includes("produced in") ||
+    sentence.includes("samme fabrik") ||
+    sentence.includes("same facility") ||
+    sentence.includes("samme produktionsudstyr")
   );
-}
-
-// Tjek om allergenet er fremhævet (EU-krav: fed/versaler)
-function isEmphasized(originalText: string, keyword: string): boolean {
-  // Find keyword i original-tekst (case-sensitive søgning efter versal-version)
-  const upperKw = keyword.toUpperCase();
-  // Kun hvis ordet optræder HELT i versaler OG er mindst 3 tegn
-  if (keyword.length < 3) return false;
-  return originalText.includes(upperKw) && wordBoundaryMatch(originalText, upperKw);
 }
 
 function analyzeIngredients(text: string): Record<string, string> {
@@ -227,22 +240,24 @@ function analyzeIngredients(text: string): Record<string, string> {
       // Spring over hvis allergenet er negeret (laktosefri, uden mælk)
       if (isNegated(text, keyword)) continue;
 
-      // EU-krav (1169/2011): allergener i ingredienslisten SKAL fremhæves
-      // (fed/versaler). Fremhævning bruges kun for direkte ingredienser,
-      // aldrig for "kan indeholde spor af"-advarsler — så et fremhævet
-      // match er altid "yes", uanset omkringliggende spor-tekst.
-      if (isEmphasized(text, keyword)) {
-        status = "yes";
-        break;
-      }
-
-      // Match fundet — bestem om det er yes eller traces
+      // Spor-kontekst tjekkes FØRST og er afgørende — versaler/fed alene
+      // (EU-krav 1169/2011 om fremhævning) er IKKE et pålideligt signal for
+      // "direkte ingrediens", fordi danske producenter/forhandlere ofte
+      // fremhæver allergen-navnet på PRÆCIS samme måde inde i en "kan
+      // indeholde spor af"-advarsel som i selve ingredienslisten (bekræftet
+      // ved en gennemgang af rigtige produkter i databasen, 25. sept. 2026 —
+      // den tidligere kode brugte fremhævning til at overtrumfe spor-tjekket
+      // og markerede fx "Kan indeholde spor af FISK, SOJA, ... BLØDDYR" som
+      // "yes" i stedet for "traces" for alle nævnte allergener). Match fundet
+      // uden for en spor-sætning behandles som direkte ingrediens.
       if (isTracesContext(text, keyword)) {
         if (status !== "yes") status = "traces";
-      } else {
-        status = "yes";
-        break; // yes er højeste sikkerhed, stop
+        continue; // stop IKKE — en senere, direkte forekomst af samme
+                   // allergen andetsteds i teksten skal stadig kunne opgradere til "yes"
       }
+
+      status = "yes";
+      break; // yes er højeste sikkerhed, stop
     }
 
     flags[allergen] = status;

@@ -359,7 +359,15 @@ export function useProduct({ accessToken, userId, activeProfiles,
         setOcrText(ocrData.text);
         if (!proposedName) setProposedName(extractProductName(ocrData.text));
         traceLog(tid, "ocr:allergen-call", { textLength: ocrData.text.length });
-        const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ text: ocrData.text }) });
+        // force_ai:true — OCR-tekst er mindre pålidelig end maskinlæst data (fed/
+        // versal-formatering fra det fotograferede mærkat kan tabes/fejllæses),
+        // og resultatet bliver PERMANENT data for alle fremtidige scanninger af
+        // produktet. Volumen er lav (kun nye produkt-indsendelser, ikke
+        // almindelige scanninger), så den ekstra Claude-omkostning er ubetydelig
+        // sammenlignet med at spare over den samme, billigere heuristik som
+        // bruges til den høj-volumen natlige reparse-cron (se
+        // shouldUseClaudeFallback i allergens/index.ts).
+        const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ text: ocrData.text, force_ai: true }) });
         traceLog(tid, "ocr:allergen-response", { success: allergenData.success, method: allergenData.method, flags: allergenData.allergen_flags });
         if (allergenData.success) setProposedFlags(allergenData.allergen_flags);
         setNotFoundStep(3); // → Næringsindhold
