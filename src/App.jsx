@@ -844,8 +844,12 @@ export default function EatSafe() {
             får sit EGET baggrundsfoto via app-bg-scan-klassen (.app-bg.app-bg-
             scan, theme.jsx) — dækker hele skærmen kant-til-kant i stedet for
             kun rummet mellem topbar/bundnav, som en tidligere <img>-i-hero-
-            frame-udgave var begrænset til. */}
-        <div className={`app-bg${screen === SCREENS.HOME ? " app-bg-scan" : ""}`} aria-hidden="true" />
+            frame-udgave var begrænset til. Samme billede genbruges nu også på
+            WELCOME-skærmen (25. sept. 2026-brief) — billedet viser netop de
+            allergen-kilder briefen bad om (mælk/æg/havre/fisk/skaldyr/nødder),
+            i modsætning til det generelle app-bg-billede (kanel/krydderier/
+            chokolade m.m.), som ikke matcher briefens ingrediensliste. */}
+        <div className={`app-bg${(screen === SCREENS.HOME || screen === SCREENS.WELCOME) ? " app-bg-scan" : ""}`} aria-hidden="true" />
 
         {/* Skip-link for tastatur/screen reader brugere */}
         <a href="#main-content" className="skip-link">Spring til indhold</a>

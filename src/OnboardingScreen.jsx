@@ -19,11 +19,20 @@ function WelcomeIntro({ setScreen, setAuthTab }) {
 
   return (
     <div style={UI.udflex_fdcolumn_g10}>
-      <button className="welcome-btn" onClick={goSignup}>Opret gratis konto →</button>
+      <button className="welcome-btn" onClick={goSignup}>Opret gratis konto</button>
       <button className="welcome-btn-ghost" onClick={goLogin}>Jeg har allerede en konto</button>
     </div>
   );
 }
+
+// 3 korte fordele med ikon (25. sept. 2026-brief) — "Undgå allergener",
+// "Hurtigt svar", "Tryggere indkøb". Ikonerne matcher hver sin fordel:
+// shield (beskyttelse mod allergener), zap (hurtighed), cart (indkøb).
+const WELCOME_BENEFITS = [
+  ["shield", "Undgå allergener"],
+  ["zap",    "Hurtigt svar"],
+  ["cart",   "Tryggere indkøb"],
+];
 
 export default function OnboardingScreen({
   onboardStep, setOnboardStep,
@@ -193,13 +202,25 @@ export default function OnboardingScreen({
     <>
         {screen === SCREENS.WELCOME && (
           <div className="welcome-screen fade-in">
-            {/* Logo + tagline */}
+            {/* Logo + værdiforslag (25. sept. 2026-brief: kort, tydelig
+                value proposition i stedet for den tidligere slogan-agtige
+                "Scan. Tjek. Spis trygt.") */}
             <div className="welcome-logo-wrap" style={UI.mb16}>
               <EatSafeLogo size={72} variant="light" />
               <div className="welcome-wordmark">
                 <span className="welcome-wordmark-text">Eat<span>Safe</span></span>
               </div>
-              <div className="welcome-tagline">Scan. Tjek. Spis trygt.</div>
+              <div className="welcome-tagline">Scan produkter og se straks, om de matcher dine allergier.</div>
+            </div>
+
+            {/* 3 fordele */}
+            <div className="welcome-benefits">
+              {WELCOME_BENEFITS.map(([icon, label]) => (
+                <div key={label} className="welcome-benefit">
+                  <div className="welcome-benefit-icon"><Icon name={icon} size={20} color="#0E8F5A" /></div>
+                  <div className="welcome-benefit-label">{label}</div>
+                </div>
+              ))}
             </div>
 
             {/* Delt indkøbsliste venter */}
@@ -210,27 +231,36 @@ export default function OnboardingScreen({
               </div>
             )}
 
-            {/* CTA */}
+            {/* CTA — primær (grøn, mest fremtrædende) + sekundær */}
             <WelcomeIntro setScreen={setScreen} setAuthTab={setAuthTab} />
 
-            {/* Kun i den delte Artifact-preview-build (se CLAUDE.md), aldrig i
-                den rigtige app — login mod Supabase er upålideligt fra denne
+            {/* Tertiær tekstlink, ikke en knap (25. sept. 2026-brief). Kun i
+                den delte Artifact-preview-build (se CLAUDE.md), aldrig i den
+                rigtige app — login mod Supabase er upålideligt fra denne
                 kontekst (andet domæne end produktion), så en preview-only
                 genvej springer login over. Selve mock-opsætningen (bruger,
                 allergener, produkt-cache, indkøbsliste) sker i App.jsx's
                 activatePreviewMode — se dens kommentar for hvorfor logikken
                 bor der og ikke her. */}
             {import.meta.env.MODE === "artifact-preview" && (
-              <button className="welcome-btn-ghost" style={{ marginTop:10 }}
+              <button className="welcome-link" style={{ marginTop:12 }}
                 onClick={onActivatePreview}>
                 Se app uden login (preview)
               </button>
             )}
 
-            {/* Privacy */}
-            <div style={{ marginTop:16, fontSize:11, color:"var(--muted)", lineHeight:1.6, textAlign:"center" }}>
+            {/* Privacy — diskret småprint nederst. "Handelsbetingelser" er
+                bevidst ikke et link (25. sept. 2026) — der findes endnu ikke
+                en selvstændig vilkårs-side i public/ (kun privacy.html), så
+                et link ville pege på en ikke-eksisterende side. Egen
+                text-shadow-løft (ikke en del af det globale sæt i theme.jsx)
+                — denne tekst sidder tættest på skærmens nederste kant, hvor
+                vignet-effekten (theme.jsx's .app-bg) er svagest og billedet
+                mest tydeligt, så den har mest brug for et løft. */}
+            <div style={{ marginTop:16, fontSize:11, color:"var(--muted)", lineHeight:1.6, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.7)" }}>
               Ved at oprette en konto accepterer du vores{" "}
               <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:600 }}>privatlivspolitik</a>
+              {" "}og handelsbetingelser.
             </div>
           </div>
         )}

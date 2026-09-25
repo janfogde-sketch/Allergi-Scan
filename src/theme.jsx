@@ -166,11 +166,21 @@ body{
    billedets farve/elegance helt ud) — læsbarheden bæres i stedet primært af
    tekstens egen vægt/størrelse + en blød hvid text-shadow-glød ("løft" væk
    fra baggrunden), ikke af selve sløret. Se .screen-title nedenfor og
-   Scan-forsidens hilsen (ScannerScreen.jsx) for samme mønster. */
+   Scan-forsidens hilsen (ScannerScreen.jsx) for samme mønster.
+   Ændret fra et FLADT, ensartet slør til en RADIAL vignet (25. sept. 2026,
+   brugerens design-brief: "Skandinavisk, ren og moderne UI... baggrunden
+   skal være tydelig ude i kanterne, men have en rolig, lys og let tom
+   midterzone") — samme princip som ovenfor (dæmp der hvor tekst/knapper
+   ligger, lad billedet ånde der hvor der ikke er indhold), men nu med en
+   ellipse centreret på midten i stedet for ét fladt tal for hele billedet:
+   op til 92% hvid nær midten (hvor overskrifter/knapper typisk sidder),
+   glidende ned til kun 10% hvid ude i hjørnerne, så ingredienserne
+   (mælk/æg/havre/fisk/skaldyr/nødder) står tydeligt frem i kanterne uden at
+   det bliver en tung/mørk overlay — kun hvid, aldrig sort/farvet. */
 .app-bg{
   position:fixed;inset:0;z-index:0;pointer-events:none;
   background-image:
-    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)),
+    radial-gradient(ellipse 75% 60% at 50% 40%, rgba(255,255,255,.92) 0%, rgba(255,255,255,.72) 40%, rgba(255,255,255,.32) 72%, rgba(255,255,255,.1) 100%),
     url(${appBackground});
   background-size:cover,cover;
   background-position:top center,top center;
@@ -192,7 +202,7 @@ body{
    .app-bg allerede gør for det app-brede billede. */
 .app-bg.app-bg-scan{
   background-image:
-    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)),
+    radial-gradient(ellipse 75% 60% at 50% 40%, rgba(255,255,255,.92) 0%, rgba(255,255,255,.72) 40%, rgba(255,255,255,.32) 72%, rgba(255,255,255,.1) 100%),
     url(${scanHeroBg});
 }
 
@@ -372,17 +382,43 @@ body{
 
 /* ── WELCOME ── */
 .welcome-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 28px;text-align:center;}
-.welcome-logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:40px;}
+.welcome-logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:32px;}
 .welcome-wordmark{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:20px;}
 .welcome-wordmark-text{font-family:var(--f);font-size:32px;font-weight:700;color:var(--ink);letter-spacing:-.8px;line-height:1;}
 .welcome-wordmark-text span{color:var(--green);}
-.welcome-tagline{font-size:15px;color:var(--muted);margin-top:10px;letter-spacing:.2px;font-weight:400;}
+/* Tydelig value proposition (25. sept. 2026-brief: "kort og tydelig value
+   proposition") — hævet fra en dæmpet, muted tagline til en tydeligere,
+   mørkere sætning, så den reelt fungerer som skærmens hovedbudskab, ikke en
+   sekundær undertekst. */
+.welcome-tagline{font-size:15.5px;color:var(--ink2);margin-top:12px;letter-spacing:.1px;font-weight:600;line-height:1.5;max-width:280px;}
 .welcome-divider{width:40px;height:2px;background:var(--border2);border-radius:2px;margin:32px auto;}
-.welcome-features{display:flex;flex-direction:column;gap:14px;margin-bottom:44px;width:100%;}
-.welcome-feat{display:flex;align-items:center;gap:14px;text-align:left;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;}
-.welcome-feat-icon{width:38px;height:38px;background:var(--green-lt);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.welcome-feat-text{font-size:13px;color:var(--ink2);font-weight:500;line-height:1.45;}
-.welcome-feat-text strong{color:var(--ink);font-weight:700;display:block;margin-bottom:2px;}
+/* 3 fordele-række (25. sept. 2026-brief) — kort, ikon-båret opsummering,
+   IKKE tunge fuld-bredde feature-kort (erstatter tidligere .welcome-features/
+   .welcome-feat, som aldrig blev taget i brug). Bevidst let/luftig, ingen
+   kant/skygge på selve rækken — kun ikon-cirklerne er "kort" (afrundede,
+   meget lys grøn baggrund #EFF9F4, brugerens egen definerede farvepalet). */
+.welcome-benefits{display:flex;justify-content:center;gap:22px;margin:28px 0 32px;width:100%;}
+.welcome-benefit{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;max-width:100px;}
+.welcome-benefit-icon{width:44px;height:44px;border-radius:14px;background:#EFF9F4;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh);flex-shrink:0;}
+.welcome-benefit-label{font-size:11.5px;font-weight:700;color:var(--ink2);line-height:1.35;}
+/* Primær CTA i EatSafes egen scan-CTA-grøn (#0E8F5A → #08734A), IKKE den
+   generelle --green-token — brugerens 25. sept.-brief navngav netop denne
+   palet ("EatSafes grønne identitet") som knappens farve. Samme rationale
+   som Scan-CTA'en i ScannerScreen.jsx (se dens kommentar): en bevidst,
+   isoleret farve til appens vigtigste handlings-knapper, resten af appens
+   grønne elementer (bundnav, andre --green-baserede knapper) er urørt. */
+.welcome-btn{background:linear-gradient(160deg,#0E8F5A 0%,#08734A 100%);color:#fff;border:none;border-radius:14px;padding:16px 32px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:all .18s;margin-bottom:10px;letter-spacing:-.1px;box-shadow:0 10px 24px -10px rgba(8,115,74,.45);}
+.welcome-btn:hover{transform:translateY(-1px);box-shadow:0 14px 30px -10px rgba(8,115,74,.55);}
+.welcome-btn:active{transform:scale(.98);}
+.welcome-btn-ghost{background:var(--surface);color:var(--ink2);border:1.5px solid var(--border2);border-radius:14px;padding:14px 32px;font-family:var(--f);font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:all .18s;}
+.welcome-btn-ghost:hover{background:var(--surface2);}
+/* Tertiær tekstlink (25. sept. 2026-brief: "skal være et tekstlink, ikke en
+   stor tredje knap") — erstatter den tidligere .welcome-btn-ghost-brug til
+   "Se app uden login (preview)"-genvejen, som visuelt konkurrerede med den
+   rigtige sekundærknap ovenfor. Ingen baggrund/kant/padding-boks, kun
+   understreget tekst. */
+.welcome-link{background:none;border:none;cursor:pointer;font-family:var(--f);font-size:12.5px;font-weight:600;color:var(--ink2);text-decoration:underline;text-underline-offset:2px;padding:8px 0;text-shadow:0 1px 0 rgba(255,255,255,.7);}
+.welcome-link:hover{color:var(--green);}
 .welcome-btn{background:var(--green);color:var(--on-green);border:none;border-radius:12px;padding:16px 32px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:all .18s;margin-bottom:10px;letter-spacing:-.1px;box-shadow:0 2px 12px rgba(74,222,128,.3);}
 .welcome-btn:hover{background:var(--green-glow);transform:translateY(-1px);}
 .welcome-btn-ghost{background:var(--surface);color:var(--ink2);border:1.5px solid var(--border2);border-radius:12px;padding:14px 32px;font-family:var(--f);font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:all .18s;}
