@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
 import { compareAllergens, productDisplayName, logSearchSelection, apiCall, makeHeaders, extractENumbers, buildActiveProfileList, computeProfileResults } from "./helpers.js";
-import { Icon, ProductImage, SearchResultRow, showToast } from "./SharedComponents.jsx";
+import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -102,8 +102,11 @@ function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, gra
           ) : familyMembers.length === 0 ? (
             <div style={{ fontSize:12, color:"var(--muted)" }}>Du har ikke inviteret nogen endnu — brug "Inviter" under Profil, eller del listen med koden nedenfor.</div>
           ) : familyMembers.map(m => (
+            // padding øget til ~44px radhøjde (25. sept. 2026, brugerfeedback:
+            // minimum tap-area på checkboxes/interaktive elementer) — hele
+            // rækken er klikmålet, ikke kun den lille 20×20-checkboks.
             <div key={m.id} onClick={() => toggleMember(m.id)}
-              style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, marginBottom:6, cursor:"pointer" }}>
+              style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"13px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, marginBottom:6, cursor:"pointer" }}>
               <div style={{ fontSize:13, fontWeight:600, color:"var(--ink)" }}>{m.name || m.email}</div>
               <div style={{ width:20, height:20, borderRadius:6, border:`1.5px solid ${sharedIds.has(m.id) ? "var(--green)" : "var(--border2)"}`, background: sharedIds.has(m.id) ? "var(--green)" : "transparent", display:"flex", alignItems:"center", justifyContent:"center" }}>
                 {sharedIds.has(m.id) && <Icon name="check" size={12} color="#fff" />}
@@ -162,6 +165,12 @@ export default function ListScreen({
   const [joinError, setJoinError]           = useState("");
   const [joinLoading, setJoinLoading]       = useState(false);
   const [favoritesOpen, setFavoritesOpen]   = useState(false);
+  // Bekræft-dialoger for destruktive handlinger (25. sept. 2026,
+  // brugerfeedback) — erstatter native confirm(), se ConfirmDialog i
+  // SharedComponents.jsx for hvorfor. listPendingDelete holder LISTEN
+  // (ikke kun dens id) så dialogens tekst kan vise det rigtige navn.
+  const [listPendingDelete, setListPendingDelete] = useState(null);
+  const [showClearDoneConfirm, setShowClearDoneConfirm] = useState(false);
 
   const showListPickerHint = useFirstTimeHint("list_picker");
   const showShareHint = useFirstTimeHint("list_share");
@@ -254,7 +263,13 @@ export default function ListScreen({
 
   const activeProfileList = buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles });
   const itemStatus = (item) => {
-    if (!item.ean || activeProfileList.length === 0) return null;
+    // Manuelt oprettede varer (fritekst, intet EAN/databaseprodukt) kan ikke
+    // allergitjekkes — vis det tydeligt fremfor slet ingen status, så det
+    // ikke fejlagtigt ser ud som om varen bare mangler at blive vurderet
+    // (25. sept. 2026, brugerfeedback). Diskret grå, ikke rød/orange — det
+    // er en oplysning, ikke en advarsel.
+    if (!item.ean) return { status:"manual", text:"Manuel vare – ikke allergitjekket" };
+    if (activeProfileList.length === 0) return null;
     const product = productDetails[item.ean];
     if (product === undefined || !product) return null; // stadig henter, eller ikke fundet — vis intet frem for et gæt
     const ingredientsText = product.ingredients || product.ingredients_text || "";
@@ -265,8 +280,15 @@ export default function ListScreen({
     const dangerNames = results.filter(r => r.status === "danger").map(r => r.name.split(" ")[0]);
     if (dangerNames.length > 0) return { status:"danger", text: `Konflikt for ${dangerNames.join(", ")}` };
     if (results.some(r => r.status === "warn")) return { status:"warn", text: "Kan ikke afgøres sikkert" };
-    return { status:"safe", text: results.length > 1 ? "Matcher alle profiler" : "Matcher profilen" };
+    // Ordlyden er den eksplicitte spec (25. sept. 2026, brugerfeedback) —
+    // "Matcher alle profiler" uanset om det reelt kun er én aktiv profil,
+    // ikke en grammatisk tilpasset ental-/flertalsvariant.
+    return { status:"safe", text: "Matcher alle profiler" };
   };
+  // Delt farve-/ikon-opslag for statuslinjen (Mangler- og Købt-sektionerne
+  // nedenfor) — én kilde, så de to sektioner ikke kan drifte fra hinanden.
+  const STATUS_COLOR = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", manual:"var(--muted)" };
+  const STATUS_ICON = { danger:"warning", warn:"warning", safe:"check", manual:"info" };
 
   // ── Sikker søgning: skjul produkter der er farlige for den valgte profil-
   // gruppe, og vis den anden slags (spor) med en tydelig advarsel i stedet
@@ -338,32 +360,50 @@ export default function ListScreen({
           </button>
         </div>
         {itemFocused && newItemName.trim() && (itemSearching || itemResults.length > 0) && (
-          <div style={{ position:"absolute", left:0, right:0, top:"100%", marginTop:6, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh)", zIndex:10, maxHeight:"min(60vh, 480px)", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
+          // Rent, scrollbart panel direkte under søgefeltet (25. sept. 2026,
+          // brugerfeedback: "søgeresultater må aldrig overlappe profilchips,
+          // inputfelt eller hinanden") — headeren (profilchips) er position:
+          // sticky INDE i selve scroll-containeren, med sin egen baggrund +
+          // kant + skygge, så den tydeligt "flyder" over resultaterne i
+          // stedet for at se ud til at overlappe dem når man scroller.
+          // position:absolute relativt til input-feltets egen wrapper
+          // (zIndex:5 ovenfor) holder panelet altid direkte under feltet,
+          // aldrig oven i det.
+          <div style={{ position:"absolute", left:0, right:0, top:"100%", marginTop:8, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh2)", zIndex:10, maxHeight:"min(60vh, 480px)", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
             {itemResults.length > 0 && (
-              <div style={{ position:"sticky", top:0, padding:"6px 10px", background:"var(--green-lt)", borderBottom:"1px solid var(--border)", zIndex:1 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:4, fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:".4px", marginBottom:4 }}>
+              <div style={{ position:"sticky", top:0, padding:"8px 10px", background:"var(--green-lt)", borderBottom:"1px solid var(--border)", boxShadow:"0 4px 8px -6px rgba(21,32,26,.18)", zIndex:1 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:4, fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:".4px", marginBottom: family.length > 0 ? 6 : 0 }}>
                   <Icon name="shield" size={11} color="var(--green)" /> Sikker søgning for {searchScopeLabel}
                 </div>
                 {family.length > 0 && (
-                  <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
-                    <span onMouseDown={e => { e.preventDefault(); toggleAllProfiles(); }}
-                      style={{ padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:700, cursor:"pointer", background: isAllActive ? "var(--green)" : "var(--surface)", color: isAllActive ? "var(--on-green)" : "var(--muted)", border:`1px solid ${isAllActive ? "var(--green)" : "var(--border2)"}` }}>
-                      Alle
-                    </span>
-                    <span onMouseDown={e => { e.preventDefault(); toggleOneProfile("me"); }}
-                      style={{ padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:700, cursor:"pointer", background: !isAllActive && meActive ? "var(--green)" : "var(--surface)", color: !isAllActive && meActive ? "var(--on-green)" : "var(--muted)", border:`1px solid ${!isAllActive && meActive ? "var(--green)" : "var(--border2)"}` }}>
-                      Mig
-                    </span>
-                    {family.map(m => {
-                      const on = !isAllActive && activeProfiles.includes(m.id);
-                      return (
-                        <span key={m.id} onMouseDown={e => { e.preventDefault(); toggleOneProfile(m.id); }}
-                          style={{ padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:700, cursor:"pointer", background: on ? "var(--green)" : "var(--surface)", color: on ? "var(--on-green)" : "var(--muted)", border:`1px solid ${on ? "var(--green)" : "var(--border2)"}` }}>
-                          {m.name.split(" ")[0]}
-                        </span>
-                      );
-                    })}
-                  </div>
+                  <>
+                    {/* Tydeliggørelse (25. sept. 2026, brugerfeedback) —
+                        profilchipsene havde ingen egen forklaring, kun den
+                        generelle "Sikker søgning for X"-label ovenfor, så
+                        det ikke var entydigt at de er klikbare valg. */}
+                    <div style={{ fontSize:9.5, fontWeight:700, color:"var(--muted)", marginBottom:4 }}>
+                      Vis produkter der passer til:
+                    </div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                      <span onMouseDown={e => { e.preventDefault(); toggleAllProfiles(); }}
+                        style={{ padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:700, cursor:"pointer", background: isAllActive ? "var(--green)" : "var(--surface)", color: isAllActive ? "var(--on-green)" : "var(--muted)", border:`1px solid ${isAllActive ? "var(--green)" : "var(--border2)"}` }}>
+                        Alle
+                      </span>
+                      <span onMouseDown={e => { e.preventDefault(); toggleOneProfile("me"); }}
+                        style={{ padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:700, cursor:"pointer", background: !isAllActive && meActive ? "var(--green)" : "var(--surface)", color: !isAllActive && meActive ? "var(--on-green)" : "var(--muted)", border:`1px solid ${!isAllActive && meActive ? "var(--green)" : "var(--border2)"}` }}>
+                        Mig
+                      </span>
+                      {family.map(m => {
+                        const on = !isAllActive && activeProfiles.includes(m.id);
+                        return (
+                          <span key={m.id} onMouseDown={e => { e.preventDefault(); toggleOneProfile(m.id); }}
+                            style={{ padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:700, cursor:"pointer", background: on ? "var(--green)" : "var(--surface)", color: on ? "var(--on-green)" : "var(--muted)", border:`1px solid ${on ? "var(--green)" : "var(--border2)"}` }}>
+                            {m.name.split(" ")[0]}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -371,7 +411,7 @@ export default function ListScreen({
               <div style={{ padding:"10px 12px", fontSize:12, color:"var(--muted)" }}>Søger…</div>
             )}
             {visibleItemResults.length > 0 && (
-              <div style={{ padding:"10px 12px 2px" }}>
+              <div style={{ padding:"12px 12px 4px" }}>
                 {visibleItemResults.map(({ product: p }) => (
                   <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds}
                     onOpen={() => { logSearchSelection(newItemName, p, accessToken); lookupProduct(p.ean||p.code||p.id); setItemFocused(false); setNewItemName(""); }}
@@ -448,11 +488,17 @@ export default function ListScreen({
                 {l.type === "family" && <span style={{ marginLeft:6, display:"inline-flex", verticalAlign:"middle" }}><Icon name="family" size={12} color="var(--muted)" /></span>}
                 {l.owner_id !== userId && <span style={{ marginLeft:6, fontSize:10, color:"var(--muted)" }}>(delt)</span>}
               </div>
-              {/* Sletning kræver altid et rigtigt bekræft-dialog (confirm())
-                  — bevidst valgt fremfor en tavs handling. lists.length>1-
-                  betingelsen sikrer desuden at man ALDRIG kan slette sin
-                  sidste tilbageværende liste (ingen ny automatisk oprettes
-                  igen bagefter), uanset dens navn.
+              {/* Sletning kræver altid et rigtigt bekræft-dialog — nu den
+                  delte ConfirmDialog (SharedComponents.jsx) i stedet for
+                  native confirm() (25. sept. 2026, brugerfeedback: "erstat
+                  generiske OK-knapper med handlingsspecifik tekst" — native
+                  confirm()'s knapper styres af browseren og kan ikke få
+                  eget tekst). Dialogen forklarer konsekvensen ("Alle varer
+                  på listen fjernes permanent") og bekræft-knappen hedder
+                  "Slet liste", ikke "OK". lists.length>1-betingelsen
+                  sikrer desuden at man ALDRIG kan slette sin sidste
+                  tilbageværende liste (ingen ny automatisk oprettes igen
+                  bagefter), uanset dens navn.
                   Undersøgt (25. sept. 2026, brugerfeedback): bør "Min
                   indkøbsliste" specifikt være permanent/ikke-slettelig? Der
                   findes ingen is_default-kolonne eller lignende i skemaet —
@@ -467,12 +513,11 @@ export default function ListScreen({
                   problematiske tilfælde (aldrig stå uden nogen liste
                   overhovedet) — ingen yderligere lås tilføjet. */}
               {l.owner_id === userId && lists.length > 1 && (
-                <span role="button" aria-label={`Slet "${l.name}"`} tabIndex={0}
-                  onClick={e => { e.stopPropagation(); if (confirm(`Slet listen "${l.name}"?`)) deleteList(l.id); }}
-                  onKeyDown={e => e.key === "Enter" && deleteList(l.id)}
-                  style={{ padding:6, opacity:.5 }}>
+                <button type="button" aria-label={`Slet "${l.name}"`}
+                  onClick={e => { e.stopPropagation(); setListPendingDelete(l); }}
+                  style={{ width:44, height:44, minWidth:44, display:"flex", alignItems:"center", justifyContent:"center", background:"none", border:"none", cursor:"pointer", opacity:.5, flexShrink:0 }}>
                   <Icon name="trash" size={14} color="var(--muted)" />
-                </span>
+                </button>
               )}
             </div>
           ))}
@@ -584,8 +629,8 @@ export default function ListScreen({
                     ovenfor. Samme grøn/rød/orange-farvesprog som resultat-
                     siden, altid ikon+tekst, aldrig kun farve. */}
                 {st && (
-                  <div style={{ display:"flex", alignItems:"center", gap:3, marginTop:2, fontSize:10, fontWeight:600, color: st.status==="danger" ? "var(--red)" : st.status==="warn" ? "var(--amber)" : "var(--green)" }}>
-                    <Icon name={st.status==="safe" ? "check" : "warning"} size={9} color="currentColor" />
+                  <div style={{ display:"flex", alignItems:"center", gap:3, marginTop:2, fontSize:10, fontWeight:600, color: STATUS_COLOR[st.status] }}>
+                    <Icon name={STATUS_ICON[st.status]} size={9} color="currentColor" />
                     {st.text}
                   </div>
                 )}
@@ -604,16 +649,18 @@ export default function ListScreen({
         <>
           <div className="list-section" style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
             <span>Købt ({shoppingList.filter(i=>i.checked).length})</span>
-            {/* "Ryd" → "Ryd købte" + et bekræft-dialog, samme mønster som
-                liste-sletning (25. sept. 2026, brugerfeedback: "brug
-                destruktiv styling sparsomt") — dæmpet til --muted i stedet
-                for fuldt rødt/fed, kun et lille skraldespand-ikon som
-                visuel markør af at handlingen fjerner noget. */}
-            <span style={{ display:"flex", alignItems:"center", gap:4, cursor:"pointer", color:"var(--muted)", fontWeight:700, fontSize:11.5, padding:"4px 2px" }} role="button" aria-label="Ryd alle købte varer" tabIndex={0}
-              onClick={() => { if (confirm("Fjern alle købte varer fra listen?")) clearDone(); }}
-              onKeyDown={e => { if (e.key === "Enter" && confirm("Fjern alle købte varer fra listen?")) clearDone(); }}>
+            {/* "Ryd" → "Ryd købte" + en rigtig bekræft-dialog (ConfirmDialog,
+                SharedComponents.jsx) i stedet for native confirm() (25.
+                sept. 2026, brugerfeedback: "erstat generiske OK-knapper med
+                handlingsspecifik tekst" — confirm()'s knapper styres af
+                browseren og kan ikke omdøbes). Dæmpet til --muted i stedet
+                for fuldt rødt/fed ("brug destruktiv styling sparsomt"), kun
+                et lille skraldespand-ikon som visuel markør. */}
+            <button type="button" style={{ display:"flex", alignItems:"center", gap:4, cursor:"pointer", background:"none", border:"none", color:"var(--muted)", fontWeight:700, fontSize:11.5, fontFamily:"var(--f)", padding:"8px 6px" }}
+              aria-label="Ryd alle købte varer"
+              onClick={() => setShowClearDoneConfirm(true)}>
               <Icon name="trash" size={11} color="var(--muted)" /> Ryd købte
-            </span>
+            </button>
           </div>
           {shoppingList.filter(i => i.checked).map(item => {
             const st = itemStatus(item);
@@ -628,8 +675,8 @@ export default function ListScreen({
                       onClick={() => lookupProduct(item.ean)} onKeyDown={e => e.key === "Enter" && lookupProduct(item.ean)}>{item.name}</div>
                   : <div className="list-name done">{item.name}</div>}
                 {st && (
-                  <div style={{ display:"flex", alignItems:"center", gap:3, marginTop:2, fontSize:10, fontWeight:600, color: st.status==="danger" ? "var(--red)" : st.status==="warn" ? "var(--amber)" : "var(--green)" }}>
-                    <Icon name={st.status==="safe" ? "check" : "warning"} size={9} color="currentColor" />
+                  <div style={{ display:"flex", alignItems:"center", gap:3, marginTop:2, fontSize:10, fontWeight:600, color: STATUS_COLOR[st.status] }}>
+                    <Icon name={STATUS_ICON[st.status]} size={9} color="currentColor" />
                     {st.text}
                   </div>
                 )}
@@ -641,6 +688,29 @@ export default function ListScreen({
             </div>
           );})}
         </>
+      )}
+
+      {/* Bekræft-dialoger for destruktive handlinger (25. sept. 2026,
+          brugerfeedback) — se ConfirmDialog i SharedComponents.jsx og
+          kommentarerne ved "Slet liste"-knappen/"Ryd købte"-knappen
+          ovenfor for hvorfor native confirm() er erstattet her. */}
+      {listPendingDelete && (
+        <ConfirmDialog
+          title={`Slet listen "${listPendingDelete.name}"?`}
+          message="Alle varer på listen fjernes permanent."
+          confirmLabel="Slet liste"
+          onConfirm={() => { deleteList(listPendingDelete.id); setListPendingDelete(null); }}
+          onCancel={() => setListPendingDelete(null)}
+        />
+      )}
+      {showClearDoneConfirm && (
+        <ConfirmDialog
+          title="Ryd alle købte varer?"
+          message="Varerne fjernes fra listen. Denne handling kan ikke fortrydes."
+          confirmLabel="Ryd købte"
+          onConfirm={() => { clearDone(); setShowClearDoneConfirm(false); }}
+          onCancel={() => setShowClearDoneConfirm(false)}
+        />
       )}
     </div>
   );

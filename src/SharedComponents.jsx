@@ -493,7 +493,12 @@ export function ProductImage({ product, size = 64 }) {
 export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, onOpen, onAddToList }) {
   const { status, matchedDanger, matchedWarning } = compareAllergens(p.allergen_flags||{}, effectiveIds);
   const statusColor = safetyStyle(status).color;
-  const statusLabel = `${safetyStyle(status).icon} ${status==="safe" ? "Sikker" : status==="danger" ? "Farlig" : "Advarsel"}`;
+  // Samme EatSafe-status-ordlyd som resten af appen (25. sept. 2026,
+  // brugerfeedback) — "farlige" produkter filtreres allerede væk FØR de når
+  // denne komponent (se ListScreen.jsx/SearchScreen.jsx's resultsWithSafety),
+  // så "danger" reelt aldrig vises her i praksis — men teksten er alligevel
+  // konsekvent med de andre to statusser, hvis det ændrer sig.
+  const statusLabel = `${safetyStyle(status).icon} ${status==="safe" ? "Matcher alle profiler" : status==="danger" ? "Konflikt" : "Kan ikke afgøres sikkert"}`;
   const matchedLabels = [...matchedDanger, ...matchedWarning].map(id => ALLERGENS.find(a=>a.id===id)).filter(Boolean);
   const tagLabels = { vegan:"🌱 Vegansk", vegetarian:"🥦 Vegetarisk" };
   // Grøn "+"-knap når produktet er lagt på (mindst) en liste — nulstilles
@@ -582,6 +587,47 @@ export function ListPickerSheet({ lists, onChoose, onCancel }) {
             {l.type === "family" && <Icon name="family" size={13} color="var(--muted)" />}
           </div>
         ))}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// ─── BEKRÆFT-DIALOG (destruktive handlinger) ─────────────────────────────────
+// Erstatter native window.confirm() for destruktive handlinger (25. sept.
+// 2026, brugerfeedback) — confirm()'s knapper er styret af browseren og kan
+// IKKE få handlingsspecifik tekst ("Ryd købte"/"Slet liste" i stedet for et
+// generisk "OK"), kun det browseren selv viser. Samme bund-ark-mønster som
+// ShareSheet/ListPickerSheet/DeleteAccountModal (portal-baseret — se
+// CLAUDE.md afsnit 3 for hvorfor), men lettere: ingen tekst-bekræftelse
+// krævet, kun to tydelige knapper. `danger` (default true) styrer om
+// bekræft-knappen er rød med et skraldespand-ikon (sletning/rydning) eller
+// grøn uden ikon (for evt. fremtidig ikke-destruktiv brug af samme
+// komponent). Begge knapper er mindst 44px høje (tap-area-krav).
+export function ConfirmDialog({ title, message, confirmLabel, cancelLabel = "Annuller", onConfirm, onCancel, danger = true }) {
+  return createPortal(
+    <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }}
+      onClick={onCancel}>
+      <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"22px 16px 28px", width:"100%" }}
+        onClick={e => e.stopPropagation()}>
+        <div style={{ display:"flex", alignItems:"flex-start", gap:10, marginBottom:18 }}>
+          {danger && <Icon name="warning" size={20} color="var(--red)" />}
+          <div>
+            <div style={{ fontSize:15.5, fontWeight:800, color:"var(--ink)", marginBottom: message ? 4 : 0 }}>{title}</div>
+            {message && <div style={{ fontSize:12.5, color:"var(--muted2)", lineHeight:1.5 }}>{message}</div>}
+          </div>
+        </div>
+        <div style={{ display:"flex", gap:8 }}>
+          <button type="button" onClick={onCancel}
+            style={{ flex:1, minHeight:44, padding:"12px", background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+            {cancelLabel}
+          </button>
+          <button type="button" onClick={onConfirm}
+            style={{ flex:1, minHeight:44, padding:"12px", background: danger ? "var(--red)" : "var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+            {danger && <Icon name="trash" size={14} color="#fff" />}
+            {confirmLabel}
+          </button>
+        </div>
       </div>
     </div>,
     document.body

@@ -627,7 +627,12 @@ body::-webkit-scrollbar{display:none;}
 .list-check.checked{background:var(--green);border-color:var(--green);}
 .list-name{font-size:14px;font-weight:600;flex:1;letter-spacing:-.1px;color:var(--ink);}
 .list-name.done{text-decoration:line-through;color:var(--muted);}
-.list-del{font-size:15px;cursor:pointer;opacity:.2;padding:10px;margin:-6px -10px -6px 0;transition:opacity .15s;}.list-del:hover{opacity:.6;}
+.list-del{position:relative;font-size:15px;cursor:pointer;opacity:.2;padding:10px;margin:-6px -10px -6px 0;transition:opacity .15s;}.list-del:hover{opacity:.6;}
+/* Usynlig tap-area-udvidelse til ~44×44px (25. sept. 2026, brugerfeedback:
+   "sørg for minimum ca. 44×44 px tap-area") — samme ::before-mønster som
+   .list-check ovenfor. Det synlige ikon (16px + 10px padding = 36×36px)
+   forbliver visuelt uændret; kun det klikbare område udvides. */
+.list-del::before{content:'';position:absolute;inset:-4px;}
 .list-section{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);margin:14px 0 8px;}
 
 /* ── PROFILE ── */
