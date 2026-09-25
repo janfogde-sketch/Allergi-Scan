@@ -171,8 +171,8 @@ function ScanProfilePickerSheet({ activeProfiles, setActiveProfiles, family, use
         </div>
       )}
       <div style={{ flex:1, fontSize:13.5, fontWeight:700, color: checked ? "var(--green)" : "var(--ink)" }}>{label}</div>
-      <div style={{ width:20, height:20, borderRadius:6, border:`1.5px solid ${checked ? "var(--green)" : "var(--border2)"}`, background: checked ? "var(--green)" : "transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-        {checked && <Icon name="check" size={12} color="var(--on-green)" />}
+      <div style={{ width:20, height:20, borderRadius:6, border:`1.5px solid ${checked ? "var(--green)" : "var(--border2)"}`, background: checked ? "var(--green-selected-bg)" : "transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+        {checked && <Icon name="check" size={12} color="var(--green)" />}
       </div>
     </div>
   );
@@ -269,16 +269,23 @@ export default function ScannerScreen({
   const [manualEanError, setManualEanError] = React.useState("");
   const [showScanProfilePicker, setShowScanProfilePicker] = React.useState(false);
 
+  // Vælgeren vises kun når husstanden reelt har mere end én profil (mig +
+  // mindst ét familiemedlem) — med kun én profil er der intet at vælge
+  // imellem, og alle scanninger vurderes automatisk mod den ene profil
+  // (25. sept. 2026, opfølgning). Dukker automatisk op igen når et første
+  // familiemedlem tilføjes, og skjules igen hvis antallet falder til én.
+  const scanProfilePickerAvailable = family.length > 0;
+
   // Kompakt label til "Scanner for: ..."-chippen (25. sept. 2026,
   // brugerfeedback) — "Alle" når alle profiler er aktive, personens navn ved
-  // præcis én, ellers "N valgt".
+  // præcis én, ellers "N profiler".
   const scanProfileAllIds = ["me", ...family.map(m => m.id)];
-  const scanProfileIsAll = family.length > 0 && scanProfileAllIds.every(id => activeProfiles.includes(id));
+  const scanProfileIsAll = scanProfilePickerAvailable && scanProfileAllIds.every(id => activeProfiles.includes(id));
   const scanProfileLabel = scanProfileIsAll
     ? "Alle"
     : activeProfiles.length === 1
-      ? (activeProfiles[0] === "me" ? (user.name?.split(" ")[0] || "Dig") : (family.find(m => m.id === activeProfiles[0])?.name?.split(" ")[0] || "1 valgt"))
-      : `${activeProfiles.length} valgt`;
+      ? (activeProfiles[0] === "me" ? (user.name?.split(" ")[0] || "Dig") : (family.find(m => m.id === activeProfiles[0])?.name?.split(" ")[0] || "1 profil"))
+      : `${activeProfiles.length} profiler`;
 
   // activeIds (kombinerede allergen-id'er for alle aktive profiler) kommer nu
   // som prop fra App.jsx' allActive() i stedet for at blive genberegnet her
@@ -483,21 +490,27 @@ export default function ScannerScreen({
                     kompakt, der kan indsættes der uden enten at overlappe
                     hilse-teksten eller knappen, som begge skal forblive
                     uændrede. Denne placering er den eneste der reelt har
-                    ledig plads uden at røre nogen eksisterende positioner. */}
-                <div style={{ position:"absolute", top:"clamp(8px, 2cqh, 16px)", left:0, right:0, zIndex:2, display:"flex", justifyContent:"center" }}>
-                  <button type="button" onClick={() => setShowScanProfilePicker(true)}
-                    style={{ display:"flex", alignItems:"center", gap:5, background:"rgba(255,255,255,.82)", border:"1px solid var(--border)",
-                      borderRadius:100, padding:"clamp(5px, 1.1cqh, 7px) clamp(11px, 2.2cqh, 14px)", cursor:"pointer",
-                      boxShadow:"0 4px 12px -6px rgba(21,32,26,.3)", fontFamily:"var(--f)", maxWidth:"78%" }}>
-                    <Icon name="family" size={12} color="var(--green)" />
-                    <span style={{ fontSize:"clamp(10.5px, 1.9cqh, 12.5px)", fontWeight:700, color:"var(--ink2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                      Scanner for: <span style={{ color:"var(--green)" }}>{scanProfileLabel}</span>
-                    </span>
-                    <Icon name="chevronDown" size={11} color="var(--muted)" />
-                  </button>
-                </div>
+                    ledig plads uden at røre nogen eksisterende positioner.
+                    Vises kun når husstanden har mere end én profil (25.
+                    sept. 2026, opfølgning) — med kun brugerens egen profil
+                    er der intet at vælge imellem, se
+                    scanProfilePickerAvailable ovenfor. */}
+                {scanProfilePickerAvailable && (
+                  <div style={{ position:"absolute", top:"clamp(8px, 2cqh, 16px)", left:0, right:0, zIndex:2, display:"flex", justifyContent:"center" }}>
+                    <button type="button" onClick={() => setShowScanProfilePicker(true)}
+                      style={{ display:"flex", alignItems:"center", gap:5, background:"rgba(255,255,255,.82)", border:"1px solid var(--border)",
+                        borderRadius:100, padding:"clamp(5px, 1.1cqh, 7px) clamp(11px, 2.2cqh, 14px)", cursor:"pointer",
+                        boxShadow:"0 4px 12px -6px rgba(21,32,26,.3)", fontFamily:"var(--f)", maxWidth:"78%" }}>
+                      <Icon name="family" size={12} color="var(--green)" />
+                      <span style={{ fontSize:"clamp(10.5px, 1.9cqh, 12.5px)", fontWeight:700, color:"var(--ink2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                        Scanner for: <span style={{ color:"var(--green)" }}>{scanProfileLabel}</span>
+                      </span>
+                      <Icon name="chevronDown" size={11} color="var(--muted)" />
+                    </button>
+                  </div>
+                )}
 
-                {showScanProfilePicker && (
+                {showScanProfilePicker && scanProfilePickerAvailable && (
                   <ScanProfilePickerSheet
                     activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
                     family={family} user={user}
