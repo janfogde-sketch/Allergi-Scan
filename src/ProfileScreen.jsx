@@ -6,6 +6,7 @@ import { EatSafeLogo, Icon, ProductImage, ProfileBadges, showToast } from "./Sha
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
 import { usePush } from "./usePush.js";
+import { useNotificationPrefs } from "./useNotificationPrefs.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -197,6 +198,9 @@ export default function ProfileScreen({
   const { supported: pushSupported, permission: pushPermission, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePush();
   const [pushLoading, setPushLoading] = useState(false);
   const [pushStatus, setPushStatus] = useState(pushPermission);
+
+  // ── Notifikations-kategorier (hvilke typer, via hvilke kanaler) ──────────────
+  const { prefs: notifPrefs, savingKeys: notifSavingKeys, setPref: setNotifPref, categories: notifCategories } = useNotificationPrefs({ accessToken, userId });
 
   const handlePushToggle = async () => {
     setPushLoading(true);
@@ -454,6 +458,55 @@ export default function ProfileScreen({
                   )}
                 </div>
             )}
+
+            {/* ── Notifikations-kategorier ── */}
+            <div className="card" style={UI.mb12}>
+              <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2 }}>
+                <Icon name="bell" size={14} color="var(--ink)" /> Notifikationer
+              </div>
+              <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5, marginBottom:12 }}>
+                Vælg hvilke beskeder du vil have, og om de skal komme som push, email — eller begge dele.
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+                {notifCategories.map(cat => (
+                  <div key={cat.id} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:12.5, fontWeight:700, color:"var(--ink)" }}>{cat.label}</div>
+                      <div style={{ fontSize:10.5, color:"var(--muted)", lineHeight:1.4 }}>{cat.description}</div>
+                    </div>
+                    <div style={{ display:"flex", gap:12, flexShrink:0 }}>
+                      {[{ ch:"push", label:"Push" }, { ch:"email", label:"Mail" }].map(({ ch, label }) => {
+                        const key = `${cat.id}:${ch}`;
+                        const on = notifPrefs[key] !== false;
+                        const busy = !!notifSavingKeys[key];
+                        return (
+                          <div key={ch} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3 }}>
+                            <div style={{ fontSize:9, fontWeight:700, color:"var(--muted2)", textTransform:"uppercase", letterSpacing:.3 }}>{label}</div>
+                            <button
+                              onClick={() => setNotifPref(cat.id, ch, !on)}
+                              disabled={busy}
+                              aria-label={`${label}-notifikation for ${cat.label}`}
+                              style={{
+                                width:36, height:20, borderRadius:10, border:"none", cursor:"pointer",
+                                background: on ? "var(--green)" : "var(--border2)",
+                                position:"relative", transition:"background .2s", flexShrink:0,
+                                opacity: busy ? 0.6 : 1,
+                              }}>
+                              <div style={{
+                                width:16, height:16, borderRadius:"50%", background:"var(--ink)",
+                                position:"absolute", top:2,
+                                left: on ? 18 : 2,
+                                transition:"left .2s", boxShadow:"0 1px 3px rgba(0,0,0,.3)"
+                              }} />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* ── Footer: kontakt + privatlivspolitik ── */}
             <div style={{ marginTop:24, paddingBottom:8, textAlign:"center" }}>

@@ -734,6 +734,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
             : `${produktnavn} er nu tilgængeligt i EatSafe-databasen.`,
           "https://eatsafe.dk",
           accessToken,
+          "submission_status",
         );
       }
 
@@ -761,6 +762,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
                 `${produktnavn} er nu i EatSafe-databasen — prøv at scanne igen.`,
                 "https://eatsafe.dk",
                 accessToken,
+                "missing_product_found",
               );
             }
           }
@@ -779,6 +781,9 @@ export function useAdmin(accessToken, userId, clearAuth) {
   };
 
   const rejectSubmission = async (id) => {
+    // Slås op FØR den fjernes fra listen nedenfor — bruges til push-
+    // notifikationen til indsenderen, se sendPushToUser-kaldet.
+    const submission = submissions.find(x => x.id === id);
     setSubmissions(s => s.filter(x => x.id !== id));
     setOpenSubmission(null);
     try {
@@ -787,6 +792,19 @@ export function useAdmin(accessToken, userId, clearAuth) {
         headers: makeHeaders(accessToken),
         body: JSON.stringify({ status: "rejected", reviewed_by: userId }),
       });
+      // Send push til indsender — afvisning gav hidtil ingen notifikation
+      // overhovedet, i modsætning til godkendelse (bruger-rapporteret
+      // gennemgangsbehov, 25. sept. 2026).
+      if (submission?.submitted_by) {
+        await sendPushToUser(
+          submission.submitted_by,
+          "Indsendelse ikke godkendt",
+          `Din indsendelse${submission.name ? ` af "${submission.name}"` : ""} blev desværre ikke godkendt.`,
+          "https://eatsafe.dk",
+          accessToken,
+          "submission_status",
+        );
+      }
     } catch (e) {
       console.error("rejectSubmission:", e);
       showToast("Afvisning fejlede: " + e.message + " — indsendelsen er ikke afvist, listen er opdateret", "error");
