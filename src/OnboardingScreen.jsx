@@ -4,7 +4,8 @@ import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS, AVATAR_COLORS, E_NUMBERS, E_CATEGORIES } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { EatSafeLogo, Icon, showToast } from "./SharedComponents.jsx";
-import { ENumberPicker } from "./AllergenPicker.jsx";
+import { ENumberPicker, AllergenChipPicker, DietChipPicker } from "./AllergenPicker.jsx";
+import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { MemberForm } from "./MemberForm.jsx";
 import { usePush } from "./usePush.js";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -157,18 +158,6 @@ export default function OnboardingScreen({
       !genderOk && "køn",
       !phoneOk && "telefon",
     ].filter(Boolean);
-    // Alder-stepper (25. sept. 2026, opfølgning) — erstatter det tidligere
-    // ensomme, smalle talfelt (maxWidth:120), som virkede tilfældigt
-    // smallere end de øvrige felter. "− [tal] +" ser mere bevidst designet
-    // ud og er samtidig lettere at betjene på touch. Starter fra 25 ved
-    // første tryk på en tom værdi — et neutralt udgangspunkt, ikke fra 0/1.
-    const ageNum = Number(user.age) || 0;
-    const stepAge = delta => setUser(u => {
-      const base = Number(u.age) || 25;
-      const next = ageNum === 0 && delta > 0 ? base : Math.min(120, Math.max(1, base + delta));
-      return { ...u, age: String(next) };
-    });
-
     return (
       <div className="fade-in">
         <div style={UI.mb14}>
@@ -231,49 +220,20 @@ export default function OnboardingScreen({
             </div>
           </div>
 
-          {/* Alder — kompakt "− tal +"-stepper i stedet for et smalt talfelt */}
+          {/* Alder — delt AgeStepper-komponent (FormFields.jsx), også brugt
+              af MemberForm.jsx (25. sept. 2026: familie-trinnet skal
+              genbruge præcis samme komponent, ikke sit eget parallelle
+              design). */}
           <div style={{ marginBottom:19 }}>
             <label className="field-lbl">Alder <span style={UI.red}>*</span></label>
-            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-              <button type="button" onClick={() => stepAge(-1)} aria-label="Én år yngre"
-                style={{ width:40, height:40, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                −
-              </button>
-              <input className="field field-no-spinner" type="number" inputMode="numeric" placeholder="32" min="1" max="120"
-                value={user.age||""} onChange={e => setUser(u => ({...u, age:e.target.value}))}
-                style={{ width:64, flexShrink:0, textAlign:"center", padding:"10px 4px" }} />
-              <button type="button" onClick={() => stepAge(1)} aria-label="Ét år ældre"
-                style={{ width:40, height:40, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                +
-              </button>
-            </div>
+            <AgeStepper value={user.age} onChange={age => setUser(u => ({...u, age}))} />
           </div>
 
-          {/* Køn — 2×2-grid med ens bredde (25. sept. 2026, opfølgning) i
-              stedet for flex-wrap, hvor "Vil ikke oplyse" (længste label)
-              endte alene på sin egen linje. */}
+          {/* Køn — delt GenderPicker-komponent (FormFields.jsx), samme
+              begrundelse som Alder ovenfor. */}
           <div>
             <label className="field-lbl">Køn <span style={UI.red}>*</span></label>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-              {["Mand","Kvinde","Andet","Vil ikke oplyse"].map(g => (
-                <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
-                  style={{
-                    padding:"10px 8px", borderRadius:8, cursor:"pointer", textAlign:"center",
-                    border:`1px solid ${user.gender===g ? "var(--green)" : "var(--border)"}`,
-                    // 16%-mellemtrinnet (forrige runde) var stadig ikke
-                    // tydeligt nok i praksis (25. sept. 2026, endnu en
-                    // opfølgning: "samme tydelige selected-state som
-                    // tidligere") — hævet igen til 24%, en klar, umiskendelig
-                    // lys grøn fyldfarve når et køn er valgt.
-                    background: user.gender===g ? "rgba(23,138,80,.24)" : "var(--surface)",
-                    fontSize:13, fontWeight:700,
-                    color: user.gender===g ? "var(--green)" : "var(--muted)",
-                    transition:"all .15s",
-                  }}>
-                  {g}
-                </div>
-              ))}
-            </div>
+            <GenderPicker value={user.gender} onChange={gender => setUser(u => ({...u, gender}))} />
           </div>
         </div>
 
@@ -320,30 +280,6 @@ export default function OnboardingScreen({
   // top-niveau-state), da den kun kaldes betinget (onboardStep===2).
   const renderStep2 = () => {
     const selectedCount = allergens.length + customAllerg.length;
-    const allergiItems = ALLERGENS.filter(a => a.type !== "intolerance");
-    const intoleranceItems = ALLERGENS.filter(a => a.type === "intolerance");
-
-    const renderAllergenChip = a => {
-      const on = allergens.includes(a.id);
-      return (
-        <div key={a.id} className={`chip${on ? " on" : ""}`}
-          style={on ? { borderColor:"var(--green)", borderWidth:1.5 } : undefined}
-          onClick={() => {
-            setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id]);
-            if (noAllergiesConfirmed) setNoAllergiesConfirmed(false);
-          }}>
-          <span style={UI.flex1}>{a.emoji} {a.label}</span>
-          {a.note && (
-            <span role="button" aria-label={`Om ${a.label}`}
-              onClick={e => { e.stopPropagation(); showToast(a.note, "info"); }}
-              style={{ display:"flex", alignItems:"center", justifyContent:"center", width:18, height:18, flexShrink:0, color: on ? "var(--green)" : "var(--muted)" }}>
-              <Icon name="info" size={14} color="currentColor" />
-            </span>
-          )}
-          {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
-        </div>
-      );
-    };
 
     return (
       <div className="fade-in">
@@ -356,15 +292,10 @@ export default function OnboardingScreen({
             {selectedCount} valgt
           </div>
 
-          <div style={UI.sectionLbl6}>Allergier</div>
-          <div className="chip-grid" style={{ marginBottom:16 }}>
-            {allergiItems.map(renderAllergenChip)}
-          </div>
-
-          <div style={UI.sectionLbl6}>Intolerancer / andre følsomheder</div>
-          <div className="chip-grid">
-            {intoleranceItems.map(renderAllergenChip)}
-          </div>
+          <AllergenChipPicker selected={allergens} onChange={arr => {
+            setAllergens(arr);
+            if (noAllergiesConfirmed) setNoAllergiesConfirmed(false);
+          }} />
 
           {/* Skriv selv — kortet markant ned (25. sept. 2026) */}
           <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
@@ -458,41 +389,12 @@ export default function OnboardingScreen({
             {selectedCount} valgt
           </div>
 
-          <div className="chip-grid">
-            {DIETS.map((d, i, arr) => {
-              const on = diets.includes(d.id);
-              const isAutoGluten = d.id === "gluten-free" && allergens.includes("gluten");
-              // Sidste kort står alene i venstre kolonne, hvis DIETS har et
-              // ulige antal — lader det spænde hele bredden i stedet for at
-              // efterlade et skævt tomt hul i højre kolonne (25. sept. 2026,
-              // brugerfeedback). Løser sig selv den dag DIETS får et lige
-              // antal valg.
-              const isDanglingLast = i === arr.length - 1 && arr.length % 2 !== 0;
-              return (
-                <div key={d.id} className={`chip${on ? " on" : ""}`}
-                  style={{
-                    ...(on ? { borderColor:"var(--green)", borderWidth:1.5 } : {}),
-                    ...(isDanglingLast ? { gridColumn:"1 / -1" } : {}),
-                  }}
-                  onClick={() => {
-                    setUser(u => ({ ...u, diets: on ? (u.diets||[]).filter(x=>x!==d.id) : [...(u.diets||[]), d.id] }));
-                    if (!on && noDietConfirmed) setNoDietConfirmed(false);
-                  }}>
-                  <div style={UI.flex1}>
-                    <div style={UI.ufw700}>{d.label}</div>
-                    {isAutoGluten ? (
-                      <div style={{ fontSize:9.5, color: on ? "var(--green)" : "var(--muted)", fontWeight:500, marginTop:2, lineHeight:1.3 }}>
-                        Valgt ud fra dine allergier/intolerancer
-                      </div>
-                    ) : (
-                      <div style={UI.muted11mt2}>{d.desc}</div>
-                    )}
-                  </div>
-                  {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
-                </div>
-              );
-            })}
-          </div>
+          <DietChipPicker selected={diets} showCount={false}
+            autoNote={allergens.includes("gluten") ? { id:"gluten-free", text:"Valgt ud fra dine allergier/intolerancer" } : undefined}
+            onChange={arr => {
+              setUser(u => ({ ...u, diets: arr }));
+              if (arr.length > diets.length && noDietConfirmed) setNoDietConfirmed(false);
+            }} />
         </div>
 
         {/* Neutral, ikke-alarmerende disclaimer — rød/orange er reserveret
@@ -910,12 +812,24 @@ export default function OnboardingScreen({
                     eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
                     customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}
                     onAdd={addMember}
-                    addLabel={`+ Tilføj ${newMemberName||"familiemedlem"}`}
+                    addLabel="+ Tilføj familiemedlem"
                   />
                 </div>
 
                 <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(5)}>Fortsæt →</button>
-                <div className="onboard-skip">Kan springes over</div>
+                {/* "Kan springes over" var kun en statisk billedtekst (ikke
+                    klikbar) — utydeligt at familie reelt kan springes over
+                    med ét tryk (25. sept. 2026, brugerfeedback). Samme
+                    lette, grønne sekundær-knap-stil som "Ingen særlig
+                    diæt"/"Jeg har ingen allergier..." på trin 2-3. */}
+                <button className="btn btn-full" style={{
+                    ...UI.mt8,
+                    background:"var(--surface)", color:"var(--green)",
+                    border:"1.5px solid var(--green-mid)",
+                  }}
+                  onClick={() => setOnboardStep(5)}>
+                  Spring over
+                </button>
               </div>
             )}
 

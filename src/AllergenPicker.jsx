@@ -1,8 +1,95 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { Icon } from "./SharedComponents.jsx";
+import { Icon, showToast } from "./SharedComponents.jsx";
 import { ALLERGENS, E_NUMBERS, E_CATEGORIES, DIETS } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
+
+// Delt allergi-vælger (grøn valgt-state, ✓, allergi/intolerance-opdeling,
+// ⓘ-note på gluten) — udtrukket fra OnboardingScreen.jsx's trin 2 (25. sept.
+// 2026, brugerfeedback: familie-formularen på trin 4 skal genbruge PRÆCIS
+// denne komponent i stedet for sin egen, røde parallel-version).
+export const AllergenChipPicker = ({ selected, onChange }) => {
+  const allergiItems = ALLERGENS.filter(a => a.type !== "intolerance");
+  const intoleranceItems = ALLERGENS.filter(a => a.type === "intolerance");
+
+  const renderChip = a => {
+    const on = selected.includes(a.id);
+    return (
+      <div key={a.id} className={`chip${on ? " on" : ""}`}
+        style={on ? { borderColor:"var(--green)", borderWidth:1.5 } : undefined}
+        onClick={() => onChange(on ? selected.filter(x => x !== a.id) : [...selected, a.id])}>
+        <span style={UI.flex1}>{a.emoji} {a.label}</span>
+        {a.note && (
+          <span role="button" aria-label={`Om ${a.label}`}
+            onClick={e => { e.stopPropagation(); showToast(a.note, "info"); }}
+            style={{ display:"flex", alignItems:"center", justifyContent:"center", width:18, height:18, flexShrink:0, color: on ? "var(--green)" : "var(--muted)" }}>
+            <Icon name="info" size={14} color="currentColor" />
+          </span>
+        )}
+        {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      <div style={UI.sectionLbl6}>Allergier</div>
+      <div className="chip-grid" style={{ marginBottom:16 }}>
+        {allergiItems.map(renderChip)}
+      </div>
+      <div style={UI.sectionLbl6}>Intolerancer / andre følsomheder</div>
+      <div className="chip-grid">
+        {intoleranceItems.map(renderChip)}
+      </div>
+    </div>
+  );
+};
+
+// Delt kostpræference-vælger (grøn valgt-state, ✓, sidste-ulige-kort spænder
+// hele bredden) — udtrukket fra OnboardingScreen.jsx's trin 3, samme
+// begrundelse som AllergenChipPicker ovenfor. `autoNote` er valgfri:
+// { id, text } viser en forklarende note under ét specifikt kort i stedet
+// for dets normale beskrivelse (bruges til den Gluten→Glutenfri-afledte
+// note på trin 3 — MemberForm bruger den ikke).
+export const DietChipPicker = ({ selected, onChange, showCount = true, autoNote }) => {
+  const selectedCount = selected.length;
+  return (
+    <div>
+      {showCount && (
+        <div style={{ fontSize:12, fontWeight:700, color: selectedCount > 0 ? "var(--green)" : "var(--muted)", marginBottom:14 }}>
+          {selectedCount} valgt
+        </div>
+      )}
+      <div className="chip-grid">
+        {DIETS.map((d, i, arr) => {
+          const on = selected.includes(d.id);
+          const isDanglingLast = i === arr.length - 1 && arr.length % 2 !== 0;
+          const showAutoNote = autoNote && d.id === autoNote.id;
+          return (
+            <div key={d.id} className={`chip${on ? " on" : ""}`}
+              style={{
+                ...(on ? { borderColor:"var(--green)", borderWidth:1.5 } : {}),
+                ...(isDanglingLast ? { gridColumn:"1 / -1" } : {}),
+              }}
+              onClick={() => onChange(on ? selected.filter(x => x !== d.id) : [...selected, d.id])}>
+              <div style={UI.flex1}>
+                <div style={UI.ufw700}>{d.label}</div>
+                {showAutoNote ? (
+                  <div style={{ fontSize:9.5, color: on ? "var(--green)" : "var(--muted)", fontWeight:500, marginTop:2, lineHeight:1.3 }}>
+                    {autoNote.text}
+                  </div>
+                ) : (
+                  <div style={UI.muted11mt2}>{d.desc}</div>
+                )}
+              </div>
+              {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 export const ENumberPicker = ({ selected, onChange }) => {
   const [search, setSearch] = React.useState("");

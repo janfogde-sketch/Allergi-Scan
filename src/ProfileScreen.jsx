@@ -947,7 +947,7 @@ export default function ProfileScreen({
                 eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
                 customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}
                 onAdd={addMember}
-                addLabel={`+ Tilføj ${newMemberName||"familiemedlem"}`}
+                addLabel="+ Tilføj familiemedlem"
               />
             </div>
           </div>
