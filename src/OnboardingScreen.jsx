@@ -281,10 +281,16 @@ export default function OnboardingScreen({
         {screen === SCREENS.LOGIN && (
           <div className="login-wrap fade-in">
 
-            {/* Logo */}
-            <div className="login-header">
-              <div className="login-shield" style={{background:"none",padding:0,width:56,height:56}}><EatSafeLogo size={56} variant="light" /></div>
-              <div className="login-title">Eat<span style={{color:"var(--green)",fontStyle:"italic"}}>Safe</span></div>
+            {/* Logo — genbruger PRÆCIS samme markup/klasser som velkomst-
+                skærmen (welcome-logo-wrap/-wordmark/-wordmark-text), i
+                stedet for de tidligere separate login-shield/login-title-
+                klasser (mindre logo, kursiv "Safe") — 25. sept. 2026-brief:
+                "1:1 i brandudtryk", "Safe må ikke være kursiv". */}
+            <div className="welcome-logo-wrap">
+              <EatSafeLogo size={72} variant="light" />
+              <div className="welcome-wordmark">
+                <span className="welcome-wordmark-text">Eat<span>Safe</span></span>
+              </div>
             </div>
 
             {/* Tab vælger — se .tab-row/.tab.active i theme.jsx for den

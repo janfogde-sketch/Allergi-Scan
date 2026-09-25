@@ -439,10 +439,6 @@ body{
 
 /* ── LOGIN ── */
 .login-wrap{min-height:100vh;display:flex;flex-direction:column;padding:48px 20px 32px;}
-.login-header{text-align:center;margin-bottom:28px;}
-.login-shield{width:64px;height:64px;background:none;border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;overflow:hidden;}
-.login-title{font-size:24px;font-weight:700;color:var(--ink);letter-spacing:-.5px;}
-.login-sub{font-size:13px;color:var(--muted);margin-top:4px;}
 /* Formular-kort (25. sept. 2026-brief): "tydeligt hvidt formular-kort med
    16-20px radius, diskret skygge, god indvendig padding" — erstatter den
    generiske .card (12px radius, 16px padding, brugt overalt ellers i appen)
@@ -804,7 +800,7 @@ body{
    baggrundens punkt-gitter. Et fint, lyst "løft" (ikke en blur/glød) holder
    den læsbar uden at det ligner en fejl. */
 .screen-title,.screen-sub,.section-lbl,.mp-title,.mp-subtitle,.mp-section-lbl,
-.login-title,.login-sub,.welcome-wordmark-text,.welcome-tagline,
+.welcome-wordmark-text,.welcome-tagline,
 .step-title,.step-sub,.onboard-skip{
   text-shadow:0 1px 0 rgba(255,255,255,.7);
 }

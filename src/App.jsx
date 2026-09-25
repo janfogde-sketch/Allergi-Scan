@@ -847,15 +847,19 @@ export default function EatSafe() {
             scan, theme.jsx) — dækker hele skærmen kant-til-kant i stedet for
             kun rummet mellem topbar/bundnav, som en tidligere <img>-i-hero-
             frame-udgave var begrænset til. Samme billede genbruges nu også på
-            WELCOME-skærmen (25. sept. 2026-brief) — billedet viser netop de
-            allergen-kilder briefen bad om (mælk/æg/havre/fisk/skaldyr/nødder),
-            i modsætning til det generelle app-bg-billede (kanel/krydderier/
-            chokolade m.m.), som ikke matcher briefens ingrediensliste. */}
-        <div className={`app-bg${(screen === SCREENS.HOME || screen === SCREENS.WELCOME) ? " app-bg-scan" : ""}`} aria-hidden="true" />
-        {/* Ekstra dæmpning af baggrunden KUN på Log ind/Opret konto (25. sept.
-            2026-brief: "formularen bliver vigtigst") — se .app-bg-dim i
-            theme.jsx. Selvstændigt lag i stedet for at ændre .app-bg selv, så
-            resten af appen beholder sin nuværende baggrunds-intensitet. */}
+            WELCOME- OG LOGIN-skærmen (25. sept. 2026-brief, senest udvidet:
+            "match velkomstsiden 1:1 i brandudtryk... samme type ingredienser
+            placeret i kanterne") — billedet viser netop de allergen-kilder
+            briefen bad om (mælk/æg/havre/fisk/skaldyr/nødder), i modsætning
+            til det generelle app-bg-billede (kanel/krydderier/chokolade
+            m.m.), som ikke matcher briefens ingrediensliste. */}
+        <div className={`app-bg${[SCREENS.HOME, SCREENS.WELCOME, SCREENS.LOGIN].includes(screen) ? " app-bg-scan" : ""}`} aria-hidden="true" />
+        {/* Ekstra, let dæmpning af baggrunden KUN på Log ind/Opret konto
+            (25. sept. 2026-brief: "formularen bliver vigtigst", "baggrunden
+            må gerne være let dæmpet på formularsiderne") — se .app-bg-dim i
+            theme.jsx. Selvstændigt lag OVEN PÅ det nu delte Scan/Velkomst/
+            Login-baggrundsfoto, i stedet for at ændre .app-bg-scan selv, så
+            Scan- og Velkomst-skærmen beholder deres nuværende intensitet. */}
         {screen === SCREENS.LOGIN && <div className="app-bg-dim" aria-hidden="true" />}
 
         {/* Skip-link for tastatur/screen reader brugere */}
