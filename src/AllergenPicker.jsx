@@ -16,7 +16,6 @@ export const AllergenChipPicker = ({ selected, onChange }) => {
     const on = selected.includes(a.id);
     return (
       <div key={a.id} className={`chip${on ? " on" : ""}`}
-        style={on ? { borderColor:"var(--green)", borderWidth:1.5 } : undefined}
         onClick={() => onChange(on ? selected.filter(x => x !== a.id) : [...selected, a.id])}>
         <span style={UI.flex1}>{a.emoji} {a.label}</span>
         {a.note && (
@@ -67,10 +66,7 @@ export const DietChipPicker = ({ selected, onChange, showCount = true, autoNote 
           const showAutoNote = autoNote && d.id === autoNote.id;
           return (
             <div key={d.id} className={`chip${on ? " on" : ""}`}
-              style={{
-                ...(on ? { borderColor:"var(--green)", borderWidth:1.5 } : {}),
-                ...(isDanglingLast ? { gridColumn:"1 / -1" } : {}),
-              }}
+              style={isDanglingLast ? { gridColumn:"1 / -1" } : undefined}
               onClick={() => onChange(on ? selected.filter(x => x !== d.id) : [...selected, d.id])}>
               <div style={UI.flex1}>
                 <div style={UI.ufw700}>{d.label}</div>

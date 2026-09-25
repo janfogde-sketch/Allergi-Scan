@@ -37,7 +37,7 @@ export function GenderPicker({ value, onChange, options = ["Mand", "Kvinde", "An
           style={{
             padding:"10px 8px", borderRadius:8, cursor:"pointer", textAlign:"center",
             border:`1px solid ${value === g ? "var(--green)" : "var(--border)"}`,
-            background: value === g ? "rgba(23,138,80,.24)" : "var(--surface)",
+            background: value === g ? "rgba(14,143,90,.24)" : "var(--surface)",
             fontSize:13, fontWeight:700,
             color: value === g ? "var(--green)" : "var(--muted)",
             transition:"all .15s",

@@ -263,7 +263,7 @@ export default function OnboardingScreen({
             (.btn-primary's egne farver) så snart alt er udfyldt. */}
         <button className="btn btn-primary btn-full"
           style={{
-            background: allOk ? undefined : "rgba(23,138,80,.18)",
+            background: allOk ? undefined : "rgba(14,143,90,.18)",
             color: allOk ? undefined : "var(--green)",
             cursor: allOk ? "pointer" : "not-allowed",
           }}
@@ -303,7 +303,7 @@ export default function OnboardingScreen({
           <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
             <div style={UI.sectionLbl6}>Mangler din allergi eller intolerance?</div>
             <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0 }}>
-              <input className="field" placeholder='Skriv fx "Fructose"…' value={customInput}
+              <input className="field" placeholder='Skriv fx "Fruktose"…' value={customInput}
                 onChange={e => setCustomInput(e.target.value)}
                 onKeyDown={e => { if (e.key==="Enter"&&customInput.trim()) { setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); setNoAllergiesConfirmed(false); }}} />
               <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); setNoAllergiesConfirmed(false); }}}>+</button>
@@ -462,7 +462,7 @@ export default function OnboardingScreen({
             <div className="welcome-benefits">
               {WELCOME_BENEFITS.map(([icon, label]) => (
                 <div key={label} className="welcome-benefit">
-                  <div className="welcome-benefit-icon"><Icon name={icon} size={20} color="#0E8F5A" /></div>
+                  <div className="welcome-benefit-icon"><Icon name={icon} size={20} color="var(--green)" /></div>
                   <div className="welcome-benefit-label">{label}</div>
                 </div>
               ))}
@@ -640,7 +640,7 @@ export default function OnboardingScreen({
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:12 }}>
                     <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12.5, fontWeight:600, color:"var(--ink2)", cursor:"pointer" }}>
                       <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)}
-                        style={{ width:16, height:16, accentColor:"#0E8F5A", cursor:"pointer" }} />
+                        style={{ width:16, height:16, accentColor:"var(--green)", cursor:"pointer" }} />
                       Husk mig
                     </label>
                     {/* Valideres lokalt FØR handleForgotPassword kaldes, så en

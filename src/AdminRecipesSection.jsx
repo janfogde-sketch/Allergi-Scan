@@ -104,7 +104,7 @@ export default function AdminRecipesSection({
               <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100,
                 background:r.status==="pending"?"var(--amber-lt)":r.status==="approved"?"var(--green-lt)":"var(--red-lt)",
                 color:r.status==="pending"?"var(--amber)":r.status==="approved"?"var(--green)":"var(--red)",
-                border:`1px solid ${r.status==="pending"?"var(--amber-md)":r.status==="approved"?"rgba(74,222,128,.3)":"var(--red-md)"}`,
+                border:`1px solid ${r.status==="pending"?"var(--amber-md)":r.status==="approved"?"rgba(14,143,90,.3)":"var(--red-md)"}`,
                 flexShrink:0, marginLeft:8, display:"inline-flex", alignItems:"center", gap:4 }}>
                 <Icon name={r.status==="pending"?"clock":r.status==="approved"?"check":"x"} size={10} color={r.status==="pending"?"var(--amber)":r.status==="approved"?"var(--green)":"var(--red)"} /> {r.status==="pending"?"Afventer":r.status==="approved"?"Godkendt":"Afvist"}
               </span>

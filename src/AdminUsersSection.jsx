@@ -69,7 +69,7 @@ export default function AdminUsersSection({
                 <div style={{ fontSize:11, color:"var(--muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</div>
               </div>
               <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0 }}>
-                <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: u.role==="admin" ? "rgba(74,222,128,.2)" : "var(--surface2)", color: u.role==="admin" ? "var(--green)" : "var(--muted)", border: `1px solid ${u.role==="admin" ? "var(--green-mid)" : "var(--border)"}` }}>
+                <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: u.role==="admin" ? "rgba(14,143,90,.2)" : "var(--surface2)", color: u.role==="admin" ? "var(--green)" : "var(--muted)", border: `1px solid ${u.role==="admin" ? "var(--green-mid)" : "var(--border)"}` }}>
                   {u.role==="admin" ? "Admin" : "Bruger"}
                 </span>
                 {u.onboarding_completed === false && <span style={{ fontSize:9, color:"var(--amber)", fontWeight:700 }}>Onboarding ufærdig</span>}

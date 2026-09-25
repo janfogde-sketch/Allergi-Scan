@@ -343,7 +343,7 @@ export default function SuggestEditScreen({
               submit();
             }}
             disabled={editType === "ingredients" && !editIngText.trim() && ingItems.length === 0}
-            style={{ width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:12, padding:"16px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:8, opacity: (editType === "ingredients" && !editIngText.trim()) ? 0.4 : 1, boxShadow:"0 2px 12px rgba(74,222,128,.25)", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+            style={{ width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:12, padding:"16px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:8, opacity: (editType === "ingredients" && !editIngText.trim()) ? 0.4 : 1, boxShadow:"0 2px 12px rgba(14,143,90,.25)", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
             Send forslag <Icon name="check" size={14} color="var(--on-green)" />
           </button>
           <button className="btn btn-ghost btn-full" onClick={() => setScreen(SCREENS.RESULT)}>Annuller</button>

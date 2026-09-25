@@ -10,7 +10,7 @@ const CATEGORIES = [
   { id:"allergen",       emoji:"🌾", label:"Allergener",      color:"var(--red)",  bg:"rgba(255,82,82,.10)" },
   { id:"ingredient",     emoji:"🫙", label:"Ingredienser",    color:"var(--blue)",  bg:"rgba(96,165,250,.10)" },
   { id:"e_number",       emoji:"🔢", label:"E-numre",         color:"var(--amber)",  bg:"rgba(255,186,59,.10)" },
-  { id:"diet",           emoji:"🥗", label:"Diæter",          color:"var(--green)",  bg:"rgba(74,222,128,.10)" },
+  { id:"diet",           emoji:"🥗", label:"Diæter",          color:"var(--green)",  bg:"rgba(14,143,90,.10)" },
   { id:"cross_reaction", emoji:"🔄", label:"Krydsreaktioner", color:"#E8A87C",  bg:"rgba(232,168,124,.10)" },
   { id:"faq",            emoji:"❓", label:"FAQ",             color:"var(--neutral)",  bg:"rgba(148,163,184,.10)" },
   { id:"fun_fact",       emoji:"💡", label:"Vidste du at",    color:"#E8A87C",  bg:"rgba(232,168,124,.10)" },
@@ -167,7 +167,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           <div style={S.section}><div style={S.sectionLabel}>Findes i</div><div style={S.pillRow}>{selectedEntry.found_in.map((f,i) => <span key={i} style={S.pill("var(--surface)","var(--muted)","var(--border)")}>{f}</span>)}</div></div>
         )}
         {Array.isArray(selectedEntry.alternatives) && selectedEntry.alternatives.length > 0 && (
-          <div style={S.section}><div style={S.sectionLabel}>Alternativer</div><div style={S.pillRow}>{selectedEntry.alternatives.map((a,i) => <span key={i} style={{ ...S.pill("var(--green-lt)","var(--green)","rgba(74,222,128,.2)"), display:"inline-flex", alignItems:"center", gap:4 }}><Icon name="check" size={10} color="var(--green)" /> {a}</span>)}</div></div>
+          <div style={S.section}><div style={S.sectionLabel}>Alternativer</div><div style={S.pillRow}>{selectedEntry.alternatives.map((a,i) => <span key={i} style={{ ...S.pill("var(--green-lt)","var(--green)","rgba(14,143,90,.2)"), display:"inline-flex", alignItems:"center", gap:4 }}><Icon name="check" size={10} color="var(--green)" /> {a}</span>)}</div></div>
         )}
         {Array.isArray(selectedEntry.aliases) && selectedEntry.aliases.length > 0 && (
           <div style={S.section}><div style={S.sectionLabel}>Kendes også som</div><div style={S.pillRow}>{selectedEntry.aliases.map((a,i) => <span key={i} style={S.pill("var(--surface)","var(--muted)","var(--border)")}>{a}</span>)}</div></div>

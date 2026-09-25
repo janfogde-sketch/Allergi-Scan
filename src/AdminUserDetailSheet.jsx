@@ -25,7 +25,7 @@ export default function AdminUserDetailSheet({
                 <div style={UI.ufs18_fw900_cink}>{openAdminUser.name || "Ingen navn"}</div>
                 <div style={UI.muted12mt2}>{openAdminUser.email}</div>
                 <div style={{ display:"flex", gap:6, marginTop:6 }}>
-                  <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: openAdminUser.role==="admin" ? "rgba(74,222,128,.2)" : "var(--surface2)", color: openAdminUser.role==="admin" ? "var(--green)" : "var(--muted)", display:"inline-flex", alignItems:"center", gap:4 }}>
+                  <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: openAdminUser.role==="admin" ? "rgba(14,143,90,.2)" : "var(--surface2)", color: openAdminUser.role==="admin" ? "var(--green)" : "var(--muted)", display:"inline-flex", alignItems:"center", gap:4 }}>
                     <Icon name={openAdminUser.role==="admin" ? "shield" : "profile"} size={10} color={openAdminUser.role==="admin" ? "var(--green)" : "var(--muted)"} /> {openAdminUser.role==="admin" ? "Admin" : "Bruger"}
                   </span>
                   <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: openAdminUser.onboarding_completed ? "var(--green-lt)" : "var(--amber-lt)", color: openAdminUser.onboarding_completed ? "var(--green)" : "var(--amber)", display:"inline-flex", alignItems:"center", gap:4 }}>

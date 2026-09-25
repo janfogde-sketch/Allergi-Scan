@@ -73,7 +73,7 @@ export const MemberForm = ({
       <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
         <div style={UI.sectionLbl6}>Mangler din allergi eller intolerance?</div>
         <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0 }}>
-          <input className="field" placeholder='Skriv fx "Fructose"…' value={customInput}
+          <input className="field" placeholder='Skriv fx "Fruktose"…' value={customInput}
             onChange={e => setCustomInput(e.target.value)}
             onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(p=>[...p,customInput.trim()]); setCustomInput(""); }}} />
           <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(p=>[...p,customInput.trim()]); setCustomInput(""); }}}>+</button>
@@ -128,7 +128,7 @@ export const MemberForm = ({
       <button className="btn btn-primary btn-full"
         style={{
           marginTop:12,
-          background: isValid ? undefined : "rgba(23,138,80,.18)",
+          background: isValid ? undefined : "rgba(14,143,90,.18)",
           color: isValid ? undefined : "var(--green)",
           cursor: isValid ? "pointer" : "not-allowed",
         }}

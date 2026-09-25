@@ -363,7 +363,7 @@ export default function ScannerScreen({
                   </div>
                 </div>
 
-                {/* Stor cirkulær scan-knap — grøn fyld (#0E8F5A → #08734A). Knappen
+                {/* Stor cirkulær scan-knap — grøn fyld (var(--green) → var(--green-dark)). Knappen
                     selv står nu STILLE (scanCtaBreathe-åndedrættet er fjernet
                     herfra 25. sept. 2026 — brugeren bad specifikt om puls "kun i"
                     halo-gløden, ikke selve knappen); al levende bevægelse ligger
@@ -390,14 +390,14 @@ export default function ScannerScreen({
                 <div style={{ position:"absolute", top:"calc(44% - 18px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
                   <div style={{ position:"relative", width:"clamp(132px, 34cqh, 219px)", height:"clamp(132px, 34cqh, 219px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
                     <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-20px, -3.3cqh, -9px)", borderRadius:"50%",
-                      background:"radial-gradient(circle, #DDF4E8 0%, rgba(221,244,232,0) 70%)" }} aria-hidden="true" />
+                      background:"radial-gradient(circle, var(--green-halo) 0%, rgba(221,244,232,0) 70%)" }} aria-hidden="true" />
                     <button
                       className="scan-cta-btn"
                       onClick={() => startCamera()}
                       aria-label="Start kamera for at scanne stregkode"
                       style={{ position:"absolute", inset:"clamp(5px, 1.1cqh, 7px)", borderRadius:"50%", cursor:"pointer",
                         border:"none", fontFamily:"var(--f)",
-                        background:"linear-gradient(160deg,#0E8F5A 0%,#08734A 100%)",
+                        background:"linear-gradient(160deg,var(--green) 0%,var(--green-dark) 100%)",
                         boxShadow:"0 14px 28px -12px rgba(8,115,74,.55), inset 0 2px 3px rgba(255,255,255,.3)",
                         display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(6px, 1.5cqh, 10px)" }}>
                       <Icon name="scanframe" size="clamp(29px, 6.3cqh, 43px)" color="#fff" />
@@ -474,7 +474,7 @@ export default function ScannerScreen({
                   <button
                     style={{ padding:"0 16px", borderRadius:10, background:"var(--green)", border:"none",
                       color:"var(--on-green)", fontWeight:800, fontSize:14, cursor:"pointer", fontFamily:"var(--f)", flexShrink:0,
-                      boxShadow:"0 2px 12px rgba(74,222,128,.25)" }}
+                      boxShadow:"0 2px 12px rgba(14,143,90,.25)" }}
                     onClick={() => {
                       const val = document.getElementById("manual-ean-input")?.value?.trim();
                       if (!val || val.length < 8) return;

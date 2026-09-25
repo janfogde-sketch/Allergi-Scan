@@ -26,8 +26,8 @@ const TIPS = [
     icon: "🚪",
     title: "Når du ankommer",
     color: "var(--green)",
-    bg: "rgba(74,222,128,.08)",
-    border: "rgba(74,222,128,.2)",
+    bg: "rgba(14,143,90,.08)",
+    border: "rgba(14,143,90,.2)",
     tips: [
       "Fortæl tjeneren om dine allergier med det samme — ikke når maden er bestilt.",
       "Brug dit EatSafe madpas: tryk 'Vis til tjener' og lad dem læse det direkte.",
@@ -147,7 +147,7 @@ export default function RestaurantGuideScreen() {
       )}
 
       {/* Tip til madpas */}
-      <div style={{ background:"rgba(74,222,128,.07)", border:"1px solid rgba(74,222,128,.2)", borderRadius:12, padding:"12px 14px", marginBottom:16, display:"flex", gap:10, alignItems:"flex-start" }}>
+      <div style={{ background:"rgba(14,143,90,.07)", border:"1px solid rgba(14,143,90,.2)", borderRadius:12, padding:"12px 14px", marginBottom:16, display:"flex", gap:10, alignItems:"flex-start" }}>
         <div style={UI.fs20Shrink0}><Icon name="bulb" size={18} color="var(--green)" /></div>
         <div>
           <div style={{ fontSize:13, fontWeight:700, color:"var(--green)", marginBottom:3 }}>Brug dit madpas</div>

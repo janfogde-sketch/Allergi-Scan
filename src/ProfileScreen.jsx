@@ -718,7 +718,7 @@ export default function ProfileScreen({
               </div>
               <div className="card-lbl">Andre allergier</div>
               <div className="input-row" style={{ marginBottom: customAllerg.length ? 8 : 0 }}>
-                <input className="field" placeholder="Fx. Fructose…" value={customInput} onChange={e => setCustomInput(e.target.value)}
+                <input className="field" placeholder="Fx. Fruktose…" value={customInput} onChange={e => setCustomInput(e.target.value)}
                   onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}} />
                 <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}}>+</button>
               </div>

@@ -253,7 +253,7 @@ export default function MadpasScreen({
                   <div style={{ fontSize:11, color:"var(--muted)", marginBottom:16, wordBreak:"break-all" }}>{shareUrl}</div>
                   <button onClick={() => setQrOpen(false)}
                     style={{ width:"100%", padding:"12px", borderRadius:12, background:"var(--green)", border:"none",
-                      fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer", boxShadow:"0 2px 12px rgba(74,222,128,.25)" }}>
+                      fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer", boxShadow:"0 2px 12px rgba(14,143,90,.25)" }}>
                     Luk
                   </button>
                 </div>
@@ -271,7 +271,7 @@ export default function MadpasScreen({
                       alt="QR-kode til madpas"
                       width={100} height={100}
                       onError={() => setQrError(true)}
-                      style={{ borderRadius:10, display:"block", border:"2px solid rgba(74,222,128,.2)" }}
+                      style={{ borderRadius:10, display:"block", border:"2px solid rgba(14,143,90,.2)" }}
                     />
                     <div style={{ position:"absolute", inset:0, borderRadius:10, background:"rgba(0,0,0,.45)",
                       display:"flex", alignItems:"center", justifyContent:"center",
@@ -311,7 +311,7 @@ export default function MadpasScreen({
                       style={{ width:"100%", padding:"10px 12px", borderRadius:10, border:"none",
                         background:"var(--green)", fontFamily:"var(--f)", fontSize:12, fontWeight:800,
                         color:"var(--on-green)", cursor:"pointer",
-                        display:"flex", alignItems:"center", justifyContent:"center", gap:6, boxShadow:"0 2px 12px rgba(74,222,128,.25)" }}>
+                        display:"flex", alignItems:"center", justifyContent:"center", gap:6, boxShadow:"0 2px 12px rgba(14,143,90,.25)" }}>
                       <Icon name="share" size={13} color="var(--on-green)" /> Del via...
                     </button>
                   )}

@@ -10,7 +10,27 @@ paths:
 ```
 --ink:#15201A            tekst
 --paper:#F6F8F3          baggrund (hvid/lys — IKKE grøn baggrund)
---green:#178A50 (+lt/mid/glow/text/logo)   succes / primær CTA / navigation
+--green:#0E8F5A          EatSafe-designsystemets ENE grønne værdi — låst
+                         25. sept. 2026 (se CLAUDE.md afsnit 5/7). Var
+                         tidligere #178A50, adskilt fra en Scan-CTA-only
+                         palet (#0E8F5A/#08734A) — de to er nu slået sammen
+                         til denne ene værdi, brugt overalt (Scan, Profil,
+                         Indkøbsliste, onboarding osv.), ingen undtagelser.
+--green-dark:#08734A     mørk variant — knap-gradienter/hover, IKKE en
+                         separat semantisk farve
+--green-logo/-glow/-text  afledt af --green, se theme.jsx for præcise værdier
+--green-lt / --green-mid  translucent grøn (rgba(14,143,90,.10 / .18)) — til
+                         bløde baggrunde/skygger, IKKE til valgt-tilstand
+                         (se --green-selected-bg nedenfor)
+--green-selected-bg:#EFF9F4  SOLID lys baggrund til "valgt"/aktiv chip-,
+                         filter- og tab-tilstande (fx .chip.on, .tab.active,
+                         .filter-chip.active) — brug denne, ikke --green-lt,
+                         for valgt-state, så baggrunden ikke skinner
+                         gennem/blander sig med et evt. baggrundsbillede bag
+                         kortet (gentaget rod-årsag til flere runders
+                         "ser forkert ud i preview"-fejlfinding denne sæson)
+--green-halo:#DDF4E8     lys grøn glød/halo bag store CTA'er (fx Scan-
+                         knappens radial-gradient-halo)
 --on-green:#FFFFFF
 --red:#C8402E (+lt/md)   fare
 --amber:#B5791A (+lt/md) advarsel
@@ -23,6 +43,27 @@ paths:
 --r:12px (default radius), --sh / --sh2 (skygge-tokens)
 --f:'DM Sans',system-ui,sans-serif
 ```
+
+**Valgt-tilstand ("selected"), fast mønster:** brug ALTID `border-color:
+var(--green)` (solid, ikke translucent) + `background:var(--green-
+selected-bg)` på den delte klasse selv (`.chip.on`, `.tab.active`,
+`.filter-chip.active`, `.ap-chip.on`, `.mp-aa.on`,
+`.recipe-filter-chip.active`, `.home-chip.active` er allerede rettet
+sådan). Tilføj IKKE en per-instance inline `style`-override for
+border-farve/-bredde oven på disse klasser — det var nødvendigt før 25.
+sept. 2026, fordi den delte CSS-klasse selv brugte en anden, ikke-relateret
+translucent grøn (`rgba(74,222,128,...)`), men er nu redundant og skal ikke
+genindføres i nye komponenter.
+
+**Planlagt komponentbibliotek (låst retning, ikke fuldt bygget endnu — 25.
+sept. 2026):** `PrimaryButton`, `SecondaryButton`, `TextLink`, `InputField`,
+`ChoiceCard`, `ChoiceChip`, `FormCard`, `SectionHeading`,
+`ProgressIndicator`, `Accordion`, `InfoRow`, `ErrorMessage`. Formålet er at
+nye skærme SAMMENSÆTTER disse i stedet for at style'e hver knap/kort
+individuelt igen. Indtil de er udtrukket som rigtige komponenter: brug de
+eksisterende delte CSS-klasser (`.btn.btn-primary.btn-full`, `.btn.btn-
+outline`, `.chip`/`.chip.on`, `.link-green`) konsekvent — ikke ad hoc
+inline-styles der genopfinder dem.
 
 **Anbefalet spacing-skala** (tilføjet 14. sept. 2026 efter en grep-bekræftet
 gennemgang af antimønster #15 nedenfor). Eksisterende inline-styles bruger

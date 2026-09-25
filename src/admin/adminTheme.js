@@ -12,7 +12,7 @@ export const adminCss = `
   --ink:#15201A;--ink2:rgba(21,32,26,.78);
   --paper:#F6F8F3;--paper2:#EEF1E9;
   --surface:#FFFFFF;--surface2:#F1F3EC;--surface3:#FAFBF8;
-  --green:#178A50;--green-lt:rgba(23,138,80,.10);--green-mid:rgba(23,138,80,.18);--on-green:#FFFFFF;
+  --green:#0E8F5A;--green-dark:#08734A;--green-lt:rgba(14,143,90,.10);--green-mid:rgba(14,143,90,.18);--green-selected-bg:#EFF9F4;--on-green:#FFFFFF;
   --red:#C8402E;--red-lt:rgba(200,64,46,.08);--red-md:rgba(200,64,46,.18);
   --amber:#B5791A;--amber-lt:rgba(181,121,26,.08);--amber-md:rgba(181,121,26,.18);
   --blue:#3A6EA5;--blue-lt:rgba(58,110,165,.10);--blue-md:rgba(58,110,165,.20);

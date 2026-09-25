@@ -18,12 +18,13 @@ export const THEME = {
   ink2:    "rgba(21,32,26,.72)",
   ink3:    "rgba(21,32,26,.52)",
 
-  // Grøn — appens ene accentfarve: sikker/success/primær CTA
-  green:      "#178A50",
-  greenGlow:  "#1FA25C",
-  greenLt:    "rgba(23,138,80,.10)",
-  greenMid:   "rgba(23,138,80,.18)",
-  greenText:  "#178A50",
+  // Grøn — appens ene accentfarve: sikker/success/primær CTA (låst 25. sept. 2026)
+  green:      "#0E8F5A",
+  greenDark:  "#08734A",
+  greenGlow:  "#16A363",
+  greenLt:    "rgba(14,143,90,.10)",
+  greenMid:   "rgba(14,143,90,.18)",
+  greenText:  "#0E8F5A",
   onGreen:    "#FFFFFF", // Tekstfarve på grøn baggrund (knapper, badges)
 
   // Fare — rød
@@ -85,13 +86,20 @@ export const appCss = `
   --paper2:#F3F3F1;
   /* Bundark/modal-overflader — hvid, til overlejringer der "svæver" over resten af skærmen */
   --sheet:#FFFFFF;
-  /* Grøn — appens ene accentfarve: sikker/success/primær CTA */
-  --green:#178A50;
-  --green-logo:#178A50;
-  --green-glow:#1FA25C;
-  --green-lt:rgba(23,138,80,.10);
-  --green-mid:rgba(23,138,80,.18);
-  --green-text:#178A50;
+  /* Grøn — appens ene accentfarve: sikker/success/primær CTA.
+     Låst som EatSafe-designsystem 25. sept. 2026 (samme palet som
+     tidligere kun Scan-CTA'en brugte — se CLAUDE.md afsnit 5/7) — al
+     tidligere rgba(74,222,128,...)-legacy-grøn og den gamle
+     #178A50-base er udfaset til fordel for denne. */
+  --green:#0E8F5A;
+  --green-dark:#08734A;
+  --green-logo:#0E8F5A;
+  --green-glow:#16A363;
+  --green-lt:rgba(14,143,90,.10);
+  --green-mid:rgba(14,143,90,.18);
+  --green-text:#0E8F5A;
+  --green-selected-bg:#EFF9F4;
+  --green-halo:#DDF4E8;
   --on-green:#FFFFFF;
   /* Borders — bløde, lyse */
   --border:rgba(21,32,26,.10);
@@ -366,9 +374,9 @@ body::-webkit-scrollbar{display:none;}
 /* ── BUTTONS ── */
 .btn{padding:12px 20px;border-radius:10px;border:none;font-family:var(--f);font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px;letter-spacing:-.1px;}
 .btn-full{width:100%;}
-.btn-primary{background:var(--green);color:var(--on-green);box-shadow:0 2px 12px rgba(74,222,128,.25);}
+.btn-primary{background:var(--green);color:var(--on-green);box-shadow:0 2px 12px rgba(14,143,90,.25);}
 .btn-primary:hover{background:var(--green-glow);transform:translateY(-1px);}
-.btn-green{background:var(--green);color:var(--on-green);box-shadow:0 2px 12px rgba(74,222,128,.25);}
+.btn-green{background:var(--green);color:var(--on-green);box-shadow:0 2px 12px rgba(14,143,90,.25);}
 .btn-green:hover{background:var(--green-glow);transform:translateY(-1px);}
 .btn-outline{background:transparent;color:var(--ink);border:1.5px solid var(--border2);}
 .btn-outline:hover{border-color:var(--ink2);background:var(--surface);}
@@ -383,7 +391,7 @@ body::-webkit-scrollbar{display:none;}
 .chip-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
 .chip{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border2);background:var(--surface);cursor:pointer;transition:all .15s;font-size:12.5px;font-weight:600;color:var(--ink2);user-select:none;}
 .chip:hover{border-color:var(--border2);color:var(--ink);}
-.chip.on{border-color:rgba(74,222,128,.3);background:var(--green-lt);color:var(--green);font-weight:700;}
+.chip.on{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);font-weight:700;}
 .chip-check{margin-left:auto;width:16px;height:16px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--on-green);flex-shrink:0;}
 .tags{display:flex;flex-wrap:wrap;gap:6px;}
 .tag{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--green-lt);border:1px solid var(--green-mid);border-radius:100px;font-size:12px;color:var(--green);font-weight:600;}
@@ -418,17 +426,17 @@ body::-webkit-scrollbar{display:none;}
    meget lys grøn baggrund #EFF9F4, brugerens egen definerede farvepalet). */
 .welcome-benefits{display:flex;justify-content:center;gap:22px;margin:28px 0 32px;width:100%;}
 .welcome-benefit{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;max-width:100px;}
-.welcome-benefit-icon{width:44px;height:44px;border-radius:14px;background:#EFF9F4;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh);flex-shrink:0;}
+.welcome-benefit-icon{width:44px;height:44px;border-radius:14px;background:var(--green-selected-bg);display:flex;align-items:center;justify-content:center;box-shadow:var(--sh);flex-shrink:0;}
 /* Hævet fra 11.5px/--ink2 til 13px/--ink (samme dag, opfølgning) — var på
    grænsen til for diskret; nu på linje med resten af skærmens tekstvægt. */
 .welcome-benefit-label{font-size:13px;font-weight:700;color:var(--ink);line-height:1.35;}
-/* Primær CTA i EatSafes egen scan-CTA-grøn (#0E8F5A → #08734A), IKKE den
-   generelle --green-token — brugerens 25. sept.-brief navngav netop denne
-   palet ("EatSafes grønne identitet") som knappens farve. Samme rationale
-   som Scan-CTA'en i ScannerScreen.jsx (se dens kommentar): en bevidst,
-   isoleret farve til appens vigtigste handlings-knapper, resten af appens
-   grønne elementer (bundnav, andre --green-baserede knapper) er urørt. */
-.welcome-btn{background:linear-gradient(160deg,#0E8F5A 0%,#08734A 100%);color:#fff;border:none;border-radius:14px;padding:16px 32px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:all .18s;margin-bottom:10px;letter-spacing:-.1px;box-shadow:0 10px 24px -10px rgba(8,115,74,.45);}
+/* Primær CTA — EatSafes låste --green/--green-dark-token (25. sept.
+   2026-designsystem, se CLAUDE.md afsnit 5/7). Var tidligere hardkodet til
+   den daværende Scan-CTA-only-palet (#0E8F5A→#08734A) adskilt fra
+   --green — nu samme farve, så ingen adskillelse længere nødvendig.
+   (Ryddet op i en duplikeret, tavst-vindende `.welcome-btn`-regel
+   længere nede i filen, som pga. CSS-cascade reelt overskrev denne. */
+.welcome-btn{background:linear-gradient(160deg,var(--green) 0%,var(--green-dark) 100%);color:var(--on-green);border:none;border-radius:14px;padding:16px 32px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:all .18s;margin-bottom:10px;letter-spacing:-.1px;box-shadow:0 10px 24px -10px rgba(8,115,74,.45);}
 .welcome-btn:hover{transform:translateY(-1px);box-shadow:0 14px 30px -10px rgba(8,115,74,.55);}
 .welcome-btn:active{transform:scale(.98);}
 .welcome-btn-ghost{background:var(--surface);color:var(--ink2);border:1.5px solid var(--border2);border-radius:14px;padding:14px 32px;font-family:var(--f);font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:all .18s;}
@@ -446,14 +454,10 @@ body::-webkit-scrollbar{display:none;}
    (som ellers viser en firkantet "indrammet" tilstand efter et museklik i
    Chrome/Firefox) — :focus-visible gengiver en rigtig, synlig ring, men
    KUN ved reelt tastaturfokus (Tab), som brugeren bad om. */
-.link-green{background:none;border:none;cursor:pointer;font-family:var(--f);font-size:12.5px;font-weight:600;color:#0E8F5A;text-decoration:underline;text-underline-offset:2px;padding:0;outline:none;}
-.link-green:hover{color:#08734A;}
-.link-green:focus-visible{outline:2px solid #0E8F5A;outline-offset:3px;border-radius:4px;}
+.link-green{background:none;border:none;cursor:pointer;font-family:var(--f);font-size:12.5px;font-weight:600;color:var(--green);text-decoration:underline;text-underline-offset:2px;padding:0;outline:none;}
+.link-green:hover{color:var(--green-dark);}
+.link-green:focus-visible{outline:2px solid var(--green);outline-offset:3px;border-radius:4px;}
 .link-green:disabled{opacity:.5;cursor:not-allowed;}
-.welcome-btn{background:var(--green);color:var(--on-green);border:none;border-radius:12px;padding:16px 32px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:all .18s;margin-bottom:10px;letter-spacing:-.1px;box-shadow:0 2px 12px rgba(74,222,128,.3);}
-.welcome-btn:hover{background:var(--green-glow);transform:translateY(-1px);}
-.welcome-btn-ghost{background:var(--surface);color:var(--ink2);border:1.5px solid var(--border2);border-radius:12px;padding:14px 32px;font-family:var(--f);font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:all .18s;}
-.welcome-btn-ghost:hover{background:var(--surface2);}
 
 /* ── LOGIN ── */
 /* Bund-padding øget fra 32px til 40px + telefonens egen safe-area (25.
@@ -478,9 +482,9 @@ body::-webkit-scrollbar{display:none;}
    (25. sept. 2026-brief) — hvid pille i EatSafes scan-CTA-grøn tekstfarve
    (#0E8F5A) på en meget lys grøn baggrund (#EFF9F4), samme palet som resten
    af onboarding-flowet. */
-.tab-row{display:flex;gap:3px;background:#EFF9F4;border-radius:10px;padding:3px;margin-bottom:14px;border:1px solid var(--green-mid);}
+.tab-row{display:flex;gap:3px;background:var(--green-selected-bg);border-radius:10px;padding:3px;margin-bottom:14px;border:1px solid var(--green-mid);}
 .tab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink2);transition:all .15s;}
-.tab.active{background:var(--surface);color:#0E8F5A;box-shadow:var(--sh);}
+.tab.active{background:var(--surface);color:var(--green);box-shadow:var(--sh);}
 /* Sociale login-knapper — hvide/neutrale med platformens eget ikon (25.
    sept. 2026-brief: "undgå en stor blå Facebook-knap, fordi den stjæler
    fokus fra EatSafe"). Én delt klasse for Google/Facebook (Apple fjernet
@@ -568,7 +572,7 @@ body::-webkit-scrollbar{display:none;}
 .recent-name{font-size:13px;font-weight:500;color:var(--ink);letter-spacing:-.2px;margin-bottom:2px;}
 .recent-meta{font-size:10px;color:var(--muted2);font-weight:400;}
 .recent-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-left:auto;}
-.recent-dot.safe{background:var(--green);box-shadow:0 0 7px rgba(74,222,128,.6);}
+.recent-dot.safe{background:var(--green);box-shadow:0 0 7px rgba(14,143,90,.6);}
 .recent-dot.warn{background:var(--amber);}
 .recent-dot.danger{background:var(--red);box-shadow:0 0 7px rgba(255,82,82,.5);}
 .recent-dot.not_found{background:var(--muted);}
@@ -577,7 +581,7 @@ body::-webkit-scrollbar{display:none;}
 /* Profile chips (home) */
 .home-profile-chips{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap;}
 .home-chip{display:flex;align-items:center;gap:6px;padding:6px 12px 6px 6px;background:var(--surface);border:1px solid var(--border);border-radius:100px;font-size:11px;font-weight:500;color:var(--ink2);cursor:pointer;transition:all .15s;min-height:30px;}
-.home-chip.active{background:var(--green-lt);border-color:rgba(74,222,128,.25);color:var(--green);}
+.home-chip.active{background:var(--green-selected-bg);border-color:var(--green);color:var(--green);}
 .home-chip-avatar{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7.5px;font-weight:700;color:var(--ink);flex-shrink:0;}
 
 /* Version */
@@ -597,7 +601,7 @@ body::-webkit-scrollbar{display:none;}
 /* ── SEARCH ── */
 .filter-chip{padding:6px 12px;border-radius:100px;border:1.5px solid var(--border2);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--muted);}
 .filter-chip:hover{border-color:var(--border2);color:var(--ink);}
-.filter-chip.active{border-color:rgba(74,222,128,.3);background:var(--green-lt);color:var(--green);}
+.filter-chip.active{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);}
 .product-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
 .product-card:hover{border-color:var(--border2);}
 .product-emoji{width:44px;height:44px;background:var(--surface2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1px solid var(--border);}
@@ -633,7 +637,7 @@ body::-webkit-scrollbar{display:none;}
 .fm-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;}
 .ap-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:100px;border:1.5px solid var(--border2);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--muted);}
 .ap-chip:hover{border-color:var(--border2);color:var(--ink);}
-.ap-chip.on{border-color:rgba(74,222,128,.3);background:var(--green-lt);color:var(--green);}
+.ap-chip.on{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);}
 
 /* ── HISTORY ── */
 .hist-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .1s;}
@@ -750,12 +754,12 @@ body::-webkit-scrollbar{display:none;}
 .mp-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;}
 .mp-allergen-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:var(--red-lt);border:1px solid var(--red-md);border-radius:100px;font-weight:700;color:var(--red);margin:3px;}
 .mp-allergen-pill.custom{background:var(--surface2);border-color:var(--border2);color:var(--ink2);}
-.mp-big-btn{width:100%;background:var(--green);color:var(--on-green);border:none;border-radius:14px;padding:16px;font-family:var(--f);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;box-shadow:0 3px 12px rgba(74,222,128,.25);}
+.mp-big-btn{width:100%;background:var(--green);color:var(--on-green);border:none;border-radius:14px;padding:16px;font-family:var(--f);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;box-shadow:0 3px 12px rgba(14,143,90,.25);}
 .mp-big-btn:hover{background:var(--green-glow);}
 .mp-speak-btn{background:var(--green);color:var(--on-green);border:none;border-radius:10px;padding:8px 14px;font-family:var(--f);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;flex:1;}
 .mp-speak-btn.speaking{background:var(--amber);color:var(--on-green);}
 .mp-aa{background:var(--surface2);color:var(--muted);border:1.5px solid var(--border2);border-radius:9px;padding:8px 12px;font-family:var(--f);font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;}
-.mp-aa.on{background:var(--green-lt);border-color:rgba(74,222,128,.3);color:var(--green);}
+.mp-aa.on{background:var(--green-selected-bg);border-color:var(--green);color:var(--green);}
 .mp-family-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--border);}
 .mp-family-row:last-child{border-bottom:none;}
 
@@ -777,7 +781,7 @@ body::-webkit-scrollbar{display:none;}
 .recipe-filter-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none;}
 .recipe-filter-row::-webkit-scrollbar{display:none;}
 .recipe-filter-chip{flex-shrink:0;padding:8px 14px;border-radius:100px;border:1.5px solid var(--border2);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);transition:all .15s;white-space:nowrap;}
-.recipe-filter-chip.active{border-color:rgba(74,222,128,.3);background:var(--green-lt);color:var(--green);}
+.recipe-filter-chip.active{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);}
 .recipe-search-wrap{position:relative;margin-bottom:12px;}
 .recipe-search-input{width:100%;padding:12px 14px 12px 42px;border:1.5px solid var(--border2);border-radius:12px;background:var(--surface);font-family:var(--f);font-size:14px;color:var(--ink);outline:none;box-sizing:border-box;transition:border-color .15s;}
 .recipe-search-input:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-lt);}
