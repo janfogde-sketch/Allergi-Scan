@@ -343,6 +343,7 @@ export default function EatSafe() {
                   title: "👨‍👩‍👧 Familie tilsluttet!",
                   body: `${acceptorName} har accepteret din invitation og er nu en del af din familie i EatSafe.`,
                   url: "https://eatsafe.dk",
+                  category: "family",
                 }),
               });
             } catch { /* silent — push er ikke kritisk */ }

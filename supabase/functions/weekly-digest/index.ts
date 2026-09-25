@@ -95,6 +95,7 @@ serve(async (req) => {
             title: `🍽️ ${count} nye opskrift${count !== 1 ? "er" : ""} denne uge`,
             body: `Bl.a. "${exampleTitle}" — filtreret til din allergiprofil.`,
             url: "https://eatsafe.dk",
+            category: "weekly_digest",
           }),
         });
         if (res.ok) sent++;
