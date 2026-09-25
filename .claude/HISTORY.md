@@ -1978,12 +1978,17 @@ produktion, og at PWA-specifikke ting (service worker/installation) ikke
 kan testes troværdigt derfra.
 
 **Nuværende link (opdatér dette, ikke opret et nyt, ved fremtidige
-republiceringer):** https://claude.ai/artifact/KYD7ZofTv9o81CgZTVQ9j3
-(det forrige link, `.../TzA4goSRfzAoSVWvoM94z1`, blev slettet eller mistede
-skriveadgang inden 24. sept. 2026's opfølgnings-runde — et helt nyt link
-blev oprettet i stedet. Hvis DETTE link også holder op med at virke,
-opret igen et nyt og opdatér denne linje, i stedet for at antage
-publicerings-fejlen betyder noget andet er galt.)
+republiceringer):** https://claude.ai/artifact/TzA4goSRfzAoSVWvoM94z1
+
+(24. sept. 2026 — en parallel session rapporterede fejlagtigt at dette
+link var slettet/havde mistet skriveadgang, og dokumenterede i stedet et
+nyt link, `.../KYD7ZofTv9o81CgZTVQ9j3`. Verificeret samme dag: DET nye
+link kan ikke læses ("artifact not found") fra en anden session på samme
+konto, mens dette oprindelige link fortsat læses og republiceres uden
+problemer ("owned by you") — det nye links session havde sandsynligvis
+blot mistet sin egen sessions adgang, ikke selve artifacten. Brug derfor
+fortsat DETTE link. Opret først et nyt hvis en publicering til netop
+dette link reelt fejler.)
 
 Metoden er dokumenteret i CLAUDE.md's "Andre stående aftaler". Kort
 opsummeret: `vite build --base=./ --mode artifact-preview`, en telefon-
