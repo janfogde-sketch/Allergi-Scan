@@ -184,6 +184,7 @@ export default function ScannerScreen({
   onBetaClick,
   alternatives,
   altLoading,
+  onOpenHelp,
 }) {
   const { user, userId, accessToken } = useAuthContext();
   const { activeProfiles, setActiveProfiles } = useProfileContext();
@@ -538,6 +539,7 @@ export default function ScannerScreen({
           <ListScreen
             activeIds={activeIds}
             lookupProduct={lookupProduct}
+            onOpenHelp={onOpenHelp}
           />
           </Suspense>
         )}

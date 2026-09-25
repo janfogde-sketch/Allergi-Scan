@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
 import { initials } from "./helpers.js";
@@ -55,7 +55,7 @@ export default function OnboardingScreen({
   onActivatePreview,
 }) {
   const {
-    authTab, setAuthTab, authError, setAuthError, authLoading,
+    authTab, setAuthTab, authError, setAuthError, emailTakenError, setEmailTakenError, authLoading,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
     user, setUser, isOAuth, accessToken,
     rememberMe, setRememberMe,
@@ -114,19 +114,41 @@ export default function OnboardingScreen({
   // vælge noget" (25. sept. 2026, brugerfeedback).
   const [noDietConfirmed, setNoDietConfirmed] = useState(false);
 
-  // Trin 3 (Kostpræferencer): hvis brugeren allerede har markeret Gluten som
-  // allergi/intolerance på trin 2, er det overflødigt at bede dem vælge
-  // "Glutenfri" igen her — appen markerer den automatisk, én gang, når
-  // brugeren når trin 3 (25. sept. 2026, brugerfeedback: "undgår
-  // dobbeltarbejde"). Ref'en sikrer det kun sker én gang, så en efterfølgende
-  // manuel fravalg af Glutenfri ikke bliver overskrevet igen ved et re-render.
-  const glutenAutoAppliedRef = useRef(false);
+  // Trin 4 (Familie): "Tilføj nyt familiemedlem"-formularen skal kun være
+  // foldet ud, når der endnu ikke er gemt noget (første besøg på trinnet),
+  // under en aktiv redigering, eller efter et eksplicit tryk på "+ Tilføj
+  // endnu et familiemedlem" (25. sept. 2026, brugerfeedback) — ikke
+  // automatisk hver gang trinnet vises, når familien allerede har medlemmer.
+  const [showAddMemberForm, setShowAddMemberForm] = useState(family.length === 0);
+  // Slettes det sidste tilbageværende familiemedlem, skal formularen folde
+  // sig ud igen — ellers står brugeren tilbage med kun "+ Tilføj endnu et
+  // familiemedlem", som læser mærkeligt når der reelt ikke er nogen "endnu
+  // et" at tilføje til.
   useEffect(() => {
-    if (onboardStep === 3 && !glutenAutoAppliedRef.current && allergens.includes("gluten")) {
-      glutenAutoAppliedRef.current = true;
-      setUser(u => (u.diets||[]).includes("gluten-free") ? u : { ...u, diets: [...(u.diets||[]), "gluten-free"] });
+    if (family.length === 0) setShowAddMemberForm(true);
+  }, [family.length]);
+
+  // Gluten ↔ Glutenfri-synkronisering (25. sept. 2026, brugerfeedback) — LIVE
+  // reaktion på allergen-valget, ikke kun én gang ved ankomst til trin 3:
+  // vælges "Gluten", markeres "Glutenfri" automatisk med samme grønne
+  // valgt-state. Fjernes "Gluten" igen, fjernes "Glutenfri" automatisk KUN
+  // hvis den stadig er den auto-tilføjede (glutenFreeAutoApplied) — har
+  // brugeren selv rørt ved Glutenfri-kortet siden (tilføjet ELLER fjernet
+  // det manuelt), låses valget som brugerens eget og røres ikke igen
+  // (nulstillet i DietChipPickers onChange nedenfor). Samme mønster bruges i
+  // MemberForm.jsx for familiemedlemmer, ingen forskel på hovedprofil/familie.
+  const [glutenFreeAutoApplied, setGlutenFreeAutoApplied] = useState(false);
+  useEffect(() => {
+    const hasGluten = allergens.includes("gluten");
+    const hasGlutenFree = (user.diets || []).includes("gluten-free");
+    if (hasGluten && !hasGlutenFree) {
+      setUser(u => ({ ...u, diets: [...(u.diets||[]), "gluten-free"] }));
+      setGlutenFreeAutoApplied(true);
+    } else if (!hasGluten && hasGlutenFree && glutenFreeAutoApplied) {
+      setUser(u => ({ ...u, diets: (u.diets||[]).filter(d => d !== "gluten-free") }));
+      setGlutenFreeAutoApplied(false);
     }
-  }, [onboardStep, allergens]);
+  }, [allergens]);
 
   // FIX: disse hooks lå tidligere INDE i en betinget IIFE, som kun blev kaldt
   // når onboardStep === 5. Det bryder Reacts "Rules of Hooks" (hooks skal
@@ -369,8 +391,12 @@ export default function OnboardingScreen({
           <SectionHeading title="Kostpræferencer" sub="Vælg alle der gælder for dig" count={selectedCount} />
 
           <DietChipPicker selected={diets} showCount={false}
-            autoNote={allergens.includes("gluten") ? { id:"gluten-free", text:"Valgt ud fra dine allergier/intolerancer" } : undefined}
+            autoNote={glutenFreeAutoApplied ? { id:"gluten-free", text:"Valgt ud fra gluten" } : undefined}
             onChange={arr => {
+              // Rører brugeren selv ved Glutenfri-kortet (tilføjer ELLER
+              // fjerner det manuelt), er det ikke længere det auto-tilføjede
+              // valg — lås det som brugerens eget, se effekten ovenfor.
+              if (arr.includes("gluten-free") !== diets.includes("gluten-free")) setGlutenFreeAutoApplied(false);
               setUser(u => ({ ...u, diets: arr }));
               if (arr.length > diets.length && noDietConfirmed) setNoDietConfirmed(false);
             }} />
@@ -502,8 +528,8 @@ export default function OnboardingScreen({
             {/* Tab vælger — se .tab-row/.tab.active i theme.jsx for den
                 tydeligere-men-rolige aktiv-markering (25. sept. 2026). */}
             <div className="tab-row">
-              <div className={`tab${authTab==="signup"?" active":""}`} onClick={() => { setAuthTab("signup"); setAuthError(""); setForgotPwError(""); }}>Ny bruger</div>
-              <div className={`tab${authTab==="login"?" active":""}`} onClick={() => { setAuthTab("login"); setAuthError(""); setForgotPwError(""); }}>Log ind</div>
+              <div className={`tab${authTab==="signup"?" active":""}`} onClick={() => { setAuthTab("signup"); setAuthError(""); setEmailTakenError(""); setForgotPwError(""); }}>Ny bruger</div>
+              <div className={`tab${authTab==="login"?" active":""}`} onClick={() => { setAuthTab("login"); setAuthError(""); setEmailTakenError(""); setForgotPwError(""); }}>Log ind</div>
             </div>
 
             {/* Preview-only genvej til onboarding-flowet (25. sept. 2026,
@@ -532,10 +558,24 @@ export default function OnboardingScreen({
                   <div style={UI.ufs12_cmuted_mt4}>Du opsætter dine allergier i næste trin.</div>
                 </div>
                 <div className="login-card">
+                  {/* E-mail — "allerede registreret" vises som en felt-
+                      specifik inline-fejl direkte her (25. sept. 2026,
+                      brugerfeedback), IKKE i den store, globale error-boks
+                      nedenfor, som nu er forbeholdt fejl der ikke kan
+                      knyttes til ét felt. */}
                   <label className="field-lbl">E-mail</label>
                   <input className="field" type="email" placeholder="din@email.dk" value={loginEmail}
-                    onChange={e => setLoginEmail(e.target.value)} style={UI.mb12}
+                    onChange={e => { setLoginEmail(e.target.value); if (emailTakenError) setEmailTakenError(""); }}
+                    style={{ ...UI.mb12, borderColor: emailTakenError ? "var(--red-md)" : undefined }}
                     onKeyDown={e => e.key==="Enter" && handleSignup()} />
+                  {emailTakenError && (
+                    <div style={{ marginTop:-8, marginBottom:12, fontSize:11.5, lineHeight:1.5 }}>
+                      <div style={{ color:"var(--red)", fontWeight:600 }}>{emailTakenError}</div>
+                      <TextLink onClick={() => { setAuthTab("login"); setEmailTakenError(""); }} style={{ marginTop:2 }}>
+                        Log ind i stedet
+                      </TextLink>
+                    </div>
+                  )}
                   <label className="field-lbl">Adgangskode</label>
                   <div style={{ position:"relative" }}>
                     <input className="field" type={showPassword ? "text" : "password"} placeholder="Minimum 10 tegn" value={loginPassword}
@@ -551,12 +591,12 @@ export default function OnboardingScreen({
                   </div>
                 </div>
                 <ErrorMessage>{authError}</ErrorMessage>
-                <button className="btn welcome-btn" onClick={handleSignup} disabled={authLoading}>
+                <button className="btn welcome-btn" onClick={handleSignup} disabled={authLoading || !!emailTakenError}>
                   {authLoading ? "Opretter konto…" : "Opret konto og fortsæt →"}
                 </button>
                 <div style={UI.utacenter_mt12_fs12_cmuted}>
                   Har du allerede en konto?{" "}
-                  <span style={UI.ucgreen_fw700_curpointer} onClick={() => { setAuthTab("login"); setAuthError(""); }}>
+                  <span style={UI.ucgreen_fw700_curpointer} onClick={() => { setAuthTab("login"); setAuthError(""); setEmailTakenError(""); }}>
                     Log ind
                   </span>
                 </div>
@@ -742,16 +782,26 @@ export default function OnboardingScreen({
                 {/* Allerede tilføjede — viser navn + alder som primær linje
                     (25. sept. 2026, brugerfeedback: "Mia, 24 år"), ikke kun
                     allergiliste, så det er umiddelbart tydeligt at
-                    familiemedlemmet reelt blev gemt. "Rediger" (25. sept.
-                    2026, opfølgning) genbruger samme MemberForm nedenfor i
-                    stedet for en separat redigerings-dialog — se
-                    startEditMember/updateMember i useFamily.js. Det medlem
-                    der redigeres, får en tydelig grøn kant, så det er
-                    utvetydigt hvilken række formularen nedenfor gælder. */}
+                    familiemedlemmet reelt blev gemt. Allergioversigten er
+                    begrænset til 3 værdier + "+N" (samme dag, opfølgning) —
+                    en lang allergiliste skubbede ellers Rediger/slet ud af
+                    synsfeltet på smalle skærme. "Rediger" (25. sept. 2026,
+                    opfølgning) genbruger samme MemberForm nedenfor i stedet
+                    for en separat redigerings-dialog — se startEditMember/
+                    updateMember i useFamily.js. Det medlem der redigeres,
+                    får en tydelig grøn kant, så det er utvetydigt hvilken
+                    række formularen nedenfor gælder. Sletteikonet er
+                    neutralt/gråt i normal state — rød/destruktiv styling
+                    vises kun i den native bekræftelsesdialog, ikke på selve
+                    ikonet, så listen ikke ser "farlig" ud i hvile. */}
                 {family.length > 0 && (
                   <div className="card" style={UI.mb12}>
                     <div style={UI.sectionLbl6}>Tilføjet</div>
-                    {family.map(m => (
+                    {family.map(m => {
+                      const allergenLabels = m.allergens.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean);
+                      const shownAllergens = allergenLabels.slice(0, 3);
+                      const extraCount = allergenLabels.length - shownAllergens.length;
+                      return (
                       <div key={m.id} style={{
                           display:"flex", alignItems:"center", gap:10, padding:"10px 6px",
                           margin:"0 -6px", borderRadius:10, borderBottom:"1px solid var(--border)",
@@ -763,44 +813,57 @@ export default function OnboardingScreen({
                             {m.name}{m.birth_year ? ` · ${new Date().getFullYear() - m.birth_year} år` : ""}
                           </div>
                           <div style={UI.muted11mt2}>
-                            {m.allergens.length ? m.allergens.map(id => ALLERGENS.find(a=>a.id===id)?.label).join(", ") : "Ingen allergier"}
+                            {allergenLabels.length ? shownAllergens.join(", ") + (extraCount > 0 ? ` +${extraCount}` : "") : "Ingen allergier"}
                           </div>
                         </div>
-                        <button type="button" onClick={() => startEditMember(m)} aria-label={`Rediger ${m.name}`}
-                          style={{ background:"none", border:"none", cursor:"pointer", padding:"10px 6px", minHeight:44, fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color: editingMemberId === m.id ? "var(--green)" : "var(--muted2)" }}>
+                        <button type="button" onClick={() => { startEditMember(m); setShowAddMemberForm(true); }} aria-label={`Rediger ${m.name}`}
+                          style={{ background:"none", border:"none", cursor:"pointer", padding:"10px 6px", minHeight:44, fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color:"var(--green)" }}>
                           Rediger
                         </button>
-                        <button type="button" onClick={() => removeMember(m.id)} aria-label={`Fjern ${m.name}`}
+                        <button type="button" onClick={() => { if (window.confirm(`Fjern ${m.name} fra familien?`)) removeMember(m.id); }} aria-label={`Fjern ${m.name}`}
                           style={{ background:"none", border:"none", cursor:"pointer", width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center", opacity:.5, flexShrink:0 }}>
                           <Icon name="trash" size={18} color="var(--muted)" />
                         </button>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
-                {/* Tilføj nyt medlem / rediger et eksisterende */}
-                <div className="card" style={UI.mb12}>
-                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
-                    <div className="card-lbl">{editingMemberId ? "Rediger familiemedlem" : "Tilføj nyt familiemedlem"}</div>
-                    {editingMemberId && (
-                      <TextLink onClick={cancelEditMember}>Annuller</TextLink>
-                    )}
+                {/* Tilføj nyt medlem / rediger et eksisterende — foldet
+                    sammen som standard så snart mindst ét medlem er gemt
+                    (25. sept. 2026, brugerfeedback: den tomme formular
+                    dominerede trin 4 unødigt efter det første medlem var
+                    tilføjet). Kun ved 0 medlemmer, en aktiv redigering, eller
+                    et eksplicit tryk på "+ Tilføj endnu et familiemedlem"
+                    nedenfor er formularen foldet ud. */}
+                {showAddMemberForm ? (
+                  <div className="card" style={UI.mb12}>
+                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+                      <div className="card-lbl">{editingMemberId ? "Rediger familiemedlem" : "Tilføj nyt familiemedlem"}</div>
+                      {family.length > 0 && (
+                        <TextLink onClick={() => { cancelEditMember(); setShowAddMemberForm(false); }}>Annuller</TextLink>
+                      )}
+                    </div>
+                    <MemberForm
+                      name={newMemberName} setName={setNewMemberName}
+                      birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
+                      gender={newMemberGender} setGender={setNewMemberGender}
+                      allergens={newMemberAllerg} setAllergens={setNewMemberAllerg}
+                      customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
+                      subtypes={newMemberSubtypes} setSubtypes={setNewMemberSubtypes}
+                      diets={newMemberDiets} setDiets={setNewMemberDiets}
+                      eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
+                      customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}
+                      onAdd={() => { (editingMemberId ? updateMember : addMember)(); setShowAddMemberForm(false); }}
+                      addLabel={editingMemberId ? "Gem ændringer" : "+ Tilføj familiemedlem"}
+                    />
                   </div>
-                  <MemberForm
-                    name={newMemberName} setName={setNewMemberName}
-                    birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
-                    gender={newMemberGender} setGender={setNewMemberGender}
-                    allergens={newMemberAllerg} setAllergens={setNewMemberAllerg}
-                    customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
-                    subtypes={newMemberSubtypes} setSubtypes={setNewMemberSubtypes}
-                    diets={newMemberDiets} setDiets={setNewMemberDiets}
-                    eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
-                    customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}
-                    onAdd={editingMemberId ? updateMember : addMember}
-                    addLabel={editingMemberId ? "Gem ændringer" : "+ Tilføj familiemedlem"}
-                  />
-                </div>
+                ) : (
+                  <SecondaryButton style={UI.mb12} onClick={() => setShowAddMemberForm(true)}>
+                    + Tilføj endnu et familiemedlem
+                  </SecondaryButton>
+                )}
 
                 {/* Fortsæt og "spring over" var tidligere altid vist samtidig
                     — redundant, da de betyder næsten det samme, hvis intet
