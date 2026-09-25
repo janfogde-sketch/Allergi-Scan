@@ -389,7 +389,7 @@ export default function OnboardingScreen({
                 <div style={UI.utacenter_mt12_fs12_cmuted}>
                   Har du ikke en konto?{" "}
                   <span style={UI.ucgreen_fw700_curpointer} onClick={() => { setAuthTab("signup"); setAuthError(""); }}>
-                    Opret en her
+                    Opret konto
                   </span>
                 </div>
               </div>
