@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS, AVATAR_COLORS, E_NUMBERS, E_CATEGORIES } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { EatSafeLogo, Icon, showToast } from "./SharedComponents.jsx";
@@ -468,6 +469,40 @@ export default function OnboardingScreen({
         {/* ══ ONBOARDING ══ */}
         {(screen === SCREENS.ONBOARD || editMode) && (
           <div className="onboard-wrap fade-in">
+            {/* Preview-only dev-navigation (25. sept. 2026) — springer
+                onboardStep frem/tilbage direkte, UDEN at validere trinnets
+                felter (den normale "Fortsæt →"-knap kræver udfyldte
+                felter for at gå videre). Kun til at gennemgå/designe
+                trinnenes skærme hurtigt i Artifact-previewen — vises
+                ALDRIG i produktion, samme mønster som "Se app uden login
+                (preview)" på velkomstskærmen. Fast, mørk pille nederst,
+                bevidst anderledes end appens eget UI, så den aldrig kan
+                forveksles med rigtig produkt-UI. Renderes via en portal til
+                document.body (IKKE som almindeligt barn af .onboard-wrap)
+                — .onboard-wrap har klassen "fade-in", hvis animation
+                (animation-fill-mode:both) efterlader en permanent
+                transform på elementet og dermed gør det til et "containing
+                block" for position:fixed-børn (kendt CSS-fælde, se
+                CLAUDE.md afsnit 3) — uden portalen ville pillen blive
+                fanget inde i .onboard-wraps egen boks og scrolle væk på
+                lange trin (fx trin 6) i stedet for at blive siddende fast
+                på skærmen. */}
+            {import.meta.env.MODE === "artifact-preview" && createPortal(
+              <div style={{ position:"fixed", bottom:"calc(12px + env(safe-area-inset-bottom))", left:"50%", transform:"translateX(-50%)", zIndex:1001,
+                display:"flex", alignItems:"center", gap:4, background:"rgba(21,32,26,.88)", borderRadius:100,
+                padding:4, boxShadow:"0 8px 24px -8px rgba(0,0,0,.45)" }}>
+                <button onClick={() => setOnboardStep(s => Math.max(1, s - 1))} disabled={onboardStep <= 1}
+                  style={{ background:"none", border:"none", color:"#fff", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", opacity: onboardStep<=1 ? .35 : 1, padding:"7px 12px", borderRadius:100, whiteSpace:"nowrap" }}>
+                  ← Forrige
+                </button>
+                <span style={{ color:"#fff", fontSize:11.5, fontWeight:600, opacity:.7, padding:"0 4px", whiteSpace:"nowrap" }}>Trin {onboardStep}/6</span>
+                <button onClick={() => setOnboardStep(s => Math.min(6, s + 1))} disabled={onboardStep >= 6}
+                  style={{ background:"none", border:"none", color:"#fff", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", opacity: onboardStep>=6 ? .35 : 1, padding:"7px 12px", borderRadius:100, whiteSpace:"nowrap" }}>
+                  Næste →
+                </button>
+              </div>,
+              document.body
+            )}
             {!editMode && (
               <div style={{ textAlign:"center", padding:"4px 0 20px" }}>
                 <div style={UI.mb6}><EatSafeLogo size={40} variant="light" /></div>
