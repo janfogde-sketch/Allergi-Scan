@@ -127,11 +127,20 @@ export const appCss = `
   --sh2:0 1px 0 rgba(255,255,255,.7) inset, 0 10px 22px -14px rgba(21,32,26,.18);
   --sh3:0 1px 0 rgba(255,255,255,.7) inset, 0 20px 44px -20px rgba(21,32,26,.24);
 }
+/* Skjul den grå, browseragtige scrollbar-indikator app-bredt (25. sept.
+   2026-brief: "får designet til at ligne en prototype") — scroll virker
+   stadig fint, kun det visuelle scrollbar-spor/håndtag er skjult.
+   scrollbar-width (Firefox) + -ms-overflow-style (gammel Edge) dækker de
+   browsere ::-webkit-scrollbar ikke rammer. */
+html{scrollbar-width:none;-ms-overflow-style:none;}
+html::-webkit-scrollbar{display:none;}
 body{
   background:#FFFFFF;
   color:var(--ink);font-family:var(--f);-webkit-font-smoothing:antialiased;
   min-height:100vh;
+  scrollbar-width:none;-ms-overflow-style:none;
 }
+body::-webkit-scrollbar{display:none;}
 .app{
   /* 480px — ikke 390px — dækker moderne store telefoner (iPhone Air: 402px,
      Pro Max-modeller: op til 430px), så appen ikke centreres med synlige
@@ -339,7 +348,19 @@ body{
 .card-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;letter-spacing:-.2px;}
 .field{width:100%;background:var(--surface2);border:1.5px solid var(--border2);border-radius:10px;padding:12px 14px;color:var(--ink);font-family:var(--f);font-size:16px;outline:none;transition:border-color .15s,background .15s;}
 .field:focus{border-color:var(--green);background:var(--surface2);box-shadow:0 0 0 3px var(--green-lt);}
+/* Skjuler browserens native op/ned-spinner-pile på type="number"-felter
+   (25. sept. 2026, opfølgning: Alder-feltet har allerede egne −/+-knapper
+   udenom, så de indbyggede pile er dobbelt funktion og "ser tekniske ud").
+   Scoped til .field-no-spinner, ikke alle .field-inputs — kun de steder
+   der reelt har en ekstern stepper-erstatning. */
+.field-no-spinner::-webkit-inner-spin-button,
+.field-no-spinner::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+.field-no-spinner{-moz-appearance:textfield;}
 .field-lbl{font-size:11.5px;font-weight:700;color:var(--ink2);margin-bottom:6px;display:block;letter-spacing:.1px;}
+.phone-field{display:flex;align-items:stretch;padding:0;overflow:hidden;}
+.phone-field:focus-within{border-color:var(--green);background:var(--surface2);box-shadow:0 0 0 3px var(--green-lt);}
+.phone-prefix{flex:0 0 auto;display:flex;align-items:center;padding:12px 10px 12px 14px;color:var(--ink2);font-weight:700;font-size:16px;font-family:var(--f);user-select:none;border-right:1.5px solid var(--border2);background:var(--surface3);}
+.phone-rest{flex:1;min-width:0;border:none;outline:none;background:transparent;padding:12px 14px 12px 10px;font-size:16px;font-family:var(--f);color:var(--ink);}
 .input-row{display:flex;gap:8px;}
 
 /* ── BUTTONS ── */
@@ -419,13 +440,32 @@ body{
    understreget tekst. */
 .welcome-link{background:none;border:none;cursor:pointer;font-family:var(--f);font-size:12.5px;font-weight:600;color:var(--ink2);text-decoration:underline;text-underline-offset:2px;padding:8px 0;text-shadow:0 1px 0 rgba(255,255,255,.7);}
 .welcome-link:hover{color:var(--green);}
+/* Grønt tekstlink, brugt af "Glemt adgangskode?" (25. sept. 2026,
+   opfølgning) — almindelig, læsbar grøn tekst, understreget, ingen
+   knap-kant/baggrund. outline:none fjerner browserens standard fokus-ring
+   (som ellers viser en firkantet "indrammet" tilstand efter et museklik i
+   Chrome/Firefox) — :focus-visible gengiver en rigtig, synlig ring, men
+   KUN ved reelt tastaturfokus (Tab), som brugeren bad om. */
+.link-green{background:none;border:none;cursor:pointer;font-family:var(--f);font-size:12.5px;font-weight:600;color:#0E8F5A;text-decoration:underline;text-underline-offset:2px;padding:0;outline:none;}
+.link-green:hover{color:#08734A;}
+.link-green:focus-visible{outline:2px solid #0E8F5A;outline-offset:3px;border-radius:4px;}
+.link-green:disabled{opacity:.5;cursor:not-allowed;}
 .welcome-btn{background:var(--green);color:var(--on-green);border:none;border-radius:12px;padding:16px 32px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:all .18s;margin-bottom:10px;letter-spacing:-.1px;box-shadow:0 2px 12px rgba(74,222,128,.3);}
 .welcome-btn:hover{background:var(--green-glow);transform:translateY(-1px);}
 .welcome-btn-ghost{background:var(--surface);color:var(--ink2);border:1.5px solid var(--border2);border-radius:12px;padding:14px 32px;font-family:var(--f);font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:all .18s;}
 .welcome-btn-ghost:hover{background:var(--surface2);}
 
 /* ── LOGIN ── */
-.login-wrap{min-height:100vh;display:flex;flex-direction:column;padding:48px 20px 32px;}
+/* Bund-padding øget fra 32px til 40px + telefonens egen safe-area (25.
+   sept. 2026, opfølgning) — den sidste sociale login-knap (Facebook)
+   kolliderede med teksten under den, for lidt luft til at være tydeligt
+   adskilt. Yderligere øget specifikt på lave skærme (samme dag, endnu en
+   opfølgning) — 40px var stadig knapt på fx iPhone SE (568px høj), hvor
+   det samlede indhold fylder relativt mere af viewporten. */
+.login-wrap{min-height:100vh;display:flex;flex-direction:column;padding:48px 20px calc(40px + env(safe-area-inset-bottom));}
+@media (max-height:700px){
+  .login-wrap{padding-bottom:calc(64px + env(safe-area-inset-bottom));}
+}
 /* Formular-kort (25. sept. 2026-brief): "tydeligt hvidt formular-kort med
    16-20px radius, diskret skygge, god indvendig padding" — erstatter den
    generiske .card (12px radius, 16px padding, brugt overalt ellers i appen)
@@ -443,9 +483,9 @@ body{
 .tab.active{background:var(--surface);color:#0E8F5A;box-shadow:var(--sh);}
 /* Sociale login-knapper — hvide/neutrale med platformens eget ikon (25.
    sept. 2026-brief: "undgå en stor blå Facebook-knap, fordi den stjæler
-   fokus fra EatSafe"). Én delt klasse for Google/Apple/Facebook, så alle
-   tre reelt er visuelt lige stærke — og altid svagere end .welcome-btn
-   (den primære CTA), som briefen kræver. */
+   fokus fra EatSafe"). Én delt klasse for Google/Facebook (Apple fjernet
+   igen samme dag), så begge reelt er visuelt lige stærke — og altid
+   svagere end .welcome-btn (den primære CTA), som briefen kræver. */
 .social-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px 16px;background:var(--surface);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-family:var(--f);font-size:14px;font-weight:600;color:var(--ink);transition:all .15s;}
 .social-btn:hover{background:var(--surface2);border-color:var(--ink2);}
 .social-btn:active{transform:scale(.98);}
@@ -453,9 +493,16 @@ body{
 
 /* ── ONBOARDING ── */
 .onboard-wrap{padding:20px 16px 100px;}
+/* flex:1 (= flex-grow:1 flex-shrink:1 flex-basis:0%) på hvert segment
+   sikrer allerede matematisk lige bred fordeling af den tilgængelige
+   plads, og det faste gap:6 på selve rækken (App.jsx's StepBar) giver
+   ensartet afstand mellem alle segmenter — bevidst IKKE ændret her (25.
+   sept. 2026, opfølgning), kun bekræftet/verificeret. */
 .step-seg{height:3px;flex:1;border-radius:2px;background:var(--border2);transition:background .3s;}
 .step-seg.done{background:var(--green);}
-.step-num{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap;}
+/* Hævet fra --muted til --ink2 + en anelse større (25. sept. 2026,
+   opfølgning: "gør 1/5 lidt tydeligere"). */
+.step-num{font-size:12px;font-weight:700;color:var(--ink2);white-space:nowrap;}
 .step-title{font-size:17px;font-weight:700;margin-bottom:6px;color:var(--ink);letter-spacing:-.3px;}
 .step-sub{font-size:13px;color:var(--ink2);margin-bottom:16px;line-height:1.55;}
 .onboard-skip{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;}
@@ -764,14 +811,22 @@ body{
    Tryk-feedback på trykbare kort/rækker/chips — samme mønster som
    .recipe-card/.home-shortcut-card. Afgrænset til klasser der allerede
    erklærer cursor:pointer (kodebasens egen konvention for "dette kan trykkes"),
-   så statisk/ikke-trykbart indhold ikke får en vildledende presse-animation. */
+   så statisk/ikke-trykbart indhold ikke får en vildledende presse-animation.
+   .btn tilføjet 25. sept. 2026 (opfølgning: "sikr at disabled-state og
+   active-state har tydelig nok forskel" på Onboardings "Fortsæt →") — den
+   delte .btn-klasse manglede hidtil helt visuel tryk-feedback (kun
+   :hover, ikke touch-relevant), i modsætning til stort set alle andre
+   trykbare elementer i appen. .btn:disabled{transform:none!important}
+   (theme.jsx) sikrer at en deaktiveret knap aldrig "presser" ved et
+   forsøgt tryk. */
 .home-mini-card:active,.scan-hero:active,.hist-row:active,.step-row:active,
 .mp-lang-dropdown:active,.mp-lang-opt:active,.chip:active,.home-chip:active,
 .filter-chip:active,.ap-chip:active,.recipe-filter-chip:active,.tab:active,
 .demo-code:active,.topbar-avatar:active,.menu-item:active,.menu-profile-card:active,
 .scroll-top-btn:active,.admin-tab:active,.admin-action-card:active,
 .admin-list-row:active,.destructive-confirm-btn:active,.plain-cancel-btn:active,
-.enum-chip:active,.enum-row:active,.enum-remove:active,.member-pick:active{
+.enum-chip:active,.enum-row:active,.enum-remove:active,.member-pick:active,
+.btn:active{
   transform:scale(.97);
 }
 .enum-chip,.enum-row,.enum-remove,.member-pick{cursor:pointer;}

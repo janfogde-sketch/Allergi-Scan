@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS, AVATAR_COLORS, E_NUMBERS, E_CATEGORIES } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { EatSafeLogo, Icon, showToast } from "./SharedComponents.jsx";
@@ -81,6 +82,25 @@ export default function OnboardingScreen({
   // "showENumbersInOnboard is not defined" så snart man nåede dertil.
   const [showENumbersInOnboard, setShowENumbersInOnboard] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  // "Glemt adgangskode?"-valideringen skal vises som en lille inline-fejl
+  // direkte under E-mail-feltet (25. sept. 2026, opfølgning), IKKE i den
+  // store, fælles error-box (authError) — det gør en simpel "husk at
+  // udfylde feltet"-påmindelse unødigt alarmerende. Lokal, adskilt state,
+  // ryddes igen når brugeren retter e-mail-feltet eller skifter fane.
+  const [forgotPwError, setForgotPwError] = useState("");
+  // Onboarding trin 1's "Mangler: ..."-liste skal først vises EFTER et
+  // forsøgt tryk på "Fortsæt →" (25. sept. 2026, opfølgning: "vil helst
+  // ikke vise den før brugeren har forsøgt at fortsætte") — ellers møder
+  // brugeren en fejlliste før de overhovedet er begyndt at udfylde noget.
+  // Deklareret her (top-niveau), ikke inde i renderStep1, da hooks ikke må
+  // kaldes betinget — renderStep1 kaldes kun når onboardStep===1.
+  const [step1Attempted, setStep1Attempted] = useState(false);
+  // Trin 2: "Fortsæt" skal ikke kunne trykkes ved en fejl, hvis brugeren
+  // reelt ingen allergier har — de skal aktivt bekræfte det via en dedikeret
+  // knap i stedet for blot at kunne fortsætte med et tomt valg (25. sept.
+  // 2026, brugerfeedback). Fravælges automatisk, hvis brugeren derefter
+  // vælger en allergi/intolerance eller tilføjer en custom-ingrediens.
+  const [noAllergiesConfirmed, setNoAllergiesConfirmed] = useState(false);
 
   // FIX: disse hooks lå tidligere INDE i en betinget IIFE, som kun blev kaldt
   // når onboardStep === 5. Det bryder Reacts "Rules of Hooks" (hooks skal
@@ -117,24 +137,52 @@ export default function OnboardingScreen({
       !genderOk && "køn",
       !phoneOk && "telefon",
     ].filter(Boolean);
+    // Alder-stepper (25. sept. 2026, opfølgning) — erstatter det tidligere
+    // ensomme, smalle talfelt (maxWidth:120), som virkede tilfældigt
+    // smallere end de øvrige felter. "− [tal] +" ser mere bevidst designet
+    // ud og er samtidig lettere at betjene på touch. Starter fra 25 ved
+    // første tryk på en tom værdi — et neutralt udgangspunkt, ikke fra 0/1.
+    const ageNum = Number(user.age) || 0;
+    const stepAge = delta => setUser(u => {
+      const base = Number(u.age) || 25;
+      const next = ageNum === 0 && delta > 0 ? base : Math.min(120, Math.max(1, base + delta));
+      return { ...u, age: String(next) };
+    });
+
     return (
       <div className="fade-in">
         <div style={UI.mb14}>
           <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", marginBottom:4 }}>Hvem er du?</div>
-          <div style={UI.ufs13_cmuted2_lh15}>Oplysningerne bruges til din personlige allergiprofil og kan redigeres senere.</div>
+          {/* Begge undertekster gjort en anelse mørkere (25. sept. 2026,
+              opfølgning) — var hhv. --muted2 og --muted, lidt for lyse til
+              at læse uden anstrengelse ved siden af de mørkere overskrifter. */}
+          <div style={{ ...UI.ufs13_cmuted2_lh15, color:"var(--ink2)" }}>Oplysningerne bruges til din personlige allergiprofil og kan redigeres senere.</div>
         </div>
 
-        <div className="card" style={UI.mb12}>
-          {/* Navn */}
-          <div style={UI.mb12}>
+        {/* Ekstra, blød hvid glød lige bag kortet (25. sept. 2026,
+            opfølgning: "dæmp ingredienserne 5-10% lige bag formularen...
+            kun så kortet står lidt renere") — lagt oven på .card's
+            eksisterende var(--sh)-skygge, ikke en erstatning af den, og
+            KUN på dette kort, ikke en ændring af den delte .card-klasse
+            (brugt bredt andre steder i appen uden dette behov). */}
+        <div className="card" style={{ ...UI.mb12, boxShadow:"var(--sh), 0 0 46px 26px rgba(255,255,255,.55)" }}>
+          {/* Navn — kanten var rød fra allerførste render (25. sept. 2026,
+              opfølgning: "rødlig kant selv om brugeren endnu ikke har gjort
+              noget forkert"). Bug: user.name initialiseres til "" i
+              App.jsx, ikke undefined, så `user.name !== undefined` var
+              sandt med det samme — rød kant IKKE betinget af noget
+              brugeren faktisk havde gjort. Erstattet med step1Attempted
+              (samme gate som "Mangler: ..."-teksten) — rød betyder nu kun
+              "du prøvede at fortsætte, og dette felt mangler stadig". */}
+          <div style={{ marginBottom:17 }}>
             <label className="field-lbl">Fulde navn <span style={UI.red}>*</span></label>
             <input className="field" type="text" placeholder="Fx. Anna Hansen"
               value={user.name||""} onChange={e => setUser(u => ({...u, name:e.target.value}))}
-              style={{ borderColor: !nameOk && (user.name !== undefined) ? "var(--red-md)" : undefined }} />
+              style={{ borderColor: step1Attempted && !nameOk ? "var(--red-md)" : undefined }} />
           </div>
 
           {/* Email */}
-          <div style={UI.mb12}>
+          <div style={{ marginBottom:17 }}>
             <label className="field-lbl">Email <span style={UI.red}>*</span></label>
             <input className="field" type="email" placeholder="din@email.dk"
               value={user.email||loginEmail||""}
@@ -149,31 +197,55 @@ export default function OnboardingScreen({
             )}
           </div>
 
-          {/* Telefon */}
-          <div style={UI.mb12}>
+          {/* Telefon — +45 er låst, brugeren skriver kun selve nummeret */}
+          <div style={{ marginBottom:17 }}>
             <label className="field-lbl">Telefonnummer <span style={UI.red}>*</span></label>
-            <input className="field" type="tel" placeholder="+45 12 34 56 78"
-              value={user.phone||""} onChange={e => setUser(u => ({...u, phone:e.target.value}))} />
+            <div className="field phone-field">
+              <span className="phone-prefix">+45</span>
+              <input className="phone-rest" type="tel" inputMode="numeric" placeholder="12 34 56 78"
+                value={(user.phone||"").replace(/^\+45\s*/, "")}
+                onChange={e => {
+                  const rest = e.target.value.replace(/[^\d\s]/g, "");
+                  setUser(u => ({...u, phone: rest ? `+45 ${rest}` : ""}));
+                }} />
+            </div>
           </div>
 
-          {/* Alder */}
-          <div style={UI.mb14}>
+          {/* Alder — kompakt "− tal +"-stepper i stedet for et smalt talfelt */}
+          <div style={{ marginBottom:19 }}>
             <label className="field-lbl">Alder <span style={UI.red}>*</span></label>
-            <input className="field" type="number" inputMode="numeric" placeholder="Fx. 32" min="1" max="120"
-              value={user.age||""} onChange={e => setUser(u => ({...u, age:e.target.value}))}
-              style={{ maxWidth:120 }} />
+            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+              <button type="button" onClick={() => stepAge(-1)} aria-label="Én år yngre"
+                style={{ width:40, height:40, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                −
+              </button>
+              <input className="field field-no-spinner" type="number" inputMode="numeric" placeholder="32" min="1" max="120"
+                value={user.age||""} onChange={e => setUser(u => ({...u, age:e.target.value}))}
+                style={{ width:64, flexShrink:0, textAlign:"center", padding:"10px 4px" }} />
+              <button type="button" onClick={() => stepAge(1)} aria-label="Ét år ældre"
+                style={{ width:40, height:40, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                +
+              </button>
+            </div>
           </div>
 
-          {/* Køn */}
+          {/* Køn — 2×2-grid med ens bredde (25. sept. 2026, opfølgning) i
+              stedet for flex-wrap, hvor "Vil ikke oplyse" (længste label)
+              endte alene på sin egen linje. */}
           <div>
             <label className="field-lbl">Køn <span style={UI.red}>*</span></label>
-            <div style={UI.udflex_g6_flewrap}>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
               {["Mand","Kvinde","Andet","Vil ikke oplyse"].map(g => (
                 <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
                   style={{
-                    padding:"10px 14px", borderRadius:8, cursor:"pointer",
+                    padding:"10px 8px", borderRadius:8, cursor:"pointer", textAlign:"center",
                     border:`1px solid ${user.gender===g ? "var(--green)" : "var(--border)"}`,
-                    background: user.gender===g ? "var(--green-lt)" : "var(--surface)",
+                    // 16%-mellemtrinnet (forrige runde) var stadig ikke
+                    // tydeligt nok i praksis (25. sept. 2026, endnu en
+                    // opfølgning: "samme tydelige selected-state som
+                    // tidligere") — hævet igen til 24%, en klar, umiskendelig
+                    // lys grøn fyldfarve når et køn er valgt.
+                    background: user.gender===g ? "rgba(23,138,80,.24)" : "var(--surface)",
                     fontSize:13, fontWeight:700,
                     color: user.gender===g ? "var(--green)" : "var(--muted)",
                     transition:"all .15s",
@@ -185,18 +257,162 @@ export default function OnboardingScreen({
           </div>
         </div>
 
-        {/* Validering */}
-        {!allOk && missingFields.length > 0 && (
+        {/* Validering — vises KUN efter et forsøgt tryk på "Fortsæt →"
+            mens formularen er ufuldstændig (se step1Attempted), ikke
+            proaktivt fra starten. Knappen har derfor bevidst IKKE det
+            native disabled-attribut (som ville blokere selve klikket og
+            dermed forsøget) — den ser stadig dæmpet/"disabled" ud via
+            opacity, men klik registreres altid, så det første forsøg kan
+            fanges. */}
+        {step1Attempted && !allOk && missingFields.length > 0 && (
           <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", marginBottom:10 }}>
             Mangler: {missingFields.join(", ")}
           </div>
         )}
 
+        {/* Disabled-tilstanden brugte tidligere kun opacity:.45 på HELE
+            knappen, hvilket dæmpede teksten (hvid) lige så meget som
+            baggrunden og gjorde den svær at læse (25. sept. 2026,
+            opfølgning). Erstattet med eksplicitte farver: en lys grøn
+            baggrund + fuld-styrke grøn tekst (samme "lys baggrund, mørk
+            tekst"-mønster som Køn-valgene ovenfor) i stedet for en
+            gennemgående opacity-dæmpning — teksten forbliver let læsbar,
+            og knappen skifter til den fulde, normale EatSafe-grønne
+            (.btn-primary's egne farver) så snart alt er udfyldt. */}
         <button className="btn btn-primary btn-full"
-          disabled={!allOk}
-          style={{ opacity: allOk ? 1 : 0.45 }}
-          onClick={() => allOk && saveProfileStep1().then(() => setOnboardStep(2))}>
+          style={{
+            background: allOk ? undefined : "rgba(23,138,80,.18)",
+            color: allOk ? undefined : "var(--green)",
+            cursor: allOk ? "pointer" : "not-allowed",
+          }}
+          onClick={() => {
+            if (!allOk) { setStep1Attempted(true); return; }
+            saveProfileStep1().then(() => setOnboardStep(2));
+          }}>
           Fortsæt →
+        </button>
+      </div>
+    );
+  };
+
+  // Trin 2 er ligesom trin 1 flyttet ud i en render-funktion (ikke en
+  // separat komponent — ingen hooks herinde, kun let closures over
+  // top-niveau-state), da den kun kaldes betinget (onboardStep===2).
+  const renderStep2 = () => {
+    const selectedCount = allergens.length + customAllerg.length;
+    const allergiItems = ALLERGENS.filter(a => a.type !== "intolerance");
+    const intoleranceItems = ALLERGENS.filter(a => a.type === "intolerance");
+
+    const renderAllergenChip = a => {
+      const on = allergens.includes(a.id);
+      return (
+        <div key={a.id} className={`chip${on ? " on" : ""}`}
+          style={on ? { borderColor:"var(--green)", borderWidth:1.5 } : undefined}
+          onClick={() => {
+            setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id]);
+            if (noAllergiesConfirmed) setNoAllergiesConfirmed(false);
+          }}>
+          <span style={UI.flex1}>{a.emoji} {a.label}</span>
+          {a.note && (
+            <span role="button" aria-label={`Om ${a.label}`}
+              onClick={e => { e.stopPropagation(); showToast(a.note, "info"); }}
+              style={{ display:"flex", alignItems:"center", justifyContent:"center", width:18, height:18, flexShrink:0, color: on ? "var(--green)" : "var(--muted)" }}>
+              <Icon name="info" size={14} color="currentColor" />
+            </span>
+          )}
+          {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
+        </div>
+      );
+    };
+
+    return (
+      <div className="fade-in">
+        <div className="card">
+          <div className="step-title">Allergier / intolerancer</div>
+          <div style={{ fontSize:11, color:"var(--muted)", marginBottom:4, lineHeight:1.4 }}>
+            Vælg alt der gælder for dig
+          </div>
+          <div style={{ fontSize:12, fontWeight:700, color: selectedCount > 0 ? "var(--green)" : "var(--muted)", marginBottom:14 }}>
+            {selectedCount} valgt
+          </div>
+
+          <div style={UI.sectionLbl6}>Allergier</div>
+          <div className="chip-grid" style={{ marginBottom:16 }}>
+            {allergiItems.map(renderAllergenChip)}
+          </div>
+
+          <div style={UI.sectionLbl6}>Intolerancer / andre følsomheder</div>
+          <div className="chip-grid">
+            {intoleranceItems.map(renderAllergenChip)}
+          </div>
+
+          {/* Skriv selv — kortet markant ned (25. sept. 2026) */}
+          <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
+            <div style={UI.sectionLbl6}>Mangler din allergi eller intolerance?</div>
+            <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0 }}>
+              <input className="field" placeholder='Skriv fx "Fructose"…' value={customInput}
+                onChange={e => setCustomInput(e.target.value)}
+                onKeyDown={e => { if (e.key==="Enter"&&customInput.trim()) { setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); setNoAllergiesConfirmed(false); }}} />
+              <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); setNoAllergiesConfirmed(false); }}}>+</button>
+            </div>
+            {customAllerg.length > 0 && (
+              <div className="tags">
+                {customAllerg.map((a,i) => (
+                  <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
+                    onClick={() => setCustomAllerg(c=>c.filter(x=>x!==a))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(c=>c.filter(x=>x!==a))}>×</span></div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── E-numre: kompakt valgfri række (var en fremtrædende boks —
+            brugerfeedback: "for dominerende her") ── */}
+        <button
+          onClick={() => setShowENumbersInOnboard(s => !s)}
+          style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", background:"none", border:"none", cursor:"pointer", padding:"12px 2px", fontFamily:"var(--f)" }}>
+          <span style={{ fontSize:12.5, fontWeight:600, color:"var(--ink2)" }}>
+            Overvåg specifikke E-numre
+            {selectedENumbers.length > 0
+              ? <span style={{ color:"var(--green)", fontWeight:700 }}> · {selectedENumbers.length} valgt</span>
+              : <span style={{ color:"var(--muted)", fontWeight:500 }}> · Valgfrit</span>}
+          </span>
+          <span style={{ display:"flex", transform: showENumbersInOnboard ? "rotate(90deg)" : "none", transition:".2s" }}>
+            <Icon name="chevronRight" size={16} color="var(--muted)" />
+          </span>
+        </button>
+        {showENumbersInOnboard && (
+          // Solidt kort (ligesom allergi-kortet ovenfor) i stedet for at
+          // ligge direkte på baggrundsfotoet — ellers slår fotoet igennem
+          // de gennemsigtige grønne valgt-farver og får dem til at se
+          // rødlige/orange ud på trods af den korrekte grønne farvekode
+          // (25. sept. 2026, opfølgning på grøn-vs-rød-feedback).
+          <div className="card" style={UI.mb12}>
+            <div style={{ fontSize:12, fontWeight:700, color: selectedENumbers.length > 0 ? "var(--green)" : "var(--muted)", marginBottom:8 }}>
+              {selectedENumbers.length} valgt
+            </div>
+            <ENumberPicker selected={selectedENumbers} onChange={setSelectedENumbers} />
+          </div>
+        )}
+
+        <button className="btn btn-primary btn-full" style={UI.mt12}
+          disabled={!(selectedCount > 0 || noAllergiesConfirmed)}
+          onClick={async () => {
+            try { await saveAllergensStep2(); setOnboardStep(3); }
+            catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
+          }}>Fortsæt →</button>
+
+        <button className="btn btn-full btn-outline" style={{
+            marginTop:8,
+            ...(noAllergiesConfirmed ? { background:"var(--green-lt)", borderColor:"var(--green)", color:"var(--green)", fontWeight:700 } : {}),
+          }}
+          onClick={() => {
+            if (noAllergiesConfirmed) { setNoAllergiesConfirmed(false); return; }
+            if (selectedCount > 0 && !window.confirm("Du har allerede valgt allergier/intolerancer. Vil du fjerne dem og markere, at du ingen har?")) return;
+            setAllergens([]); setCustomAllerg([]);
+            setNoAllergiesConfirmed(true);
+          }}>
+          {noAllergiesConfirmed && <Icon name="check" size={13} color="var(--green)" />} Jeg har ingen allergier eller intolerancer
         </button>
       </div>
     );
@@ -274,10 +490,11 @@ export default function OnboardingScreen({
             hvidt formular-kort (.login-card), baggrunden dæmpet yderligere
             på denne skærm (.app-bg-dim i App.jsx), "Adgangskode" i stedet
             for "Kodeord" overalt, ét enkelt "Eller fortsæt med"-separator i
-            stedet for to "eller"-linjer, og tre neutrale/hvide sociale
-            login-knapper (Google/Apple/Facebook) — ingen af dem må være
-            visuelt stærkere end den grønne primær-CTA (.welcome-btn,
-            genbrugt her for samme farvepalet/vægt som velkomstskærmen). */}
+            stedet for to "eller"-linjer, og neutrale/hvide sociale
+            login-knapper (Google/Facebook — Apple fjernet igen 25. sept.
+            2026, samme dag) — ingen af dem må være visuelt stærkere end
+            den grønne primær-CTA (.welcome-btn, genbrugt her for samme
+            farvepalet/vægt som velkomstskærmen). */}
         {screen === SCREENS.LOGIN && (
           <div className="login-wrap fade-in">
 
@@ -296,9 +513,22 @@ export default function OnboardingScreen({
             {/* Tab vælger — se .tab-row/.tab.active i theme.jsx for den
                 tydeligere-men-rolige aktiv-markering (25. sept. 2026). */}
             <div className="tab-row">
-              <div className={`tab${authTab==="signup"?" active":""}`} onClick={() => { setAuthTab("signup"); setAuthError(""); }}>Ny bruger</div>
-              <div className={`tab${authTab==="login"?" active":""}`} onClick={() => { setAuthTab("login"); setAuthError(""); }}>Log ind</div>
+              <div className={`tab${authTab==="signup"?" active":""}`} onClick={() => { setAuthTab("signup"); setAuthError(""); setForgotPwError(""); }}>Ny bruger</div>
+              <div className={`tab${authTab==="login"?" active":""}`} onClick={() => { setAuthTab("login"); setAuthError(""); setForgotPwError(""); }}>Log ind</div>
             </div>
+
+            {/* Preview-only genvej til onboarding-flowet (25. sept. 2026,
+                samme dag) — springer signup/login helt over og går direkte
+                til SCREENS.ONBOARD trin 1, til at designe/gennemgå
+                onboarding-trinnene uden at skulle oprette en rigtig konto
+                først. Samme mønster/gate som "Se app uden login (preview)"
+                på velkomstskærmen — vises ALDRIG i produktion. */}
+            {import.meta.env.MODE === "artifact-preview" && (
+              <button className="welcome-link" style={{ display:"block", margin:"0 auto 14px", textAlign:"center" }}
+                onClick={() => { setOnboardStep(1); setScreen(SCREENS.ONBOARD); }}>
+                Gå til onboarding (preview)
+              </button>
+            )}
 
             {/* SIGNUP flow */}
             {authTab === "signup" && (
@@ -359,8 +589,19 @@ export default function OnboardingScreen({
                 <div className="login-card">
                   <label className="field-lbl">E-mail</label>
                   <input className="field" type="email" placeholder="din@email.dk" value={loginEmail}
-                    onChange={e => setLoginEmail(e.target.value)} style={UI.mb12}
+                    onChange={e => { setLoginEmail(e.target.value); if (forgotPwError) setForgotPwError(""); }}
+                    style={forgotPwError ? undefined : UI.mb12}
                     onKeyDown={e => e.key==="Enter" && handleLogin()} />
+                  {/* Inline felt-fejl for "Glemt adgangskode?" uden udfyldt
+                      e-mail (25. sept. 2026, opfølgning) — sidder direkte
+                      under feltet den vedrører, IKKE i den store, fælles
+                      error-box nedenfor, som er forbeholdt reelle login-
+                      fejl efter et forsøgt kald. */}
+                  {forgotPwError && (
+                    <div style={{ fontSize:11.5, color:"var(--red)", fontWeight:600, marginTop:5, marginBottom:12 }}>
+                      {forgotPwError}
+                    </div>
+                  )}
                   <label className="field-lbl">Adgangskode</label>
                   <div style={{ position:"relative" }}>
                     <input className="field" type={showPassword ? "text" : "password"} placeholder="Din adgangskode" value={loginPassword}
@@ -377,8 +618,17 @@ export default function OnboardingScreen({
                         style={{ width:16, height:16, accentColor:"#0E8F5A", cursor:"pointer" }} />
                       Husk mig
                     </label>
-                    <button type="button" onClick={handleForgotPassword} disabled={authLoading}
-                      style={{ background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", fontSize:12.5, fontWeight:600, color:"#0E8F5A", textDecoration:"underline", textUnderlineOffset:"2px", padding:0 }}>
+                    {/* Valideres lokalt FØR handleForgotPassword kaldes, så en
+                        manglende e-mail vises som en let inline-note under
+                        feltet i stedet for hookens egen authError-fald-
+                        tilbage (den store error-box) — se .link-green i
+                        theme.jsx for fokus-tilstanden ("skal kun markeres
+                        ved rigtigt tastaturfokus, ikke ved museklik"). */}
+                    <button type="button" className="link-green" onClick={() => {
+                      if (!loginEmail || !loginEmail.includes("@")) { setForgotPwError("Indtast din e-mail først."); return; }
+                      setForgotPwError("");
+                      handleForgotPassword();
+                    }} disabled={authLoading}>
                       Glemt adgangskode?
                     </button>
                   </div>
@@ -402,10 +652,12 @@ export default function OnboardingScreen({
             )}
 
             {/* Ét enkelt separator (25. sept. 2026 — var tidligere to
-                "eller"-linjer, én før og én efter de sociale knapper). */}
+                "eller"-linjer, én før og én efter de sociale knapper).
+                Gjort en anelse mere diskret (opfølgning samme dag) —
+                --muted2 i stedet for --muted, mindre skrifttykkelse. */}
             <div style={{ display:"flex", alignItems:"center", gap:10, margin:"16px 0 10px" }}>
               <div style={UI.hr} />
-              <span style={{ fontSize:12, color:"var(--muted)", fontWeight:600 }}>Eller fortsæt med</span>
+              <span style={{ fontSize:11.5, color:"var(--muted2)", fontWeight:500 }}>Eller fortsæt med</span>
               <div style={UI.hr} />
             </div>
 
@@ -421,14 +673,6 @@ export default function OnboardingScreen({
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                 </svg>
                 Fortsæt med Google
-              </button>
-
-              {/* Apple */}
-              <button className="social-btn" onClick={() => handleOAuth("apple")} disabled={authLoading}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="#000">
-                  <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zm3.415-3.132c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.817-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.56-1.7z"/>
-                </svg>
-                Fortsæt med Apple
               </button>
 
               {/* Facebook — kun det blå "f"-mærke, ikke en fyldt blå knap
@@ -447,11 +691,45 @@ export default function OnboardingScreen({
         {/* ══ ONBOARDING ══ */}
         {(screen === SCREENS.ONBOARD || editMode) && (
           <div className="onboard-wrap fade-in">
+            {/* Preview-only dev-navigation (25. sept. 2026) — springer
+                onboardStep frem/tilbage direkte, UDEN at validere trinnets
+                felter (den normale "Fortsæt →"-knap kræver udfyldte
+                felter for at gå videre). Kun til at gennemgå/designe
+                trinnenes skærme hurtigt i Artifact-previewen — vises
+                ALDRIG i produktion, samme mønster som "Se app uden login
+                (preview)" på velkomstskærmen. Fast, mørk pille nederst,
+                bevidst anderledes end appens eget UI, så den aldrig kan
+                forveksles med rigtig produkt-UI. Renderes via en portal til
+                document.body (IKKE som almindeligt barn af .onboard-wrap)
+                — .onboard-wrap har klassen "fade-in", hvis animation
+                (animation-fill-mode:both) efterlader en permanent
+                transform på elementet og dermed gør det til et "containing
+                block" for position:fixed-børn (kendt CSS-fælde, se
+                CLAUDE.md afsnit 3) — uden portalen ville pillen blive
+                fanget inde i .onboard-wraps egen boks og scrolle væk på
+                lange trin (fx trin 6) i stedet for at blive siddende fast
+                på skærmen. */}
+            {import.meta.env.MODE === "artifact-preview" && createPortal(
+              <div style={{ position:"fixed", bottom:"calc(12px + env(safe-area-inset-bottom))", left:"50%", transform:"translateX(-50%)", zIndex:1001,
+                display:"flex", alignItems:"center", gap:4, background:"rgba(21,32,26,.88)", borderRadius:100,
+                padding:4, boxShadow:"0 8px 24px -8px rgba(0,0,0,.45)" }}>
+                <button onClick={() => setOnboardStep(s => Math.max(1, s - 1))} disabled={onboardStep <= 1}
+                  style={{ background:"none", border:"none", color:"#fff", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", opacity: onboardStep<=1 ? .35 : 1, padding:"7px 12px", borderRadius:100, whiteSpace:"nowrap" }}>
+                  ← Forrige
+                </button>
+                <span style={{ color:"#fff", fontSize:11.5, fontWeight:600, opacity:.7, padding:"0 4px", whiteSpace:"nowrap" }}>Trin {onboardStep}/6</span>
+                <button onClick={() => setOnboardStep(s => Math.min(6, s + 1))} disabled={onboardStep >= 6}
+                  style={{ background:"none", border:"none", color:"#fff", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", opacity: onboardStep>=6 ? .35 : 1, padding:"7px 12px", borderRadius:100, whiteSpace:"nowrap" }}>
+                  Næste →
+                </button>
+              </div>,
+              document.body
+            )}
             {!editMode && (
               <div style={{ textAlign:"center", padding:"4px 0 20px" }}>
                 <div style={UI.mb6}><EatSafeLogo size={40} variant="light" /></div>
                 <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)" }}>Opsæt din profil</div>
-                <div style={{ fontSize:13, color:"var(--muted)", marginTop:4 }}>Tager under 2 minutter</div>
+                <div style={{ fontSize:13, color:"var(--ink2)", marginTop:4 }}>Tager under 2 minutter</div>
               </div>
             )}
             {editMode && <div style={{ height:4 }} />}
@@ -474,100 +752,7 @@ export default function OnboardingScreen({
             {onboardStep === 1 && renderStep1()}
 
             {/* ── TRIN 2: Dine allergier / intolerancer ── */}
-            {onboardStep === 2 && (
-              <div className="fade-in">
-                <div className="card">
-                  <div className="step-title">Allergier / intolerancer</div>
-
-                  <div style={{ fontSize:11, color:"var(--muted)", marginBottom:12, lineHeight:1.4 }}>
-                    Tryk for at markere en allergi eller intolerance
-                  </div>
-
-                  <div className="chip-grid">
-                    {ALLERGENS.map(a => {
-                      const on = allergens.includes(a.id);
-                      return (
-                        <div key={a.id} className="chip" style={{
-                          background: on ? "var(--red-lt)" : "var(--paper2)",
-                          border: `1px solid ${on ? "var(--red)" : "var(--border)"}`,
-                          color: on ? "var(--red)" : "var(--ink)",
-                        }}
-                          onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
-                          <span style={UI.flex1}>{a.emoji} {a.label}</span>
-                          {on && <div style={UI.redBadge9}><Icon name="check" size={9} color="#fff" /></div>}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Skriv selv */}
-                  <div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid var(--border)" }}>
-                    <div style={UI.sectionLbl6}>Kan ikke finde din allergi eller din intolerance?</div>
-                    <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8, lineHeight:1.6 }}>
-                      Tilføj selv — enten en hel allergikategori (fx. "Fructose") eller en specifik ingrediens du reagerer på (fx. "Kasein", "Sorbitol", "Hvede-kimolie"). Vi fremhæver det i ingredienslister.
-                    </div>
-                    <div className="input-row" style={{ marginBottom: customAllerg.length ? 8 : 0 }}>
-                      <input className="field" placeholder="Fx. Fructose…" value={customInput}
-                        onChange={e => setCustomInput(e.target.value)}
-                        onKeyDown={e => { if (e.key==="Enter"&&customInput.trim()) { setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}} />
-                      <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}}>+</button>
-                    </div>
-                    {customAllerg.length > 0 && (
-                      <div className="tags">
-                        {customAllerg.map((a,i) => (
-                          <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
-                            onClick={() => setCustomAllerg(c=>c.filter(x=>x!==a))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(c=>c.filter(x=>x!==a))}>×</span></div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* ── E-numre: kollapsibel ── */}
-                <div style={{ marginTop:12, borderTop:"1px solid var(--border)", paddingTop:12 }}>
-                  <button
-                    onClick={() => setShowENumbersInOnboard(s => !s)}
-                    style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", background:"none", border:"none", cursor:"pointer", padding:"4px 0", fontFamily:"var(--f)" }}>
-                    <div style={UI.udflex_aicenter_g8}>
-                      <span style={UI.fs16}>🔢</span>
-                      <div style={{ textAlign:"left" }}>
-                        <div style={UI.ufs13_fw700_cink}>
-                          Overvåg specifikke E-numre
-                          {selectedENumbers.length > 0 && <span style={{ fontSize:11, color:"var(--amber)", marginLeft:6 }}>{selectedENumbers.length} valgt</span>}
-                        </div>
-                        <div style={UI.muted11}>Valgfrit — kan altid tilføjes senere</div>
-                      </div>
-                    </div>
-                    <span style={{ fontSize:18, color:"var(--muted)", transform: showENumbersInOnboard ? "rotate(180deg)" : "none", transition:".2s" }}>⌄</span>
-                  </button>
-                  {showENumbersInOnboard && (
-                    <div style={UI.mt12}>
-                      <ENumberPicker selected={selectedENumbers} onChange={setSelectedENumbers} />
-                    </div>
-                  )}
-                </div>
-
-                <button className="btn btn-primary btn-full" style={UI.mt12} onClick={async () => {
-                  try { await saveAllergensStep2(); setOnboardStep(3); }
-                  catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
-                }}>Fortsæt →</button>
-                {allergens.length === 0 && customAllerg.length === 0 ? (
-                  <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", padding:"10px 0", marginTop:2 }}
-                    onClick={() => {
-                      if (window.confirm("Er du sikker på, at du ingen allergier eller intolerancer har? Du kan altid tilføje dem senere under Profil.")) {
-                        saveAllergensStep2().then(() => setOnboardStep(3))
-                          .catch(() => showToast("Kunne ikke gemme. Tjek din forbindelse og prøv igen.", "error"));
-                      }
-                    }}>
-                    Spring over — jeg har ingen allergier
-                  </button>
-                ) : (
-                  <div style={{ textAlign:"center", fontSize:12, color:"var(--muted)", marginTop:6 }}>
-                    {allergens.length + customAllerg.length} allergi{allergens.length + customAllerg.length !== 1 ? "er" : ""} valgt
-                  </div>
-                )}
-              </div>
-            )}
+            {onboardStep === 2 && renderStep2()}
 
             {/* ── TRIN 7: Familie ── */}
             {onboardStep === 4 && (

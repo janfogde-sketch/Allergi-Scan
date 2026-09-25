@@ -309,23 +309,29 @@ export const E_NUMBERS = {
 };
 
 
+// "type" bruges til at dele allergener op i to tydeligt adskilte sektioner
+// i onboarding trin 2 (25. sept. 2026, brugerfeedback: "Hvedeallergi,
+// mælkeallergi og laktoseintolerance er ikke det samme") — "allergi" for
+// klassiske IgE-medierede fødevareallergier, "intolerance" for laktose-
+// intolerance, sulfit-følsomhed og gluten (cøliaki/glutenfølsomhed, som
+// ikke er det samme som hvedeallergi — deraf også "note"-feltet på gluten).
 export const ALLERGENS = [
-  { id:"gluten",        label:"Gluten",           emoji:"🥖" },
-  { id:"hvede",         label:"Hvede",             emoji:"🌾" },
-  { id:"maelkeallergi", label:"Mælk",              emoji:"🥛" },
-  { id:"laktose",       label:"Laktoseintolerance",emoji:"🍬" },
-  { id:"aeg",           label:"Æg",               emoji:"🥚" },
-  { id:"noedder",       label:"Nødder",            emoji:"🌰" },
-  { id:"jordnoedder",   label:"Jordnødder",        emoji:"🥜" },
-  { id:"soja",          label:"Soja",              emoji:"🫛" },
-  { id:"fisk",          label:"Fisk",              emoji:"🐟" },
-  { id:"skaldyr",       label:"Skaldyr",           emoji:"🦐" },
-  { id:"selleri",       label:"Selleri",           emoji:"🥬" },
-  { id:"sennep",        label:"Sennep",            emoji:"🟡" },
-  { id:"sesam",         label:"Sesam",             emoji:"🌿" },
-  { id:"svovl",         label:"Sulfitter",         emoji:"🍷" },
-  { id:"lupin",         label:"Lupin",             emoji:"🌸" },
-  { id:"bloeddyr",      label:"Bløddyr",           emoji:"🦑" },
+  { id:"gluten",        label:"Gluten",           emoji:"🥖", type:"intolerance", note:"Cøliaki/glutenfølsomhed — ikke det samme som hvedeallergi" },
+  { id:"hvede",         label:"Hvede",             emoji:"🌾", type:"allergi" },
+  { id:"maelkeallergi", label:"Mælk",              emoji:"🥛", type:"allergi" },
+  { id:"laktose",       label:"Laktoseintolerance",emoji:"🍬", type:"intolerance" },
+  { id:"aeg",           label:"Æg",               emoji:"🥚", type:"allergi" },
+  { id:"noedder",       label:"Nødder",            emoji:"🌰", type:"allergi" },
+  { id:"jordnoedder",   label:"Jordnødder",        emoji:"🥜", type:"allergi" },
+  { id:"soja",          label:"Soja",              emoji:"🫛", type:"allergi" },
+  { id:"fisk",          label:"Fisk",              emoji:"🐟", type:"allergi" },
+  { id:"skaldyr",       label:"Skaldyr",           emoji:"🦐", type:"allergi" },
+  { id:"selleri",       label:"Selleri",           emoji:"🥬", type:"allergi" },
+  { id:"sennep",        label:"Sennep",            emoji:"🟡", type:"allergi" },
+  { id:"sesam",         label:"Sesam",             emoji:"🌿", type:"allergi" },
+  { id:"svovl",         label:"Sulfitter",         emoji:"🍷", type:"intolerance" },
+  { id:"lupin",         label:"Lupin",             emoji:"🌸", type:"allergi" },
+  { id:"bloeddyr",      label:"Bløddyr",           emoji:"🦑", type:"allergi" },
 ];
 
 export const DEMO_CODES = [

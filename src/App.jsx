@@ -546,8 +546,12 @@ export default function EatSafe() {
     );
   };
 
+  {/* "X/N"-tallet sad helt flugtende med højre kant og virkede isoleret
+      derude (25. sept. 2026, opfølgning) — paddingRight trækker hele
+      rækken (segmenter + tal) et par pixels ind, så tallet får lidt luft
+      til kanten i stedet for at sidde helt ude i hjørnet. */}
   const StepBar = ({ total, current }) => (
-    <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:22 }}>
+    <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:22, paddingRight:3 }}>
       {Array.from({ length: total }).map((_, i) => (
         <div key={i} className={`step-seg${i <= current-1 ? " done" : ""}`} />
       ))}
