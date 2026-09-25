@@ -374,7 +374,7 @@ export default function OnboardingScreen({
           <span style={{ fontSize:12.5, fontWeight:600, color:"var(--ink2)" }}>
             Overvåg specifikke E-numre
             {selectedENumbers.length > 0
-              ? <span style={{ color:"var(--amber)", fontWeight:700 }}> · {selectedENumbers.length} valgt</span>
+              ? <span style={{ color:"var(--green)", fontWeight:700 }}> · {selectedENumbers.length} valgt</span>
               : <span style={{ color:"var(--muted)", fontWeight:500 }}> · Valgfrit</span>}
           </span>
           <span style={{ display:"flex", transform: showENumbersInOnboard ? "rotate(90deg)" : "none", transition:".2s" }}>
@@ -382,7 +382,15 @@ export default function OnboardingScreen({
           </span>
         </button>
         {showENumbersInOnboard && (
-          <div style={UI.mb12}>
+          // Solidt kort (ligesom allergi-kortet ovenfor) i stedet for at
+          // ligge direkte på baggrundsfotoet — ellers slår fotoet igennem
+          // de gennemsigtige grønne valgt-farver og får dem til at se
+          // rødlige/orange ud på trods af den korrekte grønne farvekode
+          // (25. sept. 2026, opfølgning på grøn-vs-rød-feedback).
+          <div className="card" style={UI.mb12}>
+            <div style={{ fontSize:12, fontWeight:700, color: selectedENumbers.length > 0 ? "var(--green)" : "var(--muted)", marginBottom:8 }}>
+              {selectedENumbers.length} valgt
+            </div>
             <ENumberPicker selected={selectedENumbers} onChange={setSelectedENumbers} />
           </div>
         )}
