@@ -304,6 +304,32 @@ lave dem lokalt.
   faktisk merge til `main`. Vil nogen undtagelsesvist se en branch direkte på
   Vercel, kræver det en manuel `vercel deploy` fra CLI'en (virker stadig —
   kun de automatiske Git-udløste preview-builds er slået fra).
+- **Vercel-tidsstempler (deployments, `job_run_details` osv.) er UTC, ikke
+  dansk tid — læg 2 timer til for CEST (sommertid, gælder i september).**
+  Nævn altid dansk tid ved rapportering til brugeren, ikke UTC direkte.
+- **Vercels Git-integration stoppede midlertidigt med at reagere på GitHub-
+  pushes, 25. sept. 2026, kl. ca. 11:52–12:11 dansk tid (~19 min).** Opdaget
+  da brugeren bad Bjørn om at pushe (PR #320) og konstaterede at eatsafe.dk
+  ikke blev opdateret. Undersøgt: BÅDE production-deploys ved merge til
+  `main` OG almindelige branch-preview-deploys (via manuel `vercel deploy`
+  fra CLI'en) stoppede på nøjagtig samme tidspunkt, for begge sessioners
+  branches samtidig — ingen fejlede/annullerede deployment-forsøg overhovedet
+  registreret hos Vercel i intervallet, kun total stilhed. Det udelukker en
+  byggefejl eller en kvote-blokering (de ville givet et synligt ERROR/BLOCKED-
+  forsøg). Løst ved at udløse et deploy manuelt via `mcp__Vercel__create_deployment`
+  med `gitSource:{type:"github",org,repo,ref:"main",sha:<seneste main-SHA>}`
+  og `target:"production"` — gik igennem uden problemer, hvilket viser at det
+  IKKE var en kvote-blokering (de bruger samme daglige kvote). Rodårsagen er
+  ikke fundet (formentlig en forbigående GitHub→Vercel-webhook-fejl, uden for
+  vores kontrol) — ingen tegn på at det hænger sammen med den nye push-
+  godkendelses-regel (afsnit 4, trin 6), som fungerede som tilsigtet: Bjørns
+  push afventede korrekt brugerens eksplicitte "ja" og gik først til `main`
+  derefter. **Tjekpunkt ved en fremtidig "eatsafe.dk opdaterede sig ikke"-
+  rapport:** tjek `mcp__Vercel__list_deployments` for om der overhovedet
+  findes et deployment-forsøg (også fejlet) for den forventede commit-SHA —
+  ingen forsøg overhovedet peger på samme webhook-hak, ikke en byggefejl at
+  debugge i selve appen. Genbrug samme manuelle `create_deployment`-genvej
+  til at rette det med det samme, uden at afvente at brugeren opdager det.
 - **Vercel Free-planens daglige deployment-grænse (100/dag) — push kun til
   Vercel når ændringen reelt kræver produktion for at kunne testes/tjekkes**
   (fx noget der afhænger af det rigtige domæne, PWA-installation, service
