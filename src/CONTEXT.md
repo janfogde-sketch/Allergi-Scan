@@ -233,6 +233,25 @@ i funktionerne selv, ikke via grant-fjernelse. Antag ikke dette er et
 overset fund ved en fremtidig `security-check`-kørsel uden at læse dette
 afsnit først.
 
+**Fjerde punkt fra samme gennemgang, samme dag: `pg_trgm`-extensionen lå i
+`public`-skemaet** (Supabase-linter-advarslen "Extension in Public").
+Verificeret før flytning at kun to indekser (`products_name_trgm_idx`,
+`products_brand_trgm_idx` på `products.name`/`products.brand`, bruges til
+at accelerere `ILIKE '%term%'`-søgning) afhænger af dens operator-klasse,
+og ingen egen SQL-/Edge-function kalder dens `similarity()`/
+`word_similarity()`-funktioner direkte. **Fix:** `ALTER EXTENSION pg_trgm
+SET SCHEMA extensions` (Supabases forudoprettede, dedikerede extensions-
+skema). Eksisterende indeks-definitioner er bundet via OID, ikke søgesti-
+opslag, så de virker uændret efter flytningen — verificeret bagefter med
+en rigtig `ILIKE`-søgning mod `products` (934 træf, uændret adfærd).
+
+**Status efter denne gennemgang:** alle fire fundne punkter (family_group-
+lækage, is_admin-lækage, trigger-eksponering, pg_trgm-placering) er rettet.
+Resterende `get_advisors`-punkter er enten kendt/accepteret støj (se
+ovenfor) eller kræver en brugerbeslutning uden for hvad et værktøj kan
+rette (Leaked Password Protection, se `CLAUDE.md` afsnit 0) — ingen
+yderligere handling ventende.
+
 ---
 
 ## 7. Edge Functions (Supabase)
