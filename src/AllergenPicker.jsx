@@ -1,8 +1,92 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { Icon } from "./SharedComponents.jsx";
+import { Icon, showToast } from "./SharedComponents.jsx";
 import { ALLERGENS, E_NUMBERS, E_CATEGORIES, DIETS } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
+import { ChoiceChip } from "./DesignSystem.jsx";
+
+// Delt allergi-vælger (grøn valgt-state, ✓, allergi/intolerance-opdeling,
+// ⓘ-note på gluten) — udtrukket fra OnboardingScreen.jsx's trin 2 (25. sept.
+// 2026, brugerfeedback: familie-formularen på trin 4 skal genbruge PRÆCIS
+// denne komponent i stedet for sin egen, røde parallel-version).
+export const AllergenChipPicker = ({ selected, onChange }) => {
+  const allergiItems = ALLERGENS.filter(a => a.type !== "intolerance");
+  const intoleranceItems = ALLERGENS.filter(a => a.type === "intolerance");
+
+  const renderChip = a => {
+    const on = selected.includes(a.id);
+    return (
+      <ChoiceChip key={a.id} selected={on} showCheck={false}
+        onClick={() => onChange(on ? selected.filter(x => x !== a.id) : [...selected, a.id])}>
+        <span style={UI.flex1}>{a.emoji} {a.label}</span>
+        {a.note && (
+          <span role="button" aria-label={`Om ${a.label}`}
+            onClick={e => { e.stopPropagation(); showToast(a.note, "info"); }}
+            style={{ display:"flex", alignItems:"center", justifyContent:"center", width:18, height:18, flexShrink:0, color: on ? "var(--green)" : "var(--muted)" }}>
+            <Icon name="info" size={14} color="currentColor" />
+          </span>
+        )}
+        {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
+      </ChoiceChip>
+    );
+  };
+
+  return (
+    <div>
+      <div style={UI.sectionLbl6}>Allergier</div>
+      <div className="chip-grid" style={{ marginBottom:16 }}>
+        {allergiItems.map(renderChip)}
+      </div>
+      <div style={UI.sectionLbl6}>Intolerancer / andre følsomheder</div>
+      <div className="chip-grid">
+        {intoleranceItems.map(renderChip)}
+      </div>
+    </div>
+  );
+};
+
+// Delt kostpræference-vælger (grøn valgt-state, ✓, sidste-ulige-kort spænder
+// hele bredden) — udtrukket fra OnboardingScreen.jsx's trin 3, samme
+// begrundelse som AllergenChipPicker ovenfor. `autoNote` er valgfri:
+// { id, text } viser en forklarende note under ét specifikt kort i stedet
+// for dets normale beskrivelse (bruges til den Gluten→Glutenfri-afledte
+// note på trin 3 — MemberForm bruger den ikke).
+export const DietChipPicker = ({ selected, onChange, showCount = true, autoNote }) => {
+  const selectedCount = selected.length;
+  return (
+    <div>
+      {showCount && (
+        <div style={{ fontSize:12, fontWeight:700, color: selectedCount > 0 ? "var(--green)" : "var(--muted)", marginBottom:14 }}>
+          {selectedCount} valgt
+        </div>
+      )}
+      <div className="chip-grid">
+        {DIETS.map((d, i, arr) => {
+          const on = selected.includes(d.id);
+          const isDanglingLast = i === arr.length - 1 && arr.length % 2 !== 0;
+          const showAutoNote = autoNote && d.id === autoNote.id;
+          return (
+            <ChoiceChip key={d.id} selected={on} showCheck={false}
+              style={isDanglingLast ? { gridColumn:"1 / -1" } : undefined}
+              onClick={() => onChange(on ? selected.filter(x => x !== d.id) : [...selected, d.id])}>
+              <div style={UI.flex1}>
+                <div style={UI.ufw700}>{d.label}</div>
+                {showAutoNote ? (
+                  <div style={{ fontSize:9.5, color: on ? "var(--green)" : "var(--muted)", fontWeight:500, marginTop:2, lineHeight:1.3 }}>
+                    {autoNote.text}
+                  </div>
+                ) : (
+                  <div style={UI.muted11mt2}>{d.desc}</div>
+                )}
+              </div>
+              {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
+            </ChoiceChip>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 export const ENumberPicker = ({ selected, onChange }) => {
   const [search, setSearch] = React.useState("");
@@ -29,6 +113,30 @@ export const ENumberPicker = ({ selected, onChange }) => {
 
   return (
     <div>
+      {/* Valgte — vises øverst, ikke nederst under hele listen (25. sept.
+          2026, brugerfeedback: man skal kunne se sine egne valg med det
+          samme man åbner sektionen, ikke skulle scrolle forbi hele listen
+          for at finde dem). */}
+      {selected.length > 0 && (
+        <div style={{ marginBottom:10 }}>
+          <div style={UI.sectionLbl6}>Valgte E-numre ({selected.length})</div>
+          <div style={UI.wrapGap4}>
+            {selected.map(e => (
+              <div key={e} style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 10px",
+                background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:20 }}>
+                <div style={{ fontSize:11, fontWeight:800, color:"var(--green)" }}>{e}</div>
+                <div onClick={() => onChange(selected.filter(x=>x!==e))}
+                  onKeyDown={ev => ev.key === "Enter" && onChange(selected.filter(x=>x!==e))}
+                  role="button" aria-label={`Fjern ${e}`} tabIndex={0} className="enum-remove"
+                  style={{ lineHeight:0, padding:6, margin:-6 }}>
+                  <Icon name="x" size={11} color="var(--green)" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Populære */}
       <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
         {popular.filter(e => E_NUMBERS[e]).map(e => {
@@ -75,7 +183,7 @@ export const ENumberPicker = ({ selected, onChange }) => {
             <div key={e} className="enum-row"
               style={{ borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", background: on?"var(--green-lt)":"var(--surface)" }}>
               <div onClick={() => onChange(on ? selected.filter(x=>x!==e) : [...selected, e])}
-                style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 12px", cursor:"pointer" }}>
+                style={{ display:"flex", alignItems:"center", gap:10, padding:"6px 12px", cursor:"pointer" }}>
                 <div style={{ fontSize:12, fontWeight:800, color:on?"var(--green)":"var(--ink)", width:48, flexShrink:0 }}>{e}</div>
                 <div style={{ fontSize:12, color:on?"var(--green)":"var(--ink2)", flex:1, lineHeight:1.4 }}>{shortName}</div>
                 {detail && (
@@ -95,27 +203,6 @@ export const ENumberPicker = ({ selected, onChange }) => {
         })}
         {filtered.length === 0 && <div style={{ padding:"16px", fontSize:13, color:"var(--muted)", textAlign:"center" }}>Ingen resultater</div>}
       </div>
-
-      {/* Valgte */}
-      {selected.length > 0 && (
-        <div style={{ marginTop:10 }}>
-          <div style={UI.sectionLbl6}>Valgte ({selected.length})</div>
-          <div style={UI.wrapGap4}>
-            {selected.map(e => (
-              <div key={e} style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 10px",
-                background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:20 }}>
-                <div style={{ fontSize:11, fontWeight:800, color:"var(--green)" }}>{e}</div>
-                <div onClick={() => onChange(selected.filter(x=>x!==e))}
-                  onKeyDown={ev => ev.key === "Enter" && onChange(selected.filter(x=>x!==e))}
-                  role="button" aria-label={`Fjern ${e}`} tabIndex={0} className="enum-remove"
-                  style={{ lineHeight:0, padding:6, margin:-6 }}>
-                  <Icon name="x" size={11} color="var(--green)" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

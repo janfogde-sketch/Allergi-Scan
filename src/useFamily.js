@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { SUPABASE_URL, AVATAR_COLORS, uid } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
+import { showToast } from "./SharedComponents.jsx";
 
 export function useFamily({ accessToken, userId, setActiveProfiles }) {
   const [family, setFamily]                         = useState([]);
@@ -22,6 +23,10 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
   const [newMemberENumbers, setNewMemberENumbers]   = useState([]);
   const [newMemberSubtypes, setNewMemberSubtypes]   = useState({});
   const [newMemberCustomInput, setNewMemberCustomInput] = useState("");
+  // Sat til et medlems id, mens formularen ovenfor redigerer det medlem i
+  // stedet for at oprette et nyt (25. sept. 2026, brugerfeedback: "Rediger"
+  // på et allerede-tilføjet familiemedlem) — null betyder "tilføj nyt".
+  const [editingMemberId, setEditingMemberId] = useState(null);
 
   const resetNewMember = () => {
     setNewMemberName("");
@@ -33,7 +38,26 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
     setNewMemberENumbers([]);
     setNewMemberSubtypes({});
     setNewMemberCustomInput("");
+    setEditingMemberId(null);
   };
+
+  // Fylder formularen ovenfor med et allerede-gemt medlems data, så
+  // "Rediger" kan genbruge nøjagtig samme MemberForm som "Tilføj nyt" i
+  // stedet for en separat redigerings-dialog.
+  const startEditMember = (member) => {
+    setNewMemberName(member.name || "");
+    setNewMemberBirthYear(member.birth_year ? String(member.birth_year) : "");
+    setNewMemberGender(member.gender || "");
+    setNewMemberAllerg(member.allergens || []);
+    setNewMemberCustomAllerg(member.custom || []);
+    setNewMemberDiets(member.diets || []);
+    setNewMemberENumbers(member.eNumbers || []);
+    setNewMemberSubtypes({});
+    setNewMemberCustomInput("");
+    setEditingMemberId(member.id);
+  };
+
+  const cancelEditMember = () => resetNewMember();
 
   const loadFamily = async () => {
     try {
@@ -73,6 +97,11 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
     };
     setFamily(f => [...f, tempMember]);
     resetNewMember();
+    // Ekstra bekræftelse ud over selve listen der viser medlemmet — uden
+    // den kunne brugeren være usikker på, om trykket reelt gjorde noget
+    // (25. sept. 2026, brugerfeedback: "hvad sker der, når man trykker
+    // + Tilføj familiemedlem?").
+    showToast(`${tempMember.name} er tilføjet`);
     try {
       const data = await apiCall(`${SUPABASE_URL}/rest/v1/family_members`, {
         method: "POST",
@@ -98,10 +127,48 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
     }
   };
 
+  const updateMember = async () => {
+    if (!editingMemberId || !newMemberName.trim() || !newMemberBirthYear || !newMemberGender) return;
+    const id = editingMemberId;
+    const before = family.find(m => m.id === id);
+    const patch = {
+      name: newMemberName.trim(),
+      birth_year: parseInt(newMemberBirthYear) || null,
+      gender: newMemberGender,
+      allergens: newMemberAllerg,
+      custom: newMemberCustomAllerg,
+      diets: newMemberDiets,
+      eNumbers: newMemberENumbers,
+    };
+    setFamily(f => f.map(m => m.id === id ? { ...m, ...patch } : m));
+    resetNewMember();
+    showToast(`${patch.name} er opdateret`);
+    try {
+      await apiCall(`${SUPABASE_URL}/rest/v1/family_members?id=eq.${id}`, {
+        method: "PATCH",
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+        body: JSON.stringify({
+          name: patch.name,
+          birth_year: patch.birth_year,
+          gender: patch.gender,
+          allergens: newMemberAllerg,
+          custom_allergens: newMemberCustomAllerg,
+          diets: newMemberDiets,
+          e_numbers: newMemberENumbers,
+        }),
+      });
+    } catch {
+      // Opdatering fejlede — læg det oprindelige medlem tilbage, ellers
+      // viser UI'et ændringer der aldrig blev gemt i databasen
+      if (before) setFamily(f => f.map(m => m.id === id ? before : m));
+    }
+  };
+
   const removeMember = async (id) => {
     const removed = family.find(m => m.id === id);
     setFamily(f => f.filter(m => m.id !== id));
     setActiveProfiles(a => a.filter(x => x !== id));
+    if (editingMemberId === id) resetNewMember();
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/family_members?id=eq.${id}`, {
         method: "DELETE",
@@ -125,8 +192,12 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
     newMemberENumbers, setNewMemberENumbers,
     newMemberSubtypes, setNewMemberSubtypes,
     newMemberCustomInput, setNewMemberCustomInput,
+    editingMemberId,
     loadFamily,
     addMember,
+    updateMember,
     removeMember,
+    startEditMember,
+    cancelEditMember,
   };
 }

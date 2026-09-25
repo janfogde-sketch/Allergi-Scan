@@ -1,9 +1,20 @@
 // @ts-nocheck
 import React from "react";
 import { Icon } from "./SharedComponents.jsx";
-import { ALLERGENS, DIETS, E_NUMBERS, E_CATEGORIES } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
+import { AgeStepper, GenderPicker } from "./FormFields.jsx";
+import { AllergenChipPicker, DietChipPicker, ENumberPicker } from "./AllergenPicker.jsx";
+import { Accordion, PrimaryButton, InputField } from "./DesignSystem.jsx";
 
+// Familiemedlem-formularen genbruger nu PRÆCIS de samme felt-komponenter som
+// onboarding trin 1-3 (25. sept. 2026, brugerfeedback: "Ingen nye designs...
+// Brugeren skal føle at de udfylder det samme for deres familiemedlem, ikke
+// møder et nyt formularsystem") — Alder/Køn fra FormFields.jsx, allergi-
+// og kostpræference-vælgerne samt E-nummer-vælgeren fra AllergenPicker.jsx.
+// Rettede samtidig at hele formularen tidligere brugte RØD som valgt-farve
+// for allergier/E-numre (rød er reserveret til "produkt indeholder
+// allergen"/fejl i resten af appen) — de delte komponenter bruger allerede
+// den korrekte grønne valgt-state.
 export const MemberForm = ({
   name, setName,
   birthYear, setBirthYear,
@@ -15,166 +26,97 @@ export const MemberForm = ({
   customInput, setCustomInput,
   onAdd, addLabel,
 }) => {
-  const [eSearch, setESearch] = React.useState("");
-  const [eCat, setECat] = React.useState("alle");
-
   const isValid = name?.trim() && birthYear && gender;
+  const age = birthYear ? String(new Date().getFullYear() - parseInt(birthYear)) : "";
+  // "Navn, alder og køn er obligatoriske"-teksten må først vises EFTER et
+  // forsøgt tryk på "+ Tilføj familiemedlem", ikke proaktivt fra starten
+  // (25. sept. 2026, brugerfeedback — samme princip som trin 1's
+  // step1Attempted). Knappen har derfor bevidst IKKE det native
+  // disabled-attribut (ville blokere selve klikket og dermed forsøget).
+  const [attempted, setAttempted] = React.useState(false);
+  // E-numre skal være lukket som standard, ligesom trin 2 — ellers bliver
+  // trin 4 unødigt langt for en valgfri funktion (25. sept. 2026,
+  // brugerfeedback). Lokal state, da MemberForm er en selvstændig,
+  // genbrugelig komponent uden adgang til onboardingens egen state.
+  const [showENumre, setShowENumre] = React.useState(false);
 
   return (
     <div>
 
       {/* Navn * */}
-      <label className="field-lbl">Navn <span style={UI.red}>*</span></label>
-      <input className="field" placeholder="Fx. Mia" value={name}
-        onChange={e => setName(e.target.value)}
-        style={{ marginBottom:10, borderColor: name?.trim() ? "var(--border2)" : "" }} />
+      <InputField label="Navn" required style={{ marginBottom:17 }}
+        placeholder="Fx. Mia" value={name} onChange={e => setName(e.target.value)} />
 
-      {/* Alder * — gemmes internt som fødselsår (birthYear-prop uændret) */}
-      <label className="field-lbl">Alder <span style={UI.red}>*</span></label>
-      <input className="field" type="number" placeholder="Fx. 8" min="0" max="120"
-        value={birthYear ? String(new Date().getFullYear() - parseInt(birthYear)) : ""}
-        onChange={e => {
-          const age = e.target.value;
-          setBirthYear(age ? String(new Date().getFullYear() - parseInt(age)) : "");
-        }}
-        style={UI.mb10} />
-
-      {/* Køn * */}
-      <label className="field-lbl">Køn <span style={UI.red}>*</span></label>
-      <div style={{ display:"flex", gap:8, marginBottom:14 }}>
-        {["Mand","Kvinde","Andet"].map(g => (
-          <div key={g} onClick={() => setGender(g)} className="member-pick"
-            style={{ flex:1, padding:"10px 0", textAlign:"center", borderRadius:8,
-              border:`1.5px solid ${gender===g?"var(--green)":"var(--border)"}`,
-              background: gender===g ? "var(--green-lt)" : "var(--surface)",
-              fontSize:13, fontWeight:700,
-              color: gender===g ? "var(--green)" : "var(--muted2)",
-              transition:"all .15s" }}>
-            {g}
-          </div>
-        ))}
+      {/* Alder * — delt AgeStepper-komponent, samme som trin 1. Gemmes
+          internt som fødselsår (birthYear-prop uændret). */}
+      <div style={{ marginBottom:19 }}>
+        <label className="field-lbl">Alder <span style={UI.red}>*</span></label>
+        <AgeStepper value={age} min={0}
+          onChange={a => setBirthYear(a ? String(new Date().getFullYear() - parseInt(a)) : "")} />
       </div>
 
-      {/* Allergier / intolerancer — 3-state identisk med egen profil */}
-      <div className="card-lbl" style={UI.mb6}>Allergier / intolerancer</div>
-
-
-
-      <div className="chip-grid" style={UI.mb10}>
-        {ALLERGENS.map(a => {
-          const on = allergens.includes(a.id);
-          return (
-            <div key={a.id} className="chip" style={{
-              background: on ? "var(--red-lt)" : "var(--surface)",
-              border: `1.5px solid ${on ? "var(--red)" : "var(--border2)"}`,
-              color: on ? "var(--red)" : "var(--ink)",
-            }}
-              onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
-              <span style={UI.flex1}>{a.emoji} {a.label}</span>
-              {on && <Icon name="check" size={11} color="var(--red)" />}
-            </div>
-          );
-        })}
+      {/* Køn * — delt GenderPicker-komponent, samme fire valgmuligheder
+          (inkl. "Vil ikke oplyse") som trin 1. */}
+      <div style={{ marginBottom:17 }}>
+        <label className="field-lbl">Køn <span style={UI.red}>*</span></label>
+        <GenderPicker value={gender} onChange={setGender} />
       </div>
 
-      {/* Custom allergier */}
-      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:4 }}>Kan ikke finde allergi?</div>
-      <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8, lineHeight:1.5 }}>Vi tilføjer løbende flere valgmuligheder med større sikkerhed.</div>
-      <div className="input-row" style={{ marginBottom: customAllerg.length ? 8 : 12 }}>
-        <input className="field" placeholder="Fx. Fructose…" value={customInput}
-          onChange={e => setCustomInput(e.target.value)}
-          onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(p=>[...p,customInput.trim()]); setCustomInput(""); }}} />
-        <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(p=>[...p,customInput.trim()]); setCustomInput(""); }}}>+</button>
-      </div>
-      {customAllerg.length > 0 && (
-        <div className="tags" style={UI.mb12}>
-          {customAllerg.map((a,i) => (
-            <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
-              onClick={() => setCustomAllerg(p=>p.filter(x=>x!==a))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(p=>p.filter(x=>x!==a))}>×</span></div>
-          ))}
+      {/* Allergier / intolerancer — delt AllergenChipPicker, samme som
+          trin 2 (grøn valgt-state, allergi/intolerance-opdeling, ⓘ-note). */}
+      <div className="card-lbl" style={UI.mb8}>Allergier / intolerancer</div>
+      <AllergenChipPicker selected={allergens} onChange={setAllergens} />
+
+      {/* Skriv selv — samme ordlyd/opbygning som trin 2 */}
+      <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
+        <div style={UI.sectionLbl6}>Mangler din allergi eller intolerance?</div>
+        <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0 }}>
+          <input className="field" placeholder='Skriv fx "Fruktose"…' value={customInput}
+            onChange={e => setCustomInput(e.target.value)}
+            onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(p=>[...p,customInput.trim()]); setCustomInput(""); }}} />
+          <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(p=>[...p,customInput.trim()]); setCustomInput(""); }}}>+</button>
         </div>
-      )}
-
-      {/* Diæt */}
-      <div className="card-lbl" style={UI.mb8}>Diæt</div>
-      <div className="chip-grid" style={UI.mb12}>
-        {DIETS.map(d => {
-          const on = diets.includes(d.id);
-          return (
-            <div key={d.id} className={`chip${on?" on":""}`}
-              onClick={() => setDiets(p => on ? p.filter(x=>x!==d.id) : [...p,d.id])}>
-              <div style={UI.flex1}>
-                <div style={UI.ufw700}>{d.label}</div>
-                <div style={UI.ufs10_cmuted_mt1}>{d.desc}</div>
-              </div>
-              {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* E-numre */}
-      <div className="card-lbl" style={UI.mb6}>E-numre der undgås</div>
-      <input className="field" placeholder="Søg E-nummer..." value={eSearch}
-        onChange={e => setESearch(e.target.value)} style={UI.mb6} />
-      <select className="field" value={eCat} onChange={e => setECat(e.target.value)} style={UI.mb8}>
-        <option value="alle">Alle kategorier</option>
-        {E_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label} ({c.range})</option>)}
-      </select>
-
-
-
-      <div style={{ maxHeight:200, overflowY:"auto", border:"1px solid var(--border)", borderRadius:8, marginBottom:eNumbers.length ? 8 : 12 }}>
-        {Object.entries(E_NUMBERS).filter(([e,name]) => {
-          const ms = !eSearch || e.toLowerCase().includes(eSearch.toLowerCase()) || name.toLowerCase().includes(eSearch.toLowerCase());
-          if (!ms) return false;
-          if (eCat==="alle") return true;
-          const cat = E_CATEGORIES.find(c=>c.id===eCat);
-          const num = parseInt(e.replace(/[^0-9]/g,""));
-          return cat ? num>=cat.min && num<=cat.max : true;
-        }).map(([e,name],i,arr) => {
-          const on = eNumbers.includes(e);
-          return (
-            <div key={e} onClick={() => setENumbers(p => on ? p.filter(x=>x!==e) : [...p,e])} className="member-pick"
-              style={{ display:"flex", gap:8, padding:"8px 12px",
-                borderBottom:i<arr.length-1?"1px solid var(--border)":"none",
-                background:on?"var(--red-lt)":"var(--surface)" }}>
-              <div style={{ fontSize:11, fontWeight:800, color:on?"var(--red)":"var(--ink)", width:44, flexShrink:0 }}>{e}</div>
-              <div style={{ fontSize:11, color:on?"var(--red)":"var(--muted2)", flex:1, lineHeight:1.3 }}>{name}</div>
-              {on && <Icon name="check" size={11} color="var(--red)" />}
-            </div>
-          );
-        })}
-      </div>
-
-      {eNumbers.length > 0 && (
-        <div style={UI.mb12}>
-          <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", marginBottom:4 }}>Valgte ({eNumbers.length})</div>
-          <div style={UI.wrapGap4}>
-            {eNumbers.map(e => (
-              <div key={e} className="member-pick" style={{ fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20,
-                background:"var(--red-lt)", color:"var(--red)",
-                border:"1px solid var(--red)" }}
-                onClick={() => setENumbers(p=>p.filter(x=>x!==e))}>
-                {e} ×
-              </div>
+        {customAllerg.length > 0 && (
+          <div className="tags">
+            {customAllerg.map((a,i) => (
+              <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
+                onClick={() => setCustomAllerg(p=>p.filter(x=>x!==a))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(p=>p.filter(x=>x!==a))}>×</span></div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Obligatoriske felter — hjælpetekst */}
-      {!isValid && (
-        <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10, lineHeight:1.5 }}>
+      {/* Kostpræferencer — delt DietChipPicker, samme som trin 3 (grøn
+          valgt-state, sidste-ulige-kort spænder hele bredden). */}
+      <div className="card-lbl" style={{ marginTop:16, marginBottom:8 }}>Kostpræferencer</div>
+      <DietChipPicker selected={diets} onChange={setDiets} />
+
+      {/* E-numre — samme delte ENumberPicker og lukkede-som-standard
+          Accordion-mønster som trin 2. Erstatter den tidligere lokale, røde
+          søg/liste-implementering. */}
+      <Accordion label="Overvåg specifikke E-numre" count={eNumbers.length}
+        open={showENumre} onToggle={() => setShowENumre(s => !s)} style={{ marginTop:16 }}>
+        <div style={UI.mt8}>
+          <ENumberPicker selected={eNumbers} onChange={setENumbers} />
+        </div>
+      </Accordion>
+
+      {/* Obligatoriske felter — hjælpetekst, kun efter et forsøgt tryk */}
+      {attempted && !isValid && (
+        <div style={{ fontSize:11, color:"var(--muted)", margin:"12px 0 10px", lineHeight:1.5 }}>
           <span style={UI.red}>*</span> Navn, alder og køn er obligatoriske
         </div>
       )}
 
       {/* Gem knap */}
-      <button className="btn btn-primary btn-full" style={{color:"var(--on-green)"}} onClick={onAdd}
-        disabled={!isValid}>
+      <PrimaryButton style={{ marginTop:12 }} softDisabled={!isValid}
+        onClick={() => {
+          if (!isValid) { setAttempted(true); return; }
+          onAdd();
+          setAttempted(false);
+        }}>
         {addLabel || "+ Tilføj familiemedlem"}
-      </button>
+      </PrimaryButton>
     </div>
   );
 };
@@ -211,3 +153,4 @@ export const CategorySelect = ({ value, onChange, options, placeholder="Alle kat
 };
 
 // ─── ALLERGEN UNDERKATEGORIER ────────────────────────────────────────────────
+

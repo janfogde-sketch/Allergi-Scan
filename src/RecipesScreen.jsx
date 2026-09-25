@@ -584,7 +584,7 @@ export default function RecipesScreen({
                     borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700,
                     background: isActive ? "var(--green-lt)" : "var(--surface2)",
                     color: isActive ? "var(--green)" : "var(--muted)",
-                    border:`1px solid ${isActive ? "rgba(74,222,128,.3)" : "var(--border)"}`,
+                    border:`1px solid ${isActive ? "rgba(14,143,90,.3)" : "var(--border)"}`,
                   }}>
                   <div style={{
                     width:20, height:20, borderRadius:"50%", background: isActive ? "var(--green)" : "var(--surface3)",
@@ -629,7 +629,7 @@ export default function RecipesScreen({
                 <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)", letterSpacing:"-.3px", marginBottom:4 }}>Kunne ikke indlæse</div>
                 <div style={UI.ufs12_cmuted_mb12}>Tjek din forbindelse og prøv igen</div>
                 <button onClick={() => loadRecipes()}
-                  style={{ background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:10, padding:"10px 18px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", boxShadow:"0 2px 12px rgba(74,222,128,.25)" }}>
+                  style={{ background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:10, padding:"10px 18px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", boxShadow:"0 2px 12px rgba(14,143,90,.25)" }}>
                   Prøv igen →
                 </button>
               </div>
@@ -947,7 +947,7 @@ export default function RecipesScreen({
           <div style={UI.sectionLblInk3}>Fremgangsmåde</div>
           {submitSteps.map((step, idx) => (
             <div key={idx} style={{ display:"flex", gap:8, marginBottom:8, alignItems:"flex-start" }}>
-              <div style={{ width:26, height:26, borderRadius:"50%", background:"var(--green-lt)", border:"1px solid rgba(74,222,128,.3)", color:"var(--green)", fontWeight:800, fontSize:12, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:8 }}>{idx+1}</div>
+              <div style={{ width:26, height:26, borderRadius:"50%", background:"var(--green-lt)", border:"1px solid rgba(14,143,90,.3)", color:"var(--green)", fontWeight:800, fontSize:12, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:8 }}>{idx+1}</div>
               <textarea
                 placeholder={`Trin ${idx+1}…`} value={step} rows={2}
                 onChange={e => setSubmitSteps(submitSteps.map((s,i)=>i===idx?e.target.value:s))}
@@ -978,7 +978,7 @@ export default function RecipesScreen({
                   style={{ padding:"6px 12px", borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700,
                     background: active ? "var(--green-lt)" : "var(--surface)",
                     color: active ? "var(--green)" : "var(--muted2)",
-                    border:`1px solid ${active ? "rgba(74,222,128,.3)" : "var(--border)"}`,
+                    border:`1px solid ${active ? "rgba(14,143,90,.3)" : "var(--border)"}`,
                   }}>
                   {d.emoji||"🥗"} {d.label}
                 </div>
@@ -1035,7 +1035,7 @@ export default function RecipesScreen({
             if (submitIngredients.filter(i=>i.name.trim()).length === 0) { setSubmitError("Tilføj mindst én ingrediens."); return; }
             await handleSubmit();
           }}
-          style={{ width:"100%", padding:"14px", borderRadius:12, background:"var(--green)", color:"var(--on-green)", border:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:40, opacity: submittingRecipe||imgUploading ? .6 : 1, boxShadow:"0 2px 12px rgba(74,222,128,.25)" }}>
+          style={{ width:"100%", padding:"14px", borderRadius:12, background:"var(--green)", color:"var(--on-green)", border:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:40, opacity: submittingRecipe||imgUploading ? .6 : 1, boxShadow:"0 2px 12px rgba(14,143,90,.25)" }}>
           {submittingRecipe || imgUploading ? "Sender…" : "Send til godkendelse →"}
         </button>
       </div>
@@ -1069,7 +1069,7 @@ export default function RecipesScreen({
             </div>
             <button
               onClick={() => { setShowSubmitRecipe(false); setSubmitSuccess(false); }}
-              style={{ padding:"14px 32px", borderRadius:12, background:"var(--green)", color:"var(--on-green)", border:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", width:"100%", maxWidth:300, boxShadow:"0 2px 12px rgba(74,222,128,.25)" }}>
+              style={{ padding:"14px 32px", borderRadius:12, background:"var(--green)", color:"var(--on-green)", border:"none", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", width:"100%", maxWidth:300, boxShadow:"0 2px 12px rgba(14,143,90,.25)" }}>
               Tilbage til opskrifter →
             </button>
           </div>

@@ -203,7 +203,7 @@ export default function UsersSection({
 
             <div className="admin-field">
               <label className="admin-label">Egne tilføjede allergier <span style={{ fontWeight: 400, color: "var(--muted)" }}>(kommasepareret)</span></label>
-              <input value={editingAdminUser.custom_allergens} onChange={e => setEditingAdminUser(s => ({ ...s, custom_allergens: e.target.value }))} placeholder="Fructose, kanel…" />
+              <input value={editingAdminUser.custom_allergens} onChange={e => setEditingAdminUser(s => ({ ...s, custom_allergens: e.target.value }))} placeholder="Fruktose, kanel…" />
             </div>
 
             <div className="admin-field">
