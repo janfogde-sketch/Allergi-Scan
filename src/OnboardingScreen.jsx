@@ -88,6 +88,13 @@ export default function OnboardingScreen({
   // udfylde feltet"-påmindelse unødigt alarmerende. Lokal, adskilt state,
   // ryddes igen når brugeren retter e-mail-feltet eller skifter fane.
   const [forgotPwError, setForgotPwError] = useState("");
+  // Onboarding trin 1's "Mangler: ..."-liste skal først vises EFTER et
+  // forsøgt tryk på "Fortsæt →" (25. sept. 2026, opfølgning: "vil helst
+  // ikke vise den før brugeren har forsøgt at fortsætte") — ellers møder
+  // brugeren en fejlliste før de overhovedet er begyndt at udfylde noget.
+  // Deklareret her (top-niveau), ikke inde i renderStep1, da hooks ikke må
+  // kaldes betinget — renderStep1 kaldes kun når onboardStep===1.
+  const [step1Attempted, setStep1Attempted] = useState(false);
 
   // FIX: disse hooks lå tidligere INDE i en betinget IIFE, som kun blev kaldt
   // når onboardStep === 5. Det bryder Reacts "Rules of Hooks" (hooks skal
@@ -213,13 +220,12 @@ export default function OnboardingScreen({
                   style={{
                     padding:"10px 8px", borderRadius:8, cursor:"pointer", textAlign:"center",
                     border:`1px solid ${user.gender===g ? "var(--green)" : "var(--border)"}`,
-                    // Selected-baggrunden hævet en anelse fra --green-lt (10%
-                    // opacity) til 16% (25. sept. 2026, opfølgning: "en
-                    // anelse tydeligere") — et bevidst mellemtrin, ikke
-                    // spring til --green-mid (18%), som app-bredt er
-                    // reserveret til kant-farven i dette mønster (se andre
-                    // grøn-markerede pilller i appen), ikke baggrundsfyld.
-                    background: user.gender===g ? "rgba(23,138,80,.16)" : "var(--surface)",
+                    // 16%-mellemtrinnet (forrige runde) var stadig ikke
+                    // tydeligt nok i praksis (25. sept. 2026, endnu en
+                    // opfølgning: "samme tydelige selected-state som
+                    // tidligere") — hævet igen til 24%, en klar, umiskendelig
+                    // lys grøn fyldfarve når et køn er valgt.
+                    background: user.gender===g ? "rgba(23,138,80,.24)" : "var(--surface)",
                     fontSize:13, fontWeight:700,
                     color: user.gender===g ? "var(--green)" : "var(--muted)",
                     transition:"all .15s",
@@ -231,17 +237,25 @@ export default function OnboardingScreen({
           </div>
         </div>
 
-        {/* Validering */}
-        {!allOk && missingFields.length > 0 && (
+        {/* Validering — vises KUN efter et forsøgt tryk på "Fortsæt →"
+            mens formularen er ufuldstændig (se step1Attempted), ikke
+            proaktivt fra starten. Knappen har derfor bevidst IKKE det
+            native disabled-attribut (som ville blokere selve klikket og
+            dermed forsøget) — den ser stadig dæmpet/"disabled" ud via
+            opacity, men klik registreres altid, så det første forsøg kan
+            fanges. */}
+        {step1Attempted && !allOk && missingFields.length > 0 && (
           <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", marginBottom:10 }}>
             Mangler: {missingFields.join(", ")}
           </div>
         )}
 
         <button className="btn btn-primary btn-full"
-          disabled={!allOk}
-          style={{ opacity: allOk ? 1 : 0.45 }}
-          onClick={() => allOk && saveProfileStep1().then(() => setOnboardStep(2))}>
+          style={{ opacity: allOk ? 1 : 0.45, cursor: allOk ? "pointer" : "not-allowed" }}
+          onClick={() => {
+            if (!allOk) { setStep1Attempted(true); return; }
+            saveProfileStep1().then(() => setOnboardStep(2));
+          }}>
           Fortsæt →
         </button>
       </div>
