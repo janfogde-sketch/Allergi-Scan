@@ -223,8 +223,16 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap }) {
   }
 
   const isHighlighted = (part) => {
-    // STORE BOGSTAVER = allergen markeret af producent
-    const hasUppercase = part !== part.toLowerCase() && part === part.toUpperCase() && part.length > 2;
+    // STORE BOGSTAVER = allergen markeret af producent. Tæl kun de
+    // bogstaver der reelt er i teksten (ikke hele part.length) — ellers
+    // tæller cifre med i længdetjekket, og korte bogstav+tal-tokens som
+    // vitamin-notationer ("B12") eller E-numre ("E621") bliver fejlagtigt
+    // fremhævet, mens fx "B6" tilfældigt undgår det pga. sin kortere
+    // samlede længde (bruger-rapporteret fejl, 25. sept. 2026: "b12
+    // fremhæves men ikke b6" — reelt en fejl i selve heuristikken, ikke i
+    // allergen-matchingen).
+    const letters = part.match(/[a-zA-ZæøåÆØÅ]+/g)?.join("") || "";
+    const hasUppercase = letters.length > 2 && letters === letters.toUpperCase();
     // Eller indeholder et allergen-ord
     const words = part.toLowerCase().replace(/[()[\]]/g, "").split(/\s+/);
     const hasAllergenWord = words.some(w => isAllergenWord(w, allergenFlags));
