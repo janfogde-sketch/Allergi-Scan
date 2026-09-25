@@ -348,8 +348,13 @@ export default function OnboardingScreen({
           </div>
         )}
 
+        {/* At vælge specifikke E-numre at overvåge er også et bevidst,
+            gyldigt valg på dette trin — Fortsæt må ikke forblive låst, hvis
+            det er det eneste brugeren har valgt (fundet som en reel bug,
+            25. sept. 2026: "vælger et E-nummer og ikke en allergi... kan
+            jeg ikke trykke fortsæt"). */}
         <button className="btn btn-primary btn-full" style={UI.mt12}
-          disabled={!(selectedCount > 0 || noAllergiesConfirmed)}
+          disabled={!(selectedCount > 0 || selectedENumbers.length > 0 || noAllergiesConfirmed)}
           onClick={async () => {
             try { await saveAllergensStep2(); setOnboardStep(3); }
             catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
