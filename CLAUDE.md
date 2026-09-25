@@ -69,6 +69,7 @@ at tilføje til indkøbsliste.
 | Backend | Supabase (projekt-id `jegrpcflyguadyxialkm`) — Postgres, Edge Functions, Auth |
 | Ejer/admin | janfogde@gmail.com |
 | Team-adgang | `bjangst@gmail.com` (Jans forretningspartner) — GitHub-collaborator på repoet + Supabase-organisationen (rolle: Developer). **Ikke** medlem på Vercel — Hobby-planen tillader kun én bruger; ville kræve opgradering til Pro for at tilføje flere. Kode-ændringer sker derfor via GitHub, og Vercel auto-deployer som normalt uden at bjangst behøver Vercel-adgang. |
+| Rollefordeling (25. sept. 2026) | **Bjørn ejer design/UI/UX** — farver, layout, komponenter, animationer, baggrundsbilleder og lignende. **Jan fokuserer på backend** — Supabase (skema, RLS, Edge Functions, sikkerhed), data-/funktionsændringer, integrationer. Ved en session der starter fra Jans instruktioner: forvent primært backend-/funktionsarbejde, og vær varsom med at foreslå eller lave designændringer på eget initiativ — design-beslutninger hører nu under Bjørns spor. Ved tvivl om hvis "spor" en opgave hører under: spørg, i stedet for at antage. |
 
 Se `src/CONTEXT.md` for fuld database-skema-reference, edge-function-liste og
 integrationsdetaljer (Madpas, familie-deling, auto-import-pipeline m.m.).
