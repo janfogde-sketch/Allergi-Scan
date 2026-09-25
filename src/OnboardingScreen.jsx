@@ -452,12 +452,21 @@ export default function OnboardingScreen({
           </div>
 
           <div className="chip-grid">
-            {DIETS.map(d => {
+            {DIETS.map((d, i, arr) => {
               const on = diets.includes(d.id);
               const isAutoGluten = d.id === "gluten-free" && allergens.includes("gluten");
+              // Sidste kort står alene i venstre kolonne, hvis DIETS har et
+              // ulige antal — lader det spænde hele bredden i stedet for at
+              // efterlade et skævt tomt hul i højre kolonne (25. sept. 2026,
+              // brugerfeedback). Løser sig selv den dag DIETS får et lige
+              // antal valg.
+              const isDanglingLast = i === arr.length - 1 && arr.length % 2 !== 0;
               return (
                 <div key={d.id} className={`chip${on ? " on" : ""}`}
-                  style={on ? { borderColor:"var(--green)", borderWidth:1.5 } : undefined}
+                  style={{
+                    ...(on ? { borderColor:"var(--green)", borderWidth:1.5 } : {}),
+                    ...(isDanglingLast ? { gridColumn:"1 / -1" } : {}),
+                  }}
                   onClick={() => setUser(u => ({ ...u, diets: on ? (u.diets||[]).filter(x=>x!==d.id) : [...(u.diets||[]), d.id] }))}>
                   <div style={UI.flex1}>
                     <div style={UI.ufw700}>{d.label}</div>
@@ -478,15 +487,21 @@ export default function OnboardingScreen({
 
         {/* Neutral, ikke-alarmerende disclaimer — rød/orange er reserveret
             til allergener/fejl, ikke en generel vejledende note (25. sept.
-            2026, brugerfeedback). */}
-        <div style={{ display:"flex", alignItems:"flex-start", gap:6, fontSize:11, color:"var(--muted)", lineHeight:1.5, marginBottom:16 }}>
-          <Icon name="info" size={13} color="var(--muted)" />
+            2026, brugerfeedback). --ink2 i stedet for --muted (samme
+            mørkere-men-stadig-grå greb som login-undertekster tidligere i
+            sessionen) efter opfølgning om at teksten var for svag. */}
+        <div style={{ display:"flex", alignItems:"flex-start", gap:6, fontSize:11, color:"var(--ink2)", lineHeight:1.5, marginBottom:16 }}>
+          <Icon name="info" size={13} color="var(--ink2)" />
           <span>Diæt-tjek er vejledende og baseret på produkttags. Tjek altid ingredienserne selv.</span>
         </div>
 
         <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(4)}>Fortsæt →</button>
         <button className="btn btn-full btn-outline" style={UI.mt8}
-          onClick={() => { setUser(u => ({...u, diets:[]})); setOnboardStep(4); }}>
+          onClick={() => {
+            if (diets.length > 0 && !window.confirm("Fjern dine valgte kostpræferencer?")) return;
+            setUser(u => ({...u, diets:[]}));
+            setOnboardStep(4);
+          }}>
           Ingen særlig diæt
         </button>
       </div>
