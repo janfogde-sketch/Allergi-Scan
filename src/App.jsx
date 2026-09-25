@@ -1142,7 +1142,7 @@ export default function EatSafe() {
           <nav className="bottom-nav" role="navigation" aria-label="Hovednavigation">
             {[
               [SCREENS.LIST,    "cart",     "Indkøbsliste"],
-              [SCREENS.HOME,    "barcode",  "Scan"],
+              [SCREENS.HOME,    "scanframe","Scan"],
               [SCREENS.HISTORY, "clock",    "Historik"],
             ].map(([s,icon,lbl]) => (
               <div key={s} className={`nav-item${(

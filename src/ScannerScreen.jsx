@@ -372,11 +372,15 @@ export default function ScannerScreen({
                     (fire scanner-hjørner om stregkode-barer, samme visuelle
                     sprog som kameraets eget scan-overlay) — bevaret uændret.
                     Positionen er flyttet 25px op sammen med hilsen-blokken
-                    ovenfor (calc(44% - 25px) i stedet for 44%). Selve knappen er
-                    en rigtig <button> (ikke en div med role="button") for native
-                    tastatur-aktivering + pålidelig :active-tryk-feedback på
-                    touch-enheder (.scan-cta-btn:active, theme.jsx). */}
-                <div style={{ position:"absolute", top:"calc(44% - 25px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
+                    ovenfor, men 7px mindre end teksten (calc(44% - 18px) i
+                    stedet for calc(44% - 25px)) — en lille ekstra luft-
+                    justering (25. sept. 2026, opfølgning) mellem hjælpe-
+                    teksten og knappen, uden at ændre teksten selv. Selve
+                    knappen er en rigtig <button> (ikke en div med role=
+                    "button") for native tastatur-aktivering + pålidelig
+                    :active-tryk-feedback på touch-enheder
+                    (.scan-cta-btn:active, theme.jsx). */}
+                <div style={{ position:"absolute", top:"calc(44% - 18px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
                   <div style={{ position:"relative", width:"clamp(132px, 34cqh, 219px)", height:"clamp(132px, 34cqh, 219px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
                     <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-20px, -3.3cqh, -9px)", borderRadius:"50%",
                       background:"radial-gradient(circle, #DDF4E8 0%, rgba(221,244,232,0) 70%)" }} aria-hidden="true" />
