@@ -778,14 +778,21 @@ export default function OnboardingScreen({
                 <div className="step-title" style={UI.utacenter}>Familiemedlemmer</div>
                 <div style={{ fontSize:13, color:"var(--muted2)", textAlign:"center", marginBottom:16 }}>Tilføj familiemedlemmer med egne allergier. Valgfrit.</div>
 
-                {/* Allerede tilføjede */}
+                {/* Allerede tilføjede — viser nu navn + alder som primær
+                    linje (25. sept. 2026, brugerfeedback: "Mia, 24 år"),
+                    ikke kun allergiliste, så det er umiddelbart tydeligt at
+                    familiemedlemmet reelt blev gemt efter et tryk på
+                    "+ Tilføj familiemedlem". */}
                 {family.length > 0 && (
                   <div className="card" style={UI.mb12}>
+                    <div style={UI.sectionLbl6}>Tilføjet</div>
                     {family.map(m => (
                       <div key={m.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 0", borderBottom:"1px solid var(--border)" }}>
                         <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)" }}>{initials(m.name)}</div>
                         <div style={UI.flex1}>
-                          <div style={{ fontWeight:800, fontSize:14 }}>{m.name}</div>
+                          <div style={{ fontWeight:800, fontSize:14 }}>
+                            {m.name}{m.birth_year ? `, ${new Date().getFullYear() - m.birth_year} år` : ""}
+                          </div>
                           <div style={UI.muted11mt2}>
                             {m.allergens.length ? m.allergens.map(id => ALLERGENS.find(a=>a.id===id)?.label).join(", ") : "Ingen allergier"}
                           </div>
@@ -821,14 +828,17 @@ export default function OnboardingScreen({
                     klikbar) — utydeligt at familie reelt kan springes over
                     med ét tryk (25. sept. 2026, brugerfeedback). Samme
                     lette, grønne sekundær-knap-stil som "Ingen særlig
-                    diæt"/"Jeg har ingen allergier..." på trin 2-3. */}
+                    diæt"/"Jeg har ingen allergier..." på trin 2-3. Teksten
+                    er efterfølgende gjort mere præcis — "Spring over" kunne
+                    fejlagtigt læses som "spring felter over i formularen"
+                    i stedet for "spring hele dette trin over". */}
                 <button className="btn btn-full" style={{
                     ...UI.mt8,
                     background:"var(--surface)", color:"var(--green)",
                     border:"1.5px solid var(--green-mid)",
                   }}
                   onClick={() => setOnboardStep(5)}>
-                  Spring over
+                  Jeg vil ikke tilføje familiemedlemmer nu
                 </button>
               </div>
             )}

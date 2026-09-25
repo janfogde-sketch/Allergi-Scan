@@ -26,6 +26,12 @@ export const MemberForm = ({
 }) => {
   const isValid = name?.trim() && birthYear && gender;
   const age = birthYear ? String(new Date().getFullYear() - parseInt(birthYear)) : "";
+  // "Navn, alder og køn er obligatoriske"-teksten må først vises EFTER et
+  // forsøgt tryk på "+ Tilføj familiemedlem", ikke proaktivt fra starten
+  // (25. sept. 2026, brugerfeedback — samme princip som trin 1's
+  // step1Attempted). Knappen har derfor bevidst IKKE det native
+  // disabled-attribut (ville blokere selve klikket og dermed forsøget).
+  const [attempted, setAttempted] = React.useState(false);
 
   return (
     <div>
@@ -87,16 +93,26 @@ export const MemberForm = ({
       <div className="card-lbl" style={{ marginTop:16, marginBottom:8 }}>E-numre der undgås</div>
       <ENumberPicker selected={eNumbers} onChange={setENumbers} />
 
-      {/* Obligatoriske felter — hjælpetekst */}
-      {!isValid && (
+      {/* Obligatoriske felter — hjælpetekst, kun efter et forsøgt tryk */}
+      {attempted && !isValid && (
         <div style={{ fontSize:11, color:"var(--muted)", margin:"12px 0 10px", lineHeight:1.5 }}>
           <span style={UI.red}>*</span> Navn, alder og køn er obligatoriske
         </div>
       )}
 
       {/* Gem knap */}
-      <button className="btn btn-primary btn-full" style={{ marginTop:12 }} onClick={onAdd}
-        disabled={!isValid}>
+      <button className="btn btn-primary btn-full"
+        style={{
+          marginTop:12,
+          background: isValid ? undefined : "rgba(23,138,80,.18)",
+          color: isValid ? undefined : "var(--green)",
+          cursor: isValid ? "pointer" : "not-allowed",
+        }}
+        onClick={() => {
+          if (!isValid) { setAttempted(true); return; }
+          onAdd();
+          setAttempted(false);
+        }}>
         {addLabel || "+ Tilføj familiemedlem"}
       </button>
     </div>

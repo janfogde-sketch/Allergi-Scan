@@ -162,7 +162,7 @@ export const ENumberPicker = ({ selected, onChange }) => {
             <div key={e} className="enum-row"
               style={{ borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", background: on?"var(--green-lt)":"var(--surface)" }}>
               <div onClick={() => onChange(on ? selected.filter(x=>x!==e) : [...selected, e])}
-                style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 12px", cursor:"pointer" }}>
+                style={{ display:"flex", alignItems:"center", gap:10, padding:"6px 12px", cursor:"pointer" }}>
                 <div style={{ fontSize:12, fontWeight:800, color:on?"var(--green)":"var(--ink)", width:48, flexShrink:0 }}>{e}</div>
                 <div style={{ fontSize:12, color:on?"var(--green)":"var(--ink2)", flex:1, lineHeight:1.4 }}>{shortName}</div>
                 {detail && (
@@ -186,7 +186,7 @@ export const ENumberPicker = ({ selected, onChange }) => {
       {/* Valgte */}
       {selected.length > 0 && (
         <div style={{ marginTop:10 }}>
-          <div style={UI.sectionLbl6}>Valgte ({selected.length})</div>
+          <div style={UI.sectionLbl6}>Valgte E-numre ({selected.length})</div>
           <div style={UI.wrapGap4}>
             {selected.map(e => (
               <div key={e} style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 10px",

@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { SUPABASE_URL, AVATAR_COLORS, uid } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
+import { showToast } from "./SharedComponents.jsx";
 
 export function useFamily({ accessToken, userId, setActiveProfiles }) {
   const [family, setFamily]                         = useState([]);
@@ -73,6 +74,11 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
     };
     setFamily(f => [...f, tempMember]);
     resetNewMember();
+    // Ekstra bekræftelse ud over selve listen der viser medlemmet — uden
+    // den kunne brugeren være usikker på, om trykket reelt gjorde noget
+    // (25. sept. 2026, brugerfeedback: "hvad sker der, når man trykker
+    // + Tilføj familiemedlem?").
+    showToast(`${tempMember.name} er tilføjet`);
     try {
       const data = await apiCall(`${SUPABASE_URL}/rest/v1/family_members`, {
         method: "POST",
