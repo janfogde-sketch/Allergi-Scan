@@ -578,6 +578,30 @@ egen top i stedet for den faktisk synlige, bund-forankrede Beta-info-knap
 selv — rettet ved at måle mod den rigtige knap-element, ikke dens
 forælder-boks).
 
+**25. sept. 2026 — endnu en finjusteringsrunde (design-only, IKKE pushet/
+merget).** Fem præcise justeringer oven på forrige rundes ændringer:
+- **Scan-knappen yderligere ~12,5% større** (clamp(117px, 30cqh, 195px) →
+  clamp(132px, 34cqh, 219px), + tilsvarende ikon/tekst/halo/gap) — en
+  mindre, mere præcis finjustering end forrige rundes ~30%.
+- **Hilsen, hjælpetekst og scan-området flyttet 25px op** — `calc(27% -
+  25px)` og `calc(44% - 25px)` i stedet for rene %-værdier, en bevidst FAST
+  pixel-forskydning (brugeren bad specifikt om px, ikke en proportional
+  flytning). Beta-information-foden er UÆNDRET (top:65%) — kun de tre
+  navngivne elementer skulle rykkes.
+- **Pulsen er nu KUN i halo-gløden, ikke på selve knappen** — `scanCtaBreathe`
+  fjernet fra knap-wrapperen (var tilføjet forrige runde efter "må gerne
+  pulsere så man får lyst til at trykke", men brugeren præciserede denne
+  runde at kun haloen skal pulsere). Halo-pulsen selv er dæmpet og
+  langsommere: skala 1→1.06 (var 1.12), opacity .7→.5 (var .8→.35), 4s
+  (var 2.4s) — "en langsom, subtil puls".
+- **Scanframe-ikonet, bundnavigationen (Indkøbsliste/Scan/Historik) og
+  baggrundens afdæmpede intensitet er bevidst UÆNDREDE** — brugeren bad
+  eksplicit om at bevare dem denne runde.
+- Genverificeret på iPhone SE/13/14 Pro Max: nul overflow, positivt
+  mellemrum (91–123px) mellem knap og Beta-info-knap,
+  `element.getAnimations()` bekræftede halo-animationen kører og
+  knap-wrapperen ikke længere har nogen animation.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,

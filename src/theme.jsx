@@ -260,25 +260,24 @@ body{
      13 — faste px-størrelser skalerede slet ikke med boksens egen højde. */
   container-type:size;
 }
-/* Hjem-forsidens store scan-CTA (24. sept. 2026-runde, genskinnet fra den
-   mellemliggende hvide ghost/outline-udgave efter brugerens eksplicitte
-   ønske: "Knappen skal være grøn, men den må gerne pulsere så man får lyst
-   til at trykke"): egen farvepalet (primær #0E8F5A, mørk #08734A, halo
-   #DDF4E8) adskilt fra appens generelle --green-token, bevidst — kun selve
-   CTA'en skal bruge denne specifikke nuance, resten af appens grønne
-   elementer (bundnav, andre knapper) rører vi ikke her. To lag levende
-   bevægelse i hvile, begge bevidst tydeligere end et rent kosmetisk "det
-   lever lidt"-pift: haloen (den bløde glød bag knappen) pulserer i skala+
-   opacitet via denne keyframe, OG selve knap-wrapperen får et ekstra
-   åndedræt via scanCtaBreathe (genbrugt fra ghost-udgaven, defineret
-   længere nede) — sammen skal de to lag give en tydelig invitation til at
-   trykke, ikke kun en diskret detalje. Tryk-feedback (:active nedenfor) er
-   et tredje, uafhængigt lag oven i disse to løbende animationer. */
+/* Hjem-forsidens store scan-CTA: egen farvepalet (primær #0E8F5A, mørk
+   #08734A, halo #DDF4E8) adskilt fra appens generelle --green-token,
+   bevidst — kun selve CTA'en skal bruge denne specifikke nuance, resten af
+   appens grønne elementer (bundnav, andre knapper) rører vi ikke her.
+   Puls-adfærden er justeret to gange: 24. sept. 2026 startede med en
+   tydelig, hurtig puls PÅ BÅDE halo og knap (efter ønsket "må gerne
+   pulsere så man får lyst til at trykke"); 25. sept. 2026 præciseret til
+   "en langsom, subtil puls KUN i ... halo" — knappens eget åndedræt
+   (scanCtaBreathe, stadig defineret længere nede, men ikke længere brugt
+   her) er fjernet, og selve halo-pulsen er dæmpet ned (skala 1→1.06 i
+   stedet for 1.12, opacity .7→.5 i stedet for .8→.35) og sat langsommere
+   (4s i stedet for 2.4s). Tryk-feedback (:active nedenfor) er et separat,
+   uafhængigt lag oven i denne løbende animation. */
 @keyframes scan-halo-pulse{
-  0%,100%{transform:scale(1);opacity:.8;}
-  50%{transform:scale(1.12);opacity:.35;}
+  0%,100%{transform:scale(1);opacity:.7;}
+  50%{transform:scale(1.06);opacity:.5;}
 }
-.scan-cta-halo{animation:scan-halo-pulse 2.4s ease-in-out infinite;}
+.scan-cta-halo{animation:scan-halo-pulse 4s ease-in-out infinite;}
 .scan-cta-btn{transition:transform .12s cubic-bezier(.34,1.56,.64,1);}
 .scan-cta-btn:active{transform:scale(.95);}
 @media (prefers-reduced-motion: reduce){
@@ -438,11 +437,11 @@ body{
 
 /* scanCtaBreathe: et let åndedræt (skala 1 → 1.015) på hele scan-CTA-
    wrapperen — stammer fra en mellemliggende hvid ghost/outline-udgave af
-   knappen (siden droppet igen til fordel for grøn fyld, se .scan-cta-halo
-   ovenfor), men selve åndedræts-keyframen er genbrugt uændret som ét af
-   de to lag levende bevægelse på den nuværende grønne knap. Respekterer
-   den globale prefers-reduced-motion-regel nedenfor (ACCESSIBILITY) uden
-   ekstra kode her. */
+   knappen, og blev kortvarigt genbrugt på den grønne knap (24. sept. 2026).
+   IKKE længere anvendt (25. sept. 2026) — brugeren præciserede at pulsen
+   skal ligge KUN i halo-gløden (.scan-cta-halo ovenfor), ikke på selve
+   knappen. Keyframen er bevaret, ikke slettet, i tilfælde af senere
+   genbrug samme sted i koden. */
 @keyframes scanCtaBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.015);}}
 
 /* Mini cards */
