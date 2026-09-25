@@ -67,12 +67,12 @@ describe("useAuth handleLogin — validation guards", () => {
 });
 
 describe("useAuth handleSignup — validation guards", () => {
-  it("rejects a password under 6 characters before calling the network", async () => {
+  it("rejects a password under 10 characters before calling the network", async () => {
     const { result } = setup();
-    act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("123"); });
+    act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("123456789"); });
     await act(async () => { await result.current.handleSignup(); });
     expect(global.fetch).not.toHaveBeenCalled();
-    expect(result.current.authError).toMatch(/mindst 6 tegn/i);
+    expect(result.current.authError).toMatch(/mindst 10 tegn/i);
   });
 
   it("rejects a malformed email before calling the network", async () => {

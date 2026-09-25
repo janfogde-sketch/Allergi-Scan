@@ -220,7 +220,12 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   // ── Signup ────────────────────────────────────────────────────────────────
   const handleSignup = useCallback(async () => {
     if (!loginEmail || !loginEmail.includes("@")) { setAuthError("Indtast en gyldig email-adresse."); return; }
-    if (!loginPassword || loginPassword.length < 6) { setAuthError("Adgangskoden skal være mindst 6 tegn."); return; }
+    // Kun længdekrav (min. 10 tegn), ingen tvungen tegn-kompleksitet — matcher
+    // moderne sikkerhedsanbefalinger (NIST 800-63B), som fraråder påtvungne
+    // store bogstaver/tal/specialtegn-krav: de får ofte brugere til at vælge
+    // forudsigelige mønstre (fx "Password1!") og øger frafald ved signup uden
+    // reel sikkerhedsgevinst — længde er den langt vigtigste faktor.
+    if (!loginPassword || loginPassword.length < 10) { setAuthError("Adgangskoden skal være mindst 10 tegn."); return; }
     setAuthLoading(true); setAuthError("");
     try {
       const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
@@ -238,7 +243,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         if (msg.toLowerCase().includes("already registered") || data.error_code === "email_exists")
           throw new Error("Denne email er allerede registreret. Prøv at logge ind i stedet.");
         if (msg.toLowerCase().includes("password") || msg.toLowerCase().includes("weak"))
-          throw new Error("Adgangskoden er for svag. Brug mindst 6 tegn.");
+          throw new Error("Adgangskoden er for svag. Brug mindst 10 tegn.");
         throw new Error(msg || "Oprettelse fejlede. Prøv igen.");
       }
       if (data.access_token) {
