@@ -7,6 +7,10 @@ import { EatSafeLogo, Icon, showToast } from "./SharedComponents.jsx";
 import { ENumberPicker, AllergenChipPicker, DietChipPicker } from "./AllergenPicker.jsx";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { MemberForm } from "./MemberForm.jsx";
+import {
+  PrimaryButton, SecondaryButton, TextLink, FormCard, SectionHeading,
+  Accordion, InfoRow, ErrorMessage, InputField,
+} from "./DesignSystem.jsx";
 import { usePush } from "./usePush.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -72,7 +76,8 @@ export default function OnboardingScreen({
     newMemberENumbers, setNewMemberENumbers,
     newMemberSubtypes, setNewMemberSubtypes,
     newMemberCustomInput, setNewMemberCustomInput,
-    addMember, removeMember,
+    editingMemberId,
+    addMember, updateMember, removeMember, startEditMember, cancelEditMember,
   } = useFamilyFormContext();
   const {
     selectedENumbers = [], setSelectedENumbers,
@@ -176,7 +181,7 @@ export default function OnboardingScreen({
             eksisterende var(--sh)-skygge, ikke en erstatning af den, og
             KUN på dette kort, ikke en ændring af den delte .card-klasse
             (brugt bredt andre steder i appen uden dette behov). */}
-        <div className="card" style={{ ...UI.mb12, boxShadow:"var(--sh), 0 0 46px 26px rgba(255,255,255,.55)" }}>
+        <FormCard glow style={UI.mb12}>
           {/* Navn — kanten var rød fra allerførste render (25. sept. 2026,
               opfølgning: "rødlig kant selv om brugeren endnu ikke har gjort
               noget forkert"). Bug: user.name initialiseres til "" i
@@ -185,21 +190,21 @@ export default function OnboardingScreen({
               brugeren faktisk havde gjort. Erstattet med step1Attempted
               (samme gate som "Mangler: ..."-teksten) — rød betyder nu kun
               "du prøvede at fortsætte, og dette felt mangler stadig". */}
-          <div style={{ marginBottom:17 }}>
-            <label className="field-lbl">Fulde navn <span style={UI.red}>*</span></label>
-            <input className="field" type="text" placeholder="Fx. Anna Hansen"
-              value={user.name||""} onChange={e => setUser(u => ({...u, name:e.target.value}))}
-              style={{ borderColor: step1Attempted && !nameOk ? "var(--red-md)" : undefined }} />
-          </div>
+          <InputField label="Fulde navn" required style={{ marginBottom:17 }}
+            type="text" placeholder="Fx. Anna Hansen"
+            value={user.name||""} onChange={e => setUser(u => ({...u, name:e.target.value}))}
+            error={step1Attempted && !nameOk} />
 
-          {/* Email */}
+          {/* E-mail — "Email" uden bindestreg blev tidligere brugt her,
+              mens login/signup-skærmene konsekvent bruger "E-mail" (25.
+              sept. 2026, opfølgning: terminologi-ensretning). */}
           <div style={{ marginBottom:17 }}>
-            <label className="field-lbl">Email <span style={UI.red}>*</span></label>
-            <input className="field" type="email" placeholder="din@email.dk"
+            <InputField label="E-mail" required
+              type="email" placeholder="din@email.dk"
               value={user.email||loginEmail||""}
               onChange={e => setUser(u => ({...u, email:e.target.value}))}
               readOnly={!!(loginEmail || isOAuth)}
-              style={{ opacity: (loginEmail || isOAuth) ? 0.6 : 1 }} />
+              inputStyle={{ opacity: (loginEmail || isOAuth) ? 0.6 : 1 }} />
             {isOAuth && (
               <div style={{ fontSize:10, color:"var(--green)", marginTop:3, display:"flex", alignItems:"center", gap:4 }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
@@ -237,7 +242,7 @@ export default function OnboardingScreen({
             <label className="field-lbl">Køn <span style={UI.red}>*</span></label>
             <GenderPicker value={user.gender} onChange={gender => setUser(u => ({...u, gender}))} />
           </div>
-        </div>
+        </FormCard>
 
         {/* Validering — vises KUN efter et forsøgt tryk på "Fortsæt →"
             mens formularen er ufuldstændig (se step1Attempted), ikke
@@ -252,27 +257,21 @@ export default function OnboardingScreen({
           </div>
         )}
 
-        {/* Disabled-tilstanden brugte tidligere kun opacity:.45 på HELE
-            knappen, hvilket dæmpede teksten (hvid) lige så meget som
-            baggrunden og gjorde den svær at læse (25. sept. 2026,
-            opfølgning). Erstattet med eksplicitte farver: en lys grøn
-            baggrund + fuld-styrke grøn tekst (samme "lys baggrund, mørk
-            tekst"-mønster som Køn-valgene ovenfor) i stedet for en
-            gennemgående opacity-dæmpning — teksten forbliver let læsbar,
-            og knappen skifter til den fulde, normale EatSafe-grønne
-            (.btn-primary's egne farver) så snart alt er udfyldt. */}
-        <button className="btn btn-primary btn-full"
-          style={{
-            background: allOk ? undefined : "rgba(14,143,90,.18)",
-            color: allOk ? undefined : "var(--green)",
-            cursor: allOk ? "pointer" : "not-allowed",
-          }}
+        {/* Disabled-tilstanden bruger PrimaryButtons låste softDisabled-
+            udseende (lys grøn baggrund + fuld-styrke grøn tekst, samme
+            "lys baggrund, mørk tekst"-mønster som Køn-valgene ovenfor) i
+            stedet for en gennemgående opacity-dæmpning, der gjorde hvid
+            knap-tekst svær at læse. softDisabled (ikke disabled) holder
+            knappen klikbar, så første forsøg stadig kan fanges og vise
+            "Mangler: ..."-teksten. */}
+        <PrimaryButton
+          softDisabled={!allOk}
           onClick={() => {
             if (!allOk) { setStep1Attempted(true); return; }
             saveProfileStep1().then(() => setOnboardStep(2));
           }}>
           Fortsæt →
-        </button>
+        </PrimaryButton>
       </div>
     );
   };
@@ -285,14 +284,8 @@ export default function OnboardingScreen({
 
     return (
       <div className="fade-in">
-        <div className="card">
-          <div className="step-title">Allergier / intolerancer</div>
-          <div style={{ fontSize:11, color:"var(--muted)", marginBottom:4, lineHeight:1.4 }}>
-            Vælg alt der gælder for dig
-          </div>
-          <div style={{ fontSize:12, fontWeight:700, color: selectedCount > 0 ? "var(--green)" : "var(--muted)", marginBottom:14 }}>
-            {selectedCount} valgt
-          </div>
+        <FormCard>
+          <SectionHeading title="Allergier / intolerancer" sub="Vælg alt der gælder for dig" count={selectedCount} />
 
           <AllergenChipPicker selected={allergens} onChange={arr => {
             setAllergens(arr);
@@ -317,61 +310,46 @@ export default function OnboardingScreen({
               </div>
             )}
           </div>
-        </div>
+        </FormCard>
 
         {/* ── E-numre: kompakt valgfri række (var en fremtrædende boks —
             brugerfeedback: "for dominerende her") ── */}
-        <button
-          onClick={() => setShowENumbersInOnboard(s => !s)}
-          style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", background:"none", border:"none", cursor:"pointer", padding:"12px 2px", fontFamily:"var(--f)" }}>
-          <span style={{ fontSize:12.5, fontWeight:600, color:"var(--ink2)" }}>
-            Overvåg specifikke E-numre
-            {selectedENumbers.length > 0
-              ? <span style={{ color:"var(--green)", fontWeight:700 }}> · {selectedENumbers.length} valgt</span>
-              : <span style={{ color:"var(--muted)", fontWeight:500 }}> · Valgfrit</span>}
-          </span>
-          <span style={{ display:"flex", transform: showENumbersInOnboard ? "rotate(90deg)" : "none", transition:".2s" }}>
-            <Icon name="chevronRight" size={16} color="var(--muted)" />
-          </span>
-        </button>
-        {showENumbersInOnboard && (
-          // Solidt kort (ligesom allergi-kortet ovenfor) i stedet for at
-          // ligge direkte på baggrundsfotoet — ellers slår fotoet igennem
-          // de gennemsigtige grønne valgt-farver og får dem til at se
-          // rødlige/orange ud på trods af den korrekte grønne farvekode
-          // (25. sept. 2026, opfølgning på grøn-vs-rød-feedback).
-          <div className="card" style={UI.mb12}>
+        <Accordion label="Overvåg specifikke E-numre" count={selectedENumbers.length}
+          open={showENumbersInOnboard} onToggle={() => setShowENumbersInOnboard(s => !s)}>
+          {/* Solidt kort (ligesom allergi-kortet ovenfor) i stedet for at
+              ligge direkte på baggrundsfotoet — ellers slår fotoet igennem
+              de gennemsigtige grønne valgt-farver og får dem til at se
+              rødlige/orange ud på trods af den korrekte grønne farvekode
+              (25. sept. 2026, opfølgning på grøn-vs-rød-feedback). */}
+          <FormCard style={UI.mb12}>
             <div style={{ fontSize:12, fontWeight:700, color: selectedENumbers.length > 0 ? "var(--green)" : "var(--muted)", marginBottom:8 }}>
               {selectedENumbers.length} valgt
             </div>
             <ENumberPicker selected={selectedENumbers} onChange={setSelectedENumbers} />
-          </div>
-        )}
+          </FormCard>
+        </Accordion>
 
         {/* At vælge specifikke E-numre at overvåge er også et bevidst,
             gyldigt valg på dette trin — Fortsæt må ikke forblive låst, hvis
             det er det eneste brugeren har valgt (fundet som en reel bug,
             25. sept. 2026: "vælger et E-nummer og ikke en allergi... kan
             jeg ikke trykke fortsæt"). */}
-        <button className="btn btn-primary btn-full" style={UI.mt12}
+        <PrimaryButton style={UI.mt12}
           disabled={!(selectedCount > 0 || selectedENumbers.length > 0 || noAllergiesConfirmed)}
           onClick={async () => {
             try { await saveAllergensStep2(); setOnboardStep(3); }
             catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
-          }}>Fortsæt →</button>
+          }}>Fortsæt →</PrimaryButton>
 
-        <button className="btn btn-full btn-outline" style={{
-            marginTop:8,
-            ...(noAllergiesConfirmed ? { background:"var(--green-lt)", borderColor:"var(--green)", color:"var(--green)", fontWeight:700 } : {}),
-          }}
+        <SecondaryButton style={UI.mt8} active={noAllergiesConfirmed}
           onClick={() => {
             if (noAllergiesConfirmed) { setNoAllergiesConfirmed(false); return; }
             if (selectedCount > 0 && !window.confirm("Du har allerede valgt allergier/intolerancer. Vil du fjerne dem og markere, at du ingen har?")) return;
             setAllergens([]); setCustomAllerg([]);
             setNoAllergiesConfirmed(true);
           }}>
-          {noAllergiesConfirmed && <Icon name="check" size={13} color="var(--green)" />} Jeg har ingen allergier eller intolerancer
-        </button>
+          Jeg har ingen allergier eller intolerancer
+        </SecondaryButton>
       </div>
     );
   };
@@ -388,13 +366,7 @@ export default function OnboardingScreen({
     return (
       <div className="fade-in">
         <div className="card">
-          <div className="step-title">Kostpræferencer</div>
-          <div style={{ fontSize:11, color:"var(--muted)", marginBottom:4, lineHeight:1.4 }}>
-            Vælg alle der gælder for dig
-          </div>
-          <div style={{ fontSize:12, fontWeight:700, color: selectedCount > 0 ? "var(--green)" : "var(--muted)", marginBottom:14 }}>
-            {selectedCount} valgt
-          </div>
+          <SectionHeading title="Kostpræferencer" sub="Vælg alle der gælder for dig" count={selectedCount} />
 
           <DietChipPicker selected={diets} showCount={false}
             autoNote={allergens.includes("gluten") ? { id:"gluten-free", text:"Valgt ud fra dine allergier/intolerancer" } : undefined}
@@ -409,28 +381,20 @@ export default function OnboardingScreen({
             2026, brugerfeedback). Mørknet igen, et niveau mere end forrige
             runde (--muted → --ink2 → --ink) — stadig samme neutrale grå
             farvefamilie, bare fuld styrke i stedet for --ink2's 78%. */}
-        <div style={{ display:"flex", alignItems:"flex-start", gap:6, fontSize:11, color:"var(--ink)", lineHeight:1.5, marginBottom:16 }}>
-          <Icon name="info" size={13} color="var(--ink)" />
-          <span>Diæt-tjek er vejledende og baseret på produkttags. Tjek altid ingredienserne selv.</span>
-        </div>
+        <InfoRow icon="info" color="var(--ink)" style={{ marginBottom:16 }}>
+          Diæt-tjek er vejledende og baseret på produkttags. Tjek altid ingredienserne selv.
+        </InfoRow>
 
         {/* "Fortsæt" må ikke være aktiv ved "0 valgt" — ellers kan appen
             ikke skelne "brugeren har bevidst ingen kostpræferencer" fra
             "brugeren glemte at vælge noget" (25. sept. 2026, brugerfeedback,
             samme princip som trin 2's noAllergiesConfirmed-gate). */}
-        <button className="btn btn-primary btn-full" disabled={!canContinueDiet} onClick={() => setOnboardStep(4)}>Fortsæt →</button>
-        {/* "Ingen særlig diæt" så næsten ud som almindelig tekst med den
-            transparente .btn-outline-stil (dens meget lyse border smelter
-            sammen med det gennemsigtige baggrundsfoto herude, uden for
-            kortet — samme rodårsag som E-numre-farve-bleed'et tidligere).
-            Løst med en solid, uigennemsigtig hvid baggrund + grøn kant/
-            tekst i stedet — tydeligt klikbart, men stadig markant lettere
-            end den fyldte grønne Fortsæt-knap (25. sept. 2026, opfølgning). */}
-        <button className="btn btn-full" style={{
-            ...UI.mt8,
-            background:"var(--surface)", color:"var(--green)",
-            border:"1.5px solid var(--green-mid)",
-          }}
+        <PrimaryButton disabled={!canContinueDiet} onClick={() => setOnboardStep(4)}>Fortsæt →</PrimaryButton>
+        {/* "Ingen særlig diæt" — samme låste SecondaryButton-stil som trin 2's
+            "Jeg har ingen allergier..." (solid hvid baggrund + grøn kant/
+            tekst), tydeligt klikbart uden at konkurrere med den fyldte
+            grønne Fortsæt-knap. */}
+        <SecondaryButton style={UI.mt8}
           onClick={() => {
             if (diets.length > 0 && !window.confirm("Fjern dine valgte kostpræferencer?")) return;
             setUser(u => ({...u, diets:[]}));
@@ -438,7 +402,7 @@ export default function OnboardingScreen({
             setOnboardStep(4);
           }}>
           Ingen særlig diæt
-        </button>
+        </SecondaryButton>
       </div>
     );
   };
@@ -575,10 +539,10 @@ export default function OnboardingScreen({
                   <label className="field-lbl">Adgangskode</label>
                   <div style={{ position:"relative" }}>
                     <input className="field" type={showPassword ? "text" : "password"} placeholder="Minimum 10 tegn" value={loginPassword}
-                      onChange={e => setLoginPassword(e.target.value)} style={{ paddingRight:40 }}
+                      onChange={e => setLoginPassword(e.target.value)} style={{ paddingRight:46 }}
                       onKeyDown={e => e.key==="Enter" && handleSignup()} />
                     <button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? "Skjul adgangskode" : "Vis adgangskode"}
-                      style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", padding:4, display:"flex" }}>
+                      style={{ position:"absolute", right:0, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center" }}>
                       <Icon name={showPassword ? "eyeOff" : "eye"} size={16} color="var(--muted)" />
                     </button>
                   </div>
@@ -586,12 +550,7 @@ export default function OnboardingScreen({
                     Ved at oprette en konto accepterer du vores vilkår og bekræfter, at du er over 13 år.
                   </div>
                 </div>
-                {authError && (
-                  <div className="error-box" style={UI.ufdcolumn_aiflexstar_g4}>
-                    <span style={{ ...UI.ufw800, display:"flex", alignItems:"center", gap:6 }}><Icon name="warning" size={12} color="var(--red)" /> Fejl</span>
-                    <span style={UI.ufw500_fs12_lh15}>{authError}</span>
-                  </div>
-                )}
+                <ErrorMessage>{authError}</ErrorMessage>
                 <button className="btn welcome-btn" onClick={handleSignup} disabled={authLoading}>
                   {authLoading ? "Opretter konto…" : "Opret konto og fortsæt →"}
                 </button>
@@ -630,10 +589,10 @@ export default function OnboardingScreen({
                   <label className="field-lbl">Adgangskode</label>
                   <div style={{ position:"relative" }}>
                     <input className="field" type={showPassword ? "text" : "password"} placeholder="Din adgangskode" value={loginPassword}
-                      onChange={e => setLoginPassword(e.target.value)} style={{ paddingRight:40 }}
+                      onChange={e => setLoginPassword(e.target.value)} style={{ paddingRight:46 }}
                       onKeyDown={e => e.key==="Enter" && handleLogin()} />
                     <button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? "Skjul adgangskode" : "Vis adgangskode"}
-                      style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", padding:4, display:"flex" }}>
+                      style={{ position:"absolute", right:0, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center" }}>
                       <Icon name={showPassword ? "eyeOff" : "eye"} size={16} color="var(--muted)" />
                     </button>
                   </div>
@@ -649,21 +608,16 @@ export default function OnboardingScreen({
                         tilbage (den store error-box) — se .link-green i
                         theme.jsx for fokus-tilstanden ("skal kun markeres
                         ved rigtigt tastaturfokus, ikke ved museklik"). */}
-                    <button type="button" className="link-green" onClick={() => {
+                    <TextLink onClick={() => {
                       if (!loginEmail || !loginEmail.includes("@")) { setForgotPwError("Indtast din e-mail først."); return; }
                       setForgotPwError("");
                       handleForgotPassword();
                     }} disabled={authLoading}>
                       Glemt adgangskode?
-                    </button>
+                    </TextLink>
                   </div>
                 </div>
-                {authError && (
-                  <div className="error-box" style={UI.ufdcolumn_aiflexstar_g4}>
-                    <span style={{ ...UI.ufw800, display:"flex", alignItems:"center", gap:6 }}><Icon name="warning" size={12} color="var(--red)" /> Fejl</span>
-                    <span style={UI.ufw500_fs12_lh15}>{authError}</span>
-                  </div>
-                )}
+                <ErrorMessage>{authError}</ErrorMessage>
                 <button className="btn welcome-btn" onClick={handleLogin} disabled={authLoading}>
                   {authLoading ? "Logger ind…" : "Log ind →"}
                 </button>
@@ -779,42 +733,60 @@ export default function OnboardingScreen({
             {/* ── TRIN 2: Dine allergier / intolerancer ── */}
             {onboardStep === 2 && renderStep2()}
 
-            {/* ── TRIN 7: Familie ── */}
+            {/* ── TRIN 4: Familie ── */}
             {onboardStep === 4 && (
               <div className="fade-in">
                 <div className="step-title" style={UI.utacenter}>Familiemedlemmer</div>
                 <div style={{ fontSize:13, color:"var(--muted2)", textAlign:"center", marginBottom:16 }}>Tilføj familiemedlemmer med egne allergier. Valgfrit.</div>
 
-                {/* Allerede tilføjede — viser nu navn + alder som primær
-                    linje (25. sept. 2026, brugerfeedback: "Mia, 24 år"),
-                    ikke kun allergiliste, så det er umiddelbart tydeligt at
-                    familiemedlemmet reelt blev gemt efter et tryk på
-                    "+ Tilføj familiemedlem". */}
+                {/* Allerede tilføjede — viser navn + alder som primær linje
+                    (25. sept. 2026, brugerfeedback: "Mia, 24 år"), ikke kun
+                    allergiliste, så det er umiddelbart tydeligt at
+                    familiemedlemmet reelt blev gemt. "Rediger" (25. sept.
+                    2026, opfølgning) genbruger samme MemberForm nedenfor i
+                    stedet for en separat redigerings-dialog — se
+                    startEditMember/updateMember i useFamily.js. Det medlem
+                    der redigeres, får en tydelig grøn kant, så det er
+                    utvetydigt hvilken række formularen nedenfor gælder. */}
                 {family.length > 0 && (
                   <div className="card" style={UI.mb12}>
                     <div style={UI.sectionLbl6}>Tilføjet</div>
                     {family.map(m => (
-                      <div key={m.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 0", borderBottom:"1px solid var(--border)" }}>
+                      <div key={m.id} style={{
+                          display:"flex", alignItems:"center", gap:10, padding:"10px 6px",
+                          margin:"0 -6px", borderRadius:10, borderBottom:"1px solid var(--border)",
+                          ...(editingMemberId === m.id ? { background:"var(--green-selected-bg)", border:"1.5px solid var(--green)" } : {}),
+                        }}>
                         <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)" }}>{initials(m.name)}</div>
                         <div style={UI.flex1}>
                           <div style={{ fontWeight:800, fontSize:14 }}>
-                            {m.name}{m.birth_year ? `, ${new Date().getFullYear() - m.birth_year} år` : ""}
+                            {m.name}{m.birth_year ? ` · ${new Date().getFullYear() - m.birth_year} år` : ""}
                           </div>
                           <div style={UI.muted11mt2}>
                             {m.allergens.length ? m.allergens.map(id => ALLERGENS.find(a=>a.id===id)?.label).join(", ") : "Ingen allergier"}
                           </div>
                         </div>
-                        <div onClick={() => removeMember(m.id)} style={{ cursor:"pointer", opacity:.4 }}>
+                        <button type="button" onClick={() => startEditMember(m)} aria-label={`Rediger ${m.name}`}
+                          style={{ background:"none", border:"none", cursor:"pointer", padding:"10px 6px", minHeight:44, fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color: editingMemberId === m.id ? "var(--green)" : "var(--muted2)" }}>
+                          Rediger
+                        </button>
+                        <button type="button" onClick={() => removeMember(m.id)} aria-label={`Fjern ${m.name}`}
+                          style={{ background:"none", border:"none", cursor:"pointer", width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center", opacity:.5, flexShrink:0 }}>
                           <Icon name="trash" size={18} color="var(--muted)" />
-                        </div>
+                        </button>
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* Tilføj nyt medlem */}
+                {/* Tilføj nyt medlem / rediger et eksisterende */}
                 <div className="card" style={UI.mb12}>
-                  <div className="card-lbl" style={UI.mb12}>Tilføj nyt familiemedlem</div>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+                    <div className="card-lbl">{editingMemberId ? "Rediger familiemedlem" : "Tilføj nyt familiemedlem"}</div>
+                    {editingMemberId && (
+                      <TextLink onClick={cancelEditMember}>Annuller</TextLink>
+                    )}
+                  </div>
                   <MemberForm
                     name={newMemberName} setName={setNewMemberName}
                     birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
@@ -825,8 +797,8 @@ export default function OnboardingScreen({
                     diets={newMemberDiets} setDiets={setNewMemberDiets}
                     eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
                     customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}
-                    onAdd={addMember}
-                    addLabel="+ Tilføj familiemedlem"
+                    onAdd={editingMemberId ? updateMember : addMember}
+                    addLabel={editingMemberId ? "Gem ændringer" : "+ Tilføj familiemedlem"}
                   />
                 </div>
 
@@ -838,15 +810,11 @@ export default function OnboardingScreen({
                     utvetydig og erstatter skip-knappen; er der ikke gemt
                     noget, er "spring over" den eneste vej videre. */}
                 {family.length > 0 ? (
-                  <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(5)}>Fortsæt →</button>
+                  <PrimaryButton onClick={() => setOnboardStep(5)}>Fortsæt →</PrimaryButton>
                 ) : (
-                  <button className="btn btn-full" style={{
-                      background:"var(--surface)", color:"var(--green)",
-                      border:"1.5px solid var(--green-mid)",
-                    }}
-                    onClick={() => setOnboardStep(5)}>
+                  <SecondaryButton onClick={() => setOnboardStep(5)}>
                     Jeg vil ikke tilføje familiemedlemmer nu
-                  </button>
+                  </SecondaryButton>
                 )}
               </div>
             )}
@@ -862,36 +830,30 @@ export default function OnboardingScreen({
                     </div>
                   </div>
 
-                  <div className="card" style={UI.mb16}>
+                  <FormCard style={UI.mb16}>
                     {[
                       ["check","Produktet er godkendt","Når admin godkender dit indsendte produkt"],
                       ["family","Familie tilslutter sig","Når nogen accepterer dit invitationslink"],
                       ["search","Produkt tilgængeligt","Når et produkt, du har ledt efter, kommer i databasen"],
-                    ].map(([icon, title, sub]) => (
-                      <div key={title} style={{ display:"flex", gap:12, padding:"10px 0", borderBottom:"1px solid var(--border)" }}>
-                        <div style={{ display:"flex", alignItems:"center" }}><Icon name={icon} size={19} color="var(--green)" /></div>
-                        <div>
-                          <div style={UI.ufs13_fw700_cink}>{title}</div>
-                          <div style={UI.muted11mt2}>{sub}</div>
-                        </div>
-                      </div>
+                    ].map(([icon, title, sub], i, arr) => (
+                      <InfoRow key={title} icon={icon} color="var(--green)" title={title} sub={sub} border={i < arr.length - 1} />
                     ))}
-                  </div>
+                  </FormCard>
 
                   {!pushSupported ? (
-                    <button className="btn btn-primary btn-full" onClick={finishOnboard}>
+                    <PrimaryButton onClick={finishOnboard}>
                       Fortsæt →
-                    </button>
+                    </PrimaryButton>
                   ) : pushDone ? (
-                    <button className="btn btn-primary btn-full" disabled style={{ opacity:.7, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                    <PrimaryButton disabled style={{ opacity:.7, background:"var(--green)", color:"var(--on-green)" }}>
                       <Icon name="check" size={14} color="var(--on-green)" /> Notifikationer aktiveret
-                    </button>
+                    </PrimaryButton>
                   ) : (
                     <>
-                      <button className="btn btn-primary btn-full" onClick={handleEnablePush} disabled={pushLoading}
-                        style={{ opacity: pushLoading ? .6 : 1, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                      <PrimaryButton onClick={handleEnablePush} disabled={pushLoading}
+                        style={{ opacity: pushLoading ? .6 : 1, background:"var(--green)", color:"var(--on-green)" }}>
                         {pushLoading ? "Aktiverer…" : <><Icon name="bell" size={14} color="var(--on-green)" /> Slå notifikationer til</>}
-                      </button>
+                      </PrimaryButton>
                       {/* Ikke nu — var en fuld-bredde .btn-ghost der næsten
                           matchede hovedknappens vægt (25. sept. 2026,
                           brugerfeedback: "lidt for fremtrædende"). Nu en
@@ -900,20 +862,15 @@ export default function OnboardingScreen({
                           er den anbefalede handling, "Ikke nu" er der bare
                           uden at presse. Afslutter onboarding direkte, ingen
                           ekstra "Du er færdig"-skærm. */}
-                      <button style={{
-                          display:"block", width:"100%", marginTop:12, background:"none", border:"none",
-                          fontFamily:"var(--f)", fontSize:13, fontWeight:600, color:"var(--muted2)",
-                          textAlign:"center", padding:"6px", cursor:"pointer",
-                        }}
-                        onClick={finishOnboard}>
+                      <TextLink variant="muted" block onClick={finishOnboard}>
                         Ikke nu
-                      </button>
+                      </TextLink>
                     </>
                   )}
                 </div>
             )}
 
-            {/* ── TRIN 6: Kostpræferencer ── */}
+            {/* ── TRIN 3: Kostpræferencer ── */}
             {onboardStep === 3 && renderStep3()}
 
                     </div>

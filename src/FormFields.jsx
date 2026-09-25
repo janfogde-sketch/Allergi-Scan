@@ -4,6 +4,7 @@
 // PRÆCIS de samme komponenter som trin 1-3, ikke sit eget parallelle
 // design). Bruges af både OnboardingScreen.jsx (trin 1) og MemberForm.jsx.
 import React from "react";
+import { ChoiceCard } from "./DesignSystem.jsx";
 
 export function AgeStepper({ value, onChange, min = 1, max = 120, placeholder = "32" }) {
   const numValue = Number(value) || 0;
@@ -33,17 +34,7 @@ export function GenderPicker({ value, onChange, options = ["Mand", "Kvinde", "An
   return (
     <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
       {options.map(g => (
-        <div key={g} onClick={() => onChange(g)}
-          style={{
-            padding:"10px 8px", borderRadius:8, cursor:"pointer", textAlign:"center",
-            border:`1px solid ${value === g ? "var(--green)" : "var(--border)"}`,
-            background: value === g ? "rgba(14,143,90,.24)" : "var(--surface)",
-            fontSize:13, fontWeight:700,
-            color: value === g ? "var(--green)" : "var(--muted)",
-            transition:"all .15s",
-          }}>
-          {g}
-        </div>
+        <ChoiceCard key={g} label={g} selected={value === g} onClick={() => onChange(g)} />
       ))}
     </div>
   );

@@ -434,8 +434,8 @@ body::-webkit-scrollbar{display:none;}
    2026-designsystem, se CLAUDE.md afsnit 5/7). Var tidligere hardkodet til
    den daværende Scan-CTA-only-palet (#0E8F5A→#08734A) adskilt fra
    --green — nu samme farve, så ingen adskillelse længere nødvendig.
-   (Ryddet op i en duplikeret, tavst-vindende `.welcome-btn`-regel
-   længere nede i filen, som pga. CSS-cascade reelt overskrev denne. */
+   (Ryddet op i en duplikeret, tavst-vindende .welcome-btn-regel
+   længere nede i filen, som pga. CSS-cascade reelt overskrev denne.) */
 .welcome-btn{background:linear-gradient(160deg,var(--green) 0%,var(--green-dark) 100%);color:var(--on-green);border:none;border-radius:14px;padding:16px 32px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:all .18s;margin-bottom:10px;letter-spacing:-.1px;box-shadow:0 10px 24px -10px rgba(8,115,74,.45);}
 .welcome-btn:hover{transform:translateY(-1px);box-shadow:0 14px 30px -10px rgba(8,115,74,.55);}
 .welcome-btn:active{transform:scale(.98);}

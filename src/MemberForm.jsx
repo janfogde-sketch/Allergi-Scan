@@ -4,6 +4,7 @@ import { Icon } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { AllergenChipPicker, DietChipPicker, ENumberPicker } from "./AllergenPicker.jsx";
+import { Accordion, PrimaryButton, InputField } from "./DesignSystem.jsx";
 
 // Familiemedlem-formularen genbruger nu PRÆCIS de samme felt-komponenter som
 // onboarding trin 1-3 (25. sept. 2026, brugerfeedback: "Ingen nye designs...
@@ -43,11 +44,8 @@ export const MemberForm = ({
     <div>
 
       {/* Navn * */}
-      <div style={{ marginBottom:17 }}>
-        <label className="field-lbl">Navn <span style={UI.red}>*</span></label>
-        <input className="field" placeholder="Fx. Mia" value={name}
-          onChange={e => setName(e.target.value)} />
-      </div>
+      <InputField label="Navn" required style={{ marginBottom:17 }}
+        placeholder="Fx. Mia" value={name} onChange={e => setName(e.target.value)} />
 
       {/* Alder * — delt AgeStepper-komponent, samme som trin 1. Gemmes
           internt som fødselsår (birthYear-prop uændret). */}
@@ -93,29 +91,15 @@ export const MemberForm = ({
       <div className="card-lbl" style={{ marginTop:16, marginBottom:8 }}>Kostpræferencer</div>
       <DietChipPicker selected={diets} onChange={setDiets} />
 
-      {/* E-numre — samme delte ENumberPicker som trin 2 (grøn valgt-state,
-          korte navne der foldes ud pr. række). Erstatter den tidligere
-          lokale, røde søg/liste-implementering. */}
-      {/* E-numre — samme lukkede-som-standard mønster som trin 2 (en
-          kompakt, valgfri række der først folder listen ud ved tryk). */}
-      <button
-        onClick={() => setShowENumre(s => !s)}
-        style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", background:"none", border:"none", cursor:"pointer", padding:"12px 2px", fontFamily:"var(--f)", marginTop:16 }}>
-        <span style={{ fontSize:12.5, fontWeight:600, color:"var(--ink2)" }}>
-          Overvåg specifikke E-numre
-          {eNumbers.length > 0
-            ? <span style={{ color:"var(--green)", fontWeight:700 }}> · {eNumbers.length} valgt</span>
-            : <span style={{ color:"var(--muted)", fontWeight:500 }}> · Valgfrit</span>}
-        </span>
-        <span style={{ display:"flex", transform: showENumre ? "rotate(90deg)" : "none", transition:".2s" }}>
-          <Icon name="chevronRight" size={16} color="var(--muted)" />
-        </span>
-      </button>
-      {showENumre && (
+      {/* E-numre — samme delte ENumberPicker og lukkede-som-standard
+          Accordion-mønster som trin 2. Erstatter den tidligere lokale, røde
+          søg/liste-implementering. */}
+      <Accordion label="Overvåg specifikke E-numre" count={eNumbers.length}
+        open={showENumre} onToggle={() => setShowENumre(s => !s)} style={{ marginTop:16 }}>
         <div style={UI.mt8}>
           <ENumberPicker selected={eNumbers} onChange={setENumbers} />
         </div>
-      )}
+      </Accordion>
 
       {/* Obligatoriske felter — hjælpetekst, kun efter et forsøgt tryk */}
       {attempted && !isValid && (
@@ -125,20 +109,14 @@ export const MemberForm = ({
       )}
 
       {/* Gem knap */}
-      <button className="btn btn-primary btn-full"
-        style={{
-          marginTop:12,
-          background: isValid ? undefined : "rgba(14,143,90,.18)",
-          color: isValid ? undefined : "var(--green)",
-          cursor: isValid ? "pointer" : "not-allowed",
-        }}
+      <PrimaryButton style={{ marginTop:12 }} softDisabled={!isValid}
         onClick={() => {
           if (!isValid) { setAttempted(true); return; }
           onAdd();
           setAttempted(false);
         }}>
         {addLabel || "+ Tilføj familiemedlem"}
-      </button>
+      </PrimaryButton>
     </div>
   );
 };

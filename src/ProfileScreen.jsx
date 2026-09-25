@@ -4,6 +4,7 @@ import { ALLERGENS, SCREENS, DIETS, E_NUMBERS, E_CATEGORIES, SUPABASE_URL, SUPAB
 import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall } from "./helpers.js";
 import { EatSafeLogo, Icon, ProductImage, ProfileBadges, showToast } from "./SharedComponents.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
+import { TextLink } from "./DesignSystem.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
 import { usePush } from "./usePush.js";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -167,7 +168,8 @@ export default function ProfileScreen({
     newMemberENumbers, setNewMemberENumbers,
     newMemberSubtypes, setNewMemberSubtypes,
     newMemberCustomInput, setNewMemberCustomInput,
-    addMember, removeMember,
+    editingMemberId,
+    addMember, updateMember, removeMember, startEditMember, cancelEditMember,
   } = useFamilyFormContext();
   const {
     eSearch, setESearch, eCategory, setECategory,
@@ -815,7 +817,7 @@ export default function ProfileScreen({
             </div>
             {family.length===0 && household.length===0 && <div className="empty-state"><span className="empty-icon"><Icon name="family" size={28} color="var(--muted)" /></span><div className="empty-txt">Ingen i familien endnu</div><div className="empty-sub">Tilføj fx et barn eller en partner for at scanne for dem, eller invitér en med egen konto</div></div>}
             {family.map(m => (
-              <div key={`p-${m.id}`} className="family-member">
+              <div key={`p-${m.id}`} className="family-member" style={editingMemberId === m.id ? { border:"1.5px solid var(--green)", background:"var(--green-selected-bg)" } : undefined}>
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:m.allergens.length?10:0 }}>
                   <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)" }}>{initials(m.name)}</div>
                   <div style={UI.flex1}>
@@ -824,7 +826,14 @@ export default function ProfileScreen({
                       {[m.birth_year && `${new Date().getFullYear() - m.birth_year} år`, m.gender, m.allergens.length && `${m.allergens.length} allergi${m.allergens.length!==1?"er":""}`, "Ingen egen konto"].filter(Boolean).join(" · ")}
                     </div>
                   </div>
-                  <span style={{ cursor:"pointer", opacity:.35, fontSize:18, padding:4 }} onClick={() => removeMember(m.id)}><Icon name="trash" size={18} color="var(--muted)" /></span>
+                  <button type="button" onClick={() => startEditMember(m)} aria-label={`Rediger ${m.name}`}
+                    style={{ background:"none", border:"none", cursor:"pointer", padding:"10px 6px", minHeight:44, fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color: editingMemberId === m.id ? "var(--green)" : "var(--muted2)" }}>
+                    Rediger
+                  </button>
+                  <button type="button" onClick={() => removeMember(m.id)} aria-label={`Fjern ${m.name}`}
+                    style={{ background:"none", border:"none", cursor:"pointer", width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center", opacity:.5, flexShrink:0 }}>
+                    <Icon name="trash" size={18} color="var(--muted)" />
+                  </button>
                 </div>
                 {m.allergens.length>0 && <div className="tags">{getAllergenLabels(m.allergens,m.custom||[]).map((a,j) => <div key={j} className="tag" style={{ fontSize:11 }}>{a}</div>)}</div>}
               </div>
@@ -935,7 +944,10 @@ export default function ProfileScreen({
             </div>
 
             <div className="card">
-              <div className="card-title">+ Tilføj uden egen konto</div>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                <div className="card-title">{editingMemberId ? "Rediger familiemedlem" : "+ Tilføj uden egen konto"}</div>
+                {editingMemberId && <TextLink onClick={cancelEditMember}>Annuller</TextLink>}
+              </div>
               <MemberForm
                 name={newMemberName} setName={setNewMemberName}
                 birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
@@ -946,8 +958,8 @@ export default function ProfileScreen({
                 diets={newMemberDiets} setDiets={setNewMemberDiets}
                 eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
                 customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}
-                onAdd={addMember}
-                addLabel="+ Tilføj familiemedlem"
+                onAdd={editingMemberId ? updateMember : addMember}
+                addLabel={editingMemberId ? "Gem ændringer" : "+ Tilføj familiemedlem"}
               />
             </div>
           </div>

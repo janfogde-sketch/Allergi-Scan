@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Icon, showToast } from "./SharedComponents.jsx";
 import { ALLERGENS, E_NUMBERS, E_CATEGORIES, DIETS } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
+import { ChoiceChip } from "./DesignSystem.jsx";
 
 // Delt allergi-vælger (grøn valgt-state, ✓, allergi/intolerance-opdeling,
 // ⓘ-note på gluten) — udtrukket fra OnboardingScreen.jsx's trin 2 (25. sept.
@@ -15,7 +16,7 @@ export const AllergenChipPicker = ({ selected, onChange }) => {
   const renderChip = a => {
     const on = selected.includes(a.id);
     return (
-      <div key={a.id} className={`chip${on ? " on" : ""}`}
+      <ChoiceChip key={a.id} selected={on} showCheck={false}
         onClick={() => onChange(on ? selected.filter(x => x !== a.id) : [...selected, a.id])}>
         <span style={UI.flex1}>{a.emoji} {a.label}</span>
         {a.note && (
@@ -26,7 +27,7 @@ export const AllergenChipPicker = ({ selected, onChange }) => {
           </span>
         )}
         {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
-      </div>
+      </ChoiceChip>
     );
   };
 
@@ -65,7 +66,7 @@ export const DietChipPicker = ({ selected, onChange, showCount = true, autoNote 
           const isDanglingLast = i === arr.length - 1 && arr.length % 2 !== 0;
           const showAutoNote = autoNote && d.id === autoNote.id;
           return (
-            <div key={d.id} className={`chip${on ? " on" : ""}`}
+            <ChoiceChip key={d.id} selected={on} showCheck={false}
               style={isDanglingLast ? { gridColumn:"1 / -1" } : undefined}
               onClick={() => onChange(on ? selected.filter(x => x !== d.id) : [...selected, d.id])}>
               <div style={UI.flex1}>
@@ -79,7 +80,7 @@ export const DietChipPicker = ({ selected, onChange, showCount = true, autoNote 
                 )}
               </div>
               {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
-            </div>
+            </ChoiceChip>
           );
         })}
       </div>
