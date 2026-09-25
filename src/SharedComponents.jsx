@@ -621,12 +621,12 @@ export function ToastHost() {
       {toasts.map(t => (
         <div key={t.id} style={{
           display:"flex", alignItems:"center", gap:8,
-          background:"var(--surface)", border:`1px solid ${t.type === "error" ? "var(--red-md)" : "var(--border)"}`,
+          background:"var(--surface)", border:`1px solid ${t.type === "error" ? "var(--red-md)" : t.type === "info" ? "var(--blue-md)" : "var(--border)"}`,
           borderRadius:12, padding:"12px 16px", boxShadow:"var(--sh2)",
           maxWidth:420, width:"100%", pointerEvents:"auto",
           animation:"toast-in .2s ease-out",
         }}>
-          <Icon name={t.type === "error" ? "warning" : "check"} size={16} color={t.type === "error" ? "var(--red)" : "var(--green)"} />
+          <Icon name={t.type === "error" ? "warning" : t.type === "info" ? "info" : "check"} size={16} color={t.type === "error" ? "var(--red)" : t.type === "info" ? "var(--blue)" : "var(--green)"} />
           <span style={{ fontSize:13, fontWeight:600, color:"var(--ink)", lineHeight:1.4 }}>{t.message}</span>
         </div>
       ))}

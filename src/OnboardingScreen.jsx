@@ -312,14 +312,14 @@ export default function OnboardingScreen({
             setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id]);
             if (noAllergiesConfirmed) setNoAllergiesConfirmed(false);
           }}>
-          <div style={UI.flex1}>
-            <span>{a.emoji} {a.label}</span>
-            {a.note && (
-              <div style={{ fontSize:9.5, color: on ? "var(--green)" : "var(--muted)", fontWeight:500, marginTop:2, lineHeight:1.3 }}>
-                {a.note}
-              </div>
-            )}
-          </div>
+          <span style={UI.flex1}>{a.emoji} {a.label}</span>
+          {a.note && (
+            <span role="button" aria-label={`Om ${a.label}`}
+              onClick={e => { e.stopPropagation(); showToast(a.note, "info"); }}
+              style={{ display:"flex", alignItems:"center", justifyContent:"center", width:18, height:18, flexShrink:0, color: on ? "var(--green)" : "var(--muted)" }}>
+              <Icon name="info" size={14} color="currentColor" />
+            </span>
+          )}
           {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
         </div>
       );
@@ -348,7 +348,7 @@ export default function OnboardingScreen({
 
           {/* Skriv selv — kortet markant ned (25. sept. 2026) */}
           <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
-            <div style={UI.sectionLbl6}>Mangler din allergi?</div>
+            <div style={UI.sectionLbl6}>Mangler din allergi eller intolerance?</div>
             <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0 }}>
               <input className="field" placeholder='Skriv fx "Fructose"…' value={customInput}
                 onChange={e => setCustomInput(e.target.value)}
@@ -373,7 +373,9 @@ export default function OnboardingScreen({
           style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", background:"none", border:"none", cursor:"pointer", padding:"12px 2px", fontFamily:"var(--f)" }}>
           <span style={{ fontSize:12.5, fontWeight:600, color:"var(--ink2)" }}>
             Overvåg specifikke E-numre
-            {selectedENumbers.length > 0 && <span style={{ color:"var(--amber)", fontWeight:700 }}> · {selectedENumbers.length} valgt</span>}
+            {selectedENumbers.length > 0
+              ? <span style={{ color:"var(--amber)", fontWeight:700 }}> · {selectedENumbers.length} valgt</span>
+              : <span style={{ color:"var(--muted)", fontWeight:500 }}> · Valgfrit</span>}
           </span>
           <span style={{ display:"flex", transform: showENumbersInOnboard ? "rotate(90deg)" : "none", transition:".2s" }}>
             <Icon name="chevronRight" size={16} color="var(--muted)" />
@@ -398,6 +400,7 @@ export default function OnboardingScreen({
           }}
           onClick={() => {
             if (noAllergiesConfirmed) { setNoAllergiesConfirmed(false); return; }
+            if (selectedCount > 0 && !window.confirm("Du har allerede valgt allergier/intolerancer. Vil du fjerne dem og markere, at du ingen har?")) return;
             setAllergens([]); setCustomAllerg([]);
             setNoAllergiesConfirmed(true);
           }}>

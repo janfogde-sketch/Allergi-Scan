@@ -7,6 +7,13 @@ import { UI } from "./styleUtils.js";
 export const ENumberPicker = ({ selected, onChange }) => {
   const [search, setSearch] = React.useState("");
   const [cat, setCat] = React.useState("alle");
+  // Rækkerne viste tidligere hele E_NUMBERS-beskrivelsen ("Navn — detaljer")
+  // direkte i listen, hvilket gjorde den langsom at skimme (25. sept. 2026,
+  // brugerfeedback). E_NUMBERS-strengene bruger allerede konsekvent " — "
+  // som skilletegn mellem kort navn og uddybende detalje, så vi kan splitte
+  // på det i stedet for at ændre selve dataen — kort navn vises altid,
+  // detaljen foldes ud pr. række ved tryk på chevronen.
+  const [expandedRows, setExpandedRows] = React.useState({});
 
   const filtered = Object.entries(E_NUMBERS).filter(([e, name]) => {
     const matchSearch = !search || e.toLowerCase().includes(search.toLowerCase()) || name.toLowerCase().includes(search.toLowerCase());
@@ -60,14 +67,29 @@ export const ENumberPicker = ({ selected, onChange }) => {
       <div style={UI.umxh320_ovyauto_bd1pxsolid_br8}>
         {filtered.map(([e, name], i, arr) => {
           const on = selected.includes(e);
+          const dashIdx = name.indexOf(" — ");
+          const shortName = dashIdx === -1 ? name : name.slice(0, dashIdx);
+          const detail = dashIdx === -1 ? "" : name.slice(dashIdx + 3);
+          const isExpanded = !!expandedRows[e];
           return (
-            <div key={e} onClick={() => onChange(on ? selected.filter(x=>x!==e) : [...selected, e])} className="enum-row"
-              style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"8px 12px",
-                borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none",
-                background: on?"var(--red-lt)":"var(--surface)" }}>
-              <div style={{ fontSize:12, fontWeight:800, color:on?"var(--red)":"var(--ink)", width:48, flexShrink:0, paddingTop:1 }}>{e}</div>
-              <div style={{ fontSize:12, color:on?"var(--red)":"var(--muted2)", flex:1, lineHeight:1.4 }}>{name}</div>
-              {on && <div style={{ flexShrink:0, paddingTop:2 }}><Icon name="check" size={11} color="var(--red)" /></div>}
+            <div key={e} className="enum-row"
+              style={{ borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", background: on?"var(--red-lt)":"var(--surface)" }}>
+              <div onClick={() => onChange(on ? selected.filter(x=>x!==e) : [...selected, e])}
+                style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 12px", cursor:"pointer" }}>
+                <div style={{ fontSize:12, fontWeight:800, color:on?"var(--red)":"var(--ink)", width:48, flexShrink:0 }}>{e}</div>
+                <div style={{ fontSize:12, color:on?"var(--red)":"var(--ink2)", flex:1, lineHeight:1.4 }}>{shortName}</div>
+                {detail && (
+                  <div role="button" aria-label={isExpanded ? "Skjul detaljer" : "Vis detaljer"}
+                    onClick={ev => { ev.stopPropagation(); setExpandedRows(s => ({...s, [e]: !s[e]})); }}
+                    style={{ flexShrink:0, padding:4, margin:-4, display:"flex", transform: isExpanded ? "rotate(180deg)" : "none", transition:".2s" }}>
+                    <Icon name="chevronDown" size={13} color="var(--muted)" />
+                  </div>
+                )}
+                {on && <div style={{ flexShrink:0 }}><Icon name="check" size={11} color="var(--red)" /></div>}
+              </div>
+              {isExpanded && detail && (
+                <div style={{ padding:"0 12px 8px 58px", fontSize:11, color:"var(--muted)", lineHeight:1.4 }}>{detail}</div>
+              )}
             </div>
           );
         })}
