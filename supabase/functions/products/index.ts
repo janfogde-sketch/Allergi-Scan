@@ -139,7 +139,8 @@ async function fetchFromOFF(ean: string) {
 async function saveOffProductToDB(
   supabase: ReturnType<typeof createClient>,
   offProduct: Awaited<ReturnType<typeof fetchFromOFF>>,
-  allergenFlags: Record<string, string>
+  allergenFlags: Record<string, string>,
+  usedKeywordEngine: boolean
 ) {
   if (!offProduct?.ean || !offProduct?.name) return;
   try {
@@ -151,6 +152,15 @@ async function saveOffProductToDB(
       .maybeSingle();
     if (existing) return; // Allerede i DB — skip
 
+    // Herkomst + kvalitet — se products.allergen_source_method's kolonne-
+    // kommentar (forslag F fra allergen-detektions-gennemgangen, 25. sept.
+    // 2026). "medium" når nøgleords-motoren faktisk kørte mod
+    // ingredients_text (samme klassificering som auto-reparse bruger for
+    // en ren keyword-reparse) — ellers "pending" (kun OFF's egne tags,
+    // ingen reel analyse af selve ingredienslisten er sket endnu).
+    const allergenSourceMethod = usedKeywordEngine ? "off_tags+keyword" : "off_tags";
+    const allergenQuality = usedKeywordEngine ? "medium" : "pending";
+
     const { error } = await supabase.from("products").insert({
       ean:              offProduct.ean,
       name:             offProduct.name,
@@ -160,6 +170,8 @@ async function saveOffProductToDB(
       ingredients_text: offProduct.ingredients_text,
       nutrition:        offProduct.nutrition,
       allergen_flags:   allergenFlags,
+      allergen_source_method: allergenSourceMethod,
+      allergen_quality: allergenQuality,
       source:           "open_food_facts",
       verified_status:  "unverified",
       country:          "DK",
@@ -244,14 +256,16 @@ Deno.serve(async (req) => {
         const offProduct = await fetchFromOFF(identifier);
         if (offProduct) {
           let allergenFlags = mapAllergenTags(offProduct.allergens_tags, offProduct.traces_tags);
+          let usedKeywordEngine = false;
           if (offProduct.ingredients_text) {
             const keywordFlags = await analyzeIngredientsViaKeywordEngine(offProduct.ingredients_text);
             allergenFlags = mergeAllergenFlags(allergenFlags, keywordFlags);
+            usedKeywordEngine = !!keywordFlags;
           }
 
           // Gem permanent i baggrunden — returnér svar til brugeren med det samme
           // EdgeRuntime.waitUntil sikrer at gem-operationen fuldføres selv efter response er sendt
-          const savePromise = saveOffProductToDB(supabase, offProduct, allergenFlags);
+          const savePromise = saveOffProductToDB(supabase, offProduct, allergenFlags, usedKeywordEngine);
           if (typeof EdgeRuntime !== "undefined") {
             EdgeRuntime.waitUntil(savePromise);
           } else {

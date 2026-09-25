@@ -157,7 +157,7 @@ begrundelse.
 
 | Tabel | Nøglefelter | Noter |
 |-------|-------------|-------|
-| `products` | id, ean, name, brand, allergen_flags (jsonb), nutrition (jsonb), verified_status, source, ingredients_text | ~20.200+ |
+| `products` | id, ean, name, brand, allergen_flags (jsonb), allergen_quality, allergen_source_method, nutrition (jsonb), verified_status, source, ingredients_text | ~20.200+ |
 | `users` | id, name, email, role, diets (jsonb) | |
 | `user_allergens` | user_id, allergen_id | |
 | `family_members` | id, user_id, name, allergens (jsonb), diets, e_numbers, family_owner_id | |
@@ -169,6 +169,27 @@ begrundelse.
 | `knowledge_base` | id, category, slug, title, summary, description, allergen_ids, risk_level | ~700 entries |
 | `missing_ean_log` | ean, count, first_seen, last_seen | Auto-logget + auto-importeret |
 | `recipes` | id, title, instructions, image_url | ~627 |
+
+**`products.allergen_source_method` (25. sept. 2026 — forslag F fra
+allergen-detektions-gennemgangen):** sporer HVORDAN de nuværende
+`allergen_flags` blev beregnet, adskilt fra `allergen_quality` (som er
+tillids-niveauet). Værdier: `keyword` (kun nøgleords-motoren), `keyword+
+claude` (keyword + Claude-fallback/`force_ai`), `off_tags` (kun Open Food
+Facts' egne `allergens_tags`/`traces_tags`, ingen `ingredients_text` at
+køre keyword-motoren på), `off_tags+keyword` (OFF-tags flettet med
+keyword-motoren mod `ingredients_text`, se afsnittet om `products`-Edge
+Function ovenfor). `NULL` = ukendt/uverificeret herkomst — typisk den
+oprindelige bilka/nemlig-import-pipeline (ikke i dette repo, se punktet om
+data-provenance-gab i `.claude/HISTORY.md`) eller data der aldrig er rørt
+af vores egne funktioner siden. Skrives af `auto-reparse`, `allergens`
+(dens interne `save`-vej) og `products`' OFF-fallback-gem — IKKE af
+`useAdmin.js`s admin-godkendelsesflows' egne direkte `PATCH`-kald mod
+`products`, som nu (samme dato) også er rettet til at udlede
+`allergen_quality` fra det FAKTISKE `method`-svar fra `allergens`-
+funktionen i stedet for at hardkode `"high"` — et `force_ai:true`-kald der
+stille fejler (fx manglende `ANTHROPIC_API_KEY`) returnerer `method:
+"keyword"`, og det ville tidligere fejlagtigt være blevet gemt som `"high"`
+alligevel.
 
 **`users.role`-beskyttelse (24. sept. 2026, fundet under admin-audit):**
 `users_update_own_or_admin`-policyen tillader `id = auth.uid()` (selv-
