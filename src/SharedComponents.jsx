@@ -376,11 +376,17 @@ export function safetyStyle(status) {
 export function SafetyRow({ name, status, statusText, onClick }) {
   const s = safetyStyle(status);
   return (
-    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"6px 10px", background:s.bg, border:`1px solid ${s.border}`, borderRadius:8, gap:6 }}>
-      <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", flex:1 }}>
+    <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", padding:"6px 10px", background:s.bg, border:`1px solid ${s.border}`, borderRadius:8, gap:8 }}>
+      <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", flexShrink:0, maxWidth:"40%", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
         {name}
       </div>
-      <div style={{ fontSize:11, fontWeight:700, color:s.color, flexShrink:0, cursor: onClick ? "pointer" : "default" }}
+      {/* statusText kan blive lang, når den samler flere årsager (fx flere
+          allergener + en diæt-konflikt + et overvåget E-nummer, se
+          ResultScreen.jsx's per-profil-opsummering) — ombryder nu i stedet
+          for at skubbe teksten uden for kortet vandret (fundet ved en
+          Playwright-gennemgang: en samlet årsagstekst løb bogstaveligt talt
+          ud over skærmkanten med den tidligere ensrettede nowrap-linje). */}
+      <div style={{ fontSize:11, fontWeight:700, color:s.color, textAlign:"right", lineHeight:1.4, flex:1, minWidth:0, cursor: onClick ? "pointer" : "default" }}
         onClick={onClick}>
         {s.icon} {statusText}{onClick ? " ›" : ""}
       </div>

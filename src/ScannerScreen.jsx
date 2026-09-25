@@ -1,8 +1,9 @@
 // @ts-nocheck
 import React, { useState, useRef, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
          ALLERGEN_EXAMPLES, E_NUMBERS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
-import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo, isValidEanChecksum } from "./helpers.js";
+import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo, isValidEanChecksum, initials } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage, LazyFallback } from "./SharedComponents.jsx";
 import { DEMO_SLIDES } from "./demoSlides.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -133,6 +134,75 @@ function DemoSlider({ onClose }) {
   );
 }
 
+// ── Scanner-profilvælger ("Scanner for: ...") ──────────────────────────────
+// Bund-ark (samme mønster som ListScreens ShareSheet/ListPickerSheet) der lader
+// brugeren vælge hvilke(n) profil(er) fremtidige scanninger vurderes imod —
+// Alle, kun brugeren selv, eller en vilkårlig delmængde af familien (25. sept.
+// 2026, brugerfeedback). Genbruger PRÆCIS samme toggle-semantik som den
+// eksisterende (men skjulte, kun brugt i ProfileScreens "Aktive profiler ved
+// scanning"-chip-række) FamilyChips-logik: klik på "Alle" vælger alle, klik på
+// én specifik person mens "Alle" er aktivt indsnævrer til kun den ene, og
+// almindelige klik derefter til-/fravælger enkeltvis. Portal-baseret — se
+// CLAUDE.md afsnit 3 for hvorfor (samme fade-in-containing-block-fælde).
+function ScanProfilePickerSheet({ activeProfiles, setActiveProfiles, family, user, onClose }) {
+  const allIds = ["me", ...family.map(m => m.id)];
+  const isAll = allIds.every(id => activeProfiles.includes(id));
+  const toggleAll = () => setActiveProfiles(isAll ? ["me"] : allIds);
+  const toggleOne = (id) => {
+    if (isAll) { setActiveProfiles([id]); return; }
+    const next = activeProfiles.includes(id) ? activeProfiles.filter(x => x !== id) : [...activeProfiles, id];
+    setActiveProfiles(next.length === 0 ? [id] : next);
+  };
+
+  const Row = ({ id, label, avatarColor, avatarInitials, checked, onClick }) => (
+    <div onClick={onClick} role="checkbox" aria-checked={checked} tabIndex={0}
+      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
+      style={{
+        display:"flex", alignItems:"center", gap:10, padding:"12px 10px", borderRadius:10, cursor:"pointer",
+        background: checked ? "var(--green-selected-bg)" : "transparent",
+      }}>
+      {avatarColor !== undefined ? (
+        <div style={{ width:28, height:28, borderRadius:"50%", background:avatarColor, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
+          {avatarInitials}
+        </div>
+      ) : (
+        <div style={{ width:28, height:28, borderRadius:"50%", background:"var(--green-selected-bg)", border:"1.5px solid var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+          <Icon name="family" size={13} color="var(--green)" />
+        </div>
+      )}
+      <div style={{ flex:1, fontSize:13.5, fontWeight:700, color: checked ? "var(--green)" : "var(--ink)" }}>{label}</div>
+      <div style={{ width:20, height:20, borderRadius:6, border:`1.5px solid ${checked ? "var(--green)" : "var(--border2)"}`, background: checked ? "var(--green)" : "transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+        {checked && <Icon name="check" size={12} color="var(--on-green)" />}
+      </div>
+    </div>
+  );
+
+  return createPortal(
+    <div style={{ position:"fixed", inset:0, zIndex:9996, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }}
+      onClick={onClose}>
+      <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
+        onClick={e => e.stopPropagation()}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+          <div style={{ fontSize:16, fontWeight:900, color:"var(--ink)" }}>Scanner for</div>
+          <button onClick={onClose} aria-label="Luk"
+            style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
+        </div>
+        <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12, lineHeight:1.4 }}>
+          Vælg hvilke profiler fremtidige scanninger skal tjekkes imod.
+        </div>
+        <Row id="all" label="Alle" checked={isAll} onClick={toggleAll} />
+        <Row id="me" label={user.name || "Dig"} avatarColor="var(--green)" avatarInitials={initials(user.name || "Mig")}
+          checked={!isAll && activeProfiles.includes("me")} onClick={() => toggleOne("me")} />
+        {family.map(m => (
+          <Row key={m.id} id={m.id} label={m.name} avatarColor={m.color} avatarInitials={initials(m.name)}
+            checked={!isAll && activeProfiles.includes(m.id)} onClick={() => toggleOne(m.id)} />
+        ))}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export default function ScannerScreen({
   scanResult, notFoundEan,
   searchQuery, setSearchQuery,
@@ -187,7 +257,7 @@ export default function ScannerScreen({
   onOpenHelp,
 }) {
   const { user, userId, accessToken } = useAuthContext();
-  const { activeProfiles, setActiveProfiles } = useProfileContext();
+  const { activeProfiles, setActiveProfiles, family } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
   const { favorites, toggleFavorite, isFavorite } = useHistoryContext();
 
@@ -197,6 +267,18 @@ export default function ScannerScreen({
   // ── Guide modal state ─────────────────────────────────────────────────────
   const [showGuide, setShowGuide] = React.useState(false);
   const [manualEanError, setManualEanError] = React.useState("");
+  const [showScanProfilePicker, setShowScanProfilePicker] = React.useState(false);
+
+  // Kompakt label til "Scanner for: ..."-chippen (25. sept. 2026,
+  // brugerfeedback) — "Alle" når alle profiler er aktive, personens navn ved
+  // præcis én, ellers "N valgt".
+  const scanProfileAllIds = ["me", ...family.map(m => m.id)];
+  const scanProfileIsAll = family.length > 0 && scanProfileAllIds.every(id => activeProfiles.includes(id));
+  const scanProfileLabel = scanProfileIsAll
+    ? "Alle"
+    : activeProfiles.length === 1
+      ? (activeProfiles[0] === "me" ? (user.name?.split(" ")[0] || "Dig") : (family.find(m => m.id === activeProfiles[0])?.name?.split(" ")[0] || "1 valgt"))
+      : `${activeProfiles.length} valgt`;
 
   // activeIds (kombinerede allergen-id'er for alle aktive profiler) kommer nu
   // som prop fra App.jsx' allActive() i stedet for at blive genberegnet her
@@ -388,6 +470,41 @@ export default function ScannerScreen({
                     roterende ring-lys (mockup "C") — bevidst ikke genindført
                     ved sammenlægningen med main, se theme.jsx's kommentar
                     ved .scan-cta-halo for begrundelsen. */}
+                {/* "Scanner for: ..."-chip (25. sept. 2026, brugerfeedback) —
+                    diskret profilvælger, så brugeren altid kan se hvilke(n)
+                    profil(er) scanninger vurderes imod. Placeret øverst i
+                    .home-hero-frame (lige under topbaren), IKKE i mellemrummet
+                    mellem hilsen og selve scan-knappen som først forsøgt —
+                    målt empirisk med Playwright på tværs af iPhone SE/13/14
+                    Pro Max at det mellemrum reelt er 0px allerede FØR chippen
+                    (hilsenblokkens undertekst slutter bogstaveligt talt
+                    præcis der hvor knappens egen top-anker starter, uden
+                    indbygget slack) — der er ingen chip-højde, uanset hvor
+                    kompakt, der kan indsættes der uden enten at overlappe
+                    hilse-teksten eller knappen, som begge skal forblive
+                    uændrede. Denne placering er den eneste der reelt har
+                    ledig plads uden at røre nogen eksisterende positioner. */}
+                <div style={{ position:"absolute", top:"clamp(8px, 2cqh, 16px)", left:0, right:0, zIndex:2, display:"flex", justifyContent:"center" }}>
+                  <button type="button" onClick={() => setShowScanProfilePicker(true)}
+                    style={{ display:"flex", alignItems:"center", gap:5, background:"rgba(255,255,255,.82)", border:"1px solid var(--border)",
+                      borderRadius:100, padding:"clamp(5px, 1.1cqh, 7px) clamp(11px, 2.2cqh, 14px)", cursor:"pointer",
+                      boxShadow:"0 4px 12px -6px rgba(21,32,26,.3)", fontFamily:"var(--f)", maxWidth:"78%" }}>
+                    <Icon name="family" size={12} color="var(--green)" />
+                    <span style={{ fontSize:"clamp(10.5px, 1.9cqh, 12.5px)", fontWeight:700, color:"var(--ink2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                      Scanner for: <span style={{ color:"var(--green)" }}>{scanProfileLabel}</span>
+                    </span>
+                    <Icon name="chevronDown" size={11} color="var(--muted)" />
+                  </button>
+                </div>
+
+                {showScanProfilePicker && (
+                  <ScanProfilePickerSheet
+                    activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
+                    family={family} user={user}
+                    onClose={() => setShowScanProfilePicker(false)}
+                  />
+                )}
+
                 <div style={{ position:"absolute", top:"calc(44% - 18px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
                   <div style={{ position:"relative", width:"clamp(132px, 34cqh, 219px)", height:"clamp(132px, 34cqh, 219px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
                     <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-20px, -3.3cqh, -9px)", borderRadius:"50%",
