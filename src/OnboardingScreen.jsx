@@ -95,6 +95,12 @@ export default function OnboardingScreen({
   // Deklareret her (top-niveau), ikke inde i renderStep1, da hooks ikke må
   // kaldes betinget — renderStep1 kaldes kun når onboardStep===1.
   const [step1Attempted, setStep1Attempted] = useState(false);
+  // Trin 2: "Fortsæt" skal ikke kunne trykkes ved en fejl, hvis brugeren
+  // reelt ingen allergier har — de skal aktivt bekræfte det via en dedikeret
+  // knap i stedet for blot at kunne fortsætte med et tomt valg (25. sept.
+  // 2026, brugerfeedback). Fravælges automatisk, hvis brugeren derefter
+  // vælger en allergi/intolerance eller tilføjer en custom-ingrediens.
+  const [noAllergiesConfirmed, setNoAllergiesConfirmed] = useState(false);
 
   // FIX: disse hooks lå tidligere INDE i en betinget IIFE, som kun blev kaldt
   // når onboardStep === 5. Det bryder Reacts "Rules of Hooks" (hooks skal
@@ -284,6 +290,118 @@ export default function OnboardingScreen({
             saveProfileStep1().then(() => setOnboardStep(2));
           }}>
           Fortsæt →
+        </button>
+      </div>
+    );
+  };
+
+  // Trin 2 er ligesom trin 1 flyttet ud i en render-funktion (ikke en
+  // separat komponent — ingen hooks herinde, kun let closures over
+  // top-niveau-state), da den kun kaldes betinget (onboardStep===2).
+  const renderStep2 = () => {
+    const selectedCount = allergens.length + customAllerg.length;
+    const allergiItems = ALLERGENS.filter(a => a.type !== "intolerance");
+    const intoleranceItems = ALLERGENS.filter(a => a.type === "intolerance");
+
+    const renderAllergenChip = a => {
+      const on = allergens.includes(a.id);
+      return (
+        <div key={a.id} className={`chip${on ? " on" : ""}`}
+          style={on ? { borderColor:"var(--green)", borderWidth:1.5 } : undefined}
+          onClick={() => {
+            setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id]);
+            if (noAllergiesConfirmed) setNoAllergiesConfirmed(false);
+          }}>
+          <div style={UI.flex1}>
+            <span>{a.emoji} {a.label}</span>
+            {a.note && (
+              <div style={{ fontSize:9.5, color: on ? "var(--green)" : "var(--muted)", fontWeight:500, marginTop:2, lineHeight:1.3 }}>
+                {a.note}
+              </div>
+            )}
+          </div>
+          {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
+        </div>
+      );
+    };
+
+    return (
+      <div className="fade-in">
+        <div className="card">
+          <div className="step-title">Allergier / intolerancer</div>
+          <div style={{ fontSize:11, color:"var(--muted)", marginBottom:4, lineHeight:1.4 }}>
+            Vælg alt der gælder for dig
+          </div>
+          <div style={{ fontSize:12, fontWeight:700, color: selectedCount > 0 ? "var(--green)" : "var(--muted)", marginBottom:14 }}>
+            {selectedCount} valgt
+          </div>
+
+          <div style={UI.sectionLbl6}>Allergier</div>
+          <div className="chip-grid" style={{ marginBottom:16 }}>
+            {allergiItems.map(renderAllergenChip)}
+          </div>
+
+          <div style={UI.sectionLbl6}>Intolerancer / andre følsomheder</div>
+          <div className="chip-grid">
+            {intoleranceItems.map(renderAllergenChip)}
+          </div>
+
+          {/* Skriv selv — kortet markant ned (25. sept. 2026) */}
+          <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
+            <div style={UI.sectionLbl6}>Mangler din allergi?</div>
+            <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0 }}>
+              <input className="field" placeholder='Skriv fx "Fructose"…' value={customInput}
+                onChange={e => setCustomInput(e.target.value)}
+                onKeyDown={e => { if (e.key==="Enter"&&customInput.trim()) { setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); setNoAllergiesConfirmed(false); }}} />
+              <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); setNoAllergiesConfirmed(false); }}}>+</button>
+            </div>
+            {customAllerg.length > 0 && (
+              <div className="tags">
+                {customAllerg.map((a,i) => (
+                  <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
+                    onClick={() => setCustomAllerg(c=>c.filter(x=>x!==a))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(c=>c.filter(x=>x!==a))}>×</span></div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── E-numre: kompakt valgfri række (var en fremtrædende boks —
+            brugerfeedback: "for dominerende her") ── */}
+        <button
+          onClick={() => setShowENumbersInOnboard(s => !s)}
+          style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", background:"none", border:"none", cursor:"pointer", padding:"12px 2px", fontFamily:"var(--f)" }}>
+          <span style={{ fontSize:12.5, fontWeight:600, color:"var(--ink2)" }}>
+            Overvåg specifikke E-numre
+            {selectedENumbers.length > 0 && <span style={{ color:"var(--amber)", fontWeight:700 }}> · {selectedENumbers.length} valgt</span>}
+          </span>
+          <span style={{ display:"flex", transform: showENumbersInOnboard ? "rotate(90deg)" : "none", transition:".2s" }}>
+            <Icon name="chevronRight" size={16} color="var(--muted)" />
+          </span>
+        </button>
+        {showENumbersInOnboard && (
+          <div style={UI.mb12}>
+            <ENumberPicker selected={selectedENumbers} onChange={setSelectedENumbers} />
+          </div>
+        )}
+
+        <button className="btn btn-primary btn-full" style={UI.mt12}
+          disabled={!(selectedCount > 0 || noAllergiesConfirmed)}
+          onClick={async () => {
+            try { await saveAllergensStep2(); setOnboardStep(3); }
+            catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
+          }}>Fortsæt →</button>
+
+        <button className="btn btn-full btn-outline" style={{
+            marginTop:8,
+            ...(noAllergiesConfirmed ? { background:"var(--green-lt)", borderColor:"var(--green)", color:"var(--green)", fontWeight:700 } : {}),
+          }}
+          onClick={() => {
+            if (noAllergiesConfirmed) { setNoAllergiesConfirmed(false); return; }
+            setAllergens([]); setCustomAllerg([]);
+            setNoAllergiesConfirmed(true);
+          }}>
+          {noAllergiesConfirmed && <Icon name="check" size={13} color="var(--green)" />} Jeg har ingen allergier eller intolerancer
         </button>
       </div>
     );
@@ -623,100 +741,7 @@ export default function OnboardingScreen({
             {onboardStep === 1 && renderStep1()}
 
             {/* ── TRIN 2: Dine allergier / intolerancer ── */}
-            {onboardStep === 2 && (
-              <div className="fade-in">
-                <div className="card">
-                  <div className="step-title">Allergier / intolerancer</div>
-
-                  <div style={{ fontSize:11, color:"var(--muted)", marginBottom:12, lineHeight:1.4 }}>
-                    Tryk for at markere en allergi eller intolerance
-                  </div>
-
-                  <div className="chip-grid">
-                    {ALLERGENS.map(a => {
-                      const on = allergens.includes(a.id);
-                      return (
-                        <div key={a.id} className="chip" style={{
-                          background: on ? "var(--red-lt)" : "var(--paper2)",
-                          border: `1px solid ${on ? "var(--red)" : "var(--border)"}`,
-                          color: on ? "var(--red)" : "var(--ink)",
-                        }}
-                          onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
-                          <span style={UI.flex1}>{a.emoji} {a.label}</span>
-                          {on && <div style={UI.redBadge9}><Icon name="check" size={9} color="#fff" /></div>}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Skriv selv */}
-                  <div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid var(--border)" }}>
-                    <div style={UI.sectionLbl6}>Kan ikke finde din allergi eller din intolerance?</div>
-                    <div style={{ fontSize:11, color:"var(--muted)", marginBottom:8, lineHeight:1.6 }}>
-                      Tilføj selv — enten en hel allergikategori (fx. "Fructose") eller en specifik ingrediens du reagerer på (fx. "Kasein", "Sorbitol", "Hvede-kimolie"). Vi fremhæver det i ingredienslister.
-                    </div>
-                    <div className="input-row" style={{ marginBottom: customAllerg.length ? 8 : 0 }}>
-                      <input className="field" placeholder="Fx. Fructose…" value={customInput}
-                        onChange={e => setCustomInput(e.target.value)}
-                        onKeyDown={e => { if (e.key==="Enter"&&customInput.trim()) { setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}} />
-                      <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}}>+</button>
-                    </div>
-                    {customAllerg.length > 0 && (
-                      <div className="tags">
-                        {customAllerg.map((a,i) => (
-                          <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
-                            onClick={() => setCustomAllerg(c=>c.filter(x=>x!==a))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(c=>c.filter(x=>x!==a))}>×</span></div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* ── E-numre: kollapsibel ── */}
-                <div style={{ marginTop:12, borderTop:"1px solid var(--border)", paddingTop:12 }}>
-                  <button
-                    onClick={() => setShowENumbersInOnboard(s => !s)}
-                    style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", background:"none", border:"none", cursor:"pointer", padding:"4px 0", fontFamily:"var(--f)" }}>
-                    <div style={UI.udflex_aicenter_g8}>
-                      <span style={UI.fs16}>🔢</span>
-                      <div style={{ textAlign:"left" }}>
-                        <div style={UI.ufs13_fw700_cink}>
-                          Overvåg specifikke E-numre
-                          {selectedENumbers.length > 0 && <span style={{ fontSize:11, color:"var(--amber)", marginLeft:6 }}>{selectedENumbers.length} valgt</span>}
-                        </div>
-                        <div style={UI.muted11}>Valgfrit — kan altid tilføjes senere</div>
-                      </div>
-                    </div>
-                    <span style={{ fontSize:18, color:"var(--muted)", transform: showENumbersInOnboard ? "rotate(180deg)" : "none", transition:".2s" }}>⌄</span>
-                  </button>
-                  {showENumbersInOnboard && (
-                    <div style={UI.mt12}>
-                      <ENumberPicker selected={selectedENumbers} onChange={setSelectedENumbers} />
-                    </div>
-                  )}
-                </div>
-
-                <button className="btn btn-primary btn-full" style={UI.mt12} onClick={async () => {
-                  try { await saveAllergensStep2(); setOnboardStep(3); }
-                  catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
-                }}>Fortsæt →</button>
-                {allergens.length === 0 && customAllerg.length === 0 ? (
-                  <button style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", padding:"10px 0", marginTop:2 }}
-                    onClick={() => {
-                      if (window.confirm("Er du sikker på, at du ingen allergier eller intolerancer har? Du kan altid tilføje dem senere under Profil.")) {
-                        saveAllergensStep2().then(() => setOnboardStep(3))
-                          .catch(() => showToast("Kunne ikke gemme. Tjek din forbindelse og prøv igen.", "error"));
-                      }
-                    }}>
-                    Spring over — jeg har ingen allergier
-                  </button>
-                ) : (
-                  <div style={{ textAlign:"center", fontSize:12, color:"var(--muted)", marginTop:6 }}>
-                    {allergens.length + customAllerg.length} allergi{allergens.length + customAllerg.length !== 1 ? "er" : ""} valgt
-                  </div>
-                )}
-              </div>
-            )}
+            {onboardStep === 2 && renderStep2()}
 
             {/* ── TRIN 7: Familie ── */}
             {onboardStep === 4 && (
