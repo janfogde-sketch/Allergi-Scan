@@ -359,7 +359,12 @@ Deno.serve(async (req) => {
 
       const { error } = await supabase
         .from("products")
-        .update({ allergen_flags: allergenFlags })
+        .update({
+          allergen_flags: allergenFlags,
+          // Herkomst — se products.allergen_source_method's kolonnekommentar
+          // (forslag F fra allergen-detektions-gennemgangen, 25. sept. 2026).
+          allergen_source_method: method,
+        })
         .eq("id", product_id);
 
       if (error) {
