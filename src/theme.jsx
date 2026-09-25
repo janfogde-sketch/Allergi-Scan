@@ -127,11 +127,20 @@ export const appCss = `
   --sh2:0 1px 0 rgba(255,255,255,.7) inset, 0 10px 22px -14px rgba(21,32,26,.18);
   --sh3:0 1px 0 rgba(255,255,255,.7) inset, 0 20px 44px -20px rgba(21,32,26,.24);
 }
+/* Skjul den grå, browseragtige scrollbar-indikator app-bredt (25. sept.
+   2026-brief: "får designet til at ligne en prototype") — scroll virker
+   stadig fint, kun det visuelle scrollbar-spor/håndtag er skjult.
+   scrollbar-width (Firefox) + -ms-overflow-style (gammel Edge) dækker de
+   browsere ::-webkit-scrollbar ikke rammer. */
+html{scrollbar-width:none;-ms-overflow-style:none;}
+html::-webkit-scrollbar{display:none;}
 body{
   background:#FFFFFF;
   color:var(--ink);font-family:var(--f);-webkit-font-smoothing:antialiased;
   min-height:100vh;
+  scrollbar-width:none;-ms-overflow-style:none;
 }
+body::-webkit-scrollbar{display:none;}
 .app{
   /* 480px — ikke 390px — dækker moderne store telefoner (iPhone Air: 402px,
      Pro Max-modeller: op til 430px), så appen ikke centreres med synlige
@@ -419,13 +428,27 @@ body{
    understreget tekst. */
 .welcome-link{background:none;border:none;cursor:pointer;font-family:var(--f);font-size:12.5px;font-weight:600;color:var(--ink2);text-decoration:underline;text-underline-offset:2px;padding:8px 0;text-shadow:0 1px 0 rgba(255,255,255,.7);}
 .welcome-link:hover{color:var(--green);}
+/* Grønt tekstlink, brugt af "Glemt adgangskode?" (25. sept. 2026,
+   opfølgning) — almindelig, læsbar grøn tekst, understreget, ingen
+   knap-kant/baggrund. outline:none fjerner browserens standard fokus-ring
+   (som ellers viser en firkantet "indrammet" tilstand efter et museklik i
+   Chrome/Firefox) — :focus-visible gengiver en rigtig, synlig ring, men
+   KUN ved reelt tastaturfokus (Tab), som brugeren bad om. */
+.link-green{background:none;border:none;cursor:pointer;font-family:var(--f);font-size:12.5px;font-weight:600;color:#0E8F5A;text-decoration:underline;text-underline-offset:2px;padding:0;outline:none;}
+.link-green:hover{color:#08734A;}
+.link-green:focus-visible{outline:2px solid #0E8F5A;outline-offset:3px;border-radius:4px;}
+.link-green:disabled{opacity:.5;cursor:not-allowed;}
 .welcome-btn{background:var(--green);color:var(--on-green);border:none;border-radius:12px;padding:16px 32px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:all .18s;margin-bottom:10px;letter-spacing:-.1px;box-shadow:0 2px 12px rgba(74,222,128,.3);}
 .welcome-btn:hover{background:var(--green-glow);transform:translateY(-1px);}
 .welcome-btn-ghost{background:var(--surface);color:var(--ink2);border:1.5px solid var(--border2);border-radius:12px;padding:14px 32px;font-family:var(--f);font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:all .18s;}
 .welcome-btn-ghost:hover{background:var(--surface2);}
 
 /* ── LOGIN ── */
-.login-wrap{min-height:100vh;display:flex;flex-direction:column;padding:48px 20px 32px;}
+/* Bund-padding øget fra 32px til 40px + telefonens egen safe-area (25.
+   sept. 2026, opfølgning) — den sidste sociale login-knap (Facebook)
+   kolliderede med teksten under den, for lidt luft til at være tydeligt
+   adskilt. */
+.login-wrap{min-height:100vh;display:flex;flex-direction:column;padding:48px 20px calc(40px + env(safe-area-inset-bottom));}
 /* Formular-kort (25. sept. 2026-brief): "tydeligt hvidt formular-kort med
    16-20px radius, diskret skygge, god indvendig padding" — erstatter den
    generiske .card (12px radius, 16px padding, brugt overalt ellers i appen)

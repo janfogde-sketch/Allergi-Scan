@@ -81,6 +81,12 @@ export default function OnboardingScreen({
   // "showENumbersInOnboard is not defined" så snart man nåede dertil.
   const [showENumbersInOnboard, setShowENumbersInOnboard] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  // "Glemt adgangskode?"-valideringen skal vises som en lille inline-fejl
+  // direkte under E-mail-feltet (25. sept. 2026, opfølgning), IKKE i den
+  // store, fælles error-box (authError) — det gør en simpel "husk at
+  // udfylde feltet"-påmindelse unødigt alarmerende. Lokal, adskilt state,
+  // ryddes igen når brugeren retter e-mail-feltet eller skifter fane.
+  const [forgotPwError, setForgotPwError] = useState("");
 
   // FIX: disse hooks lå tidligere INDE i en betinget IIFE, som kun blev kaldt
   // når onboardStep === 5. Det bryder Reacts "Rules of Hooks" (hooks skal
@@ -297,8 +303,8 @@ export default function OnboardingScreen({
             {/* Tab vælger — se .tab-row/.tab.active i theme.jsx for den
                 tydeligere-men-rolige aktiv-markering (25. sept. 2026). */}
             <div className="tab-row">
-              <div className={`tab${authTab==="signup"?" active":""}`} onClick={() => { setAuthTab("signup"); setAuthError(""); }}>Ny bruger</div>
-              <div className={`tab${authTab==="login"?" active":""}`} onClick={() => { setAuthTab("login"); setAuthError(""); }}>Log ind</div>
+              <div className={`tab${authTab==="signup"?" active":""}`} onClick={() => { setAuthTab("signup"); setAuthError(""); setForgotPwError(""); }}>Ny bruger</div>
+              <div className={`tab${authTab==="login"?" active":""}`} onClick={() => { setAuthTab("login"); setAuthError(""); setForgotPwError(""); }}>Log ind</div>
             </div>
 
             {/* SIGNUP flow */}
@@ -360,8 +366,19 @@ export default function OnboardingScreen({
                 <div className="login-card">
                   <label className="field-lbl">E-mail</label>
                   <input className="field" type="email" placeholder="din@email.dk" value={loginEmail}
-                    onChange={e => setLoginEmail(e.target.value)} style={UI.mb12}
+                    onChange={e => { setLoginEmail(e.target.value); if (forgotPwError) setForgotPwError(""); }}
+                    style={forgotPwError ? undefined : UI.mb12}
                     onKeyDown={e => e.key==="Enter" && handleLogin()} />
+                  {/* Inline felt-fejl for "Glemt adgangskode?" uden udfyldt
+                      e-mail (25. sept. 2026, opfølgning) — sidder direkte
+                      under feltet den vedrører, IKKE i den store, fælles
+                      error-box nedenfor, som er forbeholdt reelle login-
+                      fejl efter et forsøgt kald. */}
+                  {forgotPwError && (
+                    <div style={{ fontSize:11.5, color:"var(--red)", fontWeight:600, marginTop:5, marginBottom:12 }}>
+                      {forgotPwError}
+                    </div>
+                  )}
                   <label className="field-lbl">Adgangskode</label>
                   <div style={{ position:"relative" }}>
                     <input className="field" type={showPassword ? "text" : "password"} placeholder="Din adgangskode" value={loginPassword}
@@ -378,8 +395,17 @@ export default function OnboardingScreen({
                         style={{ width:16, height:16, accentColor:"#0E8F5A", cursor:"pointer" }} />
                       Husk mig
                     </label>
-                    <button type="button" onClick={handleForgotPassword} disabled={authLoading}
-                      style={{ background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", fontSize:12.5, fontWeight:600, color:"#0E8F5A", textDecoration:"underline", textUnderlineOffset:"2px", padding:0 }}>
+                    {/* Valideres lokalt FØR handleForgotPassword kaldes, så en
+                        manglende e-mail vises som en let inline-note under
+                        feltet i stedet for hookens egen authError-fald-
+                        tilbage (den store error-box) — se .link-green i
+                        theme.jsx for fokus-tilstanden ("skal kun markeres
+                        ved rigtigt tastaturfokus, ikke ved museklik"). */}
+                    <button type="button" className="link-green" onClick={() => {
+                      if (!loginEmail || !loginEmail.includes("@")) { setForgotPwError("Indtast din e-mail først."); return; }
+                      setForgotPwError("");
+                      handleForgotPassword();
+                    }} disabled={authLoading}>
                       Glemt adgangskode?
                     </button>
                   </div>
