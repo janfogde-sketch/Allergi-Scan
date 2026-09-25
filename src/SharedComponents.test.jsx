@@ -72,3 +72,49 @@ describe("IngredientsList — fremhævning af nestede under-lister", () => {
     }
   });
 });
+
+describe("IngredientsList — leksikon-fremhævning af E-numre og vitaminer", () => {
+  // Regressionstest for et bruger-rapporteret fund (25. sept. 2026, EAN
+  // 9002490216016 "Energidrik"): "B12" blev fejlagtigt fremhævet rødt som
+  // allergen (længde-fejl i STORE BOGSTAVER-heuristikken, rettet separat),
+  // mens "B6" tilfældigt undgik det. Efter den rettelse ønskede brugeren i
+  // stedet at B6/B12 (og E-numre) skal fremhæves som opslagsbare
+  // leksikon-termer — en neutral blå stil, adskilt fra allergen-rød, siden
+  // de ikke er en fare i sig selv.
+  const ingredients = "vand, saccharose, vitaminer (niacin, pantothensyre, B6, B12), aromaer, farver (karamel, riboflavin), smagsforstærker (E621).";
+  const flags = { laktose: "no", maelkeallergi: "no", gluten: "no", hvede: "no", aeg: "no", noedder: "no", jordnoedder: "no", soja: "no", fisk: "no", skaldyr: "no", selleri: "no", sennep: "no", sesam: "no", svovl: "no", lupin: "no", bloeddyr: "no" };
+
+  function textsWithBackground(container, background) {
+    const found = [];
+    for (const span of container.querySelectorAll("span[style]")) {
+      if (span.style.background === background) found.push(span.textContent);
+    }
+    return found;
+  }
+  const blueTexts = (container) => textsWithBackground(container, "var(--blue-lt)");
+  const redTexts = (container) => textsWithBackground(container, "var(--red-lt)");
+
+  it("fremhæver B6, B12 og E621 blåt (leksikon), ikke rødt (allergen)", () => {
+    const { container } = render(<IngredientsList text={ingredients} allergenFlags={flags} />);
+    const blue = blueTexts(container);
+    const red = redTexts(container);
+
+    expect(blue).toContain("B6");
+    expect(blue).toContain("B12");
+    // E621 står i kildeteksten som "smagsforstærker (E621)." — samme
+    // sammensatte del-mønster som "VALLEPULVER (MÆLK)" i testen ovenfor,
+    // så hele delen fremhæves, ikke kun selve E-nummeret isoleret.
+    expect(blue.some(t => t.includes("E621"))).toBe(true);
+    expect(red).not.toEqual(expect.arrayContaining(["B6", "B12"]));
+    expect(red.some(t => t.includes("E621"))).toBe(false);
+  });
+
+  it("fremhæver IKKE almindelige ingredienser som leksikon-termer", () => {
+    const { container } = render(<IngredientsList text={ingredients} allergenFlags={flags} />);
+    const blue = blueTexts(container);
+
+    for (const safeWord of ["vand", "saccharose", "aromaer", "niacin"]) {
+      expect(blue.some(h => h.toLowerCase() === safeWord)).toBe(false);
+    }
+  });
+});
