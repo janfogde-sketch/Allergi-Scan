@@ -167,7 +167,13 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
   const removeMember = async (id) => {
     const removed = family.find(m => m.id === id);
     setFamily(f => f.filter(m => m.id !== id));
-    setActiveProfiles(a => a.filter(x => x !== id));
+    // Fjern det slettede medlem fra det gemte scannerudvalg — hvis det var
+    // den eneste valgte profil, falder vi tilbage til brugerens egen ("me")
+    // i stedet for at efterlade et tomt udvalg (25. sept. 2026, opfølgning).
+    setActiveProfiles(a => {
+      const next = a.filter(x => x !== id);
+      return next.length > 0 ? next : ["me"];
+    });
     if (editingMemberId === id) resetNewMember();
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/family_members?id=eq.${id}`, {
