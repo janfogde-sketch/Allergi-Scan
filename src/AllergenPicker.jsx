@@ -116,6 +116,30 @@ export const ENumberPicker = ({ selected, onChange }) => {
 
   return (
     <div>
+      {/* Valgte — vises øverst, ikke nederst under hele listen (25. sept.
+          2026, brugerfeedback: man skal kunne se sine egne valg med det
+          samme man åbner sektionen, ikke skulle scrolle forbi hele listen
+          for at finde dem). */}
+      {selected.length > 0 && (
+        <div style={{ marginBottom:10 }}>
+          <div style={UI.sectionLbl6}>Valgte E-numre ({selected.length})</div>
+          <div style={UI.wrapGap4}>
+            {selected.map(e => (
+              <div key={e} style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 10px",
+                background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:20 }}>
+                <div style={{ fontSize:11, fontWeight:800, color:"var(--green)" }}>{e}</div>
+                <div onClick={() => onChange(selected.filter(x=>x!==e))}
+                  onKeyDown={ev => ev.key === "Enter" && onChange(selected.filter(x=>x!==e))}
+                  role="button" aria-label={`Fjern ${e}`} tabIndex={0} className="enum-remove"
+                  style={{ lineHeight:0, padding:6, margin:-6 }}>
+                  <Icon name="x" size={11} color="var(--green)" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Populære */}
       <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
         {popular.filter(e => E_NUMBERS[e]).map(e => {
@@ -182,27 +206,6 @@ export const ENumberPicker = ({ selected, onChange }) => {
         })}
         {filtered.length === 0 && <div style={{ padding:"16px", fontSize:13, color:"var(--muted)", textAlign:"center" }}>Ingen resultater</div>}
       </div>
-
-      {/* Valgte */}
-      {selected.length > 0 && (
-        <div style={{ marginTop:10 }}>
-          <div style={UI.sectionLbl6}>Valgte E-numre ({selected.length})</div>
-          <div style={UI.wrapGap4}>
-            {selected.map(e => (
-              <div key={e} style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 10px",
-                background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:20 }}>
-                <div style={{ fontSize:11, fontWeight:800, color:"var(--green)" }}>{e}</div>
-                <div onClick={() => onChange(selected.filter(x=>x!==e))}
-                  onKeyDown={ev => ev.key === "Enter" && onChange(selected.filter(x=>x!==e))}
-                  role="button" aria-label={`Fjern ${e}`} tabIndex={0} className="enum-remove"
-                  style={{ lineHeight:0, padding:6, margin:-6 }}>
-                  <Icon name="x" size={11} color="var(--green)" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

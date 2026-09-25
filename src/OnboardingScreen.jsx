@@ -823,23 +823,24 @@ export default function OnboardingScreen({
                   />
                 </div>
 
-                <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(5)}>Fortsæt →</button>
-                {/* "Kan springes over" var kun en statisk billedtekst (ikke
-                    klikbar) — utydeligt at familie reelt kan springes over
-                    med ét tryk (25. sept. 2026, brugerfeedback). Samme
-                    lette, grønne sekundær-knap-stil som "Ingen særlig
-                    diæt"/"Jeg har ingen allergier..." på trin 2-3. Teksten
-                    er efterfølgende gjort mere præcis — "Spring over" kunne
-                    fejlagtigt læses som "spring felter over i formularen"
-                    i stedet for "spring hele dette trin over". */}
-                <button className="btn btn-full" style={{
-                    ...UI.mt8,
-                    background:"var(--surface)", color:"var(--green)",
-                    border:"1.5px solid var(--green-mid)",
-                  }}
-                  onClick={() => setOnboardStep(5)}>
-                  Jeg vil ikke tilføje familiemedlemmer nu
-                </button>
+                {/* Fortsæt og "spring over" var tidligere altid vist samtidig
+                    — redundant, da de betyder næsten det samme, hvis intet
+                    familiemedlem endnu er tilføjet (25. sept. 2026,
+                    brugerfeedback). Nu kun ÉN kontekstafhængig knap: så
+                    snart mindst ét familiemedlem er gemt, er "Fortsæt →"
+                    utvetydig og erstatter skip-knappen; er der ikke gemt
+                    noget, er "spring over" den eneste vej videre. */}
+                {family.length > 0 ? (
+                  <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(5)}>Fortsæt →</button>
+                ) : (
+                  <button className="btn btn-full" style={{
+                      background:"var(--surface)", color:"var(--green)",
+                      border:"1.5px solid var(--green-mid)",
+                    }}
+                    onClick={() => setOnboardStep(5)}>
+                    Jeg vil ikke tilføje familiemedlemmer nu
+                  </button>
+                )}
               </div>
             )}
 

@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React from "react";
+import { Icon } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { AllergenChipPicker, DietChipPicker, ENumberPicker } from "./AllergenPicker.jsx";
@@ -32,6 +33,11 @@ export const MemberForm = ({
   // step1Attempted). Knappen har derfor bevidst IKKE det native
   // disabled-attribut (ville blokere selve klikket og dermed forsøget).
   const [attempted, setAttempted] = React.useState(false);
+  // E-numre skal være lukket som standard, ligesom trin 2 — ellers bliver
+  // trin 4 unødigt langt for en valgfri funktion (25. sept. 2026,
+  // brugerfeedback). Lokal state, da MemberForm er en selvstændig,
+  // genbrugelig komponent uden adgang til onboardingens egen state.
+  const [showENumre, setShowENumre] = React.useState(false);
 
   return (
     <div>
@@ -90,8 +96,26 @@ export const MemberForm = ({
       {/* E-numre — samme delte ENumberPicker som trin 2 (grøn valgt-state,
           korte navne der foldes ud pr. række). Erstatter den tidligere
           lokale, røde søg/liste-implementering. */}
-      <div className="card-lbl" style={{ marginTop:16, marginBottom:8 }}>E-numre der undgås</div>
-      <ENumberPicker selected={eNumbers} onChange={setENumbers} />
+      {/* E-numre — samme lukkede-som-standard mønster som trin 2 (en
+          kompakt, valgfri række der først folder listen ud ved tryk). */}
+      <button
+        onClick={() => setShowENumre(s => !s)}
+        style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", background:"none", border:"none", cursor:"pointer", padding:"12px 2px", fontFamily:"var(--f)", marginTop:16 }}>
+        <span style={{ fontSize:12.5, fontWeight:600, color:"var(--ink2)" }}>
+          Overvåg specifikke E-numre
+          {eNumbers.length > 0
+            ? <span style={{ color:"var(--green)", fontWeight:700 }}> · {eNumbers.length} valgt</span>
+            : <span style={{ color:"var(--muted)", fontWeight:500 }}> · Valgfrit</span>}
+        </span>
+        <span style={{ display:"flex", transform: showENumre ? "rotate(90deg)" : "none", transition:".2s" }}>
+          <Icon name="chevronRight" size={16} color="var(--muted)" />
+        </span>
+      </button>
+      {showENumre && (
+        <div style={UI.mt8}>
+          <ENumberPicker selected={eNumbers} onChange={setENumbers} />
+        </div>
+      )}
 
       {/* Obligatoriske felter — hjælpetekst, kun efter et forsøgt tryk */}
       {attempted && !isValid && (
