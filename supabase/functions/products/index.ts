@@ -50,6 +50,53 @@ function normalizeAllergenFlags(raw: Record<string, unknown> | null): Record<str
   return result;
 }
 
+// ── Kør vores egen nøgleords-motor mod OFF's ingredients_text ────────────────
+// OFF's allergens_tags/traces_tags er producent-indberettede og ofte ufuldstændige
+// (bekræftet i praksis: OFF-produkter mangler jævnligt tags for allergener der
+// reelt står i selve ingredienslisten). Vi har allerede en velafprøvet
+// nøgleords-motor (samme som bruges til OCR/admin-indsendelser) i allergens-
+// funktionen — kald den internt i stedet for at duplikere ordlisten en tredje
+// gang her (se .claude/rules for hvorfor to lister allerede er en kendt gæld).
+// Bruger service-role-nøglen som intern-kald-identifikation, samme mønster som
+// auto-reparse-cronnen bruger til at kalde allergens uden en bruger-session.
+async function analyzeIngredientsViaKeywordEngine(text: string): Promise<Record<string, string> | null> {
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  if (!serviceRoleKey || !supabaseUrl || !text) return null;
+  try {
+    const res = await fetch(`${supabaseUrl}/functions/v1/allergens`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: serviceRoleKey },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.allergen_flags || null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Flet OFF-tags og nøgleords-resultat — tag altid det mest forsigtige ──────
+// yes > traces > no > unknown. OFF-tags kan sige "unknown" for et allergen
+// nøgleords-motoren faktisk fandt i teksten (eller omvendt, sjældnere) — vi vil
+// aldrig nedgradere en sikkerhedsvurdering, kun opgradere den (samme
+// fail-safe-princip som compareAllergens() i frontenden allerede bruger).
+function mergeAllergenFlags(
+  offFlags: Record<string, string>,
+  keywordFlags: Record<string, string> | null
+): Record<string, string> {
+  if (!keywordFlags) return offFlags;
+  const rank = (v: string) => (v === "yes" ? 3 : v === "traces" ? 2 : v === "no" ? 1 : 0);
+  const merged: Record<string, string> = {};
+  for (const key of Object.keys(offFlags)) {
+    const off = offFlags[key];
+    const kw = keywordFlags[key];
+    merged[key] = kw !== undefined && rank(kw) > rank(off) ? kw : off;
+  }
+  return merged;
+}
+
 async function fetchFromOFF(ean: string) {
   try {
     const res = await fetch(
@@ -196,7 +243,11 @@ Deno.serve(async (req) => {
       if (isEan && /^\d+$/.test(identifier)) {
         const offProduct = await fetchFromOFF(identifier);
         if (offProduct) {
-          const allergenFlags = mapAllergenTags(offProduct.allergens_tags, offProduct.traces_tags);
+          let allergenFlags = mapAllergenTags(offProduct.allergens_tags, offProduct.traces_tags);
+          if (offProduct.ingredients_text) {
+            const keywordFlags = await analyzeIngredientsViaKeywordEngine(offProduct.ingredients_text);
+            allergenFlags = mergeAllergenFlags(allergenFlags, keywordFlags);
+          }
 
           // Gem permanent i baggrunden — returnér svar til brugeren med det samme
           // EdgeRuntime.waitUntil sikrer at gem-operationen fuldføres selv efter response er sendt
