@@ -1,13 +1,14 @@
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
-import { compareAllergens, productDisplayName, logSearchSelection, apiCall, makeHeaders } from "./helpers.js";
+import { compareAllergens, productDisplayName, logSearchSelection, apiCall, makeHeaders, extractENumbers, buildActiveProfileList, computeProfileResults } from "./helpers.js";
 import { Icon, ProductImage, SearchResultRow, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
+import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 import { UI } from "./styleUtils.js";
 
 const S = {
@@ -88,6 +89,14 @@ function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, gra
           <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>
             Eller vælg udvalgte personer
           </div>
+          {/* Tydeliggørelse (25. sept. 2026, brugerfeedback) — familieprofiler
+              man selv har oprettet (fx et barn) har ikke nødvendigvis deres
+              egen EatSafe-konto, og kan derfor ikke inviteres/få redigerings-
+              adgang til listen her. Kun listen nedenfor (personer der reelt
+              har accepteret en invitation til EatSafe) kan det. */}
+          <div style={{ fontSize:10.5, color:"var(--muted)", marginBottom:8, lineHeight:1.4 }}>
+            Kun personer med deres egen EatSafe-konto kan få redigeringsadgang her — familieprofiler uden konto (fx et barn) deles ikke automatisk med.
+          </div>
           {loading ? (
             <div style={{ fontSize:12, color:"var(--muted)" }}>Henter…</div>
           ) : familyMembers.length === 0 ? (
@@ -132,8 +141,9 @@ export default function ListScreen({
   lookupProduct,
   onOpenHelp,
 }) {
-  const { userId, accessToken } = useAuthContext();
-  const { family, activeProfiles, setActiveProfiles } = useProfileContext();
+  const { user, userId, accessToken } = useAuthContext();
+  const { family, allergens, customAllerg, activeProfiles, setActiveProfiles } = useProfileContext();
+  const { selectedENumbers } = useAllergenPrefsContext();
   const { setScreen } = useNavigationContext();
   const { favorites } = useHistoryContext();
   const {
@@ -218,6 +228,44 @@ export default function ListScreen({
     addToList({ name: productDisplayName(p), ean: p.ean || p.code, id: p.id, image_url: p.image_url });
     setItemResults([]);
     setItemFocused(false);
+  };
+
+  // ── EatSafe-status pr. vare på listen (25. sept. 2026, brugerfeedback) ──────
+  // Henter produktdata for varer med et EAN (dvs. tilføjet fra søgning/scan,
+  // ikke en fritekst-vare) én gang pr. unikt EAN, så en diskret statuslinje
+  // under varenavnet kan vise "Matcher alle profiler"/"Konflikt for X"/"Kan
+  // ikke afgøres sikkert" — samme sikkerhedsberegning som ResultScreen bruger
+  // efter et scan (buildActiveProfileList/computeProfileResults, se
+  // helpers.js), IKKE en selvstændig kopi af logikken.
+  const [productDetails, setProductDetails] = useState({});
+  const fetchingEansRef = useRef(new Set());
+  useEffect(() => {
+    const eans = [...new Set(shoppingList.filter(i => i.ean).map(i => i.ean))];
+    const toFetch = eans.filter(ean => !(ean in productDetails) && !fetchingEansRef.current.has(ean));
+    if (toFetch.length === 0) return;
+    toFetch.forEach(ean => {
+      fetchingEansRef.current.add(ean);
+      apiCall(`${SUPABASE_URL}/functions/v1/products/${ean}`, { headers: makeHeaders(accessToken) })
+        .then(data => setProductDetails(prev => ({ ...prev, [ean]: data?.found ? data.product : null })))
+        .catch(() => setProductDetails(prev => ({ ...prev, [ean]: null })))
+        .finally(() => fetchingEansRef.current.delete(ean));
+    });
+  }, [shoppingList, accessToken]);
+
+  const activeProfileList = buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles });
+  const itemStatus = (item) => {
+    if (!item.ean || activeProfileList.length === 0) return null;
+    const product = productDetails[item.ean];
+    if (product === undefined || !product) return null; // stadig henter, eller ikke fundet — vis intet frem for et gæt
+    const ingredientsText = product.ingredients || product.ingredients_text || "";
+    const results = computeProfileResults(activeProfileList, {
+      allergen_flags: product.allergen_flags, ingredients: ingredientsText, nutrition: product.nutrition,
+      productENumbers: extractENumbers(ingredientsText),
+    });
+    const dangerNames = results.filter(r => r.status === "danger").map(r => r.name.split(" ")[0]);
+    if (dangerNames.length > 0) return { status:"danger", text: `Konflikt for ${dangerNames.join(", ")}` };
+    if (results.some(r => r.status === "warn")) return { status:"warn", text: "Kan ikke afgøres sikkert" };
+    return { status:"safe", text: results.length > 1 ? "Matcher alle profiler" : "Matcher profilen" };
   };
 
   // ── Sikker søgning: skjul produkter der er farlige for den valgte profil-
@@ -348,8 +396,9 @@ export default function ListScreen({
             )}
             {!itemSearching && (
               <div onMouseDown={() => addToList(newItemName)}
-                style={{ padding:"8px 12px", fontSize:12, color:"var(--muted)", cursor:"pointer" }}>
-                Tilføj "{newItemName.trim()}" som fritekst-vare
+                style={{ display:"flex", alignItems:"center", gap:6, padding:"11px 12px", fontSize:12.5, fontWeight:700, color:"var(--green)", cursor:"pointer", borderTop: (itemResults.length > 0 || itemHasMore) ? "1px solid var(--border)" : "none" }}>
+                <Icon name="plus" size={13} color="var(--green)" />
+                Tilføj "{newItemName.trim()}" som almindelig vare
               </div>
             )}
           </div>
@@ -399,6 +448,24 @@ export default function ListScreen({
                 {l.type === "family" && <span style={{ marginLeft:6, display:"inline-flex", verticalAlign:"middle" }}><Icon name="family" size={12} color="var(--muted)" /></span>}
                 {l.owner_id !== userId && <span style={{ marginLeft:6, fontSize:10, color:"var(--muted)" }}>(delt)</span>}
               </div>
+              {/* Sletning kræver altid et rigtigt bekræft-dialog (confirm())
+                  — bevidst valgt fremfor en tavs handling. lists.length>1-
+                  betingelsen sikrer desuden at man ALDRIG kan slette sin
+                  sidste tilbageværende liste (ingen ny automatisk oprettes
+                  igen bagefter), uanset dens navn.
+                  Undersøgt (25. sept. 2026, brugerfeedback): bør "Min
+                  indkøbsliste" specifikt være permanent/ikke-slettelig? Der
+                  findes ingen is_default-kolonne eller lignende i skemaet —
+                  den er navngivet sådan udelukkende fordi den er den FØRSTE
+                  liste loadShoppingList() opretter automatisk, og er
+                  bagefter en almindelig liste som enhver anden (kan
+                  omdøbes, deles, slettes). At låse den fast på selve
+                  NAVNET ville være skørt (brud ved omdøbning) og ville
+                  forhindre en gyldig arbejdsgang (fx konsolidere til kun
+                  "Fest"-listen og slette standardlisten). Den eksisterende
+                  lists.length>1-beskyttelse dækker allerede det reelt
+                  problematiske tilfælde (aldrig stå uden nogen liste
+                  overhovedet) — ingen yderligere lås tilføjet. */}
               {l.owner_id === userId && lists.length > 1 && (
                 <span role="button" aria-label={`Slet "${l.name}"`} tabIndex={0}
                   onClick={e => { e.stopPropagation(); if (confirm(`Slet listen "${l.name}"?`)) deleteList(l.id); }}
@@ -500,21 +567,35 @@ export default function ListScreen({
           <div className="list-section">
             Mangler ({shoppingList.filter(i=>!i.checked).length})
           </div>
-          {shoppingList.filter(i => !i.checked).map(item => (
+          {shoppingList.filter(i => !i.checked).map(item => {
+            const st = itemStatus(item);
+            return (
             <div key={item.id} className="list-item">
               <div className="list-check" role="checkbox" aria-checked="false" aria-label={`Markér "${item.name}" som købt`} tabIndex={0}
                 onClick={() => handleToggleItem(item.id, false)} onKeyDown={e => e.key === "Enter" && handleToggleItem(item.id, false)} />
               {item.ean && <ProductImage product={item} size={22} />}
-              {item.ean
-                ? <div className="list-name" role="link" tabIndex={0} style={{ cursor:"pointer", textDecoration:"underline", textDecorationColor:"var(--border2)", textUnderlineOffset:3 }}
-                    onClick={() => lookupProduct(item.ean)} onKeyDown={e => e.key === "Enter" && lookupProduct(item.ean)}>{item.name}</div>
-                : <div className="list-name">{item.name}</div>}
+              <div style={{ flex:1, minWidth:0 }}>
+                {item.ean
+                  ? <div className="list-name" role="link" tabIndex={0} style={{ cursor:"pointer", textDecoration:"underline", textDecorationColor:"var(--border2)", textUnderlineOffset:3 }}
+                      onClick={() => lookupProduct(item.ean)} onKeyDown={e => e.key === "Enter" && lookupProduct(item.ean)}>{item.name}</div>
+                  : <div className="list-name">{item.name}</div>}
+                {/* Diskret EatSafe-status (25. sept. 2026, brugerfeedback) —
+                    kun for varer med kendt produktdata (EAN), se itemStatus
+                    ovenfor. Samme grøn/rød/orange-farvesprog som resultat-
+                    siden, altid ikon+tekst, aldrig kun farve. */}
+                {st && (
+                  <div style={{ display:"flex", alignItems:"center", gap:3, marginTop:2, fontSize:10, fontWeight:600, color: st.status==="danger" ? "var(--red)" : st.status==="warn" ? "var(--amber)" : "var(--green)" }}>
+                    <Icon name={st.status==="safe" ? "check" : "warning"} size={9} color="currentColor" />
+                    {st.text}
+                  </div>
+                )}
+              </div>
               <div className="list-del" role="button" aria-label={`Slet "${item.name}"`} tabIndex={0}
                 onClick={() => removeItem(item.id)} onKeyDown={e => e.key === "Enter" && removeItem(item.id)}>
                 <Icon name="trash" size={16} color="var(--muted)" />
               </div>
             </div>
-          ))}
+          );})}
         </>
       )}
 
@@ -523,24 +604,42 @@ export default function ListScreen({
         <>
           <div className="list-section" style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
             <span>Købt ({shoppingList.filter(i=>i.checked).length})</span>
-            <span style={{ cursor:"pointer", color:"var(--red)", fontWeight:700, fontSize:12, padding:"4px 2px" }} role="button" aria-label="Ryd alle købte varer" tabIndex={0}
-              onClick={clearDone} onKeyDown={e => e.key === "Enter" && clearDone()}>Ryd</span>
+            {/* "Ryd" → "Ryd købte" + et bekræft-dialog, samme mønster som
+                liste-sletning (25. sept. 2026, brugerfeedback: "brug
+                destruktiv styling sparsomt") — dæmpet til --muted i stedet
+                for fuldt rødt/fed, kun et lille skraldespand-ikon som
+                visuel markør af at handlingen fjerner noget. */}
+            <span style={{ display:"flex", alignItems:"center", gap:4, cursor:"pointer", color:"var(--muted)", fontWeight:700, fontSize:11.5, padding:"4px 2px" }} role="button" aria-label="Ryd alle købte varer" tabIndex={0}
+              onClick={() => { if (confirm("Fjern alle købte varer fra listen?")) clearDone(); }}
+              onKeyDown={e => { if (e.key === "Enter" && confirm("Fjern alle købte varer fra listen?")) clearDone(); }}>
+              <Icon name="trash" size={11} color="var(--muted)" /> Ryd købte
+            </span>
           </div>
-          {shoppingList.filter(i => i.checked).map(item => (
+          {shoppingList.filter(i => i.checked).map(item => {
+            const st = itemStatus(item);
+            return (
             <div key={item.id} className="list-item done">
               <div className="list-check checked" role="checkbox" aria-checked="true" aria-label={`Fjern "${item.name}" fra købt`} tabIndex={0}
                 onClick={() => toggleItem(item.id)} onKeyDown={e => e.key === "Enter" && toggleItem(item.id)}><Icon name="check" size={12} color="#fff" /></div>
               {item.ean && <ProductImage product={item} size={22} />}
-              {item.ean
-                ? <div className="list-name done" role="link" tabIndex={0} style={{ cursor:"pointer" }}
-                    onClick={() => lookupProduct(item.ean)} onKeyDown={e => e.key === "Enter" && lookupProduct(item.ean)}>{item.name}</div>
-                : <div className="list-name done">{item.name}</div>}
+              <div style={{ flex:1, minWidth:0 }}>
+                {item.ean
+                  ? <div className="list-name done" role="link" tabIndex={0} style={{ cursor:"pointer" }}
+                      onClick={() => lookupProduct(item.ean)} onKeyDown={e => e.key === "Enter" && lookupProduct(item.ean)}>{item.name}</div>
+                  : <div className="list-name done">{item.name}</div>}
+                {st && (
+                  <div style={{ display:"flex", alignItems:"center", gap:3, marginTop:2, fontSize:10, fontWeight:600, color: st.status==="danger" ? "var(--red)" : st.status==="warn" ? "var(--amber)" : "var(--green)" }}>
+                    <Icon name={st.status==="safe" ? "check" : "warning"} size={9} color="currentColor" />
+                    {st.text}
+                  </div>
+                )}
+              </div>
               <div className="list-del" role="button" aria-label={`Slet "${item.name}"`} tabIndex={0}
                 onClick={() => removeItem(item.id)} onKeyDown={e => e.key === "Enter" && removeItem(item.id)}>
                 <Icon name="trash" size={16} color="var(--muted)" />
               </div>
             </div>
-          ))}
+          );})}
         </>
       )}
     </div>

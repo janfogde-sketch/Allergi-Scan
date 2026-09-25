@@ -1,8 +1,8 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compareENumbers, checkDietCompatibility, verifiedBadge, makeHeaders, productDisplayName, matchCustomAllergens } from "./helpers.js";
-import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet } from "./SharedComponents.jsx";
+import { compareENumbers, checkDietCompatibility, verifiedBadge, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findActiveListMatch } from "./helpers.js";
+import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -35,12 +35,14 @@ export default function ResultScreen({
   const { family, allergens, customAllerg, activeProfiles } = useProfileContext();
   const { setScreen } = useNavigationContext();
   const { isFavorite, toggleFavorite } = useHistoryContext();
-  const { lists, activeListId, addToList } = useShoppingContext();
+  const { lists, activeList, activeListId, addToList, shoppingList, toggleItem } = useShoppingContext();
   const [addedToList, setAddedToList] = React.useState(false);
   const [showListPicker, setShowListPicker] = React.useState(false);
+  const [listMatchDismissed, setListMatchDismissed] = React.useState(false);
+  const [listMatchConfirmed, setListMatchConfirmed] = React.useState(false);
   // Nulstil "tilføjet"-kvitteringen når man ser et nyt produkt — ResultScreen
   // forbliver monteret på tværs af scanninger, kun scanResult skifter.
-  React.useEffect(() => { setAddedToList(false); setShowListPicker(false); }, [scanResult?.code]);
+  React.useEffect(() => { setAddedToList(false); setShowListPicker(false); setListMatchDismissed(false); setListMatchConfirmed(false); }, [scanResult?.code]);
   if (!scanResult) return null;
 
   // ── Per-profil sikkerhedsvurdering (25. sept. 2026, brugerfeedback) ──────
@@ -50,40 +52,15 @@ export default function ResultScreen({
   // scanResult, som useProduct.js bygger ud fra det sammenlagte activeIds-
   // sæt til appens øvrige, eksisterende brug af det) — et skift af aktive
   // profiler mens et resultat vises opdaterer dermed visningen øjeblikkeligt
-  // uden et nyt scan.
-  const resultFlags = scanResult.allergen_flags || {};
-  const resultProfilesRaw = [
-    { id:"me", name: user.name || "Dig", allergens, custom: customAllerg || [], diets: user.diets || [], eNumbers: selectedENumbers || [], color: null },
-    ...family.map(m => ({ id:m.id, name:m.name, allergens: m.allergens || [], custom: m.custom || [], diets: m.diets || [], eNumbers: m.eNumbers || [], color: m.color })),
-  ].filter(p => activeProfiles.includes(p.id));
-
-  const profileResults = resultProfilesRaw.map(p => {
-    const danger = p.allergens.filter(a => resultFlags[a] === "yes");
-    const warning = p.allergens.filter(a => resultFlags[a] === "traces");
-    // Fritekst-match af profilens egne tilføjede allergier — se
-    // matchCustomAllergens' egen kommentar for hvorfor dette er mindre
-    // pålideligt end de faste allergener (ingen synonymer).
-    const customMatches = p.custom?.length ? matchCustomAllergens(scanResult.ingredients, p.custom) : [];
-    const dietResults = (p.diets || []).map(d => ({
-      id: d, label: DIETS.find(x => x.id === d)?.label || d,
-      ...checkDietCompatibility(d, resultFlags, scanResult.ingredients, scanResult.nutrition),
-    }));
-    const dietFails = dietResults.filter(r => r.ok === false);
-    const eNumberMatches = (scanResult.productENumbers?.length > 0 && p.eNumbers?.length > 0)
-      ? compareENumbers(scanResult.productENumbers, p.eNumbers).matched
-      : [];
-
-    const reasons = [
-      ...danger.map(id => ALLERGENS.find(a => a.id === id)?.label || id),
-      ...customMatches.map(t => `Muligvis "${t}"`),
-      ...warning.map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id}`),
-      ...dietFails.map(r => `${r.label}: ${r.reasons[0] || "passer ikke"}`),
-      ...eNumberMatches.map(e => `Overvåget E-nummer ${e}`),
-    ];
-    const status = (danger.length > 0 || customMatches.length > 0) ? "danger"
-      : (warning.length > 0 || dietFails.length > 0 || eNumberMatches.length > 0) ? "warn"
-      : "safe";
-    return { ...p, status, reasons, danger, warning };
+  // uden et nyt scan. Selve beregningen (buildActiveProfileList/
+  // computeProfileResults) er delt med ListScreen.jsx's per-vare-status —
+  // se helpers.js for hvorfor.
+  const resultProfilesRaw = buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles });
+  const profileResults = computeProfileResults(resultProfilesRaw, {
+    allergen_flags: scanResult.allergen_flags,
+    ingredients: scanResult.ingredients,
+    nutrition: scanResult.nutrition,
+    productENumbers: scanResult.productENumbers,
   });
 
   const isMultiProfile = profileResults.length > 1;
@@ -105,6 +82,19 @@ export default function ResultScreen({
     setShowListPicker(false);
     addToList({ name: productDisplayName({ name: scanResult.name, brand: scanResult.brand }), ean: scanResult.code, id: scanResult.id, image_url: scanResult.image_url }, listId)
       .then(ok => { if (ok) setAddedToList(true); });
+  };
+
+  // ── Scan-integration: matcher det scannede produkt en umarkeret vare på
+  // den aktive indkøbsliste? (25. sept. 2026, brugerfeedback) — kun et
+  // diskret forslag, ALDRIG en automatisk markering; kræver et eksplicit
+  // klik fra brugeren (se knappen nedenfor). Skjules resten af visningen
+  // af dette scan-resultat, hvis brugeren enten bekræfter eller afviser.
+  const listMatch = (!listMatchDismissed && !listMatchConfirmed) ? findActiveListMatch(shoppingList, scanResult) : null;
+  const confirmListMatch = () => {
+    if (!listMatch) return;
+    toggleItem(listMatch.id);
+    setListMatchConfirmed(true);
+    showToast(`"${listMatch.name}" markeret som købt`, "success");
   };
 
   // ── Småbørn-advarsler (under 3 år) ──────────────────────────────────────────
@@ -520,6 +510,22 @@ export default function ResultScreen({
       </button>
       {showListPicker && (
         <ListPickerSheet lists={lists} onChoose={chooseListForAdd} onCancel={() => setShowListPicker(false)} />
+      )}
+
+      {/* ── Scan-integration: forslag om at markere en matchende vare på
+          indkøbslisten som købt — diskret, kræver et eksplicit klik. ── */}
+      {listMatch && (
+        <div style={{ display:"flex", alignItems:"center", gap:8, background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, padding:"9px 10px", marginBottom:10 }}>
+          <Icon name="cart" size={14} color="var(--green)" />
+          <button type="button" onClick={confirmListMatch}
+            style={{ flex:1, minWidth:0, textAlign:"left", background:"none", border:"none", padding:0, cursor:"pointer", fontFamily:"var(--f)", fontSize:11.5, fontWeight:700, color:"var(--green)", lineHeight:1.4 }}>
+            Matcher "{listMatch.name}" på din liste – markér som købt
+          </button>
+          <button type="button" aria-label="Afvis forslag" onClick={() => setListMatchDismissed(true)}
+            style={{ background:"none", border:"none", cursor:"pointer", padding:4, flexShrink:0, display:"flex" }}>
+            <Icon name="x" size={13} color="var(--muted)" />
+          </button>
+        </div>
       )}
 
       {/* ── 1b. SIKRE ALTERNATIVER ── */}
