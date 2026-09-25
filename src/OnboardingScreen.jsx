@@ -191,11 +191,18 @@ export default function OnboardingScreen({
             )}
           </div>
 
-          {/* Telefon */}
+          {/* Telefon — +45 er låst, brugeren skriver kun selve nummeret */}
           <div style={{ marginBottom:17 }}>
             <label className="field-lbl">Telefonnummer <span style={UI.red}>*</span></label>
-            <input className="field" type="tel" placeholder="+45 12 34 56 78"
-              value={user.phone||""} onChange={e => setUser(u => ({...u, phone:e.target.value}))} />
+            <div className="field phone-field">
+              <span className="phone-prefix">+45</span>
+              <input className="phone-rest" type="tel" inputMode="numeric" placeholder="12 34 56 78"
+                value={(user.phone||"").replace(/^\+45\s*/, "")}
+                onChange={e => {
+                  const rest = e.target.value.replace(/[^\d\s]/g, "");
+                  setUser(u => ({...u, phone: rest ? `+45 ${rest}` : ""}));
+                }} />
+            </div>
           </div>
 
           {/* Alder — kompakt "− tal +"-stepper i stedet for et smalt talfelt */}
