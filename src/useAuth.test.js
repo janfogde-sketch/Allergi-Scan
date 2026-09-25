@@ -52,7 +52,7 @@ describe("useAuth handleLogin — validation guards", () => {
     const { result } = setup();
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("wrongpass"); });
     await act(async () => { await result.current.handleLogin(); });
-    expect(result.current.authError).toBe("Forkert email eller kodeord.");
+    expect(result.current.authError).toBe("Forkert email eller adgangskode.");
   });
 
   it("saves tokens and navigates home on a successful login", async () => {

@@ -8,14 +8,18 @@
 import { useState, useEffect, useCallback } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { apiCall, decodeJwtPayload } from "./helpers.js";
+import { showToast } from "./SharedComponents.jsx";
 
 export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
                           onSignupSuccess }) {
 
-  // ── Token state — persisteret i localStorage ──────────────────────────────
-  const [accessToken, setAccessToken]   = useState(() => localStorage.getItem("as_token") || null);
-  const [refreshToken, setRefreshToken] = useState(() => localStorage.getItem("as_refresh") || null);
-  const [userId, setUserId]             = useState(() => localStorage.getItem("as_user_id") || null);
+  // ── Token state — persisteret i localStorage (eller sessionStorage, se
+  // rememberMe nedenfor) — falder tilbage til sessionStorage ved opstart,
+  // så et token gemt dér (rememberMe=false) også findes igen efter en
+  // genindlæsning inden for samme faneblad. ────────────────────────────────
+  const [accessToken, setAccessToken]   = useState(() => localStorage.getItem("as_token") || sessionStorage.getItem("as_token") || null);
+  const [refreshToken, setRefreshToken] = useState(() => localStorage.getItem("as_refresh") || sessionStorage.getItem("as_refresh") || null);
+  const [userId, setUserId]             = useState(() => localStorage.getItem("as_user_id") || sessionStorage.getItem("as_user_id") || null);
 
   // ── Login-formular state ───────────────────────────────────────────────────
   const [loginEmail, setLoginEmail]     = useState("");
@@ -24,23 +28,34 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   const [authLoading, setAuthLoading]   = useState(false);
   const [authTab, setAuthTab]           = useState("signup"); // "signup" | "login"
   const [isOAuth, setIsOAuth]           = useState(false);
+  // "Husk mig" (25. sept. 2026-brief) — sand som standard (uændret adfærd:
+  // token i localStorage, overlever browseren lukkes). Slået fra gemmes
+  // tokenet i sessionStorage i stedet, så det forsvinder når fanebladet
+  // lukkes. saveTokens rydder altid den ANDEN storage for de samme nøgler,
+  // så der aldrig ligger to modstridende kopier af det samme token.
+  const [rememberMe, setRememberMe]     = useState(true);
 
-  // ── Gem tokens i localStorage ─────────────────────────────────────────────
+  // ── Gem tokens i localStorage/sessionStorage ──────────────────────────────
   const saveTokens = useCallback((access, refresh, uid) => {
     setAccessToken(access);
     setRefreshToken(refresh);
     setUserId(uid);
-    localStorage.setItem("as_token", access);
-    localStorage.setItem("as_refresh", refresh);
-    localStorage.setItem("as_user_id", uid);
-  }, []);
+    const store = rememberMe ? localStorage : sessionStorage;
+    const other = rememberMe ? sessionStorage : localStorage;
+    store.setItem("as_token", access);
+    store.setItem("as_refresh", refresh);
+    store.setItem("as_user_id", uid);
+    other.removeItem("as_token");
+    other.removeItem("as_refresh");
+    other.removeItem("as_user_id");
+  }, [rememberMe]);
 
   // ── Ryd auth ved logout / slet konto ─────────────────────────────────────
   const clearAuth = useCallback(() => {
     setAccessToken(null); setRefreshToken(null); setUserId(null);
-    localStorage.removeItem("as_token");
-    localStorage.removeItem("as_refresh");
-    localStorage.removeItem("as_user_id");
+    localStorage.removeItem("as_token"); sessionStorage.removeItem("as_token");
+    localStorage.removeItem("as_refresh"); sessionStorage.removeItem("as_refresh");
+    localStorage.removeItem("as_user_id"); sessionStorage.removeItem("as_user_id");
     setUser({ name:"", age:"", email:"", phone:"", password:"", role:"" });
     setAllergens([]); setCustomAllerg([]);
     // App.jsx rydder family/history/shopping via useEffect på accessToken
@@ -93,7 +108,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   // naturligt udløb + fejlet baggrunds-fornyelse) efterlod brugeren på
   // Hjem-skærmen som om de var logget ind, indtil et API-kald fejlede.
   useEffect(() => {
-    const tokenFromStorage = localStorage.getItem("as_token");
+    const tokenFromStorage = localStorage.getItem("as_token") || sessionStorage.getItem("as_token");
     if (!tokenFromStorage) return;
     let cancelled = false;
 
@@ -109,7 +124,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       if (cancelled || checkRes.ok) return; // Tokenet er gyldigt
 
       // Tokenet blev afvist af Supabase — prøv at forny det med det samme
-      const storedRefresh = localStorage.getItem("as_refresh");
+      const storedRefresh = localStorage.getItem("as_refresh") || sessionStorage.getItem("as_refresh");
       if (!storedRefresh) { if (!cancelled) clearAuth(); return; }
 
       let refreshRes;
@@ -191,13 +206,13 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       if (!res.ok) {
         const msg = data.msg || data.error_description || data.message || "";
         if (msg.toLowerCase().includes("invalid login") || msg.toLowerCase().includes("invalid credentials"))
-          throw new Error("Forkert email eller kodeord.");
+          throw new Error("Forkert email eller adgangskode.");
         throw new Error(msg || "Login fejlede.");
       }
       saveTokens(data.access_token, data.refresh_token, data.user.id);
       setScreen(SCREENS.HOME);
     } catch (e) {
-      setAuthError(e.message || "Forkert email eller kodeord. Prøv igen.");
+      setAuthError(e.message || "Forkert email eller adgangskode. Prøv igen.");
     }
     setAuthLoading(false);
   }, [loginEmail, loginPassword, saveTokens, setScreen]);
@@ -205,7 +220,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   // ── Signup ────────────────────────────────────────────────────────────────
   const handleSignup = useCallback(async () => {
     if (!loginEmail || !loginEmail.includes("@")) { setAuthError("Indtast en gyldig email-adresse."); return; }
-    if (!loginPassword || loginPassword.length < 6) { setAuthError("Kodeordet skal være mindst 6 tegn."); return; }
+    if (!loginPassword || loginPassword.length < 6) { setAuthError("Adgangskoden skal være mindst 6 tegn."); return; }
     setAuthLoading(true); setAuthError("");
     try {
       const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
@@ -223,7 +238,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         if (msg.toLowerCase().includes("already registered") || data.error_code === "email_exists")
           throw new Error("Denne email er allerede registreret. Prøv at logge ind i stedet.");
         if (msg.toLowerCase().includes("password") || msg.toLowerCase().includes("weak"))
-          throw new Error("Kodeordet er for svagt. Brug mindst 6 tegn.");
+          throw new Error("Adgangskoden er for svag. Brug mindst 6 tegn.");
         throw new Error(msg || "Oprettelse fejlede. Prøv igen.");
       }
       if (data.access_token) {
@@ -255,6 +270,30 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     }
   }, []);
 
+  // ── Glemt adgangskode (25. sept. 2026-brief) — samme REST-mønster som
+  // handleLogin/handleSignup, mod Supabases indbyggede recover-endpoint.
+  // Supabase sender selv en email med nulstillingslink; vi viser blot en
+  // bekræftelse via den delte Toast, ikke via error-box (det er ikke en fejl).
+  const handleForgotPassword = useCallback(async () => {
+    if (!loginEmail || !loginEmail.includes("@")) {
+      setAuthError("Indtast din email for at nulstille adgangskoden.");
+      return;
+    }
+    setAuthLoading(true); setAuthError("");
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
+        body: JSON.stringify({ email: loginEmail }),
+      });
+      if (!res.ok) throw new Error("Kunne ikke sende nulstillingslink. Prøv igen.");
+      showToast("Tjek din email for at nulstille adgangskoden.", "success");
+    } catch (e) {
+      setAuthError(e.message || "Kunne ikke sende nulstillingslink. Prøv igen.");
+    }
+    setAuthLoading(false);
+  }, [loginEmail]);
+
   return {
     accessToken, setAccessToken,
     refreshToken, setRefreshToken,
@@ -265,10 +304,12 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     authLoading, setAuthLoading,
     authTab, setAuthTab,
     isOAuth, setIsOAuth,
+    rememberMe, setRememberMe,
     saveTokens,
     clearAuth,
     handleLogin,
     handleSignup,
     handleOAuth,
+    handleForgotPassword,
   };
 }

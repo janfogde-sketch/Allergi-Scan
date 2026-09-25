@@ -205,6 +205,16 @@ body{
     radial-gradient(ellipse 75% 60% at 50% 40%, rgba(255,255,255,.92) 0%, rgba(255,255,255,.72) 40%, rgba(255,255,255,.32) 72%, rgba(255,255,255,.1) 100%),
     url(${scanHeroBg});
 }
+/* Ekstra dæmpning specifikt på Log ind/Opret konto-skærmen (25. sept.
+   2026-brief: "Dæmp baggrunden ca. 20-30% på denne side, så formularen
+   bliver vigtigst"). Et selvstændigt, fast lag OVEN PÅ .app-bg (samme
+   z-index:0, men senere i DOM'en — se App.jsx — så det maler ovenpå
+   vignetten uden at ændre den for resten af appen). Ren hvid, ingen
+   mørk/tung overlay, som briefen eksplicit bad om at undgå. */
+.app-bg-dim{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:rgba(255,255,255,.28);
+}
 
 /* ── TOPBAR ── */
 .topbar{
@@ -433,6 +443,30 @@ body{
 .login-shield{width:64px;height:64px;background:none;border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;overflow:hidden;}
 .login-title{font-size:24px;font-weight:700;color:var(--ink);letter-spacing:-.5px;}
 .login-sub{font-size:13px;color:var(--muted);margin-top:4px;}
+/* Formular-kort (25. sept. 2026-brief): "tydeligt hvidt formular-kort med
+   16-20px radius, diskret skygge, god indvendig padding" — erstatter den
+   generiske .card (12px radius, 16px padding, brugt overalt ellers i appen)
+   specifikt på Opret konto/Log ind, så kortet får mere "luft" og fremstår
+   som skærmens klare fokuspunkt, uden at ændre .card noget andet sted. */
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px 20px;box-shadow:var(--sh2);margin-bottom:10px;}
+/* Segmenteret kontrol — "Ny bruger | Log ind" aktiv-tilstand hævet fra en
+   næsten usynlig markering (samme --surface2-farve som rækkens egen
+   baggrund, kun adskilt af en skygge) til en tydelig, men rolig markering
+   (25. sept. 2026-brief) — hvid pille i EatSafes scan-CTA-grøn tekstfarve
+   (#0E8F5A) på en meget lys grøn baggrund (#EFF9F4), samme palet som resten
+   af onboarding-flowet. */
+.tab-row{display:flex;gap:3px;background:#EFF9F4;border-radius:10px;padding:3px;margin-bottom:14px;border:1px solid var(--green-mid);}
+.tab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink2);transition:all .15s;}
+.tab.active{background:var(--surface);color:#0E8F5A;box-shadow:var(--sh);}
+/* Sociale login-knapper — hvide/neutrale med platformens eget ikon (25.
+   sept. 2026-brief: "undgå en stor blå Facebook-knap, fordi den stjæler
+   fokus fra EatSafe"). Én delt klasse for Google/Apple/Facebook, så alle
+   tre reelt er visuelt lige stærke — og altid svagere end .welcome-btn
+   (den primære CTA), som briefen kræver. */
+.social-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px 16px;background:var(--surface);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-family:var(--f);font-size:14px;font-weight:600;color:var(--ink);transition:all .15s;}
+.social-btn:hover{background:var(--surface2);border-color:var(--ink2);}
+.social-btn:active{transform:scale(.98);}
+.social-btn:disabled{opacity:.5;cursor:not-allowed;}
 
 /* ── ONBOARDING ── */
 .onboard-wrap{padding:20px 16px 100px;}
@@ -606,9 +640,6 @@ body{
 .demo-code:hover{border-color:var(--green);color:var(--green);background:var(--green-lt);}
 .screen-title{font-size:16px;font-weight:800;color:var(--ink);margin:10px 0 3px;letter-spacing:-.2px;text-align:center;width:100%;text-shadow:0 1px 2px rgba(255,255,255,.85),0 2px 12px rgba(255,255,255,.6);}
 .screen-sub{font-size:11px;color:var(--ink2);margin-bottom:10px;line-height:1.4;font-weight:400;}
-.tab-row{display:flex;gap:3px;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:14px;border:1px solid var(--border);}
-.tab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--muted);transition:all .15s;}
-.tab.active{background:var(--surface2);color:var(--ink);box-shadow:var(--sh);}
 #qr-reader{width:100%!important;border:none!important;min-height:200px;}
 #qr-reader video{width:100%!important;height:auto!important;border-radius:8px!important;display:block!important;}
 #qr-reader__dashboard{display:none!important;}

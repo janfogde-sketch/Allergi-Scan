@@ -167,7 +167,8 @@ export default function EatSafe() {
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
     authError, setAuthError, authLoading, setAuthLoading,
     authTab, setAuthTab, isOAuth, setIsOAuth,
-    saveTokens, clearAuth, handleLogin, handleSignup, handleOAuth,
+    rememberMe, setRememberMe,
+    saveTokens, clearAuth, handleLogin, handleSignup, handleOAuth, handleForgotPassword,
   } = useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
                 onSignupSuccess: () => setOnboardStep(1) });
 
@@ -744,8 +745,9 @@ export default function EatSafe() {
     user, setUser, userId, setUserId, accessToken,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
     authError, setAuthError, authLoading, authTab, setAuthTab,
-    isOAuth, handleLogin, handleSignup, handleOAuth, clearAuth,
-  }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, authLoading, authTab, isOAuth, handleLogin, handleSignup, handleOAuth, clearAuth]);
+    isOAuth, rememberMe, setRememberMe,
+    handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth,
+  }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, authLoading, authTab, isOAuth, rememberMe, handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth]);
 
   const profileContextValue = useMemo(() => ({
     allergens, setAllergens, customAllerg, setCustomAllerg,
@@ -850,6 +852,11 @@ export default function EatSafe() {
             i modsætning til det generelle app-bg-billede (kanel/krydderier/
             chokolade m.m.), som ikke matcher briefens ingrediensliste. */}
         <div className={`app-bg${(screen === SCREENS.HOME || screen === SCREENS.WELCOME) ? " app-bg-scan" : ""}`} aria-hidden="true" />
+        {/* Ekstra dæmpning af baggrunden KUN på Log ind/Opret konto (25. sept.
+            2026-brief: "formularen bliver vigtigst") — se .app-bg-dim i
+            theme.jsx. Selvstændigt lag i stedet for at ændre .app-bg selv, så
+            resten af appen beholder sin nuværende baggrunds-intensitet. */}
+        {screen === SCREENS.LOGIN && <div className="app-bg-dim" aria-hidden="true" />}
 
         {/* Skip-link for tastatur/screen reader brugere */}
         <a href="#main-content" className="skip-link">Spring til indhold</a>
