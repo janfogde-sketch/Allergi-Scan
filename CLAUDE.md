@@ -69,6 +69,7 @@ at tilføje til indkøbsliste.
 | Backend | Supabase (projekt-id `jegrpcflyguadyxialkm`) — Postgres, Edge Functions, Auth |
 | Ejer/admin | janfogde@gmail.com |
 | Team-adgang | `bjangst@gmail.com` (Jans forretningspartner) — GitHub-collaborator på repoet + Supabase-organisationen (rolle: Developer). **Ikke** medlem på Vercel — Hobby-planen tillader kun én bruger; ville kræve opgradering til Pro for at tilføje flere. Kode-ændringer sker derfor via GitHub, og Vercel auto-deployer som normalt uden at bjangst behøver Vercel-adgang. |
+| Rollefordeling (25. sept. 2026) | **Bjørn ejer design/UI/UX** — farver, layout, komponenter, animationer, baggrundsbilleder og lignende. **Jan fokuserer på backend** — Supabase (skema, RLS, Edge Functions, sikkerhed), data-/funktionsændringer, integrationer. Ved en session der starter fra Jans instruktioner: forvent primært backend-/funktionsarbejde, og vær varsom med at foreslå eller lave designændringer på eget initiativ — design-beslutninger hører nu under Bjørns spor. Ved tvivl om hvis "spor" en opgave hører under: spørg, i stedet for at antage. |
 
 Se `src/CONTEXT.md` for fuld database-skema-reference, edge-function-liste og
 integrationsdetaljer (Madpas, familie-deling, auto-import-pipeline m.m.).
@@ -303,19 +304,38 @@ nye krav der skal implementeres, ikke som spørgsmål der skal diskuteres først
   virker ikke troværdigt uden det rigtige domæne — kun til at verificere
   UI/layout/funktioner visuelt.
 
-  **Stående regel (24. sept. 2026 — brugerens eksplicitte instruks): push/
-  merge til Vercel KUN ved funktions- og dataændringer, ALDRIG ved rene
-  design-/visuelle ændringer** (farver, layout, spacing, baggrundsbilleder,
-  skrifttype/vægt, skygger, ikoner og lignende). Rene design-opgaver
-  afsluttes med byg/test/mojibake-scan/commit som normalt (se trin 1-5
-  ovenfor) og verificeres i en Artifact-preview — men PUSH IKKE, opret IKKE
-  PR, og merge IKKE til `main` for dem. Commits bliver liggende lokalt på
-  feature-branchen til enten (a) en efterfølgende funktions-/dataændring i
-  samme arbejdsomgang bundler dem ind i én PR, eller (b) brugeren eksplicit
-  beder om at få dem shippet. Undtagelsen i afsnit 4 for kritiske/
-  blokerende produktionsfejl (fx et reelt crash) står stadig over denne
-  regel — den slags shippes altid med det samme, uanset om fejlen stammer
-  fra en design- eller funktionsændring.
+  **Stående regel (24. sept. 2026 — brugerens eksplicitte instruks, udvidet
+  25. sept. 2026): push/merge til Vercel KUN ved funktions- og
+  dataændringer, ALDRIG ved rene design-/visuelle ændringer** (farver,
+  layout, spacing, baggrundsbilleder, skrifttype/vægt, skygger, ikoner og
+  lignende) **og ALDRIG ved rene dokument-/dokumentationsændringer**
+  (`CLAUDE.md`, `src/CONTEXT.md`, `.claude/HISTORY.md`, `README.md`,
+  kommentarer og lignende — de påvirker ikke den byggede app, så et
+  Vercel-deploy for dem er ren spildt kvote). Rene design- eller
+  dokumentations-opgaver afsluttes med byg/test/mojibake-scan/commit som
+  normalt (se trin 1-5 ovenfor) — design verificeres i en Artifact-preview,
+  dokumentationsændringer kræver ingen verifikation ud over selve
+  commit'en — men PUSH IKKE, opret IKKE PR, og merge IKKE til `main` for
+  dem. Commits bliver liggende lokalt på feature-branchen til enten (a) en
+  efterfølgende funktions-/dataændring i samme arbejdsomgang bundler dem
+  ind i én PR, eller (b) brugeren eksplicit beder om at få dem shippet.
+  Undtagelsen i afsnit 4 for kritiske/blokerende produktionsfejl (fx et
+  reelt crash) står stadig over denne regel — den slags shippes altid med
+  det samme, uanset om fejlen stammer fra en design-, dokumentations- eller
+  funktionsændring.
+
+  **Fundet overtrådt i praksis samme dag (PR #307/#308):** en anden,
+  parallel session mergede to rene design-PR'er (Scan-CTA-farve/-puls +
+  baggrundsbillede) direkte til `main`/Vercel FØR denne regel var skrevet
+  ned af den session der satte den — men opdagede først reglen (via
+  `git merge`s auto-merge af CLAUDE.md) EFTER begge allerede var mergede,
+  og fulgte den ikke retroaktivt. Konsekvens: Vercels daglige kvote blev
+  ramt af de mange hurtige merges, og brugeren så en forældet, ufikset
+  version af appen i flere minutter mens produktions-deploy ventede på
+  kvote-reset. **Læren:** læs hele den mergede CLAUDE.md igennem efter en
+  `git merge` med reelle konflikter — ikke kun de linjer der konfliktede —
+  en stående regel kan være tilføjet i en del af filen der auto-mergede
+  stille og roligt uden at kræve din opmærksomhed.
 
   **Fundet overtrådt i praksis samme dag (PR #307/#308):** en anden,
   parallel session mergede to rene design-PR'er (Scan-CTA-farve/-puls +

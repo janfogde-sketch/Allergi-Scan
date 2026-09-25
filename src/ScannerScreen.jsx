@@ -320,15 +320,17 @@ export default function ScannerScreen({
                 onChange={e => { if (e.target.files[0]) scanPhotoForEan(e.target.files[0]); e.target.value=""; }} />
 
               {/* Forside-hero når kamera ikke er aktivt: hilsen + stor scan-
-                  knap + Beta-info-fod, siddende oven på Scan-forsidens EGET
-                  baggrundsfoto — som nu er et app-bg-lag (App.jsx's
-                  app-bg-scan-klasse, theme.jsx), ikke en <img> herinde. Det
-                  var oprindeligt en <img> direkte i .home-hero-frame, men den
-                  udgave var begrænset til rummet MELLEM topbar og bundnav
-                  (kunne aldrig dække kant-til-kant uden en risikabel
-                  tilbagevenden til flex-fill-højde, se HISTORY.md) — flyttet
-                  til app-bg-laget, som allerede dækker hele skærmen
-                  pålideligt. .home-hero-frame giver stadig boksen en
+                  knap + Beta-info-fod, siddende oven på det app-brede
+                  baggrundsbillede (.app-bg, theme.jsx — 25. sept. 2026:
+                  Scan-forsidens eget foto blev gjort til det universelle
+                  billede for hele appen, ikke længere Scan-specifikt),
+                  ikke en <img> herinde. Det var oprindeligt en <img> direkte
+                  i .home-hero-frame, men den udgave var begrænset til rummet
+                  MELLEM topbar og bundnav (kunne aldrig dække kant-til-kant
+                  uden en risikabel tilbagevenden til flex-fill-højde, se
+                  HISTORY.md) — flyttet til app-bg-laget, som allerede dækker
+                  hele skærmen pålideligt. .home-hero-frame giver stadig
+                  boksen en
                   DEFINITIV calc(100dvh - Npx)-højde, så hilsen/knap altid er
                   synlige uden scroll — ren layout-container nu, intet visuelt
                   eget indhold. Alle mål er clamp(min, Ncqh, max) i stedet for
@@ -345,14 +347,15 @@ export default function ScannerScreen({
               <div className="home-hero-frame">
                 <div style={{ position:"absolute", top:"calc(27% - 25px)", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
                   {/* Tykkere/større tekst + en blød hvid text-shadow-glød "løfter"
-                      teksten af baggrundsfotoet bagved (app-bg-scan, se App.jsx/
-                      theme.jsx), samme mønster som appens øvrige skærme bruger
-                      mod det app-brede baggrundsbillede. Flyttet 25px op (25.
-                      sept. 2026, opfølgning) sammen med scan-knappen herunder —
-                      brugerens ønske om at rykke hilsen/hjælpetekst/scanner-
-                      område ca. 20-30px op, ren fast pixel-forskydning (calc)
-                      oven på den eksisterende %-position, ikke en ny %-værdi —
-                      brugeren bad specifikt om px, ikke en proportional flytning. */}
+                      teksten af det app-brede baggrundsbillede bagved (.app-bg,
+                      theme.jsx — samme billede på tværs af hele appen, se dens
+                      kommentar), samme mønster som appens øvrige skærme bruger.
+                      Flyttet 25px op (25. sept. 2026, opfølgning) sammen med
+                      scan-knappen herunder — brugerens ønske om at rykke
+                      hilsen/hjælpetekst/scanner-område ca. 20-30px op, ren fast
+                      pixel-forskydning (calc) oven på den eksisterende
+                      %-position, ikke en ny %-værdi — brugeren bad specifikt
+                      om px, ikke en proportional flytning. */}
                   <div style={{ fontSize:"clamp(14px, 2.9cqh, 19px)", fontWeight:600, color:"var(--ink)", letterSpacing:"-.2px", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{getGreeting()},</div>
                   <div style={{ fontSize:"clamp(22px, 4.7cqh, 32px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(2px, .4cqh, 4px)", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{user.name?.split(" ")[0] || "der"}</div>
                   <div style={{ fontSize:"clamp(11.5px, 2.1cqh, 15px)", fontWeight:600, color:"var(--ink2)", marginTop:"clamp(5px, 1.1cqh, 9px)", lineHeight:1.5, maxWidth:250, marginLeft:"auto", marginRight:"auto", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 12px rgba(255,255,255,.6)" }}>
@@ -379,7 +382,11 @@ export default function ScannerScreen({
                     knappen er en rigtig <button> (ikke en div med role=
                     "button") for native tastatur-aktivering + pålidelig
                     :active-tryk-feedback på touch-enheder
-                    (.scan-cta-btn:active, theme.jsx). */}
+                    (.scan-cta-btn:active, theme.jsx). En parallel session
+                    forsøgte samme dag et hvidt ghost/outline-design med en
+                    roterende ring-lys (mockup "C") — bevidst ikke genindført
+                    ved sammenlægningen med main, se theme.jsx's kommentar
+                    ved .scan-cta-halo for begrundelsen. */}
                 <div style={{ position:"absolute", top:"calc(44% - 18px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
                   <div style={{ position:"relative", width:"clamp(132px, 34cqh, 219px)", height:"clamp(132px, 34cqh, 219px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
                     <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-20px, -3.3cqh, -9px)", borderRadius:"50%",

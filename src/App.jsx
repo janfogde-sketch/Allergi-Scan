@@ -842,24 +842,22 @@ export default function EatSafe() {
       <div className="app" role="application" aria-label="EatSafe">
         {/* App-bred baggrund — ét fast billede bag alt andet indhold, se
             .app-bg i theme.jsx for hvorfor det er en ægte position:fixed-boks
-            og ikke background-attachment:fixed. Scan-forsiden (SCREENS.HOME)
-            får sit EGET baggrundsfoto via app-bg-scan-klassen (.app-bg.app-bg-
-            scan, theme.jsx) — dækker hele skærmen kant-til-kant i stedet for
-            kun rummet mellem topbar/bundnav, som en tidligere <img>-i-hero-
-            frame-udgave var begrænset til. Samme billede genbruges nu også på
-            WELCOME- OG LOGIN-skærmen (25. sept. 2026-brief, senest udvidet:
-            "match velkomstsiden 1:1 i brandudtryk... samme type ingredienser
-            placeret i kanterne") — billedet viser netop de allergen-kilder
-            briefen bad om (mælk/æg/havre/fisk/skaldyr/nødder), i modsætning
-            til det generelle app-bg-billede (kanel/krydderier/chokolade
-            m.m.), som ikke matcher briefens ingrediensliste. */}
-        <div className={`app-bg${[SCREENS.HOME, SCREENS.WELCOME, SCREENS.LOGIN].includes(screen) ? " app-bg-scan" : ""}`} aria-hidden="true" />
+            og ikke background-attachment:fixed. 25. sept. 2026: Scan-forsidens
+            EGET baggrundsfoto (tidligere kun vist på SCREENS.HOME via en
+            app-bg-scan-modifier-klasse) er gjort til det ENE, universelle
+            billede for hele appen (main) — modifier-klassen er derfor fjernet,
+            .app-bg bruger nu samme billede direkte, se theme.jsx. Matcher også
+            denne sessions eget mål (brandkonsistens-brief: "match velkomstsiden
+            1:1... samme type ingredienser placeret i kanterne" på tværs af
+            Scan/Velkomst/Login) — billedet viser netop de allergen-kilder
+            briefen bad om (mælk/æg/havre/fisk/skaldyr/nødder). */}
+        <div className="app-bg" aria-hidden="true" />
         {/* Ekstra, let dæmpning af baggrunden KUN på Log ind/Opret konto
             (25. sept. 2026-brief: "formularen bliver vigtigst", "baggrunden
             må gerne være let dæmpet på formularsiderne") — se .app-bg-dim i
-            theme.jsx. Selvstændigt lag OVEN PÅ det nu delte Scan/Velkomst/
-            Login-baggrundsfoto, i stedet for at ændre .app-bg-scan selv, så
-            Scan- og Velkomst-skærmen beholder deres nuværende intensitet. */}
+            theme.jsx. Selvstændigt lag OVEN PÅ det nu universelle baggrunds-
+            billede, i stedet for at ændre .app-bg selv, så resten af appen
+            beholder sin nuværende intensitet. */}
         {screen === SCREENS.LOGIN && <div className="app-bg-dim" aria-hidden="true" />}
 
         {/* Skip-link for tastatur/screen reader brugere */}

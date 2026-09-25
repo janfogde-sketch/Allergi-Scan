@@ -6,7 +6,6 @@
 // Skift tema ved at ændre THEME-objektet herunder — resten følger automatisk.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import appBackground from "./assets/app-background.webp";
 import scanHeroBg from "./assets/home/scan-hero-bg.webp";
 
 export const THEME = {
@@ -142,70 +141,51 @@ body{
   width:100%;position:relative;overflow-x:hidden;
   background:#FFFFFF;
 }
-/* App-bred baggrund: ét fast billede (ingredienser/frugt i en dekorativ ramme
-   om et blankt hvidt midterfelt) i stedet for det tidligere prikgitter+farve-
-   glød-lag — samme billede på tværs af ALLE skærme, ikke kun Scan-forsiden
-   (24. sept. 2026, efter Bjørns design-arbejde på Scan-siden specifikt).
-   Egen ægte position:fixed-boks (ikke background-attachment:fixed på .app)
-   — background-attachment:fixed understøttes ikke pålideligt i mobil Safari/
-   iOS-hjemmeskærm-PWA'er (velkendt, langvarig WebKit-begrænsning), mens en
-   almindelig fixed-positioneret boks virker konsekvent alle steder. Ligger
-   som første barn i .app, bag alt andet indhold via z-index:0 + .screen's
-   z-index:1 nedenfor — IKKE negativ z-index, som i visse browsere kan ende
-   bag body's egen baggrund i stedet for bag skærmens indhold.
-   Hvid slør-wash (24. sept. 2026, efter billedskifte til en tættere fyldt
-   flatlay uden det forrige billedes indbyggede blanke midterfelt) — tekst
-   ligger flere steder direkte oven på dette lag uden kort/boks (Scan-
-   forsidens hilsen, screen-title øverst på flere skærme), og det nye billede
-   er markant tættere/mere farverigt end det forrige, hvilket gjorde den
-   tekst svær at læse. Løst med ÉT globalt, ensartet hvidt slør-lag frem for
-   individuelle bokse bag tekst — billedet bliver en dæmpet, stemningsfuld
-   tekstur i baggrunden i stedet for at konkurrere med indholdet, og løsningen
-   gælder automatisk alle nuværende og fremtidige skærme uden per-skærm-arbejde.
-   Dæmpet fra .8 til .5 samme dag (brugerfeedback: for kraftigt slør vaskede
-   billedets farve/elegance helt ud) — læsbarheden bæres i stedet primært af
-   tekstens egen vægt/størrelse + en blød hvid text-shadow-glød ("løft" væk
-   fra baggrunden), ikke af selve sløret. Se .screen-title nedenfor og
-   Scan-forsidens hilsen (ScannerScreen.jsx) for samme mønster.
-   Ændret fra et FLADT, ensartet slør til en RADIAL vignet (25. sept. 2026,
-   brugerens design-brief: "Skandinavisk, ren og moderne UI... baggrunden
-   skal være tydelig ude i kanterne, men have en rolig, lys og let tom
-   midterzone") — samme princip som ovenfor (dæmp der hvor tekst/knapper
-   ligger, lad billedet ånde der hvor der ikke er indhold), men nu med en
-   ellipse centreret på midten i stedet for ét fladt tal for hele billedet:
-   op til 92% hvid nær midten (hvor overskrifter/knapper typisk sidder),
-   glidende ned til kun 10% hvid ude i hjørnerne, så ingredienserne
-   (mælk/æg/havre/fisk/skaldyr/nødder) står tydeligt frem i kanterne uden at
-   det bliver en tung/mørk overlay — kun hvid, aldrig sort/farvet. */
+/* App-bred baggrund: ét fast billede bag alt andet indhold. 25. sept. 2026:
+   Scan-forsidens eget baggrundsfoto (allergen-fødevarer i to kolonner på
+   ren hvid baggrund, direkte uploadet af brugeren — tidligere kun vist på
+   SCREENS.HOME) er gjort til det ENE, universelle billede for hele appen,
+   ikke kun Scan-forsiden — samme billede, ingen skærm-specifik modifier-
+   klasse længere (se App.jsx). Egen ægte position:fixed-boks (ikke
+   background-attachment:fixed på .app) — background-attachment:fixed
+   understøttes ikke pålideligt i mobil Safari/iOS-hjemmeskærm-PWA'er
+   (velkendt, langvarig WebKit-begrænsning), mens en almindelig fixed-
+   positioneret boks virker konsekvent alle steder. Ligger som første barn
+   i .app, bag alt andet indhold via z-index:0 + .screen's z-index:1
+   nedenfor — IKKE negativ z-index, som i visse browsere kan ende bag
+   body's egen baggrund i stedet for bag skærmens indhold.
+   Hvid slør-wash — tekst ligger flere steder direkte oven på dette lag
+   uden kort/boks (Scan-forsidens hilsen, screen-title øverst på flere
+   skærme), og billedet er markant tættere/mere farverigt end det
+   oprindelige app-bg-billede, hvilket gjorde teksten svær at læse.
+   Ændret fra et FLADT, ensartet slør (main's oprindelige .5-opacity-wash,
+   se git-historik) til en RADIAL vignet (25. sept. 2026, brugerens
+   design-brief: "Skandinavisk, ren og moderne UI... baggrunden skal være
+   tydelig ude i kanterne, men have en rolig, lys og let tom midterzone")
+   — dæmp der hvor tekst/knapper ligger, lad billedet ånde der hvor der
+   ikke er indhold, med en ellipse centreret på midten i stedet for ét
+   fladt tal for hele billedet: op til 92% hvid nær midten (hvor
+   overskrifter/knapper typisk sidder), glidende ned til kun 10% hvid ude
+   i hjørnerne, så ingredienserne (mælk/æg/havre/fisk/skaldyr/nødder) står
+   tydeligt frem i kanterne uden at det bliver en tung/mørk overlay — kun
+   hvid, aldrig sort/farvet. Læsbarheden bæres desuden af tekstens egen
+   vægt/størrelse + en blød hvid text-shadow-glød ("løft" væk fra
+   baggrunden). Se .screen-title nedenfor og Scan-forsidens hilsen
+   (ScannerScreen.jsx) for samme mønster.
+   Billedet selv (Scan-forsidens eget foto, allergen-fødevarer i to
+   kolonner på ren hvid baggrund) er allerede det ENE, universelle billede
+   for hele appen (main, 25. sept. 2026) — ingen skærm-specifik modifier-
+   klasse længere (se App.jsx). */
 .app-bg{
   position:fixed;inset:0;z-index:0;pointer-events:none;
   background-image:
     radial-gradient(ellipse 75% 60% at 50% 40%, rgba(255,255,255,.92) 0%, rgba(255,255,255,.72) 40%, rgba(255,255,255,.32) 72%, rgba(255,255,255,.1) 100%),
-    url(${appBackground});
+    url(${scanHeroBg});
   background-size:cover,cover;
   background-position:top center,top center;
   background-repeat:no-repeat,no-repeat;
 }
-/* Scan-forsidens EGET baggrundsfoto (24. sept. 2026) — overstyrer kun
-   billedet, samme position:fixed-boks, samme cover/wash-teknik som .app-bg
-   ovenfor. Slået til via en ekstra klasse (app-bg-scan) i App.jsx, KUN når
-   screen===SCREENS.HOME, så billedet dækker HELE skærmen kant-til-kant
-   (bag topbar OG bundnav, som allerede har frosted-glass-gennemsigtighed —
-   se .topbar::before/.bottom-nav::before nedenfor), i stedet for kun det
-   smallere rum imellem dem. Tidligere forsøgt som en <img> INDE i
-   .home-hero-frame (height:100%, aldrig beskåret) — men det billede-format
-   (941×1672, smallere end de fleste telefonskærme) betød at boksen aldrig
-   nåede bag topbar/bundnav uden en risikabel tilbagevenden til flex-fill-
-   højde (se HISTORY.md for den fejlklasse, allerede fundet og rettet én
-   gang denne session). background-size:cover her accepterer i stedet en
-   smule beskæring i siderne på ekstreme skærmforhold, samme afvejning som
-   .app-bg allerede gør for det app-brede billede. */
-.app-bg.app-bg-scan{
-  background-image:
-    radial-gradient(ellipse 75% 60% at 50% 40%, rgba(255,255,255,.92) 0%, rgba(255,255,255,.72) 40%, rgba(255,255,255,.32) 72%, rgba(255,255,255,.1) 100%),
-    url(${scanHeroBg});
-}
-/* Ekstra dæmpning specifikt på Log ind/Opret konto-skærmen (25. sept.
+/* Ekstra, let dæmpning specifikt på Log ind/Opret konto-skærmen (25. sept.
    2026-brief: "Dæmp baggrunden ca. 20-30% på denne side, så formularen
    bliver vigtigst"). Et selvstændigt, fast lag OVEN PÅ .app-bg (samme
    z-index:0, men senere i DOM'en — se App.jsx — så det maler ovenpå
@@ -292,7 +272,14 @@ body{
    her) er fjernet, og selve halo-pulsen er dæmpet ned (skala 1→1.06 i
    stedet for 1.12, opacity .7→.5 i stedet for .8→.35) og sat langsommere
    (4s i stedet for 2.4s). Tryk-feedback (:active nedenfor) er et separat,
-   uafhængigt lag oven i denne løbende animation. */
+   uafhængigt lag oven i denne løbende animation.
+   (En parallel session forsøgte samme dag at føre knappen tilbage til en
+   hvid ghost/outline-stil med en roterende ring-lys — den grønne fyld
+   herover er bevidst bevaret ved genforeningen med main, da DENNE session
+   gennem flere eksplicitte brugerrunder har bekræftet grøn fyld + puls,
+   senest ved en fuld velkomst-/login-brandkonsistens-runde bygget netop på
+   denne palet. .scan-cta-ring-light/scanCtaRingSpin fra ghost-forsøget er
+   fjernet igen, samme afgørelse som sidste gang samme konflikt opstod.) */
 @keyframes scan-halo-pulse{
   0%,100%{transform:scale(1);opacity:.7;}
   50%{transform:scale(1.06);opacity:.5;}
