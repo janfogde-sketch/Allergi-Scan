@@ -697,12 +697,22 @@ export function useAdmin(accessToken, userId, clearAuth) {
               body: JSON.stringify({ text: ingredientsText, force_ai: true }),
             });
             if (allergenData?.allergen_flags) {
+              // "high" kræver at Claude-fallbacket faktisk lykkedes (method
+              // rummer "claude") — hvis force_ai:true stille fejlede (fx
+              // manglende ANTHROPIC_API_KEY eller et API-kald der fejlede)
+              // returnerer allergens-funktionen method:"keyword", og det
+              // ville være løgn at skrive "high" i så fald. Samme
+              // klassificering som auto-reparse allerede bruger. Se
+              // products.allergen_source_method's kolonnekommentar (forslag
+              // F fra allergen-detektions-gennemgangen, 25. sept. 2026).
+              const method = allergenData.method || "keyword";
               await apiCall(`${SUPABASE_URL}/rest/v1/products?ean=eq.${ean}`, {
                 method: "PATCH",
                 headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
                 body: JSON.stringify({
                   allergen_flags: allergenData.allergen_flags,
-                  allergen_quality: "high",
+                  allergen_quality: method.includes("claude") ? "high" : "medium",
+                  allergen_source_method: method,
                   reparsed_at: new Date().toISOString(),
                 }),
               });
@@ -834,9 +844,17 @@ export function useAdmin(accessToken, userId, clearAuth) {
               body: JSON.stringify({ text: ingredientsText, force_ai: true }),
             });
             if (allergenData?.allergen_flags) {
+              // Se den identiske begrundelse i updateSubmissionAndApprove
+              // ovenfor — "high" kun når Claude-fallbacket faktisk lykkedes.
+              const method = allergenData.method || "keyword";
               await apiCall(`${SUPABASE_URL}/rest/v1/products?ean=eq.${ean}`, {
                 method: "PATCH", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-                body: JSON.stringify({ allergen_flags: allergenData.allergen_flags, allergen_quality: "high", reparsed_at: new Date().toISOString() }),
+                body: JSON.stringify({
+                  allergen_flags: allergenData.allergen_flags,
+                  allergen_quality: method.includes("claude") ? "high" : "medium",
+                  allergen_source_method: method,
+                  reparsed_at: new Date().toISOString(),
+                }),
               });
             }
           } catch (e) { console.warn("Bulk-reparse fejl:", e); }

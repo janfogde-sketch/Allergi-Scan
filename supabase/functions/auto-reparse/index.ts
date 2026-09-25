@@ -136,6 +136,10 @@ serve(async (req) => {
           .update({
             allergen_flags: allergenData.allergen_flags,
             allergen_quality: quality,
+            // Herkomst — se kolonnekommentaren for den fulde betydning af
+            // hver værdi (forslag F fra allergen-detektions-gennemgangen,
+            // 25. sept. 2026).
+            allergen_source_method: method,
             reparsed_at: new Date().toISOString(),
           })
           .eq("id", product.id);

@@ -223,12 +223,33 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap }) {
   }
 
   const isHighlighted = (part) => {
-    // STORE BOGSTAVER = allergen markeret af producent
-    const hasUppercase = part !== part.toLowerCase() && part === part.toUpperCase() && part.length > 2;
+    // STORE BOGSTAVER = allergen markeret af producent. Tæl kun de
+    // bogstaver der reelt er i teksten (ikke hele part.length) — ellers
+    // tæller cifre med i længdetjekket, og korte bogstav+tal-tokens som
+    // vitamin-notationer ("B12") eller E-numre ("E621") bliver fejlagtigt
+    // fremhævet, mens fx "B6" tilfældigt undgår det pga. sin kortere
+    // samlede længde (bruger-rapporteret fejl, 25. sept. 2026: "b12
+    // fremhæves men ikke b6" — reelt en fejl i selve heuristikken, ikke i
+    // allergen-matchingen).
+    const letters = part.match(/[a-zA-ZæøåÆØÅ]+/g)?.join("") || "";
+    const hasUppercase = letters.length > 2 && letters === letters.toUpperCase();
     // Eller indeholder et allergen-ord
     const words = part.toLowerCase().replace(/[()[\]]/g, "").split(/\s+/);
     const hasAllergenWord = words.some(w => isAllergenWord(w, allergenFlags));
     return hasUppercase || hasAllergenWord;
+  };
+
+  // E-numre og vitaminer er ikke allergener, men de er begge opslagsbare i
+  // leksikonet (bruger-ønske, 25. sept. 2026: "vil gerne at dem fremhæves
+  // som noget der fremgår af mit leksikon, lige som enumre") — fremhæves
+  // derfor i en separat, neutral blå stil i stedet for allergen-rød, så de
+  // ikke fejlagtigt læses som en fare. Ligesom hasAllergenWord ovenfor
+  // tjekkes hvert ord i den urensede part for sig (IKKE cleanPart, som
+  // fjerner hele parentes-indholdet — et E-nummer der står i en parentes,
+  // fx "smagsforstærker (E621)", ville ellers aldrig blive fundet).
+  const isKnowledgeTerm = (part) => {
+    const words = part.replace(/[()[\]]/g, " ").replace(/[.,]/g, "").trim().split(/\s+/);
+    return words.some(w => /^E[\s-]?\d{3,4}[a-z]?$/i.test(w) || /^[abcdk][0-9]{0,2}$/i.test(w));
   };
 
   return (
@@ -238,17 +259,18 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap }) {
         const clickable = !!onIngredientTap;
         // Rens ingrediens-tekst for opslag (fjern parenteser og ekstra tegn)
         const cleanPart = part.replace(/\(.*?\)/g, "").replace(/[*%]/g, "").trim();
+        const knowledgeTerm = !highlighted && isKnowledgeTerm(part);
         return (
           <span key={i} style={{ display:"inline-flex", alignItems:"baseline" }}>
             <span
               onClick={clickable ? () => onIngredientTap(cleanPart) : undefined}
               style={{
                 fontSize: 12,
-                fontWeight: highlighted ? 700 : 400,
-                color: highlighted ? "var(--red)" : "var(--muted2)",
-                background: highlighted ? "var(--red-lt)" : "transparent",
-                borderRadius: highlighted ? 4 : 0,
-                padding: highlighted ? "1px 4px" : "1px 2px",
+                fontWeight: highlighted || knowledgeTerm ? 700 : 400,
+                color: highlighted ? "var(--red)" : knowledgeTerm ? "var(--blue)" : "var(--muted2)",
+                background: highlighted ? "var(--red-lt)" : knowledgeTerm ? "var(--blue-lt)" : "transparent",
+                borderRadius: highlighted || knowledgeTerm ? 4 : 0,
+                padding: highlighted || knowledgeTerm ? "1px 4px" : "1px 2px",
                 cursor: clickable ? "pointer" : "default",
                 transition: "background .1s",
               }}

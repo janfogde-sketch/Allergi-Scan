@@ -549,7 +549,7 @@ export default function OnboardingScreen({
                     onKeyDown={e => e.key==="Enter" && handleSignup()} />
                   <label className="field-lbl">Adgangskode</label>
                   <div style={{ position:"relative" }}>
-                    <input className="field" type={showPassword ? "text" : "password"} placeholder="Minimum 6 tegn" value={loginPassword}
+                    <input className="field" type={showPassword ? "text" : "password"} placeholder="Minimum 10 tegn" value={loginPassword}
                       onChange={e => setLoginPassword(e.target.value)} style={{ paddingRight:40 }}
                       onKeyDown={e => e.key==="Enter" && handleSignup()} />
                     <button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? "Skjul adgangskode" : "Vis adgangskode"}
