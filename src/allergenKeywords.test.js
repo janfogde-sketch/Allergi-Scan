@@ -95,7 +95,14 @@ describe("isAllergenWord", () => {
 
   it("respects an explicit 'no' flag by not flagging that allergen's words", () => {
     expect(isAllergenWord("ost")).toBe(true);
-    expect(isAllergenWord("ost", { maelkeallergi: "no" })).toBe(false);
+    // "ost" matcher BÅDE maelkeallergi og laktose (ost indeholder begge dele)
+    // — sammenlægningen af de to nøgleordslister (25. sept. 2026) gjorde
+    // laktose-kategorien bredere, så den matcher alle mælkeprodukter (samme
+    // model som backend allergens Edge Function bruger). Et "no" på KUN
+    // maelkeallergi skal derfor ikke længere undertrykke "ost" alene — en
+    // bruger uden mælkeproteinallergi kan sagtens stadig være laktoseintolerant.
+    expect(isAllergenWord("ost", { maelkeallergi: "no" })).toBe(true);
+    expect(isAllergenWord("ost", { maelkeallergi: "no", laktose: "no" })).toBe(false);
   });
 
   it("does not flag 'aroma' as a milk allergen word just because it's a substring of 'smøraroma'", () => {
