@@ -160,12 +160,19 @@ export default function OnboardingScreen({
             KUN på dette kort, ikke en ændring af den delte .card-klasse
             (brugt bredt andre steder i appen uden dette behov). */}
         <div className="card" style={{ ...UI.mb12, boxShadow:"var(--sh), 0 0 46px 26px rgba(255,255,255,.55)" }}>
-          {/* Navn */}
+          {/* Navn — kanten var rød fra allerførste render (25. sept. 2026,
+              opfølgning: "rødlig kant selv om brugeren endnu ikke har gjort
+              noget forkert"). Bug: user.name initialiseres til "" i
+              App.jsx, ikke undefined, så `user.name !== undefined` var
+              sandt med det samme — rød kant IKKE betinget af noget
+              brugeren faktisk havde gjort. Erstattet med step1Attempted
+              (samme gate som "Mangler: ..."-teksten) — rød betyder nu kun
+              "du prøvede at fortsætte, og dette felt mangler stadig". */}
           <div style={{ marginBottom:17 }}>
             <label className="field-lbl">Fulde navn <span style={UI.red}>*</span></label>
             <input className="field" type="text" placeholder="Fx. Anna Hansen"
               value={user.name||""} onChange={e => setUser(u => ({...u, name:e.target.value}))}
-              style={{ borderColor: !nameOk && (user.name !== undefined) ? "var(--red-md)" : undefined }} />
+              style={{ borderColor: step1Attempted && !nameOk ? "var(--red-md)" : undefined }} />
           </div>
 
           {/* Email */}
@@ -199,7 +206,7 @@ export default function OnboardingScreen({
                 style={{ width:40, height:40, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
                 −
               </button>
-              <input className="field" type="number" inputMode="numeric" placeholder="32" min="1" max="120"
+              <input className="field field-no-spinner" type="number" inputMode="numeric" placeholder="32" min="1" max="120"
                 value={user.age||""} onChange={e => setUser(u => ({...u, age:e.target.value}))}
                 style={{ width:64, flexShrink:0, textAlign:"center", padding:"10px 4px" }} />
               <button type="button" onClick={() => stepAge(1)} aria-label="Ét år ældre"
@@ -250,8 +257,21 @@ export default function OnboardingScreen({
           </div>
         )}
 
+        {/* Disabled-tilstanden brugte tidligere kun opacity:.45 på HELE
+            knappen, hvilket dæmpede teksten (hvid) lige så meget som
+            baggrunden og gjorde den svær at læse (25. sept. 2026,
+            opfølgning). Erstattet med eksplicitte farver: en lys grøn
+            baggrund + fuld-styrke grøn tekst (samme "lys baggrund, mørk
+            tekst"-mønster som Køn-valgene ovenfor) i stedet for en
+            gennemgående opacity-dæmpning — teksten forbliver let læsbar,
+            og knappen skifter til den fulde, normale EatSafe-grønne
+            (.btn-primary's egne farver) så snart alt er udfyldt. */}
         <button className="btn btn-primary btn-full"
-          style={{ opacity: allOk ? 1 : 0.45, cursor: allOk ? "pointer" : "not-allowed" }}
+          style={{
+            background: allOk ? undefined : "rgba(23,138,80,.18)",
+            color: allOk ? undefined : "var(--green)",
+            cursor: allOk ? "pointer" : "not-allowed",
+          }}
           onClick={() => {
             if (!allOk) { setStep1Attempted(true); return; }
             saveProfileStep1().then(() => setOnboardStep(2));

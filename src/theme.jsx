@@ -348,6 +348,14 @@ body::-webkit-scrollbar{display:none;}
 .card-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;letter-spacing:-.2px;}
 .field{width:100%;background:var(--surface2);border:1.5px solid var(--border2);border-radius:10px;padding:12px 14px;color:var(--ink);font-family:var(--f);font-size:16px;outline:none;transition:border-color .15s,background .15s;}
 .field:focus{border-color:var(--green);background:var(--surface2);box-shadow:0 0 0 3px var(--green-lt);}
+/* Skjuler browserens native op/ned-spinner-pile på type="number"-felter
+   (25. sept. 2026, opfølgning: Alder-feltet har allerede egne −/+-knapper
+   udenom, så de indbyggede pile er dobbelt funktion og "ser tekniske ud").
+   Scoped til .field-no-spinner, ikke alle .field-inputs — kun de steder
+   der reelt har en ekstern stepper-erstatning. */
+.field-no-spinner::-webkit-inner-spin-button,
+.field-no-spinner::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+.field-no-spinner{-moz-appearance:textfield;}
 .field-lbl{font-size:11.5px;font-weight:700;color:var(--ink2);margin-bottom:6px;display:block;letter-spacing:.1px;}
 .input-row{display:flex;gap:8px;}
 
