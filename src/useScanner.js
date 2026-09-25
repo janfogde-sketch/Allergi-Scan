@@ -12,6 +12,43 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { SUPABASE_URL } from "./constants.jsx";
 import { compressImageToBase64, isValidEanChecksum, apiCall, makeHeaders } from "./helpers.js";
 
+// ── Delt to-trins stregkode-afkodning fra et billede ──────────────────────
+// Trin 1: html5-qrcode (hurtig, gratis, ren billed-afkodning). Trin 2, kun
+// hvis trin 1 fejler: Claude Vision OCR-fallback (samme model som scanPhotoForEan
+// altid har brugt). Udtrukket 25. sept. 2026 — scanFromGallery (galleri-valgt
+// billede) havde tidligere KUN trin 1, mens scanPhotoForEan (foto taget efter
+// mislykket live-scan) havde begge. Et galleri-billede hvor html5-qrcode ikke
+// kunne afkode koden fik derfor aldrig en chance for OCR-genopretning — en
+// ubegrundet inkonsistens mellem to reelt ligeværdige indgange, ikke en
+// bevidst designbeslutning. Returnerer den fundne, checksum-validerede EAN,
+// eller null hvis begge trin fejler.
+async function decodeBarcodeFromImage(file, accessToken) {
+  try {
+    const { Html5Qrcode } = await import("html5-qrcode");
+    const scanner = new Html5Qrcode("qr-reader-gallery");
+    const result = await scanner.scanFile(file, true);
+    scanner.clear();
+    return result;
+  } catch { /* fald igennem til Vision-OCR */ }
+
+  try {
+    const base64 = await compressImageToBase64(file);
+    const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, {
+      method: "POST",
+      headers: makeHeaders(accessToken),
+      body: JSON.stringify({ image_base64: base64, mode: "ean_from_image" }),
+    });
+    const rawText = ocrData.text || ocrData.ean || "";
+    // Vision-OCR kan fejllæse et enkelt ciffer, så tjek EAN-checksummen før vi
+    // bruger tallet — ellers risikerer vi et opslag på et forkert (men
+    // tilfældigt eksisterende) produkt.
+    const candidates = rawText.match(/\d{8,14}/g) || [];
+    return candidates.find(isValidEanChecksum) || null;
+  } catch {
+    return null;
+  }
+}
+
 export function useScanner({ setScanError, setLoading, onScanSuccess, accessToken }) {
   // ── Kamera-state ──────────────────────────────────────────────────────────
   const [cameraActive, setCameraActive]       = useState(false);
@@ -103,8 +140,17 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
 
       html5QrRef.current = new Html5Qrcode(readerId, { verbose: false });
 
-      // Kun stregkode-formater (hurtigere decode)
-      const barcodeFormats = [3, 5, 8, 9, 10, 14, 15]; // CODE_39, CODE_128, ITF, EAN_13, EAN_8, UPC_A, UPC_E
+      // Kun stregkode-formater (hurtigere decode). Tilføjet RSS_14/RSS_EXPANDED
+      // (GS1 DataBar / DataBar Expanded, 25. sept. 2026) — bruges ofte på
+      // variabel-vægt-varer i danske supermarkeder (løsvægt-frugt/grønt,
+      // slagter-/delikatesse-disk), som appens egne bilka/nemlig-kilder
+      // dækker tungt. Uden disse formater afkodede kameraet aldrig sådan et
+      // produkts stregkode overhovedet — brugeren endte i foto-/OCR-fallback
+      // for noget der reelt burde kunne live-scannes direkte. html5-qrcode
+      // har allerede en dokumenteret afbødning for en kendt ZXing-kvirk med
+      // RSS_14 (ny decoder-instans pr. scan) — ingen ekstra risiko ved at
+      // slå formaterne til.
+      const barcodeFormats = [3, 5, 8, 9, 10, 12, 13, 14, 15]; // CODE_39, CODE_128, ITF, EAN_13, EAN_8, RSS_14, RSS_EXPANDED, UPC_A, UPC_E
 
       const qrConfig = {
         fps: isIOS ? 25 : 24,
@@ -219,60 +265,35 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   const scanFromGallery = useCallback(async (file) => {
     if (!file) return;
     setScanError(""); setLoading(true);
+    // Galleri-knappen sidder oven på det aktive kamera-view — kameraet skal
+    // stoppes her ligesom i scanPhotoForEan, ellers kører det unødigt videre
+    // i baggrunden mens billedet behandles.
+    stopCamera();
     try {
-      const { Html5Qrcode } = await import("html5-qrcode");
-      const scanner = new Html5Qrcode("qr-reader-gallery");
-      const result = await scanner.scanFile(file, true);
-      scanner.clear();
-      onScanSuccessRef.current?.(result);
+      const code = await decodeBarcodeFromImage(file, accessToken);
+      setLoading(false);
+      if (code) { onScanSuccessRef.current?.(code); return; }
+      setScanError("Kunne ikke finde en gyldig stregkode i billedet. Prøv et klarere billede eller tættere på.");
     } catch {
       setLoading(false);
-      setScanError("Ingen stregkode fundet i billedet. Prøv et klarere billede.");
+      setScanError("Foto-scan fejlede. Prøv igen.");
     }
-  }, [setScanError, setLoading]);
+  }, [setScanError, setLoading, stopCamera, accessToken]);
 
-  // ── scanPhotoForEan — foto-fallback via Claude Vision ─────────────────────
+  // ── scanPhotoForEan — foto-fallback via html5-qrcode + Claude Vision ──────
   const scanPhotoForEan = useCallback(async (file) => {
     if (!file) return;
     setPhotoScanLoading(true); setScanError(""); setShowPhotoHint(false);
     stopCamera();
     try {
-      // Trin 1: prøv html5-qrcode direkte
-      try {
-        const { Html5Qrcode } = await import("html5-qrcode");
-        const scanner = new Html5Qrcode("qr-reader-gallery");
-        const result = await scanner.scanFile(file, true);
-        scanner.clear();
-        setPhotoScanLoading(false);
-        onScanSuccessRef.current?.(result);
-        return;
-      } catch { /* html5-qrcode fejlede — prøv Claude Vision */ }
-
-      // Trin 2: Claude Vision via OCR Edge Function
-      const base64 = await compressImageToBase64(file);
-
-      const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, {
-        method: "POST",
-        headers: makeHeaders(accessToken),
-        body: JSON.stringify({ image_base64: base64, mode: "ean_from_image" }),
-      });
-      const rawText = ocrData.text || ocrData.ean || "";
-      // Vision-OCR kan fejllæse et enkelt ciffer, så tjek EAN-checksummen
-      // før vi bruger tallet — ellers risikerer vi et opslag på et forkert
-      // (men tilfældigt eksisterende) produkt.
-      const candidates = rawText.match(/\d{8,14}/g) || [];
-      const validEan = candidates.find(isValidEanChecksum);
-      if (validEan) {
-        setPhotoScanLoading(false);
-        onScanSuccessRef.current?.(validEan);
-        return;
-      }
-
+      const code = await decodeBarcodeFromImage(file, accessToken);
+      setPhotoScanLoading(false);
+      if (code) { onScanSuccessRef.current?.(code); return; }
       setScanError("Kunne ikke aflæse en gyldig stregkode fra billede. Prøv tæt på og i god belysning.");
     } catch {
+      setPhotoScanLoading(false);
       setScanError("Foto-scan fejlede. Prøv igen.");
     }
-    setPhotoScanLoading(false);
   }, [setScanError, stopCamera, accessToken]);
 
   // ── toggleTorch ────────────────────────────────────────────────────────────
