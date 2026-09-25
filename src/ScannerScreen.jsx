@@ -351,39 +351,40 @@ export default function ScannerScreen({
                   <div style={{ fontSize:"clamp(14px, 2.9cqh, 19px)", fontWeight:600, color:"var(--ink)", letterSpacing:"-.2px", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{getGreeting()},</div>
                   <div style={{ fontSize:"clamp(22px, 4.7cqh, 32px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(2px, .4cqh, 4px)", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{user.name?.split(" ")[0] || "der"}</div>
                   <div style={{ fontSize:"clamp(11.5px, 2.1cqh, 15px)", fontWeight:600, color:"var(--ink2)", marginTop:"clamp(5px, 1.1cqh, 9px)", lineHeight:1.5, maxWidth:250, marginLeft:"auto", marginRight:"auto", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 12px rgba(255,255,255,.6)" }}>
-                    Scan en vare og få hurtigt svar om den passer til dine allergier.
+                    Scan et produkt og se straks, om det matcher dine allergier.
                   </div>
                 </div>
 
-                {/* Stor cirkulær scan-knap — grøn fyld (#0E8F5A → #08734A, ikke
-                    ghost/outline-stilen fra den forrige runde) med en tydelig
-                    pulserende halo-glød bagved OG et let åndedræt på hele
-                    knappen (samme scanCtaBreathe-keyframe som ghost-versionen
-                    brugte), så knappen virker levende og indbydende at trykke
-                    på. Størrelsen er sat NED igen (fra clamp(168px, 42cqh,
-                    267px), 50%-forstørrelsen fra en tidligere runde) efter
-                    brugerens direkte feedback "knappen er så stor" — tilbage
-                    til samme mål som den grønne knap oprindeligt fik i denne
-                    runde. Selve knappen er en rigtig <button> (ikke en div
-                    med role="button") for native tastatur-aktivering +
-                    pålidelig :active-tryk-feedback på touch-enheder
-                    (.scan-cta-btn:active, theme.jsx). */}
-                <div style={{ position:"absolute", top:"46%", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
-                  <div style={{ position:"relative", width:"clamp(90px, 23cqh, 150px)", height:"clamp(90px, 23cqh, 150px)", display:"flex", alignItems:"center", justifyContent:"center",
+                {/* Stor cirkulær scan-knap — grøn fyld (#0E8F5A → #08734A) med en
+                    tydelig pulserende halo-glød bagved OG et let åndedræt på hele
+                    knappen (scanCtaBreathe), så knappen virker levende og
+                    indbydende at trykke på. Størrelsen er øget ~30% (24. sept.
+                    2026, opfølgning) efter brugerfeedback om at knappen — appens
+                    vigtigste handling — føltes for lille/sekundær; op fra
+                    clamp(90px, 23cqh, 150px) til clamp(117px, 30cqh, 195px).
+                    Ikonet er skiftet fra en ren stregkode til "scanframe" (fire
+                    scanner-hjørner om stregkode-barer, samme visuelle sprog som
+                    kameraets eget scan-overlay) — mere intuitivt "peg og scan"-
+                    signal end en bar stregkode. Selve knappen er en rigtig
+                    <button> (ikke en div med role="button") for native
+                    tastatur-aktivering + pålidelig :active-tryk-feedback på
+                    touch-enheder (.scan-cta-btn:active, theme.jsx). */}
+                <div style={{ position:"absolute", top:"44%", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
+                  <div style={{ position:"relative", width:"clamp(117px, 30cqh, 195px)", height:"clamp(117px, 30cqh, 195px)", display:"flex", alignItems:"center", justifyContent:"center",
                     animation:"scanCtaBreathe 4.5s ease-in-out infinite" }}>
-                    <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-14px, -2.2cqh, -6px)", borderRadius:"50%",
+                    <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-18px, -2.9cqh, -8px)", borderRadius:"50%",
                       background:"radial-gradient(circle, #DDF4E8 0%, rgba(221,244,232,0) 70%)" }} aria-hidden="true" />
                     <button
                       className="scan-cta-btn"
                       onClick={() => startCamera()}
                       aria-label="Start kamera for at scanne stregkode"
-                      style={{ position:"absolute", inset:"clamp(3px, .8cqh, 5px)", borderRadius:"50%", cursor:"pointer",
+                      style={{ position:"absolute", inset:"clamp(4px, 1cqh, 6px)", borderRadius:"50%", cursor:"pointer",
                         border:"none", fontFamily:"var(--f)",
                         background:"linear-gradient(160deg,#0E8F5A 0%,#08734A 100%)",
                         boxShadow:"0 14px 28px -12px rgba(8,115,74,.55), inset 0 2px 3px rgba(255,255,255,.3)",
-                        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(4px, 1cqh, 7px)" }}>
-                      <Icon name="barcode" size="clamp(20px, 4.3cqh, 29px)" color="#fff" />
-                      <div style={{ fontSize:"clamp(9px, 1.6cqh, 11px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
+                        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(5px, 1.3cqh, 9px)" }}>
+                      <Icon name="scanframe" size="clamp(26px, 5.6cqh, 38px)" color="#fff" />
+                      <div style={{ fontSize:"clamp(12px, 2.1cqh, 14px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
                     </button>
                   </div>
                 </div>
@@ -392,8 +393,10 @@ export default function ScannerScreen({
                     beta") og "Prøv en demo"-pillen er begge fjernet fra forsiden
                     (hhv. efter det nye referencedesign og efter brugerens
                     tidligere ønske, se historik) — version er stadig synligt
-                    inde på selve Beta-information-skærmen. */}
-                <div style={{ position:"absolute", top:"71.5%", left:0, right:0, bottom:"clamp(6px, 1.4cqh, 10px)", zIndex:2,
+                    inde på selve Beta-information-skærmen. Flyttet op fra
+                    top:71.5% til top:65% (24. sept. 2026, opfølgning) — for
+                    meget tom luft mellem knappen og bunden. */}
+                <div style={{ position:"absolute", top:"65%", left:0, right:0, bottom:"clamp(6px, 1.4cqh, 10px)", zIndex:2,
                   display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-end", padding:"0 12px", overflow:"hidden" }}>
                   <button onClick={onBetaClick}
                     style={{ display:"inline-flex", alignItems:"center", gap:5, flexShrink:0,

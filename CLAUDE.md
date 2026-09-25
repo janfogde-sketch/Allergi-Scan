@@ -538,6 +538,46 @@ se `.claude/HISTORY.md` for mockuppets fulde indhold og screenshots.
 - Verificeret med Playwright-device-profiler (iPhone SE, iPhone 13) — nul
   overflow, ingen overlap/klipning, farver/puls/knap-type som beskrevet.
 
+**25. sept. 2026 — endnu en opfølgningsrunde (design-only, IKKE pushet/
+merget, se Vercel-kvote-reglen ovenfor).** Brugeren gav seks stykker
+feedback på den delte Artifact-preview:
+- **Scan-knappen ~30% større** — clamp(90px, 23cqh, 150px) →
+  clamp(117px, 30cqh, 195px) (+ tilsvarende ikon/tekst/halo/gap-mål) efter
+  feedback om at knappen, appens vigtigste handling, føltes for lille/
+  sekundær.
+- **Mindre tom luft mellem knap og bund** — knappens `top` rykket fra 46%
+  til 44%, Beta-information-fodens `top` rykket fra 71.5% til 65%.
+- **Bundmenuen ændret til Indkøbsliste | Scan | Historik** — "Søg" fjernet
+  fra bundnavigationen (brugerens begrundelse: søgning hører nu til inde i
+  Indkøbsliste-skærmen, som allerede har en fuld, allergi-filtreret
+  produktsøgning indbygget til "tilføj vare"-feltet). `SCREENS.SEARCH`
+  er IKKE slettet — stadig et gyldigt route, stadig nået fra
+  `SubmittedScreen.jsx`s "søg i stedet"-link, bare uden en dedikeret
+  bundnav-plads længere.
+- **Topbar-knapperne (?, Feedback, hamburger) forstørret** (32px→38px,
+  Feedback-pillens padding øget) og farven skiftet fra `var(--muted2)` til
+  det mørkere `var(--ink2)` + en let skygge (`var(--sh)`) — virkede "småt
+  og anonymt ... næsten disabled" ved den forrige, lysere/mindre stil.
+- **Undertekst-teksten ændret** til "Scan et produkt og se straks, om det
+  matcher dine allergier." (fra "Scan en vare og få hurtigt svar om den
+  passer til dine allergier.") — brugerens vurdering: den stærkere
+  formulering.
+- **Nyt `scanframe`-ikon** (`SharedComponents.jsx`) erstatter den bare
+  `barcode`-ikon på CTA-knappen — fire scanner-hjørne-vinkler (samme
+  visuelle sprog som det rigtige kamera-overlays hjørne-markører) omkring
+  korte stregkode-barer, mere "peg og scan"-intuitivt end en ren stregkode.
+
+Alle seks er rene design-/tekst-ændringer — committet lokalt på
+feature-branchen, IKKE pushet/PR'et/mergt (se den stående Vercel-kvote-
+regel i afsnit 4), og verificeret via en delt Artifact-preview i stedet.
+Genverificeret med Playwright på iPhone SE/13/14 Pro Max efter ændringerne
+— nul overflow, positivt mellemrum (83–122px) mellem knap og Beta-info-
+knap på alle tre (en første, naiv programmatisk måling viste et falsk
+"overlap" ved fejlagtigt at sammenligne knappens bund mod fod-CONTAINERENS
+egen top i stedet for den faktisk synlige, bund-forankrede Beta-info-knap
+selv — rettet ved at måle mod den rigtige knap-element, ikke dens
+forælder-boks).
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
