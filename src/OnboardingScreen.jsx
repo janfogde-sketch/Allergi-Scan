@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { ALLERGENS, SCREENS, DIETS, AVATAR_COLORS, E_NUMBERS, E_CATEGORIES } from "./constants.jsx";
+import { ALLERGENS, SCREENS } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { EatSafeLogo, Icon, showToast } from "./SharedComponents.jsx";
 import { ENumberPicker, AllergenChipPicker, DietChipPicker } from "./AllergenPicker.jsx";
@@ -140,7 +140,9 @@ export default function OnboardingScreen({
     setPushLoading(false);
     if (result.ok || result.reason === "Tilladelse afvist") {
       setPushDone(true);
-      setTimeout(() => setOnboardStep(6), 800);
+      // Onboarding afsluttes direkte herfra uanset svar — ingen ekstra
+      // "Du er færdig"-oversigtsskærm (25. sept. 2026, brugerfeedback).
+      setTimeout(() => finishOnboard(), 800);
     }
   };
 
@@ -735,9 +737,9 @@ export default function OnboardingScreen({
                   style={{ background:"none", border:"none", color:"#fff", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", opacity: onboardStep<=1 ? .35 : 1, padding:"7px 12px", borderRadius:100, whiteSpace:"nowrap" }}>
                   ← Forrige
                 </button>
-                <span style={{ color:"#fff", fontSize:11.5, fontWeight:600, opacity:.7, padding:"0 4px", whiteSpace:"nowrap" }}>Trin {onboardStep}/6</span>
-                <button onClick={() => setOnboardStep(s => Math.min(6, s + 1))} disabled={onboardStep >= 6}
-                  style={{ background:"none", border:"none", color:"#fff", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", opacity: onboardStep>=6 ? .35 : 1, padding:"7px 12px", borderRadius:100, whiteSpace:"nowrap" }}>
+                <span style={{ color:"#fff", fontSize:11.5, fontWeight:600, opacity:.7, padding:"0 4px", whiteSpace:"nowrap" }}>Trin {onboardStep}/5</span>
+                <button onClick={() => setOnboardStep(s => Math.min(5, s + 1))} disabled={onboardStep >= 5}
+                  style={{ background:"none", border:"none", color:"#fff", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", opacity: onboardStep>=5 ? .35 : 1, padding:"7px 12px", borderRadius:100, whiteSpace:"nowrap" }}>
                   Næste →
                 </button>
               </div>,
@@ -851,7 +853,7 @@ export default function OnboardingScreen({
                     <div style={{ display:"flex", justifyContent:"center", marginBottom:12 }}><Icon name="bell" size={42} color="var(--green)" /></div>
                     <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Bliv opdateret</div>
                     <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.65 }}>
-                      Få en notifikation når dine produktindsendelser godkendes, og når familiemedlemmer tilslutter sig.
+                      Få besked, når der sker noget vigtigt i EatSafe.
                     </div>
                   </div>
 
@@ -859,7 +861,7 @@ export default function OnboardingScreen({
                     {[
                       ["check","Produktet er godkendt","Når admin godkender dit indsendte produkt"],
                       ["family","Familie tilslutter sig","Når nogen accepterer dit invitationslink"],
-                      ["search","Nyt i databasen","Når et produkt du søgte efter nu er tilgængeligt"],
+                      ["search","Produkt tilgængeligt","Når et produkt, du har ledt efter, kommer i databasen"],
                     ].map(([icon, title, sub]) => (
                       <div key={title} style={{ display:"flex", gap:12, padding:"10px 0", borderBottom:"1px solid var(--border)" }}>
                         <div style={{ display:"flex", alignItems:"center" }}><Icon name={icon} size={19} color="var(--green)" /></div>
@@ -872,7 +874,7 @@ export default function OnboardingScreen({
                   </div>
 
                   {!pushSupported ? (
-                    <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(6)}>
+                    <button className="btn btn-primary btn-full" onClick={finishOnboard}>
                       Fortsæt →
                     </button>
                   ) : pushDone ? (
@@ -885,8 +887,13 @@ export default function OnboardingScreen({
                         style={{ opacity: pushLoading ? .6 : 1, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                         {pushLoading ? "Aktiverer…" : <><Icon name="bell" size={14} color="var(--on-green)" /> Slå notifikationer til</>}
                       </button>
+                      {/* Ikke nu — bevidst nedtonet .btn-ghost, ikke en stor
+                          outlined-knap, så notifikationer ikke føles
+                          obligatoriske (25. sept. 2026, brugerfeedback).
+                          Afslutter onboarding direkte, ingen ekstra
+                          "Du er færdig"-skærm. */}
                       <button className="btn btn-ghost btn-full" style={UI.mt8}
-                        onClick={() => setOnboardStep(6)}>
+                        onClick={finishOnboard}>
                         Ikke nu
                       </button>
                     </>
@@ -896,151 +903,6 @@ export default function OnboardingScreen({
 
             {/* ── TRIN 6: Kostpræferencer ── */}
             {onboardStep === 3 && renderStep3()}
-
-            {/* ── TRIN 9: Oversigt & Klar! ── */}
-            {onboardStep === 6 && (
-              <div className="fade-in">
-
-                {/* Header */}
-                <div style={{ textAlign:"center", padding:"8px 0 20px" }}>
-                  <div style={{ width:64, height:64, borderRadius:"50%", background:"var(--green-lt)",
-                    display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 12px" }}>
-                    <Icon name="check" size={32} color="var(--green)" />
-                  </div>
-                  <div style={{ fontSize:24, fontWeight:900, color:"var(--ink)", marginBottom:6 }}>Alt er klar!</div>
-                  <div style={{ fontSize:14, color:"var(--muted2)", lineHeight:1.6 }}>
-                    Her er et overblik over din profil. Du kan altid redigere senere.
-                  </div>
-                </div>
-
-                {/* Din profil */}
-                <div className="card" style={UI.mb12}>
-                  <div style={UI.udflex_aicenter_jcspacebet_mb12}>
-                    <div style={{ fontWeight:800, fontSize:15, color:"var(--ink)" }}>
-                      {user.name || "Din profil"}
-                    </div>
-                    <button className="btn btn-ghost btn-sm" style={{ fontSize:12, padding:"4px 10px" }}
-                      onClick={() => setOnboardStep(1)}>
-                      Rediger
-                    </button>
-                  </div>
-
-                  {/* Allergier */}
-                  {allergens.length > 0 ? (
-                    <div style={UI.mb10}>
-                      <div style={UI.sectionLbl6}>
-                        Allergier / intolerancer
-                      </div>
-                      <div style={UI.wrapGap5}>
-                        {allergens.map(id => {
-                          const a = ALLERGENS.find(x=>x.id===id);
-                          return (
-                            <div key={id} style={{ padding:"6px 10px", borderRadius:20, fontSize:12, fontWeight:700,
-                              background:"var(--red-lt)", color:"var(--red)",
-                              border:"1px solid var(--red-md)" }}>
-                              {a?.emoji} {a?.label}
-                            </div>
-                          );
-                        })}
-                        {customAllerg.map((c,i) => (
-                          <div key={i} style={{ padding:"6px 10px", borderRadius:20, fontSize:12, fontWeight:700,
-                            background:"var(--paper2)", color:"var(--muted)", border:"1px solid var(--border)" }}>
-                            {c}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ fontSize:12, color:"var(--muted)", marginBottom:8 }}>Ingen allergier registreret</div>
-                  )}
-
-                  {/* Diæt */}
-                  {user.diets && user.diets.length > 0 && (
-                    <div style={UI.mb10}>
-                      <div style={UI.sectionLbl6}>Diæt</div>
-                      <div style={UI.wrapGap5}>
-                        {user.diets.map(d => (
-                          <div key={d} style={{ padding:"6px 10px", borderRadius:20, fontSize:12, fontWeight:700,
-                            background:"var(--green-lt)", color:"var(--green)", border:"1px solid var(--green-mid)" }}>
-                            {DIETS.find(x=>x.id===d)?.label}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* E-numre */}
-                  {selectedENumbers.length > 0 && (
-                    <div>
-                      <div style={UI.sectionLbl6}>E-numre der undgås</div>
-                      <div style={UI.ufs12_cmuted2}>{selectedENumbers.length} E-numre valgt</div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Familiemedlemmer */}
-                {family.length > 0 && (
-                  <div style={UI.mb12}>
-                    <div style={UI.ufs13_fw700_cink_mb8}>Familiemedlemmer</div>
-                    {family.map(m => (
-                      <div key={m.id} className="card" style={{ marginBottom:8, padding:"12px 14px" }}>
-                        <div style={UI.udflex_aicenter_g10}>
-                          <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)", flexShrink:0 }}>
-                            {initials(m.name)}
-                          </div>
-                          <div style={UI.flex1}>
-                            <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>{m.name}</div>
-                            <div style={UI.muted11mt2}>
-                              {m.allergens.length
-                                ? m.allergens.map(id=>ALLERGENS.find(a=>a.id===id)?.label).join(", ")
-                                : "Ingen allergier"}
-                            </div>
-                          </div>
-                          <button className="btn btn-ghost btn-sm" style={{ fontSize:12, padding:"4px 10px", flexShrink:0 }}
-                            onClick={() => { setScreen(SCREENS.FAMILY); }}>
-                            Rediger
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {family.length === 0 && (
-                  <div className="card" style={{ marginBottom:12, textAlign:"center", padding:"14px" }}>
-                    <div style={UI.ufs13_cmuted2_mb8}>Ingen familiemedlemmer tilføjet</div>
-                    <button className="btn btn-outline btn-sm" onClick={() => setOnboardStep(4)}>
-                      + Tilføj familiemedlem
-                    </button>
-                  </div>
-                )}
-
-                {/* Fællesskab-card */}
-                <div style={{ background:"var(--warm-lt)", border:"1px solid var(--warm-md)", borderRadius:14, padding:"16px 18px", marginBottom:12, display:"flex", gap:12, alignItems:"flex-start" }}>
-                  <div style={UI.ufs28_shr0}>🤝</div>
-                  <div>
-                    <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>Du er nu en del af fællesskabet</div>
-                    <div style={UI.muted2_12lh}>Når du scanner ukendte produkter og indsender data, hjælper du alle andre med de samme allergier. Tak!</div>
-                  </div>
-                </div>
-
-                {/* Disclaimer */}
-                <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"center", gap:6, fontSize:11, color:"var(--muted)", lineHeight:1.5, marginBottom:16, textAlign:"center", padding:"0 8px" }}>
-                  <Icon name="info" size={12} color="var(--muted)" /> EatSafe er vejledende og erstatter ikke medicinsk rådgivning. Tjek altid produktets emballage.
-                </div>
-
-                {/* Afslut */}
-                <button className="btn btn-primary btn-full" style={{ marginTop:4, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }} onClick={finishOnboard}>
-                  {editMode ? <><Icon name="check" size={14} color="var(--on-green)" /> Gem ændringer</> : "Gå til appen →"}
-                </button>
-                {editMode && (
-                  <button className="btn btn-outline btn-full" style={UI.mt8}
-                    onClick={() => { setEditMode(false); setScreen(SCREENS.PROFILE); }}>
-                    Annuller
-                  </button>
-                )}
-              </div>
-            )}
 
                     </div>
         )}
