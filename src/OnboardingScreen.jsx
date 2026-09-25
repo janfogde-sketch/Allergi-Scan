@@ -487,16 +487,27 @@ export default function OnboardingScreen({
 
         {/* Neutral, ikke-alarmerende disclaimer — rød/orange er reserveret
             til allergener/fejl, ikke en generel vejledende note (25. sept.
-            2026, brugerfeedback). --ink2 i stedet for --muted (samme
-            mørkere-men-stadig-grå greb som login-undertekster tidligere i
-            sessionen) efter opfølgning om at teksten var for svag. */}
-        <div style={{ display:"flex", alignItems:"flex-start", gap:6, fontSize:11, color:"var(--ink2)", lineHeight:1.5, marginBottom:16 }}>
-          <Icon name="info" size={13} color="var(--ink2)" />
+            2026, brugerfeedback). Mørknet igen, et niveau mere end forrige
+            runde (--muted → --ink2 → --ink) — stadig samme neutrale grå
+            farvefamilie, bare fuld styrke i stedet for --ink2's 78%. */}
+        <div style={{ display:"flex", alignItems:"flex-start", gap:6, fontSize:11, color:"var(--ink)", lineHeight:1.5, marginBottom:16 }}>
+          <Icon name="info" size={13} color="var(--ink)" />
           <span>Diæt-tjek er vejledende og baseret på produkttags. Tjek altid ingredienserne selv.</span>
         </div>
 
         <button className="btn btn-primary btn-full" onClick={() => setOnboardStep(4)}>Fortsæt →</button>
-        <button className="btn btn-full btn-outline" style={UI.mt8}
+        {/* "Ingen særlig diæt" så næsten ud som almindelig tekst med den
+            transparente .btn-outline-stil (dens meget lyse border smelter
+            sammen med det gennemsigtige baggrundsfoto herude, uden for
+            kortet — samme rodårsag som E-numre-farve-bleed'et tidligere).
+            Løst med en solid, uigennemsigtig hvid baggrund + grøn kant/
+            tekst i stedet — tydeligt klikbart, men stadig markant lettere
+            end den fyldte grønne Fortsæt-knap (25. sept. 2026, opfølgning). */}
+        <button className="btn btn-full" style={{
+            ...UI.mt8,
+            background:"var(--surface)", color:"var(--green)",
+            border:"1.5px solid var(--green-mid)",
+          }}
           onClick={() => {
             if (diets.length > 0 && !window.confirm("Fjern dine valgte kostpræferencer?")) return;
             setUser(u => ({...u, diets:[]}));
