@@ -261,6 +261,20 @@ nye krav der skal implementeres, ikke som spørgsmål der skal diskuteres først
   `has_function_privilege(rolle, funktion, 'EXECUTE')` — antag det ikke
   virkede bare fordi kommandoen ikke fejlede (fundet under `security-check`s
   baseline-kørsel, se `.claude/HISTORY.md`).
+- **Preview-deploys er slået helt fra på Vercel-projektet (25. sept. 2026,
+  `previewDeploymentsDisabled:true` sat via Vercel-API'et, IKKE en
+  CLAUDE.md-regel — kræver ingen session-genindlæsning, gælder øjeblikkeligt
+  for alle).** Årsag: Bjørns (og enhver anden sessions) almindelige
+  arbejds-pushes til en ikke-`main`-branch udløste automatisk en separat
+  Vercel-preview-build PR hver eneste commit — helt uafhængigt af om nogen
+  rent faktisk mergede noget, og brugte dermed kvote i baggrunden uden at
+  nogen bad om det. Nu udløser KUN et push til `main` (dvs. en rigtig merge)
+  et Vercel-deploy. Praktisk konsekvens: der kommer ikke længere automatiske
+  preview-links per commit/branch — design gennemgås i stedet i en Artifact-
+  preview (se metoden nedenfor), og et rigtigt Vercel-deploy sker kun ved en
+  faktisk merge til `main`. Vil nogen undtagelsesvist se en branch direkte på
+  Vercel, kræver det en manuel `vercel deploy` fra CLI'en (virker stadig —
+  kun de automatiske Git-udløste preview-builds er slået fra).
 - **Vercel Free-planens daglige deployment-grænse (100/dag) — push kun til
   Vercel når ændringen reelt kræver produktion for at kunne testes/tjekkes**
   (fx noget der afhænger af det rigtige domæne, PWA-installation, service
