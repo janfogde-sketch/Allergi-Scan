@@ -400,7 +400,9 @@ body{
 .welcome-benefits{display:flex;justify-content:center;gap:22px;margin:28px 0 32px;width:100%;}
 .welcome-benefit{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;max-width:100px;}
 .welcome-benefit-icon{width:44px;height:44px;border-radius:14px;background:#EFF9F4;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh);flex-shrink:0;}
-.welcome-benefit-label{font-size:11.5px;font-weight:700;color:var(--ink2);line-height:1.35;}
+/* Hævet fra 11.5px/--ink2 til 13px/--ink (samme dag, opfølgning) — var på
+   grænsen til for diskret; nu på linje med resten af skærmens tekstvægt. */
+.welcome-benefit-label{font-size:13px;font-weight:700;color:var(--ink);line-height:1.35;}
 /* Primær CTA i EatSafes egen scan-CTA-grøn (#0E8F5A → #08734A), IKKE den
    generelle --green-token — brugerens 25. sept.-brief navngav netop denne
    palet ("EatSafes grønne identitet") som knappens farve. Samme rationale

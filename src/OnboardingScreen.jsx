@@ -25,11 +25,14 @@ function WelcomeIntro({ setScreen, setAuthTab }) {
   );
 }
 
-// 3 korte fordele med ikon (25. sept. 2026-brief) — "Undgå allergener",
+// 3 korte fordele med ikon (25. sept. 2026-brief) — "Tjek allergener",
 // "Hurtigt svar", "Tryggere indkøb". Ikonerne matcher hver sin fordel:
 // shield (beskyttelse mod allergener), zap (hurtighed), cart (indkøb).
+// "Undgå" → "Tjek" (samme dag, opfølgning) — "Undgå" kan lyde som en
+// garanti appen ikke kan give; "Tjek" beskriver mere præcist at appen
+// hjælper med VURDERINGEN, ikke selve garantien.
 const WELCOME_BENEFITS = [
-  ["shield", "Undgå allergener"],
+  ["shield", "Tjek allergener"],
   ["zap",    "Hurtigt svar"],
   ["cart",   "Tryggere indkøb"],
 ];
