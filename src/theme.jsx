@@ -389,8 +389,9 @@ body{
 /* Tydelig value proposition (25. sept. 2026-brief: "kort og tydelig value
    proposition") — hævet fra en dæmpet, muted tagline til en tydeligere,
    mørkere sætning, så den reelt fungerer som skærmens hovedbudskab, ikke en
-   sekundær undertekst. */
-.welcome-tagline{font-size:15.5px;color:var(--ink2);margin-top:12px;letter-spacing:.1px;font-weight:600;line-height:1.5;max-width:280px;}
+   sekundær undertekst. Hævet endnu en anelse samme dag (opfølgning) — var
+   stadig for diskret: 15.5px→16.5px, --ink2→--ink (fuld tekstfarve). */
+.welcome-tagline{font-size:16.5px;color:var(--ink);margin-top:12px;letter-spacing:.1px;font-weight:600;line-height:1.5;max-width:280px;}
 .welcome-divider{width:40px;height:2px;background:var(--border2);border-radius:2px;margin:32px auto;}
 /* 3 fordele-række (25. sept. 2026-brief) — kort, ikon-båret opsummering,
    IKKE tunge fuld-bredde feature-kort (erstatter tidligere .welcome-features/
