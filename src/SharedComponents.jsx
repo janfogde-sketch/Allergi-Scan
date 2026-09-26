@@ -206,7 +206,6 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
 // forklaring i stedet for det almindelige leksikon-opslag.
 const HIGHLIGHT_CATEGORY_STYLE = {
   allergy: { color: "var(--red)", bg: "var(--red-lt)" },
-  intolerance: { color: "var(--amber)", bg: "var(--amber-lt)" },
   enumber: { color: "var(--amber)", bg: "var(--amber-lt)" },
   diet: { color: "var(--amber)", bg: "var(--amber-lt)" },
 };

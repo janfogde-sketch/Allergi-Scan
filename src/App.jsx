@@ -814,7 +814,7 @@ export default function EatSafe() {
 
     setFamily([
       { id:"preview-fam-1", name:"Oskar Nielsen", color:AVATAR_COLORS[0], birth_year:2016, gender:"Mand", allergens:["jordnoedder"], custom:[], diets:[], eNumbers:[] },
-      { id:"preview-fam-2", name:"Sofie Nielsen", color:AVATAR_COLORS[1], birth_year:2019, gender:"Kvinde", allergens:[], custom:["Kiwi"], diets:["vegetar"], eNumbers:[] },
+      { id:"preview-fam-2", name:"Sofie Nielsen", color:AVATAR_COLORS[1], birth_year:2019, gender:"Kvinde", allergens:[], custom:["Kiwi"], diets:["vegetarian"], eNumbers:[] },
     ]);
 
     const now = Date.now();

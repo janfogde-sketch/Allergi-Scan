@@ -16,7 +16,6 @@ const S = {
   mb10:     { marginBottom:10 },
   h13b:     { fontSize:13, fontWeight:700, color:"var(--ink)" },
   sub11:    { fontSize:11, color:"var(--muted)" },
-  opacity6: { opacity:.6 },
 };
 
 export default function ResultScreen({
@@ -146,7 +145,10 @@ export default function ResultScreen({
     })),
     ...findings.intoleranceMatches.map(m => ({
       keywords: ALLERGEN_KEYWORDS[m.id] || [m.label],
-      category: "intolerance", label: m.label,
+      // "allergy"-kategori (rød), ikke en separat "intolerance"-farve —
+      // FORBEDR PRODUKTSIDEN (28. sept. 2026) samler allergi+intolerance i
+      // én rød sundhedsadvarsel-behandling overalt på siden, se topStatus.
+      category: "allergy", label: m.label,
       reason: m.severity === "traces" ? `Kan indeholde spor af ${m.label}.` : `Matcher din valgte ${m.label}.`,
     })),
     ...findings.customMatches.map(m => ({
@@ -165,13 +167,119 @@ export default function ResultScreen({
       reason: d.reasons?.[0] ? `${d.reasons[0]} — passer derfor ikke til ${d.label.toLowerCase()}.` : `Passer ikke til ${d.label.toLowerCase()}.`,
     })).filter(r => r.keywords.length > 0),
   ];
-  // Undtagelsen fra "fremhævet = kun relevant for dig": hvis SLET INGEN af
-  // fundene ovenfor findes, men der er ukendte/ikke-relevante allergener i
-  // produktet (den eksisterende, adskilte "Andre allergener i produktet"-
-  // sektion nedenfor dækker det tilfælde separat) — ingrediens-listen
-  // fremhæver da simpelthen intet, hvilket er korrekt (intet ER relevant).
-  const allHighlightsAreAllergyOnly = ingredientHighlightRules.length > 0 && ingredientHighlightRules.every(r => r.category === "allergy");
   const onIngredientHighlightTap = (rule) => showToast(`${rule.label} — ${rule.reason}`, "info");
+
+  // ── "DINE VALG" (FORBEDR PRODUKTSIDEN, 28. sept. 2026) ──────────────────
+  // Én samlet, neutral forklaringssektion for ÉN aktiv profil — erstatter
+  // "Relevant for dig" + "Passer til dine kostpræferencer", som begge viste
+  // en delvist overlappende konklusion. Viser ALLE brugerens EGNE valgte
+  // allergier/intolerancer, kostpræferencer og overvågede E-numre — hver
+  // med ✓ (matcher ikke)/✕ (matcher, med konkret grund)/? (kan ikke
+  // afgøres ud fra produktdata) — aldrig kun de der matcher, og aldrig en
+  // overskrift der lover et bestemt udfald (krav 3: "brug ALDRIG 'PASSER
+  // TIL DINE KOSTPRÆFERENCER' hvis resultatet kan være negativt"). Kun ved
+  // ÉN aktiv profil — ved flere profiler dækker renderPersonOverview()
+  // allerede hver persons egne fund separat.
+  const soloProfile = (!isMultiProfile && resultProfilesRaw.length === 1) ? resultProfilesRaw[0] : null;
+  const CHOICE_STATUS_ORDER = { cross: 0, unknown: 1, check: 2 };
+
+  const buildAllergyChoiceRows = () => {
+    if (!soloProfile) return [];
+    const flags = scanResult.allergen_flags || {};
+    const rows = (soloProfile.allergens || []).map(id => {
+      const a = ALLERGENS.find(x => x.id === id);
+      if (!a) return null;
+      const val = flags[id];
+      if (val === "yes") return { status: "cross", label: a.label, reason: "Fundet i produktet." };
+      if (val === "traces") return { status: "cross", label: a.label, reason: "Kan indeholde spor i produktet." };
+      if (val === "no") return { status: "check", label: a.label, reason: null };
+      return { status: "unknown", label: a.label, reason: "Kan ikke afgøres ud fra de tilgængelige produktdata." };
+    }).filter(Boolean);
+    // Egne, fritekst-tilføjede allergier — kun fundet/ikke fundet, ingen
+    // "?"-tilstand er mulig her (binært tekst-match, se matchCustomAllergens).
+    const customRows = (soloProfile.custom || []).map(term => {
+      const found = (scanResult.customAllergenMatches || []).some(m => m.toLowerCase() === term.toLowerCase());
+      return found
+        ? { status: "cross", label: term, reason: "Fundet i ingredienslisten (fritekst)." }
+        : { status: "check", label: term, reason: null };
+    });
+    return [...rows, ...customRows].sort((a, b) => CHOICE_STATUS_ORDER[a.status] - CHOICE_STATUS_ORDER[b.status]);
+  };
+
+  const buildDietChoiceRows = () => {
+    if (!soloProfile) return [];
+    return dietResults.map(r => {
+      if (r.ok === false) return { status: "cross", label: r.label, reason: r.reasons?.[0] || "Passer ikke til dit valg." };
+      // Lav datasikkerhed (fx tom ingrediensliste) kan give et falsk "ok:true"
+      // for vegan/vegetarisk/pescetarian (de returnerer aldrig ok:null, kun en
+      // lav confidence, se checkDietCompatibility) — vis "?" i stedet for en
+      // falsk grøn ✓, så denne sektion aldrig modsiger et gråt "utilstrækkelige
+      // data"-resultatkort ovenfor.
+      if (r.ok === null || (r.ok === true && r.confidence === "low")) {
+        return { status: "unknown", label: r.label, reason: r.reasons?.[0] ? `${r.reasons[0]} — kan ikke afgøres med sikkerhed.` : "Kan ikke afgøres ud fra de tilgængelige produktdata." };
+      }
+      return { status: "check", label: r.label, reason: null };
+    }).sort((a, b) => CHOICE_STATUS_ORDER[a.status] - CHOICE_STATUS_ORDER[b.status]);
+  };
+
+  const eNumberChoiceLabel = (id) => E_NUMBERS[id] ? `${id} — ${E_NUMBERS[id].split("—")[0].trim()}` : id;
+  const buildENumberChoiceRows = () => {
+    if (!soloProfile) return [];
+    const ids = soloProfile.eNumbers || [];
+    if (ids.length === 0) return [];
+    if (!hasIngredientsText) {
+      return ids.map(id => ({ status: "unknown", label: eNumberChoiceLabel(id), reason: "Ingrediensliste mangler — kan ikke afgøres." }));
+    }
+    const present = new Set((scanResult.productENumbers || []).map(e => e.toUpperCase()));
+    return ids.map(id => present.has(id.toUpperCase())
+      ? { status: "cross", label: eNumberChoiceLabel(id), reason: "Fundet i produktet." }
+      : { status: "check", label: eNumberChoiceLabel(id), reason: null }
+    ).sort((a, b) => CHOICE_STATUS_ORDER[a.status] - CHOICE_STATUS_ORDER[b.status]);
+  };
+
+  const ChoiceRow = ({ status, label, reason, crossColor = "var(--red)" }) => {
+    const icon = status === "cross" ? "x" : status === "unknown" ? "info" : "check";
+    const color = status === "cross" ? crossColor : status === "unknown" ? "var(--muted)" : "var(--green)";
+    return (
+      <div style={{ display:"flex", alignItems:"flex-start", gap:6, padding:"4px 0" }}>
+        <Icon name={icon} size={13} color={color} />
+        <div style={{ fontSize:12.5, lineHeight:1.4 }}>
+          <span style={{ fontWeight:700, color:"var(--ink)" }}>{label}</span>
+          {reason && <div style={{ color:"var(--muted2)", fontSize:11.5, marginTop:1 }}>{reason}</div>}
+        </div>
+      </div>
+    );
+  };
+
+  const ChoiceCategory = ({ title, rows, crossColor }) => {
+    if (rows.length === 0) return null;
+    return (
+      <div>
+        <div style={UI.ufs9_cmuted_fw700_ttuppercas_ls4px_mb4}>{title}</div>
+        <div style={{ display:"flex", flexDirection:"column" }}>
+          {rows.map((r, i) => <ChoiceRow key={i} {...r} crossColor={crossColor} />)}
+        </div>
+      </div>
+    );
+  };
+
+  const renderDineValg = () => {
+    if (!soloProfile) return null;
+    const allergyRows = buildAllergyChoiceRows();
+    const dietRows = buildDietChoiceRows();
+    const eNumberRows = buildENumberChoiceRows();
+    if (allergyRows.length === 0 && dietRows.length === 0 && eNumberRows.length === 0) return null;
+    return (
+      <div className="card">
+        <div className="card-lbl">Dine valg</div>
+        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+          <ChoiceCategory title="Allergier & intolerancer" rows={allergyRows} crossColor="var(--red)" />
+          <ChoiceCategory title="Kostpræferencer" rows={dietRows} crossColor="var(--amber)" />
+          <ChoiceCategory title="E-numre & øvrige fravalg" rows={eNumberRows} crossColor="var(--amber)" />
+        </div>
+      </div>
+    );
+  };
 
   const handleAddToList = () => {
     if (lists.length > 1) { setShowListPicker(true); return; }
@@ -281,28 +389,51 @@ export default function ResultScreen({
     // en strimmel øverst med ikon + status, i stedet for en selvstændig boks under
     // kortet der bare gentog det samme. Se SECURITY/DESIGN-diskussion i PR'en for baggrund.
     //
-    // FINAL PRODUCT RESULT PAGE (28. sept. 2026) — ved ÉN aktiv profil
-    // bruges nu den dynamiske, kategoriserede `topStatus` (allergi →
-    // intolerance → E-nummer → diæt → utilstrækkelige data → ingen fund) i
-    // stedet for scanResult.status/headline, som kun kendte tre tilstande
-    // og kunne kalde et produkt "Sikkert produkt" alene fordi der ikke var
-    // et match — uden at skelne fra reelt manglende data. Ved FLERE aktive
+    // FORBEDR PRODUKTSIDEN (28. sept. 2026) — ved ÉN aktiv profil bruges nu
+    // den dynamiske `topStatus` med kun TO advarselsfarver: RØD forbeholdt
+    // egentlige allergi-/intoleranceadvarsler, GUL/ORANGE for kostpræference-
+    // /E-nummer-fravalg (et bevidst valg, ikke en sundhedsadvarsel) — i
+    // stedet for scanResult.status/headline, som kun kendte tre tilstande og
+    // kunne kalde et produkt "Sikkert produkt" alene fordi der ikke var et
+    // match, uden at skelne fra reelt manglende data. Ved FLERE aktive
     // profiler bruges fortsat den eksisterende, samlede tre-tilstands-status
     // (overallStatus/overallHeadline) — per-profil-detaljer vises separat
-    // nedenfor (renderSafetyDiet).
+    // nedenfor (renderPersonOverview).
     const verdictColor = isMultiProfile
       ? ({ danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[overallStatus] || "var(--green)")
       : ({ danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", unknown:"var(--neutral)" }[topStatus.level] || "var(--green)");
     const verdictIcon = isMultiProfile ? (overallStatus === "safe" ? "check" : "warning") : topStatus.icon;
     const headlineText = isMultiProfile ? overallHeadline : topStatus.headline;
-    // Konkrete navne under headline (krav B/C/D — "Mælk · Æg · Soja") — kun
+    // Konkrete navne under headline, vist som chips/tags (krav 1: "hvis flere
+    // ting udløser resultatet, må de gerne vises som korte chips/tags") — kun
     // ved én aktiv profil, hvor topStatus.names allerede er de præcise fund.
-    const namesLine = !isMultiProfile && topStatus.names?.length > 0 ? topStatus.names.join(" · ") : null;
+    const topNames = !isMultiProfile && topStatus.names?.length > 0 ? topStatus.names : null;
+    // Kort, konkret forklaring direkte i resultatkortet (krav 14: "Forklaring:
+    // 'Produktet indeholder mælkeprotein.'") — udledt af det første reelle
+    // fund, ikke en generisk sætning. Kun for de to advarselstilstande; grøn/
+    // grå har allerede deres egen forklarende sætning nedenfor.
+    const topExplanation = isMultiProfile ? null : (() => {
+      if (topStatus.level === "danger") {
+        const first = [...findings.customMatches, ...findings.allergyMatches, ...findings.intoleranceMatches][0];
+        if (!first) return null;
+        return first.severity === "traces" ? `Produktet kan indeholde spor af ${first.label}.` : `Produktet indeholder ${first.label}.`;
+      }
+      if (topStatus.level === "warn") {
+        const firstDiet = findings.dietFails[0];
+        if (firstDiet?.reasons?.[0]) {
+          const r = firstDiet.reasons[0];
+          return `Produktet ${r.charAt(0).toLowerCase()}${r.slice(1)}.`;
+        }
+        const firstE = findings.eNumberMatches[0];
+        if (firstE) return `Produktet indeholder E-nummeret ${firstE}.`;
+      }
+      return null;
+    })();
     const sourceInfoText = scanResult.source === "producer" || scanResult.verified_status === "verified"
       ? "Produktdata kommer direkte fra producenten eller en verificeret kilde."
       : scanResult.source === "off" || scanResult.source === "open_food_facts"
-      ? "Produktdata kommer fra Open Food Facts, en åben, community-drevet database — kan være ufuldstændig."
-      : "Produktdata er indsendt af en bruger og kan være ufuldstændige eller ændret siden indsendelsen.";
+      ? "Produktdata kommer fra Open Food Facts og kan være brugeroprettede. Kontrollér altid produktets aktuelle emballage."
+      : "Produktdata er indsendt af en EatSafe-bruger og kan indeholde fejl eller være forældede.";
     return (
       <div className="product-hero" style={{ position:"relative", border:`2px solid ${verdictColor}` }}>
         {/* Favorit/del — nu rigtige flex-børn af banneret (eller af en tilsvarende
@@ -326,16 +457,23 @@ export default function ResultScreen({
               </button>
             </div>
           </div>
-          {namesLine && (
-            <div style={{ fontSize:13, fontWeight:700, color:"#fff", marginTop:6 }}>{namesLine}</div>
+          {topNames && (
+            <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:6 }}>
+              {topNames.map((n, i) => (
+                <span key={i} style={{ fontSize:12, fontWeight:700, color:"#fff", background:"rgba(255,255,255,.22)", borderRadius:20, padding:"3px 10px" }}>{n}</span>
+              ))}
+            </div>
+          )}
+          {topExplanation && (
+            <div style={{ fontSize:11.5, color:"rgba(255,255,255,.9)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>{topExplanation}</div>
           )}
           {!isMultiProfile && topStatus.level === "safe" && (
             <div style={{ fontSize:11.5, color:"rgba(255,255,255,.9)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>
-              Vi fandt ingen match med dine valgte allergier, intolerancer eller øvrige ting, du undgår.
+              Vi fandt ingen match med dine valgte allergier, intolerancer eller øvrige præferencer.
             </div>
           )}
           {!isMultiProfile && topStatus.level === "unknown" && (
-            <div style={{ fontSize:11.5, color:"var(--ink2)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>
+            <div style={{ fontSize:11.5, color:"rgba(255,255,255,.9)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>
               Vi mangler produktdata og kan derfor ikke kontrollere alle dine præferencer.
             </div>
           )}
@@ -389,10 +527,9 @@ export default function ResultScreen({
 
   // Per-person-oversigt (multi-profil) + småbørn-advarsler + produktets
   // egne selv-deklarerede tags (fx "vegansk" sat af producenten selv — IKKE
-  // en beregning mod brugerens præferencer, se renderDietPreferences for
-  // den). Findings/E-numre/diæt-matches mod BRUGERENS præferencer er
-  // flyttet til de nye, dedikerede renderRelevantForYou()/
-  // renderDietPreferences() nedenfor (FINAL PRODUCT RESULT PAGE, krav 3/7).
+  // en beregning mod brugerens præferencer, se renderDineValg for den).
+  // Findings/E-numre/diæt-matches mod BRUGERENS præferencer vises i den
+  // dedikerede renderDineValg() nedenfor.
   const renderPersonOverview = () => {
     const tagLabels = { vegan:"Vegansk", vegetarian:"Vegetarisk", "palm-oil-free":"Uden palmeolie", "gluten-free":"Glutenfri", organic:"Økologisk" };
     const hasTags = scanResult.tags && scanResult.tags.length > 0;
@@ -453,121 +590,24 @@ export default function ResultScreen({
     );
   };
 
-  // ── "Relevant for dig" (krav 3) ─────────────────────────────────────────
-  // Samlet oversigt over ALLE fund på tværs af kategorier, opdelt og
-  // prioriteret allergi → intolerance/følsomhed → E-nummer → kostpræference
-  // — ikke reduceret til én uklar status. Kun ved ÉN aktiv profil (ved
-  // flere profiler dækker per-person-listen ovenfor allerede hver persons
-  // egne fund separat, med samme prioritering internt).
-  const renderRelevantForYou = () => {
-    if (isMultiProfile) return null;
-    const { allergyMatches, intoleranceMatches, customMatches, eNumberMatches, dietFails } = findings;
-    const hasAny = allergyMatches.length > 0 || customMatches.length > 0 || intoleranceMatches.length > 0 || eNumberMatches.length > 0 || dietFails.length > 0;
-    if (!hasAny) return null;
-
-    const Group = ({ color, bg, title, children }) => (
-      <div style={{ padding:"8px 12px", marginBottom:6, background:bg, border:`1px solid ${color==="var(--red)"?"var(--red-md)":"var(--amber-md)"}`, borderRadius:10 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:800, color, marginBottom:4 }}>
-          <Icon name="warning" size={12} color={color} /> {title}
-        </div>
-        <div style={UI.wrapGap4}>{children}</div>
-      </div>
-    );
-    const Chip = ({ color, bg, onClick, children }) => (
-      <span onClick={onClick}
-        style={{ fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:6, background:bg, color, border:`1px solid ${color==="var(--red)"?"var(--red-md)":"var(--amber-md)"}`, cursor: onClick ? "pointer" : "default", display:"inline-flex", alignItems:"center", gap:4 }}>
-        {children}{onClick && <span style={UI.ufs9_op06}>›</span>}
-      </span>
-    );
-
-    return (
-      <div style={S.mb10}>
-        <div className="card-lbl" style={{ marginLeft:2 }}>Relevant for dig</div>
-        {(allergyMatches.length > 0 || customMatches.length > 0) && (
-          <Group color="var(--red)" bg="var(--red-lt)" title="Allergier">
-            {customMatches.map(m => (
-              <Chip key={m.id} color="var(--red)" bg="var(--red-lt)">✏️ {m.label}</Chip>
-            ))}
-            {allergyMatches.map(m => (
-              <Chip key={m.id} color="var(--red)" bg="var(--red-lt)" onClick={() => { setKnowledgeSlug(m.id); setScreen(SCREENS.KNOWLEDGE); }}>
-                {m.severity === "traces" ? `spor: ${m.label}` : m.label}
-              </Chip>
-            ))}
-          </Group>
-        )}
-        {intoleranceMatches.length > 0 && (
-          <Group color="var(--amber)" bg="var(--amber-lt)" title="Intolerancer / følsomheder">
-            {intoleranceMatches.map(m => (
-              <Chip key={m.id} color="var(--amber)" bg="var(--amber-lt)" onClick={() => { setKnowledgeSlug(m.id); setScreen(SCREENS.KNOWLEDGE); }}>
-                {m.severity === "traces" ? `spor: ${m.label}` : m.label}
-              </Chip>
-            ))}
-          </Group>
-        )}
-        {eNumberMatches.length > 0 && (
-          <Group color="var(--amber)" bg="var(--amber-lt)" title="E-numre du undgår">
-            {eNumberMatches.map(e => (
-              <Chip key={e} color="var(--amber)" bg="var(--amber-lt)" onClick={() => { const slug = "e-" + e.toLowerCase().replace("e",""); setKnowledgeSlug(slug); setScreen(SCREENS.KNOWLEDGE); }}>
-                {e}{E_NUMBERS[e] ? " — " + E_NUMBERS[e].split("—")[0].trim() : ""}
-              </Chip>
-            ))}
-          </Group>
-        )}
-        {dietFails.length > 0 && (
-          <Group color="var(--amber)" bg="var(--amber-lt)" title="Kostpræferencer">
-            {dietFails.map(d => (
-              <Chip key={d.id} color="var(--amber)" bg="var(--amber-lt)">
-                {d.label}{d.reasons?.[0] ? ` — ${d.reasons[0]}` : ""}
-              </Chip>
-            ))}
-          </Group>
-        )}
-      </div>
-    );
-  };
-
-  // ── Kostpræferencer (krav 7) ─────────────────────────────────────────────
-  // Omdøbt fra "Kompatibel med dine diæter" — viser ALLE brugerens/familiens
-  // aktive diæter (ikke kun de der fejler, i modsætning til "Relevant for
-  // dig" ovenfor), hver med ✓ (passer) / ✕ (passer ikke, + kort årsag hvis
-  // data tillader det) / ? (kan ikke afgøres). Vist kun hvis der reelt er
-  // aktive kostpræferencer at vise noget for. Gætter aldrig — ✕ og ? er
-  // adskilte tilstande, aldrig slået sammen.
-  const renderDietPreferences = () => {
-    if (dietResults.length === 0) return null;
-    return (
-      <div className="card">
-        <div className="card-lbl">Passer til dine kostpræferencer</div>
-        <div style={UI.udflex_fdcolumn_g4}>
-          {dietResults.map(r => (
-            <div key={r.id} style={{ display:"flex", alignItems:"flex-start", gap:6, fontSize:12.5 }}>
-              <Icon name={r.ok === true ? "check" : r.ok === false ? "x" : "info"} size={13}
-                color={r.ok === true ? "var(--green)" : r.ok === false ? "var(--amber)" : "var(--muted)"} />
-              <span style={{ color: r.ok === true ? "var(--ink)" : r.ok === false ? "var(--ink)" : "var(--muted)" }}>
-                <strong>{r.label}</strong>
-                {r.ok === false && r.reasons?.[0] && <span style={{ color:"var(--muted2)" }}> — {r.reasons[0]}</span>}
-                {r.ok === null && <span> – kan ikke afgøres ud fra de tilgængelige oplysninger</span>}
-                {r.confidence === "low" && r.ok !== null && <span style={S.opacity6}> (usikker)</span>}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
+  // Kun EGENTLIGE allergener (ALLERGENS' eget type==="allergi") må stå i
+  // "Andre deklarerede allergener" — en intolerance som laktoseintolerance/
+  // gluten er IKKE et allergen og hørte tidligere fejlagtigt med i denne
+  // liste (FORBEDR PRODUKTSIDEN, 28. sept. 2026, bruger-rapporteret fund).
+  const isRealAllergen = (id) => ALLERGENS.find(a => a.id === id)?.type === "allergi";
 
   const renderOtherAllergens = () => {
     const flags = scanResult.allergen_flags;
-    const present = Object.entries(flags).filter(([k,v]) => v==="yes"    && ALLERGENS.find(a=>a.id===k));
-    const traces  = Object.entries(flags).filter(([k,v]) => v==="traces" && ALLERGENS.find(a=>a.id===k));
+    const present = Object.entries(flags).filter(([k,v]) => v==="yes"    && isRealAllergen(k));
+    const traces  = Object.entries(flags).filter(([k,v]) => v==="traces" && isRealAllergen(k));
     const myAllergens  = new Set([...scanResult.matchedDanger||[], ...scanResult.matchedWarning||[]]);
     const otherPresent = present.filter(([k]) => !myAllergens.has(k));
     const otherTraces  = traces.filter(([k])  => !myAllergens.has(k));
     if (!otherPresent.length && !otherTraces.length) return null;
     return (
       <div className="card">
-        <div className="card-lbl">Andre allergener i produktet</div>
-        <div style={UI.ufs11_cmuted_mb8}>Ikke registreret på dine profiler</div>
+        <div className="card-lbl">Andre deklarerede allergener</div>
+        <div style={UI.ufs11_cmuted_mb8}>Ikke blandt dine valgte allergier</div>
         {otherPresent.length > 0 && (
           <div className="tags" style={UI.mb6}>
             {otherPresent.map(([k]) => {
@@ -776,14 +816,15 @@ export default function ResultScreen({
       {/* ── 2. PER-PERSON-OVERBLIK, SMÅBØRN, PRODUKTETS EGNE TAGS ── */}
       {renderPersonOverview()}
 
-      {/* ── 3. RELEVANT FOR DIG — samlet, kategoriseret fund (krav 3) ── */}
-      {renderRelevantForYou()}
+      {/* ── 3. DINE VALG — én samlet, neutral forklaring på konklusionen
+          ovenfor (FORBEDR PRODUKTSIDEN, 28. sept. 2026). Erstatter de
+          tidligere separate "Relevant for dig"- og "Passer til dine
+          kostpræferencer"-sektioner, som gentog samme konklusion to/tre
+          steder på siden. ── */}
+      {renderDineValg()}
 
-      {/* ── 4. KOSTPRÆFERENCER — dedikeret, viser ALLE aktive diæter (krav 7) ── */}
-      {renderDietPreferences()}
-
-      {/* ── ANDRE ALLERGENER I PRODUKTET — ikke relevante for brugeren selv,
-          rent informativt, uændret. ── */}
+      {/* ── 4. ANDRE DEKLAREREDE ALLERGENER — ikke relevante for brugeren
+          selv, rent informativt. ── */}
       {scanResult.allergen_flags && renderOtherAllergens()}
 
       {/* ── 5. INGREDIENSLISTE ── */}
@@ -797,15 +838,9 @@ export default function ResultScreen({
                 onHighlightTap={onIngredientHighlightTap}
                 onIngredientTap={handleIngredientTap} />
             </div>
-            {/* Kun ÉN, korrekt billedtekst for hvad fremhævningen betyder —
-                aldrig den generiske "Fremhævet = allergen", medmindre ALT
-                fremhævet reelt er en allergi (krav 8). Ved en blanding af
-                kategorier, eller ingen fund overhovedet, nævnes fremhævning
-                slet ikke her. */}
             {ingredientHighlightRules.length > 0 && (
               <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
-                {allHighlightsAreAllergyOnly ? "Fremhævet = allergen. " : "Fremhævet = relevant for dig. "}
-                Tryk for en kort forklaring. Listen kan være på originalsprog.
+                Fremhævede ingredienser er relevante for dine valg. Tryk for en kort forklaring.
               </div>
             )}
             {customAllerg?.length > 0 && (

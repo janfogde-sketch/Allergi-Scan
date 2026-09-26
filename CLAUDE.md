@@ -1105,6 +1105,65 @@ ingen specialcases pr. produkt.
   build`/`npx vitest run` (109/109, ingen regressioner) grønne, mojibake-
   scan clean.
 
+**Opfølgende omstrukturering, samme skærm — "FORBEDR PRODUKTSIDEN" (28.
+sept. 2026, videreudvikling, ikke redesign).** Brugeren pegede på at
+konklusionen stadig blev gentaget/modsagt flere steder (resultatkort +
+"Relevant for dig" + "Passer til dine kostpræferencer" kunne vise
+delvist overlappende eller ligefrem modstridende information). Løst ved
+at forenkle til KUN to advarselsfarver og én samlet forklaringssektion:
+- **RØD forbeholdt egentlige allergi-/intoleranceadvarsler** — allergi og
+  intolerance er nu slået sammen ét sted (samme røde behandling overalt:
+  topstatus, ingrediens-fremhævning, "Dine valg"), da begge er sundheds-
+  relevante fund brugeren ikke selv har "valgt fra". `computeTopStatus`
+  (helpers.js) har kun to advarselsniveauer nu i stedet for fire.
+- **GUL/ORANGE for kostpræferencer og fravalgte E-numre** — et bevidst
+  valg, ikke en sundhedsadvarsel, og skal derfor ikke alarmere som en
+  allergi. Ny, eksakt headline "Passer ikke til dine valg" (var fire
+  forskellige headlines afhængig af fund-type).
+- **Konkrete årsager vises nu som chips/tags direkte i resultatkortet**
+  (var en enkelt sammenkædet tekstlinje), plus en kort, konkret
+  forklaringssætning udledt af det første fund (fx "Produktet indeholder
+  mælkeprotein.") — ny `topExplanation`-beregning i ResultScreen.jsx.
+- **"Relevant for dig" og "Passer til dine kostpræferencer" er fjernet
+  helt**, erstattet af ÉN ny sektion **"Dine valg"** (`renderDineValg()`)
+  med tre skjulbare underkategorier (Allergier & intolerancer/
+  Kostpræferencer/E-numre & øvrige fravalg) — hver viser ALLE brugerens
+  egne valgte allergener/diæter/E-numre, ikke kun dem der matcher, med
+  ✓ (matcher ikke) / ✕ (matcher, konkret grund) / ? (kan ikke afgøres).
+  Aldrig en overskrift der lover et bestemt udfald (fx "PASSER TIL DINE
+  KOSTPRÆFERENCER") — kun neutrale kategori-navne. En lav-datasikkerheds
+  "ok:true" fra `checkDietCompatibility` (vegan/vegetarisk/pescetarisk
+  returnerer aldrig `ok:null`, kun lav `confidence`) nedgraderes bevidst
+  til "?" her, så sektionen aldrig modsiger et gråt "utilstrækkelige
+  data"-resultatkort ovenfor.
+- **"Andre allergener i produktet" omdøbt til "Andre deklarerede
+  allergener"** + rettet en reel bug: sektionen inkluderede tidligere
+  ALLE `ALLERGENS`-entries uanset `type`, så en intolerance som
+  "Laktoseintolerance" fejlagtigt blev listet som et allergen — filtreret
+  til kun `type==="allergi"` nu.
+- Ingrediens-fremhævningens hjælpetekst under listen forenklet til én
+  sætning ("Fremhævede ingredienser er relevante for dine valg. Tryk for
+  en kort forklaring.") — droppede den tidligere betingede "Fremhævet =
+  allergen/relevant for dig"-skelnen som unødig kompleksitet.
+- **Sideordnet fund, samme runde:** preview-mock-dataens "Sofie"-familie-
+  medlem havde diæt-id'et `"vegetar"` i stedet for det korrekte
+  `"vegetarian"` (DIETS' egen id, `constants.jsx`) — et klassisk felt-
+  navne-mismatch (se afsnit 5's stående lektion) der gjorde ethvert
+  diæt-tjek for hende stille `ok:null` ("Ukendt diæt") i stedet for reelt
+  at tjekke — kun relevant for artifact-preview-demoen, ikke rigtige
+  brugere (som vælger diæt via UI'et, hvor id'erne er korrekte), men
+  rettet i samme omgang da den blokerede verifikation af netop
+  diæt-brud-scenariet.
+- Verificeret med Playwright (fem mock-produkter + profilskift til et
+  familiemedlem med egen diæt/fritekst-allergi): grøn "Ingen advarsler
+  fundet" uden andre bokse, rød "Allergi-advarsel" + navn-chip + korrekt
+  "Andre deklarerede allergener" (uden intolerance-fejlen), grå
+  "Ikke nok oplysninger" med "?" på hver enkelt valgt allergen (ikke kun
+  et globalt banner), orange "Passer ikke til dine valg" + kostpræference-
+  chip + forklaring + korrekt ✕-række i "Dine valg", og en diæt-OK-
+  variant der kun viser ✓-rækker uden ekstra grønne bokse. `npm run
+  build`/`npx vitest run` (109/109) grønne, mojibake-scan clean.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
