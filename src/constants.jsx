@@ -542,51 +542,78 @@ export const MADPAS_SECTIONS_T = {
   diet:         { da:"Kost",               en:"Diet", de:"Ernährung", fr:"Régime", es:"Dieta", it:"Dieta", nl:"Dieet", pt:"Dieta", pl:"Dieta", sv:"Kost", no:"Kosthold", ja:"食事制限", zh:"饮食", ar:"النظام الغذائي", tr:"Diyet", th:"การกินอาหาร", el:"Δίαιτα" },
 };
 
-// Kort sikkerheds-sætning under selve allergi-listen (IKKE et langt,
-// høfligt afsnit — "Restaurantpersonalet skal kunne forstå hovedbudskabet
-// på få sekunder", se CLAUDE.md's Madpas-redesign-note). Vises kun under
-// FØDEVAREALLERGIER, ikke intolerancer/kost. To varianter (26. sept. 2026,
-// opfølgende polish-runde, krav 6): PLURAL (denne, MADPAS_SAFETY_NOTE_T)
-// bruges ved 2+ hensyn ("... any of these ingredients"), SINGULAR
-// (MADPAS_SAFETY_NOTE_SINGULAR_T nedenfor, med et {name}-indsætningspunkt)
-// bruges når der kun er ét — se madpasSafetyNote() i useMadpas.js.
+// Sikkerheds-sætning under hvert enkelt allergen-/fritekst-emne i
+// FØDEVAREALLERGIER (IKKE intolerancer/kost) — genereres nu ALTID pr.
+// enkelt hensyn, ikke som én kombineret sætning for flere (27. sept.
+// 2026, Madpas-finpolish, krav 4: "Ændr ... til en mere præcis
+// formulering" + "genereres dynamisk for den konkrete allergi"), fordi
+// hvert hensyn nu vises som sin egen tydelige informationsblok (krav 6).
+// {name} kan forekomme flere gange i skabelonen — se madpasSafetyNote()
+// i useMadpas.js, som erstatter ALLE forekomster, ikke kun den første.
 export const MADPAS_SAFETY_NOTE_T = {
-  da:"Sørg venligst for, at min mad ikke indeholder nogen af disse ingredienser.",
-  en:"Please make sure my food does not contain any of these ingredients.",
-  de:"Bitte stellen Sie sicher, dass mein Essen keine dieser Zutaten enthält.",
-  fr:"Veuillez vous assurer que mon repas ne contient aucun de ces ingrédients.",
-  es:"Por favor, asegúrese de que mi comida no contenga ninguno de estos ingredientes.",
-  it:"Si prega di assicurarsi che il mio pasto non contenga nessuno di questi ingredienti.",
-  nl:"Zorg er alstublieft voor dat mijn maaltijd geen van deze ingrediënten bevat.",
-  pt:"Por favor, certifique-se de que a minha refeição não contém nenhum destes ingredientes.",
-  pl:"Proszę upewnić się, że moje jedzenie nie zawiera żadnego z tych składników.",
-  sv:"Vänligen se till att min måltid inte innehåller något av dessa ingredienser.",
-  no:"Vennligst sørg for at måltidet mitt ikke inneholder noen av disse ingrediensene.",
-  ja:"私の食事にこれらの成分が含まれないようにしてください。",
-  zh:"请确保我的餐食不含以上任何一种成分。",
-  ar:"يرجى التأكد من أن وجبتي لا تحتوي على أي من هذه المكونات.",
-  tr:"Lütfen yemeğimin bu malzemelerden hiçbirini içermediğinden emin olun.",
-  th:"กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มีส่วนผสมเหล่านี้",
-  el:"Παρακαλώ βεβαιωθείτε ότι το γεύμα μου δεν περιέχει κανένα από αυτά τα συστατικά.",
+  da:"Sørg venligst for, at min mad ikke indeholder {name} eller ingredienser fremstillet af {name}.",
+  en:"Please make sure my food does not contain {name} or ingredients made from {name}.",
+  de:"Bitte stellen Sie sicher, dass mein Essen Folgendes nicht enthält: {name}, oder Zutaten, die daraus hergestellt wurden.",
+  fr:"Veuillez vous assurer que mon repas ne contient pas ce qui suit : {name}, ni aucun ingrédient qui en est dérivé.",
+  es:"Por favor, asegúrese de que mi comida no contenga lo siguiente: {name}, ni ingredientes derivados de ello.",
+  it:"Assicuratevi che il mio pasto non contenga quanto segue: {name}, né ingredienti derivati da esso.",
+  nl:"Zorg ervoor dat mijn maaltijd geen {name} bevat, en ook geen ingrediënten die daarvan gemaakt zijn.",
+  pt:"Por favor, certifique-se de que a minha refeição não contém o seguinte: {name}, nem ingredientes derivados dele.",
+  pl:"Proszę dopilnować, aby moje jedzenie nie zawierało następującego składnika: {name}, ani produktów z niego wytworzonych.",
+  sv:"Se till att min måltid inte innehåller {name} eller ingredienser gjorda av {name}.",
+  no:"Sørg for at måltidet mitt ikke inneholder {name} eller ingredienser laget av {name}.",
+  ja:"私の食事に{name}、または{name}由来の原材料が含まれていないことを確認してください。",
+  zh:"请确保我的食物不含{name}，也不含由{name}制成的成分。",
+  ar:"يرجى التأكد من أن طعامي لا يحتوي على: {name}، أو أي مكونات مصنوعة منه.",
+  tr:"Lütfen yemeğimde {name} veya {name}'den yapılan malzemeler bulunmadığından emin olun.",
+  th:"กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มี {name} หรือส่วนผสมที่ทำจาก {name}",
+  el:"Παρακαλώ φροντίστε το φαγητό μου να μην περιέχει το ακόλουθο: {name}, ή οποιοδήποτε συστατικό που παράγεται από αυτό.",
 };
-export const MADPAS_SAFETY_NOTE_SINGULAR_T = {
-  da:"Sørg venligst for, at min mad ikke indeholder {name}.",
-  en:"Please make sure my food does not contain {name}.",
-  de:"Bitte stellen Sie sicher, dass mein Essen Folgendes nicht enthält: {name}.",
-  fr:"Veuillez vous assurer que mon repas ne contient pas ceci : {name}.",
-  es:"Por favor, asegúrese de que mi comida no contenga esto: {name}.",
-  it:"Si prega di assicurarsi che il mio pasto non contenga questo: {name}.",
-  nl:"Zorg er alstublieft voor dat mijn maaltijd geen {name} bevat.",
-  pt:"Por favor, certifique-se de que a minha refeição não contém isto: {name}.",
-  pl:"Proszę upewnić się, że moje jedzenie nie zawiera tego: {name}.",
-  sv:"Vänligen se till att min måltid inte innehåller {name}.",
-  no:"Vennligst sørg for at måltidet mitt ikke inneholder {name}.",
-  ja:"私の食事に{name}が含まれないようにしてください。",
-  zh:"请确保我的餐食不含{name}。",
-  ar:"يرجى التأكد من أن وجبتي لا تحتوي على هذا: {name}.",
-  tr:"Lütfen yemeğimin şunu içermediğinden emin olun: {name}.",
-  th:"กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มี {name}",
-  el:"Παρακαλώ βεβαιωθείτε ότι το γεύμα μου δεν περιέχει το εξής: {name}.",
+
+// Krydskontaminerings-besked (27. sept. 2026, Madpas-finpolish, krav 7) —
+// KUN vist/oplæst hvis brugeren selv har slået den til i Madpas-
+// indstillingerne (default FRA, se madpasCrossContact i App.jsx). Én
+// kombineret sætning for HELE fødevareallergi-sektionen (ikke pr. emne,
+// modsat MADPAS_SAFETY_NOTE_T ovenfor) — SINGULAR ved kun ét hensyn,
+// PLURAL ("disse allergener"/"these allergens") ved flere, se
+// madpasCrossContactNote() i useMadpas.js.
+export const MADPAS_CROSS_CONTACT_SINGULAR_T = {
+  da:"Undgå venligst krydskontaminering med {name} under tilberedningen.",
+  en:"Please avoid cross-contact with {name} during preparation.",
+  de:"Bitte vermeiden Sie Kreuzkontamination mit {name} bei der Zubereitung.",
+  fr:"Veuillez éviter tout contact croisé avec {name} lors de la préparation.",
+  es:"Por favor, evite el contacto cruzado con {name} durante la preparación.",
+  it:"Si prega di evitare la contaminazione crociata con {name} durante la preparazione.",
+  nl:"Vermijd kruisbesmetting met {name} tijdens de bereiding.",
+  pt:"Por favor, evite contacto cruzado com {name} durante a preparação.",
+  pl:"Proszę unikać kontaktu krzyżowego z {name} podczas przygotowywania.",
+  sv:"Undvik vänligen korskontaminering med {name} under tillagningen.",
+  no:"Unngå vennligst krysskontaminering med {name} under tilberedningen.",
+  ja:"調理の際は{name}との接触汚染を避けてください。",
+  zh:"请在准备过程中避免与{name}交叉接触。",
+  ar:"يرجى تجنب التلوث المتبادل مع {name} أثناء التحضير.",
+  tr:"Lütfen hazırlık sırasında {name} ile çapraz bulaşmadan kaçının.",
+  th:"กรุณาหลีกเลี่ยงการปนเปื้อนข้ามกับ {name} ระหว่างการเตรียมอาหาร",
+  el:"Παρακαλώ αποφύγετε την διασταυρούμενη επιμόλυνση με {name} κατά την προετοιμασία.",
+};
+export const MADPAS_CROSS_CONTACT_PLURAL_T = {
+  da:"Undgå venligst krydskontaminering med disse allergener under tilberedningen.",
+  en:"Please avoid cross-contact with these allergens during preparation.",
+  de:"Bitte vermeiden Sie Kreuzkontamination mit diesen Allergenen bei der Zubereitung.",
+  fr:"Veuillez éviter tout contact croisé avec ces allergènes lors de la préparation.",
+  es:"Por favor, evite el contacto cruzado con estos alérgenos durante la preparación.",
+  it:"Si prega di evitare la contaminazione crociata con questi allergeni durante la preparazione.",
+  nl:"Vermijd kruisbesmetting met deze allergenen tijdens de bereiding.",
+  pt:"Por favor, evite contacto cruzado com estes alergénios durante a preparação.",
+  pl:"Proszę unikać kontaktu krzyżowego z tymi alergenami podczas przygotowywania.",
+  sv:"Undvik vänligen korskontaminering med dessa allergener under tillagningen.",
+  no:"Unngå vennligst krysskontaminering med disse allergenene under tilberedningen.",
+  ja:"調理の際はこれらのアレルゲンとの接触汚染を避けてください。",
+  zh:"请在准备过程中避免与这些过敏原交叉接触。",
+  ar:"يرجى تجنب التلوث المتبادل مع هذه المواد المسببة للحساسية أثناء التحضير.",
+  tr:"Lütfen hazırlık sırasında bu alerjenlerle çapraz bulaşmadan kaçının.",
+  th:"กรุณาหลีกเลี่ยงการปนเปื้อนข้ามกับสารก่อภูมิแพ้เหล่านี้ระหว่างการเตรียมอาหาร",
+  el:"Παρακαλώ αποφύγετε την διασταυρούμενη επιμόλυνση με αυτά τα αλλεργιογόνα κατά την προετοιμασία.",
 };
 
 // "Jeg er allergisk over for:" / "Jeg tåler ikke:" — korte overskrifter

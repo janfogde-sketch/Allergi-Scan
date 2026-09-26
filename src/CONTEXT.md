@@ -312,15 +312,15 @@ yderligere handling ventende.
 
 ---
 
-## 10. Madpas (26. sept. 2026 — redesignet, herefter forenklet til kernefunktionen)
+## 10. Madpas (26.-27. sept. 2026 — redesignet, forenklet, herefter finpoleret)
 
-Madpas' formål: en tjener/ekspedient i udlandet skal kunne forstå de
-vigtigste kost-/allergioplysninger på få sekunder — strukturerede sektioner
-(FOOD ALLERGIES/INTOLERANCES/DIET, se `ALLERGENS[].type` for allergi/
-intolerance-skellet), ikke én generisk liste, og en madpas der altid
-afspejler den VALGTE profils AKTUELLE data (også kostpræferencer for et
-familiemedlem — fulgte tidligere fejlagtigt altid den loggede bruger selv,
-rettet i App.jsx/useMadpas.js).
+Madpas' formål: en tjener, butiksansat, hotel- eller cafémedarbejder — IKKE
+kun restaurantpersonale — skal kunne forstå de vigtigste kost-/allergi-
+oplysninger på 2-3 sekunder — strukturerede sektioner (FOOD ALLERGIES/
+INTOLERANCES/DIET, se `ALLERGENS[].type` for allergi/intolerance-skellet),
+ikke én generisk liste, og en madpas der altid afspejler den VALGTE profils
+AKTUELLE data (også kostpræferencer for et familiemedlem — fulgte tidligere
+fejlagtigt altid den loggede bruger selv, rettet i App.jsx/useMadpas.js).
 
 **To redesign-runder (26. sept. 2026), derefter en tredje forenklings-
 runde samme dag** — se `.claude/HISTORY.md` for fuld dag-for-dag-detalje.
@@ -349,33 +349,55 @@ helt — uden en sprog-nøgle faldt visningen tilbage til `ALLERGENS`' DANSKE
 korrekt prioriterer `lang==="da" ? a.label : ALLERGEN_T[...]` — brug dem
 ved fremtidige Madpas-ændringer i stedet for at genopfinde faldback-logikken.
 
-**Singular/plural sikkerheds-sætning (runde 3):** med kun ÉT allergen/
-fritekst-emne i FOOD ALLERGIES-sektionen vises en grammatisk singular
-sætning ("...does not contain wheat.") i stedet for den generiske plural
-("...does not contain any of these ingredients.") — aldrig "any of these"-
-fraseologi når kun én ting reelt vises. `madpasSafetyNote(names, lang)` i
-useMadpas.js vælger mellem `MADPAS_SAFETY_NOTE_SINGULAR_T` (med en
-`{name}`-placeholder, indsat direkte for sprog hvor det er grammatisk
-sikkert; kolon-baseret "...indeholder følgende: {name}" for sprog med
-køns-/artikel-bøjning såsom tysk/fransk/spansk/italiensk/portugisisk/
-polsk) og `MADPAS_SAFETY_NOTE_T` (den uændrede plural-variant) i
-`constants.jsx`, alle 17 sprog.
+**Hvert hensyn er sin egen informationsblok, ikke en delt liste (runde 4,
+27. sept.):** `renderStaffView()` (MadpasScreen.jsx, omdøbt fra
+`renderWaiterView` — funktionen er ikke kun for tjenere) viser hvert
+allergen/fritekst-emne som sin EGEN blok (ikon + stort, fed navn — det
+mest fremtrædende element på hele skærmen — derefter "Common examples:"
+og en pr.-emne sikkerhedstekst), adskilt af whitespace i stedet for
+skillelinjer i en fælles liste. Sikkerhedsteksten genereres nu ALTID pr.
+enkelt emne (aldrig en kombineret "any of these ingredients"-sætning for
+flere) og er samtidig gjort mere præcis: "...does not contain {name} OR
+INGREDIENTS MADE FROM {name}." `madpasSafetyNote(name, lang)` i
+useMadpas.js erstatter alle forekomster af `{name}` i
+`MADPAS_SAFETY_NOTE_T`-skabelonen (kolon-baseret sætningsopbygning for
+sprog med køns-/artikel-bøjning som tysk/fransk/spansk/italiensk/
+portugisisk/polsk, direkte indsættelse for resten), alle 17 sprog.
+
+**Ny, bevidst OPT-IN krydskontaminerings-advarsel (runde 4):** en toggle
+("KRYDSKONTAMINERING") på selve Madpas-forsiden — default FRA, persisteret
+i `localStorage` som `as_madpas_cross_contact` (App.jsx) — når den er
+aktiveret, vises/oplæses ÉN kombineret sætning nederst i FOOD ALLERGIES-
+sektionen: singular ("...cross-contact with milk...") ved ét hensyn,
+plural ("...cross-contact with these allergens...") ved flere.
+`madpasCrossContactNote(names, lang)` i useMadpas.js, `MADPAS_CROSS_
+CONTACT_SINGULAR_T`/`MADPAS_CROSS_CONTACT_PLURAL_T` i constants.jsx.
+Bevidst opt-in fordi EatSafe ikke selv må antage alvorlighedsgraden af
+brugerens allergi — se toggle-beskrivelsesteksten i MadpasScreen.jsx.
 
 **Korte fødevare-eksempler** (`ALLERGEN_EXAMPLES` i constants.jsx,
 `madpasAllergenExamples()` i useMadpas.js) vises under hvert allergen/
-relevant intolerance i tjener-visningen — bevidst SMÅ og MUTED sammenlignet
-med selve allergen-navnet, og mærket med et kort, oversat
-"Almindelige eksempler:"/"Common examples:"-label (`MADPAS_EXAMPLES_LABEL_T`,
-omdøbt fra "Fx:"/"Examples:" i runde 3) for aldrig at kunne forveksles med
-en komplet/garanteret liste.
+relevant intolerance i fremvisningsskærmen — bevidst SMÅ og MUTED
+sammenlignet med selve allergen-navnet, og mærket med et kort, oversat
+"Almindelige eksempler:"/"Common examples:"-label (`MADPAS_EXAMPLES_LABEL_T`)
+for aldrig at kunne forveksles med en komplet/garanteret liste.
 
-**Oplæsnings-knappens tekst er selv oversat** (runde 3) —
-`MADPAS_SPEAK_LABEL_T`/`MADPAS_STOP_LABEL_T` (17 sprog, fx
-da:"Oplæs"/en:"Read aloud"/de:"Vorlesen") — hele UI'et, ikke bare
-allergen-/diæt-navnene, skal følge det valgte sprog.
+**Oplæsning** — knappens tekst er selv oversat (`MADPAS_SPEAK_LABEL_T`/
+`MADPAS_STOP_LABEL_T`, 17 sprog, fx da:"Oplæs"/en:"Read aloud") og er nu en
+stor, fuld-bredde knap fast i bunden (runde 4, krav 8). `madpasSpeak()`
+(useMadpas.js) oplæser nu pr. allergen: navn + den samme sikkerhedstekst
+som vises på skærmen, plus krydskontaminerings-sætningen hvis aktiveret —
+"Common examples" oplæses bevidst IKKE (gør beskeden unødigt lang).
+Intolerancer nævnes samlet uden sikkerhedstekst, matcher den visuelle
+opdeling.
 
-**Footeren i tjener-visningen viser kun "EatSafe"** (runde 3) — datoen er
-fjernet som fremtrædende element (ikke relevant for restaurantpersonale).
+**Footeren i fremvisningsskærmen viser INTET branding/dato længere**
+(runde 4, krav 2 — "Fjern teksten EatSafe ... den har ingen funktion på
+denne skærm") — kun den store oplæs-knap. CTA-knappen på selve Madpas-
+forsiden hedder nu "Åbn madpas" (var "Vis til tjener"), og undertekstens
+ordlyd er "Vis dine allergier og kosthensyn på det lokale sprog." (var
+tjener-/butikspersonale-specifik) for at afspejle at Madpas bruges bredt
+(restaurant, café, hotel, butik, takeaway).
 
 ---
 

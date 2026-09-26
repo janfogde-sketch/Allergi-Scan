@@ -712,39 +712,42 @@ tilkoblet rigtig konto (undgår dubletter uden automatisk navne-matching).
 Fuld detalje i `.claude/HISTORY.md`, backend-reference i `src/CONTEXT.md`
 afsnit 9.
 
-### Madpas — redesignet, så igen forenklet til kernefunktionen (26. sept. 2026)
+### Madpas — redesignet, forenklet til kernefunktionen, herefter finpoleret (26.-27. sept. 2026)
 
-Madpas' formål: en tjener/ekspedient i udlandet skal kunne forstå de
-vigtigste kost-/allergioplysninger på få sekunder. To redesign-runder
-samme dag byggede et fuldt delings-system (tilbagekaldeligt token-link,
-`madpas_links`-tabel + `get_madpas_by_token()`-RPC, en offentlig statisk
-side `public/madpas-view.html`, QR-kode, PDF/print, og en E-numre-
-synlighed-opt-in) oven på en struktureret tjener-visning (FØDEVARE-
-ALLERGIER/INTOLERANCER/KOST, se `ALLERGENS[].type`) der altid afspejler
-den VALGTE profils aktuelle data.
+Madpas' formål: en tjener, butiksansat, hotel- eller cafémedarbejder — IKKE
+kun restaurantpersonale — skal kunne forstå de vigtigste kost-/allergi-
+oplysninger på 2-3 sekunder. To redesign-runder 26. sept. byggede et fuldt
+delings-system (token-link, `madpas_links`-tabel + RPC, offentlig side,
+QR-kode, PDF/print, E-numre-opt-in), en tredje runde samme dag fjernede
+al den deling igen efter eksplicit brugerkrav ("Link- og QR-funktionalitet
+skal være helt fjernet") — Madpas er udelukkende on-device siden da.
 
-**Tredje runde, samme dag — al deling fjernet igen, eksplicit bruger-
-krav:** "Link- og QR-funktionalitet skal være helt fjernet." Madpas er nu
-udelukkende on-device: vælg profil → vælg sprog → se kompakt preview →
-"Vis til tjener" (fuldskærm) → evt. oplæsning. `madpas_links`-tabellen og
-`get_madpas_by_token()` er droppet fra databasen (verificeret 0 rækker før
-drop), `public/madpas-view.html` og `vercel.json`s `/madpas/:token`-rewrite
-er slettet, og PDF/print samt E-numre-visning er fjernet med (PDF/print var
-ikke nævnt i denne rundes "behold"-liste — afklaret via en direkte
-bruger-forespørgsel: fjern den også). Ny singular/plural-logik i
-sikkerheds-sætningen ("does not contain wheat." vs. "...any of these
-ingredients.", `madpasSafetyNote()` i useMadpas.js) og en selv-oversat
-oplæsnings-knap (`MADPAS_SPEAK_LABEL_T`/`MADPAS_STOP_LABEL_T`) tilføjet i
-samme runde.
+**Fjerde runde (27. sept.) — finpolish af selve fremvisningsskærmen,
+uden at ændre strukturen:** hvert allergen/fritekst-emne vises nu som sin
+EGEN informationsblok (stort, fedt navn — det mest fremtrædende element på
+skærmen — derefter eksempler, derefter en PR.-EMNE sikkerhedstekst) i
+stedet for en delt liste med én kombineret sætning for hele sektionen.
+Sikkerhedsteksten er samtidig gjort mere præcis: "...does not contain
+{name} or ingredients made from {name}." (var kun "...does not contain
+{name}."). Ny, bevidst OPT-IN krydskontaminerings-advarsel (toggle på
+Madpas-forsiden, default FRA — EatSafe må ikke selv antage alvorlighedsgraden
+af brugerens allergi) tilføjer én kombineret sætning nederst i FOOD
+ALLERGIES-sektionen når aktiveret. Oplæsnings-knappen er nu stor og
+fuld-bredde fast i bunden, og oplæsningen inkluderer nu selve
+sikkerhedsteksten (og krydskontaminering hvis aktiveret), ikke kun navn +
+eksempler. CTA-knappen hedder nu "Åbn madpas" (var "Vis til tjener"), og
+undertekst/framing er gjort bredere ("restaurant-, café-, hotel- eller
+butikspersonale", ikke kun tjener) — footeren i fremvisningsskærmen viser
+nu intet branding/dato længere.
 
-**To reelle, pre-eksisterende huller fundet og rettet i de tidligere
-runder (stadig gældende):** `ALLERGEN_T` og `ALLERGEN_EXAMPLES` (per-sprogs
+**To reelle, pre-eksisterende huller fundet og rettet i tidligere runder
+(stadig gældende):** `ALLERGEN_T` og `ALLERGEN_EXAMPLES` (per-sprogs
 allergen-navne/-eksempler) manglede begge `hvede`/`maelkeallergi` helt —
 uden en sprog-nøgle faldt visningen tilbage til den DANSKE `a.label`/ingen
 eksempler, selv når madpasset var sat til fx engelsk. Begge rettet for
 alle 17 sprog.
 
-Fuld dag-for-dag-detalje (alle tre runder) i `.claude/HISTORY.md`,
+Fuld dag-for-dag-detalje (alle fire runder) i `.claude/HISTORY.md`,
 backend-/struktur-reference i `src/CONTEXT.md` afsnit 10.
 
 ### Beta-installation (september 2026) — nuværende arkitektur

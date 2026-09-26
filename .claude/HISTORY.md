@@ -2670,3 +2670,111 @@ my food does not contain wheat." og IKKE den plurale "any of these
 ingredients"-fraseologi. Tre skærmbilleder (`mp4-main.png`,
 `mp4-waiter-multi.png`, `mp4-waiter-singular.png`) inspiceret visuelt og
 bekræftet rene, korrekt grupperede og letlæselige.
+
+## Madpas, fjerde runde — finpolish af selve fremvisningen, uden at ændre strukturen (27. sept. 2026)
+
+Dagen efter de tre foregående Madpas-runder gav brugeren en ny, meget
+detaljeret 11-punkts spec med et eksplicit rammesæt: "Bevar det nuværende
+visuelle design, farver, typografi og generelle stil. Lav ikke unødvendige
+redesigns af resten af appen. Fokusér kun på Madpas-flowet." Kernepointen:
+Madpas skal ikke kun omtales som en "tjener"-funktion — den bruges også i
+butikker, hoteller, caféer og takeaway — og selve fremvisningsskærmen
+skulle gøres endnu hurtigere at aflæse på 2-3 sekunder, uden at ændre den
+overordnede FOOD ALLERGIES/INTOLERANCES/DIET-struktur fra runde 3.
+
+**Forsiden:**
+- Undertekst ændret fra en tjener-/butikspersonale-specifik sætning til
+  den bredere "Vis dine allergier og kosthensyn på det lokale sprog."
+- CTA-knappen omdøbt fra "Vis til tjener" til "Åbn madpas" (samme grønne
+  styling/størrelse, uændret) — matcher den bredere brugssammenhæng.
+- Ny toggle-sektion "KRYDSKONTAMINERING" tilføjet under sprogvælgeren (kun
+  vist når brugeren har mindst ét hensyn registreret), genbruger nøjagtig
+  samme toggle-switch-styling som `SettingsScreen.jsx`s push-tilladelse-
+  toggle (grøn/grå baggrund + hvid cirkel der glider) — INGEN ny visuel
+  stil opfundet, som eksplicit krævet.
+
+**Fremvisningsskærmen (`renderStaffView()` i MadpasScreen.jsx, omdøbt fra
+`renderWaiterView` — funktionen er ikke længere kun for tjenere):**
+- **Hvert hensyn er nu sin egen informationsblok** (krav 6 — "må ikke blot
+  blive vist som små chips ... vis hver allergi som sin egen tydelige
+  informationsblok"), adskilt af whitespace (26px blok-margin) i stedet
+  for de tidligere delte lister med skillelinjer mellem rækker.
+- **Allergen-/emne-navnet er gjort betydeligt mere fremtrædende** (krav 3
+  — "det mest visuelt fremtrædende element på siden"): fontSize øget fra
+  26px til 32px, ikonet fra ca. 20px til 36px, "Common examples"- og
+  sikkerhedstekst-linjerne indrykket til at flugte under navnet
+  (`paddingLeft:50`) i stedet for at dele en fælles ikon-kolonne med
+  navnet i en tættere række.
+- **Sikkerhedsteksten genereres nu ALTID pr. enkelt emne**, aldrig som én
+  kombineret sætning for flere (krav 4 — "Dette skal selvfølgelig
+  genereres dynamisk for den konkrete allergi", med Milk/Egg/Wheat vist
+  som tre selvstændige eksempler i specen, ikke én fælles sætning) — den
+  tidligere singular/plural-logik fra runde 3 (`madpasSafetyNote(names,
+  lang)` med et array) er derfor forenklet til `madpasSafetyNote(name,
+  lang)` med ÉT navn, kaldt separat for hvert emne. Selve ordlyden er også
+  gjort mere præcis: "...does not contain {name} or ingredients made from
+  {name}." (var kun "...does not contain {name}.") — `MADPAS_SAFETY_NOTE_T`
+  i constants.jsx omskrevet for alle 17 sprog, med `{name}` som kan
+  forekomme flere gange i skabelonen (kolon-baseret sætningsopbygning
+  brugt for sprog med køns-/artikel-bøjning: tysk/fransk/spansk/
+  italiensk/portugisisk/polsk, direkte dobbelt-indsættelse for resten).
+- **Ny, bevidst OPT-IN krydskontaminerings-advarsel** (krav 7): når
+  brugeren selv har slået toggle'n til, vises ÉN kombineret sætning
+  nederst i FOOD ALLERGIES-sektionen — singular ("...cross-contact with
+  milk...") ved ét hensyn, plural ("...cross-contact with these
+  allergens...") ved flere. Ny `madpasCrossContactNote(names, lang)` i
+  useMadpas.js + `MADPAS_CROSS_CONTACT_SINGULAR_T`/`MADPAS_CROSS_
+  CONTACT_PLURAL_T` (17 sprog hver) i constants.jsx — samme singular/
+  plural-mønster som runde 3's nu-forladte gruppe-sikkerhedstekst, men
+  anvendt her i stedet, da kravet eksplicit beder om præcis denne
+  sondring ("ved flere allergener: 'these allergens'"). Persisteret i
+  `localStorage` som `as_madpas_cross_contact`, default FRA — "Denne
+  besked må ikke automatisk vises for alle brugere ... EatSafe må ikke
+  automatisk antage alvorlighedsgraden af brugerens allergi" er efterlevet
+  ved at gøre indstillingen 100% opt-in med en tekst der eksplicit beder
+  brugeren selv vurdere relevansen ("Vurdér selv om det er relevant for
+  din allergi"), i stedet for at EatSafe gætter ud fra allergenets type.
+- **INTOLERANCES-sektionen fik samme prominente blok-layout** (ikon+navn+
+  eksempler) som allergi-blokkene, men UDEN sikkerhedstekst/krydskontami-
+  nering — matcher at kun ægte allergier er sikkerhedskritiske i denne
+  forstand, ikke intolerancer.
+- **Footeren viser nu INTET branding/dato længere** (krav 2 — "Fjern
+  teksten EatSafe nederst til venstre. Den har ingen funktion på denne
+  skærm") — kun selve oplæs-knappen er tilbage, og den er samtidig gjort
+  stor og fuld-bredde (krav 8 — "den store Read aloud-knap fast nederst"),
+  ikke længere en lille kompakt pille i højre side af en delt footer-række.
+
+**Oplæsning (`madpasSpeak()` i useMadpas.js) omskrevet til at inkludere
+selve sikkerhedsteksten** (krav 8: "Oplæsningen skal inkludere ... sikker-
+hedsteksten ... krydskontamineringsteksten hvis aktiveret"): for hvert
+ægte allergen tales navn + `madpasSafetyNote(name, lang)` (samme tekst som
+vises på skærmen), efterfulgt af `madpasCrossContactNote()` hvis brugeren
+har aktiveret indstillingen. Intolerancer nævnes samlet i én sætning uden
+sikkerhedstekst (matcher den visuelle sondring). "Common examples" oplæses
+bevidst IKKE — krav 8 tillader eksplicit at udelade dem, "hvis det gør
+beskeden unødigt lang", og at fjerne dem gjorde den samlede oplæsning
+mærkbart kortere og mere fokuseret.
+
+**Ingen ændringer uden for Madpas-flowet** — krav 11 var eksplicit om ikke
+at røre Scan/Historik/Indkøbsliste/Familiefunktion/Allergileksikon/
+hovednavigation "medmindre det er teknisk nødvendigt for at understøtte
+Madpas". Eneste fil rørt uden for `Madpas*.jsx`/`useMadpas.js`/
+`constants.jsx` var `App.jsx`, og kun for den nye `madpasCrossContact`-
+state (samme mønster som den eksisterende `madpasLang`-state) og dens
+prop-videregivelse til `MadpasScreen` — ingen andre skærme påvirket.
+
+**Test:** `npm run build` grøn, `npx vitest run` 109/109 bestået (ingen
+eksisterende tests dækker Madpas direkte — bekræftet via grep før
+ændringerne), mojibake-scan ren på alle fire ændrede filer. Verificeret
+med Playwright på to viewport-størrelser: en 393×852-gennemgang med to
+allergier (Wheat+Peanuts) + én intolerance (Lactose) + kost (Vegetarian)
+bekræftede alle 11 krav visuelt (ingen "Vis til tjener"-tekst tilbage,
+ingen "EatSafe" i footeren, ny undertekst, KRYDSKONTAMINERING-toggle,
+per-emne sikkerhedstekst med "or ingredients made from X", den
+kombinerede plurale krydskontamineringssætning efter aktivering af
+toggle'n, stor "Read aloud"-knap, Wheat-navnets `fontSize` bekræftet
+32px via `getComputedStyle`) — og en separat iPhone SE (375×667)-kontrol
+med kun ét allergen bekræftede at hele blokken (navn+eksempler+
+sikkerhedstekst) OG den store oplæs-knap er synlige uden scroll for det
+mest almindelige tilfælde (1 hensyn), som krav 6 kræver ("uden unødvendig
+scrolling, når der kun er 1-3 allergier").

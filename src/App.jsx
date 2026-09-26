@@ -125,6 +125,11 @@ export default function EatSafe() {
     // Favorites → useHistory hook
   const [madpasLang, setMadpasLang] = useState(() => localStorage.getItem("as_madpas_lang") || "en");
   const [madpasProfileId, setMadpasProfileId] = useState("self");
+  // Krydskontaminerings-advarsel i Madpas (27. sept. 2026, Madpas-finpolish,
+  // krav 7) — bevidst opt-IN, default FRA: EatSafe må ikke selv antage
+  // alvorlighedsgraden af brugerens allergi, så beskeden vises/oplæses
+  // KUN hvis brugeren selv har slået den til her.
+  const [madpasCrossContact, setMadpasCrossContact] = useState(() => localStorage.getItem("as_madpas_cross_contact") === "1");
   // madpasActiveProfile → computed after hooks (uses family)
   // Recipes → useRecipes hook (kaldet efter useAuth nedenfor)
 
@@ -247,7 +252,7 @@ export default function EatSafe() {
   const { madpasSpeaking, setMadpasSpeaking,
           madpasWaiterView, setMadpasWaiterView, langOpen, setLangOpen,
           madpasSpeak } = useMadpas({
-    allergens, customAllerg, user, madpasLang, family, madpasProfileId
+    allergens, customAllerg, user, madpasLang, family, madpasProfileId, madpasCrossContact
   });
 
   const {
@@ -1157,6 +1162,7 @@ export default function EatSafe() {
             madpasProfileId={madpasProfileId} setMadpasProfileId={setMadpasProfileId}
             madpasSpeaking={madpasSpeaking} setMadpasSpeaking={setMadpasSpeaking}
             madpasWaiterView={madpasWaiterView} setMadpasWaiterView={setMadpasWaiterView}
+            madpasCrossContact={madpasCrossContact} setMadpasCrossContact={setMadpasCrossContact}
             mpAllergens={mpAllergens} mpCustom={mpCustom}
             mpDiets={mpDiets}
             langOpen={langOpen} setLangOpen={setLangOpen}
