@@ -712,52 +712,40 @@ tilkoblet rigtig konto (undgår dubletter uden automatisk navne-matching).
 Fuld detalje i `.claude/HISTORY.md`, backend-reference i `src/CONTEXT.md`
 afsnit 9.
 
-### Madpas redesignet og gjort reelt funktionsdygtigt (26. sept. 2026)
+### Madpas — redesignet, så igen forenklet til kernefunktionen (26. sept. 2026)
 
 Madpas' formål: en tjener/ekspedient i udlandet skal kunne forstå de
-vigtigste kost-/allergioplysninger på få sekunder. Redesignet strukturerer
-tjener-visningen og PDF'en efter type (FØDEVAREALLERGIER/INTOLERANCER/
-KOST/E-NUMRE, se `ALLERGENS[].type`) i stedet for én generisk liste,
-fjerner den lange høflighedstekst der skubbede budskabet ned, og sikrer at
-madpasset altid afspejler den VALGTE profils aktuelle data — kostpræfe-
-rencer/E-numre fulgte tidligere fejlagtigt altid den loggede bruger selv,
-også når "Vis madpas for" pegede på et familiemedlem (rettet i App.jsx).
+vigtigste kost-/allergioplysninger på få sekunder. To redesign-runder
+samme dag byggede et fuldt delings-system (tilbagekaldeligt token-link,
+`madpas_links`-tabel + `get_madpas_by_token()`-RPC, en offentlig statisk
+side `public/madpas-view.html`, QR-kode, PDF/print, og en E-numre-
+synlighed-opt-in) oven på en struktureret tjener-visning (FØDEVARE-
+ALLERGIER/INTOLERANCER/KOST, se `ALLERGENS[].type`) der altid afspejler
+den VALGTE profils aktuelle data.
 
-**To reelle, pre-eksisterende huller fundet og rettet undervejs (ikke en
-del af den oprindelige opgave, men direkte i vejen):**
-1. `ALLERGEN_T` (per-sprogs allergen-navne) manglede `hvede`/`maelkeallergi`
-   helt — uden en sprog-nøgle faldt visningen tilbage til den DANSKE
-   `a.label`, selv når madpasset var sat til fx engelsk. Nøjagtig den
-   fejlklasse denne opgave bad om at eliminere ("aldrig ... allergennavnet
-   bliver stående på [et andet sprog]").
-2. Delings-linket (`eatsafe.dk/madpas/[userId]`) pegede på INGEN
-   offentlig visning overhovedet — en besøgende landede bare på den
-   almindelige app/login-væg. Erstattet af et rigtigt, tilbagekaldeligt
-   token-system (`madpas_links`-tabellen + `get_madpas_by_token()`-RPC,
-   samme SECURITY DEFINER-mønster som familie-invitationernes
-   `get_invite_preview`) og en ny offentlig side, `public/madpas-view.html`
-   (samme selvstændige vanilla-JS-mønster som `invite.html`), rewrites via
-   `vercel.json`. Brugeren kan nu reelt deaktivere/generere et nyt link.
+**Tredje runde, samme dag — al deling fjernet igen, eksplicit bruger-
+krav:** "Link- og QR-funktionalitet skal være helt fjernet." Madpas er nu
+udelukkende on-device: vælg profil → vælg sprog → se kompakt preview →
+"Vis til tjener" (fuldskærm) → evt. oplæsning. `madpas_links`-tabellen og
+`get_madpas_by_token()` er droppet fra databasen (verificeret 0 rækker før
+drop), `public/madpas-view.html` og `vercel.json`s `/madpas/:token`-rewrite
+er slettet, og PDF/print samt E-numre-visning er fjernet med (PDF/print var
+ikke nævnt i denne rundes "behold"-liste — afklaret via en direkte
+bruger-forespørgsel: fjern den også). Ny singular/plural-logik i
+sikkerheds-sætningen ("does not contain wheat." vs. "...any of these
+ingredients.", `madpasSafetyNote()` i useMadpas.js) og en selv-oversat
+oplæsnings-knap (`MADPAS_SPEAK_LABEL_T`/`MADPAS_STOP_LABEL_T`) tilføjet i
+samme runde.
 
-Fuld detalje i `.claude/HISTORY.md`, backend-reference i `src/CONTEXT.md`
-afsnit 10.
+**To reelle, pre-eksisterende huller fundet og rettet i de tidligere
+runder (stadig gældende):** `ALLERGEN_T` og `ALLERGEN_EXAMPLES` (per-sprogs
+allergen-navne/-eksempler) manglede begge `hvede`/`maelkeallergi` helt —
+uden en sprog-nøgle faldt visningen tilbage til den DANSKE `a.label`/ingen
+eksempler, selv når madpasset var sat til fx engelsk. Begge rettet for
+alle 17 sprog.
 
-**Opfølgende runde, samme dag — korte fødevareeksempler + E-numre kun ved
-bevidst valg:** hvert allergen/relevant intolerance viser nu et kort,
-oversat "Fx: Bread, Pasta, ..."-eksempel (`ALLERGEN_EXAMPLES` +
-`madpasAllergenExamples()`, useMadpas.js) i tjener-visning/PDF/den
-offentlige side — bevidst lille/muted, aldrig mere fremtrædende end selve
-allergenet. E-numre vises nu kun hvis brugeren eksplicit slår en ny
-checkbox til ("Vis overvågede E-numre på madpasset") — valget gemmes både
-lokalt og på selve delings-linket (`madpas_links.show_enumbers`), så det
-offentlige link aldrig kan vise E-numre appens egen visning skjuler. En
-reel bug blev fundet og rettet i samme omgang: `regenerateLink()` revokede
-det gamle link FØR det nye blev oprettet, men nulstillede kun UI-state ved
-succes — fejlede selve oprettelsen, blev det allerede-døde gamle link
-stående og så aktivt ud (præcis det denne opgaves egen "et defekt link må
-ikke vises som aktivt"-krav advarede imod). `hvede`/`maelkeallergi` manglede
-samtidig helt i `ALLERGEN_EXAMPLES` (samme hul som `ALLERGEN_T` fra første
-runde) — tilføjet.
+Fuld dag-for-dag-detalje (alle tre runder) i `.claude/HISTORY.md`,
+backend-/struktur-reference i `src/CONTEXT.md` afsnit 10.
 
 ### Beta-installation (september 2026) — nuværende arkitektur
 

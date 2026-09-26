@@ -244,10 +244,10 @@ export default function EatSafe() {
   }, [family]);
 
   // ── MADPAS SPEAK → useMadpas hook (placeret efter useFamily pga. family-dependency) ──
-  const { madpasSpeaking, setMadpasSpeaking, madpasBig, setMadpasBig,
+  const { madpasSpeaking, setMadpasSpeaking,
           madpasWaiterView, setMadpasWaiterView, langOpen, setLangOpen,
           madpasSpeak } = useMadpas({
-    allergens, customAllerg, selectedENumbers, user, madpasLang, family, madpasProfileId
+    allergens, customAllerg, user, madpasLang, family, madpasProfileId
   });
 
   const {
@@ -711,14 +711,14 @@ export default function EatSafe() {
   const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
   const mpAllergens = madpasActiveProfile ? (madpasActiveProfile.allergens || []) : allergens;
   const mpCustom = madpasActiveProfile ? (madpasActiveProfile.custom || []) : customAllerg;
-  // Kostpræferencer/E-numre fulgte tidligere ALTID den loggede bruger selv
-  // (user.diets/selectedENumbers), også når "Vis madpas for" pegede på et
-  // familiemedlem — reel bug, rettet 26. sept. 2026 (Madpas-redesign, krav
-  // 2: "Madpasset skal altid genereres ud fra den valgte profils aktuelle
-  // ... kostpræferencer ... øvrige følsomheder"). Familiemedlemmer har egne
-  // diets/eNumbers-felter (se useFamily.js), samme som allergens/custom.
+  // Kostpræferencer fulgte tidligere ALTID den loggede bruger selv
+  // (user.diets), også når "Vis madpas for" pegede på et familiemedlem —
+  // reel bug, rettet 26. sept. 2026 (Madpas-redesign, krav 2: "Madpasset
+  // skal altid genereres ud fra den valgte profils aktuelle ...
+  // kostpræferencer"). Familiemedlemmer har eget diets-felt (se
+  // useFamily.js), samme som allergens/custom. E-numre er fjernet helt fra
+  // Madpas (opfølgende polish-runde, samme dag) sammen med link/QR-deling.
   const mpDiets = madpasActiveProfile ? (madpasActiveProfile.diets || []) : (user.diets || []);
-  const mpENumbers = madpasActiveProfile ? (madpasActiveProfile.eNumbers || []) : (selectedENumbers || []);
 
   // ── Android tilbageknap ─────────────────────────────────────────────────────
   React.useEffect(() => {
@@ -1156,10 +1156,9 @@ export default function EatSafe() {
             madpasLang={madpasLang} setMadpasLang={setMadpasLang}
             madpasProfileId={madpasProfileId} setMadpasProfileId={setMadpasProfileId}
             madpasSpeaking={madpasSpeaking} setMadpasSpeaking={setMadpasSpeaking}
-            madpasBig={madpasBig}
             madpasWaiterView={madpasWaiterView} setMadpasWaiterView={setMadpasWaiterView}
             mpAllergens={mpAllergens} mpCustom={mpCustom}
-            mpDiets={mpDiets} mpENumbers={mpENumbers}
+            mpDiets={mpDiets}
             langOpen={langOpen} setLangOpen={setLangOpen}
             madpasSpeak={madpasSpeak}
           />

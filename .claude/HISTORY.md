@@ -2560,3 +2560,113 @@ fødevareeksemplerne i tjener-visningen, og — vigtigst — en dedikeret test
 af den fundne "dødt link"-fejlsti (tvunget oprettelses-fejl efter en
 vellykket revoke), som bekræftede både buggen og rettelsen. Den offentlige
 sides eksempel-visning verificeret separat med et screenshot.
+
+## Madpas, tredje runde samme dag — "Færdiggør og polish", link/QR/PDF/E-numre fjernet igen (26. sept. 2026)
+
+Samme dag som de to redesign-runder ovenfor gav brugeren en ny, detaljeret
+spec med et modsatrettet krav i forhold til begge tidligere runder: **"Link-
+og QR-funktionalitet skal være helt fjernet."** Madpas skulle "færdiggøres
+og poleres" til udelukkende at være en on-device visning til at vise
+allergier/intolerancer/kost for en tjener — ingen ekstern deling
+overhovedet. Spec'en indeholdt desuden 13 nummererede krav (gruppering
+uden E-numre, korte oversatte eksempler omdøbt fra "Fx:" til "Almindelige
+eksempler:"/"Common examples:", singular/plural-sikkerhedslogik, fuld
+oversættelse af ALT inkl. knaptekster, oplæsning med oversat knaptekst,
+footer uden fremtrædende dato, konsistens med appens eksisterende
+designsystem).
+
+**Eneste tvetydighed, afklaret via `AskUserQuestion`:** spec'ens "behold"-
+liste nævnte, i modsætning til begge tidligere runder, ikke "Gem som PDF/
+Print" nogen steder, og den endelige flow-sætning endte ved "Oplæs ved
+behov" uden et PDF-skridt. I stedet for at gætte blev brugeren spurgt
+direkte: "Skal 'Gem som PDF/Print' også fjernes fra Madpas i denne runde?"
+med to svarmuligheder (den anbefalede var "Behold PDF/Print"). **Brugeren
+svarede "Fjern PDF/Print også"** — det endelige, afgørende svar, som
+overstyrede min egen anbefaling.
+
+**Fuld reversering af de to foregående runders delings-infrastruktur:**
+- **Database:** `madpas_links`-tabellen og `get_madpas_by_token()`-RPC'en
+  droppet helt via `mcp__Supabase__apply_migration` (migration
+  `remove_madpas_link_sharing`: `drop function if exists
+  public.get_madpas_by_token(text); drop table if exists
+  public.madpas_links;`). Verificeret FØRST via `select count(*) from
+  public.madpas_links;` → 0 rækker, altså ingen datatab ved dropet — samme
+  "verificér før en destruktiv/irreversibel handling"-disciplin som
+  projektet ellers følger.
+- **`public/madpas-view.html`** (den selvstændige vanilla-JS offentlige
+  side fra runde 1-2) slettet helt (`rm -f`).
+- **`vercel.json`**: `/madpas/:token`-rewriten til den nu-slettede fil
+  fjernet.
+- **`MadpasScreen.jsx`**: omskrevet fuldt ud. Delings-sektion (QR/kopiér
+  link/deaktiver/generér nyt link), `renderPrintDiv()`/PDF-knap, og
+  E-numre-checkbox/-sektion fjernet. Ny `renderCompactPreview()` bygger en
+  flad chip-liste (allergier+intolerancer+fritekst+kost) begrænset til
+  `PREVIEW_LIMIT = 6` med en statisk "+N"-chip ved overløb — bevidst
+  simplere end Familie-skærmens klik-til-udvid-mønster, da preview'et her
+  kun er en opsummering, ikke hovedvisningen.
+- **`useMadpas.js`**: `selectedENumbers`-parameteren og al E-numre-relateret
+  oplæsningslogik fjernet fra `madpasSpeak()`. Ny `madpasSafetyNote(names,
+  lang)`-hjælpefunktion (singular/plural-valg, se nedenfor).
+- **`App.jsx`**: `mpENumbers`-beregningen og dens prop til `MadpasScreen`
+  fjernet. Bekræftet via grep at den underliggende `selectedENumbers`-state
+  fortsat lever og bruges uændret til selve produkt-scanningens allergen-
+  matching (afsnit uden relation til Madpas) — kun Madpas-specifik
+  wiring blev fjernet, ikke den app-brede E-numre-funktion.
+- **Dødt-kode-oprydning fundet undervejs:** `madpasBig`/`setMadpasBig`
+  var deklareret og trukket gennem props/return-værdier alle vegne, men
+  aldrig faktisk læst/brugt i nogen JSX (bekræftet via
+  `grep -rn "madpasBig|setMadpasBig" src/*.jsx src/*.js`) — fjernet helt
+  fra useMadpas.js, App.jsx og MadpasScreen.jsx.
+
+**Ny singular/plural-sikkerhedssætning (krav 7):** med kun ét allergen/
+fritekst-emne i FOOD ALLERGIES-sektionen vises nu "Please make sure my
+food does not contain wheat." (indsætter navnet direkte) i stedet for den
+generiske plurale "...does not contain any of these ingredients." — aldrig
+"any of these"-fraseologi ved kun én ting. `MADPAS_SAFETY_NOTE_SINGULAR_T`
+(ny, 17 sprog, `{name}`-placeholder) og en omskrevet `MADPAS_SAFETY_NOTE_T`
+(uændret betydning, men nu eksplicit dokumenteret som den PLURALE variant,
+med "...ingredients." tilføjet i slutningen for klarhed) i constants.jsx.
+Sproglig afvejning: for sprog med køns-/artikel-bøjning (tysk, fransk,
+spansk, italiensk, portugisisk, polsk, samt arabisk/græsk af samme grund)
+bruges en kolon-baseret "...indeholder ikke følgende: {navn}"-konstruktion
+i stedet for direkte indsættelse af et vilkårligt substantiv, for at forblive
+grammatisk sikker uden en fuld sætning-pr.-allergen-oversættelsesmatrix;
+for sprog uden dette problem (dansk, engelsk, hollandsk, svensk, norsk,
+japansk, kinesisk, thai, tyrkisk) indsættes navnet direkte, hvilket matcher
+spec'ens egne eksempler ordret for dansk/engelsk.
+
+**Øvrige krav:** `MADPAS_EXAMPLES_LABEL_T` omdøbt fra "Fx:"/"Examples:" til
+fuldere "Almindelige eksempler:"/"Common examples:" (krav 6). Ny
+`MADPAS_SPEAK_LABEL_T`/`MADPAS_STOP_LABEL_T` (17 sprog hver, fx
+da:"Oplæs"/en:"Read aloud"/de:"Vorlesen", da:"Stop"/en:"Stop"/de:"Stopp")
+— oplæsnings-knappens egen tekst følger nu også det valgte sprog (krav 8-9:
+"ingen blandet-sprog madpas"). `MADPAS_SECTIONS_T`'s `enumbers`-nøgle
+fjernet (ingen E-NUMBERS-sektion længere). Footeren i tjener-visningen
+viser nu kun ordet "EatSafe" — ingen dato (krav 10).
+
+**Mojibake fundet og rettet under selve editeringen (ikke i produktions-
+kode, kun en ny kommentar):** en kommentarlinje kom til at indeholde et
+korrupt "æ"-tegn (to Unicode replacement-tegn, U+FFFD, i stedet for "æ"
+i `// Opl[U+FFFD][U+FFFD]s/Stop-knappens tekst...`) — fanget af
+den rutinemæssige mojibake-scan (udvidet med et U+FFFD-tjek, ikke kun den
+kyrilliske regex) umiddelbart efter
+ændringen, rettet til `// Oplæs/Stop-knappens tekst...`, genscannet ren.
+
+**Test:** `npm run build` grøn (MadpasScreen-bundlen faldt fra ~21KB til
+~8.67KB, hvilket bekræfter den tilsigtede forenkling), `npx vitest run`
+109/109 bestået, mojibake-scan ren. Verificeret med to Playwright-scripts:
+`verify_madpas4.js` bekræftede at INTET netværkskald overhovedet rammer
+`madpas_links`/RPC'en/`madpas-view` (mocket fetch faldt bevidst IKKE
+gennem til disse endpoints, for at opdage det hvis appen stadig kaldte
+dem), at delings-/PDF-/E-numre-UI er helt væk, at et kost-chip stadig vises
+i preview'et, og at tjener-visningen med to allergier korrekt viser den
+plurale sikkerhedssætning + "Common examples:"-label + den engelske
+"Read aloud"-knap + en footer der udelukkende viser "EatSafe" (verificeret
+via `page.evaluate` på selve span-elementets `textContent`, ikke kun en
+`:visible`-check) + korrekt dansk fallback til "Hvede" efter sprogskift
+tilbage til dansk. `verify_madpas_singular.js` bekræftede specifikt
+singular-sagen: med kun ét allergen ("hvede"/Wheat) vises "Please make sure
+my food does not contain wheat." og IKKE den plurale "any of these
+ingredients"-fraseologi. Tre skærmbilleder (`mp4-main.png`,
+`mp4-waiter-multi.png`, `mp4-waiter-singular.png`) inspiceret visuelt og
+bekræftet rene, korrekt grupperede og letlæselige.

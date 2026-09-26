@@ -530,38 +530,63 @@ export const DIET_T = {
   keto:         { en:"Keto", de:"Keto", fr:"Kéto", es:"Keto", it:"Cheto", nl:"Keto", pt:"Keto", pl:"Keto", sv:"Keto", no:"Keto", ja:"ケト", zh:"生酮", ar:"كيتو", tr:"Keto", th:"คีโต", el:"Κέτο" },
 };
 
-// Sektionsoverskrifter til Madpas' strukturerede tjener-visning/PDF (26.
-// sept. 2026) — grupperer efter type (allergi/intolerance/kost/E-numre) i
-// stedet for én generisk "kan ikke spise"-liste, se CLAUDE.md.
+// Sektionsoverskrifter til Madpas' strukturerede tjener-visning (26. sept.
+// 2026) — grupperer efter type (allergi/intolerance/kost) i stedet for én
+// generisk "kan ikke spise"-liste, se CLAUDE.md. E-numre er bevidst IKKE
+// en sektion her længere (26. sept. 2026, opfølgende polish-runde: en
+// tjener har ikke brug for at se E-nummer-koder, og QR/link-delingen der
+// tidligere gjorde E-numre relevante at vise separat er fjernet helt).
 export const MADPAS_SECTIONS_T = {
   allergies:    { da:"Fødevareallergier", en:"Food allergies", de:"Lebensmittelallergien", fr:"Allergies alimentaires", es:"Alergias alimentarias", it:"Allergie alimentari", nl:"Voedselallergieën", pt:"Alergias alimentares", pl:"Alergie pokarmowe", sv:"Matallergier", no:"Matallergier", ja:"食物アレルギー", zh:"食物过敏", ar:"حساسية الطعام", tr:"Gıda alerjileri", th:"การแพ้อาหาร", el:"Τροφικές αλλεργίες" },
   intolerances: { da:"Intolerancer",       en:"Intolerances", de:"Unverträglichkeiten", fr:"Intolérances", es:"Intolerancias", it:"Intolleranze", nl:"Intoleranties", pt:"Intolerâncias", pl:"Nietolerancje", sv:"Intoleranser", no:"Intoleranser", ja:"不耐症", zh:"不耐受", ar:"عدم التحمل", tr:"İntoleranslar", th:"การแพ้/ไม่ทนอาหาร", el:"Δυσανεξίες" },
   diet:         { da:"Kost",               en:"Diet", de:"Ernährung", fr:"Régime", es:"Dieta", it:"Dieta", nl:"Dieet", pt:"Dieta", pl:"Dieta", sv:"Kost", no:"Kosthold", ja:"食事制限", zh:"饮食", ar:"النظام الغذائي", tr:"Diyet", th:"การกินอาหาร", el:"Δίαιτα" },
-  enumbers:     { da:"E-numre",            en:"E-numbers", de:"E-Nummern", fr:"Additifs (E)", es:"Aditivos (E)", it:"Additivi (E)", nl:"E-nummers", pt:"Aditivos (E)", pl:"Dodatki (E)", sv:"E-nummer", no:"E-nummer", ja:"添加物（E番号）", zh:"添加剂（E编号）", ar:"الإضافات (E)", tr:"Katkı maddeleri (E)", th:"สารเติมแต่ง (E)", el:"Πρόσθετα (E)" },
 };
 
 // Kort sikkerheds-sætning under selve allergi-listen (IKKE et langt,
 // høfligt afsnit — "Restaurantpersonalet skal kunne forstå hovedbudskabet
 // på få sekunder", se CLAUDE.md's Madpas-redesign-note). Vises kun under
-// FØDEVAREALLERGIER, ikke intolerancer/kost/E-numre.
+// FØDEVAREALLERGIER, ikke intolerancer/kost. To varianter (26. sept. 2026,
+// opfølgende polish-runde, krav 6): PLURAL (denne, MADPAS_SAFETY_NOTE_T)
+// bruges ved 2+ hensyn ("... any of these ingredients"), SINGULAR
+// (MADPAS_SAFETY_NOTE_SINGULAR_T nedenfor, med et {name}-indsætningspunkt)
+// bruges når der kun er ét — se madpasSafetyNote() i useMadpas.js.
 export const MADPAS_SAFETY_NOTE_T = {
-  da:"Sørg venligst for, at min mad ikke indeholder nogen af disse.",
-  en:"Please make sure my food does not contain any of these.",
-  de:"Bitte stellen Sie sicher, dass mein Essen keines davon enthält.",
-  fr:"Veuillez vous assurer que mon repas n'en contient aucun.",
-  es:"Por favor, asegúrese de que mi comida no contenga ninguno de estos.",
-  it:"Si prega di assicurarsi che il mio pasto non contenga nessuno di questi.",
-  nl:"Zorg er alstublieft voor dat mijn maaltijd geen van deze bevat.",
-  pt:"Por favor, certifique-se de que a minha refeição não contém nenhum destes.",
+  da:"Sørg venligst for, at min mad ikke indeholder nogen af disse ingredienser.",
+  en:"Please make sure my food does not contain any of these ingredients.",
+  de:"Bitte stellen Sie sicher, dass mein Essen keine dieser Zutaten enthält.",
+  fr:"Veuillez vous assurer que mon repas ne contient aucun de ces ingrédients.",
+  es:"Por favor, asegúrese de que mi comida no contenga ninguno de estos ingredientes.",
+  it:"Si prega di assicurarsi che il mio pasto non contenga nessuno di questi ingredienti.",
+  nl:"Zorg er alstublieft voor dat mijn maaltijd geen van deze ingrediënten bevat.",
+  pt:"Por favor, certifique-se de que a minha refeição não contém nenhum destes ingredientes.",
   pl:"Proszę upewnić się, że moje jedzenie nie zawiera żadnego z tych składników.",
-  sv:"Vänligen se till att min måltid inte innehåller något av dessa.",
-  no:"Vennligst sørg for at måltidet mitt ikke inneholder noen av disse.",
-  ja:"私の食事にこれらが含まれないようにしてください。",
-  zh:"请确保我的餐食不含以上任何一种。",
-  ar:"يرجى التأكد من أن وجبتي لا تحتوي على أي من هذه العناصر.",
-  tr:"Lütfen yemeğimin bunlardan hiçbirini içermediğinden emin olun.",
-  th:"กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มีสิ่งเหล่านี้",
-  el:"Παρακαλώ βεβαιωθείτε ότι το γεύμα μου δεν περιέχει κανένα από αυτά.",
+  sv:"Vänligen se till att min måltid inte innehåller något av dessa ingredienser.",
+  no:"Vennligst sørg for at måltidet mitt ikke inneholder noen av disse ingrediensene.",
+  ja:"私の食事にこれらの成分が含まれないようにしてください。",
+  zh:"请确保我的餐食不含以上任何一种成分。",
+  ar:"يرجى التأكد من أن وجبتي لا تحتوي على أي من هذه المكونات.",
+  tr:"Lütfen yemeğimin bu malzemelerden hiçbirini içermediğinden emin olun.",
+  th:"กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มีส่วนผสมเหล่านี้",
+  el:"Παρακαλώ βεβαιωθείτε ότι το γεύμα μου δεν περιέχει κανένα από αυτά τα συστατικά.",
+};
+export const MADPAS_SAFETY_NOTE_SINGULAR_T = {
+  da:"Sørg venligst for, at min mad ikke indeholder {name}.",
+  en:"Please make sure my food does not contain {name}.",
+  de:"Bitte stellen Sie sicher, dass mein Essen Folgendes nicht enthält: {name}.",
+  fr:"Veuillez vous assurer que mon repas ne contient pas ceci : {name}.",
+  es:"Por favor, asegúrese de que mi comida no contenga esto: {name}.",
+  it:"Si prega di assicurarsi che il mio pasto non contenga questo: {name}.",
+  nl:"Zorg er alstublieft voor dat mijn maaltijd geen {name} bevat.",
+  pt:"Por favor, certifique-se de que a minha refeição não contém isto: {name}.",
+  pl:"Proszę upewnić się, że moje jedzenie nie zawiera tego: {name}.",
+  sv:"Vänligen se till att min måltid inte innehåller {name}.",
+  no:"Vennligst sørg for at måltidet mitt ikke inneholder {name}.",
+  ja:"私の食事に{name}が含まれないようにしてください。",
+  zh:"请确保我的餐食不含{name}。",
+  ar:"يرجى التأكد من أن وجبتي لا تحتوي على هذا: {name}.",
+  tr:"Lütfen yemeğimin şunu içermediğinden emin olun: {name}.",
+  th:"กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มี {name}",
+  el:"Παρακαλώ βεβαιωθείτε ότι το γεύμα μου δεν περιέχει το εξής: {name}.",
 };
 
 // "Jeg er allergisk over for:" / "Jeg tåler ikke:" — korte overskrifter
@@ -585,17 +610,33 @@ export const MADPAS_INTOLERANCE_HEADLINE_T = {
 };
 
 // Kort, tydeligt mærket "eksempel"-label foran de korte fødevare-eksempler
-// under hvert allergen i Madpas' tjener-visning/PDF/offentlige side (26.
-// sept. 2026, Madpas-redesign, afsnit 8-10) — bevidst generisk ("Fx:"/
-// "Examples:") i stedet for en sætningsskabelon pr. allergen ("Common
-// foods containing X:"), så det forbliver kompakt og ensartet uanset om
-// brugeren har ét eller flere allergener, og aldrig kan forveksles med en
-// komplet/garanteret liste.
+// under hvert allergen i Madpas' tjener-visning (26. sept. 2026, Madpas-
+// redesign, afsnit 8-10; ordlyden opdateret til "Common examples"-stil i
+// den opfølgende polish-runde samme dag) — bevidst generisk i stedet for
+// en sætningsskabelon pr. allergen ("Common foods containing X:"), så det
+// forbliver kompakt og ensartet uanset om brugeren har ét eller flere
+// allergener, og aldrig kan forveksles med en komplet/garanteret liste.
 export const MADPAS_EXAMPLES_LABEL_T = {
-  da:"Fx:", en:"Examples:", de:"Beispiele:", fr:"Exemples :", es:"Ejemplos:",
-  it:"Esempi:", nl:"Voorbeelden:", pt:"Exemplos:", pl:"Przykłady:",
-  sv:"Exempel:", no:"Eksempler:", ja:"例：", zh:"例如：", ar:"أمثلة:",
-  tr:"Örnekler:", th:"ตัวอย่าง:", el:"Παραδείγματα:",
+  da:"Almindelige eksempler:", en:"Common examples:", de:"Typische Beispiele:", fr:"Exemples courants :", es:"Ejemplos comunes:",
+  it:"Esempi comuni:", nl:"Veelvoorkomende voorbeelden:", pt:"Exemplos comuns:", pl:"Typowe przykłady:",
+  sv:"Vanliga exempel:", no:"Vanlige eksempler:", ja:"よくある例：", zh:"常见例子：", ar:"أمثلة شائعة:",
+  tr:"Yaygın örnekler:", th:"ตัวอย่างทั่วไป:", el:"Συνήθη παραδείγματα:",
+};
+
+// Oplæs/Stop-knappens tekst i selve tjener-visningen (26. sept. 2026,
+// opfølgende polish-runde, krav 8) — hele visningen skal være på det
+// valgte sprog, inklusive knaptekster, ikke kun selve allergi-indholdet.
+export const MADPAS_SPEAK_LABEL_T = {
+  da:"Oplæs", en:"Read aloud", de:"Vorlesen", fr:"Lire à voix haute", es:"Leer en voz alta",
+  it:"Leggi ad alta voce", nl:"Voorlezen", pt:"Ler em voz alta", pl:"Odczytaj na głos",
+  sv:"Läs högt", no:"Les høyt", ja:"読み上げ", zh:"朗读", ar:"اقرأ بصوت عالٍ",
+  tr:"Sesli oku", th:"อ่านออกเสียง", el:"Ανάγνωση φωναχτά",
+};
+export const MADPAS_STOP_LABEL_T = {
+  da:"Stop", en:"Stop", de:"Stopp", fr:"Arrêter", es:"Detener",
+  it:"Ferma", nl:"Stop", pt:"Parar", pl:"Zatrzymaj",
+  sv:"Stoppa", no:"Stopp", ja:"停止", zh:"停止", ar:"إيقاف",
+  tr:"Durdur", th:"หยุด", el:"Διακοπή",
 };
 
 export const AVATAR_COLORS = ["#52b788","#74c69d","#40916c","#b7e4c7","#2d6a4f","#95d5b2","#f4a261","#e76f51"];
