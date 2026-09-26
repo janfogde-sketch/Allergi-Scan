@@ -1021,6 +1021,23 @@ ordlyd (billede uden læsbar stregkode, netværksfejl). En reel
 ciffer i en indsat formateret EAN) blev fundet af en Playwright-test og
 rettet. Fuld detalje i `.claude/HISTORY.md`.
 
+**Opfølgende bugfix, samme dag — scanner-state blev ikke fuldt nulstillet
+ved kamera-luk:** "Indtast EAN-nummer"-panelet (App.jsx-state
+`showManualEan`) blev stående åbent på Scan-forsiden efter kameraet blev
+lukket, fordi `stopCamera()` (useScanner.js) kun nulstillede kamera-
+hardwaren selv (cameraActive/torchOn/scanReady) — ikke zoom, fejlbeskeder,
+"kan den ikke scannes?"-hintet, eller det manuelle EAN-panel (sidstnævnte
+er slet ikke en del af useScanner). Rettet i to lag: `stopCamera()` selv
+nulstiller nu også `scanZoom`/`scanError`/`showPhotoHint`; og en ny
+`closeCameraFully()`-wrapper (App.jsx) samt `handleCloseCamera()`
+(ScannerScreen.jsx, bruges af selve luk-kamera-knappen) lægger
+`setShowManualEan(false)` (+ den lokale EAN-værdi/-fejltekst) oven på
+det almindelige `stopCamera()`-kald, ved ALLE de steder kameraet reelt
+lukkes (det eksplicitte luk-tryk, navigation væk fra scanner-skærmene,
+appen i baggrunden, Android-tilbageknappen). Verificeret med Playwright:
+åbnede panelet, simulerede et kamera-luk (`visibilitychange`), bekræftede
+panelet forsvandt og Scan-forsiden vendte tilbage helt ren.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,

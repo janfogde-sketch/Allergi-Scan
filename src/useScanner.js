@@ -86,6 +86,15 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   useEffect(() => { onScanSuccessRef.current = onScanSuccess; }, [onScanSuccess]);
 
   // ── stopCamera ─────────────────────────────────────────────────────────────
+  // Fuld nulstilling af al midlertidig scanner-state (28. sept. 2026,
+  // BUGFIX – scanner state) — ikke kun kamera-hardwaren selv. Ramte
+  // tidligere kun cameraActive/torchOn/scanReady, så zoom-niveau, en evt.
+  // fejlbesked og "kan den ikke scannes?"-hintet kunne overleve et
+  // kamera-luk og stå tilbage som forældet state. `photoScanLoading`
+  // røres BEVIDST IKKE her — scanFromGallery/scanPhotoForEan sætter den
+  // til `true` og kalder derefter selv stopCamera() som et undertrin,
+  // mens billedet stadig behandles; at nulstille den her ville afbryde
+  // deres egen loading-indikator på samme tick.
   const stopCamera = useCallback(() => {
     if (noScanTimerRef.current) { clearTimeout(noScanTimerRef.current); noScanTimerRef.current = null; }
     if (html5QrRef.current) { html5QrRef.current.stop().catch(() => {}); html5QrRef.current = null; }
@@ -93,8 +102,10 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       try { torchTrackRef.current.applyConstraints({ advanced: [{ torch: false }] }); } catch {}
       torchTrackRef.current = null;
     }
+    scanZoomRef.current = 1.0;
     setCameraActive(false); setTorchOn(false); setScanReady(false);
-  }, []);
+    setScanZoom(1.0); setShowPhotoHint(false); setScanError("");
+  }, [setScanError]);
 
   // ── startCamera ────────────────────────────────────────────────────────────
   const startCamera = useCallback(async () => {

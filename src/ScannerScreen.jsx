@@ -339,6 +339,20 @@ export default function ScannerScreen({
   // udkast (28. sept. 2026, FINAL POLISH – SCANNER, krav 7).
   const openManualEan = () => { setManualEanValue(""); setManualEanError(""); setShowManualEan(true); };
 
+  // Luk kamera-visningen helt (28. sept. 2026, BUGFIX – scanner state) —
+  // `stopCamera()` (useScanner.js) nulstiller selve kamera-/zoom-/fejl-
+  // state, men ved intet om det manuelle EAN-panel, som er lokal state
+  // her i ScannerScreen.jsx. Uden denne wrapper kunne panelet blive
+  // stående åbent på Scan-forsiden efter et kamera-luk, hvis brugeren
+  // havde åbnet det ("Indtast") mens kameraet stadig var aktivt. Panelet
+  // skal kun kunne åbnes igen ved et aktivt tryk på "Indtast".
+  const handleCloseCamera = () => {
+    stopCamera();
+    setShowManualEan(false);
+    setManualEanValue("");
+    setManualEanError("");
+  };
+
   // Delt EAN-validering (krav 7/12) — to adskilte, specifikke fejltekster:
   // forkert LÆNGDE (kan slet ikke være en EAN) vs. korrekt længde men
   // ugyldig CHECKSUM (en formentlig tastefejl). `digits` er allerede
@@ -498,7 +512,7 @@ export default function ScannerScreen({
                     når aktiv (krav 6/14 — statussen må ikke kun fremgå af
                     farven). */}
                 <div style={{ position:"absolute", top:8, left:10, right:6, display:"flex", alignItems:"flex-start", justifyContent:"space-between", zIndex:2 }}>
-                  <button onClick={stopCamera} aria-label="Luk kamera"
+                  <button onClick={handleCloseCamera} aria-label="Luk kamera"
                     style={{ ...S.camCtrlBtn, marginTop:5 }}>
                     <Icon name="x" size={15} color="#fff" />
                   </button>
