@@ -351,6 +351,7 @@ export const SCREENS = {
   MADPAS:"madpas", RECIPES:"recipes", EDITPROFILE:"editprofile", SUGGEST_EDIT:"suggest_edit",
   KNOWLEDGE:"knowledge",
   RESTAURANTGUIDE:"restaurantguide",
+  SETTINGS:"settings",
 };
 
 export const PAGE_IDS = {
@@ -360,7 +361,7 @@ export const PAGE_IDS = {
   result:"SCR-10", history:"SCR-11", notfound:"SCR-12",
   submitted:"SCR-13", admin:"SCR-14", favorites:"SCR-15",
   madpas:"SCR-16", recipes:"SCR-17", editprofile:"SCR-18",
-  knowledge:"SCR-19", restaurantguide:"SCR-20",
+  knowledge:"SCR-19", restaurantguide:"SCR-20", settings:"SCR-21",
 };
 
 export const DUMMY_PRODUCT = {

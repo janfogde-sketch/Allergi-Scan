@@ -21,18 +21,18 @@ import { Icon } from "./SharedComponents.jsx";
 
 // Delt række-komponent, så ethvert menupunkt (uanset gruppe) ser og opfører
 // sig ens: ikon til venstre, titel + evt. sekundær beskrivelse, evt. chevron
-// til højre. `tone="muted"` bruges kun til "Log ud" (skal være tydeligt
-// sekundær, se komponentens brug nedenfor) — ellers identisk styling for alle.
-function MenuRow({ icon, label, sub, chevron = true, tone = "default", onClick }) {
-  const textColor = tone === "muted" ? "var(--muted)" : "var(--ink)";
-  const iconColor = tone === "muted" ? "var(--muted)" : "var(--ink2)";
+// til højre. Samme tekst-/ikonfarve for ALLE punkter, "Log ud" inklusive
+// (26. sept. 2026, brugerfeedback: en dæmpet grå "Log ud" så ud som om den
+// var disabled/ikke-trykbar — "tydeligt sekundær" opnås i stedet alene via
+// placering nederst + ingen chevron, ikke en anden tekstfarve).
+function MenuRow({ icon, label, sub, chevron = true, onClick }) {
   return (
     <div className="menu-item" onClick={onClick}>
       <div style={{ width:36, height:36, borderRadius:9, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-        <Icon name={icon} size={17} color={iconColor} />
+        <Icon name={icon} size={17} color="var(--ink2)" />
       </div>
       <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ fontSize:13, fontWeight:700, color:textColor }}>{label}</div>
+        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{label}</div>
         {sub && <div style={{ fontSize:10.5, color:"var(--muted)", marginTop:1 }}>{sub}</div>}
       </div>
       {chevron && (
@@ -80,16 +80,23 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenBetaInfo 
         // den tidligere permanente "Beta-information"-knap på Scan-forsiden,
         // som IKKE er genindført.
         { icon:"bug", label:"Om EatSafe Beta", sub:"Se velkomst- og sikkerhedsinformation igen", action: onOpenBetaInfo },
+        // Genindført (26. sept. 2026, brugerfeedback) — huser notifikations-
+        // og kontoindstillinger (flyttet fra ProfileScreen.jsx, se
+        // SettingsScreen.jsx), klar til fremtidige punkter (sprog, app-
+        // præferencer) uden at skulle omstrukturere menuen igen.
+        { icon:"settings", label:"Indstillinger", screen: SCREENS.SETTINGS },
         // Samme eksterne privatlivspolitik som ProfileScreen.jsx allerede
         // linker til nederst på profilsiden — ingen ny kilde opfundet.
         { icon:"file", label:"Privatliv", href:"https://eatsafe.dk/privacy" },
-        // Tydeligt sekundær (tone="muted", ingen chevron — det er en
-        // handling, ikke en navigation) og ALDRIG rød i normal tilstand
-        // (26. sept. 2026, brugerfeedback: "brug ikke stærk rød farve i
-        // normal state"). Samme clearAuth() som ProfileScreens "Log ud"-
-        // knap, ingen selvstændig bekræftelses-dialog tilføjet — matcher
-        // eksisterende adfærd ét-til-ét.
-        { icon:"x", label:"Log ud", action: clearAuth, tone:"muted", chevron:false },
+        // Ingen chevron (det er en handling, ikke en navigation) og ALDRIG
+        // rød i normal tilstand (brugerfeedback: "rød kan først bruges i
+        // en evt. bekræftelse"). Samme tekstfarve som alle andre punkter —
+        // en tidligere dæmpet grå udgave så disabled/ikke-trykbar ud;
+        // "tydeligt sekundær" opnås alene via placering nederst. Samme
+        // clearAuth() som ProfileScreens "Log ud"-knap, ingen selvstændig
+        // bekræftelses-dialog tilføjet — matcher eksisterende adfærd
+        // ét-til-ét.
+        { icon:"x", label:"Log ud", action: clearAuth, chevron:false },
       ],
     },
   ];
@@ -102,15 +109,19 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenBetaInfo 
 
   return createPortal(
     <div style={{ position:"fixed", inset:0, zIndex:9996, background:"rgba(0,0,0,.5)" }} onClick={onClose}>
-      {/* Ren, varm off-white baggrund (var(--paper), samme token som
-          appens øvrige funktionelle sider) i stedet for det tidligere
-          ingrediens-/madvarebillede (26. sept. 2026, brugerfeedback:
-          "menuen skal føles som en ren, premium app-menu, ikke endnu en
-          dekorativ fødevareskærm" — den slags baggrunde hører fortsat kun
-          hjemme på Scan-forsiden og andre bevidste brand-flader). Drawer-
-          positionering/animation og det mørke overlay ovenfor er UÆNDREDE. */}
+      {/* Ren, varm off-white baggrund i stedet for det tidligere ingrediens-
+          /madvarebillede (26. sept. 2026, brugerfeedback: "menuen skal
+          føles som en ren, premium app-menu, ikke endnu en dekorativ
+          fødevareskærm" — den slags baggrunde hører fortsat kun hjemme på
+          Scan-forsiden og andre bevidste brand-flader). var(--surface3)
+          (samme eksisterende, allerede-brugte token som fx .recent-list)
+          i stedet for var(--paper) — var(--paper) er reelt ren hvid
+          (#FFFFFF), hvilket blev oplevet som for koldt/sterilt til denne
+          menu; var(--surface3) er en meget svag, subtil off-white i
+          stedet, ikke en ny farve. Drawer-positionering/animation og det
+          mørke overlay ovenfor er UÆNDREDE. */}
       <div style={{ position:"absolute", top:0, right:0, bottom:0, width:"min(320px, 86vw)",
-          background:"var(--paper)",
+          background:"var(--surface3)",
           boxShadow:"-10px 0 28px rgba(0,0,0,.18)", display:"flex", flexDirection:"column", overflowY:"auto" }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 14px 14px" }}>

@@ -29,6 +29,7 @@ const AdminScreen = React.lazy(() => import('./AdminScreen.jsx'));
 const OnboardingScreen = React.lazy(() => import('./OnboardingScreen.jsx'));
 const MadpasScreen = React.lazy(() => import('./MadpasScreen.jsx'));
 const ProfileScreen = React.lazy(() => import('./ProfileScreen.jsx'));
+const SettingsScreen = React.lazy(() => import('./SettingsScreen.jsx'));
 import ScannerScreen from './ScannerScreen.jsx';
 const RecipesScreen = React.lazy(() => import('./RecipesScreen.jsx'));
 const KnowledgeScreen = React.lazy(() => import('./KnowledgeScreen.jsx'));
@@ -1166,11 +1167,22 @@ export default function EatSafe() {
           <Suspense fallback={LazyFallback}>
           <ErrorBoundary screen="Profil">
           <ProfileScreen
-            showDeleteAccount={showDeleteAccount} setShowDeleteAccount={setShowDeleteAccount}
-            deleteConfirmText={deleteConfirmText} setDeleteConfirmText={setDeleteConfirmText}
-            deletingAccount={deletingAccount} deleteOwnAccount={deleteOwnAccount}
             customInput={customInput} setCustomInput={setCustomInput}
             lookupProduct={lookupProduct}
+          />
+          </ErrorBoundary>
+          </Suspense>
+        )}
+
+        {/* ══ INDSTILLINGER ══ (26. sept. 2026, brugerfeedback) — Konto/
+            notifikationsindholdet flyttet hertil fra ProfileScreen.jsx, se
+            SettingsScreen.jsx's egen kommentar. Nås via ProfileMenu.jsx's
+            "Indstillinger", ikke fra bundnavigationen. */}
+        {screen === SCREENS.SETTINGS && (
+          <Suspense fallback={LazyFallback}>
+          <ErrorBoundary screen="Indstillinger">
+          <SettingsScreen
+            setShowDeleteAccount={setShowDeleteAccount} setDeleteConfirmText={setDeleteConfirmText}
           />
           </ErrorBoundary>
           </Suspense>

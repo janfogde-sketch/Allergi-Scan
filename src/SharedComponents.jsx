@@ -176,6 +176,11 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
     utensils: <><path strokeLinecap="round" strokeLinejoin="round" d="M7 3v7a2 2 0 002 2h0a2 2 0 002-2V3M9 12v9M16 3c-1.5 1.5-2 3-2 6s.5 4.5 2 6v6"/></>,
     hash: <path strokeLinecap="round" strokeLinejoin="round" d="M5 9h14M5 15h14M10 4L8 20m8-16l-2 16"/>,
     zap: <path strokeLinecap="round" strokeLinejoin="round" d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>,
+    // "Sliders"-stil indstillings-ikon (25. sept. 2026, ProfileMenu.jsx's
+    // "Indstillinger") — generisk nok til at dække notifikationer/sprog/
+    // konto/app-præferencer efterhånden som de tilføjes, i stedet for et
+    // ikon der kun betyder én bestemt indstillingstype (fx "bell").
+    settings: <><line x1="4" y1="6" x2="20" y2="6" strokeLinecap="round"/><line x1="4" y1="12" x2="20" y2="12" strokeLinecap="round"/><line x1="4" y1="18" x2="20" y2="18" strokeLinecap="round"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" style={{ flexShrink:0, display:"block" }}>
