@@ -3064,3 +3064,52 @@ værdier. `getComputedStyle()` bekræftede hjælpetekstens `line-height:
 18.4px` (11.5px × 1.6) og CTA-knappens uændrede `padding:16px`.
 Skærmbillede inspiceret visuelt — hver sektion fremstår nu som en tydelig
 gruppe, siden virker stadig kompakt, ikke spredt ud.
+
+## Madpas, ottende runde — reelt venstre-alignment-fund, ét-linjes rettelse (27. sept. 2026)
+
+Umiddelbart efter runde 7 gav brugeren en ny, meget præcis spec: "Ret kun
+alignment og margins ... ingen redesign og ingen ændringer af
+funktionalitet eller tekst." Brugeren havde observeret "en visuel
+inkonsistens i venstrestillingen" og bad specifikt om at kontrollere at
+"DIT MADPAS og chippen/chipsene under ikke står længere til venstre end
+resten af indholdet" — en meget konkret, allerede-diagnosticeret
+mistanke, ikke bare en generel "tjek layoutet"-anmodning.
+
+**Fundet: brugerens mistanke var korrekt, og årsagen var en reel bug, ikke
+indbildning.** `.mp-scroll` (theme.jsx) giver `padding:0 20px 120px` —
+20px venstre/højre-padding til ALT sit indhold. Men `.mp-head` (kun
+brugt i MadpasScreen.jsx til at wrappe titel/undertekst/"VIS MADPAS FOR"/
+"VÆLG SPROG"/"KRYDSKONTAMINERING" — INGEN andre skærme bruger denne
+klasse) havde SIN EGEN ekstra `padding:20px 20px 0` oveni. Da `.mp-head`
+er et barn af `.mp-scroll`, blev de to venstre-paddings adderet:
+20+20=40px for alt indhold INDE i `.mp-head`. Men "Dit madpas"/chips/
+CTA-knappen (`renderMainContent()`) renderes SOM EN SØSKENDE-DIV til
+`.mp-head`, ikke som et barn af den — den fik derfor kun `.mp-scroll`s
+egne 20px. Resultat: chips/CTA-knappen sad bekræftet 20px længere til
+venstre end titel/undertekst/sektionsoverskrifter — nøjagtig den
+inkonsistens brugeren havde observeret og navngivet specifikt.
+
+**Rettelse:** ét CSS-linje-skift i theme.jsx —
+`.mp-head{padding:20px 20px 0;}` → `.mp-head{padding:20px 0 0;}` (kun
+venstre/højre fjernet; top-paddingen, som giver luft ned fra topbaren, er
+urørt, ligesom al anden spacing/farve/typografi/funktionalitet). Da
+`.mp-head` udelukkende bruges i MadpasScreen.jsx, påvirker denne
+rettelse ingen andre skærme i appen.
+
+**Bivirkning, eksplicit forudset af brugerens eget krav 3** ("Bevar
+dropdownens og CTA-knappens nuværende bredde, men kontrollér at deres
+indre content alignment harmonerer"): sprog-dropdownen/-listen (tidligere
+indsnævret af den doble padding til kun `.mp-scroll`s bredde minus 40px i
+alt) er nu lige så bred som CTA-knappen (begge fylder nu den samme,
+fælles 20px-indrammede indholds-kolonne) — de to elementer havde reelt
+FORSKELLIG bredde før denne rettelse, hvilket var en del af den samme
+underliggende bug, ikke en ekstra ændring ud over det brugeren bad om.
+
+**Test:** `npm run build` grøn, `npx vitest run` 109/109 bestået,
+mojibake-scan ren. Verificeret programmatisk med Playwright — målte
+`getBoundingClientRect().left` for otte elementer (titel, undertekst,
+"VÆLG SPROG"-label, sprog-dropdown, "KRYDSKONTAMINERING"-label,
+krydskontaminerings-hjælpetekst, "Dit madpas"-label, første chip, CTA-
+knap): ALLE otte returnerede nøjagtig `20px` fra viewportets venstre
+kant, ingen undtagelser. Skærmbillede inspiceret visuelt og bekræftet en
+ren, konsekvent venstreflugt på tværs af hele siden.
