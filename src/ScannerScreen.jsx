@@ -251,7 +251,6 @@ export default function ScannerScreen({
   scanPhotoForEan,
   setKnowledgeSlug,
   lookupProduct,
-  onBetaClick,
   alternatives,
   altLoading,
   onOpenHelp,
@@ -537,23 +536,12 @@ export default function ScannerScreen({
                   </div>
                 </div>
 
-                {/* Beta-information — bund-forankret. Versionsnummeret ("v1.0.6 ·
-                    beta") og "Prøv en demo"-pillen er begge fjernet fra forsiden
-                    (hhv. efter det nye referencedesign og efter brugerens
-                    tidligere ønske, se historik) — version er stadig synligt
-                    inde på selve Beta-information-skærmen. Flyttet op fra
-                    top:71.5% til top:65% (24. sept. 2026, opfølgning) — for
-                    meget tom luft mellem knappen og bunden. */}
-                <div style={{ position:"absolute", top:"65%", left:0, right:0, bottom:"clamp(6px, 1.4cqh, 10px)", zIndex:2,
-                  display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-end", padding:"0 12px", overflow:"hidden" }}>
-                  <button onClick={onBetaClick}
-                    style={{ display:"inline-flex", alignItems:"center", gap:5, flexShrink:0,
-                      padding:"clamp(4px, 1cqh, 6px) clamp(9px, 2cqh, 13px)", borderRadius:100,
-                      background:"rgba(255,255,255,.82)", border:"1px solid var(--border)", boxShadow:"0 4px 12px -6px rgba(21,32,26,.3)",
-                      fontFamily:"var(--f)", fontSize:"clamp(10px, 1.7cqh, 12.5px)", fontWeight:700, color:"var(--green)", cursor:"pointer", letterSpacing:".2px" }}>
-                    Beta-information
-                  </button>
-                </div>
+                {/* Den permanente "Beta-information"-knap er fjernet herfra
+                    (25. sept. 2026, brugerfeedback) — Beta-introen vises nu
+                    automatisk som en kort, engangs-overlay lige efter
+                    onboarding trin 5 (se App.jsx's finishOnboard-wrapper),
+                    og kan genåbnes manuelt via "Om EatSafe Beta" i
+                    ProfileMenu.jsx i stedet for en fast knap på forsiden. */}
               </div>
               )}
             </div>}

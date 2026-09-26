@@ -2,7 +2,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, PAGE_IDS } from "./constants.jsx";
-import { initials, compareAllergens, productDisplayName } from "./helpers.js";
+import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers } from "./helpers.js";
 import { isAllergenWord } from "./allergenKeywords.js";
 import { UI } from "./styleUtils.js";
 
@@ -490,16 +490,48 @@ export function ProductImage({ product, size = 64 }) {
 // ── Fælles søgeresultat-kort ────────────────────────────────────────────────
 // Bruges både på forsidens Søg-skærm og i "Tilføj vare" i indkøbslisten, så
 // et søgeresultat ser ens ud uanset hvor man søger fra.
-export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, onOpen, onAddToList }) {
-  const { status, matchedDanger, matchedWarning } = compareAllergens(p.allergen_flags||{}, effectiveIds);
+export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, profiles, onOpen, onAddToList }) {
+  // To udregningsveje (25. sept. 2026, brugerfeedback: "hvilken profil
+  // konflikten gælder" + "skriv årsagen eksplicit"):
+  // - `profiles` (fra ListScreen.jsx, med den fulde aktive profil-liste) →
+  //   samme per-profil-beregning som resten af appen (computeProfileResults,
+  //   helpers.js), så status kan navngive PRÆCIS hvem en konflikt gælder.
+  //   computeProfileResults' egne "reasons" er kun DELVIST eksplicitte i
+  //   forvejen ("Spor af X"/"Muligvis 'X'"/diæt-/E-nummer-tekst er allerede
+  //   fint, men et rent allergi-match returneres som et BART allergen-navn,
+  //   fx "Nødder" — samme mønster ResultScreen selv bruger uændret) — derfor
+  //   `explicitReason` nedenfor, som tilføjer "Indeholder " foran præcis de
+  //   bare navne, uden at røre selve computeProfileResults (delt med
+  //   ResultScreen, uden for denne opgaves scope).
+  // - Ingen `profiles` (SearchScreen.jsx sender endnu kun `effectiveIds`,
+  //   det sammenlagte allergen-id-sæt) → uændret, enklere fald-tilbage, men
+  //   med samme eksplicitte "Indeholder/Spor af"-formulering på chipsene i
+  //   stedet for et bart allergen-navn, så de aldrig kan misforstås som en
+  //   påstand om at produktet "er" det allergen.
+  const explicitReason = (r) => (/^(Spor af |Muligvis |Overvåget |[^:]+: )/.test(r) ? r : `Indeholder ${r}`);
+  let status, statusLabel, reasonChips;
+  if (profiles && profiles.length > 0) {
+    const ingredientsText = p.ingredients || p.ingredients_text || "";
+    const results = computeProfileResults(profiles, {
+      allergen_flags: p.allergen_flags, ingredients: ingredientsText, nutrition: p.nutrition,
+      productENumbers: extractENumbers(ingredientsText),
+    });
+    const dangerNames = results.filter(r => r.status === "danger").map(r => r.name.split(" ")[0]);
+    status = dangerNames.length > 0 ? "danger" : results.some(r => r.status === "warn") ? "warn" : "safe";
+    statusLabel = dangerNames.length > 0 ? `Konflikt for ${dangerNames.join(", ")}`
+      : status === "warn" ? "Kan ikke afgøres sikkert" : "Matcher alle profiler";
+    reasonChips = [...new Set(results.flatMap(r => r.reasons).map(explicitReason))];
+  } else {
+    const cmp = compareAllergens(p.allergen_flags||{}, effectiveIds);
+    status = cmp.status;
+    statusLabel = status==="safe" ? "Matcher alle profiler" : status==="danger" ? "Konflikt" : "Kan ikke afgøres sikkert";
+    reasonChips = [
+      ...cmp.matchedDanger.map(id => `Indeholder ${ALLERGENS.find(a=>a.id===id)?.label || id}`),
+      ...cmp.matchedWarning.map(id => `Spor af ${ALLERGENS.find(a=>a.id===id)?.label || id}`),
+    ];
+  }
   const statusColor = safetyStyle(status).color;
-  // Samme EatSafe-status-ordlyd som resten af appen (25. sept. 2026,
-  // brugerfeedback) — "farlige" produkter filtreres allerede væk FØR de når
-  // denne komponent (se ListScreen.jsx/SearchScreen.jsx's resultsWithSafety),
-  // så "danger" reelt aldrig vises her i praksis — men teksten er alligevel
-  // konsekvent med de andre to statusser, hvis det ændrer sig.
-  const statusLabel = `${safetyStyle(status).icon} ${status==="safe" ? "Matcher alle profiler" : status==="danger" ? "Konflikt" : "Kan ikke afgøres sikkert"}`;
-  const matchedLabels = [...matchedDanger, ...matchedWarning].map(id => ALLERGENS.find(a=>a.id===id)).filter(Boolean);
+  const statusText = `${safetyStyle(status).icon} ${statusLabel}`;
   const tagLabels = { vegan:"🌱 Vegansk", vegetarian:"🥦 Vegetarisk" };
   // Grøn "+"-knap når produktet er lagt på (mindst) en liste — nulstilles
   // naturligt næste gang der søges, da komponentet så får et nyt produkt/key.
@@ -525,11 +557,17 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{productDisplayName(p)}</div>
         <div style={{ fontSize:11, color:"var(--muted)" }}>{p.brand}{p.category ? ` · ${p.category}` : ""}</div>
-        {matchedLabels.length > 0 && (
+        {/* Årsags-chips (25. sept. 2026, brugerfeedback: "kan aldrig
+            misforstås som at produktet nødvendigvis indeholder disse
+            ingredienser") — reasonChips er allerede formuleret eksplicit
+            ("Indeholder X"/"Spor af Y"/"Muligvis 'Z'"/diæt-/E-nummer-tekst,
+            se computeProfileResults i helpers.js), ikke et bart allergen-
+            navn der kunne læses som en påstand om produktets indhold. */}
+        {reasonChips.length > 0 && (
           <div style={{ display:"flex", gap:3, marginTop:4, flexWrap:"wrap" }}>
-            {matchedLabels.map(a => (
-              <span key={a.id} style={{ fontSize:10, fontWeight:700, color: matchedDanger.includes(a.id) ? "var(--red)" : "var(--amber)", background: matchedDanger.includes(a.id) ? "var(--red-lt)" : "var(--amber-lt)", border:`1px solid ${matchedDanger.includes(a.id) ? "var(--red-md)" : "var(--amber-md)"}`, borderRadius:100, padding:"1px 6px" }}>
-                {a.emoji} {a.label}
+            {reasonChips.map((reason, i) => (
+              <span key={i} style={{ fontSize:10, fontWeight:700, color: statusColor, background: status==="danger" ? "var(--red-lt)" : "var(--amber-lt)", border:`1px solid ${status==="danger" ? "var(--red-md)" : "var(--amber-md)"}`, borderRadius:100, padding:"1px 6px" }}>
+                {reason}
               </span>
             ))}
           </div>
@@ -545,7 +583,7 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
         )}
       </div>
       <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
-        <div style={{ fontSize:11, fontWeight:700, color:statusColor }}>{statusLabel}</div>
+        <div style={{ fontSize:11, fontWeight:700, color:statusColor, textAlign:"right" }}>{statusText}</div>
         <button type="button" className="btn btn-sm" aria-label={added ? `"${productDisplayName(p)}" er tilføjet` : `Tilføj "${productDisplayName(p)}" til indkøbsliste`}
           // Forhindrer specifikt HER at et tap flytter fokus væk fra et søgefelt
           // ovenover (fx ListScreens "Tilføj vare") — ellers kan søgefeltets

@@ -193,6 +193,12 @@ export default function ListScreen({
   const [itemHasMore, setItemHasMore]         = useState(false);
   const [itemTotal, setItemTotal]             = useState(0);
   const [itemLoadingMore, setItemLoadingMore] = useState(false);
+  // Skjulte konflikt-produkter foldes ud manuelt af brugeren (se
+  // hiddenConflictResults nedenfor) — nulstillet ved en ny søgetekst, så
+  // et tidligere udfoldet resultat ikke fejlagtigt "følger med" over i en
+  // ny søgning.
+  const [showHiddenConflicts, setShowHiddenConflicts] = useState(false);
+  useEffect(() => { setShowHiddenConflicts(false); }, [newItemName]);
   useEffect(() => {
     if (!newItemName.trim()) { setItemResults([]); setItemSearching(false); setItemHasMore(false); setItemTotal(0); return; }
     const controller = new AbortController();
@@ -290,14 +296,25 @@ export default function ListScreen({
   const STATUS_COLOR = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", manual:"var(--muted)" };
   const STATUS_ICON = { danger:"warning", warn:"warning", safe:"check", manual:"info" };
 
-  // ── Sikker søgning: skjul produkter der er farlige for den valgte profil-
-  // gruppe, og vis den anden slags (spor) med en tydelig advarsel i stedet
-  // for helt at gemme dem ── ─────────────────────────────────────────────────
-  const itemResultsWithSafety = itemResults
-    .map(p => ({ product: p, status: compareAllergens(p.allergen_flags||{}, activeIds).status }))
-    .filter(r => r.status !== "danger");
-  const visibleItemResults = itemResultsWithSafety;
-  const hiddenUnsafeCount = itemResults.length - itemResultsWithSafety.length;
+  // ── Sikker søgning: skjul produkter med allergikonflikt som standard, og
+  // vis den anden slags (spor/usikkert) med en tydelig advarsel i stedet for
+  // helt at gemme dem (25. sept. 2026, opfølgning) — konfliktprodukter er
+  // ikke længere utilgængelige, kun skjult bag en klikbar "Vis N produkter
+  // med konflikt"-række (se showHiddenConflicts nedenfor), så brugeren selv
+  // kan vælge at se dem. Bruger samme per-profil-beregning som resten af
+  // appen (buildActiveProfileList/computeProfileResults, helpers.js) i
+  // stedet for den tidligere flade compareAllergens(activeIds), så "farlig"
+  // her betyder præcis det samme som "Konflikt for X" nedenfor.
+  const itemResultsWithSafety = itemResults.map(p => {
+    const ingredientsText = p.ingredients || p.ingredients_text || "";
+    const results = computeProfileResults(activeProfileList, {
+      allergen_flags: p.allergen_flags, ingredients: ingredientsText, nutrition: p.nutrition,
+      productENumbers: extractENumbers(ingredientsText),
+    });
+    return { product: p, danger: results.some(r => r.status === "danger") };
+  });
+  const visibleItemResults = itemResultsWithSafety.filter(r => !r.danger);
+  const hiddenConflictResults = itemResultsWithSafety.filter(r => r.danger).map(r => r.product);
 
   const activeFamily = family.filter(m => activeProfiles.includes(m.id));
   const meActive = activeProfiles.includes("me");
@@ -338,9 +355,16 @@ export default function ListScreen({
             fjernet til fordel for netop dette: hjælp der hører hjemme der
             hvor den er relevant, ikke i global navigation. */}
         {onOpenHelp && (
+          // Farve skiftet fra --muted2 til det mørkere --ink2 (25. sept.
+          // 2026, brugerfeedback: "en anelse mørkere for bedre læsbarhed,
+          // men behold den sekundær i hierarkiet") — samme mønster som da
+          // topbar-ikonerne fik samme skift for at undgå at virke "småt og
+          // anonymt" (se CLAUDE.md's 25. sept.-log). Stadig letvægt/ingen
+          // baggrund/kant, så den forbliver klart sekundær ift. skærmens
+          // primære indhold.
           <button type="button" onClick={onOpenHelp}
-            style={{ display:"flex", alignItems:"center", gap:4, background:"none", border:"none", cursor:"pointer", padding:"4px 2px", fontFamily:"var(--f)", fontSize:11.5, fontWeight:600, color:"var(--muted2)", flexShrink:0 }}>
-            <Icon name="info" size={12} color="var(--muted2)" /> Sådan fungerer listen
+            style={{ display:"flex", alignItems:"center", gap:4, background:"none", border:"none", cursor:"pointer", padding:"4px 2px", fontFamily:"var(--f)", fontSize:11.5, fontWeight:600, color:"var(--ink2)", flexShrink:0 }}>
+            <Icon name="info" size={12} color="var(--ink2)" /> Sådan fungerer listen
           </button>
         )}
       </div>
@@ -378,11 +402,13 @@ export default function ListScreen({
                 {family.length > 0 && (
                   <>
                     {/* Tydeliggørelse (25. sept. 2026, brugerfeedback) —
-                        profilchipsene havde ingen egen forklaring, kun den
-                        generelle "Sikker søgning for X"-label ovenfor, så
-                        det ikke var entydigt at de er klikbare valg. */}
+                        profilchipsene viser HVEM produkterne tjekkes imod,
+                        ikke en egenskab ved selve produktet — uden kontekst
+                        kan et navn som "Hanne" fejlagtigt læses som om
+                        produktet handler om/matcher Hanne, i stedet for at
+                        det er profilen søgningen sikkerhedstjekkes for. */}
                     <div style={{ fontSize:9.5, fontWeight:700, color:"var(--muted)", marginBottom:4 }}>
-                      Vis produkter der passer til:
+                      Tjekkes for:
                     </div>
                     <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
                       <span onMouseDown={e => { e.preventDefault(); toggleAllProfiles(); }}
@@ -413,17 +439,47 @@ export default function ListScreen({
             {visibleItemResults.length > 0 && (
               <div style={{ padding:"12px 12px 4px" }}>
                 {visibleItemResults.map(({ product: p }) => (
-                  <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds}
+                  <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds} profiles={activeProfileList}
                     onOpen={() => { logSearchSelection(newItemName, p, accessToken); lookupProduct(p.ean||p.code||p.id); setItemFocused(false); setNewItemName(""); }}
                     onAddToList={() => pickItemProduct(p)}
                   />
                 ))}
               </div>
             )}
-            {hiddenUnsafeCount > 0 && (
-              <div style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", fontSize:10, color:"var(--muted)", background:"var(--paper2)" }}>
-                <Icon name="block" size={11} color="var(--muted)" /> {hiddenUnsafeCount} produkt{hiddenUnsafeCount!==1?"er":""} skjult — indeholder allergener for {searchScopeLabel}
-              </div>
+            {/* Konfliktprodukter er skjult som standard, men aldrig
+                utilgængelige — en klikbar række folder dem ud i stedet for
+                den tidligere statiske "N produkter skjult"-tekst (25. sept.
+                2026, brugerfeedback). Udfoldet vises de tydeligt røde, med
+                hvilken profil konflikten gælder (samme SearchResultRow,
+                bare uden det implicitte danger-filter — se profiles-prop). */}
+            {hiddenConflictResults.length > 0 && (
+              <>
+                {/* onMouseDown+preventDefault i stedet for onClick (samme
+                    mønster som "Indlæs flere"-knappen og "+"-knappen i
+                    SearchResultRow ovenfor) — ellers når søgefeltets egen
+                    onBlur (150ms timeout) at lukke hele panelet FØR et
+                    almindeligt onClick-tryk her når at blive registreret,
+                    så udfoldningen aldrig ses (fundet ved Playwright-
+                    gennemgang, ikke en antagelse). */}
+                <button type="button" onMouseDown={e => { e.preventDefault(); setShowHiddenConflicts(v => !v); }}
+                  style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", gap:6, padding:"10px 12px", fontSize:10.5, fontWeight:700, color:"var(--red)", background:"var(--red-lt)", border:"none", borderTop:"1px solid var(--border)", cursor:"pointer", fontFamily:"var(--f)" }}>
+                  <span style={{ display:"flex", alignItems:"center", gap:6 }}>
+                    <Icon name="warning" size={11} color="var(--red)" />
+                    {showHiddenConflicts ? "Skjul" : "Vis"} {hiddenConflictResults.length} produkt{hiddenConflictResults.length!==1?"er":""} med konflikt
+                  </span>
+                  <Icon name={showHiddenConflicts ? "chevronUp" : "chevronDown"} size={12} color="var(--red)" />
+                </button>
+                {showHiddenConflicts && (
+                  <div style={{ padding:"10px 12px 2px" }}>
+                    {hiddenConflictResults.map(p => (
+                      <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds} profiles={activeProfileList}
+                        onOpen={() => { logSearchSelection(newItemName, p, accessToken); lookupProduct(p.ean||p.code||p.id); setItemFocused(false); setNewItemName(""); }}
+                        onAddToList={() => pickItemProduct(p)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             )}
             {itemHasMore && (
               <div style={{ padding:"6px 12px 10px" }}>
