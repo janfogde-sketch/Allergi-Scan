@@ -3302,3 +3302,42 @@ programmatisk bekræftet identisk med appens neutrale kant-farve (ikke
 blå). Et testklik på Gluten-chippens info-ikon i "Rediger præferencer"
 bekræftede at tooltip-teksten nu nævner både "Glutenfri" og "koblet" —
 den nye forklaring vises korrekt. Ingen konsol-fejl.
+
+## Profil, sidste polish-runde — footer-overlap rettet, "Ugentlig streak" omdøbt (28. sept. 2026)
+
+Brugeren delte et skærmbillede af den live Profil-side (efter merge af PR
+#350) der viste et reelt overlap-problem: footerens mail-link
+("hej@eatsafe.dk") var delvist skjult bag bundnavigationens Scan-ikon.
+Bad om et præcist, scoped fix — ingen redesign, ingen nye features, kun
+(1) ret bund-spacing så footeren aldrig dækkes, (2) omdøb "Ugentlig
+streak" til noget mindre streak-fokuseret, (3) bevar alt andet uændret.
+
+**Rodårsag:** den delte `.screen`-CSS-klasse (theme.jsx) reserverer en
+flad `110px` bund-padding for hele appen, som en fast tilnærmelse til
+bundnavigationens egen højde (ca. 77px fast + dens egen
+`env(safe-area-inset-bottom)`). Footerens egen `paddingBottom:8` var for
+lille en buffer oveni til pålideligt at klare enheder med større safe-area
+end den faste 110px allerede antog — beskrevet præcist af brugeren selv i
+kravet ("navigationens højde + safe-area inset + ekstra luft").
+
+**Fix (kun `src/ProfileScreen.jsx`, scoped til Profil-footeren — IKKE den
+delte `.screen`-klasse, for ikke at ændre layoutet på andre skærme):**
+footerens `paddingBottom` ændret fra `8` til
+`calc(96px + env(safe-area-inset-bottom))` — lægger navigationens
+omtrentlige egen-højde + samme safe-area-formel + en håndfuld ekstra
+pixels luft direkte på footer-elementet selv, som en garanti der ikke
+afhænger af at det flade 110px-tal i den delte klasse rammer nøjagtigt
+rigtigt på enhver enhed.
+
+**Microcopy:** "Ugentlig streak" (progress-bar-labelen) omdøbt til
+"Ugentlig aktivitet" — selve progress-baren og "3 dage!"-badgen er
+uændrede, kun teksten er mindre streak-centreret, som bedt om.
+
+**Verifikation:** `npm run build` grøn, `npx vitest run` 109/109, mojibake-
+scan clean. Playwright på iPhone SE/13/14 Pro Max (artifact-preview-build,
+login-bypass, hamburger-menu → `.menu-profile-card` → Profil, scroll til
+`document.body.scrollHeight`): footerens sidste linje ("EatSafe Beta") har
+nu **127px fri luft** til bundnavigationens topkant på alle tre profiler
+(op fra et tidligere, reelt overlap) — "Ugentlig aktivitet" fundet i DOM,
+den gamle "Ugentlig streak"-tekst ikke længere til stede. 2×2-grid,
+profilkort, Mine præferencer og Husstand-genvej uændrede, som krævet.
