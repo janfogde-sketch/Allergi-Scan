@@ -770,6 +770,14 @@ body::-webkit-scrollbar{display:none;}
 .mp-lang-opt.on{background:var(--green-lt);}
 .mp-big-btn{width:100%;background:var(--green);color:var(--on-green);border:none;border-radius:14px;padding:16px;font-family:var(--f);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;box-shadow:0 3px 12px rgba(14,143,90,.25);}
 .mp-big-btn:hover{background:var(--green-glow);}
+/* Fremvisningsskærmens knapper (27. sept. 2026, Madpas-finpolish) —
+   udtrukket fra tidligere rene inline-styles til klasser, udelukkende for
+   at kunne give dem samme tryk-feedback som resten af appens knapper (se
+   den delte :active-liste nedenfor) — ingen visuel ændring i sig selv. */
+.mp-close-btn{background:var(--surface2);border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.mp-speak-btn{width:100%;border:none;border-radius:14px;padding:16px 20px;font-family:var(--f);font-size:17px;font-weight:800;color:var(--on-green);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;}
+.mp-cc-toggle{width:48px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.mp-cc-toggle-knob{width:22px;height:22px;border-radius:50%;background:var(--ink);position:absolute;top:3px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
 
 /* ── OPSKRIFTER ── */
 .recipe-grid{display:flex;flex-direction:column;gap:12px;}
@@ -838,6 +846,7 @@ body::-webkit-scrollbar{display:none;}
 .scroll-top-btn:active,.admin-tab:active,.admin-action-card:active,
 .admin-list-row:active,.destructive-confirm-btn:active,.plain-cancel-btn:active,
 .enum-chip:active,.enum-row:active,.enum-remove:active,.member-pick:active,
+.mp-big-btn:active,.mp-close-btn:active,.mp-speak-btn:active,.mp-cc-toggle:active,
 .btn:active{
   transform:scale(.97);
 }

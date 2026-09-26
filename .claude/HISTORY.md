@@ -2864,3 +2864,124 @@ og både Vegan- og Gluten-free-blokkene viser deres fulde, korrekte
 besked-tekst (Vegan-teksten bekræftet ordret identisk med brugerens eget
 eksempel). Skærmbillede inspiceret visuelt og bekræftet rent, med samme
 blok-layout for diæter som allergier/intolerancer.
+
+## Madpas, sjette runde — ren visuel/spacing-polish, IKKE shippet (27. sept. 2026)
+
+Efter tre skærmbilleder af den live fremvisningsskærm (én af hovedsiden,
+to af fremvisningsskærmen med Milk+Soya-allergener og en Vegan-diæt) gav
+brugeren en meget omfattende, 15-punkts "sidste professionelle polish"-
+spec — eksplicit afgrænset til "ingen redesigns, ingen nye features, kun
+sidste professionelle polish", med et helt afsnit (punkt 14) der
+opremsede ting der IKKE måtte tilføjes (QR-koder, links, ekstra cards,
+nye indstillinger, ekstra knapper, tutorials, nye navigationselementer).
+
+**Kritisk fund i de vedhæftede skærmbilleder (punkt 5):** to af de tre
+billeder viste tekst der syntes at fortsætte ind under/bag den grønne
+"Read aloud"-knap (fx "Please make sure my food does not contain meat,
+fish..." klippet af lige ved knappens top, med et svagt, sløret gentaget
+mønster synligt under selve knappen). Undersøgt: selve flexbox-strukturen
+(overlayet er `display:flex;flex-direction:column`, med header/scroll-
+område/footer som tre søskende-elementer, footeren `flexShrink:0`) burde
+strukturelt set ALDRIG kunne overlappe — den slags layout kan ikke
+matematisk producere overlap i en almindelig flexbox-kolonne. Mest
+sandsynlige forklaring: et iOS-skærmbillede taget midt i en elastisk
+scroll/"rubber-band"-bevægelse, som kan fange et bevægelsesudtværet
+duplikat af indhold under en visuelt "fastholdt" bund-knap — IKKE en
+reel, vedvarende layout-bug. Uanset årsag blev det behandlet som "kritisk"
+per brugerens egen vurdering, og løst defensivt: scroll-områdets bund-
+padding hævet fra 32px til 40px (mere luft til sidste linje), og
+footerens bund-padding fik `env(safe-area-inset-bottom)` tilføjet (var
+en fast 28px, kunne i teorien sidde for tæt på home indicator-området på
+en notch-telefon — samme etablerede `calc(<n>px + env(safe-area-inset-
+bottom))`-mønster som allerede bruges i `ProfileScreen.jsx`/`theme.jsx`s
+bundnav/`ScannerScreen.jsx`/`KnowledgeScreen.jsx`, ikke en ny opfindelse).
+Verificeret programmatisk (ikke kun visuelt): en Playwright-test der
+scroller fremvisningsskærmens indre scroll-container HELT til
+`scrollHeight` (5 allergener + 1 intolerance + 1 diæt, den tætteste
+mulige indholdsmængde) og måler den værste overlap mellem ethvert
+tekst-element og knappens top — resultat: `0px` overlap, i alle tilfælde.
+
+**Spacing rundet til appens faste skala** (punkt 1) — `.claude/rules/
+design-tokens.md`s skala (4/6/8/10/12/14/16/20/24/32px): `itemBlock`s
+`marginBottom` 26→24px, `headline`s `marginBottom` 18→16px, krydskonta-
+mineringsblokkens `marginTop` 18→20px, hjem-skærmens krydskontaminerings-
+sektions `marginTop` 14→20px (mere adskillelse fra sprogvælgeren ovenfor)
+og label-til-beskrivelse-afstand 2→4px.
+
+**Typografisk hierarki finpudset** (punkt 2) — den statiske overskrifts-
+sætning ("I am allergic to:"/"I am intolerant to:", tidligere 19px/700/
+`--ink`) konkurrerede visuelt med både allergen-navnet (32px) OG selve
+sikkerhedsteksten (15.5px/700), fordi den næsten havde samme vægt som
+sidstnævnte. Nedtonet til 14px/600/`--ink2` — nu tydeligt en kontekst-
+sætning, ikke indhold. Til gengæld er selve sikkerhedsteksten/diæt-
+beskeden (prioritet #2 i brugerens eget hierarki) løftet fra `--ink2` til
+`--ink` (mørkere), så den holder sin plads klart over "Common examples"
+(uændret, fortsat tydeligt sekundær) uden at nå navnets vægt.
+
+**Krydskontaminerings-advarslen gjort en anelse mere sekundær** (punkt 3)
+— fontWeight 700→600, fontSize 15→14.5px på selve fremvisningsskærmens
+advarselstekst (ikonet 18→17px for proportion) — stadig tydelig og orange,
+men ikke længere lige så tungtvejende som de individuelle allergi-
+sikkerhedstekster, som brugeren bad om ("gør advarslen tydelig, men lidt
+mere sekundær end selve allergierne").
+
+**Mikrointeraktioner/tryk-feedback** (punkt 9-10 og 12) — `.mp-big-btn`
+("Åbn madpas") havde ingen `:active`-tryk-feedback, i modsætning til
+stort set alle andre trykbare elementer i appen (den delte globale
+`:active{transform:scale(.97)}`-liste i theme.jsx, se afsnit 5's egen
+note om denne liste). Tilføjet til listen. Luk-knappen, oplæs-/stop-
+knappen og krydskontaminerings-toggle'en var alle rene inline-styled
+`<button>`-elementer uden mulighed for `:active`-pseudoklasser i React —
+udtrukket til nye, minimale CSS-klasser (`.mp-close-btn`, `.mp-speak-btn`,
+`.mp-cc-toggle`/`.mp-cc-toggle-knob`) UDELUKKENDE for at kunne give dem
+samme tryk-feedback, ingen visuel ændring i sig selv (kun de state-
+afhængige dele — farve, knap-positionen — er tilbage som inline style).
+Ingen bounce-effekter eller store animationer tilføjet, som brugeren bad
+om at undgå.
+
+**Chips (punkt 4), visuel konsistens (punkt 11) og andre punkter vurderet
+allerede opfyldt:** `.tag`/`.tags`-klassen (theme.jsx) er allerede én delt
+klasse brugt app-bredt (ikke kun Madpas) — ensartet højde/padding/radius/
+ikon-tekst-alignment er derfor automatisk givet af selve klasse-
+delingen, og blev IKKE ændret, da en justering ville have påvirket alle
+andre skærme der bruger samme chip (Familie, søgefiltre m.fl.) — uden for
+denne rundes scope ("kun Madpas-flowet"). Radius/borders/shadows/
+font-weights/farver var allerede CSS-variabel-baserede (`--r`, `--sh`,
+`--border`, `--muted`, `--green` osv.) uden hardkodede afvigelser — ingen
+inkonsistens fundet at rette.
+
+**Lange oversættelser/ingen faste højder (punkt 7-8):** ingen fast
+`height`/`max-height` findes noget sted i MadpasScreen.jsx's tekst-
+containere (kun ikoner/toggle-knap har faste, bevidste pixel-mål) — alle
+tekstblokke er allerede auto-height. Verificeret med Playwright: tysk
+oversættelse (kendt for længere sætninger end engelsk) på den mindste
+understøttede skærmstørrelse (iPhone SE, 375×667) viste ingen horisontal
+overflow og intet ødelagt linjeskift.
+
+**Fundet, men bevidst IKKE rettet — uden for denne rundes scope:** tyske
+substantiver i sikkerhedsteksten ("milch", "erdnüsse") vises med lille
+forbogstav, fordi `madpasSafetyNote()` altid kalder `.toLowerCase()` på
+det indsatte navn — grammatisk ukorrekt på tysk, hvor substantiver skal
+have stort forbogstav. Denne rundes spec var eksplicit afgrænset til
+spacing/hierarki/scroll/safe-areas/mikrointeraktioner, ikke sprogfejl —
+notér til en fremtidig oversættelses-fokuseret runde i stedet for at
+rette det på eget initiativ nu.
+
+**IKKE pushet/PR'et/merget** — dette er en ren visuel/spacing-ændring
+(ingen data- eller funktionsændring), og falder derfor under den stående
+Vercel-kvote-regel i afsnit 4: "push/merge til Vercel KUN ved funktions-
+og dataændringer, ALDRIG ved rene design-/visuelle ændringer." Committet
+lokalt på feature-branchen, verificeret via Playwright i stedet for en
+rigtig deploy.
+
+**Test:** `npm run build` grøn, `npx vitest run` 109/109 bestået, mojibake-
+scan ren på begge ændrede filer (MadpasScreen.jsx, theme.jsx). Verificeret
+med tre separate Playwright-scenarier: (1) 5 allergener + 1 intolerance +
+1 diæt scrollet helt til `scrollHeight` — 0px overlap mellem sidste
+tekstlinje og Read aloud-knappen, (2) tysk oversættelse på iPhone SE — ingen
+horisontal overflow, (3) programmatisk CSS-regel-tjek der bekræftede at
+alle fire nye/opdaterede knap-klasser (`.mp-big-btn`, `.mp-close-btn`,
+`.mp-speak-btn`, `.mp-cc-toggle`) reelt har `:active`-tryk-feedback
+registreret. Hjemmeskærmens krydskontaminerings-toggle inspiceret visuelt
+efter klasse-omlægningen og bekræftet uændret funktion/udseende (kun ny
+tryk-feedback tilføjet).

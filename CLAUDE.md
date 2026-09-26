@@ -712,7 +712,7 @@ tilkoblet rigtig konto (undgår dubletter uden automatisk navne-matching).
 Fuld detalje i `.claude/HISTORY.md`, backend-reference i `src/CONTEXT.md`
 afsnit 9.
 
-### Madpas — redesignet, forenklet til kernefunktionen, herefter finpoleret to gange (26.-27. sept. 2026)
+### Madpas — redesignet, forenklet til kernefunktionen, herefter finpoleret tre gange (26.-27. sept. 2026)
 
 Madpas' formål: en tjener, butiksansat, hotel- eller cafémedarbejder — IKKE
 kun restaurantpersonale — skal kunne forstå de vigtigste kost-/allergi-
@@ -761,7 +761,20 @@ Soya") — rettet til blot "Soya" (korrekt for MADPAS_LANGUAGES' britiske
 eksempel-grænse fra 4 til 5, da de 4 eksisterende eksempler alene allerede
 fyldte den gamle grænse).
 
-Fuld dag-for-dag-detalje (alle fem runder) i `.claude/HISTORY.md`,
+**Sjette runde (samme dag) — ren visuel/spacing-polish af fremvisnings-
+skærmen, IKKE pushet/merget** (design-only, se den stående Vercel-kvote-
+regel ovenfor): spacing rundet til appens faste skala, typografisk
+hierarki finpudset (den statiske "I am allergic to:"-headline nedtonet så
+den ikke konkurrerer med allergen-navnet/sikkerhedsteksten), krydskonta-
+mineringsadvarslen gjort en anelse lettere/mere sekundær, og — vigtigst —
+en reel bund-scroll-sikring: mere bund-padding + `env(safe-area-inset-
+bottom)` på fremvisningsskærmens Read aloud-footer, verificeret
+programmatisk at intet indhold nogensinde kan overlappe knappen. Luk-/
+oplæs-/krydskontamineringstoggle-knapperne fik samme tryk-feedback
+(`:active{scale(.97)}`) som resten af appens knapper. Committet lokalt,
+verificeret via Playwright — ikke pushet, da det er en ren design-runde.
+
+Fuld dag-for-dag-detalje (alle seks runder) i `.claude/HISTORY.md`,
 backend-/struktur-reference i `src/CONTEXT.md` afsnit 10.
 
 ### Beta-installation (september 2026) — nuværende arkitektur

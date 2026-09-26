@@ -74,14 +74,23 @@ export default function MadpasScreen({
     // IKKE til den enkelte sikkerhedstekst, som nu genereres pr. emne.
     const crossContactNames = [...allergyItems.map(a => madpasAllergenLabel(a, lang)), ...customItems];
 
-    const sectionLbl = { fontSize:15, fontWeight:800, textTransform:"uppercase", letterSpacing:"1px", color:"var(--muted)", marginBottom:10 };
-    const headline = { fontSize:19, fontWeight:700, color:"var(--ink)", marginBottom:18 };
+    // Typografisk hierarki (27. sept. 2026, Madpas-finpolish nr. 2), i
+    // prioriteret rækkefølge: 1) allergenets/diætens navn (itemName) —
+    // det klart mest fremtrædende element, 2) den konkrete besked til
+    // personalet (safetyLine/dietMsg) — læsbar og tydelig, men må ikke
+    // konkurrere med navnet, 3) kategorioverskrift+headline (sectionLbl/
+    // headline) — bevidst SMÅ/DÆMPEDE, kun kontekst, 4) "Common examples"
+    // (exampleLine) — klart sekundær, mindst fremtrædende tekst-element.
+    const sectionLbl = { fontSize:14, fontWeight:800, textTransform:"uppercase", letterSpacing:"1px", color:"var(--muted)", marginBottom:8 };
+    const headline = { fontSize:14, fontWeight:600, color:"var(--ink2)", marginBottom:16 };
     // Hvert hensyn er sin EGEN informationsblok med luft mellem — ikke
     // en delt liste med skillelinjer (krav 6: "må ikke blot blive vist
     // som små chips ... vis hver allergi som sin egen tydelige
     // informationsblok"). Navnet er bevidst det mest fremtrædende
-    // element på hele skærmen (krav 3).
-    const itemBlock = { marginBottom:26 };
+    // element på hele skærmen (krav 3). marginBottom rundet til appens
+    // faste spacing-skala (4/6/8/10/12/14/16/20/24/32, se
+    // .claude/rules/design-tokens.md) i stedet for "næsten runde" 26px.
+    const itemBlock = { marginBottom:24 };
     const itemHeadRow = { display:"flex", alignItems:"center", gap:14 };
     const itemIcon = { fontSize:36, lineHeight:1, flexShrink:0, width:36, textAlign:"center" };
     const itemName = { fontSize:32, fontWeight:800, color:"var(--ink)", lineHeight:1.15 };
@@ -91,8 +100,10 @@ export default function MadpasScreen({
     const exampleLine = { fontSize:14.5, color:"var(--muted)", marginTop:8, lineHeight:1.45, paddingLeft:50 };
     // Den konkrete besked til personalet — genereres pr. emne (krav 4:
     // "genereres dynamisk for den konkrete allergi"), ikke som én
-    // kombineret sætning for hele sektionen.
-    const safetyLine = { fontSize:15.5, fontWeight:700, color:"var(--ink2)", marginTop:10, lineHeight:1.5, paddingLeft:50 };
+    // kombineret sætning for hele sektionen. `--ink` (ikke `--ink2`) for
+    // at holde den tydeligt over headline/examples i det visuelle
+    // hierarki (prioritet 2), uden at nå selve navnets vægt.
+    const safetyLine = { fontSize:15.5, fontWeight:700, color:"var(--ink)", marginTop:10, lineHeight:1.5, paddingLeft:50 };
     const renderExamples = (allergenId) => {
       const examples = madpasAllergenExamples(allergenId, lang);
       if (examples.length === 0) return null;
@@ -112,16 +123,20 @@ export default function MadpasScreen({
             <span style={{ fontSize:44, lineHeight:1 }}>{langInfo?.flag}</span>
             <span style={{ fontSize:17, color:"var(--ink2)", fontWeight:700 }}>{langInfo?.name}</span>
           </div>
-          <button onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }} aria-label="Luk"
-            style={{ background:"var(--surface2)", border:"none", borderRadius:"50%", width:40, height:40, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>
+          <button className="mp-close-btn" onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }} aria-label="Luk">
             <Icon name="x" size={20} color="var(--ink2)" />
           </button>
         </div>
 
         {/* Ren fremvisningsskærm — ingen hovedmenu/feedback/bundnav, kun
             ægte indhold. Ingen lang høflighedstekst der skubber
-            budskabet ned. */}
-        <div style={{ flex:1, overflowY:"auto", padding:"4px 24px 32px" }}>
+            budskabet ned. Bund-padding er bevidst rummelig (40px, ikke
+            kun 24-32px) — footeren nedenfor er et flex-søskende-element
+            (flexShrink:0), så scrollområdet aldrig kan blive dækket af
+            den, men den ekstra luft sikrer at sidste linje altid har
+            synlig afstand til Read aloud-knappen i stedet for at ende
+            lige der (27. sept., finpolish nr. 2, punkt 5). */}
+        <div style={{ flex:1, overflowY:"auto", padding:"4px 24px 40px" }}>
           {(allergyItems.length > 0 || customItems.length > 0) && (
             <div style={{ marginBottom:32 }}>
               <div style={sectionLbl}>{MADPAS_SECTIONS_T.allergies[lang] || MADPAS_SECTIONS_T.allergies.en}</div>
@@ -149,11 +164,15 @@ export default function MadpasScreen({
               </div>
               {/* Krydskontaminering — KUN vist hvis brugeren selv har
                   aktiveret den i Madpas-indstillingerne (krav 7). Én
-                  kombineret sætning for hele sektionen, ikke pr. emne. */}
+                  kombineret sætning for hele sektionen, ikke pr. emne.
+                  Bevidst en anelse mindre/lettere end de individuelle
+                  sikkerhedstekster (fontWeight 600 fremfor 700, 14.5px
+                  fremfor 15.5px) — tydelig, men sekundær i forhold til
+                  selve allergierne (27. sept., finpolish nr. 2, punkt 3). */}
               {madpasCrossContact && crossContactNames.length > 0 && (
-                <div style={{ display:"flex", alignItems:"flex-start", gap:10, marginTop:18, paddingTop:16, borderTop:"1px solid var(--border)" }}>
-                  <span style={{ flexShrink:0, marginTop:1 }}><Icon name="warning" size={18} color="var(--amber)" /></span>
-                  <span style={{ fontSize:15, fontWeight:700, color:"var(--amber)", lineHeight:1.5 }}>
+                <div style={{ display:"flex", alignItems:"flex-start", gap:10, marginTop:20, paddingTop:16, borderTop:"1px solid var(--border)" }}>
+                  <span style={{ flexShrink:0, marginTop:2 }}><Icon name="warning" size={17} color="var(--amber)" /></span>
+                  <span style={{ fontSize:14.5, fontWeight:600, color:"var(--amber)", lineHeight:1.5 }}>
                     {madpasCrossContactNote(crossContactNames, lang)}
                   </span>
                 </div>
@@ -189,7 +208,7 @@ export default function MadpasScreen({
                 {dietItems.map(d => (
                   <div key={d.id} style={itemBlock}>
                     <div style={itemName}>{d.label}</div>
-                    <div style={{ fontSize:15.5, fontWeight:700, color:"var(--ink2)", marginTop:10, lineHeight:1.5 }}>
+                    <div style={{ fontSize:15.5, fontWeight:700, color:"var(--ink)", marginTop:10, lineHeight:1.5 }}>
                       {madpasDietMessage(d.id, lang)}
                     </div>
                   </div>
@@ -201,16 +220,14 @@ export default function MadpasScreen({
 
         {/* Footer — kun den store oplæs-knap (reel funktion). Ingen
             branding/dato her (krav 2: "Fjern teksten EatSafe nederst til
-            venstre. Den har ingen funktion på denne skærm."). */}
+            venstre. Den har ingen funktion på denne skærm."). Bund-
+            padding inkluderer env(safe-area-inset-bottom) (samme etablerede
+            mønster som fx ProfileScreen.jsx/theme.jsx's bundnav — se
+            27. sept., finpolish nr. 2, punkt 6) så knappen aldrig ligger
+            for tæt på home indicator-området på en notch-telefon. */}
         {window.speechSynthesis && (
-          <div style={{ padding:"16px 24px 28px", borderTop:"1px solid var(--border)", flexShrink:0 }}>
-            <button onClick={madpasSpeak} style={{
-              width:"100%",
-              background: madpasSpeaking ? "var(--amber)" : "var(--green)",
-              border:"none", borderRadius:14, padding:"16px 20px", fontSize:17, fontWeight:800,
-              color:"var(--on-green)", cursor:"pointer", fontFamily:"var(--f)",
-              display:"flex", alignItems:"center", justifyContent:"center", gap:10,
-            }}>
+          <div style={{ padding:"16px 24px calc(20px + env(safe-area-inset-bottom))", borderTop:"1px solid var(--border)", flexShrink:0 }}>
+            <button className="mp-speak-btn" onClick={madpasSpeak} style={{ background: madpasSpeaking ? "var(--amber)" : "var(--green)" }}>
               <Icon name={madpasSpeaking ? "speakerOff" : "speaker"} size={19} color="var(--on-green)" />
               {madpasSpeaking ? (MADPAS_STOP_LABEL_T[lang] || MADPAS_STOP_LABEL_T.en) : (MADPAS_SPEAK_LABEL_T[lang] || MADPAS_SPEAK_LABEL_T.en)}
             </button>
@@ -322,25 +339,16 @@ export default function MadpasScreen({
                     brugerens allergi, så indstillingen er default FRA,
                     og brugeren skal aktivt slå den til her. */}
                 {hasAnyData && (
-                  <div style={{ marginTop:14, display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+                  <div style={{ marginTop:20, display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
                     <div style={{ flex:1, minWidth:0 }}>
-                      <div className="mp-section-lbl" style={{ marginBottom:2 }}>KRYDSKONTAMINERING</div>
+                      <div className="mp-section-lbl" style={{ marginBottom:4 }}>KRYDSKONTAMINERING</div>
                       <div style={{ fontSize:11.5, color:"var(--muted)", lineHeight:1.4 }}>
                         Tilføj en advarsel om krydskontaminering til dit madpas.
                       </div>
                     </div>
-                    <button onClick={toggleCrossContact} aria-label="Krydskontamineringsadvarsel"
-                      style={{
-                        width:48, height:28, borderRadius:14, border:"none", cursor:"pointer",
-                        background: madpasCrossContact ? "var(--green)" : "var(--border2)",
-                        position:"relative", transition:"background .2s", flexShrink:0,
-                      }}>
-                      <div style={{
-                        width:22, height:22, borderRadius:"50%", background:"var(--ink)",
-                        position:"absolute", top:3,
-                        left: madpasCrossContact ? 23 : 3,
-                        transition:"left .2s", boxShadow:"0 1px 3px rgba(0,0,0,.3)"
-                      }} />
+                    <button className="mp-cc-toggle" onClick={toggleCrossContact} aria-label="Krydskontamineringsadvarsel"
+                      style={{ background: madpasCrossContact ? "var(--green)" : "var(--border2)" }}>
+                      <div className="mp-cc-toggle-knob" style={{ left: madpasCrossContact ? 23 : 3 }} />
                     </button>
                   </div>
                 )}

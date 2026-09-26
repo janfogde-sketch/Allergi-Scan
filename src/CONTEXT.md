@@ -422,6 +422,41 @@ første ingrediens (alle 17 sprog), og `madpasAllergenExamples()`s
 slice-grænse hævet fra 4 til 5 i useMadpas.js, da de 4 eksisterende
 `products`-eksempler alene allerede fyldte den tidligere grænse.
 
+**Sjette runde (samme dag) — ren visuel/spacing-polish, IKKE pushet/
+merget** (se Vercel-kvote-reglen i afsnit 4 — rene design-ændringer skal
+ikke deployes): spacing i `renderStaffView()` rundet til appens faste
+skala (`itemBlock` 26→24px, `headline` 18→16px, krydskontaminerings-
+blokkens `marginTop` 18→20px), typografisk hierarki finpudset (den
+statiske "I am allergic to:"-headline nedtonet fra 19px/700/`--ink` til
+14px/600/`--ink2`, så den ikke konkurrerer med allergen-navnet eller
+sikkerhedsteksten; sikkerhedsteksten/diæt-beskeden opgraderet fra `--ink2`
+til `--ink` for at styrke dens plads som prioritet #2), krydskontamine-
+rings-advarslen på fremvisningsskærmen gjort en anelse lettere (700→600,
+15→14.5px) så den forbliver sekundær i forhold til selve allergierne.
+**Reel bund-scroll-sikring:** fremvisningsskærmens scrollbare område fik
+mere bund-padding (32→40px) og footeren (Read aloud-knappen) fik
+`env(safe-area-inset-bottom)` tilføjet til sin bund-padding (samme
+etablerede mønster som `ProfileScreen.jsx`/bundnav) — verificeret
+programmatisk (scroll til `scrollHeight`, mål afstand mellem sidste
+tekstlinje og knappens top) at INGEN indhold nogensinde overlapper
+knappen, uanset antal hensyn. Luk-/oplæs-/krydskontamineringstoggle-
+knapperne er udtrukket fra rene inline-styles til nye CSS-klasser
+(`.mp-close-btn`, `.mp-speak-btn`, `.mp-cc-toggle`/`.mp-cc-toggle-knob` i
+theme.jsx) udelukkende for at kunne give dem samme tryk-feedback
+(`:active{transform:scale(.97)}`) som resten af appens knapper —
+`.mp-big-btn` manglede den samme feedback og er tilføjet til den delte
+liste. Verificeret med Playwright på flere scenarier (5 allergier +
+intolerance + diæt scrollet helt til bunds, tysk oversættelse på mindste
+understøttede skærmstørrelse iPhone SE) — ingen tekst-overlap, ingen
+horisontal overflow ved længere oversættelser. **Fundet, men bevidst IKKE
+rettet i denne runde (uden for scope):** tyske substantiver i sikkerheds-
+teksten (`Milch`/`Erdnüsse`) vises med lille forbogstav, fordi
+`madpasSafetyNote()` altid kalder `.toLowerCase()` på navnet — grammatisk
+ukorrekt på tysk (substantiver skal stå med stort), men brugerens denne
+runde var eksplicit afgrænset til spacing/hierarki/scroll/safe-areas/
+mikrointeraktioner, ikke sprogfejl. Tag fat i det i en fremtidig
+sprog-/oversættelses-fokuseret runde.
+
 ---
 
 ## 11. CSS-konventioner
