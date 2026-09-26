@@ -337,26 +337,47 @@ ved fremtidige Madpas-ændringer i stedet for at genopfinde faldback-logikken.
   et rigtigt, tilbagekaldeligt token pr. (bruger, profil)-par.
 - **Tabel:** `madpas_links` (id, user_id, profile_ref ["self" eller et
   family_members-id], lang, token, status ["active"/"revoked"],
-  created_at). RLS: kun ejeren (`user_id = auth.uid()`) kan SELECT/INSERT/
-  UPDATE egen række — ingen offentlig SELECT-policy.
+  `show_enumbers` [boolean, default false], created_at). RLS: kun ejeren
+  (`user_id = auth.uid()`) kan SELECT/INSERT/UPDATE egen række — ingen
+  offentlig SELECT-policy.
 - **Offentlig læsning:** `get_madpas_by_token(p_token)`, en SECURITY
   DEFINER RPC (samme mønster som `get_invite_preview` for family_invites)
   — slår token op, tjekker `status='active'`, og returnerer navn +
   allergener/custom/diæter/E-numre for enten brugeren selv eller den
-  angivne administrerede profil. Callable af `anon` (verificeret via
-  `has_function_privilege`).
+  angivne administrerede profil. E-numre nulstilles til `[]` i svaret hvis
+  `show_enumbers=false` på linket, så det offentlige link aldrig kan vise
+  E-numre appens egen visning har skjult (se "E-numre" nedenfor). Callable
+  af `anon` (verificeret via `has_function_privilege`).
 - **Offentlig side:** `public/madpas-view.html` — selvstændig statisk
   side (samme vanilla-JS-mønster som `invite.html`, ingen Vite-build).
   Indeholder en BEVIDST duplikeret delmængde af oversættelses-data
-  (ALLERGENS, ALLERGEN_T-navne, DIET_T, MADPAS_LANGUAGES,
-  MADPAS_SECTIONS_T m.fl.) — samme accepterede duplikerings-mønster som
-  `src/allergenKeywords.js` vs. `supabase/functions/allergens/index.ts`.
-  Opdatér BEGGE steder hvis disse oversættelser ændres. Ruten
-  `/madpas/:token` rewrites til denne fil (`vercel.json`).
+  (ALLERGENS, ALLERGEN_T-navne, DIET_T, ALLERGEN_EXAMPLES,
+  MADPAS_EXAMPLES_LABEL_T, MADPAS_LANGUAGES, MADPAS_SECTIONS_T m.fl.) —
+  samme accepterede duplikerings-mønster som `src/allergenKeywords.js` vs.
+  `supabase/functions/allergens/index.ts`. Opdatér BEGGE steder hvis disse
+  oversættelser ændres. Ruten `/madpas/:token` rewrites til denne fil
+  (`vercel.json`).
 - **Deaktiver/generér nyt link:** "Deaktiver link" sætter `status=
   'revoked'` på den aktive række; "Generér nyt link" gør det samme og
   opretter en ny — det gamle link stopper øjeblikkeligt med at virke
-  (RPC'en filtrerer på `status='active'`).
+  (RPC'en filtrerer på `status='active'`). `regenerateLink()` i
+  MadpasScreen.jsx nulstiller UI-state til "intet aktivt link" ØJEBLIKKELIGT
+  efter en vellykket revoke, uanset om den efterfølgende oprettelse af et
+  nyt link lykkes — ellers kunne et allerede dødt link fejlagtigt blive
+  stående og se aktivt ud, hvis selve oprettelseskaldet fejlede (fundet
+  under 2. redesign-runde, se `.claude/HISTORY.md`).
+- **E-numre** vises KUN hvis brugeren eksplicit har slået "Vis overvågede
+  E-numre på madpasset" til (checkbox i MadpasScreen.jsx, persisteret i
+  `localStorage` som `as_madpas_show_enumbers` OG gemt på selve linket via
+  `show_enumbers`-kolonnen) — overvågede E-numre er en scannings-
+  indstilling, ikke automatisk noget en bruger ønsker at dele med en
+  tjener.
+- **Korte fødevare-eksempler** (`ALLERGEN_EXAMPLES` i constants.jsx,
+  `madpasAllergenExamples()` i useMadpas.js) vises under hvert allergen/
+  relevant intolerance i tjener-visningen, PDF'en og den offentlige side —
+  bevidst SMÅ og MUTED sammenlignet med selve allergen-navnet, og mærket
+  med et kort, oversat "Fx:"/"Examples:"-label (`MADPAS_EXAMPLES_LABEL_T`)
+  for aldrig at kunne forveksles med en komplet/garanteret liste.
 
 ---
 

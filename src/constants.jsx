@@ -444,6 +444,17 @@ export const ALLERGEN_EXAMPLES = {
     products: { da:["Brød","Pasta","Øl","Sojasauce"], en:["Bread","Pasta","Beer","Soy sauce"], de:["Brot","Pasta","Bier","Sojasoße"], fr:["Pain","Pâtes","Bière","Sauce soja"], es:["Pan","Pasta","Cerveza","Salsa de soja"], it:["Pane","Pasta","Birra","Salsa di soia"], nl:["Brood","Pasta","Bier","Sojasaus"], pt:["Pão","Massa","Cerveja","Molho de soja"], pl:["Chleb","Makaron","Piwo","Sos sojowy"], sv:["Bröd","Pasta","Öl","Sojasås"], no:["Brød","Pasta","Øl","Soyasaus"], ja:["パン","パスタ","ビール","醤油"], zh:["面包","面食","啤酒","酱油"], ar:["خبز","معكرونة","بيرة","صلصة الصويا"], tr:["Ekmek","Makarna","Bira","Soya sosu"], th:["ขนมปัง","พาสต้า","เบียร์","ซีอิ้ว"], el:["Ψωμί","Ζυμαρικά","Μπύρα","Σάλτσα σόγιας"] },
     ingredients: { da:["Hvede","Rug","Byg","Havre","Spelt"], en:["Wheat","Rye","Barley","Oats","Spelt"], de:["Weizen","Roggen","Gerste","Hafer","Dinkel"], fr:["Blé","Seigle","Orge","Avoine","Épeautre"], es:["Trigo","Centeno","Cebada","Avena","Espelta"], it:["Frumento","Segale","Orzo","Avena","Farro"], nl:["Tarwe","Rogge","Gerst","Haver","Spelt"], pt:["Trigo","Centeio","Cevada","Aveia","Espelta"], pl:["Pszenica","Żyto","Jęczmień","Owies","Orkisz"], sv:["Vete","Råg","Korn","Havre","Dinkel"], no:["Hvete","Rug","Bygg","Havre","Spelt"], ja:["小麦","ライ麦","大麦","燕麦","スペルト"], zh:["小麦","黑麦","大麦","燕麦","斯佩尔特"], ar:["قمح","جاودار","شعير","شوفان","كاموت"], tr:["Buğday","Çavdar","Arpa","Yulaf","Kavılca"], th:["ข้าวสาลี","ข้าวไรย์","ข้าวบาร์เลย์","ข้าวโอ๊ต"], el:["Σιτάρι","Σίκαλη","Κριθάρι","Βρώμη","Ζέα"] },
   },
+  // "hvede" og "maelkeallergi" manglede oprindeligt her, samme hul som
+  // ALLERGEN_T (26. sept. 2026, Madpas-redesign — se madpasAllergenLabel()
+  // i useMadpas.js for den anden halvdel af samme fund).
+  hvede: {
+    products: { da:["Brød","Pasta","Pizzadej","Kager"], en:["Bread","Pasta","Pizza dough","Cakes"], de:["Brot","Pasta","Pizzateig","Kuchen"], fr:["Pain","Pâtes","Pâte à pizza","Gâteaux"], es:["Pan","Pasta","Masa de pizza","Pasteles"], it:["Pane","Pasta","Impasto per pizza","Torte"], nl:["Brood","Pasta","Pizzadeeg","Taart"], pt:["Pão","Massa","Massa de pizza","Bolos"], pl:["Chleb","Makaron","Ciasto na pizzę","Ciasta"], sv:["Bröd","Pasta","Pizzadeg","Kakor"], no:["Brød","Pasta","Pizzadeig","Kaker"], ja:["パン","パスタ","ピザ生地","ケーキ"], zh:["面包","面食","披萨面团","蛋糕"], ar:["خبز","معكرونة","عجينة بيتزا","كعك"], tr:["Ekmek","Makarna","Pizza hamuru","Kekler"], th:["ขนมปัง","พาสต้า","แป้งพิซซ่า","เค้ก"], el:["Ψωμί","Ζυμαρικά","Ζύμη πίτσας","Κέικ"] },
+    ingredients: { da:["Rasp","Nogle saucer"], en:["Breadcrumbs","Some sauces"], de:["Paniermehl","Manche Soßen"], fr:["Chapelure","Certaines sauces"], es:["Pan rallado","Algunas salsas"], it:["Pangrattato","Alcune salse"], nl:["Paneermeel","Sommige sauzen"], pt:["Farinha de rosca","Alguns molhos"], pl:["Bułka tarta","Niektóre sosy"], sv:["Ströbröd","Vissa såser"], no:["Brødsmuler","Enkelte sauser"], ja:["パン粉","一部のソース"], zh:["面包糠","部分酱汁"], ar:["فتات الخبز","بعض الصلصات"], tr:["Galeta unu","Bazı soslar"], th:["เกล็ดขนมปัง","ซอสบางชนิด"], el:["Τριμμένη φρυγανιά","Ορισμένες σάλτσες"] },
+  },
+  maelkeallergi: {
+    products: { da:["Mælk","Fløde","Smør","Ost"], en:["Milk","Cream","Butter","Cheese"], de:["Milch","Sahne","Butter","Käse"], fr:["Lait","Crème","Beurre","Fromage"], es:["Leche","Nata","Mantequilla","Queso"], it:["Latte","Panna","Burro","Formaggio"], nl:["Melk","Room","Boter","Kaas"], pt:["Leite","Natas","Manteiga","Queijo"], pl:["Mleko","Śmietana","Masło","Ser"], sv:["Mjölk","Grädde","Smör","Ost"], no:["Melk","Fløte","Smør","Ost"], ja:["牛乳","クリーム","バター","チーズ"], zh:["牛奶","奶油","黄油","奶酪"], ar:["حليب","كريمة","زبدة","جبن"], tr:["Süt","Krema","Tereyağı","Peynir"], th:["นม","ครีม","เนย","ชีส"], el:["Γάλα","Κρέμα γάλακτος","Βούτυρο","Τυρί"] },
+    ingredients: { da:["Chokolade","Nogle bagværk"], en:["Chocolate","Some baked goods"], de:["Schokolade","Manche Backwaren"], fr:["Chocolat","Certaines pâtisseries"], es:["Chocolate","Algunos productos horneados"], it:["Cioccolato","Alcuni prodotti da forno"], nl:["Chocolade","Sommige gebakken producten"], pt:["Chocolate","Alguns produtos de padaria"], pl:["Czekolada","Niektóre wypieki"], sv:["Choklad","Vissa bakverk"], no:["Sjokolade","Enkelte bakevarer"], ja:["チョコレート","一部の焼き菓子"], zh:["巧克力","部分烘焙食品"], ar:["شوكولاتة","بعض المخبوزات"], tr:["Çikolata","Bazı fırın ürünleri"], th:["ช็อกโกแลต","ขนมอบบางชนิด"], el:["Σοκολάτα","Ορισμένα αρτοσκευάσματα"] },
+  },
   laktose: {
     products: { da:["Mælk","Ost","Smør","Is","Yoghurt"], en:["Milk","Cheese","Butter","Ice cream","Yoghurt"], de:["Milch","Käse","Butter","Eis","Joghurt"], fr:["Lait","Fromage","Beurre","Glace","Yaourt"], es:["Leche","Queso","Mantequilla","Helado","Yogur"], it:["Latte","Formaggio","Burro","Gelato","Yogurt"], nl:["Melk","Kaas","Boter","Ijs","Yoghurt"], pt:["Leite","Queijo","Manteiga","Gelado","Iogurte"], pl:["Mleko","Ser","Masło","Lody","Jogurt"], sv:["Mjölk","Ost","Smör","Glass","Yoghurt"], no:["Melk","Ost","Smør","Is","Yoghurt"], ja:["牛乳","チーズ","バター","アイスクリーム","ヨーグルト"], zh:["牛奶","奶酪","黄油","冰淇淋","酸奶"], ar:["حليب","جبن","زبدة","آيس كريم","زبادي"], tr:["Süt","Peynir","Tereyağı","Dondurma","Yoğurt"], th:["นม","ชีส","เนย","ไอศกรีม","โยเกิร์ต"], el:["Γάλα","Τυρί","Βούτυρο","Παγωτό","Γιαούρτι"] },
     ingredients: { da:["Laktose","Valle","Kasein","Fløde","Skummetmælk"], en:["Lactose","Whey","Casein","Cream","Skimmed milk"], de:["Laktose","Molke","Kasein","Sahne","Magermilch"], fr:["Lactose","Lactosérum","Caséine","Crème","Lait écrémé"], es:["Lactosa","Suero","Caseína","Nata","Leche desnatada"], it:["Lattosio","Siero","Caseina","Panna","Latte scremato"], nl:["Lactose","Wei","Caseïne","Room","Magere melk"], pt:["Lactose","Soro","Caseína","Natas","Leite desnatado"], pl:["Laktoza","Serwatka","Kazeina","Śmietana","Mleko odtłuszczone"], sv:["Laktos","Vassle","Kasein","Grädde","Skummjölk"], no:["Laktose","Myse","Kasein","Fløte","Skummet melk"], ja:["乳糖","乳清","カゼイン","クリーム","脱脂乳"], zh:["乳糖","乳清","酪蛋白","奶油","脱脂奶"], ar:["لاكتوز","مصل اللبن","كازين","كريمة","حليب خالي الدسم"], tr:["Laktoz","Peynir altı suyu","Kazein","Krema","Yağsız süt"], th:["แลคโตส","เวย์","เคซีน","ครีม","นมพร่องมันเนย"], el:["Λακτόζη","Ορός γάλακτος","Καζεΐνη","Κρέμα","Αποβουτυρωμένο γάλα"] },
@@ -571,6 +582,20 @@ export const MADPAS_INTOLERANCE_HEADLINE_T = {
   sv:"Jag tål inte:", no:"Jeg tåler ikke:", ja:"不耐性があります：",
   zh:"我不耐受：", ar:"لا أتحمل:", tr:"Şuna karşı hassasiyetim var:",
   th:"ฉันไม่สามารถทานได้:", el:"Δεν ανέχομαι:",
+};
+
+// Kort, tydeligt mærket "eksempel"-label foran de korte fødevare-eksempler
+// under hvert allergen i Madpas' tjener-visning/PDF/offentlige side (26.
+// sept. 2026, Madpas-redesign, afsnit 8-10) — bevidst generisk ("Fx:"/
+// "Examples:") i stedet for en sætningsskabelon pr. allergen ("Common
+// foods containing X:"), så det forbliver kompakt og ensartet uanset om
+// brugeren har ét eller flere allergener, og aldrig kan forveksles med en
+// komplet/garanteret liste.
+export const MADPAS_EXAMPLES_LABEL_T = {
+  da:"Fx:", en:"Examples:", de:"Beispiele:", fr:"Exemples :", es:"Ejemplos:",
+  it:"Esempi:", nl:"Voorbeelden:", pt:"Exemplos:", pl:"Przykłady:",
+  sv:"Exempel:", no:"Eksempler:", ja:"例：", zh:"例如：", ar:"أمثلة:",
+  tr:"Örnekler:", th:"ตัวอย่าง:", el:"Παραδείγματα:",
 };
 
 export const AVATAR_COLORS = ["#52b788","#74c69d","#40916c","#b7e4c7","#2d6a4f","#95d5b2","#f4a261","#e76f51"];
