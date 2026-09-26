@@ -203,6 +203,36 @@ function ScanProfilePickerSheet({ activeProfiles, setActiveProfiles, family, use
   );
 }
 
+// ── Kamera-kontrolknap med label (28. sept. 2026, FINAL POLISH – SCANNER,
+// krav 1) ─────────────────────────────────────────────────────────────────
+// De tre handlinger (Billede/Indtast/Lygte) var tidligere rene ikon-cirkler
+// uden tekst — "for kryptiske alene" ifølge brugerens egen formulering.
+// Ikon + kort label stablet lodret, samme diskrete mørke/blurrede pille-
+// baggrund som før, men nu med en tekst under. `minWidth`/`minHeight:44`
+// sikrer et reelt touch-target på mindst ca. 44×44pt (krav 14), selvom den
+// synlige cirkel stadig er 34px — touch-fladen er større end det viste ikon.
+function CamCtrlBtn({ icon, label, onClick, active, ariaLabel, ariaPressed }) {
+  return (
+    <button onClick={onClick} aria-label={ariaLabel || label} aria-pressed={ariaPressed}
+      style={{
+        display:"flex", flexDirection:"column", alignItems:"center", gap:3,
+        background:"none", border:"none", cursor:"pointer", padding:"4px 6px",
+        minWidth:44, minHeight:44, justifyContent:"center", fontFamily:"var(--f)",
+      }}>
+      <div style={{
+        width:34, height:34, borderRadius:"50%",
+        background: active ? "rgba(251,191,36,.4)" : "rgba(0,0,0,.45)",
+        backdropFilter:"blur(6px)", WebkitBackdropFilter:"blur(6px)",
+        border: `1px solid ${active ? "rgba(251,191,36,.6)" : "rgba(255,255,255,.2)"}`,
+        display:"flex", alignItems:"center", justifyContent:"center",
+      }}>
+        <Icon name={icon} size={14} color={active ? "#fbbf24" : "#fff"} />
+      </div>
+      <span style={{ fontSize:9, fontWeight:700, color: active ? "#fbbf24" : "rgba(255,255,255,.92)", textShadow:"0 1px 2px rgba(0,0,0,.7)", whiteSpace:"nowrap" }}>{label}</span>
+    </button>
+  );
+}
+
 export default function ScannerScreen({
   scanResult, notFoundEan,
   searchQuery, setSearchQuery,
@@ -247,6 +277,7 @@ export default function ScannerScreen({
   scanZoom,
   showPhotoHint,
   photoScanLoading,
+  cameraPermissionDenied,
   photoFallbackRef,
   scanPhotoForEan,
   setKnowledgeSlug,
@@ -266,7 +297,67 @@ export default function ScannerScreen({
   // ── Guide modal state ─────────────────────────────────────────────────────
   const [showGuide, setShowGuide] = React.useState(false);
   const [manualEanError, setManualEanError] = React.useState("");
+  const [manualEanValue, setManualEanValue] = React.useState("");
   const [showScanProfilePicker, setShowScanProfilePicker] = React.useState(false);
+
+  // ── Dynamisk scanner-hjælpetekst (28. sept. 2026, FINAL POLISH – SCANNER,
+  // krav 2) ───────────────────────────────────────────────────────────────
+  // Én kort besked ad gangen, som ændrer sig med tiden siden kameraet blev
+  // klar — IKKE en pixel-baseret lys-/genskin-detektion (findes ikke i
+  // kodebasen og ville være en reel ny funktion at bygge, ikke "polish").
+  // "Kan den ikke scannes?"-faldbacken (krav 3) styres separat af
+  // `showPhotoHint`, som allerede findes i useScanner.js (sat efter 5s uden
+  // et scan) men aldrig blev vist nogen steder i UI'et før denne runde.
+  const [scanHint, setScanHint] = React.useState("Placér hele stregkoden i rammen");
+  React.useEffect(() => {
+    if (!scanReady) { setScanHint("Placér hele stregkoden i rammen"); return; }
+    const t = setTimeout(() => setScanHint("Hold telefonen stille"), 3000);
+    return () => clearTimeout(t);
+  }, [scanReady]);
+
+  // ── Kamera-permission-primer, første gang (28. sept. 2026, FINAL POLISH –
+  // SCANNER, krav 10) ────────────────────────────────────────────────────
+  // Kort, engangs-forklaring lige FØR browserens egen tilladelses-dialog
+  // vises første gang appen har brug for kameraet — ikke en lang privacy-
+  // forklaring, kun én sætning. `localStorage`-flag, samme mønster som
+  // andre "vis kun første gang"-tilstande i appen (fx betaIntroSeen).
+  const [showCameraPrimer, setShowCameraPrimer] = React.useState(false);
+  const handleScanButtonClick = () => {
+    let primerSeen = true;
+    try { primerSeen = localStorage.getItem("as_camera_primer_seen") === "1"; } catch { /* ignoreres */ }
+    if (primerSeen) { startCamera(); return; }
+    setShowCameraPrimer(true);
+  };
+  const dismissCameraPrimer = () => {
+    try { localStorage.setItem("as_camera_primer_seen", "1"); } catch { /* ignoreres */ }
+    setShowCameraPrimer(false);
+    startCamera();
+  };
+
+  // Åbner manuel EAN-indtastning frisk hver gang — rydder en evt. tidligere
+  // værdi/fejl fra sidste åbning, i stedet for at genbruge et forladt
+  // udkast (28. sept. 2026, FINAL POLISH – SCANNER, krav 7).
+  const openManualEan = () => { setManualEanValue(""); setManualEanError(""); setShowManualEan(true); };
+
+  // Delt EAN-validering (krav 7/12) — to adskilte, specifikke fejltekster:
+  // forkert LÆNGDE (kan slet ikke være en EAN) vs. korrekt længde men
+  // ugyldig CHECKSUM (en formentlig tastefejl). `digits` er allerede
+  // renset for alt andet end tal via input'ets onChange, men trimmes her
+  // igen for en sikkerheds skyld ved direkte kald.
+  const submitManualEan = (rawValue) => {
+    const digits = rawValue.replace(/\D/g, "");
+    if (![8, 12, 13, 14].includes(digits.length)) {
+      setManualEanError("EAN-nummeret skal være 8 eller 13 cifre.");
+      return;
+    }
+    if (!isValidEanChecksum(digits)) {
+      setManualEanError("Stregkoden kunne ikke læses. Prøv igen.");
+      return;
+    }
+    setShowManualEan(false); setManualEanError(""); setManualEanValue("");
+    lookupProduct(digits);
+  };
+  const manualEanReadyLength = [8, 12, 13, 14].includes(manualEanValue.length);
 
   // Vælgeren vises kun når husstanden reelt har mere end én profil (mig +
   // mindst ét familiemedlem) — med kun én profil er der intet at vælge
@@ -304,6 +395,30 @@ export default function ScannerScreen({
                 <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", overflow:"hidden", maxHeight:"90vh", overflowY:"auto" }}
                   onClick={e => e.stopPropagation()}>
                   <DemoSlider onClose={() => setShowGuide(false)} />
+                </div>
+              </div>
+            )}
+
+            {/* Kamera-permission-primer — vises KUN første gang, lige før
+                browserens egen kamera-tilladelses-dialog (28. sept. 2026,
+                FINAL POLISH – SCANNER, krav 10). Kort, ét sætning — ingen
+                lang privacy-forklaring. */}
+            {showCameraPrimer && (
+              <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.6)", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
+                onClick={dismissCameraPrimer}>
+                <div style={{ background:"var(--paper)", borderRadius:20, padding:"24px 22px", maxWidth:320, textAlign:"center", boxShadow:"var(--sh2)" }}
+                  onClick={e => e.stopPropagation()}>
+                  <div style={{ display:"flex", justifyContent:"center", marginBottom:12 }}>
+                    <div style={{ width:48, height:48, borderRadius:"50%", background:"var(--green-selected-bg)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                      <Icon name="camera" size={22} color="var(--green)" />
+                    </div>
+                  </div>
+                  <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>
+                    EatSafe bruger kameraet til at læse produktets stregkode.
+                  </div>
+                  <button className="btn btn-primary btn-full" onClick={dismissCameraPrimer} style={{ marginTop:6 }}>
+                    Fortsæt
+                  </button>
                 </div>
               </div>
             )}
@@ -375,29 +490,52 @@ export default function ScannerScreen({
                   </div>
                 </div>
 
-                {/* Svævende kontroller oven på kameraet — luk, galleri, manuelt, lygte */}
-                <div style={{ position:"absolute", top:10, left:10, right:10, display:"flex", alignItems:"center", justifyContent:"space-between", zIndex:2 }}>
-                  <button onClick={stopCamera} aria-label="Luk kamera" style={S.camCtrlBtn}>
+                {/* Svævende kontroller oven på kameraet — luk separat til
+                    venstre (uændret, ikon-kun), Billede/Indtast/Lygte til
+                    højre med korte labels (28. sept. 2026, FINAL POLISH –
+                    SCANNER, krav 1: "de nuværende ikoner er dog for
+                    kryptiske alene"). Lygtens label skifter til "Lygte til"
+                    når aktiv (krav 6/14 — statussen må ikke kun fremgå af
+                    farven). */}
+                <div style={{ position:"absolute", top:8, left:10, right:6, display:"flex", alignItems:"flex-start", justifyContent:"space-between", zIndex:2 }}>
+                  <button onClick={stopCamera} aria-label="Luk kamera"
+                    style={{ ...S.camCtrlBtn, marginTop:5 }}>
                     <Icon name="x" size={15} color="#fff" />
                   </button>
-                  <div style={S.rowGap6}>
-                    <button onClick={() => galleryInputRef.current?.click()} aria-label="Vælg billede fra galleri" style={S.camCtrlBtn}>
-                      <Icon name="image" size={14} color="#fff" />
-                    </button>
-                    <button onClick={() => setShowManualEan(true)} aria-label="Indtast stregkode manuelt" style={S.camCtrlBtn}>
-                      <Icon name="edit" size={14} color="#fff" />
-                    </button>
-                    <button onClick={toggleTorch} aria-label={torchOn ? "Sluk lygte" : "Tænd lygte"}
-                      style={{ ...S.camCtrlBtn, background: torchOn ? "rgba(251,191,36,.4)" : S.camCtrlBtn.background, borderColor: torchOn ? "rgba(251,191,36,.6)" : S.camCtrlBtn.borderColor }}>
-                      <Icon name="flashlight" size={14} color={torchOn ? "#fbbf24" : "#fff"} />
-                    </button>
+                  <div style={{ display:"flex", gap:2 }}>
+                    <CamCtrlBtn icon="image" label="Billede" ariaLabel="Vælg billede fra galleri" onClick={() => galleryInputRef.current?.click()} />
+                    <CamCtrlBtn icon="edit" label="Indtast" ariaLabel="Indtast stregkode manuelt" onClick={() => openManualEan()} />
+                    <CamCtrlBtn icon="flashlight" label={torchOn ? "Lygte til" : "Lygte"} ariaLabel={torchOn ? "Sluk lygte" : "Tænd lygte"} ariaPressed={torchOn} onClick={toggleTorch} active={torchOn} />
                   </div>
                 </div>
 
-                {/* Svævende hint/zoom nederst over kameraet */}
-                <div style={{ position:"absolute", bottom:14, left:"50%", transform:"translateX(-50%)", zIndex:2 }}>
-                  <div style={{ background:"rgba(0,0,0,.5)", backdropFilter:"blur(6px)", WebkitBackdropFilter:"blur(6px)", borderRadius:100, padding:"6px 14px", fontSize:11.5, fontWeight:600, whiteSpace:"nowrap", color: scanZoom > 1.0 ? "#86EFAC" : "rgba(255,255,255,.85)" }}>
-                    {scanZoom > 1.0 ? `🔍 ${scanZoom}× zoom` : "Hold stregkoden ind i rammen"}
+                {/* Svævende hjælpetekst + zoom nederst over kameraet (28.
+                    sept. 2026, FINAL POLISH – SCANNER, krav 2/3/5) — zoom-
+                    indikatoren er REN INFORMATION (ingen tap-til-zoom findes,
+                    kun den eksisterende auto-zoom), derfor holdt lille/let og
+                    adskilt fra selve hjælpeteksten, i stedet for at erstatte
+                    den helt som tidligere. Efter ca. 5s uden et scan
+                    (`showPhotoHint`, sat i useScanner.js) erstattes den
+                    almindelige, tidsstyrede hjælpetekst af en faldback med
+                    direkte klikbare "Billede"/"Indtast EAN"-handlinger, så
+                    brugeren aldrig står fast uden en vej videre. */}
+                <div style={{ position:"absolute", bottom:14, left:"50%", transform:"translateX(-50%)", zIndex:2, display:"flex", flexDirection:"column", alignItems:"center", gap:6, maxWidth:"88%" }}>
+                  {scanZoom > 1.0 && (
+                    <div style={{ fontSize:10, fontWeight:600, color:"rgba(134,239,172,.85)", textShadow:"0 1px 2px rgba(0,0,0,.6)" }}>
+                      {scanZoom}× zoom
+                    </div>
+                  )}
+                  <div style={{ background:"rgba(0,0,0,.5)", backdropFilter:"blur(6px)", WebkitBackdropFilter:"blur(6px)", borderRadius:14, padding:"7px 14px", fontSize:11.5, fontWeight:600, color:"rgba(255,255,255,.9)", textAlign:"center", lineHeight:1.4 }}>
+                    {showPhotoHint ? (
+                      <>
+                        Kan den ikke scannes?{" "}
+                        <span style={{ textDecoration:"underline", cursor:"pointer", color:"#fff", fontWeight:800 }}
+                          onClick={() => openManualEan()}>Indtast EAN</span>
+                        {" "}eller{" "}
+                        <span style={{ textDecoration:"underline", cursor:"pointer", color:"#fff", fontWeight:800 }}
+                          onClick={() => galleryInputRef.current?.click()}>vælg et billede</span>.
+                      </>
+                    ) : scanHint}
                   </div>
                 </div>
               </div>
@@ -448,7 +586,9 @@ export default function ScannerScreen({
                   <div style={{ fontSize:"clamp(14px, 2.9cqh, 19px)", fontWeight:600, color:"var(--ink)", letterSpacing:"-.2px", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{getGreeting()},</div>
                   <div style={{ fontSize:"clamp(22px, 4.7cqh, 32px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(2px, .4cqh, 4px)", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{user.name?.split(" ")[0] || "der"}</div>
                   <div style={{ fontSize:"clamp(11.5px, 2.1cqh, 15px)", fontWeight:600, color:"var(--ink2)", marginTop:"clamp(5px, 1.1cqh, 9px)", lineHeight:1.5, maxWidth:250, marginLeft:"auto", marginRight:"auto", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 12px rgba(255,255,255,.6)" }}>
-                    Scan et produkt og se straks, om det matcher dine allergier.
+                    {cameraPermissionDenied
+                      ? "Kameraadgang er slået fra — brug Billede eller Indtast EAN i stedet."
+                      : "Scan et produkt og se straks, om det matcher dine allergier."}
                   </div>
                 </div>
 
@@ -517,13 +657,47 @@ export default function ScannerScreen({
                   />
                 )}
 
+                {/* Kameraadgang nægtet: erstat den store scan-knap med en
+                    tydelig, dedikeret besked + de to reelle alternativer
+                    (28. sept. 2026, FINAL POLISH – SCANNER, krav 9) — IKKE
+                    bare et lille rødt banner under en fortsat klikbar
+                    scan-knap, der ellers ville slå fejl igen og igen. Ingen
+                    "Åbn Indstillinger"-knap: der findes ingen cross-
+                    browser/cross-platform JS-API til at åbne kamera-
+                    tilladelser fra en PWA (samme genundersøgte konklusion
+                    som Indstillinger → Notifikationer, se SettingsScreen.jsx). */}
+                {cameraPermissionDenied ? (
+                  <div style={{ position:"absolute", top:"calc(44% - 18px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center", padding:"0 20px" }}>
+                    <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:20, padding:"20px 18px", maxWidth:300, width:"100%", textAlign:"center", boxShadow:"var(--sh2)" }}>
+                      <div style={{ display:"flex", justifyContent:"center", marginBottom:10 }}>
+                        <div style={{ width:44, height:44, borderRadius:"50%", background:"var(--red-lt)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                          <Icon name="block" size={20} color="var(--red)" />
+                        </div>
+                      </div>
+                      <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>Kameraadgang er slået fra</div>
+                      <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginBottom:16 }}>
+                        Tillad kameraadgang for at scanne stregkoder — eller brug en af mulighederne nedenfor.
+                      </div>
+                      <div style={{ display:"flex", gap:8 }}>
+                        <button onClick={() => galleryInputRef.current?.click()}
+                          style={{ flex:1, minHeight:44, padding:"10px", borderRadius:10, background:"var(--surface2)", border:"1px solid var(--border2)", fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                          <Icon name="image" size={13} color="var(--ink)" /> Billede
+                        </button>
+                        <button onClick={() => openManualEan()}
+                          style={{ flex:1, minHeight:44, padding:"10px", borderRadius:10, background:"var(--green)", border:"none", fontFamily:"var(--f)", fontSize:12.5, fontWeight:800, color:"var(--on-green)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                          <Icon name="edit" size={13} color="var(--on-green)" /> Indtast EAN
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
                 <div style={{ position:"absolute", top:"calc(44% - 18px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
                   <div style={{ position:"relative", width:"clamp(132px, 34cqh, 219px)", height:"clamp(132px, 34cqh, 219px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
                     <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-20px, -3.3cqh, -9px)", borderRadius:"50%",
                       background:"radial-gradient(circle, var(--green-halo) 0%, rgba(221,244,232,0) 70%)" }} aria-hidden="true" />
                     <button
                       className="scan-cta-btn"
-                      onClick={() => startCamera()}
+                      onClick={handleScanButtonClick}
                       aria-label="Start kamera for at scanne stregkode"
                       style={{ position:"absolute", inset:"clamp(5px, 1.1cqh, 7px)", borderRadius:"50%", cursor:"pointer",
                         border:"none", fontFamily:"var(--f)",
@@ -535,6 +709,7 @@ export default function ScannerScreen({
                     </button>
                   </div>
                 </div>
+                )}
 
                 {/* Den permanente "Beta-information"-knap er fjernet herfra
                     (25. sept. 2026, brugerfeedback) — Beta-introen vises nu
@@ -558,11 +733,19 @@ export default function ScannerScreen({
             {/* Fejlbesked fra kamera */}
             {scanError && (
               <div style={{ fontSize:12, color:"var(--red)", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:8, padding:"8px 12px", marginBottom:8 }}>
-                {scanError} — <span style={{ textDecoration:"underline", cursor:"pointer" }} onClick={() => setShowManualEan(true)}>Indtast manuelt</span>
+                {scanError} — <span style={{ textDecoration:"underline", cursor:"pointer" }} onClick={() => openManualEan()}>Indtast manuelt</span>
               </div>
             )}
 
-            {/* Manuel EAN-input — åbnes via blyant-ikonet i kamera-kontrollerne, eller herunder ved fejl */}
+            {/* Manuel EAN-input — åbnes via "Indtast"-kontrollen i kameraet,
+                eller herunder ved fejl. Kontrolleret input (28. sept. 2026,
+                FINAL POLISH – SCANNER, krav 7) — `type="text"` +
+                `inputMode="numeric"` i stedet for `type="number"` giver
+                stadig et numerisk tastatur på mobil, men undgår number-
+                inputtets egne kvirks (kan skrive "e"/"+"/"-", mister
+                foranstillede nuller) og lader os selv trimme/filtrere
+                ethvert ikke-ciffer-tegn (mellemrum, bindestreger fra en
+                indsat stregkode) fortløbende i onChange. */}
             {showManualEan && (
               <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb12}>
                 <div style={S.rowBetweenMb10}>
@@ -573,39 +756,33 @@ export default function ScannerScreen({
                 <div style={S.rowGap8}>
                   <input
                     id="manual-ean-input"
-                    type="number"
+                    type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
+                    enterKeyHint="search"
                     placeholder="fx 5712873099443"
                     autoFocus
                     className="field"
+                    value={manualEanValue}
+                    aria-label="EAN-nummer"
+                    aria-invalid={!!manualEanError}
                     style={{ flex:1, fontSize:16, letterSpacing:1, borderColor: manualEanError ? "var(--red)" : undefined }}
-                    onChange={() => manualEanError && setManualEanError("")}
-                    onKeyDown={e => {
-                      if (e.key !== "Enter") return;
-                      const val = e.target.value.trim();
-                      if (val.length < 8) return;
-                      if (!isValidEanChecksum(val)) { setManualEanError("Det ligner ikke en gyldig stregkode — tjek cifrene."); return; }
-                      setShowManualEan(false); setManualEanError("");
-                      lookupProduct(val);
-                    }}
+                    onChange={e => { setManualEanValue(e.target.value.replace(/\D/g, "").slice(0, 14)); if (manualEanError) setManualEanError(""); }}
+                    onKeyDown={e => { if (e.key === "Enter") submitManualEan(manualEanValue); }}
                   />
                   <button
-                    style={{ padding:"0 16px", borderRadius:10, background:"var(--green)", border:"none",
-                      color:"var(--on-green)", fontWeight:800, fontSize:14, cursor:"pointer", fontFamily:"var(--f)", flexShrink:0,
-                      boxShadow:"0 2px 12px rgba(14,143,90,.25)" }}
-                    onClick={() => {
-                      const val = document.getElementById("manual-ean-input")?.value?.trim();
-                      if (!val || val.length < 8) return;
-                      if (!isValidEanChecksum(val)) { setManualEanError("Det ligner ikke en gyldig stregkode — tjek cifrene."); return; }
-                      setShowManualEan(false); setManualEanError("");
-                      lookupProduct(val);
-                    }}>
+                    disabled={!manualEanReadyLength}
+                    style={{ padding:"0 16px", borderRadius:10, border:"none",
+                      background: manualEanReadyLength ? "var(--green)" : "var(--border2)",
+                      color: manualEanReadyLength ? "var(--on-green)" : "var(--muted)",
+                      fontWeight:800, fontSize:14, cursor: manualEanReadyLength ? "pointer" : "default", fontFamily:"var(--f)", flexShrink:0, minHeight:44,
+                      boxShadow: manualEanReadyLength ? "0 2px 12px rgba(14,143,90,.25)" : "none" }}
+                    onClick={() => submitManualEan(manualEanValue)}>
                     Søg
                   </button>
                 </div>
                 {manualEanError ? (
-                  <div style={{ fontSize:11, color:"var(--red)", marginTop:8, fontWeight:600 }}>{manualEanError}</div>
+                  <div style={{ fontSize:11, color:"var(--red)", marginTop:8, fontWeight:600 }} role="alert">{manualEanError}</div>
                 ) : (
                   <div style={UI.ufs10_cmuted_mt8}>
                     EAN-nummeret er stregkodens tal — typisk 8 eller 13 cifre.

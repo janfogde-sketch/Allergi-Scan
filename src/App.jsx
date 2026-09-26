@@ -660,6 +660,7 @@ export default function EatSafe() {
     scanZoom,
     showPhotoHint, setShowPhotoHint,
     photoScanLoading,
+    cameraPermissionDenied,
     galleryInputRef,
     photoFallbackRef,
     lastScannedRef,
@@ -1150,6 +1151,7 @@ export default function EatSafe() {
             scanZoom={scanZoom}
             showPhotoHint={showPhotoHint}
             photoScanLoading={photoScanLoading}
+            cameraPermissionDenied={cameraPermissionDenied}
             photoFallbackRef={photoFallbackRef}
             scanPhotoForEan={scanPhotoForEan}
             setKnowledgeSlug={setKnowledgeSlug}
