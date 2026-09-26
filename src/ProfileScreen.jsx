@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { ALLERGENS, SCREENS, DIETS, E_NUMBERS, E_CATEGORIES, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall } from "./helpers.js";
+import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall, buildActiveProfileList, computeProfileResults, extractENumbers } from "./helpers.js";
 import { EatSafeLogo, Icon, ProductImage, ProfileBadges, showToast } from "./SharedComponents.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { TextLink } from "./DesignSystem.jsx";
@@ -14,6 +14,22 @@ import { useAdminContext } from "./AdminContext.jsx";
 import { useFamilyFormContext } from "./FamilyFormContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 import { UI } from "./styleUtils.js";
+
+// ── Historik: status-sprog, kompakt filter ──────────────────────────────────
+// Samme grøn/rød/orange-farvesprog og ikon+tekst+farve-mønster som
+// Indkøbslistens itemStatus (ListScreen.jsx) — én kilde til hvad "Konflikt"/
+// "Kan ikke afgøres sikkert"/"Matcher" betyder på tværs af appen, ikke en
+// selvstændig kopi af logikken. "not_found" er specifikt for Historik (et
+// scan der ikke gav noget produkt at vurdere) og findes ikke i Indkøbslisten.
+const HISTORY_STATUS_COLOR = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", not_found:"var(--muted)" };
+const HISTORY_STATUS_ICON  = { danger:"warning", warn:"warning", safe:"check", not_found:"info" };
+const HISTORY_FILTERS = [
+  { id:"all",       label:"Alle" },
+  { id:"safe",      label:"Sikker" },
+  { id:"danger",    label:"Konflikt" },
+  { id:"warn",      label:"Usikker" },
+  { id:"not_found", label:"Ikke fundet" },
+];
 
 // ── Gamification helpers ──────────────────────────────────────────────────────
 function computeStreak(history) {
@@ -174,12 +190,26 @@ export default function ProfileScreen({
     activeSubtypeModal, setActiveSubtypeModal,
   } = useAllergenPrefsContext();
 
-  // Historik hentes kun ved eksplicit "Opdater"/"Se alle"-klik andre steder i
-  // denne fil — uden dette viser skærmen 0 scanninger ved første besøg, indtil
-  // brugeren selv trykker opdater, selvom historikken reelt findes.
+  // Historik hentes ved allerførste mount (Profil/Favoritter læser også
+  // `history`, fx GamificationCard/"Senest scannet", uden selv at besøge
+  // Historik-fanen) — uden dette viser de 0 scanninger indtil et separat
+  // besøg på Historik tilfældigvis trigger et hent.
   useEffect(() => {
     if (userId && accessToken) loadHistory();
   }, [userId, accessToken, loadHistory]);
+
+  // Historikken opdaterer automatisk ved hvert besøg på selve Historik-fanen
+  // (26. sept. 2026, brugerfeedback: "historikken skal opdatere automatisk",
+  // erstatter den tidligere manuelle "Opdater"-knap) — ProfileScreen skifter
+  // kun INTERN gren ved navigation mellem Profil/Historik/Familie/
+  // Favoritter (forbliver mount'et), så mount-effekten ovenfor alene ikke er
+  // nok til at give et friskt hent hver gang man navigerer IND på Historik.
+  // Bevidst kun `screen` som trigger, ikke `loadHistory`/scope — de ville
+  // ellers også genudløse ved fx et Mine/Husstanden-skift, som allerede
+  // kalder loadHistory() direkte selv.
+  useEffect(() => {
+    if (screen === SCREENS.HISTORY && userId && accessToken) loadHistory(historyScope);
+  }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Invite state ────────────────────────────────────────────────────────────
   const [inviteLink, setInviteLink] = useState(null);
@@ -190,6 +220,54 @@ export default function ProfileScreen({
   const [newCategoryInput, setNewCategoryInput] = useState("");
   const [inviteError, setInviteError] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
+
+  // ── Historik: kompakt filter + status pr. post ──────────────────────────────
+  const [historyFilter, setHistoryFilter] = useState("all");
+
+  // Beregner samme sikkerhedsvurdering som Indkøbslisten (buildActiveProfileList
+  // + computeProfileResults, helpers.js) — men ud fra den FROSNE `flags_triggered`
+  // og `active_profiles`, som blev gemt PÅ SELVE SCANNINGSTIDSPUNKTET, i stedet
+  // for appens nuværende aktive profiler/produktdata. Det gør statuslinjen i
+  // selve historik-rækken konsistent med hvad der reelt blev vist dengang,
+  // uanset om brugeren siden har skiftet aktive profiler. Ingrediens-/
+  // næringsdata er IKKE gemt i historikken (kun allergen_flags via
+  // flags_triggered) — diæt-/E-nummer-baserede advarsler indgår derfor ikke
+  // her, kun det primære allergen-match, som er den dominerende faktor bag
+  // "Konflikt"/"Kan ikke afgøres sikkert" alligevel.
+  const historyDetails = (h) => {
+    const rawStatus = h.result || h.status;
+    const ids = (h.active_profiles && h.active_profiles.length) ? h.active_profiles : activeProfiles;
+    const profiles = buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles: ids });
+    const checkedFor = profiles.map(p => p.name.split(" ")[0]).join(", ") || null;
+    if (rawStatus === "not_found") return { status:"not_found", text:"Produkt ikke fundet", checkedFor };
+    if (profiles.length === 0) return { status:null, text:null, checkedFor: null };
+    const flags = h.flags_triggered || {};
+    const results = computeProfileResults(profiles, { allergen_flags: flags, ingredients:"", nutrition:null, productENumbers:[] });
+    const dangerNames = results.filter(r => r.status === "danger").map(r => r.name.split(" ")[0]);
+    if (dangerNames.length > 0) {
+      return { status:"danger", text: dangerNames.length <= 2 ? `Konflikt for ${dangerNames.join(", ")}` : "Passer ikke til valgte profiler", checkedFor };
+    }
+    if (results.some(r => r.status === "warn")) return { status:"warn", text:"Kan ikke afgøres sikkert", checkedFor };
+    return { status:"safe", text:"Matcher valgte profiler", checkedFor };
+  };
+
+  // Genåbner et tidligere scan-resultat for SAMME profiler som ved den
+  // oprindelige scanning (26. sept. 2026, brugerfeedback) — sætter appens
+  // aktive profiler til den historiske liste og genbruger derefter PRÆCIS
+  // samme lookupProduct-kald som resten af appen (Favoritter, "Senest
+  // scannet" m.fl.), i stedet for at bygge en selvstændig visning af et
+  // frosset resultat. Bevidst valg at hente FRISK produktdata i stedet for
+  // at genbruge `flags_triggered` her: allergendata kan være rettet siden
+  // scanningen (fx en fejlrettelse efter en indsendelse), og et frosset,
+  // muligvis forældet "sikkert"-resultat ville være et reelt sikkerheds-
+  // problem i en allergi-app. Ingen automatisk gendannelse af de tidligere
+  // aktive profiler ved tilbage-navigation — samme model som resten af
+  // appen, hvor "aktive profiler" er ét delt, globalt valg.
+  const openHistoryEntry = (h) => {
+    if ((h.result || h.status) === "not_found") return;
+    if (h.active_profiles?.length) setActiveProfiles(h.active_profiles);
+    lookupProduct(h.ean_scanned || h.code);
+  };
 
   const FamilyChips = () => {
     const allIds = ["me", ...family.map(m => m.id)];
@@ -241,7 +319,7 @@ export default function ProfileScreen({
                 </div>
               </div>
             )}
-            <button className="btn btn-ghost btn-sm" style={UI.mb14} onClick={() => { loadHistory(); }}>Opdater</button>
+
             {historyLoading && (
               <div className="fade-in">
                 {[1,2,3,4].map(i => (
@@ -255,32 +333,72 @@ export default function ProfileScreen({
                 ))}
               </div>
             )}
+
             {!historyLoading && history.length===0 && (
-              <div className="empty-state"><span className="empty-icon"><Icon name="search" size={26} color="var(--muted)" /></span><div className="empty-txt">Ingen scanninger endnu</div><div className="empty-sub">Skan dit første produkt for at se din historik her</div><button className="btn btn-outline btn-sm" style={UI.mt12} onClick={() => setScreen(SCREENS.HOME)}>Skan nu</button></div>
+              <div className="empty-state">
+                <span className="empty-icon"><Icon name="search" size={26} color="var(--muted)" /></span>
+                <div className="empty-txt">Ingen scanninger endnu</div>
+                <div className="empty-sub">Skan dit første produkt for at se din historik her</div>
+                <button className="btn btn-primary btn-sm" style={UI.mt12} onClick={() => setScreen(SCREENS.HOME)}>Scan nu</button>
+              </div>
             )}
-            {history.map((h,i) => {
-              const s = h.result||h.status;
-              const name = h.products?.name||h.name||h.ean_scanned||"Ukendt";
-              return (
-                <div key={i} className="hist-row" style={{ padding:"12px 0" }}
-                  // Genbruger samme lookupProduct-kald som "Senest scannet" og
-                  // favoritter — den viser et cachet fuldt resultat øjeblikkeligt
-                  // hvis produktet allerede er set, ellers henter den friske data.
-                  // Et manuelt stub-objekt her (som tidligere) manglede billede,
-                  // kategori, ingredienser og alt andet end navn/status.
-                  onClick={() => lookupProduct(h.ean_scanned || h.code)}>
-                  <div className={`hist-dot ${s}`} />
-                  <div className="hist-info">
-                    <div className="hist-name">{name}</div>
-                    <div className="hist-time">
-                      {timeAgo(h.scanned_at||h.timestamp)}
-                      {historyScope==="family" && h.user_id!==userId && h.users?.name && ` · ${h.users.name.split(" ")[0]}`}
+
+            {/* Kompakt filter — kun når historikken reelt indeholder nok til at
+                et filter giver mening (26. sept. 2026, brugerfeedback). Genbruger
+                den allerede eksisterende, men hidtil ubrugte .filter-chip-klasse
+                (theme.jsx) i stedet for at style'e nye chips til formålet. */}
+            {!historyLoading && history.length > 5 && (
+              <div style={{ ...UI.wrapGap7, marginBottom:12 }}>
+                {HISTORY_FILTERS.map(f => (
+                  <div key={f.id} className={`filter-chip${historyFilter===f.id?" active":""}`} onClick={() => setHistoryFilter(f.id)}>
+                    {f.label}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!historyLoading && history.length > 0 && (() => {
+              const filtered = historyFilter === "all"
+                ? history
+                : history.filter(h => historyDetails(h).status === historyFilter);
+              if (filtered.length === 0) {
+                return <div style={{ textAlign:"center", padding:"32px 0", fontSize:12.5, color:"var(--muted)" }}>Ingen scanninger matcher dette filter</div>;
+              }
+              return filtered.map((h,i) => {
+                const d = historyDetails(h);
+                const isNotFound = d.status === "not_found";
+                const name = isNotFound ? "Produkt ikke fundet" : (h.products?.name || h.name || "Ukendt produkt");
+                const prod = { name: h.products?.name || h.name, brand: h.products?.brand || h.brand, image_url: h.products?.image_url || null };
+                const scannedBySuffix = historyScope === "family" && h.user_id !== userId && h.users?.name ? ` · ${h.users.name.split(" ")[0]}` : "";
+                return (
+                  <div key={h.id ?? i} className="hist-row" style={{ padding:"12px 0", cursor: isNotFound ? "default" : "pointer" }}
+                    // Genbruger samme lookupProduct-kald som "Senest scannet" og
+                    // favoritter, men sætter først appens aktive profiler til den
+                    // historiske liste — se openHistoryEntry ovenfor for hvorfor.
+                    onClick={() => openHistoryEntry(h)}>
+                    <ProductImage product={prod} size={40} />
+                    <div className="hist-info" style={{ marginLeft:2 }}>
+                      <div className="hist-name">{name}</div>
+                      <div className="hist-time">
+                        {isNotFound
+                          ? `Stregkode ${h.ean_scanned || h.code || "?"} · ${timeAgo(h.scanned_at||h.timestamp)}`
+                          : `${timeAgo(h.scanned_at||h.timestamp)}${d.checkedFor ? ` · Tjekket for ${d.checkedFor}` : ""}`}
+                        {scannedBySuffix}
+                      </div>
+                      {/* Altid ikon + tekst + farve, aldrig farve alene (26. sept.
+                          2026, brugerfeedback) — samme mønster som Indkøbslistens
+                          itemStatus-linje (ListScreen.jsx). */}
+                      {d.status && (
+                        <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:3, fontSize:11, fontWeight:700, color: HISTORY_STATUS_COLOR[d.status] }}>
+                          <Icon name={HISTORY_STATUS_ICON[d.status]} size={11} color="currentColor" />
+                          {d.text}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className={`badge ${s==="safe"?"safe":s==="danger"?"danger":s==="not_found"?"":"warn"}`}>{s==="safe"?"Sikker":s==="danger"?"Farlig":s==="not_found"?"Ikke fundet":"Advarsel"}</div>
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         )}
 

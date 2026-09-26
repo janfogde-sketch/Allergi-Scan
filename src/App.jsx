@@ -927,8 +927,11 @@ export default function EatSafe() {
             betinget) — men helt opak (var(--paper)) i stedet for en let
             hvid dæmpning, så Indkøbslisten får appens rene hvid/off-white
             arbejdsflade uden ingrediensbilledet, mens resten af appen
-            (herunder Scan-forsiden) beholder det uændret. */}
-        {screen === SCREENS.LIST && <div className="app-bg-hide" aria-hidden="true" />}
+            (herunder Scan-forsiden) beholder det uændret. Historik fik
+            samme behandling (26. sept. 2026, brugerfeedback: "match den
+            rene, funktionelle stil fra Indkøbslisten") — genbruger samme
+            .app-bg-hide-lag i stedet for en ny klasse. */}
+        {(screen === SCREENS.LIST || screen === SCREENS.HISTORY) && <div className="app-bg-hide" aria-hidden="true" />}
 
         {/* Skip-link for tastatur/screen reader brugere */}
         <a href="#main-content" className="skip-link">Spring til indhold</a>
