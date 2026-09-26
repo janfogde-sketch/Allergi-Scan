@@ -946,6 +946,18 @@ notifikations-labels og den fælles Push/E-mail-kolonneheader begge til
 stede, Om EatSafe-sektionens tre rækker til stede. Ingen build-/test-/
 mojibake-fejl (109/109 tests bestået).
 
+**Opfølgende oprydning, samme dag — privatlivspolitik kun ét sted i
+navigationen:** hamburgermenuens (`ProfileMenu.jsx`) selvstændige
+"Privatliv"-punkt (linkede direkte til `https://eatsafe.dk/privacy`) er
+fjernet — samme link findes nu KUN under Indstillinger → Privatliv & data
+(tilføjet i denne omgang, se ovenfor). Brugerens egen begrundelse:
+hamburgermenuen skal navigere mellem appens vigtigste funktioner, ikke
+huse juridiske links der allerede ligger under Indstillinger.
+ProfileScreen.jsx's eget footer-privacy-link (nederst på profilsiden) er
+UÆNDRET, som bedt om — begge tilbageværende links peger på præcis samme
+eksterne side. `handleItemClick`s nu-ubrugte `href`-gren i ProfileMenu.jsx
+er fjernet som en direkte konsekvens (ingen andre menupunkter brugte den).
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
