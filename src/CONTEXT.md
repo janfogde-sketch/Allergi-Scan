@@ -72,7 +72,9 @@ src/
 ├── SearchScreen.jsx          # SEARCH — søgning + profil/manuel allergen-filter
 ├── ListScreen.jsx            # LIST — indkøbsliste + favoritter
 ├── SuggestEditScreen.jsx     # SUGGEST_EDIT — foreslå rettelse til produkt
-├── ProfileScreen.jsx         # PROFILE, EDITPROFILE, FAMILY, HISTORY, FAVORITES, ADMIN
+├── ProfileScreen.jsx         # PROFILE, EDITPROFILE (kun navn/telefon), EDITPREFERENCES
+│                             #   (allergier/intolerancer/diæt/E-numre), FAMILY, HISTORY,
+│                             #   FAVORITES, ADMIN
 │                             #   Footer: hej@eatsafe.dk + privatlivspolitik link
 ├── ProfileMenu.jsx           # Slide-out menu fra højre (åbnes via hamburger-ikon i
 │                             #   topbar) — profil-hero + links til Favoritter, Familie,
@@ -88,7 +90,9 @@ src/
 │
 ├── — Delte komponenter —
 ├── MemberForm.jsx            # MemberForm, CategorySelect
-├── AllergenPicker.jsx        # AllergenPicker, ENumberPicker
+├── AllergenPicker.jsx        # AllergenChipPicker, DietChipPicker, ENumberPicker,
+│                             #   useGlutenFreeSync (delt gluten↔glutenfri-sync-hook,
+│                             #   bruges af onboarding + MemberForm + Rediger præferencer)
 ├── FeedbackModal.jsx         # FeedbackModal med debug trace
 │
 ├── — Desktop admin-panel (NY, 24. sept. 2026) —

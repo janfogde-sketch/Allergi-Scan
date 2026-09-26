@@ -5,6 +5,32 @@ import { ALLERGENS, E_NUMBERS, E_CATEGORIES, DIETS } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
 import { ChoiceChip } from "./DesignSystem.jsx";
 
+// Gluten ↔ Glutenfri-synkronisering (28. sept. 2026, Profil-restrukturering,
+// krav 3: "Ændres en valgmulighed ét sted i kodebasen, skal ændringen slå
+// igennem både i onboarding og redigering") — udtrukket til ÉN fælles hook
+// i stedet for to næsten-identiske kopier (OnboardingScreen.jsx trin 2→3 og
+// MemberForm.jsx havde hver sin, opererende på hhv. `user.diets`/`setUser`
+// og lokale `diets`/`setDiets`-props). `setDiets` skal altid modtage det
+// FULDE nye array, samme kontrakt som DietChipPicker/AllergenChipPickers
+// egen `onChange`. Bruges nu tre steder: onboarding, MemberForm og
+// ProfileScreen.jsx's "Rediger præferencer".
+export function useGlutenFreeSync(allergens, diets, setDiets) {
+  const [glutenFreeAutoApplied, setGlutenFreeAutoApplied] = useState(false);
+  React.useEffect(() => {
+    const hasGluten = allergens.includes("gluten");
+    const hasGlutenFree = diets.includes("gluten-free");
+    if (hasGluten && !hasGlutenFree) {
+      setDiets([...diets, "gluten-free"]);
+      setGlutenFreeAutoApplied(true);
+    } else if (!hasGluten && hasGlutenFree && glutenFreeAutoApplied) {
+      setDiets(diets.filter(d => d !== "gluten-free"));
+      setGlutenFreeAutoApplied(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allergens]);
+  return [glutenFreeAutoApplied, setGlutenFreeAutoApplied];
+}
+
 // Delt allergi-vælger (grøn valgt-state, ✓, allergi/intolerance-opdeling,
 // ⓘ-note på gluten) — udtrukket fra OnboardingScreen.jsx's trin 2 (25. sept.
 // 2026, brugerfeedback: familie-formularen på trin 4 skal genbruge PRÆCIS

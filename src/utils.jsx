@@ -83,6 +83,7 @@ export const buildScreenLabel = ({
       ? `Opskrifter — ${selectedRecipe.name || "ukendt opskrift"}`
       : "Opskrifter — liste",
     [SCREENS.EDITPROFILE]:  `Rediger profil${editMode ? " (onboarding-flow)" : ""}`,
+    [SCREENS.EDITPREFERENCES]: "Rediger præferencer",
     [SCREENS.ADMIN]:        "Admin dashboard",
   };
 

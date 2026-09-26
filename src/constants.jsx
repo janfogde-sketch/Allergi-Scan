@@ -348,7 +348,7 @@ export const SCREENS = {
   RESULT:"result", HISTORY:"history",
   NOTFOUND:"notfound", SUBMITTED:"submitted",
   ADMIN:"admin", FAVORITES:"favorites",
-  MADPAS:"madpas", RECIPES:"recipes", EDITPROFILE:"editprofile", SUGGEST_EDIT:"suggest_edit",
+  MADPAS:"madpas", RECIPES:"recipes", EDITPROFILE:"editprofile", EDITPREFERENCES:"editpreferences", SUGGEST_EDIT:"suggest_edit",
   KNOWLEDGE:"knowledge",
   RESTAURANTGUIDE:"restaurantguide",
   SETTINGS:"settings",
