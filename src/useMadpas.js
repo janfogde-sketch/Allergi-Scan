@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState } from "react";
-import { ALLERGENS, MADPAS_LANGUAGES, ALLERGEN_T, ALLERGEN_EXAMPLES, DIETS, DIET_T, MADPAS_SAFETY_NOTE_T, MADPAS_SAFETY_NOTE_SINGULAR_T } from "./constants.jsx";
+import { ALLERGENS, MADPAS_LANGUAGES, ALLERGEN_T, ALLERGEN_EXAMPLES, DIETS, DIET_T, MADPAS_SAFETY_NOTE_T, MADPAS_CROSS_CONTACT_SINGULAR_T, MADPAS_CROSS_CONTACT_PLURAL_T } from "./constants.jsx";
 
 // ALLERGEN_T har ingen "da"-nøgle (dansk er allerede ALLERGENS' eget
 // a.label, se konstantens egen kommentar) — uden dette faldt et valgt
@@ -33,21 +33,32 @@ export function madpasAllergenExamples(allergenId, lang) {
   const ingredients = ex.ingredients?.[lang] || ex.ingredients?.en || [];
   return [...products, ...ingredients].slice(0, 4);
 }
-// Singular/plural sikkerheds-sætning under FØDEVAREALLERGIER (26. sept.
-// 2026, opfølgende Madpas-polish, krav 6: "Undgå formuleringer som 'any of
-// these', når der kun vises én ting"). `names` er de allerede-oversatte
-// labels for alt i allergi-sektionen (rigtige allergener + fritekst),
-// IKKE selve id'erne — singularformen indsætter navnet direkte i sætningen.
-export function madpasSafetyNote(names, lang) {
+// Sikkerheds-sætning PR. ENKELT allergen/fritekst-emne i FØDEVARE-
+// ALLERGIER (27. sept. 2026, Madpas-finpolish, krav 4 — "genereres
+// dynamisk for den konkrete allergi"). `name` er det allerede-oversatte
+// label (IKKE selve id'et) — indsættes overalt hvor skabelonen har
+// {name} (kan forekomme flere gange, se MADPAS_SAFETY_NOTE_T).
+export function madpasSafetyNote(name, lang) {
+  if (!name) return "";
+  const template = MADPAS_SAFETY_NOTE_T[lang] || MADPAS_SAFETY_NOTE_T.en;
+  return template.split("{name}").join(name.toLowerCase());
+}
+// Krydskontaminerings-sætning (krav 7) — ÉN kombineret sætning for hele
+// fødevareallergi-sektionen, singular ved ét hensyn ("with milk"), plural
+// ("with these allergens") ved flere. `names` er de allerede-oversatte
+// labels for alt i allergi-sektionen (rigtige allergener + fritekst).
+// Kun kaldt når brugeren selv har aktiveret indstillingen — se
+// madpasCrossContact i App.jsx.
+export function madpasCrossContactNote(names, lang) {
   if (!names || names.length === 0) return "";
   if (names.length === 1) {
-    const template = MADPAS_SAFETY_NOTE_SINGULAR_T[lang] || MADPAS_SAFETY_NOTE_SINGULAR_T.en;
+    const template = MADPAS_CROSS_CONTACT_SINGULAR_T[lang] || MADPAS_CROSS_CONTACT_SINGULAR_T.en;
     return template.replace("{name}", names[0].toLowerCase());
   }
-  return MADPAS_SAFETY_NOTE_T[lang] || MADPAS_SAFETY_NOTE_T.en;
+  return MADPAS_CROSS_CONTACT_PLURAL_T[lang] || MADPAS_CROSS_CONTACT_PLURAL_T.en;
 }
 
-export function useMadpas({ allergens, customAllerg, user, madpasLang, family, madpasProfileId }) {
+export function useMadpas({ allergens, customAllerg, user, madpasLang, family, madpasProfileId, madpasCrossContact }) {
   const [madpasSpeaking, setMadpasSpeaking] = useState(false);
   const [madpasWaiterView, setMadpasWaiterView] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
@@ -121,18 +132,33 @@ export function useMadpas({ allergens, customAllerg, user, madpasLang, family, m
     const parts = [];
     parts.push(introText[lang] || introText.en);
 
-    const allItems = [...speakAllergens, ...speakCustom.filter(c => !speakAllergens.includes(c))];
-    allItems.forEach((item, i) => {
-      if (typeof item !== "string") return;
-      const a = ALLERGENS.find(x => x.id === item);
-      const label = a ? madpasAllergenLabel(a, lang) : item;
-      const ex = a ? ALLERGEN_EXAMPLES[item] : null;
-      const exProducts = ex?.products?.[lang] || ex?.products?.en || [];
-      const exIngredients = ex?.ingredients?.[lang] || ex?.ingredients?.en || [];
-      const exText = [...exProducts.slice(0,3), ...exIngredients.slice(0,4)].join(", ");
-      const prefix = i === 0 ? (cannotText[lang] || cannotText.en) + ": " : "";
-      parts.push(prefix + label + (exText ? ". " + exText : ""));
+    // Ægte allergener (type "allergi") + fritekst får hver deres egen
+    // fulde sikkerheds-sætning (samme tekst som vises på skærmen, se
+    // madpasSafetyNote()) — intolerancer nævnes samlet uden den sætning,
+    // matcher den visuelle opdeling (INTOLERANCES har ingen sikkerheds-
+    // tekst, kun FOOD ALLERGIES). "Common examples" oplæses bevidst
+    // IKKE (27. sept. 2026, krav 8: "behøver ikke nødvendigvis læses op,
+    // hvis det gør beskeden unødigt lang").
+    const allergyNames = [];
+    const intoleranceNames = [];
+    speakAllergens.filter(id => typeof id === "string").forEach(id => {
+      const a = ALLERGENS.find(x => x.id === id);
+      if (!a) return;
+      const label = madpasAllergenLabel(a, lang);
+      if (a.type === "allergi") allergyNames.push(label);
+      else intoleranceNames.push(label);
     });
+    speakCustom.filter(c => typeof c === "string" && !speakAllergens.includes(c)).forEach(c => allergyNames.push(c));
+
+    allergyNames.forEach(name => parts.push(name + ". " + madpasSafetyNote(name, lang)));
+    // Krydskontaminering oplæses KUN hvis brugeren selv har aktiveret den
+    // (krav 7 — må aldrig vises/oplæses automatisk for alle).
+    if (madpasCrossContact && allergyNames.length > 0) {
+      parts.push(madpasCrossContactNote(allergyNames, lang));
+    }
+    if (intoleranceNames.length > 0) {
+      parts.push((cannotText[lang] || cannotText.en) + ": " + intoleranceNames.join(", "));
+    }
 
     if (speakDiets.length > 0) {
       const dietNames = speakDiets.map(d => madpasDietLabel(d, lang)).filter(Boolean).join(", ");
