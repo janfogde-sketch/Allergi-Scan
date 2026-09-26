@@ -64,7 +64,13 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenBetaInfo 
     {
       label: "PERSONLIGT",
       items: [
-        { icon:"star", label:"Favoritter", sub:"Gemte produkter og opskrifter", screen: SCREENS.FAVORITES },
+        // "og opskrifter" fjernet fra beskrivelsen (26. sept. 2026,
+        // opfølgning) — opskrifters hjerte-markering (RecipesScreen.jsx) er
+        // kun lokalt useState, ikke gemt nogen steder, og overlever ikke en
+        // genindlæsning. Beskrivelsen skal ikke love en funktion appen
+        // reelt ikke har (endnu) — se Favoritter-redesignets egen note om
+        // hvorfor der ikke er en Produkter/Opskrifter-fane på selve siden.
+        { icon:"star", label:"Favoritter", sub:"Gemte produkter", screen: SCREENS.FAVORITES },
         { icon:"family", label:"Familie", sub:"Allergiprofiler og husstand", screen: SCREENS.FAMILY },
       ],
     },

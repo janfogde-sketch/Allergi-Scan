@@ -217,8 +217,8 @@ body::-webkit-scrollbar{display:none;}
    universelle .app-bg helt opakt på Indkøbsliste-skærmen (se App.jsx),
    så skærmen igen får EatSafes rene hvid/off-white arbejdsflade i stedet
    for madvarebilledet, uden at ændre .app-bg selv (som resten af appen,
-   inkl. Scan-forsiden, fortsat bruger uændret). Genbrugt for Historik
-   (26. sept. 2026, se App.jsx) — samme lag, ingen ny klasse. */
+   inkl. Scan-forsiden, fortsat bruger uændret). Genbrugt for Historik og
+   Favoritter (26. sept. 2026, se App.jsx) — samme lag, ingen ny klasse. */
 .app-bg-hide{
   position:fixed;inset:0;z-index:0;pointer-events:none;
   background:var(--paper);
