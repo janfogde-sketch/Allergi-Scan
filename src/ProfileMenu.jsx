@@ -94,10 +94,15 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenBetaInfo 
         // og kontoindstillinger (flyttet fra ProfileScreen.jsx, se
         // SettingsScreen.jsx), klar til fremtidige punkter (sprog, app-
         // præferencer) uden at skulle omstrukturere menuen igen.
+        // "Privatliv"-punktet (linkede direkte til privacy.html) er fjernet
+        // herfra (28. sept. 2026, informationsarkitektur-oprydning,
+        // brugerens egen begrundelse: "Hamburgermenuen skal primært bruges
+        // til navigation mellem appens vigtigste funktioner og ikke til
+        // juridiske links") — findes nu KUN under Indstillinger → Privatliv
+        // & data (SettingsScreen.jsx), samme eksterne
+        // https://eatsafe.dk/privacy-link. Footerens eget privacy-link
+        // (ProfileScreen.jsx) er urørt, som bedt om.
         { icon:"settings", label:"Indstillinger", screen: SCREENS.SETTINGS },
-        // Samme eksterne privatlivspolitik som ProfileScreen.jsx allerede
-        // linker til nederst på profilsiden — ingen ny kilde opfundet.
-        { icon:"file", label:"Privatliv", href:"https://eatsafe.dk/privacy" },
         // Ingen chevron (det er en handling, ikke en navigation) og ALDRIG
         // rød i normal tilstand (brugerfeedback: "rød kan først bruges i
         // en evt. bekræftelse"). Samme tekstfarve som alle andre punkter —
@@ -113,7 +118,6 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenBetaInfo 
   ];
 
   const handleItemClick = (item) => {
-    if (item.href) { window.open(item.href, "_blank", "noopener,noreferrer"); return; }
     if (item.action) { item.action(); return; }
     onNavigate(item.screen);
   };

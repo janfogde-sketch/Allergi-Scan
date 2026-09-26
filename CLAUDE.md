@@ -946,6 +946,55 @@ notifikations-labels og den fælles Push/E-mail-kolonneheader begge til
 stede, Om EatSafe-sektionens tre rækker til stede. Ingen build-/test-/
 mojibake-fejl (109/109 tests bestået).
 
+**Opfølgende oprydning, samme dag — privatlivspolitik kun ét sted i
+navigationen:** hamburgermenuens (`ProfileMenu.jsx`) selvstændige
+"Privatliv"-punkt (linkede direkte til `https://eatsafe.dk/privacy`) er
+fjernet — samme link findes nu KUN under Indstillinger → Privatliv & data
+(tilføjet i denne omgang, se ovenfor). Brugerens egen begrundelse:
+hamburgermenuen skal navigere mellem appens vigtigste funktioner, ikke
+huse juridiske links der allerede ligger under Indstillinger.
+ProfileScreen.jsx's eget footer-privacy-link (nederst på profilsiden) er
+UÆNDRET, som bedt om — begge tilbageværende links peger på præcis samme
+eksterne side. `handleItemClick`s nu-ubrugte `href`-gren i ProfileMenu.jsx
+er fjernet som en direkte konsekvens (ingen andre menupunkter brugte den).
+
+**Endnu en opfølgning, samme dag — "FINAL POLISH – INDSTILLINGER" (copy +
+platformskorrekt adfærd + bund-overlap, ingen redesign):**
+- **Bund-overlap rettet:** "Om EatSafe"-kortet (sidste element på siden)
+  fik `marginBottom:"calc(96px + env(safe-area-inset-bottom))"` — samme
+  rodårsag/løsning som ProfileScreen.jsx-footerens tidligere fix (den
+  delte `.screen`-klasses flade 110px medregner ikke `env(safe-area-
+  inset-bottom)`). Verificeret ~144px fri luft til bundnavigationen efter
+  scroll til bunds (iPhone SE/13).
+- **Scanningstekster udvidet:** "Vibration/Lyd ved advarsel"s hjælpetekst
+  ændret fra "...matcher en allergi" til "...udløser en advarsel", da
+  danger/warn-status også kan komme fra diæter/E-numre, ikke kun
+  allergier — samme rettelse i en kode-kommentar i `useProduct.js`.
+- **Push-status gjort platforms-ærlig:** "Blokeret i browserindstillinger"
+  (antog fejlagtigt altid en browser-indstilling, ikke fx en installeret
+  PWA's OS-niveau app-tilladelse) erstattet med "Push-notifikationer er
+  slået fra på enheden." + en mere universel forklaringstekst. En "Åbn
+  Indstillinger"-knap blev genundersøgt og stadig IKKE tilføjet — ingen
+  cross-browser/cross-platform JS-API findes til at åbne push-
+  indstillinger fra en PWA, uanset platform, så en sådan knap ville altid
+  være fake (se `SettingsScreen.jsx`s filhoved for detaljen).
+- **"Sprog" omdøbt til "Madpas-sprog":** appen har intet app-sprog-skift
+  at sektionere under et generisk "Sprog" (kun Madpas har reel sprog-
+  understøttelse) — samme begrundelse som da "App-sprog" oprindeligt blev
+  udeladt.
+- **Version gjort brugervenlig:** viste tidligere `formatBuildTime()` +
+  rå `COMMIT_SHA` som primær info. Nu viser rækken "Beta" (reel status,
+  matcher topbarens badge — IKKE et fabrikeret tal som "0.9.0", da appen
+  ikke har et rigtigt semver-nummer) + en venlig bygge-dato, og
+  git-commit-SHA'et er flyttet til en sekundær, udfoldelig
+  "Build-ID (teknisk)"-detalje (samme udfolde-mønster som "Hvilke data
+  EatSafe gemmer").
+- **"Kontakt & feedback" omdøbt til "Kontakt & support"** — mindre
+  redundant navngivning ved siden af topbarens egen "Feedback"-knap.
+- Uændret, som krævet: Privatliv & data-kortets indhold, Farezone/Slet
+  konto, Push/E-mail-matricens mekanik, og selve scanningstogglernes
+  funktion (kun deres hjælpetekst er ændret).
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
