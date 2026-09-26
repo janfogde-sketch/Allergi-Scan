@@ -218,8 +218,8 @@ body::-webkit-scrollbar{display:none;}
    så skærmen igen får EatSafes rene hvid/off-white arbejdsflade i stedet
    for madvarebilledet, uden at ændre .app-bg selv (som resten af appen,
    inkl. Scan-forsiden, fortsat bruger uændret). Genbrugt for Historik,
-   Favoritter og Allergileksikon (26. sept. 2026, se App.jsx) — samme lag,
-   ingen ny klasse. */
+   Favoritter, Allergileksikon og Familie (26. sept. 2026, se App.jsx) —
+   samme lag, ingen ny klasse. */
 .app-bg-hide{
   position:fixed;inset:0;z-index:0;pointer-events:none;
   background:var(--paper);
