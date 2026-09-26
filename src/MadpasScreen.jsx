@@ -3,7 +3,7 @@ import React from "react";
 import { ALLERGENS, SCREENS, MADPAS_LANGUAGES, MADPAS_SECTIONS_T, MADPAS_ALLERGY_HEADLINE_T, MADPAS_INTOLERANCE_HEADLINE_T, MADPAS_EXAMPLES_LABEL_T, MADPAS_SPEAK_LABEL_T, MADPAS_STOP_LABEL_T } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { Icon } from "./SharedComponents.jsx";
-import { madpasAllergenLabel, madpasDietLabel, madpasAllergenExamples, madpasSafetyNote, madpasCrossContactNote } from "./useMadpas.js";
+import { madpasAllergenLabel, madpasDietLabel, madpasAllergenExamples, madpasSafetyNote, madpasCrossContactNote, madpasDietMessage } from "./useMadpas.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -182,10 +182,16 @@ export default function MadpasScreen({
           {dietItems.length > 0 && (
             <div>
               <div style={sectionLbl}>{MADPAS_SECTIONS_T.diet[lang] || MADPAS_SECTIONS_T.diet.en}</div>
-              <div style={UI.udflex_flewrap_g8}>
+              <div>
+                {/* Diæter må ikke kun vises som badges — de skal have en
+                    kort, tydelig besked til personalet på samme måde som
+                    allergier (27. sept. 2026, Madpas-finpolish, krav 1-2). */}
                 {dietItems.map(d => (
-                  <div key={d.id} style={{ padding:"10px 18px", borderRadius:100, background:"var(--green-selected-bg)", border:"1px solid var(--border)", fontSize:17, fontWeight:700, color:"var(--ink)" }}>
-                    {d.label}
+                  <div key={d.id} style={itemBlock}>
+                    <div style={itemName}>{d.label}</div>
+                    <div style={{ fontSize:15.5, fontWeight:700, color:"var(--ink2)", marginTop:10, lineHeight:1.5 }}>
+                      {madpasDietMessage(d.id, lang)}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -320,7 +326,7 @@ export default function MadpasScreen({
                     <div style={{ flex:1, minWidth:0 }}>
                       <div className="mp-section-lbl" style={{ marginBottom:2 }}>KRYDSKONTAMINERING</div>
                       <div style={{ fontSize:11.5, color:"var(--muted)", lineHeight:1.4 }}>
-                        Tilføj en advarsel om krydskontaminering til madpasset. Vurdér selv om det er relevant for din allergi.
+                        Tilføj en advarsel om krydskontaminering til dit madpas.
                       </div>
                     </div>
                     <button onClick={toggleCrossContact} aria-label="Krydskontamineringsadvarsel"

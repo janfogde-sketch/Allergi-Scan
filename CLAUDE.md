@@ -712,7 +712,7 @@ tilkoblet rigtig konto (undgår dubletter uden automatisk navne-matching).
 Fuld detalje i `.claude/HISTORY.md`, backend-reference i `src/CONTEXT.md`
 afsnit 9.
 
-### Madpas — redesignet, forenklet til kernefunktionen, herefter finpoleret (26.-27. sept. 2026)
+### Madpas — redesignet, forenklet til kernefunktionen, herefter finpoleret to gange (26.-27. sept. 2026)
 
 Madpas' formål: en tjener, butiksansat, hotel- eller cafémedarbejder — IKKE
 kun restaurantpersonale — skal kunne forstå de vigtigste kost-/allergi-
@@ -747,7 +747,21 @@ uden en sprog-nøgle faldt visningen tilbage til den DANSKE `a.label`/ingen
 eksempler, selv når madpasset var sat til fx engelsk. Begge rettet for
 alle 17 sprog.
 
-Fuld dag-for-dag-detalje (alle fire runder) i `.claude/HISTORY.md`,
+**Femte runde (27. sept., samme dag) — diæter fik samme type besked som
+allergier:** diæter (vegan/vegetarian/pescetarian/gluten-free/keto) vises
+ikke længere kun som badges i fremvisningsskærmen, men som samme slags
+blok som allergier (navn + en naturligt oversat "jeg spiser X, sørg for
+at min mad ikke indeholder Y"-besked, `MADPAS_DIET_MESSAGE_T`, 5×17
+sprog). Sektionsoverskriften er ændret fra "DIET" til "DIETARY
+REQUIREMENTS". To mindre isolerede rettelser i samme runde: Soja-
+allergenets engelske navn viste fejlagtigt to varianter samtidig ("Soy /
+Soya") — rettet til blot "Soya" (korrekt for MADPAS_LANGUAGES' britiske
+"en"-variant). "Whey" manglede i mælkeallergiens eksempler — tilføjet
+(krævede samtidig at hæve `madpasAllergenExamples()`s interne
+eksempel-grænse fra 4 til 5, da de 4 eksisterende eksempler alene allerede
+fyldte den gamle grænse).
+
+Fuld dag-for-dag-detalje (alle fem runder) i `.claude/HISTORY.md`,
 backend-/struktur-reference i `src/CONTEXT.md` afsnit 10.
 
 ### Beta-installation (september 2026) — nuværende arkitektur

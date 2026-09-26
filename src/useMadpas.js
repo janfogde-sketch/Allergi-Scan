@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState } from "react";
-import { ALLERGENS, MADPAS_LANGUAGES, ALLERGEN_T, ALLERGEN_EXAMPLES, DIETS, DIET_T, MADPAS_SAFETY_NOTE_T, MADPAS_CROSS_CONTACT_SINGULAR_T, MADPAS_CROSS_CONTACT_PLURAL_T } from "./constants.jsx";
+import { ALLERGENS, MADPAS_LANGUAGES, ALLERGEN_T, ALLERGEN_EXAMPLES, DIETS, DIET_T, MADPAS_SAFETY_NOTE_T, MADPAS_CROSS_CONTACT_SINGULAR_T, MADPAS_CROSS_CONTACT_PLURAL_T, MADPAS_DIET_MESSAGE_T } from "./constants.jsx";
 
 // ALLERGEN_T har ingen "da"-nøgle (dansk er allerede ALLERGENS' eget
 // a.label, se konstantens egen kommentar) — uden dette faldt et valgt
@@ -20,6 +20,14 @@ export function madpasDietLabel(dietId, lang) {
   if (lang === "da") return d.label;
   return DIET_T[dietId]?.[lang] || DIET_T[dietId]?.en || d.label;
 }
+// Kort, tydelig besked til personalet pr. diæt (27. sept. 2026, Madpas-
+// finpolish, krav 1-2) — diæter skal have samme type besked som allergier,
+// ikke kun vises som badges. Se MADPAS_DIET_MESSAGE_T i constants.jsx.
+export function madpasDietMessage(dietId, lang) {
+  const messages = MADPAS_DIET_MESSAGE_T[dietId];
+  if (!messages) return "";
+  return messages[lang] || messages.en || "";
+}
 // Korte, oversatte fødevare-eksempler til Madpas' tjener-visning/PDF/
 // offentlige side (26. sept. 2026, Madpas-redesign, afsnit 8-10) — "Fx:
 // Bread, Pasta, Cakes" under selve allergenet, IKKE en fuld/garanteret
@@ -31,7 +39,10 @@ export function madpasAllergenExamples(allergenId, lang) {
   if (!ex) return [];
   const products = ex.products?.[lang] || ex.products?.en || [];
   const ingredients = ex.ingredients?.[lang] || ex.ingredients?.en || [];
-  return [...products, ...ingredients].slice(0, 4);
+  // Hævet fra 4 til 5 (27. sept. 2026, Madpas-finpolish, krav 6) — behøvedes
+  // for at "Valle"/"Whey" (mælkeallergiens 5. eksempel) reelt kommer frem,
+  // da de 4 products alene allerede fyldte den tidligere grænse.
+  return [...products, ...ingredients].slice(0, 5);
 }
 // Sikkerheds-sætning PR. ENKELT allergen/fritekst-emne i FØDEVARE-
 // ALLERGIER (27. sept. 2026, Madpas-finpolish, krav 4 — "genereres
