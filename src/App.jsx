@@ -711,6 +711,14 @@ export default function EatSafe() {
   const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
   const mpAllergens = madpasActiveProfile ? (madpasActiveProfile.allergens || []) : allergens;
   const mpCustom = madpasActiveProfile ? (madpasActiveProfile.custom || []) : customAllerg;
+  // Kostpræferencer/E-numre fulgte tidligere ALTID den loggede bruger selv
+  // (user.diets/selectedENumbers), også når "Vis madpas for" pegede på et
+  // familiemedlem — reel bug, rettet 26. sept. 2026 (Madpas-redesign, krav
+  // 2: "Madpasset skal altid genereres ud fra den valgte profils aktuelle
+  // ... kostpræferencer ... øvrige følsomheder"). Familiemedlemmer har egne
+  // diets/eNumbers-felter (se useFamily.js), samme som allergens/custom.
+  const mpDiets = madpasActiveProfile ? (madpasActiveProfile.diets || []) : (user.diets || []);
+  const mpENumbers = madpasActiveProfile ? (madpasActiveProfile.eNumbers || []) : (selectedENumbers || []);
 
   // ── Android tilbageknap ─────────────────────────────────────────────────────
   React.useEffect(() => {
@@ -933,8 +941,10 @@ export default function EatSafe() {
             Indkøbslisten") — genbruger samme .app-bg-hide-lag i stedet for
             en ny klasse. Familie-siden fik samme behandling (26. sept.
             2026, Familie-redesign: siden skal føles som en enkel
-            husstands-oversigt, ikke en fødevarebaggrund-tung skærm). */}
-        {(screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE || screen === SCREENS.FAMILY) && <div className="app-bg-hide" aria-hidden="true" />}
+            husstands-oversigt, ikke en fødevarebaggrund-tung skærm), og
+            Madpas fik den samme (26. sept. 2026, Madpas-redesign: skal
+            fremstå som en administrationsside, ikke Scan-forsiden). */}
+        {(screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE || screen === SCREENS.FAMILY || screen === SCREENS.MADPAS) && <div className="app-bg-hide" aria-hidden="true" />}
 
         {/* Skip-link for tastatur/screen reader brugere */}
         <a href="#main-content" className="skip-link">Spring til indhold</a>
@@ -964,8 +974,11 @@ export default function EatSafe() {
           />
           </Suspense>
         )}
-        {/* TOPBAR */}
-        {!isOnboard && (
+        {/* TOPBAR — skjult under Madpas' tjener-visning (26. sept. 2026,
+            Madpas-redesign, krav 11: "skjul ... hamburger-menu"/"Feedback"
+            når 'Vis til tjener' er åbnet, ikke kun visuelt dækket af
+            overlayet). */}
+        {!isOnboard && !madpasWaiterView && (
           <header className="topbar">
             <div className="topbar-logo">
               <div className="topbar-name">Eat<span>Safe</span></div>
@@ -1146,9 +1159,9 @@ export default function EatSafe() {
             madpasBig={madpasBig}
             madpasWaiterView={madpasWaiterView} setMadpasWaiterView={setMadpasWaiterView}
             mpAllergens={mpAllergens} mpCustom={mpCustom}
+            mpDiets={mpDiets} mpENumbers={mpENumbers}
             langOpen={langOpen} setLangOpen={setLangOpen}
             madpasSpeak={madpasSpeak}
-            selectedENumbers={selectedENumbers}
           />
           </ErrorBoundary>
           </Suspense>

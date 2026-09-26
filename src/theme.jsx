@@ -218,8 +218,8 @@ body::-webkit-scrollbar{display:none;}
    så skærmen igen får EatSafes rene hvid/off-white arbejdsflade i stedet
    for madvarebilledet, uden at ændre .app-bg selv (som resten af appen,
    inkl. Scan-forsiden, fortsat bruger uændret). Genbrugt for Historik,
-   Favoritter, Allergileksikon og Familie (26. sept. 2026, se App.jsx) —
-   samme lag, ingen ny klasse. */
+   Favoritter, Allergileksikon, Familie og Madpas (26. sept. 2026, se
+   App.jsx) — samme lag, ingen ny klasse. */
 .app-bg-hide{
   position:fixed;inset:0;z-index:0;pointer-events:none;
   background:var(--paper);
@@ -768,17 +768,8 @@ body::-webkit-scrollbar{display:none;}
 .mp-lang-opt:last-child{border-bottom:none;}
 .mp-lang-opt:hover{background:var(--surface2);}
 .mp-lang-opt.on{background:var(--green-lt);}
-.mp-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;}
-.mp-allergen-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:var(--red-lt);border:1px solid var(--red-md);border-radius:100px;font-weight:700;color:var(--red);margin:3px;}
-.mp-allergen-pill.custom{background:var(--surface2);border-color:var(--border2);color:var(--ink2);}
 .mp-big-btn{width:100%;background:var(--green);color:var(--on-green);border:none;border-radius:14px;padding:16px;font-family:var(--f);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;box-shadow:0 3px 12px rgba(14,143,90,.25);}
 .mp-big-btn:hover{background:var(--green-glow);}
-.mp-speak-btn{background:var(--green);color:var(--on-green);border:none;border-radius:10px;padding:8px 14px;font-family:var(--f);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;flex:1;}
-.mp-speak-btn.speaking{background:var(--amber);color:var(--on-green);}
-.mp-aa{background:var(--surface2);color:var(--muted);border:1.5px solid var(--border2);border-radius:9px;padding:8px 12px;font-family:var(--f);font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;}
-.mp-aa.on{background:var(--green-selected-bg);border-color:var(--green);color:var(--green);}
-.mp-family-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--border);}
-.mp-family-row:last-child{border-bottom:none;}
 
 /* ── OPSKRIFTER ── */
 .recipe-grid{display:flex;flex-direction:column;gap:12px;}

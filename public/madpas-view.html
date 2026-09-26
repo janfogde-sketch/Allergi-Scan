@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>EatSafe — Meal Passport</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root{
+      --ink:#15201A; --ink2:rgba(21,32,26,.78); --muted:rgba(21,32,26,.58);
+      --paper:#F6F8F3; --green:#0E8F5A; --green-lt:rgba(14,143,90,.10); --green-mid:rgba(14,143,90,.18);
+      --green-selected-bg:#EFF9F4; --surface:#FFFFFF; --surface2:#F1F3EC;
+      --border:rgba(21,32,26,.10); --border2:rgba(21,32,26,.16);
+      --red:#C8402E; --f:'DM Sans',system-ui,-apple-system,sans-serif;
+    }
+    body {
+      font-family: var(--f);
+      background: var(--paper); color: var(--ink);
+      min-height: 100vh; -webkit-font-smoothing: antialiased;
+      padding: 0 0 40px;
+    }
+    #app { max-width: 480px; margin: 0 auto; padding: 0 20px; }
+    .top { display:flex; align-items:center; justify-content:space-between; padding:18px 0 10px; }
+    .logo { font-size: 16px; font-weight: 800; color: var(--green); letter-spacing:-.2px; }
+    .logo span { color: var(--ink); }
+    .lang-select {
+      appearance:none; -webkit-appearance:none; border:1.5px solid var(--border2);
+      background:var(--surface); border-radius:100px; padding:8px 32px 8px 12px;
+      font-family:var(--f); font-size:13px; font-weight:700; color:var(--ink);
+      cursor:pointer;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M1 1l4 4 4-4' stroke='%2315201A' stroke-width='1.5' fill='none'/></svg>");
+      background-repeat:no-repeat; background-position:right 12px center;
+    }
+    .hero { text-align:center; padding: 18px 0 22px; }
+    .hero-flag { font-size:56px; line-height:1; margin-bottom:10px; }
+    .hero-lang { font-size:15px; font-weight:700; color:var(--muted); }
+    .hero-name { font-size:22px; font-weight:900; letter-spacing:-.4px; margin-top:6px; }
+    .section { margin-bottom:22px; }
+    .section-lbl { font-size:12.5px; font-weight:800; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); margin-bottom:10px; }
+    .headline { font-size:15px; font-weight:700; color:var(--ink); margin-bottom:10px; }
+    .item-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
+    .item-row:last-child { border-bottom:none; }
+    .item-emoji { font-size:26px; flex-shrink:0; }
+    .item-name { font-size:20px; font-weight:800; color:var(--ink); }
+    .safety-note { font-size:14px; color:var(--ink2); margin-top:10px; line-height:1.5; font-weight:600; }
+    .chip-row { display:flex; flex-wrap:wrap; gap:8px; }
+    .chip { padding:8px 14px; border-radius:100px; font-size:14px; font-weight:700; background:var(--green-selected-bg); border:1px solid var(--border); color:var(--ink2); }
+    .chip.enumber { background:var(--surface2); }
+    .footer { text-align:center; font-size:11px; color:var(--muted); margin-top:32px; padding-top:16px; border-top:1px solid var(--border); }
+    .state-card { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:32px 24px; text-align:center; margin-top:60px; }
+    .state-icon { font-size:40px; margin-bottom:14px; }
+    .state-title { font-size:18px; font-weight:800; margin-bottom:8px; }
+    .state-text { font-size:13px; color:var(--muted); line-height:1.6; }
+    .spinner { width:28px; height:28px; border:3px solid var(--border2); border-top-color:var(--green); border-radius:50%; animation:spin .8s linear infinite; margin:80px auto; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="top">
+      <div class="logo">Eat<span>Safe</span></div>
+      <div id="langSlot"></div>
+    </div>
+    <div id="content"><div class="spinner"></div></div>
+  </div>
+
+  <script>
+    // ─────────────────────────────────────────────────────────────────────
+    // Selvstændig statisk side (samme mønster som invite.html) — ingen
+    // Vite-build, ingen import fra src/. Oversættelses-data herunder er
+    // derfor en BEVIDST, nødvendig kopi af et udsnit af src/constants.jsx
+    // (ALLERGENS, ALLERGEN_T "n"-felter, DIETS/DIET_T, MADPAS_LANGUAGES,
+    // MADPAS_SECTIONS_T, MADPAS_SAFETY_NOTE_T, MADPAS_*_HEADLINE_T) — samme
+    // accepterede duplikerings-mønster som allerede findes i projektet for
+    // src/allergenKeywords.js vs. supabase/functions/allergens/index.ts
+    // (se CLAUDE.md). Hold i sync manuelt hvis kildedataene ændres.
+    // ─────────────────────────────────────────────────────────────────────
+    const DATA = {"ALLERGENS":[{"id":"gluten","label":"Gluten","emoji":"🥖","type":"intolerance"},{"id":"hvede","label":"Hvede","emoji":"🌾","type":"allergi"},{"id":"maelkeallergi","label":"Mælk","emoji":"🥛","type":"allergi"},{"id":"laktose","label":"Laktoseintolerance","emoji":"🍬","type":"intolerance"},{"id":"aeg","label":"Æg","emoji":"🥚","type":"allergi"},{"id":"noedder","label":"Nødder","emoji":"🌰","type":"allergi"},{"id":"jordnoedder","label":"Jordnødder","emoji":"🥜","type":"allergi"},{"id":"soja","label":"Soja","emoji":"🫛","type":"allergi"},{"id":"fisk","label":"Fisk","emoji":"🐟","type":"allergi"},{"id":"skaldyr","label":"Skaldyr","emoji":"🦐","type":"allergi"},{"id":"selleri","label":"Selleri","emoji":"🥬","type":"allergi"},{"id":"sennep","label":"Sennep","emoji":"🟡","type":"allergi"},{"id":"sesam","label":"Sesam","emoji":"🌿","type":"allergi"},{"id":"svovl","label":"Sulfitter","emoji":"🍷","type":"intolerance"},{"id":"lupin","label":"Lupin","emoji":"🌸","type":"allergi"},{"id":"bloeddyr","label":"Bløddyr","emoji":"🦑","type":"allergi"}],"ALLERGEN_T":{"gluten":{"en":"Gluten","de":"Gluten","fr":"Gluten","es":"Gluten","it":"Glutine","nl":"Gluten","pt":"Glúten","pl":"Gluten","sv":"Gluten","no":"Gluten","ja":"グルテン","zh":"麸质","ar":"الغلوتين","tr":"Gluten","th":"กลูเตน","el":"Γλουτένη"},"hvede":{"en":"Wheat","de":"Weizen","fr":"Blé","es":"Trigo","it":"Grano","nl":"Tarwe","pt":"Trigo","pl":"Pszenica","sv":"Vete","no":"Hvete","ja":"小麦","zh":"小麦","ar":"القمح","tr":"Buğday","th":"ข้าวสาลี","el":"Σιτάρι"},"maelkeallergi":{"en":"Milk","de":"Milch","fr":"Lait","es":"Leche","it":"Latte","nl":"Melk","pt":"Leite","pl":"Mleko","sv":"Mjölk","no":"Melk","ja":"牛乳","zh":"牛奶","ar":"الحليب","tr":"Süt","th":"นม","el":"Γάλα"},"laktose":{"en":"Lactose / Dairy","de":"Laktose / Milch","fr":"Lactose / Lait","es":"Lactosa / Lácteos","it":"Lattosio / Latte","nl":"Lactose / Melk","pt":"Lactose / Leite","pl":"Laktoza / Mleko","sv":"Laktos / Mjölk","no":"Laktose / Melk","ja":"乳糖 / 乳製品","zh":"乳糖 / 乳制品","ar":"اللاكتوز / الألبان","tr":"Laktoz / Süt","th":"แลคโตส / นม","el":"Λακτόζη / Γάλα"},"aeg":{"en":"Eggs","de":"Ei","fr":"Œufs","es":"Huevos","it":"Uova","nl":"Eieren","pt":"Ovos","pl":"Jaja","sv":"Ägg","no":"Egg","ja":"卵","zh":"鸡蛋","ar":"البيض","tr":"Yumurta","th":"ไข่","el":"Αυγά"},"noedder":{"en":"Tree Nuts","de":"Schalenfrüchte","fr":"Fruits à coque","es":"Frutos secos","it":"Frutta a guscio","nl":"Noten","pt":"Frutos de casca rija","pl":"Orzechy","sv":"Nötter","no":"Nøtter","ja":"ナッツ類","zh":"坚果","ar":"المكسرات","tr":"Kabuklu Yemişler","th":"ถั่วต้นไม้","el":"Ξηροί καρποί"},"jordnoedder":{"en":"Peanuts","de":"Erdnüsse","fr":"Arachides","es":"Cacahuetes","it":"Arachidi","nl":"Pinda's","pt":"Amendoins","pl":"Orzeszki ziemne","sv":"Jordnötter","no":"Peanøtter","ja":"ピーナッツ","zh":"花生","ar":"الفول السوداني","tr":"Yerfıstığı","th":"ถั่วลิสง","el":"Φιστίκια"},"soja":{"en":"Soy / Soya","de":"Soja","fr":"Soja","es":"Soja","it":"Soia","nl":"Soja","pt":"Soja","pl":"Soja","sv":"Soja","no":"Soya","ja":"大豆","zh":"大豆","ar":"الصويا","tr":"Soya","th":"ถั่วเหลือง","el":"Σόγια"},"fisk":{"en":"Fish","de":"Fisch","fr":"Poisson","es":"Pescado","it":"Pesce","nl":"Vis","pt":"Peixe","pl":"Ryby","sv":"Fisk","no":"Fisk","ja":"魚","zh":"鱼类","ar":"السمك","tr":"Balık","th":"ปลา","el":"Ψάρι"},"skaldyr":{"en":"Shellfish / Crustaceans","de":"Krebstiere / Schalentiere","fr":"Crustacés / Mollusques","es":"Crustáceos / Mariscos","it":"Crostacei / Molluschi","nl":"Schaaldieren","pt":"Crustáceos / Moluscos","pl":"Skorupiaki","sv":"Skaldjur","no":"Skalldyr","ja":"甲殻類・貝類","zh":"甲壳类 / 贝类","ar":"القشريات والمحار","tr":"Kabuklu Deniz Ürünleri","th":"สัตว์มีเปลือก","el":"Οστρακοειδή"},"selleri":{"en":"Celery","de":"Sellerie","fr":"Céleri","es":"Apio","it":"Sedano","nl":"Selderij","pt":"Aipo","pl":"Seler","sv":"Selleri","no":"Selleri","ja":"セロリ","zh":"芹菜","ar":"الكرفس","tr":"Kereviz","th":"คื่นฉ่าย","el":"Σέλινο"},"sennep":{"en":"Mustard","de":"Senf","fr":"Moutarde","es":"Mostaza","it":"Senape","nl":"Mosterd","pt":"Mostarda","pl":"Gorczyca","sv":"Senap","no":"Sennep","ja":"マスタード","zh":"芥末","ar":"الخردل","tr":"Hardal","th":"มัสตาร์ด","el":"Μουστάρδα"},"sesam":{"en":"Sesame","de":"Sesam","fr":"Sésame","es":"Sésamo","it":"Sesamo","nl":"Sesam","pt":"Sésamo","pl":"Sezam","sv":"Sesam","no":"Sesam","ja":"ゴマ","zh":"芝麻","ar":"السمسم","tr":"Susam","th":"งา","el":"Σουσάμι"},"svovl":{"en":"Sulphites / Sulfites","de":"Sulfite / SO₂","fr":"Sulfites / SO₂","es":"Sulfitos / SO₂","it":"Solfiti / SO₂","nl":"Sulfieten / SO₂","pt":"Sulfitos / SO₂","pl":"Siarczyny / SO₂","sv":"Sulfiter / SO₂","no":"Sulfitter / SO₂","ja":"亜硫酸塩 / SO₂","zh":"亚硫酸盐 / SO₂","ar":"الكبريتيت / SO₂","tr":"Sülfit / SO₂","th":"ซัลไฟต์ / SO₂","el":"Θειώδη / SO₂"},"lupin":{"en":"Lupin","de":"Lupinen","fr":"Lupin","es":"Altramuz","it":"Lupini","nl":"Lupine","pt":"Tremoço","pl":"Łubin","sv":"Lupin","no":"Lupin","ja":"ルピナス","zh":"羽扇豆","ar":"الترمس","tr":"Lupin","th":"ลูพิน","el":"Λούπινα"},"bloeddyr":{"en":"Molluscs","de":"Weichtiere","fr":"Mollusques","es":"Moluscos","it":"Molluschi","nl":"Weekdieren","pt":"Moluscos","pl":"Mięczaki","sv":"Blötdjur","no":"Bløtdyr","ja":"軟体動物","zh":"软体动物","ar":"الرخويات","tr":"Yumuşakçalar","th":"หอย / ปลาหมึก","el":"Μαλάκια"}}
+,"DIETS":[{"id":"vegan","label":"Vegansk"},{"id":"vegetarian","label":"Vegetarisk"},{"id":"pescetarian","label":"Pescetarisk"},{"id":"gluten-free","label":"Glutenfri"},{"id":"keto","label":"Keto"}],"DIET_T":{"vegan":{"en":"Vegan","de":"Vegan","fr":"Végane","es":"Vegano","it":"Vegano","nl":"Veganistisch","pt":"Vegano","pl":"Wegański","sv":"Vegansk","no":"Vegansk","ja":"ヴィーガン","zh":"纯素","ar":"نباتي صرف","tr":"Vegan","th":"วีแกน","el":"Βίγκαν"},"vegetarian":{"en":"Vegetarian","de":"Vegetarisch","fr":"Végétarien","es":"Vegetariano","it":"Vegetariano","nl":"Vegetarisch","pt":"Vegetariano","pl":"Wegetariański","sv":"Vegetarisk","no":"Vegetarisk","ja":"ベジタリアン","zh":"素食","ar":"نباتي","tr":"Vejetaryen","th":"มังสวิรัติ","el":"Χορτοφάγος"},"pescetarian":{"en":"Pescatarian","de":"Pescetarisch","fr":"Pescétarien","es":"Pescetariano","it":"Pescetariano","nl":"Pescotarisch","pt":"Pescetariano","pl":"Pescetariański","sv":"Pescetarian","no":"Pescetarianer","ja":"ペスカタリアン","zh":"鱼素者","ar":"نباتي يأكل السمك","tr":"Pesketaryen","th":"กินมังสวิรัติแบบทานปลาได้","el":"Πεσκεταριανός"},"gluten-free":{"en":"Gluten-free","de":"Glutenfrei","fr":"Sans gluten","es":"Sin gluten","it":"Senza glutine","nl":"Glutenvrij","pt":"Sem glúten","pl":"Bezglutenowy","sv":"Glutenfri","no":"Glutenfri","ja":"グルテンフリー","zh":"无麸质","ar":"خالٍ من الغلوتين","tr":"Glutensiz","th":"ปราศจากกลูเตน","el":"Χωρίς γλουτένη"},"keto":{"en":"Keto","de":"Keto","fr":"Kéto","es":"Keto","it":"Cheto","nl":"Keto","pt":"Keto","pl":"Keto","sv":"Keto","no":"Keto","ja":"ケト","zh":"生酮","ar":"كيتو","tr":"Keto","th":"คีโต","el":"Κέτο"}},"MADPAS_LANGUAGES":[{"code":"da","flag":"🇩🇰","name":"Dansk","bcp":"da-DK"},{"code":"en","flag":"🇬🇧","name":"English","bcp":"en-GB"},{"code":"de","flag":"🇩🇪","name":"Deutsch","bcp":"de-DE"},{"code":"fr","flag":"🇫🇷","name":"Français","bcp":"fr-FR"},{"code":"es","flag":"🇪🇸","name":"Español","bcp":"es-ES"},{"code":"it","flag":"🇮🇹","name":"Italiano","bcp":"it-IT"},{"code":"nl","flag":"🇳🇱","name":"Nederlands","bcp":"nl-NL"},{"code":"pt","flag":"🇵🇹","name":"Português","bcp":"pt-PT"},{"code":"pl","flag":"🇵🇱","name":"Polski","bcp":"pl-PL"},{"code":"sv","flag":"🇸🇪","name":"Svenska","bcp":"sv-SE"},{"code":"no","flag":"🇳🇴","name":"Norsk","bcp":"nb-NO"},{"code":"ja","flag":"🇯🇵","name":"日本語","bcp":"ja-JP"},{"code":"zh","flag":"🇨🇳","name":"中文","bcp":"zh-CN"},{"code":"ar","flag":"🇸🇦","name":"العربية","bcp":"ar-SA","rtl":true},{"code":"tr","flag":"🇹🇷","name":"Türkçe","bcp":"tr-TR"},{"code":"th","flag":"🇹🇭","name":"ภาษาไทย","bcp":"th-TH"},{"code":"el","flag":"🇬🇷","name":"Ελληνικά","bcp":"el-GR"}],"MADPAS_SECTIONS_T":{"allergies":{"da":"Fødevareallergier","en":"Food allergies","de":"Lebensmittelallergien","fr":"Allergies alimentaires","es":"Alergias alimentarias","it":"Allergie alimentari","nl":"Voedselallergieën","pt":"Alergias alimentares","pl":"Alergie pokarmowe","sv":"Matallergier","no":"Matallergier","ja":"食物アレルギー","zh":"食物过敏","ar":"حساسية الطعام","tr":"Gıda alerjileri","th":"การแพ้อาหาร","el":"Τροφικές αλλεργίες"},"intolerances":{"da":"Intolerancer","en":"Intolerances","de":"Unverträglichkeiten","fr":"Intolérances","es":"Intolerancias","it":"Intolleranze","nl":"Intoleranties","pt":"Intolerâncias","pl":"Nietolerancje","sv":"Intoleranser","no":"Intoleranser","ja":"不耐症","zh":"不耐受","ar":"عدم التحمل","tr":"İntoleranslar","th":"การแพ้/ไม่ทนอาหาร","el":"Δυσανεξίες"},"diet":{"da":"Kost","en":"Diet","de":"Ernährung","fr":"Régime","es":"Dieta","it":"Dieta","nl":"Dieet","pt":"Dieta","pl":"Dieta","sv":"Kost","no":"Kosthold","ja":"食事制限","zh":"饮食","ar":"النظام الغذائي","tr":"Diyet","th":"การกินอาหาร","el":"Δίαιτα"},"enumbers":{"da":"E-numre","en":"E-numbers","de":"E-Nummern","fr":"Additifs (E)","es":"Aditivos (E)","it":"Additivi (E)","nl":"E-nummers","pt":"Aditivos (E)","pl":"Dodatki (E)","sv":"E-nummer","no":"E-nummer","ja":"添加物（E番号）","zh":"添加剂（E编号）","ar":"الإضافات (E)","tr":"Katkı maddeleri (E)","th":"สารเติมแต่ง (E)","el":"Πρόσθετα (E)"}},"MADPAS_SAFETY_NOTE_T":{"da":"Sørg venligst for, at min mad ikke indeholder nogen af disse.","en":"Please make sure my food does not contain any of these.","de":"Bitte stellen Sie sicher, dass mein Essen keines davon enthält.","fr":"Veuillez vous assurer que mon repas n'en contient aucun.","es":"Por favor, asegúrese de que mi comida no contenga ninguno de estos.","it":"Si prega di assicurarsi che il mio pasto non contenga nessuno di questi.","nl":"Zorg er alstublieft voor dat mijn maaltijd geen van deze bevat.","pt":"Por favor, certifique-se de que a minha refeição não contém nenhum destes.","pl":"Proszę upewnić się, że moje jedzenie nie zawiera żadnego z tych składników.","sv":"Vänligen se till att min måltid inte innehåller något av dessa.","no":"Vennligst sørg for at måltidet mitt ikke inneholder noen av disse.","ja":"私の食事にこれらが含まれないようにしてください。","zh":"请确保我的餐食不含以上任何一种。","ar":"يرجى التأكد من أن وجبتي لا تحتوي على أي من هذه العناصر.","tr":"Lütfen yemeğimin bunlardan hiçbirini içermediğinden emin olun.","th":"กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มีสิ่งเหล่านี้","el":"Παρακαλώ βεβαιωθείτε ότι το γεύμα μου δεν περιέχει κανένα από αυτά."},"MADPAS_ALLERGY_HEADLINE_T":{"da":"Jeg er allergisk over for:","en":"I am allergic to:","de":"Ich bin allergisch gegen:","fr":"Je suis allergique à :","es":"Soy alérgico a:","it":"Sono allergico a:","nl":"Ik ben allergisch voor:","pt":"Sou alérgico a:","pl":"Jestem uczulony na:","sv":"Jag är allergisk mot:","no":"Jeg er allergisk mot:","ja":"アレルギーがあります：","zh":"我对以下物质过敏：","ar":"أنا أعاني من الحساسية تجاه:","tr":"Şuna karşı alerjim var:","th":"ฉันแพ้:","el":"Είμαι αλλεργικός/ή σε:"},"MADPAS_INTOLERANCE_HEADLINE_T":{"da":"Jeg tåler ikke:","en":"I am intolerant to:","de":"Ich vertrage nicht:","fr":"Je ne tolère pas :","es":"No tolero:","it":"Non tollero:","nl":"Ik verdraag niet:","pt":"Não tolero:","pl":"Nie toleruję:","sv":"Jag tål inte:","no":"Jeg tåler ikke:","ja":"不耐性があります：","zh":"我不耐受：","ar":"لا أتحمل:","tr":"Şuna karşı hassasiyetim var:","th":"ฉันไม่สามารถทานได้:","el":"Δεν ανέχομαι:"}};
+
+    const SUPABASE_URL = "https://jegrpcflyguadyxialkm.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplZ3JwY2ZseWd1YWR5eGlhbGttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNjY5NjQsImV4cCI6MjA5NDc0Mjk2NH0.QErfbw2xmsdYjTZCS1WUOUwQHv6G2PKQRldyj8rdGq8";
+
+    const token = window.location.pathname.split("/madpas/")[1]?.split("/")[0];
+    const content = document.getElementById("content");
+    const langSlot = document.getElementById("langSlot");
+
+    function allergenLabel(a, lang) {
+      if (lang === "da") return a.label;
+      return (DATA.ALLERGEN_T[a.id] && DATA.ALLERGEN_T[a.id][lang]) || (DATA.ALLERGEN_T[a.id] && DATA.ALLERGEN_T[a.id].en) || a.label;
+    }
+    function dietLabel(id, lang) {
+      const d = DATA.DIETS.find(x => x.id === id);
+      if (!d) return null;
+      if (lang === "da") return d.label;
+      return (DATA.DIET_T[id] && DATA.DIET_T[id][lang]) || (DATA.DIET_T[id] && DATA.DIET_T[id].en) || d.label;
+    }
+    function section(id, lang) { return DATA.MADPAS_SECTIONS_T[id][lang] || DATA.MADPAS_SECTIONS_T[id].en; }
+
+    function renderPassport(passport, lang) {
+      const langInfo = DATA.MADPAS_LANGUAGES.find(l => l.code === lang) || DATA.MADPAS_LANGUAGES[1];
+      document.documentElement.dir = langInfo.rtl ? "rtl" : "ltr";
+
+      const allergenItems = (passport.allergens || []).map(id => DATA.ALLERGENS.find(a => a.id === id)).filter(Boolean);
+      const allergyItems = allergenItems.filter(a => a.type === "allergi");
+      const intoleranceItems = allergenItems.filter(a => a.type === "intolerance");
+      const customItems = (passport.custom || []);
+      const dietItems = (passport.diets || []).map(id => ({ id, label: dietLabel(id, lang) })).filter(x => x.label);
+      const eNumberItems = passport.eNumbers || [];
+
+      let html = "";
+      html += `<div class="hero">
+        <div class="hero-flag">${langInfo.flag}</div>
+        <div class="hero-lang">${langInfo.name}</div>
+        ${passport.name ? `<div class="hero-name">${escapeHtml(passport.name)}</div>` : ""}
+      </div>`;
+
+      if (allergyItems.length > 0 || customItems.length > 0) {
+        html += `<div class="section">
+          <div class="section-lbl">${section("allergies", lang)}</div>
+          <div class="headline">${DATA.MADPAS_ALLERGY_HEADLINE_T[lang] || DATA.MADPAS_ALLERGY_HEADLINE_T.en}</div>
+          <div>`;
+        allergyItems.forEach(a => {
+          html += `<div class="item-row"><span class="item-emoji">${a.emoji}</span><span class="item-name">${escapeHtml(allergenLabel(a, lang))}</span></div>`;
+        });
+        customItems.forEach(c => {
+          html += `<div class="item-row"><span class="item-emoji">⚠️</span><span class="item-name">${escapeHtml(c)}</span></div>`;
+        });
+        html += `</div>
+          <div class="safety-note">${DATA.MADPAS_SAFETY_NOTE_T[lang] || DATA.MADPAS_SAFETY_NOTE_T.en}</div>
+        </div>`;
+      }
+
+      if (intoleranceItems.length > 0) {
+        html += `<div class="section">
+          <div class="section-lbl">${section("intolerances", lang)}</div>
+          <div class="headline">${DATA.MADPAS_INTOLERANCE_HEADLINE_T[lang] || DATA.MADPAS_INTOLERANCE_HEADLINE_T.en}</div>
+          <div>`;
+        intoleranceItems.forEach(a => {
+          html += `<div class="item-row"><span class="item-emoji">${a.emoji}</span><span class="item-name">${escapeHtml(allergenLabel(a, lang))}</span></div>`;
+        });
+        html += `</div></div>`;
+      }
+
+      if (dietItems.length > 0) {
+        html += `<div class="section">
+          <div class="section-lbl">${section("diet", lang)}</div>
+          <div class="chip-row">`;
+        dietItems.forEach(d => { html += `<div class="chip">${escapeHtml(d.label)}</div>`; });
+        html += `</div></div>`;
+      }
+
+      if (eNumberItems.length > 0) {
+        html += `<div class="section">
+          <div class="section-lbl">${section("enumbers", lang)}</div>
+          <div class="chip-row">`;
+        eNumberItems.forEach(e => { html += `<div class="chip enumber">${escapeHtml(e)}</div>`; });
+        html += `</div></div>`;
+      }
+
+      html += `<div class="footer">EatSafe · eatsafe.dk · ${new Date().toLocaleDateString(langInfo.bcp)}</div>`;
+      content.innerHTML = html;
+    }
+
+    function escapeHtml(s) {
+      const d = document.createElement("div");
+      d.textContent = String(s);
+      return d.innerHTML;
+    }
+
+    function renderLangSelect(currentLang, onChange) {
+      const sel = document.createElement("select");
+      sel.className = "lang-select";
+      DATA.MADPAS_LANGUAGES.forEach(l => {
+        const opt = document.createElement("option");
+        opt.value = l.code;
+        opt.textContent = `${l.flag} ${l.name}`;
+        if (l.code === currentLang) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener("change", e => onChange(e.target.value));
+      langSlot.innerHTML = "";
+      langSlot.appendChild(sel);
+    }
+
+    function showState(icon, title, text) {
+      content.innerHTML = `<div class="state-card">
+        <div class="state-icon">${icon}</div>
+        <div class="state-title">${escapeHtml(title)}</div>
+        <div class="state-text">${escapeHtml(text)}</div>
+      </div>`;
+    }
+
+    (async () => {
+      if (!token) {
+        showState("❌", "Invalid link", "This meal passport link is not valid.");
+        return;
+      }
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_madpas_by_token`, {
+          method: "POST",
+          headers: { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({ p_token: token }),
+        });
+        const data = await res.json();
+        if (!data?.found) {
+          showState("❌", "No longer available", "This meal passport link has been deactivated or does not exist.");
+          return;
+        }
+        let lang = data.lang && DATA.MADPAS_LANGUAGES.some(l => l.code === data.lang) ? data.lang : "en";
+        renderLangSelect(lang, (newLang) => { lang = newLang; renderPassport(data, lang); });
+        renderPassport(data, lang);
+      } catch {
+        showState("⚠️", "Something went wrong", "Please check your connection and try again.");
+      }
+    })();
+  </script>
+</body>
+</html>

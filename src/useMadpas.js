@@ -1,6 +1,25 @@
 // @ts-nocheck
 import { useState } from "react";
-import { ALLERGENS, MADPAS_LANGUAGES, ALLERGEN_T, ALLERGEN_EXAMPLES, DIETS } from "./constants.jsx";
+import { ALLERGENS, MADPAS_LANGUAGES, ALLERGEN_T, ALLERGEN_EXAMPLES, DIETS, DIET_T } from "./constants.jsx";
+
+// ALLERGEN_T har ingen "da"-nøgle (dansk er allerede ALLERGENS' eget
+// a.label, se konstantens egen kommentar) — uden dette faldt et valgt
+// "Dansk" madpas fejlagtigt tilbage til den ENGELSKE allergen-tekst, mens
+// resten af UI'et var dansk (26. sept. 2026, Madpas-redesign, fundet og
+// rettet: "det må aldrig forekomme at UI'et er oversat til ét sprog, mens
+// allergennavnet bliver stående på [et andet]"). Samme hjælpefunktion
+// bruges i MadpasScreen.jsx.
+export function madpasAllergenLabel(a, lang) {
+  if (!a) return null;
+  if (lang === "da") return a.label;
+  return ALLERGEN_T[a.id]?.[lang]?.n || ALLERGEN_T[a.id]?.en?.n || a.label;
+}
+export function madpasDietLabel(dietId, lang) {
+  const d = DIETS.find(x => x.id === dietId);
+  if (!d) return null;
+  if (lang === "da") return d.label;
+  return DIET_T[dietId]?.[lang] || DIET_T[dietId]?.en || d.label;
+}
 
 export function useMadpas({ allergens, customAllerg, selectedENumbers, user, madpasLang, family, madpasProfileId }) {
   const [madpasSpeaking, setMadpasSpeaking] = useState(false);
@@ -67,6 +86,11 @@ export function useMadpas({ allergens, customAllerg, selectedENumbers, user, mad
       : null;
     const speakAllergens = activeProfile ? (activeProfile.allergens || []) : allergens;
     const speakCustom = activeProfile ? (activeProfile.custom || []) : customAllerg;
+    // Samme rettelse som allergener/custom herover (26. sept. 2026, Madpas-
+    // redesign) — kost/E-numre fulgte tidligere ALTID den loggede bruger
+    // selv, også når man taler for et familiemedlems madpas.
+    const speakDiets = activeProfile ? (activeProfile.diets || []) : (user.diets || []);
+    const speakENumbers = activeProfile ? (activeProfile.eNumbers || []) : (selectedENumbers || []);
 
     const parts = [];
     parts.push(introText[lang] || introText.en);
@@ -75,7 +99,7 @@ export function useMadpas({ allergens, customAllerg, selectedENumbers, user, mad
     allItems.forEach((item, i) => {
       if (typeof item !== "string") return;
       const a = ALLERGENS.find(x => x.id === item);
-      const label = a ? (ALLERGEN_T[item]?.[lang]?.n || ALLERGEN_T[item]?.en?.n || a.label) : item;
+      const label = a ? madpasAllergenLabel(a, lang) : item;
       const ex = a ? ALLERGEN_EXAMPLES[item] : null;
       const exProducts = ex?.products?.[lang] || ex?.products?.en || [];
       const exIngredients = ex?.ingredients?.[lang] || ex?.ingredients?.en || [];
@@ -84,12 +108,12 @@ export function useMadpas({ allergens, customAllerg, selectedENumbers, user, mad
       parts.push(prefix + label + (exText ? ". " + exText : ""));
     });
 
-    if (user.diets && user.diets.length > 0) {
-      const dietNames = user.diets.map(d => DIETS.find(x=>x.id===d)?.label).filter(Boolean).join(", ");
+    if (speakDiets.length > 0) {
+      const dietNames = speakDiets.map(d => madpasDietLabel(d, lang)).filter(Boolean).join(", ");
       parts.push(dietNames);
     }
-    if (selectedENumbers && selectedENumbers.length > 0) {
-      parts.push(selectedENumbers.join(", "));
+    if (speakENumbers.length > 0) {
+      parts.push(speakENumbers.join(", "));
     }
     parts.push(outroText[lang] || outroText.en);
 
