@@ -1,7 +1,8 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compareENumbers, checkDietCompatibility, verifiedBadge, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findActiveListMatch } from "./helpers.js";
+import { compareENumbers, checkDietCompatibility, verifiedBadge, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findActiveListMatch, categorizeProductFindings, computeTopStatus } from "./helpers.js";
+import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -68,10 +69,109 @@ export default function ResultScreen({
     : profileResults.some(r => r.status === "danger") ? "danger"
     : profileResults.some(r => r.status === "warn") ? "warn"
     : "safe";
+  // "Kan ikke afgøres sikkert for alle" indeholdt ordet "sikkert" — undgået
+  // konsekvent på tværs af hele denne skærm (FINAL PRODUCT RESULT PAGE,
+  // krav 1: brug aldrig "sikkert"/"100% sikkert"/"allergifrit"/"garanteret").
   const overallHeadline = !isMultiProfile ? scanResult.headline
     : overallStatus === "safe" ? "Passer til alle"
     : overallStatus === "danger" ? "Passer ikke til alle"
-    : "Kan ikke afgøres sikkert for alle";
+    : "Kan ikke bekræftes for alle";
+
+  // ── FINAL PRODUCT RESULT PAGE — dynamisk, kategoriseret statuslogik (28.
+  // sept. 2026) ──────────────────────────────────────────────────────────
+  // Bygget udelukkende af data der allerede findes på scanResult + brugerens
+  // egne aktive valg (allergener/E-numre/diæter) — ingen specialcases pr.
+  // produkt. Ændrer IKKE scanResult.status/headline/summary selv (History/
+  // ListScreen/SearchScreen bruger fortsat dem uændret) — kun denne skærms
+  // egen, rigere visning bygger på `topStatus`/`findings` herfra. Diæt-
+  // resultaterne er en UNION på tværs af alle aktive profilers valgte
+  // diæter (samme som den tidligere ad hoc-beregning i renderSafetyDiet),
+  // ikke kun den loggede brugers egne — bevarer multi-profil-understøttelsen.
+  const allActiveDiets = new Set();
+  profileResults.forEach(p => (p.diets || []).forEach(d => allActiveDiets.add(d)));
+  const dietResults = [...allActiveDiets].map(d => ({
+    id: d,
+    label: DIETS.find(x => x.id === d)?.label || d,
+    ...checkDietCompatibility(d, scanResult.allergen_flags, scanResult.ingredients, scanResult.nutrition),
+  }));
+  const matchedENumbersForUser = (scanResult.productENumbers?.length > 0 && activeENumbers?.length > 0)
+    ? compareENumbers(scanResult.productENumbers, activeENumbers).matched
+    : [];
+  const findings = categorizeProductFindings({
+    matchedDanger: scanResult.matchedDanger,
+    matchedWarning: scanResult.matchedWarning,
+    customAllergenMatches: scanResult.customAllergenMatches,
+    matchedENumbers: matchedENumbersForUser,
+    dietResults,
+  });
+  // "Utilstrækkelige data" (krav 2F) — enten mangler brugerens EGNE aktive
+  // allergener klassifikation (scanResult.hasUnknown, allerede beregnet i
+  // useProduct.js), eller produktet har hverken allergen-flags eller en
+  // ingrediensliste overhovedet at kontrollere noget som helst imod.
+  const hasAnyAllergenData = scanResult.allergen_flags && Object.values(scanResult.allergen_flags).some(v => v === "yes" || v === "no" || v === "traces");
+  const hasIngredientsText = !!(scanResult.ingredients && scanResult.ingredients.trim());
+  const hasSufficientData = !scanResult.hasUnknown && (hasAnyAllergenData || hasIngredientsText);
+  const topStatus = computeTopStatus({ hasSufficientData, ...findings });
+
+  // ── Ingrediensliste-fremhævning (krav 8/9) ──────────────────────────────
+  // KUN ingredienser der reelt matcher et fund relevant for DENNE bruger —
+  // ikke alle allergener produktet måtte indeholde (se IngredientsList's
+  // egen kommentar i SharedComponents.jsx for hvorfor det er en bevidst
+  // forskel fra standard-opførslen). Hver regel bærer sin egen korte
+  // forklaring til tap-forklaringen (krav 9).
+  //
+  // Diæt-fund er det eneste sted hvor et rent tekst-nøgleord skal udledes
+  // bagefter, i stedet for at være kendt på forhånd — checkDietCompatibility
+  // (helpers.js) returnerer kun en færdig sætning ("Indeholder gelatine"
+  // eller "Indeholder mælkeprotein"). For allergen-flag-baserede diæt-brud
+  // (mælk/laktose/æg/fisk/skaldyr/bløddyr/gluten/hvede) er selve ordet i
+  // sætningen ikke nødvendigvis det ord der reelt står i ingredienslisten
+  // (fx "mælkeprotein" vs. den faktiske ingrediens "skummetmælkspulver") —
+  // mappet til det rigtige allergens egen ordliste herunder. For de
+  // resterende (ingrediens-nøgleords-baserede, fx "Indeholder gelatine")
+  // ER selve ordet i sætningen garanteret det ord der udløste matchet, så
+  // en simpel præfiks-afstrejning er nok.
+  const DIET_REASON_TO_ALLERGEN_ID = { "mælkeprotein":"maelkeallergi", "laktose":"laktose", "æg":"aeg", "fisk":"fisk", "skaldyr":"skaldyr", "bløddyr":"bloeddyr", "gluten":"gluten", "hvede":"hvede" };
+  const dietFailKeywords = (reasonText) => {
+    const stripped = (reasonText || "").replace(/^(Indeholder|Kan indeholde spor af)\s+/i, "").trim().toLowerCase();
+    const mappedId = DIET_REASON_TO_ALLERGEN_ID[stripped];
+    if (mappedId && ALLERGEN_KEYWORDS[mappedId]) return ALLERGEN_KEYWORDS[mappedId];
+    return stripped ? [stripped] : [];
+  };
+  const ingredientHighlightRules = [
+    ...findings.allergyMatches.map(m => ({
+      keywords: ALLERGEN_KEYWORDS[m.id] || [m.label],
+      category: "allergy", label: m.label,
+      reason: m.severity === "traces" ? `Kan indeholde spor af ${m.label} — du er allergisk.` : `Matcher din valgte ${m.label}-allergi.`,
+    })),
+    ...findings.intoleranceMatches.map(m => ({
+      keywords: ALLERGEN_KEYWORDS[m.id] || [m.label],
+      category: "intolerance", label: m.label,
+      reason: m.severity === "traces" ? `Kan indeholde spor af ${m.label}.` : `Matcher din valgte ${m.label}.`,
+    })),
+    ...findings.customMatches.map(m => ({
+      keywords: [m.label],
+      category: "allergy", label: m.label,
+      reason: "Din egen tilføjede allergi.",
+    })),
+    ...findings.eNumberMatches.map(code => ({
+      codes: [code],
+      category: "enumber", label: code,
+      reason: "Du har valgt at undgå dette E-nummer.",
+    })),
+    ...findings.dietFails.map(d => ({
+      keywords: dietFailKeywords(d.reasons?.[0]),
+      category: "diet", label: d.label,
+      reason: d.reasons?.[0] ? `${d.reasons[0]} — passer derfor ikke til ${d.label.toLowerCase()}.` : `Passer ikke til ${d.label.toLowerCase()}.`,
+    })).filter(r => r.keywords.length > 0),
+  ];
+  // Undtagelsen fra "fremhævet = kun relevant for dig": hvis SLET INGEN af
+  // fundene ovenfor findes, men der er ukendte/ikke-relevante allergener i
+  // produktet (den eksisterende, adskilte "Andre allergener i produktet"-
+  // sektion nedenfor dækker det tilfælde separat) — ingrediens-listen
+  // fremhæver da simpelthen intet, hvilket er korrekt (intet ER relevant).
+  const allHighlightsAreAllergyOnly = ingredientHighlightRules.length > 0 && ingredientHighlightRules.every(r => r.category === "allergy");
+  const onIngredientHighlightTap = (rule) => showToast(`${rule.label} — ${rule.reason}`, "info");
 
   const handleAddToList = () => {
     if (lists.length > 1) { setShowListPicker(true); return; }
@@ -180,34 +280,65 @@ export default function ResultScreen({
     // Verdikt smeltet ind i selve produktkortet — en farvet ramme om hele kortet plus
     // en strimmel øverst med ikon + status, i stedet for en selvstændig boks under
     // kortet der bare gentog det samme. Se SECURITY/DESIGN-diskussion i PR'en for baggrund.
-    // Ved flere aktive profiler viser banneret nu den samlede tre-tilstands-
-    // status (overallStatus/overallHeadline, se profileResults-beregningen
-    // ovenfor) i stedet for scanResult.status/headline, som kun repræsenterer
-    // ét sammenlagt allergisæt — med kun én aktiv profil er de to identiske,
-    // så single-profil-visningen er uændret.
-    const verdictColor = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[overallStatus] || "var(--green)";
-    const verdictIcon = overallStatus === "safe" ? "check" : "warning";
+    //
+    // FINAL PRODUCT RESULT PAGE (28. sept. 2026) — ved ÉN aktiv profil
+    // bruges nu den dynamiske, kategoriserede `topStatus` (allergi →
+    // intolerance → E-nummer → diæt → utilstrækkelige data → ingen fund) i
+    // stedet for scanResult.status/headline, som kun kendte tre tilstande
+    // og kunne kalde et produkt "Sikkert produkt" alene fordi der ikke var
+    // et match — uden at skelne fra reelt manglende data. Ved FLERE aktive
+    // profiler bruges fortsat den eksisterende, samlede tre-tilstands-status
+    // (overallStatus/overallHeadline) — per-profil-detaljer vises separat
+    // nedenfor (renderSafetyDiet).
+    const verdictColor = isMultiProfile
+      ? ({ danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[overallStatus] || "var(--green)")
+      : ({ danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", unknown:"var(--neutral)" }[topStatus.level] || "var(--green)");
+    const verdictIcon = isMultiProfile ? (overallStatus === "safe" ? "check" : "warning") : topStatus.icon;
+    const headlineText = isMultiProfile ? overallHeadline : topStatus.headline;
+    // Konkrete navne under headline (krav B/C/D — "Mælk · Æg · Soja") — kun
+    // ved én aktiv profil, hvor topStatus.names allerede er de præcise fund.
+    const namesLine = !isMultiProfile && topStatus.names?.length > 0 ? topStatus.names.join(" · ") : null;
+    const sourceInfoText = scanResult.source === "producer" || scanResult.verified_status === "verified"
+      ? "Produktdata kommer direkte fra producenten eller en verificeret kilde."
+      : scanResult.source === "off" || scanResult.source === "open_food_facts"
+      ? "Produktdata kommer fra Open Food Facts, en åben, community-drevet database — kan være ufuldstændig."
+      : "Produktdata er indsendt af en bruger og kan være ufuldstændige eller ændret siden indsendelsen.";
     return (
       <div className="product-hero" style={{ position:"relative", border:`2px solid ${verdictColor}` }}>
         {/* Favorit/del — nu rigtige flex-børn af banneret (eller af en tilsvarende
             strimmel når der undtagelsesvist ingen headline er), i stedet for
             absolut positioneret hen over en højde vi gættede på. Banneret er
             gjort lidt højere, så de større knapper har plads til at sidde pænt. */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding:"12px 14px", background: overallHeadline ? verdictColor : "var(--surface2)", color: overallHeadline ? "#fff" : "var(--ink)" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:8, minWidth:0 }}>
-            {overallHeadline && <><Icon name={verdictIcon} size={13} color="#fff" />
-            <span style={UI.ufs12_fw800_ls01em_ttuppercas}>{overallHeadline}</span></>}
+        <div style={{ padding:"12px 14px", background: headlineText ? verdictColor : "var(--surface2)", color: headlineText ? "#fff" : "var(--ink)" }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, minWidth:0 }}>
+              {headlineText && <><Icon name={verdictIcon} size={13} color="#fff" />
+              <span style={UI.ufs12_fw800_ls01em_ttuppercas}>{headlineText}</span></>}
+            </div>
+            <div style={{ display:"flex", gap:8, flexShrink:0 }}>
+              <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} onClick={() => toggleFavorite(scanResult)}
+                style={{ ...UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc, width:36, height:36 }}>
+                <Icon name="heart" size={16} color={fav ? "var(--red)" : "var(--ink2)"} />
+              </button>
+              <button aria-label="Del produkt" onClick={() => { if(navigator.share) navigator.share({ title:scanResult.name, text:headlineText }); }}
+                style={{ ...UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc, width:36, height:36 }}>
+                <Icon name="share" size={16} color="var(--ink2)" />
+              </button>
+            </div>
           </div>
-          <div style={{ display:"flex", gap:8, flexShrink:0 }}>
-            <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} onClick={() => toggleFavorite(scanResult)}
-              style={{ ...UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc, width:36, height:36 }}>
-              <Icon name="heart" size={16} color={fav ? "var(--red)" : "var(--ink2)"} />
-            </button>
-            <button aria-label="Del produkt" onClick={() => { if(navigator.share) navigator.share({ title:scanResult.name, text:overallHeadline }); }}
-              style={{ ...UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc, width:36, height:36 }}>
-              <Icon name="share" size={16} color="var(--ink2)" />
-            </button>
-          </div>
+          {namesLine && (
+            <div style={{ fontSize:13, fontWeight:700, color:"#fff", marginTop:6 }}>{namesLine}</div>
+          )}
+          {!isMultiProfile && topStatus.level === "safe" && (
+            <div style={{ fontSize:11.5, color:"rgba(255,255,255,.9)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>
+              Vi fandt ingen match med dine valgte allergier, intolerancer eller øvrige ting, du undgår.
+            </div>
+          )}
+          {!isMultiProfile && topStatus.level === "unknown" && (
+            <div style={{ fontSize:11.5, color:"var(--ink2)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>
+              Vi mangler produktdata og kan derfor ikke kontrollere alle dine præferencer.
+            </div>
+          )}
         </div>
         <div>
           {scanResult.image_url
@@ -231,18 +362,19 @@ export default function ResultScreen({
         <div className="product-hero-body">
           <div className="product-hero-name">{scanResult.name}</div>
           {scanResult.brand && <div className="product-hero-brand">{scanResult.brand}</div>}
-          {/* Ved flere aktive profiler erstatter per-person-oversigten
-              nedenfor (renderSafetyDiet) denne enkeltprofil-sætning — den
-              beskriver kun ÉT sammenlagt allergisæt og ville ellers vise en
-              vildledende "fælles" begrundelse for flere forskellige mennesker. */}
-          {scanResult.summary && !isMultiProfile && overallStatus !== "safe" && (
-            <div style={{ fontSize:12, color:verdictColor, fontWeight:600, marginTop:4, lineHeight:1.4 }}>{scanResult.summary}</div>
-          )}
           <div className="product-hero-meta">
             <span style={{ fontSize:10, color:"var(--muted)", fontWeight:500 }}>EAN: {scanResult.code}</span>
-            <span style={{ display:"inline-flex", alignItems:"center", gap:4, fontSize:10, fontWeight:700, padding:"2px 10px", borderRadius:20, background:vb.bg, color:vb.color, border:`1px solid ${vb.dot}22` }}>
+            {/* Datakilde — samme genbrugelige verifiedBadge()-komponent for
+                alle tre kilder (bruger-indsendt/Open Food Facts/producent),
+                nu med et tappeligt info-ikon der forklarer hvad kilden
+                betyder (krav 5) — samme komponent kan senere vise en fjerde
+                kilde uden at selve produktsiden skal ændres. */}
+            <span
+              onClick={() => showToast(sourceInfoText, "info")}
+              style={{ display:"inline-flex", alignItems:"center", gap:4, fontSize:10, fontWeight:700, padding:"2px 10px", borderRadius:20, background:vb.bg, color:vb.color, border:`1px solid ${vb.dot}22`, cursor:"pointer" }}>
               <span style={{ width:5, height:5, borderRadius:"50%", background:vb.dot, flexShrink:0, display:"inline-block" }} />
               {vb.label}
+              <Icon name="info" size={10} color={vb.color} />
             </span>
             {scanResult.verified_status === "pending" && (
               <span style={{ display:"inline-flex", alignItems:"center", gap:4, padding:"2px 10px", borderRadius:20, background:"var(--amber-lt)", border:"1px solid rgba(251,191,36,.3)", fontSize:10, fontWeight:700, color:"var(--amber)" }}>
@@ -255,28 +387,16 @@ export default function ResultScreen({
     );
   };
 
-  const renderSafetyDiet = () => {
-    const flags = scanResult.allergen_flags || {};
+  // Per-person-oversigt (multi-profil) + småbørn-advarsler + produktets
+  // egne selv-deklarerede tags (fx "vegansk" sat af producenten selv — IKKE
+  // en beregning mod brugerens præferencer, se renderDietPreferences for
+  // den). Findings/E-numre/diæt-matches mod BRUGERENS præferencer er
+  // flyttet til de nye, dedikerede renderRelevantForYou()/
+  // renderDietPreferences() nedenfor (FINAL PRODUCT RESULT PAGE, krav 3/7).
+  const renderPersonOverview = () => {
     const tagLabels = { vegan:"Vegansk", vegetarian:"Vegetarisk", "palm-oil-free":"Uden palmeolie", "gluten-free":"Glutenfri", organic:"Økologisk" };
     const hasTags = scanResult.tags && scanResult.tags.length > 0;
-
-    // E-nummer advarsler
-    const matchedENumbers = (scanResult.productENumbers?.length > 0 && activeENumbers?.length > 0)
-      ? compareENumbers(scanResult.productENumbers, activeENumbers).matched
-      : [];
-
-    // Diæt-detaljer
-    const allDiets = new Set();
-    profileResults.forEach(p => (p.diets || []).forEach(d => allDiets.add(d)));
-    const dietResultsAll = allDiets.size > 0 ? [...allDiets].map(d => ({
-      id: d,
-      label: DIETS.find(x => x.id === d)?.label || d,
-      ...checkDietCompatibility(d, scanResult.allergen_flags, scanResult.ingredients, scanResult.nutrition),
-    })) : [];
-    const dietFailsAll = dietResultsAll.filter(r => r.ok === false);
-    const dietUnknownsAll = dietResultsAll.filter(r => r.ok === null);
-    const dietPassesAll = dietResultsAll.filter(r => r.ok === true);
-    const showDietDetails = dietFailsAll.length > 0 || dietUnknownsAll.length > 0 || dietPassesAll.length > 0;
+    if (!isMultiProfile && infantWarnings.length === 0 && !hasTags) return null;
 
     return (
       <div style={S.mb10}>
@@ -319,51 +439,9 @@ export default function ResultScreen({
           </div>
         )}
 
-        {/* E-nummer advarsler */}
-        {matchedENumbers.length > 0 && (
-          <div style={{ padding:"8px 12px", marginBottom:6, background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:10 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:800, color:"var(--amber)", marginBottom:4 }}><Icon name="warning" size={12} color="var(--amber)" /> E-numre fundet som du overvåger</div>
-            <div style={UI.wrapGap4}>
-              {matchedENumbers.map(e => (
-                <span key={e}
-                  onClick={() => { const slug = "e-" + e.toLowerCase().replace("e",""); setKnowledgeSlug(slug); setScreen(SCREENS.KNOWLEDGE); }}
-                  style={{ fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:6, background:"rgba(255,180,0,.15)", color:"var(--amber)", border:"1px solid var(--amber-md)", cursor:"pointer", display:"inline-flex", alignItems:"center", gap:4 }}>
-                  {e} {E_NUMBERS[e] ? "— " + E_NUMBERS[e].split("—")[0].trim() : ""} <span style={UI.ufs9_op06}>›</span>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Diæt-detaljer */}
-        {showDietDetails && (
-          <div style={{ padding:"10px 12px", marginBottom:6, background: dietFailsAll.length > 0 ? "var(--amber-lt)" : "var(--green-lt)", border:`1px solid ${dietFailsAll.length > 0 ? "var(--amber-md)" : "var(--green-mid)"}`, borderRadius:10 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:800, color: dietFailsAll.length > 0 ? "var(--amber)" : "var(--green)", marginBottom:6 }}>
-              <Icon name={dietFailsAll.length > 0 ? "warning" : "check"} size={12} color={dietFailsAll.length > 0 ? "var(--amber)" : "var(--green)"} />
-              {dietFailsAll.length > 0 ? "Diæt-advarsler" : "Kompatibel med dine diæter"}
-            </div>
-            <div style={UI.udflex_fdcolumn_g4}>
-              {dietFailsAll.map(r => (
-                <div key={r.id} style={{ fontSize:11, color:"var(--amber)" }}>
-                  <strong>{r.label}:</strong> {r.reasons[0]}
-                  {r.confidence === "low" && <span style={S.opacity6}> (usikker)</span>}
-                </div>
-              ))}
-              {dietPassesAll.map(r => (
-                <div key={r.id} style={{ fontSize:11, color:"var(--green)" }}>
-                  ✓ {r.label}{r.confidence === "low" && <span style={S.opacity6}> (usikker)</span>}
-                </div>
-              ))}
-              {dietUnknownsAll.map(r => (
-                <div key={r.id} style={S.sub11}>? {r.label}: {r.reasons[0]}</div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Diæt-tags */}
+        {/* Produktets EGNE selv-deklarerede tags (fx sat af producenten) */}
         {hasTags && (
-          <div style={{ display:"flex", gap:6, flexWrap:"wrap", padding:"8px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderTop:"none", borderRadius:"0 0 12px 12px" }}>
+          <div style={{ display:"flex", gap:6, flexWrap:"wrap", padding:"8px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
             {scanResult.tags.map((tag, i) => (
               <span key={i} style={{ fontSize:11, fontWeight:700, color:"var(--green)", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:100, padding:"2px 10px" }}>
                 {tagLabels[tag] || tag}
@@ -371,6 +449,109 @@ export default function ResultScreen({
             ))}
           </div>
         )}
+      </div>
+    );
+  };
+
+  // ── "Relevant for dig" (krav 3) ─────────────────────────────────────────
+  // Samlet oversigt over ALLE fund på tværs af kategorier, opdelt og
+  // prioriteret allergi → intolerance/følsomhed → E-nummer → kostpræference
+  // — ikke reduceret til én uklar status. Kun ved ÉN aktiv profil (ved
+  // flere profiler dækker per-person-listen ovenfor allerede hver persons
+  // egne fund separat, med samme prioritering internt).
+  const renderRelevantForYou = () => {
+    if (isMultiProfile) return null;
+    const { allergyMatches, intoleranceMatches, customMatches, eNumberMatches, dietFails } = findings;
+    const hasAny = allergyMatches.length > 0 || customMatches.length > 0 || intoleranceMatches.length > 0 || eNumberMatches.length > 0 || dietFails.length > 0;
+    if (!hasAny) return null;
+
+    const Group = ({ color, bg, title, children }) => (
+      <div style={{ padding:"8px 12px", marginBottom:6, background:bg, border:`1px solid ${color==="var(--red)"?"var(--red-md)":"var(--amber-md)"}`, borderRadius:10 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:800, color, marginBottom:4 }}>
+          <Icon name="warning" size={12} color={color} /> {title}
+        </div>
+        <div style={UI.wrapGap4}>{children}</div>
+      </div>
+    );
+    const Chip = ({ color, bg, onClick, children }) => (
+      <span onClick={onClick}
+        style={{ fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:6, background:bg, color, border:`1px solid ${color==="var(--red)"?"var(--red-md)":"var(--amber-md)"}`, cursor: onClick ? "pointer" : "default", display:"inline-flex", alignItems:"center", gap:4 }}>
+        {children}{onClick && <span style={UI.ufs9_op06}>›</span>}
+      </span>
+    );
+
+    return (
+      <div style={S.mb10}>
+        <div className="card-lbl" style={{ marginLeft:2 }}>Relevant for dig</div>
+        {(allergyMatches.length > 0 || customMatches.length > 0) && (
+          <Group color="var(--red)" bg="var(--red-lt)" title="Allergier">
+            {customMatches.map(m => (
+              <Chip key={m.id} color="var(--red)" bg="var(--red-lt)">✏️ {m.label}</Chip>
+            ))}
+            {allergyMatches.map(m => (
+              <Chip key={m.id} color="var(--red)" bg="var(--red-lt)" onClick={() => { setKnowledgeSlug(m.id); setScreen(SCREENS.KNOWLEDGE); }}>
+                {m.severity === "traces" ? `spor: ${m.label}` : m.label}
+              </Chip>
+            ))}
+          </Group>
+        )}
+        {intoleranceMatches.length > 0 && (
+          <Group color="var(--amber)" bg="var(--amber-lt)" title="Intolerancer / følsomheder">
+            {intoleranceMatches.map(m => (
+              <Chip key={m.id} color="var(--amber)" bg="var(--amber-lt)" onClick={() => { setKnowledgeSlug(m.id); setScreen(SCREENS.KNOWLEDGE); }}>
+                {m.severity === "traces" ? `spor: ${m.label}` : m.label}
+              </Chip>
+            ))}
+          </Group>
+        )}
+        {eNumberMatches.length > 0 && (
+          <Group color="var(--amber)" bg="var(--amber-lt)" title="E-numre du undgår">
+            {eNumberMatches.map(e => (
+              <Chip key={e} color="var(--amber)" bg="var(--amber-lt)" onClick={() => { const slug = "e-" + e.toLowerCase().replace("e",""); setKnowledgeSlug(slug); setScreen(SCREENS.KNOWLEDGE); }}>
+                {e}{E_NUMBERS[e] ? " — " + E_NUMBERS[e].split("—")[0].trim() : ""}
+              </Chip>
+            ))}
+          </Group>
+        )}
+        {dietFails.length > 0 && (
+          <Group color="var(--amber)" bg="var(--amber-lt)" title="Kostpræferencer">
+            {dietFails.map(d => (
+              <Chip key={d.id} color="var(--amber)" bg="var(--amber-lt)">
+                {d.label}{d.reasons?.[0] ? ` — ${d.reasons[0]}` : ""}
+              </Chip>
+            ))}
+          </Group>
+        )}
+      </div>
+    );
+  };
+
+  // ── Kostpræferencer (krav 7) ─────────────────────────────────────────────
+  // Omdøbt fra "Kompatibel med dine diæter" — viser ALLE brugerens/familiens
+  // aktive diæter (ikke kun de der fejler, i modsætning til "Relevant for
+  // dig" ovenfor), hver med ✓ (passer) / ✕ (passer ikke, + kort årsag hvis
+  // data tillader det) / ? (kan ikke afgøres). Vist kun hvis der reelt er
+  // aktive kostpræferencer at vise noget for. Gætter aldrig — ✕ og ? er
+  // adskilte tilstande, aldrig slået sammen.
+  const renderDietPreferences = () => {
+    if (dietResults.length === 0) return null;
+    return (
+      <div className="card">
+        <div className="card-lbl">Passer til dine kostpræferencer</div>
+        <div style={UI.udflex_fdcolumn_g4}>
+          {dietResults.map(r => (
+            <div key={r.id} style={{ display:"flex", alignItems:"flex-start", gap:6, fontSize:12.5 }}>
+              <Icon name={r.ok === true ? "check" : r.ok === false ? "x" : "info"} size={13}
+                color={r.ok === true ? "var(--green)" : r.ok === false ? "var(--amber)" : "var(--muted)"} />
+              <span style={{ color: r.ok === true ? "var(--ink)" : r.ok === false ? "var(--ink)" : "var(--muted)" }}>
+                <strong>{r.label}</strong>
+                {r.ok === false && r.reasons?.[0] && <span style={{ color:"var(--muted2)" }}> — {r.reasons[0]}</span>}
+                {r.ok === null && <span> – kan ikke afgøres ud fra de tilgængelige oplysninger</span>}
+                {r.confidence === "low" && r.ok !== null && <span style={S.opacity6}> (usikker)</span>}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     );
   };
@@ -462,8 +643,20 @@ export default function ResultScreen({
     );
   };
 
+  // FINAL PRODUCT RESULT PAGE, krav 10 — dynamisk enhed i stedet for et
+  // hardkodet "pr. 100g" for alle produkter. Der findes intet eksplicit
+  // enheds-felt i produktdataen endnu, så enheden udledes forsigtigt af
+  // produktets EGEN kategori-tekst (data-drevet, ikke en fast konstant) —
+  // rammer ikke perfekt hver gang, men er langt mere korrekt end at antage
+  // "g" for en sodavand. Kan udskiftes med et rigtigt portions-/enheds-felt
+  // senere uden at ændre selve kort-layoutet (samme krav nævner dette
+  // eksplicit: "kan understøttes senere uden at ændre hovedlayoutet").
+  const LIQUID_CATEGORY_HINTS = ["drik","juice","vand","øl","sodavand","mælk","saft","cider","spiritus","vin","kaffe","te","smoothie","shot","nektar"];
+  const nutritionUnit = LIQUID_CATEGORY_HINTS.some(h => (scanResult.category || "").toLowerCase().includes(h)) ? "100 ml" : "100 g";
+
   const renderNutrition = () => {
     const n = scanResult.nutrition;
+    if (!n) return null;
     const rows = [
       ["Energi",          n.energy_kcal    ? `${n.energy_kcal} kcal`    : null],
       ["Fedt",            n.fat     != null ? `${n.fat} g`               : null],
@@ -474,10 +667,14 @@ export default function ResultScreen({
       ["Protein",         n.protein != null ? `${n.protein} g`           : null],
       ["Salt",            n.salt    != null ? `${n.salt} g`              : null],
     ].filter(([,v]) => v !== null);
+    // Ingen brugbare næringsdata — skjul HELE sektionen (krav 10/13),
+    // ikke en "hjælp os"-prompt som ved manglende ingredienser. Den
+    // asymmetri er bevidst: krav 13 nævner "ingen næringsdata → skjul",
+    // men "ingen ingrediensdata → vis manglende-data-status" separat.
     if (!rows.length) return null;
     return (
       <div className="card">
-        <div className="card-lbl">Næringsindhold pr. 100g</div>
+        <div className="card-lbl">Næringsindhold pr. {nutritionUnit}</div>
         <div style={UI.udflex_fdcolumn}>
           {rows.map(([label, value], i) => (
             <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom: i < rows.length-1 ? "1px solid var(--border)" : "none" }}>
@@ -576,26 +773,44 @@ export default function ResultScreen({
         </div>
       )}
 
-      {/* ── 2. SIKKERHED + DIÆT ── */}
-      {renderSafetyDiet()}
+      {/* ── 2. PER-PERSON-OVERBLIK, SMÅBØRN, PRODUKTETS EGNE TAGS ── */}
+      {renderPersonOverview()}
 
-      {/* ── 3. ALLERGENER ── */}
+      {/* ── 3. RELEVANT FOR DIG — samlet, kategoriseret fund (krav 3) ── */}
+      {renderRelevantForYou()}
+
+      {/* ── 4. KOSTPRÆFERENCER — dedikeret, viser ALLE aktive diæter (krav 7) ── */}
+      {renderDietPreferences()}
+
+      {/* ── ANDRE ALLERGENER I PRODUKTET — ikke relevante for brugeren selv,
+          rent informativt, uændret. ── */}
       {scanResult.allergen_flags && renderOtherAllergens()}
 
-      {/* ── 4. INGREDIENSLISTE ── */}
+      {/* ── 5. INGREDIENSLISTE ── */}
       <div className="card">
         <div className="card-lbl">Ingrediensliste</div>
         {scanResult.ingredients ? (
           <div>
             <div style={{ padding:"10px", background:"var(--paper2)", borderRadius:8, marginBottom:8 }}>
-              <IngredientsList text={scanResult.ingredients} allergenFlags={scanResult.allergen_flags||{}} onIngredientTap={handleIngredientTap} />
+              <IngredientsList text={scanResult.ingredients}
+                highlightRules={ingredientHighlightRules}
+                onHighlightTap={onIngredientHighlightTap}
+                onIngredientTap={handleIngredientTap} />
             </div>
-            <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
-              Fremhævet = allergen · Listen kan være på originalsprog — tjek altid selv
-            </div>
+            {/* Kun ÉN, korrekt billedtekst for hvad fremhævningen betyder —
+                aldrig den generiske "Fremhævet = allergen", medmindre ALT
+                fremhævet reelt er en allergi (krav 8). Ved en blanding af
+                kategorier, eller ingen fund overhovedet, nævnes fremhævning
+                slet ikke her. */}
+            {ingredientHighlightRules.length > 0 && (
+              <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
+                {allHighlightsAreAllergyOnly ? "Fremhævet = allergen. " : "Fremhævet = relevant for dig. "}
+                Tryk for en kort forklaring. Listen kan være på originalsprog.
+              </div>
+            )}
             {customAllerg?.length > 0 && (
               <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", marginTop:6, background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
-                Dine egne tilføjede allergier tjekkes via fritekst-søgning her i ingredienslisten — det kan være sværere for os at fange end vores faste allergener. Dobbelttjek altid selv, og sig endelig til hvis vi overser noget — vi udvider løbende vores allergen-liste.
+                Dine egne tilføjede allergier tjekkes via fritekst-søgning her i ingredienslisten — det kan være sværere for os at fange end vores faste allergener. Sig endelig til hvis vi overser noget — vi udvider løbende vores allergen-liste.
               </div>
             )}
           </div>
@@ -610,29 +825,24 @@ export default function ResultScreen({
         )}
       </div>
 
-      {/* ── 4b. E-NUMRE ── */}
+      {/* ── 5b. E-NUMRE I PRODUKTET (fuld liste, uændret) ── */}
       {scanResult.productENumbers?.length > 0 && renderENumbers()}
 
-      {/* ── 6. NÆRINGSINDHOLD ── */}
-      {!scanResult.nutrition && (
-        <div className="card">
-          <div className="ing-toggle" style={{ cursor:"default" }}>
-            <span>Næringsindhold pr. 100g</span>
-          </div>
-          <div style={{ padding:"12px 0", display:"flex", alignItems:"center", gap:10 }}>
-            <div style={S.flex1}>
-              <div style={{ fontSize:13, color:"var(--muted2)", marginBottom:6 }}>Vi mangler næringsdata for dette produkt.</div>
-              <button className="btn btn-outline btn-sm"
-                onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients||""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
-                Hjælp os — indsend næringsdata
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {scanResult.nutrition && renderNutrition()}
+      {/* ── 6. NÆRINGSINDHOLD — skjules helt hvis der ikke er brugbare data
+          (krav 10/13), ikke længere en "hjælp os"-prompt. ── */}
+      {renderNutrition()}
 
-      {/* ── 7. RET DATA — mindre vigtig handling, holdt nederst. Ikke relevant
+      {/* ── 7. ÉN SAMLET SIKKERHEDSDISCLAIMER (krav 11) — den eneste faste
+          disclaimer på siden. Placeret her, umiddelbart før "Ret forkerte
+          data", som krævet. ── */}
+      <div style={{ display:"flex", alignItems:"flex-start", gap:8, padding:"10px 12px", marginBottom:10, background:"var(--paper2)", borderRadius:10 }}>
+        <Icon name="info" size={13} color="var(--muted)" />
+        <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>
+          EatSafe er vejledende. Kontrollér altid produktets aktuelle ingrediens- og allergenoplysninger.
+        </div>
+      </div>
+
+      {/* ── 8. RET DATA — mindre vigtig handling, holdt nederst. Ikke relevant
           for demo-scanningen, som ikke er et rigtigt produkt i databasen. ── */}
       {!scanResult.isDemo && (
         <div style={UI.mb10}>

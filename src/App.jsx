@@ -682,17 +682,29 @@ export default function EatSafe() {
   // fx Profil eller Opskrifter mens kameraet kører lod streamen køre videre i
   // baggrunden for evigt. Stop den eksplicit her, både ved skærmskift væk fra
   // de skærme kameraet reelt bruges på, og når appen lægges i baggrunden.
+  //
+  // `closeCameraFully` (28. sept. 2026, BUGFIX – scanner state) — samme
+  // fund som ScannerScreen.jsx's `handleCloseCamera`: `stopCamera()` alene
+  // ved intet om det manuelle EAN-panel (`showManualEan`, App.jsx-state),
+  // så et kamera-luk via navigation væk fra scanner-skærmene, appen i
+  // baggrunden, eller Android-tilbageknappen kunne alle efterlade panelet
+  // stående åbent. Bruges her ved siden af (ikke i stedet for)
+  // ScannerScreen.jsx's egen `handleCloseCamera`, som dækker det
+  // eksplicitte luk-kamera-tryk og samtidig nulstiller sin egen lokale
+  // EAN-værdi/-fejltekst.
+  const closeCameraFully = useCallback(() => { stopCamera(); setShowManualEan(false); }, [stopCamera]);
+
   const SCANNER_SCREENS = [SCREENS.HOME, SCREENS.RESULT, SCREENS.NOTFOUND, SCREENS.SUBMITTED, SCREENS.SEARCH, SCREENS.LIST, SCREENS.SUGGEST_EDIT];
   useEffect(() => {
     if (!cameraActive) return;
-    if (!SCANNER_SCREENS.includes(screen)) stopCamera();
-  }, [screen, cameraActive, stopCamera]);
+    if (!SCANNER_SCREENS.includes(screen)) closeCameraFully();
+  }, [screen, cameraActive, closeCameraFully]);
 
   useEffect(() => {
-    const onVisibilityChange = () => { if (document.hidden) stopCamera(); };
+    const onVisibilityChange = () => { if (document.hidden) closeCameraFully(); };
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, [stopCamera]);
+  }, [closeCameraFully]);
 
   // Ref der altid peger på den seneste lookupProduct (undgår TDZ-cirkulær afhænighed)
   const lookupProductRef = useRef(null);
@@ -749,7 +761,7 @@ export default function EatSafe() {
       if (helpOpen) { setHelpOpen(false); return; }
       if (feedbackOpen) { setFeedbackOpen(false); return; }
       if (profilePopup) { setProfilePopup(null); return; }
-      if (cameraActive) { stopCamera(); return; }
+      if (cameraActive) { closeCameraFully(); return; }
       if (screen === SCREENS.RESULT || screen === SCREENS.NOTFOUND || screen === SCREENS.SUGGEST_EDIT
           || screen === SCREENS.SEARCH || screen === SCREENS.SUBMITTED
           || screen === SCREENS.MADPAS || screen === SCREENS.RESTAURANTGUIDE) {
