@@ -3450,3 +3450,186 @@ fælles "Push"/"E-mail"-kolonneheader til stede; "Version"/"Om EatSafe
 Beta"/"Kontakt & feedback" alle til stede i Om EatSafe-sektionen.
 Skærmbilleder (iPhone 13) bekræftede visuelt konsistent kort-/spacing-
 design med resten af appen, ingen layout-brud.
+
+## Scanner — "FINAL POLISH – SCANNER", 16-punkts spec (28. sept. 2026)
+
+Brugeren gav en omfattende, 16-punkts spec for scanner-flowet: gør det
+"helt intuitivt, hurtigt og robust for almindelige brugere", bevar
+kamera-feed/EatSafe-stil/bundnavigation, ingen redesign, ingen feature
+creep. Berørte filer: `ScannerScreen.jsx`, `useScanner.js`,
+`useProduct.js`, `App.jsx` (prop-threading).
+
+**Undersøgelse før implementering:**
+- Læste hele `ScannerScreen.jsx` (719 linjer) og `useScanner.js` (335
+  linjer) grundigt for at forstå den eksisterende kamera-/scan-pipeline
+  før noget blev ændret.
+- **Reelt dødt-state-fund:** `showPhotoHint` (useScanner.js) sættes
+  allerede korrekt til `true` via en `setTimeout(..., 5000)` efter
+  kameraet er klar, uden et scan — præcis den timing spec'ens punkt 3
+  bad om ("efter ca. 5-7 sekunder"). Men state'en blev modtaget som prop
+  i `ScannerScreen.jsx` og ALDRIG renderet noget sted i JSX'en — samme
+  klasse fund som feltnavne-mismatch-lektionen i CLAUDE.md afsnit 5
+  (en beregnet værdi, sendt ind, men aldrig faktisk brugt). Løsningen
+  for punkt 3 var derfor ikke at bygge en ny timer, men at forbinde en
+  allerede-korrekt eksisterende til UI'et.
+- Grep'ede efter eksisterende lys-/genskin-detektion (ingen findes —
+  ingen pixel-/canvas-baseret billedanalyse i kodebasen) før punkt 2's
+  "for mørkt? tænd lygten"-eksempel blev vurderet: at bygge reel
+  lysstyrke-detektion ville være en ny funktion, ikke "polish" — udeladt,
+  til fordel for en tidsstyret (ikke lysstyrke-styret) hjælpetekst-rotation,
+  som stadig opfylder kravets kerne ("hjælpeteksten skal kunne ændres
+  dynamisk efter situationen").
+- Tjekkede `isValidEanChecksum` (helpers.js) — validerer allerede
+  8/12/13/14-cifrede koder med rigtig EAN/UPC-checksum, en strengere/mere
+  korrekt kontrol end spec'ens egen "8 eller 13 cifre"-krav. Genbrugt
+  uændret, ikke erstattet med en svagere længde-kun-kontrol.
+- Bekræftede at `galleryInputRef`s skjulte fil-input (`accept="image/*"`,
+  INGEN `capture`-attribut) allerede giver browserens/OS'ets fulde native
+  vælger (Fotobibliotek/Tag foto/Vælg arkiv) — punkt 8 var derfor allerede
+  opfyldt uden ændring.
+- Genundersøgte (samme konklusion som Indstillinger-rundens push-status)
+  om en "Åbn Indstillinger"-knap kan åbne kamera-tilladelser fra en PWA —
+  stadig ingen cross-browser/cross-platform JS-API findes. Udeladt med
+  samme begrundelse, dokumenteret i koden.
+
+**Implementerede ændringer, punkt for punkt:**
+
+1. **Kamera-kontrol-labels:** ny lokal `CamCtrlBtn`-komponent
+   (ScannerScreen.jsx) stabler ikon + 9px tekst-label lodret i en
+   `minWidth/minHeight:44`-touch-flade (den synlige cirkel er stadig kun
+   34px — touch-fladen er større end det viste ikon, for at ramme
+   tilgængeligheds-kravet uden at forstørre det visuelle udtryk).
+   Luk-knappen forblev et separat, ikon-kun `S.camCtrlBtn` til venstre,
+   uændret placering.
+2. **Dynamisk hjælpetekst:** ny `scanHint`-state,
+   `useEffect`-styret på `scanReady` — "Placér hele stregkoden i rammen"
+   ved kamera-klar, "Hold telefonen stille" efter 3s. Ingen lang
+   tip-liste, kun én besked ad gangen, som krævet.
+3. **Timeout-faldback:** `showPhotoHint` (se ovenfor) renderer nu
+   "Kan den ikke scannes? *Indtast EAN* eller *vælg et billede*." med
+   to reelt klikbare inline-spans (samme handlinger som de eksisterende
+   kontroller: `openManualEan()`/`galleryInputRef.current?.click()`).
+4. **Scanneramme:** uændret — ingen nye animationer/effekter tilføjet,
+   som bedt om.
+5. **Zoom:** adskilt fra hjælpeteksten (viste tidligere ENTEN/ELLER,
+   aldrig begge samtidig — zoom-teksten erstattede hjælpeteksten helt).
+   Vurderet ikke-interaktiv (ingen tap-til-zoom findes, kun eksisterende
+   auto-zoom via `useScanner.js`s timere) → holdt bevidst lille/let
+   (10px, dæmpet grøn, ingen baggrunds-pille) i stedet for at gøre den
+   klikbar, jf. spec'ens eget betingede "hvis... kun information...
+   fjern unødvendig visuel vægt."
+6. **Lygte:** label skifter til "Lygte til" når aktiv (i tillæg til den
+   eksisterende gule/orange farve) — statussen kommunikeres nu IKKE kun
+   via farve (tilgængeligheds-krav 14). `aria-pressed` tilføjet.
+7. **Manuel EAN — den mest omfattende enkeltændring:**
+   - Input skiftet fra `type="number"` til `type="text"` +
+     `inputMode="numeric"` — undgår number-inputtets kendte kvirks
+     (kan skrive "e"/"+"/"-", mister foranstillede nuller ved visning)
+     og giver stadig et numerisk tastatur på mobil.
+   - Kontrolleret state (`manualEanValue`) med `onChange` der filtrerer
+     `.replace(/\D/g, "")` fortløbende — trimmer automatisk mellemrum,
+     bindestreger og alt andet end cifre, som krævet.
+   - **Reel bug fundet af en Playwright-test, ikke ved manuel
+     inspektion:** en `maxLength={14}`-attribut på selve `<input>` talte
+     RÅ tegn (inklusive bindestreger/mellemrum), ikke cifre. En test der
+     indsatte "571-2873 099443" (15 rå tegn, 13 reelle cifre) og
+     sammenlignede input/output character-for-character afslørede at
+     browseren afskar det sidste tegn ("3") FØR JS-filteret overhovedet
+     nåede at fjerne bindestregen/mellemrummet — værdien endte som
+     "571287309944" (kun 12 cifre) i stedet for de fulde 13. Rettet ved
+     at fjerne den native `maxLength` helt og udelukkende cifre-
+     begrænse (`.slice(0,14)`) EFTER filtrering i JS. Genverificeret:
+     samme input gav nu korrekt "5712873099443" (alle 13 cifre bevaret).
+   - To adskilte, specifikke fejltekster i stedet for spec'ens ene
+     eksempel-sætning: forkert LÆNGDE (ikke i `[8,12,13,14]`) →
+     "EAN-nummeret skal være 8 eller 13 cifre." (krav 7's egen ordlyd);
+     korrekt længde men ugyldig CHECKSUM (en formentlig tastefejl) →
+     "Stregkoden kunne ikke læses. Prøv igen." (krav 12's "ugyldig
+     stregkode"-tekst) — en naturlig, meningsfuld arbejdsdeling mellem
+     de to krav i stedet for at vælge kun den ene tekst vilkårligt.
+   - Søg-knappen er nu `disabled` indtil længden er gyldig (grå i stedet
+     for grøn) — checksum tjekkes stadig kun ved faktisk forsøgt søgning
+     (Enter/klik), ikke løbende mens brugeren taster, for ikke at vise en
+     fejl for et endnu-ufuldstændigt tal.
+   - `openManualEan()`-hjælpefunktion indført så ALLE fem steder der
+     åbner panelet (kontrol-knap, faldback-hint, permission-denied-kort,
+     fejlbanner-link) konsekvent nulstiller `manualEanValue`/
+     `manualEanError` — et tidligere forladt udkast fra en tidligere
+     åbning kunne ellers dukke op igen. **Selv-rekursions-bug fundet og
+     rettet med det samme:** en automatiseret søg/erstat af
+     `setShowManualEan(true)` → `openManualEan()` ramte ved en fejl også
+     selve `openManualEan`-funktionens EGEN krop (som naturligvis
+     indeholdt strengen `setShowManualEan(true)`), hvilket ville have
+     givet uendelig rekursion ved første klik — opdaget ved en
+     eftergrep af alle forekomster af `openManualEan` umiddelbart efter
+     erstatningen, før build/test overhovedet blev kørt.
+8. **Billede/upload:** kopi opdateret ("Vi kunne ikke finde en tydelig
+   stregkode på billedet. Prøv et andet billede eller indtast EAN
+   manuelt.") for både galleri- og foto-fallback-stien. Selve
+   native-vælgeren var allerede korrekt (se undersøgelses-afsnittet).
+9. **Kameraadgang nægtet:** ny `cameraPermissionDenied`-state i
+   useScanner.js, sat specifikt i `NotAllowedError`/
+   `PermissionDeniedError`-grenen (nulstillet ved hvert nyt
+   `startCamera()`-forsøg). Erstatter den store scan-knap med et
+   dedikeret kort ("Kameraadgang er slået fra" / "Tillad kameraadgang
+   for at scanne stregkoder.") + to reelt fungerende knapper (Billede →
+   `galleryInputRef.current?.click()`, Indtast EAN → `openManualEan()`).
+   Undertekst-teksten i hero'en opdateres samtidig. Ingen "Åbn
+   Indstillinger"-knap (se undersøgelses-afsnittet).
+10. **Kamera-permission-primer:** ny `showCameraPrimer`-state + en
+    lille, centreret, ét-sætnings modal ("EatSafe bruger kameraet til
+    at læse produktets stregkode.") vist FØR `startCamera()` kaldes,
+    kun hvis `localStorage`-flagget `as_camera_primer_seen` ikke er
+    sat — sættes ved "Fortsæt", som derefter selv kalder `startCamera()`.
+11. **Succes-feedback/debounce:** allerede korrekt implementeret —
+    `stopCamera()` kaldes FØR `onScanSuccessRef.current?.(code)`, og
+    `lastScannedRef` blokerer samme kode i 1500ms. Ingen ny toggle
+    tilføjet for "vibration ved scan" — den eksisterende, ubetingede
+    stregkode-detekterings-feedback (vibrate+beep i useScanner.js) ER
+    allerede den krævede "korte visuelle feedback"; kravets "hvis
+    aktiveret i Indstillinger" tolkes som den allerede eksisterende
+    "Vibration ved advarsel"-indstilling fra forrige runde, ikke en ny,
+    tredje separat toggle (ville være reel feature creep, krav 15).
+12. **Fejltilstande:** "Ugyldig stregkode" (→ delt med krav 7's
+    checksum-fejl, se ovenfor) og "Netværksfejl" ("Kunne ikke hente
+    produktet. Kontrollér forbindelsen og prøv igen.", useProduct.js)
+    opdateret til spec'ens ordlyd. Derudover: en `isValidEanChecksum`-
+    gate tilføjet direkte i html5-qrcodes success-callback i
+    useScanner.js — en ugyldig/garblet live-afkodning IGNORERES NU
+    STILLE og scanningen fortsætter, i stedet for potentielt at sende et
+    forkert tal videre til et produktopslag. Bevidst IKKE et synligt
+    fejlbanner her (i modsætning til manuel indtastning) — et enkelt
+    fejlaflæst kamera-frame er normalt/forbigående, og et afbrydende
+    banner for hver mislykket frame ville være mere distraherende end
+    hjælpsomt. "Produkt ikke fundet" (NotFoundScreen.jsx) er bevidst
+    IKKE ændret — allerede dækket af et fuldt fungerende indsend-/
+    efterspørg-flow, og eksplicit uden for scanner-scopet ("Bevar resten
+    af EatSafe uændret").
+13-14. **Visuel polish/tilgængelighed:** touch-targets ≥44px på alle nye
+    kontrolknapper, `aria-label`/`aria-invalid`/`role="alert"` på det nye
+    EAN-input, `aria-pressed` på lygte-knappen, lygte-status kommunikeret
+    via BÅDE farve og tekst-label (ikke kun farve).
+15. **Ingen feature creep:** ingen nye scanner-modes, ingen AR, ingen
+    permanente tip-lister, ingen tutorial-slides tilføjet.
+
+**Verifikation:** `npm run build` grøn, `npx vitest run` 109/109
+(uændret — ingen eksisterende test afhang af de ændrede fejltekster),
+mojibake-scan clean på alle fire ændrede filer. Playwright
+(artifact-preview-build, iPhone 13-profil):
+- Kamera-primer vises ved første klik på "Scan produkt", sætter
+  `localStorage`-flagget korrekt, og vises IKKE igen ved efterfølgende
+  klik.
+- Manuel EAN: Søg-knappen bekræftet `disabled` ved 5-cifret input,
+  `enabled` ved 13-cifret input; ugyldig 13-cifret checksum viste
+  korrekt "Stregkoden kunne ikke læses. Prøv igen." via `role="alert"`;
+  cifre-filtrering bekræftet character-for-character efter
+  `maxLength`-fixet (dette var testen der fandt buggen i første omgang).
+- Kamera-permission-nægtet-stien kunne ikke udløses pålideligt via
+  Chromium-flag i denne sandbox (hverken det rigtige "intet kamera"-
+  scenarie eller et forsøg med `--use-fake-device-for-media-stream` gav
+  konsekvent `NotAllowedError` — miljøet mangler tilsyneladende reel
+  kamera-hardware-emulering) — verificeret i stedet ved kode-gennemgang
+  af selve grenen (`cameraPermissionDenied` sættes korrekt, kun i den
+  rette catch-gren) samt ved at bekræfte at ANDRE fejlgrene (fx "Intet
+  kamera fundet") korrekt IKKE udløser det nye dedikerede kort, kun den
+  eksisterende generiske banner — konsistent, korrekt betinget adfærd.

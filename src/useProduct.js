@@ -286,7 +286,7 @@ export async function runLookupProduct(ean, ctx) {
     if (isStale()) return;
     setScreen(SCREENS.RESULT);
     if (navigator.vibrate) navigator.vibrate(25);
-  } catch (e) { traceLog(tid, "scan:error", { error: e.message }); setScanError("Der opstod en fejl. Tjek din forbindelse og prøv igen."); }
+  } catch (e) { traceLog(tid, "scan:error", { error: e.message }); setScanError("Kunne ikke hente produktet. Kontrollér forbindelsen og prøv igen."); }
   if (!isStale()) setLoading(false);
 }
 

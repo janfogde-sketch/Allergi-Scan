@@ -61,6 +61,13 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   const [scanZoom, setScanZoom]               = useState(1.0);
   const [showPhotoHint, setShowPhotoHint]     = useState(false);
   const [photoScanLoading, setPhotoScanLoading] = useState(false);
+  // Sandt specifikt når getUserMedia fejlede med NotAllowedError/
+  // PermissionDeniedError (28. sept. 2026, FINAL POLISH – SCANNER, krav 9)
+  // — adskilt fra den generiske `scanError`-tekst, så ScannerScreen.jsx kan
+  // vise en tydelig, dedikeret "kameraadgang slået fra"-tilstand med egne
+  // handlinger (Billede/Indtast EAN) i stedet for bare et lille rødt banner
+  // under et ellers misvisende, stadig-klikbart "Scan produkt"-forsøg.
+  const [cameraPermissionDenied, setCameraPermissionDenied] = useState(false);
 
   // ── Refs ──────────────────────────────────────────────────────────────────
   const html5QrRef      = useRef(null);
@@ -95,7 +102,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     // kalde startCamera igen før første kald har sat state — startingRef lukker det hul
     if (cameraActive || startingRef.current) return;
     startingRef.current = true;
-    setScanError(""); setTorchOn(false); setScanZoom(1.0); scanZoomRef.current = 1.0; setShowPhotoHint(false); setScanReady(false);
+    setScanError(""); setTorchOn(false); setScanZoom(1.0); scanZoomRef.current = 1.0; setShowPhotoHint(false); setScanReady(false); setCameraPermissionDenied(false);
     if (noScanTimerRef.current) { clearTimeout(noScanTimerRef.current); noScanTimerRef.current = null; }
     torchTrackRef.current = null; lastScannedRef.current = null;
 
@@ -117,7 +124,8 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       stream.getTracks().forEach(t => t.stop());
     } catch (e) {
       if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
-        setScanError("Kamera-adgang nægtet. Gå til telefonens indstillinger og tillad kamera for denne app.");
+        setCameraPermissionDenied(true);
+        setScanError("Kameraadgang er slået fra. Tillad kameraadgang for at scanne stregkoder.");
         return;
       } else if (e.name === "NotFoundError") {
         setScanError("Intet kamera fundet på denne enhed.");
@@ -170,6 +178,13 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       await html5QrRef.current.start(
         { facingMode: isIOS ? { exact: "environment" } : "environment" }, qrConfig,
         (code) => {
+          // Ugyldig/garblet afkodning ignoreres stille og scanningen
+          // fortsætter (28. sept. 2026, FINAL POLISH – SCANNER, krav 12) —
+          // et enkelt fejlaflæst frame er normalt og forbigående, så et
+          // afbrydende fejlbanner ville være mere distraherende end
+          // hjælpsomt her (i modsætning til manuel EAN-indtastning, hvor
+          // samme validering VISER en fejltekst, se ScannerScreen.jsx).
+          if (!isValidEanChecksum(code)) return;
           const now = Date.now();
           if (lastScannedRef.current?.code === code && now - lastScannedRef.current.time < 1500) return;
           lastScannedRef.current = { code, time: now };
@@ -273,7 +288,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       const code = await decodeBarcodeFromImage(file, accessToken);
       setLoading(false);
       if (code) { onScanSuccessRef.current?.(code); return; }
-      setScanError("Kunne ikke finde en gyldig stregkode i billedet. Prøv et klarere billede eller tættere på.");
+      setScanError("Vi kunne ikke finde en tydelig stregkode på billedet. Prøv et andet billede eller indtast EAN manuelt.");
     } catch {
       setLoading(false);
       setScanError("Foto-scan fejlede. Prøv igen.");
@@ -289,7 +304,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       const code = await decodeBarcodeFromImage(file, accessToken);
       setPhotoScanLoading(false);
       if (code) { onScanSuccessRef.current?.(code); return; }
-      setScanError("Kunne ikke aflæse en gyldig stregkode fra billede. Prøv tæt på og i god belysning.");
+      setScanError("Vi kunne ikke finde en tydelig stregkode på billedet. Prøv et andet billede eller indtast EAN manuelt.");
     } catch {
       setPhotoScanLoading(false);
       setScanError("Foto-scan fejlede. Prøv igen.");
@@ -321,6 +336,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     scanZoom, setScanZoom,
     showPhotoHint, setShowPhotoHint,
     photoScanLoading,
+    cameraPermissionDenied,
     // Refs (sendes direkte til ScannerScreen som input-refs)
     galleryInputRef,
     photoFallbackRef,

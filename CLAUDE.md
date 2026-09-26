@@ -995,6 +995,32 @@ platformskorrekt adfærd + bund-overlap, ingen redesign):**
   konto, Push/E-mail-matricens mekanik, og selve scanningstogglernes
   funktion (kun deres hjælpetekst er ændret).
 
+### Scanner-flow finpudset — labels, dynamisk hjælpetekst, kamera-permission (28. sept. 2026)
+
+En omfattende "FINAL POLISH – SCANNER"-spec (16 punkter) — mål: gøre
+scanneren intuitiv/robust for førstegangsbrugere, ingen redesign af
+kamera-feed, EatSafe-stil eller bundnavigation. Ændringer i
+`ScannerScreen.jsx`/`useScanner.js`/`useProduct.js`: de tre svævende
+kamera-kontroller (Billede/Indtast/Lygte) fik korte tekst-labels under
+ikonerne (ny lokal `CamCtrlBtn`, ≥44×44pt touch-target); en dynamisk
+hjælpetekst under scanneren skifter fra "Placér hele stregkoden i
+rammen" til "Hold telefonen stille" efter 3s; et allerede-eksisterende
+men aldrig-renderet `showPhotoHint`-state (sat efter 5s uden et scan)
+bruges nu til en faldback-besked med klikbare Indtast/Billede-handlinger;
+zoom-indikatoren er adskilt fra hjælpeteksten og holdt bevidst let (ren
+information, ikke interaktiv); en ny `cameraPermissionDenied`-tilstand
+erstatter den ellers-stadig-klikbare "Scan produkt"-knap med et
+dedikeret "Kameraadgang er slået fra"-kort + fungerende Billede-/
+Indtast EAN-knapper, uden en fake "Åbn Indstillinger"-knap; en kort,
+ét-sætnings kamera-permission-primer vises kun første gang; manuel
+EAN-indtastning er gjort robust (kontrolleret, cifre-filtreret input,
+Søg deaktiveret ved forkert længde, to adskilte fejltekster for
+længde vs. checksum); og tre fejltekster er finpudset til spec'ens
+ordlyd (billede uden læsbar stregkode, netværksfejl). En reel
+`maxLength`-bug (talte rå tegn i stedet for cifre, kunne afskære sidste
+ciffer i en indsat formateret EAN) blev fundet af en Playwright-test og
+rettet. Fuld detalje i `.claude/HISTORY.md`.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
