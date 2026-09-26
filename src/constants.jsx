@@ -506,6 +506,73 @@ export const DIETS = [
   { id:"keto",        label:"Keto",          desc:"Lavt kulhydratindhold" },
 ];
 
+// Kostpræference-navne pr. sprog — til Madpas (26. sept. 2026, Madpas-
+// redesign: "Når brugeren vælger et andet sprog, skal hele madpasset
+// oversættes, inklusive navnene på ... diæter". DIETS.label ovenfor er kun
+// dansk; dansk selv læses direkte derfra (samme mønster som ALLERGEN_T,
+// der heller ikke har en separat "da"-nøgle), resten af sprogene her.
+export const DIET_T = {
+  vegan:        { en:"Vegan", de:"Vegan", fr:"Végane", es:"Vegano", it:"Vegano", nl:"Veganistisch", pt:"Vegano", pl:"Wegański", sv:"Vegansk", no:"Vegansk", ja:"ヴィーガン", zh:"纯素", ar:"نباتي صرف", tr:"Vegan", th:"วีแกน", el:"Βίγκαν" },
+  vegetarian:   { en:"Vegetarian", de:"Vegetarisch", fr:"Végétarien", es:"Vegetariano", it:"Vegetariano", nl:"Vegetarisch", pt:"Vegetariano", pl:"Wegetariański", sv:"Vegetarisk", no:"Vegetarisk", ja:"ベジタリアン", zh:"素食", ar:"نباتي", tr:"Vejetaryen", th:"มังสวิรัติ", el:"Χορτοφάγος" },
+  pescetarian:  { en:"Pescatarian", de:"Pescetarisch", fr:"Pescétarien", es:"Pescetariano", it:"Pescetariano", nl:"Pescotarisch", pt:"Pescetariano", pl:"Pescetariański", sv:"Pescetarian", no:"Pescetarianer", ja:"ペスカタリアン", zh:"鱼素者", ar:"نباتي يأكل السمك", tr:"Pesketaryen", th:"กินมังสวิรัติแบบทานปลาได้", el:"Πεσκεταριανός" },
+  "gluten-free":{ en:"Gluten-free", de:"Glutenfrei", fr:"Sans gluten", es:"Sin gluten", it:"Senza glutine", nl:"Glutenvrij", pt:"Sem glúten", pl:"Bezglutenowy", sv:"Glutenfri", no:"Glutenfri", ja:"グルテンフリー", zh:"无麸质", ar:"خالٍ من الغلوتين", tr:"Glutensiz", th:"ปราศจากกลูเตน", el:"Χωρίς γλουτένη" },
+  keto:         { en:"Keto", de:"Keto", fr:"Kéto", es:"Keto", it:"Cheto", nl:"Keto", pt:"Keto", pl:"Keto", sv:"Keto", no:"Keto", ja:"ケト", zh:"生酮", ar:"كيتو", tr:"Keto", th:"คีโต", el:"Κέτο" },
+};
+
+// Sektionsoverskrifter til Madpas' strukturerede tjener-visning/PDF (26.
+// sept. 2026) — grupperer efter type (allergi/intolerance/kost/E-numre) i
+// stedet for én generisk "kan ikke spise"-liste, se CLAUDE.md.
+export const MADPAS_SECTIONS_T = {
+  allergies:    { da:"Fødevareallergier", en:"Food allergies", de:"Lebensmittelallergien", fr:"Allergies alimentaires", es:"Alergias alimentarias", it:"Allergie alimentari", nl:"Voedselallergieën", pt:"Alergias alimentares", pl:"Alergie pokarmowe", sv:"Matallergier", no:"Matallergier", ja:"食物アレルギー", zh:"食物过敏", ar:"حساسية الطعام", tr:"Gıda alerjileri", th:"การแพ้อาหาร", el:"Τροφικές αλλεργίες" },
+  intolerances: { da:"Intolerancer",       en:"Intolerances", de:"Unverträglichkeiten", fr:"Intolérances", es:"Intolerancias", it:"Intolleranze", nl:"Intoleranties", pt:"Intolerâncias", pl:"Nietolerancje", sv:"Intoleranser", no:"Intoleranser", ja:"不耐症", zh:"不耐受", ar:"عدم التحمل", tr:"İntoleranslar", th:"การแพ้/ไม่ทนอาหาร", el:"Δυσανεξίες" },
+  diet:         { da:"Kost",               en:"Diet", de:"Ernährung", fr:"Régime", es:"Dieta", it:"Dieta", nl:"Dieet", pt:"Dieta", pl:"Dieta", sv:"Kost", no:"Kosthold", ja:"食事制限", zh:"饮食", ar:"النظام الغذائي", tr:"Diyet", th:"การกินอาหาร", el:"Δίαιτα" },
+  enumbers:     { da:"E-numre",            en:"E-numbers", de:"E-Nummern", fr:"Additifs (E)", es:"Aditivos (E)", it:"Additivi (E)", nl:"E-nummers", pt:"Aditivos (E)", pl:"Dodatki (E)", sv:"E-nummer", no:"E-nummer", ja:"添加物（E番号）", zh:"添加剂（E编号）", ar:"الإضافات (E)", tr:"Katkı maddeleri (E)", th:"สารเติมแต่ง (E)", el:"Πρόσθετα (E)" },
+};
+
+// Kort sikkerheds-sætning under selve allergi-listen (IKKE et langt,
+// høfligt afsnit — "Restaurantpersonalet skal kunne forstå hovedbudskabet
+// på få sekunder", se CLAUDE.md's Madpas-redesign-note). Vises kun under
+// FØDEVAREALLERGIER, ikke intolerancer/kost/E-numre.
+export const MADPAS_SAFETY_NOTE_T = {
+  da:"Sørg venligst for, at min mad ikke indeholder nogen af disse.",
+  en:"Please make sure my food does not contain any of these.",
+  de:"Bitte stellen Sie sicher, dass mein Essen keines davon enthält.",
+  fr:"Veuillez vous assurer que mon repas n'en contient aucun.",
+  es:"Por favor, asegúrese de que mi comida no contenga ninguno de estos.",
+  it:"Si prega di assicurarsi che il mio pasto non contenga nessuno di questi.",
+  nl:"Zorg er alstublieft voor dat mijn maaltijd geen van deze bevat.",
+  pt:"Por favor, certifique-se de que a minha refeição não contém nenhum destes.",
+  pl:"Proszę upewnić się, że moje jedzenie nie zawiera żadnego z tych składników.",
+  sv:"Vänligen se till att min måltid inte innehåller något av dessa.",
+  no:"Vennligst sørg for at måltidet mitt ikke inneholder noen av disse.",
+  ja:"私の食事にこれらが含まれないようにしてください。",
+  zh:"请确保我的餐食不含以上任何一种。",
+  ar:"يرجى التأكد من أن وجبتي لا تحتوي على أي من هذه العناصر.",
+  tr:"Lütfen yemeğimin bunlardan hiçbirini içermediğinden emin olun.",
+  th:"กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มีสิ่งเหล่านี้",
+  el:"Παρακαλώ βεβαιωθείτε ότι το γεύμα μου δεν περιέχει κανένα από αυτά.",
+};
+
+// "Jeg er allergisk over for:" / "Jeg tåler ikke:" — korte overskrifter
+// over selve chip-listen i hver sektion (erstatter den tidligere lange
+// "Hej! Jeg har ... og ønsker gerne din hjælp"-intro på selve kortet).
+export const MADPAS_ALLERGY_HEADLINE_T = {
+  da:"Jeg er allergisk over for:", en:"I am allergic to:", de:"Ich bin allergisch gegen:",
+  fr:"Je suis allergique à :", es:"Soy alérgico a:", it:"Sono allergico a:",
+  nl:"Ik ben allergisch voor:", pt:"Sou alérgico a:", pl:"Jestem uczulony na:",
+  sv:"Jag är allergisk mot:", no:"Jeg er allergisk mot:", ja:"アレルギーがあります：",
+  zh:"我对以下物质过敏：", ar:"أنا أعاني من الحساسية تجاه:", tr:"Şuna karşı alerjim var:",
+  th:"ฉันแพ้:", el:"Είμαι αλλεργικός/ή σε:",
+};
+export const MADPAS_INTOLERANCE_HEADLINE_T = {
+  da:"Jeg tåler ikke:", en:"I am intolerant to:", de:"Ich vertrage nicht:",
+  fr:"Je ne tolère pas :", es:"No tolero:", it:"Non tollero:",
+  nl:"Ik verdraag niet:", pt:"Não tolero:", pl:"Nie toleruję:",
+  sv:"Jag tål inte:", no:"Jeg tåler ikke:", ja:"不耐性があります：",
+  zh:"我不耐受：", ar:"لا أتحمل:", tr:"Şuna karşı hassasiyetim var:",
+  th:"ฉันไม่สามารถทานได้:", el:"Δεν ανέχομαι:",
+};
+
 export const AVATAR_COLORS = ["#52b788","#74c69d","#40916c","#b7e4c7","#2d6a4f","#95d5b2","#f4a261","#e76f51"];
 
 export const HOME_TIPS = [
@@ -547,6 +614,13 @@ export const MADPAS_LANGUAGES = [
 
 export const ALLERGEN_T = {
   gluten:      { en:{n:"Gluten",d:"Contains gluten (wheat, rye, barley, oats, spelt)"},de:{n:"Gluten",d:"Enthält Gluten (Weizen, Roggen, Gerste, Hafer, Dinkel)"},fr:{n:"Gluten",d:"Contient du gluten (blé, seigle, orge, avoine, épeautre)"},es:{n:"Gluten",d:"Contiene gluten (trigo, centeno, cebada, avena, espelta)"},it:{n:"Glutine",d:"Contiene glutine (frumento, segale, orzo, avena, farro)"},nl:{n:"Gluten",d:"Bevat gluten (tarwe, rogge, gerst, haver, spelt)"},pt:{n:"Glúten",d:"Contém glúten (trigo, centeio, cevada, aveia, espelta)"},pl:{n:"Gluten",d:"Zawiera gluten (pszenica, żyto, jęczmień, owies, orkisz)"},sv:{n:"Gluten",d:"Innehåller gluten (vete, råg, korn, havre, dinkel)"},no:{n:"Gluten",d:"Inneholder gluten (hvete, rug, bygg, havre, spelt)"},ja:{n:"グルテン",d:"グルテン含有（小麦・ライ麦・大麦・燕麦・スペルト小麦）"},zh:{n:"麸质",d:"含麸质（小麦、黑麦、大麦、燕麦、斯佩尔特小麦）"},ar:{n:"الغلوتين",d:"يحتوي على الغلوتين (قمح، جاودار، شعير، شوفان)"},tr:{n:"Gluten",d:"Gluten içerir (buğday, çavdar, arpa, yulaf, kavılca)"},th:{n:"กลูเตน",d:"มีกลูเตน (ข้าวสาลี, ข้าวไรย์, ข้าวบาร์เลย์, ข้าวโอ๊ต)"},el:{n:"Γλουτένη",d:"Περιέχει γλουτένη (σιτάρι, σίκαλη, κριθάρι, βρώμη, ζέα)"} },
+  // "hvede" og "maelkeallergi" manglede oprindeligt her (26. sept. 2026,
+  // Madpas-redesign — fundet og rettet: uden en "en" osv.-nøgle faldt
+  // koden tilbage til ALLERGENS' danske a.label, så et madpas på fx
+  // engelsk viste "Hvede" i stedet for "Wheat", mens resten af UI'et var
+  // korrekt oversat. Se madpasAllergenLabel() i useMadpas.js).
+  hvede:       { en:{n:"Wheat",d:"Contains wheat and wheat products"},de:{n:"Weizen",d:"Enthält Weizen und Weizenprodukte"},fr:{n:"Blé",d:"Contient du blé et des produits à base de blé"},es:{n:"Trigo",d:"Contiene trigo y productos a base de trigo"},it:{n:"Grano",d:"Contiene grano e prodotti a base di grano"},nl:{n:"Tarwe",d:"Bevat tarwe en tarweproducten"},pt:{n:"Trigo",d:"Contém trigo e produtos à base de trigo"},pl:{n:"Pszenica",d:"Zawiera pszenicę i produkty pszenne"},sv:{n:"Vete",d:"Innehåller vete och veteprodukter"},no:{n:"Hvete",d:"Inneholder hvete og hveteprodukter"},ja:{n:"小麦",d:"小麦および小麦製品を含む"},zh:{n:"小麦",d:"含有小麦和小麦制品"},ar:{n:"القمح",d:"يحتوي على القمح ومنتجاته"},tr:{n:"Buğday",d:"Buğday ve buğday ürünleri içerir"},th:{n:"ข้าวสาลี",d:"มีข้าวสาลีและผลิตภัณฑ์จากข้าวสาลี"},el:{n:"Σιτάρι",d:"Περιέχει σιτάρι και προϊόντα σιταριού"} },
+  maelkeallergi: { en:{n:"Milk",d:"Contains milk and milk products"},de:{n:"Milch",d:"Enthält Milch und Milchprodukte"},fr:{n:"Lait",d:"Contient du lait et des produits laitiers"},es:{n:"Leche",d:"Contiene leche y productos lácteos"},it:{n:"Latte",d:"Contiene latte e latticini"},nl:{n:"Melk",d:"Bevat melk en zuivelproducten"},pt:{n:"Leite",d:"Contém leite e laticínios"},pl:{n:"Mleko",d:"Zawiera mleko i produkty mleczne"},sv:{n:"Mjölk",d:"Innehåller mjölk och mjölkprodukter"},no:{n:"Melk",d:"Inneholder melk og melkeprodukter"},ja:{n:"牛乳",d:"牛乳および乳製品を含む"},zh:{n:"牛奶",d:"含有牛奶和乳制品"},ar:{n:"الحليب",d:"يحتوي على الحليب ومنتجاته"},tr:{n:"Süt",d:"Süt ve süt ürünleri içerir"},th:{n:"นม",d:"มีนมและผลิตภัณฑ์จากนม"},el:{n:"Γάλα",d:"Περιέχει γάλα και γαλακτοκομικά προϊόντα"} },
   laktose:     { en:{n:"Lactose / Dairy",d:"Contains milk and dairy products (lactose)"},de:{n:"Laktose / Milch",d:"Enthält Milch und Milchprodukte (Laktose)"},fr:{n:"Lactose / Lait",d:"Contient du lait et des produits laitiers (lactose)"},es:{n:"Lactosa / Lácteos",d:"Contiene leche y productos lácteos (lactosa)"},it:{n:"Lattosio / Latte",d:"Contiene latte e latticini (lattosio)"},nl:{n:"Lactose / Melk",d:"Bevat melk en zuivelproducten (lactose)"},pt:{n:"Lactose / Leite",d:"Contém leite e produtos lácteos (lactose)"},pl:{n:"Laktoza / Mleko",d:"Zawiera mleko i produkty mleczne (laktoza)"},sv:{n:"Laktos / Mjölk",d:"Innehåller mjölk och mjölkprodukter (laktos)"},no:{n:"Laktose / Melk",d:"Inneholder melk og meieriprodukter (laktose)"},ja:{n:"乳糖 / 乳製品",d:"牛乳および乳製品を含む（ラクトース）"},zh:{n:"乳糖 / 乳制品",d:"含有牛奶和乳制品（乳糖）"},ar:{n:"اللاكتوز / الألبان",d:"يحتوي على الحليب ومنتجات الألبان"},tr:{n:"Laktoz / Süt",d:"Süt ve süt ürünleri içerir (laktoz)"},th:{n:"แลคโตส / นม",d:"มีนมและผลิตภัณฑ์จากนม (แลคโตส)"},el:{n:"Λακτόζη / Γάλα",d:"Περιέχει γάλα και γαλακτοκομικά (λακτόζη)"} },
   aeg:         { en:{n:"Eggs",d:"Contains eggs and egg products"},de:{n:"Ei",d:"Enthält Eier und Eiprodukte"},fr:{n:"Œufs",d:"Contient des œufs et ovoproduits"},es:{n:"Huevos",d:"Contiene huevos y ovoproductos"},it:{n:"Uova",d:"Contiene uova e ovoprodotti"},nl:{n:"Eieren",d:"Bevat eieren en eiproducten"},pt:{n:"Ovos",d:"Contém ovos e produtos à base de ovos"},pl:{n:"Jaja",d:"Zawiera jaja i produkty na bazie jaj"},sv:{n:"Ägg",d:"Innehåller ägg och äggprodukter"},no:{n:"Egg",d:"Inneholder egg og eggprodukter"},ja:{n:"卵",d:"卵および卵製品を含む"},zh:{n:"鸡蛋",d:"含有鸡蛋和蛋制品"},ar:{n:"البيض",d:"يحتوي على البيض ومنتجاته"},tr:{n:"Yumurta",d:"Yumurta ve yumurta ürünleri içerir"},th:{n:"ไข่",d:"มีไข่และผลิตภัณฑ์จากไข่"},el:{n:"Αυγά",d:"Περιέχει αυγά και προϊόντα αυγών"} },
   noedder:     { en:{n:"Tree Nuts",d:"Contains nuts (almonds, hazelnuts, walnuts, cashews, pistachios etc.)"},de:{n:"Schalenfrüchte",d:"Enthält Nüsse (Mandeln, Haselnüsse, Walnüsse, Cashews, Pistazien usw.)"},fr:{n:"Fruits à coque",d:"Contient des fruits à coque (amandes, noisettes, noix, cajou, pistaches, etc.)"},es:{n:"Frutos secos",d:"Contiene frutos secos (almendras, avellanas, nueces, anacardos, pistachos, etc.)"},it:{n:"Frutta a guscio",d:"Contiene frutta a guscio (mandorle, nocciole, noci, anacardi, pistacchi ecc.)"},nl:{n:"Noten",d:"Bevat noten (amandelen, hazelnoten, walnoten, cashewnoten, pistachenoten, etc.)"},pt:{n:"Frutos de casca rija",d:"Contém frutos de casca rija (amêndoas, avelãs, nozes, cajus, pistáchios, etc.)"},pl:{n:"Orzechy",d:"Zawiera orzechy (migdały, orzechy laskowe, włoskie, nerkowce, pistacje itp.)"},sv:{n:"Nötter",d:"Innehåller nötter (mandlar, hasselnötter, valnötter, cashewnötter, pistaschnötter m.fl.)"},no:{n:"Nøtter",d:"Inneholder nøtter (mandler, hasselnøtter, valnøtter, cashewnøtter, pistasjnøtter m.fl.)"},ja:{n:"ナッツ類",d:"ナッツ類含有（アーモンド・ヘーゼルナッツ・クルミ・カシューナッツ・ピスタチオ等）"},zh:{n:"坚果",d:"含有坚果（杏仁、榛子、核桃、腰果、开心果等）"},ar:{n:"المكسرات",d:"يحتوي على المكسرات (اللوز، البندق، الجوز، الكاجو، الفستق)"},tr:{n:"Kabuklu Yemişler",d:"Kabuklu yemiş içerir (badem, fındık, ceviz, kaju, antep fıstığı vb.)"},th:{n:"ถั่วต้นไม้",d:"มีถั่ว (อัลมอนด์, เฮเซลนัท, วอลนัท, มะม่วงหิมพานต์, พิสตาชิโอ)"},el:{n:"Ξηροί καρποί",d:"Περιέχει ξηρούς καρπούς (αμύγδαλα, φουντούκια, καρύδια, κάσιους, φιστίκια)"} },

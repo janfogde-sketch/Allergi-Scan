@@ -81,7 +81,7 @@ src/
 ├── OnboardingScreen.jsx      # WELCOME, LOGIN, ONBOARD
 ├── KnowledgeScreen.jsx       # KNOWLEDGE — Leksikon
 ├── RecipesScreen.jsx         # RECIPES — opskrifter (gradient header)
-├── MadpasScreen.jsx          # MADPAS (17 sprog) — QR-kode + del-link
+├── MadpasScreen.jsx          # MADPAS (17 sprog) — strukturerede sektioner, QR/del-link (madpas_links)
 ├── AdminScreen.jsx           # Mobil admin-panel (via ProfileScreen)
 │                             #   Tabs: Dashboard, Brugere, Indsendelser, Tickets,
 │                             #         Debug, Manglende, Import
@@ -111,6 +111,7 @@ src/
 └── — Statiske sider (public/) —
     privacy.html              # Privatlivspolitik på eatsafe.dk/privacy
     invite.html               # Familie-invitation på eatsafe.dk/invite/[token]
+    madpas-view.html          # Offentlig madpas-visning på eatsafe.dk/madpas/[token]
 ```
 
 ---
@@ -311,11 +312,51 @@ yderligere handling ventende.
 
 ---
 
-## 10. Madpas QR-kode
+## 10. Madpas (26. sept. 2026 — redesignet og gjort reelt funktionsdygtigt)
 
-- **QR:** Allergen-tekst kodet direkte ind via `api.qrserver.com` — virker offline og i udlandet
-- **Link:** `eatsafe.dk/madpas/[userId]` — offentlig webside som backup
-- **Offline fallback:** Tekst-boks med allergennavne vises hvis QR API er utilgængeligt
+Madpas' formål: en tjener/ekspedient i udlandet skal kunne forstå de
+vigtigste kost-/allergioplysninger på få sekunder — strukturerede sektioner
+(fødevareallergier/intolerancer/kost/E-numre, se `ALLERGENS[].type` for
+allergi/intolerance-skellet), ikke én generisk liste, og en madpas der
+altid afspejler den VALGTE profils AKTUELLE data (også kostpræferencer/
+E-numre for et familiemedlem — fulgte tidligere fejlagtigt altid den
+loggede bruger selv, rettet i App.jsx/useMadpas.js).
+
+**Oversættelses-hul fundet og rettet:** `ALLERGEN_T` (per-sprogs allergen-
+navne, `src/constants.jsx`) manglede `hvede`/`maelkeallergi` helt — uden en
+sprog-nøgle faldt visningen tilbage til `ALLERGENS`' DANSKE `a.label`,
+selv når madpasset var sat til fx engelsk. `madpasAllergenLabel()`/
+`madpasDietLabel()` (useMadpas.js) er de fælles hjælpefunktioner, der
+korrekt prioriterer `lang==="da" ? a.label : ALLERGEN_T[...]` — brug dem
+ved fremtidige Madpas-ændringer i stedet for at genopfinde faldback-logikken.
+
+**Delings-link (madpas_links-tabellen + get_madpas_by_token()-RPC):**
+- Linket var TIDLIGERE bare `eatsafe.dk/madpas/[userId]` — en URL uden
+  NOGEN offentlig visning bag sig overhovedet (fundet under dette
+  redesign: besøgende landede bare på den almindelige app/login-væg). Nu
+  et rigtigt, tilbagekaldeligt token pr. (bruger, profil)-par.
+- **Tabel:** `madpas_links` (id, user_id, profile_ref ["self" eller et
+  family_members-id], lang, token, status ["active"/"revoked"],
+  created_at). RLS: kun ejeren (`user_id = auth.uid()`) kan SELECT/INSERT/
+  UPDATE egen række — ingen offentlig SELECT-policy.
+- **Offentlig læsning:** `get_madpas_by_token(p_token)`, en SECURITY
+  DEFINER RPC (samme mønster som `get_invite_preview` for family_invites)
+  — slår token op, tjekker `status='active'`, og returnerer navn +
+  allergener/custom/diæter/E-numre for enten brugeren selv eller den
+  angivne administrerede profil. Callable af `anon` (verificeret via
+  `has_function_privilege`).
+- **Offentlig side:** `public/madpas-view.html` — selvstændig statisk
+  side (samme vanilla-JS-mønster som `invite.html`, ingen Vite-build).
+  Indeholder en BEVIDST duplikeret delmængde af oversættelses-data
+  (ALLERGENS, ALLERGEN_T-navne, DIET_T, MADPAS_LANGUAGES,
+  MADPAS_SECTIONS_T m.fl.) — samme accepterede duplikerings-mønster som
+  `src/allergenKeywords.js` vs. `supabase/functions/allergens/index.ts`.
+  Opdatér BEGGE steder hvis disse oversættelser ændres. Ruten
+  `/madpas/:token` rewrites til denne fil (`vercel.json`).
+- **Deaktiver/generér nyt link:** "Deaktiver link" sætter `status=
+  'revoked'` på den aktive række; "Generér nyt link" gør det samme og
+  opretter en ny — det gamle link stopper øjeblikkeligt med at virke
+  (RPC'en filtrerer på `status='active'`).
 
 ---
 

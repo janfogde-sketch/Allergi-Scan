@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/invite/:token", "destination": "/invite.html" },
+    { "source": "/madpas/:token", "destination": "/madpas-view.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

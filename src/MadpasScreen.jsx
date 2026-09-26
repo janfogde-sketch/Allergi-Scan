@@ -1,33 +1,132 @@
 // @ts-nocheck
-import React, { useState } from "react";
-import { ALLERGENS, SCREENS, MADPAS_LANGUAGES, ALLERGEN_T, MADPAS_INTRO, ALLERGEN_EXAMPLES, DIETS } from "./constants.jsx";
-import { initials, getAllergenLabels } from "./helpers.js";
-import { Icon } from "./SharedComponents.jsx";
+import React, { useState, useEffect } from "react";
+import { ALLERGENS, SCREENS, MADPAS_LANGUAGES, MADPAS_SECTIONS_T, MADPAS_SAFETY_NOTE_T, MADPAS_ALLERGY_HEADLINE_T, MADPAS_INTOLERANCE_HEADLINE_T, SUPABASE_URL } from "./constants.jsx";
+import { initials, makeHeaders, apiCall } from "./helpers.js";
+import { Icon, showToast } from "./SharedComponents.jsx";
+import { madpasAllergenLabel, madpasDietLabel } from "./useMadpas.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { UI } from "./styleUtils.js";
 
+// ── Madpas-redesign (26. sept. 2026) ────────────────────────────────────────
+// Målet: en tjener/ekspedient i udlandet skal kunne forstå de vigtigste
+// kost-/allergioplysninger på FÅ SEKUNDER. Det betyder: strukturerede
+// sektioner efter type (allergi/intolerance/kost/E-numre) i stedet for én
+// generisk "kan ikke spise"-liste, ekstrem læsbarhed i tjener-visningen
+// (stort sprog/flag, stor tekst, ingen dekorativ baggrund), og et madpas der
+// ALTID afspejler den valgte profils AKTUELLE data — inkl. kostpræferencer
+// og E-numre, som tidligere fejlagtigt altid fulgte den loggede bruger selv
+// uanset hvilken profil der var valgt (rettet i App.jsx/useMadpas.js, se
+// mpDiets/mpENumbers).
+//
+// Delings-linket (QR/kopiér) er nu et RIGTIGT, tilbagekaldeligt token
+// (madpas_links-tabellen + get_madpas_by_token()-RPC'en, se
+// src/CONTEXT.md) — det var tidligere bare `eatsafe.dk/madpas/<userId>`,
+// en URL der ikke gjorde noget som helst, fordi der ingen offentlig
+// visning fandtes for den (fundet under dette redesign). Den offentlige
+// side, modtageren rent faktisk ser, er public/madpas-view.html.
 export default function MadpasScreen({
   madpasLang, setMadpasLang,
   madpasProfileId, setMadpasProfileId,
   madpasSpeaking, setMadpasSpeaking,
   madpasBig,
   madpasWaiterView, setMadpasWaiterView,
-  mpAllergens, mpCustom,
+  mpAllergens, mpCustom, mpDiets, mpENumbers,
   langOpen, setLangOpen,
   madpasSpeak,
-
-  selectedENumbers,
 }) {
-  const { user, userId } = useAuthContext();
+  const { user, userId, accessToken } = useAuthContext();
   const { family } = useProfileContext();
   const { screen } = useNavigationContext();
-  const shareUrl = userId ? `https://eatsafe.dk/madpas/${userId}` : null;
+
+  const profileRef = madpasProfileId === "self" ? "self" : madpasProfileId;
+
+  // ── Delbart link (madpas_links) ─────────────────────────────────────────
+  // Hentes/oprettes automatisk pr. valgt profil, så QR/kopiér-sektionen
+  // virker med det samme uden en ekstra "opret link"-handling — men er nu
+  // et rigtigt, tilbagekaldeligt token i stedet for den tidligere faste,
+  // aldrig-fungerende userId-baserede URL.
+  const [madpasLinkToken, setMadpasLinkToken] = useState(null);
+  const [madpasLinkLoading, setMadpasLinkLoading] = useState(false);
+
+  useEffect(() => {
+    if (!userId || !accessToken) return;
+    let cancelled = false;
+    setMadpasLinkToken(null);
+    setMadpasLinkLoading(true);
+    (async () => {
+      try {
+        const rows = await apiCall(
+          `${SUPABASE_URL}/rest/v1/madpas_links?user_id=eq.${userId}&profile_ref=eq.${encodeURIComponent(profileRef)}&status=eq.active&order=created_at.desc&limit=1`,
+          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+        );
+        if (cancelled) return;
+        if (Array.isArray(rows) && rows[0]) { setMadpasLinkToken(rows[0].token); return; }
+        const created = await apiCall(`${SUPABASE_URL}/rest/v1/madpas_links`, {
+          method: "POST",
+          headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+          body: JSON.stringify({ user_id: userId, profile_ref: profileRef, lang: madpasLang }),
+        });
+        if (!cancelled && Array.isArray(created) && created[0]) setMadpasLinkToken(created[0].token);
+      } catch { /* del-sektionen skjules blot hvis linket ikke kunne hentes/oprettes */ }
+      finally { if (!cancelled) setMadpasLinkLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [userId, accessToken, profileRef]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Holder linkets gemte sprog nogenlunde friskt (bruges kun som den
+  // offentlige sides STANDARDsprog — modtageren kan altid selv skifte det).
+  useEffect(() => {
+    if (!madpasLinkToken || !accessToken) return;
+    apiCall(`${SUPABASE_URL}/rest/v1/madpas_links?token=eq.${madpasLinkToken}`, {
+      method: "PATCH", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+      body: JSON.stringify({ lang: madpasLang }),
+    }).catch(() => {});
+  }, [madpasLang]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const regenerateLink = async () => {
+    setMadpasLinkLoading(true);
+    try {
+      if (madpasLinkToken) {
+        await apiCall(`${SUPABASE_URL}/rest/v1/madpas_links?token=eq.${madpasLinkToken}`, {
+          method: "PATCH", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+          body: JSON.stringify({ status: "revoked" }),
+        });
+      }
+      const created = await apiCall(`${SUPABASE_URL}/rest/v1/madpas_links`, {
+        method: "POST", headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+        body: JSON.stringify({ user_id: userId, profile_ref: profileRef, lang: madpasLang }),
+      });
+      setMadpasLinkToken(Array.isArray(created) && created[0] ? created[0].token : null);
+      showToast("Nyt link oprettet — det gamle virker ikke længere");
+    } catch {
+      showToast("Kunne ikke generere nyt link. Prøv igen.", "error");
+    }
+    setMadpasLinkLoading(false);
+  };
+
+  const deactivateLink = async () => {
+    if (!madpasLinkToken) return;
+    setMadpasLinkLoading(true);
+    try {
+      await apiCall(`${SUPABASE_URL}/rest/v1/madpas_links?token=eq.${madpasLinkToken}`, {
+        method: "PATCH", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+        body: JSON.stringify({ status: "revoked" }),
+      });
+      setMadpasLinkToken(null);
+      showToast("Linket er deaktiveret");
+    } catch {
+      showToast("Kunne ikke deaktivere linket. Prøv igen.", "error");
+    }
+    setMadpasLinkLoading(false);
+  };
+
+  const shareUrl = madpasLinkToken ? `https://eatsafe.dk/madpas/${madpasLinkToken}` : null;
   const qrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shareUrl)}&bgcolor=0d1f12&color=4ADE80&qzone=2` : null;
-  const [qrError, setQrError] = React.useState(false);
-  const [copied, setCopied] = React.useState(false);
-  const [qrOpen, setQrOpen] = React.useState(false);
+  const [qrError, setQrError] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   const copyLink = () => {
     if (!shareUrl) return;
     navigator.clipboard?.writeText(shareUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
@@ -50,126 +149,130 @@ export default function MadpasScreen({
     }, 1000);
   };
 
+  // ── Grupperede oplysninger efter type — fælles for preview, tjener-
+  // visning og PDF, så alle tre altid viser præcis det samme (26. sept.
+  // 2026). ALLERGENS.type ("allergi"/"intolerance") styrer grupperingen —
+  // fritekst-tilføjelser ("Skriv selv") kan ikke kategoriseres og lægges i
+  // allergi-sektionen som den mest forsigtige antagelse.
+  const buildGroups = (lang) => {
+    const allergenItems = mpAllergens.map(id => ALLERGENS.find(a => a.id === id)).filter(Boolean);
+    return {
+      allergyItems: allergenItems.filter(a => a.type === "allergi"),
+      intoleranceItems: allergenItems.filter(a => a.type === "intolerance"),
+      customItems: (mpCustom || []).filter(c => typeof c === "string" && !mpAllergens.includes(c)),
+      dietItems: (mpDiets || []).map(id => ({ id, label: madpasDietLabel(id, lang) })).filter(x => x.label),
+      eNumberItems: mpENumbers || [],
+    };
+  };
+
   const renderWaiterView = () => {
     const lang = madpasLang;
     const rtl = MADPAS_LANGUAGES.find(l => l.code === lang)?.rtl;
-    const allergenCount = mpAllergens.length + (mpCustom?.length || 0);
     const langInfo = MADPAS_LANGUAGES.find(l => l.code === lang);
+    const { allergyItems, intoleranceItems, customItems, dietItems, eNumberItems } = buildGroups(lang);
 
-    const s = { fontSize:17, fontWeight:400, color:"var(--ink)", margin:"0 0 16px", lineHeight:1.7, display:"block" };
-    const sIntro = { ...s, margin:"0 0 32px" };
-    const lines = [];
-
-    // Intro
-    const introText = {
-      da: allergenCount === 1 ? "Hej! Jeg har en fødevareallergi og ønsker gerne din hjælp til at finde noget, jeg kan spise trygt." : "Hej! Jeg har fødevareallergier og ønsker gerne din hjælp til at finde noget, jeg kan spise trygt.",
-      en: "Hi! I have some food allergies and would love your help finding something safe for me to eat.",
-      de: "Hallo! Ich habe einige Lebensmittelallergien und würde mich über Ihre Hilfe freuen.",
-      fr: "Bonjour ! J'ai des allergies alimentaires et j'aurais besoin de votre aide.",
-      es: "¡Hola! Tengo algunas alergias alimentarias y agradecería su ayuda.",
-      it: "Ciao! Ho alcune allergie alimentari e apprezzerei il suo aiuto.",
-      nl: "Hallo! Ik heb wat voedselallergieën en zou graag uw hulp willen.",
-      pt: "Olá! Tenho algumas alergias alimentares e gostaria da sua ajuda.",
-      pl: "Cześć! Mam kilka alergii pokarmowych i chciałbym prosić o pomoc.",
-      sv: "Hej! Jag har några matallergier och skulle uppskatta din hjälp.",
-      no: "Hei! Jeg har noen matallergier og ønsker gjerne din hjelp.",
-      ja: "こんにちは！食物アレルギーがあります。安全な食事を見つけるお手伝いをお願いできますか。",
-      zh: "您好！我有食物过敏，希望您能帮助我找到安全的食物。",
-      ar: "مرحباً! لدي بعض الحساسية الغذائية وأود مساعدتك في إيجاد شيء آمن لي.",
-      tr: "Merhaba! Gıda alerjilerim var ve güvenli bir şey bulmam için yardımınıza ihtiyacım var.",
-      el: "Γεια σας! Έχω κάποιες αλλεργίες τροφίμων και θα εκτιμούσα τη βοήθειά σας.",
-    };
-    lines.push(<span key="hello" style={sIntro}>{introText[lang] || introText.en}</span>);
-
-    // Allergener
-    [...mpAllergens, ...mpCustom.filter(c => !c.endsWith("_intolerance") && !mpAllergens.includes(c))].forEach((item, i) => {
-      if (typeof item !== "string") return;
-      const a = ALLERGENS.find(x => x.id === item);
-      const label = a ? (ALLERGEN_T[item]?.[lang]?.n || ALLERGEN_T[item]?.en?.n || a.label) : item;
-      const ex = a ? ALLERGEN_EXAMPLES[item] : null;
-      const exProducts = ex?.products?.[lang] || ex?.products?.en || [];
-      const exIngredients = ex?.ingredients?.[lang] || ex?.ingredients?.en || [];
-      const exText = [
-        exProducts.slice(0,3).join(", "),
-        exIngredients.slice(0,4).join(", ")
-      ].filter(Boolean).join(" · ");
-
-      const cannotText = {
-        da:"Jeg har allergi over for", en:"I cannot eat", de:"Ich kann nicht essen",
-        fr:"Je ne peux pas manger", es:"No puedo comer", it:"Non posso mangiare",
-        nl:"Ik kan niet eten", pt:"Não posso comer", pl:"Nie mogę jeść",
-        sv:"Jag kan inte äta", no:"Jeg kan ikke spise", ja:"食べられません",
-        zh:"我不能吃", ar:"لا أستطيع تناول", tr:"Yiyemiyorum", el:"Δεν μπορώ να φάω",
-      };
-      lines.push(
-        <span key={`a${i}`} style={s}>
-          {i === 0 ? (cannotText[lang] || cannotText.en) + ": " : ""}{label}{exText ? ` (${exText})` : ""}
-        </span>
-      );
-    });
-
-    // Diæt
-    if (user.diets && user.diets.length > 0) {
-      const dietNames = user.diets.map(d => DIETS.find(x=>x.id===d)?.label).filter(Boolean).join(", ");
-      lines.push(<span key="diet" style={s}>{dietNames}</span>);
-    }
-
-    // E-numre
-    if (selectedENumbers && selectedENumbers.length > 0) {
-      lines.push(<span key="enum" style={s}>{selectedENumbers.join(", ")}</span>);
-    }
-
-    // Hjælp
-    const outroText = {
-      da: "Tak for din hjælp — det betyder rigtig meget for mig.",
-      en: "Thank you so much for your help — it means a lot to me.",
-      de: "Vielen Dank für Ihre Hilfe — das bedeutet mir sehr viel.",
-      fr: "Merci beaucoup pour votre aide — cela compte beaucoup pour moi.",
-      es: "Muchas gracias por su ayuda — significa mucho para mí.",
-      it: "Grazie mille per il suo aiuto — significa molto per me.",
-      nl: "Heel erg bedankt voor uw hulp — dat betekent veel voor mij.",
-      pt: "Muito obrigado pela sua ajuda — significa muito para mim.",
-      pl: "Bardzo dziękuję za pomoc — wiele dla mnie znaczy.",
-      sv: "Tack så mycket för din hjälp — det betyder mycket för mig.",
-      no: "Tusen takk for hjelpen — det betyr mye for meg.",
-      ja: "ご協力ありがとうございます。本当に助かります。",
-      zh: "非常感谢您的帮助，对我来说意义重大。",
-      ar: "شكراً جزيلاً على مساعدتك — هذا يعني لي الكثير.",
-      tr: "Yardımınız için çok teşekkür ederim — bu benim için çok şey ifade ediyor.",
-      el: "Σας ευχαριστώ πολύ για τη βοήθειά σας — σημαίνει πολλά για μένα.",
-    };
-    lines.push(<span key="help" style={{ ...s, marginTop:8 }}>{outroText[lang] || outroText.en}</span>);
+    const sectionLbl = { fontSize:15, fontWeight:800, textTransform:"uppercase", letterSpacing:"1px", color:"var(--muted)", marginBottom:10 };
+    const headline = { fontSize:19, fontWeight:700, color:"var(--ink)", marginBottom:14 };
+    const itemRow = { display:"flex", alignItems:"center", gap:14, padding:"14px 0", borderBottom:"1px solid var(--border)" };
+    const itemName = { fontSize:26, fontWeight:800, color:"var(--ink)", lineHeight:1.25 };
 
     return (
       <div style={{ position:"fixed", inset:0, zIndex:9999, background:"var(--paper)", display:"flex", flexDirection:"column" }} dir={rtl ? "rtl" : "ltr"}>
 
-        {/* Header — sprog + kryds */}
-        <div style={{ padding:"14px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid var(--border)", flexShrink:0 }}>
-          <div style={UI.udflex_aicenter_g8}>
-            <span style={UI.fs20}>{langInfo?.flag}</span>
-            <span style={{ fontSize:13, color:"var(--muted)", fontWeight:600 }}>{langInfo?.name}</span>
+        {/* Stort flag/sprog øverst + luk (krav 5: "stort sprog/flag øverst",
+            "ingen unødvendige knapper" — kun luk, ingen anden chrome). */}
+        <div style={{ padding:"22px 24px 18px", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+            <span style={{ fontSize:44, lineHeight:1 }}>{langInfo?.flag}</span>
+            <span style={{ fontSize:17, color:"var(--ink2)", fontWeight:700 }}>{langInfo?.name}</span>
           </div>
           <button onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }} aria-label="Luk"
-            style={{ background:"none", border:"none", padding:8, margin:-4, cursor:"pointer" }}>
-            <Icon name="x" size={22} color="var(--ink2)" />
+            style={{ background:"var(--surface2)", border:"none", borderRadius:"50%", width:40, height:40, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>
+            <Icon name="x" size={20} color="var(--ink2)" />
           </button>
         </div>
 
-        {/* Indhold — fuldstændig ensartet tekst */}
-        <div style={{ flex:1, overflowY:"auto", padding:"32px 28px" }}>
-          {lines}
+        {/* Strukturerede sektioner — ingen lang høflighedstekst der skubber
+            budskabet ned (krav 7), kun ægte indhold. */}
+        <div style={{ flex:1, overflowY:"auto", padding:"4px 24px 32px" }}>
+          {(allergyItems.length > 0 || customItems.length > 0) && (
+            <div style={{ marginBottom:32 }}>
+              <div style={sectionLbl}>{MADPAS_SECTIONS_T.allergies[lang] || MADPAS_SECTIONS_T.allergies.en}</div>
+              <div style={headline}>{MADPAS_ALLERGY_HEADLINE_T[lang] || MADPAS_ALLERGY_HEADLINE_T.en}</div>
+              <div>
+                {allergyItems.map((a,i) => (
+                  <div key={a.id} style={{ ...itemRow, borderBottom: (i===allergyItems.length-1 && customItems.length===0) ? "none" : itemRow.borderBottom }}>
+                    <span style={UI.fs20}>{a.emoji}</span>
+                    <span style={itemName}>{madpasAllergenLabel(a, lang)}</span>
+                  </div>
+                ))}
+                {customItems.map((c,i) => (
+                  <div key={`c${i}`} style={{ ...itemRow, borderBottom: i===customItems.length-1 ? "none" : itemRow.borderBottom }}>
+                    <Icon name="warning" size={20} color="var(--amber)" />
+                    <span style={itemName}>{c}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize:15, fontWeight:600, color:"var(--ink2)", marginTop:14, lineHeight:1.5 }}>
+                {MADPAS_SAFETY_NOTE_T[lang] || MADPAS_SAFETY_NOTE_T.en}
+              </div>
+            </div>
+          )}
+
+          {intoleranceItems.length > 0 && (
+            <div style={{ marginBottom:32 }}>
+              <div style={sectionLbl}>{MADPAS_SECTIONS_T.intolerances[lang] || MADPAS_SECTIONS_T.intolerances.en}</div>
+              <div style={headline}>{MADPAS_INTOLERANCE_HEADLINE_T[lang] || MADPAS_INTOLERANCE_HEADLINE_T.en}</div>
+              <div>
+                {intoleranceItems.map((a,i) => (
+                  <div key={a.id} style={{ ...itemRow, borderBottom: i===intoleranceItems.length-1 ? "none" : itemRow.borderBottom }}>
+                    <span style={UI.fs20}>{a.emoji}</span>
+                    <span style={itemName}>{madpasAllergenLabel(a, lang)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {dietItems.length > 0 && (
+            <div style={{ marginBottom:32 }}>
+              <div style={sectionLbl}>{MADPAS_SECTIONS_T.diet[lang] || MADPAS_SECTIONS_T.diet.en}</div>
+              <div style={UI.udflex_flewrap_g8}>
+                {dietItems.map(d => (
+                  <div key={d.id} style={{ padding:"10px 18px", borderRadius:100, background:"var(--green-selected-bg)", border:"1px solid var(--border)", fontSize:17, fontWeight:700, color:"var(--ink)" }}>
+                    {d.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {eNumberItems.length > 0 && (
+            <div>
+              <div style={sectionLbl}>{MADPAS_SECTIONS_T.enumbers[lang] || MADPAS_SECTIONS_T.enumbers.en}</div>
+              <div style={UI.udflex_flewrap_g8}>
+                {eNumberItems.map((e,i) => (
+                  <div key={i} style={{ padding:"10px 18px", borderRadius:100, background:"var(--surface2)", border:"1px solid var(--border)", fontSize:17, fontWeight:700, color:"var(--ink)" }}>
+                    {e}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Footer */}
-        <div style={{ padding:"12px 24px 28px", borderTop:"1px solid var(--border)", flexShrink:0, display:"flex", justifyContent:"flex-end" }}>
+        {/* Footer — kun oplæs-knappen (reel funktion, ikke dekoration) +
+            diskret branding/dato. */}
+        <div style={{ padding:"12px 24px 28px", borderTop:"1px solid var(--border)", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <span style={{ fontSize:11, color:"var(--muted)" }}>EatSafe · {new Date().toLocaleDateString("da-DK")}</span>
           {window.speechSynthesis && (
             <button onClick={madpasSpeak} style={{
               background: madpasSpeaking ? "var(--amber)" : "var(--green)",
               border:"none", borderRadius:8, padding:"8px 16px", fontSize:13, fontWeight:700,
-              color:"var(--ink)", cursor:"pointer", fontFamily:"var(--f)",
+              color:"var(--on-green)", cursor:"pointer", fontFamily:"var(--f)",
               display:"flex", alignItems:"center", gap:8,
             }}>
-              <Icon name={madpasSpeaking ? "speakerOff" : "speaker"} size={15} color="var(--ink)" />
+              <Icon name={madpasSpeaking ? "speakerOff" : "speaker"} size={15} color="var(--on-green)" />
               {madpasSpeaking ? "Stop" : "Oplæs"}
             </button>
           )}
@@ -178,42 +281,157 @@ export default function MadpasScreen({
     );
   };
 
-  const renderAllergenList = () => {
+  const renderCompactPreview = () => {
+    const lang = madpasLang;
+    const { allergyItems, intoleranceItems, customItems, dietItems, eNumberItems } = buildGroups(lang);
+    const dietStyle = { background:"var(--green-selected-bg)", borderColor:"var(--border)", color:"var(--ink2)" };
+    const enumberStyle = { background:"var(--surface2)", borderColor:"var(--border)", color:"var(--ink2)" };
+    return (
+      <div style={UI.mb14}>
+        <div className="mp-section-lbl">Dit madpas</div>
+        <div className="tags">
+          {allergyItems.map(a => <div key={a.id} className="tag">{a.emoji} {madpasAllergenLabel(a, lang)}</div>)}
+          {intoleranceItems.map(a => <div key={a.id} className="tag">{a.emoji} {madpasAllergenLabel(a, lang)}</div>)}
+          {customItems.map((c,i) => <div key={`c${i}`} className="tag">{c}</div>)}
+          {dietItems.map(d => <div key={d.id} className="tag" style={dietStyle}>{d.label}</div>)}
+          {eNumberItems.map((e,i) => <div key={i} className="tag" style={enumberStyle}>{e}</div>)}
+        </div>
+      </div>
+    );
+  };
+
+  const renderShareSection = () => (
+    <div style={{ marginTop:16, background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:16, overflow:"hidden", boxShadow:"var(--sh)" }}>
+      {/* Header */}
+      <div style={{ padding:"12px 16px", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", gap:8 }}>
+        <Icon name="package" size={16} color="var(--ink2)" />
+        <div>
+          <div style={UI.boldInk13}>Del dit madpas</div>
+          <div style={UI.muted11mt1}>Modtageren kan åbne madpasset i sin browser uden at installere EatSafe</div>
+        </div>
+      </div>
+
+      {!shareUrl && (
+        <div style={{ padding:16, fontSize:12, color:"var(--muted)" }}>
+          {madpasLinkLoading ? "Opretter link…" : "Intet aktivt link."}
+          {!madpasLinkLoading && (
+            <button onClick={regenerateLink} style={{ marginLeft:8, background:"none", border:"none", color:"var(--green)", fontWeight:700, fontFamily:"var(--f)", fontSize:12, cursor:"pointer", padding:0 }}>
+              Opret nyt link
+            </button>
+          )}
+        </div>
+      )}
+
+      {shareUrl && (
+        <>
+          {/* QR popup — fullscreen overlay */}
+          {qrOpen && (
+            <div onClick={() => setQrOpen(false)}
+              style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.85)",
+                display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:32 }}>
+              <div onClick={e => e.stopPropagation()}
+                style={{ background:"var(--sheet)", borderRadius:24, padding:"28px 24px", maxWidth:320, width:"100%", textAlign:"center" }}>
+                <div style={{ fontSize:13, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:4 }}>Dit madpas</div>
+                <div style={{ fontSize:11, color:"var(--muted)", marginBottom:20, lineHeight:1.5 }}>
+                  Bed tjeneren om at scanne denne QR-kode med sin telefon — så åbner dit madpas direkte i deres browser uden at de behøver installere noget.
+                </div>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(shareUrl)}&bgcolor=ffffff&color=0d3320&qzone=2`}
+                  alt="QR-kode til madpas"
+                  width={220} height={220}
+                  style={{ borderRadius:16, border:"3px solid var(--green-mid)", display:"block", margin:"0 auto 20px" }}
+                />
+                <button onClick={() => setQrOpen(false)}
+                  style={{ width:"100%", padding:"12px", borderRadius:12, background:"var(--green)", border:"none",
+                    fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer", boxShadow:"0 2px 12px rgba(14,143,90,.25)" }}>
+                  Luk
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* QR + knapper side om side — INGEN rå URL vist som dominerende
+              element (krav 8), kun QR + Kopiér + Del. */}
+          <div style={{ padding:"16px", display:"flex", gap:16, alignItems:"center" }}>
+            <div style={UI.shrink0}>
+              {!qrError ? (
+                <div onClick={() => setQrOpen(true)} style={{ cursor:"pointer", position:"relative" }}>
+                  <img
+                    src={qrUrl}
+                    alt="QR-kode til madpas"
+                    width={100} height={100}
+                    onError={() => setQrError(true)}
+                    style={{ borderRadius:10, display:"block", border:"2px solid rgba(14,143,90,.2)" }}
+                  />
+                </div>
+              ) : (
+                <div style={{ width:100, height:100, borderRadius:10, background:"var(--surface)", border:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, color:"var(--muted)", textAlign:"center", padding:8 }}>
+                  QR ikke tilgængelig
+                </div>
+              )}
+              <div style={{ fontSize:9, color:"var(--muted)", textAlign:"center", marginTop:6, fontWeight:600 }}>
+                Tryk for at forstørre
+              </div>
+            </div>
+
+            <div style={{ ...UI.flexMin, display:"flex", flexDirection:"column", gap:8 }}>
+              <button onClick={copyLink}
+                style={{ width:"100%", padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)",
+                  background: copied ? "var(--green-lt)" : "var(--surface)",
+                  fontFamily:"var(--f)", fontSize:12, fontWeight:700,
+                  color: copied ? "var(--green)" : "var(--ink2)", cursor:"pointer",
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:6, transition:"all .2s" }}>
+                <Icon name={copied ? "check" : "link"} size={13} color={copied ? "var(--green)" : "var(--ink2)"} /> {copied ? "Kopieret!" : "Kopiér link"}
+              </button>
+              {navigator.share && (
+                <button onClick={() => navigator.share({ title:"Mit EatSafe madpas", url:shareUrl })}
+                  style={{ width:"100%", padding:"10px 12px", borderRadius:10, border:"none",
+                    background:"var(--green)", fontFamily:"var(--f)", fontSize:12, fontWeight:800,
+                    color:"var(--on-green)", cursor:"pointer",
+                    display:"flex", alignItems:"center", justifyContent:"center", gap:6, boxShadow:"0 2px 12px rgba(14,143,90,.25)" }}>
+                  <Icon name="share" size={13} color="var(--on-green)" /> Del
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* PDF-eksport */}
+          <button
+            onClick={handlePrint}
+            style={{ width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"12px 16px", background:"var(--paper2)", border:"none", borderTop:"1px solid var(--border)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
+            <Icon name="file" size={16} color="var(--ink2)" />
+            Gem som PDF / Print
+          </button>
+
+          {/* Privatliv/kontrol (krav 9): eksplicit undgået "offentligt
+              tilgængelig" — kun personer med selve linket kan se det, og
+              brugeren kan altid deaktivere/generere et nyt. */}
+          <div style={{ padding:"12px 16px 14px", borderTop:"1px solid var(--border)" }}>
+            <div style={{ display:"flex", alignItems:"flex-start", gap:6, fontSize:11, color:"var(--muted)", lineHeight:1.5, marginBottom:10 }}>
+              <Icon name="shield" size={13} color="var(--muted)" /> Alle med linket kan se dette madpas. Linket er permanent, indtil du deaktiverer det.
+            </div>
+            <div style={{ display:"flex", gap:14 }}>
+              <button onClick={regenerateLink} disabled={madpasLinkLoading}
+                style={{ background:"none", border:"none", padding:0, color:"var(--green)", fontFamily:"var(--f)", fontSize:12, fontWeight:700, cursor:"pointer" }}>
+                Generér nyt link
+              </button>
+              <button onClick={deactivateLink} disabled={madpasLinkLoading}
+                style={{ background:"none", border:"none", padding:0, color:"var(--red)", fontFamily:"var(--f)", fontSize:12, fontWeight:700, cursor:"pointer" }}>
+                Deaktiver link
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  const renderMainContent = () => {
     const lang = madpasLang;
     const rtl = MADPAS_LANGUAGES.find(l => l.code === lang)?.rtl;
     return (
       <div style={{ paddingBottom:8 }} dir={rtl ? "rtl" : "ltr"}>
-
-        {/* Allergen liste — ren, ingen labels */}
-        <div style={UI.udflex_fdcolumn}>
-          {[...mpAllergens, ...mpCustom.filter(c => !c.endsWith("_intolerance") && !mpAllergens.includes(c))].map((item, i, arr) => {
-            const isLast = i === arr.length - 1;
-            if (typeof item !== "string") return null;
-            const a = ALLERGENS.find(x => x.id === item);
-            if (!a) return null;
-            const t = ALLERGEN_T[item]?.[lang] || ALLERGEN_T[item]?.en;
-            const ex = ALLERGEN_EXAMPLES[item];
-            const exProducts = ex?.products?.[lang] || ex?.products?.en || [];
-            const exIngredients = ex?.ingredients?.[lang] || ex?.ingredients?.en || [];
-            return (
-              <div key={i} style={{ padding:"14px 0", borderBottom: isLast ? "none" : "1px solid var(--border)" }}>
-                <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)", marginBottom: (exProducts.length||exIngredients.length) ? 4 : 0 }}>
-                  {t?.n || a.label}
-                </div>
-                {(exProducts.length > 0 || exIngredients.length > 0) && (
-                  <div style={UI.ufs13_cmuted2_lh15}>
-                    {[...exProducts.slice(0,3), ...exIngredients.slice(0,4)].join(", ")}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          {mpCustom.filter(c => !c.endsWith("_intolerance") && !mpAllergens.includes(c)).map((c, i) => (
-            <div key={`custom${i}`} style={{ padding:"14px 0", borderBottom:"1px solid var(--border)" }}>
-              <div style={{ fontSize:18, fontWeight:700, color:"var(--ink)" }}>{c}</div>
-            </div>
-          ))}
-        </div>
+        {renderCompactPreview()}
 
         {/* VIS TIL TJENER */}
         <button className="mp-big-btn" onClick={() => setMadpasWaiterView(true)}>
@@ -221,144 +439,25 @@ export default function MadpasScreen({
           Vis til tjener
         </button>
 
-        {/* QR-kode + del-link */}
-        {shareUrl && (
-          <div style={{ marginTop:16, background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:16, overflow:"hidden", boxShadow:"var(--sh)" }}>
-            {/* Header */}
-            <div style={{ padding:"12px 16px", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", gap:8 }}>
-              <span style={UI.fs16}>📱</span>
-              <div>
-                <div style={UI.boldInk13}>Del dit madpas</div>
-                <div style={UI.muted11mt1}>Tjeneren scanner QR-koden og ser dine allergier direkte i sin browser — uden at installere noget</div>
-              </div>
-            </div>
-
-            {/* QR popup — fullscreen overlay */}
-            {qrOpen && (
-              <div onClick={() => setQrOpen(false)}
-                style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.85)",
-                  display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:32 }}>
-                <div onClick={e => e.stopPropagation()}
-                  style={{ background:"var(--sheet)", borderRadius:24, padding:"28px 24px", maxWidth:320, width:"100%", textAlign:"center" }}>
-                  <div style={{ fontSize:13, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:4 }}>Dit madpas</div>
-                  <div style={{ fontSize:11, color:"var(--muted)", marginBottom:20, lineHeight:1.5 }}>
-                    Bed tjeneren om at scanne denne QR-kode med sin telefon — så åbner dit madpas direkte i deres browser uden at de behøver installere noget.
-                  </div>
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(shareUrl)}&bgcolor=ffffff&color=0d3320&qzone=2`}
-                    alt="QR-kode til madpas"
-                    width={220} height={220}
-                    style={{ borderRadius:16, border:"3px solid var(--green-mid)", display:"block", margin:"0 auto 20px" }}
-                  />
-                  <div style={{ fontSize:11, color:"var(--muted)", marginBottom:16, wordBreak:"break-all" }}>{shareUrl}</div>
-                  <button onClick={() => setQrOpen(false)}
-                    style={{ width:"100%", padding:"12px", borderRadius:12, background:"var(--green)", border:"none",
-                      fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer", boxShadow:"0 2px 12px rgba(14,143,90,.25)" }}>
-                    Luk
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* QR + link side om side */}
-            <div style={{ padding:"16px", display:"flex", gap:16, alignItems:"center" }}>
-              {/* QR — klikbar */}
-              <div style={UI.shrink0}>
-                {!qrError ? (
-                  <div onClick={() => setQrOpen(true)} style={{ cursor:"pointer", position:"relative" }}>
-                    <img
-                      src={qrUrl}
-                      alt="QR-kode til madpas"
-                      width={100} height={100}
-                      onError={() => setQrError(true)}
-                      style={{ borderRadius:10, display:"block", border:"2px solid rgba(14,143,90,.2)" }}
-                    />
-                    <div style={{ position:"absolute", inset:0, borderRadius:10, background:"rgba(0,0,0,.45)",
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                      fontSize:20, opacity:0, transition:"opacity .15s" }}
-                      onMouseEnter={e => e.currentTarget.style.opacity=1}
-                      onMouseLeave={e => e.currentTarget.style.opacity=0}>
-                      <Icon name="search" size={18} color="#fff" />
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ width:100, height:100, borderRadius:10, background:"var(--surface)", border:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, color:"var(--muted)", textAlign:"center", padding:8 }}>
-                    QR ikke tilgængelig
-                  </div>
-                )}
-                <div style={{ fontSize:9, color:"var(--muted)", textAlign:"center", marginTop:6, fontWeight:600 }}>
-                  Tryk for at forstørre
-                </div>
-              </div>
-
-              {/* Link + knapper */}
-              <div style={UI.flexMin}>
-                <div style={{ fontSize:10, color:"var(--muted)", marginBottom:6, fontWeight:700, textTransform:"uppercase", letterSpacing:"1px" }}>Dit madpas-link</div>
-                <div style={{ fontSize:11, color:"var(--green)", wordBreak:"break-all", marginBottom:10, lineHeight:1.4, fontWeight:600 }}>
-                  {shareUrl}
-                </div>
-                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  <button onClick={copyLink}
-                    style={{ width:"100%", padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)",
-                      background: copied ? "var(--green-lt)" : "var(--surface)",
-                      fontFamily:"var(--f)", fontSize:12, fontWeight:700,
-                      color: copied ? "var(--green)" : "var(--ink2)", cursor:"pointer",
-                      display:"flex", alignItems:"center", justifyContent:"center", gap:6, transition:"all .2s" }}>
-                    <Icon name={copied ? "check" : "link"} size={13} color={copied ? "var(--green)" : "var(--ink2)"} /> {copied ? "Kopieret!" : "Kopiér link"}
-                  </button>
-                  {navigator.share && (
-                    <button onClick={() => navigator.share({ title:"Mit EatSafe madpas", url:shareUrl })}
-                      style={{ width:"100%", padding:"10px 12px", borderRadius:10, border:"none",
-                        background:"var(--green)", fontFamily:"var(--f)", fontSize:12, fontWeight:800,
-                        color:"var(--on-green)", cursor:"pointer",
-                        display:"flex", alignItems:"center", justifyContent:"center", gap:6, boxShadow:"0 2px 12px rgba(14,143,90,.25)" }}>
-                      <Icon name="share" size={13} color="var(--on-green)" /> Del via...
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* PDF-eksport */}
-            <button
-              onClick={handlePrint}
-              style={{ width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"12px 16px", background:"var(--paper2)", border:"none", borderTop:"1px solid var(--border)", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)", cursor:"pointer" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="12" y1="18" x2="12" y2="12"/>
-                <line x1="9" y1="15" x2="15" y2="15"/>
-              </svg>
-              Gem som PDF / Print
-            </button>
-
-            {/* Info */}
-            <div style={{ display:"flex", alignItems:"flex-start", gap:6, padding:"10px 16px 14px", fontSize:11, color:"var(--muted)", lineHeight:1.5, borderTop:"1px solid var(--border)" }}>
-              <Icon name="bulb" size={13} color="var(--muted)" /> Andre kan se dit madpas uden at have EatSafe installeret. Siden er offentlig tilgængelig via linket.
-            </div>
-          </div>
-        )}
-
-        <div style={{ textAlign:"center", fontSize:11, color:"var(--muted)", marginTop:12 }}>
-          🇩🇰 EatSafe · {new Date().toLocaleDateString("da-DK")}
-        </div>
+        {renderShareSection()}
       </div>
     );
   };
 
   const renderPrintDiv = () => {
-    const allergenLabels = [
-      ...mpAllergens.map(id => {
-        const a = ALLERGENS.find(x => x.id === id);
-        return a ? `${a.emoji} ${ALLERGEN_T[id]?.[madpasLang]?.n || a.label}` : id;
-      }),
-      ...(mpCustom||[]).filter(c => !mpAllergens.includes(c)).map(c => `• ${c}`),
-    ];
+    const lang = madpasLang;
+    const { allergyItems, intoleranceItems, customItems, dietItems, eNumberItems } = buildGroups(lang);
     const profileName = madpasProfileId === "self"
       ? user?.name || "Mig"
       : family?.find(m => m.id === madpasProfileId)?.name || "Familiemedlem";
-    const lang = MADPAS_LANGUAGES.find(l => l.code === madpasLang);
-    const dietLabels = (user?.diets||[]).map(d => DIETS.find(x=>x.id===d)?.label).filter(Boolean);
+    const langInfo = MADPAS_LANGUAGES.find(l => l.code === lang);
+
+    const printSection = (title, children) => (
+      <div style={UI.umb24}>
+        <div style={UI.ufs13_fw700_ttuppercas_ls1px_c555_mb12}>{title}</div>
+        {children}
+      </div>
+    );
 
     return (
       <div id="madpas-print" style={{ display:"none", fontFamily:"Georgia, serif", color:"#111", padding:40, maxWidth:600, margin:"0 auto" }}>
@@ -371,46 +470,52 @@ export default function MadpasScreen({
           <div style={{ textAlign:"right" }}>
             <div style={{ fontSize:16, fontWeight:700 }}>{profileName}</div>
             <div style={UI.ufs12_c555}>{new Date().toLocaleDateString("da-DK")}</div>
-            {lang && <div style={UI.ufs12_c555}>{lang.flag} {lang.name}</div>}
+            {langInfo && <div style={UI.ufs12_c555}>{langInfo.flag} {langInfo.name}</div>}
           </div>
         </div>
 
-        {/* Intro */}
-        {MADPAS_INTRO?.[madpasLang] && (
-          <div style={{ fontSize:14, lineHeight:1.7, marginBottom:24, padding:"14px 18px", border:"1px solid #ddd", borderRadius:8, color:"#333" }}>
-            {MADPAS_INTRO[madpasLang]}
+        {(allergyItems.length > 0 || customItems.length > 0) && printSection(
+          `${MADPAS_SECTIONS_T.allergies[lang] || MADPAS_SECTIONS_T.allergies.en} / ${MADPAS_SECTIONS_T.allergies.en}`,
+          <div style={UI.udflex_flewrap_g8}>
+            {allergyItems.map(a => (
+              <div key={a.id} style={{ padding:"8px 16px", border:"2px solid #111", borderRadius:100, fontSize:15, fontWeight:700 }}>
+                {a.emoji} {madpasAllergenLabel(a, lang)}
+              </div>
+            ))}
+            {customItems.map((c,i) => (
+              <div key={i} style={{ padding:"8px 16px", border:"2px solid #111", borderRadius:100, fontSize:15, fontWeight:700 }}>
+                • {c}
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Allergener */}
-        {allergenLabels.length > 0 && (
-          <div style={UI.umb24}>
-            <div style={UI.ufs13_fw700_ttuppercas_ls1px_c555_mb12}>
-              Allergener / Allergens
-            </div>
-            <div style={UI.udflex_flewrap_g8}>
-              {allergenLabels.map((label, i) => (
-                <div key={i} style={{ padding:"8px 16px", border:"2px solid #111", borderRadius:100, fontSize:15, fontWeight:700 }}>
-                  {label}
-                </div>
-              ))}
-            </div>
+        {intoleranceItems.length > 0 && printSection(
+          `${MADPAS_SECTIONS_T.intolerances[lang] || MADPAS_SECTIONS_T.intolerances.en} / ${MADPAS_SECTIONS_T.intolerances.en}`,
+          <div style={UI.udflex_flewrap_g8}>
+            {intoleranceItems.map(a => (
+              <div key={a.id} style={{ padding:"8px 16px", border:"1px solid #111", borderRadius:100, fontSize:14 }}>
+                {a.emoji} {madpasAllergenLabel(a, lang)}
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Diæter */}
-        {dietLabels.length > 0 && (
-          <div style={UI.umb24}>
-            <div style={UI.ufs13_fw700_ttuppercas_ls1px_c555_mb12}>
-              Diæt / Diet
-            </div>
-            <div style={UI.udflex_flewrap_g8}>
-              {dietLabels.map((label, i) => (
-                <div key={i} style={{ padding:"6px 14px", border:"1px solid #111", borderRadius:100, fontSize:14 }}>
-                  {label}
-                </div>
-              ))}
-            </div>
+        {dietItems.length > 0 && printSection(
+          `${MADPAS_SECTIONS_T.diet[lang] || MADPAS_SECTIONS_T.diet.en} / ${MADPAS_SECTIONS_T.diet.en}`,
+          <div style={UI.udflex_flewrap_g8}>
+            {dietItems.map(d => (
+              <div key={d.id} style={{ padding:"6px 14px", border:"1px solid #111", borderRadius:100, fontSize:14 }}>{d.label}</div>
+            ))}
+          </div>
+        )}
+
+        {eNumberItems.length > 0 && printSection(
+          `${MADPAS_SECTIONS_T.enumbers[lang] || MADPAS_SECTIONS_T.enumbers.en} / ${MADPAS_SECTIONS_T.enumbers.en}`,
+          <div style={UI.udflex_flewrap_g8}>
+            {eNumberItems.map((e,i) => (
+              <div key={i} style={{ padding:"6px 14px", border:"1px solid #111", borderRadius:100, fontSize:14 }}>{e}</div>
+            ))}
           </div>
         )}
 
@@ -422,6 +527,8 @@ export default function MadpasScreen({
       </div>
     );
   };
+
+  const hasAnyData = mpAllergens.length > 0 || mpCustom.length > 0 || mpDiets.length > 0 || mpENumbers.length > 0;
 
   return (
     <>
@@ -436,24 +543,28 @@ export default function MadpasScreen({
               {/* HEADER */}
               <div className="mp-head">
                 <div className="mp-title">Madpas</div>
-                <div className="mp-subtitle">Vis dit madpas til din tjener/ekspedient for at forklare dine ønsker.</div>
+                <div className="mp-subtitle">Vis dit madpas til restaurant- eller butikspersonale, så de hurtigt kan forstå dine allergier og kosthensyn.</div>
 
-                {/* Profilvælger — samme stil som hjemskærmen */}
-                <div style={UI.mb14}>
-                  <div className="mp-section-lbl">VIS MADPAS FOR</div>
-                  <div style={UI.wrapGap7}>
-                    <div className={`ap-chip${madpasProfileId==="self" ? " on" : ""}`} onClick={() => setMadpasProfileId("self")}>
-                      <div style={UI.uw20_h20_br50_bggreen_dflex_aicenter_jccenter_fs10_fw800_cin}>{initials(user.name||"Mig")}</div>
-                      {(user.name||"Mig").split(" ")[0]}
-                    </div>
-                    {family.map(m => (
-                      <div key={m.id} className={`ap-chip${madpasProfileId===m.id ? " on" : ""}`} onClick={() => setMadpasProfileId(m.id)}>
-                        <div style={{width:20,height:20,borderRadius:"50%",background:m.color||"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(m.name)}</div>
-                        {m.name.split(" ")[0]}
+                {/* Profilvælger — kun vist når der reelt er noget at vælge
+                    mellem (krav 2: "Hvis familien kun har én relevant
+                    profil, kan den vises direkte"). */}
+                {family.length > 0 && (
+                  <div style={UI.mb14}>
+                    <div className="mp-section-lbl">VIS MADPAS FOR</div>
+                    <div style={UI.wrapGap7}>
+                      <div className={`ap-chip${madpasProfileId==="self" ? " on" : ""}`} onClick={() => setMadpasProfileId("self")}>
+                        <div style={UI.uw20_h20_br50_bggreen_dflex_aicenter_jccenter_fs10_fw800_cin}>{initials(user.name||"Mig")}</div>
+                        {(user.name||"Mig").split(" ")[0]}
                       </div>
-                    ))}
+                      {family.map(m => (
+                        <div key={m.id} className={`ap-chip${madpasProfileId===m.id ? " on" : ""}`} onClick={() => setMadpasProfileId(m.id)}>
+                          <div style={{width:20,height:20,borderRadius:"50%",background:m.color||"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(m.name)}</div>
+                          {m.name.split(" ")[0]}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Sprog-dropdown */}
                 <div className="mp-section-lbl">VÆLG SPROG</div>
@@ -478,7 +589,7 @@ export default function MadpasScreen({
               </div>
 
               {/* Tom state */}
-              {mpAllergens.length === 0 && mpCustom.length === 0 && (
+              {!hasAnyData && (
                 <div className="empty-state" style={{ paddingTop:32 }}>
                   <span className="empty-icon"><Icon name="shield" size={26} color="var(--muted)" /></span>
                   <div className="empty-txt">Ingen allergier registreret</div>
@@ -486,8 +597,7 @@ export default function MadpasScreen({
                 </div>
               )}
 
-              {/* ALLERGEN LISTE */}
-              {(mpAllergens.length > 0 || mpCustom.length > 0) && renderAllergenList()}
+              {hasAnyData && renderMainContent()}
 
             </div>
           </div>

@@ -712,6 +712,36 @@ tilkoblet rigtig konto (undgår dubletter uden automatisk navne-matching).
 Fuld detalje i `.claude/HISTORY.md`, backend-reference i `src/CONTEXT.md`
 afsnit 9.
 
+### Madpas redesignet og gjort reelt funktionsdygtigt (26. sept. 2026)
+
+Madpas' formål: en tjener/ekspedient i udlandet skal kunne forstå de
+vigtigste kost-/allergioplysninger på få sekunder. Redesignet strukturerer
+tjener-visningen og PDF'en efter type (FØDEVAREALLERGIER/INTOLERANCER/
+KOST/E-NUMRE, se `ALLERGENS[].type`) i stedet for én generisk liste,
+fjerner den lange høflighedstekst der skubbede budskabet ned, og sikrer at
+madpasset altid afspejler den VALGTE profils aktuelle data — kostpræfe-
+rencer/E-numre fulgte tidligere fejlagtigt altid den loggede bruger selv,
+også når "Vis madpas for" pegede på et familiemedlem (rettet i App.jsx).
+
+**To reelle, pre-eksisterende huller fundet og rettet undervejs (ikke en
+del af den oprindelige opgave, men direkte i vejen):**
+1. `ALLERGEN_T` (per-sprogs allergen-navne) manglede `hvede`/`maelkeallergi`
+   helt — uden en sprog-nøgle faldt visningen tilbage til den DANSKE
+   `a.label`, selv når madpasset var sat til fx engelsk. Nøjagtig den
+   fejlklasse denne opgave bad om at eliminere ("aldrig ... allergennavnet
+   bliver stående på [et andet sprog]").
+2. Delings-linket (`eatsafe.dk/madpas/[userId]`) pegede på INGEN
+   offentlig visning overhovedet — en besøgende landede bare på den
+   almindelige app/login-væg. Erstattet af et rigtigt, tilbagekaldeligt
+   token-system (`madpas_links`-tabellen + `get_madpas_by_token()`-RPC,
+   samme SECURITY DEFINER-mønster som familie-invitationernes
+   `get_invite_preview`) og en ny offentlig side, `public/madpas-view.html`
+   (samme selvstændige vanilla-JS-mønster som `invite.html`), rewrites via
+   `vercel.json`. Brugeren kan nu reelt deaktivere/generere et nyt link.
+
+Fuld detalje i `.claude/HISTORY.md`, backend-reference i `src/CONTEXT.md`
+afsnit 10.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,

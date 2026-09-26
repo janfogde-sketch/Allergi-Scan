@@ -2361,3 +2361,123 @@ profil forsvinder fra listen). Selve `family`-edge-functionen er deployet
 til produktion (version 16) — kunne ikke ende-til-ende-testes direkte (kun
 via mock-data i frontend-testen), så den server-side logik hviler på
 kode-gennemgang frem for en kørt integrationstest.
+
+## Madpas redesignet og gjort reelt funktionsdygtigt (26. sept. 2026)
+
+Et detaljeret, 12-punkts krav om at gøre Madpas "ekstremt hurtig at forstå
+for restaurant- og butikspersonale" — en tjener i udlandet skal kunne
+række telefonen tilbage og forstå de vigtigste kost-/allergioplysninger på
+få sekunder. Dette var langt mere end en visuel opdatering; to reelle,
+funktionelle huller blev fundet og rettet undervejs.
+
+**Hovedside:**
+- Madvare-baggrunden fjernet (samme `app-bg-hide`-mønster som List/
+  Historik/Favoritter/Allergileksikon/Familie).
+- Ny overskrift/undertekst efter brugerens eksakte ordlyd.
+- Profilvælgeren ("VIS MADPAS FOR") vises nu KUN når `family.length > 0`
+  — én profil (kun brugeren selv) viser sig direkte uden en vælger at
+  klikke igennem.
+- Den tidligere løse, fuldt udfoldede allergen-liste (med eksempelprodukter
+  og -ingredienser, ret høj og tekst-tung) er erstattet af en kompakt
+  "Dit madpas"-chip-oversigt — samme `.tag`-mønster som Familie-sidens
+  scanningsrelevante chips (allergi=grøn, kost=lysere grøn/neutral
+  `--green-selected-bg`, E-numre=helt neutral `--surface2`), ingen nye
+  farver.
+
+**Strukturerede sektioner (tjener-visning + PDF), i stedet for én generisk
+"kan ikke spise"-liste:**
+- `ALLERGENS[].type` ("allergi"/"intolerance", allerede i skemaet, men
+  aldrig brugt til reel gruppering før) styrer opdelingen i FØDEVARE-
+  ALLERGIER og INTOLERANCER. KOST og E-NUMRE er egne sektioner, kun vist
+  når de reelt har indhold.
+- Korte overskrifter ("Jeg er allergisk over for:"/"Jeg tåler ikke:") i
+  stedet for den tidligere lange "Hej! Jeg har fødevareallergier og
+  ønsker gerne din hjælp..."-intro og det lange "Tak for din hjælp — det
+  betyder rigtig meget for mig"-outro på selve kortet — begge skubbede
+  det egentlige budskab nedad. En kort sikkerheds-sætning
+  ("Sørg venligst for, at min mad ikke indeholder nogen af disse.") er
+  bevaret, men KUN under FØDEVAREALLERGIER, matcher brugerens eget
+  eksempel præcist. Selve talefunktionen (Oplæs) beholder sin fulde,
+  høflige formulering uændret — det er en anden modalitet (tale, ikke
+  synligt scan-hastigheds-kritisk tekst), hvor en naturlig, høflig sætning
+  ikke går ud over læsehastigheden.
+- Tjener-visningen: stort flag (44px) + sprognavn øverst, meget stor
+  fed allergen-tekst (26px), ingen dekorativ baggrund (ren `var(--paper)`),
+  kun luk-knappen + den reelle Oplæs-funktion nederst — ingen anden chrome.
+- Bundnavigation, hamburger-menu og Feedback-knappen er nu bogstaveligt
+  fjernet fra DOM'en mens tjener-visningen er åben (`!madpasWaiterView`
+  tilføjet til topbar-betingelsen i App.jsx), ikke kun visuelt dækket af
+  et overlay — vigtigt for tastatur-/skærmlæser-navigation, ikke kun
+  udseende.
+
+**Reelt fund #1 — oversættelses-hul:** `ALLERGEN_T` (per-sprogs allergen-
+navne) manglede `hvede` og `maelkeallergi` fuldstændigt. Uden en sprog-
+nøgle faldt koden tilbage til `ALLERGENS`' egen DANSKE `a.label` — et
+madpas sat til engelsk viste altså "Hvede" i stedet for "Wheat", mens
+resten af UI'et var korrekt engelsk. Nøjagtig den fejlklasse opgaven
+eksplicit bad om at undgå. Fundet ved at bygge en Playwright-test der
+faktisk skiftede sprog og tjekkede allergen-teksten (ikke kun UI-
+chrome-teksten) — ville være usynligt ved kun visuel gennemgang, samme
+mønster som "feltnavne-mismatch"-lektionen fra tidligere i sessionen
+(CLAUDE.md afsnit 5). Rettet ved at tilføje begge manglende nøgler (16
+sprog hver) og indføre delte `madpasAllergenLabel()`/`madpasDietLabel()`-
+hjælpefunktioner (useMadpas.js) der korrekt prioriterer
+`lang==="da" ? a.label : ALLERGEN_T[...]` — brugt konsekvent i
+MadpasScreen.jsx, useMadpas.js's tale-funktion, PDF-skabelonen og
+public/madpas-view.html, i stedet for at hver kaldested gentager sin egen
+faldback-kæde (den oprindelige kilde til buggen).
+
+**Reelt fund #2 — det delte link virkede aldrig:** `shareUrl` var
+`https://eatsafe.dk/madpas/[userId]` — men der var INGEN route/side der
+overhovedet håndterede denne URL. `vercel.json` havde ingen rewrite for
+`/madpas/*`, og App.jsx havde ingen `window.location.pathname`-baseret
+routing for det (kun `?invite=`-query-parameteren er håndteret). En
+tjener der scannede QR-koden eller åbnede linket landede altså bare på
+EatSafes almindelige login-væg — hele "del dit madpas uden at modtageren
+skal installere noget"-løftet var ikke-fungerende. Rettet med:
+- Ny tabel `madpas_links` (id, user_id, profile_ref, lang, token, status,
+  created_at) — RLS: kun ejeren kan SELECT/INSERT/UPDATE egen række.
+- Ny SECURITY DEFINER-RPC `get_madpas_by_token(p_token)` (samme mønster
+  som `get_invite_preview` for family_invites) — slår token op, tjekker
+  `status='active'`, returnerer navn + allergener/kost/E-numre for enten
+  brugeren selv eller den angivne administrerede profil. Verificeret
+  callable af `anon`-rollen (`has_function_privilege`) og testet direkte
+  via en midlertidig test-række (oprettet og slettet igen med det samme).
+- Ny offentlig side `public/madpas-view.html` — samme selvstændige,
+  build-fri vanilla-JS-mønster som `invite.html`. Indeholder en bevidst
+  duplikeret delmængde af oversættelses-data (udtrukket programmatisk fra
+  `src/constants.jsx` via et lille Node-script, ikke hånd-transskriberet,
+  for at undgå kopiérings-fejl) — samme allerede-accepterede mønster som
+  `src/allergenKeywords.js` vs. `supabase/functions/allergens/index.ts`.
+  Siden har sin egen sprogvælger, så modtageren selv kan skifte sprog,
+  uafhængigt af hvilket sprog afsenderen havde valgt (linkets `lang`-felt
+  er kun en startværdi).
+- `vercel.json` fik en ny rewrite: `/madpas/:token` → `/madpas-view.html`.
+- App-siden opretter/henter automatisk et aktivt link pr. valgt profil
+  (intet ekstra klik nødvendigt, bevarer den tidligere "virker med det
+  samme"-oplevelse), og tilbyder nu reelle "Generér nyt link"/"Deaktiver
+  link"-handlinger — begge sætter `status='revoked'` på den gamle række,
+  hvorefter RPC'en øjeblikkeligt afviser det gamle token.
+- Fjernet den dominerende rå URL-tekst fra både del-kortet og QR-popup'en
+  (kun QR + Kopiér + Del tilbage), og ændret privatlivsteksten fra
+  "Siden er offentlig tilgængelig via linket" til den mere præcise
+  "Alle med linket kan se dette madpas. Linket er permanent, indtil du
+  deaktiverer det."
+
+**Oprydning:** fem bekræftet ubrugte `.mp-*`-CSS-klasser (`.mp-card`,
+`.mp-allergen-pill`, `.mp-speak-btn`, `.mp-aa`, `.mp-family-row` — grep-
+verificeret: refereret ingen steder i nogen `.jsx`-fil, kun defineret i
+theme.jsx) slettet fra en tidligere Madpas-design-iteration.
+
+**Test:** `npm run build` grøn, `npx vitest run` 109/109 bestået, mojibake-
+scan ren på alle ændrede filer. Verificeret med fire separate Playwright-
+gennemgange: (1) hovedskærm + sprogskift + den rettede dansk/engelsk-
+allergenbug, (2) del-sektionen inkl. deaktiver/generér-nyt-link-roundtrip,
+(3) tjener-visningens strukturerede sektioner + skjult navigation, (4) den
+offentlige `madpas-view.html`-side selv (fundet+ikke-fundet-tilstand,
+sprogskift) via en lokal `page.route`-simulering af Vercel-rewriten (Vite's
+dev-server følger ikke `vercel.json`). RPC'en er desuden verificeret
+direkte via SQL mod det rigtige projekt. Selve produktionsdeploy af
+edge-function-ændringer var ikke nødvendigt denne gang — `madpas_links`/
+`get_madpas_by_token` er ren database-side (tabel + RPC), ingen Edge
+Function involveret.
