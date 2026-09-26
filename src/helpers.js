@@ -449,23 +449,22 @@ export function categorizeProductFindings({ matchedDanger, matchedWarning, custo
 
 // Beregner ÉN, tydelig topstatus ud fra de kategoriserede fund + om EatSafe
 // reelt har nok data til at have foretaget kontrollen (`hasSufficientData`).
-// Prioritering, som krævet: allergi → intolerance/følsomhed → E-nummer →
-// kostpræference → (utilstrækkelige data) → ingen fund. "safe" bruges KUN
+// FORBEDR PRODUKTSIDEN (28. sept. 2026) — kun TO farvede advarselstilstande
+// nu, ikke fire: RØD er forbeholdt egentlige allergi-/intoleranceadvarsler
+// (sundhedsrelevante, ikke et bevidst valg brugeren har taget), mens
+// kostpræferencer og fravalgte E-numre samles under én neutral GUL/ORANGE
+// "passer ikke til dine valg" — en kostpræference som vegansk skal ikke
+// have samme alvorlige behandling som en allergiadvarsel. "safe" bruges KUN
 // når der er nok data OG intet fund — aldrig som gæt. Returnerer aldrig ord
 // som "sikkert"/"100% sikkert"/"allergifrit"/"garanteret".
 export function computeTopStatus({ hasSufficientData, allergyMatches, intoleranceMatches, customMatches, eNumberMatches, dietFails }) {
-  const allergyNames = [...(customMatches || []), ...(allergyMatches || [])].map(m => m.label);
-  if (allergyNames.length > 0) {
-    return { level: "danger", icon: "warning", headline: "Indeholder noget, du er allergisk overfor", names: allergyNames };
+  const healthNames = [...(customMatches || []), ...(allergyMatches || []), ...(intoleranceMatches || [])].map(m => m.label);
+  if (healthNames.length > 0) {
+    return { level: "danger", icon: "warning", headline: "Allergi-advarsel", names: healthNames };
   }
-  if ((intoleranceMatches || []).length > 0) {
-    return { level: "warn", icon: "warning", headline: "Matcher noget, du ønsker at undgå", names: intoleranceMatches.map(m => m.label) };
-  }
-  if ((eNumberMatches || []).length > 0) {
-    return { level: "warn", icon: "warning", headline: "Indeholder et E-nummer, du undgår", names: eNumberMatches };
-  }
-  if ((dietFails || []).length > 0) {
-    return { level: "warn", icon: "warning", headline: "Passer ikke til din kost", names: dietFails.map(d => d.label) };
+  const preferenceNames = [...(eNumberMatches || []), ...(dietFails || []).map(d => d.label)];
+  if (preferenceNames.length > 0) {
+    return { level: "warn", icon: "warning", headline: "Passer ikke til dine valg", names: preferenceNames };
   }
   if (!hasSufficientData) {
     return { level: "unknown", icon: "info", headline: "Ikke nok oplysninger til fuld kontrol", names: [] };
