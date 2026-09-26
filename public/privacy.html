@@ -9,9 +9,14 @@
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root{
+      /* 26. sept. 2026 (opfølgning): justeret til de faktiske, nuværende
+         app-tokens (src/theme.jsx) — var tidligere en ældre, uafhængig
+         --paper/--green-værdi fra før farverne blev låst 25. sept. 2026,
+         hvilket gjorde denne side synligt anderledes end den aktuelle app
+         når den åbnes fra den ellers rolige, ensartede menu. */
       --ink:#15201A; --ink2:rgba(21,32,26,.78); --muted:rgba(21,32,26,.58);
-      --paper:#F6F8F3; --green:#178A50; --green-lt:rgba(23,138,80,.10); --green-mid:rgba(23,138,80,.18);
-      --surface:#FFFFFF; --surface2:#F1F3EC; --border:rgba(21,32,26,.10); --border2:rgba(21,32,26,.16);
+      --paper:#FFFFFF; --green:#0E8F5A; --green-lt:rgba(14,143,90,.10); --green-mid:rgba(14,143,90,.18);
+      --surface:#FFFFFF; --surface2:#F4F4F2; --border:rgba(21,32,26,.10); --border2:rgba(21,32,26,.16);
       --f:'DM Sans',system-ui,-apple-system,sans-serif;
     }
     body {
