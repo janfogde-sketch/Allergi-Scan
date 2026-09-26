@@ -2985,3 +2985,82 @@ alle fire nye/opdaterede knap-klasser (`.mp-big-btn`, `.mp-close-btn`,
 registreret. Hjemmeskærmens krydskontaminerings-toggle inspiceret visuelt
 efter klasse-omlægningen og bekræftet uændret funktion/udseende (kun ny
 tryk-feedback tilføjet).
+
+**Opfølgning samme dag:** brugeren bad om at pushe runde 6 alligevel med
+det enkelte ord "Push", på trods af at runden var en ren design-ændring
+(hvor den stående regel normalt siger "push ikke"). Behandlet som en
+eksplicit override af reglen (reglen forhindrer AT Claude selv initierer
+et push for design-ændringer uden at spørge, ikke at brugeren aktivt kan
+bede om det) — pushet, PR #346 oprettet, mergt, branch resynket som
+normalt.
+
+## Madpas, syvende runde — fire præcise afstandsjusteringer på selve forsiden (27. sept. 2026)
+
+Umiddelbart efter runde 6 (og dens push) gav brugeren en kort, meget
+præcis opfølgning med fire konkrete afstands-klager på selve Madpas-
+forsiden (ikke fremvisningsskærmen denne gang) — hver med et angivet
+pixel-interval, plus et eksplicit "spred ikke hele siden ud, målet er at
+den stadig føles kompakt, men ikke sammenpresset":
+
+1. Afstand efter sprog-dropdownen før KRYDSKONTAMINERING: +8–12px.
+2. Krydskontaminerings-hjælpetekstens linjehøjde: lidt mere (to linjer
+   virkede klemte).
+3. Afstand mellem krydskontamineringssektionen og "DIT MADPAS": +12–16px.
+4. Afstand mellem "DIT MADPAS" og chipsene: +8–10px.
+5. Afstand mellem chipsene og "Åbn madpas": +16–20px.
+6. Bevar CTA'ens størrelse og sidens bredder.
+
+**Fundet ved undersøgelse af den faktiske gengivne afstand (ikke kun
+kildekoden) — to af de fire var reelt SLET INGEN margin, ikke bare for
+lidt:** CSS-margin-collapsing mellem tilstødende block-elementer betyder
+at to marginer ikke lægges sammen, men tager den STØRSTE af de to — så
+en `marginBottom` på ét element og en `marginTop` på det næste "spiser"
+hinanden i stedet for at adderes. Konkret:
+- Sprog-dropdownens egen `margin-bottom:16px` (CSS-klassen
+  `.mp-lang-dropdown`/`.mp-lang-list`) og KRYDSKONTAMINERING-sektionens
+  daværende `marginTop:20` COLLAPSEDE til blot `max(16,20)=20px` — ikke
+  36px, som en naiv sum ville antyde.
+- KRYDSKONTAMINERING-sektionen (sidste element i `.mp-head`, som har
+  `padding:20px 20px 0` — altså PRÆCIS 0 bund-padding) havde INGEN
+  `marginBottom` overhovedet, og var samtidig separeret fra "Dit
+  madpas"-sektionen (en sibling-div uden egen `marginTop`) — den reelle
+  gengivne afstand her var derfor bekræftet 0px, ikke "for lidt", før
+  denne runde. Uden `.mp-head`s bund-padding var netop 0 kunne dette
+  IKKE opdages ved kun at læse kildekoden — verificeret direkte med
+  `getBoundingClientRect()` i en Playwright-test.
+
+**Rettelser (alle som lokale inline-style-overrides, IKKE i de delte
+`.mp-section-lbl`/`UI.mb14`-klasser** — begge bruges bredt andre steder i
+appen, fx `.mp-section-lbl` på "VÆLG SPROG"/"VIS MADPAS FOR" og
+`UI.mb14` på adskillige andre skærme, så en ændring i selve klassen ville
+have spredt sig uden for Madpas):
+- KRYDSKONTAMINERING-sektionens `marginTop` 20→32 — det collapsede
+  resultat blev dermed `max(16,32)=32px` (+12px, øvre ende af det ønskede
+  interval).
+- KRYDSKONTAMINERING-hjælpetekstens `lineHeight` 1.4→1.6.
+- KRYDSKONTAMINERING-sektionen fik en NY `marginBottom:16` (var 0) — det
+  collapsede resultat med "Dit madpas"-sektionens manglende `marginTop`
+  blev `max(16,0)=16px` (øvre ende af det ønskede 12-16px-interval).
+- "Dit madpas"-labellens egen `marginBottom` (var 8px fra den delte
+  `.mp-section-lbl`-klasse) fik et lokalt override til 16px (+8px, nedre
+  ende af det ønskede 8-10px-interval).
+- Hele "Dit madpas"-sektionens wrapper-`marginBottom` (var 14px fra den
+  delte `UI.mb14`) erstattet med et lokalt `marginBottom:32` (+18px,
+  midt i det ønskede 16-20px-interval) — gapet til selve CTA-knappen.
+- Alle nye værdier er på appens faste spacing-skala (4/6/8/10/12/14/16/
+  20/24/32px).
+
+**CTA-knappens egen størrelse og sidens bredder er 100% urørt** — kun
+`marginTop`/`marginBottom`/`lineHeight`-værdier er ændret, ingen padding,
+font-size eller bredde-egenskaber.
+
+**Test:** `npm run build` grøn, `npx vitest run` 109/109 bestået,
+mojibake-scan ren. Verificeret programmatisk (ikke kun visuelt) med en
+Playwright-test der måler `getBoundingClientRect()` for alle fire
+afstande efter ændringen: sprog→KRYDSKONTAMINERING 32px,
+KRYDSKONTAMINERING→"Dit madpas" 16px, "Dit madpas"-label→chips 16px,
+chips→CTA 32px — alle nøjagtigt de forventede, collapse-korrigerede
+værdier. `getComputedStyle()` bekræftede hjælpetekstens `line-height:
+18.4px` (11.5px × 1.6) og CTA-knappens uændrede `padding:16px`.
+Skærmbillede inspiceret visuelt — hver sektion fremstår nu som en tydelig
+gruppe, siden virker stadig kompakt, ikke spredt ud.

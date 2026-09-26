@@ -252,9 +252,15 @@ export default function MadpasScreen({
     ];
     const visible = chips.slice(0, PREVIEW_LIMIT);
     const overflow = chips.length - visible.length;
+    // Egne spacing-værdier i stedet for den delte UI.mb14/.mp-section-lbl
+    // (28. sept. 2026, spacing-opfølgning) — "Dit madpas"-labellen har
+    // brug for lidt mere luft NED til chipsene (8→16px) end sektions-
+    // labels ellers har, og selve sektionen skal have mere luft NED til
+    // CTA-knappen (14→32px) end sit tidligere fælles UI.mb14 gav — begge
+    // ville påvirke andre sektioner/skærme hvis ændret i den delte klasse.
     return (
-      <div style={UI.mb14}>
-        <div className="mp-section-lbl">Dit madpas</div>
+      <div style={{ marginBottom:32 }}>
+        <div className="mp-section-lbl" style={{ marginBottom:16 }}>Dit madpas</div>
         <div className="tags">
           {visible.map(c => <div key={c.key} className="tag" style={c.style}>{c.text}</div>)}
           {overflow > 0 && <div className="tag" style={{ background:"var(--surface2)", borderColor:"var(--border)", color:"var(--muted)" }}>+{overflow}</div>}
@@ -337,12 +343,17 @@ export default function MadpasScreen({
                 {/* Krydskontaminerings-advarsel — bevidst opt-IN (krav 7):
                     EatSafe må ikke selv antage alvorlighedsgraden af
                     brugerens allergi, så indstillingen er default FRA,
-                    og brugeren skal aktivt slå den til her. */}
+                    og brugeren skal aktivt slå den til her.
+                    Spacing-opfølgning (28. sept. 2026): marginTop 20→32
+                    (mere luft ned fra sprog-dropdownen/-listen ovenfor),
+                    marginBottom 0→16 (ny — luft ned til "Dit madpas"
+                    manglede helt), lineHeight på hjælpeteksten 1.4→1.6
+                    (de to linjer virkede klemte). */}
                 {hasAnyData && (
-                  <div style={{ marginTop:20, display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+                  <div style={{ marginTop:32, marginBottom:16, display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
                     <div style={{ flex:1, minWidth:0 }}>
                       <div className="mp-section-lbl" style={{ marginBottom:4 }}>KRYDSKONTAMINERING</div>
-                      <div style={{ fontSize:11.5, color:"var(--muted)", lineHeight:1.4 }}>
+                      <div style={{ fontSize:11.5, color:"var(--muted)", lineHeight:1.6 }}>
                         Tilføj en advarsel om krydskontaminering til dit madpas.
                       </div>
                     </div>

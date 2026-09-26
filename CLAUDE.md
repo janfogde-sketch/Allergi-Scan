@@ -762,19 +762,29 @@ eksempel-grænse fra 4 til 5, da de 4 eksisterende eksempler alene allerede
 fyldte den gamle grænse).
 
 **Sjette runde (samme dag) — ren visuel/spacing-polish af fremvisnings-
-skærmen, IKKE pushet/merget** (design-only, se den stående Vercel-kvote-
-regel ovenfor): spacing rundet til appens faste skala, typografisk
-hierarki finpudset (den statiske "I am allergic to:"-headline nedtonet så
-den ikke konkurrerer med allergen-navnet/sikkerhedsteksten), krydskonta-
-mineringsadvarslen gjort en anelse lettere/mere sekundær, og — vigtigst —
-en reel bund-scroll-sikring: mere bund-padding + `env(safe-area-inset-
-bottom)` på fremvisningsskærmens Read aloud-footer, verificeret
-programmatisk at intet indhold nogensinde kan overlappe knappen. Luk-/
-oplæs-/krydskontamineringstoggle-knapperne fik samme tryk-feedback
-(`:active{scale(.97)}`) som resten af appens knapper. Committet lokalt,
-verificeret via Playwright — ikke pushet, da det er en ren design-runde.
+skærmen** (design-only, se den stående Vercel-kvote-regel ovenfor):
+spacing rundet til appens faste skala, typografisk hierarki finpudset
+(den statiske "I am allergic to:"-headline nedtonet så den ikke
+konkurrerer med allergen-navnet/sikkerhedsteksten), krydskontaminerings-
+advarslen gjort en anelse lettere/mere sekundær, og — vigtigst — en reel
+bund-scroll-sikring: mere bund-padding + `env(safe-area-inset-bottom)` på
+fremvisningsskærmens Read aloud-footer, verificeret programmatisk at
+intet indhold nogensinde kan overlappe knappen. Luk-/oplæs-/krydskonta-
+mineringstoggle-knapperne fik samme tryk-feedback (`:active{scale(.97)}`)
+som resten af appens knapper. Blev committet lokalt (ikke pushet, jf.
+design-only-reglen), men pushet/merget alligevel efter brugerens
+eksplicitte "Push" — reglen forhindrer AT vi selv initierer et push for
+rene design-ændringer, ikke at brugeren aktivt kan bede om det.
 
-Fuld dag-for-dag-detalje (alle seks runder) i `.claude/HISTORY.md`,
+**Syvende runde (samme dag) — fire præcise afstandsjusteringer på selve
+Madpas-forsiden:** sprog-dropdown→KRYDSKONTAMINERING (+12px),
+KRYDSKONTAMINERING-hjælpetekstens linjehøjde (1.4→1.6),
+KRYDSKONTAMINERING→"Dit madpas" (0→16px, manglede helt før), "Dit
+madpas"-label→chips (+8px), chips→"Åbn madpas" (+18px) — alle via lokale
+style-overrides, ikke i de delte klasser (`.mp-section-lbl`/`UI.mb14`)
+der bruges andre steder i appen. CTA-størrelse og sidebredder urørt.
+
+Fuld dag-for-dag-detalje (alle syv runder) i `.claude/HISTORY.md`,
 backend-/struktur-reference i `src/CONTEXT.md` afsnit 10.
 
 ### Beta-installation (september 2026) — nuværende arkitektur
