@@ -754,7 +754,15 @@ body::-webkit-scrollbar{display:none;}
 /* ── MADPAS ── */
 .mp-page{display:flex;flex-direction:column;flex:1;}
 .mp-scroll{flex:1;overflow-y:auto;padding:0 20px 120px;}
-.mp-head{padding:20px 20px 0;}
+/* Venstre/højre padding fjernet herfra (28. sept. 2026, alignment-fix) —
+   .mp-scroll (forælder) giver allerede 20px padding på begge sider til
+   ALT sit indhold. .mp-head havde sin EGEN ekstra 20px oveni, så titel/
+   undertekst/sektionsoverskrifter/krydskontaminering endte 40px inde,
+   mens "Dit madpas"/chips/CTA'en (renderMainContent, en søskende-div
+   UDEN for .mp-head) kun fik .mp-scroll's 20px — en reel, utilsigtet
+   20px venstre-forskydning mellem de to grupper. .mp-head bruges kun i
+   MadpasScreen.jsx, så denne rettelse påvirker ikke andre skærme. */
+.mp-head{padding:20px 0 0;}
 .mp-title{font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.5px;margin-bottom:6px;}
 .mp-subtitle{font-size:13px;color:var(--ink2);font-weight:400;line-height:1.5;margin-bottom:20px;}
 .mp-section-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);margin:0 0 8px;}

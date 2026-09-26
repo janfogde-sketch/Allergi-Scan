@@ -470,6 +470,25 @@ madpas" 14→32px. CTA'ens egen størrelse og sidens bredder er urørt.
 Verificeret programmatisk med `getBoundingClientRect()`-mål af alle fire
 afstande efter ændringen (32/16/16/32px), ikke kun visuelt.
 
+**Ottende runde (27. sept., samme dag) — reelt venstre-alignment-fund,
+ét-linjes rettelse:** `.mp-scroll` (theme.jsx) giver allerede 20px
+venstre/højre-padding til ALT sit indhold, men `.mp-head` (kun brugt i
+MadpasScreen.jsx, ingen andre skærme påvirket) havde sin EGEN ekstra 20px
+padding oveni — titel/undertekst/sektionsoverskrifter/krydskontaminering
+sad derfor reelt 40px inde, mens "Dit madpas"/chips/CTA-knappen
+(`renderMainContent()`, en søskende-div UDENFOR `.mp-head`) kun fik
+`.mp-scroll`s 20px. Chips/CTA stod dermed bekræftet 20px længere til
+venstre end resten af siden — nøjagtig den inkonsistens brugeren
+rapporterede. Rettet med `.mp-head{padding:20px 20px 0}` →
+`{padding:20px 0 0}` (kun venstre/højre fjernet, top-paddingen som giver
+luft ned fra topbaren er urørt). Bivirkning, som var tilsigtet af
+brugerens egen krav 3: sprog-dropdownen (tidligere indsnævret af den
+dobbelte padding) og CTA-knappen har nu samme bredde, begge fuld bredde
+af den fælles 20px-indrammede indholds-kolonne. Verificeret med
+`getBoundingClientRect()` for otte elementer (titel, undertekst, "VÆLG
+SPROG", dropdown, "KRYDSKONTAMINERING", hjælpetekst, "Dit madpas", første
+chip, CTA) — alle nu `left:20px` fra viewportets kant, ingen undtagelser.
+
 ---
 
 ## 11. CSS-konventioner

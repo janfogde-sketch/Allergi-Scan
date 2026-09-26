@@ -784,7 +784,17 @@ madpas"-label→chips (+8px), chips→"Åbn madpas" (+18px) — alle via lokale
 style-overrides, ikke i de delte klasser (`.mp-section-lbl`/`UI.mb14`)
 der bruges andre steder i appen. CTA-størrelse og sidebredder urørt.
 
-Fuld dag-for-dag-detalje (alle syv runder) i `.claude/HISTORY.md`,
+**Ottende runde (samme dag) — reelt venstre-alignment-fund:** `.mp-head`
+(kun brugt i MadpasScreen.jsx) havde sin egen ekstra 20px venstre/højre-
+padding oveni `.mp-scroll`s allerede eksisterende 20px — titel/undertekst/
+sektionsoverskrifter sad derfor 40px inde, mens "Dit madpas"/chips/CTA
+(en søskende-div udenfor `.mp-head`) kun fik 20px, altså 20px længere til
+venstre end resten af siden. Rettet med ét CSS-linje-skift
+(`.mp-head`s venstre/højre-padding fjernet). Bivirkning (tilsigtet):
+sprog-dropdownen og CTA-knappen har nu samme bredde. Verificeret med
+`getBoundingClientRect()` for otte elementer — alle nu `left:20px`.
+
+Fuld dag-for-dag-detalje (alle otte runder) i `.claude/HISTORY.md`,
 backend-/struktur-reference i `src/CONTEXT.md` afsnit 10.
 
 ### Beta-installation (september 2026) — nuværende arkitektur
