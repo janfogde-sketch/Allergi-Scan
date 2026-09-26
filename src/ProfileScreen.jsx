@@ -157,26 +157,33 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
 // kategori pr. favorit, ikke en liste (setFavoriteCategory(ean, category)) —
 // så "tilføj til/fjern fra en kategori" her betyder vælge/fravælge kategorien,
 // ikke et multi-select. Gemmer DIREKTE ved tryk (samme øjeblikkelige
-// gem-mønster som det tidligere inline-panel allerede brugte), lukker sig
-// selv bagefter — opfylder specifikationens "gemmes direkte" uden en
-// selvstændig, ekstra Gem-knap. Samme portal-/bottom-sheet-mønster som
-// ShareSheet (ListScreen.jsx) og ConfirmDialog (SharedComponents.jsx) — MEN
-// via createPortal til document.body (26. sept. 2026, opfølgning: "bund-
-// navigationen lå ovenpå/foran sheetet, Ny kategori/Opret var ikke fuldt
-// synlige"). Roden er det kendte .screen.fade-in-mønster (se CLAUDE.md
-// afsnit 3): fade-in-animationens efterladte transform gør .screen til et
-// CSS "containing block" for position:fixed-børn, så en fixed sheet renderet
-// INDE i skærmen (som denne var) positioneres relativt til SKÆRMENS boks i
-// stedet for det virkelige viewport — det forklarer både hvorfor bundnav'en
-// (som ER fixed til det rigtige viewport) kunne ligge foran, og hvorfor
-// sheetets bund kunne klippes af. Samme løsning som ListPickerSheet/
-// ProfileMenu.jsx allerede bruger: portal til document.body.
+// gem-mønster som det tidligere inline-panel allerede brugte). Sheetet
+// lukker IKKE længere sig selv efter hvert valg (26. sept. 2026, opfølgning:
+// "trykker man på den valgte kategori igen, skal varen fjernes, og
+// checkmarken skal forsvinde STRAKS") — `favorite` sendes nu ind som det
+// FRISKE, live objekt fra `favorites`-arrayet (se kaldsstedet), ikke et
+// frosset øjebliksbillede taget da sheetet blev åbnet, så checkmarken altid
+// afspejler den nyeste tilstand med det samme, uden at sheetet behøver
+// genåbnes. Brugeren lukker selv via ×/baggrundstryk når de er færdige.
+// Samme portal-/bottom-sheet-mønster som ShareSheet (ListScreen.jsx) og
+// ConfirmDialog (SharedComponents.jsx) — MEN via createPortal til
+// document.body (26. sept. 2026, opfølgning: "bundnavigationen lå ovenpå/
+// foran sheetet, Ny kategori/Opret var ikke fuldt synlige"). Roden er det
+// kendte .screen.fade-in-mønster (se CLAUDE.md afsnit 3): fade-in-
+// animationens efterladte transform gør .screen til et CSS "containing
+// block" for position:fixed-børn, så en fixed sheet renderet INDE i skærmen
+// (som denne var) positioneres relativt til SKÆRMENS boks i stedet for det
+// virkelige viewport — det forklarer både hvorfor bundnav'en (som ER fixed
+// til det rigtige viewport) kunne ligge foran, og hvorfor sheetets bund
+// kunne klippes af. Samme løsning som ListPickerSheet/ProfileMenu.jsx
+// allerede bruger: portal til document.body.
 function FavoriteCategorySheet({ favorite, existingCategories, onSetCategory, onClose }) {
   const [newCategoryInput, setNewCategoryInput] = useState("");
   const createCategory = () => {
     const name = newCategoryInput.trim();
     if (!name) return;
     onSetCategory(name);
+    setNewCategoryInput("");
   };
   return createPortal(
     <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.5)" }} onClick={onClose}>
@@ -188,7 +195,11 @@ function FavoriteCategorySheet({ favorite, existingCategories, onSetCategory, on
       <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px calc(28px + env(safe-area-inset-bottom))", position:"absolute", left:0, right:0, bottom:0, maxHeight:"75vh", overflowY:"auto" }}
         onClick={e => e.stopPropagation()}>
         <div style={UI.rowBetweenMb16}>
-          <div style={UI.ufs18_fw900_cink}>Kategorisér favorit</div>
+          {/* "Kategorisér favorit" → "Kategorier" (26. sept. 2026,
+              brugerfeedback: "renere — brugeren kan allerede se produkt-
+              navnet nedenunder og forstår handlingen"). Produktnavnet
+              herunder er UÆNDRET. */}
+          <div style={UI.ufs18_fw900_cink}>Kategorier</div>
           <button onClick={onClose} aria-label="Luk"
             style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
         </div>
@@ -217,7 +228,10 @@ function FavoriteCategorySheet({ favorite, existingCategories, onSetCategory, on
           <input className="field" placeholder="Ny kategori…" value={newCategoryInput}
             onChange={e => setNewCategoryInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") createCategory(); }} />
-          <button className="btn btn-primary btn-sm" style={UI.uwsnowrap} onClick={createCategory}>Opret</button>
+          {/* Disabled indtil der reelt står noget i feltet (26. sept. 2026,
+              brugerfeedback) — .btn:disabled (theme.jsx) giver allerede
+              den dæmpede, ikke-klikbare stil resten af appen bruger. */}
+          <button className="btn btn-primary btn-sm" style={UI.uwsnowrap} disabled={!newCategoryInput.trim()} onClick={createCategory}>Opret</button>
         </div>
       </div>
     </div>,
@@ -297,11 +311,16 @@ export default function ProfileScreen({
   const [inviteCopied, setInviteCopied] = useState(false);
 
   // ── Favoritter: kategori-filter + kategoriser-sheet ─────────────────────────
-  // `categorizingFavorite` holder den favorit sheeten er åben for (null =
-  // lukket) — erstatter det tidligere `categoryMenuFor` (kun et EAN, brugt af
-  // det inline-panel der nu er fjernet, se FavoriteCategorySheet ovenfor).
+  // `categorizingEan` holder EAN'et for favoritten sheeten er åben for (null
+  // = lukket) — kun selve identifikatoren, IKKE favorit-objektet selv (26.
+  // sept. 2026, opfølgning: sheetet skal vise checkmarken forsvinde STRAKS
+  // når man fravælger en kategori, uden at skulle lukkes/genåbnes — det
+  // kræver at sheetet altid får det FRISKESTE favorit-objekt fra
+  // `favorites`-arrayet på hvert render, se categorizingFavorite nedenfor,
+  // ikke et frosset øjebliksbillede taget da sheetet blev åbnet).
   const [favoriteCategoryFilter, setFavoriteCategoryFilter] = useState("all");
-  const [categorizingFavorite, setCategorizingFavorite] = useState(null);
+  const [categorizingEan, setCategorizingEan] = useState(null);
+  const categorizingFavorite = categorizingEan ? favorites.find(f => f.ean === categorizingEan) : null;
 
   // ── Historik: kompakt filter + status pr. post ──────────────────────────────
   const [historyFilter, setHistoryFilter] = useState("all");
@@ -801,7 +820,7 @@ export default function ProfileScreen({
                         {f.savedByMe !== false && (
                           <div style={{ display:"flex", gap:2, flexShrink:0 }} onClick={e => e.stopPropagation()}>
                             <button className="btn btn-ghost btn-sm" style={{ padding:"6px" }} aria-label={`Kategorisér "${f.name || "produkt"}"`}
-                              onClick={() => setCategorizingFavorite(f)}>
+                              onClick={() => setCategorizingEan(f.ean)}>
                               <Icon name="tag" size={14} color="var(--ink2)" />
                             </button>
                             {/* Samme skraldespand-ikon som resten af EatSafe bruger
@@ -826,8 +845,8 @@ export default function ProfileScreen({
               <FavoriteCategorySheet
                 favorite={categorizingFavorite}
                 existingCategories={[...new Set(favorites.map(f => f.category).filter(Boolean))].sort()}
-                onSetCategory={(cat) => { setFavoriteCategory(categorizingFavorite.ean, cat); setCategorizingFavorite(null); }}
-                onClose={() => setCategorizingFavorite(null)}
+                onSetCategory={(cat) => setFavoriteCategory(categorizingFavorite.ean, cat)}
+                onClose={() => setCategorizingEan(null)}
               />
             )}
           </div>
