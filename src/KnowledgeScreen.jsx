@@ -11,13 +11,19 @@ import { UI } from "./styleUtils.js";
 // eksisterende stroke-ikoner ("én konsekvent EatSafe-ikonfamilie"), ikke nye
 // ikoner. FAQ er bevidst UDENFOR denne liste — den vises nu som en separat
 // hjælpe-række på forsiden (se HjælpRow i hovedvisningen), ikke som en
-// kategori-flise blandt de øvrige. Farverne er UÆNDREDE fra før.
+// kategori-flise blandt de øvrige.
+// Krydsreaktioners farve ændret fra en peach (#E8A87C) til --blue (samme dag,
+// opfølgning: "undgå at bruge samme orange farve til både kategori-identitet
+// OG advarsler" — peach lå visuelt for tæt på risiko-amberen, så et
+// krydsreaktions-ikon kunne fejlagtigt læses som en aktiv advarsel i sig
+// selv). "Vidste du at" beholder sin peach — den kategori viser aldrig
+// risikoniveauer, så der er intet reelt kollisionsscenarie der.
 const CATEGORIES = [
   { id:"allergen",       icon:"shield",   label:"Allergener",      color:"var(--red)",   bg:"rgba(255,82,82,.10)" },
   { id:"ingredient",     icon:"package",  label:"Ingredienser",    color:"var(--blue)",  bg:"rgba(96,165,250,.10)" },
   { id:"e_number",       icon:"hash",     label:"E-numre",         color:"var(--amber)", bg:"rgba(255,186,59,.10)" },
   { id:"diet",           icon:"utensils", label:"Diæter",          color:"var(--green)", bg:"rgba(14,143,90,.10)" },
-  { id:"cross_reaction", icon:"refresh",  label:"Krydsreaktioner", color:"#E8A87C",      bg:"rgba(232,168,124,.10)" },
+  { id:"cross_reaction", icon:"refresh",  label:"Krydsreaktioner", color:"var(--blue)",  bg:"var(--blue-lt)" },
   { id:"fun_fact",       icon:"bulb",     label:"Vidste du at",    color:"#E8A87C",      bg:"rgba(232,168,124,.10)" },
 ];
 // "FAQ" → "Ofte stillede spørgsmål" (26. sept. 2026, brugerfeedback) — egen
@@ -27,7 +33,33 @@ const CATEGORIES = [
 const FAQ_CATEGORY = { id:"faq", icon:"message", label:"Ofte stillede spørgsmål", color:"var(--neutral)", bg:"rgba(148,163,184,.10)" };
 const CAT_MAP = Object.fromEntries([...CATEGORIES, FAQ_CATEGORY].map(c => [c.id, c]));
 
-const RISK_LABEL = { high:"Høj risiko", medium:"Moderat" };
+// Konsekvent risiko-farvesystem (26. sept. 2026, opfølgning) — grøn/orange/
+// rød for lav/moderat/høj, samme tre farver appen allerede bruger semantisk
+// alle andre steder (Historik/Indkøbsliste/Favoritter-statuslinjer). "low"
+// manglede helt tidligere (blev fejlagtigt farvet som "moderat"), selvom
+// knowledge_base rent faktisk bruger den flittigt (fx 103 af 247 E-numre har
+// risk_level:"low"). "none"/null giver bevidst INGEN badge, se brugsstederne.
+const RISK_META = {
+  high:   { label:"Høj risiko",  color:"var(--red)",   bg:"var(--red-lt)",   border:"var(--red-md)" },
+  medium: { label:"Moderat",     color:"var(--amber)", bg:"var(--amber-lt)", border:"var(--amber-md)" },
+  low:    { label:"Lav risiko",  color:"var(--green)", bg:"var(--green-lt)", border:"rgba(14,143,90,.2)" },
+};
+
+// Læsevenlige kildenavne i stedet for rå URL'er (26. sept. 2026,
+// opfølgning) — fallback til selve domænet for ukendte kilder, så en
+// fremtidig, ikke-kortlagt kilde stadig vises pænt frem for at knække.
+const KNOWN_SOURCES = {
+  "astma-allergi.dk": "Astma-Allergi Danmark",
+  "ncbi.nlm.nih.gov": "NCBI / National Library of Medicine",
+  "sundhed.dk": "Sundhed.dk",
+  "datatilsynet.dk": "Datatilsynet",
+};
+function sourceLabel(url) {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    return KNOWN_SOURCES[host] || host;
+  } catch { return url; }
+}
 
 // ── Inline styles (så de ALDRIG kan mangle) ──────────────────────────────────
 const S = {
@@ -41,14 +73,18 @@ const S = {
   searchWrap: { position:"relative", marginBottom:14 },
   searchInput: { width:"100%", padding:"12px 14px 12px 42px", border:"1px solid var(--border2)", borderRadius:12, background:"var(--surface)", fontFamily:"var(--f)", fontSize:14, color:"var(--ink)", outline:"none", boxSizing:"border-box" },
   searchIcon: { position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" },
-  card: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:8, display:"flex", alignItems:"flex-start", gap:10, cursor:"pointer" },
-  cardIconBox: (c) => ({ width:36, height:36, borderRadius:9, background:c.bg||"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }),
-  cardTitle: { fontSize:14, fontWeight:700, color:"var(--ink)", marginBottom:3 },
-  cardSummary: { fontSize:12, color:"var(--muted2)", lineHeight:1.45 },
+  // Kompakte resultatkort (26. sept. 2026, opfølgning: "gør resultatkortene
+  // mere kompakte") — reduceret padding/gap/ikonstørrelse ift. den første
+  // redesign-runde. cardSummary er nu clamped til 2 linjer med ellipsis —
+  // fuld forklaring hører kun hjemme på detaljesiden.
+  card: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"10px 12px", marginBottom:6, display:"flex", alignItems:"flex-start", gap:9, cursor:"pointer" },
+  cardIconBox: (c) => ({ width:32, height:32, borderRadius:8, background:c.bg||"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }),
+  cardTitle: { fontSize:13.5, fontWeight:700, color:"var(--ink)", marginBottom:2 },
+  cardSummary: { fontSize:11.5, color:"var(--muted2)", lineHeight:1.4, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" },
   // Farvet prik ALDRIG alene (26. sept. 2026, brugerfeedback) — altid parret
-  // med tydelig tekst ("Høj risiko"/"Moderat"), samme ikon+tekst+farve-
-  // princip som resten af appens statuslinjer (Historik/Favoritter m.fl.).
-  riskRow: (level) => ({ display:"flex", alignItems:"center", gap:4, marginTop:4, fontSize:10.5, fontWeight:700, color: level==="high"?"var(--red)":"var(--amber)" }),
+  // med tydelig tekst ("Høj risiko"/"Moderat"/"Lav risiko"), samme ikon+
+  // tekst+farve-princip som resten af appens statuslinjer.
+  riskRow: (level) => ({ display:"flex", alignItems:"center", gap:4, marginTop:4, fontSize:10.5, fontWeight:700, color: RISK_META[level]?.color || "var(--muted)" }),
   label: { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:10 },
   backBtn: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, flexShrink:0 },
   section: { marginBottom:16 },
@@ -59,6 +95,16 @@ const S = {
   healthBox: { background:"rgba(232,168,124,.10)", border:"1px solid rgba(232,168,124,.18)", borderRadius:12, padding:"12px 14px", marginBottom:16 },
   error: { background:"rgba(255,82,82,.12)", border:"1px solid rgba(255,82,82,.25)", borderRadius:12, padding:"14px", marginBottom:12, color:"var(--red)", fontSize:13 },
 };
+
+// Tærskel for hvornår "Kort fortalt" bliver clampet til 4 linjer med en
+// "Læs mere"-udvidelse i stedet for at vise det fulde afsnit direkte (26.
+// sept. 2026, opfølgning: "gør indholdet reelt kort, ca. 2-4 linjer").
+// knowledge_base har KUN ét description-felt (ingen separat "kort"/"lang"-
+// version) — i stedet for at opfinde en kunstig sætnings-afskæring har
+// "Kort fortalt" derfor et ægte, fuldt indhold der bare er visuelt clampet
+// som standard, fremfor en fabrikeret "Mere om X"-sektion bygget på en
+// gættet midt-i-sætningen-deling af samme tekst.
+const DESC_CLAMP_THRESHOLD = 220;
 
 export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
   const { accessToken } = useAuthContext();
@@ -71,15 +117,23 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
   const [counts, setCounts]                 = useState({});
   const [error, setError]                   = useState(null);
   const [funFacts, setFunFacts]             = useState([]);
-  // Relaterede krydsreaktioner for en allergen-detaljeside (26. sept. 2026) —
-  // knowledge_base har ingen selvstændig "cross_reactions"-kolonne, men
-  // cross_reaction-opslagenes EGEN allergen_ids-liste indeholder netop de
-  // allergener krydsreaktionen vedrører (fx "Birk → Frugt og grønt" har
-  // allergen_ids:["selleri","noedder"]) — genbruger derfor et ægte,
-  // eksisterende DB-felt til at slå relaterede opslag op, i stedet for at
-  // opfinde indhold uden datagrundlag.
+  // Relaterede krydsreaktioner for en allergen-detaljeside — knowledge_base
+  // har ingen selvstændig "cross_reactions"-kolonne, men cross_reaction-
+  // opslagenes EGEN allergen_ids-liste indeholder netop de allergener
+  // krydsreaktionen vedrører (fx "Birk → Frugt og grønt" har allergen_ids:
+  // ["selleri","noedder"]) — genbruger derfor et ægte, eksisterende DB-felt
+  // til at slå relaterede opslag op, i stedet for at opfinde indhold uden
+  // datagrundlag.
   const [crossReactions, setCrossReactions] = useState([]);
+  // "Relaterede opslag" (26. sept. 2026) — bredere end krydsreaktioner:
+  // ethvert andet opslag (allergen/ingrediens/diæt/E-nummer/FAQ) der deler
+  // mindst ét allergen_id med det aktuelle opslag. Ekskluderer selv
+  // cross_reaction (allerede dækket af Krydsreaktioner-sektionen ovenfor,
+  // for at undgå at samme opslag optræder to gange) og fun_fact (trivia,
+  // ikke opslagsværks-reference).
+  const [relatedEntries, setRelatedEntries] = useState([]);
   const [sourcesOpen, setSourcesOpen]       = useState(false);
+  const [descExpanded, setDescExpanded]     = useState(false);
 
   const doFetch = useCallback(async (url) => {
     // knowledge_base er public (USING true) — brug kun anon key, aldrig JWT
@@ -121,20 +175,29 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
     })();
   }, [openSlug, accessToken, doFetch]);
 
-  // Relaterede krydsreaktioner — kun relevant for allergen-opslag med et
-  // allergen_id at slå op imod. Nulstilles ved hvert entry-skift, så en
-  // tidligere entrys resultater ikke "hænger ved" på den næste.
+  // Relaterede opslag + krydsreaktioner — nulstilles ved hvert entry-skift,
+  // så en tidligere entrys resultater ikke "hænger ved" på den næste.
   useEffect(() => {
     setSourcesOpen(false);
+    setDescExpanded(false);
     setCrossReactions([]);
-    if (!selectedEntry || selectedEntry.category !== "allergen") return;
+    setRelatedEntries([]);
+    if (!selectedEntry) return;
     const allergenId = selectedEntry.allergen_ids?.[0];
     if (!allergenId) return;
+    if (selectedEntry.category === "allergen") {
+      (async () => {
+        try {
+          const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?category=eq.cross_reaction&allergen_ids=cs.${encodeURIComponent(`{${allergenId}}`)}&limit=10`);
+          if (Array.isArray(data)) setCrossReactions(data.filter(x => x.id !== selectedEntry.id));
+        } catch { /* ikke-kritisk — sektionen skjules bare hvis opslaget fejler */ }
+      })();
+    }
     (async () => {
       try {
-        const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?category=eq.cross_reaction&allergen_ids=cs.${encodeURIComponent(`{${allergenId}}`)}&limit=10`);
-        if (Array.isArray(data)) setCrossReactions(data.filter(x => x.id !== selectedEntry.id));
-      } catch { /* ikke-kritisk — sektionen skjules bare hvis opslaget fejler */ }
+        const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?allergen_ids=ov.${encodeURIComponent(`{${allergenId}}`)}&category=not.in.(fun_fact,cross_reaction)&order=category.asc,title.asc&limit=8`);
+        if (Array.isArray(data)) setRelatedEntries(data.filter(x => x.id !== selectedEntry.id).slice(0,6));
+      } catch { /* ikke-kritisk */ }
     })();
   }, [selectedEntry, doFetch]);
 
@@ -178,13 +241,14 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
   // ── Detail view ──────────────────────────────────────────────────────────
   if (selectedEntry) {
     const cat = CAT_MAP[selectedEntry.category] || {};
+    const risk = RISK_META[selectedEntry.risk_level];
     const AN = { gluten:"Gluten",laktose:"Laktose/Mælk",aeg:"Æg",noedder:"Nødder",jordnoedder:"Jordnødder",soja:"Soja",fisk:"Fisk",skaldyr:"Skaldyr",selleri:"Selleri",sennep:"Sennep",sesam:"Sesam",svovl:"Svovl/Sulfitter",lupin:"Lupin",bloeddyr:"Bløddyr" };
+    const desc = selectedEntry.description || "";
+    const descIsLong = desc.length > DESC_CLAMP_THRESHOLD;
     return (
       <div className="screen fade-in">
         {/* Tydelig tilbageknap øverst til venstre + kategori-label OVER
-            titlen (fx "ALLERGENER") — begge dele var allerede her, kun
-            emoji'et er erstattet med samme Icon-bibliotek som resten af
-            appen (26. sept. 2026, brugerfeedback). */}
+            titlen (fx "ALLERGENER"). */}
         <div style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 0 8px" }}>
           <button onClick={() => setSelectedEntry(null)} aria-label="Tilbage" style={S.backBtn}>
             <Icon name="chevronLeft" size={18} color="var(--ink)" />
@@ -193,22 +257,39 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
             {cat.icon && <Icon name={cat.icon} size={12} color={cat.color||"var(--muted)"} />} {cat.label}
           </div>
         </div>
-        <div style={{ padding:"16px 0 14px" }}>
-          <div style={{ width:56, height:56, borderRadius:14, background:cat.bg||"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:14 }}>
-            <Icon name={cat.icon||"book"} size={26} color={cat.color||"var(--ink2)"} />
+        <div style={{ padding:"14px 0 14px" }}>
+          {/* Kategoriikon reduceret ca. 25% (56→42px boks, 26→20px ikon —
+              26. sept. 2026, opfølgning: "reducer det ca. 20-30%, så det
+              ikke optager unødigt meget plads"). */}
+          <div style={{ width:42, height:42, borderRadius:12, background:cat.bg||"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:12 }}>
+            <Icon name={cat.icon||"book"} size={20} color={cat.color||"var(--ink2)"} />
           </div>
           <div style={{ fontSize:22, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>{selectedEntry.title}</div>
           {selectedEntry.summary && <div style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.55, marginBottom:16 }}>{selectedEntry.summary}</div>}
-          {selectedEntry.risk_level && selectedEntry.risk_level !== "none" && (
-            <span style={{ ...S.pill(selectedEntry.risk_level==="high"?"var(--red-lt)":"var(--amber-lt)", selectedEntry.risk_level==="high"?"var(--red)":"var(--amber)", selectedEntry.risk_level==="high"?"var(--red-md)":"var(--amber-md)"), display:"inline-flex", alignItems:"center", gap:6 }}>
-              <Icon name="warning" size={11} color={selectedEntry.risk_level==="high"?"var(--red)":"var(--amber)"} /> {RISK_LABEL[selectedEntry.risk_level]||selectedEntry.risk_level}
+          {risk && (
+            <span style={{ ...S.pill(risk.bg, risk.color, risk.border), display:"inline-flex", alignItems:"center", gap:6 }}>
+              <Icon name="warning" size={11} color={risk.color} /> {risk.label}
             </span>
           )}
         </div>
 
-        {/* "Kort fortalt" (26. sept. 2026, brugerfeedback — erstatter
-            "Beskrivelse") */}
-        {selectedEntry.description && <div style={S.section}><div style={S.sectionLabel}>Kort fortalt</div><div style={S.sectionText}>{selectedEntry.description}</div></div>}
+        {/* "Kort fortalt" — clampet til 4 linjer som standard, kun med en
+            "Læs mere"-udvidelse hvis teksten reelt er lang (26. sept. 2026,
+            opfølgning: "skal kunne læses hurtigt, ca. 2-4 linjer"). */}
+        {desc && (
+          <div style={S.section}>
+            <div style={S.sectionLabel}>Kort fortalt</div>
+            <div style={descIsLong && !descExpanded ? { ...S.sectionText, display:"-webkit-box", WebkitLineClamp:4, WebkitBoxOrient:"vertical", overflow:"hidden" } : S.sectionText}>
+              {desc}
+            </div>
+            {descIsLong && (
+              <button onClick={() => setDescExpanded(v => !v)}
+                style={{ background:"none", border:"none", padding:0, marginTop:6, cursor:"pointer", fontFamily:"var(--f)", fontSize:11.5, fontWeight:700, color:"var(--green)" }}>
+                {descExpanded ? "Vis mindre" : "Læs mere"}
+              </button>
+            )}
+          </div>
+        )}
 
         {selectedEntry.health_notes && <div style={S.healthBox}><div style={{ ...S.sectionLabel, color:"var(--warm)", display:"flex", alignItems:"center", gap:6 }}><Icon name="info" size={12} color="var(--warm)" /> Sundhedsnote</div><div style={S.sectionText}>{selectedEntry.health_notes}</div></div>}
 
@@ -216,8 +297,6 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           <div style={S.section}><div style={S.sectionLabel}>Allergener</div><div style={S.pillRow}>{selectedEntry.allergen_ids.map(a => <span key={a} style={{ ...S.pill("var(--red-lt)","var(--red)","var(--red-md)"), display:"inline-flex", alignItems:"center", gap:4 }}><Icon name="warning" size={10} color="var(--red)" /> {AN[a]||a}</span>)}</div></div>
         )}
 
-        {/* "Findes ofte i" (26. sept. 2026, brugerfeedback — erstatter
-            "Findes i") */}
         {Array.isArray(selectedEntry.found_in) && selectedEntry.found_in.length > 0 && (
           <div style={S.section}><div style={S.sectionLabel}>Findes ofte i</div><div style={S.pillRow}>{selectedEntry.found_in.map((f,i) => <span key={i} style={S.pill("var(--surface)","var(--muted)","var(--border)")}>{f}</span>)}</div></div>
         )}
@@ -230,29 +309,52 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           <div style={S.section}><div style={S.sectionLabel}>Kendes også som</div><div style={S.pillRow}>{selectedEntry.aliases.map((a,i) => <span key={i} style={S.pill("var(--surface)","var(--muted)","var(--border)")}>{a}</span>)}</div></div>
         )}
 
-        {/* "Krydsreaktioner" (26. sept. 2026) — kun for allergen-opslag hvor
-            der reelt findes relaterede cross_reaction-opslag (se effect
-            ovenfor). Hvert link åbner det pågældende krydsreaktions-opslag
-            direkte, samme mønster som resten af leksikonets kort/rækker. */}
+        {/* "Krydsreaktioner" — kun for allergen-opslag hvor der reelt findes
+            relaterede cross_reaction-opslag (se effect ovenfor). */}
         {crossReactions.length > 0 && (
           <div style={S.section}>
             <div style={S.sectionLabel}>Krydsreaktioner</div>
-            {crossReactions.map(x => (
-              <div key={x.id} style={{ ...S.card, marginBottom:6, padding:"10px 12px" }} onClick={() => setSelectedEntry(x)}>
-                <div style={S.cardIconBox(FAQ_CATEGORY.id===x.category?FAQ_CATEGORY:CAT_MAP.cross_reaction)}><Icon name="refresh" size={16} color="#E8A87C" /></div>
-                <div style={UI.flexMin}>
-                  <div style={{ ...S.cardTitle, fontSize:13, marginBottom:1 }}>{x.title}</div>
-                  {x.summary && <div style={{ ...S.cardSummary, fontSize:11.5 }}>{x.summary}</div>}
+            {crossReactions.map(x => {
+              const xCat = CAT_MAP[x.category] || CAT_MAP.cross_reaction;
+              return (
+                <div key={x.id} style={{ ...S.card, marginBottom:6 }} onClick={() => setSelectedEntry(x)}>
+                  <div style={S.cardIconBox(xCat)}><Icon name={xCat.icon} size={15} color={xCat.color} /></div>
+                  <div style={UI.flexMin}>
+                    <div style={{ ...S.cardTitle, fontSize:13, marginBottom:1 }}>{x.title}</div>
+                    {x.summary && <div style={S.cardSummary}>{x.summary}</div>}
+                  </div>
+                  <Icon name="chevronRight" size={14} color="var(--muted)" />
                 </div>
-                <Icon name="chevronRight" size={14} color="var(--muted)" />
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
-        {/* "Kilder og faglig gennemgang" (26. sept. 2026) — skjult bag en
-            diskret disclosure, kun vist hvis opslaget rent faktisk har
-            kilder registreret (knowledge_base.sources). */}
+        {/* "Relaterede opslag" (26. sept. 2026) — kompakte, klikbare chips
+            til beslægtet indhold i ANDRE kategorier, baseret på delte
+            allergen_ids (fx "Æg ↔ Fjerkræ" → "Æg", "Æggehvide" m.fl.). */}
+        {relatedEntries.length > 0 && (
+          <div style={S.section}>
+            <div style={S.sectionLabel}>Relaterede opslag</div>
+            <div style={S.pillRow}>
+              {relatedEntries.map(x => {
+                const xCat = CAT_MAP[x.category] || {};
+                return (
+                  <button key={x.id} onClick={() => setSelectedEntry(x)}
+                    style={{ ...S.pill("var(--surface)","var(--ink)","var(--border)"), display:"inline-flex", alignItems:"center", gap:5, cursor:"pointer", fontFamily:"var(--f)" }}>
+                    <Icon name={xCat.icon||"book"} size={11} color={xCat.color||"var(--muted)"} /> {x.title}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* "Kilder og faglig gennemgang" — skjult bag en diskret disclosure
+            (lukket som standard), kun vist hvis opslaget rent faktisk har
+            kilder registreret (knowledge_base.sources). Viser læsevenlige
+            kildenavne (fx "Astma-Allergi Danmark") i stedet for rå URL'er —
+            selve linket åbner stadig den ægte adresse. */}
         {Array.isArray(selectedEntry.sources) && selectedEntry.sources.length > 0 && (
           <div style={{ ...S.section, borderTop:"1px solid var(--border)", paddingTop:14 }}>
             <button onClick={() => setSourcesOpen(v => !v)}
@@ -263,11 +365,11 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
               <Icon name={sourcesOpen ? "chevronUp" : "chevronDown"} size={14} color="var(--muted)" />
             </button>
             {sourcesOpen && (
-              <div style={{ marginTop:10, display:"flex", flexDirection:"column", gap:6 }}>
+              <div style={{ marginTop:10, display:"flex", flexDirection:"column", gap:8 }}>
                 {selectedEntry.sources.map((src,i) => (
                   <a key={i} href={src} target="_blank" rel="noopener noreferrer"
-                    style={{ fontSize:11.5, color:"var(--green)", wordBreak:"break-all", textDecoration:"underline", textUnderlineOffset:2 }}>
-                    {src}
+                    style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, fontWeight:700, color:"var(--green)", textDecoration:"none" }}>
+                    <Icon name="link" size={12} color="var(--green)" /> {sourceLabel(src)}
                   </a>
                 ))}
               </div>
@@ -283,14 +385,18 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           </div>
         )}
 
-        {/* Diskret lægelig disclaimer (26. sept. 2026, brugerfeedback) —
-            samme muted, sekundære stil som "Sidst opdateret" ovenfor, ikke
-            en fremhævet advarselsboks (det er allerede Sundhedsnotens rolle). */}
+        {/* Diskret lægelig disclaimer — samme muted, sekundære stil som
+            "Sidst opdateret" ovenfor, ikke en fremhævet advarselsboks (det
+            er allerede Sundhedsnotens rolle). */}
         <div style={{ fontSize:10.5, color:"var(--muted)", marginTop:6, lineHeight:1.4 }}>
           Indholdet på denne side er vejledende og erstatter ikke professionel lægelig rådgivning.
         </div>
 
-        <div style={{ height:40 }} />
+        {/* Safe-area-bevidst bundplads (26. sept. 2026, opfølgning: "sidste
+            element skal altid kunne scrolles helt fri af navigationen") —
+            lagt OVEN PÅ den delte .screen-klasses faste 110px bundpadding,
+            ikke en erstatning for den (den er fælles for alle skærme). */}
+        <div style={{ height:"calc(40px + env(safe-area-inset-bottom))" }} />
       </div>
     );
   }
@@ -339,10 +445,8 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
             })}
           </div>
 
-          {/* "FAQ" → egen hjælpesektion i stedet for en kategori-flise (26.
-              sept. 2026, brugerfeedback) — samme handleCatSelect-mekanisme
-              som kategorierne ovenfor, bare layoutet som én tydelig,
-              fuldbredde række i stedet for et grid-kort. */}
+          {/* "FAQ" → egen hjælpesektion i stedet for en kategori-flise —
+              samme handleCatSelect-mekanisme som kategorierne ovenfor. */}
           <div style={{ ...S.label, marginTop:4 }}>Hjælp</div>
           <button style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left", marginBottom:8 }}
             onClick={() => handleCatSelect("faq")}>
@@ -372,8 +476,8 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
       {showList && (loading ? (
         <div className="fade-in">
           {[1,2,3,4,5].map(i => (
-            <div key={i} className="skeleton-card" style={{ display:"flex", gap:10, marginBottom:8 }}>
-              <div className="skeleton-block" style={{ width:36, height:36, borderRadius:8, flexShrink:0 }} />
+            <div key={i} className="skeleton-card" style={{ display:"flex", gap:9, marginBottom:6 }}>
+              <div className="skeleton-block" style={{ width:32, height:32, borderRadius:8, flexShrink:0 }} />
               <div style={UI.flex1}>
                 <div className="skeleton-block skeleton-title" />
                 <div className="skeleton-block skeleton-sub" />
@@ -386,17 +490,17 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
       ) : (
         <div>{entries.map(entry => {
           const cat = CAT_MAP[entry.category] || {};
+          const risk = RISK_META[entry.risk_level];
           return (
             <div key={entry.id} style={S.card} onClick={() => setSelectedEntry(entry)}>
-              <div style={S.cardIconBox(cat)}><Icon name={cat.icon||"book"} size={17} color={cat.color||"var(--ink2)"} /></div>
+              <div style={S.cardIconBox(cat)}><Icon name={cat.icon||"book"} size={16} color={cat.color||"var(--ink2)"} /></div>
               <div style={UI.flexMin}>
                 <div style={S.cardTitle}>{entry.title}</div>
                 {entry.summary && <div style={S.cardSummary}>{entry.summary}</div>}
-                {/* Farvet prik ALDRIG alene — altid parret med tydelig tekst
-                    (26. sept. 2026, brugerfeedback). */}
-                {entry.risk_level && entry.risk_level !== "none" && (
+                {/* Farvet prik ALDRIG alene — altid parret med tydelig tekst. */}
+                {risk && (
                   <div style={S.riskRow(entry.risk_level)}>
-                    <Icon name="warning" size={10} color="currentColor" /> {RISK_LABEL[entry.risk_level]||entry.risk_level}
+                    <Icon name="warning" size={10} color="currentColor" /> {risk.label}
                   </div>
                 )}
               </div>
@@ -406,29 +510,37 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
         })}</div>
       ))}
 
-      {/* Fun facts på forsiden — kompakte teaser-cards, ikke lange
-          tekstafsnit (26. sept. 2026, brugerfeedback). Emoji-ikonet i
-          sektionsoverskriften er erstattet med Icon-biblioteket, og hvert
-          kort har nu en tydelig "Læs mere →"-affordance i stedet for at
-          fremstå som et rent tekstafsnit man tilfældigvis kan trykke på. */}
+      {/* Fun facts på forsiden — kompakte teaser-cards, maks. 3 stk. (26.
+          sept. 2026, opfølgning: "skal fylde mindre visuelt, maks. 2-3
+          kort, gør kortene en smule mere kompakte"), med en diskret "Se
+          alle →" nederst der åbner hele fun_fact-kategorien. Leksikonet
+          skal først og fremmest opleves som et opslagsværk, ikke et
+          artikel-feed. */}
       {!showList && funFacts.length > 0 && (
         <div style={UI.mt8}>
           <div style={{ ...S.label, display:"flex", alignItems:"center", gap:6 }}><Icon name="bulb" size={12} color="var(--muted)" /> Vidste du at...</div>
-          {funFacts.map(f => (
-            <div key={f.id} onClick={() => setSelectedEntry(f)}
-              style={{ background:"rgba(232,168,124,.10)", border:"1px solid rgba(232,168,124,.18)", borderRadius:12, padding:"12px 14px", cursor:"pointer", display:"flex", gap:10, alignItems:"flex-start", marginBottom:8 }}>
-              <div style={S.catIconBox(FAQ_CATEGORY.id===f.category?FAQ_CATEGORY:CAT_MAP.fun_fact)}><Icon name="bulb" size={16} color="#E8A87C" /></div>
-              <div style={UI.flexMin}>
-                <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:3 }}>{f.title}</div>
-                <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.45, marginBottom:4 }}>{f.summary}</div>
-                <div style={{ fontSize:11, fontWeight:700, color:"#E8A87C" }}>Læs mere →</div>
+          {funFacts.slice(0,3).map(f => {
+            const fCat = CAT_MAP[f.category] || CAT_MAP.fun_fact;
+            return (
+              <div key={f.id} onClick={() => setSelectedEntry(f)}
+                style={{ background:"rgba(232,168,124,.10)", border:"1px solid rgba(232,168,124,.18)", borderRadius:12, padding:"10px 12px", cursor:"pointer", display:"flex", gap:9, alignItems:"flex-start", marginBottom:6 }}>
+                <div style={S.cardIconBox(fCat)}><Icon name={fCat.icon} size={15} color={fCat.color} /></div>
+                <div style={UI.flexMin}>
+                  <div style={{ fontSize:12.5, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{f.title}</div>
+                  <div style={S.cardSummary}>{f.summary}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
+          <button onClick={() => handleCatSelect("fun_fact")}
+            style={{ display:"flex", alignItems:"center", gap:4, background:"none", border:"none", padding:"4px 2px", marginTop:2, cursor:"pointer", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink2)" }}>
+            Se alle →
+          </button>
         </div>
       )}
 
-      <div style={{ height:20 }} />
+      {/* Safe-area-bevidst bundplads, se samme note på detaljesiden. */}
+      <div style={{ height:"calc(20px + env(safe-area-inset-bottom))" }} />
       {showList && <ScrollToTop />}
     </div>
   );
