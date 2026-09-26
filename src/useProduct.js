@@ -139,6 +139,29 @@ export function buildDemoScanResult({ activeIds, activeCustom, activeENumbers, f
 // hvert kald i stedet for at fange det i en useCallback-closure — det
 // garanterer altid friske værdier (ingen stale-closure-risiko fra en
 // ufuldstændig deps-liste).
+// ── Advarsels-alarm (Indstillinger → Scanning, 28. sept. 2026) ───────────────
+// Vibration/lyd specifikt for et allergi-match (danger/warn) — uafhængig af
+// den allerede eksisterende, ubetingede "stregkode registreret"-feedback i
+// useScanner.js (samme vibrate+Web Audio-mønster genbrugt derfra, men egen
+// lavere/længere tone her, så de to kan skelnes). Begge kanaler er default
+// TIL (ctx-værdien er kun `false` når brugeren selv har slået den fra i
+// Indstillinger — `undefined`, fx fra eksisterende tests, tæller som TIL).
+function fireWarningAlert(vibrateOn, soundOn) {
+  if (vibrateOn !== false && navigator.vibrate) navigator.vibrate([50, 60, 50, 60, 90]);
+  if (soundOn !== false) {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 320; gain.gain.setValueAtTime(0.28, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.22);
+    } catch { /* Web Audio ikke tilgængelig — ingen fallback nødvendig */ }
+  }
+}
+
 export async function runLookupProduct(ean, ctx) {
   const {
     accessToken, activeIds, activeCustom, activeENumbers, family, activeProfiles,
@@ -146,6 +169,7 @@ export async function runLookupProduct(ean, ctx) {
     setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
     setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
     setProductImagePreview, setProductImageBase64,
+    vibrateOnWarning, soundOnWarning,
   } = ctx;
 
   if (!ean?.trim()) return;
@@ -182,6 +206,7 @@ export async function runLookupProduct(ean, ctx) {
     // det er appens første scanning), i stedet for at vise de rigtige
     // alternativer til DETTE produkt.
     if (cachedResult.status === "danger" || cachedResult.status === "warn") {
+      fireWarningAlert(vibrateOnWarning, soundOnWarning);
       loadAlternatives(cachedResult.category, ean.trim());
     } else {
       clearAlternatives();
@@ -249,6 +274,7 @@ export async function runLookupProduct(ean, ctx) {
     await saveHistoryEntry(ean.trim(), product.id, finalResult.status, result.allergen_flags, activeProfiles);
     // Hent alternativer hvis produktet er farligt eller har spor
     if (finalResult.status === "danger" || finalResult.status === "warn") {
+      fireWarningAlert(vibrateOnWarning, soundOnWarning);
       loadAlternatives(finalResult.category, ean.trim());
     } else {
       clearAlternatives();

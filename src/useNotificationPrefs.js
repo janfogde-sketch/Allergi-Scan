@@ -16,12 +16,15 @@ import { makeHeaders, apiCall } from "./helpers.js";
 // som en reel notifikation (send_welcome_email), men er en engangs-besked
 // ved oprettelse — ikke noget en bruger meningsfuldt kan slå fra/til, så den
 // er bevidst udeladt af listen brugeren ser.
+// Labels finpudset (28. sept. 2026, Indstillinger-forbedring) til mere
+// naturlig/præcis microcopy — "id" (bruges som databasenøgle) er UÆNDRET
+// for alle fem, kun de synlige "label"-tekster er rettet.
 export const NOTIFICATION_CATEGORIES = [
-  { id: "submission_status", label: "Dine indsendelser", description: "Når en indsendelse du har lavet bliver godkendt eller afvist" },
+  { id: "submission_status", label: "Indsendte produkter", description: "Når en indsendelse du har lavet bliver godkendt eller afvist" },
   { id: "missing_product_found", label: "Efterspurgte produkter", description: "Når et produkt du har ledt efter, men ikke fundet, bliver tilføjet" },
-  { id: "family", label: "Familie", description: "Når nogen accepterer din familie-invitation" },
+  { id: "family", label: "Familieinvitationer", description: "Når nogen accepterer din familie-invitation" },
   { id: "feedback", label: "Svar på feedback", description: "Når en ticket du har sendt ind får svar eller opdateret status" },
-  { id: "weekly_digest", label: "Ugentligt opskrifts-digest", description: "En ugentlig påmindelse om nye opskrifter der matcher dine allergier" },
+  { id: "weekly_digest", label: "Ugentlig opskriftsoversigt", description: "En ugentlig påmindelse om nye opskrifter der matcher dine allergier" },
 ];
 
 const CHANNELS = ["push", "email"];

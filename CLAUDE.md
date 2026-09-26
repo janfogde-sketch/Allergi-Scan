@@ -878,6 +878,74 @@ teksten). Ingen andre layout-/farve-/funktionsændringer.
 
 Fuld detalje i `.claude/HISTORY.md`.
 
+### Indstillinger omstruktureret til seks logiske sektioner (28. sept. 2026)
+
+`SettingsScreen.jsx` var indtil videre kun to kort (Konto med Log ud/Slet
+konto side om side, og Notifikationer). Omstruktureret efter en detaljeret
+"FORBEDR INDSTILLINGER I EATSAFE"-spec til seks sektioner: **Konto** (kun
+Log ud), **Sprog** (Standard-sprog til Madpas — genbruger `MADPAS_LANGUAGES`
++ App.jsx's allerede lagrede `madpasLang`-state og MadpasScreen.jsx's egne
+`.mp-lang-dropdown`/`.mp-lang-list`-CSS-klasser 1:1, ikke en ny UI),
+**Scanning** (to nye toggles, se nedenfor), **Notifikationer** (samme
+funktion, forbedret layout — se nedenfor), **Privatliv & data**
+(Privatlivspolitik-link, en udfoldelig "Hvilke data EatSafe gemmer"-liste,
+og **Slet konto** flyttet hertil fra Konto-kortet ind i en tydeligt
+adskilt "FAREZONE"-underafsnit med rød tekst-knap i stedet for en fyldt
+rød blok, så den ikke konkurrerer visuelt med Log ud), og **Om EatSafe**
+(Version via det allerede eksisterende `formatBuildTime()`/`COMMIT_SHA`
+fra `utils.jsx`, "Om EatSafe Beta" der genåbner den eksisterende
+`BetaIntroModal` via samme `setBetaIntroStep(0)/setBetaIntroSeen(false)`-
+mønster som ProfileMenu.jsx, og "Kontakt & feedback" der åbner den
+eksisterende `FeedbackModal` via samme `onOpenFeedback`-prop-navn som
+`HelpModal.jsx` allerede bruger).
+
+**To nye, reelle Scanning-indstillinger** (localStorage-persisteret, samme
+mønster som `madpasCrossContact`, default TIL): "Vibration ved advarsel"
+og "Lyd ved advarsel". Begge er koblet til et helt nyt checkpoint i
+`useProduct.js`s `runLookupProduct` (en `fireWarningAlert()`-hjælpe-
+funktion, genbruger `navigator.vibrate`+Web Audio-oscillator-mønsteret fra
+`useScanner.js`s eksisterende "stregkode registreret"-feedback, men med
+en tydeligt anderledes, lavere/længere tone) der fyrer specifikt når et
+scan-resultat er `danger`/`warn` — IKKE det samme som den allerede
+eksisterende, ubetingede vibration ved enhver scanning (som er urørt).
+State er løftet til App.jsx (`vibrateOnWarning`/`soundOnWarning`) og
+sendes med i `lookupProduct`s `ctx`, præcis som appens øvrige scan-
+afhængige state.
+
+**Notifikationer-kortets ændringer:** "Push-tilladelse" omdøbt til
+"Push-notifikationer"; kategori-labels finpudset i `useNotificationPrefs.js`
+("Dine indsendelser"→"Indsendte produkter", "Familie"→"Familieinvitationer",
+"Ugentligt opskrifts-digest"→"Ugentlig opskriftsoversigt" — kun de
+synlige labels, databasenøglerne/`id`-felterne er uændrede); de gentagne
+PUSH/MAIL-labels på hver række erstattet af én fælles kolonneheader
+("Push"/"E-mail") over hele gridet; og — den reelle funktionelle rettelse
+— per-kategori Push-toggles vises nu grånede/deaktiverede (med en kort
+forklaring ovenfor gridet) når browserens push-tilladelse ikke er givet,
+så en toggle aldrig kan se aktiv ud uden reelt at kunne sende noget.
+Mail-kolonnen er bevidst UPÅVIRKET af push-tilladelsen (de to kanaler er
+uafhængige af hinanden).
+
+**Bevidst udeladt** (ikke glemt — begrundelse i `SettingsScreen.jsx`s
+egen filhoved-kommentar): "App-sprog" (appen har intet i18n-system, al
+UI-tekst er hardkodet dansk — kun Madpas har reel sprogunderstøttelse),
+"Åbn resultat automatisk efter scanning" (scan-flowet har allerede
+ingen anden tilstand at slå til/fra — det er allerede ubetinget
+automatisk), "Eksportér mine data" (ingen understøttende Edge Function
+findes), "Vilkår" (ingen selvstændig vilkårs-side findes, samme kendte
+begrænsning som OnboardingScreen.jsx's "Handelsbetingelser"-tekst
+allerede dokumenterer), og en "Åbn Indstillinger"-genvej ved afvist
+push (ingen cross-browser PWA-API til at åbne systemindstillinger findes
+— den eksisterende tekstforklaring er den ærlige erstatning).
+
+Verificeret med Playwright (artifact-preview-build, login-bypass,
+hamburger-menu → Indstillinger): alle seks sektionsoverskrifter til
+stede, sprogvælgeren åbner/vælger/persisterer korrekt, Slet konto væk
+fra Konto-kortet og til stede i Privatliv & data-kortets Farezone,
+"Hvilke data EatSafe gemmer" folder korrekt ud, de tre omdøbte
+notifikations-labels og den fælles Push/E-mail-kolonneheader begge til
+stede, Om EatSafe-sektionens tre rækker til stede. Ingen build-/test-/
+mojibake-fejl (109/109 tests bestået).
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
