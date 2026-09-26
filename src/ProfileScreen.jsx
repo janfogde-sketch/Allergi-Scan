@@ -282,6 +282,31 @@ export default function ProfileScreen({
     lookupProduct(h.ean_scanned || h.code);
   };
 
+  // Samler gentagne "produkt ikke fundet"-scanninger af SAMME stregkode til
+  // én række med et antal (26. sept. 2026, brugerfeedback: "historikken kan
+  // hurtigt blive fyldt med identiske mislykkede scanninger") — kun for
+  // ikke-fundne produkter, IKKE for fundne produkter (at scanne den samme
+  // yoghurt to gange med to ugers mellemrum er reel, adskilt historik, ikke
+  // støj, der skal slås sammen). `history` kommer allerede nyest-først fra
+  // API'et, så den FØRSTE forekomst af et EAN i iterationsrækkefølgen er
+  // automatisk den seneste — den bruges som rækkens tidspunkt/plads i
+  // listen, øvrige forekomster tælles ind i samme objekt og udelades selv.
+  const groupNotFoundDuplicates = (list) => {
+    const seenByEan = new Map();
+    const result = [];
+    for (const h of list) {
+      const isNF = (h.result || h.status) === "not_found";
+      const ean = h.ean_scanned || h.code;
+      if (!isNF || !ean) { result.push(h); continue; }
+      const existing = seenByEan.get(ean);
+      if (existing) { existing.__count++; continue; }
+      const group = { ...h, __count: 1 };
+      seenByEan.set(ean, group);
+      result.push(group);
+    }
+    return result;
+  };
+
   const FamilyChips = () => {
     const allIds = ["me", ...family.map(m => m.id)];
     const isAll = allIds.every(id => activeProfiles.includes(id));
@@ -311,7 +336,15 @@ export default function ProfileScreen({
     <>
         {screen === SCREENS.HISTORY && (
           <div className="screen fade-in">
-            <div className="screen-title">Historik</div>
+            {/* .screen-title er centreret som standard (theme.jsx, delt af alle
+                skærme) — venstrestillet her med en lokal inline-override
+                (26. sept. 2026, brugerfeedback: "centreret titel + venstre-
+                stillet undertekst ser tilfældigt ud, venstrestil begge så
+                siden matcher en funktionel listevisning bedre", samme
+                reference som Indkøbslistens allerede venstrestillede titel).
+                Ændrer IKKE den delte klasse — resten af appens skærme, som
+                ikke blev nævnt, beholder deres centrerede titel uændret. */}
+            <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Historik</div>
             <div className="screen-sub">
               {historyScope === "family" ? "Alle scanninger i din husstand." : "Alle dine tidligere scanninger."}
             </div>
@@ -381,7 +414,8 @@ export default function ProfileScreen({
               if (filtered.length === 0) {
                 return <div style={{ textAlign:"center", padding:"32px 0", fontSize:12.5, color:"var(--muted)" }}>Ingen scanninger matcher dette filter</div>;
               }
-              return filtered.map((h,i) => {
+              const grouped = groupNotFoundDuplicates(filtered);
+              return grouped.map((h,i) => {
                 const d = historyDetails(h);
                 const isNotFound = d.status === "not_found";
                 const name = isNotFound ? "Produkt ikke fundet" : (h.products?.name || h.name || "Ukendt produkt");
@@ -408,7 +442,7 @@ export default function ProfileScreen({
                       <div className="hist-name">{name}</div>
                       <div className="hist-time">
                         {isNotFound
-                          ? `Stregkode ${h.ean_scanned || h.code || "?"} · ${timeAgo(h.scanned_at||h.timestamp)}`
+                          ? `Stregkode ${h.ean_scanned || h.code || "?"} · ${h.__count > 1 ? `Scannet ${h.__count} gange, senest ${timeAgo(h.scanned_at||h.timestamp)}` : `${timeAgo(h.scanned_at||h.timestamp)}`}`
                           : `${timeAgo(h.scanned_at||h.timestamp)}${d.checkedFor ? ` · Tjekket for: ${d.checkedFor}` : ""}`}
                         {scannedBySuffix}
                       </div>
