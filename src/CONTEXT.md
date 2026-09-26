@@ -57,7 +57,7 @@ src/
 │                             #   scanFromGallery, scanPhotoForEan (foto-fallback)
 ├── useAlternatives.js        # Sikre alternativer ved farlige produkter
 │                             #   Kategori-match → overkategori fallback → filtrér allergen-profil
-├── useMadpas.js              # Madpas speak-funktion + madpasSpeaking/Big/WaiterView state
+├── useMadpas.js              # Madpas speak-funktion + madpasSpeaking/WaiterView state
 ├── useSearch.js              # Søgning via Edge Function med 350ms debounce
 ├── useAdmin.js               # Admin CRUD (brugere, submissions, tickets)
 ├── useRecipes.js             # Opskrifter CRUD
@@ -81,7 +81,7 @@ src/
 ├── OnboardingScreen.jsx      # WELCOME, LOGIN, ONBOARD
 ├── KnowledgeScreen.jsx       # KNOWLEDGE — Leksikon
 ├── RecipesScreen.jsx         # RECIPES — opskrifter (gradient header)
-├── MadpasScreen.jsx          # MADPAS (17 sprog) — strukturerede sektioner, QR/del-link (madpas_links)
+├── MadpasScreen.jsx          # MADPAS (17 sprog) — strukturerede sektioner, kun on-device (intet link/QR/PDF)
 ├── AdminScreen.jsx           # Mobil admin-panel (via ProfileScreen)
 │                             #   Tabs: Dashboard, Brugere, Indsendelser, Tickets,
 │                             #         Debug, Manglende, Import
@@ -144,7 +144,7 @@ src/
 | FAMILY | ProfileScreen | Familie + invitationslink |
 | KNOWLEDGE | KnowledgeScreen | Leksikon |
 | RECIPES | RecipesScreen | Opskrifter |
-| MADPAS | MadpasScreen | Madpas + QR |
+| MADPAS | MadpasScreen | Madpas (kun on-device, intet link/QR) |
 
 Bundmenu (opdateret sept. 2026): `Indkøbsliste (venstre) → Scan (midten, barcode-ikon)
 → Søg (højre)`. Profil, Familie, Favoritter, Historik, Opskrifter, Viden, Madpas,
@@ -312,72 +312,70 @@ yderligere handling ventende.
 
 ---
 
-## 10. Madpas (26. sept. 2026 — redesignet og gjort reelt funktionsdygtigt)
+## 10. Madpas (26. sept. 2026 — redesignet, herefter forenklet til kernefunktionen)
 
 Madpas' formål: en tjener/ekspedient i udlandet skal kunne forstå de
 vigtigste kost-/allergioplysninger på få sekunder — strukturerede sektioner
-(fødevareallergier/intolerancer/kost/E-numre, se `ALLERGENS[].type` for
-allergi/intolerance-skellet), ikke én generisk liste, og en madpas der
-altid afspejler den VALGTE profils AKTUELLE data (også kostpræferencer/
-E-numre for et familiemedlem — fulgte tidligere fejlagtigt altid den
-loggede bruger selv, rettet i App.jsx/useMadpas.js).
+(FOOD ALLERGIES/INTOLERANCES/DIET, se `ALLERGENS[].type` for allergi/
+intolerance-skellet), ikke én generisk liste, og en madpas der altid
+afspejler den VALGTE profils AKTUELLE data (også kostpræferencer for et
+familiemedlem — fulgte tidligere fejlagtigt altid den loggede bruger selv,
+rettet i App.jsx/useMadpas.js).
 
-**Oversættelses-hul fundet og rettet:** `ALLERGEN_T` (per-sprogs allergen-
-navne, `src/constants.jsx`) manglede `hvede`/`maelkeallergi` helt — uden en
-sprog-nøgle faldt visningen tilbage til `ALLERGENS`' DANSKE `a.label`,
-selv når madpasset var sat til fx engelsk. `madpasAllergenLabel()`/
-`madpasDietLabel()` (useMadpas.js) er de fælles hjælpefunktioner, der
+**To redesign-runder (26. sept. 2026), derefter en tredje forenklings-
+runde samme dag** — se `.claude/HISTORY.md` for fuld dag-for-dag-detalje.
+Runde 1-2 byggede et delings-link (token-baseret `madpas_links`-tabel +
+`get_madpas_by_token()`-RPC + en offentlig statisk `public/madpas-view.html`-
+side + QR-kode + PDF/print + en E-numre-synlighed-opt-in). **Runde 3 fjernede
+al den infrastruktur igen** efter et eksplicit brugerkrav ("Link- og QR-
+funktionalitet skal være helt fjernet") — `madpas_links`-tabellen og
+`get_madpas_by_token()`-funktionen er droppet fra databasen (migration
+`remove_madpas_link_sharing`, verificeret 0 rækker før drop), `public/
+madpas-view.html` er slettet, `vercel.json`s `/madpas/:token`-rewrite er
+fjernet, og PDF/print samt E-numre-visning på madpasset er også fjernet
+(PDF/print var ikke eksplicit nævnt i runde 3-specifikationens
+"behold"-liste — afklaret via en direkte bruger-forespørgsel, svar: fjern
+den også). Madpas er nu udelukkende en on-device visning: vælg profil →
+vælg sprog → se kompakt preview → "Vis til tjener" (fuldskærm) → evt. "Læs
+højt"/oplæsning. Der er ingen ekstern deling, intet link, ingen offentlig
+side, og ingen server-side madpas-specifik tilstand tilbage overhovedet.
+
+**Oversættelses-hul fundet og rettet (runde 1):** `ALLERGEN_T` (per-sprogs
+allergen-navne, `src/constants.jsx`) manglede `hvede`/`maelkeallergi`
+helt — uden en sprog-nøgle faldt visningen tilbage til `ALLERGENS`' DANSKE
+`a.label`, selv når madpasset var sat til fx engelsk. Samme hul fandtes i
+`ALLERGEN_EXAMPLES` (runde 2). `madpasAllergenLabel()`/`madpasDietLabel()`/
+`madpasAllergenExamples()` (useMadpas.js) er de fælles hjælpefunktioner, der
 korrekt prioriterer `lang==="da" ? a.label : ALLERGEN_T[...]` — brug dem
 ved fremtidige Madpas-ændringer i stedet for at genopfinde faldback-logikken.
 
-**Delings-link (madpas_links-tabellen + get_madpas_by_token()-RPC):**
-- Linket var TIDLIGERE bare `eatsafe.dk/madpas/[userId]` — en URL uden
-  NOGEN offentlig visning bag sig overhovedet (fundet under dette
-  redesign: besøgende landede bare på den almindelige app/login-væg). Nu
-  et rigtigt, tilbagekaldeligt token pr. (bruger, profil)-par.
-- **Tabel:** `madpas_links` (id, user_id, profile_ref ["self" eller et
-  family_members-id], lang, token, status ["active"/"revoked"],
-  `show_enumbers` [boolean, default false], created_at). RLS: kun ejeren
-  (`user_id = auth.uid()`) kan SELECT/INSERT/UPDATE egen række — ingen
-  offentlig SELECT-policy.
-- **Offentlig læsning:** `get_madpas_by_token(p_token)`, en SECURITY
-  DEFINER RPC (samme mønster som `get_invite_preview` for family_invites)
-  — slår token op, tjekker `status='active'`, og returnerer navn +
-  allergener/custom/diæter/E-numre for enten brugeren selv eller den
-  angivne administrerede profil. E-numre nulstilles til `[]` i svaret hvis
-  `show_enumbers=false` på linket, så det offentlige link aldrig kan vise
-  E-numre appens egen visning har skjult (se "E-numre" nedenfor). Callable
-  af `anon` (verificeret via `has_function_privilege`).
-- **Offentlig side:** `public/madpas-view.html` — selvstændig statisk
-  side (samme vanilla-JS-mønster som `invite.html`, ingen Vite-build).
-  Indeholder en BEVIDST duplikeret delmængde af oversættelses-data
-  (ALLERGENS, ALLERGEN_T-navne, DIET_T, ALLERGEN_EXAMPLES,
-  MADPAS_EXAMPLES_LABEL_T, MADPAS_LANGUAGES, MADPAS_SECTIONS_T m.fl.) —
-  samme accepterede duplikerings-mønster som `src/allergenKeywords.js` vs.
-  `supabase/functions/allergens/index.ts`. Opdatér BEGGE steder hvis disse
-  oversættelser ændres. Ruten `/madpas/:token` rewrites til denne fil
-  (`vercel.json`).
-- **Deaktiver/generér nyt link:** "Deaktiver link" sætter `status=
-  'revoked'` på den aktive række; "Generér nyt link" gør det samme og
-  opretter en ny — det gamle link stopper øjeblikkeligt med at virke
-  (RPC'en filtrerer på `status='active'`). `regenerateLink()` i
-  MadpasScreen.jsx nulstiller UI-state til "intet aktivt link" ØJEBLIKKELIGT
-  efter en vellykket revoke, uanset om den efterfølgende oprettelse af et
-  nyt link lykkes — ellers kunne et allerede dødt link fejlagtigt blive
-  stående og se aktivt ud, hvis selve oprettelseskaldet fejlede (fundet
-  under 2. redesign-runde, se `.claude/HISTORY.md`).
-- **E-numre** vises KUN hvis brugeren eksplicit har slået "Vis overvågede
-  E-numre på madpasset" til (checkbox i MadpasScreen.jsx, persisteret i
-  `localStorage` som `as_madpas_show_enumbers` OG gemt på selve linket via
-  `show_enumbers`-kolonnen) — overvågede E-numre er en scannings-
-  indstilling, ikke automatisk noget en bruger ønsker at dele med en
-  tjener.
-- **Korte fødevare-eksempler** (`ALLERGEN_EXAMPLES` i constants.jsx,
-  `madpasAllergenExamples()` i useMadpas.js) vises under hvert allergen/
-  relevant intolerance i tjener-visningen, PDF'en og den offentlige side —
-  bevidst SMÅ og MUTED sammenlignet med selve allergen-navnet, og mærket
-  med et kort, oversat "Fx:"/"Examples:"-label (`MADPAS_EXAMPLES_LABEL_T`)
-  for aldrig at kunne forveksles med en komplet/garanteret liste.
+**Singular/plural sikkerheds-sætning (runde 3):** med kun ÉT allergen/
+fritekst-emne i FOOD ALLERGIES-sektionen vises en grammatisk singular
+sætning ("...does not contain wheat.") i stedet for den generiske plural
+("...does not contain any of these ingredients.") — aldrig "any of these"-
+fraseologi når kun én ting reelt vises. `madpasSafetyNote(names, lang)` i
+useMadpas.js vælger mellem `MADPAS_SAFETY_NOTE_SINGULAR_T` (med en
+`{name}`-placeholder, indsat direkte for sprog hvor det er grammatisk
+sikkert; kolon-baseret "...indeholder følgende: {name}" for sprog med
+køns-/artikel-bøjning såsom tysk/fransk/spansk/italiensk/portugisisk/
+polsk) og `MADPAS_SAFETY_NOTE_T` (den uændrede plural-variant) i
+`constants.jsx`, alle 17 sprog.
+
+**Korte fødevare-eksempler** (`ALLERGEN_EXAMPLES` i constants.jsx,
+`madpasAllergenExamples()` i useMadpas.js) vises under hvert allergen/
+relevant intolerance i tjener-visningen — bevidst SMÅ og MUTED sammenlignet
+med selve allergen-navnet, og mærket med et kort, oversat
+"Almindelige eksempler:"/"Common examples:"-label (`MADPAS_EXAMPLES_LABEL_T`,
+omdøbt fra "Fx:"/"Examples:" i runde 3) for aldrig at kunne forveksles med
+en komplet/garanteret liste.
+
+**Oplæsnings-knappens tekst er selv oversat** (runde 3) —
+`MADPAS_SPEAK_LABEL_T`/`MADPAS_STOP_LABEL_T` (17 sprog, fx
+da:"Oplæs"/en:"Read aloud"/de:"Vorlesen") — hele UI'et, ikke bare
+allergen-/diæt-navnene, skal følge det valgte sprog.
+
+**Footeren i tjener-visningen viser kun "EatSafe"** (runde 3) — datoen er
+fjernet som fremtrædende element (ikke relevant for restaurantpersonale).
 
 ---
 

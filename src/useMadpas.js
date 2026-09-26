@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState } from "react";
-import { ALLERGENS, MADPAS_LANGUAGES, ALLERGEN_T, ALLERGEN_EXAMPLES, DIETS, DIET_T } from "./constants.jsx";
+import { ALLERGENS, MADPAS_LANGUAGES, ALLERGEN_T, ALLERGEN_EXAMPLES, DIETS, DIET_T, MADPAS_SAFETY_NOTE_T, MADPAS_SAFETY_NOTE_SINGULAR_T } from "./constants.jsx";
 
 // ALLERGEN_T har ingen "da"-nøgle (dansk er allerede ALLERGENS' eget
 // a.label, se konstantens egen kommentar) — uden dette faldt et valgt
@@ -33,10 +33,22 @@ export function madpasAllergenExamples(allergenId, lang) {
   const ingredients = ex.ingredients?.[lang] || ex.ingredients?.en || [];
   return [...products, ...ingredients].slice(0, 4);
 }
+// Singular/plural sikkerheds-sætning under FØDEVAREALLERGIER (26. sept.
+// 2026, opfølgende Madpas-polish, krav 6: "Undgå formuleringer som 'any of
+// these', når der kun vises én ting"). `names` er de allerede-oversatte
+// labels for alt i allergi-sektionen (rigtige allergener + fritekst),
+// IKKE selve id'erne — singularformen indsætter navnet direkte i sætningen.
+export function madpasSafetyNote(names, lang) {
+  if (!names || names.length === 0) return "";
+  if (names.length === 1) {
+    const template = MADPAS_SAFETY_NOTE_SINGULAR_T[lang] || MADPAS_SAFETY_NOTE_SINGULAR_T.en;
+    return template.replace("{name}", names[0].toLowerCase());
+  }
+  return MADPAS_SAFETY_NOTE_T[lang] || MADPAS_SAFETY_NOTE_T.en;
+}
 
-export function useMadpas({ allergens, customAllerg, selectedENumbers, user, madpasLang, family, madpasProfileId }) {
+export function useMadpas({ allergens, customAllerg, user, madpasLang, family, madpasProfileId }) {
   const [madpasSpeaking, setMadpasSpeaking] = useState(false);
-  const [madpasBig, setMadpasBig] = useState(false);
   const [madpasWaiterView, setMadpasWaiterView] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
 
@@ -100,10 +112,11 @@ export function useMadpas({ allergens, customAllerg, selectedENumbers, user, mad
     const speakAllergens = activeProfile ? (activeProfile.allergens || []) : allergens;
     const speakCustom = activeProfile ? (activeProfile.custom || []) : customAllerg;
     // Samme rettelse som allergener/custom herover (26. sept. 2026, Madpas-
-    // redesign) — kost/E-numre fulgte tidligere ALTID den loggede bruger
-    // selv, også når man taler for et familiemedlems madpas.
+    // redesign) — kost fulgte tidligere ALTID den loggede bruger selv, også
+    // når man taler for et familiemedlems madpas. E-numre er fjernet helt
+    // fra Madpas (opfølgende polish-runde, samme dag) — en tjener har ikke
+    // brug for at høre E-nummer-koder oplæst.
     const speakDiets = activeProfile ? (activeProfile.diets || []) : (user.diets || []);
-    const speakENumbers = activeProfile ? (activeProfile.eNumbers || []) : (selectedENumbers || []);
 
     const parts = [];
     parts.push(introText[lang] || introText.en);
@@ -125,9 +138,6 @@ export function useMadpas({ allergens, customAllerg, selectedENumbers, user, mad
       const dietNames = speakDiets.map(d => madpasDietLabel(d, lang)).filter(Boolean).join(", ");
       parts.push(dietNames);
     }
-    if (speakENumbers.length > 0) {
-      parts.push(speakENumbers.join(", "));
-    }
     parts.push(outroText[lang] || outroText.en);
 
     const utter = new SpeechSynthesisUtterance(parts.join(". "));
@@ -139,5 +149,5 @@ export function useMadpas({ allergens, customAllerg, selectedENumbers, user, mad
     window.speechSynthesis.speak(utter);
   };
 
-  return { madpasSpeaking, setMadpasSpeaking, madpasBig, setMadpasBig, madpasWaiterView, setMadpasWaiterView, langOpen, setLangOpen, madpasSpeak };
+  return { madpasSpeaking, setMadpasSpeaking, madpasWaiterView, setMadpasWaiterView, langOpen, setLangOpen, madpasSpeak };
 }
