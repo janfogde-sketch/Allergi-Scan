@@ -55,30 +55,37 @@ function computeStreak(history) {
   return streak;
 }
 
-function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS }) {
+function GamificationCard({ history, setScreen, SCREENS }) {
   const streak        = computeStreak(history);
   const total         = history.length;
   const dangers       = history.filter(h => (h.result || h.status) === "danger").length;
   const safes         = history.filter(h => (h.result || h.status) === "safe").length;
-  const familyActive  = activeProfiles.filter(id => id !== "me" && id !== "user").length;
 
+  // "Familie aktive" fjernet (28. sept. 2026, Profil-oprydning) — Husstand
+  // har nu sin egen tydelige genvej på Profil-siden (se ovenfor), så et
+  // separat aktivitets-tal for familie-tilstedeværelse var overflødigt her.
+  // Rent 2×2-grid tilbage.
   const metrics = [
-    { icon:"flame",  value: streak,       label:"Dages streak",       color:"#f97316", bg:"rgba(249,115,22,.12)", border:"rgba(249,115,22,.25)" },
-    { icon:"search", value: total,        label:"Scanninger i alt",   color:"var(--green)", bg:"var(--green-lt)", border:"var(--green-mid)" },
-    { icon:"warning",value: dangers,      label:"Advarsler fanget",   color:"var(--red)", bg:"var(--red-lt)", border:"var(--red-md)" },
-    { icon:"check",  value: safes,        label:"Sikre opdagelser",   color:"var(--green)", bg:"var(--green-lt)", border:"var(--green-mid)" },
-    { icon:"family", value: familyActive, label:"Familie aktive",    color:"#818cf8", bg:"rgba(129,140,248,.12)", border:"rgba(129,140,248,.25)" },
+    { icon:"flame",  value: streak,  label:"Dage i træk",        color:"#f97316", bg:"rgba(249,115,22,.12)", border:"rgba(249,115,22,.25)" },
+    { icon:"search", value: total,   label:"Scanninger i alt",   color:"var(--green)", bg:"var(--green-lt)", border:"var(--green-mid)" },
+    { icon:"warning",value: dangers, label:"Advarsler fanget",   color:"var(--red)", bg:"var(--red-lt)", border:"var(--red-md)" },
+    { icon:"check",  value: safes,   label:"Sikre opdagelser",   color:"var(--green)", bg:"var(--green-lt)", border:"var(--green-mid)" },
   ];
 
   return (
-    // Tertiær: sjove/motiverende tal, ikke sikkerhedskritisk data — holdes bevidst
-    // fladt med kun en accent-kant, samme mønster som dagens-tip-kortet på Hjem,
-    // så det ikke konkurrerer visuelt med "Mine præferencer" ovenfor.
-    <div style={{ ...UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10, boxShadow:"none", borderLeft:"2px solid var(--blue)" }}>
+    // Tertiær: sjove/motiverende tal, ikke sikkerhedskritisk data — holdes
+    // bevidst fladt, uden accent-kant (28. sept. 2026, Profil-oprydning:
+    // den tidligere blå venstre-kant er fjernet, ingen anden accent
+    // tilføjet i stedet), så det ikke konkurrerer visuelt med "Mine
+    // præferencer" ovenfor.
+    <div style={{ ...UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10, boxShadow:"none" }}>
       <div style={UI.udflex_aicenter_jcspacebet_mb12}>
         <div>
           <div style={UI.boldInk13}>Din aktivitet</div>
-          <div style={UI.muted11mt2}>Streak · Scanninger · Opdagelser</div>
+          {/* "Streak" fjernet herfra (28. sept. 2026, Profil-oprydning) —
+              allerede kommunikeret via "3 dage!"-badgen og "Dage i
+              træk"-feltet nedenfor, ingen grund til en tredje omtale. */}
+          <div style={UI.muted11mt2}>Scanninger · Opdagelser</div>
         </div>
         {streak >= 3 && (
           <div style={{ display:"flex", alignItems:"center", gap:4, fontSize:11, fontWeight:800, color:"#f97316", background:"rgba(249,115,22,.12)", border:"1px solid rgba(249,115,22,.25)", borderRadius:20, padding:"3px 10px" }}>
@@ -799,8 +806,6 @@ export default function ProfileScreen({
             {/* Gamification */}
             <GamificationCard
               history={history}
-              family={family}
-              activeProfiles={activeProfiles}
               setScreen={setScreen}
               SCREENS={SCREENS}
             />

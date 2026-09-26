@@ -316,7 +316,12 @@ export const E_NUMBERS = {
 // intolerance, sulfit-følsomhed og gluten (cøliaki/glutenfølsomhed, som
 // ikke er det samme som hvedeallergi — deraf også "note"-feltet på gluten).
 export const ALLERGENS = [
-  { id:"gluten",        label:"Gluten",           emoji:"🥖", type:"intolerance", note:"Cøliaki/glutenfølsomhed — ikke det samme som hvedeallergi" },
+  // Note udvidet (28. sept. 2026, Profil-oprydning, krav 6) til også at
+  // forklare forholdet til kostpræferencen "Glutenfri" — de to er koblet
+  // (se useGlutenFreeSync i AllergenPicker.jsx: vælges Gluten her, tilføjes
+  // Glutenfri automatisk under Kostpræferencer), så brugeren ikke behøver
+  // vælge begge selv for at opnå samme filtrering.
+  { id:"gluten",        label:"Gluten",           emoji:"🥖", type:"intolerance", note:"Gluten (intolerance) og Glutenfri (kost) er koblet sammen — vælger du Gluten, tilføjes Glutenfri automatisk, så du ikke skal vælge begge. Ikke det samme som hvedeallergi." },
   { id:"hvede",         label:"Hvede",             emoji:"🌾", type:"allergi" },
   { id:"maelkeallergi", label:"Mælk",              emoji:"🥛", type:"allergi" },
   { id:"laktose",       label:"Laktoseintolerance",emoji:"🍬", type:"intolerance" },
