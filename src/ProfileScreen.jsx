@@ -238,8 +238,21 @@ export default function ProfileScreen({
     const rawStatus = h.result || h.status;
     const ids = (h.active_profiles && h.active_profiles.length) ? h.active_profiles : activeProfiles;
     const profiles = buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles: ids });
-    const checkedFor = profiles.map(p => p.name.split(" ")[0]).join(", ") || null;
-    if (rawStatus === "not_found") return { status:"not_found", text:"Produkt ikke fundet", checkedFor };
+    // "Tjekket for: Alle" når scanningen dækkede ALLE nuværende profiler (mig
+    // + hele familien), "Carsten + Kaj" ved specifikke navne, ellers et enkelt
+    // navn (26. sept. 2026, opfølgning — eksplicit ordlyd fra brugeren).
+    // Sammenlignet mod den NUVÆRENDE familieliste, ikke en frosset liste fra
+    // scanningstidspunktet (den findes ikke i skemaet) — en rimelig
+    // forenkling, dokumenteret her fremfor at fremstå som en fejl.
+    const allCurrentIds = ["me", ...family.map(m => m.id)];
+    const isAllProfiles = profiles.length > 1 && allCurrentIds.every(id => ids.includes(id));
+    const names = profiles.map(p => p.name.split(" ")[0]);
+    const checkedFor = names.length === 0 ? null : isAllProfiles ? "Alle" : names.join(" + ");
+    // "Produkt ikke fundet" står allerede som selve rækkens overskrift — en
+    // ekstra statuslinje med samme tekst er ren gentagelse (26. sept. 2026,
+    // brugerfeedback: "fjern den dobbelte tekst"). Ingen `text` her betyder
+    // ingen tredje linje overhovedet, se render-koden.
+    if (rawStatus === "not_found") return { status:"not_found", text:null, checkedFor };
     if (profiles.length === 0) return { status:null, text:null, checkedFor: null };
     const flags = h.flags_triggered || {};
     const results = computeProfileResults(profiles, { allergen_flags: flags, ingredients:"", nutrition:null, productENumbers:[] });
@@ -298,7 +311,7 @@ export default function ProfileScreen({
     <>
         {screen === SCREENS.HISTORY && (
           <div className="screen fade-in">
-            <div className="screen-title">Scanningshistorik</div>
+            <div className="screen-title">Historik</div>
             <div className="screen-sub">
               {historyScope === "family" ? "Alle scanninger i din husstand." : "Alle dine tidligere scanninger."}
             </div>
@@ -344,10 +357,14 @@ export default function ProfileScreen({
             )}
 
             {/* Kompakt filter — kun når historikken reelt indeholder nok til at
-                et filter giver mening (26. sept. 2026, brugerfeedback). Genbruger
-                den allerede eksisterende, men hidtil ubrugte .filter-chip-klasse
+                et filter giver mening (26. sept. 2026, brugerfeedback: "tilføj
+                ikke permanente filtre endnu ved få poster... ved ca. 10-15+
+                scanninger kan der senere tilføjes"). Tærsklen er selve
+                mekanismen der gør det "senere" — ingen ny kodeændring nødvendig
+                når en bruger vokser forbi den. Genbruger den allerede
+                eksisterende, men hidtil ubrugte .filter-chip-klasse
                 (theme.jsx) i stedet for at style'e nye chips til formålet. */}
-            {!historyLoading && history.length > 5 && (
+            {!historyLoading && history.length >= 10 && (
               <div style={{ ...UI.wrapGap7, marginBottom:12 }}>
                 {HISTORY_FILTERS.map(f => (
                   <div key={f.id} className={`filter-chip${historyFilter===f.id?" active":""}`} onClick={() => setHistoryFilter(f.id)}>
@@ -376,25 +393,48 @@ export default function ProfileScreen({
                     // favoritter, men sætter først appens aktive profiler til den
                     // historiske liste — se openHistoryEntry ovenfor for hvorfor.
                     onClick={() => openHistoryEntry(h)}>
-                    <ProductImage product={prod} size={40} />
+                    {/* Ukendte produkter (26. sept. 2026, opfølgning) får en
+                        neutral stregkode-ikon-boks i stedet for ProductImages
+                        emoji-kategori-gæt (som for et helt ukendt produkt bare
+                        endte som en generisk indkøbsvogn) — samme
+                        charcoal/grå ikonstil som resten af appens Icon-
+                        bibliotek, ikke endnu en emoji-variant. */}
+                    {isNotFound
+                      ? <div style={{ width:40, height:40, background:"var(--paper2)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                          <Icon name="barcode" size={19} color="var(--muted)" />
+                        </div>
+                      : <ProductImage product={prod} size={40} />}
                     <div className="hist-info" style={{ marginLeft:2 }}>
                       <div className="hist-name">{name}</div>
                       <div className="hist-time">
                         {isNotFound
                           ? `Stregkode ${h.ean_scanned || h.code || "?"} · ${timeAgo(h.scanned_at||h.timestamp)}`
-                          : `${timeAgo(h.scanned_at||h.timestamp)}${d.checkedFor ? ` · Tjekket for ${d.checkedFor}` : ""}`}
+                          : `${timeAgo(h.scanned_at||h.timestamp)}${d.checkedFor ? ` · Tjekket for: ${d.checkedFor}` : ""}`}
                         {scannedBySuffix}
                       </div>
                       {/* Altid ikon + tekst + farve, aldrig farve alene (26. sept.
                           2026, brugerfeedback) — samme mønster som Indkøbslistens
-                          itemStatus-linje (ListScreen.jsx). */}
-                      {d.status && (
+                          itemStatus-linje (ListScreen.jsx). Ingen linje her for
+                          "produkt ikke fundet" (d.text er bevidst null, se
+                          historyDetails) — overskriften siger det allerede,
+                          en gentagelse nedenunder var det brugeren bad om at
+                          fjerne. */}
+                      {d.status && d.text && (
                         <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:3, fontSize:11, fontWeight:700, color: HISTORY_STATUS_COLOR[d.status] }}>
                           <Icon name={HISTORY_STATUS_ICON[d.status]} size={11} color="currentColor" />
                           {d.text}
                         </div>
                       )}
                     </div>
+                    {/* Diskret chevron KUN på rækker der reelt kan genåbnes —
+                        "produkt ikke fundet" har intet resultat at vise (26.
+                        sept. 2026, brugerfeedback). Samme chevron-mønster som
+                        fx ProfileMenu.jsx's menupunkter. */}
+                    {!isNotFound && (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0 }}>
+                        <path strokeLinecap="round" d="M9 5l7 7-7 7"/>
+                      </svg>
+                    )}
                   </div>
                 );
               });
