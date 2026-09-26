@@ -98,7 +98,7 @@ function GamificationCard({ history, setScreen, SCREENS }) {
       {streak > 0 && (
         <div style={UI.mb12}>
           <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, color:"var(--muted)", marginBottom:4, fontWeight:600 }}>
-            <span>Ugentlig streak</span>
+            <span>Ugentlig aktivitet</span>
             <span>{Math.min(streak, 7)}/7 dage</span>
           </div>
           <div style={{ display:"flex", gap:4 }}>
@@ -815,8 +815,16 @@ export default function ProfileScreen({
                 feedback: "Indstillinger mangler i menuen") — nås nu via
                 ProfileMenu.jsx's "Indstillinger", ikke længere herfra. */}
 
-            {/* ── Footer: kontakt + privatlivspolitik ── */}
-            <div style={{ marginTop:24, paddingBottom:8, textAlign:"center" }}>
+            {/* ── Footer: kontakt + privatlivspolitik ──
+                Bund-padding udvidet (26. sept. 2026, sidste polish) — 8px var
+                for lidt til at friholde footeren fra den faste, position:fixed
+                bottom-nav (se .bottom-nav i theme.jsx: ca. 77px egen højde +
+                dens egen env(safe-area-inset-bottom)-bund-padding). Formlen
+                her lægger navigationens omtrentlige højde + samme safe-area-
+                inset + ekstra luft oveni, så "Spørgsmål eller feedback?",
+                mailadressen, privatlivspolitik-linket og "EatSafe Beta" altid
+                kan scrolles helt fri af baren, uanset enhedens safe-area. */}
+            <div style={{ marginTop:24, paddingBottom:"calc(96px + env(safe-area-inset-bottom))", textAlign:"center" }}>
               <div style={UI.ufs11_cmuted_mb8}>
                 Spørgsmål eller feedback?
               </div>

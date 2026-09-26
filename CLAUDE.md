@@ -863,6 +863,19 @@ Gluten, tilføjes Glutenfri automatisk via `useGlutenFreeSync`, så
 brugeren ikke skal vælge begge selv) — ingen ny UI, kun tekst i den
 allerede eksisterende mekanisme.
 
+**Sidste polish-runde, samme dag — footer-overlap og microcopy:** et reelt
+fund — Profil-sidens footer ("Spørgsmål eller feedback?"/mail/privatlivs-
+politik/"EatSafe Beta") kunne ende delvist dækket af den faste bundnavigation,
+fordi footerens egen `paddingBottom:8` ikke pålideligt supplerede den delte
+`.screen`-klasses flade 110px bundpadding på tværs af enheder med forskellig
+`env(safe-area-inset-bottom)`. Rettet ved at give footeren sin egen, generøse
+`paddingBottom:calc(96px + env(safe-area-inset-bottom))` — scoped til kun
+denne skærms footer, ikke en ændring af den delte `.screen`-klasse. Verificeret
+med Playwright (iPhone SE/13/14 Pro Max): 127px fri luft mellem footerens sidste
+linje og bundnavigationens top efter scroll helt til bunds. Derudover omdøbt
+"Ugentlig streak" til "Ugentlig aktivitet" (samme progress-bar/badge, kun
+teksten). Ingen andre layout-/farve-/funktionsændringer.
+
 Fuld detalje i `.claude/HISTORY.md`.
 
 ### Beta-installation (september 2026) — nuværende arkitektur
