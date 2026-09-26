@@ -3,7 +3,7 @@ import React from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, PAGE_IDS } from "./constants.jsx";
 import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers } from "./helpers.js";
-import { isAllergenWord } from "./allergenKeywords.js";
+import { isAllergenWord, keywordMatches } from "./allergenKeywords.js";
 import { UI } from "./styleUtils.js";
 
 export function EatSafeLogo({ size = 32, variant = "light" }) {
@@ -191,7 +191,39 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
 
 // ─── KONSTANTER ──────────────────────────────────────────────────────────────
 
-export function IngredientsList({ text, allergenFlags = {}, onIngredientTap }) {
+// `highlightRules` (28. sept. 2026, FINAL PRODUCT RESULT PAGE) — valgfrit,
+// bagudkompatibelt tilvalg til den brugerspecifikke fremhævning på
+// ResultScreen.jsx: en liste af `{ keywords?, codes?, category, label,
+// reason }`, hvor kun ingredienser der reelt matcher NOGET af dette
+// fremhæves — IKKE alle allergener produktet måtte indeholde (den
+// eksisterende `allergenFlags`-baserede opførsel herunder, brugt af
+// RecipesScreen.jsx og bevaret 100% uændret når `highlightRules` udelades,
+// fremhæver derimod ALLE kendte allergener i produktet, uanset brugerens
+// egne aktive valg — bevidst forskellig brug, se ResultScreen.jsx's egen
+// kommentar for hvorfor kun ÉT sted har brug for den strengere variant).
+// `category` afgør farve (allergi=rød, alt andet=orange/gult, jf. appens
+// statusfarve-konvention) og bruges af `onHighlightTap` til at vise en kort
+// forklaring i stedet for det almindelige leksikon-opslag.
+const HIGHLIGHT_CATEGORY_STYLE = {
+  allergy: { color: "var(--red)", bg: "var(--red-lt)" },
+  intolerance: { color: "var(--amber)", bg: "var(--amber-lt)" },
+  enumber: { color: "var(--amber)", bg: "var(--amber-lt)" },
+  diet: { color: "var(--amber)", bg: "var(--amber-lt)" },
+};
+
+function findMatchingHighlightRule(part, highlightRules) {
+  if (!highlightRules?.length) return null;
+  const lowerPart = part.toLowerCase();
+  const eCodesInPart = (part.match(/\bE[\s-]?\d{3,4}[a-z]?\b/gi) || [])
+    .map(m => "E" + m.replace(/^E[\s-]?/i, "").toUpperCase());
+  for (const rule of highlightRules) {
+    if (rule.codes?.length && eCodesInPart.some(c => rule.codes.some(rc => rc.toUpperCase() === c))) return rule;
+    if (rule.keywords?.length && rule.keywords.some(kw => keywordMatches(lowerPart, kw))) return rule;
+  }
+  return null;
+}
+
+export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, highlightRules, onHighlightTap }) {
   if (!text) return null;
 
   // Rens teksten — fjern linjeskift og ekstra mellemrum
@@ -257,29 +289,42 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap }) {
     return words.some(w => /^E[\s-]?\d{3,4}[a-z]?$/i.test(w) || /^[abcdk][0-9]{0,2}$/i.test(w));
   };
 
+  // Brugerspecifik tilstand (kun når `highlightRules` er givet, se
+  // komponent-kommentaren ovenfor) — ellers 100% uændret opførsel.
+  const useRules = Array.isArray(highlightRules) && highlightRules.length > 0;
+  // Mindre "washed out" grundtekst (krav 8) — kun i den nye tilstand, så
+  // RecipesScreen.jsx's eksisterende brug (ingen highlightRules) er
+  // pixel-identisk uændret.
+  const baseColor = useRules ? "var(--ink2)" : "var(--muted2)";
+
   return (
     <div style={{ display:"flex", flexWrap:"wrap", gap:"4px 2px", lineHeight:1.6 }}>
       {parts.map((part, i) => {
-        const highlighted = isHighlighted(part);
-        const clickable = !!onIngredientTap;
+        const rule = useRules ? findMatchingHighlightRule(part, highlightRules) : null;
+        const highlighted = useRules ? !!rule : isHighlighted(part);
+        const clickable = !!onIngredientTap || (useRules && !!rule && !!onHighlightTap);
         // Rens ingrediens-tekst for opslag (fjern parenteser og ekstra tegn)
         const cleanPart = part.replace(/\(.*?\)/g, "").replace(/[*%]/g, "").trim();
         const knowledgeTerm = !highlighted && isKnowledgeTerm(part);
+        const ruleStyle = rule ? (HIGHLIGHT_CATEGORY_STYLE[rule.category] || HIGHLIGHT_CATEGORY_STYLE.diet) : null;
+        const handleClick = rule && onHighlightTap ? () => onHighlightTap(rule)
+          : onIngredientTap ? () => onIngredientTap(cleanPart)
+          : undefined;
         return (
           <span key={i} style={{ display:"inline-flex", alignItems:"baseline" }}>
             <span
-              onClick={clickable ? () => onIngredientTap(cleanPart) : undefined}
+              onClick={handleClick}
               style={{
                 fontSize: 12,
                 fontWeight: highlighted || knowledgeTerm ? 700 : 400,
-                color: highlighted ? "var(--red)" : knowledgeTerm ? "var(--blue)" : "var(--muted2)",
-                background: highlighted ? "var(--red-lt)" : knowledgeTerm ? "var(--blue-lt)" : "transparent",
+                color: ruleStyle ? ruleStyle.color : highlighted ? "var(--red)" : knowledgeTerm ? "var(--blue)" : baseColor,
+                background: ruleStyle ? ruleStyle.bg : highlighted ? "var(--red-lt)" : knowledgeTerm ? "var(--blue-lt)" : "transparent",
                 borderRadius: highlighted || knowledgeTerm ? 4 : 0,
                 padding: highlighted || knowledgeTerm ? "1px 4px" : "1px 2px",
                 cursor: clickable ? "pointer" : "default",
                 transition: "background .1s",
               }}
-              title={clickable ? `Søg "${cleanPart}" i leksikon` : undefined}
+              title={rule ? rule.label : clickable ? `Søg "${cleanPart}" i leksikon` : undefined}
             >
               {part}
             </span>

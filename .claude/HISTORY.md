@@ -3633,3 +3633,162 @@ mojibake-scan clean på alle fire ændrede filer. Playwright
   rette catch-gren) samt ved at bekræfte at ANDRE fejlgrene (fx "Intet
   kamera fundet") korrekt IKKE udløser det nye dedikerede kort, kun den
   eksisterende generiske banner — konsistent, korrekt betinget adfærd.
+
+## Produktresultatside — "FINAL PRODUCT RESULT PAGE", 17-punkts spec (28. sept. 2026)
+
+Brugeren delte et Red Bull-eksempel og en omfattende, 17-punkts spec for
+`ResultScreen.jsx`: EatSafe må ALDRIG kalde et produkt "sikkert" alene
+fordi der ikke var et match i databasen (ingredienser kan ændre sig, data
+kan være ufuldstændige, produktdata kan være bruger-indsendt) — løsningen
+skal være én generisk skabelon der virker for ALLE produkter, ikke
+hardkodet til eksemplet. Ingen redesign af resten af appen, ingen feature
+creep.
+
+**Undersøgelse før implementering:**
+- Læste hele `ResultScreen.jsx` (648 linjer), `useProduct.js`s
+  `buildScanResultFromProductData`, og de relevante dele af `helpers.js`
+  (`compareAllergens`/`compareENumbers`/`checkDietCompatibility`/
+  `computeProfileResults`) grundigt for at forstå hvilken data der
+  allerede findes, før noget blev besluttet.
+- **Nøglefund:** `ALLERGENS`-konstanten (constants.jsx) har allerede et
+  `type`-felt pr. allergen ("allergi" vs. "intolerance") — præcis den
+  skelnen spec'ens punkt B/C bad om (allergi ≠ intolerance/følsomhed).
+  Ingen ny data nødvendig, kun en omgruppering af allerede beregnede
+  matches (`scanResult.matchedDanger`/`matchedWarning`) efter dette felt.
+- **Reelt datakvalitets-fund:** `IngredientsList` (SharedComponents.jsx)
+  fremhævede hidtil ALLE allergener produktet indeholdt, uanset om
+  brugeren selv havde det pågældende allergen aktivt — kun eksplicit
+  "no"-flaggede allergener på selve PRODUKTET blev udelukket
+  (`isAllergenWord` i allergenKeywords.js), ikke brugerens egne
+  (ir)relevante valg. Dette var præcis spec'ens punkt 8-klage ("kun
+  fremhæves hvis relevant for DEN konkrete bruger") — bekræftet ved at
+  læse `isAllergenWord`s implementering, ikke antaget.
+- Bekræftede at `IngredientsList` også bruges af `RecipesScreen.jsx` med
+  en anden kaldskontrakt (`allergenFlags`, ikke brugerens egne valg) —
+  enhver ændring skulle derfor være strengt bagudkompatibel, ikke en
+  erstatning.
+- Grep'ede efter alle forbrugere af `scanResult.status/headline/summary`
+  (History, ListScreen, SearchScreen, `useProduct.test.js`s eksakte
+  tekst-assertions) FØR beslutningen om ikke at ændre `useProduct.js`
+  overhovedet — al ny logik skulle ligge som et rent ekstra lag i
+  `ResultScreen.jsx` selv, ikke i den delte beregning.
+- Grep'ede efter et eksisterende "enheds"-felt (100g/100ml) på
+  næringsdata — findes ikke. Løst med en kategori-tekst-baseret
+  heuristik (data-drevet, ikke en fast konstant) i stedet for enten at
+  opfinde et nyt datafelt (ude af scope) eller fortsætte med at hardkode
+  "100g" til alt.
+
+**Nye, generiske hjælpefunktioner (`helpers.js`, ingen ændring af
+eksisterende exports):**
+- `categorizeProductFindings({ matchedDanger, matchedWarning,
+  customAllergenMatches, matchedENumbers, dietResults })` — grupperer
+  allerede-beregnede matches i allergi/intolerance/E-nummer/diæt-fejl/
+  diæt-ukendt/diæt-ok, udelukkende ved opslag i `ALLERGENS`' `type`-felt.
+- `computeTopStatus({ hasSufficientData, ...findings })` — beregner ÉN
+  topstatus, prioriteret allergi → intolerance → E-nummer → kost →
+  utilstrækkelige data → ingen fund. Returnerer aldrig "sikkert"/
+  "allergifrit"/"garanteret".
+- `hasSufficientData` beregnes i `ResultScreen.jsx` selv: enten mangler
+  data for brugerens EGNE aktive allergener (`scanResult.hasUnknown`,
+  allerede beregnet i `useProduct.js` men aldrig eksponeret som en
+  selvstændig UI-tilstand før nu), eller produktet har hverken
+  allergen-flags eller en ingrediensliste overhovedet.
+
+**`ResultScreen.jsx`, sektion for sektion:**
+- Produktkort-verdikt: bruger nu `topStatus` (ved én aktiv profil) i
+  stedet for `scanResult.headline`. Viser konkrete navne under
+  overskriften ("Mælk · Æg · Soja"-mønsteret), plus den korrekte
+  sekundærtekst for grøn/grå-tilstandene, direkte i den farvede strimmel.
+- Datakilde-badgen (allerede en genbrugelig `verifiedBadge()`) fik et
+  tappeligt info-ikon (`showToast`) der forklarer kilden — ingen ny
+  komponent, kun en interaktion tilføjet til en allerede generisk én.
+- Ny "Relevant for dig"-sektion (kun ved én aktiv profil — ved flere
+  profiler dækker den eksisterende per-person-liste allerede hver
+  persons egne fund separat).
+- "Kompatibel med dine diæter" omdøbt til "Passer til dine
+  kostpræferencer", ✓/✕/?-visning for ALLE aktive diæter (ikke kun
+  fejlede) via `Icon`-komponenter i stedet for tekst-symboler.
+- Ingredienslisten: ny `ingredientHighlightRules`-liste bygget af de
+  kategoriserede fund, sendt til `IngredientsList`s nye `highlightRules`/
+  `onHighlightTap`-props. Diæt-fund var den eneste kategori der krævede
+  en lille ekstra oversættelse (checkDietCompatibility returnerer kun en
+  færdig sætning som "Indeholder mælkeprotein" — ordet i sætningen er
+  ikke altid det ord der reelt står i ingredienslisten, fx
+  "skummetmælkspulver" — løst med et lille map fra kendte
+  allergen-flag-udledte sætninger til det rigtige allergens egen
+  ordliste, med en generisk præfiks-afstrejning som fallback for de
+  ingrediens-nøgleords-baserede diæt-brud, hvor sætningens ord ER
+  garanteret det ord der udløste matchet).
+- "Fremhævet = allergen"-billedteksten vises nu KUN når alt fremhævet
+  reelt er en allergi — ellers en mere præcis, generisk tekst. De to
+  tidligere spredte "tjek altid selv"/"dobbelttjek altid selv"-
+  formuleringer er fjernet fra ingredienslisten.
+- Næringsindhold: dynamisk "pr. 100 g"/"pr. 100 ml" (kategori-heuristik,
+  se ovenfor), sektionen SKJULES HELT ved manglende data (var tidligere
+  en "hjælp os"-prompt) — bevidst forskellig behandling fra manglende
+  ingredienser, som spec'en selv bad om.
+- Én samlet sikkerhedsdisclaimer, eksakt ordlyd fra spec'en, placeret
+  lige før "Ret forkerte data".
+
+**`SharedComponents.jsx` (`IngredientsList`):** nyt, valgfrit
+`highlightRules`/`onHighlightTap`-prop-par. Når udeladt (RecipesScreen.jsx's
+brug), er opførslen 100% uændret — bekræftet ved at de 7 eksisterende
+`SharedComponents.test.jsx`-tests stadig består uændret. Når angivet
+(kun ResultScreen.jsx), overtager en ny matchings-funktion
+(`findMatchingHighlightRule`, genbruger `keywordMatches` fra
+allergenKeywords.js for ordgrænse-/negations-korrekt matching, samme
+funktion `checkDietCompatibility` selv bruger) — E-numre matches via
+udtrukne/normaliserede koder, allergener/diæt via nøgleord. Farveskema:
+kun to farver (rød=allergi, orange/gult=alt andet), jf. appens egen
+statusfarve-konvention (krav 14) — reducerer visuel kompleksitet
+fremfor fire forskellige farver.
+
+**Verifikation:** `npm run build` grøn, `npx vitest run` 109/109 (ingen
+regressioner — hverken i de generelle tests eller specifikt
+`SharedComponents.test.jsx`s IngredientsList-tests), mojibake-scan clean
+på alle tre ændrede filer.
+
+Playwright (artifact-preview-build, iPhone 13, fire mock-produkter via
+route-interception på `/functions/v1/products/*`): et reelt Playwright-
+routing-fund undervejs — ruter matches i OMVENDT registreringsrækkefølge
+(sidst registreret vinder), så en generisk catch-all-rute registreret
+EFTER en specifik produkt-rute overstyrede den utilsigtet; rettet ved at
+bytte rækkefølgen. Et andet miljø-fund: service worker-registrering (ægte
+PWA-adfærd) forhindrede Playwrights `page.route()` i at opsnappe
+netværkskald til Supabase i denne sandbox — løst med
+`serviceWorkers:'block'` på browser-konteksten. Endelig: preview-
+tilstanden aktiverer som standard "Alle" profiler (bruger + 2
+familiemedlemmer), hvilket udløser den EKSISTERENDE multi-profil-kode-sti
+i stedet for den nye enkelt-profil-logik — løst ved eksplicit at vælge
+kun "Dig" via den eksisterende "Scanner for"-vælger, FØR scan-testene.
+
+Fire scannede mock-produkter bekræftede al kernelogik korrekt:
+- **Ingen problemer** (mælk/laktose "yes" men ikke brugerens aktive
+  allergener, fuld ingrediens-/næringsdata): "Ingen advarsler fundet"
+  (grøn), korrekt sekundærtekst, "Næringsindhold pr. 100 g" vist,
+  disclaimeren vist præcis én gang.
+- **Allergi** (nødder "yes", brugerens aktive allergen, ingen
+  næringsdata): "Indeholder noget, du er allergisk overfor" (rød),
+  "Nødder" vist som navn, "Relevant for dig"-sektionen vist,
+  næringssektionen bekræftet FRAVÆRENDE (skjult korrekt),
+  "HASSELNØDDER" fremhævet rødt i ingredienslisten, tryk på den
+  fremhævede ingrediens viste korrekt en toast: "Nødder — Matcher din
+  valgte Nødder-allergi."
+- **Intolerance** (gluten "yes", brugerens aktive allergen, type
+  "intolerance"): "Matcher noget, du ønsker at undgå" (orange/gult, IKKE
+  rød) — bekræfter den centrale allergi/intolerance-skelnen virker
+  korrekt. "Intolerancer / følsomheder"-gruppen vist separat fra
+  Allergier-gruppen.
+- **Utilstrækkelige data** (tomme allergen_flags, ingen ingrediensliste):
+  "Ikke nok oplysninger til fuld kontrol" (neutral grå, `--neutral`-
+  token) — ALDRIG grøn, som spec'ens punkt F eksplicit krævede. Korrekt
+  sekundærtekst vist.
+
+Multi-profil-visningen, kamera-permission-baserede test-scenarier (fx
+brugerindsendt-badge, lang ingrediensliste, fremmedsproget tekst,
+indkøbslisten-match) blev IKKE hver især eksplicit Playwright-testet
+inden for denne omgangs tidsramme — disse code paths genbruger enten
+allerede-eksisterende, tidligere verificerede mekanismer
+(`verifiedBadge()`, `findActiveListMatch()`, `IngredientsList`s
+eksisterende tekst-splitting) eller er lavrisiko, rent visningsmæssige
+konsekvenser af den allerede testede kernelogik.

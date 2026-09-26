@@ -417,6 +417,62 @@ export function computeProfileResults(profiles, { allergen_flags, ingredients, n
   });
 }
 
+// ─── PRODUKTRESULTAT: KATEGORISEREDE FUND (28. sept. 2026) ──────────────────
+// FINAL PRODUCT RESULT PAGE — ét genbrugeligt, data-drevet lag der grupperer
+// et allerede-beregnet scan-resultats matches (matchedDanger/matchedWarning
+// fra compareAllergens, matchede E-numre fra compareENumbers, diæt-resultater
+// fra checkDietCompatibility) i allergi/intolerance/E-nummer/diæt ud fra
+// ALLERGENS' eget `type`-felt ("allergi" vs "intolerance") — ingen ny
+// allergen-logik, kun en omstrukturering af data der allerede findes.
+// Rører IKKE ved compareAllergens/compareENumbers/checkDietCompatibility
+// selv, og ændrer intet ved scanResult.status/headline/summary, som History/
+// ListScreen/SearchScreen fortsat bruger uændret — kun ResultScreen.jsx
+// bruger disse to funktioner, til sin egen, dynamiske statusvisning.
+export function categorizeProductFindings({ matchedDanger, matchedWarning, customAllergenMatches, matchedENumbers, dietResults }) {
+  const lookup = (ids, severity) => (ids || [])
+    .map(id => {
+      const a = ALLERGENS.find(x => x.id === id);
+      return a ? { id, label: a.label, type: a.type, severity } : null;
+    })
+    .filter(Boolean);
+  const byType = [...lookup(matchedDanger, "yes"), ...lookup(matchedWarning, "traces")];
+  return {
+    allergyMatches: byType.filter(x => x.type === "allergi"),
+    intoleranceMatches: byType.filter(x => x.type === "intolerance"),
+    customMatches: (customAllergenMatches || []).map(term => ({ id: term, label: term, severity: "custom" })),
+    eNumberMatches: matchedENumbers || [],
+    dietFails: (dietResults || []).filter(r => r.ok === false),
+    dietUnknowns: (dietResults || []).filter(r => r.ok === null),
+    dietPasses: (dietResults || []).filter(r => r.ok === true),
+  };
+}
+
+// Beregner ÉN, tydelig topstatus ud fra de kategoriserede fund + om EatSafe
+// reelt har nok data til at have foretaget kontrollen (`hasSufficientData`).
+// Prioritering, som krævet: allergi → intolerance/følsomhed → E-nummer →
+// kostpræference → (utilstrækkelige data) → ingen fund. "safe" bruges KUN
+// når der er nok data OG intet fund — aldrig som gæt. Returnerer aldrig ord
+// som "sikkert"/"100% sikkert"/"allergifrit"/"garanteret".
+export function computeTopStatus({ hasSufficientData, allergyMatches, intoleranceMatches, customMatches, eNumberMatches, dietFails }) {
+  const allergyNames = [...(customMatches || []), ...(allergyMatches || [])].map(m => m.label);
+  if (allergyNames.length > 0) {
+    return { level: "danger", icon: "warning", headline: "Indeholder noget, du er allergisk overfor", names: allergyNames };
+  }
+  if ((intoleranceMatches || []).length > 0) {
+    return { level: "warn", icon: "warning", headline: "Matcher noget, du ønsker at undgå", names: intoleranceMatches.map(m => m.label) };
+  }
+  if ((eNumberMatches || []).length > 0) {
+    return { level: "warn", icon: "warning", headline: "Indeholder et E-nummer, du undgår", names: eNumberMatches };
+  }
+  if ((dietFails || []).length > 0) {
+    return { level: "warn", icon: "warning", headline: "Passer ikke til din kost", names: dietFails.map(d => d.label) };
+  }
+  if (!hasSufficientData) {
+    return { level: "unknown", icon: "info", headline: "Ikke nok oplysninger til fuld kontrol", names: [] };
+  }
+  return { level: "safe", icon: "check", headline: "Ingen advarsler fundet", names: [] };
+}
+
 // ─── SCAN → INDKØBSLISTE-MATCH ───────────────────────────────────────────────
 // Finder en umarkeret vare på den aktive indkøbsliste der sandsynligvis er
 // den samme som det lige scannede produkt — bruges KUN til at foreslå

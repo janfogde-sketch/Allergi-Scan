@@ -1038,6 +1038,73 @@ appen i baggrunden, Android-tilbageknappen). Verificeret med Playwright:
 åbnede panelet, simulerede et kamera-luk (`visibilitychange`), bekræftede
 panelet forsvandt og Scan-forsiden vendte tilbage helt ren.
 
+### Produktresultatside omstruktureret — dynamisk, kategoriseret status (28. sept. 2026)
+
+En omfattende "FINAL PRODUCT RESULT PAGE"-spec (17 punkter) — mål: én
+robust, generisk produktskabelon (`ResultScreen.jsx`) der ALDRIG kalder et
+produkt "sikkert" alene fordi der ikke var et match, og som tydeligt
+skelner allergi/intolerance/E-nummer/kostpræference i stedet for én uklar
+samlet status. Ingen ændring af `scanResult.status/headline/summary` selv
+(History/ListScreen/SearchScreen bruger dem fortsat uændret) — al ny logik
+er et ekstra, rent lag oveni, bygget af to nye, generiske hjælpefunktioner
+i `helpers.js` (`categorizeProductFindings`/`computeTopStatus`), begge
+data-drevne (ALLERGENS' eget `type`-felt afgør allergi vs. intolerance),
+ingen specialcases pr. produkt.
+
+- **Ny topstatus, prioriteret allergi → intolerance/følsomhed → E-nummer →
+  kostpræference → utilstrækkelige data → ingen fund** — erstatter det
+  tidligere tre-tilstands "Sikkert produkt"/"Indeholder allergen"/"Mulige
+  spor". Bruger aldrig "sikkert"/"allergifrit"/"garanteret". "Ingen
+  advarsler fundet" (grøn) vises KUN når der reelt er data nok til at have
+  foretaget kontrollen — ellers en ny, neutral grå "Ikke nok oplysninger
+  til fuld kontrol"-tilstand (`--neutral`-token, allerede i designsystemet,
+  ingen ny farve).
+- **Ny "Relevant for dig"-sektion** samler ALLE fund på tværs af
+  kategorier (allergi/intolerance/E-nummer/kostbrud), tydeligt adskilt,
+  ikke reduceret til én sætning.
+- **"Kompatibel med dine diæter" omdøbt til "Passer til dine
+  kostpræferencer"** — viser nu ✓/✕/? for hver aktiv diæt (aldrig gættet:
+  ✕ og ? er adskilte tilstande), kun vist hvis brugeren har aktive
+  kostpræferencer.
+- **Ingredienslisten fremhæver nu KUN det der er relevant for DENNE
+  bruger** — ikke længere alle allergener produktet måtte indeholde
+  (reelt fund: den gamle fremhævning viste ALLE 16 allergen-typer,
+  uanset brugerens egne valgte allergier). `IngredientsList`
+  (SharedComponents.jsx) har fået et nyt, valgfrit `highlightRules`-prop
+  til dette — 100% bagudkompatibelt, RecipesScreen.jsx's eksisterende
+  brug (uden dette prop) er pixel-identisk uændret, verificeret af de
+  eksisterende tests. Tryk på en fremhævet ingrediens viser nu en kort
+  forklaring (`showToast`) i stedet for altid at åbne leksikonet.
+  "Fremhævet = allergen"-teksten vises kun når ALT fremhævet reelt er en
+  allergi, ellers en mere præcis tekst.
+- **Datakilde-badgen** (allerede en genbrugelig `verifiedBadge()`-
+  komponent) har fået et tappeligt info-ikon der forklarer hvad kilden
+  betyder — samme komponent kan senere vise en fjerde kilde uden at
+  siden skal ændres.
+- **Næringsindhold** viser nu "pr. 100 g" ELLER "pr. 100 ml" (udledt af
+  produktets kategori-tekst, ikke hardkodet) og skjules HELT hvis der
+  ingen brugbare data er — modsat manglende ingredienser, som fortsat
+  viser en "hjælp os"-status (bevidst asymmetri, som spec'en selv bad om).
+- **Én samlet sikkerhedsdisclaimer** ("EatSafe er vejledende...") lige
+  før "Ret forkerte data" — alle tidligere spredte "tjek altid selv"/
+  "dobbelttjek altid selv"-formuleringer fjernet fra ingredienslisten.
+- **Reel bug fundet undervejs:** en `isValidEanChecksum`-gate blev
+  tilføjet direkte i html5-qrcodes success-callback (useScanner.js, sidste
+  runde) — urelateret opdagelse ved gennemgang af hele scan-pipelinen for
+  denne opgave, allerede rettet i forrige commit.
+- Multi-profil-visningen (flere aktive familiemedlemmer) er bevidst KUN
+  let justeret (fjernet "sikkert"-ordet fra én sammenfattende sætning) —
+  den nye, dybere kategorisering gælder ved ÉN aktiv profil, hvor hele
+  denne spec's eksempler (Red Bull-scenariet) hører hjemme.
+- Verificeret med Playwright (fire mock-produkter via route-interception:
+  ingen fund/allergi/intolerance/utilstrækkelige data): korrekt topstatus-
+  headline, farve og sekundærtekst i alle fire tilfælde, "Relevant for
+  dig" vises kun ved reelle fund, ingrediens-fremhævning + tap-forklaring
+  bekræftet for et allergi-match, næringssektion bekræftet skjult ved
+  manglende data, disclaimer bekræftet vist præcis én gang. `npm run
+  build`/`npx vitest run` (109/109, ingen regressioner) grønne, mojibake-
+  scan clean.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
