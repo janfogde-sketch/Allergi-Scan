@@ -146,7 +146,12 @@ export default function EatSafe() {
   const [feedbackDone, setFeedbackDone] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [betaIntroSeen, setBetaIntroSeen] = useState(true); // Beta-info er nu i onboarding, overlay kun via knap
+  // Starter altid `true` (skjult) ved en ny side-indlæsning — sat til
+  // `false` kun via finishOnboard-wrapperen ovenfor (automatisk, én gang,
+  // lige efter onboarding trin 5) eller "Om EatSafe Beta" i ProfileMenu.jsx
+  // (manuel genåbning). Se finishOnboard-wrapperens kommentar for hvorfor
+  // dette alene er nok til at opfylde "vis ikke automatisk igen".
+  const [betaIntroSeen, setBetaIntroSeen] = useState(true);
   const [betaIntroStep, setBetaIntroStep] = useState(0);
 
   // (adminTickets, openTicket, ticketsLoading, ocrImagePreview → useAdmin hook)
@@ -256,10 +261,25 @@ export default function EatSafe() {
     editMode, setEditMode,
     tourIdx, setTourIdx,
     customInput, setCustomInput,
-    saveProfileStep1, saveAllergensStep2, finishOnboard,
+    saveProfileStep1, saveAllergensStep2, finishOnboard: finishOnboardRaw,
   } = useOnboarding({ accessToken, userId, user, loginEmail,
                       allergens, customAllerg,
                       setUser, setScreen, setEditMode: () => {}, setIsOAuth });
+
+  // Viser Beta-introen automatisk, én gang, lige efter onboarding trin 5
+  // (25. sept. 2026, brugerfeedback) — finishOnboard() kaldes KUN fra de to
+  // knapper i selve trin 5 (se OnboardingScreen.jsx), så at trigge
+  // visningen her er nok til at garantere at den aldrig dukker op
+  // automatisk ved almindelige, senere appstarter: betaIntroSeen starter
+  // altid som `true` ved en ny side-indlæsning (se useState nedenfor) og
+  // bliver kun `false` via dette ene kald, eller via et manuelt "Om
+  // EatSafe Beta"-tryk i ProfileMenu.jsx — ingen localStorage-flag
+  // nødvendig for selve "vis ikke automatisk igen"-kravet.
+  const finishOnboard = async () => {
+    await finishOnboardRaw();
+    setBetaIntroStep(0);
+    setBetaIntroSeen(false);
+  };
 
   // Admin → useAdmin hook
   const {
@@ -1028,6 +1048,7 @@ export default function EatSafe() {
           <ProfileMenu
             open={showProfileMenu} onClose={() => setShowProfileMenu(false)}
             onNavigate={(s) => { setScreen(s); setShowProfileMenu(false); }}
+            onOpenBetaInfo={() => { setBetaIntroStep(0); setBetaIntroSeen(false); setShowProfileMenu(false); }}
           />
           </Suspense>
         )}
@@ -1100,7 +1121,6 @@ export default function EatSafe() {
             selectedENumbers={selectedENumbers}
             activeIds={activeIds}
             activeENumbers={activeENumbers}
-            onBetaClick={() => { setBetaIntroSeen(false); setBetaIntroStep(0); }}
             alternatives={alternatives}
             altLoading={altLoading}
             onOpenHelp={() => setHelpOpen(true)}

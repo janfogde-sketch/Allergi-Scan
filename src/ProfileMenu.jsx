@@ -16,7 +16,7 @@ import { useHistoryContext } from "./HistoryContext.jsx";
 import { Icon } from "./SharedComponents.jsx";
 import menuBackground from "./assets/profile-menu-background.webp";
 
-export default function ProfileMenu({ open, onClose, onNavigate }) {
+export default function ProfileMenu({ open, onClose, onNavigate, onOpenBetaInfo }) {
   const { user } = useAuthContext();
   const { history } = useHistoryContext();
 
@@ -31,6 +31,11 @@ export default function ProfileMenu({ open, onClose, onNavigate }) {
     { icon:"madpas", label:"Madpas", sub:"Vis allergier til restaurantpersonale", screen: SCREENS.MADPAS },
     { icon:"utensils", label:"Restaurantguide", sub:"Spis trygt ude — tips & rettigheder", screen: SCREENS.RESTAURANTGUIDE },
     ...(user?.role === "admin" ? [{ icon:"shield", label:"Admin panel", sub:"Godkend og administrér produkter", screen: SCREENS.ADMIN }] : []),
+    // Genåbner Beta-intro-overlayet manuelt (25. sept. 2026, brugerfeedback)
+    // — erstatter den tidligere permanente "Beta-information"-knap på
+    // Scan-forsiden. `action` i stedet for `screen`, da dette ikke er en
+    // navigation men en overlay-trigger — se render-loopet nedenfor.
+    { icon:"bug", label:"Om EatSafe Beta", sub:"Se velkomst- og sikkerhedsinformationen igen", action: onOpenBetaInfo },
   ];
 
   return createPortal(
@@ -66,7 +71,7 @@ export default function ProfileMenu({ open, onClose, onNavigate }) {
 
         <div style={{ padding:"0 10px" }}>
           {items.map(item => (
-            <div key={item.label} className="menu-item" onClick={() => onNavigate(item.screen)}>
+            <div key={item.label} className="menu-item" onClick={() => item.action ? item.action() : onNavigate(item.screen)}>
               <div style={{ width:36, height:36, borderRadius:9, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
                 <Icon name={item.icon} size={17} color="var(--ink2)" />
               </div>
