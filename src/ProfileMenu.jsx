@@ -25,14 +25,18 @@ import { Icon } from "./SharedComponents.jsx";
 // (26. sept. 2026, brugerfeedback: en dæmpet grå "Log ud" så ud som om den
 // var disabled/ikke-trykbar — "tydeligt sekundær" opnås i stedet alene via
 // placering nederst + ingen chevron, ikke en anden tekstfarve).
-function MenuRow({ icon, label, sub, chevron = true, onClick }) {
+// `secondary` (samme dag, opfølgning) — en anelse mindre fremtrædende end de
+// øvrige app-punkter: lidt mere luft ovenfor + en smule lettere skriftvægt.
+// STADIG samme --ink-tekstfarve, ikke grå/dæmpet — kun typografisk vægt og
+// afstand adskiller den, ikke farve.
+function MenuRow({ icon, label, sub, chevron = true, onClick, secondary = false }) {
   return (
-    <div className="menu-item" onClick={onClick}>
+    <div className="menu-item" onClick={onClick} style={secondary ? { marginTop:10 } : undefined}>
       <div style={{ width:36, height:36, borderRadius:9, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
         <Icon name={icon} size={17} color="var(--ink2)" />
       </div>
       <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{label}</div>
+        <div style={{ fontSize:13, fontWeight: secondary ? 600 : 700, color:"var(--ink)" }}>{label}</div>
         {sub && <div style={{ fontSize:10.5, color:"var(--muted)", marginTop:1 }}>{sub}</div>}
       </div>
       {chevron && (
@@ -95,8 +99,9 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenBetaInfo 
         // "tydeligt sekundær" opnås alene via placering nederst. Samme
         // clearAuth() som ProfileScreens "Log ud"-knap, ingen selvstændig
         // bekræftelses-dialog tilføjet — matcher eksisterende adfærd
-        // ét-til-ét.
-        { icon:"x", label:"Log ud", action: clearAuth, chevron:false },
+        // ét-til-ét. `secondary` (se MenuRow) gør den en anelse mindre
+        // fremtrædende end de øvrige APP-punkter uden at gøre den grå.
+        { icon:"x", label:"Log ud", action: clearAuth, chevron:false, secondary:true },
       ],
     },
   ];

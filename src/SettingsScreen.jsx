@@ -59,51 +59,55 @@ export default function SettingsScreen({ setShowDeleteAccount, setDeleteConfirmT
         </div>
       </div>
 
-      {/* ── Push-notifikationer ── */}
-      {pushSupported && (
-          <div className="card" style={UI.mb12}>
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-              <div>
-                <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2 }}><Icon name="bell" size={14} color="var(--ink)" /> Push-notifikationer</div>
-                <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>
-                  {pushStatus === "granted"
-                    ? "Du får besked når dine indsendelser godkendes"
-                    : pushStatus === "denied"
-                    ? "Blokeret i browserindstillinger"
-                    : "Få besked når dine produkter godkendes"}
-                </div>
-              </div>
-              {pushStatus !== "denied" && (
-                <button onClick={handlePushToggle} disabled={pushLoading}
-                  style={{
-                    width:48, height:28, borderRadius:14, border:"none", cursor:"pointer",
-                    background: pushStatus === "granted" ? "var(--green)" : "var(--border2)",
-                    position:"relative", transition:"background .2s", flexShrink:0,
-                    opacity: pushLoading ? 0.6 : 1,
-                  }}>
-                  <div style={{
-                    width:22, height:22, borderRadius:"50%", background:"var(--ink)",
-                    position:"absolute", top:3,
-                    left: pushStatus === "granted" ? 23 : 3,
-                    transition:"left .2s", boxShadow:"0 1px 3px rgba(0,0,0,.3)"
-                  }} />
-                </button>
-              )}
-            </div>
-            {pushStatus === "denied" && (
-              <div style={{ marginTop:8, fontSize:11, color:"var(--amber)", background:"var(--amber-lt)", borderRadius:8, padding:"6px 10px" }}>
-                Tilladelse er blokeret. Aktivér push i din browsers indstillinger.
-              </div>
-            )}
-          </div>
-      )}
-
-      {/* ── Notifikations-kategorier ── */}
+      {/* ── Notifikationer ── (26. sept. 2026, opfølgning: den tidligere
+          separate "Push-notifikationer"-kort er slået sammen med dette,
+          som første række, i stedet for at være et selvstændigt kort —
+          ét kort i stedet for to reducerer skærmens samlede højde/antal
+          adskilte bokse, så Indstillinger matcher den nyligt oprydede,
+          rolige menu i stedet for at føles overfyldt. Samme
+          hooks/handlers, ingen funktionalitet ændret.) */}
       <div className="card" style={UI.mb12}>
         <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2 }}>
           <Icon name="bell" size={14} color="var(--ink)" /> Notifikationer
         </div>
-        <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5, marginBottom:12 }}>
+
+        {pushSupported && (
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 0", marginTop:6, borderBottom:"1px solid var(--border)" }}>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:12.5, fontWeight:700, color:"var(--ink)" }}>Push-tilladelse</div>
+              <div style={{ fontSize:10.5, color:"var(--muted)", lineHeight:1.4 }}>
+                {pushStatus === "granted"
+                  ? "Aktiveret i denne browser"
+                  : pushStatus === "denied"
+                  ? "Blokeret i browserindstillinger"
+                  : "Skal aktiveres, før push-beskeder kan sendes"}
+              </div>
+              {pushStatus === "denied" && (
+                <div style={{ marginTop:6, fontSize:11, color:"var(--amber)", background:"var(--amber-lt)", borderRadius:8, padding:"6px 10px" }}>
+                  Aktivér push i din browsers indstillinger.
+                </div>
+              )}
+            </div>
+            {pushStatus !== "denied" && (
+              <button onClick={handlePushToggle} disabled={pushLoading}
+                style={{
+                  width:48, height:28, borderRadius:14, border:"none", cursor:"pointer",
+                  background: pushStatus === "granted" ? "var(--green)" : "var(--border2)",
+                  position:"relative", transition:"background .2s", flexShrink:0,
+                  opacity: pushLoading ? 0.6 : 1,
+                }}>
+                <div style={{
+                  width:22, height:22, borderRadius:"50%", background:"var(--ink)",
+                  position:"absolute", top:3,
+                  left: pushStatus === "granted" ? 23 : 3,
+                  transition:"left .2s", boxShadow:"0 1px 3px rgba(0,0,0,.3)"
+                }} />
+              </button>
+            )}
+          </div>
+        )}
+
+        <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5, margin:"12px 0" }}>
           Vælg hvilke beskeder du vil have, og om de skal komme som push, email — eller begge dele.
         </div>
         <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
