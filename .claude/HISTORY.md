@@ -2778,3 +2778,89 @@ med kun ét allergen bekræftede at hele blokken (navn+eksempler+
 sikkerhedstekst) OG den store oplæs-knap er synlige uden scroll for det
 mest almindelige tilfælde (1 hensyn), som krav 6 kræver ("uden unødvendig
 scrolling, når der kun er 1-3 allergier").
+
+## Madpas, femte runde — diæter fik samme type besked som allergier (27. sept. 2026)
+
+Samme dag som runde 4 gav brugeren en kort, meget målrettet 8-punkts
+opfølgning, eksplicit afgrænset til "kun følgende ændringer" — bevar
+design og funktionalitet i øvrigt, "lav ingen andre redesigns eller
+ændringer". Seks konkrete punkter (punkt 7-8 var "rør ikke oplæsning" og
+"ingen andre ændringer"):
+
+1. **Diæter må ikke kun vises som badges** — de skal have samme type
+   korte, tydelige besked til personalet som allergier.
+2. Eksempel givet for Vegan (engelsk): "I follow a vegan diet. Please make
+   sure my food does not contain meat, fish, dairy, eggs or other
+   animal-derived ingredients."
+3. Overskriften "DIET" → "DIETARY REQUIREMENTS".
+4. "Soy / Soya" må ikke vises samtidigt — brug det korrekte lokale navn.
+5. Forkort krydskontaminerings-beskrivelsen til "Tilføj en advarsel om
+   krydskontaminering til dit madpas."
+6. Tilføj Whey til mælkens almindelige eksempler.
+
+**Implementering:**
+- **Diæt-beskeder (punkt 1-2):** ny `MADPAS_DIET_MESSAGE_T` i
+  constants.jsx — én naturligt oversat besked pr. diæt (`vegan`,
+  `vegetarian`, `pescetarian`, `gluten-free`, `keto`) × 17 sprog, ikke
+  ord-for-ord-oversat. Bevidst SOFTERE ordlyd for keto ("limit"/"begræns"
+  høj-kulhydrat-ingredienser) end for de øvrige ("does not contain"/
+  "indeholder ikke") — keto er en præference, ikke en sikkerhedsrisiko på
+  samme måde som en allergi eller et reelt kostkrav som veganisme/gluten-
+  fri. Ny `madpasDietMessage(dietId, lang)`-hjælpefunktion i useMadpas.js
+  (samme mønster som `madpasSafetyNote`). `renderStaffView()` i
+  MadpasScreen.jsx: DIETARY REQUIREMENTS-sektionen skiftet fra en
+  `.tags`-liste af pille-badges til samme blok-layout som allergi-/
+  intolerance-sektionerne (navn i `itemName`-stilen, genbrugt fra
+  allergi-blokkene, + beskeden i samme muted-men-fed stil som sikkerheds-
+  teksten). Den kompakte forside-preview (`renderCompactPreview()`) er
+  BEVIDST uændret — den viser fortsat diæter som korte chips, da brugerens
+  krav eksplicit gjaldt "på fremvisningsskærmen", ikke forside-summary'et.
+- **Overskrift (punkt 3):** `MADPAS_SECTIONS_T.diet` omskrevet fra
+  "Diet"/"Kost"-stil til "Dietary requirements"/"Kosthensyn"-stil for
+  alle 17 sprog (en naturlig oversættelse af begrebet, ikke en bogstavelig
+  gengivelse i hvert sprog — fx dansk "Kosthensyn" i stedet for det mere
+  akavede "Kostkrav").
+- **Soja-navnet (punkt 4):** `ALLERGEN_T.soja.en.n` var "Soy / Soya" —
+  to engelske varianter vist samtidig, forvirrende for personalet. Rettet
+  til blot "Soya", som er den korrekte betegnelse for MADPAS_LANGUAGES'
+  "en"-sprogvariant (flag 🇬🇧, `bcp:"en-GB"` — britisk engelsk bruger
+  "soya", ikke "soy"). Kun selve allergen-NAVNET er rettet — eksempel-
+  listerne (`ALLERGEN_EXAMPLES.soja`, fx "Soy sauce") er UÆNDREDE, da de
+  ikke var en del af det rapporterede problem (et produktnavn som "soy
+  sauce" er ikke det samme som allergenets eget navn optrædende i to
+  varianter) og brugeren eksplicit bad om ingen andre ændringer.
+- **Krydskontaminerings-tekst (punkt 5):** MadpasScreen.jsx's beskrivelses-
+  linje under "KRYDSKONTAMINERING"-toggle'n forkortet fra "Tilføj en
+  advarsel om krydskontaminering til madpasset. Vurdér selv om det er
+  relevant for din allergi." til præcis den ordlyd brugeren gav: "Tilføj
+  en advarsel om krydskontaminering til dit madpas."
+- **Whey (punkt 6):** `ALLERGEN_EXAMPLES.maelkeallergi.ingredients`
+  manglede "Whey"/"Valle" — men en simpel tilføjelse alene var ikke nok:
+  `madpasAllergenExamples()` slicer den kombinerede products+ingredients-
+  liste til de første 4 elementer, og `maelkeallergi.products` alene
+  havde allerede præcis 4 elementer (Milk/Cream/Butter/Cheese), så et nyt
+  5. element ville ALDRIG blive vist uden også at hæve selve grænsen.
+  Løst ved at (a) tilføje "Valle"/"Whey" som FØRSTE element i
+  `ingredients`-arrayet (alle 17 sprog, samme oversættelser som allerede
+  fandtes for `laktose.ingredients`, genbrugt for konsistens) og (b) hæve
+  slice-grænsen fra 4 til 5 i `madpasAllergenExamples()` — en lille,
+  fælles ændring der også giver ét ekstra eksempel for øvrige allergener
+  med mange nok produkter/ingredienser til at ramme grænsen (fx
+  `laktose`s "Yoghurt", som tidligere blev skåret væk), en accepteret,
+  minimal sideeffekt af den præcise rettelse punkt 6 krævede.
+
+**Ingen andre ændringer** — verificeret ved at kun `constants.jsx`,
+`useMadpas.js` og `MadpasScreen.jsx` er rørt, ingen andre skærme eller
+`App.jsx` påvirket (i modsætning til runde 3-4, som begge også rørte
+App.jsx for ny state).
+
+**Test:** `npm run build` grøn, `npx vitest run` 109/109 bestået, mojibake-
+scan ren på alle tre ændrede filer. Verificeret med Playwright (393×852,
+profil med Milk+Soya-allergener og Vegan+Gluten-free-diæter): den
+forkortede krydskontaminerings-tekst er synlig og den gamle længere
+version væk, "Whey" er nu synlig i Milks eksempler, "Soy / Soya" er væk
+og kun "Soya" vises, "DIETARY REQUIREMENTS" vises i stedet for "DIET",
+og både Vegan- og Gluten-free-blokkene viser deres fulde, korrekte
+besked-tekst (Vegan-teksten bekræftet ordret identisk med brugerens eget
+eksempel). Skærmbillede inspiceret visuelt og bekræftet rent, med samme
+blok-layout for diæter som allergier/intolerancer.

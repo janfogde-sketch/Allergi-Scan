@@ -453,7 +453,11 @@ export const ALLERGEN_EXAMPLES = {
   },
   maelkeallergi: {
     products: { da:["Mælk","Fløde","Smør","Ost"], en:["Milk","Cream","Butter","Cheese"], de:["Milch","Sahne","Butter","Käse"], fr:["Lait","Crème","Beurre","Fromage"], es:["Leche","Nata","Mantequilla","Queso"], it:["Latte","Panna","Burro","Formaggio"], nl:["Melk","Room","Boter","Kaas"], pt:["Leite","Natas","Manteiga","Queijo"], pl:["Mleko","Śmietana","Masło","Ser"], sv:["Mjölk","Grädde","Smör","Ost"], no:["Melk","Fløte","Smør","Ost"], ja:["牛乳","クリーム","バター","チーズ"], zh:["牛奶","奶油","黄油","奶酪"], ar:["حليب","كريمة","زبدة","جبن"], tr:["Süt","Krema","Tereyağı","Peynir"], th:["นม","ครีม","เนย","ชีส"], el:["Γάλα","Κρέμα γάλακτος","Βούτυρο","Τυρί"] },
-    ingredients: { da:["Chokolade","Nogle bagværk"], en:["Chocolate","Some baked goods"], de:["Schokolade","Manche Backwaren"], fr:["Chocolat","Certaines pâtisseries"], es:["Chocolate","Algunos productos horneados"], it:["Cioccolato","Alcuni prodotti da forno"], nl:["Chocolade","Sommige gebakken producten"], pt:["Chocolate","Alguns produtos de padaria"], pl:["Czekolada","Niektóre wypieki"], sv:["Choklad","Vissa bakverk"], no:["Sjokolade","Enkelte bakevarer"], ja:["チョコレート","一部の焼き菓子"], zh:["巧克力","部分烘焙食品"], ar:["شوكولاتة","بعض المخبوزات"], tr:["Çikolata","Bazı fırın ürünleri"], th:["ช็อกโกแลต","ขนมอบบางชนิด"], el:["Σοκολάτα","Ορισμένα αρτοσκευάσματα"] },
+    // "Valle"/"Whey" tilføjet FØRST her (27. sept. 2026, Madpas-finpolish,
+    // krav 6) — products alene fylder allerede de 4 pladser
+    // madpasAllergenExamples() viste tidligere, så Whey kom aldrig frem;
+    // slice-grænsen er samtidig hævet fra 4 til 5 i useMadpas.js.
+    ingredients: { da:["Valle","Chokolade","Nogle bagværk"], en:["Whey","Chocolate","Some baked goods"], de:["Molke","Schokolade","Manche Backwaren"], fr:["Lactosérum","Chocolat","Certaines pâtisseries"], es:["Suero","Chocolate","Algunos productos horneados"], it:["Siero","Cioccolato","Alcuni prodotti da forno"], nl:["Wei","Chocolade","Sommige gebakken producten"], pt:["Soro","Chocolate","Alguns produtos de padaria"], pl:["Serwatka","Czekolada","Niektóre wypieki"], sv:["Vassle","Choklad","Vissa bakverk"], no:["Myse","Sjokolade","Enkelte bakevarer"], ja:["乳清","チョコレート","一部の焼き菓子"], zh:["乳清","巧克力","部分烘焙食品"], ar:["مصل اللبن","شوكولاتة","بعض المخبوزات"], tr:["Peynir altı suyu","Çikolata","Bazı fırın ürünleri"], th:["เวย์","ช็อกโกแลต","ขนมอบบางชนิด"], el:["Ορός γάλακτος","Σοκολάτα","Ορισμένα αρτοσκευάσματα"] },
   },
   laktose: {
     products: { da:["Mælk","Ost","Smør","Is","Yoghurt"], en:["Milk","Cheese","Butter","Ice cream","Yoghurt"], de:["Milch","Käse","Butter","Eis","Joghurt"], fr:["Lait","Fromage","Beurre","Glace","Yaourt"], es:["Leche","Queso","Mantequilla","Helado","Yogur"], it:["Latte","Formaggio","Burro","Gelato","Yogurt"], nl:["Melk","Kaas","Boter","Ijs","Yoghurt"], pt:["Leite","Queijo","Manteiga","Gelado","Iogurte"], pl:["Mleko","Ser","Masło","Lody","Jogurt"], sv:["Mjölk","Ost","Smör","Glass","Yoghurt"], no:["Melk","Ost","Smør","Is","Yoghurt"], ja:["牛乳","チーズ","バター","アイスクリーム","ヨーグルト"], zh:["牛奶","奶酪","黄油","冰淇淋","酸奶"], ar:["حليب","جبن","زبدة","آيس كريم","زبادي"], tr:["Süt","Peynir","Tereyağı","Dondurma","Yoğurt"], th:["นม","ชีส","เนย","ไอศกรีม","โยเกิร์ต"], el:["Γάλα","Τυρί","Βούτυρο","Παγωτό","Γιαούρτι"] },
@@ -539,7 +543,115 @@ export const DIET_T = {
 export const MADPAS_SECTIONS_T = {
   allergies:    { da:"Fødevareallergier", en:"Food allergies", de:"Lebensmittelallergien", fr:"Allergies alimentaires", es:"Alergias alimentarias", it:"Allergie alimentari", nl:"Voedselallergieën", pt:"Alergias alimentares", pl:"Alergie pokarmowe", sv:"Matallergier", no:"Matallergier", ja:"食物アレルギー", zh:"食物过敏", ar:"حساسية الطعام", tr:"Gıda alerjileri", th:"การแพ้อาหาร", el:"Τροφικές αλλεργίες" },
   intolerances: { da:"Intolerancer",       en:"Intolerances", de:"Unverträglichkeiten", fr:"Intolérances", es:"Intolerancias", it:"Intolleranze", nl:"Intoleranties", pt:"Intolerâncias", pl:"Nietolerancje", sv:"Intoleranser", no:"Intoleranser", ja:"不耐症", zh:"不耐受", ar:"عدم التحمل", tr:"İntoleranslar", th:"การแพ้/ไม่ทนอาหาร", el:"Δυσανεξίες" },
-  diet:         { da:"Kost",               en:"Diet", de:"Ernährung", fr:"Régime", es:"Dieta", it:"Dieta", nl:"Dieet", pt:"Dieta", pl:"Dieta", sv:"Kost", no:"Kosthold", ja:"食事制限", zh:"饮食", ar:"النظام الغذائي", tr:"Diyet", th:"การกินอาหาร", el:"Δίαιτα" },
+  // "Dietary requirements" i stedet for blot "Diet" (27. sept. 2026,
+  // Madpas-finpolish, krav 3) — mere præcist for personalet, som ellers
+  // kan læse "Diet" som en slankekur i stedet for et fødevarehensyn.
+  diet:         { da:"Kosthensyn", en:"Dietary requirements", de:"Ernährungsanforderungen", fr:"Exigences alimentaires", es:"Requisitos dietéticos", it:"Requisiti dietetici", nl:"Dieetvereisten", pt:"Requisitos alimentares", pl:"Wymagania żywieniowe", sv:"Kostkrav", no:"Kostkrav", ja:"食事の要件", zh:"饮食要求", ar:"المتطلبات الغذائية", tr:"Beslenme gereksinimleri", th:"ข้อกำหนดด้านอาหาร", el:"Διατροφικές απαιτήσεις" },
+};
+
+// Kort, tydelig besked til personalet PR. DIÆT (27. sept. 2026, Madpas-
+// finpolish, krav 1-2) — diæter må ikke kun vises som badges, de skal have
+// samme type "kan/kan ikke spise"-besked som allergier. Naturligt
+// oversat (ikke ord-for-ord), IKKE en sikkerheds-sætning i samme forstand
+// som allergener (fx keto er en præference, ikke en risiko), så ordlyden
+// er bevidst blødere for keto ("limit"/"begræns") end for de øvrige
+// ("does not contain"/"indeholder ikke").
+export const MADPAS_DIET_MESSAGE_T = {
+  vegan: {
+    da:"Jeg spiser vegansk. Sørg venligst for, at min mad ikke indeholder kød, fisk, mejeriprodukter, æg eller andre animalske ingredienser.",
+    en:"I follow a vegan diet. Please make sure my food does not contain meat, fish, dairy, eggs or other animal-derived ingredients.",
+    de:"Ich ernähre mich vegan. Bitte stellen Sie sicher, dass mein Essen kein Fleisch, keinen Fisch, keine Milchprodukte, keine Eier oder andere tierische Zutaten enthält.",
+    fr:"Je suis végane. Veuillez vous assurer que mon repas ne contient ni viande, ni poisson, ni produits laitiers, ni œufs, ni aucun autre ingrédient d'origine animale.",
+    es:"Sigo una dieta vegana. Por favor, asegúrese de que mi comida no contenga carne, pescado, lácteos, huevos ni ningún otro ingrediente de origen animal.",
+    it:"Seguo una dieta vegana. Assicuratevi che il mio pasto non contenga carne, pesce, latticini, uova o altri ingredienti di origine animale.",
+    nl:"Ik eet veganistisch. Zorg ervoor dat mijn maaltijd geen vlees, vis, zuivel, eieren of andere dierlijke ingrediënten bevat.",
+    pt:"Sigo uma dieta vegana. Por favor, certifique-se de que a minha refeição não contém carne, peixe, laticínios, ovos ou outros ingredientes de origem animal.",
+    pl:"Stosuję dietę wegańską. Proszę dopilnować, aby moje jedzenie nie zawierało mięsa, ryb, nabiału, jaj ani innych składników pochodzenia zwierzęcego.",
+    sv:"Jag äter veganskt. Se till att min måltid inte innehåller kött, fisk, mejeriprodukter, ägg eller andra animaliska ingredienser.",
+    no:"Jeg spiser vegansk. Sørg for at maten min ikke inneholder kjøtt, fisk, meieriprodukter, egg eller andre animalske ingredienser.",
+    ja:"私はヴィーガンです。肉、魚、乳製品、卵、その他の動物由来の原材料が含まれていない料理をお願いします。",
+    zh:"我遵循纯素饮食。请确保我的食物不含肉类、鱼类、乳制品、鸡蛋或其他动物源成分。",
+    ar:"أتبع نظاماً نباتياً صرفاً. يرجى التأكد من أن طعامي لا يحتوي على اللحوم أو الأسماك أو منتجات الألبان أو البيض أو أي مكونات أخرى مشتقة من الحيوانات.",
+    tr:"Vegan besleniyorum. Lütfen yemeğimde et, balık, süt ürünleri, yumurta veya başka hayvansal kaynaklı malzemeler bulunmadığından emin olun.",
+    th:"ฉันกินอาหารวีแกน กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มีเนื้อสัตว์ ปลา ผลิตภัณฑ์นม ไข่ หรือส่วนผสมอื่นที่มาจากสัตว์",
+    el:"Ακολουθώ vegan διατροφή. Παρακαλώ φροντίστε το φαγητό μου να μην περιέχει κρέας, ψάρι, γαλακτοκομικά, αυγά ή άλλα συστατικά ζωικής προέλευσης.",
+  },
+  vegetarian: {
+    da:"Jeg spiser vegetarisk. Sørg venligst for, at min mad ikke indeholder kød eller fisk.",
+    en:"I follow a vegetarian diet. Please make sure my food does not contain meat or fish.",
+    de:"Ich ernähre mich vegetarisch. Bitte stellen Sie sicher, dass mein Essen kein Fleisch und keinen Fisch enthält.",
+    fr:"Je suis végétarien(ne). Veuillez vous assurer que mon repas ne contient ni viande ni poisson.",
+    es:"Sigo una dieta vegetariana. Por favor, asegúrese de que mi comida no contenga carne ni pescado.",
+    it:"Seguo una dieta vegetariana. Assicuratevi che il mio pasto non contenga carne né pesce.",
+    nl:"Ik eet vegetarisch. Zorg ervoor dat mijn maaltijd geen vlees of vis bevat.",
+    pt:"Sigo uma dieta vegetariana. Por favor, certifique-se de que a minha refeição não contém carne nem peixe.",
+    pl:"Stosuję dietę wegetariańską. Proszę dopilnować, aby moje jedzenie nie zawierało mięsa ani ryb.",
+    sv:"Jag äter vegetariskt. Se till att min måltid inte innehåller kött eller fisk.",
+    no:"Jeg spiser vegetarisk. Sørg for at maten min ikke inneholder kjøtt eller fisk.",
+    ja:"私はベジタリアンです。肉や魚が含まれていない料理をお願いします。",
+    zh:"我遵循素食饮食。请确保我的食物不含肉类或鱼类。",
+    ar:"أتبع نظاماً نباتياً. يرجى التأكد من أن طعامي لا يحتوي على اللحوم أو الأسماك.",
+    tr:"Vejetaryen besleniyorum. Lütfen yemeğimde et veya balık bulunmadığından emin olun.",
+    th:"ฉันกินมังสวิรัติ กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มีเนื้อสัตว์หรือปลา",
+    el:"Ακολουθώ χορτοφαγική διατροφή. Παρακαλώ φροντίστε το φαγητό μου να μην περιέχει κρέας ή ψάρι.",
+  },
+  pescetarian: {
+    da:"Jeg spiser pescetarisk. Sørg venligst for, at min mad ikke indeholder kød — fisk og skaldyr er okay.",
+    en:"I follow a pescetarian diet. Please make sure my food does not contain meat — fish and seafood are fine.",
+    de:"Ich ernähre mich pescetarisch. Bitte stellen Sie sicher, dass mein Essen kein Fleisch enthält — Fisch und Meeresfrüchte sind in Ordnung.",
+    fr:"Je suis pescétarien(ne). Veuillez vous assurer que mon repas ne contient pas de viande — le poisson et les fruits de mer conviennent.",
+    es:"Sigo una dieta pescetariana. Por favor, asegúrese de que mi comida no contenga carne — el pescado y el marisco están bien.",
+    it:"Seguo una dieta pescetariana. Assicuratevi che il mio pasto non contenga carne — pesce e frutti di mare vanno bene.",
+    nl:"Ik eet pescotarisch. Zorg ervoor dat mijn maaltijd geen vlees bevat — vis en zeevruchten zijn prima.",
+    pt:"Sigo uma dieta pescetariana. Por favor, certifique-se de que a minha refeição não contém carne — peixe e marisco não são problema.",
+    pl:"Stosuję dietę pescowegetariańską. Proszę dopilnować, aby moje jedzenie nie zawierało mięsa — ryby i owoce morza są w porządku.",
+    sv:"Jag äter pescetariskt. Se till att min måltid inte innehåller kött — fisk och skaldjur är okej.",
+    no:"Jeg spiser pescetarisk. Sørg for at maten min ikke inneholder kjøtt — fisk og sjømat er greit.",
+    ja:"私はペスクタリアンです。肉が含まれていない料理をお願いします（魚介類は問題ありません）。",
+    zh:"我遵循鱼素饮食。请确保我的食物不含肉类——鱼类和海鲜没问题。",
+    ar:"أتبع نظاماً غذائياً يعتمد على الأسماك. يرجى التأكد من أن طعامي لا يحتوي على اللحوم — الأسماك والمأكولات البحرية مقبولة.",
+    tr:"Pesketaryen besleniyorum. Lütfen yemeğimde et bulunmadığından emin olun — balık ve deniz ürünleri sorun değil.",
+    th:"ฉันกินอาหารเพสคาทาเรียน กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มีเนื้อสัตว์ — ปลาและอาหารทะเลรับประทานได้",
+    el:"Ακολουθώ πεσκετεριανή διατροφή. Παρακαλώ φροντίστε το φαγητό μου να μην περιέχει κρέας — τα ψάρια και τα θαλασσινά είναι εντάξει.",
+  },
+  "gluten-free": {
+    da:"Jeg spiser glutenfrit. Sørg venligst for, at min mad ikke indeholder hvede, rug, byg eller andre glutenkilder.",
+    en:"I follow a gluten-free diet. Please make sure my food does not contain wheat, rye, barley or other sources of gluten.",
+    de:"Ich ernähre mich glutenfrei. Bitte stellen Sie sicher, dass mein Essen keinen Weizen, Roggen, Gerste oder andere glutenhaltige Zutaten enthält.",
+    fr:"Je suis un régime sans gluten. Veuillez vous assurer que mon repas ne contient ni blé, ni seigle, ni orge, ni aucune autre source de gluten.",
+    es:"Sigo una dieta sin gluten. Por favor, asegúrese de que mi comida no contenga trigo, centeno, cebada ni ninguna otra fuente de gluten.",
+    it:"Seguo una dieta senza glutine. Assicuratevi che il mio pasto non contenga frumento, segale, orzo o altre fonti di glutine.",
+    nl:"Ik eet glutenvrij. Zorg ervoor dat mijn maaltijd geen tarwe, rogge, gerst of andere glutenbronnen bevat.",
+    pt:"Sigo uma dieta sem glúten. Por favor, certifique-se de que a minha refeição não contém trigo, centeio, cevada ou outras fontes de glúten.",
+    pl:"Stosuję dietę bezglutenową. Proszę dopilnować, aby moje jedzenie nie zawierało pszenicy, żyta, jęczmienia ani innych źródeł glutenu.",
+    sv:"Jag äter glutenfritt. Se till att min måltid inte innehåller vete, råg, korn eller andra glutenkällor.",
+    no:"Jeg spiser glutenfritt. Sørg for at maten min ikke inneholder hvete, rug, bygg eller andre glutenkilder.",
+    ja:"私はグルテンフリーの食事をしています。小麦、ライ麦、大麦、その他グルテンを含む原材料が入っていない料理をお願いします。",
+    zh:"我遵循无麸质饮食。请确保我的食物不含小麦、黑麦、大麦或其他麸质来源。",
+    ar:"أتبع نظاماً خالياً من الغلوتين. يرجى التأكد من أن طعامي لا يحتوي على القمح أو الجاودار أو الشعير أو أي مصدر آخر للغلوتين.",
+    tr:"Glutensiz besleniyorum. Lütfen yemeğimde buğday, çavdar, arpa veya başka gluten kaynakları bulunmadığından emin olun.",
+    th:"ฉันกินอาหารปลอดกลูเตน กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มีข้าวสาลี ข้าวไรย์ ข้าวบาร์เลย์ หรือแหล่งกลูเตนอื่นๆ",
+    el:"Ακολουθώ διατροφή χωρίς γλουτένη. Παρακαλώ φροντίστε το φαγητό μου να μην περιέχει σιτάρι, σίκαλη, κριθάρι ή άλλες πηγές γλουτένης.",
+  },
+  keto: {
+    da:"Jeg spiser lavkulhydrat (keto). Begræns venligst kulhydratrige ingredienser som sukker, brød, pasta og ris i min mad.",
+    en:"I follow a low-carb (keto) diet. Please limit high-carbohydrate ingredients such as sugar, bread, pasta and rice in my food.",
+    de:"Ich ernähre mich kohlenhydratarm (Keto). Bitte begrenzen Sie kohlenhydratreiche Zutaten wie Zucker, Brot, Nudeln und Reis in meinem Essen.",
+    fr:"Je suis un régime pauvre en glucides (cétogène). Veuillez limiter les ingrédients riches en glucides comme le sucre, le pain, les pâtes et le riz dans mon repas.",
+    es:"Sigo una dieta baja en carbohidratos (keto). Por favor, limite los ingredientes ricos en carbohidratos como azúcar, pan, pasta y arroz en mi comida.",
+    it:"Seguo una dieta a basso contenuto di carboidrati (cheto). Vi prego di limitare ingredienti ricchi di carboidrati come zucchero, pane, pasta e riso nel mio pasto.",
+    nl:"Ik eet koolhydraatarm (keto). Beperk alstublieft koolhydraatrijke ingrediënten zoals suiker, brood, pasta en rijst in mijn maaltijd.",
+    pt:"Sigo uma dieta baixa em hidratos de carbono (keto). Por favor, limite ingredientes ricos em hidratos de carbono como açúcar, pão, massa e arroz na minha refeição.",
+    pl:"Stosuję dietę niskowęglowodanową (keto). Proszę ograniczyć składniki bogate w węglowodany, takie jak cukier, chleb, makaron i ryż, w moim posiłku.",
+    sv:"Jag äter lågkolhydratkost (keto). Begränsa gärna kolhydratrika ingredienser som socker, bröd, pasta och ris i min måltid.",
+    no:"Jeg spiser lavkarbo (keto). Vennligst begrens karbohydratrike ingredienser som sukker, brød, pasta og ris i maten min.",
+    ja:"私は低炭水化物（ケトジェニック）食を実践しています。砂糖、パン、パスタ、米などの炭水化物の多い食材はできるだけ控えてください。",
+    zh:"我遵循低碳水化合物（生酮）饮食。请尽量减少我食物中的糖、面包、面食和米饭等高碳水化合物成分。",
+    ar:"أتبع نظاماً غذائياً منخفض الكربوهيدرات (كيتو). يرجى تقليل المكونات الغنية بالكربوهيدرات مثل السكر والخبز والمعكرونة والأرز في طعامي.",
+    tr:"Düşük karbonhidratlı (keto) besleniyorum. Lütfen yemeğimde şeker, ekmek, makarna ve pirinç gibi yüksek karbonhidratlı malzemeleri sınırlandırın.",
+    th:"ฉันกินอาหารคาร์บต่ำ (คีโต) กรุณาจำกัดส่วนผสมที่มีคาร์โบไฮเดรตสูง เช่น น้ำตาล ขนมปัง พาสต้า และข้าว ในอาหารของฉัน",
+    el:"Ακολουθώ διατροφή χαμηλή σε υδατάνθρακες (κέτο). Παρακαλώ περιορίστε συστατικά πλούσια σε υδατάνθρακες όπως ζάχαρη, ψωμί, ζυμαρικά και ρύζι στο φαγητό μου.",
+  },
 };
 
 // Sikkerheds-sætning under hvert enkelt allergen-/fritekst-emne i
@@ -718,7 +830,11 @@ export const ALLERGEN_T = {
   aeg:         { en:{n:"Eggs",d:"Contains eggs and egg products"},de:{n:"Ei",d:"Enthält Eier und Eiprodukte"},fr:{n:"Œufs",d:"Contient des œufs et ovoproduits"},es:{n:"Huevos",d:"Contiene huevos y ovoproductos"},it:{n:"Uova",d:"Contiene uova e ovoprodotti"},nl:{n:"Eieren",d:"Bevat eieren en eiproducten"},pt:{n:"Ovos",d:"Contém ovos e produtos à base de ovos"},pl:{n:"Jaja",d:"Zawiera jaja i produkty na bazie jaj"},sv:{n:"Ägg",d:"Innehåller ägg och äggprodukter"},no:{n:"Egg",d:"Inneholder egg og eggprodukter"},ja:{n:"卵",d:"卵および卵製品を含む"},zh:{n:"鸡蛋",d:"含有鸡蛋和蛋制品"},ar:{n:"البيض",d:"يحتوي على البيض ومنتجاته"},tr:{n:"Yumurta",d:"Yumurta ve yumurta ürünleri içerir"},th:{n:"ไข่",d:"มีไข่และผลิตภัณฑ์จากไข่"},el:{n:"Αυγά",d:"Περιέχει αυγά και προϊόντα αυγών"} },
   noedder:     { en:{n:"Tree Nuts",d:"Contains nuts (almonds, hazelnuts, walnuts, cashews, pistachios etc.)"},de:{n:"Schalenfrüchte",d:"Enthält Nüsse (Mandeln, Haselnüsse, Walnüsse, Cashews, Pistazien usw.)"},fr:{n:"Fruits à coque",d:"Contient des fruits à coque (amandes, noisettes, noix, cajou, pistaches, etc.)"},es:{n:"Frutos secos",d:"Contiene frutos secos (almendras, avellanas, nueces, anacardos, pistachos, etc.)"},it:{n:"Frutta a guscio",d:"Contiene frutta a guscio (mandorle, nocciole, noci, anacardi, pistacchi ecc.)"},nl:{n:"Noten",d:"Bevat noten (amandelen, hazelnoten, walnoten, cashewnoten, pistachenoten, etc.)"},pt:{n:"Frutos de casca rija",d:"Contém frutos de casca rija (amêndoas, avelãs, nozes, cajus, pistáchios, etc.)"},pl:{n:"Orzechy",d:"Zawiera orzechy (migdały, orzechy laskowe, włoskie, nerkowce, pistacje itp.)"},sv:{n:"Nötter",d:"Innehåller nötter (mandlar, hasselnötter, valnötter, cashewnötter, pistaschnötter m.fl.)"},no:{n:"Nøtter",d:"Inneholder nøtter (mandler, hasselnøtter, valnøtter, cashewnøtter, pistasjnøtter m.fl.)"},ja:{n:"ナッツ類",d:"ナッツ類含有（アーモンド・ヘーゼルナッツ・クルミ・カシューナッツ・ピスタチオ等）"},zh:{n:"坚果",d:"含有坚果（杏仁、榛子、核桃、腰果、开心果等）"},ar:{n:"المكسرات",d:"يحتوي على المكسرات (اللوز، البندق، الجوز، الكاجو، الفستق)"},tr:{n:"Kabuklu Yemişler",d:"Kabuklu yemiş içerir (badem, fındık, ceviz, kaju, antep fıstığı vb.)"},th:{n:"ถั่วต้นไม้",d:"มีถั่ว (อัลมอนด์, เฮเซลนัท, วอลนัท, มะม่วงหิมพานต์, พิสตาชิโอ)"},el:{n:"Ξηροί καρποί",d:"Περιέχει ξηρούς καρπούς (αμύγδαλα, φουντούκια, καρύδια, κάσιους, φιστίκια)"} },
   jordnoedder: { en:{n:"Peanuts",d:"Contains peanuts and peanut products"},de:{n:"Erdnüsse",d:"Enthält Erdnüsse und Erdnussprodukte"},fr:{n:"Arachides",d:"Contient des arachides (cacahuètes) et produits"},es:{n:"Cacahuetes",d:"Contiene cacahuetes y productos a base de cacahuetes"},it:{n:"Arachidi",d:"Contiene arachidi e prodotti a base di arachidi"},nl:{n:"Pinda's",d:"Bevat pinda's en pindaproducten"},pt:{n:"Amendoins",d:"Contém amendoins e produtos à base de amendoins"},pl:{n:"Orzeszki ziemne",d:"Zawiera orzeszki ziemne i produkty z orzeszków ziemnych"},sv:{n:"Jordnötter",d:"Innehåller jordnötter och jordnötsprodukter"},no:{n:"Peanøtter",d:"Inneholder peanøtter og peanøttprodukter"},ja:{n:"ピーナッツ",d:"ピーナッツおよびピーナッツ製品を含む"},zh:{n:"花生",d:"含有花生和花生制品"},ar:{n:"الفول السوداني",d:"يحتوي على الفول السوداني ومنتجاته"},tr:{n:"Yerfıstığı",d:"Yerfıstığı ve yerfıstığı ürünleri içerir"},th:{n:"ถั่วลิสง",d:"มีถั่วลิสงและผลิตภัณฑ์จากถั่วลิสง"},el:{n:"Φιστίκια",d:"Περιέχει φιστίκια και προϊόντα φιστικιών"} },
-  soja:        { en:{n:"Soy / Soya",d:"Contains soy and soy-based products"},de:{n:"Soja",d:"Enthält Soja und sojahaltige Produkte"},fr:{n:"Soja",d:"Contient du soja et des produits à base de soja"},es:{n:"Soja",d:"Contiene soja y productos a base de soja"},it:{n:"Soia",d:"Contiene soia e prodotti a base di soia"},nl:{n:"Soja",d:"Bevat soja en sojaproducten"},pt:{n:"Soja",d:"Contém soja e produtos à base de soja"},pl:{n:"Soja",d:"Zawiera soję i produkty sojowe"},sv:{n:"Soja",d:"Innehåller soja och sojabaserade produkter"},no:{n:"Soya",d:"Inneholder soya og soyabaserte produkter"},ja:{n:"大豆",d:"大豆および大豆製品を含む"},zh:{n:"大豆",d:"含有大豆和大豆制品"},ar:{n:"الصويا",d:"يحتوي على الصويا ومنتجاتها"},tr:{n:"Soya",d:"Soya ve soya ürünleri içerir"},th:{n:"ถั่วเหลือง",d:"มีถั่วเหลืองและผลิตภัณฑ์จากถั่วเหลือง"},el:{n:"Σόγια",d:"Περιέχει σόγια και προϊόντα σόγιας"} },
+  // "Soya" (IKKE "Soy / Soya") — det korrekte lokale navn for MADPAS_LANGUAGES'
+  // "en"-variant, som er britisk engelsk (🇬🇧, bcp en-GB, se MADPAS_LANGUAGES) —
+  // to varianter samtidig var forvirrende for personalet (27. sept. 2026,
+  // Madpas-finpolish, krav 4).
+  soja:        { en:{n:"Soya",d:"Contains soya and soya-based products"},de:{n:"Soja",d:"Enthält Soja und sojahaltige Produkte"},fr:{n:"Soja",d:"Contient du soja et des produits à base de soja"},es:{n:"Soja",d:"Contiene soja y productos a base de soja"},it:{n:"Soia",d:"Contiene soia e prodotti a base di soia"},nl:{n:"Soja",d:"Bevat soja en sojaproducten"},pt:{n:"Soja",d:"Contém soja e produtos à base de soja"},pl:{n:"Soja",d:"Zawiera soję i produkty sojowe"},sv:{n:"Soja",d:"Innehåller soja och sojabaserade produkter"},no:{n:"Soya",d:"Inneholder soya og soyabaserte produkter"},ja:{n:"大豆",d:"大豆および大豆製品を含む"},zh:{n:"大豆",d:"含有大豆和大豆制品"},ar:{n:"الصويا",d:"يحتوي على الصويا ومنتجاتها"},tr:{n:"Soya",d:"Soya ve soya ürünleri içerir"},th:{n:"ถั่วเหลือง",d:"มีถั่วเหลืองและผลิตภัณฑ์จากถั่วเหลือง"},el:{n:"Σόγια",d:"Περιέχει σόγια και προϊόντα σόγιας"} },
   fisk:        { en:{n:"Fish",d:"Contains fish and fish products"},de:{n:"Fisch",d:"Enthält Fisch und Fischprodukte"},fr:{n:"Poisson",d:"Contient du poisson et des produits à base de poisson"},es:{n:"Pescado",d:"Contiene pescado y productos a base de pescado"},it:{n:"Pesce",d:"Contiene pesce e prodotti ittici"},nl:{n:"Vis",d:"Bevat vis en visproducten"},pt:{n:"Peixe",d:"Contém peixe e produtos à base de peixe"},pl:{n:"Ryby",d:"Zawiera ryby i produkty rybne"},sv:{n:"Fisk",d:"Innehåller fisk och fiskprodukter"},no:{n:"Fisk",d:"Inneholder fisk og fiskeprodukter"},ja:{n:"魚",d:"魚および魚製品を含む"},zh:{n:"鱼类",d:"含有鱼和鱼制品"},ar:{n:"السمك",d:"يحتوي على السمك ومنتجاته"},tr:{n:"Balık",d:"Balık ve balık ürünleri içerir"},th:{n:"ปลา",d:"มีปลาและผลิตภัณฑ์จากปลา"},el:{n:"Ψάρι",d:"Περιέχει ψάρι και προϊόντα ψαριού"} },
   skaldyr:     { en:{n:"Shellfish / Crustaceans",d:"Contains crustaceans and shellfish (shrimp, crab, lobster, mussels etc.)"},de:{n:"Krebstiere / Schalentiere",d:"Enthält Krebstiere und Schalentiere (Garnelen, Krabben, Hummer, Muscheln)"},fr:{n:"Crustacés / Mollusques",d:"Contient des crustacés et mollusques (crevettes, crabe, homard, moules)"},es:{n:"Crustáceos / Mariscos",d:"Contiene crustáceos y mariscos (gambas, cangrejo, langosta, mejillones)"},it:{n:"Crostacei / Molluschi",d:"Contiene crostacei e molluschi (gamberi, granchio, aragosta, cozze)"},nl:{n:"Schaaldieren",d:"Bevat schaaldieren (garnalen, krab, kreeft, mosselen)"},pt:{n:"Crustáceos / Moluscos",d:"Contém crustáceos e moluscos (camarão, caranguejo, lagosta, mexilhões)"},pl:{n:"Skorupiaki",d:"Zawiera skorupiaki (krewetki, kraby, homary, małże)"},sv:{n:"Skaldjur",d:"Innehåller skaldjur (räkor, krabba, hummer, musslor)"},no:{n:"Skalldyr",d:"Inneholder skalldyr (reker, krabbe, hummer, muslinger)"},ja:{n:"甲殻類・貝類",d:"甲殻類・貝類含有（エビ・カニ・ロブスター・ムール貝等）"},zh:{n:"甲壳类 / 贝类",d:"含有甲壳类和贝类（虾、蟹、龙虾、贻贝等）"},ar:{n:"القشريات والمحار",d:"يحتوي على القشريات والمحار"},tr:{n:"Kabuklu Deniz Ürünleri",d:"Kabuklu deniz ürünleri içerir (karides, yengeç, ıstakoz, midye)"},th:{n:"สัตว์มีเปลือก",d:"มีสัตว์มีเปลือก (กุ้ง, ปู, กุ้งมังกร, หอย)"},el:{n:"Οστρακοειδή",d:"Περιέχει οστρακοειδή (γαρίδες, καβούρι, αστακός, μύδια)"} },
   selleri:     { en:{n:"Celery",d:"Contains celery and celery products"},de:{n:"Sellerie",d:"Enthält Sellerie und Sellerieprodukte"},fr:{n:"Céleri",d:"Contient du céleri et produits à base de céleri"},es:{n:"Apio",d:"Contiene apio y productos a base de apio"},it:{n:"Sedano",d:"Contiene sedano e prodotti a base di sedano"},nl:{n:"Selderij",d:"Bevat selderij en selderijproducten"},pt:{n:"Aipo",d:"Contém aipo e produtos à base de aipo"},pl:{n:"Seler",d:"Zawiera seler i produkty na bazie selera"},sv:{n:"Selleri",d:"Innehåller selleri och selleriprodukter"},no:{n:"Selleri",d:"Inneholder selleri og selleriprodukter"},ja:{n:"セロリ",d:"セロリおよびセロリ製品を含む"},zh:{n:"芹菜",d:"含有芹菜和芹菜制品"},ar:{n:"الكرفس",d:"يحتوي على الكرفس ومنتجاته"},tr:{n:"Kereviz",d:"Kereviz ve kereviz ürünleri içerir"},th:{n:"คื่นฉ่าย",d:"มีคื่นฉ่ายและผลิตภัณฑ์จากคื่นฉ่าย"},el:{n:"Σέλινο",d:"Περιέχει σέλινο και προϊόντα σέλινου"} },

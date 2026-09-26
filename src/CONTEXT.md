@@ -399,6 +399,29 @@ ordlyd er "Vis dine allergier og kosthensyn på det lokale sprog." (var
 tjener-/butikspersonale-specifik) for at afspejle at Madpas bruges bredt
 (restaurant, café, hotel, butik, takeaway).
 
+**Diæter har nu samme type besked som allergier, ikke kun badges (runde
+5, 27. sept.):** hvert diæt-hensyn (`DIETS` i constants.jsx: vegan,
+vegetarian, pescetarian, gluten-free, keto) vises i fremvisningsskærmen
+som sin egen blok (navn + en naturligt oversat "jeg spiser X, sørg for at
+min mad ikke indeholder Y"-besked), samme layout som allergi-/
+intolerance-blokkene. `madpasDietMessage(dietId, lang)` i useMadpas.js,
+`MADPAS_DIET_MESSAGE_T` i constants.jsx (5 diæter × 17 sprog). Bevidst
+blødere ordlyd for keto ("limit"/"begræns") end for de øvrige ("does not
+contain"/"indeholder ikke") — keto er en præference, ikke en sikkerheds-
+risiko. Sektionsoverskriften er samtidig ændret fra "DIET" til "DIETARY
+REQUIREMENTS" (`MADPAS_SECTIONS_T.diet`, alle 17 sprog) for præcision.
+Den kompakte forside-preview (`renderCompactPreview()`) viser fortsat
+diæter som korte chips — kun selve fremvisningsskærmen fik den fulde
+besked, som krævet.
+
+**To mindre, isolerede rettelser (runde 5):** `ALLERGEN_T.soja.en.n`
+viste tidligere "Soy / Soya" (to varianter samtidig) — rettet til blot
+"Soya", det korrekte navn for MADPAS_LANGUAGES' "en"-variant (🇬🇧, en-GB).
+`ALLERGEN_EXAMPLES.maelkeallergi` manglede "Whey"/"Valle" — tilføjet som
+første ingrediens (alle 17 sprog), og `madpasAllergenExamples()`s
+slice-grænse hævet fra 4 til 5 i useMadpas.js, da de 4 eksisterende
+`products`-eksempler alene allerede fyldte den tidligere grænse.
+
 ---
 
 ## 11. CSS-konventioner
