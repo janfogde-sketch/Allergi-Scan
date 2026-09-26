@@ -3341,3 +3341,112 @@ nu **127px fri luft** til bundnavigationens topkant på alle tre profiler
 (op fra et tidligere, reelt overlap) — "Ugentlig aktivitet" fundet i DOM,
 den gamle "Ugentlig streak"-tekst ikke længere til stede. 2×2-grid,
 profilkort, Mine præferencer og Husstand-genvej uændrede, som krævet.
+
+## Indstillinger — fuld omstrukturering til seks sektioner (28. sept. 2026)
+
+Brugeren gav en detaljeret, tolv-punkts "FORBEDR INDSTILLINGER I EATSAFE"-
+spec: samme visuelle stil som resten af appen, ingen redesign, kun
+Indstillinger. Målet var en mere logisk/rolig/komplet side uden at fylde
+den med irrelevante muligheder.
+
+**Undersøgelse før implementering** — for at undgå at bygge "fake"
+toggles (antimønsteret denne sessions egen historik gentagne gange har
+fundet og rettet, senest feltnavne-mismatch-lektionen i afsnit 5):
+- Grep efter eksisterende sprog-/i18n-infrastruktur: EatSafe har INTET
+  app-bredt i18n-system — al UI-tekst er hardkodet dansk direkte i hver
+  skærms JSX. Kun Madpas har en reel sprog-mekanik (`MADPAS_LANGUAGES` +
+  oversatte tekst-tabeller). Konklusion: "App-sprog" ville være en toggle
+  uden nogen reel funktion bag sig — udeladt, med en tydelig begrundelse
+  i `SettingsScreen.jsx`s filhoved i stedet for stiltiende at droppe det.
+- Læste `runLookupProduct` (useProduct.js) grundigt: scan-flowet
+  navigerer ALTID direkte til `SCREENS.RESULT` efter et opslag — der
+  findes ingen alternativ, ikke-automatisk visningstilstand. "Åbn
+  resultat automatisk efter scanning" ville derfor heller ikke styre
+  noget reelt — udeladt af samme grund.
+- Grep efter data-eksport/GDPR-endpoints: ingen findes. "Eksportér mine
+  data" udeladt (spec'en selv gjorde dette punkt eksplicit betinget:
+  "hvis funktionen understøttes").
+- CLAUDE.md dokumenterer allerede at der ikke findes en selvstændig
+  vilkårs-side (kun privacy.html) — "Vilkår" udeladt af samme grund.
+- Ingen cross-browser PWA-API kan åbne browserens/systemets egne
+  indstillinger fra JS — den spec'ede "Åbn Indstillinger"-knap ved afvist
+  push-tilladelse er udeladt (spec'en markerede den selv som "evt.");
+  den eksisterende tekstforklaring ("Aktivér push i din browsers
+  indstillinger") er den ærlige erstatning.
+
+**Reelt genbrugt, intet opfundet:**
+- Sprogvælgeren for "Standard-sprog til Madpas" er en 1:1-genbrug af
+  MadpasScreen.jsx's egne `.mp-lang-dropdown`/`.mp-lang-list`/`.mp-lang-
+  opt`-CSS-klasser og af App.jsx's allerede lagrede `madpasLang`/
+  `setMadpasLang`-state (samme `localStorage`-nøgle,
+  `as_madpas_lang`) — ingen ny dropdown-UI opfundet.
+- "Om EatSafe Beta" genåbner den eksisterende `BetaIntroModal` via
+  præcis samme `setBetaIntroStep(0); setBetaIntroSeen(false);`-mønster
+  som ProfileMenu.jsx's egen "Om EatSafe Beta"-række allerede bruger.
+- "Kontakt & feedback" åbner den eksisterende `FeedbackModal` via samme
+  `onOpenFeedback`-prop-navn/-mønster som `HelpModal.jsx` allerede bruger
+  i App.jsx.
+- "Version" viser `formatBuildTime()`/`COMMIT_SHA` fra `utils.jsx` —
+  samme diagnostik-mønster `FeedbackModal.jsx` allerede viser internt,
+  ikke et hardkodet versionsnummer (den slags blev netop identificeret
+  og fjernet som et feltnavne-mismatch-fund tidligere i denne session,
+  se afsnittet om Scan-forsidens redesign).
+- "Hvilke data EatSafe gemmer"s liste er den samme kategori-liste som
+  `DeleteAccountModal.jsx`s "FØLGENDE DATA SLETTES" — bevidst dupliceret
+  (to små, statiske arrays), ikke ekstraheret til en fælles fil for kun
+  to brugssteder.
+
+**To reelt nye, fungerende indstillinger** (ikke fake toggles): "Vibration
+ved advarsel" og "Lyd ved advarsel". Da der ikke fandtes noget eksisterende
+"advarsel"-specifikt alarm-checkpoint at gøre betinget (den eksisterende
+vibration i `useProduct.js` er ubetinget, fyrer ved ENHVER scanning,
+ikke kun farlige), blev et nyt, minimalt `fireWarningAlert()`-checkpoint
+tilføjet i `runLookupProduct` netop dér hvor koden allerede tjekker
+`status === "danger" || status === "warn"` (til at hente alternativer) —
+samme vibrate-array-mønster og Web Audio-oscillator-mønster som allerede
+findes i `useScanner.js`s stregkode-detektions-feedback, men en tydeligt
+lavere/længere tone så de to kan skelnes. State (`vibrateOnWarning`/
+`soundOnWarning`) er `localStorage`-persisteret (samme mønster som
+`madpasCrossContact`, men default TIL — dette er tilgængeligheds-
+feedback, ikke en antagelse om allergi-alvorlighed) og løftet til
+App.jsx, sendt med i `lookupProduct`s `ctx` ved siden af den øvrige
+scan-afhængige state.
+
+**Notifikationer-kortet:** "Push-tilladelse" → "Push-notifikationer".
+Tre kategori-labels finpudset i `useNotificationPrefs.js` ("Dine
+indsendelser"→"Indsendte produkter", "Familie"→"Familieinvitationer",
+"Ugentligt opskrifts-digest"→"Ugentlig opskriftsoversigt") — kun de
+synlige `label`-felter, `id`-nøglerne (bruges som databasekategori) er
+UÆNDREDE, for ikke at knække eksisterende gemte præferencer. De
+gentagne PUSH/MAIL-labels på hver enkelt kategori-række erstattet af én
+fælles kolonneheader ("Push"/"E-mail") lige under introteksten. Den
+reelle funktionelle rettelse: per-kategori Push-toggles vises nu grånede/
+deaktiverede, med en kort forklarende linje ovenfor gridet, når browserens
+push-tilladelse ikke er givet — før kunne en bruger tænde en Push-toggle
+der reelt ikke kunne sende noget. Mail-kolonnen er bevidst UPÅVIRKET af
+push-tilladelsen, da de to kanaler er helt uafhængige.
+
+**Slet konto flyttet og omdesignet:** væk fra Konto-kortets top (hvor den
+sad side om side med Log ud, "konkurrerende visuelt" som spec'en selv
+kaldte det), ned i et nyt "FAREZONE"-underafsnit nederst i Privatliv &
+data-kortet — en lille, uppercase, dæmpet label efterfulgt af en ren
+tekst-/ikon-knap (rød tekst, ingen fyldt baggrund), ikke en ligeværdig
+blok-knap blandt normale handlinger. Selve bekræftelses-flowet ("skriv
+'slet'") er den eksisterende, delte `DeleteAccountModal.jsx` — uændret,
+kun dens trigger-knap er flyttet.
+
+**Verifikation:** `npm run build` grøn, `npx vitest run` 109/109, mojibake-
+scan clean på alle fire ændrede filer (kun de allerede kendte, harmløse
+zero-width-joiner-emoji i App.jsx, urørt af denne ændring). Playwright
+(artifact-preview-build, login-bypass, hamburger-menu → Indstillinger,
+iPhone 13-profil): alle seks sektionsoverskrifter fundet (Konto/Sprog/
+Scanning/Notifikationer/Privatliv & data/Om EatSafe); sprogvælgeren
+åbnede 17 sprog-muligheder, valgte "Dansk", og opdaterede den lukkede
+dropdown-visning korrekt; "Slet konto" bekræftet FRAVÆRENDE fra
+Konto-kortets tekst og TIL STEDE i Privatliv & data-kortet;
+"Hvilke data EatSafe gemmer" foldede korrekt ud og viste
+"Scanningshistorik"; alle tre omdøbte notifikations-labels fundet;
+fælles "Push"/"E-mail"-kolonneheader til stede; "Version"/"Om EatSafe
+Beta"/"Kontakt & feedback" alle til stede i Om EatSafe-sektionen.
+Skærmbilleder (iPhone 13) bekræftede visuelt konsistent kort-/spacing-
+design med resten af appen, ingen layout-brud.

@@ -130,6 +130,15 @@ export default function EatSafe() {
   // alvorlighedsgraden af brugerens allergi, så beskeden vises/oplæses
   // KUN hvis brugeren selv har slået den til her.
   const [madpasCrossContact, setMadpasCrossContact] = useState(() => localStorage.getItem("as_madpas_cross_contact") === "1");
+  // Scanning-indstillinger (28. sept. 2026, Indstillinger-forbedring) —
+  // vibration/lyd ved et allergi-match ("advarsel" = danger ELLER warn)
+  // ved siden af den allerede eksisterende, ubetingede "scan registreret"-
+  // feedback i useScanner.js (kamera-detektion, uafhængig af resultatet).
+  // Default TIL, i modsætning til madpasCrossContact — dette er ikke en
+  // antagelse om brugerens allergi-alvorlighed, kun en tilgængeligheds-
+  // feedback de fleste forventer er slået til.
+  const [vibrateOnWarning, setVibrateOnWarning] = useState(() => localStorage.getItem("as_vibrate_on_warning") !== "0");
+  const [soundOnWarning, setSoundOnWarning] = useState(() => localStorage.getItem("as_sound_on_warning") !== "0");
   // madpasActiveProfile → computed after hooks (uses family)
   // Recipes → useRecipes hook (kaldet efter useAuth nedenfor)
 
@@ -705,11 +714,13 @@ export default function EatSafe() {
     setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
     setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
     setProductImagePreview, setProductImageBase64,
+    vibrateOnWarning, soundOnWarning,
   }), [accessToken, activeIds, activeCustom, activeENumbers, family, activeProfiles,
        productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
        setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
        setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
-       setProductImagePreview, setProductImageBase64]);
+       setProductImagePreview, setProductImageBase64,
+       vibrateOnWarning, soundOnWarning]);
   lookupProductRef.current = lookupProduct;
 
   // ── COMPUTED (afhænger af hooks) ─────────────────────────────────────────
@@ -1208,6 +1219,11 @@ export default function EatSafe() {
           <ErrorBoundary screen="Indstillinger">
           <SettingsScreen
             setShowDeleteAccount={setShowDeleteAccount} setDeleteConfirmText={setDeleteConfirmText}
+            madpasLang={madpasLang} setMadpasLang={setMadpasLang}
+            vibrateOnWarning={vibrateOnWarning} setVibrateOnWarning={setVibrateOnWarning}
+            soundOnWarning={soundOnWarning} setSoundOnWarning={setSoundOnWarning}
+            onOpenFeedback={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
+            onOpenBetaInfo={() => { setBetaIntroStep(0); setBetaIntroSeen(false); }}
           />
           </ErrorBoundary>
           </Suspense>
