@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { ALLERGENS, SCREENS, DIETS, E_NUMBERS, E_CATEGORIES, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall, buildActiveProfileList, computeProfileResults, extractENumbers } from "./helpers.js";
-import { EatSafeLogo, Icon, ProductImage, ProfileBadges, showToast } from "./SharedComponents.jsx";
+import { EatSafeLogo, Icon, ProductImage, showToast } from "./SharedComponents.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { TextLink } from "./DesignSystem.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
@@ -15,14 +15,16 @@ import { useFamilyFormContext } from "./FamilyFormContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 import { UI } from "./styleUtils.js";
 
-// ── Historik: status-sprog, kompakt filter ──────────────────────────────────
+// ── Historik/Favoritter: status-sprog, kompakt filter ───────────────────────
 // Samme grøn/rød/orange-farvesprog og ikon+tekst+farve-mønster som
 // Indkøbslistens itemStatus (ListScreen.jsx) — én kilde til hvad "Konflikt"/
 // "Kan ikke afgøres sikkert"/"Matcher" betyder på tværs af appen, ikke en
-// selvstændig kopi af logikken. "not_found" er specifikt for Historik (et
-// scan der ikke gav noget produkt at vurdere) og findes ikke i Indkøbslisten.
-const HISTORY_STATUS_COLOR = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", not_found:"var(--muted)" };
-const HISTORY_STATUS_ICON  = { danger:"warning", warn:"warning", safe:"check", not_found:"info" };
+// selvstændig kopi af logikken. Delt mellem Historik og Favoritter (26.
+// sept. 2026, opfølgning) — samme tekst/farve/ikon uanset hvilken skærm der
+// viser statussen. "not_found" er specifikt for Historik (et scan der ikke
+// gav noget produkt at vurdere) og findes ikke i Indkøbslisten/Favoritter.
+const STATUS_COLOR = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", not_found:"var(--muted)" };
+const STATUS_ICON  = { danger:"warning", warn:"warning", safe:"check", not_found:"info" };
 const HISTORY_FILTERS = [
   { id:"all",       label:"Alle" },
   { id:"safe",      label:"Sikker" },
@@ -147,6 +149,65 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
   );
 }
 
+// ── Favoritter: kategoriser-bottom sheet ─────────────────────────────────────
+// Erstatter det tidligere inline "Flyt til kategori"-panel, der udvidede
+// selve produktkortet (26. sept. 2026, brugerfeedback: "lad ikke produkt-
+// kortet udvide sig inline"). Samme underliggende data-model som før — ÉN
+// kategori pr. favorit, ikke en liste (setFavoriteCategory(ean, category)) —
+// så "tilføj til/fjern fra en kategori" her betyder vælge/fravælge kategorien,
+// ikke et multi-select. Gemmer DIREKTE ved tryk (samme øjeblikkelige
+// gem-mønster som det tidligere inline-panel allerede brugte), lukker sig
+// selv bagefter — opfylder specifikationens "gemmes direkte" uden en
+// selvstændig, ekstra Gem-knap. Samme portal-/bottom-sheet-mønster som
+// ShareSheet (ListScreen.jsx) og ConfirmDialog (SharedComponents.jsx).
+function FavoriteCategorySheet({ favorite, existingCategories, onSetCategory, onClose }) {
+  const [newCategoryInput, setNewCategoryInput] = useState("");
+  const createCategory = () => {
+    const name = newCategoryInput.trim();
+    if (!name) return;
+    onSetCategory(name);
+  };
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.5)" }} onClick={onClose}>
+      <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 28px", position:"absolute", left:0, right:0, bottom:0, maxHeight:"75vh", overflowY:"auto" }}
+        onClick={e => e.stopPropagation()}>
+        <div style={UI.rowBetweenMb16}>
+          <div style={UI.ufs18_fw900_cink}>Kategorisér favorit</div>
+          <button onClick={onClose} aria-label="Luk"
+            style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
+        </div>
+        <div style={{ fontSize:12.5, color:"var(--muted)", marginBottom:16 }}>{favorite.name || "Ukendt produkt"}</div>
+
+        <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:16 }}>
+          {existingCategories.length === 0 && (
+            <div style={{ fontSize:12, color:"var(--muted)" }}>Ingen kategorier oprettet endnu — opret den første nedenfor.</div>
+          )}
+          {existingCategories.map(cat => {
+            const selected = favorite.category === cat;
+            return (
+              <div key={cat} onClick={() => onSetCategory(selected ? null : cat)}
+                style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", borderRadius:10, cursor:"pointer",
+                  background: selected ? "var(--green-selected-bg)" : "var(--surface)", border:`1px solid ${selected ? "var(--green)" : "var(--border)"}` }}>
+                <span style={{ display:"flex", alignItems:"center", gap:8, fontSize:13, fontWeight:700, color: selected ? "var(--green)" : "var(--ink)" }}>
+                  <Icon name="tag" size={13} color={selected ? "var(--green)" : "var(--muted)"} /> {cat}
+                </span>
+                {selected && <Icon name="check" size={14} color="var(--green)" />}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="input-row">
+          <input className="field" placeholder="Ny kategori…" value={newCategoryInput}
+            onChange={e => setNewCategoryInput(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") createCategory(); }} />
+          <button className="btn btn-primary btn-sm" style={UI.uwsnowrap} onClick={createCategory}>Opret</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProfileScreen({
   customInput, setCustomInput,
   lookupProduct,
@@ -215,11 +276,15 @@ export default function ProfileScreen({
   const [inviteLink, setInviteLink] = useState(null);
   const [inviteLoading, setInviteLoading] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
-  const [collapsedCategories, setCollapsedCategories] = useState([]);
-  const [categoryMenuFor, setCategoryMenuFor] = useState(null);
-  const [newCategoryInput, setNewCategoryInput] = useState("");
   const [inviteError, setInviteError] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
+
+  // ── Favoritter: kategori-filter + kategoriser-sheet ─────────────────────────
+  // `categorizingFavorite` holder den favorit sheeten er åben for (null =
+  // lukket) — erstatter det tidligere `categoryMenuFor` (kun et EAN, brugt af
+  // det inline-panel der nu er fjernet, se FavoriteCategorySheet ovenfor).
+  const [favoriteCategoryFilter, setFavoriteCategoryFilter] = useState("all");
+  const [categorizingFavorite, setCategorizingFavorite] = useState(null);
 
   // ── Historik: kompakt filter + status pr. post ──────────────────────────────
   const [historyFilter, setHistoryFilter] = useState("all");
@@ -282,6 +347,55 @@ export default function ProfileScreen({
     lookupProduct(h.ean_scanned || h.code);
   };
 
+  // Samler gentagne "produkt ikke fundet"-scanninger af SAMME stregkode til
+  // én række med et antal (26. sept. 2026, brugerfeedback: "historikken kan
+  // hurtigt blive fyldt med identiske mislykkede scanninger") — kun for
+  // ikke-fundne produkter, IKKE for fundne produkter (at scanne den samme
+  // yoghurt to gange med to ugers mellemrum er reel, adskilt historik, ikke
+  // støj, der skal slås sammen). `history` kommer allerede nyest-først fra
+  // API'et, så den FØRSTE forekomst af et EAN i iterationsrækkefølgen er
+  // automatisk den seneste — den bruges som rækkens tidspunkt/plads i
+  // listen, øvrige forekomster tælles ind i samme objekt og udelades selv.
+  const groupNotFoundDuplicates = (list) => {
+    const seenByEan = new Map();
+    const result = [];
+    for (const h of list) {
+      const isNF = (h.result || h.status) === "not_found";
+      const ean = h.ean_scanned || h.code;
+      if (!isNF || !ean) { result.push(h); continue; }
+      const existing = seenByEan.get(ean);
+      if (existing) { existing.__count++; continue; }
+      const group = { ...h, __count: 1 };
+      seenByEan.set(ean, group);
+      result.push(group);
+    }
+    return result;
+  };
+
+  // ── Favoritter: samme statuslogik som Indkøbslisten/Historik, ud fra de
+  // NUVÆRENDE aktive profiler (26. sept. 2026, brugerfeedback) — en favorit
+  // er et løbende gemt produkt, ikke et fastfrosset øjebliksbillede som en
+  // historik-scanning, så "relevant EatSafe-status" betyder her "er det
+  // sikkert for hvem jeg har valgt LIGE NU", ikke hvem der var valgt dengang
+  // produktet blev gemt. `product_snapshot` (gemt af toggleFavorite ud fra
+  // det fulde scanResult, se ResultScreen.jsx) indeholder allerede
+  // allergen_flags/ingredienser/E-numre — ingen ekstra opslag nødvendigt.
+  const activeProfileList = buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles });
+  const favoriteStatus = (f) => {
+    if (activeProfileList.length === 0 || !f.allergen_flags) return null;
+    const ingredientsText = f.ingredients || f.ingredients_text || "";
+    const results = computeProfileResults(activeProfileList, {
+      allergen_flags: f.allergen_flags, ingredients: ingredientsText, nutrition: f.nutrition,
+      productENumbers: f.productENumbers?.length ? f.productENumbers : extractENumbers(ingredientsText),
+    });
+    const dangerNames = results.filter(r => r.status === "danger").map(r => r.name.split(" ")[0]);
+    if (dangerNames.length > 0) {
+      return { status:"danger", text: dangerNames.length <= 2 ? `Konflikt for ${dangerNames.join(", ")}` : "Passer ikke til valgte profiler" };
+    }
+    if (results.some(r => r.status === "warn")) return { status:"warn", text:"Kan ikke afgøres sikkert" };
+    return { status:"safe", text:"Matcher valgte profiler" };
+  };
+
   const FamilyChips = () => {
     const allIds = ["me", ...family.map(m => m.id)];
     const isAll = allIds.every(id => activeProfiles.includes(id));
@@ -311,7 +425,15 @@ export default function ProfileScreen({
     <>
         {screen === SCREENS.HISTORY && (
           <div className="screen fade-in">
-            <div className="screen-title">Historik</div>
+            {/* .screen-title er centreret som standard (theme.jsx, delt af alle
+                skærme) — venstrestillet her med en lokal inline-override
+                (26. sept. 2026, brugerfeedback: "centreret titel + venstre-
+                stillet undertekst ser tilfældigt ud, venstrestil begge så
+                siden matcher en funktionel listevisning bedre", samme
+                reference som Indkøbslistens allerede venstrestillede titel).
+                Ændrer IKKE den delte klasse — resten af appens skærme, som
+                ikke blev nævnt, beholder deres centrerede titel uændret. */}
+            <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Historik</div>
             <div className="screen-sub">
               {historyScope === "family" ? "Alle scanninger i din husstand." : "Alle dine tidligere scanninger."}
             </div>
@@ -381,7 +503,8 @@ export default function ProfileScreen({
               if (filtered.length === 0) {
                 return <div style={{ textAlign:"center", padding:"32px 0", fontSize:12.5, color:"var(--muted)" }}>Ingen scanninger matcher dette filter</div>;
               }
-              return filtered.map((h,i) => {
+              const grouped = groupNotFoundDuplicates(filtered);
+              return grouped.map((h,i) => {
                 const d = historyDetails(h);
                 const isNotFound = d.status === "not_found";
                 const name = isNotFound ? "Produkt ikke fundet" : (h.products?.name || h.name || "Ukendt produkt");
@@ -408,7 +531,7 @@ export default function ProfileScreen({
                       <div className="hist-name">{name}</div>
                       <div className="hist-time">
                         {isNotFound
-                          ? `Stregkode ${h.ean_scanned || h.code || "?"} · ${timeAgo(h.scanned_at||h.timestamp)}`
+                          ? `Stregkode ${h.ean_scanned || h.code || "?"} · ${h.__count > 1 ? `Scannet ${h.__count} gange, senest ${timeAgo(h.scanned_at||h.timestamp)}` : `${timeAgo(h.scanned_at||h.timestamp)}`}`
                           : `${timeAgo(h.scanned_at||h.timestamp)}${d.checkedFor ? ` · Tjekket for: ${d.checkedFor}` : ""}`}
                         {scannedBySuffix}
                       </div>
@@ -420,8 +543,8 @@ export default function ProfileScreen({
                           en gentagelse nedenunder var det brugeren bad om at
                           fjerne. */}
                       {d.status && d.text && (
-                        <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:3, fontSize:11, fontWeight:700, color: HISTORY_STATUS_COLOR[d.status] }}>
-                          <Icon name={HISTORY_STATUS_ICON[d.status]} size={11} color="currentColor" />
+                        <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:3, fontSize:11, fontWeight:700, color: STATUS_COLOR[d.status] }}>
+                          <Icon name={STATUS_ICON[d.status]} size={11} color="currentColor" />
                           {d.text}
                         </div>
                       )}
@@ -574,7 +697,12 @@ export default function ProfileScreen({
 
         {screen === SCREENS.FAVORITES && (
           <div className="screen fade-in">
-            <div className="screen-title"> Favoritter</div>
+            {/* Venstrestillet som Historik/Indkøbslisten (26. sept. 2026,
+                opfølgning) — samme scopede inline-override af den delte,
+                ellers centrerede .screen-title-klasse, ikke en ændring af
+                selve klassen. Fjernet et lille, ægte tastefejl (et
+                foranstillet mellemrum før "Favoritter"). */}
+            <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Favoritter</div>
 
             {household.length > 0 && (
               <div style={{ display:"flex", gap:8, marginBottom:14 }}>
@@ -594,127 +722,90 @@ export default function ProfileScreen({
               </div>
             )}
 
-            {/* Seneste scanninger */}
-            {history.filter(h => h.result !== "not_found" && (h.products?.name || h.name)).length > 0 && (
-              <div className="card" style={UI.mb10}>
-                <div className="card-lbl" style={{ display:"flex", justifyContent:"space-between" }}>
-                  <span>Senest scannet</span>
-                  <span style={{ cursor:"pointer", color:"var(--green)", fontWeight:700, fontSize:11 }} onClick={() => { loadHistory(); setScreen(SCREENS.HISTORY); }}>Se alle</span>
-                </div>
-                {history.filter(h => h.result !== "not_found").slice(0,3).map((h,i) => {
-                  const s = h.result || h.status;
-                  const name = h.products?.name || h.name || h.ean_scanned || "Ukendt";
-                  const prod = { name, brand: h.products?.brand||h.brand||"", image_url: h.products?.image_url||null };
-                  const color = s==="safe" ? "var(--green)" : s==="danger" ? "var(--red)" : "var(--amber)";
-                  const bg = s==="safe" ? "var(--green-lt)" : s==="danger" ? "var(--red-lt)" : "var(--amber-lt)";
-                  return (
-                    <div key={i} className="hist-row" style={UI.ucurpointer}
-                      onClick={() => lookupProduct(h.ean_scanned || h.code)}>
-                      <ProductImage product={prod} size={36} />
-                      <div className="hist-info" style={{ marginLeft:8 }}>
-                        <div className="hist-name">{name}</div>
-                        <div className="hist-time">{timeAgo(h.scanned_at||h.timestamp)}</div>
-                      </div>
-                      <div style={{ fontSize:11, fontWeight:700, color, background:bg, border:`1px solid ${color}`, borderRadius:20, padding:"3px 10px", flexShrink:0 }}>
-                        {s==="safe"?"Sikker":s==="danger"?"Farlig":"Advarsel"}
-                      </div>
-                    </div>
-                  );
-                })}
+            {/* "Senest scannet" er FJERNET (26. sept. 2026, brugerfeedback:
+                "seneste scanninger hører kun hjemme under Historik") —
+                Favoritter viser nu udelukkende gemte favoritter. */}
+
+            {favorites.length === 0 && (
+              <div className="empty-state">
+                <span className="empty-icon"><Icon name="heart" size={26} color="var(--muted)" /></span>
+                <div className="empty-txt">Ingen favoritter endnu</div>
+                <div className="empty-sub">Tryk på hjertet ved et produkt for at gemme det her.</div>
               </div>
             )}
 
-            {/* Gemte favoritter — grupperet i kategorier */}
-            {favorites.length === 0 && (
-              <div className="empty-state"><span className="empty-icon"><Icon name="heart" size={26} color="var(--muted)" /></span><div className="empty-txt">Ingen favoritter endnu</div><div className="empty-sub">Tryk hjertet på et produkt under scanning for at gemme det her</div>
-              </div>
-            )}
             {favorites.length > 0 && (() => {
               const existingCategories = [...new Set(favorites.map(f => f.category).filter(Boolean))].sort();
-              const groups = {};
-              favorites.forEach(f => {
-                const key = f.category || "Ukategoriseret";
-                (groups[key] = groups[key] || []).push(f);
-              });
-              const orderedKeys = [...existingCategories, ...(groups["Ukategoriseret"] ? ["Ukategoriseret"] : [])];
-              return orderedKeys.map(cat => {
-                const isCollapsed = collapsedCategories.includes(cat);
-                return (
-                  <div key={cat} style={UI.mb10}>
-                    <div onClick={() => setCollapsedCategories(c => isCollapsed ? c.filter(x=>x!==cat) : [...c, cat])}
-                      style={{ display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", padding:"4px 2px", marginBottom:6 }}>
-                      <div className="card-lbl" style={{ display:"flex", alignItems:"center", gap:6, marginBottom:0 }}>
-                        <Icon name={cat === "Ukategoriseret" ? "package" : "tag"} size={11} color="var(--neutral)" />
-                        {cat === "Ukategoriseret" ? "Ukategoriseret" : cat} ({groups[cat].length})
-                      </div>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"
-                        style={{ transform: isCollapsed ? "none" : "rotate(180deg)", transition:"transform .2s" }}>
-                        <path strokeLinecap="round" d="M6 9l6 6 6-6"/>
-                      </svg>
+              // Flad liste + filterchips i stedet for grupperede, kollapsbare
+              // sektioner (26. sept. 2026, brugerfeedback: "lad ikke produkt-
+              // kortet udvide sig inline" + "eksisterende kategorier som
+              // filterchips øverst") — kun vist hvis brugeren faktisk har
+              // oprettet mindst én kategori.
+              const visibleFavorites = favoriteCategoryFilter === "all"
+                ? favorites
+                : favorites.filter(f => f.category === favoriteCategoryFilter);
+              return (
+                <>
+                  {existingCategories.length > 0 && (
+                    <div style={{ ...UI.wrapGap7, marginBottom:12 }}>
+                      <div className={`filter-chip${favoriteCategoryFilter==="all"?" active":""}`} onClick={() => setFavoriteCategoryFilter("all")}>Alle</div>
+                      {existingCategories.map(cat => (
+                        <div key={cat} className={`filter-chip${favoriteCategoryFilter===cat?" active":""}`} onClick={() => setFavoriteCategoryFilter(cat)}>{cat}</div>
+                      ))}
                     </div>
-                    {!isCollapsed && groups[cat].map((f,i) => (
-                      <div key={i} className="card" style={{ padding:"12px 14px", cursor:"pointer", marginBottom:8, position:"relative" }}
+                  )}
+                  {visibleFavorites.map((f,i) => {
+                    const st = favoriteStatus(f);
+                    const metaLine = [f.brand, favoritesScope==="family" && !f.savedByMe && f.savedBy ? `Gemt af ${f.savedBy.split(" ")[0]}` : null].filter(Boolean).join(" · ");
+                    return (
+                      <div key={f.ean || f.id || i} className="hist-row" style={{ padding:"12px 0", cursor:"pointer" }}
                         onClick={() => lookupProduct(f.ean || f.code || f.id)}>
-                        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-                          <ProductImage product={f} size={48} />
-                          <div style={UI.flexMin}>
-                            <div style={{ fontWeight:700, fontSize:14 }}>{f.name || "Ukendt"}</div>
-                            {f.brand && <div style={UI.ufs12_cmuted_mt1}>{f.brand}</div>}
-                            {favoritesScope==="family" && !f.savedByMe && f.savedBy && (
-                              <div style={{ fontSize:11, color:"var(--green)", fontWeight:700, marginTop:2 }}>Gemt af {f.savedBy.split(" ")[0]}</div>
-                            )}
-                            <div style={{ marginTop:6 }}>
-                              <ProfileBadges allergenFlags={f.allergen_flags||{}} allergens={allergens} customAllerg={customAllerg} family={family} activeProfiles={activeProfiles} size={22} />
-                            </div>
-                          </div>
-                          {f.savedByMe !== false && (
-                            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, flexShrink:0 }}>
-                              <button className="btn btn-ghost btn-sm" style={{ fontSize:12, padding:"2px 6px" }} aria-label={`Flyt "${f.name || "produkt"}" til en kategori`}
-                                onClick={e => { e.stopPropagation(); setCategoryMenuFor(categoryMenuFor === f.ean ? null : f.ean); setNewCategoryInput(""); }}>
-                                <Icon name="tag" size={12} color="var(--ink2)" />
-                              </button>
-                              <button className="btn btn-ghost btn-sm" style={{ fontSize:12 }} aria-label={`Fjern "${f.name || "produkt"}" fra favoritter`}
-                                onClick={e => { e.stopPropagation(); toggleFavorite(f); }}>
-                                ×
-                              </button>
+                        <ProductImage product={f} size={44} />
+                        <div className="hist-info" style={{ marginLeft:8 }}>
+                          <div className="hist-name">{f.name || "Ukendt produkt"}</div>
+                          {metaLine && <div className="hist-time">{metaLine}</div>}
+                          {/* Altid ikon + tekst + farve, aldrig farve alene — samme
+                              statussprog som Indkøbslisten/Historik, ALDRIG
+                              "Farlig" (26. sept. 2026, brugerfeedback). */}
+                          {st && (
+                            <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:3, fontSize:11, fontWeight:700, color: STATUS_COLOR[st.status] }}>
+                              <Icon name={STATUS_ICON[st.status]} size={11} color="currentColor" />
+                              {st.text}
                             </div>
                           )}
                         </div>
-                        {categoryMenuFor === f.ean && (
-                          <div onClick={e => e.stopPropagation()}
-                            style={{ marginTop:10, paddingTop:10, borderTop:"1px solid var(--border)" }}>
-                            <div style={UI.ufs11_cmuted_mb8}>Flyt til kategori</div>
-                            <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:8 }}>
-                              {f.category && (
-                                <div onClick={() => { setFavoriteCategory(f.ean, null); setCategoryMenuFor(null); }}
-                                  style={{ display:"flex", alignItems:"center", gap:4, padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:700, cursor:"pointer", background:"var(--surface2)", border:"1px solid var(--border2)", color:"var(--muted)" }}>
-                                  <Icon name="package" size={10} color="var(--muted)" /> Fjern kategori
-                                </div>
-                              )}
-                              {existingCategories.filter(c => c !== f.category).map(c => (
-                                <div key={c} onClick={() => { setFavoriteCategory(f.ean, c); setCategoryMenuFor(null); }}
-                                  style={{ display:"flex", alignItems:"center", gap:4, padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:700, cursor:"pointer", background:"var(--green-lt)", border:"1px solid var(--green-mid)", color:"var(--green)" }}>
-                                  <Icon name="tag" size={10} color="var(--green)" /> {c}
-                                </div>
-                              ))}
-                            </div>
-                            <div className="input-row">
-                              <input className="field" placeholder="Ny kategori…" value={newCategoryInput}
-                                onChange={e => setNewCategoryInput(e.target.value)}
-                                onKeyDown={e => { if (e.key === "Enter" && newCategoryInput.trim()) { setFavoriteCategory(f.ean, newCategoryInput.trim()); setCategoryMenuFor(null); } }} />
-                              <button className="btn btn-primary btn-sm" style={UI.uwsnowrap}
-                                onClick={() => { if (newCategoryInput.trim()) { setFavoriteCategory(f.ean, newCategoryInput.trim()); setCategoryMenuFor(null); } }}>
-                                Opret
-                              </button>
-                            </div>
+                        {f.savedByMe !== false && (
+                          <div style={{ display:"flex", gap:2, flexShrink:0 }} onClick={e => e.stopPropagation()}>
+                            <button className="btn btn-ghost btn-sm" style={{ padding:"6px" }} aria-label={`Kategorisér "${f.name || "produkt"}"`}
+                              onClick={() => setCategorizingFavorite(f)}>
+                              <Icon name="tag" size={14} color="var(--ink2)" />
+                            </button>
+                            {/* Samme skraldespand-ikon som resten af EatSafe bruger
+                                til at fjerne noget (fx Familie/Indkøbsliste) — det
+                                tidligere × var en selvstændig, anden ikonografi for
+                                samme handling (26. sept. 2026, brugerfeedback:
+                                "samme handling skal altid have samme ikonografi"). */}
+                            <button className="btn btn-ghost btn-sm" style={{ padding:"6px" }} aria-label={`Fjern "${f.name || "produkt"}" fra favoritter`}
+                              onClick={() => toggleFavorite(f)}>
+                              <Icon name="trash" size={14} color="var(--muted)" />
+                            </button>
                           </div>
                         )}
                       </div>
-                    ))}
-                  </div>
-                );
-              });
+                    );
+                  })}
+                </>
+              );
             })()}
+
+            {categorizingFavorite && (
+              <FavoriteCategorySheet
+                favorite={categorizingFavorite}
+                existingCategories={[...new Set(favorites.map(f => f.category).filter(Boolean))].sort()}
+                onSetCategory={(cat) => { setFavoriteCategory(categorizingFavorite.ean, cat); setCategorizingFavorite(null); }}
+                onClose={() => setCategorizingFavorite(null)}
+              />
+            )}
           </div>
         )}
 
