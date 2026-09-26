@@ -931,8 +931,10 @@ export default function EatSafe() {
             Favoritter og Allergileksikon fik samme behandling (26. sept.
             2026, brugerfeedback: "match den rene, funktionelle stil fra
             Indkøbslisten") — genbruger samme .app-bg-hide-lag i stedet for
-            en ny klasse. */}
-        {(screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE) && <div className="app-bg-hide" aria-hidden="true" />}
+            en ny klasse. Familie-siden fik samme behandling (26. sept.
+            2026, Familie-redesign: siden skal føles som en enkel
+            husstands-oversigt, ikke en fødevarebaggrund-tung skærm). */}
+        {(screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE || screen === SCREENS.FAMILY) && <div className="app-bg-hide" aria-hidden="true" />}
 
         {/* Skip-link for tastatur/screen reader brugere */}
         <a href="#main-content" className="skip-link">Spring til indhold</a>

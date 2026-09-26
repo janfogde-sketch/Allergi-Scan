@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS, E_NUMBERS, E_CATEGORIES, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall, buildActiveProfileList, computeProfileResults, extractENumbers } from "./helpers.js";
-import { EatSafeLogo, Icon, ProductImage, showToast } from "./SharedComponents.jsx";
+import { EatSafeLogo, Icon, ProductImage, showToast, ConfirmDialog } from "./SharedComponents.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { TextLink } from "./DesignSystem.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
@@ -305,10 +305,21 @@ export default function ProfileScreen({
 
   // ── Invite state ────────────────────────────────────────────────────────────
   const [inviteLink, setInviteLink] = useState(null);
+  const [inviteId, setInviteId] = useState(null); // gemmes fra oprettelsen, så "Annullér link" kan slette den rigtige række
   const [inviteLoading, setInviteLoading] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [inviteError, setInviteError] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
+
+  // ── Familie-redesign (26. sept. 2026): "+ Tilføj familiemedlem" viser først
+  // et valg mellem de to tilføjelses-måder, i stedet for at have et stort
+  // formular-kort (eller invitationskortet) permanent udfoldet — se
+  // CLAUDE.md's Familie-redesign-note. null = kun "+"-knappen synlig,
+  // "choose" = de to valg, "form" = MemberForm (genbruges uændret),
+  // "invite" = invitations-panelet.
+  const [familyAddMode, setFamilyAddMode] = useState(null);
+  const [confirmDeleteProfile, setConfirmDeleteProfile] = useState(null); // administreret profil, der afventer "Slet profil"-bekræftelse
+  const [confirmRemoveHousehold, setConfirmRemoveHousehold] = useState(null); // rigtig konto, der afventer "Fjern fra familien"-bekræftelse
 
   // ── Favoritter: kategori-filter + kategoriser-sheet ─────────────────────────
   // `categorizingEan` holder EAN'et for favoritten sheeten er åben for (null
@@ -432,31 +443,6 @@ export default function ProfileScreen({
     return { status:"safe", text:"Matcher valgte profiler" };
   };
 
-  const FamilyChips = () => {
-    const allIds = ["me", ...family.map(m => m.id)];
-    const isAll = allIds.every(id => activeProfiles.includes(id));
-    const toggleAll = () => setActiveProfiles(isAll ? ["me"] : allIds);
-    const toggleOne = (id) => {
-      if (isAll) { setActiveProfiles([id]); return; }
-      const next = activeProfiles.includes(id) ? activeProfiles.filter(x => x !== id) : [...activeProfiles, id];
-      setActiveProfiles(next.length === 0 ? [id] : next);
-    };
-    return (
-      <div style={UI.wrapGap7}>
-        <div className={`ap-chip${isAll?" on":""}`} onClick={toggleAll}>Hele familien</div>
-        <div className={`ap-chip${!isAll&&activeProfiles.includes("me")?" on":""}`} onClick={() => toggleOne("me")}>
-          <div style={UI.uw20_h20_br50_bggreen_dflex_aicenter_jccenter_fs10_fw800_cin}>{initials(user.name||"Mig")}</div>
-          {(user.name||"Mig").split(" ")[0]}
-        </div>
-        {family.map(m => (
-          <div key={m.id} className={`ap-chip${!isAll&&activeProfiles.includes(m.id)?" on":""}`} onClick={() => toggleOne(m.id)}>
-            <div style={{width:20,height:20,borderRadius:"50%",background:m.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(m.name)}</div>
-            {m.name.split(" ")[0]}
-          </div>
-        ))}
-      </div>
-    );
-  };
   return (
     <>
         {screen === SCREENS.HISTORY && (
@@ -1034,33 +1020,47 @@ export default function ProfileScreen({
           <div className="screen fade-in">
             <div className="screen-title">Familie</div>
             <div className="screen-sub">Alle i din familie — dem du har oprettet en allergiprofil for, og dem med egen EatSafe-konto.</div>
-            <div className="card" style={UI.up12px14px}>
-              <div className="card-lbl">Aktive profiler ved scanning</div>
-              <FamilyChips />
-            </div>
+            {/* "Aktive profiler ved scanning" er fjernet herfra (26. sept.
+                2026, Familie-redesign) — hvem der scannes for styres
+                allerede af "Scanner for"-vælgeren på Scan-forsiden (samme
+                FamilyChips-mønster, se ScannerScreen.jsx/App.jsx). Familie-
+                siden skal være en ren husstands-oversigt, ikke endnu et
+                sted at vælge scanner-profil. En evt. "Standardprofiler ved
+                scanning"-indstilling hører til under Indstillinger, ikke
+                her — ikke bygget i denne omgang. */}
             {family.length===0 && household.length===0 && <div className="empty-state"><span className="empty-icon"><Icon name="family" size={28} color="var(--muted)" /></span><div className="empty-txt">Ingen i familien endnu</div><div className="empty-sub">Tilføj fx et barn eller en partner for at scanne for dem, eller invitér en med egen konto</div></div>}
-            {family.map(m => (
-              <div key={`p-${m.id}`} className="family-member" style={editingMemberId === m.id ? { border:"1.5px solid var(--green)", background:"var(--green-selected-bg)" } : undefined}>
-                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:m.allergens.length?10:0 }}>
-                  <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)" }}>{initials(m.name)}</div>
-                  <div style={UI.flex1}>
-                    <div style={{ fontWeight:800, fontSize:15 }}>{m.name}</div>
-                    <div style={UI.muted11mt2}>
-                      {[m.birth_year && `${new Date().getFullYear() - m.birth_year} år`, m.gender, m.allergens.length && `${m.allergens.length} allergi${m.allergens.length!==1?"er":""}`, "Ingen egen konto"].filter(Boolean).join(" · ")}
+            {family.map(m => {
+              const allergenLabels = getAllergenLabels(m.allergens, m.custom || []);
+              const visibleLabels = allergenLabels.slice(0, 3);
+              const overflowCount = allergenLabels.length - visibleLabels.length;
+              return (
+                <div key={`p-${m.id}`} className="family-member" style={editingMemberId === m.id ? { border:"1.5px solid var(--green)", background:"var(--green-selected-bg)" } : undefined}>
+                  <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:allergenLabels.length?10:0 }}>
+                    <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)" }}>{initials(m.name)}</div>
+                    <div style={UI.flex1}>
+                      <div style={{ fontWeight:800, fontSize:15 }}>{m.name}</div>
+                      <div style={UI.muted11mt2}>
+                        {[m.birth_year && `${new Date().getFullYear() - m.birth_year} år`, m.gender, "Administreret profil"].filter(Boolean).join(" · ")}
+                      </div>
                     </div>
+                    <button type="button" onClick={() => { setFamilyAddMode(null); startEditMember(m); }} aria-label={`Rediger ${m.name}`}
+                      style={{ background:"none", border:"none", cursor:"pointer", padding:"10px 6px", minHeight:44, fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color: editingMemberId === m.id ? "var(--green)" : "var(--muted2)" }}>
+                      Rediger
+                    </button>
+                    <button type="button" onClick={() => setConfirmDeleteProfile(m)} aria-label={`Slet profilen for ${m.name}`}
+                      style={{ background:"none", border:"none", cursor:"pointer", width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center", opacity:.5, flexShrink:0 }}>
+                      <Icon name="trash" size={18} color="var(--muted)" />
+                    </button>
                   </div>
-                  <button type="button" onClick={() => startEditMember(m)} aria-label={`Rediger ${m.name}`}
-                    style={{ background:"none", border:"none", cursor:"pointer", padding:"10px 6px", minHeight:44, fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color: editingMemberId === m.id ? "var(--green)" : "var(--muted2)" }}>
-                    Rediger
-                  </button>
-                  <button type="button" onClick={() => removeMember(m.id)} aria-label={`Fjern ${m.name}`}
-                    style={{ background:"none", border:"none", cursor:"pointer", width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center", opacity:.5, flexShrink:0 }}>
-                    <Icon name="trash" size={18} color="var(--muted)" />
-                  </button>
+                  {allergenLabels.length>0 && (
+                    <div className="tags">
+                      {visibleLabels.map((a,j) => <div key={j} className="tag" style={{ fontSize:11 }}>{a}</div>)}
+                      {overflowCount>0 && <div className="tag" style={{ fontSize:11, color:"var(--muted)" }}>+{overflowCount}</div>}
+                    </div>
+                  )}
                 </div>
-                {m.allergens.length>0 && <div className="tags">{getAllergenLabels(m.allergens,m.custom||[]).map((a,j) => <div key={j} className="tag" style={{ fontSize:11 }}>{a}</div>)}</div>}
-              </div>
-            ))}
+              );
+            })}
             {household.map(m => (
               <div key={`h-${m.id}`} className="family-member">
                 <div style={{ display:"flex", alignItems:"center", gap:10 }}>
@@ -1072,119 +1072,203 @@ export default function ProfileScreen({
                     </div>
                   </div>
                   {m.canRemove && (
-                    <span style={{ cursor:"pointer", opacity:.35, fontSize:18, padding:4 }} aria-label={`Fjern ${m.name || m.email} fra familien`} role="button" tabIndex={0}
-                      onClick={async () => {
-                        if (!confirm(`Fjern ${m.name || m.email} fra din familie? I mister adgang til hinandens delte data.`)) return;
-                        await apiCall(`${SUPABASE_URL}/functions/v1/family/group/${m.id}`, { method: "DELETE", headers: makeHeaders(accessToken) });
-                        setHousehold(h => h.filter(x => x.id !== m.id));
-                      }}
-                      onKeyDown={async e => { if (e.key !== "Enter") return;
-                        if (!confirm(`Fjern ${m.name || m.email} fra din familie? I mister adgang til hinandens delte data.`)) return;
-                        await apiCall(`${SUPABASE_URL}/functions/v1/family/group/${m.id}`, { method: "DELETE", headers: makeHeaders(accessToken) });
-                        setHousehold(h => h.filter(x => x.id !== m.id));
-                      }}>
+                    <button type="button" onClick={() => setConfirmRemoveHousehold(m)} aria-label={`Fjern ${m.name || m.email} fra familien`}
+                      style={{ background:"none", border:"none", cursor:"pointer", width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center", opacity:.5, flexShrink:0 }}>
                       <Icon name="trash" size={18} color="var(--muted)" />
-                    </span>
+                    </button>
                   )}
                 </div>
               </div>
             ))}
 
-            {/* ── Invitér familiemedlem via link ── */}
-            <div className="card" style={UI.mb12}>
-              <div style={{ ...UI.ufs13_fw800_cink_mb4, display:"flex", alignItems:"center", gap:6 }}>
-                <Icon name="link" size={13} color="var(--ink)" /> Invitér med egen konto
-              </div>
-              <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12, lineHeight:1.5 }}>
-                Send et link til et familiemedlem, der skal have sin egen EatSafe-konto. Når de opretter sig via linket, deles I automatisk scanninger, favoritter og indkøbslister.
-              </div>
+            {/* ── Tilføj familiemedlem — enkelt "+"-handling, der først viser
+                et valg mellem de to måder, i stedet for at have et stort
+                formular- eller invitationskort permanent udfoldet (26. sept.
+                2026, Familie-redesign: "målet er, at Familie-siden først og
+                fremmest føles som en enkel oversigt over husstanden — ikke
+                som én lang onboarding-formular"). "Rediger" på et
+                eksisterende medlem springer valget over og åbner MemberForm
+                direkte, se knappen ovenfor. ── */}
+            {!editingMemberId && familyAddMode === null && (
+              <button type="button" onClick={() => setFamilyAddMode("choose")}
+                style={{ width:"100%", padding:"14px", background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:"var(--r)", fontFamily:"var(--f)", fontSize:14, fontWeight:800, cursor:"pointer", marginBottom:10 }}>
+                + Tilføj familiemedlem
+              </button>
+            )}
 
-              {!inviteLink && (
-                <button
-                  onClick={async () => {
-                    setInviteLoading(true);
-                    setInviteError("");
-                    try {
-                      const data = await apiCall(
-                        `${SUPABASE_URL}/rest/v1/family_invites`,
-                        {
-                          method: "POST",
-                          headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
-                          body: JSON.stringify({ invited_by: userId }),
-                        }
-                      );
-                      if (Array.isArray(data) && data[0]?.token) {
-                        setInviteLink(`https://eatsafe.dk/invite/${data[0].token}`);
-                      } else {
-                        setInviteError("Kunne ikke oprette invitation. Prøv igen.");
-                      }
-                    } catch {
-                      setInviteError("Noget gik galt. Tjek din forbindelse.");
-                    }
-                    setInviteLoading(false);
-                  }}
-                  disabled={inviteLoading}
-                  style={{ width:"100%", padding:"12px", background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:800, cursor:"pointer", opacity: inviteLoading ? .6 : 1 }}>
-                  {inviteLoading ? "Opretter link…" : "Opret invitationslink"}
-                </button>
-              )}
-
-              {inviteError && (
-                <div style={{ fontSize:12, color:"var(--red)", marginTop:8 }}>{inviteError}</div>
-              )}
-
-              {inviteLink && (
-                <div>
-                  <div style={{ padding:"10px 12px", background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:8, fontFamily:"monospace", fontSize:11, color:"var(--ink)", wordBreak:"break-all", marginBottom:8 }}>
-                    {inviteLink}
-                  </div>
-                  <div style={UI.rowGap8}>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard?.writeText(inviteLink);
-                        setInviteCopied(true);
-                        setTimeout(() => setInviteCopied(false), 2000);
-                      }}
-                      style={{ flex:1, padding:"10px", background: inviteCopied ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${inviteCopied ? "var(--green)" : "var(--border2)"}`, borderRadius:8, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color: inviteCopied ? "var(--green)" : "var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                      <Icon name={inviteCopied ? "check" : "link"} size={12} color={inviteCopied ? "var(--green)" : "var(--ink)"} /> {inviteCopied ? "Kopieret!" : "Kopiér link"}
-                    </button>
-                    <button
-                      onClick={() => navigator.share?.({ title:"EatSafe invitation", url: inviteLink })}
-                      style={{ flex:1, padding:"10px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:8, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                      <Icon name="share" size={12} color="var(--ink)" /> Del
-                    </button>
-                    <button
-                      onClick={() => { setInviteLink(null); setInviteCopied(false); }}
-                      style={{ padding:"10px 12px", background:"none", border:"1px solid var(--border)", borderRadius:8, fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", cursor:"pointer" }}>
-                      ×
-                    </button>
-                  </div>
-                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:8 }}>
-                    ⏱ Linket udløber om 24 timer
-                  </div>
+            {!editingMemberId && familyAddMode === "choose" && (
+              <div className="card">
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+                  <div className="card-title" style={{ marginBottom:0 }}>Tilføj familiemedlem</div>
+                  <TextLink onClick={() => setFamilyAddMode(null)}>Annuller</TextLink>
                 </div>
-              )}
-            </div>
-
-            <div className="card">
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                <div className="card-title">{editingMemberId ? "Rediger familiemedlem" : "+ Tilføj uden egen konto"}</div>
-                {editingMemberId && <TextLink onClick={cancelEditMember}>Annuller</TextLink>}
+                <button type="button" onClick={() => setFamilyAddMode("form")}
+                  style={{ display:"flex", alignItems:"center", gap:12, width:"100%", textAlign:"left", cursor:"pointer", fontFamily:"var(--f)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px 16px", marginBottom:10 }}>
+                  <span style={{ width:38, height:38, borderRadius:"50%", background:"var(--green-selected-bg)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                    <Icon name="family" size={18} color="var(--green)" />
+                  </span>
+                  <span>
+                    <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>Opret profil uden egen konto</div>
+                    <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Til fx børn eller andre, hvis profil du administrerer.</div>
+                  </span>
+                </button>
+                <button type="button" onClick={() => setFamilyAddMode("invite")}
+                  style={{ display:"flex", alignItems:"center", gap:12, width:"100%", textAlign:"left", cursor:"pointer", fontFamily:"var(--f)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px 16px", marginBottom:0 }}>
+                  <span style={{ width:38, height:38, borderRadius:"50%", background:"var(--green-selected-bg)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                    <Icon name="link" size={18} color="var(--green)" />
+                  </span>
+                  <span>
+                    <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>Invitér med egen konto</div>
+                    <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Personen opretter sit eget login og bliver en del af familien.</div>
+                  </span>
+                </button>
               </div>
-              <MemberForm
-                name={newMemberName} setName={setNewMemberName}
-                birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
-                gender={newMemberGender} setGender={setNewMemberGender}
-                allergens={newMemberAllerg} setAllergens={setNewMemberAllerg}
-                customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
-                subtypes={newMemberSubtypes} setSubtypes={setNewMemberSubtypes}
-                diets={newMemberDiets} setDiets={setNewMemberDiets}
-                eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
-                customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}
-                onAdd={editingMemberId ? updateMember : addMember}
-                addLabel={editingMemberId ? "Gem ændringer" : "+ Tilføj familiemedlem"}
+            )}
+
+            {!editingMemberId && familyAddMode === "invite" && (
+              <div className="card" style={UI.mb12}>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
+                  <div style={{ ...UI.ufs13_fw800_cink_mb4, display:"flex", alignItems:"center", gap:6, marginBottom:0 }}>
+                    <Icon name="link" size={13} color="var(--ink)" /> Invitér til familien
+                  </div>
+                  <TextLink onClick={() => setFamilyAddMode(null)}>Annuller</TextLink>
+                </div>
+                <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12, lineHeight:1.5 }}>
+                  Personen får sin egen EatSafe-konto og bliver en del af din familie.
+                </div>
+
+                {!inviteLink && (
+                  <button
+                    onClick={async () => {
+                      setInviteLoading(true);
+                      setInviteError("");
+                      try {
+                        const data = await apiCall(
+                          `${SUPABASE_URL}/rest/v1/family_invites`,
+                          {
+                            method: "POST",
+                            headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+                            body: JSON.stringify({ invited_by: userId }),
+                          }
+                        );
+                        if (Array.isArray(data) && data[0]?.token) {
+                          setInviteLink(`https://eatsafe.dk/invite/${data[0].token}`);
+                          setInviteId(data[0].id ?? null);
+                        } else {
+                          setInviteError("Kunne ikke oprette invitation. Prøv igen.");
+                        }
+                      } catch {
+                        setInviteError("Noget gik galt. Tjek din forbindelse.");
+                      }
+                      setInviteLoading(false);
+                    }}
+                    disabled={inviteLoading}
+                    style={{ width:"100%", padding:"12px", background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:800, cursor:"pointer", opacity: inviteLoading ? .6 : 1 }}>
+                    {inviteLoading ? "Opretter link…" : "Opret invitationslink"}
+                  </button>
+                )}
+
+                {inviteError && (
+                  <div style={{ fontSize:12, color:"var(--red)", marginTop:8 }}>{inviteError}</div>
+                )}
+
+                {inviteLink && (
+                  <div>
+                    <div style={UI.rowGap8}>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard?.writeText(inviteLink);
+                          setInviteCopied(true);
+                          setTimeout(() => setInviteCopied(false), 2000);
+                        }}
+                        style={{ flex:1, padding:"10px", background: inviteCopied ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${inviteCopied ? "var(--green)" : "var(--border2)"}`, borderRadius:8, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color: inviteCopied ? "var(--green)" : "var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                        <Icon name={inviteCopied ? "check" : "link"} size={12} color={inviteCopied ? "var(--green)" : "var(--ink)"} /> {inviteCopied ? "Kopieret!" : "Kopiér invitationslink"}
+                      </button>
+                      <button
+                        onClick={() => navigator.share?.({ title:"EatSafe invitation", url: inviteLink })}
+                        style={{ flex:1, padding:"10px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:8, fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                        <Icon name="share" size={12} color="var(--ink)" /> Del
+                      </button>
+                    </div>
+                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:8 }}>
+                      <div style={{ fontSize:11, color:"var(--muted)" }}>Linket udløber om 24 timer</div>
+                      <TextLink onClick={async () => {
+                        if (inviteId) {
+                          try {
+                            await apiCall(`${SUPABASE_URL}/rest/v1/family_invites?id=eq.${inviteId}`, { method:"DELETE", headers: makeHeaders(accessToken) });
+                          } catch {
+                            showToast("Kunne ikke annullere linket. Prøv igen.", "error");
+                            return;
+                          }
+                        }
+                        setInviteLink(null);
+                        setInviteId(null);
+                        setInviteCopied(false);
+                      }}>Annullér link</TextLink>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {(familyAddMode === "form" || editingMemberId) && (
+              <div className="card">
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                  <div className="card-title">{editingMemberId ? "Rediger familiemedlem" : "Opret profil uden egen konto"}</div>
+                  <TextLink onClick={() => { cancelEditMember(); setFamilyAddMode(null); }}>Annuller</TextLink>
+                </div>
+                <MemberForm
+                  name={newMemberName} setName={setNewMemberName}
+                  birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
+                  gender={newMemberGender} setGender={setNewMemberGender}
+                  allergens={newMemberAllerg} setAllergens={setNewMemberAllerg}
+                  customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
+                  subtypes={newMemberSubtypes} setSubtypes={setNewMemberSubtypes}
+                  diets={newMemberDiets} setDiets={setNewMemberDiets}
+                  eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
+                  customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}
+                  onAdd={editingMemberId ? updateMember : () => {
+                    const valid = newMemberName.trim() && newMemberBirthYear && newMemberGender;
+                    addMember();
+                    if (valid) setFamilyAddMode(null);
+                  }}
+                  addLabel={editingMemberId ? "Gem ændringer" : "+ Tilføj familiemedlem"}
+                />
+              </div>
+            )}
+
+            {/* Bekræft-dialoger for de to sletnings-/fjernelses-handlinger
+                (26. sept. 2026, Familie-redesign — administreret profil
+                krævede tidligere INGEN bekræftelse overhovedet, se
+                CLAUDE.md). Administreret profil = reel data-sletning
+                (danger=true, rød "Slet profil"), husstands-fjernelse er en
+                reversibel afkobling af to konti — ingen data slettes, kun
+                den delte adgang (danger=false, grøn "Fjern fra familien"),
+                erstatter den tidligere native window.confirm(). */}
+            {confirmDeleteProfile && (
+              <ConfirmDialog
+                title={`Slet profilen for ${confirmDeleteProfile.name}?`}
+                message="Profilen og alle tilknyttede allergivalg fjernes permanent."
+                confirmLabel="Slet profil"
+                onConfirm={() => { removeMember(confirmDeleteProfile.id); setConfirmDeleteProfile(null); }}
+                onCancel={() => setConfirmDeleteProfile(null)}
               />
-            </div>
+            )}
+            {confirmRemoveHousehold && (
+              <ConfirmDialog
+                title={`Fjern ${confirmRemoveHousehold.name || confirmRemoveHousehold.email} fra familien?`}
+                message="I mister adgang til hinandens delte data. Personens egen EatSafe-konto påvirkes ikke."
+                confirmLabel="Fjern fra familien"
+                danger={false}
+                onConfirm={async () => {
+                  const m = confirmRemoveHousehold;
+                  setConfirmRemoveHousehold(null);
+                  await apiCall(`${SUPABASE_URL}/functions/v1/family/group/${m.id}`, { method: "DELETE", headers: makeHeaders(accessToken) });
+                  setHousehold(h => h.filter(x => x.id !== m.id));
+                }}
+                onCancel={() => setConfirmRemoveHousehold(null)}
+              />
+            )}
           </div>
         )}
     </>
