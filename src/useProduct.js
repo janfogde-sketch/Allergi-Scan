@@ -140,7 +140,10 @@ export function buildDemoScanResult({ activeIds, activeCustom, activeENumbers, f
 // garanterer altid friske værdier (ingen stale-closure-risiko fra en
 // ufuldstændig deps-liste).
 // ── Advarsels-alarm (Indstillinger → Scanning, 28. sept. 2026) ───────────────
-// Vibration/lyd specifikt for et allergi-match (danger/warn) — uafhængig af
+// Vibration/lyd specifikt når et scan-resultat udløser en advarsel
+// (status danger/warn — kan komme fra allergier, men også fra andre
+// brugerpræferencer som diæter/E-numre, se buildScanResultFromProductData)
+// — uafhængig af
 // den allerede eksisterende, ubetingede "stregkode registreret"-feedback i
 // useScanner.js (samme vibrate+Web Audio-mønster genbrugt derfra, men egen
 // lavere/længere tone her, så de to kan skelnes). Begge kanaler er default

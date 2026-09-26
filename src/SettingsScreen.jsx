@@ -28,10 +28,14 @@
 // - "Vilkår": ingen selvstændig vilkårs-side findes i public/ (kun
 //   privacy.html) — samme velkendte begrænsning som OnboardingScreen.jsx
 //   allerede dokumenterer for sin egen "Handelsbetingelser"-tekst.
-// - En "Åbn Indstillinger"-genvej ved afvist push-tilladelse: der findes
-//   ingen cross-browser JS-API til at åbne systemets/browserens egne
-//   indstillinger fra en PWA — den eksisterende tekstforklaring
-//   ("Aktivér push i din browsers indstillinger") er den ærlige erstatning.
+// - En "Åbn Indstillinger"-genvej ved afvist push-tilladelse: genundersøgt
+//   i FINAL POLISH-runden (28. sept. 2026) — der findes stadig ingen
+//   cross-browser/cross-platform JS-API til at åbne systemets/browserens
+//   egne push-indstillinger fra en PWA (hverken iOS Safari, Android Chrome
+//   eller en installeret PWA har en sådan generisk genvej). En sådan knap
+//   ville derfor altid være fake uanset platform — udeladt, men teksten
+//   der ELLERS ville have krævet knappen (se Notifikationer nedenfor) er
+//   gjort mere universel/ærlig i stedet.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from "react";
@@ -144,6 +148,7 @@ export default function SettingsScreen({
 
   const [langOpen, setLangOpen] = useState(false);
   const [showDataInfo, setShowDataInfo] = useState(false);
+  const [showBuildDetail, setShowBuildDetail] = useState(false);
 
   const handlePushToggle = async () => {
     setPushLoading(true);
@@ -191,10 +196,13 @@ export default function SettingsScreen({
         </button>
       </div>
 
-      {/* ── Sprog ── */}
+      {/* ── Madpas-sprog ── (omdøbt fra "Sprog" 28. sept. 2026, FINAL
+          POLISH-runde — EatSafe har intet app-sprog-skift at sektionere
+          under et generisk "Sprog", kun Madpas har reel sprog-
+          understøttelse, se filhoved-kommentaren) */}
       <div className="card">
         <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>
-          <Icon name="globe" size={14} color="var(--ink)" /> Sprog
+          <Icon name="globe" size={14} color="var(--ink)" /> Madpas-sprog
         </div>
         <div style={{ fontSize:12.5, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>Standard-sprog til Madpas</div>
         <div style={{ fontSize:10.5, color:"var(--muted)", lineHeight:1.4, marginBottom:10 }}>
@@ -225,8 +233,8 @@ export default function SettingsScreen({
         <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2 }}>
           <Icon name="scanframe" size={14} color="var(--ink)" /> Scanning
         </div>
-        <ToggleRow label="Vibration ved advarsel" sub="Kort vibration når et scannet produkt matcher en allergi" on={vibrateOnWarning} onToggle={toggleVibrate} />
-        <ToggleRow label="Lyd ved advarsel" sub="Kort lyd når et scannet produkt matcher en allergi" on={soundOnWarning} onToggle={toggleSound} last />
+        <ToggleRow label="Vibration ved advarsel" sub="Kort vibration når et scannet produkt udløser en advarsel." on={vibrateOnWarning} onToggle={toggleVibrate} />
+        <ToggleRow label="Lyd ved advarsel" sub="Kort lyd når et scannet produkt udløser en advarsel." on={soundOnWarning} onToggle={toggleSound} last />
       </div>
 
       {/* ── Notifikationer ── */}
@@ -239,11 +247,11 @@ export default function SettingsScreen({
           <ToggleRow
             label="Push-notifikationer"
             sub={pushStatus === "granted"
-              ? "Aktiveret i denne browser"
+              ? "Aktiveret på denne enhed"
               : pushStatus === "denied"
-              ? "Blokeret i browserindstillinger"
+              ? "Push-notifikationer er slået fra på enheden."
               : "Skal aktiveres, før push-beskeder kan sendes"}
-            note={pushDenied ? "Aktivér push i din browsers indstillinger." : null}
+            note={pushDenied ? "Aktivér push i din enheds indstillinger for at modtage beskeder." : null}
             on={pushStatus === "granted"}
             onToggle={pushDenied ? undefined : handlePushToggle}
             disabled={pushLoading || pushDenied}
@@ -333,14 +341,33 @@ export default function SettingsScreen({
         </div>
       </div>
 
-      {/* ── Om EatSafe ── */}
-      <div className="card">
+      {/* ── Om EatSafe ──
+          Sidste kort på siden — ekstra bund-margin (28. sept. 2026, FINAL
+          POLISH) tilføjet HER, ikke på den delte `.screen`-klasse (som kun
+          reserverer en flad 110px, uden `env(safe-area-inset-bottom)`, se
+          samme rodårsag/løsning som ProfileScreen.jsx-footeren) — sikrer at
+          "Kontakt & support" nederst altid kan scrolles helt fri af den
+          faste bundnavigation, uanset enhedens safe-area. */}
+      <div className="card" style={{ marginBottom:"calc(96px + env(safe-area-inset-bottom))" }}>
         <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2 }}>
           <Icon name="info" size={14} color="var(--ink)" /> Om EatSafe
         </div>
-        <ChevronRow icon="clock" label="Version" sub={`Bygget ${formatBuildTime()} · ${COMMIT_SHA}`} />
+        {/* Version — venlig, brugervenlig primærtekst (28. sept. 2026,
+            FINAL POLISH: intet fabrikeret versionsnummer som "0.9.0", da
+            appen ikke har et rigtigt semver-tal at vise — "Beta" er den
+            reelle status, samme som topbarens BETA-badge). Git-commit-SHA
+            (teknisk build-ID) er flyttet til en sekundær, udfoldelig
+            detaljevisning i stedet for at stå som primær info — samme
+            udfolde-mønster som "Hvilke data EatSafe gemmer" ovenfor. */}
+        <ChevronRow icon="clock" label="Version" value="Beta" sub={`Bygget ${formatBuildTime()}`}
+          onClick={() => setShowBuildDetail(v => !v)} last={!showBuildDetail} />
+        {showBuildDetail && (
+          <div style={{ background:"var(--surface2)", borderRadius:10, padding:"10px 12px", margin:"0 0 12px", fontSize:11, color:"var(--muted)" }}>
+            Build-ID (teknisk): {COMMIT_SHA}
+          </div>
+        )}
         <ChevronRow icon="bug" label="Om EatSafe Beta" sub="Se velkomst- og sikkerhedsinformation igen" onClick={onOpenBetaInfo} />
-        <ChevronRow icon="message" label="Kontakt & feedback" onClick={onOpenFeedback} last />
+        <ChevronRow icon="message" label="Kontakt & support" onClick={onOpenFeedback} last />
       </div>
     </div>
   );
