@@ -3113,3 +3113,122 @@ krydskontaminerings-hjælpetekst, "Dit madpas"-label, første chip, CTA-
 knap): ALLE otte returnerede nøjagtig `20px` fra viewportets venstre
 kant, ingen undtagelser. Skærmbillede inspiceret visuelt og bekræftet en
 ren, konsekvent venstreflugt på tværs af hele siden.
+
+## Profil og redigering restruktureret — "Rediger profil" og "Rediger præferencer" adskilt (28. sept. 2026)
+
+Brugeren gav en stor, detaljeret 10-punkts spec med et klart mål: fjerne
+en reel, observérbar dublering på Profil-siden — BÅDE "Rediger" ved
+navn/profilkortet OG "Rediger" ved "Mine præferencer" førte til NØJAGTIG
+samme skærm (`SCREENS.EDITPROFILE`), som samtidig blandede personlige
+konto-oplysninger sammen med allergi-/diæt-/E-nummer-redigering i én lang
+formular. Eksplicit ramme: "Bevar EatSafes nuværende visuelle design ...
+Fokusér kun på informationsarkitektur, navigation og genbrug af
+eksisterende onboarding-komponenter", "Ingen feature creep. Ingen
+redesigns."
+
+**Undersøgelse først, ingen kode skrevet før hele billedet var klart:**
+- `ProfileScreen.jsx`s daværende `SCREENS.EDITPROFILE`-blok (linje
+  ~947-1123) viste sig ved læsning at være PRÆCIS den beskrevne dublering:
+  navn/telefon/alder/køn + Diæt + "Mine allergier/intolerancer" + E-numre
+  der undgås, alt sammen i én formular, med sin egen, selvstændige,
+  hånd-rullede allergi-/E-nummer-UI (RØD som valgt-farve — en reel,
+  pre-eksisterende inkonsistens, da appens designsystem reserverer rød
+  til "produkt indeholder allergen"/fejl, ikke en valgt-tilstand).
+- `AllergenPicker.jsx` viste sig allerede at indeholde PRÆCIS de delte,
+  genbrugelige komponenter brugerens krav 3 og 6 bad om at genbruge:
+  `AllergenChipPicker`, `DietChipPicker`, `ENumberPicker` — rene,
+  præsentations-komponenter med en simpel `{selected, onChange}`-kontrakt,
+  allerede brugt af BÅDE onboarding OG `MemberForm.jsx` (familiemedlem-
+  redigering). `MemberForm.jsx` viste sig samtidig allerede at være et
+  levende eksempel på PRÆCIS den arkitektur brugeren bad om for "Rediger
+  præferencer": samme delte komponenter samlet på ÉN side uden et trin-
+  for-trin-flow (kun en foldbar `Accordion` til E-numre) — ikke noget der
+  skulle opfindes fra bunden, kun en variant af et allerede eksisterende,
+  bevist mønster.
+- Et reelt duplikerings-fund undervejs: den samme gluten↔glutenfri-auto-
+  synkroniserings-effekt (vælges "Gluten", markeres "Glutenfri" automatisk)
+  fandtes som to næsten-identiske kopier — én i `OnboardingScreen.jsx`
+  (opererende på `user.diets`/`setUser`) og én i `MemberForm.jsx`
+  (opererende på lokale `diets`/`setDiets`-props). At bygge en tredje,
+  ligeledes duplikeret kopi til "Rediger præferencer" ville have været
+  nøjagtig den anti-mønster brugerens krav 3 eksplicit bad om at undgå
+  ("Ændres en valgmulighed ét sted i kodebasen, skal ændringen slå
+  igennem både i onboarding og redigering") — udtrukket i stedet til én
+  delt `useGlutenFreeSync(allergens, diets, setDiets)`-hook i
+  `AllergenPicker.jsx`, og både `OnboardingScreen.jsx` og `MemberForm.jsx`
+  omskrevet til at kalde den fælles hook i stedet for deres egen kopi
+  (identisk logik/adfærd, kun konsolideret til ét sted). Dette er den
+  eneste ændring i eksisterende, IKKE-Profil-relaterede filer denne runde
+  lavede — direkte nødvendiggjort af krav 3, ikke en tilfældig ekstra
+  ændring.
+- `birth_year`/`gender`-felterne blev grundigt undersøgt for reel brug
+  (krav 1: "Alder og køn skal kun vises, hvis EatSafe konkret bruger
+  oplysningerne til en funktion") — grep på tværs af hele kodebasen viste
+  at de KUN bruges til visning (familie-rækkens "34 år · Mand"-tekst,
+  adminpanelets brugerdetalje-visning), aldrig til nogen reel allergen-
+  matchings-, filtrerings- eller anbefalingslogik. Bekræftet fjernbare
+  efter denne definition.
+- Bottom-nav-overlap-bekymringen (krav 8: "aldrig dækkes af bundnavigation")
+  viste sig allerede løst app-bredt: den delte `.screen`-CSS-klasse
+  (theme.jsx) reserverer allerede 110px bund-padding for den faste
+  bundnav, og de nye/eksisterende redigeringsskærme bruger begge samme
+  `className="screen fade-in"` — ingen ekstra arbejde nødvendigt for at
+  opfylde dette krav, det var allerede en etableret, app-bred garanti.
+
+**Ny arkitektur:**
+1. **`SCREENS.EDITPREFERENCES`** tilføjet til `constants.jsx`, wired ind i
+   `App.jsx` de samme tre steder `SCREENS.EDITPROFILE` allerede var
+   registreret (Profil-skærmgruppen der renderer `ProfileScreen`, Android-
+   tilbageknap-målet, hamburger-menuens aktiv-indikator-prik).
+2. **`SCREENS.EDITPROFILE`** ("Rediger profil") skåret ned til KUN Navn
+   (obligatorisk, uændret validering) + Telefon (valgfri) — alder/køn/
+   diæt/allergier/E-numre fjernet helt. Gem-knappen PATCHer nu kun
+   `{name, phone}` til `users`-tabellen (var tidligere hele objektet
+   inkl. birth_year/gender/diets/e_numbers).
+3. **`SCREENS.EDITPREFERENCES`** (ny) — `AllergenChipPicker` (med samme
+   "Skriv selv"-fritekstblok som MemberForm, ordret samme markup) +
+   `DietChipPicker` (med `useGlutenFreeSync`s `autoNote`) + `ENumberPicker`
+   i en `Accordion` (lukket som standard, samme mønster som MemberForm).
+   Alle tre får den SAMME state som Profil-sidens egen oversigt allerede
+   viser (`allergens`/`customAllerg`/`user.diets`/`selectedENumbers`) —
+   eksisterende valg er derfor automatisk forudmarkeret, ingen ekstra
+   synkroniseringskode nødvendig. Gem-knappen PATCHer `{diets, e_numbers}`
+   til `users` + gør samme DELETE-og-bulk-POST til `user_allergens` som
+   den gamle kombinerede formular allerede gjorde (uændret persisterings-
+   mønster, blot opdelt på de to nye skærme efter hvad de hver især ejer).
+4. **To "Rediger"-knapper på Profil peger nu på hver sin skærm**:
+   profilkortets på `EDITPROFILE`, "Mine præferencer"s (og dens tomme-
+   state "Tilføj allergener"-knap) på `EDITPREFERENCES` — aldrig længere
+   samme mål.
+5. **"Min husstand" erstattet af én kompakt, klikbar række** ("Husstand" +
+   `family.length + household.length` medlemmer + chevron →
+   `setScreen(SCREENS.FAMILY)`) — ingen medlem-chips/administration
+   tilbage på Profil-siden selv, kun en genvej til den allerede
+   eksisterende, fulde Familie-side.
+6. Dødt-kode-oprydning som direkte konsekvens af at fjerne den gamle
+   hånd-rullede E-nummer-UI: `eSearch`/`setESearch`/`eCategory`/
+   `setECategory` var kun brugt af den nu-slettede blok — fjernet fra
+   `ProfileScreen.jsx`s destrukturering af `useAllergenPrefsContext()`
+   (selve konteksten er urørt, bruges stadig andre steder). `E_NUMBERS`/
+   `E_CATEGORIES`-importen blev samtidig overflødig og fjernet.
+   `allergenSubtypes`/`activeSubtypeModal` var allerede ubrugte FØR denne
+   runde (ikke noget denne ændring skabte) — ladet urørt, uden for scope.
+
+**Test:** `npm run build` grøn, `npx vitest run` 109/109 bestået, mojibake-
+scan ren på alle syv ændrede filer (`ProfileScreen.jsx`, `AllergenPicker.jsx`,
+`OnboardingScreen.jsx`, `MemberForm.jsx`, `constants.jsx`, `App.jsx`,
+`utils.jsx`). Verificeret med en omfattende Playwright-gennemgang (mock
+Supabase-respons for en bruger med eksisterende Mælk-allergi, Nikkel-
+intolerance, Vegetarisk diæt og E211): Profil-siden viser den nye,
+kompakte Husstand-række (ikke længere "Min husstand" med chips), "Rediger
+profil" viser KUN navn/telefon (alder/køn/diæt/allergi/E-numre-sektioner
+alle bekræftet fraværende), gem PATCHer korrekt kun `{name, phone}`,
+"Rediger præferencer" viser AllergenChipPicker med Mælk korrekt
+forudmarkeret i den RIGTIGE grønne valgt-state (ikke rød), DietChipPicker
+med Vegetarisk forudmarkeret, E-numre-accordion tilstede, et testklik på
+"Gluten" udløste korrekt den automatiske Glutenfri-markering + "Valgt ud
+fra gluten"-noten, gem POST'ede korrekt hele den opdaterede allergen-liste
+inkl. gluten og PATCHede kun `{diets, e_numbers}`, og Profil-sidens egen
+oversigt viste øjeblikkeligt de nye valg efter navigation tilbage — uden
+en separat genindlæsning. Husstand-rækken blev klikket og bekræftet at
+åbne den eksisterende Familie-side. Ingen konsol-fejl i noget trin.

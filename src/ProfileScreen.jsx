@@ -1,12 +1,12 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { ALLERGENS, SCREENS, DIETS, E_NUMBERS, E_CATEGORIES, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
+import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall, buildActiveProfileList, computeProfileResults, extractENumbers } from "./helpers.js";
 import { EatSafeLogo, Icon, ProductImage, showToast, ConfirmDialog } from "./SharedComponents.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
-import { TextLink } from "./DesignSystem.jsx";
-import { ENumberPicker } from "./AllergenPicker.jsx";
+import { TextLink, Accordion } from "./DesignSystem.jsx";
+import { ENumberPicker, AllergenChipPicker, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -285,11 +285,18 @@ export default function ProfileScreen({
     addMember, updateMember, removeMember, startEditMember, cancelEditMember,
   } = useFamilyFormContext();
   const {
-    eSearch, setESearch, eCategory, setECategory,
     allergenSubtypes, setAllergenSubtypes,
     selectedENumbers, setSelectedENumbers,
     activeSubtypeModal, setActiveSubtypeModal,
   } = useAllergenPrefsContext();
+  // "Rediger præferencer" (28. sept. 2026, Profil-restrukturering) — samme
+  // delte gluten↔glutenfri-sync-hook som onboarding/MemberForm bruger (se
+  // AllergenPicker.jsx), og samme lukket-som-standard Accordion-mønster for
+  // E-numre som MemberForm allerede bruger for familiemedlemmer.
+  const [showENumre, setShowENumre] = useState(false);
+  const [glutenFreeAutoApplied, setGlutenFreeAutoApplied] = useGlutenFreeSync(
+    allergens, user.diets || [], (arr) => setUser(u => ({ ...u, diets: arr }))
+  );
 
   // Historik hentes ved allerførste mount (Profil/Favoritter læser også
   // `history`, fx GamificationCard/"Senest scannet", uden selv at besøge
@@ -722,13 +729,13 @@ export default function ProfileScreen({
                   <div style={UI.boldInk13}>Mine præferencer</div>
                   <div style={UI.muted11mt2}>Allergier · Intolerancer · Diæter · E-numre</div>
                 </div>
-                <button onClick={() => setScreen(SCREENS.EDITPROFILE)}
+                <button onClick={() => setScreen(SCREENS.EDITPREFERENCES)}
                   style={{ background:"var(--green-lt)", border:"none", borderRadius:8, padding:"4px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--green)", cursor:"pointer" }}>
                   Rediger
                 </button>
               </div>
               {allergens.length + customAllerg.length + (selectedENumbers?.length || 0) + (user?.diets?.length || 0) === 0
-                ? <div style={{ textAlign:"center", padding:"16px 0" }}><div style={{ marginBottom:8, display:"flex", justifyContent:"center" }}><Icon name="info" size={30} color="var(--muted)" /></div><div style={{ fontSize:13, color:"var(--muted)", marginBottom:10 }}>Ingen præferencer registreret endnu</div><button className="btn btn-outline btn-sm" onClick={() => setScreen(SCREENS.EDITPROFILE)}>Tilføj allergener</button></div>
+                ? <div style={{ textAlign:"center", padding:"16px 0" }}><div style={{ marginBottom:8, display:"flex", justifyContent:"center" }}><Icon name="info" size={30} color="var(--muted)" /></div><div style={{ fontSize:13, color:"var(--muted)", marginBottom:10 }}>Ingen præferencer registreret endnu</div><button className="btn btn-outline btn-sm" onClick={() => setScreen(SCREENS.EDITPREFERENCES)}>Tilføj allergener</button></div>
                 : (
                   <div>
                     {/* Gruppér: allergener, intoleranser, diæter */}
@@ -761,26 +768,32 @@ export default function ProfileScreen({
               }
             </div>
 
-            {/* Min husstand — rigtige inviterede konti, adskilt fra allergi-profilerne i "Familie" */}
-            <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10}>
-              <div style={{ ...UI.boldInk13, display:"flex", alignItems:"center", gap:6 }}><Icon name="family" size={13} color="var(--ink)" /> Min husstand</div>
-              <div style={{ ...UI.muted11mt2, marginBottom:10 }}>Konti du deler scanninger, favoritter og indkøbslister med</div>
-              {householdLoading ? (
-                <div style={{ fontSize:12, color:"var(--muted)" }}>Henter…</div>
-              ) : household.length === 0 ? (
-                <div style={{ fontSize:12, color:"var(--muted)" }}>Du har ikke inviteret nogen endnu — gå til "Familie" for at oprette et invitationslink.</div>
-              ) : (
-                <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
-                  {household.map(m => (
-                    <div key={m.id} style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 10px 6px 6px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:20 }}>
-                      <div style={{ width:24, height:24, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:800, color:"var(--ink)" }}>
-                        {initials(m.name || m.email)}
-                      </div>
-                      <span style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{m.name || m.email}</span>
-                    </div>
-                  ))}
+            {/* Husstand — kun en let genvej til den eksisterende husstands-
+                side ("Familie"), IKKE en dupliceret administrations-UI (28.
+                sept. 2026, Profil-restrukturering, krav 4: "EatSafe har
+                allerede en separat husstandsfunktion ... profilområdet skal
+                ikke duplikere denne funktion"). Ingen medlem-chips, ingen
+                "tilføj medlem", ingen administration her længere — kun et
+                antal + chevron, samme mønster som GamificationCards "Se
+                fuld scanningshistorik"-række. Tæller BÅDE administrerede
+                profiler (family) og rigtige husstandskonti (household) —
+                de samme to grupper Familie-siden selv viser samlet. */}
+            <div style={{ ...UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10, display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer" }}
+              onClick={() => setScreen(SCREENS.FAMILY)}>
+              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                <Icon name="family" size={16} color="var(--ink)" />
+                <div>
+                  <div style={UI.boldInk13}>Husstand</div>
+                  <div style={UI.muted11mt2}>
+                    {householdLoading
+                      ? "Henter…"
+                      : (family.length + household.length) === 0
+                        ? "Ingen medlemmer endnu"
+                        : `${family.length + household.length} medlem${family.length + household.length === 1 ? "" : "mer"}`}
+                  </div>
                 </div>
-              )}
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0 }}><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
             </div>
 
             {/* Gamification */}
@@ -944,14 +957,19 @@ export default function ProfileScreen({
           </div>
         )}
 
+        {/* "Rediger profil" — KUN personlige konto-/profiloplysninger (28.
+            sept. 2026, Profil-restrukturering, krav 1). Alder/køn er
+            fjernet helt herfra: EatSafe bruger dem intetsteds til en reel
+            funktion (kun til visning i familie-rækker/adminpanelet), så de
+            hører ikke hjemme som obligatoriske felter på selve kontoen.
+            Ingen allergier/intolerancer/diæter/E-numre/husstand her længere
+            — det er nu "Rediger præferencer" nedenfor. */}
         {screen === SCREENS.EDITPROFILE && (
           <div className="screen fade-in">
             <div style={{ display:"flex", alignItems:"center", gap:10, padding:"16px 0 20px" }}>
-              
               <div style={UI.ufs18_fw800_cink}>Rediger profil</div>
             </div>
 
-            {/* Navn og kontakt */}
             <div className="card" style={UI.mb10}>
               <div className="card-lbl">Personlige oplysninger</div>
               {[["Dit navn","text","Fx. Anna Hansen","name"],["Telefon","tel","+45 12 34 56 78","phone"]].map(([lbl,type,ph,key]) => (
@@ -962,131 +980,96 @@ export default function ProfileScreen({
                   <input className="field" type={type} placeholder={ph} value={user[key]||""} onChange={e => setUser(u => ({ ...u, [key]: e.target.value }))} />
                 </div>
               ))}
-              <div style={UI.mb10}>
-                <label className="field-lbl">Alder <span style={UI.red}>*</span></label>
-                <input className="field" type="number" placeholder="Fx. 34" min="1" max="120"
-                  value={user.birth_year ? String(new Date().getFullYear() - parseInt(user.birth_year)) : ""}
-                  onChange={e => {
-                    const age = e.target.value;
-                    setUser(u => ({ ...u, birth_year: age ? String(new Date().getFullYear() - parseInt(age)) : "" }));
-                  }} />
-              </div>
-              <label className="field-lbl">Køn <span style={UI.red}>*</span></label>
-              <div style={{ display:"flex", gap:8, marginBottom:10 }}>
-                {["Mand","Kvinde","Andet"].map(g => (
-                  <div key={g} onClick={() => setUser(u => ({...u, gender:g}))}
-                    style={{ flex:1, padding:"8px 0", textAlign:"center", borderRadius:8, border:`1px solid ${user.gender===g?"var(--green)":"var(--border)"}`, background:user.gender===g?"var(--green-lt)":"var(--surface)", fontSize:13, fontWeight:700, color:user.gender===g?"var(--green)":"var(--muted)", cursor:"pointer" }}>
-                    {g}
-                  </div>
-                ))}
-              </div>
-              {(!user.name?.trim() || !user.birth_year || !user.gender) && (
+              {!user.name?.trim() && (
                 <div style={UI.ufs11_cmuted_mb10}>
-                  <span style={UI.red}>*</span> Navn, alder og køn er obligatoriske
-                </div>
-              )}
-            </div>
-
-            {/* Allergier */}
-            {/* Diæt */}
-            <div className="card" style={UI.mb10}>
-              <div className="card-lbl">Diæt</div>
-              <div style={{ fontSize:12, color:"var(--muted)", marginBottom:10, lineHeight:1.5 }}>Vælg din diæt — bruges til filtrering af produkter og opskrifter.</div>
-              <div className="chip-grid" style={UI.mb8}>
-                {DIETS.map(d => {
-                  const on = (user.diets||[]).includes(d.id);
-                  return (
-                    <div key={d.id} className={`chip${on?" on":""}`}
-                      onClick={() => setUser(u => ({ ...u, diets: on ? (u.diets||[]).filter(x=>x!==d.id) : [...(u.diets||[]), d.id] }))}>
-                      <div style={UI.flex1}>
-                        <div style={UI.ufw700}>{d.label}</div>
-                        <div style={UI.ufs10_cmuted_mt1}>{d.desc}</div>
-                      </div>
-                      {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
-                    </div>
-                  );
-                })}
-              </div>
-              {(user.diets||[]).length > 0 && (
-                <button className="btn btn-ghost btn-sm" onClick={() => setUser(u => ({...u, diets:[]}))}>Nulstil diæt</button>
-              )}
-            </div>
-
-            <div className="card" style={UI.mb10}>
-              <div className="card-lbl">Mine allergier / intolerancer</div>
-              <div style={{ fontSize:11, color:"var(--muted)", marginBottom:10, lineHeight:1.4 }}>
-                Tryk for at markere en allergi eller intolerance
-              </div>
-              <div className="chip-grid" style={UI.mb10}>
-                {ALLERGENS.map(a => {
-                  const on = allergens.includes(a.id);
-                  return (
-                    <div key={a.id} className="chip" style={{
-                      background: on ? "var(--red-lt)" : "var(--surface)",
-                      border: `1px solid ${on ? "var(--red)" : "var(--border)"}`,
-                      color: on ? "var(--red)" : "var(--ink)",
-                    }}
-                      onClick={() => setAllergens(p => on ? p.filter(x => x !== a.id) : [...p, a.id])}>
-                      <span style={UI.flex1}>{a.emoji} {a.label}</span>
-                      {on && <div style={UI.redBadge9}><Icon name="check" size={9} color="#fff" /></div>}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="card-lbl">Andre allergier</div>
-              <div className="input-row" style={{ marginBottom: customAllerg.length ? 8 : 0 }}>
-                <input className="field" placeholder="Fx. Fruktose…" value={customInput} onChange={e => setCustomInput(e.target.value)}
-                  onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}} />
-                <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}}>+</button>
-              </div>
-              {customAllerg.length > 0 && <div className="tags">{customAllerg.map((a,i) => <div key={i} className="tag" style={{ display:"inline-flex", alignItems:"center", gap:4 }}><Icon name="edit" size={10} color="currentColor" /> {a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
-                onClick={() => setCustomAllerg(c=>c.filter((_,j)=>j!==i))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(c=>c.filter((_,j)=>j!==i))}>×</span></div>)}</div>}
-            </div>
-
-            {/* E-numre i rediger profil */}
-            <div className="card" style={UI.mb10}>
-              <div className="card-lbl">E-numre der undgås</div>
-              <input className="field" placeholder="Søg E-nummer..." value={eSearch}
-                onChange={e => setESearch(e.target.value)} style={UI.mb8} />
-              <select className="field" value={eCategory} onChange={e => setECategory(e.target.value)} style={UI.mb8}>
-                <option value="alle">Alle kategorier</option>
-                {E_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label} ({c.range})</option>)}
-              </select>
-              <div style={UI.umxh320_ovyauto_bd1pxsolid_br8}>
-                {Object.entries(E_NUMBERS).filter(([e,name]) => {
-                  const matchSearch = !eSearch || e.toLowerCase().includes(eSearch.toLowerCase()) || name.toLowerCase().includes(eSearch.toLowerCase());
-                  if (!matchSearch) return false;
-                  if (eCategory==="alle") return true;
-                  const cat = E_CATEGORIES.find(c=>c.id===eCategory);
-                  const num = parseInt(e.replace(/[^0-9]/g,""));
-                  return cat ? num>=cat.min && num<=cat.max : true;
-                }).map(([e,name],i,arr) => {
-                  const on = selectedENumbers.includes(e);
-                  return (
-                    <div key={e} onClick={() => setSelectedENumbers(p => on?p.filter(x=>x!==e):[...p,e])}
-                      style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px",
-                        borderBottom:i<arr.length-1?"1px solid var(--border)":"none",
-                        background:on?"var(--red-lt)":"var(--surface)", cursor:"pointer" }}>
-                      <div style={{ fontSize:12, fontWeight:800, color:on?"var(--red)":"var(--ink)", width:44 }}>{e}</div>
-                      <div style={{ fontSize:11, color:on?"var(--red)":"var(--muted2)", flex:1, lineHeight:1.3 }}>{name}</div>
-                      {on && <Icon name="check" size={13} color="var(--red)" />}
-                    </div>
-                  );
-                })}
-              </div>
-              {selectedENumbers.length > 0 && (
-                <div style={{ marginTop:8, fontSize:11, fontWeight:700, color:"var(--red)" }}>
-                  {selectedENumbers.length} E-numre valgt
+                  <span style={UI.red}>*</span> Navn er obligatorisk
                 </div>
               )}
             </div>
 
             <button className="btn btn-primary btn-full" style={UI.mb16}
-              disabled={!user.name?.trim() || !user.birth_year || !user.gender || savingProfile}
+              disabled={!user.name?.trim() || savingProfile}
               onClick={async () => {
                 setSavingProfile(true);
                 try {
-                  // Flush en evt. ikke-tilføjet tekst i "Andre allergier"-feltet, så den ikke går tabt
+                  await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+                    method:"PATCH",
+                    headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" },
+                    body:JSON.stringify({ name:user.name, phone:user.phone||null }),
+                  });
+                  setScreen(SCREENS.PROFILE);
+                } catch (e) {
+                  showToast("Fejl: " + e.message, "error");
+                } finally {
+                  setSavingProfile(false);
+                }
+              }}>{savingProfile ? "Gemmer…" : "Gem ændringer"}</button>
+          </div>
+        )}
+
+        {/* "Rediger præferencer" — KUN allergier/intolerancer/diæter/
+            E-numre (28. sept. 2026, Profil-restrukturering, krav 2-3).
+            Genbruger PRÆCIS de samme delte komponenter som onboarding og
+            MemberForm.jsx (AllergenChipPicker/DietChipPicker/ENumberPicker,
+            samme grønne valgt-state/ikoner/labels — ikke en tredje,
+            selvstændig kopi af samme data/UI), og redigeres direkte på én
+            side i stedet for et trin-for-trin-flow. Eksisterende valg er
+            allerede forudmarkeret, da komponenterne får den samme, delte
+            state (allergens/customAllerg/user.diets/selectedENumbers) som
+            profilens egen oversigt viser. */}
+        {screen === SCREENS.EDITPREFERENCES && (
+          <div className="screen fade-in">
+            <div style={{ display:"flex", alignItems:"center", gap:10, padding:"16px 0 20px" }}>
+              <div style={UI.ufs18_fw800_cink}>Rediger præferencer</div>
+            </div>
+
+            <div className="card" style={UI.mb10}>
+              <div className="card-lbl" style={UI.mb8}>Allergier / intolerancer</div>
+              <AllergenChipPicker selected={allergens} onChange={setAllergens} />
+
+              <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
+                <div style={UI.sectionLbl6}>Mangler din allergi eller intolerance?</div>
+                <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0 }}>
+                  <input className="field" placeholder='Skriv fx "Fruktose"…' value={customInput} onChange={e => setCustomInput(e.target.value)}
+                    onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}} />
+                  <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}}>+</button>
+                </div>
+                {customAllerg.length > 0 && (
+                  <div className="tags">
+                    {customAllerg.map((a,i) => (
+                      <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
+                        onClick={() => setCustomAllerg(c=>c.filter((_,j)=>j!==i))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(c=>c.filter((_,j)=>j!==i))}>×</span></div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="card" style={UI.mb10}>
+              <div className="card-lbl" style={UI.mb8}>Kostpræferencer</div>
+              <DietChipPicker selected={user.diets || []}
+                autoNote={glutenFreeAutoApplied ? { id:"gluten-free", text:"Valgt ud fra gluten" } : undefined}
+                onChange={arr => {
+                  if (arr.includes("gluten-free") !== (user.diets||[]).includes("gluten-free")) setGlutenFreeAutoApplied(false);
+                  setUser(u => ({ ...u, diets: arr }));
+                }} />
+            </div>
+
+            <div className="card" style={UI.mb10}>
+              <Accordion label="Overvåg specifikke E-numre" count={selectedENumbers.length}
+                open={showENumre} onToggle={() => setShowENumre(s => !s)}>
+                <div style={UI.mt8}>
+                  <ENumberPicker selected={selectedENumbers} onChange={setSelectedENumbers} />
+                </div>
+              </Accordion>
+            </div>
+
+            <button className="btn btn-primary btn-full" style={UI.mb16}
+              disabled={savingProfile}
+              onClick={async () => {
+                setSavingProfile(true);
+                try {
+                  // Flush en evt. ikke-tilføjet tekst i "Skriv selv"-feltet, så den ikke går tabt
                   const pendingCustom = customInput.trim();
                   const allCustom = pendingCustom ? [...customAllerg, pendingCustom] : customAllerg;
                   if (pendingCustom) { setCustomAllerg(allCustom); setCustomInput(""); }
@@ -1094,12 +1077,7 @@ export default function ProfileScreen({
                   await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
                     method:"PATCH",
                     headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" },
-                    body:JSON.stringify({
-                      name:user.name, phone:user.phone||null,
-                      birth_year:user.birth_year?parseInt(user.birth_year):null,
-                      gender:user.gender||null, diets:user.diets||[],
-                      e_numbers:selectedENumbers||[],
-                    }),
+                    body:JSON.stringify({ diets:user.diets||[], e_numbers:selectedENumbers||[] }),
                   });
 
                   // Samlet DELETE + én bulk-POST i stedet for et loop af enkelt-POSTs —

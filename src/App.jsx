@@ -745,7 +745,7 @@ export default function EatSafe() {
         return;
       }
       if (screen === SCREENS.ADMIN || screen === SCREENS.FAMILY || screen === SCREENS.HISTORY
-          || screen === SCREENS.FAVORITES || screen === SCREENS.EDITPROFILE) {
+          || screen === SCREENS.FAVORITES || screen === SCREENS.EDITPROFILE || screen === SCREENS.EDITPREFERENCES) {
         setScreen(SCREENS.PROFILE);
         return;
       }
@@ -1006,7 +1006,7 @@ export default function EatSafe() {
               <button onClick={() => setShowProfileMenu(true)} aria-label="Åbn menu"
                 style={{ position:"relative", background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:38, height:38, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"var(--sh)" }}>
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2.2"><path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
-                {[SCREENS.PROFILE, SCREENS.EDITPROFILE, SCREENS.HISTORY, SCREENS.FAVORITES, SCREENS.FAMILY, SCREENS.ADMIN, SCREENS.MADPAS, SCREENS.RESTAURANTGUIDE, SCREENS.RECIPES, SCREENS.KNOWLEDGE].includes(screen) && (
+                {[SCREENS.PROFILE, SCREENS.EDITPROFILE, SCREENS.EDITPREFERENCES, SCREENS.HISTORY, SCREENS.FAVORITES, SCREENS.FAMILY, SCREENS.ADMIN, SCREENS.MADPAS, SCREENS.RESTAURANTGUIDE, SCREENS.RECIPES, SCREENS.KNOWLEDGE].includes(screen) && (
                   <span style={{ position:"absolute", top:-1, right:-1, width:9, height:9, borderRadius:"50%", background:"var(--green)", border:"1.5px solid var(--paper)" }} />
                 )}
               </button>
@@ -1187,6 +1187,7 @@ export default function EatSafe() {
         {/* ══ PROFILE SCREENS ══ */}
         {(screen === SCREENS.HISTORY || screen === SCREENS.PROFILE ||
           screen === SCREENS.FAVORITES || screen === SCREENS.EDITPROFILE ||
+          screen === SCREENS.EDITPREFERENCES ||
           screen === SCREENS.FAMILY) && (
           <Suspense fallback={LazyFallback}>
           <ErrorBoundary screen="Profil">

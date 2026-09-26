@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { EatSafeLogo, Icon, showToast } from "./SharedComponents.jsx";
-import { ENumberPicker, AllergenChipPicker, DietChipPicker } from "./AllergenPicker.jsx";
+import { ENumberPicker, AllergenChipPicker, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { MemberForm } from "./MemberForm.jsx";
 import {
@@ -128,27 +128,20 @@ export default function OnboardingScreen({
     if (family.length === 0) setShowAddMemberForm(true);
   }, [family.length]);
 
-  // Gluten ↔ Glutenfri-synkronisering (25. sept. 2026, brugerfeedback) — LIVE
-  // reaktion på allergen-valget, ikke kun én gang ved ankomst til trin 3:
-  // vælges "Gluten", markeres "Glutenfri" automatisk med samme grønne
-  // valgt-state. Fjernes "Gluten" igen, fjernes "Glutenfri" automatisk KUN
-  // hvis den stadig er den auto-tilføjede (glutenFreeAutoApplied) — har
-  // brugeren selv rørt ved Glutenfri-kortet siden (tilføjet ELLER fjernet
-  // det manuelt), låses valget som brugerens eget og røres ikke igen
-  // (nulstillet i DietChipPickers onChange nedenfor). Samme mønster bruges i
-  // MemberForm.jsx for familiemedlemmer, ingen forskel på hovedprofil/familie.
-  const [glutenFreeAutoApplied, setGlutenFreeAutoApplied] = useState(false);
-  useEffect(() => {
-    const hasGluten = allergens.includes("gluten");
-    const hasGlutenFree = (user.diets || []).includes("gluten-free");
-    if (hasGluten && !hasGlutenFree) {
-      setUser(u => ({ ...u, diets: [...(u.diets||[]), "gluten-free"] }));
-      setGlutenFreeAutoApplied(true);
-    } else if (!hasGluten && hasGlutenFree && glutenFreeAutoApplied) {
-      setUser(u => ({ ...u, diets: (u.diets||[]).filter(d => d !== "gluten-free") }));
-      setGlutenFreeAutoApplied(false);
-    }
-  }, [allergens]);
+  // Gluten ↔ Glutenfri-synkronisering — LIVE reaktion på allergen-valget,
+  // ikke kun én gang ved ankomst til trin 3: vælges "Gluten", markeres
+  // "Glutenfri" automatisk med samme grønne valgt-state. Fjernes "Gluten"
+  // igen, fjernes "Glutenfri" automatisk KUN hvis den stadig er den
+  // auto-tilføjede (glutenFreeAutoApplied) — har brugeren selv rørt ved
+  // Glutenfri-kortet siden (tilføjet ELLER fjernet det manuelt), låses
+  // valget som brugerens eget og røres ikke igen (nulstillet i
+  // DietChipPickers onChange nedenfor). Udtrukket til ÉN delt hook (28.
+  // sept. 2026, Profil-restrukturering) — samme logik bruges nu også af
+  // MemberForm.jsx og ProfileScreen.jsx's "Rediger præferencer", i stedet
+  // for tre kopier af samme effekt.
+  const [glutenFreeAutoApplied, setGlutenFreeAutoApplied] = useGlutenFreeSync(
+    allergens, user.diets || [], (arr) => setUser(u => ({ ...u, diets: arr }))
+  );
 
   // FIX: disse hooks lå tidligere INDE i en betinget IIFE, som kun blev kaldt
   // når onboardStep === 5. Det bryder Reacts "Rules of Hooks" (hooks skal

@@ -797,6 +797,58 @@ sprog-dropdownen og CTA-knappen har nu samme bredde. Verificeret med
 Fuld dag-for-dag-detalje (alle otte runder) i `.claude/HISTORY.md`,
 backend-/struktur-reference i `src/CONTEXT.md` afsnit 10.
 
+### Profil restruktureret — "Rediger profil" og "Rediger præferencer" adskilt (28. sept. 2026)
+
+Tidligere førte BÅDE "Rediger" ved profilkortet OG "Rediger" ved "Mine
+præferencer" til samme skærm (`SCREENS.EDITPROFILE`), som blandede
+personlige oplysninger (navn/telefon/alder/køn) sammen med allergi-/
+diæt-/E-nummer-redigering i én lang formular — uklart hvad man rent
+faktisk redigerede, og en helt selvstændig, hånd-rullet kopi af allergi-/
+diæt-/E-nummer-UI'et (bl.a. med RØD som valgt-farve i stedet for appens
+korrekte grønne valgt-state) i stedet for at genbruge onboardingens
+allerede eksisterende, delte komponenter.
+
+**Nu to adskilte skærme:**
+- **`SCREENS.EDITPROFILE`** ("Rediger profil", nås KUN fra profilkortets
+  "Rediger") — udelukkende Navn (obligatorisk) + Telefon. Alder/køn er
+  fjernet helt herfra — EatSafe bruger dem intetsteds til en reel
+  funktion (kun til visning i familie-rækker/adminpanelet), så de ikke
+  længere er obligatoriske felter på selve kontoen. Ingen allergier/
+  diæter/E-numre/husstand her.
+- **`SCREENS.EDITPREFERENCES`** ("Rediger præferencer", NY, nås fra "Mine
+  præferencer"s "Rediger" på Profil) — udelukkende allergier/
+  intolerancer/diæter/E-numre. Genbruger PRÆCIS de samme delte
+  komponenter som onboarding og `MemberForm.jsx` allerede bruger
+  (`AllergenChipPicker`/`DietChipPicker`/`ENumberPicker`, `AllergenPicker.jsx`)
+  — samme grønne valgt-state, ikoner, labels som onboarding, ikke en
+  tredje kopi af samme UI. Redigeres direkte på én side (ingen "Næste"-
+  trin-flow) — `Accordion`-komponenten (samme mønster som MemberForms
+  E-numre-sektion) bruges kun til at folde E-numre-listen ud/ind, ikke
+  til at gate fremdrift.
+- **Gluten↔glutenfri-synkroniseringen** (vælges "Gluten" markeres
+  "Glutenfri" automatisk) fandtes tidligere som to næsten-identiske
+  kopier af samme effekt (onboarding + MemberForm) — udtrukket til én
+  delt `useGlutenFreeSync()`-hook i `AllergenPicker.jsx`, nu brugt tre
+  steder (onboarding, MemberForm, Rediger præferencer) i stedet for at
+  tilføje en fjerde kopi.
+
+**"Min husstand" på Profil er stærkt forenklet** — viste tidligere hele
+husstandens medlem-chips direkte på Profil-siden, en reel duplikering af
+den allerede eksisterende, fulde husstands-/familiefunktion
+(`SCREENS.FAMILY`). Erstattet af én kompakt, klikbar række ("Husstand" +
+antal medlemmer + chevron) der blot åbner den eksisterende Familie-side —
+ingen medlem-chips, ingen "tilføj medlem", ingen administration længere
+på selve Profil-siden. Tæller BÅDE administrerede profiler (`family`) og
+rigtige husstandskonti (`household`) — samme to grupper Familie-siden
+selv viser samlet.
+
+**Uændret:** "Mine præferencer"-oversigten på selve Profil-siden (kompakt
+gruppevisning af aktive valg, kun kategorier der reelt har noget), "Din
+aktivitet"-kortet (Gamification), konto-/support-footeren, samt Scan/
+Historik/Indkøbsliste/Madpas/husstandslogikken i øvrigt.
+
+Fuld detalje i `.claude/HISTORY.md`.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,

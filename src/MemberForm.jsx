@@ -3,7 +3,7 @@ import React from "react";
 import { Icon } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
-import { AllergenChipPicker, DietChipPicker, ENumberPicker } from "./AllergenPicker.jsx";
+import { AllergenChipPicker, DietChipPicker, ENumberPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { Accordion, PrimaryButton, InputField } from "./DesignSystem.jsx";
 
 // Familiemedlem-formularen genbruger nu PRÆCIS de samme felt-komponenter som
@@ -40,24 +40,11 @@ export const MemberForm = ({
   // genbrugelig komponent uden adgang til onboardingens egen state.
   const [showENumre, setShowENumre] = React.useState(false);
 
-  // Gluten ↔ Glutenfri-synkronisering — samme logik/adfærd som onboarding
-  // trin 2→3 (OnboardingScreen.jsx), så hovedprofil og familiemedlemmer ikke
-  // opfører sig forskelligt (25. sept. 2026, brugerfeedback). Lever her, ikke
-  // i onboarding-/ProfileScreen-laget, fordi MemberForm allerede modtager
-  // allergens/diets + deres settere som props uanset hvilken skærm der
-  // bruger den — én implementering, to steder den gælder.
-  const [glutenFreeAutoApplied, setGlutenFreeAutoApplied] = React.useState(false);
-  React.useEffect(() => {
-    const hasGluten = allergens.includes("gluten");
-    const hasGlutenFree = diets.includes("gluten-free");
-    if (hasGluten && !hasGlutenFree) {
-      setDiets([...diets, "gluten-free"]);
-      setGlutenFreeAutoApplied(true);
-    } else if (!hasGluten && hasGlutenFree && glutenFreeAutoApplied) {
-      setDiets(diets.filter(d => d !== "gluten-free"));
-      setGlutenFreeAutoApplied(false);
-    }
-  }, [allergens]);
+  // Gluten ↔ Glutenfri-synkronisering — samme delte hook som onboarding og
+  // ProfileScreen.jsx's "Rediger præferencer" bruger (28. sept. 2026,
+  // Profil-restrukturering: én implementering af logikken i stedet for tre
+  // kopier), så hovedprofil og familiemedlemmer ikke opfører sig forskelligt.
+  const [glutenFreeAutoApplied, setGlutenFreeAutoApplied] = useGlutenFreeSync(allergens, diets, setDiets);
 
   return (
     <div>
