@@ -742,6 +742,23 @@ del af den oprindelige opgave, men direkte i vejen):**
 Fuld detalje i `.claude/HISTORY.md`, backend-reference i `src/CONTEXT.md`
 afsnit 10.
 
+**Opfølgende runde, samme dag — korte fødevareeksempler + E-numre kun ved
+bevidst valg:** hvert allergen/relevant intolerance viser nu et kort,
+oversat "Fx: Bread, Pasta, ..."-eksempel (`ALLERGEN_EXAMPLES` +
+`madpasAllergenExamples()`, useMadpas.js) i tjener-visning/PDF/den
+offentlige side — bevidst lille/muted, aldrig mere fremtrædende end selve
+allergenet. E-numre vises nu kun hvis brugeren eksplicit slår en ny
+checkbox til ("Vis overvågede E-numre på madpasset") — valget gemmes både
+lokalt og på selve delings-linket (`madpas_links.show_enumbers`), så det
+offentlige link aldrig kan vise E-numre appens egen visning skjuler. En
+reel bug blev fundet og rettet i samme omgang: `regenerateLink()` revokede
+det gamle link FØR det nye blev oprettet, men nulstillede kun UI-state ved
+succes — fejlede selve oprettelsen, blev det allerede-døde gamle link
+stående og så aktivt ud (præcis det denne opgaves egen "et defekt link må
+ikke vises som aktivt"-krav advarede imod). `hvede`/`maelkeallergi` manglede
+samtidig helt i `ALLERGEN_EXAMPLES` (samme hul som `ALLERGEN_T` fra første
+runde) — tilføjet.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,

@@ -2481,3 +2481,82 @@ direkte via SQL mod det rigtige projekt. Selve produktionsdeploy af
 edge-function-ændringer var ikke nødvendigt denne gang — `madpas_links`/
 `get_madpas_by_token` er ren database-side (tabel + RPC), ingen Edge
 Function involveret.
+
+## Madpas, opfølgende runde — korte fødevareeksempler, bevidst E-nummer-valg, en reel "dødt link"-bug fundet (26. sept. 2026, samme dag som Madpas-redesignet)
+
+En ny, 20-punkts kravsliste byggede videre på Madpas-redesignet fra samme
+dag — de fleste punkter var allerede opfyldt (struktur, sprog, QR-first
+deling, deaktiver/generér nyt link, privatlivstekst), men tre reelle,
+tidligere manglende stykker blev identificeret og bygget:
+
+**1. Korte fødevareeksempler (afsnit 8-10 i kravet) var slet ikke med** —
+den forrige redesign-runde havde bevidst fjernet den gamle
+`ALLERGEN_EXAMPLES`-baserede eksempel-tekst for at forenkle, men denne
+kravsliste bad eksplicit om den tilbage, blot kortere og tydeligere
+mærket. Løst med en ny `madpasAllergenExamples(allergenId, lang)`-
+hjælpefunktion (useMadpas.js) der kombinerer `products`+`ingredients` fra
+`ALLERGEN_EXAMPLES` og capper ved 4 stk., samt et nyt, kort, oversat
+"Fx:"/"Examples:"-label (`MADPAS_EXAMPLES_LABEL_T`, 17 sprog) — bevidst
+generisk i stedet for en sætningsskabelon pr. allergen ("Common foods
+containing X:"), så det forbliver kompakt og ensartet uanset om brugeren
+har ét eller flere allergener (kravets eget eksempel viser begge former;
+den generiske label dækker begge uden at skulle vedligeholde 17×16
+sætningsvarianter). Vist under selve allergen-/intolerance-navnet i
+tjener-visningen, PDF'en OG den offentlige `madpas-view.html`-side, altid
+i en mindre, muted skriftstørrelse end selve allergenet (krav 9: "selve
+allergenet skal altid være det mest fremtrædende element").
+
+**Endnu et sprog-hul fundet i samme datasæt:** `ALLERGEN_EXAMPLES` manglede
+`hvede`/`maelkeallergi` fuldstændigt — nøjagtig samme to id'er som
+`ALLERGEN_T` manglede i den forrige runde. Tilføjet for alle 17 sprog
+(products: Bread/Pasta/Pizza dough/Cakes for hvede osv., se
+`src/constants.jsx`).
+
+**2. E-numre skal kun vises ved bevidst valg (afsnit 2):** overvågede
+E-numre er en scannings-indstilling (til at vurdere om et produkt er
+sikkert), ikke automatisk noget en bruger ønsker at dele med en tjener. Ny
+checkbox "Vis overvågede E-numre på madpasset" i MadpasScreen.jsx, default
+FRA, persisteret i `localStorage` (samme mønster som `madpasLang`). Vigtigt
+konsistens-fund undervejs: uden yderligere arbejde ville det DELTE link
+stadig vise E-numre selvom appens egen visning skjulte dem — en reel
+lækage. Løst ved at tilføje en `show_enumbers boolean`-kolonne til
+`madpas_links` og opdatere `get_madpas_by_token()`-RPC'en til at nulstille
+`eNumbers` til `[]` i sit svar når `show_enumbers=false`, uanset hvad der
+faktisk står i databasen for profilen. Checkbox-tilstanden sendes nu med
+til både `INSERT` (ny linkoprettelse) og `PATCH` (ved sprogskift, som i
+forvejen patchede linket).
+
+**3. Reel "dødt link vist som aktivt"-bug fundet og rettet:**
+`regenerateLink()`'s oprindelige rækkefølge var: (a) revoke det gamle
+token server-side, (b) opret et nyt, (c) opdatér UI-state — men UI-state
+blev kun sat i `try`-blokkens success-gren. Fejlede skridt (b) (fx en
+midlertidig netværksfejl), forblev `madpasLinkToken` i React-state
+UÆNDRET og pegede stadig på det token, der LIGE var blevet revoked
+server-side i skridt (a) — brugeren så altså en tilsyneladende "aktiv" QR-
+kode/link, der reelt allerede var dødt. Fundet ved at bygge en Playwright-
+test der bevidst tvang oprettelses-kaldet til at fejle (500) EFTER en
+vellykket revoke, ikke kun ved at teste den lykkedes-sti — nøjagtig den
+slags fejl-sti kravets eget punkt 14 ("et defekt link må ikke vises som
+aktivt") advarer imod, og som ikke ville være fundet ved kun happy-path-
+test. Rettet ved at nulstille `madpasLinkToken` til `null` STRAKS efter en
+vellykket revoke, uafhængigt af om den efterfølgende oprettelse lykkes —
+et evt. efterfølgende `catch` nulstiller det samme igen som en ekstra
+sikkerhed. UI'et falder nu korrekt tilbage til den (i samme omgang
+opgraderede) "Intet aktivt link"-tilstand med en tydelig fejlbesked og en
+rigtig "Opret nyt link"-primærknap i stedet for den tidligere lille,
+diskrete inline-tekstlink.
+
+**Offentlig side (`public/madpas-view.html`) holdt i sync:** samme
+`ALLERGEN_EXAMPLES`/`MADPAS_EXAMPLES_LABEL_T`-data (udtrukket
+programmatisk via et lille Node-script, ikke hånd-transskriberet) og
+samme eksempel-rendering tilføjet der — RPC'en håndterer allerede
+`show_enumbers`-filtreringen server-side, så den offentlige side selv
+ikke behøver kende til togglen, den viser blot hvad RPC'en returnerer.
+
+**Test:** `npm run build` grøn, `npx vitest run` 109/109 bestået, mojibake-
+scan ren. Verificeret med en udvidet Playwright-gennemgang: E-nummer-
+togglens synlighed/adfærd + korrekt `PATCH`-kald med `show_enumbers`,
+fødevareeksemplerne i tjener-visningen, og — vigtigst — en dedikeret test
+af den fundne "dødt link"-fejlsti (tvunget oprettelses-fejl efter en
+vellykket revoke), som bekræftede både buggen og rettelsen. Den offentlige
+sides eksempel-visning verificeret separat med et screenshot.

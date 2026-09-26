@@ -1,9 +1,9 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
-import { ALLERGENS, SCREENS, MADPAS_LANGUAGES, MADPAS_SECTIONS_T, MADPAS_SAFETY_NOTE_T, MADPAS_ALLERGY_HEADLINE_T, MADPAS_INTOLERANCE_HEADLINE_T, SUPABASE_URL } from "./constants.jsx";
+import { ALLERGENS, SCREENS, MADPAS_LANGUAGES, MADPAS_SECTIONS_T, MADPAS_SAFETY_NOTE_T, MADPAS_ALLERGY_HEADLINE_T, MADPAS_INTOLERANCE_HEADLINE_T, MADPAS_EXAMPLES_LABEL_T, SUPABASE_URL } from "./constants.jsx";
 import { initials, makeHeaders, apiCall } from "./helpers.js";
 import { Icon, showToast } from "./SharedComponents.jsx";
-import { madpasAllergenLabel, madpasDietLabel } from "./useMadpas.js";
+import { madpasAllergenLabel, madpasDietLabel, madpasAllergenExamples } from "./useMadpas.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -42,6 +42,22 @@ export default function MadpasScreen({
 
   const profileRef = madpasProfileId === "self" ? "self" : madpasProfileId;
 
+  // ── E-numre kun med hvis bevidst valgt til visning (26. sept. 2026,
+  // Madpas-redesign, afsnit 2) — overvågede E-numre er en scannings-
+  // indstilling, ikke automatisk noget man ønsker at vise en tjener.
+  // Persisteres lokalt (samme mønster som madpasLang) og gemmes desuden PÅ
+  // selve delings-linket (show_enumbers-kolonnen), så det offentlige link
+  // respekterer nøjagtig samme valg som selve app-visningen — ellers ville
+  // en delt QR-kode kunne vise E-numre, brugeren netop har valgt at skjule.
+  const [showENumbersOnMadpas, setShowENumbersOnMadpas] = useState(() => localStorage.getItem("as_madpas_show_enumbers") === "1");
+  const toggleShowENumbers = () => {
+    setShowENumbersOnMadpas(v => {
+      const next = !v;
+      localStorage.setItem("as_madpas_show_enumbers", next ? "1" : "0");
+      return next;
+    });
+  };
+
   // ── Delbart link (madpas_links) ─────────────────────────────────────────
   // Hentes/oprettes automatisk pr. valgt profil, så QR/kopiér-sektionen
   // virker med det samme uden en ekstra "opret link"-handling — men er nu
@@ -49,58 +65,82 @@ export default function MadpasScreen({
   // aldrig-fungerende userId-baserede URL.
   const [madpasLinkToken, setMadpasLinkToken] = useState(null);
   const [madpasLinkLoading, setMadpasLinkLoading] = useState(false);
+  const [madpasLinkError, setMadpasLinkError] = useState(false);
 
-  useEffect(() => {
+  const createLink = () => apiCall(`${SUPABASE_URL}/rest/v1/madpas_links`, {
+    method: "POST",
+    headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+    body: JSON.stringify({ user_id: userId, profile_ref: profileRef, lang: madpasLang, show_enumbers: showENumbersOnMadpas }),
+  });
+
+  const fetchOrCreateLink = async () => {
     if (!userId || !accessToken) return;
-    let cancelled = false;
+    setMadpasLinkError(false);
     setMadpasLinkToken(null);
     setMadpasLinkLoading(true);
+    try {
+      const rows = await apiCall(
+        `${SUPABASE_URL}/rest/v1/madpas_links?user_id=eq.${userId}&profile_ref=eq.${encodeURIComponent(profileRef)}&status=eq.active&order=created_at.desc&limit=1`,
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+      );
+      if (Array.isArray(rows) && rows[0]) { setMadpasLinkToken(rows[0].token); return; }
+      const created = await createLink();
+      if (Array.isArray(created) && created[0]) setMadpasLinkToken(created[0].token);
+      else setMadpasLinkError(true);
+    } catch {
+      setMadpasLinkError(true);
+    } finally {
+      setMadpasLinkLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
     (async () => {
-      try {
-        const rows = await apiCall(
-          `${SUPABASE_URL}/rest/v1/madpas_links?user_id=eq.${userId}&profile_ref=eq.${encodeURIComponent(profileRef)}&status=eq.active&order=created_at.desc&limit=1`,
-          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-        );
-        if (cancelled) return;
-        if (Array.isArray(rows) && rows[0]) { setMadpasLinkToken(rows[0].token); return; }
-        const created = await apiCall(`${SUPABASE_URL}/rest/v1/madpas_links`, {
-          method: "POST",
-          headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
-          body: JSON.stringify({ user_id: userId, profile_ref: profileRef, lang: madpasLang }),
-        });
-        if (!cancelled && Array.isArray(created) && created[0]) setMadpasLinkToken(created[0].token);
-      } catch { /* del-sektionen skjules blot hvis linket ikke kunne hentes/oprettes */ }
-      finally { if (!cancelled) setMadpasLinkLoading(false); }
+      if (cancelled) return;
+      await fetchOrCreateLink();
     })();
     return () => { cancelled = true; };
   }, [userId, accessToken, profileRef]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Holder linkets gemte sprog nogenlunde friskt (bruges kun som den
-  // offentlige sides STANDARDsprog — modtageren kan altid selv skifte det).
+  // Holder linkets gemte sprog/E-nummer-valg nogenlunde friskt — sproget
+  // bruges kun som den offentlige sides STANDARDsprog (modtageren kan
+  // altid selv skifte det), men show_enumbers styrer reelt hvad RPC'en
+  // returnerer, se get_madpas_by_token() i Supabase.
   useEffect(() => {
     if (!madpasLinkToken || !accessToken) return;
     apiCall(`${SUPABASE_URL}/rest/v1/madpas_links?token=eq.${madpasLinkToken}`, {
       method: "PATCH", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-      body: JSON.stringify({ lang: madpasLang }),
+      body: JSON.stringify({ lang: madpasLang, show_enumbers: showENumbersOnMadpas }),
     }).catch(() => {});
-  }, [madpasLang]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [madpasLang, showENumbersOnMadpas]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const regenerateLink = async () => {
     setMadpasLinkLoading(true);
+    setMadpasLinkError(false);
+    const oldToken = madpasLinkToken;
     try {
-      if (madpasLinkToken) {
-        await apiCall(`${SUPABASE_URL}/rest/v1/madpas_links?token=eq.${madpasLinkToken}`, {
+      if (oldToken) {
+        await apiCall(`${SUPABASE_URL}/rest/v1/madpas_links?token=eq.${oldToken}`, {
           method: "PATCH", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
           body: JSON.stringify({ status: "revoked" }),
         });
+        // Det gamle link er nu revoked server-side, uanset om oprettelsen
+        // af et nyt herunder lykkes — nulstil UI'et med det samme, så et nu
+        // dødt link ALDRIG kan blive stående og se aktivt ud (krav 14: "et
+        // defekt link må ikke vises som aktivt").
+        setMadpasLinkToken(null);
       }
-      const created = await apiCall(`${SUPABASE_URL}/rest/v1/madpas_links`, {
-        method: "POST", headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
-        body: JSON.stringify({ user_id: userId, profile_ref: profileRef, lang: madpasLang }),
-      });
-      setMadpasLinkToken(Array.isArray(created) && created[0] ? created[0].token : null);
-      showToast("Nyt link oprettet — det gamle virker ikke længere");
+      const created = await createLink();
+      if (Array.isArray(created) && created[0]) {
+        setMadpasLinkToken(created[0].token);
+        showToast("Nyt link oprettet — det gamle virker ikke længere");
+      } else {
+        setMadpasLinkError(true);
+      }
     } catch {
+      setMadpasLinkToken(null);
+      setMadpasLinkError(true);
       showToast("Kunne ikke generere nyt link. Prøv igen.", "error");
     }
     setMadpasLinkLoading(false);
@@ -161,7 +201,7 @@ export default function MadpasScreen({
       intoleranceItems: allergenItems.filter(a => a.type === "intolerance"),
       customItems: (mpCustom || []).filter(c => typeof c === "string" && !mpAllergens.includes(c)),
       dietItems: (mpDiets || []).map(id => ({ id, label: madpasDietLabel(id, lang) })).filter(x => x.label),
-      eNumberItems: mpENumbers || [],
+      eNumberItems: showENumbersOnMadpas ? (mpENumbers || []) : [],
     };
   };
 
@@ -173,8 +213,23 @@ export default function MadpasScreen({
 
     const sectionLbl = { fontSize:15, fontWeight:800, textTransform:"uppercase", letterSpacing:"1px", color:"var(--muted)", marginBottom:10 };
     const headline = { fontSize:19, fontWeight:700, color:"var(--ink)", marginBottom:14 };
-    const itemRow = { display:"flex", alignItems:"center", gap:14, padding:"14px 0", borderBottom:"1px solid var(--border)" };
+    const itemRow = { display:"flex", alignItems:"flex-start", gap:14, padding:"14px 0", borderBottom:"1px solid var(--border)" };
     const itemName = { fontSize:26, fontWeight:800, color:"var(--ink)", lineHeight:1.25 };
+    // Korte, tydeligt mærkede fødevare-eksempler under selve allergenet
+    // (krav 8-10) — bevidst LILLE og MUTED sammenlignet med itemName, så
+    // allergenet selv altid forbliver det mest fremtrædende element (krav
+    // 9: "høflighedstekst må aldrig være mere fremtrædende end allergien" —
+    // gælder analogt for eksemplerne).
+    const exampleLine = { fontSize:14, color:"var(--muted)", marginTop:4, lineHeight:1.4 };
+    const renderExamples = (allergenId) => {
+      const examples = madpasAllergenExamples(allergenId, lang);
+      if (examples.length === 0) return null;
+      return (
+        <div style={exampleLine}>
+          <span style={{ fontWeight:700 }}>{MADPAS_EXAMPLES_LABEL_T[lang] || MADPAS_EXAMPLES_LABEL_T.en}</span> {examples.join(" · ")}
+        </div>
+      );
+    };
 
     return (
       <div style={{ position:"fixed", inset:0, zIndex:9999, background:"var(--paper)", display:"flex", flexDirection:"column" }} dir={rtl ? "rtl" : "ltr"}>
@@ -202,13 +257,16 @@ export default function MadpasScreen({
               <div>
                 {allergyItems.map((a,i) => (
                   <div key={a.id} style={{ ...itemRow, borderBottom: (i===allergyItems.length-1 && customItems.length===0) ? "none" : itemRow.borderBottom }}>
-                    <span style={UI.fs20}>{a.emoji}</span>
-                    <span style={itemName}>{madpasAllergenLabel(a, lang)}</span>
+                    <span style={{ ...UI.fs20, marginTop:2 }}>{a.emoji}</span>
+                    <div>
+                      <span style={itemName}>{madpasAllergenLabel(a, lang)}</span>
+                      {renderExamples(a.id)}
+                    </div>
                   </div>
                 ))}
                 {customItems.map((c,i) => (
                   <div key={`c${i}`} style={{ ...itemRow, borderBottom: i===customItems.length-1 ? "none" : itemRow.borderBottom }}>
-                    <Icon name="warning" size={20} color="var(--amber)" />
+                    <span style={{ marginTop:2, flexShrink:0 }}><Icon name="warning" size={20} color="var(--amber)" /></span>
                     <span style={itemName}>{c}</span>
                   </div>
                 ))}
@@ -226,8 +284,11 @@ export default function MadpasScreen({
               <div>
                 {intoleranceItems.map((a,i) => (
                   <div key={a.id} style={{ ...itemRow, borderBottom: i===intoleranceItems.length-1 ? "none" : itemRow.borderBottom }}>
-                    <span style={UI.fs20}>{a.emoji}</span>
-                    <span style={itemName}>{madpasAllergenLabel(a, lang)}</span>
+                    <span style={{ ...UI.fs20, marginTop:2 }}>{a.emoji}</span>
+                    <div>
+                      <span style={itemName}>{madpasAllergenLabel(a, lang)}</span>
+                      {renderExamples(a.id)}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -296,6 +357,15 @@ export default function MadpasScreen({
           {dietItems.map(d => <div key={d.id} className="tag" style={dietStyle}>{d.label}</div>)}
           {eNumberItems.map((e,i) => <div key={i} className="tag" style={enumberStyle}>{e}</div>)}
         </div>
+        {/* E-numre er en scannings-indstilling, ikke automatisk noget man
+            ønsker at vise en tjener (krav 2: "bevidst valgt til visning") —
+            kontrollen vises kun når der reelt er noget at vise/skjule. */}
+        {mpENumbers.length > 0 && (
+          <label style={{ display:"flex", alignItems:"center", gap:8, marginTop:10, cursor:"pointer" }}>
+            <input type="checkbox" checked={showENumbersOnMadpas} onChange={toggleShowENumbers} style={{ width:16, height:16, accentColor:"var(--green)", cursor:"pointer" }} />
+            <span style={{ fontSize:12, color:"var(--ink2)", fontWeight:600 }}>Vis overvågede E-numre på madpasset</span>
+          </label>
+        )}
       </div>
     );
   };
@@ -311,13 +381,25 @@ export default function MadpasScreen({
         </div>
       </div>
 
+      {/* "Intet aktivt link" (krav 13) — en tydelig primær handling, ikke
+          en lille inline-tekst, så det aldrig fremstår som om der reelt er
+          et link at dele. Fejl ved oprettelse vises som en synlig
+          inline-fejl (krav 18), ikke en stille fejlende knap. */}
       {!shareUrl && (
-        <div style={{ padding:16, fontSize:12, color:"var(--muted)" }}>
-          {madpasLinkLoading ? "Opretter link…" : "Intet aktivt link."}
-          {!madpasLinkLoading && (
-            <button onClick={regenerateLink} style={{ marginLeft:8, background:"none", border:"none", color:"var(--green)", fontWeight:700, fontFamily:"var(--f)", fontSize:12, cursor:"pointer", padding:0 }}>
-              Opret nyt link
-            </button>
+        <div style={{ padding:16 }}>
+          {madpasLinkLoading ? (
+            <div style={{ fontSize:12, color:"var(--muted)" }}>Opretter link…</div>
+          ) : (
+            <>
+              <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:10 }}>Intet aktivt link</div>
+              {madpasLinkError && (
+                <div style={{ fontSize:12, color:"var(--red)", marginBottom:10 }}>Kunne ikke oprette Madpas-link. Prøv igen.</div>
+              )}
+              <button onClick={fetchOrCreateLink}
+                style={{ width:"100%", padding:"12px", background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:800, cursor:"pointer" }}>
+                Opret nyt link
+              </button>
+            </>
           )}
         </div>
       )}
@@ -476,28 +558,47 @@ export default function MadpasScreen({
 
         {(allergyItems.length > 0 || customItems.length > 0) && printSection(
           `${MADPAS_SECTIONS_T.allergies[lang] || MADPAS_SECTIONS_T.allergies.en} / ${MADPAS_SECTIONS_T.allergies.en}`,
-          <div style={UI.udflex_flewrap_g8}>
-            {allergyItems.map(a => (
-              <div key={a.id} style={{ padding:"8px 16px", border:"2px solid #111", borderRadius:100, fontSize:15, fontWeight:700 }}>
-                {a.emoji} {madpasAllergenLabel(a, lang)}
-              </div>
-            ))}
+          <div>
+            {allergyItems.map((a,i) => {
+              const examples = madpasAllergenExamples(a.id, lang);
+              return (
+                <div key={a.id} style={{ marginBottom: i===allergyItems.length-1 && customItems.length===0 ? 0 : 10 }}>
+                  <div style={{ fontSize:17, fontWeight:800 }}>{a.emoji} {madpasAllergenLabel(a, lang)}</div>
+                  {examples.length > 0 && (
+                    <div style={{ fontSize:12, color:"#555", marginTop:2 }}>
+                      {MADPAS_EXAMPLES_LABEL_T[lang] || MADPAS_EXAMPLES_LABEL_T.en} {examples.join(", ")}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
             {customItems.map((c,i) => (
-              <div key={i} style={{ padding:"8px 16px", border:"2px solid #111", borderRadius:100, fontSize:15, fontWeight:700 }}>
+              <div key={i} style={{ fontSize:17, fontWeight:800, marginBottom: i===customItems.length-1 ? 0 : 10 }}>
                 • {c}
               </div>
             ))}
+            <div style={{ fontSize:12, color:"#555", marginTop:12 }}>
+              {MADPAS_SAFETY_NOTE_T[lang] || MADPAS_SAFETY_NOTE_T.en}
+            </div>
           </div>
         )}
 
         {intoleranceItems.length > 0 && printSection(
           `${MADPAS_SECTIONS_T.intolerances[lang] || MADPAS_SECTIONS_T.intolerances.en} / ${MADPAS_SECTIONS_T.intolerances.en}`,
-          <div style={UI.udflex_flewrap_g8}>
-            {intoleranceItems.map(a => (
-              <div key={a.id} style={{ padding:"8px 16px", border:"1px solid #111", borderRadius:100, fontSize:14 }}>
-                {a.emoji} {madpasAllergenLabel(a, lang)}
-              </div>
-            ))}
+          <div>
+            {intoleranceItems.map((a,i) => {
+              const examples = madpasAllergenExamples(a.id, lang);
+              return (
+                <div key={a.id} style={{ marginBottom: i===intoleranceItems.length-1 ? 0 : 10 }}>
+                  <div style={{ fontSize:16, fontWeight:700 }}>{a.emoji} {madpasAllergenLabel(a, lang)}</div>
+                  {examples.length > 0 && (
+                    <div style={{ fontSize:12, color:"#555", marginTop:2 }}>
+                      {MADPAS_EXAMPLES_LABEL_T[lang] || MADPAS_EXAMPLES_LABEL_T.en} {examples.join(", ")}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 

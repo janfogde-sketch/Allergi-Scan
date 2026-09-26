@@ -20,6 +20,19 @@ export function madpasDietLabel(dietId, lang) {
   if (lang === "da") return d.label;
   return DIET_T[dietId]?.[lang] || DIET_T[dietId]?.en || d.label;
 }
+// Korte, oversatte fødevare-eksempler til Madpas' tjener-visning/PDF/
+// offentlige side (26. sept. 2026, Madpas-redesign, afsnit 8-10) — "Fx:
+// Bread, Pasta, Cakes" under selve allergenet, IKKE en fuld/garanteret
+// liste. Kombinerer products+ingredients (samme datasæt som allerede
+// findes i ALLERGEN_EXAMPLES) og begrænser til 4 stk., så det forbliver
+// kompakt selv med flere allergener.
+export function madpasAllergenExamples(allergenId, lang) {
+  const ex = ALLERGEN_EXAMPLES[allergenId];
+  if (!ex) return [];
+  const products = ex.products?.[lang] || ex.products?.en || [];
+  const ingredients = ex.ingredients?.[lang] || ex.ingredients?.en || [];
+  return [...products, ...ingredients].slice(0, 4);
+}
 
 export function useMadpas({ allergens, customAllerg, selectedENumbers, user, madpasLang, family, madpasProfileId }) {
   const [madpasSpeaking, setMadpasSpeaking] = useState(false);
