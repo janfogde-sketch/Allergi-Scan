@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS, E_NUMBERS, E_CATEGORIES, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall, buildActiveProfileList, computeProfileResults, extractENumbers } from "./helpers.js";
 import { EatSafeLogo, Icon, ProductImage, showToast } from "./SharedComponents.jsx";
@@ -159,7 +160,17 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
 // gem-mønster som det tidligere inline-panel allerede brugte), lukker sig
 // selv bagefter — opfylder specifikationens "gemmes direkte" uden en
 // selvstændig, ekstra Gem-knap. Samme portal-/bottom-sheet-mønster som
-// ShareSheet (ListScreen.jsx) og ConfirmDialog (SharedComponents.jsx).
+// ShareSheet (ListScreen.jsx) og ConfirmDialog (SharedComponents.jsx) — MEN
+// via createPortal til document.body (26. sept. 2026, opfølgning: "bund-
+// navigationen lå ovenpå/foran sheetet, Ny kategori/Opret var ikke fuldt
+// synlige"). Roden er det kendte .screen.fade-in-mønster (se CLAUDE.md
+// afsnit 3): fade-in-animationens efterladte transform gør .screen til et
+// CSS "containing block" for position:fixed-børn, så en fixed sheet renderet
+// INDE i skærmen (som denne var) positioneres relativt til SKÆRMENS boks i
+// stedet for det virkelige viewport — det forklarer både hvorfor bundnav'en
+// (som ER fixed til det rigtige viewport) kunne ligge foran, og hvorfor
+// sheetets bund kunne klippes af. Samme løsning som ListPickerSheet/
+// ProfileMenu.jsx allerede bruger: portal til document.body.
 function FavoriteCategorySheet({ favorite, existingCategories, onSetCategory, onClose }) {
   const [newCategoryInput, setNewCategoryInput] = useState("");
   const createCategory = () => {
@@ -167,9 +178,14 @@ function FavoriteCategorySheet({ favorite, existingCategories, onSetCategory, on
     if (!name) return;
     onSetCategory(name);
   };
-  return (
+  return createPortal(
     <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.5)" }} onClick={onClose}>
-      <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 28px", position:"absolute", left:0, right:0, bottom:0, maxHeight:"75vh", overflowY:"auto" }}
+      {/* Bund-padding inkluderer env(safe-area-inset-bottom) (26. sept.
+          2026, opfølgning: "Ny kategori/Opret skal altid have korrekt
+          safe-area padding nederst") — samme additive mønster som
+          .bottom-nav allerede bruger (calc(24px + env(...))), så "Opret"-
+          knappen aldrig ender under enhedens home-indikator/safe-area. */}
+      <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px calc(28px + env(safe-area-inset-bottom))", position:"absolute", left:0, right:0, bottom:0, maxHeight:"75vh", overflowY:"auto" }}
         onClick={e => e.stopPropagation()}>
         <div style={UI.rowBetweenMb16}>
           <div style={UI.ufs18_fw900_cink}>Kategorisér favorit</div>
@@ -204,7 +220,8 @@ function FavoriteCategorySheet({ favorite, existingCategories, onSetCategory, on
           <button className="btn btn-primary btn-sm" style={UI.uwsnowrap} onClick={createCategory}>Opret</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -757,8 +774,15 @@ export default function ProfileScreen({
                   {visibleFavorites.map((f,i) => {
                     const st = favoriteStatus(f);
                     const metaLine = [f.brand, favoritesScope==="family" && !f.savedByMe && f.savedBy ? `Gemt af ${f.savedBy.split(" ")[0]}` : null].filter(Boolean).join(" · ");
+                    // 14px lodret padding (op fra 12px, næste trin på
+                    // spacing-skalaen) — Favoritter-rækker er 3 linjer høje
+                    // (navn/mærke/status) mod Historiks typisk 2, så lidt
+                    // mere luft holder listen let at scanne med mange gemte
+                    // varer (26. sept. 2026, opfølgning). .hist-rows egen
+                    // bund-kant-divider (theme.jsx) er uændret og giver
+                    // fortsat den visuelle adskillelse mellem rækker.
                     return (
-                      <div key={f.ean || f.id || i} className="hist-row" style={{ padding:"12px 0", cursor:"pointer" }}
+                      <div key={f.ean || f.id || i} className="hist-row" style={{ padding:"14px 0", cursor:"pointer" }}
                         onClick={() => lookupProduct(f.ean || f.code || f.id)}>
                         <ProductImage product={f} size={44} />
                         <div className="hist-info" style={{ marginLeft:8 }}>
