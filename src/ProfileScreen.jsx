@@ -6,8 +6,6 @@ import { EatSafeLogo, Icon, ProductImage, ProfileBadges, showToast } from "./Sha
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { TextLink } from "./DesignSystem.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
-import { usePush } from "./usePush.js";
-import { useNotificationPrefs } from "./useNotificationPrefs.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -134,13 +132,10 @@ function GamificationCard({ history, family, activeProfiles, setScreen, SCREENS 
 }
 
 export default function ProfileScreen({
-  showDeleteAccount, setShowDeleteAccount,
-  deleteConfirmText, setDeleteConfirmText,
-  deletingAccount, deleteOwnAccount,
   customInput, setCustomInput,
   lookupProduct,
 }) {
-  const { user, setUser, userId, accessToken, clearAuth, loginEmail } = useAuthContext();
+  const { user, setUser, userId, accessToken, loginEmail } = useAuthContext();
   const { allergens, setAllergens, customAllerg, setCustomAllerg, family, setFamily, activeProfiles, setActiveProfiles } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
   const { history, favorites, historyLoading, historyScope, favoritesScope, loadHistory, loadFavorites, toggleFavorite, setFavoriteCategory } = useHistoryContext();
@@ -196,25 +191,6 @@ export default function ProfileScreen({
   const [inviteError, setInviteError] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
 
-  // ── Push-notifikationer (hooks skal være på komponent-niveau) ────────────────
-  const { supported: pushSupported, permission: pushPermission, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePush();
-  const [pushLoading, setPushLoading] = useState(false);
-  const [pushStatus, setPushStatus] = useState(pushPermission);
-
-  // ── Notifikations-kategorier (hvilke typer, via hvilke kanaler) ──────────────
-  const { prefs: notifPrefs, savingKeys: notifSavingKeys, setPref: setNotifPref, categories: notifCategories } = useNotificationPrefs({ accessToken, userId });
-
-  const handlePushToggle = async () => {
-    setPushLoading(true);
-    if (pushStatus === "granted") {
-      await pushUnsubscribe(accessToken);
-      setPushStatus("default");
-    } else {
-      const result = await pushSubscribe(accessToken);
-      setPushStatus(result.ok ? "granted" : "denied");
-    }
-    setPushLoading(false);
-  };
   const FamilyChips = () => {
     const allIds = ["me", ...family.map(m => m.id)];
     const isAll = allIds.every(id => activeProfiles.includes(id));
@@ -407,108 +383,10 @@ export default function ProfileScreen({
               SCREENS={SCREENS}
             />
 
-            {/* Konto */}
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
-              <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:12 }}>Konto</div>
-              <div style={UI.rowGap8}>
-                <button onClick={clearAuth}
-                  style={{ flex:1, padding:"12px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
-                  Log ud
-                </button>
-                <button onClick={() => { setShowDeleteAccount(true); setDeleteConfirmText(""); }}
-                  style={{ flex:1, padding:"12px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--red)", cursor:"pointer" }}>
-                  Slet konto
-                </button>
-              </div>
-            </div>
-
-            {/* ── Push-notifikationer ── */}
-            {pushSupported && (
-                <div className="card" style={UI.mb12}>
-                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                    <div>
-                      <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2 }}><Icon name="bell" size={14} color="var(--ink)" /> Push-notifikationer</div>
-                      <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>
-                        {pushStatus === "granted"
-                          ? "Du får besked når dine indsendelser godkendes"
-                          : pushStatus === "denied"
-                          ? "Blokeret i browserindstillinger"
-                          : "Få besked når dine produkter godkendes"}
-                      </div>
-                    </div>
-                    {pushStatus !== "denied" && (
-                      <button onClick={handlePushToggle} disabled={pushLoading}
-                        style={{
-                          width:48, height:28, borderRadius:14, border:"none", cursor:"pointer",
-                          background: pushStatus === "granted" ? "var(--green)" : "var(--border2)",
-                          position:"relative", transition:"background .2s", flexShrink:0,
-                          opacity: pushLoading ? 0.6 : 1,
-                        }}>
-                        <div style={{
-                          width:22, height:22, borderRadius:"50%", background:"var(--ink)",
-                          position:"absolute", top:3,
-                          left: pushStatus === "granted" ? 23 : 3,
-                          transition:"left .2s", boxShadow:"0 1px 3px rgba(0,0,0,.3)"
-                        }} />
-                      </button>
-                    )}
-                  </div>
-                  {pushStatus === "denied" && (
-                    <div style={{ marginTop:8, fontSize:11, color:"var(--amber)", background:"var(--amber-lt)", borderRadius:8, padding:"6px 10px" }}>
-                      Tilladelse er blokeret. Aktivér push i din browsers indstillinger.
-                    </div>
-                  )}
-                </div>
-            )}
-
-            {/* ── Notifikations-kategorier ── */}
-            <div className="card" style={UI.mb12}>
-              <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2 }}>
-                <Icon name="bell" size={14} color="var(--ink)" /> Notifikationer
-              </div>
-              <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5, marginBottom:12 }}>
-                Vælg hvilke beskeder du vil have, og om de skal komme som push, email — eller begge dele.
-              </div>
-              <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-                {notifCategories.map(cat => (
-                  <div key={cat.id} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:12.5, fontWeight:700, color:"var(--ink)" }}>{cat.label}</div>
-                      <div style={{ fontSize:10.5, color:"var(--muted)", lineHeight:1.4 }}>{cat.description}</div>
-                    </div>
-                    <div style={{ display:"flex", gap:12, flexShrink:0 }}>
-                      {[{ ch:"push", label:"Push" }, { ch:"email", label:"Mail" }].map(({ ch, label }) => {
-                        const key = `${cat.id}:${ch}`;
-                        const on = notifPrefs[key] !== false;
-                        const busy = !!notifSavingKeys[key];
-                        return (
-                          <div key={ch} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3 }}>
-                            <div style={{ fontSize:9, fontWeight:700, color:"var(--muted2)", textTransform:"uppercase", letterSpacing:.3 }}>{label}</div>
-                            <button
-                              onClick={() => setNotifPref(cat.id, ch, !on)}
-                              disabled={busy}
-                              aria-label={`${label}-notifikation for ${cat.label}`}
-                              style={{
-                                width:36, height:20, borderRadius:10, border:"none", cursor:"pointer",
-                                background: on ? "var(--green)" : "var(--border2)",
-                                position:"relative", transition:"background .2s", flexShrink:0,
-                                opacity: busy ? 0.6 : 1,
-                              }}>
-                              <div style={{
-                                width:16, height:16, borderRadius:"50%", background:"var(--ink)",
-                                position:"absolute", top:2,
-                                left: on ? 18 : 2,
-                                transition:"left .2s", boxShadow:"0 1px 3px rgba(0,0,0,.3)"
-                              }} />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Konto, Push-notifikationer og Notifikations-kategorier er
+                flyttet til SettingsScreen.jsx (26. sept. 2026, bruger-
+                feedback: "Indstillinger mangler i menuen") — nås nu via
+                ProfileMenu.jsx's "Indstillinger", ikke længere herfra. */}
 
             {/* ── Footer: kontakt + privatlivspolitik ── */}
             <div style={{ marginTop:24, paddingBottom:8, textAlign:"center" }}>
