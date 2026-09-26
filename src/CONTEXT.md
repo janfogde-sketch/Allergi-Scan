@@ -457,6 +457,19 @@ runde var eksplicit afgrænset til spacing/hierarki/scroll/safe-areas/
 mikrointeraktioner, ikke sprogfejl. Tag fat i det i en fremtidig
 sprog-/oversættelses-fokuseret runde.
 
+**Syvende runde (27. sept., samme dag) — præcise afstandsjusteringer på
+selve Madpas-forsiden**, opfølgning på runde 6's mere generelle spacing-
+oprydning: brugeren pegede på fire konkrete, for stramme afstande. Alle
+fire justeret via lokale inline-style-overrides (IKKE i de delte
+`.mp-section-lbl`/`UI.mb14`-klasser, som bruges bredt i resten af appen):
+sprog-dropdown → KRYDSKONTAMINERING 20→32px (margin-collapse med
+dropdownens egen 16px marginBottom), KRYDSKONTAMINERING-hjælpetekstens
+`lineHeight` 1.4→1.6, KRYDSKONTAMINERING → "Dit madpas" 0→16px (manglede
+helt margin før), "Dit madpas"-label → chips 8→16px, chips → "Åbn
+madpas" 14→32px. CTA'ens egen størrelse og sidens bredder er urørt.
+Verificeret programmatisk med `getBoundingClientRect()`-mål af alle fire
+afstande efter ændringen (32/16/16/32px), ikke kun visuelt.
+
 ---
 
 ## 11. CSS-konventioner
