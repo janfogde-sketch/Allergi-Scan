@@ -3232,3 +3232,73 @@ inkl. gluten og PATCHede kun `{diets, e_numbers}`, og Profil-sidens egen
 oversigt viste øjeblikkeligt de nye valg efter navigation tilbage — uden
 en separat genindlæsning. Husstand-rækken blev klikket og bekræftet at
 åbne den eksisterende Familie-side. Ingen konsol-fejl i noget trin.
+
+## Profil, sidste oprydningsrunde — "Din aktivitet" trimmet, Gluten/Glutenfri forklaret (28. sept. 2026)
+
+Umiddelbart efter forrige runde bekræftede brugeren eksplicit at den nye
+struktur/navigation var korrekt ("Bevar den nuværende nye struktur og
+navigation præcis som nu"), og gav en kort, syv-punkts "final cleanup"-
+liste — ren finpudsning, ingen nye ændringer i struktur eller
+navigation.
+
+**1-3. "Din aktivitet" (GamificationCard) trimmet til et rent 2×2-grid:**
+`familyActive`-metricen (badge "Familie aktive", talte `activeProfiles`
+minus "me"/"user") er fjernet — begrundelsen var eksplicit at Husstand nu
+har sin egen tydelige genvej på Profil-siden (fra forrige runde), så et
+separat aktivitets-tal for det samme koncept var overflødigt. Med kun 4
+metrics tilbage (Dage i træk/Scanninger i alt/Advarsler fanget/Sikre
+opdagelser) bliver det 2-kolonne-gridet automatisk et rent 2×2 uden
+yderligere layoutarbejde. "Dages streak" omdøbt til "Dage i træk"
+(krav 3). Komponentens `family`/`activeProfiles`-props er fjernet fra
+funktionssignaturen OG fra selve kaldsstedet i Profil-JSX'en, da de nu var
+fuldstændig ubrugte — ren, direkte konsekvens af at fjerne metricen, ikke
+en selvstændig oprydning ud over scope.
+
+**4. Redundant streak-tekst reduceret (krav 4):** header-undertekstens
+"Streak · Scanninger · Opdagelser" er ændret til "Scanninger ·
+Opdagelser" — "Streak" var den tredje omtale af samme koncept (efter
+"X dage!"-badgen og selve "Dage i træk"-feltet), og brugeren bad
+eksplicit om at undgå at kommunikere streak "unødvendigt mange steder".
+Progressbaren ("Ugentlig streak", 7-dages-indikatoren) og "X dage!"-
+badgen (vist ved streak ≥3) er UDTRYKKELIGT bevaret uændret, som krav 4
+bad om — kun den ekstra, redundante undertekst-omtale er fjernet.
+
+**5. Blå venstre-accentkant fjernet, ingen erstatning (krav 5):**
+`borderLeft:"2px solid var(--blue)"` fjernet fra kortets container-style.
+Kortet er nu lige så fladt som fx den nye Husstand-række fra forrige
+runde (samme delte `UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10`-stil,
+ingen per-instance override) — bekræftet programmatisk at kortets
+venstre-kant nu matcher den almindelige, neutrale kant-farve
+(`rgba(21,32,26,.1)`, samme som appens `--border`-token), ikke længere
+den blå accent.
+
+**6-7. Gluten vs. Glutenfri-forholdet forklaret via det eksisterende
+info-ikon (krav 6):** `ALLERGENS`-listens "gluten"-post (`constants.jsx`)
+havde allerede et `note`-felt og et info-ikon (ⓘ) i `AllergenChipPicker`
+(viser noten som en `showToast(a.note,"info")` ved tryk) — men noten
+forklarede kun forskellen mellem cøliaki/glutenfølsomhed og hvedeallergi,
+IKKE forholdet til kostpræferencen "Glutenfri". Brugeren havde ret i at
+dette kunne være forvirrende: appen har allerede en `useGlutenFreeSync()`-
+hook (indført i forrige Profil-runde) der automatisk tilføjer "Glutenfri"
+til kostpræferencerne når "Gluten" vælges som intolerance — men uden en
+forklaring kunne en bruger tro de selv skulle vælge BEGGE manuelt for at
+være dækket. Noten er udvidet (samme felt, samme info-ikon, ingen ny UI)
+til: "Gluten (intolerance) og Glutenfri (kost) er koblet sammen — vælger
+du Gluten, tilføjes Glutenfri automatisk, så du ikke skal vælge begge.
+Ikke det samme som hvedeallergi." — bevarer den oprindelige hvedeallergi-
+distinktion, tilføjer den nye kobling-forklaring. Ingen ændring af
+`DietChipPicker`s "Glutenfri"-kort selv (ingen info-ikon-mekanisme findes
+der, og opgaven bad kun om at bevare/genbruge det EKSISTERENDE ikon på
+Gluten-siden).
+
+**Test:** `npm run build` grøn, `npx vitest run` 109/109 bestået,
+mojibake-scan ren på begge ændrede filer (`ProfileScreen.jsx`,
+`constants.jsx`). Verificeret med Playwright: "Familie aktive" bekræftet
+væk, præcis 4 metric-felter tilbage (`Dage i træk`, `Scanninger i alt`,
+`Advarsler fanget`, `Sikre opdagelser`), gammel "Dages streak"-tekst væk,
+undertekst korrekt forkortet til "Scanninger · Opdagelser", progressbar
+("Ugentlig streak") fortsat synlig, aktivitetskortets `border-left`
+programmatisk bekræftet identisk med appens neutrale kant-farve (ikke
+blå). Et testklik på Gluten-chippens info-ikon i "Rediger præferencer"
+bekræftede at tooltip-teksten nu nævner både "Glutenfri" og "koblet" —
+den nye forklaring vises korrekt. Ingen konsol-fejl.

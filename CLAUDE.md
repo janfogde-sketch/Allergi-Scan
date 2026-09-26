@@ -843,9 +843,25 @@ rigtige husstandskonti (`household`) — samme to grupper Familie-siden
 selv viser samlet.
 
 **Uændret:** "Mine præferencer"-oversigten på selve Profil-siden (kompakt
-gruppevisning af aktive valg, kun kategorier der reelt har noget), "Din
-aktivitet"-kortet (Gamification), konto-/support-footeren, samt Scan/
-Historik/Indkøbsliste/Madpas/husstandslogikken i øvrigt.
+gruppevisning af aktive valg, kun kategorier der reelt har noget), konto-/
+support-footeren, samt Scan/Historik/Indkøbsliste/Madpas/husstandslogikken
+i øvrigt.
+
+**Opfølgende oprydningsrunde, samme dag — "Din aktivitet" (Gamification)
+og Gluten/Glutenfri-forklaring:** "Familie aktive"-tallet er fjernet fra
+aktivitetskortet (Husstand har nu sin egen tydelige genvej, se ovenfor) —
+tilbage er et rent 2×2-grid (Dage i træk/Scanninger i alt/Advarsler
+fanget/Sikre opdagelser). "Dages streak" omdøbt til "Dage i træk", og
+header-undertekstens redundante "Streak ·" fjernet (streak kommunikeres
+allerede via "X dage!"-badgen og selve feltet) — progressbaren og "3
+dage!"-badgen er UÆNDREDE, som bedt om. Den blå venstre-accentkant på
+kortet er fjernet uden erstatning (kortet er nu lige så fladt som fx
+Husstand-rækken). Gluten-allergenets eksisterende info-ikon (ⓘ, allerede
+brugt til en cøliaki/hvedeallergi-forklaring) har fået sin note udvidet
+til også at forklare koblingen til kostpræferencen "Glutenfri" (vælges
+Gluten, tilføjes Glutenfri automatisk via `useGlutenFreeSync`, så
+brugeren ikke skal vælge begge selv) — ingen ny UI, kun tekst i den
+allerede eksisterende mekanisme.
 
 Fuld detalje i `.claude/HISTORY.md`.
 
