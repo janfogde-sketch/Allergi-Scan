@@ -303,9 +303,11 @@ yderligere handling ventende.
 
 ## 9. Familie-deling
 
-- **Tabel:** `family_invites` (token, 24t expiry, to-vejs)
+- **Tabel:** `family_invites` (token, 24t expiry, to-vejs). RLS: `invited_by`/`accepted_by` kan SELECT egen række, kun `invited_by` kan INSERT, admin kan DELETE, og (26. sept. 2026) `invited_by` kan selv DELETE sin egen række mens `status='pending'` — nødvendigt for at "Annullér link"/"Annullér invitation" kan virke for en almindelig bruger.
 - **Flow:** Profil → Familie → "Opret invitationslink" → send link → modtager åbner `eatsafe.dk/invite/[token]` → opretter konto → tilknyttes via `accept_family_invite()` RPC
-- **Realtime indkøbsliste:** WebSocket på `shopping_list_items` — alle familiemedlemmer ser ændringer live
+- **`GET /functions/v1/family/group`** (26. sept. 2026) returnerer nu også hvert husstandsmedlems `allergens`/`custom`/`diets`/`eNumbers` (læst fra `user_allergens` + `users.diets`/`e_numbers`) — Familie-siden viser dermed scanningsrelevante chips for BÅDE administrerede profiler og rigtige konti, ikke kun de administrerede. Kun læsning, ingen redigeringsret følger med.
+- **`POST /functions/v1/family/link-profile`** (26. sept. 2026, `{managed_member_id, target_user_id}`) — undgår dubletter når en person, der tidligere havde en administreret `family_members`-profil, senere får sin egen konto via invitation: overfører profilens allergener/kostpræferencer/E-numre til kontoen (overskriver) og sletter den administrerede profil. Kræver at caller ejer profilen OG at target er en del af callers husstand (accepteret invitation i begge retninger) — en eksplicit, bruger-initieret handling, ikke automatisk navne-matching.
+- **Realtime indkøbsliste:** WebSocket på `shopping_list_items` — alle familiemedlemmer ser ændringer live. Familie-siden selv har ingen realtime-kanal — et periodisk tjek (hvert 12. sek.) mens man ser på fanen dækker "opdater automatisk ved accepteret invitation"-behovet uden en ny WebSocket-kanal til en sjælden hændelse.
 
 ---
 
