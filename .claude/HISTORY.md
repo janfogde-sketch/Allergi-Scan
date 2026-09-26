@@ -2266,3 +2266,98 @@ artifact-preview-baserede live-verifikation beskrevet ovenfor (en mere
 pålidelig metode end håndskrevne mimics, værd at genbruge fremover når en
 skærm kræver visuel efterprøvning og en `--mode artifact-preview`-login-
 bypass findes).
+
+## Familie-siden gjort til en enkel husstands-oversigt, fase 2 — chips, ventende invitationer, dublet-sammenlægning (26. sept. 2026, samme dag som fase 1)
+
+Fase 1 (samme dag, tidligere PR) fjernede madvare-baggrunden, "Aktive
+profiler ved scanning" og det permanent udfoldede tilføj-/invitations-kort.
+Denne opfølgende, langt mere omfattende runde byggede på et detaljeret,
+16-punkts krav fra brugeren om at gøre selve familie-*funktionen* færdig,
+ikke kun dens layout:
+
+- **Scanningsrelevante chips for ALLE familiemedlemmer, ikke kun
+  administrerede profiler.** Tidligere viste kun `family_members`-
+  profilerne allergi-chips; rigtige husstandskonti (fra `/functions/v1/
+  family/group`) viste slet ingen data ud over navn/konto-type. Rettet ved
+  at udvide edge-functionens GET-handler til også at slå `user_allergens` +
+  `users.diets`/`e_numbers` op for hver husstands-bruger og returnere dem i
+  samme `{allergens, custom, diets, eNumbers}`-form som administrerede
+  profiler allerede brugte — én fælles `buildMemberChips()`/
+  `renderMemberChips()`-funktion i `ProfileScreen.jsx` bruges nu af begge
+  rækketyper. Prioriteret rækkefølge (allergier/intolerancer → kost-
+  præferencer → E-numre), capped ved 4 synlige chips + en klikbar "+N" der
+  folder resten ud pr. række (lokal `expandedChipsFor`-liste af række-
+  nøgler, ikke en ny formular eller navigation). Allergi-chips bruger den
+  eksisterende `.tag`-klasse uændret; kostpræferencer fik en lysere,
+  neutral grøn variant (`--green-selected-bg`/`--border`/`--ink2`) og
+  E-numre en helt neutral variant (`--surface2`/`--border`/`--ink2`) — ingen
+  nye farver, kun eksisterende tokens, bevidst adskilt fra allergi-farven så
+  et E-nummer eller en kostpræference ikke kan forveksles med en allergi-
+  advarsel.
+- **Ventende invitationer vises nu direkte i familie-oversigten**, ikke kun
+  inde i "Invitér med egen konto"-panelet mens man opretter den. Ny
+  `pendingInvites`-state hentet fra `family_invites?invited_by=eq.<mig>&
+  status=eq.pending` (tilladt af den allerede-eksisterende SELECT-policy),
+  filtreret for reelt udløbne rækker client-side. Hver ventende invitation
+  vises som en selvstændig række ("Invitation afventer" + udløbsdato) med
+  "Kopiér invitationslink"/"Del igen"/"Annullér invitation" — den sidste
+  genbruger den `family_invites_delete_own_pending`-RLS-policy, fase 1
+  tilføjede. For at undgå at samme invitation vises BÅDE inde i det åbne
+  opret-panel OG i hovedlisten samtidig, filtreres panelets egen
+  `inviteId` fra hovedlistens visning, og panelets "Annuller"-header
+  nulstiller nu panel-state og genindlæser listen i stedet for bare at
+  lukke panelet.
+- **"Opdater automatisk" ved accepteret invitation** — der findes ingen
+  realtime-kanal for `family_invites`/husstanden (kun Indkøbslisten har en
+  rå WebSocket-baseret Supabase Realtime-kanal, se `useShoppingList.js`).
+  At bygge en ny kanal til en hændelse der sker sjældent (én gang pr.
+  invitation) blev vurderet uforholdsmæssigt — løst i stedet med et let
+  periodisk tjek (`setInterval`, 12 sek.) af husstand + ventende
+  invitationer, men KUN mens man rent faktisk har Familie-fanen åben
+  (ryddet op ved `screen`-skift), plus et øjeblikkeligt genhent ved hvert
+  besøg på fanen (samme mønster som Historik-fanens allerede eksisterende
+  auto-opdatering).
+- **Undgå dubletter ved konto-tilknytning.** Ny `POST /functions/v1/
+  family/link-profile`-endpoint (`supabase/functions/family/index.ts`):
+  tager `{managed_member_id, target_user_id}`, verificerer at caller ejer
+  den administrerede profil OG at target rent faktisk er en del af callers
+  husstand (en accepteret invitation i begge retninger), overfører
+  profilens allergener/kostpræferencer/E-numre til target-kontoen
+  (overskriver `user_allergens` + `users.diets`/`e_numbers`) og sletter
+  derefter den nu overflødige administrerede profil. Bevidst en EKSPLICIT,
+  bruger-initieret handling — en lille "Kobl til en administreret profil"-
+  link under hver husstandskonto man selv administrerer forbindelsen for
+  (samme `canRemove`-afgrænsning som fjernelses-handlingen), der åbner en
+  simpel liste af ens administrerede profiler at vælge imellem. Ingen
+  automatisk navne-matching, som let kunne koble den forkerte profil sammen.
+- **Ny undertekst** ("Alle i din familie — både profiler du administrerer,
+  og personer med egen EatSafe-konto.") efter brugerens eksakte ordlyd.
+- **Bevidst IKKE ændret:** `MemberForm`s knap bruger stadig `softDisabled`
+  (dæmpet, men klikbar — viser valideringsfejl først efter forsøgt tryk) i
+  stedet for et hårdt `disabled`-attribut, selvom kravspecifikationen bad
+  om en decideret disabled knap. Dette er en bevidst, tidligere etableret,
+  app-bred (inkl. onboarding trin 1) UX-beslutning dokumenteret direkte i
+  `MemberForm.jsx`'s egne kommentarer — at ændre den ville også ændre
+  onboarding, langt uden for denne opgaves egentlige scope ("genbrug
+  præcis samme komponenter og logik som onboarding"). Automatisk scroll-
+  til-fejl er af samme grund heller ikke tilføjet — onboarding selv har det
+  ikke, kun den samme efter-forsøgt-tryk-besked som allerede findes.
+  Granulær, brugeraktiveret deling af favoritter/indkøbslister (adskilt fra
+  automatisk delte allergiprofiler) er heller ikke bygget — den eksisterende
+  automatiske deling mellem ægte husstandskonti er allerede en bevidst,
+  transparent (forklaret i `HelpModal.jsx` og Profil-fanens egen "Konti du
+  deler ... med"-tekst), fungerende funktion; at gøre den til en per-
+  funktion opt-in-indstilling er en selvstændig, større arkitekturændring
+  uden for denne redesign-rundes scope, jf. "bevar al eksisterende
+  funktionalitet, der allerede virker".
+
+**Test:** `npm run build` grøn, `npx vitest run` 109/109 bestået, mojibake-
+scan ren. Verificeret med Playwright mod realistiske mock-data: chip-
+prioritering og -farver for begge rækketyper, "+N"-udfoldning, ventende
+invitation med alle tre handlinger (kopiér/del igen/annullér — DELETE
+bekræftet kaldt), og hele dublet-sammenlægningsflowet (vælger-liste →
+korrekt `link-profile`-kald med de rigtige id'er → den administrerede
+profil forsvinder fra listen). Selve `family`-edge-functionen er deployet
+til produktion (version 16) — kunne ikke ende-til-ende-testes direkte (kun
+via mock-data i frontend-testen), så den server-side logik hviler på
+kode-gennemgang frem for en kørt integrationstest.

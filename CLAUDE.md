@@ -691,6 +691,27 @@ merget).** Fem præcise justeringer oven på forrige rundes ændringer:
   `element.getAnimations()` bekræftede halo-animationen kører og
   knap-wrapperen ikke længere har nogen animation.
 
+### Familie-siden gjort færdig som funktion, ikke kun layout (26. sept. 2026)
+
+Efter en første, layout-fokuseret redesign-runde (fjernet madvare-baggrund,
+"Aktive profiler ved scanning" og det permanent udfoldede tilføj-/
+invitationskort — samme mønster som List/Historik/Favoritter/Allergi-
+leksikon, se `app-bg-hide` ovenfor) fulgte en langt mere omfattende, 16-
+punkts opfølgning der gør selve familie-*funktionen* færdig: scanningsrele-
+vante chips (allergier → kostpræferencer → E-numre, prioriteret rækkefølge,
+capped med udfoldelig "+N") for BÅDE administrerede profiler og rigtige
+husstandskonti (edge-functionen `family/index.ts`s `/group`-endpoint
+returnerer nu også allergener/kost/E-numre pr. husstandsmedlem, ikke kun
+navn/email); ventende invitationer vist direkte i familie-oversigten med
+kopiér/del igen/annullér; et periodisk 12-sekunders-tjek mens man er på
+fanen (ingen realtime-kanal findes for `family_invites`, kun Indkøbslisten
+har det) så en accepteret invitation dukker op uden manuel genindlæsning;
+og et nyt `POST /functions/v1/family/link-profile`-endpoint til eksplicit,
+bruger-initieret sammenlægning af en administreret profil med en nyligt
+tilkoblet rigtig konto (undgår dubletter uden automatisk navne-matching).
+Fuld detalje i `.claude/HISTORY.md`, backend-reference i `src/CONTEXT.md`
+afsnit 9.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,

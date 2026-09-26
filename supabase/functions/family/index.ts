@@ -50,6 +50,7 @@ Deno.serve(async (req) => {
   const groupUserId = isGroup && parts[parts.length - 1] !== "group" ? parts[parts.length - 1] : null;
   const isMembers = parts.includes("members");
   const isInvite = parts.includes("invite");
+  const isLinkProfile = parts.includes("link-profile");
   const memberId = isMembers ? parts[parts.length - 1] === "members" ? null : parts[parts.length - 1] : null;
   const inviteId = isInvite ? parts[parts.length - 1] === "invite" ? null : parts[parts.length - 1] : null;
   const familyId = !isMembers && !isInvite && !isGroup ? parts[parts.length - 1] === "family" ? null : parts[parts.length - 1] : null;
@@ -63,6 +64,12 @@ Deno.serve(async (req) => {
     // GET — hent min husstand (mig + alle jeg har inviteret/er inviteret af).
     // canRemove er kun true for medlemmer CALLER selv oprindeligt inviterede
     // — kun den oprindelige "admin" af en given forbindelse kan fjerne den.
+    // Returnerer nu også hvert medlems allergener/kostpræferencer/E-numre
+    // (26. sept. 2026, Familie-redesign — "brugeren skal med ét blik kunne
+    // se, hvad profilen faktisk bliver kontrolleret imod ved scanning" gælder
+    // alle familiemedlemmer, ikke kun administrerede profiler). Kun læsning,
+    // ingen redigeringsret følger med — retten til selv at styre sin egen
+    // konto ligger hos personen selv (se CLAUDE.md's rettigheds-afsnit).
     if (method === "GET" && isGroup && !groupUserId) {
       const { data: groupRows } = await supabase.rpc("family_group", { p_uid: caller.id });
       const group = (groupRows ?? []).map((r) => (typeof r === "string" ? r : r.family_group)).filter((id) => id !== caller.id);
@@ -71,7 +78,7 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ success: true, members: [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       const { data: members, error } = await supabase
-        .from("users").select("id, name, email").in("id", group);
+        .from("users").select("id, name, email, diets, e_numbers").in("id", group);
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
       const { data: invitedByMe } = await supabase
@@ -79,7 +86,24 @@ Deno.serve(async (req) => {
         .eq("status", "accepted").eq("invited_by", caller.id).in("accepted_by", group);
       const adminOf = new Set((invitedByMe ?? []).map((r) => r.accepted_by));
 
-      const withPermissions = (members ?? []).map((m) => ({ ...m, canRemove: adminOf.has(m.id) }));
+      const { data: allergenRows } = await supabase
+        .from("user_allergens").select("user_id, allergen, type")
+        .in("user_id", group).is("family_member_id", null);
+      const allergensByUser = new Map();
+      for (const row of allergenRows ?? []) {
+        if (!allergensByUser.has(row.user_id)) allergensByUser.set(row.user_id, { allergens: [], custom: [] });
+        const bucket = allergensByUser.get(row.user_id);
+        if (row.type === "custom") bucket.custom.push(row.allergen); else bucket.allergens.push(row.allergen);
+      }
+
+      const withPermissions = (members ?? []).map((m) => ({
+        ...m,
+        canRemove: adminOf.has(m.id),
+        allergens: allergensByUser.get(m.id)?.allergens ?? [],
+        custom: allergensByUser.get(m.id)?.custom ?? [],
+        diets: m.diets ?? [],
+        eNumbers: m.e_numbers ?? [],
+      }));
       return new Response(JSON.stringify({ success: true, members: withPermissions }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -96,6 +120,59 @@ Deno.serve(async (req) => {
       );
       const { error } = await supabase.from("family_invites").delete().eq("id", link.id);
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // POST — kobl en administreret profil (family_members, uden eget login)
+    // til en rigtig EatSafe-konto der lige er blevet en del af husstanden
+    // (26. sept. 2026, Familie-redesign: undgå dubletter når en person, man
+    // tidligere har administreret en profil for, senere accepterer en
+    // invitation med sit eget login). Overfører profilens allergener/
+    // kostpræferencer/E-numre til kontoen og sletter den nu overflødige
+    // administrerede profil — en bevidst, eksplicit handling fra husstandens
+    // administrator, ikke en automatisk sammenlægning ud fra fx navne-match.
+    if (method === "POST" && isLinkProfile) {
+      const { managed_member_id, target_user_id } = await req.json();
+      if (!managed_member_id || !target_user_id) return new Response(
+        JSON.stringify({ error: "managed_member_id og target_user_id er påkrævet" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+
+      const { data: managedMember } = await supabase
+        .from("family_members").select("*").eq("id", managed_member_id).eq("user_id", caller.id).maybeSingle();
+      if (!managedMember) return new Response(
+        JSON.stringify({ error: "Ikke autoriseret til denne profil" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+
+      // target_user_id skal være en del af caller's egen husstand — samme
+      // "admin af forbindelsen"-tjek som DELETE /group ovenfor, blot i begge
+      // retninger (caller kan have inviteret target, eller omvendt).
+      const { data: link } = await supabase
+        .from("family_invites").select("id")
+        .eq("status", "accepted")
+        .or(`and(invited_by.eq.${caller.id},accepted_by.eq.${target_user_id}),and(invited_by.eq.${target_user_id},accepted_by.eq.${caller.id})`)
+        .maybeSingle();
+      if (!link) return new Response(
+        JSON.stringify({ error: "Denne konto er ikke en del af din husstand" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+
+      await supabase.from("user_allergens").delete().eq("user_id", target_user_id).is("family_member_id", null);
+      const allergenRows = [
+        ...(managedMember.allergens ?? []).map((a) => ({ user_id: target_user_id, allergen: a, type: "allergen" })),
+        ...(managedMember.custom_allergens ?? []).map((c) => ({ user_id: target_user_id, allergen: c, type: "custom" })),
+      ];
+      if (allergenRows.length > 0) await supabase.from("user_allergens").insert(allergenRows);
+
+      await supabase.from("users").update({
+        diets: managedMember.diets ?? [],
+        e_numbers: managedMember.e_numbers ?? [],
+      }).eq("id", target_user_id);
+
+      const { error } = await supabase.from("family_members").delete().eq("id", managed_member_id);
+      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
