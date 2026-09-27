@@ -471,8 +471,13 @@ body::-webkit-scrollbar{display:none;}
    stadig for diskret: 15.5px→16.5px, --ink2→--ink (fuld tekstfarve).
    max-width øget 280px→300px (28. sept. 2026, "FINAL POLISH") — den
    opdaterede, længere hovedbudskab-tekst ("...allergier og kosthensyn")
-   fik en akavet 3. linje med kun ét ord ved den gamle bredde. */
-.welcome-tagline{font-size:16.5px;color:var(--ink);margin-top:12px;letter-spacing:.1px;font-weight:600;line-height:1.5;max-width:300px;}
+   fik en akavet 3. linje med kun ét ord ved den gamle bredde.
+   27. sept. 2026, "FINAL MICRO-POLISH": margin-top 12px→16px (mere
+   lodret rytme ned til sloganet ovenfor), line-height 1.5→1.6 +
+   font-weight 600→500 (de tre linjer skal føles "lettere og mere
+   elegante" — stadig fuld --ink-farve + samme størrelse, så det ikke går
+   ud over læsbarheden). */
+.welcome-tagline{font-size:16.5px;color:var(--ink);margin-top:16px;letter-spacing:.1px;font-weight:500;line-height:1.6;max-width:300px;}
 .welcome-divider{width:40px;height:2px;background:var(--border2);border-radius:2px;margin:32px auto;}
 /* 3 fordele-række (25. sept. 2026-brief) — kort, ikon-båret opsummering,
    IKKE tunge fuld-bredde feature-kort (erstatter tidligere .welcome-features/

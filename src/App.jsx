@@ -1048,16 +1048,20 @@ export default function EatSafe() {
           </header>
         )}
 
-        {/* Feedback-knap under onboarding — safe-area-korrekt top-afstand +
-            samme skygge-token (var(--sh)) som resten af appens knapper i
-            stedet for en selvstændig, hardkodet skygge (28. sept. 2026,
-            "FINAL POLISH – VELKOMSTSIDE", punkt 8). `top:12` alene ville
-            sidde for tæt på/under statuslinjen eller Dynamic Island på
-            notch-enheder — nu `calc(12px + env(safe-area-inset-top))`. */}
+        {/* Feedback-knap under onboarding — safe-area-korrekt top-afstand.
+            `top:12` alene ville sidde for tæt på/under statuslinjen eller
+            Dynamic Island på notch-enheder — nu `calc(12px +
+            env(safe-area-inset-top))`.
+            27. sept. 2026, "FINAL MICRO-POLISH": skygge/kant gjort en
+            anelse mere diskret end appens standard var(--sh)-token — knappen
+            skal stadig være nem at finde i beta, men ikke konkurrere
+            visuelt med logo/slogan eller den primære CTA lige under. Lysere
+            kant (var(--border) i stedet for var(--border2)) + en lettere,
+            tættere skygge (lavere opacity/spredning end var(--sh)). */}
         {isOnboard && (
           <div style={{ position:"fixed", top:"calc(12px + env(safe-area-inset-top))", right:12, zIndex:1000 }}>
             <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
-              style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"6px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--ink2)", cursor:"pointer", display:"flex", alignItems:"center", gap:6, boxShadow:"var(--sh)" }}>
+              style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:100, padding:"6px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--ink2)", cursor:"pointer", display:"flex", alignItems:"center", gap:6, boxShadow:"0 1px 3px -1px rgba(21,32,26,.08)" }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
               Feedback
             </button>

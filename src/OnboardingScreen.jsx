@@ -488,25 +488,34 @@ export default function OnboardingScreen({
             )}
 
             {/* Juridisk tekst — diskret, men læsbar, småprint nederst (28.
-                sept. 2026, "FINAL POLISH"). Både "handelsbetingelser" og
-                "privatlivspolitikken" er nu rigtige links (se public/
+                sept. 2026, "FINAL POLISH"). Både linket og
+                "privatlivspolitikken" er rigtige links (se public/
                 terms.html, nyoprettet i samme runde — der fandtes tidligere
                 ingen selvstændig vilkårs-side, kun privacy.html). Teksten
-                er omformuleret til at skelne "accepterer handelsbetingelser"
-                fra "bekræfter at have læst privatlivspolitikken" — denne
+                er omformuleret til at skelne "accepterer brugsvilkår" fra
+                "bekræfter at have læst privatlivspolitikken" — denne
                 tekst er IKKE samtykke til behandling af allergi-/
                 helbredsoplysninger (det håndteres separat, eksplicit,
                 længere inde i selve onboardingen, se privacy.html afsnit 4).
-                --ink2 i stedet for det tidligere, lysere --muted (bedre
-                kontrast mod det aktive food-baggrundsbillede), max-width
-                for pænere linjebrud, og en anelse større line-height.
-                Egen text-shadow-løft (ikke en del af det globale sæt i
-                theme.jsx) — denne tekst sidder tættest på skærmens nederste
-                kant, hvor vignet-effekten (theme.jsx's .app-bg) er svagest
-                og billedet mest tydeligt, så den har mest brug for et løft. */}
-            <div style={{ marginTop:22, maxWidth:290, fontSize:11.5, color:"var(--ink2)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
+                max-width for pænere linjebrud, og en anelse større
+                line-height. Egen text-shadow-løft (ikke en del af det
+                globale sæt i theme.jsx) — denne tekst sidder tættest på
+                skærmens nederste kant, hvor vignet-effekten (theme.jsx's
+                .app-bg) er svagest og billedet mest tydeligt, så den har
+                mest brug for et løft.
+                27. sept. 2026, "FINAL MICRO-POLISH": "handelsbetingelser"
+                omdøbt til "brugsvilkår" — terms.html's indhold (tjenesten,
+                ingen medicinsk erstatning, konto, brugerindsendt indhold,
+                ansvarsbegrænsning) er almindelige brugsvilkår, ikke
+                købs-/handelsbetingelser (EatSafe sælger ikke noget
+                transaktionelt); terms.html's egen overskrift rettet
+                tilsvarende. Farve skærpet fra --ink2 (.78 alpha) til en
+                lokal, lidt mørkere rgba(.85 alpha) for optimal kontrast mod
+                det aktive baggrundsbillede — stadig tydeligt "småprint",
+                ikke fuld --ink-vægt. */}
+            <div style={{ marginTop:22, maxWidth:290, fontSize:11.5, color:"rgba(21,32,26,.85)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
               Ved at oprette en konto accepterer du vores{" "}
-              <a href="/terms.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>handelsbetingelser</a>
+              <a href="/terms.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>brugsvilkår</a>
               {" "}og bekræfter, at du har læst{" "}
               <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>privatlivspolitikken</a>.
             </div>
