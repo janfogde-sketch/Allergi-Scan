@@ -9,8 +9,8 @@
 //
 // Bygget oven på de eksisterende, delte CSS-klasser i theme.jsx (.btn,
 // .card, .chip, .field osv.) — ikke en ny, parallel styling-mekanisme.
-// Farverne er EatSafe-designsystemets låste palet (--green:#0E8F5A,
-// --green-dark:#08734A, --green-selected-bg:#EFF9F4, --green-halo:#DDF4E8,
+// Farverne er EatSafe-designsystemets låste palet (--green:#0F7D4F,
+// --green-dark:#0C643F, --green-selected-bg:#EFF9F4, --green-halo:#DDF4E8,
 // se .claude/rules/design-tokens.md).
 // ─────────────────────────────────────────────────────────────────────────────
 import React from "react";
@@ -228,7 +228,7 @@ export function ChoiceChip({ children, selected, onClick, showCheck = true, styl
       onKeyDown={onClick ? (e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }) : undefined}
       style={style}>
       {children}
-      {selected && showCheck && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
+      {selected && showCheck && <div className="chip-check"><Icon name="check" size={9} color="var(--ink)" /></div>}
     </div>
   );
 }

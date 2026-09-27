@@ -18,14 +18,18 @@ export const THEME = {
   ink2:    "rgba(21,32,26,.72)",
   ink3:    "rgba(21,32,26,.52)",
 
-  // Grøn — appens ene accentfarve: sikker/success/primær CTA (låst 25. sept. 2026)
-  green:      "#0E8F5A",
-  greenDark:  "#08734A",
-  greenGlow:  "#16A363",
-  greenLt:    "rgba(14,143,90,.10)",
-  greenMid:   "rgba(14,143,90,.18)",
-  greenText:  "#0E8F5A",
-  onGreen:    "#FFFFFF", // Tekstfarve på grøn baggrund (knapper, badges)
+  // Grønt to-farve-system (låst 27. sept. 2026, se :root i denne fil for
+  // fuld begrundelse) — green er primær handlingsfarve, greenAccent er en
+  // separat, lysere highlight-farve kun til små positive mikro-elementer.
+  green:        "#0F7D4F",
+  greenDark:    "#0C643F",
+  greenGlow:    "#15945F",
+  greenLt:      "rgba(15,125,79,.10)",
+  greenMid:     "rgba(15,125,79,.18)",
+  greenText:    "#0F7D4F",
+  greenAccent:  "#34D06A",
+  greenAccentLt:"rgba(52,208,106,.14)",
+  onGreen:      "#FFFFFF", // Tekstfarve på grøn baggrund (knapper, badges)
 
   // Fare — rød
   red:    "#C8402E",
@@ -86,21 +90,30 @@ export const appCss = `
   --paper2:#F3F3F1;
   /* Bundark/modal-overflader — hvid, til overlejringer der "svæver" over resten af skærmen */
   --sheet:#FFFFFF;
-  /* Grøn — appens ene accentfarve: sikker/success/primær CTA.
-     Låst som EatSafe-designsystem 25. sept. 2026 (samme palet som
-     tidligere kun Scan-CTA'en brugte — se CLAUDE.md afsnit 5/7) — al
-     tidligere rgba(74,222,128,...)-legacy-grøn og den gamle
-     #178A50-base er udfaset til fordel for denne. */
-  --green:#0E8F5A;
-  --green-dark:#08734A;
-  --green-logo:#0E8F5A;
-  --green-glow:#16A363;
-  --green-lt:rgba(14,143,90,.10);
-  --green-mid:rgba(14,143,90,.18);
-  --green-text:#0E8F5A;
+  /* Grønt to-farve-system — låst 27. sept. 2026 (MASTER PROMPT-brief, se
+     CLAUDE.md afsnit 5/7), superseding den tidligere ENE-grønne lås fra
+     25. sept. --green er igen appens primære handlingsfarve: knapper,
+     aktive toggles/tabs/faner, primære CTA'er, aktive trin-markører,
+     centrale handlingspunkter (bl.a. Scan-knappen). --green-accent er en
+     lysere, adskilt highlight-farve KUN til små positive mikro-elementer
+     (checkmarks, "safe"-badges/dots, kamera-reticle-accenter) - den må
+     IKKE bruges til knapper/aktive tilstande, så den ikke overtager som
+     primær handlingsfarve (brugerens eksplicitte krav). */
+  --green:#0F7D4F;
+  --green-dark:#0C643F;
+  --green-logo:#34D06A;
+  --green-glow:#15945F;
+  --green-lt:rgba(15,125,79,.10);
+  --green-mid:rgba(15,125,79,.18);
+  --green-text:#0F7D4F;
   --green-selected-bg:#EFF9F4;
   --green-halo:#DDF4E8;
   --on-green:#FFFFFF;
+  /* Accent-grønt — kun små highlights (checkmarks, safe-badges/dots,
+     reticle), se kommentaren ovenfor. */
+  --green-accent:#34D06A;
+  --green-accent-lt:rgba(52,208,106,.14);
+  --green-accent-mid:rgba(52,208,106,.26);
   /* Borders — bløde, lyse */
   --border:rgba(21,32,26,.10);
   --border2:rgba(21,32,26,.16);
@@ -402,14 +415,14 @@ body::-webkit-scrollbar{display:none;}
 .chip{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border2);background:var(--surface);cursor:pointer;transition:all .15s;font-size:12.5px;font-weight:600;color:var(--ink2);user-select:none;}
 .chip:hover{border-color:var(--border2);color:var(--ink);}
 .chip.on{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);font-weight:700;}
-.chip-check{margin-left:auto;width:16px;height:16px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--on-green);flex-shrink:0;}
+.chip-check{margin-left:auto;width:16px;height:16px;background:var(--green-accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--ink);flex-shrink:0;}
 .tags{display:flex;flex-wrap:wrap;gap:6px;}
 .tag{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--green-lt);border:1px solid var(--green-mid);border-radius:100px;font-size:12px;color:var(--green);font-weight:600;}
 .tag-x{cursor:pointer;opacity:.4;font-size:13px;padding:4px 6px;margin:-4px -6px -4px 0;border-radius:50%;}.tag-x:hover{opacity:.8;background:rgba(21,32,26,.06);}
 
 /* ── BADGES ── */
 .badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap;letter-spacing:.2px;}
-.badge.safe{background:var(--green-lt);color:var(--green);border:1px solid var(--green-mid);}
+.badge.safe{background:var(--green-accent-lt);color:var(--green-dark);border:1px solid var(--green-accent-mid);}
 .badge.danger{background:var(--red-lt);color:var(--red);border:1px solid var(--red-md);}
 .badge.warn{background:var(--amber-lt);color:var(--amber);border:1px solid var(--amber-md);}
 
@@ -617,7 +630,7 @@ body::-webkit-scrollbar{display:none;}
 .recent-name{font-size:13px;font-weight:500;color:var(--ink);letter-spacing:-.2px;margin-bottom:2px;}
 .recent-meta{font-size:10px;color:var(--muted2);font-weight:400;}
 .recent-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-left:auto;}
-.recent-dot.safe{background:var(--green);box-shadow:0 0 7px rgba(14,143,90,.6);}
+.recent-dot.safe{background:var(--green-accent);box-shadow:0 0 7px rgba(52,208,106,.6);}
 .recent-dot.warn{background:var(--amber);}
 .recent-dot.danger{background:var(--red);box-shadow:0 0 7px rgba(255,82,82,.5);}
 .recent-dot.not_found{background:var(--muted);}
@@ -699,7 +712,7 @@ body::-webkit-scrollbar{display:none;}
 .menu-profile-card{cursor:pointer;transition:opacity .1s;}
 .menu-profile-card:hover{opacity:.85;}
 .hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.hist-dot.safe{background:var(--green);}.hist-dot.danger{background:var(--red);}.hist-dot.warn,.hist-dot.warning{background:var(--amber);}.hist-dot.not_found{background:var(--muted);}
+.hist-dot.safe{background:var(--green-accent);}.hist-dot.danger{background:var(--red);}.hist-dot.warn,.hist-dot.warning{background:var(--amber);}.hist-dot.not_found{background:var(--muted);}
 .hist-info{flex:1;min-width:0;}
 .hist-name{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.1px;color:var(--ink);}
 .hist-time{font-size:11px;color:var(--muted);margin-top:1px;font-weight:400;}

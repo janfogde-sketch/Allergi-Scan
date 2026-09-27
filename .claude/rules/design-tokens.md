@@ -10,18 +10,32 @@ paths:
 ```
 --ink:#15201A            tekst
 --paper:#F6F8F3          baggrund (hvid/lys — IKKE grøn baggrund)
---green:#0E8F5A          EatSafe-designsystemets ENE grønne værdi — låst
-                         25. sept. 2026 (se CLAUDE.md afsnit 5/7). Var
-                         tidligere #178A50, adskilt fra en Scan-CTA-only
-                         palet (#0E8F5A/#08734A) — de to er nu slået sammen
-                         til denne ene værdi, brugt overalt (Scan, Profil,
-                         Indkøbsliste, onboarding osv.), ingen undtagelser.
---green-dark:#08734A     mørk variant — knap-gradienter/hover, IKKE en
-                         separat semantisk farve
---green-logo/-glow/-text  afledt af --green, se theme.jsx for præcise værdier
---green-lt / --green-mid  translucent grøn (rgba(14,143,90,.10 / .18)) — til
-                         bløde baggrunde/skygger, IKKE til valgt-tilstand
-                         (se --green-selected-bg nedenfor)
+--green:#0F7D4F          EatSafe-designsystemets PRIMÆRE grønne handlings-
+                         farve — låst 27. sept. 2026 (MASTER PROMPT-brief,
+                         se CLAUDE.md afsnit 5/7), superseding den tidligere
+                         ENE-grønne lås fra 25. sept. (som da var #0E8F5A).
+                         Brug KUN til: knapper, aktive toggles/tabs/faner,
+                         primære CTA'er, aktive trin-markører, centrale
+                         handlingspunkter (bl.a. Scan-knappen). Må IKKE
+                         erstattes af --green-accent nedenfor.
+--green-accent:#34D06A   Adskilt, lysere highlight-farve — KUN til små
+                         positive mikro-elementer: checkmarks (.chip-check),
+                         "safe"-badges/dots (.badge.safe, .recent-dot.safe,
+                         .hist-dot.safe), kamera-scan-reticle/laser-linje
+                         (--green-logo, ScannerScreen.jsx). Må IKKE bruges
+                         til knapper eller andre aktive/valgt-tilstande —
+                         den lyse grøn må ikke tage over som primær
+                         handlingsfarve i appen (brugerens eksplicitte krav,
+                         gentaget flere gange under MASTER PROMPT-brief'en).
+--green-accent-lt/-mid   translucent accent-grøn, til badge-baggrunde
+--green-dark:#0C643F     mørk variant af PRIMÆR grøn — knap-gradienter/
+                         hover, IKKE en separat semantisk farve
+--green-logo/-glow/-text  se theme.jsx for præcise værdier (--green-logo er
+                         nu aliaset til --green-accent, ikke --green — den
+                         driver kun kamera-reticle/laser-effekten)
+--green-lt / --green-mid  translucent PRIMÆR grøn — til bløde baggrunde/
+                         skygger, IKKE til valgt-tilstand (se
+                         --green-selected-bg nedenfor)
 --green-selected-bg:#EFF9F4  SOLID lys baggrund til "valgt"/aktiv chip-,
                          filter- og tab-tilstande (fx .chip.on, .tab.active,
                          .filter-chip.active) — brug denne, ikke --green-lt,
@@ -30,7 +44,8 @@ paths:
                          kortet (gentaget rod-årsag til flere runders
                          "ser forkert ud i preview"-fejlfinding denne sæson)
 --green-halo:#DDF4E8     lys grøn glød/halo bag store CTA'er (fx Scan-
-                         knappens radial-gradient-halo)
+                         knappens radial-gradient-halo) — PRIMÆR-afledt,
+                         ikke accent
 --on-green:#FFFFFF
 --red:#C8402E (+lt/md)   fare
 --amber:#B5791A (+lt/md) advarsel
