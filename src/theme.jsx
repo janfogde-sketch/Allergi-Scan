@@ -452,6 +452,18 @@ body::-webkit-scrollbar{display:none;}
 .welcome-vspace-top{flex:0.62 1 0%;min-height:0;}
 .welcome-vspace-bottom{flex:1 1 0%;min-height:8px;}
 .welcome-logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:32px;}
+/* Delt brand-slogan-klasse "Mere tryghed i hverdagen" (27. sept. 2026,
+   MASTER PROMPT-brief) — en diskret brand statement, IKKE en funktionel
+   undertekst (den rolle har .welcome-tagline nedenfor uændret, og
+   SettingsScreen.jsx's egne rækketekster). Bevidst dæmpet/lille, muted
+   farve, bred letter-spacing, så den læses som en rolig signatur, ikke
+   endnu en overskrift der konkurrerer med sidens hovedbudskab. Brugt KUN
+   to steder: under logoet på velkomstsiden (OnboardingScreen.jsx), og i
+   "Om EatSafe"-kortet i Indstillinger (SettingsScreen.jsx) — IKKE gentaget
+   på andre skærme eller i topbaren, jf. brief'ens eksplicitte "aldrig fast
+   gentagelse". */
+.brand-slogan{font-size:12px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;font-weight:600;}
+.welcome-logo-wrap .brand-slogan{margin-top:8px;}
 /* Tydelig value proposition (25. sept. 2026-brief: "kort og tydelig value
    proposition") — hævet fra en dæmpet, muted tagline til en tydeligere,
    mørkere sætning, så den reelt fungerer som skærmens hovedbudskab, ikke en
@@ -917,7 +929,7 @@ body::-webkit-scrollbar{display:none;}
    baggrundens punkt-gitter. Et fint, lyst "løft" (ikke en blur/glød) holder
    den læsbar uden at det ligner en fejl. */
 .screen-title,.screen-sub,.section-lbl,.mp-title,.mp-subtitle,.mp-section-lbl,
-.welcome-tagline,
+.welcome-tagline,.brand-slogan,
 .step-title,.step-sub,.onboard-skip{
   text-shadow:0 1px 0 rgba(255,255,255,.7);
 }

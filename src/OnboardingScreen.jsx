@@ -447,6 +447,7 @@ export default function OnboardingScreen({
                 allergier — matcher at appen også dækker diæter/E-numre. */}
             <div className="welcome-logo-wrap" style={UI.mb16}>
               <EatSafeLogo variant="horizontal" size={56} />
+              <div className="brand-slogan">Mere tryghed i hverdagen</div>
               <div className="welcome-tagline">Scan produkter og se straks, om de passer til dine allergier og kosthensyn.</div>
             </div>
 

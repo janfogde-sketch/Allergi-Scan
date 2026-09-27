@@ -352,6 +352,10 @@ export default function SettingsScreen({
         <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2 }}>
           <Icon name="info" size={14} color="var(--ink)" /> Om EatSafe
         </div>
+        {/* Slogan (27. sept. 2026, MASTER PROMPT-brief) — samme diskrete
+            .brand-slogan-klasse som velkomstsiden, se theme.jsx. Kun
+            disse to steder i hele appen. */}
+        <div className="brand-slogan" style={{ marginBottom:12 }}>Mere tryghed i hverdagen</div>
         {/* Version — venlig, brugervenlig primærtekst (28. sept. 2026,
             FINAL POLISH: intet fabrikeret versionsnummer som "0.9.0", da
             appen ikke har et rigtigt semver-tal at vise — "Beta" er den
