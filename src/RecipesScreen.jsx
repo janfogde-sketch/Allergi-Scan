@@ -755,9 +755,9 @@ export default function RecipesScreen({
       <div className="screen fade-in">
         {/* Header */}
         <div style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 0 16px" }}>
-          <button onClick={() => setShowSubmitRecipe(false)}
-            style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", lineHeight:0 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          <button onClick={() => setShowSubmitRecipe(false)} aria-label="Tilbage"
+            style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0 }}>
+            <Icon name="chevronLeft" size={18} color="var(--ink)" />
           </button>
           <div>
             <div style={UI.ufs18_fw800_cink}>Indsend opskrift</div>

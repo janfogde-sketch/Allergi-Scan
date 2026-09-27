@@ -516,7 +516,7 @@ export default function ResultScreen({
             </span>
             {scanResult.verified_status === "pending" && (
               <span style={{ display:"inline-flex", alignItems:"center", gap:4, padding:"2px 10px", borderRadius:20, background:"var(--amber-lt)", border:"1px solid rgba(251,191,36,.3)", fontSize:10, fontWeight:700, color:"var(--amber)" }}>
-                ⏳ Afventer godkendelse
+                <Icon name="clock" size={10} color="var(--amber)" /> Afventer godkendelse
               </span>
             )}
           </div>
@@ -563,7 +563,7 @@ export default function ResultScreen({
         {infantWarnings.length > 0 && (
           <div style={{ padding:"10px 12px", marginBottom:6, background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:10 }}>
             <div style={{ fontSize:11, fontWeight:800, color:"var(--amber)", marginBottom:6, display:"flex", alignItems:"center", gap:6 }}>
-              <span>🍼</span>
+              <Icon name="warning" size={13} color="var(--amber)" />
               Advarsel for småbørn — {infantProfiles.map(m => m.name?.split(" ")[0]).join(", ")} (under 3 år)
             </div>
             <div style={UI.udflex_fdcolumn_g4}>
@@ -752,7 +752,7 @@ export default function ResultScreen({
       {/* ── Scan-integration: forslag om at markere en matchende vare på
           indkøbslisten som købt — diskret, kræver et eksplicit klik. ── */}
       {listMatch && (
-        <div style={{ display:"flex", alignItems:"center", gap:8, background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, padding:"9px 10px", marginBottom:10 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, padding:"10px 10px", marginBottom:10 }}>
           <Icon name="cart" size={14} color="var(--green)" />
           <button type="button" onClick={confirmListMatch}
             style={{ flex:1, minWidth:0, textAlign:"left", background:"none", border:"none", padding:0, cursor:"pointer", fontFamily:"var(--f)", fontSize:11.5, fontWeight:700, color:"var(--green)", lineHeight:1.4 }}>

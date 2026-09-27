@@ -653,7 +653,7 @@ export default function ProfileScreen({
                 const prod = { name: h.products?.name || h.name, brand: h.products?.brand || h.brand, image_url: h.products?.image_url || null };
                 const scannedBySuffix = historyScope === "family" && h.user_id !== userId && h.users?.name ? ` · ${h.users.name.split(" ")[0]}` : "";
                 return (
-                  <div key={h.id ?? i} className="hist-row" style={{ padding:"12px 0", cursor: isNotFound ? "default" : "pointer" }}
+                  <div key={h.id ?? i} className="hist-row" style={{ cursor: isNotFound ? "default" : "pointer" }}
                     // Genbruger samme lookupProduct-kald som "Senest scannet" og
                     // favoritter, men sætter først appens aktive profiler til den
                     // historiske liste — se openHistoryEntry ovenfor for hvorfor.
@@ -711,7 +711,7 @@ export default function ProfileScreen({
           <div className="screen fade-in">
 
             {/* Hero */}
-            <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:20, padding:"22px 20px", marginBottom:14, boxShadow:"var(--sh)" }}>
+            <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:20, padding:"24px 20px", marginBottom:14, boxShadow:"var(--sh)" }}>
               <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:16 }}>
                 <div style={{ width:56, height:56, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
                   {initials(user.name||"?")}
@@ -911,15 +911,16 @@ export default function ProfileScreen({
                   {visibleFavorites.map((f,i) => {
                     const st = favoriteStatus(f);
                     const metaLine = [f.brand, favoritesScope==="family" && !f.savedByMe && f.savedBy ? `Gemt af ${f.savedBy.split(" ")[0]}` : null].filter(Boolean).join(" · ");
-                    // 14px lodret padding (op fra 12px, næste trin på
-                    // spacing-skalaen) — Favoritter-rækker er 3 linjer høje
+                    // 14px lodret padding (op fra .hist-rows 12px, næste trin
+                    // på spacing-skalaen) — Favoritter-rækker er 3 linjer høje
                     // (navn/mærke/status) mod Historiks typisk 2, så lidt
                     // mere luft holder listen let at scanne med mange gemte
-                    // varer (26. sept. 2026, opfølgning). .hist-rows egen
-                    // bund-kant-divider (theme.jsx) er uændret og giver
-                    // fortsat den visuelle adskillelse mellem rækker.
+                    // varer (26. sept. 2026, opfølgning). .hist-row er siden
+                    // 27. sept. 2026 et bordered kort (samme stil som
+                    // .list-item, se theme.jsx) i stedet for en flad divider-
+                    // række — vandret padding overrides derfor ikke længere.
                     return (
-                      <div key={f.ean || f.id || i} className="hist-row" style={{ padding:"14px 0", cursor:"pointer" }}
+                      <div key={f.ean || f.id || i} className="hist-row" style={{ padding:"14px 14px", cursor:"pointer" }}
                         onClick={() => lookupProduct(f.ean || f.code || f.id)}>
                         <ProductImage product={f} size={44} />
                         <div className="hist-info" style={{ marginLeft:8 }}>
@@ -980,7 +981,7 @@ export default function ProfileScreen({
         {screen === SCREENS.EDITPROFILE && (
           <div className="screen fade-in">
             <div style={{ display:"flex", alignItems:"center", gap:10, padding:"16px 0 20px" }}>
-              <div style={UI.ufs18_fw800_cink}>Rediger profil</div>
+              <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Rediger profil</div>
             </div>
 
             <div className="card" style={UI.mb10}>
@@ -1033,7 +1034,7 @@ export default function ProfileScreen({
         {screen === SCREENS.EDITPREFERENCES && (
           <div className="screen fade-in">
             <div style={{ display:"flex", alignItems:"center", gap:10, padding:"16px 0 20px" }}>
-              <div style={UI.ufs18_fw800_cink}>Rediger præferencer</div>
+              <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Rediger præferencer</div>
             </div>
 
             <div className="card" style={UI.mb10}>

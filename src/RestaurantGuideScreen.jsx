@@ -9,7 +9,7 @@ import { Icon } from "./SharedComponents.jsx";
 const TIPS = [
   {
     id: "forbered",
-    icon: "📋",
+    icon: "file",
     title: "Forbered dig inden du går",
     color: "#818cf8",
     bg: "rgba(129,140,248,.10)",
@@ -23,7 +23,7 @@ const TIPS = [
   },
   {
     id: "ankom",
-    icon: "🚪",
+    icon: "door",
     title: "Når du ankommer",
     color: "var(--green)",
     bg: "rgba(14,143,90,.08)",
@@ -37,7 +37,7 @@ const TIPS = [
   },
   {
     id: "bestil",
-    icon: "🍽️",
+    icon: "utensils",
     title: "Bestillingsøjeblikket",
     color: "#f97316",
     bg: "rgba(249,115,22,.08)",
@@ -52,7 +52,7 @@ const TIPS = [
   },
   {
     id: "udlandet",
-    icon: "✈️",
+    icon: "globe",
     title: "Rejser og udlandet",
     color: "#fbbf24",
     bg: "rgba(251,191,36,.08)",
@@ -67,7 +67,7 @@ const TIPS = [
   },
   {
     id: "kantina",
-    icon: "🏢",
+    icon: "building",
     title: "Kantiner og buffeter",
     color: "#34d399",
     bg: "rgba(52,211,153,.08)",
@@ -81,7 +81,7 @@ const TIPS = [
   },
   {
     id: "rettigheder",
-    icon: "⚖️",
+    icon: "shield",
     title: "Dine rettigheder",
     color: "#a78bfa",
     bg: "rgba(167,139,250,.08)",
@@ -120,9 +120,9 @@ export default function RestaurantGuideScreen() {
     <div className="screen fade-in">
       {/* Header */}
       <div style={{ display:"flex", alignItems:"center", gap:10, padding:"16px 0 4px" }}>
-        <button onClick={() => setScreen(SCREENS.PROFILE)}
-          style={{ background:"none", border:"none", cursor:"pointer", padding:"4px 8px 4px 0", color:"var(--muted)", fontSize:20, lineHeight:1 }}>
-          ‹
+        <button onClick={() => setScreen(SCREENS.PROFILE)} aria-label="Tilbage"
+          style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, flexShrink:0 }}>
+          <Icon name="chevronLeft" size={18} color="var(--ink)" />
         </button>
         <div>
           <div style={UI.ufs18_fw800_cink}>Restaurantguide</div>
@@ -167,8 +167,8 @@ export default function RestaurantGuideScreen() {
               {/* Accordion header */}
               <div onClick={() => setOpenSection(isOpen ? null : section.id)}
                 style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 16px", cursor:"pointer" }}>
-                <div style={{ width:38, height:38, borderRadius:10, background: section.bg, border:`1px solid ${section.border}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
-                  {section.icon}
+                <div style={{ width:38, height:38, borderRadius:10, background: section.bg, border:`1px solid ${section.border}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                  <Icon name={section.icon} size={18} color={section.color} />
                 </div>
                 <div style={UI.flex1}>
                   <div style={UI.boldInk14}>{section.title}</div>

@@ -25,9 +25,10 @@
 //   ikke styre noget reelt.
 // - "Eksportér mine data": ingen eksisterende Edge Function/RPC
 //   understøtter en data-eksport endnu.
-// - "Vilkår": ingen selvstændig vilkårs-side findes i public/ (kun
-//   privacy.html) — samme velkendte begrænsning som OnboardingScreen.jsx
-//   allerede dokumenterer for sin egen "Handelsbetingelser"-tekst.
+// - "Vilkår": public/terms.html (Brugsvilkår) findes siden 28. sept. 2026,
+//   linket fra OnboardingScreen.jsx's velkomstside — ingen selvstændig
+//   genvej hertil er tilføjet i Indstillinger, da Privatliv & data-kortet
+//   allerede er det etablerede sted for den slags juridiske links.
 // - En "Åbn Indstillinger"-genvej ved afvist push-tilladelse: genundersøgt
 //   i FINAL POLISH-runden (28. sept. 2026) — der findes stadig ingen
 //   cross-browser/cross-platform JS-API til at åbne systemets/browserens
