@@ -245,7 +245,12 @@ body::-webkit-scrollbar{display:none;}
      på tværs af alle skærme. Selve sløringen/tonen ligger nu i ::before
      (næste regel), IKKE direkte her — se dens kommentar for hvorfor. */
   border-bottom:none;
-  padding:12px 20px 10px;display:flex;align-items:center;justify-content:space-between;
+  /* Topafstand inkluderer nu env(safe-area-inset-top) (27. sept. 2026,
+     "Opdater EatSafe-headeren"-brief, punkt 4) — manglede helt før, så
+     headeren i praksis kunne sidde tættere på statuslinjen/Dynamic Island
+     end de 12px selv tilsigtede på notch-enheder. */
+  padding:calc(12px + env(safe-area-inset-top)) 20px 10px;
+  display:flex;align-items:center;justify-content:space-between;
   position:sticky;top:0;z-index:60;
 }
 /* Baggrundslag for topbaren, adskilt fra selve topbaren (24. sept. 2026,
@@ -266,6 +271,21 @@ body::-webkit-scrollbar{display:none;}
   mask-image:linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
 }
 .topbar-logo{display:flex;align-items:center;gap:8px;}
+/* Header-tekstlogo (27. sept. 2026, "Opdater EatSafe-headeren"-brief) —
+   erstatter det fulde EatSafeLogo-billedeaktiv (symbol+ordmærke) KUN i
+   denne kompakte header-kontekst; scanner-/stregkode-ikonet skal fremover
+   udelukkende signalere selve scan-funktionen (Scan-knappen, bundnav),
+   ikke bruges som del af brandingen her. Størrelsen (24px) er en
+   ca. 20-25% forøgelse af det tidligere billedlogos ca. 22px visuelle
+   højde, semibold/bold vægt, så brandet står tydeligere uden at dominere. */
+.topbar-wordmark{font-size:24px;font-weight:700;color:var(--ink);letter-spacing:-.3px;line-height:1;white-space:nowrap;}
+.topbar-wordmark-safe{color:var(--green);}
+/* BETA-badge — samme varme/guldbrune farve som før, nu i en delt klasse i
+   stedet for inline styles, med line-height:1 + inline-flex-centrering så
+   den altid centrerer sig lodret mod tekstlogoet uanset dets nøjagtige
+   linjehøjde (den tidligere marginTop:2-hack kompenserede specifikt for
+   billedlogoets egen indre luft, og er ikke længere nødvendig). */
+.topbar-beta{background:var(--amber);color:var(--ink);font-size:9px;font-weight:800;padding:3px 8px;border-radius:100px;letter-spacing:.5px;line-height:1;display:inline-flex;align-items:center;flex-shrink:0;}
 .topbar-avatar{width:32px;height:32px;background:var(--green-lt);border:1.5px solid var(--green-mid);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--green);cursor:pointer;transition:all .15s;letter-spacing:.3px;}
 .topbar-avatar:hover{background:var(--green-mid);}
 

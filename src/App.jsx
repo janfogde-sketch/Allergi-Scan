@@ -19,9 +19,10 @@ import {
 import {
   Icon, IngredientsList, ProfileBadges,
   getProductIcon, ProductImage, LazyFallback, ToastHost, showToast,
-  ScanLoadingOverlay, EatSafeLogo
+  ScanLoadingOverlay
 } from "./SharedComponents.jsx";
 
+import AppHeader from "./AppHeader.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { ProgressIndicator } from "./DesignSystem.jsx";
@@ -1016,39 +1017,17 @@ export default function EatSafe() {
           />
           </Suspense>
         )}
-        {/* TOPBAR — skjult under Madpas' tjener-visning (26. sept. 2026,
+        {/* TOPBAR — fælles, genbrugelig header (AppHeader.jsx, 27. sept.
+            2026), skjult under Madpas' tjener-visning (26. sept. 2026,
             Madpas-redesign, krav 11: "skjul ... hamburger-menu"/"Feedback"
             når 'Vis til tjener' er åbnet, ikke kun visuelt dækket af
             overlayet). */}
         {!isOnboard && !madpasWaiterView && (
-          <header className="topbar">
-            <div className="topbar-logo">
-              <EatSafeLogo variant="horizontal" size={22} />
-              <div style={{ background:"var(--amber)", color:"var(--ink)", fontSize:9, fontWeight:800, padding:"2px 8px", borderRadius:100, letterSpacing:".5px", marginLeft:4, marginTop:2 }}>BETA</div>
-            </div>
-            {/* Topbar-knapperne var 32px, `var(--paper2)`-baggrund + `var(--muted2)`-
-                ikonfarve — brugerfeedback (24. sept. 2026, opfølgning): "lidt for
-                småt og anonymt ... ser næsten disabled ud". Forstørret til 38px
-                (44px for Feedback-pillen), skiftet ikonfarven til det mørkere
-                `var(--ink2)` og lagt en let skygge på for at give dem samme
-                kort-vægt de har andre steder i appen, i stedet for at blende ind. */}
-            <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-              {/* Feedback-knap */}
-              <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
-                style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"9px 15px", fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color:"var(--ink2)", cursor:"pointer", display:"flex", alignItems:"center", gap:6, boxShadow:"var(--sh)" }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                Feedback
-              </button>
-              {/* Menu-knap — profil, familie, favoritter, historik, opskrifter, viden m.m. */}
-              <button onClick={() => setShowProfileMenu(true)} aria-label="Åbn menu"
-                style={{ position:"relative", background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:38, height:38, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"var(--sh)" }}>
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2.2"><path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
-                {[SCREENS.PROFILE, SCREENS.EDITPROFILE, SCREENS.EDITPREFERENCES, SCREENS.HISTORY, SCREENS.FAVORITES, SCREENS.FAMILY, SCREENS.ADMIN, SCREENS.MADPAS, SCREENS.RESTAURANTGUIDE, SCREENS.RECIPES, SCREENS.KNOWLEDGE].includes(screen) && (
-                  <span style={{ position:"absolute", top:-1, right:-1, width:9, height:9, borderRadius:"50%", background:"var(--green)", border:"1.5px solid var(--paper)" }} />
-                )}
-              </button>
-            </div>
-          </header>
+          <AppHeader
+            screen={screen}
+            onFeedback={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
+            onMenu={() => setShowProfileMenu(true)}
+          />
         )}
 
         {/* Feedback-knap under onboarding — safe-area-korrekt top-afstand.
