@@ -6,6 +6,16 @@
 import React from "react";
 import { ChoiceCard } from "./DesignSystem.jsx";
 
+// 27. sept. 2026, "FINAL 10/10 POLISH – ONBOARDING TRIN 1": alle tre bokse
+// (minus/værdi/plus) har nu samme 44px højde (var 40px på knapperne, en
+// implicit, ikke-eksakt højde på inputtet via padding) — matcher desuden
+// det almindelige 44×44pt-tap-mål-minimum, som knapperne tidligere var
+// under. Værdien i midten fik større/federe skrift (matcher knappernes
+// egen 19px/700-vægt) i stedet for almindelig felt-tekst, så den læses som
+// en aktiv, fremhævet værdi frem for almindelig, "død" input-tekst. Ny
+// .age-step-btn-klasse (theme.jsx) giver en tydelig tryk-feedback
+// (:active{scale+mørkere baggrund}), som de rå inline-stylede knapper
+// ikke havde nogen af før.
 export function AgeStepper({ value, onChange, min = 1, max = 120, placeholder = "32" }) {
   const numValue = Number(value) || 0;
   const step = delta => {
@@ -15,15 +25,15 @@ export function AgeStepper({ value, onChange, min = 1, max = 120, placeholder = 
   };
   return (
     <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-      <button type="button" onClick={() => step(-1)} aria-label="Én år yngre"
-        style={{ width:40, height:40, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <button type="button" className="age-step-btn" onClick={() => step(-1)} aria-label="Én år yngre"
+        style={{ width:44, height:44, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
         −
       </button>
       <input className="field field-no-spinner" type="number" inputMode="numeric" placeholder={placeholder} min={min} max={max}
         value={value || ""} onChange={e => onChange(e.target.value)}
-        style={{ width:64, flexShrink:0, textAlign:"center", padding:"10px 4px" }} />
-      <button type="button" onClick={() => step(1)} aria-label="Ét år ældre"
-        style={{ width:40, height:40, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+        style={{ width:64, height:44, flexShrink:0, textAlign:"center", padding:"0 4px", fontSize:17, fontWeight:700, boxSizing:"border-box" }} />
+      <button type="button" className="age-step-btn" onClick={() => step(1)} aria-label="Ét år ældre"
+        style={{ width:44, height:44, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
         +
       </button>
     </div>
