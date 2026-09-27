@@ -10,6 +10,13 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { apiCall, decodeJwtPayload } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 
+// Simpel, ikke-overdrevet streng e-mail-validering (27. sept. 2026, MASTER
+// PROMPT "FINAL 10/10 POLISH – OPRET KONTO & LOG IND") — erstatter den
+// tidligere blotte `.includes("@")`-tjek, som lod ting som "a@b" eller "a@"
+// passere som "gyldige". Kræver kun tegn@tegn.tegn, ingen fuld RFC 5322-
+// validering (ville afvise reelt gyldige adresser unødigt).
+export const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
 export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
                           onSignupSuccess }) {
 
@@ -30,6 +37,18 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   // selve E-mail-feltet, ikke i den store, globale error-boks — globale
   // error-alerts er nu forbeholdt fejl der ikke kan knyttes til ét felt.
   const [emailTakenError, setEmailTakenError] = useState("");
+  // 27. sept. 2026, "FINAL 10/10 POLISH – OPRET KONTO & LOG IND": alle
+  // felt-specifikke valideringsfejl (tom/ugyldig e-mail, for kort/svag
+  // adgangskode) er flyttet fra den fælles authError-boks til disse to
+  // dedikerede states, som OnboardingScreen.jsx viser inline direkte under
+  // det relevante felt — BÅDE på Ny bruger og Log ind. Deles på tværs af
+  // begge faner (kun én er synlig ad gangen, og et fane-skift rydder dem,
+  // se OnboardingScreen.jsx) — også genbrugt til "Glemt adgangskode?"s
+  // e-mail-krav, som tidligere havde sin egen, adskilte lokale
+  // forgotPwError-state i OnboardingScreen.jsx (nu fjernet, samme
+  // fejltekst "Indtast din e-mail først." dækkede præcis samme behov).
+  const [emailError, setEmailError]     = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [authLoading, setAuthLoading]   = useState(false);
   const [authTab, setAuthTab]           = useState("signup"); // "signup" | "login"
   const [isOAuth, setIsOAuth]           = useState(false);
@@ -194,8 +213,13 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
 
   // ── Login ─────────────────────────────────────────────────────────────────
   const handleLogin = useCallback(async () => {
-    if (!loginEmail || !loginPassword) return;
-    if (!loginEmail.includes("@")) { setAuthError("Indtast en gyldig email-adresse."); return; }
+    // Felt-specifik validering FØRST (27. sept. 2026, "FINAL 10/10 POLISH")
+    // — tom/ugyldig e-mail og tom adgangskode er begge entydigt knyttet til
+    // ét felt, så de vises der, ikke i den globale error-boks.
+    if (!loginEmail) { setEmailError("Indtast din e-mail først."); return; }
+    if (!isValidEmail(loginEmail)) { setEmailError("Indtast en gyldig e-mailadresse."); return; }
+    if (!loginPassword) { setPasswordError("Indtast din adgangskode."); return; }
+    setEmailError(""); setPasswordError("");
     setAuthLoading(true); setAuthError("");
     try {
       const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
@@ -205,32 +229,52 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       });
       const text = await res.text();
       if (text === "Host not in allowlist") {
-        setAuthError("⚙️ Supabase er ikke konfigureret til dette domæne."); setAuthLoading(false); return;
+        setAuthError("Supabase er ikke konfigureret til dette domæne."); setAuthLoading(false); return;
       }
       const data = JSON.parse(text);
       if (!res.ok) {
-        const msg = data.msg || data.error_description || data.message || "";
-        if (msg.toLowerCase().includes("invalid login") || msg.toLowerCase().includes("invalid credentials"))
-          throw new Error("Forkert email eller adgangskode.");
-        throw new Error(msg || "Login fejlede.");
+        const msg = (data.msg || data.error_description || data.message || "").toLowerCase();
+        // Global error-boks (27. sept. 2026, "FINAL 10/10 POLISH") — ALDRIG
+        // Supabases rå, tekniske fejltekst direkte til brugeren, kun en af
+        // disse tre faste, venlige beskeder. "Forkert email eller
+        // adgangskode" kan desuden IKKE knyttes til ét bestemt felt
+        // (Supabase fortæller bevidst ikke hvilket af de to der er forkert,
+        // af sikkerhedshensyn), så den hører til her, ikke som en
+        // felt-specifik inline-fejl.
+        if (msg.includes("invalid login") || msg.includes("invalid credentials")) {
+          setAuthError("E-mail eller adgangskode er forkert.");
+        } else if (msg.includes("email not confirmed")) {
+          setAuthError("Bekræft din e-mail via linket vi sendte dig, før du kan logge ind.");
+        } else {
+          setAuthError("Der opstod en fejl. Prøv igen.");
+        }
+        setAuthLoading(false);
+        return;
       }
       saveTokens(data.access_token, data.refresh_token, data.user.id);
       setScreen(SCREENS.HOME);
-    } catch (e) {
-      setAuthError(e.message || "Forkert email eller adgangskode. Prøv igen.");
+    } catch {
+      // Ægte, uventede fejl (netværk nede, JSON-parse-fejl osv.) — vis
+      // ALDRIG browserens/JS'ens rå tekniske fejltekst (fx "Failed to
+      // fetch") til brugeren, kun den faste, venlige generiske besked.
+      setAuthError("Der opstod en fejl. Prøv igen.");
     }
     setAuthLoading(false);
   }, [loginEmail, loginPassword, saveTokens, setScreen]);
 
   // ── Signup ────────────────────────────────────────────────────────────────
   const handleSignup = useCallback(async () => {
-    if (!loginEmail || !loginEmail.includes("@")) { setAuthError("Indtast en gyldig email-adresse."); return; }
+    // Felt-specifik validering FØRST (27. sept. 2026, "FINAL 10/10 POLISH")
+    // — se handleLogin ovenfor for samme mønster/begrundelse.
+    if (!loginEmail) { setEmailError("Indtast din e-mail først."); return; }
+    if (!isValidEmail(loginEmail)) { setEmailError("Indtast en gyldig e-mailadresse."); return; }
     // Kun længdekrav (min. 10 tegn), ingen tvungen tegn-kompleksitet — matcher
     // moderne sikkerhedsanbefalinger (NIST 800-63B), som fraråder påtvungne
     // store bogstaver/tal/specialtegn-krav: de får ofte brugere til at vælge
     // forudsigelige mønstre (fx "Password1!") og øger frafald ved signup uden
     // reel sikkerhedsgevinst — længde er den langt vigtigste faktor.
-    if (!loginPassword || loginPassword.length < 10) { setAuthError("Adgangskoden skal være mindst 10 tegn."); return; }
+    if (!loginPassword || loginPassword.length < 10) { setPasswordError("Adgangskoden skal være mindst 10 tegn."); return; }
+    setEmailError(""); setPasswordError("");
     setAuthLoading(true); setAuthError(""); setEmailTakenError("");
     try {
       const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
@@ -240,21 +284,33 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       });
       const text = await res.text();
       if (text === "Host not in allowlist") {
-        setAuthError("⚙️ Supabase er ikke konfigureret til dette domæne."); setAuthLoading(false); return;
+        setAuthError("Supabase er ikke konfigureret til dette domæne."); setAuthLoading(false); return;
       }
       const data = JSON.parse(text);
       if (!res.ok) {
         const msg = data.msg || data.error_description || data.message || "";
-        // Felt-specifik fejl (25. sept. 2026) — vises inline ved E-mail-
-        // feltet, ikke i den globale error-boks, se emailTakenError ovenfor.
+        // Felt-specifikke fejl (25./27. sept. 2026) — vises inline ved det
+        // relevante felt, ikke i den globale error-boks. "Allerede
+        // registreret" hører til E-mail-feltet (emailTakenError ovenfor,
+        // egen "Log ind i stedet"-handling); et for svagt password fra
+        // Supabases egen validering (fx et kendt læk-tjek) hører til
+        // Adgangskode-feltet, samme sted som længde-fejlen ovenfor.
         if (msg.toLowerCase().includes("already registered") || data.error_code === "email_exists") {
           setEmailTakenError("Denne e-mail er allerede registreret.");
           setAuthLoading(false);
           return;
         }
-        if (msg.toLowerCase().includes("password") || msg.toLowerCase().includes("weak"))
-          throw new Error("Adgangskoden er for svag. Brug mindst 10 tegn.");
-        throw new Error(msg || "Oprettelse fejlede. Prøv igen.");
+        if (msg.toLowerCase().includes("password") || msg.toLowerCase().includes("weak")) {
+          setPasswordError("Adgangskoden er for svag. Brug mindst 10 tegn.");
+          setAuthLoading(false);
+          return;
+        }
+        // Global error-boks (27. sept. 2026) — ALDRIG Supabases rå,
+        // tekniske fejltekst direkte til brugeren for øvrige, ukendte
+        // fejltyper, kun den faste, venlige generiske besked.
+        setAuthError("Der opstod en fejl. Prøv igen.");
+        setAuthLoading(false);
+        return;
       }
       if (data.access_token) {
         saveTokens(data.access_token, data.refresh_token, data.user.id);
@@ -262,10 +318,13 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         setScreen(SCREENS.ONBOARD);
         if (onSignupSuccess) onSignupSuccess();
       } else {
-        setAuthError("✉️ Tjek din email og klik på bekræftelseslinket — log derefter ind her.");
+        setAuthError("Tjek din e-mail og klik på bekræftelseslinket — log derefter ind her.");
       }
-    } catch (e) {
-      setAuthError(e.message || "Oprettelse fejlede. Prøv igen.");
+    } catch {
+      // Ægte, uventede fejl (netværk nede, JSON-parse-fejl osv.) — vis
+      // ALDRIG browserens/JS'ens rå tekniske fejltekst til brugeren, kun
+      // den faste, venlige generiske besked.
+      setAuthError("Der opstod en fejl. Prøv igen.");
     }
     setAuthLoading(false);
   }, [loginEmail, loginPassword, saveTokens, setUser, setScreen, onSignupSuccess]);
@@ -290,10 +349,13 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   // Supabase sender selv en email med nulstillingslink; vi viser blot en
   // bekræftelse via den delte Toast, ikke via error-box (det er ikke en fejl).
   const handleForgotPassword = useCallback(async () => {
-    if (!loginEmail || !loginEmail.includes("@")) {
-      setAuthError("Indtast din email for at nulstille adgangskoden.");
-      return;
-    }
+    // Felt-specifik (27. sept. 2026) — dette tjek dækkes normalt allerede af
+    // OnboardingScreen.jsx's egen guard før dette kald, men er bevaret her
+    // som et sikkerhedsnet, nu rettet mod samme emailError-state i stedet
+    // for den globale authError-boks.
+    if (!loginEmail) { setEmailError("Indtast din e-mail først."); return; }
+    if (!isValidEmail(loginEmail)) { setEmailError("Indtast en gyldig e-mailadresse."); return; }
+    setEmailError("");
     setAuthLoading(true); setAuthError("");
     try {
       const res = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
@@ -301,10 +363,10 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
         body: JSON.stringify({ email: loginEmail }),
       });
-      if (!res.ok) throw new Error("Kunne ikke sende nulstillingslink. Prøv igen.");
-      showToast("Tjek din email for at nulstille adgangskoden.", "success");
-    } catch (e) {
-      setAuthError(e.message || "Kunne ikke sende nulstillingslink. Prøv igen.");
+      if (!res.ok) { setAuthError("Kunne ikke sende nulstillingslink. Prøv igen."); setAuthLoading(false); return; }
+      showToast("Tjek din e-mail for at nulstille adgangskoden.", "success");
+    } catch {
+      setAuthError("Der opstod en fejl. Prøv igen.");
     }
     setAuthLoading(false);
   }, [loginEmail]);
@@ -317,6 +379,8 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     loginPassword, setLoginPassword,
     authError, setAuthError,
     emailTakenError, setEmailTakenError,
+    emailError, setEmailError,
+    passwordError, setPasswordError,
     authLoading, setAuthLoading,
     authTab, setAuthTab,
     isOAuth, setIsOAuth,

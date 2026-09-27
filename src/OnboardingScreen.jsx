@@ -12,6 +12,7 @@ import {
   Accordion, InfoRow, ErrorMessage, InputField,
 } from "./DesignSystem.jsx";
 import { usePush } from "./usePush.js";
+import { isValidEmail } from "./useAuth.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -59,7 +60,8 @@ export default function OnboardingScreen({
   onActivatePreview,
 }) {
   const {
-    authTab, setAuthTab, authError, setAuthError, emailTakenError, setEmailTakenError, authLoading,
+    authTab, setAuthTab, authError, setAuthError, emailTakenError, setEmailTakenError,
+    emailError, setEmailError, passwordError, setPasswordError, authLoading,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
     user, setUser, isOAuth, accessToken,
     rememberMe, setRememberMe,
@@ -92,12 +94,12 @@ export default function OnboardingScreen({
   // "showENumbersInOnboard is not defined" så snart man nåede dertil.
   const [showENumbersInOnboard, setShowENumbersInOnboard] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  // "Glemt adgangskode?"-valideringen skal vises som en lille inline-fejl
-  // direkte under E-mail-feltet (25. sept. 2026, opfølgning), IKKE i den
-  // store, fælles error-box (authError) — det gør en simpel "husk at
-  // udfylde feltet"-påmindelse unødigt alarmerende. Lokal, adskilt state,
-  // ryddes igen når brugeren retter e-mail-feltet eller skifter fane.
-  const [forgotPwError, setForgotPwError] = useState("");
+  // "Glemt adgangskode?"-valideringen genbruger nu den delte emailError-
+  // state fra useAuthContext() (27. sept. 2026, "FINAL 10/10 POLISH") —
+  // havde tidligere sin egen, adskilte lokale forgotPwError-state, men
+  // begge viser reelt samme "Indtast din e-mail først."-besked samme sted
+  // (direkte under E-mail-feltet), så en fælles state er enklere og sikrer
+  // ét konsistent felt-fejl-mønster på tværs af Ny bruger og Log ind.
   // Onboarding trin 1's "Mangler: ..."-liste skal først vises EFTER et
   // forsøgt tryk på "Fortsæt →" (25. sept. 2026, opfølgning: "vil helst
   // ikke vise den før brugeren har forsøgt at fortsætte") — ellers møder
@@ -571,8 +573,8 @@ export default function OnboardingScreen({
             {/* Tab vælger — se .tab-row/.tab.active i theme.jsx for den
                 tydeligere-men-rolige aktiv-markering (25. sept. 2026). */}
             <div className="tab-row">
-              <div className={`tab${authTab==="signup"?" active":""}`} onClick={() => { setAuthTab("signup"); setAuthError(""); setEmailTakenError(""); setForgotPwError(""); }}>Ny bruger</div>
-              <div className={`tab${authTab==="login"?" active":""}`} onClick={() => { setAuthTab("login"); setAuthError(""); setEmailTakenError(""); setForgotPwError(""); }}>Log ind</div>
+              <div className={`tab${authTab==="signup"?" active":""}`} onClick={() => { setAuthTab("signup"); setAuthError(""); setEmailTakenError(""); setEmailError(""); setPasswordError(""); }}>Ny bruger</div>
+              <div className={`tab${authTab==="login"?" active":""}`} onClick={() => { setAuthTab("login"); setAuthError(""); setEmailTakenError(""); setEmailError(""); setPasswordError(""); }}>Log ind</div>
             </div>
 
             {/* Preview-only genvej til onboarding-flowet (25. sept. 2026,
@@ -601,48 +603,68 @@ export default function OnboardingScreen({
                   <div style={UI.ufs12_cmuted_mt4}>Du opsætter dine allergier i næste trin.</div>
                 </div>
                 <div className="login-card">
-                  {/* E-mail — "allerede registreret" vises som en felt-
-                      specifik inline-fejl direkte her (25. sept. 2026,
-                      brugerfeedback), IKKE i den store, globale error-boks
-                      nedenfor, som nu er forbeholdt fejl der ikke kan
-                      knyttes til ét felt. */}
+                  {/* E-mail — 27. sept. 2026, "FINAL 10/10 POLISH": ALLE
+                      felt-specifikke e-mail-fejl (tom/ugyldig e-mail,
+                      allerede registreret) vises inline direkte her, med en
+                      diskret rød kant på selve feltet — IKKE i den store,
+                      globale error-boks (authError) nedenfor, som nu kun
+                      bruges til fejl der ikke kan knyttes til ét felt (fx
+                      "Der opstod en fejl. Prøv igen."). */}
                   <label className="field-lbl">E-mail</label>
                   <input className="field" type="email" placeholder="din@email.dk" value={loginEmail}
-                    onChange={e => { setLoginEmail(e.target.value); if (emailTakenError) setEmailTakenError(""); }}
-                    style={{ ...UI.mb12, borderColor: emailTakenError ? "var(--red-md)" : undefined }}
+                    onChange={e => { setLoginEmail(e.target.value); if (emailError) setEmailError(""); if (emailTakenError) setEmailTakenError(""); }}
+                    style={{ marginBottom: (emailError || emailTakenError) ? 6 : 12, borderColor: (emailError || emailTakenError) ? "var(--red-md)" : undefined }}
                     onKeyDown={e => e.key==="Enter" && handleSignup()} />
-                  {emailTakenError && (
-                    <div style={{ marginTop:-8, marginBottom:12, fontSize:11.5, lineHeight:1.5 }}>
-                      <div style={{ color:"var(--red)", fontWeight:600 }}>{emailTakenError}</div>
-                      <TextLink onClick={() => { setAuthTab("login"); setEmailTakenError(""); }} style={{ marginTop:2 }}>
-                        Log ind i stedet
-                      </TextLink>
+                  {(emailError || emailTakenError) && (
+                    <div style={{ marginBottom:12, fontSize:11.5, lineHeight:1.5 }}>
+                      <div style={{ color:"var(--red)", fontWeight:600 }}>{emailError || emailTakenError}</div>
+                      {emailTakenError && (
+                        <TextLink onClick={() => { setAuthTab("login"); setEmailTakenError(""); }} style={{ marginTop:2 }}>
+                          Log ind i stedet
+                        </TextLink>
+                      )}
                     </div>
                   )}
                   <label className="field-lbl">Adgangskode</label>
                   <div style={{ position:"relative" }}>
                     <input className="field" type={showPassword ? "text" : "password"} placeholder="Minimum 10 tegn" value={loginPassword}
-                      onChange={e => setLoginPassword(e.target.value)} style={{ paddingRight:46 }}
+                      onChange={e => { setLoginPassword(e.target.value); if (passwordError) setPasswordError(""); }}
+                      style={{ paddingRight:46, borderColor: passwordError ? "var(--red-md)" : undefined }}
                       onKeyDown={e => e.key==="Enter" && handleSignup()} />
                     <button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? "Skjul adgangskode" : "Vis adgangskode"}
                       style={{ position:"absolute", right:0, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center" }}>
                       <Icon name={showPassword ? "eyeOff" : "eye"} size={16} color="var(--muted)" />
                     </button>
                   </div>
-                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:8, lineHeight:1.5 }}>
-                    Ved at oprette en konto accepterer du vores vilkår og bekræfter, at du er over 13 år.
+                  {/* Diskret, ALTID synlig adgangskode-hjælpetekst (27. sept.
+                      2026, "FINAL 10/10 POLISH", punkt 5) — kommunikerer
+                      kravet uafhængigt af placeholderen, som forsvinder ved
+                      indtastning. Skifter til rød/fed fejl-visning ved et
+                      mislykket forsøg (samme tekst som passwordError, ingen
+                      dublering) — ingen layout-jump, linjen er altid der. */}
+                  <div style={{ fontSize:11, marginTop:6, lineHeight:1.5, color: passwordError ? "var(--red)" : "var(--muted)", fontWeight: passwordError ? 600 : 400 }}>
+                    {passwordError || "Adgangskoden skal være mindst 10 tegn."}
+                  </div>
+                  {/* Juridisk tekst (27. sept. 2026, "FINAL 10/10 POLISH",
+                      punkt 4) — erstatter den tidligere "...bekræfter, at du
+                      er over 13 år"-formulering (intet alderskrav er
+                      håndteret nogen andre steder i appen, så teksten gav et
+                      løfte om en kontrol der reelt ikke fandtes). Samme
+                      ordlyd/links som velkomstsidens tilsvarende tekst (se
+                      "Ved at oprette en konto..."-blokken der) — denne tekst
+                      er IKKE samtykke til behandling af allergi-/helbreds-
+                      oplysninger, det håndteres separat i selve onboardingen. */}
+                  <div style={{ fontSize:11, color:"var(--muted)", marginTop:12, lineHeight:1.5 }}>
+                    Ved at oprette en konto accepterer du vores{" "}
+                    <a href="/terms.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>brugsvilkår</a>
+                    {" "}og bekræfter, at du har læst{" "}
+                    <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>privatlivspolitikken</a>.
                   </div>
                 </div>
                 <ErrorMessage>{authError}</ErrorMessage>
                 <button className="btn welcome-btn" onClick={handleSignup} disabled={authLoading || !!emailTakenError}>
                   {authLoading ? "Opretter konto…" : "Opret konto og fortsæt →"}
                 </button>
-                <div style={UI.utacenter_mt12_fs12_cmuted}>
-                  Har du allerede en konto?{" "}
-                  <span style={UI.ucgreen_fw700_curpointer} onClick={() => { setAuthTab("login"); setAuthError(""); setEmailTakenError(""); }}>
-                    Log ind
-                  </span>
-                </div>
               </div>
             )}
 
@@ -654,31 +676,38 @@ export default function OnboardingScreen({
                   <div style={UI.ufs12_cmuted_mt4}>Log ind med din e-mail og adgangskode.</div>
                 </div>
                 <div className="login-card">
+                  {/* Samme felt-fejl-mønster som Ny bruger ovenfor (27. sept.
+                      2026, "FINAL 10/10 POLISH") — samme spacing/error-
+                      design på begge faner. emailError dækker BÅDE
+                      "Log ind →" trykket med tom/ugyldig e-mail OG "Glemt
+                      adgangskode?" trykket uden en gyldig e-mail (samme
+                      delte state, se useAuth.js). */}
                   <label className="field-lbl">E-mail</label>
                   <input className="field" type="email" placeholder="din@email.dk" value={loginEmail}
-                    onChange={e => { setLoginEmail(e.target.value); if (forgotPwError) setForgotPwError(""); }}
-                    style={forgotPwError ? undefined : UI.mb12}
+                    onChange={e => { setLoginEmail(e.target.value); if (emailError) setEmailError(""); }}
+                    style={{ marginBottom: emailError ? 6 : 12, borderColor: emailError ? "var(--red-md)" : undefined }}
                     onKeyDown={e => e.key==="Enter" && handleLogin()} />
-                  {/* Inline felt-fejl for "Glemt adgangskode?" uden udfyldt
-                      e-mail (25. sept. 2026, opfølgning) — sidder direkte
-                      under feltet den vedrører, IKKE i den store, fælles
-                      error-box nedenfor, som er forbeholdt reelle login-
-                      fejl efter et forsøgt kald. */}
-                  {forgotPwError && (
-                    <div style={{ fontSize:11.5, color:"var(--red)", fontWeight:600, marginTop:5, marginBottom:12 }}>
-                      {forgotPwError}
+                  {emailError && (
+                    <div style={{ fontSize:11.5, color:"var(--red)", fontWeight:600, marginBottom:12 }}>
+                      {emailError}
                     </div>
                   )}
                   <label className="field-lbl">Adgangskode</label>
                   <div style={{ position:"relative" }}>
                     <input className="field" type={showPassword ? "text" : "password"} placeholder="Din adgangskode" value={loginPassword}
-                      onChange={e => setLoginPassword(e.target.value)} style={{ paddingRight:46 }}
+                      onChange={e => { setLoginPassword(e.target.value); if (passwordError) setPasswordError(""); }}
+                      style={{ paddingRight:46, borderColor: passwordError ? "var(--red-md)" : undefined }}
                       onKeyDown={e => e.key==="Enter" && handleLogin()} />
                     <button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? "Skjul adgangskode" : "Vis adgangskode"}
                       style={{ position:"absolute", right:0, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center" }}>
                       <Icon name={showPassword ? "eyeOff" : "eye"} size={16} color="var(--muted)" />
                     </button>
                   </div>
+                  {passwordError && (
+                    <div style={{ fontSize:11, color:"var(--red)", fontWeight:600, marginTop:6, lineHeight:1.5 }}>
+                      {passwordError}
+                    </div>
+                  )}
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:12 }}>
                     <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12.5, fontWeight:600, color:"var(--ink2)", cursor:"pointer" }}>
                       <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)}
@@ -686,14 +715,15 @@ export default function OnboardingScreen({
                       Husk mig
                     </label>
                     {/* Valideres lokalt FØR handleForgotPassword kaldes, så en
-                        manglende e-mail vises som en let inline-note under
-                        feltet i stedet for hookens egen authError-fald-
-                        tilbage (den store error-box) — se .link-green i
-                        theme.jsx for fokus-tilstanden ("skal kun markeres
-                        ved rigtigt tastaturfokus, ikke ved museklik"). */}
+                        manglende/ugyldig e-mail vises som en felt-fejl under
+                        feltet i stedet for at kalde hooken og lade DEN
+                        opdage det — se .link-green i theme.jsx for fokus-
+                        tilstanden ("skal kun markeres ved rigtigt
+                        tastaturfokus, ikke ved museklik"). */}
                     <TextLink onClick={() => {
-                      if (!loginEmail || !loginEmail.includes("@")) { setForgotPwError("Indtast din e-mail først."); return; }
-                      setForgotPwError("");
+                      if (!loginEmail) { setEmailError("Indtast din e-mail først."); return; }
+                      if (!isValidEmail(loginEmail)) { setEmailError("Indtast en gyldig e-mailadresse."); return; }
+                      setEmailError("");
                       handleForgotPassword();
                     }} disabled={authLoading}>
                       Glemt adgangskode?
@@ -704,12 +734,6 @@ export default function OnboardingScreen({
                 <button className="btn welcome-btn" onClick={handleLogin} disabled={authLoading}>
                   {authLoading ? "Logger ind…" : "Log ind →"}
                 </button>
-                <div style={UI.utacenter_mt12_fs12_cmuted}>
-                  Har du ikke en konto?{" "}
-                  <span style={UI.ucgreen_fw700_curpointer} onClick={() => { setAuthTab("signup"); setAuthError(""); }}>
-                    Opret konto
-                  </span>
-                </div>
               </div>
             )}
 

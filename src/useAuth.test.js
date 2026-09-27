@@ -33,10 +33,19 @@ beforeEach(() => {
 });
 
 describe("useAuth handleLogin — validation guards", () => {
-  it("does nothing when email or password is empty", async () => {
+  it("sets a field-specific error under email when submitted empty, without calling the network", async () => {
     const { result } = setup();
     await act(async () => { await result.current.handleLogin(); });
     expect(global.fetch).not.toHaveBeenCalled();
+    expect(result.current.emailError).toBe("Indtast din e-mail først.");
+  });
+
+  it("sets a field-specific error under password when email is valid but password is empty", async () => {
+    const { result } = setup();
+    act(() => { result.current.setLoginEmail("a@b.dk"); });
+    await act(async () => { await result.current.handleLogin(); });
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(result.current.passwordError).toBe("Indtast din adgangskode.");
   });
 
   it("rejects an email without '@' before ever calling the network", async () => {
@@ -44,7 +53,11 @@ describe("useAuth handleLogin — validation guards", () => {
     act(() => { result.current.setLoginEmail("not-an-email"); result.current.setLoginPassword("secret123"); });
     await act(async () => { await result.current.handleLogin(); });
     expect(global.fetch).not.toHaveBeenCalled();
-    expect(result.current.authError).toMatch(/gyldig email/i);
+    // 27. sept. 2026, "FINAL 10/10 POLISH": felt-specifikke valideringsfejl
+    // vises nu i emailError/passwordError, ikke i den globale authError —
+    // se OnboardingScreen.jsx, som viser dem inline under det relevante felt.
+    expect(result.current.emailError).toMatch(/gyldig e-mailadresse/i);
+    expect(result.current.authError).toBe("");
   });
 
   it("shows a generic error instead of leaking the server's raw message for bad credentials", async () => {
@@ -52,7 +65,7 @@ describe("useAuth handleLogin — validation guards", () => {
     const { result } = setup();
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("wrongpass"); });
     await act(async () => { await result.current.handleLogin(); });
-    expect(result.current.authError).toBe("Forkert email eller adgangskode.");
+    expect(result.current.authError).toBe("E-mail eller adgangskode er forkert.");
   });
 
   it("saves tokens and navigates home on a successful login", async () => {
@@ -72,7 +85,8 @@ describe("useAuth handleSignup — validation guards", () => {
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("123456789"); });
     await act(async () => { await result.current.handleSignup(); });
     expect(global.fetch).not.toHaveBeenCalled();
-    expect(result.current.authError).toMatch(/mindst 10 tegn/i);
+    expect(result.current.passwordError).toMatch(/mindst 10 tegn/i);
+    expect(result.current.authError).toBe("");
   });
 
   it("rejects a malformed email before calling the network", async () => {
@@ -80,7 +94,8 @@ describe("useAuth handleSignup — validation guards", () => {
     act(() => { result.current.setLoginEmail("nope"); result.current.setLoginPassword("longenough"); });
     await act(async () => { await result.current.handleSignup(); });
     expect(global.fetch).not.toHaveBeenCalled();
-    expect(result.current.authError).toMatch(/gyldig email/i);
+    expect(result.current.emailError).toMatch(/gyldig e-mailadresse/i);
+    expect(result.current.authError).toBe("");
   });
 
   it("tells the user to confirm their email when signup succeeds without an access_token", async () => {

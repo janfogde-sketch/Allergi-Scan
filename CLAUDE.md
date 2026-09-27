@@ -1411,16 +1411,109 @@ omgang — se punkt-for-punkt-status herunder, opdatér listen efterhånden.
   (Viden-siden, BetaIntroModal, onboarding-diæt-tjek, Opskrifter) er
   bevidst urørte — hver dækker sin egen, ikke-overlappende kontekst.
 
-**Resterende (ikke startet/i gang, fortsættes i en senere PR):** navigation/
+**Shippet (PR #360, merget):** design-reviewer-agent-audit af typografi/
+spacing/komponentkonsistens på tværs af Historik/Indkøbsliste/Madpas/
+Indstillinger/Profil/Produktsider — Historik/Favoritter flyttet fra en flad
+divider-række til samme bordered-card-stil som Indkøbslistens `.list-item`
+("Historik skal føles som søster til Indkøbsliste"), to nye SVG-ikoner
+(`door`, `building`) erstattede emoji-som-UI-chrome i RestaurantGuide-
+Screen.jsx/ResultScreen.jsx/RecipesScreen.jsx, titel-typografi rettet for
+"tilbageknap + titel"-mønsteret (18px→16px, matcher `.screen-title`), to
+touch-target-bugs rettet i ListScreen.jsx. Fandt undervejs at
+`SCREENS.RESTAURANTGUIDE` ikke har nogen navigations-indgang i den
+nuværende UI (fjernet fra ProfileMenu.jsx på et tidspunkt, ikke erstattet)
+— IKKE rettet (produkt-/navigationsbeslutning, ikke en styling-fix), flaget
+til brugeren.
+
+**Shippet (PR #361, #362, merget):** velkomstside-finpolish i tre runder —
+lodret rytme (slogan→hovedtekst-afstand, line-height/font-weight),
+Feedback-knappens skygge/kant gjort mere diskret (to omgange), og den
+juridiske teksts linjebrud rettet to gange (først "handelsbetingelser"→
+"brugsvilkår" + halevedhæng så selve linket aldrig ender alene på en
+linje, derefter max-width/font-size finjusteret empirisk til præcis 3
+jævnt fyldte linjer på SE/iPhone 13/Pro Max).
+
+**Shippet (endnu ikke pushet — se nedenfor):** "FINAL 10/10 POLISH – OPRET
+KONTO & LOG IND", se eget afsnit under "Opret konto/Log ind" nedenfor.
+
+**Resterende (ikke startet, fortsættes i en senere PR):** navigation/
 topbar/bottom-nav-gennemgang (stikprøve viste allerede konsistente,
-enkeltstående komponenter — ingen fund), en design-reviewer-agent-audit af
-typografi/spacing/komponentkonsistens på tværs af Historik/Indkøbsliste/
-Madpas/Indstillinger/Profil/Produktsider (kørende), mikrocopy-gennemgang,
-tilgængelighedstjek, og en afsluttende cross-page-visuel-konsistens-
-sammenligning. De fleste af brief'ens punkter om Scan-flow/Produktside/
-Indstillinger-struktur er allerede dækket af tidligere, separate runder
-(se de respektive afsnit ovenfor) — audit'en verificerer det frem for at
-lave det om.
+enkeltstående komponenter — ingen fund udover RestaurantGuide-fundet
+ovenfor), mikrocopy-gennemgang, tilgængelighedstjek, og en afsluttende
+cross-page-visuel-konsistens-sammenligning. De fleste af brief'ens punkter
+om Scan-flow/Produktside/Indstillinger-struktur er allerede dækket af
+tidligere, separate runder (se de respektive afsnit ovenfor).
+
+### Opret konto & Log ind — "FINAL 10/10 POLISH" (27. sept. 2026)
+
+En detaljeret 10-punkts spec til `SCREENS.LOGIN` (Ny bruger + Log ind) —
+konsistens/validering/sidste polish, ikke et redesign. Ændringer i
+`useAuth.js`, `OnboardingScreen.jsx`, `App.jsx`.
+
+- **Felt-specifikke fejl standardiseret** — to nye delte states
+  (`emailError`, `passwordError`, useAuth.js) erstatter den tidligere
+  praksis hvor `authError` (den globale error-boks) blev brugt til BÅDE
+  felt-specifikke valideringsfejl (tom/ugyldig e-mail, for kort password)
+  OG reelle globale fejl. Nu vises felt-fejl inline direkte under det
+  relevante felt, med en diskret rød kant på selve inputtet, PÅ BEGGE
+  faner (samme spacing/design). `authError` (den store boks, `ErrorMessage`
+  i DesignSystem.jsx — returnerer `null` og fylder intet når tom) er nu KUN
+  for fejl der ikke kan knyttes til ét felt: "E-mail eller adgangskode er
+  forkert." (login), "Der opstod en fejl. Prøv igen." (alt andet uventet),
+  "Bekræft din e-mail..." (email ikke bekræftet endnu), "Tjek din e-mail og
+  klik på bekræftelseslinket..." (signup uden access_token).
+  **Reelt fund undervejs:** de gamle catch-blokke gjorde
+  `setAuthError(e.message || "...")`, hvilket i praksis kunne lække rå,
+  tekniske fetch-/JS-fejltekster (fx "Failed to fetch") direkte til
+  brugeren ved en ægte netværksfejl — opdaget under Playwright-verifikation
+  med en mocket serverfejl. Rettet ved ALDRIG at propagere `e.message` fra
+  en catch-blok; kun de eksplicit satte, venlige faste beskeder vises.
+- **"Har du allerede en konto?"/"Har du ikke en konto?"-linkene fjernet**
+  fra begge faner — segmenteret kontrol (`.tab-row`) øverst er nu den
+  eneste sekundære navigation mellem de to auth-tilstande, som brugeren
+  bad om.
+- **Segmenteret kontrol** — verificeret identisk (bredde/højde/aktiv-
+  farve/font-weight/radius, målt programmatisk) mellem Ny bruger og Log
+  ind; skifter ikke layout ved tab-skift.
+- **Legal copy på Ny bruger rettet** — "...bekræfter, at du er over 13 år"
+  (intet alderskrav findes reelt nogen andre steder i appen) erstattet med
+  samme ordlyd/links som velkomstsidens tilsvarende tekst ("brugsvilkår" +
+  "privatlivspolitikken", begge klikbare, samme "ikke samtykke til
+  helbredsoplysninger"-forbehold).
+- **Ny, altid synlig adgangskode-hjælpetekst** under Ny brugers password-
+  felt ("Adgangskoden skal være mindst 10 tegn.", muted grå) — erstattet
+  af samme tekst i rød/fed ved et mislykket forsøg, ingen dubleret linje,
+  intet layout-hop (linjen er der altid, kun farven/vægten skifter).
+- **CTA'er og sociale login-knapper** — verificeret programmatisk 100%
+  identiske (højde/bredde/radius/skygge/font-size/baggrund) mellem
+  Opret/Log ind-knapperne og mellem Google/Facebook-knapperne; bruger
+  allerede EatSafes låste primære UI-grøn (`.welcome-btn`-klassen, delt med
+  velkomstsidens CTA).
+- **Ikke implementeret, flaget til brugeren:** "Fortsæt med Apple" — spec'en
+  bad om det, betinget på om EatSafe skal distribueres via App Store/
+  TestFlight med social login som primær login-metode (Apples App Review
+  Guideline 4.8). Dette blev allerede tilføjet og bevidst fjernet igen
+  samme dag i en tidligere runde (25. sept. 2026, se `.claude/HISTORY.md`)
+  — en reel Apple-OAuth-integration kræver et Apple Developer-konto-setup
+  og Supabase-provider-konfiguration, ingen af delene tilgængelige fra
+  denne session, og er under alle omstændigheder en produktdistributions-
+  beslutning, ikke en ren styling-opgave. Afventer brugerens afklaring.
+- **Reel bug fundet og rettet undervejs:** tab-skiftets onClick-handlers
+  kaldte stadig `setForgotPwError("")` — en lokal state der blev fjernet
+  som led i konsolideringen til den delte `emailError` (samme "Indtast din
+  e-mail først."-besked dækkede både "Glemt adgangskode?" uden e-mail OG
+  det nye tom-email-ved-login-tjek). Ville have kastet en `ReferenceError`
+  i konsollen ved hvert tab-skift — fundet ved gennemlæsning af egen diff,
+  ikke af Playwright (en synkron JS-fejl i en klik-handler stopper ikke
+  altid synligt UI-flow, så det er let at overse uden at læse koden
+  igennem). Rettet til `setEmailError("")`/`setPasswordError("")`.
+- Verificeret med Playwright på tre enhedsbredder (SE/iPhone 13/Pro Max):
+  alle 10 kombinationer af tom/ugyldig e-mail, tom/for kort adgangskode på
+  begge faner, ingen JS-konsol-fejl ved tab-skift, ingen stale fejl der
+  overlever et tab-skift. `npm run build`/`npx vitest run` (110/110, 3 nye
+  tests for de nye felt-fejl-cases) grønne, mojibake-scan clean.
+- **Ikke pushet endnu** — afventer brugerens eksplicitte godkendelse, jf.
+  den stående push-regel (afsnit 4).
 
 ---
 
