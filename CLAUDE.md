@@ -1195,9 +1195,19 @@ al almindelig UI (knapper, chips osv.). Logoets egen, faste palet:
   topbar/velkommen/login) OG en tidligere håndtegnet inline-SVG med samme
   navn (9 tynde bars, andre farver) — begge var reelt egne fortolkninger,
   præcis det brugeren bad om at undgå ("ingen nye variationer eller
-  AI-fortolkninger"). Bruges nu i: `App.jsx` (topbar), `OnboardingScreen.jsx`
+  AI-fortolkninger"). Bruges nu i: `OnboardingScreen.jsx`
   (velkommen/login — samme markup, fjernede den nu-overflødige separate
   tekst-wordmark ved siden af; onboarding-trin-header, kompakt `symbol`).
+  **Undtagelse tilføjet 27. sept. 2026** (brugerens eksplicitte
+  "Opdater EatSafe-headeren"-brief): app-headeren (`AppHeader.jsx`, se
+  arkitektur-afsnittet) er bevidst gået tilbage til en ren tekst-wordmark
+  ("Eat"=mørk/"Safe"=grøn, IKKE `EatSafeLogo`-billedet) i netop DENNE ene,
+  kompakte kontekst — scanner-/stregkodesymbolet skal her udelukkende
+  signalere selve scan-funktionen (Scan-knappen, bundnav), ikke indgå i
+  brandingen i en header hvor pladsen er trang. `EatSafeLogo` (med det
+  fulde symbol) er UÆNDRET alle andre steder (velkommen/login/onboarding/
+  admin) — kun app-headeren er undtaget fra det ellers stadig gældende
+  "ét fast billedaktiv, ingen nye tekst-fortolkninger"-princip.
   Admin-bundlet (`src/admin/AdminApp.jsx`/`AdminLayout.jsx`) importerer
   samme komponent fra `../SharedComponents.jsx` (allerede en fælles
   afhængighed via `showToast`/`ToastHost`, så ingen ny bundle-kobling).
@@ -1573,6 +1583,54 @@ konsistens/validering/polish, alle felter bevaret, intet redesign.
   `loginEmail || isOAuth`-betingelse styrer stadig hvornår feltet er
   read-only, kun de resulterende stil-værdier er ændret.
   `npm run build`/`npx vitest run` (110/110) grønne, mojibake-scan clean.
+
+### App-headeren omdøbt til fælles komponent + tekst-wordmark (27. sept. 2026)
+
+Brugerens eksplicitte "Opdater EatSafe-headeren"-brief, 7 punkter — mål:
+tydeligere, mere professionel, 100% konsekvent header på tværs af appen.
+
+- **Scanner-/stregkodeikonet fjernet fra header-brandingen** — headeren
+  viste tidligere det fulde, låste `EatSafeLogo`-billedeaktiv (stregkode-
+  symbol + ordmærke). Nu udelukkende en ren tekst-wordmark ("Eat" i
+  `--ink`, "Safe" i `--green`), ca. 20-25% større (24px, op fra
+  billedlogoets ca. 22px visuelle højde), semibold/bold vægt. Scanner-
+  ikonet er UÆNDRET alle de steder det reelt betyder "scan" (den store
+  Scan-knap, bundnavigationen) — kun fjernet fra selve branding-teksten.
+  `EatSafeLogo`-komponenten og dens SVG-assets er urørte og bruges
+  uændret på velkommen/login/onboarding/admin (se logo-afsnittet ovenfor
+  for den fulde begrundelse for denne bevidste undtagelse).
+- **Ny, navngiven, genbrugelig komponent `AppHeader.jsx`** — udtrukket fra
+  App.jsx's tidligere inlinede `<header className="topbar">`-blok (samme
+  markup/adfærd, nu et navngivet, selvstændigt sted). Renderes ÉT sted i
+  App.jsx (var allerede tilfældet før udtrækket) og vises derfor allerede
+  identisk på Scan/Historik/Indkøbsliste og alle øvrige hovedfaner — verificeret
+  programmatisk pixel-identisk (samme højde/positioner for logo/BETA/
+  Feedback/hamburger) på tværs af de tre testede skærme.
+- **BETA-badge** flyttet fra inline styles til en delt `.topbar-beta`-
+  klasse — samme varme/guldbrune (`--amber`) farve, nu med `line-height:1`
+  + `inline-flex`-centrering, så den centrerer sig lodret mod tekstlogoet
+  uden en manuel `marginTop`-hack (den tidligere hack kompenserede
+  specifikt for billedlogoets egen indre luft, unødvendig med en tekst-
+  wordmark). Målt: badgens og logoets lodrette centre ligger under 1px fra
+  hinanden.
+- **Manglende `safe-area-inset-top`-håndtering rettet** — `.topbar` havde
+  ingen som helst hensyntagen til statuslinjen/Dynamic Island (kun
+  onboardingens separate, flydende Feedback-knap havde det). Tilføjet
+  `calc(12px + env(safe-area-inset-top))` som topafstand.
+- **Punkt 6 (undersider) bevidst IKKE ændret i denne omgang** — brief'ens
+  ordlyd her var vejledende ("kan erstattes... hvis det giver bedre
+  navigation"), ikke et krav. Eksisterende undersider (Allergileksikon,
+  Restaurantguide, Opskrifter m.fl.) har allerede deres egen "tilbageknap +
+  titel"-række UNDER den fælles header, uændret — en større omlægning af
+  hvordan alle undersiders navigation fungerer er en selvstændig, større
+  opgave, ikke en del af denne header-branding-runde.
+- Verificeret med Playwright: header pixel-identisk på Scan/Historik/
+  Indkøbsliste, ingen barcode-ikon i header-brandingen nogen steder,
+  hero-billede/"God morgen"-hilsen/undertekst/grøn Scan-knap/bundnavigation
+  alle bekræftet UÆNDREDE, header renderer korrekt (inkl. hamburgerens
+  aktiv-prik) på en underside (Allergileksikon) uden konflikt med dens
+  egen back-button-række. `npm run build`/`npx vitest run` (110/110)
+  grønne, mojibake-scan clean.
 
 ---
 
