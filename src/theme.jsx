@@ -714,10 +714,18 @@ body::-webkit-scrollbar{display:none;}
 .ap-chip:hover{border-color:var(--border2);color:var(--ink);}
 .ap-chip.on{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);}
 
-/* ── HISTORY ── */
-.hist-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .1s;}
-.hist-row:hover{opacity:.75;}
-.hist-row:last-child{border-bottom:none;}
+/* ── HISTORY ──
+   Var tidligere en flad, kantløs divider-række (border-bottom, ingen
+   baggrund/kant/skygge) — reelt et andet visuelt sprog end Indkøbslistens
+   .list-item-kort, selvom begge viser samme slags indhold (produktnavn +
+   metadata + status). Ensrettet 27. sept. 2026 (MASTER PROMPT-brief,
+   navngivet eksempel: "Historik skal føles som søster til Indkøbsliste")
+   til samme bordered-card-behandling som .list-item — samme padding/
+   baggrund/kant/radius/margin, plus samme tryk-feedback-mønster
+   (:active{scale(.99)}) som andre trykbare kort i appen (fx .recipe-card). */
+.hist-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:11px;margin-bottom:8px;cursor:pointer;transition:opacity .1s,transform .1s;}
+.hist-row:hover{opacity:.85;}
+.hist-row:active{transform:scale(.99);}
 .menu-item{display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .1s;}
 .menu-item:hover{opacity:.75;}
 .menu-item:last-child{border-bottom:none;}

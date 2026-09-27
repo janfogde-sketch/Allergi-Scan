@@ -161,7 +161,7 @@ linjer — resten er hooks/contexts/effects, ikke JSX til at udtrække).
   info, chevronLeft, chevronRight, chevronDown, chevronUp, heart, trash, share, cart, camera, bulb,
   speaker, speakerOff, plus, edit, family, madpas, book, flame, image, flashlight, shield,
   block, link, bell, tag, package, message, chart, bug, download, eye, eyeOff, refresh,
-  mail, calendar, key, file, clock, save, utensils, hash, zap`. **Ingen emoji i UI'et længere hvor det kan
+  mail, calendar, key, file, clock, save, utensils, hash, zap, door, building`. **Ingen emoji i UI'et længere hvor det kan
   undgås** — brug/tilføj SVG-ikoner i stedet (se designsystem-noter nedenfor for kendte
   resterende emoji-steder, primært content-emoji som allergen-glyffer og kategori-ikoner).
 - `showToast(message, type?)` + `<ToastHost/>` — delt, designkonsistent erstatning for

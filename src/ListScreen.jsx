@@ -106,7 +106,7 @@ function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, gra
             // minimum tap-area på checkboxes/interaktive elementer) — hele
             // rækken er klikmålet, ikke kun den lille 20×20-checkboks.
             <div key={m.id} onClick={() => toggleMember(m.id)}
-              style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"13px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, marginBottom:6, cursor:"pointer" }}>
+              style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, marginBottom:6, cursor:"pointer" }}>
               <div style={{ fontSize:13, fontWeight:600, color:"var(--ink)" }}>{m.name || m.email}</div>
               <div style={{ width:20, height:20, borderRadius:6, border:`1.5px solid ${sharedIds.has(m.id) ? "var(--green)" : "var(--border2)"}`, background: sharedIds.has(m.id) ? "var(--green)" : "transparent", display:"flex", alignItems:"center", justifyContent:"center" }}>
                 {sharedIds.has(m.id) && <Icon name="check" size={12} color="#fff" />}
@@ -516,12 +516,12 @@ export default function ListScreen({
           </div>
           {favorites.length > 0 && (
             <button aria-label="Dine favoritter" onClick={() => setFavoritesOpen(v => !v)}
-              style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:"auto", padding:0, background: favoritesOpen ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${favoritesOpen ? "var(--green)" : "var(--border)"}`, borderRadius:10, cursor:"pointer", flexShrink:0 }}>
+              style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:34, padding:0, background: favoritesOpen ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${favoritesOpen ? "var(--green)" : "var(--border)"}`, borderRadius:10, cursor:"pointer", flexShrink:0 }}>
               <Icon name="heart" size={15} color={favoritesOpen ? "var(--green)" : "var(--red)"} />
             </button>
           )}
           <button aria-label="Del liste" onClick={() => setShowShareSheet(true)} disabled={!activeList}
-            style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:"auto", padding:0, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor: activeList ? "pointer" : "not-allowed", opacity: activeList ? 1 : .5, flexShrink:0 }}>
+            style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:34, padding:0, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor: activeList ? "pointer" : "not-allowed", opacity: activeList ? 1 : .5, flexShrink:0 }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2">
               <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
               <path strokeLinecap="round" d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
@@ -657,6 +657,7 @@ export default function ListScreen({
       {/* ── Tom tilstand ── */}
       {shoppingList.length === 0 && (
         <div className="empty-state">
+          <span className="empty-icon"><Icon name="cart" size={26} color="var(--muted)" /></span>
           <div className="empty-txt">Listen er tom</div>
           <div className="empty-sub">Søg efter produkter eller tilføj en vare manuelt</div>
         </div>
