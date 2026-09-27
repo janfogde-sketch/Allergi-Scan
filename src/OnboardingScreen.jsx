@@ -434,10 +434,7 @@ export default function OnboardingScreen({
                 value proposition i stedet for den tidligere slogan-agtige
                 "Scan. Tjek. Spis trygt.") */}
             <div className="welcome-logo-wrap" style={UI.mb16}>
-              <EatSafeLogo size={72} variant="light" />
-              <div className="welcome-wordmark">
-                <span className="welcome-wordmark-text">Eat<span>Safe</span></span>
-              </div>
+              <EatSafeLogo variant="horizontal" size={56} />
               <div className="welcome-tagline">Scan produkter og se straks, om de matcher dine allergier.</div>
             </div>
 
@@ -506,16 +503,11 @@ export default function OnboardingScreen({
         {screen === SCREENS.LOGIN && (
           <div className="login-wrap fade-in">
 
-            {/* Logo — genbruger PRÆCIS samme markup/klasser som velkomst-
-                skærmen (welcome-logo-wrap/-wordmark/-wordmark-text), i
-                stedet for de tidligere separate login-shield/login-title-
-                klasser (mindre logo, kursiv "Safe") — 25. sept. 2026-brief:
-                "1:1 i brandudtryk", "Safe må ikke være kursiv". */}
+            {/* Logo — genbruger PRÆCIS samme markup/klasse som velkomst-
+                skærmen (welcome-logo-wrap), og samme faste logo-asset
+                (EatSafeLogo, se SharedComponents.jsx) — "1:1 i brandudtryk". */}
             <div className="welcome-logo-wrap">
-              <EatSafeLogo size={72} variant="light" />
-              <div className="welcome-wordmark">
-                <span className="welcome-wordmark-text">Eat<span>Safe</span></span>
-              </div>
+              <EatSafeLogo variant="horizontal" size={56} />
             </div>
 
             {/* Tab vælger — se .tab-row/.tab.active i theme.jsx for den
@@ -739,7 +731,7 @@ export default function OnboardingScreen({
             )}
             {!editMode && (
               <div style={{ textAlign:"center", padding:"4px 0 20px" }}>
-                <div style={UI.mb6}><EatSafeLogo size={40} variant="light" /></div>
+                <div style={UI.mb6}><EatSafeLogo variant="symbol" size={40} /></div>
                 <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)" }}>Opsæt din profil</div>
                 <div style={{ fontSize:13, color:"var(--ink2)", marginTop:4 }}>Tager under 2 minutter</div>
               </div>

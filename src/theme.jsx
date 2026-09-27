@@ -253,8 +253,6 @@ body::-webkit-scrollbar{display:none;}
   mask-image:linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
 }
 .topbar-logo{display:flex;align-items:center;gap:8px;}
-.topbar-name{font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.4px;font-family:var(--f);}
-.topbar-name span{color:var(--green);font-style:normal;}
 .topbar-avatar{width:32px;height:32px;background:var(--green-lt);border:1.5px solid var(--green-mid);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--green);cursor:pointer;transition:all .15s;letter-spacing:.3px;}
 .topbar-avatar:hover{background:var(--green-mid);}
 
@@ -421,9 +419,6 @@ body::-webkit-scrollbar{display:none;}
 /* ── WELCOME ── */
 .welcome-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 28px;text-align:center;}
 .welcome-logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:32px;}
-.welcome-wordmark{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:20px;}
-.welcome-wordmark-text{font-family:var(--f);font-size:32px;font-weight:700;color:var(--ink);letter-spacing:-.8px;line-height:1;}
-.welcome-wordmark-text span{color:var(--green);}
 /* Tydelig value proposition (25. sept. 2026-brief: "kort og tydelig value
    proposition") — hævet fra en dæmpet, muted tagline til en tydeligere,
    mørkere sætning, så den reelt fungerer som skærmens hovedbudskab, ikke en
@@ -871,7 +866,7 @@ body::-webkit-scrollbar{display:none;}
    baggrundens punkt-gitter. Et fint, lyst "løft" (ikke en blur/glød) holder
    den læsbar uden at det ligner en fejl. */
 .screen-title,.screen-sub,.section-lbl,.mp-title,.mp-subtitle,.mp-section-lbl,
-.welcome-wordmark-text,.welcome-tagline,
+.welcome-tagline,
 .step-title,.step-sub,.onboard-skip{
   text-shadow:0 1px 0 rgba(255,255,255,.7);
 }

@@ -32,8 +32,7 @@ body{
 /* ── Login ── */
 .admin-login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
 .admin-login-card{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;box-shadow:0 2px 12px -4px rgba(21,32,26,.10);}
-.admin-login-logo{font-size:19px;font-weight:900;color:var(--green);margin-bottom:4px;}
-.admin-login-logo span{color:var(--ink);}
+.admin-login-logo{display:flex;align-items:center;gap:8px;font-size:19px;font-weight:900;color:var(--ink);margin-bottom:4px;}
 .admin-login-sub{font-size:12.5px;color:var(--muted);margin-bottom:24px;}
 .admin-field{margin-bottom:14px;}
 .admin-field label{display:block;font-size:11.5px;font-weight:700;color:var(--ink2);margin-bottom:5px;}
@@ -56,8 +55,7 @@ body{
 /* ── Layout ── */
 .admin-shell{display:flex;min-height:100vh;}
 .admin-sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 12px;}
-.admin-sidebar-logo{font-size:17px;font-weight:900;color:var(--green);padding:0 10px 20px;}
-.admin-sidebar-logo span{color:var(--ink);}
+.admin-sidebar-logo{display:flex;align-items:center;gap:7px;font-size:17px;font-weight:900;color:var(--ink);padding:0 10px 20px;}
 .admin-nav{display:flex;flex-direction:column;gap:2px;flex:1;}
 .admin-nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer;border:none;background:none;font-family:var(--f);text-align:left;width:100%;}
 .admin-nav-item:hover{background:var(--surface2);}

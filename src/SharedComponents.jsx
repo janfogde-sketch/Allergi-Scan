@@ -5,59 +5,37 @@ import { ALLERGENS, PAGE_IDS } from "./constants.jsx";
 import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers } from "./helpers.js";
 import { isAllergenWord, keywordMatches } from "./allergenKeywords.js";
 import { UI } from "./styleUtils.js";
+import eatsafeLogoHorizontal from "./assets/logo/eatsafe-logo-horizontal.svg";
+import eatsafeLogoHorizontalMono from "./assets/logo/eatsafe-logo-horizontal-mono.svg";
+import eatsafeSymbol from "./assets/logo/eatsafe-symbol.svg";
+import eatsafeSymbolMono from "./assets/logo/eatsafe-symbol-mono.svg";
 
-export function EatSafeLogo({ size = 32, variant = "light" }) {
-  const isDark = variant === "dark";
-  const bg = isDark ? "#1F2733" : "#FAFAF7";
-  const barColor = isDark ? "#3A4452" : "#1F2733";
-  const uid = "es-" + size + "-" + variant + "-" + Math.random().toString(36).slice(2,6);
+// ─── EATSAFE-LOGO (nu låst brandasset, 28. sept. 2026) ──────────────────────
+// Ét fast sæt vektor-assets (src/assets/logo/, eksporteret fra den godkendte
+// master-pakke) — erstatter BÅDE den tidligere live-tekst-rekonstruktion
+// ("Eat"+grøn "Safe" i DM Sans) OG den tidligere håndtegnede inline-SVG her
+// (9 tynde bars, anden farvepalet) — begge var reelt egne fortolkninger af
+// logoet, netop det brugeren bad om at undgå ("ingen nye variationer eller
+// AI-fortolkninger"). `variant`:
+// "horizontal" (stregkode-mærke + ordmærke, farve) — standard, brug hvor der
+// er plads til et bredt logo (velkommen/login/topbar) — `size` er højden,
+// bredden følger automatisk (billedforhold ~3.33:1).
+// "symbol" (kun stregkode-mærket, farve) — kompakte steder uden plads til
+// ordmærket — `size` er både bredde og højde (kvadratisk).
+// "-mono"-udgaver af begge til ren sort/hvid-kontekst (fx print/PDF).
+const EATSAFE_LOGO_SRC = {
+  horizontal: eatsafeLogoHorizontal,
+  "horizontal-mono": eatsafeLogoHorizontalMono,
+  symbol: eatsafeSymbol,
+  "symbol-mono": eatsafeSymbolMono,
+};
+export const EatSafeLogo = ({ variant = "horizontal", size = 28, style, className }) => {
+  const isSymbol = variant === "symbol" || variant === "symbol-mono";
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width={size} height={size} role="img" aria-label="EatSafe">
-      <defs>
-        <clipPath id={"sq-"+uid}>
-          <path d="M 50 0 C 85 0, 100 15, 100 50 C 100 85, 85 100, 50 100 C 15 100, 0 85, 0 50 C 0 15, 15 0, 50 0 Z" />
-        </clipPath>
-        <filter id={"glow-"+uid} x="-30%" y="-50%" width="160%" height="200%">
-          <feGaussianBlur stdDeviation={isDark ? 2.4 : 1.6} result="blur" />
-          <feMerge>
-            {isDark && <feMergeNode in="blur" />}
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <linearGradient id={"gline-"+uid} x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0%" stopColor="var(--green)" stopOpacity="0.9" />
-          <stop offset="60%" stopColor="var(--green)" />
-          <stop offset="100%" stopColor="var(--green)" />
-        </linearGradient>
-      </defs>
-      <g clipPath={"url(#sq-"+uid+")"}>
-        <rect width="100" height="100" fill={bg} />
-        <g fill={barColor}>
-          <rect x="18.00" y="16" width="8.31" height="68" rx="1.49" />
-          <rect x="29.05" y="22" width="4.15" height="56" rx="0.75" />
-          <rect x="35.94" y="16" width="5.54" height="68" rx="1.00" />
-          <rect x="44.21" y="22" width="2.77" height="56" rx="0.50" />
-          <rect x="49.71" y="16" width="3.32" height="68" rx="0.60" />
-          <rect x="55.76" y="22" width="6.92" height="56" rx="1.25" />
-          <rect x="65.41" y="16" width="4.43" height="68" rx="0.80" />
-          <rect x="72.57" y="22" width="5.54" height="56" rx="1.00" />
-          <rect x="80.84" y="16" width="3.88" height="68" rx="0.70" />
-        </g>
-        <g filter={"url(#glow-"+uid+")"}>
-          <path
-            d="M 20 58 L 70 58 L 76 64 L 86 50"
-            fill="none"
-            stroke={isDark ? "var(--green)" : "url(#gline-"+uid+")"}
-            strokeWidth="4.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </g>
-      </g>
-    </svg>
+    <img src={EATSAFE_LOGO_SRC[variant]} alt="EatSafe" draggable={false} className={className}
+      style={{ height: size, width: isSymbol ? size : "auto", display: "block", ...style }} />
   );
-}
+};
 
 // ─── SCAN-LOADING OVERLAY ─────────────────────────────────────────────────────
 // Logo-baseret loading-animation, vist mens et scannet/søgt produkt slås op

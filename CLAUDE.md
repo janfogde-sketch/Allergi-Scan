@@ -1164,6 +1164,78 @@ at forenkle til KUN to advarselsfarver og én samlet forklaringssektion:
   variant der kun viser ✓-rækker uden ekstra grønne bokse. `npm run
   build`/`npx vitest run` (109/109) grønne, mojibake-scan clean.
 
+### EatSafe-logoet låst og implementeret konsekvent overalt (28. sept. 2026)
+
+Brugeren delte det nu **endeligt godkendte** EatSafe-logo (mørk charcoal
+stregkode-mærke med en integreret grøn scanlinje/checkmark) + en fuld
+master-vektorpakke (SVG/PDF/PNG i alle nødvendige formater — bekræftet at
+være den ægte kildefil, ikke kun et præsentationsbillede, før noget blev
+implementeret). Opgaven var **konsekvent brug af ét fast asset**, ikke et
+redesign — se `public/brand/README.txt` for den fulde master-pakkes indhold.
+
+**Låste brandfarver (fra selve master-filerne, IKKE de omtrentlige "fx"-
+farver brugeren nævnte i sin besked)** — bevidst ADSKILT fra appens egen
+`--green:#0E8F5A`-designtoken (design-tokens.md), som forbliver uændret til
+al almindelig UI (knapper, chips osv.). Logoets egen, faste palet:
+- Mørk (bars/wordmark "Eat"): `#232528`
+- Grøn (checkmark/wordmark "Safe"): `#039A55`, med en gradient
+  `#70DC59 → #17BF55 → #039A55` i checkmark-stregen/prikken
+- Off-white baggrund (app-ikon/favicon): `#FBFAF7`
+
+**Nye faste assets:**
+- `src/assets/logo/` — de aktivt brugte SVG'er (symbol/symbol-mono/
+  horizontal/horizontal-mono), importeret som almindelige Vite-assets.
+- `public/brand/` — hele master-pakken (alle SVG/PDF/PNG-varianter +
+  README) lagt ud som downloadbar reference på `eatsafe.dk/brand/...`,
+  jf. kravet om at "SVG/vector master" og "PNG-varianter" skal findes.
+- **Ny delt komponent `EatSafeLogo`** (`SharedComponents.jsx`) —
+  `variant="horizontal"|"horizontal-mono"|"symbol"|"symbol-mono"` + `size`
+  (højde for horizontal, bredde=højde for symbol). Erstatter BÅDE den
+  tidligere live-tekst-rekonstruktion ("Eat"+grøn "Safe" i DM Sans, brugt i
+  topbar/velkommen/login) OG en tidligere håndtegnet inline-SVG med samme
+  navn (9 tynde bars, andre farver) — begge var reelt egne fortolkninger,
+  præcis det brugeren bad om at undgå ("ingen nye variationer eller
+  AI-fortolkninger"). Bruges nu i: `App.jsx` (topbar), `OnboardingScreen.jsx`
+  (velkommen/login — samme markup, fjernede den nu-overflødige separate
+  tekst-wordmark ved siden af; onboarding-trin-header, kompakt `symbol`).
+  Admin-bundlet (`src/admin/AdminApp.jsx`/`AdminLayout.jsx`) importerer
+  samme komponent fra `../SharedComponents.jsx` (allerede en fælles
+  afhængighed via `showToast`/`ToastHost`, så ingen ny bundle-kobling).
+- **App-ikon/favicon/manifest gendannet fra master:** `public/favicon.svg`
+  (samme squircle-klip som før, men med det nye mærkes eksakte geometri/
+  farver i stedet for den gamle 9-bar-tolkning), `icon-192/512(-maskable)
+  .png` + `apple-touch-icon.png` gendannet ved at nedskalere den leverede
+  1024×1024-master (samme billede bruges til "any" og "maskable" — den
+  leverede paddings er allerede rigelig til Androids safe-zone-krav).
+  `manifest.json`s `theme_color`/`background_color` og `index.html`s
+  `theme-color`-meta opdateret til de nye låste farver; tilføjet et
+  `og:image` (pegende på den nye horisontale logo-PNG i `public/brand/`)
+  som ikke fandtes før.
+- **Statiske sider** (`public/install.html`, `invite.html`, `privacy.html`)
+  havde hver sin egen, let ANDERLEDES tekst-wordmark-kopi (bl.a. en
+  omvendt "Eat=grøn/Safe=ink"-farvefejl i to af dem, modsat topbarens
+  "Eat=ink/Safe=grøn") — alle tre erstattet med samme `<img>`-reference til
+  `/brand/EatSafe_Master_Logo_Horizontal.svg`, så der nu kun findes ÉT
+  visuelt udtryk for logoet på tværs af hele produktet, ikke fire-fem
+  let-forskellige tekst-rekonstruktioner. `public/install.html` brugte
+  allerede `icon-192.png` (nu automatisk opdateret) + separat tekst ved
+  siden af — den separate tekst er fjernet, billedet dækker nu begge dele.
+- **Bevidst UDEN for scope:** `public/eatsafe-dashboard.html` (en statisk,
+  ikke-refereret fil — ikke det rigtige admin-panel, som er `src/admin/` +
+  `admin.html` — verificeret ubrugt før den blev ladet urørt) og
+  ProfileScreen.jsx/BetaIntroModal.jsx's løse "EatSafe Beta"-omtaler i
+  brødtekst (ikke en visuel logo-gengivelse, bare produktnavnet i en sætning
+  — et billede-logo inline i løbende tekst ville være forkert brug af et
+  ordmærke).
+- Verificeret med Playwright (artifact-preview-build): velkommen-, login-
+  og onboarding-trin-skærme, topbar, admin-login, samt install/invite/
+  privacy-siderne (alle tre, inkl. install.html's iOS-guide via enheds-
+  emulering, da ikke-iOS-brugeragenter omdirigeres til den rigtige
+  produktions-URL uden for sandboxens netadgang) — alle viser nu identisk
+  logo-geometri/-farver. Favicon.svg renderet standalone og bekræftet
+  pixel-identisk med app-ikonets proportioner. `npm run build`/
+  `npx vitest run` (109/109) grønne, mojibake-scan clean.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
