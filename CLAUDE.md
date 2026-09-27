@@ -1373,6 +1373,55 @@ allerede-åbne faner (ellers kører en bruger med appen allerede åben videre
 på den gamle service worker). Fejlfindingshistorien bag disse tre fund er
 i `.claude/HISTORY.md`.
 
+### MASTER PROMPT — visuelt system og polering af hele EatSafe-appen (27. sept. 2026, i gang)
+
+Bjørn gav en stor, 14-punkts "MASTER PROMPT"-brief: mål er stringens/
+konsistens/10/10-polish på tværs af HELE appen — eksplicit IKKE et
+redesign, EatSafe-identiteten/lys food-baggrund/afrundede kort/venlige
+tone/nuværende grønne retning skal bevares. Arbejdet batches i flere PR'er
+efterhånden som dele bliver færdige og godkendt til push, ikke i én stor
+omgang — se punkt-for-punkt-status herunder, opdatér listen efterhånden.
+
+**Delvis shippet (PR #359, merget):**
+- **Nyt 2-grønt farvesystem** — `--green` er nu `#0F7D4F` (primær
+  handlingsfarve: knapper, aktive toggles/tabs/faner, CTA'er, herunder
+  Scan-knappen), superseder den tidligere ENE-grønne lås fra 25. sept.
+  (`#0E8F5A`). Ny, adskilt `--green-accent:#34D06A` — KUN til små positive
+  mikro-elementer (checkmarks, safe-badges/dots, kamera-scan-reticle/
+  laser-linjen i ScannerScreen.jsx via `--green-logo`) — må ALDRIG bruges
+  til knapper/aktive tilstande. Se `.claude/rules/design-tokens.md` for
+  den fulde, opdaterede token-tabel. Logo-SVG'ernes egne, indbyggede
+  farver (fast brandasset, se logo-afsnittet ovenfor) er bevidst urørt.
+  Checkmark-ikonet i `.chip-check` skiftet fra hvid til `--ink`, da hvid
+  på den lysere accent-grøn kun gav 2.02:1 kontrast (under WCAG's
+  3:1-minimum for UI-grafik) — `--ink` giver 8.28:1.
+- **Brand-slogan "Mere tryghed i hverdagen"** — ny delt `.brand-slogan`-
+  CSS-klasse, bevidst lille/muted/bred letter-spacing (læses som en rolig
+  signatur, ikke en overskrift). Placeret KUN to steder: under logoet på
+  velkomstsiden, og i "Om EatSafe"-kortet i Indstillinger — IKKE gentaget
+  på andre skærme eller i topbaren, jf. brief'ens eksplicitte "aldrig fast
+  gentagelse".
+- **Disclaimer-audit** — bekræftet at den foretrukne ordlyd ("EatSafe er
+  vejledende. Kontrollér altid produktets aktuelle ingrediens- og
+  allergenoplysninger.") allerede findes korrekt ét sted (ResultScreen.jsx,
+  fra en tidligere runde) — ingen ændring nødvendig der. Fjernet den
+  eksplicit frarådede formulering "ved alvorlige allergier" to andre
+  steder (opskrift-indsendelsens write-only disclaimer-felt i
+  useRecipes.js, terms.html). Øvrige "vejledende/tjek altid"-tekster
+  (Viden-siden, BetaIntroModal, onboarding-diæt-tjek, Opskrifter) er
+  bevidst urørte — hver dækker sin egen, ikke-overlappende kontekst.
+
+**Resterende (ikke startet/i gang, fortsættes i en senere PR):** navigation/
+topbar/bottom-nav-gennemgang (stikprøve viste allerede konsistente,
+enkeltstående komponenter — ingen fund), en design-reviewer-agent-audit af
+typografi/spacing/komponentkonsistens på tværs af Historik/Indkøbsliste/
+Madpas/Indstillinger/Profil/Produktsider (kørende), mikrocopy-gennemgang,
+tilgængelighedstjek, og en afsluttende cross-page-visuel-konsistens-
+sammenligning. De fleste af brief'ens punkter om Scan-flow/Produktside/
+Indstillinger-struktur er allerede dækket af tidligere, separate runder
+(se de respektive afsnit ovenfor) — audit'en verificerer det frem for at
+lave det om.
+
 ---
 
 ## 6. Design-antimønstre — ting vi bevidst IKKE vil have i appen
