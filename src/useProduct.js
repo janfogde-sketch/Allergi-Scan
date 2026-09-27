@@ -197,10 +197,12 @@ export async function runLookupProduct(ean, ctx) {
     if (elapsed < MIN_LOADING_MS) await new Promise(r => setTimeout(r, MIN_LOADING_MS - elapsed));
   };
 
-  const cached = productCacheRef.current[ean.trim()] || getFromOfflineCache(ean.trim());
-  if (cached) {
+  // Viser et cache-resultat og henter de tilhørende alternativer — delt af
+  // både sessions-cachen (samme app-session) og den vedvarende offline-cache
+  // (kun brugt når reelt offline, se nedenfor).
+  const showCachedResult = (cachedProduct) => {
     traceLog(tid, "scan:cache-hit");
-    const cachedResult = withCustomAllergenMatch(cached, activeCustom);
+    const cachedResult = withCustomAllergenMatch(cachedProduct, activeCustom);
     setScanResult(cachedResult); setScreen(SCREENS.RESULT); setLoading(false);
     if (navigator.vibrate) navigator.vibrate(25);
     // Alternativer er IKKE en del af det cachede result-objekt — uden dette
@@ -214,10 +216,24 @@ export async function runLookupProduct(ean, ctx) {
     } else {
       clearAlternatives();
     }
-    return;
-  }
-  // Offline uden cache — vis besked
+  };
+
+  // Kun sessions-cachen (in-memory, ryddes ved reload) bruges når vi er
+  // online — den vedvarende offline-cache (localStorage, ingen udløbsdato)
+  // må IKKE springe netværkskaldet over når vi reelt er online, for så
+  // fryser den allergendata på scanningstidspunktet permanent, selv efter
+  // en admin-godkendt rettelse retter dem server-side. Bruger-rapporteret
+  // 27. sept. 2026: en godkendt ingrediens-rettelse til "Risted Løg" nåede
+  // aldrig brugeren, fordi et tidligere, ingrediensløst scan af samme EAN
+  // allerede lå uændret i den vedvarende cache — nøjagtig samme klasse fejl
+  // som cache-nøglens v2-bump herover engang måtte rette med en global,
+  // engangs-invalidering, ikke en rigtig løsning på selve mekanismen.
+  const sessionCached = productCacheRef.current[ean.trim()];
+  if (sessionCached) { showCachedResult(sessionCached); return; }
+
   if (!navigator.onLine) {
+    const offlineCached = getFromOfflineCache(ean.trim());
+    if (offlineCached) { showCachedResult(offlineCached); return; }
     setScanError("Du er offline og dette produkt er ikke i den lokale cache.");
     setLoading(false); return;
   }

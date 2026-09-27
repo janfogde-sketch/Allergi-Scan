@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       const body = await req.json();
       const { ean, submitted_by, raw_label_image, ocr_raw_text, ai_parsed_data, user_confirmed, notes } = body;
       const type = body.type === "edit" ? "edit" : "new_product";
-      const product_id = type === "edit" ? body.product_id : null;
+      let product_id = type === "edit" ? body.product_id : null;
 
       if (!ean || !submitted_by) {
         return new Response(
@@ -121,9 +121,23 @@ Deno.serve(async (req) => {
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+      // Klienten sender scanResult.id som product_id — men den er null for et
+      // produkt der lige er hentet live fra Open Food Facts og endnu ikke var
+      // gemt i vores egen database på det tidspunkt appen hentede det (products-
+      // funktionen gemmer den slags produkter asynkront i baggrunden,
+      // EdgeRuntime.waitUntil, EFTER svaret allerede er sendt til klienten —
+      // se dens GET-handler). Uden dette blev ethvert rettelsesforslag til den
+      // slags produkter afvist med det samme, selvom produktet rent faktisk
+      // findes (bruger-rapporteret: "Risted Løg", EAN 5705830004222 — indsendt
+      // 2 timer efter produktet var gemt, men klientens scanResult.id var
+      // stadig null). Slå derfor produktet op på EAN i stedet for at afvise.
+      if (type === "edit" && !product_id) {
+        const { data: existingProduct } = await supabase.from("products").select("id").eq("ean", ean).single();
+        if (existingProduct) product_id = existingProduct.id;
+      }
       if (type === "edit" && !product_id) {
         return new Response(
-          JSON.stringify({ error: "product_id er påkrævet for et rettelsesforslag" }),
+          JSON.stringify({ error: "Produktet kunne ikke findes i databasen endnu — prøv igen om lidt" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
