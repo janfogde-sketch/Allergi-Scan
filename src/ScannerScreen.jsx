@@ -477,7 +477,7 @@ export default function ScannerScreen({
                         left: key.endsWith("l") ? 0 : "auto",
                         right: key.endsWith("r") ? 0 : "auto",
                         width:22, height:22,
-                        borderColor:"var(--green)",
+                        borderColor:"var(--green-accent)",
                         borderStyle:"solid",
                         borderWidth:0,
                         borderTopWidth: key.startsWith("t") ? 3 : 0,
@@ -495,8 +495,8 @@ export default function ScannerScreen({
                     {scanReady && (
                       <div style={{
                         position:"absolute", left:4, right:4, height:2,
-                        background:"linear-gradient(90deg, transparent, var(--green), rgba(134,239,172,.8), var(--green), transparent)",
-                        boxShadow:"0 0 8px var(--green), 0 0 16px var(--green)",
+                        background:"linear-gradient(90deg, transparent, var(--green-accent), rgba(134,239,172,.8), var(--green-accent), transparent)",
+                        boxShadow:"0 0 8px var(--green-accent), 0 0 16px var(--green-accent)",
                         animation:"laserMove 1.8s ease-in-out infinite",
                         top:0,
                       }} />

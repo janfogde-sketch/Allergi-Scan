@@ -52,7 +52,7 @@ export const AllergenChipPicker = ({ selected, onChange }) => {
             <Icon name="info" size={14} color="currentColor" />
           </span>
         )}
-        {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
+        {on && <div className="chip-check"><Icon name="check" size={9} color="var(--ink)" /></div>}
       </ChoiceChip>
     );
   };
@@ -105,7 +105,7 @@ export const DietChipPicker = ({ selected, onChange, showCount = true, autoNote 
                   <div style={UI.muted11mt2}>{d.desc}</div>
                 )}
               </div>
-              {on && <div className="chip-check"><Icon name="check" size={9} color="var(--on-green)" /></div>}
+              {on && <div className="chip-check"><Icon name="check" size={9} color="var(--ink)" /></div>}
             </ChoiceChip>
           );
         })}

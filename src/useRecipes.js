@@ -87,7 +87,7 @@ export function useRecipes(accessToken, userId) {
         allergen_flags: allergenFlags.length > 0
           ? JSON.stringify(Object.fromEntries(allergenFlags.map(id => [id, true])))
           : null,
-        disclaimer: "Allergener er vejledende. Tjek altid ingrediensernes emballage ved alvorlige allergier.",
+        disclaimer: "Allergener er vejledende. Tjek altid ingrediensernes emballage.",
       });
       let data;
       try {
