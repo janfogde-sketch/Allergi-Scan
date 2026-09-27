@@ -512,8 +512,15 @@ export default function OnboardingScreen({
                 tilsvarende. Farve skærpet fra --ink2 (.78 alpha) til en
                 lokal, lidt mørkere rgba(.85 alpha) for optimal kontrast mod
                 det aktive baggrundsbillede — stadig tydeligt "småprint",
-                ikke fuld --ink-vægt. */}
-            <div style={{ marginTop:22, maxWidth:290, fontSize:11.5, color:"rgba(21,32,26,.85)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
+                ikke fuld --ink-vægt.
+                Samme dag, "FINAL 10/10 MICRO-POLISH": max-width 290px→250px
+                — ved 290px endte "privatlivspolitikken." alene på sin egen
+                3. linje (kun linket + punktum), hvilket så skævt/ubalanceret
+                ud. Den smallere bredde giver en mere naturlig ombrydning
+                ("...at du har / læst privatlivspolitikken.") uden at røre
+                font-size/line-height/tekst — verificeret på SE/iPhone 13/
+                Pro Max, ingen link står længere alene. */}
+            <div style={{ marginTop:22, maxWidth:250, fontSize:11.5, color:"rgba(21,32,26,.85)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
               Ved at oprette en konto accepterer du vores{" "}
               <a href="/terms.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>brugsvilkår</a>
               {" "}og bekræfter, at du har læst{" "}
