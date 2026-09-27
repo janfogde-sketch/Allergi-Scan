@@ -516,15 +516,29 @@ export default function OnboardingScreen({
                 Samme dag, "FINAL 10/10 MICRO-POLISH": max-width 290px→250px
                 — ved 290px endte "privatlivspolitikken." alene på sin egen
                 3. linje (kun linket + punktum), hvilket så skævt/ubalanceret
-                ud. Den smallere bredde giver en mere naturlig ombrydning
-                ("...at du har / læst privatlivspolitikken.") uden at røre
-                font-size/line-height/tekst — verificeret på SE/iPhone 13/
-                Pro Max, ingen link står længere alene. */}
-            <div style={{ marginTop:22, maxWidth:250, fontSize:11.5, color:"rgba(21,32,26,.85)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
-              Ved at oprette en konto accepterer du vores{" "}
+                ud. Den smallere bredde gav en mere naturlig ombrydning uden
+                at røre font-size/line-height/tekst.
+                27. sept. 2026, "FINAL MICRO-FIX": selve sætningen omskrevet
+                ("Du accepterer vores brugsvilkår og bekræfter, at du har
+                læst privatlivspolitikken, når du opretter en konto.") —
+                "privatlivspolitikken" har nu et halevedhæng (", når du
+                opretter en konto.") i stedet for et punktum lige efter
+                linket, så LINKET aldrig kan ende alene på sin egen linje.
+                Den nye, længere sætning gav dog et nyt problem ved den
+                daværende 250px/11.5px-kombination: sidste ORD ("konto.")
+                endte alene på en 4. linje i stedet. Løst empirisk (afprøvet
+                flere bredde/font-size-kombinationer direkte i den byggede
+                app, ikke gættet) med max-width 250px→270px + font-size
+                11.5px→11px — giver præcis 3 jævnt fyldte linjer på alle tre
+                testede bredder (SE/iPhone 13/Pro Max), ingen linje med kun
+                ét ord eller ét link. line-height/farve/kontrast/centrering
+                uændret. */}
+            <div style={{ marginTop:22, maxWidth:270, fontSize:11, color:"rgba(21,32,26,.85)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
+              Du accepterer vores{" "}
               <a href="/terms.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>brugsvilkår</a>
               {" "}og bekræfter, at du har læst{" "}
-              <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>privatlivspolitikken</a>.
+              <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>privatlivspolitikken</a>,
+              {" "}når du opretter en konto.
             </div>
 
             {/* Samme spacer-mekanisme som toppen, se kommentar ovenfor —
