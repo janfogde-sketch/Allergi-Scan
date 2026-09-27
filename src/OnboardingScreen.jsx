@@ -32,15 +32,19 @@ function WelcomeIntro({ setScreen, setAuthTab }) {
 }
 
 // 3 korte fordele med ikon (25. sept. 2026-brief) — "Tjek allergener",
-// "Hurtigt svar", "Tryggere indkøb". Ikonerne matcher hver sin fordel:
+// "Hurtigt svar", "Lettere indkøb". Ikonerne matcher hver sin fordel:
 // shield (beskyttelse mod allergener), zap (hurtighed), cart (indkøb).
 // "Undgå" → "Tjek" (samme dag, opfølgning) — "Undgå" kan lyde som en
 // garanti appen ikke kan give; "Tjek" beskriver mere præcist at appen
 // hjælper med VURDERINGEN, ikke selve garantien.
+// "Tryggere indkøb" → "Lettere indkøb" (28. sept. 2026, "FINAL POLISH") —
+// dels en kortere tekst der reelt kan stå på én linje ved siden af de to
+// andre (se .welcome-benefits-kommentaren i theme.jsx), dels undgår
+// "Tryggere" et kategorisk sikkerhedsløfte appen ikke kan indfri fuldt ud.
 const WELCOME_BENEFITS = [
   ["shield", "Tjek allergener"],
   ["zap",    "Hurtigt svar"],
-  ["cart",   "Tryggere indkøb"],
+  ["cart",   "Lettere indkøb"],
 ];
 
 export default function OnboardingScreen({
@@ -430,12 +434,20 @@ export default function OnboardingScreen({
     <>
         {screen === SCREENS.WELCOME && (
           <div className="welcome-screen fade-in">
+            {/* Usynlig spacer med ulige flex-grow-vægt (28. sept. 2026,
+                "FINAL POLISH") — se .welcome-vspace-top/-bottom i theme.jsx
+                for hvorfor: flytter kompositionens lodrette tyngdepunkt en
+                anelse op uden at ændre selve layoutet. */}
+            <div className="welcome-vspace-top" aria-hidden="true" />
+
             {/* Logo + værdiforslag (25. sept. 2026-brief: kort, tydelig
                 value proposition i stedet for den tidligere slogan-agtige
-                "Scan. Tjek. Spis trygt.") */}
+                "Scan. Tjek. Spis trygt."). Teksten udvidet 28. sept. 2026
+                ("FINAL POLISH") til også at nævne kosthensyn, ikke kun
+                allergier — matcher at appen også dækker diæter/E-numre. */}
             <div className="welcome-logo-wrap" style={UI.mb16}>
               <EatSafeLogo variant="horizontal" size={56} />
-              <div className="welcome-tagline">Scan produkter og se straks, om de matcher dine allergier.</div>
+              <div className="welcome-tagline">Scan produkter og se straks, om de passer til dine allergier og kosthensyn.</div>
             </div>
 
             {/* 3 fordele */}
@@ -474,19 +486,34 @@ export default function OnboardingScreen({
               </button>
             )}
 
-            {/* Privacy — diskret småprint nederst. "Handelsbetingelser" er
-                bevidst ikke et link (25. sept. 2026) — der findes endnu ikke
-                en selvstændig vilkårs-side i public/ (kun privacy.html), så
-                et link ville pege på en ikke-eksisterende side. Egen
-                text-shadow-løft (ikke en del af det globale sæt i theme.jsx)
-                — denne tekst sidder tættest på skærmens nederste kant, hvor
-                vignet-effekten (theme.jsx's .app-bg) er svagest og billedet
-                mest tydeligt, så den har mest brug for et løft. */}
-            <div style={{ marginTop:16, fontSize:11, color:"var(--muted)", lineHeight:1.6, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.7)" }}>
+            {/* Juridisk tekst — diskret, men læsbar, småprint nederst (28.
+                sept. 2026, "FINAL POLISH"). Både "handelsbetingelser" og
+                "privatlivspolitikken" er nu rigtige links (se public/
+                terms.html, nyoprettet i samme runde — der fandtes tidligere
+                ingen selvstændig vilkårs-side, kun privacy.html). Teksten
+                er omformuleret til at skelne "accepterer handelsbetingelser"
+                fra "bekræfter at have læst privatlivspolitikken" — denne
+                tekst er IKKE samtykke til behandling af allergi-/
+                helbredsoplysninger (det håndteres separat, eksplicit,
+                længere inde i selve onboardingen, se privacy.html afsnit 4).
+                --ink2 i stedet for det tidligere, lysere --muted (bedre
+                kontrast mod det aktive food-baggrundsbillede), max-width
+                for pænere linjebrud, og en anelse større line-height.
+                Egen text-shadow-løft (ikke en del af det globale sæt i
+                theme.jsx) — denne tekst sidder tættest på skærmens nederste
+                kant, hvor vignet-effekten (theme.jsx's .app-bg) er svagest
+                og billedet mest tydeligt, så den har mest brug for et løft. */}
+            <div style={{ marginTop:22, maxWidth:290, fontSize:11.5, color:"var(--ink2)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
               Ved at oprette en konto accepterer du vores{" "}
-              <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:600 }}>privatlivspolitik</a>
-              {" "}og handelsbetingelser.
+              <a href="/terms.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>handelsbetingelser</a>
+              {" "}og bekræfter, at du har læst{" "}
+              <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>privatlivspolitikken</a>.
             </div>
+
+            {/* Samme spacer-mekanisme som toppen, se kommentar ovenfor —
+                giver resten af den ledige plads (0.62:1-vægten, se
+                theme.jsx). */}
+            <div className="welcome-vspace-bottom" aria-hidden="true" />
           </div>
         )}
 

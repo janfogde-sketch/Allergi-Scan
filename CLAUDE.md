@@ -1276,6 +1276,88 @@ igen → menuen starter lukket; gentaget logout-cyklus (åbn menu → log ud →
 log ind igen) to gange i træk uden at menuen nogensinde forbliver åben.
 `npm run build`/`npx vitest run` (109/109) grønne, mojibake-scan clean.
 
+### Velkomstside — "FINAL POLISH", produktionsklar finish (28. sept. 2026)
+
+En detaljeret 12-punkts "FINAL POLISH"-spec til `SCREENS.WELCOME` —
+videreudvikling af eksisterende layout/logo/baggrund/CTA-struktur, ikke et
+redesign. Alle ændringer i `OnboardingScreen.jsx` (kun WELCOME-blokken,
+LOGIN/ONBOARD urørt) og `theme.jsx`s `.welcome-*`-regler, plus én ny
+statisk side.
+
+- **Lodret balance (krav 1):** `.welcome-screen` brugte `justify-content:
+  center`, som altid deler ledig plads 50/50 over/under indholdet —
+  brugerfeedback var "en anelse for meget tom plads over hero-indholdet".
+  Erstattet af to usynlige spacer-`div`er (`.welcome-vspace-top/-bottom`)
+  med ULIGE flex-grow-vægt (0.62:1) i stedet for selve `justify-content`
+  — fordeler ledig plads ca. 38/62 (top/bund), skalerer proportionalt på
+  tværs af enhver skærmhøjde, og krymper begge til ~0 på den mindste
+  iPhone (SE-klasse), hvor der ikke er ledig plads at fordele i forvejen.
+  Lodret padding sat ned 48px→20px (spacers giver resten af luften).
+- **Hovedbudskab (krav 2):** "...om de matcher dine allergier." → "...om
+  de passer til dine allergier og kosthensyn." — `.welcome-tagline`s
+  `max-width` øget 280px→300px for pænere linjebrud ved den længere tekst.
+- **De tre benefits (krav 3) — reelt fund:** "Tjek allergener" og
+  "Tryggere indkøb" brød begge over to linjer ved den gamle kolonnebredde
+  (100px cap), mens "Hurtigt svar" stod på én — en synligt ujævn række.
+  Målt præcist med Playwright (reelle DM Sans-tekstbredder, ikke gæt):
+  løst med `.welcome-benefits` gap 22px→14px + `.welcome-benefit`
+  max-width 100px→130px + `.welcome-benefit-label` font-size 13px→12px
+  (mindste nødvendige kombination for at alle tre står på én linje ved
+  standard iPhone-bredde, som kravet selv beder om at prioritere frem for
+  at gøre hele rækken mindre). "Tryggere indkøb" omdøbt til "Lettere
+  indkøb" — kortere tekst der reelt kan stå på én linje, og undgår et
+  kategorisk sikkerhedsløfte ("Tryggere") appen ikke fuldt kan indfri.
+- **CTA-polish (krav 4/5):** `.welcome-btn`/`.welcome-btn-ghost`
+  border-radius 14px→16px (matcher hinanden, som krævet), `.welcome-btn`s
+  skygge dæmpet (opacity/blur skåret ned — "subtil og premium, ikke
+  kraftig"), `text-align:center` gjort eksplicit, indbyrdes spacing
+  10px→12px. Bredde/radii var allerede identiske mellem de to knapper.
+- **Juridisk tekst (krav 6/7) — ny side oprettet:** "handelsbetingelser"
+  var bevidst IKKE et link før nu (ingen side fandtes) — brugeren bad
+  eksplicit om at få en oprettet i denne omgang. Ny `public/terms.html`
+  (samme stil/struktur som `privacy.html`) med en tydeligt markeret,
+  amber "foreløbig/ikke juridisk gennemgået"-boks øverst — genuint
+  generisk placeholder-indhold, IKKE juridisk godkendt tekst; skal
+  erstattes af rigtigt indhold før det bruges retligt bindende. Teksten
+  omformuleret til "...accepterer du vores handelsbetingelser og
+  bekræfter, at du har læst privatlivspolitikken" — adskiller bevidst
+  "acceptér vilkår" fra "bekræft at have læst privatliv", og er EKSPLICIT
+  IKKE samtykke til behandling af allergi-/helbredsoplysninger (det sker
+  separat, senere i selve onboardingen). Begge ord er nu rigtige links.
+  Visuel polish: farve `--muted`→`--ink2` (bedre kontrast mod det aktive
+  food-baggrundsbillede), font-size 11px→11.5px, line-height 1.6→1.65,
+  ny `max-width:290px` for pænere linjebrud, margin-top 16px→22px for
+  bedre rytme-adskillelse fra CTA-klyngen ovenfor.
+- **Feedback-knap (krav 8) — reelt fund:** onboarding-udgaven af
+  Feedback-knappen (adskilt fra den autentificerede topbar-udgave) brugte
+  `top:12` uden `env(safe-area-inset-top)` (risiko for kollision med
+  statuslinje/Dynamic Island på notch-enheder) og en selvstændig, hardkodet
+  skygge i stedet for appens delte `var(--sh)`-token. Begge rettet.
+- **Baggrund/kontrast (krav 9):** ingen ændring af selve `.app-bg`
+  (baggrundens karakter skal bevares) — kontrastløftet for hovedbudskab/
+  benefits/CTA'er var allerede tilstrækkeligt via eksisterende
+  `--ink`/hvide kort-baggrunde; kun den juridiske teksts farve/kontrast
+  var reelt utilstrækkelig (se krav 7 ovenfor).
+- **Vertikal rytme (krav 10):** gennemgået hele sekvensen logo→
+  hovedbudskab→benefits→primær CTA→sekundær CTA→juridisk tekst — bevidst
+  AFTAGENDE mellemrum ned gennem hierarkiet (fra ~44px mellem logo og
+  benefits til ~22px før juridisk tekst) i stedet for identiske
+  pixel-mellemrum overalt, som ville virke mekanisk; ingen sektion
+  målt/vurderet som klemt eller løsrevet.
+- Verificeret med Playwright på alle fire krævede enhedsstørrelser (mindre
+  iPhone/SE-klasse 320×568, standard iPhone 390×844, stor iPhone/Pro
+  Max-klasse 430×932, Dynamic Island-klasse 393×852): alle tre benefits på
+  én linje på standard-bredde, ingen beskårne labels/knapper/juridisk
+  tekst, og — reelt fund undervejs — den i forvejen eksisterende, minimale
+  overflow på SE-klassen (~12px, eksisterede allerede FØR denne omgang på
+  grund af `min-height:100vh`+indhold der samlet er højere end skærmen)
+  blev ikke forværret af den nu længere juridiske tekst, takket være den
+  reducerede lodrette padding — tværtimod forbedret til ~6px. `npm run
+  build`/`npx vitest run` (109/109) grønne, mojibake-scan clean (fangede
+  undervejs en reel byggefejl: en backtick i en CSS-kommentar inde i
+  `theme.jsx`s `appCss`-template-literal brød selve JS-syntaksen — samme
+  fejlklasse denne fil selv advarer om andetsteds, rettet før commit).
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
