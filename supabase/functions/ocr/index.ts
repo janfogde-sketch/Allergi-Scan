@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
       ean_from_image:
         "Læs stregkodens tal (EAN/UPC, typisk 8-14 cifre) fra dette billede. Returner KUN tallet, uden mellemrum eller andre tegn. Hvis du ikke kan læse det tydeligt, returner en tom streng.",
       ingredients:
-        "Læs ingredienslisten fra dette billede af en fødevareemballage. Returner KUN den rå ingrediensliste præcis som den står — behold originalsproget, store/små bogstaver og tegnsætning. Fjern alt andet (næringsdeklaration, adresser, batchnumre). Hvis du ikke kan finde en ingrediensliste, returner en tom streng.",
+        "Læs ingredienslisten fra dette billede af en fødevareemballage. Emballagen viser ofte ingredienslisten på flere sprog samtidig (fx dansk sammen med svensk, norsk, engelsk eller tysk) — returner KUN den danske udgave af listen. Hvis ingredienslisten IKKE findes på dansk (kun på et andet sprog), skal du selv oversætte den til naturligt, korrekt dansk i stedet for at returnere den på originalsproget — returner ALDRIG tekst på et andet sprog end dansk. Behold rækkefølgen af ingredienser, procentangivelser i parentes, og kommaseparering som i kildeteksten. Fjern alt andet (næringsdeklaration, adresser, batchnumre, øvrige sprogversioner). Returner KUN selve den danske ingrediensliste, intet andet. Hvis du ikke kan finde en ingrediensliste, returner en tom streng.",
     };
     const prompt = PROMPTS[mode] || PROMPTS.ingredients;
 
