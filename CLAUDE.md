@@ -1512,8 +1512,67 @@ konsistens/validering/sidste polish, ikke et redesign. Ændringer i
   begge faner, ingen JS-konsol-fejl ved tab-skift, ingen stale fejl der
   overlever et tab-skift. `npm run build`/`npx vitest run` (110/110, 3 nye
   tests for de nye felt-fejl-cases) grønne, mojibake-scan clean.
-- **Ikke pushet endnu** — afventer brugerens eksplicitte godkendelse, jf.
-  den stående push-regel (afsnit 4).
+- **Shippet (PR #363, merget).**
+
+### Onboarding trin 1 ("Hvem er du?") — "FINAL 10/10 POLISH" (27. sept. 2026)
+
+10-punkts spec til onboardingens trin 1 (Navn/E-mail/Telefon/Alder/Køn) —
+konsistens/validering/polish, alle felter bevaret, intet redesign.
+Ændringer i `OnboardingScreen.jsx` (renderStep1), `FormFields.jsx`
+(AgeStepper), `DesignSystem.jsx` (ChoiceCard) og `theme.jsx`.
+
+- **Hjælpetekst rettet** — "bruges til din personlige allergiprofil"
+  antydede fejlagtigt at ALLE felter her er nødvendige for allergi-logikken
+  (kun allergier/diæter, indsamlet på senere trin, er det reelt) — ændret
+  til "bruges til at opsætte din profil og kan ændres senere."
+- **E-mail-feltets read-only-tilstand rettet** — brugte tidligere
+  `opacity:.6`, samme visuelle "dæmpet"-signal som et disabled/fejlramt
+  felt, præcis det brugeren bad om at undgå. Erstattet med en let, positiv
+  grøn baggrundstone (`--green-lt`/`--green-mid`, samme par som appens
+  øvrige "gemt/aktiv"-tilstande) + fuld tekstkontrast + en tydelig
+  undertekst ("Allerede gemt fra din konto" / "Bekræftet via Google" for
+  OAuth) — vises nu for BEGGE tilfælde (var kun OAuth før), ikke kun
+  opacity-dæmpning.
+- **Telefonnummer fik reel formatvalidering** — krævede tidligere kun et
+  ikke-tomt felt, uanset ciffer-antal. Nu præcis 8 cifre (dansk mobilnummer-
+  længde), med to adskilte fejltekster (tom vs. forkert længde). Tallene
+  grupperes automatisk parvis mens man skriver ("12 34 56 78", samme format
+  som placeholderen allerede lovede men det indtastede tal ikke fulgte).
+- **Alder-stepperen finpudset** — minus/værdi/plus har nu alle præcis 44px
+  højde (var 40px på knapperne, en upræcis, ikke-eksakt højde på inputtet)
+  — matcher desuden 44×44pt-tap-måls-minimummet, som knapperne var under.
+  Værdien i midten fik større/federe skrift (matcher knappernes egen
+  vægt) i stedet for almindelig felt-tekst, så den ligner en aktiv værdi,
+  ikke "død" input-tekst. Ny `.age-step-btn:active`-CSS-klasse giver en
+  tydelig tryk-feedback, som de rå inline-stylede knapper ikke havde før.
+  Deles med `MemberForm.jsx` (samme komponent), så familie-trinnet får
+  samme forbedring automatisk.
+- **Køn-vælgeren (ChoiceCard) fik et diskret checkmark** ved valgt-state —
+  havde kun farve før; matcher nu samme "grøn baggrund/kant/tekst + lille
+  check"-mønster som chip-baserede vælgere andre steder i onboardingen.
+- **Felt-specifikke fejl** — hvert felt (Navn/Telefon/Alder/Køn) viser nu
+  sin egen inline fejltekst direkte under sig selv efter et forsøgt
+  "Fortsæt →" (samme mønster som Opret konto/Log ind-skærmens felt-fejl,
+  se ovenfor), i stedet for én samlet "Mangler: ..."-sætning nederst
+  (fjernet). "Vil ikke oplyse" opfylder fortsat køn-feltets krav.
+- **Progress-bar (5 segmenter + "1/5")** — verificeret programmatisk
+  allerede perfekt: alle segmenter samme bredde/vertikale position, aktivt
+  segment bruger `--green` (den låste primære grøn), resterende bruger en
+  neutral grå (`rgba(21,32,26,.16)`) — ingen ændring nødvendig, kun
+  bekræftet.
+- CTA'ens `softDisabled`-mønster (klikbar men dæmpet indtil alle felter er
+  gyldige, så første forsøg stadig kan udløse felt-fejlene) er UÆNDRET —
+  allerede korrekt implementeret fra en tidligere runde.
+- Verificeret med Playwright på tre enhedsbredder (SE/iPhone 13/Pro Max):
+  tomt/delvist/fuldt udfyldt skema, forkert telefonlængde, alder-steppens
+  44px-højde bekræftet målt, progress-bar-alignment bekræftet målt, ingen
+  JS-fejl. E-mail-feltets prefillede/read-only visning kunne ikke
+  fotograferes direkte (kræver en reel post-signup/OAuth-session, som ikke
+  lod sig mocke pålideligt gennem sandboxens netværksproxy denne gang) —
+  verificeret ved kodegennemgang i stedet: den eksisterende, uændrede
+  `loginEmail || isOAuth`-betingelse styrer stadig hvornår feltet er
+  read-only, kun de resulterende stil-værdier er ændret.
+  `npm run build`/`npx vitest run` (110/110) grønne, mojibake-scan clean.
 
 ---
 

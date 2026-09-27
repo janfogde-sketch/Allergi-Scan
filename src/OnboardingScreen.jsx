@@ -177,23 +177,27 @@ export default function OnboardingScreen({
     const emailOk = (user.email||loginEmail||"").trim().length > 0;
     const ageOk = (user.age||"").toString().trim().length > 0 && Number(user.age) > 0;
     const genderOk = !!(user.gender);
-    const phoneOk = (user.phone||"").trim().length > 0;
+    // Telefon — 27. sept. 2026, "FINAL 10/10 POLISH": reel formatvalidering
+    // (præcis 8 cifre efter +45, standard dansk mobilnummer-længde) i
+    // stedet for det tidligere "bare ikke-tomt"-tjek, som lod ethvert
+    // ciffer-antal passere som "gyldigt".
+    const phoneDigits = (user.phone||"").replace(/^\+45\s*/, "").replace(/\D/g, "");
+    const phoneOk = phoneDigits.length === 8;
     const allOk = nameOk && emailOk && ageOk && genderOk && phoneOk;
-    const missingFields = [
-      !nameOk && "navn",
-      !emailOk && "email",
-      !ageOk && "alder",
-      !genderOk && "køn",
-      !phoneOk && "telefon",
-    ].filter(Boolean);
+    const emailIsSaved = !!(loginEmail || isOAuth);
     return (
       <div className="fade-in">
         <div style={UI.mb14}>
           <div style={{ fontSize:19, fontWeight:900, color:"var(--ink)", marginBottom:4 }}>Hvem er du?</div>
           {/* Begge undertekster gjort en anelse mørkere (25. sept. 2026,
               opfølgning) — var hhv. --muted2 og --muted, lidt for lyse til
-              at læse uden anstrengelse ved siden af de mørkere overskrifter. */}
-          <div style={{ ...UI.ufs13_cmuted2_lh15, color:"var(--ink2)" }}>Oplysningerne bruges til din personlige allergiprofil og kan redigeres senere.</div>
+              at læse uden anstrengelse ved siden af de mørkere overskrifter.
+              27. sept. 2026, "FINAL 10/10 POLISH": teksten omformuleret —
+              "bruges til din personlige allergiprofil" antydede fejlagtigt
+              at ALLE felter her (navn/telefon/alder/køn) er nødvendige for
+              selve allergi-logikken, hvilket kun allergier/diæter reelt er
+              (indsamlet på senere trin) — disse felter er kontooplysninger. */}
+          <div style={{ ...UI.ufs13_cmuted2_lh15, color:"var(--ink2)" }}>Oplysningerne bruges til at opsætte din profil og kan ændres senere.</div>
         </div>
 
         {/* Ekstra, blød hvid glød lige bag kortet (25. sept. 2026,
@@ -209,43 +213,77 @@ export default function OnboardingScreen({
               App.jsx, ikke undefined, så `user.name !== undefined` var
               sandt med det samme — rød kant IKKE betinget af noget
               brugeren faktisk havde gjort. Erstattet med step1Attempted
-              (samme gate som "Mangler: ..."-teksten) — rød betyder nu kun
-              "du prøvede at fortsætte, og dette felt mangler stadig". */}
-          <InputField label="Fulde navn" required style={{ marginBottom:17 }}
-            type="text" placeholder="Fx. Anna Hansen"
-            value={user.name||""} onChange={e => setUser(u => ({...u, name:e.target.value}))}
-            error={step1Attempted && !nameOk} />
+              (samme gate som de felt-specifikke fejltekster nedenfor) —
+              rød betyder nu kun "du prøvede at fortsætte, og dette felt
+              mangler stadig". 27. sept. 2026: hver fejltekst er nu inline
+              direkte under sit eget felt (i stedet for én samlet
+              "Mangler: ..."-sætning nederst), samme mønster som Opret
+              konto/Log ind-skærmens felt-fejl. */}
+          <div style={{ marginBottom:17 }}>
+            <InputField label="Fulde navn" required
+              type="text" placeholder="Fx. Anna Hansen"
+              value={user.name||""} onChange={e => setUser(u => ({...u, name:e.target.value}))}
+              error={step1Attempted && !nameOk} />
+            {step1Attempted && !nameOk && (
+              <div style={{ fontSize:11.5, color:"var(--red)", fontWeight:600, marginTop:5 }}>Indtast dit fulde navn.</div>
+            )}
+          </div>
 
           {/* E-mail — "Email" uden bindestreg blev tidligere brugt her,
               mens login/signup-skærmene konsekvent bruger "E-mail" (25.
-              sept. 2026, opfølgning: terminologi-ensretning). */}
+              sept. 2026, opfølgning: terminologi-ensretning).
+              27. sept. 2026, "FINAL 10/10 POLISH": den prefillede/read-only
+              tilstand brugte tidligere kun `opacity:.6` — samme visuelle
+              "dæmpet"-signal som et disabled/fejlramt felt ville have,
+              præcis det brugeren bad om at undgå ("brugeren skal forstå at
+              e-mailen er gemt, ikke at feltet er slået fra/i fejl").
+              Erstattet med en let, positiv grøn baggrundstone (samme
+              --green-lt/--green-mid-par som appens øvrige "gemt/aktiv"-
+              tilstande) + fuld tekstkontrast (ingen opacity-dæmpning) + en
+              tydelig undertekst. isOAuth-checkmarket er samtidig flyttet
+              fra en rå inline-SVG til den delte Icon-komponent, og vises nu
+              for BEGGE tilfælde (ikke kun OAuth), med hver sin præcise
+              forklaringstekst. */}
           <div style={{ marginBottom:17 }}>
             <InputField label="E-mail" required
               type="email" placeholder="din@email.dk"
               value={user.email||loginEmail||""}
               onChange={e => setUser(u => ({...u, email:e.target.value}))}
-              readOnly={!!(loginEmail || isOAuth)}
-              inputStyle={{ opacity: (loginEmail || isOAuth) ? 0.6 : 1 }} />
-            {isOAuth && (
+              readOnly={emailIsSaved}
+              inputStyle={emailIsSaved ? { background:"var(--green-lt)", borderColor:"var(--green-mid)", color:"var(--ink)", cursor:"default" } : undefined} />
+            {emailIsSaved && (
               <div style={{ fontSize:10, color:"var(--green)", marginTop:3, display:"flex", alignItems:"center", gap:4 }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
-                Bekræftet via Google
+                <Icon name="check" size={10} color="var(--green)" />
+                {isOAuth ? "Bekræftet via Google" : "Allerede gemt fra din konto"}
               </div>
             )}
           </div>
 
-          {/* Telefon — +45 er låst, brugeren skriver kun selve nummeret */}
+          {/* Telefon — +45 er låst, brugeren skriver kun selve nummeret.
+              27. sept. 2026, "FINAL 10/10 POLISH": tallene grupperes nu
+              automatisk parvis while typing (dansk mobilnummer-konvention,
+              "12 34 56 78") i stedet for at gemme cifrene råt/ugrupperet —
+              samme mønster som placeholderen allerede viste, men som det
+              indtastede tal ikke fulgte. Kapper ved 8 cifre (reelt dansk
+              mobilnummer-længde). Rød kant + inline fejl ved forsøgt
+              "Fortsæt →" med et forkert antal cifre. */}
           <div style={{ marginBottom:17 }}>
             <label className="field-lbl">Telefonnummer <span style={UI.red}>*</span></label>
-            <div className="field phone-field">
+            <div className="field phone-field" style={{ borderColor: (step1Attempted && !phoneOk) ? "var(--red-md)" : undefined }}>
               <span className="phone-prefix">+45</span>
               <input className="phone-rest" type="tel" inputMode="numeric" placeholder="12 34 56 78"
                 value={(user.phone||"").replace(/^\+45\s*/, "")}
                 onChange={e => {
-                  const rest = e.target.value.replace(/[^\d\s]/g, "");
-                  setUser(u => ({...u, phone: rest ? `+45 ${rest}` : ""}));
+                  const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+                  const grouped = digits.replace(/(\d{2})(?=\d)/g, "$1 ");
+                  setUser(u => ({...u, phone: digits ? `+45 ${grouped}` : ""}));
                 }} />
             </div>
+            {step1Attempted && !phoneOk && (
+              <div style={{ fontSize:11.5, color:"var(--red)", fontWeight:600, marginTop:5 }}>
+                {phoneDigits.length === 0 ? "Indtast dit telefonnummer." : "Indtast et gyldigt dansk telefonnummer (8 cifre)."}
+              </div>
+            )}
           </div>
 
           {/* Alder — delt AgeStepper-komponent (FormFields.jsx), også brugt
@@ -255,6 +293,9 @@ export default function OnboardingScreen({
           <div style={{ marginBottom:19 }}>
             <label className="field-lbl">Alder <span style={UI.red}>*</span></label>
             <AgeStepper value={user.age} onChange={age => setUser(u => ({...u, age}))} />
+            {step1Attempted && !ageOk && (
+              <div style={{ fontSize:11.5, color:"var(--red)", fontWeight:600, marginTop:6 }}>Angiv din alder.</div>
+            )}
           </div>
 
           {/* Køn — delt GenderPicker-komponent (FormFields.jsx), samme
@@ -262,29 +303,19 @@ export default function OnboardingScreen({
           <div>
             <label className="field-lbl">Køn <span style={UI.red}>*</span></label>
             <GenderPicker value={user.gender} onChange={gender => setUser(u => ({...u, gender}))} />
+            {step1Attempted && !genderOk && (
+              <div style={{ fontSize:11.5, color:"var(--red)", fontWeight:600, marginTop:8 }}>Vælg en mulighed.</div>
+            )}
           </div>
         </FormCard>
-
-        {/* Validering — vises KUN efter et forsøgt tryk på "Fortsæt →"
-            mens formularen er ufuldstændig (se step1Attempted), ikke
-            proaktivt fra starten. Knappen har derfor bevidst IKKE det
-            native disabled-attribut (som ville blokere selve klikket og
-            dermed forsøget) — den ser stadig dæmpet/"disabled" ud via
-            opacity, men klik registreres altid, så det første forsøg kan
-            fanges. */}
-        {step1Attempted && !allOk && missingFields.length > 0 && (
-          <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", marginBottom:10 }}>
-            Mangler: {missingFields.join(", ")}
-          </div>
-        )}
 
         {/* Disabled-tilstanden bruger PrimaryButtons låste softDisabled-
             udseende (lys grøn baggrund + fuld-styrke grøn tekst, samme
             "lys baggrund, mørk tekst"-mønster som Køn-valgene ovenfor) i
             stedet for en gennemgående opacity-dæmpning, der gjorde hvid
             knap-tekst svær at læse. softDisabled (ikke disabled) holder
-            knappen klikbar, så første forsøg stadig kan fanges og vise
-            "Mangler: ..."-teksten. */}
+            knappen klikbar, så første forsøg stadig kan fanges og vise de
+            felt-specifikke fejltekster ovenfor. */}
         <PrimaryButton
           softDisabled={!allOk}
           onClick={() => {

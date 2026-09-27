@@ -392,6 +392,13 @@ body::-webkit-scrollbar{display:none;}
 .phone-field:focus-within{border-color:var(--green);background:var(--surface2);box-shadow:0 0 0 3px var(--green-lt);}
 .phone-prefix{flex:0 0 auto;display:flex;align-items:center;padding:12px 10px 12px 14px;color:var(--ink2);font-weight:700;font-size:16px;font-family:var(--f);user-select:none;border-right:1.5px solid var(--border2);background:var(--surface3);}
 .phone-rest{flex:1;min-width:0;border:none;outline:none;background:transparent;padding:12px 14px 12px 10px;font-size:16px;font-family:var(--f);color:var(--ink);}
+/* Alder-steppens minus/plus-knapper (FormFields.jsx) — tydelig tryk-
+   feedback (27. sept. 2026, "FINAL 10/10 POLISH – ONBOARDING TRIN 1"),
+   samme lette scale-mønster som andre trykbare elementer i appen (fx
+   .recipe-card:active ovenfor), plus en mørkere baggrund så trykket også
+   er synligt på enheder uden animation (prefers-reduced-motion). */
+.age-step-btn{transition:transform .1s,background .1s;}
+.age-step-btn:active{transform:scale(.9);background:var(--border2);}
 .input-row{display:flex;gap:8px;}
 
 /* ── BUTTONS ── */

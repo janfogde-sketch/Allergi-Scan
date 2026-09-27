@@ -237,6 +237,11 @@ export function ChoiceChip({ children, selected, onClick, showCheck = true, styl
 // samme grøn valgt-state som ChoiceChip, men til grid-baserede kort med kun
 // ét label, ikke rækker af smalle chips. Min. 44px høj for et ordentligt
 // tap-mål.
+// 27. sept. 2026, "FINAL 10/10 POLISH – ONBOARDING TRIN 1": tilføjet et
+// diskret checkmark-ikon ved valgt-state, så ChoiceCard matcher samme
+// "valgt = grøn baggrund/kant/tekst + lille check"-mønster som chip-
+// baserede vælgere andre steder i onboardingen (fx .chip-check i
+// AllergenChipPicker/DietChipPicker) — var tidligere kun farve, ingen ikon.
 export function ChoiceCard({ label, selected, onClick, style }) {
   return (
     <div
@@ -246,7 +251,7 @@ export function ChoiceCard({ label, selected, onClick, style }) {
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
       style={{
         padding: "12px 8px", minHeight: 44, borderRadius: 8, cursor: "pointer", textAlign: "center",
-        display: "flex", alignItems: "center", justifyContent: "center",
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
         border: `1px solid ${selected ? "var(--green)" : "var(--border)"}`,
         background: selected ? "var(--green-selected-bg)" : "var(--surface)",
         fontSize: 13, fontWeight: 700,
@@ -254,6 +259,7 @@ export function ChoiceCard({ label, selected, onClick, style }) {
         transition: "all .15s",
         ...style,
       }}>
+      {selected && <Icon name="check" size={13} color="var(--green)" />}
       {label}
     </div>
   );
