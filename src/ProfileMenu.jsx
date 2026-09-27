@@ -117,8 +117,17 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenBetaInfo 
     },
   ];
 
+  // Luk ALTID menuen synkront før en handling køres (28. sept. 2026,
+  // bugfix) — "Log ud" kaldte tidligere kun clearAuth() uden at lukke
+  // menuen selv, så hamburgermenuen/overlayet blev stående åbent oven på
+  // velkomstskærmen efter logout. onClose() + clearAuth() sker nu i samme
+  // synkrone klik-handler, så React batcher dem til ÉT render — intet
+  // mellemliggende frame hvor velkomstskærmen vises bag en stadig åben
+  // menu. App.jsx har desuden et sikkerhedsnet (nulstiller showProfileMenu
+  // direkte på auth-state-ændring), der dækker andre logout-veje (session-
+  // udløb, tvungen logout) hvor menuen ikke lukkes via et direkte klik her.
   const handleItemClick = (item) => {
-    if (item.action) { item.action(); return; }
+    if (item.action) { onClose(); item.action(); return; }
     onNavigate(item.screen);
   };
 

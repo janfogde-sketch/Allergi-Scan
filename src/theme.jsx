@@ -417,36 +417,74 @@ body::-webkit-scrollbar{display:none;}
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
 
 /* ── WELCOME ── */
-.welcome-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 28px;text-align:center;}
+/* 28. sept. 2026, "FINAL POLISH" — justify-content:center fjernet til fordel
+   for to usynlige spacer-elementer (.welcome-vspace-top/-bottom, se JSX)
+   med ULIGE flex-grow-vægt (0.62:1). En almindelig justify-content:center
+   deler altid al ledig plads 50/50 over/under indholdet — brugerfeedback var
+   at det gav "en anelse for meget tom plads over hero-indholdet". De to
+   spacers fordeler i stedet den ledige plads ca. 38/62 (top/bund), så
+   kompositionen rykker en anelse op uden at ændre selve layoutet eller
+   miste whitespace — og skalerer proportionalt på tværs af enhver
+   skærmhøjde (krymper begge til 0 på de mindste skærme, hvor der slet ikke
+   er ledig plads at fordele) — på den mindste iPhone (SE-klasse, 320×568)
+   var indholdet i forvejen en anelse højere end skærmen FØR denne
+   omgang (uændret, kendt vilkår); begge spacers krymper her til ~0, og
+   den lodrette padding/margin er strammet en anelse ekstra (se nedenfor)
+   så den nye, længere juridiske tekst (krav 6) ikke øger det eksisterende
+   overløb yderligere. Padding sat ned fra 48px til 20px lodret (spacers
+   giver den resterende luft på større skærme) og fra 28px til 22px
+   vandret (frigiver de sidste par pixel til benefit-rækken, se
+   .welcome-benefits nedenfor). */
+.welcome-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 22px;text-align:center;}
+.welcome-vspace-top{flex:0.62 1 0%;min-height:0;}
+.welcome-vspace-bottom{flex:1 1 0%;min-height:8px;}
 .welcome-logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:32px;}
 /* Tydelig value proposition (25. sept. 2026-brief: "kort og tydelig value
    proposition") — hævet fra en dæmpet, muted tagline til en tydeligere,
    mørkere sætning, så den reelt fungerer som skærmens hovedbudskab, ikke en
    sekundær undertekst. Hævet endnu en anelse samme dag (opfølgning) — var
-   stadig for diskret: 15.5px→16.5px, --ink2→--ink (fuld tekstfarve). */
-.welcome-tagline{font-size:16.5px;color:var(--ink);margin-top:12px;letter-spacing:.1px;font-weight:600;line-height:1.5;max-width:280px;}
+   stadig for diskret: 15.5px→16.5px, --ink2→--ink (fuld tekstfarve).
+   max-width øget 280px→300px (28. sept. 2026, "FINAL POLISH") — den
+   opdaterede, længere hovedbudskab-tekst ("...allergier og kosthensyn")
+   fik en akavet 3. linje med kun ét ord ved den gamle bredde. */
+.welcome-tagline{font-size:16.5px;color:var(--ink);margin-top:12px;letter-spacing:.1px;font-weight:600;line-height:1.5;max-width:300px;}
 .welcome-divider{width:40px;height:2px;background:var(--border2);border-radius:2px;margin:32px auto;}
 /* 3 fordele-række (25. sept. 2026-brief) — kort, ikon-båret opsummering,
    IKKE tunge fuld-bredde feature-kort (erstatter tidligere .welcome-features/
    .welcome-feat, som aldrig blev taget i brug). Bevidst let/luftig, ingen
    kant/skygge på selve rækken — kun ikon-cirklerne er "kort" (afrundede,
-   meget lys grøn baggrund #EFF9F4, brugerens egen definerede farvepalet). */
-.welcome-benefits{display:flex;justify-content:center;gap:22px;margin:28px 0 32px;width:100%;}
-.welcome-benefit{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;max-width:100px;}
+   meget lys grøn baggrund #EFF9F4, brugerens egen definerede farvepalet).
+   gap 22px→14px + .welcome-benefit max-width 100px→130px (28. sept. 2026,
+   "FINAL POLISH") — reelt fund: "Tjek allergener" og "Tryggere indkøb"
+   brød begge over to linjer ved den gamle, snævrere kolonnebredde, mens
+   "Hurtigt svar" stod på én — en synligt ujævn række. Ved standard
+   iPhone-bredde giver den nye gap+max-width+font-size (se
+   .welcome-benefit-label) alle tre nok plads til én linje hver. */
+.welcome-benefits{display:flex;justify-content:center;gap:14px;margin:28px 0 32px;width:100%;}
+.welcome-benefit{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;max-width:130px;}
 .welcome-benefit-icon{width:44px;height:44px;border-radius:14px;background:var(--green-selected-bg);display:flex;align-items:center;justify-content:center;box-shadow:var(--sh);flex-shrink:0;}
-/* Hævet fra 11.5px/--ink2 til 13px/--ink (samme dag, opfølgning) — var på
-   grænsen til for diskret; nu på linje med resten af skærmens tekstvægt. */
-.welcome-benefit-label{font-size:13px;font-weight:700;color:var(--ink);line-height:1.35;}
+/* 13px→12px (28. sept. 2026, "FINAL POLISH", se .welcome-benefits-kommentar
+   ovenfor) — den mindste af de to justeringer der var nødvendige for at få
+   alle tre labels til at stå på én linje ved standard iPhone-bredde, jf.
+   kravet om at justere kolonnebredde/font-size minimalt frem for at gøre
+   hele rækken mindre. Tidligere hævet fra 11.5px, se historik i git. */
+.welcome-benefit-label{font-size:12px;font-weight:700;color:var(--ink);line-height:1.35;white-space:nowrap;}
 /* Primær CTA — EatSafes låste --green/--green-dark-token (25. sept.
    2026-designsystem, se CLAUDE.md afsnit 5/7). Var tidligere hardkodet til
    den daværende Scan-CTA-only-palet (#0E8F5A→#08734A) adskilt fra
    --green — nu samme farve, så ingen adskillelse længere nødvendig.
    (Ryddet op i en duplikeret, tavst-vindende .welcome-btn-regel
-   længere nede i filen, som pga. CSS-cascade reelt overskrev denne.) */
-.welcome-btn{background:linear-gradient(160deg,var(--green) 0%,var(--green-dark) 100%);color:var(--on-green);border:none;border-radius:14px;padding:16px 32px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:all .18s;margin-bottom:10px;letter-spacing:-.1px;box-shadow:0 10px 24px -10px rgba(8,115,74,.45);}
-.welcome-btn:hover{transform:translateY(-1px);box-shadow:0 14px 30px -10px rgba(8,115,74,.55);}
+   længere nede i filen, som pga. CSS-cascade reelt overskrev denne.)
+   border-radius 14px→16px + skygge dæmpet (28. sept. 2026, "FINAL POLISH":
+   "shadow/glow skal være subtil og premium, ikke kraftig") — samme
+   grøn-toning, men opacity/blur skåret ned, så den løfter knappen uden at
+   dominere kompositionen. text-align:center tilføjet eksplicit (var
+   allerede visuelt centreret via browserens standard <button>-opførsel,
+   men gjort eksplicit så det ikke afhænger af det). */
+.welcome-btn{background:linear-gradient(160deg,var(--green) 0%,var(--green-dark) 100%);color:var(--on-green);border:none;border-radius:16px;padding:16px 32px;font-family:var(--f);font-size:15px;font-weight:700;text-align:center;cursor:pointer;width:100%;transition:all .18s;margin-bottom:12px;letter-spacing:-.1px;box-shadow:0 8px 18px -10px rgba(8,115,74,.32);}
+.welcome-btn:hover{transform:translateY(-1px);box-shadow:0 10px 22px -10px rgba(8,115,74,.4);}
 .welcome-btn:active{transform:scale(.98);}
-.welcome-btn-ghost{background:var(--surface);color:var(--ink2);border:1.5px solid var(--border2);border-radius:14px;padding:14px 32px;font-family:var(--f);font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:all .18s;}
+.welcome-btn-ghost{background:var(--surface);color:var(--ink2);border:1.5px solid var(--border2);border-radius:16px;padding:14px 32px;font-family:var(--f);font-size:14px;font-weight:600;text-align:center;cursor:pointer;width:100%;transition:all .18s;}
 .welcome-btn-ghost:hover{background:var(--surface2);}
 /* Tertiær tekstlink (25. sept. 2026-brief: "skal være et tekstlink, ikke en
    stor tredje knap") — erstatter den tidligere .welcome-btn-ghost-brug til

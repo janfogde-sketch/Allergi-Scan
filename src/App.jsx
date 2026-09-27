@@ -535,12 +535,22 @@ export default function EatSafe() {
                    notFoundEan, setNotFoundEan,
                    setScreen });
 
-  // Ryd familie/historik/indkøb når auth cleares (accessToken → null)
+  // Ryd familie/historik/indkøb + luk hamburgermenuen når auth cleares
+  // (accessToken → null) — sikkerhedsnet for AL logout, ikke kun det
+  // eksplicitte "Log ud"-tryk i ProfileMenu.jsx (som lukker menuen synkront
+  // selv, se dens handleItemClick): dækker også session-udløb/tvungen
+  // logout (useAuth.js) og admin-401-logout (useAdmin.js), hvor menuen
+  // teoretisk kan stå åben når auth-state ændres i baggrunden. Uden dette
+  // blev showProfileMenu aldrig nulstillet af selve auth-state-ændringen —
+  // kun af et eksplicit onClose-kald — så hamburgermenuen kunne blive
+  // stående åben oven på velkomstskærmen efter logout (bruger-rapporteret
+  // fund, 28. sept. 2026).
   React.useEffect(() => {
     if (!accessToken) {
       setFamily([]);
       setHistory([]);
       setShoppingList([]);
+      setShowProfileMenu(false);
     }
   }, [accessToken]);
 
@@ -1038,11 +1048,16 @@ export default function EatSafe() {
           </header>
         )}
 
-        {/* Feedback-knap under onboarding */}
+        {/* Feedback-knap under onboarding — safe-area-korrekt top-afstand +
+            samme skygge-token (var(--sh)) som resten af appens knapper i
+            stedet for en selvstændig, hardkodet skygge (28. sept. 2026,
+            "FINAL POLISH – VELKOMSTSIDE", punkt 8). `top:12` alene ville
+            sidde for tæt på/under statuslinjen eller Dynamic Island på
+            notch-enheder — nu `calc(12px + env(safe-area-inset-top))`. */}
         {isOnboard && (
-          <div style={{ position:"fixed", top:12, right:12, zIndex:1000 }}>
+          <div style={{ position:"fixed", top:"calc(12px + env(safe-area-inset-top))", right:12, zIndex:1000 }}>
             <button onClick={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
-              style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"6px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--ink2)", cursor:"pointer", display:"flex", alignItems:"center", gap:6, boxShadow:"0 2px 8px rgba(0,0,0,.15)" }}>
+              style={{ background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:100, padding:"6px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--ink2)", cursor:"pointer", display:"flex", alignItems:"center", gap:6, boxShadow:"var(--sh)" }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
               Feedback
             </button>
