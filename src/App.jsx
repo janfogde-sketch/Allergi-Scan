@@ -535,12 +535,22 @@ export default function EatSafe() {
                    notFoundEan, setNotFoundEan,
                    setScreen });
 
-  // Ryd familie/historik/indkøb når auth cleares (accessToken → null)
+  // Ryd familie/historik/indkøb + luk hamburgermenuen når auth cleares
+  // (accessToken → null) — sikkerhedsnet for AL logout, ikke kun det
+  // eksplicitte "Log ud"-tryk i ProfileMenu.jsx (som lukker menuen synkront
+  // selv, se dens handleItemClick): dækker også session-udløb/tvungen
+  // logout (useAuth.js) og admin-401-logout (useAdmin.js), hvor menuen
+  // teoretisk kan stå åben når auth-state ændres i baggrunden. Uden dette
+  // blev showProfileMenu aldrig nulstillet af selve auth-state-ændringen —
+  // kun af et eksplicit onClose-kald — så hamburgermenuen kunne blive
+  // stående åben oven på velkomstskærmen efter logout (bruger-rapporteret
+  // fund, 28. sept. 2026).
   React.useEffect(() => {
     if (!accessToken) {
       setFamily([]);
       setHistory([]);
       setShoppingList([]);
+      setShowProfileMenu(false);
     }
   }, [accessToken]);
 

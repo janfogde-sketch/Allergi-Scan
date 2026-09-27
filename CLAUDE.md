@@ -1236,6 +1236,46 @@ al almindelig UI (knapper, chips osv.). Logoets egen, faste palet:
   pixel-identisk med app-ikonets proportioner. `npm run build`/
   `npx vitest run` (109/109) grønne, mojibake-scan clean.
 
+### Bugfix: hamburgermenuen forblev åben oven på velkomstsiden efter logout (28. sept. 2026)
+
+Bruger-rapporteret fund: "Log ud" i hamburgermenuen (`ProfileMenu.jsx`)
+sendte korrekt brugeren til velkomstsiden, men selve menu-overlayet/
+draweren blev stående åbent ovenpå. Rodårsag: `handleItemClick` kaldte
+`item.action()` (her `clearAuth` fra `AuthContext`) direkte uden nogensinde
+at kalde `onClose()` — `showProfileMenu`-state'en i `App.jsx` (der styrer
+hele overlayets rendering) var derfor helt afkoblet fra selve auth-state-
+ændringen. Screen-skiftet til `SCREENS.WELCOME` virkede fint (topbar/
+bundnav er allerede korrekt gatet på `isOnboard`), men menuens egen
+`showProfileMenu`-boolean blev aldrig rørt.
+
+**Rettet i to lag** (én synkron fix for selve knappen + ét sikkerhedsnet
+for alle andre logout-veje, som brugeren eksplicit bad om):
+1. `ProfileMenu.jsx`s `handleItemClick` kalder nu `onClose()` FØR
+   `item.action()` køres for ethvert action-baseret menupunkt (ikke kun
+   "Log ud") — sker synkront i samme klik-handler som `clearAuth()`, så
+   React batcher dem til ét render. Intet mellemliggende frame hvor
+   velkomstsiden vises bag en stadig åben menu.
+2. `App.jsx`s eksisterende "ryd familie/historik/indkøb når `accessToken`
+   bliver null"-effekt udvidet til også at nulstille `showProfileMenu` —
+   et sikkerhedsnet for de andre steder `clearAuth()` kaldes fra
+   (session-udløb/tvungen refresh-fejl i `useAuth.js`, admin-401-logout i
+   `useAdmin.js`, Indstillinger-skærmens egen log ud-knap), hvor menuen i
+   teorien kunne stå åben når auth-state ændres i baggrunden, ikke kun via
+   et direkte klik i selve menuen.
+
+Browser/enheds-"tilbage" efter logout er allerede korrekt (ikke rørt) —
+appen bruger ikke en per-skærm browser-historik (`screen` er almindelig
+React-state), kun ét fast "app"-history-anchor der genpushes ved hvert
+`popstate` for at fange Android-tilbageknappen (se afsnittet om det
+længere nede) — der er derfor intet reelt "tidligere autentificeret
+side"-historik-punkt at navigere tilbage til.
+
+Verificeret med Playwright: åbn menu → "Log ud" → menuen/overlayet/
+bundnavigationen er alle væk med det samme, velkomstsiden vises ren; login
+igen → menuen starter lukket; gentaget logout-cyklus (åbn menu → log ud →
+log ind igen) to gange i træk uden at menuen nogensinde forbliver åben.
+`npm run build`/`npx vitest run` (109/109) grønne, mojibake-scan clean.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
