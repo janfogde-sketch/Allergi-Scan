@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from "react";
-import { Icon } from "../SharedComponents.jsx";
+import { Icon, EatSafeLogo } from "../SharedComponents.jsx";
 import FeedbackButton from "./FeedbackButton.jsx";
 
 const NAV_ITEMS = [
@@ -22,7 +22,7 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
-        <div className="admin-sidebar-logo">Eat<span>Safe</span> Admin</div>
+        <div className="admin-sidebar-logo"><EatSafeLogo variant="horizontal" size={20} /> Admin</div>
         <nav className="admin-nav">
           {NAV_ITEMS.map(item => {
             const badgeVal = item.badgeKey ? badges[item.badgeKey] : null;

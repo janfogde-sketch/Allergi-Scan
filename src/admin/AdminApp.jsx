@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { SUPABASE_URL } from "../constants.jsx";
 import { apiCall, makeHeaders } from "../helpers.js";
-import { showToast, ToastHost } from "../SharedComponents.jsx";
+import { showToast, ToastHost, EatSafeLogo } from "../SharedComponents.jsx";
 import { useAdmin } from "../useAdmin.js";
 import { useAdminAuth } from "./useAdminAuth.js";
 import AdminLayout from "./AdminLayout.jsx";
@@ -144,7 +144,7 @@ export default function AdminApp() {
       <div className="admin-login-wrap">
         <ToastHost />
         <form className="admin-login-card" onSubmit={handleLogin}>
-          <div className="admin-login-logo">Eat<span>Safe</span> Admin</div>
+          <div className="admin-login-logo"><EatSafeLogo variant="horizontal" size={22} /> Admin</div>
           <div className="admin-login-sub">Log ind med din admin-konto</div>
           {authError && <div className="admin-error">{authError}</div>}
           <div className="admin-field">
@@ -172,7 +172,7 @@ export default function AdminApp() {
       <div className="admin-login-wrap">
         <ToastHost />
         <div className="admin-login-card">
-          <div className="admin-login-logo">Eat<span>Safe</span> Admin</div>
+          <div className="admin-login-logo"><EatSafeLogo variant="horizontal" size={22} /> Admin</div>
           <div className="admin-error">
             {roleCheckError
               ? `Kunne ikke bekræfte admin-adgang: ${roleCheckError}. Prøv at logge ind igen.`

@@ -19,7 +19,7 @@ import {
 import {
   Icon, IngredientsList, ProfileBadges,
   getProductIcon, ProductImage, LazyFallback, ToastHost, showToast,
-  ScanLoadingOverlay
+  ScanLoadingOverlay, EatSafeLogo
 } from "./SharedComponents.jsx";
 
 import { ENumberPicker } from "./AllergenPicker.jsx";
@@ -1010,7 +1010,7 @@ export default function EatSafe() {
         {!isOnboard && !madpasWaiterView && (
           <header className="topbar">
             <div className="topbar-logo">
-              <div className="topbar-name">Eat<span>Safe</span></div>
+              <EatSafeLogo variant="horizontal" size={22} />
               <div style={{ background:"var(--amber)", color:"var(--ink)", fontSize:9, fontWeight:800, padding:"2px 8px", borderRadius:100, letterSpacing:".5px", marginLeft:4, marginTop:2 }}>BETA</div>
             </div>
             {/* Topbar-knapperne var 32px, `var(--paper2)`-baggrund + `var(--muted2)`-
