@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
-import { compareAllergens, productDisplayName, logSearchSelection, apiCall, makeHeaders, extractENumbers, buildActiveProfileList, computeProfileResults } from "./helpers.js";
+import { compareAllergens, normalizeProductFlagsFor, productDisplayName, logSearchSelection, apiCall, makeHeaders, extractENumbers, buildActiveProfileList, computeProfileResults } from "./helpers.js";
 import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -280,7 +280,7 @@ export default function ListScreen({
     if (product === undefined || !product) return null; // stadig henter, eller ikke fundet — vis intet frem for et gæt
     const ingredientsText = product.ingredients || product.ingredients_text || "";
     const results = computeProfileResults(activeProfileList, {
-      allergen_flags: product.allergen_flags, ingredients: ingredientsText, nutrition: product.nutrition,
+      allergen_flags: normalizeProductFlagsFor(product), ingredients: ingredientsText, nutrition: product.nutrition,
       productENumbers: extractENumbers(ingredientsText),
     });
     const dangerNames = results.filter(r => r.status === "danger").map(r => r.name.split(" ")[0]);
@@ -308,7 +308,7 @@ export default function ListScreen({
   const itemResultsWithSafety = itemResults.map(p => {
     const ingredientsText = p.ingredients || p.ingredients_text || "";
     const results = computeProfileResults(activeProfileList, {
-      allergen_flags: p.allergen_flags, ingredients: ingredientsText, nutrition: p.nutrition,
+      allergen_flags: normalizeProductFlagsFor(p), ingredients: ingredientsText, nutrition: p.nutrition,
       productENumbers: extractENumbers(ingredientsText),
     });
     return { product: p, danger: results.some(r => r.status === "danger") };
@@ -624,7 +624,8 @@ export default function ListScreen({
           <div className="card-lbl">Dine favoritter ({favorites.length})</div>
           <>
               {favorites.slice(0,10).map(p => {
-                const { status } = compareAllergens(p.allergen_flags||{}, activeIds);
+                const { status: rawStatus, hasUnknown } = compareAllergens(normalizeProductFlagsFor(p), activeIds);
+                const status = rawStatus === "safe" && hasUnknown ? "warn" : rawStatus;
                 const statusColor = status==="safe" ? "var(--green)" : status==="danger" ? "var(--red)" : "var(--amber)";
                 return (
                   <div key={p.ean||p.id}
