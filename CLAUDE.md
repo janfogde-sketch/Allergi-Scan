@@ -406,19 +406,6 @@ lave dem lokalt.
   en stående regel kan være tilføjet i en del af filen der auto-mergede
   stille og roligt uden at kræve din opmærksomhed.
 
-  **Fundet overtrådt i praksis samme dag (PR #307/#308):** en anden,
-  parallel session mergede to rene design-PR'er (Scan-CTA-farve/-puls +
-  baggrundsbillede) direkte til `main`/Vercel FØR denne regel var skrevet
-  ned af den session der satte den — men opdagede først reglen (via
-  `git merge`s auto-merge af CLAUDE.md) EFTER begge allerede var mergede,
-  og fulgte den ikke retroaktivt. Konsekvens: Vercels daglige kvote blev
-  ramt af de mange hurtige merges, og brugeren så en forældet, ufikset
-  version af appen i flere minutter mens produktions-deploy ventede på
-  kvote-reset. **Læren:** læs hele den mergede CLAUDE.md igennem efter en
-  `git merge` med reelle konflikter — ikke kun de linjer der konfliktede —
-  en stående regel kan være tilføjet i en del af filen der auto-mergede
-  stille og roligt uden at kræve din opmærksomhed.
-
 ---
 
 ## 5. Designforbedring (september 2026) — afsluttet
@@ -470,226 +457,38 @@ forkert data. Grep efter den slags mismatch når en bruger rapporterer noget
 der umiddelbart ligner "bare" en tekst-/UI-inkonsistens (dette mønster er
 også indbygget i `.claude/commands/review-pr.md`).
 
-**Fuld dag-for-dag-log** (alle 14 gennemgangs-bølger, hver "lektion",
-20-punkts-tjeklistens fulde vurdering, søgefunktions-fix'ets fulde
-undersøgelse, spacing-retrofittets metode, PWA-installationsflowets
-fejlfindingshistorie) er flyttet til `.claude/HISTORY.md` — dette afsnit
-udgjorde tidligere ~70% af hele `CLAUDE.md` (fundet af `token-audit`-
-skillen), og `CLAUDE.md` læses ved hver eneste session-start uanset opgave.
+**Fuld dag-for-dag-log** for hele designforbedringsarbejdet — de
+oprindelige 14 gennemgangsbølger OG al efterfølgende runde-for-runde-detalje
+for Scan-forsiden/scan-knappen, Familie, Madpas, Profil, Indstillinger,
+Scanner-UX, Produktresultatsiden, EatSafe-logoet, velkomstsiden,
+login/onboarding-polish og app-headeren — ligger i `.claude/HISTORY.md`.
+Dette afsnit er trimmet to gange nu (15. og 28. sept. 2026, begge gange
+fundet af `token-audit`-skillen efter at det var vokset til ~70% af hele
+`CLAUDE.md`): behold her KUN nutids-tilstanden; slå op i HISTORY.md for
+selve begrundelsen/forsøgene bag hver beslutning.
 
-**24. sept. 2026 — Scan-forsiden og app-baggrunden: fuld redesign-runde,
-afsluttet.** Efter flere iterationer (delt referencedesign → frugt-collage
-→ nyt referencefoto → app-bredt baggrundsbillede → en produktions-hotfix
-af en indefinit-højde-bug) landede den nuværende, stabile tilstand:
-- **`.home-hero-frame`** (ScannerScreen.jsx) har en definitiv
-  `calc(100dvh - 143px - env(safe-area-inset-bottom))`-højde + CSS
-  Container Queries (`clamp(min, Ncqh, max)` på alle mål) for
-  proportional skalering — verificeret nul overflow programmatisk på
-  Playwrights rigtige enhedsprofiler (iPhone SE 320×568, iPhone 13/14
-  Pro Max, Pixel 5, bred desktop).
-- **Ét app-bredt baggrundsbillede** (`src/assets/app-background.webp`,
-  via `.app-bg{position:fixed;z-index:0}` + `.screen{position:relative;
-  z-index:1}`) er fælles for ALLE skærme, ikke kun Scan-forsiden.
-- **Topbar/bottom-nav** har et let frostet-glas-look (`backdrop-filter:
-  blur` + `mask-image`-udtoning i stedet for en hård kant) app-bredt.
-- **"Prøv en demo"-knappen er fjernet** — `DemoSlider`/`showGuide` er
-  bevidst ikke slettet, men har ingen synlig UI-indgang længere. Genoptag
-  ved behov (fx en indgang under Profil-menuen), eller fjern dødt-kode-
-  resten, hvis det bekræftes at guiden reelt ikke skal bruges mere.
-
-**Scan-knappen selv har efterfølgende været igennem flere runder samme
-dag** (fyldt grøn gradient → forsøg på en synlig glans-highlight/lys-
-effekt → brugerfeedback "ligner en gummibold" → fladere, mindre kontrast-
-fyldt gradient → tre forslag til en ny retning, brugeren valgte "ghost/
-outline" med et lyspunkt i kanten → brugerfeedback "ligner en radar" på
-den første, for skarpe udgave af ringen). **Nuværende design:** en let,
-hvid cirkel med grønt ikon/tekst; en bredt blurret, langsomt roterende
-lyskilde i en tynd ring (`scanCtaRingSpin`, 9s — IKKE en skarp/smal bue,
-det gav radar-udtrykket); en blød, jordet ambient-glød bagved; og en
-fler-lags elevation-skygge (nær+fjern) for reel dybde uden glossy-look.
-**Bundnavigationens inaktive ikoner** bruger nu en solid, mørkere farve
-(`--ink2`) i stedet for `opacity:.45`, som gjorde dem svære at se mod
-barens gennemsigtige/slørede baggrund.
-
-Fuld dag-for-dag-detalje for hele denne redesign-runde (alle mellem-
-liggende forsøg, mockup-iterationer, fejlfindingshistorik, backtick-
-byggefejl-mønsteret) er i `.claude/HISTORY.md`.
-
-**24. sept. 2026 — samme dag, nyt referencefoto + egen CTA-farvepalet til
-scan-knappen.** Brugeren delte et nyt, direkte uploadet baggrundsfoto
-(allergen-fødevarer i to kolonner på ren hvid baggrund — mælk/havre/æg/
-laks/rejer i venstre side, æggeskaller/mel/hvede/mandler/hasselnødder i
-højre side) samt et fuldt UI-referencedesign. Vist først som et interaktivt
-HTML-mockup (Artifact) til godkendelse, før den rigtige app blev ændret —
-se `.claude/HISTORY.md` for mockuppets fulde indhold og screenshots.
-Ændringer i `ScannerScreen.jsx`/`theme.jsx`:
-- **Nyt baggrundsfoto** erstatter det forrige (`src/assets/home/
-  scan-hero-bg.webp` overskrevet in-place, samme import uændret) — allerede
-  tæt på ren hvid i kilden (RGB ~250-254), ingen hvidbalance-korrektion
-  nødvendig denne gang.
-- **Scan-knappen fik sin egen farvepalet**, adskilt fra appens generelle
-  `--green`-token: primær `#0E8F5A`, mørk `#08734A`, halo `#DDF4E8` — kun
-  denne ene knap, resten af appens grønne elementer (bundnav, andre
-  primærknapper) er urørt.
-- **To lag levende bevægelse i hvile** (brugerens eksplicitte ønske: "Knappen
-  skal være grøn, men den må gerne pulsere så man får lyst til at trykke") —
-  halo-gløden bag knappen pulserer i skala+opacitet (`@keyframes
-  scan-halo-pulse`, 2.4s, skala 1→1.12 + opacity .8→.35), OG selve
-  knap-wrapperen får et ekstra åndedræt (`scanCtaBreathe`, genbrugt fra en
-  mellemliggende hvid ghost/outline-udgave af knappen — se nedenfor).
-  Respekterer `prefers-reduced-motion`.
-- **Knappen er nu en rigtig `<button>`** (var tidligere en `<div role=
-  "button">` med manuel `tabIndex`/`onKeyDown`) — giver native tastatur-
-  aktivering gratis og gør `:active{transform:scale(.95)}`-tryk-feedback
-  pålideligt på touch-enheder (virker ikke troværdigt via CSS `:active` på
-  en almindelig div på iOS).
-- **Fjernet versionsnummeret** ("v1.0.6 · beta") fra forsiden. Fandt
-  undervejs at det var et hardkodet tal, ikke den faktiske `buildLabel`-
-  prop (`formatBuildTime()`) — et feltnavne-mismatch-mønster (se afsnit 5's
-  stående lektion) hvor et komponent-prop var beregnet, sendt ind, men
-  aldrig faktisk brugt. `buildLabel`-proppen er fjernet fra `ScannerScreen`
-  (var reelt ubrugt) — OnboardingScreen's egen, separate brug er urørt.
-- **"Prøv en demo-scanning"-knappen** (kun til konti <24 timer gamle) er
-  fjernet fra forsiden, inkl. den nu-ubrugte `runDemoScan`-callback i
-  `App.jsx` (den underliggende, testede `buildDemoScanResult`-hjælpefunktion
-  i `useProduct.js` er bevaret uændret — bruges/testes uafhængigt).
-  **"Prøv en demo"-pillen** (åbnede app-guiden) er også fjernet — oprindeligt
-  bevidst bevaret i denne omgang, men en efterfølgende merge med `main`
-  (se nedenfor) viste at brugeren allerede havde bedt om den fjernet i en
-  parallel session; `DemoSlider`-guiden har nu ingen synlig indgang i UI'et,
-  uændret fra `main`s tilstand.
-- **Bundmenuen er UÆNDRET** (Indkøbsliste/Scan/Søg) — referencedesignets
-  billede viste "Historik" som tredje punkt i stedet for "Søg", men
-  brugeren bekræftede eksplicit at bundmenuen skal forblive som den er, da
-  spørgsmålet blev stillet (hvor skulle Søg så bo, hvis fjernet).
-- **Reel bug fundet og rettet undervejs (ikke en del af denne rundes
-  oprindelige scope, men direkte i vejen):** kamerascanningens laser-linje-
-  animation (`animation:"laserMove ..."`) refererede et `@keyframes
-  laserMove` der aldrig var defineret i `theme.jsx` — linjen "animerede"
-  aldrig, den lå bare stille. Tilføjet den manglende keyframe. Samtidig
-  fundet at laser-linjen kunne nå at vises et øjeblik FØR kameraet reelt
-  var i gang med at afkode (`cameraActive` sættes i `useScanner.js`s
-  `startCamera` før `Html5Qrcode.start()`s promise er løst) — tilføjet et
-  nyt `scanReady`-state (sandt først når `.start()` reelt er løst) og
-  gatet laser-linjens rendering på det, i stedet for kun `cameraActive`.
-  Matcher brugerens eksplicitte krav: "scannerlinje må først vises, når
-  kameraet faktisk scanner."
-- **Mergekonflikt med parallelt arbejde på `main`, løst i samme runde:**
-  mens denne gren arbejdede, nåede `main` 14 uafhængige commits om NETOP
-  denne skærm — en hvid ghost/outline-udgave af scan-knappen (roterende
-  blurret lysring, 50% større end originalen efter brugerens tidligere
-  ønske), et helt app-bredt baggrundsbillede-system der ERSTATTEDE
-  Scan-forsidens eget foto, og en kritisk hvid-skærm-hotfix (samme
-  backtick-i-kommentar-fejlklasse som denne fil selv advarer om andetsteds).
-  Løst ved en rigtig `git merge` (ikke en overskrivning): main's app-brede
-  baggrundssystem (`.app-bg`) beholdes uændret for resten af appen,
-  Scan-forsidens EGET baggrundsfoto genindføres specifikt på denne skærm
-  (brugeren bad eksplicit om netop dette foto her), main's forstørrede
-  knap-størrelse og `scanCtaBreathe`-åndedræt genbruges men med grøn fyld
-  i stedet for hvid ghost-stil, og main's fjernelse af version/demo-pil
-  respekteres. Fandt undervejs et reelt, ellers usynligt 1.75px-overlap
-  mellem undertekst og knap på iPhone SE (button-forstørrelsen havde
-  spist main's oprindelige sikkerhedsmargin) — rettet ved at flytte
-  knappens `top`-position fra 46% til 48%. Fuld liste over hvad der blev
-  auto-merget vs. manuelt reconcileret i `.claude/HISTORY.md`.
-- **Opfølgning, samme dag:** brugeren testede den mergede version live og
-  gav tre stykker feedback: knappen var for stor (main's 50%-forstørrelse,
-  som lige var genbrugt ovenfor, blev IKKE ønsket af denne bruger — sat
-  tilbage til de oprindelige `clamp(90px, 23cqh, 150px)`-mål), knappen
-  pulserede ikke synligt, og baggrundsbilledet var tydeligt beskåret/ikke
-  fuldt skærmdækkende. Undersøgt og rettet:
-  - **Puls-klagen viste sig at være korrekt kode, ikke en bug** — verificeret
-    direkte i den byggede app (ikke en hånd-mimic) via Playwright + et
-    `--mode artifact-preview`-build (se `import.meta.env.MODE ===
-    "artifact-preview"` i `OnboardingScreen.jsx` for login-bypass'en) og
-    `element.getAnimations()`: begge animationer (`scan-halo-pulse`,
-    `scanCtaBreathe`) rapporterede `playState:"running"` i den rigtige,
-    bygget-og-serverede app. Mest sandsynlige forklaring på brugerens
-    oplevelse: et skærmbillede kan i sagens natur ikke vise bevægelse, eller
-    en forsinket PWA-service-worker-opdatering (se afsnit "Beta-installation"
-    nedenfor for den kendte cache-mekanik) — IKKE en kodefejl. Fjern denne
-    note hvis brugeren bekræfter det stadig ikke pulserer efter en hård
-    genindlæsning.
-  - **Baggrunds-beskæringen var en reel arkitekturbegrænsning**, ikke en bug:
-    `<img>`-i-`.home-hero-frame`-tilgangen (fra PR #307/mergen) var af design
-    begrænset til rummet MELLEM topbar og bundnav (samme calc-budget som gav
-    hero-boksen sin definitive højde) — den nåede aldrig kant-til-kant bag
-    barerne. Løst ved at flytte Scan-forsidens baggrundsfoto fra en `<img>`
-    inde i hero-frame'et til et `app-bg-scan`-modifier-lag på selve
-    `.app-bg` (samme mønster som main's app-brede baggrund allerede bruger,
-    kun med et andet billede, betinget på `screen===SCREENS.HOME` i
-    `App.jsx`) — genbruger dermed en allerede-bevist, fuldt-skærmdækkende
-    teknik i stedet for at opfinde en ny. Kendt afvejning: `background-
-    size:cover` kan beskære lidt i siderne på ekstreme skærmforhold (samme
-    afvejning main's eget baggrundsbillede allerede accepterer) — men dette
-    var eksplicit hvad brugeren bad om ("den skal jo dække hele skærmen"),
-    så prioriteret over det tidligere "aldrig beskåret"-princip fra PR #307.
-- Verificeret med Playwright-device-profiler (iPhone SE, iPhone 13) — nul
-  overflow, ingen overlap/klipning, farver/puls/knap-type som beskrevet.
-
-**25. sept. 2026 — endnu en opfølgningsrunde (design-only, IKKE pushet/
-merget, se Vercel-kvote-reglen ovenfor).** Brugeren gav seks stykker
-feedback på den delte Artifact-preview:
-- **Scan-knappen ~30% større** — clamp(90px, 23cqh, 150px) →
-  clamp(117px, 30cqh, 195px) (+ tilsvarende ikon/tekst/halo/gap-mål) efter
-  feedback om at knappen, appens vigtigste handling, føltes for lille/
-  sekundær.
-- **Mindre tom luft mellem knap og bund** — knappens `top` rykket fra 46%
-  til 44%, Beta-information-fodens `top` rykket fra 71.5% til 65%.
-- **Bundmenuen ændret til Indkøbsliste | Scan | Historik** — "Søg" fjernet
-  fra bundnavigationen (brugerens begrundelse: søgning hører nu til inde i
-  Indkøbsliste-skærmen, som allerede har en fuld, allergi-filtreret
-  produktsøgning indbygget til "tilføj vare"-feltet). `SCREENS.SEARCH`
-  er IKKE slettet — stadig et gyldigt route, stadig nået fra
-  `SubmittedScreen.jsx`s "søg i stedet"-link, bare uden en dedikeret
-  bundnav-plads længere.
-- **Topbar-knapperne (?, Feedback, hamburger) forstørret** (32px→38px,
-  Feedback-pillens padding øget) og farven skiftet fra `var(--muted2)` til
-  det mørkere `var(--ink2)` + en let skygge (`var(--sh)`) — virkede "småt
-  og anonymt ... næsten disabled" ved den forrige, lysere/mindre stil.
-- **Undertekst-teksten ændret** til "Scan et produkt og se straks, om det
-  matcher dine allergier." (fra "Scan en vare og få hurtigt svar om den
-  passer til dine allergier.") — brugerens vurdering: den stærkere
-  formulering.
-- **Nyt `scanframe`-ikon** (`SharedComponents.jsx`) erstatter den bare
-  `barcode`-ikon på CTA-knappen — fire scanner-hjørne-vinkler (samme
-  visuelle sprog som det rigtige kamera-overlays hjørne-markører) omkring
-  korte stregkode-barer, mere "peg og scan"-intuitivt end en ren stregkode.
-
-Alle seks er rene design-/tekst-ændringer — committet lokalt på
-feature-branchen, IKKE pushet/PR'et/mergt (se den stående Vercel-kvote-
-regel i afsnit 4), og verificeret via en delt Artifact-preview i stedet.
-Genverificeret med Playwright på iPhone SE/13/14 Pro Max efter ændringerne
-— nul overflow, positivt mellemrum (83–122px) mellem knap og Beta-info-
-knap på alle tre (en første, naiv programmatisk måling viste et falsk
-"overlap" ved fejlagtigt at sammenligne knappens bund mod fod-CONTAINERENS
-egen top i stedet for den faktisk synlige, bund-forankrede Beta-info-knap
-selv — rettet ved at måle mod den rigtige knap-element, ikke dens
-forælder-boks).
-
-**25. sept. 2026 — endnu en finjusteringsrunde (design-only, IKKE pushet/
-merget).** Fem præcise justeringer oven på forrige rundes ændringer:
-- **Scan-knappen yderligere ~12,5% større** (clamp(117px, 30cqh, 195px) →
-  clamp(132px, 34cqh, 219px), + tilsvarende ikon/tekst/halo/gap) — en
-  mindre, mere præcis finjustering end forrige rundes ~30%.
-- **Hilsen, hjælpetekst og scan-området flyttet 25px op** — `calc(27% -
-  25px)` og `calc(44% - 25px)` i stedet for rene %-værdier, en bevidst FAST
-  pixel-forskydning (brugeren bad specifikt om px, ikke en proportional
-  flytning). Beta-information-foden er UÆNDRET (top:65%) — kun de tre
-  navngivne elementer skulle rykkes.
-- **Pulsen er nu KUN i halo-gløden, ikke på selve knappen** — `scanCtaBreathe`
-  fjernet fra knap-wrapperen (var tilføjet forrige runde efter "må gerne
-  pulsere så man får lyst til at trykke", men brugeren præciserede denne
-  runde at kun haloen skal pulsere). Halo-pulsen selv er dæmpet og
-  langsommere: skala 1→1.06 (var 1.12), opacity .7→.5 (var .8→.35), 4s
-  (var 2.4s) — "en langsom, subtil puls".
-- **Scanframe-ikonet, bundnavigationen (Indkøbsliste/Scan/Historik) og
-  baggrundens afdæmpede intensitet er bevidst UÆNDREDE** — brugeren bad
-  eksplicit om at bevare dem denne runde.
-- Genverificeret på iPhone SE/13/14 Pro Max: nul overflow, positivt
-  mellemrum (91–123px) mellem knap og Beta-info-knap,
-  `element.getAnimations()` bekræftede halo-animationen kører og
-  knap-wrapperen ikke længere har nogen animation.
+**Scan-forside og scan-knap — nuværende tilstand** (efter adskillige
+redesign-runder 24.-25. sept., inkl. en mergekonflikt med 14 parallelle
+commits på `main` og tre opfølgende brugerfeedback-runder): `.home-hero-
+frame` (ScannerScreen.jsx) har en definitiv `calc(100dvh - 143px -
+env(safe-area-inset-bottom))`-højde + CSS Container Queries for
+proportional skalering. Ét app-bredt baggrundsbillede
+(`app-background.webp`) ligger bag alle skærme, men Scan-forsiden har sit
+eget foto lagt som et `app-bg-scan`-modifier-lag på selve `.app-bg` (fuldt
+skærmdækkende, ikke begrænset til hero-rummet). Topbar/bottom-nav har et
+let frostet-glas-look (`backdrop-filter:blur`). Scan-knappen er en rigtig
+`<button>` med sin egen farvepalet (primær `#0E8F5A`, mørk `#08734A`, halo
+`#DDF4E8` — adskilt fra appens `--green`-token), størrelse
+`clamp(132px, 34cqh, 219px)`, en blødt roterende lysring (`scanCtaRingSpin`,
+9s) og en puls KUN i halo-gløden (`scan-halo-pulse`, 4s, skala 1→1.06 /
+opacity .7→.5 — ikke på selve knappen). Ikonet er `scanframe` (fire
+scanner-hjørne-vinkler). Bundnavigationen er **Indkøbsliste | Scan |
+Historik** ("Søg" er fjernet herfra, men `SCREENS.SEARCH` findes stadig som
+route, nået fra `SubmittedScreen.jsx`). Version-nummeret og "Prøv en
+demo"-knapperne er fjernet fra forsiden (`DemoSlider`/`showGuide` er ikke
+slettet, blot uden UI-indgang). Topbar-knapperne (?, Feedback, hamburger)
+bruger `--ink2` + en let skygge. Fuld dag-for-dag-detalje i
+`.claude/HISTORY.md`.
 
 ### Familie-siden gjort færdig som funktion, ikke kun layout (26. sept. 2026)
 
@@ -712,661 +511,186 @@ tilkoblet rigtig konto (undgår dubletter uden automatisk navne-matching).
 Fuld detalje i `.claude/HISTORY.md`, backend-reference i `src/CONTEXT.md`
 afsnit 9.
 
-### Madpas — redesignet, forenklet til kernefunktionen, herefter finpoleret tre gange (26.-27. sept. 2026)
+### Madpas — redesignet, forenklet til kernefunktionen, herefter finpoleret otte gange (26.-27. sept. 2026)
 
-Madpas' formål: en tjener, butiksansat, hotel- eller cafémedarbejder — IKKE
-kun restaurantpersonale — skal kunne forstå de vigtigste kost-/allergi-
-oplysninger på 2-3 sekunder. To redesign-runder 26. sept. byggede et fuldt
-delings-system (token-link, `madpas_links`-tabel + RPC, offentlig side,
-QR-kode, PDF/print, E-numre-opt-in), en tredje runde samme dag fjernede
-al den deling igen efter eksplicit brugerkrav ("Link- og QR-funktionalitet
-skal være helt fjernet") — Madpas er udelukkende on-device siden da.
-
-**Fjerde runde (27. sept.) — finpolish af selve fremvisningsskærmen,
-uden at ændre strukturen:** hvert allergen/fritekst-emne vises nu som sin
-EGEN informationsblok (stort, fedt navn — det mest fremtrædende element på
-skærmen — derefter eksempler, derefter en PR.-EMNE sikkerhedstekst) i
-stedet for en delt liste med én kombineret sætning for hele sektionen.
-Sikkerhedsteksten er samtidig gjort mere præcis: "...does not contain
-{name} or ingredients made from {name}." (var kun "...does not contain
-{name}."). Ny, bevidst OPT-IN krydskontaminerings-advarsel (toggle på
-Madpas-forsiden, default FRA — EatSafe må ikke selv antage alvorlighedsgraden
-af brugerens allergi) tilføjer én kombineret sætning nederst i FOOD
-ALLERGIES-sektionen når aktiveret. Oplæsnings-knappen er nu stor og
-fuld-bredde fast i bunden, og oplæsningen inkluderer nu selve
-sikkerhedsteksten (og krydskontaminering hvis aktiveret), ikke kun navn +
-eksempler. CTA-knappen hedder nu "Åbn madpas" (var "Vis til tjener"), og
-undertekst/framing er gjort bredere ("restaurant-, café-, hotel- eller
-butikspersonale", ikke kun tjener) — footeren i fremvisningsskærmen viser
-nu intet branding/dato længere.
-
-**To reelle, pre-eksisterende huller fundet og rettet i tidligere runder
-(stadig gældende):** `ALLERGEN_T` og `ALLERGEN_EXAMPLES` (per-sprogs
-allergen-navne/-eksempler) manglede begge `hvede`/`maelkeallergi` helt —
-uden en sprog-nøgle faldt visningen tilbage til den DANSKE `a.label`/ingen
-eksempler, selv når madpasset var sat til fx engelsk. Begge rettet for
-alle 17 sprog.
-
-**Femte runde (27. sept., samme dag) — diæter fik samme type besked som
-allergier:** diæter (vegan/vegetarian/pescetarian/gluten-free/keto) vises
-ikke længere kun som badges i fremvisningsskærmen, men som samme slags
-blok som allergier (navn + en naturligt oversat "jeg spiser X, sørg for
-at min mad ikke indeholder Y"-besked, `MADPAS_DIET_MESSAGE_T`, 5×17
-sprog). Sektionsoverskriften er ændret fra "DIET" til "DIETARY
-REQUIREMENTS". To mindre isolerede rettelser i samme runde: Soja-
-allergenets engelske navn viste fejlagtigt to varianter samtidig ("Soy /
-Soya") — rettet til blot "Soya" (korrekt for MADPAS_LANGUAGES' britiske
-"en"-variant). "Whey" manglede i mælkeallergiens eksempler — tilføjet
-(krævede samtidig at hæve `madpasAllergenExamples()`s interne
-eksempel-grænse fra 4 til 5, da de 4 eksisterende eksempler alene allerede
-fyldte den gamle grænse).
-
-**Sjette runde (samme dag) — ren visuel/spacing-polish af fremvisnings-
-skærmen** (design-only, se den stående Vercel-kvote-regel ovenfor):
-spacing rundet til appens faste skala, typografisk hierarki finpudset
-(den statiske "I am allergic to:"-headline nedtonet så den ikke
-konkurrerer med allergen-navnet/sikkerhedsteksten), krydskontaminerings-
-advarslen gjort en anelse lettere/mere sekundær, og — vigtigst — en reel
-bund-scroll-sikring: mere bund-padding + `env(safe-area-inset-bottom)` på
-fremvisningsskærmens Read aloud-footer, verificeret programmatisk at
-intet indhold nogensinde kan overlappe knappen. Luk-/oplæs-/krydskonta-
-mineringstoggle-knapperne fik samme tryk-feedback (`:active{scale(.97)}`)
-som resten af appens knapper. Blev committet lokalt (ikke pushet, jf.
-design-only-reglen), men pushet/merget alligevel efter brugerens
-eksplicitte "Push" — reglen forhindrer AT vi selv initierer et push for
-rene design-ændringer, ikke at brugeren aktivt kan bede om det.
-
-**Syvende runde (samme dag) — fire præcise afstandsjusteringer på selve
-Madpas-forsiden:** sprog-dropdown→KRYDSKONTAMINERING (+12px),
-KRYDSKONTAMINERING-hjælpetekstens linjehøjde (1.4→1.6),
-KRYDSKONTAMINERING→"Dit madpas" (0→16px, manglede helt før), "Dit
-madpas"-label→chips (+8px), chips→"Åbn madpas" (+18px) — alle via lokale
-style-overrides, ikke i de delte klasser (`.mp-section-lbl`/`UI.mb14`)
-der bruges andre steder i appen. CTA-størrelse og sidebredder urørt.
-
-**Ottende runde (samme dag) — reelt venstre-alignment-fund:** `.mp-head`
-(kun brugt i MadpasScreen.jsx) havde sin egen ekstra 20px venstre/højre-
-padding oveni `.mp-scroll`s allerede eksisterende 20px — titel/undertekst/
-sektionsoverskrifter sad derfor 40px inde, mens "Dit madpas"/chips/CTA
-(en søskende-div udenfor `.mp-head`) kun fik 20px, altså 20px længere til
-venstre end resten af siden. Rettet med ét CSS-linje-skift
-(`.mp-head`s venstre/højre-padding fjernet). Bivirkning (tilsigtet):
-sprog-dropdownen og CTA-knappen har nu samme bredde. Verificeret med
-`getBoundingClientRect()` for otte elementer — alle nu `left:20px`.
-
-Fuld dag-for-dag-detalje (alle otte runder) i `.claude/HISTORY.md`,
-backend-/struktur-reference i `src/CONTEXT.md` afsnit 10.
+Madpas' formål: alt relevant personale (tjener, butiks-, hotel- eller
+cafémedarbejder — ikke kun restaurantpersonale) skal kunne forstå de
+vigtigste kost-/allergioplysninger på 2-3 sekunder. Et fuldt delingssystem
+(token-link, `madpas_links`-tabel + RPC, offentlig side, QR-kode, PDF/print,
+E-numre-opt-in) blev bygget og samme dag fjernet igen efter eksplicit
+brugerkrav ("Link- og QR-funktionalitet skal være helt fjernet") — Madpas
+er udelukkende on-device siden da. Fremvisningsskærmen viser hvert
+allergen/fritekst-emne som sin egen blok (stort, fedt navn → eksempler →
+en PR.-EMNE sikkerhedstekst, "...does not contain {name} or ingredients
+made from {name}."), med samme blok-behandling for diæter
+(`MADPAS_DIET_MESSAGE_T`, 17 sprog, sektionsoverskrift "DIETARY
+REQUIREMENTS"). En bevidst opt-in krydskontaminerings-advarsel (toggle på
+Madpas-forsiden, default FRA) føjer én sætning til FOOD ALLERGIES-sektionen
+når aktiveret. Oplæsningsknappen er stor/fuld-bredde og inkluderer selve
+sikkerhedsteksten. To reelle sproghuller (manglende `hvede`/
+`maelkeallergi`-oversættelser for alle 17 sprog, en fejlvisning "Soy /
+Soya", et manglende "Whey"-eksempel) er rettet. Layoutets spacing og
+venstre-alignment er finpudset til appens faste skala (inkl. et reelt fund:
+`.mp-head` havde sin egen ekstra venstre/højre-padding oveni `.mp-scroll`s
+allerede eksisterende — rettet med ét CSS-linje-skift). Fuld otte-runders
+dag-for-dag-detalje i `.claude/HISTORY.md`, backend-/struktur-reference i
+`src/CONTEXT.md` afsnit 10.
 
 ### Profil restruktureret — "Rediger profil" og "Rediger præferencer" adskilt (28. sept. 2026)
 
-Tidligere førte BÅDE "Rediger" ved profilkortet OG "Rediger" ved "Mine
-præferencer" til samme skærm (`SCREENS.EDITPROFILE`), som blandede
-personlige oplysninger (navn/telefon/alder/køn) sammen med allergi-/
-diæt-/E-nummer-redigering i én lang formular — uklart hvad man rent
-faktisk redigerede, og en helt selvstændig, hånd-rullet kopi af allergi-/
-diæt-/E-nummer-UI'et (bl.a. med RØD som valgt-farve i stedet for appens
-korrekte grønne valgt-state) i stedet for at genbruge onboardingens
-allerede eksisterende, delte komponenter.
-
-**Nu to adskilte skærme:**
-- **`SCREENS.EDITPROFILE`** ("Rediger profil", nås KUN fra profilkortets
-  "Rediger") — udelukkende Navn (obligatorisk) + Telefon. Alder/køn er
-  fjernet helt herfra — EatSafe bruger dem intetsteds til en reel
-  funktion (kun til visning i familie-rækker/adminpanelet), så de ikke
-  længere er obligatoriske felter på selve kontoen. Ingen allergier/
-  diæter/E-numre/husstand her.
-- **`SCREENS.EDITPREFERENCES`** ("Rediger præferencer", NY, nås fra "Mine
-  præferencer"s "Rediger" på Profil) — udelukkende allergier/
-  intolerancer/diæter/E-numre. Genbruger PRÆCIS de samme delte
-  komponenter som onboarding og `MemberForm.jsx` allerede bruger
-  (`AllergenChipPicker`/`DietChipPicker`/`ENumberPicker`, `AllergenPicker.jsx`)
-  — samme grønne valgt-state, ikoner, labels som onboarding, ikke en
-  tredje kopi af samme UI. Redigeres direkte på én side (ingen "Næste"-
-  trin-flow) — `Accordion`-komponenten (samme mønster som MemberForms
-  E-numre-sektion) bruges kun til at folde E-numre-listen ud/ind, ikke
-  til at gate fremdrift.
-- **Gluten↔glutenfri-synkroniseringen** (vælges "Gluten" markeres
-  "Glutenfri" automatisk) fandtes tidligere som to næsten-identiske
-  kopier af samme effekt (onboarding + MemberForm) — udtrukket til én
-  delt `useGlutenFreeSync()`-hook i `AllergenPicker.jsx`, nu brugt tre
-  steder (onboarding, MemberForm, Rediger præferencer) i stedet for at
-  tilføje en fjerde kopi.
-
-**"Min husstand" på Profil er stærkt forenklet** — viste tidligere hele
-husstandens medlem-chips direkte på Profil-siden, en reel duplikering af
-den allerede eksisterende, fulde husstands-/familiefunktion
-(`SCREENS.FAMILY`). Erstattet af én kompakt, klikbar række ("Husstand" +
-antal medlemmer + chevron) der blot åbner den eksisterende Familie-side —
-ingen medlem-chips, ingen "tilføj medlem", ingen administration længere
-på selve Profil-siden. Tæller BÅDE administrerede profiler (`family`) og
-rigtige husstandskonti (`household`) — samme to grupper Familie-siden
-selv viser samlet.
-
-**Uændret:** "Mine præferencer"-oversigten på selve Profil-siden (kompakt
-gruppevisning af aktive valg, kun kategorier der reelt har noget), konto-/
-support-footeren, samt Scan/Historik/Indkøbsliste/Madpas/husstandslogikken
-i øvrigt.
-
-**Opfølgende oprydningsrunde, samme dag — "Din aktivitet" (Gamification)
-og Gluten/Glutenfri-forklaring:** "Familie aktive"-tallet er fjernet fra
-aktivitetskortet (Husstand har nu sin egen tydelige genvej, se ovenfor) —
-tilbage er et rent 2×2-grid (Dage i træk/Scanninger i alt/Advarsler
-fanget/Sikre opdagelser). "Dages streak" omdøbt til "Dage i træk", og
-header-undertekstens redundante "Streak ·" fjernet (streak kommunikeres
-allerede via "X dage!"-badgen og selve feltet) — progressbaren og "3
-dage!"-badgen er UÆNDREDE, som bedt om. Den blå venstre-accentkant på
-kortet er fjernet uden erstatning (kortet er nu lige så fladt som fx
-Husstand-rækken). Gluten-allergenets eksisterende info-ikon (ⓘ, allerede
-brugt til en cøliaki/hvedeallergi-forklaring) har fået sin note udvidet
-til også at forklare koblingen til kostpræferencen "Glutenfri" (vælges
-Gluten, tilføjes Glutenfri automatisk via `useGlutenFreeSync`, så
-brugeren ikke skal vælge begge selv) — ingen ny UI, kun tekst i den
-allerede eksisterende mekanisme.
-
-**Sidste polish-runde, samme dag — footer-overlap og microcopy:** et reelt
-fund — Profil-sidens footer ("Spørgsmål eller feedback?"/mail/privatlivs-
-politik/"EatSafe Beta") kunne ende delvist dækket af den faste bundnavigation,
-fordi footerens egen `paddingBottom:8` ikke pålideligt supplerede den delte
-`.screen`-klasses flade 110px bundpadding på tværs af enheder med forskellig
-`env(safe-area-inset-bottom)`. Rettet ved at give footeren sin egen, generøse
-`paddingBottom:calc(96px + env(safe-area-inset-bottom))` — scoped til kun
-denne skærms footer, ikke en ændring af den delte `.screen`-klasse. Verificeret
-med Playwright (iPhone SE/13/14 Pro Max): 127px fri luft mellem footerens sidste
-linje og bundnavigationens top efter scroll helt til bunds. Derudover omdøbt
-"Ugentlig streak" til "Ugentlig aktivitet" (samme progress-bar/badge, kun
-teksten). Ingen andre layout-/farve-/funktionsændringer.
-
-Fuld detalje i `.claude/HISTORY.md`.
+Profilsiden har to adskilte redigeringsskærme: `SCREENS.EDITPROFILE`
+("Rediger profil", nås KUN fra profilkortets "Rediger") håndterer
+udelukkende Navn (obligatorisk) + Telefon — alder/køn er fjernet helt
+herfra, da EatSafe intetsteds bruger dem til en reel funktion (kun til
+visning i familie-rækker/adminpanelet). `SCREENS.EDITPREFERENCES`
+("Rediger præferencer", nås fra "Mine præferencer"s "Rediger" på Profil)
+håndterer udelukkende allergier/intolerancer/diæter/E-numre, og genbruger
+PRÆCIS de samme delte komponenter som onboarding og `MemberForm.jsx`
+(`AllergenChipPicker`/`DietChipPicker`/`ENumberPicker`, `AllergenPicker.jsx`)
+i stedet for en tredje UI-kopi. Gluten↔glutenfri-synkroniseringen er
+udtrukket til én delt `useGlutenFreeSync()`-hook, nu brugt tre steder
+(onboarding, MemberForm, Rediger præferencer). "Min husstand" på Profil er
+erstattet af én kompakt, klikbar række ("Husstand" + antal medlemmer +
+chevron) der blot åbner den eksisterende Familie-side — ingen
+medlem-administration direkte på Profil længere. "Din aktivitet"
+(Gamification) er nu et rent 2×2-grid (Dage i træk/Scanninger i alt/
+Advarsler fanget/Sikre opdagelser — "Familie aktive"-tallet er fjernet,
+Husstand-rækken dækker det samme). Profil-footeren har en dedikeret
+`paddingBottom:calc(96px + env(safe-area-inset-bottom))` der forhindrer
+overlap med bundnavigationen. Fuld detalje (tre opfølgningsrunder) i
+`.claude/HISTORY.md`.
 
 ### Indstillinger omstruktureret til seks logiske sektioner (28. sept. 2026)
 
-`SettingsScreen.jsx` var indtil videre kun to kort (Konto med Log ud/Slet
-konto side om side, og Notifikationer). Omstruktureret efter en detaljeret
-"FORBEDR INDSTILLINGER I EATSAFE"-spec til seks sektioner: **Konto** (kun
-Log ud), **Sprog** (Standard-sprog til Madpas — genbruger `MADPAS_LANGUAGES`
-+ App.jsx's allerede lagrede `madpasLang`-state og MadpasScreen.jsx's egne
-`.mp-lang-dropdown`/`.mp-lang-list`-CSS-klasser 1:1, ikke en ny UI),
-**Scanning** (to nye toggles, se nedenfor), **Notifikationer** (samme
-funktion, forbedret layout — se nedenfor), **Privatliv & data**
-(Privatlivspolitik-link, en udfoldelig "Hvilke data EatSafe gemmer"-liste,
-og **Slet konto** flyttet hertil fra Konto-kortet ind i en tydeligt
-adskilt "FAREZONE"-underafsnit med rød tekst-knap i stedet for en fyldt
-rød blok, så den ikke konkurrerer visuelt med Log ud), og **Om EatSafe**
-(Version via det allerede eksisterende `formatBuildTime()`/`COMMIT_SHA`
-fra `utils.jsx`, "Om EatSafe Beta" der genåbner den eksisterende
-`BetaIntroModal` via samme `setBetaIntroStep(0)/setBetaIntroSeen(false)`-
-mønster som ProfileMenu.jsx, og "Kontakt & feedback" der åbner den
-eksisterende `FeedbackModal` via samme `onOpenFeedback`-prop-navn som
-`HelpModal.jsx` allerede bruger).
-
-**To nye, reelle Scanning-indstillinger** (localStorage-persisteret, samme
-mønster som `madpasCrossContact`, default TIL): "Vibration ved advarsel"
-og "Lyd ved advarsel". Begge er koblet til et helt nyt checkpoint i
-`useProduct.js`s `runLookupProduct` (en `fireWarningAlert()`-hjælpe-
-funktion, genbruger `navigator.vibrate`+Web Audio-oscillator-mønsteret fra
-`useScanner.js`s eksisterende "stregkode registreret"-feedback, men med
-en tydeligt anderledes, lavere/længere tone) der fyrer specifikt når et
-scan-resultat er `danger`/`warn` — IKKE det samme som den allerede
-eksisterende, ubetingede vibration ved enhver scanning (som er urørt).
-State er løftet til App.jsx (`vibrateOnWarning`/`soundOnWarning`) og
-sendes med i `lookupProduct`s `ctx`, præcis som appens øvrige scan-
-afhængige state.
-
-**Notifikationer-kortets ændringer:** "Push-tilladelse" omdøbt til
-"Push-notifikationer"; kategori-labels finpudset i `useNotificationPrefs.js`
-("Dine indsendelser"→"Indsendte produkter", "Familie"→"Familieinvitationer",
-"Ugentligt opskrifts-digest"→"Ugentlig opskriftsoversigt" — kun de
-synlige labels, databasenøglerne/`id`-felterne er uændrede); de gentagne
-PUSH/MAIL-labels på hver række erstattet af én fælles kolonneheader
-("Push"/"E-mail") over hele gridet; og — den reelle funktionelle rettelse
-— per-kategori Push-toggles vises nu grånede/deaktiverede (med en kort
-forklaring ovenfor gridet) når browserens push-tilladelse ikke er givet,
-så en toggle aldrig kan se aktiv ud uden reelt at kunne sende noget.
-Mail-kolonnen er bevidst UPÅVIRKET af push-tilladelsen (de to kanaler er
-uafhængige af hinanden).
-
-**Bevidst udeladt** (ikke glemt — begrundelse i `SettingsScreen.jsx`s
-egen filhoved-kommentar): "App-sprog" (appen har intet i18n-system, al
-UI-tekst er hardkodet dansk — kun Madpas har reel sprogunderstøttelse),
-"Åbn resultat automatisk efter scanning" (scan-flowet har allerede
-ingen anden tilstand at slå til/fra — det er allerede ubetinget
-automatisk), "Eksportér mine data" (ingen understøttende Edge Function
-findes), "Vilkår" (ingen selvstændig vilkårs-side findes, samme kendte
-begrænsning som OnboardingScreen.jsx's "Handelsbetingelser"-tekst
-allerede dokumenterer), og en "Åbn Indstillinger"-genvej ved afvist
-push (ingen cross-browser PWA-API til at åbne systemindstillinger findes
-— den eksisterende tekstforklaring er den ærlige erstatning).
-
-Verificeret med Playwright (artifact-preview-build, login-bypass,
-hamburger-menu → Indstillinger): alle seks sektionsoverskrifter til
-stede, sprogvælgeren åbner/vælger/persisterer korrekt, Slet konto væk
-fra Konto-kortet og til stede i Privatliv & data-kortets Farezone,
-"Hvilke data EatSafe gemmer" folder korrekt ud, de tre omdøbte
-notifikations-labels og den fælles Push/E-mail-kolonneheader begge til
-stede, Om EatSafe-sektionens tre rækker til stede. Ingen build-/test-/
-mojibake-fejl (109/109 tests bestået).
-
-**Opfølgende oprydning, samme dag — privatlivspolitik kun ét sted i
-navigationen:** hamburgermenuens (`ProfileMenu.jsx`) selvstændige
-"Privatliv"-punkt (linkede direkte til `https://eatsafe.dk/privacy`) er
-fjernet — samme link findes nu KUN under Indstillinger → Privatliv & data
-(tilføjet i denne omgang, se ovenfor). Brugerens egen begrundelse:
-hamburgermenuen skal navigere mellem appens vigtigste funktioner, ikke
-huse juridiske links der allerede ligger under Indstillinger.
-ProfileScreen.jsx's eget footer-privacy-link (nederst på profilsiden) er
-UÆNDRET, som bedt om — begge tilbageværende links peger på præcis samme
-eksterne side. `handleItemClick`s nu-ubrugte `href`-gren i ProfileMenu.jsx
-er fjernet som en direkte konsekvens (ingen andre menupunkter brugte den).
-
-**Endnu en opfølgning, samme dag — "FINAL POLISH – INDSTILLINGER" (copy +
-platformskorrekt adfærd + bund-overlap, ingen redesign):**
-- **Bund-overlap rettet:** "Om EatSafe"-kortet (sidste element på siden)
-  fik `marginBottom:"calc(96px + env(safe-area-inset-bottom))"` — samme
-  rodårsag/løsning som ProfileScreen.jsx-footerens tidligere fix (den
-  delte `.screen`-klasses flade 110px medregner ikke `env(safe-area-
-  inset-bottom)`). Verificeret ~144px fri luft til bundnavigationen efter
-  scroll til bunds (iPhone SE/13).
-- **Scanningstekster udvidet:** "Vibration/Lyd ved advarsel"s hjælpetekst
-  ændret fra "...matcher en allergi" til "...udløser en advarsel", da
-  danger/warn-status også kan komme fra diæter/E-numre, ikke kun
-  allergier — samme rettelse i en kode-kommentar i `useProduct.js`.
-- **Push-status gjort platforms-ærlig:** "Blokeret i browserindstillinger"
-  (antog fejlagtigt altid en browser-indstilling, ikke fx en installeret
-  PWA's OS-niveau app-tilladelse) erstattet med "Push-notifikationer er
-  slået fra på enheden." + en mere universel forklaringstekst. En "Åbn
-  Indstillinger"-knap blev genundersøgt og stadig IKKE tilføjet — ingen
-  cross-browser/cross-platform JS-API findes til at åbne push-
-  indstillinger fra en PWA, uanset platform, så en sådan knap ville altid
-  være fake (se `SettingsScreen.jsx`s filhoved for detaljen).
-- **"Sprog" omdøbt til "Madpas-sprog":** appen har intet app-sprog-skift
-  at sektionere under et generisk "Sprog" (kun Madpas har reel sprog-
-  understøttelse) — samme begrundelse som da "App-sprog" oprindeligt blev
-  udeladt.
-- **Version gjort brugervenlig:** viste tidligere `formatBuildTime()` +
-  rå `COMMIT_SHA` som primær info. Nu viser rækken "Beta" (reel status,
-  matcher topbarens badge — IKKE et fabrikeret tal som "0.9.0", da appen
-  ikke har et rigtigt semver-nummer) + en venlig bygge-dato, og
-  git-commit-SHA'et er flyttet til en sekundær, udfoldelig
-  "Build-ID (teknisk)"-detalje (samme udfolde-mønster som "Hvilke data
-  EatSafe gemmer").
-- **"Kontakt & feedback" omdøbt til "Kontakt & support"** — mindre
-  redundant navngivning ved siden af topbarens egen "Feedback"-knap.
-- Uændret, som krævet: Privatliv & data-kortets indhold, Farezone/Slet
-  konto, Push/E-mail-matricens mekanik, og selve scanningstogglernes
-  funktion (kun deres hjælpetekst er ændret).
+`SettingsScreen.jsx` har seks sektioner: **Konto** (kun Log ud),
+**Madpas-sprog** (genbruger `MADPAS_LANGUAGES` + App.jsx's `madpasLang`-
+state og MadpasScreen.jsx's eksisterende dropdown-CSS), **Scanning** (to
+nye, localStorage-persisterede toggles — "Vibration ved advarsel"/"Lyd ved
+advarsel", default TIL, fyrer via en ny `fireWarningAlert()`-hjælpefunktion
+i `useProduct.js`s `runLookupProduct` specifikt når et scan-resultat er
+`danger`/`warn`), **Notifikationer** (finpudsede kategori-labels, én fælles
+Push/E-mail-kolonneheader, og — den reelle funktionelle rettelse —
+per-kategori Push-toggles vist grånede/deaktiverede når browserens/OS'ets
+push-tilladelse mangler), **Privatliv & data** (privatlivspolitik-link, en
+udfoldelig "Hvilke data EatSafe gemmer"-liste, og Slet konto flyttet hertil
+i en adskilt rød "FAREZONE"-underafsnit), og **Om EatSafe** (status "Beta"
++ venlig bygge-dato, git-commit-SHA som udfoldelig sekundær "Build-ID
+(teknisk)"-detalje, "Om EatSafe Beta" der genåbner `BetaIntroModal`, og
+"Kontakt & support"). Bevidst udeladt (begrundet i `SettingsScreen.jsx`s
+eget filhoved): App-sprog (intet i18n-system), en "Åbn resultat
+automatisk"-toggle (allerede ubetinget adfærd), dataeksport, en selvstændig
+Vilkår-side, og en "Åbn Indstillinger"-genvej (ingen cross-platform PWA-API
+findes). Privatlivspolitik-linket findes nu KUN under Indstillinger +
+ProfileScreen-footeren (fjernet fra hamburgermenuen, som skal navigere
+mellem funktioner, ikke huse juridiske links). Fuld detalje i
+`.claude/HISTORY.md`.
 
 ### Scanner-flow finpudset — labels, dynamisk hjælpetekst, kamera-permission (28. sept. 2026)
 
-En omfattende "FINAL POLISH – SCANNER"-spec (16 punkter) — mål: gøre
-scanneren intuitiv/robust for førstegangsbrugere, ingen redesign af
-kamera-feed, EatSafe-stil eller bundnavigation. Ændringer i
-`ScannerScreen.jsx`/`useScanner.js`/`useProduct.js`: de tre svævende
-kamera-kontroller (Billede/Indtast/Lygte) fik korte tekst-labels under
-ikonerne (ny lokal `CamCtrlBtn`, ≥44×44pt touch-target); en dynamisk
-hjælpetekst under scanneren skifter fra "Placér hele stregkoden i
-rammen" til "Hold telefonen stille" efter 3s; et allerede-eksisterende
-men aldrig-renderet `showPhotoHint`-state (sat efter 5s uden et scan)
-bruges nu til en faldback-besked med klikbare Indtast/Billede-handlinger;
-zoom-indikatoren er adskilt fra hjælpeteksten og holdt bevidst let (ren
-information, ikke interaktiv); en ny `cameraPermissionDenied`-tilstand
-erstatter den ellers-stadig-klikbare "Scan produkt"-knap med et
-dedikeret "Kameraadgang er slået fra"-kort + fungerende Billede-/
-Indtast EAN-knapper, uden en fake "Åbn Indstillinger"-knap; en kort,
-ét-sætnings kamera-permission-primer vises kun første gang; manuel
-EAN-indtastning er gjort robust (kontrolleret, cifre-filtreret input,
-Søg deaktiveret ved forkert længde, to adskilte fejltekster for
-længde vs. checksum); og tre fejltekster er finpudset til spec'ens
-ordlyd (billede uden læsbar stregkode, netværksfejl). En reel
-`maxLength`-bug (talte rå tegn i stedet for cifre, kunne afskære sidste
-ciffer i en indsat formateret EAN) blev fundet af en Playwright-test og
-rettet. Fuld detalje i `.claude/HISTORY.md`.
-
-**Opfølgende bugfix, samme dag — scanner-state blev ikke fuldt nulstillet
-ved kamera-luk:** "Indtast EAN-nummer"-panelet (App.jsx-state
-`showManualEan`) blev stående åbent på Scan-forsiden efter kameraet blev
-lukket, fordi `stopCamera()` (useScanner.js) kun nulstillede kamera-
-hardwaren selv (cameraActive/torchOn/scanReady) — ikke zoom, fejlbeskeder,
-"kan den ikke scannes?"-hintet, eller det manuelle EAN-panel (sidstnævnte
-er slet ikke en del af useScanner). Rettet i to lag: `stopCamera()` selv
-nulstiller nu også `scanZoom`/`scanError`/`showPhotoHint`; og en ny
-`closeCameraFully()`-wrapper (App.jsx) samt `handleCloseCamera()`
-(ScannerScreen.jsx, bruges af selve luk-kamera-knappen) lægger
-`setShowManualEan(false)` (+ den lokale EAN-værdi/-fejltekst) oven på
-det almindelige `stopCamera()`-kald, ved ALLE de steder kameraet reelt
-lukkes (det eksplicitte luk-tryk, navigation væk fra scanner-skærmene,
-appen i baggrunden, Android-tilbageknappen). Verificeret med Playwright:
-åbnede panelet, simulerede et kamera-luk (`visibilitychange`), bekræftede
-panelet forsvandt og Scan-forsiden vendte tilbage helt ren.
+Scanneren (`ScannerScreen.jsx`/`useScanner.js`/`useProduct.js`) har
+tekst-labels under de tre svævende kamera-kontroller (Billede/Indtast/
+Lygte, ≥44×44pt touch-target); en dynamisk hjælpetekst under scanneren
+skifter fra "Placér hele stregkoden i rammen" til "Hold telefonen stille"
+efter 3s, og en 5s-fallback (`showPhotoHint`) tilbyder klikbare Indtast-/
+Billede-genveje; en ny `cameraPermissionDenied`-tilstand viser et dedikeret
+"Kameraadgang er slået fra"-kort (med fungerende Billede-/Indtast
+EAN-knapper) i stedet for en stadig-klikbar, men reelt ubrugelig
+"Scan produkt"-knap; manuel EAN-indtastning er cifre-filtreret med to
+adskilte fejltekster for forkert længde vs. checksum. **Opfølgende
+bugfix, samme dag:** `stopCamera()` (useScanner.js) nulstiller nu ALT
+scanner-relateret state (zoom/fejlbesked/"kan den ikke scannes?"-hint OG
+det manuelle EAN-panel via en ny `closeCameraFully()`-wrapper i App.jsx)
+ved ethvert kamera-luk (eksplicit luk-tryk, navigation væk, appen i
+baggrunden, Android-tilbageknappen) — en tidligere bug lod "Indtast
+EAN"-panelet stå åbent på Scan-forsiden efter kameraet blev lukket. Fuld
+16-punkts-spec-detalje i `.claude/HISTORY.md`.
 
 ### Produktresultatside omstruktureret — dynamisk, kategoriseret status (28. sept. 2026)
 
-En omfattende "FINAL PRODUCT RESULT PAGE"-spec (17 punkter) — mål: én
-robust, generisk produktskabelon (`ResultScreen.jsx`) der ALDRIG kalder et
-produkt "sikkert" alene fordi der ikke var et match, og som tydeligt
-skelner allergi/intolerance/E-nummer/kostpræference i stedet for én uklar
-samlet status. Ingen ændring af `scanResult.status/headline/summary` selv
-(History/ListScreen/SearchScreen bruger dem fortsat uændret) — al ny logik
-er et ekstra, rent lag oveni, bygget af to nye, generiske hjælpefunktioner
-i `helpers.js` (`categorizeProductFindings`/`computeTopStatus`), begge
-data-drevne (ALLERGENS' eget `type`-felt afgør allergi vs. intolerance),
-ingen specialcases pr. produkt.
-
-- **Ny topstatus, prioriteret allergi → intolerance/følsomhed → E-nummer →
-  kostpræference → utilstrækkelige data → ingen fund** — erstatter det
-  tidligere tre-tilstands "Sikkert produkt"/"Indeholder allergen"/"Mulige
-  spor". Bruger aldrig "sikkert"/"allergifrit"/"garanteret". "Ingen
-  advarsler fundet" (grøn) vises KUN når der reelt er data nok til at have
-  foretaget kontrollen — ellers en ny, neutral grå "Ikke nok oplysninger
-  til fuld kontrol"-tilstand (`--neutral`-token, allerede i designsystemet,
-  ingen ny farve).
-- **Ny "Relevant for dig"-sektion** samler ALLE fund på tværs af
-  kategorier (allergi/intolerance/E-nummer/kostbrud), tydeligt adskilt,
-  ikke reduceret til én sætning.
-- **"Kompatibel med dine diæter" omdøbt til "Passer til dine
-  kostpræferencer"** — viser nu ✓/✕/? for hver aktiv diæt (aldrig gættet:
-  ✕ og ? er adskilte tilstande), kun vist hvis brugeren har aktive
-  kostpræferencer.
-- **Ingredienslisten fremhæver nu KUN det der er relevant for DENNE
-  bruger** — ikke længere alle allergener produktet måtte indeholde
-  (reelt fund: den gamle fremhævning viste ALLE 16 allergen-typer,
-  uanset brugerens egne valgte allergier). `IngredientsList`
-  (SharedComponents.jsx) har fået et nyt, valgfrit `highlightRules`-prop
-  til dette — 100% bagudkompatibelt, RecipesScreen.jsx's eksisterende
-  brug (uden dette prop) er pixel-identisk uændret, verificeret af de
-  eksisterende tests. Tryk på en fremhævet ingrediens viser nu en kort
-  forklaring (`showToast`) i stedet for altid at åbne leksikonet.
-  "Fremhævet = allergen"-teksten vises kun når ALT fremhævet reelt er en
-  allergi, ellers en mere præcis tekst.
-- **Datakilde-badgen** (allerede en genbrugelig `verifiedBadge()`-
-  komponent) har fået et tappeligt info-ikon der forklarer hvad kilden
-  betyder — samme komponent kan senere vise en fjerde kilde uden at
-  siden skal ændres.
-- **Næringsindhold** viser nu "pr. 100 g" ELLER "pr. 100 ml" (udledt af
-  produktets kategori-tekst, ikke hardkodet) og skjules HELT hvis der
-  ingen brugbare data er — modsat manglende ingredienser, som fortsat
-  viser en "hjælp os"-status (bevidst asymmetri, som spec'en selv bad om).
-- **Én samlet sikkerhedsdisclaimer** ("EatSafe er vejledende...") lige
-  før "Ret forkerte data" — alle tidligere spredte "tjek altid selv"/
-  "dobbelttjek altid selv"-formuleringer fjernet fra ingredienslisten.
-- **Reel bug fundet undervejs:** en `isValidEanChecksum`-gate blev
-  tilføjet direkte i html5-qrcodes success-callback (useScanner.js, sidste
-  runde) — urelateret opdagelse ved gennemgang af hele scan-pipelinen for
-  denne opgave, allerede rettet i forrige commit.
-- Multi-profil-visningen (flere aktive familiemedlemmer) er bevidst KUN
-  let justeret (fjernet "sikkert"-ordet fra én sammenfattende sætning) —
-  den nye, dybere kategorisering gælder ved ÉN aktiv profil, hvor hele
-  denne spec's eksempler (Red Bull-scenariet) hører hjemme.
-- Verificeret med Playwright (fire mock-produkter via route-interception:
-  ingen fund/allergi/intolerance/utilstrækkelige data): korrekt topstatus-
-  headline, farve og sekundærtekst i alle fire tilfælde, "Relevant for
-  dig" vises kun ved reelle fund, ingrediens-fremhævning + tap-forklaring
-  bekræftet for et allergi-match, næringssektion bekræftet skjult ved
-  manglende data, disclaimer bekræftet vist præcis én gang. `npm run
-  build`/`npx vitest run` (109/109, ingen regressioner) grønne, mojibake-
-  scan clean.
-
-**Opfølgende omstrukturering, samme skærm — "FORBEDR PRODUKTSIDEN" (28.
-sept. 2026, videreudvikling, ikke redesign).** Brugeren pegede på at
-konklusionen stadig blev gentaget/modsagt flere steder (resultatkort +
-"Relevant for dig" + "Passer til dine kostpræferencer" kunne vise
-delvist overlappende eller ligefrem modstridende information). Løst ved
-at forenkle til KUN to advarselsfarver og én samlet forklaringssektion:
-- **RØD forbeholdt egentlige allergi-/intoleranceadvarsler** — allergi og
-  intolerance er nu slået sammen ét sted (samme røde behandling overalt:
-  topstatus, ingrediens-fremhævning, "Dine valg"), da begge er sundheds-
-  relevante fund brugeren ikke selv har "valgt fra". `computeTopStatus`
-  (helpers.js) har kun to advarselsniveauer nu i stedet for fire.
-- **GUL/ORANGE for kostpræferencer og fravalgte E-numre** — et bevidst
-  valg, ikke en sundhedsadvarsel, og skal derfor ikke alarmere som en
-  allergi. Ny, eksakt headline "Passer ikke til dine valg" (var fire
-  forskellige headlines afhængig af fund-type).
-- **Konkrete årsager vises nu som chips/tags direkte i resultatkortet**
-  (var en enkelt sammenkædet tekstlinje), plus en kort, konkret
-  forklaringssætning udledt af det første fund (fx "Produktet indeholder
-  mælkeprotein.") — ny `topExplanation`-beregning i ResultScreen.jsx.
-- **"Relevant for dig" og "Passer til dine kostpræferencer" er fjernet
-  helt**, erstattet af ÉN ny sektion **"Dine valg"** (`renderDineValg()`)
-  med tre skjulbare underkategorier (Allergier & intolerancer/
-  Kostpræferencer/E-numre & øvrige fravalg) — hver viser ALLE brugerens
-  egne valgte allergener/diæter/E-numre, ikke kun dem der matcher, med
-  ✓ (matcher ikke) / ✕ (matcher, konkret grund) / ? (kan ikke afgøres).
-  Aldrig en overskrift der lover et bestemt udfald (fx "PASSER TIL DINE
-  KOSTPRÆFERENCER") — kun neutrale kategori-navne. En lav-datasikkerheds
-  "ok:true" fra `checkDietCompatibility` (vegan/vegetarisk/pescetarisk
-  returnerer aldrig `ok:null`, kun lav `confidence`) nedgraderes bevidst
-  til "?" her, så sektionen aldrig modsiger et gråt "utilstrækkelige
-  data"-resultatkort ovenfor.
-- **"Andre allergener i produktet" omdøbt til "Andre deklarerede
-  allergener"** + rettet en reel bug: sektionen inkluderede tidligere
-  ALLE `ALLERGENS`-entries uanset `type`, så en intolerance som
-  "Laktoseintolerance" fejlagtigt blev listet som et allergen — filtreret
-  til kun `type==="allergi"` nu.
-- Ingrediens-fremhævningens hjælpetekst under listen forenklet til én
-  sætning ("Fremhævede ingredienser er relevante for dine valg. Tryk for
-  en kort forklaring.") — droppede den tidligere betingede "Fremhævet =
-  allergen/relevant for dig"-skelnen som unødig kompleksitet.
-- **Sideordnet fund, samme runde:** preview-mock-dataens "Sofie"-familie-
-  medlem havde diæt-id'et `"vegetar"` i stedet for det korrekte
-  `"vegetarian"` (DIETS' egen id, `constants.jsx`) — et klassisk felt-
-  navne-mismatch (se afsnit 5's stående lektion) der gjorde ethvert
-  diæt-tjek for hende stille `ok:null` ("Ukendt diæt") i stedet for reelt
-  at tjekke — kun relevant for artifact-preview-demoen, ikke rigtige
-  brugere (som vælger diæt via UI'et, hvor id'erne er korrekte), men
-  rettet i samme omgang da den blokerede verifikation af netop
-  diæt-brud-scenariet.
-- Verificeret med Playwright (fem mock-produkter + profilskift til et
-  familiemedlem med egen diæt/fritekst-allergi): grøn "Ingen advarsler
-  fundet" uden andre bokse, rød "Allergi-advarsel" + navn-chip + korrekt
-  "Andre deklarerede allergener" (uden intolerance-fejlen), grå
-  "Ikke nok oplysninger" med "?" på hver enkelt valgt allergen (ikke kun
-  et globalt banner), orange "Passer ikke til dine valg" + kostpræference-
-  chip + forklaring + korrekt ✕-række i "Dine valg", og en diæt-OK-
-  variant der kun viser ✓-rækker uden ekstra grønne bokse. `npm run
-  build`/`npx vitest run` (109/109) grønne, mojibake-scan clean.
+`ResultScreen.jsx` bruger en generisk, data-drevet kategorisering
+(`categorizeProductFindings`/`computeTopStatus` i `helpers.js`, ALLERGENS'
+eget `type`-felt afgør allergi vs. intolerance, ingen specialcases pr.
+produkt) der ALDRIG kalder et produkt "sikkert" alene fordi der ikke var et
+match. Kun to advarselsfarver: **RØD** for egentlige allergi-/
+intoleranceadvarsler (sundhedsrelevante fund, ikke brugerens eget valg) og
+**GUL/ORANGE** for kostpræference-/E-nummer-fravalg (bevidste valg, ikke en
+sundhedsadvarsel — headline "Passer ikke til dine valg"). En neutral grå
+"Ikke nok oplysninger til fuld kontrol"-tilstand (`--neutral`-token) vises
+når der reelt mangler data (aldrig grøn i det tilfælde). Konkrete årsager
+vises som chips direkte i resultatkortet, plus én kort, konkret
+forklaringssætning (`topExplanation`). Én samlet sektion **"Dine valg"**
+(`renderDineValg()`, tre skjulbare underkategorier: Allergier &
+intolerancer / Kostpræferencer / E-numre & øvrige fravalg) viser ALLE
+brugerens egne valgte allergener/diæter/E-numre med ✓ (matcher ikke) / ✕
+(matcher, konkret grund) / ? (kan ikke afgøres) — erstatter de tidligere,
+delvist modstridende "Relevant for dig"/"Passer til dine kostpræferencer"-
+sektioner. Ingredienslisten fremhæver KUN det der er relevant for DENNE
+bruger (nyt, bagudkompatibelt `highlightRules`-prop på `IngredientsList`,
+tryk viser en kort `showToast`-forklaring). "Andre deklarerede allergener"
+(tidligere "Andre allergener i produktet") er nu korrekt filtreret til kun
+`type==="allergi"`. Næringsindhold viser "pr. 100 g" ELLER "pr. 100 ml" og
+skjules helt uden brugbare data. Én samlet disclaimer ("EatSafe er
+vejledende...") lige før "Ret forkerte data". Fuld to-runders detalje i
+`.claude/HISTORY.md`.
 
 ### EatSafe-logoet låst og implementeret konsekvent overalt (28. sept. 2026)
 
-Brugeren delte det nu **endeligt godkendte** EatSafe-logo (mørk charcoal
-stregkode-mærke med en integreret grøn scanlinje/checkmark) + en fuld
-master-vektorpakke (SVG/PDF/PNG i alle nødvendige formater — bekræftet at
-være den ægte kildefil, ikke kun et præsentationsbillede, før noget blev
-implementeret). Opgaven var **konsekvent brug af ét fast asset**, ikke et
-redesign — se `public/brand/README.txt` for den fulde master-pakkes indhold.
-
-**Låste brandfarver (fra selve master-filerne, IKKE de omtrentlige "fx"-
-farver brugeren nævnte i sin besked)** — bevidst ADSKILT fra appens egen
-`--green:#0E8F5A`-designtoken (design-tokens.md), som forbliver uændret til
-al almindelig UI (knapper, chips osv.). Logoets egen, faste palet:
-- Mørk (bars/wordmark "Eat"): `#232528`
-- Grøn (checkmark/wordmark "Safe"): `#039A55`, med en gradient
-  `#70DC59 → #17BF55 → #039A55` i checkmark-stregen/prikken
-- Off-white baggrund (app-ikon/favicon): `#FBFAF7`
-
-**Nye faste assets:**
-- `src/assets/logo/` — de aktivt brugte SVG'er (symbol/symbol-mono/
-  horizontal/horizontal-mono), importeret som almindelige Vite-assets.
-- `public/brand/` — hele master-pakken (alle SVG/PDF/PNG-varianter +
-  README) lagt ud som downloadbar reference på `eatsafe.dk/brand/...`,
-  jf. kravet om at "SVG/vector master" og "PNG-varianter" skal findes.
-- **Ny delt komponent `EatSafeLogo`** (`SharedComponents.jsx`) —
-  `variant="horizontal"|"horizontal-mono"|"symbol"|"symbol-mono"` + `size`
-  (højde for horizontal, bredde=højde for symbol). Erstatter BÅDE den
-  tidligere live-tekst-rekonstruktion ("Eat"+grøn "Safe" i DM Sans, brugt i
-  topbar/velkommen/login) OG en tidligere håndtegnet inline-SVG med samme
-  navn (9 tynde bars, andre farver) — begge var reelt egne fortolkninger,
-  præcis det brugeren bad om at undgå ("ingen nye variationer eller
-  AI-fortolkninger"). Bruges nu i: `OnboardingScreen.jsx`
-  (velkommen/login — samme markup, fjernede den nu-overflødige separate
-  tekst-wordmark ved siden af; onboarding-trin-header, kompakt `symbol`).
-  **Undtagelse tilføjet 27. sept. 2026** (brugerens eksplicitte
-  "Opdater EatSafe-headeren"-brief): app-headeren (`AppHeader.jsx`, se
-  arkitektur-afsnittet) er bevidst gået tilbage til en ren tekst-wordmark
-  ("Eat"=mørk/"Safe"=grøn, IKKE `EatSafeLogo`-billedet) i netop DENNE ene,
-  kompakte kontekst — scanner-/stregkodesymbolet skal her udelukkende
-  signalere selve scan-funktionen (Scan-knappen, bundnav), ikke indgå i
-  brandingen i en header hvor pladsen er trang. `EatSafeLogo` (med det
-  fulde symbol) er UÆNDRET alle andre steder (velkommen/login/onboarding/
-  admin) — kun app-headeren er undtaget fra det ellers stadig gældende
-  "ét fast billedaktiv, ingen nye tekst-fortolkninger"-princip.
-  Admin-bundlet (`src/admin/AdminApp.jsx`/`AdminLayout.jsx`) importerer
-  samme komponent fra `../SharedComponents.jsx` (allerede en fælles
-  afhængighed via `showToast`/`ToastHost`, så ingen ny bundle-kobling).
-- **App-ikon/favicon/manifest gendannet fra master:** `public/favicon.svg`
-  (samme squircle-klip som før, men med det nye mærkes eksakte geometri/
-  farver i stedet for den gamle 9-bar-tolkning), `icon-192/512(-maskable)
-  .png` + `apple-touch-icon.png` gendannet ved at nedskalere den leverede
-  1024×1024-master (samme billede bruges til "any" og "maskable" — den
-  leverede paddings er allerede rigelig til Androids safe-zone-krav).
-  `manifest.json`s `theme_color`/`background_color` og `index.html`s
-  `theme-color`-meta opdateret til de nye låste farver; tilføjet et
-  `og:image` (pegende på den nye horisontale logo-PNG i `public/brand/`)
-  som ikke fandtes før.
-- **Statiske sider** (`public/install.html`, `invite.html`, `privacy.html`)
-  havde hver sin egen, let ANDERLEDES tekst-wordmark-kopi (bl.a. en
-  omvendt "Eat=grøn/Safe=ink"-farvefejl i to af dem, modsat topbarens
-  "Eat=ink/Safe=grøn") — alle tre erstattet med samme `<img>`-reference til
-  `/brand/EatSafe_Master_Logo_Horizontal.svg`, så der nu kun findes ÉT
-  visuelt udtryk for logoet på tværs af hele produktet, ikke fire-fem
-  let-forskellige tekst-rekonstruktioner. `public/install.html` brugte
-  allerede `icon-192.png` (nu automatisk opdateret) + separat tekst ved
-  siden af — den separate tekst er fjernet, billedet dækker nu begge dele.
-- **Bevidst UDEN for scope:** `public/eatsafe-dashboard.html` (en statisk,
-  ikke-refereret fil — ikke det rigtige admin-panel, som er `src/admin/` +
-  `admin.html` — verificeret ubrugt før den blev ladet urørt) og
-  ProfileScreen.jsx/BetaIntroModal.jsx's løse "EatSafe Beta"-omtaler i
-  brødtekst (ikke en visuel logo-gengivelse, bare produktnavnet i en sætning
-  — et billede-logo inline i løbende tekst ville være forkert brug af et
-  ordmærke).
-- Verificeret med Playwright (artifact-preview-build): velkommen-, login-
-  og onboarding-trin-skærme, topbar, admin-login, samt install/invite/
-  privacy-siderne (alle tre, inkl. install.html's iOS-guide via enheds-
-  emulering, da ikke-iOS-brugeragenter omdirigeres til den rigtige
-  produktions-URL uden for sandboxens netadgang) — alle viser nu identisk
-  logo-geometri/-farver. Favicon.svg renderet standalone og bekræftet
-  pixel-identisk med app-ikonets proportioner. `npm run build`/
-  `npx vitest run` (109/109) grønne, mojibake-scan clean.
+EatSafe-logoet (mørk charcoal stregkodemærke med en integreret grøn
+scanlinje/checkmark) er låst som ét fast billedaktiv fra en godkendt
+master-vektorpakke (`public/brand/`, se README der for fuldt indhold).
+Låste brandfarver — mørk (bars/wordmark "Eat") `#232528`, grøn
+(checkmark/wordmark "Safe") `#039A55` med en gradient `#70DC59→#17BF55→
+#039A55` i checkmarket, off-white baggrund `#FBFAF7` — er bevidst ADSKILT
+fra appens `--green:#0F7D4F`-designtoken, som forbliver uændret til al
+almindelig UI. Ny delt komponent `EatSafeLogo` (`SharedComponents.jsx`,
+varianter `horizontal(-mono)`/`symbol(-mono)`) erstatter alle tidligere
+egne tekst-/SVG-fortolkninger og bruges på velkommen/login/onboarding/
+admin. **Undtagelse (27. sept. 2026):** app-headeren (`AppHeader.jsx`)
+bruger bevidst en ren tekst-wordmark i stedet for billedlogoet (se
+App-header-afsnittet nedenfor) — scanner-ikonet skal her udelukkende
+signalere selve scan-funktionen, ikke indgå i brandingen i en kompakt
+header. App-ikon/favicon/manifest (`theme_color`/`background_color`) er
+gendannet fra masterfilen; de statiske sider (`install.html`/`invite.html`/
+`privacy.html`) refererer nu alle samme
+`/brand/EatSafe_Master_Logo_Horizontal.svg` i stedet for hver sin
+let-forskellige tekst-rekonstruktion. Bevidst uden for scope:
+`public/eatsafe-dashboard.html` (en ubrugt, ikke-refereret fil) og løse
+"EatSafe Beta"-produktnavne-omtaler i brødtekst. Fuld detalje i
+`.claude/HISTORY.md`.
 
 ### Bugfix: hamburgermenuen forblev åben oven på velkomstsiden efter logout (28. sept. 2026)
 
-Bruger-rapporteret fund: "Log ud" i hamburgermenuen (`ProfileMenu.jsx`)
-sendte korrekt brugeren til velkomstsiden, men selve menu-overlayet/
-draweren blev stående åbent ovenpå. Rodårsag: `handleItemClick` kaldte
-`item.action()` (her `clearAuth` fra `AuthContext`) direkte uden nogensinde
-at kalde `onClose()` — `showProfileMenu`-state'en i `App.jsx` (der styrer
-hele overlayets rendering) var derfor helt afkoblet fra selve auth-state-
-ændringen. Screen-skiftet til `SCREENS.WELCOME` virkede fint (topbar/
-bundnav er allerede korrekt gatet på `isOnboard`), men menuens egen
-`showProfileMenu`-boolean blev aldrig rørt.
-
-**Rettet i to lag** (én synkron fix for selve knappen + ét sikkerhedsnet
-for alle andre logout-veje, som brugeren eksplicit bad om):
-1. `ProfileMenu.jsx`s `handleItemClick` kalder nu `onClose()` FØR
-   `item.action()` køres for ethvert action-baseret menupunkt (ikke kun
-   "Log ud") — sker synkront i samme klik-handler som `clearAuth()`, så
-   React batcher dem til ét render. Intet mellemliggende frame hvor
-   velkomstsiden vises bag en stadig åben menu.
-2. `App.jsx`s eksisterende "ryd familie/historik/indkøb når `accessToken`
-   bliver null"-effekt udvidet til også at nulstille `showProfileMenu` —
-   et sikkerhedsnet for de andre steder `clearAuth()` kaldes fra
-   (session-udløb/tvungen refresh-fejl i `useAuth.js`, admin-401-logout i
-   `useAdmin.js`, Indstillinger-skærmens egen log ud-knap), hvor menuen i
-   teorien kunne stå åben når auth-state ændres i baggrunden, ikke kun via
-   et direkte klik i selve menuen.
-
-Browser/enheds-"tilbage" efter logout er allerede korrekt (ikke rørt) —
-appen bruger ikke en per-skærm browser-historik (`screen` er almindelig
-React-state), kun ét fast "app"-history-anchor der genpushes ved hvert
-`popstate` for at fange Android-tilbageknappen (se afsnittet om det
-længere nede) — der er derfor intet reelt "tidligere autentificeret
-side"-historik-punkt at navigere tilbage til.
-
-Verificeret med Playwright: åbn menu → "Log ud" → menuen/overlayet/
-bundnavigationen er alle væk med det samme, velkomstsiden vises ren; login
-igen → menuen starter lukket; gentaget logout-cyklus (åbn menu → log ud →
-log ind igen) to gange i træk uden at menuen nogensinde forbliver åben.
-`npm run build`/`npx vitest run` (109/109) grønne, mojibake-scan clean.
+**Lektion (logout-veje skal lukke egne overlays):** `ProfileMenu.jsx`s
+`handleItemClick` kalder nu `onClose()` FØR ethvert menupunkts action
+udføres (ikke kun "Log ud") — en tidligere bug lod menu-overlayet/
+draweren stå åben oven på velkomstsiden efter logout, fordi
+`showProfileMenu`-state i `App.jsx` aldrig blev rørt af selve
+`clearAuth()`-kaldet. `App.jsx`s eksisterende "ryd familie/historik/
+indkøb ved `accessToken===null`"-effekt er udvidet til også at nulstille
+`showProfileMenu`, som sikkerhedsnet for de øvrige steder `clearAuth()`
+kaldes fra (session-udløb, admin-401-logout, Indstillinger-skærmens egen
+log ud-knap). Fuld detalje i `.claude/HISTORY.md`.
 
 ### Velkomstside — "FINAL POLISH", produktionsklar finish (28. sept. 2026)
 
-En detaljeret 12-punkts "FINAL POLISH"-spec til `SCREENS.WELCOME` —
-videreudvikling af eksisterende layout/logo/baggrund/CTA-struktur, ikke et
-redesign. Alle ændringer i `OnboardingScreen.jsx` (kun WELCOME-blokken,
-LOGIN/ONBOARD urørt) og `theme.jsx`s `.welcome-*`-regler, plus én ny
-statisk side.
-
-- **Lodret balance (krav 1):** `.welcome-screen` brugte `justify-content:
-  center`, som altid deler ledig plads 50/50 over/under indholdet —
-  brugerfeedback var "en anelse for meget tom plads over hero-indholdet".
-  Erstattet af to usynlige spacer-`div`er (`.welcome-vspace-top/-bottom`)
-  med ULIGE flex-grow-vægt (0.62:1) i stedet for selve `justify-content`
-  — fordeler ledig plads ca. 38/62 (top/bund), skalerer proportionalt på
-  tværs af enhver skærmhøjde, og krymper begge til ~0 på den mindste
-  iPhone (SE-klasse), hvor der ikke er ledig plads at fordele i forvejen.
-  Lodret padding sat ned 48px→20px (spacers giver resten af luften).
-- **Hovedbudskab (krav 2):** "...om de matcher dine allergier." → "...om
-  de passer til dine allergier og kosthensyn." — `.welcome-tagline`s
-  `max-width` øget 280px→300px for pænere linjebrud ved den længere tekst.
-- **De tre benefits (krav 3) — reelt fund:** "Tjek allergener" og
-  "Tryggere indkøb" brød begge over to linjer ved den gamle kolonnebredde
-  (100px cap), mens "Hurtigt svar" stod på én — en synligt ujævn række.
-  Målt præcist med Playwright (reelle DM Sans-tekstbredder, ikke gæt):
-  løst med `.welcome-benefits` gap 22px→14px + `.welcome-benefit`
-  max-width 100px→130px + `.welcome-benefit-label` font-size 13px→12px
-  (mindste nødvendige kombination for at alle tre står på én linje ved
-  standard iPhone-bredde, som kravet selv beder om at prioritere frem for
-  at gøre hele rækken mindre). "Tryggere indkøb" omdøbt til "Lettere
-  indkøb" — kortere tekst der reelt kan stå på én linje, og undgår et
-  kategorisk sikkerhedsløfte ("Tryggere") appen ikke fuldt kan indfri.
-- **CTA-polish (krav 4/5):** `.welcome-btn`/`.welcome-btn-ghost`
-  border-radius 14px→16px (matcher hinanden, som krævet), `.welcome-btn`s
-  skygge dæmpet (opacity/blur skåret ned — "subtil og premium, ikke
-  kraftig"), `text-align:center` gjort eksplicit, indbyrdes spacing
-  10px→12px. Bredde/radii var allerede identiske mellem de to knapper.
-- **Juridisk tekst (krav 6/7) — ny side oprettet:** "handelsbetingelser"
-  var bevidst IKKE et link før nu (ingen side fandtes) — brugeren bad
-  eksplicit om at få en oprettet i denne omgang. Ny `public/terms.html`
-  (samme stil/struktur som `privacy.html`) med en tydeligt markeret,
-  amber "foreløbig/ikke juridisk gennemgået"-boks øverst — genuint
-  generisk placeholder-indhold, IKKE juridisk godkendt tekst; skal
-  erstattes af rigtigt indhold før det bruges retligt bindende. Teksten
-  omformuleret til "...accepterer du vores handelsbetingelser og
-  bekræfter, at du har læst privatlivspolitikken" — adskiller bevidst
-  "acceptér vilkår" fra "bekræft at have læst privatliv", og er EKSPLICIT
-  IKKE samtykke til behandling af allergi-/helbredsoplysninger (det sker
-  separat, senere i selve onboardingen). Begge ord er nu rigtige links.
-  Visuel polish: farve `--muted`→`--ink2` (bedre kontrast mod det aktive
-  food-baggrundsbillede), font-size 11px→11.5px, line-height 1.6→1.65,
-  ny `max-width:290px` for pænere linjebrud, margin-top 16px→22px for
-  bedre rytme-adskillelse fra CTA-klyngen ovenfor.
-- **Feedback-knap (krav 8) — reelt fund:** onboarding-udgaven af
-  Feedback-knappen (adskilt fra den autentificerede topbar-udgave) brugte
-  `top:12` uden `env(safe-area-inset-top)` (risiko for kollision med
-  statuslinje/Dynamic Island på notch-enheder) og en selvstændig, hardkodet
-  skygge i stedet for appens delte `var(--sh)`-token. Begge rettet.
-- **Baggrund/kontrast (krav 9):** ingen ændring af selve `.app-bg`
-  (baggrundens karakter skal bevares) — kontrastløftet for hovedbudskab/
-  benefits/CTA'er var allerede tilstrækkeligt via eksisterende
-  `--ink`/hvide kort-baggrunde; kun den juridiske teksts farve/kontrast
-  var reelt utilstrækkelig (se krav 7 ovenfor).
-- **Vertikal rytme (krav 10):** gennemgået hele sekvensen logo→
-  hovedbudskab→benefits→primær CTA→sekundær CTA→juridisk tekst — bevidst
-  AFTAGENDE mellemrum ned gennem hierarkiet (fra ~44px mellem logo og
-  benefits til ~22px før juridisk tekst) i stedet for identiske
-  pixel-mellemrum overalt, som ville virke mekanisk; ingen sektion
-  målt/vurderet som klemt eller løsrevet.
-- Verificeret med Playwright på alle fire krævede enhedsstørrelser (mindre
-  iPhone/SE-klasse 320×568, standard iPhone 390×844, stor iPhone/Pro
-  Max-klasse 430×932, Dynamic Island-klasse 393×852): alle tre benefits på
-  én linje på standard-bredde, ingen beskårne labels/knapper/juridisk
-  tekst, og — reelt fund undervejs — den i forvejen eksisterende, minimale
-  overflow på SE-klassen (~12px, eksisterede allerede FØR denne omgang på
-  grund af `min-height:100vh`+indhold der samlet er højere end skærmen)
-  blev ikke forværret af den nu længere juridiske tekst, takket være den
-  reducerede lodrette padding — tværtimod forbedret til ~6px. `npm run
-  build`/`npx vitest run` (109/109) grønne, mojibake-scan clean (fangede
-  undervejs en reel byggefejl: en backtick i en CSS-kommentar inde i
-  `theme.jsx`s `appCss`-template-literal brød selve JS-syntaksen — samme
-  fejlklasse denne fil selv advarer om andetsteds, rettet før commit).
+Velkomstsidens (`SCREENS.WELCOME`) lodrette fordeling bruger to usynlige
+spacer-`div`er (`.welcome-vspace-top/-bottom`) med ULIGE flex-grow-vægt
+(0.62:1) i stedet for `justify-content:center`, så ledig plads fordeles
+ca. 38/62 (top/bund) og krymper mod ~0 på små skærme i stedet for at
+efterlade for meget tom plads øverst. De tre benefit-labels ("Tjek
+allergener"/"Hurtigt svar"/"Lettere indkøb", sidstnævnte omdøbt fra
+"Tryggere indkøb") passer nu altid på én linje (gap/max-width/font-size
+finjusteret empirisk). CTA-knappernes radius/skygge er ensrettet
+(`border-radius:16px` begge, dæmpet skygge). Ny statisk side
+`public/terms.html` (samme stil som `privacy.html`, en tydelig
+"foreløbig/ikke juridisk gennemgået"-boks — genuint placeholder-indhold)
+gør "handelsbetingelser" til et rigtigt link; teksten adskiller bevidst
+"acceptér vilkår" fra "bekræft at have læst privatlivspolitikken" og er
+EKSPLICIT IKKE samtykke til behandling af allergi-/helbredsoplysninger
+(det sker separat i selve onboardingen). Onboardingens flydende
+Feedback-knap har fået `env(safe-area-inset-top)`-håndtering + appens
+delte `var(--sh)`-skyggetoken. Fuld 12-punkts-detalje i
+`.claude/HISTORY.md`.
 
 ### Beta-installation (september 2026) — nuværende arkitektur
 
@@ -1388,249 +712,94 @@ i `.claude/HISTORY.md`.
 Bjørn gav en stor, 14-punkts "MASTER PROMPT"-brief: mål er stringens/
 konsistens/10/10-polish på tværs af HELE appen — eksplicit IKKE et
 redesign, EatSafe-identiteten/lys food-baggrund/afrundede kort/venlige
-tone/nuværende grønne retning skal bevares. Arbejdet batches i flere PR'er
-efterhånden som dele bliver færdige og godkendt til push, ikke i én stor
-omgang — se punkt-for-punkt-status herunder, opdatér listen efterhånden.
+tone/nuværende grønne retning skal bevares. Arbejdet batches i flere
+PR'er efterhånden som dele bliver færdige og godkendt til push.
 
-**Delvis shippet (PR #359, merget):**
-- **Nyt 2-grønt farvesystem** — `--green` er nu `#0F7D4F` (primær
-  handlingsfarve: knapper, aktive toggles/tabs/faner, CTA'er, herunder
-  Scan-knappen), superseder den tidligere ENE-grønne lås fra 25. sept.
-  (`#0E8F5A`). Ny, adskilt `--green-accent:#34D06A` — KUN til små positive
-  mikro-elementer (checkmarks, safe-badges/dots, kamera-scan-reticle/
-  laser-linjen i ScannerScreen.jsx via `--green-logo`) — må ALDRIG bruges
-  til knapper/aktive tilstande. Se `.claude/rules/design-tokens.md` for
-  den fulde, opdaterede token-tabel. Logo-SVG'ernes egne, indbyggede
-  farver (fast brandasset, se logo-afsnittet ovenfor) er bevidst urørt.
-  Checkmark-ikonet i `.chip-check` skiftet fra hvid til `--ink`, da hvid
-  på den lysere accent-grøn kun gav 2.02:1 kontrast (under WCAG's
-  3:1-minimum for UI-grafik) — `--ink` giver 8.28:1.
-- **Brand-slogan "Mere tryghed i hverdagen"** — ny delt `.brand-slogan`-
-  CSS-klasse, bevidst lille/muted/bred letter-spacing (læses som en rolig
-  signatur, ikke en overskrift). Placeret KUN to steder: under logoet på
-  velkomstsiden, og i "Om EatSafe"-kortet i Indstillinger — IKKE gentaget
-  på andre skærme eller i topbaren, jf. brief'ens eksplicitte "aldrig fast
-  gentagelse".
-- **Disclaimer-audit** — bekræftet at den foretrukne ordlyd ("EatSafe er
-  vejledende. Kontrollér altid produktets aktuelle ingrediens- og
-  allergenoplysninger.") allerede findes korrekt ét sted (ResultScreen.jsx,
-  fra en tidligere runde) — ingen ændring nødvendig der. Fjernet den
-  eksplicit frarådede formulering "ved alvorlige allergier" to andre
-  steder (opskrift-indsendelsens write-only disclaimer-felt i
-  useRecipes.js, terms.html). Øvrige "vejledende/tjek altid"-tekster
-  (Viden-siden, BetaIntroModal, onboarding-diæt-tjek, Opskrifter) er
-  bevidst urørte — hver dækker sin egen, ikke-overlappende kontekst.
+**Shippet:** et nyt 2-grønt farvesystem (`--green:#0F7D4F` til primære
+handlinger/CTA'er inkl. Scan-knappen; adskilt `--green-accent:#34D06A` KUN
+til små positive mikro-elementer som checkmarks/safe-badges — se
+`.claude/rules/design-tokens.md` for den fulde token-tabel); brand-sloganet
+"Mere tryghed i hverdagen" (kun under logoet på velkomstsiden og i "Om
+EatSafe"-kortet, aldrig gentaget andre steder); en disclaimer-audit
+(bekræftede den foretrukne ordlyd i ResultScreen.jsx, fjernede den
+frarådede "ved alvorlige allergier"-formulering to andre steder); en
+design-reviewer-agent-audit af Historik/Indkøbsliste/Madpas/Indstillinger/
+Profil/Produktsider (Historik/Favoritter fik samme bordered-card-stil som
+Indkøbslisten, to nye SVG-ikoner `door`/`building` erstattede emoji i
+RestaurantGuide/ResultScreen/RecipesScreen); og tre runder velkomstside-
+finpolish (lodret rytme, Feedback-knappens skygge/kant, juridisk teksts
+linjebrud). Alt ovenstående + Opret konto/Log ind- og Onboarding trin
+1-rundene (se deres egne afsnit) hører under samme MASTER PROMPT-brief.
 
-**Shippet (PR #360, merget):** design-reviewer-agent-audit af typografi/
-spacing/komponentkonsistens på tværs af Historik/Indkøbsliste/Madpas/
-Indstillinger/Profil/Produktsider — Historik/Favoritter flyttet fra en flad
-divider-række til samme bordered-card-stil som Indkøbslistens `.list-item`
-("Historik skal føles som søster til Indkøbsliste"), to nye SVG-ikoner
-(`door`, `building`) erstattede emoji-som-UI-chrome i RestaurantGuide-
-Screen.jsx/ResultScreen.jsx/RecipesScreen.jsx, titel-typografi rettet for
-"tilbageknap + titel"-mønsteret (18px→16px, matcher `.screen-title`), to
-touch-target-bugs rettet i ListScreen.jsx. Fandt undervejs at
-`SCREENS.RESTAURANTGUIDE` ikke har nogen navigations-indgang i den
-nuværende UI (fjernet fra ProfileMenu.jsx på et tidspunkt, ikke erstattet)
-— IKKE rettet (produkt-/navigationsbeslutning, ikke en styling-fix), flaget
-til brugeren.
+**Flaget, ikke rettet:** `SCREENS.RESTAURANTGUIDE` har ingen
+navigations-indgang i den nuværende UI (fjernet fra ProfileMenu.jsx på et
+tidspunkt, ikke erstattet) — en produkt-/navigationsbeslutning, ikke en
+styling-fix.
 
-**Shippet (PR #361, #362, merget):** velkomstside-finpolish i tre runder —
-lodret rytme (slogan→hovedtekst-afstand, line-height/font-weight),
-Feedback-knappens skygge/kant gjort mere diskret (to omgange), og den
-juridiske teksts linjebrud rettet to gange (først "handelsbetingelser"→
-"brugsvilkår" + halevedhæng så selve linket aldrig ender alene på en
-linje, derefter max-width/font-size finjusteret empirisk til præcis 3
-jævnt fyldte linjer på SE/iPhone 13/Pro Max).
-
-**Shippet (endnu ikke pushet — se nedenfor):** "FINAL 10/10 POLISH – OPRET
-KONTO & LOG IND", se eget afsnit under "Opret konto/Log ind" nedenfor.
-
-**Resterende (ikke startet, fortsættes i en senere PR):** navigation/
-topbar/bottom-nav-gennemgang (stikprøve viste allerede konsistente,
-enkeltstående komponenter — ingen fund udover RestaurantGuide-fundet
-ovenfor), mikrocopy-gennemgang, tilgængelighedstjek, og en afsluttende
-cross-page-visuel-konsistens-sammenligning. De fleste af brief'ens punkter
-om Scan-flow/Produktside/Indstillinger-struktur er allerede dækket af
-tidligere, separate runder (se de respektive afsnit ovenfor).
+**Resterende (ikke startet):** navigation/topbar/bottom-nav-gennemgang
+(stikprøve viste allerede konsistente komponenter, ingen fund udover
+RestaurantGuide-fundet ovenfor), mikrocopy-gennemgang, tilgængelighedstjek,
+og en afsluttende cross-page-visuel-konsistens-sammenligning. De fleste af
+brief'ens punkter om Scan-flow/Produktside/Indstillinger-struktur er
+allerede dækket af de separate runder beskrevet ovenfor i dette afsnit.
+Fuld PR-for-PR-detalje i `.claude/HISTORY.md`.
 
 ### Opret konto & Log ind — "FINAL 10/10 POLISH" (27. sept. 2026)
 
-En detaljeret 10-punkts spec til `SCREENS.LOGIN` (Ny bruger + Log ind) —
-konsistens/validering/sidste polish, ikke et redesign. Ændringer i
-`useAuth.js`, `OnboardingScreen.jsx`, `App.jsx`.
-
-- **Felt-specifikke fejl standardiseret** — to nye delte states
-  (`emailError`, `passwordError`, useAuth.js) erstatter den tidligere
-  praksis hvor `authError` (den globale error-boks) blev brugt til BÅDE
-  felt-specifikke valideringsfejl (tom/ugyldig e-mail, for kort password)
-  OG reelle globale fejl. Nu vises felt-fejl inline direkte under det
-  relevante felt, med en diskret rød kant på selve inputtet, PÅ BEGGE
-  faner (samme spacing/design). `authError` (den store boks, `ErrorMessage`
-  i DesignSystem.jsx — returnerer `null` og fylder intet når tom) er nu KUN
-  for fejl der ikke kan knyttes til ét felt: "E-mail eller adgangskode er
-  forkert." (login), "Der opstod en fejl. Prøv igen." (alt andet uventet),
-  "Bekræft din e-mail..." (email ikke bekræftet endnu), "Tjek din e-mail og
-  klik på bekræftelseslinket..." (signup uden access_token).
-  **Reelt fund undervejs:** de gamle catch-blokke gjorde
-  `setAuthError(e.message || "...")`, hvilket i praksis kunne lække rå,
-  tekniske fetch-/JS-fejltekster (fx "Failed to fetch") direkte til
-  brugeren ved en ægte netværksfejl — opdaget under Playwright-verifikation
-  med en mocket serverfejl. Rettet ved ALDRIG at propagere `e.message` fra
-  en catch-blok; kun de eksplicit satte, venlige faste beskeder vises.
-- **"Har du allerede en konto?"/"Har du ikke en konto?"-linkene fjernet**
-  fra begge faner — segmenteret kontrol (`.tab-row`) øverst er nu den
-  eneste sekundære navigation mellem de to auth-tilstande, som brugeren
-  bad om.
-- **Segmenteret kontrol** — verificeret identisk (bredde/højde/aktiv-
-  farve/font-weight/radius, målt programmatisk) mellem Ny bruger og Log
-  ind; skifter ikke layout ved tab-skift.
-- **Legal copy på Ny bruger rettet** — "...bekræfter, at du er over 13 år"
-  (intet alderskrav findes reelt nogen andre steder i appen) erstattet med
-  samme ordlyd/links som velkomstsidens tilsvarende tekst ("brugsvilkår" +
-  "privatlivspolitikken", begge klikbare, samme "ikke samtykke til
-  helbredsoplysninger"-forbehold).
-- **Ny, altid synlig adgangskode-hjælpetekst** under Ny brugers password-
-  felt ("Adgangskoden skal være mindst 10 tegn.", muted grå) — erstattet
-  af samme tekst i rød/fed ved et mislykket forsøg, ingen dubleret linje,
-  intet layout-hop (linjen er der altid, kun farven/vægten skifter).
-- **CTA'er og sociale login-knapper** — verificeret programmatisk 100%
-  identiske (højde/bredde/radius/skygge/font-size/baggrund) mellem
-  Opret/Log ind-knapperne og mellem Google/Facebook-knapperne; bruger
-  allerede EatSafes låste primære UI-grøn (`.welcome-btn`-klassen, delt med
-  velkomstsidens CTA).
-- **Ikke implementeret, flaget til brugeren:** "Fortsæt med Apple" — spec'en
-  bad om det, betinget på om EatSafe skal distribueres via App Store/
-  TestFlight med social login som primær login-metode (Apples App Review
-  Guideline 4.8). Dette blev allerede tilføjet og bevidst fjernet igen
-  samme dag i en tidligere runde (25. sept. 2026, se `.claude/HISTORY.md`)
-  — en reel Apple-OAuth-integration kræver et Apple Developer-konto-setup
-  og Supabase-provider-konfiguration, ingen af delene tilgængelige fra
-  denne session, og er under alle omstændigheder en produktdistributions-
-  beslutning, ikke en ren styling-opgave. Afventer brugerens afklaring.
-- **Reel bug fundet og rettet undervejs:** tab-skiftets onClick-handlers
-  kaldte stadig `setForgotPwError("")` — en lokal state der blev fjernet
-  som led i konsolideringen til den delte `emailError` (samme "Indtast din
-  e-mail først."-besked dækkede både "Glemt adgangskode?" uden e-mail OG
-  det nye tom-email-ved-login-tjek). Ville have kastet en `ReferenceError`
-  i konsollen ved hvert tab-skift — fundet ved gennemlæsning af egen diff,
-  ikke af Playwright (en synkron JS-fejl i en klik-handler stopper ikke
-  altid synligt UI-flow, så det er let at overse uden at læse koden
-  igennem). Rettet til `setEmailError("")`/`setPasswordError("")`.
-- Verificeret med Playwright på tre enhedsbredder (SE/iPhone 13/Pro Max):
-  alle 10 kombinationer af tom/ugyldig e-mail, tom/for kort adgangskode på
-  begge faner, ingen JS-konsol-fejl ved tab-skift, ingen stale fejl der
-  overlever et tab-skift. `npm run build`/`npx vitest run` (110/110, 3 nye
-  tests for de nye felt-fejl-cases) grønne, mojibake-scan clean.
-- **Shippet (PR #363, merget).**
+`SCREENS.LOGIN` (Ny bruger + Log ind) bruger nu felt-specifikke fejl
+(`emailError`/`passwordError` i `useAuth.js`) vist inline direkte under
+det relevante felt på BEGGE faner — `authError` (den globale fejlboks) er
+nu KUN for fejl der ikke kan knyttes til ét felt ("E-mail eller
+adgangskode er forkert.", "Der opstod en fejl. Prøv igen.", email-
+bekræftelses-beskeder). Catch-blokke propagerer ALDRIG længere
+`e.message` til brugeren (forhindrede en reel lækage af rå fetch-/JS-
+fejltekster ved en ægte netværksfejl) — kun faste, venlige beskeder vises.
+"Har du allerede en konto?"/"Har du ikke en konto?"-linkene er fjernet fra
+begge faner (den segmenterede `.tab-row`-kontrol er nu eneste sekundære
+navigation). Legal copy på Ny bruger er rettet til samme "brugsvilkår +
+privatlivspolitikken"-ordlyd/links som velkomstsiden (ikke længere et
+fiktivt "over 13 år"-alderskrav). En altid synlig adgangskode-hjælpetekst
+("mindst 10 tegn") skifter kun farve/vægt ved et mislykket forsøg, ingen
+dubleret linje. CTA'er og sociale login-knapper er verificeret 100%
+identiske mellem de to faner. **Ikke implementeret, afventer brugerens
+afklaring:** "Fortsæt med Apple" — kræver et Apple Developer-konto-setup +
+er en produktdistributionsbeslutning (App Store/TestFlight-krav), ikke en
+ren styling-opgave. Fuld detalje i `.claude/HISTORY.md`.
 
 ### Onboarding trin 1 ("Hvem er du?") — "FINAL 10/10 POLISH" (27. sept. 2026)
 
-10-punkts spec til onboardingens trin 1 (Navn/E-mail/Telefon/Alder/Køn) —
-konsistens/validering/polish, alle felter bevaret, intet redesign.
-Ændringer i `OnboardingScreen.jsx` (renderStep1), `FormFields.jsx`
-(AgeStepper), `DesignSystem.jsx` (ChoiceCard) og `theme.jsx`.
-
-- **Hjælpetekst rettet** — "bruges til din personlige allergiprofil"
-  antydede fejlagtigt at ALLE felter her er nødvendige for allergi-logikken
-  (kun allergier/diæter, indsamlet på senere trin, er det reelt) — ændret
-  til "bruges til at opsætte din profil og kan ændres senere."
-- **E-mail-feltets read-only-tilstand rettet** — brugte tidligere
-  `opacity:.6`, samme visuelle "dæmpet"-signal som et disabled/fejlramt
-  felt, præcis det brugeren bad om at undgå. Erstattet med en let, positiv
-  grøn baggrundstone (`--green-lt`/`--green-mid`, samme par som appens
-  øvrige "gemt/aktiv"-tilstande) + fuld tekstkontrast + en tydelig
-  undertekst ("Allerede gemt fra din konto" / "Bekræftet via Google" for
-  OAuth) — vises nu for BEGGE tilfælde (var kun OAuth før), ikke kun
-  opacity-dæmpning.
-- **Telefonnummer fik reel formatvalidering** — krævede tidligere kun et
-  ikke-tomt felt, uanset ciffer-antal. Nu præcis 8 cifre (dansk mobilnummer-
-  længde), med to adskilte fejltekster (tom vs. forkert længde). Tallene
-  grupperes automatisk parvis mens man skriver ("12 34 56 78", samme format
-  som placeholderen allerede lovede men det indtastede tal ikke fulgte).
-- **Alder-stepperen finpudset** — minus/værdi/plus har nu alle præcis 44px
-  højde (var 40px på knapperne, en upræcis, ikke-eksakt højde på inputtet)
-  — matcher desuden 44×44pt-tap-måls-minimummet, som knapperne var under.
-  Værdien i midten fik større/federe skrift (matcher knappernes egen
-  vægt) i stedet for almindelig felt-tekst, så den ligner en aktiv værdi,
-  ikke "død" input-tekst. Ny `.age-step-btn:active`-CSS-klasse giver en
-  tydelig tryk-feedback, som de rå inline-stylede knapper ikke havde før.
-  Deles med `MemberForm.jsx` (samme komponent), så familie-trinnet får
-  samme forbedring automatisk.
-- **Køn-vælgeren (ChoiceCard) fik et diskret checkmark** ved valgt-state —
-  havde kun farve før; matcher nu samme "grøn baggrund/kant/tekst + lille
-  check"-mønster som chip-baserede vælgere andre steder i onboardingen.
-- **Felt-specifikke fejl** — hvert felt (Navn/Telefon/Alder/Køn) viser nu
-  sin egen inline fejltekst direkte under sig selv efter et forsøgt
-  "Fortsæt →" (samme mønster som Opret konto/Log ind-skærmens felt-fejl,
-  se ovenfor), i stedet for én samlet "Mangler: ..."-sætning nederst
-  (fjernet). "Vil ikke oplyse" opfylder fortsat køn-feltets krav.
-- **Progress-bar (5 segmenter + "1/5")** — verificeret programmatisk
-  allerede perfekt: alle segmenter samme bredde/vertikale position, aktivt
-  segment bruger `--green` (den låste primære grøn), resterende bruger en
-  neutral grå (`rgba(21,32,26,.16)`) — ingen ændring nødvendig, kun
-  bekræftet.
-- CTA'ens `softDisabled`-mønster (klikbar men dæmpet indtil alle felter er
-  gyldige, så første forsøg stadig kan udløse felt-fejlene) er UÆNDRET —
-  allerede korrekt implementeret fra en tidligere runde.
-- Verificeret med Playwright på tre enhedsbredder (SE/iPhone 13/Pro Max):
-  tomt/delvist/fuldt udfyldt skema, forkert telefonlængde, alder-steppens
-  44px-højde bekræftet målt, progress-bar-alignment bekræftet målt, ingen
-  JS-fejl. E-mail-feltets prefillede/read-only visning kunne ikke
-  fotograferes direkte (kræver en reel post-signup/OAuth-session, som ikke
-  lod sig mocke pålideligt gennem sandboxens netværksproxy denne gang) —
-  verificeret ved kodegennemgang i stedet: den eksisterende, uændrede
-  `loginEmail || isOAuth`-betingelse styrer stadig hvornår feltet er
-  read-only, kun de resulterende stil-værdier er ændret.
-  `npm run build`/`npx vitest run` (110/110) grønne, mojibake-scan clean.
+Onboardingens trin 1 (Navn/E-mail/Telefon/Alder/Køn,
+`OnboardingScreen.jsx`) har felt-specifikke inline-fejl (samme mønster som
+Login ovenfor) i stedet for én samlet "Mangler: ..."-sætning. Telefonnummer
+kræver nu præcis 8 cifre (dansk mobilnummer-længde) med automatisk parvis
+gruppering ("12 34 56 78"). Alder-stepperen (`FormFields.jsx`, delt med
+`MemberForm.jsx`) har ensartet 44×44pt-højde på minus/værdi/plus + en
+tydelig `:active`-tryk-feedback. Køn-vælgeren (`ChoiceCard`,
+`DesignSystem.jsx`) har fået et diskret checkmark ved valgt-state, samme
+mønster som chip-baserede vælgere andre steder. E-mail-feltets read-only-
+visning (prefillet fra konto, eller bekræftet via Google) bruger nu en
+positiv grøn baggrundstone (`--green-lt`/`--green-mid`) i stedet for
+`opacity:.6`, som gav et fejlagtigt "disabled/fejlramt"-udseende. Fuld
+detalje i `.claude/HISTORY.md`.
 
 ### App-headeren omdøbt til fælles komponent + tekst-wordmark (27. sept. 2026)
 
-Brugerens eksplicitte "Opdater EatSafe-headeren"-brief, 7 punkter — mål:
-tydeligere, mere professionel, 100% konsekvent header på tværs af appen.
-
-- **Scanner-/stregkodeikonet fjernet fra header-brandingen** — headeren
-  viste tidligere det fulde, låste `EatSafeLogo`-billedeaktiv (stregkode-
-  symbol + ordmærke). Nu udelukkende en ren tekst-wordmark ("Eat" i
-  `--ink`, "Safe" i `--green`), ca. 20-25% større (24px, op fra
-  billedlogoets ca. 22px visuelle højde), semibold/bold vægt. Scanner-
-  ikonet er UÆNDRET alle de steder det reelt betyder "scan" (den store
-  Scan-knap, bundnavigationen) — kun fjernet fra selve branding-teksten.
-  `EatSafeLogo`-komponenten og dens SVG-assets er urørte og bruges
-  uændret på velkommen/login/onboarding/admin (se logo-afsnittet ovenfor
-  for den fulde begrundelse for denne bevidste undtagelse).
-- **Ny, navngiven, genbrugelig komponent `AppHeader.jsx`** — udtrukket fra
-  App.jsx's tidligere inlinede `<header className="topbar">`-blok (samme
-  markup/adfærd, nu et navngivet, selvstændigt sted). Renderes ÉT sted i
-  App.jsx (var allerede tilfældet før udtrækket) og vises derfor allerede
-  identisk på Scan/Historik/Indkøbsliste og alle øvrige hovedfaner — verificeret
-  programmatisk pixel-identisk (samme højde/positioner for logo/BETA/
-  Feedback/hamburger) på tværs af de tre testede skærme.
-- **BETA-badge** flyttet fra inline styles til en delt `.topbar-beta`-
-  klasse — samme varme/guldbrune (`--amber`) farve, nu med `line-height:1`
-  + `inline-flex`-centrering, så den centrerer sig lodret mod tekstlogoet
-  uden en manuel `marginTop`-hack (den tidligere hack kompenserede
-  specifikt for billedlogoets egen indre luft, unødvendig med en tekst-
-  wordmark). Målt: badgens og logoets lodrette centre ligger under 1px fra
-  hinanden.
-- **Manglende `safe-area-inset-top`-håndtering rettet** — `.topbar` havde
-  ingen som helst hensyntagen til statuslinjen/Dynamic Island (kun
-  onboardingens separate, flydende Feedback-knap havde det). Tilføjet
-  `calc(12px + env(safe-area-inset-top))` som topafstand.
-- **Punkt 6 (undersider) bevidst IKKE ændret i denne omgang** — brief'ens
-  ordlyd her var vejledende ("kan erstattes... hvis det giver bedre
-  navigation"), ikke et krav. Eksisterende undersider (Allergileksikon,
-  Restaurantguide, Opskrifter m.fl.) har allerede deres egen "tilbageknap +
-  titel"-række UNDER den fælles header, uændret — en større omlægning af
-  hvordan alle undersiders navigation fungerer er en selvstændig, større
-  opgave, ikke en del af denne header-branding-runde.
-- Verificeret med Playwright: header pixel-identisk på Scan/Historik/
-  Indkøbsliste, ingen barcode-ikon i header-brandingen nogen steder,
-  hero-billede/"God morgen"-hilsen/undertekst/grøn Scan-knap/bundnavigation
-  alle bekræftet UÆNDREDE, header renderer korrekt (inkl. hamburgerens
-  aktiv-prik) på en underside (Allergileksikon) uden konflikt med dens
-  egen back-button-række. `npm run build`/`npx vitest run` (110/110)
-  grønne, mojibake-scan clean.
+App-headeren er udtrukket til en navngivet, genbrugelig komponent
+`AppHeader.jsx` (samme markup/adfærd som den tidligere inlinede blok i
+App.jsx, renderet ét sted, derfor allerede pixel-identisk på tværs af
+Scan/Historik/Indkøbsliste og øvrige hovedfaner). Branding er nu
+udelukkende en ren tekst-wordmark ("Eat" i `--ink`, "Safe" i `--green`,
+~24px, semibold/bold) i stedet for det fulde `EatSafeLogo`-billedeaktiv —
+scanner-/stregkodeikonet skal her udelukkende signalere selve
+scan-funktionen (Scan-knappen, bundnav), ikke indgå i selve
+branding-teksten. `EatSafeLogo` selv er uændret alle andre steder
+(velkommen/login/onboarding/admin) — kun app-headeren er undtaget fra det
+ellers gældende "ét fast billedaktiv"-princip. BETA-badgen bruger nu en
+delt `.topbar-beta`-klasse med lodret centrering mod tekstlogoet (`line-
+height:1` + `inline-flex`, ingen manuel `marginTop`-hack). `.topbar` har
+fået `calc(12px + env(safe-area-inset-top))`-håndtering af statuslinjen/
+Dynamic Island. Undersidernes egen "tilbageknap + titel"-række er bevidst
+UÆNDRET i denne omgang. Fuld detalje i `.claude/HISTORY.md`.
 
 ---
 
