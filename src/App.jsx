@@ -103,13 +103,37 @@ export default function EatSafe() {
   // eneste appstart vise et kort, forkert glimt af ONBOARD for en allerede
   // færdig bruger, mens den rigtige status stadig hentes. Kun en BEKRÆFTET
   // false blokerer.
+  // Reel bug rettet 29. sept. 2026, bruger-rapporteret: "Ikke nu" i trin 5
+  // gik korrekt videre til beta-informationen, men efter den var lukket, var
+  // man tilbage på trin 5 — screen var reelt ALDRIG blevet HOME, kun skjult
+  // bag beta-modalens uigennemsigtige fuldskærms-overlay imens. Rodårsag:
+  // finishOnboard (useOnboarding.js) kalder setUser(...onboarding_completed:
+  // true) og setScreen(SCREENS.HOME) synkront, lige efter hinanden — men
+  // guarden nedenfor læste ORDINÆR React-state (user.onboarding_completed)
+  // via en useCallback-closure, som IKKE opdateres synkront af en
+  // forudgående setUser-kald i samme funktion (React batcher/committer
+  // state-opdateringer asynkront, effekter kører først EFTER commit). Guarden
+  // så derfor stadig den GAMLE false-værdi i selve setScreen(HOME)-kaldet,
+  // og omdirigerede tilbage til ONBOARD — den tidligere kommentar om at
+  // "opdatere lokal state FØR setScreen" løste derfor ikke racet, den
+  // beskrev kun rækkefølgen i kildekoden, ikke hvornår React reelt
+  // committer den. onboardingCompletedRef + markOnboardingCompleted
+  // (nedenfor) opdaterer en almindelig ref-værdi SYNKRONT, uden om Reacts
+  // batching, så guarden altid ser den friske værdi med det samme.
+  const onboardingCompletedRef = useRef(user.onboarding_completed);
+  useEffect(() => { onboardingCompletedRef.current = user.onboarding_completed; }, [user.onboarding_completed]);
+  const markOnboardingCompleted = useCallback(() => {
+    onboardingCompletedRef.current = true;
+    setUser(u => ({ ...u, onboarding_completed: true }));
+  }, []);
+
   const setScreen = useCallback((next) => {
-    if (user.onboarding_completed === false && !ONBOARDING_EXEMPT_SCREENS.includes(next)) {
+    if (onboardingCompletedRef.current === false && !ONBOARDING_EXEMPT_SCREENS.includes(next)) {
       setScreenRaw(SCREENS.ONBOARD);
       return;
     }
     setScreenRaw(next);
-  }, [user.onboarding_completed]);
+  }, []);
 
   // Brugsvilkår/Privatlivspolitik som almindelige undersider, ikke modaler
   // (29. sept. 2026) — legalReturnScreen husker PRÆCIS hvilken skærm der
@@ -331,7 +355,7 @@ export default function EatSafe() {
   } = useOnboarding({ accessToken, userId, user, loginEmail, screen,
                       onboardStep, setOnboardStep,
                       allergens, customAllerg, selectedENumbers,
-                      setUser, setScreen, setEditMode: () => {}, setIsOAuth });
+                      setUser, markOnboardingCompleted, setScreen, setEditMode: () => {}, setIsOAuth });
 
   // Viser Beta-introen automatisk, én gang, lige efter onboarding trin 5
   // (25. sept. 2026, brugerfeedback) — finishOnboard() kaldes KUN fra de to
