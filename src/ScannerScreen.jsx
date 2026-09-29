@@ -598,7 +598,13 @@ export default function ScannerScreen({
                       %-position, ikke en ny %-værdi — brugeren bad specifikt
                       om px, ikke en proportional flytning. */}
                   <div style={{ fontSize:"clamp(14px, 2.9cqh, 19px)", fontWeight:600, color:"var(--ink)", letterSpacing:"-.2px", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{getGreeting()},</div>
-                  <div style={{ fontSize:"clamp(22px, 4.7cqh, 32px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(2px, .4cqh, 4px)", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{user.name?.split(" ")[0] || "der"}</div>
+                  {/* Ingen fallback-tekst her (var tidligere "der", fejlrapporteret
+                      25. sept. 2026: "der" blev vist kortvarigt, før navnet nåede
+                      at blive hentet) — user.name er tomt indtil App.jsx's loadAll-
+                      fetch resolver, og et gættet ord er værre end intet, mens vi
+                      venter. Linjen popper ind med navnet, i stedet for at skifte
+                      fra et forkert ord til det rigtige. */}
+                  <div style={{ fontSize:"clamp(22px, 4.7cqh, 32px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(2px, .4cqh, 4px)", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{user.name?.split(" ")[0] || ""}</div>
                   <div style={{ fontSize:"clamp(11.5px, 2.1cqh, 15px)", fontWeight:600, color:"var(--ink2)", marginTop:"clamp(5px, 1.1cqh, 9px)", lineHeight:1.5, maxWidth:250, marginLeft:"auto", marginRight:"auto", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 12px rgba(255,255,255,.6)" }}>
                     {cameraPermissionDenied
                       ? "Kameraadgang er slået fra — brug Billede eller Indtast EAN i stedet."
