@@ -983,26 +983,23 @@ export default function OnboardingScreen({
               </div>
             )}
             {editMode && <div style={{ height:4 }} />}
-            {/* Step header med tilbage og fremgang — tilbagepilen brugte en
-                håndrullet inline-SVG der hverken lignede appens øvrige
-                tilbageknapper eller gav ordentlig separation til
-                fremgangsbjælken (29. sept. 2026, brugerfeedback). Erstattet
-                med EXAKT samme delte mønster som KnowledgeScreen.jsx/
-                RecipesScreen.jsx/RestaurantGuideScreen.jsx allerede bruger:
-                en let boks (kant + let baggrund) med den delte
-                Icon name="chevronLeft" — så den nu ser ud som resten af
-                appens tilbageknapper, med naturlig luft til bjælken uden en
-                unødvendig ekstra 44px-touch-target-udvidelse. */}
-            <div style={{ ...UI.udflex_aicenter_g10_mb8, gap:12 }}>
+            {/* Step header med tilbage og fremgang — tilbagepilen stod
+                tidligere ved siden af fremgangsbjælken, hvilket enten
+                skubbede bjælken eller sad for tæt på den (29. sept. 2026,
+                brugerfeedback, to runder). Ligger nu på sin egen linje
+                OVER bjælken, som derfor altid har fuld bredde og aldrig
+                flytter sig, uanset om tilbagepilen vises (trin > 1) eller
+                ej. Samme delte boks-mønster (kant + Icon name="chevronLeft")
+                som KnowledgeScreen.jsx/RecipesScreen.jsx/
+                RestaurantGuideScreen.jsx. */}
+            <div style={UI.mb8}>
               {onboardStep > 1 && (
                 <button onClick={() => setOnboardStep(onboardStep - 1)} aria-label="Tilbage"
-                  style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, flexShrink:0 }}>
+                  style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, marginBottom:10 }}>
                   <Icon name="chevronLeft" size={18} color="var(--ink)" />
                 </button>
               )}
-              <div style={UI.flex1}>
-                {onboardStep > 0 && <StepBar total={5} current={onboardStep} />}
-              </div>
+              {onboardStep > 0 && <StepBar total={5} current={onboardStep} />}
             </div>
 
             {/* ── TRIN 1: Din profil (obligatorisk) ── */}
