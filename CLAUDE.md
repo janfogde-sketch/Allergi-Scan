@@ -1632,6 +1632,68 @@ tydeligere, mere professionel, 100% konsekvent header på tværs af appen.
   egen back-button-række. `npm run build`/`npx vitest run` (110/110)
   grønne, mojibake-scan clean.
 
+### Velkomstsiden — finpolish af logo/spacing/CTA-hierarki/juridisk tekst (29. sept. 2026)
+
+Endnu en detaljeret, 9-punkts spec til `SCREENS.WELCOME` — bevidst bevaret
+visuel stil/baggrundsbillede/farver/logo/indhold, kun de ni beskrevne
+justeringer. Alle ændringer i `OnboardingScreen.jsx` (kun WELCOME-blokken)
+og `theme.jsx`s `.welcome-*`-regler. LOGIN/Ny bruger-fanen er UBERØRT (de to
+CSS-klasser `.welcome-btn`/`.welcome-btn-ghost` genbruges der, se nedenfor
+for hvordan det er skærmet af).
+
+- **Logoet** (`EatSafeLogo`, komplet med scannerikon) er uændret i størrelse
+  og allerede korrekt centreret (`.welcome-logo-wrap{align-items:center}`)
+  — ingen kodeændring nødvendig her, kun verificeret.
+- **Hovedindholdet flyttet op** — `.welcome-vspace-top`s flex-grow-vægt
+  (samme spacer-mekanisme som 28. sept.) sænket 0.62→0.35, hvilket flytter
+  logoet ~30px op på en standard iPhone-bredde (målt, ikke gættet).
+  Feedback-knappen er en søskende-position uden for denne mekanisme og
+  derfor upåvirket.
+- **Brand-sloganet** ("MERE TRYGHED I HVERDAGEN") mørknet — scoped
+  `.welcome-logo-wrap .brand-slogan{color:var(--ink2)}` (var `--muted`,
+  virkede udvasket), IKKE den delte base-`.brand-slogan`-klasse, så
+  SettingsScreen.jsx's "Om EatSafe"-brug af samme klasse er uændret.
+  Letter-spacing reduceret .6px→.4px.
+- **Intro-teksten fik et reelt fund:** brød over 3 linjer ved den
+  daværende 300px max-width, i strid med kravet om maks. 2 linjer.
+  Rettet ved at øge `.welcome-tagline`s max-width til 340px (font-size/
+  vægt/centrering uændret) — giver 2 linjer på standard iPhone- og
+  Pro Max-bredde; forbliver 3 linjer på den mindste SE-klasse (320px),
+  hvor det ikke er opnåeligt uden at gå på kompromis med den krævede
+  "behold den nuværende læsbare størrelse".
+- **De tre fordele** — ikonernes lysegrønne bokse formindsket ~9%
+  (44px→40px, border-radius 14→13px), fortsat præcist ens størrelse/
+  centrering/afstand for alle tre (var allerede strukturelt garanteret via
+  fast `width`/`height` + flex-centrering, kun selve målet er ændret).
+- **CTA-hierarki** — begge knapper fik en `min-height` (62px/56px) +
+  eksplicit flex-centrering af teksten, i stedet for at ramme en højde via
+  padding alene (upræcist på tværs af font-rendering). Skærmet specifikt
+  til `.welcome-screen .welcome-btn`/`.welcome-screen .welcome-btn-ghost`
+  — de samme to klasser bruges også af Opret konto/Log ind-formularens
+  submit-knapper (`.login-wrap`), som er uden for denne opgaves scope og
+  derfor bevidst IKKE ændret højde (verificeret: forbliver 50px).
+  Bredde/radius var allerede identiske mellem de to velkomst-knapper.
+- **Juridisk tekst** — `fontSize` 11px→10.5px, farve
+  `rgba(21,32,26,.85)`→`rgba(21,32,26,.6)` (mere neutral/sekundær, mindre
+  visuel vægt), selve teksten og de grønne, fede links uændrede.
+- **Vertikal rytme (punkt 9)** — seks mellemrum justeret til spec'ens
+  målintervaller, verificeret programmatisk præcis i midten af hvert
+  interval på tværs af tre enhedsbredder: logo→tagline 14px (mål 12-16),
+  tagline→intro 26px (24-28), intro→fordele 34px (32-36), fordele→primær
+  CTA 40px (38-44), primær→sekundær CTA 18px (16-20, opnået ved at skifte
+  knap-wrapperens flex-gap fra 10 til 6px, da `.welcome-btn`s egen
+  margin-bottom:12 lægger sig oveni), sekundær CTA→juridisk tekst 28px
+  (26-32, beregnet fra selve elementets `margin-top`, da preview-buildets
+  ekstra "Se app uden login"-genvejslink ikke findes i produktion og derfor
+  ville forvride en direkte visuel måling i selve preview'en).
+- Verificeret med Playwright (artifact-preview-build, `getBoundingClientRect()`
+  på hvert element) på tre enhedsbredder (SE 320×568, iPhone 13 390×844,
+  Pro Max 430×932): alle seks mellemrum, logo-centrering, ikon-boks-
+  ligestørrelse, knap-højder og 2-linjers intro-tekst (undtagen SE, se
+  ovenfor) bekræftet. `.login-wrap`s formular-knapper bekræftet upåvirkede
+  (50px, uændret). `npm run build`/`npx vitest run` (110/110) grønne,
+  mojibake-scan clean.
+
 ---
 
 ## 6. Design-antimønstre — ting vi bevidst IKKE vil have i appen

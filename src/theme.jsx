@@ -476,9 +476,13 @@ body::-webkit-scrollbar{display:none;}
    vandret (frigiver de sidste par pixel til benefit-rækken, se
    .welcome-benefits nedenfor). */
 .welcome-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 22px;text-align:center;}
-.welcome-vspace-top{flex:0.62 1 0%;min-height:0;}
+/* 0.62→0.42 (29. sept. 2026, "Polér velkomst-/login-siden", punkt 2: flyt
+   hovedindholdet yderligere op — for meget tom luft mellem Feedback-knappen
+   og logoet). Samme mekanisme som før (se kommentaren ovenfor), kun en
+   mindre justering af vægtforholdet. */
+.welcome-vspace-top{flex:0.35 1 0%;min-height:0;}
 .welcome-vspace-bottom{flex:1 1 0%;min-height:8px;}
-.welcome-logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:32px;}
+.welcome-logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:0;}
 /* Delt brand-slogan-klasse "Mere tryghed i hverdagen" (27. sept. 2026,
    MASTER PROMPT-brief) — en diskret brand statement, IKKE en funktionel
    undertekst (den rolle har .welcome-tagline nedenfor uændret, og
@@ -490,7 +494,12 @@ body::-webkit-scrollbar{display:none;}
    på andre skærme eller i topbaren, jf. brief'ens eksplicitte "aldrig fast
    gentagelse". */
 .brand-slogan{font-size:12px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;font-weight:600;}
-.welcome-logo-wrap .brand-slogan{margin-top:8px;}
+/* 29. sept. 2026, "Polér velkomst-/login-siden": scoped til KUN
+   velkomstsidens instans (ikke SettingsScreen.jsx's "Om EatSafe"-brug af
+   samme delte klasse) — mørkere (var udvasket) + lidt mindre letter-spacing,
+   stadig klart sekundær ift. selve logoet. margin-top 8→14 (punkt 9:
+   logo→tagline, mål 12-16px). */
+.welcome-logo-wrap .brand-slogan{margin-top:14px;color:var(--ink2);letter-spacing:.4px;}
 /* Tydelig value proposition (25. sept. 2026-brief: "kort og tydelig value
    proposition") — hævet fra en dæmpet, muted tagline til en tydeligere,
    mørkere sætning, så den reelt fungerer som skærmens hovedbudskab, ikke en
@@ -504,7 +513,10 @@ body::-webkit-scrollbar{display:none;}
    font-weight 600→500 (de tre linjer skal føles "lettere og mere
    elegante" — stadig fuld --ink-farve + samme størrelse, så det ikke går
    ud over læsbarheden). */
-.welcome-tagline{font-size:16.5px;color:var(--ink);margin-top:16px;letter-spacing:.1px;font-weight:500;line-height:1.6;max-width:300px;}
+/* margin-top 16→26 (29. sept. 2026, "Polér velkomst-/login-siden", punkt 9:
+   tagline→intro, mål 24-28px). max-width 300→340px (punkt 4: maks. 2 linjer
+   ved standard skærmbredde — 300px brækkede teksten i 3 linjer). */
+.welcome-tagline{font-size:16.5px;color:var(--ink);margin-top:26px;letter-spacing:.1px;font-weight:500;line-height:1.6;max-width:340px;}
 .welcome-divider{width:40px;height:2px;background:var(--border2);border-radius:2px;margin:32px auto;}
 /* 3 fordele-række (25. sept. 2026-brief) — kort, ikon-båret opsummering,
    IKKE tunge fuld-bredde feature-kort (erstatter tidligere .welcome-features/
@@ -517,9 +529,16 @@ body::-webkit-scrollbar{display:none;}
    "Hurtigt svar" stod på én — en synligt ujævn række. Ved standard
    iPhone-bredde giver den nye gap+max-width+font-size (se
    .welcome-benefit-label) alle tre nok plads til én linje hver. */
-.welcome-benefits{display:flex;justify-content:center;gap:14px;margin:28px 0 32px;width:100%;}
+/* margin 28px 0 32px → 34px 0 40px (29. sept. 2026, "Polér velkomst-/
+   login-siden", punkt 9: intro→fordele mål 32-36px, fordele→primær-CTA
+   mål 38-44px — .welcome-logo-wrap's tidligere inline marginBottom:16 er
+   samtidig fjernet i JSX, så dette top-mål er den ENESTE kilde til det
+   mellemrum). */
+.welcome-benefits{display:flex;justify-content:center;gap:14px;margin:34px 0 40px;width:100%;}
 .welcome-benefit{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;max-width:130px;}
-.welcome-benefit-icon{width:44px;height:44px;border-radius:14px;background:var(--green-selected-bg);display:flex;align-items:center;justify-content:center;box-shadow:var(--sh);flex-shrink:0;}
+/* 44px→40px (~9% mindre, punkt 5) — stadig præcist ens for alle tre, samme
+   centrering/skygge/baggrund. border-radius skaleret tilsvarende 14→13px. */
+.welcome-benefit-icon{width:40px;height:40px;border-radius:13px;background:var(--green-selected-bg);display:flex;align-items:center;justify-content:center;box-shadow:var(--sh);flex-shrink:0;}
 /* 13px→12px (28. sept. 2026, "FINAL POLISH", se .welcome-benefits-kommentar
    ovenfor) — den mindste af de to justeringer der var nødvendige for at få
    alle tre labels til at stå på én linje ved standard iPhone-bredde, jf.
@@ -543,6 +562,16 @@ body::-webkit-scrollbar{display:none;}
 .welcome-btn:active{transform:scale(.98);}
 .welcome-btn-ghost{background:var(--surface);color:var(--ink2);border:1.5px solid var(--border2);border-radius:16px;padding:14px 32px;font-family:var(--f);font-size:14px;font-weight:600;text-align:center;cursor:pointer;width:100%;transition:all .18s;}
 .welcome-btn-ghost:hover{background:var(--surface2);}
+/* min-height + flex-centrering, SCOPED til kun velkomstsidens egen brug af
+   .welcome-btn/.welcome-btn-ghost (29. sept. 2026, "Polér velkomst-/
+   login-siden", punkt 6/7: højde ca. 60-64px / 54-58px) — de samme to
+   klasser genbruges også af Opret konto/Log ind-formularens submit-knapper
+   (.login-wrap), som er UDEN for denne opgaves scope og derfor ikke må
+   ændre højde. Mere præcist/robust end at ramme en højde via padding alene
+   (afhænger af font-metrics på tværs af browsere) — teksten centreres
+   eksplicit i stedet. */
+.welcome-screen .welcome-btn{min-height:62px;display:flex;align-items:center;justify-content:center;}
+.welcome-screen .welcome-btn-ghost{min-height:56px;display:flex;align-items:center;justify-content:center;}
 /* Tertiær tekstlink (25. sept. 2026-brief: "skal være et tekstlink, ikke en
    stor tredje knap") — erstatter den tidligere .welcome-btn-ghost-brug til
    "Se app uden login (preview)"-genvejen, som visuelt konkurrerede med den
