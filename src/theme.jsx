@@ -623,8 +623,13 @@ body::-webkit-scrollbar{display:none;}
    stadig klart sekundær ift. selve logoet. margin-top 8→14 (punkt 9:
    logo→tagline, mål 12-16px).
    29. sept. 2026, "Ryk sloganet op til logoet": margin-top 14→6px —
-   brugerfeedback (skærmbillede) om at sloganet sad for langt fra logoet. */
-.welcome-logo-wrap .brand-slogan{margin-top:6px;color:var(--ink2);letter-spacing:.4px;}
+   brugerfeedback (skærmbillede) om at sloganet sad for langt fra logoet.
+   29. sept. 2026, "Fordel indholdet mere naturligt": margin-top 6→16px
+   (+10px, inden for det ønskede +8-12px) — samlet redistribuering af hele
+   sidens lodrette spacing (se .welcome-benefits/.welcome-btn-kommentarer
+   nedenfor for resten), efter feedback om at siden virkede for kompakt
+   foroven/midtfor med for meget ubrugt plads forneden. */
+.welcome-logo-wrap .brand-slogan{margin-top:16px;color:var(--ink2);letter-spacing:.4px;}
 /* Tydelig value proposition (25. sept. 2026-brief: "kort og tydelig value
    proposition") — hævet fra en dæmpet, muted tagline til en tydeligere,
    mørkere sætning, så den reelt fungerer som skærmens hovedbudskab, ikke en
@@ -646,8 +651,11 @@ body::-webkit-scrollbar{display:none;}
    hver side — det opgivne mål var 12-16px, men 324px er grænsen for at
    teksten stadig kan stå på 2 linjer på standard/Pro Max-bredde, som en
    tidligere runde eksplicit krævede; en smallere bredde brækker den i 3
-   linjer, afprøvet empirisk). */
-.welcome-tagline{font-size:16.5px;color:var(--ink);margin-top:16px;letter-spacing:.1px;font-weight:500;line-height:1.6;max-width:324px;}
+   linjer, afprøvet empirisk).
+   29. sept. 2026, "Fordel indholdet mere naturligt": margin-top 16→24px
+   (+8px, som ønsket) — se .welcome-logo-wrap .brand-slogan-kommentaren
+   ovenfor for hele redistribueringens baggrund. */
+.welcome-tagline{font-size:16.5px;color:var(--ink);margin-top:24px;letter-spacing:.1px;font-weight:500;line-height:1.6;max-width:324px;}
 .welcome-divider{width:40px;height:2px;background:var(--border2);border-radius:2px;margin:32px auto;}
 /* 3 fordele-række (25. sept. 2026-brief) — kort, ikon-båret opsummering,
    IKKE tunge fuld-bredde feature-kort (erstatter tidligere .welcome-features/
@@ -680,8 +688,13 @@ body::-webkit-scrollbar{display:none;}
    grænse, hvilket gjorde kolonnerne synligt ulige (102/82/99px, målt
    med Playwright) — 4px/side holder sig under grænsen på alle tre
    testede bredder (320/390/430px), verificeret at kolonnerne forbliver
-   pixel-lige efter ændringen. */
-.welcome-benefits{display:flex;justify-content:center;gap:14px;margin:24px 0 32px;padding:0 4px;width:100%;box-sizing:border-box;}
+   pixel-lige efter ændringen.
+   29. sept. 2026, "Fordel indholdet mere naturligt": margin-top 24→40px
+   (+16px) og margin-bottom 32→48px (+16px), begge inden for det ønskede
+   +16-20px — den ekstra højde optager naturligt den plads
+   .welcome-vspace-bottom (se JSX) ellers ville reservere som ubrugt luft
+   nederst, i stedet for at gøre selve elementerne mindre. */
+.welcome-benefits{display:flex;justify-content:center;gap:14px;margin:40px 0 48px;padding:0 4px;width:100%;box-sizing:border-box;}
 /* gap 8→4px (29. sept. 2026, "sidste spacing-polering": labels 3-5px
    tættere på deres ikoner). */
 .welcome-benefit{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;max-width:130px;}
