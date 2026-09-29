@@ -32,11 +32,13 @@ function WelcomeIntro({ setScreen, setAuthTab }) {
   const goSignup = () => { setAuthTab("signup"); setScreen(SCREENS.LOGIN); };
   const goLogin  = () => { setAuthTab("login");  setScreen(SCREENS.LOGIN); };
 
-  // gap:6 + .welcome-btn's egen margin-bottom:12 (theme.jsx) giver et samlet
-  // primær→sekundær-mellemrum på 18px (29. sept. 2026, "Polér velkomst-/
-  // login-siden"-spec, punkt 9: mål 16-20px) — var før 10+12=22px.
+  // gap:18 + .welcome-btn's egen margin-bottom:12 (theme.jsx) giver et
+  // samlet primær→sekundær-mellemrum på 30px (29. sept. 2026, "Fordel
+  // indholdet mere naturligt": +12px oven på det tidligere 18px, inden
+  // for det ønskede +10-12px) — var før gap:6, samlet 18px (25. sept.
+  // 2026-brief, punkt 9: mål 16-20px).
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+    <div style={{ display:"flex", flexDirection:"column", gap:18 }}>
       <button className="welcome-btn" onClick={goSignup}>Opret gratis konto</button>
       <button className="welcome-btn-ghost" onClick={goLogin}>Jeg har allerede en konto</button>
     </div>
@@ -624,8 +626,12 @@ export default function OnboardingScreen({
                 kommentaren ovenfor). 260px er den smalleste bredde der
                 stadig giver 3 jævnt fyldte linjer uden noget ord/link
                 alene på en linje, verificeret empirisk med Playwright på
-                alle tre testede skærmbredder (SE/iPhone 13/Pro Max). */}
-            <div style={{ marginTop:18, maxWidth:260, fontSize:10.5, color:"rgba(21,32,26,.6)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
+                alle tre testede skærmbredder (SE/iPhone 13/Pro Max).
+                29. sept. 2026, "Fordel indholdet mere naturligt": marginTop
+                18→32px (+14px, inden for det ønskede +12-16px) — del af en
+                samlet redistribuering af hele sidens lodrette spacing, se
+                .welcome-benefits-kommentaren i theme.jsx. */}
+            <div style={{ marginTop:32, maxWidth:260, fontSize:10.5, color:"rgba(21,32,26,.6)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
               Du accepterer vores{" "}
               <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.TERMS)}>brugsvilkår</button>
               {" "}og bekræfter, at du har læst{" "}
