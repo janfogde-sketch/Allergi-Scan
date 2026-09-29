@@ -356,6 +356,21 @@ export default function OnboardingScreen({
       setNoAllergiesConfirmed(false);
     };
 
+    // Neutral, let sekundærknap-stil (29. sept. 2026, "Ret designet på
+    // onboarding-trin 2/5") — kun for DENNE knap: "Jeg har ingen allergier
+    // eller intolerancer" er et gyldigt, men bevidst LAVERE-vægtet fravalg
+    // ved siden af den primære, grønne "Fortsæt →". Den delte
+    // SecondaryButton-stil (grøn kant/tekst) bruges stadig uændret andre
+    // steder i onboardingen (fx trin 3's "Ingen særlig diæt", som ikke er
+    // en del af denne opgave) — kun overstyret her, ikke i selve
+    // komponenten. Gælder kun i det ubekræftede default-state; forbliver
+    // SecondaryButtons normale grønne "bekræftet"-stil (kant + flueben), når
+    // noAllergiesConfirmed er sat, i det sjældne tilfælde gemningen fejler
+    // og knappen ikke når at navigere videre.
+    const neutralSecondaryStyle = noAllergiesConfirmed
+      ? UI.mt8
+      : { ...UI.mt8, minHeight:40, padding:"9px 16px", fontWeight:500, color:"var(--ink2)", background:"transparent", border:"1px solid var(--border)" };
+
     return (
       <div className="fade-in">
         <FormCard>
@@ -369,12 +384,18 @@ export default function OnboardingScreen({
           {/* Skriv selv — kortet markant ned (25. sept. 2026) */}
           <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
             <div style={UI.sectionLbl6}>Mangler din allergi eller intolerance?</div>
-            <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0 }}>
+            {/* Input + "+"-knap givet samme højde/radius/centrering (29.
+                sept. 2026) — feltet (.field) og den tidligere btn-sm var
+                hverken lige høje eller lige rundede, hvilket fik dem til at
+                se ud som to løse elementer i stedet for én samlet
+                indtastnings-enhed. */}
+            <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0, alignItems:"stretch" }}>
               <input className="field" placeholder='Skriv fx "Fruktose"…' value={customInput}
                 aria-label="Egen allergi eller intolerance"
                 onChange={e => setCustomInput(e.target.value)}
                 onKeyDown={e => { if (e.key==="Enter") addCustomAllergy(); }} />
-              <button className="btn btn-outline btn-sm" aria-label="Tilføj egen allergi" onClick={addCustomAllergy}>+</button>
+              <button className="btn btn-outline" aria-label="Tilføj egen allergi" onClick={addCustomAllergy}
+                style={{ width:46, minHeight:0, padding:0, borderRadius:10, fontSize:19, flexShrink:0 }}>+</button>
             </div>
             {customAllerg.length > 0 && (
               <div className="tags">
@@ -387,29 +408,30 @@ export default function OnboardingScreen({
           </div>
         </FormCard>
 
-        {/* ── E-numre: kompakt valgfri række (var en fremtrædende boks —
-            brugerfeedback: "for dominerende her") ── */}
-        <Accordion label="Overvåg specifikke E-numre" count={selectedENumbers.length}
-          open={showENumbersInOnboard} onToggle={() => setShowENumbersInOnboard(s => !s)}>
-          {/* Solidt kort (ligesom allergi-kortet ovenfor) i stedet for at
-              ligge direkte på baggrundsfotoet — ellers slår fotoet igennem
-              de gennemsigtige grønne valgt-farver og får dem til at se
-              rødlige/orange ud på trods af den korrekte grønne farvekode
-              (25. sept. 2026, opfølgning på grøn-vs-rød-feedback). */}
-          <FormCard style={UI.mb12}>
-            <div style={{ fontSize:12, fontWeight:700, color: selectedENumbers.length > 0 ? "var(--green)" : "var(--muted)", marginBottom:8 }}>
-              {selectedENumbers.length} valgt
+        {/* ── E-numre: kompakt, tydeligt sekundær accordion (29. sept. 2026,
+            "Ret designet på onboarding-trin 2/5") — hele sektionen
+            (overskrift + indhold) er nu ÉT samlet kort (samme mønster som
+            ProfileScreen.jsx's "Rediger præferencer"), i stedet for at
+            overskriften lå løst mellem allergi-kortet og et separat,
+            indlejret kort. Fjernet: den redundante "X valgt"-linje (stod
+            allerede i Accordion-headeren) og det ekstra indlejrede
+            FormCard-lag om selve ENumberPicker — begge bidrog til at
+            sektionen føltes tungere/mere dominerende end allergi-delen. */}
+        <div className="card" style={{ marginBottom:20 }}>
+          <Accordion label="Overvåg specifikke E-numre" count={selectedENumbers.length}
+            open={showENumbersInOnboard} onToggle={() => setShowENumbersInOnboard(s => !s)}>
+            <div style={UI.mt8}>
+              <ENumberPicker selected={selectedENumbers} onChange={setSelectedENumbers} />
             </div>
-            <ENumberPicker selected={selectedENumbers} onChange={setSelectedENumbers} />
-          </FormCard>
-        </Accordion>
+          </Accordion>
+        </div>
 
         {/* At vælge specifikke E-numre at overvåge er også et bevidst,
             gyldigt valg på dette trin — Fortsæt må ikke forblive låst, hvis
             det er det eneste brugeren har valgt (fundet som en reel bug,
             25. sept. 2026: "vælger et E-nummer og ikke en allergi... kan
             jeg ikke trykke fortsæt"). */}
-        <PrimaryButton style={UI.mt12}
+        <PrimaryButton
           disabled={!(selectedCount > 0 || selectedENumbers.length > 0 || noAllergiesConfirmed)}
           onClick={async () => {
             try { await saveAllergensStep2(); setOnboardStep(3); }
@@ -425,7 +447,7 @@ export default function OnboardingScreen({
             i closure, som stadig ville indeholde de GAMLE, ikke-ryddede
             værdier på dette tidspunkt (setAllergens/setCustomAllerg er
             asynkrone). */}
-        <SecondaryButton style={UI.mt8} active={noAllergiesConfirmed}
+        <SecondaryButton style={neutralSecondaryStyle} active={noAllergiesConfirmed}
           onClick={async () => {
             if (selectedCount > 0 && !window.confirm("Du har allerede valgt allergier/intolerancer. Vil du fjerne dem og markere, at du ingen har?")) return;
             setAllergens([]); setCustomAllerg([]);
@@ -961,11 +983,21 @@ export default function OnboardingScreen({
               </div>
             )}
             {editMode && <div style={{ height:4 }} />}
-            {/* Step header med tilbage og fremgang */}
-            <div style={UI.udflex_aicenter_g10_mb8}>
+            {/* Step header med tilbage og fremgang — tilbagepilen fik egen
+                luft og et rigtigt touch-target (29. sept. 2026, "Ret
+                designet på onboarding-trin 2/5"): sad tidligere med kun
+                10px gap og et 20px-bredt klikområde direkte op ad
+                fremgangsbjælken, hvilket kunne læses som var den en del af
+                selve bjælken. Knappen har nu reel 44×44-padding (EatSafes
+                faste touch-target-minimum) i stedet for en negativ margin,
+                som ellers ville have ladet selve klik-fladen overlappe ind
+                i det ekstra gap igen og gjort den visuelle adskillelse
+                virkningsløs — fremgangsbjælken rykker derfor en anelse til
+                højre, hvilket den tåler fint (flex:1, egen bredde). */}
+            <div style={{ ...UI.udflex_aicenter_g10_mb8, gap:14 }}>
               {onboardStep > 1 && (
-                <button onClick={() => setOnboardStep(onboardStep - 1)}
-                  style={{ background:"none", border:"none", cursor:"pointer", padding:"4px 0", flexShrink:0 }}>
+                <button onClick={() => setOnboardStep(onboardStep - 1)} aria-label="Tilbage"
+                  style={{ background:"none", border:"none", cursor:"pointer", width:44, height:44, padding:0, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
                     <path strokeLinecap="round" d="M15 19l-7-7 7-7"/>
                   </svg>
