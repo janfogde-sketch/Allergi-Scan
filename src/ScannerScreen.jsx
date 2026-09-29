@@ -586,15 +586,15 @@ export default function ScannerScreen({
                   synlig indgang i UI'et. */}
               {!cameraActive && (
               <div className="home-hero-frame">
-                <div style={{ position:"absolute", top:"calc(27% - 50px)", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
+                <div style={{ position:"absolute", top:"calc(27% - 62px)", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
                   {/* Tykkere/større tekst + en blød hvid text-shadow-glød "løfter"
                       teksten af det app-brede baggrundsbillede bagved (.app-bg,
                       theme.jsx — samme billede på tværs af hele appen, se dens
                       kommentar), samme mønster som appens øvrige skærme bruger.
-                      Flyttet 25px op (25. sept. 2026, opfølgning), og igen 25px
-                      op (29. sept. 2026, "en mere balanceret og rolig forside" —
-                      reducerer den tomme flade mellem header og hilsen, samlet
-                      50px op fra den oprindelige %-position) sammen med
+                      Flyttet 25px op (25. sept. 2026, opfølgning), igen 25px op
+                      (29. sept. 2026, "en mere balanceret og rolig forside"),
+                      og igen 12px op (29. sept. 2026, opfølgning — samlet 62px
+                      op fra den oprindelige %-position) sammen med
                       scan-knappen herunder — ren fast pixel-forskydning (calc)
                       oven på den eksisterende %-position, ikke en ny %-værdi —
                       brugeren bad specifikt om px, ikke en proportional
@@ -635,11 +635,15 @@ export default function ScannerScreen({
                     samme visuelle sprog som kameraets eget scan-overlay) —
                     bevaret uændret i størrelse. Positionen er flyttet
                     yderligere 25px op sammen med hilsen-blokken ovenfor
-                    (samlet 50px op fra den oprindelige %-position, samme
-                    runde), men fortsat 7px mindre end teksten
-                    (calc(44% - 43px) i stedet for calc(44% - 50px)) — samme
-                    lille ekstra luft-justering mellem hjælpeteksten og
-                    knappen som tidligere, uden at ændre teksten selv. Selve
+                    (29. sept. 2026, "en mere balanceret og rolig forside"),
+                    og igen 2px op (29. sept. 2026, opfølgning — hilsen-
+                    blokken flyttede 12px, men knappen kun 2px af dem, så de
+                    resterende 10px i stedet blev til MERE luft mellem
+                    hjælpeteksten og knappen, som bedt om). Samlet
+                    calc(44% - 45px), 17px mindre end hilsen-blokkens egen
+                    forskydning (62px) — den luft-justering mellem
+                    hjælpeteksten og knappen som allerede fandtes (7px), plus
+                    de nye 10px. Selve
                     knappen er en rigtig <button> (ikke en div med role=
                     "button") for native tastatur-aktivering + pålidelig
                     :active-tryk-feedback på touch-enheder
@@ -699,7 +703,7 @@ export default function ScannerScreen({
                     tilladelser fra en PWA (samme genundersøgte konklusion
                     som Indstillinger → Notifikationer, se SettingsScreen.jsx). */}
                 {cameraPermissionDenied ? (
-                  <div style={{ position:"absolute", top:"calc(44% - 43px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center", padding:"0 20px" }}>
+                  <div style={{ position:"absolute", top:"calc(44% - 45px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center", padding:"0 20px" }}>
                     <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:20, padding:"20px 18px", maxWidth:300, width:"100%", textAlign:"center", boxShadow:"var(--sh2)" }}>
                       <div style={{ display:"flex", justifyContent:"center", marginBottom:10 }}>
                         <div style={{ width:44, height:44, borderRadius:"50%", background:"var(--red-lt)", display:"flex", alignItems:"center", justifyContent:"center" }}>
@@ -723,7 +727,7 @@ export default function ScannerScreen({
                     </div>
                   </div>
                 ) : (
-                <div style={{ position:"absolute", top:"calc(44% - 43px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
+                <div style={{ position:"absolute", top:"calc(44% - 45px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
                   <div style={{ position:"relative", width:"clamp(119px, 30cqh, 197px)", height:"clamp(119px, 30cqh, 197px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
                     {/* Glow dæmpet ~25% (29. sept. 2026, "en mere balanceret
                         og rolig forside") — se .scan-halo-pulse-keyframes i
