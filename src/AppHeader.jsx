@@ -19,24 +19,28 @@
 // skærm-specifik back-button-række. Ikke ændret i denne omgang, se
 // CLAUDE.md's note om punkt 6 i brief'en.
 //
-// Logo opdateret 29. sept. 2026 ("Opdater EatSafe-brandingen i headers"):
-// selve wordmark+BETA-markup er udtrukket til den delte
-// <EatSafeHeaderLogo/> (SharedComponents.jsx) — samme komponent bruges
-// konsekvent overalt hvor denne header rendres, i stedet for at hver
-// header-instans risikerer at afvige. Farve/størrelse/vægt for wordmark'et
-// er nu låst til de SAMME brandfarver/proportioner som velkomstsidens
-// billedlogo (--brand-ink/--brand-green, se theme.jsx), ikke appens
-// almindelige --ink/--green-UI-tokens — og ca. 10% større end den
-// tidligere headerudgave. Stadig bevidst UDEN scannerikon (kun ren tekst +
-// BETA-badge) — scanner-/stregkodeikonet forbliver et rent FUNKTIONSikon
-// (Scan-knappen, bundnavigationen), ikke en del af header-brandingen. Det
-// fulde, låste EatSafeLogo-billedeaktiv (symbol+ordmærke, inkl.
-// scannerikon) bruges fortsat uændret på velkomst-/login-/onboarding-
-// skærmene — kun DENNE ene, kompakte header-kontekst er tekst-only.
+// Logo opdateret 29. sept. 2026 ("Master-specifikation for logo og branding
+// i headers"): selve wordmark-markup er udtrukket til den delte
+// <EatSafeWordmark/> (SharedComponents.jsx, kun teksten "EatSafe" — hverken
+// scanner-/stregkodeikon eller BETA-badge er en del af komponenten selv) —
+// samme komponent bruges konsekvent alle steder wordmark'et skal vises
+// (denne header OG onboarding-headeren, se OnboardingScreen.jsx), i stedet
+// for at hver instans risikerer at afvige. Farve/størrelse/vægt/kerning er
+// låst til de SAMME brandfarver/proportioner som velkomstsidens billedlogo
+// (--brand-ink/--brand-green, se theme.jsx — hentet direkte fra SVG-master-
+// filernes indlejrede farver, ikke gættet), ikke appens almindelige --ink/
+// --green-UI-tokens. BETA-badgen tilføjes HER, kun i appens headers (ikke i
+// onboarding, se master-specen afsnit 3/7) — komponeres ved siden af
+// wordmark'et, ikke inde i selve <EatSafeWordmark/>. Scanner-/
+// stregkodeikonet er stadig bevidst UDELADT her — det forbliver et rent
+// FUNKTIONSikon (Scan-knappen, bundnavigationen), ikke en del af header-
+// brandingen. Det fulde, låste EatSafeLogo-billedeaktiv (symbol+ordmærke,
+// inkl. scannerikon) bruges fortsat uændret på velkomstsiden — kun DENNE
+// ene, kompakte header-kontekst (og onboarding) er tekst-only.
 // ─────────────────────────────────────────────────────────────────────────────
 import React from "react";
 import { SCREENS } from "./constants.jsx";
-import { EatSafeHeaderLogo } from "./SharedComponents.jsx";
+import { EatSafeWordmark } from "./SharedComponents.jsx";
 
 // Skærme hvor hamburger-knappen får en lille grøn prik — brugeren er "inde
 // i" en af menuens destinationer, så prikken markerer at menuen har en
@@ -50,7 +54,10 @@ const MENU_DOT_SCREENS = [
 export default function AppHeader({ screen, onFeedback, onMenu }) {
   return (
     <header className="topbar">
-      <EatSafeHeaderLogo />
+      <div className="topbar-logo">
+        <EatSafeWordmark />
+        <div className="topbar-beta">BETA</div>
+      </div>
       <div style={{ display:"flex", gap:8, alignItems:"center" }}>
         {/* Feedback-knap */}
         <button onClick={onFeedback}
