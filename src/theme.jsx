@@ -109,6 +109,17 @@ export const appCss = `
   --green-selected-bg:#EFF9F4;
   --green-halo:#DDF4E8;
   --on-green:#FFFFFF;
+  /* Låste logo-/brandfarver (29. sept. 2026, "Opdater EatSafe-brandingen i
+     headers") — hentet direkte fra de FASTE SVG-master-filerne
+     (src/assets/logo/*.svg, fill="#232528"/"#039A55"), IKKE de samme som
+     appens almindelige --ink/--green-UI-tokens ovenfor. Bruges KUN til at
+     gengive selve EatSafe-ordmærket som tekst (headerens wordmark) — ikke
+     til almindelig UI (knapper, ikoner osv.), som fortsat bruger --ink/
+     --green. Navngivet forskelligt fra den eksisterende --green-logo
+     (som reelt er aliaset til --green-accent og driver kamera-reticle/
+     laser-linjen — et andet, ikke-relateret formål) for at undgå forveksling. */
+  --brand-ink:#232528;
+  --brand-green:#039A55;
   /* Accent-grønt — kun små highlights (checkmarks, safe-badges/dots,
      reticle), se kommentaren ovenfor. */
   --green-accent:#34D06A;
@@ -275,11 +286,22 @@ body::-webkit-scrollbar{display:none;}
    erstatter det fulde EatSafeLogo-billedeaktiv (symbol+ordmærke) KUN i
    denne kompakte header-kontekst; scanner-/stregkode-ikonet skal fremover
    udelukkende signalere selve scan-funktionen (Scan-knappen, bundnav),
-   ikke bruges som del af brandingen her. Størrelsen (24px) er en
-   ca. 20-25% forøgelse af det tidligere billedlogos ca. 22px visuelle
-   højde, semibold/bold vægt, så brandet står tydeligere uden at dominere. */
-.topbar-wordmark{font-size:24px;font-weight:700;color:var(--ink);letter-spacing:-.3px;line-height:1;white-space:nowrap;}
-.topbar-wordmark-safe{color:var(--green);}
+   ikke bruges som del af brandingen her.
+   29. sept. 2026, "Opdater EatSafe-brandingen i headers": farverne skiftet
+   fra appens almindelige --ink/--green-UI-tokens til de FASTE, låste logo-
+   brandfarver --brand-ink/--brand-green (samme #232528/#039A55 som selve
+   master-SVG'en på velkomstsiden bruger, se :root-kommentaren ovenfor) —
+   headeren skal nu farvemæssigt matche velkomstsidens rigtige logo, ikke
+   blot appens generelle UI-palet. Størrelse øget yderligere ~10%
+   (24px→26px, oven i den tidligere 20-25%-forøgelse fra 27. sept.) for
+   bedre visuel balance mod Feedback-/hamburger-knapperne, vægt hævet til
+   800 (fra 700) for et tungere, mere "logotype"-agtigt udtryk — selve
+   ordmærket i SVG'en er tegnet som faste vektorformer (ikke rigtig tekst),
+   så en pixel-identisk skrifttype-gengivelse via CSS er ikke muligt; dette
+   er den tætteste praktisk opnåelige match inden for appens ene faste
+   skrifttype (DM Sans). */
+.topbar-wordmark{font-size:26px;font-weight:800;color:var(--brand-ink);letter-spacing:-.4px;line-height:1;white-space:nowrap;}
+.topbar-wordmark-safe{color:var(--brand-green);}
 /* BETA-badge — samme varme/guldbrune farve som før, nu i en delt klasse i
    stedet for inline styles, med line-height:1 + inline-flex-centrering så
    den altid centrerer sig lodret mod tekstlogoet uanset dets nøjagtige

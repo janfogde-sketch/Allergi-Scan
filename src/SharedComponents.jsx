@@ -37,6 +37,21 @@ export const EatSafeLogo = ({ variant = "horizontal", size = 28, style, classNam
   );
 };
 
+// ─── HEADER-LOGO (tekst-only, 29. sept. 2026) ────────────────────────────────
+// "EatSafe" + BETA-badge som ren tekst/CSS — IKKE billedaktivet ovenfor.
+// Brugt udelukkende i AppHeader.jsx (appens sider), ALDRIG på velkommen/
+// login/onboarding (som fortsat viser det fulde billedlogo inkl.
+// scannerikon via EatSafeLogo ovenfor). Farver/vægt styres af
+// --brand-ink/--brand-green + .topbar-wordmark(-safe) i theme.jsx, bevidst
+// hentet fra samme SVG-master-farver som billedlogoet, ikke appens
+// almindelige --ink/--green-UI-tokens.
+export const EatSafeHeaderLogo = () => (
+  <div className="topbar-logo">
+    <span className="topbar-wordmark">Eat<span className="topbar-wordmark-safe">Safe</span></span>
+    <div className="topbar-beta">BETA</div>
+  </div>
+);
+
 // ─── SCAN-LOADING OVERLAY ─────────────────────────────────────────────────────
 // Logo-baseret loading-animation, vist mens et scannet/søgt produkt slås op
 // (fra scan:start til resultatet er klart, se runLookupProduct i useProduct.js).
