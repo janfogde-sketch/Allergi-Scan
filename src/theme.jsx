@@ -778,9 +778,9 @@ body::-webkit-scrollbar{display:none;}
 .list-check{position:relative;width:20px;height:20px;border-radius:6px;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .18s;font-size:11px;color:var(--on-green);}
 .list-check::before{content:'';position:absolute;inset:-13px;}
 .list-check.checked{background:var(--green);border-color:var(--green);}
-.list-name{font-size:14px;font-weight:600;flex:1;letter-spacing:-.1px;color:var(--ink);}
+.list-name{font-size:14px;font-weight:600;flex:1;letter-spacing:-.1px;color:var(--ink);overflow-wrap:anywhere;}
 .list-name.done{text-decoration:line-through;color:var(--muted);}
-.list-del{position:relative;font-size:15px;cursor:pointer;opacity:.2;padding:10px;margin:-6px -10px -6px 0;transition:opacity .15s;}.list-del:hover{opacity:.6;}
+.list-del{position:relative;flex-shrink:0;font-size:15px;cursor:pointer;opacity:.2;padding:10px;margin:-6px -10px -6px 0;transition:opacity .15s;}.list-del:hover{opacity:.6;}
 /* Usynlig tap-area-udvidelse til ~44×44px (25. sept. 2026, brugerfeedback:
    "sørg for minimum ca. 44×44 px tap-area") — samme ::before-mønster som
    .list-check ovenfor. Det synlige ikon (16px + 10px padding = 36×36px)

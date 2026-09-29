@@ -365,7 +365,7 @@ export default function ScannerScreen({
       return;
     }
     if (!isValidEanChecksum(digits)) {
-      setManualEanError("Stregkoden kunne ikke læses. Prøv igen.");
+      setManualEanError("Nummeret er ikke et gyldigt EAN. Tjek at alle cifre er tastet rigtigt.");
       return;
     }
     setShowManualEan(false); setManualEanError(""); setManualEanValue("");
@@ -603,8 +603,9 @@ export default function ScannerScreen({
                       at blive hentet) — user.name er tomt indtil App.jsx's loadAll-
                       fetch resolver, og et gættet ord er værre end intet, mens vi
                       venter. Linjen popper ind med navnet, i stedet for at skifte
-                      fra et forkert ord til det rigtige. */}
-                  <div style={{ fontSize:"clamp(22px, 4.7cqh, 32px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(2px, .4cqh, 4px)", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{user.name?.split(" ")[0] || ""}</div>
+                      fra et forkert ord til det rigtige. Et hårdt mellemrum holder
+                      linjens højde, så layoutet ikke hopper, når navnet kommer. */}
+                  <div style={{ fontSize:"clamp(22px, 4.7cqh, 32px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(2px, .4cqh, 4px)", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{(user.name || "").trim().split(/\s+/)[0] || "\u00A0"}</div>
                   <div style={{ fontSize:"clamp(11.5px, 2.1cqh, 15px)", fontWeight:600, color:"var(--ink2)", marginTop:"clamp(5px, 1.1cqh, 9px)", lineHeight:1.5, maxWidth:250, marginLeft:"auto", marginRight:"auto", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 12px rgba(255,255,255,.6)" }}>
                     {cameraPermissionDenied
                       ? "Kameraadgang er slået fra — brug Billede eller Indtast EAN i stedet."

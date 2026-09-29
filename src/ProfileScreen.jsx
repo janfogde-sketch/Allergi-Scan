@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall, buildActiveProfileList, computeProfileResults, extractENumbers, normalizeProductFlagsFor } from "./helpers.js";
+import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall, buildActiveProfileList, computeProfileResults, extractENumbers, normalizeProductFlagsFor, addUniqueCustom } from "./helpers.js";
 import { EatSafeLogo, Icon, ProductImage, showToast, ConfirmDialog } from "./SharedComponents.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { TextLink, Accordion } from "./DesignSystem.jsx";
@@ -1009,11 +1009,12 @@ export default function ProfileScreen({
                   await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
                     method:"PATCH",
                     headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" },
-                    body:JSON.stringify({ name:user.name, phone:user.phone||null }),
+                    body:JSON.stringify({ name:user.name.trim(), phone:user.phone||null }),
                   });
+                  setUser(u => ({ ...u, name:(u.name || "").trim() }));
                   setScreen(SCREENS.PROFILE);
                 } catch (e) {
-                  showToast("Fejl: " + e.message, "error");
+                  showToast("Profilen kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error");
                 } finally {
                   setSavingProfile(false);
                 }
@@ -1045,8 +1046,9 @@ export default function ProfileScreen({
                 <div style={UI.sectionLbl6}>Mangler din allergi eller intolerance?</div>
                 <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0 }}>
                   <input className="field" placeholder='Skriv fx "Fruktose"…' value={customInput} onChange={e => setCustomInput(e.target.value)}
-                    onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}} />
-                  <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); }}}>+</button>
+                    aria-label="Egen allergi eller intolerance"
+                    onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(c=>addUniqueCustom(c, customInput)); setCustomInput(""); }}} />
+                  <button className="btn btn-outline btn-sm" aria-label="Tilføj egen allergi" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>addUniqueCustom(c, customInput)); setCustomInput(""); }}}>+</button>
                 </div>
                 {customAllerg.length > 0 && (
                   <div className="tags">
@@ -1085,7 +1087,7 @@ export default function ProfileScreen({
                 try {
                   // Flush en evt. ikke-tilføjet tekst i "Skriv selv"-feltet, så den ikke går tabt
                   const pendingCustom = customInput.trim();
-                  const allCustom = pendingCustom ? [...customAllerg, pendingCustom] : customAllerg;
+                  const allCustom = pendingCustom ? addUniqueCustom(customAllerg, pendingCustom) : customAllerg;
                   if (pendingCustom) { setCustomAllerg(allCustom); setCustomInput(""); }
 
                   await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {

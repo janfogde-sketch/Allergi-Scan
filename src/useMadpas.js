@@ -49,10 +49,16 @@ export function madpasAllergenExamples(allergenId, lang) {
 // dynamisk for den konkrete allergi"). `name` er det allerede-oversatte
 // label (IKKE selve id'et) — indsættes overalt hvor skabelonen har
 // {name} (kan forekomme flere gange, se MADPAS_SAFETY_NOTE_T).
+// Navnet sænkes til små bogstaver midt i sætningen ("ikke indeholder
+// jordnødder") — undtagen på tysk, hvor navneord altid skrives med stort
+// ("kein Erdnüsse", ikke "erdnüsse").
+function inlineName(name, lang) {
+  return lang === "de" ? name : name.toLowerCase();
+}
 export function madpasSafetyNote(name, lang) {
   if (!name) return "";
   const template = MADPAS_SAFETY_NOTE_T[lang] || MADPAS_SAFETY_NOTE_T.en;
-  return template.split("{name}").join(name.toLowerCase());
+  return template.split("{name}").join(inlineName(name, lang));
 }
 // Krydskontaminerings-sætning (krav 7) — ÉN kombineret sætning for hele
 // fødevareallergi-sektionen, singular ved ét hensyn ("with milk"), plural
@@ -64,7 +70,7 @@ export function madpasCrossContactNote(names, lang) {
   if (!names || names.length === 0) return "";
   if (names.length === 1) {
     const template = MADPAS_CROSS_CONTACT_SINGULAR_T[lang] || MADPAS_CROSS_CONTACT_SINGULAR_T.en;
-    return template.replace("{name}", names[0].toLowerCase());
+    return template.replace("{name}", inlineName(names[0], lang));
   }
   return MADPAS_CROSS_CONTACT_PLURAL_T[lang] || MADPAS_CROSS_CONTACT_PLURAL_T.en;
 }

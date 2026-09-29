@@ -69,6 +69,15 @@ export function isValidEanChecksum(code) {
   return (10 - (sum % 10)) % 10 === check;
 }
 
+// Tilføjer en egen (fritekst-)allergi uden dubletter (uanset store/små bogstaver).
+export function addUniqueCustom(list, value) {
+  const v = (value || "").trim();
+  if (!v || (list || []).some(c => c.toLowerCase() === v.toLowerCase())) return list || [];
+  return [...(list || []), v];
+}
+
+export const STORE_SOURCES = ["bilka", "nemlig"];
+
 export const verifiedBadge = (verified_status, source) => {
   // Producent-data — højeste troværdighed
   if (verified_status === "verified" || source === "producer")
@@ -76,6 +85,9 @@ export const verifiedBadge = (verified_status, source) => {
   // Open Food Facts — crowd-sourced
   if (source === "off" || source === "open_food_facts")
     return { label:"Open Food Facts", bg:"rgba(37,99,235,.06)", color:"#2563eb", dot:"#2563eb" };
+  // Importeret fra butikkernes varekataloger — ikke indsendt af en bruger
+  if (STORE_SOURCES.includes(source))
+    return { label:"Butiksdata", bg:"rgba(138,144,153,.08)", color:"#6B7280", dot:"#6B7280" };
   // Bruger-indsendt
   return { label:"Bruger-indsendt", bg:"rgba(138,144,153,.08)", color:"#6B7280", dot:"#6B7280" };
 };

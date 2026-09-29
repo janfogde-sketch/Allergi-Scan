@@ -55,7 +55,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
         method: "PATCH",
         headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
         body: JSON.stringify({
-          name: user.name,
+          name: user.name.trim(),
           email: emailToSave || null,
           phone: user.phone || null,
           // Gemmes som fødselsår (samme skema som familiemedlemmer og resten
@@ -65,7 +65,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
           gender: user.gender || null,
         }),
       });
-      if (emailToSave) setUser(u => ({ ...u, email: emailToSave }));
+      setUser(u => ({ ...u, name: (u.name || "").trim(), ...(emailToSave ? { email: emailToSave } : {}) }));
     } catch (e) { console.error("saveProfileStep1 fejl:", e); }
   };
 
