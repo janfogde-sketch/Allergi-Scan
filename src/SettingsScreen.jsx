@@ -186,15 +186,6 @@ export default function SettingsScreen({
     <div className="screen fade-in">
       <div className="screen-title">Indstillinger</div>
 
-      {/* ── Konto ── */}
-      <div className="card">
-        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:12 }}>Konto</div>
-        <button onClick={clearAuth}
-          style={{ width:"100%", padding:"12px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink)", cursor:"pointer" }}>
-          Log ud
-        </button>
-      </div>
-
       {/* ── Madpas-sprog ── (omdøbt fra "Sprog" 28. sept. 2026, FINAL
           POLISH-runde — EatSafe har intet app-sprog-skift at sektionere
           under et generisk "Sprog", kun Madpas har reel sprog-
@@ -326,28 +317,10 @@ export default function SettingsScreen({
             ))}
           </div>
         )}
-
-        {/* Farezone — visuelt adskilt fra almindelige konto-/privacy-
-            handlinger ovenfor, ikke en ligeværdig knap blandt dem.
-            Bekræftelses-trinnet ("skriv 'slet'") ligger i den delte
-            DeleteAccountModal.jsx, uændret. */}
-        <div style={{ paddingTop:14, borderTop:"1px solid var(--border)" }}>
-          <div style={{ fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:1, color:"var(--muted)", marginBottom:10 }}>Farezone</div>
-          <button onClick={() => { setShowDeleteAccount(true); setDeleteConfirmText(""); }}
-            style={{ background:"none", border:"none", padding:0, fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color:"var(--red)", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-            <Icon name="trash" size={13} color="var(--red)" /> Slet konto
-          </button>
-        </div>
       </div>
 
-      {/* ── Om EatSafe ──
-          Sidste kort på siden — ekstra bund-margin (28. sept. 2026, FINAL
-          POLISH) tilføjet HER, ikke på den delte `.screen`-klasse (som kun
-          reserverer en flad 110px, uden `env(safe-area-inset-bottom)`, se
-          samme rodårsag/løsning som ProfileScreen.jsx-footeren) — sikrer at
-          "Kontakt & support" nederst altid kan scrolles helt fri af den
-          faste bundnavigation, uanset enhedens safe-area. */}
-      <div className="card" style={{ marginBottom:"calc(96px + env(safe-area-inset-bottom))" }}>
+      {/* ── Om EatSafe ── */}
+      <div className="card">
         <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:2 }}>
           <Icon name="info" size={14} color="var(--ink)" /> Om EatSafe
         </div>
@@ -371,6 +344,29 @@ export default function SettingsScreen({
         )}
         <ChevronRow icon="bug" label="Om EatSafe Beta" sub="Se velkomst- og sikkerhedsinformation igen" onClick={onOpenBetaInfo} />
         <ChevronRow icon="message" label="Kontakt & support" onClick={onOpenFeedback} last />
+      </div>
+
+      {/* ── Log ud / Slet konto — flyttet til bunden af siden (29. sept.
+          2026, brugerønske, mønster fra et andet reference-screenshot) —
+          lå tidligere hhv. i et eget "Konto"-kort øverst og som et diskret
+          rødt tekstlink i "Privatliv & data"s Farezone. Nu to fulde,
+          solide knapper nederst, i den rækkefølge: Log ud (appens egen
+          mørke --ink-farve, ikke reference-billedets navy) → Slet konto
+          (rød, som brugeren eksplicit tillod). Bekræftelses-trinnet
+          ("skriv 'slet'") ligger fortsat i den delte DeleteAccountModal.jsx,
+          uændret. Bund-margin (var tidligere på "Om EatSafe"-kortet, 28.
+          sept. 2026 FINAL POLISH) er flyttet hertil, da dette nu er
+          sidens reelle sidste indhold — sikrer stadig at "Slet konto"
+          altid kan scrolles helt fri af den faste bundnavigation. */}
+      <div style={{ marginBottom:"calc(96px + env(safe-area-inset-bottom))" }}>
+        <button className="btn btn-full" onClick={clearAuth}
+          style={{ background:"var(--ink)", color:"#fff", marginBottom:10 }}>
+          Log ud
+        </button>
+        <button className="btn btn-full" onClick={() => { setShowDeleteAccount(true); setDeleteConfirmText(""); }}
+          style={{ background:"var(--red)", color:"#fff" }}>
+          Slet konto
+        </button>
       </div>
     </div>
   );
