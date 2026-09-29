@@ -976,36 +976,42 @@ export default function OnboardingScreen({
                 overskriften ikke overlapper det nye faste brand-logo
                 ovenfor — direkte konsekvens af logoet, ikke en selvstændig
                 layoutændring. */}
+            {/* Tilbagepilen ligger nu i forlængelse af selve "Opsæt din
+                profil"/"Tager under 2 minutter"-blokken (29. sept. 2026,
+                brugerfeedback — tredje runde: stod først ved siden af
+                fremgangsbjælken, så på sin egen linje over den, nu i stedet
+                lodret centreret ud for headingen, venstrestillet i samme
+                kolonne som det faste EatSafe-logo ovenfor). Kræver
+                position:relative på selve heading-blokken, da knappen
+                positioneres absolut i forhold til den. Samme delte
+                boks-mønster (kant + Icon name="chevronLeft") som
+                KnowledgeScreen.jsx/RecipesScreen.jsx/
+                RestaurantGuideScreen.jsx. */}
             {!editMode && (
-              <div style={{ textAlign:"center", padding:"44px 0 20px" }}>
+              <div style={{ position:"relative", textAlign:"center", padding:"44px 0 20px" }}>
+                {onboardStep > 1 && (
+                  <button onClick={() => setOnboardStep(onboardStep - 1)} aria-label="Tilbage"
+                    style={{ position:"absolute", left:20, top:"50%", transform:"translateY(-50%)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0 }}>
+                    <Icon name="chevronLeft" size={18} color="var(--ink)" />
+                  </button>
+                )}
                 <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)" }}>Opsæt din profil</div>
                 <div style={{ fontSize:13, color:"var(--ink2)", marginTop:4 }}>Tager under 2 minutter</div>
               </div>
             )}
             {editMode && <div style={{ height:4 }} />}
-            {/* Step header med tilbage og fremgang — tilbagepilen fik egen
-                luft og et rigtigt touch-target (29. sept. 2026, "Ret
-                designet på onboarding-trin 2/5"): sad tidligere med kun
-                10px gap og et 20px-bredt klikområde direkte op ad
-                fremgangsbjælken, hvilket kunne læses som var den en del af
-                selve bjælken. Knappen har nu reel 44×44-padding (EatSafes
-                faste touch-target-minimum) i stedet for en negativ margin,
-                som ellers ville have ladet selve klik-fladen overlappe ind
-                i det ekstra gap igen og gjort den visuelle adskillelse
-                virkningsløs — fremgangsbjælken rykker derfor en anelse til
-                højre, hvilket den tåler fint (flex:1, egen bredde). */}
-            <div style={{ ...UI.udflex_aicenter_g10_mb8, gap:14 }}>
-              {onboardStep > 1 && (
+            {/* Fremgangsbjælke, altid fuld bredde. I editMode findes
+                headingen ovenfor ikke (Rediger profil/præferencer har sin
+                egen AppHeader/tilbageknap) — behold et simpelt fallback for
+                tilbagepilen dér, samme boks-stil. */}
+            <div style={UI.mb8}>
+              {editMode && onboardStep > 1 && (
                 <button onClick={() => setOnboardStep(onboardStep - 1)} aria-label="Tilbage"
-                  style={{ background:"none", border:"none", cursor:"pointer", width:44, height:44, padding:0, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
-                    <path strokeLinecap="round" d="M15 19l-7-7 7-7"/>
-                  </svg>
+                  style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, marginBottom:10 }}>
+                  <Icon name="chevronLeft" size={18} color="var(--ink)" />
                 </button>
               )}
-              <div style={UI.flex1}>
-                {onboardStep > 0 && <StepBar total={5} current={onboardStep} />}
-              </div>
+              {onboardStep > 0 && <StepBar total={5} current={onboardStep} />}
             </div>
 
             {/* ── TRIN 1: Din profil (obligatorisk) ── */}
