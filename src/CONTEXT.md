@@ -163,7 +163,7 @@ begrundelse.
 | Tabel | Nøglefelter | Noter |
 |-------|-------------|-------|
 | `products` | id, ean, name, brand, allergen_flags (jsonb), allergen_quality, allergen_source_method, nutrition (jsonb), verified_status, source, ingredients_text | ~20.200+ |
-| `users` | id, name, email, role, diets (jsonb) | |
+| `users` | id, name, email, role, diets (jsonb), onboarding_completed, onboarding_step | Se note nedenfor |
 | `user_allergens` | user_id, allergen_id | |
 | `family_members` | id, user_id, name, allergens (jsonb), diets, e_numbers, family_owner_id | |
 | `family_invites` | id, token, invited_by, accepted_by, status, expires_at | To-vejs deling, 24t expiry |
@@ -212,6 +212,20 @@ begrænse per-kolonne, så en tilsvarende trigger bør overvejes for andre
 tabeller med et lignende "selv-ejerskab uden kolonne-begrænsning"-mønster,
 hvis en ny privilegeret kolonne nogensinde tilføjes til `users` eller andre
 selv-redigerbare tabeller.
+
+**`users.onboarding_step` (29. sept. 2026, "Onboarding-persistens"):**
+integer, 1-5, default 1 — huske PRÆCIS hvilket af de 5 onboarding-trin en
+bruger nåede til (`onboarding_completed`, boolean, fandtes allerede). Ét
+engangs-backfill-migration (`add_onboarding_step_to_users`) udledte det
+mest sandsynlige trin for eksisterende brugere ud fra reelle gemte signaler
+(navn/allergener/diæter-E-numre/familiemedlemmer) — IKKE kun "har mindst
+én allergi". Selv-opdateres via almindelig `PATCH /rest/v1/users?id=eq.
+<eget-id>` (samme RLS-policy som resten af tabellen, ingen ny kolonne-
+beskyttelse nødvendig — kun `role` har den slags trigger-guard, se ovenfor).
+Se `useOnboarding.js`/`useAuth.js`/`App.jsx`'s routing-logik for hvordan
+felterne bruges til at genoptage onboarding på tværs af sessioner/enheder
+og forhindre en ufuldført bruger i at nå hovedappen — fuld detalje i
+`CLAUDE.md`.
 
 **Opfølgende sikkerhedsfund og -fix (25. sept. 2026, `security-check`-gennemgang):**
 `get_advisors` fandt at tre `SECURITY DEFINER`-funktioner var direkte

@@ -68,6 +68,10 @@ import HelpModal from "./HelpModal.jsx";
 import BetaIntroModal from "./BetaIntroModal.jsx";
 import DeleteAccountModal from "./DeleteAccountModal.jsx";
 
+// Skærme en bruger med ufuldført onboarding ALTID må kunne se/blive på (29.
+// sept. 2026, "Onboarding-persistens") — se setScreen-wrapperen i
+// EatSafe()-komponenten nedenfor, som håndhæver dette for enhver anden skærm.
+const ONBOARDING_EXEMPT_SCREENS = [SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD];
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
 
@@ -75,12 +79,39 @@ export default function EatSafe() {
   // Auth state → useAuth hook
 
   // UI state
-  const [screen, setScreen] = useState(() => localStorage.getItem("as_token") ? SCREENS.HOME : SCREENS.WELCOME);
+  const [screen, setScreenRaw] = useState(() => localStorage.getItem("as_token") ? SCREENS.HOME : SCREENS.WELCOME);
 
   // User data
-  const [user, setUser] = useState({ name:"", age:"", email:"", phone:"", password:"", role:"" });
+  const [user, setUser] = useState({ name:"", age:"", email:"", phone:"", password:"", role:"", onboarding_completed: undefined, onboarding_step: 1 });
   const [allergens, setAllergens] = useState([]);
   const [customAllerg, setCustomAllerg] = useState([]);
+
+  // Route guard (29. sept. 2026, "Onboarding-persistens") — en bruger med
+  // onboarding_completed===false må ALDRIG kunne lande på scanner/historik/
+  // indkøbsliste/øvrige hovedfunktioner, uanset hvor i appen setScreen(...)
+  // kaldes fra (WELCOME/LOGIN/ONBOARD er de eneste undtagelser). Wrappet HER
+  // — ikke ved hvert enkelt setScreen-kald i hele appen — så ALLE ~30+
+  // eksisterende kaldesteder (direkte i denne fil og via NavigationContext
+  // til andre skærme) automatisk får beskyttelsen uden selv at ændres.
+  // user.onboarding_completed===undefined ("endnu ukendt", før første
+  // profilhentning er landet) blokerer bevidst IKKE — ellers ville hver
+  // eneste appstart vise et kort, forkert glimt af ONBOARD for en allerede
+  // færdig bruger, mens den rigtige status stadig hentes. Kun en BEKRÆFTET
+  // false blokerer.
+  const setScreen = useCallback((next) => {
+    if (user.onboarding_completed === false && !ONBOARDING_EXEMPT_SCREENS.includes(next)) {
+      setScreenRaw(SCREENS.ONBOARD);
+      return;
+    }
+    setScreenRaw(next);
+  }, [user.onboarding_completed]);
+
+  // Onboarding-trin — deklareret HER (før useAuth-kaldet nedenfor), ikke
+  // inde i useOnboarding.js som tidligere (29. sept. 2026, "Onboarding-
+  // persistens") — useAuth() skal kunne sætte det aktuelle trin direkte
+  // ved login/OAuth/app-boot-genoptagelse, og useAuth() kaldes FØR
+  // useOnboarding() længere nede i denne fil.
+  const [onboardStep, setOnboardStep] = useState(1);
   // → useFamily hook (family, setFamily)
   // Scanner-profilfilteret ("Scanner for: ...") huskes mellem sessioner
   // (25. sept. 2026, brugerfeedback) — læst én gang ved opstart, IKKE
@@ -217,7 +248,7 @@ export default function EatSafe() {
     authTab, setAuthTab, isOAuth, setIsOAuth,
     rememberMe, setRememberMe,
     saveTokens, clearAuth, handleLogin, handleSignup, handleOAuth, handleForgotPassword,
-  } = useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
+  } = useAuth({ setScreen, setUser, setAllergens, setCustomAllerg, setOnboardStep,
                 onSignupSuccess: () => setOnboardStep(1) });
 
   const {
@@ -274,12 +305,12 @@ export default function EatSafe() {
   } = useHistory({ accessToken, userId });
 
   const {
-    onboardStep, setOnboardStep,
     editMode, setEditMode,
     tourIdx, setTourIdx,
     customInput, setCustomInput,
-    saveProfileStep1, saveAllergensStep2, savePreferencesStep3, finishOnboard: finishOnboardRaw,
-  } = useOnboarding({ accessToken, userId, user, loginEmail,
+    saveProfileStep1, saveAllergensStep2, saveDietStep3, finishOnboard: finishOnboardRaw,
+  } = useOnboarding({ accessToken, userId, user, loginEmail, screen,
+                      onboardStep, setOnboardStep,
                       allergens, customAllerg, selectedENumbers,
                       setUser, setScreen, setEditMode: () => {}, setIsOAuth });
 
@@ -564,7 +595,7 @@ export default function EatSafe() {
       try {
         // Brugerprofil
         const profile = await apiCall(
-          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,onboarding_completed,diets,e_numbers,created_at&limit=1`,
+          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,onboarding_completed,onboarding_step,diets,e_numbers,created_at&limit=1`,
           { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
         );
         if (Array.isArray(profile) && profile[0]) {
@@ -578,6 +609,13 @@ export default function EatSafe() {
             birth_year: p.birth_year || "",
             gender: p.gender || "",
             role: p.role || "user",
+            // onboarding_completed/-_step blev tidligere hentet her men aldrig
+            // gemt i state — routing kunne derfor ikke reagere på reel status
+            // (29. sept. 2026, "Onboarding-persistens"). Se setScreen-guarden
+            // og useAuth.js's app-boot-/login-/OAuth-korrektion, som alle
+            // afhænger af disse to felter.
+            onboarding_completed: p.onboarding_completed !== false,
+            onboarding_step: p.onboarding_step || 1,
             diets: p.diets || [],
             created_at: p.created_at || u.created_at || "",
           }));
@@ -592,18 +630,6 @@ export default function EatSafe() {
         if (Array.isArray(allergenData)) {
           setAllergens(allergenData.filter(a => a.type === "allergen").map(a => a.allergen));
           setCustomAllerg(allergenData.filter(a => a.type === "custom").map(a => a.allergen));
-        }
-
-        // Login med e-mail/adgangskode (og genåbning af appen) sendte altid
-        // til forsiden — en bruger der forlod onboarding før allergierne var
-        // valgt, endte uden allergiprofil, og alt blev vist som "ingen
-        // advarsler". Send dem tilbage til onboarding. Kun når der reelt ikke
-        // er gemt nogen allergier: flere tidlige brugere har flaget=false men
-        // en udfyldt profil, og dem skal vi ikke tvinge igennem forfra.
-        const profileRow = Array.isArray(profile) ? profile[0] : null;
-        if (profileRow?.onboarding_completed === false && Array.isArray(allergenData) && allergenData.length === 0) {
-          setOnboardStep(1);
-          setScreen(s => (s === SCREENS.HOME ? SCREENS.ONBOARD : s));
         }
 
         // Familie + indkøb + favoritter
@@ -1021,7 +1047,7 @@ export default function EatSafe() {
             editMode={editMode} setEditMode={setEditMode}
             customInput={customInput} setCustomInput={setCustomInput}
             saveAllergensStep2={saveAllergensStep2}
-            savePreferencesStep3={savePreferencesStep3}
+            saveDietStep3={saveDietStep3}
             saveProfileStep1={saveProfileStep1} finishOnboard={finishOnboard}
             StepBar={StepBar}
             buildLabel={formatBuildTime()}
