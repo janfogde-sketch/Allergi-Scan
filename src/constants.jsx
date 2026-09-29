@@ -324,7 +324,7 @@ export const ALLERGENS = [
   { id:"gluten",        label:"Gluten",           emoji:"🥖", type:"intolerance", note:"Gluten (intolerance) og Glutenfri (kost) er koblet sammen — vælger du Gluten, tilføjes Glutenfri automatisk, så du ikke skal vælge begge. Ikke det samme som hvedeallergi." },
   { id:"hvede",         label:"Hvede",             emoji:"🌾", type:"allergi" },
   { id:"maelkeallergi", label:"Mælk",              emoji:"🥛", type:"allergi" },
-  { id:"laktose",       label:"Laktoseintolerance",emoji:"🍬", type:"intolerance" },
+  { id:"laktose",       label:"Laktose",           emoji:"🍬", type:"intolerance" },
   { id:"aeg",           label:"Æg",               emoji:"🥚", type:"allergi" },
   { id:"noedder",       label:"Nødder",            emoji:"🌰", type:"allergi" },
   { id:"jordnoedder",   label:"Jordnødder",        emoji:"🥜", type:"allergi" },
