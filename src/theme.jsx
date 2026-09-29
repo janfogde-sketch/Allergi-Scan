@@ -641,8 +641,24 @@ body::-webkit-scrollbar{display:none;}
    login-siden", punkt 9: intro→fordele mål 32-36px, fordele→primær-CTA
    mål 38-44px — .welcome-logo-wrap's tidligere inline marginBottom:16 er
    samtidig fjernet i JSX, så dette top-mål er den ENESTE kilde til det
-   mellemrum). */
-.welcome-benefits{display:flex;justify-content:center;gap:14px;margin:34px 0 40px;width:100%;}
+   mellemrum).
+   29. sept. 2026, "sidste designpolering": margin-top 34→24px (10px
+   mindre luft til intro-teksten, mål 8-12px) og margin-bottom 40→32px
+   (8px mindre luft til "Opret gratis konto"). Vandret padding 0→4px
+   tilføjet (mål: yderste labels sad for tæt på skærmkanterne) — på
+   selve raden, ikke på de enkelte .welcome-benefit-kolonner, så de tre
+   kolonner i princippet forbliver lige brede og ikon/tekst-alignment er
+   uændret. Bevidst kun 4px, ikke 8px: hver .welcome-benefit-label har
+   white-space:nowrap (låst i en tidligere runde, så label'en aldrig
+   brækker over 2 linjer) — en flex-række med flex:1 fordeler kun
+   PRÆCIST ligeligt så længe alle tre kolonners tilgængelige bredde er
+   over hver labels naturlige (nowrap) bredde; ved 320px-skærmbredden
+   (mindste testede) var 8px/side nok til at skubbe layoutet under den
+   grænse, hvilket gjorde kolonnerne synligt ulige (102/82/99px, målt
+   med Playwright) — 4px/side holder sig under grænsen på alle tre
+   testede bredder (320/390/430px), verificeret at kolonnerne forbliver
+   pixel-lige efter ændringen. */
+.welcome-benefits{display:flex;justify-content:center;gap:14px;margin:24px 0 32px;padding:0 4px;width:100%;box-sizing:border-box;}
 /* gap 8→4px (29. sept. 2026, "sidste spacing-polering": labels 3-5px
    tættere på deres ikoner). */
 .welcome-benefit{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;max-width:130px;}
