@@ -43,10 +43,11 @@ export const EatSafeLogo = ({ variant = "horizontal", size = 28, style, classNam
 // — badge'n er bevidst IKKE en del af denne komponent, da den kun skal vises
 // visse steder (appens headers), ikke andre (onboarding), se AppHeader.jsx/
 // OnboardingScreen.jsx for hvordan de hver især komponerer den. Farver/
-// vægt/kerning styres af --brand-ink/--brand-green + .topbar-wordmark(-safe)
-// i theme.jsx — PRÆCIS samme værdier som selve billedlogoets (EatSafeLogo
-// ovenfor) indlejrede SVG-farver, hentet direkte fra master-vektorfilerne
-// (src/assets/logo/*.svg), ikke gættet ud fra et screenshot og ikke appens
+// vægt/kerning styres af --brand-ink/--brand-green-gradient +
+// .topbar-wordmark(-safe) i theme.jsx — PRÆCIS samme værdier som selve
+// billedlogoets (EatSafeLogo ovenfor) indlejrede SVG-farver, hentet direkte
+// fra master-vektorfilerne (src/assets/logo/*.svg — "Safe" er en gradient i
+// selve SVG'en, ikke en flad farve), ikke gættet ud fra et screenshot og ikke appens
 // almindelige --ink/--green-UI-tokens. Dette er den ENE wordmark-komponent
 // for hele appen — brug den overalt tekst-logoet skal vises (aldrig en ny,
 // lignende variant), så "Eat"/"Safe"-farve, font, vægt, kerning og
