@@ -542,11 +542,15 @@ export default function ListScreen({
         {showShareHint && <div style={S.hint}>Del listen med familie eller via link</div>}
       </div>
 
+      {/* Gjort mere kompakt (29. sept. 2026, "Polér designet på
+          Indkøbsliste") — ydre padding 10→8, rækkernes lodrette padding
+          10→7px, "+ Ny liste"/"Tilslut med link" er en anelse lavere og
+          lettere (se deres egen inline-overstyring nedenfor). */}
       {showListPicker && (
-        <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:10, marginBottom:14 }}>
+        <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:8, marginBottom:14 }}>
           {lists.map(l => (
             <div key={l.id} onClick={() => { setActiveListId(l.id); setShowListPicker(false); }}
-              style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 8px", borderRadius:8, cursor:"pointer", background: l.id === activeListId ? "var(--green-lt)" : "transparent" }}>
+              style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"7px 8px", borderRadius:8, cursor:"pointer", background: l.id === activeListId ? "var(--green-lt)" : "transparent" }}>
               <div>
                 <span style={{ fontSize:13, fontWeight:700, color: l.id === activeListId ? "var(--green)" : "var(--ink)" }}>{l.name}</span>
                 {l.type === "family" && <span style={{ marginLeft:6, display:"inline-flex", verticalAlign:"middle" }}><Icon name="family" size={12} color="var(--muted)" /></span>}
@@ -587,8 +591,8 @@ export default function ListScreen({
           ))}
           {!showNewList ? (
             <div style={{ display:"flex", gap:8, marginTop:6 }}>
-              <button className="btn btn-ghost btn-sm" style={{ flex:1 }} onClick={() => setShowNewList(true)}>+ Ny liste</button>
-              <button className="btn btn-ghost btn-sm" style={{ flex:1 }} onClick={() => { setShowListPicker(false); setShowJoin(true); }}>Tilslut med link</button>
+              <button className="btn btn-ghost btn-sm" style={{ flex:1, padding:"6px 14px", fontWeight:600 }} onClick={() => setShowNewList(true)}>+ Ny liste</button>
+              <button className="btn btn-ghost btn-sm" style={{ flex:1, padding:"6px 14px", fontWeight:600 }} onClick={() => { setShowListPicker(false); setShowJoin(true); }}>Tilslut med link</button>
             </div>
           ) : (
             <div style={{ display:"flex", gap:8, marginTop:8, padding:"0 4px" }}>
@@ -664,16 +668,15 @@ export default function ListScreen({
       )}
 
       {/* ── Tom tilstand ──
-          Alle tre overstyringer er lokale inline-styles KUN på denne
-          instans (29. sept. 2026, brugerfeedback) — .empty-state/
-          -icon/-sub er delte klasser brugt uændret af MadpasScreen.jsx og
-          tre steder i ProfileScreen.jsx, som ikke skal påvirkes.
-          paddingTop 56→8px flytter hele blokken ~48px op (mindre tomrum
-          under listevælgeren), cirklen er ~12% mindre (68→60px, ikonet
-          26→23px i samme forhold), og hjælpeteksten har fået en smule
-          strammere linjeafstand (1.55→1.35). */}
+          Positionen (paddingTop) er tilbageført til den delte klasses
+          normale 56px (29. sept. 2026, opfølgning — en tidligere runde
+          flyttede blokken ~48px op, men det skulle rulles tilbage). Cirkel-
+          størrelsen og hjælpetekstens linjeafstand er fortsat lokale
+          inline-overstyringer KUN på denne instans — .empty-icon/-sub er
+          delte klasser brugt uændret af MadpasScreen.jsx og tre steder i
+          ProfileScreen.jsx, som ikke skal påvirkes. */}
       {shoppingList.length === 0 && (
-        <div className="empty-state" style={{ paddingTop:8 }}>
+        <div className="empty-state">
           <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="cart" size={23} color="var(--muted)" /></span>
           <div className="empty-txt">Listen er tom</div>
           <div className="empty-sub" style={{ lineHeight:1.35 }}>Søg efter produkter eller tilføj en vare manuelt</div>
@@ -695,7 +698,7 @@ export default function ListScreen({
               {item.ean && <ProductImage product={item} size={22} />}
               <div style={{ flex:1, minWidth:0 }}>
                 {item.ean
-                  ? <div className="list-name" role="link" tabIndex={0} style={{ cursor:"pointer", textDecoration:"underline", textDecorationColor:"var(--border2)", textUnderlineOffset:3 }}
+                  ? <div className="list-name" role="link" tabIndex={0} style={{ cursor:"pointer" }}
                       onClick={() => lookupProduct(item.ean)} onKeyDown={e => e.key === "Enter" && lookupProduct(item.ean)}>{item.name}</div>
                   : <div className="list-name">{item.name}</div>}
                 {/* Diskret EatSafe-status (25. sept. 2026, brugerfeedback) —

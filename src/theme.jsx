@@ -917,21 +917,34 @@ body::-webkit-scrollbar{display:none;}
 .product-brand{font-size:11.5px;color:var(--muted);margin-top:2px;}
 .verified-pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;margin-top:4px;letter-spacing:.2px;}
 
-/* ── LIST ── */
-.list-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:11px;margin-bottom:8px;}
+/* ── LIST ──
+   Alle fem klasser herunder bruges KUN af ListScreen.jsx (29. sept. 2026,
+   "Polér designet på Indkøbsliste") — trygt at justere direkte uden at
+   røre andre skærme. */
+/* Top/bund-padding 12→8px, ~15% lavere kort, samme vandrette padding. */
+.list-item{display:flex;align-items:center;gap:12px;padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:11px;margin-bottom:8px;}
 .list-item.done{opacity:.4;}
-.list-check{position:relative;width:20px;height:20px;border-radius:6px;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .18s;font-size:11px;color:var(--on-green);}
-.list-check::before{content:'';position:absolute;inset:-13px;}
+/* Størrelse 20→17px (en smule mindre, mere fokus til varenavnet) —
+   ::before-tap-området er udvidet tilsvarende (13→14.5px) for stadig at
+   give en tydelig ~46×46px touch-target uændret fra før. */
+.list-check{position:relative;width:17px;height:17px;border-radius:5px;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .18s;font-size:11px;color:var(--on-green);}
+.list-check::before{content:'';position:absolute;inset:-14.5px;}
 .list-check.checked{background:var(--green);border-color:var(--green);}
 .list-name{font-size:14px;font-weight:600;flex:1;letter-spacing:-.1px;color:var(--ink);overflow-wrap:anywhere;}
 .list-name.done{text-decoration:line-through;color:var(--muted);}
-.list-del{position:relative;flex-shrink:0;font-size:15px;cursor:pointer;opacity:.2;padding:10px;margin:-6px -10px -6px 0;transition:opacity .15s;}.list-del:hover{opacity:.6;}
+/* Opacity .2→.35 — en anelse mørkere/lettere at se, stadig tydeligt
+   sekundær/diskret ift. hover-tilstandens .6. */
+.list-del{position:relative;flex-shrink:0;font-size:15px;cursor:pointer;opacity:.35;padding:10px;margin:-6px -10px -6px 0;transition:opacity .15s;}.list-del:hover{opacity:.6;}
 /* Usynlig tap-area-udvidelse til ~44×44px (25. sept. 2026, brugerfeedback:
    "sørg for minimum ca. 44×44 px tap-area") — samme ::before-mønster som
    .list-check ovenfor. Det synlige ikon (16px + 10px padding = 36×36px)
    forbliver visuelt uændret; kun det klikbare område udvides. */
 .list-del::before{content:'';position:absolute;inset:-4px;}
-.list-section{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);margin:14px 0 8px;}
+/* font-size/letter-spacing rettet til at matche appens almindelige små
+   sektionsoverskrift-mønster (fx UI.sectionLbl6/8 i styleUtils.js: 11px/
+   700/1px tracking) — var 10.5px/1.4px, en lille, ikke-tilsigtet
+   afvigelse. Vægt/farve matchede allerede. */
+.list-section{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:14px 0 8px;}
 
 /* ── PROFILE ── */
 .profile-hero{background:var(--surface2);border:1px solid var(--border2);border-radius:16px;padding:20px 18px;margin:16px 0 12px;display:flex;align-items:center;gap:14px;}
