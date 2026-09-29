@@ -2,9 +2,8 @@
 -- brugerens e-mail er bekræftet — ikke allerede ved oprettelse (hvor den
 -- ellers også rammer forkerte/fremmede adresser).
 --
--- STATUS: IKKE anvendt endnu. Anvendes via Supabase MCP `apply_migration`
--- (navn: welcome_email_after_confirm), KUN efter Jans eksplicitte ja.
--- Tjek om den allerede er anvendt:
+-- STATUS: Anvendt 29. sept. 2026 via Supabase MCP `apply_migration`
+-- (navn: welcome_email_after_confirm). Tjek:
 --   select count(*) from information_schema.triggers
 --   where trigger_name = 'on_auth_email_confirmed';   -- 1 = anvendt
 --

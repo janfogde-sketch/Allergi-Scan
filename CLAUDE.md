@@ -13,7 +13,48 @@
 
 ---
 
-## 0. Topprioritet til næste session (opdateret 24. sept. 2026)
+## 0. Topprioritet til næste session (opdateret 29. sept. 2026)
+
+**Start her: åbne punkter pr. 29. sept. 2026.** Nævn listen kort for Jan,
+når sessionen starter, og spørg hvad der skal tages først. Detaljerne står
+i afsnittene under listen. Opdatér listen, når et punkt er klaret.
+
+*Kun Jan kan gøre det:*
+1. Supabase Dashboard: tjek SMTP-indstillingerne, og slå derefter
+   "Confirm email" til (D1, se "ÅBEN: Slå e-mailbekræftelse til" nedenfor).
+2. Cloud-miljøet: tillad `eatsafe.dk`, `jegrpcflyguadyxialkm.supabase.co`
+   og `world.openfoodfacts.org` under Network access (B1, se nedenfor).
+3. Del testtjeklisten https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X
+   med Bjørn som Contributor, og kør den manuelle testrunde på rigtige
+   telefoner.
+
+*Venter på Jans beslutning:*
+4. Skal alder og køn tilbage i Rediger profil? Onboarding kræver dem
+   stadig (Jan bruger dem), men brugerne kan ikke rette dem bagefter.
+   Det er en UI-ændring, så Bjørn skal inddrages.
+5. Skal QA-testkontoen `janfogde+eatsafeqa@gmail.com` have admin-rolle,
+   så admin-panelet kan testes fra sandboxen?
+6. Energi (kJ) er forkert på ca. 4.860 Bilka-produkter: tusindtals-
+   punktummet er læst som decimal (fx 2.162 i stedet for 2162). Det vises
+   ikke i appen i dag. Jan fravalgte en datarettelse 29. sept.; tag den op
+   igen, hvis energi skal vises.
+7. Nye e-mailbrugere får deres e-mail-præfiks (fx "janfogde+eatsafeqa")
+   forudfyldt som navn i onboarding og i velkomstmailen. Det kommer fra
+   `handle_new_user()` i databasen. Ikke rettet.
+8. Arkitektur-audit "som en senior engineer" (Jan delte forslaget 29.
+   sept.). Claude anbefalede den som ren rapport efter QA-rettelserne.
+   Ikke besluttet, ikke startet.
+9. Leaked Password Protection kræver Supabase Pro (se nedenfor). Spørg om
+   Jan vil opgradere, ikke om det er glemt.
+
+*Claude gør bagefter:*
+10. Luk D1 (`cc121cd9…`) og B1 (`820806b9…`) i `feedback_tickets`, når de
+    er verificeret. Læs testrundens resultater og opret tickets for fejl.
+
+QA-runden 28.-29. sept.: alle fund Q1–Q14 er rettet og live (PR #372,
+#373, #376), undtagen kJ-dataene i punkt 6. D2 (telefon valgfri) er live
+(PR #377). Detaljer i tickets, der starter med "[QA 28/9", i
+`feedback_tickets`.
 
 Rescue-audittets fulde 4-fase-roadmap, Claude Code Setup Audit-rapportens 3
 forslag, og alle "16. sept."-opfølgningspunkter (npm audit fix --force,
@@ -40,8 +81,7 @@ detaljen. Øvrige fund var lav-severity/informative (rolle-scope på to
 RLS-policyer, PostgREST-filter-escaping i søgefunktioner) — ingen yderligere
 handling påkrævet.
 
-**Eneste resterende punkt: Leaked Password Protection er blokeret, ikke
-glemt.** Brugeren forsøgte at slå den til 17. sept. i Supabase Dashboard →
+**Leaked Password Protection er blokeret, ikke glemt.** Brugeren forsøgte at slå den til 17. sept. i Supabase Dashboard →
 Authentication → Sign In/Providers, men fik fejlen "Configuring leaked
 password protection via HaveIBeenPwned.org is available on Pro Plans and
 up" — projektet kører på Free-planen. Kræver en betalt opgradering til
@@ -55,12 +95,10 @@ I dag kan man oprette en konto på en fremmed eller forkert e-mailadresse,
 og den får velkomstmail med det samme. Rækkefølgen er vigtig. Nævn
 punkterne for Jan ved sessionens start, indtil de er gjort, og fjern
 afsnittet bagefter.
-1. *(Claude, kræver Jans ja)* Kør `supabase/sql/2026-09-29_welcome_email_after_confirm.sql`
-   via `apply_migration`, så velkomstmailen først sendes ved bekræftelse.
-   Filens header viser, hvordan man tjekker om den allerede er kørt.
-2. *(Claude, kræver Jans ja)* App-delen (commit "Klar til
-   e-mailbekræftelse (D1) og valgfrit telefonnummer (D2)") skal være
-   merget til `main`. Tjek `git log origin/main`.
+1. ✅ *Gjort 29. sept.:* `supabase/sql/2026-09-29_welcome_email_after_confirm.sql`
+   er kørt. Velkomstmailen sendes nu først ved bekræftelse, verificeret
+   mod de live triggere i en tilbagerullet test.
+2. ✅ *Gjort 29. sept.:* app-delen er merget og live (PR #377).
 3. *(Jan, Supabase Dashboard)* Authentication → Emails → SMTP Settings:
    bekræft at egen SMTP (formentlig Resend) er slået til. Uden den sender
    Supabase kun mails til teamets egne adresser, og så kan ingen nye
@@ -68,9 +106,27 @@ afsnittet bagefter.
    sendt en nulstillingsmail til en adresse uden for teamet 25. sept.
 4. *(Jan, Supabase Dashboard)* Authentication → Sign In / Providers →
    Email → slå "Confirm email" til. Først når 1-3 er på plads.
-5. *(Claude)* Luk tickets D1 (`cc121cd9…`) og D2 (`d4fd8b35…`) i
-   `feedback_tickets`, når det er verificeret. D2 kan lukkes, så snart
-   punkt 2 er merget.
+5. *(Claude)* Luk ticket D1 (`cc121cd9…`) i `feedback_tickets`, når
+   punkt 3-4 er gjort og verificeret (fx en testoprettelse med et
+   `janfogde+…`-alias, der skal vise den blå "Vi har sendt et
+   bekræftelseslink"-besked). D2 (`d4fd8b35…`) er lukket.
+
+**ÅBEN: Fuld E2E-test fra Claude-sandboxen (QA-ticket B1, `820806b9…`).**
+Miljøets netværkspolitik afviser `eatsafe.dk`,
+`jegrpcflyguadyxialkm.supabase.co` og `world.openfoodfacts.org` (403 på
+CONNECT, tjekket igen 29. sept.). Jan skal tilføje dem under miljøets
+indstillinger: cloud-miljø-menuen i sessionens titellinje → Edit →
+Network access. Ændringen gælder nye sessioner. Tjek bagefter med
+`curl -s -o /dev/null -w "%{http_code}" https://eatsafe.dk`. Admin-panelet
+kræver desuden en testkonto med admin-rolle; opret den KUN efter Jans ja.
+Luk B1, når en ny session har kunnet nå alle tre domæner.
+Det, som ingen sandbox kan teste (kamera, installation, push, deling
+mellem to konti, login-udbydere, skærmlæser), står i en fælles
+tjekliste: https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X. Status og
+noter ligger i dens database, samlingen `results` (ét dokument pr.
+punkt: `status` ok/fail/skip, `note`, `by`, `at`, `device`), og kan
+læses med `ArtifactData` `list`. Opret tickets for punkter med
+`status: "fail"`.
 
 ---
 
