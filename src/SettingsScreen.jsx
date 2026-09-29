@@ -52,41 +52,37 @@ import { formatBuildTime, COMMIT_SHA } from "./utils.jsx";
 // samme "lokal helper i skærmens egen fil"-mønster som ProfileScreen.jsx's
 // GamificationCard, ikke en ny delt fil, da ingen anden skærm har brug for dem.
 
-function BigToggle({ on, onClick, disabled }) {
+// Kontakterne er rigtige switches for skærmlæsere (role/aria-checked/navn).
+// Selve knappen er en usynlig 44×44-trykflade (negativ margin, så layoutet
+// er uændret) rundt om det synlige spor — det synlige udtryk er det samme.
+function Toggle({ on, onClick, disabled, label, w, h, knob, disabledOpacity }) {
+  const padX = Math.max(0, (44 - w) / 2), padY = Math.max(0, (44 - h) / 2);
+  const inset = (h - knob) / 2;
   return (
-    <button onClick={onClick} disabled={disabled}
+    <button type="button" role="switch" aria-checked={!!on} aria-label={label} onClick={onClick} disabled={disabled}
       style={{
-        width:48, height:28, borderRadius:14, border:"none", cursor: disabled ? "default" : "pointer",
-        background: on ? "var(--green)" : "var(--border2)",
-        position:"relative", transition:"background .2s", flexShrink:0,
-        opacity: disabled ? 0.5 : 1,
+        width: w + padX * 2, height: h + padY * 2, margin: `${-padY}px ${-padX}px`, padding: 0,
+        border:"none", background:"transparent", cursor: disabled ? "default" : "pointer",
+        display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
       }}>
-      <div style={{
-        width:22, height:22, borderRadius:"50%", background:"var(--ink)",
-        position:"absolute", top:3, left: on ? 23 : 3,
-        transition:"left .2s", boxShadow:"0 1px 3px rgba(0,0,0,.3)",
-      }} />
+      <span style={{
+        width:w, height:h, borderRadius:h / 2, display:"block",
+        background: on ? "var(--green)" : "var(--border2)",
+        position:"relative", transition:"background .2s",
+        opacity: disabled ? disabledOpacity : 1,
+      }}>
+        <span style={{
+          width:knob, height:knob, borderRadius:"50%", background:"var(--ink)", display:"block",
+          position:"absolute", top:inset, left: on ? w - knob - inset : inset,
+          transition:"left .2s", boxShadow:"0 1px 3px rgba(0,0,0,.3)",
+        }} />
+      </span>
     </button>
   );
 }
 
-function SmallToggle({ on, onClick, disabled }) {
-  return (
-    <button onClick={onClick} disabled={disabled} aria-pressed={on}
-      style={{
-        width:36, height:20, borderRadius:10, border:"none", cursor: disabled ? "default" : "pointer",
-        background: on ? "var(--green)" : "var(--border2)",
-        position:"relative", transition:"background .2s", flexShrink:0,
-        opacity: disabled ? 0.4 : 1,
-      }}>
-      <div style={{
-        width:16, height:16, borderRadius:"50%", background:"var(--ink)",
-        position:"absolute", top:2, left: on ? 18 : 2,
-        transition:"left .2s", boxShadow:"0 1px 3px rgba(0,0,0,.3)",
-      }} />
-    </button>
-  );
-}
+const BigToggle = (p) => <Toggle {...p} w={48} h={28} knob={22} disabledOpacity={0.5} />;
+const SmallToggle = (p) => <Toggle {...p} w={36} h={20} knob={16} disabledOpacity={0.4} />;
 
 // On/off-række — Vibration/Lyd/Push-notifikationer.
 function ToggleRow({ label, sub, note, on, onToggle, disabled, last }) {
@@ -97,7 +93,7 @@ function ToggleRow({ label, sub, note, on, onToggle, disabled, last }) {
         {sub && <div style={{ fontSize:10.5, color:"var(--muted)", lineHeight:1.4, marginTop:2 }}>{sub}</div>}
         {note && <div style={{ marginTop:6, fontSize:11, color:"var(--amber)", background:"var(--amber-lt)", borderRadius:8, padding:"6px 10px" }}>{note}</div>}
       </div>
-      <BigToggle on={on} onClick={onToggle} disabled={disabled} />
+      <BigToggle on={on} onClick={onToggle} disabled={disabled} label={label} />
     </div>
   );
 }
@@ -299,7 +295,7 @@ export default function SettingsScreen({
                         on={channelDisabled ? false : on}
                         onClick={() => setNotifPref(cat.id, ch, !on)}
                         disabled={busy || channelDisabled}
-                        aria-label={`${label}-notifikation for ${cat.label}`}
+                        label={`${label}-notifikation for ${cat.label}`}
                       />
                     </div>
                   );
