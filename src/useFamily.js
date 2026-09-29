@@ -110,11 +110,6 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
     pendingTempIdsRef.current.add(tempMember.id);
     setFamily(f => [...f, tempMember]);
     resetNewMember();
-    // Ekstra bekræftelse ud over selve listen der viser medlemmet — uden
-    // den kunne brugeren være usikker på, om trykket reelt gjorde noget
-    // (25. sept. 2026, brugerfeedback: "hvad sker der, når man trykker
-    // + Tilføj familiemedlem?").
-    showToast(`${tempMember.name} er tilføjet`);
     try {
       const data = await apiCall(`${SUPABASE_URL}/rest/v1/family_members`, {
         method: "POST",
@@ -138,7 +133,12 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
         // App.jsx's "vælg Alle første gang"-effekt) — skift det også dér.
         setActiveProfiles?.(a => (a || []).map(x => x === tempMember.id ? saved.id : x));
       }
+      // Bekræftelse ud over selve listen (25. sept. 2026, brugerfeedback:
+      // "hvad sker der, når man trykker + Tilføj familiemedlem?") — først
+      // når serveren har gemt, så den aldrig lover noget der ikke skete.
+      showToast(`${tempMember.name} er tilføjet`);
     } catch {
+      showToast(`${tempMember.name} kunne ikke gemmes. Tjek din forbindelse og prøv igen.`, "error");
       // Gemning fejlede — fjern det optimistiske medlem igen, ellers står
       // brugeren med et familiemedlem i UI'et der aldrig blev gemt i databasen
       setFamily(f => f.filter(m => m.id !== tempMember.id));
@@ -166,7 +166,6 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
     };
     setFamily(f => f.map(m => m.id === id ? { ...m, ...patch } : m));
     resetNewMember();
-    showToast(`${patch.name} er opdateret`);
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/family_members?id=eq.${id}`, {
         method: "PATCH",
@@ -181,10 +180,12 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
           e_numbers: newMemberENumbers,
         }),
       });
+      showToast(`${patch.name} er opdateret`);
     } catch {
       // Opdatering fejlede — læg det oprindelige medlem tilbage, ellers
       // viser UI'et ændringer der aldrig blev gemt i databasen
       if (before) setFamily(f => f.map(m => m.id === id ? before : m));
+      showToast(`Ændringerne til ${patch.name} kunne ikke gemmes. Prøv igen.`, "error");
     }
   };
 
@@ -208,6 +209,7 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
       // Sletning fejlede — læg medlemmet tilbage, ellers forsvinder det fra UI'et
       // uden at faktisk være slettet i databasen
       if (removed) setFamily(f => [...f, removed]);
+      showToast(`${removed?.name || "Medlemmet"} kunne ikke slettes. Prøv igen.`, "error");
     }
   };
 
