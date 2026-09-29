@@ -983,24 +983,21 @@ export default function OnboardingScreen({
               </div>
             )}
             {editMode && <div style={{ height:4 }} />}
-            {/* Step header med tilbage og fremgang — tilbagepilen fik egen
-                luft og et rigtigt touch-target (29. sept. 2026, "Ret
-                designet på onboarding-trin 2/5"): sad tidligere med kun
-                10px gap og et 20px-bredt klikområde direkte op ad
-                fremgangsbjælken, hvilket kunne læses som var den en del af
-                selve bjælken. Knappen har nu reel 44×44-padding (EatSafes
-                faste touch-target-minimum) i stedet for en negativ margin,
-                som ellers ville have ladet selve klik-fladen overlappe ind
-                i det ekstra gap igen og gjort den visuelle adskillelse
-                virkningsløs — fremgangsbjælken rykker derfor en anelse til
-                højre, hvilket den tåler fint (flex:1, egen bredde). */}
-            <div style={{ ...UI.udflex_aicenter_g10_mb8, gap:14 }}>
+            {/* Step header med tilbage og fremgang — tilbagepilen brugte en
+                håndrullet inline-SVG der hverken lignede appens øvrige
+                tilbageknapper eller gav ordentlig separation til
+                fremgangsbjælken (29. sept. 2026, brugerfeedback). Erstattet
+                med EXAKT samme delte mønster som KnowledgeScreen.jsx/
+                RecipesScreen.jsx/RestaurantGuideScreen.jsx allerede bruger:
+                en let boks (kant + let baggrund) med den delte
+                Icon name="chevronLeft" — så den nu ser ud som resten af
+                appens tilbageknapper, med naturlig luft til bjælken uden en
+                unødvendig ekstra 44px-touch-target-udvidelse. */}
+            <div style={{ ...UI.udflex_aicenter_g10_mb8, gap:12 }}>
               {onboardStep > 1 && (
                 <button onClick={() => setOnboardStep(onboardStep - 1)} aria-label="Tilbage"
-                  style={{ background:"none", border:"none", cursor:"pointer", width:44, height:44, padding:0, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
-                    <path strokeLinecap="round" d="M15 19l-7-7 7-7"/>
-                  </svg>
+                  style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, flexShrink:0 }}>
+                  <Icon name="chevronLeft" size={18} color="var(--ink)" />
                 </button>
               )}
               <div style={UI.flex1}>
