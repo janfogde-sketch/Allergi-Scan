@@ -664,16 +664,15 @@ export default function ListScreen({
       )}
 
       {/* ── Tom tilstand ──
-          Alle tre overstyringer er lokale inline-styles KUN på denne
-          instans (29. sept. 2026, brugerfeedback) — .empty-state/
-          -icon/-sub er delte klasser brugt uændret af MadpasScreen.jsx og
-          tre steder i ProfileScreen.jsx, som ikke skal påvirkes.
-          paddingTop 56→8px flytter hele blokken ~48px op (mindre tomrum
-          under listevælgeren), cirklen er ~12% mindre (68→60px, ikonet
-          26→23px i samme forhold), og hjælpeteksten har fået en smule
-          strammere linjeafstand (1.55→1.35). */}
+          Positionen (paddingTop) er tilbageført til den delte klasses
+          normale 56px (29. sept. 2026, opfølgning — en tidligere runde
+          flyttede blokken ~48px op, men det skulle rulles tilbage). Cirkel-
+          størrelsen og hjælpetekstens linjeafstand er fortsat lokale
+          inline-overstyringer KUN på denne instans — .empty-icon/-sub er
+          delte klasser brugt uændret af MadpasScreen.jsx og tre steder i
+          ProfileScreen.jsx, som ikke skal påvirkes. */}
       {shoppingList.length === 0 && (
-        <div className="empty-state" style={{ paddingTop:8 }}>
+        <div className="empty-state">
           <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="cart" size={23} color="var(--muted)" /></span>
           <div className="empty-txt">Listen er tom</div>
           <div className="empty-sub" style={{ lineHeight:1.35 }}>Søg efter produkter eller tilføj en vare manuelt</div>
