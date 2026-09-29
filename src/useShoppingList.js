@@ -11,6 +11,9 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 import { PREVIEW_MOCK_PRODUCTS } from "./previewMockData.js";
+import { showToast } from "./SharedComponents.jsx";
+
+const SAVE_FAILED = "kunne ikke gemmes. Tjek din forbindelse og prøv igen.";
 
 const ACTIVE_LIST_KEY = "as_active_shopping_list";
 const SHOPPING_FN = `${SUPABASE_URL}/functions/v1/shopping`;
@@ -153,7 +156,7 @@ export function useShoppingList({ accessToken, userId }) {
         setActiveListId(data.list.id);
         return data.list;
       }
-    } catch { /* silent */ }
+    } catch { showToast(`Listen ${SAVE_FAILED}`, "error"); }
     return null;
   }, [userId, accessToken, setActiveListId]);
 
@@ -164,8 +167,8 @@ export function useShoppingList({ accessToken, userId }) {
       await apiCall(`${SHOPPING_FN}/${listId}`, {
         method: "PATCH", headers: makeHeaders(accessToken), body: JSON.stringify({ name: name.trim() }),
       });
-    } catch { /* silent — næste loadShoppingList() retter visningen */ }
-  }, [accessToken]);
+    } catch { showToast(`Det nye navn ${SAVE_FAILED}`, "error"); loadShoppingList(); }
+  }, [accessToken, loadShoppingList]);
 
   const setListType = useCallback(async (listId, type) => {
     updateLists(l => l.map(x => x.id === listId ? { ...x, type } : x));
@@ -173,8 +176,8 @@ export function useShoppingList({ accessToken, userId }) {
       await apiCall(`${SHOPPING_FN}/${listId}`, {
         method: "PATCH", headers: makeHeaders(accessToken), body: JSON.stringify({ type }),
       });
-    } catch { /* silent */ }
-  }, [accessToken]);
+    } catch { showToast(`Ændringen ${SAVE_FAILED}`, "error"); loadShoppingList(); }
+  }, [accessToken, loadShoppingList]);
 
   const deleteList = useCallback(async (listId) => {
     const removed = listsRef.current.find(l => l.id === listId);
@@ -185,6 +188,7 @@ export function useShoppingList({ accessToken, userId }) {
       await apiCall(`${SHOPPING_FN}/${listId}`, { method: "DELETE", headers: makeHeaders(accessToken) });
     } catch {
       if (removed) updateLists(l => [...l, removed]);
+      showToast("Listen kunne ikke slettes. Tjek din forbindelse og prøv igen.", "error");
     }
   }, [accessToken, activeListId, setActiveListId]);
 
@@ -379,6 +383,10 @@ export function useShoppingList({ accessToken, userId }) {
       pendingAddQueueRef.current = pendingAddQueueRef.current.filter(e => e.tempId !== tempId);
       pendingAddsRef.current.get(tempId)?.resolve(null);
       pendingAddsRef.current.delete(tempId);
+      // Feltet blev ryddet optimistisk — læg fritekst-varen tilbage, så den
+      // ikke skal skrives igen (men overskriv ikke noget nyt brugeren har skrevet)
+      if (!isProduct) setNewItemName(cur => cur || name.trim());
+      showToast(`"${name.trim()}" ${SAVE_FAILED}`, "error");
       return false;
     }
   }, [activeListId, accessToken, userId]);
@@ -406,6 +414,7 @@ export function useShoppingList({ accessToken, userId }) {
       // Opdatering fejlede — rul afkrydsningen tilbage, ellers viser UI'et en
       // status serveren ikke er enig i, indtil næste genindlæsning stille retter den
       updateLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: (x.shopping_list_items||[]).map(i => i.id === id ? { ...i, checked: !newChecked } : i) }));
+      showToast(`Ændringen ${SAVE_FAILED}`, "error");
     }
   }, [activeListId, accessToken]);
 
@@ -425,6 +434,7 @@ export function useShoppingList({ accessToken, userId }) {
       // Sletning fejlede — læg varen tilbage, ellers forsvinder den fra UI'et
       // uden reelt at være slettet i databasen
       if (removed) updateLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: [...(x.shopping_list_items||[]), removed] }));
+      showToast("Varen kunne ikke slettes. Tjek din forbindelse og prøv igen.", "error");
     }
   }, [activeListId, accessToken]);
 

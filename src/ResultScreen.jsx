@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compareENumbers, checkDietCompatibility, verifiedBadge, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findActiveListMatch, categorizeProductFindings, computeTopStatus } from "./helpers.js";
+import { compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findActiveListMatch, categorizeProductFindings, computeTopStatus } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -433,6 +433,8 @@ export default function ResultScreen({
       ? "Produktdata kommer direkte fra producenten eller en verificeret kilde."
       : scanResult.source === "off" || scanResult.source === "open_food_facts"
       ? "Produktdata kommer fra Open Food Facts og kan være brugeroprettede. Kontrollér altid produktets aktuelle emballage."
+      : STORE_SOURCES.includes(scanResult.source)
+      ? "Produktdata kommer fra butikkens varekatalog og kan være ufuldstændige eller forældede. Kontrollér altid produktets aktuelle emballage."
       : "Produktdata er indsendt af en EatSafe-bruger og kan indeholde fejl eller være forældede.";
     return (
       <div className="product-hero" style={{ position:"relative", border:`2px solid ${verdictColor}` }}>
@@ -700,9 +702,11 @@ export default function ResultScreen({
     const rows = [
       ["Energi",          n.energy_kcal    ? `${n.energy_kcal} kcal`    : null],
       ["Fedt",            n.fat     != null ? `${n.fat} g`               : null],
-      ["— heraf mættet",  n.saturated_fat != null ? `${n.saturated_fat} g` : null],
+      // "heraf" kun under en overrække der faktisk vises — ellers læses fx
+      // "Fedt 32 g / — heraf sukker 58 g" som at fedtet er sukker.
+      [n.fat != null ? "— heraf mættet" : "Mættet fedt", n.saturated_fat != null ? `${n.saturated_fat} g` : null],
       ["Kulhydrat",       n.carbohydrates != null ? `${n.carbohydrates} g` : null],
-      ["— heraf sukker",  n.sugars  != null ? `${n.sugars} g`            : null],
+      [n.carbohydrates != null ? "— heraf sukker" : "Sukkerarter", n.sugars != null ? `${n.sugars} g` : null],
       ["Kostfibre",       n.fiber   != null ? `${n.fiber} g`             : null],
       ["Protein",         n.protein != null ? `${n.protein} g`           : null],
       ["Salt",            n.salt    != null ? `${n.salt} g`              : null],

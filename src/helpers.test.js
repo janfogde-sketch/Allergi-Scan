@@ -206,6 +206,11 @@ describe("verifiedBadge", () => {
     expect(verifiedBadge(null, "off").label).toBe("Open Food Facts");
   });
 
+  it("marks Bilka/nemlig imports as store data, not user-submitted", () => {
+    expect(verifiedBadge(null, "bilka").label).toBe("Butiksdata");
+    expect(verifiedBadge("unverified", "nemlig").label).toBe("Butiksdata");
+  });
+
   it("falls back to user-submitted for anything else", () => {
     expect(verifiedBadge(null, null).label).toBe("Bruger-indsendt");
   });

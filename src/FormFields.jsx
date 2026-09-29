@@ -29,7 +29,7 @@ export function AgeStepper({ value, onChange, min = 1, max = 120, placeholder = 
         style={{ width:44, height:44, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
         −
       </button>
-      <input className="field field-no-spinner" type="number" inputMode="numeric" placeholder={placeholder} min={min} max={max}
+      <input className="field field-no-spinner" type="number" inputMode="numeric" placeholder={placeholder} min={min} max={max} aria-label="Alder i år"
         value={value || ""} onChange={e => onChange(e.target.value)}
         style={{ width:64, height:44, flexShrink:0, textAlign:"center", padding:"0 4px", fontSize:17, fontWeight:700, boxSizing:"border-box" }} />
       <button type="button" className="age-step-btn" onClick={() => step(1)} aria-label="Ét år ældre"

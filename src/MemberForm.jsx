@@ -5,6 +5,7 @@ import { UI } from "./styleUtils.js";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { AllergenChipPicker, DietChipPicker, ENumberPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { Accordion, PrimaryButton, InputField } from "./DesignSystem.jsx";
+import { addUniqueCustom } from "./helpers.js";
 
 // Familiemedlem-formularen genbruger nu PRÆCIS de samme felt-komponenter som
 // onboarding trin 1-3 (25. sept. 2026, brugerfeedback: "Ingen nye designs...
@@ -26,8 +27,10 @@ export const MemberForm = ({
   customInput, setCustomInput,
   onAdd, addLabel,
 }) => {
-  const isValid = name?.trim() && birthYear && gender;
   const age = birthYear ? String(new Date().getFullYear() - parseInt(birthYear)) : "";
+  // Samme realistiske interval som trin 1 (0 tilladt for spædbørn).
+  const ageOk = age !== "" && Number(age) >= 0 && Number(age) <= 120;
+  const isValid = name?.trim() && birthYear && ageOk && gender;
   // "Navn, alder og køn er obligatoriske"-teksten må først vises EFTER et
   // forsøgt tryk på "+ Tilføj familiemedlem", ikke proaktivt fra starten
   // (25. sept. 2026, brugerfeedback — samme princip som trin 1's
@@ -78,9 +81,10 @@ export const MemberForm = ({
         <div style={UI.sectionLbl6}>Mangler din allergi eller intolerance?</div>
         <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0 }}>
           <input className="field" placeholder='Skriv fx "Fruktose"…' value={customInput}
+            aria-label="Egen allergi eller intolerance"
             onChange={e => setCustomInput(e.target.value)}
-            onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(p=>[...p,customInput.trim()]); setCustomInput(""); }}} />
-          <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(p=>[...p,customInput.trim()]); setCustomInput(""); }}}>+</button>
+            onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(p=>addUniqueCustom(p, customInput)); setCustomInput(""); }}} />
+          <button className="btn btn-outline btn-sm" aria-label="Tilføj egen allergi" onClick={() => { if(customInput.trim()){ setCustomAllerg(p=>addUniqueCustom(p, customInput)); setCustomInput(""); }}}>+</button>
         </div>
         {customAllerg.length > 0 && (
           <div className="tags">

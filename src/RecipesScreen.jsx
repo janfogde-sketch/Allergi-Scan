@@ -494,7 +494,7 @@ export default function RecipesScreen({
           <div>
             <div style={{ fontSize:21, fontWeight:700, color:"var(--ink)", letterSpacing:"-.4px" }}>Opskrifter</div>
             <div style={UI.muted12mt2}>
-              {recipes.length > 0 ? `${recipes.length} opskrifter` : "Indlæser…"}
+              {recipesLoading ? "Indlæser…" : recipes.length > 0 ? `${recipes.length} opskrifter` : null}
             </div>
           </div>
           <button onClick={() => setShowSubmitRecipe(true)}

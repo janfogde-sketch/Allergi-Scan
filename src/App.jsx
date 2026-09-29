@@ -811,23 +811,20 @@ export default function EatSafe() {
       if (helpOpen) { setHelpOpen(false); return; }
       if (feedbackOpen) { setFeedbackOpen(false); return; }
       if (profilePopup) { setProfilePopup(null); return; }
+      if (showProfileMenu) { setShowProfileMenu(false); return; }
       if (cameraActive) { closeCameraFully(); return; }
-      if (screen === SCREENS.RESULT || screen === SCREENS.NOTFOUND || screen === SCREENS.SUGGEST_EDIT
-          || screen === SCREENS.SEARCH || screen === SCREENS.SUBMITTED
-          || screen === SCREENS.MADPAS || screen === SCREENS.RESTAURANTGUIDE) {
-        setScreen(SCREENS.HOME);
-        return;
-      }
-      if (screen === SCREENS.ADMIN || screen === SCREENS.FAMILY || screen === SCREENS.HISTORY
-          || screen === SCREENS.FAVORITES || screen === SCREENS.EDITPROFILE || screen === SCREENS.EDITPREFERENCES) {
-        setScreen(SCREENS.PROFILE);
-        return;
-      }
-      // På bundmenu-skærmene (HOME, LIST, RECIPES, KNOWLEDGE, PROFILE) — gør ingenting (forhindrer logout)
+      // Bundmenu-skærmene og selve login/onboarding — gør ingenting
+      // (forhindrer at tilbage forlader appen eller afbryder onboarding).
+      const STAY = [SCREENS.HOME, SCREENS.LIST, SCREENS.HISTORY, SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD];
+      if (STAY.includes(screen)) return;
+      // Redigering åbnes fra Profil og går tilbage dertil; alt andet (menu-
+      // skærme, resultat, indsendelse, Madpas m.fl.) går til forsiden.
+      if (screen === SCREENS.EDITPROFILE || screen === SCREENS.EDITPREFERENCES) { setScreen(SCREENS.PROFILE); return; }
+      setScreen(SCREENS.HOME);
     };
     window.addEventListener("popstate", handleBack);
     return () => window.removeEventListener("popstate", handleBack);
-  }, [screen, helpOpen, feedbackOpen, profilePopup, cameraActive]);
+  }, [screen, helpOpen, feedbackOpen, profilePopup, cameraActive, showProfileMenu]);
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
   // Load admin stats when entering admin screen

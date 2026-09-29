@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
-import { initials } from "./helpers.js";
+import { initials, addUniqueCustom } from "./helpers.js";
 import { EatSafeLogo, Icon, showToast } from "./SharedComponents.jsx";
 import { ENumberPicker, AllergenChipPicker, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
@@ -178,7 +178,11 @@ export default function OnboardingScreen({
   const renderStep1 = () => {
     const nameOk = (user.name||"").trim().length > 0;
     const emailOk = (user.email||loginEmail||"").trim().length > 0;
-    const ageOk = (user.age||"").toString().trim().length > 0 && Number(user.age) > 0;
+    // Alder skal være et realistisk tal (1-120) — AgeStepper begrænser kun
+    // +/-, ikke et tal der tastes direkte ind (fx "999").
+    const ageNum = Number(user.age);
+    const ageEntered = (user.age||"").toString().trim().length > 0;
+    const ageOk = ageEntered && Number.isFinite(ageNum) && ageNum >= 1 && ageNum <= 120;
     const genderOk = !!(user.gender);
     // Telefon — 27. sept. 2026, "FINAL 10/10 POLISH": reel formatvalidering
     // (præcis 8 cifre efter +45, standard dansk mobilnummer-længde) i
@@ -297,7 +301,7 @@ export default function OnboardingScreen({
             <label className="field-lbl">Alder <span style={UI.red}>*</span></label>
             <AgeStepper value={user.age} onChange={age => setUser(u => ({...u, age}))} />
             {step1Attempted && !ageOk && (
-              <div style={{ fontSize:11.5, color:"var(--red)", fontWeight:600, marginTop:6 }}>Angiv din alder.</div>
+              <div style={{ fontSize:11.5, color:"var(--red)", fontWeight:600, marginTop:6 }}>{ageEntered ? "Angiv en alder mellem 1 og 120." : "Angiv din alder."}</div>
             )}
           </div>
 
@@ -336,6 +340,12 @@ export default function OnboardingScreen({
   // top-niveau-state), da den kun kaldes betinget (onboardStep===2).
   const renderStep2 = () => {
     const selectedCount = allergens.length + customAllerg.length;
+    const addCustomAllergy = () => {
+      if (!customInput.trim()) return;
+      setCustomAllerg(c => addUniqueCustom(c, customInput));
+      setCustomInput("");
+      setNoAllergiesConfirmed(false);
+    };
 
     return (
       <div className="fade-in">
@@ -352,9 +362,10 @@ export default function OnboardingScreen({
             <div style={UI.sectionLbl6}>Mangler din allergi eller intolerance?</div>
             <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0 }}>
               <input className="field" placeholder='Skriv fx "Fruktose"…' value={customInput}
+                aria-label="Egen allergi eller intolerance"
                 onChange={e => setCustomInput(e.target.value)}
-                onKeyDown={e => { if (e.key==="Enter"&&customInput.trim()) { setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); setNoAllergiesConfirmed(false); }}} />
-              <button className="btn btn-outline btn-sm" onClick={() => { if(customInput.trim()){ setCustomAllerg(c=>[...c,customInput.trim()]); setCustomInput(""); setNoAllergiesConfirmed(false); }}}>+</button>
+                onKeyDown={e => { if (e.key==="Enter") addCustomAllergy(); }} />
+              <button className="btn btn-outline btn-sm" aria-label="Tilføj egen allergi" onClick={addCustomAllergy}>+</button>
             </div>
             {customAllerg.length > 0 && (
               <div className="tags">
@@ -663,8 +674,9 @@ export default function OnboardingScreen({
                       globale error-boks (authError) nedenfor, som nu kun
                       bruges til fejl der ikke kan knyttes til ét felt (fx
                       "Der opstod en fejl. Prøv igen."). */}
-                  <label className="field-lbl">E-mail</label>
-                  <input className="field" type="email" autoComplete="email" placeholder="din@email.dk" value={loginEmail}
+                  <label className="field-lbl" htmlFor="signup-email">E-mail</label>
+                  <input id="signup-email" name="email" className="field" type="email" autoComplete="email" placeholder="din@email.dk" value={loginEmail}
+                    aria-invalid={!!(emailError || emailTakenError)}
                     onChange={e => { setLoginEmail(e.target.value); if (emailError) setEmailError(""); if (emailTakenError) setEmailTakenError(""); }}
                     style={{ marginBottom: (emailError || emailTakenError) ? 6 : 12, borderColor: (emailError || emailTakenError) ? "var(--red-md)" : undefined }}
                     onKeyDown={e => e.key==="Enter" && handleSignup()} />
@@ -678,9 +690,10 @@ export default function OnboardingScreen({
                       )}
                     </div>
                   )}
-                  <label className="field-lbl">Adgangskode</label>
+                  <label className="field-lbl" htmlFor="signup-password">Adgangskode</label>
                   <div style={{ position:"relative" }}>
-                    <input className="field" type={showPassword ? "text" : "password"} autoComplete="new-password" placeholder="Minimum 10 tegn" value={loginPassword}
+                    <input id="signup-password" name="password" className="field" type={showPassword ? "text" : "password"} autoComplete="new-password" placeholder="Minimum 10 tegn" value={loginPassword}
+                      aria-invalid={!!passwordError}
                       onChange={e => { setLoginPassword(e.target.value); if (passwordError) setPasswordError(""); }}
                       style={{ paddingRight:46, borderColor: passwordError ? "var(--red-md)" : undefined }}
                       onKeyDown={e => e.key==="Enter" && handleSignup()} />
@@ -735,8 +748,9 @@ export default function OnboardingScreen({
                       "Log ind →" trykket med tom/ugyldig e-mail OG "Glemt
                       adgangskode?" trykket uden en gyldig e-mail (samme
                       delte state, se useAuth.js). */}
-                  <label className="field-lbl">E-mail</label>
-                  <input className="field" type="email" autoComplete="email" placeholder="din@email.dk" value={loginEmail}
+                  <label className="field-lbl" htmlFor="login-email">E-mail</label>
+                  <input id="login-email" name="email" className="field" type="email" autoComplete="email" placeholder="din@email.dk" value={loginEmail}
+                    aria-invalid={!!emailError}
                     onChange={e => { setLoginEmail(e.target.value); if (emailError) setEmailError(""); }}
                     style={{ marginBottom: emailError ? 6 : 12, borderColor: emailError ? "var(--red-md)" : undefined }}
                     onKeyDown={e => e.key==="Enter" && handleLogin()} />
@@ -745,9 +759,10 @@ export default function OnboardingScreen({
                       {emailError}
                     </div>
                   )}
-                  <label className="field-lbl">Adgangskode</label>
+                  <label className="field-lbl" htmlFor="login-password">Adgangskode</label>
                   <div style={{ position:"relative" }}>
-                    <input className="field" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="Din adgangskode" value={loginPassword}
+                    <input id="login-password" name="password" className="field" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="Din adgangskode" value={loginPassword}
+                      aria-invalid={!!passwordError}
                       onChange={e => { setLoginPassword(e.target.value); if (passwordError) setPasswordError(""); }}
                       style={{ paddingRight:46, borderColor: passwordError ? "var(--red-md)" : undefined }}
                       onKeyDown={e => e.key==="Enter" && handleLogin()} />
