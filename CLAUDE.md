@@ -71,6 +71,16 @@ afsnittet bagefter.
    `janfogde+…`-alias, der skal vise den blå "Vi har sendt et
    bekræftelseslink"-besked). D2 (`d4fd8b35…`) er lukket.
 
+**ÅBEN: Fuld E2E-test fra Claude-sandboxen (QA-ticket B1, `820806b9…`).**
+Miljøets netværkspolitik afviser `eatsafe.dk`,
+`jegrpcflyguadyxialkm.supabase.co` og `world.openfoodfacts.org` (403 på
+CONNECT, tjekket igen 29. sept.). Jan skal tilføje dem under miljøets
+indstillinger: cloud-miljø-menuen i sessionens titellinje → Edit →
+Network access. Ændringen gælder nye sessioner. Tjek bagefter med
+`curl -s -o /dev/null -w "%{http_code}" https://eatsafe.dk`. Admin-panelet
+kræver desuden en testkonto med admin-rolle; opret den KUN efter Jans ja.
+Luk B1, når en ny session har kunnet nå alle tre domæner.
+
 ---
 
 ## 1. Hvad er EatSafe?
