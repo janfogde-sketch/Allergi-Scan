@@ -37,19 +37,22 @@ export const EatSafeLogo = ({ variant = "horizontal", size = 28, style, classNam
   );
 };
 
-// ─── HEADER-LOGO (tekst-only, 29. sept. 2026) ────────────────────────────────
-// "EatSafe" + BETA-badge som ren tekst/CSS — IKKE billedaktivet ovenfor.
-// Brugt udelukkende i AppHeader.jsx (appens sider), ALDRIG på velkommen/
-// login/onboarding (som fortsat viser det fulde billedlogo inkl.
-// scannerikon via EatSafeLogo ovenfor). Farver/vægt styres af
-// --brand-ink/--brand-green + .topbar-wordmark(-safe) i theme.jsx, bevidst
-// hentet fra samme SVG-master-farver som billedlogoet, ikke appens
-// almindelige --ink/--green-UI-tokens.
-export const EatSafeHeaderLogo = () => (
-  <div className="topbar-logo">
-    <span className="topbar-wordmark">Eat<span className="topbar-wordmark-safe">Safe</span></span>
-    <div className="topbar-beta">BETA</div>
-  </div>
+// ─── EATSAFE-WORDMARK (tekst-only, 29. sept. 2026, "Master-specifikation for
+// logo og branding i headers") ────────────────────────────────────────────
+// Kun teksten "EatSafe", ingen scanner-/stregkode-symbol og ingen BETA-badge
+// — badge'n er bevidst IKKE en del af denne komponent, da den kun skal vises
+// visse steder (appens headers), ikke andre (onboarding), se AppHeader.jsx/
+// OnboardingScreen.jsx for hvordan de hver især komponerer den. Farver/
+// vægt/kerning styres af --brand-ink/--brand-green + .topbar-wordmark(-safe)
+// i theme.jsx — PRÆCIS samme værdier som selve billedlogoets (EatSafeLogo
+// ovenfor) indlejrede SVG-farver, hentet direkte fra master-vektorfilerne
+// (src/assets/logo/*.svg), ikke gættet ud fra et screenshot og ikke appens
+// almindelige --ink/--green-UI-tokens. Dette er den ENE wordmark-komponent
+// for hele appen — brug den overalt tekst-logoet skal vises (aldrig en ny,
+// lignende variant), så "Eat"/"Safe"-farve, font, vægt, kerning og
+// proportioner er identiske alle steder.
+export const EatSafeWordmark = () => (
+  <span className="topbar-wordmark">Eat<span className="topbar-wordmark-safe">Safe</span></span>
 );
 
 // ─── SCAN-LOADING OVERLAY ─────────────────────────────────────────────────────
