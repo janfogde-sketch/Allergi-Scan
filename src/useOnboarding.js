@@ -57,6 +57,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
         body: JSON.stringify({
           name: user.name.trim(),
           email: emailToSave || null,
+          // Telefon er valgfri (QA-beslutning D2, 29. sept. 2026).
           phone: user.phone || null,
           // Gemmes som fødselsår (samme skema som familiemedlemmer og resten
           // af appen) i stedet for rå alder, så det ikke bliver forældet —

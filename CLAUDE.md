@@ -50,6 +50,28 @@ længere log-retention). **Spørg IKKE om det bare er glemt** — spørg i
 stedet om brugeren ønsker at opgradere Supabase-planen, og lad det være
 deres beslutning. Fjern dette afsnit når det er afklaret.
 
+**ÅBEN: Slå e-mailbekræftelse til (QA-beslutning D1, 29. sept. 2026).**
+I dag kan man oprette en konto på en fremmed eller forkert e-mailadresse,
+og den får velkomstmail med det samme. Rækkefølgen er vigtig. Nævn
+punkterne for Jan ved sessionens start, indtil de er gjort, og fjern
+afsnittet bagefter.
+1. *(Claude, kræver Jans ja)* Kør `supabase/sql/2026-09-29_welcome_email_after_confirm.sql`
+   via `apply_migration`, så velkomstmailen først sendes ved bekræftelse.
+   Filens header viser, hvordan man tjekker om den allerede er kørt.
+2. *(Claude, kræver Jans ja)* App-delen (commit "Klar til
+   e-mailbekræftelse (D1) og valgfrit telefonnummer (D2)") skal være
+   merget til `main`. Tjek `git log origin/main`.
+3. *(Jan, Supabase Dashboard)* Authentication → Emails → SMTP Settings:
+   bekræft at egen SMTP (formentlig Resend) er slået til. Uden den sender
+   Supabase kun mails til teamets egne adresser, og så kan ingen nye
+   brugere bekræfte deres konto. Den er formentlig sat op, for der blev
+   sendt en nulstillingsmail til en adresse uden for teamet 25. sept.
+4. *(Jan, Supabase Dashboard)* Authentication → Sign In / Providers →
+   Email → slå "Confirm email" til. Først når 1-3 er på plads.
+5. *(Claude)* Luk tickets D1 (`cc121cd9…`) og D2 (`d4fd8b35…`) i
+   `feedback_tickets`, når det er verificeret. D2 kan lukkes, så snart
+   punkt 2 er merget.
+
 ---
 
 ## 1. Hvad er EatSafe?
@@ -781,6 +803,22 @@ visning (prefillet fra konto, eller bekræftet via Google) bruger nu en
 positiv grøn baggrundstone (`--green-lt`/`--green-mid`) i stedet for
 `opacity:.6`, som gav et fejlagtigt "disabled/fejlramt"-udseende. Fuld
 detalje i `.claude/HISTORY.md`.
+
+**Opdateret 29. sept. 2026 (QA-beslutning D2):** Telefon er valgfri
+(valideres kun hvis udfyldt: præcis 8 cifre). **Alder og Køn SKAL forblive
+obligatoriske** — Jans eksplicitte beslutning: han bruger dem, selvom
+appens egne funktioner ikke gør. Foreslå ikke at fjerne dem igen af
+dataminimeringshensyn.
+
+**E-mailbekræftelse (QA-beslutning D1, 29. sept. 2026):** appen håndterer
+Supabase-indstillingen "Confirm email": oprettelse uden session viser en
+neutral `.info-box` (`authInfo` i `useAuth.js`, ikke den røde fejlboks),
+signup sender `redirect_to` til appens eget domæne, en eksisterende e-mail
+genkendes via Supabases "bruger uden identities"-svar, og bekræftelses-
+linket lander i onboarding med mærket "E-mail bekræftet" (`isOAuth` holder
+nu udbyderen: `"google"`/`"email"`). Velkomstmailen skal flyttes til
+bekræftelsen og selve indstillingen slås til. Se den åbne tjekliste i
+afsnit 0.
 
 ### App-headeren omdøbt til fælles komponent + tekst-wordmark (27. sept. 2026)
 

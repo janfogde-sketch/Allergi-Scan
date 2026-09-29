@@ -243,7 +243,7 @@ export default function EatSafe() {
     accessToken, setAccessToken, refreshToken, setRefreshToken,
     userId, setUserId,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
-    authError, setAuthError, emailTakenError, setEmailTakenError,
+    authError, setAuthError, authInfo, emailTakenError, setEmailTakenError,
     emailError, setEmailError, passwordError, setPasswordError, authLoading, setAuthLoading,
     authTab, setAuthTab, isOAuth, setIsOAuth,
     rememberMe, setRememberMe,
@@ -886,12 +886,12 @@ export default function EatSafe() {
   const authContextValue = useMemo(() => ({
     user, setUser, userId, setUserId, accessToken,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
-    authError, setAuthError, emailTakenError, setEmailTakenError,
+    authError, setAuthError, authInfo, emailTakenError, setEmailTakenError,
     emailError, setEmailError, passwordError, setPasswordError,
     authLoading, authTab, setAuthTab,
     isOAuth, rememberMe, setRememberMe,
     handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth,
-  }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, emailTakenError, emailError, passwordError, authLoading, authTab, isOAuth, rememberMe, handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth]);
+  }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, authInfo, emailTakenError, emailError, passwordError, authLoading, authTab, isOAuth, rememberMe, handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth]);
 
   const profileContextValue = useMemo(() => ({
     allergens, setAllergens, customAllerg, setCustomAllerg,

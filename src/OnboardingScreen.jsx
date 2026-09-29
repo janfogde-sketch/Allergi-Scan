@@ -63,7 +63,7 @@ export default function OnboardingScreen({
   onActivatePreview,
 }) {
   const {
-    authTab, setAuthTab, authError, setAuthError, emailTakenError, setEmailTakenError,
+    authTab, setAuthTab, authError, setAuthError, authInfo, emailTakenError, setEmailTakenError,
     emailError, setEmailError, passwordError, setPasswordError, authLoading,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
     user, setUser, isOAuth, accessToken,
@@ -184,12 +184,11 @@ export default function OnboardingScreen({
     const ageEntered = (user.age||"").toString().trim().length > 0;
     const ageOk = ageEntered && Number.isFinite(ageNum) && ageNum >= 1 && ageNum <= 120;
     const genderOk = !!(user.gender);
-    // Telefon — 27. sept. 2026, "FINAL 10/10 POLISH": reel formatvalidering
-    // (præcis 8 cifre efter +45, standard dansk mobilnummer-længde) i
-    // stedet for det tidligere "bare ikke-tomt"-tjek, som lod ethvert
-    // ciffer-antal passere som "gyldigt".
+    // Telefon er valgfri (29. sept. 2026, QA-beslutning D2 — alder og køn
+    // er fortsat obligatoriske, telefon bruges ikke). Valideres kun, hvis
+    // brugeren selv har skrevet noget: præcis 8 cifre efter +45.
     const phoneDigits = (user.phone||"").replace(/^\+45\s*/, "").replace(/\D/g, "");
-    const phoneOk = phoneDigits.length === 8;
+    const phoneOk = phoneDigits.length === 0 || phoneDigits.length === 8;
     const allOk = nameOk && emailOk && ageOk && genderOk && phoneOk;
     const emailIsSaved = !!(loginEmail || isOAuth);
     return (
@@ -261,7 +260,7 @@ export default function OnboardingScreen({
             {emailIsSaved && (
               <div style={{ fontSize:10, color:"var(--green)", marginTop:3, display:"flex", alignItems:"center", gap:4 }}>
                 <Icon name="check" size={10} color="var(--green)" />
-                {isOAuth ? "Bekræftet via Google" : "Allerede gemt fra din konto"}
+                {isOAuth === "google" ? "Bekræftet via Google" : isOAuth ? "E-mail bekræftet" : "Allerede gemt fra din konto"}
               </div>
             )}
           </div>
@@ -275,10 +274,10 @@ export default function OnboardingScreen({
               mobilnummer-længde). Rød kant + inline fejl ved forsøgt
               "Fortsæt →" med et forkert antal cifre. */}
           <div style={{ marginBottom:17 }}>
-            <label className="field-lbl">Telefonnummer <span style={UI.red}>*</span></label>
+            <label className="field-lbl" htmlFor="onboard-phone">Telefonnummer <span style={{ fontWeight:500, color:"var(--muted)" }}>(valgfrit)</span></label>
             <div className="field phone-field" style={{ borderColor: (step1Attempted && !phoneOk) ? "var(--red-md)" : undefined }}>
               <span className="phone-prefix">+45</span>
-              <input className="phone-rest" type="tel" inputMode="numeric" placeholder="12 34 56 78"
+              <input id="onboard-phone" className="phone-rest" type="tel" inputMode="numeric" autoComplete="tel-national" placeholder="12 34 56 78"
                 value={(user.phone||"").replace(/^\+45\s*/, "")}
                 onChange={e => {
                   const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
@@ -288,7 +287,7 @@ export default function OnboardingScreen({
             </div>
             {step1Attempted && !phoneOk && (
               <div style={{ fontSize:11.5, color:"var(--red)", fontWeight:600, marginTop:5 }}>
-                {phoneDigits.length === 0 ? "Indtast dit telefonnummer." : "Indtast et gyldigt dansk telefonnummer (8 cifre)."}
+                Indtast et gyldigt dansk telefonnummer (8 cifre), eller lad feltet stå tomt.
               </div>
             )}
           </div>
@@ -727,6 +726,12 @@ export default function OnboardingScreen({
                     <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>privatlivspolitikken</a>.
                   </div>
                 </div>
+                {authInfo && (
+                  <div className="info-box" role="status" style={{ alignItems:"flex-start", lineHeight:1.5 }}>
+                    <Icon name="mail" size={14} color="var(--blue)" />
+                    <span>{authInfo}</span>
+                  </div>
+                )}
                 <ErrorMessage>{authError}</ErrorMessage>
                 <button className="btn welcome-btn" onClick={handleSignup} disabled={authLoading || !!emailTakenError}>
                   {authLoading ? "Opretter konto…" : "Opret konto og fortsæt →"}
@@ -805,6 +810,12 @@ export default function OnboardingScreen({
                     </TextLink>
                   </div>
                 </div>
+                {authInfo && (
+                  <div className="info-box" role="status" style={{ alignItems:"flex-start", lineHeight:1.5 }}>
+                    <Icon name="mail" size={14} color="var(--blue)" />
+                    <span>{authInfo}</span>
+                  </div>
+                )}
                 <ErrorMessage>{authError}</ErrorMessage>
                 <button className="btn welcome-btn" onClick={handleLogin} disabled={authLoading}>
                   {authLoading ? "Logger ind…" : "Log ind →"}
