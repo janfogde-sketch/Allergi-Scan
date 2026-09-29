@@ -586,17 +586,20 @@ export default function ScannerScreen({
                   synlig indgang i UI'et. */}
               {!cameraActive && (
               <div className="home-hero-frame">
-                <div style={{ position:"absolute", top:"calc(27% - 25px)", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
+                <div style={{ position:"absolute", top:"calc(27% - 50px)", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
                   {/* Tykkere/større tekst + en blød hvid text-shadow-glød "løfter"
                       teksten af det app-brede baggrundsbillede bagved (.app-bg,
                       theme.jsx — samme billede på tværs af hele appen, se dens
                       kommentar), samme mønster som appens øvrige skærme bruger.
-                      Flyttet 25px op (25. sept. 2026, opfølgning) sammen med
-                      scan-knappen herunder — brugerens ønske om at rykke
-                      hilsen/hjælpetekst/scanner-område ca. 20-30px op, ren fast
-                      pixel-forskydning (calc) oven på den eksisterende
-                      %-position, ikke en ny %-værdi — brugeren bad specifikt
-                      om px, ikke en proportional flytning. */}
+                      Flyttet 25px op (25. sept. 2026, opfølgning), og igen 25px
+                      op (29. sept. 2026, "en mere balanceret og rolig forside" —
+                      reducerer den tomme flade mellem header og hilsen, samlet
+                      50px op fra den oprindelige %-position) sammen med
+                      scan-knappen herunder — ren fast pixel-forskydning (calc)
+                      oven på den eksisterende %-position, ikke en ny %-værdi —
+                      brugeren bad specifikt om px, ikke en proportional
+                      flytning. Selve blokkens interne spacing (hilsen→navn→
+                      hjælpetekst) er urørt, kun den fælles ydre position. */}
                   <div style={{ fontSize:"clamp(14px, 2.9cqh, 19px)", fontWeight:600, color:"var(--ink)", letterSpacing:"-.2px", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{getGreeting()},</div>
                   {/* Ingen fallback-tekst her (var tidligere "der", fejlrapporteret
                       25. sept. 2026: "der" blev vist kortvarigt, før navnet nåede
@@ -606,7 +609,11 @@ export default function ScannerScreen({
                       fra et forkert ord til det rigtige. Et hårdt mellemrum holder
                       linjens højde, så layoutet ikke hopper, når navnet kommer. */}
                   <div style={{ fontSize:"clamp(22px, 4.7cqh, 32px)", fontWeight:800, color:"var(--ink)", letterSpacing:"-.5px", marginTop:"clamp(2px, .4cqh, 4px)", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.65)" }}>{(user.name || "").trim().split(/\s+/)[0] || "\u00A0"}</div>
-                  <div style={{ fontSize:"clamp(11.5px, 2.1cqh, 15px)", fontWeight:600, color:"var(--ink2)", marginTop:"clamp(5px, 1.1cqh, 9px)", lineHeight:1.5, maxWidth:250, marginLeft:"auto", marginRight:"auto", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 12px rgba(255,255,255,.6)" }}>
+                  {/* fontWeight 600→500 (29. sept. 2026, "en mere balanceret
+                      og rolig forside") — lettere visuelt, så den ikke
+                      konkurrerer med navnet (800) eller scan-knappen;
+                      størrelse/placering urørt. */}
+                  <div style={{ fontSize:"clamp(11.5px, 2.1cqh, 15px)", fontWeight:500, color:"var(--ink2)", marginTop:"clamp(5px, 1.1cqh, 9px)", lineHeight:1.5, maxWidth:250, marginLeft:"auto", marginRight:"auto", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 12px rgba(255,255,255,.6)" }}>
                     {cameraPermissionDenied
                       ? "Kameraadgang er slået fra — brug Billede eller Indtast EAN i stedet."
                       : "Scan et produkt og se straks, om det matcher dine allergier."}
@@ -618,17 +625,21 @@ export default function ScannerScreen({
                     herfra 25. sept. 2026 — brugeren bad specifikt om puls "kun i"
                     halo-gløden, ikke selve knappen); al levende bevægelse ligger
                     nu udelukkende i .scan-cta-halo (langsom, subtil skala+
-                    opacity-puls, se theme.jsx). Størrelsen er øget yderligere
-                    ~12,5% denne runde (op fra clamp(117px, 30cqh, 195px) til
-                    clamp(132px, 34cqh, 219px)) — en mindre, mere præcis
-                    finjustering end forrige rundes ~30%. Ikonet er "scanframe"
-                    (fire scanner-hjørner om stregkode-barer, samme visuelle
-                    sprog som kameraets eget scan-overlay) — bevaret uændret.
-                    Positionen er flyttet 25px op sammen med hilsen-blokken
-                    ovenfor, men 7px mindre end teksten (calc(44% - 18px) i
-                    stedet for calc(44% - 25px)) — en lille ekstra luft-
-                    justering (25. sept. 2026, opfølgning) mellem hjælpe-
-                    teksten og knappen, uden at ændre teksten selv. Selve
+                    opacity-puls, se theme.jsx). Størrelsen er reduceret ~10%
+                    denne runde (29. sept. 2026, "en mere balanceret og rolig
+                    forside" — knappen må stadig være hovedfokus, men ikke
+                    dominere hele skærmen; ned fra clamp(132px, 34cqh, 219px)
+                    til clamp(119px, 30cqh, 197px)), efter tidligere runders
+                    forøgelser (senest ~12,5% op til 132/34/219). Ikonet er
+                    "scanframe" (fire scanner-hjørner om stregkode-barer,
+                    samme visuelle sprog som kameraets eget scan-overlay) —
+                    bevaret uændret i størrelse. Positionen er flyttet
+                    yderligere 25px op sammen med hilsen-blokken ovenfor
+                    (samlet 50px op fra den oprindelige %-position, samme
+                    runde), men fortsat 7px mindre end teksten
+                    (calc(44% - 43px) i stedet for calc(44% - 50px)) — samme
+                    lille ekstra luft-justering mellem hjælpeteksten og
+                    knappen som tidligere, uden at ændre teksten selv. Selve
                     knappen er en rigtig <button> (ikke en div med role=
                     "button") for native tastatur-aktivering + pålidelig
                     :active-tryk-feedback på touch-enheder
@@ -688,7 +699,7 @@ export default function ScannerScreen({
                     tilladelser fra en PWA (samme genundersøgte konklusion
                     som Indstillinger → Notifikationer, se SettingsScreen.jsx). */}
                 {cameraPermissionDenied ? (
-                  <div style={{ position:"absolute", top:"calc(44% - 18px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center", padding:"0 20px" }}>
+                  <div style={{ position:"absolute", top:"calc(44% - 43px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center", padding:"0 20px" }}>
                     <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:20, padding:"20px 18px", maxWidth:300, width:"100%", textAlign:"center", boxShadow:"var(--sh2)" }}>
                       <div style={{ display:"flex", justifyContent:"center", marginBottom:10 }}>
                         <div style={{ width:44, height:44, borderRadius:"50%", background:"var(--red-lt)", display:"flex", alignItems:"center", justifyContent:"center" }}>
@@ -712,8 +723,13 @@ export default function ScannerScreen({
                     </div>
                   </div>
                 ) : (
-                <div style={{ position:"absolute", top:"calc(44% - 18px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
-                  <div style={{ position:"relative", width:"clamp(132px, 34cqh, 219px)", height:"clamp(132px, 34cqh, 219px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <div style={{ position:"absolute", top:"calc(44% - 43px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
+                  <div style={{ position:"relative", width:"clamp(119px, 30cqh, 197px)", height:"clamp(119px, 30cqh, 197px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    {/* Glow dæmpet ~25% (29. sept. 2026, "en mere balanceret
+                        og rolig forside") — se .scan-halo-pulse-keyframes i
+                        theme.jsx, hvor selve puls-opaciteten er skaleret
+                        ned, så knappen stadig har dybde, men mere
+                        diskret/premium. */}
                     <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-20px, -3.3cqh, -9px)", borderRadius:"50%",
                       background:"radial-gradient(circle, var(--green-halo) 0%, rgba(221,244,232,0) 70%)" }} aria-hidden="true" />
                     <button
@@ -723,10 +739,15 @@ export default function ScannerScreen({
                       style={{ position:"absolute", inset:"clamp(5px, 1.1cqh, 7px)", borderRadius:"50%", cursor:"pointer",
                         border:"none", fontFamily:"var(--f)",
                         background:"linear-gradient(160deg,var(--green) 0%,var(--green-dark) 100%)",
-                        boxShadow:"0 14px 28px -12px rgba(8,115,74,.55), inset 0 2px 3px rgba(255,255,255,.3)",
-                        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(6px, 1.5cqh, 10px)" }}>
-                      <Icon name="scanframe" size="clamp(29px, 6.3cqh, 43px)" color="#fff" />
-                      <div style={{ fontSize:"clamp(13px, 2.4cqh, 16px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
+                        boxShadow:"0 14px 28px -12px rgba(8,115,74,.4), inset 0 2px 3px rgba(255,255,255,.3)",
+                        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(5px, 1.4cqh, 9px)" }}>
+                      {/* Ikon/tekst/gap skaleret ~10% ned sammen med selve
+                          knappen (samme runde) — bevarer de oprindelige
+                          proportioner mellem indhold og knap, i stedet for
+                          at ikon/tekst pludselig fylder relativt mere i en
+                          mindre cirkel. */}
+                      <Icon name="scanframe" size="clamp(26px, 5.7cqh, 39px)" color="#fff" />
+                      <div style={{ fontSize:"clamp(12px, 2.2cqh, 14px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
                     </button>
                   </div>
                 </div>
