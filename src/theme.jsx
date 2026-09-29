@@ -350,11 +350,20 @@ body::-webkit-scrollbar{display:none;}
    positionering er upåvirket af dette (samme mønster som den eksisterende,
    velfungerende Feedback-knap/offline-banner), og opnår det brugeren
    faktisk bad om: "navigationen altid er tilgængelig ved scroll". */
+/* 29. sept. 2026, "Polér designet... Brugsvilkår/Privatlivspolitik": ren hvid
+   baggrund (--surface, IKKE --paper — --paper er en let off-white/cremet
+   tone, ikke "ren hvid", se design-tokens.md) + lidt strammere lodret
+   padding (12/10→10/8px) for en mere kompakt header-højde. Kun HEADEREN er
+   ændret til --surface her — selve indholdsområdet nedenfor (.screen,
+   dækket af app-bg-hide) beholder --paper uændret, jf. opgavens "ændr intet
+   andet". */
 .legal-topbar{
-  background:var(--paper);
+  background:var(--surface);
   border-bottom:1px solid var(--border);
-  padding:calc(12px + env(safe-area-inset-top)) 20px 10px;
-  display:flex;align-items:center;gap:12px;
+  padding:calc(10px + env(safe-area-inset-top)) 20px 8px;
+  /* gap 12→16px (29. sept. 2026, "Polér designet... så de ser ens og mere
+     gennemførte ud"): lidt mere luft mellem tilbageknap og titel. */
+  display:flex;align-items:center;gap:16px;
   /* left/right:0 + max-width/margin matcher .app's egen 480px-loft +
      center-på-desktop (samme opskrift som .app selv) — ellers ville en
      position:fixed-header med left/right:0 alene strække sig ud over hele
@@ -362,14 +371,26 @@ body::-webkit-scrollbar{display:none;}
      bred desktop-skærm. */
   position:fixed;top:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:60;
 }
-/* 44×44px minimum touch target (eksplicit krav til denne opgave — større end
-   de øvrige undersiders tilbageknap-mønster, som ikke rammer 44px). Runde
-   knap, samme farvepalet/skygge som AppHeader.jsx's hamburger-knap. */
+/* 44×44px touch-target BEVARET (eksplicit krav), men det SYNLIGE, farvede
+   spor er nu en mindre, lettere cirkel centreret indeni — samme "usynlig
+   trykflade rundt om et mindre synligt element"-mønster som Settings-
+   skærmens Toggle-komponent bruger andre steder i appen. Selve knappen
+   (.legal-topbar-back) er nu uden baggrund/kant/skygge — kun den indre
+   .legal-topbar-back-circle bærer det visuelle udtryk, mindre og lettere
+   end før (44px farvet cirkel + skygge → 32px, ingen skygge). */
 .legal-topbar-back{
-  background:var(--paper2);border:1px solid var(--border2);border-radius:50%;
+  background:none;border:none;padding:0;
   width:44px;height:44px;flex-shrink:0;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
-  box-shadow:var(--sh);
+}
+/* 32→36px (29. sept. 2026, "Polér designet... så de ser ens og mere
+   gennemførte ud" — "tilbageknappen en anelse større visuelt, men stadig
+   diskret") — stadig ingen skygge/mørk kant, kun en let baggrund + tynd,
+   neutral kant, så den forbliver diskret trods den lidt større flade. */
+.legal-topbar-back-circle{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--paper2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
 }
 
 /* ── LAYOUT ── */
@@ -641,8 +662,24 @@ body::-webkit-scrollbar{display:none;}
    login-siden", punkt 9: intro→fordele mål 32-36px, fordele→primær-CTA
    mål 38-44px — .welcome-logo-wrap's tidligere inline marginBottom:16 er
    samtidig fjernet i JSX, så dette top-mål er den ENESTE kilde til det
-   mellemrum). */
-.welcome-benefits{display:flex;justify-content:center;gap:14px;margin:34px 0 40px;width:100%;}
+   mellemrum).
+   29. sept. 2026, "sidste designpolering": margin-top 34→24px (10px
+   mindre luft til intro-teksten, mål 8-12px) og margin-bottom 40→32px
+   (8px mindre luft til "Opret gratis konto"). Vandret padding 0→4px
+   tilføjet (mål: yderste labels sad for tæt på skærmkanterne) — på
+   selve raden, ikke på de enkelte .welcome-benefit-kolonner, så de tre
+   kolonner i princippet forbliver lige brede og ikon/tekst-alignment er
+   uændret. Bevidst kun 4px, ikke 8px: hver .welcome-benefit-label har
+   white-space:nowrap (låst i en tidligere runde, så label'en aldrig
+   brækker over 2 linjer) — en flex-række med flex:1 fordeler kun
+   PRÆCIST ligeligt så længe alle tre kolonners tilgængelige bredde er
+   over hver labels naturlige (nowrap) bredde; ved 320px-skærmbredden
+   (mindste testede) var 8px/side nok til at skubbe layoutet under den
+   grænse, hvilket gjorde kolonnerne synligt ulige (102/82/99px, målt
+   med Playwright) — 4px/side holder sig under grænsen på alle tre
+   testede bredder (320/390/430px), verificeret at kolonnerne forbliver
+   pixel-lige efter ændringen. */
+.welcome-benefits{display:flex;justify-content:center;gap:14px;margin:24px 0 32px;padding:0 4px;width:100%;box-sizing:border-box;}
 /* gap 8→4px (29. sept. 2026, "sidste spacing-polering": labels 3-5px
    tættere på deres ikoner). */
 .welcome-benefit{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;max-width:130px;}

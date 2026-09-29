@@ -615,8 +615,17 @@ export default function OnboardingScreen({
                 mørkegrå, uden at konkurrere med CTA-knapperne. Selve
                 teksten/linkene (grønne, fed) er uændrede.
                 29. sept. 2026, "sidste spacing-polering": marginTop 28→18
-                (8-12px tættere på "Jeg har allerede en konto" ovenfor). */}
-            <div style={{ marginTop:18, maxWidth:270, fontSize:10.5, color:"rgba(21,32,26,.6)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
+                (8-12px tættere på "Jeg har allerede en konto" ovenfor).
+                29. sept. 2026, "sidste designpolering": maxWidth 270→260px
+                (smallere, mere kontrolleret/centreret tekstblok) — 250px
+                blev afprøvet først, men brækkede teksten i 4 linjer med
+                "konto." alene på sidste linje, PRÆCIS samme fælde som en
+                tidligere runde allerede havde løst ved 270px (se
+                kommentaren ovenfor). 260px er den smalleste bredde der
+                stadig giver 3 jævnt fyldte linjer uden noget ord/link
+                alene på en linje, verificeret empirisk med Playwright på
+                alle tre testede skærmbredder (SE/iPhone 13/Pro Max). */}
+            <div style={{ marginTop:18, maxWidth:260, fontSize:10.5, color:"rgba(21,32,26,.6)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
               Du accepterer vores{" "}
               <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.TERMS)}>brugsvilkår</button>
               {" "}og bekræfter, at du har læst{" "}

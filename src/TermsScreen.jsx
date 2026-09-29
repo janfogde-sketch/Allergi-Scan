@@ -24,15 +24,14 @@ import React from "react";
 import { Icon } from "./SharedComponents.jsx";
 
 const S = {
-  h1: { fontSize:22, fontWeight:900, color:"var(--ink)", letterSpacing:-.3, marginBottom:4 },
   updated: { fontSize:12.5, color:"var(--muted)", marginBottom:16 },
-  draftNotice: { background:"var(--amber-lt)", border:"1px solid var(--amber-mid)", borderRadius:12, padding:"14px 16px", marginBottom:24, fontSize:12.5, color:"var(--amber)", fontWeight:600, lineHeight:1.6 },
+  draftNotice: { background:"var(--amber-lt)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:24, fontSize:13, color:"var(--ink2)", fontWeight:500, lineHeight:1.5 },
   h2: { fontSize:15, fontWeight:800, color:"var(--green)", margin:"24px 0 8px" },
-  p: { fontSize:13.5, color:"var(--ink2)", lineHeight:1.65, marginBottom:10 },
-  ul: { fontSize:13.5, color:"var(--ink2)", lineHeight:1.65, paddingLeft:18, marginBottom:10 },
+  p: { fontSize:13.5, color:"var(--ink2)", lineHeight:1.55, marginBottom:10 },
+  ul: { fontSize:13.5, color:"var(--ink2)", lineHeight:1.55, paddingLeft:18, marginBottom:10 },
   li: { marginBottom:5 },
   a: { color:"var(--green)", fontWeight:700, textDecoration:"none" },
-  contactBox: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"16px 18px", marginTop:28, boxShadow:"var(--sh)" },
+  contactBox: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 18px", marginTop:28, boxShadow:"var(--sh)" },
 };
 
 export default function TermsScreen({ onBack }) {
@@ -40,16 +39,23 @@ export default function TermsScreen({ onBack }) {
     <>
       <header className="legal-topbar">
         <button onClick={onBack} aria-label="Tilbage" className="legal-topbar-back">
-          <Icon name="chevronLeft" size={18} color="var(--ink)" />
+          <span className="legal-topbar-back-circle">
+            <Icon name="chevronLeft" size={17} color="var(--ink)" />
+          </span>
         </button>
         <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Brugsvilkår</div>
       </header>
       {/* paddingTop matcher .legal-topbar's egen renderede højde (header er
           position:fixed, tager ikke plads i normal flow) + lidt luft — se
           theme.jsx's .legal-topbar-kommentar for hvorfor fixed frem for
-          sticky. */}
-      <div className="screen fade-in" style={{ paddingTop:"calc(79px + env(safe-area-inset-top))" }}>
-        <h1 style={S.h1}>Brugsvilkår</h1>
+          sticky. 79→75px (29. sept. 2026, "Polér designet..."): headeren
+          selv blev 4px lavere (strammere lodret padding), så clearance er
+          reduceret tilsvarende for at bevare samme lille luft under den. */}
+      <div className="screen fade-in" style={{ paddingTop:"calc(75px + env(safe-area-inset-top))" }}>
+        {/* H1 fjernet (29. sept. 2026, "Polér designet..."): sidens titel
+            ("Brugsvilkår") vises allerede i topbaren ovenfor — en gentaget
+            stor overskrift i selve indholdet var redundant. "Sidst
+            opdateret"-linjen er nu selve indholdets første element. */}
         <div style={S.updated}>Sidst opdateret: september 2026</div>
 
         <div style={S.draftNotice}>
@@ -98,7 +104,7 @@ export default function TermsScreen({ onBack }) {
         </p>
 
         <div style={S.contactBox}>
-          <p style={{ margin:0, fontSize:13.5, color:"var(--ink2)", lineHeight:1.65 }}>
+          <p style={{ margin:0, fontSize:13.5, color:"var(--ink2)", lineHeight:1.55 }}>
             Spørgsmål til brugsvilkårene?<br/>
             Skriv til os på <a href="mailto:hej@eatsafe.dk" style={S.a}>hej@eatsafe.dk</a>
           </p>
