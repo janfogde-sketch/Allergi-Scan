@@ -17,6 +17,12 @@ import { showToast } from "./SharedComponents.jsx";
 // validering (ville afvise reelt gyldige adresser unødigt).
 export const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+// Supabase/GoTrue understøtter ikke internationale tegn (æ, ø, å m.fl.) i
+// e-mailadresser (29. sept. 2026) — afvises her i stedet for at blive sendt
+// til backend. Erstatter/transskriberer IKKE tegnene (fx ø→o, æ→ae), da det
+// kan ændre adressen til en anden, reelt eksisterende adresse.
+export const hasUnsupportedEmailChars = (email) => /[^\x00-\x7F]/.test(email);
+
 export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
                           setOnboardStep, onSignupSuccess }) {
 
@@ -277,8 +283,12 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     // Felt-specifik validering FØRST (27. sept. 2026, "FINAL 10/10 POLISH")
     // — tom/ugyldig e-mail og tom adgangskode er begge entydigt knyttet til
     // ét felt, så de vises der, ikke i den globale error-boks.
-    if (!loginEmail) { setEmailError("Indtast din e-mail først."); return; }
-    if (!isValidEmail(loginEmail)) { setEmailError("Indtast en gyldig e-mailadresse."); return; }
+    // Trim + lowercase FØR validering/afsendelse (29. sept. 2026) — kun
+    // normalisering, ingen transskribering af selve tegnene.
+    const email = loginEmail.trim().toLowerCase();
+    if (!email) { setEmailError("Indtast din e-mail først."); return; }
+    if (hasUnsupportedEmailChars(email)) { setEmailError("Brug en e-mailadresse uden æ, ø, å eller andre specialtegn."); return; }
+    if (!isValidEmail(email)) { setEmailError("Indtast en gyldig e-mailadresse."); return; }
     if (!loginPassword) { setPasswordError("Indtast din adgangskode."); return; }
     setEmailError(""); setPasswordError("");
     setAuthLoading(true); setAuthError(""); setAuthInfo("");
@@ -286,7 +296,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+        body: JSON.stringify({ email, password: loginPassword }),
       });
       const text = await res.text();
       if (text === "Host not in allowlist") {
@@ -297,15 +307,19 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         const msg = (data.msg || data.error_description || data.message || "").toLowerCase();
         // Global error-boks (27. sept. 2026, "FINAL 10/10 POLISH") — ALDRIG
         // Supabases rå, tekniske fejltekst direkte til brugeren, kun en af
-        // disse tre faste, venlige beskeder. "Forkert email eller
-        // adgangskode" kan desuden IKKE knyttes til ét bestemt felt
-        // (Supabase fortæller bevidst ikke hvilket af de to der er forkert,
-        // af sikkerhedshensyn), så den hører til her, ikke som en
-        // felt-specifik inline-fejl.
+        // disse faste, venlige beskeder. "Forkert email eller adgangskode"
+        // kan desuden IKKE knyttes til ét bestemt felt (Supabase fortæller
+        // bevidst ikke hvilket af de to der er forkert, af sikkerhedshensyn),
+        // så den hører til her, ikke som en felt-specifik inline-fejl. En
+        // "invalid email"-afvisning fra backend derimod HØRER til e-mail-
+        // feltet (29. sept. 2026) — bør reelt aldrig ske her, da frontend nu
+        // validerer det samme før kaldet, men mappes korrekt hvis den gør.
         if (msg.includes("invalid login") || msg.includes("invalid credentials")) {
           setAuthError("E-mail eller adgangskode er forkert.");
         } else if (msg.includes("email not confirmed")) {
           setAuthError("Bekræft din e-mail via linket vi sendte dig, før du kan logge ind.");
+        } else if (msg.includes("invalid") && msg.includes("email")) {
+          setEmailError("Indtast en gyldig e-mailadresse.");
         } else {
           setAuthError("Der opstod en fejl. Prøv igen.");
         }
@@ -331,8 +345,17 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   const handleSignup = useCallback(async () => {
     // Felt-specifik validering FØRST (27. sept. 2026, "FINAL 10/10 POLISH")
     // — se handleLogin ovenfor for samme mønster/begrundelse.
-    if (!loginEmail) { setEmailError("Indtast din e-mail først."); return; }
-    if (!isValidEmail(loginEmail)) { setEmailError("Indtast en gyldig e-mailadresse."); return; }
+    // Trim + lowercase FØR validering/afsendelse (29. sept. 2026) — kun
+    // normalisering, ingen transskribering af selve tegnene (fx ø→o), da det
+    // kan ændre adressen til en anden, reelt eksisterende adresse.
+    const email = loginEmail.trim().toLowerCase();
+    if (!email) { setEmailError("Indtast din e-mail først."); return; }
+    // Supabase/GoTrue understøtter ikke internationale tegn (æ/ø/å m.fl.) i
+    // e-mailadresser — afvis her, FØR den ellers gyldige formatkontrol
+    // nedenfor, med en dedikeret besked (ikke den generiske "ugyldig
+    // e-mailadresse", som ikke ville forklare HVORFOR den blev afvist).
+    if (hasUnsupportedEmailChars(email)) { setEmailError("Brug en e-mailadresse uden æ, ø, å eller andre specialtegn."); return; }
+    if (!isValidEmail(email)) { setEmailError("Indtast en gyldig e-mailadresse."); return; }
     // Kun længdekrav (min. 10 tegn), ingen tvungen tegn-kompleksitet — matcher
     // moderne sikkerhedsanbefalinger (NIST 800-63B), som fraråder påtvungne
     // store bogstaver/tal/specialtegn-krav: de får ofte brugere til at vælge
@@ -347,7 +370,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       const res = await fetch(`${SUPABASE_URL}/auth/v1/signup?redirect_to=${encodeURIComponent(window.location.origin + "/")}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+        body: JSON.stringify({ email, password: loginPassword }),
       });
       const text = await res.text();
       if (text === "Host not in allowlist") {
@@ -356,19 +379,28 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       const data = JSON.parse(text);
       if (!res.ok) {
         const msg = data.msg || data.error_description || data.message || "";
-        // Felt-specifikke fejl (25./27. sept. 2026) — vises inline ved det
-        // relevante felt, ikke i den globale error-boks. "Allerede
+        const msgLc = msg.toLowerCase();
+        // Felt-specifikke fejl (25./27./29. sept. 2026) — vises inline ved
+        // det relevante felt, ikke i den globale error-boks. "Allerede
         // registreret" hører til E-mail-feltet (emailTakenError ovenfor,
         // egen "Log ind i stedet"-handling); et for svagt password fra
         // Supabases egen validering (fx et kendt læk-tjek) hører til
-        // Adgangskode-feltet, samme sted som længde-fejlen ovenfor.
-        if (msg.toLowerCase().includes("already registered") || data.error_code === "email_exists") {
+        // Adgangskode-feltet, samme sted som længde-fejlen ovenfor. En
+        // "invalid email"-afvisning fra backend hører også til E-mail-
+        // feltet — bør reelt aldrig ske her, da frontend nu validerer det
+        // samme før kaldet, men mappes korrekt hvis den alligevel gør.
+        if (msgLc.includes("already registered") || data.error_code === "email_exists") {
           setEmailTakenError("Denne e-mail er allerede registreret.");
           setAuthLoading(false);
           return;
         }
-        if (msg.toLowerCase().includes("password") || msg.toLowerCase().includes("weak")) {
+        if (msgLc.includes("password") || msgLc.includes("weak")) {
           setPasswordError("Adgangskoden er for svag. Brug mindst 10 tegn.");
+          setAuthLoading(false);
+          return;
+        }
+        if (msgLc.includes("invalid") && msgLc.includes("email")) {
+          setEmailError("Indtast en gyldig e-mailadresse.");
           setAuthLoading(false);
           return;
         }
@@ -391,11 +423,11 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       }
       if (data.access_token) {
         saveTokens(data.access_token, data.refresh_token, data.user.id);
-        setUser(u => ({ ...u, email: loginEmail }));
+        setUser(u => ({ ...u, email }));
         setScreen(SCREENS.ONBOARD);
         if (onSignupSuccess) onSignupSuccess();
       } else {
-        setAuthInfo(`Vi har sendt et bekræftelseslink til ${loginEmail}. Klik på linket i mailen for at aktivere din konto — tjek evt. din spam-mappe.`);
+        setAuthInfo(`Vi har sendt et bekræftelseslink til ${email}. Klik på linket i mailen for at aktivere din konto — tjek evt. din spam-mappe.`);
       }
     } catch {
       // Ægte, uventede fejl (netværk nede, JSON-parse-fejl osv.) — vis
@@ -430,15 +462,17 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     // OnboardingScreen.jsx's egen guard før dette kald, men er bevaret her
     // som et sikkerhedsnet, nu rettet mod samme emailError-state i stedet
     // for den globale authError-boks.
-    if (!loginEmail) { setEmailError("Indtast din e-mail først."); return; }
-    if (!isValidEmail(loginEmail)) { setEmailError("Indtast en gyldig e-mailadresse."); return; }
+    const email = loginEmail.trim().toLowerCase();
+    if (!email) { setEmailError("Indtast din e-mail først."); return; }
+    if (hasUnsupportedEmailChars(email)) { setEmailError("Brug en e-mailadresse uden æ, ø, å eller andre specialtegn."); return; }
+    if (!isValidEmail(email)) { setEmailError("Indtast en gyldig e-mailadresse."); return; }
     setEmailError("");
     setAuthLoading(true); setAuthError("");
     try {
       const res = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
-        body: JSON.stringify({ email: loginEmail }),
+        body: JSON.stringify({ email }),
       });
       if (!res.ok) { setAuthError("Kunne ikke sende nulstillingslink. Prøv igen."); setAuthLoading(false); return; }
       showToast("Tjek din e-mail for at nulstille adgangskoden.", "success");
