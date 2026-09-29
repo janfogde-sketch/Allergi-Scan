@@ -14,7 +14,7 @@ import { UI } from "./styleUtils.js";
 
 export const DEMO_SLIDES = [
   {
-    title: "Skan — og spis trygt",
+    title: "Scan — og spis trygt",
     sub: "Ét kamera-tryk, og du ved det med det samme.",
     bg: "var(--surface2)", accent: "var(--green)",
     mockup: (

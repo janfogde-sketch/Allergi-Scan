@@ -613,10 +613,21 @@ export default function ProfileScreen({
 
             {!historyLoading && history.length===0 && (
               <div className="empty-state">
-                <span className="empty-icon"><Icon name="search" size={26} color="var(--muted)" /></span>
+                {/* 29. sept. 2026, brugerfeedback: lup-ikonet signalerede
+                    søgning, ikke historik — skiftet til "clock" (samme ikon
+                    som Historik-fanen i bundnavigationen). Cirklen er ~12%
+                    mindre (68→60px, lokal overstyring, kun denne instans —
+                    .empty-icon er en delt klasse brugt uændret af
+                    MadpasScreen.jsx og Favoritter/Familie-tomtilstandene i
+                    denne fil). Stavefejl "Skan" → "Scan" rettet, samme
+                    rettelse som HelpModal.jsx/demoSlides.jsx. */}
+                <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="clock" size={23} color="var(--muted)" /></span>
                 <div className="empty-txt">Ingen scanninger endnu</div>
-                <div className="empty-sub">Skan dit første produkt for at se din historik her</div>
-                <button className="btn btn-primary btn-sm" style={UI.mt12} onClick={() => setScreen(SCREENS.HOME)}>Scan nu</button>
+                <div className="empty-sub">Scan dit første produkt for at se din historik her</div>
+                {/* Ekstra horisontal padding (14→20px), samme højde/farve/
+                    kompakthed — knappen føles mere balanceret uden at blive
+                    fuld bredde. */}
+                <button className="btn btn-primary btn-sm" style={{ ...UI.mt12, padding:"8px 20px" }} onClick={() => setScreen(SCREENS.HOME)}>Scan nu</button>
               </div>
             )}
 
