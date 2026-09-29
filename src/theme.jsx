@@ -621,8 +621,10 @@ body::-webkit-scrollbar{display:none;}
    velkomstsidens instans (ikke SettingsScreen.jsx's "Om EatSafe"-brug af
    samme delte klasse) — mørkere (var udvasket) + lidt mindre letter-spacing,
    stadig klart sekundær ift. selve logoet. margin-top 8→14 (punkt 9:
-   logo→tagline, mål 12-16px). */
-.welcome-logo-wrap .brand-slogan{margin-top:14px;color:var(--ink2);letter-spacing:.4px;}
+   logo→tagline, mål 12-16px).
+   29. sept. 2026, "Ryk sloganet op til logoet": margin-top 14→6px —
+   brugerfeedback (skærmbillede) om at sloganet sad for langt fra logoet. */
+.welcome-logo-wrap .brand-slogan{margin-top:6px;color:var(--ink2);letter-spacing:.4px;}
 /* Tydelig value proposition (25. sept. 2026-brief: "kort og tydelig value
    proposition") — hævet fra en dæmpet, muted tagline til en tydeligere,
    mørkere sætning, så den reelt fungerer som skærmens hovedbudskab, ikke en
