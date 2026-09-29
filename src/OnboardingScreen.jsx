@@ -56,7 +56,7 @@ export default function OnboardingScreen({
   tourIdx, setTourIdx,
   editMode, setEditMode,
   customInput, setCustomInput,
-  saveAllergensStep2,
+  saveAllergensStep2, saveDietStep3,
   saveProfileStep1, finishOnboard,
   StepBar,
   hasPendingJoinList,
@@ -447,18 +447,29 @@ export default function OnboardingScreen({
         {/* "Fortsæt" må ikke være aktiv ved "0 valgt" — ellers kan appen
             ikke skelne "brugeren har bevidst ingen kostpræferencer" fra
             "brugeren glemte at vælge noget" (25. sept. 2026, brugerfeedback,
-            samme princip som trin 2's noAllergiesConfirmed-gate). */}
-        <PrimaryButton disabled={!canContinueDiet} onClick={() => setOnboardStep(4)}>Fortsæt →</PrimaryButton>
+            samme princip som trin 2's noAllergiesConfirmed-gate).
+            saveDietStep3 tilføjet 29. sept. 2026 ("Onboarding-persistens")
+            — kostpræferencer blev tidligere KUN gemt lokalt under selve
+            onboardingen, aldrig til backend, og gik derfor tabt hvis
+            brugeren lukkede appen før trin 5. Samme mønster som trin 2:
+            avancér ikke ved fejl, vis i stedet en fejl-toast, så intet
+            valg går stille tabt. */}
+        <PrimaryButton disabled={!canContinueDiet}
+          onClick={async () => {
+            try { await saveDietStep3(diets); setOnboardStep(4); }
+            catch { showToast("Dine kostpræferencer kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
+          }}>Fortsæt →</PrimaryButton>
         {/* "Ingen særlig diæt" — samme låste SecondaryButton-stil som trin 2's
             "Jeg har ingen allergier..." (solid hvid baggrund + grøn kant/
             tekst), tydeligt klikbart uden at konkurrere med den fyldte
             grønne Fortsæt-knap. */}
         <SecondaryButton style={UI.mt8}
-          onClick={() => {
+          onClick={async () => {
             if (diets.length > 0 && !window.confirm("Fjern dine valgte kostpræferencer?")) return;
             setUser(u => ({...u, diets:[]}));
             setNoDietConfirmed(true);
-            setOnboardStep(4);
+            try { await saveDietStep3([]); setOnboardStep(4); }
+            catch { showToast("Dine kostpræferencer kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
           }}>
           Ingen særlig diæt
         </SecondaryButton>

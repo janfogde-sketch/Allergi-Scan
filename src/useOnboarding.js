@@ -4,18 +4,42 @@
 // Onboarding-flow state og gem-funktioner.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 
-export function useOnboarding({ accessToken, userId, user, loginEmail,
-                                allergens, customAllerg,
+// onboardStep/setOnboardStep er deklareret i App.jsx og sendes ind som
+// props (29. sept. 2026, "Onboarding-persistens") — IKKE længere lokal
+// state her. useAuth.js skal kunne sætte det aktuelle trin direkte ved
+// login/OAuth/app-boot-genoptagelse, og useAuth() kaldes FØR useOnboarding()
+// i App.jsx — en lokal useState her ville derfor ikke eksistere endnu på
+// det tidspunkt useAuth() sætter sin konfiguration op.
+export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
+                                onboardStep, setOnboardStep,
+                                allergens, customAllerg, selectedENumbers,
                                 setUser, setScreen, setEditMode, setIsOAuth }) {
 
-  const [onboardStep, setOnboardStep] = useState(1);
   const [editMode, setEditModeLocal]  = useState(false);
   const [tourIdx, setTourIdx]         = useState(0);
   const [customInput, setCustomInput] = useState("");
+
+  // Persistér det aktuelle trin til backend, hver gang det ændrer sig (29.
+  // sept. 2026, "Onboarding-persistens") — onboardStep levede tidligere KUN
+  // som lokal React-state, nulstillet til 1 hver gang appen blev genstartet,
+  // uanset hvor langt brugeren faktisk var kommet. Gated til KUN at køre
+  // mens skærmen reelt er ONBOARD — ellers ville denne effekt også fyre
+  // ved almindelig appstart for en allerede færdig bruger (onboardStep's
+  // useState-default er 1) og fejlagtigt nulstille deres gemte trin i
+  // backend, selvom de aldrig ser onboarding-UI'et.
+  useEffect(() => {
+    if (!accessToken || !userId) return;
+    if (screen !== SCREENS.ONBOARD) return;
+    apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+      method: "PATCH",
+      headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+      body: JSON.stringify({ onboarding_step: onboardStep }),
+    }).catch(() => {});
+  }, [onboardStep, screen, accessToken, userId]);
 
   // Wrap setEditMode so both local + parent stay in sync
   const setEditMode_ = (val) => {
@@ -42,7 +66,6 @@ export function useOnboarding({ accessToken, userId, user, loginEmail,
       });
       if (emailToSave) setUser(u => ({ ...u, email: emailToSave }));
     } catch (e) { console.error("saveProfileStep1 fejl:", e); }
-    setOnboardStep(4);
   };
 
   const saveAllergensStep2 = async () => {
@@ -60,11 +83,32 @@ export function useOnboarding({ accessToken, userId, user, loginEmail,
       ...allergens.map(a => ({ user_id: userId, allergen: a, type: "allergen" })),
       ...customAllerg.map(c => ({ user_id: userId, allergen: c, type: "custom" })),
     ];
-    if (rows.length === 0) return;
-    await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, {
-      method: "POST",
+    if (rows.length > 0) {
+      await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, {
+        method: "POST",
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+        body: JSON.stringify(rows),
+      });
+    }
+    // E-numre gemmes på samme trin i UI'et (Accordion inde i renderStep2),
+    // men blev tidligere KUN gemt fra Rediger præferencer på Profil-siden,
+    // aldrig fra selve onboardingen — et reelt hul (29. sept. 2026,
+    // "Onboarding-persistens"): lukkede brugeren appen efter at have valgt
+    // E-numre her, men før hele onboardingen var gennemført, gik valget tabt.
+    await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+      method: "PATCH",
       headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-      body: JSON.stringify(rows),
+      body: JSON.stringify({ e_numbers: selectedENumbers || [] }),
+    });
+  };
+
+  // Samme hul som E-numre ovenfor gjaldt kostpræferencer (trin 3) — valgt i
+  // UI'et (user.diets), men aldrig gemt til backend under selve onboardingen.
+  const saveDietStep3 = async (diets) => {
+    await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+      method: "PATCH",
+      headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+      body: JSON.stringify({ diets: diets || [] }),
     });
   };
 
@@ -77,6 +121,12 @@ export function useOnboarding({ accessToken, userId, user, loginEmail,
         body: JSON.stringify({ onboarding_completed: true }),
       });
     } catch {}
+    // Opdatér den lokale kopi FØR setScreen — App.jsx's route guard (29.
+    // sept. 2026, "Onboarding-persistens") blokerer ethvert forsøg på at
+    // navigere væk fra onboarding mens user.onboarding_completed er false,
+    // så den lokale state skal bekræfte "færdig" her, ellers ville guarden
+    // selv forhindre denne overgang til Hjem.
+    setUser(u => ({ ...u, onboarding_completed: true }));
     setScreen(SCREENS.HOME);
     setEditModeLocal(false);
     setEditMode(false);
@@ -84,12 +134,12 @@ export function useOnboarding({ accessToken, userId, user, loginEmail,
   };
 
   return {
-    onboardStep, setOnboardStep,
     editMode, setEditMode: setEditMode_,
     tourIdx, setTourIdx,
     customInput, setCustomInput,
     saveProfileStep1,
     saveAllergensStep2,
+    saveDietStep3,
     finishOnboard,
   };
 }

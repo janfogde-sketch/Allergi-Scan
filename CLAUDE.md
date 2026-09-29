@@ -937,6 +937,84 @@ stedet for gættet. To reelle huller fundet og rettet:
   i `theme.jsx`s `appCss`-template-literal, samme kendte fejlklasse denne
   fil advarer om andetsteds, rettet før commit).
 
+### Onboarding-persistens — reel routing-/state-bug rettet (29. sept. 2026, backend/funktion — Jans spor)
+
+Brugeren (Bjørn) bad om en 8-punkts backend-/routing-audit af onboarding-
+flowet. Reelt, alvorligt fund bekræftet ved kodegennemgang OG live data: en
+bruger med et gemt token, men `onboarding_completed=false` (aldrig
+gennemført onboarding, eller lukkede appen midtvejs), blev VED HVER
+APPSTART/LOGIN sendt direkte til scanner-forsiden — `screen`-useState'ens
+initiale gæt (`localStorage.getItem("as_token") ? HOME : WELCOME`) og
+`handleLogin` tjekkede aldrig `onboarding_completed`. Bekræftet i den LIVE
+Supabase-database: 9 af 19 eksisterende brugere havde reelt
+`onboarding_completed=false` (nogle med allerede gemte allergener), som
+alle blev fejlagtigt lukket direkte ind i hovedappen af den daværende kode.
+
+**Datamodel** (`users`-tabellen havde allerede `onboarding_completed`,
+boolean — men intet felt til at huske PRÆCIS hvilket trin): ny
+`onboarding_step`-kolonne (integer, 1-5, default 1) + et engangs-backfill-
+migration for eksisterende brugere, udledt af reelle gemte signaler
+(navn/allergener/diæter-E-numre/familiemedlemmer), IKKE kun "har mindst én
+allergi" som eneste kriterium (brugerens eksplicitte krav). Se `src/
+CONTEXT.md` afsnit 6 for den fulde kolonne-/migrations-detalje.
+
+**Routing rettet tre steder** (`useAuth.js`, ny delt `resolveOnboardingRoute`-
+funktion, genbrugt af alle tre for at undgå at de kan modsige hinanden):
+app-boot (et token i storage udløser nu et tjek af reel status, ikke et
+blindt HOME-gæt), e-mail/adgangskode-login (fetcher status FØR den vælger
+ONBOARD/HOME, i stedet for altid HOME), og OAuth-callbacken (som allerede
+delvist gjorde det rigtige, men fejlagtigt nulstillede en RETURNERENDE,
+ufuldført OAuth-brugers gemte trin tilbage til 1 ved hvert login — rettet
+til kun at nulstille for en reelt NY konto).
+
+**Route guard** (`App.jsx`): `setScreen` er nu en guardet wrapper omkring
+den rå `useState`-setter — ethvert forsøg på at navigere til en skærm uden
+for WELCOME/LOGIN/ONBOARD, mens `user.onboarding_completed===false`, bliver
+omdirigeret til ONBOARD i stedet. Wrappet ÉT sted (ikke ved hvert af de
+~30+ eksisterende `setScreen`-kaldesteder), så al eksisterende kode
+automatisk får beskyttelsen. `finishOnboard()` opdaterer nu eksplicit den
+lokale `user.onboarding_completed` FØR den selv navigerer til Hjem — ellers
+ville guarden ironisk nok blokere selve fuldførelsen af onboardingen.
+
+**Genoptagelse midt i et trin:** `onboardStep` PATCHes til backend, hver
+gang det ændrer sig (`useOnboarding.js`, gated til kun at køre mens
+`screen===ONBOARD`, så det ikke nulstiller en allerede færdig brugers gemte
+trin ved almindelig appstart). To reelle, pre-eksisterende huller fundet
+undervejs: kostpræferencer (trin 3) og E-numre (trin 2's accordion) blev
+KUN gemt til backend fra "Rediger præferencer" på Profil-siden, ALDRIG fra
+selve onboardingen — valgt der gik tabt hvis brugeren lukkede appen før
+trin 5. Begge nu gemt løbende (`saveDietStep3`, udvidet `saveAllergensStep2`),
+samme ikke-avancér-ved-fejl-mønster som allergener allerede brugte.
+
+**Reel bug fundet under implementeringen (produktions-kritisk, ville have
+crashet appen for ALLE brugere):** `setOnboardStep` blev sendt som en almindelig
+objekt-egenskab (`{ setOnboardStep }`) ind i `useAuth`-konfigurationen, FØR
+variablen var deklareret længere nede i filen — modsat en closure (`() =>
+setOnboardStep(1)`, som allerede fandtes og ER sikker, da den kun evalueres
+ved selve KALDET, ikke ved oprettelsen). Gav en øjeblikkelig "Cannot access
+'setOnboardStep' before initialization"-TDZ-krasch ved hver eneste side-
+indlæsning — fanget af en Playwright-smoke-test (IKKE af build/vitest, som
+begge var grønne), rettet ved at flytte `onboardStep`/`setOnboardStep`s
+`useState` op i App.jsx til FØR `useAuth()`-kaldet (var tidligere ejet af
+`useOnboarding.js`, som kaldes EFTER `useAuth()`).
+
+**Verifikation:** `npm run build`/`npx vitest run` (110/110) grønne,
+mojibake-scan clean, Playwright-smoke-test (artifact-preview-build)
+bekræftede ingen runtime-fejl og at preview-bypass-flowet (uautentificeret,
+`onboarding_completed` forbliver bevidst `undefined`/"ukendt" for denne
+brugertype) samt normal bundnav-navigation er upåvirket af den nye guard.
+**Kendt begrænsning:** selve login-/signup-netværksflowet mod den ægte
+Supabase-auth-endpoint kunne IKKE testes end-to-end i denne sandbox — et
+forsøg på at mocke `https://jegrpcflyguadyxialkm.supabase.co/auth/v1/token`
+via Playwrights `page.route()` fejlede med `net::ERR_FAILED` FØR selve
+mock-interceptoren nåede at reagere, dvs. sandboxens udgående netværks-
+politik blokerer den rigtige Supabase-vært fra selve browser-konteksten
+(samme kendte klasse af begrænsning som tidligere sessioners "kan ikke
+mocke Supabase-netværk pålideligt her", se afsnit 4's note om
+skærmbilleder) — verificeret i stedet ved grundig manuel kode-sporing af
+alle tre routing-stier samt direkte SQL-verifikation af skema/RLS/backfill
+mod den LIVE database.
+
 ---
 
 ## 6. Design-antimønstre — ting vi bevidst IKKE vil have i appen

@@ -18,7 +18,33 @@ import { showToast } from "./SharedComponents.jsx";
 export const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
-                          onSignupSuccess }) {
+                          setOnboardStep, onSignupSuccess }) {
+
+  // Slår op om en frisk indlæst/logget ind bruger har gennemført onboarding,
+  // og ruter til hhv. ONBOARD (med det gemte trin genoptaget) eller HOME
+  // (29. sept. 2026, "Onboarding-persistens") — delt af handleLogin og
+  // app-boot-korrektionen nedenfor, så de to steder ikke kan komme i
+  // konflikt med hinanden om hvordan beslutningen tages.
+  const resolveOnboardingRoute = useCallback(async (uid, token) => {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=onboarding_completed,onboarding_step`, {
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, Accept: "application/json" },
+      });
+      const rows = await res.json();
+      const p = Array.isArray(rows) ? rows[0] : null;
+      if (p && p.onboarding_completed === false) {
+        setOnboardStep(p.onboarding_step || 1);
+        setScreen(SCREENS.ONBOARD);
+      } else {
+        setScreen(SCREENS.HOME);
+      }
+    } catch {
+      // Kunne ikke afgøre status (netværksfejl) — fald tilbage til den
+      // tidligere, simple adfærd frem for at lade brugeren hænge på et tomt
+      // login-skærmbillede.
+      setScreen(SCREENS.HOME);
+    }
+  }, [setScreen, setOnboardStep]);
 
   // ── Token state — persisteret i localStorage (eller sessionStorage, se
   // rememberMe nedenfor) — falder tilbage til sessionStorage ved opstart,
@@ -98,19 +124,29 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         const payload = decodeJwtPayload(access);
         const uid = payload.sub;
         saveTokens(access, refresh, uid);
-        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,created_at,onboarding_completed`, {
+        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,created_at,onboarding_completed,onboarding_step`, {
           headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${access}`, "Accept": "application/json" },
         })
           .then(r => r.json())
           .then(data => {
             const profile = data?.[0];
             const createdAt = profile?.created_at ? new Date(profile.created_at) : null;
-            const isNew = !profile || profile.onboarding_completed === false || !createdAt || (Date.now() - createdAt.getTime() < 120000);
-            if (isNew) {
-              const meta = payload.user_metadata || {};
-              setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "" }));
-              if (onSignupSuccess) onSignupSuccess();
-              setIsOAuth(true);
+            // Reelt splittet i to (29. sept. 2026, "Onboarding-persistens") —
+            // tidligere blev "helt ny konto" og "eksisterende, men ufuldført
+            // onboarding" behandlet ens, hvilket fejlagtigt nulstillede en
+            // RETURNERENDE, ufuldført brugers gemte trin tilbage til 1 (via
+            // onSignupSuccess) hver gang de logget ind via OAuth igen.
+            const isBrandNew = !profile || !createdAt || (Date.now() - createdAt.getTime() < 120000);
+            const needsOnboarding = isBrandNew || profile.onboarding_completed === false;
+            if (needsOnboarding) {
+              if (isBrandNew) {
+                const meta = payload.user_metadata || {};
+                setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "" }));
+                if (onSignupSuccess) onSignupSuccess();
+                setIsOAuth(true);
+              } else {
+                setOnboardStep(profile.onboarding_step || 1);
+              }
               setScreen(SCREENS.ONBOARD);
             } else {
               setScreen(SCREENS.HOME);
@@ -172,6 +208,24 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     })();
 
     return () => { cancelled = true; };
+  }, []);
+
+  // ── App-boot: korrigér startskærmen ud fra reel onboarding-status ────────
+  // (29. sept. 2026, "Onboarding-persistens") — App.jsx's `screen`-useState
+  // gætter blindt HOME, blot fordi der ligger et token i localStorage/
+  // sessionStorage, uden nogensinde at tjekke onboarding_completed. En
+  // bruger der lukkede appen midt i onboardingen (eller aldrig gennemførte
+  // den) blev derfor altid sendt direkte til scanner-forsiden ved appstart.
+  // Kører KUN én gang ved mount (tomt dep-array) — ikke ved senere token-
+  // fornyelser, som ikke må afbryde et onboarding-forløb der er i gang
+  // inde i selve sessionen (resolveOnboardingRoute bruges dér IKKE).
+  useEffect(() => {
+    // En frisk OAuth-redirect (samme mount) håndterer sin egen routing i
+    // effekten ovenfor, inkl. genoptagelse af gemt trin — spring den her
+    // over for at undgå at de to konkurrerer om at afgøre skærmen to gange.
+    if (window.location.hash && window.location.hash.includes("access_token")) return;
+    if (!accessToken || !userId) return;
+    resolveOnboardingRoute(userId, accessToken);
   }, []);
 
   // ── Auto-refresh token — planlagt efter tokenets faktiske udløbstid ──────
@@ -252,7 +306,11 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         return;
       }
       saveTokens(data.access_token, data.refresh_token, data.user.id);
-      setScreen(SCREENS.HOME);
+      // Ruter til ONBOARD (med gemt trin genoptaget) eller HOME ud fra reel
+      // status i stedet for blindt at antage Hjem (29. sept. 2026,
+      // "Onboarding-persistens") — en bruger der aldrig gennemførte
+      // onboarding skal tilbage dertil, hver gang de logger ind igen.
+      await resolveOnboardingRoute(data.user.id, data.access_token);
     } catch {
       // Ægte, uventede fejl (netværk nede, JSON-parse-fejl osv.) — vis
       // ALDRIG browserens/JS'ens rå tekniske fejltekst (fx "Failed to
@@ -260,7 +318,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       setAuthError("Der opstod en fejl. Prøv igen.");
     }
     setAuthLoading(false);
-  }, [loginEmail, loginPassword, saveTokens, setScreen]);
+  }, [loginEmail, loginPassword, saveTokens, resolveOnboardingRoute]);
 
   // ── Signup ────────────────────────────────────────────────────────────────
   const handleSignup = useCallback(async () => {
