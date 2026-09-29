@@ -586,15 +586,15 @@ export default function ScannerScreen({
                   synlig indgang i UI'et. */}
               {!cameraActive && (
               <div className="home-hero-frame">
-                <div style={{ position:"absolute", top:"calc(27% - 50px)", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
+                <div style={{ position:"absolute", top:"calc(27% - 62px)", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
                   {/* Tykkere/større tekst + en blød hvid text-shadow-glød "løfter"
                       teksten af det app-brede baggrundsbillede bagved (.app-bg,
                       theme.jsx — samme billede på tværs af hele appen, se dens
                       kommentar), samme mønster som appens øvrige skærme bruger.
-                      Flyttet 25px op (25. sept. 2026, opfølgning), og igen 25px
-                      op (29. sept. 2026, "en mere balanceret og rolig forside" —
-                      reducerer den tomme flade mellem header og hilsen, samlet
-                      50px op fra den oprindelige %-position) sammen med
+                      Flyttet 25px op (25. sept. 2026, opfølgning), igen 25px op
+                      (29. sept. 2026, "en mere balanceret og rolig forside"),
+                      og igen 12px op (29. sept. 2026, opfølgning — samlet 62px
+                      op fra den oprindelige %-position) sammen med
                       scan-knappen herunder — ren fast pixel-forskydning (calc)
                       oven på den eksisterende %-position, ikke en ny %-værdi —
                       brugeren bad specifikt om px, ikke en proportional
@@ -635,11 +635,15 @@ export default function ScannerScreen({
                     samme visuelle sprog som kameraets eget scan-overlay) —
                     bevaret uændret i størrelse. Positionen er flyttet
                     yderligere 25px op sammen med hilsen-blokken ovenfor
-                    (samlet 50px op fra den oprindelige %-position, samme
-                    runde), men fortsat 7px mindre end teksten
-                    (calc(44% - 43px) i stedet for calc(44% - 50px)) — samme
-                    lille ekstra luft-justering mellem hjælpeteksten og
-                    knappen som tidligere, uden at ændre teksten selv. Selve
+                    (29. sept. 2026, "en mere balanceret og rolig forside"),
+                    og igen 2px op (29. sept. 2026, opfølgning — hilsen-
+                    blokken flyttede 12px, men knappen kun 2px af dem, så de
+                    resterende 10px i stedet blev til MERE luft mellem
+                    hjælpeteksten og knappen, som bedt om). Samlet
+                    calc(44% - 45px), 17px mindre end hilsen-blokkens egen
+                    forskydning (62px) — den luft-justering mellem
+                    hjælpeteksten og knappen som allerede fandtes (7px), plus
+                    de nye 10px. Selve
                     knappen er en rigtig <button> (ikke en div med role=
                     "button") for native tastatur-aktivering + pålidelig
                     :active-tryk-feedback på touch-enheder
@@ -666,17 +670,27 @@ export default function ScannerScreen({
                     sept. 2026, opfølgning) — med kun brugerens egen profil
                     er der intet at vælge imellem, se
                     scanProfilePickerAvailable ovenfor. */}
+                {/* Gjort ~12% mere kompakt (højde/bredde) og med lidt mere
+                    afstand til headeren (29. sept. 2026, opfølgning) —
+                    funktion/placering (øverst i .home-hero-frame) er
+                    uændret. Radius skiftet fra en fuld pille (100) til
+                    appens almindelige --r-token (12px), så chippen matcher
+                    resten af appens kort/komponenter i stedet for at have
+                    sin egen særlige form. "Scanner for:" er nu let (500,
+                    neutral --ink2), mens selve den valgte profil er fed
+                    (800) og grøn — tydeligere vægtforskel end tidligere,
+                    hvor begge dele delte samme 700-vægt. */}
                 {scanProfilePickerAvailable && (
-                  <div style={{ position:"absolute", top:"clamp(8px, 2cqh, 16px)", left:0, right:0, zIndex:2, display:"flex", justifyContent:"center" }}>
+                  <div style={{ position:"absolute", top:"clamp(14px, 2.6cqh, 22px)", left:0, right:0, zIndex:2, display:"flex", justifyContent:"center" }}>
                     <button type="button" onClick={() => setShowScanProfilePicker(true)}
-                      style={{ display:"flex", alignItems:"center", gap:5, background:"rgba(255,255,255,.82)", border:"1px solid var(--border)",
-                        borderRadius:100, padding:"clamp(5px, 1.1cqh, 7px) clamp(11px, 2.2cqh, 14px)", cursor:"pointer",
+                      style={{ display:"flex", alignItems:"center", gap:4, background:"rgba(255,255,255,.82)", border:"1px solid var(--border)",
+                        borderRadius:"var(--r)", padding:"clamp(4px, 1cqh, 6px) clamp(10px, 2cqh, 12px)", cursor:"pointer",
                         boxShadow:"0 4px 12px -6px rgba(21,32,26,.3)", fontFamily:"var(--f)", maxWidth:"78%" }}>
-                      <Icon name="family" size={12} color="var(--green)" />
-                      <span style={{ fontSize:"clamp(10.5px, 1.9cqh, 12.5px)", fontWeight:700, color:"var(--ink2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                        Scanner for: <span style={{ color:"var(--green)" }}>{scanProfileLabel}</span>
+                      <Icon name="family" size={11} color="var(--green)" />
+                      <span style={{ fontSize:"clamp(9.5px, 1.7cqh, 11px)", fontWeight:500, color:"var(--ink2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                        Scanner for: <span style={{ color:"var(--green)", fontWeight:800 }}>{scanProfileLabel}</span>
                       </span>
-                      <Icon name="chevronDown" size={11} color="var(--muted)" />
+                      <Icon name="chevronDown" size={10} color="var(--muted)" />
                     </button>
                   </div>
                 )}
@@ -699,7 +713,7 @@ export default function ScannerScreen({
                     tilladelser fra en PWA (samme genundersøgte konklusion
                     som Indstillinger → Notifikationer, se SettingsScreen.jsx). */}
                 {cameraPermissionDenied ? (
-                  <div style={{ position:"absolute", top:"calc(44% - 43px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center", padding:"0 20px" }}>
+                  <div style={{ position:"absolute", top:"calc(44% - 45px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center", padding:"0 20px" }}>
                     <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:20, padding:"20px 18px", maxWidth:300, width:"100%", textAlign:"center", boxShadow:"var(--sh2)" }}>
                       <div style={{ display:"flex", justifyContent:"center", marginBottom:10 }}>
                         <div style={{ width:44, height:44, borderRadius:"50%", background:"var(--red-lt)", display:"flex", alignItems:"center", justifyContent:"center" }}>
@@ -723,7 +737,7 @@ export default function ScannerScreen({
                     </div>
                   </div>
                 ) : (
-                <div style={{ position:"absolute", top:"calc(44% - 43px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
+                <div style={{ position:"absolute", top:"calc(44% - 45px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
                   <div style={{ position:"relative", width:"clamp(119px, 30cqh, 197px)", height:"clamp(119px, 30cqh, 197px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
                     {/* Glow dæmpet ~25% (29. sept. 2026, "en mere balanceret
                         og rolig forside") — se .scan-halo-pulse-keyframes i
