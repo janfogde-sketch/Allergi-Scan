@@ -210,3 +210,73 @@ describe("verifiedBadge", () => {
     expect(verifiedBadge(null, null).label).toBe("Bruger-indsendt");
   });
 });
+
+// ─── QA 28. sept. 2026: falske "ingen advarsler" (Q1/Q2/Q3) ─────────────────
+import { effectiveAllergenFlag, looksNonDanishIngredients, normalizeProductFlags, computeProfileResults as cpr } from "./helpers.js";
+
+const ALL_NO = { gluten:"no", hvede:"no", maelkeallergi:"no", laktose:"no", noedder:"no", jordnoedder:"no", soja:"no", sesam:"no" };
+
+describe("hvede tæller som gluten (Q3)", () => {
+  it("effectiveAllergenFlag løfter gluten til hvedes værdi", () => {
+    expect(effectiveAllergenFlag({ gluten:"no", hvede:"yes" }, "gluten")).toBe("yes");
+    expect(effectiveAllergenFlag({ gluten:"no", hvede:"traces" }, "gluten")).toBe("traces");
+    expect(effectiveAllergenFlag({ gluten:"yes", hvede:"traces" }, "gluten")).toBe("yes");
+    expect(effectiveAllergenFlag({ gluten:"yes", hvede:"no" }, "hvede")).toBe("no");
+  });
+  it("gluten-bruger advares om Nestlé-bar med hvede=yes, gluten=no", () => {
+    expect(compareAllergens({ ...ALL_NO, hvede:"yes" }, ["gluten"]).status).toBe("danger");
+    expect(compareAllergens({ ...ALL_NO, hvede:"traces" }, ["gluten"]).status).toBe("warn");
+  });
+});
+
+describe("looksNonDanishIngredients (Q1)", () => {
+  it("genkender tysk, svensk og engelsk", () => {
+    expect(looksNonDanishIngredients("Zucker, Vollmilchpulver, Kakaobutter, Haselnüsse (10%), Weizenmehl")).toBe(true);
+    expect(looksNonDanishIngredients("Mjölk, mjölksyrakultur, laktasenzym")).toBe(true);
+    expect(looksNonDanishIngredients("sugar, wheat flour, salt")).toBe(true);
+    expect(looksNonDanishIngredients("wheat 95%,")).toBe(true);
+  });
+  it("lader danske og blandede danske lister være", () => {
+    expect(looksNonDanishIngredients("Sukker, kakaosmør, SKUMMETMÆLKSPULVER, emulgator (SOJALECITHINER)")).toBe(false);
+    expect(looksNonDanishIngredients("socker/sukker, VETEmjöl/HVEDE-/HVETEMEL, skumMJÖLKS-/SKUMMETMÆLKS")).toBe(false);
+    expect(looksNonDanishIngredients("220 g løg, 44 g palmeolie, 31 g hvedemel, salt.")).toBe(false);
+    expect(looksNonDanishIngredients("")).toBe(false);
+  });
+});
+
+describe("normalizeProductFlags (Q1/Q2)", () => {
+  it("uden ingrediensliste bliver 'no' til 'unknown' (Kartoffel Sandwichbrød)", () => {
+    const f = normalizeProductFlags(ALL_NO, { ingredientsText: null });
+    expect(f.gluten).toBe("unknown");
+    expect(compareAllergens(f, ["gluten"]).hasUnknown).toBe(true);
+  });
+  it("pladsholderen 'Ingen ingrediensliste' tæller ikke som data", () => {
+    expect(normalizeProductFlags(ALL_NO, { ingredientsText: "Ingen ingrediensliste" }).noedder).toBe("unknown");
+  });
+  it("tysk liste uden AI-læsning bliver 'unknown' (Lindt), men 'yes' bevares", () => {
+    const f = normalizeProductFlags({ ...ALL_NO, soja:"yes" }, { ingredientsText: "Zucker, Haselnüsse, Weizenmehl" });
+    expect(f.noedder).toBe("unknown");
+    expect(f.soja).toBe("yes");
+  });
+  it("stoler på verificerede og Claude-læste flag", () => {
+    expect(normalizeProductFlags(ALL_NO, { ingredientsText: "", verifiedStatus: "verified" }).gluten).toBe("no");
+    expect(normalizeProductFlags(ALL_NO, { ingredientsText: "Zucker, Weizenmehl", sourceMethod: "keyword+claude" }).gluten).toBe("no");
+  });
+  it("dansk liste er uændret", () => {
+    expect(normalizeProductFlags(ALL_NO, { ingredientsText: "Sukker, rismel, salt" }).gluten).toBe("no");
+  });
+  it("retter gluten ud fra hvede i selve flag-objektet", () => {
+    expect(normalizeProductFlags({ ...ALL_NO, hvede:"yes" }, { ingredientsText: "hvedemel, sukker" }).gluten).toBe("yes");
+  });
+});
+
+describe("computeProfileResults: ukendt er ikke sikkert", () => {
+  it("giver 'warn' når en valgt allergi er ukendt", () => {
+    const [r] = cpr([{ id:"me", name:"Åse", allergens:["gluten"] }], { allergen_flags: { gluten:"unknown" }, ingredients:"" });
+    expect(r.status).toBe("warn");
+  });
+  it("giver 'danger' for hvede når profilen har gluten", () => {
+    const [r] = cpr([{ id:"me", name:"Åse", allergens:["gluten"] }], { allergen_flags: { gluten:"no", hvede:"yes" }, ingredients:"hvedemel" });
+    expect(r.status).toBe("danger");
+  });
+});

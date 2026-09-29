@@ -6,7 +6,7 @@
 
 import { useState, useRef } from "react";
 import { SUPABASE_URL, ALLERGENS, SCREENS } from "./constants.jsx";
-import { makeHeaders, apiCall, compareAllergens, compareENumbers, extractENumbers, traceId, traceLog, compressImageToBase64, matchCustomAllergens } from "./helpers.js";
+import { makeHeaders, apiCall, compareAllergens, compareENumbers, extractENumbers, traceId, traceLog, compressImageToBase64, matchCustomAllergens, normalizeProductFlags } from "./helpers.js";
 import { saveToOfflineCache, getFromOfflineCache } from "./useOffline.js";
 
 // Lægger et fritekst-match af brugerens EGNE, selv-tilføjede allergier
@@ -27,7 +27,11 @@ import { saveToOfflineCache, getFromOfflineCache } from "./useOffline.js";
 // (se aktiveIds-kommentaren i App.jsx).
 export function buildScanResultFromProductData({ product, data, ean, activeIds, activeENumbers, family, activeProfiles }) {
   const variantLabel = product.variant_label || null;
-  const flags = product.allergen_flags || data?.allergen_flags || {};
+  const ingredientsText = product.ingredients || data?.ingredients?.raw_text || product.ingredients_text || "";
+  const flags = normalizeProductFlags(product.allergen_flags || data?.allergen_flags || {}, {
+    ingredientsText, verifiedStatus: product.verified_status, source: product.source,
+    sourceMethod: product.allergen_source_method, quality: product.allergen_quality,
+  });
   const { status: rawStatus, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(flags, activeIds);
   // Data mangler for ét eller flere af dine allergener ("unknown"-felter) — vis
   // det IKKE som et trygt grønt "sikkert produkt". Uden dette nedgraderes en
@@ -38,7 +42,6 @@ export function buildScanResultFromProductData({ product, data, ean, activeIds, 
   const status = isUnsafeUnknown ? "warn" : rawStatus;
 
   // Udtræk E-numre fra ingredienstekst
-  const ingredientsText = product.ingredients || data?.ingredients?.raw_text || product.ingredients_text || "";
   const productENumbers = extractENumbers(ingredientsText);
   const { matched: matchedENumbers } = compareENumbers(productENumbers, activeENumbers);
 

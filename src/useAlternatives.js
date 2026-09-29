@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useCallback } from "react";
 import { SUPABASE_URL } from "./constants.jsx";
-import { makeHeaders, compareAllergens } from "./helpers.js";
+import { makeHeaders, compareAllergens, normalizeProductFlagsFor } from "./helpers.js";
 
 // Kategori-hierarki: hvis ingen resultater i præcis kategori, prøv overkategori
 const CATEGORY_PARENTS = {
@@ -56,7 +56,7 @@ async function fetchByCategory(category, excludeEan, accessToken, activeIds) {
     + `?category=eq.${encodeURIComponent(category)}`
     + `&ean=neq.${encodeURIComponent(excludeEan)}`
     + `&verified_status=in.(verified,auto_verified)`
-    + `&select=id,ean,name,brand,image_url,allergen_flags,category,verified_status`
+    + `&select=id,ean,name,brand,image_url,allergen_flags,category,verified_status,source,ingredients_text,allergen_source_method,allergen_quality`
     + `&limit=50`
     + `&order=verified_status.desc`; // "verified" > "auto_verified" alfabetisk — desc viser verified først
 
@@ -70,8 +70,7 @@ async function fetchByCategory(category, excludeEan, accessToken, activeIds) {
 
   // Filtrér: kun produkter der er sikre for alle aktive allergen-IDs
   return products.filter(p => {
-    const flags = p.allergen_flags || {};
-    const { status } = compareAllergens(flags, activeIds);
-    return status === "safe";
+    const { status, hasUnknown } = compareAllergens(normalizeProductFlagsFor(p), activeIds);
+    return status === "safe" && !hasUnknown;
   });
 }

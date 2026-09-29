@@ -195,7 +195,7 @@ async function analyzeWithClaude(text: string): Promise<Record<string, string> |
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) return null; // Ingen nøgle = spring fallback over
 
-  const systemPrompt = `Du er en allergen-detektor for danske fødevarer. Analysér ingredienslisten og returner KUN et JSON-objekt med disse 16 allergener som nøgler og "yes"/"traces"/"no" som værdier:
+  const systemPrompt = `Du er en allergen-detektor for fødevarer solgt i Danmark. Ingredienslisten kan være på dansk, svensk, norsk, tysk, engelsk eller et andet sprog — læs den på dens eget sprog. Analysér ingredienslisten og returner KUN et JSON-objekt med disse 16 allergener som nøgler og "yes"/"traces"/"no" som værdier:
 
 gluten, hvede, maelkeallergi, laktose, aeg, noedder, jordnoedder, soja, fisk, skaldyr, selleri, sennep, sesam, svovl, lupin, bloeddyr
 
@@ -203,7 +203,7 @@ REGLER:
 - maelkeallergi = mælkePROTEIN (kasein, valle, ost, smør). "Laktosefri mælk" -> maelkeallergi=yes
 - laktose = mælkeSUKKER. "Laktosefri" -> laktose=no, men maelkeallergi kan stadig være yes
 - hvede = hvedeprotein, separat fra gluten
-- gluten = hvede/rug/byg/havre-protein. Rismel/majsmel = IKKE gluten
+- gluten = hvede/rug/byg/havre-protein (fx Weizen/wheat/vete/Roggen/råg/rye). Rismel/majsmel = IKKE gluten. Indeholder produktet hvede, er gluten mindst lige så højt som hvede
 - "yes" = indeholder direkte. "traces" = kan indeholde spor af / samme fabrik. "no" = ikke til stede
 - E-numre: E322=soja(traces), E471/E472=maelkeallergi(traces), E220-228=svovl(yes)
 - Vær konservativ: ved tvivl om spor, brug "traces" ikke "no"
@@ -243,9 +243,34 @@ Returner KUN JSON, ingen forklaring, ingen markdown.`;
   }
 }
 
+// Samme heuristik som looksNonDanishIngredients i src/helpers.js (deler ikke
+// kode). Nøgleordsmotoren kender kun danske ord og ville ellers svare "no" for
+// alt i en tysk/svensk/engelsk liste — et falsk "ingen allergener".
+const FOREIGN_INGREDIENT_STEMS = [
+  "zucker","weizen","milch","vollmilch","magermilch","wasser","salz","hefe","eier","haselnüss","mandeln","roggen","gerste","sahne","zutaten",
+  "sugar","wheat","flour","milk","water","yeast","eggs","hazelnut","almond","butter","cream","barley","rye","ingredients",
+  "socker","vete","mjölk","vatten","ägg","råg","grädde","smör","jäst","nötter","ingredienser:","hvete","melk",
+];
+const DANISH_INGREDIENT_STEMS = ["sukker","hvede","mælk","vand","gær","smør","fløde","olie","nødder","mandler","kerner","stivelse","krydderi","æg","rug","byg","havre"];
+function looksNonDanish(text: string): boolean {
+  const words = text.toLowerCase().split(/[^a-zæøåäöüß:]+/).filter(Boolean);
+  if (words.length === 0) return false;
+  const danishHits = words.filter(w => DANISH_INGREDIENT_STEMS.some(s => w.startsWith(s) || w.endsWith(s)) || /mel$/.test(w)).length;
+  if (danishHits > 0) return false;
+  return words.some(w => FOREIGN_INGREDIENT_STEMS.some(s => w.startsWith(s)));
+}
+
+// Hvede indeholder altid gluten — gluten må aldrig stå lavere end hvede.
+function liftGlutenFromWheat(flags: Record<string, string>): Record<string, string> {
+  const rank = (v: string) => v === "yes" ? 3 : v === "traces" ? 2 : v === "no" ? 1 : 0;
+  if (rank(flags.hvede) >= 2 && rank(flags.hvede) > rank(flags.gluten)) flags.gluten = flags.hvede;
+  return flags;
+}
+
 // Vurder om keyword-resultatet er "usikkert" og bør verificeres med Claude
 function shouldUseClaudeFallback(text: string): boolean {
   const lower = text.toLowerCase();
+  if (looksNonDanish(text)) return true;
   if (/uden|fri for|free|laktosefri|under 0/.test(lower)) return true;
   const commaCount = (text.match(/,/g) || []).length;
   if (commaCount > 15) return true;
@@ -334,6 +359,14 @@ Deno.serve(async (req) => {
         method = "keyword+claude";
       }
     }
+
+    // Ikke-dansk tekst som Claude ikke kunne læse (ingen nøgle/API-fejl):
+    // nøgleordsmotorens "no" betyder her kun "fandt ingen danske ord" —
+    // returnér "unknown" i stedet for et falsk negativt resultat.
+    if (method === "keyword" && looksNonDanish(text)) {
+      for (const a of ALL_ALLERGENS) if (allergenFlags[a] === "no") allergenFlags[a] = "unknown";
+    }
+    allergenFlags = liftGlutenFromWheat(allergenFlags);
 
     if (save && product_id) {
       const supabase = createClient(

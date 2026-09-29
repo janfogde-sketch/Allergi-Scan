@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall, buildActiveProfileList, computeProfileResults, extractENumbers } from "./helpers.js";
+import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall, buildActiveProfileList, computeProfileResults, extractENumbers, normalizeProductFlagsFor } from "./helpers.js";
 import { EatSafeLogo, Icon, ProductImage, showToast, ConfirmDialog } from "./SharedComponents.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { TextLink, Accordion } from "./DesignSystem.jsx";
@@ -552,7 +552,7 @@ export default function ProfileScreen({
     if (activeProfileList.length === 0 || !f.allergen_flags) return null;
     const ingredientsText = f.ingredients || f.ingredients_text || "";
     const results = computeProfileResults(activeProfileList, {
-      allergen_flags: f.allergen_flags, ingredients: ingredientsText, nutrition: f.nutrition,
+      allergen_flags: normalizeProductFlagsFor(f), ingredients: ingredientsText, nutrition: f.nutrition,
       productENumbers: f.productENumbers?.length ? f.productENumbers : extractENumbers(ingredientsText),
     });
     const dangerNames = results.filter(r => r.status === "danger").map(r => r.name.split(" ")[0]);

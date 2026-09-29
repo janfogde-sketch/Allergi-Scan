@@ -135,6 +135,65 @@ export function decodeJwtPayload(token) {
 
 // ─── ALLERGEN SAMMENLIGNING ──────────────────────────────────────────────────
 
+const FLAG_RANK = { yes: 3, traces: 2, no: 1, unknown: 0 };
+const flagRank = (v) => (v === true ? 3 : FLAG_RANK[v] ?? 0);
+
+// Hvede indeholder altid gluten — et hvede-fund skal derfor også advare en
+// gluten-bruger, selv hvis produktets gluten-flag (fejlagtigt) siger "no".
+export function effectiveAllergenFlag(flags, id) {
+  const val = flags?.[id];
+  if (id === "gluten" && flagRank(flags?.hvede) >= 2 && flagRank(flags.hvede) > flagRank(val)) return flags.hvede;
+  return val;
+}
+
+// Ord der næsten kun optræder i tyske/engelske/svenske/norske ingredienslister.
+const FOREIGN_INGREDIENT_STEMS = [
+  "zucker","weizen","milch","vollmilch","magermilch","wasser","salz","hefe","eier","haselnüss","mandeln","roggen","gerste","sahne","zutaten",
+  "sugar","wheat","flour","milk","water","yeast","eggs","hazelnut","almond","butter","cream","barley","rye","ingredients",
+  "socker","vete","mjölk","vatten","ägg","råg","grädde","smör","jäst","nötter","ingredienser:","hvete","melk",
+];
+const DANISH_INGREDIENT_STEMS = ["sukker","hvede","mælk","vand","gær","smør","fløde","olie","nødder","mandler","kerner","stivelse","krydderi","æg","rug","byg","havre"];
+
+// Ingredienslister på et andet sprog end dansk kan vores danske nøgleords-
+// motor ikke læse — den svarer "no" for alt, hvilket ellers vises som grønt.
+export function looksNonDanishIngredients(text) {
+  const words = (text || "").toLowerCase().split(/[^a-zæøåäöüß:]+/).filter(Boolean);
+  if (words.length === 0) return false;
+  const danishHits = words.filter(w => DANISH_INGREDIENT_STEMS.some(s => w.startsWith(s) || w.endsWith(s)) || /mel$/.test(w)).length;
+  if (danishHits > 0) return false;
+  return words.some(w => FOREIGN_INGREDIENT_STEMS.some(s => w.startsWith(s)));
+}
+
+export function hasRealIngredients(text) {
+  const t = (text || "").trim();
+  return t.length > 0 && !/^ingen ingrediensliste/i.test(t);
+}
+
+// Produktets allergen-flag som de reelt kan bruges til en vurdering: "no"
+// uden grundlag (ingen ingrediensliste, eller en liste nøgleordsmotoren ikke
+// kan læse) gøres til "unknown", så appen aldrig viser "ingen advarsler" for
+// noget den ikke har kontrolleret. Producent-verificerede eller AI-læste
+// (Claude) flag stoles der på uændret.
+export function normalizeProductFlags(flags, { ingredientsText = "", verifiedStatus, source, sourceMethod, quality } = {}) {
+  const out = { ...(flags || {}) };
+  const trusted = verifiedStatus === "verified" || source === "producer" || /claude/.test(sourceMethod || "") || quality === "high";
+  if (!trusted && (!hasRealIngredients(ingredientsText) || looksNonDanishIngredients(ingredientsText))) {
+    for (const k of Object.keys(out)) if (out[k] === "no" || out[k] === false) out[k] = "unknown";
+  }
+  const g = effectiveAllergenFlag(out, "gluten");
+  if (g !== out.gluten && g !== undefined) out.gluten = g;
+  return out;
+}
+
+export function normalizeProductFlagsFor(product) {
+  if (!product) return {};
+  return normalizeProductFlags(product.allergen_flags, {
+    ingredientsText: product.ingredients || product.ingredients_text || "",
+    verifiedStatus: product.verified_status, source: product.source,
+    sourceMethod: product.allergen_source_method, quality: product.allergen_quality,
+  });
+}
+
 export function compareAllergens(flags, activeAllergenIds) {
   if (!flags || activeAllergenIds.length === 0) return { status:"safe", matchedDanger:[], matchedWarning:[], hasUnknown:false, confidence:"high", explanation:[] };
   const matchedDanger = [];
@@ -143,7 +202,7 @@ export function compareAllergens(flags, activeAllergenIds) {
   const explanation = []; // Forklaring på HVORFOR et produkt er usikkert
 
   for (const id of activeAllergenIds) {
-    const val = flags[id];
+    const val = effectiveAllergenFlag(flags, id);
     // Håndter boolean (recipes) og string (produkter)
     if (val === true || val === "yes") {
       matchedDanger.push(id);
@@ -388,8 +447,10 @@ export function computeProfileResults(profiles, { allergen_flags, ingredients, n
   const resultFlags = allergen_flags || {};
   const ingredientsText = ingredients || "";
   return (profiles || []).map(p => {
-    const danger = (p.allergens || []).filter(a => resultFlags[a] === "yes");
-    const warning = (p.allergens || []).filter(a => resultFlags[a] === "traces");
+    const flagOf = (a) => effectiveAllergenFlag(resultFlags, a);
+    const danger = (p.allergens || []).filter(a => flagOf(a) === "yes" || flagOf(a) === true);
+    const warning = (p.allergens || []).filter(a => flagOf(a) === "traces");
+    const unknown = (p.allergens || []).filter(a => !["yes", "traces", "no", true, false].includes(flagOf(a)));
     // Fritekst-match af profilens egne tilføjede allergier — se
     // matchCustomAllergens' egen kommentar for hvorfor dette er mindre
     // pålideligt end de faste allergener (ingen synonymer).
@@ -409,11 +470,12 @@ export function computeProfileResults(profiles, { allergen_flags, ingredients, n
       ...warning.map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id}`),
       ...dietFails.map(r => `${r.label}: ${r.reasons[0] || "passer ikke"}`),
       ...eNumberMatches.map(e => `Overvåget E-nummer ${e}`),
+      ...unknown.map(id => `${ALLERGENS.find(a => a.id === id)?.label || id}: kan ikke afgøres`),
     ];
     const status = (danger.length > 0 || customMatches.length > 0) ? "danger"
-      : (warning.length > 0 || dietFails.length > 0 || eNumberMatches.length > 0) ? "warn"
+      : (warning.length > 0 || dietFails.length > 0 || eNumberMatches.length > 0 || unknown.length > 0) ? "warn"
       : "safe";
-    return { ...p, status, reasons, danger, warning };
+    return { ...p, status, reasons, danger, warning, unknown };
   });
 }
 
