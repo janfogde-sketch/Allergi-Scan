@@ -13,6 +13,8 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import { useFamily } from "./useFamily.js";
 
+vi.mock("./constants.jsx", async (importOriginal) => ({ ...(await importOriginal()), uid: () => "temp-1" }));
+
 function jsonResponse(body, ok = true) {
   return { ok, status: ok ? 200 : 500, text: async () => JSON.stringify(body) };
 }
@@ -56,6 +58,49 @@ describe("useFamily addMember", () => {
     await act(async () => { await result.current.addMember(); });
     expect(result.current.family).toEqual([]);
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+});
+
+// QA 28. sept. 2026 (Q4): det første familiemedlem indgik ikke i scanningen,
+// fordi scanner-udvalget beholdt det midlertidige klient-id.
+describe("useFamily scanner-udvalg (activeProfiles)", () => {
+  function holder(initial) {
+    const h = { value: initial };
+    h.set = (u) => { h.value = typeof u === "function" ? u(h.value) : u; };
+    return h;
+  }
+
+  it("udskifter det midlertidige id med serverens id efter gemning", async () => {
+    const ap = holder(["me"]);
+    const { result } = renderHook(() => useFamily({ accessToken: "tok", userId: "u1", setActiveProfiles: ap.set }));
+    global.fetch.mockImplementation(async () => {
+      // Som App.jsx's "vælg Alle første gang"-effekt: udvalget får temp-id'et
+      ap.value = ["me", "temp-1"];
+      return jsonResponse([{ id: "server-id-1" }]);
+    });
+    act(() => {
+      result.current.setNewMemberName("Øjvind");
+      result.current.setNewMemberBirthYear("2020");
+      result.current.setNewMemberGender("mand");
+    });
+    await act(async () => { await result.current.addMember(); });
+    expect(ap.value).toEqual(["me", "server-id-1"]);
+  });
+
+  it("reparerer et gemt udvalg med ukendte id'er til 'Alle' ved indlæsning", async () => {
+    const ap = holder(["me", "b735pp3"]);
+    global.fetch.mockResolvedValue(jsonResponse([{ id: "m1", name: "Øjvind" }, { id: "m2", name: "Sofie" }]));
+    const { result } = renderHook(() => useFamily({ accessToken: "tok", userId: "u1", setActiveProfiles: ap.set }));
+    await act(async () => { await result.current.loadFamily(); });
+    expect(ap.value).toEqual(["me", "m1", "m2"]);
+  });
+
+  it("lader et gyldigt, bevidst udvalg være", async () => {
+    const ap = holder(["m2"]);
+    global.fetch.mockResolvedValue(jsonResponse([{ id: "m1", name: "Øjvind" }, { id: "m2", name: "Sofie" }]));
+    const { result } = renderHook(() => useFamily({ accessToken: "tok", userId: "u1", setActiveProfiles: ap.set }));
+    await act(async () => { await result.current.loadFamily(); });
+    expect(ap.value).toEqual(["m2"]);
   });
 });
 

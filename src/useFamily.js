@@ -5,7 +5,7 @@
 // Nyt-medlem-state bor her og nulstilles automatisk efter tilføjelse.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { SUPABASE_URL, AVATAR_COLORS, uid } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
@@ -27,6 +27,9 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
   // stedet for at oprette et nyt (25. sept. 2026, brugerfeedback: "Rediger"
   // på et allerede-tilføjet familiemedlem) — null betyder "tilføj nyt".
   const [editingMemberId, setEditingMemberId] = useState(null);
+  // Midlertidige klient-id'er for medlemmer der er ved at blive gemt — må
+  // ikke ryddes væk af reparationen i loadFamily mens gemningen står på.
+  const pendingTempIdsRef = useRef(new Set());
 
   const resetNewMember = () => {
     setNewMemberName("");
@@ -66,6 +69,15 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
         { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
       );
       if (Array.isArray(data)) {
+        // Et gemt scanner-udvalg der peger på id'er som ikke findes (fx et
+        // midlertidigt klient-id fra før serveren svarede) ville få forsiden
+        // til at sige "Scanner for: N profiler", mens medlemmet reelt ikke
+        // tjekkes. Genopret da "Alle" — det sikre valg.
+        const serverIds = new Set(data.map(m => m.id));
+        setActiveProfiles?.(a => {
+          const stale = (a || []).filter(x => x !== "me" && !serverIds.has(x) && !pendingTempIdsRef.current.has(x));
+          return stale.length === 0 ? a : ["me", ...data.map(m => m.id)];
+        });
         setFamily(data.map(m => ({
           id: m.id,
           name: m.name,
@@ -95,6 +107,7 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
       eNumbers: newMemberENumbers,
       color,
     };
+    pendingTempIdsRef.current.add(tempMember.id);
     setFamily(f => [...f, tempMember]);
     resetNewMember();
     // Ekstra bekræftelse ud over selve listen der viser medlemmet — uden
@@ -119,11 +132,22 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
         }),
       });
       const saved = Array.isArray(data) ? data[0] : data;
-      if (saved?.id) setFamily(f => f.map(m => m.id === tempMember.id ? { ...m, id: saved.id } : m));
+      if (saved?.id) {
+        setFamily(f => f.map(m => m.id === tempMember.id ? { ...m, id: saved.id } : m));
+        // Scanner-udvalget kan allerede have fået det midlertidige id (fx
+        // App.jsx's "vælg Alle første gang"-effekt) — skift det også dér.
+        setActiveProfiles?.(a => (a || []).map(x => x === tempMember.id ? saved.id : x));
+      }
     } catch {
       // Gemning fejlede — fjern det optimistiske medlem igen, ellers står
       // brugeren med et familiemedlem i UI'et der aldrig blev gemt i databasen
       setFamily(f => f.filter(m => m.id !== tempMember.id));
+      setActiveProfiles?.(a => {
+        const next = (a || []).filter(x => x !== tempMember.id);
+        return next.length > 0 ? next : ["me"];
+      });
+    } finally {
+      pendingTempIdsRef.current.delete(tempMember.id);
     }
   };
 

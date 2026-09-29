@@ -16,7 +16,7 @@ import { makeHeaders, apiCall } from "./helpers.js";
 // det tidspunkt useAuth() sætter sin konfiguration op.
 export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
                                 onboardStep, setOnboardStep,
-                                allergens, customAllerg, selectedENumbers,
+                                allergens, customAllerg, selectedENumbers = [],
                                 setUser, setScreen, setEditMode, setIsOAuth }) {
 
   const [editMode, setEditModeLocal]  = useState(false);
@@ -62,6 +62,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
           // af appen) i stedet for rå alder, så det ikke bliver forældet —
           // "alder" er kun UI-sproget, ikke det lagrede felt.
           birth_year: user.age ? new Date().getFullYear() - parseInt(user.age) : null,
+          gender: user.gender || null,
         }),
       });
       if (emailToSave) setUser(u => ({ ...u, email: emailToSave }));
@@ -118,7 +119,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
         method: "PATCH",
         headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY,
           "Authorization": `Bearer ${accessToken}`, "Prefer": "return=minimal" },
-        body: JSON.stringify({ onboarding_completed: true }),
+        body: JSON.stringify({ onboarding_completed: true, diets: user.diets || [], e_numbers: selectedENumbers }),
       });
     } catch {}
     // Opdatér den lokale kopi FØR setScreen — App.jsx's route guard (29.
