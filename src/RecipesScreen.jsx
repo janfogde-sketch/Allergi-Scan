@@ -490,10 +490,10 @@ export default function RecipesScreen({
     return (
       <div className="screen fade-in">
         {/* Header */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", margin:"20px 0 16px" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <div>
-            <div style={{ fontSize:21, fontWeight:700, color:"var(--ink)", letterSpacing:"-.4px" }}>Opskrifter</div>
-            <div style={UI.muted12mt2}>
+            <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Opskrifter</div>
+            <div className="screen-sub">
               {recipesLoading ? "Indlæser…" : recipes.length > 0 ? `${recipes.length} opskrifter` : null}
             </div>
           </div>

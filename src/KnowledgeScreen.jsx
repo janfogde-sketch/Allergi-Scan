@@ -85,7 +85,7 @@ const S = {
   // med tydelig tekst ("Høj risiko"/"Moderat"/"Lav risiko"), samme ikon+
   // tekst+farve-princip som resten af appens statuslinjer.
   riskRow: (level) => ({ display:"flex", alignItems:"center", gap:4, marginTop:4, fontSize:10.5, fontWeight:700, color: RISK_META[level]?.color || "var(--muted)" }),
-  label: { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:10 },
+  label: { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:10 },
   backBtn: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, flexShrink:0 },
   section: { marginBottom:16 },
   sectionLabel: { fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"1.4px", color:"var(--neutral)", marginBottom:8 },
@@ -408,12 +408,8 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
 
   return (
     <div className="screen fade-in">
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", paddingTop:4, marginBottom:16 }}>
-        <div>
-          <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:22, fontWeight:800, color:"var(--ink)" }}><Icon name="book" size={20} color="var(--ink)" /> Allergileksikon</div>
-          <div style={UI.muted12mt2}>{total} opslag</div>
-        </div>
-      </div>
+      <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Allergileksikon</div>
+      <div className="screen-sub">{total} opslag</div>
 
       {/* Fejlbesked — synlig under udvikling */}
       {error && <div style={{ ...S.error, display:"flex", alignItems:"center", gap:6 }}><Icon name="warning" size={13} color="var(--red)" /> {error}</div>}

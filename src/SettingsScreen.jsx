@@ -184,7 +184,7 @@ export default function SettingsScreen({
 
   return (
     <div className="screen fade-in">
-      <div className="screen-title">Indstillinger</div>
+      <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Indstillinger</div>
 
       {/* ── Madpas-sprog ── (omdøbt fra "Sprog" 28. sept. 2026, FINAL
           POLISH-runde — EatSafe har intet app-sprog-skift at sektionere
