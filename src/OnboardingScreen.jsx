@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
 import { initials, addUniqueCustom } from "./helpers.js";
-import { EatSafeLogo, Icon, showToast } from "./SharedComponents.jsx";
+import { EatSafeLogo, EatSafeHeaderLogo, Icon, showToast } from "./SharedComponents.jsx";
 import { ENumberPicker, AllergenChipPicker, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { MemberForm } from "./MemberForm.jsx";
@@ -897,9 +897,32 @@ export default function OnboardingScreen({
               </div>,
               document.body
             )}
+            {/* Brand-header (29. sept. 2026, "Ret branding i hele onboarding-
+                flowet") — erstatter det tidligere selvstændige scanner-/
+                stregkode-symbol (EatSafeLogo variant="symbol", kun selve
+                bar-mærket uden ordmærke) med det SAMME tekst-only header-
+                logo (EatSafeHeaderLogo, se SharedComponents.jsx) som appens
+                almindelige sider (AppHeader.jsx) og hovedsidens BETA-badge
+                bruger — samme --brand-ink/--brand-green-farver, skrifttype/
+                -vægt og BETA-badge som resten af appen, ingen scanner-/
+                stregkodeikon. Fast positioneret øverst til venstre (samme
+                top-afstandsformel som Feedback-knappen nedenfor, som
+                allerede er position:fixed her under hele onboardingen), så
+                de to visuelt balancerer hinanden som en header-række —
+                UDEN at ændre selve Feedback-knappens kode. Gælder alle 5
+                trin (samme onboard-wrap-blok), ikke editMode (Rediger
+                profil/præferencer har allerede AppHeader). */}
             {!editMode && (
-              <div style={{ textAlign:"center", padding:"4px 0 20px" }}>
-                <div style={UI.mb6}><EatSafeLogo variant="symbol" size={40} /></div>
+              <div style={{ position:"fixed", top:"calc(12px + env(safe-area-inset-top))", left:20, zIndex:1000 }}>
+                <EatSafeHeaderLogo />
+              </div>
+            )}
+            {/* padding-top øget fra 4px (24. sept.-standarden) til 44px, så
+                overskriften ikke overlapper det nye faste brand-logo
+                ovenfor — direkte konsekvens af logoet, ikke en selvstændig
+                layoutændring. */}
+            {!editMode && (
+              <div style={{ textAlign:"center", padding:"44px 0 20px" }}>
                 <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)" }}>Opsæt din profil</div>
                 <div style={{ fontSize:13, color:"var(--ink2)", marginTop:4 }}>Tager under 2 minutter</div>
               </div>
