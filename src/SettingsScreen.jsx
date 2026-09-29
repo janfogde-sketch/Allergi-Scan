@@ -44,7 +44,8 @@ import { Icon } from "./SharedComponents.jsx";
 import { usePush } from "./usePush.js";
 import { useNotificationPrefs } from "./useNotificationPrefs.js";
 import { useAuthContext } from "./AuthContext.jsx";
-import { MADPAS_LANGUAGES } from "./constants.jsx";
+import { useNavigationContext } from "./NavigationContext.jsx";
+import { MADPAS_LANGUAGES, SCREENS } from "./constants.jsx";
 import { formatBuildTime, COMMIT_SHA } from "./utils.jsx";
 
 // ── Lokale rækkekomponenter ──────────────────────────────────────────────────
@@ -134,6 +135,7 @@ export default function SettingsScreen({
   onOpenFeedback, onOpenBetaInfo,
 }) {
   const { accessToken, userId, clearAuth } = useAuthContext();
+  const { openLegal } = useNavigationContext();
 
   // ── Push-notifikationer (hooks skal være på komponent-niveau) ────────────────
   const { supported: pushSupported, permission: pushPermission, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePush();
@@ -312,7 +314,7 @@ export default function SettingsScreen({
           <Icon name="shield" size={14} color="var(--ink)" /> Privatliv & data
         </div>
         <ChevronRow icon="file" label="Privatlivspolitik"
-          onClick={() => window.open("https://eatsafe.dk/privacy", "_blank", "noopener,noreferrer")} />
+          onClick={() => openLegal(SCREENS.PRIVACY)} />
         <ChevronRow icon="info" label="Hvilke data EatSafe gemmer"
           onClick={() => setShowDataInfo(v => !v)} last={!showDataInfo} />
         {showDataInfo && (

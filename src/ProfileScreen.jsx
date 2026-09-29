@@ -252,7 +252,7 @@ export default function ProfileScreen({
 }) {
   const { user, setUser, userId, accessToken, loginEmail } = useAuthContext();
   const { allergens, setAllergens, customAllerg, setCustomAllerg, family, setFamily, activeProfiles, setActiveProfiles } = useProfileContext();
-  const { screen, setScreen } = useNavigationContext();
+  const { screen, setScreen, openLegal } = useNavigationContext();
   const { history, favorites, historyLoading, historyScope, favoritesScope, loadHistory, loadFavorites, toggleFavorite, setFavoriteCategory } = useHistoryContext();
   const [household, setHousehold] = useState([]);
   const [householdLoading, setHouseholdLoading] = useState(false);
@@ -837,10 +837,10 @@ export default function ProfileScreen({
                 hej@eatsafe.dk
               </a>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:12, fontSize:11, color:"var(--muted)" }}>
-                <a href="https://eatsafe.dk/privacy" target="_blank" rel="noopener noreferrer"
-                  style={{ color:"var(--muted)", textDecoration:"underline", textUnderlineOffset:3 }}>
+                <button type="button" onClick={() => openLegal(SCREENS.PRIVACY)}
+                  style={{ background:"none", border:"none", padding:0, font:"inherit", color:"var(--muted)", textDecoration:"underline", textUnderlineOffset:3, cursor:"pointer" }}>
                   Privatlivspolitik
-                </a>
+                </button>
                 <span>·</span>
                 <span>EatSafe Beta</span>
               </div>

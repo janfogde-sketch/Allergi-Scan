@@ -34,6 +34,8 @@ const SettingsScreen = React.lazy(() => import('./SettingsScreen.jsx'));
 import ScannerScreen from './ScannerScreen.jsx';
 const RecipesScreen = React.lazy(() => import('./RecipesScreen.jsx'));
 const KnowledgeScreen = React.lazy(() => import('./KnowledgeScreen.jsx'));
+const TermsScreen = React.lazy(() => import('./TermsScreen.jsx'));
+const PrivacyScreen = React.lazy(() => import('./PrivacyScreen.jsx'));
 const FeedbackModal = React.lazy(() => import('./FeedbackModal.jsx'));
 const ProfileMenu = React.lazy(() => import('./ProfileMenu.jsx'));
 import ErrorBoundary from './ErrorBoundary.jsx';
@@ -71,7 +73,10 @@ import DeleteAccountModal from "./DeleteAccountModal.jsx";
 // Skærme en bruger med ufuldført onboarding ALTID må kunne se/blive på (29.
 // sept. 2026, "Onboarding-persistens") — se setScreen-wrapperen i
 // EatSafe()-komponenten nedenfor, som håndhæver dette for enhver anden skærm.
-const ONBOARDING_EXEMPT_SCREENS = [SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD];
+// TERMS/PRIVACY tilføjet 29. sept. 2026 ("Opdater siderne Brugsvilkår og
+// Privatlivspolitik") — juridiske sider skal altid kunne ses, uanset
+// onboarding-status, præcis samme begrundelse som WELCOME/LOGIN/ONBOARD.
+const ONBOARDING_EXEMPT_SCREENS = [SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD, SCREENS.TERMS, SCREENS.PRIVACY];
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
 
@@ -105,6 +110,20 @@ export default function EatSafe() {
     }
     setScreenRaw(next);
   }, [user.onboarding_completed]);
+
+  // Brugsvilkår/Privatlivspolitik som almindelige undersider, ikke modaler
+  // (29. sept. 2026) — legalReturnScreen husker PRÆCIS hvilken skærm der
+  // åbnede siden (Velkommen/Ny bruger/Log ind/Indstillinger/Profil m.fl.),
+  // så tilbagepilen i TermsScreen.jsx/PrivacyScreen.jsx kan føre brugeren
+  // tilbage did — IKKE et fast "hjem"-mål. Selve formularfelterne (e-mail/
+  // adgangskode/onboarding-trin) går ALDRIG tabt ved denne navigation, da de
+  // allerede lever i App.jsx's egne hooks (useAuth/useOnboarding), ikke i de
+  // enkelte skærmkomponenters lokale state — se CLAUDE.md's note om dette.
+  const [legalReturnScreen, setLegalReturnScreen] = useState(SCREENS.WELCOME);
+  const openLegal = useCallback((target) => {
+    setLegalReturnScreen(screen);
+    setScreen(target);
+  }, [screen, setScreen]);
 
   // Onboarding-trin — deklareret HER (før useAuth-kaldet nedenfor), ikke
   // inde i useOnboarding.js som tidligere (29. sept. 2026, "Onboarding-
@@ -645,6 +664,12 @@ export default function EatSafe() {
   }, [accessToken, userId]);
 
   const isOnboard = screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode;
+  // Brugsvilkår/Privatlivspolitik (29. sept. 2026) — egen, selvstændig sticky
+  // header (.legal-topbar, se TermsScreen.jsx/PrivacyScreen.jsx), ALDRIG
+  // sammen med AppHeader eller bundnavigationen, uanset om siden blev åbnet
+  // fra en kontekst der normalt viser dem (Indstillinger/Profil) eller ikke
+  // (Velkommen/Log ind) — så navigationen er identisk uanset indgang.
+  const isLegalPage = screen === SCREENS.TERMS || screen === SCREENS.PRIVACY;
 
   const FamilyChips = () => {
     const allIds = ["me", ...family.map(m => m.id)];
@@ -929,7 +954,7 @@ export default function EatSafe() {
     importLog, importLoading, runImport, reparseLog, reparseLoading, runReparse,
   ]);
 
-  const navigationContextValue = useMemo(() => ({ screen, setScreen }), [screen]);
+  const navigationContextValue = useMemo(() => ({ screen, setScreen, openLegal, legalReturnScreen }), [screen, openLegal, legalReturnScreen]);
 
   const historyContextValue = useMemo(() => ({
     history, setHistory, historyLoading, historyScope,
@@ -1022,7 +1047,7 @@ export default function EatSafe() {
             husstands-oversigt, ikke en fødevarebaggrund-tung skærm), og
             Madpas fik den samme (26. sept. 2026, Madpas-redesign: skal
             fremstå som en administrationsside, ikke Scan-forsiden). */}
-        {(screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE || screen === SCREENS.FAMILY || screen === SCREENS.MADPAS) && <div className="app-bg-hide" aria-hidden="true" />}
+        {(screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE || screen === SCREENS.FAMILY || screen === SCREENS.MADPAS || isLegalPage) && <div className="app-bg-hide" aria-hidden="true" />}
 
         {/* Skip-link for tastatur/screen reader brugere */}
         <a href="#main-content" className="skip-link">Spring til indhold</a>
@@ -1057,8 +1082,10 @@ export default function EatSafe() {
             2026), skjult under Madpas' tjener-visning (26. sept. 2026,
             Madpas-redesign, krav 11: "skjul ... hamburger-menu"/"Feedback"
             når 'Vis til tjener' er åbnet, ikke kun visuelt dækket af
-            overlayet). */}
-        {!isOnboard && !madpasWaiterView && (
+            overlayet), og under Brugsvilkår/Privatlivspolitik (29. sept.
+            2026) — de viser deres egen selvstændige header i stedet, se
+            isLegalPage ovenfor. */}
+        {!isOnboard && !madpasWaiterView && !isLegalPage && (
           <AppHeader
             screen={screen}
             onFeedback={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
@@ -1250,6 +1277,25 @@ export default function EatSafe() {
           </Suspense>
         )}
 
+        {/* ══ BRUGSVILKÅR / PRIVATLIVSPOLITIK ══ (29. sept. 2026) — almindelige
+            undersider, ikke modaler; egen sticky header, se isLegalPage
+            ovenfor. onBack fører tilbage til legalReturnScreen (den skærm
+            der åbnede siden via openLegal), ikke et fast mål. */}
+        {screen === SCREENS.TERMS && (
+          <Suspense fallback={LazyFallback}>
+          <ErrorBoundary screen="Brugsvilkår">
+          <TermsScreen onBack={() => setScreen(legalReturnScreen)} />
+          </ErrorBoundary>
+          </Suspense>
+        )}
+        {screen === SCREENS.PRIVACY && (
+          <Suspense fallback={LazyFallback}>
+          <ErrorBoundary screen="Privatlivspolitik">
+          <PrivacyScreen onBack={() => setScreen(legalReturnScreen)} />
+          </ErrorBoundary>
+          </Suspense>
+        )}
+
         {/* ══ PROFILE SCREENS ══ */}
         {(screen === SCREENS.HISTORY || screen === SCREENS.PROFILE ||
           screen === SCREENS.FAVORITES || screen === SCREENS.EDITPROFILE ||
@@ -1323,8 +1369,12 @@ export default function EatSafe() {
           </Suspense>
         )}
 
-        {/* BUNDNAVIGATION */}
-        {!isOnboard && !madpasWaiterView && (
+        {/* BUNDNAVIGATION — skjult på Brugsvilkår/Privatlivspolitik (29.
+            sept. 2026), samme begrundelse som TOPBAR ovenfor: siderne kan
+            åbnes fra kontekster uden bundnav (Velkommen/Log ind), så den
+            skal være konsekvent fraværende uanset hvor siden blev åbnet
+            fra, i stedet for at dukke op/forsvinde afhængigt af indgang. */}
+        {!isOnboard && !madpasWaiterView && !isLegalPage && (
           <nav className="bottom-nav" role="navigation" aria-label="Hovednavigation">
             {[
               [SCREENS.LIST,    "cart",     "Indkøbsliste"],

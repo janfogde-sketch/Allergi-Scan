@@ -311,6 +311,50 @@ body::-webkit-scrollbar{display:none;}
 .topbar-avatar{width:32px;height:32px;background:var(--green-lt);border:1.5px solid var(--green-mid);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--green);cursor:pointer;transition:all .15s;letter-spacing:.3px;}
 .topbar-avatar:hover{background:var(--green-mid);}
 
+/* ── JURIDISKE UNDERSIDER (Brugsvilkår/Privatlivspolitik, 29. sept. 2026) ──
+   Selvstændig header, samme højde-/padding-formel som .topbar ovenfor (så
+   den føles identisk, uanset at disse to sider kan åbnes BÅDE fra
+   kontekster med AppHeader (Indstillinger/Profil) OG uden (Velkommen/Log
+   ind, hvor AppHeader er skjult) — for at undgå at navigationen ser
+   forskellig ud afhængigt af hvor siden blev åbnet fra, viser Brugsvilkår/
+   Privatlivspolitik ALTID denne ene, selvstændige header i stedet for selve
+   AppHeader, aldrig begge på samme tid. Solid baggrund (ikke frostet glas
+   som .topbar) — disse sider har ikke det app-brede baggrundsbillede bag
+   sig (se app-bg-hide i App.jsx), så der er intet at tone/sløre igennem.
+   position:fixed, IKKE sticky (bevidst afvigelse fra .topbar) — .app har
+   kun overflow-x:hidden sat, hvilket CSS-specifikationen selv "låner ud"
+   til at gøre overflow-y:auto (den implicitte regel: sættes den ene akse
+   til andet end visible, bliver den anden akse auto, ikke visible) — .app
+   bliver dermed teknisk set sin egen "scroll-beholder" for position:sticky,
+   MEN har samtidig kun min-height (ikke en loftsat height), så den ALDRIG
+   selv får noget at scrolle internt — resultatet er at et sticky-element
+   herinde reelt aldrig "sætter sig fast", det scroller væk sammen med
+   resten af siden (bekræftet empirisk med Playwright, scroll-test). Fast
+   positionering er upåvirket af dette (samme mønster som den eksisterende,
+   velfungerende Feedback-knap/offline-banner), og opnår det brugeren
+   faktisk bad om: "navigationen altid er tilgængelig ved scroll". */
+.legal-topbar{
+  background:var(--paper);
+  border-bottom:1px solid var(--border);
+  padding:calc(12px + env(safe-area-inset-top)) 20px 10px;
+  display:flex;align-items:center;gap:12px;
+  /* left/right:0 + max-width/margin matcher .app's egen 480px-loft +
+     center-på-desktop (samme opskrift som .app selv) — ellers ville en
+     position:fixed-header med left/right:0 alene strække sig ud over hele
+     browservinduet i stedet for kun appens 480px-"telefon"-kolonne på en
+     bred desktop-skærm. */
+  position:fixed;top:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:60;
+}
+/* 44×44px minimum touch target (eksplicit krav til denne opgave — større end
+   de øvrige undersiders tilbageknap-mønster, som ikke rammer 44px). Runde
+   knap, samme farvepalet/skygge som AppHeader.jsx's hamburger-knap. */
+.legal-topbar-back{
+  background:var(--paper2);border:1px solid var(--border2);border-radius:50%;
+  width:44px;height:44px;flex-shrink:0;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--sh);
+}
+
 /* ── LAYOUT ── */
 .screen{flex:1;padding:0 16px 110px;position:relative;z-index:1;}
 /* Scan-forsidens hero-boks (idle-tilstand, kamera ikke aktivt) — skal ALTID

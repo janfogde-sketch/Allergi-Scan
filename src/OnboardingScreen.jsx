@@ -20,6 +20,14 @@ import { useFamilyFormContext } from "./FamilyFormContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 import { UI } from "./styleUtils.js";
 
+// Delt stil for de juridiske inline-tekstlinks (brugsvilkår/privatlivs-
+// politikken), 4 forekomster nedenfor — en <button> i stedet for en <a>
+// (29. sept. 2026, "Opdater siderne Brugsvilkår og Privatlivspolitik"), da
+// disse nu navigerer internt via openLegal i stedet for at åbne en ekstern
+// side i en ny fane. Nulstiller knap-standardstile (baggrund/kant/padding/
+// font), samme grønne/fede visuelle udtryk som det tidligere <a>-link.
+const LEGAL_LINK_STYLE = { background:"none", border:"none", padding:0, margin:0, font:"inherit", color:"var(--green)", fontWeight:700, textDecoration:"none", cursor:"pointer" };
+
 function WelcomeIntro({ setScreen, setAuthTab }) {
   const goSignup = () => { setAuthTab("signup"); setScreen(SCREENS.LOGIN); };
   const goLogin  = () => { setAuthTab("login");  setScreen(SCREENS.LOGIN); };
@@ -74,7 +82,7 @@ export default function OnboardingScreen({
     allergens, setAllergens, customAllerg, setCustomAllerg,
     family, setFamily, activeProfiles, setActiveProfiles,
   } = useProfileContext();
-  const { screen, setScreen } = useNavigationContext();
+  const { screen, setScreen, openLegal } = useNavigationContext();
   const {
     newMemberName, setNewMemberName,
     newMemberBirthYear, setNewMemberBirthYear,
@@ -600,9 +608,9 @@ export default function OnboardingScreen({
                 (8-12px tættere på "Jeg har allerede en konto" ovenfor). */}
             <div style={{ marginTop:18, maxWidth:270, fontSize:10.5, color:"rgba(21,32,26,.6)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
               Du accepterer vores{" "}
-              <a href="/terms.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>brugsvilkår</a>
+              <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.TERMS)}>brugsvilkår</button>
               {" "}og bekræfter, at du har læst{" "}
-              <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>privatlivspolitikken</a>,
+              <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.PRIVACY)}>privatlivspolitikken</button>,
               {" "}når du opretter en konto.
             </div>
 
@@ -721,9 +729,9 @@ export default function OnboardingScreen({
                       oplysninger, det håndteres separat i selve onboardingen. */}
                   <div style={{ fontSize:11, color:"var(--muted)", marginTop:12, lineHeight:1.5 }}>
                     Ved at oprette en konto accepterer du vores{" "}
-                    <a href="/terms.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>brugsvilkår</a>
+                    <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.TERMS)}>brugsvilkår</button>
                     {" "}og bekræfter, at du har læst{" "}
-                    <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>privatlivspolitikken</a>.
+                    <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.PRIVACY)}>privatlivspolitikken</button>.
                   </div>
                 </div>
                 {authInfo && (
