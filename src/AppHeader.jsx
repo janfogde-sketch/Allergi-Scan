@@ -18,9 +18,25 @@
 // øverst, uændret — kun deres eget indhold nedenfor har en ekstra,
 // skærm-specifik back-button-række. Ikke ændret i denne omgang, se
 // CLAUDE.md's note om punkt 6 i brief'en.
+//
+// Logo opdateret 29. sept. 2026 ("Opdater EatSafe-brandingen i headers"):
+// selve wordmark+BETA-markup er udtrukket til den delte
+// <EatSafeHeaderLogo/> (SharedComponents.jsx) — samme komponent bruges
+// konsekvent overalt hvor denne header rendres, i stedet for at hver
+// header-instans risikerer at afvige. Farve/størrelse/vægt for wordmark'et
+// er nu låst til de SAMME brandfarver/proportioner som velkomstsidens
+// billedlogo (--brand-ink/--brand-green, se theme.jsx), ikke appens
+// almindelige --ink/--green-UI-tokens — og ca. 10% større end den
+// tidligere headerudgave. Stadig bevidst UDEN scannerikon (kun ren tekst +
+// BETA-badge) — scanner-/stregkodeikonet forbliver et rent FUNKTIONSikon
+// (Scan-knappen, bundnavigationen), ikke en del af header-brandingen. Det
+// fulde, låste EatSafeLogo-billedeaktiv (symbol+ordmærke, inkl.
+// scannerikon) bruges fortsat uændret på velkomst-/login-/onboarding-
+// skærmene — kun DENNE ene, kompakte header-kontekst er tekst-only.
 // ─────────────────────────────────────────────────────────────────────────────
 import React from "react";
 import { SCREENS } from "./constants.jsx";
+import { EatSafeHeaderLogo } from "./SharedComponents.jsx";
 
 // Skærme hvor hamburger-knappen får en lille grøn prik — brugeren er "inde
 // i" en af menuens destinationer, så prikken markerer at menuen har en
@@ -34,22 +50,7 @@ const MENU_DOT_SCREENS = [
 export default function AppHeader({ screen, onFeedback, onMenu }) {
   return (
     <header className="topbar">
-      {/* 27. sept. 2026, "Opdater EatSafe-headeren"-brief: scanner-/
-          stregkodeikonet er fjernet fra headerens branding — det er nu
-          udelukkende et FUNKTIONSikon (Scan-knappen, bundnavigationen),
-          ikke en del af logoet her. Headeren viser derfor kun tekstlogoet
-          "EatSafe" (samme faste "Eat"=mørk/"Safe"=grøn-farvepar som før),
-          IKKE det fulde, låste EatSafeLogo-billedeaktiv (symbol+ordmærke)
-          som stadig bruges uændret på velkomst-/login-/onboarding-skærmene
-          — kun DENNE ene, kompakte header-kontekst er undtaget fra det
-          faste brandasset, som brugeren eksplicit bad om. Størrelsen er
-          øget ca. 20-25% (24px, op fra logo-billedets tidligere 22px
-          visuelle højde), semibold/bold vægt, så brandet står tydeligere
-          uden at dominere siden. */}
-      <div className="topbar-logo">
-        <span className="topbar-wordmark">Eat<span className="topbar-wordmark-safe">Safe</span></span>
-        <div className="topbar-beta">BETA</div>
-      </div>
+      <EatSafeHeaderLogo />
       <div style={{ display:"flex", gap:8, alignItems:"center" }}>
         {/* Feedback-knap */}
         <button onClick={onFeedback}
