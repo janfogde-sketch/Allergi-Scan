@@ -348,26 +348,24 @@ export default function ListScreen({
 
   return (
     <div className="screen fade-in">
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
-        <div className="screen-title" style={{ marginBottom:0 }}>Indkøbsliste</div>
-        {/* Kontekstuel adgang til den samlede hjælpesheet (25. sept. 2026)
-            — erstatter det tidligere globale "?" i topbaren, som blev
-            fjernet til fordel for netop dette: hjælp der hører hjemme der
-            hvor den er relevant, ikke i global navigation. */}
-        {onOpenHelp && (
-          // Farve skiftet fra --muted2 til det mørkere --ink2 (25. sept.
-          // 2026, brugerfeedback: "en anelse mørkere for bedre læsbarhed,
-          // men behold den sekundær i hierarkiet") — samme mønster som da
-          // topbar-ikonerne fik samme skift for at undgå at virke "småt og
-          // anonymt" (se CLAUDE.md's 25. sept.-log). Stadig letvægt/ingen
-          // baggrund/kant, så den forbliver klart sekundær ift. skærmens
-          // primære indhold.
-          <button type="button" onClick={onOpenHelp}
-            style={{ display:"flex", alignItems:"center", gap:4, background:"none", border:"none", cursor:"pointer", padding:"4px 2px", fontFamily:"var(--f)", fontSize:11.5, fontWeight:600, color:"var(--ink2)", flexShrink:0 }}>
-            <Icon name="info" size={12} color="var(--ink2)" /> Sådan fungerer listen
-          </button>
-        )}
-      </div>
+      {/* Titlen fik sin egen fulde linje/zone (29. sept. 2026, bruger-
+          feedback) — lå tidligere i en delt space-between-flexrække med
+          "Sådan fungerer listen", hvor den delte klasses egen
+          width:100%/text-align:center kolliderede med flex-rækkens layout.
+          Venstrestillet + margin uændret fra den delte .screen-title-klasse
+          (samme mønster som ProfileScreen.jsx's Historik/Favoritter-titler,
+          "samme reference som Indkøbslistens [titel]" — den reference
+          havde ikke slået igennem her endnu). Hjælpelinket er flyttet ned
+          på sin egen linje og gjort tydeligt sekundært (lettere vægt,
+          --muted i stedet for --ink2, mindre ikon), så det ikke længere
+          konkurrerer visuelt med sidetitlen. */}
+      <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Indkøbsliste</div>
+      {onOpenHelp && (
+        <button type="button" onClick={onOpenHelp}
+          style={{ display:"flex", alignItems:"center", gap:4, background:"none", border:"none", cursor:"pointer", padding:0, marginBottom:12, fontFamily:"var(--f)", fontSize:11, fontWeight:500, color:"var(--muted)" }}>
+          <Icon name="info" size={11} color="var(--muted)" /> Sådan fungerer listen
+        </button>
+      )}
 
       {/* ── Tilføj vare (øverst, så søgeresultater aldrig kan havne bag andet indhold) ── */}
       <div style={{ marginBottom:10, position:"relative", zIndex:5 }}>
@@ -378,7 +376,12 @@ export default function ListScreen({
             onFocus={() => setItemFocused(true)}
             onBlur={() => setTimeout(() => setItemFocused(false), 150)}
             onKeyDown={e => e.key==="Enter" && addToList(newItemName)} />
-          <button className="btn btn-primary btn-sm" style={UI.uwsnowrap}
+          {/* Knappen smallet en anelse ind (29. sept. 2026, brugerfeedback)
+              — reduceret sidepadding (14px→10px) giver søgefeltet lidt mere
+              plads uden at ændre knappens højde. Radius rettet til 10px
+              (matcher .field's radius) — .btn-sm's delte radius er 8px,
+              hvilket ikke matchede feltets, kun overstyret her. */}
+          <button className="btn btn-primary btn-sm" style={{ ...UI.uwsnowrap, padding:"8px 10px", borderRadius:10 }}
             onClick={() => addToList(newItemName)}>
             Tilføj
           </button>
@@ -501,11 +504,16 @@ export default function ListScreen({
         )}
       </div>
 
-      {/* ── Listevælger (komprimeret) ── */}
+      {/* ── Listevælger (komprimeret) ──
+          Række-gap strammet 6→4px og dropdownen fik en eksplicit height:34
+          (matcher favorit-/del-knappernes faste 34px, i stedet for at
+          stole på flex-stretch af dens padding-baserede indholdshøjde),
+          så de føles som én samlet kontrolrække i stedet for tre løse
+          elementer (29. sept. 2026, brugerfeedback). */}
       <div style={{ marginBottom:12 }}>
-        <div style={{ display:"flex", gap:6 }}>
+        <div style={{ display:"flex", gap:4, alignItems:"center" }}>
           <div onClick={() => setShowListPicker(v => !v)}
-            style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}>
+            style={{ flex:1, minWidth:0, height:34, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}>
             <div style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
               <span style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{activeList?.name || "Vælg liste"}</span>
               {activeList?.type === "family" && <span style={{ marginLeft:6, display:"inline-flex", verticalAlign:"middle" }}><Icon name="family" size={11} color="var(--green)" /></span>}
@@ -655,12 +663,20 @@ export default function ListScreen({
         </div>
       )}
 
-      {/* ── Tom tilstand ── */}
+      {/* ── Tom tilstand ──
+          Alle tre overstyringer er lokale inline-styles KUN på denne
+          instans (29. sept. 2026, brugerfeedback) — .empty-state/
+          -icon/-sub er delte klasser brugt uændret af MadpasScreen.jsx og
+          tre steder i ProfileScreen.jsx, som ikke skal påvirkes.
+          paddingTop 56→8px flytter hele blokken ~48px op (mindre tomrum
+          under listevælgeren), cirklen er ~12% mindre (68→60px, ikonet
+          26→23px i samme forhold), og hjælpeteksten har fået en smule
+          strammere linjeafstand (1.55→1.35). */}
       {shoppingList.length === 0 && (
-        <div className="empty-state">
-          <span className="empty-icon"><Icon name="cart" size={26} color="var(--muted)" /></span>
+        <div className="empty-state" style={{ paddingTop:8 }}>
+          <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="cart" size={23} color="var(--muted)" /></span>
           <div className="empty-txt">Listen er tom</div>
-          <div className="empty-sub">Søg efter produkter eller tilføj en vare manuelt</div>
+          <div className="empty-sub" style={{ lineHeight:1.35 }}>Søg efter produkter eller tilføj en vare manuelt</div>
         </div>
       )}
 
