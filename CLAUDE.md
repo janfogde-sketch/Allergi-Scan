@@ -80,6 +80,13 @@ Network access. Ændringen gælder nye sessioner. Tjek bagefter med
 `curl -s -o /dev/null -w "%{http_code}" https://eatsafe.dk`. Admin-panelet
 kræver desuden en testkonto med admin-rolle; opret den KUN efter Jans ja.
 Luk B1, når en ny session har kunnet nå alle tre domæner.
+Det, som ingen sandbox kan teste (kamera, installation, push, deling
+mellem to konti, login-udbydere, skærmlæser), står i en fælles
+tjekliste: https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X. Status og
+noter ligger i dens database, samlingen `results` (ét dokument pr.
+punkt: `status` ok/fail/skip, `note`, `by`, `at`, `device`), og kan
+læses med `ArtifactData` `list`. Opret tickets for punkter med
+`status: "fail"`.
 
 ---
 
