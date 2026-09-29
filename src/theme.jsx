@@ -399,6 +399,25 @@ body::-webkit-scrollbar{display:none;}
 .card-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;letter-spacing:-.2px;}
 .field{width:100%;background:var(--surface2);border:1.5px solid var(--border2);border-radius:10px;padding:12px 14px;color:var(--ink);font-family:var(--f);font-size:16px;outline:none;transition:border-color .15s,background .15s;}
 .field:focus{border-color:var(--green);background:var(--surface2);box-shadow:0 0 0 3px var(--green-lt);}
+/* Browserens native autofill-baggrund (kraftig gul i Chrome/Safari) er
+   overstyret her, så et autofillet felt (fx e-mail på Log ind-fanen) ser ud
+   som et almindeligt EatSafe-felt (29. sept. 2026, "FINAL POLISH – NY
+   BRUGER/LOG IND", punkt 2). Selve autofill-funktionaliteten er uændret —
+   kun det visuelle udtryk. Et stort inset-box-shadow-spread i feltets egen
+   baggrundsfarve er den eneste pålidelige måde at overstyre Chromiums
+   indbyggede autofill-styling på, da almindelig background-styling alene
+   ignoreres af browseren her. Den lange transition-delay forhindrer et
+   kort gult glimt, før autofill-stylingen selv når at anvendes. */
+.field:-webkit-autofill,
+.field:-webkit-autofill:hover,
+.field:-webkit-autofill:focus{
+  -webkit-text-fill-color:var(--ink);
+  caret-color:var(--ink);
+  -webkit-box-shadow:0 0 0 1000px var(--surface2) inset;
+  box-shadow:0 0 0 1000px var(--surface2) inset;
+  border-color:var(--border2);
+  transition:background-color 600000s ease-in-out 0s;
+}
 /* Skjuler browserens native op/ned-spinner-pile på type="number"-felter
    (25. sept. 2026, opfølgning: Alder-feltet har allerede egne −/+-knapper
    udenom, så de indbyggede pile er dobbelt funktion og "ser tekniske ud").
@@ -623,7 +642,12 @@ body::-webkit-scrollbar{display:none;}
    af onboarding-flowet. */
 .tab-row{display:flex;gap:3px;background:var(--green-selected-bg);border-radius:10px;padding:3px;margin-bottom:14px;border:1px solid var(--green-mid);}
 .tab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink2);transition:all .15s;}
-.tab.active{background:var(--surface);color:var(--green);box-shadow:var(--sh);}
+/* Enkelt, diskret skygge i stedet for den delte to-lags .sh-token (29. sept.
+   2026, "FINAL POLISH – NY BRUGER/LOG IND", punkt 4) — .sh's inset hvide
+   linje + drop-skygge kunne sammen med .tab-row's egen grønne kant virke som
+   en dobbelt kant omkring den aktive fane; én blød drop-skygge er nok til at
+   løfte pillen fra baggrunden. */
+.tab.active{background:var(--surface);color:var(--green);box-shadow:0 1px 3px rgba(21,32,26,.10);}
 /* Sociale login-knapper — hvide/neutrale med platformens eget ikon (25.
    sept. 2026-brief: "undgå en stor blå Facebook-knap, fordi den stjæler
    fokus fra EatSafe"). Én delt klasse for Google/Facebook (Apple fjernet

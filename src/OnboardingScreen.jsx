@@ -653,7 +653,7 @@ export default function OnboardingScreen({
                       bruges til fejl der ikke kan knyttes til ét felt (fx
                       "Der opstod en fejl. Prøv igen."). */}
                   <label className="field-lbl">E-mail</label>
-                  <input className="field" type="email" placeholder="din@email.dk" value={loginEmail}
+                  <input className="field" type="email" autoComplete="email" placeholder="din@email.dk" value={loginEmail}
                     onChange={e => { setLoginEmail(e.target.value); if (emailError) setEmailError(""); if (emailTakenError) setEmailTakenError(""); }}
                     style={{ marginBottom: (emailError || emailTakenError) ? 6 : 12, borderColor: (emailError || emailTakenError) ? "var(--red-md)" : undefined }}
                     onKeyDown={e => e.key==="Enter" && handleSignup()} />
@@ -669,7 +669,7 @@ export default function OnboardingScreen({
                   )}
                   <label className="field-lbl">Adgangskode</label>
                   <div style={{ position:"relative" }}>
-                    <input className="field" type={showPassword ? "text" : "password"} placeholder="Minimum 10 tegn" value={loginPassword}
+                    <input className="field" type={showPassword ? "text" : "password"} autoComplete="new-password" placeholder="Minimum 10 tegn" value={loginPassword}
                       onChange={e => { setLoginPassword(e.target.value); if (passwordError) setPasswordError(""); }}
                       style={{ paddingRight:46, borderColor: passwordError ? "var(--red-md)" : undefined }}
                       onKeyDown={e => e.key==="Enter" && handleSignup()} />
@@ -725,7 +725,7 @@ export default function OnboardingScreen({
                       adgangskode?" trykket uden en gyldig e-mail (samme
                       delte state, se useAuth.js). */}
                   <label className="field-lbl">E-mail</label>
-                  <input className="field" type="email" placeholder="din@email.dk" value={loginEmail}
+                  <input className="field" type="email" autoComplete="email" placeholder="din@email.dk" value={loginEmail}
                     onChange={e => { setLoginEmail(e.target.value); if (emailError) setEmailError(""); }}
                     style={{ marginBottom: emailError ? 6 : 12, borderColor: emailError ? "var(--red-md)" : undefined }}
                     onKeyDown={e => e.key==="Enter" && handleLogin()} />
@@ -736,7 +736,7 @@ export default function OnboardingScreen({
                   )}
                   <label className="field-lbl">Adgangskode</label>
                   <div style={{ position:"relative" }}>
-                    <input className="field" type={showPassword ? "text" : "password"} placeholder="Din adgangskode" value={loginPassword}
+                    <input className="field" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="Din adgangskode" value={loginPassword}
                       onChange={e => { setLoginPassword(e.target.value); if (passwordError) setPasswordError(""); }}
                       style={{ paddingRight:46, borderColor: passwordError ? "var(--red-md)" : undefined }}
                       onKeyDown={e => e.key==="Enter" && handleLogin()} />
@@ -750,8 +750,15 @@ export default function OnboardingScreen({
                       {passwordError}
                     </div>
                   )}
-                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:12 }}>
-                    <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12.5, fontWeight:600, color:"var(--ink2)", cursor:"pointer" }}>
+                  {/* min-height:44 på begge interaktive elementer (29. sept.
+                      2026, "FINAL POLISH – NY BRUGER/LOG IND", punkt 10:
+                      44×44px minimum touch-target) — usynlig padding rundt
+                      om den uændrede tekst/checkbox, ikke en visuel
+                      forstørrelse. Selve rækken vokser tilsvarende, men
+                      checkbox/tekst/link ser ud og er placeret præcis som
+                      før. */}
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:12, minHeight:44 }}>
+                    <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12.5, fontWeight:600, color:"var(--ink2)", cursor:"pointer", minHeight:44 }}>
                       <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)}
                         style={{ width:16, height:16, accentColor:"var(--green)", cursor:"pointer" }} />
                       Husk mig
@@ -767,7 +774,7 @@ export default function OnboardingScreen({
                       if (!isValidEmail(loginEmail)) { setEmailError("Indtast en gyldig e-mailadresse."); return; }
                       setEmailError("");
                       handleForgotPassword();
-                    }} disabled={authLoading}>
+                    }} disabled={authLoading} style={{ display:"inline-flex", alignItems:"center", minHeight:44 }}>
                       Glemt adgangskode?
                     </TextLink>
                   </div>
