@@ -880,6 +880,63 @@ justeringer, intet redesign:**
   som før). `npm run build`/`npx vitest run` (110/110) grønne, mojibake-
   scan clean.
 
+### Ny bruger & Log ind — sidste UI/UX-polering, produktionsklar (29. sept. 2026)
+
+En 10-punkts spec til `SCREENS.LOGIN` — robusthed/konsistens/tilgænge-
+lighed, ikke et redesign. De to faner brugte allerede stort set 100% de
+samme delte CSS-klasser (`.login-card`/`.field`/`.tab-row`/`.tab`/
+`.welcome-btn`/`.social-btn`) og samme felt-fejl-mønster fra en tidligere
+runde (se "Opret konto & Log ind — FINAL 10/10 POLISH" ovenfor) — verificeret
+programmatisk identiske (højde/radius/border/font/farve) mellem faner i
+stedet for gættet. To reelle huller fundet og rettet:
+
+- **Autofill havde ingen styling overhovedet** — browserens kraftige gule
+  standard-baggrund (Chrome/Safari) skinnede ugarderet igennem på et
+  autofillet felt. Tilføjet `.field:-webkit-autofill`-overstyring (stort
+  inset-`box-shadow`-spread i feltets egen `--surface2`-baggrundsfarve —
+  almindelig `background`-styling ignoreres af Chromium her, en lang
+  transition-delay forhindrer et kort gult glimt). Gælder alle `.field`-
+  brug app-bredt (fx onboarding trin 1), ikke kun Log ind. Selve autofill-
+  funktionaliteten er uændret.
+- **Ingen `autocomplete`-attributter fandtes på nogen af de fire felter**
+  — tilføjet `email` (begge fane-e-mail-felter), `new-password` (Opret
+  konto) og `current-password` (Log ind).
+- **Segmenteret kontrol** — `.tab.active`s box-shadow skiftet fra den
+  delte to-lags `--sh`-token (inset hvid linje + drop-skygge, som sammen
+  med `.tab-row`s egen grønne kant kunne virke som en dobbelt kant) til én
+  enkelt, diskret drop-skygge (`0 1px 3px rgba(21,32,26,.10)`). Bredde/
+  højde var allerede identisk mellem de to faner (flex:1), kun verificeret.
+- **"Husk mig"/"Glemt adgangskode?"-rækken** fik `min-height:44` på både
+  checkbox-labelen og linket (usynlig padding, ikke en visuel forstørrelse)
+  — opfylder 44×44px-touch-target-minimummet uden at ændre hvordan
+  checkbox/tekst/link ser ud eller er placeret.
+- **Validation states, form-level vs. field-level** — begge var allerede
+  korrekt implementeret fra den tidligere "FINAL 10/10 POLISH"-runde
+  (felt-fejl: rød kant + rød tekst under feltet, ingen aggressiv fejl mens
+  brugeren skriver, kun ved forsøgt submit; form-level: den delte
+  `ErrorMessage`/`.error-box`-komponent med lys rød baggrund, diskret rød
+  kant, advarselsikon og rød tekst, generisk "E-mail eller adgangskode er
+  forkert." der ikke afslører hvilket felt) — verificeret ved kodegennemgang
+  og Playwright (felt-fejl udløst ved tomt/for kort felt, cleared øjeblik-
+  keligt ved næste tastetryk; form-level-boksens FARVER/struktur bekræftet
+  via en mocket 400-fejl, om end selve fejlteksten faldt tilbage til den
+  generiske besked pga. sandboxens kendte upålidelige Supabase-netværks-
+  mocking, se tidligere sessions — ikke en regression i selve koden).
+- **Responsive keyboard-adfærd (punkt 9)** — verificeret ved kodegennemgang
+  (ingen ægte mobil-tastatur kan simuleres i sandboxen): hverken `.login-
+  wrap`, `.app`, `body` eller `html` sætter `height:100vh`+`overflow:hidden`
+  noget sted i kæden, kun `min-height:100vh` — dokumentets naturlige scroll
+  er derfor allerede intakt, og browseren kan rulle et fokuseret felt i
+  syne som normalt.
+- **Uændret, som krævet:** baggrundsbillede, EatSafe-logo, layout,
+  informationsarkitektur, sociale login-knappers ikon+tekst-centrering
+  (allerede korrekt: `justify-content:center` på hele gruppen), CTA'ernes
+  visuelle hierarki.
+- `npm run build`/`npx vitest run` (110/110) grønne, mojibake-scan clean
+  (fangede undervejs en reel byggefejl — en backtick i en ny CSS-kommentar
+  i `theme.jsx`s `appCss`-template-literal, samme kendte fejlklasse denne
+  fil advarer om andetsteds, rettet før commit).
+
 ---
 
 ## 6. Design-antimønstre — ting vi bevidst IKKE vil have i appen
