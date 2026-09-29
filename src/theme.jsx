@@ -350,10 +350,17 @@ body::-webkit-scrollbar{display:none;}
    positionering er upåvirket af dette (samme mønster som den eksisterende,
    velfungerende Feedback-knap/offline-banner), og opnår det brugeren
    faktisk bad om: "navigationen altid er tilgængelig ved scroll". */
+/* 29. sept. 2026, "Polér designet... Brugsvilkår/Privatlivspolitik": ren hvid
+   baggrund (--surface, IKKE --paper — --paper er en let off-white/cremet
+   tone, ikke "ren hvid", se design-tokens.md) + lidt strammere lodret
+   padding (12/10→10/8px) for en mere kompakt header-højde. Kun HEADEREN er
+   ændret til --surface her — selve indholdsområdet nedenfor (.screen,
+   dækket af app-bg-hide) beholder --paper uændret, jf. opgavens "ændr intet
+   andet". */
 .legal-topbar{
-  background:var(--paper);
+  background:var(--surface);
   border-bottom:1px solid var(--border);
-  padding:calc(12px + env(safe-area-inset-top)) 20px 10px;
+  padding:calc(10px + env(safe-area-inset-top)) 20px 8px;
   display:flex;align-items:center;gap:12px;
   /* left/right:0 + max-width/margin matcher .app's egen 480px-loft +
      center-på-desktop (samme opskrift som .app selv) — ellers ville en
@@ -362,14 +369,22 @@ body::-webkit-scrollbar{display:none;}
      bred desktop-skærm. */
   position:fixed;top:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:60;
 }
-/* 44×44px minimum touch target (eksplicit krav til denne opgave — større end
-   de øvrige undersiders tilbageknap-mønster, som ikke rammer 44px). Runde
-   knap, samme farvepalet/skygge som AppHeader.jsx's hamburger-knap. */
+/* 44×44px touch-target BEVARET (eksplicit krav), men det SYNLIGE, farvede
+   spor er nu en mindre, lettere cirkel centreret indeni — samme "usynlig
+   trykflade rundt om et mindre synligt element"-mønster som Settings-
+   skærmens Toggle-komponent bruger andre steder i appen. Selve knappen
+   (.legal-topbar-back) er nu uden baggrund/kant/skygge — kun den indre
+   .legal-topbar-back-circle bærer det visuelle udtryk, mindre og lettere
+   end før (44px farvet cirkel + skygge → 32px, ingen skygge). */
 .legal-topbar-back{
-  background:var(--paper2);border:1px solid var(--border2);border-radius:50%;
+  background:none;border:none;padding:0;
   width:44px;height:44px;flex-shrink:0;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
-  box-shadow:var(--sh);
+}
+.legal-topbar-back-circle{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--paper2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
 }
 
 /* ── LAYOUT ── */
