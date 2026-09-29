@@ -414,12 +414,22 @@ export default function OnboardingScreen({
             catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
           }}>Fortsæt →</PrimaryButton>
 
+        {/* Går automatisk videre til trin 3 ved klik (29. sept. 2026, bruger-
+            rapporteret: "den bliver blot markeret med et flueben, og så skal
+            man derefter trykke fortsæt") — samme mønster som trin 3's "Ingen
+            særlig diæt" ovenfor, som allerede gjorde dette korrekt. Eksplicit
+            [] til saveAllergensStep2 (se dens egen kommentar i
+            useOnboarding.js) i stedet for at stole på allergens/customAllerg
+            i closure, som stadig ville indeholde de GAMLE, ikke-ryddede
+            værdier på dette tidspunkt (setAllergens/setCustomAllerg er
+            asynkrone). */}
         <SecondaryButton style={UI.mt8} active={noAllergiesConfirmed}
-          onClick={() => {
-            if (noAllergiesConfirmed) { setNoAllergiesConfirmed(false); return; }
+          onClick={async () => {
             if (selectedCount > 0 && !window.confirm("Du har allerede valgt allergier/intolerancer. Vil du fjerne dem og markere, at du ingen har?")) return;
             setAllergens([]); setCustomAllerg([]);
             setNoAllergiesConfirmed(true);
+            try { await saveAllergensStep2([], []); setOnboardStep(3); }
+            catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
           }}>
           Jeg har ingen allergier eller intolerancer
         </SecondaryButton>

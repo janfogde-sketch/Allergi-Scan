@@ -70,7 +70,18 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
     } catch (e) { console.error("saveProfileStep1 fejl:", e); }
   };
 
-  const saveAllergensStep2 = async () => {
+  // overrideAllergens/overrideCustomAllerg (29. sept. 2026, "auto-fremad ved
+  // 'ingen allergier'") — samme princip som saveDietStep3(diets) nedenfor:
+  // knappen der rydder+gemmer+går videre i ét klik kalder setAllergens([])/
+  // setCustomAllerg([]) og skal gemme den SAMME tomme liste med det samme,
+  // men React batcher state-opdateringer, så allergens/customAllerg i denne
+  // funktions closure stadig ville være de GAMLE, ikke-ryddede værdier hvis
+  // funktionen kaldes synkront lige efter setAllergens([]) uden et re-render
+  // imellem. Eksplicitte parametre (default til closure-værdien, når de ikke
+  // gives) omgår racet helt, i stedet for at gemme forkerte/forældede data.
+  const saveAllergensStep2 = async (overrideAllergens, overrideCustomAllerg) => {
+    const allergensToSave = overrideAllergens !== undefined ? overrideAllergens : allergens;
+    const customToSave = overrideCustomAllerg !== undefined ? overrideCustomAllerg : customAllerg;
     // Tidligere blev hvert allergen POST'et enkeltvis i et loop efter DELETE —
     // fejlede ét kald midtvejs (fx netværksudfald), endte brugeren med en
     // DELVIST gemt allergiliste uden nogen advarsel. Kritisk i en app der skal
@@ -82,8 +93,8 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
       headers: makeHeaders(accessToken),
     });
     const rows = [
-      ...allergens.map(a => ({ user_id: userId, allergen: a, type: "allergen" })),
-      ...customAllerg.map(c => ({ user_id: userId, allergen: c, type: "custom" })),
+      ...allergensToSave.map(a => ({ user_id: userId, allergen: a, type: "allergen" })),
+      ...customToSave.map(c => ({ user_id: userId, allergen: c, type: "custom" })),
     ];
     if (rows.length > 0) {
       await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, {
