@@ -13,7 +13,48 @@
 
 ---
 
-## 0. Topprioritet til næste session (opdateret 24. sept. 2026)
+## 0. Topprioritet til næste session (opdateret 29. sept. 2026)
+
+**Start her: åbne punkter pr. 29. sept. 2026.** Nævn listen kort for Jan,
+når sessionen starter, og spørg hvad der skal tages først. Detaljerne står
+i afsnittene under listen. Opdatér listen, når et punkt er klaret.
+
+*Kun Jan kan gøre det:*
+1. Supabase Dashboard: tjek SMTP-indstillingerne, og slå derefter
+   "Confirm email" til (D1, se "ÅBEN: Slå e-mailbekræftelse til" nedenfor).
+2. Cloud-miljøet: tillad `eatsafe.dk`, `jegrpcflyguadyxialkm.supabase.co`
+   og `world.openfoodfacts.org` under Network access (B1, se nedenfor).
+3. Del testtjeklisten https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X
+   med Bjørn som Contributor, og kør den manuelle testrunde på rigtige
+   telefoner.
+
+*Venter på Jans beslutning:*
+4. Skal alder og køn tilbage i Rediger profil? Onboarding kræver dem
+   stadig (Jan bruger dem), men brugerne kan ikke rette dem bagefter.
+   Det er en UI-ændring, så Bjørn skal inddrages.
+5. Skal QA-testkontoen `janfogde+eatsafeqa@gmail.com` have admin-rolle,
+   så admin-panelet kan testes fra sandboxen?
+6. Energi (kJ) er forkert på ca. 4.860 Bilka-produkter: tusindtals-
+   punktummet er læst som decimal (fx 2.162 i stedet for 2162). Det vises
+   ikke i appen i dag. Jan fravalgte en datarettelse 29. sept.; tag den op
+   igen, hvis energi skal vises.
+7. Nye e-mailbrugere får deres e-mail-præfiks (fx "janfogde+eatsafeqa")
+   forudfyldt som navn i onboarding og i velkomstmailen. Det kommer fra
+   `handle_new_user()` i databasen. Ikke rettet.
+8. Arkitektur-audit "som en senior engineer" (Jan delte forslaget 29.
+   sept.). Claude anbefalede den som ren rapport efter QA-rettelserne.
+   Ikke besluttet, ikke startet.
+9. Leaked Password Protection kræver Supabase Pro (se nedenfor). Spørg om
+   Jan vil opgradere, ikke om det er glemt.
+
+*Claude gør bagefter:*
+10. Luk D1 (`cc121cd9…`) og B1 (`820806b9…`) i `feedback_tickets`, når de
+    er verificeret. Læs testrundens resultater og opret tickets for fejl.
+
+QA-runden 28.-29. sept.: alle fund Q1–Q14 er rettet og live (PR #372,
+#373, #376), undtagen kJ-dataene i punkt 6. D2 (telefon valgfri) er live
+(PR #377). Detaljer i tickets, der starter med "[QA 28/9", i
+`feedback_tickets`.
 
 Rescue-audittets fulde 4-fase-roadmap, Claude Code Setup Audit-rapportens 3
 forslag, og alle "16. sept."-opfølgningspunkter (npm audit fix --force,
@@ -40,8 +81,7 @@ detaljen. Øvrige fund var lav-severity/informative (rolle-scope på to
 RLS-policyer, PostgREST-filter-escaping i søgefunktioner) — ingen yderligere
 handling påkrævet.
 
-**Eneste resterende punkt: Leaked Password Protection er blokeret, ikke
-glemt.** Brugeren forsøgte at slå den til 17. sept. i Supabase Dashboard →
+**Leaked Password Protection er blokeret, ikke glemt.** Brugeren forsøgte at slå den til 17. sept. i Supabase Dashboard →
 Authentication → Sign In/Providers, men fik fejlen "Configuring leaked
 password protection via HaveIBeenPwned.org is available on Pro Plans and
 up" — projektet kører på Free-planen. Kræver en betalt opgradering til
