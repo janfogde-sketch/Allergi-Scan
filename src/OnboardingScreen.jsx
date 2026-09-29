@@ -24,8 +24,11 @@ function WelcomeIntro({ setScreen, setAuthTab }) {
   const goSignup = () => { setAuthTab("signup"); setScreen(SCREENS.LOGIN); };
   const goLogin  = () => { setAuthTab("login");  setScreen(SCREENS.LOGIN); };
 
+  // gap:6 + .welcome-btn's egen margin-bottom:12 (theme.jsx) giver et samlet
+  // primær→sekundær-mellemrum på 18px (29. sept. 2026, "Polér velkomst-/
+  // login-siden"-spec, punkt 9: mål 16-20px) — var før 10+12=22px.
   return (
-    <div style={UI.udflex_fdcolumn_g10}>
+    <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
       <button className="welcome-btn" onClick={goSignup}>Opret gratis konto</button>
       <button className="welcome-btn-ghost" onClick={goLogin}>Jeg har allerede en konto</button>
     </div>
@@ -478,7 +481,7 @@ export default function OnboardingScreen({
                 "Scan. Tjek. Spis trygt."). Teksten udvidet 28. sept. 2026
                 ("FINAL POLISH") til også at nævne kosthensyn, ikke kun
                 allergier — matcher at appen også dækker diæter/E-numre. */}
-            <div className="welcome-logo-wrap" style={UI.mb16}>
+            <div className="welcome-logo-wrap">
               <EatSafeLogo variant="horizontal" size={56} />
               <div className="brand-slogan">Mere tryghed i hverdagen</div>
               <div className="welcome-tagline">Scan produkter og se straks, om de passer til dine allergier og kosthensyn.</div>
@@ -566,7 +569,13 @@ export default function OnboardingScreen({
                 testede bredder (SE/iPhone 13/Pro Max), ingen linje med kun
                 ét ord eller ét link. line-height/farve/kontrast/centrering
                 uændret. */}
-            <div style={{ marginTop:22, maxWidth:270, fontSize:11, color:"rgba(21,32,26,.85)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
+            {/* 29. sept. 2026, "Polér velkomst-/login-siden": marginTop
+                22→28 (punkt 9: sekundær CTA→juridisk tekst, mål 26-32px).
+                fontSize/farve dæmpet (11px→10.5px, rgba(...,.85)→(...,.6))
+                — punkt 8: skal fremstå mindre og mere sekundær, neutral
+                mørkegrå, uden at konkurrere med CTA-knapperne. Selve
+                teksten/linkene (grønne, fed) er uændrede. */}
+            <div style={{ marginTop:28, maxWidth:270, fontSize:10.5, color:"rgba(21,32,26,.6)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
               Du accepterer vores{" "}
               <a href="/terms.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>brugsvilkår</a>
               {" "}og bekræfter, at du har læst{" "}
