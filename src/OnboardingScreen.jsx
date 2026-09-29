@@ -32,13 +32,13 @@ function WelcomeIntro({ setScreen, setAuthTab }) {
   const goSignup = () => { setAuthTab("signup"); setScreen(SCREENS.LOGIN); };
   const goLogin  = () => { setAuthTab("login");  setScreen(SCREENS.LOGIN); };
 
-  // gap:18 + .welcome-btn's egen margin-bottom:12 (theme.jsx) giver et
-  // samlet primær→sekundær-mellemrum på 30px (29. sept. 2026, "Fordel
-  // indholdet mere naturligt": +12px oven på det tidligere 18px, inden
-  // for det ønskede +10-12px) — var før gap:6, samlet 18px (25. sept.
-  // 2026-brief, punkt 9: mål 16-20px).
+  // gap:8 + .welcome-btn's egen margin-bottom:12 (theme.jsx) giver et
+  // samlet primær→sekundær-mellemrum på 20px (29. sept. 2026, "logo og
+  // slogan skal føles som én samlet brandblok": -10px fra det tidligere
+  // 30px, inden for det ønskede -8-12px) — var før gap:18, samlet 30px
+  // ("Fordel indholdet mere naturligt", som overkorrigerede).
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:18 }}>
+    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
       <button className="welcome-btn" onClick={goSignup}>Opret gratis konto</button>
       <button className="welcome-btn-ghost" onClick={goLogin}>Jeg har allerede en konto</button>
     </div>

@@ -628,8 +628,12 @@ body::-webkit-scrollbar{display:none;}
    (+10px, inden for det ønskede +8-12px) — samlet redistribuering af hele
    sidens lodrette spacing (se .welcome-benefits/.welcome-btn-kommentarer
    nedenfor for resten), efter feedback om at siden virkede for kompakt
-   foroven/midtfor med for meget ubrugt plads forneden. */
-.welcome-logo-wrap .brand-slogan{margin-top:16px;color:var(--ink2);letter-spacing:.4px;}
+   foroven/midtfor med for meget ubrugt plads forneden.
+   29. sept. 2026, "logo og slogan skal føles som én samlet brandblok":
+   margin-top 16→4px (-12px, inden for det ønskede -12-16px) — 16px havde
+   overkorrigeret, så logo og slogan igen virkede som to adskilte
+   elementer i stedet for én visuel enhed. */
+.welcome-logo-wrap .brand-slogan{margin-top:4px;color:var(--ink2);letter-spacing:.4px;}
 /* Tydelig value proposition (25. sept. 2026-brief: "kort og tydelig value
    proposition") — hævet fra en dæmpet, muted tagline til en tydeligere,
    mørkere sætning, så den reelt fungerer som skærmens hovedbudskab, ikke en
@@ -693,8 +697,12 @@ body::-webkit-scrollbar{display:none;}
    (+16px) og margin-bottom 32→48px (+16px), begge inden for det ønskede
    +16-20px — den ekstra højde optager naturligt den plads
    .welcome-vspace-bottom (se JSX) ellers ville reservere som ubrugt luft
-   nederst, i stedet for at gøre selve elementerne mindre. */
-.welcome-benefits{display:flex;justify-content:center;gap:14px;margin:40px 0 48px;padding:0 4px;width:100%;box-sizing:border-box;}
+   nederst, i stedet for at gøre selve elementerne mindre.
+   29. sept. 2026, "logo og slogan skal føles som én samlet brandblok":
+   margin-top 40→24px (-16px, mål -16-20px) og margin-bottom 48→28px
+   (-20px, mål -20-24px) — forrige runde overkorrigerede, siden virkede
+   for "mast fra hinanden" i stedet for rolig. */
+.welcome-benefits{display:flex;justify-content:center;gap:14px;margin:24px 0 28px;padding:0 4px;width:100%;box-sizing:border-box;}
 /* gap 8→4px (29. sept. 2026, "sidste spacing-polering": labels 3-5px
    tættere på deres ikoner). */
 .welcome-benefit{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;max-width:130px;}
