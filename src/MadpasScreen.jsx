@@ -368,7 +368,7 @@ export default function MadpasScreen({
               {/* Tom state */}
               {!hasAnyData && (
                 <div className="empty-state" style={{ paddingTop:32 }}>
-                  <span className="empty-icon"><Icon name="shield" size={26} color="var(--muted)" /></span>
+                  <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="shield" size={23} color="var(--muted)" /></span>
                   <div className="empty-txt">Ingen allergier registreret</div>
                   <div className="empty-sub">Tilføj dine allergier, intoleranser og diæter under Profil → Mine præferencer</div>
                 </div>

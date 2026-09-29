@@ -1070,19 +1070,23 @@ body::-webkit-scrollbar{display:none;}
 
 /* ── MADPAS ── */
 .mp-page{display:flex;flex-direction:column;flex:1;}
-.mp-scroll{flex:1;overflow-y:auto;padding:0 20px 120px;}
+.mp-scroll{flex:1;overflow-y:auto;padding:0 16px 120px;}
 /* Venstre/højre padding fjernet herfra (28. sept. 2026, alignment-fix) —
-   .mp-scroll (forælder) giver allerede 20px padding på begge sider til
-   ALT sit indhold. .mp-head havde sin EGEN ekstra 20px oveni, så titel/
-   undertekst/sektionsoverskrifter/krydskontaminering endte 40px inde,
-   mens "Dit madpas"/chips/CTA'en (renderMainContent, en søskende-div
-   UDEN for .mp-head) kun fik .mp-scroll's 20px — en reel, utilsigtet
-   20px venstre-forskydning mellem de to grupper. .mp-head bruges kun i
-   MadpasScreen.jsx, så denne rettelse påvirker ikke andre skærme. */
-.mp-head{padding:20px 0 0;}
-.mp-title{font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.5px;margin-bottom:6px;}
-.mp-subtitle{font-size:13px;color:var(--ink2);font-weight:400;line-height:1.5;margin-bottom:20px;}
-.mp-section-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);margin:0 0 8px;}
+   .mp-scroll (forælder) giver allerede 16px padding på begge sider til
+   ALT sit indhold, samme mål som den delte .screen-klasse. .mp-head
+   havde sin EGEN ekstra padding oveni, så titel/undertekst/sektions-
+   overskrifter/krydskontaminering endte forskudt fra "Dit madpas"/chips/
+   CTA'en (renderMainContent, en søskende-div UDEN for .mp-head) som kun
+   fik .mp-scroll's padding. .mp-head bruges kun i MadpasScreen.jsx, så
+   denne rettelse påvirker ikke andre skærme. */
+.mp-head{padding:10px 0 0;}
+/* Fælles designsystem-opgave (29. sept. 2026) — mp-title/mp-subtitle/
+   mp-section-lbl matcher nu numerisk .screen-title/.screen-sub/den
+   delte sectionLbl-typografi (se .claude/rules/design-tokens.md), så
+   Madpas ikke længere skiller sig ud med sin egen titel-størrelse. */
+.mp-title{font-size:16px;font-weight:800;color:var(--ink);letter-spacing:-.2px;margin-bottom:3px;}
+.mp-subtitle{font-size:11px;color:var(--ink2);font-weight:400;line-height:1.4;margin-bottom:10px;}
+.mp-section-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:0 0 8px;}
 .mp-lang-dropdown{width:100%;background:var(--surface);border:1.5px solid var(--border2);border-radius:13px;padding:14px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s;margin-bottom:16px;box-sizing:border-box;}
 .mp-lang-dropdown:hover{border-color:var(--green);}
 .mp-lang-flag{font-size:22px;flex-shrink:0;}

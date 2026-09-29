@@ -893,7 +893,7 @@ export default function ProfileScreen({
 
             {favorites.length === 0 && (
               <div className="empty-state">
-                <span className="empty-icon"><Icon name="heart" size={26} color="var(--muted)" /></span>
+                <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="heart" size={23} color="var(--muted)" /></span>
                 <div className="empty-txt">Ingen favoritter endnu</div>
                 <div className="empty-sub">Tryk på hjertet ved et produkt for at gemme det her.</div>
               </div>
@@ -1129,7 +1129,7 @@ export default function ProfileScreen({
 
         {screen === SCREENS.FAMILY && (
           <div className="screen fade-in">
-            <div className="screen-title">Familie</div>
+            <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Familie</div>
             <div className="screen-sub">Alle i din familie — både profiler du administrerer, og personer med egen EatSafe-konto.</div>
             {/* "Aktive profiler ved scanning" er fjernet herfra (26. sept.
                 2026, Familie-redesign) — hvem der scannes for styres
@@ -1139,7 +1139,7 @@ export default function ProfileScreen({
                 sted at vælge scanner-profil. En evt. "Standardprofiler ved
                 scanning"-indstilling hører til under Indstillinger, ikke
                 her — ikke bygget i denne omgang. */}
-            {family.length===0 && household.length===0 && pendingInvites.length===0 && <div className="empty-state"><span className="empty-icon"><Icon name="family" size={28} color="var(--muted)" /></span><div className="empty-txt">Ingen i familien endnu</div><div className="empty-sub">Tilføj fx et barn eller en partner for at scanne for dem, eller invitér en med egen konto</div></div>}
+            {family.length===0 && household.length===0 && pendingInvites.length===0 && <div className="empty-state"><span className="empty-icon" style={{ width:60, height:60 }}><Icon name="family" size={23} color="var(--muted)" /></span><div className="empty-txt">Ingen i familien endnu</div><div className="empty-sub">Tilføj fx et barn eller en partner for at scanne for dem, eller invitér en med egen konto</div></div>}
             {family.map(m => (
               <div key={`p-${m.id}`} className="family-member" style={editingMemberId === m.id ? { border:"1.5px solid var(--green)", background:"var(--green-selected-bg)" } : undefined}>
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
