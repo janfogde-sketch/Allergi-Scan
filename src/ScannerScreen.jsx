@@ -652,49 +652,6 @@ export default function ScannerScreen({
                     roterende ring-lys (mockup "C") — bevidst ikke genindført
                     ved sammenlægningen med main, se theme.jsx's kommentar
                     ved .scan-cta-halo for begrundelsen. */}
-                {/* "Scanner for: ..."-chip (25. sept. 2026, brugerfeedback) —
-                    diskret profilvælger, så brugeren altid kan se hvilke(n)
-                    profil(er) scanninger vurderes imod. Placeret øverst i
-                    .home-hero-frame (lige under topbaren), IKKE i mellemrummet
-                    mellem hilsen og selve scan-knappen som først forsøgt —
-                    målt empirisk med Playwright på tværs af iPhone SE/13/14
-                    Pro Max at det mellemrum reelt er 0px allerede FØR chippen
-                    (hilsenblokkens undertekst slutter bogstaveligt talt
-                    præcis der hvor knappens egen top-anker starter, uden
-                    indbygget slack) — der er ingen chip-højde, uanset hvor
-                    kompakt, der kan indsættes der uden enten at overlappe
-                    hilse-teksten eller knappen, som begge skal forblive
-                    uændrede. Denne placering er den eneste der reelt har
-                    ledig plads uden at røre nogen eksisterende positioner.
-                    Vises kun når husstanden har mere end én profil (25.
-                    sept. 2026, opfølgning) — med kun brugerens egen profil
-                    er der intet at vælge imellem, se
-                    scanProfilePickerAvailable ovenfor. */}
-                {/* Gjort ~12% mere kompakt (højde/bredde) og med lidt mere
-                    afstand til headeren (29. sept. 2026, opfølgning) —
-                    funktion/placering (øverst i .home-hero-frame) er
-                    uændret. Radius skiftet fra en fuld pille (100) til
-                    appens almindelige --r-token (12px), så chippen matcher
-                    resten af appens kort/komponenter i stedet for at have
-                    sin egen særlige form. "Scanner for:" er nu let (500,
-                    neutral --ink2), mens selve den valgte profil er fed
-                    (800) og grøn — tydeligere vægtforskel end tidligere,
-                    hvor begge dele delte samme 700-vægt. */}
-                {scanProfilePickerAvailable && (
-                  <div style={{ position:"absolute", top:"clamp(14px, 2.6cqh, 22px)", left:0, right:0, zIndex:2, display:"flex", justifyContent:"center" }}>
-                    <button type="button" onClick={() => setShowScanProfilePicker(true)}
-                      style={{ display:"flex", alignItems:"center", gap:4, background:"rgba(255,255,255,.82)", border:"1px solid var(--border)",
-                        borderRadius:"var(--r)", padding:"clamp(4px, 1cqh, 6px) clamp(10px, 2cqh, 12px)", cursor:"pointer",
-                        boxShadow:"0 4px 12px -6px rgba(21,32,26,.3)", fontFamily:"var(--f)", maxWidth:"78%" }}>
-                      <Icon name="family" size={11} color="var(--green)" />
-                      <span style={{ fontSize:"clamp(9.5px, 1.7cqh, 11px)", fontWeight:500, color:"var(--ink2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                        Scanner for: <span style={{ color:"var(--green)", fontWeight:800 }}>{scanProfileLabel}</span>
-                      </span>
-                      <Icon name="chevronDown" size={10} color="var(--muted)" />
-                    </button>
-                  </div>
-                )}
-
                 {showScanProfilePicker && scanProfilePickerAvailable && (
                   <ScanProfilePickerSheet
                     activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
@@ -711,61 +668,100 @@ export default function ScannerScreen({
                     "Åbn Indstillinger"-knap: der findes ingen cross-
                     browser/cross-platform JS-API til at åbne kamera-
                     tilladelser fra en PWA (samme genundersøgte konklusion
-                    som Indstillinger → Notifikationer, se SettingsScreen.jsx). */}
-                {cameraPermissionDenied ? (
-                  <div style={{ position:"absolute", top:"calc(44% - 45px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center", padding:"0 20px" }}>
-                    <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:20, padding:"20px 18px", maxWidth:300, width:"100%", textAlign:"center", boxShadow:"var(--sh2)" }}>
-                      <div style={{ display:"flex", justifyContent:"center", marginBottom:10 }}>
-                        <div style={{ width:44, height:44, borderRadius:"50%", background:"var(--red-lt)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                          <Icon name="block" size={20} color="var(--red)" />
+                    som Indstillinger → Notifikationer, se SettingsScreen.jsx).
+                    "Scanner for: ..."-chippen (25. sept. 2026, brugerfeedback
+                    — diskret profilvælger) er 29. sept. 2026 flyttet fra sin
+                    egen position øverst i .home-hero-frame til HERINDE, som
+                    normal flow-barn (marginTop, ikke egen absolut position)
+                    lige under knappen/kortet, i samme fælles absolut
+                    positionerede flex-kolonne — brugerens eksplicitte ønske
+                    om at knap + chip "næsten opleves som én funktionel
+                    gruppe", 16-20px mellemrum, i stedet for langt fra
+                    hinanden øverst/midt på skærmen. Størrelsen er UÆNDRET
+                    (samme kompakte mål som forrige runde). Vises kun når
+                    husstanden har mere end én profil, se
+                    scanProfilePickerAvailable ovenfor. */}
+                <div style={{ position:"absolute", top:"calc(44% - 45px)", left:0, right:0, zIndex:1, display:"flex", flexDirection:"column", alignItems:"center" }}>
+                  {cameraPermissionDenied ? (
+                    <div style={{ display:"flex", justifyContent:"center", padding:"0 20px", width:"100%" }}>
+                      <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:20, padding:"20px 18px", maxWidth:300, width:"100%", textAlign:"center", boxShadow:"var(--sh2)" }}>
+                        <div style={{ display:"flex", justifyContent:"center", marginBottom:10 }}>
+                          <div style={{ width:44, height:44, borderRadius:"50%", background:"var(--red-lt)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                            <Icon name="block" size={20} color="var(--red)" />
+                          </div>
+                        </div>
+                        <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>Kameraadgang er slået fra</div>
+                        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginBottom:16 }}>
+                          Tillad kameraadgang for at scanne stregkoder — eller brug en af mulighederne nedenfor.
+                        </div>
+                        <div style={{ display:"flex", gap:8 }}>
+                          <button onClick={() => galleryInputRef.current?.click()}
+                            style={{ flex:1, minHeight:44, padding:"10px", borderRadius:10, background:"var(--surface2)", border:"1px solid var(--border2)", fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                            <Icon name="image" size={13} color="var(--ink)" /> Billede
+                          </button>
+                          <button onClick={() => openManualEan()}
+                            style={{ flex:1, minHeight:44, padding:"10px", borderRadius:10, background:"var(--green)", border:"none", fontFamily:"var(--f)", fontSize:12.5, fontWeight:800, color:"var(--on-green)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                            <Icon name="edit" size={13} color="var(--on-green)" /> Indtast EAN
+                          </button>
                         </div>
                       </div>
-                      <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>Kameraadgang er slået fra</div>
-                      <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginBottom:16 }}>
-                        Tillad kameraadgang for at scanne stregkoder — eller brug en af mulighederne nedenfor.
-                      </div>
-                      <div style={{ display:"flex", gap:8 }}>
-                        <button onClick={() => galleryInputRef.current?.click()}
-                          style={{ flex:1, minHeight:44, padding:"10px", borderRadius:10, background:"var(--surface2)", border:"1px solid var(--border2)", fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                          <Icon name="image" size={13} color="var(--ink)" /> Billede
-                        </button>
-                        <button onClick={() => openManualEan()}
-                          style={{ flex:1, minHeight:44, padding:"10px", borderRadius:10, background:"var(--green)", border:"none", fontFamily:"var(--f)", fontSize:12.5, fontWeight:800, color:"var(--on-green)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                          <Icon name="edit" size={13} color="var(--on-green)" /> Indtast EAN
-                        </button>
-                      </div>
                     </div>
-                  </div>
-                ) : (
-                <div style={{ position:"absolute", top:"calc(44% - 45px)", left:0, right:0, zIndex:1, display:"flex", justifyContent:"center" }}>
-                  <div style={{ position:"relative", width:"clamp(119px, 30cqh, 197px)", height:"clamp(119px, 30cqh, 197px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                    {/* Glow dæmpet ~25% (29. sept. 2026, "en mere balanceret
-                        og rolig forside") — se .scan-halo-pulse-keyframes i
-                        theme.jsx, hvor selve puls-opaciteten er skaleret
-                        ned, så knappen stadig har dybde, men mere
-                        diskret/premium. */}
-                    <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-20px, -3.3cqh, -9px)", borderRadius:"50%",
-                      background:"radial-gradient(circle, var(--green-halo) 0%, rgba(221,244,232,0) 70%)" }} aria-hidden="true" />
-                    <button
-                      className="scan-cta-btn"
-                      onClick={handleScanButtonClick}
-                      aria-label="Start kamera for at scanne stregkode"
-                      style={{ position:"absolute", inset:"clamp(5px, 1.1cqh, 7px)", borderRadius:"50%", cursor:"pointer",
-                        border:"none", fontFamily:"var(--f)",
-                        background:"linear-gradient(160deg,var(--green) 0%,var(--green-dark) 100%)",
-                        boxShadow:"0 14px 28px -12px rgba(8,115,74,.4), inset 0 2px 3px rgba(255,255,255,.3)",
-                        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(5px, 1.4cqh, 9px)" }}>
-                      {/* Ikon/tekst/gap skaleret ~10% ned sammen med selve
-                          knappen (samme runde) — bevarer de oprindelige
-                          proportioner mellem indhold og knap, i stedet for
-                          at ikon/tekst pludselig fylder relativt mere i en
-                          mindre cirkel. */}
-                      <Icon name="scanframe" size="clamp(26px, 5.7cqh, 39px)" color="#fff" />
-                      <div style={{ fontSize:"clamp(12px, 2.2cqh, 14px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
-                    </button>
-                  </div>
+                  ) : (
+                    <div style={{ position:"relative", width:"clamp(119px, 30cqh, 197px)", height:"clamp(119px, 30cqh, 197px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                      {/* Glow dæmpet ~25% (29. sept. 2026, "en mere balanceret
+                          og rolig forside") — se .scan-halo-pulse-keyframes i
+                          theme.jsx, hvor selve puls-opaciteten er skaleret
+                          ned, så knappen stadig har dybde, men mere
+                          diskret/premium. */}
+                      <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-20px, -3.3cqh, -9px)", borderRadius:"50%",
+                        background:"radial-gradient(circle, var(--green-halo) 0%, rgba(221,244,232,0) 70%)" }} aria-hidden="true" />
+                      <button
+                        className="scan-cta-btn"
+                        onClick={handleScanButtonClick}
+                        aria-label="Start kamera for at scanne stregkode"
+                        style={{ position:"absolute", inset:"clamp(5px, 1.1cqh, 7px)", borderRadius:"50%", cursor:"pointer",
+                          border:"none", fontFamily:"var(--f)",
+                          background:"linear-gradient(160deg,var(--green) 0%,var(--green-dark) 100%)",
+                          boxShadow:"0 14px 28px -12px rgba(8,115,74,.4), inset 0 2px 3px rgba(255,255,255,.3)",
+                          display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(5px, 1.4cqh, 9px)" }}>
+                        {/* Ikon/tekst/gap skaleret ~10% ned sammen med selve
+                            knappen (samme runde) — bevarer de oprindelige
+                            proportioner mellem indhold og knap, i stedet for
+                            at ikon/tekst pludselig fylder relativt mere i en
+                            mindre cirkel. */}
+                        <Icon name="scanframe" size="clamp(26px, 5.7cqh, 39px)" color="#fff" />
+                        <div style={{ fontSize:"clamp(12px, 2.2cqh, 14px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
+                      </button>
+                    </div>
+                  )}
+                  {scanProfilePickerAvailable && (
+                    // marginTop:11, ikke 16-20 direkte — knappen selv sidder
+                    // inset:clamp(5px,1.1cqh,7px) inde i sin egen kant-til-
+                    // kant container ovenfor, så det FAKTISKE mellemrum
+                    // mellem den synlige grønne cirkel og chippen (målt med
+                    // Playwright) bliver marginTop + det inset, samlet
+                    // ~16-20px som bedt om.
+                    <div style={{ marginTop:11 }}>
+                      {/* maxWidth ændret fra "78%" til en fast 260px — chippen
+                          sidder nu i en shrink-to-fit flex-kolonne (ikke
+                          længere en fuld-bredde række), hvor en %-bredde ikke
+                          har noget defineret grundlag at regne ud fra og
+                          trak teksten forkert sammen ("Scanner ..." i stedet
+                          for "Scanner for: Alle"). En fast px-værdi løser det
+                          og er rigeligt inden for appens 480px-loft. */}
+                      <button type="button" onClick={() => setShowScanProfilePicker(true)}
+                        style={{ display:"flex", alignItems:"center", gap:4, background:"rgba(255,255,255,.82)", border:"1px solid var(--border)",
+                          borderRadius:"var(--r)", padding:"clamp(4px, 1cqh, 6px) clamp(10px, 2cqh, 12px)", cursor:"pointer",
+                          boxShadow:"0 4px 12px -6px rgba(21,32,26,.3)", fontFamily:"var(--f)", maxWidth:260 }}>
+                        <Icon name="family" size={11} color="var(--green)" />
+                        <span style={{ fontSize:"clamp(9.5px, 1.7cqh, 11px)", fontWeight:500, color:"var(--ink2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                          Scanner for: <span style={{ color:"var(--green)", fontWeight:800 }}>{scanProfileLabel}</span>
+                        </span>
+                        <Icon name="chevronDown" size={10} color="var(--muted)" />
+                      </button>
+                    </div>
+                  )}
                 </div>
-                )}
 
                 {/* Den permanente "Beta-information"-knap er fjernet herfra
                     (25. sept. 2026, brugerfeedback) — Beta-introen vises nu
