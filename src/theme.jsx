@@ -361,7 +361,9 @@ body::-webkit-scrollbar{display:none;}
   background:var(--surface);
   border-bottom:1px solid var(--border);
   padding:calc(10px + env(safe-area-inset-top)) 20px 8px;
-  display:flex;align-items:center;gap:12px;
+  /* gap 12→16px (29. sept. 2026, "Polér designet... så de ser ens og mere
+     gennemførte ud"): lidt mere luft mellem tilbageknap og titel. */
+  display:flex;align-items:center;gap:16px;
   /* left/right:0 + max-width/margin matcher .app's egen 480px-loft +
      center-på-desktop (samme opskrift som .app selv) — ellers ville en
      position:fixed-header med left/right:0 alene strække sig ud over hele
@@ -381,8 +383,12 @@ body::-webkit-scrollbar{display:none;}
   width:44px;height:44px;flex-shrink:0;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
 }
+/* 32→36px (29. sept. 2026, "Polér designet... så de ser ens og mere
+   gennemførte ud" — "tilbageknappen en anelse større visuelt, men stadig
+   diskret") — stadig ingen skygge/mørk kant, kun en let baggrund + tynd,
+   neutral kant, så den forbliver diskret trods den lidt større flade. */
 .legal-topbar-back-circle{
-  width:32px;height:32px;border-radius:50%;
+  width:36px;height:36px;border-radius:50%;
   background:var(--paper2);border:1px solid var(--border);
   display:flex;align-items:center;justify-content:center;
 }

@@ -25,7 +25,7 @@ import { Icon } from "./SharedComponents.jsx";
 
 const S = {
   updated: { fontSize:12.5, color:"var(--muted)", marginBottom:16 },
-  draftNotice: { background:"var(--amber-lt)", border:"1px solid var(--border)", borderRadius:12, padding:"14px 16px", marginBottom:24, fontSize:12.5, color:"var(--ink2)", fontWeight:500, lineHeight:1.55 },
+  draftNotice: { background:"var(--amber-lt)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:24, fontSize:13, color:"var(--ink2)", fontWeight:500, lineHeight:1.5 },
   h2: { fontSize:15, fontWeight:800, color:"var(--green)", margin:"24px 0 8px" },
   p: { fontSize:13.5, color:"var(--ink2)", lineHeight:1.55, marginBottom:10 },
   ul: { fontSize:13.5, color:"var(--ink2)", lineHeight:1.55, paddingLeft:18, marginBottom:10 },
@@ -40,7 +40,7 @@ export default function TermsScreen({ onBack }) {
       <header className="legal-topbar">
         <button onClick={onBack} aria-label="Tilbage" className="legal-topbar-back">
           <span className="legal-topbar-back-circle">
-            <Icon name="chevronLeft" size={16} color="var(--ink)" />
+            <Icon name="chevronLeft" size={17} color="var(--ink)" />
           </span>
         </button>
         <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Brugsvilkår</div>

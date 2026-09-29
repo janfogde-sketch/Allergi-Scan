@@ -21,7 +21,7 @@ import React from "react";
 import { Icon } from "./SharedComponents.jsx";
 
 const S = {
-  updated: { fontSize:12.5, color:"var(--muted)", marginBottom:24 },
+  updated: { fontSize:12.5, color:"var(--muted)", marginBottom:16 },
   h2: { fontSize:15, fontWeight:800, color:"var(--green)", margin:"24px 0 8px" },
   p: { fontSize:13.5, color:"var(--ink2)", lineHeight:1.55, marginBottom:10 },
   ul: { fontSize:13.5, color:"var(--ink2)", lineHeight:1.55, paddingLeft:18, marginBottom:10 },
@@ -36,7 +36,7 @@ export default function PrivacyScreen({ onBack }) {
       <header className="legal-topbar">
         <button onClick={onBack} aria-label="Tilbage" className="legal-topbar-back">
           <span className="legal-topbar-back-circle">
-            <Icon name="chevronLeft" size={16} color="var(--ink)" />
+            <Icon name="chevronLeft" size={17} color="var(--ink)" />
           </span>
         </button>
         <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Privatlivspolitik</div>
@@ -50,7 +50,10 @@ export default function PrivacyScreen({ onBack }) {
       <div className="screen fade-in" style={{ paddingTop:"calc(75px + env(safe-area-inset-top))" }}>
         {/* H1 fjernet (29. sept. 2026, "Polér designet..."): sidens titel
             ("Privatlivspolitik") vises allerede i topbaren ovenfor — en
-            gentaget stor overskrift i selve indholdet var redundant. */}
+            gentaget stor overskrift i selve indholdet var redundant.
+            "Sidst opdateret"-linjens marginBottom er nu 16px, samme
+            værdi som TermsScreen.jsx (var før 24px her) — samme
+            placering/styling af elementet på begge sider, som bedt om. */}
         <div style={S.updated}>Sidst opdateret: juni 2026</div>
 
         <p style={S.p}>
