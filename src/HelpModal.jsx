@@ -5,7 +5,7 @@ import { UI } from "./styleUtils.js";
 
 const HELP_CONTENT = {
   "home": { title:"Scanner", titleIcon:"camera", tips:[
-    { icon:"barcode", title:"Skan stregkode", desc:"Tryk på det grønne scan-felt for at åbne kameraet, og hold det roligt over stregkoden. Appen scanner automatisk." },
+    { icon:"barcode", title:"Scan stregkode", desc:"Tryk på det grønne scan-felt for at åbne kameraet, og hold det roligt over stregkoden. Appen scanner automatisk." },
     { icon:"search", title:"Søg produkter", desc:"Kan du ikke scanne? Brug genvejen 'Søg produkter' længere nede på skærmen til at finde varer ved navn." },
     { icon:"hash", title:"Indtast manuelt", desc:"Har du kun tallene fra stregkoden? Tryk 'Indtast EAN-nummer manuelt' under scan-feltet." },
     { icon:"zap", title:"Hurtig scanning", desc:"God belysning og rolig hånd giver hurtigere og mere præcist resultat." },
