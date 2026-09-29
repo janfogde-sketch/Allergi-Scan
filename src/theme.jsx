@@ -110,16 +110,30 @@ export const appCss = `
   --green-halo:#DDF4E8;
   --on-green:#FFFFFF;
   /* Låste logo-/brandfarver (29. sept. 2026, "Opdater EatSafe-brandingen i
-     headers") — hentet direkte fra de FASTE SVG-master-filerne
-     (src/assets/logo/*.svg, fill="#232528"/"#039A55"), IKKE de samme som
-     appens almindelige --ink/--green-UI-tokens ovenfor. Bruges KUN til at
-     gengive selve EatSafe-ordmærket som tekst (headerens wordmark) — ikke
+     headers", rettet 29. sept. 2026 efter et reelt farve-fund — se nedenfor)
+     — hentet direkte fra de FASTE SVG-master-filerne (src/assets/logo/
+     eatsafe-logo-horizontal.svg), IKKE de samme som appens almindelige
+     --ink/--green-UI-tokens ovenfor. Bruges KUN til at gengive selve
+     EatSafe-ordmærket som tekst (headerens/onboardingens wordmark) — ikke
      til almindelig UI (knapper, ikoner osv.), som fortsat bruger --ink/
-     --green. Navngivet forskelligt fra den eksisterende --green-logo
-     (som reelt er aliaset til --green-accent og driver kamera-reticle/
-     laser-linjen — et andet, ikke-relateret formål) for at undgå forveksling. */
+     --green. Navngivet forskelligt fra den eksisterende --green-logo (som
+     reelt er aliaset til --green-accent og driver kamera-reticle/laser-
+     linjen — et andet, ikke-relateret formål) for at undgå forveksling.
+     --brand-ink:#232528 er "Eat"-teksten i SVG'en, fill="#232528" (flad
+     farve, ingen gradient) — korrekt uændret.
+     --brand-green-gradient: "Safe"-teksten i SVG'en er IKKE en flad farve
+     — dens <path> har fill="url(#greenGrad)", en venstre-til-højre-gradient
+     (stops #70DC59→#17BF55→#039A55, samme gradient som logoets lille
+     tjekmærke-cirkel). Et tidligere forsøg (samme dag) brugte fejlagtigt
+     #039A55 alene som en FLAD farve for hele "Safe" — det er reelt kun
+     farven på tjekmærke-CIRKLEN i symbolet, ikke selve wordmark-teksten;
+     fundet ved at gen-optælle fill-værdier i selve SVG-kildefilen
+     (fill="url(#greenGrad)" optræder præcis dér hvor "Safe"-bogstaverne
+     tegnes) i stedet for at antage den ene grønne hex-værdi i filen var
+     "facit". Brugt via background-clip:text på selve wordmark-spannet
+     (se .topbar-wordmark-safe nedenfor), IKKE som en simpel text-color. */
   --brand-ink:#232528;
-  --brand-green:#039A55;
+  --brand-green-gradient:linear-gradient(90deg, #70DC59 0%, #17BF55 52%, #039A55 100%);
   /* Accent-grønt — kun små highlights (checkmarks, safe-badges/dots,
      reticle), se kommentaren ovenfor. */
   --green-accent:#34D06A;
@@ -289,7 +303,7 @@ body::-webkit-scrollbar{display:none;}
    ikke bruges som del af brandingen her.
    29. sept. 2026, "Opdater EatSafe-brandingen i headers": farverne skiftet
    fra appens almindelige --ink/--green-UI-tokens til de FASTE, låste logo-
-   brandfarver --brand-ink/--brand-green (samme #232528/#039A55 som selve
+   brandfarver --brand-ink/--brand-green-gradient (samme farver som selve
    master-SVG'en på velkomstsiden bruger, se :root-kommentaren ovenfor) —
    headeren skal nu farvemæssigt matche velkomstsidens rigtige logo, ikke
    blot appens generelle UI-palet. Størrelse øget yderligere ~10%
@@ -299,9 +313,12 @@ body::-webkit-scrollbar{display:none;}
    ordmærket i SVG'en er tegnet som faste vektorformer (ikke rigtig tekst),
    så en pixel-identisk skrifttype-gengivelse via CSS er ikke muligt; dette
    er den tætteste praktisk opnåelige match inden for appens ene faste
-   skrifttype (DM Sans). */
+   skrifttype (DM Sans).
+   Rettet SAMME dag: "Safe" er en gradient i SVG'en (fill="url(#greenGrad)"),
+   ikke en flad farve — background-clip:text erstatter den tidligere,
+   forkerte flade color:var(--brand-green). */
 .topbar-wordmark{font-size:26px;font-weight:800;color:var(--brand-ink);letter-spacing:-.4px;line-height:1;white-space:nowrap;}
-.topbar-wordmark-safe{color:var(--brand-green);}
+.topbar-wordmark-safe{background:var(--brand-green-gradient);background-clip:text;-webkit-background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}
 /* BETA-badge — samme varme/guldbrune farve som før, nu i en delt klasse i
    stedet for inline styles, med line-height:1 + inline-flex-centrering så
    den altid centrerer sig lodret mod tekstlogoet uanset dets nøjagtige

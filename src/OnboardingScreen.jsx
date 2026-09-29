@@ -908,8 +908,8 @@ export default function OnboardingScreen({
             {/* Brand-header (29. sept. 2026, "Master-specifikation for logo
                 og branding i headers") — viser KUN "EatSafe" (samme delte
                 <EatSafeWordmark/> som AppHeader.jsx, se SharedComponents.jsx
-                — samme --brand-ink/--brand-green-farver, skrifttype/-vægt/
-                kerning som velkomstsidens billedlogo), ingen scanner-/
+                — samme --brand-ink/--brand-green-gradient-farver, skrifttype/
+                -vægt/kerning som velkomstsidens billedlogo), ingen scanner-/
                 stregkodeikon og INGEN BETA-badge — specen skelner bevidst
                 mellem onboarding ("EatSafe") og appens øvrige headers
                 ("EatSafe BETA"), se dens afsnit 3/7. Fast positioneret

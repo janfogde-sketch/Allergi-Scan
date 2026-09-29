@@ -27,8 +27,9 @@
 // (denne header OG onboarding-headeren, se OnboardingScreen.jsx), i stedet
 // for at hver instans risikerer at afvige. Farve/størrelse/vægt/kerning er
 // låst til de SAMME brandfarver/proportioner som velkomstsidens billedlogo
-// (--brand-ink/--brand-green, se theme.jsx — hentet direkte fra SVG-master-
-// filernes indlejrede farver, ikke gættet), ikke appens almindelige --ink/
+// (--brand-ink/--brand-green-gradient, se theme.jsx — hentet direkte fra
+// SVG-master-filens indlejrede farver, ikke gættet; "Safe" er en gradient i
+// selve SVG'en, ikke en flad farve), ikke appens almindelige --ink/
 // --green-UI-tokens. BETA-badgen tilføjes HER, kun i appens headers (ikke i
 // onboarding, se master-specen afsnit 3/7) — komponeres ved siden af
 // wordmark'et, ikke inde i selve <EatSafeWordmark/>. Scanner-/
