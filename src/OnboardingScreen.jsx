@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
 import { initials, addUniqueCustom } from "./helpers.js";
-import { EatSafeLogo, Icon, showToast } from "./SharedComponents.jsx";
+import { EatSafeLogo, EatSafeHeaderLogo, Icon, showToast } from "./SharedComponents.jsx";
 import { ENumberPicker, AllergenChipPicker, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { MemberForm } from "./MemberForm.jsx";
@@ -19,6 +19,14 @@ import { useNavigationContext } from "./NavigationContext.jsx";
 import { useFamilyFormContext } from "./FamilyFormContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 import { UI } from "./styleUtils.js";
+
+// Delt stil for de juridiske inline-tekstlinks (brugsvilkår/privatlivs-
+// politikken), 4 forekomster nedenfor — en <button> i stedet for en <a>
+// (29. sept. 2026, "Opdater siderne Brugsvilkår og Privatlivspolitik"), da
+// disse nu navigerer internt via openLegal i stedet for at åbne en ekstern
+// side i en ny fane. Nulstiller knap-standardstile (baggrund/kant/padding/
+// font), samme grønne/fede visuelle udtryk som det tidligere <a>-link.
+const LEGAL_LINK_STYLE = { background:"none", border:"none", padding:0, margin:0, font:"inherit", color:"var(--green)", fontWeight:700, textDecoration:"none", cursor:"pointer" };
 
 function WelcomeIntro({ setScreen, setAuthTab }) {
   const goSignup = () => { setAuthTab("signup"); setScreen(SCREENS.LOGIN); };
@@ -74,7 +82,7 @@ export default function OnboardingScreen({
     allergens, setAllergens, customAllerg, setCustomAllerg,
     family, setFamily, activeProfiles, setActiveProfiles,
   } = useProfileContext();
-  const { screen, setScreen } = useNavigationContext();
+  const { screen, setScreen, openLegal } = useNavigationContext();
   const {
     newMemberName, setNewMemberName,
     newMemberBirthYear, setNewMemberBirthYear,
@@ -600,9 +608,9 @@ export default function OnboardingScreen({
                 (8-12px tættere på "Jeg har allerede en konto" ovenfor). */}
             <div style={{ marginTop:18, maxWidth:270, fontSize:10.5, color:"rgba(21,32,26,.6)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
               Du accepterer vores{" "}
-              <a href="/terms.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>brugsvilkår</a>
+              <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.TERMS)}>brugsvilkår</button>
               {" "}og bekræfter, at du har læst{" "}
-              <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>privatlivspolitikken</a>,
+              <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.PRIVACY)}>privatlivspolitikken</button>,
               {" "}når du opretter en konto.
             </div>
 
@@ -721,9 +729,9 @@ export default function OnboardingScreen({
                       oplysninger, det håndteres separat i selve onboardingen. */}
                   <div style={{ fontSize:11, color:"var(--muted)", marginTop:12, lineHeight:1.5 }}>
                     Ved at oprette en konto accepterer du vores{" "}
-                    <a href="/terms.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>brugsvilkår</a>
+                    <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.TERMS)}>brugsvilkår</button>
                     {" "}og bekræfter, at du har læst{" "}
-                    <a href="/privacy.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>privatlivspolitikken</a>.
+                    <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.PRIVACY)}>privatlivspolitikken</button>.
                   </div>
                 </div>
                 {authInfo && (
@@ -897,9 +905,32 @@ export default function OnboardingScreen({
               </div>,
               document.body
             )}
+            {/* Brand-header (29. sept. 2026, "Ret branding i hele onboarding-
+                flowet") — erstatter det tidligere selvstændige scanner-/
+                stregkode-symbol (EatSafeLogo variant="symbol", kun selve
+                bar-mærket uden ordmærke) med det SAMME tekst-only header-
+                logo (EatSafeHeaderLogo, se SharedComponents.jsx) som appens
+                almindelige sider (AppHeader.jsx) og hovedsidens BETA-badge
+                bruger — samme --brand-ink/--brand-green-farver, skrifttype/
+                -vægt og BETA-badge som resten af appen, ingen scanner-/
+                stregkodeikon. Fast positioneret øverst til venstre (samme
+                top-afstandsformel som Feedback-knappen nedenfor, som
+                allerede er position:fixed her under hele onboardingen), så
+                de to visuelt balancerer hinanden som en header-række —
+                UDEN at ændre selve Feedback-knappens kode. Gælder alle 5
+                trin (samme onboard-wrap-blok), ikke editMode (Rediger
+                profil/præferencer har allerede AppHeader). */}
             {!editMode && (
-              <div style={{ textAlign:"center", padding:"4px 0 20px" }}>
-                <div style={UI.mb6}><EatSafeLogo variant="symbol" size={40} /></div>
+              <div style={{ position:"fixed", top:"calc(12px + env(safe-area-inset-top))", left:20, zIndex:1000 }}>
+                <EatSafeHeaderLogo />
+              </div>
+            )}
+            {/* padding-top øget fra 4px (24. sept.-standarden) til 44px, så
+                overskriften ikke overlapper det nye faste brand-logo
+                ovenfor — direkte konsekvens af logoet, ikke en selvstændig
+                layoutændring. */}
+            {!editMode && (
+              <div style={{ textAlign:"center", padding:"44px 0 20px" }}>
                 <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)" }}>Opsæt din profil</div>
                 <div style={{ fontSize:13, color:"var(--ink2)", marginTop:4 }}>Tager under 2 minutter</div>
               </div>

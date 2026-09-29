@@ -357,6 +357,10 @@ export const SCREENS = {
   KNOWLEDGE:"knowledge",
   RESTAURANTGUIDE:"restaurantguide",
   SETTINGS:"settings",
+  // Brugsvilkår/Privatlivspolitik (29. sept. 2026, "Opdater siderne...med
+  // tydelig navigation tilbage") — almindelige undersider, ikke modaler, se
+  // TermsScreen.jsx/PrivacyScreen.jsx + App.jsx's openLegal/legalReturnScreen.
+  TERMS:"terms", PRIVACY:"privacy",
 };
 
 export const PAGE_IDS = {
@@ -367,6 +371,7 @@ export const PAGE_IDS = {
   submitted:"SCR-13", admin:"SCR-14", favorites:"SCR-15",
   madpas:"SCR-16", recipes:"SCR-17", editprofile:"SCR-18",
   knowledge:"SCR-19", restaurantguide:"SCR-20", settings:"SCR-21",
+  terms:"SCR-22", privacy:"SCR-23",
 };
 
 export const DUMMY_PRODUCT = {
