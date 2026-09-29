@@ -782,6 +782,21 @@ positiv grøn baggrundstone (`--green-lt`/`--green-mid`) i stedet for
 `opacity:.6`, som gav et fejlagtigt "disabled/fejlramt"-udseende. Fuld
 detalje i `.claude/HISTORY.md`.
 
+**Opdateret 29. sept. 2026 (QA-beslutning D2):** Telefon er valgfri
+(valideres kun hvis udfyldt: præcis 8 cifre). **Alder og Køn SKAL forblive
+obligatoriske** — Jans eksplicitte beslutning: han bruger dem, selvom
+appens egne funktioner ikke gør. Foreslå ikke at fjerne dem igen af
+dataminimeringshensyn.
+
+**E-mailbekræftelse (QA-beslutning D1, 29. sept. 2026):** appen håndterer
+Supabase-indstillingen "Confirm email": oprettelse uden session viser en
+neutral `.info-box` (`authInfo` i `useAuth.js`, ikke den røde fejlboks),
+signup sender `redirect_to` til appens eget domæne, en eksisterende e-mail
+genkendes via Supabases "bruger uden identities"-svar, og bekræftelses-
+linket lander i onboarding med mærket "E-mail bekræftet" (`isOAuth` holder
+nu udbyderen: `"google"`/`"email"`). Velkomstmailen sendes først, når
+e-mailen er bekræftet (se `src/CONTEXT.md`, `send-email`).
+
 ### App-headeren omdøbt til fælles komponent + tekst-wordmark (27. sept. 2026)
 
 App-headeren er udtrukket til en navngivet, genbrugelig komponent

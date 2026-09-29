@@ -58,6 +58,9 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   const [loginEmail, setLoginEmail]     = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [authError, setAuthError]       = useState("");
+  // Neutral besked (ikke en fejl) — fx "tjek din e-mail" efter oprettelse,
+  // når Supabase kræver e-mailbekræftelse før første login (D1, 29. sept.).
+  const [authInfo, setAuthInfo]         = useState("");
   // Adskilt fra authError (25. sept. 2026, opfølgning): "denne email er
   // allerede registreret" skal vises som en felt-specifik inline-fejl ved
   // selve E-mail-feltet, ikke i den store, globale error-boks — globale
@@ -143,9 +146,13 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
                 const meta = payload.user_metadata || {};
                 setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "" }));
                 if (onSignupSuccess) onSignupSuccess();
-                setIsOAuth(true);
+                // "google" ved Google-login, "email" når brugeren kommer fra
+                // bekræftelseslinket i mailen — styrer teksten under
+                // E-mail-feltet i onboarding trin 1.
+                setIsOAuth(payload.app_metadata?.provider || true);
               } else {
                 setOnboardStep(profile.onboarding_step || 1);
+                if (params.get("type") === "signup") setIsOAuth("email");
               }
               setScreen(SCREENS.ONBOARD);
             } else {
@@ -274,7 +281,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     if (!isValidEmail(loginEmail)) { setEmailError("Indtast en gyldig e-mailadresse."); return; }
     if (!loginPassword) { setPasswordError("Indtast din adgangskode."); return; }
     setEmailError(""); setPasswordError("");
-    setAuthLoading(true); setAuthError("");
+    setAuthLoading(true); setAuthError(""); setAuthInfo("");
     try {
       const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
         method: "POST",
@@ -333,9 +340,11 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     // reel sikkerhedsgevinst — længde er den langt vigtigste faktor.
     if (!loginPassword || loginPassword.length < 10) { setPasswordError("Adgangskoden skal være mindst 10 tegn."); return; }
     setEmailError(""); setPasswordError("");
-    setAuthLoading(true); setAuthError(""); setEmailTakenError("");
+    setAuthLoading(true); setAuthError(""); setAuthInfo(""); setEmailTakenError("");
     try {
-      const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+      // redirect_to: bekræftelseslinket i mailen skal føre tilbage til samme
+      // domæne som appen blev åbnet fra (samme mønster som OAuth nedenfor).
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/signup?redirect_to=${encodeURIComponent(window.location.origin + "/")}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
         body: JSON.stringify({ email: loginEmail, password: loginPassword }),
@@ -370,13 +379,23 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         setAuthLoading(false);
         return;
       }
+      // Med e-mailbekræftelse slået til svarer Supabase IKKE med en fejl for
+      // en allerede registreret e-mail, men med en bruger uden identities
+      // (beskytter mod at afsløre hvem der har en konto) — samme besked som
+      // før, så brugeren kan logge ind i stedet.
+      const signedUp = data.user || data;
+      if (Array.isArray(signedUp?.identities) && signedUp.identities.length === 0) {
+        setEmailTakenError("Denne e-mail er allerede registreret.");
+        setAuthLoading(false);
+        return;
+      }
       if (data.access_token) {
         saveTokens(data.access_token, data.refresh_token, data.user.id);
         setUser(u => ({ ...u, email: loginEmail }));
         setScreen(SCREENS.ONBOARD);
         if (onSignupSuccess) onSignupSuccess();
       } else {
-        setAuthError("Tjek din e-mail og klik på bekræftelseslinket — log derefter ind her.");
+        setAuthInfo(`Vi har sendt et bekræftelseslink til ${loginEmail}. Klik på linket i mailen for at aktivere din konto — tjek evt. din spam-mappe.`);
       }
     } catch {
       // Ægte, uventede fejl (netværk nede, JSON-parse-fejl osv.) — vis
@@ -436,6 +455,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     loginEmail, setLoginEmail,
     loginPassword, setLoginPassword,
     authError, setAuthError,
+    authInfo, setAuthInfo,
     emailTakenError, setEmailTakenError,
     emailError, setEmailError,
     passwordError, setPasswordError,

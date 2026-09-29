@@ -103,7 +103,19 @@ describe("useAuth handleSignup — validation guards", () => {
     const { result } = setup();
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("longenough"); });
     await act(async () => { await result.current.handleSignup(); });
-    expect(result.current.authError).toMatch(/bekræftelseslinket/i);
+    expect(result.current.authInfo).toMatch(/bekræftelseslink/i);
+    expect(result.current.authError).toBe("");
     expect(result.current.accessToken).toBeNull();
+    expect(global.fetch.mock.calls[0][0]).toContain("/auth/v1/signup?redirect_to=");
+  });
+
+  it("shows 'already registered' when confirmation is on and Supabase hides an existing account", async () => {
+    // Med e-mailbekræftelse slået til svarer Supabase 200 med en bruger uden identities
+    global.fetch.mockResolvedValue(textResponse({ id: "u1", identities: [] }));
+    const { result } = setup();
+    act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("longenough"); });
+    await act(async () => { await result.current.handleSignup(); });
+    expect(result.current.emailTakenError).toMatch(/allerede registreret/i);
+    expect(result.current.authInfo).toBe("");
   });
 });
