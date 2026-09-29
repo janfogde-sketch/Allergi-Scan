@@ -135,17 +135,22 @@ export const ENumberPicker = ({ selected, onChange }) => {
     return r ? (num >= r[0] && num <= r[1]) : true;
   });
 
-  const popular = ["E621","E211","E102","E951","E250","E320","E150d","E110","E129"];
-
   return (
     <div>
       {/* Valgte — vises øverst, ikke nederst under hele listen (25. sept.
           2026, brugerfeedback: man skal kunne se sine egne valg med det
           samme man åbner sektionen, ikke skulle scrolle forbi hele listen
-          for at finde dem). */}
+          for at finde dem). Kun tallet vises IKKE her længere (29. sept.
+          2026, "E-numre kompakt accordion") — det viste allerede samme tal
+          som den omsluttende Accordion-header, så en gentaget "(X)" her var
+          ren duplikering. Selve chipsene er nu det ENE, tydelige sted
+          valgte E-numre præsenteres (den tidligere "populære"-quick-select-
+          række herunder viste samtidig de samme valgte numre en tredje
+          gang, fremhævet grønne — fjernet helt, se dens tidligere kommentar
+          i git-historikken). */}
       {selected.length > 0 && (
         <div style={{ marginBottom:10 }}>
-          <div style={UI.sectionLbl6}>Valgte E-numre ({selected.length})</div>
+          <div style={UI.sectionLbl6}>Valgte E-numre</div>
           <div style={UI.wrapGap4}>
             {selected.map(e => (
               <div key={e} style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 10px",
@@ -162,22 +167,6 @@ export const ENumberPicker = ({ selected, onChange }) => {
           </div>
         </div>
       )}
-
-      {/* Populære */}
-      <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
-        {popular.filter(e => E_NUMBERS[e]).map(e => {
-          const on = selected.includes(e);
-          return (
-            <div key={e} onClick={() => onChange(on ? selected.filter(x=>x!==e) : [...selected,e])} className="enum-chip"
-              style={{ display:"flex", alignItems:"center", gap:4, fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:20,
-                background: on?"var(--green-lt)":"var(--surface)",
-                color: on?"var(--green)":"var(--ink)",
-                border:`1px solid ${on?"var(--green)":"var(--border)"}` }}>
-              {e}{on && <Icon name="check" size={10} color="var(--green)" />}
-            </div>
-          );
-        })}
-      </div>
 
       {/* Søg */}
       <input style={{ width:"100%", padding:"8px 12px", border:"1px solid var(--border2)", borderRadius:8, fontSize:13, fontFamily:"var(--f)", marginBottom:8, boxSizing:"border-box", background:"var(--surface)", color:"var(--ink)" }}
