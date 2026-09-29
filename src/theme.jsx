@@ -444,9 +444,11 @@ body::-webkit-scrollbar{display:none;}
    senest ved en fuld velkomst-/login-brandkonsistens-runde bygget netop på
    denne palet. .scan-cta-ring-light/scanCtaRingSpin fra ghost-forsøget er
    fjernet igen, samme afgørelse som sidste gang samme konflikt opstod.) */
+/* Opaciteten er dæmpet ~25% (29. sept. 2026, "en mere balanceret og rolig
+   forside" — .7/.5 skaleret til .53/.38), samme skala/timing i øvrigt. */
 @keyframes scan-halo-pulse{
-  0%,100%{transform:scale(1);opacity:.7;}
-  50%{transform:scale(1.06);opacity:.5;}
+  0%,100%{transform:scale(1);opacity:.53;}
+  50%{transform:scale(1.06);opacity:.38;}
 }
 .scan-cta-halo{animation:scan-halo-pulse 4s ease-in-out infinite;}
 .scan-cta-btn{transition:transform .12s cubic-bezier(.34,1.56,.64,1);}
