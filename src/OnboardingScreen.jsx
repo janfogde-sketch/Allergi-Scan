@@ -976,24 +976,36 @@ export default function OnboardingScreen({
                 overskriften ikke overlapper det nye faste brand-logo
                 ovenfor — direkte konsekvens af logoet, ikke en selvstændig
                 layoutændring. */}
+            {/* Tilbagepilen ligger nu i forlængelse af selve "Opsæt din
+                profil"/"Tager under 2 minutter"-blokken (29. sept. 2026,
+                brugerfeedback — tredje runde: stod først ved siden af
+                fremgangsbjælken, så på sin egen linje over den, nu i stedet
+                lodret centreret ud for headingen, venstrestillet i samme
+                kolonne som det faste EatSafe-logo ovenfor). Kræver
+                position:relative på selve heading-blokken, da knappen
+                positioneres absolut i forhold til den. Samme delte
+                boks-mønster (kant + Icon name="chevronLeft") som
+                KnowledgeScreen.jsx/RecipesScreen.jsx/
+                RestaurantGuideScreen.jsx. */}
             {!editMode && (
-              <div style={{ textAlign:"center", padding:"44px 0 20px" }}>
+              <div style={{ position:"relative", textAlign:"center", padding:"44px 0 20px" }}>
+                {onboardStep > 1 && (
+                  <button onClick={() => setOnboardStep(onboardStep - 1)} aria-label="Tilbage"
+                    style={{ position:"absolute", left:20, top:"50%", transform:"translateY(-50%)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0 }}>
+                    <Icon name="chevronLeft" size={18} color="var(--ink)" />
+                  </button>
+                )}
                 <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)" }}>Opsæt din profil</div>
                 <div style={{ fontSize:13, color:"var(--ink2)", marginTop:4 }}>Tager under 2 minutter</div>
               </div>
             )}
             {editMode && <div style={{ height:4 }} />}
-            {/* Step header med tilbage og fremgang — tilbagepilen stod
-                tidligere ved siden af fremgangsbjælken, hvilket enten
-                skubbede bjælken eller sad for tæt på den (29. sept. 2026,
-                brugerfeedback, to runder). Ligger nu på sin egen linje
-                OVER bjælken, som derfor altid har fuld bredde og aldrig
-                flytter sig, uanset om tilbagepilen vises (trin > 1) eller
-                ej. Samme delte boks-mønster (kant + Icon name="chevronLeft")
-                som KnowledgeScreen.jsx/RecipesScreen.jsx/
-                RestaurantGuideScreen.jsx. */}
+            {/* Fremgangsbjælke, altid fuld bredde. I editMode findes
+                headingen ovenfor ikke (Rediger profil/præferencer har sin
+                egen AppHeader/tilbageknap) — behold et simpelt fallback for
+                tilbagepilen dér, samme boks-stil. */}
             <div style={UI.mb8}>
-              {onboardStep > 1 && (
+              {editMode && onboardStep > 1 && (
                 <button onClick={() => setOnboardStep(onboardStep - 1)} aria-label="Tilbage"
                   style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, marginBottom:10 }}>
                   <Icon name="chevronLeft" size={18} color="var(--ink)" />
