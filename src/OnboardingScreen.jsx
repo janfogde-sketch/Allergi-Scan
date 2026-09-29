@@ -574,8 +574,10 @@ export default function OnboardingScreen({
                 fontSize/farve dæmpet (11px→10.5px, rgba(...,.85)→(...,.6))
                 — punkt 8: skal fremstå mindre og mere sekundær, neutral
                 mørkegrå, uden at konkurrere med CTA-knapperne. Selve
-                teksten/linkene (grønne, fed) er uændrede. */}
-            <div style={{ marginTop:28, maxWidth:270, fontSize:10.5, color:"rgba(21,32,26,.6)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
+                teksten/linkene (grønne, fed) er uændrede.
+                29. sept. 2026, "sidste spacing-polering": marginTop 28→18
+                (8-12px tættere på "Jeg har allerede en konto" ovenfor). */}
+            <div style={{ marginTop:18, maxWidth:270, fontSize:10.5, color:"rgba(21,32,26,.6)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
               Du accepterer vores{" "}
               <a href="/terms.html" target="_blank" style={{ color:"var(--green)", fontWeight:700 }}>brugsvilkår</a>
               {" "}og bekræfter, at du har læst{" "}
