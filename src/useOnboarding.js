@@ -17,7 +17,7 @@ import { makeHeaders, apiCall } from "./helpers.js";
 export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
                                 onboardStep, setOnboardStep,
                                 allergens, customAllerg, selectedENumbers = [],
-                                setUser, setScreen, setEditMode, setIsOAuth }) {
+                                setUser, markOnboardingCompleted, setScreen, setEditMode, setIsOAuth }) {
 
   const [editMode, setEditModeLocal]  = useState(false);
   const [tourIdx, setTourIdx]         = useState(0);
@@ -134,12 +134,15 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
         body: JSON.stringify({ onboarding_completed: true, diets: user.diets || [], e_numbers: selectedENumbers }),
       });
     } catch {}
-    // Opdatér den lokale kopi FØR setScreen — App.jsx's route guard (29.
-    // sept. 2026, "Onboarding-persistens") blokerer ethvert forsøg på at
-    // navigere væk fra onboarding mens user.onboarding_completed er false,
-    // så den lokale state skal bekræfte "færdig" her, ellers ville guarden
-    // selv forhindre denne overgang til Hjem.
-    setUser(u => ({ ...u, onboarding_completed: true }));
+    // markOnboardingCompleted (IKKE et almindeligt setUser-kald — se dens
+    // egen kommentar i App.jsx for hele fejlfindingen) opdaterer en ref
+    // SYNKRONT, så App.jsx's route guard garanteret ser "færdig" allerede i
+    // dette setScreen-kald nedenfor, i stedet for at bruge en forældet
+    // closure-værdi og fejlagtigt sende brugeren tilbage til ONBOARD (bug
+    // rettet 29. sept. 2026: "Ikke nu" i trin 5 endte tilbage på trin 5 efter
+    // beta-introen, fordi screen reelt aldrig blev HOME, kun skjult bag
+    // beta-modalens fuldskærms-overlay).
+    markOnboardingCompleted();
     setScreen(SCREENS.HOME);
     setEditModeLocal(false);
     setEditMode(false);
