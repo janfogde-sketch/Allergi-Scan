@@ -278,9 +278,9 @@ export default function EatSafe() {
     editMode, setEditMode,
     tourIdx, setTourIdx,
     customInput, setCustomInput,
-    saveProfileStep1, saveAllergensStep2, finishOnboard: finishOnboardRaw,
+    saveProfileStep1, saveAllergensStep2, savePreferencesStep3, finishOnboard: finishOnboardRaw,
   } = useOnboarding({ accessToken, userId, user, loginEmail,
-                      allergens, customAllerg,
+                      allergens, customAllerg, selectedENumbers,
                       setUser, setScreen, setEditMode: () => {}, setIsOAuth });
 
   // Viser Beta-introen automatisk, én gang, lige efter onboarding trin 5
@@ -592,6 +592,18 @@ export default function EatSafe() {
         if (Array.isArray(allergenData)) {
           setAllergens(allergenData.filter(a => a.type === "allergen").map(a => a.allergen));
           setCustomAllerg(allergenData.filter(a => a.type === "custom").map(a => a.allergen));
+        }
+
+        // Login med e-mail/adgangskode (og genåbning af appen) sendte altid
+        // til forsiden — en bruger der forlod onboarding før allergierne var
+        // valgt, endte uden allergiprofil, og alt blev vist som "ingen
+        // advarsler". Send dem tilbage til onboarding. Kun når der reelt ikke
+        // er gemt nogen allergier: flere tidlige brugere har flaget=false men
+        // en udfyldt profil, og dem skal vi ikke tvinge igennem forfra.
+        const profileRow = Array.isArray(profile) ? profile[0] : null;
+        if (profileRow?.onboarding_completed === false && Array.isArray(allergenData) && allergenData.length === 0) {
+          setOnboardStep(1);
+          setScreen(s => (s === SCREENS.HOME ? SCREENS.ONBOARD : s));
         }
 
         // Familie + indkøb + favoritter
@@ -1009,6 +1021,7 @@ export default function EatSafe() {
             editMode={editMode} setEditMode={setEditMode}
             customInput={customInput} setCustomInput={setCustomInput}
             saveAllergensStep2={saveAllergensStep2}
+            savePreferencesStep3={savePreferencesStep3}
             saveProfileStep1={saveProfileStep1} finishOnboard={finishOnboard}
             StepBar={StepBar}
             buildLabel={formatBuildTime()}

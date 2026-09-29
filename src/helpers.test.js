@@ -262,6 +262,9 @@ describe("normalizeProductFlags (Q1/Q2)", () => {
     expect(normalizeProductFlags(ALL_NO, { ingredientsText: "", verifiedStatus: "verified" }).gluten).toBe("no");
     expect(normalizeProductFlags(ALL_NO, { ingredientsText: "Zucker, Weizenmehl", sourceMethod: "keyword+claude" }).gluten).toBe("no");
   });
+  it("kvalitet 'high' redder ikke et produkt uden ingrediensliste", () => {
+    expect(normalizeProductFlags(ALL_NO, { ingredientsText: "Ingen ingrediensliste", quality: "high" }).gluten).toBe("unknown");
+  });
   it("dansk liste er uændret", () => {
     expect(normalizeProductFlags(ALL_NO, { ingredientsText: "Sukker, rismel, salt" }).gluten).toBe("no");
   });

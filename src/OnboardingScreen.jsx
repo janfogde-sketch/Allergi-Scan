@@ -56,7 +56,7 @@ export default function OnboardingScreen({
   tourIdx, setTourIdx,
   editMode, setEditMode,
   customInput, setCustomInput,
-  saveAllergensStep2,
+  saveAllergensStep2, savePreferencesStep3,
   saveProfileStep1, finishOnboard,
   StepBar,
   hasPendingJoinList,
@@ -448,17 +448,21 @@ export default function OnboardingScreen({
             ikke skelne "brugeren har bevidst ingen kostpræferencer" fra
             "brugeren glemte at vælge noget" (25. sept. 2026, brugerfeedback,
             samme princip som trin 2's noAllergiesConfirmed-gate). */}
-        <PrimaryButton disabled={!canContinueDiet} onClick={() => setOnboardStep(4)}>Fortsæt →</PrimaryButton>
+        <PrimaryButton disabled={!canContinueDiet} onClick={async () => {
+          try { await savePreferencesStep3(); setOnboardStep(4); }
+          catch { showToast("Dine kostpræferencer kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
+        }}>Fortsæt →</PrimaryButton>
         {/* "Ingen særlig diæt" — samme låste SecondaryButton-stil som trin 2's
             "Jeg har ingen allergier..." (solid hvid baggrund + grøn kant/
             tekst), tydeligt klikbart uden at konkurrere med den fyldte
             grønne Fortsæt-knap. */}
         <SecondaryButton style={UI.mt8}
-          onClick={() => {
+          onClick={async () => {
             if (diets.length > 0 && !window.confirm("Fjern dine valgte kostpræferencer?")) return;
             setUser(u => ({...u, diets:[]}));
             setNoDietConfirmed(true);
-            setOnboardStep(4);
+            try { await savePreferencesStep3([]); setOnboardStep(4); }
+            catch { showToast("Dine kostpræferencer kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
           }}>
           Ingen særlig diæt
         </SecondaryButton>

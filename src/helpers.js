@@ -176,8 +176,12 @@ export function hasRealIngredients(text) {
 // (Claude) flag stoles der på uændret.
 export function normalizeProductFlags(flags, { ingredientsText = "", verifiedStatus, source, sourceMethod, quality } = {}) {
   const out = { ...(flags || {}) };
-  const trusted = verifiedStatus === "verified" || source === "producer" || /claude/.test(sourceMethod || "") || quality === "high";
-  if (!trusted && (!hasRealIngredients(ingredientsText) || looksNonDanishIngredients(ingredientsText))) {
+  // Uden ingrediensliste har hverken nøgleord eller Claude læst noget — da
+  // stoles der kun på producent-verificerede data.
+  const verified = verifiedStatus === "verified" || source === "producer";
+  const aiRead = /claude/.test(sourceMethod || "") || quality === "high";
+  const noIngredients = !hasRealIngredients(ingredientsText);
+  if (!verified && (noIngredients || (!aiRead && looksNonDanishIngredients(ingredientsText)))) {
     for (const k of Object.keys(out)) if (out[k] === "no" || out[k] === false) out[k] = "unknown";
   }
   const g = effectiveAllergenFlag(out, "gluten");

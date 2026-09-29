@@ -9,7 +9,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 
 export function useOnboarding({ accessToken, userId, user, loginEmail,
-                                allergens, customAllerg,
+                                allergens, customAllerg, selectedENumbers = [],
                                 setUser, setScreen, setEditMode, setIsOAuth }) {
 
   const [onboardStep, setOnboardStep] = useState(1);
@@ -38,6 +38,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail,
           // af appen) i stedet for rå alder, så det ikke bliver forældet —
           // "alder" er kun UI-sproget, ikke det lagrede felt.
           birth_year: user.age ? new Date().getFullYear() - parseInt(user.age) : null,
+          gender: user.gender || null,
         }),
       });
       if (emailToSave) setUser(u => ({ ...u, email: emailToSave }));
@@ -68,13 +69,25 @@ export function useOnboarding({ accessToken, userId, user, loginEmail,
     });
   };
 
+  // Kostpræferencer (trin 3) og E-numre (valgt i trin 2) — blev tidligere kun
+  // holdt i lokal state og gik tabt ved næste genindlæsning. `dietsOverride`
+  // bruges når knappen samtidig nulstiller diets ("Ingen særlig diæt"), fordi
+  // setUser ikke er slået igennem endnu i samme klik.
+  const savePreferencesStep3 = async (dietsOverride) => {
+    await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+      method: "PATCH",
+      headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+      body: JSON.stringify({ diets: dietsOverride ?? user.diets ?? [], e_numbers: selectedENumbers }),
+    });
+  };
+
   const finishOnboard = async () => {
     try {
       await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY,
           "Authorization": `Bearer ${accessToken}`, "Prefer": "return=minimal" },
-        body: JSON.stringify({ onboarding_completed: true }),
+        body: JSON.stringify({ onboarding_completed: true, diets: user.diets || [], e_numbers: selectedENumbers }),
       });
     } catch {}
     setScreen(SCREENS.HOME);
@@ -90,6 +103,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail,
     customInput, setCustomInput,
     saveProfileStep1,
     saveAllergensStep2,
+    savePreferencesStep3,
     finishOnboard,
   };
 }
