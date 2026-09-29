@@ -863,6 +863,23 @@ for hvordan det er skærmet af).
   (50px, uændret). `npm run build`/`npx vitest run` (110/110) grønne,
   mojibake-scan clean.
 
+**Sidste spacing-polering, samme dag (29. sept. 2026) — fire mikro-
+justeringer, intet redesign:**
+- `.welcome-tagline`s max-width 340→324px (8px ekstra luft i hver side) —
+  brugerens mål var 12-16px, men en probe direkte i den byggede app viste
+  at alt under 324px brækker teksten i 3 linjer på standard/Pro Max-bredde,
+  hvilket ville modsige en tidligere rundes eksplicitte 2-linjers-krav.
+  324px er derfor den størst mulige reduktion inden for det constraint.
+- `.welcome-tagline`s margin-top 26→16px (10px mindre luft til sloganet).
+- `.welcome-benefit`s gap 8→4px (labels 4px tættere på deres ikoner).
+- Den juridiske teksts marginTop 28→18px (10px tættere på "Jeg har
+  allerede en konto"-knappen).
+- Alle fire verificeret programmatisk (samme Playwright-metode som
+  ovenfor) på tre enhedsbredder — 2-linjers intro-teksten bevaret på
+  standard/Pro Max, uændret 3 linjer på SE-klassen (samme kendte vilkår
+  som før). `npm run build`/`npx vitest run` (110/110) grønne, mojibake-
+  scan clean.
+
 ---
 
 ## 6. Design-antimønstre — ting vi bevidst IKKE vil have i appen

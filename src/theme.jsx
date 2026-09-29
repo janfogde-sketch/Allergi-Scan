@@ -515,8 +515,14 @@ body::-webkit-scrollbar{display:none;}
    ud over læsbarheden). */
 /* margin-top 16→26 (29. sept. 2026, "Polér velkomst-/login-siden", punkt 9:
    tagline→intro, mål 24-28px). max-width 300→340px (punkt 4: maks. 2 linjer
-   ved standard skærmbredde — 300px brækkede teksten i 3 linjer). */
-.welcome-tagline{font-size:16.5px;color:var(--ink);margin-top:26px;letter-spacing:.1px;font-weight:500;line-height:1.6;max-width:340px;}
+   ved standard skærmbredde — 300px brækkede teksten i 3 linjer).
+   29. sept. 2026, "sidste spacing-polering": margin-top 26→16 (8-12px
+   mindre luft til sloganet ovenfor) + max-width 340→324 (8px ekstra luft i
+   hver side — det opgivne mål var 12-16px, men 324px er grænsen for at
+   teksten stadig kan stå på 2 linjer på standard/Pro Max-bredde, som en
+   tidligere runde eksplicit krævede; en smallere bredde brækker den i 3
+   linjer, afprøvet empirisk). */
+.welcome-tagline{font-size:16.5px;color:var(--ink);margin-top:16px;letter-spacing:.1px;font-weight:500;line-height:1.6;max-width:324px;}
 .welcome-divider{width:40px;height:2px;background:var(--border2);border-radius:2px;margin:32px auto;}
 /* 3 fordele-række (25. sept. 2026-brief) — kort, ikon-båret opsummering,
    IKKE tunge fuld-bredde feature-kort (erstatter tidligere .welcome-features/
@@ -535,7 +541,9 @@ body::-webkit-scrollbar{display:none;}
    samtidig fjernet i JSX, så dette top-mål er den ENESTE kilde til det
    mellemrum). */
 .welcome-benefits{display:flex;justify-content:center;gap:14px;margin:34px 0 40px;width:100%;}
-.welcome-benefit{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;max-width:130px;}
+/* gap 8→4px (29. sept. 2026, "sidste spacing-polering": labels 3-5px
+   tættere på deres ikoner). */
+.welcome-benefit{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;max-width:130px;}
 /* 44px→40px (~9% mindre, punkt 5) — stadig præcist ens for alle tre, samme
    centrering/skygge/baggrund. border-radius skaleret tilsvarende 14→13px. */
 .welcome-benefit-icon{width:40px;height:40px;border-radius:13px;background:var(--green-selected-bg);display:flex;align-items:center;justify-content:center;box-shadow:var(--sh);flex-shrink:0;}
