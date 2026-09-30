@@ -61,6 +61,19 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
     herfra). Gem gerne den endelige HTML i repoet, fx
     `supabase/templates/`, så den kan versionsstyres.
 
+*Funktion (Jans spor):*
+12. Fejlteksten, når en adgangskode afvises, skal sige præcis hvad der er
+    galt, og hvad koden mindst skal indeholde. I dag viser appen altid
+    "Adgangskoden er for svag. Brug mindst 10 tegn." (`useAuth.js`,
+    `handleSignup`), uanset hvorfor Supabase afviste den. Supabase svarer
+    med `error_code: "weak_password"` og en liste `weak_password.reasons`
+    (`length`, `characters`, `pwned`); brug den til en konkret besked pr.
+    årsag. Tjek først Supabase Dashboard → Authentication → Sign In /
+    Providers → Email for de faktiske krav (min. længde, krævede
+    tegntyper), så appens egen hjælpetekst og tjek ("mindst 10 tegn",
+    `OnboardingScreen.jsx`) matcher dem. Gælder også nulstilling af
+    adgangskode, hvis den har et eget felt til ny kode.
+
 *Claude gør bagefter:*
 10. Luk D1 (`cc121cd9…`) og B1 (`820806b9…`) i `feedback_tickets`, når de
     er verificeret. Læs testrundens resultater og opret tickets for fejl.
