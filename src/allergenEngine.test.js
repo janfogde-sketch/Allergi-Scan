@@ -44,6 +44,13 @@ describe("analyzeIngredients — grundlæggende", () => {
   it("matcher sammensatte mælkeord som understreng", () => {
     expect(analyzeIngredients("gedemælk, salt").maelkeallergi).toBe("yes");
   });
+
+  it("finder smørfedt og friske oste (fundet i live-produkter 30. sept.)", () => {
+    expect(analyzeIngredients("Rapsolie (95 %), SMØRFEDT (5 %)").maelkeallergi).toBe("yes");
+    expect(analyzeIngredients("Hytteost naturel").maelkeallergi).toBe("yes");
+    expect(analyzeIngredients("Hytteost naturel").laktose).toBe("yes");
+    expect(analyzeIngredients("flødeost, krydderier").maelkeallergi).toBe("yes");
+  });
 });
 
 describe("spor (kan indeholde)", () => {

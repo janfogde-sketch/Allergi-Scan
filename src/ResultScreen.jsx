@@ -96,20 +96,30 @@ export default function ResultScreen({
   const matchedENumbersForUser = (scanResult.productENumbers?.length > 0 && activeENumbers?.length > 0)
     ? compareENumbers(scanResult.productENumbers, activeENumbers).matched
     : [];
+  // Fundene bygges af de profiler, der er aktive NU (profileResults), ikke
+  // af scanResult.matchedDanger/-Warning, som blev beregnet med de profiler,
+  // der var aktive, da produktet blev scannet. Ellers kunne fx en
+  // familieprofils æg-allergi blive fremhævet i ingredienslisten, selvom
+  // kun brugerens egen profil (uden æg) var aktiv (rapporteret 30. sept.
+  // 2026) — og "Dine valg" og fremhævningen kunne modsige hinanden.
+  const uniqueIds = (arr) => [...new Set(arr)];
+  const liveDanger = uniqueIds(profileResults.flatMap(p => p.danger || []));
+  const liveWarning = uniqueIds(profileResults.flatMap(p => p.warning || [])).filter(id => !liveDanger.includes(id));
+  const liveCustom = uniqueIds(profileResults.flatMap(p => p.customMatches || []));
   const findings = categorizeProductFindings({
-    matchedDanger: scanResult.matchedDanger,
-    matchedWarning: scanResult.matchedWarning,
-    customAllergenMatches: scanResult.customAllergenMatches,
+    matchedDanger: liveDanger,
+    matchedWarning: liveWarning,
+    customAllergenMatches: liveCustom,
     matchedENumbers: matchedENumbersForUser,
     dietResults,
   });
   // "Utilstrækkelige data" (krav 2F) — enten mangler brugerens EGNE aktive
-  // allergener klassifikation (scanResult.hasUnknown, allerede beregnet i
-  // useProduct.js), eller produktet har hverken allergen-flags eller en
+  // allergener klassifikation (profilernes "unknown", beregnet ovenfor for
+  // de profiler, der er aktive nu), eller produktet har hverken allergen-flags eller en
   // ingrediensliste overhovedet at kontrollere noget som helst imod.
   const hasAnyAllergenData = scanResult.allergen_flags && Object.values(scanResult.allergen_flags).some(v => v === "yes" || v === "no" || v === "traces");
   const hasIngredientsText = !!(scanResult.ingredients && scanResult.ingredients.trim());
-  const hasSufficientData = !scanResult.hasUnknown && (hasAnyAllergenData || hasIngredientsText);
+  const hasSufficientData = !profileResults.some(p => (p.unknown || []).length > 0) && (hasAnyAllergenData || hasIngredientsText);
   const topStatus = computeTopStatus({ hasSufficientData, ...findings });
 
   // ── Ingrediensliste-fremhævning (krav 8/9) ──────────────────────────────
@@ -198,7 +208,7 @@ export default function ResultScreen({
     // Egne, fritekst-tilføjede allergier — kun fundet/ikke fundet, ingen
     // "?"-tilstand er mulig her (binært tekst-match, se matchCustomAllergens).
     const customRows = (soloProfile.custom || []).map(term => {
-      const found = (scanResult.customAllergenMatches || []).some(m => m.toLowerCase() === term.toLowerCase());
+      const found = liveCustom.some(m => m.toLowerCase() === term.toLowerCase());
       return found
         ? { status: "cross", label: term, reason: "Fundet i ingredienslisten (fritekst)." }
         : { status: "check", label: term, reason: null };
@@ -602,7 +612,7 @@ export default function ResultScreen({
     const flags = scanResult.allergen_flags;
     const present = Object.entries(flags).filter(([k,v]) => v==="yes"    && isRealAllergen(k));
     const traces  = Object.entries(flags).filter(([k,v]) => v==="traces" && isRealAllergen(k));
-    const myAllergens  = new Set([...scanResult.matchedDanger||[], ...scanResult.matchedWarning||[]]);
+    const myAllergens  = new Set([...liveDanger, ...liveWarning]);
     const otherPresent = present.filter(([k]) => !myAllergens.has(k));
     const otherTraces  = traces.filter(([k])  => !myAllergens.has(k));
     if (!otherPresent.length && !otherTraces.length) return null;

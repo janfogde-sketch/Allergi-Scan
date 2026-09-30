@@ -79,6 +79,12 @@ export const ALLERGEN_KEYWORDS = {
     "flødepulver", "mælketørstof", "milk solids", "laktoprotein",
     "inddampet mælk", "condensed milk", "evaporated milk",
     "animalsk fedtstof", "animalsk olie", "margarine", "minarine",
+    // Sammensatte ord med de korte kerneord "smør"/"ost", som ellers kun
+    // matcher som hele ord (30. sept. 2026 — "SMØRFEDT" og "Hytteost" blev
+    // overset). Ental og flertal, jf. den stående regel i CLAUDE.md.
+    "smørfedt", "smørfedtstof", "flødeost", "flødeoste", "smøreost", "smøreoste",
+    "friskost", "friskoste", "hytteost", "hytteoste", "rygeost", "rygeoste",
+    "gedeost", "gedeoste", "fåreost", "fåreoste",
     // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
     "milch", "vollmilch", "vollmilchpulver", "magermilch", "magermilchpulver", "milchpulver", "milcheiweiß", "milchbestandteile", "sahne", "rahm", "käse", "molke", "molken", "molkenpulver", "molkenerzeugnis", "butterreinfett", "joghurt",
   ],
@@ -91,6 +97,9 @@ export const ALLERGEN_KEYWORDS = {
     "mælk", "milk", "fløde", "cream", "ost", "oste", "cheese",
     "yoghurt", "yogurt", "kærnemælk", "buttermilk",
     "valle", "whey", "tørmælk", "mælkepulver", "milk powder",
+    // Friske oste indeholder laktose (30. sept. 2026)
+    "flødeost", "flødeoste", "smøreost", "smøreoste", "friskost", "friskoste",
+    "hytteost", "hytteoste",
     // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
     "milchzucker", "milch", "sahne", "rahm", "käse", "molke", "molken", "molkenpulver", "joghurt", "buttermilch",
   ],

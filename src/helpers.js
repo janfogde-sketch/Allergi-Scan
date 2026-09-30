@@ -498,7 +498,7 @@ export function computeProfileResults(profiles, { allergen_flags, ingredients, n
     const status = (danger.length > 0 || customMatches.length > 0) ? "danger"
       : (warning.length > 0 || dietFails.length > 0 || eNumberMatches.length > 0 || unknown.length > 0) ? "warn"
       : "safe";
-    return { ...p, status, reasons, danger, warning, unknown };
+    return { ...p, status, reasons, danger, warning, unknown, customMatches };
   });
 }
 
