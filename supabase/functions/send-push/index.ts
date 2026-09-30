@@ -10,6 +10,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendWebPush } from "../_shared/webpush.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -122,16 +123,12 @@ serve(async (req) => {
       });
     }
 
-    // Byg VAPID JWT
-    const vapidJwt = await buildVapidJwt(VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT);
-
-    const payload = JSON.stringify({
+    const payload = {
       title,
       body,
       icon: "/icon-192.png",
-      badge: "/badge-72.png",
-      url: url ?? "https://eatsafe.dk",
-    });
+      url: url ?? "https://www.eatsafe.dk",
+    };
 
     let sent = 0;
     const staleTokens: string[] = [];
@@ -139,23 +136,14 @@ serve(async (req) => {
     for (const { token } of tokens) {
       try {
         const sub = JSON.parse(token);
-        const res = await fetch(sub.endpoint, {
-          method: "POST",
-          headers: {
-            "Authorization": `vapid t=${vapidJwt},k=${VAPID_PUBLIC_KEY}`,
-            "Content-Type": "application/octet-stream",
-            "Content-Encoding": "aes128gcm",
-            "TTL": "86400",
-          },
-          body: await encryptPayload(payload, sub),
+        const result = await sendWebPush(sub, payload, {
+          vapidPublicKey: VAPID_PUBLIC_KEY,
+          vapidPrivateKey: VAPID_PRIVATE_KEY,
+          vapidSubject: VAPID_SUBJECT,
         });
-
-        if (res.status === 201 || res.status === 200) {
-          sent++;
-        } else if (res.status === 410 || res.status === 404) {
-          // Token er udløbet — slet det
-          staleTokens.push(token);
-        }
+        if (result.ok) sent++;
+        else if (result.gone) staleTokens.push(token); // udløbet — slet det
+        else console.error("Push fejlede:", result.status, result.error);
       } catch (e) {
         console.error("Push fejl for token:", e);
       }
@@ -177,72 +165,3 @@ serve(async (req) => {
     });
   }
 });
-
-// ── VAPID JWT builder ────────────────────────────────────────────────────────
-async function buildVapidJwt(pubKey: string, privKey: string, subject: string): Promise<string> {
-  const now = Math.floor(Date.now() / 1000);
-  const header = btoa(JSON.stringify({ typ: "JWT", alg: "ES256" })).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
-  const payload = btoa(JSON.stringify({ aud: "https://fcm.googleapis.com", exp: now + 43200, sub: subject })).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
-  const sigInput = `${header}.${payload}`;
-
-  const keyBytes = base64urlDecode(privKey);
-  const cryptoKey = await crypto.subtle.importKey(
-    "pkcs8", keyBytes,
-    { name: "ECDSA", namedCurve: "P-256" },
-    false, ["sign"]
-  );
-  const sig = await crypto.subtle.sign(
-    { name: "ECDSA", hash: "SHA-256" },
-    cryptoKey,
-    new TextEncoder().encode(sigInput)
-  );
-  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
-  return `${sigInput}.${sigB64}`;
-}
-
-// ── Web Push payload kryptering (aes128gcm) ──────────────────────────────────
-async function encryptPayload(payload: string, sub: { keys: { p256dh: string; auth: string } }): Promise<Uint8Array> {
-  const clientPublicKey = base64urlDecode(sub.keys.p256dh);
-  const clientAuth      = base64urlDecode(sub.keys.auth);
-
-  const serverKeyPair = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey", "deriveBits"]);
-  const serverPublicKeyRaw = new Uint8Array(await crypto.subtle.exportKey("raw", serverKeyPair.publicKey));
-
-  const clientKey = await crypto.subtle.importKey("raw", clientPublicKey, { name: "ECDH", namedCurve: "P-256" }, false, []);
-  const sharedSecret = new Uint8Array(await crypto.subtle.deriveBits({ name: "ECDH", public: clientKey }, serverKeyPair.privateKey, 256));
-
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-
-  // HKDF
-  const prk = await hkdf(clientAuth, sharedSecret, concat(new TextEncoder().encode("WebPush: info\0"), clientPublicKey, serverPublicKeyRaw), 32);
-  const cek = await hkdf(salt, prk, new TextEncoder().encode("Content-Encoding: aes128gcm\0"), 16);
-  const nonce = await hkdf(salt, prk, new TextEncoder().encode("Content-Encoding: nonce\0"), 12);
-
-  const cryptoKey = await crypto.subtle.importKey("raw", cek, "AES-GCM", false, ["encrypt"]);
-  const paddedPayload = concat(new TextEncoder().encode(payload), new Uint8Array([2]));
-  const encrypted = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce }, cryptoKey, paddedPayload));
-
-  // aes128gcm header: salt (16) + record size (4) + key length (1) + server public key (65)
-  const recordSize = new Uint8Array(4);
-  new DataView(recordSize.buffer).setUint32(0, 4096, false);
-
-  return concat(salt, recordSize, new Uint8Array([serverPublicKeyRaw.length]), serverPublicKeyRaw, encrypted);
-}
-
-async function hkdf(salt: Uint8Array, ikm: Uint8Array, info: Uint8Array, length: number): Promise<Uint8Array> {
-  const key = await crypto.subtle.importKey("raw", ikm, { name: "HKDF" }, false, ["deriveBits"]);
-  return new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, key, length * 8));
-}
-
-function concat(...arrays: Uint8Array[]): Uint8Array {
-  const total = arrays.reduce((n, a) => n + a.length, 0);
-  const out = new Uint8Array(total);
-  let offset = 0;
-  for (const a of arrays) { out.set(a, offset); offset += a.length; }
-  return out;
-}
-
-function base64urlDecode(str: string): Uint8Array {
-  const b64 = str.replace(/-/g, "+").replace(/_/g, "/").padEnd(str.length + (4 - str.length % 4) % 4, "=");
-  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-}

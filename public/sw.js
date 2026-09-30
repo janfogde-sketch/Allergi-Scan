@@ -19,27 +19,49 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(fetch(event.request));
 });
 
+// Push er kun den korte tekst; den fulde besked ligger i appen og åbnes via
+// url'en (https://www.eatsafe.dk/?notification={id}). Se _shared/webpush.ts og
+// notify-funktionen. Ingen standard-badge (filen fandtes aldrig) og ingen
+// tvungen vibration — enheden bestemmer selv.
+const APP_ORIGINS = ["https://www.eatsafe.dk", "https://eatsafe.dk"];
+const APP_HOME = "https://www.eatsafe.dk/";
+
+function safeAppUrl(raw) {
+  try {
+    const u = new URL(raw, APP_HOME);
+    return APP_ORIGINS.includes(u.origin) ? u.href : APP_HOME;
+  } catch {
+    return APP_HOME;
+  }
+}
+
 self.addEventListener("push", (event) => {
   if (!event.data) return;
-  const data = event.data.json();
-  event.waitUntil(
-    self.registration.showNotification(data.title ?? "EatSafe", {
-      body: data.body ?? "",
-      icon: data.icon ?? "/icon-192.png",
-      badge: data.badge ?? "/badge-72.png",
-      data: { url: data.url ?? "https://eatsafe.dk" },
-      vibrate: [200, 100, 200],
-    })
-  );
+  let data;
+  try { data = event.data.json(); } catch { return; }
+  // Udløbet besked (fx enheden var offline): vis den ikke.
+  if (data.expiresAt && Date.parse(data.expiresAt) < Date.now()) return;
+  const options = {
+    body: data.body ?? "",
+    icon: data.icon ?? "/icon-192.png",
+    lang: data.lang ?? "da",
+    data: { url: safeAppUrl(data.url), notificationId: data.notificationId ?? null },
+  };
+  if (data.badge) options.badge = data.badge;
+  if (data.tag) options.tag = data.tag; // samme tag erstatter en tidligere besked om samme sag
+  event.waitUntil(self.registration.showNotification(data.title ?? "EatSafe", options));
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url ?? "https://eatsafe.dk";
+  const url = safeAppUrl(event.notification.data?.url);
   event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then(async (clientList) => {
       for (const client of clientList) {
-        if (client.url === url && "focus" in client) return client.focus();
+        if (APP_ORIGINS.includes(new URL(client.url).origin) && "focus" in client) {
+          await client.focus();
+          if ("navigate" in client) { try { return await client.navigate(url); } catch { /* åbn nyt vindue */ } }
+        }
       }
       if (clients.openWindow) return clients.openWindow(url);
     })

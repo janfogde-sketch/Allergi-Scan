@@ -79,14 +79,21 @@ er allerede live; app-delen kræver merge. Resultat, kort:
 - ProfileScreen er delt i seks skærmfiler; App.jsx har fået
   `useAdminTools`, `useIncomingLinks`, `useLoadUserData`.
 
-**Åbne efter A1–A8:**
-- Jan: opret GitHub-secret `SUPABASE_ACCESS_TOKEN` (ellers springer
-  workflowet deploy over med en advarsel).
-- Claude, efter merge til main: kør `supabase/pending/
-  feedback_close_direct_insert.sql` som migration og flyt filen til
-  `supabase/migrations/`. Lukker den gamle, direkte INSERT i
-  feedback_tickets. Kør den ikke før, ellers fejler feedback fra den
-  gamle app i produktion.
+**Afsluttet 30. sept.:** merget i #411 og #412 (Node 22 i deploy-workflowet).
+Secret'en `SUPABASE_ACCESS_TOKEN` virker; første deploy gav `allergens` v23
+og `feedback` v2, verificeret live. Den gamle direkte INSERT i
+feedback_tickets er lukket (migration `20260930100707`). Adgangsnøglen
+udløber efter den periode, Jan valgte; når deploy-jobbet fejler med 401/403,
+skal der laves en ny nøgle og secret'en opdateres.
+
+*Notifikationer (Bjørn har godkendt designet, Jan: "Start med trin 1"):* trin 1
+(server-fundament) er lavet lokalt og databasedelen er live (tabeller, triggere,
+cron; push-flaget `notifications_push_enabled` er FRA). Edge-funktionen `notify`
+og appændringer kræver merge og deploy, og `notify` er endnu ikke kørt live.
+Næste: test `notify` efter deploy med markerede testdata (QA-kontoen, mails og
+push slået fra), derefter trin 2 (beskedside/rute i appen), trin 3 (alle
+varianter + mails + nye indstillinger), trin 4 (P1/P3/P6, egne ticket-visninger).
+Detaljer i `src/CONTEXT.md` afsnit 14.
 
 *Claude gør bagefter:*
 10. Læs testrundens resultater og opret tickets for fejl (når punkt 3
