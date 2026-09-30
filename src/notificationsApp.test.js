@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { readNotificationParam, fetchNotification, markNotificationRead } from "./notificationsApi.js";
+import { readNotificationParam, fetchNotification, markNotificationRead, fetchTicket, fetchInviteStatus } from "./notificationsApi.js";
 import NotificationBlocks from "./NotificationBlocks.jsx";
 import { renderNotification } from "../supabase/functions/_shared/notificationContent.js";
 
@@ -86,3 +86,42 @@ describe("NotificationBlocks", () => {
     expect(html).not.toContain("fremtid");
   });
 });
+
+describe("fetchTicket", () => {
+  it("returnerer egen ticket uden billedet", async () => {
+    stubFetch(async () => ({ ok: true, json: async () => [{ id: ID, description: "d", status: "open", admin_note: null, created_at: "2026-09-30T10:00:00Z" }] }));
+    const r = await fetchTicket("tok", ID);
+    expect(r.status).toBe("ok");
+    expect(fetch.mock.calls[0][0]).not.toContain("image_base64");
+    expect(fetch.mock.calls[0][0]).toContain(`id=eq.${ID}`);
+  });
+  it("giver notfound for tom liste (slettet eller anden konto) og error ved fejl", async () => {
+    stubFetch(async () => ({ ok: true, json: async () => [] }));
+    expect((await fetchTicket("tok", ID)).status).toBe("notfound");
+    stubFetch(async () => ({ ok: false, status: 500 }));
+    expect((await fetchTicket("tok", ID)).status).toBe("error");
+    stubFetch(async () => { throw new Error("offline"); });
+    expect((await fetchTicket("tok", ID)).status).toBe("error");
+  });
+});
+
+describe("fetchInviteStatus", () => {
+  const row = (r) => stubFetch(async () => ({ ok: true, json: async () => (r ? [r] : []) }));
+  it("active kun for ventende, ikke-udløbet invitation", async () => {
+    row({ status: "pending", expires_at: new Date(Date.now() + 3600_000).toISOString() });
+    expect(await fetchInviteStatus("tok", ID)).toBe("active");
+  });
+  it("inactive for accepteret, udløbet eller forsvundet invitation", async () => {
+    row({ status: "accepted", expires_at: new Date(Date.now() + 3600_000).toISOString() });
+    expect(await fetchInviteStatus("tok", ID)).toBe("inactive");
+    row({ status: "pending", expires_at: new Date(Date.now() - 1000).toISOString() });
+    expect(await fetchInviteStatus("tok", ID)).toBe("inactive");
+    row(null);
+    expect(await fetchInviteStatus("tok", ID)).toBe("inactive");
+  });
+  it("unknown ved fejl (knappen vises som hidtil)", async () => {
+    stubFetch(async () => ({ ok: false, status: 500 }));
+    expect(await fetchInviteStatus("tok", ID)).toBe("unknown");
+  });
+});
+

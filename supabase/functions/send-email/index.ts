@@ -2,6 +2,8 @@
 // Sender emails via Resend med templates fra resend.com
 // Rediger mail-indhold på resend.com/templates
 
+import { TRANSACTIONAL_TEMPLATES, buildMailVariables, escapeHtml, sendTemplateMail } from "../_shared/mailSend.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -70,6 +72,17 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "type og to er påkrævet" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Nye servicemails (Resend-skabeloner med {{{variabel}}}): værdierne HTML-escapes her.
+    const tt = TRANSACTIONAL_TEMPLATES[type];
+    if (tt) {
+      const variables: Record<string, string> = {};
+      for (const [k, v] of Object.entries(data)) variables[k] = escapeHtml(v);
+      if ("name" in data) variables.name = buildMailVariables({}, String(data.name ?? "")).name;
+      const res = await sendTemplateMail({ apiKey: RESEND_API_KEY, to, templateId: tt.id, subject: tt.subject, variables, idempotencyKey: `${type}-${to}-${new Date().toISOString().slice(0, 10)}` });
+      if (!res.ok) throw new Error(`Resend fejl: ${res.error}`);
+      return new Response(JSON.stringify({ success: true, id: res.id }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // "raw" er til interne, admin-rettede emails (fx admin-digest) hvor
