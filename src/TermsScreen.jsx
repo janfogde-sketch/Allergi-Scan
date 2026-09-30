@@ -1,11 +1,6 @@
 // @ts-nocheck
 // ─────────────────────────────────────────────────────────────────────────────
-// TermsScreen.jsx — Brugsvilkår som en almindelig underside i appen (29.
-// sept. 2026, "Opdater siderne Brugsvilkår og Privatlivspolitik med tydelig
-// navigation tilbage"). Erstatter den tidligere <a href="/terms.html"
-// target="_blank">-adfærd (åbnede den statiske public/terms.html i en ny
-// browserfane) — samme ordlyd/indhold, uændret, blot portet til appens eget
-// design-sprog og navigationssystem i stedet for en ekstern side.
+// TermsScreen.jsx — Brugsvilkår som en almindelig underside i appen.
 //
 // Egen, selvstændig sticky header (.legal-topbar, se theme.jsx) i stedet for
 // AppHeader — se App.jsx's isLegalPage-kommentar for hvorfor: siden kan
@@ -15,10 +10,12 @@
 // legalReturnScreen (den skærm der åbnede siden via openLegal i
 // NavigationContext), IKKE et fast mål — se App.jsx.
 //
-// public/terms.html er bevidst IKKE fjernet/ændret — den kan stadig bruges
-// som en selvstændig, offentligt tilgængelig URL uden for selve appen.
-// Denne fil er en uafhængig kopi af samme tekst, ikke en delt kilde — ret
-// begge, hvis selve vilkårene ændres.
+// public/terms.html er en uafhængig kopi af samme tekst (offentlig URL uden
+// for appen), ikke en delt kilde — ret begge, hvis vilkårene ændres.
+//
+// Åbne, interne punkter i vilkårene står KUN i admin-ticketen
+// "[Brugsvilkår · IKKE FÆRDIGE]" i feedback_tickets — aldrig her, da både
+// JS-bundlen og terms.html er offentligt tilgængelige.
 // ─────────────────────────────────────────────────────────────────────────────
 import React from "react";
 import { Icon } from "./SharedComponents.jsx";
@@ -34,6 +31,8 @@ const S = {
   contactBox: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 18px", marginTop:28, boxShadow:"var(--sh)" },
 };
 
+const Mail = () => <a href="mailto:hej@eatsafe.dk" style={S.a}>hej@eatsafe.dk</a>;
+
 export default function TermsScreen({ onBack }) {
   return (
     <>
@@ -46,67 +45,140 @@ export default function TermsScreen({ onBack }) {
         <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Brugsvilkår</div>
       </header>
       {/* paddingTop matcher .legal-topbar's egen renderede højde (header er
-          position:fixed, tager ikke plads i normal flow) + lidt luft — se
-          theme.jsx's .legal-topbar-kommentar for hvorfor fixed frem for
-          sticky. 79→75px (29. sept. 2026, "Polér designet..."): headeren
-          selv blev 4px lavere (strammere lodret padding), så clearance er
-          reduceret tilsvarende for at bevare samme lille luft under den. */}
+          position:fixed, tager ikke plads i normal flow) + lidt luft. */}
       <div className="screen fade-in" style={{ paddingTop:"calc(75px + env(safe-area-inset-top))" }}>
-        {/* H1 fjernet (29. sept. 2026, "Polér designet..."): sidens titel
-            ("Brugsvilkår") vises allerede i topbaren ovenfor — en gentaget
-            stor overskrift i selve indholdet var redundant. "Sidst
-            opdateret"-linjen er nu selve indholdets første element. */}
-        <div style={S.updated}>Sidst opdateret: september 2026</div>
+        <div style={S.updated}>Sidst opdateret: 30. september 2026</div>
 
         <div style={S.draftNotice}>
-          Denne side er en foreløbig, generisk udgave af EatSafes brugsvilkår og er endnu ikke juridisk gennemgået. Kontakt <a href="mailto:hej@eatsafe.dk" style={S.a}>hej@eatsafe.dk</a>, hvis du har spørgsmål, indtil den endelige version er på plads.
+          Denne side er en foreløbig udgave af EatSafes brugsvilkår og er endnu ikke juridisk gennemgået. Kontakt <Mail />, hvis du har spørgsmål, indtil den endelige version er på plads.
         </div>
 
-        <p style={S.p}>
-          Disse brugsvilkår gælder for din brug af EatSafe ("vi", "os", "appen"). Ved at oprette en konto accepterer du betingelserne nedenfor.
-        </p>
+        <p style={S.p}>Disse brugsvilkår gælder for din brug af EatSafe.</p>
+        <p style={S.p}>EatSafe hjælper dig med at sammenholde oplysninger om fødevarer med de allergier, intolerancer, kostpræferencer, E-numre og andre valg, du har registreret i appen.</p>
+        <p style={S.p}>Ved at oprette en konto og bruge EatSafe accepterer du disse brugsvilkår.</p>
 
-        <h2 style={S.h2}>1. Tjenesten</h2>
-        <p style={S.p}>
-          EatSafe er en dansk app, der hjælper dig med at vurdere, om et fødevareprodukt matcher dine registrerede allergier, intolerancer, kostpræferencer og fravalgte E-numre, baseret på produktdata fra flere kilder (producenter, Open Food Facts, andre brugere).
-        </p>
+        <h2 style={S.h2}>1. Hvem står bag EatSafe?</h2>
+        <p style={S.p}>EatSafe drives af:</p>
+        <p style={S.p}>E-mail: <Mail /></p>
 
-        <h2 style={S.h2}>2. Ingen medicinsk erstatning</h2>
-        <p style={S.p}>
-          EatSafe er et vejledende værktøj — <strong>ikke</strong> en medicinsk vurdering, og appen erstatter ikke din egen kontrol af produktets emballage eller rådgivning fra en læge, diætist eller allergolog. Kontrollér altid selv et produkts aktuelle ingrediens- og allergenoplysninger.
-        </p>
-
-        <h2 style={S.h2}>3. Din konto</h2>
+        <h2 style={S.h2}>2. Hvad gør EatSafe?</h2>
+        <p style={S.p}>EatSafe er et digitalt værktøj, der hjælper dig med at vurdere, om oplysninger om et fødevareprodukt matcher de valg, du har registreret i EatSafe.</p>
+        <p style={S.p}>EatSafe kan blandt andet:</p>
         <ul style={S.ul}>
-          <li style={S.li}>Du skal give korrekte oplysninger ved oprettelse af konto</li>
-          <li style={S.li}>Du er selv ansvarlig for at holde din adgangskode fortrolig</li>
-          <li style={S.li}>Du kan til enhver tid slette din konto i appen under Profil → Konto</li>
+          <li style={S.li}>scanne eller søge efter fødevarer</li>
+          <li style={S.li}>sammenholde produktdata med dine registrerede allergier og intolerancer</li>
+          <li style={S.li}>kontrollere kostpræferencer og valgte E-numre</li>
+          <li style={S.li}>vise ingredienser, allergener og næringsoplysninger</li>
+          <li style={S.li}>gemme historik, favoritter og indkøbslister</li>
+          <li style={S.li}>understøtte profiler for familiemedlemmer eller andre personer i din husstand</li>
+          <li style={S.li}>modtage produktbilleder, rettelser og andre produktoplysninger fra brugere.</li>
         </ul>
+        <p style={S.p}>Hvilke funktioner der er tilgængelige, kan ændre sig over tid.</p>
 
-        <h2 style={S.h2}>4. Brugerindsendt indhold</h2>
-        <p style={S.p}>
-          Indsender du produktdata (fx et nyt produkt, en rettelse eller et billede), giver du EatSafe ret til at bruge, vise og redigere dette indhold i appen. Du er ansvarlig for, at dine indsendelser er korrekte efter bedste evne — men vi kan ikke garantere, at brugerindsendt eller tredjeparts produktdata altid er 100% opdateret eller fejlfri.
-        </p>
+        <h2 style={S.h2}>3. EatSafe er vejledende</h2>
+        <p style={S.p}>EatSafe er et vejledende hjælpemiddel. EatSafe kan ikke garantere, at et produkt er sikkert for dig at indtage.</p>
+        <p style={S.p}>EatSafe baserer sine resultater på de produktdata, der er tilgængelige for tjenesten. Produktoplysninger kan være mangelfulde, forkerte, forældede eller være blevet ændret af producenten.</p>
+        <p style={S.p}>Kontrollér derfor altid produktets aktuelle emballage, ingrediensliste og allergenoplysninger, før du bruger eller indtager produktet.</p>
+        <p style={S.p}>Hvis oplysningerne i EatSafe afviger fra produktets aktuelle emballage, skal du lægge oplysningerne på emballagen til grund.</p>
+        <p style={S.p}>EatSafe kan kun advare om forhold, som kan identificeres ud fra de tilgængelige produktdata. Ændrede opskrifter, produktionsforhold, krydskontaminering eller andre forhold fremgår ikke nødvendigvis af EatSafes data.</p>
+        <p style={S.p}>EatSafe yder ikke lægelig, ernæringsfaglig eller anden sundhedsfaglig rådgivning.</p>
 
-        <h2 style={S.h2}>5. Ansvarsbegrænsning</h2>
-        <p style={S.p}>
-          EatSafe leveres "som den er". I det omfang dansk lovgivning tillader det, er vi ikke ansvarlige for skader, der opstår som følge af forkerte eller forældede produktdata, medmindre skaden skyldes vores egen grove uagtsomhed eller forsæt.
-        </p>
+        <h2 style={S.h2}>4. EatSafe-resultater</h2>
+        <p style={S.p}>Et resultat som eksempelvis “Ingen advarsler fundet” betyder, at EatSafe ikke har fundet et match mellem de tilgængelige produktdata og de relevante valg, du har registreret i EatSafe.</p>
+        <p style={S.p}>Resultatet er ikke en garanti for, at produktet er fri for et bestemt allergen eller sikkert for dig at indtage.</p>
+        <p style={S.p}>Hvis EatSafe viser et usikkert resultat, betyder det, at de tilgængelige oplysninger ikke er tilstrækkelige til, at EatSafe kan foretage en sikker vurdering.</p>
+        <p style={S.p}>Du bør derfor altid kontrollere produktets aktuelle ingrediens- og allergenoplysninger på emballagen.</p>
 
-        <h2 style={S.h2}>6. Ændringer</h2>
-        <p style={S.p}>
-          Vi kan opdatere disse betingelser løbende. Væsentlige ændringer meddeles via appen. Den gældende version er altid tilgængelig på <a href="https://eatsafe.dk/terms" style={S.a}>eatsafe.dk/terms</a>.
-        </p>
+        <h2 style={S.h2}>5. Produktdata og eksterne kilder</h2>
+        <p style={S.p}>EatSafe anvender produktinformation fra forskellige kilder. Det kan blandt andet være offentligt tilgængelige produktdatabaser, producenter, EatSafe-brugere og oplysninger aflæst fra produktemballage.</p>
+        <p style={S.p}>Hvor det er relevant, kan EatSafe vise, hvilken kilde produktdata stammer fra.</p>
+        <p style={S.p}>Tredjepartsdata og brugerindsendte oplysninger kan indeholde fejl, være ufuldstændige eller være forældede. EatSafe kontrollerer ikke nødvendigvis alle oplysninger manuelt, før de vises i appen.</p>
+        <p style={S.p}>Produktnavne, varemærker, billeder og andet materiale tilhører deres respektive rettighedshavere.</p>
 
-        <h2 style={S.h2}>7. Lovvalg</h2>
-        <p style={S.p}>
-          Disse betingelser er underlagt dansk ret.
-        </p>
+        <h2 style={S.h2}>6. Automatisk billed- og tekstanalyse</h2>
+        <p style={S.p}>EatSafe kan anvende automatiseret billed- og tekstanalyse til eksempelvis at aflæse stregkoder, ingredienslister, allergenoplysninger og anden produktinformation.</p>
+        <p style={S.p}>Automatisk analyse kan tage fejl. Oplysninger, der er fundet ved automatisk analyse, bør derfor kontrolleres mod produktets aktuelle emballage.</p>
+        <p style={S.p}>EatSafe kan markere oplysninger som usikre, hvis de tilgængelige produktdata ikke er tilstrækkelige til at foretage en pålidelig vurdering.</p>
+
+        <h2 style={S.h2}>7. Din konto</h2>
+        <p style={S.p}>Du er ansvarlig for, at de oplysninger, du giver i forbindelse med oprettelse og brug af din EatSafe-konto, er korrekte.</p>
+        <p style={S.p}>Du skal beskytte dine loginoplysninger og må ikke give andre uberettiget adgang til din konto.</p>
+        <p style={S.p}>Hvis du mener, at din konto er blevet misbrugt, skal du kontakte os hurtigst muligt på <Mail />.</p>
+        <p style={S.p}>Du kan slette din konto via EatSafes indstillinger.</p>
+        <p style={S.p}>Behandling og sletning af personoplysninger er nærmere beskrevet i EatSafes privatlivspolitik.</p>
+
+        <h2 style={S.h2}>8. Familie- og husstandsprofiler</h2>
+        <p style={S.p}>EatSafe kan gøre det muligt at oprette eller administrere profiler for andre personer i en husstand.</p>
+        <p style={S.p}>Du må kun registrere oplysninger om en anden person, når du har ret til det.</p>
+        <p style={S.p}>For voksne personer kan EatSafe kræve, at personen selv accepterer en invitation eller bekræfter sine oplysninger, før bestemte funktioner bliver aktive.</p>
+        <p style={S.p}>Ved oprettelse af en profil for et barn skal du have ret til at handle på barnets vegne.</p>
+        <p style={S.p}>EatSafe kan begrænse eller ændre mulighederne for at registrere oplysninger om andre personer for at beskytte deres privatliv og sikkerhed.</p>
+
+        <h2 style={S.h2}>9. Brugerindsendt indhold</h2>
+        <p style={S.p}>Du kan i visse dele af EatSafe indsende produktbilleder, ingrediensoplysninger, stregkoder, rettelser og anden produktinformation.</p>
+        <p style={S.p}>Du skal efter bedste evne sikre, at de oplysninger, du indsender, er korrekte og vedrører det relevante produkt.</p>
+        <p style={S.p}>Du må ikke indsende materiale, som er ulovligt, vildledende, krænkende eller som du ikke har ret til at anvende.</p>
+        <p style={S.p}>Du beholder eventuelle rettigheder til materiale, du indsender.</p>
+        <p style={S.p}>Du giver EatSafe en ikke-eksklusiv ret til at opbevare, behandle, tilpasse og vise materialet i det omfang, det er nødvendigt for at drive og forbedre EatSafe og EatSafes produktdata.</p>
+        <p style={S.p}>EatSafe kan rette eller fjerne brugerindsendte oplysninger, hvis de vurderes at være forkerte, irrelevante, forældede eller i strid med disse brugsvilkår.</p>
+
+        <h2 style={S.h2}>10. Acceptabel brug</h2>
+        <p style={S.p}>Du må ikke:</p>
+        <ul style={S.ul}>
+          <li style={S.li}>bruge EatSafe til ulovlige formål</li>
+          <li style={S.li}>forsøge at få uautoriseret adgang til EatSafes systemer eller andre brugeres konti</li>
+          <li style={S.li}>omgå EatSafes sikkerheds- eller adgangsbegrænsninger</li>
+          <li style={S.li}>automatiseret hente eller kopiere større mængder data fra EatSafe uden tilladelse</li>
+          <li style={S.li}>bevidst indsende falske eller vildledende produktdata</li>
+          <li style={S.li}>forsøge at manipulere produktresultater</li>
+          <li style={S.li}>bruge tjenesten på en måde, der kan skade, overbelaste eller forstyrre EatSafe.</li>
+        </ul>
+        <p style={S.p}>EatSafe kan begrænse eller suspendere adgangen til tjenesten ved væsentligt eller gentaget misbrug.</p>
+
+        <h2 style={S.h2}>11. Immaterielle rettigheder</h2>
+        <p style={S.p}>EatSafes navn, logo, design, software, tekster og øvrige materiale, som EatSafe selv ejer eller har rettigheder til, må ikke kopieres, distribueres eller anvendes kommercielt uden tilladelse, medmindre andet følger af lovgivningen eller en relevant tredjepartslicens.</p>
+        <p style={S.p}>Rettigheder til tredjepartsdata, varemærker, billeder og andet materiale tilhører de respektive rettighedshavere.</p>
+
+        <h2 style={S.h2}>12. Drift og Beta</h2>
+        <p style={S.p}>EatSafe er fortsat under udvikling og tilbydes aktuelt som en Beta-version.</p>
+        <p style={S.p}>Der kan derfor forekomme fejl, manglende funktioner og ændringer i tjenesten.</p>
+        <p style={S.p}>Funktioner kan blive tilføjet, ændret eller fjernet i takt med, at EatSafe udvikles.</p>
+        <p style={S.p}>Vi bestræber os på at holde EatSafe tilgængelig og funktionsdygtig, men kan ikke garantere uafbrudt adgang til tjenesten.</p>
+        <p style={S.p}>Midlertidige driftsforstyrrelser kan blandt andet forekomme i forbindelse med vedligeholdelse, tekniske fejl eller problemer hos eksterne leverandører.</p>
+
+        <h2 style={S.h2}>13. Ansvar</h2>
+        <p style={S.p}>EatSafes ansvar reguleres af dansk rets almindelige regler.</p>
+        <p style={S.p}>Intet i disse brugsvilkår begrænser de rettigheder, du har efter ufravigelig forbrugerbeskyttende lovgivning.</p>
+        <p style={S.p}>EatSafe er et vejledende værktøj, og tjenestens begrænsninger vedrørende produktdata, automatiske analyser og EatSafe-resultater er beskrevet i disse brugsvilkår.</p>
+        <p style={S.p}>Du bør altid kontrollere produktets aktuelle ingrediens- og allergenoplysninger på emballagen, inden produktet anvendes eller indtages.</p>
+
+        <h2 style={S.h2}>14. Suspension og lukning af konto</h2>
+        <p style={S.p}>Du kan til enhver tid stoppe med at bruge EatSafe og slette din konto.</p>
+        <p style={S.p}>EatSafe kan suspendere eller lukke en konto ved væsentlig eller gentagen overtrædelse af disse brugsvilkår, misbrug af tjenesten eller handlinger, der kan true EatSafes eller andre brugeres sikkerhed.</p>
+        <p style={S.p}>Hvor det er rimeligt og muligt, vil brugeren blive informeret om årsagen.</p>
+
+        <h2 style={S.h2}>15. Betalte funktioner</h2>
+        <p style={S.p}>EatSafe kan på et senere tidspunkt tilbyde betalte funktioner eller abonnementer.</p>
+        <p style={S.p}>Pris, betalingsperiode, indhold, opsigelsesvilkår og øvrige relevante købsvilkår vil i så fald blive oplyst tydeligt, inden du foretager et køb.</p>
+
+        <h2 style={S.h2}>16. Ændringer af brugsvilkårene</h2>
+        <p style={S.p}>Vi kan opdatere disse brugsvilkår, når EatSafe udvikles, når tjenestens funktioner ændres, eller når det er nødvendigt som følge af lovgivning, sikkerhed eller andre relevante forhold.</p>
+        <p style={S.p}>Ved væsentlige ændringer informerer vi brugerne på passende måde.</p>
+        <p style={S.p}>Den aktuelle version af brugsvilkårene vil altid være tilgængelig i EatSafe.</p>
+
+        <h2 style={S.h2}>17. Lovvalg og forbrugerrettigheder</h2>
+        <p style={S.p}>Disse brugsvilkår er underlagt dansk ret.</p>
+        <p style={S.p}>Dette påvirker ikke ufravigelige rettigheder, som du måtte have som forbruger efter gældende lovgivning.</p>
+
+        <h2 style={S.h2}>18. Kontakt og klager</h2>
+        <p style={S.p}>Har du spørgsmål til disse brugsvilkår eller ønsker du at klage over EatSafe, kan du kontakte os på:</p>
+        <p style={S.p}><Mail /></p>
+        <p style={S.p}>Hvis vi ikke kan finde en løsning, kan du undersøge dine muligheder for at indbringe sagen for den relevante danske forbrugerklageinstans.</p>
 
         <div style={S.contactBox}>
           <p style={{ margin:0, fontSize:13.5, color:"var(--ink2)", lineHeight:1.55 }}>
             Spørgsmål til brugsvilkårene?<br/>
-            Skriv til os på <a href="mailto:hej@eatsafe.dk" style={S.a}>hej@eatsafe.dk</a>
+            Skriv til os på <Mail />
           </p>
         </div>
       </div>
