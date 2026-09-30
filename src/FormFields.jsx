@@ -25,7 +25,7 @@ export function AgeStepper({ value, onChange, min = 1, max = 120, placeholder = 
   };
   return (
     <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-      <button type="button" className="age-step-btn" onClick={() => step(-1)} aria-label="Én år yngre"
+      <button type="button" className="age-step-btn" onClick={() => step(-1)} aria-label="Ét år yngre"
         style={{ width:44, height:44, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
         −
       </button>

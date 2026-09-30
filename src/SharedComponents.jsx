@@ -350,7 +350,16 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
   // afsluttende lukning), og klæber en ren, kort forklarings-parentes
   // ("(MÆLK)" som sin egen del) til den forrige del i stedet for at vise den
   // isoleret.
-  const rawParts = cleaned.split(",").map(p => p.trim()).filter(Boolean);
+  // Et komma MELLEM to cifre er et decimalkomma ("jordbær (6,1%)"), ikke
+  // en ingrediens-adskiller — ellers blev det vist som "jordbær 6" og "1%"
+  // (fundet i live-test 30. sept. 2026, Arla Cultura). Decimalkommaet
+  // maskeres midlertidigt i stedet for et lookbehind-regex, som ældre
+  // iOS-Safari (før 16.4) ikke kan parse — det ville vælte hele bundlen.
+  const DECIMAL_MARK = "\u0000";
+  const rawParts = cleaned.replace(/(\d),(?=\d)/g, "$1" + DECIMAL_MARK)
+    .split(",")
+    .map(p => p.split(DECIMAL_MARK).join(",").trim())
+    .filter(Boolean);
   const parts = [];
   for (const raw of rawParts) {
     const opens = (raw.match(/[([]/g) || []).length;

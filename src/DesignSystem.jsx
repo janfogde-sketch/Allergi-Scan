@@ -270,13 +270,18 @@ export function ChoiceCard({ label, selected, onClick, style }) {
 // onChange, placeholder, type osv.) — dækker ikke de par felter der har
 // ekstra chrome ud over selve inputtet (telefon-præfiks, adgangskode-
 // vis/skjul-ikon), som forbliver deres egen bespoke markup.
-export function InputField({ label, required = false, error = false, style, inputStyle, ...inputProps }) {
+// Labelen kobles til inputtet via htmlFor/id (useId, medmindre et id gives),
+// så skærmlæsere læser feltets navn (fundet i live-test 30. sept. 2026:
+// familieformularens Navn-felt havde intet tilgængeligt navn).
+export function InputField({ label, required = false, error = false, style, inputStyle, id, ...inputProps }) {
+  const autoId = React.useId();
+  const inputId = id || autoId;
   return (
     <div style={style}>
       {label && (
-        <label className="field-lbl">{label} {required && <span style={{ color: "var(--red)" }}>*</span>}</label>
+        <label className="field-lbl" htmlFor={inputId}>{label} {required && <span style={{ color: "var(--red)" }}>*</span>}</label>
       )}
-      <input className="field" {...inputProps}
+      <input className="field" id={inputId} aria-invalid={error || undefined} {...inputProps}
         style={{ borderColor: error ? "var(--red-md)" : undefined, ...inputStyle }} />
     </div>
   );

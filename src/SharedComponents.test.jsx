@@ -73,6 +73,18 @@ describe("IngredientsList — fremhævning af nestede under-lister", () => {
   });
 });
 
+describe("IngredientsList — decimalkommaer", () => {
+  // Live-test 30. sept. 2026 (Arla Cultura, EAN 5760466804547): "(6,1%)" blev
+  // delt i "6" og "1%", fordi der blev splittet på alle kommaer.
+  it("deler ikke på et komma mellem to cifre", () => {
+    const { container } = render(<IngredientsList text="MÆLK, jordbær (6,1%), sukker (2,3%), vand" allergenFlags={{}} />);
+    const text = container.textContent;
+    expect(text).toContain("jordbær (6,1%)");
+    expect(text).toContain("sukker (2,3%)");
+    expect(text).toContain("vand");
+  });
+});
+
 describe("IngredientsList — leksikon-fremhævning af E-numre og vitaminer", () => {
   // Regressionstest for et bruger-rapporteret fund (25. sept. 2026, EAN
   // 9002490216016 "Energidrik"): "B12" blev fejlagtigt fremhævet rødt som
