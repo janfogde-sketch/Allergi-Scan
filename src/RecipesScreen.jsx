@@ -28,16 +28,19 @@ const RecipeCard = React.memo(function RecipeCard({ recipe: r, profiles, isFav, 
     return ps;
   };
   // Samlet verdikt for kortets ramme + strimmel — samme mønster som Resultat-skærmen
-  const cardStatus = profiles.reduce((worst, p) => {
-    const ps = profileStatus(p);
-    const rank = { safe:0, warn:1, danger:2 };
-    return rank[ps] > rank[worst] ? ps : worst;
-  }, "safe");
+  const statuses = profiles.map(profileStatus);
+  const rank = { safe:0, warn:1, danger:2 };
+  const cardStatus = statuses.reduce((worst, ps) => rank[ps] > rank[worst] ? ps : worst, "safe");
+  // Profil-chips giver kun ny information, når verdiktet varierer mellem
+  // profilerne — er alle ens, siger statusbjælken det hele.
+  const statusVaries = new Set(statuses).size > 1;
   const cardColor = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[cardStatus];
-  const cardHeadline = { danger:"Ikke sikker for alle", warn:"Tjek allergener", safe:"Sikker for alle" }[cardStatus];
+  const cardHeadline = profiles.length > 1
+    ? { danger:"Ikke sikker for alle", warn:"Tjek allergener", safe:"Sikker for alle" }[cardStatus]
+    : { danger:"Ikke sikker for dig", warn:"Tjek allergener", safe:"Sikker for dig" }[cardStatus];
   const cardIcon = cardStatus === "safe" ? "check" : "warning";
   return (
-    <div className="recipe-card" style={{ border:`2px solid ${cardColor}` }} onClick={onOpen}>
+    <div className="recipe-card" onClick={onOpen}>
       <button className="recipe-fav-btn" onClick={e => { e.stopPropagation(); onToggleFavorite(); }}>
         <Icon name="heart" size={16} color={isFav ? "var(--red)" : "#fff"} />
       </button>
@@ -60,22 +63,20 @@ const RecipeCard = React.memo(function RecipeCard({ recipe: r, profiles, isFav, 
           </div>
         )}
         <div className="recipe-card-meta">
-          {r.category && <span className="recipe-pill" style={UI.ubgpaper2_cmuted2_bdcborder}>{getCatEmoji(r.category)} {r.category}</span>}
-          {totalMins > 0 && <span className="recipe-pill" style={UI.ubgpaper2_cmuted2_bdcborder}>⏱ {totalMins} min</span>}
-          {r.servings && <span className="recipe-pill" style={{ ...UI.ubgpaper2_cmuted2_bdcborder, display:"inline-flex", alignItems:"center", gap:3 }}><Icon name="profile" size={10} color="var(--muted2)" /> {r.servings} pers.</span>}
+          {r.category && <span className="recipe-pill">{getCatEmoji(r.category)} {r.category}</span>}
+          {totalMins > 0 && <span className="recipe-pill"><Icon name="clock" size={11} color="var(--muted)" /> {totalMins} min</span>}
+          {r.servings && <span className="recipe-pill"><Icon name="profile" size={11} color="var(--muted)" /> {r.servings} pers.</span>}
           {(r.tags||[]).filter(t=>t==="vegetarisk"||t==="vegan").map(t => (
-            <span key={t} className="recipe-pill" style={UI.ubggreenlt_cgreen_bdcgreenmid}>
-              {t==="vegan"?"🌱":"🥦"} {t}
-            </span>
+            <span key={t} className="recipe-pill">{t==="vegan"?"🌱":"🥦"} {t}</span>
           ))}
         </div>
-        {/* Sikkerhed per profil — kun når der er nogen at sammenligne på tværs af */}
-        {profiles.length > 1 && (
+        {/* Sikkerhed per profil — kun når verdiktet varierer mellem profilerne */}
+        {statusVaries && (
         <div className="recipe-safe-bar">
-          {profiles.map(p => (
+          {profiles.map((p, i) => (
             <SafetyPill key={p.id}
               name={p.id==="me" ? "Dig" : p.name.split(" ")[0]}
-              status={profileStatus(p)}
+              status={statuses[i]}
             />
           ))}
         </div>
@@ -464,7 +465,7 @@ export default function RecipesScreen({
 
   const renderRecipeList = () => {
     const categories = [
-      { id:"alle", label:`🍽️ Alle${recipes.length > 0 ? ` (${recipes.length})` : ""}` },
+      { id:"alle", label:"🍽️ Alle" },
       { id:"favoritter", label:"❤️ Favoritter" },
       { id:"morgenmad", label:"☕ Morgenmad" },
       { id:"frokost", label:"🥗 Frokost" },
@@ -480,6 +481,13 @@ export default function RecipesScreen({
     // filtered opskrifter er beregnet (memoized) på øverste niveau af
     // komponenten — se filteredRecipes ovenfor.
     const filtered = filteredRecipes;
+    // Ét samlet antal under sidetitlen: det totale antal, eller "X af Y",
+    // når søgning/kategori/kun sikre har indsnævret listen.
+    const isNarrowed = filtered.length !== recipes.length;
+    const recipeCountText = recipesLoading ? "Indlæser…"
+      : recipes.length === 0 ? null
+      : isNarrowed ? `${filtered.length} af ${recipes.length} opskrifter`
+      : `${recipes.length} opskrifter`;
 
     // Profil-chips når kun-sikre er aktiv
     const allSafeProfiles = [
@@ -488,18 +496,16 @@ export default function RecipesScreen({
     ];
 
     return (
-      <div className="screen fade-in">
-        {/* Header */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+      <div className="screen fade-in recipes-screen">
+        {/* Header — antal opskrifter vises KUN her (ikke gentaget over kortene) */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
           <div>
             <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Opskrifter</div>
-            <div className="screen-sub">
-              {recipesLoading ? "Indlæser…" : recipes.length > 0 ? `${recipes.length} opskrifter` : null}
-            </div>
+            <div className="screen-sub">{recipeCountText}</div>
           </div>
-          <button onClick={() => setShowSubmitRecipe(true)}
-            style={{ background:"var(--green-lt)", color:"var(--green)", border:"1px solid var(--green-mid)", borderRadius:10, padding:"8px 14px", fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer" }}>
-            + Indsend
+          <button className="recipe-submit-btn" onClick={() => setShowSubmitRecipe(true)}>
+            <Icon name="plus" size={14} color="var(--green)" />
+            Indsend
           </button>
         </div>
 
@@ -550,16 +556,14 @@ export default function RecipesScreen({
             )}
           </div>
           {/* Kun-sikre toggle */}
-          <div onClick={() => setRecipeSafeOnly(v => !v)} style={{
-            flexShrink:0, display:"flex", alignItems:"center", gap:6, padding:"10px 12px",
-            borderRadius:12, border:`1px solid ${recipeSafeOnly ? "var(--green)" : "var(--border2)"}`,
-            background: recipeSafeOnly ? "var(--green-lt)" : "var(--surface)", cursor:"pointer",
-            fontSize:12, fontWeight:700, color: recipeSafeOnly ? "var(--green)" : "var(--muted2)",
-            whiteSpace:"nowrap",
-          }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
+          <button type="button" aria-pressed={recipeSafeOnly}
+            className={`recipe-safe-toggle${recipeSafeOnly ? " on" : ""}`}
+            onClick={() => setRecipeSafeOnly(v => !v)}>
+            <span className="recipe-safe-toggle-box">
+              {recipeSafeOnly && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
+            </span>
             Kun sikre
-          </div>
+          </button>
         </div>
 
         {/* Profil-chips når kun-sikre er aktiv */}
@@ -597,16 +601,6 @@ export default function RecipesScreen({
             })}
           </div>
         )}
-
-        {/* Resultat-tæller */}
-        {recipes.length > 0 && !recipesLoading && (
-          <div style={{ fontSize:12, color:"var(--muted)", marginBottom:10 }}>
-            {filtered.length} opskrift{filtered.length !== 1 ? "er" : ""}
-            {recipeFilter !== "alle" && ` · ${categories.find(c=>c.id===recipeFilter)?.label?.split(" ").slice(1).join(" ") || recipeFilter}`}
-            {recipeSafeOnly && " · kun sikre"}
-          </div>
-        )}
-
 
 
         {/* Skeleton loader */}
@@ -663,10 +657,9 @@ export default function RecipesScreen({
         {/* Label over kortene */}
         {!recipesLoading && filtered.length > 0 && (
           <div style={UI.ufs12_fw700_cmuted_ttuppercas_ls1px_mb10}>
-            {recipeFilter === "alle" ? "⭐ Mest populære" :
-             recipeFilter === "favoritter" ? "❤️ Dine favoritter" :
-             `🍽️ ${recipeFilter.charAt(0).toUpperCase() + recipeFilter.slice(1)}`}
-            {" "}· {filtered.length} opskrift{filtered.length !== 1 ? "er" : ""}
+            {recipeFilter === "alle" ? "Mest populære" :
+             recipeFilter === "favoritter" ? "Dine favoritter" :
+             recipeFilter.charAt(0).toUpperCase() + recipeFilter.slice(1)}
           </div>
         )}
 
