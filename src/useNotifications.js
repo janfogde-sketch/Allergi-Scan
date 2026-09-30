@@ -56,7 +56,7 @@ export function useNotifications({ accessToken, userId, user, screen, setScreen,
       setAuthTab?.("login");
       setScreen(SCREENS.LOGIN);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Åbn den ventende besked, når brugeren er logget ind og færdig med onboarding.
   useEffect(() => {
