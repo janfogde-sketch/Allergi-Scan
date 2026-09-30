@@ -11,6 +11,12 @@ import { useShoppingContext } from "./ShoppingContext.jsx";
 import { detectAllergensInText } from "./allergenKeywords.js";
 import { UI } from "./styleUtils.js";
 
+// Opskrifter er midlertidigt sat på pause (30. sept. 2026, Bjørn): menupunktet
+// bliver i hamburgermenuen, men siden viser kun en "under udvikling"-besked og
+// henter ingen opskrifter. Al kode nedenfor er bevaret, så funktionen kan slås
+// til igen ved at sætte flaget til true.
+const RECIPES_ENABLED = false;
+
 const getCatEmoji = c => ({ morgenmad:"☕",frokost:"🥗",aftensmad:"🍝",dessert:"🍰",tilbehør:"🥦",snack:"🍿" })[c] || "🍽️";
 
 // Udtrukket til en selvstændig, memoized komponent, så et re-render af
@@ -177,7 +183,7 @@ export default function RecipesScreen({
 
   // Auto-load alle opskrifter ved mount
   React.useEffect(() => {
-    if (screen === SCREENS.RECIPES) loadRecipes();
+    if (RECIPES_ENABLED && screen === SCREENS.RECIPES) loadRecipes();
   }, [screen]);
 
   const renderRecipeDetail = () => {
@@ -1044,6 +1050,19 @@ export default function RecipesScreen({
       </div>
     );
   };
+
+  if (!RECIPES_ENABLED) {
+    return screen === SCREENS.RECIPES ? (
+      <div className="screen fade-in">
+        <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Opskrifter</div>
+        <EmptyState
+          icon={<Icon name="utensils" size={26} color="var(--muted)" />}
+          text="Siden er under udvikling"
+          sub="Vi arbejder på opskrifter, der passer til dine allergier og kostvalg. Funktionen kommer i en senere version af EatSafe."
+        />
+      </div>
+    ) : null;
+  }
 
   return (
     <>
