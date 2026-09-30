@@ -69,6 +69,9 @@ import InstallPrompt from "./InstallPrompt.jsx";
 import HelpModal from "./HelpModal.jsx";
 import BetaIntroModal from "./BetaIntroModal.jsx";
 import DeleteAccountModal from "./DeleteAccountModal.jsx";
+import { useAdminTools } from "./useAdminTools.js";
+import { useIncomingLinks } from "./useIncomingLinks.js";
+import { useLoadUserData } from "./useLoadUserData.js";
 
 // Skærme en bruger med ufuldført onboarding ALTID må kunne se/blive på (29.
 // sept. 2026, "Onboarding-persistens") — se setScreen-wrapperen i
@@ -391,31 +394,11 @@ export default function EatSafe() {
     reparseLog, reparseLoading, runReparse,
   } = useAdmin(accessToken, userId, clearAuth);
 
-  // ── Manglende EAN'er ──────────────────────────────────────────────────────
-  const [missingEans, setMissingEans] = useState([]);
-  const [missingEansLoading, setMissingEansLoading] = useState(false);
-
-  const loadMissingEans = async () => {
-    setMissingEansLoading(true);
-    try {
-      const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/missing_ean_log?select=ean,count,first_seen,last_seen&order=count.desc&limit=100`,
-        { headers: makeHeaders(accessToken) }
-      );
-      if (Array.isArray(data)) setMissingEans(data);
-    } catch {}
-    setMissingEansLoading(false);
-  };
-
-  const deleteMissingEan = async (ean) => {
-    try {
-      await apiCall(
-        `${SUPABASE_URL}/rest/v1/missing_ean_log?ean=eq.${encodeURIComponent(ean)}`,
-        { method: "DELETE", headers: makeHeaders(accessToken) }
-      );
-      setMissingEans(prev => prev.filter(r => r.ean !== ean));
-    } catch {}
-  };
+  // ── Manglende EAN'er + OFF-import (admin) → useAdminTools ──
+  const {
+    missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
+    importLog, importLoading, runImport,
+  } = useAdminTools(accessToken);
 
   // Recipes → useRecipes hook
   const {
@@ -438,140 +421,11 @@ export default function EatSafe() {
     loadRecipes, loadRecipeIngredients, submitUserRecipe,
   } = useRecipes(accessToken, userId);
 
-  // ── Familie-invitation accept ────────────────────────────────────────────
-  React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const inviteToken = params.get("invite");
-    if (!inviteToken || !accessToken || !userId) return;
-
-    // Fjern token fra URL uden reload
-    const url = new URL(window.location.href);
-    url.searchParams.delete("invite");
-    url.searchParams.delete("login");
-    window.history.replaceState({}, "", url.toString());
-
-    // Accepter invitation via RPC
-    const acceptInvite = async () => {
-      try {
-        // Hent invited_by inden accept så vi kan sende push — via
-        // get_invite_preview()-RPC'en, ikke en direkte tabel-læsning (se
-        // RPC'ens egen kommentar: en bred SELECT-policy på family_invites
-        // ville lade enhver dumpe alle aktive invitations-tokens).
-        let invitedBy = null;
-        try {
-          const inviteData = await apiCall(
-            `${SUPABASE_URL}/rest/v1/rpc/get_invite_preview`,
-            {
-              method: "POST",
-              headers: makeHeaders(accessToken),
-              body: JSON.stringify({ p_token: inviteToken }),
-            }
-          );
-          invitedBy = inviteData?.found ? inviteData.invited_by : null;
-        } catch { /* silent */ }
-
-        const data = await apiCall(
-          `${SUPABASE_URL}/rest/v1/rpc/accept_family_invite`,
-          {
-            method: "POST",
-            headers: makeHeaders(accessToken),
-            body: JSON.stringify({ p_token: inviteToken }),
-          }
-        );
-        if (data?.success) {
-          // Genindlæs familie-data
-          loadFamily();
-          showToast("🎉 Invitation accepteret! Jeres familieoplysninger er nu delt.");
-
-          // Send push til den der inviterede
-          if (invitedBy && invitedBy !== userId) {
-            const acceptorName = user?.name?.split(" ")[0] || "Et familiemedlem";
-            try {
-              await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
-                method: "POST",
-                headers: { ...makeHeaders(accessToken), "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  user_id: invitedBy,
-                  title: "👨‍👩‍👧 Familie tilsluttet!",
-                  body: `${acceptorName} har accepteret din invitation og er nu en del af din familie i EatSafe.`,
-                  url: "https://eatsafe.dk",
-                  category: "family",
-                }),
-              });
-            } catch { /* silent — push er ikke kritisk */ }
-          }
-        } else if (data?.error) {
-          showToast("Invitation fejlede: " + data.error, "error");
-        }
-      } catch { /* ignorer */ }
-    };
-    acceptInvite();
-  }, [accessToken, userId]);
-
-  // ── Indkøbsliste-tilslutning via delt link ────────────────────────────────
-  // Koden gemmes i localStorage (ikke kun URL'en), så den overlever hele
-  // signup-flowet — en ny bruger, der åbner linket, skal først igennem
-  // "Opret konto" og allergi-opsætning, før accessToken overhovedet findes.
-  const [pendingJoinList, setPendingJoinList] = useState(() => localStorage.getItem("as_pending_join_list"));
-
-  React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("join-list");
-    if (!code) return;
-    localStorage.setItem("as_pending_join_list", code);
-    setPendingJoinList(code);
-    // Fjern koden fra URL uden reload — den lever videre i localStorage
-    const url = new URL(window.location.href);
-    url.searchParams.delete("join-list");
-    window.history.replaceState({}, "", url.toString());
-    // Ikke logget ind endnu — opfordr direkte til at oprette en konto,
-    // fremfor at brugeren lander på den almindelige velkomstskærm
-    if (!localStorage.getItem("as_token")) {
-      setAuthTab("signup");
-      setScreen(SCREENS.LOGIN);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    if (!pendingJoinList || !accessToken || !userId) return;
-    const code = pendingJoinList;
-    localStorage.removeItem("as_pending_join_list");
-    setPendingJoinList(null);
-
-    joinByCode(code).then(res => {
-      if (res.success) {
-        loadShoppingList();
-        setScreen(SCREENS.LIST);
-        showToast(`🛒 Du er nu tilsluttet listen "${res.list?.name || ""}"!`);
-      } else {
-        showToast("Kunne ikke tilslutte listen: " + (res.error || "Ugyldig kode"), "error");
-      }
-    });
-  }, [accessToken, userId, pendingJoinList]);
-
-  // ── OFF Import ───────────────────────────────────────────────────────────────
-  const [importLog, setImportLog] = useState(null);
-  const [importLoading, setImportLoading] = useState(false);
-
-  const runImport = async (execute = true) => {
-    if (!execute) return; // ved tab-skift viser vi bare UI uden at køre
-    setImportLoading(true);
-    setImportLog(null);
-    try {
-      const data = await apiCall(
-        `${SUPABASE_URL}/functions/v1/auto-import-off`,
-        {
-          method: "POST",
-          headers: makeHeaders(accessToken),
-          body: JSON.stringify({}),
-        }
-      );
-      setImportLog(data);
-    } catch (e) {
-      setImportLog({ ok: false, error: e.message, stats: { imported:0, not_on_off:0, error:1 }, log: [] });
-    }
-    setImportLoading(false);
-  };
+  // ── Familie-invitation og delt indkøbsliste via link → useIncomingLinks ──
+  const { pendingJoinList } = useIncomingLinks({
+    accessToken, userId, user, loadFamily,
+    joinByCode, loadShoppingList, setAuthTab, setScreen,
+  });
 
   // ── Router — browser back-knap support ──────────────────────────────────
   const isOffline = useOffline();
@@ -631,69 +485,11 @@ export default function EatSafe() {
     }
   }, [accessToken]);
 
-  // ── Load brugerdata ved login ─────────────────────────────────────────────
-  React.useEffect(() => {
-    if (!accessToken || !userId) return;
-    // Skifter login midt i indlæsningen (fx en ny bruger fra
-    // bekræftelsesmailen i en browser, hvor en anden konto var logget ind),
-    // må den gamle kontos svar ikke overskrive den nye kontos data.
-    let cancelled = false;
-
-    const loadAll = async () => {
-      try {
-        // Brugerprofil
-        const profile = await apiCall(
-          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,onboarding_completed,onboarding_step,diets,e_numbers,created_at&limit=1`,
-          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-        );
-        if (cancelled) return;
-        if (Array.isArray(profile) && profile[0]) {
-          const p = profile[0];
-          setUser(u => ({
-            ...u,
-            name: p.name || u.name || "",
-            email: p.email || u.email || "",
-            phone: p.phone || "",
-            age: p.birth_year ? String(new Date().getFullYear() - p.birth_year) : "",
-            birth_year: p.birth_year || "",
-            gender: p.gender || "",
-            role: p.role || "user",
-            // onboarding_completed/-_step blev tidligere hentet her men aldrig
-            // gemt i state — routing kunne derfor ikke reagere på reel status
-            // (29. sept. 2026, "Onboarding-persistens"). Se setScreen-guarden
-            // og useAuth.js's app-boot-/login-/OAuth-korrektion, som alle
-            // afhænger af disse to felter.
-            onboarding_completed: p.onboarding_completed !== false,
-            onboarding_step: p.onboarding_step || 1,
-            diets: p.diets || [],
-            created_at: p.created_at || u.created_at || "",
-          }));
-          setSelectedENumbers(p.e_numbers || []);
-        }
-
-        // Allergener
-        const allergenData = await apiCall(
-          `${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}&select=allergen,type`,
-          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-        );
-        if (cancelled) return;
-        if (Array.isArray(allergenData)) {
-          setAllergens(allergenData.filter(a => a.type === "allergen").map(a => a.allergen));
-          setCustomAllerg(allergenData.filter(a => a.type === "custom").map(a => a.allergen));
-        }
-
-        // Familie + indkøb + favoritter
-        loadFamily();
-        loadShoppingList();
-        loadFavorites();
-      } catch (e) {
-        console.error("loadAll fejl:", e);
-      }
-    };
-
-    loadAll();
-    return () => { cancelled = true; };
-  }, [accessToken, userId]);
+  // ── Load brugerdata ved login → useLoadUserData ──
+  useLoadUserData({
+    accessToken, userId, setUser, setSelectedENumbers, setAllergens, setCustomAllerg,
+    loadFamily, loadShoppingList, loadFavorites,
+  });
 
   const isOnboard = screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode;
   // Brugsvilkår/Privatlivspolitik (29. sept. 2026) — egen, selvstændig sticky
