@@ -26,6 +26,13 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
 *Venter på Jans beslutning:*
 9. Leaked Password Protection kræver Supabase Pro (se nedenfor). Jan: vent.
 
+*Todo (Jan, 30. sept.):*
+13. Admin-visning til tilbagekaldelser uden gyldig EAN (`recalls` med status
+    `needs_review`): vis titel, kilde-link, rå tal (`unverified_eans`) og
+    tilbagekaldelsens tekst, og lad admin søge produkter frem og knytte EAN'er,
+    hvorefter status sættes til `ready` og hændelsen `recall_published` lægges i
+    outboxen. Kræver en admin-RPC til opdatering (tabellen er kun læsbar for admin).
+
 *Skal designes (Bjørns spor):*
 11. Supabases auth-mails bruger stadig Supabases engelske standard-
     skabeloner. De skal designes på dansk i EatSafes stil, så de matcher
