@@ -49,7 +49,8 @@ import { BUILD_TIME, COMMIT_SHA, formatBuildTime, buildScreenLabel } from './uti
 import { useShoppingList } from './useShoppingList.js';
 import { useFamily } from './useFamily.js';
 import { useHistory } from './useHistory.js';
-import { useAuth } from './useAuth.js';
+import { useAuth, markOnboardedLocally, ONBOARDED_KEY, PENDING_VERIFY_KEY } from './useAuth.js';
+const VerifyEmailScreen = React.lazy(() => import('./VerifyEmailScreen.jsx'));
 import { useOnboarding } from './useOnboarding.js';
 import { useAdmin } from './useAdmin.js';
 import { useScanner } from './useScanner.js';
@@ -83,7 +84,22 @@ import { useLoadUserData } from "./useLoadUserData.js";
 // TERMS/PRIVACY tilføjet 29. sept. 2026 ("Opdater siderne Brugsvilkår og
 // Privatlivspolitik") — juridiske sider skal altid kunne ses, uanset
 // onboarding-status, præcis samme begrundelse som WELCOME/LOGIN/ONBOARD.
-const ONBOARDING_EXEMPT_SCREENS = [SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD, SCREENS.TERMS, SCREENS.PRIVACY];
+const ONBOARDING_EXEMPT_SCREENS = [SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD, SCREENS.VERIFYEMAIL, SCREENS.BOOT, SCREENS.TERMS, SCREENS.PRIVACY];
+// Skærme uden AppHeader/bundnavigation (login, bekræftelse, onboarding).
+const AUTH_FLOW_SCREENS = [SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD, SCREENS.VERIFYEMAIL, SCREENS.BOOT];
+
+// Startskærm (30. sept. 2026): kun en enhed, der har set onboarding færdig
+// (ONBOARDED_KEY), starter direkte på forsiden. Andre med en session venter
+// på den rigtige status (BOOT → useAuth.resolveOnboardingRoute), og en
+// oprettet, ubekræftet konto åbner bekræftelsesskærmen igen.
+function initialScreen() {
+  try {
+    const token = localStorage.getItem("as_token") || sessionStorage.getItem("as_token");
+    if (token) return localStorage.getItem(ONBOARDED_KEY) ? SCREENS.HOME : SCREENS.BOOT;
+    if (localStorage.getItem(PENDING_VERIFY_KEY)) return SCREENS.VERIFYEMAIL;
+  } catch { /* privat tilstand */ }
+  return SCREENS.WELCOME;
+}
 
 // ─── HOVED KOMPONENT ─────────────────────────────────────────────────────────
 
@@ -91,7 +107,7 @@ export default function EatSafe() {
   // Auth state → useAuth hook
 
   // UI state
-  const [screen, setScreenRaw] = useState(() => localStorage.getItem("as_token") ? SCREENS.HOME : SCREENS.WELCOME);
+  const [screen, setScreenRaw] = useState(initialScreen);
 
   // User data
   const [user, setUser] = useState({ name:"", age:"", email:"", phone:"", password:"", role:"", onboarding_completed: undefined, onboarding_step: 1 });
@@ -131,6 +147,7 @@ export default function EatSafe() {
   useEffect(() => { onboardingCompletedRef.current = user.onboarding_completed; }, [user.onboarding_completed]);
   const markOnboardingCompleted = useCallback(() => {
     onboardingCompletedRef.current = true;
+    markOnboardedLocally();
     setUser(u => ({ ...u, onboarding_completed: true }));
   }, []);
 
@@ -298,9 +315,9 @@ export default function EatSafe() {
     authTab, setAuthTab, isOAuth, setIsOAuth,
     rememberMe, setRememberMe,
     saveTokens, clearAuth, handleLogin, handleSignup, handleOAuth, handleForgotPassword,
-    completeSignup, pendingSignup, setPendingSignup,
-  } = useAuth({ setScreen, setUser, setAllergens, setCustomAllerg, setOnboardStep,
-                onSignupSuccess: () => setOnboardStep(1) });
+    verifyEmail, verifyStatus, verifyError, verifyNotice, verifyLoading, resendCooldown,
+    checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify,
+  } = useAuth({ setScreen, setUser, setAllergens, setCustomAllerg, setOnboardStep });
 
   const {
     lists, activeList, activeListId, setActiveListId,
@@ -498,7 +515,7 @@ export default function EatSafe() {
     loadFamily, loadShoppingList, loadFavorites,
   });
 
-  const isOnboard = screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode;
+  const isOnboard = AUTH_FLOW_SCREENS.includes(screen) || editMode;
   // Brugsvilkår/Privatlivspolitik (29. sept. 2026) — egen, selvstændig sticky
   // header (.legal-topbar, se TermsScreen.jsx/PrivacyScreen.jsx), ALDRIG
   // sammen med AppHeader eller bundnavigationen, uanset om siden blev åbnet
@@ -687,7 +704,7 @@ export default function EatSafe() {
       if (cameraActive) { closeCameraFully(); return; }
       // Bundmenu-skærmene og selve login/onboarding — gør ingenting
       // (forhindrer at tilbage forlader appen eller afbryder onboarding).
-      const STAY = [SCREENS.HOME, SCREENS.LIST, SCREENS.HISTORY, SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD];
+      const STAY = [SCREENS.HOME, SCREENS.LIST, SCREENS.HISTORY, ...AUTH_FLOW_SCREENS];
       if (STAY.includes(screen)) return;
       // Redigering åbnes fra Profil og går tilbage dertil; alt andet (menu-
       // skærme, resultat, indsendelse, Madpas m.fl.) går til forsiden.
@@ -763,8 +780,10 @@ export default function EatSafe() {
     authLoading, authTab, setAuthTab,
     isOAuth, rememberMe, setRememberMe,
     handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth,
-    completeSignup, pendingSignup, setPendingSignup,
-  }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, authInfo, emailTakenError, emailError, passwordError, authLoading, authTab, isOAuth, rememberMe, handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth, completeSignup, pendingSignup, setPendingSignup]);
+    verifyEmail, verifyStatus, verifyError, verifyNotice, verifyLoading, resendCooldown,
+    checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify,
+  }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, authInfo, emailTakenError, emailError, passwordError, authLoading, authTab, isOAuth, rememberMe, handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth,
+       verifyEmail, verifyStatus, verifyError, verifyNotice, verifyLoading, resendCooldown, checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify]);
 
   const profileContextValue = useMemo(() => ({
     allergens, setAllergens, customAllerg, setCustomAllerg,
@@ -877,7 +896,7 @@ export default function EatSafe() {
             theme.jsx. Selvstændigt lag OVEN PÅ det nu universelle baggrunds-
             billede, i stedet for at ændre .app-bg selv, så resten af appen
             beholder sin nuværende intensitet. */}
-        {screen === SCREENS.LOGIN && <div className="app-bg-dim" aria-hidden="true" />}
+        {(screen === SCREENS.LOGIN || screen === SCREENS.VERIFYEMAIL) && <div className="app-bg-dim" aria-hidden="true" />}
         {/* Indkøbsliste-polish (25. sept. 2026, brugerfeedback): "fjern
             ingrediens-/fødevarebaggrunden fra Indkøbslisten — den skal kun
             bruges på den primære Scan-forside". Samme mønster som
@@ -906,6 +925,13 @@ export default function EatSafe() {
         {/* Scan-loading — vist mens et scannet/søgt produkt slås op (fra
             runLookupProduct's setLoading(true) til resultatet er klart) */}
         <ScanLoadingOverlay show={loading} />
+
+        {/* ══ BEKRÆFT E-MAIL ══ */}
+        {screen === SCREENS.VERIFYEMAIL && (
+          <Suspense fallback={LazyFallback}>
+            <VerifyEmailScreen />
+          </Suspense>
+        )}
 
         {/* ══ VELKOMST ══ */}
         {/* ══ ONBOARDING SCREENS ══ */}

@@ -79,7 +79,6 @@ export default function OnboardingScreen({
     user, setUser, isOAuth, accessToken,
     rememberMe, setRememberMe,
     handleLogin, handleSignup, handleOAuth, handleForgotPassword,
-    completeSignup, pendingSignup, setPendingSignup,
   } = useAuthContext();
   const {
     allergens, setAllergens, customAllerg, setCustomAllerg,
@@ -195,12 +194,10 @@ export default function OnboardingScreen({
     const ageEntered = (user.age||"").toString().trim().length > 0;
     const ageOk = ageEntered && Number.isFinite(ageNum) && ageNum >= 1 && ageNum <= 120;
     const genderOk = !!(user.gender);
-    // Telefon er valgfri (29. sept. 2026, QA-beslutning D2 — alder og køn
-    // er fortsat obligatoriske, telefon bruges ikke). Valideres kun, hvis
-    // brugeren selv har skrevet noget: præcis 8 cifre efter +45.
-    const phoneDigits = (user.phone||"").replace(/^\+45\s*/, "").replace(/\D/g, "");
-    const phoneOk = phoneDigits.length === 0 || phoneDigits.length === 8;
-    const allOk = nameOk && emailOk && ageOk && genderOk && phoneOk;
+    // Telefon er fjernet fra onboarding (30. sept. 2026) — alder og køn er
+    // fortsat obligatoriske (Jans beslutning, D2). Telefon kan stadig
+    // tilføjes under Rediger profil.
+    const allOk = nameOk && emailOk && ageOk && genderOk;
     const emailIsSaved = !!(loginEmail || isOAuth);
     return (
       <div className="fade-in">
@@ -271,34 +268,7 @@ export default function OnboardingScreen({
             {emailIsSaved && (
               <div style={{ fontSize:10, color:"var(--green)", marginTop:3, display:"flex", alignItems:"center", gap:4 }}>
                 <Icon name="check" size={10} color="var(--green)" />
-                {isOAuth === "google" ? "Bekræftet via Google" : isOAuth ? "E-mail bekræftet" : pendingSignup ? "Den e-mail, du opretter kontoen med" : "Allerede gemt fra din konto"}
-              </div>
-            )}
-          </div>
-
-          {/* Telefon — +45 er låst, brugeren skriver kun selve nummeret.
-              27. sept. 2026, "FINAL 10/10 POLISH": tallene grupperes nu
-              automatisk parvis while typing (dansk mobilnummer-konvention,
-              "12 34 56 78") i stedet for at gemme cifrene råt/ugrupperet —
-              samme mønster som placeholderen allerede viste, men som det
-              indtastede tal ikke fulgte. Kapper ved 8 cifre (reelt dansk
-              mobilnummer-længde). Rød kant + inline fejl ved forsøgt
-              "Fortsæt →" med et forkert antal cifre. */}
-          <div style={{ marginBottom:17 }}>
-            <label className="field-lbl" htmlFor="onboard-phone">Telefonnummer <span style={{ fontWeight:500, color:"var(--muted)" }}>(valgfrit)</span></label>
-            <div className="field phone-field" style={{ borderColor: (step1Attempted && !phoneOk) ? "var(--red-md)" : undefined }}>
-              <span className="phone-prefix">+45</span>
-              <input id="onboard-phone" className="phone-rest" type="tel" inputMode="numeric" autoComplete="tel-national" placeholder="12 34 56 78"
-                value={(user.phone||"").replace(/^\+45\s*/, "")}
-                onChange={e => {
-                  const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
-                  const grouped = digits.replace(/(\d{2})(?=\d)/g, "$1 ");
-                  setUser(u => ({...u, phone: digits ? `+45 ${grouped}` : ""}));
-                }} />
-            </div>
-            {step1Attempted && !phoneOk && (
-              <div style={{ fontSize:11.5, color:"var(--red)", fontWeight:600, marginTop:5 }}>
-                Indtast et gyldigt dansk telefonnummer (8 cifre), eller lad feltet stå tomt.
+                {isOAuth === "google" ? "Bekræftet via Google" : isOAuth === "facebook" ? "Bekræftet via Facebook" : isOAuth ? "E-mail bekræftet" : "Allerede gemt fra din konto"}
               </div>
             )}
           </div>
@@ -333,27 +303,13 @@ export default function OnboardingScreen({
             knap-tekst svær at læse. softDisabled (ikke disabled) holder
             knappen klikbar, så første forsøg stadig kan fanges og vise de
             felt-specifikke fejltekster ovenfor. */}
-        {/* Kontoen oprettes først her, når trin 1 er udfyldt (30. sept. 2026,
-            pendingSignup) — en fejl der ikke hører til et bestemt felt
-            vises lige over knappen. */}
-        {pendingSignup && authError && <div style={UI.mb12}><ErrorMessage>{authError}</ErrorMessage></div>}
         <PrimaryButton
           softDisabled={!allOk}
-          disabled={pendingSignup && authLoading}
           onClick={() => {
             if (!allOk) { setStep1Attempted(true); return; }
-            if (pendingSignup) {
-              completeSignup({
-                name: user.name,
-                phone: user.phone || null,
-                birth_year: new Date().getFullYear() - parseInt(user.age),
-                gender: user.gender,
-              });
-              return;
-            }
             saveProfileStep1().then(() => setOnboardStep(2));
           }}>
-          {pendingSignup ? (authLoading ? "Opretter konto…" : "Opret konto →") : "Fortsæt →"}
+          Fortsæt →
         </PrimaryButton>
       </div>
     );
@@ -796,15 +752,11 @@ export default function OnboardingScreen({
                     <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.PRIVACY)}>privatlivspolitikken</button>.
                   </div>
                 </div>
-                {authInfo && (
-                  <div className="info-box" role="status" style={{ alignItems:"flex-start", lineHeight:1.5 }}>
-                    <Icon name="mail" size={14} color="var(--blue)" />
-                    <span>{authInfo}</span>
-                  </div>
-                )}
+                {/* Ingen besked om en sendt mail her — den vises først på
+                    bekræftelsesskærmen, når kontoen er oprettet (30. sept. 2026). */}
                 <ErrorMessage>{authError}</ErrorMessage>
                 <button className="btn welcome-btn" onClick={handleSignup} disabled={authLoading || !!emailTakenError}>
-                  {authLoading ? "Opretter konto…" : "Opret konto og fortsæt →"}
+                  {authLoading ? "Opretter konto…" : "Opret konto"}
                 </button>
               </div>
             )}
@@ -1004,11 +956,8 @@ export default function OnboardingScreen({
                 RestaurantGuideScreen.jsx. */}
             {!editMode && (
               <div style={{ position:"relative", textAlign:"center", padding:"44px 0 20px" }}>
-                {(onboardStep > 1 || pendingSignup) && (
-                  <button onClick={() => {
-                    if (pendingSignup && onboardStep === 1) { setPendingSignup(false); setScreen(SCREENS.LOGIN); }
-                    else setOnboardStep(onboardStep - 1);
-                  }} aria-label="Tilbage"
+                {onboardStep > 1 && (
+                  <button onClick={() => setOnboardStep(onboardStep - 1)} aria-label="Tilbage"
                     style={{ position:"absolute", left:20, top:"50%", transform:"translateY(-50%)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0 }}>
                     <Icon name="chevronLeft" size={18} color="var(--ink)" />
                   </button>

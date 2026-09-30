@@ -27,7 +27,7 @@ export const MAIL_ONLY_WITHOUT_PUSH = new Set(["P2:default"]);
 
 /** Servicemails uden besked i appen (N1 velkomst, P4 slettekvittering) — sendes af send-email/delete-user. */
 export const TRANSACTIONAL_TEMPLATES: Record<string, { id: string; subject: string }> = {
-  welcome_onboarded: { id: "00508c8a-ef90-4d09-be1d-d7e03d3938bf", subject: "Velkommen til EatSafe Beta" },
+  welcome_onboarded: { id: "00508c8a-ef90-4d09-be1d-d7e03d3938bf", subject: "Velkommen til EatSafe" },
   account_deleted: { id: "3f0cd2e1-b3d5-4d6f-80d3-0fd09b16629b", subject: "Din EatSafe-konto er slettet" },
 };
 

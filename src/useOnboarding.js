@@ -57,8 +57,8 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
         body: JSON.stringify({
           name: user.name.trim(),
           email: emailToSave || null,
-          // Telefon er valgfri (QA-beslutning D2, 29. sept. 2026).
-          phone: user.phone || null,
+          // Telefon indsamles ikke længere i onboarding (30. sept. 2026) —
+          // sendes ikke med, så et eventuelt gemt nummer ikke overskrives.
           // Gemmes som fødselsår (samme skema som familiemedlemmer og resten
           // af appen) i stedet for rå alder, så det ikke bliver forældet —
           // "alder" er kun UI-sproget, ikke det lagrede felt.

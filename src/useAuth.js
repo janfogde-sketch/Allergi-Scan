@@ -23,8 +23,31 @@ export const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 // kan ændre adressen til en anden, reelt eksisterende adresse.
 export const hasUnsupportedEmailChars = (email) => /[^\x00-\x7F]/.test(email);
 
+// Tre adskilte tilstande (30. sept. 2026): konto oprettet → e-mail bekræftet
+// → onboarding færdig. De to lokale markører nedenfor lader appen vælge den
+// rigtige startskærm, FØR serveren har svaret:
+//  - as_pending_verify: e-mailen på en oprettet, endnu ikke bekræftet konto
+//    (ingen session endnu) — appen åbner bekræftelsesskærmen igen.
+//  - as_onboarded: denne enhed har set onboarding_completed=true — kun da må
+//    appen starte direkte på forsiden. Uden markøren venter appen på svaret
+//    (SCREENS.BOOT) i stedet for at gætte på forsiden.
+export const PENDING_VERIFY_KEY = "as_pending_verify";
+export const ONBOARDED_KEY = "as_onboarded";
+export function markOnboardedLocally() {
+  try { localStorage.setItem(ONBOARDED_KEY, "1"); } catch { /* privat tilstand */ }
+}
+function readPendingVerify() {
+  try { return localStorage.getItem(PENDING_VERIFY_KEY) || ""; } catch { return ""; }
+}
+function writePendingVerify(email) {
+  try {
+    if (email) localStorage.setItem(PENDING_VERIFY_KEY, email);
+    else localStorage.removeItem(PENDING_VERIFY_KEY);
+  } catch { /* privat tilstand */ }
+}
+
 export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
-                          setOnboardStep, onSignupSuccess }) {
+                          setOnboardStep }) {
 
   // Slår op om en frisk indlæst/logget ind bruger har gennemført onboarding,
   // og ruter til hhv. ONBOARD (med det gemte trin genoptaget) eller HOME
@@ -42,6 +65,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         setOnboardStep(p.onboarding_step || 1);
         setScreen(SCREENS.ONBOARD);
       } else {
+        markOnboardedLocally();
         setScreen(SCREENS.HOME);
       }
     } catch {
@@ -67,13 +91,19 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   // Neutral besked (ikke en fejl) — fx "tjek din e-mail" efter oprettelse,
   // når Supabase kræver e-mailbekræftelse før første login (D1, 29. sept.).
   const [authInfo, setAuthInfo]         = useState("");
-  // Oprettelse i to trin (30. sept. 2026, Jans punkt 7): "Opret konto"
-  // validerer e-mail/adgangskode og sender brugeren til onboarding trin 1
-  // UDEN at oprette kontoen endnu. Først når trin 1 (navn, telefon, alder,
-  // køn) er udfyldt, kaldes Supabase signup med oplysningerne som metadata
-  // (completeSignup nedenfor), så navnet er gemt, før bekræftelses- og
-  // velkomstmailen sendes.
-  const [pendingSignup, setPendingSignup] = useState(false);
+  // Bekræftelsesskærmen (SCREENS.VERIFYEMAIL, 30. sept. 2026): "Opret
+  // konto" opretter kontoen med det samme og viser skærmen. verifyStatus er
+  // "pending" (mail sendt, venter) eller "verified" (bekræftet, klar til
+  // "Fortsæt opsætning"). verifyError/verifyNotice er skærmens egne
+  // beskeder, adskilt fra login-formularens authError/authInfo.
+  const [verifyEmail, setVerifyEmail]   = useState(readPendingVerify);
+  const [verifyStatus, setVerifyStatus] = useState("pending");
+  const [verifyError, setVerifyError]   = useState("");
+  const [verifyNotice, setVerifyNotice] = useState("");
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  // Sekunder til "Send mail igen" må bruges igen (Supabase tillader én
+  // mail pr. 60 s pr. adresse).
+  const [resendCooldown, setResendCooldown] = useState(0);
   // Adskilt fra authError (25. sept. 2026, opfølgning): "denne email er
   // allerede registreret" skal vises som en felt-specifik inline-fejl ved
   // selve E-mail-feltet, ikke i den store, globale error-boks — globale
@@ -133,7 +163,8 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     localStorage.removeItem("as_refresh"); sessionStorage.removeItem("as_refresh");
     localStorage.removeItem("as_user_id"); sessionStorage.removeItem("as_user_id");
     setUser({ name:"", age:"", email:"", phone:"", password:"", role:"" });
-    setPendingSignup(false);
+    try { localStorage.removeItem(ONBOARDED_KEY); } catch { /* privat tilstand */ }
+    writePendingVerify(""); setVerifyEmail(""); setVerifyStatus("pending");
     setAllergens([]); setCustomAllerg([]);
     // App.jsx rydder family/history/shopping via useEffect på accessToken
     setScreen(SCREENS.WELCOME);
@@ -144,6 +175,20 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     const hash = window.location.hash;
     if (!hash) return;
     const params = new URLSearchParams(hash.replace("#", "?").replace("#", "&"));
+    // Udløbet eller allerede brugt bekræftelseslink (Supabase sender
+    // #error=...&error_code=otp_expired tilbage i stedet for en session).
+    if (params.get("error") || params.get("error_code")) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      if (readPendingVerify()) {
+        setVerifyError("Linket i mailen er udløbet eller allerede brugt. Tryk på “Send mail igen”, eller log ind, hvis du allerede har bekræftet.");
+        setScreen(SCREENS.VERIFYEMAIL);
+      } else {
+        setAuthTab("login");
+        setAuthError("Linket i mailen er udløbet eller allerede brugt. Log ind for at fortsætte.");
+        setScreen(SCREENS.LOGIN);
+      }
+      return;
+    }
     const access = params.get("access_token");
     const refresh = params.get("refresh_token");
     if (access && refresh) {
@@ -151,42 +196,45 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         const payload = decodeJwtPayload(access);
         const uid = payload.sub;
         saveTokens(access, refresh, uid);
-        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,created_at,onboarding_completed,onboarding_step`, {
+        // Kom brugeren fra bekræftelseslinket i mailen (type=signup)? Så
+        // vises bekræftelsesskærmen i "bekræftet"-tilstand først, uanset
+        // hvad der ellers ligger i browseren.
+        const fromSignupLink = params.get("type") === "signup";
+        if (fromSignupLink) {
+          writePendingVerify("");
+          setVerifyEmail(payload.email || "");
+          setVerifyError(""); setVerifyNotice("");
+          setVerifyStatus("verified");
+        }
+        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,onboarding_completed,onboarding_step`, {
           headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${access}`, "Accept": "application/json" },
         })
           .then(r => r.json())
           .then(data => {
             const profile = data?.[0];
-            const createdAt = profile?.created_at ? new Date(profile.created_at) : null;
-            // Reelt splittet i to (29. sept. 2026, "Onboarding-persistens") —
-            // tidligere blev "helt ny konto" og "eksisterende, men ufuldført
-            // onboarding" behandlet ens, hvilket fejlagtigt nulstillede en
-            // RETURNERENDE, ufuldført brugers gemte trin tilbage til 1 (via
-            // onSignupSuccess) hver gang de logget ind via OAuth igen.
-            const isBrandNew = !profile || !createdAt || (Date.now() - createdAt.getTime() < 120000);
-            const needsOnboarding = isBrandNew || profile.onboarding_completed === false;
-            if (needsOnboarding) {
-              if (isBrandNew) {
-                const meta = payload.user_metadata || {};
-                setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "" }));
-                // Trin 1 kan allerede være udfyldt før oprettelsen (e-mail-
-                // flowet, 30. sept. 2026) — fortsæt så fra det gemte trin.
-                if (profile?.onboarding_step > 1) setOnboardStep(profile.onboarding_step);
-                else if (onSignupSuccess) onSignupSuccess();
-                // "google" ved Google-login, "email" når brugeren kommer fra
-                // bekræftelseslinket i mailen — styrer teksten under
-                // E-mail-feltet i onboarding trin 1.
-                setIsOAuth(payload.app_metadata?.provider || true);
-              } else {
-                setOnboardStep(profile.onboarding_step || 1);
-                if (params.get("type") === "signup") setIsOAuth("email");
-              }
-              setScreen(SCREENS.ONBOARD);
-            } else {
+            // Kun en færdig onboarding sender direkte ind i appen — ikke det
+            // at kontoen findes eller at e-mailen netop er bekræftet.
+            if (profile?.onboarding_completed === true) {
+              markOnboardedLocally();
               setScreen(SCREENS.HOME);
+              return;
+            }
+            setOnboardStep(profile?.onboarding_step || 1);
+            const meta = payload.user_metadata || {};
+            setUser(u => ({ ...u, email: payload.email || meta.email || u.email || "",
+              name: u.name || profile?.name || meta.full_name || meta.name || "" }));
+            if (fromSignupLink) {
+              setIsOAuth("email");
+              setScreen(SCREENS.VERIFYEMAIL);
+            } else {
+              // Google/Facebook: e-mailen er bekræftet af udbyderen, så
+              // brugeren går direkte til (det gemte trin i) onboarding.
+              // "google" styrer teksten under E-mail-feltet i trin 1.
+              setIsOAuth(payload.app_metadata?.provider || true);
+              setScreen(SCREENS.ONBOARD);
             }
           })
-          .catch(() => setScreen(SCREENS.HOME));
+          .catch(() => setScreen(fromSignupLink ? SCREENS.VERIFYEMAIL : SCREENS.HOME));
         window.history.replaceState({}, document.title, window.location.pathname);
       } catch (e) {
         console.error("OAuth callback fejl:", e);
@@ -258,8 +306,11 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     // effekten ovenfor, inkl. genoptagelse af gemt trin — spring den her
     // over for at undgå at de to konkurrerer om at afgøre skærmen to gange.
     if (arrivedViaAuthLinkRef.current) return;
-    if (!accessToken || !userId) return;
-    resolveOnboardingRoute(userId, accessToken);
+    if (!accessToken) return;
+    let uid = userId;
+    try { uid = uid || decodeJwtPayload(accessToken).sub; } catch { /* ugyldigt token */ }
+    if (!uid) { setScreen(SCREENS.HOME); return; }
+    resolveOnboardingRoute(uid, accessToken);
   }, []);
 
   // ── Auto-refresh token — planlagt efter tokenets faktiske udløbstid ──────
@@ -298,6 +349,16 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     timeoutId = setTimeout(() => refresh(), delay);
     return () => { cancelled = true; clearTimeout(timeoutId); };
   }, [refreshToken, accessToken, saveTokens]);
+
+  // ── Bekræftelsesskærmen ──────────────────────────────────────────────────
+  const openVerifyScreen = useCallback((email) => {
+    writePendingVerify(email);
+    setVerifyEmail(email);
+    setVerifyStatus("pending");
+    setVerifyError(""); setVerifyNotice("");
+    setAuthError(""); setAuthInfo("");
+    setScreen(SCREENS.VERIFYEMAIL);
+  }, [setScreen]);
 
   // ── Login ─────────────────────────────────────────────────────────────────
   const handleLogin = useCallback(async () => {
@@ -338,7 +399,10 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         if (msg.includes("invalid login") || msg.includes("invalid credentials")) {
           setAuthError("E-mail eller adgangskode er forkert.");
         } else if (msg.includes("email not confirmed")) {
-          setAuthError("Bekræft din e-mail via linket vi sendte dig, før du kan logge ind.");
+          // Konto oprettet, men e-mailen er ikke bekræftet: vis
+          // bekræftelsesskærmen (adgangskoden bliver i hukommelsen, så
+          // "Jeg har bekræftet min e-mail" kan logge ind bagefter).
+          openVerifyScreen(email);
         } else if (msg.includes("invalid") && msg.includes("email")) {
           setEmailError("Indtast en gyldig e-mailadresse.");
         } else {
@@ -348,7 +412,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         return;
       }
       saveTokens(data.access_token, data.refresh_token, data.user.id);
-      setPendingSignup(false);
+      writePendingVerify(""); setVerifyEmail("");
       // Ruter til ONBOARD (med gemt trin genoptaget) eller HOME ud fra reel
       // status i stedet for blindt at antage Hjem (29. sept. 2026,
       // "Onboarding-persistens") — en bruger der aldrig gennemførte
@@ -361,11 +425,10 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       setAuthError("Der opstod en fejl. Prøv igen.");
     }
     setAuthLoading(false);
-  }, [loginEmail, loginPassword, saveTokens, resolveOnboardingRoute]);
+  }, [loginEmail, loginPassword, saveTokens, resolveOnboardingRoute, openVerifyScreen]);
 
   // ── Signup ────────────────────────────────────────────────────────────────
-  // Felt-validering for "Opret konto" — delt af handleSignup (før trin 1)
-  // og completeSignup (lige før selve kaldet). Returnerer den normaliserede
+  // Felt-validering for "Opret konto" (handleSignup). Returnerer den normaliserede
   // e-mail, eller null hvis et felt er ugyldigt (fejlen er sat på feltet).
   const validateSignupFields = useCallback(() => {
     // Felt-specifik validering FØRST (27. sept. 2026, "FINAL 10/10 POLISH")
@@ -390,31 +453,12 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     return email;
   }, [loginEmail, loginPassword]);
 
-  // Fejl der hører til e-mail/adgangskode vises på oprettelsesformularen,
-  // ikke i trin 1 — send brugeren tilbage dertil (trin 1-svarene bevares i
-  // user-state, så de ikke skal udfyldes igen).
-  const backToSignupForm = useCallback(() => {
-    setPendingSignup(false);
-    setAuthTab("signup");
-    setScreen(SCREENS.LOGIN);
-  }, [setScreen]);
-
-  // "Opret konto" på oprettelsesformularen: valider og gå til trin 1.
+  // "Opret konto": opret kontoen med det samme (kun e-mail og adgangskode;
+  // navn, alder og køn udfyldes i onboarding efter bekræftelsen) og vis
+  // bekræftelsesskærmen. Ingen besked om en sendt mail, før kaldet er lykkedes.
   const handleSignup = useCallback(async () => {
     const email = validateSignupFields();
     if (!email) return;
-    setAuthError(""); setAuthInfo(""); setEmailTakenError("");
-    setUser(u => ({ ...u, email }));
-    setPendingSignup(true);
-    if (onSignupSuccess) onSignupSuccess();
-    setScreen(SCREENS.ONBOARD);
-  }, [validateSignupFields, setUser, setScreen, onSignupSuccess]);
-
-  // Trin 1 udfyldt: opret kontoen med trin 1-oplysningerne som metadata.
-  // profile = { name, phone, birth_year, gender }.
-  const completeSignup = useCallback(async (profile = {}) => {
-    const email = validateSignupFields();
-    if (!email) { backToSignupForm(); return; }
     setAuthLoading(true); setAuthError(""); setAuthInfo(""); setEmailTakenError("");
     try {
       // redirect_to: bekræftelseslinket i mailen skal føre tilbage til samme
@@ -422,13 +466,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       const res = await fetch(`${SUPABASE_URL}/auth/v1/signup?redirect_to=${encodeURIComponent(window.location.origin + "/")}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
-        body: JSON.stringify({ email, password: loginPassword, data: {
-          name: (profile.name || "").trim(),
-          phone: profile.phone || null,
-          birth_year: profile.birth_year || null,
-          gender: profile.gender || null,
-          signup_profile: "true",
-        } }),
+        body: JSON.stringify({ email, password: loginPassword }),
       });
       const text = await res.text();
       if (text === "Host not in allowlist") {
@@ -443,73 +481,174 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         // registreret" hører til E-mail-feltet (emailTakenError ovenfor,
         // egen "Log ind i stedet"-handling); et for svagt password fra
         // Supabases egen validering (fx et kendt læk-tjek) hører til
-        // Adgangskode-feltet, samme sted som længde-fejlen ovenfor. En
-        // "invalid email"-afvisning fra backend hører også til E-mail-
-        // feltet — bør reelt aldrig ske her, da frontend nu validerer det
-        // samme før kaldet, men mappes korrekt hvis den alligevel gør.
+        // Adgangskode-feltet, samme sted som længde-fejlen ovenfor.
         if (msgLc.includes("already registered") || data.error_code === "email_exists") {
           setEmailTakenError("Denne e-mail er allerede registreret.");
-          backToSignupForm();
-          setAuthLoading(false);
-          return;
-        }
-        if (data.error_code === "weak_password" || msgLc.includes("password") || msgLc.includes("weak")) {
+        } else if (data.error_code === "weak_password" || msgLc.includes("password") || msgLc.includes("weak")) {
           // Supabase angiver årsagen i weak_password.reasons ("length",
           // "characters", "pwned"). En lækket kode kan ikke fanges lokalt.
           const reasons = data.weak_password?.reasons || [];
           setPasswordError(reasons.includes("pwned")
             ? "Adgangskoden er fundet i et kendt datalæk og kan ikke bruges. Vælg en anden."
             : (passwordErrorText(loginPassword) || `Adgangskoden opfylder ikke kravene. ${PASSWORD_REQUIREMENTS_TEXT}`));
-          backToSignupForm();
-          setAuthLoading(false);
-          return;
-        }
-        if (msgLc.includes("invalid") && msgLc.includes("email")) {
+        } else if (msgLc.includes("invalid") && msgLc.includes("email")) {
           setEmailError("Indtast en gyldig e-mailadresse.");
-          backToSignupForm();
-          setAuthLoading(false);
-          return;
+        } else if (res.status === 429) {
+          setAuthError("Der er sendt for mange mails lige nu. Vent et øjeblik, og prøv igen.");
+        } else {
+          // ALDRIG Supabases rå, tekniske fejltekst til brugeren.
+          setAuthError("Der opstod en fejl. Prøv igen.");
         }
-        // Global error-boks (27. sept. 2026) — ALDRIG Supabases rå,
-        // tekniske fejltekst direkte til brugeren for øvrige, ukendte
-        // fejltyper, kun den faste, venlige generiske besked.
-        setAuthError("Der opstod en fejl. Prøv igen.");
         setAuthLoading(false);
         return;
       }
       // Med e-mailbekræftelse slået til svarer Supabase IKKE med en fejl for
       // en allerede registreret e-mail, men med en bruger uden identities
-      // (beskytter mod at afsløre hvem der har en konto) — samme besked som
-      // før, så brugeren kan logge ind i stedet.
+      // (beskytter mod at afsløre hvem der har en konto).
       const signedUp = data.user || data;
       if (Array.isArray(signedUp?.identities) && signedUp.identities.length === 0) {
         setEmailTakenError("Denne e-mail er allerede registreret.");
-        backToSignupForm();
         setAuthLoading(false);
         return;
       }
-      setPendingSignup(false);
+      setUser(u => ({ ...u, email }));
       if (data.access_token) {
-        // Uden e-mailbekræftelse: kontoen er aktiv med det samme, og trin 1
-        // er allerede gemt af handle_new_user() — fortsæt til trin 2.
+        // Uden e-mailbekræftelse (slået fra i Supabase): kontoen er aktiv
+        // med det samme — gå direkte til onboarding trin 1.
         saveTokens(data.access_token, data.refresh_token, data.user.id);
-        setUser(u => ({ ...u, email }));
-        if (setOnboardStep) setOnboardStep(2);
+        writePendingVerify("");
+        if (setOnboardStep) setOnboardStep(1);
         setScreen(SCREENS.ONBOARD);
       } else {
-        setLoginPassword("");
-        setAuthTab("signup");
-        setScreen(SCREENS.LOGIN);
-        setAuthInfo(`Vi har sendt et bekræftelseslink til ${email}. Klik på linket i mailen for at aktivere din konto og fortsætte opsætningen — tjek evt. din spam-mappe.`);
+        openVerifyScreen(email);
+        setResendCooldown(60);
       }
     } catch {
       // Ægte, uventede fejl (netværk nede, JSON-parse-fejl osv.) — vis
-      // ALDRIG browserens/JS'ens rå tekniske fejltekst til brugeren, kun
-      // den faste, venlige generiske besked.
+      // ALDRIG browserens/JS'ens rå tekniske fejltekst til brugeren.
       setAuthError("Der opstod en fejl. Prøv igen.");
     }
     setAuthLoading(false);
-  }, [loginEmail, loginPassword, saveTokens, setUser, setScreen, setOnboardStep, validateSignupFields, backToSignupForm]);
+  }, [loginPassword, saveTokens, setUser, setScreen, setOnboardStep, validateSignupFields, openVerifyScreen]);
+
+  // Henter onboarding-status for en netop bekræftet konto og viser
+  // "✓ E-mail bekræftet" (eller forsiden, hvis onboarding allerede er færdig).
+  const finishVerification = useCallback(async (access, uid) => {
+    writePendingVerify("");
+    setVerifyError(""); setVerifyNotice("");
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=onboarding_completed,onboarding_step`, {
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${access}`, Accept: "application/json" },
+      });
+      const p = (await res.json())?.[0];
+      if (p?.onboarding_completed === true) { markOnboardedLocally(); setScreen(SCREENS.HOME); return; }
+      setOnboardStep(p?.onboarding_step || 1);
+    } catch { setOnboardStep(1); }
+    setVerifyStatus("verified");
+  }, [setScreen, setOnboardStep]);
+
+  // "Jeg har bekræftet min e-mail": er linket åbnet i en anden fane i samme
+  // browser, ligger sessionen allerede i localStorage. Ellers logges der ind
+  // med adgangskoden fra oprettelsen (kun i hukommelsen, aldrig gemt). Er
+  // appen genstartet siden, kendes adgangskoden ikke — så går brugeren til
+  // Log ind med e-mailen udfyldt.
+  const checkEmailVerified = useCallback(async () => {
+    setVerifyError(""); setVerifyNotice("");
+    const storedToken = localStorage.getItem("as_token");
+    const storedUid = localStorage.getItem("as_user_id");
+    let storedEmail = "";
+    try { storedEmail = storedToken ? (decodeJwtPayload(storedToken).email || "").toLowerCase() : ""; } catch { /* ugyldigt token */ }
+    // Kun en session for PRÆCIS denne e-mail — aldrig en anden kontos.
+    if (storedToken && storedUid && storedEmail === verifyEmail.toLowerCase()) {
+      setAccessToken(storedToken);
+      setRefreshToken(localStorage.getItem("as_refresh"));
+      setUserId(storedUid);
+      setVerifyLoading(true);
+      await finishVerification(storedToken, storedUid);
+      setVerifyLoading(false);
+      return;
+    }
+    if (!loginPassword) {
+      setLoginEmail(verifyEmail);
+      setAuthTab("login");
+      setAuthError("");
+      setAuthInfo("Log ind for at fortsætte opsætningen.");
+      setScreen(SCREENS.LOGIN);
+      return;
+    }
+    setVerifyLoading(true);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
+        body: JSON.stringify({ email: verifyEmail, password: loginPassword }),
+      });
+      const data = await res.json();
+      if (res.ok && data.access_token) {
+        saveTokens(data.access_token, data.refresh_token, data.user.id);
+        await finishVerification(data.access_token, data.user.id);
+      } else {
+        const msg = (data.msg || data.error_description || data.message || "").toLowerCase();
+        setVerifyError(msg.includes("email not confirmed")
+          ? "Vi kan ikke se, at e-mailen er bekræftet endnu. Tryk på linket i mailen, og prøv igen."
+          : "Der opstod en fejl. Prøv igen.");
+      }
+    } catch {
+      setVerifyError("Der opstod en fejl. Prøv igen.");
+    }
+    setVerifyLoading(false);
+  }, [verifyEmail, loginPassword, saveTokens, finishVerification, setScreen]);
+
+  // "Send mail igen" — Supabases resend-endpoint for signup-bekræftelse.
+  const resendVerification = useCallback(async () => {
+    if (!verifyEmail || resendCooldown > 0) return;
+    setVerifyError(""); setVerifyNotice("");
+    setVerifyLoading(true);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/resend?redirect_to=${encodeURIComponent(window.location.origin + "/")}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
+        body: JSON.stringify({ type: "signup", email: verifyEmail }),
+      });
+      if (res.ok) {
+        setVerifyNotice("Vi har sendt en ny mail.");
+        setResendCooldown(60);
+      } else if (res.status === 429) {
+        setVerifyError("Vent lidt, før du beder om en ny mail.");
+        setResendCooldown(60);
+      } else {
+        setVerifyError("Mailen kunne ikke sendes. Prøv igen om lidt.");
+      }
+    } catch {
+      setVerifyError("Der opstod en fejl. Prøv igen.");
+    }
+    setVerifyLoading(false);
+  }, [verifyEmail, resendCooldown]);
+
+  // Nedtælling til "Send mail igen" kan bruges igen.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
+  // "Skift e-mailadresse": tilbage til oprettelsesformularen med e-mailen
+  // udfyldt, så den kan rettes. Den ubekræftede konto bliver aldrig aktiv.
+  const changeVerifyEmail = useCallback(() => {
+    writePendingVerify("");
+    setLoginEmail(verifyEmail);
+    setVerifyEmail(""); setVerifyStatus("pending");
+    setVerifyError(""); setVerifyNotice("");
+    setAuthTab("signup"); setAuthError(""); setAuthInfo("");
+    setScreen(SCREENS.LOGIN);
+  }, [verifyEmail, setScreen]);
+
+  // "Fortsæt opsætning" efter bekræftelsen — onboarding fra det gemte trin.
+  const continueAfterVerify = useCallback(() => {
+    setVerifyStatus("pending"); setVerifyEmail("");
+    setIsOAuth("email");
+    setScreen(SCREENS.ONBOARD);
+  }, [setScreen]);
 
   // ── OAuth redirect ────────────────────────────────────────────────────────
   const handleOAuth = useCallback(async (provider) => {
@@ -574,8 +713,8 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     clearAuth,
     handleLogin,
     handleSignup,
-    completeSignup,
-    pendingSignup, setPendingSignup,
+    verifyEmail, verifyStatus, verifyError, verifyNotice, verifyLoading, resendCooldown,
+    checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify,
     handleOAuth,
     handleForgotPassword,
   };
