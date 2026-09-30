@@ -680,7 +680,7 @@ export default function RecipesScreen({
 
         {/* Tom kategori (fx Frokost/Snack har pt. ingen opskrifter) eller alt filtreret væk af "Kun sikre" */}
         {!recipesLoading && recipes.length > 0 && filtered.length === 0 && recipeFilter !== "favoritter" && !recipeSearch && (
-          <EmptyState icon={<Icon name="utensils" size={26} color="var(--muted)" />} text="Ingen opskrifter her endnu"
+          <EmptyState icon={<Icon name="recipes" size={26} color="var(--muted)" />} text="Ingen opskrifter her endnu"
             sub={recipeSafeOnly ? "Ingen opskrifter i denne kategori passer til de valgte profiler" : "Der er endnu ingen opskrifter i denne kategori"}>
             <button className="btn btn-outline btn-sm" style={UI.mt12} onClick={() => setRecipeFilter("alle")}>Se alle opskrifter</button>
           </EmptyState>
@@ -1056,7 +1056,7 @@ export default function RecipesScreen({
       <div className="screen fade-in">
         <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Opskrifter</div>
         <EmptyState
-          icon={<Icon name="utensils" size={26} color="var(--muted)" />}
+          icon={<Icon name="recipes" size={26} color="var(--muted)" />}
           text="Siden er under udvikling"
           sub="Vi arbejder på opskrifter, der passer til dine allergier og kostvalg. Funktionen kommer i en senere version af EatSafe."
         />
