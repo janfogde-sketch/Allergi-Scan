@@ -33,6 +33,7 @@ const ProfileScreen = React.lazy(() => import('./ProfileScreen.jsx'));
 const SettingsScreen = React.lazy(() => import('./SettingsScreen.jsx'));
 const NotificationsScreen = React.lazy(() => import('./NotificationsScreen.jsx'));
 const NotificationScreen = React.lazy(() => import('./NotificationScreen.jsx'));
+const TicketScreen = React.lazy(() => import('./TicketScreen.jsx'));
 import ScannerScreen from './ScannerScreen.jsx';
 const RecipesScreen = React.lazy(() => import('./RecipesScreen.jsx'));
 const KnowledgeScreen = React.lazy(() => import('./KnowledgeScreen.jsx'));
@@ -647,10 +648,13 @@ export default function EatSafe() {
 
   // Primær handling fra en besked. Produktet slås op på ny (aktuel status),
   // så en gammel besked aldrig fungerer som en aktuel sikkerhedsvurdering.
+  const [openTicketId, setOpenTicketId] = useState(null);
+  React.useEffect(() => { if (!accessToken) setOpenTicketId(null); }, [accessToken]);
   const handleNotificationAction = useCallback((action) => {
     if (action?.type === "open_product" && action.params?.ean) lookupProduct(action.params.ean);
     else if (action?.type === "open_family") setScreen(SCREENS.FAMILY);
     else if (action?.type === "open_list") setScreen(SCREENS.LIST);
+    else if (action?.type === "open_ticket" && action.params?.ticketId) { setOpenTicketId(action.params.ticketId); setScreen(SCREENS.TICKET); }
     else if (action?.type === "scan") setScreen(SCREENS.HOME);
   }, [lookupProduct, setScreen]);
 
@@ -1177,6 +1181,14 @@ export default function EatSafe() {
             onAction={handleNotificationAction}
             onBack={() => setScreen(SCREENS.NOTIFICATIONS)}
           />
+          </ErrorBoundary>
+          </Suspense>
+        )}
+
+        {screen === SCREENS.TICKET && openTicketId && (
+          <Suspense fallback={LazyFallback}>
+          <ErrorBoundary screen="Feedback">
+          <TicketScreen key={openTicketId} ticketId={openTicketId} onBack={() => setScreen(SCREENS.NOTIFICATIONS)} />
           </ErrorBoundary>
           </Suspense>
         )}

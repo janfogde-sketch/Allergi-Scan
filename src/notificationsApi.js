@@ -79,3 +79,24 @@ export async function fetchInviteStatus(accessToken, inviteId) {
     return "unknown";
   }
 }
+
+/**
+ * Egen feedback-ticket (RLS: kun den, der har sendt den). `notfound` dækker slettet ticket og en anden
+ * kontos ticket. Billedet (image_base64) hentes bevidst ikke.
+ */
+export async function fetchTicket(accessToken, id) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/feedback_tickets?select=id,type,description,status,admin_note,created_at&id=eq.${encodeURIComponent(id)}&limit=1`,
+      { headers: makeHeaders(accessToken) },
+    );
+    if (!res.ok) return { status: "error" };
+    const item = (await res.json())?.[0];
+    return item ? { status: "ok", item } : { status: "notfound" };
+  } catch {
+    return { status: "error" };
+  }
+}
+
+export const TICKET_STATUS_LABELS = { open: "Åben", in_progress: "I gang", resolved: "Løst" };
+

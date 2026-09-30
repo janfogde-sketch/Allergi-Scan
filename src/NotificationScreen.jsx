@@ -10,9 +10,8 @@ import { timeAgo } from "./helpers.js";
 import NotificationBlocks from "./NotificationBlocks.jsx";
 import { fetchNotification, fetchInviteStatus, PENDING_KEY } from "./notificationsApi.js";
 
-// Handlinger, appen må udføre fra en besked. `open_ticket` vises først, når
-// egne feedback-visninger findes (trin 4) — indtil da ingen virkesløs knap.
-const SUPPORTED_ACTIONS = ["open_product", "scan", "open_family", "open_list"];
+// Handlinger, appen må udføre fra en besked.
+const SUPPORTED_ACTIONS = ["open_product", "scan", "open_family", "open_list", "open_ticket"];
 
 export default function NotificationScreen({ notificationId, markRead, onAction, onBack }) {
   const { accessToken, clearAuth } = useAuthContext();
