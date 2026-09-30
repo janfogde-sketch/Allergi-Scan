@@ -24,7 +24,6 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
    https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X (deling med Bjørn).
 
 *Venter på Jans beslutning:*
-8. Arkitektur-audit "som en senior engineer". Jan: vent.
 9. Leaked Password Protection kræver Supabase Pro (se nedenfor). Jan: vent.
 
 *Skal designes (Bjørns spor):*
@@ -40,6 +39,14 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
     Authentication → Emails → Templates (intet værktøj kan ændre dem
     herfra). Gem gerne den endelige HTML i repoet, fx
     `supabase/templates/`, så den kan versionsstyres.
+
+*Arkitektur-audit (30. sept. 2026):* rapport i
+https://claude.ai/artifact/8sj2uZhFSYy18iVV1upuAL (16 fund + roadmap).
+De tre største risici: ingen backups (Free), skemaet ikke versionsstyret i
+repoet (0 migrationsfiler), intet testmiljø. Tre åbne INSERT-politikker
+blev lukket under auditten (`supabase/sql/2026-09-30_drop_open_insert_policies.sql`).
+**Ny stående regel:** databaseændringer køres som migration (`apply_migration`)
+OG gemmes som fil i repoet i samme omgang, aldrig kun som løs SQL.
 
 *Claude gør bagefter:*
 10. Læs testrundens resultater og opret tickets for fejl (når punkt 3
