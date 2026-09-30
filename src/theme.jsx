@@ -1126,6 +1126,12 @@ body::-webkit-scrollbar{display:none;}
 /* Opskrifter (30. sept. 2026): sidste kort skal kunne scrolles helt fri af
    bundnavigationen, også med home-indicator (safe-area) på iPhone. */
 .recipes-screen{padding-bottom:calc(120px + env(safe-area-inset-bottom));}
+/* Indkøbslistens listevælger (30. sept. 2026): sekundære handlinger, der
+   tydeligt er klikbare (hvid flade, synlig kant, mørk tekst) — ikke den
+   grå .btn-ghost, som kunne ligne en deaktiveret knap. */
+.list-picker-action{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 12px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;font-family:var(--f);font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;white-space:nowrap;transition:transform .15s,border-color .15s;}
+.list-picker-action:hover{border-color:var(--ink2);}
+.list-picker-action:active{transform:scale(.97);}
 /* Allergileksikon (30. sept. 2026): samme safe-area-bundafstand som Opskrifter,
    så sidste kort altid kan scrolles helt fri af bundnavigationen. */
 .knowledge-screen{padding-bottom:calc(120px + env(safe-area-inset-bottom));}
