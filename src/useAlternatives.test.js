@@ -1,0 +1,39 @@
+// @ts-nocheck
+// Alternativer skal ligne produktet — ikke bare dele hovedkategori
+// (live-test 30. sept. 2026: Coca-Cola foreslået til en drikkeyoghurt).
+import { describe, it, expect } from "vitest";
+import { similarityScore } from "./useAlternatives.js";
+
+describe("similarityScore", () => {
+  const cola = { name: "Coca Cola Zero", brand: "Coca-Cola", category: "Drikkevarer", category_original: "Drikkevarer > Sodavand > Cola" };
+
+  it("scores products in the same store category path highly", () => {
+    const pepsi = { name: "Pepsi Max", category: "Drikkevarer", category_original: "Drikkevarer > Sodavand > Cola" };
+    expect(similarityScore(cola, pepsi)).toBeGreaterThanOrEqual(4);
+  });
+
+  it("does not treat a broad one-level category like 'Beverages' as similar", () => {
+    const cultura = { name: "Cultura", category: "Drikkevarer", category_original: "Beverages And Beverages Preparations" };
+    const juice = { name: "Appelsinjuice", category: "Drikkevarer", category_original: "Beverages And Beverages Preparations" };
+    expect(similarityScore(cultura, juice)).toBeLessThan(3);
+  });
+
+  it("does not suggest a cola for a drinking yoghurt", () => {
+    const cultura = { name: "Cultura Drikkeyoghurt Jordbær", category: "Drikkevarer", category_original: "Beverages" };
+    expect(similarityScore(cultura, cola)).toBeLessThan(3);
+  });
+
+  it("counts shared name words and subcategory", () => {
+    const a = { name: "Drikkeyoghurt Jordbær", subcategory: "Yoghurt & skyr" };
+    const b = { name: "Drikkeyoghurt Blåbær", subcategory: "Yoghurt & skyr" };
+    expect(similarityScore(a, b)).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe("similarityScore — tærskel", () => {
+  it("a single shared adjective is not enough (peanut butter is no alternative to chocolate)", () => {
+    const lindt = { name: "Hello Crunchy Nougat", brand: "Lindt", category_original: "Snacks" };
+    const pb = { name: "Peanut Butter Crunchy", brand: "Coop", category_original: "Kolonial > Pålæg > Peanutbutter" };
+    expect(similarityScore(lindt, pb)).toBeLessThan(3);
+  });
+});
