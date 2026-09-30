@@ -540,3 +540,75 @@ chip, CTA) — alle nu `left:20px` fra viewportets kant, ingen undtagelser.
 | Desktop admin — nye funktioner | Shellet (`src/admin/`) + alle eksisterende faner (Dashboard/Brugere/Indsendelser/Tickets/Manglende/Import/Opskrifter) er bygget og shippet 24. sept. 2026. **Produkt-database direkte** (ny "Produkter"-fane, `src/admin/sections/ProductsSection.jsx`) er også shippet 24. sept. 2026 — søg på navn/brand/EAN (eller se seneste opdaterede uden søgeord, da `products` har 20.000+ rækker), redigér navn/brand/kategori/ingredienstekst/allergen_flags/verificeringsstatus direkte, slet produkt (kan fejle med en synlig FK-fejl hvis produktet stadig er refereret fra fx en indkøbsliste/scanningshistorik/ændringslog — bevidst ikke cascade-slettet automatisk). Kun på desktop, ikke porteret til mobil-admin. **Leksikon-CRUD** (ny "Leksikon"-fane, `src/admin/sections/KnowledgeSection.jsx`) er også shippet 24. sept. 2026 — søg/filtrér på kategori (allergen/e_number/ingredient/diet/cross_reaction/faq/fun_fact — DB check-constraint), opret/redigér/slet `knowledge_base`-entries (titel, slug med auto-generering fra titel ved oprettelse, emoji, resumé, beskrivelse, sundhedsnoter, risikoniveau, sortering, tilknyttede allergener som klikbare chips, og 6 frie liste-felter som kommasepareret tekst: found_in/alternatives/diet_tags/aliases/tags/sources). RLS tillader allerede admin-skriv direkte (ingen Edge Function nødvendig). Kun på desktop. **Ændringshistorik** (ny "Historik"-fane, `src/admin/sections/HistorySection.jsx`) er også shippet 24. sept. 2026 — read-only visning af `revision_log`, filtrérbar på oprettet/opdateret, produkt- og bruger-navne slås op i to batch-kald efter hovedlisten (ingen FK-embed tilgængelig for changed_by). **Brugere-redigering** (`UsersSection.jsx`, samme dag) er udvidet til at dække ALT bundet til brugeren, inkl. allergener — krævede en RLS-migration (`admin_can_write_user_allergens`) der tilføjer `is_admin()`-OR-betingelse til `user_allergens`s INSERT/UPDATE/DELETE-policyer (SELECT tillod allerede admin-læsning, men skriv var kun ejeren/familiemedlem-ejeren); samme slet-og-bulk-indsæt-mønster som `ProfileScreen.jsx` bruger for sig selv. Familiemedlemmers allergener ligger ikke i `user_allergens` (kun brugerens egne, `family_member_id is null`) og er ikke omfattet. Kun på desktop. **Bulk-handlinger** (Indsendelser-fanen, samme dag) — afkrydsningsbokse på pending-visningen + "Godkend valgte"/"Afvis valgte". Bevidst en SLANKERE parallel-implementation, ikke et loop der genbruger `updateSubmissionAndApprove`/`rejectSubmission` (de sluger deres egne fejl internt og viser individuelle toasts/lukker modaler, hvilket ville gøre det umuligt at tælle reelle succes/fejl på tværs af en batch) — sender ikke navn/brand-override (kun ingredienstekst fra OCR; Edge Function'en patcher kun felter der rent faktisk sendes) og springer push-notifikationer over for hastighed; AI-reparse'en efter hver godkendelse sikrer stadig korrekte allergen_flags. Kun på desktop. **Rigere dashboard/analytics** (`DashboardSection.jsx`, samme dag) — to søjlediagrammer (scanninger/dag, nye brugere/dag, seneste 14 dage) under stat-gridet. Ingen graf-bibliotek — rene CSS/HTML-søjler, én sekventiel farve pr. serie (grøn/blå, appens egne tokens), native `title`-attribut som hover-tooltip. PostgREST har ingen GROUP BY-dag, så `loadAdminStats` henter de rå `scanned_at`/`created_at`-rækker for perioden (kun de to felter, billigt) og bucketter dem selv i JS (`bucketByDay`-helper) — tomme dage fyldes med 0 så grafen altid har præcis 14 punkter. Kun på desktop. **CSV-eksport** (`src/admin/csvExport.js`, samme dag) — delt `downloadCsv(filename, rows, columns)`-helper (RFC 4180-escaping, UTF-8 BOM så æ/ø/å ikke bliver mojibake i Excel), "Eksportér CSV"-knap på Brugere- og Produkter-fanerne, eksporterer den aktuelt filtrerede/hentede liste (ikke hele tabellen — konsistent med den eksisterende paginering på 50-200 rækker). Ligger bevidst under `src/admin/`, ikke i det delte `helpers.js`, så den ikke bloater den mobile PWA's bundle. Kun på desktop. **Familie-overblik** (ny "Familie"-fane, `src/admin/sections/FamilySection.jsx`, samme dag) — grupperer `family_members` pr. ejer (viser husstanden samlet, ikke en flad liste) + en tabel over `family_invites` med status. Krævede en RLS-migration (`admin_can_read_family_invites`) — `family_members` tillod allerede admin-læsning, men `family_invites` kun inviteren/den der accepterede selv. **Handlingsmuligheder tilføjet 24. sept. 2026** — "fjern medlem" (×-knap på hver medlem-pille) og "annullér" på afventende invitationer. Krævede endnu en RLS-migration (`admin_can_manage_family_data`): `family_members`s DELETE-policy manglede admin-bypass, og `family_invites` havde slet ingen DELETE-policy overhovedet (hverken for ejer eller admin — invitationer kunne kun oprettes/læses, aldrig slettes via REST). **Global søgning** (`GlobalSearchBox.jsx`, samme dag) — en søgeboks i topbaren (uafhængig af hvilken fane admin står på), søger parallelt i brugere/produkter/tickets, klik på et resultat skifter til den relevante fane og forudfylder dens søgefelt. Begge kun på desktop.
 
 **Med dette er hele "nye funktioner"-backlogget fra 24. sept. 2026 gennemført** (8/8 punkter: produkt-database, leksikon, ændringshistorik, brugere-redigering inkl. allergener, bulk-handlinger, dashboard-trends, CSV-eksport, familie-overblik + global søgning). Debug-fanen (mobil-appens `getTraceLog()`) er bevidst IKKE porteret — den er session-lokal til den enhed der scanner, og giver ikke mening i et separat desktop-panel |
+
+## 14. Notifikationer (trin 1 færdig 30. sept. 2026, ikke i produktion før merge)
+
+Grundlag: udviklerpakken "EatSafe-samlet-udviklerpakke". Kravet: push er kun den
+korte tekst og åbner den fulde, beskyttede besked i appen via
+`https://www.eatsafe.dk/?notification={id}`. Én fælles indholdskilde til push, app og mail.
+
+- **Tabeller** (`20260930135031_notifications_foundation.sql`): `notification_events`
+  (outbox, unik `event_key`), `notifications` (modtagerens snapshot, dedup på
+  event_key+user+type+variant, klienten kan kun SELECT egne og markere læst via
+  `mark_notification_read`), `notification_deliveries` (afsendelsesregister, endpoint
+  som hash), `app_flags` (`notifications_push_enabled`, **starter FRA**).
+- **Triggere** (`20260930135839_..._triggers_and_dispatch.sql`): indsendelse godkendt/afvist
+  (N2a/N2b/N3, plus N4 "produkt nu tilgængeligt" ved ny godkendt produktindsendelse),
+  invitation accepteret (N5), feedback statusskift eller nyt svar (N6, fire varianter).
+  De skriver kun en hændelse og kan aldrig blokere ændringen (fejl → `client_errors`).
+- **Afvikling:** pg_cron `notify-dispatch` hvert minut kalder edge-funktionen `notify`
+  (kategori 4, kun service-role) for hændelser ældre end 15 sek. `notify` opretter beskeden
+  FØR push, sender push kun hvis flaget er tændt og brugeren ikke har slået kategorien fra,
+  og retry'er op til 5 gange. Afvisning uden `review_note` afvises som `failed` og logges.
+  Oprydning: beskeder 12 mdr., hændelser 90 dage (`cleanup_notifications`).
+- **Delt kode i `supabase/functions/_shared/`:** `notificationContent.js` (definitioner,
+  `renderNotification`, testet i `src/notificationContent.test.js`) og `webpush.ts` (VAPID
+  med `aud` pr. push-tjeneste, aes128gcm, `sendWebPush`; testet i `src/webpush.test.js`).
+  `send-push` bruger nu den delte afsender.
+- **Rettet undervejs:** VAPID-`aud` var fast FCM (Apple/Mozilla afviste); `/badge-72.png`
+  findes ikke; N4 blev aldrig sendt (forkerte kolonnenavne); N3 uden begrundelse; push blev
+  sendt fra browseren. Klient-push i `useAdmin.js`/`useIncomingLinks.js` er fjernet.
+- **Regel:** er både push og mail fravalgt for en kategori, oprettes ingen besked (udviklerpakken).
+- **Trin 2 (app, i PR): ** `SCREENS.NOTIFICATIONS` (oversigt, tid, læst/ulæst) og `SCREENS.NOTIFICATION`
+  (den fulde besked, tegnet af `NotificationBlocks.jsx` fra de gemte blokke). Ruten `?notification={id}`
+  læses i `useNotifications.js`, gemmes i localStorage (`as_pending_notification`) gennem login og åbnes
+  efter onboarding; ugyldigt id ignoreres. Anden konto/slettet/udløbet giver samme neutrale side (RLS) med
+  "Log ind med en anden konto". Læst sættes først efter visning (`mark_notification_read`). `open_ticket`-
+  knappen vises først i trin 4. Menupunkt "Beskeder" med ulæst-tæller i `ProfileMenu.jsx`.
+- **Mangler (trin 3-4):**  pushvarianter + 30 mails koblet på rigtige hændelser, nye indstillingskategorier,
+  P1/P3/P6 og egne ticket-visninger. Mail bruger stadig de gamle triggere/skabeloner.
+- **Push-flaget må ikke tændes**, før beskedsiden er i produktion og testet.
+- **Trin 3a (mail, live i DB, notify i PR):** `notify` sender også mail via Resend-skabelonerne
+  (`supabase/templates/resend/`, id'er i `_shared/mailSend.ts`) for N2a/N2b/N3/N4/N5/N6a-d, når
+  `app_flags.notifications_email_enabled` er tændt (starter FRA) og brugeren ikke har slået mail fra
+  for kategorien. Når flaget tændes, springer de gamle triggere `send_submission_email` og
+  `send_ticket_email` over (ingen dobbelt-mails). Værdier HTML-escapes i `buildMailVariables`; mailens
+  variabler er de samme rensede værdier som appens besked (`renderNotification().mailVars`).
+  `src/mailSend.test.js` sikrer, at hver skabeloneks tekst indeholder alle blokke fra appens besked.
+  `notification_deliveries.endpoint` er nu NOT NULL ('' for mail) med almindeligt UNIQUE (det gamle
+  udtryks-indeks kunne ikke bruges til upsert). **Mail er ikke testet live** (ingen rigtige mails i test).
+- **Trin 3b/3c (kategorier, P2, P3):** fire nye kategorier i `notification_preferences`
+  (`product_changes`, `shared_lists`, `recalls`, `onboarding_reminder`). Standard pr. kategori ligger i
+  `notification_enabled()`: **fra** for `shared_lists` og `onboarding_reminder`, **til** for resten;
+  `notify` bruger funktionen (ikke længere egne tjek), og `useNotificationPrefs.js` skal matche
+  (`defaultOn`). Kun kategorier med `live !== false` vises i Indstillinger (nu: `shared_lists`; de andre
+  tre vises, når P1/P6/P5 sendes). **P2** (invitation udløber): cron `notify-expiring-invites` hvert 10. min
+  finder ventende invitationer med højst 4 timer tilbage (én hændelse pr. invitation); `notify` tjekker
+  status igen, sætter TTL = min(3600, resterende) og `expiresAt` på pushen; beskedsiden skjuler knappen,
+  når invitationen ikke længere er aktiv; mail kun til dem uden push (`MAIL_ONLY_WITHOUT_PUSH`).
+  **P3** (delt liste): trigger på `shopping_list_items` (kun lister delt med nogen andre) giver én hændelse
+  pr. liste pr. 30-min-vindue, udskudt 5 min (`notification_events.available_at`); `notify` tæller pr.
+  modtager varer tilføjet af *andre* (ejer + nuværende adgangsbrugere), varenavne kun i app/mail, ikke i push.
+  Varer tilføjet efter afsendelsen i samme vindue får først en besked, hvis der kommer en ny tilføjelse i
+  næste vindue (bevidst grænse: højst én besked pr. modtager pr. liste pr. 30 min).
+- **Trin 4 + N1/P4 (30. sept. 2026):** *Se din feedback*: `SCREENS.TICKET` (`TicketScreen.jsx`) viser egen ticket
+  (tilbagemelding, status, teamets svar) og åbnes fra `open_ticket` på beskedsiden (RLS: kun ejeren).
+  **N1** (velkomstmail efter onboarding): `users.welcome_sent_at`; trigger `on_onboarding_completed` sender
+  én gang, når `onboarding_completed` bliver true og e-mailen er bekræftet (adressen hentes fra `auth.users`);
+  brugeren kan ikke nulstille kolonnen. **P4** (slettekvittering): `delete-user` henter e-mail/navn FØR
+  sletningen og sender kvitteringen EFTER en gennemført sletning (3 forsøg; fejl logges i `client_errors`,
+  adressen gemmes ikke — der er bevidst ingen udgående kø). Begge servicemails bruger
+  `TRANSACTIONAL_TEMPLATES` i `_shared/mailSend.ts` via `send-email`/`delete-user`, og er styret af
+  `notifications_email_enabled` (FRA): er flaget fra, virker de gamle triggere som før; er det til, springer de
+  gamle velkomsttriggere over.
+

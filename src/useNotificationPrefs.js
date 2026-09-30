@@ -3,7 +3,7 @@
 // useNotificationPrefs.js
 // Styrer brugerens per-kategori/per-kanal notifikationsindstillinger
 // (notification_preferences-tabellen). Manglende række for en given
-// (kategori, kanal) betyder "slået til" — se notification_enabled() i
+// (kategori, kanal) betyder kategoriens standard (til, undtagen shared_lists og onboarding_reminder) — se notification_enabled() i
 // databasen, som al reel afsendelse (DB-triggers + send-push) slår op mod.
 // Denne hook er kun til at VISE/ÆNDRE indstillingerne i UI'et.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -26,6 +26,13 @@ export const NOTIFICATION_CATEGORIES = [
   { id: "family", label: "Familieinvitationer", description: "Når nogen accepterer din familie-invitation" },
   { id: "feedback", label: "Svar på feedback", description: "Når en ticket du har sendt ind får svar eller opdateret status" },
   { id: "weekly_digest", label: "Ugentlig opskriftsoversigt", description: "En ugentlig påmindelse om nye opskrifter der matcher dine allergier" },
+  // Tilføjet 30. sept. 2026 (notifikations-redesign). `defaultOn` skal matche notification_enabled() i
+  // databasen. `live:false` = kategorien findes i databasen, men der sendes endnu ikke noget i den, så den
+  // vises ikke i Indstillinger (ingen kontakter, der ikke gør noget). Sæt live:true, når afsendelsen er bygget.
+  { id: "shared_lists", label: "Delte indkøbslister", description: "Når andre tilføjer varer til en indkøbsliste, du deler", defaultOn: false },
+  { id: "product_changes", label: "Ændringer i dine produkter", description: "Når allergenoplysninger ændres for et produkt, du har gemt eller scannet", live: false },
+  { id: "recalls", label: "Tilbagekaldelser", description: "Når et produkt, du har brugt, bliver tilbagekaldt", live: false },
+  { id: "onboarding_reminder", label: "Påmindelse om oprettelse", description: "En engangspåmindelse, hvis du ikke er færdig med at oprette din profil", defaultOn: false, live: false },
 ];
 
 const CHANNELS = ["push", "email"];
@@ -33,7 +40,7 @@ const CHANNELS = ["push", "email"];
 function defaultPrefs() {
   const prefs = {};
   for (const cat of NOTIFICATION_CATEGORIES) {
-    for (const ch of CHANNELS) prefs[`${cat.id}:${ch}`] = true;
+    for (const ch of CHANNELS) prefs[`${cat.id}:${ch}`] = cat.defaultOn !== false;
   }
   return prefs;
 }
@@ -91,5 +98,5 @@ export function useNotificationPrefs({ accessToken, userId }) {
     setSavingKeys(s => { const n = { ...s }; delete n[key]; return n; });
   }, [accessToken, userId, prefs]);
 
-  return { prefs, loading, savingKeys, setPref, categories: NOTIFICATION_CATEGORIES };
+  return { prefs, loading, savingKeys, setPref, categories: NOTIFICATION_CATEGORIES.filter(c => c.live !== false) };
 }

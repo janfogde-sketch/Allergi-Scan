@@ -79,14 +79,23 @@ er allerede live; app-delen kræver merge. Resultat, kort:
 - ProfileScreen er delt i seks skærmfiler; App.jsx har fået
   `useAdminTools`, `useIncomingLinks`, `useLoadUserData`.
 
-**Åbne efter A1–A8:**
-- Jan: opret GitHub-secret `SUPABASE_ACCESS_TOKEN` (ellers springer
-  workflowet deploy over med en advarsel).
-- Claude, efter merge til main: kør `supabase/pending/
-  feedback_close_direct_insert.sql` som migration og flyt filen til
-  `supabase/migrations/`. Lukker den gamle, direkte INSERT i
-  feedback_tickets. Kør den ikke før, ellers fejler feedback fra den
-  gamle app i produktion.
+**Afsluttet 30. sept.:** merget i #411 og #412 (Node 22 i deploy-workflowet).
+Secret'en `SUPABASE_ACCESS_TOKEN` virker; første deploy gav `allergens` v23
+og `feedback` v2, verificeret live. Den gamle direkte INSERT i
+feedback_tickets er lukket (migration `20260930100707`). Adgangsnøglen
+udløber efter den periode, Jan valgte; når deploy-jobbet fejler med 401/403,
+skal der laves en ny nøgle og secret'en opdateres.
+
+*Notifikationer (Bjørn har godkendt designet):* trin 1-3 er merget (#417-#419), på
+nær den nyeste commit (kategorier, P2, P3), som ligger lokalt. Push-flaget
+`notifications_push_enabled` og mail-flaget `notifications_email_enabled` er
+begge FRA; ingen rigtige push eller mails er sendt. `notify` er testet live
+(besked oprettet, ingen afsendelse). Beskedside/rute er i appen; 22 Resend-
+skabeloner ligger i `supabase/templates/resend/`. Mangler: P1 (kræver
+ændringshistorik for allergener), P6 (ingen datakilde), P5 (afventer
+beslutning), N7 (opskrifter er sat på pause), N1 efter onboarding, P4 ved
+kontosletning, "Se din feedback"-visning (trin 4), test på rigtige telefoner
+FØR flagene tændes. Detaljer i `src/CONTEXT.md` afsnit 14.
 
 *Claude gør bagefter:*
 10. Læs testrundens resultater og opret tickets for fejl (når punkt 3

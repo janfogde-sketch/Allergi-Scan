@@ -360,6 +360,9 @@ export const SCREENS = {
   KNOWLEDGE:"knowledge",
   RESTAURANTGUIDE:"restaurantguide",
   SETTINGS:"settings",
+  // Beskeder (30. sept. 2026): liste over egne notifikationer + den fulde besked,
+  // som push åbner via ?notification={id}.
+  NOTIFICATIONS:"notifications", NOTIFICATION:"notification", TICKET:"ticket",
   // Brugsvilkår/Privatlivspolitik (29. sept. 2026, "Opdater siderne...med
   // tydelig navigation tilbage") — almindelige undersider, ikke modaler, se
   // TermsScreen.jsx/PrivacyScreen.jsx + App.jsx's openLegal/legalReturnScreen.
@@ -375,6 +378,7 @@ export const PAGE_IDS = {
   madpas:"SCR-16", recipes:"SCR-17", editprofile:"SCR-18",
   knowledge:"SCR-19", restaurantguide:"SCR-20", settings:"SCR-21",
   terms:"SCR-22", privacy:"SCR-23",
+  notifications:"SCR-24", notification:"SCR-25", ticket:"SCR-26",
 };
 
 export const DUMMY_PRODUCT = {

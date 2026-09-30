@@ -4,6 +4,8 @@
 // Sletning af en ANDEN bruger kræver admin-rolle på den kaldende bruger.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { TRANSACTIONAL_TEMPLATES, buildMailVariables, sendTemplateMail } from "../_shared/mailSend.ts";
+import { formatDanishDateTime } from "../_shared/notifyHelpers.js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,6 +46,9 @@ Deno.serve(async (req) => {
       if (callerProfile?.role !== "admin") throw new Error("Kun admins kan slette andre brugere");
     }
 
+    // Hent minimal e-mail/navn FØR sletningen — bruges kun til slettekvitteringen (P4) og gemmes ikke.
+    const { data: target } = await supabase.from("users").select("email, name").eq("id", uid).maybeSingle();
+
     // Slet afhængige data i korrekt rækkefølge.
     //
     // favorites/push_tokens/search_selections er BEVIDST ikke nævnt her —
@@ -72,6 +77,27 @@ Deno.serve(async (req) => {
     // Slet fra auth.users (kræver service role)
     const { error: authError } = await supabase.auth.admin.deleteUser(uid);
     if (authError) throw new Error(`auth sletning fejlede: ${authError.message}`);
+
+    // P4: slettekvittering — først EFTER en gennemført sletning, og kun når mailkanalen er slået til
+    // (notifications_email_enabled). Fejl her må aldrig få selve sletningen til at se fejlet ud.
+    try {
+      const { data: flag } = await supabase.from("app_flags").select("value").eq("key", "notifications_email_enabled").maybeSingle();
+      const apiKey = Deno.env.get("RESEND_API_KEY") ?? "";
+      if (flag?.value === true && target?.email && apiKey) {
+        const variables = { ...buildMailVariables({ deletedAt: formatDanishDateTime(new Date().toISOString()) }, target.name) };
+        let res = { ok: false, retryable: true, error: "" } as { ok: boolean; retryable: boolean; error?: string };
+        for (let attempt = 0; attempt < 3 && !res.ok && res.retryable; attempt++) {
+          res = await sendTemplateMail({
+            apiKey, to: target.email, templateId: TRANSACTIONAL_TEMPLATES.account_deleted.id,
+            subject: TRANSACTIONAL_TEMPLATES.account_deleted.subject, variables, idempotencyKey: `account-deleted-${uid}`,
+          });
+          if (!res.ok && res.retryable) await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+        }
+        if (!res.ok) await supabase.rpc("log_client_error", { p_message: `Slettekvittering fejlede: ${res.error}`, p_source: "edge:delete-user" });
+      }
+    } catch (e) {
+      console.error("slettekvittering:", e);
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -73,3 +73,7 @@ verify_jwt = true
 
 [functions.send-push]
 verify_jwt = true
+
+# Kategori 4: kun service-role (cron). Tjekker nøglen selv i koden.
+[functions.notify]
+verify_jwt = false
