@@ -5,7 +5,7 @@
 // Returnerer tokens og brugerstyring til App.jsx.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { apiCall, decodeJwtPayload } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
@@ -87,6 +87,16 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   const [authLoading, setAuthLoading]   = useState(false);
   const [authTab, setAuthTab]           = useState("signup"); // "signup" | "login"
   const [isOAuth, setIsOAuth]           = useState(false);
+  // Aflæst allerede under første render, FØR nogen effekt kører: landede
+  // appen fra et login-/bekræftelseslink (#access_token=...)? Effekten
+  // nedenfor, der tager imod linket, fjerner selve hashen fra adressen, så
+  // app-boot-effekten kan ikke længere se den, når den kører lige efter.
+  // Uden denne ref slog app-boot onboarding-status op for en GAMMEL konto,
+  // der stadig lå i browseren, og sendte en ny bruger fra
+  // bekræftelsesmailen direkte til forsiden (fundet 30. sept. 2026).
+  const arrivedViaAuthLinkRef = useRef(
+    typeof window !== "undefined" && window.location.hash.includes("access_token")
+  );
   // "Husk mig" (25. sept. 2026-brief) — sand som standard (uændret adfærd:
   // token i localStorage, overlever browseren lukkes). Slået fra gemmes
   // tokenet i sessionStorage i stedet, så det forsvinder når fanebladet
@@ -236,7 +246,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     // En frisk OAuth-redirect (samme mount) håndterer sin egen routing i
     // effekten ovenfor, inkl. genoptagelse af gemt trin — spring den her
     // over for at undgå at de to konkurrerer om at afgøre skærmen to gange.
-    if (window.location.hash && window.location.hash.includes("access_token")) return;
+    if (arrivedViaAuthLinkRef.current) return;
     if (!accessToken || !userId) return;
     resolveOnboardingRoute(userId, accessToken);
   }, []);

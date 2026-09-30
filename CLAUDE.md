@@ -20,8 +20,9 @@ når sessionen starter, og spørg hvad der skal tages først. Detaljerne står
 i afsnittene under listen. Opdatér listen, når et punkt er klaret.
 
 *Kun Jan kan gøre det:*
-1. Supabase Dashboard: slå "Confirm email" til (D1, se "ÅBEN: Slå
-   e-mailbekræftelse til" nedenfor). SMTP er sat op 30. sept.
+1. ✅ "Confirm email" er slået til 30. sept. (SMTP via Resend samme dag).
+   Mangler kun en ny testoprettelse efter rettelsen af bekræftelseslinket
+   (se D1 nedenfor), før D1 kan lukkes.
 2. Cloud-miljøet: tillad `eatsafe.dk`, `jegrpcflyguadyxialkm.supabase.co`
    og `world.openfoodfacts.org` under Network access (B1, se nedenfor).
 3. Del testtjeklisten https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X
@@ -134,8 +135,14 @@ afsnittet bagefter.
    uden for teamet gik igennem (status 200, `recovery_sent_at` sat).
    Mailgrænsen er hævet fra 30 til 100 i timen (Authentication → Rate
    Limits). Bemærk, at Resends egen plan også har et loft.
-4. *(Jan, Supabase Dashboard)* Authentication → Sign In / Providers →
-   Email → slå "Confirm email" til. Først når 1-3 er på plads.
+4. ✅ *Gjort 30. sept.:* "Confirm email" slået til. Første test afslørede
+   en fejl: kom man fra bekræftelsesmailen i en browser, hvor en anden
+   konto var logget ind, sprang appen onboarding over (app-boot-effekten i
+   `useAuth.js` slog status op for den gamle konto, fordi linket-effekten
+   allerede havde fjernet `#access_token` fra adressen). Rettet med
+   `arrivedViaAuthLinkRef` (aflæses under første render) og en
+   `cancelled`-vagt i `loadAll` i `App.jsx`, så den gamle kontos data ikke
+   kan overskrive den nye.
 5. *(Claude)* Luk ticket D1 (`cc121cd9…`) i `feedback_tickets`, når
    punkt 3-4 er gjort og verificeret (fx en testoprettelse med et
    `janfogde+…`-alias, der skal vise den blå "Vi har sendt et

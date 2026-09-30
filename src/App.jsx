@@ -633,6 +633,10 @@ export default function EatSafe() {
   // ── Load brugerdata ved login ─────────────────────────────────────────────
   React.useEffect(() => {
     if (!accessToken || !userId) return;
+    // Skifter login midt i indlæsningen (fx en ny bruger fra
+    // bekræftelsesmailen i en browser, hvor en anden konto var logget ind),
+    // må den gamle kontos svar ikke overskrive den nye kontos data.
+    let cancelled = false;
 
     const loadAll = async () => {
       try {
@@ -641,6 +645,7 @@ export default function EatSafe() {
           `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,onboarding_completed,onboarding_step,diets,e_numbers,created_at&limit=1`,
           { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
         );
+        if (cancelled) return;
         if (Array.isArray(profile) && profile[0]) {
           const p = profile[0];
           setUser(u => ({
@@ -670,6 +675,7 @@ export default function EatSafe() {
           `${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}&select=allergen,type`,
           { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
         );
+        if (cancelled) return;
         if (Array.isArray(allergenData)) {
           setAllergens(allergenData.filter(a => a.type === "allergen").map(a => a.allergen));
           setCustomAllerg(allergenData.filter(a => a.type === "custom").map(a => a.allergen));
@@ -685,6 +691,7 @@ export default function EatSafe() {
     };
 
     loadAll();
+    return () => { cancelled = true; };
   }, [accessToken, userId]);
 
   const isOnboard = screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode;
