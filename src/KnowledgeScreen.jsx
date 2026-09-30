@@ -65,16 +65,18 @@ function sourceLabel(url) {
 
 // ── Inline styles (så de ALDRIG kan mangle) ──────────────────────────────────
 const S = {
-  grid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:18 },
-  catBtn: { display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" },
-  catBtnActive: (c) => ({ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:c.bg, border:`1px solid ${c.color}33`, borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" }),
+  // Finpudset 30. sept. 2026: kompaktere fliser/søgefelt og ens 16px
+  // mellem alle sektioner (søg → kategorier → hjælp → udvalgte fakta).
+  grid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:16 },
+  catBtn: { display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" },
+  catBtnActive: (c) => ({ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:c.bg, border:`1px solid ${c.color}33`, borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" }),
   catIconBox: (c) => ({ width:32, height:32, borderRadius:10, background:c.bg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }),
   catLabel: { fontSize:12, fontWeight:700, color:"var(--ink)" },
   catLabelActive: (c) => ({ fontSize:12, fontWeight:700, color:c.color }),
   catCount: { fontSize:10, color:"var(--muted)", marginTop:1 },
-  searchWrap: { position:"relative", marginBottom:14 },
-  searchInput: { width:"100%", padding:"12px 14px 12px 42px", border:"1px solid var(--border2)", borderRadius:12, background:"var(--surface)", fontFamily:"var(--f)", fontSize:14, color:"var(--ink)", outline:"none", boxSizing:"border-box" },
-  searchIcon: { position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" },
+  searchWrap: { position:"relative", marginBottom:16 },
+  searchInput: { width:"100%", padding:"10px 14px 10px 40px", border:"1px solid var(--border2)", borderRadius:12, background:"var(--surface)", fontFamily:"var(--f)", fontSize:14, color:"var(--ink)", outline:"none", boxSizing:"border-box" },
+  searchIcon: { position:"absolute", left:13, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" },
   // Kompakte resultatkort (26. sept. 2026, opfølgning: "gør resultatkortene
   // mere kompakte") — reduceret padding/gap/ikonstørrelse ift. den første
   // redesign-runde. cardSummary er nu clamped til 2 linjer med ellipsis —
@@ -88,7 +90,11 @@ const S = {
   cardSummary: { fontSize:12, color:"var(--muted2)", lineHeight:1.45, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" },
   cardStatus: { display:"inline-block", marginTop:6, fontSize:11, fontWeight:600, color:"var(--ink2)", background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:100, padding:"2px 8px" },
   cardChevron: { alignSelf:"center", flexShrink:0, display:"flex" },
-  label: { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:10 },
+  // "Udvalgte fakta" på forsiden: lavere kort, lettere orange tone og
+  // mørkere preview-tekst end de almindelige opslagskort.
+  factCard: { padding:"10px 12px", alignItems:"center", background:"rgba(232,168,124,.07)", border:"1px solid rgba(232,168,124,.16)" },
+  factSummary: { color:"var(--ink2)", lineHeight:1.4 },
+  label: { fontSize:10.5, fontWeight:600, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".9px", marginBottom:8 },
   backBtn: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, flexShrink:0 },
   section: { marginBottom:16 },
   sectionLabel: { fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"1.4px", color:"var(--neutral)", marginBottom:8 },
@@ -113,14 +119,14 @@ const DESC_CLAMP_THRESHOLD = 220;
 
 // Fælles opslagskort — bruges af kategorilister, søgeresultater, krydsreaktioner
 // på en detaljeside og "Vidste du at"-teaserne, så alle følger samme struktur.
-function EntryCard({ entry, cat, onOpen, style }) {
+function EntryCard({ entry, cat, onOpen, style, summaryStyle }) {
   return (
     <div role="button" tabIndex={0} className="kb-card" style={style ? { ...S.card, ...style } : S.card} onClick={onOpen}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(); } }}>
       <div style={S.cardIconBox(cat)}><Icon name={cat.icon||"book"} size={16} color={cat.color||"var(--ink2)"} /></div>
       <div style={UI.flexMin}>
         <div style={S.cardTitle}>{entry.title}</div>
-        {entry.summary && <div style={S.cardSummary}>{entry.summary}</div>}
+        {entry.summary && <div style={summaryStyle ? { ...S.cardSummary, ...summaryStyle } : S.cardSummary}>{entry.summary}</div>}
         {entry.status_label && <div style={S.cardStatus}>{entry.status_label}</div>}
       </div>
       <div style={S.cardChevron}><Icon name="chevronRight" size={14} color="var(--muted)" /></div>
@@ -457,8 +463,8 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
 
           {/* "FAQ" → egen hjælpesektion i stedet for en kategori-flise —
               samme handleCatSelect-mekanisme som kategorierne ovenfor. */}
-          <div style={{ ...S.label, marginTop:4 }}>Hjælp</div>
-          <button style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left", marginBottom:8 }}
+          <div style={S.label}>Hjælp</div>
+          <button style={{ ...S.catBtn, width:"100%", marginBottom:16 }}
             onClick={() => handleCatSelect("faq")}>
             <div style={S.catIconBox(FAQ_CATEGORY)}><Icon name={FAQ_CATEGORY.icon} size={16} color={FAQ_CATEGORY.color} /></div>
             <div style={UI.flex1}>
@@ -510,13 +516,13 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           skal først og fremmest opleves som et opslagsværk, ikke et
           artikel-feed. */}
       {!showList && funFacts.length > 0 && (
-        <div style={UI.mt8}>
-          <div style={{ ...S.label, display:"flex", alignItems:"center", gap:6 }}><Icon name="bulb" size={12} color="var(--muted)" /> Vidste du at...</div>
+        <div>
+          <div style={{ ...S.label, display:"flex", alignItems:"center", gap:6 }}><Icon name="bulb" size={12} color="var(--muted)" /> Udvalgte fakta</div>
           {funFacts.slice(0,3).map(f => {
             const fCat = CAT_MAP[f.category] || CAT_MAP.fun_fact;
             return (
               <EntryCard key={f.id} entry={f} cat={fCat} onOpen={() => setSelectedEntry(f)}
-                style={{ background:"rgba(232,168,124,.10)", border:"1px solid rgba(232,168,124,.18)" }} />
+                style={S.factCard} summaryStyle={S.factSummary} />
             );
           })}
           <button onClick={() => handleCatSelect("fun_fact")}
