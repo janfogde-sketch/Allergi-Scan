@@ -20,8 +20,9 @@ når sessionen starter, og spørg hvad der skal tages først. Detaljerne står
 i afsnittene under listen. Opdatér listen, når et punkt er klaret.
 
 *Kun Jan kan gøre det:*
-1. Supabase Dashboard: tjek SMTP-indstillingerne, og slå derefter
-   "Confirm email" til (D1, se "ÅBEN: Slå e-mailbekræftelse til" nedenfor).
+1. ✅ "Confirm email" er slået til 30. sept. (SMTP via Resend samme dag).
+   Mangler kun en ny testoprettelse efter rettelsen af bekræftelseslinket
+   (se D1 nedenfor), før D1 kan lukkes.
 2. Cloud-miljøet: tillad `eatsafe.dk`, `jegrpcflyguadyxialkm.supabase.co`
    og `world.openfoodfacts.org` under Network access (B1, se nedenfor).
 3. Del testtjeklisten https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X
@@ -46,6 +47,33 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
    Ikke besluttet, ikke startet.
 9. Leaked Password Protection kræver Supabase Pro (se nedenfor). Spørg om
    Jan vil opgradere, ikke om det er glemt.
+
+*Skal designes (Bjørns spor):*
+11. Supabases auth-mails bruger stadig Supabases engelske standard-
+    skabeloner. De skal designes på dansk i EatSafes stil, så de matcher
+    velkomstmailen (Resend-skabelon, afsender `noreply@eatsafe.dk`).
+    Gælder de mails, der sendes i dag: Confirm sign up (bekræftelse ved
+    oprettelse, sendes til alle nye e-mailbrugere siden 30. sept.) og
+    Reset password (Glemt adgangskode) først, dernæst Change email
+    address, Magic link or OTP, Invite user og Reauthentication. Under
+    Security findes desuden valgfrie notifikationer (fx Password changed,
+    slået fra i dag). Skabelonerne redigeres i Supabase Dashboard →
+    Authentication → Emails → Templates (intet værktøj kan ændre dem
+    herfra). Gem gerne den endelige HTML i repoet, fx
+    `supabase/templates/`, så den kan versionsstyres.
+
+*Funktion (Jans spor):*
+12. Fejlteksten, når en adgangskode afvises, skal sige præcis hvad der er
+    galt, og hvad koden mindst skal indeholde. I dag viser appen altid
+    "Adgangskoden er for svag. Brug mindst 10 tegn." (`useAuth.js`,
+    `handleSignup`), uanset hvorfor Supabase afviste den. Supabase svarer
+    med `error_code: "weak_password"` og en liste `weak_password.reasons`
+    (`length`, `characters`, `pwned`); brug den til en konkret besked pr.
+    årsag. Tjek først Supabase Dashboard → Authentication → Sign In /
+    Providers → Email for de faktiske krav (min. længde, krævede
+    tegntyper), så appens egen hjælpetekst og tjek ("mindst 10 tegn",
+    `OnboardingScreen.jsx`) matcher dem. Gælder også nulstilling af
+    adgangskode, hvis den har et eget felt til ny kode.
 
 *Claude gør bagefter:*
 10. Luk D1 (`cc121cd9…`) og B1 (`820806b9…`) i `feedback_tickets`, når de
@@ -99,13 +127,22 @@ afsnittet bagefter.
    er kørt. Velkomstmailen sendes nu først ved bekræftelse, verificeret
    mod de live triggere i en tilbagerullet test.
 2. ✅ *Gjort 29. sept.:* app-delen er merget og live (PR #377).
-3. *(Jan, Supabase Dashboard)* Authentication → Emails → SMTP Settings:
-   bekræft at egen SMTP (formentlig Resend) er slået til. Uden den sender
-   Supabase kun mails til teamets egne adresser, og så kan ingen nye
-   brugere bekræfte deres konto. Den er formentlig sat op, for der blev
-   sendt en nulstillingsmail til en adresse uden for teamet 25. sept.
-4. *(Jan, Supabase Dashboard)* Authentication → Sign In / Providers →
-   Email → slå "Confirm email" til. Først når 1-3 er på plads.
+3. ✅ *Gjort 30. sept.:* egen SMTP via Resend (`smtp.resend.com:465`,
+   bruger `resend`, afsender `noreply@eatsafe.dk`). Indtil da kørte
+   projektet på Supabases indbyggede mailtjeneste, som KUN sender til
+   teamets egne adresser (så "Glemt adgangskode" virkede reelt ikke for
+   almindelige brugere). Verificeret: en nulstillingsmail til en adresse
+   uden for teamet gik igennem (status 200, `recovery_sent_at` sat).
+   Mailgrænsen er hævet fra 30 til 100 i timen (Authentication → Rate
+   Limits). Bemærk, at Resends egen plan også har et loft.
+4. ✅ *Gjort 30. sept.:* "Confirm email" slået til. Første test afslørede
+   en fejl: kom man fra bekræftelsesmailen i en browser, hvor en anden
+   konto var logget ind, sprang appen onboarding over (app-boot-effekten i
+   `useAuth.js` slog status op for den gamle konto, fordi linket-effekten
+   allerede havde fjernet `#access_token` fra adressen). Rettet med
+   `arrivedViaAuthLinkRef` (aflæses under første render) og en
+   `cancelled`-vagt i `loadAll` i `App.jsx`, så den gamle kontos data ikke
+   kan overskrive den nye.
 5. *(Claude)* Luk ticket D1 (`cc121cd9…`) i `feedback_tickets`, når
    punkt 3-4 er gjort og verificeret (fx en testoprettelse med et
    `janfogde+…`-alias, der skal vise den blå "Vi har sendt et
