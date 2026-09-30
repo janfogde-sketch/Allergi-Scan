@@ -8,7 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from "react";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../constants.jsx";
+import { submitFeedback } from "../submitFeedback.js";
 import { compressImageToBase64 } from "../helpers.js";
 import { showToast } from "../SharedComponents.jsx";
 
@@ -53,20 +53,7 @@ export default function FeedbackButton({ accessToken, userId, userEmail, section
         user_id: userId || null,
         user_email: userEmail || null,
       };
-      const headers = {
-        "Content-Type": "application/json",
-        apikey: SUPABASE_ANON_KEY,
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      };
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets`, {
-        method: "POST",
-        headers: { ...headers, Prefer: "return=minimal" },
-        body: JSON.stringify({
-          type, description: text, context: ctx,
-          image_base64: imageB64 || null, status: "open", submitted_by: userId || null,
-        }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await submitFeedback({ type, description: text, context: ctx, imageBase64: imageB64, accessToken });
       setDone(true);
       setTimeout(close, 1800);
     } catch (e) {
