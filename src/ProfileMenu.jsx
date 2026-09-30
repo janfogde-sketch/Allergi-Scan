@@ -77,7 +77,7 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenBetaInfo 
     {
       label: "UDFORSK",
       items: [
-        { icon:"recipes", label:"Opskrifter", sub:"Find opskrifter der passer til dine allergier", screen: SCREENS.RECIPES },
+        { icon:"recipes", label:"Opskrifter", sub:"Under udvikling", screen: SCREENS.RECIPES },
         { icon:"book", label:"Allergileksikon", sub:"Opslag om allergener, intolerancer, E-numre og kost", screen: SCREENS.KNOWLEDGE },
         { icon:"madpas", label:"Madpas", sub:"Vis dine allergier til restaurantpersonale", screen: SCREENS.MADPAS },
       ],
