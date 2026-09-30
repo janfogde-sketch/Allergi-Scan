@@ -1115,14 +1115,24 @@ body::-webkit-scrollbar{display:none;}
 .recipe-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s;position:relative;}
 .recipe-card:active{transform:scale(.99);}
 .recipe-card:hover{border-color:var(--border2);}
-.recipe-card-img{width:100%;height:180px;object-fit:cover;display:block;background:var(--surface2);}
-.recipe-card-img-placeholder{width:100%;height:140px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:52px;}
-.recipe-card-body{padding:14px 16px 16px;}
-.recipe-card-title{font-size:16px;font-weight:700;color:var(--ink);line-height:1.25;margin-bottom:6px;letter-spacing:-.2px;}
-.recipe-card-desc{font-size:12px;color:var(--ink2);line-height:1.55;margin-bottom:10px;}
+.recipe-card-img{width:100%;height:150px;object-fit:cover;display:block;background:var(--surface2);}
+.recipe-card-img-placeholder{width:100%;height:120px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:52px;}
+.recipe-card-body{padding:12px 14px 14px;}
+.recipe-card-title{font-size:16px;font-weight:700;color:var(--ink);line-height:1.25;margin-bottom:4px;letter-spacing:-.2px;}
+.recipe-card-desc{font-size:12px;color:var(--ink2);line-height:1.5;margin-bottom:10px;}
 .recipe-card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.recipe-pill{font-size:10px;font-weight:700;border-radius:100px;padding:3px 10px;border:1px solid;white-space:nowrap;}
-.recipe-safe-bar{display:flex;gap:6px;flex-wrap:wrap;padding:10px 14px 0;border-top:1px solid var(--border);margin-top:10px;}
+.recipe-pill{display:inline-flex;align-items:center;gap:4px;height:24px;box-sizing:border-box;padding:0 10px;font-size:11px;font-weight:600;line-height:1;border-radius:100px;border:1px solid var(--border);background:var(--surface2);color:var(--ink2);white-space:nowrap;}
+.recipe-safe-bar{display:flex;gap:6px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border);margin-top:10px;}
+/* Opskrifter (30. sept. 2026): sidste kort skal kunne scrolles helt fri af
+   bundnavigationen, også med home-indicator (safe-area) på iPhone. */
+.recipes-screen{padding-bottom:calc(120px + env(safe-area-inset-bottom));}
+.recipe-submit-btn{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;height:32px;padding:0 12px 0 10px;border-radius:100px;border:1px solid var(--border2);background:var(--surface);color:var(--green);font-family:var(--f);font-size:13px;font-weight:700;cursor:pointer;}
+.recipe-submit-btn:active{transform:scale(.97);}
+.recipe-safe-toggle{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid var(--border2);background:var(--surface);color:var(--ink);font-family:var(--f);font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;}
+.recipe-safe-toggle:active{transform:scale(.97);}
+.recipe-safe-toggle-box{width:16px;height:16px;box-sizing:border-box;border-radius:5px;border:1.5px solid var(--border2);background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--on-green);}
+.recipe-safe-toggle.on{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);font-weight:700;}
+.recipe-safe-toggle.on .recipe-safe-toggle-box{border-color:var(--green);background:var(--green);}
 .recipe-profile-badge{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;border:1px solid;}
 .recipe-fav-btn{position:absolute;top:10px;right:10px;z-index:2;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.45);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .15s;}
 .recipe-filter-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none;}
