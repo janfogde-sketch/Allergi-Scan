@@ -17,6 +17,8 @@ import ProductsSection from "./sections/ProductsSection.jsx";
 import KnowledgeSection from "./sections/KnowledgeSection.jsx";
 import HistorySection from "./sections/HistorySection.jsx";
 import FamilySection from "./sections/FamilySection.jsx";
+import ErrorsSection from "./sections/ErrorsSection.jsx";
+import { useClientErrors } from "./useClientErrors.js";
 import GlobalSearchBox from "./GlobalSearchBox.jsx";
 
 export default function AdminApp() {
@@ -27,6 +29,7 @@ export default function AdminApp() {
 
   const admin = useAdmin(accessToken, userId, logout);
   const [section, setSection] = useState("dashboard");
+  const clientErrors = useClientErrors(accessToken);
 
   // ── Manglende EAN'er (porteret fra App.jsx — samme logik) ────────────────
   const [missingEans, setMissingEans] = useState([]);
@@ -136,6 +139,7 @@ export default function AdminApp() {
     if (section === "knowledge") admin.loadKnowledgeEntries();
     if (section === "history") admin.loadRevisionLog();
     if (section === "family") admin.loadFamilyOverview();
+    if (section === "errors") clientErrors.load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section, accessToken, isAdmin]);
 
@@ -293,6 +297,7 @@ export default function AdminApp() {
           loadRevisionLog={admin.loadRevisionLog}
         />
       )}
+      {section === "errors" && <ErrorsSection {...clientErrors} />}
       {section === "family" && (
         <FamilySection
           familyMembers={admin.familyMembers} familyInvites={admin.familyInvites} familyLoading={admin.familyLoading}

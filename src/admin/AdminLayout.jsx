@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { id: "knowledge",   icon: "file",     label: "Leksikon" },
   { id: "submissions", icon: "package",  label: "Indsendelser", badgeKey: "pendingSubmissions" },
   { id: "tickets",     icon: "bug",      label: "Tickets", badgeKey: "openTickets" },
+  { id: "errors",      icon: "warning",  label: "Fejl" },
   { id: "missing",     icon: "info",     label: "Manglende EAN'er" },
   { id: "import",      icon: "download", label: "Import" },
   { id: "recipes",     icon: "book",     label: "Opskrifter" },

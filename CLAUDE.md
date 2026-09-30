@@ -24,7 +24,6 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
    https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X (deling med Bjørn).
 
 *Venter på Jans beslutning:*
-8. Arkitektur-audit "som en senior engineer". Jan: vent.
 9. Leaked Password Protection kræver Supabase Pro (se nedenfor). Jan: vent.
 
 *Skal designes (Bjørns spor):*
@@ -40,6 +39,54 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
     Authentication → Emails → Templates (intet værktøj kan ændre dem
     herfra). Gem gerne den endelige HTML i repoet, fx
     `supabase/templates/`, så den kan versionsstyres.
+
+*Arkitektur-audit (30. sept. 2026):* rapport i
+https://claude.ai/artifact/8sj2uZhFSYy18iVV1upuAL (16 fund + roadmap).
+De tre største risici: ingen backups (Free), skemaet ikke versionsstyret i
+repoet (0 migrationsfiler), intet testmiljø. Tre åbne INSERT-politikker
+blev lukket under auditten (`supabase/sql/2026-09-30_drop_open_insert_policies.sql`).
+**Ny stående regel:** databaseændringer køres som migration (`apply_migration`)
+OG gemmes som fil i repoet i samme omgang, aldrig kun som løs SQL.
+
+*Audit-plan, besluttet af Jan 30. sept.:* Supabase Pro = senere (backups,
+testmiljø og Leaked Password Protection venter); fejlovervågning = egen
+fejltabel i Supabase (ingen tredjepart); feedback uden login beholdes med
+en grænse via edge-funktion; opdeling af ProfileScreen/App.jsx først når
+Bjørn ikke har åbent arbejde (tjek hans PR'er/branches). Rækkefølge:
+1 skema-baseline i `supabase/migrations/`, 2 tests for allergenmotoren
+(fælles kode i `_shared`), 3 fejltabel + visning i admin, 4 feedback-
+grænse, 5 fjern anon-rettigheder på login-tabeller, 6 edge-deploy fra
+repoet via GitHub Action (Jan opretter Supabase-adgangsnøgle som secret),
+7 `npm audit fix`, 8 opdeling. Detaljer i rapporten ovenfor.
+
+**Status 30. sept.: alle 8 er lavet** (commits "A1"–"A8"). Databasedelen
+er allerede live; app-delen kræver merge. Resultat, kort:
+- Migrationer ligger i `supabase/migrations/` (baseline + nye), se README
+  der. Nye ændringer: `apply_migration`, derefter filen med den version,
+  `list_migrations` viser.
+- Allergenmotoren bor i `supabase/functions/_shared/allergenEngine.js`
+  (testet i `src/allergenEngine.test.js`).
+- Fejl fra appen lander i tabellen `client_errors` (RPC
+  `log_client_error`, `src/errorReporter.js`) og vises i admin-panelet
+  under "Fejl". E-mail-triggerne logger også dertil. Undervejs rettet:
+  mailen om godkendt/afvist indsendelse blev aldrig sendt.
+- Feedback går via edge-funktionen `feedback` (grænser: 5/time pr.
+  afsender og 60/time i alt uden login, 20/time med login).
+- Anon har ingen rettigheder til login-tabellerne, og storage-upload
+  kræver login (kun `recipes/`).
+- `.github/workflows/deploy-edge-functions.yml` deployer ændrede
+  funktioner ved merge. `supabase/config.toml` har verify_jwt for alle 20.
+- ProfileScreen er delt i seks skærmfiler; App.jsx har fået
+  `useAdminTools`, `useIncomingLinks`, `useLoadUserData`.
+
+**Åbne efter A1–A8:**
+- Jan: opret GitHub-secret `SUPABASE_ACCESS_TOKEN` (ellers springer
+  workflowet deploy over med en advarsel).
+- Claude, efter merge til main: kør `supabase/pending/
+  feedback_close_direct_insert.sql` som migration og flyt filen til
+  `supabase/migrations/`. Lukker den gamle, direkte INSERT i
+  feedback_tickets. Kør den ikke før, ellers fejler feedback fra den
+  gamle app i produktion.
 
 *Claude gør bagefter:*
 10. Læs testrundens resultater og opret tickets for fejl (når punkt 3
