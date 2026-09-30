@@ -2,7 +2,6 @@
 import { useState, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS } from "./constants.jsx";
 import { makeHeaders, apiCall, stripExcludedENumbers } from "./helpers.js";
-import { sendPushToUser } from "./usePush.js";
 import { showToast } from "./SharedComponents.jsx";
 
 export function useAdmin(accessToken, userId, clearAuth) {
@@ -721,53 +720,9 @@ export function useAdmin(accessToken, userId, clearAuth) {
         }
       }
 
-      const isEdit = submission.type === "edit";
-
-      // Send push til indsender
-      if (submission.submitted_by) {
-        const produktnavn = edited?.name || submission.name || "Dit produkt";
-        await sendPushToUser(
-          submission.submitted_by,
-          isEdit ? "✅ Rettelse godkendt!" : "✅ Produkt godkendt!",
-          isEdit
-            ? `Din rettelse til ${produktnavn} er godkendt. Tak for din hjælp!`
-            : `${produktnavn} er nu tilgængeligt i EatSafe-databasen.`,
-          "https://eatsafe.dk",
-          accessToken,
-          "submission_status",
-        );
-      }
-
-      // Send push til brugere der har scannet samme EAN som NOTFOUND — kun
-      // relevant for helt nye produkter, en rettelse gælder et produkt der
-      // allerede var fundet.
-      const ean = submission.ean;
-      if (ean && !isEdit) {
-        try {
-          const notFoundScanners = await apiCall(
-            `${SUPABASE_URL}/rest/v1/scan_history?ean=eq.${ean}&status=eq.not_found&select=user_id`,
-            { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-          );
-          if (Array.isArray(notFoundScanners)) {
-            const uniqueUserIds = [...new Set(
-              notFoundScanners
-                .map(s => s.user_id)
-                .filter(id => id && id !== submission.submitted_by)
-            )];
-            const produktnavn = edited?.name || submission.name || "Et produkt";
-            for (const uid of uniqueUserIds) {
-              await sendPushToUser(
-                uid,
-                "🎉 Produkt nu tilgængeligt!",
-                `${produktnavn} er nu i EatSafe-databasen — prøv at scanne igen.`,
-                "https://eatsafe.dk",
-                accessToken,
-                "missing_product_found",
-              );
-            }
-          }
-        } catch (e) { console.warn("NOTFOUND push fejl:", e); }
-      }
+      // Beskeder til indsender (N2a/N2b) og til dem der scannede produktet uden
+      // resultat (N4) oprettes af databasen (trigger → notification_events) og
+      // sendes af edge-funktionen `notify` — ikke fra browseren.
     } catch (e) {
       // submission blev fjernet fra listen optimistisk før kaldet ovenfor —
       // uden en synlig fejl her ville den bare forsvinde fra admins syne,
@@ -780,31 +735,32 @@ export function useAdmin(accessToken, userId, clearAuth) {
     }
   };
 
+  // En afvisning skal have en begrundelse: den sendes til indsenderen (N3) og
+  // notifikationen oprettes ikke uden. Enkel dialog indtil et rigtigt felt
+  // designes i afvisnings-fladerne.
+  const askRejectReason = (count = 1) => {
+    const text = window.prompt(
+      count > 1
+        ? `Begrundelse til indsenderne (påkrævet, samme tekst sendes for alle ${count}):`
+        : "Begrundelse til indsenderen (påkrævet — vises i beskeden):",
+      ""
+    );
+    const reason = (text || "").trim();
+    if (!reason) showToast("Afvisning kræver en begrundelse til indsenderen", "error");
+    return reason || null;
+  };
+
   const rejectSubmission = async (id) => {
-    // Slås op FØR den fjernes fra listen nedenfor — bruges til push-
-    // notifikationen til indsenderen, se sendPushToUser-kaldet.
-    const submission = submissions.find(x => x.id === id);
+    const reason = askRejectReason();
+    if (!reason) return;
     setSubmissions(s => s.filter(x => x.id !== id));
     setOpenSubmission(null);
     try {
       await apiCall(`${SUPABASE_URL}/functions/v1/submissions/${id}`, {
         method: "PATCH",
         headers: makeHeaders(accessToken),
-        body: JSON.stringify({ status: "rejected", reviewed_by: userId }),
+        body: JSON.stringify({ status: "rejected", reviewed_by: userId, review_note: reason }),
       });
-      // Send push til indsender — afvisning gav hidtil ingen notifikation
-      // overhovedet, i modsætning til godkendelse (bruger-rapporteret
-      // gennemgangsbehov, 25. sept. 2026).
-      if (submission?.submitted_by) {
-        await sendPushToUser(
-          submission.submitted_by,
-          "Indsendelse ikke godkendt",
-          `Din indsendelse${submission.name ? ` af "${submission.name}"` : ""} blev desværre ikke godkendt.`,
-          "https://eatsafe.dk",
-          accessToken,
-          "submission_status",
-        );
-      }
     } catch (e) {
       console.error("rejectSubmission:", e);
       showToast("Afvisning fejlede: " + e.message + " — indsendelsen er ikke afvist, listen er opdateret", "error");
@@ -893,6 +849,8 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const bulkRejectSubmissions = async () => {
     const ids = [...selectedSubmissionIds];
     if (ids.length === 0) return;
+    const reason = askRejectReason(ids.length);
+    if (!reason) return;
     setBulkActionLoading(true);
     let succeeded = 0, failed = 0;
     for (const id of ids) {
@@ -900,7 +858,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
         await apiCall(`${SUPABASE_URL}/functions/v1/submissions/${id}`, {
           method: "PATCH",
           headers: makeHeaders(accessToken),
-          body: JSON.stringify({ status: "rejected", reviewed_by: userId }),
+          body: JSON.stringify({ status: "rejected", reviewed_by: userId, review_note: reason }),
         });
         succeeded++;
       } catch (e) {

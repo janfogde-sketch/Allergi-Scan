@@ -26,23 +26,6 @@ export function useIncomingLinks({
     // Accepter invitation via RPC
     const acceptInvite = async () => {
       try {
-        // Hent invited_by inden accept så vi kan sende push — via
-        // get_invite_preview()-RPC'en, ikke en direkte tabel-læsning (se
-        // RPC'ens egen kommentar: en bred SELECT-policy på family_invites
-        // ville lade enhver dumpe alle aktive invitations-tokens).
-        let invitedBy = null;
-        try {
-          const inviteData = await apiCall(
-            `${SUPABASE_URL}/rest/v1/rpc/get_invite_preview`,
-            {
-              method: "POST",
-              headers: makeHeaders(accessToken),
-              body: JSON.stringify({ p_token: inviteToken }),
-            }
-          );
-          invitedBy = inviteData?.found ? inviteData.invited_by : null;
-        } catch { /* silent */ }
-
         const data = await apiCall(
           `${SUPABASE_URL}/rest/v1/rpc/accept_family_invite`,
           {
@@ -56,23 +39,7 @@ export function useIncomingLinks({
           loadFamily();
           showToast("🎉 Invitation accepteret! Jeres familieoplysninger er nu delt.");
 
-          // Send push til den der inviterede
-          if (invitedBy && invitedBy !== userId) {
-            const acceptorName = user?.name?.split(" ")[0] || "Et familiemedlem";
-            try {
-              await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
-                method: "POST",
-                headers: { ...makeHeaders(accessToken), "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  user_id: invitedBy,
-                  title: "👨‍👩‍👧 Familie tilsluttet!",
-                  body: `${acceptorName} har accepteret din invitation og er nu en del af din familie i EatSafe.`,
-                  url: "https://eatsafe.dk",
-                  category: "family",
-                }),
-              });
-            } catch { /* silent — push er ikke kritisk */ }
-          }
+          // Beskeden til den der inviterede (N5) oprettes af databasen og sendes af `notify`.
         } else if (data?.error) {
           showToast("Invitation fejlede: " + data.error, "error");
         }
