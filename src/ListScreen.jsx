@@ -16,24 +16,7 @@ const S = {
   mb10:    { marginBottom:10 },
   h13b:    { fontSize:13, fontWeight:700, color:"var(--ink)" },
   sub11:   { fontSize:11, color:"var(--muted)" },
-  hint:    { fontSize:10.5, color:"var(--ink2)", marginTop:4, lineHeight:1.4 },
 };
-
-// Korte, kontekstuelle hints (25. sept. 2026, brugerfeedback: "brug
-// hjælpetekster sparsomt og kun første gang") — vises kun ved brugerens
-// allerførste besøg på Indkøbsliste-skærmen nogensinde (localStorage-flag
-// pr. hint), i stedet for en fuld manual der altid er synlig. Adskilt fra
-// den samlede hjælpesheet (HelpModal, åbnet via "Sådan fungerer listen"
-// nedenfor), som stadig findes for den der aktivt leder efter mere.
-function useFirstTimeHint(key) {
-  const [show] = useState(() => {
-    try { return localStorage.getItem(`as_hint_${key}`) !== "1"; } catch { return true; }
-  });
-  useEffect(() => {
-    if (show) { try { localStorage.setItem(`as_hint_${key}`, "1"); } catch { /* ignoreres */ } }
-  }, []);
-  return show;
-}
 
 function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, grantAccess, revokeAccess, setListType, onClose }) {
   const [access, setAccess]     = useState([]);
@@ -169,8 +152,6 @@ export default function ListScreen({
   const [listPendingDelete, setListPendingDelete] = useState(null);
   const [showClearDoneConfirm, setShowClearDoneConfirm] = useState(false);
 
-  const showListPickerHint = useFirstTimeHint("list_picker");
-  const showShareHint = useFirstTimeHint("list_share");
   const handleToggleItem = (id, wasChecked) => {
     toggleItem(id);
     if (wasChecked) return;
@@ -530,10 +511,6 @@ export default function ListScreen({
             </svg>
           </button>
         </div>
-        {/* Kontekstuelle første-gangs-hints (se useFirstTimeHint ovenfor) —
-            korte, diskrete, vises kun ved allerførste besøg. */}
-        {showListPickerHint && <div style={S.hint}>Flere lister</div>}
-        {showShareHint && <div style={S.hint}>Del listen med familie eller via link</div>}
       </div>
 
       {/* Gjort mere kompakt (29. sept. 2026, "Polér designet på
