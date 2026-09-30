@@ -11,6 +11,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { SUPABASE_URL } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
+import { showToast } from "./SharedComponents.jsx";
 
 // Rækkefølgen her styrer visningsrækkefølgen i UI'et. "welcome" findes også
 // som en reel notifikation (send_welcome_email), men er en engangs-besked
@@ -85,6 +86,7 @@ export function useNotificationPrefs({ accessToken, userId }) {
     } catch (e) {
       console.warn("[useNotificationPrefs] setPref fejl:", e);
       setPrefs(p => ({ ...p, [key]: prev }));
+      showToast("Indstillingen kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error");
     }
     setSavingKeys(s => { const n = { ...s }; delete n[key]; return n; });
   }, [accessToken, userId, prefs]);
