@@ -86,6 +86,15 @@ feedback_tickets er lukket (migration `20260930100707`). Adgangsnøglen
 udløber efter den periode, Jan valgte; når deploy-jobbet fejler med 401/403,
 skal der laves en ny nøgle og secret'en opdateres.
 
+*Notifikationer (Bjørn har godkendt designet, Jan: "Start med trin 1"):* trin 1
+(server-fundament) er lavet lokalt og databasedelen er live (tabeller, triggere,
+cron; push-flaget `notifications_push_enabled` er FRA). Edge-funktionen `notify`
+og appændringer kræver merge og deploy, og `notify` er endnu ikke kørt live.
+Næste: test `notify` efter deploy med markerede testdata (QA-kontoen, mails og
+push slået fra), derefter trin 2 (beskedside/rute i appen), trin 3 (alle
+varianter + mails + nye indstillinger), trin 4 (P1/P3/P6, egne ticket-visninger).
+Detaljer i `src/CONTEXT.md` afsnit 14.
+
 *Claude gør bagefter:*
 10. Læs testrundens resultater og opret tickets for fejl (når punkt 3
     genoptages).
