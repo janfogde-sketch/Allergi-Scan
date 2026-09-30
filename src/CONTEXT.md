@@ -171,7 +171,7 @@ begrundelse.
 | `product_submissions` | id, ean, name, status, submitted_by | |
 | `shopping_lists` | id, owner_id, name, family_id | Realtime aktiveret |
 | `shopping_list_items` | id, list_id, name, checked, added_by, added_at | Realtime aktiveret |
-| `knowledge_base` | id, category, slug, title, summary, description, allergen_ids, risk_level | ~700 entries |
+| `knowledge_base` | id, category, slug, title, summary, description, allergen_ids, status_label (faglig status, fx "Fødevareallergi"), risk_level (ikke længere brugt, alle null siden 30. sept. 2026) | 768 opslag. Kategorier: allergen (EU's 14 + hvede), ingredient (kun ting der kan stå i en ingrediensliste), dish (retter/produkter, kun via søgning), e_number, diet, cross_reaction, faq, fun_fact. Backup før kvalitetssikringen: `knowledge_base_backup_20260930` |
 | `missing_ean_log` | ean, count, first_seen, last_seen | Auto-logget + auto-importeret |
 | `recipes` | id, title, instructions, image_url | ~627 |
 | `client_errors` | id, fingerprint, source, message, stack, screen, occurrences, first_seen, last_seen, status | Fejl fra appen/edge/DB-triggere (30. sept. 2026, A3). Skrives kun via RPC `log_client_error` (også anon; samme fejl inden for 1 time lægges sammen, loft 300 nye rækker/10 min). Kun admin kan læse (RLS). Vises i admin-panelet under "Fejl" |

@@ -834,6 +834,23 @@ slettet permanent fra databasen efter Bjørns valg "Slet helt" (ingen
 backup). Skal funktionen genopstå, skal flaget sættes til true OG
 opskrifterne importeres forfra.
 
+### Allergileksikon kvalitetssikret (30. sept. 2026)
+
+Fagligt stringent struktur, så allergi, intolerance og andre reaktioner ikke
+blandes: **Allergener** = EU's 14 mærkningspligtige allergener + Hvede, hver
+med en neutral "faglig status" (`status_label`, fx "Fødevareallergi",
+"Cøliaki og hvedeallergi", "Overfølsomhed – sjældent allergi"). Laktose er
+flyttet til Ingredienser ("Intolerance – ikke allergi"). **Ingredienser** =
+kun det, der kan stå i en ingrediensliste; færdige retter/produkter ligger
+i kategorien `dish` (ikke en flise i griddet, findes via søgning).
+Risikoniveauer ("Høj risiko"/"Moderat") er fjernet helt (alvor afhænger af
+personen) — genindfør dem ikke uden en klart defineret faglig betydning.
+`allergen_ids` bruger nu `maelkeallergi` for mælkeprotein og `hvede` for
+hvede (før fejlagtigt `laktose`/kun `gluten`). Dubletter slettet, bastante
+sundhedspåstande omskrevet. Migrationer:
+`supabase/migrations/20260930114148_knowledge_base_quality_review.sql` (+ `_2`),
+backup i `knowledge_base_backup_20260930`.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,

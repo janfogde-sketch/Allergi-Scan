@@ -1126,6 +1126,11 @@ body::-webkit-scrollbar{display:none;}
 /* Opskrifter (30. sept. 2026): sidste kort skal kunne scrolles helt fri af
    bundnavigationen, også med home-indicator (safe-area) på iPhone. */
 .recipes-screen{padding-bottom:calc(120px + env(safe-area-inset-bottom));}
+/* Allergileksikon (30. sept. 2026): samme safe-area-bundafstand som Opskrifter,
+   så sidste kort altid kan scrolles helt fri af bundnavigationen. */
+.knowledge-screen{padding-bottom:calc(120px + env(safe-area-inset-bottom));}
+.kb-card{transition:transform .15s;}
+.kb-card:active{transform:scale(.99);}
 .recipe-submit-btn{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;height:32px;padding:0 12px 0 10px;border-radius:100px;border:1px solid var(--border2);background:var(--surface);color:var(--green);font-family:var(--f);font-size:13px;font-weight:700;cursor:pointer;}
 .recipe-submit-btn:active{transform:scale(.97);}
 .recipe-safe-toggle{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid var(--border2);background:var(--surface);color:var(--ink);font-family:var(--f);font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;}
