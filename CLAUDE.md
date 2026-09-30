@@ -20,8 +20,6 @@ når sessionen starter, og spørg hvad der skal tages først. Detaljerne står
 i afsnittene under listen. Opdatér listen, når et punkt er klaret.
 
 *Kun Jan kan gøre det:*
-2. Cloud-miljøet: tillad `eatsafe.dk`, `jegrpcflyguadyxialkm.supabase.co`
-   og `world.openfoodfacts.org` under Network access (B1, se nedenfor).
 3. Del testtjeklisten https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X
    med Bjørn som Contributor, og kør den manuelle testrunde på rigtige
    telefoner.
@@ -60,7 +58,7 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
     `supabase/templates/`, så den kan versionsstyres.
 
 *Claude gør bagefter:*
-10. Luk B1 (`820806b9…`) i `feedback_tickets`, når den er verificeret. Læs testrundens resultater og opret tickets for fejl.
+10. Læs testrundens resultater og opret tickets for fejl.
 
 QA-runden 28.-29. sept.: alle fund Q1–Q14 er rettet og live (PR #372,
 #373, #376), undtagen kJ-dataene i punkt 6. D2 (telefon valgfri) er live
@@ -118,15 +116,13 @@ Begge dele tjekkes nu i appen før oprettelse (`passwordErrorText()` i
 `helpers.js` rettes tilsvarende. Afviser Supabase koden som lækket
 (`weak_password.reasons` indeholder `pwned`), siges det direkte.
 
-**ÅBEN: Fuld E2E-test fra Claude-sandboxen (QA-ticket B1, `820806b9…`).**
-Miljøets netværkspolitik afviser `eatsafe.dk`,
-`jegrpcflyguadyxialkm.supabase.co` og `world.openfoodfacts.org` (403 på
-CONNECT, tjekket igen 29. sept.). Jan skal tilføje dem under miljøets
-indstillinger: cloud-miljø-menuen i sessionens titellinje → Edit →
-Network access. Ændringen gælder nye sessioner. Tjek bagefter med
-`curl -s -o /dev/null -w "%{http_code}" https://eatsafe.dk`. Admin-panelet
-kræver desuden en testkonto med admin-rolle; opret den KUN efter Jans ja.
-Luk B1, når en ny session har kunnet nå alle tre domæner.
+**Netværk (B1) løst 30. sept. 2026.** Cloud-miljøet "Eatsafe" har Network
+access = Custom med `eatsafe.dk`, `www.eatsafe.dk`,
+`jegrpcflyguadyxialkm.supabase.co` og `world.openfoodfacts.org`. Claude-
+sessioner kan derfor nu nå den rigtige app, Supabase og Open Food Facts
+direkte (eatsafe.dk sender videre til www). Ticket `820806b9` er lukket.
+Admin-panelet kræver stadig en testkonto med admin-rolle; opret den KUN
+efter Jans ja.
 Det, som ingen sandbox kan teste (kamera, installation, push, deling
 mellem to konti, login-udbydere, skærmlæser), står i en fælles
 tjekliste: https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X. Status og
