@@ -15,7 +15,13 @@ export const RESEND_TEMPLATES: Record<string, string> = {
   "N6:resolved": "2320eeb2-501d-4fca-827e-093920d4337f",
   "N6:reopened": "9bca4381-9e3f-42f6-ad1a-408c2c83f055",
   "N6:reply": "90abf267-b5d0-4bd9-9e9c-7b40aa26d684",
+  "P2:default": "235f8ca1-fa9b-4095-bfd2-bd1ee8751bf7",
+  "P3:one": "77fab913-e8f3-4271-a824-fc592791ada1",
+  "P3:many": "77fab913-e8f3-4271-a824-fc592791ada1",
 };
+
+/** Varianter, hvis mail kun sendes til modtagere, der ikke fik push (P2: valgfri mail, ikke begge som standard). */
+export const MAIL_ONLY_WITHOUT_PUSH = new Set(["P2:default"]);
 
 export const MAIL_FROM = "EatSafe <noreply@eatsafe.dk>";
 

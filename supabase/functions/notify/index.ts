@@ -17,7 +17,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { renderNotification, MissingRequiredError, productLabel } from "../_shared/notificationContent.js";
 import { sendWebPush, endpointHash } from "../_shared/webpush.ts";
-import { RESEND_TEMPLATES, buildMailVariables, sendTemplateMail } from "../_shared/mailSend.ts";
+import { formatDanishDeadline, summarizeItems } from "../_shared/notifyHelpers.js";
+import { RESEND_TEMPLATES, MAIL_ONLY_WITHOUT_PUSH, buildMailVariables, sendTemplateMail } from "../_shared/mailSend.ts";
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 const APP_URL = "https://www.eatsafe.dk";
@@ -26,13 +27,18 @@ const BATCH = 20;
 
 type EventRow = { id: string; event_key: string; kind: string; payload: Record<string, unknown>; attempts: number };
 type Flags = { push: boolean; email: boolean };
-type Planned = { userId: string; templateKey: string; data: Record<string, unknown>; eventAt?: string };
+type Planned = {
+  userId: string; templateKey: string; data: Record<string, unknown>; eventAt?: string;
+  /** Web Push TTL og udløbstid for pushen (fx P2: kun så længe invitationen er gyldig). */
+  ttlSeconds?: number; pushExpiresAt?: string;
+};
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
 // deno-lint-ignore no-explicit-any
 type Db = any;
+
 
 // ── Hændelse → modtagere + data ─────────────────────────────────────────────
 async function planEvent(db: Db, ev: EventRow): Promise<Planned[]> {
@@ -81,6 +87,39 @@ async function planEvent(db: Db, ev: EventRow): Promise<Planned[]> {
         data: { description: t.description, message: p.message, ticketId: t.id },
       }];
     }
+    case "family_invite_expiring": {
+      const { data: inv } = await db.from("family_invites").select("id, invited_by, status, expires_at").eq("id", p.invite_id).maybeSingle();
+      // Tjek status igen ved afsendelse: accepteret, tilbagekaldt eller udløbet → ingen påmindelse.
+      if (!inv?.invited_by || inv.status !== "pending") return [];
+      const remaining = Math.floor((Date.parse(inv.expires_at) - Date.now()) / 1000);
+      if (!(remaining > 0)) return [];
+      return [{
+        userId: inv.invited_by, templateKey: "P2:default",
+        data: { inviteId: inv.id, expiresAt: formatDanishDeadline(inv.expires_at) },
+        ttlSeconds: Math.min(3600, remaining), pushExpiresAt: inv.expires_at,
+      }];
+    }
+    case "list_items_added": {
+      const { data: list } = await db.from("shopping_lists").select("id, name, owner_id").eq("id", p.list_id).maybeSingle();
+      if (!list) return []; // listen er slettet
+      const since = String(p.window_start ?? "");
+      const { data: items } = await db.from("shopping_list_items").select("name, added_by")
+        .eq("list_id", list.id).gte("added_at", since).not("added_by", "is", null).order("added_at");
+      if (!items?.length) return []; // alle nye varer er fjernet igen
+      const { data: access } = await db.from("shopping_list_access").select("user_id").eq("list_id", list.id);
+      // Modtagere: ejeren og de brugere, der har adgang NU (adgang genvurderes ved afsendelse)
+      const recipients = [...new Set([list.owner_id, ...(access ?? []).map((a: { user_id: string }) => a.user_id)].filter(Boolean))] as string[];
+      const plans: Planned[] = [];
+      for (const userId of recipients) {
+        const theirs = items.filter((i: { added_by: string }) => i.added_by !== userId);
+        if (theirs.length === 0) continue;
+        plans.push({
+          userId, templateKey: theirs.length === 1 ? "P3:one" : "P3:many",
+          data: { listName: list.name, listId: list.id, itemSummary: summarizeItems(theirs.map((i: { name: string }) => i.name)) },
+        });
+      }
+      return plans;
+    }
     default:
       throw new Error(`Ukendt hændelsestype: ${ev.kind}`);
   }
@@ -99,11 +138,15 @@ async function productNameFor(db: Db, s: { product_id?: string | null; ean?: str
 async function deliver(db: Db, ev: EventRow, plan: Planned, flags: Flags): Promise<{ retry: boolean }> {
   const r = renderNotification(plan.templateKey, plan.data);
 
-  // Udviklerpakken: er både push og mail fravalgt for kategorien, oprettes ingen besked.
-  const { data: prefs } = await db.from("notification_preferences").select("channel, enabled")
-    .eq("user_id", plan.userId).eq("category", r.category);
-  const off = (ch: string) => (prefs ?? []).some((x: { channel: string; enabled: boolean }) => x.channel === ch && x.enabled === false);
-  if (off("push") && off("email")) return { retry: false };
+  // Brugerens valg pr. kanal (med kategoriens standard, se notification_enabled() i databasen).
+  // Er både push og mail fravalgt, oprettes ingen besked (udviklerpakken).
+  const enabled = async (channel: string): Promise<boolean> => {
+    const { data, error } = await db.rpc("notification_enabled", { p_user_id: plan.userId, p_category: r.category, p_channel: channel });
+    if (error) throw error;
+    return data !== false;
+  };
+  const [pushOn, emailOn] = [await enabled("push"), await enabled("email")];
+  if (!pushOn && !emailOn) return { retry: false };
 
   const row = {
     user_id: plan.userId, event_id: ev.id, event_key: ev.event_key,
@@ -120,8 +163,9 @@ async function deliver(db: Db, ev: EventRow, plan: Planned, flags: Flags): Promi
   if (!n) throw new Error("Besked blev ikke gemt");
 
   let retry = false;
-  if (flags.push && !off("push")) retry = (await sendPushes(db, ev, plan, r, n.id)) || retry;
-  if (flags.email && !off("email")) retry = (await sendMail(db, plan, r, n.id)) || retry;
+  const willPush = flags.push && pushOn;
+  if (willPush) retry = (await sendPushes(db, ev, plan, r, n.id)) || retry;
+  if (flags.email && emailOn) retry = (await sendMail(db, plan, r, n.id, willPush)) || retry;
   return { retry };
 }
 
@@ -132,6 +176,7 @@ async function sendPushes(db: Db, ev: EventRow, plan: Planned, r: ReturnType<typ
     title: r.title, body: r.pushBody, icon: "/icon-192.png", lang: "da",
     url: `${APP_URL}/?notification=${notificationId}`, notificationId, eventId: ev.id,
     tag: `${r.type}:${r.entityId ?? notificationId}`,
+    ...(plan.pushExpiresAt ? { expiresAt: plan.pushExpiresAt } : {}),
   };
 
   for (const { token } of tokens ?? []) {
@@ -147,7 +192,7 @@ async function sendPushes(db: Db, ev: EventRow, plan: Planned, r: ReturnType<typ
     const res = await sendWebPush(sub, payload, {
       vapidPublicKey: Deno.env.get("VAPID_PUBLIC_KEY")!, vapidPrivateKey: Deno.env.get("VAPID_PRIVATE_KEY")!,
       vapidSubject: Deno.env.get("VAPID_SUBJECT") ?? "mailto:hej@eatsafe.dk",
-      ttlSeconds: r.ttlSeconds,
+      ttlSeconds: plan.ttlSeconds ?? r.ttlSeconds,
     });
     const status = res.ok ? "sent" : res.gone ? "skipped" : "failed";
     await db.from("notification_deliveries").upsert({
@@ -162,9 +207,14 @@ async function sendPushes(db: Db, ev: EventRow, plan: Planned, r: ReturnType<typ
 }
 
 // Mail: én pr. besked (registret forhindrer dobbelt afsendelse), via Resend-skabelonen for varianten.
-async function sendMail(db: Db, plan: Planned, r: ReturnType<typeof renderNotification>, notificationId: string): Promise<boolean> {
+async function sendMail(db: Db, plan: Planned, r: ReturnType<typeof renderNotification>, notificationId: string, pushWasSent: boolean): Promise<boolean> {
   const templateId = RESEND_TEMPLATES[r.key];
   if (!templateId) return false; // varianten har ingen mail (endnu)
+  if (pushWasSent && MAIL_ONLY_WITHOUT_PUSH.has(r.key)) {
+    // Fx P2: mailen er kun til dem uden push (udviklerpakken anbefaler ikke begge som standard).
+    const { count } = await db.from("push_tokens").select("id", { count: "exact", head: true }).eq("user_id", plan.userId);
+    if ((count ?? 0) > 0) return false;
+  }
 
   const { data: prev } = await db.from("notification_deliveries").select("status, attempts")
     .eq("notification_id", notificationId).eq("channel", "email").eq("endpoint", "").maybeSingle();
@@ -248,7 +298,7 @@ Deno.serve(async (req) => {
 
     let q = db.from("notification_events").select("id, event_key, kind, payload, attempts").eq("status", "pending");
     if (body?.event_id) q = q.eq("id", body.event_id);
-    else q = q.lt("created_at", new Date(Date.now() - 15_000).toISOString());
+    else q = q.lt("created_at", new Date(Date.now() - 15_000).toISOString()).lte("available_at", new Date().toISOString());
     const { data: events, error } = await q.order("created_at").limit(BATCH);
     if (error) throw error;
 

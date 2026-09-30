@@ -587,4 +587,18 @@ korte tekst og åbner den fulde, beskyttede besked i appen via
   `src/mailSend.test.js` sikrer, at hver skabeloneks tekst indeholder alle blokke fra appens besked.
   `notification_deliveries.endpoint` er nu NOT NULL ('' for mail) med almindeligt UNIQUE (det gamle
   udtryks-indeks kunne ikke bruges til upsert). **Mail er ikke testet live** (ingen rigtige mails i test).
+- **Trin 3b/3c (kategorier, P2, P3):** fire nye kategorier i `notification_preferences`
+  (`product_changes`, `shared_lists`, `recalls`, `onboarding_reminder`). Standard pr. kategori ligger i
+  `notification_enabled()`: **fra** for `shared_lists` og `onboarding_reminder`, **til** for resten;
+  `notify` bruger funktionen (ikke længere egne tjek), og `useNotificationPrefs.js` skal matche
+  (`defaultOn`). Kun kategorier med `live !== false` vises i Indstillinger (nu: `shared_lists`; de andre
+  tre vises, når P1/P6/P5 sendes). **P2** (invitation udløber): cron `notify-expiring-invites` hvert 10. min
+  finder ventende invitationer med højst 4 timer tilbage (én hændelse pr. invitation); `notify` tjekker
+  status igen, sætter TTL = min(3600, resterende) og `expiresAt` på pushen; beskedsiden skjuler knappen,
+  når invitationen ikke længere er aktiv; mail kun til dem uden push (`MAIL_ONLY_WITHOUT_PUSH`).
+  **P3** (delt liste): trigger på `shopping_list_items` (kun lister delt med nogen andre) giver én hændelse
+  pr. liste pr. 30-min-vindue, udskudt 5 min (`notification_events.available_at`); `notify` tæller pr.
+  modtager varer tilføjet af *andre* (ejer + nuværende adgangsbrugere), varenavne kun i app/mail, ikke i push.
+  Varer tilføjet efter afsendelsen i samme vindue får først en besked, hvis der kommer en ny tilføjelse i
+  næste vindue (bevidst grænse: højst én besked pr. modtager pr. liste pr. 30 min).
 

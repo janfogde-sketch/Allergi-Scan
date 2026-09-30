@@ -650,6 +650,7 @@ export default function EatSafe() {
   const handleNotificationAction = useCallback((action) => {
     if (action?.type === "open_product" && action.params?.ean) lookupProduct(action.params.ean);
     else if (action?.type === "open_family") setScreen(SCREENS.FAMILY);
+    else if (action?.type === "open_list") setScreen(SCREENS.LIST);
     else if (action?.type === "scan") setScreen(SCREENS.HOME);
   }, [lookupProduct, setScreen]);
 

@@ -59,3 +59,23 @@ export async function markNotificationRead(accessToken, id) {
     return false;
   }
 }
+
+/**
+ * Status for en invitation (kun den, der har oprettet den, kan læse den — RLS).
+ * "inactive" = ikke længere ventende eller udløbet; "unknown" ved fejl (knappen vises så som hidtil).
+ */
+export async function fetchInviteStatus(accessToken, inviteId) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/family_invites?select=status,expires_at&id=eq.${encodeURIComponent(inviteId)}&limit=1`,
+      { headers: makeHeaders(accessToken) },
+    );
+    if (!res.ok) return "unknown";
+    const row = (await res.json())?.[0];
+    if (!row) return "inactive";
+    if (row.status !== "pending" || Date.parse(row.expires_at) <= Date.now()) return "inactive";
+    return "active";
+  } catch {
+    return "unknown";
+  }
+}
