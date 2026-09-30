@@ -502,6 +502,20 @@ export function computeProfileResults(profiles, { allergen_flags, ingredients, n
   });
 }
 
+// Statuslinje-tekst for en konflikt i lister (indkøbsliste, historik,
+// favoritter, søgning). Nævner også profiler med en advarsel (fx spor), når
+// en anden profil har en egentlig konflikt — ellers skjulte "Konflikt for
+// Mia" at produktet også kunne indeholde spor af noget, brugeren selv skal
+// undgå (live-test 30. sept. 2026). Returnerer null, når ingen har konflikt.
+export function profileConflictLabel(results, { maxNames = Infinity, manyText = "Passer ikke til valgte profiler" } = {}) {
+  const first = r => (r.name || "").split(" ")[0];
+  const danger = results.filter(r => r.status === "danger").map(first);
+  if (danger.length === 0) return null;
+  const warn = results.filter(r => r.status === "warn").map(first);
+  const main = danger.length <= maxNames ? `Konflikt for ${danger.join(", ")}` : manyText;
+  return warn.length ? `${main} · advarsel for ${warn.join(", ")}` : main;
+}
+
 // ─── PRODUKTRESULTAT: KATEGORISEREDE FUND (28. sept. 2026) ──────────────────
 // FINAL PRODUCT RESULT PAGE — ét genbrugeligt, data-drevet lag der grupperer
 // et allerede-beregnet scan-resultats matches (matchedDanger/matchedWarning

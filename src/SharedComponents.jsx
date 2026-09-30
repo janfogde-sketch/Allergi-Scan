@@ -2,7 +2,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, PAGE_IDS } from "./constants.jsx";
-import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers } from "./helpers.js";
+import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers, profileConflictLabel } from "./helpers.js";
 import { isAllergenWord, keywordMatches } from "./allergenKeywords.js";
 import { UI } from "./styleUtils.js";
 import eatsafeLogoHorizontal from "./assets/logo/eatsafe-logo-horizontal.svg";
@@ -682,10 +682,9 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
       allergen_flags: p.allergen_flags, ingredients: ingredientsText, nutrition: p.nutrition,
       productENumbers: extractENumbers(ingredientsText),
     });
-    const dangerNames = results.filter(r => r.status === "danger").map(r => r.name.split(" ")[0]);
-    status = dangerNames.length > 0 ? "danger" : results.some(r => r.status === "warn") ? "warn" : "safe";
-    statusLabel = dangerNames.length > 0 ? `Konflikt for ${dangerNames.join(", ")}`
-      : status === "warn" ? "Kan ikke afgøres sikkert" : "Matcher alle profiler";
+    const conflict = profileConflictLabel(results);
+    status = conflict ? "danger" : results.some(r => r.status === "warn") ? "warn" : "safe";
+    statusLabel = conflict || (status === "warn" ? "Kan ikke afgøres sikkert" : "Matcher alle profiler");
     reasonChips = [...new Set(results.flatMap(r => r.reasons).map(explicitReason))];
   } else {
     const cmp = compareAllergens(p.allergen_flags||{}, effectiveIds);

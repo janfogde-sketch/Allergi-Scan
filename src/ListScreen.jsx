@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
-import { compareAllergens, normalizeProductFlagsFor, productDisplayName, logSearchSelection, apiCall, makeHeaders, extractENumbers, buildActiveProfileList, computeProfileResults } from "./helpers.js";
+import { compareAllergens, normalizeProductFlagsFor, productDisplayName, logSearchSelection, apiCall, makeHeaders, extractENumbers, buildActiveProfileList, computeProfileResults, profileConflictLabel } from "./helpers.js";
 import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -283,8 +283,8 @@ export default function ListScreen({
       allergen_flags: normalizeProductFlagsFor(product), ingredients: ingredientsText, nutrition: product.nutrition,
       productENumbers: extractENumbers(ingredientsText),
     });
-    const dangerNames = results.filter(r => r.status === "danger").map(r => r.name.split(" ")[0]);
-    if (dangerNames.length > 0) return { status:"danger", text: `Konflikt for ${dangerNames.join(", ")}` };
+    const conflict = profileConflictLabel(results);
+    if (conflict) return { status:"danger", text: conflict };
     if (results.some(r => r.status === "warn")) return { status:"warn", text: "Kan ikke afgøres sikkert" };
     // Ordlyden er den eksplicitte spec (25. sept. 2026, brugerfeedback) —
     // "Matcher alle profiler" uanset om det reelt kun er én aktiv profil,

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall, buildActiveProfileList, computeProfileResults, extractENumbers, normalizeProductFlagsFor, addUniqueCustom } from "./helpers.js";
+import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall, buildActiveProfileList, computeProfileResults, profileConflictLabel, extractENumbers, normalizeProductFlagsFor, addUniqueCustom } from "./helpers.js";
 import { EatSafeLogo, Icon, ProductImage, showToast, ConfirmDialog, AllergenGlyph } from "./SharedComponents.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { TextLink, Accordion } from "./DesignSystem.jsx";
@@ -488,10 +488,8 @@ export default function ProfileScreen({
     if (profiles.length === 0) return { status:null, text:null, checkedFor: null };
     const flags = h.flags_triggered || {};
     const results = computeProfileResults(profiles, { allergen_flags: flags, ingredients:"", nutrition:null, productENumbers:[] });
-    const dangerNames = results.filter(r => r.status === "danger").map(r => r.name.split(" ")[0]);
-    if (dangerNames.length > 0) {
-      return { status:"danger", text: dangerNames.length <= 2 ? `Konflikt for ${dangerNames.join(", ")}` : "Passer ikke til valgte profiler", checkedFor };
-    }
+    const conflict = profileConflictLabel(results, { maxNames: 2 });
+    if (conflict) return { status:"danger", text: conflict, checkedFor };
     if (results.some(r => r.status === "warn")) return { status:"warn", text:"Kan ikke afgøres sikkert", checkedFor };
     return { status:"safe", text:"Matcher valgte profiler", checkedFor };
   };
@@ -555,10 +553,8 @@ export default function ProfileScreen({
       allergen_flags: normalizeProductFlagsFor(f), ingredients: ingredientsText, nutrition: f.nutrition,
       productENumbers: f.productENumbers?.length ? f.productENumbers : extractENumbers(ingredientsText),
     });
-    const dangerNames = results.filter(r => r.status === "danger").map(r => r.name.split(" ")[0]);
-    if (dangerNames.length > 0) {
-      return { status:"danger", text: dangerNames.length <= 2 ? `Konflikt for ${dangerNames.join(", ")}` : "Passer ikke til valgte profiler" };
-    }
+    const conflict = profileConflictLabel(results, { maxNames: 2 });
+    if (conflict) return { status:"danger", text: conflict };
     if (results.some(r => r.status === "warn")) return { status:"warn", text:"Kan ikke afgøres sikkert" };
     return { status:"safe", text:"Matcher valgte profiler" };
   };

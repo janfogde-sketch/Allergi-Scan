@@ -16,6 +16,7 @@ import {
   verifiedBadge,
   isValidEanChecksum,
 } from "./helpers.js";
+import { profileConflictLabel } from "./helpers.js";
 
 describe("isValidEanChecksum", () => {
   it("accepts a real EAN-13 with a correct check digit", () => {
@@ -305,5 +306,18 @@ describe("passwordErrorText", () => {
   });
   it("beder om en kode når feltet er tomt", () => {
     expect(passwordErrorText("")).toContain(PASSWORD_REQUIREMENTS_TEXT);
+  });
+});
+
+describe("profileConflictLabel", () => {
+  const r = (name, status) => ({ name, status });
+  it("returns null when nobody has a conflict", () => {
+    expect(profileConflictLabel([r("Jan Fogde", "warn"), r("Mia", "safe")])).toBeNull();
+  });
+  it("also names profiles with a warning when another profile has a conflict", () => {
+    expect(profileConflictLabel([r("Jan Fogde", "warn"), r("Mia", "danger")])).toBe("Konflikt for Mia · advarsel for Jan");
+  });
+  it("uses the summary text above maxNames", () => {
+    expect(profileConflictLabel([r("A", "danger"), r("B", "danger"), r("C", "danger")], { maxNames: 2 })).toBe("Passer ikke til valgte profiler");
   });
 });
