@@ -549,7 +549,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
       if (cat && cat !== "all") filters.push(`category=eq.${cat}`);
       const filter = filters.length ? filters.join("&") + "&" : "";
       const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/knowledge_base?${filter}select=id,category,title,slug,emoji,summary,risk_level,updated_at&order=sort_order.asc,title.asc&limit=100`,
+        `${SUPABASE_URL}/rest/v1/knowledge_base?${filter}select=id,category,title,slug,emoji,summary,status_label,updated_at&order=sort_order.asc,title.asc&limit=100`,
         { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
       );
       setKnowledgeEntries(Array.isArray(data) ? data : []);
@@ -573,7 +573,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
       setEditingKnowledgeEntry({
         category: full.category, title: full.title, slug: full.slug, emoji: full.emoji || "",
         summary: full.summary || "", description: full.description || "", health_notes: full.health_notes || "",
-        risk_level: full.risk_level || "", sort_order: full.sort_order ?? 0,
+        status_label: full.status_label || "", sort_order: full.sort_order ?? 0,
         ...kbArraysToText(full),
       });
     } catch (e) {
@@ -586,7 +586,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
     setOpenKnowledgeEntry({ id: null, isNew: true });
     setEditingKnowledgeEntry({
       category: "ingredient", title: "", slug: "", emoji: "", summary: "", description: "", health_notes: "",
-      risk_level: "", sort_order: 0, found_in: "", alternatives: "", diet_tags: "", allergen_ids: "", aliases: "", tags: "", sources: "",
+      status_label: "", sort_order: 0, found_in: "", alternatives: "", diet_tags: "", allergen_ids: "", aliases: "", tags: "", sources: "",
     });
   };
 
@@ -605,7 +605,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
         summary: editingKnowledgeEntry.summary || null,
         description: editingKnowledgeEntry.description || null,
         health_notes: editingKnowledgeEntry.health_notes || null,
-        risk_level: editingKnowledgeEntry.risk_level || null,
+        status_label: editingKnowledgeEntry.status_label?.trim() || null,
         sort_order: editingKnowledgeEntry.sort_order || 0,
         ...kbTextToArrays(editingKnowledgeEntry),
       });

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback } from "react";
-import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS, ALLERGENS } from "./constants.jsx";
 import { Icon, EmptyState, ScrollToTop } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -31,19 +31,21 @@ const CATEGORIES = [
 // CAT_MAP så kategori-labelen på en FAQ-detaljeside ("OFTE STILLEDE
 // SPØRGSMÅL") kan slås op ét sted, ikke en selvstændig kopi af opslaget.
 const FAQ_CATEGORY = { id:"faq", icon:"message", label:"Ofte stillede spørgsmål", color:"var(--neutral)", bg:"rgba(148,163,184,.10)" };
-const CAT_MAP = Object.fromEntries([...CATEGORIES, FAQ_CATEGORY].map(c => [c.id, c]));
+// Faglig struktur (30. sept. 2026): "Ingredienser" indeholder kun det, der kan
+// stå i en ingrediensliste (råvarer, forarbejdede ingredienser, krydderier,
+// saucer brugt som ingrediens). Færdige retter, bagværk, slik, drikkevarer og
+// færdigprodukter ligger i "dish" — ikke en flise i griddet, men de kan stadig
+// findes via søgning og relaterede opslag.
+const DISH_CATEGORY = { id:"dish", icon:"tag", label:"Retter og produkter", color:"var(--neutral)", bg:"rgba(148,163,184,.10)" };
+const CAT_MAP = Object.fromEntries([...CATEGORIES, FAQ_CATEGORY, DISH_CATEGORY].map(c => [c.id, c]));
 
-// Konsekvent risiko-farvesystem (26. sept. 2026, opfølgning) — grøn/orange/
-// rød for lav/moderat/høj, samme tre farver appen allerede bruger semantisk
-// alle andre steder (Historik/Indkøbsliste/Favoritter-statuslinjer). "low"
-// manglede helt tidligere (blev fejlagtigt farvet som "moderat"), selvom
-// knowledge_base rent faktisk bruger den flittigt (fx 103 af 247 E-numre har
-// risk_level:"low"). "none"/null giver bevidst INGEN badge, se brugsstederne.
-const RISK_META = {
-  high:   { label:"Høj risiko",  color:"var(--red)",   bg:"var(--red-lt)",   border:"var(--red-md)" },
-  medium: { label:"Moderat",     color:"var(--amber)", bg:"var(--amber-lt)", border:"var(--amber-md)" },
-  low:    { label:"Lav risiko",  color:"var(--green)", bg:"var(--green-lt)", border:"rgba(14,143,90,.2)" },
-};
+// Risikoniveauer ("Høj risiko"/"Moderat"/"Lav risiko") er fjernet 30. sept.
+// 2026: de kunne læses som en universel medicinsk vurdering, men hvor alvorlig
+// en reaktion er, afhænger af personen. I stedet viser et opslag en neutral
+// "faglig status" (knowledge_base.status_label), fx "Fødevareallergi",
+// "Cøliaki og hvedeallergi" eller "Intolerance – ikke allergi", så allergi,
+// intolerance og andre reaktionstyper ikke blandes sammen.
+const ALLERGEN_LABEL = Object.fromEntries(ALLERGENS.map(a => [a.id, a.label]));
 
 // Læsevenlige kildenavne i stedet for rå URL'er (26. sept. 2026,
 // opfølgning) — fallback til selve domænet for ukendte kilder, så en
@@ -66,7 +68,7 @@ const S = {
   grid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:18 },
   catBtn: { display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" },
   catBtnActive: (c) => ({ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:c.bg, border:`1px solid ${c.color}33`, borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" }),
-  catIconBox: (c) => ({ width:32, height:32, borderRadius:9, background:c.bg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }),
+  catIconBox: (c) => ({ width:32, height:32, borderRadius:10, background:c.bg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }),
   catLabel: { fontSize:12, fontWeight:700, color:"var(--ink)" },
   catLabelActive: (c) => ({ fontSize:12, fontWeight:700, color:c.color }),
   catCount: { fontSize:10, color:"var(--muted)", marginTop:1 },
@@ -77,19 +79,22 @@ const S = {
   // mere kompakte") — reduceret padding/gap/ikonstørrelse ift. den første
   // redesign-runde. cardSummary er nu clamped til 2 linjer med ellipsis —
   // fuld forklaring hører kun hjemme på detaljesiden.
-  card: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"10px 12px", marginBottom:6, display:"flex", alignItems:"flex-start", gap:9, cursor:"pointer" },
-  cardIconBox: (c) => ({ width:32, height:32, borderRadius:8, background:c.bg||"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }),
-  cardTitle: { fontSize:13.5, fontWeight:700, color:"var(--ink)", marginBottom:2 },
-  cardSummary: { fontSize:11.5, color:"var(--muted2)", lineHeight:1.4, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" },
-  // Farvet prik ALDRIG alene (26. sept. 2026, brugerfeedback) — altid parret
-  // med tydelig tekst ("Høj risiko"/"Moderat"/"Lav risiko"), samme ikon+
-  // tekst+farve-princip som resten af appens statuslinjer.
-  riskRow: (level) => ({ display:"flex", alignItems:"center", gap:4, marginTop:4, fontSize:10.5, fontWeight:700, color: RISK_META[level]?.color || "var(--muted)" }),
+  // Ét fælles kort for alle opslag (30. sept. 2026): ikon · titel · kort
+  // forklaring · evt. faglig status · chevron — samme padding, radius og
+  // teksthierarki i alle kategorier, søgeresultater og relaterede opslag.
+  card: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px", marginBottom:8, display:"flex", alignItems:"flex-start", gap:10, cursor:"pointer" },
+  cardIconBox: (c) => ({ width:32, height:32, borderRadius:10, background:c.bg||"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }),
+  cardTitle: { fontSize:14, fontWeight:700, color:"var(--ink)", lineHeight:1.3, marginBottom:2 },
+  cardSummary: { fontSize:12, color:"var(--muted2)", lineHeight:1.45, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" },
+  cardStatus: { display:"inline-block", marginTop:6, fontSize:11, fontWeight:600, color:"var(--ink2)", background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:100, padding:"2px 8px" },
+  cardChevron: { alignSelf:"center", flexShrink:0, display:"flex" },
   label: { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:10 },
   backBtn: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, flexShrink:0 },
   section: { marginBottom:16 },
   sectionLabel: { fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"1.4px", color:"var(--neutral)", marginBottom:8 },
-  sectionText: { fontSize:13, color:"var(--ink2)", lineHeight:1.6 },
+  // pre-line: beskrivelser kan bestå af flere afsnit adskilt af tomme linjer
+  // (fx Glutenholdige kornsorter: cøliaki / hvedeallergi / glutenfølsomhed).
+  sectionText: { fontSize:13, color:"var(--ink2)", lineHeight:1.6, whiteSpace:"pre-line" },
   pillRow: { display:"flex", flexWrap:"wrap", gap:6 },
   pill: (bg, color, border) => ({ fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:100, background:bg, color, border:`1px solid ${border}` }),
   healthBox: { background:"rgba(232,168,124,.10)", border:"1px solid rgba(232,168,124,.18)", borderRadius:12, padding:"12px 14px", marginBottom:16 },
@@ -105,6 +110,23 @@ const S = {
 // som standard, fremfor en fabrikeret "Mere om X"-sektion bygget på en
 // gættet midt-i-sætningen-deling af samme tekst.
 const DESC_CLAMP_THRESHOLD = 220;
+
+// Fælles opslagskort — bruges af kategorilister, søgeresultater, krydsreaktioner
+// på en detaljeside og "Vidste du at"-teaserne, så alle følger samme struktur.
+function EntryCard({ entry, cat, onOpen, style }) {
+  return (
+    <div role="button" tabIndex={0} className="kb-card" style={style ? { ...S.card, ...style } : S.card} onClick={onOpen}
+      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(); } }}>
+      <div style={S.cardIconBox(cat)}><Icon name={cat.icon||"book"} size={16} color={cat.color||"var(--ink2)"} /></div>
+      <div style={UI.flexMin}>
+        <div style={S.cardTitle}>{entry.title}</div>
+        {entry.summary && <div style={S.cardSummary}>{entry.summary}</div>}
+        {entry.status_label && <div style={S.cardStatus}>{entry.status_label}</div>}
+      </div>
+      <div style={S.cardChevron}><Icon name="chevronRight" size={14} color="var(--muted)" /></div>
+    </div>
+  );
+}
 
 export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
   const { accessToken } = useAuthContext();
@@ -195,8 +217,11 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
     }
     (async () => {
       try {
-        const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?allergen_ids=ov.${encodeURIComponent(`{${allergenId}}`)}&category=not.in.(fun_fact,cross_reaction)&order=category.asc,title.asc&limit=8`);
-        if (Array.isArray(data)) setRelatedEntries(data.filter(x => x.id !== selectedEntry.id).slice(0,6));
+        const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?allergen_ids=ov.${encodeURIComponent(`{${allergenId}}`)}&category=not.in.(fun_fact,cross_reaction)&order=title.asc&limit=40`);
+        // Forklarende opslag først, konkrete retter/produkter sidst.
+        const rank = { allergen:0, faq:1, diet:2, ingredient:3, e_number:4, dish:5 };
+        if (Array.isArray(data)) setRelatedEntries(data.filter(x => x.id !== selectedEntry.id)
+          .sort((a,b) => (rank[a.category] ?? 9) - (rank[b.category] ?? 9)).slice(0,6));
       } catch { /* ikke-kritisk */ }
     })();
   }, [selectedEntry, doFetch]);
@@ -216,7 +241,10 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
     setLoading(true); setError(null);
     try {
       const enc = encodeURIComponent(`%${q}%`);
-      const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?or=(title.ilike.${enc},summary.ilike.${enc})&order=category.asc,sort_order.asc&limit=50`);
+      // Er en kategori valgt, søges der kun i den — ellers passer filterchippen
+      // og resultatantallet ikke til listen.
+      const catFilter = selectedCategory ? `&category=eq.${selectedCategory}` : "";
+      const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?or=(title.ilike.${enc},summary.ilike.${enc})${catFilter}&order=category.asc,sort_order.asc&limit=50`);
       setEntries(Array.isArray(data) ? data : []);
     } catch (e) { setError(`Søg: ${e.message}`); setEntries([]); }
     setLoading(false);
@@ -241,12 +269,10 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
   // ── Detail view ──────────────────────────────────────────────────────────
   if (selectedEntry) {
     const cat = CAT_MAP[selectedEntry.category] || {};
-    const risk = RISK_META[selectedEntry.risk_level];
-    const AN = { gluten:"Gluten",laktose:"Laktose/Mælk",aeg:"Æg",noedder:"Nødder",jordnoedder:"Jordnødder",soja:"Soja",fisk:"Fisk",skaldyr:"Skaldyr",selleri:"Selleri",sennep:"Sennep",sesam:"Sesam",svovl:"Svovl/Sulfitter",lupin:"Lupin",bloeddyr:"Bløddyr" };
     const desc = selectedEntry.description || "";
     const descIsLong = desc.length > DESC_CLAMP_THRESHOLD;
     return (
-      <div className="screen fade-in">
+      <div className="screen fade-in knowledge-screen">
         {/* Tydelig tilbageknap øverst til venstre + kategori-label OVER
             titlen (fx "ALLERGENER"). */}
         <div style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 0 8px" }}>
@@ -266,9 +292,9 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           </div>
           <div style={{ fontSize:22, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>{selectedEntry.title}</div>
           {selectedEntry.summary && <div style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.55, marginBottom:16 }}>{selectedEntry.summary}</div>}
-          {risk && (
-            <span style={{ ...S.pill(risk.bg, risk.color, risk.border), display:"inline-flex", alignItems:"center", gap:6 }}>
-              <Icon name="warning" size={11} color={risk.color} /> {risk.label}
+          {selectedEntry.status_label && (
+            <span style={{ ...S.pill("var(--surface2)","var(--ink2)","var(--border)"), display:"inline-flex", alignItems:"center", gap:6 }}>
+              <Icon name="info" size={11} color="var(--ink2)" /> {selectedEntry.status_label}
             </span>
           )}
         </div>
@@ -294,7 +320,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
         {selectedEntry.health_notes && <div style={S.healthBox}><div style={{ ...S.sectionLabel, color:"var(--warm)", display:"flex", alignItems:"center", gap:6 }}><Icon name="info" size={12} color="var(--warm)" /> Sundhedsnote</div><div style={S.sectionText}>{selectedEntry.health_notes}</div></div>}
 
         {Array.isArray(selectedEntry.allergen_ids) && selectedEntry.allergen_ids.length > 0 && (
-          <div style={S.section}><div style={S.sectionLabel}>Allergener</div><div style={S.pillRow}>{selectedEntry.allergen_ids.map(a => <span key={a} style={{ ...S.pill("var(--red-lt)","var(--red)","var(--red-md)"), display:"inline-flex", alignItems:"center", gap:4 }}><Icon name="warning" size={10} color="var(--red)" /> {AN[a]||a}</span>)}</div></div>
+          <div style={S.section}><div style={S.sectionLabel}>Relevant ved</div><div style={S.pillRow}>{selectedEntry.allergen_ids.map(a => <span key={a} style={S.pill("var(--surface)","var(--ink2)","var(--border)")}>{ALLERGEN_LABEL[a]||a}</span>)}</div></div>
         )}
 
         {Array.isArray(selectedEntry.found_in) && selectedEntry.found_in.length > 0 && (
@@ -317,14 +343,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
             {crossReactions.map(x => {
               const xCat = CAT_MAP[x.category] || CAT_MAP.cross_reaction;
               return (
-                <div key={x.id} style={{ ...S.card, marginBottom:6 }} onClick={() => setSelectedEntry(x)}>
-                  <div style={S.cardIconBox(xCat)}><Icon name={xCat.icon} size={15} color={xCat.color} /></div>
-                  <div style={UI.flexMin}>
-                    <div style={{ ...S.cardTitle, fontSize:13, marginBottom:1 }}>{x.title}</div>
-                    {x.summary && <div style={S.cardSummary}>{x.summary}</div>}
-                  </div>
-                  <Icon name="chevronRight" size={14} color="var(--muted)" />
-                </div>
+                <EntryCard key={x.id} entry={x} cat={xCat} onOpen={() => setSelectedEntry(x)} />
               );
             })}
           </div>
@@ -392,11 +411,6 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           Indholdet på denne side er vejledende og erstatter ikke professionel lægelig rådgivning.
         </div>
 
-        {/* Safe-area-bevidst bundplads (26. sept. 2026, opfølgning: "sidste
-            element skal altid kunne scrolles helt fri af navigationen") —
-            lagt OVEN PÅ den delte .screen-klasses faste 110px bundpadding,
-            ikke en erstatning for den (den er fælles for alle skærme). */}
-        <div style={{ height:"calc(40px + env(safe-area-inset-bottom))" }} />
       </div>
     );
   }
@@ -407,7 +421,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
   const selectedCat = selectedCategory ? CAT_MAP[selectedCategory] : null;
 
   return (
-    <div className="screen fade-in">
+    <div className="screen fade-in knowledge-screen">
       <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Allergileksikon</div>
       <div className="screen-sub">{total} opslag</div>
 
@@ -458,13 +472,13 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
 
       {/* Filter-header */}
       {showList && (
-        <div style={UI.udflex_aicenter_g8_mb12}>
+        <div style={{ display:"flex", alignItems:"center", gap:10, minHeight:32, marginBottom:12 }}>
           {selectedCategory && (
-            <button onClick={() => handleCatSelect(null)} aria-label={`Ryd kategori-filter: ${selectedCat?.label}`} style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", background:selectedCat?.bg, border:`1px solid ${selectedCat?.color}33`, borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700, color:selectedCat?.color, fontFamily:"var(--f)" }}>
-              <Icon name={selectedCat?.icon} size={12} color={selectedCat?.color} /> {selectedCat?.label} ×
+            <button onClick={() => handleCatSelect(null)} aria-label={`Ryd kategori-filter: ${selectedCat?.label}`} style={{ display:"inline-flex", alignItems:"center", gap:6, height:32, padding:"0 12px", background:selectedCat?.bg, border:`1px solid ${selectedCat?.color}33`, borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700, color:selectedCat?.color, fontFamily:"var(--f)", lineHeight:1 }}>
+              <Icon name={selectedCat?.icon} size={12} color={selectedCat?.color} /> {selectedCat?.label} <span aria-hidden="true" style={{ fontSize:14, marginLeft:2 }}>×</span>
             </button>
           )}
-          <div style={UI.ufs12_cmuted}>{entries.length} resultater</div>
+          {!loading && <div style={UI.ufs12_cmuted}>{entries.length} {entries.length === 1 ? "resultat" : "resultater"}</div>}
         </div>
       )}
 
@@ -472,7 +486,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
       {showList && (loading ? (
         <div className="fade-in">
           {[1,2,3,4,5].map(i => (
-            <div key={i} className="skeleton-card" style={{ display:"flex", gap:9, marginBottom:6 }}>
+            <div key={i} className="skeleton-card" style={{ display:"flex", gap:10, marginBottom:8 }}>
               <div className="skeleton-block" style={{ width:32, height:32, borderRadius:8, flexShrink:0 }} />
               <div style={UI.flex1}>
                 <div className="skeleton-block skeleton-title" />
@@ -482,28 +496,11 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           ))}
         </div>
       ) : entries.length === 0 ? (
-        <EmptyState icon={<Icon name="search" size={26} color="var(--muted)" />} text="Ingen resultater" sub={searchQuery ? "Prøv et andet søgeord" : "Ingen entries i denne kategori endnu"} />
+        <EmptyState icon={<Icon name="search" size={26} color="var(--muted)" />} text="Ingen resultater" sub={searchQuery ? "Prøv et andet søgeord" : "Ingen opslag i denne kategori endnu"} />
       ) : (
-        <div>{entries.map(entry => {
-          const cat = CAT_MAP[entry.category] || {};
-          const risk = RISK_META[entry.risk_level];
-          return (
-            <div key={entry.id} style={S.card} onClick={() => setSelectedEntry(entry)}>
-              <div style={S.cardIconBox(cat)}><Icon name={cat.icon||"book"} size={16} color={cat.color||"var(--ink2)"} /></div>
-              <div style={UI.flexMin}>
-                <div style={S.cardTitle}>{entry.title}</div>
-                {entry.summary && <div style={S.cardSummary}>{entry.summary}</div>}
-                {/* Farvet prik ALDRIG alene — altid parret med tydelig tekst. */}
-                {risk && (
-                  <div style={S.riskRow(entry.risk_level)}>
-                    <Icon name="warning" size={10} color="currentColor" /> {risk.label}
-                  </div>
-                )}
-              </div>
-              <Icon name="chevronRight" size={14} color="var(--muted)" />
-            </div>
-          );
-        })}</div>
+        <div>{entries.map(entry => (
+          <EntryCard key={entry.id} entry={entry} cat={CAT_MAP[entry.category] || {}} onOpen={() => setSelectedEntry(entry)} />
+        ))}</div>
       ))}
 
       {/* Fun facts på forsiden — kompakte teaser-cards, maks. 3 stk. (26.
@@ -518,14 +515,8 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           {funFacts.slice(0,3).map(f => {
             const fCat = CAT_MAP[f.category] || CAT_MAP.fun_fact;
             return (
-              <div key={f.id} onClick={() => setSelectedEntry(f)}
-                style={{ background:"rgba(232,168,124,.10)", border:"1px solid rgba(232,168,124,.18)", borderRadius:12, padding:"10px 12px", cursor:"pointer", display:"flex", gap:9, alignItems:"flex-start", marginBottom:6 }}>
-                <div style={S.cardIconBox(fCat)}><Icon name={fCat.icon} size={15} color={fCat.color} /></div>
-                <div style={UI.flexMin}>
-                  <div style={{ fontSize:12.5, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{f.title}</div>
-                  <div style={S.cardSummary}>{f.summary}</div>
-                </div>
-              </div>
+              <EntryCard key={f.id} entry={f} cat={fCat} onOpen={() => setSelectedEntry(f)}
+                style={{ background:"rgba(232,168,124,.10)", border:"1px solid rgba(232,168,124,.18)" }} />
             );
           })}
           <button onClick={() => handleCatSelect("fun_fact")}
@@ -535,8 +526,6 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
         </div>
       )}
 
-      {/* Safe-area-bevidst bundplads, se samme note på detaljesiden. */}
-      <div style={{ height:"calc(20px + env(safe-area-inset-bottom))" }} />
       {showList && <ScrollToTop />}
     </div>
   );
