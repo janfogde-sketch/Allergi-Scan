@@ -20,8 +20,8 @@ når sessionen starter, og spørg hvad der skal tages først. Detaljerne står
 i afsnittene under listen. Opdatér listen, når et punkt er klaret.
 
 *Kun Jan kan gøre det:*
-1. Supabase Dashboard: tjek SMTP-indstillingerne, og slå derefter
-   "Confirm email" til (D1, se "ÅBEN: Slå e-mailbekræftelse til" nedenfor).
+1. Supabase Dashboard: slå "Confirm email" til (D1, se "ÅBEN: Slå
+   e-mailbekræftelse til" nedenfor). SMTP er sat op 30. sept.
 2. Cloud-miljøet: tillad `eatsafe.dk`, `jegrpcflyguadyxialkm.supabase.co`
    og `world.openfoodfacts.org` under Network access (B1, se nedenfor).
 3. Del testtjeklisten https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X
@@ -99,11 +99,14 @@ afsnittet bagefter.
    er kørt. Velkomstmailen sendes nu først ved bekræftelse, verificeret
    mod de live triggere i en tilbagerullet test.
 2. ✅ *Gjort 29. sept.:* app-delen er merget og live (PR #377).
-3. *(Jan, Supabase Dashboard)* Authentication → Emails → SMTP Settings:
-   bekræft at egen SMTP (formentlig Resend) er slået til. Uden den sender
-   Supabase kun mails til teamets egne adresser, og så kan ingen nye
-   brugere bekræfte deres konto. Den er formentlig sat op, for der blev
-   sendt en nulstillingsmail til en adresse uden for teamet 25. sept.
+3. ✅ *Gjort 30. sept.:* egen SMTP via Resend (`smtp.resend.com:465`,
+   bruger `resend`, afsender `noreply@eatsafe.dk`). Indtil da kørte
+   projektet på Supabases indbyggede mailtjeneste, som KUN sender til
+   teamets egne adresser (så "Glemt adgangskode" virkede reelt ikke for
+   almindelige brugere). Verificeret: en nulstillingsmail til en adresse
+   uden for teamet gik igennem (status 200, `recovery_sent_at` sat).
+   Mailgrænsen er hævet fra 30 til 100 i timen (Authentication → Rate
+   Limits). Bemærk, at Resends egen plan også har et loft.
 4. *(Jan, Supabase Dashboard)* Authentication → Sign In / Providers →
    Email → slå "Confirm email" til. Først når 1-3 er på plads.
 5. *(Claude)* Luk ticket D1 (`cc121cd9…`) i `feedback_tickets`, når
