@@ -150,6 +150,11 @@ export default function ListScreen({
   // SharedComponents.jsx for hvorfor. listPendingDelete holder LISTEN
   // (ikke kun dens id) så dialogens tekst kan vise det rigtige navn.
   const [listPendingDelete, setListPendingDelete] = useState(null);
+  // "Rediger"-tilstand i listevælgeren — viser Slet-knapper; nulstilles
+  // når vælgeren lukkes.
+  const [editLists, setEditLists] = useState(false);
+  const canDeleteAny = lists.length > 1 && lists.some(l => l.owner_id === userId);
+  useEffect(() => { if (!showListPicker || !canDeleteAny) setEditLists(false); }, [showListPicker, canDeleteAny]);
   const [showClearDoneConfirm, setShowClearDoneConfirm] = useState(false);
 
   const handleToggleItem = (id, wasChecked) => {
@@ -504,7 +509,7 @@ export default function ListScreen({
             </svg>
           </div>
           <button aria-label="Del liste" onClick={() => setShowShareSheet(true)} disabled={!activeList}
-            style={{ display:"flex", alignItems:"center", justifyContent:"center", width:40, padding:0, background:"none", border:"none", borderLeft:"1px solid var(--border)", cursor: activeList ? "pointer" : "not-allowed", opacity: activeList ? 1 : .5, flexShrink:0 }}>
+            style={{ display:"flex", alignItems:"center", justifyContent:"center", width:36, padding:0, background:"none", border:"none", borderLeft:"1px solid var(--border)", cursor: activeList ? "pointer" : "not-allowed", opacity: activeList ? 1 : .5, flexShrink:0 }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2">
               <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
               <path strokeLinecap="round" d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
@@ -513,64 +518,64 @@ export default function ListScreen({
         </div>
       </div>
 
-      {/* Gjort mere kompakt (29. sept. 2026, "Polér designet på
-          Indkøbsliste") — ydre padding 10→8, rækkernes lodrette padding
-          10→7px, "+ Ny liste"/"Tilslut med link" er en anelse lavere og
-          lettere (se deres egen inline-overstyring nedenfor). */}
+      {/* Listevælgerens dropdown (30. sept. 2026): kompakte rækker (52px),
+          aktiv liste med lysegrøn baggrund + checkmark, og ingen permanente
+          papirkurve. Sletning ligger bag "Rediger" øverst i panelet, så den
+          ikke er en fremtrædende handling. Sletning bruger stadig den delte
+          ConfirmDialog, og man kan aldrig slette sin sidste liste
+          (lists.length>1) — "Min indkøbsliste" er en almindelig liste uden
+          særstatus i skemaet (ingen is_default-kolonne). */}
       {showListPicker && (
-        <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:8, marginBottom:14 }}>
-          {lists.map(l => (
-            <div key={l.id} onClick={() => { setActiveListId(l.id); setShowListPicker(false); }}
-              style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"7px 8px", borderRadius:8, cursor:"pointer", background: l.id === activeListId ? "var(--green-lt)" : "transparent" }}>
-              <div>
-                <span style={{ fontSize:13, fontWeight:700, color: l.id === activeListId ? "var(--green)" : "var(--ink)" }}>{l.name}</span>
-                {l.type === "family" && <span style={{ marginLeft:6, display:"inline-flex", verticalAlign:"middle" }}><Icon name="family" size={12} color="var(--muted)" /></span>}
-                {l.owner_id !== userId && <span style={{ marginLeft:6, fontSize:10, color:"var(--muted)" }}>(delt)</span>}
+        <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"4px 6px 8px", marginBottom:10, boxShadow:"var(--sh)" }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"4px 8px 2px" }}>
+            <span style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".8px" }}>Dine lister</span>
+            {canDeleteAny && (
+              <button type="button" onClick={() => setEditLists(v => !v)}
+                style={{ background:"none", border:"none", padding:"6px 0 6px 12px", cursor:"pointer", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--green)" }}>
+                {editLists ? "Færdig" : "Rediger"}
+              </button>
+            )}
+          </div>
+          {lists.map(l => {
+            const isActive = l.id === activeListId;
+            const deletable = l.owner_id === userId && lists.length > 1;
+            return (
+              <div key={l.id} onClick={() => { if (editLists) return; setActiveListId(l.id); setShowListPicker(false); }}
+                style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, minHeight:52, padding:"0 10px", borderRadius:8, cursor: editLists ? "default" : "pointer", background: isActive ? "var(--green-selected-bg)" : "transparent" }}>
+                <div style={{ minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                  <span style={{ fontSize:14, fontWeight: isActive ? 700 : 600, color: isActive ? "var(--green)" : "var(--ink)" }}>{l.name}</span>
+                  {l.type === "family" && <span style={{ marginLeft:6, display:"inline-flex", verticalAlign:"middle" }}><Icon name="family" size={12} color="var(--muted)" /></span>}
+                  {l.owner_id !== userId && <span style={{ marginLeft:6, fontSize:11, color:"var(--muted)" }}>(delt)</span>}
+                </div>
+                {editLists ? (
+                  deletable && (
+                    <button type="button" aria-label={`Slet "${l.name}"`}
+                      onClick={e => { e.stopPropagation(); setListPendingDelete(l); }}
+                      style={{ flexShrink:0, height:32, padding:"0 10px", background:"none", border:"1px solid var(--red-md)", borderRadius:8, cursor:"pointer", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--red)" }}>
+                      Slet
+                    </button>
+                  )
+                ) : (
+                  isActive && <Icon name="check" size={16} color="var(--green)" />
+                )}
               </div>
-              {/* Sletning kræver altid et rigtigt bekræft-dialog — nu den
-                  delte ConfirmDialog (SharedComponents.jsx) i stedet for
-                  native confirm() (25. sept. 2026, brugerfeedback: "erstat
-                  generiske OK-knapper med handlingsspecifik tekst" — native
-                  confirm()'s knapper styres af browseren og kan ikke få
-                  eget tekst). Dialogen forklarer konsekvensen ("Alle varer
-                  på listen fjernes permanent") og bekræft-knappen hedder
-                  "Slet liste", ikke "OK". lists.length>1-betingelsen
-                  sikrer desuden at man ALDRIG kan slette sin sidste
-                  tilbageværende liste (ingen ny automatisk oprettes igen
-                  bagefter), uanset dens navn.
-                  Undersøgt (25. sept. 2026, brugerfeedback): bør "Min
-                  indkøbsliste" specifikt være permanent/ikke-slettelig? Der
-                  findes ingen is_default-kolonne eller lignende i skemaet —
-                  den er navngivet sådan udelukkende fordi den er den FØRSTE
-                  liste loadShoppingList() opretter automatisk, og er
-                  bagefter en almindelig liste som enhver anden (kan
-                  omdøbes, deles, slettes). At låse den fast på selve
-                  NAVNET ville være skørt (brud ved omdøbning) og ville
-                  forhindre en gyldig arbejdsgang (fx konsolidere til kun
-                  "Fest"-listen og slette standardlisten). Den eksisterende
-                  lists.length>1-beskyttelse dækker allerede det reelt
-                  problematiske tilfælde (aldrig stå uden nogen liste
-                  overhovedet) — ingen yderligere lås tilføjet. */}
-              {l.owner_id === userId && lists.length > 1 && (
-                <button type="button" aria-label={`Slet "${l.name}"`}
-                  onClick={e => { e.stopPropagation(); setListPendingDelete(l); }}
-                  style={{ width:44, height:44, minWidth:44, display:"flex", alignItems:"center", justifyContent:"center", background:"none", border:"none", cursor:"pointer", opacity:.5, flexShrink:0 }}>
-                  <Icon name="trash" size={14} color="var(--muted)" />
-                </button>
-              )}
-            </div>
-          ))}
+            );
+          })}
           {!showNewList ? (
-            <div style={{ display:"flex", gap:8, marginTop:6 }}>
-              <button className="btn btn-ghost btn-sm" style={{ flex:1, padding:"6px 14px", fontWeight:600 }} onClick={() => setShowNewList(true)}>+ Ny liste</button>
-              <button className="btn btn-ghost btn-sm" style={{ flex:1, padding:"6px 14px", fontWeight:600 }} onClick={() => { setShowListPicker(false); setShowJoin(true); }}>Tilslut med link</button>
+            <div style={{ display:"flex", gap:8, marginTop:8, padding:"0 2px" }}>
+              <button type="button" className="list-picker-action" onClick={() => setShowNewList(true)}>
+                <Icon name="plus" size={13} color="var(--ink)" /> Ny liste
+              </button>
+              <button type="button" className="list-picker-action" onClick={() => { setShowListPicker(false); setShowJoin(true); }}>
+                <Icon name="link" size={13} color="var(--ink)" /> Tilslut med link
+              </button>
             </div>
           ) : (
-            <div style={{ display:"flex", gap:8, marginTop:8, padding:"0 4px" }}>
-              <input className="field" placeholder="Fx. Weekend, Fest…" autoFocus style={{ flex:1, marginBottom:0 }}
+            <div style={{ display:"flex", gap:8, marginTop:8, padding:"0 2px" }}>
+              <input className="field" placeholder="Fx. Weekend, Fest…" autoFocus style={{ flex:1, marginBottom:0, height:40, padding:"0 12px" }}
                 value={newListName} onChange={e => setNewListName(e.target.value)}
                 onKeyDown={async e => { if (e.key === "Enter" && newListName.trim()) { await createList(newListName); setNewListName(""); setShowNewList(false); setShowListPicker(false); } }} />
-              <button className="btn btn-primary btn-sm" onClick={async () => { if (newListName.trim()) { await createList(newListName); setNewListName(""); setShowNewList(false); setShowListPicker(false); } }}>
+              <button className="btn btn-primary btn-sm" style={{ height:40, minHeight:40, padding:"0 14px", borderRadius:10 }} onClick={async () => { if (newListName.trim()) { await createList(newListName); setNewListName(""); setShowNewList(false); setShowListPicker(false); } }}>
                 Opret
               </button>
             </div>
