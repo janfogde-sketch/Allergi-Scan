@@ -86,14 +86,16 @@ feedback_tickets er lukket (migration `20260930100707`). Adgangsnøglen
 udløber efter den periode, Jan valgte; når deploy-jobbet fejler med 401/403,
 skal der laves en ny nøgle og secret'en opdateres.
 
-*Notifikationer (Bjørn har godkendt designet, Jan: "Start med trin 1"):* trin 1
-(server-fundament) er lavet lokalt og databasedelen er live (tabeller, triggere,
-cron; push-flaget `notifications_push_enabled` er FRA). Edge-funktionen `notify`
-og appændringer kræver merge og deploy, og `notify` er endnu ikke kørt live.
-Næste: test `notify` efter deploy med markerede testdata (QA-kontoen, mails og
-push slået fra), derefter trin 2 (beskedside/rute i appen), trin 3 (alle
-varianter + mails + nye indstillinger), trin 4 (P1/P3/P6, egne ticket-visninger).
-Detaljer i `src/CONTEXT.md` afsnit 14.
+*Notifikationer (Bjørn har godkendt designet):* trin 1-3 er merget (#417-#419), på
+nær den nyeste commit (kategorier, P2, P3), som ligger lokalt. Push-flaget
+`notifications_push_enabled` og mail-flaget `notifications_email_enabled` er
+begge FRA; ingen rigtige push eller mails er sendt. `notify` er testet live
+(besked oprettet, ingen afsendelse). Beskedside/rute er i appen; 22 Resend-
+skabeloner ligger i `supabase/templates/resend/`. Mangler: P1 (kræver
+ændringshistorik for allergener), P6 (ingen datakilde), P5 (afventer
+beslutning), N7 (opskrifter er sat på pause), N1 efter onboarding, P4 ved
+kontosletning, "Se din feedback"-visning (trin 4), test på rigtige telefoner
+FØR flagene tændes. Detaljer i `src/CONTEXT.md` afsnit 14.
 
 *Claude gør bagefter:*
 10. Læs testrundens resultater og opret tickets for fejl (når punkt 3
