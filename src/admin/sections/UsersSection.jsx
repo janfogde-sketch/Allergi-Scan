@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { DIETS, ALLERGENS } from "../../constants.jsx";
+import { AllergenGlyph } from "../../SharedComponents.jsx";
 import { downloadCsv } from "../csvExport.js";
 
 const CSV_COLUMNS = [
@@ -194,7 +195,7 @@ export default function UsersSection({
                         color: isOn ? "var(--red)" : "var(--muted2)",
                         border: `1px solid ${isOn ? "var(--red-md)" : "var(--border)"}`,
                       }}>
-                      {a.emoji} {a.label}
+                      <AllergenGlyph a={a} size={11} /> {a.label}
                     </button>
                   );
                 })}

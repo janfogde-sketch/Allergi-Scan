@@ -2,7 +2,7 @@
 import React from "react";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
-import { Icon, Loader } from "./SharedComponents.jsx";
+import { Icon, Loader, AllergenGlyph } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 
 const S = {
@@ -456,7 +456,7 @@ export default function NotFoundScreen({
                         });
                       }}
                       style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", borderRadius:100, cursor:"pointer", border:`1px solid ${isOn ? "var(--red-md)" : isTrace ? "var(--amber-md)" : "var(--border2)"}`, background: isOn ? "var(--red-lt)" : isTrace ? "var(--amber-lt)" : "var(--paper2)", transition:"all .15s" }}>
-                      <span style={{ fontSize:14 }}>{a.emoji}</span>
+                      <span style={{ fontSize:14 }}><AllergenGlyph a={a} size={13} /></span>
                       <span style={{ fontSize:11, fontWeight:700, color: isOn ? "var(--red)" : isTrace ? "var(--amber)" : "var(--muted2)" }}>{a.label}</span>
                       {isOn    && <span style={{ fontSize:9, fontWeight:800, color:"var(--red)",   background:"var(--red-lt)",   padding:"1px 6px", borderRadius:4 }}>JA</span>}
                       {isTrace && <span style={{ fontSize:9, fontWeight:800, color:"var(--amber)", background:"var(--amber-lt)", padding:"1px 6px", borderRadius:4 }}>SPOR</span>}

@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS } from "../../constants.jsx";
+import { AllergenGlyph } from "../../SharedComponents.jsx";
 
 const CATEGORIES = ["allergen", "e_number", "ingredient", "diet", "cross_reaction", "faq", "fun_fact"];
 const CATEGORY_LABELS = {
@@ -189,7 +190,7 @@ export default function KnowledgeSection({
                         color: isOn ? "var(--red)" : "var(--muted2)",
                         border: `1px solid ${isOn ? "var(--red-md)" : "var(--border)"}`,
                       }}>
-                      {a.emoji} {a.label}
+                      <AllergenGlyph a={a} size={11} /> {a.label}
                     </button>
                   );
                 })}

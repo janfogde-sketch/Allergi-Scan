@@ -3,7 +3,7 @@ import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findActiveListMatch, categorizeProductFindings, computeTopStatus } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
-import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet, showToast } from "./SharedComponents.jsx";
+import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -618,7 +618,7 @@ export default function ResultScreen({
                 <div key={k} className="tag"
                   onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
                   style={{ background:"var(--surface2)", color:"var(--ink)", borderColor:"var(--border2)", cursor:"pointer" }}>
-                  {a.emoji} {a.label} <span style={UI.ufs9_op06}>›</span>
+                  <AllergenGlyph a={a} size={13} /> {a.label} <span style={UI.ufs9_op06}>›</span>
                 </div>
               ) : null;
             })}
@@ -632,7 +632,7 @@ export default function ResultScreen({
                 <div key={k} className="tag"
                   onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
                   style={{ background:"var(--surface)", color:"var(--muted)", borderColor:"var(--border2)", cursor:"pointer" }}>
-                  spor: {a.emoji} {a.label} <span style={UI.ufs9_op06}>›</span>
+                  spor: <AllergenGlyph a={a} size={13} /> {a.label} <span style={UI.ufs9_op06}>›</span>
                 </div>
               ) : null;
             })}

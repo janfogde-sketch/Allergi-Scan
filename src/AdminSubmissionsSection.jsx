@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { ALLERGENS } from "./constants.jsx";
-import { Loader, Icon, showToast } from "./SharedComponents.jsx";
+import { Loader, Icon, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 import { ALL_ALLERGEN_WORDS } from "./allergenKeywords.js";
 import { normalizeENumber, addENumberToText } from "./helpers.js";
@@ -121,7 +121,7 @@ export default function AdminSubmissionsSection({
                   </div>
                   <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6, fontFamily:"monospace" }}>EAN: {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`} · #{s.id.slice(0, 8)}</div>
                   <div style={UI.wrapGap4}>
-                    {dangerAllergens.slice(0,3).map(a => <span key={a.id} style={{ fontSize:10, padding:"2px 8px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", fontWeight:700 }}>{a.emoji} {a.label}</span>)}
+                    {dangerAllergens.slice(0,3).map(a => <span key={a.id} style={{ fontSize:10, padding:"2px 8px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", fontWeight:700 }}><AllergenGlyph a={a} size={10} /> {a.label}</span>)}
                     {dangerAllergens.length === 0 && <span style={UI.muted10}>Ingen allergener</span>}
                   </div>
                 </div>
@@ -358,7 +358,7 @@ export function AdminSubmissionReview({
                   border:`1px solid ${isYes?"var(--red-md)":isTrace?"var(--amber-md)":"var(--border)"}`,
                   background: isYes?"var(--red-lt)":isTrace?"var(--amber-lt)":"var(--paper2)",
                   fontFamily:"var(--f)" }}>
-                <span style={UI.fs16}>{a.emoji}</span>
+                <span style={UI.fs16}><AllergenGlyph a={a} size={16} /></span>
                 <span style={{ flex:1, minWidth:0, fontSize:12, fontWeight:700, color:isYes?"var(--red)":isTrace?"var(--amber)":"var(--muted2)", textAlign:"left", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{a.label}</span>
                 <span style={{ fontSize:10, fontWeight:800, color:isYes?"var(--red)":isTrace?"var(--amber)":"var(--muted)", flexShrink:0 }}>
                   {isYes?"JA":isTrace?"SPOR":"NEJ"}

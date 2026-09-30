@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS } from "./constants.jsx";
-import { Loader, Icon } from "./SharedComponents.jsx";
+import { Loader, Icon, AllergenGlyph } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 
 export default function AdminRecipesSection({
@@ -61,7 +61,7 @@ export default function AdminRecipesSection({
                 style={{ padding:"3px 10px", borderRadius:100, cursor:"pointer", fontSize:11, fontWeight:700,
                   background: isOn?"var(--red-lt)":"var(--surface2)", color:isOn?"var(--red)":"var(--muted2)",
                   border:`1px solid ${isOn?"var(--red-md)":"var(--border)"}` }}>
-                  {a.emoji} {a.label}
+                  <AllergenGlyph a={a} size={11} /> {a.label}
                 </div>
               );
             })}
@@ -115,7 +115,7 @@ export default function AdminRecipesSection({
             {flaggedAllergens.length > 0 && (
               <div style={UI.wrapGap4}>
                 {flaggedAllergens.map(a => (
-                  <span key={a.id} style={{ fontSize:10, padding:"2px 8px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", border:"1px solid var(--red-md)", fontWeight:700 }}>{a.emoji} {a.label}</span>
+                  <span key={a.id} style={{ fontSize:10, padding:"2px 8px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", border:"1px solid var(--red-md)", fontWeight:700 }}><AllergenGlyph a={a} size={10} /> {a.label}</span>
                 ))}
               </div>
             )}

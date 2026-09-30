@@ -2,7 +2,7 @@
 import React from "react";
 import { ALLERGENS, SCREENS, MADPAS_LANGUAGES, MADPAS_SECTIONS_T, MADPAS_ALLERGY_HEADLINE_T, MADPAS_INTOLERANCE_HEADLINE_T, MADPAS_EXAMPLES_LABEL_T, MADPAS_SPEAK_LABEL_T, MADPAS_STOP_LABEL_T } from "./constants.jsx";
 import { initials } from "./helpers.js";
-import { Icon } from "./SharedComponents.jsx";
+import { Icon, AllergenGlyph } from "./SharedComponents.jsx";
 import { madpasAllergenLabel, madpasDietLabel, madpasAllergenExamples, madpasSafetyNote, madpasCrossContactNote, madpasDietMessage } from "./useMadpas.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -145,7 +145,7 @@ export default function MadpasScreen({
                 {allergyItems.map(a => (
                   <div key={a.id} style={itemBlock}>
                     <div style={itemHeadRow}>
-                      <span style={itemIcon}>{a.emoji}</span>
+                      <span style={itemIcon}><AllergenGlyph a={a} size={32} /></span>
                       <span style={itemName}>{madpasAllergenLabel(a, lang)}</span>
                     </div>
                     {renderExamples(a.id)}
@@ -188,7 +188,7 @@ export default function MadpasScreen({
                 {intoleranceItems.map(a => (
                   <div key={a.id} style={itemBlock}>
                     <div style={itemHeadRow}>
-                      <span style={itemIcon}>{a.emoji}</span>
+                      <span style={itemIcon}><AllergenGlyph a={a} size={32} /></span>
                       <span style={itemName}>{madpasAllergenLabel(a, lang)}</span>
                     </div>
                     {renderExamples(a.id)}
@@ -244,9 +244,13 @@ export default function MadpasScreen({
     const lang = madpasLang;
     const { allergyItems, intoleranceItems, customItems, dietItems } = buildGroups(lang);
     const dietStyle = { background:"var(--green-selected-bg)", borderColor:"var(--border)", color:"var(--ink2)" };
+    // `text` er et React-node, ikke en ren streng (29. sept. 2026, Laktose-
+    // ikon-opgaven) — de fleste allergener stringificerer stadig deres eget
+    // emoji direkte via <AllergenGlyph>, som viser et specialtegnet ikon for
+    // "Laktose" i stedet for dens emoji.
     const chips = [
-      ...allergyItems.map(a => ({ key:`a-${a.id}`, text:`${a.emoji} ${madpasAllergenLabel(a, lang)}` })),
-      ...intoleranceItems.map(a => ({ key:`i-${a.id}`, text:`${a.emoji} ${madpasAllergenLabel(a, lang)}` })),
+      ...allergyItems.map(a => ({ key:`a-${a.id}`, text:<><AllergenGlyph a={a} size={12} /> {madpasAllergenLabel(a, lang)}</> })),
+      ...intoleranceItems.map(a => ({ key:`i-${a.id}`, text:<><AllergenGlyph a={a} size={12} /> {madpasAllergenLabel(a, lang)}</> })),
       ...customItems.map((c,i) => ({ key:`c-${i}`, text:c })),
       ...dietItems.map(d => ({ key:`d-${d.id}`, text:d.label, style:dietStyle })),
     ];

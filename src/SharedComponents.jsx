@@ -196,6 +196,40 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
   );
 };
 
+// ─── LAKTOSE-IKON (29. sept. 2026) ────────────────────────────────────────────
+// Alle andre allergener bruger stadig deres rigtige Unicode-emoji direkte
+// (a.emoji, se constants.jsx/ALLERGENS — bevidst, se CLAUDE.md afsnit 6: kun
+// content-emoji, ikke UI-chrome, er tilbage i appen). "Laktose" er en
+// specifik, begrundet undtagelse: dens tidligere emoji (🍬, slik) havde
+// ingen visuel sammenhæng med laktose overhovedet, og et almindeligt
+// mælke-glas-emoji ville skabe forveksling med "Mælk"s eget 🥛 (allergi over
+// for mælkeprotein er noget andet end laktoseintolerance). Løsningen er en
+// selvstændig, to-farvet inline-SVG (uden for den almindelige, ensfarvede
+// `Icon`-komponent ovenfor, samme princip som `EatSafeLogo`/
+// `ScanLoadingOverlay` — faste brand-farver, ikke `currentColor`) i stedet
+// for endnu et Unicode-tegn: en afrundet, cremefarvet mælkedråbe med et
+// tydeligt, grønt "L" indeni. Cremefarven holder den neutral/mælke-
+// associeret uden at genbruge mælk-emojiets blå/hvide glas-form, og det
+// grønne "L" matcher EatSafes primære brandfarve. Fungerer uændret på både
+// hvid baggrund og selected-chip-baggrund (var(--green-selected-bg)), da
+// begge er lyse nok til at dråbens creme-toner og det mørkere grønne "L"
+// forbliver læsbare uden brug af CSS-variabler her.
+export const LactoseIcon = ({ size = 16, style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={style} aria-hidden="true" focusable="false">
+    <path d="M12 2.5c-.4 0-.78.19-1.02.52C9.02 5.6 5.25 11.4 5.25 15.35 5.25 19.56 8.24 22.5 12 22.5s6.75-2.94 6.75-7.15c0-3.95-3.77-9.75-5.73-12.33A1.28 1.28 0 0012 2.5z"
+      fill="#FAF1DC" stroke="#E3D3A8" strokeWidth="1.3" strokeLinejoin="round" />
+    <path d="M10 10.2v5h4.2" stroke="#0F7D4F" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  </svg>
+);
+
+// Centraliserer laktose-undtagelsen ét sted, så hver chip-visning i appen
+// (Madpas, Familie, Profil, Rediger præferencer, Resultatside, Opskrifter,
+// Admin) automatisk viser samme ikon, i stedet for at hvert kaldested selv
+// skal kende til specialtilfældet. `a` kan være undefined/null (samme
+// tolerance som de tidligere `{a?.emoji}`-kaldesteder).
+export const AllergenGlyph = ({ a, size = 14 }) =>
+  a?.id === "laktose" ? <LactoseIcon size={size} style={{ verticalAlign:"-2px" }} /> : <>{a?.emoji}</>;
+
 // ─── KONSTANTER ──────────────────────────────────────────────────────────────
 
 // `highlightRules` (28. sept. 2026, FINAL PRODUCT RESULT PAGE) — valgfrit,

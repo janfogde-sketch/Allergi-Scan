@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { Icon, showToast } from "./SharedComponents.jsx";
+import { Icon, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { ALLERGENS, E_NUMBERS, E_CATEGORIES, DIETS } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
 import { ChoiceChip } from "./DesignSystem.jsx";
@@ -44,7 +44,7 @@ export const AllergenChipPicker = ({ selected, onChange }) => {
     return (
       <ChoiceChip key={a.id} selected={on} showCheck={false}
         onClick={() => onChange(on ? selected.filter(x => x !== a.id) : [...selected, a.id])}>
-        <span style={UI.flex1}>{a.emoji} {a.label}</span>
+        <span style={UI.flex1}><AllergenGlyph a={a} size={14} /> {a.label}</span>
         {a.note && (
           <span role="button" aria-label={`Om ${a.label}`}
             onClick={e => { e.stopPropagation(); showToast(a.note, "info"); }}

@@ -2,7 +2,7 @@
 import React from "react";
 import { ALLERGENS, SUPABASE_URL } from "./constants.jsx";
 import { apiCall, makeHeaders } from "./helpers.js";
-import { Icon, showToast } from "./SharedComponents.jsx";
+import { Icon, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 
 export default function AdminUserDetailSheet({
@@ -62,7 +62,7 @@ export default function AdminUserDetailSheet({
                 <div style={UI.udflex_flewrap_g5_mb14}>
                   {openAdminUser.allergens.map(id => {
                     const a = ALLERGENS.find(x => x.id === id);
-                    return a ? <span key={id} style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", border:"1px solid var(--red-md)" }}>{a.emoji} {a.label}</span> : null;
+                    return a ? <span key={id} style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", border:"1px solid var(--red-md)" }}><AllergenGlyph a={a} size={11} /> {a.label}</span> : null;
                   })}
                 </div>
               </>
