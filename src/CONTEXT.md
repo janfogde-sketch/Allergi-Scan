@@ -568,6 +568,7 @@ korte tekst og åbner den fulde, beskyttede besked i appen via
 - **Rettet undervejs:** VAPID-`aud` var fast FCM (Apple/Mozilla afviste); `/badge-72.png`
   findes ikke; N4 blev aldrig sendt (forkerte kolonnenavne); N3 uden begrundelse; push blev
   sendt fra browseren. Klient-push i `useAdmin.js`/`useIncomingLinks.js` er fjernet.
+- **Regel:** er både push og mail fravalgt for en kategori, oprettes ingen besked (udviklerpakken).
 - **Mangler (trin 2-4):** beskedside og rute i appen (`?notification=`), læst/ulæst,
   alle 16 pushvarianter + 30 mails koblet på rigtige hændelser, nye indstillingskategorier,
   P1/P3/P6 og egne ticket-visninger. Mail bruger stadig de gamle triggere/skabeloner.
