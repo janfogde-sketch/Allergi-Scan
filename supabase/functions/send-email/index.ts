@@ -3,6 +3,7 @@
 // Rediger mail-indhold på resend.com/templates
 
 import { TRANSACTIONAL_TEMPLATES, buildMailVariables, escapeHtml, sendTemplateMail } from "../_shared/mailSend.ts";
+import { WELCOME_MAIL_SUBJECT, renderWelcomeMail } from "../_shared/welcomeMail.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +13,6 @@ const corsHeaders = {
 const FROM = "EatSafe <noreply@eatsafe.dk>";
 
 const TEMPLATES: Record<string, { id: string; subject: string }> = {
-  welcome:             { id: "c59a0cef-a98e-4e9b-9429-b1f43d836902", subject: "Velkommen til EatSafe 🛡️" },
   submission_approved: { id: "fb81f06b-5a8b-4729-9139-37c696b82f56", subject: "Dit produkt er godkendt" },
   submission_rejected: { id: "cc9dd12d-2aaf-4395-94c7-fe15396f0d5b", subject: "Produkt ikke godkendt" },
   ticket_update:       { id: "9965c3a0-67b5-4818-bb7d-ea278fc839a4", subject: "Opdatering på din EatSafe feedback" },
@@ -50,7 +50,7 @@ async function fetchTemplateHtml(templateId: string, apiKey: string, data: Recor
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  // Kaldes udelukkende af vores egne DB-triggers (send_welcome_email m.fl.),
+  // Kaldes udelukkende af vores egne DB-triggers (send_welcome_after_onboarding m.fl.),
   // aldrig direkte fra klienten — kræver derfor at kalderen identificerer
   // sig med service-role-nøglen. Uden dette kunne enhver udenfra sende
   // vilkårlige emails fra vores Resend-konto til en vilkårlig modtager.
@@ -72,6 +72,21 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "type og to er påkrævet" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Velkomstmailen (30. sept. 2026): sendes kun af send_welcome_after_onboarding,
+    // én gang pr. bruger. Begge typer bruger HTML'en fra repoet (welcomeMail.ts),
+    // så overskrift og tekst versionsstyres. Idempotency-Key forhindrer, at et
+    // gentaget kald inden for 24 timer giver en ekstra mail.
+    if (type === "welcome" || type === "welcome_onboarded") {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": `welcome-${to}` },
+        body: JSON.stringify({ from: FROM, to: [to], subject: WELCOME_MAIL_SUBJECT, html: renderWelcomeMail(data.name) }),
+      });
+      if (!res.ok) throw new Error(`Resend fejl ${res.status}: ${await res.text()}`);
+      const result = await res.json();
+      return new Response(JSON.stringify({ success: true, id: result.id }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // Nye servicemails (Resend-skabeloner med {{{variabel}}}): værdierne HTML-escapes her.

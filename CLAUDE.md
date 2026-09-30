@@ -34,18 +34,16 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
     outboxen. Kræver en admin-RPC til opdatering (tabellen er kun læsbar for admin).
 
 *Skal designes (Bjørns spor):*
-11. Supabases auth-mails bruger stadig Supabases engelske standard-
-    skabeloner. De skal designes på dansk i EatSafes stil, så de matcher
-    velkomstmailen (Resend-skabelon, afsender `noreply@eatsafe.dk`).
-    Gælder de mails, der sendes i dag: Confirm sign up (bekræftelse ved
-    oprettelse, sendes til alle nye e-mailbrugere siden 30. sept.) og
-    Reset password (Glemt adgangskode) først, dernæst Change email
-    address, Magic link or OTP, Invite user og Reauthentication. Under
-    Security findes desuden valgfrie notifikationer (fx Password changed,
-    slået fra i dag). Skabelonerne redigeres i Supabase Dashboard →
-    Authentication → Emails → Templates (intet værktøj kan ændre dem
-    herfra). Gem gerne den endelige HTML i repoet, fx
-    `supabase/templates/`, så den kan versionsstyres.
+11. Supabases auth-mails på dansk i EatSafes stil. **Confirm sign up er
+    lavet (30. sept.):** `supabase/templates/auth/confirm-signup.html`,
+    emne i `templates.json`, og `.github/workflows/deploy-auth-templates.yml`
+    sætter emne + HTML via Management API'et ved merge (samme
+    `SUPABASE_ACCESS_TOKEN`-secret som edge-deploy). Mangler: Reset
+    password (Glemt adgangskode), dernæst Change email address, Magic link
+    or OTP, Invite user og Reauthentication — tilføj en HTML-fil og en
+    linje i `templates.json` (nøgler: `recovery`, `email_change`,
+    `magic_link`, `invite`, `reauthentication`). Under Security findes
+    desuden valgfrie notifikationer (fx Password changed, slået fra i dag).
 
 *Arkitektur-audit (30. sept. 2026):* rapport i
 https://claude.ai/artifact/8sj2uZhFSYy18iVV1upuAL (16 fund + roadmap).
@@ -977,10 +975,19 @@ den på status på `SCREENS.BOOT`). Login med ubekræftet e-mail åbner
 bekræftelsesskærmen, og et udløbet link giver en forklaring. "Jeg har
 bekræftet" logger ind med adgangskoden fra oprettelsen (kun i hukommelsen);
 efter en genstart sendes brugeren til Log ind med e-mailen udfyldt.
-Databasen (migration `20260930193753`): `handle_new_user()` sætter ikke
-længere e-mailens lokale del som navn, og velkomstmailen sendes, når
-onboarding er færdig (med navn), i stedet for ved bekræftelse, når navnet
-mangler. Google/Facebook går uændret direkte til onboarding.
+Databasen (migrationer `20260930193753` og `20260930194647`):
+`handle_new_user()` sætter ikke længere e-mailens lokale del som navn, og
+velkomstmailen sendes KUN når `onboarding_completed` skifter false → true
+(triggeren `on_onboarding_completed`) — aldrig ved oprettelse, login,
+bekræftelse eller genstart; de gamle triggere på oprettelse/bekræftelse og
+`send_welcome_email()` er fjernet. Én mail pr. bruger: `welcome_sent_at`
+reserveres atomisk før afsendelsen. Velkomstmailens HTML ligger i repoet
+(`supabase/templates/resend/N1-velkomst.html` → `_shared/welcomeMail.ts`
+via `node scripts/build-welcome-mail.mjs`, testet i `src/welcomeMail.test.js`)
+med overskriften "Velkommen til EatSafe" og BETA som badge. Bekræftelses-
+linket lander på appens egen side "✓ Din e-mail er bekræftet" →
+"Fortsæt opsætning" (næste manglende trin). Google/Facebook går uændret
+direkte til onboarding.
 
 ### App-headeren omdøbt til fælles komponent + tekst-wordmark (27. sept. 2026)
 

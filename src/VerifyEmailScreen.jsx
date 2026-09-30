@@ -7,8 +7,9 @@
 // To tilstande:
 //  - "pending": mailen er sendt — "Jeg har bekræftet min e-mail", "Send mail
 //    igen" og "Skift e-mailadresse".
-//  - "verified": kort "✓ E-mail bekræftet" og "Fortsæt opsætning", som åbner
-//    onboarding på det gemte trin.
+//  - "verified": "✓ Din e-mail er bekræftet" og "Fortsæt opsætning", som åbner
+//    onboarding på det næste manglende trin (onboarding_step). Det er også
+//    siden, bekræftelseslinket i mailen lander på (redirect_to = appen).
 // Bevidst rolig: samme logo, baggrund og knapper som Opret konto/Log ind,
 // ingen ekstra elementer.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -47,9 +48,8 @@ export default function VerifyEmailScreen() {
             <div className="verify-icon verify-icon-ok" aria-hidden="true">
               <Icon name="check" size={24} color="var(--green)" />
             </div>
-            <div className="verify-title">E-mail bekræftet</div>
-            {verifyEmail && <div className="verify-email">{verifyEmail}</div>}
-            <div className="verify-text">Nu mangler du kun at fortælle lidt om dig selv og dine allergier.</div>
+            <div className="verify-title">Din e-mail er bekræftet</div>
+            <div className="verify-text">Fortsæt opsætningen i EatSafe for at gøre din profil klar.</div>
           </div>
         ) : (
           <div>
