@@ -542,7 +542,11 @@ export function safetyStyle(status) {
 export function SafetyRow({ name, status, statusText, onClick }) {
   const s = safetyStyle(status);
   return (
-    <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", padding:"6px 10px", background:s.bg, border:`1px solid ${s.border}`, borderRadius:8, gap:8 }}>
+    // Farvetonen lægges oven på en fast --surface-baggrund — alene var den
+    // gennemsigtig (8 %), så appens baggrundsfoto skinnede igennem og
+    // rækken næsten ikke kunne ses (live-test 30. sept. 2026). Samme
+    // princip som --green-selected-bg i designreglerne.
+    <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", padding:"10px 12px", background:`linear-gradient(${s.bg}, ${s.bg}), var(--surface)`, border:`1px solid ${s.border}`, borderRadius:10, gap:12 }}>
       <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", flexShrink:0, maxWidth:"40%", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
         {name}
       </div>
