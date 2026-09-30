@@ -107,7 +107,8 @@ FØR flagene tændes. Detaljer i `src/CONTEXT.md` afsnit 14.
 
 **Løst 30. sept. 2026** (Jans svar på listen, detaljer i commits og
 `supabase/sql/2026-09-30_*.sql`): 4 alder/køn i Rediger profil; 5
-QA-kontoen er admin; 6 kJ-data rettet (4.876 produkter, backup-tabel); 7
+QA-kontoen er admin (4 er senere erstattet: Rediger profil ændrer kun
+navnet, Bjørns beslutning); 6 kJ-data rettet (4.876 produkter, backup-tabel); 7
 (erstattet samme aften af Bjørns nye oprettelsesflow, se "Oprettelse og
 e-mailbekræftelse" i afsnit 5); 12 tyske
 ingredienslister (allergens v22 + 18 produkter genanalyseret); 13
@@ -683,9 +684,10 @@ dag-for-dag-detalje i `.claude/HISTORY.md`, backend-/struktur-reference i
 
 Profilsiden har to adskilte redigeringsskærme: `SCREENS.EDITPROFILE`
 ("Rediger profil", nås KUN fra profilkortets "Rediger") håndterer
-Navn, Telefon, Alder og Køn (alder/køn blev fjernet 28. sept. og sat
-tilbage 30. sept. efter Jans beslutning, med de delte AgeStepper/
-GenderPicker fra onboarding). `SCREENS.EDITPREFERENCES`
+kun Navn (30. sept. 2026, Bjørns beslutning — erstatter Jans punkt 4, der
+satte alder/køn tilbage samme dag; alder og køn udfyldes i onboarding og
+gemmes, men redigeres ikke bagefter, og telefon indsamles ikke længere).
+`SCREENS.EDITPREFERENCES`
 ("Rediger præferencer", nås fra "Mine præferencer"s "Rediger" på Profil)
 håndterer udelukkende allergier/intolerancer/diæter/E-numre, og genbruger
 PRÆCIS de samme delte komponenter som onboarding og `MemberForm.jsx`
@@ -954,8 +956,7 @@ positiv grøn baggrundstone (`--green-lt`/`--green-mid`) i stedet for
 detalje i `.claude/HISTORY.md`.
 
 **Opdateret 29. sept. 2026 (QA-beslutning D2), 30. sept. 2026:** Telefon
-er fjernet helt fra onboarding og oprettelse (kan stadig tilføjes under
-Rediger profil). **Alder og Køn SKAL forblive
+er fjernet helt fra onboarding, oprettelse og Rediger profil. **Alder og Køn SKAL forblive
 obligatoriske** — Jans eksplicitte beslutning: han bruger dem, selvom
 appens egne funktioner ikke gør. Foreslå ikke at fjerne dem igen af
 dataminimeringshensyn.

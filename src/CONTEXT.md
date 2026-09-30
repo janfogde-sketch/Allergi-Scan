@@ -72,7 +72,7 @@ src/
 ├── SearchScreen.jsx          # SEARCH — søgning + profil/manuel allergen-filter
 ├── ListScreen.jsx            # LIST — indkøbsliste + favoritter
 ├── SuggestEditScreen.jsx     # SUGGEST_EDIT — foreslå rettelse til produkt
-├── ProfileScreen.jsx         # PROFILE, EDITPROFILE (kun navn/telefon), EDITPREFERENCES
+├── ProfileScreen.jsx         # PROFILE, EDITPROFILE (kun navn), EDITPREFERENCES
 │                             #   (allergier/intolerancer/diæt/E-numre), FAMILY, HISTORY,
 │                             #   FAVORITES, ADMIN
 │                             #   Footer: hej@eatsafe.dk + privatlivspolitik link
