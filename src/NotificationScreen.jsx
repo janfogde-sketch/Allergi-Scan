@@ -8,21 +8,28 @@ import { Icon } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { timeAgo } from "./helpers.js";
 import NotificationBlocks from "./NotificationBlocks.jsx";
-import { fetchNotification, PENDING_KEY } from "./notificationsApi.js";
+import { fetchNotification, fetchInviteStatus, PENDING_KEY } from "./notificationsApi.js";
 
 // Handlinger, appen må udføre fra en besked. `open_ticket` vises først, når
 // egne feedback-visninger findes (trin 4) — indtil da ingen virkesløs knap.
-const SUPPORTED_ACTIONS = ["open_product", "scan", "open_family"];
+const SUPPORTED_ACTIONS = ["open_product", "scan", "open_family", "open_list"];
 
 export default function NotificationScreen({ notificationId, markRead, onAction, onBack }) {
   const { accessToken, clearAuth } = useAuthContext();
   const [state, setState] = useState({ status: "loading", item: null });
+  // P2 (invitation udløber): knappen fjernes, når invitationen ikke længere er gyldig.
+  const [inviteInactive, setInviteInactive] = useState(false);
 
   const load = useCallback(async () => {
     setState({ status: "loading", item: null });
     const res = await fetchNotification(accessToken, notificationId);
     setState(res);
+    setInviteInactive(false);
     if (res.status === "ok" && !res.item.read_at) markRead(notificationId);
+    if (res.status === "ok" && res.item.type === "P2" && res.item.entity_id) {
+      const inv = await fetchInviteStatus(accessToken, res.item.entity_id);
+      if (inv === "inactive") setInviteInactive(true);
+    }
   }, [accessToken, notificationId, markRead]);
 
   useEffect(() => { if (notificationId) load(); }, [notificationId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -33,7 +40,7 @@ export default function NotificationScreen({ notificationId, markRead, onAction,
   };
 
   const action = state.item?.primary_action;
-  const canAct = action && SUPPORTED_ACTIONS.includes(action.type);
+  const canAct = action && SUPPORTED_ACTIONS.includes(action.type) && !inviteInactive;
 
   return (
     <div className="screen fade-in">
@@ -70,6 +77,9 @@ export default function NotificationScreen({ notificationId, markRead, onAction,
         <>
           <div style={{ fontSize:11.5, color:"var(--muted)", marginBottom:10 }}>{timeAgo(state.item.event_at || state.item.created_at)}</div>
           <NotificationBlocks blocks={state.item.content_blocks} />
+          {inviteInactive && (
+            <div className="info-box" role="status" style={{ marginTop:4 }}>Invitationen er ikke længere aktiv. Du kan oprette en ny under Familie.</div>
+          )}
           {canAct && (
             <button className="btn btn-primary btn-full" style={{ marginTop:8 }} onClick={() => onAction(action)}>
               {action.label}

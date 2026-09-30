@@ -24,7 +24,7 @@
 export const DISCLAIMER = "EatSafe er vejledende. Tjek altid emballagen.";
 
 /** Handlingstyper appen må bygge en rute ud fra. Alt andet afvises. */
-export const ALLOWED_ACTIONS = ["open_product", "scan", "open_family", "open_ticket"];
+export const ALLOWED_ACTIONS = ["open_product", "scan", "open_family", "open_ticket", "open_list"];
 
 export const STATUS_LABELS = { open: "Åben", in_progress: "I gang", resolved: "Løst" };
 
@@ -80,6 +80,19 @@ const SUBMISSION_ENTITY = { type: "submission", idFrom: "submissionId" };
 const PRODUCT_ACTION = { type: "open_product", label: "Se produktet", params: ["ean"] };
 
 const TICKET_QUOTE = { t: "quote", label: "Din tilbagemelding", text: "{{ticketExcerpt}}" };
+
+const LIST_VARS = {
+  listName: { max: 34, pushFallback: "jeres fælles indkøbsliste", fallback: "jeres fælles indkøbsliste" },
+  itemSummary: { fallback: "" },
+};
+const LIST_BLOCKS = [
+  H("Jeres indkøbsliste er opdateret"),
+  P("Der er blevet tilføjet varer til **{{listName}}** af andre, som deler listen med dig."),
+  PANEL("Tilføjede varer", [P("{{itemSummary}}")]),
+  P("Åbn Indkøbslister i appen for at se den aktuelle liste og markere de varer, der er købt."),
+];
+const LIST_ACTION = { type: "open_list", label: "Åbn indkøbslisten", params: ["listId"] };
+const LIST_ENTITY = { type: "list", idFrom: "listId" };
 
 export const DEFINITIONS = {
   "N2a:default": {
@@ -235,6 +248,41 @@ export const DEFINITIONS = {
       P("Hvis du har spørgsmål eller flere oplysninger, kan du sende dem via feedbackknappen i appen. Henvis gerne til din tidligere tilbagemelding."),
     ],
     action: TICKET_ACTION, entity: TICKET_ENTITY,
+  },
+
+  // ── P2: familieinvitationen udløber snart (maks. én påmindelse pr. invitation) ──
+  "P2:default": {
+    type: "P2", variant: "default", category: "family", version: 1, ttl: 3600,
+    push: { title: "Din invitation udløber snart", body: "Din familieinvitation er endnu ikke accepteret. Den udløber inden for fire timer." },
+    mail: { subject: "Din familieinvitation udløber snart", preheader: "Der er stadig tid til at bruge invitationen, inden linket udløber." },
+    vars: { expiresAt: { fallback: "snart" } }, required: [],
+    blocks: [
+      H("Din invitation er stadig åben"),
+      P("Din familieinvitation i EatSafe er endnu ikke blevet accepteret. Linket udløber **{{expiresAt}}**."),
+      PANEL("Vil du stadig forbinde familien?", [
+        P("Du kan minde den person, du har inviteret, om at åbne det invitationslink, du har delt. Personen skal logge ind for at acceptere invitationen."),
+      ]),
+      P("Hvis linket når at udløbe, kan du oprette en ny invitation under Familie i appen. Du behøver ikke gøre noget, hvis invitationen ikke længere er relevant."),
+    ],
+    action: { type: "open_family", label: "Se familieinvitationer", params: [] }, entity: { type: "invitation", idFrom: "inviteId" },
+  },
+
+  // ── P3: nye varer på en delt indkøbsliste (aggregeret; varenavne står ikke i pushen) ──
+  "P3:one": {
+    type: "P3", variant: "one", category: "shared_lists", version: 1, ttl: 7200,
+    push: { title: "Jeres indkøbsliste er opdateret", body: "Der er tilføjet en vare til {{listName}}. Se listen i EatSafe." },
+    mail: { subject: "Der er nye varer på jeres indkøbsliste", preheader: "Se, hvad der er blevet tilføjet til den indkøbsliste, du deler." },
+    vars: LIST_VARS, required: [],
+    blocks: LIST_BLOCKS,
+    action: LIST_ACTION, entity: LIST_ENTITY,
+  },
+  "P3:many": {
+    type: "P3", variant: "many", category: "shared_lists", version: 1, ttl: 7200,
+    push: { title: "Jeres indkøbsliste er opdateret", body: "Nye varer er tilføjet til {{listName}}. Se den opdaterede liste." },
+    mail: { subject: "Der er nye varer på jeres indkøbsliste", preheader: "Se, hvad der er blevet tilføjet til den indkøbsliste, du deler." },
+    vars: LIST_VARS, required: [],
+    blocks: LIST_BLOCKS,
+    action: LIST_ACTION, entity: LIST_ENTITY,
   },
 };
 

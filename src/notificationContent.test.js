@@ -11,6 +11,7 @@ const SAMPLE = {
   reason: "Ingredienslisten er ikke læsbar.\nIndsend et skarpere billede.",
   memberName: "Frederikke", inviteId: "inv-1",
   description: "Kameraet åbner ikke, når jeg vælger Scan.", message: "Vi har rettet fejlen. Prøv gerne igen.", ticketId: "tik-1",
+  expiresAt: "i dag kl. 18:35", listName: "Familiens indkøb", listId: "list-1", itemSummary: "Mælk og Æg",
 };
 const KEYS = Object.keys(DEFINITIONS);
 const LONG = "X".repeat(90);
@@ -45,7 +46,7 @@ describe("renderNotification — alle definitioner", () => {
   });
 
   it.each(KEYS)("%s holder pushbudgettet (titel ≤ 40, tekst ≤ 110) også med meget lange navne", (key) => {
-    const n = renderNotification(key, { ...SAMPLE, productName: LONG, memberName: LONG });
+    const n = renderNotification(key, { ...SAMPLE, productName: LONG, memberName: LONG, listName: LONG });
     expect(n.title.length).toBeLessThanOrEqual(40);
     expect(n.pushBody.length).toBeLessThanOrEqual(110);
   });

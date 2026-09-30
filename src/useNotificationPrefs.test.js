@@ -24,16 +24,29 @@ beforeEach(() => {
 });
 
 describe("useNotificationPrefs", () => {
-  it("default alt til 'slået til' når serveren ikke har nogen rækker", async () => {
+  it("bruger kategoriens standard, når serveren ikke har nogen rækker (til, undtagen delte lister og oprettelsespåmindelse)", async () => {
     global.fetch.mockResolvedValue(jsonResponse([]));
     const { result } = renderHook(() => useNotificationPrefs({ accessToken: "t", userId: "u1" }));
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
+    const OFF_BY_DEFAULT = ["shared_lists", "onboarding_reminder"]; // skal matche notification_enabled() i databasen
     for (const cat of NOTIFICATION_CATEGORIES) {
-      expect(result.current.prefs[`${cat.id}:push`]).toBe(true);
-      expect(result.current.prefs[`${cat.id}:email`]).toBe(true);
+      const expected = !OFF_BY_DEFAULT.includes(cat.id);
+      expect(result.current.prefs[`${cat.id}:push`], cat.id).toBe(expected);
+      expect(result.current.prefs[`${cat.id}:email`], cat.id).toBe(expected);
     }
+  });
+
+  it("viser kun kategorier, hvor der faktisk sendes noget", async () => {
+    global.fetch.mockResolvedValue(jsonResponse([]));
+    const { result } = renderHook(() => useNotificationPrefs({ accessToken: "t", userId: "u1" }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const ids = result.current.categories.map(c => c.id);
+    expect(ids).toContain("shared_lists");
+    expect(ids).not.toContain("recalls");
+    expect(ids).not.toContain("product_changes");
+    expect(ids).not.toContain("onboarding_reminder");
   });
 
   it("overstyrer default med eksplicitte rækker fra serveren", async () => {
