@@ -26,7 +26,7 @@ const MAX_ATTEMPTS = 5;
 const BATCH = 20;
 
 type EventRow = { id: string; event_key: string; kind: string; payload: Record<string, unknown>; attempts: number };
-type Flags = { push: boolean; email: boolean };
+type Flags = { push: boolean; email: boolean; testUsers: Set<string> };
 type Planned = {
   userId: string; templateKey: string; data: Record<string, unknown>; eventAt?: string;
   /** Web Push TTL og udløbstid for pushen (fx P2: kun så længe invitationen er gyldig). */
@@ -163,9 +163,11 @@ async function deliver(db: Db, ev: EventRow, plan: Planned, flags: Flags): Promi
   if (!n) throw new Error("Besked blev ikke gemt");
 
   let retry = false;
-  const willPush = flags.push && pushOn;
+  // Globalt flag TIL, eller brugeren står på testlisten (app_flags.notifications_test_users)
+  const isTester = flags.testUsers.has(plan.userId);
+  const willPush = (flags.push || isTester) && pushOn;
   if (willPush) retry = (await sendPushes(db, ev, plan, r, n.id)) || retry;
-  if (flags.email && emailOn) retry = (await sendMail(db, plan, r, n.id, willPush)) || retry;
+  if ((flags.email || isTester) && emailOn) retry = (await sendMail(db, plan, r, n.id, willPush)) || retry;
   return { retry };
 }
 
@@ -292,9 +294,15 @@ Deno.serve(async (req) => {
     const db = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
     const body = await req.json().catch(() => ({}));
 
-    const { data: flagRows } = await db.from("app_flags").select("key, value").in("key", ["notifications_push_enabled", "notifications_email_enabled"]);
-    const isOn = (k: string) => (flagRows ?? []).some((f: { key: string; value: unknown }) => f.key === k && f.value === true);
-    const flags: Flags = { push: isOn("notifications_push_enabled"), email: isOn("notifications_email_enabled") };
+    const { data: flagRows } = await db.from("app_flags").select("key, value")
+      .in("key", ["notifications_push_enabled", "notifications_email_enabled", "notifications_test_users"]);
+    const flagValue = (k: string) => (flagRows ?? []).find((f: { key: string }) => f.key === k)?.value;
+    const testList = flagValue("notifications_test_users");
+    const flags: Flags = {
+      push: flagValue("notifications_push_enabled") === true,
+      email: flagValue("notifications_email_enabled") === true,
+      testUsers: new Set(Array.isArray(testList) ? testList.map(String) : []),
+    };
 
     let q = db.from("notification_events").select("id, event_key, kind, payload, attempts").eq("status", "pending");
     if (body?.event_id) q = q.eq("id", body.event_id);
@@ -307,7 +315,7 @@ Deno.serve(async (req) => {
       const outcome = await processEvent(db, ev as EventRow, flags);
       summary[outcome] = (summary[outcome] ?? 0) + 1;
     }
-    return json({ processed: events?.length ?? 0, ...flags, ...summary });
+    return json({ processed: events?.length ?? 0, push: flags.push, email: flags.email, testUsers: flags.testUsers.size, ...summary });
   } catch (e) {
     console.error("notify:", e);
     return json({ error: String((e as Error)?.message ?? e) }, 500);

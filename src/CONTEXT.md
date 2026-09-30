@@ -612,3 +612,7 @@ korte tekst og åbner den fulde, beskyttede besked i appen via
   `notifications_email_enabled` (FRA): er flaget fra, virker de gamle triggere som før; er det til, springer de
   gamle velkomsttriggere over.
 
+- **Testbrugerliste (30. sept. 2026):** `app_flags.notifications_test_users` (jsonb-liste af bruger-id'er).
+  `notification_flag(key, user)` er sand, hvis det globale flag er tændt ELLER brugeren står på listen; push, mail,
+  `notify`, de fire mailtriggere og `delete-user` bruger den. Så kan én testkonto få rigtige push/mails, mens alle
+  andre er uberørte. Testplan: `docs/notifikationer-testplan.md`. Ryd listen ved go-live.
