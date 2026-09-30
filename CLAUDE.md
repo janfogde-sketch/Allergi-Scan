@@ -776,6 +776,17 @@ Feedback-knap har fået `env(safe-area-inset-top)`-håndtering + appens
 delte `var(--sh)`-skyggetoken. Fuld 12-punkts-detalje i
 `.claude/HISTORY.md`.
 
+### Opskrifter sat på pause (30. sept. 2026)
+
+Bjørns beslutning: Opskrifter er ikke nødvendige lige nu, men skal kunne
+komme tilbage. Menupunktet står stadig i hamburgermenuen (undertekst
+"Under udvikling"), og siden viser kun "Siden er under udvikling". Koden er
+bevaret bag `RECIPES_ENABLED = false` øverst i `RecipesScreen.jsx`. Alle
+629 opskrifter (og 13.182 `recipe_ingredients`-rækker via cascade) er
+slettet permanent fra databasen efter Bjørns valg "Slet helt" (ingen
+backup). Skal funktionen genopstå, skal flaget sættes til true OG
+opskrifterne importeres forfra.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,
