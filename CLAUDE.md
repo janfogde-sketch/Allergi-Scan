@@ -13,35 +13,19 @@
 
 ---
 
-## 0. Topprioritet til næste session (opdateret 29. sept. 2026)
+## 0. Topprioritet til næste session (opdateret 30. sept. 2026)
 
-**Start her: åbne punkter pr. 29. sept. 2026.** Nævn listen kort for Jan,
+**Start her: åbne punkter pr. 30. sept. 2026.** Nævn listen kort for Jan,
 når sessionen starter, og spørg hvad der skal tages først. Detaljerne står
 i afsnittene under listen. Opdatér listen, når et punkt er klaret.
 
-*Kun Jan kan gøre det:*
-3. Del testtjeklisten https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X
-   med Bjørn som Contributor, og kør den manuelle testrunde på rigtige
-   telefoner.
+*Sat på pause (Jan, 30. sept.):*
+3. Testrunden på rigtige telefoner med tjeklisten
+   https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X (deling med Bjørn).
 
 *Venter på Jans beslutning:*
-4. Skal alder og køn tilbage i Rediger profil? Onboarding kræver dem
-   stadig (Jan bruger dem), men brugerne kan ikke rette dem bagefter.
-   Det er en UI-ændring, så Bjørn skal inddrages.
-5. Skal QA-testkontoen `janfogde+eatsafeqa@gmail.com` have admin-rolle,
-   så admin-panelet kan testes fra sandboxen?
-6. Energi (kJ) er forkert på ca. 4.860 Bilka-produkter: tusindtals-
-   punktummet er læst som decimal (fx 2.162 i stedet for 2162). Det vises
-   ikke i appen i dag. Jan fravalgte en datarettelse 29. sept.; tag den op
-   igen, hvis energi skal vises.
-7. Nye e-mailbrugere får deres e-mail-præfiks (fx "janfogde+eatsafeqa")
-   forudfyldt som navn i onboarding og i velkomstmailen. Det kommer fra
-   `handle_new_user()` i databasen. Ikke rettet.
-8. Arkitektur-audit "som en senior engineer" (Jan delte forslaget 29.
-   sept.). Claude anbefalede den som ren rapport efter QA-rettelserne.
-   Ikke besluttet, ikke startet.
-9. Leaked Password Protection kræver Supabase Pro (se nedenfor). Spørg om
-   Jan vil opgradere, ikke om det er glemt.
+8. Arkitektur-audit "som en senior engineer". Jan: vent.
+9. Leaked Password Protection kræver Supabase Pro (se nedenfor). Jan: vent.
 
 *Skal designes (Bjørns spor):*
 11. Supabases auth-mails bruger stadig Supabases engelske standard-
@@ -58,21 +42,21 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
     `supabase/templates/`, så den kan versionsstyres.
 
 *Claude gør bagefter:*
-10. Læs testrundens resultater og opret tickets for fejl.
+10. Læs testrundens resultater og opret tickets for fejl (når punkt 3
+    genoptages).
 
-*Fund fra live-testen 30. sept., ikke rettet (afventer prioritering):*
-12. Tyske ingredienslister (fx Lindt 4000539222108: "Haselnüsse",
-    "Weizenmehl", "Vollmilchpulver") genkendes ikke og giver "kan ikke
-    afgøres" i stedet for en advarsel. Kræver tyske nøgleord i begge
-    nøgleordslister.
-13. "Sikre alternativer" matcher kun på kategori: Coca-Cola foreslås som
-    alternativ til Arla Cultura (begge "Drikkevarer").
-14. Historik/indkøbsliste viser kun "Konflikt for <familiemedlem>", selv
-    når produktet også har en sporadvarsel for brugeren selv (Marabou).
-15. Nogle opskriftstitler er dårligt oversat (fx "Abrikos & tyrkisk glæde
-    rod").
-16. *(Bjørn)* Resultatsidens rækker "Dig"/familiemedlem har næsten ingen
-    baggrund, og lange advarselstekster brydes tæt ind mod kanten.
+**Løst 30. sept. 2026** (Jans svar på listen, detaljer i commits og
+`supabase/sql/2026-09-30_*.sql`): 4 alder/køn i Rediger profil; 5
+QA-kontoen er admin; 6 kJ-data rettet (4.876 produkter, backup-tabel); 7
+onboarding trin 1 udfyldes FØR kontoen oprettes, så navnet er gemt, før
+bekræftelses- og velkomstmail sendes (`pendingSignup`/`completeSignup` i
+`useAuth.js`, `handle_new_user()` læser metadata); 12 tyske
+ingredienslister (allergens v22 + 18 produkter genanalyseret); 13
+alternativer scores på lighed (det gamle verified-filter matchede kun ét
+produkt); 14 lister nævner advarsler for andre profiler; 15 189
+opskriftstitler rettet; 16 profilrækker på resultatsiden. Samtidig fundet
+og rettet: notification_preferences manglede GRANTs (ingen valg blev
+gemt), og gender-check afviste "Vil ikke oplyse".
 
 QA-runden 28.-29. sept.: alle fund Q1–Q14 er rettet og live (PR #372,
 #373, #376), undtagen kJ-dataene i punkt 6. D2 (telefon valgfri) er live
@@ -640,9 +624,9 @@ dag-for-dag-detalje i `.claude/HISTORY.md`, backend-/struktur-reference i
 
 Profilsiden har to adskilte redigeringsskærme: `SCREENS.EDITPROFILE`
 ("Rediger profil", nås KUN fra profilkortets "Rediger") håndterer
-udelukkende Navn (obligatorisk) + Telefon — alder/køn er fjernet helt
-herfra, da EatSafe intetsteds bruger dem til en reel funktion (kun til
-visning i familie-rækker/adminpanelet). `SCREENS.EDITPREFERENCES`
+Navn, Telefon, Alder og Køn (alder/køn blev fjernet 28. sept. og sat
+tilbage 30. sept. efter Jans beslutning, med de delte AgeStepper/
+GenderPicker fra onboarding). `SCREENS.EDITPREFERENCES`
 ("Rediger præferencer", nås fra "Mine præferencer"s "Rediger" på Profil)
 håndterer udelukkende allergier/intolerancer/diæter/E-numre, og genbruger
 PRÆCIS de samme delte komponenter som onboarding og `MemberForm.jsx`
