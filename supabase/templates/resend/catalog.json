@@ -1,0 +1,287 @@
+{
+ "N1": {
+  "file": "N1-velkomst.html",
+  "subject": "Velkommen til EatSafe Beta",
+  "vars": [
+   "name"
+  ],
+  "bytes": 9681,
+  "resendId": "00508c8a-ef90-4d09-be1d-d7e03d3938bf",
+  "alias": "eatsafe-n1-velkomst"
+ },
+ "N2a": {
+  "file": "N2a-produkt-godkendt.html",
+  "subject": "Dit produkt er godkendt og tilføjet i EatSafe",
+  "vars": [
+   "name",
+   "productName"
+  ],
+  "bytes": 6710,
+  "resendId": "eccf4c47-2e02-4515-82c7-c9ee437aec27",
+  "alias": "eatsafe-n2a-produkt-godkendt"
+ },
+ "N2b": {
+  "file": "N2b-rettelse-godkendt.html",
+  "subject": "Din rettelse er godkendt i EatSafe",
+  "vars": [
+   "name",
+   "productName"
+  ],
+  "bytes": 6759,
+  "resendId": "5afa5e9d-e411-4116-b276-fd8a4e0ee8c9",
+  "alias": "eatsafe-n2b-rettelse-godkendt"
+ },
+ "N3": {
+  "file": "N3-indsendelse-afvist.html",
+  "subject": "Din indsendelse kunne ikke godkendes",
+  "vars": [
+   "name",
+   "productName",
+   "reason"
+  ],
+  "bytes": 7084,
+  "resendId": "04a09e93-25fc-4f58-b140-a37eed54b4e5",
+  "alias": "eatsafe-n3-indsendelse-afvist"
+ },
+ "N4": {
+  "file": "N4-produkt-tilfoejet.html",
+  "subject": "Et produkt, du har ledt efter, er nu i EatSafe",
+  "vars": [
+   "name",
+   "productName"
+  ],
+  "bytes": 7101,
+  "resendId": "0c406786-94ee-478f-92f0-c7042246c1c8",
+  "alias": "eatsafe-n4-produkt-tilfoejet"
+ },
+ "N5": {
+  "file": "N5-familieinvitation-accepteret.html",
+  "subject": "Din familieinvitation er accepteret",
+  "vars": [
+   "memberName",
+   "name"
+  ],
+  "bytes": 6605,
+  "resendId": "a1752fb6-dbc0-461d-9365-65dddae1f8f5",
+  "alias": "eatsafe-n5-familieinvitation-accepteret"
+ },
+ "N6a": {
+  "file": "N6a-feedback-a.html",
+  "subject": "Vi arbejder på din feedback",
+  "vars": [
+   "message",
+   "name",
+   "ticketExcerpt"
+  ],
+  "bytes": 6392,
+  "resendId": "75c259c2-db5c-433b-afbd-45881c632158",
+  "alias": "eatsafe-n6a-feedback-a"
+ },
+ "N6b": {
+  "file": "N6b-feedback-b.html",
+  "subject": "Din feedback er markeret som løst",
+  "vars": [
+   "message",
+   "name",
+   "ticketExcerpt"
+  ],
+  "bytes": 6465,
+  "resendId": "2320eeb2-501d-4fca-827e-093920d4337f",
+  "alias": "eatsafe-n6b-feedback-b"
+ },
+ "N6c": {
+  "file": "N6c-feedback-c.html",
+  "subject": "Din feedback er åbnet igen",
+  "vars": [
+   "message",
+   "name",
+   "ticketExcerpt"
+  ],
+  "bytes": 6351,
+  "resendId": "9bca4381-9e3f-42f6-ad1a-408c2c83f055",
+  "alias": "eatsafe-n6c-feedback-c"
+ },
+ "N6d": {
+  "file": "N6d-nyt-svar.html",
+  "subject": "Der er et nyt svar på din feedback",
+  "vars": [
+   "message",
+   "name",
+   "ticketExcerpt"
+  ],
+  "bytes": 6414,
+  "resendId": "90abf267-b5d0-4bd9-9e9c-7b40aa26d684",
+  "alias": "eatsafe-n6d-nyt-svar"
+ },
+ "N7-1": {
+  "file": "N7-1-ugens-opskrifter.html",
+  "subject": "Ugens opskrifter i EatSafe",
+  "vars": [
+   "name",
+   "recipeCount",
+   "recipeDescription1",
+   "recipeTitle1"
+  ],
+  "bytes": 6473,
+  "resendId": "d4201e68-8da9-499b-b031-f3e41a7ab8e4",
+  "alias": "eatsafe-n7-1-ugens-opskrifter"
+ },
+ "N7-2": {
+  "file": "N7-2-ugens-opskrifter.html",
+  "subject": "Ugens opskrifter i EatSafe",
+  "vars": [
+   "name",
+   "recipeCount",
+   "recipeDescription1",
+   "recipeDescription2",
+   "recipeTitle1",
+   "recipeTitle2"
+  ],
+  "bytes": 6958,
+  "resendId": "2f9789e9-4d68-48ee-bbb8-bdc8b5c444cf",
+  "alias": "eatsafe-n7-2-ugens-opskrifter"
+ },
+ "N7-3": {
+  "file": "N7-3-ugens-opskrifter.html",
+  "subject": "Ugens opskrifter i EatSafe",
+  "vars": [
+   "name",
+   "recipeCount",
+   "recipeDescription1",
+   "recipeDescription2",
+   "recipeDescription3",
+   "recipeTitle1",
+   "recipeTitle2",
+   "recipeTitle3"
+  ],
+  "bytes": 7443,
+  "resendId": "2326bf08-9dab-4088-b0ab-32f6b04df647",
+  "alias": "eatsafe-n7-3-ugens-opskrifter"
+ },
+ "N7-4": {
+  "file": "N7-4-ugens-opskrifter.html",
+  "subject": "Ugens opskrifter i EatSafe",
+  "vars": [
+   "name",
+   "recipeCount",
+   "recipeDescription1",
+   "recipeDescription2",
+   "recipeDescription3",
+   "recipeDescription4",
+   "recipeTitle1",
+   "recipeTitle2",
+   "recipeTitle3",
+   "recipeTitle4"
+  ],
+  "bytes": 7928,
+  "resendId": "3b6b5ba5-98a3-432c-ab51-a4064062133d",
+  "alias": "eatsafe-n7-4-ugens-opskrifter"
+ },
+ "N7-5": {
+  "file": "N7-5-ugens-opskrifter.html",
+  "subject": "Ugens opskrifter i EatSafe",
+  "vars": [
+   "name",
+   "recipeCount",
+   "recipeDescription1",
+   "recipeDescription2",
+   "recipeDescription3",
+   "recipeDescription4",
+   "recipeDescription5",
+   "recipeTitle1",
+   "recipeTitle2",
+   "recipeTitle3",
+   "recipeTitle4",
+   "recipeTitle5"
+  ],
+  "bytes": 8413,
+  "resendId": "f94a5543-2126-4b07-a529-94186feca1bc",
+  "alias": "eatsafe-n7-5-ugens-opskrifter"
+ },
+ "N8": {
+  "file": "N8-admin-overblik.html",
+  "subject": "Dit ugentlige EatSafe-overblik",
+  "vars": [
+   "errorCount",
+   "name",
+   "newUserCount",
+   "pendingCount",
+   "scanCount",
+   "ticketCount"
+  ],
+  "bytes": 6740,
+  "resendId": "cd863495-fa2b-4ad7-a82d-744f12f75c1f",
+  "alias": "eatsafe-n8-admin-overblik"
+ },
+ "P1": {
+  "file": "P1-aendrede-allergenoplysninger.html",
+  "subject": "Allergenoplysninger er ændret for et af dine produkter",
+  "vars": [
+   "changeSummary",
+   "name",
+   "productName"
+  ],
+  "bytes": 6576,
+  "resendId": "8bb93a15-91b5-4a68-b060-d200ceef2ccf",
+  "alias": "eatsafe-p1-aendrede-allergenoplysninger"
+ },
+ "P2": {
+  "file": "P2-invitation-udloeber.html",
+  "subject": "Din familieinvitation udløber snart",
+  "vars": [
+   "expiresAt",
+   "name"
+  ],
+  "bytes": 6157,
+  "resendId": "235f8ca1-fa9b-4095-bfd2-bd1ee8751bf7",
+  "alias": "eatsafe-p2-invitation-udloeber"
+ },
+ "P3": {
+  "file": "P3-delt-indkoebsliste.html",
+  "subject": "Der er nye varer på jeres indkøbsliste",
+  "vars": [
+   "itemSummary",
+   "listName",
+   "name"
+  ],
+  "bytes": 5960,
+  "resendId": "77fab913-e8f3-4271-a824-fc592791ada1",
+  "alias": "eatsafe-p3-delt-indkoebsliste"
+ },
+ "P4": {
+  "file": "P4-konto-slettet.html",
+  "subject": "Din EatSafe-konto er slettet",
+  "vars": [
+   "deletedAt",
+   "name"
+  ],
+  "bytes": 5506,
+  "resendId": "3f0cd2e1-b3d5-4d6f-80d3-0fd09b16629b",
+  "alias": "eatsafe-p4-konto-slettet"
+ },
+ "P5": {
+  "file": "P5-faerdiggoer-profil.html",
+  "subject": "Din EatSafe-profil er ikke helt færdig",
+  "vars": [
+   "name"
+  ],
+  "bytes": 5691,
+  "resendId": "2755a4bb-b87a-4183-b4ea-5dc7472805c6",
+  "alias": "eatsafe-p5-faerdiggoer-profil"
+ },
+ "P6": {
+  "file": "P6-tilbagekaldelse.html",
+  "subject": "Tilbagekaldelse af et produkt, du har brugt i EatSafe",
+  "vars": [
+   "affectedBatches",
+   "name",
+   "productName",
+   "recallAction",
+   "recallReason",
+   "recallUrl"
+  ],
+  "bytes": 6906,
+  "resendId": "cd7c5cf9-808a-4b22-9c25-5a74e1c10ca0",
+  "alias": "eatsafe-p6-tilbagekaldelse"
+ }
+}

@@ -8,8 +8,8 @@
 // i `notifications`, 2) send derefter push, som kun er den korte tekst med et link
 // til beskeden (https://www.eatsafe.dk/?notification={id}). Push sendes kun hvis
 // driftsflaget notifications_push_enabled er slået til og brugeren ikke har slået
-// kategorien fra. Mail er ikke koblet på endnu (trin 3); de eksisterende
-// mail-triggere fungerer uændret ved siden af.
+// kategorien fra. Mail sendes på samme måde via Resend-skabelonerne, når
+// notifications_email_enabled er slået til (de gamle mail-triggere springer da over).
 //
 // Kald: POST {}                  → behandl ventende hændelser (ældre end 15 sek.)
 //       POST { event_id: "…" }   → behandl netop den hændelse
@@ -17,6 +17,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { renderNotification, MissingRequiredError, productLabel } from "../_shared/notificationContent.js";
 import { sendWebPush, endpointHash } from "../_shared/webpush.ts";
+import { RESEND_TEMPLATES, buildMailVariables, sendTemplateMail } from "../_shared/mailSend.ts";
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 const APP_URL = "https://www.eatsafe.dk";
@@ -24,6 +25,7 @@ const MAX_ATTEMPTS = 5;
 const BATCH = 20;
 
 type EventRow = { id: string; event_key: string; kind: string; payload: Record<string, unknown>; attempts: number };
+type Flags = { push: boolean; email: boolean };
 type Planned = { userId: string; templateKey: string; data: Record<string, unknown>; eventAt?: string };
 
 const json = (body: unknown, status = 200) =>
@@ -94,7 +96,7 @@ async function productNameFor(db: Db, s: { product_id?: string | null; ean?: str
 }
 
 // ── Én modtager: opret besked, derefter push ────────────────────────────────
-async function deliver(db: Db, ev: EventRow, plan: Planned, pushEnabled: boolean): Promise<{ retry: boolean }> {
+async function deliver(db: Db, ev: EventRow, plan: Planned, flags: Flags): Promise<{ retry: boolean }> {
   const r = renderNotification(plan.templateKey, plan.data);
 
   // Udviklerpakken: er både push og mail fravalgt for kategorien, oprettes ingen besked.
@@ -117,15 +119,19 @@ async function deliver(db: Db, ev: EventRow, plan: Planned, pushEnabled: boolean
     .eq("user_id", plan.userId).eq("type", r.type).eq("variant", r.variant).single();
   if (!n) throw new Error("Besked blev ikke gemt");
 
-  if (!pushEnabled) return { retry: false };
-  if (off("push")) return { retry: false };
+  let retry = false;
+  if (flags.push && !off("push")) retry = (await sendPushes(db, ev, plan, r, n.id)) || retry;
+  if (flags.email && !off("email")) retry = (await sendMail(db, plan, r, n.id)) || retry;
+  return { retry };
+}
 
+async function sendPushes(db: Db, ev: EventRow, plan: Planned, r: ReturnType<typeof renderNotification>, notificationId: string): Promise<boolean> {
   const { data: tokens } = await db.from("push_tokens").select("token").eq("user_id", plan.userId);
   let retry = false;
   const payload = {
     title: r.title, body: r.pushBody, icon: "/icon-192.png", lang: "da",
-    url: `${APP_URL}/?notification=${n.id}`, notificationId: n.id, eventId: ev.id,
-    tag: `${r.type}:${r.entityId ?? n.id}`,
+    url: `${APP_URL}/?notification=${notificationId}`, notificationId, eventId: ev.id,
+    tag: `${r.type}:${r.entityId ?? notificationId}`,
   };
 
   for (const { token } of tokens ?? []) {
@@ -135,7 +141,7 @@ async function deliver(db: Db, ev: EventRow, plan: Planned, pushEnabled: boolean
     const hash = await endpointHash(sub.endpoint);
 
     const { data: prev } = await db.from("notification_deliveries").select("id, status, attempts")
-      .eq("notification_id", n.id).eq("channel", "push").eq("endpoint", hash).maybeSingle();
+      .eq("notification_id", notificationId).eq("channel", "push").eq("endpoint", hash).maybeSingle();
     if (prev?.status === "sent" || prev?.status === "skipped") continue;
 
     const res = await sendWebPush(sub, payload, {
@@ -145,21 +151,48 @@ async function deliver(db: Db, ev: EventRow, plan: Planned, pushEnabled: boolean
     });
     const status = res.ok ? "sent" : res.gone ? "skipped" : "failed";
     await db.from("notification_deliveries").upsert({
-      notification_id: n.id, channel: "push", endpoint: hash, status,
+      notification_id: notificationId, channel: "push", endpoint: hash, status,
       attempts: (prev?.attempts ?? 0) + 1, last_error: res.ok ? null : (res.gone ? "Endpoint udløbet (fjernet)" : res.error ?? null),
       sent_at: res.ok ? new Date().toISOString() : null,
     }, { onConflict: "notification_id,channel,endpoint" });
     if (res.gone) await db.from("push_tokens").delete().eq("user_id", plan.userId).eq("token", token);
     if (!res.ok && res.retryable) retry = true;
   }
-  return { retry };
+  return retry;
+}
+
+// Mail: én pr. besked (registret forhindrer dobbelt afsendelse), via Resend-skabelonen for varianten.
+async function sendMail(db: Db, plan: Planned, r: ReturnType<typeof renderNotification>, notificationId: string): Promise<boolean> {
+  const templateId = RESEND_TEMPLATES[r.key];
+  if (!templateId) return false; // varianten har ingen mail (endnu)
+
+  const { data: prev } = await db.from("notification_deliveries").select("status, attempts")
+    .eq("notification_id", notificationId).eq("channel", "email").eq("endpoint", "").maybeSingle();
+  if (prev?.status === "sent" || prev?.status === "skipped") return false;
+
+  const { data: user } = await db.from("users").select("email, name").eq("id", plan.userId).maybeSingle();
+  const record = (status: string, error: string | null) => db.from("notification_deliveries").upsert({
+    notification_id: notificationId, channel: "email", endpoint: "", status,
+    attempts: (prev?.attempts ?? 0) + 1, last_error: error, sent_at: status === "sent" ? new Date().toISOString() : null,
+  }, { onConflict: "notification_id,channel,endpoint" });
+  if (!user?.email) { await record("skipped", "Ingen e-mailadresse"); return false; }
+
+  const apiKey = Deno.env.get("RESEND_API_KEY") ?? "";
+  if (!apiKey) { await record("failed", "RESEND_API_KEY mangler"); return false; }
+
+  const res = await sendTemplateMail({
+    apiKey, to: user.email, templateId, subject: r.mail.subject,
+    variables: buildMailVariables(r.mailVars, user.name), idempotencyKey: `notification-${notificationId}`,
+  });
+  await record(res.ok ? "sent" : "failed", res.ok ? null : res.error ?? null);
+  return !res.ok && res.retryable;
 }
 
 async function logError(db: Db, message: string, context: Record<string, unknown>) {
   try { await db.rpc("log_client_error", { p_message: message, p_source: "edge:notify", p_context: context }); } catch { /* aldrig blokere */ }
 }
 
-async function processEvent(db: Db, ev: EventRow, pushEnabled: boolean) {
+async function processEvent(db: Db, ev: EventRow, flags: Flags) {
   // Claim: kun én kørsel ad gangen får lov at tage en ventende hændelse.
   const { data: claimed } = await db.from("notification_events")
     .update({ attempts: ev.attempts + 1 }).eq("id", ev.id).eq("status", "pending").eq("attempts", ev.attempts).select("id");
@@ -170,7 +203,7 @@ async function processEvent(db: Db, ev: EventRow, pushEnabled: boolean) {
     let retry = false;
     for (const plan of plans) {
       try {
-        const out = await deliver(db, ev, plan, pushEnabled);
+        const out = await deliver(db, ev, plan, flags);
         retry ||= out.retry;
       } catch (e) {
         if (e instanceof MissingRequiredError) {
@@ -209,8 +242,9 @@ Deno.serve(async (req) => {
     const db = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
     const body = await req.json().catch(() => ({}));
 
-    const { data: flag } = await db.from("app_flags").select("value").eq("key", "notifications_push_enabled").maybeSingle();
-    const pushEnabled = flag?.value === true;
+    const { data: flagRows } = await db.from("app_flags").select("key, value").in("key", ["notifications_push_enabled", "notifications_email_enabled"]);
+    const isOn = (k: string) => (flagRows ?? []).some((f: { key: string; value: unknown }) => f.key === k && f.value === true);
+    const flags: Flags = { push: isOn("notifications_push_enabled"), email: isOn("notifications_email_enabled") };
 
     let q = db.from("notification_events").select("id, event_key, kind, payload, attempts").eq("status", "pending");
     if (body?.event_id) q = q.eq("id", body.event_id);
@@ -220,10 +254,10 @@ Deno.serve(async (req) => {
 
     const summary: Record<string, number> = {};
     for (const ev of events ?? []) {
-      const outcome = await processEvent(db, ev as EventRow, pushEnabled);
+      const outcome = await processEvent(db, ev as EventRow, flags);
       summary[outcome] = (summary[outcome] ?? 0) + 1;
     }
-    return json({ processed: events?.length ?? 0, pushEnabled, ...summary });
+    return json({ processed: events?.length ?? 0, ...flags, ...summary });
   } catch (e) {
     console.error("notify:", e);
     return json({ error: String((e as Error)?.message ?? e) }, 500);

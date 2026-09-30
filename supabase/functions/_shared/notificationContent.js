@@ -330,6 +330,9 @@ export function renderNotification(key, data = {}) {
     entityType: def.entity.type,
     entityId: entityId || null,
     mail: { subject: def.mail.subject, preheader: def.mail.preheader },
+    // De samme rensede værdier som brødteksten bruger — sendes som variabler til mailskabelonen,
+    // så app og mail aldrig kan vise forskellige tal/tekster for samme hændelse.
+    mailVars: blockValues,
   };
 
   for (const s of [out.title, out.pushBody, JSON.stringify(out.blocks), out.mail.subject]) {
