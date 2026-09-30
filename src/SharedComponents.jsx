@@ -9,6 +9,7 @@ import eatsafeLogoHorizontal from "./assets/logo/eatsafe-logo-horizontal.svg";
 import eatsafeLogoHorizontalMono from "./assets/logo/eatsafe-logo-horizontal-mono.svg";
 import eatsafeSymbol from "./assets/logo/eatsafe-symbol.svg";
 import eatsafeSymbolMono from "./assets/logo/eatsafe-symbol-mono.svg";
+import lactoseDropImg from "./assets/icons/lactose-drop.png";
 
 // ─── EATSAFE-LOGO (nu låst brandasset, 28. sept. 2026) ──────────────────────
 // Ét fast sæt vektor-assets (src/assets/logo/, eksporteret fra den godkendte
@@ -196,31 +197,39 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
   );
 };
 
-// ─── LAKTOSE-IKON (29. sept. 2026) ────────────────────────────────────────────
+// ─── LAKTOSE-IKON (29.-30. sept. 2026) ────────────────────────────────────────
 // Alle andre allergener bruger stadig deres rigtige Unicode-emoji direkte
 // (a.emoji, se constants.jsx/ALLERGENS — bevidst, se CLAUDE.md afsnit 6: kun
 // content-emoji, ikke UI-chrome, er tilbage i appen). "Laktose" er en
 // specifik, begrundet undtagelse: dens tidligere emoji (🍬, slik) havde
 // ingen visuel sammenhæng med laktose overhovedet, og et almindeligt
 // mælke-glas-emoji ville skabe forveksling med "Mælk"s eget 🥛 (allergi over
-// for mælkeprotein er noget andet end laktoseintolerance). Løsningen er en
-// selvstændig, to-farvet inline-SVG (uden for den almindelige, ensfarvede
-// `Icon`-komponent ovenfor, samme princip som `EatSafeLogo`/
-// `ScanLoadingOverlay` — faste brand-farver, ikke `currentColor`) i stedet
-// for endnu et Unicode-tegn: en afrundet, cremefarvet mælkedråbe med et
-// tydeligt, grønt "L" indeni. Cremefarven holder den neutral/mælke-
-// associeret uden at genbruge mælk-emojiets blå/hvide glas-form, og det
-// grønne "L" matcher EatSafes primære brandfarve. Fungerer uændret på både
-// hvid baggrund og selected-chip-baggrund (var(--green-selected-bg)), da
-// begge er lyse nok til at dråbens creme-toner og det mørkere grønne "L"
-// forbliver læsbare uden brug af CSS-variabler her.
-export const LactoseIcon = ({ size = 16, style }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={style} aria-hidden="true" focusable="false">
-    <path d="M12 2.5c-.4 0-.78.19-1.02.52C9.02 5.6 5.25 11.4 5.25 15.35 5.25 19.56 8.24 22.5 12 22.5s6.75-2.94 6.75-7.15c0-3.95-3.77-9.75-5.73-12.33A1.28 1.28 0 0012 2.5z"
-      fill="#FAF1DC" stroke="#E3D3A8" strokeWidth="1.3" strokeLinejoin="round" />
-    <path d="M10 10.2v5h4.2" stroke="#0F7D4F" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-  </svg>
-);
+// for mælkeprotein er noget andet end laktoseintolerance). Et hånd-tegnet,
+// fladt to-linjers SVG-udkast (29. sept.) blev erstattet dagen efter med et
+// brugerleveret, blankt 3D-renderet ikon (afrundet cremefarvet mælkedråbe
+// med et glansfyldt grønt "L") — importeret som `src/assets/icons/
+// lactose-drop.png` (nedskaleret til 320×320, rigeligt til den største
+// brugsstørrelse på 32px i Madpas' fremvisningsskærm). Kildebilledet havde
+// en ensfarvet hvid baggrund uden alfakanal, som ville vise sig som en
+// firkantet hvid boks på selected-chip-baggrunden (lys grøn) — løst med en
+// glat spline-`clipPath` der følger dråbens silhuet (målt punkt-for-punkt
+// fra kildebilledet, med indadgående margin, interpoleret til en jævn
+// kurve via Catmull-Rom→Bezier), i stedet for et pixel-baseret
+// baggrunds-fjernelsesværktøj (upålideligt her, da dråbens egen cremefarve
+// mange steder ligger meget tæt på selve baggrundens hvide tone).
+export const LactoseIcon = ({ size = 16, style }) => {
+  const clipId = React.useId();
+  return (
+    <svg width={size} height={size} viewBox="0 0 320 320" style={style} aria-hidden="true" focusable="false">
+      <defs>
+        <clipPath id={clipId}>
+          <path d="M 160.00,57.42 C 160.43,57.42 159.36,60.61 160.77,63.80 C 162.17,66.99 164.17,70.18 168.42,76.56 C 172.67,82.93 179.90,93.57 186.28,102.07 C 192.66,110.58 200.32,117.94 206.70,127.59 C 213.08,137.25 220.73,149.37 224.56,160.00 C 228.39,170.63 230.52,181.90 229.67,191.39 C 228.81,200.87 223.71,209.25 219.46,216.91 C 215.20,224.56 209.25,232.22 204.15,237.32 C 199.04,242.42 194.36,244.76 188.84,247.53 C 183.31,250.29 175.78,252.21 170.97,253.91 C 166.17,255.61 163.83,257.74 160.00,257.74 C 156.17,257.74 152.98,255.61 148.01,253.91 C 143.03,252.21 135.67,250.29 130.14,247.53 C 124.61,244.76 119.94,242.42 114.83,237.32 C 109.73,232.22 103.35,224.56 99.52,216.91 C 95.69,209.25 92.72,200.87 91.87,191.39 C 91.02,181.90 91.02,170.63 94.42,160.00 C 97.82,149.37 105.90,137.25 112.28,127.59 C 118.66,117.94 126.32,110.58 132.70,102.07 C 139.07,93.57 146.31,82.93 150.56,76.56 C 154.81,70.18 156.64,66.99 158.21,63.80 C 159.79,60.61 159.57,57.42 160.00,57.42 Z" />
+        </clipPath>
+      </defs>
+      <image href={lactoseDropImg} x="0" y="0" width="320" height="320" clipPath={`url(#${clipId})`} />
+    </svg>
+  );
+};
 
 // Centraliserer laktose-undtagelsen ét sted, så hver chip-visning i appen
 // (Madpas, Familie, Profil, Rediger præferencer, Resultatside, Opskrifter,
