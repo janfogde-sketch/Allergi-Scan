@@ -77,3 +77,7 @@ verify_jwt = true
 # Kategori 4: kun service-role (cron). Tjekker nøglen selv i koden.
 [functions.notify]
 verify_jwt = false
+
+# Kategori 4: kun service-role (cron sync_recalls). Tjekker nøglen selv i koden.
+[functions.recalls-sync]
+verify_jwt = false

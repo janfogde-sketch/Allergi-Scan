@@ -17,7 +17,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { renderNotification, MissingRequiredError, productLabel } from "../_shared/notificationContent.js";
 import { sendWebPush, endpointHash } from "../_shared/webpush.ts";
-import { formatDanishDeadline, summarizeItems } from "../_shared/notifyHelpers.js";
+import { formatDanishDeadline, summarizeItems, affectedAllergenChanges, summarizeAllergenChanges } from "../_shared/notifyHelpers.js";
+import { eanVariants } from "../_shared/recallParser.js";
 import { RESEND_TEMPLATES, MAIL_ONLY_WITHOUT_PUSH, buildMailVariables, sendTemplateMail } from "../_shared/mailSend.ts";
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
@@ -26,7 +27,7 @@ const MAX_ATTEMPTS = 5;
 const BATCH = 20;
 
 type EventRow = { id: string; event_key: string; kind: string; payload: Record<string, unknown>; attempts: number };
-type Flags = { push: boolean; email: boolean };
+type Flags = { push: boolean; email: boolean; testUsers: Set<string> };
 type Planned = {
   userId: string; templateKey: string; data: Record<string, unknown>; eventAt?: string;
   /** Web Push TTL og udløbstid for pushen (fx P2: kun så længe invitationen er gyldig). */
@@ -120,6 +121,93 @@ async function planEvent(db: Db, ev: EventRow): Promise<Planned[]> {
       }
       return plans;
     }
+    case "product_allergen_changed": {
+      const { data: prod } = await db.from("products").select("id, ean, name, brand, allergen_flags").eq("id", p.product_id).maybeSingle();
+      if (!prod) return [];
+      const since = new Date(Date.now() - 90 * 86400_000).toISOString();
+      // Kandidater: favoritter, aktuelle lister (ejer + adgang) og scanninger de sidste 90 dage.
+      const ids = new Set<string>();
+      if (prod.ean) {
+        const { data: fav } = await db.from("favorites").select("user_id").eq("ean", prod.ean);
+        for (const r of fav ?? []) if (r.user_id) ids.add(r.user_id);
+      }
+      const { data: scans } = await db.from("scan_history").select("user_id")
+        .or(`product_id.eq.${prod.id}${prod.ean ? `,ean_scanned.eq.${prod.ean}` : ""}`).gte("scanned_at", since).not("user_id", "is", null);
+      for (const r of scans ?? []) ids.add(r.user_id);
+      const { data: items } = await db.from("shopping_list_items").select("list_id")
+        .or(`product_id.eq.${prod.id}${prod.ean ? `,ean.eq.${prod.ean}` : ""}`);
+      const listIds = [...new Set((items ?? []).map((i: { list_id: string }) => i.list_id))];
+      if (listIds.length) {
+        const { data: lists } = await db.from("shopping_lists").select("owner_id").in("id", listIds);
+        for (const l of lists ?? []) if (l.owner_id) ids.add(l.owner_id);
+        const { data: acc } = await db.from("shopping_list_access").select("user_id").in("list_id", listIds);
+        for (const a of acc ?? []) ids.add(a.user_id);
+      }
+      if (ids.size === 0) return [];
+
+      const userIds = [...ids];
+      const { data: own } = await db.from("user_allergens").select("user_id, allergen").in("user_id", userIds).is("family_member_id", null).eq("type", "allergen");
+      const { data: members } = await db.from("family_members").select("user_id, allergens").in("user_id", userIds);
+      const byUser = new Map<string, string[]>();
+      const add = (u: string, a: unknown) => {
+        const id = typeof a === "string" ? a : (a as { id?: string })?.id;
+        if (u && id) byUser.set(u, [...(byUser.get(u) ?? []), id]);
+      };
+      for (const r of own ?? []) add(r.user_id, r.allergen);
+      for (const m of members ?? []) if (Array.isArray(m.allergens)) for (const a of m.allergens) add(m.user_id, a);
+
+      const productName = productLabel({ brand: prod.brand, name: prod.name });
+      const plans: Planned[] = [];
+      for (const userId of userIds) {
+        const hits = affectedAllergenChanges(p.changes as Record<string, { old: string }>, prod.allergen_flags, byUser.get(userId) ?? []);
+        if (hits.length === 0) continue; // berører ingen af modtagerens profiler, eller er rullet tilbage
+        plans.push({ userId, templateKey: "P1:default", data: { productName, ean: prod.ean, changeSummary: summarizeAllergenChanges(hits) } });
+      }
+      return plans;
+    }
+    case "recall_published": {
+      const { data: rc } = await db.from("recalls").select("id, source_url, reason, affected, action, eans, status").eq("id", p.recall_id).maybeSingle();
+      // Kun bekræftede (status ready) tilbagekaldelser med gyldige EAN'er sendes; annulleret/arkiveret → ingen besked.
+      if (!rc || rc.status !== "ready" || !rc.eans?.length) return [];
+      const variants = [...new Set((rc.eans as string[]).flatMap((e) => eanVariants(e)))];
+      const { data: prods } = await db.from("products").select("id, ean, name, brand").in("ean", variants);
+      const prodByEan = new Map<string, { id: string; ean: string; name: string; brand: string }>();
+      for (const pr of prods ?? []) prodByEan.set(pr.ean, pr);
+      const since = new Date(Date.now() - 90 * 86400_000).toISOString();
+
+      // bruger → første matchede EAN (som den står i databasen)
+      const hit = new Map<string, string>();
+      const mark = (userId: string | null | undefined, ean: string | null | undefined) => {
+        if (userId && ean && !hit.has(userId)) hit.set(userId, ean);
+      };
+      const { data: fav } = await db.from("favorites").select("user_id, ean").in("ean", variants);
+      for (const r of fav ?? []) mark(r.user_id, r.ean);
+      const { data: scans } = await db.from("scan_history").select("user_id, ean_scanned").in("ean_scanned", variants).gte("scanned_at", since).not("user_id", "is", null);
+      for (const r of scans ?? []) mark(r.user_id, r.ean_scanned);
+      const { data: items } = await db.from("shopping_list_items").select("list_id, ean").in("ean", variants);
+      const listEan = new Map<string, string>();
+      for (const i of items ?? []) if (i.list_id && i.ean && !listEan.has(i.list_id)) listEan.set(i.list_id, i.ean);
+      if (listEan.size) {
+        const listIds = [...listEan.keys()];
+        const { data: lists } = await db.from("shopping_lists").select("id, owner_id").in("id", listIds);
+        for (const l of lists ?? []) mark(l.owner_id, listEan.get(l.id));
+        const { data: acc } = await db.from("shopping_list_access").select("list_id, user_id").in("list_id", listIds);
+        for (const a of acc ?? []) mark(a.user_id, listEan.get(a.list_id));
+      }
+
+      const plans: Planned[] = [];
+      for (const [userId, ean] of hit) {
+        const prod = prodByEan.get(ean);
+        plans.push({
+          userId, templateKey: "P6:default",
+          data: {
+            productName: prod ? productLabel({ brand: prod.brand, name: prod.name }) : "", ean: prod?.ean ?? ean,
+            recallReason: rc.reason, affectedBatches: rc.affected, recallAction: rc.action, recallUrl: rc.source_url, recallId: rc.id,
+          },
+        });
+      }
+      return plans;
+    }
     default:
       throw new Error(`Ukendt hændelsestype: ${ev.kind}`);
   }
@@ -163,9 +251,11 @@ async function deliver(db: Db, ev: EventRow, plan: Planned, flags: Flags): Promi
   if (!n) throw new Error("Besked blev ikke gemt");
 
   let retry = false;
-  const willPush = flags.push && pushOn;
+  // Globalt flag TIL, eller brugeren står på testlisten (app_flags.notifications_test_users)
+  const isTester = flags.testUsers.has(plan.userId);
+  const willPush = (flags.push || isTester) && pushOn;
   if (willPush) retry = (await sendPushes(db, ev, plan, r, n.id)) || retry;
-  if (flags.email && emailOn) retry = (await sendMail(db, plan, r, n.id, willPush)) || retry;
+  if ((flags.email || isTester) && emailOn) retry = (await sendMail(db, plan, r, n.id, willPush)) || retry;
   return { retry };
 }
 
@@ -292,9 +382,15 @@ Deno.serve(async (req) => {
     const db = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
     const body = await req.json().catch(() => ({}));
 
-    const { data: flagRows } = await db.from("app_flags").select("key, value").in("key", ["notifications_push_enabled", "notifications_email_enabled"]);
-    const isOn = (k: string) => (flagRows ?? []).some((f: { key: string; value: unknown }) => f.key === k && f.value === true);
-    const flags: Flags = { push: isOn("notifications_push_enabled"), email: isOn("notifications_email_enabled") };
+    const { data: flagRows } = await db.from("app_flags").select("key, value")
+      .in("key", ["notifications_push_enabled", "notifications_email_enabled", "notifications_test_users"]);
+    const flagValue = (k: string) => (flagRows ?? []).find((f: { key: string }) => f.key === k)?.value;
+    const testList = flagValue("notifications_test_users");
+    const flags: Flags = {
+      push: flagValue("notifications_push_enabled") === true,
+      email: flagValue("notifications_email_enabled") === true,
+      testUsers: new Set(Array.isArray(testList) ? testList.map(String) : []),
+    };
 
     let q = db.from("notification_events").select("id, event_key, kind, payload, attempts").eq("status", "pending");
     if (body?.event_id) q = q.eq("id", body.event_id);
@@ -307,7 +403,7 @@ Deno.serve(async (req) => {
       const outcome = await processEvent(db, ev as EventRow, flags);
       summary[outcome] = (summary[outcome] ?? 0) + 1;
     }
-    return json({ processed: events?.length ?? 0, ...flags, ...summary });
+    return json({ processed: events?.length ?? 0, push: flags.push, email: flags.email, testUsers: flags.testUsers.size, ...summary });
   } catch (e) {
     console.error("notify:", e);
     return json({ error: String((e as Error)?.message ?? e) }, 500);

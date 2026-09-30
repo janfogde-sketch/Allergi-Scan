@@ -32,3 +32,39 @@ export function formatDanishDateTime(iso) {
   return `${date} kl. ${time}`;
 }
 
+
+// ── P1: ændrede allergenoplysninger ─────────────────────────────────────────
+const ALLERGEN_LABELS = {
+  aeg: "Æg", fisk: "Fisk", soja: "Soja", hvede: "Hvede", lupin: "Lupin", sesam: "Sesam", svovl: "Svovldioxid og sulfit",
+  gluten: "Gluten", sennep: "Sennep", laktose: "Laktose", noedder: "Nødder", selleri: "Selleri", skaldyr: "Skaldyr",
+  bloeddyr: "Bløddyr", jordnoedder: "Jordnødder", maelkeallergi: "Mælkeprotein",
+};
+const CHANGE_WORDS = { yes: "indeholder nu", traces: "kan nu indeholde spor", unknown: "er nu uoplyst" };
+
+/** Risikotrin for et allergenflag — samme skala som allergen_risk_rank() i databasen. */
+export function allergenRiskRank(v) {
+  return v === "yes" ? 3 : v === "traces" ? 2 : v === "unknown" ? 1 : 0;
+}
+
+/**
+ * Hvilke af de ændrede flag gælder stadig og berører denne modtagers profiler?
+ * changes: { key: { old, new } } fra hændelsen; current: produktets AKTUELLE allergen_flags;
+ * profileAllergens: alle allergen-id'er fra modtagerens egen og administrerede profiler.
+ * Returnerer [{ key, label, value }] — kun flag, hvor risikoen fortsat er højere end før.
+ */
+export function affectedAllergenChanges(changes, current, profileAllergens) {
+  const mine = new Set(profileAllergens);
+  const out = [];
+  for (const [key, ch] of Object.entries(changes ?? {})) {
+    if (!mine.has(key)) continue;
+    const now = current?.[key];
+    if (allergenRiskRank(now) <= allergenRiskRank(ch?.old)) continue; // rullet tilbage siden
+    out.push({ key, label: ALLERGEN_LABELS[key] ?? key, value: now });
+  }
+  return out;
+}
+
+/** "Æg indeholder nu, Fisk kan nu indeholde spor" — bruges i besked og mail. */
+export function summarizeAllergenChanges(list) {
+  return list.map((c) => `${c.label} ${CHANGE_WORDS[c.value] ?? "er ændret"}`).join(", ");
+}

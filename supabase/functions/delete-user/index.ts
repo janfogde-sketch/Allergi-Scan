@@ -79,11 +79,11 @@ Deno.serve(async (req) => {
     if (authError) throw new Error(`auth sletning fejlede: ${authError.message}`);
 
     // P4: slettekvittering — først EFTER en gennemført sletning, og kun når mailkanalen er slået til
-    // (notifications_email_enabled). Fejl her må aldrig få selve sletningen til at se fejlet ud.
+    // (notifications_email_enabled, eller brugeren står på testlisten). Fejl her må aldrig få selve sletningen til at se fejlet ud.
     try {
-      const { data: flag } = await supabase.from("app_flags").select("value").eq("key", "notifications_email_enabled").maybeSingle();
+      const { data: flagOn } = await supabase.rpc("notification_flag", { p_key: "notifications_email_enabled", p_user: uid });
       const apiKey = Deno.env.get("RESEND_API_KEY") ?? "";
-      if (flag?.value === true && target?.email && apiKey) {
+      if (flagOn === true && target?.email && apiKey) {
         const variables = { ...buildMailVariables({ deletedAt: formatDanishDateTime(new Date().toISOString()) }, target.name) };
         let res = { ok: false, retryable: true, error: "" } as { ok: boolean; retryable: boolean; error?: string };
         for (let attempt = 0; attempt < 3 && !res.ok && res.retryable; attempt++) {

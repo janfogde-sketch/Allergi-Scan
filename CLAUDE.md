@@ -26,6 +26,13 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
 *Venter på Jans beslutning:*
 9. Leaked Password Protection kræver Supabase Pro (se nedenfor). Jan: vent.
 
+*Todo (Jan, 30. sept.):*
+13. Admin-visning til tilbagekaldelser uden gyldig EAN (`recalls` med status
+    `needs_review`): vis titel, kilde-link, rå tal (`unverified_eans`) og
+    tilbagekaldelsens tekst, og lad admin søge produkter frem og knytte EAN'er,
+    hvorefter status sættes til `ready` og hændelsen `recall_published` lægges i
+    outboxen. Kræver en admin-RPC til opdatering (tabellen er kun læsbar for admin).
+
 *Skal designes (Bjørns spor):*
 11. Supabases auth-mails bruger stadig Supabases engelske standard-
     skabeloner. De skal designes på dansk i EatSafes stil, så de matcher
@@ -91,9 +98,8 @@ nær den nyeste commit (kategorier, P2, P3), som ligger lokalt. Push-flaget
 `notifications_push_enabled` og mail-flaget `notifications_email_enabled` er
 begge FRA; ingen rigtige push eller mails er sendt. `notify` er testet live
 (besked oprettet, ingen afsendelse). Beskedside/rute er i appen; 22 Resend-
-skabeloner ligger i `supabase/templates/resend/`. Mangler: P1 (kræver
-ændringshistorik for allergener), P6 (ingen datakilde), P5 (afventer
-beslutning), N7 (opskrifter er sat på pause), N1 efter onboarding, P4 ved
+skabeloner ligger i `supabase/templates/resend/`. P1 er bygget (trigger + notify, kun stigende risiko) og P5 er droppet. P6 er bygget (RSS-feed fra Fødevarestyrelsen → `recalls` → EAN-match; kræver merge og deploy af `recalls-sync`). Mangler: admin-visning
+til tilbagekaldelser uden gyldig EAN, N7 (opskrifter er sat på pause), N1 efter onboarding, P4 ved
 kontosletning, "Se din feedback"-visning (trin 4), test på rigtige telefoner
 FØR flagene tændes. Detaljer i `src/CONTEXT.md` afsnit 14.
 

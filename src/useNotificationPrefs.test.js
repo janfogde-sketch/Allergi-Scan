@@ -44,8 +44,8 @@ describe("useNotificationPrefs", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     const ids = result.current.categories.map(c => c.id);
     expect(ids).toContain("shared_lists");
-    expect(ids).not.toContain("recalls");
-    expect(ids).not.toContain("product_changes");
+    expect(ids).toContain("recalls");
+    expect(ids).toContain("product_changes");
     expect(ids).not.toContain("onboarding_reminder");
   });
 

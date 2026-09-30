@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { formatDanishDeadline, formatDanishDateTime, summarizeItems } from "../supabase/functions/_shared/notifyHelpers.js";
+import { formatDanishDeadline, formatDanishDateTime, summarizeItems, affectedAllergenChanges, summarizeAllergenChanges, allergenRiskRank } from "../supabase/functions/_shared/notifyHelpers.js";
 
 describe("formatDanishDeadline", () => {
   const now = new Date("2026-09-30T12:00:00Z"); // 14:00 dansk sommertid
@@ -34,3 +34,23 @@ describe("formatDanishDateTime", () => {
   });
 });
 
+
+describe("P1: ændrede allergenoplysninger", () => {
+  const changes = { aeg: { old: "no", new: "yes" }, fisk: { old: "no", new: "traces" }, soja: { old: "unknown", new: "yes" } };
+  const current = { aeg: "yes", fisk: "traces", soja: "no" };
+  it("risikoskalaen følger databasen", () => {
+    expect(["no", "false", undefined, "unknown", "traces", "yes"].map(allergenRiskRank)).toEqual([0, 0, 0, 1, 2, 3]);
+  });
+  it("viser kun ændringer, der berører modtagerens profil", () => {
+    const hits = affectedAllergenChanges(changes, current, ["aeg", "gluten"]);
+    expect(hits).toEqual([{ key: "aeg", label: "Æg", value: "yes" }]);
+    expect(affectedAllergenChanges(changes, current, ["gluten"])).toEqual([]);
+  });
+  it("dropper flag, der er rullet tilbage siden hændelsen", () => {
+    expect(affectedAllergenChanges(changes, current, ["soja"])).toEqual([]); // soja er nu "no"
+  });
+  it("formulerer resumeet", () => {
+    const hits = affectedAllergenChanges(changes, current, ["aeg", "fisk"]);
+    expect(summarizeAllergenChanges(hits)).toBe("Æg indeholder nu, Fisk kan nu indeholde spor");
+  });
+});

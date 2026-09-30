@@ -612,3 +612,23 @@ korte tekst og åbner den fulde, beskyttede besked i appen via
   `notifications_email_enabled` (FRA): er flaget fra, virker de gamle triggere som før; er det til, springer de
   gamle velkomsttriggere over.
 
+- **Testbrugerliste (30. sept. 2026):** `app_flags.notifications_test_users` (jsonb-liste af bruger-id'er).
+  `notification_flag(key, user)` er sand, hvis det globale flag er tændt ELLER brugeren står på listen; push, mail,
+  `notify`, de fire mailtriggere og `delete-user` bruger den. Så kan én testkonto få rigtige push/mails, mens alle
+  andre er uberørte. Testplan: `docs/notifikationer-testplan.md`. Ryd listen ved go-live.
+- **P1 (30. sept. 2026):** trigger `on_products_allergen_change` (migration `20260930152251`) lægger hændelsen
+  `product_allergen_changed` i outboxen, når et allergenflag får HØJERE risiko (`allergen_risk_rank`: nej 0, uoplyst 1,
+  spor 2, ja 3); faldende risiko giver ingen besked. Hændelsen udskydes 10 min. `notify` genvurderer mod produktets
+  aktuelle flag og finder modtagere via favoritter, aktuelle lister (ejer + adgang) og scanninger de sidste 90 dage,
+  kun hvis egne eller administrerede profilers allergener berøres (`affectedAllergenChanges` i `notifyHelpers.js`).
+  Kategori `product_changes` (standard TIL) er nu synlig i Indstillinger. **P5 er droppet** (Jan, 30. sept.).
+  **P6** afventer adgang til Fødevarestyrelsen (domænet er blokeret i cloud-miljøets netværksliste).
+- **P6 (30. sept. 2026):** tabel `recalls` (kun admin kan læse) + edge-funktionen `recalls-sync` (service-role, cron
+  `notify-recalls-sync` dagligt kl. 06:07 UTC) henter Fødevarestyrelsens RSS-feed
+  (`foedevarestyrelsen.dk/handlers/DynamicRss.ashx?id=8c2cdc12-...`), læser hver ny side (`_shared/recallParser.js`) og
+  udleder EAN, parti og årsag. Kun EAN'er med gyldigt GTIN-kontrolciffer tæller. Status: `ready` (gyldig EAN, sendes),
+  `needs_review` (ingen gyldig EAN; kun admin ser den, `unverified_eans` viser rå tal), `cancelled` (titel starter med
+  ANNULLERET), `archived` (første kørsel og alt ældre end 14 dage sendes aldrig). `notify` (`recall_published`) matcher på
+  favoritter, scanninger (90 dage) og indkøbslister via EAN, aldrig på navn, og sender P6 til alle matchede uanset
+  allergiprofil. Linket i beskeden (blokken `link`) tillader kun https på foedevarestyrelsen.dk. Cirka 28 af 50 sider i feedet
+  havde gyldig EAN (juni-sept. 2026). Mangler: admin-visning til `needs_review` med manuel tilknytning af EAN.

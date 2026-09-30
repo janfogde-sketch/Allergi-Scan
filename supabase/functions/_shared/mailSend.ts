@@ -15,6 +15,8 @@ export const RESEND_TEMPLATES: Record<string, string> = {
   "N6:resolved": "2320eeb2-501d-4fca-827e-093920d4337f",
   "N6:reopened": "9bca4381-9e3f-42f6-ad1a-408c2c83f055",
   "N6:reply": "90abf267-b5d0-4bd9-9e9c-7b40aa26d684",
+  "P1:default": "8bb93a15-91b5-4a68-b060-d200ceef2ccf",
+  "P6:default": "cd7c5cf9-808a-4b22-9c25-5a74e1c10ca0",
   "P2:default": "235f8ca1-fa9b-4095-bfd2-bd1ee8751bf7",
   "P3:one": "77fab913-e8f3-4271-a824-fc592791ada1",
   "P3:many": "77fab913-e8f3-4271-a824-fc592791ada1",
@@ -43,7 +45,8 @@ export function escapeHtml(value: unknown): string {
 /** Variabler til skabelonen: rensede værdier fra beskeden + fornavn, alle HTML-escapet. */
 export function buildMailVariables(mailVars: Record<string, string>, userName?: string | null): Record<string, string> {
   const out: Record<string, string> = { name: escapeHtml((userName ?? "").trim().split(/\s+/)[0] ?? "") };
-  for (const [k, v] of Object.entries(mailVars)) out[k] = escapeHtml(v);
+  // Linjeskift bliver <br> (efter escaping), så flerlinjede værdier (partier, svar) ikke løber sammen i mailen.
+  for (const [k, v] of Object.entries(mailVars)) out[k] = escapeHtml(v).replace(/\r?\n/g, "<br>");
   return out;
 }
 
