@@ -139,6 +139,8 @@ export default function RecipesScreen({
   ], [recipeSafeProfiles, family, customAllerg]);
   const filteredRecipes = useMemo(() => {
     return (recipeFilter === "favoritter" ? recipes.filter(r => favoriteRecipes.includes(r.id)) : recipes).filter(r => {
+      // Kategori-filteret (dropdownen) — "alle"/"favoritter" er ikke kategorier
+      if (recipeFilter !== "alle" && recipeFilter !== "favoritter" && r.category !== recipeFilter) return false;
       if (recipeSearch && !r.title.toLowerCase().includes(recipeSearch.toLowerCase())) return false;
       if (recipeSafeOnly) {
         let rFlags = {};
@@ -667,6 +669,14 @@ export default function RecipesScreen({
         {!recipesLoading && recipes.length > 0 && filtered.length === 0 && recipeFilter !== "favoritter" && recipeSearch && (
           <EmptyState icon={<Icon name="search" size={26} color="var(--muted)" />} text="Ingen resultater" sub={`Ingen opskrifter matcher "${recipeSearch}"`}>
             <button className="btn btn-outline btn-sm" style={UI.mt12} onClick={() => setRecipeSearch("")}>Ryd søgning</button>
+          </EmptyState>
+        )}
+
+        {/* Tom kategori (fx Frokost/Snack har pt. ingen opskrifter) eller alt filtreret væk af "Kun sikre" */}
+        {!recipesLoading && recipes.length > 0 && filtered.length === 0 && recipeFilter !== "favoritter" && !recipeSearch && (
+          <EmptyState icon={<Icon name="utensils" size={26} color="var(--muted)" />} text="Ingen opskrifter her endnu"
+            sub={recipeSafeOnly ? "Ingen opskrifter i denne kategori passer til de valgte profiler" : "Der er endnu ingen opskrifter i denne kategori"}>
+            <button className="btn btn-outline btn-sm" style={UI.mt12} onClick={() => setRecipeFilter("alle")}>Se alle opskrifter</button>
           </EmptyState>
         )}
 
