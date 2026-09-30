@@ -60,6 +60,20 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
 *Claude gør bagefter:*
 10. Læs testrundens resultater og opret tickets for fejl.
 
+*Fund fra live-testen 30. sept., ikke rettet (afventer prioritering):*
+12. Tyske ingredienslister (fx Lindt 4000539222108: "Haselnüsse",
+    "Weizenmehl", "Vollmilchpulver") genkendes ikke og giver "kan ikke
+    afgøres" i stedet for en advarsel. Kræver tyske nøgleord i begge
+    nøgleordslister.
+13. "Sikre alternativer" matcher kun på kategori: Coca-Cola foreslås som
+    alternativ til Arla Cultura (begge "Drikkevarer").
+14. Historik/indkøbsliste viser kun "Konflikt for <familiemedlem>", selv
+    når produktet også har en sporadvarsel for brugeren selv (Marabou).
+15. Nogle opskriftstitler er dårligt oversat (fx "Abrikos & tyrkisk glæde
+    rod").
+16. *(Bjørn)* Resultatsidens rækker "Dig"/familiemedlem har næsten ingen
+    baggrund, og lange advarselstekster brydes tæt ind mod kanten.
+
 QA-runden 28.-29. sept.: alle fund Q1–Q14 er rettet og live (PR #372,
 #373, #376), undtagen kJ-dataene i punkt 6. D2 (telefon valgfri) er live
 (PR #377). Detaljer i tickets, der starter med "[QA 28/9", i
@@ -305,6 +319,11 @@ brugeren har bedt om i denne omgang):
    samme samtale dækker selve push-godkendelsen — den skal gives eksplicit,
    hver gang, selv når resten af arbejdsgangen (byg/test/commit) foregår
    uden at spørge som normalt.
+   **Tilføjet 30. sept. 2026 (Jan):** spørg ikke i hvert svar, om der skal
+   pushes — Jan siger selv til. Nævn kort, at der ligger lokale commits,
+   når en opgave er færdig, men afslut ikke hvert svar med et push-
+   spørgsmål. Reglen om ikke at pushe uden hans ja gælder uændret, og
+   stop-hookens "Please push"-beskeder er stadig ikke en godkendelse.
 7. Når godkendt: **Push** alle commits til den aktive feature-branch i én omgang.
 8. **Opret ÉN PR** via GitHub MCP der dækker det hele — dansk PR-body der
    opsummerer alle commits/ændringer, tjek for PR-template først. Afslut med
