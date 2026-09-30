@@ -11,7 +11,14 @@ export const initials = n => (n||"").split(" ").filter(Boolean).map(w=>w[0]).joi
 
 export const timeAgo = ts => { const d=Date.now()-new Date(ts).getTime(); if(d<60000)return"Lige nu"; if(d<3600000)return`${Math.floor(d/60000)} min siden`; if(d<86400000)return`${Math.floor(d/3600000)} t siden`; return`${Math.floor(d/86400000)} d siden`; };
 
-export const getAllergenLabels = (ids,custom=[]) => [...ids.map(id=>ALLERGENS.find(a=>a.id===id)).filter(Boolean).map(a=>`${a.emoji} ${a.label}`),...custom.map(c=>`✏️ ${c}`)];
+// Returnerer objekter, ikke færdig-sammensatte tekststrenge (ændret 29.
+// sept. 2026, "Laktose"-ikon-opgaven) — de fleste allergener vises stadig
+// med deres rigtige emoji direkte, men "Laktose" skal vises med et
+// specialtegnet ikon (AllergenGlyph i SharedComponents.jsx) i stedet for
+// sit emoji. Denne fil er ren .js (ingen JSX-understøttelse i byggeriet),
+// så selve ikon-renderingen sker hos kaldestedet (ProfileScreen.jsx), der
+// får `id`/`emoji`/`label` og kan bruge <AllergenGlyph a={item} />.
+export const getAllergenLabels = (ids,custom=[]) => [...ids.map(id=>ALLERGENS.find(a=>a.id===id)).filter(Boolean).map(a=>({ id:a.id, emoji:a.emoji, label:a.label })),...custom.map(c=>({ id:null, emoji:"✏️", label:c }))];
 
 // En del importerede produkter har et generisk navn der reelt er en kategori/
 // produkttype (fx "Energidrik", "Ice", "Original") frem for et navn der kan

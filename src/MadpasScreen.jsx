@@ -2,7 +2,7 @@
 import React from "react";
 import { ALLERGENS, SCREENS, MADPAS_LANGUAGES, MADPAS_SECTIONS_T, MADPAS_ALLERGY_HEADLINE_T, MADPAS_INTOLERANCE_HEADLINE_T, MADPAS_EXAMPLES_LABEL_T, MADPAS_SPEAK_LABEL_T, MADPAS_STOP_LABEL_T } from "./constants.jsx";
 import { initials } from "./helpers.js";
-import { Icon } from "./SharedComponents.jsx";
+import { Icon, AllergenGlyph } from "./SharedComponents.jsx";
 import { madpasAllergenLabel, madpasDietLabel, madpasAllergenExamples, madpasSafetyNote, madpasCrossContactNote, madpasDietMessage } from "./useMadpas.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -145,7 +145,7 @@ export default function MadpasScreen({
                 {allergyItems.map(a => (
                   <div key={a.id} style={itemBlock}>
                     <div style={itemHeadRow}>
-                      <span style={itemIcon}>{a.emoji}</span>
+                      <span style={itemIcon}><AllergenGlyph a={a} size={32} /></span>
                       <span style={itemName}>{madpasAllergenLabel(a, lang)}</span>
                     </div>
                     {renderExamples(a.id)}
@@ -188,7 +188,7 @@ export default function MadpasScreen({
                 {intoleranceItems.map(a => (
                   <div key={a.id} style={itemBlock}>
                     <div style={itemHeadRow}>
-                      <span style={itemIcon}>{a.emoji}</span>
+                      <span style={itemIcon}><AllergenGlyph a={a} size={32} /></span>
                       <span style={itemName}>{madpasAllergenLabel(a, lang)}</span>
                     </div>
                     {renderExamples(a.id)}
@@ -244,23 +244,27 @@ export default function MadpasScreen({
     const lang = madpasLang;
     const { allergyItems, intoleranceItems, customItems, dietItems } = buildGroups(lang);
     const dietStyle = { background:"var(--green-selected-bg)", borderColor:"var(--border)", color:"var(--ink2)" };
+    // `text` er et React-node, ikke en ren streng (29. sept. 2026, Laktose-
+    // ikon-opgaven) — de fleste allergener stringificerer stadig deres eget
+    // emoji direkte via <AllergenGlyph>, som viser et specialtegnet ikon for
+    // "Laktose" i stedet for dens emoji.
     const chips = [
-      ...allergyItems.map(a => ({ key:`a-${a.id}`, text:`${a.emoji} ${madpasAllergenLabel(a, lang)}` })),
-      ...intoleranceItems.map(a => ({ key:`i-${a.id}`, text:`${a.emoji} ${madpasAllergenLabel(a, lang)}` })),
+      ...allergyItems.map(a => ({ key:`a-${a.id}`, text:<><AllergenGlyph a={a} size={12} /> {madpasAllergenLabel(a, lang)}</> })),
+      ...intoleranceItems.map(a => ({ key:`i-${a.id}`, text:<><AllergenGlyph a={a} size={12} /> {madpasAllergenLabel(a, lang)}</> })),
       ...customItems.map((c,i) => ({ key:`c-${i}`, text:c })),
       ...dietItems.map(d => ({ key:`d-${d.id}`, text:d.label, style:dietStyle })),
     ];
     const visible = chips.slice(0, PREVIEW_LIMIT);
     const overflow = chips.length - visible.length;
     // Egne spacing-værdier i stedet for den delte UI.mb14/.mp-section-lbl
-    // (28. sept. 2026, spacing-opfølgning) — "Dit madpas"-labellen har
-    // brug for lidt mere luft NED til chipsene (8→16px) end sektions-
-    // labels ellers har, og selve sektionen skal have mere luft NED til
-    // CTA-knappen (14→32px) end sit tidligere fælles UI.mb14 gav — begge
-    // ville påvirke andre sektioner/skærme hvis ændret i den delte klasse.
+    // (28. sept. 2026, spacing-opfølgning, strammet 29. sept. som del af
+    // Madpas' egen design-polish-runde) — "Dit madpas"-labellen har brug
+    // for lidt mere luft NED til chipsene end sektions-labels ellers har,
+    // og selve sektionen skal have luft NED til CTA-knappen — begge ville
+    // påvirke andre sektioner/skærme hvis ændret i den delte klasse.
     return (
-      <div style={{ marginBottom:32 }}>
-        <div className="mp-section-lbl" style={{ marginBottom:16 }}>Dit madpas</div>
+      <div style={{ marginBottom:24 }}>
+        <div className="mp-section-lbl" style={{ marginBottom:12 }}>Dit madpas</div>
         <div className="tags">
           {visible.map(c => <div key={c.key} className="tag" style={c.style}>{c.text}</div>)}
           {overflow > 0 && <div className="tag" style={{ background:"var(--surface2)", borderColor:"var(--border)", color:"var(--muted)" }}>+{overflow}</div>}
@@ -273,9 +277,13 @@ export default function MadpasScreen({
     <div style={{ paddingBottom:8 }}>
       {renderCompactPreview()}
 
-      {/* ÅBN MADPAS */}
-      <button className="mp-big-btn" onClick={() => setMadpasWaiterView(true)}>
-        <span style={UI.fs18}>⤢</span>
+      {/* ÅBN MADPAS — matcher nu appens delte primære CTA-klasse (samme
+          radius/font-weight/tryk-feedback som andre primære knapper) i
+          stedet for sin egen, højere mp-big-btn-styling. Ikonet var et
+          resize/expand-symbol (⤢), der ikke tydeligt signalerede "åbn et
+          dokument" — skiftet til det delte "file"-ikon (29. sept. 2026). */}
+      <button className="btn btn-primary btn-full" onClick={() => setMadpasWaiterView(true)}>
+        <Icon name="file" size={17} color="var(--on-green)" />
         Åbn madpas
       </button>
     </div>
@@ -344,16 +352,16 @@ export default function MadpasScreen({
                     EatSafe må ikke selv antage alvorlighedsgraden af
                     brugerens allergi, så indstillingen er default FRA,
                     og brugeren skal aktivt slå den til her.
-                    Spacing-opfølgning (28. sept. 2026): marginTop 20→32
-                    (mere luft ned fra sprog-dropdownen/-listen ovenfor),
-                    marginBottom 0→16 (ny — luft ned til "Dit madpas"
-                    manglede helt), lineHeight på hjælpeteksten 1.4→1.6
-                    (de to linjer virkede klemte). */}
+                    Designsystem-opfølgning (29. sept. 2026): rækken er nu
+                    en selvstændig "card" med border/baggrund/skygge (samme
+                    delte .card-klasse som Indstillinger bruger til sine
+                    toggle-rækker), så den opleves som ÉN samlet indstilling
+                    i stedet for løs tekst med en switch langt til højre. */}
                 {hasAnyData && (
-                  <div style={{ marginTop:32, marginBottom:16, display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+                  <div className="card" style={{ marginTop:24, marginBottom:20, padding:"14px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
                     <div style={{ flex:1, minWidth:0 }}>
                       <div className="mp-section-lbl" style={{ marginBottom:4 }}>KRYDSKONTAMINERING</div>
-                      <div style={{ fontSize:11.5, color:"var(--muted)", lineHeight:1.6 }}>
+                      <div style={{ fontSize:11.5, color:"var(--muted)", lineHeight:1.5 }}>
                         Tilføj en advarsel om krydskontaminering til dit madpas.
                       </div>
                     </div>

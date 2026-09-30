@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { compareAllergens, getAllergenLabels, matchCustomAllergens } from "./helpers.js";
-import { Icon, IngredientsList, ProfileBadges, SafetyRow, SafetyPill, EmptyState, ScrollToTop } from "./SharedComponents.jsx";
+import { Icon, IngredientsList, ProfileBadges, SafetyRow, SafetyPill, EmptyState, ScrollToTop, AllergenGlyph } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -862,7 +862,7 @@ export default function RecipesScreen({
                         color: isAuto ? "var(--amber)" : "var(--red)",
                         border:`1px solid ${isAuto ? "var(--amber-md)" : "var(--red-md)"}`,
                       }}>
-                        {a?.emoji} {a?.label||id}
+                        <AllergenGlyph a={a} size={10} /> {a?.label||id}
                         <span style={{ cursor:"pointer", padding:4, margin:"-4px -4px -4px 1px", opacity:.7 }}
                           role="button" aria-label={`Fjern ${a?.label||id}`} tabIndex={0}
                           onClick={() => {
@@ -908,7 +908,7 @@ export default function RecipesScreen({
                           i===idx ? {...x, allergens:[...(x.allergens||[]),a.id], showPicker:false} : x
                         ))}
                         style={{ padding:"3px 10px", borderRadius:100, border:"1px solid var(--border)", background:"var(--surface2)", color:"var(--muted2)", fontSize:10, fontWeight:700, cursor:"pointer" }}>
-                        {a.emoji} {a.label}
+                        <AllergenGlyph a={a} size={10} /> {a.label}
                       </div>
                     ))}
                   </div>
@@ -925,7 +925,7 @@ export default function RecipesScreen({
                   const a = ALLERGENS.find(x=>x.id===id);
                   return (
                     <div key={id} style={{ display:"flex", alignItems:"center", gap:4, padding:"3px 8px", background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:100, fontSize:11, fontWeight:700, color:"var(--amber)" }}>
-                      {a?.emoji} {a?.label||id}
+                      <AllergenGlyph a={a} size={11} /> {a?.label||id}
                       <span style={{ cursor:"pointer", opacity:.7, padding:4, margin:"-4px -4px -4px 2px" }}
                         role="button" aria-label={`Fjern ${a?.label||id}`} tabIndex={0}
                         onClick={() => setRemovedAuto(r=>[...r,id])}
@@ -1000,7 +1000,7 @@ export default function RecipesScreen({
                     color: isManual ? "var(--red)" : "var(--muted2)",
                     border:`1px solid ${isManual ? "var(--red-md)" : "var(--border)"}`,
                   }}>
-                  {a.emoji} {a.label}
+                  <AllergenGlyph a={a} size={10} /> {a.label}
                 </div>
               );
             })}

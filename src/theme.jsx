@@ -1087,18 +1087,20 @@ body::-webkit-scrollbar{display:none;}
 .mp-title{font-size:16px;font-weight:800;color:var(--ink);letter-spacing:-.2px;margin-bottom:3px;}
 .mp-subtitle{font-size:11px;color:var(--ink2);font-weight:400;line-height:1.4;margin-bottom:10px;}
 .mp-section-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:0 0 8px;}
-.mp-lang-dropdown{width:100%;background:var(--surface);border:1.5px solid var(--border2);border-radius:13px;padding:14px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s;margin-bottom:16px;box-sizing:border-box;}
+/* mp-lang-dropdown/-list radius (13→12) matcher nu appens andre dropdown-
+   komponenter (fx Opskrifters kategori-vælger), og selve dropdownens
+   padding er strammet (14px→12px lodret, ~15%) så den ikke længere føles
+   som et stort, tomt formularfelt (29. sept. 2026, design-polish). */
+.mp-lang-dropdown{width:100%;background:var(--surface);border:1.5px solid var(--border2);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s;margin-bottom:14px;box-sizing:border-box;}
 .mp-lang-dropdown:hover{border-color:var(--green);}
-.mp-lang-flag{font-size:22px;flex-shrink:0;}
-.mp-lang-name{flex:1;font-size:15px;font-weight:700;color:var(--ink);}
+.mp-lang-flag{font-size:20px;flex-shrink:0;}
+.mp-lang-name{flex:1;font-size:14px;font-weight:700;color:var(--ink);}
 .mp-lang-arrow{font-size:14px;color:var(--muted);}
-.mp-lang-list{background:var(--surface);border:1.5px solid var(--border2);border-radius:13px;overflow:hidden;margin-bottom:16px;max-height:320px;overflow-y:auto;}
+.mp-lang-list{background:var(--surface);border:1.5px solid var(--border2);border-radius:12px;overflow:hidden;margin-bottom:14px;max-height:320px;overflow-y:auto;}
 .mp-lang-opt{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border);}
 .mp-lang-opt:last-child{border-bottom:none;}
 .mp-lang-opt:hover{background:var(--surface2);}
 .mp-lang-opt.on{background:var(--green-lt);}
-.mp-big-btn{width:100%;background:var(--green);color:var(--on-green);border:none;border-radius:14px;padding:16px;font-family:var(--f);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;box-shadow:0 3px 12px rgba(14,143,90,.25);}
-.mp-big-btn:hover{background:var(--green-glow);}
 /* Fremvisningsskærmens knapper (27. sept. 2026, Madpas-finpolish) —
    udtrukket fra tidligere rene inline-styles til klasser, udelukkende for
    at kunne give dem samme tryk-feedback som resten af appens knapper (se
@@ -1175,7 +1177,7 @@ body::-webkit-scrollbar{display:none;}
 .scroll-top-btn:active,.admin-tab:active,.admin-action-card:active,
 .admin-list-row:active,.destructive-confirm-btn:active,.plain-cancel-btn:active,
 .enum-chip:active,.enum-row:active,.enum-remove:active,.member-pick:active,
-.mp-big-btn:active,.mp-close-btn:active,.mp-speak-btn:active,.mp-cc-toggle:active,
+.mp-close-btn:active,.mp-speak-btn:active,.mp-cc-toggle:active,
 .btn:active{
   transform:scale(.97);
 }

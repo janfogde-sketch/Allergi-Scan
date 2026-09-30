@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall, buildActiveProfileList, computeProfileResults, extractENumbers, normalizeProductFlagsFor, addUniqueCustom } from "./helpers.js";
-import { EatSafeLogo, Icon, ProductImage, showToast, ConfirmDialog } from "./SharedComponents.jsx";
+import { EatSafeLogo, Icon, ProductImage, showToast, ConfirmDialog, AllergenGlyph } from "./SharedComponents.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { TextLink, Accordion } from "./DesignSystem.jsx";
 import { ENumberPicker, AllergenChipPicker, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
@@ -384,7 +384,7 @@ export default function ProfileScreen({
   // (vigtigst for sikkerheden), så kostpræferencer, så overvågede E-numre.
   const CHIP_VISIBLE_LIMIT = 4;
   const buildMemberChips = (m) => [
-    ...getAllergenLabels(m.allergens || [], m.custom || []).map(text => ({ text, variant:"allergy" })),
+    ...getAllergenLabels(m.allergens || [], m.custom || []).map(item => ({ item, variant:"allergy" })),
     ...(m.diets || []).map(id => DIETS.find(d => d.id === id)?.label).filter(Boolean).map(text => ({ text, variant:"diet" })),
     ...(m.eNumbers || []).map(text => ({ text, variant:"enumber" })),
   ];
@@ -404,7 +404,7 @@ export default function ProfileScreen({
     const overflow = chips.length - visible.length;
     return (
       <div className="tags">
-        {visible.map((c,j) => <div key={j} className="tag" style={{ fontSize:11, ...CHIP_VARIANT_STYLE[c.variant] }}>{c.text}</div>)}
+        {visible.map((c,j) => <div key={j} className="tag" style={{ fontSize:11, ...CHIP_VARIANT_STYLE[c.variant] }}>{c.variant==="allergy" ? <><AllergenGlyph a={c.item} size={11} /> {c.item.label}</> : c.text}</div>)}
         {overflow>0 && (
           <button type="button" onClick={() => setExpandedChipsFor(f => [...f, rowKey])}
             className="tag" style={{ fontSize:11, color:"var(--muted)", background:"var(--surface2)", borderColor:"var(--border)", cursor:"pointer", fontFamily:"var(--f)" }}>
@@ -760,7 +760,7 @@ export default function ProfileScreen({
                     {allergens.filter(id => ALLERGENS.some(a => a.id === id)).length > 0 && (
                       <div style={UI.mb8}>
                         <div style={UI.sectionLbl4Ink}>Allergier</div>
-                        <div className="tags">{allergens.filter(id => ALLERGENS.some(a => a.id === id)).map(id => { const a = ALLERGENS.find(x=>x.id===id); return a ? <div key={id} className="tag" style={{ background:"var(--red-lt)", color:"var(--red)", borderColor:"var(--red-md)" }}>{a.emoji} {a.label}</div> : null; })}</div>
+                        <div className="tags">{allergens.filter(id => ALLERGENS.some(a => a.id === id)).map(id => { const a = ALLERGENS.find(x=>x.id===id); return a ? <div key={id} className="tag" style={{ background:"var(--red-lt)", color:"var(--red)", borderColor:"var(--red-md)" }}><AllergenGlyph a={a} size={11} /> {a.label}</div> : null; })}</div>
                       </div>
                     )}
                     {customAllerg.length > 0 && (
