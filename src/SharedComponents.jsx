@@ -10,6 +10,21 @@ import eatsafeLogoHorizontalMono from "./assets/logo/eatsafe-logo-horizontal-mon
 import eatsafeSymbol from "./assets/logo/eatsafe-symbol.svg";
 import eatsafeSymbolMono from "./assets/logo/eatsafe-symbol-mono.svg";
 import lactoseDropImg from "./assets/icons/lactose-drop.png";
+import allergenHvedeImg from "./assets/icons/allergen-hvede.png";
+import allergenMaelkImg from "./assets/icons/allergen-maelk.png";
+import allergenAegImg from "./assets/icons/allergen-aeg.png";
+import allergenNoedderImg from "./assets/icons/allergen-noedder.png";
+import allergenJordnoedderImg from "./assets/icons/allergen-jordnoedder.png";
+import allergenSojaImg from "./assets/icons/allergen-soja.png";
+import allergenFiskImg from "./assets/icons/allergen-fisk.png";
+import allergenSkaldyrImg from "./assets/icons/allergen-skaldyr.png";
+import allergenSelleriImg from "./assets/icons/allergen-selleri.png";
+import allergenSennepImg from "./assets/icons/allergen-sennep.png";
+import allergenSesamImg from "./assets/icons/allergen-sesam.png";
+import allergenLupinImg from "./assets/icons/allergen-lupin.png";
+import allergenBloeddyrImg from "./assets/icons/allergen-bloeddyr.png";
+import allergenGlutenImg from "./assets/icons/allergen-gluten.png";
+import allergenSvovlImg from "./assets/icons/allergen-svovl.png";
 
 // ─── EATSAFE-LOGO (nu låst brandasset, 28. sept. 2026) ──────────────────────
 // Ét fast sæt vektor-assets (src/assets/logo/, eksporteret fra den godkendte
@@ -237,13 +252,50 @@ export const LactoseIcon = ({ size = 16, style }) => {
   );
 };
 
-// Centraliserer laktose-undtagelsen ét sted, så hver chip-visning i appen
+// ─── ALLERGEN-IKONSÆT (30. sept. 2026) ────────────────────────────────────────
+// Brugerleveret, blankt 3D-illustreret ikonsæt (samme stil/kilde som Laktose-
+// dråben) for de resterende 15 allergener — erstatter deres Unicode-emoji
+// (a.emoji) et for et. Hvert billede er udtrukket fra en 4×4-gitteroversigt,
+// beskåret til objektets egen silhuet og eksporteret med reel alfa-
+// gennemsigtighed, så de — ligesom Laktose-dråben — fungerer uændret på både
+// hvid og selected-chip-baggrund (lys grøn). De fleste blev renset med en
+// grænse-flood-fill (baggrunden er ensfarvet hvid uden alfakanal i kilde-
+// billedet); "Mælk" (glas) og "Æg" havde samme lav-kontrast-problem som
+// Laktose (deres egen lyse farve ligger for tæt på baggrundens hvide tone
+// til automatisk fjernelse) og er derfor maskeret med samme håndmålte
+// spline-silhuet-teknik som LactoseIcon, bagt til en rigtig alfakanal i
+// stedet for en klip-sti ved kørsel (simplere — ét fælles renderings-
+// mønster for alle 16 ikoner).
+const ALLERGEN_ICON_MAP = {
+  hvede: allergenHvedeImg,
+  maelkeallergi: allergenMaelkImg,
+  aeg: allergenAegImg,
+  noedder: allergenNoedderImg,
+  jordnoedder: allergenJordnoedderImg,
+  soja: allergenSojaImg,
+  fisk: allergenFiskImg,
+  skaldyr: allergenSkaldyrImg,
+  selleri: allergenSelleriImg,
+  sennep: allergenSennepImg,
+  sesam: allergenSesamImg,
+  lupin: allergenLupinImg,
+  bloeddyr: allergenBloeddyrImg,
+  gluten: allergenGlutenImg,
+  svovl: allergenSvovlImg,
+};
+
+// Centraliserer allergen-ikonerne ét sted, så hver chip-visning i appen
 // (Madpas, Familie, Profil, Rediger præferencer, Resultatside, Opskrifter,
-// Admin) automatisk viser samme ikon, i stedet for at hvert kaldested selv
-// skal kende til specialtilfældet. `a` kan være undefined/null (samme
-// tolerance som de tidligere `{a?.emoji}`-kaldesteder).
-export const AllergenGlyph = ({ a, size = 14 }) =>
-  a?.id === "laktose" ? <LactoseIcon size={size} style={{ verticalAlign:"-2px" }} /> : <>{a?.emoji}</>;
+// Admin) automatisk viser samme ikonsæt, i stedet for at hvert kaldested
+// selv skal kende til specialtilfældene. `a` kan være undefined/null (samme
+// tolerance som de tidligere `{a?.emoji}`-kaldesteder). Falder tilbage til
+// det rigtige emoji, hvis et allergen-id ikke (endnu) har et ikon.
+export const AllergenGlyph = ({ a, size = 14 }) => {
+  if (a?.id === "laktose") return <LactoseIcon size={size} style={{ verticalAlign:"-2px" }} />;
+  const img = a?.id && ALLERGEN_ICON_MAP[a.id];
+  if (img) return <img src={img} alt="" width={size} height={size} style={{ objectFit:"contain", verticalAlign:"-2px" }} />;
+  return <>{a?.emoji}</>;
+};
 
 // ─── KONSTANTER ──────────────────────────────────────────────────────────────
 
