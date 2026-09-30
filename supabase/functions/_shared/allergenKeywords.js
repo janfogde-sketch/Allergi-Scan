@@ -49,6 +49,8 @@ export const ALLERGEN_KEYWORDS = {
     "hvedestivelse", "wheat starch", "stivelse af hvede",
     "semulje", "semolina", "couscous", "bulgur", "farro", "freekeh",
     "seitan", "breadcrumbs", "rasp", "panko", "croutons",
+    // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
+    "roggen", "roggenmehl", "gerste", "gerstenmalz", "gerstenmalzextrakt", "hafer", "haferflocken", "hafermehl", "grünkern", "malzextrakt", "weizenmehl", "weizenstärke", "weizengluten",
   ],
   // Hvede = specifikt hvedeprotein (separat fra cøliaki/gluten)
   hvede: [
@@ -56,6 +58,8 @@ export const ALLERGEN_KEYWORDS = {
     "hvedeprotein", "wheat protein", "hvedestivelse", "wheat starch",
     "hvedegluten", "hvedeklid", "wheat bran", "hvedekerne", "wheat germ",
     "durum", "spelt", "seitan", "hvedekimolie", "hvedegryn",
+    // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
+    "weizen", "weizenmehl", "weizenstärke", "weizeneiweiß", "weizengluten", "hartweizen", "hartweizengrieß", "weizengrieß",
   ],
   // Mælkeallergi = mælkePROTEIN (kasein, valle) — separat fra laktose
   maelkeallergi: [
@@ -75,6 +79,8 @@ export const ALLERGEN_KEYWORDS = {
     "flødepulver", "mælketørstof", "milk solids", "laktoprotein",
     "inddampet mælk", "condensed milk", "evaporated milk",
     "animalsk fedtstof", "animalsk olie", "margarine", "minarine",
+    // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
+    "milch", "vollmilch", "vollmilchpulver", "magermilch", "magermilchpulver", "milchpulver", "milcheiweiß", "milchbestandteile", "sahne", "rahm", "käse", "molke", "molken", "molkenpulver", "molkenerzeugnis", "butterreinfett", "joghurt",
   ],
   // Laktose = mælkeSUKKER. Backend behandler laktose bredt (enhver mælke-
   // ingrediens kan indebære laktose) med en global "laktosefri"-override
@@ -85,6 +91,8 @@ export const ALLERGEN_KEYWORDS = {
     "mælk", "milk", "fløde", "cream", "ost", "oste", "cheese",
     "yoghurt", "yogurt", "kærnemælk", "buttermilk",
     "valle", "whey", "tørmælk", "mælkepulver", "milk powder",
+    // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
+    "milchzucker", "milch", "sahne", "rahm", "käse", "molke", "molken", "molkenpulver", "joghurt", "buttermilch",
   ],
   aeg: [
     "æg", "egg", "eggs", "ovum", "hønseæg", "æggehvide", "egg white",
@@ -92,6 +100,8 @@ export const ALLERGEN_KEYWORDS = {
     "lysozym", "lysozyme", "globulin", "mayonnaise", "majonæse", "remoulade",
     "meringue", "marengs", "æggepulver", "egg powder",
     "dried egg", "whole egg", "pasteuriseret æg",
+    // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
+    "ei", "eier", "hühnerei", "hühnereier", "vollei", "volleipulver", "eigelb", "eiklar", "eipulver", "eiweißpulver",
   ],
   noedder: [
     "nødder", "mandel", "mandler", "almond", "hasselnød", "hasselnødder",
@@ -107,12 +117,16 @@ export const ALLERGEN_KEYWORDS = {
     "pesto", "praline", "gianduja",
     "mandelmel", "nøddemel", "mandelsmør", "nøddeolie",
     "mandelekstrakt", "hasselnøddepasta",
+    // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
+    "haselnuss", "haselnüsse", "haselnusskerne", "haselnussmark", "mandeln", "walnuss", "walnüsse", "cashewkerne", "cashewnüsse", "pistazie", "pistazien", "pekannuss", "pekannüsse", "macadamianuss", "macadamianüsse", "paranuss", "paranüsse", "schalenfrüchte",
   ],
   jordnoedder: [
     "jordnød", "jordnødder", "peanut", "peanuts", "groundnut",
     "arachis", "arachide", "jordnøddeolie", "peanut oil", "arachideolie",
     "arachis oil", "jordnøddesmør", "peanut butter",
     "satay", "kacang", "nut sauce",
+    // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
+    "erdnuss", "erdnüsse", "erdnussöl", "erdnussbutter", "erdnussmus",
   ],
   soja: [
     "soja", "soy", "soya", "glycine max", "sojabønne", "sojabønner",
@@ -124,6 +138,8 @@ export const ALLERGEN_KEYWORDS = {
     "textured vegetable protein", "tvp",
     "hydrolyseret sojaprotein", "isoleret sojaprotein",
     "lecithin", "lecitin",
+    // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
+    "sojabohnen", "sojalecithine", "sojaeiweiß",
   ],
   fisk: [
     "fisk", "fish", "ansjos", "ansjoser", "anchovy", "anchovies", "anchois",
@@ -139,6 +155,8 @@ export const ALLERGEN_KEYWORDS = {
     "fiskeolie", "fish oil", "surimi",
     "fiskegelatine", "fiskeekstrakt", "fiskeboller", "fiskemel", "omega-3",
     "rogn", "roe", "kaviar", "caviar",
+    // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
+    "fisch", "fischsauce", "lachs", "thunfisch", "sardellen", "hering", "kabeljau", "seelachs",
   ],
   skaldyr: [
     "skaldyr", "crustacean", "rejer", "reje", "tigerrejer", "shrimp", "prawn",
@@ -148,17 +166,23 @@ export const ALLERGEN_KEYWORDS = {
     "musling", "muslinger", "østers", "blæksprutte", "blæksprutter",
     "kammusling", "kammuslinger", "mussel", "oyster", "squid", "scallop",
     "snegle", "pilgrimsmusling", "escargot",
+    // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
+    "krebstiere", "garnelen", "krabben", "shrimps",
   ],
   selleri: [
     "selleri", "celery", "apium", "knoldselleri", "celeriac",
     "bladselleri", "selleriolie", "sellerisalt", "celery salt",
     "sellerifnug", "selleripulver", "celery seed", "celery extract",
+    // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
+    "sellerie", "knollensellerie",
   ],
   sennep: [
     "sennep", "mustard", "sinapis", "sennepsfrø", "mustard seed",
     "sennepsolie", "mustard oil", "sennepspulver", "mustard powder",
     "sennepsmel", "mustard flour", "dijon", "dijonsennep",
     "engelsk sennep", "grovkornet sennep",
+    // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
+    "senf", "senfsaat", "senfmehl", "senfkörner",
   ],
   sesam: [
     "sesam", "sesame", "sesamum", "tahini", "tahin",
@@ -170,6 +194,8 @@ export const ALLERGEN_KEYWORDS = {
     "sulfit", "sulfitter", "sulphite", "sulfite", "so2",
     "e220", "e221", "e222", "e223", "e224", "e225", "e226", "e227", "e228",
     "natriumsulfit", "kaliumsulfit", "natriummetabisulfit",
+    // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
+    "schwefeldioxid",
   ],
   lupin: [
     "lupin", "lupine", "lupinus", "lupinfrø", "lupinmel",
@@ -181,5 +207,7 @@ export const ALLERGEN_KEYWORDS = {
     "østers", "oyster", "blæksprutte", "blæksprutter", "squid", "octopus",
     "snegl", "snegle", "snail", "kammusling", "kammuslinger", "scallop",
     "clam", "abalone", "vongole",
+    // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
+    "weichtiere", "muscheln", "miesmuscheln", "tintenfisch",
   ],
 };

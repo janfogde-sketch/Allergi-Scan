@@ -57,8 +57,11 @@ function isNegatedAt(text, idx, kwLength) {
     before.includes("uden") ||
     before.includes("fri for") ||
     before.includes("ingen") ||
+    before.includes("ohne") ||
     after.startsWith("fri") ||
     after.startsWith("-fri") ||
+    after.startsWith("frei") ||
+    after.startsWith("-frei") ||
     after.includes("under 0") ||
     after.includes("free")
   );
