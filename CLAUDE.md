@@ -110,9 +110,8 @@ FØR flagene tændes. Detaljer i `src/CONTEXT.md` afsnit 14.
 **Løst 30. sept. 2026** (Jans svar på listen, detaljer i commits og
 `supabase/sql/2026-09-30_*.sql`): 4 alder/køn i Rediger profil; 5
 QA-kontoen er admin; 6 kJ-data rettet (4.876 produkter, backup-tabel); 7
-onboarding trin 1 udfyldes FØR kontoen oprettes, så navnet er gemt, før
-bekræftelses- og velkomstmail sendes (`pendingSignup`/`completeSignup` i
-`useAuth.js`, `handle_new_user()` læser metadata); 12 tyske
+(erstattet samme aften af Bjørns nye oprettelsesflow, se "Oprettelse og
+e-mailbekræftelse" i afsnit 5); 12 tyske
 ingredienslister (allergens v22 + 18 produkter genanalyseret); 13
 alternativer scores på lighed (det gamle verified-filter matchede kun ét
 produkt); 14 lister nævner advarsler for andre profiler; 15 189
@@ -956,21 +955,32 @@ positiv grøn baggrundstone (`--green-lt`/`--green-mid`) i stedet for
 `opacity:.6`, som gav et fejlagtigt "disabled/fejlramt"-udseende. Fuld
 detalje i `.claude/HISTORY.md`.
 
-**Opdateret 29. sept. 2026 (QA-beslutning D2):** Telefon er valgfri
-(valideres kun hvis udfyldt: præcis 8 cifre). **Alder og Køn SKAL forblive
+**Opdateret 29. sept. 2026 (QA-beslutning D2), 30. sept. 2026:** Telefon
+er fjernet helt fra onboarding og oprettelse (kan stadig tilføjes under
+Rediger profil). **Alder og Køn SKAL forblive
 obligatoriske** — Jans eksplicitte beslutning: han bruger dem, selvom
 appens egne funktioner ikke gør. Foreslå ikke at fjerne dem igen af
 dataminimeringshensyn.
 
-**E-mailbekræftelse (QA-beslutning D1, 29. sept. 2026):** appen håndterer
-Supabase-indstillingen "Confirm email": oprettelse uden session viser en
-neutral `.info-box` (`authInfo` i `useAuth.js`, ikke den røde fejlboks),
-signup sender `redirect_to` til appens eget domæne, en eksisterende e-mail
-genkendes via Supabases "bruger uden identities"-svar, og bekræftelses-
-linket lander i onboarding med mærket "E-mail bekræftet" (`isOAuth` holder
-nu udbyderen: `"google"`/`"email"`). Velkomstmailen skal flyttes til
-bekræftelsen og selve indstillingen slås til. Se den åbne tjekliste i
-afsnit 0.
+**Oprettelse og e-mailbekræftelse (30. sept. 2026, Bjørns spec — erstatter
+Jans punkt 7 om trin 1 før oprettelse):** "Opret konto" kræver kun e-mail,
+adgangskode og accept af vilkår (tekst under feltet), opretter kontoen med
+det samme og viser `SCREENS.VERIFYEMAIL` (`VerifyEmailScreen.jsx`): "Jeg har
+bekræftet min e-mail", "Send mail igen" (Supabase `/auth/v1/resend`, 60 s
+nedtælling), "Skift e-mailadresse" og spam-hjælpetekst. Bekræftet →
+"✓ E-mail bekræftet" + "Fortsæt opsætning" → onboarding fra gemt trin.
+Tre adskilte tilstande: konto oprettet (`as_pending_verify` i localStorage →
+appen åbner bekræftelsesskærmen igen), e-mail bekræftet (session, men
+`onboarding_completed=false` → onboarding), onboarding færdig
+(`as_onboarded` → kun da starter appen direkte på forsiden; ellers venter
+den på status på `SCREENS.BOOT`). Login med ubekræftet e-mail åbner
+bekræftelsesskærmen, og et udløbet link giver en forklaring. "Jeg har
+bekræftet" logger ind med adgangskoden fra oprettelsen (kun i hukommelsen);
+efter en genstart sendes brugeren til Log ind med e-mailen udfyldt.
+Databasen (migration `20260930193753`): `handle_new_user()` sætter ikke
+længere e-mailens lokale del som navn, og velkomstmailen sendes, når
+onboarding er færdig (med navn), i stedet for ved bekræftelse, når navnet
+mangler. Google/Facebook går uændret direkte til onboarding.
 
 ### App-headeren omdøbt til fælles komponent + tekst-wordmark (27. sept. 2026)
 

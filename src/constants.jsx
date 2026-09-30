@@ -351,6 +351,9 @@ export const DEMO_CODES = [
 
 export const SCREENS = {
   WELCOME:"welcome", LOGIN:"login", ONBOARD:"onboard",
+  // VERIFYEMAIL: "Bekræft din e-mail" efter oprettelse. BOOT: tom skærm mens
+  // onboarding-status hentes ved appstart (se useAuth.js, ONBOARDED_KEY).
+  VERIFYEMAIL:"verifyemail", BOOT:"boot",
   HOME:"home", SEARCH:"search",
   LIST:"list", PROFILE:"profile", FAMILY:"family",
   RESULT:"result", HISTORY:"history",

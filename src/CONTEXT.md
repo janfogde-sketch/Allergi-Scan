@@ -228,6 +228,16 @@ felterne bruges til at genoptage onboarding på tværs af sessioner/enheder
 og forhindre en ufuldført bruger i at nå hovedappen — fuld detalje i
 `CLAUDE.md`.
 
+**Oprettelse uden profil-metadata (30. sept. 2026, migration
+`20260930193753_onboarding_signup_without_profile`):** signup sender kun
+e-mail og adgangskode. `handle_new_user()` lader `name` være null, når
+metadata ikke har et navn (før: e-mailens lokale del).
+`send_welcome_email()` springer bekræftelses-velkomsten over, når navnet
+mangler, og `send_welcome_after_onboarding()` sender så den nuværende
+velkomstmail (`type:'welcome'`, med navn) ved `onboarding_completed=true`,
+mens `notifications_email_enabled` er FRA; med flaget TIL sendes
+`welcome_onboarded` som før. `welcome_sent_at` forhindrer dubletter.
+
 **Opfølgende sikkerhedsfund og -fix (25. sept. 2026, `security-check`-gennemgang):**
 `get_advisors` fandt at tre `SECURITY DEFINER`-funktioner var direkte
 kaldbare som RPC'er med et vilkårligt/tredjeparts-argument, ikke kun i den
