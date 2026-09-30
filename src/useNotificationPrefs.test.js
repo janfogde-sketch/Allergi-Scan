@@ -10,6 +10,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { useNotificationPrefs, NOTIFICATION_CATEGORIES } from "./useNotificationPrefs.js";
+import { showToast } from "./SharedComponents.jsx";
+
+vi.mock("./SharedComponents.jsx", () => ({ showToast: vi.fn() }));
 
 function jsonResponse(body, ok = true) {
   return { ok, status: ok ? 200 : 400, text: async () => JSON.stringify(body) };
@@ -17,6 +20,7 @@ function jsonResponse(body, ok = true) {
 
 beforeEach(() => {
   global.fetch = vi.fn();
+  showToast.mockClear();
 });
 
 describe("useNotificationPrefs", () => {
@@ -67,5 +71,6 @@ describe("useNotificationPrefs", () => {
     await act(async () => { await result.current.setPref("family", "push", false); });
 
     expect(result.current.prefs["family:push"]).toBe(true);
+    expect(showToast).toHaveBeenCalledWith(expect.stringContaining("kunne ikke gemmes"), "error");
   });
 });

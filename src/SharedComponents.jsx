@@ -2,7 +2,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, PAGE_IDS } from "./constants.jsx";
-import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers } from "./helpers.js";
+import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers, profileConflictLabel } from "./helpers.js";
 import { isAllergenWord, keywordMatches } from "./allergenKeywords.js";
 import { UI } from "./styleUtils.js";
 import eatsafeLogoHorizontal from "./assets/logo/eatsafe-logo-horizontal.svg";
@@ -350,7 +350,16 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
   // afsluttende lukning), og klæber en ren, kort forklarings-parentes
   // ("(MÆLK)" som sin egen del) til den forrige del i stedet for at vise den
   // isoleret.
-  const rawParts = cleaned.split(",").map(p => p.trim()).filter(Boolean);
+  // Et komma MELLEM to cifre er et decimalkomma ("jordbær (6,1%)"), ikke
+  // en ingrediens-adskiller — ellers blev det vist som "jordbær 6" og "1%"
+  // (fundet i live-test 30. sept. 2026, Arla Cultura). Decimalkommaet
+  // maskeres midlertidigt i stedet for et lookbehind-regex, som ældre
+  // iOS-Safari (før 16.4) ikke kan parse — det ville vælte hele bundlen.
+  const DECIMAL_MARK = "\u0000";
+  const rawParts = cleaned.replace(/(\d),(?=\d)/g, "$1" + DECIMAL_MARK)
+    .split(",")
+    .map(p => p.split(DECIMAL_MARK).join(",").trim())
+    .filter(Boolean);
   const parts = [];
   for (const raw of rawParts) {
     const opens = (raw.match(/[([]/g) || []).length;
@@ -533,7 +542,11 @@ export function safetyStyle(status) {
 export function SafetyRow({ name, status, statusText, onClick }) {
   const s = safetyStyle(status);
   return (
-    <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", padding:"6px 10px", background:s.bg, border:`1px solid ${s.border}`, borderRadius:8, gap:8 }}>
+    // Farvetonen lægges oven på en fast --surface-baggrund — alene var den
+    // gennemsigtig (8 %), så appens baggrundsfoto skinnede igennem og
+    // rækken næsten ikke kunne ses (live-test 30. sept. 2026). Samme
+    // princip som --green-selected-bg i designreglerne.
+    <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", padding:"10px 12px", background:`linear-gradient(${s.bg}, ${s.bg}), var(--surface)`, border:`1px solid ${s.border}`, borderRadius:10, gap:12 }}>
       <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", flexShrink:0, maxWidth:"40%", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
         {name}
       </div>
@@ -673,10 +686,9 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
       allergen_flags: p.allergen_flags, ingredients: ingredientsText, nutrition: p.nutrition,
       productENumbers: extractENumbers(ingredientsText),
     });
-    const dangerNames = results.filter(r => r.status === "danger").map(r => r.name.split(" ")[0]);
-    status = dangerNames.length > 0 ? "danger" : results.some(r => r.status === "warn") ? "warn" : "safe";
-    statusLabel = dangerNames.length > 0 ? `Konflikt for ${dangerNames.join(", ")}`
-      : status === "warn" ? "Kan ikke afgøres sikkert" : "Matcher alle profiler";
+    const conflict = profileConflictLabel(results);
+    status = conflict ? "danger" : results.some(r => r.status === "warn") ? "warn" : "safe";
+    statusLabel = conflict || (status === "warn" ? "Kan ikke afgøres sikkert" : "Matcher alle profiler");
     reasonChips = [...new Set(results.flatMap(r => r.reasons).map(explicitReason))];
   } else {
     const cmp = compareAllergens(p.allergen_flags||{}, effectiveIds);

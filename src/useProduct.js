@@ -74,6 +74,7 @@ export function buildScanResultFromProductData({ product, data, ean, activeIds, 
     code: ean.trim(), name: product.name || "Ukendt produkt", brand: product.brand || "",
     variant_label: variantLabel,
     image_url: product.image_url || null, category: product.category || null,
+    subcategory: product.subcategory || null, category_original: product.category_original || null,
     ingredients: ingredientsText,
     productENumbers,
     nutrition: product.nutrition || data?.nutrition || null,
@@ -215,7 +216,7 @@ export async function runLookupProduct(ean, ctx) {
     // alternativer til DETTE produkt.
     if (cachedResult.status === "danger" || cachedResult.status === "warn") {
       fireWarningAlert(vibrateOnWarning, soundOnWarning);
-      loadAlternatives(cachedResult.category, ean.trim());
+      loadAlternatives(cachedResult, ean.trim());
     } else {
       clearAlternatives();
     }
@@ -297,7 +298,7 @@ export async function runLookupProduct(ean, ctx) {
     // Hent alternativer hvis produktet er farligt eller har spor
     if (finalResult.status === "danger" || finalResult.status === "warn") {
       fireWarningAlert(vibrateOnWarning, soundOnWarning);
-      loadAlternatives(finalResult.category, ean.trim());
+      loadAlternatives(finalResult, ean.trim());
     } else {
       clearAlternatives();
     }

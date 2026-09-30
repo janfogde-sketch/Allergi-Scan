@@ -502,6 +502,20 @@ export function computeProfileResults(profiles, { allergen_flags, ingredients, n
   });
 }
 
+// Statuslinje-tekst for en konflikt i lister (indkøbsliste, historik,
+// favoritter, søgning). Nævner også profiler med en advarsel (fx spor), når
+// en anden profil har en egentlig konflikt — ellers skjulte "Konflikt for
+// Mia" at produktet også kunne indeholde spor af noget, brugeren selv skal
+// undgå (live-test 30. sept. 2026). Returnerer null, når ingen har konflikt.
+export function profileConflictLabel(results, { maxNames = Infinity, manyText = "Passer ikke til valgte profiler" } = {}) {
+  const first = r => (r.name || "").split(" ")[0];
+  const danger = results.filter(r => r.status === "danger").map(first);
+  if (danger.length === 0) return null;
+  const warn = results.filter(r => r.status === "warn").map(first);
+  const main = danger.length <= maxNames ? `Konflikt for ${danger.join(", ")}` : manyText;
+  return warn.length ? `${main} · advarsel for ${warn.join(", ")}` : main;
+}
+
 // ─── PRODUKTRESULTAT: KATEGORISEREDE FUND (28. sept. 2026) ──────────────────
 // FINAL PRODUCT RESULT PAGE — ét genbrugeligt, data-drevet lag der grupperer
 // et allerede-beregnet scan-resultats matches (matchedDanger/matchedWarning
@@ -622,3 +636,35 @@ export function clearTraceLog() {
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 
 // ─── MADPAS — BUNDLED OVERSÆTTELSER ─────────────────────────────────────────
+
+// Adgangskode-krav (30. sept. 2026). Skal matche Supabases egne krav
+// (Authentication → Sign In / Providers → Email): mindst ét lille bogstav,
+// ét stort bogstav og ét tal. Længden (10) er appens eget, strengere krav.
+// Supabase afviste ellers koder, som appen havde godkendt, med en tekst der
+// ikke forklarede hvorfor. Retter man kravene i Supabase, skal de også
+// rettes her.
+export const PASSWORD_MIN_LENGTH = 10;
+export const PASSWORD_REQUIREMENTS_TEXT = "Mindst 10 tegn med små og store bogstaver og mindst ét tal.";
+
+export function passwordProblems(pw) {
+  const p = pw || "";
+  const missing = [];
+  if (!/[a-zæøå]/.test(p)) missing.push("et lille bogstav");
+  if (!/[A-ZÆØÅ]/.test(p)) missing.push("et stort bogstav");
+  if (!/[0-9]/.test(p)) missing.push("et tal");
+  return { tooShort: p.length < PASSWORD_MIN_LENGTH, length: p.length, missing };
+}
+
+const joinDa = (xs) => xs.length <= 1 ? (xs[0] || "") : `${xs.slice(0, -1).join(", ")} og ${xs[xs.length - 1]}`;
+
+// Én konkret sætning om hvad der er galt, eller "" når koden er i orden.
+export function passwordErrorText(pw) {
+  const { tooShort, length, missing } = passwordProblems(pw);
+  if (!pw) return `Indtast en adgangskode. ${PASSWORD_REQUIREMENTS_TEXT}`;
+  const parts = [];
+  if (tooShort) parts.push(`den er kun ${length} tegn (mindst ${PASSWORD_MIN_LENGTH})`);
+  if (missing.length) parts.push(`den mangler ${joinDa(missing)}`);
+  if (!parts.length) return "";
+  const s = parts.join(", og ");
+  return `Adgangskoden kan ikke bruges: ${s}.`;
+}

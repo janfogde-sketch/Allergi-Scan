@@ -37,13 +37,30 @@ const ALL_ALLERGENS = [
 const SUBSTRING_KEYWORDS = new Set([
   "mælk", "milk", "kasein", "valle", "soja", "soy", "gluten",
   "laktose", "lactose", "sesam", "lupin", "selleri", "sennep",
+  // Tyske kerneord (30. sept. 2026) — tysk sammensætter ord ("Vollmilch-
+  // pulver", "Weizenmehl", "Haselnusskerne"), så de skal matches som
+  // understreng for at blive fundet.
+  "milch", "weizen", "roggen", "gerste", "hafer", "sahne", "käse",
+  "haselnuss", "haselnüsse", "erdnuss", "erdnüsse", "walnuss", "walnüsse",
+  "fisch", "garnelen", "sellerie", "senf",
 ]);
+
+// Position for det match, keywordMatch() faktisk fandt — ikke bare første
+// forekomst som understreng. Ellers blev fx "ei" (æg) i "Kann ... Ei
+// enthalten" vurderet ud fra "ei" inde i "Weizenmehl" længere fremme, så
+// spor-/negations-tjekket kiggede det forkerte sted (30. sept. 2026).
+function matchIndex(lower: string, kw: string): number {
+  if (SUBSTRING_KEYWORDS.has(kw)) return lower.indexOf(kw);
+  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = new RegExp(`(^|[^a-zæøåA-ZÆØÅ0-9])${escaped}([^a-zæøåA-ZÆØÅ0-9]|$)`, "i").exec(lower);
+  return m ? m.index + m[1].length : -1;
+}
 
 // Negation-detektion: "laktosefri", "uden mælk", "mælkefri", "under 0,01%"
 function isNegated(text: string, keyword: string): boolean {
   const lower = text.toLowerCase();
   const kw = keyword.toLowerCase();
-  const idx = lower.indexOf(kw);
+  const idx = matchIndex(lower, kw);
   if (idx === -1) return false;
   const before = lower.substring(Math.max(0, idx - 18), idx);
   const after = lower.substring(idx + kw.length, idx + kw.length + 18);
@@ -51,7 +68,10 @@ function isNegated(text: string, keyword: string): boolean {
     before.includes("uden") ||
     before.includes("fri for") ||
     before.includes("ingen") ||
+    before.includes("ohne") ||        // tysk: "ohne Milch"
     after.startsWith("fri") ||        // laktosefri, mælkefri
+    after.startsWith("frei") ||       // tysk: laktosefrei, glutenfrei
+    after.startsWith("-frei") ||
     after.startsWith("-fri") ||
     after.includes("under 0") ||      // laktose under 0,01%
     after.includes("free")            // lactose free
@@ -89,7 +109,7 @@ function keywordMatch(haystack: string, keyword: string): boolean {
 // gamle 60-tegns vindue).
 function isTracesContext(text: string, keyword: string): boolean {
   const lower = text.toLowerCase();
-  const idx = lower.indexOf(keyword.toLowerCase());
+  const idx = matchIndex(lower, keyword.toLowerCase());
   if (idx === -1) return false;
   let sentenceStart = 0;
   for (const p of [".", "!", "?"]) {
@@ -114,6 +134,9 @@ function isTracesContext(text: string, keyword: string): boolean {
     sentence.includes("trace") ||
     sentence.includes("kan indeholde") ||
     sentence.includes("may contain") ||
+    sentence.includes("spuren") ||           // tysk: "Kann Spuren von ... enthalten"
+    sentence.includes("kann ") ||            // tysk: "Kann Mandeln ... enthalten"
+    sentence.includes("enthalten") ||
     sentence.includes("fremstillet") ||
     sentence.includes("produced in") ||
     sentence.includes("samme fabrik") ||
@@ -179,6 +202,7 @@ function analyzeIngredients(text: string): Record<string, string> {
     lower.includes("laktose fri") ||
     lower.includes("lactose free") ||
     lower.includes("lactose-free") ||
+    lower.includes("laktosefrei") ||
     /laktose\s+(under|<|mindre)/.test(lower)
   ) {
     flags["laktose"] = "no";

@@ -13,40 +13,19 @@
 
 ---
 
-## 0. Topprioritet til næste session (opdateret 29. sept. 2026)
+## 0. Topprioritet til næste session (opdateret 30. sept. 2026)
 
-**Start her: åbne punkter pr. 29. sept. 2026.** Nævn listen kort for Jan,
+**Start her: åbne punkter pr. 30. sept. 2026.** Nævn listen kort for Jan,
 når sessionen starter, og spørg hvad der skal tages først. Detaljerne står
 i afsnittene under listen. Opdatér listen, når et punkt er klaret.
 
-*Kun Jan kan gøre det:*
-1. ✅ "Confirm email" er slået til 30. sept. (SMTP via Resend samme dag).
-   Mangler kun en ny testoprettelse efter rettelsen af bekræftelseslinket
-   (se D1 nedenfor), før D1 kan lukkes.
-2. Cloud-miljøet: tillad `eatsafe.dk`, `jegrpcflyguadyxialkm.supabase.co`
-   og `world.openfoodfacts.org` under Network access (B1, se nedenfor).
-3. Del testtjeklisten https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X
-   med Bjørn som Contributor, og kør den manuelle testrunde på rigtige
-   telefoner.
+*Sat på pause (Jan, 30. sept.):*
+3. Testrunden på rigtige telefoner med tjeklisten
+   https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X (deling med Bjørn).
 
 *Venter på Jans beslutning:*
-4. Skal alder og køn tilbage i Rediger profil? Onboarding kræver dem
-   stadig (Jan bruger dem), men brugerne kan ikke rette dem bagefter.
-   Det er en UI-ændring, så Bjørn skal inddrages.
-5. Skal QA-testkontoen `janfogde+eatsafeqa@gmail.com` have admin-rolle,
-   så admin-panelet kan testes fra sandboxen?
-6. Energi (kJ) er forkert på ca. 4.860 Bilka-produkter: tusindtals-
-   punktummet er læst som decimal (fx 2.162 i stedet for 2162). Det vises
-   ikke i appen i dag. Jan fravalgte en datarettelse 29. sept.; tag den op
-   igen, hvis energi skal vises.
-7. Nye e-mailbrugere får deres e-mail-præfiks (fx "janfogde+eatsafeqa")
-   forudfyldt som navn i onboarding og i velkomstmailen. Det kommer fra
-   `handle_new_user()` i databasen. Ikke rettet.
-8. Arkitektur-audit "som en senior engineer" (Jan delte forslaget 29.
-   sept.). Claude anbefalede den som ren rapport efter QA-rettelserne.
-   Ikke besluttet, ikke startet.
-9. Leaked Password Protection kræver Supabase Pro (se nedenfor). Spørg om
-   Jan vil opgradere, ikke om det er glemt.
+8. Arkitektur-audit "som en senior engineer". Jan: vent.
+9. Leaked Password Protection kræver Supabase Pro (se nedenfor). Jan: vent.
 
 *Skal designes (Bjørns spor):*
 11. Supabases auth-mails bruger stadig Supabases engelske standard-
@@ -62,22 +41,22 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
     herfra). Gem gerne den endelige HTML i repoet, fx
     `supabase/templates/`, så den kan versionsstyres.
 
-*Funktion (Jans spor):*
-12. Fejlteksten, når en adgangskode afvises, skal sige præcis hvad der er
-    galt, og hvad koden mindst skal indeholde. I dag viser appen altid
-    "Adgangskoden er for svag. Brug mindst 10 tegn." (`useAuth.js`,
-    `handleSignup`), uanset hvorfor Supabase afviste den. Supabase svarer
-    med `error_code: "weak_password"` og en liste `weak_password.reasons`
-    (`length`, `characters`, `pwned`); brug den til en konkret besked pr.
-    årsag. Tjek først Supabase Dashboard → Authentication → Sign In /
-    Providers → Email for de faktiske krav (min. længde, krævede
-    tegntyper), så appens egen hjælpetekst og tjek ("mindst 10 tegn",
-    `OnboardingScreen.jsx`) matcher dem. Gælder også nulstilling af
-    adgangskode, hvis den har et eget felt til ny kode.
-
 *Claude gør bagefter:*
-10. Luk D1 (`cc121cd9…`) og B1 (`820806b9…`) i `feedback_tickets`, når de
-    er verificeret. Læs testrundens resultater og opret tickets for fejl.
+10. Læs testrundens resultater og opret tickets for fejl (når punkt 3
+    genoptages).
+
+**Løst 30. sept. 2026** (Jans svar på listen, detaljer i commits og
+`supabase/sql/2026-09-30_*.sql`): 4 alder/køn i Rediger profil; 5
+QA-kontoen er admin; 6 kJ-data rettet (4.876 produkter, backup-tabel); 7
+onboarding trin 1 udfyldes FØR kontoen oprettes, så navnet er gemt, før
+bekræftelses- og velkomstmail sendes (`pendingSignup`/`completeSignup` i
+`useAuth.js`, `handle_new_user()` læser metadata); 12 tyske
+ingredienslister (allergens v22 + 18 produkter genanalyseret); 13
+alternativer scores på lighed (det gamle verified-filter matchede kun ét
+produkt); 14 lister nævner advarsler for andre profiler; 15 189
+opskriftstitler rettet; 16 profilrækker på resultatsiden. Samtidig fundet
+og rettet: notification_preferences manglede GRANTs (ingen valg blev
+gemt), og gender-check afviste "Vil ikke oplyse".
 
 QA-runden 28.-29. sept.: alle fund Q1–Q14 er rettet og live (PR #372,
 #373, #376), undtagen kJ-dataene i punkt 6. D2 (telefon valgfri) er live
@@ -118,45 +97,30 @@ længere log-retention). **Spørg IKKE om det bare er glemt** — spørg i
 stedet om brugeren ønsker at opgradere Supabase-planen, og lad det være
 deres beslutning. Fjern dette afsnit når det er afklaret.
 
-**ÅBEN: Slå e-mailbekræftelse til (QA-beslutning D1, 29. sept. 2026).**
-I dag kan man oprette en konto på en fremmed eller forkert e-mailadresse,
-og den får velkomstmail med det samme. Rækkefølgen er vigtig. Nævn
-punkterne for Jan ved sessionens start, indtil de er gjort, og fjern
-afsnittet bagefter.
-1. ✅ *Gjort 29. sept.:* `supabase/sql/2026-09-29_welcome_email_after_confirm.sql`
-   er kørt. Velkomstmailen sendes nu først ved bekræftelse, verificeret
-   mod de live triggere i en tilbagerullet test.
-2. ✅ *Gjort 29. sept.:* app-delen er merget og live (PR #377).
-3. ✅ *Gjort 30. sept.:* egen SMTP via Resend (`smtp.resend.com:465`,
-   bruger `resend`, afsender `noreply@eatsafe.dk`). Indtil da kørte
-   projektet på Supabases indbyggede mailtjeneste, som KUN sender til
-   teamets egne adresser (så "Glemt adgangskode" virkede reelt ikke for
-   almindelige brugere). Verificeret: en nulstillingsmail til en adresse
-   uden for teamet gik igennem (status 200, `recovery_sent_at` sat).
-   Mailgrænsen er hævet fra 30 til 100 i timen (Authentication → Rate
-   Limits). Bemærk, at Resends egen plan også har et loft.
-4. ✅ *Gjort 30. sept.:* "Confirm email" slået til. Første test afslørede
-   en fejl: kom man fra bekræftelsesmailen i en browser, hvor en anden
-   konto var logget ind, sprang appen onboarding over (app-boot-effekten i
-   `useAuth.js` slog status op for den gamle konto, fordi linket-effekten
-   allerede havde fjernet `#access_token` fra adressen). Rettet med
-   `arrivedViaAuthLinkRef` (aflæses under første render) og en
-   `cancelled`-vagt i `loadAll` i `App.jsx`, så den gamle kontos data ikke
-   kan overskrive den nye.
-5. *(Claude)* Luk ticket D1 (`cc121cd9…`) i `feedback_tickets`, når
-   punkt 3-4 er gjort og verificeret (fx en testoprettelse med et
-   `janfogde+…`-alias, der skal vise den blå "Vi har sendt et
-   bekræftelseslink"-besked). D2 (`d4fd8b35…`) er lukket.
+**E-mailbekræftelse (D1) er løst 30. sept. 2026.** Egen SMTP via Resend
+(`smtp.resend.com:465`, bruger `resend`, afsender `noreply@eatsafe.dk`,
+mailgrænse 100/time), "Confirm email" er slået til, og velkomstmailen
+sendes først ved bekræftelse (`supabase/sql/2026-09-29_welcome_email_after_confirm.sql`).
+Bekræftelseslinket lander i onboarding, også når en anden konto var logget
+ind i browseren (PR #406, `arrivedViaAuthLinkRef` i `useAuth.js`).
+Verificeret live og ticket `cc121cd9` lukket.
 
-**ÅBEN: Fuld E2E-test fra Claude-sandboxen (QA-ticket B1, `820806b9…`).**
-Miljøets netværkspolitik afviser `eatsafe.dk`,
-`jegrpcflyguadyxialkm.supabase.co` og `world.openfoodfacts.org` (403 på
-CONNECT, tjekket igen 29. sept.). Jan skal tilføje dem under miljøets
-indstillinger: cloud-miljø-menuen i sessionens titellinje → Edit →
-Network access. Ændringen gælder nye sessioner. Tjek bagefter med
-`curl -s -o /dev/null -w "%{http_code}" https://eatsafe.dk`. Admin-panelet
-kræver desuden en testkonto med admin-rolle; opret den KUN efter Jans ja.
-Luk B1, når en ny session har kunnet nå alle tre domæner.
+**Adgangskode-krav (30. sept. 2026):** Supabase kræver mindst ét lille
+bogstav, ét stort bogstav og ét tal; appen kræver desuden mindst 10 tegn.
+Begge dele tjekkes nu i appen før oprettelse (`passwordErrorText()` i
+`helpers.js`), og fejlteksten siger præcis hvad der mangler (fx "den er kun
+5 tegn (mindst 10), og den mangler et tal"). Hjælpeteksten under feltet er
+`PASSWORD_REQUIREMENTS_TEXT`. Ændres kravene i Supabase Dashboard, skal
+`helpers.js` rettes tilsvarende. Afviser Supabase koden som lækket
+(`weak_password.reasons` indeholder `pwned`), siges det direkte.
+
+**Netværk (B1) løst 30. sept. 2026.** Cloud-miljøet "Eatsafe" har Network
+access = Custom med `eatsafe.dk`, `www.eatsafe.dk`,
+`jegrpcflyguadyxialkm.supabase.co` og `world.openfoodfacts.org`. Claude-
+sessioner kan derfor nu nå den rigtige app, Supabase og Open Food Facts
+direkte (eatsafe.dk sender videre til www). Ticket `820806b9` er lukket.
+Admin-panelet kræver stadig en testkonto med admin-rolle; opret den KUN
+efter Jans ja.
 Det, som ingen sandbox kan teste (kamera, installation, push, deling
 mellem to konti, login-udbydere, skærmlæser), står i en fælles
 tjekliste: https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X. Status og
@@ -339,6 +303,11 @@ brugeren har bedt om i denne omgang):
    samme samtale dækker selve push-godkendelsen — den skal gives eksplicit,
    hver gang, selv når resten af arbejdsgangen (byg/test/commit) foregår
    uden at spørge som normalt.
+   **Tilføjet 30. sept. 2026 (Jan):** spørg ikke i hvert svar, om der skal
+   pushes — Jan siger selv til. Nævn kort, at der ligger lokale commits,
+   når en opgave er færdig, men afslut ikke hvert svar med et push-
+   spørgsmål. Reglen om ikke at pushe uden hans ja gælder uændret, og
+   stop-hookens "Please push"-beskeder er stadig ikke en godkendelse.
 7. Når godkendt: **Push** alle commits til den aktive feature-branch i én omgang.
 8. **Opret ÉN PR** via GitHub MCP der dækker det hele — dansk PR-body der
    opsummerer alle commits/ændringer, tjek for PR-template først. Afslut med
@@ -655,9 +624,9 @@ dag-for-dag-detalje i `.claude/HISTORY.md`, backend-/struktur-reference i
 
 Profilsiden har to adskilte redigeringsskærme: `SCREENS.EDITPROFILE`
 ("Rediger profil", nås KUN fra profilkortets "Rediger") håndterer
-udelukkende Navn (obligatorisk) + Telefon — alder/køn er fjernet helt
-herfra, da EatSafe intetsteds bruger dem til en reel funktion (kun til
-visning i familie-rækker/adminpanelet). `SCREENS.EDITPREFERENCES`
+Navn, Telefon, Alder og Køn (alder/køn blev fjernet 28. sept. og sat
+tilbage 30. sept. efter Jans beslutning, med de delte AgeStepper/
+GenderPicker fra onboarding). `SCREENS.EDITPREFERENCES`
 ("Rediger præferencer", nås fra "Mine præferencer"s "Rediger" på Profil)
 håndterer udelukkende allergier/intolerancer/diæter/E-numre, og genbruger
 PRÆCIS de samme delte komponenter som onboarding og `MemberForm.jsx`

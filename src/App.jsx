@@ -291,6 +291,7 @@ export default function EatSafe() {
     authTab, setAuthTab, isOAuth, setIsOAuth,
     rememberMe, setRememberMe,
     saveTokens, clearAuth, handleLogin, handleSignup, handleOAuth, handleForgotPassword,
+    completeSignup, pendingSignup, setPendingSignup,
   } = useAuth({ setScreen, setUser, setAllergens, setCustomAllerg, setOnboardStep,
                 onSignupSuccess: () => setOnboardStep(1) });
 
@@ -947,7 +948,8 @@ export default function EatSafe() {
     authLoading, authTab, setAuthTab,
     isOAuth, rememberMe, setRememberMe,
     handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth,
-  }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, authInfo, emailTakenError, emailError, passwordError, authLoading, authTab, isOAuth, rememberMe, handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth]);
+    completeSignup, pendingSignup, setPendingSignup,
+  }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, authInfo, emailTakenError, emailError, passwordError, authLoading, authTab, isOAuth, rememberMe, handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth, completeSignup, pendingSignup, setPendingSignup]);
 
   const profileContextValue = useMemo(() => ({
     allergens, setAllergens, customAllerg, setCustomAllerg,

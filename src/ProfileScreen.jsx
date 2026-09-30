@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall, buildActiveProfileList, computeProfileResults, extractENumbers, normalizeProductFlagsFor, addUniqueCustom } from "./helpers.js";
+import { initials, timeAgo, getAllergenLabels, makeHeaders, apiCall, buildActiveProfileList, computeProfileResults, profileConflictLabel, extractENumbers, normalizeProductFlagsFor, addUniqueCustom } from "./helpers.js";
 import { EatSafeLogo, Icon, ProductImage, showToast, ConfirmDialog, AllergenGlyph } from "./SharedComponents.jsx";
 import { MemberForm, CategorySelect } from "./MemberForm.jsx";
 import { TextLink, Accordion } from "./DesignSystem.jsx";
 import { ENumberPicker, AllergenChipPicker, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
+import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -331,6 +332,8 @@ export default function ProfileScreen({
   const [inviteId, setInviteId] = useState(null); // gemmes fra oprettelsen, så "Annullér link" kan slette den rigtige række
   const [inviteLoading, setInviteLoading] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
+  const editAgeNum = Number(user?.age);
+  const editAgeOk = Number.isFinite(editAgeNum) && editAgeNum >= 1 && editAgeNum <= 120;
   const [inviteError, setInviteError] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
 
@@ -488,10 +491,8 @@ export default function ProfileScreen({
     if (profiles.length === 0) return { status:null, text:null, checkedFor: null };
     const flags = h.flags_triggered || {};
     const results = computeProfileResults(profiles, { allergen_flags: flags, ingredients:"", nutrition:null, productENumbers:[] });
-    const dangerNames = results.filter(r => r.status === "danger").map(r => r.name.split(" ")[0]);
-    if (dangerNames.length > 0) {
-      return { status:"danger", text: dangerNames.length <= 2 ? `Konflikt for ${dangerNames.join(", ")}` : "Passer ikke til valgte profiler", checkedFor };
-    }
+    const conflict = profileConflictLabel(results, { maxNames: 2 });
+    if (conflict) return { status:"danger", text: conflict, checkedFor };
     if (results.some(r => r.status === "warn")) return { status:"warn", text:"Kan ikke afgøres sikkert", checkedFor };
     return { status:"safe", text:"Matcher valgte profiler", checkedFor };
   };
@@ -555,10 +556,8 @@ export default function ProfileScreen({
       allergen_flags: normalizeProductFlagsFor(f), ingredients: ingredientsText, nutrition: f.nutrition,
       productENumbers: f.productENumbers?.length ? f.productENumbers : extractENumbers(ingredientsText),
     });
-    const dangerNames = results.filter(r => r.status === "danger").map(r => r.name.split(" ")[0]);
-    if (dangerNames.length > 0) {
-      return { status:"danger", text: dangerNames.length <= 2 ? `Konflikt for ${dangerNames.join(", ")}` : "Passer ikke til valgte profiler" };
-    }
+    const conflict = profileConflictLabel(results, { maxNames: 2 });
+    if (conflict) return { status:"danger", text: conflict };
     if (results.some(r => r.status === "warn")) return { status:"warn", text:"Kan ikke afgøres sikkert" };
     return { status:"safe", text:"Matcher valgte profiler" };
   };
@@ -983,12 +982,11 @@ export default function ProfileScreen({
         )}
 
         {/* "Rediger profil" — KUN personlige konto-/profiloplysninger (28.
-            sept. 2026, Profil-restrukturering, krav 1). Alder/køn er
-            fjernet helt herfra: EatSafe bruger dem intetsteds til en reel
-            funktion (kun til visning i familie-rækker/adminpanelet), så de
-            hører ikke hjemme som obligatoriske felter på selve kontoen.
-            Ingen allergier/intolerancer/diæter/E-numre/husstand her længere
-            — det er nu "Rediger præferencer" nedenfor. */}
+            sept. 2026, Profil-restrukturering, krav 1): navn, telefon,
+            alder og køn. Alder/køn blev fjernet 28. sept. og er sat tilbage
+            30. sept. (Jans beslutning: de er obligatoriske i onboarding, så
+            brugeren skal kunne rette dem). Ingen allergier/intolerancer/
+            diæter/E-numre/husstand her — det er "Rediger præferencer". */}
         {screen === SCREENS.EDITPROFILE && (
           <div className="screen fade-in">
             <div style={{ display:"flex", alignItems:"center", gap:10, padding:"16px 0 20px" }}>
@@ -1005,22 +1003,41 @@ export default function ProfileScreen({
                   <input className="field" type={type} placeholder={ph} value={user[key]||""} onChange={e => setUser(u => ({ ...u, [key]: e.target.value }))} />
                 </div>
               ))}
-              {!user.name?.trim() && (
+              {/* Alder og køn (30. sept. 2026, Jans punkt 4) — obligatoriske i
+                  onboarding, så brugeren skal også kunne rette dem bagefter.
+                  Samme delte AgeStepper/GenderPicker som onboarding trin 1. */}
+              <div style={UI.mb10}>
+                <label className="field-lbl">Alder <span style={UI.red}>*</span></label>
+                <AgeStepper value={user.age} onChange={age => setUser(u => ({ ...u, age }))} />
+                {!editAgeOk && String(user.age || "").trim() !== "" && (
+                  <div style={{ fontSize:11.5, color:"var(--red)", fontWeight:600, marginTop:6 }}>Angiv en alder mellem 1 og 120.</div>
+                )}
+              </div>
+              <div style={UI.mb10}>
+                <label className="field-lbl">Køn <span style={UI.red}>*</span></label>
+                <GenderPicker value={user.gender} onChange={gender => setUser(u => ({ ...u, gender }))} />
+              </div>
+              {(!user.name?.trim() || !editAgeOk || !user.gender) && (
                 <div style={UI.ufs11_cmuted_mb10}>
-                  <span style={UI.red}>*</span> Navn er obligatorisk
+                  <span style={UI.red}>*</span> Navn, alder og køn er obligatoriske
                 </div>
               )}
             </div>
 
             <button className="btn btn-primary btn-full" style={UI.mb16}
-              disabled={!user.name?.trim() || savingProfile}
+              disabled={!user.name?.trim() || !editAgeOk || !user.gender || savingProfile}
               onClick={async () => {
                 setSavingProfile(true);
                 try {
                   await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
                     method:"PATCH",
                     headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" },
-                    body:JSON.stringify({ name:user.name.trim(), phone:user.phone||null }),
+                    body:JSON.stringify({
+                      name:user.name.trim(), phone:user.phone||null,
+                      // Gemmes som fødselsår, samme skema som onboarding.
+                      birth_year: new Date().getFullYear() - Number(user.age),
+                      gender: user.gender,
+                    }),
                   });
                   setUser(u => ({ ...u, name:(u.name || "").trim() }));
                   setScreen(SCREENS.PROFILE);

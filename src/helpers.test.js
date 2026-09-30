@@ -16,6 +16,7 @@ import {
   verifiedBadge,
   isValidEanChecksum,
 } from "./helpers.js";
+import { profileConflictLabel } from "./helpers.js";
 
 describe("isValidEanChecksum", () => {
   it("accepts a real EAN-13 with a correct check digit", () => {
@@ -286,5 +287,37 @@ describe("computeProfileResults: ukendt er ikke sikkert", () => {
   it("giver 'danger' for hvede når profilen har gluten", () => {
     const [r] = cpr([{ id:"me", name:"Åse", allergens:["gluten"] }], { allergen_flags: { gluten:"no", hvede:"yes" }, ingredients:"hvedemel" });
     expect(r.status).toBe("danger");
+  });
+});
+
+import { passwordErrorText, PASSWORD_REQUIREMENTS_TEXT } from "./helpers.js";
+
+describe("passwordErrorText", () => {
+  it("godkender en kode der opfylder alle krav", () => {
+    expect(passwordErrorText("MinKode2026abc")).toBe("");
+  });
+  it("siger præcis hvad der mangler", () => {
+    expect(passwordErrorText("minhemmeligekode")).toBe("Adgangskoden kan ikke bruges: den mangler et stort bogstav og et tal.");
+    expect(passwordErrorText("Kort1")).toBe("Adgangskoden kan ikke bruges: den er kun 5 tegn (mindst 10).");
+    expect(passwordErrorText("abc")).toBe("Adgangskoden kan ikke bruges: den er kun 3 tegn (mindst 10), og den mangler et stort bogstav og et tal.");
+  });
+  it("tæller æ, ø og å som bogstaver", () => {
+    expect(passwordErrorText("Rødgrødmedfløde1")).toBe("");
+  });
+  it("beder om en kode når feltet er tomt", () => {
+    expect(passwordErrorText("")).toContain(PASSWORD_REQUIREMENTS_TEXT);
+  });
+});
+
+describe("profileConflictLabel", () => {
+  const r = (name, status) => ({ name, status });
+  it("returns null when nobody has a conflict", () => {
+    expect(profileConflictLabel([r("Jan Fogde", "warn"), r("Mia", "safe")])).toBeNull();
+  });
+  it("also names profiles with a warning when another profile has a conflict", () => {
+    expect(profileConflictLabel([r("Jan Fogde", "warn"), r("Mia", "danger")])).toBe("Konflikt for Mia · advarsel for Jan");
+  });
+  it("uses the summary text above maxNames", () => {
+    expect(profileConflictLabel([r("A", "danger"), r("B", "danger"), r("C", "danger")], { maxNames: 2 })).toBe("Passer ikke til valgte profiler");
   });
 });

@@ -148,3 +148,24 @@ describe("detectAllergensInText", () => {
     expect(detectAllergensInText("Indeholder sulfit")).toContain("svovl");
   });
 });
+
+describe("detectAllergensInText — tyske ingredienslister", () => {
+  // Live-test 30. sept. 2026 (Lindt, EAN 4000539222108): tyske ord som
+  // "Haselnüsse", "Weizenmehl" og "Vollmilchpulver" blev ikke genkendt.
+  it("finds nuts, wheat/gluten and milk in the real Lindt ingredient list", () => {
+    const found = detectAllergensInText("Zucker, Vollmilchpulver, Kakaobutter, Haselnüsse (10%), Kakaomasse, Magermilchpulver, Weizenmehl, Butterreinfett, Emulgator (Sojalecithin), Palmöl, Salz, Aroma.");
+    for (const id of ["noedder", "hvede", "gluten", "maelkeallergi", "soja"]) expect(found).toContain(id);
+  });
+
+  it("finds German peanut, egg, mustard and shellfish words", () => {
+    expect(detectAllergensInText("Erdnüsse, Salz")).toContain("jordnoedder");
+    expect(detectAllergensInText("Ei, Zucker")).toContain("aeg");
+    expect(detectAllergensInText("Senf, Essig")).toContain("sennep");
+    expect(detectAllergensInText("Garnelen, Reis")).toContain("skaldyr");
+  });
+
+  it("treats German '-frei' and 'ohne' as negation", () => {
+    expect(keywordMatches("glutenfrei", "gluten")).toBe(false);
+    expect(keywordMatches("brot ohne milch", "milch")).toBe(false);
+  });
+});
