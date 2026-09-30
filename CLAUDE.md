@@ -59,6 +59,35 @@ grænse, 5 fjern anon-rettigheder på login-tabeller, 6 edge-deploy fra
 repoet via GitHub Action (Jan opretter Supabase-adgangsnøgle som secret),
 7 `npm audit fix`, 8 opdeling. Detaljer i rapporten ovenfor.
 
+**Status 30. sept.: alle 8 er lavet** (commits "A1"–"A8"). Databasedelen
+er allerede live; app-delen kræver merge. Resultat, kort:
+- Migrationer ligger i `supabase/migrations/` (baseline + nye), se README
+  der. Nye ændringer: `apply_migration`, derefter filen med den version,
+  `list_migrations` viser.
+- Allergenmotoren bor i `supabase/functions/_shared/allergenEngine.js`
+  (testet i `src/allergenEngine.test.js`).
+- Fejl fra appen lander i tabellen `client_errors` (RPC
+  `log_client_error`, `src/errorReporter.js`) og vises i admin-panelet
+  under "Fejl". E-mail-triggerne logger også dertil. Undervejs rettet:
+  mailen om godkendt/afvist indsendelse blev aldrig sendt.
+- Feedback går via edge-funktionen `feedback` (grænser: 5/time pr.
+  afsender og 60/time i alt uden login, 20/time med login).
+- Anon har ingen rettigheder til login-tabellerne, og storage-upload
+  kræver login (kun `recipes/`).
+- `.github/workflows/deploy-edge-functions.yml` deployer ændrede
+  funktioner ved merge. `supabase/config.toml` har verify_jwt for alle 20.
+- ProfileScreen er delt i seks skærmfiler; App.jsx har fået
+  `useAdminTools`, `useIncomingLinks`, `useLoadUserData`.
+
+**Åbne efter A1–A8:**
+- Jan: opret GitHub-secret `SUPABASE_ACCESS_TOKEN` (ellers springer
+  workflowet deploy over med en advarsel).
+- Claude, efter merge til main: kør `supabase/pending/
+  feedback_close_direct_insert.sql` som migration og flyt filen til
+  `supabase/migrations/`. Lukker den gamle, direkte INSERT i
+  feedback_tickets. Kør den ikke før, ellers fejler feedback fra den
+  gamle app i produktion.
+
 *Claude gør bagefter:*
 10. Læs testrundens resultater og opret tickets for fejl (når punkt 3
     genoptages).
