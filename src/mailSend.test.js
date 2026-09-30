@@ -3,7 +3,7 @@
 // supabase/templates/resend/ siger det samme som appens beskeder (én indholdskilde).
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { RESEND_TEMPLATES, escapeHtml, buildMailVariables, sendTemplateMail } from "../supabase/functions/_shared/mailSend.ts";
+import { RESEND_TEMPLATES, TRANSACTIONAL_TEMPLATES, escapeHtml, buildMailVariables, sendTemplateMail } from "../supabase/functions/_shared/mailSend.ts";
 import { renderNotification, DEFINITIONS } from "../supabase/functions/_shared/notificationContent.js";
 
 const catalog = JSON.parse(readFileSync("supabase/templates/resend/catalog.json", "utf-8"));
@@ -90,3 +90,20 @@ describe("sendTemplateMail", () => {
     expect(net).toMatchObject({ ok: false, status: 0, retryable: true });
   });
 });
+
+describe("servicemails (N1 velkomst, P4 slettekvittering)", () => {
+  it("skabelon-id'erne matcher kataloget, og skabelonerne har kun variabler, vi leverer", () => {
+    expect(TRANSACTIONAL_TEMPLATES.welcome_onboarded.id).toBe(catalog.N1.resendId);
+    expect(TRANSACTIONAL_TEMPLATES.account_deleted.id).toBe(catalog.P4.resendId);
+    expect(catalog.N1.vars).toEqual(["name"]);
+    expect(catalog.P4.vars.sort()).toEqual(["deletedAt", "name"]);
+  });
+  it("P4 indeholder ingen afmelding og har en kontaktvej, N1 fører til appen", () => {
+    const p4 = readFileSync("supabase/templates/resend/P4-konto-slettet.html", "utf-8");
+    expect(p4).toContain("hej@eatsafe.dk");
+    expect(p4).not.toMatch(/afmeld|unsubscribe/i);
+    const n1 = readFileSync("supabase/templates/resend/N1-velkomst.html", "utf-8");
+    expect(n1).toContain("https://www.eatsafe.dk/");
+  });
+});
+

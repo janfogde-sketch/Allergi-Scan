@@ -24,3 +24,11 @@ export function summarizeItems(names) {
   return shown.length > 1 ? `${shown.slice(0, -1).join(", ")} og ${shown[shown.length - 1]}` : shown[0];
 }
 
+/** "30. september 2026 kl. 17:12" i dansk tid. */
+export function formatDanishDateTime(iso) {
+  const d = new Date(iso);
+  const date = new Intl.DateTimeFormat("da-DK", { timeZone: CPH, day: "numeric", month: "long", year: "numeric" }).format(d);
+  const time = new Intl.DateTimeFormat("da-DK", { timeZone: CPH, hour: "2-digit", minute: "2-digit", hour12: false }).format(d).replace(".", ":");
+  return `${date} kl. ${time}`;
+}
+

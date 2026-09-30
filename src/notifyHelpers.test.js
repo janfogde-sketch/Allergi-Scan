@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { formatDanishDeadline, summarizeItems } from "../supabase/functions/_shared/notifyHelpers.js";
+import { formatDanishDeadline, formatDanishDateTime, summarizeItems } from "../supabase/functions/_shared/notifyHelpers.js";
 
 describe("formatDanishDeadline", () => {
   const now = new Date("2026-09-30T12:00:00Z"); // 14:00 dansk sommertid
@@ -26,3 +26,11 @@ describe("summarizeItems", () => {
     expect(summarizeItems([])).toBe("");
   });
 });
+
+describe("formatDanishDateTime", () => {
+  it("dansk dato og klokkeslæt (sommer- og vintertid)", () => {
+    expect(formatDanishDateTime("2026-09-30T15:12:00Z")).toBe("30. september 2026 kl. 17:12");
+    expect(formatDanishDateTime("2026-12-24T22:30:00Z")).toBe("24. december 2026 kl. 23:30");
+  });
+});
+

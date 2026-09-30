@@ -601,4 +601,14 @@ korte tekst og åbner den fulde, beskyttede besked i appen via
   modtager varer tilføjet af *andre* (ejer + nuværende adgangsbrugere), varenavne kun i app/mail, ikke i push.
   Varer tilføjet efter afsendelsen i samme vindue får først en besked, hvis der kommer en ny tilføjelse i
   næste vindue (bevidst grænse: højst én besked pr. modtager pr. liste pr. 30 min).
+- **Trin 4 + N1/P4 (30. sept. 2026):** *Se din feedback*: `SCREENS.TICKET` (`TicketScreen.jsx`) viser egen ticket
+  (tilbagemelding, status, teamets svar) og åbnes fra `open_ticket` på beskedsiden (RLS: kun ejeren).
+  **N1** (velkomstmail efter onboarding): `users.welcome_sent_at`; trigger `on_onboarding_completed` sender
+  én gang, når `onboarding_completed` bliver true og e-mailen er bekræftet (adressen hentes fra `auth.users`);
+  brugeren kan ikke nulstille kolonnen. **P4** (slettekvittering): `delete-user` henter e-mail/navn FØR
+  sletningen og sender kvitteringen EFTER en gennemført sletning (3 forsøg; fejl logges i `client_errors`,
+  adressen gemmes ikke — der er bevidst ingen udgående kø). Begge servicemails bruger
+  `TRANSACTIONAL_TEMPLATES` i `_shared/mailSend.ts` via `send-email`/`delete-user`, og er styret af
+  `notifications_email_enabled` (FRA): er flaget fra, virker de gamle triggere som før; er det til, springer de
+  gamle velkomsttriggere over.
 
