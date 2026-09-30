@@ -830,6 +830,34 @@ Feedback-knap har fået `env(safe-area-inset-top)`-håndtering + appens
 delte `var(--sh)`-skyggetoken. Fuld 12-punkts-detalje i
 `.claude/HISTORY.md`.
 
+### Opskrifter sat på pause (30. sept. 2026)
+
+Bjørns beslutning: Opskrifter er ikke nødvendige lige nu, men skal kunne
+komme tilbage. Menupunktet står stadig i hamburgermenuen (undertekst
+"Under udvikling"), og siden viser kun "Siden er under udvikling". Koden er
+bevaret bag `RECIPES_ENABLED = false` øverst i `RecipesScreen.jsx`. Alle
+629 opskrifter (og 13.182 `recipe_ingredients`-rækker via cascade) er
+slettet permanent fra databasen efter Bjørns valg "Slet helt" (ingen
+backup). Skal funktionen genopstå, skal flaget sættes til true OG
+opskrifterne importeres forfra.
+
+### Allergileksikon kvalitetssikret (30. sept. 2026)
+
+Fagligt stringent struktur, så allergi, intolerance og andre reaktioner ikke
+blandes: **Allergener** = EU's 14 mærkningspligtige allergener + Hvede, hver
+med en neutral "faglig status" (`status_label`, fx "Fødevareallergi",
+"Cøliaki og hvedeallergi", "Overfølsomhed – sjældent allergi"). Laktose er
+flyttet til Ingredienser ("Intolerance – ikke allergi"). **Ingredienser** =
+kun det, der kan stå i en ingrediensliste; færdige retter/produkter ligger
+i kategorien `dish` (ikke en flise i griddet, findes via søgning).
+Risikoniveauer ("Høj risiko"/"Moderat") er fjernet helt (alvor afhænger af
+personen) — genindfør dem ikke uden en klart defineret faglig betydning.
+`allergen_ids` bruger nu `maelkeallergi` for mælkeprotein og `hvede` for
+hvede (før fejlagtigt `laktose`/kun `gluten`). Dubletter slettet, bastante
+sundhedspåstande omskrevet. Migrationer:
+`supabase/migrations/20260930114148_knowledge_base_quality_review.sql` (+ `_2`),
+backup i `knowledge_base_backup_20260930`.
+
 ### Beta-installation (september 2026) — nuværende arkitektur
 
 Admin-dashboardet har en "Installations-QR til beta"-knap → `public/install.html`,

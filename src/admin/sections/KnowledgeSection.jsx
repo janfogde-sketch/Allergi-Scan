@@ -3,13 +3,14 @@ import React from "react";
 import { ALLERGENS } from "../../constants.jsx";
 import { AllergenGlyph } from "../../SharedComponents.jsx";
 
-const CATEGORIES = ["allergen", "e_number", "ingredient", "diet", "cross_reaction", "faq", "fun_fact"];
+const CATEGORIES = ["allergen", "e_number", "ingredient", "dish", "diet", "cross_reaction", "faq", "fun_fact"];
 const CATEGORY_LABELS = {
-  allergen: "Allergen", e_number: "E-nummer", ingredient: "Ingrediens", diet: "Kost",
+  allergen: "Allergen", e_number: "E-nummer", ingredient: "Ingrediens", dish: "Ret/produkt", diet: "Kost",
   cross_reaction: "Krydsreaktion", faq: "FAQ", fun_fact: "Sjov viden",
 };
-const RISK_LEVELS = ["", "none", "low", "medium", "high"];
-const RISK_LABELS = { "": "(ikke sat)", none: "Ingen", low: "Lav", medium: "Middel", high: "Høj" };
+// Risikoniveau er fjernet fra leksikonet (30. sept. 2026) — "Høj risiko"/"Moderat"
+// kunne læses som en universel medicinsk vurdering. I stedet: fritekst
+// "faglig status" (fx "Fødevareallergi", "Intolerance – ikke allergi").
 
 function slugify(text) {
   return (text || "")
@@ -82,7 +83,7 @@ export default function KnowledgeSection({
           <div className="admin-table-empty">Ingen entries matcher</div>
         ) : (
           <table className="admin-table">
-            <thead><tr><th></th><th>Titel</th><th>Kategori</th><th>Slug</th><th>Risiko</th><th>Opdateret</th><th></th></tr></thead>
+            <thead><tr><th></th><th>Titel</th><th>Kategori</th><th>Slug</th><th>Faglig status</th><th>Opdateret</th><th></th></tr></thead>
             <tbody>
               {knowledgeEntries.map(k => (
                 <tr key={k.id} style={{ cursor: "pointer" }} onClick={() => openKnowledgeEntryForEdit(k)}>
@@ -90,7 +91,7 @@ export default function KnowledgeSection({
                   <td>{k.title}</td>
                   <td><span className="admin-pill admin-pill-neutral">{CATEGORY_LABELS[k.category] || k.category}</span></td>
                   <td style={{ fontFamily: "var(--mono)", fontSize: 11 }}>{k.slug}</td>
-                  <td>{k.risk_level ? <span className={`admin-pill ${k.risk_level === "high" ? "admin-pill-red" : k.risk_level === "medium" ? "admin-pill-amber" : "admin-pill-neutral"}`}>{RISK_LABELS[k.risk_level]}</span> : <span style={{ color: "var(--muted)" }}>–</span>}</td>
+                  <td>{k.status_label ? <span className="admin-pill admin-pill-neutral">{k.status_label}</span> : <span style={{ color: "var(--muted)" }}>–</span>}</td>
                   <td>{k.updated_at ? new Date(k.updated_at).toLocaleDateString("da-DK") : "–"}</td>
                   <td><button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={e => { e.stopPropagation(); openKnowledgeEntryForEdit(k); }}>Redigér</button></td>
                 </tr>
@@ -164,11 +165,9 @@ export default function KnowledgeSection({
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
               <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Risikoniveau</label>
-                <select value={editingKnowledgeEntry.risk_level} onChange={e => setEditingKnowledgeEntry(s => ({ ...s, risk_level: e.target.value }))}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border2)", fontFamily: "var(--f)", fontSize: 13 }}>
-                  {RISK_LEVELS.map(r => <option key={r} value={r}>{RISK_LABELS[r]}</option>)}
-                </select>
+                <label className="admin-label">Faglig status (valgfri)</label>
+                <input value={editingKnowledgeEntry.status_label} placeholder="Fx Fødevareallergi"
+                  onChange={e => setEditingKnowledgeEntry(s => ({ ...s, status_label: e.target.value }))} />
               </div>
               <div className="admin-field" style={{ marginBottom: 0 }}>
                 <label className="admin-label">Sortering</label>

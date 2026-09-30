@@ -1,12 +1,11 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
-import { compareAllergens, normalizeProductFlagsFor, productDisplayName, logSearchSelection, apiCall, makeHeaders, extractENumbers, buildActiveProfileList, computeProfileResults, profileConflictLabel } from "./helpers.js";
+import { normalizeProductFlagsFor, productDisplayName, logSearchSelection, apiCall, makeHeaders, extractENumbers, buildActiveProfileList, computeProfileResults, profileConflictLabel } from "./helpers.js";
 import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
-import { useHistoryContext } from "./HistoryContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 import { UI } from "./styleUtils.js";
@@ -17,24 +16,7 @@ const S = {
   mb10:    { marginBottom:10 },
   h13b:    { fontSize:13, fontWeight:700, color:"var(--ink)" },
   sub11:   { fontSize:11, color:"var(--muted)" },
-  hint:    { fontSize:10.5, color:"var(--muted)", marginTop:4, lineHeight:1.4 },
 };
-
-// Korte, kontekstuelle hints (25. sept. 2026, brugerfeedback: "brug
-// hjælpetekster sparsomt og kun første gang") — vises kun ved brugerens
-// allerførste besøg på Indkøbsliste-skærmen nogensinde (localStorage-flag
-// pr. hint), i stedet for en fuld manual der altid er synlig. Adskilt fra
-// den samlede hjælpesheet (HelpModal, åbnet via "Sådan fungerer listen"
-// nedenfor), som stadig findes for den der aktivt leder efter mere.
-function useFirstTimeHint(key) {
-  const [show] = useState(() => {
-    try { return localStorage.getItem(`as_hint_${key}`) !== "1"; } catch { return true; }
-  });
-  useEffect(() => {
-    if (show) { try { localStorage.setItem(`as_hint_${key}`, "1"); } catch { /* ignoreres */ } }
-  }, []);
-  return show;
-}
 
 function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, grantAccess, revokeAccess, setListType, onClose }) {
   const [access, setAccess]     = useState([]);
@@ -148,7 +130,6 @@ export default function ListScreen({
   const { family, allergens, customAllerg, activeProfiles, setActiveProfiles } = useProfileContext();
   const { selectedENumbers } = useAllergenPrefsContext();
   const { setScreen } = useNavigationContext();
-  const { favorites } = useHistoryContext();
   const {
     lists, activeList, activeListId, setActiveListId,
     shoppingList, newItemName, setNewItemName, addToList, toggleItem, removeItem, clearDone,
@@ -164,7 +145,6 @@ export default function ListScreen({
   const [joinCode, setJoinCode]             = useState("");
   const [joinError, setJoinError]           = useState("");
   const [joinLoading, setJoinLoading]       = useState(false);
-  const [favoritesOpen, setFavoritesOpen]   = useState(false);
   // Bekræft-dialoger for destruktive handlinger (25. sept. 2026,
   // brugerfeedback) — erstatter native confirm(), se ConfirmDialog i
   // SharedComponents.jsx for hvorfor. listPendingDelete holder LISTEN
@@ -172,8 +152,6 @@ export default function ListScreen({
   const [listPendingDelete, setListPendingDelete] = useState(null);
   const [showClearDoneConfirm, setShowClearDoneConfirm] = useState(false);
 
-  const showListPickerHint = useFirstTimeHint("list_picker");
-  const showShareHint = useFirstTimeHint("list_share");
   const handleToggleItem = (id, wasChecked) => {
     toggleItem(id);
     if (wasChecked) return;
@@ -362,15 +340,19 @@ export default function ListScreen({
       <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Indkøbsliste</div>
       {onOpenHelp && (
         <button type="button" onClick={onOpenHelp}
-          style={{ display:"flex", alignItems:"center", gap:4, background:"none", border:"none", cursor:"pointer", padding:0, marginBottom:12, fontFamily:"var(--f)", fontSize:11, fontWeight:500, color:"var(--muted)" }}>
-          <Icon name="info" size={11} color="var(--muted)" /> Sådan fungerer listen
+          style={{ display:"flex", alignItems:"center", gap:4, background:"none", border:"none", cursor:"pointer", padding:0, marginBottom:12, fontFamily:"var(--f)", fontSize:11, fontWeight:500, color:"var(--ink2)" }}>
+          <Icon name="info" size={11} color="var(--ink2)" /> Sådan fungerer listen
         </button>
       )}
 
       {/* ── Tilføj vare (øverst, så søgeresultater aldrig kan havne bag andet indhold) ── */}
-      <div style={{ marginBottom:10, position:"relative", zIndex:5 }}>
+      <div style={{ marginBottom:8, position:"relative", zIndex:5 }}>
+        {/* Søgefelt og Tilføj-knap gjort lavere/mere kompakte (30. sept. 2026)
+            — begge 40px høje. Skriftstørrelsen i feltet er bevidst 16px
+            (under 16px zoomer iOS Safari ind ved fokus). */}
         <div className="input-row" style={{ marginBottom:0 }}>
           <input className="field" placeholder="Søg eller skriv en vare…"
+            style={{ height:40, padding:"0 12px" }}
             value={newItemName}
             onChange={e => setNewItemName(e.target.value)}
             onFocus={() => setItemFocused(true)}
@@ -381,7 +363,7 @@ export default function ListScreen({
               plads uden at ændre knappens højde. Radius rettet til 10px
               (matcher .field's radius) — .btn-sm's delte radius er 8px,
               hvilket ikke matchede feltets, kun overstyret her. */}
-          <button className="btn btn-primary btn-sm" style={{ ...UI.uwsnowrap, padding:"8px 10px", borderRadius:10 }}
+          <button className="btn btn-primary btn-sm" style={{ ...UI.uwsnowrap, height:40, minHeight:40, padding:"0 12px", borderRadius:10 }}
             onClick={() => addToList(newItemName)}>
             Tilføj
           </button>
@@ -505,41 +487,30 @@ export default function ListScreen({
       </div>
 
       {/* ── Listevælger (komprimeret) ──
-          Række-gap strammet 6→4px og dropdownen fik en eksplicit height:34
-          (matcher favorit-/del-knappernes faste 34px, i stedet for at
-          stole på flex-stretch af dens padding-baserede indholdshøjde),
-          så de føles som én samlet kontrolrække i stedet for tre løse
-          elementer (29. sept. 2026, brugerfeedback). */}
-      <div style={{ marginBottom:12 }}>
-        <div style={{ display:"flex", gap:4, alignItems:"center" }}>
+          Samlet til ÉN kontrol (30. sept. 2026): listevælger og del-knap
+          deler samme ramme, adskilt af en tynd skillelinje, i stedet for
+          separate knapper. Favorit-knappen er fjernet herfra (favoritter
+          nås fortsat via menuen → Favoritter). */}
+      <div style={{ marginBottom:10 }}>
+        <div style={{ display:"flex", alignItems:"stretch", height:36, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, overflow:"hidden" }}>
           <div onClick={() => setShowListPicker(v => !v)}
-            style={{ flex:1, minWidth:0, height:34, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}>
+            style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, padding:"0 12px", cursor:"pointer" }}>
             <div style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-              <span style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>{activeList?.name || "Vælg liste"}</span>
+              <span style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{activeList?.name || "Vælg liste"}</span>
               {activeList?.type === "family" && <span style={{ marginLeft:6, display:"inline-flex", verticalAlign:"middle" }}><Icon name="family" size={11} color="var(--green)" /></span>}
             </div>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, transform: showListPicker ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2" style={{ flexShrink:0, transform: showListPicker ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
               <path strokeLinecap="round" d="M19 9l-7 7-7-7"/>
             </svg>
           </div>
-          {favorites.length > 0 && (
-            <button aria-label="Dine favoritter" onClick={() => setFavoritesOpen(v => !v)}
-              style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:34, padding:0, background: favoritesOpen ? "var(--green-lt)" : "var(--surface)", border:`1px solid ${favoritesOpen ? "var(--green)" : "var(--border)"}`, borderRadius:10, cursor:"pointer", flexShrink:0 }}>
-              <Icon name="heart" size={15} color={favoritesOpen ? "var(--green)" : "var(--red)"} />
-            </button>
-          )}
           <button aria-label="Del liste" onClick={() => setShowShareSheet(true)} disabled={!activeList}
-            style={{ display:"flex", alignItems:"center", justifyContent:"center", width:34, height:34, padding:0, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor: activeList ? "pointer" : "not-allowed", opacity: activeList ? 1 : .5, flexShrink:0 }}>
+            style={{ display:"flex", alignItems:"center", justifyContent:"center", width:40, padding:0, background:"none", border:"none", borderLeft:"1px solid var(--border)", cursor: activeList ? "pointer" : "not-allowed", opacity: activeList ? 1 : .5, flexShrink:0 }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2">
               <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
               <path strokeLinecap="round" d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
             </svg>
           </button>
         </div>
-        {/* Kontekstuelle første-gangs-hints (se useFirstTimeHint ovenfor) —
-            korte, diskrete, vises kun ved allerførste besøg. */}
-        {showListPickerHint && <div style={S.hint}>Flere lister</div>}
-        {showShareHint && <div style={S.hint}>Del listen med familie eller via link</div>}
       </div>
 
       {/* Gjort mere kompakt (29. sept. 2026, "Polér designet på
@@ -629,44 +600,6 @@ export default function ListScreen({
           onClose={() => setShowShareSheet(false)} />
       )}
 
-      {/* ── Favoritter (åbnes via ❤️-ikonet i listevælger-rækken — hjertet er
-           appens faste favorit-ikon, se fx RecipesScreen/ProfileScreen) ── */}
-      {favorites.length > 0 && favoritesOpen && (
-        <div className="card" style={S.mb12}>
-          <div className="card-lbl">Dine favoritter ({favorites.length})</div>
-          <>
-              {favorites.slice(0,10).map(p => {
-                const { status: rawStatus, hasUnknown } = compareAllergens(normalizeProductFlagsFor(p), activeIds);
-                const status = rawStatus === "safe" && hasUnknown ? "warn" : rawStatus;
-                const statusColor = status==="safe" ? "var(--green)" : status==="danger" ? "var(--red)" : "var(--amber)";
-                return (
-                  <div key={p.ean||p.id}
-                    style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 0", borderBottom:"1px solid var(--border)", cursor:"pointer" }}
-                    onClick={() => lookupProduct(p.ean||p.code||p.id)}>
-                    <ProductImage product={p} size={28} />
-                    <div style={{ ...S.flexMin, display:"flex", alignItems:"baseline", gap:6 }}>
-                      <span style={{ fontSize:12, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{productDisplayName(p)}</span>
-                      {p.brand && <span style={{ fontSize:10, color:"var(--muted)", flexShrink:0 }}>{p.brand}</span>}
-                    </div>
-                    <div style={{ width:7, height:7, borderRadius:"50%", background:statusColor, flexShrink:0 }} />
-                    <button type="button" className="btn btn-ghost btn-sm" aria-label={`Tilføj "${productDisplayName(p)}" til indkøbsliste`}
-                      style={{ flexShrink:0, width:34, padding:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, lineHeight:1 }}
-                      onClick={e => { e.stopPropagation(); addToList({ name: productDisplayName(p), ean: p.ean || p.code, id: p.id, image_url: p.image_url }); }}>
-                      +
-                    </button>
-                  </div>
-                );
-              })}
-              {favorites.length > 10 && (
-                <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", paddingTop:8, cursor:"pointer" }}
-                  onClick={() => setScreen(SCREENS.FAVORITES)}>
-                  Se alle {favorites.length} favoritter →
-                </div>
-              )}
-          </>
-        </div>
-      )}
-
       {/* ── Tom tilstand ──
           Positionen (paddingTop) er tilbageført til den delte klasses
           normale 56px (29. sept. 2026, opfølgning — en tidligere runde
@@ -679,7 +612,7 @@ export default function ListScreen({
         <div className="empty-state">
           <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="cart" size={23} color="var(--muted)" /></span>
           <div className="empty-txt">Listen er tom</div>
-          <div className="empty-sub" style={{ lineHeight:1.35 }}>Søg efter produkter eller tilføj en vare manuelt</div>
+          <div className="empty-sub" style={{ lineHeight:1.35, color:"var(--ink2)" }}>Søg efter produkter eller tilføj en vare manuelt</div>
         </div>
       )}
 
