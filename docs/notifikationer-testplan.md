@@ -47,13 +47,17 @@ For hver variant: (a) appen **lukket**, (b) appen **åben**, (c) appen i **baggr
 | N5 Invitation accepteret | Anden konto accepterer QA's invitation | Din invitation er accepteret |
 | N6 ×4 Feedback | QA sender feedback → admin sætter *I gang* / *Løst* / *Åben igen* / skriver svar | Vi arbejder … / løst / åbnet igen / Nyt svar |
 | P2 Invitation udløber | QA-invitation med højst 4 timer tilbage (Claude kan sætte udløbstid) | Din invitation udløber snart |
+| P1 Ændrede allergener | Claude hæver et allergen på et produkt, QA har som favorit og har som allergi (10 min forsinkelse) | Allergenoplysninger er ændret |
+| P6 Tilbagekaldelse | Claude opretter en testtilbagekaldelse for et produkt, QA har scannet | Et produkt er tilbagekaldt |
 | P3 Delt liste ×2 | Anden konto tilføjer 1 vare / flere til en liste delt med QA | Jeres indkøbsliste er opdateret |
 
-Ikke bygget endnu (kan ikke testes): N7 opskrifter, P1 ændrede allergener, P6 tilbagekaldelse, P5 færdiggør profil.
+Ikke bygget: N7 opskrifter (opskrifter er på pause). P5 er droppet.
 
 Fælles krav:
 - [ ] Push kommer **efter** at beskeden findes (klik åbner den aldrig som "ikke tilgængelig").
 - [ ] Ingen dublet, selv ved flere enheder/genforsøg.
+- [ ] **P1:** kun allergener fra QA's egen profil står i beskeden; push nævner ingen allergennavne; faldende risiko giver ingen besked.
+- [ ] **P6:** beskeden viser årsag, berørte partier og et link, der åbner Fødevarestyrelsens side; produktknappen åbner produktet. Testtilbagekaldelsen slettes bagefter.
 - [ ] **P3:** højst én besked pr. 30 min pr. liste; varenavne står **ikke** i pushen (kun i appen).
 - [ ] **P2:** efter at invitationen er accepteret/udløbet, ses forklaringen, men **ingen aktiv knap**.
 - [ ] Slår QA kategorien fra i Indstillinger → ingen push. Slår QA *både* push og mail fra → **ingen besked overhovedet**.

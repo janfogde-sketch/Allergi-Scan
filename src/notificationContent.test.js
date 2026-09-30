@@ -11,7 +11,8 @@ const SAMPLE = {
   reason: "Ingredienslisten er ikke læsbar.\nIndsend et skarpere billede.",
   memberName: "Frederikke", inviteId: "inv-1",
   description: "Kameraet åbner ikke, når jeg vælger Scan.", message: "Vi har rettet fejlen. Prøv gerne igen.", ticketId: "tik-1",
-  expiresAt: "i dag kl. 18:35", listName: "Familiens indkøb", listId: "list-1", itemSummary: "Mælk og Æg",
+  expiresAt: "i dag kl. 18:35", listName: "Familiens indkøb", listId: "list-1", itemSummary: "Mælk og Æg", changeSummary: "Æg indeholder nu",
+  recallReason: "For højt indhold af glycerol.", affectedBatches: "Frosty Pocket Lemon\nLotnr.: L1", recallAction: "Kassér produktet.", recallUrl: "https://foedevarestyrelsen.dk/nyheder/a", recallId: "r1",
 };
 const KEYS = Object.keys(DEFINITIONS);
 const LONG = "X".repeat(90);
@@ -166,5 +167,22 @@ describe("sikkerhed i indholdet", () => {
   it("mangler en handlingsparameter, kan beskeden ikke oprettes", () => {
     expect(() => renderNotification("N2a:default", { ...SAMPLE, ean: "" })).toThrow(MissingRequiredError);
     expect(() => renderNotification("N6:reply", { ...SAMPLE, ticketId: "" })).toThrow(MissingRequiredError);
+  });
+});
+
+describe("P6: tilbagekaldelse", () => {
+  const data = { productName: "Frosty Pocket Lemon", ean: "8435660200767", recallId: "r1", recallUrl: "https://foedevarestyrelsen.dk/nyheder/a" };
+  it("har et officielt link som blok og åbner produktet", () => {
+    const r = renderNotification("P6:default", data);
+    expect(JSON.stringify(r.blocks)).toContain('"type":"link"');
+    expect(r.primaryAction).toMatchObject({ type: "open_product", params: { ean: "8435660200767" } });
+    expect(r.category).toBe("recalls");
+  });
+  it("udelader linket, hvis adressen ikke er Fødevarestyrelsens (https)", () => {
+    const r = renderNotification("P6:default", { ...data, recallUrl: "https://evil.example.com/x" });
+    expect(JSON.stringify(r.blocks)).not.toContain('"type":"link"');
+  });
+  it("kan ikke oprettes uden kilde-adresse", () => {
+    expect(() => renderNotification("P6:default", { ...data, recallUrl: "" })).toThrow(/recallUrl/);
   });
 });

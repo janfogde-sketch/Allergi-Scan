@@ -4,6 +4,7 @@
 // serveren: kun ren tekst i kendte blokttyper, så indholdet aldrig kan bringe
 // markup eller scripts med sig. Ingen e-mailramme, afmelding eller hilsen.
 import React from "react";
+import { isOfficialRecallUrl } from "../supabase/functions/_shared/recallParser.js";
 
 const S = {
   h: { fontSize:19, fontWeight:800, color:"var(--ink)", letterSpacing:"-.3px", lineHeight:1.25, margin:"0 0 12px" },
@@ -53,6 +54,11 @@ export function NotificationBlock({ block }) {
       return <div style={S.fact}><span style={{ color:"var(--muted)" }}>{block.label}</span><span style={{ color:"var(--ink)", fontWeight:600, textAlign:"right" }}>{block.value}</span></div>;
     case "disclaimer":
       return <p style={S.disclaimer}>{block.text}</p>;
+    case "link":
+      // Kun Fødevarestyrelsens eget domæne over https (kontrolleres igen her, selv om serveren har gjort det).
+      return isOfficialRecallUrl(block.url)
+        ? <p style={S.p}><a href={block.url} target="_blank" rel="noopener noreferrer" style={{ color:"var(--green)", fontWeight:700 }}>{block.label}</a></p>
+        : null;
     default:
       return null; // Ukendt blok fra en nyere skabelonversion: vis ikke noget hellere end noget forkert
   }

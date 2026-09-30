@@ -18,6 +18,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { renderNotification, MissingRequiredError, productLabel } from "../_shared/notificationContent.js";
 import { sendWebPush, endpointHash } from "../_shared/webpush.ts";
 import { formatDanishDeadline, summarizeItems, affectedAllergenChanges, summarizeAllergenChanges } from "../_shared/notifyHelpers.js";
+import { eanVariants } from "../_shared/recallParser.js";
 import { RESEND_TEMPLATES, MAIL_ONLY_WITHOUT_PUSH, buildMailVariables, sendTemplateMail } from "../_shared/mailSend.ts";
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
@@ -161,6 +162,49 @@ async function planEvent(db: Db, ev: EventRow): Promise<Planned[]> {
         const hits = affectedAllergenChanges(p.changes as Record<string, { old: string }>, prod.allergen_flags, byUser.get(userId) ?? []);
         if (hits.length === 0) continue; // berører ingen af modtagerens profiler, eller er rullet tilbage
         plans.push({ userId, templateKey: "P1:default", data: { productName, ean: prod.ean, changeSummary: summarizeAllergenChanges(hits) } });
+      }
+      return plans;
+    }
+    case "recall_published": {
+      const { data: rc } = await db.from("recalls").select("id, source_url, reason, affected, action, eans, status").eq("id", p.recall_id).maybeSingle();
+      // Kun bekræftede (status ready) tilbagekaldelser med gyldige EAN'er sendes; annulleret/arkiveret → ingen besked.
+      if (!rc || rc.status !== "ready" || !rc.eans?.length) return [];
+      const variants = [...new Set((rc.eans as string[]).flatMap((e) => eanVariants(e)))];
+      const { data: prods } = await db.from("products").select("id, ean, name, brand").in("ean", variants);
+      const prodByEan = new Map<string, { id: string; ean: string; name: string; brand: string }>();
+      for (const pr of prods ?? []) prodByEan.set(pr.ean, pr);
+      const since = new Date(Date.now() - 90 * 86400_000).toISOString();
+
+      // bruger → første matchede EAN (som den står i databasen)
+      const hit = new Map<string, string>();
+      const mark = (userId: string | null | undefined, ean: string | null | undefined) => {
+        if (userId && ean && !hit.has(userId)) hit.set(userId, ean);
+      };
+      const { data: fav } = await db.from("favorites").select("user_id, ean").in("ean", variants);
+      for (const r of fav ?? []) mark(r.user_id, r.ean);
+      const { data: scans } = await db.from("scan_history").select("user_id, ean_scanned").in("ean_scanned", variants).gte("scanned_at", since).not("user_id", "is", null);
+      for (const r of scans ?? []) mark(r.user_id, r.ean_scanned);
+      const { data: items } = await db.from("shopping_list_items").select("list_id, ean").in("ean", variants);
+      const listEan = new Map<string, string>();
+      for (const i of items ?? []) if (i.list_id && i.ean && !listEan.has(i.list_id)) listEan.set(i.list_id, i.ean);
+      if (listEan.size) {
+        const listIds = [...listEan.keys()];
+        const { data: lists } = await db.from("shopping_lists").select("id, owner_id").in("id", listIds);
+        for (const l of lists ?? []) mark(l.owner_id, listEan.get(l.id));
+        const { data: acc } = await db.from("shopping_list_access").select("list_id, user_id").in("list_id", listIds);
+        for (const a of acc ?? []) mark(a.user_id, listEan.get(a.list_id));
+      }
+
+      const plans: Planned[] = [];
+      for (const [userId, ean] of hit) {
+        const prod = prodByEan.get(ean);
+        plans.push({
+          userId, templateKey: "P6:default",
+          data: {
+            productName: prod ? productLabel({ brand: prod.brand, name: prod.name }) : "", ean: prod?.ean ?? ean,
+            recallReason: rc.reason, affectedBatches: rc.affected, recallAction: rc.action, recallUrl: rc.source_url, recallId: rc.id,
+          },
+        });
       }
       return plans;
     }

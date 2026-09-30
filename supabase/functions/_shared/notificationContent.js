@@ -21,6 +21,8 @@
 // Den gemmes på beskeden (notifications.template_version) sammen med et
 // snapshot af den udfyldte tekst, så gamle beskeder aldrig omskrives.
 
+import { isOfficialRecallUrl } from "./recallParser.js";
+
 export const DISCLAIMER = "EatSafe er vejledende. Tjek altid emballagen.";
 
 /** Handlingstyper appen må bygge en rute ud fra. Alt andet afvises. */
@@ -67,6 +69,7 @@ const H = (text) => ({ t: "heading", text });
 const P = (text, opts = {}) => ({ t: "p", text, ...opts });
 const PANEL = (title, blocks) => ({ t: "panel", title, blocks });
 const DISC = { t: "disclaimer" };
+const LINK = (label, url) => ({ t: "link", label, url });
 
 const PRODUCT_VARS = { productName: { max: 34, pushFallback: "Produktet", fallback: "produktet" } };
 const TICKET_VARS = {
@@ -284,6 +287,32 @@ export const DEFINITIONS = {
     action: PRODUCT_ACTION, entity: { type: "product", idFrom: "ean" },
   },
 
+  // ── P6: tilbagekaldelse fra Fødevarestyrelsen, matchet på EAN (aldrig på navn alene) ──
+  "P6:default": {
+    type: "P6", variant: "default", category: "recalls", version: 1, ttl: 86400,
+    push: { title: "Et produkt er tilbagekaldt", body: "Der er en tilbagekaldelse for {{productName}}. Tjek de berørte partier." },
+    mail: { subject: "Tilbagekaldelse af et produkt, du har brugt i EatSafe", preheader: "Kontrollér produktets oplysninger i den officielle tilbagekaldelse." },
+    vars: {
+      ...PRODUCT_VARS,
+      recallReason: { fallback: "Se den officielle tilbagekaldelse for årsagen.", multiline: true },
+      affectedBatches: { fallback: "Se den officielle tilbagekaldelse for berørte varer og partier.", multiline: true },
+      recallAction: { fallback: "Følg Fødevarestyrelsens anvisninger i tilbagekaldelsen." },
+      recallUrl: { fallback: "" },
+    },
+    required: ["recallUrl"],
+    blocks: [
+      H("Et produkt er tilbagekaldt"),
+      P("Der er offentliggjort en tilbagekaldelse, som kan vedrøre **{{productName}}**, du har scannet eller gemt i EatSafe."),
+      PANEL("Årsag til tilbagekaldelsen", [P("{{recallReason}}", { multiline: true })]),
+      PANEL("Berørte varer og partier", [P("{{affectedBatches}}", { multiline: true })]),
+      P("{{recallAction}}"),
+      P("Sammenlign oplysningerne i tilbagekaldelsen med emballagen på dit produkt. En tilbagekaldelse kan gælde bestemte partier eller holdbarhedsdatoer."),
+      LINK("Læs den officielle tilbagekaldelse", "{{recallUrl}}"),
+      DISC,
+    ],
+    action: PRODUCT_ACTION, entity: { type: "recall", idFrom: "recallId" },
+  },
+
   // ── P3: nye varer på en delt indkøbsliste (aggregeret; varenavne står ikke i pushen) ──
   "P3:one": {
     type: "P3", variant: "one", category: "shared_lists", version: 1, ttl: 7200,
@@ -346,13 +375,18 @@ function renderBlock(block, values) {
     case "p":
       return { type: "paragraph", parts: toParts(fillTemplate(block.text, values)), ...(block.multiline ? { multiline: true } : {}) };
     case "panel":
-      return { type: "panel", ...(block.title ? { title: block.title } : {}), blocks: block.blocks.map((b) => renderBlock(b, values)) };
+      return { type: "panel", ...(block.title ? { title: block.title } : {}), blocks: block.blocks.map((b) => renderBlock(b, values)).filter(Boolean) };
     case "quote":
       return { type: "quote", label: block.label, text: fillTemplate(block.text, values) };
     case "fact":
       return { type: "fact", label: block.label, value: block.value };
     case "disclaimer":
       return { type: "disclaimer", text: DISCLAIMER };
+    case "link": {
+      // Kun officielle kilder (Fødevarestyrelsen, https) må blive et link; ellers udelades blokken.
+      const url = fillTemplate(block.url, values);
+      return isOfficialRecallUrl(url) ? { type: "link", label: block.label, url } : null;
+    }
     default:
       throw new Error(`Ukendt blok: ${block.t}`);
   }
@@ -372,7 +406,7 @@ export function renderNotification(key, data = {}) {
 
   const title = def.push.title;
   const pushBody = fillTemplate(def.push.body, pushValues);
-  const blocks = def.blocks.map((b) => renderBlock(b, blockValues));
+  const blocks = def.blocks.map((b) => renderBlock(b, blockValues)).filter(Boolean);
 
   const params = {};
   for (const p of def.action.params) params[p] = cleanText(data[p]);
@@ -417,6 +451,7 @@ function blockToText(b) {
     case "quote": return `${b.label}\n“${b.text}”`;
     case "fact": return `${b.label}: ${b.value}`;
     case "disclaimer": return b.text;
+    case "link": return `${b.label}: ${b.url}`;
     default: return "";
   }
 }

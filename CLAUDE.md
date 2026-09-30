@@ -91,9 +91,8 @@ nær den nyeste commit (kategorier, P2, P3), som ligger lokalt. Push-flaget
 `notifications_push_enabled` og mail-flaget `notifications_email_enabled` er
 begge FRA; ingen rigtige push eller mails er sendt. `notify` er testet live
 (besked oprettet, ingen afsendelse). Beskedside/rute er i appen; 22 Resend-
-skabeloner ligger i `supabase/templates/resend/`. P1 er bygget (trigger + notify, kun stigende risiko) og P5 er droppet. Mangler: P6 (kræver, at
-foedevarestyrelsen.dk tilføjes til miljøets netværksliste, så feedet kan undersøges;
-Jan valgte automatisk hentning), N7 (opskrifter er sat på pause), N1 efter onboarding, P4 ved
+skabeloner ligger i `supabase/templates/resend/`. P1 er bygget (trigger + notify, kun stigende risiko) og P5 er droppet. P6 er bygget (RSS-feed fra Fødevarestyrelsen → `recalls` → EAN-match; kræver merge og deploy af `recalls-sync`). Mangler: admin-visning
+til tilbagekaldelser uden gyldig EAN, N7 (opskrifter er sat på pause), N1 efter onboarding, P4 ved
 kontosletning, "Se din feedback"-visning (trin 4), test på rigtige telefoner
 FØR flagene tændes. Detaljer i `src/CONTEXT.md` afsnit 14.
 

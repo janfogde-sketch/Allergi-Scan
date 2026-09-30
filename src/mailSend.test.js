@@ -10,12 +10,13 @@ const catalog = JSON.parse(readFileSync("supabase/templates/resend/catalog.json"
 const KEY_TO_CATALOG = {
   "N2a:default": "N2a", "N2b:default": "N2b", "N3:default": "N3", "N4:default": "N4", "N5:default": "N5",
   "N6:in_progress": "N6a", "N6:resolved": "N6b", "N6:reopened": "N6c", "N6:reply": "N6d",
-  "P1:default": "P1", "P2:default": "P2", "P3:one": "P3", "P3:many": "P3",
+  "P1:default": "P1", "P6:default": "P6", "P2:default": "P2", "P3:one": "P3", "P3:many": "P3",
 };
 const SAMPLE = {
   productName: "Havregryn", ean: "5701234567890", submissionId: "s1", reason: "Billedet viser ikke ingredienslisten.",
   memberName: "Kaj", inviteId: "i1", description: "Knappen virker ikke på min iPhone.", message: "Vi har rettet fejlen.", ticketId: "t1",
   expiresAt: "i dag kl. 18:35", listName: "Familiens indkøb", listId: "l1", itemSummary: "Mælk og Æg", changeSummary: "Æg indeholder nu",
+  recallReason: "For højt indhold af glycerol.", affectedBatches: "Frosty Pocket Lemon\nLotnr.: L1", recallAction: "Kassér produktet.", recallUrl: "https://foedevarestyrelsen.dk/nyheder/a", recallId: "r1",
 };
 
 describe("escapeHtml / buildMailVariables", () => {
@@ -56,6 +57,7 @@ describe("skabeloner ↔ beskeder", () => {
         else if (b.type === "panel") { if (b.title) texts.push(b.title); b.blocks.forEach(walk); }
         else if (b.type === "quote") { texts.push(b.label, b.text); }
         else if (b.type === "disclaimer") texts.push(b.text);
+        else if (b.type === "link") texts.push(b.label);
       };
       r.blocks.forEach(walk);
       for (const t of texts) expect(mail.replace(/\s+/g, " "), `${key}: "${t}" mangler i mailen`).toContain(t.replace(/\s+/g, " "));
