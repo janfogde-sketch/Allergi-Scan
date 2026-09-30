@@ -31,6 +31,8 @@ const OnboardingScreen = React.lazy(() => import('./OnboardingScreen.jsx'));
 const MadpasScreen = React.lazy(() => import('./MadpasScreen.jsx'));
 const ProfileScreen = React.lazy(() => import('./ProfileScreen.jsx'));
 const SettingsScreen = React.lazy(() => import('./SettingsScreen.jsx'));
+const NotificationsScreen = React.lazy(() => import('./NotificationsScreen.jsx'));
+const NotificationScreen = React.lazy(() => import('./NotificationScreen.jsx'));
 import ScannerScreen from './ScannerScreen.jsx';
 const RecipesScreen = React.lazy(() => import('./RecipesScreen.jsx'));
 const KnowledgeScreen = React.lazy(() => import('./KnowledgeScreen.jsx'));
@@ -71,6 +73,7 @@ import BetaIntroModal from "./BetaIntroModal.jsx";
 import DeleteAccountModal from "./DeleteAccountModal.jsx";
 import { useAdminTools } from "./useAdminTools.js";
 import { useIncomingLinks } from "./useIncomingLinks.js";
+import { useNotifications } from "./useNotifications.js";
 import { useLoadUserData } from "./useLoadUserData.js";
 
 // Skærme en bruger med ufuldført onboarding ALTID må kunne se/blive på (29.
@@ -427,6 +430,9 @@ export default function EatSafe() {
     joinByCode, loadShoppingList, setAuthTab, setScreen,
   });
 
+  // ── Beskeder (liste, ulæst-tæller og ?notification=-ruten fra push) ──────
+  const notifications = useNotifications({ accessToken, userId, user, screen, setScreen, setAuthTab });
+
   // ── Router — browser back-knap support ──────────────────────────────────
   const isOffline = useOffline();
 
@@ -638,6 +644,14 @@ export default function EatSafe() {
        setProductImagePreview, setProductImageBase64,
        vibrateOnWarning, soundOnWarning]);
   lookupProductRef.current = lookupProduct;
+
+  // Primær handling fra en besked. Produktet slås op på ny (aktuel status),
+  // så en gammel besked aldrig fungerer som en aktuel sikkerhedsvurdering.
+  const handleNotificationAction = useCallback((action) => {
+    if (action?.type === "open_product" && action.params?.ean) lookupProduct(action.params.ean);
+    else if (action?.type === "open_family") setScreen(SCREENS.FAMILY);
+    else if (action?.type === "scan") setScreen(SCREENS.HOME);
+  }, [lookupProduct, setScreen]);
 
   // ── COMPUTED (afhænger af hooks) ─────────────────────────────────────────
   const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
@@ -994,6 +1008,7 @@ export default function EatSafe() {
           <ProfileMenu
             open={showProfileMenu} onClose={() => setShowProfileMenu(false)}
             onNavigate={(s) => { setScreen(s); setShowProfileMenu(false); }}
+            unreadNotifications={notifications.unread}
             onOpenBetaInfo={() => { setBetaIntroStep(0); setBetaIntroSeen(false); setShowProfileMenu(false); }}
           />
           </Suspense>
@@ -1135,6 +1150,31 @@ export default function EatSafe() {
           <ProfileScreen
             customInput={customInput} setCustomInput={setCustomInput}
             lookupProduct={lookupProduct}
+          />
+          </ErrorBoundary>
+          </Suspense>
+        )}
+
+        {/* ══ BESKEDER ══ (30. sept. 2026) — oversigt + den fulde besked, som push åbner */}
+        {screen === SCREENS.NOTIFICATIONS && (
+          <Suspense fallback={LazyFallback}>
+          <ErrorBoundary screen="Beskeder">
+          <NotificationsScreen
+            items={notifications.items} loading={notifications.loading} listError={notifications.listError}
+            loadList={notifications.loadList} onOpen={notifications.openNotification}
+            onBack={() => setScreen(SCREENS.HOME)}
+          />
+          </ErrorBoundary>
+          </Suspense>
+        )}
+        {screen === SCREENS.NOTIFICATION && notifications.openId && (
+          <Suspense fallback={LazyFallback}>
+          <ErrorBoundary screen="Besked">
+          <NotificationScreen
+            key={notifications.openId}
+            notificationId={notifications.openId} markRead={notifications.markRead}
+            onAction={handleNotificationAction}
+            onBack={() => setScreen(SCREENS.NOTIFICATIONS)}
           />
           </ErrorBoundary>
           </Suspense>
