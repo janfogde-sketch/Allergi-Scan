@@ -195,8 +195,8 @@ export default function OnboardingScreen({
     const ageOk = ageEntered && Number.isFinite(ageNum) && ageNum >= 1 && ageNum <= 120;
     const genderOk = !!(user.gender);
     // Telefon er fjernet fra onboarding (30. sept. 2026) — alder og køn er
-    // fortsat obligatoriske (Jans beslutning, D2). Telefon kan stadig
-    // tilføjes under Rediger profil.
+    // fortsat obligatoriske (Jans beslutning, D2) og kan kun udfyldes her;
+    // Rediger profil ændrer kun navnet.
     const allOk = nameOk && emailOk && ageOk && genderOk;
     const emailIsSaved = !!(loginEmail || isOAuth);
     return (
