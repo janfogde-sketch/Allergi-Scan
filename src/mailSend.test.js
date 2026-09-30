@@ -10,12 +10,12 @@ const catalog = JSON.parse(readFileSync("supabase/templates/resend/catalog.json"
 const KEY_TO_CATALOG = {
   "N2a:default": "N2a", "N2b:default": "N2b", "N3:default": "N3", "N4:default": "N4", "N5:default": "N5",
   "N6:in_progress": "N6a", "N6:resolved": "N6b", "N6:reopened": "N6c", "N6:reply": "N6d",
-  "P2:default": "P2", "P3:one": "P3", "P3:many": "P3",
+  "P1:default": "P1", "P2:default": "P2", "P3:one": "P3", "P3:many": "P3",
 };
 const SAMPLE = {
   productName: "Havregryn", ean: "5701234567890", submissionId: "s1", reason: "Billedet viser ikke ingredienslisten.",
   memberName: "Kaj", inviteId: "i1", description: "Knappen virker ikke på min iPhone.", message: "Vi har rettet fejlen.", ticketId: "t1",
-  expiresAt: "i dag kl. 18:35", listName: "Familiens indkøb", listId: "l1", itemSummary: "Mælk og Æg",
+  expiresAt: "i dag kl. 18:35", listName: "Familiens indkøb", listId: "l1", itemSummary: "Mælk og Æg", changeSummary: "Æg indeholder nu",
 };
 
 describe("escapeHtml / buildMailVariables", () => {

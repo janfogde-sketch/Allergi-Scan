@@ -616,3 +616,10 @@ korte tekst og åbner den fulde, beskyttede besked i appen via
   `notification_flag(key, user)` er sand, hvis det globale flag er tændt ELLER brugeren står på listen; push, mail,
   `notify`, de fire mailtriggere og `delete-user` bruger den. Så kan én testkonto få rigtige push/mails, mens alle
   andre er uberørte. Testplan: `docs/notifikationer-testplan.md`. Ryd listen ved go-live.
+- **P1 (30. sept. 2026):** trigger `on_products_allergen_change` (migration `20260930152251`) lægger hændelsen
+  `product_allergen_changed` i outboxen, når et allergenflag får HØJERE risiko (`allergen_risk_rank`: nej 0, uoplyst 1,
+  spor 2, ja 3); faldende risiko giver ingen besked. Hændelsen udskydes 10 min. `notify` genvurderer mod produktets
+  aktuelle flag og finder modtagere via favoritter, aktuelle lister (ejer + adgang) og scanninger de sidste 90 dage,
+  kun hvis egne eller administrerede profilers allergener berøres (`affectedAllergenChanges` i `notifyHelpers.js`).
+  Kategori `product_changes` (standard TIL) er nu synlig i Indstillinger. **P5 er droppet** (Jan, 30. sept.).
+  **P6** afventer adgang til Fødevarestyrelsen (domænet er blokeret i cloud-miljøets netværksliste).

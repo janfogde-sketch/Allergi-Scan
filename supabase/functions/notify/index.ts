@@ -17,7 +17,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { renderNotification, MissingRequiredError, productLabel } from "../_shared/notificationContent.js";
 import { sendWebPush, endpointHash } from "../_shared/webpush.ts";
-import { formatDanishDeadline, summarizeItems } from "../_shared/notifyHelpers.js";
+import { formatDanishDeadline, summarizeItems, affectedAllergenChanges, summarizeAllergenChanges } from "../_shared/notifyHelpers.js";
 import { RESEND_TEMPLATES, MAIL_ONLY_WITHOUT_PUSH, buildMailVariables, sendTemplateMail } from "../_shared/mailSend.ts";
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
@@ -117,6 +117,50 @@ async function planEvent(db: Db, ev: EventRow): Promise<Planned[]> {
           userId, templateKey: theirs.length === 1 ? "P3:one" : "P3:many",
           data: { listName: list.name, listId: list.id, itemSummary: summarizeItems(theirs.map((i: { name: string }) => i.name)) },
         });
+      }
+      return plans;
+    }
+    case "product_allergen_changed": {
+      const { data: prod } = await db.from("products").select("id, ean, name, brand, allergen_flags").eq("id", p.product_id).maybeSingle();
+      if (!prod) return [];
+      const since = new Date(Date.now() - 90 * 86400_000).toISOString();
+      // Kandidater: favoritter, aktuelle lister (ejer + adgang) og scanninger de sidste 90 dage.
+      const ids = new Set<string>();
+      if (prod.ean) {
+        const { data: fav } = await db.from("favorites").select("user_id").eq("ean", prod.ean);
+        for (const r of fav ?? []) if (r.user_id) ids.add(r.user_id);
+      }
+      const { data: scans } = await db.from("scan_history").select("user_id")
+        .or(`product_id.eq.${prod.id}${prod.ean ? `,ean_scanned.eq.${prod.ean}` : ""}`).gte("scanned_at", since).not("user_id", "is", null);
+      for (const r of scans ?? []) ids.add(r.user_id);
+      const { data: items } = await db.from("shopping_list_items").select("list_id")
+        .or(`product_id.eq.${prod.id}${prod.ean ? `,ean.eq.${prod.ean}` : ""}`);
+      const listIds = [...new Set((items ?? []).map((i: { list_id: string }) => i.list_id))];
+      if (listIds.length) {
+        const { data: lists } = await db.from("shopping_lists").select("owner_id").in("id", listIds);
+        for (const l of lists ?? []) if (l.owner_id) ids.add(l.owner_id);
+        const { data: acc } = await db.from("shopping_list_access").select("user_id").in("list_id", listIds);
+        for (const a of acc ?? []) ids.add(a.user_id);
+      }
+      if (ids.size === 0) return [];
+
+      const userIds = [...ids];
+      const { data: own } = await db.from("user_allergens").select("user_id, allergen").in("user_id", userIds).is("family_member_id", null).eq("type", "allergen");
+      const { data: members } = await db.from("family_members").select("user_id, allergens").in("user_id", userIds);
+      const byUser = new Map<string, string[]>();
+      const add = (u: string, a: unknown) => {
+        const id = typeof a === "string" ? a : (a as { id?: string })?.id;
+        if (u && id) byUser.set(u, [...(byUser.get(u) ?? []), id]);
+      };
+      for (const r of own ?? []) add(r.user_id, r.allergen);
+      for (const m of members ?? []) if (Array.isArray(m.allergens)) for (const a of m.allergens) add(m.user_id, a);
+
+      const productName = productLabel({ brand: prod.brand, name: prod.name });
+      const plans: Planned[] = [];
+      for (const userId of userIds) {
+        const hits = affectedAllergenChanges(p.changes as Record<string, { old: string }>, prod.allergen_flags, byUser.get(userId) ?? []);
+        if (hits.length === 0) continue; // berører ingen af modtagerens profiler, eller er rullet tilbage
+        plans.push({ userId, templateKey: "P1:default", data: { productName, ean: prod.ean, changeSummary: summarizeAllergenChanges(hits) } });
       }
       return plans;
     }

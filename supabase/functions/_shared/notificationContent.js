@@ -267,6 +267,23 @@ export const DEFINITIONS = {
     action: { type: "open_family", label: "Se familieinvitationer", params: [] }, entity: { type: "invitation", idFrom: "inviteId" },
   },
 
+  // ── P1: allergenoplysninger er ændret for et produkt, modtageren bruger (kun stigende risiko) ──
+  "P1:default": {
+    type: "P1", variant: "default", category: "product_changes", version: 1, ttl: 86400,
+    push: { title: "Allergenoplysninger er ændret", body: "Oplysninger om {{productName}} er ændret. Tjek emballagen." },
+    mail: { subject: "Allergenoplysninger er ændret for et af dine produkter", preheader: "Se ændringen, og tjek emballagen, før du bruger produktet." },
+    vars: { ...PRODUCT_VARS, changeSummary: { fallback: "Allergenoplysningerne er ændret." } }, required: [],
+    blocks: [
+      H("Nye oplysninger om dit produkt"),
+      P("Allergenoplysningerne for **{{productName}}** er blevet opdateret i EatSafe. Ændringen vedrører allergener i din profil eller en af dine familieprofiler."),
+      PANEL("Det er ændret", [P("{{changeSummary}}")]),
+      P("Ændringen kan skyldes nye eller rettede oplysninger. Den betyder ikke nødvendigvis, at producenten har ændret selve produktet."),
+      P("Scan produktet igen eller søg efter det i appen for at se den opdaterede vurdering. Tjek emballagen, før du bruger produktet."),
+      DISC,
+    ],
+    action: PRODUCT_ACTION, entity: { type: "product", idFrom: "ean" },
+  },
+
   // ── P3: nye varer på en delt indkøbsliste (aggregeret; varenavne står ikke i pushen) ──
   "P3:one": {
     type: "P3", variant: "one", category: "shared_lists", version: 1, ttl: 7200,
