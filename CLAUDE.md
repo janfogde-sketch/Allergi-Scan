@@ -93,15 +93,22 @@ feedback_tickets er lukket (migration `20260930100707`). Adgangsnøglen
 udløber efter den periode, Jan valgte; når deploy-jobbet fejler med 401/403,
 skal der laves en ny nøgle og secret'en opdateres.
 
-*Notifikationer (Bjørn har godkendt designet):* trin 1-3 er merget (#417-#419), på
-nær den nyeste commit (kategorier, P2, P3), som ligger lokalt. Push-flaget
-`notifications_push_enabled` og mail-flaget `notifications_email_enabled` er
-begge FRA; ingen rigtige push eller mails er sendt. `notify` er testet live
-(besked oprettet, ingen afsendelse). Beskedside/rute er i appen; 22 Resend-
-skabeloner ligger i `supabase/templates/resend/`. P1 er bygget (trigger + notify, kun stigende risiko) og P5 er droppet. P6 er bygget (RSS-feed fra Fødevarestyrelsen → `recalls` → EAN-match; kræver merge og deploy af `recalls-sync`). Mangler: admin-visning
-til tilbagekaldelser uden gyldig EAN, N7 (opskrifter er sat på pause), N1 efter onboarding, P4 ved
-kontosletning, "Se din feedback"-visning (trin 4), test på rigtige telefoner
-FØR flagene tændes. Detaljer i `src/CONTEXT.md` afsnit 14.
+*Notifikationer (Bjørn har godkendt designet):* alt er merget og deployet (#417-#426,
+`notify`, `recalls-sync`, `delete-user`, `send-push`). Live testet 30. sept. mod Jans konto:
+P1 og P6 (besked + mail leveret), og push til Android (Google accepterede; Jan svarede "ja, lukket",
+men trykket på beskeden er ikke bekræftet). Fundet og rettet undervejs: `push_tokens.user_id` manglede
+default (registrering fejlede stille, tabellen var altid tom), VAPID-privatnøglen er rå (32 bytes) og
+importeres nu som JWK, og `recalls` manglede GRANT til service_role. Push-flaget
+`notifications_push_enabled` og mail-flaget `notifications_email_enabled` er stadig FRA for alle;
+kun konti i `app_flags.notifications_test_users` får rigtige push/mails.
+**Testdata fra livetesten ligger stadig i produktion (ryd ved næste session, når Jan siger til):**
+produktet med EAN `9999900000017` ("TESTPRODUKT Havrekiks (slet mig)", source `livetest-notifikationer`)
+og Jans scanning af det, testtilbagekaldelsen i `recalls` (titel starter med LIVETEST), de tilhørende
+`notification_events`/`notifications` (P1 og P6 til Jan), og Jans id (`6a759160-...`) på testlisten.
+Mangler: admin-visning til tilbagekaldelser uden gyldig EAN (punkt 13 ovenfor), N7 (opskrifter på pause),
+app-rettelse så `usePush.js` tjekker svaret fra serveren, når abonnementet gemmes (fejl vises i dag ikke),
+test på iPhone og af de øvrige varianter med to konti (`docs/notifikationer-testplan.md`), og til sidst
+go-live på Jans ord (flagene til, testlisten ryddet). Detaljer i `src/CONTEXT.md` afsnit 14.
 
 *Claude gør bagefter:*
 10. Læs testrundens resultater og opret tickets for fejl (når punkt 3
