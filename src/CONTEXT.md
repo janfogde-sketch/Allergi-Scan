@@ -578,4 +578,13 @@ korte tekst og åbner den fulde, beskyttede besked i appen via
 - **Mangler (trin 3-4):**  pushvarianter + 30 mails koblet på rigtige hændelser, nye indstillingskategorier,
   P1/P3/P6 og egne ticket-visninger. Mail bruger stadig de gamle triggere/skabeloner.
 - **Push-flaget må ikke tændes**, før beskedsiden er i produktion og testet.
+- **Trin 3a (mail, live i DB, notify i PR):** `notify` sender også mail via Resend-skabelonerne
+  (`supabase/templates/resend/`, id'er i `_shared/mailSend.ts`) for N2a/N2b/N3/N4/N5/N6a-d, når
+  `app_flags.notifications_email_enabled` er tændt (starter FRA) og brugeren ikke har slået mail fra
+  for kategorien. Når flaget tændes, springer de gamle triggere `send_submission_email` og
+  `send_ticket_email` over (ingen dobbelt-mails). Værdier HTML-escapes i `buildMailVariables`; mailens
+  variabler er de samme rensede værdier som appens besked (`renderNotification().mailVars`).
+  `src/mailSend.test.js` sikrer, at hver skabeloneks tekst indeholder alle blokke fra appens besked.
+  `notification_deliveries.endpoint` er nu NOT NULL ('' for mail) med almindeligt UNIQUE (det gamle
+  udtryks-indeks kunne ikke bruges til upsert). **Mail er ikke testet live** (ingen rigtige mails i test).
 
