@@ -85,7 +85,7 @@ describe("useAuth handleSignup — validation guards", () => {
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("123456789"); });
     await act(async () => { await result.current.handleSignup(); });
     expect(global.fetch).not.toHaveBeenCalled();
-    expect(result.current.passwordError).toMatch(/mindst 10 tegn/i);
+    expect(result.current.passwordError).toMatch(/kun 9 tegn \(mindst 10\)/i);
     expect(result.current.authError).toBe("");
   });
 
@@ -101,7 +101,7 @@ describe("useAuth handleSignup — validation guards", () => {
   it("tells the user to confirm their email when signup succeeds without an access_token", async () => {
     global.fetch.mockResolvedValue(textResponse({ id: "u1" })); // ingen access_token = kræver email-bekræftelse
     const { result } = setup();
-    act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("longenough"); });
+    act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
     await act(async () => { await result.current.handleSignup(); });
     expect(result.current.authInfo).toMatch(/bekræftelseslink/i);
     expect(result.current.authError).toBe("");
@@ -109,11 +109,27 @@ describe("useAuth handleSignup — validation guards", () => {
     expect(global.fetch.mock.calls[0][0]).toContain("/auth/v1/signup?redirect_to=");
   });
 
+  it("says exactly what is missing before calling the network", async () => {
+    const { result } = setup();
+    act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("minhemmeligekode"); });
+    await act(async () => { await result.current.handleSignup(); });
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(result.current.passwordError).toBe("Adgangskoden kan ikke bruges: den mangler et stort bogstav og et tal.");
+  });
+
+  it("explains a leaked password rejected by Supabase", async () => {
+    global.fetch.mockResolvedValue(textResponse({ code: 422, error_code: "weak_password", msg: "Password is known to be weak", weak_password: { reasons: ["pwned"] } }, false));
+    const { result } = setup();
+    act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
+    await act(async () => { await result.current.handleSignup(); });
+    expect(result.current.passwordError).toMatch(/kendt datalæk/);
+  });
+
   it("shows 'already registered' when confirmation is on and Supabase hides an existing account", async () => {
     // Med e-mailbekræftelse slået til svarer Supabase 200 med en bruger uden identities
     global.fetch.mockResolvedValue(textResponse({ id: "u1", identities: [] }));
     const { result } = setup();
-    act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("longenough"); });
+    act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
     await act(async () => { await result.current.handleSignup(); });
     expect(result.current.emailTakenError).toMatch(/allerede registreret/i);
     expect(result.current.authInfo).toBe("");

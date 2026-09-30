@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
-import { apiCall, decodeJwtPayload } from "./helpers.js";
+import { apiCall, decodeJwtPayload, passwordErrorText, PASSWORD_REQUIREMENTS_TEXT } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 
 // Simpel, ikke-overdrevet streng e-mail-validering (27. sept. 2026, MASTER
@@ -366,12 +366,11 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     // e-mailadresse", som ikke ville forklare HVORFOR den blev afvist).
     if (hasUnsupportedEmailChars(email)) { setEmailError("Brug en e-mailadresse uden æ, ø, å eller andre specialtegn."); return; }
     if (!isValidEmail(email)) { setEmailError("Indtast en gyldig e-mailadresse."); return; }
-    // Kun længdekrav (min. 10 tegn), ingen tvungen tegn-kompleksitet — matcher
-    // moderne sikkerhedsanbefalinger (NIST 800-63B), som fraråder påtvungne
-    // store bogstaver/tal/specialtegn-krav: de får ofte brugere til at vælge
-    // forudsigelige mønstre (fx "Password1!") og øger frafald ved signup uden
-    // reel sikkerhedsgevinst — længde er den langt vigtigste faktor.
-    if (!loginPassword || loginPassword.length < 10) { setPasswordError("Adgangskoden skal være mindst 10 tegn."); return; }
+    // Samme krav som Supabase selv håndhæver (små og store bogstaver + tal)
+    // plus appens længdekrav, så brugeren får en konkret besked med det samme
+    // i stedet for en uforklaret afvisning fra serveren (30. sept. 2026).
+    const pwError = passwordErrorText(loginPassword);
+    if (pwError) { setPasswordError(pwError); return; }
     setEmailError(""); setPasswordError("");
     setAuthLoading(true); setAuthError(""); setAuthInfo(""); setEmailTakenError("");
     try {
@@ -404,8 +403,13 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
           setAuthLoading(false);
           return;
         }
-        if (msgLc.includes("password") || msgLc.includes("weak")) {
-          setPasswordError("Adgangskoden er for svag. Brug mindst 10 tegn.");
+        if (data.error_code === "weak_password" || msgLc.includes("password") || msgLc.includes("weak")) {
+          // Supabase angiver årsagen i weak_password.reasons ("length",
+          // "characters", "pwned"). En lækket kode kan ikke fanges lokalt.
+          const reasons = data.weak_password?.reasons || [];
+          setPasswordError(reasons.includes("pwned")
+            ? "Adgangskoden er fundet i et kendt datalæk og kan ikke bruges. Vælg en anden."
+            : (passwordErrorText(loginPassword) || `Adgangskoden opfylder ikke kravene. ${PASSWORD_REQUIREMENTS_TEXT}`));
           setAuthLoading(false);
           return;
         }

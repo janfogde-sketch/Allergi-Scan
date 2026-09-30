@@ -622,3 +622,35 @@ export function clearTraceLog() {
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 
 // ─── MADPAS — BUNDLED OVERSÆTTELSER ─────────────────────────────────────────
+
+// Adgangskode-krav (30. sept. 2026). Skal matche Supabases egne krav
+// (Authentication → Sign In / Providers → Email): mindst ét lille bogstav,
+// ét stort bogstav og ét tal. Længden (10) er appens eget, strengere krav.
+// Supabase afviste ellers koder, som appen havde godkendt, med en tekst der
+// ikke forklarede hvorfor. Retter man kravene i Supabase, skal de også
+// rettes her.
+export const PASSWORD_MIN_LENGTH = 10;
+export const PASSWORD_REQUIREMENTS_TEXT = "Mindst 10 tegn med små og store bogstaver og mindst ét tal.";
+
+export function passwordProblems(pw) {
+  const p = pw || "";
+  const missing = [];
+  if (!/[a-zæøå]/.test(p)) missing.push("et lille bogstav");
+  if (!/[A-ZÆØÅ]/.test(p)) missing.push("et stort bogstav");
+  if (!/[0-9]/.test(p)) missing.push("et tal");
+  return { tooShort: p.length < PASSWORD_MIN_LENGTH, length: p.length, missing };
+}
+
+const joinDa = (xs) => xs.length <= 1 ? (xs[0] || "") : `${xs.slice(0, -1).join(", ")} og ${xs[xs.length - 1]}`;
+
+// Én konkret sætning om hvad der er galt, eller "" når koden er i orden.
+export function passwordErrorText(pw) {
+  const { tooShort, length, missing } = passwordProblems(pw);
+  if (!pw) return `Indtast en adgangskode. ${PASSWORD_REQUIREMENTS_TEXT}`;
+  const parts = [];
+  if (tooShort) parts.push(`den er kun ${length} tegn (mindst ${PASSWORD_MIN_LENGTH})`);
+  if (missing.length) parts.push(`den mangler ${joinDa(missing)}`);
+  if (!parts.length) return "";
+  const s = parts.join(", og ");
+  return `Adgangskoden kan ikke bruges: ${s}.`;
+}

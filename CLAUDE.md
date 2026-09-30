@@ -59,19 +59,6 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
     herfra). Gem gerne den endelige HTML i repoet, fx
     `supabase/templates/`, så den kan versionsstyres.
 
-*Funktion (Jans spor):*
-12. Fejlteksten, når en adgangskode afvises, skal sige præcis hvad der er
-    galt, og hvad koden mindst skal indeholde. I dag viser appen altid
-    "Adgangskoden er for svag. Brug mindst 10 tegn." (`useAuth.js`,
-    `handleSignup`), uanset hvorfor Supabase afviste den. Supabase svarer
-    med `error_code: "weak_password"` og en liste `weak_password.reasons`
-    (`length`, `characters`, `pwned`); brug den til en konkret besked pr.
-    årsag. Tjek først Supabase Dashboard → Authentication → Sign In /
-    Providers → Email for de faktiske krav (min. længde, krævede
-    tegntyper), så appens egen hjælpetekst og tjek ("mindst 10 tegn",
-    `OnboardingScreen.jsx`) matcher dem. Gælder også nulstilling af
-    adgangskode, hvis den har et eget felt til ny kode.
-
 *Claude gør bagefter:*
 10. Luk B1 (`820806b9…`) i `feedback_tickets`, når den er verificeret. Læs testrundens resultater og opret tickets for fejl.
 
@@ -121,6 +108,15 @@ sendes først ved bekræftelse (`supabase/sql/2026-09-29_welcome_email_after_con
 Bekræftelseslinket lander i onboarding, også når en anden konto var logget
 ind i browseren (PR #406, `arrivedViaAuthLinkRef` i `useAuth.js`).
 Verificeret live og ticket `cc121cd9` lukket.
+
+**Adgangskode-krav (30. sept. 2026):** Supabase kræver mindst ét lille
+bogstav, ét stort bogstav og ét tal; appen kræver desuden mindst 10 tegn.
+Begge dele tjekkes nu i appen før oprettelse (`passwordErrorText()` i
+`helpers.js`), og fejlteksten siger præcis hvad der mangler (fx "den er kun
+5 tegn (mindst 10), og den mangler et tal"). Hjælpeteksten under feltet er
+`PASSWORD_REQUIREMENTS_TEXT`. Ændres kravene i Supabase Dashboard, skal
+`helpers.js` rettes tilsvarende. Afviser Supabase koden som lækket
+(`weak_password.reasons` indeholder `pwned`), siges det direkte.
 
 **ÅBEN: Fuld E2E-test fra Claude-sandboxen (QA-ticket B1, `820806b9…`).**
 Miljøets netværkspolitik afviser `eatsafe.dk`,

@@ -288,3 +288,22 @@ describe("computeProfileResults: ukendt er ikke sikkert", () => {
     expect(r.status).toBe("danger");
   });
 });
+
+import { passwordErrorText, PASSWORD_REQUIREMENTS_TEXT } from "./helpers.js";
+
+describe("passwordErrorText", () => {
+  it("godkender en kode der opfylder alle krav", () => {
+    expect(passwordErrorText("MinKode2026abc")).toBe("");
+  });
+  it("siger præcis hvad der mangler", () => {
+    expect(passwordErrorText("minhemmeligekode")).toBe("Adgangskoden kan ikke bruges: den mangler et stort bogstav og et tal.");
+    expect(passwordErrorText("Kort1")).toBe("Adgangskoden kan ikke bruges: den er kun 5 tegn (mindst 10).");
+    expect(passwordErrorText("abc")).toBe("Adgangskoden kan ikke bruges: den er kun 3 tegn (mindst 10), og den mangler et stort bogstav og et tal.");
+  });
+  it("tæller æ, ø og å som bogstaver", () => {
+    expect(passwordErrorText("Rødgrødmedfløde1")).toBe("");
+  });
+  it("beder om en kode når feltet er tomt", () => {
+    expect(passwordErrorText("")).toContain(PASSWORD_REQUIREMENTS_TEXT);
+  });
+});

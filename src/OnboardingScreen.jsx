@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
-import { initials, addUniqueCustom } from "./helpers.js";
+import { initials, addUniqueCustom, PASSWORD_REQUIREMENTS_TEXT } from "./helpers.js";
 import { EatSafeLogo, EatSafeWordmark, Icon, showToast } from "./SharedComponents.jsx";
 import { ENumberPicker, AllergenChipPicker, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
@@ -746,7 +746,7 @@ export default function OnboardingScreen({
                   )}
                   <label className="field-lbl" htmlFor="signup-password">Adgangskode</label>
                   <div style={{ position:"relative" }}>
-                    <input id="signup-password" name="password" className="field" type={showPassword ? "text" : "password"} autoComplete="new-password" placeholder="Minimum 10 tegn" value={loginPassword}
+                    <input id="signup-password" name="password" className="field" type={showPassword ? "text" : "password"} autoComplete="new-password" placeholder="Mindst 10 tegn" value={loginPassword}
                       aria-invalid={!!passwordError}
                       onChange={e => { setLoginPassword(e.target.value); if (passwordError) setPasswordError(""); }}
                       style={{ paddingRight:46, borderColor: passwordError ? "var(--red-md)" : undefined }}
@@ -763,7 +763,7 @@ export default function OnboardingScreen({
                       mislykket forsøg (samme tekst som passwordError, ingen
                       dublering) — ingen layout-jump, linjen er altid der. */}
                   <div style={{ fontSize:11, marginTop:6, lineHeight:1.5, color: passwordError ? "var(--red)" : "var(--muted)", fontWeight: passwordError ? 600 : 400 }}>
-                    {passwordError || "Adgangskoden skal være mindst 10 tegn."}
+                    {passwordError || PASSWORD_REQUIREMENTS_TEXT}
                   </div>
                   {/* Juridisk tekst (27. sept. 2026, "FINAL 10/10 POLISH",
                       punkt 4) — erstatter den tidligere "...bekræfter, at du
