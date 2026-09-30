@@ -3,7 +3,7 @@
 // Henter Fødevarestyrelsens RSS-feed over tilbagekaldte fødevarer, læser nye tilbagekaldssider og
 // lægger hændelsen `recall_published` i outboxen, når siden har gyldige EAN'er (P6).
 // Kategori 4 i .claude/rules/edge-function-auth.md: kun service-role — kaldes af databasens cron
-// (sync_recalls, hvert time) og aldrig af klienten.
+// (sync_recalls, dagligt) og aldrig af klienten.
 //
 // Første kørsel (tom tabel): alt, der allerede ligger i feedet, arkiveres uden at sende noget.
 // Derefter sendes kun tilbagekaldelser, der er offentliggjort inden for de sidste 14 dage.
