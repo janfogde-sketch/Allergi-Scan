@@ -48,6 +48,17 @@ blev lukket under auditten (`supabase/sql/2026-09-30_drop_open_insert_policies.s
 **Ny stående regel:** databaseændringer køres som migration (`apply_migration`)
 OG gemmes som fil i repoet i samme omgang, aldrig kun som løs SQL.
 
+*Audit-plan, besluttet af Jan 30. sept.:* Supabase Pro = senere (backups,
+testmiljø og Leaked Password Protection venter); fejlovervågning = egen
+fejltabel i Supabase (ingen tredjepart); feedback uden login beholdes med
+en grænse via edge-funktion; opdeling af ProfileScreen/App.jsx først når
+Bjørn ikke har åbent arbejde (tjek hans PR'er/branches). Rækkefølge:
+1 skema-baseline i `supabase/migrations/`, 2 tests for allergenmotoren
+(fælles kode i `_shared`), 3 fejltabel + visning i admin, 4 feedback-
+grænse, 5 fjern anon-rettigheder på login-tabeller, 6 edge-deploy fra
+repoet via GitHub Action (Jan opretter Supabase-adgangsnøgle som secret),
+7 `npm audit fix`, 8 opdeling. Detaljer i rapporten ovenfor.
+
 *Claude gør bagefter:*
 10. Læs testrundens resultater og opret tickets for fejl (når punkt 3
     genoptages).
