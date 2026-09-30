@@ -52,12 +52,30 @@ export async function endpointHash(endpoint: string): Promise<string> {
   return Array.from(digest).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
 }
 
-export async function buildVapidJwt(audience: string, privKey: string, subject: string, ttlSeconds = 12 * 3600): Promise<string> {
+/**
+ * Importerer VAPID-privatnøglen. To formater accepteres:
+ *  - rå 32 bytes (base64url) — det, `npx web-push generate-vapid-keys` udskriver; kræver den offentlige nøgle (65 bytes)
+ *  - PKCS#8 (base64url)
+ * Rettet 30. sept. 2026: koden krævede kun PKCS#8, så den gemte rå nøgle gav "expected valid PKCS#8 data".
+ */
+async function importVapidPrivateKey(privKey: string, publicKey?: string): Promise<CryptoKey> {
+  const alg = { name: "ECDSA", namedCurve: "P-256" };
+  const bytes = base64urlDecode(privKey.trim());
+  if (bytes.length === 32) {
+    const pub = publicKey ? base64urlDecode(publicKey.trim()) : new Uint8Array(0);
+    if (pub.length !== 65 || pub[0] !== 4) throw new Error("VAPID: rå privatnøgle kræver den offentlige nøgle (65 bytes)");
+    const jwk = { kty: "EC", crv: "P-256", d: base64urlEncode(bytes), x: base64urlEncode(pub.slice(1, 33)), y: base64urlEncode(pub.slice(33, 65)), ext: true };
+    return await crypto.subtle.importKey("jwk", jwk, alg, false, ["sign"]);
+  }
+  return await crypto.subtle.importKey("pkcs8", bytes, alg, false, ["sign"]);
+}
+
+export async function buildVapidJwt(audience: string, privKey: string, subject: string, ttlSeconds = 12 * 3600, publicKey?: string): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   const header = base64urlEncode(utf8(JSON.stringify({ typ: "JWT", alg: "ES256" })));
   const payload = base64urlEncode(utf8(JSON.stringify({ aud: audience, exp: now + ttlSeconds, sub: subject })));
   const sigInput = `${header}.${payload}`;
-  const key = await crypto.subtle.importKey("pkcs8", base64urlDecode(privKey), { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+  const key = await importVapidPrivateKey(privKey, publicKey);
   const sig = new Uint8Array(await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, utf8(sigInput)));
   return `${sigInput}.${base64urlEncode(sig)}`;
 }
@@ -104,7 +122,7 @@ export type SendOptions = {
 /** Sender én krypteret besked til én subscription og klassificerer svaret. */
 export async function sendWebPush(sub: PushSubscriptionJson, payload: unknown, opts: SendOptions): Promise<SendResult> {
   try {
-    const jwt = await buildVapidJwt(pushAudience(sub.endpoint), opts.vapidPrivateKey, opts.vapidSubject);
+    const jwt = await buildVapidJwt(pushAudience(sub.endpoint), opts.vapidPrivateKey, opts.vapidSubject, undefined, opts.vapidPublicKey);
     const doFetch = opts.fetchImpl ?? fetch;
     const res = await doFetch(sub.endpoint, {
       method: "POST",

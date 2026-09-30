@@ -177,3 +177,33 @@ describe("sendWebPush", () => {
     expect(result).toMatchObject({ ok: false, status: 0, gone: false, retryable: true, error: "boom" });
   });
 });
+
+describe("buildVapidJwt med rå VAPID-nøgle (web-push generate-vapid-keys)", () => {
+  it("accepterer rå 32-bytes privatnøgle + offentlig nøgle og signerer gyldigt", async () => {
+    const { kp, pub } = await makeVapid();
+    const jwk = await crypto.subtle.exportKey("jwk", kp.privateKey);
+    const rawPriv = jwk.d; // 32 bytes base64url, som web-push udskriver
+    const jwt = await buildVapidJwt("https://fcm.googleapis.com", rawPriv, "mailto:test@example.com", undefined, pub);
+    const [h, p, s] = jwt.split(".");
+    const ok = await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, kp.publicKey, base64urlDecode(s), new TextEncoder().encode(`${h}.${p}`));
+    expect(ok).toBe(true);
+  });
+  it("afviser rå privatnøgle uden offentlig nøgle med en tydelig fejl", async () => {
+    const { kp } = await makeVapid();
+    const jwk = await crypto.subtle.exportKey("jwk", kp.privateKey);
+    await expect(buildVapidJwt("https://fcm.googleapis.com", jwk.d, "mailto:t@example.com")).rejects.toThrow(/offentlige nøgle/);
+  });
+  it("sendWebPush med rå nøgle når frem til push-tjenesten", async () => {
+    const { kp, pub } = await makeVapid();
+    const jwk = await crypto.subtle.exportKey("jwk", kp.privateKey);
+    const { sub } = await makeSubscription();
+    let seen;
+    const res = await sendWebPush(sub, { title: "t" }, {
+      vapidPublicKey: pub, vapidPrivateKey: jwk.d, vapidSubject: "mailto:t@example.com",
+      fetchImpl: async (url, init) => { seen = init.headers.Authorization; return { status: 201 }; },
+    });
+    expect(res.ok).toBe(true);
+    expect(seen).toMatch(/^vapid t=.+,k=/);
+  });
+});
+
