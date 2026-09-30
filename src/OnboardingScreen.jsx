@@ -79,6 +79,7 @@ export default function OnboardingScreen({
     user, setUser, isOAuth, accessToken,
     rememberMe, setRememberMe,
     handleLogin, handleSignup, handleOAuth, handleForgotPassword,
+    completeSignup, pendingSignup, setPendingSignup,
   } = useAuthContext();
   const {
     allergens, setAllergens, customAllerg, setCustomAllerg,
@@ -270,7 +271,7 @@ export default function OnboardingScreen({
             {emailIsSaved && (
               <div style={{ fontSize:10, color:"var(--green)", marginTop:3, display:"flex", alignItems:"center", gap:4 }}>
                 <Icon name="check" size={10} color="var(--green)" />
-                {isOAuth === "google" ? "Bekræftet via Google" : isOAuth ? "E-mail bekræftet" : "Allerede gemt fra din konto"}
+                {isOAuth === "google" ? "Bekræftet via Google" : isOAuth ? "E-mail bekræftet" : pendingSignup ? "Den e-mail, du opretter kontoen med" : "Allerede gemt fra din konto"}
               </div>
             )}
           </div>
@@ -332,13 +333,27 @@ export default function OnboardingScreen({
             knap-tekst svær at læse. softDisabled (ikke disabled) holder
             knappen klikbar, så første forsøg stadig kan fanges og vise de
             felt-specifikke fejltekster ovenfor. */}
+        {/* Kontoen oprettes først her, når trin 1 er udfyldt (30. sept. 2026,
+            pendingSignup) — en fejl der ikke hører til et bestemt felt
+            vises lige over knappen. */}
+        {pendingSignup && authError && <div style={UI.mb12}><ErrorMessage>{authError}</ErrorMessage></div>}
         <PrimaryButton
           softDisabled={!allOk}
+          disabled={pendingSignup && authLoading}
           onClick={() => {
             if (!allOk) { setStep1Attempted(true); return; }
+            if (pendingSignup) {
+              completeSignup({
+                name: user.name,
+                phone: user.phone || null,
+                birth_year: new Date().getFullYear() - parseInt(user.age),
+                gender: user.gender,
+              });
+              return;
+            }
             saveProfileStep1().then(() => setOnboardStep(2));
           }}>
-          Fortsæt →
+          {pendingSignup ? (authLoading ? "Opretter konto…" : "Opret konto →") : "Fortsæt →"}
         </PrimaryButton>
       </div>
     );
@@ -718,7 +733,7 @@ export default function OnboardingScreen({
                 )}
                 <div style={UI.utacenter_mb16}>
                   <div style={UI.ufs15_fw700_cink}>Opret din konto</div>
-                  <div style={UI.ufs12_cmuted_mt4}>Du opsætter dine allergier i næste trin.</div>
+                  <div style={UI.ufs12_cmuted_mt4}>Bagefter fortæller du lidt om dig selv og dine allergier.</div>
                 </div>
                 <div className="login-card">
                   {/* E-mail — 27. sept. 2026, "FINAL 10/10 POLISH": ALLE
@@ -989,8 +1004,11 @@ export default function OnboardingScreen({
                 RestaurantGuideScreen.jsx. */}
             {!editMode && (
               <div style={{ position:"relative", textAlign:"center", padding:"44px 0 20px" }}>
-                {onboardStep > 1 && (
-                  <button onClick={() => setOnboardStep(onboardStep - 1)} aria-label="Tilbage"
+                {(onboardStep > 1 || pendingSignup) && (
+                  <button onClick={() => {
+                    if (pendingSignup && onboardStep === 1) { setPendingSignup(false); setScreen(SCREENS.LOGIN); }
+                    else setOnboardStep(onboardStep - 1);
+                  }} aria-label="Tilbage"
                     style={{ position:"absolute", left:20, top:"50%", transform:"translateY(-50%)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0 }}>
                     <Icon name="chevronLeft" size={18} color="var(--ink)" />
                   </button>

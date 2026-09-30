@@ -67,6 +67,13 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   // Neutral besked (ikke en fejl) — fx "tjek din e-mail" efter oprettelse,
   // når Supabase kræver e-mailbekræftelse før første login (D1, 29. sept.).
   const [authInfo, setAuthInfo]         = useState("");
+  // Oprettelse i to trin (30. sept. 2026, Jans punkt 7): "Opret konto"
+  // validerer e-mail/adgangskode og sender brugeren til onboarding trin 1
+  // UDEN at oprette kontoen endnu. Først når trin 1 (navn, telefon, alder,
+  // køn) er udfyldt, kaldes Supabase signup med oplysningerne som metadata
+  // (completeSignup nedenfor), så navnet er gemt, før bekræftelses- og
+  // velkomstmailen sendes.
+  const [pendingSignup, setPendingSignup] = useState(false);
   // Adskilt fra authError (25. sept. 2026, opfølgning): "denne email er
   // allerede registreret" skal vises som en felt-specifik inline-fejl ved
   // selve E-mail-feltet, ikke i den store, globale error-boks — globale
@@ -126,6 +133,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     localStorage.removeItem("as_refresh"); sessionStorage.removeItem("as_refresh");
     localStorage.removeItem("as_user_id"); sessionStorage.removeItem("as_user_id");
     setUser({ name:"", age:"", email:"", phone:"", password:"", role:"" });
+    setPendingSignup(false);
     setAllergens([]); setCustomAllerg([]);
     // App.jsx rydder family/history/shopping via useEffect på accessToken
     setScreen(SCREENS.WELCOME);
@@ -161,7 +169,10 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
               if (isBrandNew) {
                 const meta = payload.user_metadata || {};
                 setUser(u => ({ ...u, email: payload.email || meta.email || "", name: meta.full_name || meta.name || "" }));
-                if (onSignupSuccess) onSignupSuccess();
+                // Trin 1 kan allerede være udfyldt før oprettelsen (e-mail-
+                // flowet, 30. sept. 2026) — fortsæt så fra det gemte trin.
+                if (profile?.onboarding_step > 1) setOnboardStep(profile.onboarding_step);
+                else if (onSignupSuccess) onSignupSuccess();
                 // "google" ved Google-login, "email" når brugeren kommer fra
                 // bekræftelseslinket i mailen — styrer teksten under
                 // E-mail-feltet i onboarding trin 1.
@@ -337,6 +348,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         return;
       }
       saveTokens(data.access_token, data.refresh_token, data.user.id);
+      setPendingSignup(false);
       // Ruter til ONBOARD (med gemt trin genoptaget) eller HOME ud fra reel
       // status i stedet for blindt at antage Hjem (29. sept. 2026,
       // "Onboarding-persistens") — en bruger der aldrig gennemførte
@@ -352,26 +364,57 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   }, [loginEmail, loginPassword, saveTokens, resolveOnboardingRoute]);
 
   // ── Signup ────────────────────────────────────────────────────────────────
-  const handleSignup = useCallback(async () => {
+  // Felt-validering for "Opret konto" — delt af handleSignup (før trin 1)
+  // og completeSignup (lige før selve kaldet). Returnerer den normaliserede
+  // e-mail, eller null hvis et felt er ugyldigt (fejlen er sat på feltet).
+  const validateSignupFields = useCallback(() => {
     // Felt-specifik validering FØRST (27. sept. 2026, "FINAL 10/10 POLISH")
     // — se handleLogin ovenfor for samme mønster/begrundelse.
     // Trim + lowercase FØR validering/afsendelse (29. sept. 2026) — kun
     // normalisering, ingen transskribering af selve tegnene (fx ø→o), da det
     // kan ændre adressen til en anden, reelt eksisterende adresse.
     const email = loginEmail.trim().toLowerCase();
-    if (!email) { setEmailError("Indtast din e-mail først."); return; }
+    if (!email) { setEmailError("Indtast din e-mail først."); return null; }
     // Supabase/GoTrue understøtter ikke internationale tegn (æ/ø/å m.fl.) i
     // e-mailadresser — afvis her, FØR den ellers gyldige formatkontrol
     // nedenfor, med en dedikeret besked (ikke den generiske "ugyldig
     // e-mailadresse", som ikke ville forklare HVORFOR den blev afvist).
-    if (hasUnsupportedEmailChars(email)) { setEmailError("Brug en e-mailadresse uden æ, ø, å eller andre specialtegn."); return; }
-    if (!isValidEmail(email)) { setEmailError("Indtast en gyldig e-mailadresse."); return; }
+    if (hasUnsupportedEmailChars(email)) { setEmailError("Brug en e-mailadresse uden æ, ø, å eller andre specialtegn."); return null; }
+    if (!isValidEmail(email)) { setEmailError("Indtast en gyldig e-mailadresse."); return null; }
     // Samme krav som Supabase selv håndhæver (små og store bogstaver + tal)
     // plus appens længdekrav, så brugeren får en konkret besked med det samme
     // i stedet for en uforklaret afvisning fra serveren (30. sept. 2026).
     const pwError = passwordErrorText(loginPassword);
-    if (pwError) { setPasswordError(pwError); return; }
+    if (pwError) { setPasswordError(pwError); return null; }
     setEmailError(""); setPasswordError("");
+    return email;
+  }, [loginEmail, loginPassword]);
+
+  // Fejl der hører til e-mail/adgangskode vises på oprettelsesformularen,
+  // ikke i trin 1 — send brugeren tilbage dertil (trin 1-svarene bevares i
+  // user-state, så de ikke skal udfyldes igen).
+  const backToSignupForm = useCallback(() => {
+    setPendingSignup(false);
+    setAuthTab("signup");
+    setScreen(SCREENS.LOGIN);
+  }, [setScreen]);
+
+  // "Opret konto" på oprettelsesformularen: valider og gå til trin 1.
+  const handleSignup = useCallback(async () => {
+    const email = validateSignupFields();
+    if (!email) return;
+    setAuthError(""); setAuthInfo(""); setEmailTakenError("");
+    setUser(u => ({ ...u, email }));
+    setPendingSignup(true);
+    if (onSignupSuccess) onSignupSuccess();
+    setScreen(SCREENS.ONBOARD);
+  }, [validateSignupFields, setUser, setScreen, onSignupSuccess]);
+
+  // Trin 1 udfyldt: opret kontoen med trin 1-oplysningerne som metadata.
+  // profile = { name, phone, birth_year, gender }.
+  const completeSignup = useCallback(async (profile = {}) => {
+    const email = validateSignupFields();
+    if (!email) { backToSignupForm(); return; }
     setAuthLoading(true); setAuthError(""); setAuthInfo(""); setEmailTakenError("");
     try {
       // redirect_to: bekræftelseslinket i mailen skal føre tilbage til samme
@@ -379,7 +422,13 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       const res = await fetch(`${SUPABASE_URL}/auth/v1/signup?redirect_to=${encodeURIComponent(window.location.origin + "/")}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
-        body: JSON.stringify({ email, password: loginPassword }),
+        body: JSON.stringify({ email, password: loginPassword, data: {
+          name: (profile.name || "").trim(),
+          phone: profile.phone || null,
+          birth_year: profile.birth_year || null,
+          gender: profile.gender || null,
+          signup_profile: "true",
+        } }),
       });
       const text = await res.text();
       if (text === "Host not in allowlist") {
@@ -400,6 +449,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         // samme før kaldet, men mappes korrekt hvis den alligevel gør.
         if (msgLc.includes("already registered") || data.error_code === "email_exists") {
           setEmailTakenError("Denne e-mail er allerede registreret.");
+          backToSignupForm();
           setAuthLoading(false);
           return;
         }
@@ -410,11 +460,13 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
           setPasswordError(reasons.includes("pwned")
             ? "Adgangskoden er fundet i et kendt datalæk og kan ikke bruges. Vælg en anden."
             : (passwordErrorText(loginPassword) || `Adgangskoden opfylder ikke kravene. ${PASSWORD_REQUIREMENTS_TEXT}`));
+          backToSignupForm();
           setAuthLoading(false);
           return;
         }
         if (msgLc.includes("invalid") && msgLc.includes("email")) {
           setEmailError("Indtast en gyldig e-mailadresse.");
+          backToSignupForm();
           setAuthLoading(false);
           return;
         }
@@ -432,16 +484,23 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       const signedUp = data.user || data;
       if (Array.isArray(signedUp?.identities) && signedUp.identities.length === 0) {
         setEmailTakenError("Denne e-mail er allerede registreret.");
+        backToSignupForm();
         setAuthLoading(false);
         return;
       }
+      setPendingSignup(false);
       if (data.access_token) {
+        // Uden e-mailbekræftelse: kontoen er aktiv med det samme, og trin 1
+        // er allerede gemt af handle_new_user() — fortsæt til trin 2.
         saveTokens(data.access_token, data.refresh_token, data.user.id);
         setUser(u => ({ ...u, email }));
+        if (setOnboardStep) setOnboardStep(2);
         setScreen(SCREENS.ONBOARD);
-        if (onSignupSuccess) onSignupSuccess();
       } else {
-        setAuthInfo(`Vi har sendt et bekræftelseslink til ${email}. Klik på linket i mailen for at aktivere din konto — tjek evt. din spam-mappe.`);
+        setLoginPassword("");
+        setAuthTab("signup");
+        setScreen(SCREENS.LOGIN);
+        setAuthInfo(`Vi har sendt et bekræftelseslink til ${email}. Klik på linket i mailen for at aktivere din konto og fortsætte opsætningen — tjek evt. din spam-mappe.`);
       }
     } catch {
       // Ægte, uventede fejl (netværk nede, JSON-parse-fejl osv.) — vis
@@ -450,7 +509,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       setAuthError("Der opstod en fejl. Prøv igen.");
     }
     setAuthLoading(false);
-  }, [loginEmail, loginPassword, saveTokens, setUser, setScreen, onSignupSuccess]);
+  }, [loginEmail, loginPassword, saveTokens, setUser, setScreen, setOnboardStep, validateSignupFields, backToSignupForm]);
 
   // ── OAuth redirect ────────────────────────────────────────────────────────
   const handleOAuth = useCallback(async (provider) => {
@@ -515,6 +574,8 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     clearAuth,
     handleLogin,
     handleSignup,
+    completeSignup,
+    pendingSignup, setPendingSignup,
     handleOAuth,
     handleForgotPassword,
   };

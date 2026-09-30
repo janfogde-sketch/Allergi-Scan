@@ -98,15 +98,40 @@ describe("useAuth handleSignup — validation guards", () => {
     expect(result.current.authError).toBe("");
   });
 
-  it("tells the user to confirm their email when signup succeeds without an access_token", async () => {
-    global.fetch.mockResolvedValue(textResponse({ id: "u1" })); // ingen access_token = kræver email-bekræftelse
-    const { result } = setup();
+  it("'Opret konto' goes to onboarding step 1 without creating the account yet", async () => {
+    const { result, setScreen } = setup();
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
     await act(async () => { await result.current.handleSignup(); });
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(result.current.pendingSignup).toBe(true);
+    expect(setScreen).toHaveBeenLastCalledWith("onboard");
+  });
+
+  it("creates the account with step 1 as metadata and asks the user to confirm their email", async () => {
+    global.fetch.mockResolvedValue(textResponse({ id: "u1" })); // ingen access_token = kræver email-bekræftelse
+    const { result, setScreen } = setup();
+    act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
+    await act(async () => { await result.current.handleSignup(); });
+    await act(async () => { await result.current.completeSignup({ name: "Anna Hansen", phone: "+45 12 34 56 78", birth_year: 1990, gender: "Kvinde" }); });
+    expect(global.fetch.mock.calls[0][0]).toContain("/auth/v1/signup?redirect_to=");
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.data).toEqual({ name: "Anna Hansen", phone: "+45 12 34 56 78", birth_year: 1990, gender: "Kvinde", signup_profile: "true" });
     expect(result.current.authInfo).toMatch(/bekræftelseslink/i);
     expect(result.current.authError).toBe("");
     expect(result.current.accessToken).toBeNull();
-    expect(global.fetch.mock.calls[0][0]).toContain("/auth/v1/signup?redirect_to=");
+    expect(result.current.pendingSignup).toBe(false);
+    expect(setScreen).toHaveBeenLastCalledWith("login");
+  });
+
+  it("continues to step 2 when Supabase returns a session right away", async () => {
+    global.fetch.mockResolvedValue(textResponse({ access_token: "a", refresh_token: "r", user: { id: "u1" } }));
+    const setOnboardStep = vi.fn();
+    const { result, setScreen } = setup({ setOnboardStep });
+    act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
+    await act(async () => { await result.current.completeSignup({ name: "Anna Hansen", phone: "+45 12 34 56 78", birth_year: 1990, gender: "Kvinde" }); });
+    expect(result.current.accessToken).toBe("a");
+    expect(setOnboardStep).toHaveBeenLastCalledWith(2);
+    expect(setScreen).toHaveBeenLastCalledWith("onboard");
   });
 
   it("says exactly what is missing before calling the network", async () => {
@@ -117,12 +142,13 @@ describe("useAuth handleSignup — validation guards", () => {
     expect(result.current.passwordError).toBe("Adgangskoden kan ikke bruges: den mangler et stort bogstav og et tal.");
   });
 
-  it("explains a leaked password rejected by Supabase", async () => {
+  it("explains a leaked password rejected by Supabase and returns to the signup form", async () => {
     global.fetch.mockResolvedValue(textResponse({ code: 422, error_code: "weak_password", msg: "Password is known to be weak", weak_password: { reasons: ["pwned"] } }, false));
-    const { result } = setup();
+    const { result, setScreen } = setup();
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
-    await act(async () => { await result.current.handleSignup(); });
+    await act(async () => { await result.current.completeSignup({ name: "Anna Hansen", phone: "+45 12 34 56 78", birth_year: 1990, gender: "Kvinde" }); });
     expect(result.current.passwordError).toMatch(/kendt datalæk/);
+    expect(setScreen).toHaveBeenLastCalledWith("login");
   });
 
   it("shows 'already registered' when confirmation is on and Supabase hides an existing account", async () => {
@@ -130,7 +156,7 @@ describe("useAuth handleSignup — validation guards", () => {
     global.fetch.mockResolvedValue(textResponse({ id: "u1", identities: [] }));
     const { result } = setup();
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
-    await act(async () => { await result.current.handleSignup(); });
+    await act(async () => { await result.current.completeSignup({ name: "Anna Hansen", phone: "+45 12 34 56 78", birth_year: 1990, gender: "Kvinde" }); });
     expect(result.current.emailTakenError).toMatch(/allerede registreret/i);
     expect(result.current.authInfo).toBe("");
   });
