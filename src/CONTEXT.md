@@ -174,6 +174,7 @@ begrundelse.
 | `knowledge_base` | id, category, slug, title, summary, description, allergen_ids, risk_level | ~700 entries |
 | `missing_ean_log` | ean, count, first_seen, last_seen | Auto-logget + auto-importeret |
 | `recipes` | id, title, instructions, image_url | ~627 |
+| `client_errors` | id, fingerprint, source, message, stack, screen, occurrences, first_seen, last_seen, status | Fejl fra appen/edge/DB-triggere (30. sept. 2026, A3). Skrives kun via RPC `log_client_error` (også anon; samme fejl inden for 1 time lægges sammen, loft 300 nye rækker/10 min). Kun admin kan læse (RLS). Vises i admin-panelet under "Fejl" |
 
 **`products.allergen_source_method` (25. sept. 2026 — forslag F fra
 allergen-detektions-gennemgangen):** sporer HVORDAN de nuværende
@@ -303,6 +304,7 @@ yderligere handling ventende.
 | `ocr` | OCR: `ingredients` / `product_name` / `nutrition` / `ean_from_image` |
 | `search` | Fuldtekst-søgning med scoring |
 | `send-email` | Resend email — `type` er enten en Resend-skabelon (`welcome`/`submission_approved`/`submission_rejected`/`ticket_update`) eller `"raw"` (direkte `subject`+`html` i kaldet, ingen skabelon — til interne/dynamiske emails som `admin-digest`). Velkomstmailen udløses af `send_welcome_email()` og sendes først, når e-mailen er bekræftet (29. sept. 2026, `supabase/sql/2026-09-29_welcome_email_after_confirm.sql`). Ved `public.users`-INSERT (`on_user_created`) sker det kun, hvis `auth.users.email_confirmed_at` allerede er sat (Google), ellers via triggeren `on_auth_email_confirmed` på `auth.users` (NULL → sat). Præcis én mail pr. bruger |
+| `feedback` | **NY** (30. sept. 2026, A4) — modtager feedback-tickets fra appen og admin-panelet. Uden login: 5/time pr. afsender (saltet IP-hash i `feedback_tickets.client_hash`) og 60/time i alt. Med login: 20/time. `submitted_by` sættes kun fra login-tokenet. Validering i `feedback/validate.js` (testet i `src/feedbackValidate.test.js`) |
 | `auto-import-off` | **NY** — importerer fra OFF dagligt kl. 02:00 UTC via pg_cron |
 | `admin-digest` | **NY** (17. sept. 2026) — ugentlig email til alle admins (`role='admin'`) med antal afventende indsendelser + åbne tickets, kun sendt hvis der reelt er noget. pg_cron mandag kl. 08:00 UTC (jobid 4) |
 | `food-waste` | **I KØLESKABET** (17. sept. 2026) — tjekker om et EAN er nedsat pga. udløb i en nærliggende Netto/Føtex/Bilka, via Salling Groups officielle "Anti Food Waste"-API (`geo`-baseret opslag). Kræver bruger-login. Deployet og virker (testet live med `SALLING_API_TOKEN` sat) — men UI-knappen på `ResultScreen` er bevidst fjernet igen efter brugerens ønske. `useFoodWaste.js`-hooken ligger stadig i `src/`, klar til at blive genkoblet til en skærm når featuren skal genoptages — se punkt 13 |

@@ -4,13 +4,72 @@
 # `supabase login` med din egen konto først).
 project_id = "jegrpcflyguadyxialkm"
 
-# JWT-verifikation er slået fra på alle funktioner pga. ES256-inkompatibilitet
-# (se CONTEXT.md, afsnit 2). Samme indstilling som i dag i Dashboard.
+# verify_jwt pr. funktion, som i produktion 30. sept. 2026. GitHub-
+# workflowet .github/workflows/deploy-edge-functions.yml deployer herfra,
+# og en funktion, der ikke står her, får CLI'ens standard (true).
+#
+# false: funktionen laver selv sit auth-tjek (se
+# .claude/rules/edge-function-auth.md). Slået fra pga. ES256-
+# inkompatibilitet, se CONTEXT.md afsnit 2.
+
+[functions.admin]
+verify_jwt = false
+
+[functions.admin-digest]
+verify_jwt = false
+
 [functions.allergens]
+verify_jwt = false
+
+[functions.auto-import-off]
+verify_jwt = false
+
+[functions.favorites]
+verify_jwt = false
+
+[functions.family]
+verify_jwt = false
+
+[functions.feedback]
+verify_jwt = false
+
+[functions.history]
 verify_jwt = false
 
 [functions.ocr]
 verify_jwt = false
 
+[functions.products]
+verify_jwt = false
+
+[functions.search]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.shopping]
+verify_jwt = false
+
+[functions.submissions]
+verify_jwt = false
+
 [functions.weekly-digest]
 verify_jwt = false
+
+# true: Supabase tjekker JWT før funktionen kaldes.
+
+[functions.auto-reparse]
+verify_jwt = true
+
+[functions.classify-categories]
+verify_jwt = true
+
+[functions.delete-user]
+verify_jwt = true
+
+[functions.food-waste]
+verify_jwt = true
+
+[functions.send-push]
+verify_jwt = true

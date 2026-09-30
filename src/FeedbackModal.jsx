@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { SCREENS, PAGE_IDS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
+import { SCREENS, PAGE_IDS } from "./constants.jsx";
+import { submitFeedback } from "./submitFeedback.js";
 import { BUILD_TIME, COMMIT_SHA, formatBuildTime, buildScreenLabel } from "./utils.jsx";
 import { getTraceLog, compressImageToBase64 } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -95,29 +96,11 @@ export default function FeedbackModal({
         debug_trace:      getTraceLog().slice(-50), // Seneste 50 trace-entries
       };
 
-      const headers = {
-        "Content-Type": "application/json",
-        "apikey": SUPABASE_ANON_KEY,
-        ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
-      };
-
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets`, {
-        method: "POST",
-        headers: { ...headers, "Prefer": "return=minimal" },
-        body: JSON.stringify({
-          type,
-          description: text,
-          context: ctx,
-          image_base64: imageB64 || null,
-          status: "open",
-          submitted_by: userId || null,
-        }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await submitFeedback({ type, description: text, context: ctx, imageBase64: imageB64, accessToken });
 
       setDone(true);
       setTimeout(() => { close(); }, 2200);
-    } catch(e) { showToast("Fejl: " + e.message, "error"); }
+    } catch(e) { showToast(e.message, "error"); }
     setSending(false);
   };
 

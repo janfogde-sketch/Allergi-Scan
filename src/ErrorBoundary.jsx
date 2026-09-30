@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { Icon } from "./SharedComponents.jsx";
+import { reportError } from "./errorReporter.js";
 
 // ── ErrorBoundary ─────────────────────────────────────────────────────────────
 // Wrap enhver skærm for at fange crashes og vise en brugervenlig fejlside
@@ -23,6 +24,11 @@ export class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, info) {
     console.error(`[ErrorBoundary:${this.props.screen || "?"}]`, error, info);
+    reportError(error, {
+      screen: this.props.screen,
+      source: "react",
+      context: info?.componentStack ? { componentStack: info.componentStack.slice(0, 1500) } : null,
+    });
   }
 
   render() {
