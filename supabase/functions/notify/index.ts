@@ -97,6 +97,12 @@ async function productNameFor(db: Db, s: { product_id?: string | null; ean?: str
 async function deliver(db: Db, ev: EventRow, plan: Planned, pushEnabled: boolean): Promise<{ retry: boolean }> {
   const r = renderNotification(plan.templateKey, plan.data);
 
+  // Udviklerpakken: er både push og mail fravalgt for kategorien, oprettes ingen besked.
+  const { data: prefs } = await db.from("notification_preferences").select("channel, enabled")
+    .eq("user_id", plan.userId).eq("category", r.category);
+  const off = (ch: string) => (prefs ?? []).some((x: { channel: string; enabled: boolean }) => x.channel === ch && x.enabled === false);
+  if (off("push") && off("email")) return { retry: false };
+
   const row = {
     user_id: plan.userId, event_id: ev.id, event_key: ev.event_key,
     type: r.type, variant: r.variant, category: r.category, template_version: r.templateVersion,
@@ -112,9 +118,7 @@ async function deliver(db: Db, ev: EventRow, plan: Planned, pushEnabled: boolean
   if (!n) throw new Error("Besked blev ikke gemt");
 
   if (!pushEnabled) return { retry: false };
-  const { data: pref } = await db.from("notification_preferences").select("enabled")
-    .eq("user_id", plan.userId).eq("category", r.category).eq("channel", "push").maybeSingle();
-  if (pref?.enabled === false) return { retry: false };
+  if (off("push")) return { retry: false };
 
   const { data: tokens } = await db.from("push_tokens").select("token").eq("user_id", plan.userId);
   let retry = false;

@@ -568,8 +568,14 @@ korte tekst og åbner den fulde, beskyttede besked i appen via
 - **Rettet undervejs:** VAPID-`aud` var fast FCM (Apple/Mozilla afviste); `/badge-72.png`
   findes ikke; N4 blev aldrig sendt (forkerte kolonnenavne); N3 uden begrundelse; push blev
   sendt fra browseren. Klient-push i `useAdmin.js`/`useIncomingLinks.js` er fjernet.
-- **Mangler (trin 2-4):** beskedside og rute i appen (`?notification=`), læst/ulæst,
-  alle 16 pushvarianter + 30 mails koblet på rigtige hændelser, nye indstillingskategorier,
+- **Regel:** er både push og mail fravalgt for en kategori, oprettes ingen besked (udviklerpakken).
+- **Trin 2 (app, i PR): ** `SCREENS.NOTIFICATIONS` (oversigt, tid, læst/ulæst) og `SCREENS.NOTIFICATION`
+  (den fulde besked, tegnet af `NotificationBlocks.jsx` fra de gemte blokke). Ruten `?notification={id}`
+  læses i `useNotifications.js`, gemmes i localStorage (`as_pending_notification`) gennem login og åbnes
+  efter onboarding; ugyldigt id ignoreres. Anden konto/slettet/udløbet giver samme neutrale side (RLS) med
+  "Log ind med en anden konto". Læst sættes først efter visning (`mark_notification_read`). `open_ticket`-
+  knappen vises først i trin 4. Menupunkt "Beskeder" med ulæst-tæller i `ProfileMenu.jsx`.
+- **Mangler (trin 3-4):**  pushvarianter + 30 mails koblet på rigtige hændelser, nye indstillingskategorier,
   P1/P3/P6 og egne ticket-visninger. Mail bruger stadig de gamle triggere/skabeloner.
 - **Push-flaget må ikke tændes**, før beskedsiden er i produktion og testet.
 

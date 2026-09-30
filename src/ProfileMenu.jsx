@@ -48,7 +48,7 @@ function MenuRow({ icon, label, sub, chevron = true, onClick, secondary = false 
   );
 }
 
-export default function ProfileMenu({ open, onClose, onNavigate, onOpenBetaInfo }) {
+export default function ProfileMenu({ open, onClose, onNavigate, onOpenBetaInfo, unreadNotifications = 0 }) {
   const { user, clearAuth } = useAuthContext();
 
   if (!open) return null;
@@ -70,6 +70,7 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenBetaInfo 
         // genindlæsning. Beskrivelsen skal ikke love en funktion appen
         // reelt ikke har (endnu) — se Favoritter-redesignets egen note om
         // hvorfor der ikke er en Produkter/Opskrifter-fane på selve siden.
+        { icon:"bell", label:"Beskeder", sub: unreadNotifications > 0 ? `${unreadNotifications} ulæste` : "Svar og opdateringer fra EatSafe", screen: SCREENS.NOTIFICATIONS },
         { icon:"star", label:"Favoritter", sub:"Gemte produkter", screen: SCREENS.FAVORITES },
         { icon:"family", label:"Familie", sub:"Allergiprofiler og husstand", screen: SCREENS.FAMILY },
       ],
