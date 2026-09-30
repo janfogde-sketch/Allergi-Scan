@@ -47,6 +47,20 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
 9. Leaked Password Protection kræver Supabase Pro (se nedenfor). Spørg om
    Jan vil opgradere, ikke om det er glemt.
 
+*Skal designes (Bjørns spor):*
+11. Supabases auth-mails bruger stadig Supabases engelske standard-
+    skabeloner. De skal designes på dansk i EatSafes stil, så de matcher
+    velkomstmailen (Resend-skabelon, afsender `noreply@eatsafe.dk`).
+    Gælder de mails, der sendes i dag: Confirm sign up (bekræftelse ved
+    oprettelse, sendes til alle nye e-mailbrugere siden 30. sept.) og
+    Reset password (Glemt adgangskode) først, dernæst Change email
+    address, Magic link or OTP, Invite user og Reauthentication. Under
+    Security findes desuden valgfrie notifikationer (fx Password changed,
+    slået fra i dag). Skabelonerne redigeres i Supabase Dashboard →
+    Authentication → Emails → Templates (intet værktøj kan ændre dem
+    herfra). Gem gerne den endelige HTML i repoet, fx
+    `supabase/templates/`, så den kan versionsstyres.
+
 *Claude gør bagefter:*
 10. Luk D1 (`cc121cd9…`) og B1 (`820806b9…`) i `feedback_tickets`, når de
     er verificeret. Læs testrundens resultater og opret tickets for fejl.
