@@ -3,7 +3,7 @@ import React from "react";
 import { Icon, showToast, ConfirmDialog } from "./SharedComponents.jsx";
 import { useHealthConsent } from "./useHealthConsent.js";
 import HealthConsentBox from "./HealthConsentBox.jsx";
-import { canSaveHealthData } from "./healthConsent.js";
+import { memberConsentTexts } from "./healthConsent.js";
 import { UI } from "./styleUtils.js";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { AllergenChipPicker, AllergenSensitivity, CustomAllergenField, DietChipPicker, ENumberPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
@@ -48,10 +48,14 @@ export const MemberForm = ({
   // step1Attempted). Knappen har derfor bevidst IKKE det native
   // disabled-attribut (ville blokere selve klikket og dermed forsøget).
   const [attempted, setAttempted] = React.useState(false);
-  // Samtykke til helbredsoplysninger (2. okt. 2026): kræves, før allergier på en profil gemmes.
+  // Samtykke (2. okt. 2026): en profil tilhører en ANDEN person, så kontoejeren bekræfter på dennes vegne (forælder/værge eller personens
+  // eget samtykke), med tekst efter hvem oplysningerne vedrører, aldrig "mine". Kræves, før en NY profil med allergier gemmes. Ved
+  // bekræftelsen logges kontoens helbredssamtykke (consent_log), hvis det ikke allerede findes.
   const consent = useHealthConsent();
   const [consentChecked, setConsentChecked] = React.useState(false);
-  const consentOk = canSaveHealthData({ hasHealthData, given: consent.given, checked: consentChecked });
+  const memberConsent = memberConsentTexts({ name, age });
+  const needsMemberConfirm = hasHealthData && !editing;
+  const consentOk = !needsMemberConfirm || consentChecked;
   // E-numre skal være lukket som standard, ligesom trin 2 — ellers bliver
   // trin 4 unødigt langt for en valgfri funktion (25. sept. 2026,
   // brugerfeedback). Lokal state, da MemberForm er en selvstændig,
@@ -77,6 +81,12 @@ export const MemberForm = ({
         <label className="field-lbl">Alder <span style={UI.red}>*</span></label>
         <AgeStepper value={age} min={0}
           onChange={a => setBirthYear(a ? String(new Date().getFullYear() - parseInt(a)) : "")} />
+        {/* Voksne bør helst inviteres (egen konto, eget samtykke); en administreret profil er især til børn */}
+        {age !== "" && Number(age) >= 18 && (
+          <div style={{ fontSize:11.5, color:"var(--muted)", lineHeight:1.45, marginTop:6 }}>
+            Voksne kan i stedet inviteres under Familie, så de selv styrer deres oplysninger. Opretter du en profil til en voksen, skal personen have givet sit samtykke.
+          </div>
+        )}
       </div>
 
       {/* Køn * — delt GenderPicker-komponent, samme fire valgmuligheder
@@ -103,7 +113,7 @@ export const MemberForm = ({
 
       {/* Eksplicit "ingen": et medlem uden allergier skal vælges aktivt, så "glemt" og "ingen" ikke ligner hinanden. Vælges det,
           mens der allerede er valgt noget, spørger vi først, så profilen aldrig både har allergier og står som "ingen". */}
-      <SecondaryButton active={noAllergies} style={{ marginTop:12, minHeight:40, fontWeight:500 }}
+      <SecondaryButton active={noAllergies} style={{ marginTop:12, minHeight:40 }}
         onClick={() => { if (noAllergies) setNoAllergies(false); else if (hasHealthData) setConfirmNone(true); else setNoAllergies(true); }}>
         Ingen allergier eller intolerancer
       </SecondaryButton>
@@ -146,8 +156,10 @@ export const MemberForm = ({
         </div>
       )}
 
-      {hasHealthData && !consent.given && (
-        <div style={{ marginTop:12 }}><HealthConsentBox checked={consentChecked} onChange={setConsentChecked} /></div>
+      {needsMemberConfirm && (
+        <div style={{ marginTop:12 }}>
+          <HealthConsentBox id="member-consent" checked={consentChecked} onChange={setConsentChecked} text={memberConsent.text} subText={memberConsent.sub} />
+        </div>
       )}
 
       {/* Gem knap */}
@@ -156,7 +168,7 @@ export const MemberForm = ({
           if (!isValid) { setAttempted(true); return; }
           if (!consentOk) return;
           try {
-            if (hasHealthData && !consent.given) await consent.give();
+            if (needsMemberConfirm && !consent.given) await consent.give();
           } catch { showToast("Samtykket kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); return; }
           onAdd();
           setAttempted(false);

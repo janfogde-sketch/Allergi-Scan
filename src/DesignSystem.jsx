@@ -53,11 +53,12 @@ export function PrimaryButton({
 // den generiske grå `.btn-outline`). `active` viser en tydelig, men rolig
 // "valgt/bekræftet"-tilstand (fx "Jeg har ingen allergier" efter tryk).
 export function SecondaryButton({
-  children, onClick, disabled = false, active = false, fullWidth = true, style, className = "",
+  children, onClick, disabled = false, active, fullWidth = true, style, className = "",
 }) {
   return (
     <button
       type="button"
+      aria-pressed={active === undefined ? undefined : !!active}
       className={`btn${fullWidth ? " btn-full" : ""}${className ? " " + className : ""}`}
       disabled={disabled}
       onClick={onClick}

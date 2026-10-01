@@ -224,15 +224,13 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
           window.history.replaceState({}, document.title, window.location.pathname);
           return;
         }
-        // Kom brugeren fra bekræftelseslinket i mailen (type=signup)? Så
-        // vises bekræftelsesskærmen i "bekræftet"-tilstand først, uanset
-        // hvad der ellers ligger i browseren.
+        // Kom brugeren fra bekræftelseslinket i mailen (type=signup)? Så er e-mailen bekræftet af selve klikket: ingen
+        // "jeg har bekræftet"-handling og ingen mellemskærm, brugeren går direkte videre til (det gemte trin i) onboarding.
         const fromSignupLink = params.get("type") === "signup";
         if (fromSignupLink) {
           writePendingVerify("");
-          setVerifyEmail(payload.email || "");
+          setVerifyEmail(""); setVerifyStatus("pending");
           setVerifyError(""); setVerifyNotice("");
-          setVerifyStatus("verified");
         }
         fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,onboarding_completed,onboarding_step`, {
           headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${access}`, "Accept": "application/json" },
@@ -253,7 +251,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
               name: u.name || profile?.name || meta.full_name || meta.name || "" }));
             if (fromSignupLink) {
               setIsOAuth("email");
-              setScreen(SCREENS.VERIFYEMAIL);
+              setScreen(SCREENS.ONBOARD);
             } else {
               // Google/Facebook: e-mailen er bekræftet af udbyderen, så
               // brugeren går direkte til (det gemte trin i) onboarding.
@@ -262,7 +260,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
               setScreen(SCREENS.ONBOARD);
             }
           })
-          .catch(() => setScreen(fromSignupLink ? SCREENS.VERIFYEMAIL : SCREENS.HOME));
+          .catch(() => { if (fromSignupLink) { setOnboardStep(1); setIsOAuth("email"); setScreen(SCREENS.ONBOARD); } else setScreen(SCREENS.HOME); });
         window.history.replaceState({}, document.title, window.location.pathname);
       } catch (e) {
         console.error("OAuth callback fejl:", e);
@@ -562,8 +560,8 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     setAuthLoading(false);
   }, [loginPassword, saveTokens, setUser, setScreen, setOnboardStep, validateSignupFields, openVerifyScreen]);
 
-  // Henter onboarding-status for en netop bekræftet konto og viser
-  // "✓ E-mail bekræftet" (eller forsiden, hvis onboarding allerede er færdig).
+  // Henter onboarding-status for en netop bekræftet konto og sender brugeren direkte videre: til det gemte onboarding-trin
+  // (eller forsiden, hvis onboarding allerede er færdig). Ingen "E-mail bekræftet"-mellemskærm.
   const finishVerification = useCallback(async (access, uid) => {
     writePendingVerify("");
     setVerifyError(""); setVerifyNotice("");
@@ -575,7 +573,9 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       if (p?.onboarding_completed === true) { markOnboardedLocally(); setScreen(SCREENS.HOME); return; }
       setOnboardStep(p?.onboarding_step || 1);
     } catch { setOnboardStep(1); }
-    setVerifyStatus("verified");
+    setVerifyStatus("pending"); setVerifyEmail("");
+    setIsOAuth("email");
+    setScreen(SCREENS.ONBOARD);
   }, [setScreen, setOnboardStep]);
 
   // "Jeg har bekræftet min e-mail": er linket åbnet i en anden fane i samme
@@ -583,14 +583,17 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   // med adgangskoden fra oprettelsen (kun i hukommelsen, aldrig gemt). Er
   // appen genstartet siden, kendes adgangskoden ikke — så går brugeren til
   // Log ind med e-mailen udfyldt.
-  const checkEmailVerified = useCallback(async () => {
-    setVerifyError(""); setVerifyNotice("");
+  // `{ silent: true }` bruges af den automatiske kontrol, når brugeren vender tilbage til appen fra mailen: den viser aldrig fejl eller
+  // beskeder og sender aldrig brugeren til Log ind, den fortsætter kun, hvis e-mailen faktisk er bekræftet.
+  const checkEmailVerified = useCallback(async (opts) => {
+    const silent = opts?.silent === true;
+    if (!silent) { setVerifyError(""); setVerifyNotice(""); }
     const storedToken = localStorage.getItem("as_token");
     const storedUid = localStorage.getItem("as_user_id");
     let storedEmail = "";
     try { storedEmail = storedToken ? (decodeJwtPayload(storedToken).email || "").toLowerCase() : ""; } catch { /* ugyldigt token */ }
     // Kun en session for PRÆCIS denne e-mail — aldrig en anden kontos.
-    if (storedToken && storedUid && storedEmail === verifyEmail.toLowerCase()) {
+    if (storedToken && storedUid && storedEmail === (verifyEmail || "").toLowerCase()) {
       setAccessToken(storedToken);
       setRefreshToken(localStorage.getItem("as_refresh"));
       setUserId(storedUid);
@@ -600,6 +603,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       return;
     }
     if (!loginPassword) {
+      if (silent) return;
       setLoginEmail(verifyEmail);
       setAuthTab("login");
       setAuthError("");
@@ -620,12 +624,13 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         await finishVerification(data.access_token, data.user.id);
       } else {
         const msg = (data.msg || data.error_description || data.message || "").toLowerCase();
-        setVerifyError(msg.includes("email not confirmed")
-          ? "Vi kan ikke se, at e-mailen er bekræftet endnu. Tryk på linket i mailen, og prøv igen."
-          : "Der opstod en fejl. Prøv igen.");
+        // Endnu ikke bekræftet er ikke en fejl: en neutral besked (info-boksen), ikke en rød fejlboks
+        if (silent) { /* ingen besked ved den automatiske kontrol */ }
+        else if (msg.includes("email not confirmed")) setVerifyNotice("Vi kan endnu ikke se, at din e-mail er bekræftet. Åbn linket i mailen, og tryk så på Tjek bekræftelse igen.");
+        else setVerifyError("Der opstod en fejl. Prøv igen.");
       }
     } catch {
-      setVerifyError("Der opstod en fejl. Prøv igen.");
+      if (!silent) setVerifyError("Der opstod en fejl. Prøv igen.");
     }
     setVerifyLoading(false);
   }, [verifyEmail, loginPassword, saveTokens, finishVerification, setScreen]);

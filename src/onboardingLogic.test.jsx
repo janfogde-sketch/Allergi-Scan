@@ -8,6 +8,7 @@ import { MemberForm } from "./MemberForm.jsx";
 import { AgeStepper } from "./FormFields.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
 import { pruneAllergenLevels } from "./helpers.js";
+import { E_NUMBERS, ALLERGENS } from "./constants.jsx";
 
 afterEach(cleanup);
 
@@ -109,5 +110,69 @@ describe("ENumberPicker: chips og liste hænger sammen", () => {
     expect(box().getAttribute("aria-checked")).toBe("true");
     fireEvent.click(screen.getByRole("button", { name: "Fjern E101" }));
     expect(box().getAttribute("aria-checked")).toBe("false");
+  });
+});
+
+describe("MemberForm: samtykke og model for andres profiler", () => {
+  const fill = (age = "25") => {
+    fireEvent.change(screen.getByPlaceholderText("Fx. Mia"), { target: { value: "Mia" } });
+    fireEvent.change(screen.getByLabelText("Alder i år"), { target: { value: age } });
+    fireEvent.click(screen.getByText("Kvinde"));
+  };
+
+  it("kræver en bekræftelse med personens navn, før en ny profil med allergier gemmes, og bruger aldrig 'mine'", () => {
+    const onAdd = vi.fn();
+    render(<Harness onAdd={onAdd} initial={{ allergens: ["noedder"] }} />);
+    fill("25");
+    expect(screen.getByText(/Mia har givet sit udtrykkelige samtykke/)).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/\bmine\b/i);
+    fireEvent.click(screen.getByText("+ Tilføj familiemedlem"));
+    expect(onAdd).not.toHaveBeenCalled();
+    fireEvent.click(document.getElementById("member-consent"));
+    fireEvent.click(screen.getByText("+ Tilføj familiemedlem"));
+    expect(onAdd).toHaveBeenCalledTimes(1);
+  });
+
+  it("et barn får en forælder/værge-erklæring, og voksne får en note om invitation", () => {
+    render(<Harness onAdd={() => {}} initial={{ allergens: ["noedder"] }} />);
+    fill("8");
+    expect(screen.getByText(/forælder eller værge for Mia/)).toBeTruthy();
+    expect(screen.queryByText(/Voksne kan i stedet inviteres/)).toBeNull();
+    fireEvent.change(screen.getByLabelText("Alder i år"), { target: { value: "30" } });
+    expect(screen.getByText(/Voksne kan i stedet inviteres under Familie/)).toBeTruthy();
+  });
+
+  it("redigering af en eksisterende profil kræver ikke en ny bekræftelse", () => {
+    const onAdd = vi.fn();
+    render(<Harness onAdd={onAdd} editing initial={{ allergens: ["noedder"] }} />);
+    fill("25");
+    expect(document.getElementById("member-consent")).toBeNull();
+    fireEvent.click(screen.getByText("+ Tilføj familiemedlem"));
+    expect(onAdd).toHaveBeenCalledTimes(1);
+  });
+
+  it("'Ingen allergier eller intolerancer' har en tydelig valgt-tilstand (aria-pressed)", () => {
+    render(<Harness onAdd={() => {}} />);
+    const btn = screen.getByRole("button", { name: /Ingen allergier eller intolerancer/ });
+    expect(btn.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(btn);
+    expect(btn.getAttribute("aria-pressed")).toBe("true");
+  });
+});
+
+describe("faglig neutralitet i E-numre og allergennoter", () => {
+  it("E-nummerbeskrivelserne indeholder ingen helbredspåstande eller værdiladede ord", () => {
+    const banned = /hyperaktiv|kontrovers|forbudt|farlig|skadelig|giftig|kræft|\bkan give\b/i;
+    expect(Object.entries(E_NUMBERS).filter(([, v]) => banned.test(v))).toEqual([]);
+  });
+  it("E102 beskrives dokumentationsnært (advarselsmærkning), uden helbredspåstand", () => {
+    expect(E_NUMBERS.E102).toMatch(/azo-farve/);
+    expect(E_NUMBERS.E102).toMatch(/advarselsmærkning/);
+  });
+  it("hvede, gluten og sulfitter har hver en forklarende note", () => {
+    const note = id => ALLERGENS.find(a => a.id === id)?.note || "";
+    expect(note("hvede")).toMatch(/ikke det samme som gluten/);
+    expect(note("gluten")).toMatch(/ikke det samme som hvedeallergi/i);
+    expect(note("svovl")).toMatch(/10 mg\/kg/);
   });
 });

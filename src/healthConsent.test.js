@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { consentFromRows, needsHealthConsent, canSaveHealthData, HEALTH_CONSENT_TEXT, HEALTH_CONSENT_WITHDRAW_TEXT } from "./healthConsent.js";
+import { consentFromRows, needsHealthConsent, canSaveHealthData, HEALTH_CONSENT_TEXT, HEALTH_CONSENT_WITHDRAW_TEXT, memberConsentTexts } from "./healthConsent.js";
 
 describe("consentFromRows", () => {
   it("ingen rækker = ikke givet", () => {
@@ -30,5 +30,26 @@ describe("needsHealthConsent / canSaveHealthData", () => {
   it("teksten nævner udtrykkeligt samtykke og tilbagetrækning", () => {
     expect(HEALTH_CONSENT_TEXT).toMatch(/udtrykkeligt samtykke/);
     expect(HEALTH_CONSENT_WITHDRAW_TEXT).toMatch(/trække samtykket tilbage/);
+  });
+});
+
+describe("memberConsentTexts (samtykke til en andens profil)", () => {
+  it("bruger aldrig 'mine' og nævner personen ved navn", () => {
+    for (const age of ["8", "34", ""]) {
+      const { text } = memberConsentTexts({ name: "Arnold", age });
+      expect(text).toContain("Arnold");
+      expect(text).not.toMatch(/\bmine\b/i);
+    }
+  });
+  it("børn: forælder/værge-erklæring. Voksne: personens eget samtykke", () => {
+    expect(memberConsentTexts({ name: "Trine", age: "8" })).toMatchObject({ isChild: true });
+    expect(memberConsentTexts({ name: "Trine", age: "8" }).text).toMatch(/forælder eller værge/);
+    expect(memberConsentTexts({ name: "Trine", age: "25" })).toMatchObject({ isChild: false });
+    expect(memberConsentTexts({ name: "Trine", age: "25" }).text).toMatch(/har givet sit udtrykkelige samtykke/);
+  });
+  it("bøjer navnet korrekt og falder tilbage til 'personen'", () => {
+    expect(memberConsentTexts({ name: "Jens", age: "30" }).text).toContain("Jens'");
+    expect(memberConsentTexts({ name: "Mia", age: "30" }).text).toContain("Mias");
+    expect(memberConsentTexts({ name: "", age: "30" }).text).toContain("personen");
   });
 });
