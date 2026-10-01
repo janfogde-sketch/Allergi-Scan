@@ -40,8 +40,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from "react";
-import { Icon } from "./SharedComponents.jsx";
-import { usePush } from "./usePush.js";
+import { Icon, showToast } from "./SharedComponents.jsx";
+import { usePush, SAVE_FAILED_REASON } from "./usePush.js";
 import { useNotificationPrefs } from "./useNotificationPrefs.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -156,7 +156,13 @@ export default function SettingsScreen({
       setPushStatus("default");
     } else {
       const result = await pushSubscribe(accessToken);
-      setPushStatus(result.ok ? "granted" : "denied");
+      if (result.reason === SAVE_FAILED_REASON) {
+        // Tilladelsen er givet, men serveren tog ikke imod abonnementet: sig det i stedet for at lade som om alt virker.
+        setPushStatus("granted");
+        showToast("Push kunne ikke tændes lige nu. Prøv igen om lidt.", "error");
+      } else {
+        setPushStatus(result.ok ? "granted" : "denied");
+      }
     }
     setPushLoading(false);
   };

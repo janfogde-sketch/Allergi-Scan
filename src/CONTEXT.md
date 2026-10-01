@@ -660,6 +660,13 @@ korte tekst og åbner den fulde, beskyttede besked i appen via
   (brugere via favorit, scan de seneste 90 dage eller indkøbsliste, vist før afsendelse) er kun for admin. Hjælpefunktionerne
   `ean_variants()` og `is_valid_gtin()` spejler `recallParser.js`. Migration `20261001081752`.
 
+**Push er per enhed, ikke per konto (1. okt. 2026):** telefonens tilladelse gælder for enheden. Tidligere blev abonnementet
+(`push_tokens`, unik på `user_id` + `token`) kun gemt, når tilladelsen blev givet; en konto, der loggede ind på en enhed med
+eksisterende tilladelse (fx jafo efter janfogde), fik aldrig sin række og så push som "til", men intet kom. Nu gemmer
+`syncPushToken` (`usePush.js`, kaldt i `App.jsx` når en konto er logget ind) enhedens abonnement for den indloggede konto
+uden at spørge om tilladelse, og `forgetPushTokenForDevice` (kaldt i `clearAuth`) sletter kun den udloggede kontos række, så
+den forrige kontos beskeder ikke vises på enheden. Serverens svar tjekkes nu (`SAVE_FAILED_REASON`; Indstillinger viser en fejl).
+
 ## 15. Fælles to do-liste i admin-panelet (1. okt. 2026)
 
 Fanen **To do** i `eatsafe.dk/admin.html` (`src/admin/sections/TodoSection.jsx`, data-hook `useAdminTodos.js`,

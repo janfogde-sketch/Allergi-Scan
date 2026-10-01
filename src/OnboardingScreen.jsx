@@ -11,7 +11,7 @@ import {
   PrimaryButton, SecondaryButton, TextLink, FormCard, SectionHeading,
   Accordion, InfoRow, ErrorMessage, InputField,
 } from "./DesignSystem.jsx";
-import { usePush } from "./usePush.js";
+import { usePush, SAVE_FAILED_REASON } from "./usePush.js";
 import { isValidEmail } from "./useAuth.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -177,7 +177,8 @@ export default function OnboardingScreen({
     setPushLoading(true);
     const result = await pushSubscribe(accessToken);
     setPushLoading(false);
-    if (result.ok || result.reason === "Tilladelse afvist") {
+    // Et abonnement, der ikke kunne gemmes, må ikke spærre for onboarding; appen prøver igen ved næste start (syncPushToken).
+    if (result.ok || result.reason === "Tilladelse afvist" || result.reason === SAVE_FAILED_REASON) {
       setPushDone(true);
       // Onboarding afsluttes direkte herfra uanset svar — ingen ekstra
       // "Du er færdig"-oversigtsskærm (25. sept. 2026, brugerfeedback).
