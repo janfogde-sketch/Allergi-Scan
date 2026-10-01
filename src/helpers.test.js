@@ -291,22 +291,24 @@ describe("computeProfileResults: ukendt er ikke sikkert", () => {
   });
 });
 
-import { passwordErrorText, PASSWORD_REQUIREMENTS_TEXT } from "./helpers.js";
+import { passwordErrorText } from "./helpers.js";
 
 describe("passwordErrorText", () => {
   it("godkender en kode der opfylder alle krav", () => {
     expect(passwordErrorText("MinKode2026abc")).toBe("");
   });
-  it("siger præcis hvad der mangler", () => {
-    expect(passwordErrorText("minhemmeligekode")).toBe("Adgangskoden kan ikke bruges: den mangler et stort bogstav og et tal.");
-    expect(passwordErrorText("Kort1")).toBe("Adgangskoden kan ikke bruges: den er kun 5 tegn (mindst 10).");
-    expect(passwordErrorText("abc")).toBe("Adgangskoden kan ikke bruges: den er kun 3 tegn (mindst 10), og den mangler et stort bogstav og et tal.");
+  it("giver én kort, situationsbestemt tekst: tom kode, eller kravene, når noget mangler", () => {
+    expect(passwordErrorText("")).toBe("Indtast en adgangskode.");
+    const krav = "Brug mindst 10 tegn med store og små bogstaver og mindst ét tal.";
+    expect(passwordErrorText("minhemmeligekode")).toBe(krav);
+    expect(passwordErrorText("Kort1")).toBe(krav);
+    expect(passwordErrorText("abc")).toBe(krav);
   });
   it("tæller æ, ø og å som bogstaver", () => {
     expect(passwordErrorText("Rødgrødmedfløde1")).toBe("");
   });
   it("beder om en kode når feltet er tomt", () => {
-    expect(passwordErrorText("")).toContain(PASSWORD_REQUIREMENTS_TEXT);
+    expect(passwordErrorText("")).toBe("Indtast en adgangskode.");
   });
 });
 

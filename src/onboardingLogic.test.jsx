@@ -7,7 +7,8 @@ import { AuthProvider } from "./AuthContext.jsx";
 import { MemberForm } from "./MemberForm.jsx";
 import { AgeStepper } from "./FormFields.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
-import { pruneAllergenLevels } from "./helpers.js";
+import { pruneAllergenLevels, traceEligible } from "./helpers.js";
+import { AllergenSensitivity, AllergenChipPicker } from "./AllergenPicker.jsx";
 import { E_NUMBERS, ALLERGENS } from "./constants.jsx";
 
 afterEach(cleanup);
@@ -33,7 +34,7 @@ describe("AgeStepper", () => {
   });
 });
 
-function Harness({ onAdd, editing = false, initial = {} }) {
+function Harness({ onAdd, editing = false, initial = {}, onSkip, openPrivacy }) {
   const [name, setName] = useState(initial.name || "");
   const [birthYear, setBirthYear] = useState("");
   const [gender, setGender] = useState("");
@@ -48,7 +49,7 @@ function Harness({ onAdd, editing = false, initial = {} }) {
       <MemberForm name={name} setName={setName} birthYear={birthYear} setBirthYear={setBirthYear} gender={gender} setGender={setGender}
         allergens={allergens} setAllergens={setAllergens} customAllerg={customAllerg} setCustomAllerg={setCustomAllerg}
         diets={diets} setDiets={setDiets} levels={levels} setLevels={setLevels} eNumbers={eNumbers} setENumbers={setENumbers}
-        customInput={customInput} setCustomInput={setCustomInput} onAdd={onAdd} editing={editing} />
+        customInput={customInput} setCustomInput={setCustomInput} onAdd={onAdd} editing={editing} onSkip={onSkip} openPrivacy={openPrivacy} />
       <output data-testid="levels">{JSON.stringify(levels)}</output>
     </AuthProvider>
   );
@@ -56,7 +57,7 @@ function Harness({ onAdd, editing = false, initial = {} }) {
 
 const fillBasics = () => {
   fireEvent.change(screen.getByPlaceholderText("Fx. Mia"), { target: { value: "Mia" } });
-  fireEvent.change(screen.getByLabelText("Alder i år"), { target: { value: "25" } });
+  fireEvent.change(screen.getByLabelText("Alder i år"), { target: { value: "12" } });
   fireEvent.click(screen.getByText("Kvinde"));
 };
 
@@ -114,18 +115,21 @@ describe("ENumberPicker: chips og liste hænger sammen", () => {
 });
 
 describe("MemberForm: samtykke og model for andres profiler", () => {
-  const fill = (age = "25") => {
+  const fill = (age = "12") => {
     fireEvent.change(screen.getByPlaceholderText("Fx. Mia"), { target: { value: "Mia" } });
     fireEvent.change(screen.getByLabelText("Alder i år"), { target: { value: age } });
-    fireEvent.click(screen.getByText("Kvinde"));
+    fireEvent.click(screen.queryByText("Kvinde") || document.body);
   };
 
-  it("kræver en bekræftelse med personens navn, før en ny profil med allergier gemmes, og bruger aldrig 'mine'", () => {
+  it("en mindreårig kræver en forælder/værge-bekræftelse med navn og link til privatlivspolitikken, før profilen gemmes (aldrig 'mine')", () => {
     const onAdd = vi.fn();
-    render(<Harness onAdd={onAdd} initial={{ allergens: ["noedder"] }} />);
-    fill("25");
-    expect(screen.getByText(/Mia har givet sit udtrykkelige samtykke/)).toBeTruthy();
+    const openPrivacy = vi.fn();
+    render(<Harness onAdd={onAdd} openPrivacy={openPrivacy} initial={{ allergens: ["noedder"] }} />);
+    fill("12");
+    expect(screen.getByText(/forælder eller værge for Mia/)).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/\bmine\b/i);
+    fireEvent.click(screen.getByText("Læs privatlivspolitikken"));
+    expect(openPrivacy).toHaveBeenCalled();
     fireEvent.click(screen.getByText("+ Tilføj familiemedlem"));
     expect(onAdd).not.toHaveBeenCalled();
     fireEvent.click(document.getElementById("member-consent"));
@@ -133,19 +137,32 @@ describe("MemberForm: samtykke og model for andres profiler", () => {
     expect(onAdd).toHaveBeenCalledTimes(1);
   });
 
-  it("et barn får en forælder/værge-erklæring, og voksne får en note om invitation", () => {
+  it("uden kendt alder vises der ingen samtykketekst endnu", () => {
     render(<Harness onAdd={() => {}} initial={{ allergens: ["noedder"] }} />);
-    fill("8");
-    expect(screen.getByText(/forælder eller værge for Mia/)).toBeTruthy();
-    expect(screen.queryByText(/Voksne kan i stedet inviteres/)).toBeNull();
-    fireEvent.change(screen.getByLabelText("Alder i år"), { target: { value: "30" } });
-    expect(screen.getByText(/Voksne kan i stedet inviteres under Familie/)).toBeTruthy();
+    expect(document.getElementById("member-consent")).toBeNull();
   });
 
-  it("redigering af en eksisterende profil kræver ikke en ny bekræftelse", () => {
+  it("en voksen kan ikke oprettes som administreret profil: forklaring, Tilbage og Fortsæt uden at tilføje", () => {
+    const onAdd = vi.fn();
+    const onSkip = vi.fn();
+    render(<Harness onAdd={onAdd} onSkip={onSkip} initial={{ allergens: ["noedder"] }} />);
+    fireEvent.change(screen.getByPlaceholderText("Fx. Mia"), { target: { value: "Arnold" } });
+    fireEvent.change(screen.getByLabelText("Alder i år"), { target: { value: "28" } });
+    expect(screen.getByText("Voksne administrerer deres egen profil")).toBeTruthy();
+    expect(screen.getByText(/Invitér personen under Familie, når din profil er oprettet/)).toBeTruthy();
+    expect(screen.queryByText("+ Tilføj familiemedlem")).toBeNull(); // formularen er skjult for voksne
+    fireEvent.click(screen.getByText("Fortsæt uden at tilføje"));
+    expect(onSkip).toHaveBeenCalledTimes(1);
+    expect(onAdd).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText("Tilbage")); // nulstiller alderen, så formularen kan rettes
+    expect(screen.getByLabelText("Alder i år").value).toBe("");
+    expect(screen.queryByText("Voksne administrerer deres egen profil")).toBeNull();
+  });
+
+  it("redigering af en eksisterende profil kræver ikke en ny bekræftelse (og blokeres ikke)", () => {
     const onAdd = vi.fn();
     render(<Harness onAdd={onAdd} editing initial={{ allergens: ["noedder"] }} />);
-    fill("25");
+    fill("12");
     expect(document.getElementById("member-consent")).toBeNull();
     fireEvent.click(screen.getByText("+ Tilføj familiemedlem"));
     expect(onAdd).toHaveBeenCalledTimes(1);
@@ -174,5 +191,40 @@ describe("faglig neutralitet i E-numre og allergennoter", () => {
     expect(note("hvede")).toMatch(/ikke det samme som gluten/);
     expect(note("gluten")).toMatch(/ikke det samme som hvedeallergi/i);
     expect(note("svovl")).toMatch(/10 mg\/kg/);
+  });
+});
+
+describe("spor: kun hvor det giver mening", () => {
+  it("laktose har ingen sporvalg, hverken i valget, i state eller i den gemte profil", () => {
+    expect(traceEligible(["laktose", "maelkeallergi", "gluten"])).toEqual(["maelkeallergi", "gluten"]);
+    expect(pruneAllergenLevels({ laktose: "direct_only", maelkeallergi: "direct_only" }, ["laktose", "maelkeallergi"])).toEqual({ maelkeallergi: "direct_only" });
+    render(<AllergenSensitivity selected={["laktose"]} levels={{}} onChange={() => {}} />);
+    expect(screen.queryAllByRole("group")).toHaveLength(0);
+  });
+  it("mælkeallergi og laktose er to forskellige valg: kun mælk får en sporrække", () => {
+    render(<AllergenSensitivity selected={["laktose", "maelkeallergi"]} levels={{}} onChange={() => {}} />);
+    expect(screen.getAllByRole("group")).toHaveLength(1);
+    expect(screen.getByRole("group", { name: /Mælk/ })).toBeTruthy();
+  });
+  it("gluten hedder Glutenfølsomhed i valg og spor, og hvede er et separat valg", () => {
+    render(<AllergenChipPicker selected={[]} onChange={() => {}} />);
+    expect(screen.getByText("Glutenfølsomhed")).toBeTruthy();
+    expect(screen.getByText("Hvede")).toBeTruthy();
+    cleanup();
+    render(<AllergenSensitivity selected={["gluten", "hvede"]} levels={{}} onChange={() => {}} />);
+    expect(screen.getAllByRole("group")).toHaveLength(2);
+    expect(screen.getByRole("group", { name: /^Glutenfølsomhed/ })).toBeTruthy();
+  });
+  it("sulfitter har sin egen mærkningsgrænse som data og en præcis, ikke-kategorisk note", () => {
+    const a = ALLERGENS.find(x => x.id === "svovl");
+    expect(a.labelThresholdMgPerKg).toBe(10);
+    expect(a.note).toMatch(/mærkningspligtige allergener/);
+    expect(a.note).toMatch(/samlet SO₂/);
+    expect(a.note).not.toMatch(/kan EatSafe ikke se/);
+  });
+  it("hvede-noten adskiller hvedeallergi fra glutenfølsomhed og cøliaki, uden den upræcise 'Gluten (intolerance)'", () => {
+    const note = id => ALLERGENS.find(a => a.id === id)?.note || "";
+    expect(note("hvede")).toBe("Hvedeallergi er en allergi over for hvede og er ikke det samme som glutenfølsomhed eller cøliaki.");
+    expect(ALLERGENS.map(a => a.note || "").join(" ")).not.toContain("Gluten (intolerance)");
   });
 });

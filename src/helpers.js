@@ -225,9 +225,16 @@ export const ignoresTraces = (levels, id) => levels?.[id] === LEVEL_DIRECT_ONLY;
 
 // Fjerner sporvalg for allergener, der ikke (længere) er valgt, så der aldrig ligger skjulte værdier i state eller profil
 // (fx Mælks "Kun ved ingrediens", efter Mælk er fjernet). Returnerer det samme objekt, hvis intet skal fjernes.
+// Allergener, hvor "kan indeholde spor af" giver mening som valg (ikke fx laktoseintolerance, ALLERGENS[].traceOk === false; egne valg
+// har aldrig sporvalg).
+export const traceEligible = (allergenIds) => (allergenIds || []).filter(id => {
+  const a = ALLERGENS.find(x => x.id === id);
+  return !!a && a.traceOk !== false;
+});
+
 export function pruneAllergenLevels(levels, allergenIds) {
   const src = levels || {};
-  const keep = new Set(allergenIds || []);
+  const keep = new Set(traceEligible(allergenIds));
   const keys = Object.keys(src);
   if (keys.every(k => keep.has(k))) return src;
   return Object.fromEntries(keys.filter(k => keep.has(k)).map(k => [k, src[k]]));
@@ -747,7 +754,9 @@ export function clearTraceLog() {
 // ikke forklarede hvorfor. Retter man kravene i Supabase, skal de også
 // rettes her.
 export const PASSWORD_MIN_LENGTH = 10;
-export const PASSWORD_REQUIREMENTS_TEXT = "Mindst 10 tegn med små og store bogstaver og mindst ét tal.";
+// Hjælpetekst under feltet (vises kun, mens der ikke er en fejl) og den korte fejltekst, når kravene ikke er opfyldt
+export const PASSWORD_REQUIREMENTS_TEXT = "Mindst 10 tegn med store og små bogstaver og mindst ét tal.";
+export const PASSWORD_REQUIREMENTS_ERROR = "Brug mindst 10 tegn med store og små bogstaver og mindst ét tal.";
 
 export function passwordProblems(pw) {
   const p = pw || "";
@@ -758,16 +767,9 @@ export function passwordProblems(pw) {
   return { tooShort: p.length < PASSWORD_MIN_LENGTH, length: p.length, missing };
 }
 
-const joinDa = (xs) => xs.length <= 1 ? (xs[0] || "") : `${xs.slice(0, -1).join(", ")} og ${xs[xs.length - 1]}`;
-
-// Én konkret sætning om hvad der er galt, eller "" når koden er i orden.
+// Kort, situationsbestemt fejltekst: tom adgangskode, eller (når der er skrevet noget) ét krav-sætning. Tom streng = i orden.
 export function passwordErrorText(pw) {
-  const { tooShort, length, missing } = passwordProblems(pw);
-  if (!pw) return `Indtast en adgangskode. ${PASSWORD_REQUIREMENTS_TEXT}`;
-  const parts = [];
-  if (tooShort) parts.push(`den er kun ${length} tegn (mindst ${PASSWORD_MIN_LENGTH})`);
-  if (missing.length) parts.push(`den mangler ${joinDa(missing)}`);
-  if (!parts.length) return "";
-  const s = parts.join(", og ");
-  return `Adgangskoden kan ikke bruges: ${s}.`;
+  if (!pw) return "Indtast en adgangskode.";
+  const { tooShort, missing } = passwordProblems(pw);
+  return tooShort || missing.length ? PASSWORD_REQUIREMENTS_ERROR : "";
 }
