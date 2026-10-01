@@ -221,7 +221,7 @@ brugeren reagerer kun på direkte indhold, så spor flagges ikke, men vises som 
 `ignoresTraces`). På produktsiden er spor nu GULE ("Kan indeholde spor"); kun direkte indhold er rødt "Allergi-advarsel". Husstandskonti
 får deres niveauer via `family/group` (`allergenLevels`), og `notify` (P1) sender ikke en ændring til spor til en modtager, der kun
 reagerer på direkte indhold (`affectedAllergenChanges(..., tracesIgnored)`). UI: den simple `AllergenSensitivity` i `AllergenPicker.jsx`
-(onboarding trin 2, Rediger præferencer, familieformularen). Admin-panelet redigerer ikke niveauerne endnu.
+(onboarding trin 2, Rediger præferencer, familieformularen). Admin-panelet (Brugere → rediger) kan sætte niveauet pr. valgt allergen for en bruger (`useAdmin.js`, `UsersSection.jsx`); familiemedlemmers niveauer redigeres kun i appen.
 
 **`users.onboarding_step` (29. sept. 2026, "Onboarding-persistens"):**
 integer, 1-5, default 1 — huske PRÆCIS hvilket af de 5 onboarding-trin en

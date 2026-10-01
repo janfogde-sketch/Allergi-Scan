@@ -228,6 +228,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
         name: full.name || "", email: full.email || "", phone: full.phone || "",
         role: full.role || "user", birth_year: full.birth_year || "", gender: full.gender || "",
         diets: full.diets || [], e_numbers: (full.e_numbers || []).join(", "),
+        allergen_levels: full.allergen_levels || {},
         onboarding_completed: !!full.onboarding_completed,
         allergen_ids: rowsArr.filter(r => r.type === "allergen").map(r => r.allergen),
         custom_allergens: rowsArr.filter(r => r.type === "custom").map(r => r.allergen).join(", "),
@@ -255,6 +256,8 @@ export function useAdmin(accessToken, userId, clearAuth) {
           gender: editingAdminUser.gender || null,
           diets: editingAdminUser.diets,
           e_numbers: eNumbers,
+          // Kun niveauer for allergener, der stadig er valgt
+          allergen_levels: Object.fromEntries(Object.entries(editingAdminUser.allergen_levels || {}).filter(([id]) => editingAdminUser.allergen_ids.includes(id))),
           onboarding_completed: editingAdminUser.onboarding_completed,
         }),
       });
