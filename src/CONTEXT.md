@@ -737,8 +737,9 @@ Auth viser en fejl; samme `Idempotency-Key` (`auth-{webhook-id}-{n}`) hindrer do
 **Status 1. okt.:** hook'en er slået til og testet end-to-end med en testkonto (plus-adresser, derefter slettet): glemt adgangskode, oprettelse
 ("Bekræft din e-mail – EatSafe"; linket giver 303 til `eatsafe.dk` med `type=signup`, og appen viser "Din e-mail er bekræftet" → Fortsæt opsætning,
 når service workeren allerede er installeret; i en helt ny browser kan SW-reloadet springe den skærm over, og brugeren lander direkte i onboarding) og
-skift af e-mail med Secure email change (to danske mails, begge links virker, adressen i `auth.users` skiftes). **Kendt hul:** `public.users.email`
-følger ikke med ved et e-mailskift (to do-listen); appen har i øvrigt ingen skærm til at skifte e-mail. Magic link, invitation og genbekræftelse bruges ikke i appen.
+skift af e-mail med Secure email change (to danske mails, begge links virker, adressen i `auth.users` skiftes). `public.users.email`
+følger med ved et e-mailskift via triggeren `on_auth_user_email_changed` (migration `20261001113232`, testet i en rullet tilbage transaktion);
+appen har i øvrigt ingen skærm til at skifte e-mail. Magic link, invitation og genbekræftelse bruges ikke i appen.
 
 **Sådan blev den slået til (Jan, i Supabase Dashboard; samme trin ved en ny opsætning):**
 1. Authentication → Auth Hooks → Send Email → HTTPS, URL `https://jegrpcflyguadyxialkm.supabase.co/functions/v1/auth-send-email`,
