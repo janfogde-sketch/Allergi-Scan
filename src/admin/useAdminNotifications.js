@@ -71,5 +71,16 @@ export function useAdminNotifications(accessToken, userId) {
     }
   }, [accessToken]);
 
-  return { admins, overrides, loading, load, savePush, sendTest };
+  // Mailens HTML fra Resend med eksempeldata (hentes af edge-funktionen, så admin ser det, der faktisk sendes)
+  const loadMailPreview = useCallback(async (key, toUserId) => {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/notify-test`, {
+      method: "POST", headers: { ...makeHeaders(accessToken), "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "preview", key, userId: toUserId || undefined }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+    return data;
+  }, [accessToken]);
+
+  return { admins, overrides, loading, load, savePush, sendTest, loadMailPreview };
 }
