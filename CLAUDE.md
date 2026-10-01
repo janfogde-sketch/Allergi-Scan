@@ -727,6 +727,10 @@ sektioner, 12 under sektionsoverskrift, 24 over krydskontamineringsboksen),
 ensartet linjehøjde 1,5 på al brødtekst, ingen tom ekstra plads efter sidste
 blok, og Læs højt-knappen er ca. 12 % lavere (46 px).
 
+**Info-ikon ved krydskontaminering (1. okt. 2026, Bjørn):** toggle-kortet på Madpas-forsiden har et lille info-ikon
+ved "KRYDSKONTAMINERING", der åbner en delt `InfoSheet` (`SharedComponents.jsx`, bottom-sheet i portal, én "Forstået"-knap) med en kort forklaring.
+Brug `InfoSheet` til fremtidige info-ikoner.
+
 ### Profil restruktureret — "Rediger profil" og "Rediger præferencer" adskilt (28. sept. 2026)
 
 Profilsiden har to adskilte redigeringsskærme: `SCREENS.EDITPROFILE`

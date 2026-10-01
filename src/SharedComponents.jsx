@@ -856,6 +856,35 @@ export function ConfirmDialog({ title, message, confirmLabel, cancelLabel = "Ann
   );
 }
 
+// ─── INFO SHEET ───────────────────────────────────────────────────────────────
+// Lille bottom-sheet med en forklaring bag et info-ikon (1. okt. 2026, første
+// brug: "Hvad er krydskontaminering?" i Madpas). Samme portal-mønster som
+// ConfirmDialog (position:fixed fanges ellers af .screen.fade-in's transform).
+// Én "Forstået"-knap (44px) og tryk udenfor lukker.
+export function InfoSheet({ title, children, onClose, closeLabel = "Forstået" }) {
+  return createPortal(
+    <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }}
+      onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label={title}
+        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"22px 16px 28px", width:"100%" }}
+        onClick={e => e.stopPropagation()}>
+        <div style={{ display:"flex", alignItems:"flex-start", gap:10, marginBottom:18 }}>
+          <span style={{ flexShrink:0, marginTop:1, display:"flex" }}><Icon name="info" size={20} color="var(--blue)" /></span>
+          <div>
+            <div style={{ fontSize:15.5, fontWeight:800, color:"var(--ink)", marginBottom:6 }}>{title}</div>
+            <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.5 }}>{children}</div>
+          </div>
+        </div>
+        <button type="button" onClick={onClose}
+          style={{ width:"100%", minHeight:44, padding:12, background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"#fff", cursor:"pointer" }}>
+          {closeLabel}
+        </button>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 // ─── SCROLL TO TOP ────────────────────────────────────────────────────────────
 // Flydende "til toppen"-knap til lange lister (Leksikon, Opskrifter). Appen
 // scroller på window (ingen per-skærm scroll-container, se .app i theme.jsx),

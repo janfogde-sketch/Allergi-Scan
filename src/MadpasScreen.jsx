@@ -2,7 +2,7 @@
 import React from "react";
 import { ALLERGENS, SCREENS, MADPAS_LANGUAGES, MADPAS_SECTIONS_T, MADPAS_INTOLERANCE_HEADLINE_T, MADPAS_EXAMPLES_LABEL_T } from "./constants.jsx";
 import { initials } from "./helpers.js";
-import { Icon, AllergenGlyph } from "./SharedComponents.jsx";
+import { Icon, AllergenGlyph, InfoSheet } from "./SharedComponents.jsx";
 import { madpasAllergenLabel, madpasDietLabel, madpasAllergenExamples, madpasSafetyNote, madpasAllergyStatement, madpasCrossContactNote, madpasDietMessage } from "./useMadpas.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -65,6 +65,7 @@ export default function MadpasScreen({
   // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
   const { scanFamily: family } = useProfileContext();
   const { screen } = useNavigationContext();
+  const [showCrossContactInfo, setShowCrossContactInfo] = React.useState(false);
 
   // ── Grupperede oplysninger efter type — fælles for preview og fremvis-
   // ningsskærmen, så begge altid viser præcis det samme. ALLERGENS.type
@@ -410,7 +411,15 @@ export default function MadpasScreen({
                 {hasAnyData && (
                   <div className="card" style={{ marginTop:24, marginBottom:20, padding:"14px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
                     <div style={{ flex:1, minWidth:0 }}>
-                      <div className="mp-section-lbl" style={{ marginBottom:4 }}>KRYDSKONTAMINERING</div>
+                      {/* Info-ikonet (1. okt. 2026): synligt ikon 16px, men trykfladen er
+                          44x44 via negativ margin, så rækken ikke vokser. */}
+                      <div className="mp-section-lbl" style={{ marginBottom:4, display:"flex", alignItems:"center" }}>
+                        KRYDSKONTAMINERING
+                        <button type="button" onClick={() => setShowCrossContactInfo(true)} aria-label="Hvad er krydskontaminering?"
+                          style={{ width:44, height:44, margin:"-14px -10px -14px -6px", background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                          <Icon name="info" size={16} color="var(--muted)" />
+                        </button>
+                      </div>
                       <div style={{ fontSize:11.5, color:"var(--muted)", lineHeight:1.5 }}>
                         Tilføj en advarsel om krydskontaminering til dit madpas.
                       </div>
@@ -433,6 +442,12 @@ export default function MadpasScreen({
               )}
 
               {hasAnyData && renderMainContent()}
+
+              {showCrossContactInfo && (
+                <InfoSheet title="Hvad er krydskontaminering?" onClose={() => setShowCrossContactInfo(false)}>
+                  Krydskontaminering sker, når spor af et allergen utilsigtet overføres til anden mad, fx via køkkenudstyr, skærebrætter, olie eller hænder. Selv små mængder kan give en reaktion. Slår du advarslen til, beder Madpas personalet om at undgå krydskontaminering.
+                </InfoSheet>
+              )}
 
             </div>
           </div>
