@@ -1,7 +1,7 @@
 // @ts-nocheck
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { reportError, shouldReport, _resetForTests } from "./errorReporter.js";
+import { reportError, shouldReport, getRecentErrors, _resetForTests } from "./errorReporter.js";
 
 describe("shouldReport", () => {
   it("afviser tom tekst og kendt støj", () => {
@@ -67,5 +67,31 @@ describe("reportError", () => {
   it("kaster aldrig, selv hvis netværket fejler", async () => {
     fetch.mockRejectedValueOnce(new Error("offline"));
     await expect(reportError(new Error("Net"))).resolves.toBe(false);
+  });
+});
+
+describe("getRecentErrors (til crash-feedback)", () => {
+  beforeEach(() => {
+    _resetForTests();
+    localStorage.clear();
+    globalThis.fetch = vi.fn(async () => ({ ok: true, status: 204 }));
+  });
+
+  it("gemmer de seneste fejl lokalt, højst 5, uden støj og uden gentagelser i træk", async () => {
+    expect(getRecentErrors()).toEqual([]);
+    for (let i = 1; i <= 7; i++) await reportError(new Error(`Fejl ${i}`), { screen: "Scanner" });
+    await reportError(new Error("Fejl 7"), { screen: "Scanner" });
+    await reportError("ResizeObserver loop limit exceeded");
+    const list = getRecentErrors();
+    expect(list).toHaveLength(5);
+    expect(list.map(e => e.message)).toEqual(["Fejl 3", "Fejl 4", "Fejl 5", "Fejl 6", "Fejl 7"]);
+    expect(list[0]).toMatchObject({ screen: "Scanner", source: "app" });
+  });
+
+  it("gemmes også, når afsendelsen er afvist (offline)", async () => {
+    Object.defineProperty(navigator, "onLine", { value: false, configurable: true });
+    await reportError(new Error("Offline-fejl"));
+    Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
+    expect(getRecentErrors().map(e => e.message)).toEqual(["Offline-fejl"]);
   });
 });

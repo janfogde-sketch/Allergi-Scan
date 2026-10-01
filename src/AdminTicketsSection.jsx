@@ -70,7 +70,7 @@ export default function AdminTicketsSection({
       {!ticketsLoading && adminTickets.length === 0 && <div style={UI.utacenter_p48px0}><div style={UI.emoji48mb12}>🎉</div><div style={UI.ufs16_fw800_cink}>Ingen tickets</div></div>}
       <div style={UI.colGap8}>
         {adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter).map(t => {
-          const typeConfig = { bug:{icon:"bug",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{emoji:"🎨",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{icon:"bulb",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{icon:"package",color:"var(--ink3)",bg:"var(--surface2)",label:"Indhold"}, crash:{emoji:"💥",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{emoji:"✨",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
+          const typeConfig = { bug:{icon:"bug",color:"var(--red)",bg:"var(--red-lt)",label:"Fejl"}, ui:{icon:"eye",color:"var(--amber)",bg:"var(--amber-lt)",label:"Design"}, missing:{icon:"plus",color:"var(--amber)",bg:"var(--amber-lt)",label:"Mangler"}, content:{icon:"file",color:"var(--ink3)",bg:"var(--surface2)",label:"Indhold"}, crash:{icon:"warning",color:"var(--red)",bg:"var(--red-lt)",label:"Crash"}, suggestion:{icon:"bulb",color:"var(--green)",bg:"var(--green-lt)",label:"Forslag"} };
           const cfg = typeConfig[t.type] || typeConfig.bug;
           const statusColor = t.status==="open"?"var(--red)":t.status==="in_progress"?"var(--amber)":t.status==="resolved"?"var(--green)":"var(--muted)";
           const statusLabel = t.status==="open"?"Åben":t.status==="in_progress"?"I gang":t.status==="resolved"?"Løst":"Lukket";

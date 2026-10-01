@@ -22,6 +22,29 @@ const IGNORED_PATTERNS = [
   /AbortError/i,                 // afbrudte fetch-kald (navigation væk)
 ];
 
+// De seneste fejl gemmes også lokalt på enheden (højst 5, kun besked + kort stack), så en feedback af typen "Appen lukker ned" kan
+// sende dem med, også efter appen er genstartet. Indholdet forlader kun enheden, hvis brugeren sender feedback.
+const RECENT_KEY = "as_recent_errors";
+const MAX_RECENT = 5;
+
+export function getRecentErrors() {
+  try {
+    const list = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+    return Array.isArray(list) ? list.slice(-MAX_RECENT) : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberError({ message, stack, source, screen }) {
+  try {
+    const list = getRecentErrors();
+    if (list.length && list[list.length - 1].message === message.slice(0, 200)) return;
+    list.push({ ts: new Date().toISOString(), message: message.slice(0, 200), stack: stack ? stack.slice(0, 600) : null, source: source || "app", screen: screen || null });
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(-MAX_RECENT)));
+  } catch { /* lokal lagring kan være utilgængelig */ }
+}
+
 const sent = new Set();
 let sentCount = 0;
 
@@ -77,6 +100,7 @@ export async function reportError(error, meta = {}) {
     const message = String(error?.message || error || "").trim();
     const stack = typeof error?.stack === "string" ? error.stack : null;
     if (!shouldReport(message, stack)) return false;
+    rememberError({ message, stack, source: meta.source, screen: meta.screen });
     if (typeof navigator !== "undefined" && navigator.onLine === false) return false;
 
     const key = `${meta.screen || ""}|${message}`;
