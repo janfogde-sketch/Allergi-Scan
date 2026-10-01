@@ -54,8 +54,22 @@ describe.each(files)("%s", (file) => {
     for (const old of LEGACY) expect(html.toLowerCase()).not.toContain(old);
   });
   it("har Outlook-regler (data-ogsc/data-ogsb), så auto-inversion ikke gør tekst usynlig", () => {
-    expect(html).toContain("[data-ogsc] .text{color:#C9CFCC!important}");
-    expect(html).toContain("[data-ogsb] .paper{background-color:#1C1F1E!important}");
+    expect(html).toContain("[data-ogsc] .text,.text[data-ogsc]{color:#C9CFCC!important}");
+    expect(html).toContain("[data-ogsb] .paper,.paper[data-ogsb]{background-color:#1C1F1E!important}");
+  });
+  it("tåler automatisk farveinversion (Outlook.com m.fl.): kun meget mørke eller hvide tekstfarver", () => {
+    // Klienter, der ignorerer vores mørke CSS, vender kun meget mørke tekstfarver. Mellemtoner (fx #3C4A41, #647167)
+    // bliver stående og er næsten usynlige på den mørke baggrund (målt i Outlook, 1. okt. 2026).
+    const inline = [...html.matchAll(/style="([^"]*)"/g)].map(m => m[1]).join(";"); // kun inline-stilene, ikke <style>-blokken
+    const colors = [...inline.matchAll(/(?<![-\w])color:(#[0-9a-fA-F]{6})/g)].map(m => m[1]);
+    for (const c of colors) expect(lum(c) < 0.03 || lum(c) > 0.8, `${file}: ${c}`).toBe(true);
+    // sekundær tekst bruger nær-sort + opacity, ikke en grå mellemtone
+    for (const old of ["#3C4A41", "#536157", "#647167", "#4c5e51", "#426149"]) expect(html.toLowerCase()).not.toContain("color:" + old.toLowerCase());
+  });
+  it("har ingen lyse kanter, som lyser op i mørk tilstand, og logoets plade ligger i selve billedet", () => {
+    expect(html).not.toContain("border:1px solid #E6EAE1");
+    expect(html).not.toMatch(/class="logo logo-light"[^>]*background-color/);
+    expect(html).toMatch(/EatSafe_Logo_Email(_Light|_Light_Cream)?\.png/);
   });
   it("skifter logo: lyst som standard, mørkt (hvid Eat, grøn Safe) i mørk tilstand", () => {
     expect(html).toContain("logo-light");
@@ -77,8 +91,8 @@ describe.each(files)("%s", (file) => {
   });
 });
 
-describe("mørkt logo", () => {
-  it("findes som fil, så mailene kan hente det", () => {
-    expect(existsSync("public/brand/EatSafe_Logo_Email_Dark.png")).toBe(true);
+describe("logoer til mails", () => {
+  it("findes som filer, så mailene kan hente dem", () => {
+    for (const f of ["Dark", "Light", "Light_Cream"]) expect(existsSync(`public/brand/EatSafe_Logo_Email_${f}.png`)).toBe(true);
   });
 });

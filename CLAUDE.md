@@ -735,6 +735,7 @@ Brug `InfoSheet` til fremtidige info-ikoner.
 mørke palette (`#121413`/`#1C1F1E`, overskrift `#F4F7F5`, brødtekst `#C9CFCC`, sekundær `#9FA8A3`, grøn knap `#0F7D4F`), regler til Outlook og et logo,
 der skifter til `EatSafe_Logo_Email_Dark.png`. Detaljer og Gmail-begrænsning i `supabase/templates/resend/README.md`; testet i `src/mailDarkMode.test.js`.
 Ændr paletten i alle skabeloner samtidig.
+**Tåler automatisk inversion (1. okt.):** Outlook (web) ignorerer vores mørke CSS og vender selv farverne; derfor er al tekst nær-sort (+ opacity) eller hvid, aldrig en grå mellemtone, og det lyse logo har baggrunden bagt ind (se README i `supabase/templates/resend/`).
 
 ### Profil restruktureret — "Rediger profil" og "Rediger præferencer" adskilt (28. sept. 2026)
 
