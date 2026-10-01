@@ -392,7 +392,7 @@ ved fremtidige Madpas-ændringer i stedet for at genopfinde faldback-logikken.
 27. sept.):** `renderStaffView()` (MadpasScreen.jsx, omdøbt fra
 `renderWaiterView` — funktionen er ikke kun for tjenere) viser hvert
 allergen/fritekst-emne som sin EGEN blok (ikon + stort, fed navn — det
-mest fremtrædende element på hele skærmen — derefter "Common examples:"
+mest fremtrædende element på hele skærmen — derefter "May be found in:"
 og en pr.-emne sikkerhedstekst), adskilt af whitespace i stedet for
 skillelinjer i en fælles liste. Sikkerhedsteksten genereres nu ALTID pr.
 enkelt emne (aldrig en kombineret "any of these ingredients"-sætning for
@@ -418,7 +418,7 @@ brugerens allergi — se toggle-beskrivelsesteksten i MadpasScreen.jsx.
 `madpasAllergenExamples()` i useMadpas.js) vises under hvert allergen/
 relevant intolerance i fremvisningsskærmen — bevidst SMÅ og MUTED
 sammenlignet med selve allergen-navnet, og mærket med et kort, oversat
-"Almindelige eksempler:"/"Common examples:"-label (`MADPAS_EXAMPLES_LABEL_T`)
+"Kan findes i:"/"May be found in:"-label (før "Common examples:", ændret 1. okt. 2026, da eksemplerne ikke nødvendigvis indeholder allergenet) (`MADPAS_EXAMPLES_LABEL_T`)
 for aldrig at kunne forveksles med en komplet/garanteret liste.
 
 **Oplæsning** — knappens tekst er selv oversat (`MADPAS_SPEAK_LABEL_T`/
@@ -426,7 +426,7 @@ for aldrig at kunne forveksles med en komplet/garanteret liste.
 stor, fuld-bredde knap fast i bunden (runde 4, krav 8). `madpasSpeak()`
 (useMadpas.js) oplæser nu pr. allergen: navn + den samme sikkerhedstekst
 som vises på skærmen, plus krydskontaminerings-sætningen hvis aktiveret —
-"Common examples" oplæses bevidst IKKE (gør beskeden unødigt lang).
+"May be found in" oplæses bevidst IKKE (gør beskeden unødigt lang).
 Intolerancer nævnes samlet uden sikkerhedstekst, matcher den visuelle
 opdeling.
 
