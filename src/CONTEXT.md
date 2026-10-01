@@ -668,3 +668,36 @@ tællere, filtre på spor og ansvarlig, fritekstsøgning, afkrydsning direkte i 
 Menupunktet viser et rødt tal for åbne opgaver med høj prioritet (ikke ventende) eller overskredet frist. Listen er fyldt med
 de åbne punkter fra CLAUDE.md pr. 30. sept. 2026. **Claude kan læse og skrive den med SQL** (`admin_todos`); hold den opdateret,
 når et punkt klares, eller et nyt opstår. Dokumentér ikke åbne punkter to steder.
+
+## 16. Auth-mails fra Resend via Send Email Hook (1. okt. 2026)
+
+Supabase Auth kan sende sine mails på to måder, og begge går gennem Resend:
+
+1. **SMTP (i dag):** Auth bygger selv mailen ud fra skabelonerne i Supabase (emne + HTML) og afleverer den til Resends SMTP
+   (`smtp.resend.com`, `noreply@eatsafe.dk`). Skabelonerne sættes af `.github/workflows/deploy-auth-templates.yml`, der kræver, at
+   `SUPABASE_ACCESS_TOKEN` har rettigheden til at skrive auth-konfiguration (mangler den, fejler jobbet med 403, og mailen forbliver
+   Supabases engelske standard).
+2. **Send Email Hook (bygget, ikke slået til):** Auth kalder edge-funktionen `auth-send-email`, som sender mailen via Resends API.
+   Hook'en erstatter SMTP, mens den er slået til; slås den fra, bruges SMTP + skabelonerne igen (nem tilbagerulning).
+
+**Kilden til tekst og design er den samme:** `supabase/templates/auth/` (`templates.json` + én HTML-fil pr. skabelon, i Supabases
+Go-skabelonsyntaks med `{{ .ConfirmationURL }}`, `{{ .Token }}`, `{{ .Email }}`, `{{ .NewEmail }}`). Seks skabeloner: `confirmation`
+(Bjørns), `recovery`, `invite`, `magic_link`, `email_change`, `reauthentication` (udkast i samme stil, afventer Bjørns gennemsyn).
+`node scripts/build-auth-mails.mjs` bygger dem ind i `supabase/functions/_shared/authMailTemplates.ts` (genereret; `src/authMail.test.js`
+fejler, hvis den ikke er ajour).
+
+**Funktionen** (`supabase/functions/auth-send-email/index.ts`, `_shared/authMail.ts`, `_shared/standardWebhook.ts`):
+signeret webhook (Standard Webhooks; 401 uden gyldig signatur, tolerance 5 min). Bygger verify-linket
+`{SUPABASE_URL}/auth/v1/verify?token={token_hash}&type={email_action_type}&redirect_to=…`. Ved skift af e-mail med "Secure email
+change" sendes to mails (nuværende adresse: `token_hash_new`; ny adresse: `token_hash` — Supabases felter er byttet om). Typer uden skabelon
+(fx `password_changed_notification`) svares 200 uden afsendelse. Resend-fejl (429/5xx) gentages op til tre gange, derefter svares 500, så
+Auth viser en fejl; samme `Idempotency-Key` (`auth-{webhook-id}-{n}`) hindrer dobbeltafsendelse. Fejl logges i `client_errors`
+(kilde `edge:auth-send-email`, aldrig tokens).
+
+**Sådan slås den til (kun Jan, i Supabase Dashboard; efter merge og deploy af funktionen):**
+1. Authentication → Auth Hooks → Send Email → HTTPS, URL `https://jegrpcflyguadyxialkm.supabase.co/functions/v1/auth-send-email`,
+   opret hemmeligheden (`v1,whsec_…`), men lad hook'en være SLÅET FRA.
+2. Edge Functions → Secrets: tilføj `SEND_EMAIL_HOOK_SECRET` med hemmeligheden. (`RESEND_API_KEY` findes allerede.)
+3. Slå hook'en TIL, og test straks: opret en testkonto med en plus-adresse (bekræftelse) og brug "Glemt adgangskode" (recovery); tjek
+   mailen i Resend. Går noget galt: slå hook'en fra igen.
+

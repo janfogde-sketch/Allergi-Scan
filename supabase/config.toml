@@ -81,3 +81,8 @@ verify_jwt = false
 # Kategori 4: kun service-role (cron sync_recalls). Tjekker nøglen selv i koden.
 [functions.recalls-sync]
 verify_jwt = false
+
+# Signeret webhook (Supabase Auths Send Email Hook): Auth sender ingen bruger-JWT; funktionen kontrollerer
+# Standard Webhooks-signaturen med SEND_EMAIL_HOOK_SECRET i koden.
+[functions.auth-send-email]
+verify_jwt = false
