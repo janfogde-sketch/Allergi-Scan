@@ -6,7 +6,7 @@ import HealthConsentBox from "./HealthConsentBox.jsx";
 import { canSaveHealthData } from "./healthConsent.js";
 import { UI } from "./styleUtils.js";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
-import { AllergenChipPicker, AllergenSensitivity, DietChipPicker, ENumberPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
+import { AllergenChipPicker, AllergenSensitivity, CustomAllergenField, DietChipPicker, ENumberPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { Accordion, PrimaryButton, InputField } from "./DesignSystem.jsx";
 import { addUniqueCustom } from "./helpers.js";
 import { DIETS_ENABLED } from "./constants.jsx";
@@ -87,25 +87,8 @@ export const MemberForm = ({
       <AllergenChipPicker selected={allergens} onChange={setAllergens} />
       {setLevels && <AllergenSensitivity selected={allergens} levels={levels} onChange={setLevels} />}
 
-      {/* Skriv selv — samme ordlyd/opbygning som trin 2 */}
-      <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
-        <div style={UI.sectionLbl6}>Mangler din allergi eller intolerance?</div>
-        <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0 }}>
-          <input className="field" placeholder='Skriv fx "Fruktose"…' value={customInput}
-            aria-label="Egen allergi eller intolerance"
-            onChange={e => setCustomInput(e.target.value)}
-            onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setCustomAllerg(p=>addUniqueCustom(p, customInput)); setCustomInput(""); }}} />
-          <button className="btn btn-outline btn-sm" aria-label="Tilføj egen allergi" onClick={() => { if(customInput.trim()){ setCustomAllerg(p=>addUniqueCustom(p, customInput)); setCustomInput(""); }}}>+</button>
-        </div>
-        {customAllerg.length > 0 && (
-          <div className="tags">
-            {customAllerg.map((a,i) => (
-              <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
-                onClick={() => setCustomAllerg(p=>p.filter(x=>x!==a))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(p=>p.filter(x=>x!==a))}>×</span></div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Skriv selv — samme delte felt som onboarding og Rediger præferencer */}
+      <CustomAllergenField customAllerg={customAllerg} setCustomAllerg={setCustomAllerg} customInput={customInput} setCustomInput={setCustomInput} />
 
       {/* Kostpræferencer — delt DietChipPicker, samme som trin 3 (grøn
           valgt-state, sidste-ulige-kort spænder hele bredden). */}

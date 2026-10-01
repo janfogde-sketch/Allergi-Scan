@@ -145,8 +145,10 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
     }
   };
 
+  // Bundpadding med iOS safe area: bundnavigationen er ca. 113 px høj på iPhones med hjemmeindikator, mere end .screens faste 110 px, så
+  // formularens sidste knap kunne ligge bag den (2. okt. 2026).
   return (
-    <div className="screen fade-in">
+    <div className="screen fade-in" style={{ paddingBottom:"calc(110px + env(safe-area-inset-bottom))" }}>
       <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Familie</div>
       <div className="screen-sub">Alle i din familie — både profiler du administrerer, og personer med egen EatSafe-konto.</div>
       {/* "Aktive profiler ved scanning" er fjernet herfra (26. sept.

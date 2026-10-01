@@ -5,7 +5,7 @@ import { SCREENS, SUPABASE_URL, DIETS_ENABLED } from "./constants.jsx";
 import { makeHeaders, apiCall, addUniqueCustom } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 import { Accordion } from "./DesignSystem.jsx";
-import { ENumberPicker, AllergenChipPicker, AllergenSensitivity, DietChipPicker } from "./AllergenPicker.jsx";
+import { ENumberPicker, AllergenChipPicker, AllergenSensitivity, DietChipPicker, CustomAllergenField } from "./AllergenPicker.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -130,23 +130,8 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
         <AllergenSensitivity selected={allergens} levels={user.allergenLevels}
           onChange={touch(lv => setUser(u => ({ ...u, allergenLevels: lv })))} />
 
-        <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
-          <div style={UI.sectionLbl6}>Mangler din allergi eller intolerance?</div>
-          <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0 }}>
-            <input className="field" placeholder='Skriv fx "Fruktose"…' value={customInput} onChange={e => setCustomInput(e.target.value)}
-              aria-label="Egen allergi eller intolerance"
-              onKeyDown={e => { if(e.key==="Enter"&&customInput.trim()){ setTouched(true); setCustomAllerg(c=>addUniqueCustom(c, customInput)); setCustomInput(""); }}} />
-            <button className="btn btn-outline btn-sm" aria-label="Tilføj" onClick={() => { if(customInput.trim()){ setTouched(true); setCustomAllerg(c=>addUniqueCustom(c, customInput)); setCustomInput(""); }}}>+</button>
-          </div>
-          {customAllerg.length > 0 && (
-            <div className="tags">
-              {customAllerg.map((a,i) => (
-                <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
-                  onClick={() => { setTouched(true); setCustomAllerg(c=>c.filter((_,j)=>j!==i)); }} onKeyDown={e => { if (e.key === "Enter") { setTouched(true); setCustomAllerg(c=>c.filter((_,j)=>j!==i)); } }}>×</span></div>
-              ))}
-            </div>
-          )}
-        </div>
+        <CustomAllergenField customAllerg={customAllerg} setCustomAllerg={setCustomAllerg} customInput={customInput} setCustomInput={setCustomInput}
+          onChange={() => setTouched(true)} />
       </div>
 
       {DIETS_ENABLED && (
