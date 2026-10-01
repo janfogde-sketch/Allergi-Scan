@@ -1,22 +1,20 @@
 // @ts-nocheck
-// Simpel førsteversion (2. okt. 2026): særskilt afkrydsning for udtrykkeligt samtykke til helbredsoplysninger.
-// Ikke forhåndsafkrydset og adskilt fra vilkår/privatlivspolitik. Bjørn finpudser designet.
+// Særskilt afkrydsning for udtrykkeligt samtykke til helbredsoplysninger (2. okt. 2026). Aldrig forhåndsafkrydset og adskilt fra
+// vilkår/privatlivspolitik. Opbygning: primær tekst (selve samtykket), sekundær tekst (tilbagetrækning), link til politikken.
 import React from "react";
-import { HEALTH_CONSENT_TEXT } from "./healthConsent.js";
+import { HEALTH_CONSENT_TEXT, HEALTH_CONSENT_WITHDRAW_TEXT } from "./healthConsent.js";
 
 export default function HealthConsentBox({ checked, onChange, openPrivacy }) {
   return (
-    <label style={{ display:"flex", gap:10, alignItems:"flex-start", background:"var(--surface2)", border:"1px solid var(--border)",
-                    borderRadius:12, padding:"12px 14px", margin:"4px 0 14px", cursor:"pointer" }}>
-      <input id="health-consent" type="checkbox" checked={!!checked} onChange={e => onChange(e.target.checked)}
-        style={{ marginTop:3, width:18, height:18, accentColor:"var(--green)", flexShrink:0 }} />
-      <span style={{ fontSize:12.5, lineHeight:1.55, color:"var(--ink2)" }}>
-        {HEALTH_CONSENT_TEXT}
+    <label className={`consent-box${checked ? " on" : ""}`}>
+      <input id="health-consent" type="checkbox" checked={!!checked} onChange={e => onChange(e.target.checked)} />
+      <span>
+        <span className="consent-main">{HEALTH_CONSENT_TEXT}</span>
+        <span className="consent-sub">{HEALTH_CONSENT_WITHDRAW_TEXT}</span>
         {openPrivacy && (
-          <> <button type="button" onClick={e => { e.preventDefault(); openPrivacy(); }}
-            style={{ background:"none", border:"none", padding:0, color:"var(--green)", fontWeight:700, fontSize:12.5, cursor:"pointer", textDecoration:"underline" }}>
+          <button type="button" className="consent-link" onClick={e => { e.preventDefault(); openPrivacy(); }}>
             Læs privatlivspolitikken
-          </button></>
+          </button>
         )}
       </span>
     </label>

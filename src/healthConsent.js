@@ -18,6 +18,9 @@ export function canSaveHealthData({ hasHealthData, given, checked }) {
   return !needsHealthConsent({ hasHealthData, given }) || Boolean(checked);
 }
 
+// Primær tekst (selve samtykket) og sekundær tekst (om tilbagetrækning) vises på to niveauer i HealthConsentBox, så de er lette at skimme.
 export const HEALTH_CONSENT_TEXT =
-  "Jeg giver udtrykkeligt samtykke til, at EatSafe behandler de allergi-, intolerance- og andre helbredsoplysninger, jeg registrerer, " +
-  "for at give mig personlige produktkontroller og advarsler. Jeg kan til enhver tid trække samtykket tilbage under Indstillinger → Privatliv & data.";
+  "Jeg giver udtrykkeligt samtykke til, at EatSafe behandler mine allergi-, intolerance- og andre helbredsoplysninger " +
+  "for at give mig personlige produktkontroller og advarsler.";
+export const HEALTH_CONSENT_WITHDRAW_TEXT =
+  "Du kan til enhver tid trække samtykket tilbage under Indstillinger → Privatliv & data.";

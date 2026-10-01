@@ -320,7 +320,7 @@ export default function ScannerScreen({
   // Kort, engangs-forklaring lige FØR browserens egen tilladelses-dialog
   // vises første gang appen har brug for kameraet — ikke en lang privacy-
   // forklaring, kun én sætning. `localStorage`-flag, samme mønster som
-  // andre "vis kun første gang"-tilstande i appen (fx betaIntroSeen).
+  // andre "vis kun første gang"-tilstande i appen (fx dismissede hints).
   const [showCameraPrimer, setShowCameraPrimer] = React.useState(false);
   const handleScanButtonClick = () => {
     let primerSeen = true;
@@ -763,12 +763,7 @@ export default function ScannerScreen({
                   )}
                 </div>
 
-                {/* Den permanente "Beta-information"-knap er fjernet herfra
-                    (25. sept. 2026, brugerfeedback) — Beta-introen vises nu
-                    automatisk som en kort, engangs-overlay lige efter
-                    onboarding trin 5 (se App.jsx's finishOnboard-wrapper),
-                    og kan genåbnes manuelt via "Om EatSafe Beta" i
-                    ProfileMenu.jsx i stedet for en fast knap på forsiden. */}
+                {/* Sikkerhedsinformationen kan genåbnes fra menuen/Indstillinger (SafetyInfoModal), ikke fra en fast knap her. */}}
               </div>
               )}
             </div>}

@@ -114,6 +114,8 @@ export const CustomAllergenField = ({ customAllerg, setCustomAllerg, customInput
 // fordi hvede indeholder gluten og begge ellers kan modsige hinanden.
 // Design (2. okt. 2026, Bjørn): segmenteret kontrol (.trace-seg i theme.jsx, 44 px høje knapper, solid grøn valgt-state med flueben),
 // én kort linje under det valgte valg, og cøliaki-teksten som en tydelig advarselsboks. Logikken er uændret.
+// Cøliaki-teksten hører kun til valget "Gluten" (cøliaki/glutenfølsomhed), aldrig til hvede alene: hvedeallergi er ikke cøliaki, og
+// appen udleder ikke en diagnose af et almindeligt allergivalg.
 // `bare` fjerner kortets øverste skillelinje (bruges i onboarding, hvor trinnet selv har overskrift); `showTitle` skjuler overskriften.
 const TRACE_NOTE = {
   warn: "Du advares både ved ingrediens og ved spor.",
@@ -127,7 +129,7 @@ export const AllergenSensitivity = ({ selected, levels, onChange, showIntro = tr
     if (!a) continue;
     if (id === "hvede" && ids.includes("gluten")) continue; // vises sammen med gluten
     if (id === "gluten" && ids.includes("hvede")) rows.push({ key: "gluten", label: "Gluten og hvede", ids: ["gluten", "hvede"], celiac: true });
-    else rows.push({ key: id, label: a.label, ids: [id], celiac: id === "gluten" || id === "hvede" });
+    else rows.push({ key: id, label: a.label, ids: [id], celiac: id === "gluten" });
   }
   if (rows.length === 0) return null;
   const isDirect = (row) => row.ids.every(i => levels?.[i] === "direct_only");
@@ -296,35 +298,30 @@ export const ENumberPicker = ({ selected, onChange }) => {
           const shortName = dashIdx === -1 ? name : name.slice(0, dashIdx);
           const detail = dashIdx === -1 ? "" : name.slice(dashIdx + 3);
           const isExpanded = !!expandedRows[e];
-          // Fast 3-kolonne-struktur (25. sept. 2026, brugerfeedback): en fast
-          // kode-kolonne (76px) til venstre, en tekst-kolonne til navn +
-          // beskrivelse (samme venstre kant for begge, uanset linjeantal —
-          // begge ligger nu i samme grid-celle i stedet for at beskrivelsen
-          // var en selvstændig søskende-boks med sin egen, ikke-matchende
-          // padding-left), og et fast chevron/check-område (36px) til højre.
+          // Fast 4-kolonne-struktur (2. okt. 2026, onboarding-polering): en tydelig afkrydsningsboks til venstre (selve valget), en fast
+          // kode-kolonne, en tekst-kolonne til navn + beskrivelse og en separat info-knap (chevron) til højre, som KUN folder detaljer ud.
+          // Hele rækken kan også trykkes for at vælge, så man kan afkrydse direkte i listen uden at åbne hver post.
+          const toggle = () => onChange(on ? selected.filter(x => x !== e) : [...selected, e]);
           return (
-            <div key={e} className="enum-row"
-              style={{ borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none", background: on?"var(--green-lt)":"var(--surface)" }}>
-              <div onClick={() => onChange(on ? selected.filter(x=>x!==e) : [...selected, e])}
-                style={{ display:"grid", gridTemplateColumns:"76px 1fr 36px", alignItems:"start", padding:"8px 12px", cursor:"pointer" }}>
-                <div style={{ fontSize:12, fontWeight:800, color:on?"var(--green)":"var(--ink)" }}>{e}</div>
-                <div style={{ minWidth:0, textAlign:"left" }}>
-                  <div style={{ fontSize:12, color:on?"var(--green)":"var(--ink2)", lineHeight:1.4, textAlign:"left" }}>{shortName}</div>
-                  {isExpanded && detail && (
-                    <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.4, marginTop:4, textAlign:"left" }}>{detail}</div>
-                  )}
-                </div>
-                <div style={{ display:"flex", alignItems:"center", justifyContent:"flex-end", gap:4 }}>
-                  {detail && (
-                    <div role="button" aria-label={isExpanded ? "Skjul detaljer" : "Vis detaljer"}
-                      onClick={ev => { ev.stopPropagation(); setExpandedRows(s => ({...s, [e]: !s[e]})); }}
-                      style={{ flexShrink:0, padding:4, margin:-4, display:"flex", transform: isExpanded ? "rotate(180deg)" : "none", transition:".2s" }}>
-                      <Icon name="chevronDown" size={13} color="var(--muted)" />
-                    </div>
-                  )}
-                  {on && <div style={{ flexShrink:0, display:"flex" }}><Icon name="check" size={11} color="var(--green)" /></div>}
-                </div>
+            <div key={e} className={`enum-row${on ? " on" : ""}`} onClick={toggle}
+              style={{ borderBottom: i < arr.length-1 ? "1px solid var(--border)" : "none" }}>
+              <button type="button" role="checkbox" aria-checked={on} aria-label={`${e} ${shortName}`} className="enum-check"
+                onClick={ev => { ev.stopPropagation(); toggle(); }}>
+                {on && <Icon name="check" size={13} color="var(--on-green)" />}
+              </button>
+              <div className="enum-code">{e}</div>
+              <div style={{ minWidth:0, textAlign:"left" }}>
+                <div className="enum-name">{shortName}</div>
+                {isExpanded && detail && <div className="enum-detail">{detail}</div>}
               </div>
+              {detail ? (
+                <button type="button" className="enum-info" aria-expanded={isExpanded} aria-label={`${isExpanded ? "Skjul" : "Vis"} information om ${e}`}
+                  onClick={ev => { ev.stopPropagation(); setExpandedRows(st => ({ ...st, [e]: !st[e] })); }}>
+                  <span style={{ display:"flex", transform: isExpanded ? "rotate(180deg)" : "none", transition:".2s" }}>
+                    <Icon name="chevronDown" size={14} color="var(--muted)" />
+                  </span>
+                </button>
+              ) : <span />}
             </div>
           );
         })}
