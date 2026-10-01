@@ -180,6 +180,23 @@ export function useAdmin(accessToken, userId, clearAuth) {
     setTicketsLoading(false);
   };
 
+  // Åbner én ticket direkte (fx fra en opgave på To do-listen) — henter den selv, så det også virker for løste tickets,
+  // som ikke er i den indlæste liste. Returnerer true, hvis ticketten blev fundet.
+  const openTicketById = async (id) => {
+    try {
+      const data = await apiCall(`${SUPABASE_URL}/rest/v1/feedback_tickets?id=eq.${encodeURIComponent(id)}&limit=1`, {
+        headers: makeHeaders(accessToken),
+      });
+      const t = Array.isArray(data) ? data[0] : null;
+      if (!t) { showToast("Ticketten findes ikke længere", "error"); return false; }
+      setOpenTicket(t);
+      return true;
+    } catch (e) {
+      showToast("Kunne ikke åbne ticketten: " + e.message, "error");
+      return false;
+    }
+  };
+
   const loadAdminUsers = async () => {
     try {
       const data = await apiCall(
@@ -988,6 +1005,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
     deleteOwnAccount,
     loadAdminStats,
     loadTickets,
+    openTicketById,
     loadAdminUsers,
     updateUserRole,
     deleteUser,
