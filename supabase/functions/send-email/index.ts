@@ -74,11 +74,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Velkomstmailen (30. sept. 2026): sendes kun af send_welcome_after_onboarding,
-    // én gang pr. bruger. Begge typer bruger HTML'en fra repoet (welcomeMail.ts),
-    // så overskrift og tekst versionsstyres. Idempotency-Key forhindrer, at et
-    // gentaget kald inden for 24 timer giver en ekstra mail.
-    if (type === "welcome" || type === "welcome_onboarded") {
+    // Velkomstmailen (30. sept. 2026): EatSafes eneste velkomstmail. Sendes kun af
+    // send_welcome_after_onboarding, én gang pr. bruger, med HTML'en fra repoet
+    // (welcomeMail.ts), så overskrift og tekst versionsstyres. Den gamle type
+    // "welcome" og skabelonen "Velkomstmail - Beta" er fjernet 1. okt. 2026.
+    // Idempotency-Key forhindrer, at et gentaget kald inden for 24 timer giver en ekstra mail.
+    if (type === "welcome_onboarded") {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": `welcome-${to}` },
