@@ -23,6 +23,8 @@ export default function NotificationScreen({ notificationId, markRead, onDelete,
     setState({ status: "loading", item: null });
     const res = await fetchNotification(accessToken, notificationId);
     setState(res);
+    // Beskeden er hentet (eller findes ikke): det ventende link fra push er brugt.
+    try { if (localStorage.getItem(PENDING_KEY) === notificationId) localStorage.removeItem(PENDING_KEY); } catch { /* ignorer */ }
     setInviteInactive(false);
     if (res.status === "ok" && !res.item.read_at) markRead(notificationId);
     if (res.status === "ok" && res.item.type === "P2" && res.item.entity_id) {

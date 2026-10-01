@@ -66,14 +66,16 @@ export function useNotifications({ accessToken, userId, user, screen, setScreen,
   }, []);
 
   // Åbn den ventende besked, når brugeren er logget ind og færdig med onboarding.
+  // Id'et fjernes først, når selve beskeden er hentet (NotificationScreen) — ellers
+  // mister en genindlæsning midt i åbningen (fx når en ny service worker overtager
+  // og index.html genindlæser siden) beskeden, og brugeren lander på forsiden.
   useEffect(() => {
     if (!accessToken || !userId || user?.onboarding_completed !== true) return;
     let id = null;
     try { id = localStorage.getItem(PENDING_KEY); } catch { /* ignorer */ }
-    if (!id) return;
-    try { localStorage.removeItem(PENDING_KEY); } catch { /* ignorer */ }
+    if (!id || id === openId) return;
     openNotification(id);
-  }, [accessToken, userId, user, openNotification]);
+  }, [accessToken, userId, user, openNotification, openId]);
 
   const unread = items.filter((n) => !n.read_at).length;
   return { items, unread, loading, listError, loadList, markRead, removeNotification, openId, openNotification };
