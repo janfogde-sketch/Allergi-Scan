@@ -25,7 +25,7 @@ function Select({ id, value, onChange, children, label, style }) {
   );
 }
 
-function TodoModal({ todo, isNew = false, admins, userId, comments = [], commentsLoading = false, onSave, onDelete, onClose, onAddComment, onDeleteComment }) {
+function TodoModal({ todo, isNew = false, admins, userId, comments = [], commentsLoading = false, onSave, onDelete, onClose, onAddComment, onDeleteComment, onOpenTicket }) {
   const [draft, setDraft] = useState({
     title: todo.title, description: todo.description ?? "", status: todo.status, priority: todo.priority, track: todo.track,
     assignee_id: todo.assignee_id ?? "", due_date: todo.due_date ?? "", link: todo.link ?? "",
@@ -59,7 +59,12 @@ function TodoModal({ todo, isNew = false, admins, userId, comments = [], comment
               <div style={{ fontSize: 15, fontWeight: 800 }}>Ny opgave</div>
             ) : (
               <>
-              {todo.ticket_id && <div className="admin-pill admin-pill-neutral" style={{ marginBottom: 6 }}>Kommer fra en ticket · status følger med begge veje</div>}
+              {todo.ticket_id && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                  <span className="admin-pill admin-pill-neutral">Kommer fra en ticket · status følger med begge veje</span>
+                  {onOpenTicket && <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => { onOpenTicket(todo.ticket_id); onClose(); }}>Åbn ticket</button>}
+                </div>
+              )}
               <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
                 Oprettet {fmtDateTime(todo.created_at)}{todo.created_by ? ` af ${personName(admins, todo.created_by)}` : ""}
                 {todo.completed_at ? ` · Færdig ${fmtDateTime(todo.completed_at)}${todo.completed_by ? ` af ${personName(admins, todo.completed_by)}` : ""}` : ""}
@@ -164,7 +169,7 @@ function TodoModal({ todo, isNew = false, admins, userId, comments = [], comment
   );
 }
 
-export default function TodoSection({ todos, admins, loading, load, doneLoaded, doneCount, loadDone, create, update, remove, userId, comments, commentsLoading, loadComments, closeComments, addComment, deleteComment }) {
+export default function TodoSection({ onOpenTicket, todos, admins, loading, load, doneLoaded, doneCount, loadDone, create, update, remove, userId, comments, commentsLoading, loadComments, closeComments, addComment, deleteComment }) {
   const [view, setView] = useState("open");
   const [track, setTrack] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
@@ -254,7 +259,11 @@ export default function TodoSection({ todos, admins, loading, load, doneLoaded, 
                     </td>
                     <td style={{ maxWidth: 520 }}>
                       <div className={`todo-title${done ? " done" : ""}`}>
-                        {t.title}{t.ticket_id && <span className="admin-pill admin-pill-neutral" style={{ marginLeft: 8, verticalAlign: "middle" }} title="Kommer fra en ticket; status følger med begge veje">Ticket</span>}
+                        {t.title}{t.ticket_id && (onOpenTicket
+                          ? <button type="button" className="admin-pill admin-pill-neutral" style={{ marginLeft: 8, verticalAlign: "middle", cursor: "pointer", border: "none", font: "inherit" }}
+                              title="Åbn ticketten, opgaven kommer fra" aria-label={`Åbn ticketten bag: ${t.title}`}
+                              onClick={(e) => { e.stopPropagation(); onOpenTicket(t.ticket_id); }}>Åbn ticket</button>
+                          : <span className="admin-pill admin-pill-neutral" style={{ marginLeft: 8, verticalAlign: "middle" }} title="Kommer fra en ticket; status følger med begge veje">Ticket</span>)}
                       </div>
                       {t.description && <div className="todo-desc">{t.description}</div>}
                       {t.link && isHttpUrl(t.link) && (
@@ -296,6 +305,7 @@ export default function TodoSection({ todos, admins, loading, load, doneLoaded, 
           onSave={(patch) => update(openTodo.id, patch)}
           onDelete={() => remove(openTodo.id)}
           onClose={() => setOpenId(null)}
+          onOpenTicket={onOpenTicket}
           onAddComment={(text) => addComment(openTodo.id, text)}
           onDeleteComment={deleteComment}
         />

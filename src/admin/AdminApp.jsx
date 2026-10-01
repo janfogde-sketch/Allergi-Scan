@@ -317,7 +317,10 @@ export default function AdminApp() {
       {section === "errors" && <ErrorsSection {...clientErrors} />}
       {section === "recalls" && <RecallsSection {...recalls} />}
       {section === "notifications" && <NotificationsSection {...notifications} userId={userId} />}
-      {section === "todo" && <TodoSection {...todos} userId={userId} />}
+      {section === "todo" && (
+        <TodoSection {...todos} userId={userId}
+          onOpenTicket={(ticketId) => { setSection("tickets"); admin.openTicketById(ticketId); }} />
+      )}
       {section === "family" && (
         <FamilySection
           familyMembers={admin.familyMembers} familyInvites={admin.familyInvites} familyLoading={admin.familyLoading}
