@@ -57,9 +57,9 @@ function inlineName(name, lang) {
 }
 export function madpasSafetyNote(name, lang, allergenId) {
   if (!name) return "";
-  // Engelsk, fast allergen: "contains no milk or milk-derived ingredients".
+  // Engelsk, fast allergen: "does not contain milk or any milk-derived ingredients".
   const derived = (lang === "en" || !MADPAS_SAFETY_NOTE_T[lang]) && allergenId && MADPAS_EN_DERIVED[allergenId];
-  if (derived) return `Please make sure my food contains no ${inlineName(name, "en")} or ${derived}-derived ingredients.`;
+  if (derived) return `Please make sure my food does not contain ${inlineName(name, "en")} or any ${derived}\u2011derived ingredients.`; // ikke-brydende bindestreg
   const template = MADPAS_SAFETY_NOTE_T[lang] || MADPAS_SAFETY_NOTE_T.en;
   return template.split("{name}").join(inlineName(name, lang));
 }

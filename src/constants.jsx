@@ -684,7 +684,7 @@ export const MADPAS_DIET_MESSAGE_T = {
 // i useMadpas.js, som erstatter ALLE forekomster, ikke kun den første.
 export const MADPAS_SAFETY_NOTE_T = {
   da:"Sørg venligst for, at min mad ikke indeholder {name} eller ingredienser fremstillet af {name}.",
-  en:"Please make sure my food contains no {name} or ingredients made from {name}.",
+  en:"Please make sure my food does not contain {name} or any ingredients made from {name}.",
   de:"Bitte stellen Sie sicher, dass mein Essen Folgendes nicht enthält: {name}, oder Zutaten, die daraus hergestellt wurden.",
   fr:"Veuillez vous assurer que mon repas ne contient pas ce qui suit : {name}, ni aucun ingrédient qui en est dérivé.",
   es:"Por favor, asegúrese de que mi comida no contenga lo siguiente: {name}, ni ingredientes derivados de ello.",

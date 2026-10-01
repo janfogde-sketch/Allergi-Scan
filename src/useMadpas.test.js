@@ -15,12 +15,12 @@ describe("Madpas-sætninger", () => {
 
   it("giver det direkte engelske budskab for mælk", () => {
     expect(madpasAllergyStatement("Milk", "en")).toBe("I have a food allergy to milk.");
-    expect(madpasSafetyNote("Milk", "en", "maelkeallergi")).toBe("Please make sure my food contains no milk or milk-derived ingredients.");
-    expect(madpasSafetyNote("Tree Nuts", "en", "noedder")).toBe("Please make sure my food contains no tree nuts or nut-derived ingredients.");
+    expect(madpasSafetyNote("Milk", "en", "maelkeallergi")).toBe("Please make sure my food does not contain milk or any milk\u2011derived ingredients.");
+    expect(madpasSafetyNote("Tree Nuts", "en", "noedder")).toBe("Please make sure my food does not contain tree nuts or any nut\u2011derived ingredients.");
   });
 
   it("falder tilbage til 'made from' for fritekst og andre sprog", () => {
-    expect(madpasSafetyNote("Kiwi", "en")).toBe("Please make sure my food contains no kiwi or ingredients made from kiwi.");
+    expect(madpasSafetyNote("Kiwi", "en")).toBe("Please make sure my food does not contain kiwi or any ingredients made from kiwi.");
     expect(madpasSafetyNote("Mælk", "da", "maelkeallergi")).toContain("ikke indeholder mælk");
     expect(madpasAllergyStatement("Mælk", "da")).toBe("Jeg har fødevareallergi over for mælk.");
   });

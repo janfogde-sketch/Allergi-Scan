@@ -191,6 +191,9 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
     file: <><path strokeLinecap="round" strokeLinejoin="round" d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path strokeLinecap="round" strokeLinejoin="round" d="M14 3v5h5"/></>,
     clock: <><circle cx="12" cy="12" r="9" strokeWidth="1.75"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3.5 2"/></>,
     save: <><path strokeLinecap="round" strokeLinejoin="round" d="M5 4h11l3 3v13a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1z"/><path strokeLinecap="round" strokeLinejoin="round" d="M8 4v5h7V4M8 20v-6h8v6"/></>,
+    // Mælkekarton (1. okt. 2026) — stregikon til Madpas-kortet i stedet for
+    // det illustrerede glas, som lignede en emoji.
+    milk: <><path strokeLinecap="round" strokeLinejoin="round" d="M9 2.5h6M9 2.5 6.5 7.5h11L15 2.5M6.5 7.5V20a1.5 1.5 0 001.5 1.5h8a1.5 1.5 0 001.5-1.5V7.5"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 11.5c-1.3 1.6-2 2.8-2 3.7a2 2 0 004 0c0-.9-.7-2.1-2-3.7z"/></>,
     utensils: <><path strokeLinecap="round" strokeLinejoin="round" d="M7 3v7a2 2 0 002 2h0a2 2 0 002-2V3M9 12v9M16 3c-1.5 1.5-2 3-2 6s.5 4.5 2 6v6"/></>,
     hash: <path strokeLinecap="round" strokeLinejoin="round" d="M5 9h14M5 15h14M10 4L8 20m8-16l-2 16"/>,
     zap: <path strokeLinecap="round" strokeLinejoin="round" d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>,

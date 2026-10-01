@@ -90,18 +90,23 @@ export default function MadpasScreen({
     // element på hele skærmen (krav 3). marginBottom rundet til appens
     // faste spacing-skala (4/6/8/10/12/14/16/20/24/32, se
     // .claude/rules/design-tokens.md) i stedet for "næsten runde" 26px.
-    const itemBlock = { marginBottom:24 };
-    const itemHeadRow = { display:"flex", alignItems:"center", gap:14 };
-    const itemIcon = { fontSize:40, lineHeight:1, flexShrink:0, width:40, textAlign:"center" };
+    const itemBlock = { marginBottom:20 };
+    const itemHeadRow = { display:"flex", alignItems:"center", gap:12 };
+    const itemIcon = { fontSize:40, lineHeight:1, flexShrink:0, width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center" };
+    // Mælk vises med appens eget stregikon i en rolig grøn flise (1. okt.
+    // 2026) i stedet for det illustrerede glas, som lignede en emoji.
+    const renderAllergenIcon = (a) => a.id === "maelkeallergi"
+      ? <span style={{ ...itemIcon, borderRadius:14, background:"var(--green-lt)" }}><Icon name="milk" size={28} color="var(--green)" /></span>
+      : <span style={itemIcon}><AllergenGlyph a={a} size={40} /></span>;
     const itemName = { fontSize:32, fontWeight:800, color:"var(--ink)", lineHeight:1.15 };
     // Korte, tydeligt mærkede fødevare-eksempler under selve allergenet —
     // bevidst LILLE og MUTED sammenlignet med itemName, så allergenet selv
     // altid forbliver det mest fremtrædende element på skærmen.
-    const exampleLine = { fontSize:14, color:"var(--muted)", marginTop:6, lineHeight:1.45, paddingLeft:54 };
+    const exampleLine = { fontSize:14, color:"var(--muted)", marginTop:4, lineHeight:1.45, paddingLeft:56 };
     // Direkte to-sætnings-budskab pr. fødevareallergi (1. okt. 2026):
     // "I have a food allergy to milk." (stærkest) + sikkerhedssætningen.
     const statementLine = { fontSize:17, fontWeight:800, color:"var(--ink)", lineHeight:1.4 };
-    const messageBlock = { marginTop:12, paddingLeft:54 };
+    const messageBlock = { marginTop:10, paddingLeft:56 };
     const messageSafety = { fontSize:15.5, fontWeight:600, color:"var(--ink2)", marginTop:4, lineHeight:1.5 };
     const renderExamples = (allergenId) => {
       const examples = madpasAllergenExamples(allergenId, lang);
@@ -117,7 +122,7 @@ export default function MadpasScreen({
       <div style={{ position:"fixed", inset:0, zIndex:9999, background:"var(--paper)", display:"flex", flexDirection:"column" }} dir={rtl ? "rtl" : "ltr"}>
 
         {/* Stort flag/sprog øverst + tydelig-men-diskret luk-knap. */}
-        <div style={{ padding:"22px 24px 18px", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
+        <div style={{ padding:"20px 24px 8px", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
             <span style={{ fontSize:44, lineHeight:1 }}>{langInfo?.flag}</span>
             <span style={{ fontSize:17, color:"var(--ink2)", fontWeight:700 }}>{langInfo?.name}</span>
@@ -135,23 +140,20 @@ export default function MadpasScreen({
             den, men den ekstra luft sikrer at sidste linje altid har
             synlig afstand til Read aloud-knappen i stedet for at ende
             lige der (27. sept., finpolish nr. 2, punkt 5). */}
-        {/* Indholdet centreres lodret (lidt over midten) mellem sproglinjen og
-            knappen, så der ikke står en stor tom flade over knappen på høje
-            skærme (1. okt. 2026). Spacerne krymper til 0, når indholdet er
-            langt, og området scroller som før. */}
-        <div style={{ flex:1, overflowY:"auto", padding:"4px 24px 24px", display:"flex", flexDirection:"column" }}>
-          <div aria-hidden="true" style={{ flex:"1 1 0" }} />
+        {/* Indholdet starter lige under sproglinjen (1. okt. 2026: den
+            lodrette centrering gav en stor tom flade øverst). */}
+        <div style={{ flex:1, overflowY:"auto", padding:"16px 24px 32px", display:"flex", flexDirection:"column" }}>
           <div style={{ flexShrink:0 }}>
           {(allergyItems.length > 0 || customItems.length > 0) && (
             <div style={{ marginBottom:32 }}>
               {/* "I am allergic to:" er fjernet (1. okt. 2026) — hver allergi
                   har nu sin egen direkte sætning nedenfor. */}
-              <div style={{ ...sectionLbl, marginBottom:16 }}>{MADPAS_SECTIONS_T.allergies[lang] || MADPAS_SECTIONS_T.allergies.en}</div>
+              <div style={{ ...sectionLbl, marginBottom:10 }}>{MADPAS_SECTIONS_T.allergies[lang] || MADPAS_SECTIONS_T.allergies.en}</div>
               <div>
                 {allergyItems.map(a => (
                   <div key={a.id} style={itemBlock}>
                     <div style={itemHeadRow}>
-                      <span style={itemIcon}><AllergenGlyph a={a} size={40} /></span>
+                      {renderAllergenIcon(a)}
                       <span style={itemName}>{madpasAllergenLabel(a, lang)}</span>
                     </div>
                     {renderExamples(a.id)}
@@ -200,7 +202,7 @@ export default function MadpasScreen({
                 {intoleranceItems.map(a => (
                   <div key={a.id} style={itemBlock}>
                     <div style={itemHeadRow}>
-                      <span style={itemIcon}><AllergenGlyph a={a} size={40} /></span>
+                      {renderAllergenIcon(a)}
                       <span style={itemName}>{madpasAllergenLabel(a, lang)}</span>
                     </div>
                     {renderExamples(a.id)}
@@ -229,7 +231,6 @@ export default function MadpasScreen({
             </div>
           )}
           </div>
-          <div aria-hidden="true" style={{ flex:"1.15 1 0" }} />
         </div>
 
         {/* Footer — kun den store oplæs-knap (reel funktion). Ingen
