@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { SCREENS, SUPABASE_URL, DIETS_ENABLED } from "./constants.jsx";
-import { makeHeaders, apiCall, addUniqueCustom } from "./helpers.js";
+import { makeHeaders, apiCall, addUniqueCustom, pruneAllergenLevels } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 import { Accordion } from "./DesignSystem.jsx";
 import { ENumberPicker, AllergenChipPicker, AllergenSensitivity, DietChipPicker, CustomAllergenField } from "./AllergenPicker.jsx";
@@ -97,7 +97,7 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
         method:"PATCH",
         headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" },
         // Mens kostpræferencer er på pause, røres de gemte valg ikke (sendes ikke med)
-        body:JSON.stringify({ ...(DIETS_ENABLED ? { diets:user.diets||[] } : {}), e_numbers:selectedENumbers||[], allergen_levels:user.allergenLevels||{} }),
+        body:JSON.stringify({ ...(DIETS_ENABLED ? { diets:user.diets||[] } : {}), e_numbers:selectedENumbers||[], allergen_levels:pruneAllergenLevels(user.allergenLevels, allergens) }),
       });
 
       // Samlet DELETE + én bulk-POST i stedet for et loop af enkelt-POSTs —
@@ -126,7 +126,11 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
 
       <div className="card" style={UI.mb10}>
         <div className="card-lbl" style={UI.mb8}>Allergier / intolerancer</div>
-        <AllergenChipPicker selected={allergens} onChange={touch(setAllergens)} />
+        <AllergenChipPicker selected={allergens} onChange={touch(arr => {
+          setAllergens(arr);
+          // Fjernes et allergen, fjernes dets sporvalg også (ingen skjulte værdier)
+          setUser(u => ({ ...u, allergenLevels: pruneAllergenLevels(u.allergenLevels, arr) }));
+        })} />
         <AllergenSensitivity selected={allergens} levels={user.allergenLevels}
           onChange={touch(lv => setUser(u => ({ ...u, allergenLevels: lv })))} />
 

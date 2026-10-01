@@ -6,9 +6,10 @@ import { Icon } from "./SharedComponents.jsx";
 // "Velkommen til EatSafe Beta"-sliden er fjernet (BETA vises kun som diskret badge i headeren), så efter sidste onboarding-trin
 // kommer kun denne ene modal, før appen åbner. Vises enten som sidste trin i onboarding (CTA gennemfører onboarding) eller manuelt
 // fra menuen/Indstillinger (CTA lukker bare). Ingen "Spring over": brugeren skal bekræfte, at de har set den.
-export const SAFETY_INFO_TEXT =
-  "EatSafe er vejledende. Kontrollér altid produktets aktuelle ingrediens- og allergenoplysninger på emballagen. " +
-  "Produktinformation kan ændre sig, og EatSafe kan derfor ikke erstatte oplysningerne på den fysiske emballage.";
+export const SAFETY_INFO_PARAGRAPHS = [
+  "EatSafe er vejledende. Kontrollér altid produktets aktuelle ingrediens- og allergenoplysninger på emballagen.",
+  "Produktinformation kan ændre sig, og EatSafe kan derfor ikke erstatte oplysningerne på den fysiske emballage.",
+];
 
 export default function SafetyInfoModal({ onAcknowledge, busy = false }) {
   return (
@@ -23,10 +24,12 @@ export default function SafetyInfoModal({ onAcknowledge, busy = false }) {
           <div id="safety-info-title" style={{ fontSize:20, fontWeight:800, color:"var(--ink)", marginBottom:12, letterSpacing:"-.3px" }}>
             Vigtig sikkerhedsinformation
           </div>
-          <div id="safety-info-text" style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.65 }}>{SAFETY_INFO_TEXT}</div>
+          <div id="safety-info-text" style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.65, display:"flex", flexDirection:"column", gap:12 }}>
+            {SAFETY_INFO_PARAGRAPHS.map(p => <p key={p} style={{ margin:0 }}>{p}</p>)}
+          </div>
         </div>
         <button className="btn btn-primary btn-full" onClick={onAcknowledge} disabled={busy} autoFocus>
-          Jeg forstår – kom i gang →
+          Jeg forstår – kom i gang
         </button>
       </div>
     </div>

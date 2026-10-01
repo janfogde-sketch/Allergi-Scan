@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
-import { makeHeaders, apiCall } from "./helpers.js";
+import { makeHeaders, apiCall, pruneAllergenLevels } from "./helpers.js";
 
 // onboardStep/setOnboardStep er deklareret i App.jsx og sendes ind som
 // props (29. sept. 2026, "Onboarding-persistens") — IKKE længere lokal
@@ -117,7 +117,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
     await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
       method: "PATCH",
       headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-      body: JSON.stringify({ e_numbers: selectedENumbers || [], allergen_levels: allergensToSave.length > 0 ? (user.allergenLevels || {}) : {} }),
+      body: JSON.stringify({ e_numbers: selectedENumbers || [], allergen_levels: pruneAllergenLevels(user.allergenLevels, allergensToSave) }),
     });
   };
 

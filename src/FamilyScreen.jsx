@@ -402,7 +402,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
             <div className="card-title">{editingMemberId ? "Rediger familiemedlem" : "Opret profil uden egen konto"}</div>
             <TextLink onClick={() => { cancelEditMember(); setFamilyAddMode(null); }}>Annuller</TextLink>
           </div>
-          <MemberForm
+          <MemberForm key={editingMemberId || "new"} editing={!!editingMemberId}
             name={newMemberName} setName={setNewMemberName}
             birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
             gender={newMemberGender} setGender={setNewMemberGender}

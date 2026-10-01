@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS_ENABLED } from "./constants.jsx";
-import { initials, addUniqueCustom, PASSWORD_REQUIREMENTS_TEXT } from "./helpers.js";
-import { EatSafeLogo, EatSafeWordmark, Icon, showToast } from "./SharedComponents.jsx";
+import { initials, addUniqueCustom, PASSWORD_REQUIREMENTS_TEXT, pruneAllergenLevels } from "./helpers.js";
+import { EatSafeLogo, EatSafeWordmark, Icon, showToast, ConfirmDialog } from "./SharedComponents.jsx";
 import { ENumberPicker, AllergenChipPicker, AllergenSensitivity, CustomAllergenField, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { MemberForm } from "./MemberForm.jsx";
@@ -145,6 +145,8 @@ export default function OnboardingScreen({
   // 2026, brugerfeedback). Fravælges automatisk, hvis brugeren derefter
   // vælger en allergi/intolerance eller tilføjer en custom-ingrediens.
   const [noAllergiesConfirmed, setNoAllergiesConfirmed] = useState(false);
+  // Bekræftelsesdialog, når "Jeg har ingen allergier" vælges, mens der allerede er valgt noget (ingen modstridende profil).
+  const [confirmNoAllergies, setConfirmNoAllergies] = useState(false);
   // Udtrykkeligt samtykke til helbredsoplysninger (2. okt. 2026, GDPR art. 9): skal gives, før allergier gemmes.
   const consent = useHealthConsent();
   const [consentChecked, setConsentChecked] = useState(false);
@@ -159,6 +161,7 @@ export default function OnboardingScreen({
   // "+ Tilføj familiemedlem" og "Jeg vil ikke tilføje familiemedlemmer nu". Formularen foldes først ud efter et tryk på "+ Tilføj …"
   // (eller "Rediger") og lukkes igen ved Annuller/Gem, så der aldrig står en stor tom formular uopfordret.
   const [showAddMemberForm, setShowAddMemberForm] = useState(false);
+  const [confirmRemoveMember, setConfirmRemoveMember] = useState(null); // familiemedlem, der afventer "Fjern"-bekræftelse
 
   // Gluten ↔ Glutenfri-synkronisering — LIVE reaktion på allergen-valget,
   // ikke kun én gang ved ankomst til trin 3: vælges "Gluten", markeres
@@ -351,13 +354,32 @@ export default function OnboardingScreen({
       ? UI.mt8
       : { ...UI.mt8, minHeight:40, padding:"9px 16px", fontWeight:500, color:"var(--ink2)", background:"transparent", border:"1px solid var(--border)" };
 
+    // Rydder ALLE allergi-, intolerance- og sporvalg (inkl. egne), gemmer den tomme profil og går videre. Eksplicit [] til
+    // saveAllergensStep2, da state-opdateringerne ellers endnu ikke er slået igennem i dens closure.
+    const confirmNoAllergiesNow = async () => {
+      setConfirmNoAllergies(false);
+      setAllergens([]); setCustomAllerg([]); setCustomInput("");
+      setUser(u => ({ ...u, allergenLevels: {} }));
+      setNoAllergiesConfirmed(true);
+      try { await saveAllergensStep2([], []); setOnboardStep(DIETS_ENABLED ? 3 : 4); }
+      catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
+    };
+
     return (
       <div className="fade-in">
+        {confirmNoAllergies && (
+          <ConfirmDialog title="Fjern dine valgte allergier?"
+            message="Du har allerede valgt allergier eller intolerancer. Hvis du fortsætter, bliver disse valg fjernet."
+            confirmLabel="Ja, fjern mine valg"
+            onCancel={() => setConfirmNoAllergies(false)} onConfirm={confirmNoAllergiesNow} />
+        )}
         <FormCard>
           <SectionHeading title="Allergier / intolerancer" sub="Vælg alt der gælder for dig" count={selectedCount} />
 
           <AllergenChipPicker selected={allergens} onChange={arr => {
             setAllergens(arr);
+            // Fjernes et allergen, fjernes dets sporvalg også (ingen skjulte værdier i profilen)
+            setUser(u => ({ ...u, allergenLevels: pruneAllergenLevels(u.allergenLevels, arr) }));
             if (noAllergiesConfirmed) setNoAllergiesConfirmed(false);
           }} />
           {/* Spor-valget har sit eget trin 3, når kostpræferencer er på pause; ellers vises det her */}
@@ -417,13 +439,7 @@ export default function OnboardingScreen({
             værdier på dette tidspunkt (setAllergens/setCustomAllerg er
             asynkrone). */}
         <SecondaryButton style={neutralSecondaryStyle} active={noAllergiesConfirmed}
-          onClick={async () => {
-            if (selectedCount > 0 && !window.confirm("Du har allerede valgt allergier/intolerancer. Vil du fjerne dem og markere, at du ingen har?")) return;
-            setAllergens([]); setCustomAllerg([]);
-            setNoAllergiesConfirmed(true);
-            try { await saveAllergensStep2([], []); setOnboardStep(DIETS_ENABLED ? 3 : 4); }
-            catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
-          }}>
+          onClick={() => { if (selectedCount > 0) setConfirmNoAllergies(true); else confirmNoAllergiesNow(); }}>
           Jeg har ingen allergier eller intolerancer
         </SecondaryButton>
       </div>
@@ -1022,8 +1038,15 @@ export default function OnboardingScreen({
             {/* ── TRIN 4: Familie ── */}
             {onboardStep === 4 && (
               <div className="fade-in">
+                {confirmRemoveMember && (
+                  <ConfirmDialog title={`Fjern ${confirmRemoveMember.name} fra familien?`}
+                    message="Profilen og alle tilknyttede allergivalg fjernes permanent."
+                    confirmLabel="Ja, fjern"
+                    onCancel={() => setConfirmRemoveMember(null)}
+                    onConfirm={() => { removeMember(confirmRemoveMember.id); setConfirmRemoveMember(null); }} />
+                )}
                 <div className="step-title" style={UI.utacenter}>Familiemedlemmer</div>
-                <div style={{ fontSize:13, color:"var(--ink2)", textAlign:"center", marginBottom:16 }}>Tilføj familiemedlemmer med egne allergier. Valgfrit.</div>
+                <div style={{ fontSize:13, color:"var(--ink2)", textAlign:"center", marginBottom:16 }}>Tilføj familiemedlemmer med deres egne allergier og præferencer. Valgfrit.</div>
 
                 {/* Allerede tilføjede — viser navn + alder som primær linje
                     (25. sept. 2026, brugerfeedback: "Mia, 24 år"), ikke kun
@@ -1066,9 +1089,9 @@ export default function OnboardingScreen({
                           style={{ background:"none", border:"none", cursor:"pointer", padding:"10px 6px", minHeight:44, fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color:"var(--green)" }}>
                           Rediger
                         </button>
-                        <button type="button" onClick={() => { if (window.confirm(`Fjern ${m.name} fra familien?`)) removeMember(m.id); }} aria-label={`Fjern ${m.name}`}
-                          style={{ background:"none", border:"none", cursor:"pointer", width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center", opacity:.5, flexShrink:0 }}>
-                          <Icon name="trash" size={18} color="var(--muted)" />
+                        <button type="button" onClick={() => setConfirmRemoveMember(m)} aria-label={`Fjern ${m.name}`}
+                          style={{ background:"none", border:"none", cursor:"pointer", width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                          <Icon name="trash" size={18} color="var(--ink2)" />
                         </button>
                       </div>
                       );
@@ -1089,7 +1112,7 @@ export default function OnboardingScreen({
                       <div className="card-lbl">{editingMemberId ? "Rediger familiemedlem" : "Tilføj nyt familiemedlem"}</div>
                       <TextLink onClick={() => { cancelEditMember(); setShowAddMemberForm(false); }}>Annuller</TextLink>
                     </div>
-                    <MemberForm
+                    <MemberForm key={editingMemberId || "new"} editing={!!editingMemberId}
                       name={newMemberName} setName={setNewMemberName}
                       birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
                       gender={newMemberGender} setGender={setNewMemberGender}
@@ -1136,8 +1159,8 @@ export default function OnboardingScreen({
 
                   <FormCard style={UI.mb16}>
                     {[
-                      ["check","Produktet er godkendt","Når admin godkender dit indsendte produkt"],
-                      ["family","Familie tilslutter sig","Når nogen accepterer dit invitationslink"],
+                      ["check","Produktet er godkendt","Når et produkt, du har indsendt, bliver godkendt"],
+                      ["family","Familiemedlem tilslutter sig","Når nogen accepterer dit invitationslink"],
                       ["search","Produkt tilgængeligt","Når et produkt, du har ledt efter, kommer i databasen"],
                     ].map(([icon, title, sub], i, arr) => (
                       <InfoRow key={title} icon={icon} color="var(--green)" title={title} sub={sub} border={i < arr.length - 1} />

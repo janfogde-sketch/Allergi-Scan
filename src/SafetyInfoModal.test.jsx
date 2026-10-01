@@ -3,7 +3,7 @@
 import React from "react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
-import SafetyInfoModal, { SAFETY_INFO_TEXT } from "./SafetyInfoModal.jsx";
+import SafetyInfoModal, { SAFETY_INFO_PARAGRAPHS } from "./SafetyInfoModal.jsx";
 import { ENumberPicker } from "./AllergenPicker.jsx";
 
 afterEach(cleanup);
@@ -13,10 +13,10 @@ describe("SafetyInfoModal", () => {
     const onAcknowledge = vi.fn();
     render(<SafetyInfoModal onAcknowledge={onAcknowledge} />);
     expect(screen.getByRole("dialog", { name: "Vigtig sikkerhedsinformation" })).toBeTruthy();
-    expect(screen.getByText(SAFETY_INFO_TEXT)).toBeTruthy();
-    expect(SAFETY_INFO_TEXT).toMatch(/^EatSafe er vejledende\./);
+    SAFETY_INFO_PARAGRAPHS.forEach(p => expect(screen.getByText(p)).toBeTruthy());
+    expect(SAFETY_INFO_PARAGRAPHS[0]).toMatch(/^EatSafe er vejledende\./);
     expect(screen.queryByText(/Beta/)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Jeg forstår – kom i gang →" }));
+    fireEvent.click(screen.getByRole("button", { name: "Jeg forstår – kom i gang" }));
     expect(onAcknowledge).toHaveBeenCalledTimes(1);
   });
 });

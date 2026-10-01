@@ -7,7 +7,7 @@
 
 import { useState, useRef } from "react";
 import { SUPABASE_URL, AVATAR_COLORS, uid } from "./constants.jsx";
-import { makeHeaders, apiCall, isLinkedProfileId } from "./helpers.js";
+import { makeHeaders, apiCall, isLinkedProfileId, pruneAllergenLevels } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 
 export function useFamily({ accessToken, userId, setActiveProfiles }) {
@@ -109,7 +109,7 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
       allergens: newMemberAllerg,
       custom: newMemberCustomAllerg,
       diets: newMemberDiets,
-      levels: newMemberLevels,
+      levels: pruneAllergenLevels(newMemberLevels, newMemberAllerg),
       eNumbers: newMemberENumbers,
       color,
     };
@@ -129,7 +129,7 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
           allergens: newMemberAllerg,
           custom_allergens: newMemberCustomAllerg,
           diets: newMemberDiets,
-          allergen_levels: newMemberLevels,
+          allergen_levels: pruneAllergenLevels(newMemberLevels, newMemberAllerg),
           e_numbers: newMemberENumbers,
         }),
       });
@@ -169,7 +169,7 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
       allergens: newMemberAllerg,
       custom: newMemberCustomAllerg,
       diets: newMemberDiets,
-      levels: newMemberLevels,
+      levels: pruneAllergenLevels(newMemberLevels, newMemberAllerg),
       eNumbers: newMemberENumbers,
     };
     setFamily(f => f.map(m => m.id === id ? { ...m, ...patch } : m));
@@ -185,7 +185,7 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
           allergens: newMemberAllerg,
           custom_allergens: newMemberCustomAllerg,
           diets: newMemberDiets,
-          allergen_levels: newMemberLevels,
+          allergen_levels: pruneAllergenLevels(newMemberLevels, newMemberAllerg),
           e_numbers: newMemberENumbers,
         }),
       });
