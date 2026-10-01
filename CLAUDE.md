@@ -104,10 +104,8 @@ default (registrering fejlede stille, tabellen var altid tom), VAPID-privatnøgl
 importeres nu som JWK, og `recalls` manglede GRANT til service_role. Push-flaget
 `notifications_push_enabled` og mail-flaget `notifications_email_enabled` er stadig FRA for alle;
 kun konti i `app_flags.notifications_test_users` får rigtige push/mails.
-**Testdata fra livetesten ligger stadig i produktion (ryd ved næste session, når Jan siger til):**
-produktet med EAN `9999900000017` ("TESTPRODUKT Havrekiks (slet mig)", source `livetest-notifikationer`)
-og Jans scanning af det, testtilbagekaldelsen i `recalls` (titel starter med LIVETEST), de tilhørende
-`notification_events`/`notifications` (P1 og P6 til Jan), og Jans id (`6a759160-...`) på testlisten.
+**Testdata fra livetesten er ryddet (1. okt. 2026):** testprodukt, scanning, testtilbagekaldelse, hændelser, beskeder og testlisten
+(`notifications_test_users` er tom igen; Jans push-abonnement er bevaret).
 Mangler: admin-visning til tilbagekaldelser uden gyldig EAN (punkt 13 ovenfor), N7 (opskrifter på pause),
 app-rettelse så `usePush.js` tjekker svaret fra serveren, når abonnementet gemmes (fejl vises i dag ikke),
 test på iPhone og af de øvrige varianter med to konti (`docs/notifikationer-testplan.md`), og til sidst
