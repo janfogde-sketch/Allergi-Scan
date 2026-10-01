@@ -678,6 +678,18 @@ Menupunktet viser et rødt tal for åbne opgaver med høj prioritet (ikke venten
 de åbne punkter fra CLAUDE.md pr. 30. sept. 2026. **Claude kan læse og skrive den med SQL** (`admin_todos`); hold den opdateret,
 når et punkt klares, eller et nyt opstår. Dokumentér ikke åbne punkter to steder.
 
+**Tickets og to do er flettet sammen (1. okt. 2026, migration `20261001092359_tickets_todos_sync.sql`).** `admin_todos.ticket_id`
+(unik, sletter opgaven, hvis tickets slettes) peger på `feedback_tickets`. Triggere: en ny ticket giver en opgave
+(`trg_ticket_to_todo_insert`, må aldrig blokere indsendelsen; fejl logges i `client_errors`); `classify_ticket(type, tekst)` vælger
+spor (indhold → drift, `test` i teksten → test, design-ord eller type `ui` → design, ellers backend), prioritet (crash/"kan ikke"/
+"virker ikke" m.fl. → høj, forslag → lav, ellers normal) og ansvarlig (design → bho, resten → jafo). Nøgleordene er enkle og kan
+rettes i To do bagefter. Status følger med begge veje (`ticket_todo_status`/`todo_ticket_status`): done ↔ resolved, doing ↔
+in_progress, todo/blocked ↔ open; en opgave, der er "blocked", forbliver blokeret, mens tickets står som åben. En genåbnet gammel
+ticket får en ny opgave. **Et løst ticket sender som før en besked til indsenderen** (`notify`), også når det sker ved at
+afslutte opgaven. Løste og lukkede tickets blev ikke lagt på listen ved oprettelsen (kun de 5 åbne). Både To do og Tickets
+henter som standard kun åbne/aktive; de færdige hentes først, når Færdige/Alle (To do) eller Løst/Alle (Tickets) åbnes
+(`useAdminTodos.loadDone`, `useAdmin.loadTickets({ includeDone })`), og antallet af færdige opgaver kommer fra serveren.
+
 ## 16. Auth-mails fra Resend via Send Email Hook (1. okt. 2026)
 
 Supabase Auth kan sende sine mails på to måder, og begge går gennem Resend:

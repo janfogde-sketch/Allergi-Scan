@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { showToast } from "../../SharedComponents.jsx";
 import {
   STATUS_LABELS, STATUS_PILL, PRIORITY_LABELS, PRIORITY_PILL, TRACK_LABELS,
-  todayKey, dueInfo, sortTodos, filterTodos, countByView, personName, buildTodoPrompt,
+  todayKey, dueInfo, sortTodos, filterTodos, countByView, viewNeedsDone, personName, buildTodoPrompt,
 } from "../todoLogic.js";
 
 const VIEWS = [
@@ -58,10 +58,13 @@ function TodoModal({ todo, isNew = false, admins, userId, comments = [], comment
             {isNew ? (
               <div style={{ fontSize: 15, fontWeight: 800 }}>Ny opgave</div>
             ) : (
+              <>
+              {todo.ticket_id && <div className="admin-pill admin-pill-neutral" style={{ marginBottom: 6 }}>Kommer fra en ticket · status følger med begge veje</div>}
               <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
                 Oprettet {fmtDateTime(todo.created_at)}{todo.created_by ? ` af ${personName(admins, todo.created_by)}` : ""}
                 {todo.completed_at ? ` · Færdig ${fmtDateTime(todo.completed_at)}${todo.completed_by ? ` af ${personName(admins, todo.completed_by)}` : ""}` : ""}
               </div>
+              </>
             )}
           </div>
           <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={onClose} aria-label="Luk">Luk</button>
@@ -161,7 +164,7 @@ function TodoModal({ todo, isNew = false, admins, userId, comments = [], comment
   );
 }
 
-export default function TodoSection({ todos, admins, loading, load, create, update, remove, userId, comments, commentsLoading, loadComments, closeComments, addComment, deleteComment }) {
+export default function TodoSection({ todos, admins, loading, load, doneLoaded, doneCount, loadDone, create, update, remove, userId, comments, commentsLoading, loadComments, closeComments, addComment, deleteComment }) {
   const [view, setView] = useState("open");
   const [track, setTrack] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
@@ -172,9 +175,15 @@ export default function TodoSection({ todos, admins, loading, load, create, upda
   const [creating, setCreating] = useState(false);
 
   const today = todayKey();
-  const counts = countByView(todos, userId);
+  const counts = countByView(todos, userId, { doneCount, doneLoaded });
   const visible = sortTodos(filterTodos(todos, { view, track, assigneeId, query }, userId));
   const openTodo = openId ? todos.find((t) => t.id === openId) : null;
+
+  // Færdige opgaver hentes først, når Færdige eller Alle åbnes
+  useEffect(() => {
+    if (viewNeedsDone(view) && !doneLoaded) loadDone();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, doneLoaded]);
 
   useEffect(() => {
     if (openId) loadComments(openId); else closeComments();
@@ -220,14 +229,14 @@ export default function TodoSection({ todos, admins, loading, load, create, upda
         </div>
       </div>
       <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
-        Fælles liste for admin-brugerne. Opgaver med høj prioritet, eller hvis frist er overskredet, tæller i menuen.
+        Fælles liste for admin-brugerne. Tickets lægges automatisk her med ansvarlig og prioritet ud fra indholdet, og status følger med begge veje. Færdige opgaver hentes først, når du åbner Færdige eller Alle. Opgaver med høj prioritet, eller hvis frist er overskredet, tæller i menuen.
       </div>
 
       <div className="admin-table-wrap">
         {loading && todos.length === 0 ? (
           <div className="admin-loading-row"><div className="admin-spinner" /> Henter…</div>
         ) : visible.length === 0 ? (
-          <div className="admin-table-empty">{todos.length === 0 ? "Ingen opgaver endnu. Skriv den første ovenfor." : "Ingen opgaver matcher filtrene"}</div>
+          <div className="admin-table-empty">{todos.length === 0 && !viewNeedsDone(view) ? "Ingen åbne opgaver. Skriv en ny ovenfor." : "Ingen opgaver matcher filtrene"}</div>
         ) : (
           <table className="admin-table">
             <thead><tr><th style={{ width: 34 }}></th><th>Opgave</th><th>Spor</th><th>Prioritet</th><th>Ansvarlig</th><th>Frist</th><th>Status</th></tr></thead>
@@ -244,7 +253,9 @@ export default function TodoSection({ todos, admins, loading, load, create, upda
                       </button>
                     </td>
                     <td style={{ maxWidth: 520 }}>
-                      <div className={`todo-title${done ? " done" : ""}`}>{t.title}</div>
+                      <div className={`todo-title${done ? " done" : ""}`}>
+                        {t.title}{t.ticket_id && <span className="admin-pill admin-pill-neutral" style={{ marginLeft: 8, verticalAlign: "middle" }} title="Kommer fra en ticket; status følger med begge veje">Ticket</span>}
+                      </div>
                       {t.description && <div className="todo-desc">{t.description}</div>}
                       {t.link && isHttpUrl(t.link) && (
                         <a href={t.link} target="_blank" rel="noopener noreferrer" className="todo-ext" onClick={(e) => e.stopPropagation()}>Åbn link</a>

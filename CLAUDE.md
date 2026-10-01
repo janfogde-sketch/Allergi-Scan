@@ -30,6 +30,8 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
 `eatsafe.dk/admin.html` (tabellen `admin_todos`, se `src/CONTEXT.md` afsnit 15). Den er fyldt med de åbne punkter herfra. Brug den som
 den primære liste: læs den ved sessionstart (`select title, status, priority, track, due_date from admin_todos where status <> 'done'`),
 afslut punkter (`status = 'done'`), og opret nye, når der opstår opgaver. Listen herunder er kun et øjebliksbillede.
+**Tickets ligger også på listen (1. okt. 2026):** hver ny ticket bliver automatisk en opgave med ansvarlig og prioritet, og
+status følger med begge veje (afslut det ene sted, og det er afsluttet begge steder). Se `src/CONTEXT.md` afsnit 15.
 
 *Todo (Jan, 30. sept.):*
 13. Admin-visning til tilbagekaldelser uden gyldig EAN er lavet 1. okt. 2026

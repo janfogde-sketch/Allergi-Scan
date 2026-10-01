@@ -7,7 +7,8 @@ import { SUPABASE_URL } from "../constants.jsx";
 import { apiCall, makeHeaders } from "../helpers.js";
 import { showToast } from "../SharedComponents.jsx";
 
-const TODO_SELECT = "id,title,description,status,priority,track,assignee_id,due_date,link,created_by,created_at,updated_at,completed_at,completed_by";
+const TODO_SELECT = "id,title,description,status,priority,track,assignee_id,due_date,link,ticket_id,created_by,created_at,updated_at,completed_at,completed_by";
+const DONE_LIMIT = 300;
 const POLL_MS = 30_000;
 const EDITABLE = ["title", "description", "status", "priority", "track", "assignee_id", "due_date", "link"];
 
@@ -15,6 +16,10 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
   const [todos, setTodos] = useState([]);
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(false);
+  // Færdige opgaver hentes først, når nogen beder om det (visningerne Færdige/Alle).
+  const [doneLoaded, setDoneLoaded] = useState(false);
+  const [doneCount, setDoneCount] = useState(null);
+  const doneLoadedRef = useRef(false);
   const [comments, setComments] = useState([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const loadedOnce = useRef(false);
@@ -23,18 +28,56 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
   const headers = useCallback(() => makeHeaders(accessToken), [accessToken]);
   const minimal = useCallback(() => ({ ...makeHeaders(accessToken), Prefer: "return=minimal" }), [accessToken]);
 
+  // Antal færdige opgaver uden at hente dem (Content-Range fra en tom side).
+  const loadDoneCount = useCallback(async () => {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/admin_todos?status=eq.done&select=id`, {
+        headers: { ...makeHeaders(accessToken), Prefer: "count=exact", Range: "0-0" },
+      });
+      const total = parseInt((res.headers.get("content-range") || "").split("/")[1], 10);
+      if (Number.isFinite(total)) setDoneCount(total);
+    } catch { /* tælleren er en bekvemmelighed */ }
+  }, [accessToken]);
+
+  // De senest afsluttede opgaver
+  const fetchDone = useCallback(async () => {
+    const data = await apiCall(`${SUPABASE_URL}/rest/v1/admin_todos?status=eq.done&select=${TODO_SELECT}&order=completed_at.desc.nullslast&limit=${DONE_LIMIT}`, { headers: headers() });
+    return Array.isArray(data) ? data : [];
+  }, [headers]);
+
+  // Standard: kun åbne opgaver (alt undtagen "done"). Er de færdige hentet, hentes de igen med.
   const load = useCallback(async ({ quiet = false } = {}) => {
     if (!accessToken) return;
     if (!quiet) setLoading(true);
     try {
-      const data = await apiCall(`${SUPABASE_URL}/rest/v1/admin_todos?select=${TODO_SELECT}&order=created_at.desc&limit=1000`, { headers: headers() });
-      setTodos(Array.isArray(data) ? data : []);
+      const [open, done] = await Promise.all([
+        apiCall(`${SUPABASE_URL}/rest/v1/admin_todos?status=neq.done&select=${TODO_SELECT}&order=created_at.desc&limit=1000`, { headers: headers() }),
+        doneLoadedRef.current ? fetchDone() : Promise.resolve([]),
+      ]);
+      setTodos([...(Array.isArray(open) ? open : []), ...done]);
       loadedOnce.current = true;
+      loadDoneCount();
     } catch (e) {
       if (!quiet) showToast("Kunne ikke hente to do-listen: " + e.message, "error");
     }
     if (!quiet) setLoading(false);
-  }, [accessToken, headers]);
+  }, [accessToken, headers, fetchDone, loadDoneCount]);
+
+  // Henter de færdige opgaver (kaldes, når Færdige eller Alle åbnes).
+  const loadDone = useCallback(async () => {
+    if (!accessToken) return;
+    setLoading(true);
+    try {
+      const done = await fetchDone();
+      doneLoadedRef.current = true;
+      setDoneLoaded(true);
+      setTodos((prev) => [...prev.filter((t) => t.status !== "done"), ...done]);
+      loadDoneCount();
+    } catch (e) {
+      showToast("Kunne ikke hente færdige opgaver: " + e.message, "error");
+    }
+    setLoading(false);
+  }, [accessToken, fetchDone, loadDoneCount]);
 
   const loadAdmins = useCallback(async () => {
     if (!accessToken) return;
@@ -148,5 +191,5 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
     }
   };
 
-  return { todos, admins, loading, load, create, update, remove, comments, commentsLoading, loadComments, closeComments, addComment, deleteComment };
+  return { todos, admins, loading, load, doneLoaded, doneCount, loadDone, create, update, remove, comments, commentsLoading, loadComments, closeComments, addComment, deleteComment };
 }

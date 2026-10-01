@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React from "react";
+import React, { useEffect } from "react";
 import { showToast } from "../../SharedComponents.jsx";
 
 const TYPE_LABELS = { bug: "Fejl", ui: "Design", missing: "Mangler", content: "Indhold", crash: "Crash", suggestion: "Forslag" };
@@ -63,17 +63,28 @@ function exportOpenTickets(tickets) {
   a.click(); URL.revokeObjectURL(url);
 }
 
-export default function TicketsSection({ adminTickets, ticketsLoading, adminTicketFilter, setAdminTicketFilter, openTicket, setOpenTicket, updateTicketStatus }) {
-  const filtered = adminTickets.filter(t => adminTicketFilter === "all" || t.status === adminTicketFilter);
+// "Aktive" (standard) er åbne + i gang. Løst og Alle henter først de færdige tickets, når de åbnes.
+const TABS = ["active", "open", "in_progress", "resolved", "all"];
+const TAB_LABEL = { active: "Aktive", all: "Alle", ...STATUS_LABELS };
+const needsDone = (tab) => tab === "resolved" || tab === "all";
+const matchesTab = (t, tab) => tab === "all" || (tab === "active" ? t.status === "open" || t.status === "in_progress" : t.status === tab);
+
+export default function TicketsSection({ adminTickets, ticketsLoading, adminTicketFilter, setAdminTicketFilter, ticketsIncludeDone, loadTickets, openTicket, setOpenTicket, updateTicketStatus }) {
+  const filtered = adminTickets.filter(t => matchesTab(t, adminTicketFilter));
   const openCount = adminTickets.filter(t => t.status === "open").length;
+
+  useEffect(() => {
+    if (needsDone(adminTicketFilter) && !ticketsIncludeDone) loadTickets({ includeDone: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminTicketFilter, ticketsIncludeDone]);
 
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div className="admin-tabs" style={{ marginBottom: 0, border: "none" }}>
-          {["all", "open", "in_progress", "resolved"].map(s => (
+          {TABS.map(s => (
             <button key={s} className={`admin-tab-btn${adminTicketFilter === s ? " active" : ""}`} onClick={() => setAdminTicketFilter(s)}>
-              {s === "all" ? "Alle" : STATUS_LABELS[s]} ({s === "all" ? adminTickets.length : adminTickets.filter(t => t.status === s).length})
+              {TAB_LABEL[s]}{needsDone(s) && !ticketsIncludeDone ? "" : ` (${adminTickets.filter(t => matchesTab(t, s)).length})`}
             </button>
           ))}
         </div>

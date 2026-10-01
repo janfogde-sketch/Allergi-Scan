@@ -79,11 +79,17 @@ export function filterTodos(list, filters, userId) {
   });
 }
 
-export function countByView(list, userId) {
-  const out = { open: 0, mine: 0, unassigned: 0, done: 0, all: list.length };
-  for (const view of ["open", "mine", "unassigned", "done"]) out[view] = list.filter((t) => matchesView(t, view, userId)).length;
+// Færdige opgaver hentes først, når man beder om det (doneLoaded). Indtil da kommer antallet fra serveren (doneCount).
+export function countByView(list, userId, { doneCount = null, doneLoaded = true } = {}) {
+  const out = { open: 0, mine: 0, unassigned: 0, done: 0, all: 0 };
+  for (const view of ["open", "mine", "unassigned"]) out[view] = list.filter((t) => matchesView(t, view, userId)).length;
+  out.done = doneLoaded || doneCount === null ? list.filter((t) => t.status === "done").length : doneCount;
+  out.all = out.open + out.done;
   return out;
 }
+
+/** "Færdige"/"Alle" er de to visninger, der kræver, at de færdige opgaver hentes. */
+export const viewNeedsDone = (view) => view === "done" || view === "all";
 
 /** Antal åbne opgaver, der kræver handling nu: høj prioritet og ikke venter, eller overskredet frist. */
 export function attentionCount(list, today = todayKey()) {

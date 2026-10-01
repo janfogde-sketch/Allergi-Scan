@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { todayKey, isOverdue, dueInfo, sortTodos, filterTodos, countByView, attentionCount, buildTodoPrompt, personName } from "./todoLogic.js";
+import { todayKey, isOverdue, dueInfo, sortTodos, filterTodos, countByView, viewNeedsDone, attentionCount, buildTodoPrompt, personName } from "./todoLogic.js";
 
 const T = (o) => ({ id: "x", title: "t", description: "", status: "todo", priority: "normal", track: "backend", assignee_id: null, due_date: null, created_at: "2026-10-01T08:00:00Z", completed_at: null, ...o });
 const TODAY = "2026-10-01";
@@ -71,6 +71,14 @@ describe("filtre og tællere", () => {
   });
   it("countByView", () => {
     expect(countByView(list, me)).toEqual({ open: 4, mine: 2, unassigned: 1, done: 1, all: 5 });
+  });
+  it("countByView bruger serverens antal, til de færdige er hentet", () => {
+    const open = list.filter((t) => t.status !== "done");
+    expect(countByView(open, me, { doneCount: 42, doneLoaded: false })).toEqual({ open: 4, mine: 2, unassigned: 1, done: 42, all: 46 });
+    expect(countByView(list, me, { doneCount: 42, doneLoaded: true }).done).toBe(1);
+  });
+  it("kun Færdige og Alle kræver de færdige opgaver", () => {
+    expect(["open", "mine", "unassigned", "done", "all"].filter(viewNeedsDone)).toEqual(["done", "all"]);
   });
   it("attentionCount: høj prioritet eller overskredet, men ikke ventende eller færdig", () => {
     const l = [
