@@ -46,6 +46,10 @@ pr. funktion står i `supabase/config.toml` (funktioner uden JWT validerer selv,
 | `recipes` | id, title, instructions, image_url | tom (opskrifter på pause, slettet 30. sept. 2026) |
 | `client_errors` | id, fingerprint, source, message, stack, screen, occurrences, first_seen, last_seen, status | Fejl fra appen/edge/DB-triggere (30. sept. 2026, A3). Skrives kun via RPC `log_client_error` (også anon; samme fejl inden for 1 time lægges sammen, loft 300 nye rækker/10 min). Kun admin kan læse (RLS). Vises i admin-panelet under "Fejl" |
 
+**Opbevaringsfrister (privatlivspolitik afsnit 11):** kontosletning (`delete-user`) fjerner straks profil, allergener, familieprofiler, lister, scanninger,
+favoritter, beskeder, push-tilmeldinger, tickets, indsendelser og login (cascade/eksplicit); `client_errors` mister bruger-id. Automatisk oprydning i `cleanup_notifications()`
+(cron `notify-cleanup`, 03:30 UTC): beskeder 12 mdr., hændelser 90 dage, `client_errors` 90 dage (på `last_seen`), `security_reports` 12 mdr. (migration `20261001132038`). Ingen automatiske backups (Free).
+
 **Backup-tabeller:** `*_backup_20260930` i `public` og skemaet `qa_backup` er rester fra datarettelser (ingen kode bruger dem, Free-planen har
 ingen automatiske backups). De slettes samlet tæt på 1. nov. 2026 (to do `c188223c`), derefter skal denne note fjernes.
 

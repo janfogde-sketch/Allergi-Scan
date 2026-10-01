@@ -47,7 +47,7 @@ export default function TermsScreen({ onBack }) {
       {/* paddingTop matcher .legal-topbar's egen renderede højde (header er
           position:fixed, tager ikke plads i normal flow) + lidt luft. */}
       <div className="screen fade-in" style={{ paddingTop:"calc(75px + env(safe-area-inset-top))" }}>
-        <div style={S.updated}>Sidst opdateret: 30. september 2026</div>
+        <div style={S.updated}>Sidst opdateret: 2. oktober 2026</div>
 
         <div style={S.draftNotice}>
           Denne side er en foreløbig udgave af EatSafes brugsvilkår og er endnu ikke juridisk gennemgået. Kontakt <Mail />, hvis du har spørgsmål, indtil den endelige version er på plads.
@@ -93,7 +93,7 @@ export default function TermsScreen({ onBack }) {
         <p style={S.p}>EatSafe anvender produktinformation fra forskellige kilder. Det kan blandt andet være offentligt tilgængelige produktdatabaser, producenter, EatSafe-brugere og oplysninger aflæst fra produktemballage.</p>
         <p style={S.p}>Hvor det er relevant, kan EatSafe vise, hvilken kilde produktdata stammer fra.</p>
         <p style={S.p}>Tredjepartsdata og brugerindsendte oplysninger kan indeholde fejl, være ufuldstændige eller være forældede. EatSafe kontrollerer ikke nødvendigvis alle oplysninger manuelt, før de vises i appen.</p>
-        <p style={S.p}>Produktnavne, varemærker, billeder og andet materiale tilhører deres respektive rettighedshavere.</p>
+        <p style={S.p}>Produktdata og billeder fra Open Food Facts og dets bidragydere er udgivet under Open Database License (ODbL), Database Contents License og Creative Commons Attribution-ShareAlike (billeder), se openfoodfacts.org. Produktnavne, varemærker, billeder og andet materiale tilhører deres respektive rettighedshavere.</p>
 
         <h2 style={S.h2}>6. Automatisk billed- og tekstanalyse</h2>
         <p style={S.p}>EatSafe kan anvende automatiseret billed- og tekstanalyse til eksempelvis at aflæse stregkoder, ingredienslister, allergenoplysninger og anden produktinformation.</p>
@@ -110,7 +110,7 @@ export default function TermsScreen({ onBack }) {
         <h2 style={S.h2}>8. Familie- og husstandsprofiler</h2>
         <p style={S.p}>EatSafe kan gøre det muligt at oprette eller administrere profiler for andre personer i en husstand.</p>
         <p style={S.p}>Du må kun registrere oplysninger om en anden person, når du har ret til det.</p>
-        <p style={S.p}>For voksne personer kan EatSafe kræve, at personen selv accepterer en invitation eller bekræfter sine oplysninger, før bestemte funktioner bliver aktive.</p>
+        <p style={S.p}>Voksne personer skal selv acceptere en invitation, før de indgår i din husstand. Registrerer du oplysninger om en voksen på en profil, du selv administrerer, forudsætter det, at personen har givet dig sit samtykke.</p>
         <p style={S.p}>Ved oprettelse af en profil for et barn skal du have ret til at handle på barnets vegne.</p>
         <p style={S.p}>EatSafe kan begrænse eller ændre mulighederne for at registrere oplysninger om andre personer for at beskytte deres privatliv og sikkerhed.</p>
 

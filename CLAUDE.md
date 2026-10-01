@@ -17,7 +17,7 @@
   (`list_migrations`), aldrig kun som løs SQL. Edge-funktioner deployes ved merge af `.github/workflows/deploy-edge-functions.yml`
   (secret `SUPABASE_ACCESS_TOKEN`; 401/403 = ny adgangsnøgle, udløber). `supabase/config.toml` har `verify_jwt` pr. funktion.
 - **Supabase Pro er sat på pause (Jans beslutning):** backups, testmiljø og Leaked Password Protection venter. Spørg ikke, om det
-  er glemt, kun om han vil opgradere.
+  er glemt, kun om han vil opgradere. **Vercel skal skifte til Pro, før vi går live** (Vercels DPA gælder kun Pro/Enterprise; to do på listen).
 - **Testrunden på rigtige telefoner** (kamera, push, installation, to konti) er sat på pause; tjeklisten er
   https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X, resultater i dens database (`results`). Opret tickets for `fail`.
 - **Netværk:** cloud-miljøet når eatsafe.dk, www.eatsafe.dk, Supabase og world.openfoodfacts.org. Admin-test kræver en testkonto med
@@ -33,6 +33,23 @@
   plan og rollback i `src/CONTEXT.md` §9 og `docs/notifikationer-testplan.md`.
 - **Admin-panel:** `eatsafe.dk/admin.html`, eget Vite-entry (`src/admin/`), rører ikke den mobile PWA's bundle. Reference i
   `src/CONTEXT.md` §2 og §10.
+
+---
+
+## 0b. Politikker og opbevaring (stående regler, Jan 2. okt. 2026)
+
+- **Tjek politikkerne mod appen i et naturligt interval.** Vilkår og privatlivspolitik (`src/TermsScreen.jsx` + `public/terms.html`,
+  `src/PrivacyScreen.jsx` + `public/privacy.html`, to kopier af samme tekst) skal følge appen. (a) Ved hver funktions- eller dataændring,
+  der rører personoplysninger (nye felter/tabeller, leverandører, notifikationstyper, lagring, login-metoder, AI-brug, opbevaring): tjek og
+  ret teksterne i samme PR, og sæt "Sidst opdateret". (b) Ved sessionstart: har den tilbagevendende to do "Gennemgå politikker mod
+  appændringer" overskredet sin frist, så gennemgå `git log` siden sidste gennemgang mod teksterne, opret fund som to do, luk opgaven og
+  opret en ny med frist om en måned. (c) Skriv teksterne generelt (kategorier og formål, ikke enkelte beskedtyper), så almindelige tilføjelser
+  ikke kræver ny tekst. Åbne juridiske punkter står i de to tickets "[Brugsvilkår · IKKE FÆRDIGE]"/"[Privatlivspolitik · IKKE FÆRDIG]", aldrig i
+  den offentlige tekst. Væsentlige ændringer skal meddeles brugerne på passende måde (Jan beslutter hvordan).
+- **Opbevaringsfrister overholdes, som loven foreskriver (GDPR: ikke længere end nødvendigt).** Frister står i privatlivspolitikkens afsnit 11 og
+  i `src/CONTEXT.md` §3 og skal også være det, databasen faktisk gør. Ny tabel/kolonne med personoplysninger: definér frist, sørg for sletning ved
+  kontosletning (`delete-user` eller cascade) og automatisk oprydning (`cleanup_notifications()`, dagligt kl. 03:30 UTC), og opdatér politikken.
+  Nuværende frister: kontodata slettes straks ved kontosletning; beskeder 12 mdr.; notifikationshændelser og fejllogs 90 dage; sikkerhedsindberetninger 12 mdr.
 
 ---
 
