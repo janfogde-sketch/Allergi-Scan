@@ -743,6 +743,15 @@ change" sendes to mails (nuværende adresse: `token_hash_new`; ny adresse: `toke
 Auth viser en fejl; samme `Idempotency-Key` (`auth-{webhook-id}-{n}`) hindrer dobbeltafsendelse. Fejl logges i `client_errors`
 (kilde `edge:auth-send-email`, aldrig tokens).
 
+**"Var det ikke dig?" i glemt-adgangskode-mailen (1. okt. 2026, to do 1a1e600b):** `recovery.html` har et diskret tekstlink "Giv EatSafe besked"
+mellem markørerne `<!--report:start-->`/`<!--report:end-->` (`{{ .ReportURL }}`). `auth-send-email` signerer en token (bruger-id + 7 dages udløb, HMAC-SHA256,
+nøgle `SEND_EMAIL_HOOK_SECRET`, `_shared/reportLink.ts`) og lægger linket `https://www.eatsafe.dk/uventet-nulstilling.html?t=…` i mailen; uden token (eller i
+Supabase Auths egne skabeloner, hvor `deploy-auth-templates.yml` fjerner blokken) udelades linket. Siden `public/uventet-nulstilling.html` sender først ved et klik på
+knappen (så mailscannere ikke giver falske alarmer) til edge-funktionen `report-unrequested-reset` (signeret token-link, `verify_jwt=false`; 400 `invalid`/`expired`
+uden gyldig token). Den gemmer en række i `security_reports` (migration `20261001120838`, kun admins kan læse, ingen IP-adresser, højst én pr. bruger pr. time),
+opretter en høj-prioritets opgave (spor drift) på to do-listen og mailer alle admins; over 30 indberetninger i timen gemmes de, men der sendes ikke flere mails/opgaver.
+Kontoen låses ikke, og intet ændres ved den. Kun recovery-mailen har linket (magic link og skift af e-mail kan få det senere).
+
 **Mørk tilstand (1. okt. 2026, Bjørn):** alle 28 mails (6 auth + 22 Resend) har samme mørke palette, Outlook-regler (`data-ogsc`/`data-ogsb`) og et logo, der skifter til en mørk version; se afsnittet "Mørk tilstand" i `supabase/templates/resend/README.md` og testen `src/mailDarkMode.test.js`.
 
 **Status 1. okt.:** hook'en er slået til og testet end-to-end med en testkonto (plus-adresser, derefter slettet): glemt adgangskode, oprettelse

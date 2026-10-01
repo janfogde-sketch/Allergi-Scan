@@ -736,6 +736,8 @@ mørke palette (`#121413`/`#1C1F1E`, overskrift `#F4F7F5`, brødtekst `#C9CFCC`,
 der skifter til `EatSafe_Logo_Email_Dark.png`. Detaljer og Gmail-begrænsning i `supabase/templates/resend/README.md`; testet i `src/mailDarkMode.test.js`.
 Ændr paletten i alle skabeloner samtidig.
 **Tåler automatisk inversion (1. okt.):** Outlook (web) ignorerer vores mørke CSS og vender selv farverne; derfor er al tekst nær-sort (+ opacity) eller hvid, aldrig en grå mellemtone, og det lyse logo har baggrunden bagt ind (se README i `supabase/templates/resend/`).
+**"Var det ikke dig?" i glemt-adgangskode-mailen (1. okt. 2026, Bjørn):** et signeret, 7 dage gyldigt link i `recovery.html` åbner `public/uventet-nulstilling.html`; et klik på knappen kalder
+`report-unrequested-reset`, som gemmer en række i `security_reports`, opretter en høj-prioritets opgave på to do-listen og mailer admins. Intet ændres ved kontoen. Se `src/CONTEXT.md` afsnit 16.
 
 ### Profil restruktureret — "Rediger profil" og "Rediger præferencer" adskilt (28. sept. 2026)
 
