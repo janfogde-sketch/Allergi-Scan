@@ -677,7 +677,7 @@ Supabase Auth kan sende sine mails på to måder, og begge går gennem Resend:
    (`smtp.resend.com`, `noreply@eatsafe.dk`). Skabelonerne sættes af `.github/workflows/deploy-auth-templates.yml`, der kræver, at
    `SUPABASE_ACCESS_TOKEN` har rettigheden til at skrive auth-konfiguration (mangler den, fejler jobbet med 403, og mailen forbliver
    Supabases engelske standard).
-2. **Send Email Hook (bygget, ikke slået til):** Auth kalder edge-funktionen `auth-send-email`, som sender mailen via Resends API.
+2. **Send Email Hook (slået til 1. okt. 2026):** Auth kalder edge-funktionen `auth-send-email`, som sender mailen via Resends API.
    Hook'en erstatter SMTP, mens den er slået til; slås den fra, bruges SMTP + skabelonerne igen (nem tilbagerulning).
 
 **Kilden til tekst og design er den samme:** `supabase/templates/auth/` (`templates.json` + én HTML-fil pr. skabelon, i Supabases
@@ -694,7 +694,9 @@ change" sendes to mails (nuværende adresse: `token_hash_new`; ny adresse: `toke
 Auth viser en fejl; samme `Idempotency-Key` (`auth-{webhook-id}-{n}`) hindrer dobbeltafsendelse. Fejl logges i `client_errors`
 (kilde `edge:auth-send-email`, aldrig tokens).
 
-**Sådan slås den til (kun Jan, i Supabase Dashboard; efter merge og deploy af funktionen):**
+**Status 1. okt.:** hook'en er slået til og verificeret (glemt-adgangskode-mail sendt via Resend fra `auth-send-email`, dansk, korrekt verify-link). Oprettelsesmailen og skift af e-mail er endnu ikke prøvet (to do-listen). **Kendt hul:** appen har ingen skærm til at vælge en ny adgangskode; nulstillingslinket logger bare ind (to do-listen, høj prioritet).
+
+**Sådan blev den slået til (Jan, i Supabase Dashboard; samme trin ved en ny opsætning):**
 1. Authentication → Auth Hooks → Send Email → HTTPS, URL `https://jegrpcflyguadyxialkm.supabase.co/functions/v1/auth-send-email`,
    opret hemmeligheden (`v1,whsec_…`), men lad hook'en være SLÅET FRA.
 2. Edge Functions → Secrets: tilføj `SEND_EMAIL_HOOK_SECRET` med hemmeligheden. (`RESEND_API_KEY` findes allerede.)

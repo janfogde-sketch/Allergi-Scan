@@ -25,7 +25,7 @@ function Select({ id, value, onChange, children, label, style }) {
   );
 }
 
-function TodoModal({ todo, admins, userId, comments, commentsLoading, onSave, onDelete, onClose, onAddComment, onDeleteComment }) {
+function TodoModal({ todo, isNew = false, admins, userId, comments = [], commentsLoading = false, onSave, onDelete, onClose, onAddComment, onDeleteComment }) {
   const [draft, setDraft] = useState({
     title: todo.title, description: todo.description ?? "", status: todo.status, priority: todo.priority, track: todo.track,
     assignee_id: todo.assignee_id ?? "", due_date: todo.due_date ?? "", link: todo.link ?? "",
@@ -34,9 +34,10 @@ function TodoModal({ todo, admins, userId, comments, commentsLoading, onSave, on
   const [saving, setSaving] = useState(false);
   const set = (k) => (v) => setDraft((d) => ({ ...d, [k]: v }));
 
-  const changed = Object.keys(draft).filter((k) => String(draft[k] ?? "") !== String(todo[k] ?? ""));
+  const changed = isNew ? Object.keys(draft) : Object.keys(draft).filter((k) => String(draft[k] ?? "") !== String(todo[k] ?? ""));
 
   const save = async () => {
+    if (!draft.title.trim()) { showToast("Giv opgaven en titel", "error"); return; }
     if (draft.link && !isHttpUrl(draft.link.trim())) { showToast("Linket skal starte med http:// eller https://", "error"); return; }
     setSaving(true);
     const ok = await onSave(Object.fromEntries(changed.map((k) => [k, typeof draft[k] === "string" ? draft[k].trim() : draft[k]])));
@@ -51,20 +52,24 @@ function TodoModal({ todo, admins, userId, comments, commentsLoading, onSave, on
 
   return (
     <div className="admin-modal-overlay" onClick={onClose}>
-      <div className="admin-modal" role="dialog" aria-modal="true" aria-label="Rediger opgave" style={{ maxWidth: 720 }} onClick={(e) => e.stopPropagation()}>
+      <div className="admin-modal" role="dialog" aria-modal="true" aria-label={isNew ? "Ny opgave" : "Rediger opgave"} style={{ maxWidth: 720 }} onClick={(e) => e.stopPropagation()}>
         <div className="admin-modal-header">
           <div>
-            <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
-              Oprettet {fmtDateTime(todo.created_at)}{todo.created_by ? ` af ${personName(admins, todo.created_by)}` : ""}
-              {todo.completed_at ? ` · Færdig ${fmtDateTime(todo.completed_at)}${todo.completed_by ? ` af ${personName(admins, todo.completed_by)}` : ""}` : ""}
-            </div>
+            {isNew ? (
+              <div style={{ fontSize: 15, fontWeight: 800 }}>Ny opgave</div>
+            ) : (
+              <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
+                Oprettet {fmtDateTime(todo.created_at)}{todo.created_by ? ` af ${personName(admins, todo.created_by)}` : ""}
+                {todo.completed_at ? ` · Færdig ${fmtDateTime(todo.completed_at)}${todo.completed_by ? ` af ${personName(admins, todo.completed_by)}` : ""}` : ""}
+              </div>
+            )}
           </div>
           <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={onClose} aria-label="Luk">Luk</button>
         </div>
 
         <div className="admin-field">
           <label htmlFor="todo-title">Titel</label>
-          <input id="todo-title" value={draft.title} maxLength={200} onChange={(e) => set("title")(e.target.value)} />
+          <input id="todo-title" autoFocus={isNew} value={draft.title} maxLength={200} onChange={(e) => set("title")(e.target.value)} />
         </div>
         <div className="admin-field">
           <label htmlFor="todo-desc">Beskrivelse</label>
@@ -109,18 +114,22 @@ function TodoModal({ todo, admins, userId, comments, commentsLoading, onSave, on
         </div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
-          <button className="admin-btn admin-btn-primary" onClick={save} disabled={saving || changed.length === 0}>{saving ? "Gemmer…" : "Gem"}</button>
-          <button className="admin-btn admin-btn-ghost"
+          <button className="admin-btn admin-btn-primary" onClick={save} disabled={saving || changed.length === 0}>
+            {saving ? (isNew ? "Opretter…" : "Gemmer…") : (isNew ? "Opret opgave" : "Gem")}
+          </button>
+          {isNew && <button className="admin-btn admin-btn-ghost" onClick={onClose}>Annullér</button>}
+          {!isNew && <button className="admin-btn admin-btn-ghost"
             onClick={() => navigator.clipboard?.writeText(buildTodoPrompt({ ...todo, ...draft, assignee_id: draft.assignee_id || null }, admins, comments))
               .then(() => showToast("Prompt kopieret")).catch((e) => showToast("Kunne ikke kopiere: " + e.message, "error"))}>
             Kopiér som prompt
-          </button>
-          <button className="admin-btn admin-btn-danger" style={{ marginLeft: "auto" }}
+          </button>}
+          {!isNew && <button className="admin-btn admin-btn-danger" style={{ marginLeft: "auto" }}
             onClick={() => { if (window.confirm("Slet opgaven og dens kommentarer? Det kan ikke fortrydes.")) onDelete().then((ok) => ok && onClose()); }}>
             Slet
-          </button>
+          </button>}
         </div>
 
+        {!isNew && <>
         <div className="admin-label">Kommentarer</div>
         {commentsLoading ? (
           <div className="admin-loading-row" style={{ padding: 8 }}><div className="admin-spinner" /> Henter…</div>
@@ -146,6 +155,7 @@ function TodoModal({ todo, admins, userId, comments, commentsLoading, onSave, on
             aria-label="Ny kommentar" onChange={(e) => setCommentText(e.target.value)} />
           <button type="submit" className="admin-btn admin-btn-ghost" disabled={!commentText.trim()}>Send</button>
         </form>
+        </>}
       </div>
     </div>
   );
@@ -159,10 +169,7 @@ export default function TodoSection({ todos, admins, loading, load, create, upda
   const [openId, setOpenId] = useState(null);
 
   const [newTitle, setNewTitle] = useState("");
-  const [newTrack, setNewTrack] = useState("backend");
-  const [newPriority, setNewPriority] = useState("normal");
-  const [newAssignee, setNewAssignee] = useState("");
-  const [adding, setAdding] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   const today = todayKey();
   const counts = countByView(todos, userId);
@@ -174,33 +181,20 @@ export default function TodoSection({ todos, admins, loading, load, create, upda
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId]);
 
-  const submitNew = async (e) => {
+  // "Tilføj" åbner den udvidede opgavemenu med titlen udfyldt; først "Opret opgave" gemmer.
+  const startNew = (e) => {
     e.preventDefault();
-    if (!newTitle.trim() || adding) return;
-    setAdding(true);
-    const ok = await create({ title: newTitle, track: newTrack, priority: newPriority, assignee_id: newAssignee });
-    setAdding(false);
-    if (ok) setNewTitle("");
+    if (newTitle.trim()) setCreating(true);
   };
 
   const toggleDone = (t) => update(t.id, { status: t.status === "done" ? "todo" : "done" });
 
   return (
     <>
-      <form className="admin-card todo-add" onSubmit={submitNew}>
+      <form className="admin-card todo-add" onSubmit={startNew}>
         <input className="admin-search" style={{ maxWidth: "none", flex: "1 1 280px" }} value={newTitle} maxLength={200}
-          placeholder="Ny opgave — skriv og tryk Enter" aria-label="Titel på ny opgave" onChange={(e) => setNewTitle(e.target.value)} />
-        <Select value={newTrack} onChange={setNewTrack} label="Spor">
-          {Object.entries(TRACK_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </Select>
-        <Select value={newPriority} onChange={setNewPriority} label="Prioritet">
-          {Object.entries(PRIORITY_LABELS).map(([k, v]) => <option key={k} value={k}>Prioritet: {v}</option>)}
-        </Select>
-        <Select value={newAssignee} onChange={setNewAssignee} label="Ansvarlig">
-          <option value="">Ingen ansvarlig</option>
-          {admins.map((a) => <option key={a.id} value={a.id}>{a.id === userId ? "Mig" : (a.name || a.email)}</option>)}
-        </Select>
-        <button type="submit" className="admin-btn admin-btn-primary" disabled={!newTitle.trim() || adding}>{adding ? "Tilføjer…" : "Tilføj"}</button>
+          placeholder="Ny opgave — skriv en titel og tryk Enter" aria-label="Titel på ny opgave" onChange={(e) => setNewTitle(e.target.value)} />
+        <button type="submit" className="admin-btn admin-btn-primary" disabled={!newTitle.trim()}>Tilføj</button>
       </form>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 8 }}>
@@ -270,6 +264,19 @@ export default function TodoSection({ todos, admins, loading, load, create, upda
           </table>
         )}
       </div>
+
+      {creating && (
+        <TodoModal
+          isNew admins={admins} userId={userId}
+          todo={{ title: newTitle.trim(), status: "todo", priority: "normal", track: "backend", assignee_id: userId || "" }}
+          onSave={async (fields) => {
+            const ok = await create(fields);
+            if (ok) setNewTitle("");
+            return ok;
+          }}
+          onClose={() => setCreating(false)}
+        />
+      )}
 
       {openTodo && (
         <TodoModal

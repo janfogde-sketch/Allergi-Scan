@@ -11,6 +11,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../constants.jsx";
 
+// Udløbstidspunktet (ms) fra access-tokenets payload; null hvis det ikke kan læses.
+export function jwtExpiryMs(token) {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return typeof payload.exp === "number" ? payload.exp * 1000 : null;
+  } catch { return null; }
+}
+
+const REFRESH_MARGIN_MS = 60_000;
+
 export function useAdminAuth() {
   const [accessToken, setAccessToken] = useState(() => localStorage.getItem("as_token") || null);
   const [refreshToken, setRefreshToken] = useState(() => localStorage.getItem("as_refresh") || null);
@@ -43,11 +53,50 @@ export function useAdminAuth() {
     localStorage.removeItem("as_user_id");
   }, []);
 
+  // ── Hold access-tokenet frisk ─────────────────────────────────────────────
+  // Supabase-tokens udløber efter ca. en time, og panelet står ofte åbent
+  // længere. Vi fornyer et minut før udløb (eller med det samme, hvis det
+  // allerede er udløbet ved indlæsning). Afvises refresh-tokenet, logges der ud.
+  useEffect(() => {
+    if (!accessToken) return;
+    const exp = jwtExpiryMs(accessToken);
+    if (exp === null) return;
+    let cancelled = false;
+    let timer;
+    const refresh = async () => {
+      const stored = localStorage.getItem("as_refresh") || refreshToken;
+      if (!stored) { logout(); return; }
+      try {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
+          body: JSON.stringify({ refresh_token: stored }),
+        });
+        if (cancelled) return;
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.access_token) {
+          saveTokens(data.access_token, data.refresh_token, data.user?.id || userId);
+        } else if (res.status >= 400 && res.status < 500) {
+          logout();
+        } else {
+          timer = setTimeout(refresh, 30_000);
+        }
+      } catch {
+        if (!cancelled) timer = setTimeout(refresh, 30_000);
+      }
+    };
+    timer = setTimeout(refresh, Math.max(0, exp - Date.now() - REFRESH_MARGIN_MS));
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [accessToken, refreshToken, userId, saveTokens, logout]);
+
   // ── Verificér admin-rolle hver gang accessToken ændrer sig ────────────────
   // Frontend-tjekket er bekvemmelighed, ikke sikkerheden — RLS på
   // users/service-role-kald i Edge Functions håndhæver den reelle adgang.
   useEffect(() => {
     if (!accessToken || !userId) { setCheckingRole(false); setIsAdmin(false); return; }
+    // Et allerede udløbet token afvises af RLS; vent på, at fornyelsen ovenfor leverer et nyt.
+    const exp = jwtExpiryMs(accessToken);
+    if (exp !== null && exp <= Date.now()) { setCheckingRole(true); return; }
     let cancelled = false;
     setCheckingRole(true);
     setRoleCheckError("");
