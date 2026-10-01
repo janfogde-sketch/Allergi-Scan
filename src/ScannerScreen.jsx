@@ -763,7 +763,7 @@ export default function ScannerScreen({
                   )}
                 </div>
 
-                {/* Sikkerhedsinformationen kan genåbnes fra menuen/Indstillinger (SafetyInfoModal), ikke fra en fast knap her. */}}
+                {/* Sikkerhedsinformationen kan genåbnes fra menuen/Indstillinger (SafetyInfoModal), ikke fra en fast knap her. */}
               </div>
               )}
             </div>}

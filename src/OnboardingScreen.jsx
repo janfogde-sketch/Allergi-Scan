@@ -64,6 +64,17 @@ const WELCOME_BENEFITS = [
   ["cart",   "Lettere indkøb"],
 ];
 
+// Kort tekst efter allergilisten på et familiemedlems kort: "Advar ved spor" / "Kun ved ingrediens", når alle medlemmets allergener
+// har samme valg (blandede valg vises ikke, så linjen forbliver kort).
+const memberTraceNote = (m) => {
+  const ids = m.allergens || [];
+  if (ids.length === 0) return "";
+  const direct = ids.filter(id => m.levels?.[id] === "direct_only").length;
+  if (direct === 0) return " · Advar ved spor";
+  if (direct === ids.length) return " · Kun ved ingrediens";
+  return "";
+};
+
 // Trinnet før `step`. Trin 3 er kostpræferencer, når de er slået til (DIETS_ENABLED). Ellers er trin 3 valget "Spor"
 // (hvad der skal ske, når pakken siger "kan indeholde spor af"); det springes over, hvis brugeren ingen allergier har valgt.
 const prevOnboardStep = (step, hasAllergens) => (!DIETS_ENABLED && step === 4 && !hasAllergens ? 2 : step - 1);
@@ -144,19 +155,10 @@ export default function OnboardingScreen({
   // vælge noget" (25. sept. 2026, brugerfeedback).
   const [noDietConfirmed, setNoDietConfirmed] = useState(false);
 
-  // Trin 4 (Familie): "Tilføj nyt familiemedlem"-formularen skal kun være
-  // foldet ud, når der endnu ikke er gemt noget (første besøg på trinnet),
-  // under en aktiv redigering, eller efter et eksplicit tryk på "+ Tilføj
-  // endnu et familiemedlem" (25. sept. 2026, brugerfeedback) — ikke
-  // automatisk hver gang trinnet vises, når familien allerede har medlemmer.
-  const [showAddMemberForm, setShowAddMemberForm] = useState(family.length === 0);
-  // Slettes det sidste tilbageværende familiemedlem, skal formularen folde
-  // sig ud igen — ellers står brugeren tilbage med kun "+ Tilføj endnu et
-  // familiemedlem", som læser mærkeligt når der reelt ikke er nogen "endnu
-  // et" at tilføje til.
-  useEffect(() => {
-    if (family.length === 0) setShowAddMemberForm(true);
-  }, [family.length]);
+  // Trin 4 (Familie) er valgfrit og skal føles sådan (2. okt. 2026, onboarding-polering): trinnet starter uden formular, kun med
+  // "+ Tilføj familiemedlem" og "Jeg vil ikke tilføje familiemedlemmer nu". Formularen foldes først ud efter et tryk på "+ Tilføj …"
+  // (eller "Rediger") og lukkes igen ved Annuller/Gem, så der aldrig står en stor tom formular uopfordret.
+  const [showAddMemberForm, setShowAddMemberForm] = useState(false);
 
   // Gluten ↔ Glutenfri-synkronisering — LIVE reaktion på allergen-valget,
   // ikke kun én gang ved ankomst til trin 3: vælges "Gluten", markeres
@@ -194,6 +196,8 @@ export default function OnboardingScreen({
       // Onboarding afsluttes direkte herfra uanset svar — ingen ekstra
       // "Du er færdig"-oversigtsskærm (25. sept. 2026, brugerfeedback).
       setTimeout(() => finishOnboard(), 800);
+    } else {
+      showToast("Notifikationer kunne ikke slås til lige nu. Du kan prøve igen under Indstillinger.", "error");
     }
   };
 
@@ -908,7 +912,12 @@ export default function OnboardingScreen({
 
         {/* ══ ONBOARDING ══ */}
         {(screen === SCREENS.ONBOARD || editMode) && (
-          <div className="onboard-wrap fade-in">
+          <div className="onboard-wrap fade-in"
+            // Tastaturet dækker ellers et fokuseret felt på lave skærme: ryk feltet ind midt på skærmen, når tastaturet er åbnet.
+            onFocus={e => {
+              const t = e.target;
+              if (t?.matches?.("input:not([type=checkbox]):not([type=radio]), select, textarea")) setTimeout(() => t.scrollIntoView?.({ block:"center", behavior:"smooth" }), 300);
+            }}>
             {/* Preview-only dev-navigation (25. sept. 2026) — springer
                 onboardStep frem/tilbage direkte, UDEN at validere trinnets
                 felter (den normale "Fortsæt →"-knap kræver udfyldte
@@ -1014,7 +1023,7 @@ export default function OnboardingScreen({
             {onboardStep === 4 && (
               <div className="fade-in">
                 <div className="step-title" style={UI.utacenter}>Familiemedlemmer</div>
-                <div style={{ fontSize:13, color:"var(--muted2)", textAlign:"center", marginBottom:16 }}>Tilføj familiemedlemmer med egne allergier. Valgfrit.</div>
+                <div style={{ fontSize:13, color:"var(--ink2)", textAlign:"center", marginBottom:16 }}>Tilføj familiemedlemmer med egne allergier. Valgfrit.</div>
 
                 {/* Allerede tilføjede — viser navn + alder som primær linje
                     (25. sept. 2026, brugerfeedback: "Mia, 24 år"), ikke kun
@@ -1050,7 +1059,7 @@ export default function OnboardingScreen({
                             {m.name}{m.birth_year ? ` · ${new Date().getFullYear() - m.birth_year} år` : ""}
                           </div>
                           <div style={UI.muted11mt2}>
-                            {allergenLabels.length ? shownAllergens.join(", ") + (extraCount > 0 ? ` +${extraCount}` : "") : "Ingen allergier"}
+                            {allergenLabels.length ? shownAllergens.join(", ") + (extraCount > 0 ? ` +${extraCount}` : "") + memberTraceNote(m) : "Ingen allergier"}
                           </div>
                         </div>
                         <button type="button" onClick={() => { startEditMember(m); setShowAddMemberForm(true); }} aria-label={`Rediger ${m.name}`}
@@ -1078,9 +1087,7 @@ export default function OnboardingScreen({
                   <div className="card" style={UI.mb12}>
                     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
                       <div className="card-lbl">{editingMemberId ? "Rediger familiemedlem" : "Tilføj nyt familiemedlem"}</div>
-                      {family.length > 0 && (
-                        <TextLink onClick={() => { cancelEditMember(); setShowAddMemberForm(false); }}>Annuller</TextLink>
-                      )}
+                      <TextLink onClick={() => { cancelEditMember(); setShowAddMemberForm(false); }}>Annuller</TextLink>
                     </div>
                     <MemberForm
                       name={newMemberName} setName={setNewMemberName}
@@ -1098,24 +1105,20 @@ export default function OnboardingScreen({
                     />
                   </div>
                 ) : (
-                  <SecondaryButton style={UI.mb12} onClick={() => setShowAddMemberForm(true)}>
-                    + Tilføj endnu et familiemedlem
-                  </SecondaryButton>
-                )}
-
-                {/* Fortsæt og "spring over" var tidligere altid vist samtidig
-                    — redundant, da de betyder næsten det samme, hvis intet
-                    familiemedlem endnu er tilføjet (25. sept. 2026,
-                    brugerfeedback). Nu kun ÉN kontekstafhængig knap: så
-                    snart mindst ét familiemedlem er gemt, er "Fortsæt →"
-                    utvetydig og erstatter skip-knappen; er der ikke gemt
-                    noget, er "spring over" den eneste vej videre. */}
-                {family.length > 0 ? (
-                  <PrimaryButton onClick={() => setOnboardStep(5)}>Fortsæt →</PrimaryButton>
-                ) : (
-                  <SecondaryButton onClick={() => setOnboardStep(5)}>
-                    Jeg vil ikke tilføje familiemedlemmer nu
-                  </SecondaryButton>
+                  <>
+                    {family.length === 0 ? (
+                      <PrimaryButton style={UI.mb8} onClick={() => setShowAddMemberForm(true)}>+ Tilføj familiemedlem</PrimaryButton>
+                    ) : (
+                      <SecondaryButton style={UI.mb12} onClick={() => setShowAddMemberForm(true)}>+ Tilføj endnu et familiemedlem</SecondaryButton>
+                    )}
+                    {/* Trinnet er valgfrit: uden medlemmer er "spring over" den eneste vej videre (sekundær), med medlemmer er
+                        "Fortsæt →" den primære handling. Skjules, mens formularen er åben, så der kun er én ting at gøre ad gangen. */}
+                    {family.length > 0 ? (
+                      <PrimaryButton onClick={() => setOnboardStep(5)}>Fortsæt →</PrimaryButton>
+                    ) : (
+                      <SecondaryButton onClick={() => setOnboardStep(5)}>Jeg vil ikke tilføje familiemedlemmer nu</SecondaryButton>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -1126,8 +1129,8 @@ export default function OnboardingScreen({
                   <div style={{ textAlign:"center", padding:"16px 0 20px" }}>
                     <div style={{ display:"flex", justifyContent:"center", marginBottom:12 }}><Icon name="bell" size={42} color="var(--green)" /></div>
                     <div style={{ fontSize:20, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Bliv opdateret</div>
-                    <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.65 }}>
-                      Få besked, når der sker noget vigtigt i EatSafe.
+                    <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.65 }}>
+                      Få besked om relevante ændringer i EatSafe. Valgfrit.
                     </div>
                   </div>
 
@@ -1163,7 +1166,7 @@ export default function OnboardingScreen({
                           er den anbefalede handling, "Ikke nu" er der bare
                           uden at presse. Afslutter onboarding direkte, ingen
                           ekstra "Du er færdig"-skærm. */}
-                      <TextLink variant="muted" block onClick={finishOnboard}>
+                      <TextLink variant="muted" block style={{ minHeight:44 }} onClick={finishOnboard}>
                         Ikke nu
                       </TextLink>
                     </>

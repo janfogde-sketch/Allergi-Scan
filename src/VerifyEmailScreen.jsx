@@ -59,14 +59,14 @@ export default function VerifyEmailScreen() {
             <div className="verify-title">Bekræft din e-mail</div>
             <div className="verify-text">Vi har sendt et bekræftelseslink til</div>
             <div className="verify-email">{verifyEmail}</div>
-            <div className="verify-text">Åbn mailen og tryk på linket for at aktivere din konto.</div>
+            <div className="verify-text">Klik på linket i mailen for at fortsætte opsætningen.</div>
           </div>
         )}
       </div>
 
       {verified ? (
         <button className="btn welcome-btn" onClick={continueAfterVerify}>
-          Fortsæt opsætning
+          Fortsæt →
         </button>
       ) : (
         <>
