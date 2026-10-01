@@ -720,6 +720,12 @@ neutralt globusikon (`Icon name="globe"`) i stedet for landeflag; mælkens
 eksempler er Madpas-specifikke ("Cream · Butter · Cheese · Whey · Milk
 powder", `MADPAS_EXAMPLES_OVERRIDE`, 17 sprog); indrykninger bruger
 `paddingInlineStart`, så arabisk (RTL) flugter.
+Final polish (1. okt. 2026): eksempel-labelen er "May be found in:" på alle
+17 sprog (`MADPAS_EXAMPLES_LABEL_T`; eksemplerne indeholder ikke nødvendigvis
+allergenet); ét afstandssystem via flex-gap (28 mellem blokke, 32 mellem
+sektioner, 12 under sektionsoverskrift, 24 over krydskontamineringsboksen),
+ensartet linjehøjde 1,5 på al brødtekst, ingen tom ekstra plads efter sidste
+blok, og Læs højt-knappen er ca. 12 % lavere (46 px).
 
 ### Profil restruktureret — "Rediger profil" og "Rediger præferencer" adskilt (28. sept. 2026)
 

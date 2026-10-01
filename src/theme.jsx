@@ -1119,7 +1119,7 @@ body::-webkit-scrollbar{display:none;}
    at kunne give dem samme tryk-feedback som resten af appens knapper (se
    den delte :active-liste nedenfor) — ingen visuel ændring i sig selv. */
 .mp-close-btn{background:var(--surface2);border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
-.mp-speak-btn{width:100%;border:none;border-radius:14px;padding:16px 20px;font-family:var(--f);font-size:17px;font-weight:800;color:var(--on-green);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;}
+.mp-speak-btn{width:100%;border:none;border-radius:14px;padding:13px 20px;font-family:var(--f);font-size:17px;font-weight:800;color:var(--on-green);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;}
 .mp-cc-toggle{width:48px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
 .mp-cc-toggle-knob{width:22px;height:22px;border-radius:50%;background:var(--ink);position:absolute;top:3px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
 

@@ -164,7 +164,7 @@ export function useMadpas({ allergens, customAllerg, user, madpasLang, family, m
     // fulde sikkerheds-sætning (samme tekst som vises på skærmen, se
     // madpasSafetyNote()) — intolerancer nævnes samlet uden den sætning,
     // matcher den visuelle opdeling (INTOLERANCES har ingen sikkerheds-
-    // tekst, kun FOOD ALLERGIES). "Common examples" oplæses bevidst
+    // tekst, kun FOOD ALLERGIES). "May be found in" oplæses bevidst
     // IKKE (27. sept. 2026, krav 8: "behøver ikke nødvendigvis læses op,
     // hvis det gør beskeden unødigt lang").
     const allergyEntries = [];
