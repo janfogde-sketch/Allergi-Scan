@@ -731,6 +731,11 @@ blok, og Læs højt-knappen er ca. 12 % lavere (46 px).
 ved "KRYDSKONTAMINERING", der åbner en delt `InfoSheet` (`SharedComponents.jsx`, bottom-sheet i portal, én "Forstået"-knap) med en kort forklaring.
 Brug `InfoSheet` til fremtidige info-ikoner.
 
+**Mails i mørk tilstand (1. okt. 2026, Bjørn):** alle 28 mailskabeloner (`supabase/templates/auth/` og `resend/`) har samme
+mørke palette (`#121413`/`#1C1F1E`, overskrift `#F4F7F5`, brødtekst `#C9CFCC`, sekundær `#9FA8A3`, grøn knap `#0F7D4F`), regler til Outlook og et logo,
+der skifter til `EatSafe_Logo_Email_Dark.png`. Detaljer og Gmail-begrænsning i `supabase/templates/resend/README.md`; testet i `src/mailDarkMode.test.js`.
+Ændr paletten i alle skabeloner samtidig.
+
 ### Profil restruktureret — "Rediger profil" og "Rediger præferencer" adskilt (28. sept. 2026)
 
 Profilsiden har to adskilte redigeringsskærme: `SCREENS.EDITPROFILE`

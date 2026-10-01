@@ -4,39 +4,43 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="x-apple-disable-message-reformatting">
-<meta name="color-scheme" content="light">
-<meta name="supported-color-schemes" content="light">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
 <title>Du er inviteret til EatSafe</title>
 <style>
+:root{color-scheme:light dark;supported-color-schemes:light dark}
 body,table,td,a{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}table,td{mso-table-lspace:0pt;mso-table-rspace:0pt}table{border-collapse:collapse}img{border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic}a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important}
 @media screen and (max-width:480px){.outer{padding:16px 8px!important}.pad{padding-left:24px!important;padding-right:24px!important}.heading{font-size:24px!important;line-height:30px!important}}
+@media(prefers-color-scheme:dark){.canvas{background-color:#121413!important}.paper{background-color:#1C1F1E!important;color:#C9CFCC!important;border-color:#262A28!important}h1,h2,h3,.heading,.text strong,.strong{color:#F4F7F5!important}.text{color:#C9CFCC!important}.muted{color:#9FA8A3!important}.panel{background-color:#262A28!important}.codebox{background-color:#262A28!important;border-color:#343A37!important;color:#F4F7F5!important}.green{color:#79D5A7!important}.rule{border-color:#2E3330!important}.badge{border-color:#3A403D!important}.btn-cell{background-color:#0F7D4F!important}.btn{background-color:#0F7D4F!important;border-color:#0F7D4F!important;color:#FFFFFF!important}.logo-light{display:none!important;max-height:0!important;overflow:hidden!important}.logo-dark{display:block!important;max-height:none!important;overflow:visible!important}}
+[data-ogsc] .paper{color:#C9CFCC!important}[data-ogsc] h1,[data-ogsc] h2,[data-ogsc] h3,[data-ogsc] .heading,[data-ogsc] .text strong,[data-ogsc] .strong{color:#F4F7F5!important}[data-ogsc] .text{color:#C9CFCC!important}[data-ogsc] .muted{color:#9FA8A3!important}[data-ogsc] .codebox{color:#F4F7F5!important}[data-ogsc] .green{color:#79D5A7!important}[data-ogsc] .btn{color:#FFFFFF!important}
+[data-ogsb] .canvas{background-color:#121413!important}[data-ogsb] .paper{background-color:#1C1F1E!important}[data-ogsb] .panel{background-color:#262A28!important}[data-ogsb] .codebox{background-color:#262A28!important}[data-ogsb] .btn-cell{background-color:#0F7D4F!important}[data-ogsb] .btn{background-color:#0F7D4F!important}[data-ogsb] .logo-light{display:none!important;max-height:0!important;overflow:hidden!important}[data-ogsb] .logo-dark{display:block!important;max-height:none!important;overflow:visible!important}
 </style>
 <!--[if mso]><style>body,table,td,p,h1,a{font-family:Arial,Helvetica,sans-serif!important}</style><![endif]-->
 </head>
-<body style="margin:0;padding:0;width:100%;background-color:#F6F8F3;">
+<body class="canvas" style="margin:0;padding:0;width:100%;background-color:#F6F8F3;">
 <!-- Auth-mail. Sendes af edge-funktionen auth-send-email (Send Email Hook) og kan også sættes som Supabase Auth-skabelon (deploy-auth-templates.yml). Pladsholdere i Go-skabelonsyntaks: ConfirmationURL, Token, Email, NewEmail. -->
 <div style="display:none;font-size:1px;line-height:1px;color:#F6F8F3;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">Du er inviteret til at oprette en konto i EatSafe.</div>
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#F6F8F3;"><tr><td align="center" class="outer" style="padding:32px 12px;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="canvas" style="background-color:#F6F8F3;"><tr><td align="center" class="outer" style="padding:32px 12px;">
 <!--[if mso]><table role="presentation" width="560" align="center"><tr><td><![endif]-->
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background-color:#FFFFFF;border:1px solid #E6EAE1;border-radius:16px;color:#15201A;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="paper" style="max-width:560px;background-color:#FFFFFF;border:1px solid #E6EAE1;border-radius:16px;color:#15201A;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
 <tr><td align="center" class="pad" style="padding:36px 40px 8px;">
-<img src="https://www.eatsafe.dk/brand/EatSafe_Logo_Horizontal_2400.png" alt="EatSafe" width="168" style="display:block;width:168px;height:auto;">
+<img class="logo logo-light" src="https://www.eatsafe.dk/brand/EatSafe_Logo_Horizontal_2400.png" alt="EatSafe" width="168" style="display:block;width:168px;height:auto;background-color:#FFFFFF;border-radius:4px;"><img class="logo logo-dark" src="https://www.eatsafe.dk/brand/EatSafe_Logo_Email_Dark.png" alt="EatSafe" width="168" style="display:none;max-height:0;overflow:hidden;mso-hide:all;width:168px;height:auto;">
 </td></tr>
 <tr><td align="center" class="pad" style="padding:28px 40px 0;">
 <h1 class="heading" style="margin:0 0 12px;font-size:26px;line-height:32px;font-weight:700;letter-spacing:-.5px;color:#15201A;">Du er inviteret til EatSafe</h1>
-<p style="margin:0;font-size:15px;line-height:24px;color:#3C4A41;">Du er blevet inviteret til at oprette en konto i EatSafe. Tryk på knappen for at acceptere invitationen.</p>
+<p class="text" style="margin:0;font-size:15px;line-height:24px;color:#3C4A41;">Du er blevet inviteret til at oprette en konto i EatSafe. Tryk på knappen for at acceptere invitationen.</p>
 </td></tr>
 <tr><td align="center" class="pad" style="padding:28px 40px 0;">
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:320px;"><tr><td align="center" bgcolor="#0F7D4F" style="background-color:#0F7D4F;border-radius:12px;mso-padding-alt:16px 24px;">
-<a href="{{ .ConfirmationURL }}" target="_blank" style="display:block;padding:16px 24px;border:1px solid #0F7D4F;border-radius:12px;font-size:16px;line-height:20px;font-weight:700;text-align:center;color:#FFFFFF;text-decoration:none;mso-padding-alt:0;">Acceptér invitation</a>
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:320px;"><tr><td align="center" class="btn-cell" bgcolor="#0F7D4F" style="background-color:#0F7D4F;border-radius:12px;mso-padding-alt:16px 24px;">
+<a class="btn" href="{{ .ConfirmationURL }}" target="_blank" style="display:block;padding:16px 24px;border:1px solid #0F7D4F;border-radius:12px;font-size:16px;line-height:20px;font-weight:700;text-align:center;color:#FFFFFF;text-decoration:none;mso-padding-alt:0;">Acceptér invitation</a>
 </td></tr></table>
 </td></tr>
 <tr><td align="center" class="pad" style="padding:20px 40px 36px;">
-<p style="margin:0;font-size:12.5px;line-height:20px;color:#647167;">Kender du ikke afsenderen, eller venter du ikke en invitation, kan du ignorere denne mail.</p>
+<p class="muted" style="margin:0;font-size:12.5px;line-height:20px;color:#647167;">Kender du ikke afsenderen, eller venter du ikke en invitation, kan du ignorere denne mail.</p>
 </td></tr>
 </table>
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;font-family:'DM Sans',Arial,Helvetica,sans-serif;"><tr><td align="center" style="padding:20px 16px 0;font-size:12px;line-height:19px;color:#647167;">
-<strong style="color:#15201A;font-weight:700;">EatSafe</strong><br>Mere tryghed i hverdagen
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;font-family:'DM Sans',Arial,Helvetica,sans-serif;"><tr><td align="center" class="muted" style="padding:20px 16px 0;font-size:12px;line-height:19px;color:#647167;">
+<strong class="strong" style="color:#15201A;font-weight:700;">EatSafe</strong><br>Mere tryghed i hverdagen
 </td></tr></table>
 <!--[if mso]></td></tr></table><![endif]-->
 </td></tr></table>
