@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useEffect } from "react";
 import { showToast } from "../../SharedComponents.jsx";
+import { ticketReporter, ticketDevice } from "../../ticketReporter.js";
 
 const TYPE_LABELS = { bug: "Fejl", ui: "Design", missing: "Mangler", content: "Indhold", crash: "Crash", suggestion: "Forslag" };
 const STATUS_LABELS = { open: "Åben", in_progress: "I gang", resolved: "Løst" };
@@ -21,13 +22,13 @@ function buildTicketPrompt(t) {
     `Type: ${TYPE_LABELS[t.type] || t.type}`,
     `Beskrivelse: ${t.description || "(ingen beskrivelse angivet)"}`,
     `Indsendt: ${dato}`,
-    `Bruger: ${ctx.user_name || "Anonym"} (${ctx.user_email || "—"}), rolle: ${ctx.user_role || "—"}`,
+    `Bruger: ${ticketReporter(t)}${ctx.user_email ? ` (${ctx.user_email})` : ""}, rolle: ${ctx.user_role || "—"}`,
     ``,
     `## Kontekst fra appen på indsendelsestidspunktet`,
     `Skærm/sektion: ${ctx.screen_label || ctx.admin_section || ctx.screen || "—"}${ctx.page_id ? ` (${ctx.page_id})` : ""}`,
     `Kilde: ${ctx.source === "desktop-admin" ? "Desktop admin-panel" : "Mobil-app (PWA)"}`,
     `URL: ${ctx.url || "—"}`,
-    `Enhed/browser: ${ctx.platform || "—"} · ${ctx.user_agent || "—"}`,
+    `Enhed/browser: ${ticketDevice(ctx)} · ${ctx.browser || ctx.user_agent || ctx.platform || "—"}`,
     `Viewport: ${ctx.viewport || "—"} (skærm: ${ctx.screen_size || "—"})`,
     `Online: ${ctx.online === false ? "Nej" : "Ja"}`,
     ...(ctx.build_time || ctx.commit_sha ? [`Build: ${ctx.build_time || "—"} (${ctx.commit_sha || "—"})`] : []),
@@ -104,7 +105,7 @@ export default function TicketsSection({ adminTickets, ticketsLoading, adminTick
                 <tr key={t.id} style={{ cursor: "pointer" }} onClick={() => setOpenTicket(t)}>
                   <td><span className="admin-pill admin-pill-neutral">{TYPE_LABELS[t.type] || t.type}</span></td>
                   <td style={{ maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.description}</td>
-                  <td>{t.context?.user_name || "Anonym"}</td>
+                  <td>{ticketReporter(t)}</td>
                   <td>{t.context?.screen_label || t.context?.screen || "–"}</td>
                   <td>{new Date(t.created_at).toLocaleDateString("da-DK")}</td>
                   <td onClick={e => e.stopPropagation()}>
@@ -131,7 +132,7 @@ export default function TicketsSection({ adminTickets, ticketsLoading, adminTick
               <div>
                 <span className="admin-pill admin-pill-neutral">{TYPE_LABELS[openTicket.type] || openTicket.type}</span>
                 <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
-                  {openTicket.context?.user_name || "Anonym"} ({openTicket.context?.user_email || "—"}) · {new Date(openTicket.created_at).toLocaleString("da-DK")}
+                  {ticketReporter(openTicket)}{openTicket.context?.user_email ? ` (${openTicket.context.user_email})` : ""} · {new Date(openTicket.created_at).toLocaleString("da-DK")}
                 </div>
               </div>
               <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => setOpenTicket(null)}>Luk</button>

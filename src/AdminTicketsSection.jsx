@@ -2,6 +2,7 @@
 import React from "react";
 import { Loader, Icon } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
+import { ticketReporter, ticketDevice } from "./ticketReporter.js";
 
 export default function AdminTicketsSection({
   adminTickets, adminTicketFilter, setAdminTicketFilter, ticketsLoading, updateTicketStatus, setOpenTicket,
@@ -40,9 +41,9 @@ export default function AdminTicketsSection({
               `── Ticket ${i + 1} ──────────────────────────────`,
               `Type:    ${typeLabels[t.type] || t.type}`,
               `Status:  ${statusLabels[t.status] || t.status}`,
-              `Bruger:  ${t.context?.user_name || "Anonym"} (${t.context?.user_email || "—"})`,
+              `Bruger:  ${ticketReporter(t)}${t.context?.user_email ? ` (${t.context.user_email})` : ""}`,
               `Skærm:   ${t.context?.screen_label || t.context?.screen || "—"}`,
-              `Enhed:   ${/iPhone|iPad/.test(t.context?.user_agent||"")?"iOS":/Android/.test(t.context?.user_agent||"")?"Android":"Desktop"}`,
+              `Enhed:   ${ticketDevice(t.context)}`,
               `Dato:    ${dato}`,
               ``,
               t.description || "(ingen beskrivelse)",
@@ -83,7 +84,7 @@ export default function AdminTicketsSection({
                     <span style={{ fontSize:11, fontWeight:700, color:cfg.color, background:cfg.bg, padding:"2px 8px", borderRadius:100 }}>{cfg.label}</span>
                   </div>
                   <div style={{ fontSize:13, color:"var(--ink)", lineHeight:1.4, marginBottom:4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{t.description}</div>
-                  <div style={UI.muted10}>{t.context?.user_name || "Anonym"} · {t.context?.screen_label || t.context?.screen || "—"} · {new Date(t.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</div>
+                  <div style={UI.muted10}>{ticketReporter(t)} · {t.context?.screen_label || t.context?.screen || "—"} · {new Date(t.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</div>
                 </div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0, marginTop:4 }}><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
               </div>

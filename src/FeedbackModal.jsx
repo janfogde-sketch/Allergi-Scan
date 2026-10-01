@@ -8,9 +8,7 @@ import { getRecentErrors } from "./errorReporter.js";
 import { FEEDBACK_TYPES } from "./feedbackTypes.js";
 import { buildFeedbackContext, diagnosticGroups } from "./feedbackDiagnostics.js";
 import { useAuthContext } from "./AuthContext.jsx";
-import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
-import { useHistoryContext } from "./HistoryContext.jsx";
 import { UI } from "./styleUtils.js";
 import { showToast, Icon } from "./SharedComponents.jsx";
 
@@ -40,10 +38,8 @@ export default function FeedbackModal({
   showManualEan,
   profilePopup,
 }) {
-  const { user, userId, accessToken, loginEmail } = useAuthContext();
-  const { allergens, family, activeProfiles } = useProfileContext();
+  const { user, userId, accessToken } = useAuthContext();
   const { screen } = useNavigationContext();
-  const { history } = useHistoryContext();
   const [type, setType]         = useState("bug");
   const [text, setText]         = useState("");
   const [image, setImage]       = useState(null);
@@ -82,12 +78,13 @@ export default function FeedbackModal({
       url: window.location.href, userAgent: navigator.userAgent, platform: navigator.platform, language: navigator.language,
       screenSize: `${window.screen.width}x${window.screen.height}`, viewport: `${window.innerWidth}x${window.innerHeight}`,
       online: navigator.onLine, timestamp: new Date().toISOString(),
+      standalone: window.matchMedia?.("(display-mode: standalone)").matches || navigator.standalone === true,
     },
     app: {
       buildTime: BUILD_TIME, commitSha: COMMIT_SHA,
       screenLabel: buildScreenLabel({ screen, authTab, onboardStep, scanResult, madpasWaiterView, madpasLang, selectedRecipe, editMode, showManualEan, profilePopup }),
     },
-    state: { screen, scanResult, madpasLang, selectedRecipe, onboardStep, userId, user, loginEmail, allergens, family, history, activeProfiles },
+    state: { screen, scanResult, madpasLang, selectedRecipe, onboardStep, userId, user },
     traces: getTraceLog(),
     recentErrors: getRecentErrors(),
   });
@@ -122,6 +119,8 @@ export default function FeedbackModal({
 
   const removeImage = () => { if (image) URL.revokeObjectURL(image); setImage(null); setImageB64(null); };
 
+  // Findes der en registreret fejl på enheden? Bestemmer hjælpeteksten ved "Appen lukker ned" (vi lover kun, hvad vi faktisk sender).
+  const hasCrashData = type === "crash" && getRecentErrors().length > 0;
   const ctx = diagOpen ? buildCtx() : null;
   const groups = ctx ? diagnosticGroups(ctx, { type, formatBuild: formatBuildTime }) : [];
   const traceLog = ctx ? ctx.debug_trace : [];
@@ -184,7 +183,9 @@ export default function FeedbackModal({
                 </div>
                 {type === "crash" && (
                   <div style={{ fontSize:11.5, color:"var(--muted)", lineHeight:1.45, marginTop:8 }}>
-                    Vi sender automatisk de seneste fejl fra din enhed med, så du ikke selv skal skrive tekniske detaljer.
+                    {hasCrashData
+                      ? "Vi vedhæfter automatisk den seneste tekniske fejl, så du ikke selv behøver beskrive de tekniske detaljer."
+                      : "Vi fandt ingen nylig crash-log på enheden. Beskriv gerne, hvad du gjorde lige før appen lukkede."}
                   </div>
                 )}
               </div>
@@ -200,7 +201,7 @@ export default function FeedbackModal({
                     fontSize:16, color:"var(--ink)", resize:"none", outline:"none",
                     lineHeight:1.5, boxSizing:"border-box" }} />
                 <div style={{ fontSize:11.5, color:"var(--muted)", lineHeight:1.45, marginTop:6 }}>
-                  Jo flere detaljer, jo lettere er det for os at finde fejlen: hvad trykkede du på, og hvad skete der så?
+                  Fortæl gerne, hvad du gjorde, hvad der skete, og hvad du forventede.
                 </div>
               </div>
 
@@ -240,11 +241,11 @@ export default function FeedbackModal({
                 {diagOpen && (
                   <div id="feedback-diag" style={{ background:"var(--surface2)", borderRadius:10, padding:"10px 12px", display:"flex", flexDirection:"column", gap:10 }}>
                     <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.45 }}>
-                      Dette sendes automatisk med din feedback, så vi kan finde fejlen. Du kan ikke fravælge det her.
+                      Disse tekniske oplysninger vedhæftes automatisk for at hjælpe os med at finde fejlen.
                     </div>
                     {groups.map(g => (
                       <div key={g.id}>
-                        <div style={{ fontSize:10, fontWeight:700, letterSpacing:".6px", textTransform:"uppercase", color: g.personal ? "var(--ink2)" : "var(--muted)", marginBottom:4 }}>
+                        <div style={{ fontSize:10, fontWeight:700, letterSpacing:".6px", textTransform:"uppercase", color:"var(--muted)", marginBottom:4 }}>
                           {g.title}
                         </div>
                         <div style={{ display:"grid", gridTemplateColumns:"auto 1fr", gap:"2px 10px" }}>

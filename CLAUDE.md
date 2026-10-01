@@ -203,7 +203,7 @@ link kun her og i Profil-footeren. Bevidst udeladt: app-sprog, dataeksport, selv
 **Scanner:** `stopCamera()` nulstiller al scanner-state (også det manuelle EAN-panel via `closeCameraFully()` i `App.jsx`) ved
 ethvert kamera-luk. `cameraPermissionDenied` viser et dedikeret kort. Advarselsvibration/-lyd via `fireWarningAlert()`.
 
-**Feedback-modal** (`FeedbackModal.jsx`): fast header og Send-knap, scrollende midte, følger `visualViewport` (tastatur) og safe-area. Typerne står i `feedbackTypes.js` (line-ikoner; id'et `crash` hedder "Appen lukker ned"). Diagnostikken er sammenfoldet og bygges ét sted (`feedbackDiagnostics.js`), så oversigten viser præcis det, der sendes; persondata står i en egen mærket gruppe. Ved "Appen lukker ned" sendes de seneste fejl med (`getRecentErrors()` i `errorReporter.js`, lokalt på enheden).
+**Feedback-modal** (`FeedbackModal.jsx`): fast header og Send-knap, scrollende midte, følger `visualViewport` (tastatur) og safe-area. Typerne står i `feedbackTypes.js` (line-ikoner; id'et `crash` hedder "Appen lukker ned"). Diagnostikken er sammenfoldet og bygges ét sted (`feedbackDiagnostics.js`), så oversigten viser præcis det, der sendes; den indeholder kun tekniske felter (ingen navn, e-mail, allergier, familie eller andre helbredsdata; kun internt bruger-ID, trace-linjer hvidlistes, URL uden query/hash). Ved "Appen lukker ned" sendes kun den seneste registrerede fejl (`getRecentErrors()` i `errorReporter.js`, lokalt på enheden), og hjælpeteksten lover det kun, hvis der findes en. Admin viser nye tickets som "Konto <id>" (`ticketReporter.js`).
 
 **Login, oprettelse, onboarding**
 - Felt-specifikke inline-fejl (`emailError`/`passwordError` i `useAuth.js`); `authError` kun til fejl, der ikke kan knyttes til ét
