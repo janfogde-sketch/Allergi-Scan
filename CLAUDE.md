@@ -669,6 +669,14 @@ tilkoblet rigtig konto (undgår dubletter uden automatisk navne-matching).
 Fuld detalje i `.claude/HISTORY.md`, backend-reference i `src/CONTEXT.md`
 afsnit 9.
 
+**Husstandskonti kan vælges som profil (1. okt. 2026, Bjørns fejlrapport):**
+rigtige EatSafe-konti i husstanden (Jan) kan nu scannes for, søges for og vises
+i Madpas, på lige fod med selvoprettede profiler, og er med i "Hele familien"
+som standard. De er SKRIVEBESKYTTEDE: kun profiler, man selv har oprettet
+(`family`), kan redigeres/slettes. Husstanden hentes i `useHousehold.js`, og
+`scanFamily` (ProfileContext) = egne + husstandens konti; brug `scanFamily`
+til alt, der vælger/tjekker profiler, og `family` kun til redigér/slet.
+
 ### Madpas — redesignet, forenklet til kernefunktionen, herefter finpoleret otte gange (26.-27. sept. 2026)
 
 Madpas' formål: alt relevant personale (tjener, butiks-, hotel- eller

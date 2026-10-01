@@ -103,7 +103,8 @@ function FavoriteCategorySheet({ favorite, existingCategories, onSetCategory, on
 // (arkitektur-audit A8, én skærm = én fil).
 export default function FavoritesScreen({ household, lookupProduct }) {
   const { user } = useAuthContext();
-  const { allergens, customAllerg, family, activeProfiles } = useProfileContext();
+  // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
+  const { allergens, customAllerg, scanFamily: family, activeProfiles } = useProfileContext();
   const { favorites, favoritesScope, loadFavorites, toggleFavorite, setFavoriteCategory } = useHistoryContext();
   const { selectedENumbers } = useAllergenPrefsContext();
 

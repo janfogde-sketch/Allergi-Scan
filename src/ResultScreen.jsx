@@ -32,7 +32,8 @@ export default function ResultScreen({
   lookupProduct,
 }) {
   const { user, accessToken } = useAuthContext();
-  const { family, allergens, customAllerg, activeProfiles } = useProfileContext();
+  // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
+  const { scanFamily: family, allergens, customAllerg, activeProfiles } = useProfileContext();
   const { setScreen } = useNavigationContext();
   const { isFavorite, toggleFavorite } = useHistoryContext();
   const { lists, activeList, activeListId, addToList, shoppingList, toggleItem } = useShoppingContext();

@@ -1,7 +1,7 @@
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
-import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL } from "./constants.jsx";
-import { initials, makeHeaders, apiCall } from "./helpers.js";
+import React, { useEffect } from "react";
+import { ALLERGENS, SCREENS, DIETS } from "./constants.jsx";
+import { initials } from "./helpers.js";
 import { Icon, AllergenGlyph } from "./SharedComponents.jsx";
 import { useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -152,30 +152,12 @@ export default function ProfileScreen({
   lookupProduct,
 }) {
   const { user, setUser, userId, accessToken, loginEmail } = useAuthContext();
-  const { allergens, customAllerg, family } = useProfileContext();
+  const { allergens, customAllerg, family, household, setHousehold, householdLoading, loadHousehold } = useProfileContext();
   const { screen, setScreen, openLegal } = useNavigationContext();
   const { history, loadHistory } = useHistoryContext();
   const { selectedENumbers } = useAllergenPrefsContext();
-  const [household, setHousehold] = useState([]);
-  const [householdLoading, setHouseholdLoading] = useState(false);
-
-  // Udtrukket til en selvstændig, genanvendelig funktion (26. sept. 2026,
-  // Familie-redesign) — kaldes både ved appstart, ved hvert besøg på
-  // Familie-fanen, af det periodiske "opdater automatisk"-tjek mens man er
-  // der, og lige efter en vellykket "Kobl til eksisterende profil"-handling
-  // (så de nyligt overførte allergener/kostpræferencer/E-numre vises straks).
-  const loadHousehold = () => {
-    if (!accessToken) return;
-    setHouseholdLoading(true);
-    return apiCall(`${SUPABASE_URL}/functions/v1/family/group`, { headers: makeHeaders(accessToken) })
-      .then(data => { if (data?.success) setHousehold(data.members || []); })
-      .catch(() => {})
-      .finally(() => setHouseholdLoading(false));
-  };
-
-  useEffect(() => {
-    loadHousehold();
-  }, [accessToken]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Husstanden (rigtige konti) hentes nu i App.jsx (useHousehold, 1. okt. 2026), så den også kan
+  // vælges som profil ved scanning m.m. — her læses den kun fra ProfileContext.
 
   // "Rediger præferencer" (28. sept. 2026, Profil-restrukturering) — samme
   // delte gluten↔glutenfri-sync-hook som onboarding/MemberForm bruger (se
