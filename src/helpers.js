@@ -516,6 +516,23 @@ export function profileConflictLabel(results, { maxNames = Infinity, manyText = 
   return warn.length ? `${main} · advarsel for ${warn.join(", ")}` : main;
 }
 
+// Statuslinje-tekst når INGEN profil har konflikt eller advarsel (indkøbsliste,
+// historik, favoritter, søgning) — tilpasset antallet af valgte profiler, så
+// en bruger uden familie ikke læser "alle profiler" (brugerrapport 25. sept.
+// 2026; erstatter den faste "Matcher alle profiler"). "Passer til" fremfor
+// "Matcher", som i en allergi-app kan misforstås som et fund af allergenet.
+// Tager både profillisten og resultater fra computeProfileResults (begge har
+// id/name).
+export function profileMatchLabel(profiles) {
+  const list = profiles || [];
+  if (list.length === 0) return "Passer til valgte profiler";
+  if (list.length > 1) return "Passer til alle valgte profiler";
+  const only = list[0];
+  if (only.id === "me") return "Passer til din profil";
+  const first = (only.name || "").trim().split(" ")[0];
+  return first ? `Passer til ${first}` : "Passer til den valgte profil";
+}
+
 // ─── PRODUKTRESULTAT: KATEGORISEREDE FUND (28. sept. 2026) ──────────────────
 // FINAL PRODUCT RESULT PAGE — ét genbrugeligt, data-drevet lag der grupperer
 // et allerede-beregnet scan-resultats matches (matchedDanger/matchedWarning

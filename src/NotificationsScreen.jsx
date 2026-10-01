@@ -25,8 +25,11 @@ export default function NotificationsScreen({ items, loading, listError, loadLis
       )}
 
       {!listError && !loading && items.length === 0 && (
-        <div className="card" style={{ textAlign:"center", color:"var(--muted)", fontSize:13.5, lineHeight:1.5 }}>
-          Du har ingen beskeder endnu. Her samles svar på din feedback, godkendte produkter og andre beskeder fra EatSafe.
+        // Samme tomme tilstand som Favoritter (1. okt. 2026): rundt ikon, overskrift, kort hjælpetekst.
+        <div className="empty-state">
+          <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="message" size={23} color="var(--muted)" /></span>
+          <div className="empty-txt">Ingen beskeder endnu</div>
+          <div className="empty-sub">Her samles svar på din feedback, godkendte produkter og andre beskeder fra EatSafe.</div>
         </div>
       )}
 

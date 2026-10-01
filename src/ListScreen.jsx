@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
-import { normalizeProductFlagsFor, productDisplayName, logSearchSelection, apiCall, makeHeaders, extractENumbers, buildActiveProfileList, computeProfileResults, profileConflictLabel } from "./helpers.js";
+import { normalizeProductFlagsFor, productDisplayName, logSearchSelection, apiCall, makeHeaders, extractENumbers, buildActiveProfileList, computeProfileResults, profileConflictLabel, profileMatchLabel } from "./helpers.js";
 import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -231,7 +231,7 @@ export default function ListScreen({
   // ── EatSafe-status pr. vare på listen (25. sept. 2026, brugerfeedback) ──────
   // Henter produktdata for varer med et EAN (dvs. tilføjet fra søgning/scan,
   // ikke en fritekst-vare) én gang pr. unikt EAN, så en diskret statuslinje
-  // under varenavnet kan vise "Matcher alle profiler"/"Konflikt for X"/"Kan
+  // under varenavnet kan vise "Passer til …"/"Konflikt for X"/"Kan
   // ikke afgøres sikkert" — samme sikkerhedsberegning som ResultScreen bruger
   // efter et scan (buildActiveProfileList/computeProfileResults, se
   // helpers.js), IKKE en selvstændig kopi af logikken.
@@ -269,10 +269,9 @@ export default function ListScreen({
     const conflict = profileConflictLabel(results);
     if (conflict) return { status:"danger", text: conflict };
     if (results.some(r => r.status === "warn")) return { status:"warn", text: "Kan ikke afgøres sikkert" };
-    // Ordlyden er den eksplicitte spec (25. sept. 2026, brugerfeedback) —
-    // "Matcher alle profiler" uanset om det reelt kun er én aktiv profil,
-    // ikke en grammatisk tilpasset ental-/flertalsvariant.
-    return { status:"safe", text: "Matcher alle profiler" };
+    // Ordlyden følger antallet af valgte profiler (1. okt. 2026, brugerrapport:
+    // "Matcher alle profiler" gav ikke mening for én person uden familie).
+    return { status:"safe", text: profileMatchLabel(activeProfileList) };
   };
   // Delt farve-/ikon-opslag for statuslinjen (Mangler- og Købt-sektionerne
   // nedenfor) — én kilde, så de to sektioner ikke kan drifte fra hinanden.

@@ -2,7 +2,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, PAGE_IDS } from "./constants.jsx";
-import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers, profileConflictLabel } from "./helpers.js";
+import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers, profileConflictLabel, profileMatchLabel } from "./helpers.js";
 import { isAllergenWord, keywordMatches } from "./allergenKeywords.js";
 import { UI } from "./styleUtils.js";
 import eatsafeLogoHorizontal from "./assets/logo/eatsafe-logo-horizontal.svg";
@@ -703,12 +703,12 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
     });
     const conflict = profileConflictLabel(results);
     status = conflict ? "danger" : results.some(r => r.status === "warn") ? "warn" : "safe";
-    statusLabel = conflict || (status === "warn" ? "Kan ikke afgøres sikkert" : "Matcher alle profiler");
+    statusLabel = conflict || (status === "warn" ? "Kan ikke afgøres sikkert" : profileMatchLabel(profiles));
     reasonChips = [...new Set(results.flatMap(r => r.reasons).map(explicitReason))];
   } else {
     const cmp = compareAllergens(p.allergen_flags||{}, effectiveIds);
     status = cmp.status;
-    statusLabel = status==="safe" ? "Matcher alle profiler" : status==="danger" ? "Konflikt" : "Kan ikke afgøres sikkert";
+    statusLabel = status==="safe" ? profileMatchLabel([]) : status==="danger" ? "Konflikt" : "Kan ikke afgøres sikkert";
     reasonChips = [
       ...cmp.matchedDanger.map(id => `Indeholder ${ALLERGENS.find(a=>a.id===id)?.label || id}`),
       ...cmp.matchedWarning.map(id => `Spor af ${ALLERGENS.find(a=>a.id===id)?.label || id}`),

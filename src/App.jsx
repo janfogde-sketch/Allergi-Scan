@@ -916,10 +916,10 @@ export default function EatSafe() {
             2026, Familie-redesign: siden skal føles som en enkel
             husstands-oversigt, ikke en fødevarebaggrund-tung skærm), og
             Madpas fik den samme (26. sept. 2026, Madpas-redesign: skal
-            fremstå som en administrationsside, ikke Scan-forsiden). Beskedlisten,
-            en åbnet besked og "Se din feedback" fik den samme (1. okt. 2026,
-            Jans feedback: brødteksten lå direkte oven på baggrundsbilledet og var
-            svær at læse). */}
+            fremstå som en administrationsside, ikke Scan-forsiden). Beskeder fik den
+            samme (1. okt. 2026, samme rolige udtryk som Favoritter), også en åbnet
+            besked og "Se din feedback" (Jans feedback: brødteksten lå direkte oven
+            på baggrundsbilledet og var svær at læse). */}
         {(screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE || screen === SCREENS.FAMILY || screen === SCREENS.MADPAS || screen === SCREENS.NOTIFICATIONS || screen === SCREENS.NOTIFICATION || screen === SCREENS.TICKET || isLegalPage) && <div className="app-bg-hide" aria-hidden="true" />}
 
         {/* Skip-link for tastatur/screen reader brugere */}

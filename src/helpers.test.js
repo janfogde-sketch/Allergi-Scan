@@ -16,7 +16,7 @@ import {
   verifiedBadge,
   isValidEanChecksum,
 } from "./helpers.js";
-import { profileConflictLabel } from "./helpers.js";
+import { profileConflictLabel, profileMatchLabel } from "./helpers.js";
 
 describe("isValidEanChecksum", () => {
   it("accepts a real EAN-13 with a correct check digit", () => {
@@ -319,5 +319,22 @@ describe("profileConflictLabel", () => {
   });
   it("uses the summary text above maxNames", () => {
     expect(profileConflictLabel([r("A", "danger"), r("B", "danger"), r("C", "danger")], { maxNames: 2 })).toBe("Passer ikke til valgte profiler");
+  });
+});
+
+describe("profileMatchLabel", () => {
+  it("siger 'din profil' når kun brugeren selv er valgt", () => {
+    expect(profileMatchLabel([{ id: "me", name: "Lars Hansen" }])).toBe("Passer til din profil");
+  });
+  it("nævner fornavnet for ét valgt familiemedlem", () => {
+    expect(profileMatchLabel([{ id: "abc", name: "Hanne Jensen" }])).toBe("Passer til Hanne");
+  });
+  it("bruger flertal ved flere profiler", () => {
+    expect(profileMatchLabel([{ id: "me", name: "Lars" }, { id: "abc", name: "Hanne" }])).toBe("Passer til alle valgte profiler");
+  });
+  it("falder tilbage uden profiler eller navn", () => {
+    expect(profileMatchLabel([])).toBe("Passer til valgte profiler");
+    expect(profileMatchLabel(undefined)).toBe("Passer til valgte profiler");
+    expect(profileMatchLabel([{ id: "x", name: "" }])).toBe("Passer til den valgte profil");
   });
 });
