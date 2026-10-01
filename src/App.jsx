@@ -1206,6 +1206,7 @@ export default function EatSafe() {
           <NotificationsScreen
             items={notifications.items} loading={notifications.loading} listError={notifications.listError}
             loadList={notifications.loadList} onOpen={notifications.openNotification}
+            onDelete={notifications.removeNotification}
             onBack={() => setScreen(SCREENS.HOME)}
           />
           </ErrorBoundary>
@@ -1217,6 +1218,7 @@ export default function EatSafe() {
           <NotificationScreen
             key={notifications.openId}
             notificationId={notifications.openId} markRead={notifications.markRead}
+            onDelete={notifications.removeNotification}
             onAction={handleNotificationAction}
             onBack={() => setScreen(SCREENS.NOTIFICATIONS)}
           />

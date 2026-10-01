@@ -1,6 +1,7 @@
 // @ts-nocheck
-// Læsning af egne beskeder (tabellen `notifications`, RLS: kun modtageren) og
-// markering som læst via RPC'en mark_notification_read. Oprettelse af beskeder
+// Læsning af egne beskeder (tabellen `notifications`, RLS: kun modtageren),
+// markering som læst via RPC'en mark_notification_read og sletning via
+// delete_notification (begge kun for egne rækker). Oprettelse af beskeder
 // sker udelukkende på serveren (edge-funktionen `notify`), se src/CONTEXT.md
 // afsnit 14.
 import { SUPABASE_URL } from "./constants.jsx";
@@ -50,6 +51,20 @@ export async function fetchNotification(accessToken, id) {
 export async function markNotificationRead(accessToken, id) {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/mark_notification_read`, {
+      method: "POST",
+      headers: makeHeaders(accessToken),
+      body: JSON.stringify({ p_id: id }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Sletter en egen besked (RPC delete_notification). Falsk ved netværks-/serverfejl; en besked, der allerede er væk, tæller som slettet. */
+export async function deleteNotification(accessToken, id) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/delete_notification`, {
       method: "POST",
       headers: makeHeaders(accessToken),
       body: JSON.stringify({ p_id: id }),
