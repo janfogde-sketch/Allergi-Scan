@@ -1005,7 +1005,7 @@ export default function EatSafe() {
             isLegalPage ovenfor. */}
         {!isOnboard && !madpasWaiterView && !isLegalPage && (
           <AppHeader
-            screen={screen}
+            unread={notifications.unread}
             onFeedback={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
             onMenu={() => setShowProfileMenu(true)}
           />
