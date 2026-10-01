@@ -703,9 +703,11 @@ food does not contain milk or any milk-derived ingredients.",
 oplæsningen); "I am allergic to:"-linjen er fjernet; krydskontaminering
 står i en diskret lys orange boks; indholdet starter lige under sproglinjen
 med stram spacing (lodret centrering gav for meget tom plads øverst);
-knappen hedder altid "Læs højt"/"Stop" (appens sprog). Mælk vises på kortet
-med appens eget stregikon (`Icon name="milk"`, mælkekarton i grøn flise) i
-stedet for det illustrerede glas; resten af appen bruger fortsat 3D-sættet. Sproglinjen viser et
+knappen hedder altid "Læs højt"/"Stop" (appens sprog). Alle allergener og
+intolerancer vises på kortet med appens egne stregikoner i en grøn flise
+(mælk = `Icon name="milk"`, resten via `MADPAS_ALLERGEN_ICON` i
+MadpasScreen.jsx, egne tilføjelser = `warning`) i stedet for de illustrerede
+ikoner; resten af appen bruger fortsat 3D-sættet. Sproglinjen viser et
 neutralt globusikon (`Icon name="globe"`) i stedet for landeflag; mælkens
 eksempler er Madpas-specifikke ("Cream · Butter · Cheese · Whey · Milk
 powder", `MADPAS_EXAMPLES_OVERRIDE`, 17 sprog); indrykninger bruger

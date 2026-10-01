@@ -9,6 +9,27 @@ import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { UI } from "./styleUtils.js";
 
+// Stregikon pr. allergen-id på Madpas-kortet (Icon i SharedComponents.jsx).
+// Ukendte id'er falder tilbage til "warning".
+const MADPAS_ALLERGEN_ICON = {
+  maelkeallergi: "milk",
+  hvede: "wheat",
+  gluten: "bread",
+  laktose: "glass",
+  aeg: "egg",
+  noedder: "acorn",
+  jordnoedder: "peanut",
+  soja: "soy",
+  fisk: "fish",
+  skaldyr: "shrimp",
+  bloeddyr: "shell",
+  selleri: "celery",
+  sennep: "mustard",
+  sesam: "sesame",
+  lupin: "lupin",
+  svovl: "wine",
+};
+
 // ── Madpas ───────────────────────────────────────────────────────────────────
 // Formål: en tjener, butiksansat, hotel- eller cafémedarbejder skal kunne
 // forstå de vigtigste kost-/allergioplysninger på FÅ SEKUNDER — Madpas er
@@ -93,11 +114,13 @@ export default function MadpasScreen({
     const itemBlock = { marginBottom:20 };
     const itemHeadRow = { display:"flex", alignItems:"center", gap:12 };
     const itemIcon = { fontSize:40, lineHeight:1, flexShrink:0, width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center" };
-    // Mælk vises med appens eget stregikon i en rolig grøn flise (1. okt.
-    // 2026) i stedet for det illustrerede glas, som lignede en emoji.
-    const renderAllergenIcon = (a) => a.id === "maelkeallergi"
-      ? <span style={{ ...itemIcon, borderRadius:14, background:"var(--green-lt)" }}><Icon name="milk" size={28} color="var(--green)" /></span>
-      : <span style={itemIcon}><AllergenGlyph a={a} size={40} /></span>;
+    // Alle allergener og intolerancer vises med appens egne stregikoner i
+    // samme rolige grønne flise som mælk (1. okt. 2026), i stedet for de
+    // illustrerede ikoner, som lignede emoji. Egne tilføjelser får advarsels-
+    // ikonet i samme flise.
+    const iconTile = { ...itemIcon, borderRadius:14, background:"var(--green-lt)" };
+    const renderIconTile = (name) => <span style={iconTile}><Icon name={name} size={28} color="var(--green)" /></span>;
+    const renderAllergenIcon = (a) => renderIconTile(MADPAS_ALLERGEN_ICON[a.id] || "warning");
     const itemName = { fontSize:32, fontWeight:800, color:"var(--ink)", lineHeight:1.15, minWidth:0, overflowWrap:"anywhere" };
     // Korte, tydeligt mærkede fødevare-eksempler under selve allergenet —
     // bevidst LILLE og MUTED sammenlignet med itemName, så allergenet selv
@@ -169,7 +192,7 @@ export default function MadpasScreen({
                 {customItems.map((c,i) => (
                   <div key={`c${i}`} style={itemBlock}>
                     <div style={itemHeadRow}>
-                      <span style={itemIcon}><Icon name="warning" size={28} color="var(--amber)" /></span>
+                      {renderIconTile("warning")}
                       <span style={itemName}>{c}</span>
                     </div>
                     <div style={messageBlock}>
