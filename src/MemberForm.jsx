@@ -1,6 +1,9 @@
 // @ts-nocheck
 import React from "react";
-import { Icon } from "./SharedComponents.jsx";
+import { Icon, showToast } from "./SharedComponents.jsx";
+import { useHealthConsent } from "./useHealthConsent.js";
+import HealthConsentBox from "./HealthConsentBox.jsx";
+import { canSaveHealthData } from "./healthConsent.js";
 import { UI } from "./styleUtils.js";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { AllergenChipPicker, AllergenSensitivity, DietChipPicker, ENumberPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
@@ -39,6 +42,11 @@ export const MemberForm = ({
   // step1Attempted). Knappen har derfor bevidst IKKE det native
   // disabled-attribut (ville blokere selve klikket og dermed forsøget).
   const [attempted, setAttempted] = React.useState(false);
+  // Samtykke til helbredsoplysninger (2. okt. 2026): kræves, før allergier på en profil gemmes.
+  const consent = useHealthConsent();
+  const [consentChecked, setConsentChecked] = React.useState(false);
+  const hasHealthData = ((allergens?.length || 0) + (customAllerg?.length || 0)) > 0;
+  const consentOk = canSaveHealthData({ hasHealthData, given: consent.given, checked: consentChecked });
   // E-numre skal være lukket som standard, ligesom trin 2 — ellers bliver
   // trin 4 unødigt langt for en valgfri funktion (25. sept. 2026,
   // brugerfeedback). Lokal state, da MemberForm er en selvstændig,
@@ -130,10 +138,18 @@ export const MemberForm = ({
         </div>
       )}
 
+      {hasHealthData && !consent.given && (
+        <div style={{ marginTop:12 }}><HealthConsentBox checked={consentChecked} onChange={setConsentChecked} /></div>
+      )}
+
       {/* Gem knap */}
-      <PrimaryButton style={{ marginTop:12 }} softDisabled={!isValid}
-        onClick={() => {
+      <PrimaryButton style={{ marginTop:12 }} softDisabled={!isValid || !consentOk}
+        onClick={async () => {
           if (!isValid) { setAttempted(true); return; }
+          if (!consentOk) return;
+          try {
+            if (hasHealthData && !consent.given) await consent.give();
+          } catch { showToast("Samtykket kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); return; }
           onAdd();
           setAttempted(false);
         }}>

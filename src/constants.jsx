@@ -2,6 +2,8 @@
 // ─── EATSAFE KONSTANTER ─────────────────────────────────────────────────────
 
 export const SUPABASE_URL = "https://jegrpcflyguadyxialkm.supabase.co";
+// Version af privatlivspolitikkens samtykketekst (gemmes sammen med samtykket, 2. okt. 2026). Ændres teksten væsentligt, hæves versionen.
+export const HEALTH_CONSENT_VERSION = "2026-10-02";
 
 export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplZ3JwY2ZseWd1YWR5eGlhbGttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNjY5NjQsImV4cCI6MjA5NDc0Mjk2NH0.QErfbw2xmsdYjTZCS1WUOUwQHv6G2PKQRldyj8rdGq8";
 

@@ -45,6 +45,7 @@ import { usePush, SAVE_FAILED_REASON } from "./usePush.js";
 import { useNotificationPrefs } from "./useNotificationPrefs.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
+import { useHealthConsent } from "./useHealthConsent.js";
 import { MADPAS_LANGUAGES, SCREENS } from "./constants.jsx";
 import { formatBuildTime, COMMIT_SHA } from "./utils.jsx";
 
@@ -147,6 +148,10 @@ export default function SettingsScreen({
 
   const [langOpen, setLangOpen] = useState(false);
   const [showDataInfo, setShowDataInfo] = useState(false);
+  // Samtykke til helbredsoplysninger (2. okt. 2026): status og tilbagetrækning.
+  const consent = useHealthConsent();
+  const [showConsent, setShowConsent] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
   const [showBuildDetail, setShowBuildDetail] = useState(false);
 
   const handlePushToggle = async () => {
@@ -312,6 +317,38 @@ export default function SettingsScreen({
         </div>
         <ChevronRow icon="file" label="Privatlivspolitik"
           onClick={() => openLegal(SCREENS.PRIVACY)} />
+        <ChevronRow icon="shield" label="Samtykke til helbredsoplysninger"
+          value={consent.loaded ? (consent.given ? "Givet" : "Ikke givet") : ""}
+          sub={consent.given && consent.at ? `Givet ${new Date(consent.at).toLocaleDateString("da-DK", { day:"numeric", month:"long", year:"numeric" })}` : undefined}
+          onClick={() => setShowConsent(v => !v)} last={false} />
+        {showConsent && (
+          <div style={{ background:"var(--surface2)", borderRadius:10, padding:"10px 12px", margin:"0 0 12px", fontSize:12, color:"var(--ink2)", lineHeight:1.55 }}>
+            {consent.given ? (
+              <>
+                <div style={{ marginBottom:10 }}>
+                  EatSafe behandler dine allergi- og helbredsoplysninger på grundlag af dit samtykke. Trækker du samtykket tilbage, slettes dine allergier og
+                  intolerancer, allergener på dine familieprofiler, følsomhedsvalg, valgte E-numre, din scanningshistorik og beskeder om allergenændringer.
+                  Du kan give samtykke igen senere.
+                </div>
+                <button className="btn btn-outline btn-sm" disabled={withdrawing}
+                  onClick={async () => {
+                    if (!window.confirm("Vil du trække dit samtykke tilbage? Dine allergi- og helbredsoplysninger og din scanningshistorik slettes permanent.")) return;
+                    setWithdrawing(true);
+                    try {
+                      await consent.withdraw();
+                      showToast("Samtykket er trukket tilbage, og dine helbredsoplysninger er slettet.");
+                      setTimeout(() => window.location.reload(), 900);
+                    } catch {
+                      showToast("Samtykket kunne ikke trækkes tilbage. Prøv igen.", "error");
+                      setWithdrawing(false);
+                    }
+                  }}>{withdrawing ? "Sletter…" : "Træk samtykke tilbage"}</button>
+              </>
+            ) : (
+              <div>Du har ikke givet samtykke. Du bliver bedt om det, første gang du gemmer allergier eller andre helbredsoplysninger.</div>
+            )}
+          </div>
+        )}
         <ChevronRow icon="info" label="Hvilke data EatSafe gemmer"
           onClick={() => setShowDataInfo(v => !v)} last={!showDataInfo} />
         {showDataInfo && (

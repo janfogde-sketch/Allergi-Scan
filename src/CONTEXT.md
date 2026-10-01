@@ -50,6 +50,12 @@ pr. funktion står i `supabase/config.toml` (funktioner uden JWT validerer selv,
 favoritter, beskeder, push-tilmeldinger, tickets, indsendelser og login (cascade/eksplicit); `client_errors` mister bruger-id. Automatisk oprydning i `cleanup_notifications()`
 (cron `notify-cleanup`, 03:30 UTC): beskeder 12 mdr., hændelser 90 dage, `client_errors` 90 dage (på `last_seen`), `security_reports` 12 mdr. (migration `20261001132038`). Ingen automatiske backups (Free).
 
+**Samtykke til helbredsoplysninger (2. okt. 2026, migrationerne `20261001133358` og `20261001133411`, GDPR art. 9, stk. 2, litra a):** tabellen `consent_log` (bruger, `kind='health'`, `given`/`withdrawn`, version, serverens tidspunkt;
+kun læsning for egen bruger/admin, slettes sammen med kontoen). Skrives kun via RPC'erne `give_health_consent(p_version)` og `withdraw_health_consent()` (sidstnævnte sletter i én transaktion `user_allergens`, familieprofilers allergener/følsomhed/E-numre,
+`users.allergen_levels`/`e_numbers`, `scan_history` og P1-beskeder). Databasen kræver samtykke: RLS på `user_allergens` (insert/update; admin undtaget), triggere på `users.allergen_levels` og `family_members`. Funktionen `has_health_consent(uid)`
+læser den nyeste række. App: `HEALTH_CONSENT_VERSION` (`constants.jsx`, hæves ved væsentlig tekstændring), `useHealthConsent.js`, ren logik i `healthConsent.js` (test), afkrydsningen `HealthConsentBox.jsx` (onboarding trin 2, Rediger præferencer, `MemberForm`;
+Bjørn finpudser designet) og Indstillinger → Privatliv & data (status og tilbagetrækning). Eksisterende brugere uden samtykke bliver bedt om det, første gang de gemmer allergier.
+
 **Backup-tabeller:** `*_backup_20260930` i `public` og skemaet `qa_backup` er rester fra datarettelser (ingen kode bruger dem, Free-planen har
 ingen automatiske backups). De slettes samlet tæt på 1. nov. 2026 (to do `c188223c`), derefter skal denne note fjernes.
 

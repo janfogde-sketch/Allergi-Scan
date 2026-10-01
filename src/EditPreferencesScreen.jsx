@@ -10,6 +10,9 @@ import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 import { UI } from "./styleUtils.js";
+import { useHealthConsent } from "./useHealthConsent.js";
+import HealthConsentBox from "./HealthConsentBox.jsx";
+import { canSaveHealthData } from "./healthConsent.js";
 
 // "Rediger præferencer" — KUN allergier/intolerancer/diæter/
 // E-numre (28. sept. 2026, Profil-restrukturering, krav 2-3).
@@ -28,9 +31,14 @@ import { UI } from "./styleUtils.js";
 export default function EditPreferencesScreen({ customInput, setCustomInput, glutenFreeAutoApplied, setGlutenFreeAutoApplied }) {
   const { user, setUser, userId, accessToken } = useAuthContext();
   const { allergens, setAllergens, customAllerg, setCustomAllerg } = useProfileContext();
-  const { setScreen } = useNavigationContext();
+  const { setScreen, openLegal } = useNavigationContext();
   const { selectedENumbers, setSelectedENumbers } = useAllergenPrefsContext();
   const [savingProfile, setSavingProfile] = useState(false);
+  // Samtykke til helbredsoplysninger (2. okt. 2026): kræves, før allergier gemmes.
+  const consent = useHealthConsent();
+  const [consentChecked, setConsentChecked] = useState(false);
+  const hasHealthData = (allergens.length + customAllerg.length + (customInput.trim() ? 1 : 0)) > 0;
+  const consentOk = canSaveHealthData({ hasHealthData, given: consent.given, checked: consentChecked });
   // Samme lukket-som-standard Accordion-mønster for E-numre som MemberForm.
   const [showENumre, setShowENumre] = useState(false);
 
@@ -86,11 +94,15 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
         </Accordion>
       </div>
 
+      {hasHealthData && !consent.given && (
+        <HealthConsentBox checked={consentChecked} onChange={setConsentChecked} openPrivacy={() => openLegal(SCREENS.PRIVACY)} />
+      )}
       <button className="btn btn-primary btn-full" style={UI.mb16}
-        disabled={savingProfile}
+        disabled={savingProfile || !consentOk}
         onClick={async () => {
           setSavingProfile(true);
           try {
+            if (hasHealthData && !consent.given) await consent.give();
             // Flush en evt. ikke-tilføjet tekst i "Skriv selv"-feltet, så den ikke går tabt
             const pendingCustom = customInput.trim();
             const allCustom = pendingCustom ? addUniqueCustom(customAllerg, pendingCustom) : customAllerg;
