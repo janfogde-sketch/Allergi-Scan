@@ -5,7 +5,7 @@
 // åbnet. Efter logout nulstilles alt, så en anden brugers beskeder aldrig ses.
 import { useState, useEffect, useCallback } from "react";
 import { SCREENS } from "./constants.jsx";
-import { fetchNotificationList, markNotificationRead, readNotificationParam, PENDING_KEY } from "./notificationsApi.js";
+import { fetchNotificationList, markNotificationRead, deleteNotification, readNotificationParam, PENDING_KEY } from "./notificationsApi.js";
 
 export function useNotifications({ accessToken, userId, user, screen, setScreen, setAuthTab }) {
   const [items, setItems] = useState([]);
@@ -30,6 +30,13 @@ export function useNotifications({ accessToken, userId, user, screen, setScreen,
   const markRead = useCallback(async (id) => {
     const ok = await markNotificationRead(accessToken, id);
     if (ok) setItems((list) => list.map((n) => (n.id === id && !n.read_at ? { ...n, read_at: new Date().toISOString() } : n)));
+    return ok;
+  }, [accessToken]);
+
+  // Sletter en besked for altid (kun modtagerens egen) og fjerner den fra listen med det samme.
+  const removeNotification = useCallback(async (id) => {
+    const ok = await deleteNotification(accessToken, id);
+    if (ok) setItems((list) => list.filter((n) => n.id !== id));
     return ok;
   }, [accessToken]);
 
@@ -69,5 +76,5 @@ export function useNotifications({ accessToken, userId, user, screen, setScreen,
   }, [accessToken, userId, user, openNotification]);
 
   const unread = items.filter((n) => !n.read_at).length;
-  return { items, unread, loading, listError, loadList, markRead, openId, openNotification };
+  return { items, unread, loading, listError, loadList, markRead, removeNotification, openId, openNotification };
 }

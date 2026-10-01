@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { readNotificationParam, fetchNotification, markNotificationRead, fetchTicket, fetchInviteStatus } from "./notificationsApi.js";
+import { readNotificationParam, fetchNotification, markNotificationRead, deleteNotification, fetchTicket, fetchInviteStatus } from "./notificationsApi.js";
 import NotificationBlocks from "./NotificationBlocks.jsx";
 import { renderNotification } from "../supabase/functions/_shared/notificationContent.js";
 
@@ -60,6 +60,21 @@ describe("markNotificationRead", () => {
     expect(fetch.mock.calls[0][0]).toContain("/rpc/mark_notification_read");
     stubFetch(async () => { throw new Error("x"); });
     expect(await markNotificationRead("tok", ID)).toBe(false);
+  });
+});
+
+describe("deleteNotification", () => {
+  it("kalder RPC'en delete_notification med besked-id'et og giver true ved succes", async () => {
+    stubFetch(async () => ({ ok: true, json: async () => true }));
+    expect(await deleteNotification("tok", ID)).toBe(true);
+    expect(fetch.mock.calls[0][0]).toContain("/rpc/delete_notification");
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({ p_id: ID });
+  });
+  it("giver false ved serverfejl og netværksfejl", async () => {
+    stubFetch(async () => ({ ok: false }));
+    expect(await deleteNotification("tok", ID)).toBe(false);
+    stubFetch(async () => { throw new Error("x"); });
+    expect(await deleteNotification("tok", ID)).toBe(false);
   });
 });
 
