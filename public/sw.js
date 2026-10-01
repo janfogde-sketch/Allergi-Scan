@@ -60,7 +60,9 @@ self.addEventListener("notificationclick", (event) => {
       for (const client of clientList) {
         if (APP_ORIGINS.includes(new URL(client.url).origin) && "focus" in client) {
           await client.focus();
-          if ("navigate" in client) { try { return await client.navigate(url); } catch { /* åbn nyt vindue */ } }
+          // navigate() kan give null (uden at navigere) for et vindue, som service workeren ikke styrer —
+          // så falder vi videre til openWindow, i stedet for kun at fokusere appen uden at åbne beskeden.
+          if ("navigate" in client) { try { const nav = await client.navigate(url); if (nav) return nav; } catch { /* åbn nyt vindue */ } }
         }
       }
       if (clients.openWindow) return clients.openWindow(url);
