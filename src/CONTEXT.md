@@ -734,7 +734,11 @@ change" sendes to mails (nuværende adresse: `token_hash_new`; ny adresse: `toke
 Auth viser en fejl; samme `Idempotency-Key` (`auth-{webhook-id}-{n}`) hindrer dobbeltafsendelse. Fejl logges i `client_errors`
 (kilde `edge:auth-send-email`, aldrig tokens).
 
-**Status 1. okt.:** hook'en er slået til og verificeret (glemt-adgangskode-mail sendt via Resend fra `auth-send-email`, dansk, korrekt verify-link). Oprettelsesmailen og skift af e-mail er endnu ikke prøvet (to do-listen). **Kendt hul:** appen har ingen skærm til at vælge en ny adgangskode; nulstillingslinket logger bare ind (to do-listen, høj prioritet).
+**Status 1. okt.:** hook'en er slået til og testet end-to-end med en testkonto (plus-adresser, derefter slettet): glemt adgangskode, oprettelse
+("Bekræft din e-mail – EatSafe"; linket giver 303 til `eatsafe.dk` med `type=signup`, og appen viser "Din e-mail er bekræftet" → Fortsæt opsætning,
+når service workeren allerede er installeret; i en helt ny browser kan SW-reloadet springe den skærm over, og brugeren lander direkte i onboarding) og
+skift af e-mail med Secure email change (to danske mails, begge links virker, adressen i `auth.users` skiftes). **Kendt hul:** `public.users.email`
+følger ikke med ved et e-mailskift (to do-listen); appen har i øvrigt ingen skærm til at skifte e-mail. Magic link, invitation og genbekræftelse bruges ikke i appen.
 
 **Sådan blev den slået til (Jan, i Supabase Dashboard; samme trin ved en ny opsætning):**
 1. Authentication → Auth Hooks → Send Email → HTTPS, URL `https://jegrpcflyguadyxialkm.supabase.co/functions/v1/auth-send-email`,
