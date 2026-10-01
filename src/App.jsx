@@ -1005,7 +1005,7 @@ export default function EatSafe() {
             isLegalPage ovenfor. */}
         {!isOnboard && !madpasWaiterView && !isLegalPage && (
           <AppHeader
-            screen={screen}
+            unread={notifications.unread}
             onFeedback={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
             onMenu={() => setShowProfileMenu(true)}
           />
@@ -1238,7 +1238,6 @@ export default function EatSafe() {
             items={notifications.items} loading={notifications.loading} listError={notifications.listError}
             loadList={notifications.loadList} onOpen={notifications.openNotification}
             onDelete={notifications.removeNotification}
-            onBack={() => setScreen(SCREENS.HOME)}
           />
           </ErrorBoundary>
           </Suspense>
