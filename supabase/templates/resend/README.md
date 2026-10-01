@@ -35,3 +35,15 @@ CTA-knap altid `#0F7D4F` med hvid tekst. Klasser: `canvas`, `paper`, `text`, `mu
   lyse logo (med en lys plade bag), og knappen er allerede mørk nok til, at den normalt ikke inverteres. Vi kan ikke styre mere derfra.
 - Ret ALTID paletten i alle skabeloner samtidig, og kør `node scripts/build-auth-mails.mjs` og
   `node scripts/build-welcome-mail.mjs`. De 21 Resend-skabeloner i Resend-kontoen (ikke N1) skal opdateres via API'et, før mørk tilstand gælder dér.
+
+### Tåler automatisk farveinversion (1. okt. 2026, målt i Outlook)
+
+Outlook (web) ignorerer vores mørke CSS og vender selv farverne: lyse baggrunde bliver mørke og **meget mørke** tekstfarver bliver lyse, men
+**mellemtoner og kanter bliver uændrede**. Fx forblev `#3C4A41` og `#647167` stående på den mørke baggrund, og de var næsten usynlige. Derfor gælder:
+
+- Al tekst har en inline farve, der enten er nær-sort (`#15201A`, kan vendes) eller hvid. Sekundær tekst er nær-sort med `opacity` (.72), ikke en grå mellemtone
+  (vores mørke CSS sætter `opacity:1`). Grøn tekst er `#042B1A`, som kan vendes. Brug aldrig en mellemtone (fx `#647167`) som tekstfarve.
+- Ingen lyse kanter på kort og kodeboks (de lyser op i mørk tilstand). Afgrænsningen sker med baggrund.
+- Det lyse logo (`EatSafe_Logo_Email_Light.png` til auth, `..._Light_Cream.png` til Resend) har kortets baggrund bagt ind i billedet, ellers bliver dens gennemsigtige baggrund
+  gjort mørk, og det mørke "Eat" forsvinder. I klienter, der understøtter mørk tilstand, skifter mailen til det gennemsigtige mørke logo.
+- `src/mailDarkMode.test.js` håndhæver reglerne.
