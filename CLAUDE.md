@@ -203,6 +203,8 @@ link kun her og i Profil-footeren. Bevidst udeladt: app-sprog, dataeksport, selv
 **Scanner:** `stopCamera()` nulstiller al scanner-state (også det manuelle EAN-panel via `closeCameraFully()` i `App.jsx`) ved
 ethvert kamera-luk. `cameraPermissionDenied` viser et dedikeret kort. Advarselsvibration/-lyd via `fireWarningAlert()`.
 
+**Feedback-modal** (`FeedbackModal.jsx`): fast header og Send-knap, scrollende midte, følger `visualViewport` (tastatur) og safe-area. Typerne står i `feedbackTypes.js` (line-ikoner; id'et `crash` hedder "Appen lukker ned"). Diagnostikken er sammenfoldet og bygges ét sted (`feedbackDiagnostics.js`), så oversigten viser præcis det, der sendes; persondata står i en egen mærket gruppe. Ved "Appen lukker ned" sendes de seneste fejl med (`getRecentErrors()` i `errorReporter.js`, lokalt på enheden).
+
 **Login, oprettelse, onboarding**
 - Felt-specifikke inline-fejl (`emailError`/`passwordError` i `useAuth.js`); `authError` kun til fejl, der ikke kan knyttes til ét
   felt. Catch-blokke viser aldrig rå `e.message`.
