@@ -15,11 +15,11 @@ describe("AllergenSensitivity (spor pr. allergen)", () => {
   it("standard er 'Advar mig', og valget skifter til 'Kun ved ingrediens' og tilbage", () => {
     const onChange = vi.fn();
     const { rerender } = render(<AllergenSensitivity selected={["maelkeallergi"]} levels={{}} onChange={onChange} />);
-    expect(screen.getByText("Advar mig").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText("Advar mig").closest("button").getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(screen.getByText("Kun ved ingrediens"));
     expect(onChange).toHaveBeenLastCalledWith({ maelkeallergi: "direct_only" });
     rerender(<AllergenSensitivity selected={["maelkeallergi"]} levels={{ maelkeallergi: "direct_only" }} onChange={onChange} />);
-    expect(screen.getByText("Kun ved ingrediens").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText("Kun ved ingrediens").closest("button").getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(screen.getByText("Advar mig"));
     expect(onChange).toHaveBeenLastCalledWith({});
   });

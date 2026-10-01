@@ -455,11 +455,11 @@ export default function OnboardingScreen({
   const renderTraceStep = () => (
     <div className="fade-in">
       <FormCard>
-        <SectionHeading title="Spor af allergener" sub="Vælg pr. allergi, hvordan du vil advares" />
+        <SectionHeading title="Spor af allergener" sub="Vælg, hvornår du vil advares" />
         {allergens.length === 0 ? (
           <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.45 }}>Du har ikke valgt nogen allergier, så der er intet at vælge her.</div>
         ) : (
-          <AllergenSensitivity selected={allergens} levels={user.allergenLevels}
+          <AllergenSensitivity selected={allergens} levels={user.allergenLevels} showTitle={false} bare
             onChange={lv => setUser(u => ({ ...u, allergenLevels: lv }))} />
         )}
       </FormCard>

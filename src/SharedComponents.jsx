@@ -422,7 +422,9 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
 
   // Brugerspecifik tilstand (kun når `highlightRules` er givet, se
   // komponent-kommentaren ovenfor) — ellers 100% uændret opførsel.
-  const useRules = Array.isArray(highlightRules) && highlightRules.length > 0;
+  // En tom liste er også brugerspecifik tilstand ("intet er relevant for dig"): ellers faldt visningen tilbage til den gamle, generelle
+  // fremhævning, som farvede alle almindelige allergen-ord røde, selv om produktet ikke matcher brugerens valg (2. okt. 2026).
+  const useRules = Array.isArray(highlightRules);
   // Mindre "washed out" grundtekst (krav 8) — kun i den nye tilstand, så
   // RecipesScreen.jsx's eksisterende brug (ingen highlightRules) er
   // pixel-identisk uændret.
