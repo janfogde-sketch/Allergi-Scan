@@ -566,6 +566,10 @@ Grundlag: udviklerpakken "EatSafe-samlet-udviklerpakke". Kravet: push er kun den
 korte tekst og åbner den fulde, beskyttede besked i appen via
 `https://www.eatsafe.dk/?notification={id}`. Én fælles indholdskilde til push, app og mail.
 
+**Princip (Jan, 1. okt. 2026):** ændringer i en notifikation laves som udgangspunkt i **mailen**. Beskeden i appen skal være
+ens med mailen, og push følger med som en afkortet version af samme tekst, der fører til selve beskeden. Ret derfor
+indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push og besked afspejle det.
+
 - **Tabeller** (`20260930135031_notifications_foundation.sql`): `notification_events`
   (outbox, unik `event_key`), `notifications` (modtagerens snapshot, dedup på
   event_key+user+type+variant, klienten kan kun SELECT egne, markere læst via
