@@ -18,6 +18,7 @@ TRANSPARENT EXPORTS
 - EatSafe_BrandMark_Transparent_2048.png
 - EatSafe_Monochrome_Transparent_2048.png
 - EatSafe_Logo_Horizontal_2400.png
+- EatSafe_Logo_Email_Dark.png: logo til mails i mørk tilstand (hvid 'Eat'/stregkode, grøn 'Safe', gennemsigtig; 1200x360).
 
 COLORS
 - Near-black: #232528
