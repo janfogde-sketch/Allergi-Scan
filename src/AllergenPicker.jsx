@@ -111,7 +111,7 @@ export const AllergenSensitivity = ({ selected, levels, onChange, showIntro = tr
     <div className="allergen-sensitivity" style={bare ? undefined : { marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
       {showTitle && <div style={UI.sectionLbl6}>Spor af allergener</div>}
       {showIntro && (
-        <div style={{ fontSize:13, color:"var(--ink2)", margin: showTitle ? "0 0 12px" : "0 0 14px", lineHeight:1.5 }}>
+        <div style={{ fontSize:13, color:"var(--ink2)", margin: showTitle ? "0 0 4px" : "0 0 14px", lineHeight:1.5 }}>
           Mange pakker skriver "kan indeholde spor af", selv om allergenet ikke er en ingrediens. Vælg, hvornår du vil advares.
         </div>
       )}

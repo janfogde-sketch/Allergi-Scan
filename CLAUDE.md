@@ -96,6 +96,8 @@ TERMS/PRIVACY, ADMIN (mobil), RECIPES (på pause).
    (hovedfilen beholder kun routing/fane-state), som AdminScreen er delt.
 4. Overlays/drawers renderes via `ReactDOM.createPortal(..., document.body)`: `.screen.fade-in` efterlader en permanent
    `transform`, som fanger `position:fixed`-børn (brugt i `ListPickerSheet`, `InfoSheet`, `ProfileMenu`).
+   Bundnavigationen er ca. 113 px høj på iPhones med hjemmeindikator (79 px uden), men `.screen` har kun 110 px bundpadding. Skærme med fast
+   bjælke over navigationen (fx "Gem ændringer" i `EditPreferencesScreen.jsx`) måler derfor navigationen med `useMeasuredHeight` og sætter selv bundpadding.
 5. Nye skærme som egne filer. `setScreen` i `App.jsx` er guardet: mens `user.onboarding_completed===false` omdirigeres alt
    uden for WELCOME/LOGIN/ONBOARD til ONBOARD.
 6. En stille feltnavne-mismatch (kolonne/prop brugt ét sted, aldrig matchet andre steder: `age`/`birth_year`, `customAllerg`/
