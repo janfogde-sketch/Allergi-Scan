@@ -72,7 +72,8 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       });
       const rows = await res.json();
       const p = Array.isArray(rows) ? rows[0] : null;
-      if (p && p.onboarding_completed === false) {
+      // Kun en eksplicit færdig profil (true) går til hovedappen: en oprettet/verificeret konto er aldrig "færdig" af sig selv
+      if (p && p.onboarding_completed !== true) {
         setOnboardStep(p.onboarding_step || 1);
         setScreen(SCREENS.ONBOARD);
       } else {

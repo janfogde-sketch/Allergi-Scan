@@ -929,13 +929,15 @@ export function showToast(message, type = "success") {
   toastListeners.forEach(fn => fn(toast));
 }
 
-export function ToastHost() {
+// `top`: vis beskederne øverst i stedet for nederst (onboarding, hvor Fortsæt-knapperne ligger nederst og ikke må dækkes).
+export function ToastHost({ top = false }) {
   const [toasts, setToasts] = React.useState([]);
 
   React.useEffect(() => {
     const handler = (toast) => {
       setToasts(t => [...t, toast]);
-      setTimeout(() => setToasts(t => t.filter(x => x.id !== toast.id)), 4000);
+      // Fejl bliver stående lidt længere end bekræftelser (som forsvinder efter ca. 2,5 sekunder)
+      setTimeout(() => setToasts(t => t.filter(x => x.id !== toast.id)), toast.type === "error" ? 4000 : 2500);
     };
     toastListeners.push(handler);
     return () => { toastListeners = toastListeners.filter(l => l !== handler); };
@@ -944,7 +946,7 @@ export function ToastHost() {
   if (!toasts.length) return null;
 
   return createPortal(
-    <div style={{ position:"fixed", left:0, right:0, bottom:"calc(84px + env(safe-area-inset-bottom))", zIndex:9998, display:"flex", flexDirection:"column", alignItems:"center", gap:8, pointerEvents:"none", padding:"0 16px" }}>
+    <div style={{ position:"fixed", left:0, right:0, ...(top ? { top:"calc(64px + env(safe-area-inset-top))" } : { bottom:"calc(84px + env(safe-area-inset-bottom))" }), zIndex:9998, display:"flex", flexDirection:"column", alignItems:"center", gap:8, pointerEvents:"none", padding:"0 16px" }}>
       {toasts.map(t => (
         <div key={t.id} style={{
           display:"flex", alignItems:"center", gap:8,

@@ -16,11 +16,12 @@ import { ChoiceCard } from "./DesignSystem.jsx";
 // .age-step-btn-klasse (theme.jsx) giver en tydelig tryk-feedback
 // (:active{scale+mørkere baggrund}), som de rå inline-stylede knapper
 // ikke havde nogen af før.
-export function AgeStepper({ value, onChange, min = 1, max = 120, placeholder = "32" }) {
+export function AgeStepper({ value, onChange, min = 1, max = 120, placeholder = "Vælg alder" }) {
   const numValue = Number(value) || 0;
   const step = delta => {
+    // Tom alder: første tryk (+ eller −) viser 25 som synligt udgangspunkt; der er ingen forudfyldt alder.
     const base = Number(value) || 25;
-    const next = numValue === 0 && delta > 0 ? base : Math.min(max, Math.max(min, base + delta));
+    const next = !value ? base : Math.min(max, Math.max(min, base + delta));
     onChange(String(next));
   };
   return (
@@ -31,7 +32,7 @@ export function AgeStepper({ value, onChange, min = 1, max = 120, placeholder = 
       </button>
       <input className="field field-no-spinner" type="number" inputMode="numeric" placeholder={placeholder} min={min} max={max} aria-label="Alder i år"
         value={value || ""} onChange={e => onChange(e.target.value)}
-        style={{ width:64, height:44, flexShrink:0, textAlign:"center", padding:"0 4px", fontSize:17, fontWeight:700, boxSizing:"border-box" }} />
+        style={{ width: value ? 64 : 112, height:44, flexShrink:0, textAlign:"center", padding:"0 4px", fontSize: value ? 17 : 14, fontWeight: value ? 700 : 500, boxSizing:"border-box" }} />
       <button type="button" className="age-step-btn" onClick={() => step(1)} aria-label="Ét år ældre"
         style={{ width:44, height:44, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
         +

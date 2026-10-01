@@ -179,8 +179,9 @@ alvorlige allergier"). Tryk-feedback `:active{transform:scale(.97)}`. Scan-knapp
 
 **Følsomhed pr. allergen (spor):** pr. valgt allergen vælger brugeren "Advar mig" (standard) eller "Kun ved ingrediens" for "Kan
 indeholde spor af". Data `allergen_levels` (jsonb, `direct_only`) på `users`/`family_members`. Spor er GULE overalt, kun direkte
-indhold er rødt. Eget trin 3 i onboarding, plus Rediger præferencer og familieformularen. Gluten/hvede er ét valg og advarer
-om cøliaki, når spor slås fra. Logik: `helpers.js` (`mergeAllergenLevels` m.fl.), notifikation P1 (`tracesIgnored`), UI
+indhold er rødt. Eget trin 3 i onboarding, plus Rediger præferencer og familieformularen. Hvert valgt allergen har sin egen række (også Gluten
+og Hvede), og sporvalget fjernes sammen med allergenet (`pruneAllergenLevels`). Ingen medicinske antagelser: der er ingen cøliaki-tekst, og Cøliaki
+skal i givet fald være et eget, eksplicit valg. Logik: `helpers.js` (`mergeAllergenLevels` m.fl.), notifikation P1 (`tracesIgnored`), UI
 `AllergenSensitivity` (finpudset 2. okt.: segmenteret kontrol `.trace-seg`, kort linje under valget; ignorerede spor er en neutral info-strimmel under banneret). Detaljer: `src/CONTEXT.md` §3.
 
 **Resultatsiden:** data-drevet kategorisering; kaldes aldrig "sikker" blot fordi der ikke var match. RØD = allergi/intolerance,
@@ -213,8 +214,9 @@ ethvert kamera-luk. `cameraPermissionDenied` viser et dedikeret kort. Advarselsv
   signeret "Var det ikke dig?"-link (`report-unrequested-reset`, `src/CONTEXT.md` §11).
 - Onboarding har 5 trin (profil, allergier + samtykke + E-numre, spor, familie [valgfrit], notifikationer [valgfrit]) og ingen skjulte trin
   bagefter: "Slå notifikationer til"/"Ikke nu" åbner `SafetyInfoModal` ("Vigtig sikkerhedsinformation"), og først "Jeg forstår – kom i gang"
-  sætter `onboarding_completed` (luk appen før da, genoptages trin 5). Ingen Beta-popup (BETA er kun et badge). Cøliaki-noten i
-  `AllergenSensitivity` hører kun til valget Gluten, aldrig til hvede alene. E-nummer-rækker har en eksplicit afkrydsningsboks; chevron er kun info.
+  sætter `onboarding_completed` (luk appen før da, genoptages trin 5). Ingen Beta-popup (BETA er kun et badge). "Jeg har ingen allergier" kræver bekræftelse, hvis noget er valgt, og rydder
+  alt (også spor); familiemedlemmer kræver navn, aktivt valgt alder (ingen forudfyldt), køn og et allergivalg eller et eksplicit "ingen". E-nummer-rækker
+  har en eksplicit afkrydsningsboks; chevron er kun info. Routing sender alt andet end `onboarding_completed=true` til onboarding.
   Et PWA kan ikke åbne bekræftelseslinket direkte i den installerede app på iOS (kræver native Universal Links); manifestet har
   `handle_links`/`launch_handler` til Chromium. Linket lander i browseren, og `VerifyEmailScreen` samt `resolveOnboardingRoute` genoptager.
 - Google/Facebook går direkte til onboarding. `onboardStep` ligger i `App.jsx` FØR `useAuth()` (ellers TDZ-krasch).

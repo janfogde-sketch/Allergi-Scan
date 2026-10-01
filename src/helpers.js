@@ -223,6 +223,16 @@ export function normalizeProductFlagsFor(product) {
 export const LEVEL_DIRECT_ONLY = "direct_only";
 export const ignoresTraces = (levels, id) => levels?.[id] === LEVEL_DIRECT_ONLY;
 
+// Fjerner sporvalg for allergener, der ikke (længere) er valgt, så der aldrig ligger skjulte værdier i state eller profil
+// (fx Mælks "Kun ved ingrediens", efter Mælk er fjernet). Returnerer det samme objekt, hvis intet skal fjernes.
+export function pruneAllergenLevels(levels, allergenIds) {
+  const src = levels || {};
+  const keep = new Set(allergenIds || []);
+  const keys = Object.keys(src);
+  if (keys.every(k => keep.has(k))) return src;
+  return Object.fromEntries(keys.filter(k => keep.has(k)).map(k => [k, src[k]]));
+}
+
 /**
  * Sammenlagt niveau for flere profiler: et allergen ignorerer kun spor, hvis ALLE aktive profiler, der har det
  * allergen, ignorerer spor (strengeste profil vinder). profiles: [{ allergens, levels }].

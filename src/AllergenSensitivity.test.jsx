@@ -24,24 +24,26 @@ describe("AllergenSensitivity (spor pr. allergen)", () => {
     expect(onChange).toHaveBeenLastCalledWith({});
   });
 
-  it("gluten og hvede vises som ét valg og sættes sammen", () => {
+  it("gluten og hvede har hver sin række og sin egen indstilling", () => {
     const onChange = vi.fn();
     render(<AllergenSensitivity selected={["hvede", "gluten"]} levels={{}} onChange={onChange} />);
-    expect(screen.getAllByText("Kun ved ingrediens")).toHaveLength(1);
-    expect(screen.getByText("Gluten og hvede")).toBeTruthy();
-    fireEvent.click(screen.getByText("Kun ved ingrediens"));
-    expect(onChange).toHaveBeenLastCalledWith({ gluten: "direct_only", hvede: "direct_only" });
+    expect(screen.getAllByText("Kun ved ingrediens")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("group", { name: /^Hvede/ }).querySelectorAll("button")[1]);
+    expect(onChange).toHaveBeenLastCalledWith({ hvede: "direct_only" });
   });
 
-  it("cøliaki-teksten hører kun til gluten, ikke til hvede alene eller andre allergier", () => {
+  it("viser aldrig cøliaki-vejledning, hverken for gluten, hvede eller andre allergier", () => {
     const { rerender } = render(<AllergenSensitivity selected={["gluten"]} levels={{}} onChange={() => {}} />);
-    expect(screen.getByText(/cøliaki/i)).toBeTruthy();
-    rerender(<AllergenSensitivity selected={["gluten", "hvede"]} levels={{}} onChange={() => {}} />);
-    expect(screen.getByText(/cøliaki/i)).toBeTruthy();
+    expect(screen.queryByText(/cøliaki/i)).toBeNull();
     rerender(<AllergenSensitivity selected={["hvede"]} levels={{}} onChange={() => {}} />);
     expect(screen.queryByText(/cøliaki/i)).toBeNull();
     expect(screen.getByText("Du advares både ved ingrediens og ved spor.")).toBeTruthy();
     rerender(<AllergenSensitivity selected={["maelkeallergi"]} levels={{}} onChange={() => {}} />);
     expect(screen.queryByText(/cøliaki/i)).toBeNull();
+  });
+
+  it("viser kun rækker for valgte allergener", () => {
+    render(<AllergenSensitivity selected={["jordnoedder"]} levels={{ maelkeallergi: "direct_only" }} onChange={() => {}} />);
+    expect(screen.getAllByRole("group")).toHaveLength(1);
   });
 });

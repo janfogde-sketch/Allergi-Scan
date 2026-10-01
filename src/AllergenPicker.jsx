@@ -110,12 +110,11 @@ export const CustomAllergenField = ({ customAllerg, setCustomAllerg, customInput
 
 // Følsomhed pr. valgt allergen (allergen_levels, 1. okt. 2026): hvad skal der ske, når pakken siger "Kan indeholde spor af …"?
 // "Advar mig" (standard, sikreste valg) eller "Kun ved ingrediens" (advar kun, hvis allergenet står i ingredienslisten).
-// Gemmes som levels: { [allergenId]: "direct_only" } (tom = advar også ved spor). Gluten og hvede vises som ét valg,
-// fordi hvede indeholder gluten og begge ellers kan modsige hinanden.
-// Design (2. okt. 2026, Bjørn): segmenteret kontrol (.trace-seg i theme.jsx, 44 px høje knapper, solid grøn valgt-state med flueben),
-// én kort linje under det valgte valg, og cøliaki-teksten som en tydelig advarselsboks. Logikken er uændret.
-// Cøliaki-teksten hører kun til valget "Gluten" (cøliaki/glutenfølsomhed), aldrig til hvede alene: hvedeallergi er ikke cøliaki, og
-// appen udleder ikke en diagnose af et almindeligt allergivalg.
+// Gemmes som levels: { [allergenId]: "direct_only" } (tom = advar også ved spor). Hvert valgt allergen har sin egen række,
+// også Gluten og Hvede (to forskellige valg). Der vises ingen medicinsk vejledning (fx om cøliaki): appen antager ikke en diagnose ud
+// fra et allergi- eller intolerancevalg.
+// Design (2. okt. 2026, Bjørn): segmenteret kontrol (.trace-seg i theme.jsx, 44 px høje knapper, solid grøn valgt-state med flueben)
+// og én kort linje under det valgte valg.
 // `bare` fjerner kortets øverste skillelinje (bruges i onboarding, hvor trinnet selv har overskrift); `showTitle` skjuler overskriften.
 const TRACE_NOTE = {
   warn: "Du advares både ved ingrediens og ved spor.",
@@ -123,14 +122,7 @@ const TRACE_NOTE = {
 };
 export const AllergenSensitivity = ({ selected, levels, onChange, showIntro = true, showTitle = true, bare = false }) => {
   const ids = selected || [];
-  const rows = [];
-  for (const id of ids) {
-    const a = ALLERGENS.find(x => x.id === id);
-    if (!a) continue;
-    if (id === "hvede" && ids.includes("gluten")) continue; // vises sammen med gluten
-    if (id === "gluten" && ids.includes("hvede")) rows.push({ key: "gluten", label: "Gluten og hvede", ids: ["gluten", "hvede"], celiac: true });
-    else rows.push({ key: id, label: a.label, ids: [id], celiac: id === "gluten" });
-  }
+  const rows = ids.map(id => ALLERGENS.find(x => x.id === id)).filter(Boolean).map(a => ({ key: a.id, label: a.label, ids: [a.id] }));
   if (rows.length === 0) return null;
   const isDirect = (row) => row.ids.every(i => levels?.[i] === "direct_only");
   const set = (row, direct) => {
@@ -162,12 +154,6 @@ export const AllergenSensitivity = ({ selected, levels, onChange, showIntro = tr
               {opt(row, true, direct, "Kun ved ingrediens")}
             </div>
             <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.45, marginTop:6 }}>{direct ? TRACE_NOTE.direct : TRACE_NOTE.warn}</div>
-            {row.celiac && (
-              <div role="note" style={{ display:"flex", alignItems:"flex-start", gap:8, marginTop:8, padding:"10px 12px", borderRadius:10, background:"var(--amber-lt)", border:`1px solid ${direct ? "var(--amber)" : "var(--amber-md)"}`, fontSize:12.5, lineHeight:1.45, color:"var(--ink)" }}>
-                <span style={{ flexShrink:0, marginTop:2, display:"inline-flex" }}><Icon name="warning" size={14} color="var(--amber)" /></span>
-                <span>Har du cøliaki, bør du vælge "Advar mig": selv små spor kan give symptomer. Er du i tvivl, så spørg din læge.</span>
-              </div>
-            )}
           </div>
         );
       })}

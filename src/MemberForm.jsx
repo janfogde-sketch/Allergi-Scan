@@ -1,14 +1,14 @@
 // @ts-nocheck
 import React from "react";
-import { Icon, showToast } from "./SharedComponents.jsx";
+import { Icon, showToast, ConfirmDialog } from "./SharedComponents.jsx";
 import { useHealthConsent } from "./useHealthConsent.js";
 import HealthConsentBox from "./HealthConsentBox.jsx";
 import { canSaveHealthData } from "./healthConsent.js";
 import { UI } from "./styleUtils.js";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { AllergenChipPicker, AllergenSensitivity, CustomAllergenField, DietChipPicker, ENumberPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
-import { Accordion, PrimaryButton, InputField } from "./DesignSystem.jsx";
-import { addUniqueCustom } from "./helpers.js";
+import { Accordion, PrimaryButton, SecondaryButton, InputField } from "./DesignSystem.jsx";
+import { pruneAllergenLevels } from "./helpers.js";
 import { DIETS_ENABLED } from "./constants.jsx";
 
 // Familiemedlem-formularen genbruger nu PRÆCIS de samme felt-komponenter som
@@ -30,12 +30,18 @@ export const MemberForm = ({
   levels, setLevels,
   eNumbers, setENumbers,
   customInput, setCustomInput,
-  onAdd, addLabel,
+  onAdd, addLabel, editing = false,
 }) => {
   const age = birthYear ? String(new Date().getFullYear() - parseInt(birthYear)) : "";
   // Samme realistiske interval som trin 1 (0 tilladt for spædbørn).
   const ageOk = age !== "" && Number(age) >= 0 && Number(age) <= 120;
-  const isValid = name?.trim() && birthYear && ageOk && gender;
+  const hasHealthData = ((allergens?.length || 0) + (customAllerg?.length || 0)) > 0;
+  // Allergivalget skal være aktivt: mindst én allergi/intolerance ELLER et eksplicit "ingen". Ved redigering af et medlem
+  // uden allergier tæller det som det eksplicitte valg. Formularen remountes pr. medlem (key), så startværdien er korrekt.
+  const [noAllergies, setNoAllergies] = React.useState(editing && !hasHealthData);
+  const [confirmNone, setConfirmNone] = React.useState(false);
+  const allergyChoiceOk = hasHealthData || noAllergies;
+  const isValid = name?.trim() && birthYear && ageOk && gender && allergyChoiceOk;
   // "Navn, alder og køn er obligatoriske"-teksten må først vises EFTER et
   // forsøgt tryk på "+ Tilføj familiemedlem", ikke proaktivt fra starten
   // (25. sept. 2026, brugerfeedback — samme princip som trin 1's
@@ -45,7 +51,6 @@ export const MemberForm = ({
   // Samtykke til helbredsoplysninger (2. okt. 2026): kræves, før allergier på en profil gemmes.
   const consent = useHealthConsent();
   const [consentChecked, setConsentChecked] = React.useState(false);
-  const hasHealthData = ((allergens?.length || 0) + (customAllerg?.length || 0)) > 0;
   const consentOk = canSaveHealthData({ hasHealthData, given: consent.given, checked: consentChecked });
   // E-numre skal være lukket som standard, ligesom trin 2 — ellers bliver
   // trin 4 unødigt langt for en valgfri funktion (25. sept. 2026,
@@ -84,11 +89,31 @@ export const MemberForm = ({
       {/* Allergier / intolerancer — delt AllergenChipPicker, samme som
           trin 2 (grøn valgt-state, allergi/intolerance-opdeling, ⓘ-note). */}
       <div className="card-lbl" style={UI.mb8}>Allergier / intolerancer</div>
-      <AllergenChipPicker selected={allergens} onChange={setAllergens} />
+      <AllergenChipPicker selected={allergens} onChange={arr => {
+        setAllergens(arr);
+        // Fjernes et allergen, fjernes dets sporvalg også (ingen skjulte værdier)
+        if (setLevels) setLevels(pruneAllergenLevels(levels, arr));
+        if (arr.length > 0) setNoAllergies(false);
+      }} />
       {setLevels && <AllergenSensitivity selected={allergens} levels={levels} onChange={setLevels} />}
 
       {/* Skriv selv — samme delte felt som onboarding og Rediger præferencer */}
-      <CustomAllergenField customAllerg={customAllerg} setCustomAllerg={setCustomAllerg} customInput={customInput} setCustomInput={setCustomInput} />
+      <CustomAllergenField customAllerg={customAllerg} setCustomAllerg={setCustomAllerg} customInput={customInput} setCustomInput={setCustomInput}
+        onChange={() => setNoAllergies(false)} />
+
+      {/* Eksplicit "ingen": et medlem uden allergier skal vælges aktivt, så "glemt" og "ingen" ikke ligner hinanden. Vælges det,
+          mens der allerede er valgt noget, spørger vi først, så profilen aldrig både har allergier og står som "ingen". */}
+      <SecondaryButton active={noAllergies} style={{ marginTop:12, minHeight:40, fontWeight:500 }}
+        onClick={() => { if (noAllergies) setNoAllergies(false); else if (hasHealthData) setConfirmNone(true); else setNoAllergies(true); }}>
+        Ingen allergier eller intolerancer
+      </SecondaryButton>
+      {confirmNone && (
+        <ConfirmDialog title="Fjern de valgte allergier?"
+          message="Du har allerede valgt allergier eller intolerancer. Hvis du fortsætter, bliver disse valg fjernet."
+          confirmLabel="Ja, fjern valgene"
+          onCancel={() => setConfirmNone(false)}
+          onConfirm={() => { setAllergens([]); setCustomAllerg([]); setCustomInput(""); if (setLevels) setLevels({}); setNoAllergies(true); setConfirmNone(false); }} />
+      )}
 
       {/* Kostpræferencer — delt DietChipPicker, samme som trin 3 (grøn
           valgt-state, sidste-ulige-kort spænder hele bredden). */}
@@ -117,7 +142,7 @@ export const MemberForm = ({
       {/* Obligatoriske felter — hjælpetekst, kun efter et forsøgt tryk */}
       {attempted && !isValid && (
         <div style={{ fontSize:11, color:"var(--muted)", margin:"12px 0 10px", lineHeight:1.5 }}>
-          <span style={UI.red}>*</span> Navn, alder og køn er obligatoriske
+          <span style={UI.red}>*</span> Navn, alder, køn og allergivalg er obligatoriske
         </div>
       )}
 

@@ -1068,7 +1068,7 @@ export default function EatSafe() {
         {showSafetyInfo && <SafetyInfoModal onAcknowledge={acknowledgeSafety} busy={safetyBusy} />}
 
         {/* ══ TOAST (delt succes-/fejl-besked, erstatter native alert()) ══ */}
-        <ToastHost />
+        <ToastHost top={screen === SCREENS.ONBOARD} />
 
         {/* ══ FEEDBACK MODAL ══ */}
         {feedbackOpen && (
