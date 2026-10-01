@@ -32,11 +32,8 @@ den primære liste: læs den ved sessionstart (`select title, status, priority, 
 afslut punkter (`status = 'done'`), og opret nye, når der opstår opgaver. Listen herunder er kun et øjebliksbillede.
 
 *Todo (Jan, 30. sept.):*
-13. Admin-visning til tilbagekaldelser uden gyldig EAN (`recalls` med status
-    `needs_review`): vis titel, kilde-link, rå tal (`unverified_eans`) og
-    tilbagekaldelsens tekst, og lad admin søge produkter frem og knytte EAN'er,
-    hvorefter status sættes til `ready` og hændelsen `recall_published` lægges i
-    outboxen. Kræver en admin-RPC til opdatering (tabellen er kun læsbar for admin).
+13. Admin-visning til tilbagekaldelser uden gyldig EAN er lavet 1. okt. 2026
+    (fanen **Tilbagekald**, RPC `admin_resolve_recall`, se `src/CONTEXT.md` afsnit 14).
 
 *Skal designes (Bjørns spor):*
 11. Supabases auth-mails på dansk i EatSafes stil. **Confirm sign up er
@@ -47,9 +44,10 @@ afslut punkter (`status = 'done'`), og opret nye, når der opstår opgaver. List
     sender alle auth-mails via Resends API med disse skabeloner; glemt-
     adgangskode-mailen er verificeret (afsnit 16 i `src/CONTEXT.md`).
     `deploy-auth-templates.yml` får fortsat 403 (nøglen mangler rettigheden til
-    at skrive auth-konfiguration), men hook'en bruger ikke nøglen. **Kendt hul:**
-    appen har ingen skærm til at vælge ny adgangskode efter "Glemt adgangskode"
-    (se to do-listen). Under Security findes desuden valgfrie notifikationer
+    at skrive auth-konfiguration), men hook'en bruger ikke nøglen. **Skærmen
+    "Vælg ny adgangskode" (`ResetPasswordScreen.jsx`, `SCREENS.RESETPASSWORD`) er
+    lavet 1. okt. (kræver merge): nulstillingslinket (`#type=recovery`) åbner den,
+    og først derefter kommer brugeren ind i appen. Under Security findes desuden valgfrie notifikationer
     (fx Password changed, slået fra i dag; hook'en springer dem over).
 
 *Arkitektur-audit (30. sept. 2026):* rapport i

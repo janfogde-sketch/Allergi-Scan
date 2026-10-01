@@ -240,3 +240,45 @@ describe("useAuth email confirmation screen", () => {
     expect(setScreen).toHaveBeenLastCalledWith("login");
   });
 });
+
+describe("useAuth — ny adgangskode efter nulstillingslink", () => {
+  it("afviser en for svag adgangskode uden at kalde netværket", async () => {
+    const { result } = setup();
+    await act(async () => { await result.current.submitNewPassword("kort"); });
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(result.current.resetError).toMatch(/kun 4 tegn/);
+  });
+
+  it("gemmer den nye adgangskode med recovery-sessionen og viser færdig-tilstand", async () => {
+    localStorage.setItem("as_token", "tok");
+    global.fetch.mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
+    const { result } = setup();
+    let ok;
+    await act(async () => { ok = await result.current.submitNewPassword("Stærk12345"); });
+    expect(ok).toBe(true);
+    // App-boot kan have lavet egne opslag med samme token — find selve PUT-kaldet.
+    const [url, init] = global.fetch.mock.calls.find(([, i]) => i?.method === "PUT");
+    expect(url).toMatch(/\/auth\/v1\/user$/);
+    expect(init.headers.Authorization).toBe("Bearer tok");
+    expect(JSON.parse(init.body)).toEqual({ password: "Stærk12345" });
+    expect(result.current.resetDone).toBe(true);
+  });
+
+  it("viser en fast, venlig tekst, når linket er udløbet (401), uden Supabases rå fejl", async () => {
+    localStorage.setItem("as_token", "tok");
+    global.fetch.mockResolvedValue({ ok: false, status: 401, json: async () => ({ msg: "JWT expired" }) });
+    const { result } = setup();
+    await act(async () => { await result.current.submitNewPassword("Stærk12345"); });
+    expect(result.current.resetDone).toBe(false);
+    expect(result.current.resetError).toMatch(/udløbet/);
+    expect(result.current.resetError).not.toMatch(/JWT/);
+  });
+
+  it("fortæller, at den nye kode skal være forskellig fra den gamle (same_password)", async () => {
+    localStorage.setItem("as_token", "tok");
+    global.fetch.mockResolvedValue({ ok: false, status: 422, json: async () => ({ error_code: "same_password" }) });
+    const { result } = setup();
+    await act(async () => { await result.current.submitNewPassword("Stærk12345"); });
+    expect(result.current.resetError).toMatch(/forskellig/);
+  });
+});

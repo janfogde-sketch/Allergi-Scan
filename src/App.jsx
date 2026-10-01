@@ -51,6 +51,7 @@ import { useFamily } from './useFamily.js';
 import { useHistory } from './useHistory.js';
 import { useAuth, markOnboardedLocally, ONBOARDED_KEY, PENDING_VERIFY_KEY } from './useAuth.js';
 const VerifyEmailScreen = React.lazy(() => import('./VerifyEmailScreen.jsx'));
+const ResetPasswordScreen = React.lazy(() => import('./ResetPasswordScreen.jsx'));
 import { useOnboarding } from './useOnboarding.js';
 import { useAdmin } from './useAdmin.js';
 import { useScanner } from './useScanner.js';
@@ -84,9 +85,9 @@ import { useLoadUserData } from "./useLoadUserData.js";
 // TERMS/PRIVACY tilføjet 29. sept. 2026 ("Opdater siderne Brugsvilkår og
 // Privatlivspolitik") — juridiske sider skal altid kunne ses, uanset
 // onboarding-status, præcis samme begrundelse som WELCOME/LOGIN/ONBOARD.
-const ONBOARDING_EXEMPT_SCREENS = [SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD, SCREENS.VERIFYEMAIL, SCREENS.BOOT, SCREENS.TERMS, SCREENS.PRIVACY];
+const ONBOARDING_EXEMPT_SCREENS = [SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD, SCREENS.VERIFYEMAIL, SCREENS.RESETPASSWORD, SCREENS.BOOT, SCREENS.TERMS, SCREENS.PRIVACY];
 // Skærme uden AppHeader/bundnavigation (login, bekræftelse, onboarding).
-const AUTH_FLOW_SCREENS = [SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD, SCREENS.VERIFYEMAIL, SCREENS.BOOT];
+const AUTH_FLOW_SCREENS = [SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD, SCREENS.VERIFYEMAIL, SCREENS.RESETPASSWORD, SCREENS.BOOT];
 
 // Startskærm (30. sept. 2026): kun en enhed, der har set onboarding færdig
 // (ONBOARDED_KEY), starter direkte på forsiden. Andre med en session venter
@@ -317,6 +318,7 @@ export default function EatSafe() {
     saveTokens, clearAuth, handleLogin, handleSignup, handleOAuth, handleForgotPassword,
     verifyEmail, verifyStatus, verifyError, verifyNotice, verifyLoading, resendCooldown,
     checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify,
+    resetError, resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset,
   } = useAuth({ setScreen, setUser, setAllergens, setCustomAllerg, setOnboardStep });
 
   const {
@@ -782,8 +784,9 @@ export default function EatSafe() {
     handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth,
     verifyEmail, verifyStatus, verifyError, verifyNotice, verifyLoading, resendCooldown,
     checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify,
+    resetError, resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset,
   }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, authInfo, emailTakenError, emailError, passwordError, authLoading, authTab, isOAuth, rememberMe, handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth,
-       verifyEmail, verifyStatus, verifyError, verifyNotice, verifyLoading, resendCooldown, checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify]);
+       verifyEmail, verifyStatus, verifyError, verifyNotice, verifyLoading, resendCooldown, checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify, resetError, resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset]);
 
   const profileContextValue = useMemo(() => ({
     allergens, setAllergens, customAllerg, setCustomAllerg,
@@ -896,7 +899,7 @@ export default function EatSafe() {
             theme.jsx. Selvstændigt lag OVEN PÅ det nu universelle baggrunds-
             billede, i stedet for at ændre .app-bg selv, så resten af appen
             beholder sin nuværende intensitet. */}
-        {(screen === SCREENS.LOGIN || screen === SCREENS.VERIFYEMAIL) && <div className="app-bg-dim" aria-hidden="true" />}
+        {(screen === SCREENS.LOGIN || screen === SCREENS.VERIFYEMAIL || screen === SCREENS.RESETPASSWORD) && <div className="app-bg-dim" aria-hidden="true" />}
         {/* Indkøbsliste-polish (25. sept. 2026, brugerfeedback): "fjern
             ingrediens-/fødevarebaggrunden fra Indkøbslisten — den skal kun
             bruges på den primære Scan-forside". Samme mønster som
@@ -913,9 +916,11 @@ export default function EatSafe() {
             2026, Familie-redesign: siden skal føles som en enkel
             husstands-oversigt, ikke en fødevarebaggrund-tung skærm), og
             Madpas fik den samme (26. sept. 2026, Madpas-redesign: skal
-            fremstå som en administrationsside, ikke Scan-forsiden), og Beskeder
-            (1. okt. 2026, samme rolige udtryk som Favoritter). */}
-        {(screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE || screen === SCREENS.FAMILY || screen === SCREENS.MADPAS || screen === SCREENS.NOTIFICATIONS || screen === SCREENS.NOTIFICATION || isLegalPage) && <div className="app-bg-hide" aria-hidden="true" />}
+            fremstå som en administrationsside, ikke Scan-forsiden). Beskeder fik den
+            samme (1. okt. 2026, samme rolige udtryk som Favoritter), også en åbnet
+            besked og "Se din feedback" (Jans feedback: brødteksten lå direkte oven
+            på baggrundsbilledet og var svær at læse). */}
+        {(screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE || screen === SCREENS.FAMILY || screen === SCREENS.MADPAS || screen === SCREENS.NOTIFICATIONS || screen === SCREENS.NOTIFICATION || screen === SCREENS.TICKET || isLegalPage) && <div className="app-bg-hide" aria-hidden="true" />}
 
         {/* Skip-link for tastatur/screen reader brugere */}
         <a href="#main-content" className="skip-link">Spring til indhold</a>
@@ -931,6 +936,13 @@ export default function EatSafe() {
         {screen === SCREENS.VERIFYEMAIL && (
           <Suspense fallback={LazyFallback}>
             <VerifyEmailScreen />
+          </Suspense>
+        )}
+
+        {/* ══ VÆLG NY ADGANGSKODE ══ */}
+        {screen === SCREENS.RESETPASSWORD && (
+          <Suspense fallback={LazyFallback}>
+            <ResetPasswordScreen />
           </Suspense>
         )}
 

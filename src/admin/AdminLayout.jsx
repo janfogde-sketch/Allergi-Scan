@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { id: "submissions", icon: "package",  label: "Indsendelser", badgeKey: "pendingSubmissions" },
   { id: "tickets",     icon: "bug",      label: "Tickets", badgeKey: "openTickets" },
   { id: "errors",      icon: "warning",  label: "Fejl" },
+  { id: "recalls",     icon: "shield",   label: "Tilbagekald", badgeKey: "pendingRecalls" },
   { id: "missing",     icon: "info",     label: "Manglende EAN'er" },
   { id: "import",      icon: "download", label: "Import" },
   { id: "recipes",     icon: "book",     label: "Opskrifter" },
@@ -19,8 +20,8 @@ const NAV_ITEMS = [
   { id: "family",      icon: "heart",    label: "Familie" },
 ];
 
-export default function AdminLayout({ section, setSection, userEmail, userId, accessToken, logout, pendingSubmissions, openTickets, todoAttention, topbarExtra, children }) {
-  const badges = { pendingSubmissions, openTickets, todoAttention };
+export default function AdminLayout({ section, setSection, userEmail, userId, accessToken, logout, pendingSubmissions, openTickets, todoAttention, pendingRecalls, topbarExtra, children }) {
+  const badges = { pendingSubmissions, openTickets, todoAttention, pendingRecalls };
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">

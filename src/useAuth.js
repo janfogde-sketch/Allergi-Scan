@@ -101,6 +101,12 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   const [verifyError, setVerifyError]   = useState("");
   const [verifyNotice, setVerifyNotice] = useState("");
   const [verifyLoading, setVerifyLoading] = useState(false);
+  // "Vælg ny adgangskode" (SCREENS.RESETPASSWORD, 1. okt. 2026): linket i
+  // "Glemt adgangskode"-mailen logger brugeren ind med en recovery-session
+  // (#type=recovery). Skærmen lader brugeren vælge en ny kode, før appen åbnes.
+  const [resetError, setResetError] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
   // Sekunder til "Send mail igen" må bruges igen (Supabase tillader én
   // mail pr. 60 s pr. adresse).
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -196,6 +202,14 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         const payload = decodeJwtPayload(access);
         const uid = payload.sub;
         saveTokens(access, refresh, uid);
+        // Nulstillingslink fra "Glemt adgangskode": vælg ny kode først, i
+        // stedet for at lukke brugeren direkte ind i appen.
+        if (params.get("type") === "recovery") {
+          setResetError(""); setResetDone(false);
+          setScreen(SCREENS.RESETPASSWORD);
+          window.history.replaceState({}, document.title, window.location.pathname);
+          return;
+        }
         // Kom brugeren fra bekræftelseslinket i mailen (type=signup)? Så
         // vises bekræftelsesskærmen i "bekræftet"-tilstand først, uanset
         // hvad der ellers ligger i browseren.
@@ -250,6 +264,9 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   // naturligt udløb + fejlet baggrunds-fornyelse) efterlod brugeren på
   // Hjem-skærmen som om de var logget ind, indtil et API-kald fejlede.
   useEffect(() => {
+    // Et frisk login-/nulstillingslink har lige gemt en ny session — tjek ikke
+    // en gammel, evt. udløbet session fra browseren (kunne rydde den nye).
+    if (arrivedViaAuthLinkRef.current) return;
     const tokenFromStorage = localStorage.getItem("as_token") || sessionStorage.getItem("as_token");
     if (!tokenFromStorage) return;
     let cancelled = false;
@@ -694,7 +711,54 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     setAuthLoading(false);
   }, [loginEmail]);
 
+  // Gem den nye adgangskode (PUT /auth/v1/user med recovery-sessionen). Alle
+  // fejl vises som faste, venlige beskeder — aldrig Supabases rå tekst.
+  const submitNewPassword = useCallback(async (password) => {
+    const problem = passwordErrorText(password);
+    if (problem) { setResetError(problem); return false; }
+    if (!accessToken) { setResetError("Linket er udløbet. Bed om et nyt under “Glemt adgangskode?”."); return false; }
+    setResetLoading(true); setResetError("");
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) { setResetDone(true); setResetLoading(false); return true; }
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401 || res.status === 403) {
+        setResetError("Linket er udløbet eller allerede brugt. Bed om et nyt under “Glemt adgangskode?”.");
+      } else if (data.error_code === "same_password") {
+        setResetError("Vælg en adgangskode, som er forskellig fra den gamle.");
+      } else if (data.error_code === "weak_password") {
+        const reasons = data.weak_password?.reasons || [];
+        setResetError(reasons.includes("pwned")
+          ? "Adgangskoden er fundet i et kendt datalæk og kan ikke bruges. Vælg en anden."
+          : (passwordErrorText(password) || `Adgangskoden opfylder ikke kravene. ${PASSWORD_REQUIREMENTS_TEXT}`));
+      } else if (res.status === 429) {
+        setResetError("Der er forsøgt for mange gange. Vent et øjeblik, og prøv igen.");
+      } else {
+        setResetError("Der opstod en fejl. Prøv igen.");
+      }
+    } catch {
+      setResetError("Der opstod en fejl. Prøv igen.");
+    }
+    setResetLoading(false);
+    return false;
+  }, [accessToken]);
+
+  // Efter en ny adgangskode: videre til forsiden, eller til det gemte
+  // onboarding-trin, hvis opsætningen ikke var færdig.
+  const continueAfterReset = useCallback(() => {
+    let uid = userId;
+    try { uid = uid || decodeJwtPayload(accessToken).sub; } catch { /* ugyldigt token */ }
+    setResetDone(false); setResetError("");
+    if (!uid || !accessToken) { setScreen(SCREENS.LOGIN); return; }
+    resolveOnboardingRoute(uid, accessToken);
+  }, [userId, accessToken, setScreen, resolveOnboardingRoute]);
+
   return {
+    resetError, resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset,
     accessToken, setAccessToken,
     refreshToken, setRefreshToken,
     userId, setUserId,

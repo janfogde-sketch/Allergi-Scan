@@ -652,7 +652,12 @@ korte tekst og åbner den fulde, beskyttede besked i appen via
   ANNULLERET), `archived` (første kørsel og alt ældre end 14 dage sendes aldrig). `notify` (`recall_published`) matcher på
   favoritter, scanninger (90 dage) og indkøbslister via EAN, aldrig på navn, og sender P6 til alle matchede uanset
   allergiprofil. Linket i beskeden (blokken `link`) tillader kun https på foedevarestyrelsen.dk. Cirka 28 af 50 sider i feedet
-  havde gyldig EAN (juni-sept. 2026). Mangler: admin-visning til `needs_review` med manuel tilknytning af EAN.
+  havde gyldig EAN (juni-sept. 2026). Admin-fanen **Tilbagekald** (1. okt. 2026, `RecallsSection.jsx`, `useAdminRecalls.js`, `recallLogic.js`)
+  viser rækkerne med tekst, link og rå tal; admin søger produkter frem og knytter dem. RPC'erne
+  `admin_resolve_recall(id, 'link'|'archive'|'cancel', eans)` (kun `needs_review`; EAN'er valideres som GTIN og skal
+  findes i `products`; `link` sætter `ready` og lægger `p6:<id>` i outboxen) og `admin_recall_affected_count(eans)`
+  (brugere via favorit, scan de seneste 90 dage eller indkøbsliste, vist før afsendelse) er kun for admin. Hjælpefunktionerne
+  `ean_variants()` og `is_valid_gtin()` spejler `recallParser.js`. Migration `20261001081752`.
 
 ## 15. Fælles to do-liste i admin-panelet (1. okt. 2026)
 

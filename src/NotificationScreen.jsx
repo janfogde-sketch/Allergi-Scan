@@ -86,13 +86,15 @@ export default function NotificationScreen({ notificationId, markRead, onDelete,
 
       {state.status === "ok" && (
         <>
-          <div style={{ fontSize:11.5, color:"var(--muted)", marginBottom:10 }}>{timeAgo(state.item.event_at || state.item.created_at)}</div>
-          <NotificationBlocks blocks={state.item.content_blocks} />
+          <div className="card">
+            <div style={{ fontSize:11.5, color:"var(--muted)", marginBottom:10 }}>{timeAgo(state.item.event_at || state.item.created_at)}</div>
+            <NotificationBlocks blocks={state.item.content_blocks} />
+          </div>
           {inviteInactive && (
-            <div className="info-box" role="status" style={{ marginTop:4 }}>Invitationen er ikke længere aktiv. Du kan oprette en ny under Familie.</div>
+            <div className="info-box" role="status" style={{ marginTop:12 }}>Invitationen er ikke længere aktiv. Du kan oprette en ny under Familie.</div>
           )}
           {canAct && (
-            <button className="btn btn-primary btn-full" style={{ marginTop:8 }} onClick={() => onAction(action)}>
+            <button className="btn btn-primary btn-full" style={{ marginTop:12 }} onClick={() => onAction(action)}>
               {action.label}
             </button>
           )}
