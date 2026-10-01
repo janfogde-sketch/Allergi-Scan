@@ -4,13 +4,14 @@
 import React from "react";
 import { HEALTH_CONSENT_TEXT, HEALTH_CONSENT_WITHDRAW_TEXT } from "./healthConsent.js";
 
-export default function HealthConsentBox({ checked, onChange, openPrivacy }) {
+// `text`/`subText` kan overstyres (samtykke til en andens profil, se memberConsentTexts); standard er kontoejerens eget samtykke.
+export default function HealthConsentBox({ checked, onChange, openPrivacy, text, subText, id = "health-consent" }) {
   return (
     <label className={`consent-box${checked ? " on" : ""}`}>
-      <input id="health-consent" type="checkbox" checked={!!checked} onChange={e => onChange(e.target.checked)} />
+      <input id={id} type="checkbox" checked={!!checked} onChange={e => onChange(e.target.checked)} />
       <span>
-        <span className="consent-main">{HEALTH_CONSENT_TEXT}</span>
-        <span className="consent-sub">{HEALTH_CONSENT_WITHDRAW_TEXT}</span>
+        <span className="consent-main">{text || HEALTH_CONSENT_TEXT}</span>
+        <span className="consent-sub">{subText || HEALTH_CONSENT_WITHDRAW_TEXT}</span>
         {openPrivacy && (
           <button type="button" className="consent-link" onClick={e => { e.preventDefault(); openPrivacy(); }}>
             Læs privatlivspolitikken

@@ -936,8 +936,8 @@ export function ToastHost({ top = false }) {
   React.useEffect(() => {
     const handler = (toast) => {
       setToasts(t => [...t, toast]);
-      // Fejl bliver stående lidt længere end bekræftelser (som forsvinder efter ca. 2,5 sekunder)
-      setTimeout(() => setToasts(t => t.filter(x => x.id !== toast.id)), toast.type === "error" ? 4000 : 2500);
+      // Bekræftelser forsvinder efter ca. 2,5 sekunder, fejl efter 4 og forklarende info (fx note under et allergen) efter 6
+      setTimeout(() => setToasts(t => t.filter(x => x.id !== toast.id)), toast.type === "error" ? 4000 : toast.type === "info" ? 6000 : 2500);
     };
     toastListeners.push(handler);
     return () => { toastListeners = toastListeners.filter(l => l !== handler); };

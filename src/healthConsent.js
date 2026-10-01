@@ -24,3 +24,16 @@ export const HEALTH_CONSENT_TEXT =
   "for at give mig personlige produktkontroller og advarsler.";
 export const HEALTH_CONSENT_WITHDRAW_TEXT =
   "Du kan til enhver tid trække samtykket tilbage under Indstillinger → Privatliv & data.";
+
+// Samtykke til en profil, der tilhører en ANDEN person (familiemodel: administrerede underprofiler). Kontoejeren må ikke sige "mine":
+// teksten tilpasses, hvem oplysningerne vedrører. Børn (under 18): forælder/værge-erklæring. Voksne: personens eget udtrykkelige samtykke
+// (voksne bør helst inviteres, så de selv styrer deres oplysninger, se Familie). `age` er et tal eller en tekst, tom = ukendt.
+export function memberConsentTexts({ name, age } = {}) {
+  const who = (name || "").trim() || "personen";
+  const poss = /[sxz]$/i.test(who) ? `${who}'` : `${who}s`;
+  const isChild = String(age ?? "") !== "" && Number(age) < 18;
+  const text = isChild
+    ? `Jeg bekræfter, at jeg er forælder eller værge for ${who}, og at jeg må registrere ${poss} allergi-, intolerance- og andre helbredsoplysninger i EatSafe for at give personlige produktkontroller og advarsler.`
+    : `Jeg bekræfter, at ${who} har givet sit udtrykkelige samtykke til, at jeg registrerer ${poss} allergi-, intolerance- og andre helbredsoplysninger i EatSafe for at give personlige produktkontroller og advarsler.`;
+  return { text, sub: "Du kan til enhver tid rette eller slette profilen under Familie.", isChild };
+}

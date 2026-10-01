@@ -192,6 +192,7 @@ brugerens valg med ✓/✕/?. Ingredienslisten fremhæver kun det, der er releva
 eksplicitte beslutning; foreslå ikke at fjerne dem). Telefon indsamles ikke. "Rediger præferencer" bruger de delte pickers og
 `useGlutenFreeSync()`. Husstandskonti (rigtige EatSafe-konti i husstanden) kan vælges som profil, men er skrivebeskyttede:
 `scanFamily` (ProfileContext) til alt, der vælger/tjekker profiler, `family` kun til redigér/slet. Familie-backend: `src/CONTEXT.md` §5.
+**Familiemodel (Bjørns krav, 2. okt. 2026): voksne inviteres og accepterer selv (egen konto, eget samtykke); administrerede underprofiler er især til børn.** Opretter kontoejeren en profil til en voksen, skal personen have givet samtykke (note i `MemberForm`, privatlivspolitik afsnit 4). En ny underprofil med allergier kræver en bekræftelse med personens navn (`memberConsentTexts()` i `healthConsent.js`: forælder/værge for børn, eget samtykke for voksne), aldrig "mine". Bekræftelsen er kun et UI-krav; den logges ikke pr. profil (kun kontoens helbredssamtykke i `consent_log`). Bland ikke modellerne, og tilføj ikke tekster om invitationslink på underprofiler.
 
 **Madpas:** kun on-device (link/QR/PDF-deling blev bygget og fjernet igen, tilføj det ikke uden bestilling). Hver allergi har et
 to-sætnings-budskab på 17 sprog, krydskontaminering er opt-in (toggle, info-ikon via `InfoSheet`), oplæsning "Læs højt"/"Stop".
@@ -219,8 +220,9 @@ ethvert kamera-luk. `cameraPermissionDenied` viser et dedikeret kort. Advarselsv
   sætter `onboarding_completed` (luk appen før da, genoptages trin 5). Ingen Beta-popup (BETA er kun et badge). "Jeg har ingen allergier" kræver bekræftelse, hvis noget er valgt, og rydder
   alt (også spor); familiemedlemmer kræver navn, aktivt valgt alder (ingen forudfyldt), køn og et allergivalg eller et eksplicit "ingen". E-nummer-rækker
   har en eksplicit afkrydsningsboks; chevron er kun info. Routing sender alt andet end `onboarding_completed=true` til onboarding.
-  Et PWA kan ikke åbne bekræftelseslinket direkte i den installerede app på iOS (kræver native Universal Links); manifestet har
-  `handle_links`/`launch_handler` til Chromium. Linket lander i browseren, og `VerifyEmailScreen` samt `resolveOnboardingRoute` genoptager.
+  Bekræftelseslinket registrerer e-mailen af sig selv og går direkte videre til onboarding (ingen mellemskærm). `VerifyEmailScreen` tjekker stille, når
+  brugeren vender tilbage til appen; knappen hedder "Tjek bekræftelse", og "ikke bekræftet endnu" er en neutral besked, ikke en fejl. Et PWA kan ikke åbne linket
+  i den installerede app på iOS (kræver native Universal Links); manifestet har `handle_links`/`launch_handler` til Chromium. Linket lander i browseren, og `resolveOnboardingRoute` genoptager.
 - Google/Facebook går direkte til onboarding. `onboardStep` ligger i `App.jsx` FØR `useAuth()` (ellers TDZ-krasch).
 
 **Allergileksikon:** `knowledge_base` har EU's 14 allergener + hvede med neutral `status_label`; laktose ligger under Ingredienser;

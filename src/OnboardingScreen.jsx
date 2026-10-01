@@ -339,6 +339,9 @@ export default function OnboardingScreen({
   // top-niveau-state), da den kun kaldes betinget (onboardStep===2).
   const renderStep2 = () => {
     const selectedCount = allergens.length + customAllerg.length;
+    // Tekst i "Skriv selv"-feltet, som ikke er tilføjet med "+", tæller med ved Fortsæt (ellers forsvinder den stille)
+    const pendingCustom = customInput.trim() !== "";
+    const effectiveCount = selectedCount + (pendingCustom ? 1 : 0);
     // Neutral, let sekundærknap-stil (29. sept. 2026, "Ret designet på
     // onboarding-trin 2/5") — kun for DENNE knap: "Jeg har ingen allergier
     // eller intolerancer" er et gyldigt, men bevidst LAVERE-vægtet fravalg
@@ -416,16 +419,20 @@ export default function OnboardingScreen({
             det er det eneste brugeren har valgt (fundet som en reel bug,
             25. sept. 2026: "vælger et E-nummer og ikke en allergi... kan
             jeg ikke trykke fortsæt"). */}
-        {selectedCount > 0 && !consent.given && (
+        {effectiveCount > 0 && !consent.given && (
           <HealthConsentBox checked={consentChecked} onChange={setConsentChecked} openPrivacy={() => openLegal(SCREENS.PRIVACY)} />
         )}
         <PrimaryButton
-          disabled={!(selectedCount > 0 || selectedENumbers.length > 0 || noAllergiesConfirmed)
-            || !canSaveHealthData({ hasHealthData: selectedCount > 0, given: consent.given, checked: consentChecked })}
+          disabled={!(effectiveCount > 0 || selectedENumbers.length > 0 || noAllergiesConfirmed)
+            || !canSaveHealthData({ hasHealthData: effectiveCount > 0, given: consent.given, checked: consentChecked })}
           onClick={async () => {
             try {
-              if (selectedCount > 0 && !consent.given) await consent.give();
-              await saveAllergensStep2(); setOnboardStep(DIETS_ENABLED || allergens.length > 0 ? 3 : 4); }
+              const nextCustom = pendingCustom ? addUniqueCustom(customAllerg, customInput) : customAllerg;
+              if (pendingCustom) { setCustomAllerg(nextCustom); setCustomInput(""); }
+              if (effectiveCount > 0 && !consent.given) await consent.give();
+              await saveAllergensStep2(allergens, nextCustom);
+              // Egne valg har ingen sporvalg, så trin 3 (spor) springes over, hvis der kun er egne valg
+              setOnboardStep(DIETS_ENABLED || allergens.length > 0 ? 3 : 4); }
             catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
           }}>Fortsæt →</PrimaryButton>
 
@@ -439,7 +446,7 @@ export default function OnboardingScreen({
             værdier på dette tidspunkt (setAllergens/setCustomAllerg er
             asynkrone). */}
         <SecondaryButton style={neutralSecondaryStyle} active={noAllergiesConfirmed}
-          onClick={() => { if (selectedCount > 0) setConfirmNoAllergies(true); else confirmNoAllergiesNow(); }}>
+          onClick={() => { if (effectiveCount > 0) setConfirmNoAllergies(true); else confirmNoAllergiesNow(); }}>
           Jeg har ingen allergier eller intolerancer
         </SecondaryButton>
       </div>
@@ -670,10 +677,9 @@ export default function OnboardingScreen({
                 .welcome-benefits-kommentaren i theme.jsx. */}
             <div style={{ marginTop:32, maxWidth:260, fontSize:10.5, color:"rgba(21,32,26,.6)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
               Du accepterer vores{" "}
-              <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.TERMS)}>brugsvilkår</button>
-              {" "}og bekræfter, at du har læst{" "}
-              <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.PRIVACY)}>privatlivspolitikken</button>,
-              {" "}når du opretter en konto.
+              <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.TERMS)}>brugsvilkår</button>,
+              {" "}når du opretter en konto. Læs, hvordan vi behandler dine oplysninger, i{" "}
+              <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.PRIVACY)}>privatlivspolitikken</button>.
             </div>
 
             {/* Samme spacer-mekanisme som toppen, se kommentar ovenfor —
@@ -791,8 +797,8 @@ export default function OnboardingScreen({
                       oplysninger, det håndteres separat i selve onboardingen. */}
                   <div style={{ fontSize:11, color:"var(--muted)", marginTop:12, lineHeight:1.5 }}>
                     Ved at oprette en konto accepterer du vores{" "}
-                    <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.TERMS)}>brugsvilkår</button>
-                    {" "}og bekræfter, at du har læst{" "}
+                    <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.TERMS)}>brugsvilkår</button>.
+                    {" "}Læs, hvordan vi behandler dine oplysninger, i{" "}
                     <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.PRIVACY)}>privatlivspolitikken</button>.
                   </div>
                 </div>
@@ -1046,7 +1052,7 @@ export default function OnboardingScreen({
                     onConfirm={() => { removeMember(confirmRemoveMember.id); setConfirmRemoveMember(null); }} />
                 )}
                 <div className="step-title" style={UI.utacenter}>Familiemedlemmer</div>
-                <div style={{ fontSize:13, color:"var(--ink2)", textAlign:"center", marginBottom:16 }}>Tilføj familiemedlemmer med deres egne allergier og præferencer. Valgfrit.</div>
+                <div style={{ fontSize:13, color:"var(--ink2)", textAlign:"center", marginBottom:16 }}>Tilføj en profil til en person, du administrerer, fx et barn. Voksne kan du invitere under Familie, så de selv styrer deres oplysninger. Valgfrit.</div>
 
                 {/* Allerede tilføjede — viser navn + alder som primær linje
                     (25. sept. 2026, brugerfeedback: "Mia, 24 år"), ikke kun
@@ -1067,7 +1073,7 @@ export default function OnboardingScreen({
                   <div className="card" style={UI.mb12}>
                     <div style={UI.sectionLbl6}>Tilføjet</div>
                     {family.map(m => {
-                      const allergenLabels = m.allergens.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean);
+                      const allergenLabels = [...m.allergens.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean), ...(m.custom || [])];
                       const shownAllergens = allergenLabels.slice(0, 3);
                       const extraCount = allergenLabels.length - shownAllergens.length;
                       return (
@@ -1160,7 +1166,7 @@ export default function OnboardingScreen({
                   <FormCard style={UI.mb16}>
                     {[
                       ["check","Produktet er godkendt","Når et produkt, du har indsendt, bliver godkendt"],
-                      ["family","Familiemedlem tilslutter sig","Når nogen accepterer dit invitationslink"],
+                      ["family","Familiemedlem tilslutter sig","Når en, du har inviteret, accepterer invitationen"],
                       ["search","Produkt tilgængeligt","Når et produkt, du har ledt efter, kommer i databasen"],
                     ].map(([icon, title, sub], i, arr) => (
                       <InfoRow key={title} icon={icon} color="var(--green)" title={title} sub={sub} border={i < arr.length - 1} />

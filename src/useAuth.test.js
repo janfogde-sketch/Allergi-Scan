@@ -182,18 +182,38 @@ describe("useAuth email confirmation screen", () => {
     expect(setScreen).toHaveBeenLastCalledWith("verifyemail");
   });
 
-  it("'Jeg har bekræftet' shows a clear message while the email is still unconfirmed", async () => {
+  it("'Tjek bekræftelse' shows a neutral notice (not an error) while the email is still unconfirmed", async () => {
     localStorage.setItem("as_pending_verify", "a@b.dk");
     global.fetch.mockResolvedValue(jsonResponse({ error_code: "email_not_confirmed", msg: "Email not confirmed" }, false));
     const { result, setScreen } = setup({ setOnboardStep: vi.fn() });
     act(() => { result.current.setLoginPassword("LongEnough2026"); });
     await act(async () => { await result.current.checkEmailVerified(); });
-    expect(result.current.verifyError).toMatch(/ikke se, at e-mailen er bekræftet/);
+    expect(result.current.verifyError).toBe("");
+    expect(result.current.verifyNotice).toMatch(/endnu ikke se, at din e-mail er bekræftet/);
     expect(result.current.verifyStatus).toBe("pending");
     expect(setScreen).not.toHaveBeenCalledWith("home");
   });
 
-  it("'Jeg har bekræftet' logs in and shows 'E-mail bekræftet' — never the scanner", async () => {
+  it("the automatic (silent) check shows nothing while unconfirmed and never navigates", async () => {
+    localStorage.setItem("as_pending_verify", "a@b.dk");
+    global.fetch.mockResolvedValue(jsonResponse({ error_code: "email_not_confirmed", msg: "Email not confirmed" }, false));
+    const { result, setScreen } = setup({ setOnboardStep: vi.fn() });
+    act(() => { result.current.setLoginPassword("LongEnough2026"); });
+    await act(async () => { await result.current.checkEmailVerified({ silent: true }); });
+    expect(result.current.verifyError).toBe("");
+    expect(result.current.verifyNotice).toBe("");
+    expect(setScreen).not.toHaveBeenCalled();
+  });
+
+  it("the silent check without a known password does nothing (no redirect to Log ind)", async () => {
+    localStorage.setItem("as_pending_verify", "a@b.dk");
+    const { result, setScreen } = setup();
+    await act(async () => { await result.current.checkEmailVerified({ silent: true }); });
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(setScreen).not.toHaveBeenCalled();
+  });
+
+  it("a confirmed email goes straight to onboarding at the saved step — no intermediate screen, never the scanner", async () => {
     localStorage.setItem("as_pending_verify", "a@b.dk");
     global.fetch
       .mockResolvedValueOnce(jsonResponse({ access_token: "a", refresh_token: "r", user: { id: "u1" } }))
@@ -201,17 +221,15 @@ describe("useAuth email confirmation screen", () => {
     const setOnboardStep = vi.fn();
     const { result, setScreen } = setup({ setOnboardStep });
     act(() => { result.current.setLoginPassword("LongEnough2026"); });
-    await act(async () => { await result.current.checkEmailVerified(); });
+    await act(async () => { await result.current.checkEmailVerified({ silent: true }); });
     expect(result.current.accessToken).toBe("a");
-    expect(result.current.verifyStatus).toBe("verified");
     expect(setOnboardStep).toHaveBeenLastCalledWith(3);
+    expect(setScreen).toHaveBeenLastCalledWith("onboard");
     expect(setScreen).not.toHaveBeenCalledWith("home");
     expect(localStorage.getItem("as_pending_verify")).toBeNull();
-    act(() => { result.current.continueAfterVerify(); });
-    expect(setScreen).toHaveBeenLastCalledWith("onboard");
   });
 
-  it("after an app restart (password unknown) 'Jeg har bekræftet' goes to Log ind with the email filled in", async () => {
+  it("after an app restart (password unknown) 'Tjek bekræftelse' goes to Log ind with the email filled in", async () => {
     localStorage.setItem("as_pending_verify", "a@b.dk");
     const { result, setScreen } = setup();
     await act(async () => { await result.current.checkEmailVerified(); });

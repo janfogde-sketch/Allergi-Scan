@@ -5,8 +5,8 @@
 // Vises lige efter "Opret konto" og igen ved appstart, så længe kontoen er
 // oprettet, men e-mailen ikke er bekræftet (useAuth.js, PENDING_VERIFY_KEY).
 // To tilstande:
-//  - "pending": mailen er sendt — "Jeg har bekræftet min e-mail", "Send mail
-//    igen" og "Skift e-mailadresse".
+//  - "pending": mailen er sendt — "Tjek bekræftelse" (fallback; bekræftelsen registreres ellers automatisk), "Send mail igen" og
+//    "Skift e-mailadresse".
 //  - "verified": "✓ Din e-mail er bekræftet" og "Fortsæt opsætning", som åbner
 //    onboarding på det næste manglende trin (onboarding_step). Det er også
 //    siden, bekræftelseslinket i mailen lander på (redirect_to = appen).
@@ -27,13 +27,21 @@ export default function VerifyEmailScreen() {
 
   const verified = verifyStatus === "verified";
 
-  // Åbnes linket i en anden fane i samme browser, gemmer den fane sessionen
-  // i localStorage — så skifter denne fane selv til "E-mail bekræftet".
+  // Bekræftelsen registreres automatisk, brugeren skal ikke selv erklære den: (1) åbnes linket i en anden fane i samme browser, gemmer
+  // den fane sessionen i localStorage; (2) vender brugeren tilbage til appen fra mailen, tjekkes der stille (højst hvert 8. sekund).
+  // Åbnes linket direkte i appen, går brugeren videre til onboarding uden at komme forbi denne skærm (useAuth.js).
   useEffect(() => {
-    if (verified) return;
-    const onStorage = (e) => { if (e.key === "as_token" && e.newValue) checkEmailVerified(); };
+    if (verified) return undefined;
+    let last = 0;
+    const onStorage = (e) => { if (e.key === "as_token" && e.newValue) checkEmailVerified({ silent: true }); };
+    const onVisible = () => {
+      if (document.visibilityState !== "visible" || Date.now() - last < 8000) return;
+      last = Date.now();
+      checkEmailVerified({ silent: true });
+    };
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { window.removeEventListener("storage", onStorage); document.removeEventListener("visibilitychange", onVisible); };
   }, [verified, checkEmailVerified]);
 
   return (
@@ -77,8 +85,8 @@ export default function VerifyEmailScreen() {
             </div>
           )}
           <ErrorMessage>{verifyError}</ErrorMessage>
-          <button className="btn welcome-btn" onClick={checkEmailVerified} disabled={verifyLoading}>
-            {verifyLoading ? "Tjekker…" : "Jeg har bekræftet min e-mail"}
+          <button className="btn welcome-btn" onClick={() => checkEmailVerified()} disabled={verifyLoading}>
+            {verifyLoading ? "Tjekker…" : "Tjek bekræftelse"}
           </button>
           <button className="btn welcome-btn-ghost" onClick={resendVerification} disabled={verifyLoading || resendCooldown > 0}>
             {resendCooldown > 0 ? `Send mail igen (${resendCooldown} s)` : "Send mail igen"}

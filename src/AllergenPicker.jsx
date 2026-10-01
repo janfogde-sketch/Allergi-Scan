@@ -97,6 +97,11 @@ export const CustomAllergenField = ({ customAllerg, setCustomAllerg, customInput
           style={{ width:46, minHeight:0, padding:0, borderRadius:10, fontSize:19, flexShrink:0 }}>+</button>
       </div>
       {customAllerg.length > 0 && (
+        <div style={{ fontSize:11.5, color:"var(--muted)", lineHeight:1.45, marginBottom:6 }}>
+          Egne valg tjekkes mod ingredienslisten som tekst. De har ingen sporvalg.
+        </div>
+      )}
+      {customAllerg.length > 0 && (
         <div className="tags">
           {customAllerg.map((a, i) => (
             <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
