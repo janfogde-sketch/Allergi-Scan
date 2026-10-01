@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ success: true, members: [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       const { data: members, error } = await supabase
-        .from("users").select("id, name, email, diets, e_numbers").in("id", group);
+        .from("users").select("id, name, email, diets, e_numbers, allergen_levels").in("id", group);
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
       const { data: invitedByMe } = await supabase
@@ -103,6 +103,7 @@ Deno.serve(async (req) => {
         custom: allergensByUser.get(m.id)?.custom ?? [],
         diets: m.diets ?? [],
         eNumbers: m.e_numbers ?? [],
+        allergenLevels: m.allergen_levels ?? {},
       }));
       return new Response(JSON.stringify({ success: true, members: withPermissions }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -168,6 +169,7 @@ Deno.serve(async (req) => {
       await supabase.from("users").update({
         diets: managedMember.diets ?? [],
         e_numbers: managedMember.e_numbers ?? [],
+        allergen_levels: managedMember.allergen_levels ?? {},
       }).eq("id", target_user_id);
 
       const { error } = await supabase.from("family_members").delete().eq("id", managed_member_id);

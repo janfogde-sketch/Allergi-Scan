@@ -3,9 +3,10 @@ import React from "react";
 import { Icon } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
-import { AllergenChipPicker, DietChipPicker, ENumberPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
+import { AllergenChipPicker, AllergenSensitivity, DietChipPicker, ENumberPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { Accordion, PrimaryButton, InputField } from "./DesignSystem.jsx";
 import { addUniqueCustom } from "./helpers.js";
+import { DIETS_ENABLED } from "./constants.jsx";
 
 // Familiemedlem-formularen genbruger nu PRÆCIS de samme felt-komponenter som
 // onboarding trin 1-3 (25. sept. 2026, brugerfeedback: "Ingen nye designs...
@@ -23,6 +24,7 @@ export const MemberForm = ({
   allergens, setAllergens,
   customAllerg, setCustomAllerg,
   diets, setDiets,
+  levels, setLevels,
   eNumbers, setENumbers,
   customInput, setCustomInput,
   onAdd, addLabel,
@@ -75,6 +77,7 @@ export const MemberForm = ({
           trin 2 (grøn valgt-state, allergi/intolerance-opdeling, ⓘ-note). */}
       <div className="card-lbl" style={UI.mb8}>Allergier / intolerancer</div>
       <AllergenChipPicker selected={allergens} onChange={setAllergens} />
+      {setLevels && <AllergenSensitivity selected={allergens} levels={levels} onChange={setLevels} />}
 
       {/* Skriv selv — samme ordlyd/opbygning som trin 2 */}
       <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
@@ -98,13 +101,17 @@ export const MemberForm = ({
 
       {/* Kostpræferencer — delt DietChipPicker, samme som trin 3 (grøn
           valgt-state, sidste-ulige-kort spænder hele bredden). */}
-      <div className="card-lbl" style={{ marginTop:16, marginBottom:8 }}>Kostpræferencer</div>
-      <DietChipPicker selected={diets}
-        autoNote={glutenFreeAutoApplied ? { id:"gluten-free", text:"Valgt ud fra gluten" } : undefined}
-        onChange={arr => {
-          if (arr.includes("gluten-free") !== diets.includes("gluten-free")) setGlutenFreeAutoApplied(false);
-          setDiets(arr);
-        }} />
+      {DIETS_ENABLED && (
+        <>
+          <div className="card-lbl" style={{ marginTop:16, marginBottom:8 }}>Kostpræferencer</div>
+          <DietChipPicker selected={diets}
+            autoNote={glutenFreeAutoApplied ? { id:"gluten-free", text:"Valgt ud fra gluten" } : undefined}
+            onChange={arr => {
+              if (arr.includes("gluten-free") !== diets.includes("gluten-free")) setGlutenFreeAutoApplied(false);
+              setDiets(arr);
+            }} />
+        </>
+      )}
 
       {/* E-numre — samme delte ENumberPicker og lukkede-som-standard
           Accordion-mønster som trin 2. Erstatter den tidligere lokale, røde

@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useState } from "react";
+import { visibleDiets } from "./helpers.js";
 import { ALLERGENS, MADPAS_LANGUAGES, ALLERGEN_T, ALLERGEN_EXAMPLES, DIETS, DIET_T, MADPAS_SAFETY_NOTE_T, MADPAS_ALLERGY_STATEMENT_T, MADPAS_EN_DERIVED, MADPAS_EXAMPLES_OVERRIDE, MADPAS_CROSS_CONTACT_SINGULAR_T, MADPAS_CROSS_CONTACT_PLURAL_T, MADPAS_DIET_MESSAGE_T } from "./constants.jsx";
 
 // ALLERGEN_T har ingen "da"-nøgle (dansk er allerede ALLERGENS' eget
@@ -155,7 +156,7 @@ export function useMadpas({ allergens, customAllerg, user, madpasLang, family, m
     // når man taler for et familiemedlems madpas. E-numre er fjernet helt
     // fra Madpas (opfølgende polish-runde, samme dag) — en tjener har ikke
     // brug for at høre E-nummer-koder oplæst.
-    const speakDiets = activeProfile ? (activeProfile.diets || []) : (user.diets || []);
+    const speakDiets = visibleDiets(activeProfile ? activeProfile.diets : user.diets);
 
     const parts = [];
     parts.push(introText[lang] || introText.en);

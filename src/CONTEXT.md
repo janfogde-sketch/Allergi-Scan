@@ -163,7 +163,7 @@ begrundelse.
 | Tabel | Nøglefelter | Noter |
 |-------|-------------|-------|
 | `products` | id, ean, name, brand, allergen_flags (jsonb), allergen_quality, allergen_source_method, nutrition (jsonb), verified_status, source, ingredients_text | ~20.200+ |
-| `users` | id, name, email, role, diets (jsonb), onboarding_completed, onboarding_step | Se note nedenfor |
+| `users` | id, name, email, role, diets (jsonb), allergen_levels (jsonb), onboarding_completed, onboarding_step | Se note nedenfor |
 | `user_allergens` | user_id, allergen_id | |
 | `family_members` | id, user_id, name, allergens (jsonb), diets, e_numbers, family_owner_id | |
 | `family_invites` | id, token, invited_by, accepted_by, status, expires_at | To-vejs deling, 24t expiry |
@@ -213,6 +213,15 @@ begrænse per-kolonne, så en tilsvarende trigger bør overvejes for andre
 tabeller med et lignende "selv-ejerskab uden kolonne-begrænsning"-mønster,
 hvis en ny privilegeret kolonne nogensinde tilføjes til `users` eller andre
 selv-redigerbare tabeller.
+
+**`allergen_levels` på `users` og `family_members` (2. okt. 2026, migration `20261001120049`):** følsomhed pr. allergen, fx
+`{"maelkeallergi":"direct_only"}`. Mangler et allergen, er det "strict" (spor flagges som advarsel, som hidtil); `direct_only` =
+brugeren reagerer kun på direkte indhold, så spor flagges ikke, men vises som en rolig info-linje. Logikken ligger i `helpers.js`
+(`compareAllergens(flags, ids, levels)` → `ignoredTraces`, `computeProfileResults`, `mergeAllergenLevels` — strengeste aktive profil vinder,
+`ignoresTraces`). På produktsiden er spor nu GULE ("Kan indeholde spor"); kun direkte indhold er rødt "Allergi-advarsel". Husstandskonti
+får deres niveauer via `family/group` (`allergenLevels`), og `notify` (P1) sender ikke en ændring til spor til en modtager, der kun
+reagerer på direkte indhold (`affectedAllergenChanges(..., tracesIgnored)`). UI: den simple `AllergenSensitivity` i `AllergenPicker.jsx`
+(onboarding trin 2, Rediger præferencer, familieformularen). Admin-panelet (Brugere → rediger) kan sætte niveauet pr. valgt allergen for en bruger (`useAdmin.js`, `UsersSection.jsx`); familiemedlemmers niveauer redigeres kun i appen.
 
 **`users.onboarding_step` (29. sept. 2026, "Onboarding-persistens"):**
 integer, 1-5, default 1 — huske PRÆCIS hvilket af de 5 onboarding-trin en
@@ -736,7 +745,12 @@ Auth viser en fejl; samme `Idempotency-Key` (`auth-{webhook-id}-{n}`) hindrer do
 
 **Mørk tilstand (1. okt. 2026, Bjørn):** alle 28 mails (6 auth + 22 Resend) har samme mørke palette, Outlook-regler (`data-ogsc`/`data-ogsb`) og et logo, der skifter til en mørk version; se afsnittet "Mørk tilstand" i `supabase/templates/resend/README.md` og testen `src/mailDarkMode.test.js`.
 
-**Status 1. okt.:** hook'en er slået til og verificeret (glemt-adgangskode-mail sendt via Resend fra `auth-send-email`, dansk, korrekt verify-link). Oprettelsesmailen og skift af e-mail er endnu ikke prøvet (to do-listen). **Kendt hul:** appen har ingen skærm til at vælge en ny adgangskode; nulstillingslinket logger bare ind (to do-listen, høj prioritet).
+**Status 1. okt.:** hook'en er slået til og testet end-to-end med en testkonto (plus-adresser, derefter slettet): glemt adgangskode, oprettelse
+("Bekræft din e-mail – EatSafe"; linket giver 303 til `eatsafe.dk` med `type=signup`, og appen viser "Din e-mail er bekræftet" → Fortsæt opsætning,
+når service workeren allerede er installeret; i en helt ny browser kan SW-reloadet springe den skærm over, og brugeren lander direkte i onboarding) og
+skift af e-mail med Secure email change (to danske mails, begge links virker, adressen i `auth.users` skiftes). `public.users.email`
+følger med ved et e-mailskift via triggeren `on_auth_user_email_changed` (migration `20261001113232`, testet i en rullet tilbage transaktion);
+appen har i øvrigt ingen skærm til at skifte e-mail. Magic link, invitation og genbekræftelse bruges ikke i appen.
 
 **Sådan blev den slået til (Jan, i Supabase Dashboard; samme trin ved en ny opsætning):**
 1. Authentication → Auth Hooks → Send Email → HTTPS, URL `https://jegrpcflyguadyxialkm.supabase.co/functions/v1/auth-send-email`,

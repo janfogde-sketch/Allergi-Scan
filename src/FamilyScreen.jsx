@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { DIETS, SUPABASE_URL } from "./constants.jsx";
-import { initials, getAllergenLabels, makeHeaders, apiCall } from "./helpers.js";
+import { initials, getAllergenLabels, makeHeaders, apiCall, visibleDiets } from "./helpers.js";
 import { Icon, showToast, ConfirmDialog, AllergenGlyph } from "./SharedComponents.jsx";
 import { MemberForm } from "./MemberForm.jsx";
 import { TextLink } from "./DesignSystem.jsx";
@@ -23,6 +23,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
     newMemberAllerg, setNewMemberAllerg,
     newMemberCustomAllerg, setNewMemberCustomAllerg,
     newMemberDiets, setNewMemberDiets,
+    newMemberLevels, setNewMemberLevels,
     newMemberENumbers, setNewMemberENumbers,
     newMemberSubtypes, setNewMemberSubtypes,
     newMemberCustomInput, setNewMemberCustomInput,
@@ -88,7 +89,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
   const CHIP_VISIBLE_LIMIT = 4;
   const buildMemberChips = (m) => [
     ...getAllergenLabels(m.allergens || [], m.custom || []).map(item => ({ item, variant:"allergy" })),
-    ...(m.diets || []).map(id => DIETS.find(d => d.id === id)?.label).filter(Boolean).map(text => ({ text, variant:"diet" })),
+    ...visibleDiets(m.diets).map(id => DIETS.find(d => d.id === id)?.label).filter(Boolean).map(text => ({ text, variant:"diet" })),
     ...(m.eNumbers || []).map(text => ({ text, variant:"enumber" })),
   ];
   // Allergi-chips bruger den eksisterende, delte .tag-klasse uændret (grøn
@@ -407,6 +408,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
             customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
             subtypes={newMemberSubtypes} setSubtypes={setNewMemberSubtypes}
             diets={newMemberDiets} setDiets={setNewMemberDiets}
+            levels={newMemberLevels} setLevels={setNewMemberLevels}
             eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
             customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}
             onAdd={editingMemberId ? updateMember : () => {

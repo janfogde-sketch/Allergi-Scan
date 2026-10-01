@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback } from "react";
-import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS, DIETS_ENABLED } from "./constants.jsx";
 import { Icon, EmptyState, ScrollToTop } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -226,7 +226,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
     }
     (async () => {
       try {
-        const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?allergen_ids=ov.${encodeURIComponent(`{${allergenIds.join(",")}}`)}&category=not.in.(fun_fact,cross_reaction)&order=title.asc&limit=40`);
+        const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?allergen_ids=ov.${encodeURIComponent(`{${allergenIds.join(",")}}`)}&category=not.in.(fun_fact,cross_reaction${DIETS_ENABLED ? "" : ",diet"})&order=title.asc&limit=40`);
         // Forklarende opslag først, konkrete retter/produkter sidst.
         const rank = { allergen:0, faq:1, diet:2, ingredient:3, e_number:4, dish:5 };
         if (Array.isArray(data)) setRelatedEntries(data.filter(x => x.id !== selectedEntry.id)
@@ -252,7 +252,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
       const enc = encodeURIComponent(`%${q}%`);
       // Er en kategori valgt, søges der kun i den — ellers passer filterchippen
       // og resultatantallet ikke til listen.
-      const catFilter = selectedCategory ? `&category=eq.${selectedCategory}` : "";
+      const catFilter = selectedCategory ? `&category=eq.${selectedCategory}` : (DIETS_ENABLED ? "" : "&category=neq.diet");
       const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?or=(title.ilike.${enc},summary.ilike.${enc})${catFilter}&order=category.asc,sort_order.asc&limit=50`);
       setEntries(Array.isArray(data) ? data : []);
     } catch (e) { setError(`Søg: ${e.message}`); setEntries([]); }
@@ -449,7 +449,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
         <>
           <div style={S.label}>Kategorier</div>
           <div style={S.grid}>
-            {CATEGORIES.map(cat => {
+            {CATEGORIES.filter(c => DIETS_ENABLED || c.id !== "diet").map(cat => {
               const active = selectedCategory === cat.id;
               return (
                 <button key={cat.id} style={active ? S.catBtnActive(cat) : S.catBtn} onClick={() => handleCatSelect(cat.id)}>

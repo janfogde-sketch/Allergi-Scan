@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from "react";
-import { ALLERGENS, SCREENS, MADPAS_LANGUAGES, MADPAS_SECTIONS_T, MADPAS_INTOLERANCE_HEADLINE_T, MADPAS_EXAMPLES_LABEL_T } from "./constants.jsx";
+import { ALLERGENS, SCREENS, DIETS_ENABLED, MADPAS_LANGUAGES, MADPAS_SECTIONS_T, MADPAS_INTOLERANCE_HEADLINE_T, MADPAS_EXAMPLES_LABEL_T } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { Icon, AllergenGlyph, InfoSheet } from "./SharedComponents.jsx";
 import { madpasAllergenLabel, madpasDietLabel, madpasAllergenExamples, madpasSafetyNote, madpasAllergyStatement, madpasCrossContactNote, madpasDietMessage } from "./useMadpas.js";
@@ -355,7 +355,7 @@ export default function MadpasScreen({
               {/* HEADER */}
               <div className="mp-head">
                 <div className="mp-title">Madpas</div>
-                <div className="mp-subtitle">Vis dine allergier og kosthensyn på det lokale sprog.</div>
+                <div className="mp-subtitle">{DIETS_ENABLED ? "Vis dine allergier og kosthensyn på det lokale sprog." : "Vis dine allergier og intolerancer på det lokale sprog."}</div>
 
                 {/* Profilvælger — kun vist når der reelt er noget at vælge
                     mellem. Én relevant profil (kun brugeren selv) vises
@@ -437,7 +437,7 @@ export default function MadpasScreen({
                 <div className="empty-state" style={{ paddingTop:32 }}>
                   <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="shield" size={23} color="var(--muted)" /></span>
                   <div className="empty-txt">Ingen allergier registreret</div>
-                  <div className="empty-sub">Tilføj dine allergier, intoleranser og diæter under Profil → Mine præferencer</div>
+                  <div className="empty-sub">{DIETS_ENABLED ? "Tilføj dine allergier, intoleranser og diæter under Profil → Mine præferencer" : "Tilføj dine allergier og intoleranser under Profil → Mine præferencer"}</div>
                 </div>
               )}
 

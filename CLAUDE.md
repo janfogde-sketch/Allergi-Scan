@@ -905,6 +905,28 @@ slettet permanent fra databasen efter Bjørns valg "Slet helt" (ingen
 backup). Skal funktionen genopstå, skal flaget sættes til true OG
 opskrifterne importeres forfra.
 
+### Følsomhed pr. allergen — spor (2. okt. 2026, Jans spor + Bjørn finpudser designet)
+
+Brugeren kan pr. valgt allergen vælge "Også spor" (standard) eller "Kun direkte indhold". Ved "Kun direkte indhold" flagges spor ikke
+(grå info-linje i stedet), fx for en mælkeallergiker, der ikke reagerer på spor. Samtidig er spor nu GULE overalt, og kun direkte indhold
+er rødt. Data: `allergen_levels` (jsonb) på `users` og `family_members`. Logik: `helpers.js` (`compareAllergens`, `computeProfileResults`,
+`mergeAllergenLevels`, `categorizeProductFindings`/`computeTopStatus`); notifikation P1 respekterer valget. Detaljer og filer i
+`src/CONTEXT.md` afsnit 6. UI'en (`AllergenSensitivity`) er en simpel førsteversion — Bjørn har en to do om at finpudse den. Gluten/hvede
+viser en advarsel om cøliaki, når spor slås fra, men det forbydes ikke.
+
+### Kostpræferencer (diæter) sat på pause (2. okt. 2026)
+
+Jans beslutning: kostpræferencer skal ikke være en del af appen lige nu, men koden og logikken beholdes. Alt styres af ét flag,
+`DIETS_ENABLED = false` i `constants.jsx`. Mens det er slået fra: onboarding har fire trin (trin 3 springes over; trinnummeret er
+reserveret, så gemte `onboarding_step`-værdier og `renderStep3`/`saveDietStep3` er uændrede, og en bruger på trin 3 sendes til trin 4);
+vælgerne er skjult i "Rediger præferencer" og i familieformularen; "Mine præferencer"/familiekort/Madpas/oplæsning/resultater og
+profilvurderingen ser ingen diæter (`visibleDiets()` i `helpers.js`, brugt i `buildActiveProfileList`, `householdToProfiles`, Madpas,
+Profil og Familie); den automatiske "Glutenfri"-diæt ved gluten-allergi (`useGlutenFreeSync`) er slået fra; "Rediger præferencer"
+sender ikke `diets` med (gemte valg røres ikke); Leksikon skjuler kategorien Diæter; teksterne på velkomstsiden, i Madpas og i
+hjælpen nævner ikke kosthensyn. Databasekolonnerne (`users.diets`, `family_members.diets`), Leksikon-indholdet, admin-panelet
+(Brugere kan stadig se/redigere diæter), Madpas' diæt-tekster og privatlivs-/vilkårsteksterne er bevidst uændrede. Skal funktionen
+tilbage: sæt flaget til true (og gennemgå privatlivs-/vilkårsteksten og tests i `helpers.test.js`).
+
 ### Allergileksikon kvalitetssikret (30. sept. 2026)
 
 Fagligt stringent struktur, så allergi, intolerance og andre reaktioner ikke

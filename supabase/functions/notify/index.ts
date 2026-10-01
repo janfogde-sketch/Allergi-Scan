@@ -147,19 +147,27 @@ async function planEvent(db: Db, ev: EventRow): Promise<Planned[]> {
 
       const userIds = [...ids];
       const { data: own } = await db.from("user_allergens").select("user_id, allergen").in("user_id", userIds).is("family_member_id", null).eq("type", "allergen");
-      const { data: members } = await db.from("family_members").select("user_id, allergens").in("user_id", userIds);
+      const { data: members } = await db.from("family_members").select("user_id, allergens, allergen_levels").in("user_id", userIds);
+      const { data: levelRows } = await db.from("users").select("id, allergen_levels").in("id", userIds);
       const byUser = new Map<string, string[]>();
-      const add = (u: string, a: unknown) => {
+      // Allergener, hvor mindst én af modtagerens profiler også reagerer på spor (strengeste profil vinder)
+      const strictFor = new Map<string, Set<string>>();
+      const ownLevels = new Map<string, Record<string, string>>((levelRows ?? []).map((r: { id: string; allergen_levels: Record<string, string> }) => [r.id, r.allergen_levels ?? {}]));
+      const add = (u: string, a: unknown, levels?: Record<string, string> | null) => {
         const id = typeof a === "string" ? a : (a as { id?: string })?.id;
-        if (u && id) byUser.set(u, [...(byUser.get(u) ?? []), id]);
+        if (!u || !id) return;
+        byUser.set(u, [...(byUser.get(u) ?? []), id]);
+        if (levels?.[id] !== "direct_only") strictFor.set(u, (strictFor.get(u) ?? new Set()).add(id));
       };
-      for (const r of own ?? []) add(r.user_id, r.allergen);
-      for (const m of members ?? []) if (Array.isArray(m.allergens)) for (const a of m.allergens) add(m.user_id, a);
+      for (const r of own ?? []) add(r.user_id, r.allergen, ownLevels.get(r.user_id));
+      for (const m of members ?? []) if (Array.isArray(m.allergens)) for (const a of m.allergens) add(m.user_id, a, m.allergen_levels);
 
       const productName = productLabel({ brand: prod.brand, name: prod.name });
       const plans: Planned[] = [];
       for (const userId of userIds) {
-        const hits = affectedAllergenChanges(p.changes as Record<string, { old: string }>, prod.allergen_flags, byUser.get(userId) ?? []);
+        const mine = byUser.get(userId) ?? [];
+        const tracesIgnored = new Set(mine.filter((id) => !(strictFor.get(userId)?.has(id))));
+        const hits = affectedAllergenChanges(p.changes as Record<string, { old: string }>, prod.allergen_flags, mine, tracesIgnored);
         if (hits.length === 0) continue; // berører ingen af modtagerens profiler, eller er rullet tilbage
         plans.push({ userId, templateKey: "P1:default", data: { productName, ean: prod.ean, changeSummary: summarizeAllergenChanges(hits) } });
       }

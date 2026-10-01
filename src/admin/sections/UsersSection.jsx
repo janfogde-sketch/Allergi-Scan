@@ -39,6 +39,11 @@ export default function UsersSection({
   const toggleDiet = (id) => setEditingAdminUser(s => ({
     ...s, diets: s.diets.includes(id) ? s.diets.filter(x => x !== id) : [...s.diets, id],
   }));
+  const toggleLevel = (id) => setEditingAdminUser(s => {
+    const next = { ...(s.allergen_levels || {}) };
+    if (next[id] === "direct_only") delete next[id]; else next[id] = "direct_only";
+    return { ...s, allergen_levels: next };
+  });
   const toggleAllergen = (id) => setEditingAdminUser(s => ({
     ...s, allergen_ids: s.allergen_ids.includes(id) ? s.allergen_ids.filter(x => x !== id) : [...s.allergen_ids, id],
   }));
@@ -201,6 +206,31 @@ export default function UsersSection({
                 })}
               </div>
             </div>
+
+            {editingAdminUser.allergen_ids.length > 0 && (
+              <div className="admin-field">
+                <label className="admin-label">Reagerer på spor? <span style={{ fontWeight: 400, color: "var(--muted)" }}>(slået fra = kun direkte indhold flagges)</span></label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {editingAdminUser.allergen_ids.map(id => {
+                    const a = ALLERGENS.find(x => x.id === id);
+                    if (!a) return null;
+                    const only = editingAdminUser.allergen_levels?.[id] === "direct_only";
+                    return (
+                      <button key={id} type="button" onClick={() => toggleLevel(id)} aria-pressed={only}
+                        title={only ? "Kun direkte indhold — klik for også spor" : "Også spor — klik for kun direkte indhold"}
+                        style={{
+                          fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20, cursor: "pointer", fontFamily: "var(--f)",
+                          background: only ? "var(--surface3)" : "var(--amber-lt)",
+                          color: only ? "var(--muted2)" : "var(--amber)",
+                          border: `1px solid ${only ? "var(--border)" : "var(--amber-md)"}`,
+                        }}>
+                        {a.label}: {only ? "kun direkte" : "også spor"}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="admin-field">
               <label className="admin-label">Egne tilføjede allergier <span style={{ fontWeight: 400, color: "var(--muted)" }}>(kommasepareret)</span></label>

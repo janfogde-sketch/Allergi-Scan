@@ -50,15 +50,18 @@ export function allergenRiskRank(v) {
  * Hvilke af de ændrede flag gælder stadig og berører denne modtagers profiler?
  * changes: { key: { old, new } } fra hændelsen; current: produktets AKTUELLE allergen_flags;
  * profileAllergens: alle allergen-id'er fra modtagerens egen og administrerede profiler.
+ * tracesIgnored: allergen-id'er, hvor ALLE modtagerens profiler kun reagerer på direkte indhold (spor flagges ikke).
  * Returnerer [{ key, label, value }] — kun flag, hvor risikoen fortsat er højere end før.
  */
-export function affectedAllergenChanges(changes, current, profileAllergens) {
+export function affectedAllergenChanges(changes, current, profileAllergens, tracesIgnored = new Set()) {
   const mine = new Set(profileAllergens);
   const out = [];
   for (const [key, ch] of Object.entries(changes ?? {})) {
     if (!mine.has(key)) continue;
     const now = current?.[key];
     if (allergenRiskRank(now) <= allergenRiskRank(ch?.old)) continue; // rullet tilbage siden
+    // Modtageren reagerer kun på direkte indhold (allergen_levels): en ændring til "spor" er ikke en advarsel
+    if (now === "traces" && tracesIgnored.has(key)) continue;
     out.push({ key, label: ALLERGEN_LABELS[key] ?? key, value: now });
   }
   return out;
