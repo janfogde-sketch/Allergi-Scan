@@ -117,6 +117,6 @@ export function buildTodoPrompt(todo, admins = [], comments = []) {
     todo.description || "(ingen)",
     ...(comments.length ? [``, `Kommentarer:`, ...comments.map((c) => `- ${personName(admins, c.author_id) || "Ukendt"}: ${c.body}`)] : []),
     ``,
-    `Læs CLAUDE.md, undersøg koden, og foreslå en plan. Vent på min bekræftelse, før du retter eller pusher.`,
+    `Læs CLAUDE.md, og løs opgaven. Er den stor eller risikabel (database, sikkerhed, politikker, flere skærme eller filer), så foreslå først en plan, og vent på min bekræftelse, før du retter. Push først efter mit ja.`,
   ].join("\n");
 }

@@ -9,10 +9,10 @@
 
 ## 0. Start her
 
-- **Læs den fælles to do-liste ved sessionstart** (admin-panelet, fanen To do, tabellen `admin_todos`, se `src/CONTEXT.md` §10):
-  `select title, status, priority, track, due_date from admin_todos where status <> 'done'`. Nævn de åbne punkter kort for
-  brugeren, og spørg hvad der skal tages først. Afslut punkter (`status='done'`) og opret nye. Tickets ligger også på listen
-  (status følger begge veje).
+- **To do-listen** (admin-panelet, fanen To do, tabellen `admin_todos`, se `src/CONTEXT.md` §10). Starter sessionen med en konkret
+  opgave (et to do-id), så læs kun den opgave (og dens kommentarer), og gå i gang; læs ikke hele listen. Starter den uden opgave:
+  `select title, status, priority, track, due_date from admin_todos where status <> 'done'`, nævn de åbne punkter kort, og spørg hvad
+  der skal tages først. Afslut punkter (`status='done'`) og opret nye. Tickets ligger også på listen (status følger begge veje).
 - **Databaseændringer** køres som migration (`apply_migration`) OG gemmes som fil i `supabase/migrations/` med den anvendte version
   (`list_migrations`), aldrig kun som løs SQL. Edge-funktioner deployes ved merge af `.github/workflows/deploy-edge-functions.yml`
   (secret `SUPABASE_ACCESS_TOKEN`; 401/403 = ny adgangsnøgle, udløber). `supabase/config.toml` har `verify_jwt` pr. funktion.
@@ -124,6 +124,9 @@ hvert tælleligt dansk substantiv skal have både ental og flertal ("hasselnød"
 1. Lav ændringen. 2. `npm run lint`, `npm run build`, `npx vitest run`. 3. Mojibake-scan på ændrede filer (se
 `.claude/commands/mojibake-scan.md`). 4. Commit KUN specifikke filer, aldrig `git add -A`; dansk, kort besked med
 attributions-trailerne fra system-instruktionen. Commits batches lokalt, indtil hele opgaven er færdig.
+
+**Effektiv brug (spar usage):** én opgave pr. session (fx én to do), start en ny session til næste opgave; læs kun de filer, opgaven kræver; undgå at hente store udtræk (`get_advisors`, `list_migrations`, hele filer) uden behov. Små og klare opgaver løses direkte. Er en opgave stor eller risikabel (database, sikkerhed, politikker, flere skærme/filer), så foreslå en plan og vent på ja, før du retter. Stop-hookens "Please push" besvares med højst én kort linje.
+**Hver session starter blank**, så intet må kun leve i samtalen. Ved afslutning af en opgave: (1) opdatér `CLAUDE.md`/`src/CONTEXT.md`, hvis noget stående er ændret; (2) skriv en kort statuskommentar på to do-opgaven (hvad er gjort, hvad mangler, hvad der afventer et svar); (3) luk opgaven, eller lad den stå med en tydelig status. Beslutninger fra Jan eller Bjørn, som gælder fremover, skrives i `CLAUDE.md`, ikke kun i svaret.
 
 **Push er den ENESTE ting, der kræver eksplicit godkendelse.** Når opgaven er færdig: opsummér kort, og vent på Jans
 "push og merge"/lignende. Spørg ikke i hvert svar; nævn blot at der ligger lokale commits. Stop-hookens "Please push"-beskeder er
