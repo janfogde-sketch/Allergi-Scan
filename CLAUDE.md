@@ -211,6 +211,12 @@ ethvert kamera-luk. `cameraPermissionDenied` viser et dedikeret kort. Advarselsv
   Velkomstmailen sendes kun når `onboarding_completed` skifter false → true (trigger `on_onboarding_completed`).
 - Glemt adgangskode: linket åbner `ResetPasswordScreen` (`#type=recovery`), først derefter kommer brugeren ind. Mailen har et
   signeret "Var det ikke dig?"-link (`report-unrequested-reset`, `src/CONTEXT.md` §11).
+- Onboarding har 5 trin (profil, allergier + samtykke + E-numre, spor, familie [valgfrit], notifikationer [valgfrit]) og ingen skjulte trin
+  bagefter: "Slå notifikationer til"/"Ikke nu" åbner `SafetyInfoModal` ("Vigtig sikkerhedsinformation"), og først "Jeg forstår – kom i gang"
+  sætter `onboarding_completed` (luk appen før da, genoptages trin 5). Ingen Beta-popup (BETA er kun et badge). Cøliaki-noten i
+  `AllergenSensitivity` hører kun til valget Gluten, aldrig til hvede alene. E-nummer-rækker har en eksplicit afkrydsningsboks; chevron er kun info.
+  Et PWA kan ikke åbne bekræftelseslinket direkte i den installerede app på iOS (kræver native Universal Links); manifestet har
+  `handle_links`/`launch_handler` til Chromium. Linket lander i browseren, og `VerifyEmailScreen` samt `resolveOnboardingRoute` genoptager.
 - Google/Facebook går direkte til onboarding. `onboardStep` ligger i `App.jsx` FØR `useAuth()` (ellers TDZ-krasch).
 
 **Allergileksikon:** `knowledge_base` har EU's 14 allergener + hvede med neutral `status_label`; laktose ligger under Ingredienser;

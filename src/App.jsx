@@ -74,7 +74,7 @@ import { AllergenPrefsProvider } from './AllergenPrefsContext.jsx';
 import { UI } from "./styleUtils.js";
 import InstallPrompt from "./InstallPrompt.jsx";
 import HelpModal from "./HelpModal.jsx";
-import BetaIntroModal from "./BetaIntroModal.jsx";
+import SafetyInfoModal from "./SafetyInfoModal.jsx";
 import DeleteAccountModal from "./DeleteAccountModal.jsx";
 import { useAdminTools } from "./useAdminTools.js";
 import { useIncomingLinks } from "./useIncomingLinks.js";
@@ -271,13 +271,12 @@ export default function EatSafe() {
   const [feedbackDone, setFeedbackDone] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  // Starter altid `true` (skjult) ved en ny side-indlæsning — sat til
-  // `false` kun via finishOnboard-wrapperen ovenfor (automatisk, én gang,
-  // lige efter onboarding trin 5) eller "Om EatSafe Beta" i ProfileMenu.jsx
-  // (manuel genåbning). Se finishOnboard-wrapperens kommentar for hvorfor
-  // dette alene er nok til at opfylde "vis ikke automatisk igen".
-  const [betaIntroSeen, setBetaIntroSeen] = useState(true);
-  const [betaIntroStep, setBetaIntroStep] = useState(0);
+  // "Vigtig sikkerhedsinformation" (SafetyInfoModal). Skjult som standard; åbnes enten som sidste skridt i onboarding (så
+  // gennemføres onboarding først, når brugeren har trykket "Jeg forstår", og et genstart før da genoptager trin 5) eller manuelt
+  // fra menuen/Indstillinger.
+  const [showSafetyInfo, setShowSafetyInfo] = useState(false);
+  const [safetyEndsOnboarding, setSafetyEndsOnboarding] = useState(false);
+  const [safetyBusy, setSafetyBusy] = useState(false);
 
   // (adminTickets, openTicket, ticketsLoading, ocrImagePreview → useAdmin hook)
 
@@ -416,19 +415,16 @@ export default function EatSafe() {
                       allergens, customAllerg, selectedENumbers,
                       setUser, markOnboardingCompleted, setScreen, setEditMode: () => {}, setIsOAuth });
 
-  // Viser Beta-introen automatisk, én gang, lige efter onboarding trin 5
-  // (25. sept. 2026, brugerfeedback) — finishOnboard() kaldes KUN fra de to
-  // knapper i selve trin 5 (se OnboardingScreen.jsx), så at trigge
-  // visningen her er nok til at garantere at den aldrig dukker op
-  // automatisk ved almindelige, senere appstarter: betaIntroSeen starter
-  // altid som `true` ved en ny side-indlæsning (se useState nedenfor) og
-  // bliver kun `false` via dette ene kald, eller via et manuelt "Om
-  // EatSafe Beta"-tryk i ProfileMenu.jsx — ingen localStorage-flag
-  // nødvendig for selve "vis ikke automatisk igen"-kravet.
-  const finishOnboard = async () => {
-    await finishOnboardRaw();
-    setBetaIntroStep(0);
-    setBetaIntroSeen(false);
+  // Sidste onboarding-trin (notifikationer) kalder finishOnboard(): det åbner kun sikkerhedsinformationen. Onboarding markeres først
+  // som gennemført (og appen åbnes), når brugeren trykker "Jeg forstår" (acknowledgeSafety) — ingen skjulte trin efter 5/5, og
+  // appen kan ikke nås uden at have set den.
+  const finishOnboard = () => { setSafetyEndsOnboarding(true); setShowSafetyInfo(true); };
+  const openSafetyInfo = () => { setSafetyEndsOnboarding(false); setShowSafetyInfo(true); };
+  const acknowledgeSafety = async () => {
+    if (safetyBusy) return;
+    setSafetyBusy(true);
+    try { if (safetyEndsOnboarding) await finishOnboardRaw(); }
+    finally { setSafetyEndsOnboarding(false); setShowSafetyInfo(false); setSafetyBusy(false); }
   };
 
   // Admin → useAdmin hook
@@ -1068,12 +1064,8 @@ export default function EatSafe() {
           />
         )}
 
-        {/* ══ BETA INTRO ══ */}
-        {!betaIntroSeen && (
-          <BetaIntroModal
-            betaIntroStep={betaIntroStep} setBetaIntroStep={setBetaIntroStep} setBetaIntroSeen={setBetaIntroSeen}
-          />
-        )}
+        {/* ══ SIKKERHEDSINFORMATION ══ */}
+        {showSafetyInfo && <SafetyInfoModal onAcknowledge={acknowledgeSafety} busy={safetyBusy} />}
 
         {/* ══ TOAST (delt succes-/fejl-besked, erstatter native alert()) ══ */}
         <ToastHost />
@@ -1099,7 +1091,7 @@ export default function EatSafe() {
             open={showProfileMenu} onClose={() => setShowProfileMenu(false)}
             onNavigate={(s) => { setScreen(s); setShowProfileMenu(false); }}
             unreadNotifications={notifications.unread}
-            onOpenBetaInfo={() => { setBetaIntroStep(0); setBetaIntroSeen(false); setShowProfileMenu(false); }}
+            onOpenSafetyInfo={() => { openSafetyInfo(); setShowProfileMenu(false); }}
           />
           </Suspense>
         )}
@@ -1293,7 +1285,7 @@ export default function EatSafe() {
             vibrateOnWarning={vibrateOnWarning} setVibrateOnWarning={setVibrateOnWarning}
             soundOnWarning={soundOnWarning} setSoundOnWarning={setSoundOnWarning}
             onOpenFeedback={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
-            onOpenBetaInfo={() => { setBetaIntroStep(0); setBetaIntroSeen(false); }}
+            onOpenSafetyInfo={openSafetyInfo}
           />
           </ErrorBoundary>
           </Suspense>

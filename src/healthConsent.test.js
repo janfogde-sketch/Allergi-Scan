@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { consentFromRows, needsHealthConsent, canSaveHealthData, HEALTH_CONSENT_TEXT } from "./healthConsent.js";
+import { consentFromRows, needsHealthConsent, canSaveHealthData, HEALTH_CONSENT_TEXT, HEALTH_CONSENT_WITHDRAW_TEXT } from "./healthConsent.js";
 
 describe("consentFromRows", () => {
   it("ingen rækker = ikke givet", () => {
@@ -29,6 +29,6 @@ describe("needsHealthConsent / canSaveHealthData", () => {
   });
   it("teksten nævner udtrykkeligt samtykke og tilbagetrækning", () => {
     expect(HEALTH_CONSENT_TEXT).toMatch(/udtrykkeligt samtykke/);
-    expect(HEALTH_CONSENT_TEXT).toMatch(/trække samtykket tilbage/);
+    expect(HEALTH_CONSENT_WITHDRAW_TEXT).toMatch(/trække samtykket tilbage/);
   });
 });

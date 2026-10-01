@@ -33,9 +33,14 @@ describe("AllergenSensitivity (spor pr. allergen)", () => {
     expect(onChange).toHaveBeenLastCalledWith({ gluten: "direct_only", hvede: "direct_only" });
   });
 
-  it("cøliaki-teksten står altid under gluten og hvede, uanset valg", () => {
+  it("cøliaki-teksten hører kun til gluten, ikke til hvede alene eller andre allergier", () => {
     const { rerender } = render(<AllergenSensitivity selected={["gluten"]} levels={{}} onChange={() => {}} />);
     expect(screen.getByText(/cøliaki/i)).toBeTruthy();
+    rerender(<AllergenSensitivity selected={["gluten", "hvede"]} levels={{}} onChange={() => {}} />);
+    expect(screen.getByText(/cøliaki/i)).toBeTruthy();
+    rerender(<AllergenSensitivity selected={["hvede"]} levels={{}} onChange={() => {}} />);
+    expect(screen.queryByText(/cøliaki/i)).toBeNull();
+    expect(screen.getByText("Du advares både ved ingrediens og ved spor.")).toBeTruthy();
     rerender(<AllergenSensitivity selected={["maelkeallergi"]} levels={{}} onChange={() => {}} />);
     expect(screen.queryByText(/cøliaki/i)).toBeNull();
   });

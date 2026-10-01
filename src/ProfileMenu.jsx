@@ -48,7 +48,7 @@ function MenuRow({ icon, label, sub, chevron = true, onClick, secondary = false 
   );
 }
 
-export default function ProfileMenu({ open, onClose, onNavigate, onOpenBetaInfo, unreadNotifications = 0 }) {
+export default function ProfileMenu({ open, onClose, onNavigate, onOpenSafetyInfo, unreadNotifications = 0 }) {
   const { user, clearAuth } = useAuthContext();
 
   if (!open) return null;
@@ -87,10 +87,10 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenBetaInfo,
       label: "APP",
       items: [
         ...(user?.role === "admin" ? [{ icon:"shield", label:"Admin panel", sub:"Godkend og administrér produkter", screen: SCREENS.ADMIN }] : []),
-        // Genåbner Beta-intro-overlayet manuelt (25. sept. 2026) — erstatter
+        // Genåbner sikkerhedsinformationen manuelt (SafetyInfoModal) — erstatter
         // den tidligere permanente "Beta-information"-knap på Scan-forsiden,
         // som IKKE er genindført.
-        { icon:"bug", label:"Om EatSafe Beta", sub:"Se velkomst- og sikkerhedsinformation igen", action: onOpenBetaInfo },
+        { icon:"warning", label:"Sikkerhedsinformation", sub:"Se den vigtige sikkerhedsinformation igen", action: onOpenSafetyInfo },
         // Genindført (26. sept. 2026, brugerfeedback) — huser notifikations-
         // og kontoindstillinger (flyttet fra ProfileScreen.jsx, se
         // SettingsScreen.jsx), klar til fremtidige punkter (sprog, app-

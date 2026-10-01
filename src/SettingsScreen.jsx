@@ -133,7 +133,7 @@ export default function SettingsScreen({
   madpasLang, setMadpasLang,
   vibrateOnWarning, setVibrateOnWarning,
   soundOnWarning, setSoundOnWarning,
-  onOpenFeedback, onOpenBetaInfo,
+  onOpenFeedback, onOpenSafetyInfo,
 }) {
   const { accessToken, userId, clearAuth } = useAuthContext();
   const { openLegal } = useNavigationContext();
@@ -385,7 +385,7 @@ export default function SettingsScreen({
             Build-ID (teknisk): {COMMIT_SHA}
           </div>
         )}
-        <ChevronRow icon="bug" label="Om EatSafe Beta" sub="Se velkomst- og sikkerhedsinformation igen" onClick={onOpenBetaInfo} />
+        <ChevronRow icon="warning" label="Sikkerhedsinformation" sub="Se den vigtige sikkerhedsinformation igen" onClick={onOpenSafetyInfo} />
         <ChevronRow icon="message" label="Kontakt & support" onClick={onOpenFeedback} last />
       </div>
 
