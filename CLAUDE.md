@@ -176,7 +176,7 @@ alvorlige allergier"). Tryk-feedback `:active{transform:scale(.97)}`. Scan-knapp
 indeholde spor af". Data `allergen_levels` (jsonb, `direct_only`) på `users`/`family_members`. Spor er GULE overalt, kun direkte
 indhold er rødt. Eget trin 3 i onboarding, plus Rediger præferencer og familieformularen. Gluten/hvede er ét valg og advarer
 om cøliaki, når spor slås fra. Logik: `helpers.js` (`mergeAllergenLevels` m.fl.), notifikation P1 (`tracesIgnored`), UI
-`AllergenSensitivity` (simpel førsteversion; Bjørn finpudser). Detaljer: `src/CONTEXT.md` §3.
+`AllergenSensitivity` (finpudset 2. okt.: segmenteret kontrol `.trace-seg`, kort linje under valget; ignorerede spor er en neutral info-strimmel under banneret). Detaljer: `src/CONTEXT.md` §3.
 
 **Resultatsiden:** data-drevet kategorisering; kaldes aldrig "sikker" blot fordi der ikke var match. RØD = allergi/intolerance,
 GUL/ORANGE = kostpræference/E-nummer-fravalg og spor, neutral grå (`--neutral`) = for lidt data. Sektionen "Dine valg" viser alle

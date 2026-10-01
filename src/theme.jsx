@@ -1009,6 +1009,12 @@ body::-webkit-scrollbar{display:none;}
 .loader-sub{font-size:11.5px;color:var(--muted);}
 .error-box{background:var(--red-lt);border:1px solid var(--red-md);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--red);font-weight:600;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px;}
 .info-box{background:var(--blue-lt);border:1px solid var(--blue-md);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--blue);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.trace-seg{display:flex;gap:3px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:3px;}
+.trace-seg button{flex:1;min-height:44px;padding:8px 6px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ink2);font-family:var(--f);font-size:13px;font-weight:600;line-height:1.25;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;text-align:center;}
+.trace-seg button[aria-pressed="true"]{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);font-weight:700;}
+.trace-seg button:active{transform:scale(.97);}
+@media(max-width:359px){.trace-seg button{font-size:12px;padding:8px 4px;}}
+.trace-seg button:focus-visible{outline:2px solid var(--green);outline-offset:1px;}
 .warn-box{background:var(--amber-lt);border:1px solid var(--amber-md);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--amber);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
 .share-bar{display:flex;gap:8px;padding:12px 14px;background:var(--blue-lt);border-radius:10px;margin-bottom:10px;align-items:center;border:1px solid var(--blue-md);}
 .share-txt{flex:1;font-size:12.5px;color:var(--blue);font-weight:600;}

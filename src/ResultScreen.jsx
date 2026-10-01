@@ -215,7 +215,7 @@ export default function ResultScreen({
       if (val === "yes") return { status: "cross", label: a.label, reason: "Fundet i produktet." };
       if (val === "traces") {
         // Brugeren reagerer kun på direkte indhold: spor er ikke en advarsel, men skjules ikke
-        if (ignoresTraces(soloProfile.levels, id)) return { status: "check", label: a.label, reason: "Kan indeholde spor — du har valgt ikke at få advarsel om det." };
+        if (ignoresTraces(soloProfile.levels, id)) return { status: "check", label: a.label, reason: "Pakken nævner spor. Du har valgt ikke at få advarsel om spor." };
         return { status: "trace", label: a.label, reason: "Kan indeholde spor i produktet." };
       }
       if (val === "no") return { status: "check", label: a.label, reason: null };
@@ -496,11 +496,6 @@ export default function ResultScreen({
           {topExplanation && (
             <div style={{ fontSize:11.5, color:"rgba(255,255,255,.9)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>{topExplanation}</div>
           )}
-          {!isMultiProfile && findings.ignoredTraceMatches.length > 0 && (
-            <div style={{ fontSize:11.5, color:"rgba(255,255,255,.9)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>
-              Kan indeholde spor af {findings.ignoredTraceMatches.map(m => m.label.toLowerCase()).join(", ")} — du har valgt ikke at få advarsel om spor.
-            </div>
-          )}
           {!isMultiProfile && topStatus.level === "safe" && (
             <div style={{ fontSize:11.5, color:"rgba(255,255,255,.9)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>
               Vi fandt ingen match med dine valgte allergier, intolerancer eller øvrige præferencer.
@@ -512,6 +507,14 @@ export default function ResultScreen({
             </div>
           )}
         </div>
+        {/* Spor, brugeren har valgt ikke at få advarsel om (2. okt. 2026, Bjørn): synlig, men neutral og uden for det farvede banner,
+            så et grønt banner ikke står med hvid tekst om spor. */}
+        {!isMultiProfile && findings.ignoredTraceMatches.length > 0 && (
+          <div role="note" style={{ display:"flex", alignItems:"flex-start", gap:8, padding:"10px 14px", background:"var(--surface2)", borderBottom:"1px solid var(--border)", fontSize:12.5, lineHeight:1.45, color:"var(--ink2)" }}>
+            <span style={{ flexShrink:0, marginTop:2, display:"inline-flex" }}><Icon name="info" size={14} color="var(--muted)" /></span>
+            <span>Pakken nævner spor af {findings.ignoredTraceMatches.map(m => m.label.toLowerCase()).join(", ")}. Du har valgt ikke at få advarsel om spor.</span>
+          </div>
+        )}
         <div>
           {scanResult.image_url
             ? <div className="product-hero-imgwrap">
@@ -583,7 +586,7 @@ export default function ResultScreen({
             <SafetyRow key={p.id}
               name={p.id==="me" ? "Dig" : p.name}
               status={p.status}
-              statusText={[...p.reasons, ...(p.ignoredTraces || []).map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id} (du har fravalgt advarsel)`)].join(" · ") || "Matcher profilen"}
+              statusText={[...p.reasons, ...(p.ignoredTraces || []).map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id} (du har valgt ikke at få advarsel)`)].join(" · ") || "Matcher profilen"}
               onClick={(p.danger.length > 0 || p.warning.length > 0) ? () => {
                 const first = [...p.danger, ...p.warning][0];
                 setKnowledgeSlug(first); setScreen(SCREENS.KNOWLEDGE);
