@@ -818,16 +818,18 @@ export const MADPAS_INTOLERANCE_HEADLINE_T = {
 
 // Kort, tydeligt mærket "eksempel"-label foran de korte fødevare-eksempler
 // under hvert allergen i Madpas' tjener-visning (26. sept. 2026, Madpas-
-// redesign, afsnit 8-10; ordlyden opdateret til "Common examples"-stil i
+// redesign, afsnit 8-10; ordlyden opdateret til "May be found in"-stil (tidligere "Common examples") i
 // den opfølgende polish-runde samme dag) — bevidst generisk i stedet for
 // en sætningsskabelon pr. allergen ("Common foods containing X:"), så det
 // forbliver kompakt og ensartet uanset om brugeren har ét eller flere
 // allergener, og aldrig kan forveksles med en komplet/garanteret liste.
+// "May be found in:" (1. okt. 2026, Bjørn): eksemplerne indeholder ikke nødvendigvis allergenet,
+// så "Common examples" (almindelige eksempler) lovede for meget. Gælder alle 17 sprog.
 export const MADPAS_EXAMPLES_LABEL_T = {
-  da:"Almindelige eksempler:", en:"Common examples:", de:"Typische Beispiele:", fr:"Exemples courants :", es:"Ejemplos comunes:",
-  it:"Esempi comuni:", nl:"Veelvoorkomende voorbeelden:", pt:"Exemplos comuns:", pl:"Typowe przykłady:",
-  sv:"Vanliga exempel:", no:"Vanlige eksempler:", ja:"よくある例：", zh:"常见例子：", ar:"أمثلة شائعة:",
-  tr:"Yaygın örnekler:", th:"ตัวอย่างทั่วไป:", el:"Συνήθη παραδείγματα:",
+  da:"Kan findes i:", en:"May be found in:", de:"Kann vorkommen in:", fr:"Peut se trouver dans :", es:"Puede encontrarse en:",
+  it:"Può essere presente in:", nl:"Kan voorkomen in:", pt:"Pode encontrar-se em:", pl:"Może występować w:",
+  sv:"Kan finnas i:", no:"Kan finnes i:", ja:"含まれている可能性のある食品：", zh:"可能存在于：", ar:"قد يوجد في:",
+  tr:"Şunlarda bulunabilir:", th:"อาจพบได้ใน:", el:"Μπορεί να βρεθεί σε:",
 };
 
 // Oplæs/Stop-knappens tekst i selve tjener-visningen (26. sept. 2026,
