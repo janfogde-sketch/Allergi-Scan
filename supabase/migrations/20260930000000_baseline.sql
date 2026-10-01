@@ -19,9 +19,9 @@
 -- Udeladt med vilje:
 --   * backup-tabeller (products_kj_backup_* m.fl.) og skemaet qa_backup
 --   * data (også plans/knowledge_base/recipes)
---   * vault-hemmeligheder: opret RESEND_API_KEY, SUPABASE_ANON_KEY og
+--   * vault-hemmeligheder: opret SUPABASE_ANON_KEY og
 --     SUPABASE_SERVICE_ROLE_KEY i Vault FØR cron-jobs og e-mail-triggere
---     kan virke
+--     kan virke (RESEND_API_KEY ligger kun som edge-secret, ikke i Vault)
 --   * Auth-indstillinger (SMTP, Confirm email, adgangskodekrav) — de
 --     ligger i Dashboard, se CLAUDE.md afsnit 0
 -- =====================================================================

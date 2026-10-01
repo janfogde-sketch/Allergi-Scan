@@ -42,7 +42,7 @@ export default function PrivacyScreen({ onBack }) {
       {/* paddingTop matcher .legal-topbar's egen renderede højde (header er
           position:fixed, tager ikke plads i normal flow) + lidt luft. */}
       <div className="screen fade-in" style={{ paddingTop:"calc(75px + env(safe-area-inset-top))" }}>
-        <div style={S.updated}>Sidst opdateret: 30. september 2026</div>
+        <div style={S.updated}>Sidst opdateret: 2. oktober 2026</div>
 
         <div style={S.draftNotice}>
           Denne side er en foreløbig udgave af EatSafes privatlivspolitik og er endnu ikke juridisk gennemgået. Kontakt <Mail />, hvis du har spørgsmål, indtil den endelige version er på plads.
@@ -57,8 +57,8 @@ export default function PrivacyScreen({ onBack }) {
 
         <h2 style={S.h2}>2. Hvilke oplysninger behandler vi?</h2>
         <p style={S.p}>Afhængigt af hvilke funktioner du bruger, kan EatSafe behandle følgende oplysninger:</p>
-        <p style={S.p}><strong>Kontooplysninger</strong><br/>Navn, e-mailadresse og andre oplysninger, du giver i forbindelse med oprettelse eller administration af din konto.</p>
-        <p style={S.p}><strong>Allergier og intolerancer</strong><br/>De allergier, intolerancer og andre helbredsrelaterede oplysninger, du selv registrerer for at få personlige produktkontroller og advarsler.</p>
+        <p style={S.p}><strong>Kontooplysninger</strong><br/>Navn, e-mailadresse, alder (fødselsår), køn og andre oplysninger, du giver i forbindelse med oprettelse eller administration af din konto. Alder og køn bruges til at tilpasse tjenesten og forstå, hvem den bruges af.</p>
+        <p style={S.p}><strong>Allergier og intolerancer</strong><br/>De allergier, intolerancer og andre helbredsrelaterede oplysninger, du selv registrerer for at få personlige produktkontroller og advarsler, herunder hvordan du ønsker, at spor af et allergen skal behandles.</p>
         <p style={S.p}>Oplysninger om helbred er en særlig kategori af personoplysninger og er underlagt skærpede regler efter GDPR.</p>
         <p style={S.p}><strong>Kostpræferencer</strong><br/>Eksempelvis vegansk, vegetarisk eller andre kosthensyn, du selv vælger.</p>
         <p style={S.p}><strong>E-numre og øvrige fravalg</strong><br/>Oplysninger om tilsætningsstoffer eller andre forhold, som du vælger at holde øje med eller undgå.</p>
@@ -80,7 +80,7 @@ export default function PrivacyScreen({ onBack }) {
 
         <h2 style={S.h2}>4. Husstand, familie og oplysninger om andre personer</h2>
         <p style={S.p}>Hvis du opretter oplysninger om en anden person, kan EatSafe behandle personoplysninger, som ikke kommer direkte fra den person, oplysningerne vedrører.</p>
-        <p style={S.p}>For voksne husstandsmedlemmer bør følsomme helbredsoplysninger ikke frit kunne registreres og anvendes uden den pågældendes involvering.</p>
+        <p style={S.p}>Voksne husstandsmedlemmer inviteres og skal selv acceptere invitationen, før de indgår i din husstand. Registrerer du oplysninger om en voksen på en profil, du selv administrerer, forudsætter det, at personen har givet dig sit samtykke.</p>
         <p style={S.p}>Når personoplysninger ikke er indsamlet direkte hos den registrerede, kan EatSafe have en informationspligt efter GDPR artikel 14. Informationen skal som udgangspunkt gives inden for rimelig tid og senest inden for én måned, medmindre en relevant undtagelse finder anvendelse.</p>
         <p style={S.p}>Ved oprettelse af en profil for et barn skal den person, der opretter profilen, have ret til at handle på barnets vegne.</p>
         <p style={S.p}>Hvis EatSafe senere tilbyder tjenesten direkte til børn, skal reglerne om børns egne konti og samtykke vurderes særskilt.</p>
@@ -105,24 +105,24 @@ export default function PrivacyScreen({ onBack }) {
         <p style={S.p}>Disse sammenligninger anvendes ikke til at træffe automatiske afgørelser, der har juridisk eller tilsvarende væsentlig virkning for dig.</p>
 
         <h2 style={S.h2}>6. Retsgrundlag</h2>
-        <p style={S.p}>Retsgrundlaget afhænger af, hvilke oplysninger der behandles og til hvilket formål.</p>
-        <p style={S.p}>For oplysninger, der er nødvendige for at oprette og levere de EatSafe-funktioner, du har bedt om, kan behandlingen ske med henblik på opfyldelse af aftalen med dig, jf. GDPR artikel 6, stk. 1, litra b.</p>
-        <p style={S.p}>For nødvendige sikkerheds-, drifts- og fejlfindingsaktiviteter kan behandlingen ske på baggrund af EatSafes legitime interesse i at drive, beskytte og fejlrette tjenesten, jf. artikel 6, stk. 1, litra f.</p>
-        <p style={S.p}>For helbredsoplysninger anvendes desuden en relevant undtagelse efter artikel 9.</p>
-        <p style={S.p}>Hvis EatSafe anvender udtrykkeligt samtykke, er det artikel 9, stk. 2, litra a.</p>
+        <p style={S.p}>Retsgrundlaget afhænger af, hvilke oplysninger der behandles, og til hvilket formål.</p>
+        <p style={S.p}><strong>Aftale (GDPR artikel 6, stk. 1, litra b):</strong> oprettelse og drift af din konto og de funktioner, du har bedt om, herunder personlige produktkontroller, profiler, indkøbslister, historik og de beskeder, der er en del af tjenesten.</p>
+        <p style={S.p}><strong>Legitim interesse (artikel 6, stk. 1, litra f):</strong> sikkerhed, forebyggelse af misbrug, fejlfinding og drift af tjenesten, behandling af alder og køn med henblik på at forstå, hvem tjenesten bruges af, og forbedring af produktdata. Du har ret til at gøre indsigelse mod behandling, der sker på dette grundlag.</p>
+        <p style={S.p}><strong>Retlig forpligtelse (artikel 6, stk. 1, litra c):</strong> når vi skal opbevare eller udlevere oplysninger for at overholde loven, fx for at besvare en anmodning om dine rettigheder.</p>
+        <p style={S.p}><strong>Helbredsoplysninger (artikel 9, stk. 2, litra a):</strong> dine allergi- og intoleranceoplysninger og øvrige helbredsrelaterede valg behandles kun på grundlag af dit udtrykkelige samtykke, ud over aftalegrundlaget i artikel 6, stk. 1, litra b. Samtykket gives særskilt, før vi behandler oplysningerne, og du kan til enhver tid trække det tilbage (se afsnit 3).</p>
+        <p style={S.p}>Oplysninger om andre personer, som du har registreret på en profil, du administrerer, behandles på samme grundlag, og forudsætter den pågældendes samtykke (se afsnit 4).</p>
 
         <h2 style={S.h2}>7. E-mails og push-notifikationer</h2>
-        <p style={S.p}>EatSafe kan sende nødvendige servicebeskeder i forbindelse med eksempelvis:</p>
+        <p style={S.p}>EatSafe kan sende beskeder til dig i appen, som push-notifikationer og som e-mail. Beskederne handler om din brug af tjenesten og kan blandt andet vedrøre:</p>
         <ul style={S.ul}>
-          <li style={S.li}>din konto</li>
-          <li style={S.li}>familieinvitationer</li>
-          <li style={S.li}>sikkerhed</li>
-          <li style={S.li}>produktindsendelser</li>
-          <li style={S.li}>support</li>
+          <li style={S.li}>din konto og sikkerhed</li>
+          <li style={S.li}>din husstand, invitationer og delte lister</li>
+          <li style={S.li}>dine produktindsendelser, din feedback og support</li>
+          <li style={S.li}>advarsler og oplysninger om produkter, du har gemt eller scannet, fx ændrede allergenoplysninger eller tilbagekaldelser</li>
           <li style={S.li}>funktioner, du selv har anmodet om.</li>
         </ul>
         <p style={S.p}>Push-notifikationer sendes kun, når EatSafe har den nødvendige tilladelse på din enhed. Du kan administrere tilladelsen i EatSafe og/eller i din enheds indstillinger.</p>
-        <p style={S.p}>Hvis EatSafe sender nyhedsbreve, tilbud, ugentlige opskriftsmails eller anden elektronisk markedsføring, håndteres dette særskilt fra nødvendige servicebeskeder.</p>
+        <p style={S.p}>Du kan vælge, hvilke typer beskeder du vil modtage, og om de skal komme som push eller e-mail, under Indstillinger → Notifikationer. EatSafe kan tilføje eller fjerne typer af beskeder, så længe de handler om ovenstående formål.</p>
 
         <h2 style={S.h2}>8. Produktbilleder og automatisk/AI-baseret analyse</h2>
         <p style={S.p}>EatSafe kan anvende automatiseret billed- og tekstanalyse til eksempelvis at aflæse:</p>
@@ -146,7 +146,10 @@ export default function PrivacyScreen({ onBack }) {
         <p style={S.p}><strong>Vercel</strong><br/>Anvendes til hosting og levering af EatSafes webbaserede infrastruktur.</p>
         <p style={S.p}>Vercels aktuelle DPA oplyser, at virksomhedens primære behandlingsfaciliteter er i USA, og at data kan behandles internationalt. DPA’en beskriver samtidig mekanismer for lovlige internationale overførsler.</p>
         <p style={S.p}><strong>Anthropic</strong><br/>Kan anvendes til automatisk analyse af produktbilleder og tekst.</p>
-        <p style={S.p}><strong>Open Food Facts</strong><br/>Anvendes som ekstern kilde til produktoplysninger.</p>
+        <p style={S.p}><strong>Open Food Facts</strong><br/>Anvendes som ekstern kilde til produktoplysninger og billeder. Disse stammer fra Open Food Facts og dets bidragydere og er udgivet under Open Database License (ODbL), Database Contents License og Creative Commons Attribution-ShareAlike (billeder). Opslag af produktdata sker fra EatSafes server alene med produktets stregkode. Produktbilleder kan hentes direkte fra Open Food Facts’ servere, hvorved din IP-adresse og tekniske enhedsoplysninger kan blive synlige for dem.</p>
+        <p style={S.p}><strong>Resend</strong><br/>Anvendes til at sende e-mails fra EatSafe, fx bekræftelse af e-mail, nulstilling af adgangskode og beskeder. Resend modtager din e-mailadresse, dit navn og beskedens indhold.</p>
+        <p style={S.p}><strong>Google og Facebook</strong><br/>Hvis du vælger at logge ind med din Google- eller Facebook-konto, modtager vi dit navn og din e-mailadresse fra udbyderen.</p>
+        <p style={S.p}><strong>Push-tjenester</strong><br/>Push-notifikationer leveres via din browser- eller enhedsleverandørs push-tjeneste (fx Apple, Google eller Mozilla).</p>
 
         <h2 style={S.h2}>10. Overførsel af oplysninger uden for EU/EØS</h2>
         <p style={S.p}>Nogle af EatSafes leverandører eller deres underdatabehandlere kan behandle personoplysninger uden for EU/EØS.</p>
@@ -163,7 +166,16 @@ export default function PrivacyScreen({ onBack }) {
         <p style={S.p}>EatSafe opbevarer ikke personoplysninger længere end nødvendigt til de formål, de blev indsamlet til.</p>
         <p style={S.p}>Kontodata og aktive profiloplysninger opbevares som udgangspunkt, mens din konto er aktiv.</p>
         <p style={S.p}>Hvis du trækker et samtykke til behandling af helbredsoplysninger tilbage, håndteres de pågældende oplysninger i overensstemmelse med den relevante sletteprocedure.</p>
-        <p style={S.p}>Når en konto slettes, slettes eller anonymiseres personoplysninger i overensstemmelse med EatSafes faktiske tekniske sletteprocedure og eventuelle lovkrav.</p>
+        <p style={S.p}>Når du sletter din konto (Indstillinger → Slet konto), slettes din profil, dine allergi- og helbredsoplysninger, familieprofiler, indkøbslister, scanningshistorik, favoritter, beskeder, tilmeldinger til push, feedback og produktindsendelser samt selve loginkontoen straks. Et produkt, du har indsendt, og som er blevet godkendt og indgår i EatSafes produktdatabase, forbliver som produktoplysninger.</p>
+        <p style={S.p}>Øvrige opbevaringsfrister:</p>
+        <ul style={S.ul}>
+          <li style={S.li}>beskeder i appen: slettes automatisk efter 12 måneder</li>
+          <li style={S.li}>tekniske hændelser og afsendelseslog for beskeder: slettes automatisk efter 90 dage</li>
+          <li style={S.li}>tekniske fejllogs: slettes automatisk efter 90 dage og er ikke knyttet til din konto efter en sletning</li>
+          <li style={S.li}>sikkerhedsindberetninger (hvis du har oplyst, at en e-mail om nulstilling af adgangskode ikke var fra dig): slettes automatisk efter 12 måneder</li>
+          <li style={S.li}>logs hos vores leverandører (fx Supabase og Vercel): efter leverandørernes egne standardfrister</li>
+          <li style={S.li}>sikkerhedskopier: hvis EatSafe tager sikkerhedskopier, udfases slettede oplysninger, når kopierne udløber.</li>
+        </ul>
 
         <h2 style={S.h2}>12. Cookies, lokal lagring og lignende teknologier</h2>
         <p style={S.p}>EatSafe kan anvende lokal lagring og andre teknologier, der er nødvendige for eksempelvis:</p>
@@ -191,6 +203,7 @@ export default function PrivacyScreen({ onBack }) {
         <p style={S.p}>Tilbagetrækning af et samtykke påvirker ikke lovligheden af den behandling, der fandt sted, før samtykket blev trukket tilbage.</p>
         <p style={S.p}>Du kan administrere en række oplysninger direkte i EatSafe.</p>
         <p style={S.p}>Kontoen kan slettes via: Menu → Indstillinger → Slet konto (nederst på siden).</p>
+        <p style={S.p}>Har du oprettet en profil for et barn, udøves barnets rettigheder af den, der har forældremyndigheden, ved henvendelse til os.</p>
         <p style={S.p}>Hvis du ønsker at gøre brug af en anden rettighed, kan du kontakte:</p>
         <p style={S.p}><Mail /></p>
         <p style={S.p}>Vi kan bede om nødvendige oplysninger for at sikre, at en anmodning kommer fra den rette person.</p>

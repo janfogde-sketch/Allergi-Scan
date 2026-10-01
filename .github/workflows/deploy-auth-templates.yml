@@ -4,18 +4,17 @@
 # templates.json angiver pr. skabelon ("confirmation", senere fx "recovery")
 # emnet og HTML-filen. Ved merge til main, der ændrer en fil i mappen, sendes
 # de til Supabase Management API'et (PATCH /config/auth, felterne
-# mailer_subjects_<navn> og mailer_templates_<navn>_content). Kan også
-# startes manuelt under Actions.
+# mailer_subjects_<navn> og mailer_templates_<navn>_content).
 #
-# Bruger samme GitHub-secret som deploy-edge-functions.yml
-# (SUPABASE_ACCESS_TOKEN). Mangler den, springes trinnet over med en besked.
+# KUN MANUELT (2. okt. 2026): siden Send Email Hook er slået til, sender
+# auth-send-email alle auth-mails med skabelonerne fra repoet, så jobbet er kun
+# en tilbagerulning, hvis hook'en slås fra. Det kører derfor ikke ved push mere
+# (det fejlede med 403 ved hver ændring). Start det under Actions, og kun hvis
+# SUPABASE_ACCESS_TOKEN har rettigheden til at skrive auth-konfiguration.
+# Mangler secret'en helt, springes trinnet over med en besked.
 name: Deploy auth email templates
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "supabase/templates/auth/**"
   workflow_dispatch:
 
 concurrency:

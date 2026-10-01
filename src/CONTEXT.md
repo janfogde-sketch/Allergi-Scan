@@ -1,164 +1,34 @@
 # EatSafe — CONTEXT.md
 
-> **Sidst opdateret:** 11. september 2026
-> **Opdateres ved større ændringer. Deles med AI-assistenter som sessionskontekst.**
-> **Se også `/CLAUDE.md`** i repo-roden — den samler projektoverblik, arkitektur og
-> vores arbejdsgang ét sted, og linker hertil for fuld teknisk detalje.
+> Teknisk reference: database, edge functions, notifikationer, to do og auth-mails. Projektoverblik, arbejdsgang, arkitekturregler
+> og produktbeslutninger står i `/CLAUDE.md`; historik og begrundelser i `.claude/HISTORY.md`. Opdatér ved skema-/integrationsændringer.
+> Sidst gennemgået og trimmet 2. okt. 2026.
 
 ---
 
-## 1. Projekt-overblik
+## 1. Nøgleoplysninger
 
-**EatSafe** er en dansk allergen-scanning PWA rettet mod forbrugere med fødevareallergier og -intolerancer. Brugere scanner stregkoder, og appen matcher ingredienser mod deres allergiprofil og viser klare advarsler.
+Supabase-projekt `jegrpcflyguadyxialkm` (`https://jegrpcflyguadyxialkm.supabase.co`), live `https://eatsafe.dk`, admin `janfogde@gmail.com`
+(`404caa7f-91b0-4bad-a2a8-bcb6a396d35f`), kontaktadresse `hej@eatsafe.dk`. Edge Functions er Deno/TypeScript og deployes ved merge; `verify_jwt`
+pr. funktion står i `supabase/config.toml` (funktioner uden JWT validerer selv, se `.claude/rules/edge-function-auth.md`).
 
-| Nøgle | Værdi |
-|-------|-------|
-| URL | https://eatsafe.dk |
-| GitHub | janfogde-sketch/Allergi-Scan |
-| Branches | `main` (produktion) · `dev` (udvikling) |
-| Supabase projekt-ID | jegrpcflyguadyxialkm |
-| Supabase URL | https://jegrpcflyguadyxialkm.supabase.co |
-| Vercel | Auto-deploy på både `main` og `dev` |
-| Admin bruger | janfogde@gmail.com (`404caa7f-91b0-4bad-a2a8-bcb6a396d35f`) |
-| Kontakt email | hej@eatsafe.dk (oprettes hos One.com) |
+## 2. Filstruktur (overblik)
 
----
+- `src/App.jsx` routing/global state; `constants.jsx` (ALLERGENS, SCREENS, DIETS, E_NUMBERS, tekster); `helpers.js` (allergenlogik, API-hjælpere);
+  `theme.jsx` (al CSS); `SharedComponents.jsx` (Icon, EatSafeLogo, InfoSheet, toasts m.fl.).
+- Skærme `src/*Screen.jsx` (én pr. SCREENS-konstant; `ScannerScreen` er HOME + intern router). `ProfileScreen`, `EditProfileScreen`,
+  `EditPreferencesScreen`, `FamilyScreen`, `HistoryScreen`, `FavoritesScreen`, `SettingsScreen` er hver sin fil. Mobil-admin: `AdminScreen.jsx` +
+  `Admin*Section.jsx`.
+- Hooks `src/use*.js` (scanner, søgning, alternativer, madpas, admin, indkøbsliste, auth, onboarding, household, push, notifikationer m.fl.),
+  contexts `src/*Context.jsx`.
+- Desktop-admin: `src/admin/` (eget Vite-entry `admin.html`, egen React-rod, egen CSS i `adminTheme.js`; deler localStorage-session
+  (`as_token`/`as_refresh`/`as_user_id`) med appen og genbruger `useAdmin.js`). Faner i `src/admin/sections/`: Dashboard, Brugere, Indsendelser,
+  Tickets, Manglende, Import, Opskrifter, Produkter, Leksikon, Historik, Familie, Fejl, Tilbagekald, Notifikationer, To do. Global søgning i topbaren.
+- Edge-funktioner `supabase/functions/<navn>/index.ts`, delt kode i `supabase/functions/_shared/`. Migrationer `supabase/migrations/`
+  (baseline + nye), mailskabeloner `supabase/templates/{auth,resend}/`, statiske sider `public/` (`install`, `invite`, `privacy`, `terms`,
+  `uventet-nulstilling`).
 
-## 2. Tech stack
-
-| Lag | Teknologi |
-|-----|-----------|
-| Frontend | React 18 + Vite 5, JSX (ikke TSX) |
-| Hosting | Vercel (auto-deploy fra GitHub) |
-| Backend | Supabase (PostgreSQL, Edge Functions, Auth, Storage) |
-| Edge Functions | Deno/TypeScript — JWT verification DISABLED (ES256-inkompatibilitet) |
-| AI | Claude Haiku 4.5 (allergen-fallback + OCR), ANTHROPIC_API_KEY som Supabase secret |
-| Ekstern data | Open Food Facts API v2, TheMealDB |
-| Lokal dev | Windows, `C:\Users\janfo`, `set`-syntaks for env vars |
-
----
-
-## 3. Filstruktur
-
-```
-src/
-├── App.jsx                   # Routing, global state, lookupProduct, alle handlers
-├── constants.jsx             # ALLERGENS, SCREENS, DIETS, E_NUMBERS, SUPABASE_URL/ANON_KEY, uid
-├── helpers.js                # compareAllergens, extractENumbers, compareENumbers,
-│                             #   checkDietCompatibility, initials, getAllergenLabels,
-│                             #   verifiedBadge, makeHeaders, apiCall, timeAgo,
-│                             #   traceId, traceLog, getTraceLog, clearTraceLog
-├── theme.jsx                 # CSS-variabler, injectTheme(), ThemeStyle komponent
-├── SharedComponents.jsx      # Icon, IngredientsList (med onIngredientTap),
-│                             #   ProfileBadges, getProductIcon, ProductImage, EatSafeLogo
-│
-├── — Hooks —
-├── useScanner.js             # Kamera, auto-zoom, tap-to-focus, lommelygte,
-│                             #   scanFromGallery, scanPhotoForEan (foto-fallback)
-├── useAlternatives.js        # Sikre alternativer ved farlige produkter
-│                             #   Kategori-match → overkategori fallback → filtrér allergen-profil
-├── useMadpas.js              # Madpas speak-funktion + madpasSpeaking/WaiterView state
-├── useSearch.js              # Søgning via Edge Function med 350ms debounce
-├── useAdmin.js               # Admin CRUD (brugere, submissions, tickets)
-├── useRecipes.js             # Opskrifter CRUD
-├── useShoppingList.js        # Indkøbsliste + Supabase Realtime WebSocket sync
-│
-├── — Screens (routing via App.jsx) —
-├── ScannerScreen.jsx         # Router + HOME screen
-├── ResultScreen.jsx          # RESULT — scan-resultat, alternativer, allergen-match,
-│                             #   ingrediens-tap→leksikon, E-nummer chips, næring
-├── NotFoundScreen.jsx        # NOTFOUND — 5-trins produkt-indsend flow
-├── SubmittedScreen.jsx       # SUBMITTED — tak-skærm efter indsendelse
-├── SearchScreen.jsx          # SEARCH — søgning + profil/manuel allergen-filter
-├── ListScreen.jsx            # LIST — indkøbsliste + favoritter
-├── SuggestEditScreen.jsx     # SUGGEST_EDIT — foreslå rettelse til produkt
-├── ProfileScreen.jsx         # PROFILE, EDITPROFILE (kun navn), EDITPREFERENCES
-│                             #   (allergier/intolerancer/diæt/E-numre), FAMILY, HISTORY,
-│                             #   FAVORITES, ADMIN
-│                             #   Footer: hej@eatsafe.dk + privatlivspolitik link
-├── ProfileMenu.jsx           # Slide-out menu fra højre (åbnes via hamburger-ikon i
-│                             #   topbar) — profil-hero + links til Favoritter, Familie,
-│                             #   Scanningshistorik, Opskrifter, Viden, Madpas,
-│                             #   Admin. Portal til document.body.
-├── OnboardingScreen.jsx      # WELCOME, LOGIN, ONBOARD
-├── KnowledgeScreen.jsx       # KNOWLEDGE — Leksikon
-├── RecipesScreen.jsx         # RECIPES — opskrifter (gradient header)
-├── MadpasScreen.jsx          # MADPAS (17 sprog) — strukturerede sektioner, kun on-device (intet link/QR/PDF)
-├── AdminScreen.jsx           # Mobil admin-panel (via ProfileScreen)
-│                             #   Tabs: Dashboard, Brugere, Indsendelser, Tickets,
-│                             #         Debug, Manglende, Import
-│
-├── — Delte komponenter —
-├── MemberForm.jsx            # MemberForm, CategorySelect
-├── AllergenPicker.jsx        # AllergenChipPicker, DietChipPicker, ENumberPicker,
-│                             #   useGlutenFreeSync (delt gluten↔glutenfri-sync-hook,
-│                             #   bruges af onboarding + MemberForm + Rediger præferencer)
-├── FeedbackModal.jsx         # FeedbackModal med debug trace
-│
-├── — Desktop admin-panel (NY, 24. sept. 2026) —
-├── admin/                    # Separat Vite-entrypoint på eatsafe.dk/admin.html
-│   │                         #   (ikke en del af den mobile PWA's SCREENS-routing/
-│   │                         #   bundle — egen React-rod, sidebar+tabel-layout til
-│   │                         #   skærm/computer. Deler localStorage-session
-│   │                         #   (as_token/as_refresh/as_user_id) med hovedappen.
-│   │                         #   Genbruger useAdmin.js's data-lag som-is.
-│   ├── main.jsx               # React-rod, injicerer adminTheme.js
-│   ├── AdminApp.jsx            # Login-gate (rolle-tjek mod users.role) + router
-│   ├── AdminLayout.jsx          # Sidebar-navigation + topbar
-│   ├── useAdminAuth.js          # Standalone login (email+password, ingen signup/OAuth)
-│   ├── adminTheme.js            # Desktop-specifik CSS (egen fra src/theme.jsx)
-│   └── sections/                # DashboardSection, UsersSection, SubmissionsSection,
-│                                 #   TicketsSection, MissingSection, ImportSection,
-│                                 #   RecipesSection — desktop-tabel-versioner af de
-│                                 #   tilsvarende Admin*Section.jsx-filer ovenfor
-│
-└── — Statiske sider (public/) —
-    privacy.html              # Privatlivspolitik på eatsafe.dk/privacy
-    invite.html               # Familie-invitation på eatsafe.dk/invite/[token]
-    madpas-view.html          # Offentlig madpas-visning på eatsafe.dk/madpas/[token]
-```
-
----
-
-## 4. ⚡ ARKITEKTUR-REGEL — NYE SKÆRME BYGGES ALTID SOM EGNE FILER
-
-**Alle nye skærme og større UI-sektioner skal fra starten bygges som selvstændige komponenter i egne filer.**
-
-1. **Én screen = én fil.** Ny screen oprettes som `XxxScreen.jsx` fra dag ét
-2. **Props frem for masse-state.** Lokalt state lever i screen-komponenten selv
-3. **Ingen IIFE-patterns.** `{condition && (() => { ... })()}` er forbudt
-4. **Ingen hooks i betinget kode.** React hooks altid øverst i komponenten
-5. **Hooks til logik.** Al logik i dedikerede hooks — ikke inlined i App.jsx
-6. **ScannerScreen er router.** Sub-screens er egne filer
-
----
-
-## 5. Screens / Navigation
-
-| SCREENS-konstant | Fil | Beskrivelse |
-|-----------------|-----|-------------|
-| HOME | ScannerScreen | Hjem |
-| RESULT | ResultScreen | Scan-resultat + alternativer |
-| NOTFOUND | NotFoundScreen | 5-trins indsendelse |
-| SUBMITTED | SubmittedScreen | Tak-skærm |
-| SEARCH | SearchScreen | Søgning |
-| LIST | ListScreen | Indkøbsliste |
-| SUGGEST_EDIT | SuggestEditScreen | Foreslå rettelse |
-| PROFILE | ProfileScreen | Profil |
-| FAMILY | ProfileScreen | Familie + invitationslink |
-| KNOWLEDGE | KnowledgeScreen | Leksikon |
-| RECIPES | RecipesScreen | Opskrifter |
-| MADPAS | MadpasScreen | Madpas (kun on-device, intet link/QR) |
-
-Bundmenu (opdateret sept. 2026): `Indkøbsliste (venstre) → Scan (midten, barcode-ikon)
-→ Søg (højre)`. Profil, Familie, Favoritter, Historik, Opskrifter, Viden, Madpas
-og Admin nås nu via et hamburger-menu-ikon i topbaren th., som åbner
-`ProfileMenu.jsx` (slide-out fra højre). Se `/CLAUDE.md` afsnit 3 for detaljer og
-begrundelse.
-
----
-
-## 6. Database — vigtigste tabeller
+## 3. Database — vigtigste tabeller
 
 | Tabel | Nøglefelter | Noter |
 |-------|-------------|-------|
@@ -171,158 +41,45 @@ begrundelse.
 | `product_submissions` | id, ean, name, status, submitted_by | |
 | `shopping_lists` | id, owner_id, name, family_id | Realtime aktiveret |
 | `shopping_list_items` | id, list_id, name, checked, added_by, added_at | Realtime aktiveret |
-| `knowledge_base` | id, category, slug, title, summary, description, allergen_ids, status_label (faglig status, fx "Fødevareallergi"), risk_level (ikke længere brugt, alle null siden 30. sept. 2026) | 768 opslag. Kategorier: allergen (EU's 14 + hvede), ingredient (kun ting der kan stå i en ingrediensliste), dish (retter/produkter, kun via søgning), e_number, diet, cross_reaction, faq, fun_fact. Backup før kvalitetssikringen: `knowledge_base_backup_20260930` |
+| `knowledge_base` | id, category, slug, title, summary, description, allergen_ids, status_label (faglig status, fx "Fødevareallergi"), risk_level (ikke længere brugt, alle null siden 30. sept. 2026) | 768 opslag. Kategorier: allergen (EU's 14 + hvede), ingredient (kun ting der kan stå i en ingrediensliste), dish (retter/produkter, kun via søgning), e_number, diet, cross_reaction, faq, fun_fact. |
 | `missing_ean_log` | ean, count, first_seen, last_seen | Auto-logget + auto-importeret |
-| `recipes` | id, title, instructions, image_url | ~627 |
+| `recipes` | id, title, instructions, image_url | tom (opskrifter på pause, slettet 30. sept. 2026) |
 | `client_errors` | id, fingerprint, source, message, stack, screen, occurrences, first_seen, last_seen, status | Fejl fra appen/edge/DB-triggere (30. sept. 2026, A3). Skrives kun via RPC `log_client_error` (også anon; samme fejl inden for 1 time lægges sammen, loft 300 nye rækker/10 min). Kun admin kan læse (RLS). Vises i admin-panelet under "Fejl" |
 
-**`products.allergen_source_method` (25. sept. 2026 — forslag F fra
-allergen-detektions-gennemgangen):** sporer HVORDAN de nuværende
-`allergen_flags` blev beregnet, adskilt fra `allergen_quality` (som er
-tillids-niveauet). Værdier: `keyword` (kun nøgleords-motoren), `keyword+
-claude` (keyword + Claude-fallback/`force_ai`), `off_tags` (kun Open Food
-Facts' egne `allergens_tags`/`traces_tags`, ingen `ingredients_text` at
-køre keyword-motoren på), `off_tags+keyword` (OFF-tags flettet med
-keyword-motoren mod `ingredients_text`, se afsnittet om `products`-Edge
-Function ovenfor). `NULL` = ukendt/uverificeret herkomst — typisk den
-oprindelige bilka/nemlig-import-pipeline (ikke i dette repo, se punktet om
-data-provenance-gab i `.claude/HISTORY.md`) eller data der aldrig er rørt
-af vores egne funktioner siden. Skrives af `auto-reparse`, `allergens`
-(dens interne `save`-vej) og `products`' OFF-fallback-gem — IKKE af
-`useAdmin.js`s admin-godkendelsesflows' egne direkte `PATCH`-kald mod
-`products`, som nu (samme dato) også er rettet til at udlede
-`allergen_quality` fra det FAKTISKE `method`-svar fra `allergens`-
-funktionen i stedet for at hardkode `"high"` — et `force_ai:true`-kald der
-stille fejler (fx manglende `ANTHROPIC_API_KEY`) returnerer `method:
-"keyword"`, og det ville tidligere fejlagtigt være blevet gemt som `"high"`
-alligevel.
+**Opbevaringsfrister (privatlivspolitik afsnit 11):** kontosletning (`delete-user`) fjerner straks profil, allergener, familieprofiler, lister, scanninger,
+favoritter, beskeder, push-tilmeldinger, tickets, indsendelser og login (cascade/eksplicit); `client_errors` mister bruger-id. Automatisk oprydning i `cleanup_notifications()`
+(cron `notify-cleanup`, 03:30 UTC): beskeder 12 mdr., hændelser 90 dage, `client_errors` 90 dage (på `last_seen`), `security_reports` 12 mdr. (migration `20261001132038`). Ingen automatiske backups (Free).
 
-**`users.role`-beskyttelse (24. sept. 2026, fundet under admin-audit):**
-`users_update_own_or_admin`-policyen tillader `id = auth.uid()` (selv-
-opdatering af egen profil) uden kolonne-begrænsning — og `authenticated`
-har kolonne-UPDATE-ret på `role`. Uden yderligere beskyttelse kunne enhver
-logget ind bruger derfor sætte sin egen `role` til `admin` via en almindelig
-`PATCH /rest/v1/users?id=eq.<eget-id>`, og `on_user_role_change`-triggeren
-ville automatisk synkronisere det ind i deres JWT `app_metadata.role` oveni.
-Rettet med en `BEFORE UPDATE`-trigger (`prevent_role_self_escalation_trigger`
-→ `prevent_role_self_escalation()`) der blokerer enhver ændring af `role`,
-medmindre den kaldende bruger (`auth.uid()`) allerede er admin — verificeret
-med en JWT-simuleret SQL-test at både blokeringen og admins fortsatte evne
-til at ændre ANDRE brugeres rolle virker. Postgres RLS kan ikke i sig selv
-begrænse per-kolonne, så en tilsvarende trigger bør overvejes for andre
-tabeller med et lignende "selv-ejerskab uden kolonne-begrænsning"-mønster,
-hvis en ny privilegeret kolonne nogensinde tilføjes til `users` eller andre
-selv-redigerbare tabeller.
+**Backup-tabeller:** `*_backup_20260930` i `public` og skemaet `qa_backup` er rester fra datarettelser (ingen kode bruger dem, Free-planen har
+ingen automatiske backups). De slettes samlet tæt på 1. nov. 2026 (to do `c188223c`), derefter skal denne note fjernes.
 
-**`allergen_levels` på `users` og `family_members` (2. okt. 2026, migration `20261001120049`):** følsomhed pr. allergen, fx
-`{"maelkeallergi":"direct_only"}`. Mangler et allergen, er det "strict" (spor flagges som advarsel, som hidtil); `direct_only` =
-brugeren reagerer kun på direkte indhold, så spor flagges ikke, men vises som en rolig info-linje. Logikken ligger i `helpers.js`
-(`compareAllergens(flags, ids, levels)` → `ignoredTraces`, `computeProfileResults`, `mergeAllergenLevels` — strengeste aktive profil vinder,
-`ignoresTraces`). På produktsiden er spor nu GULE ("Kan indeholde spor"); kun direkte indhold er rødt "Allergi-advarsel". Husstandskonti
-får deres niveauer via `family/group` (`allergenLevels`), og `notify` (P1) sender ikke en ændring til spor til en modtager, der kun
-reagerer på direkte indhold (`affectedAllergenChanges(..., tracesIgnored)`). UI: den simple `AllergenSensitivity` i `AllergenPicker.jsx`
-(onboarding trin 2, Rediger præferencer, familieformularen). Admin-panelet (Brugere → rediger) kan sætte niveauet pr. valgt allergen for en bruger (`useAdmin.js`, `UsersSection.jsx`); familiemedlemmers niveauer redigeres kun i appen.
+**`products.allergen_source_method`:** hvordan `allergen_flags` blev beregnet (adskilt fra `allergen_quality`, som er tillidsniveauet): `keyword`,
+`keyword+claude`, `off_tags`, `off_tags+keyword`; `NULL` = ukendt herkomst (den oprindelige import-pipeline, ikke i dette repo). Skrives af `auto-reparse`,
+`allergens` (`save`) og `products`' OFF-fallback; admin-godkendelsesflows i `useAdmin.js` udleder `allergen_quality` af det FAKTISKE `method`-svar.
 
-**`users.onboarding_step` (29. sept. 2026, "Onboarding-persistens"):**
-integer, 1-5, default 1 — huske PRÆCIS hvilket af de 5 onboarding-trin en
-bruger nåede til (`onboarding_completed`, boolean, fandtes allerede). Ét
-engangs-backfill-migration (`add_onboarding_step_to_users`) udledte det
-mest sandsynlige trin for eksisterende brugere ud fra reelle gemte signaler
-(navn/allergener/diæter-E-numre/familiemedlemmer) — IKKE kun "har mindst
-én allergi". Selv-opdateres via almindelig `PATCH /rest/v1/users?id=eq.
-<eget-id>` (samme RLS-policy som resten af tabellen, ingen ny kolonne-
-beskyttelse nødvendig — kun `role` har den slags trigger-guard, se ovenfor).
-Se `useOnboarding.js`/`useAuth.js`/`App.jsx`'s routing-logik for hvordan
-felterne bruges til at genoptage onboarding på tværs af sessioner/enheder
-og forhindre en ufuldført bruger i at nå hovedappen — fuld detalje i
-`CLAUDE.md`.
+**`users.role`-beskyttelse:** `users_update_own_or_admin` tillader selv-opdatering uden kolonne-begrænsning, og `authenticated` har UPDATE på `role`.
+Triggeren `prevent_role_self_escalation` blokerer ændring af `role`, medmindre kalderen allerede er admin. Overvej samme slags trigger, hvis en ny
+privilegeret kolonne tilføjes til en selv-redigerbar tabel.
 
-**Oprettelse uden profil-metadata (30. sept. 2026, migration
-`20260930193753_onboarding_signup_without_profile`):** signup sender kun
-e-mail og adgangskode. `handle_new_user()` lader `name` være null, når
-metadata ikke har et navn (før: e-mailens lokale del).
+**`allergen_levels` (jsonb) på `users`/`family_members`** (migration `20261001120049`): følsomhed pr. allergen, fx `{"maelkeallergi":"direct_only"}`. Manglende
+allergen = "strict" (spor flagges). `direct_only` = kun direkte indhold flagges; spor vises som rolig info. Logik i `helpers.js` (`compareAllergens(flags, ids,
+levels)` → `ignoredTraces`, `computeProfileResults`, `mergeAllergenLevels` — strengeste aktive profil vinder). Husstandskonti får niveauer via `family/group`
+(`allergenLevels`); `notify` P1 sender ikke spor-ændringer til en modtager, der kun reagerer på direkte indhold (`affectedAllergenChanges(..., tracesIgnored)`).
+UI: `AllergenSensitivity` i `AllergenPicker.jsx`. Admin → Brugere kan sætte niveauet; familiemedlemmers niveauer redigeres kun i appen.
 
-**Velkomstmail kun efter onboarding (migration
-`20260930194647_welcome_email_only_after_onboarding`):** triggerne
-`on_auth_email_confirmed` (auth.users) og `on_user_created` (public.users)
-og funktionen `send_welcome_email()` er fjernet. Eneste afsender er
-`send_welcome_after_onboarding()` (trigger `on_onboarding_completed`, kun
-false → true), som reserverer `welcome_sent_at` atomisk
-(`UPDATE ... WHERE welcome_sent_at IS NULL`) og derefter kalder
-`send-email` med `welcome` (flag FRA) eller `welcome_onboarded` (flag TIL).
-`send-email` sender begge typer med HTML'en fra `_shared/welcomeMail.ts`
-(kopi af `templates/resend/N1-velkomst.html`), emne "Velkommen til EatSafe".
-Supabase Auths bekræftelsesmail ligger i `supabase/templates/auth/` og
-sættes af workflowet `deploy-auth-templates.yml`.
+**`users.onboarding_step`** (integer 1-5, default 1) husker onboarding-trinnet sammen med `onboarding_completed`; selv-opdateres via PATCH. Signup sender kun
+e-mail+adgangskode, og `handle_new_user()` lader `name` være null. Velkomstmailen sendes kun af `send_welcome_after_onboarding()` (trigger
+`on_onboarding_completed`, kun false → true; `welcome_sent_at` reserveres atomisk) via `send-email` (`welcome_onboarded`, HTML fra `_shared/welcomeMail.ts`, bygget af
+`node scripts/build-welcome-mail.mjs` fra `supabase/templates/resend/N1-velkomst.html`).
 
-**Opfølgende sikkerhedsfund og -fix (25. sept. 2026, `security-check`-gennemgang):**
-`get_advisors` fandt at tre `SECURITY DEFINER`-funktioner var direkte
-kaldbare som RPC'er med et vilkårligt/tredjeparts-argument, ikke kun i den
-tiltænkte interne kontekst (RLS-policies/triggere):
-- **`family_group(p_uid uuid)`** — accepterede et VILKÅRLIGT `p_uid` og var
-  `EXECUTE`-grantet til `authenticated`. Bruges legitimt af RLS-policies
-  (kalder den med RÆKKENS ejer, ikke kalderen — nødvendigt for delt
-  familie-synlighed) og af 5 Edge Functions (`shopping`, `history`,
-  `family`, `send-push`, `favorites`) via en `service_role`-klient (hvor
-  `auth.uid()` er `null`). Problemet: enhver logget-ind bruger kunne kalde
-  `/rest/v1/rpc/family_group` direkte med en VILKÅRLIG andens uid og få
-  deres familiegruppe (UUID-sæt) tilbage, uden selv at være medlem.
-  **Fix:** funktionen filtrerer nu resultatet til kun at blive returneret
-  hvis kalderen (`auth.uid()`) selv reelt er `p_uid` eller medlem af den
-  beregnede gruppe, ELLER kaldet kommer fra `service_role` (Edge Functions).
-  RLS-adfærd og Edge Function-kald er verificeret uændrede (5 JWT-simulerede
-  SQL-tests: legitimt familiemedlem ser stadig gruppen, service_role-kald
-  virker stadig, en urelateret tredjepart der kalder direkte får nu 0 rækker).
-- **`is_admin(user_id uuid)`** — samme mønster, men ALLE faktiske brug
-  (samtlige RLS-policies + `prevent_role_self_escalation`) kalder den kun
-  med `auth.uid()` selv, aldrig en andens id. **Fix:** returnerer nu altid
-  `false` medmindre `user_id` matcher kalderens egen `auth.uid()` — lukker
-  muligheden for at enhver bruger kunne tjekke om en VILKÅRLIG andens konto
-  er admin. Verificeret med to JWT-simulerede tests (self-tjek uændret,
-  tredjeparts-tjek nu blokeret).
-- **`prevent_role_self_escalation()`** — selve trigger-funktionen ovenfor
-  var `EXECUTE`-grantet til `PUBLIC` (inkl. `anon`) og dermed listet som et
-  kaldbart RPC-endpoint, selvom den kun er tiltænkt at køre som `BEFORE
-  UPDATE`-trigger. Et direkte kald udefra ville sandsynligvis bare fejle
-  (NEW/OLD er ikke sat uden for triggerkontekst), men den hørte ikke hjemme
-  i den eksponerede API-overflade. **Fix:** `REVOKE EXECUTE ... FROM PUBLIC`
-  — verificeret med `has_function_privilege` at `anon`/`authenticated`/
-  `service_role` alle mistede direkte kaldeadgang, og at triggeren stadig
-  er tilknyttet og aktiv på `users`-tabellen (triggerudløsning er ikke
-  betinget af `EXECUTE`-grants, kun selve RPC-kaldbarheden er).
-
-**Kendt, accepteret støj i `get_advisors` herefter:** `family_group` og
-`is_admin` vil BLIVE VED med at optræde i `authenticated_security_definer_
-function_executable`-listen — Supabases linter tjekker kun om `EXECUTE`
-er grantet, ikke hvad funktionen reelt returnerer til hvem. `EXECUTE` skal
-forblive grantet til `authenticated` for at RLS-policies (som selv kører
-som denne rolle) kan evaluere dem. Datalækagen er lukket på logik-niveau
-i funktionerne selv, ikke via grant-fjernelse. Antag ikke dette er et
-overset fund ved en fremtidig `security-check`-kørsel uden at læse dette
-afsnit først.
-
-**Fjerde punkt fra samme gennemgang, samme dag: `pg_trgm`-extensionen lå i
-`public`-skemaet** (Supabase-linter-advarslen "Extension in Public").
-Verificeret før flytning at kun to indekser (`products_name_trgm_idx`,
-`products_brand_trgm_idx` på `products.name`/`products.brand`, bruges til
-at accelerere `ILIKE '%term%'`-søgning) afhænger af dens operator-klasse,
-og ingen egen SQL-/Edge-function kalder dens `similarity()`/
-`word_similarity()`-funktioner direkte. **Fix:** `ALTER EXTENSION pg_trgm
-SET SCHEMA extensions` (Supabases forudoprettede, dedikerede extensions-
-skema). Eksisterende indeks-definitioner er bundet via OID, ikke søgesti-
-opslag, så de virker uændret efter flytningen — verificeret bagefter med
-en rigtig `ILIKE`-søgning mod `products` (934 træf, uændret adfærd).
-
-**Status efter denne gennemgang:** alle fire fundne punkter (family_group-
-lækage, is_admin-lækage, trigger-eksponering, pg_trgm-placering) er rettet.
-Resterende `get_advisors`-punkter er enten kendt/accepteret støj (se
-ovenfor) eller kræver en brugerbeslutning uden for hvad et værktøj kan
-rette (Leaked Password Protection, se `CLAUDE.md` afsnit 0) — ingen
-yderligere handling ventende.
+**Sikkerhedsfunktioner (security-check 25. sept.):** `family_group(p_uid)` og `is_admin(user_id)` er `SECURITY DEFINER` og skal forblive `EXECUTE`-grantet til
+`authenticated` (RLS bruger dem), men filtrerer på logik-niveau: `family_group` returnerer kun for kalderen selv/gruppens medlemmer eller `service_role`;
+`is_admin` er kun sand for kalderens egen `auth.uid()`. De BLIVER derfor ved med at stå som "executable" i `get_advisors` (accepteret støj; antag ikke et overset
+fund). `prevent_role_self_escalation()` er revoked fra PUBLIC. `pg_trgm` ligger i skemaet `extensions`. Leaked Password Protection kræver Supabase Pro.
 
 ---
 
-## 7. Edge Functions (Supabase)
+## 4. Edge Functions (Supabase)
 
 | Funktion | Beskrivelse |
 |----------|-------------|
@@ -330,26 +87,18 @@ yderligere handling ventende.
 | `allergens` | Keyword-engine + Claude Haiku fallback |
 | `ocr` | OCR: `ingredients` / `product_name` / `nutrition` / `ean_from_image` |
 | `search` | Fuldtekst-søgning med scoring |
-| `send-email` | Resend email — `type` er `welcome_onboarded` (velkomstmailen fra repoet), en servicemail fra `TRANSACTIONAL_TEMPLATES` (`_shared/mailSend.ts`) eller `"raw"`. De gamle typer `submission_approved`/`submission_rejected`/`ticket_update` og de tre gamle Resend-skabeloner (Product Approved/Not Approved, Feedback response) er fjernet 1. okt. 2026; `notify` sender de mails med N2a, N3 og N6. Typen `"raw"` (direkte `subject`+`html` i kaldet, ingen skabelon — til interne/dynamiske emails som `admin-digest`). Velkomstmailen udløses af `send_welcome_email()` og sendes først, når e-mailen er bekræftet (29. sept. 2026, `supabase/sql/2026-09-29_welcome_email_after_confirm.sql`). Ved `public.users`-INSERT (`on_user_created`) sker det kun, hvis `auth.users.email_confirmed_at` allerede er sat (Google), ellers via triggeren `on_auth_email_confirmed` på `auth.users` (NULL → sat). Præcis én mail pr. bruger |
+| `send-email` | Resend-mail; `type` er `welcome_onboarded`, en servicemail fra `TRANSACTIONAL_TEMPLATES` (`_shared/mailSend.ts`) eller `"raw"` (direkte `subject`+`html`, til interne mails som `admin-digest`). Mails om indsendelser/tickets sendes af `notify` (N2a, N3, N6) |
 | `feedback` | **NY** (30. sept. 2026, A4) — modtager feedback-tickets fra appen og admin-panelet. Uden login: 5/time pr. afsender (saltet IP-hash i `feedback_tickets.client_hash`) og 60/time i alt. Med login: 20/time. `submitted_by` sættes kun fra login-tokenet. Validering i `feedback/validate.js` (testet i `src/feedbackValidate.test.js`) |
 | `auto-import-off` | **NY** — importerer fra OFF dagligt kl. 02:00 UTC via pg_cron |
 | `admin-digest` | **NY** (17. sept. 2026) — ugentlig email til alle admins (`role='admin'`) med antal afventende indsendelser + åbne tickets, kun sendt hvis der reelt er noget. pg_cron mandag kl. 08:00 UTC (jobid 4) |
 | `food-waste` | **I KØLESKABET** (17. sept. 2026) — tjekker om et EAN er nedsat pga. udløb i en nærliggende Netto/Føtex/Bilka, via Salling Groups officielle "Anti Food Waste"-API (`geo`-baseret opslag). Kræver bruger-login. Deployet og virker (testet live med `SALLING_API_TOKEN` sat) — men UI-knappen på `ResultScreen` er bevidst fjernet igen efter brugerens ønske. `useFoodWaste.js`-hooken ligger stadig i `src/`, klar til at blive genkoblet til en skærm når featuren skal genoptages — se punkt 13 |
 
----
+## 5. Auto-import (OFF) og Familie-deling
 
-## 8. Auto-import pipeline (OFF)
+- **Auto-import:** edge-funktionen `auto-import-off`, pg_cron dagligt kl. 02:00 UTC (manuelt: Admin → Import → "Kør import nu"). Flow: `missing_ean_log` → OFF API →
+  `products` → slet fra loggen. Ingen AI, pris $0. Lokalt script `import_missing_eans.py` (`--limit N` eller `--test-eans`).
 
-- **Edge Function:** `auto-import-off` — deployed og aktiv
-- **Cron:** pg_cron — kører dagligt kl. 02:00 UTC
-- **Manuel kørsel:** Admin → Import-tab → "Kør import nu"
-- **Lokalt script:** `import_missing_eans.py` — kør med `--limit N` eller `--test-eans "EAN1,EAN2"`
-- **Flow:** missing_ean_log → OFF API → products tabel → slet fra log
-- **Pris:** $0 (ingen AI, ren OFF-import)
-
----
-
-## 9. Familie-deling
+**Familie-deling**
 
 - **Tabel:** `family_invites` (token, 24t expiry, to-vejs). RLS: `invited_by`/`accepted_by` kan SELECT egen række, kun `invited_by` kan INSERT, admin kan DELETE, og (26. sept. 2026) `invited_by` kan selv DELETE sin egen række mens `status='pending'` — nødvendigt for at "Annullér link"/"Annullér invitation" kan virke for en almindelig bruger.
 - **Flow:** Profil → Familie → "Opret invitationslink" → send link → modtager åbner `eatsafe.dk/invite/[token]` → opretter konto → tilknyttes via `accept_family_invite()` RPC
@@ -360,218 +109,46 @@ yderligere handling ventende.
 
 ---
 
-## 10. Madpas (26.-27. sept. 2026 — redesignet, forenklet, herefter finpoleret)
+## 6. Madpas
 
-Madpas' formål: en tjener, butiksansat, hotel- eller cafémedarbejder — IKKE
-kun restaurantpersonale — skal kunne forstå de vigtigste kost-/allergi-
-oplysninger på 2-3 sekunder — strukturerede sektioner (FOOD ALLERGIES/
-INTOLERANCES/DIET, se `ALLERGENS[].type` for allergi/intolerance-skellet),
-ikke én generisk liste, og en madpas der altid afspejler den VALGTE profils
-AKTUELLE data (også kostpræferencer for et familiemedlem — fulgte tidligere
-fejlagtigt altid den loggede bruger selv, rettet i App.jsx/useMadpas.js).
+On-device visning (profil → sprog → kompakt preview → "Åbn madpas" → fuldskærm → evt. "Læs højt"); ingen deling/link/QR/PDF (infrastrukturen, `madpas_links` og
+`get_madpas_by_token()`, er fjernet). Filer: `MadpasScreen.jsx` (`renderStaffView()`, `renderCompactPreview()`), `useMadpas.js`, tekster i `constants.jsx`.
 
-**To redesign-runder (26. sept. 2026), derefter en tredje forenklings-
-runde samme dag** — se `.claude/HISTORY.md` for fuld dag-for-dag-detalje.
-Runde 1-2 byggede et delings-link (token-baseret `madpas_links`-tabel +
-`get_madpas_by_token()`-RPC + en offentlig statisk `public/madpas-view.html`-
-side + QR-kode + PDF/print + en E-numre-synlighed-opt-in). **Runde 3 fjernede
-al den infrastruktur igen** efter et eksplicit brugerkrav ("Link- og QR-
-funktionalitet skal være helt fjernet") — `madpas_links`-tabellen og
-`get_madpas_by_token()`-funktionen er droppet fra databasen (migration
-`remove_madpas_link_sharing`, verificeret 0 rækker før drop), `public/
-madpas-view.html` er slettet, `vercel.json`s `/madpas/:token`-rewrite er
-fjernet, og PDF/print samt E-numre-visning på madpasset er også fjernet
-(PDF/print var ikke eksplicit nævnt i runde 3-specifikationens
-"behold"-liste — afklaret via en direkte bruger-forespørgsel, svar: fjern
-den også). Madpas er nu udelukkende en on-device visning: vælg profil →
-vælg sprog → se kompakt preview → "Vis til tjener" (fuldskærm) → evt. "Læs
-højt"/oplæsning. Der er ingen ekstern deling, intet link, ingen offentlig
-side, og ingen server-side madpas-specifik tilstand tilbage overhovedet.
-
-**Oversættelses-hul fundet og rettet (runde 1):** `ALLERGEN_T` (per-sprogs
-allergen-navne, `src/constants.jsx`) manglede `hvede`/`maelkeallergi`
-helt — uden en sprog-nøgle faldt visningen tilbage til `ALLERGENS`' DANSKE
-`a.label`, selv når madpasset var sat til fx engelsk. Samme hul fandtes i
-`ALLERGEN_EXAMPLES` (runde 2). `madpasAllergenLabel()`/`madpasDietLabel()`/
-`madpasAllergenExamples()` (useMadpas.js) er de fælles hjælpefunktioner, der
-korrekt prioriterer `lang==="da" ? a.label : ALLERGEN_T[...]` — brug dem
-ved fremtidige Madpas-ændringer i stedet for at genopfinde faldback-logikken.
-
-**Hvert hensyn er sin egen informationsblok, ikke en delt liste (runde 4,
-27. sept.):** `renderStaffView()` (MadpasScreen.jsx, omdøbt fra
-`renderWaiterView` — funktionen er ikke kun for tjenere) viser hvert
-allergen/fritekst-emne som sin EGEN blok (ikon + stort, fed navn — det
-mest fremtrædende element på hele skærmen — derefter "May be found in:"
-og en pr.-emne sikkerhedstekst), adskilt af whitespace i stedet for
-skillelinjer i en fælles liste. Sikkerhedsteksten genereres nu ALTID pr.
-enkelt emne (aldrig en kombineret "any of these ingredients"-sætning for
-flere) og er samtidig gjort mere præcis: "...does not contain {name} OR
-INGREDIENTS MADE FROM {name}." `madpasSafetyNote(name, lang)` i
-useMadpas.js erstatter alle forekomster af `{name}` i
-`MADPAS_SAFETY_NOTE_T`-skabelonen (kolon-baseret sætningsopbygning for
-sprog med køns-/artikel-bøjning som tysk/fransk/spansk/italiensk/
-portugisisk/polsk, direkte indsættelse for resten), alle 17 sprog.
-
-**Ny, bevidst OPT-IN krydskontaminerings-advarsel (runde 4):** en toggle
-("KRYDSKONTAMINERING") på selve Madpas-forsiden — default FRA, persisteret
-i `localStorage` som `as_madpas_cross_contact` (App.jsx) — når den er
-aktiveret, vises/oplæses ÉN kombineret sætning nederst i FOOD ALLERGIES-
-sektionen: singular ("...cross-contact with milk...") ved ét hensyn,
-plural ("...cross-contact with these allergens...") ved flere.
-`madpasCrossContactNote(names, lang)` i useMadpas.js, `MADPAS_CROSS_
-CONTACT_SINGULAR_T`/`MADPAS_CROSS_CONTACT_PLURAL_T` i constants.jsx.
-Bevidst opt-in fordi EatSafe ikke selv må antage alvorlighedsgraden af
-brugerens allergi — se toggle-beskrivelsesteksten i MadpasScreen.jsx.
-
-**Korte fødevare-eksempler** (`ALLERGEN_EXAMPLES` i constants.jsx,
-`madpasAllergenExamples()` i useMadpas.js) vises under hvert allergen/
-relevant intolerance i fremvisningsskærmen — bevidst SMÅ og MUTED
-sammenlignet med selve allergen-navnet, og mærket med et kort, oversat
-"Kan findes i:"/"May be found in:"-label (før "Common examples:", ændret 1. okt. 2026, da eksemplerne ikke nødvendigvis indeholder allergenet) (`MADPAS_EXAMPLES_LABEL_T`)
-for aldrig at kunne forveksles med en komplet/garanteret liste.
-
-**Oplæsning** — knappens tekst er selv oversat (`MADPAS_SPEAK_LABEL_T`/
-`MADPAS_STOP_LABEL_T`, 17 sprog, fx da:"Oplæs"/en:"Read aloud") og er nu en
-stor, fuld-bredde knap fast i bunden (runde 4, krav 8). `madpasSpeak()`
-(useMadpas.js) oplæser nu pr. allergen: navn + den samme sikkerhedstekst
-som vises på skærmen, plus krydskontaminerings-sætningen hvis aktiveret —
-"May be found in" oplæses bevidst IKKE (gør beskeden unødigt lang).
-Intolerancer nævnes samlet uden sikkerhedstekst, matcher den visuelle
-opdeling.
-
-**Footeren i fremvisningsskærmen viser INTET branding/dato længere**
-(runde 4, krav 2 — "Fjern teksten EatSafe ... den har ingen funktion på
-denne skærm") — kun den store oplæs-knap. CTA-knappen på selve Madpas-
-forsiden hedder nu "Åbn madpas" (var "Vis til tjener"), og undertekstens
-ordlyd er "Vis dine allergier og kosthensyn på det lokale sprog." (var
-tjener-/butikspersonale-specifik) for at afspejle at Madpas bruges bredt
-(restaurant, café, hotel, butik, takeaway).
-
-**Diæter har nu samme type besked som allergier, ikke kun badges (runde
-5, 27. sept.):** hvert diæt-hensyn (`DIETS` i constants.jsx: vegan,
-vegetarian, pescetarian, gluten-free, keto) vises i fremvisningsskærmen
-som sin egen blok (navn + en naturligt oversat "jeg spiser X, sørg for at
-min mad ikke indeholder Y"-besked), samme layout som allergi-/
-intolerance-blokkene. `madpasDietMessage(dietId, lang)` i useMadpas.js,
-`MADPAS_DIET_MESSAGE_T` i constants.jsx (5 diæter × 17 sprog). Bevidst
-blødere ordlyd for keto ("limit"/"begræns") end for de øvrige ("does not
-contain"/"indeholder ikke") — keto er en præference, ikke en sikkerheds-
-risiko. Sektionsoverskriften er samtidig ændret fra "DIET" til "DIETARY
-REQUIREMENTS" (`MADPAS_SECTIONS_T.diet`, alle 17 sprog) for præcision.
-Den kompakte forside-preview (`renderCompactPreview()`) viser fortsat
-diæter som korte chips — kun selve fremvisningsskærmen fik den fulde
-besked, som krævet.
-
-**To mindre, isolerede rettelser (runde 5):** `ALLERGEN_T.soja.en.n`
-viste tidligere "Soy / Soya" (to varianter samtidig) — rettet til blot
-"Soya", det korrekte navn for MADPAS_LANGUAGES' "en"-variant (🇬🇧, en-GB).
-`ALLERGEN_EXAMPLES.maelkeallergi` manglede "Whey"/"Valle" — tilføjet som
-første ingrediens (alle 17 sprog), og `madpasAllergenExamples()`s
-slice-grænse hævet fra 4 til 5 i useMadpas.js, da de 4 eksisterende
-`products`-eksempler alene allerede fyldte den tidligere grænse.
-
-**Sjette runde (samme dag) — ren visuel/spacing-polish, IKKE pushet/
-merget** (se Vercel-kvote-reglen i afsnit 4 — rene design-ændringer skal
-ikke deployes): spacing i `renderStaffView()` rundet til appens faste
-skala (`itemBlock` 26→24px, `headline` 18→16px, krydskontaminerings-
-blokkens `marginTop` 18→20px), typografisk hierarki finpudset (den
-statiske "I am allergic to:"-headline nedtonet fra 19px/700/`--ink` til
-14px/600/`--ink2`, så den ikke konkurrerer med allergen-navnet eller
-sikkerhedsteksten; sikkerhedsteksten/diæt-beskeden opgraderet fra `--ink2`
-til `--ink` for at styrke dens plads som prioritet #2), krydskontamine-
-rings-advarslen på fremvisningsskærmen gjort en anelse lettere (700→600,
-15→14.5px) så den forbliver sekundær i forhold til selve allergierne.
-**Reel bund-scroll-sikring:** fremvisningsskærmens scrollbare område fik
-mere bund-padding (32→40px) og footeren (Read aloud-knappen) fik
-`env(safe-area-inset-bottom)` tilføjet til sin bund-padding (samme
-etablerede mønster som `ProfileScreen.jsx`/bundnav) — verificeret
-programmatisk (scroll til `scrollHeight`, mål afstand mellem sidste
-tekstlinje og knappens top) at INGEN indhold nogensinde overlapper
-knappen, uanset antal hensyn. Luk-/oplæs-/krydskontamineringstoggle-
-knapperne er udtrukket fra rene inline-styles til nye CSS-klasser
-(`.mp-close-btn`, `.mp-speak-btn`, `.mp-cc-toggle`/`.mp-cc-toggle-knob` i
-theme.jsx) udelukkende for at kunne give dem samme tryk-feedback
-(`:active{transform:scale(.97)}`) som resten af appens knapper —
-`.mp-big-btn` manglede den samme feedback og er tilføjet til den delte
-liste. Verificeret med Playwright på flere scenarier (5 allergier +
-intolerance + diæt scrollet helt til bunds, tysk oversættelse på mindste
-understøttede skærmstørrelse iPhone SE) — ingen tekst-overlap, ingen
-horisontal overflow ved længere oversættelser. **Fundet, men bevidst IKKE
-rettet i denne runde (uden for scope):** tyske substantiver i sikkerheds-
-teksten (`Milch`/`Erdnüsse`) vises med lille forbogstav, fordi
-`madpasSafetyNote()` altid kalder `.toLowerCase()` på navnet — grammatisk
-ukorrekt på tysk (substantiver skal stå med stort), men brugerens denne
-runde var eksplicit afgrænset til spacing/hierarki/scroll/safe-areas/
-mikrointeraktioner, ikke sprogfejl. Tag fat i det i en fremtidig
-sprog-/oversættelses-fokuseret runde.
-
-**Syvende runde (27. sept., samme dag) — præcise afstandsjusteringer på
-selve Madpas-forsiden**, opfølgning på runde 6's mere generelle spacing-
-oprydning: brugeren pegede på fire konkrete, for stramme afstande. Alle
-fire justeret via lokale inline-style-overrides (IKKE i de delte
-`.mp-section-lbl`/`UI.mb14`-klasser, som bruges bredt i resten af appen):
-sprog-dropdown → KRYDSKONTAMINERING 20→32px (margin-collapse med
-dropdownens egen 16px marginBottom), KRYDSKONTAMINERING-hjælpetekstens
-`lineHeight` 1.4→1.6, KRYDSKONTAMINERING → "Dit madpas" 0→16px (manglede
-helt margin før), "Dit madpas"-label → chips 8→16px, chips → "Åbn
-madpas" 14→32px. CTA'ens egen størrelse og sidens bredder er urørt.
-Verificeret programmatisk med `getBoundingClientRect()`-mål af alle fire
-afstande efter ændringen (32/16/16/32px), ikke kun visuelt.
-
-**Ottende runde (27. sept., samme dag) — reelt venstre-alignment-fund,
-ét-linjes rettelse:** `.mp-scroll` (theme.jsx) giver allerede 20px
-venstre/højre-padding til ALT sit indhold, men `.mp-head` (kun brugt i
-MadpasScreen.jsx, ingen andre skærme påvirket) havde sin EGEN ekstra 20px
-padding oveni — titel/undertekst/sektionsoverskrifter/krydskontaminering
-sad derfor reelt 40px inde, mens "Dit madpas"/chips/CTA-knappen
-(`renderMainContent()`, en søskende-div UDENFOR `.mp-head`) kun fik
-`.mp-scroll`s 20px. Chips/CTA stod dermed bekræftet 20px længere til
-venstre end resten af siden — nøjagtig den inkonsistens brugeren
-rapporterede. Rettet med `.mp-head{padding:20px 20px 0}` →
-`{padding:20px 0 0}` (kun venstre/højre fjernet, top-paddingen som giver
-luft ned fra topbaren er urørt). Bivirkning, som var tilsigtet af
-brugerens egen krav 3: sprog-dropdownen (tidligere indsnævret af den
-dobbelte padding) og CTA-knappen har nu samme bredde, begge fuld bredde
-af den fælles 20px-indrammede indholds-kolonne. Verificeret med
-`getBoundingClientRect()` for otte elementer (titel, undertekst, "VÆLG
-SPROG", dropdown, "KRYDSKONTAMINERING", hjælpetekst, "Dit madpas", første
-chip, CTA) — alle nu `left:20px` fra viewportets kant, ingen undtagelser.
+- Følger altid den VALGTE profils aktuelle data. Strukturerede sektioner FOOD ALLERGIES / INTOLERANCES / DIETARY REQUIREMENTS (`ALLERGENS[].type` afgør
+  allergi vs. intolerance); hvert emne er sin egen blok (ikon + stort navn, "May be found in:" med korte eksempler, sikkerhedstekst pr. emne).
+- Hjælpefunktioner i `useMadpas.js`: `madpasAllergenLabel()`, `madpasDietLabel()`, `madpasAllergenExamples()`, `madpasSafetyNote(name, lang)`,
+  `madpasCrossContactNote(names, lang)`, `madpasDietMessage(dietId, lang)`, `madpasSpeak()`. Brug dem (korrekt sprog-fallback) frem for at genopfinde logikken.
+  Tekstkonstanter (17 sprog): `ALLERGEN_T`, `ALLERGEN_EXAMPLES`, `MADPAS_ALLERGY_STATEMENT_T`, `MADPAS_SAFETY_NOTE_T`, `MADPAS_DIET_MESSAGE_T`,
+  `MADPAS_SECTIONS_T`, `MADPAS_EXAMPLES_LABEL_T`, `MADPAS_EXAMPLES_OVERRIDE`, `MADPAS_SPEAK_LABEL_T`/`MADPAS_STOP_LABEL_T`.
+- Sikkerhedsteksten genereres altid pr. emne ("...does not contain {name} or ingredients made from {name}."), aldrig som kombineret sætning.
+- Krydskontaminering er bevidst OPT-IN (toggle, default FRA, `localStorage` `as_madpas_cross_contact`): én sætning nederst i FOOD ALLERGIES (singular/plural,
+  `MADPAS_CROSS_CONTACT_*_T`), fordi EatSafe ikke selv må antage allergiens alvor.
+- Oplæsning: navn + sikkerhedstekst pr. allergen (+ krydskontaminering hvis aktiv); "May be found in" oplæses ikke; intolerancer nævnes samlet. Knappen er stor og
+  fuld-bredde, fast i bunden (`env(safe-area-inset-bottom)`), og fremvisningsskærmen viser intet branding.
+- Diæter har blød ordlyd for keto ("limit") og "does not contain" for resten. `.mp-head` har kun top-padding (`.mp-scroll` giver 20 px i siden).
+- **Kendt, uløst sprogfejl:** tyske substantiver i sikkerhedsteksten står med lille forbogstav (`madpasSafetyNote()` kalder `.toLowerCase()`).
 
 ---
 
-## 11. CSS-konventioner
+## 7. Konventioner (supplement til CLAUDE.md)
 
-- Al CSS bor i `theme.jsx` (`appCss`-strengen), injiceret via `<style>{appCss}</style>` i `App.jsx` — ingen separate `.css`-filer
-- **Ingen hardkodede farver i screen-komponenter** — kun CSS-variabler
-- `paddingBottom:120` på alle screen-divs
-- Grønne primærknapper: `color:#071510`
-- Farvesystem: `--green`=success/CTA, `--blue`=navigation, `--amber`=advarsel, `--red`=fare
+- `paddingBottom:120` på screen-divs (plads til bundnav); grønne primærknapper `color:#071510`; farver: `--green` CTA/succes, `--blue` navigation, `--amber`
+  advarsel, `--red` fare.
+- `submissions`/`product_submissions` er den aktive indsendelsestabel.
 
 ---
 
-## 12. Konventioner
-
-- **`// @ts-nocheck`** øverst i alle `.jsx`-filer
-- **React Hooks** — aldrig i IIFE, betinget kode eller loops
-- **Windows env:** `set KEY=value` (ikke `export`)
-- **`submissions`** er aktiv tabel
-
----
-
-## 13. Kendte åbne punkter
+## 8. Kendte åbne punkter
 
 | Punkt | Note |
-|-------|------|
-| hej@eatsafe.dk | Oprettes hos One.com inden beta |
-| Leksikon 1000+ entries | Planlagt — separat session (pt. ~700 entries) |
-| Madspild-tilbud ("i køleskabet") | `food-waste`-Edge Function virker (verificeret live 17. sept. 2026 med `SALLING_API_TOKEN` sat), men UI-indgangen er bevidst fjernet fra `ResultScreen.jsx` igen efter brugerens ønske ("put den i køleskabet"). Genoptag ved at importere `useFoodWaste` (`src/useFoodWaste.js`) i en skærm igen og gencoble knap+resultat-visning (se git-historik for `src/ResultScreen.jsx` omkring 17. sept. 2026 for den oprindelige UI-kode) |
-| Desktop admin — nye funktioner | Shellet (`src/admin/`) + alle eksisterende faner (Dashboard/Brugere/Indsendelser/Tickets/Manglende/Import/Opskrifter) er bygget og shippet 24. sept. 2026. **Produkt-database direkte** (ny "Produkter"-fane, `src/admin/sections/ProductsSection.jsx`) er også shippet 24. sept. 2026 — søg på navn/brand/EAN (eller se seneste opdaterede uden søgeord, da `products` har 20.000+ rækker), redigér navn/brand/kategori/ingredienstekst/allergen_flags/verificeringsstatus direkte, slet produkt (kan fejle med en synlig FK-fejl hvis produktet stadig er refereret fra fx en indkøbsliste/scanningshistorik/ændringslog — bevidst ikke cascade-slettet automatisk). Kun på desktop, ikke porteret til mobil-admin. **Leksikon-CRUD** (ny "Leksikon"-fane, `src/admin/sections/KnowledgeSection.jsx`) er også shippet 24. sept. 2026 — søg/filtrér på kategori (allergen/e_number/ingredient/diet/cross_reaction/faq/fun_fact — DB check-constraint), opret/redigér/slet `knowledge_base`-entries (titel, slug med auto-generering fra titel ved oprettelse, emoji, resumé, beskrivelse, sundhedsnoter, risikoniveau, sortering, tilknyttede allergener som klikbare chips, og 6 frie liste-felter som kommasepareret tekst: found_in/alternatives/diet_tags/aliases/tags/sources). RLS tillader allerede admin-skriv direkte (ingen Edge Function nødvendig). Kun på desktop. **Ændringshistorik** (ny "Historik"-fane, `src/admin/sections/HistorySection.jsx`) er også shippet 24. sept. 2026 — read-only visning af `revision_log`, filtrérbar på oprettet/opdateret, produkt- og bruger-navne slås op i to batch-kald efter hovedlisten (ingen FK-embed tilgængelig for changed_by). **Brugere-redigering** (`UsersSection.jsx`, samme dag) er udvidet til at dække ALT bundet til brugeren, inkl. allergener — krævede en RLS-migration (`admin_can_write_user_allergens`) der tilføjer `is_admin()`-OR-betingelse til `user_allergens`s INSERT/UPDATE/DELETE-policyer (SELECT tillod allerede admin-læsning, men skriv var kun ejeren/familiemedlem-ejeren); samme slet-og-bulk-indsæt-mønster som `ProfileScreen.jsx` bruger for sig selv. Familiemedlemmers allergener ligger ikke i `user_allergens` (kun brugerens egne, `family_member_id is null`) og er ikke omfattet. Kun på desktop. **Bulk-handlinger** (Indsendelser-fanen, samme dag) — afkrydsningsbokse på pending-visningen + "Godkend valgte"/"Afvis valgte". Bevidst en SLANKERE parallel-implementation, ikke et loop der genbruger `updateSubmissionAndApprove`/`rejectSubmission` (de sluger deres egne fejl internt og viser individuelle toasts/lukker modaler, hvilket ville gøre det umuligt at tælle reelle succes/fejl på tværs af en batch) — sender ikke navn/brand-override (kun ingredienstekst fra OCR; Edge Function'en patcher kun felter der rent faktisk sendes) og springer push-notifikationer over for hastighed; AI-reparse'en efter hver godkendelse sikrer stadig korrekte allergen_flags. Kun på desktop. **Rigere dashboard/analytics** (`DashboardSection.jsx`, samme dag) — to søjlediagrammer (scanninger/dag, nye brugere/dag, seneste 14 dage) under stat-gridet. Ingen graf-bibliotek — rene CSS/HTML-søjler, én sekventiel farve pr. serie (grøn/blå, appens egne tokens), native `title`-attribut som hover-tooltip. PostgREST har ingen GROUP BY-dag, så `loadAdminStats` henter de rå `scanned_at`/`created_at`-rækker for perioden (kun de to felter, billigt) og bucketter dem selv i JS (`bucketByDay`-helper) — tomme dage fyldes med 0 så grafen altid har præcis 14 punkter. Kun på desktop. **CSV-eksport** (`src/admin/csvExport.js`, samme dag) — delt `downloadCsv(filename, rows, columns)`-helper (RFC 4180-escaping, UTF-8 BOM så æ/ø/å ikke bliver mojibake i Excel), "Eksportér CSV"-knap på Brugere- og Produkter-fanerne, eksporterer den aktuelt filtrerede/hentede liste (ikke hele tabellen — konsistent med den eksisterende paginering på 50-200 rækker). Ligger bevidst under `src/admin/`, ikke i det delte `helpers.js`, så den ikke bloater den mobile PWA's bundle. Kun på desktop. **Familie-overblik** (ny "Familie"-fane, `src/admin/sections/FamilySection.jsx`, samme dag) — grupperer `family_members` pr. ejer (viser husstanden samlet, ikke en flad liste) + en tabel over `family_invites` med status. Krævede en RLS-migration (`admin_can_read_family_invites`) — `family_members` tillod allerede admin-læsning, men `family_invites` kun inviteren/den der accepterede selv. **Handlingsmuligheder tilføjet 24. sept. 2026** — "fjern medlem" (×-knap på hver medlem-pille) og "annullér" på afventende invitationer. Krævede endnu en RLS-migration (`admin_can_manage_family_data`): `family_members`s DELETE-policy manglede admin-bypass, og `family_invites` havde slet ingen DELETE-policy overhovedet (hverken for ejer eller admin — invitationer kunne kun oprettes/læses, aldrig slettes via REST). **Global søgning** (`GlobalSearchBox.jsx`, samme dag) — en søgeboks i topbaren (uafhængig af hvilken fane admin står på), søger parallelt i brugere/produkter/tickets, klik på et resultat skifter til den relevante fane og forudfylder dens søgefelt. Begge kun på desktop.
+|---|---|
+| Madspild-tilbud ("i køleskabet") | `food-waste`-funktionen virker (Salling API, `SALLING_API_TOKEN`), men UI-knappen er fjernet fra `ResultScreen.jsx`. Genoptag ved at koble `useFoodWaste` (`src/useFoodWaste.js`) på en skærm igen (se git-historik omkring 17. sept. 2026 for den gamle UI) |
+| Leksikon 1000+ entries | Planlagt; i dag ca. 770 |
+| Desktop-admin | Alle faner er bygget (se §2). Mobil-adminens Debug-fane (`getTraceLog()`) er bevidst ikke porteret. Detaljer om hver fane og de tilhørende RLS-migrationer (`admin_can_write_user_allergens`, `admin_can_read_family_invites`, `admin_can_manage_family_data`) står i `.claude/HISTORY.md` |
 
-**Med dette er hele "nye funktioner"-backlogget fra 24. sept. 2026 gennemført** (8/8 punkter: produkt-database, leksikon, ændringshistorik, brugere-redigering inkl. allergener, bulk-handlinger, dashboard-trends, CSV-eksport, familie-overblik + global søgning). Debug-fanen (mobil-appens `getTraceLog()`) er bevidst IKKE porteret — den er session-lokal til den enhed der scanner, og giver ikke mening i et separat desktop-panel |
+## 9. Notifikationer (live siden 1. okt. 2026)
 
-## 14. Notifikationer (trin 1 færdig 30. sept. 2026, ikke i produktion før merge)
-
-Grundlag: udviklerpakken "EatSafe-samlet-udviklerpakke". Kravet: push er kun den
+Kravet: push er kun den
 korte tekst og åbner den fulde, beskyttede besked i appen via
 `https://www.eatsafe.dk/?notification={id}`. Én fælles indholdskilde til push, app og mail.
 
@@ -586,7 +163,7 @@ indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push
   `20261001081923_notifications_delete_own.sql`; sletter også afsendelsesregistret via
   cascade; sletning er permanent, og en slettet besked vises i appen som "ikke længere
   tilgængelig", hvis et gammelt push-link åbnes), `notification_deliveries` (afsendelsesregister, endpoint
-  som hash), `app_flags` (`notifications_push_enabled`, **starter FRA**).
+  som hash), `app_flags` (`notifications_push_enabled`, `notifications_email_enabled`; begge TIL siden 1. okt. 2026, sættes de til false, er det en rollback — beskeder i appen påvirkes ikke).
 - **Triggere** (`20260930135839_..._triggers_and_dispatch.sql`): indsendelse godkendt/afvist
   (N2a/N2b/N3, plus N4 "produkt nu tilgængeligt" ved ny godkendt produktindsendelse),
   invitation accepteret (N5), feedback statusskift eller nyt svar (N6, fire varianter).
@@ -600,29 +177,23 @@ indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push
   `renderNotification`, testet i `src/notificationContent.test.js`) og `webpush.ts` (VAPID
   med `aud` pr. push-tjeneste, aes128gcm, `sendWebPush`; testet i `src/webpush.test.js`).
   `send-push` bruger nu den delte afsender.
-- **Rettet undervejs:** VAPID-`aud` var fast FCM (Apple/Mozilla afviste); `/badge-72.png`
-  findes ikke; N4 blev aldrig sendt (forkerte kolonnenavne); N3 uden begrundelse; push blev
-  sendt fra browseren. Klient-push i `useAdmin.js`/`useIncomingLinks.js` er fjernet.
 - **Regel:** er både push og mail fravalgt for en kategori, oprettes ingen besked (udviklerpakken).
-- **Trin 2 (app, i PR): ** `SCREENS.NOTIFICATIONS` (oversigt, tid, læst/ulæst) og `SCREENS.NOTIFICATION`
+- **App-visning:** `SCREENS.NOTIFICATIONS` (oversigt, tid, læst/ulæst) og `SCREENS.NOTIFICATION`
   (den fulde besked, tegnet af `NotificationBlocks.jsx` fra de gemte blokke). Ruten `?notification={id}`
   læses i `useNotifications.js`, gemmes i localStorage (`as_pending_notification`) gennem login og åbnes
   efter onboarding; ugyldigt id ignoreres. Anden konto/slettet/udløbet giver samme neutrale side (RLS) med
   "Log ind med en anden konto". Læst sættes først efter visning (`mark_notification_read`). `open_ticket`-
   knappen vises først i trin 4. Menupunkt "Beskeder" med ulæst-tæller i `ProfileMenu.jsx`.
-- **Mangler (trin 3-4):**  pushvarianter + 30 mails koblet på rigtige hændelser, nye indstillingskategorier,
-  P1/P3/P6 og egne ticket-visninger. Mail bruger stadig de gamle triggere/skabeloner.
-- **Push-flaget må ikke tændes**, før beskedsiden er i produktion og testet.
-- **Trin 3a (mail, live i DB, notify i PR):** `notify` sender også mail via Resend-skabelonerne
+- **Mail:** `notify` sender også mail via Resend-skabelonerne
   (`supabase/templates/resend/`, id'er i `_shared/mailSend.ts`) for N2a/N2b/N3/N4/N5/N6a-d, når
   `app_flags.notifications_email_enabled` er tændt (starter FRA) og brugeren ikke har slået mail fra
-  for kategorien. Når flaget tændes, springer de gamle triggere `send_submission_email` og
+  for kategorien. Er flaget tændt, springer de gamle triggere `send_submission_email` og
   `send_ticket_email` over (ingen dobbelt-mails). Værdier HTML-escapes i `buildMailVariables`; mailens
   variabler er de samme rensede værdier som appens besked (`renderNotification().mailVars`).
   `src/mailSend.test.js` sikrer, at hver skabeloneks tekst indeholder alle blokke fra appens besked.
   `notification_deliveries.endpoint` er nu NOT NULL ('' for mail) med almindeligt UNIQUE (det gamle
-  udtryks-indeks kunne ikke bruges til upsert). **Mail er ikke testet live** (ingen rigtige mails i test).
-- **Trin 3b/3c (kategorier, P2, P3):** fire nye kategorier i `notification_preferences`
+  udtryks-indeks kunne ikke bruges til upsert).
+- **Kategorier, P2, P3:** fire nye kategorier i `notification_preferences`
   (`product_changes`, `shared_lists`, `recalls`, `onboarding_reminder`). Standard pr. kategori ligger i
   `notification_enabled()`: **fra** for `shared_lists` og `onboarding_reminder`, **til** for resten;
   `notify` bruger funktionen (ikke længere egne tjek), og `useNotificationPrefs.js` skal matche
@@ -636,7 +207,7 @@ indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push
   modtager varer tilføjet af *andre* (ejer + nuværende adgangsbrugere), varenavne kun i app/mail, ikke i push.
   Varer tilføjet efter afsendelsen i samme vindue får først en besked, hvis der kommer en ny tilføjelse i
   næste vindue (bevidst grænse: højst én besked pr. modtager pr. liste pr. 30 min).
-- **Trin 4 + N1/P4 (30. sept. 2026):** *Se din feedback*: `SCREENS.TICKET` (`TicketScreen.jsx`) viser egen ticket
+- **Ticket-visning, N1, P4:** *Se din feedback*: `SCREENS.TICKET` (`TicketScreen.jsx`) viser egen ticket
   (tilbagemelding, status, teamets svar) og åbnes fra `open_ticket` på beskedsiden (RLS: kun ejeren).
   **N1** (velkomstmail efter onboarding): `users.welcome_sent_at`; trigger `on_onboarding_completed` sender
   én gang, når `onboarding_completed` bliver true og e-mailen er bekræftet (adressen hentes fra `auth.users`);
@@ -649,15 +220,14 @@ indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push
 
 - **Testbrugerliste (30. sept. 2026):** `app_flags.notifications_test_users` (jsonb-liste af bruger-id'er).
   `notification_flag(key, user)` er sand, hvis det globale flag er tændt ELLER brugeren står på listen; push, mail,
-  `notify`, de fire mailtriggere og `delete-user` bruger den. Så kan én testkonto få rigtige push/mails, mens alle
-  andre er uberørte. Testplan: `docs/notifikationer-testplan.md`. Ryd listen ved go-live.
+  `notify`, de fire mailtriggere og `delete-user` bruger den. Listen er tom efter go-live; bruges ved nye varianter. Testplan: `docs/notifikationer-testplan.md`.
 - **P1 (30. sept. 2026):** trigger `on_products_allergen_change` (migration `20260930152251`) lægger hændelsen
   `product_allergen_changed` i outboxen, når et allergenflag får HØJERE risiko (`allergen_risk_rank`: nej 0, uoplyst 1,
   spor 2, ja 3); faldende risiko giver ingen besked. Hændelsen udskydes 10 min. `notify` genvurderer mod produktets
   aktuelle flag og finder modtagere via favoritter, aktuelle lister (ejer + adgang) og scanninger de sidste 90 dage,
   kun hvis egne eller administrerede profilers allergener berøres (`affectedAllergenChanges` i `notifyHelpers.js`).
   Kategori `product_changes` (standard TIL) er nu synlig i Indstillinger. **P5 er droppet** (Jan, 30. sept.).
-  **P6** afventer adgang til Fødevarestyrelsen (domænet er blokeret i cloud-miljøets netværksliste).
+
 - **P6 (30. sept. 2026):** tabel `recalls` (kun admin kan læse) + edge-funktionen `recalls-sync` (service-role, cron
   `notify-recalls-sync` dagligt kl. 06:07 UTC) henter Fødevarestyrelsens RSS-feed
   (`foedevarestyrelsen.dk/handlers/DynamicRss.ashx?id=8c2cdc12-...`), læser hver ny side (`_shared/recallParser.js`) og
@@ -688,7 +258,7 @@ bruger dem ved afsendelse via `renderNotification(key, data, { pushOverride })` 
 `{{variabler}}` fra notifikationens egne vars er tilladt (`validatePushOverride`). Mail rettes stadig kun i Resend, og
 beskeden i appen er uændret.
 
-## 15. Fælles to do-liste i admin-panelet (1. okt. 2026)
+## 10. Fælles to do-liste i admin-panelet (1. okt. 2026)
 
 Fanen **To do** i `eatsafe.dk/admin.html` (`src/admin/sections/TodoSection.jsx`, data-hook `useAdminTodos.js`,
 ren logik `todoLogic.js` med tests). Tabeller (migration `20261001062300_admin_todos.sql`), begge kun for admins (RLS via `is_admin`):
@@ -702,8 +272,7 @@ ren logik `todoLogic.js` med tests). Tabeller (migration `20261001062300_admin_t
 Funktioner: hurtig tilføjelse (titel + Enter, spor, prioritet, ansvarlig), visninger Åbne/Mine/Uden ansvarlig/Færdige/Alle med
 tællere, filtre på spor og ansvarlig, fritekstsøgning, afkrydsning direkte i listen, redigering og kommentarer i et vindue,
 "Kopiér som prompt" til en Claude Code-session, og automatisk genindlæsning hvert 30. sekund, mens fanen er åben.
-Menupunktet viser et rødt tal for åbne opgaver med høj prioritet (ikke ventende) eller overskredet frist. Listen er fyldt med
-de åbne punkter fra CLAUDE.md pr. 30. sept. 2026. **Claude kan læse og skrive den med SQL** (`admin_todos`); hold den opdateret,
+Menupunktet viser et rødt tal for åbne opgaver med høj prioritet (ikke ventende) eller overskredet frist. **Claude kan læse og skrive den med SQL** (`admin_todos`); hold den opdateret,
 når et punkt klares, eller et nyt opstår. Dokumentér ikke åbne punkter to steder.
 
 **Tickets og to do er flettet sammen (1. okt. 2026, migration `20261001092359_tickets_todos_sync.sql`).** `admin_todos.ticket_id`
@@ -720,15 +289,15 @@ henter som standard kun åbne/aktive; de færdige hentes først, når Færdige/A
 
 **Link fra opgave til ticket (2. okt. 2026):** en opgave, der stammer fra en ticket (`admin_todos.ticket_id`), har knappen "Åbn ticket" i listen og i opgavens vindue. Den skifter til fanen Tickets og åbner ticketten via `openTicketById(id)` i `useAdmin.js`, som henter ticketten direkte (virker også for løste tickets, som ikke står i den indlæste liste).
 
-## 16. Auth-mails fra Resend via Send Email Hook (1. okt. 2026)
+## 11. Auth-mails fra Resend via Send Email Hook (slået til 1. okt. 2026)
 
 Supabase Auth kan sende sine mails på to måder, og begge går gennem Resend:
 
-1. **SMTP (i dag):** Auth bygger selv mailen ud fra skabelonerne i Supabase (emne + HTML) og afleverer den til Resends SMTP
-   (`smtp.resend.com`, `noreply@eatsafe.dk`). Skabelonerne sættes af `.github/workflows/deploy-auth-templates.yml`, der kræver, at
-   `SUPABASE_ACCESS_TOKEN` har rettigheden til at skrive auth-konfiguration (mangler den, fejler jobbet med 403, og mailen forbliver
-   Supabases engelske standard).
-2. **Send Email Hook (slået til 1. okt. 2026):** Auth kalder edge-funktionen `auth-send-email`, som sender mailen via Resends API.
+1. **SMTP (tilbagerulning):** Auth bygger selv mailen ud fra skabelonerne i Supabase (emne + HTML) og afleverer den til Resends SMTP
+   (`smtp.resend.com`, `noreply@eatsafe.dk`). Skabelonerne kan sættes af `.github/workflows/deploy-auth-templates.yml`, som siden 2. okt. 2026 kun kører manuelt
+   (tilbagerulning, hvis hook'en slås fra) og kræver, at `SUPABASE_ACCESS_TOKEN` har rettigheden til at skrive auth-konfiguration
+   (i dag giver den 403, så Supabases egne skabeloner er ikke ajour).
+2. **Send Email Hook (i dag):** Auth kalder edge-funktionen `auth-send-email`, som sender mailen via Resends API.
    Hook'en erstatter SMTP, mens den er slået til; slås den fra, bruges SMTP + skabelonerne igen (nem tilbagerulning).
 
 **Kilden til tekst og design er den samme:** `supabase/templates/auth/` (`templates.json` + én HTML-fil pr. skabelon, i Supabases
@@ -756,16 +325,9 @@ Kontoen låses ikke, og intet ændres ved den. Kun recovery-mailen har linket (m
 
 **Mørk tilstand (1. okt. 2026, Bjørn):** alle 28 mails (6 auth + 22 Resend) har samme mørke palette, Outlook-regler (`data-ogsc`/`data-ogsb`) og et logo, der skifter til en mørk version; se afsnittet "Mørk tilstand" i `supabase/templates/resend/README.md` og testen `src/mailDarkMode.test.js`.
 
-**Status 1. okt.:** hook'en er slået til og testet end-to-end med en testkonto (plus-adresser, derefter slettet): glemt adgangskode, oprettelse
-("Bekræft din e-mail – EatSafe"; linket giver 303 til `eatsafe.dk` med `type=signup`, og appen viser "Din e-mail er bekræftet" → Fortsæt opsætning,
-når service workeren allerede er installeret; i en helt ny browser kan SW-reloadet springe den skærm over, og brugeren lander direkte i onboarding) og
-skift af e-mail med Secure email change (to danske mails, begge links virker, adressen i `auth.users` skiftes). `public.users.email`
-følger med ved et e-mailskift via triggeren `on_auth_user_email_changed` (migration `20261001113232`, testet i en rullet tilbage transaktion);
-appen har i øvrigt ingen skærm til at skifte e-mail. Magic link, invitation og genbekræftelse bruges ikke i appen.
-
-**Sådan blev den slået til (Jan, i Supabase Dashboard; samme trin ved en ny opsætning):**
+**Opsætning (Supabase Dashboard; samme trin ved en ny opsætning):**
 1. Authentication → Auth Hooks → Send Email → HTTPS, URL `https://jegrpcflyguadyxialkm.supabase.co/functions/v1/auth-send-email`,
-   opret hemmeligheden (`v1,whsec_…`), men lad hook'en være SLÅET FRA.
+   opret hemmeligheden (`v1,whsec_…`), men lad hook'en være slået fra.
 2. Edge Functions → Secrets: tilføj `SEND_EMAIL_HOOK_SECRET` med hemmeligheden. (`RESEND_API_KEY` findes allerede.)
 3. Slå hook'en TIL, og test straks: opret en testkonto med en plus-adresse (bekræftelse) og brug "Glemt adgangskode" (recovery); tjek
    mailen i Resend. Går noget galt: slå hook'en fra igen.
