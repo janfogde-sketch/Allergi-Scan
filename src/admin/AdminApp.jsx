@@ -18,6 +18,9 @@ import KnowledgeSection from "./sections/KnowledgeSection.jsx";
 import HistorySection from "./sections/HistorySection.jsx";
 import FamilySection from "./sections/FamilySection.jsx";
 import ErrorsSection from "./sections/ErrorsSection.jsx";
+import RecallsSection from "./sections/RecallsSection.jsx";
+import { useAdminRecalls } from "./useAdminRecalls.js";
+import { needsReviewCount } from "./recallLogic.js";
 import TodoSection from "./sections/TodoSection.jsx";
 import { useAdminTodos } from "./useAdminTodos.js";
 import { attentionCount } from "./todoLogic.js";
@@ -34,6 +37,7 @@ export default function AdminApp() {
   const [section, setSection] = useState("dashboard");
   const clientErrors = useClientErrors(accessToken);
   const todos = useAdminTodos(isAdmin ? accessToken : null, { active: section === "todo" });
+  const recalls = useAdminRecalls(isAdmin ? accessToken : null);
 
   // ── Manglende EAN'er (porteret fra App.jsx — samme logik) ────────────────
   const [missingEans, setMissingEans] = useState([]);
@@ -145,6 +149,7 @@ export default function AdminApp() {
     if (section === "family") admin.loadFamilyOverview();
     if (section === "errors") clientErrors.load();
     if (section === "todo") todos.load();
+    if (section === "recalls") recalls.load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section, accessToken, isAdmin]);
 
@@ -202,6 +207,7 @@ export default function AdminApp() {
       pendingSubmissions={admin.adminStats?.pending_submissions}
       openTickets={admin.adminStats?.open_tickets}
       todoAttention={attentionCount(todos.todos)}
+      pendingRecalls={needsReviewCount(recalls.recalls)}
       topbarExtra={
         <GlobalSearchBox
           globalSearch={admin.globalSearch} setGlobalSearch={admin.setGlobalSearch}
@@ -304,6 +310,7 @@ export default function AdminApp() {
         />
       )}
       {section === "errors" && <ErrorsSection {...clientErrors} />}
+      {section === "recalls" && <RecallsSection {...recalls} />}
       {section === "todo" && <TodoSection {...todos} userId={userId} />}
       {section === "family" && (
         <FamilySection
