@@ -171,8 +171,12 @@ deres beslutning. Fjern dette afsnit når det er afklaret.
 
 **E-mailbekræftelse (D1) er løst 30. sept. 2026.** Egen SMTP via Resend
 (`smtp.resend.com:465`, bruger `resend`, afsender `noreply@eatsafe.dk`,
-mailgrænse 100/time), "Confirm email" er slået til, og velkomstmailen
-sendes først ved bekræftelse (`supabase/sql/2026-09-29_welcome_email_after_confirm.sql`).
+mailgrænse 100/time), og "Confirm email" er slået til. Velkomstmailen sendes
+nu først efter onboarding (se "Oprettelse og e-mailbekræftelse" i afsnit 5).
+**Der findes kun én velkomstmail (1. okt. 2026):** HTML'en i
+`supabase/templates/resend/N1-velkomst.html`, sendt af `send-email` (type
+`welcome_onboarded`). Skabelonen "EatSafe N1 – Velkomst" i Resend er kun en
+kopi af den; den gamle "Velkomstmail - Beta" og typen `welcome` er slettet.
 Bekræftelseslinket lander i onboarding, også når en anden konto var logget
 ind i browseren (PR #406, `arrivedViaAuthLinkRef` i `useAuth.js`).
 Verificeret live og ticket `cc121cd9` lukket.
