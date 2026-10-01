@@ -702,6 +702,23 @@ export const MADPAS_SAFETY_NOTE_T = {
   el:"Παρακαλώ φροντίστε το φαγητό μου να μην περιέχει το ακόλουθο: {name}, ή οποιοδήποτε συστατικό που παράγεται από αυτό.",
 };
 
+// Madpas-specifikke eksempler (1. okt. 2026): mælk viser ikke "Mælk" som
+// eksempel på sig selv, men "Fløde · Smør · Ost · Valle · Mælkepulver".
+// Går forud for ALLERGEN_EXAMPLES i madpasAllergenExamples().
+export const MADPAS_EXAMPLES_OVERRIDE = {
+  maelkeallergi: {
+    da:["Fløde","Smør","Ost","Valle","Mælkepulver"], en:["Cream","Butter","Cheese","Whey","Milk powder"],
+    de:["Sahne","Butter","Käse","Molke","Milchpulver"], fr:["Crème","Beurre","Fromage","Lactosérum","Lait en poudre"],
+    es:["Nata","Mantequilla","Queso","Suero","Leche en polvo"], it:["Panna","Burro","Formaggio","Siero","Latte in polvere"],
+    nl:["Room","Boter","Kaas","Wei","Melkpoeder"], pt:["Natas","Manteiga","Queijo","Soro","Leite em pó"],
+    pl:["Śmietana","Masło","Ser","Serwatka","Mleko w proszku"], sv:["Grädde","Smör","Ost","Vassle","Mjölkpulver"],
+    no:["Fløte","Smør","Ost","Myse","Melkepulver"], ja:["クリーム","バター","チーズ","乳清","粉乳"],
+    zh:["奶油","黄油","奶酪","乳清","奶粉"], ar:["كريمة","زبدة","جبن","مصل اللبن","حليب مجفف"],
+    tr:["Krema","Tereyağı","Peynir","Peynir altı suyu","Süt tozu"], th:["ครีม","เนย","ชีส","เวย์","นมผง"],
+    el:["Κρέμα γάλακτος","Βούτυρο","Τυρί","Ορός γάλακτος","Γάλα σε σκόνη"],
+  },
+};
+
 // Direkte første sætning pr. fødevareallergi i Madpas (1. okt. 2026, Bjørn:
 // "I have a food allergy to milk."), før sikkerhedssætningen ovenfor.
 export const MADPAS_ALLERGY_STATEMENT_T = {

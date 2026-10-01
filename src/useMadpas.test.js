@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { madpasSafetyNote, madpasCrossContactNote, madpasAllergyStatement } from "./useMadpas.js";
+import { madpasSafetyNote, madpasCrossContactNote, madpasAllergyStatement, madpasAllergenExamples } from "./useMadpas.js";
 
 describe("Madpas-sætninger", () => {
   it("sænker navnet midt i sætningen på dansk/engelsk", () => {
@@ -23,5 +23,10 @@ describe("Madpas-sætninger", () => {
     expect(madpasSafetyNote("Kiwi", "en")).toBe("Please make sure my food does not contain kiwi or any ingredients made from kiwi.");
     expect(madpasSafetyNote("Mælk", "da", "maelkeallergi")).toContain("ikke indeholder mælk");
     expect(madpasAllergyStatement("Mælk", "da")).toBe("Jeg har fødevareallergi over for mælk.");
+  });
+
+  it("viser mælkens eksempler uden 'Milk' selv", () => {
+    expect(madpasAllergenExamples("maelkeallergi", "en")).toEqual(["Cream","Butter","Cheese","Whey","Milk powder"]);
+    expect(madpasAllergenExamples("maelkeallergi", "da")).toContain("Mælkepulver");
   });
 });
