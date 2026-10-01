@@ -258,7 +258,7 @@ det er bevidst fravalgt). Det åbner `ProfileMenu.jsx`, en slide-out-menu fra h�
 som indeholder:
 - En profil-hero (initialer + navn) øverst → navigerer til selve `SCREENS.PROFILE`-siden
 - Menupunkter: Favoritter, Familie, Scanningshistorik, Opskrifter, Viden, Madpas,
-  Restaurantguide, (Admin hvis brugeren er admin)
+  (Admin hvis brugeren er admin)
 
 `ProfileScreen.jsx` selv indeholder nu kun profil-hero + allergioversigt + konto
 (log ud/slet konto) — den gamle liste af menu-links er flyttet til `ProfileMenu.jsx`.
@@ -282,7 +282,7 @@ siddende fast på viewporten. **Løsning:** render den slags overlays via
 | SEARCH | SearchScreen.jsx | Bundmenu (højre) — autofokus på søgefelt ved åbning |
 | LIST | ListScreen.jsx | Bundmenu (venstre) |
 | PROFILE / EDITPROFILE | ProfileScreen.jsx | Hamburger-menu → profil-hero |
-| FAMILY, FAVORITES, HISTORY, RECIPES, KNOWLEDGE, MADPAS, RESTAURANTGUIDE, ADMIN | respektive filer | Hamburger-menu → ProfileMenu.jsx |
+| FAMILY, FAVORITES, HISTORY, RECIPES, KNOWLEDGE, MADPAS, ADMIN | respektive filer | Hamburger-menu → ProfileMenu.jsx |
 | NOTFOUND, SUBMITTED | NotFoundScreen.jsx, SubmittedScreen.jsx | Efter mislykket scan → 5-trins indsendelse |
 | SUGGEST_EDIT | SuggestEditScreen.jsx | Fra ResultScreen ("Ret forkerte data") |
 | WELCOME, LOGIN, ONBOARD | OnboardingScreen.jsx | Første besøg |
@@ -937,14 +937,16 @@ finpolish (lodret rytme, Feedback-knappens skygge/kant, juridisk teksts
 linjebrud). Alt ovenstående + Opret konto/Log ind- og Onboarding trin
 1-rundene (se deres egne afsnit) hører under samme MASTER PROMPT-brief.
 
-**Flaget, ikke rettet:** `SCREENS.RESTAURANTGUIDE` har ingen
-navigations-indgang i den nuværende UI (fjernet fra ProfileMenu.jsx på et
-tidspunkt, ikke erstattet) — en produkt-/navigationsbeslutning, ikke en
-styling-fix.
+**Restaurantguide droppet (1. okt. 2026, Bjørns beslutning):** siden
+(`RestaurantGuideScreen.jsx`, `SCREENS.RESTAURANTGUIDE`) havde ingen indgang i
+menuen og er slettet helt, inkl. hjælpetekst og ikonerne `door`/`building`.
+Madpas dækker behovet for at vise sine allergier til personale. Skal den
+genopstå, kan filen hentes fra git-historikken. `SCR-20` i `PAGE_IDS` er
+ikke genbrugt, da id'erne ligger i gemte feedback-tickets.
 
 **Resterende (ikke startet):** navigation/topbar/bottom-nav-gennemgang
 (stikprøve viste allerede konsistente komponenter, ingen fund udover
-RestaurantGuide-fundet ovenfor), mikrocopy-gennemgang, tilgængelighedstjek,
+Restaurantguide-fundet ovenfor (siden er siden droppet)), mikrocopy-gennemgang, tilgængelighedstjek,
 og en afsluttende cross-page-visuel-konsistens-sammenligning. De fleste af
 brief'ens punkter om Scan-flow/Produktside/Indstillinger-struktur er
 allerede dækket af de separate runder beskrevet ovenfor i dette afsnit.

@@ -952,8 +952,7 @@ export default function OnboardingScreen({
                 position:relative på selve heading-blokken, da knappen
                 positioneres absolut i forhold til den. Samme delte
                 boks-mønster (kant + Icon name="chevronLeft") som
-                KnowledgeScreen.jsx/RecipesScreen.jsx/
-                RestaurantGuideScreen.jsx. */}
+                KnowledgeScreen.jsx/RecipesScreen.jsx. */}
             {!editMode && (
               <div style={{ position:"relative", textAlign:"center", padding:"44px 0 20px" }}>
                 {onboardStep > 1 && (

@@ -14,7 +14,7 @@
 // header-logik gælder.
 //
 // Undersider med egen "tilbageknap + titel"-navigation (fx Allergileksikon,
-// Restaurantguide, Rediger familiemedlem) renderer FORTSAT denne header
+// Rediger familiemedlem) renderer FORTSAT denne header
 // øverst, uændret — kun deres eget indhold nedenfor har en ekstra,
 // skærm-specifik back-button-række. Ikke ændret i denne omgang, se
 // CLAUDE.md's note om punkt 6 i brief'en.
@@ -44,12 +44,15 @@ import { SCREENS } from "./constants.jsx";
 import { EatSafeWordmark } from "./SharedComponents.jsx";
 
 // Skærme hvor hamburger-knappen får en lille grøn prik — brugeren er "inde
-// i" en af menuens destinationer, så prikken markerer at menuen har en
-// aktiv/relevant tilstand at vende tilbage til.
+// i" en af menuens destinationer (ProfileMenu.jsx) eller en underside til
+// dem, så prikken markerer at menuen har en aktiv/relevant tilstand at
+// vende tilbage til. Historik er IKKE med: den er en fast fane i
+// bundnavigationen, ikke et menupunkt (rettet 1. okt. 2026, brugerrapport).
+// Hold listen i takt med menupunkterne i ProfileMenu.jsx.
 const MENU_DOT_SCREENS = [
-  SCREENS.PROFILE, SCREENS.EDITPROFILE, SCREENS.EDITPREFERENCES, SCREENS.HISTORY,
-  SCREENS.FAVORITES, SCREENS.FAMILY, SCREENS.ADMIN, SCREENS.MADPAS,
-  SCREENS.RESTAURANTGUIDE, SCREENS.RECIPES, SCREENS.KNOWLEDGE,
+  SCREENS.PROFILE, SCREENS.EDITPROFILE, SCREENS.EDITPREFERENCES,
+  SCREENS.NOTIFICATIONS, SCREENS.FAVORITES, SCREENS.FAMILY, SCREENS.ADMIN,
+  SCREENS.MADPAS, SCREENS.RECIPES, SCREENS.KNOWLEDGE, SCREENS.SETTINGS,
 ];
 
 export default function AppHeader({ screen, onFeedback, onMenu }) {

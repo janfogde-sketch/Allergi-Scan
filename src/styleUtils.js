@@ -107,7 +107,7 @@ export const UI = {
   // 18px→16px (27. sept. 2026, MASTER PROMPT-audit) — matcher nu samme
   // titel-størrelse som .screen-title (theme.jsx), som var det eneste
   // reelle udsving fra appens titel-skala for denne "tilbageknap +
-  // titel/undertekst"-header-mønster (RestaurantGuideScreen, RecipesScreen).
+  // titel/undertekst"-header-mønster (RecipesScreen).
   ufs18_fw800_cink: { fontSize:16, fontWeight:800, color:"var(--ink)" },
   ubgpaper2_cmuted2_bdcborder: { background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" },
   udflex_aicenter_g6_p8px12px_bgsurface_bd1pxsolid_br10: { display:"flex", alignItems:"center", gap:6, padding:"8px 12px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10 },

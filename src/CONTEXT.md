@@ -79,7 +79,7 @@ src/
 ├── ProfileMenu.jsx           # Slide-out menu fra højre (åbnes via hamburger-ikon i
 │                             #   topbar) — profil-hero + links til Favoritter, Familie,
 │                             #   Scanningshistorik, Opskrifter, Viden, Madpas,
-│                             #   Restaurantguide, Admin. Portal til document.body.
+│                             #   Admin. Portal til document.body.
 ├── OnboardingScreen.jsx      # WELCOME, LOGIN, ONBOARD
 ├── KnowledgeScreen.jsx       # KNOWLEDGE — Leksikon
 ├── RecipesScreen.jsx         # RECIPES — opskrifter (gradient header)
@@ -151,8 +151,8 @@ src/
 | MADPAS | MadpasScreen | Madpas (kun on-device, intet link/QR) |
 
 Bundmenu (opdateret sept. 2026): `Indkøbsliste (venstre) → Scan (midten, barcode-ikon)
-→ Søg (højre)`. Profil, Familie, Favoritter, Historik, Opskrifter, Viden, Madpas,
-Restaurantguide og Admin nås nu via et hamburger-menu-ikon i topbaren th., som åbner
+→ Søg (højre)`. Profil, Familie, Favoritter, Historik, Opskrifter, Viden, Madpas
+og Admin nås nu via et hamburger-menu-ikon i topbaren th., som åbner
 `ProfileMenu.jsx` (slide-out fra højre). Se `/CLAUDE.md` afsnit 3 for detaljer og
 begrundelse.
 

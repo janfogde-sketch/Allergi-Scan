@@ -214,11 +214,6 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
     utensils: <><path strokeLinecap="round" strokeLinejoin="round" d="M7 3v7a2 2 0 002 2h0a2 2 0 002-2V3M9 12v9M16 3c-1.5 1.5-2 3-2 6s.5 4.5 2 6v6"/></>,
     hash: <path strokeLinecap="round" strokeLinejoin="round" d="M5 9h14M5 15h14M10 4L8 20m8-16l-2 16"/>,
     zap: <path strokeLinecap="round" strokeLinejoin="round" d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>,
-    // Tilføjet 27. sept. 2026 (MASTER PROMPT-brief) for at erstatte emoji-
-    // brugt som ren UI-chrome i RestaurantGuideScreen.jsx's tip-kategori-
-    // ikonbokse (🚪/🏢) — ingen eksisterende ikon dækkede "dør"/"bygning".
-    door: <><rect x="6" y="3" width="12" height="18" rx="1" strokeWidth="1.75"/><circle cx="14.5" cy="12" r="1" fill="currentColor" stroke="none"/></>,
-    building: <><rect x="5" y="3" width="14" height="18" rx="1" strokeWidth="1.75"/><path strokeLinecap="round" d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/><path d="M10 21v-4h4v4"/></>,
     // "Sliders"-stil indstillings-ikon (25. sept. 2026, ProfileMenu.jsx's
     // "Indstillinger") — generisk nok til at dække notifikationer/sprog/
     // konto/app-præferencer efterhånden som de tilføjes, i stedet for et
