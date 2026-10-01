@@ -3,10 +3,9 @@ import React, { useState, useEffect, useMemo } from "react";
 import { showToast } from "../../SharedComponents.jsx";
 import {
   listNotifications, defaultPush, previewPush, overrideIsActive, validatePushOverride, pushVariablesFor,
-  VARIABLE_LABELS, PUSH_TITLE_MAX, PUSH_BODY_MAX,
+  VARIABLE_LABELS, PUSH_TITLE_MAX, PUSH_BODY_MAX, resendTemplateUrl,
 } from "../notificationAdminLogic.js";
 
-const RESEND_TEMPLATES_URL = "https://resend.com/templates";
 
 function PushPreview({ title, body }) {
   return (
@@ -31,7 +30,7 @@ function TestResult({ res }) {
   return <div className="info-box" role="status" style={{ marginTop: 12, fontSize: 13 }}>{lines.map((l) => <div key={l}>{l}</div>)}</div>;
 }
 
-export default function NotificationsSection({ admins, overrides, loading, load, savePush, sendTest, userId }) {
+export default function NotificationsSection({ admins, overrides, loading, load, savePush, sendTest, loadMailPreview, userId }) {
   const groups = useMemo(() => listNotifications(), []);
   const [selectedKey, setSelectedKey] = useState(groups[0]?.items[0]?.key);
   const selected = groups.flatMap((g) => g.items).find((i) => i.key === selectedKey);
@@ -43,6 +42,7 @@ export default function NotificationsSection({ admins, overrides, loading, load,
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState(null);
+  const [mailPreview, setMailPreview] = useState({ state: "idle" });
 
   // Ved skift af notifikation: vis den gemte tekst, ellers standardteksten
   useEffect(() => {
@@ -53,6 +53,19 @@ export default function NotificationsSection({ admins, overrides, loading, load,
   }, [selectedKey, saved?.updated_at]);
 
   useEffect(() => { if (!recipient && admins.length) setRecipient(admins.find((a) => a.id === userId)?.id ?? admins[0].id); }, [admins, userId, recipient]);
+
+  // Mailens forhåndsvisning hentes fra Resend ved skift af notifikation (og når modtageren ændres, pga. fornavnet)
+  const templateUrl = resendTemplateUrl(selectedKey);
+  useEffect(() => {
+    if (!templateUrl) { setMailPreview({ state: "none" }); return undefined; }
+    let cancelled = false;
+    setMailPreview({ state: "loading" });
+    loadMailPreview(selectedKey, recipient)
+      .then((d) => { if (!cancelled) setMailPreview({ state: "ok", html: d.html, status: d.status }); })
+      .catch((e) => { if (!cancelled) setMailPreview({ state: "error", error: e.message }); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedKey, recipient, templateUrl]);
 
   if (!selected) return null;
   const def = defaultPush(selectedKey);
@@ -139,9 +152,21 @@ export default function NotificationsSection({ admins, overrides, loading, load,
         <div className="admin-card">
           <div className="admin-label">Mail</div>
           {hasMail && <div style={{ fontSize: 13.5, marginBottom: 4 }}>Emne: <strong>{selected.def.mail.subject}</strong></div>}
-          <div style={{ fontSize: 13, color: "var(--ink2)", lineHeight: 1.5 }}>
-            Mailens design og tekst rettes i Resend. <a href={RESEND_TEMPLATES_URL} target="_blank" rel="noopener noreferrer" style={{ color: "var(--green)", fontWeight: 600 }}>Åbn Resend-skabeloner</a>
+          <div style={{ fontSize: 13, color: "var(--ink2)", lineHeight: 1.5, marginBottom: 12 }}>
+            Mailens design og tekst rettes i Resend.{" "}
+            {templateUrl
+              ? <a href={templateUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--green)", fontWeight: 600 }}>Åbn denne skabelon i Resend</a>
+              : "Denne notifikation har ingen mail."}
           </div>
+          {mailPreview.state === "loading" && <div className="admin-loading-row"><div className="admin-spinner" /> Henter mailen fra Resend…</div>}
+          {mailPreview.state === "error" && <div className="error-box" role="alert" style={{ fontSize: 13 }}>Kunne ikke vise mailen: {mailPreview.error}</div>}
+          {mailPreview.state === "ok" && (
+            <>
+              <div className="admin-label">Sådan ser mailen ud (med eksempeldata{mailPreview.status && mailPreview.status !== "published" ? `, skabelonen er ${mailPreview.status}` : ""})</div>
+              <iframe title={`Mail: ${selected.name}`} sandbox="" srcDoc={mailPreview.html}
+                style={{ width: "100%", height: 640, border: "1px solid var(--border)", borderRadius: 10, background: "#fff" }} />
+            </>
+          )}
         </div>
 
         <div className="admin-card">

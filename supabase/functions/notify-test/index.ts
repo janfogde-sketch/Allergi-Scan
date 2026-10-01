@@ -5,7 +5,8 @@
 // OG admin-rolle hos kalderen; modtageren skal også være admin, så testen aldrig rammer
 // almindelige brugere. Der oprettes ingen besked i appen og ingen hændelse — kun push og/eller mail.
 //
-// Kald: POST { userId, key, channels: ["push","mail"] }
+// Kald: POST { userId, key, channels: ["push","mail"] }      → send test
+//       POST { action: "preview", key, userId? }              → mailens HTML fra Resend med eksempeldata
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { renderNotification, DEFINITIONS } from "../_shared/notificationContent.js";
@@ -37,6 +38,26 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const key = String(body?.key ?? "");
   const userId = String(body?.userId ?? "");
+
+  // Forhåndsvisning: henter den PUBLICEREDE skabelon direkte fra Resend (sandheden om mailens design),
+  // så admin ser præcis det, der sendes, uden at en kopi i repoet kan være forældet.
+  if (body?.action === "preview") {
+    const def = DEFINITIONS[key as keyof typeof DEFINITIONS];
+    const templateId = RESEND_TEMPLATES[key];
+    if (!def) return json({ error: "Ukendt notifikation" }, 400);
+    if (!templateId) return json({ error: "Denne notifikation har ingen mail" }, 404);
+    const apiKey = Deno.env.get("RESEND_API_KEY") ?? "";
+    if (!apiKey) return json({ error: "RESEND_API_KEY mangler" }, 500);
+    const res = await fetch(`https://api.resend.com/templates/${templateId}`, { headers: { Authorization: `Bearer ${apiKey}` } });
+    const tpl = await res.json().catch(() => ({}));
+    if (!res.ok || !tpl?.html) return json({ error: `Kunne ikke hente skabelonen fra Resend (HTTP ${res.status})` }, 502);
+    const { data: who } = userId ? await db.from("users").select("name").eq("id", userId).maybeSingle() : { data: null };
+    const r = renderNotification(key, mockDataFor(key));
+    const vars = buildMailVariables(r.mailVars, who?.name || "Maria");
+    const html = String(tpl.html).replace(/\{\{\{\s*([a-zA-Z_]+)\s*\}\}\}/g, (_m, name) => vars[name] ?? "");
+    return json({ html, subject: r.mail.subject, templateId, status: tpl.status ?? null });
+  }
+
   const channels: string[] = Array.isArray(body?.channels) ? body.channels : [];
   if (!DEFINITIONS[key as keyof typeof DEFINITIONS]) return json({ error: "Ukendt notifikation" }, 400);
   if (!userId) return json({ error: "Vælg en modtager" }, 400);

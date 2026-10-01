@@ -2,6 +2,14 @@
 import { DEFINITIONS, renderNotification, validatePushOverride, pushVariablesFor, PUSH_TITLE_MAX, PUSH_BODY_MAX } from "../../supabase/functions/_shared/notificationContent.js";
 import { mockDataFor } from "../../supabase/functions/_shared/notificationMock.js";
 
+import { RESEND_TEMPLATES } from "../../supabase/functions/_shared/mailSend.ts";
+
+/** Direkte link til notifikationens mailskabelon i Resend (null hvis varianten ikke har nogen mail). */
+export function resendTemplateUrl(key) {
+  const id = RESEND_TEMPLATES[key];
+  return id ? `https://resend.com/templates/${id}` : null;
+}
+
 export { PUSH_TITLE_MAX, PUSH_BODY_MAX, pushVariablesFor, validatePushOverride };
 
 export const NOTIFICATION_NAMES = {
