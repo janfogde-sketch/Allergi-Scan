@@ -123,6 +123,8 @@ hvert tælleligt dansk substantiv skal have både ental og flertal ("hasselnød"
 `.claude/commands/mojibake-scan.md`). 4. Commit KUN specifikke filer, aldrig `git add -A`; dansk, kort besked med
 attributions-trailerne fra system-instruktionen. Commits batches lokalt, indtil hele opgaven er færdig.
 
+**Effektiv brug (spar usage):** én opgave pr. session (fx én to do), start en ny session til næste opgave; læs kun de filer, opgaven kræver; undgå at hente store udtræk (`get_advisors`, `list_migrations`, hele filer) uden behov. Små og klare opgaver løses direkte. Er en opgave stor eller risikabel (database, sikkerhed, politikker, flere skærme/filer), så foreslå en plan og vent på ja, før du retter. Stop-hookens "Please push" besvares med højst én kort linje.
+
 **Push er den ENESTE ting, der kræver eksplicit godkendelse.** Når opgaven er færdig: opsummér kort, og vent på Jans
 "push og merge"/lignende. Spørg ikke i hvert svar; nævn blot at der ligger lokale commits. Stop-hookens "Please push"-beskeder er
 ikke en godkendelse. Når godkendt: push → ÉN PR (dansk body, tjek PR-template, slut med footer + session-link) → squash-merge →
