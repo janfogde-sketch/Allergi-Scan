@@ -354,6 +354,8 @@ export const SCREENS = {
   // VERIFYEMAIL: "Bekræft din e-mail" efter oprettelse. BOOT: tom skærm mens
   // onboarding-status hentes ved appstart (se useAuth.js, ONBOARDED_KEY).
   VERIFYEMAIL:"verifyemail", BOOT:"boot",
+  // RESETPASSWORD: "Vælg ny adgangskode" efter linket i "Glemt adgangskode"-mailen.
+  RESETPASSWORD:"resetpassword",
   HOME:"home", SEARCH:"search",
   LIST:"list", PROFILE:"profile", FAMILY:"family",
   RESULT:"result", HISTORY:"history",
