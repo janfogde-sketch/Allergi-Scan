@@ -684,7 +684,7 @@ export const MADPAS_DIET_MESSAGE_T = {
 // i useMadpas.js, som erstatter ALLE forekomster, ikke kun den første.
 export const MADPAS_SAFETY_NOTE_T = {
   da:"Sørg venligst for, at min mad ikke indeholder {name} eller ingredienser fremstillet af {name}.",
-  en:"Please make sure my food does not contain {name} or ingredients made from {name}.",
+  en:"Please make sure my food contains no {name} or ingredients made from {name}.",
   de:"Bitte stellen Sie sicher, dass mein Essen Folgendes nicht enthält: {name}, oder Zutaten, die daraus hergestellt wurden.",
   fr:"Veuillez vous assurer que mon repas ne contient pas ce qui suit : {name}, ni aucun ingrédient qui en est dérivé.",
   es:"Por favor, asegúrese de que mi comida no contenga lo siguiente: {name}, ni ingredientes derivados de ello.",
@@ -700,6 +700,36 @@ export const MADPAS_SAFETY_NOTE_T = {
   tr:"Lütfen yemeğimde {name} veya {name}'den yapılan malzemeler bulunmadığından emin olun.",
   th:"กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มี {name} หรือส่วนผสมที่ทำจาก {name}",
   el:"Παρακαλώ φροντίστε το φαγητό μου να μην περιέχει το ακόλουθο: {name}, ή οποιοδήποτε συστατικό που παράγεται από αυτό.",
+};
+
+// Direkte første sætning pr. fødevareallergi i Madpas (1. okt. 2026, Bjørn:
+// "I have a food allergy to milk."), før sikkerhedssætningen ovenfor.
+export const MADPAS_ALLERGY_STATEMENT_T = {
+  da:"Jeg har fødevareallergi over for {name}.",
+  en:"I have a food allergy to {name}.",
+  de:"Ich habe eine Lebensmittelallergie gegen {name}.",
+  fr:"J'ai une allergie alimentaire : {name}.",
+  es:"Tengo una alergia alimentaria: {name}.",
+  it:"Ho un'allergia alimentare: {name}.",
+  nl:"Ik heb een voedselallergie voor {name}.",
+  pt:"Tenho uma alergia alimentar: {name}.",
+  pl:"Mam alergię pokarmową: {name}.",
+  sv:"Jag har matallergi mot {name}.",
+  no:"Jeg har matallergi mot {name}.",
+  ja:"私は{name}の食物アレルギーがあります。",
+  zh:"我对{name}有食物过敏。",
+  ar:"لدي حساسية غذائية من: {name}.",
+  tr:"Gıda alerjim var: {name}.",
+  th:"ฉันแพ้อาหาร: {name}",
+  el:"Έχω τροφική αλλεργία: {name}.",
+};
+// Engelsk "milk-derived"-form pr. allergen (1. okt. 2026). Bruges kun på
+// engelsk og kun for de faste allergener — fritekst falder tilbage til
+// "ingredients made from {name}".
+export const MADPAS_EN_DERIVED = {
+  maelkeallergi:"milk", aeg:"egg", jordnoedder:"peanut", noedder:"nut", hvede:"wheat",
+  gluten:"gluten", soja:"soy", fisk:"fish", skaldyr:"shellfish", bloeddyr:"mollusc",
+  selleri:"celery", sennep:"mustard", sesam:"sesame", lupin:"lupin", svovl:"sulphite",
 };
 
 // Krydskontaminerings-besked (27. sept. 2026, Madpas-finpolish, krav 7) —
@@ -786,7 +816,7 @@ export const MADPAS_EXAMPLES_LABEL_T = {
 // opfølgende polish-runde, krav 8) — hele visningen skal være på det
 // valgte sprog, inklusive knaptekster, ikke kun selve allergi-indholdet.
 export const MADPAS_SPEAK_LABEL_T = {
-  da:"Oplæs", en:"Read aloud", de:"Vorlesen", fr:"Lire à voix haute", es:"Leer en voz alta",
+  da:"Læs højt", en:"Read aloud", de:"Vorlesen", fr:"Lire à voix haute", es:"Leer en voz alta",
   it:"Leggi ad alta voce", nl:"Voorlezen", pt:"Ler em voz alta", pl:"Odczytaj na głos",
   sv:"Läs högt", no:"Les høyt", ja:"読み上げ", zh:"朗读", ar:"اقرأ بصوت عالٍ",
   tr:"Sesli oku", th:"อ่านออกเสียง", el:"Ανάγνωση φωναχτά",

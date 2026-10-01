@@ -680,6 +680,16 @@ allerede eksisterende — rettet med ét CSS-linje-skift). Fuld otte-runders
 dag-for-dag-detalje i `.claude/HISTORY.md`, backend-/struktur-reference i
 `src/CONTEXT.md` afsnit 10.
 
+**Finpolish 1. okt. 2026 (Bjørn):** hver fødevareallergi har nu et direkte
+to-sætnings-budskab ("I have a food allergy to milk." + "Please make sure my
+food contains no milk or milk-derived ingredients.", `MADPAS_ALLERGY_STATEMENT_T`
++ `MADPAS_EN_DERIVED` i constants.jsx, også i oplæsningen); "I am allergic
+to:"-linjen er fjernet; krydskontaminering står i en diskret lys orange
+boks; indholdet centreres lodret mellem sproglinjen og knappen; knappen
+hedder altid "Læs højt"/"Stop" (appens sprog). Mælkeikonet
+(`src/assets/icons/allergen-maelk.png`, bruges i hele appen) er skiftet fra
+et glas, der lignede 🥛-emojien, til karton + glas i samme 3D-stil.
+
 ### Profil restruktureret — "Rediger profil" og "Rediger præferencer" adskilt (28. sept. 2026)
 
 Profilsiden har to adskilte redigeringsskærme: `SCREENS.EDITPROFILE`
