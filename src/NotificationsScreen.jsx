@@ -1,12 +1,12 @@
 // @ts-nocheck
 // SCREENS.NOTIFICATIONS — oversigt over egne beskeder (nyeste først) med tid og
-// læst/ulæst. Åbnes fra hamburgermenuen ("Beskeder") og fra beskedsidens
-// tilbage-knap. Selve beskeden vises af NotificationScreen.jsx.
+// læst/ulæst. Åbnes fra hamburgermenuen ("Beskeder") og når en åbnet besked
+// lukkes (kryds). Selve beskeden vises af NotificationScreen.jsx.
 import React, { useEffect, useState } from "react";
 import { Icon, ConfirmDialog, showToast } from "./SharedComponents.jsx";
 import { timeAgo } from "./helpers.js";
 
-export default function NotificationsScreen({ items, loading, listError, loadList, onOpen, onDelete, onBack }) {
+export default function NotificationsScreen({ items, loading, listError, loadList, onOpen, onDelete }) {
   useEffect(() => { loadList(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // Besked, der afventer "Slet besked"-bekræftelse (ConfirmDialog, samme mønster som Familie/Indkøbsliste).
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -20,10 +20,8 @@ export default function NotificationsScreen({ items, loading, listError, loadLis
 
   return (
     <div className="screen fade-in">
-      <div style={{ display:"flex", alignItems:"center", gap:10, margin:"4px 0 14px" }}>
-        <button onClick={onBack} aria-label="Tilbage" className="legal-topbar-back" style={{ position:"static" }}>
-          <span className="legal-topbar-back-circle"><Icon name="chevronLeft" size={17} color="var(--ink)" /></span>
-        </button>
+      {/* Ingen tilbageknap (1. okt. 2026): Beskeder nås fra menuen og forlades via menuen/bundnavigationen. */}
+      <div style={{ margin:"4px 0 14px" }}>
         <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Beskeder</div>
       </div>
 

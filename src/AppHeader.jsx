@@ -40,22 +40,15 @@
 // ene, kompakte header-kontekst (og onboarding) er tekst-only.
 // ─────────────────────────────────────────────────────────────────────────────
 import React from "react";
-import { SCREENS } from "./constants.jsx";
 import { EatSafeWordmark } from "./SharedComponents.jsx";
 
-// Skærme hvor hamburger-knappen får en lille grøn prik — brugeren er "inde
-// i" en af menuens destinationer (ProfileMenu.jsx) eller en underside til
-// dem, så prikken markerer at menuen har en aktiv/relevant tilstand at
-// vende tilbage til. Historik er IKKE med: den er en fast fane i
-// bundnavigationen, ikke et menupunkt (rettet 1. okt. 2026, brugerrapport).
-// Hold listen i takt med menupunkterne i ProfileMenu.jsx.
-const MENU_DOT_SCREENS = [
-  SCREENS.PROFILE, SCREENS.EDITPROFILE, SCREENS.EDITPREFERENCES,
-  SCREENS.NOTIFICATIONS, SCREENS.FAVORITES, SCREENS.FAMILY, SCREENS.ADMIN,
-  SCREENS.MADPAS, SCREENS.RECIPES, SCREENS.KNOWLEDGE, SCREENS.SETTINGS,
-];
+// Den grønne prik på hamburgerknappen betyder én ting: der er ulæste beskeder
+// (1. okt. 2026, brugerrapport — den tidligere "du er inde i en menudestination"-
+// markering blev læst som "noget nyt" og forvirrede). Beskeder findes i menuen,
+// så prikken viser vej dertil, og den vises på alle skærme, så længe der er
+// ulæste. Tallet kommer fra useNotifications (samme som "N ulæste" i menuen).
 
-export default function AppHeader({ screen, onFeedback, onMenu }) {
+export default function AppHeader({ onFeedback, onMenu, unread = 0 }) {
   return (
     <header className="topbar">
       <div className="topbar-logo">
@@ -70,10 +63,10 @@ export default function AppHeader({ screen, onFeedback, onMenu }) {
           Feedback
         </button>
         {/* Menu-knap — profil, familie, favoritter, historik, opskrifter, viden m.m. */}
-        <button onClick={onMenu} aria-label="Åbn menu"
+        <button onClick={onMenu} aria-label={unread > 0 ? `Åbn menu (${unread} ulæste ${unread === 1 ? "besked" : "beskeder"})` : "Åbn menu"}
           style={{ position:"relative", background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:38, height:38, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"var(--sh)" }}>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2.2"><path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
-          {MENU_DOT_SCREENS.includes(screen) && (
+          {unread > 0 && (
             <span style={{ position:"absolute", top:-1, right:-1, width:9, height:9, borderRadius:"50%", background:"var(--green)", border:"1.5px solid var(--paper)" }} />
           )}
         </button>
