@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { SCREENS, SUPABASE_URL } from "./constants.jsx";
+import { SCREENS, SUPABASE_URL, DIETS_ENABLED } from "./constants.jsx";
 import { makeHeaders, apiCall, addUniqueCustom } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 import { Accordion } from "./DesignSystem.jsx";
@@ -63,15 +63,17 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
         </div>
       </div>
 
-      <div className="card" style={UI.mb10}>
-        <div className="card-lbl" style={UI.mb8}>Kostpræferencer</div>
-        <DietChipPicker selected={user.diets || []}
-          autoNote={glutenFreeAutoApplied ? { id:"gluten-free", text:"Valgt ud fra gluten" } : undefined}
-          onChange={arr => {
-            if (arr.includes("gluten-free") !== (user.diets||[]).includes("gluten-free")) setGlutenFreeAutoApplied(false);
-            setUser(u => ({ ...u, diets: arr }));
-          }} />
-      </div>
+      {DIETS_ENABLED && (
+        <div className="card" style={UI.mb10}>
+          <div className="card-lbl" style={UI.mb8}>Kostpræferencer</div>
+          <DietChipPicker selected={user.diets || []}
+            autoNote={glutenFreeAutoApplied ? { id:"gluten-free", text:"Valgt ud fra gluten" } : undefined}
+            onChange={arr => {
+              if (arr.includes("gluten-free") !== (user.diets||[]).includes("gluten-free")) setGlutenFreeAutoApplied(false);
+              setUser(u => ({ ...u, diets: arr }));
+            }} />
+        </div>
+      )}
 
       <div className="card" style={UI.mb10}>
         <Accordion label="Overvåg specifikke E-numre" count={selectedENumbers.length}
@@ -95,7 +97,8 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
             await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
               method:"PATCH",
               headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" },
-              body:JSON.stringify({ diets:user.diets||[], e_numbers:selectedENumbers||[] }),
+              // Mens kostpræferencer er på pause, røres de gemte valg ikke (sendes ikke med)
+              body:JSON.stringify({ ...(DIETS_ENABLED ? { diets:user.diets||[] } : {}), e_numbers:selectedENumbers||[] }),
             });
 
             // Samlet DELETE + én bulk-POST i stedet for et loop af enkelt-POSTs —

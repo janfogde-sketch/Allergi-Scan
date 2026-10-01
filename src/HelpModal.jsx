@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { Icon } from "./SharedComponents.jsx";
+import { DIETS_ENABLED } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
 
 const HELP_CONTENT = {
@@ -29,7 +30,7 @@ const HELP_CONTENT = {
     { icon:"check", title:"Afkryds og ryd", desc:"Tryk på en vare for at markere den som købt, og brug 'Ryd' for at fjerne alle købte varer på én gang." },
   ]},
   "profile": { title:"Profil", titleIcon:"profile", tips:[
-    { icon:"edit", title:"Mine præferencer", desc:"Allergier, diæter og E-numre du overvåges for — tryk 'Rediger' for at ændre dem." },
+    { icon:"edit", title:"Mine præferencer", desc:DIETS_ENABLED ? "Allergier, diæter og E-numre du overvåges for — tryk 'Rediger' for at ændre dem." : "Allergier, intolerancer og E-numre du overvåges for — tryk 'Rediger' for at ændre dem." },
     { icon:"family", title:"Din husstand", desc:"Konti du har inviteret deler automatisk scanningshistorik, favoritter og indkøbslister med dig." },
     { icon:"list", title:"Mine / Husstanden", desc:"Under historik og favoritter kan du skifte mellem kun dine egne og hele husstandens." },
   ]},
@@ -61,7 +62,7 @@ const HELP_CONTENT = {
   ]},
   "editprofile": { title:"Rediger profil", titleIcon:"edit", tips:[
     { icon:"profile", title:"Dit navn", desc:"Navnet bruges i appen og i mails fra EatSafe." },
-    { icon:"warning", title:"Allergier og præferencer", desc:"Allergier, intolerancer, diæter og E-numre ændrer du under 'Rediger præferencer' på din profil." },
+    { icon:"warning", title:"Allergier og præferencer", desc:DIETS_ENABLED ? "Allergier, intolerancer, diæter og E-numre ændrer du under 'Rediger præferencer' på din profil." : "Allergier, intolerancer og E-numre ændrer du under 'Rediger præferencer' på din profil." },
   ]},
   "suggest_edit": { title:"Foreslå rettelse", titleIcon:"edit", tips:[
     { icon:"camera", title:"Ingrediensliste", desc:"Fotografér etiketten og lad OCR læse teksten, eller ret ingredienserne manuelt." },
@@ -76,7 +77,7 @@ const HELP_CONTENT = {
     { icon:"🙏", title:"Tak for hjælpen", desc:"Din indsendelse gennemgås snarest og bliver synlig for andre, når den er godkendt." },
   ]},
   "knowledge": { title:"Leksikon", titleIcon:"book", tips:[
-    { icon:"search", title:"Søg eller filtrér", desc:"Søg efter et emne, eller vælg en kategori som allergener, E-numre eller diæter." },
+    { icon:"search", title:"Søg eller filtrér", desc:"Søg efter et emne, eller vælg en kategori som allergener og E-numre" + (DIETS_ENABLED ? " eller diæter." : ".") },
     { icon:"👆", title:"Åbnet fra et produkt", desc:"Tryk på en ingrediens eller et E-nummer i et scanningsresultat for at hoppe direkte hertil." },
   ]},
   "admin": { title:"Admin", titleIcon:"shield", tips:[

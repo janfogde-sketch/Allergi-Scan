@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { Icon, showToast, AllergenGlyph } from "./SharedComponents.jsx";
-import { ALLERGENS, E_NUMBERS, E_CATEGORIES, DIETS } from "./constants.jsx";
+import { ALLERGENS, E_NUMBERS, E_CATEGORIES, DIETS, DIETS_ENABLED } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
 import { ChoiceChip } from "./DesignSystem.jsx";
 
@@ -17,6 +17,8 @@ import { ChoiceChip } from "./DesignSystem.jsx";
 export function useGlutenFreeSync(allergens, diets, setDiets) {
   const [glutenFreeAutoApplied, setGlutenFreeAutoApplied] = useState(false);
   React.useEffect(() => {
+    // Kostpræferencer er sat på pause: ingen automatisk "Glutenfri"-diæt (koden er bevaret til genoptagelse)
+    if (!DIETS_ENABLED) return;
     const hasGluten = allergens.includes("gluten");
     const hasGlutenFree = diets.includes("gluten-free");
     if (hasGluten && !hasGlutenFree) {

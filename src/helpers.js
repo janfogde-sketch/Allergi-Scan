@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { ALLERGENS, DIETS, AVATAR_COLORS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
+import { ALLERGENS, DIETS, DIETS_ENABLED, AVATAR_COLORS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { ALLERGEN_KEYWORDS, keywordMatches, matchCustomAllergens } from "./allergenKeywords.js";
 
 // Re-eksporteret så scan-/opskrift-/resultat-koden kan importere den sammen
@@ -477,7 +477,7 @@ export function householdToProfiles(household) {
     color: AVATAR_COLORS[(i + 3) % AVATAR_COLORS.length],
     allergens: m.allergens || [],
     custom: m.custom || [],
-    diets: m.diets || [],
+    diets: visibleDiets(m.diets),
     eNumbers: m.eNumbers || [],
     linked: true,
     readOnly: true,
@@ -495,10 +495,13 @@ export function syncLinkedActiveProfiles(activeProfiles, linkedIds, knownIds) {
   return next.length === current.length && next.every((id, i) => id === current[i]) ? current : next;
 }
 
+/** Profilens valgte kostpræferencer, som appen må bruge: tom liste, mens kostpræferencer er sat på pause (DIETS_ENABLED). */
+export const visibleDiets = (diets) => (DIETS_ENABLED ? (diets || []) : []);
+
 export function buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles }) {
   return [
-    { id:"me", name: user?.name || "Dig", allergens: allergens || [], custom: customAllerg || [], diets: user?.diets || [], eNumbers: selectedENumbers || [], color: null },
-    ...(family || []).map(m => ({ id:m.id, name:m.name, allergens: m.allergens || [], custom: m.custom || [], diets: m.diets || [], eNumbers: m.eNumbers || [], color: m.color })),
+    { id:"me", name: user?.name || "Dig", allergens: allergens || [], custom: customAllerg || [], diets: visibleDiets(user?.diets), eNumbers: selectedENumbers || [], color: null },
+    ...(family || []).map(m => ({ id:m.id, name:m.name, allergens: m.allergens || [], custom: m.custom || [], diets: visibleDiets(m.diets), eNumbers: m.eNumbers || [], color: m.color })),
   ].filter(p => (activeProfiles || []).includes(p.id));
 }
 

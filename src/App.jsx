@@ -13,7 +13,7 @@ import {
 import {
   initials, timeAgo, getAllergenLabels, verifiedBadge,
   makeHeaders, apiCall,
-  getTraceLog, householdToProfiles, syncLinkedActiveProfiles, isLinkedProfileId
+  getTraceLog, householdToProfiles, syncLinkedActiveProfiles, isLinkedProfileId, visibleDiets
 } from "./helpers.js";
 
 import {
@@ -726,7 +726,7 @@ export default function EatSafe() {
   // kostpræferencer"). Familiemedlemmer har eget diets-felt (se
   // useFamily.js), samme som allergens/custom. E-numre er fjernet helt fra
   // Madpas (opfølgende polish-runde, samme dag) sammen med link/QR-deling.
-  const mpDiets = madpasActiveProfile ? (madpasActiveProfile.diets || []) : (user.diets || []);
+  const mpDiets = visibleDiets(madpasActiveProfile ? madpasActiveProfile.diets : user.diets);
 
   // ── Android tilbageknap ─────────────────────────────────────────────────────
   React.useEffect(() => {

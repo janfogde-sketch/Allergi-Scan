@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { ALLERGENS, SCREENS } from "./constants.jsx";
+import { ALLERGENS, SCREENS, DIETS_ENABLED } from "./constants.jsx";
 import { initials, addUniqueCustom, PASSWORD_REQUIREMENTS_TEXT } from "./helpers.js";
 import { EatSafeLogo, EatSafeWordmark, Icon, showToast } from "./SharedComponents.jsx";
 import { ENumberPicker, AllergenChipPicker, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
@@ -60,6 +60,10 @@ const WELCOME_BENEFITS = [
   ["zap",    "Hurtigt svar"],
   ["cart",   "Lettere indkøb"],
 ];
+
+// Trinnet før `step`. Mens kostpræferencer er på pause (DIETS_ENABLED=false), springes trin 3 over;
+// trinnummeret 3 er stadig reserveret, så gemte onboarding_step-værdier og koden til trinnet er uændrede.
+const prevOnboardStep = (step) => (!DIETS_ENABLED && step === 4 ? 2 : step - 1);
 
 export default function OnboardingScreen({
   onboardStep, setOnboardStep,
@@ -132,6 +136,10 @@ export default function OnboardingScreen({
   // "brugeren har bevidst ingen kostpræferencer" og "brugeren glemte bare at
   // vælge noget" (25. sept. 2026, brugerfeedback).
   const [noDietConfirmed, setNoDietConfirmed] = useState(false);
+  // En bruger, der lukkede appen på det (nu skjulte) trin 3, fortsætter på trin 4.
+  useEffect(() => {
+    if (!DIETS_ENABLED && onboardStep === 3) setOnboardStep(4);
+  }, [onboardStep, setOnboardStep]);
 
   // Trin 4 (Familie): "Tilføj nyt familiemedlem"-formularen skal kun være
   // foldet ud, når der endnu ikke er gemt noget (første besøg på trinnet),
@@ -406,7 +414,7 @@ export default function OnboardingScreen({
         <PrimaryButton
           disabled={!(selectedCount > 0 || selectedENumbers.length > 0 || noAllergiesConfirmed)}
           onClick={async () => {
-            try { await saveAllergensStep2(); setOnboardStep(3); }
+            try { await saveAllergensStep2(); setOnboardStep(DIETS_ENABLED ? 3 : 4); }
             catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
           }}>Fortsæt →</PrimaryButton>
 
@@ -424,7 +432,7 @@ export default function OnboardingScreen({
             if (selectedCount > 0 && !window.confirm("Du har allerede valgt allergier/intolerancer. Vil du fjerne dem og markere, at du ingen har?")) return;
             setAllergens([]); setCustomAllerg([]);
             setNoAllergiesConfirmed(true);
-            try { await saveAllergensStep2([], []); setOnboardStep(3); }
+            try { await saveAllergensStep2([], []); setOnboardStep(DIETS_ENABLED ? 3 : 4); }
             catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
           }}>
           Jeg har ingen allergier eller intolerancer
@@ -519,7 +527,7 @@ export default function OnboardingScreen({
             <div className="welcome-logo-wrap">
               <EatSafeLogo variant="horizontal" size={56} />
               <div className="brand-slogan">Mere tryghed i hverdagen</div>
-              <div className="welcome-tagline">Scan produkter og se straks, om de passer til dine allergier og kosthensyn.</div>
+              <div className="welcome-tagline">{DIETS_ENABLED ? "Scan produkter og se straks, om de passer til dine allergier og kosthensyn." : "Scan produkter og se straks, om de passer til dine allergier og intolerancer."}</div>
             </div>
 
             {/* 3 fordele */}
@@ -957,7 +965,7 @@ export default function OnboardingScreen({
             {!editMode && (
               <div style={{ position:"relative", textAlign:"center", padding:"44px 0 20px" }}>
                 {onboardStep > 1 && (
-                  <button onClick={() => setOnboardStep(onboardStep - 1)} aria-label="Tilbage"
+                  <button onClick={() => setOnboardStep(prevOnboardStep(onboardStep))} aria-label="Tilbage"
                     style={{ position:"absolute", left:20, top:"50%", transform:"translateY(-50%)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0 }}>
                     <Icon name="chevronLeft" size={18} color="var(--ink)" />
                   </button>
@@ -973,12 +981,12 @@ export default function OnboardingScreen({
                 tilbagepilen dér, samme boks-stil. */}
             <div style={UI.mb8}>
               {editMode && onboardStep > 1 && (
-                <button onClick={() => setOnboardStep(onboardStep - 1)} aria-label="Tilbage"
+                <button onClick={() => setOnboardStep(prevOnboardStep(onboardStep))} aria-label="Tilbage"
                   style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, marginBottom:10 }}>
                   <Icon name="chevronLeft" size={18} color="var(--ink)" />
                 </button>
               )}
-              {onboardStep > 0 && <StepBar total={5} current={onboardStep} />}
+              {onboardStep > 0 && <StepBar total={DIETS_ENABLED ? 5 : 4} current={DIETS_ENABLED || onboardStep < 4 ? onboardStep : onboardStep - 1} />}
             </div>
 
             {/* ── TRIN 1: Din profil (obligatorisk) ── */}

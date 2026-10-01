@@ -534,6 +534,11 @@ export const ALLERGEN_EXAMPLES = {
   },
 };
 
+// Kostpræferencer (diæter) er sat på pause (2. okt. 2026, Jans beslutning): de vises ikke i appen og indgår
+// ikke i vurderinger, Madpas eller indstillinger, men al kode, alle data og al logik er bevaret. Sæt til true
+// for at tage funktionen i brug igen (se "Kostpræferencer sat på pause" i CLAUDE.md).
+export const DIETS_ENABLED = false;
+
 export const DIETS = [
   { id:"vegan",       label:"Vegansk",       desc:"Ingen animalske produkter" },
   { id:"vegetarian",  label:"Vegetarisk",    desc:"Ingen kød eller fisk" },

@@ -8,6 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { describe, it, expect } from "vitest";
+import { DIETS_ENABLED } from "./constants.jsx";
 import {
   compareAllergens,
   checkDietCompatibility,
@@ -344,7 +345,7 @@ describe("husstandskonti som skrivebeskyttede profiler", () => {
   it("mapper en konto til en profil med præfikset id, læse-flag og alle felter", () => {
     const [p] = householdToProfiles([jan]);
     expect(p.id).toBe(`${LINKED_PROFILE_PREFIX}u-jan`);
-    expect(p).toMatchObject({ name: "Jan Fogde", allergens: ["maelkeallergi"], custom: ["kiwi"], diets: ["vegetarian"], eNumbers: ["E150"], linked: true, readOnly: true });
+    expect(p).toMatchObject({ name: "Jan Fogde", allergens: ["maelkeallergi"], custom: ["kiwi"], diets: DIETS_ENABLED ? ["vegetarian"] : [], eNumbers: ["E150"], linked: true, readOnly: true });
     expect(typeof p.color).toBe("string");
   });
   it("falder tilbage til e-mailens lokale del, når kontoen ingen navn har", () => {
@@ -380,5 +381,19 @@ describe("husstandskonti som skrivebeskyttede profiler", () => {
       const a = ["me", "acct:a"];
       expect(syncLinkedActiveProfiles(a, ["acct:a"], ["acct:a"])).toBe(a);
     });
+  });
+});
+
+describe("kostpræferencer på pause (DIETS_ENABLED)", () => {
+  it("er slået fra, og profilernes diæter er tomme, selvom de er gemt", async () => {
+    const { visibleDiets } = await import("./helpers.js");
+    expect(DIETS_ENABLED).toBe(false);
+    expect(visibleDiets(["vegan", "gluten-free"])).toEqual([]);
+    expect(visibleDiets(undefined)).toEqual([]);
+    const list = buildActiveProfileList({
+      user: { name: "Jan", diets: ["vegan"] }, family: [{ id: "f1", name: "Oskar", diets: ["keto"] }],
+      allergens: [], customAllerg: [], selectedENumbers: [], activeProfiles: ["me", "f1"],
+    });
+    expect(list.map(p => p.diets)).toEqual([[], []]);
   });
 });
