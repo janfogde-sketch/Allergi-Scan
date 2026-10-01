@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { buildAuthMails, renderAuthTemplate, confirmationUrl, AuthMailError } from "../supabase/functions/_shared/authMail.ts";
+import { buildAuthMails, renderAuthTemplate, confirmationUrl, stripReportBlock, AuthMailError } from "../supabase/functions/_shared/authMail.ts";
 import { AUTH_MAIL_TEMPLATES } from "../supabase/functions/_shared/authMailTemplates.ts";
 
 const URL_BASE = "https://jegrpcflyguadyxialkm.supabase.co";
@@ -26,7 +26,8 @@ describe("genererede skabeloner", () => {
   });
   it("bruger kun de pladsholdere, hook'en kender", () => {
     for (const [name, t] of Object.entries(AUTH_MAIL_TEMPLATES)) {
-      for (const m of t.html.matchAll(/\{\{\s*\.(\w+)\s*\}\}/g)) expect(["ConfirmationURL", "Token", "Email", "NewEmail"], `${name}: ${m[0]}`).toContain(m[1]);
+      // ReportURL kendes kun af edge-funktionen og skal ligge i en blok, der kan fjernes (Supabase Auths egne skabeloner kender den ikke)
+      for (const m of stripReportBlock(t.html).matchAll(/\{\{\s*\.(\w+)\s*\}\}/g)) expect(["ConfirmationURL", "Token", "Email", "NewEmail"], `${name}: ${m[0]}`).toContain(m[1]);
     }
   });
 });
@@ -101,5 +102,30 @@ describe("buildAuthMails", () => {
     const [m] = buildAuthMails(payload({ email_action_type: "email_change", token_hash: "h" }, { ...user, new_email: "a\"<b>@x.dk" }), URL_BASE);
     expect(m.html).not.toContain("<b>@x.dk");
     expect(m.html).toContain("&lt;b&gt;@x.dk");
+  });
+});
+
+describe("\"Det var ikke mig\"-link i glemt-adgangskode-mailen", () => {
+  const REPORT = "https://www.eatsafe.dk/uventet-nulstilling.html?t=abc.def";
+  it("recovery med ReportURL: linket står i mailen (escapet), og markørerne er væk", () => {
+    const [m] = buildAuthMails(payload({ email_action_type: "recovery" }), URL_BASE, { ReportURL: REPORT });
+    expect(m.html).toContain(`href="${REPORT}"`);
+    expect(m.html).toContain("Var det ikke dig?");
+    expect(m.html).not.toMatch(/report:(start|end)|\{\{/);
+  });
+  it("recovery uden ReportURL: hele blokken udelades (ingen tomt link)", () => {
+    const [m] = buildAuthMails(payload({ email_action_type: "recovery" }), URL_BASE);
+    expect(m.html).not.toContain("Var det ikke dig?");
+    expect(m.html).not.toMatch(/report:(start|end)|\{\{|href=""/);
+    expect(m.html).toContain("Din adgangskode ændres ikke, før du har valgt en ny.");
+  });
+  it("andre typer får aldrig linket, selv om ReportURL gives med", () => {
+    for (const type of ["signup", "invite", "magiclink", "email"]) {
+      const [m] = buildAuthMails(payload({ email_action_type: type }), URL_BASE, { ReportURL: REPORT });
+      expect(m.html).not.toContain("uventet-nulstilling");
+    }
+  });
+  it("kun recovery-skabelonen har blokken", () => {
+    for (const [name, t] of Object.entries(AUTH_MAIL_TEMPLATES)) expect(t.html.includes("report:start"), name).toBe(name === "recovery");
   });
 });

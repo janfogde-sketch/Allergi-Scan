@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="referrer" content="no-referrer" />
+  <title>Uventet nulstilling af adgangskode — EatSafe</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root{
+      --ink:#15201A; --ink2:rgba(21,32,26,.78); --muted:rgba(21,32,26,.58);
+      --paper:#FFFFFF; --green:#0F7D4F; --green-lt:rgba(15,125,79,.10);
+      --red:#C8402E; --red-lt:rgba(200,64,46,.08);
+      --surface:#FFFFFF; --border:rgba(21,32,26,.10);
+      --f:'DM Sans',system-ui,-apple-system,sans-serif;
+    }
+    body {
+      font-family: var(--f);
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.7;
+      padding: 0 0 60px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo img { height: 26px; width: auto; display: block; }
+    .container { max-width: 520px; margin: 0 auto; padding: 40px 24px; }
+    h1 { font-size: 24px; font-weight: 900; letter-spacing: -.4px; margin-bottom: 12px; line-height: 1.25; }
+    p { font-size: 15px; color: var(--ink2); margin-bottom: 14px; }
+    a { color: var(--green); font-weight: 600; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .btn {
+      display: block; width: 100%; min-height: 52px; margin-top: 24px; padding: 14px 20px;
+      border: 0; border-radius: 12px; background: var(--green); color: #FFFFFF;
+      font-family: var(--f); font-size: 16px; font-weight: 700; cursor: pointer;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .6; cursor: default; }
+    .note { margin-top: 16px; font-size: 13px; color: var(--muted); }
+    .box { border-radius: 12px; padding: 16px 18px; margin-top: 20px; font-size: 14px; font-weight: 600; line-height: 1.6; }
+    .box.ok { background: var(--green-lt); color: var(--green); }
+    .box.err { background: var(--red-lt); color: var(--red); }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo"><img src="/brand/EatSafe_Master_Logo_Horizontal.svg" alt="EatSafe" /></div>
+  </div>
+
+  <div class="container">
+    <div id="ask">
+      <h1>Bad du ikke om at nulstille din adgangskode?</h1>
+      <p>Hvis du har fået en mail om at nulstille adgangskoden til din EatSafe-konto, uden at du har bedt om det, kan nogen have indtastet din e-mailadresse under Glemt adgangskode.</p>
+      <p>Tryk på knappen, så får vi besked og kan holde øje med din konto. Der sker ikke noget med din konto eller din adgangskode, og du behøver ikke gøre mere.</p>
+      <div class="box err" id="net-err" hidden>Vi kunne ikke sende din melding lige nu. Prøv igen om lidt.</div>
+      <button class="btn" id="send" type="button">Ja, giv EatSafe besked</button>
+      <p class="note">Var det i virkeligheden dig, kan du bare lukke denne side og bruge linket i mailen.</p>
+    </div>
+
+    <div id="done" hidden>
+      <h1>Tak, vi har fået besked</h1>
+      <div class="box ok">Din melding er sendt til EatSafe. Din adgangskode er ikke ændret.</div>
+      <p style="margin-top:20px">Vil du være ekstra sikker, kan du skifte adgangskode i EatSafe under Profil. Brug en adgangskode, du ikke bruger andre steder.</p>
+      <p>Har du spørgsmål, er du velkommen til at skrive til <a href="mailto:hej@eatsafe.dk">hej@eatsafe.dk</a>.</p>
+    </div>
+
+    <div id="bad" hidden>
+      <h1 id="bad-title">Linket virker ikke</h1>
+      <div class="box err" id="bad-text"></div>
+      <p style="margin-top:20px">Skriv til <a href="mailto:hej@eatsafe.dk">hej@eatsafe.dk</a>, så hjælper vi dig.</p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var ENDPOINT = 'https://jegrpcflyguadyxialkm.supabase.co/functions/v1/report-unrequested-reset';
+      var token = new URLSearchParams(location.search).get('t') || '';
+      var ask = document.getElementById('ask'), done = document.getElementById('done'), bad = document.getElementById('bad');
+      var btn = document.getElementById('send');
+
+      function show(el) { ask.hidden = el !== ask; done.hidden = el !== done; bad.hidden = el !== bad; }
+      function fail(title, text) {
+        document.getElementById('bad-title').textContent = title;
+        document.getElementById('bad-text').textContent = text;
+        show(bad);
+      }
+
+      // Tokenen fjernes fra adresselinjen, så den ikke bliver liggende i historik eller deles ved et skærmbillede
+      if (token && window.history && history.replaceState) history.replaceState(null, '', location.pathname);
+      if (!token) { fail('Linket virker ikke', 'Linket er ufuldstændigt. Åbn det igen fra mailen.'); return; }
+
+      btn.addEventListener('click', function () {
+        btn.disabled = true;
+        btn.textContent = 'Sender…';
+        document.getElementById('net-err').hidden = true;
+        fetch(ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: token }) })
+          .then(function (res) { return res.json().catch(function () { return {}; }).then(function (b) { return { status: res.status, body: b }; }); })
+          .then(function (r) {
+            if (r.status === 200 && r.body.ok) { show(done); return; }
+            if (r.body.error === 'expired') { fail('Linket er udløbet', 'Linket er mere end 7 dage gammelt og kan ikke bruges længere.'); return; }
+            if (r.body.error === 'invalid') { fail('Linket virker ikke', 'Linket er ugyldigt. Åbn det igen fra mailen.'); return; }
+            throw new Error('server');
+          })
+          .catch(function () {
+            btn.disabled = false;
+            btn.textContent = 'Ja, giv EatSafe besked';
+            document.getElementById('net-err').hidden = false;
+          });
+      });
+    })();
+  </script>
+</body>
+</html>

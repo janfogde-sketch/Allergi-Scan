@@ -90,3 +90,8 @@ verify_jwt = false
 # Standard Webhooks-signaturen med SEND_EMAIL_HOOK_SECRET i koden.
 [functions.auth-send-email]
 verify_jwt = false
+
+# Signeret token-link ("Det var ikke mig" i glemt-adgangskode-mailen): ingen bruger-JWT; funktionen kontrollerer
+# HMAC-signatur og udløb (_shared/reportLink.ts) før noget læses eller skrives.
+[functions.report-unrequested-reset]
+verify_jwt = false

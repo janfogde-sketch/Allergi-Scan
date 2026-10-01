@@ -16,6 +16,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyStandardWebhook } from "../_shared/standardWebhook.ts";
 import { buildAuthMails, AuthMailError, type AuthHookPayload } from "../_shared/authMail.ts";
 import { sendHtmlMail } from "../_shared/mailSend.ts";
+import { signReportToken, buildReportUrl } from "../_shared/reportLink.ts";
 
 const MAX_ATTEMPTS = 3;
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -48,7 +49,12 @@ Deno.serve(async (req) => {
   try {
     const payload = JSON.parse(body) as AuthHookPayload;
     type = String(payload?.email_data?.email_action_type ?? "");
-    mails = buildAuthMails(payload, Deno.env.get("SUPABASE_URL") ?? "");
+    // Glemt adgangskode: signeret "Det var ikke mig"-link (kan fejle uden at blokere selve mailen)
+    const extra: { ReportURL?: string } = {};
+    if (type === "recovery" && payload?.user?.id) {
+      try { extra.ReportURL = buildReportUrl(await signReportToken(secret, payload.user.id)); } catch { /* mailen sendes uden linket */ }
+    }
+    mails = buildAuthMails(payload, Deno.env.get("SUPABASE_URL") ?? "", extra);
   } catch (e) {
     if (e instanceof AuthMailError || e instanceof SyntaxError) {
       await logError(`Ugyldig hook-nyttelast: ${(e as Error).message}`, { type });
