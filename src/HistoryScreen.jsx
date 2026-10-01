@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { SCREENS } from "./constants.jsx";
-import { timeAgo, buildActiveProfileList, computeProfileResults, profileConflictLabel } from "./helpers.js";
+import { timeAgo, buildActiveProfileList, computeProfileResults, profileConflictLabel, profileMatchLabel } from "./helpers.js";
 import { Icon, ProductImage } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -67,7 +67,7 @@ export default function HistoryScreen({ household, lookupProduct }) {
     const conflict = profileConflictLabel(results, { maxNames: 2 });
     if (conflict) return { status:"danger", text: conflict, checkedFor };
     if (results.some(r => r.status === "warn")) return { status:"warn", text:"Kan ikke afgøres sikkert", checkedFor };
-    return { status:"safe", text:"Matcher valgte profiler", checkedFor };
+    return { status:"safe", text: profileMatchLabel(profiles), checkedFor };
   };
 
   // Genåbner et tidligere scan-resultat for SAMME profiler som ved den
