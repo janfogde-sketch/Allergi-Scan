@@ -113,7 +113,8 @@ export default function RecipesScreen({
   setRecipes,
 }) {
   const { user, accessToken } = useAuthContext();
-  const { allergens, customAllerg, family, activeProfiles } = useProfileContext();
+  // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
+  const { allergens, customAllerg, scanFamily: family, activeProfiles } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
   const { favorites, toggleFavorite } = useHistoryContext();
   const { addToList } = useShoppingContext();

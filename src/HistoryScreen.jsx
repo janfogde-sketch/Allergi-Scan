@@ -16,7 +16,8 @@ import { STATUS_COLOR, STATUS_ICON, HISTORY_FILTERS } from "./historyStatus.js";
 // der deles mellem skærmene (husstanden, første hent af historikken).
 export default function HistoryScreen({ household, lookupProduct }) {
   const { user, userId, accessToken } = useAuthContext();
-  const { allergens, customAllerg, family, activeProfiles, setActiveProfiles } = useProfileContext();
+  // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
+  const { allergens, customAllerg, scanFamily: family, activeProfiles, setActiveProfiles } = useProfileContext();
   const { setScreen } = useNavigationContext();
   const { history, historyLoading, historyScope, loadHistory } = useHistoryContext();
   const { selectedENumbers } = useAllergenPrefsContext();

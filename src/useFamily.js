@@ -7,7 +7,7 @@
 
 import { useState, useRef } from "react";
 import { SUPABASE_URL, AVATAR_COLORS, uid } from "./constants.jsx";
-import { makeHeaders, apiCall } from "./helpers.js";
+import { makeHeaders, apiCall, isLinkedProfileId } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 
 export function useFamily({ accessToken, userId, setActiveProfiles }) {
@@ -75,8 +75,9 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
         // tjekkes. Genopret da "Alle" — det sikre valg.
         const serverIds = new Set(data.map(m => m.id));
         setActiveProfiles?.(a => {
-          const stale = (a || []).filter(x => x !== "me" && !serverIds.has(x) && !pendingTempIdsRef.current.has(x));
-          return stale.length === 0 ? a : ["me", ...data.map(m => m.id)];
+          // Husstandskonti (acct:-id'er) hører ikke til family_members og ryddes af useHousehold-synkroniseringen.
+          const stale = (a || []).filter(x => x !== "me" && !isLinkedProfileId(x) && !serverIds.has(x) && !pendingTempIdsRef.current.has(x));
+          return stale.length === 0 ? a : ["me", ...data.map(m => m.id), ...(a || []).filter(isLinkedProfileId)];
         });
         setFamily(data.map(m => ({
           id: m.id,

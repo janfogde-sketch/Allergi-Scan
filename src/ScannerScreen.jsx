@@ -286,7 +286,8 @@ export default function ScannerScreen({
   onOpenHelp,
 }) {
   const { user, userId, accessToken } = useAuthContext();
-  const { activeProfiles, setActiveProfiles, family } = useProfileContext();
+  // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
+  const { activeProfiles, setActiveProfiles, scanFamily: family } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
   const { favorites, toggleFavorite, isFavorite } = useHistoryContext();
 

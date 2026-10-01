@@ -127,7 +127,8 @@ export default function ListScreen({
   onOpenHelp,
 }) {
   const { user, userId, accessToken } = useAuthContext();
-  const { family, allergens, customAllerg, activeProfiles, setActiveProfiles } = useProfileContext();
+  // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
+  const { scanFamily: family, allergens, customAllerg, activeProfiles, setActiveProfiles } = useProfileContext();
   const { selectedENumbers } = useAllergenPrefsContext();
   const { setScreen } = useNavigationContext();
   const {

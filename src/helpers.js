@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { ALLERGENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
+import { ALLERGENS, DIETS, AVATAR_COLORS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { ALLERGEN_KEYWORDS, keywordMatches, matchCustomAllergens } from "./allergenKeywords.js";
 
 // Re-eksporteret så scan-/opskrift-/resultat-koden kan importere den sammen
@@ -459,6 +459,42 @@ export function checkDietCompatibility(dietId, allergenFlags, ingredientsText, n
 // implementation (25. sept. 2026, opfølgning på PR #325) — to uafhængige
 // kopier af samme sikkerhedsrelevante beregning har allerede forårsaget
 // mindst én bug tidligere i dette projekt (se App.jsx' allActive()-kommentar).
+// ─── HUSSTANDSKONTI SOM SKRIVEBESKYTTEDE PROFILER (1. okt. 2026) ─────────────
+// Rigtige EatSafe-konti i husstanden (edge-funktionen family/group) kan vælges
+// som profil ved scanning, i søgning, lister, historik og Madpas — på lige fod
+// med de profiler, man selv har oprettet (`family`). Forskellen: de er
+// skrivebeskyttede. Personen styrer selv sin konto, så de findes KUN i
+// `scanFamily` (ProfileContext), aldrig i `family`, som redigér-/slet-
+// skærmene bruger. Id'et har et fast præfiks, så det aldrig kan støde ind i
+// en oprettet profils uuid og kan genkendes, når gemte valg ryddes op.
+export const LINKED_PROFILE_PREFIX = "acct:";
+export const isLinkedProfileId = (id) => typeof id === "string" && id.startsWith(LINKED_PROFILE_PREFIX);
+
+export function householdToProfiles(household) {
+  return (household || []).map((m, i) => ({
+    id: `${LINKED_PROFILE_PREFIX}${m.id}`,
+    name: m.name || (m.email || "").split("@")[0] || "Husstandsmedlem",
+    color: AVATAR_COLORS[(i + 3) % AVATAR_COLORS.length],
+    allergens: m.allergens || [],
+    custom: m.custom || [],
+    diets: m.diets || [],
+    eNumbers: m.eNumbers || [],
+    linked: true,
+    readOnly: true,
+  }));
+}
+
+// Holder valget af profiler i takt med husstanden: nye husstandskonti vælges
+// som standard (de, der ikke var kendt før), og valg af konti, der ikke længere
+// er i husstanden, fjernes. Returnerer samme array, hvis intet ændres.
+export function syncLinkedActiveProfiles(activeProfiles, linkedIds, knownIds) {
+  const current = activeProfiles || [];
+  const kept = current.filter(id => !isLinkedProfileId(id) || linkedIds.includes(id));
+  const fresh = linkedIds.filter(id => !(knownIds || []).includes(id) && !kept.includes(id));
+  const next = [...kept, ...fresh];
+  return next.length === current.length && next.every((id, i) => id === current[i]) ? current : next;
+}
+
 export function buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles }) {
   return [
     { id:"me", name: user?.name || "Dig", allergens: allergens || [], custom: customAllerg || [], diets: user?.diets || [], eNumbers: selectedENumbers || [], color: null },
