@@ -1,28 +1,42 @@
 // @ts-nocheck
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+
+afterEach(cleanup);
 import { AllergenSensitivity } from "./AllergenPicker.jsx";
 
-describe("AllergenSensitivity (følsomhed pr. allergen)", () => {
+describe("AllergenSensitivity (spor pr. allergen)", () => {
   it("viser ingenting uden valgte allergener", () => {
     const { container } = render(<AllergenSensitivity selected={[]} levels={{}} onChange={() => {}} />);
     expect(container.firstChild).toBeNull();
   });
 
-  it("standard er 'Også spor', og et tryk skifter til 'Kun direkte indhold' og tilbage", () => {
+  it("standard er 'Advar mig', og valget skifter til 'Kun ved ingrediens' og tilbage", () => {
     const onChange = vi.fn();
     const { rerender } = render(<AllergenSensitivity selected={["maelkeallergi"]} levels={{}} onChange={onChange} />);
-    fireEvent.click(screen.getByRole("switch"));
+    expect(screen.getByText("Advar mig").getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(screen.getByText("Kun ved ingrediens"));
     expect(onChange).toHaveBeenLastCalledWith({ maelkeallergi: "direct_only" });
     rerender(<AllergenSensitivity selected={["maelkeallergi"]} levels={{ maelkeallergi: "direct_only" }} onChange={onChange} />);
-    expect(screen.getByRole("switch").textContent).toBe("Kun direkte indhold");
-    fireEvent.click(screen.getByRole("switch"));
+    expect(screen.getByText("Kun ved ingrediens").getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(screen.getByText("Advar mig"));
     expect(onChange).toHaveBeenLastCalledWith({});
   });
 
-  it("gluten viser en advarsel om cøliaki, når spor slås fra (men det forbydes ikke)", () => {
-    render(<AllergenSensitivity selected={["gluten"]} levels={{ gluten: "direct_only" }} onChange={() => {}} />);
+  it("gluten og hvede vises som ét valg og sættes sammen", () => {
+    const onChange = vi.fn();
+    render(<AllergenSensitivity selected={["hvede", "gluten"]} levels={{}} onChange={onChange} />);
+    expect(screen.getAllByText("Kun ved ingrediens")).toHaveLength(1);
+    expect(screen.getByText("Gluten og hvede")).toBeTruthy();
+    fireEvent.click(screen.getByText("Kun ved ingrediens"));
+    expect(onChange).toHaveBeenLastCalledWith({ gluten: "direct_only", hvede: "direct_only" });
+  });
+
+  it("cøliaki-teksten står altid under gluten og hvede, uanset valg", () => {
+    const { rerender } = render(<AllergenSensitivity selected={["gluten"]} levels={{}} onChange={() => {}} />);
     expect(screen.getByText(/cøliaki/i)).toBeTruthy();
+    rerender(<AllergenSensitivity selected={["maelkeallergi"]} levels={{}} onChange={() => {}} />);
+    expect(screen.queryByText(/cøliaki/i)).toBeNull();
   });
 });

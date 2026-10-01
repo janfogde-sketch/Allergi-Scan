@@ -909,8 +909,9 @@ opskrifterne importeres forfra.
 
 ### Følsomhed pr. allergen — spor (2. okt. 2026, Jans spor + Bjørn finpudser designet)
 
-Brugeren kan pr. valgt allergen vælge "Også spor" (standard) eller "Kun direkte indhold". Ved "Kun direkte indhold" flagges spor ikke
-(grå info-linje i stedet), fx for en mælkeallergiker, der ikke reagerer på spor. Samtidig er spor nu GULE overalt, og kun direkte indhold
+Brugeren vælger pr. valgt allergen, hvad der sker, når pakken siger "Kan indeholde spor af …": "Advar mig" (standard) eller "Kun ved
+ingrediens". Ved "Kun ved ingrediens" flagges spor ikke (grå info-linje i stedet), fx for en mælkeallergiker, der ikke reagerer på spor.
+Gluten og hvede vises som ét valg. Valget har eget trin 3 i onboarding ("Spor af allergener"), samt i Rediger præferencer og familieformularen. Samtidig er spor nu GULE overalt, og kun direkte indhold
 er rødt. Data: `allergen_levels` (jsonb) på `users` og `family_members`. Logik: `helpers.js` (`compareAllergens`, `computeProfileResults`,
 `mergeAllergenLevels`, `categorizeProductFindings`/`computeTopStatus`); notifikation P1 respekterer valget. Detaljer og filer i
 `src/CONTEXT.md` afsnit 6. UI'en (`AllergenSensitivity`) er en simpel førsteversion — Bjørn har en to do om at finpudse den. Gluten/hvede
@@ -919,8 +920,8 @@ viser en advarsel om cøliaki, når spor slås fra, men det forbydes ikke.
 ### Kostpræferencer (diæter) sat på pause (2. okt. 2026)
 
 Jans beslutning: kostpræferencer skal ikke være en del af appen lige nu, men koden og logikken beholdes. Alt styres af ét flag,
-`DIETS_ENABLED = false` i `constants.jsx`. Mens det er slået fra: onboarding har fire trin (trin 3 springes over; trinnummeret er
-reserveret, så gemte `onboarding_step`-værdier og `renderStep3`/`saveDietStep3` er uændrede, og en bruger på trin 3 sendes til trin 4);
+`DIETS_ENABLED = false` i `constants.jsx`. Mens det er slået fra: trin 3 i onboarding er i stedet valget "Spor af allergener" (`renderTraceStep`, se afsnittet om følsomhed pr. allergen),
+som springes over, hvis brugeren ingen allergier har valgt; diæt-trinnet (`renderDietStep`/`saveDietStep3`) er uændret og tilbage på trin 3 med flaget;
 vælgerne er skjult i "Rediger præferencer" og i familieformularen; "Mine præferencer"/familiekort/Madpas/oplæsning/resultater og
 profilvurderingen ser ingen diæter (`visibleDiets()` i `helpers.js`, brugt i `buildActiveProfileList`, `householdToProfiles`, Madpas,
 Profil og Familie); den automatiske "Glutenfri"-diæt ved gluten-allergi (`useGlutenFreeSync`) er slået fra; "Rediger præferencer"

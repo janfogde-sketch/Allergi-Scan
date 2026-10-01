@@ -73,37 +73,55 @@ export const AllergenChipPicker = ({ selected, onChange }) => {
   );
 };
 
-// Følsomhed pr. valgt allergen (allergen_levels, 1. okt. 2026): "Også spor" (standard, spor flagges som advarsel) eller
-// "Kun direkte indhold" (spor flagges ikke, men vises som en rolig info-linje). SIMPEL førsteversion, som Bjørn
-// kan finpudse (design) — se to do "Design: følsomhed pr. allergen (spor)". levels: { [allergenId]: "direct_only" }.
-export const AllergenSensitivity = ({ selected, levels, onChange }) => {
-  const items = (selected || []).map(id => ALLERGENS.find(a => a.id === id)).filter(Boolean);
-  if (items.length === 0) return null;
-  const toggle = (id) => {
+// Følsomhed pr. valgt allergen (allergen_levels, 1. okt. 2026): hvad skal der ske, når pakken siger "Kan indeholde spor af …"?
+// "Advar mig" (standard, sikreste valg) eller "Kun ved ingrediens" (advar kun, hvis allergenet står i ingredienslisten).
+// Gemmes som levels: { [allergenId]: "direct_only" } (tom = advar også ved spor). Gluten og hvede vises som ét valg,
+// fordi hvede indeholder gluten og begge ellers kan modsige hinanden. SIMPEL version, som Bjørn kan finpudse (design).
+export const AllergenSensitivity = ({ selected, levels, onChange, showIntro = true }) => {
+  const ids = selected || [];
+  const rows = [];
+  for (const id of ids) {
+    const a = ALLERGENS.find(x => x.id === id);
+    if (!a) continue;
+    if (id === "hvede" && ids.includes("gluten")) continue; // vises sammen med gluten
+    if (id === "gluten" && ids.includes("hvede")) rows.push({ key: "gluten", label: "Gluten og hvede", ids: ["gluten", "hvede"], celiac: true });
+    else rows.push({ key: id, label: a.label, ids: [id], celiac: id === "gluten" || id === "hvede" });
+  }
+  if (rows.length === 0) return null;
+  const isDirect = (row) => row.ids.every(i => levels?.[i] === "direct_only");
+  const set = (row, direct) => {
     const next = { ...(levels || {}) };
-    if (next[id] === "direct_only") delete next[id]; else next[id] = "direct_only";
+    for (const i of row.ids) { if (direct) next[i] = "direct_only"; else delete next[i]; }
     onChange(next);
   };
+  const seg = (active) => ({
+    flex: 1, padding: "8px 6px", fontSize: 12.5, fontWeight: 700, fontFamily: "var(--f)", cursor: "pointer", lineHeight: 1.25,
+    border: "none", background: active ? "var(--green-lt)" : "var(--surface)", color: active ? "var(--green)" : "var(--ink2)",
+  });
   return (
     <div className="allergen-sensitivity" style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
-      <div style={UI.sectionLbl6}>Reagerer du på spor?</div>
-      <div style={{ fontSize:12, color:"var(--muted)", margin:"4px 0 6px", lineHeight:1.4 }}>
-        Vælg "Kun direkte indhold", hvis du ikke reagerer på spor ("kan indeholde"). Så flagges spor ikke som advarsel.
-      </div>
-      {items.map(a => {
-        const only = levels?.[a.id] === "direct_only";
+      <div style={UI.sectionLbl6}>Når pakken siger "Kan indeholde spor af …"</div>
+      {showIntro && (
+        <div style={{ fontSize:12, color:"var(--muted)", margin:"4px 0 8px", lineHeight:1.45 }}>
+          Mange pakker har den tekst, selvom allergenet ikke er en ingrediens. Vælg for hver allergi, om du vil have en advarsel.
+          <br /><strong>Advar mig:</strong> du advares både ved ingrediens og ved spor (sikreste valg).
+          <br /><strong>Kun ved ingrediens:</strong> du advares kun, hvis allergenet står i ingredienslisten.
+        </div>
+      )}
+      {rows.map(row => {
+        const direct = isDirect(row);
         return (
-          <div key={a.id}>
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding:"6px 0" }}>
-              <span style={{ fontSize:13.5, fontWeight:600 }}>{a.label}</span>
-              <button type="button" className="btn btn-outline btn-sm" role="switch" aria-checked={!only}
-                aria-label={`${a.label}: ${only ? "kun direkte indhold" : "også spor"}`} onClick={() => toggle(a.id)}>
-                {only ? "Kun direkte indhold" : "Også spor"}
-              </button>
+          <div key={row.key} style={{ padding:"6px 0" }}>
+            <div style={{ fontSize:13.5, fontWeight:700, marginBottom:5 }}>{row.label}</div>
+            <div role="group" aria-label={`${row.label}: advarsel ved spor`}
+              style={{ display:"flex", border:"1px solid var(--border)", borderRadius:10, overflow:"hidden" }}>
+              <button type="button" aria-pressed={!direct} onClick={() => set(row, false)} style={seg(!direct)}>Advar mig</button>
+              <button type="button" aria-pressed={direct} onClick={() => set(row, true)}
+                style={{ ...seg(direct), borderLeft:"1px solid var(--border)" }}>Kun ved ingrediens</button>
             </div>
-            {only && (a.id === "gluten" || a.id === "hvede") && (
-              <div style={{ fontSize:11.5, color:"var(--amber)", lineHeight:1.4, paddingBottom:6 }}>
-                Spor af gluten kan have betydning ved cøliaki. Tal med din læge, før du undlader at få advarsler om spor.
+            {row.celiac && (
+              <div style={{ fontSize:11.5, color: direct ? "var(--amber)" : "var(--muted)", lineHeight:1.4, marginTop:4 }}>
+                Har du cøliaki, bør du vælge "Advar mig": selv små spor kan give symptomer. Er du i tvivl, så spørg din læge.
               </div>
             )}
           </div>

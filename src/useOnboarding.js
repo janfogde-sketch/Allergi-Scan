@@ -47,7 +47,12 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
     setEditMode(val);
   };
 
+  // Artifact-preview uden login (--mode artifact-preview, knappen "Start onboarding (preview)" på velkomstsiden):
+  // der er ingen session at gemme til, så trinnene går bare videre uden netværkskald. Aldrig aktiv i produktion.
+  const previewNoSession = import.meta.env.MODE === "artifact-preview" && !accessToken;
+
   const saveProfileStep1 = async () => {
+    if (previewNoSession) return;
     if (!(user.name || "").trim()) return;
     const emailToSave = user.email || loginEmail || "";
     try {
@@ -80,6 +85,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
   // imellem. Eksplicitte parametre (default til closure-værdien, når de ikke
   // gives) omgår racet helt, i stedet for at gemme forkerte/forældede data.
   const saveAllergensStep2 = async (overrideAllergens, overrideCustomAllerg) => {
+    if (previewNoSession) return;
     const allergensToSave = overrideAllergens !== undefined ? overrideAllergens : allergens;
     const customToSave = overrideCustomAllerg !== undefined ? overrideCustomAllerg : customAllerg;
     // Tidligere blev hvert allergen POST'et enkeltvis i et loop efter DELETE —
@@ -118,6 +124,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
   // Samme hul som E-numre ovenfor gjaldt kostpræferencer (trin 3) — valgt i
   // UI'et (user.diets), men aldrig gemt til backend under selve onboardingen.
   const saveDietStep3 = async (diets) => {
+    if (previewNoSession) return;
     await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
       method: "PATCH",
       headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
@@ -127,7 +134,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
 
   const finishOnboard = async () => {
     try {
-      await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+      if (!previewNoSession) await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY,
           "Authorization": `Bearer ${accessToken}`, "Prefer": "return=minimal" },
