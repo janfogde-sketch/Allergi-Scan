@@ -79,10 +79,6 @@ const HELP_CONTENT = {
     { icon:"search", title:"Søg eller filtrér", desc:"Søg efter et emne, eller vælg en kategori som allergener, E-numre eller diæter." },
     { icon:"👆", title:"Åbnet fra et produkt", desc:"Tryk på en ingrediens eller et E-nummer i et scanningsresultat for at hoppe direkte hertil." },
   ]},
-  "restaurantguide": { title:"Restaurantguide", titleIcon:"utensils", tips:[
-    { icon:"list", title:"Tips til hvert trin", desc:"Råd til før, under og efter restaurantbesøg, når du spiser ude med allergier." },
-    { icon:"globe", title:"Vis til tjeneren", desc:"Brug dit Madpas (under Profil) til at vise dine allergier direkte til personalet." },
-  ]},
   "admin": { title:"Admin", titleIcon:"shield", tips:[
     { icon:"check", title:"Godkend indsendelser", desc:"Gennemgå og godkend eller afvis nye produkter og rettelsesforslag fra brugere." },
     { icon:"family", title:"Brugere og tickets", desc:"Administrér brugerroller og besvar indsendt feedback under de øvrige faner." },

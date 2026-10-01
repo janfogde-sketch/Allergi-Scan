@@ -24,7 +24,6 @@ const SubmittedScreen = React.lazy(() => import("./SubmittedScreen.jsx"));
 const SearchScreen = React.lazy(() => import("./SearchScreen.jsx"));
 const ListScreen = React.lazy(() => import("./ListScreen.jsx"));
 const SuggestEditScreen = React.lazy(() => import("./SuggestEditScreen.jsx"));
-const RestaurantGuideScreen = React.lazy(() => import("./RestaurantGuideScreen.jsx"));
 
 // ── Performance: Styles som konstanter (undgår nye objekter per render) ──────
 const S = {
@@ -934,12 +933,6 @@ export default function ScannerScreen({
             editProductImageB64={editProductImageB64}
             handleEditProductCapture={handleEditProductCapture}
           />
-          </Suspense>
-        )}
-
-        {screen === SCREENS.RESTAURANTGUIDE && (
-          <Suspense fallback={LazyFallback}>
-          <RestaurantGuideScreen />
           </Suspense>
         )}
 

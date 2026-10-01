@@ -14,7 +14,7 @@
 // header-logik gælder.
 //
 // Undersider med egen "tilbageknap + titel"-navigation (fx Allergileksikon,
-// Restaurantguide, Rediger familiemedlem) renderer FORTSAT denne header
+// Rediger familiemedlem) renderer FORTSAT denne header
 // øverst, uændret — kun deres eget indhold nedenfor har en ekstra,
 // skærm-specifik back-button-række. Ikke ændret i denne omgang, se
 // CLAUDE.md's note om punkt 6 i brief'en.
@@ -49,7 +49,7 @@ import { EatSafeWordmark } from "./SharedComponents.jsx";
 const MENU_DOT_SCREENS = [
   SCREENS.PROFILE, SCREENS.EDITPROFILE, SCREENS.EDITPREFERENCES, SCREENS.HISTORY,
   SCREENS.FAVORITES, SCREENS.FAMILY, SCREENS.ADMIN, SCREENS.MADPAS,
-  SCREENS.RESTAURANTGUIDE, SCREENS.RECIPES, SCREENS.KNOWLEDGE,
+  SCREENS.RECIPES, SCREENS.KNOWLEDGE,
 ];
 
 export default function AppHeader({ screen, onFeedback, onMenu }) {

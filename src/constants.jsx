@@ -361,7 +361,6 @@ export const SCREENS = {
   ADMIN:"admin", FAVORITES:"favorites",
   MADPAS:"madpas", RECIPES:"recipes", EDITPROFILE:"editprofile", EDITPREFERENCES:"editpreferences", SUGGEST_EDIT:"suggest_edit",
   KNOWLEDGE:"knowledge",
-  RESTAURANTGUIDE:"restaurantguide",
   SETTINGS:"settings",
   // Beskeder (30. sept. 2026): liste over egne notifikationer + den fulde besked,
   // som push åbner via ?notification={id}.
@@ -379,7 +378,7 @@ export const PAGE_IDS = {
   result:"SCR-10", history:"SCR-11", notfound:"SCR-12",
   submitted:"SCR-13", admin:"SCR-14", favorites:"SCR-15",
   madpas:"SCR-16", recipes:"SCR-17", editprofile:"SCR-18",
-  knowledge:"SCR-19", restaurantguide:"SCR-20", settings:"SCR-21",
+  knowledge:"SCR-19", settings:"SCR-21",
   terms:"SCR-22", privacy:"SCR-23",
   notifications:"SCR-24", notification:"SCR-25", ticket:"SCR-26",
 };
