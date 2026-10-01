@@ -722,6 +722,8 @@ change" sendes to mails (nuværende adresse: `token_hash_new`; ny adresse: `toke
 Auth viser en fejl; samme `Idempotency-Key` (`auth-{webhook-id}-{n}`) hindrer dobbeltafsendelse. Fejl logges i `client_errors`
 (kilde `edge:auth-send-email`, aldrig tokens).
 
+**Mørk tilstand (1. okt. 2026, Bjørn):** alle 28 mails (6 auth + 22 Resend) har samme mørke palette, Outlook-regler (`data-ogsc`/`data-ogsb`) og et logo, der skifter til en mørk version; se afsnittet "Mørk tilstand" i `supabase/templates/resend/README.md` og testen `src/mailDarkMode.test.js`.
+
 **Status 1. okt.:** hook'en er slået til og verificeret (glemt-adgangskode-mail sendt via Resend fra `auth-send-email`, dansk, korrekt verify-link). Oprettelsesmailen og skift af e-mail er endnu ikke prøvet (to do-listen). **Kendt hul:** appen har ingen skærm til at vælge en ny adgangskode; nulstillingslinket logger bare ind (to do-listen, høj prioritet).
 
 **Sådan blev den slået til (Jan, i Supabase Dashboard; samme trin ved en ny opsætning):**
