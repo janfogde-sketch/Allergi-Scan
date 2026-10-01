@@ -75,7 +75,9 @@ describe("useAuth handleLogin — validation guards", () => {
     await act(async () => { await result.current.handleLogin(); });
     expect(result.current.accessToken).toBe("at");
     expect(localStorage.getItem("as_token")).toBe("at");
-    expect(setScreen).toHaveBeenCalledWith("home");
+    // Routingen bruger nu funktionsformen, så en åbnet push-besked ikke overskrives.
+    const updaters = setScreen.mock.calls.map(([x]) => x).filter((x) => typeof x === "function");
+    expect(updaters.some((fn) => fn("login") === "home")).toBe(true);
   });
 });
 
@@ -280,5 +282,21 @@ describe("useAuth — ny adgangskode efter nulstillingslink", () => {
     const { result } = setup();
     await act(async () => { await result.current.submitNewPassword("Stærk12345"); });
     expect(result.current.resetError).toMatch(/forskellig/);
+  });
+});
+
+describe("useAuth — app-start overskriver ikke en besked åbnet fra push", () => {
+  it("sender ikke videre til forsiden, hvis beskeden allerede er åbnet", async () => {
+    localStorage.setItem("as_token", "a.eyJzdWIiOiJ1MSJ9.s");
+    localStorage.setItem("as_user_id", "u1");
+    global.fetch.mockResolvedValue({ ok: true, status: 200, json: async () => [{ onboarding_completed: true, onboarding_step: 5 }], text: async () => "[]" });
+    const { setScreen } = setup();
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    const withUpdater = setScreen.mock.calls.map(([a]) => a).filter((a) => typeof a === "function");
+    expect(withUpdater.length).toBeGreaterThan(0);
+    expect(withUpdater[0]("notification")).toBe("notification");
+    expect(withUpdater[0]("ticket")).toBe("ticket");
+    expect(withUpdater[0]("boot")).toBe("home");
+    expect(withUpdater[0]("home")).toBe("home");
   });
 });

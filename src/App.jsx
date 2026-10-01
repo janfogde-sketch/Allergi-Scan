@@ -154,6 +154,14 @@ export default function EatSafe() {
   }, []);
 
   const setScreen = useCallback((next) => {
+    // Funktionsform (som useState): bruges af app-startens routing, så den kan lade en allerede åbnet besked stå.
+    if (typeof next === "function") {
+      setScreenRaw((cur) => {
+        const target = next(cur);
+        return onboardingCompletedRef.current === false && !ONBOARDING_EXEMPT_SCREENS.includes(target) ? SCREENS.ONBOARD : target;
+      });
+      return;
+    }
     if (onboardingCompletedRef.current === false && !ONBOARDING_EXEMPT_SCREENS.includes(next)) {
       setScreenRaw(SCREENS.ONBOARD);
       return;

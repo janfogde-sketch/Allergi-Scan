@@ -32,6 +32,8 @@ export const hasUnsupportedEmailChars = (email) => /[^\x00-\x7F]/.test(email);
 //    appen starte direkte på forsiden. Uden markøren venter appen på svaret
 //    (SCREENS.BOOT) i stedet for at gætte på forsiden.
 export const PENDING_VERIFY_KEY = "as_pending_verify";
+// Skærme, et link fra en push åbner direkte (se useNotifications.js).
+const DEEP_LINK_SCREENS = [SCREENS.NOTIFICATION, SCREENS.TICKET];
 export const ONBOARDED_KEY = "as_onboarded";
 export function markOnboardedLocally() {
   try { localStorage.setItem(ONBOARDED_KEY, "1"); } catch { /* privat tilstand */ }
@@ -54,6 +56,14 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   // (29. sept. 2026, "Onboarding-persistens") — delt af handleLogin og
   // app-boot-korrektionen nedenfor, så de to steder ikke kan komme i
   // konflikt med hinanden om hvordan beslutningen tages.
+  // App-startens routing til forsiden må ikke overskrive en besked/ticket, som et
+  // tryk på en push allerede har åbnet (de to hentes samtidig, og den langsomste
+  // vandt før — så brugeren så kun forsiden, mens beskeden lå i listen).
+  const goHomeUnlessDeepLink = useCallback(
+    () => setScreen((cur) => (DEEP_LINK_SCREENS.includes(cur) ? cur : SCREENS.HOME)),
+    [setScreen],
+  );
+
   const resolveOnboardingRoute = useCallback(async (uid, token) => {
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=onboarding_completed,onboarding_step`, {
@@ -66,15 +76,15 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         setScreen(SCREENS.ONBOARD);
       } else {
         markOnboardedLocally();
-        setScreen(SCREENS.HOME);
+        goHomeUnlessDeepLink();
       }
     } catch {
       // Kunne ikke afgøre status (netværksfejl) — fald tilbage til den
       // tidligere, simple adfærd frem for at lade brugeren hænge på et tomt
       // login-skærmbillede.
-      setScreen(SCREENS.HOME);
+      goHomeUnlessDeepLink();
     }
-  }, [setScreen, setOnboardStep]);
+  }, [setScreen, setOnboardStep, goHomeUnlessDeepLink]);
 
   // ── Token state — persisteret i localStorage (eller sessionStorage, se
   // rememberMe nedenfor) — falder tilbage til sessionStorage ved opstart,
