@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback } from "react";
-import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS, ALLERGENS } from "./constants.jsx";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { Icon, EmptyState, ScrollToTop } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -45,7 +45,6 @@ const CAT_MAP = Object.fromEntries([...CATEGORIES, FAQ_CATEGORY, DISH_CATEGORY].
 // "faglig status" (knowledge_base.status_label), fx "Fødevareallergi",
 // "Cøliaki og hvedeallergi" eller "Intolerance – ikke allergi", så allergi,
 // intolerance og andre reaktionstyper ikke blandes sammen.
-const ALLERGEN_LABEL = Object.fromEntries(ALLERGENS.map(a => [a.id, a.label]));
 
 // Læsevenlige kildenavne i stedet for rå URL'er (26. sept. 2026,
 // opfølgning) — fallback til selve domænet for ukendte kilder, så en
@@ -65,16 +64,18 @@ function sourceLabel(url) {
 
 // ── Inline styles (så de ALDRIG kan mangle) ──────────────────────────────────
 const S = {
-  grid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:18 },
-  catBtn: { display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" },
-  catBtnActive: (c) => ({ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:c.bg, border:`1px solid ${c.color}33`, borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" }),
+  // Finpudset 30. sept. 2026: kompaktere fliser/søgefelt og ens 16px
+  // mellem alle sektioner (søg → kategorier → hjælp → udvalgte fakta).
+  grid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:16 },
+  catBtn: { display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" },
+  catBtnActive: (c) => ({ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:c.bg, border:`1px solid ${c.color}33`, borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" }),
   catIconBox: (c) => ({ width:32, height:32, borderRadius:10, background:c.bg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }),
   catLabel: { fontSize:12, fontWeight:700, color:"var(--ink)" },
   catLabelActive: (c) => ({ fontSize:12, fontWeight:700, color:c.color }),
   catCount: { fontSize:10, color:"var(--muted)", marginTop:1 },
-  searchWrap: { position:"relative", marginBottom:14 },
-  searchInput: { width:"100%", padding:"12px 14px 12px 42px", border:"1px solid var(--border2)", borderRadius:12, background:"var(--surface)", fontFamily:"var(--f)", fontSize:14, color:"var(--ink)", outline:"none", boxSizing:"border-box" },
-  searchIcon: { position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" },
+  searchWrap: { position:"relative", marginBottom:16 },
+  searchInput: { width:"100%", padding:"10px 14px 10px 40px", border:"1px solid var(--border2)", borderRadius:12, background:"var(--surface)", fontFamily:"var(--f)", fontSize:14, color:"var(--ink)", outline:"none", boxSizing:"border-box" },
+  searchIcon: { position:"absolute", left:13, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" },
   // Kompakte resultatkort (26. sept. 2026, opfølgning: "gør resultatkortene
   // mere kompakte") — reduceret padding/gap/ikonstørrelse ift. den første
   // redesign-runde. cardSummary er nu clamped til 2 linjer med ellipsis —
@@ -88,8 +89,12 @@ const S = {
   cardSummary: { fontSize:12, color:"var(--muted2)", lineHeight:1.45, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" },
   cardStatus: { display:"inline-block", marginTop:6, fontSize:11, fontWeight:600, color:"var(--ink2)", background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:100, padding:"2px 8px" },
   cardChevron: { alignSelf:"center", flexShrink:0, display:"flex" },
-  label: { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:10 },
-  backBtn: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, flexShrink:0 },
+  // "Udvalgte fakta" på forsiden: lavere kort, lettere orange tone og
+  // mørkere preview-tekst end de almindelige opslagskort.
+  factCard: { padding:"10px 12px", alignItems:"center", background:"rgba(232,168,124,.07)", border:"1px solid rgba(232,168,124,.16)" },
+  factSummary: { color:"var(--ink2)", lineHeight:1.4 },
+  label: { fontSize:10.5, fontWeight:600, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".9px", marginBottom:8 },
+  backBtn: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"6px 8px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, flexShrink:0 },
   section: { marginBottom:16 },
   sectionLabel: { fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"1.4px", color:"var(--neutral)", marginBottom:8 },
   // pre-line: beskrivelser kan bestå af flere afsnit adskilt af tomme linjer
@@ -97,7 +102,10 @@ const S = {
   sectionText: { fontSize:13, color:"var(--ink2)", lineHeight:1.6, whiteSpace:"pre-line" },
   pillRow: { display:"flex", flexWrap:"wrap", gap:6 },
   pill: (bg, color, border) => ({ fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:100, background:bg, color, border:`1px solid ${border}` }),
-  healthBox: { background:"rgba(232,168,124,.10)", border:"1px solid rgba(232,168,124,.18)", borderRadius:12, padding:"12px 14px", marginBottom:16 },
+  // Sundhedsnote: ca. 12 % lavere end før (padding, label-afstand og
+  // linjehøjde), samme diskrete orange tone.
+  healthBox: { background:"rgba(232,168,124,.10)", border:"1px solid rgba(232,168,124,.18)", borderRadius:12, padding:"8px 14px", marginBottom:16 },
+  healthText: { fontSize:13, color:"var(--ink2)", lineHeight:1.5, whiteSpace:"pre-line" },
   error: { background:"rgba(255,82,82,.12)", border:"1px solid rgba(255,82,82,.25)", borderRadius:12, padding:"14px", marginBottom:12, color:"var(--red)", fontSize:13 },
 };
 
@@ -113,14 +121,14 @@ const DESC_CLAMP_THRESHOLD = 220;
 
 // Fælles opslagskort — bruges af kategorilister, søgeresultater, krydsreaktioner
 // på en detaljeside og "Vidste du at"-teaserne, så alle følger samme struktur.
-function EntryCard({ entry, cat, onOpen, style }) {
+function EntryCard({ entry, cat, onOpen, style, summaryStyle }) {
   return (
     <div role="button" tabIndex={0} className="kb-card" style={style ? { ...S.card, ...style } : S.card} onClick={onOpen}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(); } }}>
       <div style={S.cardIconBox(cat)}><Icon name={cat.icon||"book"} size={16} color={cat.color||"var(--ink2)"} /></div>
       <div style={UI.flexMin}>
         <div style={S.cardTitle}>{entry.title}</div>
-        {entry.summary && <div style={S.cardSummary}>{entry.summary}</div>}
+        {entry.summary && <div style={summaryStyle ? { ...S.cardSummary, ...summaryStyle } : S.cardSummary}>{entry.summary}</div>}
         {entry.status_label && <div style={S.cardStatus}>{entry.status_label}</div>}
       </div>
       <div style={S.cardChevron}><Icon name="chevronRight" size={14} color="var(--muted)" /></div>
@@ -205,7 +213,8 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
     setCrossReactions([]);
     setRelatedEntries([]);
     if (!selectedEntry) return;
-    const allergenId = selectedEntry.allergen_ids?.[0];
+    const allergenIds = (selectedEntry.allergen_ids || []).filter(Boolean);
+    const allergenId = allergenIds[0];
     if (!allergenId) return;
     if (selectedEntry.category === "allergen") {
       (async () => {
@@ -217,7 +226,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
     }
     (async () => {
       try {
-        const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?allergen_ids=ov.${encodeURIComponent(`{${allergenId}}`)}&category=not.in.(fun_fact,cross_reaction)&order=title.asc&limit=40`);
+        const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?allergen_ids=ov.${encodeURIComponent(`{${allergenIds.join(",")}}`)}&category=not.in.(fun_fact,cross_reaction)&order=title.asc&limit=40`);
         // Forklarende opslag først, konkrete retter/produkter sidst.
         const rank = { allergen:0, faq:1, diet:2, ingredient:3, e_number:4, dish:5 };
         if (Array.isArray(data)) setRelatedEntries(data.filter(x => x.id !== selectedEntry.id)
@@ -275,15 +284,15 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
       <div className="screen fade-in knowledge-screen">
         {/* Tydelig tilbageknap øverst til venstre + kategori-label OVER
             titlen (fx "ALLERGENER"). */}
-        <div style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 0 8px" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10, padding:"4px 0 0" }}>
           <button onClick={() => setSelectedEntry(null)} aria-label="Tilbage" style={S.backBtn}>
-            <Icon name="chevronLeft" size={18} color="var(--ink)" />
+            <Icon name="chevronLeft" size={17} color="var(--ink)" />
           </button>
           <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:700, color:cat.color||"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px" }}>
             {cat.icon && <Icon name={cat.icon} size={12} color={cat.color||"var(--muted)"} />} {cat.label}
           </div>
         </div>
-        <div style={{ padding:"14px 0 14px" }}>
+        <div style={{ paddingTop:14, marginBottom:16 }}>
           {/* Kategoriikon reduceret ca. 25% (56→42px boks, 26→20px ikon —
               26. sept. 2026, opfølgning: "reducer det ca. 20-30%, så det
               ikke optager unødigt meget plads"). */}
@@ -291,7 +300,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
             <Icon name={cat.icon||"book"} size={20} color={cat.color||"var(--ink2)"} />
           </div>
           <div style={{ fontSize:22, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>{selectedEntry.title}</div>
-          {selectedEntry.summary && <div style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.55, marginBottom:16 }}>{selectedEntry.summary}</div>}
+          {selectedEntry.summary && <div style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.55, marginBottom:selectedEntry.status_label ? 10 : 0 }}>{selectedEntry.summary}</div>}
           {selectedEntry.status_label && (
             <span style={{ ...S.pill("var(--surface2)","var(--ink2)","var(--border)"), display:"inline-flex", alignItems:"center", gap:6 }}>
               <Icon name="info" size={11} color="var(--ink2)" /> {selectedEntry.status_label}
@@ -317,14 +326,13 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           </div>
         )}
 
-        {selectedEntry.health_notes && <div style={S.healthBox}><div style={{ ...S.sectionLabel, color:"var(--warm)", display:"flex", alignItems:"center", gap:6 }}><Icon name="info" size={12} color="var(--warm)" /> Sundhedsnote</div><div style={S.sectionText}>{selectedEntry.health_notes}</div></div>}
+        {selectedEntry.health_notes && <div style={S.healthBox}><div style={{ ...S.sectionLabel, color:"var(--warm)", display:"flex", alignItems:"center", gap:6, marginBottom:5 }}><Icon name="info" size={12} color="var(--warm)" /> Sundhedsnote</div><div style={S.healthText}>{selectedEntry.health_notes}</div></div>}
 
-        {Array.isArray(selectedEntry.allergen_ids) && selectedEntry.allergen_ids.length > 0 && (
-          <div style={S.section}><div style={S.sectionLabel}>Relevant ved</div><div style={S.pillRow}>{selectedEntry.allergen_ids.map(a => <span key={a} style={S.pill("var(--surface)","var(--ink2)","var(--border)")}>{ALLERGEN_LABEL[a]||a}</span>)}</div></div>
-        )}
-
+        {/* "Relevant ved" (ikke-klikbare allergen-chips) er fjernet 30. sept.
+            2026: det tilhørende allergen-opslag vises allerede først under
+            "Relaterede opslag", hvor det også kan åbnes. */}
         {Array.isArray(selectedEntry.found_in) && selectedEntry.found_in.length > 0 && (
-          <div style={S.section}><div style={S.sectionLabel}>Findes ofte i</div><div style={S.pillRow}>{selectedEntry.found_in.map((f,i) => <span key={i} style={S.pill("var(--surface)","var(--muted)","var(--border)")}>{f}</span>)}</div></div>
+          <div style={S.section}><div style={S.sectionLabel}>Findes ofte i</div><div style={S.pillRow}>{selectedEntry.found_in.map((f,i) => <span key={i} style={S.pill("var(--surface)","var(--ink2)","var(--border2)")}>{f}</span>)}</div></div>
         )}
 
         {Array.isArray(selectedEntry.alternatives) && selectedEntry.alternatives.length > 0 && (
@@ -332,7 +340,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
         )}
 
         {Array.isArray(selectedEntry.aliases) && selectedEntry.aliases.length > 0 && (
-          <div style={S.section}><div style={S.sectionLabel}>Kendes også som</div><div style={S.pillRow}>{selectedEntry.aliases.map((a,i) => <span key={i} style={S.pill("var(--surface)","var(--muted)","var(--border)")}>{a}</span>)}</div></div>
+          <div style={S.section}><div style={S.sectionLabel}>Kendes også som</div><div style={S.pillRow}>{selectedEntry.aliases.map((a,i) => <span key={i} style={S.pill("var(--surface)","var(--ink2)","var(--border2)")}>{a}</span>)}</div></div>
         )}
 
         {/* "Krydsreaktioner" — kun for allergen-opslag hvor der reelt findes
@@ -360,7 +368,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
                 const xCat = CAT_MAP[x.category] || {};
                 return (
                   <button key={x.id} onClick={() => setSelectedEntry(x)}
-                    style={{ ...S.pill("var(--surface)","var(--ink)","var(--border)"), display:"inline-flex", alignItems:"center", gap:5, cursor:"pointer", fontFamily:"var(--f)" }}>
+                    style={{ ...S.pill("var(--surface)","var(--ink)","var(--border)"), display:"inline-flex", alignItems:"center", gap:5, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" }}>
                     <Icon name={xCat.icon||"book"} size={11} color={xCat.color||"var(--muted)"} /> {x.title}
                   </button>
                 );
@@ -457,8 +465,8 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
 
           {/* "FAQ" → egen hjælpesektion i stedet for en kategori-flise —
               samme handleCatSelect-mekanisme som kategorierne ovenfor. */}
-          <div style={{ ...S.label, marginTop:4 }}>Hjælp</div>
-          <button style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left", marginBottom:8 }}
+          <div style={S.label}>Hjælp</div>
+          <button style={{ ...S.catBtn, width:"100%", marginBottom:16 }}
             onClick={() => handleCatSelect("faq")}>
             <div style={S.catIconBox(FAQ_CATEGORY)}><Icon name={FAQ_CATEGORY.icon} size={16} color={FAQ_CATEGORY.color} /></div>
             <div style={UI.flex1}>
@@ -510,13 +518,13 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
           skal først og fremmest opleves som et opslagsværk, ikke et
           artikel-feed. */}
       {!showList && funFacts.length > 0 && (
-        <div style={UI.mt8}>
-          <div style={{ ...S.label, display:"flex", alignItems:"center", gap:6 }}><Icon name="bulb" size={12} color="var(--muted)" /> Vidste du at...</div>
+        <div>
+          <div style={{ ...S.label, display:"flex", alignItems:"center", gap:6 }}><Icon name="bulb" size={12} color="var(--muted)" /> Udvalgte fakta</div>
           {funFacts.slice(0,3).map(f => {
             const fCat = CAT_MAP[f.category] || CAT_MAP.fun_fact;
             return (
               <EntryCard key={f.id} entry={f} cat={fCat} onOpen={() => setSelectedEntry(f)}
-                style={{ background:"rgba(232,168,124,.10)", border:"1px solid rgba(232,168,124,.18)" }} />
+                style={S.factCard} summaryStyle={S.factSummary} />
             );
           })}
           <button onClick={() => handleCatSelect("fun_fact")}

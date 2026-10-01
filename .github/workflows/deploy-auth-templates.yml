@@ -1,0 +1,59 @@
+# Sætter Supabase Auths mailskabeloner (emne + HTML) ud fra
+# supabase/templates/auth/ (30. sept. 2026).
+#
+# templates.json angiver pr. skabelon ("confirmation", senere fx "recovery")
+# emnet og HTML-filen. Ved merge til main, der ændrer en fil i mappen, sendes
+# de til Supabase Management API'et (PATCH /config/auth, felterne
+# mailer_subjects_<navn> og mailer_templates_<navn>_content). Kan også
+# startes manuelt under Actions.
+#
+# Bruger samme GitHub-secret som deploy-edge-functions.yml
+# (SUPABASE_ACCESS_TOKEN). Mangler den, springes trinnet over med en besked.
+name: Deploy auth email templates
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/templates/auth/**"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-auth-templates
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: jegrpcflyguadyxialkm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Opdatér skabeloner i Supabase Auth
+        working-directory: supabase/templates/auth
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_ACCESS_TOKEN}" ]; then
+            echo "SUPABASE_ACCESS_TOKEN mangler — springer over."
+            exit 0
+          fi
+          body='{}'
+          for name in $(jq -r 'keys[]' templates.json); do
+            subject=$(jq -r --arg n "$name" '.[$n].subject' templates.json)
+            file=$(jq -r --arg n "$name" '.[$n].file' templates.json)
+            body=$(jq --arg n "$name" --arg s "$subject" --rawfile h "$file" \
+              '. + {("mailer_subjects_" + $n): $s, ("mailer_templates_" + $n + "_content"): $h}' <<<"$body")
+            echo "Skabelon: $name ($file)"
+          done
+          status=$(curl -sS -o response.json -w '%{http_code}' -X PATCH \
+            "https://api.supabase.com/v1/projects/${PROJECT_REF}/config/auth" \
+            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data "$body")
+          if [ "$status" -ge 300 ]; then
+            echo "Supabase svarede $status:"; head -c 500 response.json; echo
+            exit 1
+          fi
+          echo "Opdateret (HTTP $status)."

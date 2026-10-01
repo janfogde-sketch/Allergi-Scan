@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState } from "react";
-import { ALLERGENS, MADPAS_LANGUAGES, ALLERGEN_T, ALLERGEN_EXAMPLES, DIETS, DIET_T, MADPAS_SAFETY_NOTE_T, MADPAS_CROSS_CONTACT_SINGULAR_T, MADPAS_CROSS_CONTACT_PLURAL_T, MADPAS_DIET_MESSAGE_T } from "./constants.jsx";
+import { ALLERGENS, MADPAS_LANGUAGES, ALLERGEN_T, ALLERGEN_EXAMPLES, DIETS, DIET_T, MADPAS_SAFETY_NOTE_T, MADPAS_ALLERGY_STATEMENT_T, MADPAS_EN_DERIVED, MADPAS_CROSS_CONTACT_SINGULAR_T, MADPAS_CROSS_CONTACT_PLURAL_T, MADPAS_DIET_MESSAGE_T } from "./constants.jsx";
 
 // ALLERGEN_T har ingen "da"-nøgle (dansk er allerede ALLERGENS' eget
 // a.label, se konstantens egen kommentar) — uden dette faldt et valgt
@@ -55,9 +55,18 @@ export function madpasAllergenExamples(allergenId, lang) {
 function inlineName(name, lang) {
   return lang === "de" ? name : name.toLowerCase();
 }
-export function madpasSafetyNote(name, lang) {
+export function madpasSafetyNote(name, lang, allergenId) {
   if (!name) return "";
+  // Engelsk, fast allergen: "does not contain milk or any milk-derived ingredients".
+  const derived = (lang === "en" || !MADPAS_SAFETY_NOTE_T[lang]) && allergenId && MADPAS_EN_DERIVED[allergenId];
+  if (derived) return `Please make sure my food does not contain ${inlineName(name, "en")} or any ${derived}\u2011derived ingredients.`; // ikke-brydende bindestreg
   const template = MADPAS_SAFETY_NOTE_T[lang] || MADPAS_SAFETY_NOTE_T.en;
+  return template.split("{name}").join(inlineName(name, lang));
+}
+// "I have a food allergy to milk." — første, direkte sætning pr. allergi.
+export function madpasAllergyStatement(name, lang) {
+  if (!name) return "";
+  const template = MADPAS_ALLERGY_STATEMENT_T[lang] || MADPAS_ALLERGY_STATEMENT_T.en;
   return template.split("{name}").join(inlineName(name, lang));
 }
 // Krydskontaminerings-sætning (krav 7) — ÉN kombineret sætning for hele
@@ -156,18 +165,21 @@ export function useMadpas({ allergens, customAllerg, user, madpasLang, family, m
     // tekst, kun FOOD ALLERGIES). "Common examples" oplæses bevidst
     // IKKE (27. sept. 2026, krav 8: "behøver ikke nødvendigvis læses op,
     // hvis det gør beskeden unødigt lang").
-    const allergyNames = [];
+    const allergyEntries = [];
     const intoleranceNames = [];
     speakAllergens.filter(id => typeof id === "string").forEach(id => {
       const a = ALLERGENS.find(x => x.id === id);
       if (!a) return;
       const label = madpasAllergenLabel(a, lang);
-      if (a.type === "allergi") allergyNames.push(label);
+      if (a.type === "allergi") allergyEntries.push({ name: label, id });
       else intoleranceNames.push(label);
     });
-    speakCustom.filter(c => typeof c === "string" && !speakAllergens.includes(c)).forEach(c => allergyNames.push(c));
+    speakCustom.filter(c => typeof c === "string" && !speakAllergens.includes(c)).forEach(c => allergyEntries.push({ name: c }));
+    const allergyNames = allergyEntries.map(e => e.name);
 
-    allergyNames.forEach(name => parts.push(name + ". " + madpasSafetyNote(name, lang)));
+    // Samme to sætninger som på skærmen: "I have a food allergy to milk."
+    // + "Please make sure my food contains no milk or milk-derived ingredients."
+    allergyEntries.forEach(e => parts.push(madpasAllergyStatement(e.name, lang) + " " + madpasSafetyNote(e.name, lang, e.id)));
     // Krydskontaminering oplæses KUN hvis brugeren selv har aktiveret den
     // (krav 7 — må aldrig vises/oplæses automatisk for alle).
     if (madpasCrossContact && allergyNames.length > 0) {

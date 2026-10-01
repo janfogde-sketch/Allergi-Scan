@@ -39,18 +39,16 @@ afslut punkter (`status = 'done'`), og opret nye, når der opstår opgaver. List
     outboxen. Kræver en admin-RPC til opdatering (tabellen er kun læsbar for admin).
 
 *Skal designes (Bjørns spor):*
-11. Supabases auth-mails bruger stadig Supabases engelske standard-
-    skabeloner. De skal designes på dansk i EatSafes stil, så de matcher
-    velkomstmailen (Resend-skabelon, afsender `noreply@eatsafe.dk`).
-    Gælder de mails, der sendes i dag: Confirm sign up (bekræftelse ved
-    oprettelse, sendes til alle nye e-mailbrugere siden 30. sept.) og
-    Reset password (Glemt adgangskode) først, dernæst Change email
-    address, Magic link or OTP, Invite user og Reauthentication. Under
-    Security findes desuden valgfrie notifikationer (fx Password changed,
-    slået fra i dag). Skabelonerne redigeres i Supabase Dashboard →
-    Authentication → Emails → Templates (intet værktøj kan ændre dem
-    herfra). Gem gerne den endelige HTML i repoet, fx
-    `supabase/templates/`, så den kan versionsstyres.
+11. Supabases auth-mails på dansk i EatSafes stil. **Confirm sign up er
+    lavet (30. sept.):** `supabase/templates/auth/confirm-signup.html`,
+    emne i `templates.json`, og `.github/workflows/deploy-auth-templates.yml`
+    sætter emne + HTML via Management API'et ved merge (samme
+    `SUPABASE_ACCESS_TOKEN`-secret som edge-deploy). Mangler: Reset
+    password (Glemt adgangskode), dernæst Change email address, Magic link
+    or OTP, Invite user og Reauthentication — tilføj en HTML-fil og en
+    linje i `templates.json` (nøgler: `recovery`, `email_change`,
+    `magic_link`, `invite`, `reauthentication`). Under Security findes
+    desuden valgfrie notifikationer (fx Password changed, slået fra i dag).
 
 *Arkitektur-audit (30. sept. 2026):* rapport i
 https://claude.ai/artifact/8sj2uZhFSYy18iVV1upuAL (16 fund + roadmap).
@@ -121,10 +119,10 @@ go-live på Jans ord (flagene til, testlisten ryddet). Detaljer i `src/CONTEXT.m
 
 **Løst 30. sept. 2026** (Jans svar på listen, detaljer i commits og
 `supabase/sql/2026-09-30_*.sql`): 4 alder/køn i Rediger profil; 5
-QA-kontoen er admin; 6 kJ-data rettet (4.876 produkter, backup-tabel); 7
-onboarding trin 1 udfyldes FØR kontoen oprettes, så navnet er gemt, før
-bekræftelses- og velkomstmail sendes (`pendingSignup`/`completeSignup` i
-`useAuth.js`, `handle_new_user()` læser metadata); 12 tyske
+QA-kontoen er admin (4 er senere erstattet: Rediger profil ændrer kun
+navnet, Bjørns beslutning); 6 kJ-data rettet (4.876 produkter, backup-tabel); 7
+(erstattet samme aften af Bjørns nye oprettelsesflow, se "Oprettelse og
+e-mailbekræftelse" i afsnit 5); 12 tyske
 ingredienslister (allergens v22 + 18 produkter genanalyseret); 13
 alternativer scores på lighed (det gamle verified-filter matchede kun ét
 produkt); 14 lister nævner advarsler for andre profiler; 15 189
@@ -694,13 +692,25 @@ allerede eksisterende — rettet med ét CSS-linje-skift). Fuld otte-runders
 dag-for-dag-detalje i `.claude/HISTORY.md`, backend-/struktur-reference i
 `src/CONTEXT.md` afsnit 10.
 
+**Finpolish 1. okt. 2026 (Bjørn):** hver fødevareallergi har nu et direkte
+to-sætnings-budskab ("I have a food allergy to milk." + "Please make sure my
+food does not contain milk or any milk-derived ingredients.",
+`MADPAS_ALLERGY_STATEMENT_T` + `MADPAS_EN_DERIVED` i constants.jsx, også i
+oplæsningen); "I am allergic to:"-linjen er fjernet; krydskontaminering
+står i en diskret lys orange boks; indholdet starter lige under sproglinjen
+med stram spacing (lodret centrering gav for meget tom plads øverst);
+knappen hedder altid "Læs højt"/"Stop" (appens sprog). Mælk vises på kortet
+med appens eget stregikon (`Icon name="milk"`, mælkekarton i grøn flise) i
+stedet for det illustrerede glas; resten af appen bruger fortsat 3D-sættet.
+
 ### Profil restruktureret — "Rediger profil" og "Rediger præferencer" adskilt (28. sept. 2026)
 
 Profilsiden har to adskilte redigeringsskærme: `SCREENS.EDITPROFILE`
 ("Rediger profil", nås KUN fra profilkortets "Rediger") håndterer
-Navn, Telefon, Alder og Køn (alder/køn blev fjernet 28. sept. og sat
-tilbage 30. sept. efter Jans beslutning, med de delte AgeStepper/
-GenderPicker fra onboarding). `SCREENS.EDITPREFERENCES`
+kun Navn (30. sept. 2026, Bjørns beslutning — erstatter Jans punkt 4, der
+satte alder/køn tilbage samme dag; alder og køn udfyldes i onboarding og
+gemmes, men redigeres ikke bagefter, og telefon indsamles ikke længere).
+`SCREENS.EDITPREFERENCES`
 ("Rediger præferencer", nås fra "Mine præferencer"s "Rediger" på Profil)
 håndterer udelukkende allergier/intolerancer/diæter/E-numre, og genbruger
 PRÆCIS de samme delte komponenter som onboarding og `MemberForm.jsx`
@@ -968,21 +978,40 @@ positiv grøn baggrundstone (`--green-lt`/`--green-mid`) i stedet for
 `opacity:.6`, som gav et fejlagtigt "disabled/fejlramt"-udseende. Fuld
 detalje i `.claude/HISTORY.md`.
 
-**Opdateret 29. sept. 2026 (QA-beslutning D2):** Telefon er valgfri
-(valideres kun hvis udfyldt: præcis 8 cifre). **Alder og Køn SKAL forblive
+**Opdateret 29. sept. 2026 (QA-beslutning D2), 30. sept. 2026:** Telefon
+er fjernet helt fra onboarding, oprettelse og Rediger profil. **Alder og Køn SKAL forblive
 obligatoriske** — Jans eksplicitte beslutning: han bruger dem, selvom
 appens egne funktioner ikke gør. Foreslå ikke at fjerne dem igen af
 dataminimeringshensyn.
 
-**E-mailbekræftelse (QA-beslutning D1, 29. sept. 2026):** appen håndterer
-Supabase-indstillingen "Confirm email": oprettelse uden session viser en
-neutral `.info-box` (`authInfo` i `useAuth.js`, ikke den røde fejlboks),
-signup sender `redirect_to` til appens eget domæne, en eksisterende e-mail
-genkendes via Supabases "bruger uden identities"-svar, og bekræftelses-
-linket lander i onboarding med mærket "E-mail bekræftet" (`isOAuth` holder
-nu udbyderen: `"google"`/`"email"`). Velkomstmailen skal flyttes til
-bekræftelsen og selve indstillingen slås til. Se den åbne tjekliste i
-afsnit 0.
+**Oprettelse og e-mailbekræftelse (30. sept. 2026, Bjørns spec — erstatter
+Jans punkt 7 om trin 1 før oprettelse):** "Opret konto" kræver kun e-mail,
+adgangskode og accept af vilkår (tekst under feltet), opretter kontoen med
+det samme og viser `SCREENS.VERIFYEMAIL` (`VerifyEmailScreen.jsx`): "Jeg har
+bekræftet min e-mail", "Send mail igen" (Supabase `/auth/v1/resend`, 60 s
+nedtælling), "Skift e-mailadresse" og spam-hjælpetekst. Bekræftet →
+"✓ E-mail bekræftet" + "Fortsæt opsætning" → onboarding fra gemt trin.
+Tre adskilte tilstande: konto oprettet (`as_pending_verify` i localStorage →
+appen åbner bekræftelsesskærmen igen), e-mail bekræftet (session, men
+`onboarding_completed=false` → onboarding), onboarding færdig
+(`as_onboarded` → kun da starter appen direkte på forsiden; ellers venter
+den på status på `SCREENS.BOOT`). Login med ubekræftet e-mail åbner
+bekræftelsesskærmen, og et udløbet link giver en forklaring. "Jeg har
+bekræftet" logger ind med adgangskoden fra oprettelsen (kun i hukommelsen);
+efter en genstart sendes brugeren til Log ind med e-mailen udfyldt.
+Databasen (migrationer `20260930193753` og `20260930194647`):
+`handle_new_user()` sætter ikke længere e-mailens lokale del som navn, og
+velkomstmailen sendes KUN når `onboarding_completed` skifter false → true
+(triggeren `on_onboarding_completed`) — aldrig ved oprettelse, login,
+bekræftelse eller genstart; de gamle triggere på oprettelse/bekræftelse og
+`send_welcome_email()` er fjernet. Én mail pr. bruger: `welcome_sent_at`
+reserveres atomisk før afsendelsen. Velkomstmailens HTML ligger i repoet
+(`supabase/templates/resend/N1-velkomst.html` → `_shared/welcomeMail.ts`
+via `node scripts/build-welcome-mail.mjs`, testet i `src/welcomeMail.test.js`)
+med overskriften "Velkommen til EatSafe" og BETA som badge. Bekræftelses-
+linket lander på appens egen side "✓ Din e-mail er bekræftet" →
+"Fortsæt opsætning" (næste manglende trin). Google/Facebook går uændret
+direkte til onboarding.
 
 ### App-headeren omdøbt til fælles komponent + tekst-wordmark (27. sept. 2026)
 

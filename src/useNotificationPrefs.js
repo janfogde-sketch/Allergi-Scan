@@ -14,8 +14,8 @@ import { makeHeaders, apiCall } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 
 // Rækkefølgen her styrer visningsrækkefølgen i UI'et. "welcome" findes også
-// som en reel notifikation (send_welcome_email), men er en engangs-besked
-// ved oprettelse — ikke noget en bruger meningsfuldt kan slå fra/til, så den
+// som en reel mail (send_welcome_after_onboarding), men er en engangs-besked
+// efter færdig onboarding — ikke noget en bruger meningsfuldt kan slå fra/til, så den
 // er bevidst udeladt af listen brugeren ser.
 // Labels finpudset (28. sept. 2026, Indstillinger-forbedring) til mere
 // naturlig/præcis microcopy — "id" (bruges som databasenøgle) er UÆNDRET

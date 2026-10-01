@@ -779,6 +779,19 @@ body::-webkit-scrollbar{display:none;}
    specifikt på Opret konto/Log ind, så kortet får mere "luft" og fremstår
    som skærmens klare fokuspunkt, uden at ændre .card noget andet sted. */
 .login-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px 20px;box-shadow:var(--sh2);margin-bottom:10px;}
+/* Bekræft din e-mail (VerifyEmailScreen.jsx, 30. sept. 2026): samme kort og knapper som Opret konto, centreret og roligt. */
+.verify-wrap .welcome-logo-wrap{margin-bottom:24px;}
+.verify-card{text-align:center;padding:26px 20px 24px;margin-bottom:16px;}
+.verify-icon{width:52px;height:52px;border-radius:16px;background:var(--green-lt);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.verify-title{font-size:19px;font-weight:800;color:var(--ink);margin-bottom:10px;letter-spacing:-.2px;}
+.verify-text{font-size:13.5px;color:var(--ink2);line-height:1.55;}
+.verify-email{font-size:14px;font-weight:700;color:var(--ink);margin:2px 0 10px;word-break:break-all;}
+.verify-wrap .welcome-btn,.verify-wrap .welcome-btn-ghost{min-height:52px;display:flex;align-items:center;justify-content:center;}
+.verify-wrap .welcome-btn-ghost{margin-bottom:6px;}
+.verify-wrap .welcome-btn-ghost:disabled{opacity:.6;cursor:default;}
+.verify-links{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:6px;text-align:center;}
+.verify-links .link-green{min-height:44px;display:inline-flex;align-items:center;}
+.verify-help{font-size:12px;color:var(--muted);line-height:1.5;}
 /* Segmenteret kontrol — "Ny bruger | Log ind" aktiv-tilstand hævet fra en
    næsten usynlig markering (samme --surface2-farve som rækkens egen
    baggrund, kun adskilt af en skygge) til en tydelig, men rolig markering

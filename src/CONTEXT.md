@@ -72,7 +72,7 @@ src/
 ├── SearchScreen.jsx          # SEARCH — søgning + profil/manuel allergen-filter
 ├── ListScreen.jsx            # LIST — indkøbsliste + favoritter
 ├── SuggestEditScreen.jsx     # SUGGEST_EDIT — foreslå rettelse til produkt
-├── ProfileScreen.jsx         # PROFILE, EDITPROFILE (kun navn/telefon), EDITPREFERENCES
+├── ProfileScreen.jsx         # PROFILE, EDITPROFILE (kun navn), EDITPREFERENCES
 │                             #   (allergier/intolerancer/diæt/E-numre), FAMILY, HISTORY,
 │                             #   FAVORITES, ADMIN
 │                             #   Footer: hej@eatsafe.dk + privatlivspolitik link
@@ -227,6 +227,24 @@ Se `useOnboarding.js`/`useAuth.js`/`App.jsx`'s routing-logik for hvordan
 felterne bruges til at genoptage onboarding på tværs af sessioner/enheder
 og forhindre en ufuldført bruger i at nå hovedappen — fuld detalje i
 `CLAUDE.md`.
+
+**Oprettelse uden profil-metadata (30. sept. 2026, migration
+`20260930193753_onboarding_signup_without_profile`):** signup sender kun
+e-mail og adgangskode. `handle_new_user()` lader `name` være null, når
+metadata ikke har et navn (før: e-mailens lokale del).
+
+**Velkomstmail kun efter onboarding (migration
+`20260930194647_welcome_email_only_after_onboarding`):** triggerne
+`on_auth_email_confirmed` (auth.users) og `on_user_created` (public.users)
+og funktionen `send_welcome_email()` er fjernet. Eneste afsender er
+`send_welcome_after_onboarding()` (trigger `on_onboarding_completed`, kun
+false → true), som reserverer `welcome_sent_at` atomisk
+(`UPDATE ... WHERE welcome_sent_at IS NULL`) og derefter kalder
+`send-email` med `welcome` (flag FRA) eller `welcome_onboarded` (flag TIL).
+`send-email` sender begge typer med HTML'en fra `_shared/welcomeMail.ts`
+(kopi af `templates/resend/N1-velkomst.html`), emne "Velkommen til EatSafe".
+Supabase Auths bekræftelsesmail ligger i `supabase/templates/auth/` og
+sættes af workflowet `deploy-auth-templates.yml`.
 
 **Opfølgende sikkerhedsfund og -fix (25. sept. 2026, `security-check`-gennemgang):**
 `get_advisors` fandt at tre `SECURITY DEFINER`-funktioner var direkte

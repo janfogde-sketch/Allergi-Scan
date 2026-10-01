@@ -1,9 +1,9 @@
 // @ts-nocheck
 import React from "react";
-import { ALLERGENS, SCREENS, MADPAS_LANGUAGES, MADPAS_SECTIONS_T, MADPAS_ALLERGY_HEADLINE_T, MADPAS_INTOLERANCE_HEADLINE_T, MADPAS_EXAMPLES_LABEL_T, MADPAS_SPEAK_LABEL_T, MADPAS_STOP_LABEL_T } from "./constants.jsx";
+import { ALLERGENS, SCREENS, MADPAS_LANGUAGES, MADPAS_SECTIONS_T, MADPAS_INTOLERANCE_HEADLINE_T, MADPAS_EXAMPLES_LABEL_T } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { Icon, AllergenGlyph } from "./SharedComponents.jsx";
-import { madpasAllergenLabel, madpasDietLabel, madpasAllergenExamples, madpasSafetyNote, madpasCrossContactNote, madpasDietMessage } from "./useMadpas.js";
+import { madpasAllergenLabel, madpasDietLabel, madpasAllergenExamples, madpasSafetyNote, madpasAllergyStatement, madpasCrossContactNote, madpasDietMessage } from "./useMadpas.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -90,26 +90,30 @@ export default function MadpasScreen({
     // element på hele skærmen (krav 3). marginBottom rundet til appens
     // faste spacing-skala (4/6/8/10/12/14/16/20/24/32, se
     // .claude/rules/design-tokens.md) i stedet for "næsten runde" 26px.
-    const itemBlock = { marginBottom:24 };
-    const itemHeadRow = { display:"flex", alignItems:"center", gap:14 };
-    const itemIcon = { fontSize:36, lineHeight:1, flexShrink:0, width:36, textAlign:"center" };
+    const itemBlock = { marginBottom:20 };
+    const itemHeadRow = { display:"flex", alignItems:"center", gap:12 };
+    const itemIcon = { fontSize:40, lineHeight:1, flexShrink:0, width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center" };
+    // Mælk vises med appens eget stregikon i en rolig grøn flise (1. okt.
+    // 2026) i stedet for det illustrerede glas, som lignede en emoji.
+    const renderAllergenIcon = (a) => a.id === "maelkeallergi"
+      ? <span style={{ ...itemIcon, borderRadius:14, background:"var(--green-lt)" }}><Icon name="milk" size={28} color="var(--green)" /></span>
+      : <span style={itemIcon}><AllergenGlyph a={a} size={40} /></span>;
     const itemName = { fontSize:32, fontWeight:800, color:"var(--ink)", lineHeight:1.15 };
     // Korte, tydeligt mærkede fødevare-eksempler under selve allergenet —
     // bevidst LILLE og MUTED sammenlignet med itemName, så allergenet selv
     // altid forbliver det mest fremtrædende element på skærmen.
-    const exampleLine = { fontSize:14.5, color:"var(--muted)", marginTop:8, lineHeight:1.45, paddingLeft:50 };
-    // Den konkrete besked til personalet — genereres pr. emne (krav 4:
-    // "genereres dynamisk for den konkrete allergi"), ikke som én
-    // kombineret sætning for hele sektionen. `--ink` (ikke `--ink2`) for
-    // at holde den tydeligt over headline/examples i det visuelle
-    // hierarki (prioritet 2), uden at nå selve navnets vægt.
-    const safetyLine = { fontSize:15.5, fontWeight:700, color:"var(--ink)", marginTop:10, lineHeight:1.5, paddingLeft:50 };
+    const exampleLine = { fontSize:14, color:"var(--muted)", marginTop:4, lineHeight:1.45, paddingLeft:56 };
+    // Direkte to-sætnings-budskab pr. fødevareallergi (1. okt. 2026):
+    // "I have a food allergy to milk." (stærkest) + sikkerhedssætningen.
+    const statementLine = { fontSize:17, fontWeight:800, color:"var(--ink)", lineHeight:1.4 };
+    const messageBlock = { marginTop:10, paddingLeft:56 };
+    const messageSafety = { fontSize:15.5, fontWeight:600, color:"var(--ink2)", marginTop:4, lineHeight:1.5 };
     const renderExamples = (allergenId) => {
       const examples = madpasAllergenExamples(allergenId, lang);
       if (examples.length === 0) return null;
       return (
         <div style={exampleLine}>
-          <span style={{ fontWeight:700 }}>{MADPAS_EXAMPLES_LABEL_T[lang] || MADPAS_EXAMPLES_LABEL_T.en}</span> {examples.join(" · ")}
+          <span style={{ fontWeight:600 }}>{MADPAS_EXAMPLES_LABEL_T[lang] || MADPAS_EXAMPLES_LABEL_T.en}</span> {examples.join(" · ")}
         </div>
       );
     };
@@ -118,7 +122,7 @@ export default function MadpasScreen({
       <div style={{ position:"fixed", inset:0, zIndex:9999, background:"var(--paper)", display:"flex", flexDirection:"column" }} dir={rtl ? "rtl" : "ltr"}>
 
         {/* Stort flag/sprog øverst + tydelig-men-diskret luk-knap. */}
-        <div style={{ padding:"22px 24px 18px", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
+        <div style={{ padding:"20px 24px 8px", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
             <span style={{ fontSize:44, lineHeight:1 }}>{langInfo?.flag}</span>
             <span style={{ fontSize:17, color:"var(--ink2)", fontWeight:700 }}>{langInfo?.name}</span>
@@ -136,20 +140,27 @@ export default function MadpasScreen({
             den, men den ekstra luft sikrer at sidste linje altid har
             synlig afstand til Read aloud-knappen i stedet for at ende
             lige der (27. sept., finpolish nr. 2, punkt 5). */}
-        <div style={{ flex:1, overflowY:"auto", padding:"4px 24px 40px" }}>
+        {/* Indholdet starter lige under sproglinjen (1. okt. 2026: den
+            lodrette centrering gav en stor tom flade øverst). */}
+        <div style={{ flex:1, overflowY:"auto", padding:"16px 24px 32px", display:"flex", flexDirection:"column" }}>
+          <div style={{ flexShrink:0 }}>
           {(allergyItems.length > 0 || customItems.length > 0) && (
             <div style={{ marginBottom:32 }}>
-              <div style={sectionLbl}>{MADPAS_SECTIONS_T.allergies[lang] || MADPAS_SECTIONS_T.allergies.en}</div>
-              <div style={headline}>{MADPAS_ALLERGY_HEADLINE_T[lang] || MADPAS_ALLERGY_HEADLINE_T.en}</div>
+              {/* "I am allergic to:" er fjernet (1. okt. 2026) — hver allergi
+                  har nu sin egen direkte sætning nedenfor. */}
+              <div style={{ ...sectionLbl, marginBottom:10 }}>{MADPAS_SECTIONS_T.allergies[lang] || MADPAS_SECTIONS_T.allergies.en}</div>
               <div>
                 {allergyItems.map(a => (
                   <div key={a.id} style={itemBlock}>
                     <div style={itemHeadRow}>
-                      <span style={itemIcon}><AllergenGlyph a={a} size={32} /></span>
+                      {renderAllergenIcon(a)}
                       <span style={itemName}>{madpasAllergenLabel(a, lang)}</span>
                     </div>
                     {renderExamples(a.id)}
-                    <div style={safetyLine}>{madpasSafetyNote(madpasAllergenLabel(a, lang), lang)}</div>
+                    <div style={messageBlock}>
+                      <div style={statementLine}>{madpasAllergyStatement(madpasAllergenLabel(a, lang), lang)}</div>
+                      <div style={messageSafety}>{madpasSafetyNote(madpasAllergenLabel(a, lang), lang, a.id)}</div>
+                    </div>
                   </div>
                 ))}
                 {customItems.map((c,i) => (
@@ -158,7 +169,10 @@ export default function MadpasScreen({
                       <span style={itemIcon}><Icon name="warning" size={28} color="var(--amber)" /></span>
                       <span style={itemName}>{c}</span>
                     </div>
-                    <div style={safetyLine}>{madpasSafetyNote(c, lang)}</div>
+                    <div style={messageBlock}>
+                      <div style={statementLine}>{madpasAllergyStatement(c, lang)}</div>
+                      <div style={messageSafety}>{madpasSafetyNote(c, lang)}</div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -170,9 +184,9 @@ export default function MadpasScreen({
                   fremfor 15.5px) — tydelig, men sekundær i forhold til
                   selve allergierne (27. sept., finpolish nr. 2, punkt 3). */}
               {madpasCrossContact && crossContactNames.length > 0 && (
-                <div style={{ display:"flex", alignItems:"flex-start", gap:10, marginTop:20, paddingTop:16, borderTop:"1px solid var(--border)" }}>
+                <div style={{ display:"flex", alignItems:"flex-start", gap:10, marginTop:4, padding:"12px 14px", background:"var(--amber-lt)", border:"1px solid rgba(181,121,26,.22)", borderRadius:12 }}>
                   <span style={{ flexShrink:0, marginTop:2 }}><Icon name="warning" size={17} color="var(--amber)" /></span>
-                  <span style={{ fontSize:14.5, fontWeight:600, color:"var(--amber)", lineHeight:1.5 }}>
+                  <span style={{ fontSize:14.5, fontWeight:600, color:"var(--ink)", lineHeight:1.5 }}>
                     {madpasCrossContactNote(crossContactNames, lang)}
                   </span>
                 </div>
@@ -188,7 +202,7 @@ export default function MadpasScreen({
                 {intoleranceItems.map(a => (
                   <div key={a.id} style={itemBlock}>
                     <div style={itemHeadRow}>
-                      <span style={itemIcon}><AllergenGlyph a={a} size={32} /></span>
+                      {renderAllergenIcon(a)}
                       <span style={itemName}>{madpasAllergenLabel(a, lang)}</span>
                     </div>
                     {renderExamples(a.id)}
@@ -216,6 +230,7 @@ export default function MadpasScreen({
               </div>
             </div>
           )}
+          </div>
         </div>
 
         {/* Footer — kun den store oplæs-knap (reel funktion). Ingen
@@ -229,7 +244,8 @@ export default function MadpasScreen({
           <div style={{ padding:"16px 24px calc(20px + env(safe-area-inset-bottom))", borderTop:"1px solid var(--border)", flexShrink:0 }}>
             <button className="mp-speak-btn" onClick={madpasSpeak} style={{ background: madpasSpeaking ? "var(--amber)" : "var(--green)" }}>
               <Icon name={madpasSpeaking ? "speakerOff" : "speaker"} size={19} color="var(--on-green)" />
-              {madpasSpeaking ? (MADPAS_STOP_LABEL_T[lang] || MADPAS_STOP_LABEL_T.en) : (MADPAS_SPEAK_LABEL_T[lang] || MADPAS_SPEAK_LABEL_T.en)}
+              {/* Knappen er til brugeren, ikke personalet: altid appens sprog (dansk). */}
+              {madpasSpeaking ? "Stop" : "Læs højt"}
             </button>
           </div>
         )}

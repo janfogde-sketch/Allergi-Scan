@@ -169,3 +169,25 @@ describe("detectAllergensInText — tyske ingredienslister", () => {
     expect(keywordMatches("brot ohne milch", "milch")).toBe(false);
   });
 });
+
+describe("sammensatte mælkeord i ingredienslisten (30. sept. 2026)", () => {
+  it("fremhæver mælk i sammensatte ord, ligesom backend", () => {
+    expect(keywordMatches("skummetmælkspulver", "mælk")).toBe(true);
+    expect(keywordMatches("mælkechokolade", "mælk")).toBe(true);
+  });
+
+  it("fremhæver ikke plantedrikke og mælkesyre som mælk", () => {
+    expect(keywordMatches("kokosmælk", "mælk")).toBe(false);
+    expect(keywordMatches("havremælk", "mælk")).toBe(false);
+    expect(keywordMatches("syre: mælkesyre", "mælk")).toBe(false);
+  });
+
+  it("fanger smørfedt og hytteost som mælkeprotein", () => {
+    expect(detectAllergensInText("SMØRFEDT, salt")).toContain("maelkeallergi");
+    expect(detectAllergensInText("Hytteost naturel")).toContain("maelkeallergi");
+  });
+
+  it("markerer ikke æg eller citronsyre som mælk", () => {
+    expect(detectAllergensInText("syre: citronsyre. Kan indeholde: ÆG.")).not.toContain("maelkeallergi");
+  });
+});

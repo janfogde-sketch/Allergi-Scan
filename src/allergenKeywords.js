@@ -14,10 +14,23 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { ALLERGEN_KEYWORDS } from "../supabase/functions/_shared/allergenKeywords.js";
+import { SUBSTRING_KEYWORDS } from "../supabase/functions/_shared/allergenEngine.js";
 
 export { ALLERGEN_KEYWORDS };
 
 export const ALL_ALLERGEN_WORDS = Object.values(ALLERGEN_KEYWORDS).flat();
+
+// Ord, der indeholder "mælk"/"milk" uden at være mælk: plantedrikke og
+// mælkesyre (E270, syre fra gæring). Uden undtagelsen ville "mælk" som
+// understreng fremhæve dem som mælkeallergen.
+const NON_DAIRY_MILK_WORD = /(kokos|kokosnød|mandel|havre|soja|ris|cashew|ærte|coconut|almond|oat|soy|rice)(mælk|drik|milk)|mælkesyre|lactic/;
+
+function containingWord(text, idx, len) {
+  let start = idx, end = idx + len;
+  while (start > 0 && /[a-zæøåäöü0-9-]/i.test(text[start - 1])) start--;
+  while (end < text.length && /[a-zæøåäöü0-9-]/i.test(text[end])) end++;
+  return text.substring(start, end).toLowerCase();
+}
 
 // Find ALLE forekomster af et nøgleord i teksten (ordgrænse-sikret for korte
 // nøgleord <=4 tegn, ren understreng for længere) og returnér deres startindeks.
@@ -28,7 +41,13 @@ export const ALL_ALLERGEN_WORDS = Object.values(ALLERGEN_KEYWORDS).flat();
 // 2026) — den farligste fejltype her er en falsk negativ (overset allergen).
 function findAllKeywordIndices(text, kw) {
   const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const wordBoundary = kw.length <= 4;
+  // Samme regel som backend-motoren (allergenEngine.js): kerneord som
+  // "mælk" matches som understreng, så "skummetmælk" og "mælkechokolade"
+  // fanges. Øvrige korte ord (<=4 tegn) kræver ordgrænse ("æg" må ikke
+  // matche inde i "lægemiddel"). Før 30. sept. 2026 brugte frontenden kun
+  // længden, så sammensatte mælkeord blev fremhævet i backend, men ikke i
+  // ingredienslisten.
+  const wordBoundary = !SUBSTRING_KEYWORDS.has(kw) && kw.length <= 4;
   const pattern = wordBoundary
     ? new RegExp(`(^|[^a-zæøå0-9])(${escaped})([^a-zæøå0-9]|$)`, "gi")
     : new RegExp(`(${escaped})`, "gi");
@@ -36,7 +55,8 @@ function findAllKeywordIndices(text, kw) {
   let m;
   while ((m = pattern.exec(text))) {
     const idx = wordBoundary ? m.index + m[1].length : m.index;
-    indices.push(idx);
+    const skip = (kw === "mælk" || kw === "milk") && NON_DAIRY_MILK_WORD.test(containingWord(text, idx, kw.length));
+    if (!skip) indices.push(idx);
     pattern.lastIndex = idx + kw.length; // undgå uendeligt loop ved nul-bredde-match
   }
   return indices;

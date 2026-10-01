@@ -60,9 +60,8 @@ const HELP_CONTENT = {
     { icon:"speaker", title:"Oplæsning", desc:"Tryk højttalerikonet for at høre udtalen på det lokale sprog." },
   ]},
   "editprofile": { title:"Rediger profil", titleIcon:"edit", tips:[
-    { icon:"warning", title:"Allergier og intolerancer", desc:"Tryk for at slå en allergi til eller fra. Har du en der ikke står på listen? Tilføj den under 'Andre allergier'." },
-    { icon:"package", title:"Diæter", desc:"Vælg diæter (fx vegansk, glutenfri), som produkter og opskrifter tjekkes op imod." },
-    { icon:"hash", title:"E-numre", desc:"Vælg specifikke E-numre du vil overvåges for, ud over dine allergier." },
+    { icon:"profile", title:"Dit navn", desc:"Navnet bruges i appen og i mails fra EatSafe." },
+    { icon:"warning", title:"Allergier og præferencer", desc:"Allergier, intolerancer, diæter og E-numre ændrer du under 'Rediger præferencer' på din profil." },
   ]},
   "suggest_edit": { title:"Foreslå rettelse", titleIcon:"edit", tips:[
     { icon:"camera", title:"Ingrediensliste", desc:"Fotografér etiketten og lad OCR læse teksten, eller ret ingredienserne manuelt." },

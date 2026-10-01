@@ -98,39 +98,42 @@ describe("useAuth handleSignup — validation guards", () => {
     expect(result.current.authError).toBe("");
   });
 
-  it("'Opret konto' goes to onboarding step 1 without creating the account yet", async () => {
+  it("'Opret konto' creates the account right away and opens the confirmation screen", async () => {
+    global.fetch.mockResolvedValue(textResponse({ id: "u1", identities: [{ id: "i1" }] })); // ingen access_token = kræver email-bekræftelse
     const { result, setScreen } = setup();
-    act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
+    act(() => { result.current.setLoginEmail(" A@B.dk "); result.current.setLoginPassword("LongEnough2026"); });
     await act(async () => { await result.current.handleSignup(); });
-    expect(global.fetch).not.toHaveBeenCalled();
-    expect(result.current.pendingSignup).toBe(true);
-    expect(setScreen).toHaveBeenLastCalledWith("onboard");
-  });
-
-  it("creates the account with step 1 as metadata and asks the user to confirm their email", async () => {
-    global.fetch.mockResolvedValue(textResponse({ id: "u1" })); // ingen access_token = kræver email-bekræftelse
-    const { result, setScreen } = setup();
-    act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
-    await act(async () => { await result.current.handleSignup(); });
-    await act(async () => { await result.current.completeSignup({ name: "Anna Hansen", phone: "+45 12 34 56 78", birth_year: 1990, gender: "Kvinde" }); });
     expect(global.fetch.mock.calls[0][0]).toContain("/auth/v1/signup?redirect_to=");
     const body = JSON.parse(global.fetch.mock.calls[0][1].body);
-    expect(body.data).toEqual({ name: "Anna Hansen", phone: "+45 12 34 56 78", birth_year: 1990, gender: "Kvinde", signup_profile: "true" });
-    expect(result.current.authInfo).toMatch(/bekræftelseslink/i);
-    expect(result.current.authError).toBe("");
+    // Kun e-mail og adgangskode — ingen telefon eller profil-metadata
+    expect(body).toEqual({ email: "a@b.dk", password: "LongEnough2026" });
+    expect(result.current.verifyEmail).toBe("a@b.dk");
+    expect(result.current.verifyStatus).toBe("pending");
+    expect(result.current.authInfo).toBe("");
     expect(result.current.accessToken).toBeNull();
-    expect(result.current.pendingSignup).toBe(false);
-    expect(setScreen).toHaveBeenLastCalledWith("login");
+    expect(localStorage.getItem("as_pending_verify")).toBe("a@b.dk");
+    expect(setScreen).toHaveBeenLastCalledWith("verifyemail");
   });
 
-  it("continues to step 2 when Supabase returns a session right away", async () => {
+  it("shows no confirmation message when the account could not be created", async () => {
+    global.fetch.mockResolvedValue(textResponse({ msg: "boom" }, false));
+    const { result, setScreen } = setup();
+    act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
+    await act(async () => { await result.current.handleSignup(); });
+    expect(result.current.authError).toBe("Der opstod en fejl. Prøv igen.");
+    expect(result.current.authInfo).toBe("");
+    expect(localStorage.getItem("as_pending_verify")).toBeNull();
+    expect(setScreen).not.toHaveBeenCalledWith("verifyemail");
+  });
+
+  it("goes straight to onboarding step 1 when Supabase returns a session right away", async () => {
     global.fetch.mockResolvedValue(textResponse({ access_token: "a", refresh_token: "r", user: { id: "u1" } }));
     const setOnboardStep = vi.fn();
     const { result, setScreen } = setup({ setOnboardStep });
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
-    await act(async () => { await result.current.completeSignup({ name: "Anna Hansen", phone: "+45 12 34 56 78", birth_year: 1990, gender: "Kvinde" }); });
+    await act(async () => { await result.current.handleSignup(); });
     expect(result.current.accessToken).toBe("a");
-    expect(setOnboardStep).toHaveBeenLastCalledWith(2);
+    expect(setOnboardStep).toHaveBeenLastCalledWith(1);
     expect(setScreen).toHaveBeenLastCalledWith("onboard");
   });
 
@@ -142,13 +145,13 @@ describe("useAuth handleSignup — validation guards", () => {
     expect(result.current.passwordError).toBe("Adgangskoden kan ikke bruges: den mangler et stort bogstav og et tal.");
   });
 
-  it("explains a leaked password rejected by Supabase and returns to the signup form", async () => {
+  it("explains a leaked password rejected by Supabase on the signup form", async () => {
     global.fetch.mockResolvedValue(textResponse({ code: 422, error_code: "weak_password", msg: "Password is known to be weak", weak_password: { reasons: ["pwned"] } }, false));
     const { result, setScreen } = setup();
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
-    await act(async () => { await result.current.completeSignup({ name: "Anna Hansen", phone: "+45 12 34 56 78", birth_year: 1990, gender: "Kvinde" }); });
+    await act(async () => { await result.current.handleSignup(); });
     expect(result.current.passwordError).toMatch(/kendt datalæk/);
-    expect(setScreen).toHaveBeenLastCalledWith("login");
+    expect(setScreen).not.toHaveBeenCalledWith("verifyemail");
   });
 
   it("shows 'already registered' when confirmation is on and Supabase hides an existing account", async () => {
@@ -156,8 +159,84 @@ describe("useAuth handleSignup — validation guards", () => {
     global.fetch.mockResolvedValue(textResponse({ id: "u1", identities: [] }));
     const { result } = setup();
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
-    await act(async () => { await result.current.completeSignup({ name: "Anna Hansen", phone: "+45 12 34 56 78", birth_year: 1990, gender: "Kvinde" }); });
+    await act(async () => { await result.current.handleSignup(); });
     expect(result.current.emailTakenError).toMatch(/allerede registreret/i);
     expect(result.current.authInfo).toBe("");
+  });
+});
+
+function jsonResponse(body, ok = true, status) {
+  return { ok, status: status || (ok ? 200 : 400), json: async () => body, text: async () => JSON.stringify(body) };
+}
+
+describe("useAuth email confirmation screen", () => {
+  it("login with an unconfirmed email opens the confirmation screen instead of an error", async () => {
+    global.fetch.mockResolvedValue(textResponse({ error_code: "email_not_confirmed", msg: "Email not confirmed" }, false));
+    const { result, setScreen } = setup();
+    act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
+    await act(async () => { await result.current.handleLogin(); });
+    expect(result.current.authError).toBe("");
+    expect(result.current.verifyEmail).toBe("a@b.dk");
+    expect(setScreen).toHaveBeenLastCalledWith("verifyemail");
+  });
+
+  it("'Jeg har bekræftet' shows a clear message while the email is still unconfirmed", async () => {
+    localStorage.setItem("as_pending_verify", "a@b.dk");
+    global.fetch.mockResolvedValue(jsonResponse({ error_code: "email_not_confirmed", msg: "Email not confirmed" }, false));
+    const { result, setScreen } = setup({ setOnboardStep: vi.fn() });
+    act(() => { result.current.setLoginPassword("LongEnough2026"); });
+    await act(async () => { await result.current.checkEmailVerified(); });
+    expect(result.current.verifyError).toMatch(/ikke se, at e-mailen er bekræftet/);
+    expect(result.current.verifyStatus).toBe("pending");
+    expect(setScreen).not.toHaveBeenCalledWith("home");
+  });
+
+  it("'Jeg har bekræftet' logs in and shows 'E-mail bekræftet' — never the scanner", async () => {
+    localStorage.setItem("as_pending_verify", "a@b.dk");
+    global.fetch
+      .mockResolvedValueOnce(jsonResponse({ access_token: "a", refresh_token: "r", user: { id: "u1" } }))
+      .mockResolvedValueOnce(jsonResponse([{ onboarding_completed: false, onboarding_step: 3 }]));
+    const setOnboardStep = vi.fn();
+    const { result, setScreen } = setup({ setOnboardStep });
+    act(() => { result.current.setLoginPassword("LongEnough2026"); });
+    await act(async () => { await result.current.checkEmailVerified(); });
+    expect(result.current.accessToken).toBe("a");
+    expect(result.current.verifyStatus).toBe("verified");
+    expect(setOnboardStep).toHaveBeenLastCalledWith(3);
+    expect(setScreen).not.toHaveBeenCalledWith("home");
+    expect(localStorage.getItem("as_pending_verify")).toBeNull();
+    act(() => { result.current.continueAfterVerify(); });
+    expect(setScreen).toHaveBeenLastCalledWith("onboard");
+  });
+
+  it("after an app restart (password unknown) 'Jeg har bekræftet' goes to Log ind with the email filled in", async () => {
+    localStorage.setItem("as_pending_verify", "a@b.dk");
+    const { result, setScreen } = setup();
+    await act(async () => { await result.current.checkEmailVerified(); });
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(result.current.loginEmail).toBe("a@b.dk");
+    expect(result.current.authTab).toBe("login");
+    expect(setScreen).toHaveBeenLastCalledWith("login");
+  });
+
+  it("'Send mail igen' calls Supabase resend for the signup email and starts a cooldown", async () => {
+    localStorage.setItem("as_pending_verify", "a@b.dk");
+    global.fetch.mockResolvedValue(jsonResponse({}));
+    const { result } = setup();
+    await act(async () => { await result.current.resendVerification(); });
+    expect(global.fetch.mock.calls[0][0]).toContain("/auth/v1/resend");
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({ type: "signup", email: "a@b.dk" });
+    expect(result.current.verifyNotice).toMatch(/ny mail/);
+    expect(result.current.resendCooldown).toBe(60);
+  });
+
+  it("'Skift e-mailadresse' returns to the signup form with the email filled in", () => {
+    localStorage.setItem("as_pending_verify", "a@b.dk");
+    const { result, setScreen } = setup();
+    act(() => { result.current.changeVerifyEmail(); });
+    expect(result.current.loginEmail).toBe("a@b.dk");
+    expect(result.current.authTab).toBe("signup");
+    expect(localStorage.getItem("as_pending_verify")).toBeNull();
+    expect(setScreen).toHaveBeenLastCalledWith("login");
   });
 });
