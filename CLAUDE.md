@@ -682,13 +682,14 @@ dag-for-dag-detalje i `.claude/HISTORY.md`, backend-/struktur-reference i
 
 **Finpolish 1. okt. 2026 (Bjørn):** hver fødevareallergi har nu et direkte
 to-sætnings-budskab ("I have a food allergy to milk." + "Please make sure my
-food contains no milk or milk-derived ingredients.", `MADPAS_ALLERGY_STATEMENT_T`
-+ `MADPAS_EN_DERIVED` i constants.jsx, også i oplæsningen); "I am allergic
-to:"-linjen er fjernet; krydskontaminering står i en diskret lys orange
-boks; indholdet centreres lodret mellem sproglinjen og knappen; knappen
-hedder altid "Læs højt"/"Stop" (appens sprog). Mælkeikonet
-(`src/assets/icons/allergen-maelk.png`, bruges i hele appen) er skiftet fra
-et glas, der lignede 🥛-emojien, til karton + glas i samme 3D-stil.
+food does not contain milk or any milk-derived ingredients.",
+`MADPAS_ALLERGY_STATEMENT_T` + `MADPAS_EN_DERIVED` i constants.jsx, også i
+oplæsningen); "I am allergic to:"-linjen er fjernet; krydskontaminering
+står i en diskret lys orange boks; indholdet starter lige under sproglinjen
+med stram spacing (lodret centrering gav for meget tom plads øverst);
+knappen hedder altid "Læs højt"/"Stop" (appens sprog). Mælk vises på kortet
+med appens eget stregikon (`Icon name="milk"`, mælkekarton i grøn flise) i
+stedet for det illustrerede glas; resten af appen bruger fortsat 3D-sættet.
 
 ### Profil restruktureret — "Rediger profil" og "Rediger præferencer" adskilt (28. sept. 2026)
 
