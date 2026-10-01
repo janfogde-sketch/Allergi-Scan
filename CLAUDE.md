@@ -103,9 +103,9 @@ skal der laves en ny nøgle og secret'en opdateres.
 P1 og P6 (besked + mail leveret), og push til Android (Google accepterede; Jan svarede "ja, lukket",
 men trykket på beskeden er ikke bekræftet). Fundet og rettet undervejs: `push_tokens.user_id` manglede
 default (registrering fejlede stille, tabellen var altid tom), VAPID-privatnøglen er rå (32 bytes) og
-importeres nu som JWK, og `recalls` manglede GRANT til service_role. Push-flaget
-`notifications_push_enabled` og mail-flaget `notifications_email_enabled` er stadig FRA for alle;
-kun konti i `app_flags.notifications_test_users` får rigtige push/mails.
+importeres nu som JWK, og `recalls` manglede GRANT til service_role. **Go-live 1. okt. 2026 (Jans ord):** push er tændt (migration `20261001080030`) og mail er tændt
+(`20261001093000`); `notifications_test_users` er tom. Rulles tilbage ved at sætte flagene til false
+(beskeder i appen påvirkes ikke). Tilbage: iPhone-test af push og de øvrige varianter med to konti.
 **Testdata fra livetesten er ryddet (1. okt. 2026):** testprodukt, scanning, testtilbagekaldelse, hændelser, beskeder og testlisten
 (`notifications_test_users` er tom igen; Jans push-abonnement er bevaret).
 Mangler: admin-visning til tilbagekaldelser uden gyldig EAN (punkt 13 ovenfor), N7 (opskrifter på pause),

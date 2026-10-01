@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { apiCall, decodeJwtPayload, passwordErrorText, PASSWORD_REQUIREMENTS_TEXT } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
+import { forgetPushTokenForDevice } from "./usePush.js";
 
 // Simpel, ikke-overdrevet streng e-mail-validering (27. sept. 2026, MASTER
 // PROMPT "FINAL 10/10 POLISH – OPRET KONTO & LOG IND") — erstatter den
@@ -174,6 +175,8 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
 
   // ── Ryd auth ved logout / slet konto ─────────────────────────────────────
   const clearAuth = useCallback(() => {
+    // Enhedens push-abonnement tilhører ikke længere den konto, der logger ud (fire-and-forget).
+    forgetPushTokenForDevice(localStorage.getItem("as_token") || sessionStorage.getItem("as_token"));
     setAccessToken(null); setRefreshToken(null); setUserId(null);
     localStorage.removeItem("as_token"); sessionStorage.removeItem("as_token");
     localStorage.removeItem("as_refresh"); sessionStorage.removeItem("as_refresh");
