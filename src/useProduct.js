@@ -25,14 +25,14 @@ import { saveToOfflineCache, getFromOfflineCache } from "./useOffline.js";
 // deler PRÆCIS samme beregningslogik — to uafhængige implementationer af
 // samme sikkerhedsrelevante beregning har allerede givet mindst én bug før
 // (se aktiveIds-kommentaren i App.jsx).
-export function buildScanResultFromProductData({ product, data, ean, activeIds, activeENumbers, family, activeProfiles }) {
+export function buildScanResultFromProductData({ product, data, ean, activeIds, activeLevels, activeENumbers, family, activeProfiles }) {
   const variantLabel = product.variant_label || null;
   const ingredientsText = product.ingredients || data?.ingredients?.raw_text || product.ingredients_text || "";
   const flags = normalizeProductFlags(product.allergen_flags || data?.allergen_flags || {}, {
     ingredientsText, verifiedStatus: product.verified_status, source: product.source,
     sourceMethod: product.allergen_source_method, quality: product.allergen_quality,
   });
-  const { status: rawStatus, matchedDanger, matchedWarning, hasUnknown } = compareAllergens(flags, activeIds);
+  const { status: rawStatus, matchedDanger, matchedWarning, ignoredTraces, hasUnknown } = compareAllergens(flags, activeIds, activeLevels);
   // Data mangler for ét eller flere af dine allergener ("unknown"-felter) — vis
   // det IKKE som et trygt grønt "sikkert produkt". Uden dette nedgraderes en
   // reel datamangel aldrig til noget brugeren faktisk ser (fundet ved en
@@ -49,6 +49,7 @@ export function buildScanResultFromProductData({ product, data, ean, activeIds, 
     ...matchedDanger.map(id => ({ type:"bad", text:`Indeholder ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
     ...matchedWarning.map(id => ({ type:"maybe", text:`Kan indeholde spor af ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
     ...(hasUnknown ? [{ type:"maybe", text:"Visse allergener er ukendte — tjek altid pakken" }] : []),
+    ...(ignoredTraces || []).map(id => ({ type:"info", text:`Kan indeholde spor af ${ALLERGENS.find(a=>a.id===id)?.label||id} — ikke markeret efter dine valg` })),
     ...(matchedDanger.length===0 && matchedWarning.length===0 && !hasUnknown ? [{ type:"good", text:"Ingen af dine allergener fundet" }] : []),
     ...(matchedENumbers.length > 0 ? [{ type:"maybe", text:`Indeholder overvågede E-numre: ${matchedENumbers.join(", ")}` }] : []),
   ];
@@ -63,7 +64,7 @@ export function buildScanResultFromProductData({ product, data, ean, activeIds, 
   const familyImpact = [];
   if (family.length > 0) {
     for (const member of family.filter(m => activeProfiles.includes(m.id))) {
-      const memberResult = compareAllergens(flags, member.allergens || []);
+      const memberResult = compareAllergens(flags, member.allergens || [], member.levels);
       if (memberResult.matchedDanger.length > 0 || memberResult.matchedWarning.length > 0) {
         familyImpact.push({ name:member.name, color:member.color, danger:memberResult.matchedDanger, warning:memberResult.matchedWarning });
       }
@@ -80,7 +81,7 @@ export function buildScanResultFromProductData({ product, data, ean, activeIds, 
     nutrition: product.nutrition || data?.nutrition || null,
     verified_status: product.verified_status || "unverified", source: product.source || data?.source,
     status, headline: headlines[status], summary: summaries[status],
-    flags: flagList, allergen_flags: flags, matchedDanger, matchedWarning, matchedENumbers, familyImpact, hasUnknown,
+    flags: flagList, allergen_flags: flags, matchedDanger, matchedWarning, ignoredTraces: ignoredTraces || [], matchedENumbers, familyImpact, hasUnknown,
     timestamp: Date.now(),
   };
 }
@@ -128,10 +129,10 @@ const DEMO_PRODUCT = {
   verified_status: "verified", source: "demo",
 };
 
-export function buildDemoScanResult({ activeIds, activeCustom, activeENumbers, family, activeProfiles }) {
+export function buildDemoScanResult({ activeIds, activeLevels, activeCustom, activeENumbers, family, activeProfiles }) {
   const result = buildScanResultFromProductData({
     product: DEMO_PRODUCT, data: {}, ean: "demo-0000000000",
-    activeIds, activeENumbers: activeENumbers || [], family: family || [], activeProfiles: activeProfiles || [],
+    activeIds, activeLevels, activeENumbers: activeENumbers || [], family: family || [], activeProfiles: activeProfiles || [],
   });
   return { ...withCustomAllergenMatch(result, activeCustom || []), isDemo: true };
 }
@@ -171,7 +172,7 @@ function fireWarningAlert(vibrateOn, soundOn) {
 
 export async function runLookupProduct(ean, ctx) {
   const {
-    accessToken, activeIds, activeCustom, activeENumbers, family, activeProfiles,
+    accessToken, activeIds, activeLevels, activeCustom, activeENumbers, family, activeProfiles,
     productCacheRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
     setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
     setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
@@ -285,7 +286,7 @@ export async function runLookupProduct(ean, ctx) {
       } catch { /* Brug variant-data som fallback */ }
     }
 
-    const result = buildScanResultFromProductData({ product, data, ean, activeIds, activeENumbers, family, activeProfiles });
+    const result = buildScanResultFromProductData({ product, data, ean, activeIds, activeLevels, activeENumbers, family, activeProfiles });
     productCacheRef.current[ean.trim()] = result;
     saveToOfflineCache(ean.trim(), result);
     const cacheKeys = Object.keys(productCacheRef.current);

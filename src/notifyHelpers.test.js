@@ -46,6 +46,13 @@ describe("P1: ændrede allergenoplysninger", () => {
     expect(hits).toEqual([{ key: "aeg", label: "Æg", value: "yes" }]);
     expect(affectedAllergenChanges(changes, current, ["gluten"])).toEqual([]);
   });
+  it("sender ikke en ændring til spor, når modtageren kun reagerer på direkte indhold", () => {
+    expect(affectedAllergenChanges(changes, current, ["fisk"], new Set(["fisk"]))).toEqual([]);
+    // direkte indhold (yes) sendes stadig, selv om spor ignoreres
+    expect(affectedAllergenChanges(changes, current, ["aeg"], new Set(["aeg"]))).toEqual([{ key: "aeg", label: "Æg", value: "yes" }]);
+    // uden undtagelse (strict) sendes sporændringen
+    expect(affectedAllergenChanges(changes, current, ["fisk"])).toHaveLength(1);
+  });
   it("dropper flag, der er rullet tilbage siden hændelsen", () => {
     expect(affectedAllergenChanges(changes, current, ["soja"])).toEqual([]); // soja er nu "no"
   });

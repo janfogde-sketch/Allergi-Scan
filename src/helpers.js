@@ -217,10 +217,35 @@ export function normalizeProductFlagsFor(product) {
   });
 }
 
-export function compareAllergens(flags, activeAllergenIds) {
-  if (!flags || activeAllergenIds.length === 0) return { status:"safe", matchedDanger:[], matchedWarning:[], hasUnknown:false, confidence:"high", explanation:[] };
+// Følsomhed pr. allergen (allergen_levels, 1. okt. 2026): "direct_only" = brugeren reagerer kun på direkte indhold,
+// så spor flagges ikke som advarsel, men returneres som ignoredTraces (vises som en rolig info-linje). Alt andet,
+// også manglende niveau, er "strict" (spor giver en advarsel, som hidtil).
+export const LEVEL_DIRECT_ONLY = "direct_only";
+export const ignoresTraces = (levels, id) => levels?.[id] === LEVEL_DIRECT_ONLY;
+
+/**
+ * Sammenlagt niveau for flere profiler: et allergen ignorerer kun spor, hvis ALLE aktive profiler, der har det
+ * allergen, ignorerer spor (strengeste profil vinder). profiles: [{ allergens, levels }].
+ */
+export function mergeAllergenLevels(profiles) {
+  const strict = new Set();
+  const seen = new Set();
+  for (const p of profiles || []) {
+    for (const id of p.allergens || []) {
+      seen.add(id);
+      if (!ignoresTraces(p.levels, id)) strict.add(id);
+    }
+  }
+  const out = {};
+  for (const id of seen) if (!strict.has(id)) out[id] = LEVEL_DIRECT_ONLY;
+  return out;
+}
+
+export function compareAllergens(flags, activeAllergenIds, levels) {
+  if (!flags || activeAllergenIds.length === 0) return { status:"safe", matchedDanger:[], matchedWarning:[], ignoredTraces:[], hasUnknown:false, confidence:"high", explanation:[] };
   const matchedDanger = [];
   const matchedWarning = [];
+  const ignoredTraces = [];
   let hasUnknown = false;
   const explanation = []; // Forklaring på HVORFOR et produkt er usikkert
 
@@ -231,6 +256,7 @@ export function compareAllergens(flags, activeAllergenIds) {
       matchedDanger.push(id);
       explanation.push({ allergen: id, reason: "direkte", severity: "high" });
     } else if (val === "traces") {
+      if (ignoresTraces(levels, id)) { ignoredTraces.push(id); continue; }
       matchedWarning.push(id);
       explanation.push({ allergen: id, reason: "spor", severity: "medium" });
     } else if (val === "unknown" || val === null || val === undefined) {
@@ -248,7 +274,7 @@ export function compareAllergens(flags, activeAllergenIds) {
   if (Object.keys(flags).length === 0) confidence = "low";
   if (Object.values(flags).every(v => v === null || v === undefined)) confidence = "low";
 
-  return { status, matchedDanger, matchedWarning, hasUnknown, confidence, explanation };
+  return { status, matchedDanger, matchedWarning, ignoredTraces, hasUnknown, confidence, explanation };
 }
 
 // ─── E-NUMMER MATCHING ─────────────────────────────────────────────────────
@@ -478,6 +504,7 @@ export function householdToProfiles(household) {
     allergens: m.allergens || [],
     custom: m.custom || [],
     diets: visibleDiets(m.diets),
+    levels: m.allergenLevels || {},
     eNumbers: m.eNumbers || [],
     linked: true,
     readOnly: true,
@@ -500,8 +527,8 @@ export const visibleDiets = (diets) => (DIETS_ENABLED ? (diets || []) : []);
 
 export function buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles }) {
   return [
-    { id:"me", name: user?.name || "Dig", allergens: allergens || [], custom: customAllerg || [], diets: visibleDiets(user?.diets), eNumbers: selectedENumbers || [], color: null },
-    ...(family || []).map(m => ({ id:m.id, name:m.name, allergens: m.allergens || [], custom: m.custom || [], diets: visibleDiets(m.diets), eNumbers: m.eNumbers || [], color: m.color })),
+    { id:"me", name: user?.name || "Dig", allergens: allergens || [], custom: customAllerg || [], diets: visibleDiets(user?.diets), levels: user?.allergenLevels || {}, eNumbers: selectedENumbers || [], color: null },
+    ...(family || []).map(m => ({ id:m.id, name:m.name, allergens: m.allergens || [], custom: m.custom || [], diets: visibleDiets(m.diets), levels: m.levels || {}, eNumbers: m.eNumbers || [], color: m.color })),
   ].filter(p => (activeProfiles || []).includes(p.id));
 }
 
@@ -511,7 +538,10 @@ export function computeProfileResults(profiles, { allergen_flags, ingredients, n
   return (profiles || []).map(p => {
     const flagOf = (a) => effectiveAllergenFlag(resultFlags, a);
     const danger = (p.allergens || []).filter(a => flagOf(a) === "yes" || flagOf(a) === true);
-    const warning = (p.allergens || []).filter(a => flagOf(a) === "traces");
+    const tracesAll = (p.allergens || []).filter(a => flagOf(a) === "traces");
+    // Spor for allergener, brugeren kun reagerer direkte på (allergen_levels), flagges ikke, men vises som info
+    const ignoredTraces = tracesAll.filter(a => ignoresTraces(p.levels, a));
+    const warning = tracesAll.filter(a => !ignoresTraces(p.levels, a));
     const unknown = (p.allergens || []).filter(a => !["yes", "traces", "no", true, false].includes(flagOf(a)));
     // Fritekst-match af profilens egne tilføjede allergier — se
     // matchCustomAllergens' egen kommentar for hvorfor dette er mindre
@@ -537,7 +567,7 @@ export function computeProfileResults(profiles, { allergen_flags, ingredients, n
     const status = (danger.length > 0 || customMatches.length > 0) ? "danger"
       : (warning.length > 0 || dietFails.length > 0 || eNumberMatches.length > 0 || unknown.length > 0) ? "warn"
       : "safe";
-    return { ...p, status, reasons, danger, warning, unknown, customMatches };
+    return { ...p, status, reasons, danger, warning, ignoredTraces, unknown, customMatches };
   });
 }
 
@@ -583,17 +613,21 @@ export function profileMatchLabel(profiles) {
 // selv, og ændrer intet ved scanResult.status/headline/summary, som History/
 // ListScreen/SearchScreen fortsat bruger uændret — kun ResultScreen.jsx
 // bruger disse to funktioner, til sin egen, dynamiske statusvisning.
-export function categorizeProductFindings({ matchedDanger, matchedWarning, customAllergenMatches, matchedENumbers, dietResults }) {
+export function categorizeProductFindings({ matchedDanger, matchedWarning, ignoredTraces, customAllergenMatches, matchedENumbers, dietResults }) {
   const lookup = (ids, severity) => (ids || [])
     .map(id => {
       const a = ALLERGENS.find(x => x.id === id);
       return a ? { id, label: a.label, type: a.type, severity } : null;
     })
     .filter(Boolean);
-  const byType = [...lookup(matchedDanger, "yes"), ...lookup(matchedWarning, "traces")];
+  const direct = lookup(matchedDanger, "yes");
+  const traces = lookup(matchedWarning, "traces");
   return {
-    allergyMatches: byType.filter(x => x.type === "allergi"),
-    intoleranceMatches: byType.filter(x => x.type === "intolerance"),
+    // Rødt (allergi-advarsel) er kun for direkte indhold; spor er gult (traceMatches), og ignorerede spor er kun info
+    allergyMatches: direct.filter(x => x.type === "allergi"),
+    intoleranceMatches: direct.filter(x => x.type === "intolerance"),
+    traceMatches: traces,
+    ignoredTraceMatches: lookup(ignoredTraces, "traces_ignored"),
     customMatches: (customAllergenMatches || []).map(term => ({ id: term, label: term, severity: "custom" })),
     eNumberMatches: matchedENumbers || [],
     dietFails: (dietResults || []).filter(r => r.ok === false),
@@ -612,10 +646,13 @@ export function categorizeProductFindings({ matchedDanger, matchedWarning, custo
 // have samme alvorlige behandling som en allergiadvarsel. "safe" bruges KUN
 // når der er nok data OG intet fund — aldrig som gæt. Returnerer aldrig ord
 // som "sikkert"/"100% sikkert"/"allergifrit"/"garanteret".
-export function computeTopStatus({ hasSufficientData, allergyMatches, intoleranceMatches, customMatches, eNumberMatches, dietFails }) {
+export function computeTopStatus({ hasSufficientData, allergyMatches, intoleranceMatches, traceMatches, customMatches, eNumberMatches, dietFails }) {
   const healthNames = [...(customMatches || []), ...(allergyMatches || []), ...(intoleranceMatches || [])].map(m => m.label);
   if (healthNames.length > 0) {
     return { level: "danger", icon: "warning", headline: "Allergi-advarsel", names: healthNames };
+  }
+  if ((traceMatches || []).length > 0) {
+    return { level: "warn", icon: "warning", headline: "Kan indeholde spor", names: traceMatches.map(m => m.label) };
   }
   const preferenceNames = [...(eNumberMatches || []), ...(dietFails || []).map(d => d.label)];
   if (preferenceNames.length > 0) {

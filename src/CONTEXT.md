@@ -163,7 +163,7 @@ begrundelse.
 | Tabel | Nøglefelter | Noter |
 |-------|-------------|-------|
 | `products` | id, ean, name, brand, allergen_flags (jsonb), allergen_quality, allergen_source_method, nutrition (jsonb), verified_status, source, ingredients_text | ~20.200+ |
-| `users` | id, name, email, role, diets (jsonb), onboarding_completed, onboarding_step | Se note nedenfor |
+| `users` | id, name, email, role, diets (jsonb), allergen_levels (jsonb), onboarding_completed, onboarding_step | Se note nedenfor |
 | `user_allergens` | user_id, allergen_id | |
 | `family_members` | id, user_id, name, allergens (jsonb), diets, e_numbers, family_owner_id | |
 | `family_invites` | id, token, invited_by, accepted_by, status, expires_at | To-vejs deling, 24t expiry |
@@ -213,6 +213,15 @@ begrænse per-kolonne, så en tilsvarende trigger bør overvejes for andre
 tabeller med et lignende "selv-ejerskab uden kolonne-begrænsning"-mønster,
 hvis en ny privilegeret kolonne nogensinde tilføjes til `users` eller andre
 selv-redigerbare tabeller.
+
+**`allergen_levels` på `users` og `family_members` (2. okt. 2026, migration `20261001120049`):** følsomhed pr. allergen, fx
+`{"maelkeallergi":"direct_only"}`. Mangler et allergen, er det "strict" (spor flagges som advarsel, som hidtil); `direct_only` =
+brugeren reagerer kun på direkte indhold, så spor flagges ikke, men vises som en rolig info-linje. Logikken ligger i `helpers.js`
+(`compareAllergens(flags, ids, levels)` → `ignoredTraces`, `computeProfileResults`, `mergeAllergenLevels` — strengeste aktive profil vinder,
+`ignoresTraces`). På produktsiden er spor nu GULE ("Kan indeholde spor"); kun direkte indhold er rødt "Allergi-advarsel". Husstandskonti
+får deres niveauer via `family/group` (`allergenLevels`), og `notify` (P1) sender ikke en ændring til spor til en modtager, der kun
+reagerer på direkte indhold (`affectedAllergenChanges(..., tracesIgnored)`). UI: den simple `AllergenSensitivity` i `AllergenPicker.jsx`
+(onboarding trin 2, Rediger præferencer, familieformularen). Admin-panelet redigerer ikke niveauerne endnu.
 
 **`users.onboarding_step` (29. sept. 2026, "Onboarding-persistens"):**
 integer, 1-5, default 1 — huske PRÆCIS hvilket af de 5 onboarding-trin en

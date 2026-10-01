@@ -122,7 +122,7 @@ function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, gra
 }
 
 export default function ListScreen({
-  activeIds,
+  activeIds, activeLevels,
   lookupProduct,
   onOpenHelp,
 }) {
@@ -429,7 +429,7 @@ export default function ListScreen({
             {visibleItemResults.length > 0 && (
               <div style={{ padding:"12px 12px 4px" }}>
                 {visibleItemResults.map(({ product: p }) => (
-                  <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds} profiles={activeProfileList}
+                  <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds} effectiveLevels={activeLevels} profiles={activeProfileList}
                     onOpen={() => { logSearchSelection(newItemName, p, accessToken); lookupProduct(p.ean||p.code||p.id); setItemFocused(false); setNewItemName(""); }}
                     onAddToList={() => pickItemProduct(p)}
                   />
@@ -462,7 +462,7 @@ export default function ListScreen({
                 {showHiddenConflicts && (
                   <div style={{ padding:"10px 12px 2px" }}>
                     {hiddenConflictResults.map(p => (
-                      <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds} profiles={activeProfileList}
+                      <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds} effectiveLevels={activeLevels} profiles={activeProfileList}
                         onOpen={() => { logSearchSelection(newItemName, p, accessToken); lookupProduct(p.ean||p.code||p.id); setItemFocused(false); setNewItemName(""); }}
                         onAddToList={() => pickItemProduct(p)}
                       />

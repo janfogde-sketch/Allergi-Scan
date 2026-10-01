@@ -8,7 +8,7 @@ import { useShoppingContext } from "./ShoppingContext.jsx";
 import { UI } from "./styleUtils.js";
 
 export default function SearchScreen({
-  activeIds,
+  activeIds, activeLevels,
   searchQuery, setSearchQuery,
   searchResults,
   searchLoading,
@@ -56,7 +56,7 @@ export default function SearchScreen({
   // gruppe, og vis spor-produkter i stedet for at gemme dem — samme regel
   // som i indkøbslistens "Tilføj vare" ── ──────────────────────────────────
   const resultsWithSafety = searchResults
-    .map(p => ({ product: p, status: compareAllergens(p.allergen_flags||{}, activeIds).status }))
+    .map(p => ({ product: p, status: compareAllergens(p.allergen_flags||{}, activeIds, activeLevels).status }))
     .filter(r => r.status !== "danger");
   const hiddenUnsafeCount = searchResults.length - resultsWithSafety.length;
 
@@ -142,7 +142,7 @@ export default function SearchScreen({
       )}
 
       {resultsWithSafety.map(({ product: p }) => (
-        <SearchResultRow key={p.id} product={p} effectiveIds={activeIds}
+        <SearchResultRow key={p.id} product={p} effectiveIds={activeIds} effectiveLevels={activeLevels}
           onOpen={() => { logSearchSelection(searchQuery, p, accessToken); lookupProduct(p.ean||p.id); }}
           onAddToList={() => handleAddToList(p)}
         />

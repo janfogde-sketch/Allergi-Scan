@@ -397,3 +397,68 @@ describe("kostpræferencer på pause (DIETS_ENABLED)", () => {
     expect(list.map(p => p.diets)).toEqual([[], []]);
   });
 });
+
+describe("følsomhed pr. allergen (spor)", () => {
+  const flags = { maelkeallergi: "traces", aeg: "yes", soja: "traces" };
+
+  it("strict (standard): spor er en advarsel", async () => {
+    const { compareAllergens } = await import("./helpers.js");
+    const r = compareAllergens({ maelkeallergi: "traces" }, ["maelkeallergi"]);
+    expect(r.status).toBe("warn");
+    expect(r.matchedWarning).toEqual(["maelkeallergi"]);
+    expect(r.ignoredTraces).toEqual([]);
+  });
+
+  it("direct_only: spor flagges ikke, men returneres som ignoredTraces; direkte indhold flagges stadig", async () => {
+    const { compareAllergens } = await import("./helpers.js");
+    const lv = { maelkeallergi: "direct_only" };
+    const only = compareAllergens({ maelkeallergi: "traces" }, ["maelkeallergi"], lv);
+    expect(only.status).toBe("safe");
+    expect(only.matchedWarning).toEqual([]);
+    expect(only.ignoredTraces).toEqual(["maelkeallergi"]);
+    const direct = compareAllergens({ maelkeallergi: "yes" }, ["maelkeallergi"], lv);
+    expect(direct.status).toBe("danger");
+    const mixed = compareAllergens(flags, ["maelkeallergi", "soja"], lv);
+    expect(mixed.matchedWarning).toEqual(["soja"]);
+    expect(mixed.status).toBe("warn");
+  });
+
+  it("mergeAllergenLevels: strengeste profil vinder", async () => {
+    const { mergeAllergenLevels } = await import("./helpers.js");
+    const a = { allergens: ["maelkeallergi", "aeg"], levels: { maelkeallergi: "direct_only", aeg: "direct_only" } };
+    const b = { allergens: ["aeg"], levels: {} };
+    expect(mergeAllergenLevels([a, b])).toEqual({ maelkeallergi: "direct_only" });
+    expect(mergeAllergenLevels([a])).toEqual({ maelkeallergi: "direct_only", aeg: "direct_only" });
+    expect(mergeAllergenLevels([])).toEqual({});
+  });
+
+  it("computeProfileResults: ignorerede spor giver ingen advarsel og ingen årsag, men ignoredTraces", () => {
+    const [strict, tolerant] = computeProfileResults(
+      [
+        { id: "a", allergens: ["maelkeallergi"], levels: {}, custom: [], diets: [], eNumbers: [] },
+        { id: "b", allergens: ["maelkeallergi"], levels: { maelkeallergi: "direct_only" }, custom: [], diets: [], eNumbers: [] },
+      ],
+      { allergen_flags: { maelkeallergi: "traces" }, ingredients: "sukker", nutrition: {}, productENumbers: [] },
+    );
+    expect(strict.status).toBe("warn");
+    expect(strict.warning).toEqual(["maelkeallergi"]);
+    expect(tolerant.status).toBe("safe");
+    expect(tolerant.reasons).toEqual([]);
+    expect(tolerant.ignoredTraces).toEqual(["maelkeallergi"]);
+  });
+
+  it("spor er gult (ikke rødt) på produktsiden; kun direkte indhold giver allergi-advarsel", async () => {
+    const { categorizeProductFindings, computeTopStatus } = await import("./helpers.js");
+    const f = categorizeProductFindings({ matchedDanger: [], matchedWarning: ["maelkeallergi"], ignoredTraces: ["soja"], customAllergenMatches: [], matchedENumbers: [], dietResults: [] });
+    expect(f.allergyMatches).toEqual([]);
+    expect(f.traceMatches.map(m => m.id)).toEqual(["maelkeallergi"]);
+    expect(f.ignoredTraceMatches.map(m => m.id)).toEqual(["soja"]);
+    const top = computeTopStatus({ hasSufficientData: true, ...f });
+    expect(top.level).toBe("warn");
+    expect(top.headline).toBe("Kan indeholde spor");
+    const direct = categorizeProductFindings({ matchedDanger: ["maelkeallergi"], matchedWarning: ["soja"], ignoredTraces: [], customAllergenMatches: [], matchedENumbers: [], dietResults: [] });
+    expect(computeTopStatus({ hasSufficientData: true, ...direct }).level).toBe("danger");
+    const onlyIgnored = categorizeProductFindings({ matchedDanger: [], matchedWarning: [], ignoredTraces: ["soja"], customAllergenMatches: [], matchedENumbers: [], dietResults: [] });
+    expect(computeTopStatus({ hasSufficientData: true, ...onlyIgnored }).level).toBe("safe");
+  });
+});

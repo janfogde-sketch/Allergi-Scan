@@ -4,7 +4,7 @@ import { SCREENS, SUPABASE_URL, DIETS_ENABLED } from "./constants.jsx";
 import { makeHeaders, apiCall, addUniqueCustom } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 import { Accordion } from "./DesignSystem.jsx";
-import { ENumberPicker, AllergenChipPicker, DietChipPicker } from "./AllergenPicker.jsx";
+import { ENumberPicker, AllergenChipPicker, AllergenSensitivity, DietChipPicker } from "./AllergenPicker.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -43,6 +43,8 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
       <div className="card" style={UI.mb10}>
         <div className="card-lbl" style={UI.mb8}>Allergier / intolerancer</div>
         <AllergenChipPicker selected={allergens} onChange={setAllergens} />
+        <AllergenSensitivity selected={allergens} levels={user.allergenLevels}
+          onChange={lv => setUser(u => ({ ...u, allergenLevels: lv }))} />
 
         <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
           <div style={UI.sectionLbl6}>Mangler din allergi eller intolerance?</div>
@@ -98,7 +100,7 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
               method:"PATCH",
               headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" },
               // Mens kostpræferencer er på pause, røres de gemte valg ikke (sendes ikke med)
-              body:JSON.stringify({ ...(DIETS_ENABLED ? { diets:user.diets||[] } : {}), e_numbers:selectedENumbers||[] }),
+              body:JSON.stringify({ ...(DIETS_ENABLED ? { diets:user.diets||[] } : {}), e_numbers:selectedENumbers||[], allergen_levels:user.allergenLevels||{} }),
             });
 
             // Samlet DELETE + én bulk-POST i stedet for et loop af enkelt-POSTs —

@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS_ENABLED } from "./constants.jsx";
 import { initials, addUniqueCustom, PASSWORD_REQUIREMENTS_TEXT } from "./helpers.js";
 import { EatSafeLogo, EatSafeWordmark, Icon, showToast } from "./SharedComponents.jsx";
-import { ENumberPicker, AllergenChipPicker, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
+import { ENumberPicker, AllergenChipPicker, AllergenSensitivity, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { MemberForm } from "./MemberForm.jsx";
 import {
@@ -96,6 +96,7 @@ export default function OnboardingScreen({
     newMemberAllerg, setNewMemberAllerg,
     newMemberCustomAllerg, setNewMemberCustomAllerg,
     newMemberDiets, setNewMemberDiets,
+    newMemberLevels, setNewMemberLevels,
     newMemberENumbers, setNewMemberENumbers,
     newMemberSubtypes, setNewMemberSubtypes,
     newMemberCustomInput, setNewMemberCustomInput,
@@ -360,6 +361,8 @@ export default function OnboardingScreen({
             setAllergens(arr);
             if (noAllergiesConfirmed) setNoAllergiesConfirmed(false);
           }} />
+          <AllergenSensitivity selected={allergens} levels={user.allergenLevels}
+            onChange={lv => setUser(u => ({ ...u, allergenLevels: lv }))} />
 
           {/* Skriv selv — kortet markant ned (25. sept. 2026) */}
           <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
@@ -1075,6 +1078,7 @@ export default function OnboardingScreen({
                       customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
                       subtypes={newMemberSubtypes} setSubtypes={setNewMemberSubtypes}
                       diets={newMemberDiets} setDiets={setNewMemberDiets}
+            levels={newMemberLevels} setLevels={setNewMemberLevels}
                       eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
                       customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}
                       onAdd={() => { (editingMemberId ? updateMember : addMember)(); setShowAddMemberForm(false); }}

@@ -3,7 +3,7 @@ import React from "react";
 import { Icon } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
-import { AllergenChipPicker, DietChipPicker, ENumberPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
+import { AllergenChipPicker, AllergenSensitivity, DietChipPicker, ENumberPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { Accordion, PrimaryButton, InputField } from "./DesignSystem.jsx";
 import { addUniqueCustom } from "./helpers.js";
 import { DIETS_ENABLED } from "./constants.jsx";
@@ -24,6 +24,7 @@ export const MemberForm = ({
   allergens, setAllergens,
   customAllerg, setCustomAllerg,
   diets, setDiets,
+  levels, setLevels,
   eNumbers, setENumbers,
   customInput, setCustomInput,
   onAdd, addLabel,
@@ -76,6 +77,7 @@ export const MemberForm = ({
           trin 2 (grøn valgt-state, allergi/intolerance-opdeling, ⓘ-note). */}
       <div className="card-lbl" style={UI.mb8}>Allergier / intolerancer</div>
       <AllergenChipPicker selected={allergens} onChange={setAllergens} />
+      {setLevels && <AllergenSensitivity selected={allergens} levels={levels} onChange={setLevels} />}
 
       {/* Skriv selv — samme ordlyd/opbygning som trin 2 */}
       <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>

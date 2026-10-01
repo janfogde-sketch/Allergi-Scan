@@ -675,7 +675,7 @@ export function ProductImage({ product, size = 64 }) {
 // ── Fælles søgeresultat-kort ────────────────────────────────────────────────
 // Bruges både på forsidens Søg-skærm og i "Tilføj vare" i indkøbslisten, så
 // et søgeresultat ser ens ud uanset hvor man søger fra.
-export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, profiles, onOpen, onAddToList }) {
+export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, effectiveLevels, profiles, onOpen, onAddToList }) {
   // To udregningsveje (25. sept. 2026, brugerfeedback: "hvilken profil
   // konflikten gælder" + "skriv årsagen eksplicit"):
   // - `profiles` (fra ListScreen.jsx, med den fulde aktive profil-liste) →
@@ -706,7 +706,7 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
     statusLabel = conflict || (status === "warn" ? "Kan ikke afgøres sikkert" : profileMatchLabel(profiles));
     reasonChips = [...new Set(results.flatMap(r => r.reasons).map(explicitReason))];
   } else {
-    const cmp = compareAllergens(p.allergen_flags||{}, effectiveIds);
+    const cmp = compareAllergens(p.allergen_flags||{}, effectiveIds, effectiveLevels);
     status = cmp.status;
     statusLabel = status==="safe" ? profileMatchLabel([]) : status==="danger" ? "Konflikt" : "Kan ikke afgøres sikkert";
     reasonChips = [

@@ -21,7 +21,7 @@ export function useLoadUserData({
       try {
         // Brugerprofil
         const profile = await apiCall(
-          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,onboarding_completed,onboarding_step,diets,e_numbers,created_at&limit=1`,
+          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,onboarding_completed,onboarding_step,diets,e_numbers,allergen_levels,created_at&limit=1`,
           { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
         );
         if (cancelled) return;
@@ -44,6 +44,7 @@ export function useLoadUserData({
             onboarding_completed: p.onboarding_completed !== false,
             onboarding_step: p.onboarding_step || 1,
             diets: p.diets || [],
+            allergenLevels: p.allergen_levels || {},
             created_at: p.created_at || u.created_at || "",
           }));
           setSelectedENumbers(p.e_numbers || []);

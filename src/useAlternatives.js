@@ -54,7 +54,7 @@ export function similarityScore(base, candidate) {
   return score;
 }
 
-export function useAlternatives({ accessToken, activeIds }) {
+export function useAlternatives({ accessToken, activeIds, activeLevels }) {
   const [alternatives, setAlternatives]   = useState([]);
   const [altLoading, setAltLoading]       = useState(false);
 
@@ -73,11 +73,11 @@ export function useAlternatives({ accessToken, activeIds }) {
 
     try {
       // Forsøg 1: præcis kategori
-      let results = await fetchByCategory(category, excludeEan, accessToken, activeIds, base);
+      let results = await fetchByCategory(category, excludeEan, accessToken, activeIds, base, activeLevels);
 
       // Forsøg 2: overkategori hvis ingen resultater
       if (results.length === 0 && CATEGORY_PARENTS[category]) {
-        results = await fetchByCategory(CATEGORY_PARENTS[category], excludeEan, accessToken, activeIds, base);
+        results = await fetchByCategory(CATEGORY_PARENTS[category], excludeEan, accessToken, activeIds, base, activeLevels);
       }
 
       const ranked = results
@@ -90,7 +90,7 @@ export function useAlternatives({ accessToken, activeIds }) {
     }
 
     setAltLoading(false);
-  }, [accessToken, activeIds]);
+  }, [accessToken, activeIds, activeLevels]);
 
   const clearAlternatives = () => setAlternatives([]);
 
@@ -112,7 +112,7 @@ function similarityFilter(base) {
   return parts.length ? `&or=(${encodeURIComponent(parts.join(","))})` : null;
 }
 
-async function fetchByCategory(category, excludeEan, accessToken, activeIds, base = {}) {
+async function fetchByCategory(category, excludeEan, accessToken, activeIds, base = {}, activeLevels) {
   const filter = similarityFilter(base);
   if (!filter) return [];
   const url = `${SUPABASE_URL}/rest/v1/products`
@@ -138,7 +138,7 @@ async function fetchByCategory(category, excludeEan, accessToken, activeIds, bas
 
   // Filtrér: kun produkter der er sikre for alle aktive allergen-IDs
   return products.filter(p => {
-    const { status, hasUnknown } = compareAllergens(normalizeProductFlagsFor(p), activeIds);
+    const { status, hasUnknown } = compareAllergens(normalizeProductFlagsFor(p), activeIds, activeLevels);
     return status === "safe" && !hasUnknown;
   });
 }

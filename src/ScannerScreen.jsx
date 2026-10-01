@@ -261,7 +261,7 @@ export default function ScannerScreen({
   galleryInputRef,
   lastScannedRef,
   selectedENumbers,
-  activeIds,
+  activeIds, activeLevels,
   activeENumbers,
   handleEditProductCapture,
   handleImageCapture, handleProductImageCapture,
@@ -870,6 +870,7 @@ export default function ScannerScreen({
           <Suspense fallback={LazyFallback}>
           <SearchScreen
             activeIds={activeIds}
+            activeLevels={activeLevels}
             searchQuery={searchQuery} setSearchQuery={setSearchQuery}
             searchResults={searchResults} setSearchResults={setSearchResults}
             searchCategory={searchCategory} setSearchCategory={setSearchCategory}
@@ -885,6 +886,7 @@ export default function ScannerScreen({
           <Suspense fallback={LazyFallback}>
           <ListScreen
             activeIds={activeIds}
+            activeLevels={activeLevels}
             lookupProduct={lookupProduct}
             onOpenHelp={onOpenHelp}
           />

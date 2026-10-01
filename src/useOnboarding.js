@@ -111,7 +111,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
     await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
       method: "PATCH",
       headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-      body: JSON.stringify({ e_numbers: selectedENumbers || [] }),
+      body: JSON.stringify({ e_numbers: selectedENumbers || [], allergen_levels: allergensToSave.length > 0 ? (user.allergenLevels || {}) : {} }),
     });
   };
 

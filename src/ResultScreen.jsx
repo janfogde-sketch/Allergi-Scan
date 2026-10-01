@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findActiveListMatch, categorizeProductFindings, computeTopStatus } from "./helpers.js";
+import { compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findActiveListMatch, categorizeProductFindings, computeTopStatus, ignoresTraces } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -107,9 +107,14 @@ export default function ResultScreen({
   const liveDanger = uniqueIds(profileResults.flatMap(p => p.danger || []));
   const liveWarning = uniqueIds(profileResults.flatMap(p => p.warning || [])).filter(id => !liveDanger.includes(id));
   const liveCustom = uniqueIds(profileResults.flatMap(p => p.customMatches || []));
+  // Spor for allergener, brugeren kun reagerer direkte på (allergen_levels): ingen advarsel, kun en rolig info-linje.
+  // Har en anden aktiv profil allergenet uden den undtagelse, flagges det i stedet (liveWarning).
+  const liveIgnoredTraces = uniqueIds(profileResults.flatMap(p => p.ignoredTraces || []))
+    .filter(id => !liveDanger.includes(id) && !liveWarning.includes(id));
   const findings = categorizeProductFindings({
     matchedDanger: liveDanger,
     matchedWarning: liveWarning,
+    ignoredTraces: liveIgnoredTraces,
     customAllergenMatches: liveCustom,
     matchedENumbers: matchedENumbersForUser,
     dietResults,
@@ -162,6 +167,12 @@ export default function ResultScreen({
       category: "allergy", label: m.label,
       reason: m.severity === "traces" ? `Kan indeholde spor af ${m.label}.` : `Matcher din valgte ${m.label}.`,
     })),
+    // Spor er gule (ikke røde): kun direkte indhold er en allergi-advarsel
+    ...findings.traceMatches.map(m => ({
+      keywords: ALLERGEN_KEYWORDS[m.id] || [m.label],
+      category: "trace", label: m.label,
+      reason: `Kan indeholde spor af ${m.label}.`,
+    })),
     ...findings.customMatches.map(m => ({
       keywords: [m.label],
       category: "allergy", label: m.label,
@@ -192,7 +203,7 @@ export default function ResultScreen({
   // ÉN aktiv profil — ved flere profiler dækker renderPersonOverview()
   // allerede hver persons egne fund separat.
   const soloProfile = (!isMultiProfile && resultProfilesRaw.length === 1) ? resultProfilesRaw[0] : null;
-  const CHOICE_STATUS_ORDER = { cross: 0, unknown: 1, check: 2 };
+  const CHOICE_STATUS_ORDER = { cross: 0, trace: 1, unknown: 2, check: 3 };
 
   const buildAllergyChoiceRows = () => {
     if (!soloProfile) return [];
@@ -202,7 +213,11 @@ export default function ResultScreen({
       if (!a) return null;
       const val = flags[id];
       if (val === "yes") return { status: "cross", label: a.label, reason: "Fundet i produktet." };
-      if (val === "traces") return { status: "cross", label: a.label, reason: "Kan indeholde spor i produktet." };
+      if (val === "traces") {
+        // Brugeren reagerer kun på direkte indhold: spor er ikke en advarsel, men skjules ikke
+        if (ignoresTraces(soloProfile.levels, id)) return { status: "check", label: a.label, reason: "Kan indeholde spor — ikke markeret efter dit valg." };
+        return { status: "trace", label: a.label, reason: "Kan indeholde spor i produktet." };
+      }
       if (val === "no") return { status: "check", label: a.label, reason: null };
       return { status: "unknown", label: a.label, reason: "Kan ikke afgøres ud fra de tilgængelige produktdata." };
     }).filter(Boolean);
@@ -249,8 +264,8 @@ export default function ResultScreen({
   };
 
   const ChoiceRow = ({ status, label, reason, crossColor = "var(--red)" }) => {
-    const icon = status === "cross" ? "x" : status === "unknown" ? "info" : "check";
-    const color = status === "cross" ? crossColor : status === "unknown" ? "var(--muted)" : "var(--green)";
+    const icon = status === "cross" ? "x" : status === "trace" ? "warning" : status === "unknown" ? "info" : "check";
+    const color = status === "cross" ? crossColor : status === "trace" ? "var(--amber)" : status === "unknown" ? "var(--muted)" : "var(--green)";
     return (
       <div style={{ display:"flex", alignItems:"flex-start", gap:6, padding:"4px 0" }}>
         <Icon name={icon} size={13} color={color} />
@@ -430,6 +445,7 @@ export default function ResultScreen({
         return first.severity === "traces" ? `Produktet kan indeholde spor af ${first.label}.` : `Produktet indeholder ${first.label}.`;
       }
       if (topStatus.level === "warn") {
+        if (findings.traceMatches[0]) return `Produktet kan indeholde spor af ${findings.traceMatches.map(m => m.label).join(", ")}.`;
         const firstDiet = findings.dietFails[0];
         if (firstDiet?.reasons?.[0]) {
           const r = firstDiet.reasons[0];
@@ -479,6 +495,11 @@ export default function ResultScreen({
           )}
           {topExplanation && (
             <div style={{ fontSize:11.5, color:"rgba(255,255,255,.9)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>{topExplanation}</div>
+          )}
+          {!isMultiProfile && findings.ignoredTraceMatches.length > 0 && (
+            <div style={{ fontSize:11.5, color:"rgba(255,255,255,.9)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>
+              Kan indeholde spor af {findings.ignoredTraceMatches.map(m => m.label.toLowerCase()).join(", ")} — ikke markeret efter dine valg.
+            </div>
           )}
           {!isMultiProfile && topStatus.level === "safe" && (
             <div style={{ fontSize:11.5, color:"rgba(255,255,255,.9)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>
@@ -562,7 +583,7 @@ export default function ResultScreen({
             <SafetyRow key={p.id}
               name={p.id==="me" ? "Dig" : p.name}
               status={p.status}
-              statusText={p.reasons.length > 0 ? p.reasons.join(" · ") : "Matcher profilen"}
+              statusText={[...p.reasons, ...(p.ignoredTraces || []).map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id} (ikke markeret)`)].join(" · ") || "Matcher profilen"}
               onClick={(p.danger.length > 0 || p.warning.length > 0) ? () => {
                 const first = [...p.danger, ...p.warning][0];
                 setKnowledgeSlug(first); setScreen(SCREENS.KNOWLEDGE);

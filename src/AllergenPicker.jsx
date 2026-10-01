@@ -73,6 +73,46 @@ export const AllergenChipPicker = ({ selected, onChange }) => {
   );
 };
 
+// Følsomhed pr. valgt allergen (allergen_levels, 1. okt. 2026): "Også spor" (standard, spor flagges som advarsel) eller
+// "Kun direkte indhold" (spor flagges ikke, men vises som en rolig info-linje). SIMPEL førsteversion, som Bjørn
+// kan finpudse (design) — se to do "Design: følsomhed pr. allergen (spor)". levels: { [allergenId]: "direct_only" }.
+export const AllergenSensitivity = ({ selected, levels, onChange }) => {
+  const items = (selected || []).map(id => ALLERGENS.find(a => a.id === id)).filter(Boolean);
+  if (items.length === 0) return null;
+  const toggle = (id) => {
+    const next = { ...(levels || {}) };
+    if (next[id] === "direct_only") delete next[id]; else next[id] = "direct_only";
+    onChange(next);
+  };
+  return (
+    <div className="allergen-sensitivity" style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
+      <div style={UI.sectionLbl6}>Reagerer du på spor?</div>
+      <div style={{ fontSize:12, color:"var(--muted)", margin:"4px 0 6px", lineHeight:1.4 }}>
+        Vælg "Kun direkte indhold", hvis du ikke reagerer på spor ("kan indeholde"). Så flagges spor ikke som advarsel.
+      </div>
+      {items.map(a => {
+        const only = levels?.[a.id] === "direct_only";
+        return (
+          <div key={a.id}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding:"6px 0" }}>
+              <span style={{ fontSize:13.5, fontWeight:600 }}>{a.label}</span>
+              <button type="button" className="btn btn-outline btn-sm" role="switch" aria-checked={!only}
+                aria-label={`${a.label}: ${only ? "kun direkte indhold" : "også spor"}`} onClick={() => toggle(a.id)}>
+                {only ? "Kun direkte indhold" : "Også spor"}
+              </button>
+            </div>
+            {only && (a.id === "gluten" || a.id === "hvede") && (
+              <div style={{ fontSize:11.5, color:"var(--amber)", lineHeight:1.4, paddingBottom:6 }}>
+                Spor af gluten kan have betydning ved cøliaki. Tal med din læge, før du undlader at få advarsler om spor.
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 // Delt kostpræference-vælger (grøn valgt-state, ✓, sidste-ulige-kort spænder
 // hele bredden) — udtrukket fra OnboardingScreen.jsx's trin 3, samme
 // begrundelse som AllergenChipPicker ovenfor. `autoNote` er valgfri:

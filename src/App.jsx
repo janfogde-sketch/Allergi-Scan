@@ -13,7 +13,7 @@ import {
 import {
   initials, timeAgo, getAllergenLabels, verifiedBadge,
   makeHeaders, apiCall,
-  getTraceLog, householdToProfiles, syncLinkedActiveProfiles, isLinkedProfileId, visibleDiets
+  getTraceLog, householdToProfiles, syncLinkedActiveProfiles, isLinkedProfileId, visibleDiets, mergeAllergenLevels
 } from "./helpers.js";
 
 import {
@@ -350,6 +350,7 @@ export default function EatSafe() {
     newMemberAllerg, setNewMemberAllerg,
     newMemberCustomAllerg, setNewMemberCustomAllerg,
     newMemberDiets, setNewMemberDiets,
+    newMemberLevels, setNewMemberLevels,
     newMemberENumbers, setNewMemberENumbers,
     newMemberSubtypes, setNewMemberSubtypes,
     newMemberCustomInput, setNewMemberCustomInput,
@@ -611,12 +612,17 @@ export default function EatSafe() {
       (m.eNumbers || []).forEach(e => eNums.add(e));
       (m.custom || []).forEach(c => custom.add(c));
     });
-    return { ids: [...ids], custom: [...custom], eNumbers: [...eNums] };
-  }, [allergens, customAllerg, selectedENumbers, scanFamily, activeProfiles]);
+    // Følsomhed pr. allergen på tværs af de aktive profiler (strengeste profil vinder)
+    const levels = mergeAllergenLevels([
+      ...(activeProfiles.includes("me") ? [{ allergens, levels: user?.allergenLevels }] : []),
+      ...scanFamily.filter(m => activeProfiles.includes(m.id)).map(m => ({ allergens: m.allergens, levels: m.levels })),
+    ]);
+    return { ids: [...ids], custom: [...custom], eNumbers: [...eNums], levels };
+  }, [allergens, customAllerg, selectedENumbers, scanFamily, activeProfiles, user?.allergenLevels]);
 
   // allActive() rebygger Sets og looper family — kaldes kun én gang og
   // destructures i stedet for to separate kald der hver genberegner det samme
-  const { ids: activeIds, custom: activeCustom, eNumbers: activeENumbers } = allActive();
+  const { ids: activeIds, custom: activeCustom, eNumbers: activeENumbers, levels: activeLevels } = allActive();
 
   
   // ── SCANNER ───────────────────────────────────────────────────────────────
@@ -681,7 +687,7 @@ export default function EatSafe() {
           searchResults, setSearchResults, searchLoading,
           searchHasMore, searchTotal, searchLoadingMore, loadMoreSearchResults } = useSearch({ accessToken });
 
-  const { alternatives, altLoading, loadAlternatives, clearAlternatives } = useAlternatives({ accessToken, activeIds });
+  const { alternatives, altLoading, loadAlternatives, clearAlternatives } = useAlternatives({ accessToken, activeIds, activeLevels });
 
   // Selve scan-resultat-pipelinen (opslag/allergen-match/familie-impact/
   // cache/historik/alternativer) er flyttet til useProduct.js' runLookupProduct
@@ -689,13 +695,13 @@ export default function EatSafe() {
   // så der (i modsætning til før) ALDRIG kan opstå en stale-closure-bug fra en
   // ufuldstændig deps-liste.
   const lookupProduct = useCallback((ean) => runLookupProduct(ean, {
-    accessToken, activeIds, activeCustom, activeENumbers, family: scanFamily, activeProfiles,
+    accessToken, activeIds, activeLevels, activeCustom, activeENumbers, family: scanFamily, activeProfiles,
     productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
     setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
     setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
     setProductImagePreview, setProductImageBase64,
     vibrateOnWarning, soundOnWarning,
-  }), [accessToken, activeIds, activeCustom, activeENumbers, scanFamily, activeProfiles,
+  }), [accessToken, activeIds, activeLevels, activeCustom, activeENumbers, scanFamily, activeProfiles,
        productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
        setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
        setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
@@ -889,6 +895,7 @@ export default function EatSafe() {
     newMemberAllerg, setNewMemberAllerg,
     newMemberCustomAllerg, setNewMemberCustomAllerg,
     newMemberDiets, setNewMemberDiets,
+    newMemberLevels, setNewMemberLevels,
     newMemberENumbers, setNewMemberENumbers,
     newMemberSubtypes, setNewMemberSubtypes,
     newMemberCustomInput, setNewMemberCustomInput,
@@ -896,7 +903,7 @@ export default function EatSafe() {
     addMember, updateMember, removeMember, startEditMember, cancelEditMember,
   }), [
     newMemberName, newMemberBirthYear, newMemberGender, newMemberAllerg,
-    newMemberCustomAllerg, newMemberDiets, newMemberENumbers, newMemberSubtypes,
+    newMemberCustomAllerg, newMemberDiets, newMemberLevels, newMemberENumbers, newMemberSubtypes,
     newMemberCustomInput, editingMemberId, addMember, updateMember, removeMember,
     startEditMember, cancelEditMember,
   ]);
@@ -1165,6 +1172,7 @@ export default function EatSafe() {
             lookupProduct={lookupProduct}
             selectedENumbers={selectedENumbers}
             activeIds={activeIds}
+            activeLevels={activeLevels}
             activeENumbers={activeENumbers}
             alternatives={alternatives}
             altLoading={altLoading}
@@ -1311,6 +1319,7 @@ export default function EatSafe() {
             recipeSafeOnly={recipeSafeOnly} setRecipeSafeOnly={setRecipeSafeOnly}
             favoriteRecipes={favoriteRecipes} setFavoriteRecipes={setFavoriteRecipes}
             activeIds={activeIds}
+            activeLevels={activeLevels}
             completedSteps={completedSteps} setCompletedSteps={setCompletedSteps}
             recipeServings={recipeServings} setRecipeServings={setRecipeServings}
             setRecipes={setRecipes}

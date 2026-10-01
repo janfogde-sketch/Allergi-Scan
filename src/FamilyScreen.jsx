@@ -23,6 +23,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
     newMemberAllerg, setNewMemberAllerg,
     newMemberCustomAllerg, setNewMemberCustomAllerg,
     newMemberDiets, setNewMemberDiets,
+    newMemberLevels, setNewMemberLevels,
     newMemberENumbers, setNewMemberENumbers,
     newMemberSubtypes, setNewMemberSubtypes,
     newMemberCustomInput, setNewMemberCustomInput,
@@ -407,6 +408,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
             customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
             subtypes={newMemberSubtypes} setSubtypes={setNewMemberSubtypes}
             diets={newMemberDiets} setDiets={setNewMemberDiets}
+            levels={newMemberLevels} setLevels={setNewMemberLevels}
             eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
             customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}
             onAdd={editingMemberId ? updateMember : () => {

@@ -899,6 +899,15 @@ slettet permanent fra databasen efter Bjørns valg "Slet helt" (ingen
 backup). Skal funktionen genopstå, skal flaget sættes til true OG
 opskrifterne importeres forfra.
 
+### Følsomhed pr. allergen — spor (2. okt. 2026, Jans spor + Bjørn finpudser designet)
+
+Brugeren kan pr. valgt allergen vælge "Også spor" (standard) eller "Kun direkte indhold". Ved "Kun direkte indhold" flagges spor ikke
+(grå info-linje i stedet), fx for en mælkeallergiker, der ikke reagerer på spor. Samtidig er spor nu GULE overalt, og kun direkte indhold
+er rødt. Data: `allergen_levels` (jsonb) på `users` og `family_members`. Logik: `helpers.js` (`compareAllergens`, `computeProfileResults`,
+`mergeAllergenLevels`, `categorizeProductFindings`/`computeTopStatus`); notifikation P1 respekterer valget. Detaljer og filer i
+`src/CONTEXT.md` afsnit 6. UI'en (`AllergenSensitivity`) er en simpel førsteversion — Bjørn har en to do om at finpudse den. Gluten/hvede
+viser en advarsel om cøliaki, når spor slås fra, men det forbydes ikke.
+
 ### Kostpræferencer (diæter) sat på pause (2. okt. 2026)
 
 Jans beslutning: kostpræferencer skal ikke være en del af appen lige nu, men koden og logikken beholdes. Alt styres af ét flag,
