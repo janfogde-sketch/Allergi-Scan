@@ -19,6 +19,9 @@ import { useNavigationContext } from "./NavigationContext.jsx";
 import { useFamilyFormContext } from "./FamilyFormContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 import { UI } from "./styleUtils.js";
+import { useHealthConsent } from "./useHealthConsent.js";
+import HealthConsentBox from "./HealthConsentBox.jsx";
+import { canSaveHealthData } from "./healthConsent.js";
 
 // Delt stil for de juridiske inline-tekstlinks (brugsvilkår/privatlivs-
 // politikken), 4 forekomster nedenfor — en <button> i stedet for en <a>
@@ -131,6 +134,9 @@ export default function OnboardingScreen({
   // 2026, brugerfeedback). Fravælges automatisk, hvis brugeren derefter
   // vælger en allergi/intolerance eller tilføjer en custom-ingrediens.
   const [noAllergiesConfirmed, setNoAllergiesConfirmed] = useState(false);
+  // Udtrykkeligt samtykke til helbredsoplysninger (2. okt. 2026, GDPR art. 9): skal gives, før allergier gemmes.
+  const consent = useHealthConsent();
+  const [consentChecked, setConsentChecked] = useState(false);
 
   // Trin 3: samme mønster som noAllergiesConfirmed ovenfor — "Fortsæt" må
   // ikke være aktiv ved "0 valgt", for ellers kan appen ikke skelne mellem
@@ -413,10 +419,16 @@ export default function OnboardingScreen({
             det er det eneste brugeren har valgt (fundet som en reel bug,
             25. sept. 2026: "vælger et E-nummer og ikke en allergi... kan
             jeg ikke trykke fortsæt"). */}
+        {selectedCount > 0 && !consent.given && (
+          <HealthConsentBox checked={consentChecked} onChange={setConsentChecked} openPrivacy={() => openLegal(SCREENS.PRIVACY)} />
+        )}
         <PrimaryButton
-          disabled={!(selectedCount > 0 || selectedENumbers.length > 0 || noAllergiesConfirmed)}
+          disabled={!(selectedCount > 0 || selectedENumbers.length > 0 || noAllergiesConfirmed)
+            || !canSaveHealthData({ hasHealthData: selectedCount > 0, given: consent.given, checked: consentChecked })}
           onClick={async () => {
-            try { await saveAllergensStep2(); setOnboardStep(DIETS_ENABLED || allergens.length > 0 ? 3 : 4); }
+            try {
+              if (selectedCount > 0 && !consent.given) await consent.give();
+              await saveAllergensStep2(); setOnboardStep(DIETS_ENABLED || allergens.length > 0 ? 3 : 4); }
             catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
           }}>Fortsæt →</PrimaryButton>
 
