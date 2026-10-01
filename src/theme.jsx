@@ -1009,6 +1009,9 @@ body::-webkit-scrollbar{display:none;}
 .loader-sub{font-size:11.5px;color:var(--muted);}
 .error-box{background:var(--red-lt);border:1px solid var(--red-md);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--red);font-weight:600;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px;}
 .info-box{background:var(--blue-lt);border:1px solid var(--blue-md);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--blue);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.save-bar{position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:99;padding:10px 16px;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--border);box-shadow:0 -8px 16px -12px rgba(21,32,26,.14);animation:saveBarIn .18s ease-out;}
+@keyframes saveBarIn{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+@media (prefers-reduced-motion: reduce){.save-bar{animation:none;}}
 .trace-seg{display:flex;gap:3px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:3px;}
 .trace-seg button{flex:1;min-height:44px;padding:8px 6px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ink2);font-family:var(--f);font-size:13px;font-weight:600;line-height:1.25;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;text-align:center;}
 .trace-seg button[aria-pressed="true"]{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);font-weight:700;}

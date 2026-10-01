@@ -4,6 +4,7 @@ import { Icon, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { ALLERGENS, E_NUMBERS, E_CATEGORIES, DIETS, DIETS_ENABLED } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
 import { ChoiceChip } from "./DesignSystem.jsx";
+import { addUniqueCustom } from "./helpers.js";
 
 // Gluten ↔ Glutenfri-synkronisering (28. sept. 2026, Profil-restrukturering,
 // krav 3: "Ændres en valgmulighed ét sted i kodebasen, skal ændringen slå
@@ -73,6 +74,40 @@ export const AllergenChipPicker = ({ selected, onChange }) => {
   );
 };
 
+// "Mangler din allergi eller intolerance?" — felt + plus-knap + tags (2. okt. 2026, Bjørn: ens i onboarding, Rediger præferencer og
+// familieformularen). Tidligere tre næsten ens kopier; nu ét sted. `onChange` kaldes ved enhver ændring (tilføj/fjern), så kalderen
+// kan nulstille sin egen tilstand (fx onboardingens "ingen allergier" eller Rediger præferencers ugemte-markering).
+export const CustomAllergenField = ({ customAllerg, setCustomAllerg, customInput, setCustomInput, onChange }) => {
+  const add = () => {
+    if (!customInput.trim()) return;
+    onChange?.();
+    setCustomAllerg(c => addUniqueCustom(c, customInput));
+    setCustomInput("");
+  };
+  const remove = (a) => { onChange?.(); setCustomAllerg(c => c.filter(x => x !== a)); };
+  return (
+    <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
+      <div style={UI.sectionLbl6}>Mangler din allergi eller intolerance?</div>
+      <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0, alignItems:"stretch" }}>
+        <input className="field" placeholder='Skriv fx "Fruktose"…' value={customInput}
+          aria-label="Egen allergi eller intolerance"
+          onChange={e => setCustomInput(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") add(); }} />
+        <button className="btn btn-outline" aria-label="Tilføj" onClick={add}
+          style={{ width:46, minHeight:0, padding:0, borderRadius:10, fontSize:19, flexShrink:0 }}>+</button>
+      </div>
+      {customAllerg.length > 0 && (
+        <div className="tags">
+          {customAllerg.map((a, i) => (
+            <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
+              onClick={() => remove(a)} onKeyDown={e => e.key === "Enter" && remove(a)}>×</span></div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Følsomhed pr. valgt allergen (allergen_levels, 1. okt. 2026): hvad skal der ske, når pakken siger "Kan indeholde spor af …"?
 // "Advar mig" (standard, sikreste valg) eller "Kun ved ingrediens" (advar kun, hvis allergenet står i ingredienslisten).
 // Gemmes som levels: { [allergenId]: "direct_only" } (tom = advar også ved spor). Gluten og hvede vises som ét valg,
@@ -111,7 +146,7 @@ export const AllergenSensitivity = ({ selected, levels, onChange, showIntro = tr
     <div className="allergen-sensitivity" style={bare ? undefined : { marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
       {showTitle && <div style={UI.sectionLbl6}>Spor af allergener</div>}
       {showIntro && (
-        <div style={{ fontSize:13, color:"var(--ink2)", margin: showTitle ? "0 0 12px" : "0 0 14px", lineHeight:1.5 }}>
+        <div style={{ fontSize:13, color:"var(--ink2)", margin: "0 0 4px", lineHeight:1.5 }}>
           Mange pakker skriver "kan indeholde spor af", selv om allergenet ikke er en ingrediens. Vælg, hvornår du vil advares.
         </div>
       )}

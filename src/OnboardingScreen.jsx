@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS_ENABLED } from "./constants.jsx";
 import { initials, addUniqueCustom, PASSWORD_REQUIREMENTS_TEXT } from "./helpers.js";
 import { EatSafeLogo, EatSafeWordmark, Icon, showToast } from "./SharedComponents.jsx";
-import { ENumberPicker, AllergenChipPicker, AllergenSensitivity, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
+import { ENumberPicker, AllergenChipPicker, AllergenSensitivity, CustomAllergenField, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { MemberForm } from "./MemberForm.jsx";
 import {
@@ -332,13 +332,6 @@ export default function OnboardingScreen({
   // top-niveau-state), da den kun kaldes betinget (onboardStep===2).
   const renderStep2 = () => {
     const selectedCount = allergens.length + customAllerg.length;
-    const addCustomAllergy = () => {
-      if (!customInput.trim()) return;
-      setCustomAllerg(c => addUniqueCustom(c, customInput));
-      setCustomInput("");
-      setNoAllergiesConfirmed(false);
-    };
-
     // Neutral, let sekundærknap-stil (29. sept. 2026, "Ret designet på
     // onboarding-trin 2/5") — kun for DENNE knap: "Jeg har ingen allergier
     // eller intolerancer" er et gyldigt, men bevidst LAVERE-vægtet fravalg
@@ -369,31 +362,9 @@ export default function OnboardingScreen({
               onChange={lv => setUser(u => ({ ...u, allergenLevels: lv }))} />
           )}
 
-          {/* Skriv selv — kortet markant ned (25. sept. 2026) */}
-          <div style={{ marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
-            <div style={UI.sectionLbl6}>Mangler din allergi eller intolerance?</div>
-            {/* Input + "+"-knap givet samme højde/radius/centrering (29.
-                sept. 2026) — feltet (.field) og den tidligere btn-sm var
-                hverken lige høje eller lige rundede, hvilket fik dem til at
-                se ud som to løse elementer i stedet for én samlet
-                indtastnings-enhed. */}
-            <div className="input-row" style={{ marginTop:6, marginBottom: customAllerg.length ? 8 : 0, alignItems:"stretch" }}>
-              <input className="field" placeholder='Skriv fx "Fruktose"…' value={customInput}
-                aria-label="Egen allergi eller intolerance"
-                onChange={e => setCustomInput(e.target.value)}
-                onKeyDown={e => { if (e.key==="Enter") addCustomAllergy(); }} />
-              <button className="btn btn-outline" aria-label="Tilføj egen allergi" onClick={addCustomAllergy}
-                style={{ width:46, minHeight:0, padding:0, borderRadius:10, fontSize:19, flexShrink:0 }}>+</button>
-            </div>
-            {customAllerg.length > 0 && (
-              <div className="tags">
-                {customAllerg.map((a,i) => (
-                  <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
-                    onClick={() => setCustomAllerg(c=>c.filter(x=>x!==a))} onKeyDown={e => e.key === "Enter" && setCustomAllerg(c=>c.filter(x=>x!==a))}>×</span></div>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Skriv selv — samme delte felt som Rediger præferencer og familieformularen (2. okt. 2026) */}
+          <CustomAllergenField customAllerg={customAllerg} setCustomAllerg={setCustomAllerg} customInput={customInput} setCustomInput={setCustomInput}
+            onChange={() => setNoAllergiesConfirmed(false)} />
         </FormCard>
 
         {/* ── E-numre: kompakt, tydeligt sekundær accordion (29. sept. 2026,
