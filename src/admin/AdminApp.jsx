@@ -252,8 +252,9 @@ export default function AdminApp() {
         <TicketsSection
           adminTickets={admin.adminTickets} ticketsLoading={admin.ticketsLoading}
           adminTicketFilter={admin.adminTicketFilter} setAdminTicketFilter={admin.setAdminTicketFilter}
+          ticketsIncludeDone={admin.ticketsIncludeDone} loadTickets={admin.loadTickets}
           openTicket={admin.openTicket} setOpenTicket={admin.setOpenTicket}
-          updateTicketStatus={admin.updateTicketStatus}
+          updateTicketStatus={async (id, status) => { await admin.updateTicketStatus(id, status); todos.load({ quiet: true }); }}
         />
       )}
       {section === "missing" && (

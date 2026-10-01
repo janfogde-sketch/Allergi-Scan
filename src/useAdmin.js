@@ -12,7 +12,9 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const [adminSection, setAdminSection] = useState("dashboard");
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminUsersLoading, setAdminUsersLoading] = useState(false);
-  const [adminTicketFilter, setAdminTicketFilter] = useState("all");
+  // Standard: kun aktive tickets (åbne og i gang). Løste hentes først, når nogen beder om det.
+  const [adminTicketFilter, setAdminTicketFilter] = useState("active");
+  const [ticketsIncludeDone, setTicketsIncludeDone] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deletingAccount, setDeletingAccount] = useState(false);
@@ -161,10 +163,13 @@ export function useAdmin(accessToken, userId, clearAuth) {
     }
   };
 
-  const loadTickets = async () => {
+  const loadTickets = async ({ includeDone } = {}) => {
+    const withDone = includeDone ?? ticketsIncludeDone;
+    setTicketsIncludeDone(withDone);
     setTicketsLoading(true);
     try {
-      const data = await apiCall(`${SUPABASE_URL}/rest/v1/feedback_tickets?order=created_at.desc&limit=100`, {
+      const filter = withDone ? "" : "status=in.(open,in_progress)&";
+      const data = await apiCall(`${SUPABASE_URL}/rest/v1/feedback_tickets?${filter}order=created_at.desc&limit=${withDone ? 200 : 100}`, {
         headers: makeHeaders(accessToken),
       });
       setAdminTickets(Array.isArray(data) ? data : []);
@@ -957,7 +962,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
     adminSection, setAdminSection,
     adminUsers, setAdminUsers,
     adminUsersLoading,
-    adminTicketFilter, setAdminTicketFilter,
+    adminTicketFilter, setAdminTicketFilter, ticketsIncludeDone,
     showDeleteAccount, setShowDeleteAccount,
     deleteConfirmText, setDeleteConfirmText,
     deletingAccount,
