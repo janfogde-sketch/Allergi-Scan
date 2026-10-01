@@ -718,6 +718,8 @@ afslutte opgaven. Løste og lukkede tickets blev ikke lagt på listen ved oprett
 henter som standard kun åbne/aktive; de færdige hentes først, når Færdige/Alle (To do) eller Løst/Alle (Tickets) åbnes
 (`useAdminTodos.loadDone`, `useAdmin.loadTickets({ includeDone })`), og antallet af færdige opgaver kommer fra serveren.
 
+**Resend-nøglen ligger kun som edge-secret (2. okt. 2026):** Vault-kopien `RESEND_API_KEY` (fra 2. juni, forældet) er slettet; den gav "API key is invalid" ved direkte `net.http_get` mod Resend fra SQL (testkald, ikke produktion). Databasen kalder aldrig Resend; kun edge-funktionerne gør, med `Deno.env`-secret'en.
+
 **Link fra opgave til ticket (2. okt. 2026):** en opgave, der stammer fra en ticket (`admin_todos.ticket_id`), har knappen "Åbn ticket" i listen og i opgavens vindue. Den skifter til fanen Tickets og åbner ticketten via `openTicketById(id)` i `useAdmin.js`, som henter ticketten direkte (virker også for løste tickets, som ikke står i den indlæste liste).
 
 ## 16. Auth-mails fra Resend via Send Email Hook (1. okt. 2026)
