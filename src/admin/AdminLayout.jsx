@@ -5,6 +5,7 @@ import FeedbackButton from "./FeedbackButton.jsx";
 
 const NAV_ITEMS = [
   { id: "dashboard",   icon: "chart",    label: "Dashboard" },
+  { id: "todo",        icon: "check",    label: "To do", badgeKey: "todoAttention" },
   { id: "users",       icon: "family",   label: "Brugere" },
   { id: "products",    icon: "tag",      label: "Produkter" },
   { id: "knowledge",   icon: "file",     label: "Leksikon" },
@@ -18,8 +19,8 @@ const NAV_ITEMS = [
   { id: "family",      icon: "heart",    label: "Familie" },
 ];
 
-export default function AdminLayout({ section, setSection, userEmail, userId, accessToken, logout, pendingSubmissions, openTickets, topbarExtra, children }) {
-  const badges = { pendingSubmissions, openTickets };
+export default function AdminLayout({ section, setSection, userEmail, userId, accessToken, logout, pendingSubmissions, openTickets, todoAttention, topbarExtra, children }) {
+  const badges = { pendingSubmissions, openTickets, todoAttention };
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">

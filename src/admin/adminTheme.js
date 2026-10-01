@@ -104,4 +104,21 @@ table.admin-table tr:hover td{background:var(--surface3);}
 .admin-modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
 textarea.admin-textarea{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-family:var(--f);font-size:13px;resize:vertical;min-height:90px;}
 .admin-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px;display:block;}
+
+/* ── To do-liste ── */
+select.admin-select{padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-family:var(--f);font-size:13px;background:var(--surface);color:var(--ink);max-width:100%;}
+select.admin-select:focus,.admin-field input[type=date]:focus{outline:2px solid var(--green);outline-offset:-1px;border-color:var(--green);}
+.admin-field select.admin-select{width:100%;padding:9px 12px;font-size:13.5px;}
+.todo-add{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 14px;}
+.todo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 14px;}
+.todo-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);background:var(--surface);color:#fff;font-size:12px;font-weight:900;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;}
+.todo-check:hover{border-color:var(--green);}
+.todo-check.done{background:var(--green);border-color:var(--green);}
+.todo-title{font-weight:700;overflow-wrap:anywhere;}
+.todo-title.done{text-decoration:line-through;color:var(--muted);font-weight:600;}
+.todo-desc{font-size:12px;color:var(--muted);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere;}
+.todo-ext{font-size:11.5px;font-weight:700;color:var(--green);}
+.todo-comment{background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;}
+.todo-link-btn{background:none;border:none;color:var(--muted);font-family:var(--f);font-size:11.5px;font-weight:700;cursor:pointer;padding:0;}
+.todo-link-btn:hover{color:var(--red);}
 `;

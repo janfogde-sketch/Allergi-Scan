@@ -18,6 +18,9 @@ import KnowledgeSection from "./sections/KnowledgeSection.jsx";
 import HistorySection from "./sections/HistorySection.jsx";
 import FamilySection from "./sections/FamilySection.jsx";
 import ErrorsSection from "./sections/ErrorsSection.jsx";
+import TodoSection from "./sections/TodoSection.jsx";
+import { useAdminTodos } from "./useAdminTodos.js";
+import { attentionCount } from "./todoLogic.js";
 import { useClientErrors } from "./useClientErrors.js";
 import GlobalSearchBox from "./GlobalSearchBox.jsx";
 
@@ -30,6 +33,7 @@ export default function AdminApp() {
   const admin = useAdmin(accessToken, userId, logout);
   const [section, setSection] = useState("dashboard");
   const clientErrors = useClientErrors(accessToken);
+  const todos = useAdminTodos(isAdmin ? accessToken : null, { active: section === "todo" });
 
   // ── Manglende EAN'er (porteret fra App.jsx — samme logik) ────────────────
   const [missingEans, setMissingEans] = useState([]);
@@ -140,6 +144,7 @@ export default function AdminApp() {
     if (section === "history") admin.loadRevisionLog();
     if (section === "family") admin.loadFamilyOverview();
     if (section === "errors") clientErrors.load();
+    if (section === "todo") todos.load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section, accessToken, isAdmin]);
 
@@ -196,6 +201,7 @@ export default function AdminApp() {
       userEmail={userEmail} userId={userId} accessToken={accessToken} logout={logout}
       pendingSubmissions={admin.adminStats?.pending_submissions}
       openTickets={admin.adminStats?.open_tickets}
+      todoAttention={attentionCount(todos.todos)}
       topbarExtra={
         <GlobalSearchBox
           globalSearch={admin.globalSearch} setGlobalSearch={admin.setGlobalSearch}
@@ -298,6 +304,7 @@ export default function AdminApp() {
         />
       )}
       {section === "errors" && <ErrorsSection {...clientErrors} />}
+      {section === "todo" && <TodoSection {...todos} userId={userId} />}
       {section === "family" && (
         <FamilySection
           familyMembers={admin.familyMembers} familyInvites={admin.familyInvites} familyLoading={admin.familyLoading}
