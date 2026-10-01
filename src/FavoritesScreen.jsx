@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
-import { buildActiveProfileList, computeProfileResults, profileConflictLabel, extractENumbers, normalizeProductFlagsFor } from "./helpers.js";
+import { buildActiveProfileList, computeProfileResults, profileConflictLabel, profileMatchLabel, extractENumbers, normalizeProductFlagsFor } from "./helpers.js";
 import { Icon, ProductImage } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -138,7 +138,7 @@ export default function FavoritesScreen({ household, lookupProduct }) {
     const conflict = profileConflictLabel(results, { maxNames: 2 });
     if (conflict) return { status:"danger", text: conflict };
     if (results.some(r => r.status === "warn")) return { status:"warn", text:"Kan ikke afgøres sikkert" };
-    return { status:"safe", text:"Matcher valgte profiler" };
+    return { status:"safe", text: profileMatchLabel(activeProfileList) };
   };
 
   // Tidligere en IIFE i JSX'en — beregnet her i stedet (arkitektur-regel 3).
