@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { id: "tickets",     icon: "bug",      label: "Tickets", badgeKey: "openTickets" },
   { id: "errors",      icon: "warning",  label: "Fejl" },
   { id: "recalls",     icon: "shield",   label: "Tilbagekald", badgeKey: "pendingRecalls" },
+  { id: "notifications", icon: "bell", label: "Notifikationer" },
   { id: "missing",     icon: "info",     label: "Manglende EAN'er" },
   { id: "import",      icon: "download", label: "Import" },
   { id: "recipes",     icon: "book",     label: "Opskrifter" },

@@ -78,6 +78,10 @@ verify_jwt = true
 [functions.notify]
 verify_jwt = false
 
+# Kategori 2: login + admin-rolle tjekkes i funktionen (testafsendelse fra admin → Notifikationer).
+[functions.notify-test]
+verify_jwt = false
+
 # Kategori 4: kun service-role (cron sync_recalls). Tjekker nøglen selv i koden.
 [functions.recalls-sync]
 verify_jwt = false

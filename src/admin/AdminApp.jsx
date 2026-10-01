@@ -20,6 +20,8 @@ import FamilySection from "./sections/FamilySection.jsx";
 import ErrorsSection from "./sections/ErrorsSection.jsx";
 import RecallsSection from "./sections/RecallsSection.jsx";
 import { useAdminRecalls } from "./useAdminRecalls.js";
+import NotificationsSection from "./sections/NotificationsSection.jsx";
+import { useAdminNotifications } from "./useAdminNotifications.js";
 import { needsReviewCount } from "./recallLogic.js";
 import TodoSection from "./sections/TodoSection.jsx";
 import { useAdminTodos } from "./useAdminTodos.js";
@@ -38,6 +40,7 @@ export default function AdminApp() {
   const clientErrors = useClientErrors(accessToken);
   const todos = useAdminTodos(isAdmin ? accessToken : null, { active: section === "todo" });
   const recalls = useAdminRecalls(isAdmin ? accessToken : null);
+  const notifications = useAdminNotifications(isAdmin ? accessToken : null, userId);
 
   // ── Manglende EAN'er (porteret fra App.jsx — samme logik) ────────────────
   const [missingEans, setMissingEans] = useState([]);
@@ -150,6 +153,7 @@ export default function AdminApp() {
     if (section === "errors") clientErrors.load();
     if (section === "todo") todos.load();
     if (section === "recalls") recalls.load();
+    if (section === "notifications") notifications.load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section, accessToken, isAdmin]);
 
@@ -312,6 +316,7 @@ export default function AdminApp() {
       )}
       {section === "errors" && <ErrorsSection {...clientErrors} />}
       {section === "recalls" && <RecallsSection {...recalls} />}
+      {section === "notifications" && <NotificationsSection {...notifications} userId={userId} />}
       {section === "todo" && <TodoSection {...todos} userId={userId} />}
       {section === "family" && (
         <FamilySection

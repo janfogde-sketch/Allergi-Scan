@@ -341,6 +341,34 @@ export class MissingRequiredError extends Error {
   }
 }
 
+// ── Redigerbar push ─────────────────────────────────────────────────────────
+export const PUSH_TITLE_MAX = 60;
+export const PUSH_BODY_MAX = 180;
+
+/** Variabelnavne, en pushtekst til denne notifikation må bruge. */
+export function pushVariablesFor(key) {
+  return Object.keys(DEFINITIONS[key]?.vars ?? {});
+}
+
+/** Tjekker en redigeret pushtekst: kendt notifikation, længder og kun tilladte {{variabler}}. */
+export function validatePushOverride(key, { title, body } = {}) {
+  const def = DEFINITIONS[key];
+  if (!def) return { ok: false, error: "Ukendt notifikation" };
+  const t = String(title ?? "").trim();
+  const b = String(body ?? "").trim();
+  if (!t && !b) return { ok: true };
+  if (t.length > PUSH_TITLE_MAX) return { ok: false, error: `Titlen må højst være ${PUSH_TITLE_MAX} tegn` };
+  if (b.length > PUSH_BODY_MAX) return { ok: false, error: `Teksten må højst være ${PUSH_BODY_MAX} tegn` };
+  const allowed = new Set(pushVariablesFor(key));
+  for (const text of [t, b]) {
+    for (const m of text.matchAll(/\{\{\s*([a-zA-Z_]*)\s*\}\}/g)) {
+      if (!allowed.has(m[1])) return { ok: false, error: `Ukendt variabel {{${m[1]}}}` };
+    }
+    if (/\{\{|\}\}/.test(text.replace(/\{\{\s*[a-zA-Z_]+\s*\}\}/g, ""))) return { ok: false, error: "Ugyldig variabel (brug {{navn}})" };
+  }
+  return { ok: true };
+}
+
 // ── Rendering ───────────────────────────────────────────────────────────────
 /** Splitter "**fed**"-markup i dele. Variabelværdier er renset for ** på forhånd. */
 function toParts(text) {
@@ -397,7 +425,7 @@ function renderBlock(block, values) {
  * Kaster MissingRequiredError, hvis en obligatorisk værdi mangler.
  * Resultatet er et snapshot: det gemmes uændret og omskrives aldrig bagefter.
  */
-export function renderNotification(key, data = {}) {
+export function renderNotification(key, data = {}, options = {}) {
   const def = DEFINITIONS[key];
   if (!def) throw new Error(`Ukendt notifikation: ${key}`);
 
@@ -405,7 +433,10 @@ export function renderNotification(key, data = {}) {
   const pushValues = buildValues(def, key, data, { forPush: true });
 
   const title = def.push.title;
-  const pushBody = fillTemplate(def.push.body, pushValues);
+  // Admin kan rette pushens tekst (tabellen notification_push_overrides). Mailen og beskeden i appen røres ikke.
+  const override = options.pushOverride && validatePushOverride(key, options.pushOverride).ok ? options.pushOverride : null;
+  const pushTitle = override?.title ? fillTemplate(override.title, pushValues) : title;
+  const pushBody = fillTemplate(override?.body || def.push.body, pushValues);
   const blocks = def.blocks.map((b) => renderBlock(b, blockValues)).filter(Boolean);
 
   const params = {};
@@ -423,6 +454,7 @@ export function renderNotification(key, data = {}) {
     templateVersion: def.version,
     ttlSeconds: def.ttl,
     title,
+    pushTitle,
     pushBody,
     blocks,
     primaryAction: { type: def.action.type, label: def.action.label, ...(Object.keys(params).length ? { params } : {}) },
@@ -434,7 +466,7 @@ export function renderNotification(key, data = {}) {
     mailVars: blockValues,
   };
 
-  for (const s of [out.title, out.pushBody, JSON.stringify(out.blocks), out.mail.subject]) {
+  for (const s of [out.title, out.pushTitle, out.pushBody, JSON.stringify(out.blocks), out.mail.subject]) {
     if (/\{\{/.test(s)) throw new Error(`Uløst variabel i ${key}`);
   }
   return out;

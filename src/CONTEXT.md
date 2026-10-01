@@ -566,6 +566,10 @@ Grundlag: udviklerpakken "EatSafe-samlet-udviklerpakke". Kravet: push er kun den
 korte tekst og åbner den fulde, beskyttede besked i appen via
 `https://www.eatsafe.dk/?notification={id}`. Én fælles indholdskilde til push, app og mail.
 
+**Princip (Jan, 1. okt. 2026):** ændringer i en notifikation laves som udgangspunkt i **mailen**. Beskeden i appen skal være
+ens med mailen, og push følger med som en afkortet version af samme tekst, der fører til selve beskeden. Ret derfor
+indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push og besked afspejle det.
+
 - **Tabeller** (`20260930135031_notifications_foundation.sql`): `notification_events`
   (outbox, unik `event_key`), `notifications` (modtagerens snapshot, dedup på
   event_key+user+type+variant, klienten kan kun SELECT egne, markere læst via
@@ -666,6 +670,14 @@ eksisterende tilladelse (fx jafo efter janfogde), fik aldrig sin række og så p
 `syncPushToken` (`usePush.js`, kaldt i `App.jsx` når en konto er logget ind) enhedens abonnement for den indloggede konto
 uden at spørge om tilladelse, og `forgetPushTokenForDevice` (kaldt i `clearAuth`) sletter kun den udloggede kontos række, så
 den forrige kontos beskeder ikke vises på enheden. Serverens svar tjekkes nu (`SAVE_FAILED_REASON`; Indstillinger viser en fejl).
+
+**Admin → Notifikationer (1. okt. 2026):** fanen vælger en notifikation, viser pushens titel/tekst med
+eksempeldata (`_shared/notificationMock.js`) og sender en testversion ("[TEST]") til en valgt admin via edge-funktionen
+`notify-test` (kræver admin-login, modtageren skal være admin, ingen besked i appen oprettes). Push-tekster kan rettes
+og gemmes i `notification_push_overrides` (key, title, body; tom = standard i koden; kun admin har adgang); `notify`
+bruger dem ved afsendelse via `renderNotification(key, data, { pushOverride })` (`pushTitle`/`pushBody`), kun
+`{{variabler}}` fra notifikationens egne vars er tilladt (`validatePushOverride`). Mail rettes stadig kun i Resend, og
+beskeden i appen er uændret.
 
 ## 15. Fælles to do-liste i admin-panelet (1. okt. 2026)
 
