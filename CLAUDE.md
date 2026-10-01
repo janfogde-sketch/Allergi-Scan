@@ -26,6 +26,11 @@ i afsnittene under listen. Opdatér listen, når et punkt er klaret.
 *Venter på Jans beslutning:*
 9. Leaked Password Protection kræver Supabase Pro (se nedenfor). Jan: vent.
 
+**Fælles to do-liste (1. okt. 2026):** Jan og Bjørn deler en to do-liste i admin-panelet, fanen **To do** på
+`eatsafe.dk/admin.html` (tabellen `admin_todos`, se `src/CONTEXT.md` afsnit 15). Den er fyldt med de åbne punkter herfra. Brug den som
+den primære liste: læs den ved sessionstart (`select title, status, priority, track, due_date from admin_todos where status <> 'done'`),
+afslut punkter (`status = 'done'`), og opret nye, når der opstår opgaver. Listen herunder er kun et øjebliksbillede.
+
 *Todo (Jan, 30. sept.):*
 13. Admin-visning til tilbagekaldelser uden gyldig EAN (`recalls` med status
     `needs_review`): vis titel, kilde-link, rå tal (`unverified_eans`) og

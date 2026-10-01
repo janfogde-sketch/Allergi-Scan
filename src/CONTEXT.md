@@ -632,3 +632,21 @@ korte tekst og åbner den fulde, beskyttede besked i appen via
   favoritter, scanninger (90 dage) og indkøbslister via EAN, aldrig på navn, og sender P6 til alle matchede uanset
   allergiprofil. Linket i beskeden (blokken `link`) tillader kun https på foedevarestyrelsen.dk. Cirka 28 af 50 sider i feedet
   havde gyldig EAN (juni-sept. 2026). Mangler: admin-visning til `needs_review` med manuel tilknytning af EAN.
+
+## 15. Fælles to do-liste i admin-panelet (1. okt. 2026)
+
+Fanen **To do** i `eatsafe.dk/admin.html` (`src/admin/sections/TodoSection.jsx`, data-hook `useAdminTodos.js`,
+ren logik `todoLogic.js` med tests). Tabeller (migration `20261001062300_admin_todos.sql`), begge kun for admins (RLS via `is_admin`):
+
+- `admin_todos`: `title`, `description`, `status` (todo/doing/blocked/done), `priority` (low/normal/high), `track`
+  (backend/design/test/drift), `assignee_id`, `due_date`, `link`, `created_by`, `created_at`, `updated_at`, `completed_at`,
+  `completed_by`. En trigger sætter `updated_at` og `completed_at/by` automatisk, og nulstiller dem, når en opgave genåbnes.
+  `created_by` kan ikke forfalskes (RLS-tjek mod `auth.uid()`).
+- `admin_todo_comments`: kommentarer pr. opgave (slettes sammen med opgaven; kun forfatteren kan slette sin egen).
+
+Funktioner: hurtig tilføjelse (titel + Enter, spor, prioritet, ansvarlig), visninger Åbne/Mine/Uden ansvarlig/Færdige/Alle med
+tællere, filtre på spor og ansvarlig, fritekstsøgning, afkrydsning direkte i listen, redigering og kommentarer i et vindue,
+"Kopiér som prompt" til en Claude Code-session, og automatisk genindlæsning hvert 30. sekund, mens fanen er åben.
+Menupunktet viser et rødt tal for åbne opgaver med høj prioritet (ikke ventende) eller overskredet frist. Listen er fyldt med
+de åbne punkter fra CLAUDE.md pr. 30. sept. 2026. **Claude kan læse og skrive den med SQL** (`admin_todos`); hold den opdateret,
+når et punkt klares, eller et nyt opstår. Dokumentér ikke åbne punkter to steder.
