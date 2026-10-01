@@ -2,12 +2,21 @@
 // SCREENS.NOTIFICATIONS — oversigt over egne beskeder (nyeste først) med tid og
 // læst/ulæst. Åbnes fra hamburgermenuen ("Beskeder") og fra beskedsidens
 // tilbage-knap. Selve beskeden vises af NotificationScreen.jsx.
-import React, { useEffect } from "react";
-import { Icon } from "./SharedComponents.jsx";
+import React, { useEffect, useState } from "react";
+import { Icon, ConfirmDialog, showToast } from "./SharedComponents.jsx";
 import { timeAgo } from "./helpers.js";
 
-export default function NotificationsScreen({ items, loading, listError, loadList, onOpen, onBack }) {
+export default function NotificationsScreen({ items, loading, listError, loadList, onOpen, onDelete, onBack }) {
   useEffect(() => { loadList(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Besked, der afventer "Slet besked"-bekræftelse (ConfirmDialog, samme mønster som Familie/Indkøbsliste).
+  const [confirmDelete, setConfirmDelete] = useState(null);
+
+  const doDelete = async () => {
+    const n = confirmDelete;
+    setConfirmDelete(null);
+    const ok = await onDelete(n.id);
+    showToast(ok ? "Beskeden er slettet" : "Beskeden kunne ikke slettes. Prøv igen.", ok ? "success" : "error");
+  };
 
   return (
     <div className="screen fade-in">
@@ -36,20 +45,37 @@ export default function NotificationsScreen({ items, loading, listError, loadLis
       {items.map((n) => {
         const unread = !n.read_at;
         return (
-          <button key={n.id} onClick={() => onOpen(n.id)}
-            style={{ display:"flex", alignItems:"center", gap:12, width:"100%", textAlign:"left", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--r)", padding:"14px 16px", marginBottom:10, boxShadow:"var(--sh)", cursor:"pointer", fontFamily:"var(--f)" }}>
-            <span aria-hidden="true" style={{ width:9, height:9, borderRadius:"50%", flexShrink:0, background: unread ? "var(--green)" : "transparent", border: unread ? "none" : "1.5px solid var(--border2)" }} />
-            <span style={{ flex:1, minWidth:0 }}>
-              <span style={{ display:"block", fontSize:14, fontWeight: unread ? 800 : 600, color:"var(--ink)" }}>{n.title}</span>
-              <span style={{ display:"block", fontSize:12.5, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>{n.push_body}</span>
-              <span style={{ display:"block", fontSize:11, color:"var(--muted)", marginTop:4 }}>
-                {timeAgo(n.event_at || n.created_at)}{unread ? " · Ulæst" : ""}
+          // Rækken er en container med to knapper (åbn + slet) — en knap må ikke ligge i en knap.
+          <div key={n.id}
+            style={{ display:"flex", alignItems:"center", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--r)", marginBottom:10, boxShadow:"var(--sh)" }}>
+            <button onClick={() => onOpen(n.id)}
+              style={{ display:"flex", alignItems:"center", gap:12, flex:1, minWidth:0, textAlign:"left", background:"none", border:"none", padding:"14px 4px 14px 16px", cursor:"pointer", fontFamily:"var(--f)" }}>
+              <span aria-hidden="true" style={{ width:9, height:9, borderRadius:"50%", flexShrink:0, background: unread ? "var(--green)" : "transparent", border: unread ? "none" : "1.5px solid var(--border2)" }} />
+              <span style={{ flex:1, minWidth:0 }}>
+                <span style={{ display:"block", fontSize:14, fontWeight: unread ? 800 : 600, color:"var(--ink)" }}>{n.title}</span>
+                <span style={{ display:"block", fontSize:12.5, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>{n.push_body}</span>
+                <span style={{ display:"block", fontSize:11, color:"var(--muted)", marginTop:4 }}>
+                  {timeAgo(n.event_at || n.created_at)}{unread ? " · Ulæst" : ""}
+                </span>
               </span>
-            </span>
-            <Icon name="chevronRight" size={14} color="var(--muted)" />
-          </button>
+            </button>
+            <button onClick={() => setConfirmDelete(n)} aria-label={`Slet besked: ${n.title}`}
+              style={{ flexShrink:0, width:44, minHeight:44, alignSelf:"stretch", display:"flex", alignItems:"center", justifyContent:"center", background:"none", border:"none", borderLeft:"1px solid var(--border)", cursor:"pointer", borderRadius:"0 var(--r) var(--r) 0" }}>
+              <Icon name="trash" size={16} color="var(--muted)" />
+            </button>
+          </div>
         );
       })}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Slet besked?"
+          message="Beskeden fjernes fra din oversigt og kan ikke fortrydes."
+          confirmLabel="Slet besked"
+          onConfirm={doDelete}
+          onCancel={() => setConfirmDelete(null)}
+        />
+      )}
     </div>
   );
 }

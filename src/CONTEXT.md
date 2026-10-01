@@ -567,8 +567,11 @@ korte tekst og åbner den fulde, beskyttede besked i appen via
 
 - **Tabeller** (`20260930135031_notifications_foundation.sql`): `notification_events`
   (outbox, unik `event_key`), `notifications` (modtagerens snapshot, dedup på
-  event_key+user+type+variant, klienten kan kun SELECT egne og markere læst via
-  `mark_notification_read`), `notification_deliveries` (afsendelsesregister, endpoint
+  event_key+user+type+variant, klienten kan kun SELECT egne, markere læst via
+  `mark_notification_read` og slette egne via `delete_notification` (1. okt. 2026,
+  `20261001081923_notifications_delete_own.sql`; sletter også afsendelsesregistret via
+  cascade; sletning er permanent, og en slettet besked vises i appen som "ikke længere
+  tilgængelig", hvis et gammelt push-link åbnes), `notification_deliveries` (afsendelsesregister, endpoint
   som hash), `app_flags` (`notifications_push_enabled`, **starter FRA**).
 - **Triggere** (`20260930135839_..._triggers_and_dispatch.sql`): indsendelse godkendt/afvist
   (N2a/N2b/N3, plus N4 "produkt nu tilgængeligt" ved ny godkendt produktindsendelse),

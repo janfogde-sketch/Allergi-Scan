@@ -4,7 +4,7 @@
 // (slettet, udløbet, anden konto) ser den samme neutrale besked, så indholdet
 // aldrig afsløres. Læst-status sættes først, når beskeden er vist.
 import React, { useEffect, useState, useCallback } from "react";
-import { Icon } from "./SharedComponents.jsx";
+import { Icon, ConfirmDialog, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { timeAgo } from "./helpers.js";
 import NotificationBlocks from "./NotificationBlocks.jsx";
@@ -13,7 +13,7 @@ import { fetchNotification, fetchInviteStatus, PENDING_KEY } from "./notificatio
 // Handlinger, appen må udføre fra en besked.
 const SUPPORTED_ACTIONS = ["open_product", "scan", "open_family", "open_list", "open_ticket"];
 
-export default function NotificationScreen({ notificationId, markRead, onAction, onBack }) {
+export default function NotificationScreen({ notificationId, markRead, onDelete, onAction, onBack }) {
   const { accessToken, clearAuth } = useAuthContext();
   const [state, setState] = useState({ status: "loading", item: null });
   // P2 (invitation udløber): knappen fjernes, når invitationen ikke længere er gyldig.
@@ -32,6 +32,18 @@ export default function NotificationScreen({ notificationId, markRead, onAction,
   }, [accessToken, notificationId, markRead]);
 
   useEffect(() => { if (notificationId) load(); }, [notificationId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // "Slet besked": bekræftes først, og sender derefter brugeren tilbage til oversigten.
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const doDelete = async () => {
+    setConfirmDelete(false);
+    setDeleting(true);
+    const ok = await onDelete(notificationId);
+    setDeleting(false);
+    if (ok) { showToast("Beskeden er slettet"); onBack(); }
+    else showToast("Beskeden kunne ikke slettes. Prøv igen.", "error");
+  };
 
   const switchAccount = () => {
     try { localStorage.setItem(PENDING_KEY, notificationId); } catch { /* ignorer */ }
@@ -83,6 +95,19 @@ export default function NotificationScreen({ notificationId, markRead, onAction,
             <button className="btn btn-primary btn-full" style={{ marginTop:8 }} onClick={() => onAction(action)}>
               {action.label}
             </button>
+          )}
+          <button className="btn btn-outline btn-full" style={{ marginTop:12, color:"var(--red)", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}
+            disabled={deleting} onClick={() => setConfirmDelete(true)}>
+            <Icon name="trash" size={14} color="var(--red)" /> Slet besked
+          </button>
+          {confirmDelete && (
+            <ConfirmDialog
+              title="Slet besked?"
+              message="Beskeden fjernes fra din oversigt og kan ikke fortrydes."
+              confirmLabel="Slet besked"
+              onConfirm={doDelete}
+              onCancel={() => setConfirmDelete(false)}
+            />
           )}
         </>
       )}
