@@ -7,7 +7,7 @@ paths: ["supabase/functions/**/*.ts"]
 Rescue-audittets Tier 1/2 fandt gentagne gange Edge Functions uden noget
 auth-tjek overhovedet (`products`, `ocr`, `auto-import-off`, `weekly-digest`,
 `send-email` — alle siden rettet). Enhver ny eller ændret funktion i
-`supabase/functions/*/index.ts` skal bevidst falde i én af disse fire
+`supabase/functions/*/index.ts` skal bevidst falde i én af disse fem
 kategorier — ikke bare "virke":
 
 1. **Kræver bruger-login:** `auth.getUser()` (via en bruger-scopet klient
@@ -25,7 +25,12 @@ kategorier — ikke bare "virke":
    `Authorization === "Bearer " + SUPABASE_SERVICE_ROLE_KEY`) — antag ALDRIG
    at en funktion kun kaldes internt bare fordi den ikke er linket fra UI'et.
 
-En funktion der ikke falder bevidst i én af de fire er sandsynligvis et hul.
+5. **Signeret webhook:** kaldes af en tjeneste uden bruger-JWT (fx Supabase Auths Send Email Hook,
+   `auth-send-email`). `verify_jwt:false`, men funktionen SKAL verificere signaturen (Standard Webhooks via
+   `_shared/standardWebhook.ts`, hemmelighed i en funktions-secret) og svare 401 uden gyldig signatur,
+   før noget læses eller sendes.
+
+En funktion der ikke falder bevidst i én af de fem er sandsynligvis et hul.
 
 **IDOR-fælden:** når en funktion tjekker ejerskab af ÉT id (fx `listId`) men
 udfører selve mutationen på et ANDET, ubundet id (fx `itemId` uden

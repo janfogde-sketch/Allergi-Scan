@@ -2,5 +2,25 @@
   "confirmation": {
     "subject": "Bekræft din e-mail – EatSafe",
     "file": "confirm-signup.html"
+  },
+  "recovery": {
+    "subject": "Nulstil din adgangskode – EatSafe",
+    "file": "recovery.html"
+  },
+  "invite": {
+    "subject": "Du er inviteret til EatSafe",
+    "file": "invite.html"
+  },
+  "magic_link": {
+    "subject": "Log ind på EatSafe",
+    "file": "magic-link.html"
+  },
+  "email_change": {
+    "subject": "Bekræft din nye e-mailadresse – EatSafe",
+    "file": "email-change.html"
+  },
+  "reauthentication": {
+    "subject": "Din bekræftelseskode – EatSafe",
+    "file": "reauthentication.html"
   }
 }

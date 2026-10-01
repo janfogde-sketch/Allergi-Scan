@@ -84,3 +84,31 @@ export async function sendTemplateMail(opts: {
     return { ok: false, status: 0, retryable: true, error: String((e as Error)?.message ?? e) };
   }
 }
+
+/** Sender en færdig HTML-mail (uden Resend-skabelon) — bruges af auth-send-email, hvor HTML'en ligger i repoet. */
+export async function sendHtmlMail(opts: {
+  apiKey: string;
+  to: string;
+  subject: string;
+  html: string;
+  idempotencyKey: string;
+  fetchImpl?: typeof fetch;
+}): Promise<MailResult> {
+  try {
+    const res = await (opts.fetchImpl ?? fetch)("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${opts.apiKey}`,
+        "Content-Type": "application/json",
+        "Idempotency-Key": opts.idempotencyKey,
+      },
+      body: JSON.stringify({ from: MAIL_FROM, to: [opts.to], subject: opts.subject, html: opts.html }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.ok) return { ok: true, status: res.status, retryable: false, id: body?.id };
+    const retryable = res.status === 429 || res.status >= 500;
+    return { ok: false, status: res.status, retryable, error: `HTTP ${res.status}${body?.message ? `: ${body.message}` : ""}` };
+  } catch (e) {
+    return { ok: false, status: 0, retryable: true, error: String((e as Error)?.message ?? e) };
+  }
+}

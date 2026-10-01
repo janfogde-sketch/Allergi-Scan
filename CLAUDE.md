@@ -40,15 +40,17 @@ afslut punkter (`status = 'done'`), og opret nye, når der opstår opgaver. List
 
 *Skal designes (Bjørns spor):*
 11. Supabases auth-mails på dansk i EatSafes stil. **Confirm sign up er
-    lavet (30. sept.):** `supabase/templates/auth/confirm-signup.html`,
-    emne i `templates.json`, og `.github/workflows/deploy-auth-templates.yml`
-    sætter emne + HTML via Management API'et ved merge (samme
-    `SUPABASE_ACCESS_TOKEN`-secret som edge-deploy). Mangler: Reset
-    password (Glemt adgangskode), dernæst Change email address, Magic link
-    or OTP, Invite user og Reauthentication — tilføj en HTML-fil og en
-    linje i `templates.json` (nøgler: `recovery`, `email_change`,
-    `magic_link`, `invite`, `reauthentication`). Under Security findes
-    desuden valgfrie notifikationer (fx Password changed, slået fra i dag).
+    lavet (Bjørn, 30. sept.)**, og 1. okt. er de øvrige fem skabeloner
+    (`recovery`, `invite`, `magic_link`, `email_change`, `reauthentication`)
+    skrevet som udkast i samme stil i `supabase/templates/auth/` — Bjørn skal
+    gennemse dem. **Ingen af dem er nået ud endnu:** deploy-jobbet
+    `deploy-auth-templates.yml` får 403, fordi `SUPABASE_ACCESS_TOKEN` mangler
+    rettigheden til at skrive auth-konfiguration. To veje, begge bygget:
+    (a) giv nøglen rettigheden (Jan), eller (b) slå **Send Email Hook** til, så
+    `auth-send-email` sender mailene via Resends API (afsnit 16 i
+    `src/CONTEXT.md` har de tre trin i Dashboard). Under Security findes desuden
+    valgfrie notifikationer (fx Password changed, slået fra i dag; hook'en
+    springer dem over).
 
 *Arkitektur-audit (30. sept. 2026):* rapport i
 https://claude.ai/artifact/8sj2uZhFSYy18iVV1upuAL (16 fund + roadmap).
@@ -104,10 +106,8 @@ default (registrering fejlede stille, tabellen var altid tom), VAPID-privatnøgl
 importeres nu som JWK, og `recalls` manglede GRANT til service_role. Push-flaget
 `notifications_push_enabled` og mail-flaget `notifications_email_enabled` er stadig FRA for alle;
 kun konti i `app_flags.notifications_test_users` får rigtige push/mails.
-**Testdata fra livetesten ligger stadig i produktion (ryd ved næste session, når Jan siger til):**
-produktet med EAN `9999900000017` ("TESTPRODUKT Havrekiks (slet mig)", source `livetest-notifikationer`)
-og Jans scanning af det, testtilbagekaldelsen i `recalls` (titel starter med LIVETEST), de tilhørende
-`notification_events`/`notifications` (P1 og P6 til Jan), og Jans id (`6a759160-...`) på testlisten.
+**Testdata fra livetesten er ryddet (1. okt. 2026):** testprodukt, scanning, testtilbagekaldelse, hændelser, beskeder og testlisten
+(`notifications_test_users` er tom igen; Jans push-abonnement er bevaret).
 Mangler: admin-visning til tilbagekaldelser uden gyldig EAN (punkt 13 ovenfor), N7 (opskrifter på pause),
 app-rettelse så `usePush.js` tjekker svaret fra serveren, når abonnementet gemmes (fejl vises i dag ikke),
 test på iPhone og af de øvrige varianter med to konti (`docs/notifikationer-testplan.md`), og til sidst
