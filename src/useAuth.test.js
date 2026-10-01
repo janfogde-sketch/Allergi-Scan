@@ -40,6 +40,16 @@ describe("useAuth handleLogin — validation guards", () => {
     expect(result.current.emailError).toBe("Indtast din e-mail først.");
   });
 
+  it("signup: tom e-mail og tom adgangskode får korte, situationsbestemte tekster", async () => {
+    const { result } = setup();
+    await act(async () => { await result.current.handleSignup(); });
+    expect(result.current.emailError).toBe("Indtast din e-mail.");
+    act(() => { result.current.setLoginEmail("a@b.dk"); });
+    await act(async () => { await result.current.handleSignup(); });
+    expect(result.current.passwordError).toBe("Indtast en adgangskode.");
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
   it("sets a field-specific error under password when email is valid but password is empty", async () => {
     const { result } = setup();
     act(() => { result.current.setLoginEmail("a@b.dk"); });
@@ -87,7 +97,7 @@ describe("useAuth handleSignup — validation guards", () => {
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("123456789"); });
     await act(async () => { await result.current.handleSignup(); });
     expect(global.fetch).not.toHaveBeenCalled();
-    expect(result.current.passwordError).toMatch(/kun 9 tegn \(mindst 10\)/i);
+    expect(result.current.passwordError).toBe("Brug mindst 10 tegn med store og små bogstaver og mindst ét tal.");
     expect(result.current.authError).toBe("");
   });
 
@@ -144,7 +154,7 @@ describe("useAuth handleSignup — validation guards", () => {
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("minhemmeligekode"); });
     await act(async () => { await result.current.handleSignup(); });
     expect(global.fetch).not.toHaveBeenCalled();
-    expect(result.current.passwordError).toBe("Adgangskoden kan ikke bruges: den mangler et stort bogstav og et tal.");
+    expect(result.current.passwordError).toBe("Brug mindst 10 tegn med store og små bogstaver og mindst ét tal.");
   });
 
   it("explains a leaked password rejected by Supabase on the signup form", async () => {
@@ -213,7 +223,7 @@ describe("useAuth email confirmation screen", () => {
     expect(setScreen).not.toHaveBeenCalled();
   });
 
-  it("a confirmed email goes straight to onboarding at the saved step — no intermediate screen, never the scanner", async () => {
+  it("a confirmed email shows the success state ('Fortsæt →') at the saved step — never the scanner", async () => {
     localStorage.setItem("as_pending_verify", "a@b.dk");
     global.fetch
       .mockResolvedValueOnce(jsonResponse({ access_token: "a", refresh_token: "r", user: { id: "u1" } }))
@@ -223,10 +233,12 @@ describe("useAuth email confirmation screen", () => {
     act(() => { result.current.setLoginPassword("LongEnough2026"); });
     await act(async () => { await result.current.checkEmailVerified({ silent: true }); });
     expect(result.current.accessToken).toBe("a");
+    expect(result.current.verifyStatus).toBe("verified");
     expect(setOnboardStep).toHaveBeenLastCalledWith(3);
-    expect(setScreen).toHaveBeenLastCalledWith("onboard");
     expect(setScreen).not.toHaveBeenCalledWith("home");
     expect(localStorage.getItem("as_pending_verify")).toBeNull();
+    act(() => { result.current.continueAfterVerify(); });
+    expect(setScreen).toHaveBeenLastCalledWith("onboard");
   });
 
   it("after an app restart (password unknown) 'Tjek bekræftelse' goes to Log ind with the email filled in", async () => {
@@ -266,7 +278,7 @@ describe("useAuth — ny adgangskode efter nulstillingslink", () => {
     const { result } = setup();
     await act(async () => { await result.current.submitNewPassword("kort"); });
     expect(global.fetch).not.toHaveBeenCalled();
-    expect(result.current.resetError).toMatch(/kun 4 tegn/);
+    expect(result.current.resetError).toMatch(/mindst 10 tegn/);
   });
 
   it("gemmer den nye adgangskode med recovery-sessionen og viser færdig-tilstand", async () => {

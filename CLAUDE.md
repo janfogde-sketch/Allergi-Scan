@@ -179,8 +179,9 @@ alvorlige allergier"). Tryk-feedback `:active{transform:scale(.97)}`. Scan-knapp
 
 **Følsomhed pr. allergen (spor):** pr. valgt allergen vælger brugeren "Advar mig" (standard) eller "Kun ved ingrediens" for "Kan
 indeholde spor af". Data `allergen_levels` (jsonb, `direct_only`) på `users`/`family_members`. Spor er GULE overalt, kun direkte
-indhold er rødt. Eget trin 3 i onboarding, plus Rediger præferencer og familieformularen. Hvert valgt allergen har sin egen række (også Gluten
-og Hvede), og sporvalget fjernes sammen med allergenet (`pruneAllergenLevels`). Ingen medicinske antagelser: der er ingen cøliaki-tekst, og Cøliaki
+indhold er rødt. Eget trin 3 i onboarding, plus Rediger præferencer og familieformularen. Hvert valgt allergen har sin egen række (også Glutenfølsomhed
+[`pickerLabel` for id `gluten`] og Hvede), og sporvalget fjernes sammen med allergenet (`pruneAllergenLevels`). Laktose (`traceOk:false`) og egne valg har ingen
+sporvalg (`traceEligible()`); trin 3 springes over, hvis intet valgt allergen har det. Ingen medicinske antagelser: der er ingen cøliaki-tekst, og Cøliaki
 skal i givet fald være et eget, eksplicit valg. Logik: `helpers.js` (`mergeAllergenLevels` m.fl.), notifikation P1 (`tracesIgnored`), UI
 `AllergenSensitivity` (finpudset 2. okt.: segmenteret kontrol `.trace-seg`, kort linje under valget; ignorerede spor er en neutral info-strimmel under banneret). Detaljer: `src/CONTEXT.md` §3.
 
@@ -192,7 +193,7 @@ brugerens valg med ✓/✕/?. Ingredienslisten fremhæver kun det, der er releva
 eksplicitte beslutning; foreslå ikke at fjerne dem). Telefon indsamles ikke. "Rediger præferencer" bruger de delte pickers og
 `useGlutenFreeSync()`. Husstandskonti (rigtige EatSafe-konti i husstanden) kan vælges som profil, men er skrivebeskyttede:
 `scanFamily` (ProfileContext) til alt, der vælger/tjekker profiler, `family` kun til redigér/slet. Familie-backend: `src/CONTEXT.md` §5.
-**Familiemodel (Bjørns krav, 2. okt. 2026): voksne inviteres og accepterer selv (egen konto, eget samtykke); administrerede underprofiler er især til børn.** Opretter kontoejeren en profil til en voksen, skal personen have givet samtykke (note i `MemberForm`, privatlivspolitik afsnit 4). En ny underprofil med allergier kræver en bekræftelse med personens navn (`memberConsentTexts()` i `healthConsent.js`: forælder/værge for børn, eget samtykke for voksne), aldrig "mine". Bekræftelsen er kun et UI-krav; den logges ikke pr. profil (kun kontoens helbredssamtykke i `consent_log`). Bland ikke modellerne, og tilføj ikke tekster om invitationslink på underprofiler.
+**Familiemodel (Bjørns krav, 2. okt. 2026): voksne inviteres og accepterer selv (egen konto, eget samtykke); administrerede underprofiler er især til børn.** Opretter kontoejeren en profil til en voksen, skal personen have givet samtykke (note i `MemberForm`, privatlivspolitik afsnit 4). En ny underprofil med allergier kræver en bekræftelse med personens navn (`memberConsentTexts()` i `healthConsent.js`: forælder/værge for børn, eget samtykke for voksne), aldrig "mine". Bekræftelsen er kun et UI-krav; den logges ikke pr. profil (kun kontoens helbredssamtykke i `consent_log`). Voksne (18+) kan ikke oprettes som underprofil: `MemberForm` viser "Voksne administrerer deres egen profil" med Tilbage / "Fortsæt uden at tilføje" (redigering af ældre voksenprofiler er undtaget). Samtykket kræver alder under 18 og har link til privatlivspolitikken. Bland ikke modellerne, og tilføj ikke tekster om invitationslink på underprofiler.
 
 **Madpas:** kun on-device (link/QR/PDF-deling blev bygget og fjernet igen, tilføj det ikke uden bestilling). Hver allergi har et
 to-sætnings-budskab på 17 sprog, krydskontaminering er opt-in (toggle, info-ikon via `InfoSheet`), oplæsning "Læs højt"/"Stop".
@@ -209,6 +210,7 @@ ethvert kamera-luk. `cameraPermissionDenied` viser et dedikeret kort. Advarselsv
 **Login, oprettelse, onboarding**
 - Felt-specifikke inline-fejl (`emailError`/`passwordError` i `useAuth.js`); `authError` kun til fejl, der ikke kan knyttes til ét
   felt. Catch-blokke viser aldrig rå `e.message`.
+- Velkomstsiden har ingen juridisk tekst (brugeren accepterer intet dér); "Ved at oprette en konto accepterer du vores brugsvilkår. Læs i privatlivspolitikken, hvordan vi behandler dine oplysninger." står først på Ny bruger. "Husk mig" findes ikke: appen holder brugeren logget ind, til de logger ud. Login-fejl er altid "E-mail eller adgangskode er forkert." Adgangskodefejl er korte: "Indtast en adgangskode." eller "Brug mindst 10 tegn med store og små bogstaver og mindst ét tal."
 - Oprettelse kræver kun e-mail, adgangskode og vilkår, opretter kontoen straks og viser `VerifyEmailScreen`. Tre tilstande:
   konto oprettet (`as_pending_verify`), e-mail bekræftet (`onboarding_completed=false` → onboarding fra gemt `onboarding_step`),
   færdig (`as_onboarded`). Appstart venter på status på `SCREENS.BOOT`. Routing deles af `resolveOnboardingRoute` i `useAuth.js`.
@@ -221,7 +223,7 @@ ethvert kamera-luk. `cameraPermissionDenied` viser et dedikeret kort. Advarselsv
   alt (også spor); familiemedlemmer kræver navn, aktivt valgt alder (ingen forudfyldt), køn og et allergivalg eller et eksplicit "ingen". E-nummer-rækker
   har en eksplicit afkrydsningsboks; chevron er kun info. Routing sender alt andet end `onboarding_completed=true` til onboarding.
   Bekræftelseslinket registrerer e-mailen af sig selv og går direkte videre til onboarding (ingen mellemskærm). `VerifyEmailScreen` tjekker stille, når
-  brugeren vender tilbage til appen; knappen hedder "Tjek bekræftelse", og "ikke bekræftet endnu" er en neutral besked, ikke en fejl. Et PWA kan ikke åbne linket
+  brugeren vender tilbage til appen (og viser så "bekræftet" med "Fortsæt →"); knappen hedder "Tjek bekræftelse", og "ikke bekræftet endnu" er en neutral besked, ikke en fejl. Et PWA kan ikke åbne linket
   i den installerede app på iOS (kræver native Universal Links); manifestet har `handle_links`/`launch_handler` til Chromium. Linket lander i browseren, og `resolveOnboardingRoute` genoptager.
 - Google/Facebook går direkte til onboarding. `onboardStep` ligger i `App.jsx` FØR `useAuth()` (ellers TDZ-krasch).
 

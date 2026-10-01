@@ -1,12 +1,13 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
-import { DIETS, SUPABASE_URL } from "./constants.jsx";
+import { DIETS, SUPABASE_URL, SCREENS } from "./constants.jsx";
 import { initials, getAllergenLabels, makeHeaders, apiCall, visibleDiets } from "./helpers.js";
 import { Icon, showToast, ConfirmDialog, AllergenGlyph } from "./SharedComponents.jsx";
 import { MemberForm } from "./MemberForm.jsx";
 import { TextLink } from "./DesignSystem.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
+import { useNavigationContext } from "./NavigationContext.jsx";
 import { useFamilyFormContext } from "./FamilyFormContext.jsx";
 import { UI } from "./styleUtils.js";
 
@@ -16,6 +17,7 @@ import { UI } from "./styleUtils.js";
 export default function FamilyScreen({ household, setHousehold, loadHousehold }) {
   const { userId, accessToken } = useAuthContext();
   const { family, setFamily } = useProfileContext();
+  const { openLegal } = useNavigationContext();
   const {
     newMemberName, setNewMemberName,
     newMemberBirthYear, setNewMemberBirthYear,
@@ -403,6 +405,9 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
             <TextLink onClick={() => { cancelEditMember(); setFamilyAddMode(null); }}>Annuller</TextLink>
           </div>
           <MemberForm key={editingMemberId || "new"} editing={!!editingMemberId}
+            openPrivacy={() => openLegal(SCREENS.PRIVACY)}
+            inviteHint="Brug Invitér med egen konto, så personen selv styrer sine oplysninger."
+            onSkip={() => { cancelEditMember(); setFamilyAddMode(null); }}
             name={newMemberName} setName={setNewMemberName}
             birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
             gender={newMemberGender} setGender={setNewMemberGender}

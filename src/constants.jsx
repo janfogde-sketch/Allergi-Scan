@@ -25,25 +25,25 @@ export const E_CATEGORIES = [
 ];
 
 export const E_NUMBERS = {
-  "E100": "Curcumin — naturlig gul farve fra gurkemeje",
-  "E101": "Riboflavin (B2) — gul-orange farve, findes naturligt i mælk",
-  "E102": "Tartrazin — syntetisk gul azo-farve. Omfattet af EU's krav om advarselsmærkning for visse farvestoffer.",
-  "E103": "Alkannin — rød-brun farve (ikke godkendt i EU)",
-  "E104": "Quinolingul — syntetisk gul-grøn farve. Omfattet af EU's krav om advarselsmærkning for visse farvestoffer.",
+  "E100": "Curcumin — naturligt gult farvestof fra gurkemeje.",
+  "E101": "Riboflavin (B2) — gul-orange farve. Riboflavin er også vitamin B2.",
+  "E102": "Tartrazin — syntetisk gul azo-farve. Kan have negativ indvirkning på børns aktivitet og koncentrationsevne (EU-krav om advarselsmærkning).",
+  "E103": "Alkannin — rød-brun farve. Ikke opført som godkendt farvestof i EU.",
+  "E104": "Quinolingul — syntetisk gul-grøn farve. Kan have negativ indvirkning på børns aktivitet og koncentrationsevne (EU-krav om advarselsmærkning).",
   "E105": "Fast Yellow AB — syntetisk gul farve (ikke godkendt i EU)",
   "E107": "Yellow 2G — syntetisk gul farve",
-  "E110": "Solsikkegul FCF — syntetisk orange-gul azo-farve. Omfattet af EU's krav om advarselsmærkning for visse farvestoffer.",
+  "E110": "Solsikkegul FCF — syntetisk orange-gul azo-farve. Kan have negativ indvirkning på børns aktivitet og koncentrationsevne (EU-krav om advarselsmærkning).",
   "E111": "Orange GGN — syntetisk orange farve (ikke godkendt i EU)",
   "E120": "Cochenille/Karminsyre — rød farve fra skjoldlus",
   "E121": "Orcein — rød-lilla farve (ikke godkendt i EU)",
-  "E122": "Azorubine/Karmoisin — syntetisk rød azo-farve. Omfattet af EU's krav om advarselsmærkning for visse farvestoffer.",
+  "E122": "Azorubine/Karmoisin — syntetisk rød azo-farve. Kan have negativ indvirkning på børns aktivitet og koncentrationsevne (EU-krav om advarselsmærkning).",
   "E123": "Amaranth — syntetisk rød azo-farve (ikke godkendt i EU)",
-  "E124": "Ponceau 4R — syntetisk rød azo-farve. Omfattet af EU's krav om advarselsmærkning for visse farvestoffer.",
+  "E124": "Ponceau 4R — syntetisk rød azo-farve. Kan have negativ indvirkning på børns aktivitet og koncentrationsevne (EU-krav om advarselsmærkning).",
   "E125": "Scarlet GN — syntetisk rød farve (ikke godkendt i EU)",
   "E126": "Ponceau 6R — syntetisk rød azo-farve (ikke godkendt i EU)",
   "E127": "Erythrosin — syntetisk lyserød/rød farve",
   "E128": "Red 2G — syntetisk rød azo-farve",
-  "E129": "Allura Rød AC — syntetisk rød azo-farve. Omfattet af EU's krav om advarselsmærkning for visse farvestoffer.",
+  "E129": "Allura Rød AC — syntetisk rød azo-farve. Kan have negativ indvirkning på børns aktivitet og koncentrationsevne (EU-krav om advarselsmærkning).",
   "E131": "Patent Blå V — syntetisk blå farve",
   "E132": "Indigokarmin — syntetisk blå farve",
   "E133": "Brilliant Blå FCF — syntetisk blå farve",
@@ -323,13 +323,16 @@ export const ALLERGENS = [
   // (se useGlutenFreeSync i AllergenPicker.jsx: vælges Gluten her, tilføjes
   // Glutenfri automatisk under Kostpræferencer), så brugeren ikke behøver
   // vælge begge selv for at opnå samme filtrering.
-  { id:"gluten",        label:"Gluten",           emoji:"🥖", type:"intolerance", note:"Gluten (intolerance) og Glutenfri (kost) er koblet sammen — vælger du Gluten, tilføjes Glutenfri automatisk, så du ikke skal vælge begge. Ikke det samme som hvedeallergi." },
-  { id:"hvede",         label:"Hvede",             emoji:"🌾", type:"allergi", note:"Hvedeallergi gælder hvede. Det er ikke det samme som gluten (intolerance), og de vælges hver for sig." },
+  // Glutenfølsomhed (ikke-cøliakisk) er et eget valg: ikke det samme som hvedeallergi og ikke cøliaki (som ikke er et valg i EatSafe).
+  // `pickerLabel` bruges i valg-skærmene; `label` bruges i resultater ("Indeholder gluten"). Id'et er uændret.
+  { id:"gluten",        label:"Gluten",           pickerLabel:"Glutenfølsomhed", emoji:"🥖", type:"intolerance", note:"Glutenfølsomhed er ikke det samme som hvedeallergi eller cøliaki." },
+  { id:"hvede",         label:"Hvede",             emoji:"🌾", type:"allergi", note:"Hvedeallergi er en allergi over for hvede og er ikke det samme som glutenfølsomhed eller cøliaki." },
   { id:"maelkeallergi", label:"Mælk",              emoji:"🥛", type:"allergi" },
   // emoji er kun et fallback-tegn for evt. rene tekst-kontekster uden JSX
   // (se AllergenGlyph i SharedComponents.jsx, som al UI reelt bruger) — det
   // oprindelige "🍬" (slik) havde ingen sammenhæng med laktose overhovedet.
-  { id:"laktose",       label:"Laktose",           emoji:"💧", type:"intolerance" },
+  // Laktoseintolerance er ikke mælkeallergi og har ingen "kan indeholde spor af"-logik (traceOk:false): sporvalg vises ikke for den.
+  { id:"laktose",       label:"Laktose",           emoji:"💧", type:"intolerance", traceOk:false },
   { id:"aeg",           label:"Æg",               emoji:"🥚", type:"allergi" },
   { id:"noedder",       label:"Nødder",            emoji:"🌰", type:"allergi" },
   { id:"jordnoedder",   label:"Jordnødder",        emoji:"🥜", type:"allergi" },
@@ -339,7 +342,9 @@ export const ALLERGENS = [
   { id:"selleri",       label:"Selleri",           emoji:"🥬", type:"allergi" },
   { id:"sennep",        label:"Sennep",            emoji:"🟡", type:"allergi" },
   { id:"sesam",         label:"Sesam",             emoji:"🌿", type:"allergi" },
-  { id:"svovl",         label:"Sulfitter",         emoji:"🍷", type:"intolerance", note:"Svovldioxid og sulfitter er et af EU's 14 mærkningspligtige allergener, men skal først angives, når mængden er over 10 mg/kg. Under den grænse kan EatSafe ikke se dem på emballagen." },
+  // Sulfitter: mærkningspligtigt EU-allergen (svovldioxid/sulfitter) over 10 mg/kg eller 10 mg/l samlet SO₂. Klassificeres fortsat som
+  // "intolerance" i resultatlogikken (sikker filtrering), men har sin egen mærkningsgrænse som data (labelThresholdMgPerKg).
+  { id:"svovl",         label:"Sulfitter",         emoji:"🍷", type:"intolerance", labelThresholdMgPerKg:10, note:"Svovldioxid og sulfitter er blandt EU's mærkningspligtige allergener. De skal fremhæves som allergen, når indholdet overstiger 10 mg/kg eller 10 mg/l målt som samlet SO₂. Under denne grænse er de ikke nødvendigvis omfattet af samme krav om allergenfremhævelse." },
   { id:"lupin",         label:"Lupin",             emoji:"🌸", type:"allergi" },
   { id:"bloeddyr",      label:"Bløddyr",           emoji:"🦑", type:"allergi" },
 ];

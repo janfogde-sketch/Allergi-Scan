@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS_ENABLED } from "./constants.jsx";
-import { initials, addUniqueCustom, PASSWORD_REQUIREMENTS_TEXT, pruneAllergenLevels } from "./helpers.js";
+import { initials, addUniqueCustom, PASSWORD_REQUIREMENTS_TEXT, pruneAllergenLevels, traceEligible } from "./helpers.js";
 import { EatSafeLogo, EatSafeWordmark, Icon, showToast, ConfirmDialog } from "./SharedComponents.jsx";
 import { ENumberPicker, AllergenChipPicker, AllergenSensitivity, CustomAllergenField, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
@@ -65,9 +65,9 @@ const WELCOME_BENEFITS = [
 ];
 
 // Kort tekst efter allergilisten på et familiemedlems kort: "Advar ved spor" / "Kun ved ingrediens", når alle medlemmets allergener
-// har samme valg (blandede valg vises ikke, så linjen forbliver kort).
+// med sporvalg har samme valg (blandede valg vises ikke, så linjen forbliver kort). Laktose og egne valg har ingen sporvalg.
 const memberTraceNote = (m) => {
-  const ids = m.allergens || [];
+  const ids = traceEligible(m.allergens);
   if (ids.length === 0) return "";
   const direct = ids.filter(id => m.levels?.[id] === "direct_only").length;
   if (direct === 0) return " · Advar ved spor";
@@ -95,7 +95,6 @@ export default function OnboardingScreen({
     emailError, setEmailError, passwordError, setPasswordError, authLoading,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
     user, setUser, isOAuth, accessToken,
-    rememberMe, setRememberMe,
     handleLogin, handleSignup, handleOAuth, handleForgotPassword,
   } = useAuthContext();
   const {
@@ -432,7 +431,7 @@ export default function OnboardingScreen({
               if (effectiveCount > 0 && !consent.given) await consent.give();
               await saveAllergensStep2(allergens, nextCustom);
               // Egne valg har ingen sporvalg, så trin 3 (spor) springes over, hvis der kun er egne valg
-              setOnboardStep(DIETS_ENABLED || allergens.length > 0 ? 3 : 4); }
+              setOnboardStep(DIETS_ENABLED || traceEligible(allergens).length > 0 ? 3 : 4); }
             catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
           }}>Fortsæt →</PrimaryButton>
 
@@ -466,8 +465,10 @@ export default function OnboardingScreen({
     <div className="fade-in">
       <FormCard>
         <SectionHeading title="Spor af allergener" sub="Vælg, hvornår du vil advares" />
-        {allergens.length === 0 ? (
-          <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.45 }}>Du har ikke valgt nogen allergier, så der er intet at vælge her.</div>
+        {traceEligible(allergens).length === 0 ? (
+          <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.45 }}>
+            {allergens.length === 0 ? "Du har ikke valgt nogen allergier, så der er intet at vælge her." : "Sporvalg gælder ikke for de følsomheder, du har valgt, så der er intet at vælge her."}
+          </div>
         ) : (
           <AllergenSensitivity selected={allergens} levels={user.allergenLevels} showTitle={false} bare
             onChange={lv => setUser(u => ({ ...u, allergenLevels: lv }))} />
@@ -608,79 +609,8 @@ export default function OnboardingScreen({
               </button>
             )}
 
-            {/* Juridisk tekst — diskret, men læsbar, småprint nederst (28.
-                sept. 2026, "FINAL POLISH"). Både linket og
-                "privatlivspolitikken" er rigtige links (se public/
-                terms.html, nyoprettet i samme runde — der fandtes tidligere
-                ingen selvstændig vilkårs-side, kun privacy.html). Teksten
-                er omformuleret til at skelne "accepterer brugsvilkår" fra
-                "bekræfter at have læst privatlivspolitikken" — denne
-                tekst er IKKE samtykke til behandling af allergi-/
-                helbredsoplysninger (det håndteres separat, eksplicit,
-                længere inde i selve onboardingen, se privacy.html afsnit 4).
-                max-width for pænere linjebrud, og en anelse større
-                line-height. Egen text-shadow-løft (ikke en del af det
-                globale sæt i theme.jsx) — denne tekst sidder tættest på
-                skærmens nederste kant, hvor vignet-effekten (theme.jsx's
-                .app-bg) er svagest og billedet mest tydeligt, så den har
-                mest brug for et løft.
-                27. sept. 2026, "FINAL MICRO-POLISH": "handelsbetingelser"
-                omdøbt til "brugsvilkår" — terms.html's indhold (tjenesten,
-                ingen medicinsk erstatning, konto, brugerindsendt indhold,
-                ansvarsbegrænsning) er almindelige brugsvilkår, ikke
-                købs-/handelsbetingelser (EatSafe sælger ikke noget
-                transaktionelt); terms.html's egen overskrift rettet
-                tilsvarende. Farve skærpet fra --ink2 (.78 alpha) til en
-                lokal, lidt mørkere rgba(.85 alpha) for optimal kontrast mod
-                det aktive baggrundsbillede — stadig tydeligt "småprint",
-                ikke fuld --ink-vægt.
-                Samme dag, "FINAL 10/10 MICRO-POLISH": max-width 290px→250px
-                — ved 290px endte "privatlivspolitikken." alene på sin egen
-                3. linje (kun linket + punktum), hvilket så skævt/ubalanceret
-                ud. Den smallere bredde gav en mere naturlig ombrydning uden
-                at røre font-size/line-height/tekst.
-                27. sept. 2026, "FINAL MICRO-FIX": selve sætningen omskrevet
-                ("Du accepterer vores brugsvilkår og bekræfter, at du har
-                læst privatlivspolitikken, når du opretter en konto.") —
-                "privatlivspolitikken" har nu et halevedhæng (", når du
-                opretter en konto.") i stedet for et punktum lige efter
-                linket, så LINKET aldrig kan ende alene på sin egen linje.
-                Den nye, længere sætning gav dog et nyt problem ved den
-                daværende 250px/11.5px-kombination: sidste ORD ("konto.")
-                endte alene på en 4. linje i stedet. Løst empirisk (afprøvet
-                flere bredde/font-size-kombinationer direkte i den byggede
-                app, ikke gættet) med max-width 250px→270px + font-size
-                11.5px→11px — giver præcis 3 jævnt fyldte linjer på alle tre
-                testede bredder (SE/iPhone 13/Pro Max), ingen linje med kun
-                ét ord eller ét link. line-height/farve/kontrast/centrering
-                uændret. */}
-            {/* 29. sept. 2026, "Polér velkomst-/login-siden": marginTop
-                22→28 (punkt 9: sekundær CTA→juridisk tekst, mål 26-32px).
-                fontSize/farve dæmpet (11px→10.5px, rgba(...,.85)→(...,.6))
-                — punkt 8: skal fremstå mindre og mere sekundær, neutral
-                mørkegrå, uden at konkurrere med CTA-knapperne. Selve
-                teksten/linkene (grønne, fed) er uændrede.
-                29. sept. 2026, "sidste spacing-polering": marginTop 28→18
-                (8-12px tættere på "Jeg har allerede en konto" ovenfor).
-                29. sept. 2026, "sidste designpolering": maxWidth 270→260px
-                (smallere, mere kontrolleret/centreret tekstblok) — 250px
-                blev afprøvet først, men brækkede teksten i 4 linjer med
-                "konto." alene på sidste linje, PRÆCIS samme fælde som en
-                tidligere runde allerede havde løst ved 270px (se
-                kommentaren ovenfor). 260px er den smalleste bredde der
-                stadig giver 3 jævnt fyldte linjer uden noget ord/link
-                alene på en linje, verificeret empirisk med Playwright på
-                alle tre testede skærmbredder (SE/iPhone 13/Pro Max).
-                29. sept. 2026, "Fordel indholdet mere naturligt": marginTop
-                18→32px (+14px, inden for det ønskede +12-16px) — del af en
-                samlet redistribuering af hele sidens lodrette spacing, se
-                .welcome-benefits-kommentaren i theme.jsx. */}
-            <div style={{ marginTop:32, maxWidth:260, fontSize:10.5, color:"rgba(21,32,26,.6)", lineHeight:1.65, textAlign:"center", textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
-              Du accepterer vores{" "}
-              <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.TERMS)}>brugsvilkår</button>,
-              {" "}når du opretter en konto. Læs, hvordan vi behandler dine oplysninger, i{" "}
-              <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.PRIVACY)}>privatlivspolitikken</button>.
-            </div>
+            {/* Ingen juridisk tekst på velkomstsiden: brugeren accepterer intet her. Vilkår og privatlivspolitik vises først ved
+                konto-oprettelsen (Ny bruger-fanen). */}
 
             {/* Samme spacer-mekanisme som toppen, se kommentar ovenfor —
                 giver resten af den ledige plads (0.62:1-vægten, se
@@ -798,8 +728,9 @@ export default function OnboardingScreen({
                   <div style={{ fontSize:11, color:"var(--muted)", marginTop:12, lineHeight:1.5 }}>
                     Ved at oprette en konto accepterer du vores{" "}
                     <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.TERMS)}>brugsvilkår</button>.
-                    {" "}Læs, hvordan vi behandler dine oplysninger, i{" "}
-                    <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.PRIVACY)}>privatlivspolitikken</button>.
+                    {" "}Læs i{" "}
+                    <button type="button" style={LEGAL_LINK_STYLE} onClick={() => openLegal(SCREENS.PRIVACY)}>privatlivspolitikken</button>,
+                    {" "}hvordan vi behandler dine oplysninger.
                   </div>
                 </div>
                 {/* Ingen besked om en sendt mail her — den vises først på
@@ -860,12 +791,8 @@ export default function OnboardingScreen({
                       forstørrelse. Selve rækken vokser tilsvarende, men
                       checkbox/tekst/link ser ud og er placeret præcis som
                       før. */}
-                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:12, minHeight:44 }}>
-                    <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12.5, fontWeight:600, color:"var(--ink2)", cursor:"pointer", minHeight:44 }}>
-                      <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)}
-                        style={{ width:16, height:16, accentColor:"var(--green)", cursor:"pointer" }} />
-                      Husk mig
-                    </label>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"flex-end", marginTop:12, minHeight:44 }}>
+                    {/* "Husk mig" er fjernet: appen holder brugeren logget ind som standard (til de logger ud), så en afkrydsning ville ikke ændre noget. */}
                     {/* Valideres lokalt FØR handleForgotPassword kaldes, så en
                         manglende/ugyldig e-mail vises som en felt-fejl under
                         feltet i stedet for at kalde hooken og lade DEN
@@ -1011,7 +938,7 @@ export default function OnboardingScreen({
             {!editMode && (
               <div style={{ position:"relative", textAlign:"center", padding:"44px 0 20px" }}>
                 {onboardStep > 1 && (
-                  <button onClick={() => setOnboardStep(prevOnboardStep(onboardStep, allergens.length > 0))} aria-label="Tilbage"
+                  <button onClick={() => setOnboardStep(prevOnboardStep(onboardStep, traceEligible(allergens).length > 0))} aria-label="Tilbage"
                     style={{ position:"absolute", left:20, top:"50%", transform:"translateY(-50%)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0 }}>
                     <Icon name="chevronLeft" size={18} color="var(--ink)" />
                   </button>
@@ -1027,7 +954,7 @@ export default function OnboardingScreen({
                 tilbagepilen dér, samme boks-stil. */}
             <div style={UI.mb8}>
               {editMode && onboardStep > 1 && (
-                <button onClick={() => setOnboardStep(prevOnboardStep(onboardStep, allergens.length > 0))} aria-label="Tilbage"
+                <button onClick={() => setOnboardStep(prevOnboardStep(onboardStep, traceEligible(allergens).length > 0))} aria-label="Tilbage"
                   style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, marginBottom:10 }}>
                   <Icon name="chevronLeft" size={18} color="var(--ink)" />
                 </button>
@@ -1073,7 +1000,7 @@ export default function OnboardingScreen({
                   <div className="card" style={UI.mb12}>
                     <div style={UI.sectionLbl6}>Tilføjet</div>
                     {family.map(m => {
-                      const allergenLabels = [...m.allergens.map(id => ALLERGENS.find(a=>a.id===id)?.label).filter(Boolean), ...(m.custom || [])];
+                      const allergenLabels = [...m.allergens.map(id => { const a = ALLERGENS.find(x=>x.id===id); return a ? (a.pickerLabel || a.label) : null; }).filter(Boolean), ...(m.custom || [])];
                       const shownAllergens = allergenLabels.slice(0, 3);
                       const extraCount = allergenLabels.length - shownAllergens.length;
                       return (
@@ -1119,6 +1046,8 @@ export default function OnboardingScreen({
                       <TextLink onClick={() => { cancelEditMember(); setShowAddMemberForm(false); }}>Annuller</TextLink>
                     </div>
                     <MemberForm key={editingMemberId || "new"} editing={!!editingMemberId}
+                      openPrivacy={() => openLegal(SCREENS.PRIVACY)}
+                      onSkip={() => { cancelEditMember(); setShowAddMemberForm(false); setOnboardStep(5); }}
                       name={newMemberName} setName={setNewMemberName}
                       birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
                       gender={newMemberGender} setGender={setNewMemberGender}
@@ -1166,7 +1095,7 @@ export default function OnboardingScreen({
                   <FormCard style={UI.mb16}>
                     {[
                       ["check","Produktet er godkendt","Når et produkt, du har indsendt, bliver godkendt"],
-                      ["family","Familiemedlem tilslutter sig","Når en, du har inviteret, accepterer invitationen"],
+                      ["family","Familiemedlem tilslutter sig","Når nogen accepterer din invitation"],
                       ["search","Produkt tilgængeligt","Når et produkt, du har ledt efter, kommer i databasen"],
                     ].map(([icon, title, sub], i, arr) => (
                       <InfoRow key={title} icon={icon} color="var(--green)" title={title} sub={sub} border={i < arr.length - 1} />

@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
-import { apiCall, decodeJwtPayload, passwordErrorText, PASSWORD_REQUIREMENTS_TEXT } from "./helpers.js";
+import { apiCall, decodeJwtPayload, passwordErrorText, PASSWORD_REQUIREMENTS_ERROR } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 import { forgetPushTokenForDevice } from "./usePush.js";
 
@@ -466,7 +466,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     // normalisering, ingen transskribering af selve tegnene (fx ø→o), da det
     // kan ændre adressen til en anden, reelt eksisterende adresse.
     const email = loginEmail.trim().toLowerCase();
-    if (!email) { setEmailError("Indtast din e-mail først."); return null; }
+    if (!email) { setEmailError("Indtast din e-mail."); return null; }
     // Supabase/GoTrue understøtter ikke internationale tegn (æ/ø/å m.fl.) i
     // e-mailadresser — afvis her, FØR den ellers gyldige formatkontrol
     // nedenfor, med en dedikeret besked (ikke den generiske "ugyldig
@@ -519,7 +519,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
           const reasons = data.weak_password?.reasons || [];
           setPasswordError(reasons.includes("pwned")
             ? "Adgangskoden er fundet i et kendt datalæk og kan ikke bruges. Vælg en anden."
-            : (passwordErrorText(loginPassword) || `Adgangskoden opfylder ikke kravene. ${PASSWORD_REQUIREMENTS_TEXT}`));
+            : (passwordErrorText(loginPassword) || PASSWORD_REQUIREMENTS_ERROR));
         } else if (msgLc.includes("invalid") && msgLc.includes("email")) {
           setEmailError("Indtast en gyldig e-mailadresse.");
         } else if (res.status === 429) {
@@ -560,8 +560,8 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     setAuthLoading(false);
   }, [loginPassword, saveTokens, setUser, setScreen, setOnboardStep, validateSignupFields, openVerifyScreen]);
 
-  // Henter onboarding-status for en netop bekræftet konto og sender brugeren direkte videre: til det gemte onboarding-trin
-  // (eller forsiden, hvis onboarding allerede er færdig). Ingen "E-mail bekræftet"-mellemskærm.
+  // Henter onboarding-status for en netop bekræftet konto og viser "✓ Din e-mail er bekræftet" med "Fortsæt →" (eller forsiden, hvis
+  // onboarding allerede er færdig).
   const finishVerification = useCallback(async (access, uid) => {
     writePendingVerify("");
     setVerifyError(""); setVerifyNotice("");
@@ -573,9 +573,9 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       if (p?.onboarding_completed === true) { markOnboardedLocally(); setScreen(SCREENS.HOME); return; }
       setOnboardStep(p?.onboarding_step || 1);
     } catch { setOnboardStep(1); }
-    setVerifyStatus("pending"); setVerifyEmail("");
-    setIsOAuth("email");
-    setScreen(SCREENS.ONBOARD);
+    // Bekræftet via "Tjek bekræftelse" (eller den stille kontrol): vis succes-tilstanden med "Fortsæt →". Åbnes linket direkte i appen,
+    // går brugeren i stedet videre til onboarding uden denne skærm (se link-effekten ovenfor).
+    setVerifyStatus("verified");
   }, [setScreen, setOnboardStep]);
 
   // "Jeg har bekræftet min e-mail": er linket åbnet i en anden fane i samme
@@ -753,7 +753,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         const reasons = data.weak_password?.reasons || [];
         setResetError(reasons.includes("pwned")
           ? "Adgangskoden er fundet i et kendt datalæk og kan ikke bruges. Vælg en anden."
-          : (passwordErrorText(password) || `Adgangskoden opfylder ikke kravene. ${PASSWORD_REQUIREMENTS_TEXT}`));
+          : (passwordErrorText(password) || PASSWORD_REQUIREMENTS_ERROR));
       } else if (res.status === 429) {
         setResetError("Der er forsøgt for mange gange. Vent et øjeblik, og prøv igen.");
       } else {

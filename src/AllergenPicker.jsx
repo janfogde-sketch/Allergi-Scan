@@ -4,7 +4,7 @@ import { Icon, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { ALLERGENS, E_NUMBERS, E_CATEGORIES, DIETS, DIETS_ENABLED } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
 import { ChoiceChip } from "./DesignSystem.jsx";
-import { addUniqueCustom } from "./helpers.js";
+import { addUniqueCustom, traceEligible } from "./helpers.js";
 
 // Gluten ↔ Glutenfri-synkronisering (28. sept. 2026, Profil-restrukturering,
 // krav 3: "Ændres en valgmulighed ét sted i kodebasen, skal ændringen slå
@@ -47,9 +47,9 @@ export const AllergenChipPicker = ({ selected, onChange }) => {
     return (
       <ChoiceChip key={a.id} selected={on} showCheck={false}
         onClick={() => onChange(on ? selected.filter(x => x !== a.id) : [...selected, a.id])}>
-        <span style={UI.flex1}><AllergenGlyph a={a} size={14} /> {a.label}</span>
+        <span style={UI.flex1}><AllergenGlyph a={a} size={14} /> {a.pickerLabel || a.label}</span>
         {a.note && (
-          <span role="button" aria-label={`Om ${a.label}`}
+          <span role="button" aria-label={`Om ${a.pickerLabel || a.label}`}
             onClick={e => { e.stopPropagation(); showToast(a.note, "info"); }}
             style={{ display:"flex", alignItems:"center", justifyContent:"center", width:18, height:18, flexShrink:0, color: on ? "var(--green)" : "var(--muted)" }}>
             <Icon name="info" size={14} color="currentColor" />
@@ -126,8 +126,9 @@ const TRACE_NOTE = {
   direct: "Du advares kun, hvis allergenet står i ingredienslisten.",
 };
 export const AllergenSensitivity = ({ selected, levels, onChange, showIntro = true, showTitle = true, bare = false }) => {
-  const ids = selected || [];
-  const rows = ids.map(id => ALLERGENS.find(x => x.id === id)).filter(Boolean).map(a => ({ key: a.id, label: a.label, ids: [a.id] }));
+  // Kun allergener, hvor sporvalg giver mening (ikke laktose), og aldrig egne valg
+  const ids = traceEligible(selected);
+  const rows = ids.map(id => ALLERGENS.find(x => x.id === id)).filter(Boolean).map(a => ({ key: a.id, label: a.pickerLabel || a.label, ids: [a.id] }));
   if (rows.length === 0) return null;
   const isDirect = (row) => row.ids.every(i => levels?.[i] === "direct_only");
   const set = (row, direct) => {
