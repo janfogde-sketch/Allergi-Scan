@@ -568,6 +568,14 @@ export default function OnboardingScreen({
                 Se app uden login (preview)
               </button>
             )}
+            {/* Preview: start onboarding fra trin 1 uden konto og uden e-mailbekræftelse (intet gemmes, se
+                previewNoSession i useOnboarding.js). Vises ALDRIG i produktion. */}
+            {import.meta.env.MODE === "artifact-preview" && (
+              <button className="welcome-link" style={{ marginTop:8 }}
+                onClick={() => { setOnboardStep(1); setScreen(SCREENS.ONBOARD); }}>
+                Start onboarding (preview)
+              </button>
+            )}
 
             {/* Juridisk tekst — diskret, men læsbar, småprint nederst (28.
                 sept. 2026, "FINAL POLISH"). Både linket og

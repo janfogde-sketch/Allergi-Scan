@@ -1977,8 +1977,10 @@ infrastruktur), men at det kalder samme live Supabase-database som
 produktion, og at PWA-specifikke ting (service worker/installation) ikke
 kan testes troværdigt derfra.
 
-**Nuværende link (opdatér dette, ikke opret et nyt, ved fremtidige
-republiceringer):** https://claude.ai/artifact/KYD7ZofTv9o81CgZTVQ9j3
+**Nuværende link (2. okt. 2026, opdatér dette, ikke opret et nyt, ved fremtidige
+republiceringer):** https://claude.ai/artifact/4JfwuFxTaarPEqZFSs2eQ9
+(det forrige, `.../KYD7ZofTv9o81CgZTVQ9j3`, kunne ikke opdateres fra Claude-sessioner — oprettet af en anden bruger/organisation).
+**Ældre link:** https://claude.ai/artifact/KYD7ZofTv9o81CgZTVQ9j3
 (det forrige link, `.../TzA4goSRfzAoSVWvoM94z1`, blev slettet eller mistede
 skriveadgang inden 24. sept. 2026's opfølgnings-runde — et helt nyt link
 blev oprettet i stedet. Hvis DETTE link også holder op med at virke,
