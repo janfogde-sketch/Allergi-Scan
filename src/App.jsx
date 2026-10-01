@@ -13,7 +13,7 @@ import {
 import {
   initials, timeAgo, getAllergenLabels, verifiedBadge,
   makeHeaders, apiCall,
-  getTraceLog
+  getTraceLog, householdToProfiles, syncLinkedActiveProfiles, isLinkedProfileId
 } from "./helpers.js";
 
 import {
@@ -48,6 +48,7 @@ import { appCss } from './theme.jsx';
 import { BUILD_TIME, COMMIT_SHA, formatBuildTime, buildScreenLabel } from './utils.jsx';
 import { useShoppingList } from './useShoppingList.js';
 import { useFamily } from './useFamily.js';
+import { useHousehold } from './useHousehold.js';
 import { useHistory } from './useHistory.js';
 import { useAuth, markOnboardedLocally, ONBOARDED_KEY, PENDING_VERIFY_KEY } from './useAuth.js';
 const VerifyEmailScreen = React.lazy(() => import('./VerifyEmailScreen.jsx'));
@@ -347,6 +348,27 @@ export default function EatSafe() {
     loadFamily, addMember, updateMember, removeMember, startEditMember, cancelEditMember,
   } = useFamily({ accessToken, userId, setActiveProfiles });
 
+  // Husstandens rigtige konti (1. okt. 2026): skrivebeskyttede profiler, der kan vælges ved scanning,
+  // søgning, lister, historik og Madpas. `family` er stadig kun de profiler, man selv har oprettet
+  // (de eneste, der kan redigeres/slettes); `scanFamily` er begge dele.
+  const { household, setHousehold, householdLoading, householdLoaded, loadHousehold } = useHousehold({ accessToken });
+  const linkedProfiles = useMemo(() => householdToProfiles(household), [household]);
+  const scanFamily = useMemo(() => [...family, ...linkedProfiles], [family, linkedProfiles]);
+  // Madpas: peger "Vis madpas for" på en konto, der ikke længere findes, falder det tilbage til én selv.
+  useEffect(() => {
+    if (householdLoaded && madpasProfileId !== "self" && !scanFamily.some(m => m.id === madpasProfileId)) setMadpasProfileId("self");
+  }, [householdLoaded, scanFamily, madpasProfileId]);
+  // Nye husstandskonti vælges som standard; konti, der er forladt husstanden, fjernes fra valget.
+  useEffect(() => {
+    if (!householdLoaded || !userId) return;
+    const ids = linkedProfiles.map(p => p.id);
+    const key = `as_known_household_${userId}`;
+    let known = [];
+    try { known = JSON.parse(localStorage.getItem(key) || "[]"); } catch { /* ignoreres */ }
+    setActiveProfiles(a => syncLinkedActiveProfiles(a, ids, known));
+    try { localStorage.setItem(key, JSON.stringify(ids)); } catch { /* ignoreres */ }
+  }, [householdLoaded, linkedProfiles, userId]);
+
   // Ingen gemt scanner-profilfilter fra en tidligere session, og husstanden
   // har (nu) familiemedlemmer — standardvælg "Alle", som brugeren bad om
   // (25. sept. 2026). Kun relevant ÉN gang, første gang family reelt
@@ -357,14 +379,14 @@ export default function EatSafe() {
     if (family.length === 0) return;
     hadStoredActiveProfilesRef.current = true;
     try { localStorage.setItem("as_active_profiles_default_applied", "1"); } catch { /* ignoreres */ }
-    setActiveProfiles(["me", ...family.map(m => m.id)]);
+    setActiveProfiles(a => ["me", ...family.map(m => m.id), ...(a || []).filter(isLinkedProfileId)]);
   }, [family]);
 
   // ── MADPAS SPEAK → useMadpas hook (placeret efter useFamily pga. family-dependency) ──
   const { madpasSpeaking, setMadpasSpeaking,
           madpasWaiterView, setMadpasWaiterView, langOpen, setLangOpen,
           madpasSpeak } = useMadpas({
-    allergens, customAllerg, user, madpasLang, family, madpasProfileId, madpasCrossContact
+    allergens, customAllerg, user, madpasLang, family: scanFamily, madpasProfileId, madpasCrossContact
   });
 
   const {
@@ -526,7 +548,7 @@ export default function EatSafe() {
   const isLegalPage = screen === SCREENS.TERMS || screen === SCREENS.PRIVACY;
 
   const FamilyChips = () => {
-    const allIds = ["me", ...family.map(m => m.id)];
+    const allIds = ["me", ...scanFamily.map(m => m.id)];
     const isAll = allIds.every(id => activeProfiles.includes(id));
     const toggleAll = () => setActiveProfiles(isAll ? ["me"] : allIds);
     const toggleOne = (id) => {
@@ -541,7 +563,7 @@ export default function EatSafe() {
           <div style={UI.uw20_h20_br50_bggreen_dflex_aicenter_jccenter_fs10_fw800_cin}>{initials(user.name||"Mig")}</div>
           {(user.name||"Mig").split(" ")[0]}
         </div>
-        {family.map(m => (
+        {scanFamily.map(m => (
           <div key={m.id} className={`ap-chip${!isAll&&activeProfiles.includes(m.id)?" on":""}`} onClick={() => toggleOne(m.id)}>
             <div style={{width:20,height:20,borderRadius:"50%",background:m.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(m.name)}</div>
             {m.name.split(" ")[0]}
@@ -568,13 +590,13 @@ export default function EatSafe() {
     // familiemedlem var valgt. Rettet så custom nu følger samme
     // aktiv-profil-logik som allergens/eNumbers herover.
     const custom = new Set(activeProfiles.includes("me") ? customAllerg : []);
-    family.filter(m => activeProfiles.includes(m.id)).forEach(m => {
+    scanFamily.filter(m => activeProfiles.includes(m.id)).forEach(m => {
       (m.allergens || []).forEach(a => ids.add(a));
       (m.eNumbers || []).forEach(e => eNums.add(e));
       (m.custom || []).forEach(c => custom.add(c));
     });
     return { ids: [...ids], custom: [...custom], eNumbers: [...eNums] };
-  }, [allergens, customAllerg, selectedENumbers, family, activeProfiles]);
+  }, [allergens, customAllerg, selectedENumbers, scanFamily, activeProfiles]);
 
   // allActive() rebygger Sets og looper family — kaldes kun én gang og
   // destructures i stedet for to separate kald der hver genberegner det samme
@@ -651,13 +673,13 @@ export default function EatSafe() {
   // så der (i modsætning til før) ALDRIG kan opstå en stale-closure-bug fra en
   // ufuldstændig deps-liste.
   const lookupProduct = useCallback((ean) => runLookupProduct(ean, {
-    accessToken, activeIds, activeCustom, activeENumbers, family, activeProfiles,
+    accessToken, activeIds, activeCustom, activeENumbers, family: scanFamily, activeProfiles,
     productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
     setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
     setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
     setProductImagePreview, setProductImageBase64,
     vibrateOnWarning, soundOnWarning,
-  }), [accessToken, activeIds, activeCustom, activeENumbers, family, activeProfiles,
+  }), [accessToken, activeIds, activeCustom, activeENumbers, scanFamily, activeProfiles,
        productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
        setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
        setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
@@ -678,7 +700,7 @@ export default function EatSafe() {
   }, [lookupProduct, setScreen]);
 
   // ── COMPUTED (afhænger af hooks) ─────────────────────────────────────────
-  const madpasActiveProfile = madpasProfileId === "self" ? null : family.find(m => m.id === madpasProfileId);
+  const madpasActiveProfile = madpasProfileId === "self" ? null : scanFamily.find(m => m.id === madpasProfileId);
   const mpAllergens = madpasActiveProfile ? (madpasActiveProfile.allergens || []) : allergens;
   const mpCustom = madpasActiveProfile ? (madpasActiveProfile.custom || []) : customAllerg;
   // Kostpræferencer fulgte tidligere ALTID den loggede bruger selv
@@ -791,7 +813,8 @@ export default function EatSafe() {
   const profileContextValue = useMemo(() => ({
     allergens, setAllergens, customAllerg, setCustomAllerg,
     family, setFamily, activeProfiles, setActiveProfiles,
-  }), [allergens, customAllerg, family, activeProfiles]);
+    scanFamily, household, setHousehold, householdLoading, loadHousehold,
+  }), [allergens, customAllerg, family, activeProfiles, scanFamily, household, householdLoading, loadHousehold]);
 
   const adminContextValue = useMemo(() => ({
     adminSection, setAdminSection, adminStats,

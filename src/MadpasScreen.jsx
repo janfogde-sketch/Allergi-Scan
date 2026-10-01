@@ -62,7 +62,8 @@ export default function MadpasScreen({
   madpasSpeak,
 }) {
   const { user } = useAuthContext();
-  const { family } = useProfileContext();
+  // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
+  const { scanFamily: family } = useProfileContext();
   const { screen } = useNavigationContext();
 
   // ── Grupperede oplysninger efter type — fælles for preview og fremvis-

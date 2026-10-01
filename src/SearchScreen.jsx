@@ -16,7 +16,8 @@ export default function SearchScreen({
   lookupProduct,
 }) {
   const { accessToken } = useAuthContext();
-  const { family, activeProfiles, setActiveProfiles } = useProfileContext();
+  // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
+  const { scanFamily: family, activeProfiles, setActiveProfiles } = useProfileContext();
   const { lists, activeListId, addToList } = useShoppingContext();
 
   // ── Vælg liste ved tilføjelse — kun nødvendigt når man har mere end én

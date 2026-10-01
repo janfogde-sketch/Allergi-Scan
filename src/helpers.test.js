@@ -16,7 +16,7 @@ import {
   verifiedBadge,
   isValidEanChecksum,
 } from "./helpers.js";
-import { profileConflictLabel, profileMatchLabel } from "./helpers.js";
+import { profileConflictLabel, profileMatchLabel, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
 
 describe("isValidEanChecksum", () => {
   it("accepts a real EAN-13 with a correct check digit", () => {
@@ -336,5 +336,49 @@ describe("profileMatchLabel", () => {
     expect(profileMatchLabel([])).toBe("Passer til valgte profiler");
     expect(profileMatchLabel(undefined)).toBe("Passer til valgte profiler");
     expect(profileMatchLabel([{ id: "x", name: "" }])).toBe("Passer til den valgte profil");
+  });
+});
+
+describe("husstandskonti som skrivebeskyttede profiler", () => {
+  const jan = { id: "u-jan", name: "Jan Fogde", email: "jan@x.dk", allergens: ["maelkeallergi"], custom: ["kiwi"], diets: ["vegetarian"], eNumbers: ["E150"], canRemove: false };
+  it("mapper en konto til en profil med præfikset id, læse-flag og alle felter", () => {
+    const [p] = householdToProfiles([jan]);
+    expect(p.id).toBe(`${LINKED_PROFILE_PREFIX}u-jan`);
+    expect(p).toMatchObject({ name: "Jan Fogde", allergens: ["maelkeallergi"], custom: ["kiwi"], diets: ["vegetarian"], eNumbers: ["E150"], linked: true, readOnly: true });
+    expect(typeof p.color).toBe("string");
+  });
+  it("falder tilbage til e-mailens lokale del, når kontoen ingen navn har", () => {
+    expect(householdToProfiles([{ id: "u2", email: "mia@x.dk" }])[0].name).toBe("mia");
+    expect(householdToProfiles([{ id: "u3" }])[0].name).toBe("Husstandsmedlem");
+    expect(householdToProfiles(undefined)).toEqual([]);
+  });
+  it("genkender husstandsid'er og aldrig oprettede profilers uuid eller 'me'", () => {
+    expect(isLinkedProfileId("acct:u-jan")).toBe(true);
+    expect(isLinkedProfileId("me")).toBe(false);
+    expect(isLinkedProfileId("3f2c1c1e-0000-4000-8000-000000000000")).toBe(false);
+    expect(isLinkedProfileId(undefined)).toBe(false);
+  });
+  it("indgår i scanningsresultatet som en profil, når den er valgt", () => {
+    const linked = householdToProfiles([jan]);
+    const profiles = buildActiveProfileList({ user: { name: "Bjørn" }, family: linked, allergens: [], customAllerg: [], selectedENumbers: [], activeProfiles: ["me", "acct:u-jan"] });
+    expect(profiles.map(p => p.name)).toEqual(["Bjørn", "Jan Fogde"]);
+    const results = computeProfileResults(profiles, { allergen_flags: { maelkeallergi: "yes" }, ingredients: "", nutrition: null, productENumbers: [] });
+    expect(results.find(r => r.name === "Jan Fogde").status).toBe("danger");
+    expect(results.find(r => r.name === "Bjørn").status).not.toBe("danger");
+  });
+  describe("syncLinkedActiveProfiles", () => {
+    it("vælger nye husstandskonti som standard og beholder øvrige valg", () => {
+      expect(syncLinkedActiveProfiles(["me", "fam-1"], ["acct:a"], [])).toEqual(["me", "fam-1", "acct:a"]);
+    });
+    it("tilføjer ikke igen en konto, som brugeren selv har fravalgt (kendt fra før)", () => {
+      expect(syncLinkedActiveProfiles(["me"], ["acct:a"], ["acct:a"])).toEqual(["me"]);
+    });
+    it("fjerner valg af konti, der ikke længere er i husstanden", () => {
+      expect(syncLinkedActiveProfiles(["me", "acct:gone", "acct:a"], ["acct:a"], ["acct:gone", "acct:a"])).toEqual(["me", "acct:a"]);
+    });
+    it("giver samme array tilbage, når intet ændres (ingen unødig gen-rendering)", () => {
+      const a = ["me", "acct:a"];
+      expect(syncLinkedActiveProfiles(a, ["acct:a"], ["acct:a"])).toBe(a);
+    });
   });
 });
