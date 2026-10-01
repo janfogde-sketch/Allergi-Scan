@@ -105,11 +105,12 @@ export default function PrivacyScreen({ onBack }) {
         <p style={S.p}>Disse sammenligninger anvendes ikke til at træffe automatiske afgørelser, der har juridisk eller tilsvarende væsentlig virkning for dig.</p>
 
         <h2 style={S.h2}>6. Retsgrundlag</h2>
-        <p style={S.p}>Retsgrundlaget afhænger af, hvilke oplysninger der behandles og til hvilket formål.</p>
-        <p style={S.p}>For oplysninger, der er nødvendige for at oprette og levere de EatSafe-funktioner, du har bedt om, kan behandlingen ske med henblik på opfyldelse af aftalen med dig, jf. GDPR artikel 6, stk. 1, litra b.</p>
-        <p style={S.p}>For nødvendige sikkerheds-, drifts- og fejlfindingsaktiviteter kan behandlingen ske på baggrund af EatSafes legitime interesse i at drive, beskytte og fejlrette tjenesten, jf. artikel 6, stk. 1, litra f.</p>
-        <p style={S.p}>For helbredsoplysninger anvendes desuden en relevant undtagelse efter artikel 9.</p>
-        <p style={S.p}>Hvis EatSafe anvender udtrykkeligt samtykke, er det artikel 9, stk. 2, litra a.</p>
+        <p style={S.p}>Retsgrundlaget afhænger af, hvilke oplysninger der behandles, og til hvilket formål.</p>
+        <p style={S.p}><strong>Aftale (GDPR artikel 6, stk. 1, litra b):</strong> oprettelse og drift af din konto og de funktioner, du har bedt om, herunder personlige produktkontroller, profiler, indkøbslister, historik og de beskeder, der er en del af tjenesten.</p>
+        <p style={S.p}><strong>Legitim interesse (artikel 6, stk. 1, litra f):</strong> sikkerhed, forebyggelse af misbrug, fejlfinding og drift af tjenesten, behandling af alder og køn med henblik på at forstå, hvem tjenesten bruges af, og forbedring af produktdata. Du har ret til at gøre indsigelse mod behandling, der sker på dette grundlag.</p>
+        <p style={S.p}><strong>Retlig forpligtelse (artikel 6, stk. 1, litra c):</strong> når vi skal opbevare eller udlevere oplysninger for at overholde loven, fx for at besvare en anmodning om dine rettigheder.</p>
+        <p style={S.p}><strong>Helbredsoplysninger (artikel 9, stk. 2, litra a):</strong> dine allergi- og intoleranceoplysninger og øvrige helbredsrelaterede valg behandles kun på grundlag af dit udtrykkelige samtykke, ud over aftalegrundlaget i artikel 6, stk. 1, litra b. Samtykket gives særskilt, før vi behandler oplysningerne, og du kan til enhver tid trække det tilbage (se afsnit 3).</p>
+        <p style={S.p}>Oplysninger om andre personer, som du har registreret på en profil, du administrerer, behandles på samme grundlag, og forudsætter den pågældendes samtykke (se afsnit 4).</p>
 
         <h2 style={S.h2}>7. E-mails og push-notifikationer</h2>
         <p style={S.p}>EatSafe kan sende beskeder til dig i appen, som push-notifikationer og som e-mail. Beskederne handler om din brug af tjenesten og kan blandt andet vedrøre:</p>
