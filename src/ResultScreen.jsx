@@ -215,7 +215,7 @@ export default function ResultScreen({
       if (val === "yes") return { status: "cross", label: a.label, reason: "Fundet i produktet." };
       if (val === "traces") {
         // Brugeren reagerer kun på direkte indhold: spor er ikke en advarsel, men skjules ikke
-        if (ignoresTraces(soloProfile.levels, id)) return { status: "check", label: a.label, reason: "Kan indeholde spor — ikke markeret efter dit valg." };
+        if (ignoresTraces(soloProfile.levels, id)) return { status: "check", label: a.label, reason: "Kan indeholde spor — du har valgt ikke at få advarsel om det." };
         return { status: "trace", label: a.label, reason: "Kan indeholde spor i produktet." };
       }
       if (val === "no") return { status: "check", label: a.label, reason: null };
@@ -498,7 +498,7 @@ export default function ResultScreen({
           )}
           {!isMultiProfile && findings.ignoredTraceMatches.length > 0 && (
             <div style={{ fontSize:11.5, color:"rgba(255,255,255,.9)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>
-              Kan indeholde spor af {findings.ignoredTraceMatches.map(m => m.label.toLowerCase()).join(", ")} — ikke markeret efter dine valg.
+              Kan indeholde spor af {findings.ignoredTraceMatches.map(m => m.label.toLowerCase()).join(", ")} — du har valgt ikke at få advarsel om spor.
             </div>
           )}
           {!isMultiProfile && topStatus.level === "safe" && (
@@ -583,7 +583,7 @@ export default function ResultScreen({
             <SafetyRow key={p.id}
               name={p.id==="me" ? "Dig" : p.name}
               status={p.status}
-              statusText={[...p.reasons, ...(p.ignoredTraces || []).map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id} (ikke markeret)`)].join(" · ") || "Matcher profilen"}
+              statusText={[...p.reasons, ...(p.ignoredTraces || []).map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id} (du har fravalgt advarsel)`)].join(" · ") || "Matcher profilen"}
               onClick={(p.danger.length > 0 || p.warning.length > 0) ? () => {
                 const first = [...p.danger, ...p.warning][0];
                 setKnowledgeSlug(first); setScreen(SCREENS.KNOWLEDGE);

@@ -49,7 +49,7 @@ export function buildScanResultFromProductData({ product, data, ean, activeIds, 
     ...matchedDanger.map(id => ({ type:"bad", text:`Indeholder ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
     ...matchedWarning.map(id => ({ type:"maybe", text:`Kan indeholde spor af ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
     ...(hasUnknown ? [{ type:"maybe", text:"Visse allergener er ukendte — tjek altid pakken" }] : []),
-    ...(ignoredTraces || []).map(id => ({ type:"info", text:`Kan indeholde spor af ${ALLERGENS.find(a=>a.id===id)?.label||id} — ikke markeret efter dine valg` })),
+    ...(ignoredTraces || []).map(id => ({ type:"info", text:`Kan indeholde spor af ${ALLERGENS.find(a=>a.id===id)?.label||id} — du har valgt ikke at få advarsel om spor` })),
     ...(matchedDanger.length===0 && matchedWarning.length===0 && !hasUnknown ? [{ type:"good", text:"Ingen af dine allergener fundet" }] : []),
     ...(matchedENumbers.length > 0 ? [{ type:"maybe", text:`Indeholder overvågede E-numre: ${matchedENumbers.join(", ")}` }] : []),
   ];
