@@ -12,41 +12,6 @@ const corsHeaders = {
 
 const FROM = "EatSafe <noreply@eatsafe.dk>";
 
-const TEMPLATES: Record<string, { id: string; subject: string }> = {
-  submission_approved: { id: "fb81f06b-5a8b-4729-9139-37c696b82f56", subject: "Dit produkt er godkendt" },
-  submission_rejected: { id: "cc9dd12d-2aaf-4395-94c7-fe15396f0d5b", subject: "Produkt ikke godkendt" },
-  ticket_update:       { id: "9965c3a0-67b5-4818-bb7d-ea278fc839a4", subject: "Opdatering på din EatSafe feedback" },
-};
-
-async function fetchTemplateHtml(templateId: string, apiKey: string, data: Record<string, string>): Promise<string> {
-  const res = await fetch(`https://api.resend.com/templates/${templateId}`, {
-    headers: { "Authorization": `Bearer ${apiKey}` },
-  });
-  if (!res.ok) throw new Error(`Template hentning fejlede: ${res.status}`);
-  const tpl = await res.json();
-
-  // Resend kan returnere HTML i forskellige felter — prøv alle
-  let html = tpl.html_content || tpl.html || tpl.content || tpl.body || "";
-
-  // Hvis stadig tom, tjek nested data
-  if (!html && tpl.data) {
-    html = tpl.data.html_content || tpl.data.html || tpl.data.content || "";
-  }
-
-  if (!html) {
-    // Log alle felter så vi kan debugge
-    console.error("Template felter:", JSON.stringify(Object.keys(tpl)));
-    console.error("Template data:", JSON.stringify(tpl).substring(0, 500));
-    throw new Error(`Ingen HTML fundet i template. Felter: ${Object.keys(tpl).join(", ")}`);
-  }
-
-  // Erstat alle {{variabel}} med data
-  for (const [key, value] of Object.entries(data)) {
-    html = html.replaceAll(`{{${key}}}`, value ?? "");
-  }
-  return html;
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -116,14 +81,11 @@ Deno.serve(async (req) => {
       subject = rawSubject;
       html = rawHtml;
     } else {
-      const template = TEMPLATES[type];
-      if (!template) {
-        return new Response(JSON.stringify({ error: `Ukendt email-type: ${type}` }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      subject = template.subject;
-      html = await fetchTemplateHtml(template.id, RESEND_API_KEY, data);
+      // De gamle skabeloner (submission_approved/_rejected, ticket_update) er slettet i Resend 1. okt. 2026;
+      // notify sender de samme mails med N2a, N3 og N6 (Resend-skabeloner i supabase/templates/resend/).
+      return new Response(JSON.stringify({ error: `Ukendt email-type: ${type}` }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const res = await fetch("https://api.resend.com/emails", {
