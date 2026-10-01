@@ -45,8 +45,8 @@ status følger med begge veje (afslut det ene sted, og det er afsluttet begge st
     gennemse dem. **Send Email Hook er slået til (1. okt.):** `auth-send-email`
     sender alle auth-mails via Resends API med disse skabeloner; glemt-
     adgangskode-mailen er verificeret (afsnit 16 i `src/CONTEXT.md`).
-    `deploy-auth-templates.yml` får fortsat 403 (nøglen mangler rettigheden til
-    at skrive auth-konfiguration), men hook'en bruger ikke nøglen. **Skærmen
+    `deploy-auth-templates.yml` kører kun manuelt siden 2. okt. (tilbagerulning;
+    nøglen mangler rettigheden til at skrive auth-konfiguration), og hook'en bruger ikke nøglen. **Skærmen
     "Vælg ny adgangskode" (`ResetPasswordScreen.jsx`, `SCREENS.RESETPASSWORD`) er
     lavet 1. okt. (kræver merge): nulstillingslinket (`#type=recovery`) åbner den,
     og først derefter kommer brugeren ind i appen. Under Security findes desuden valgfrie notifikationer

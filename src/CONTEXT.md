@@ -253,7 +253,7 @@ false → true), som reserverer `welcome_sent_at` atomisk
 `send-email` sender begge typer med HTML'en fra `_shared/welcomeMail.ts`
 (kopi af `templates/resend/N1-velkomst.html`), emne "Velkommen til EatSafe".
 Supabase Auths bekræftelsesmail ligger i `supabase/templates/auth/` og
-sættes af workflowet `deploy-auth-templates.yml`.
+kan sættes af workflowet `deploy-auth-templates.yml` (kun manuelt, som tilbagerulning).
 
 **Opfølgende sikkerhedsfund og -fix (25. sept. 2026, `security-check`-gennemgang):**
 `get_advisors` fandt at tre `SECURITY DEFINER`-funktioner var direkte
@@ -727,9 +727,9 @@ henter som standard kun åbne/aktive; de færdige hentes først, når Færdige/A
 Supabase Auth kan sende sine mails på to måder, og begge går gennem Resend:
 
 1. **SMTP (i dag):** Auth bygger selv mailen ud fra skabelonerne i Supabase (emne + HTML) og afleverer den til Resends SMTP
-   (`smtp.resend.com`, `noreply@eatsafe.dk`). Skabelonerne sættes af `.github/workflows/deploy-auth-templates.yml`, der kræver, at
-   `SUPABASE_ACCESS_TOKEN` har rettigheden til at skrive auth-konfiguration (mangler den, fejler jobbet med 403, og mailen forbliver
-   Supabases engelske standard).
+   (`smtp.resend.com`, `noreply@eatsafe.dk`). Skabelonerne kan sættes af `.github/workflows/deploy-auth-templates.yml`, som siden 2. okt. 2026 kun kører manuelt
+   (tilbagerulning, hvis hook'en slås fra) og kræver, at `SUPABASE_ACCESS_TOKEN` har rettigheden til at skrive auth-konfiguration
+   (i dag giver den 403, så Supabases egne skabeloner er ikke ajour).
 2. **Send Email Hook (slået til 1. okt. 2026):** Auth kalder edge-funktionen `auth-send-email`, som sender mailen via Resends API.
    Hook'en erstatter SMTP, mens den er slået til; slås den fra, bruges SMTP + skabelonerne igen (nem tilbagerulning).
 
