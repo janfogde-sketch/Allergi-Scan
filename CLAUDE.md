@@ -689,7 +689,11 @@ står i en diskret lys orange boks; indholdet starter lige under sproglinjen
 med stram spacing (lodret centrering gav for meget tom plads øverst);
 knappen hedder altid "Læs højt"/"Stop" (appens sprog). Mælk vises på kortet
 med appens eget stregikon (`Icon name="milk"`, mælkekarton i grøn flise) i
-stedet for det illustrerede glas; resten af appen bruger fortsat 3D-sættet.
+stedet for det illustrerede glas; resten af appen bruger fortsat 3D-sættet. Sproglinjen viser et
+neutralt globusikon (`Icon name="globe"`) i stedet for landeflag; mælkens
+eksempler er Madpas-specifikke ("Cream · Butter · Cheese · Whey · Milk
+powder", `MADPAS_EXAMPLES_OVERRIDE`, 17 sprog); indrykninger bruger
+`paddingInlineStart`, så arabisk (RTL) flugter.
 
 ### Profil restruktureret — "Rediger profil" og "Rediger præferencer" adskilt (28. sept. 2026)
 

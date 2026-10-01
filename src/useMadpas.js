@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState } from "react";
-import { ALLERGENS, MADPAS_LANGUAGES, ALLERGEN_T, ALLERGEN_EXAMPLES, DIETS, DIET_T, MADPAS_SAFETY_NOTE_T, MADPAS_ALLERGY_STATEMENT_T, MADPAS_EN_DERIVED, MADPAS_CROSS_CONTACT_SINGULAR_T, MADPAS_CROSS_CONTACT_PLURAL_T, MADPAS_DIET_MESSAGE_T } from "./constants.jsx";
+import { ALLERGENS, MADPAS_LANGUAGES, ALLERGEN_T, ALLERGEN_EXAMPLES, DIETS, DIET_T, MADPAS_SAFETY_NOTE_T, MADPAS_ALLERGY_STATEMENT_T, MADPAS_EN_DERIVED, MADPAS_EXAMPLES_OVERRIDE, MADPAS_CROSS_CONTACT_SINGULAR_T, MADPAS_CROSS_CONTACT_PLURAL_T, MADPAS_DIET_MESSAGE_T } from "./constants.jsx";
 
 // ALLERGEN_T har ingen "da"-nøgle (dansk er allerede ALLERGENS' eget
 // a.label, se konstantens egen kommentar) — uden dette faldt et valgt
@@ -35,6 +35,8 @@ export function madpasDietMessage(dietId, lang) {
 // findes i ALLERGEN_EXAMPLES) og begrænser til 4 stk., så det forbliver
 // kompakt selv med flere allergener.
 export function madpasAllergenExamples(allergenId, lang) {
+  const override = MADPAS_EXAMPLES_OVERRIDE[allergenId];
+  if (override) return override[lang] || override.en;
   const ex = ALLERGEN_EXAMPLES[allergenId];
   if (!ex) return [];
   const products = ex.products?.[lang] || ex.products?.en || [];

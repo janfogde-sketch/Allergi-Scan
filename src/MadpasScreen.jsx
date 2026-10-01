@@ -98,15 +98,16 @@ export default function MadpasScreen({
     const renderAllergenIcon = (a) => a.id === "maelkeallergi"
       ? <span style={{ ...itemIcon, borderRadius:14, background:"var(--green-lt)" }}><Icon name="milk" size={28} color="var(--green)" /></span>
       : <span style={itemIcon}><AllergenGlyph a={a} size={40} /></span>;
-    const itemName = { fontSize:32, fontWeight:800, color:"var(--ink)", lineHeight:1.15 };
+    const itemName = { fontSize:32, fontWeight:800, color:"var(--ink)", lineHeight:1.15, minWidth:0, overflowWrap:"anywhere" };
     // Korte, tydeligt mærkede fødevare-eksempler under selve allergenet —
     // bevidst LILLE og MUTED sammenlignet med itemName, så allergenet selv
     // altid forbliver det mest fremtrædende element på skærmen.
-    const exampleLine = { fontSize:14, color:"var(--muted)", marginTop:4, lineHeight:1.45, paddingLeft:56 };
+    const exampleLine = { fontSize:14, color:"var(--muted)", marginTop:4, lineHeight:1.45, paddingInlineStart:56 };
     // Direkte to-sætnings-budskab pr. fødevareallergi (1. okt. 2026):
     // "I have a food allergy to milk." (stærkest) + sikkerhedssætningen.
     const statementLine = { fontSize:17, fontWeight:800, color:"var(--ink)", lineHeight:1.4 };
-    const messageBlock = { marginTop:10, paddingLeft:56 };
+    // paddingInlineStart (ikke paddingLeft), så indrykningen også flugter på arabisk (RTL).
+    const messageBlock = { marginTop:10, paddingInlineStart:56 };
     const messageSafety = { fontSize:15.5, fontWeight:600, color:"var(--ink2)", marginTop:4, lineHeight:1.5 };
     const renderExamples = (allergenId) => {
       const examples = madpasAllergenExamples(allergenId, lang);
@@ -124,8 +125,10 @@ export default function MadpasScreen({
         {/* Stort flag/sprog øverst + tydelig-men-diskret luk-knap. */}
         <div style={{ padding:"20px 24px 8px", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-            <span style={{ fontSize:44, lineHeight:1 }}>{langInfo?.flag}</span>
-            <span style={{ fontSize:17, color:"var(--ink2)", fontWeight:700 }}>{langInfo?.name}</span>
+            {/* Neutralt globusikon i stedet for landeflag (1. okt. 2026) — et
+                sprog er ikke ét land; samme ikon på alle sprog. */}
+            <Icon name="globe" size={24} color="var(--ink2)" />
+            <span style={{ fontSize:17, color:"var(--ink2)", fontWeight:700, minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{langInfo?.name}</span>
           </div>
           <button className="mp-close-btn" onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }} aria-label="Luk">
             <Icon name="x" size={20} color="var(--ink2)" />
