@@ -43,7 +43,10 @@ jobs:
           for name in $(jq -r 'keys[]' templates.json); do
             subject=$(jq -r --arg n "$name" '.[$n].subject' templates.json)
             file=$(jq -r --arg n "$name" '.[$n].file' templates.json)
-            body=$(jq --arg n "$name" --arg s "$subject" --rawfile h "$file" \
+            # "Det var ikke mig"-linket (<!--report:start-->…<!--report:end-->) bruger {{ .ReportURL }}, som kun
+            # edge-funktionen auth-send-email kender; Supabase Auths egne skabeloner får mailen uden den blok.
+            html=$(perl -0pe 's/<!--report:start-->.*?<!--report:end-->\n?//gs' "$file")
+            body=$(jq --arg n "$name" --arg s "$subject" --arg h "$html" \
               '. + {("mailer_subjects_" + $n): $s, ("mailer_templates_" + $n + "_content"): $h}' <<<"$body")
             echo "Skabelon: $name ($file)"
           done

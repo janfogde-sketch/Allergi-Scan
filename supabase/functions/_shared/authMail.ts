@@ -46,18 +46,25 @@ export function renderAuthTemplate(html: string, vars: Record<string, string | u
 
 const isEmail = (s?: string): s is string => typeof s === "string" && /^[^\s@]+@[^\s@]+$/.test(s);
 
+/** "Det var ikke mig"-linket i recovery-skabelonen ligger mellem disse markører; uden ReportURL fjernes hele blokken. */
+const REPORT_BLOCK = /<!--report:start-->[\s\S]*?<!--report:end-->\n?/g;
+const REPORT_MARKERS = /<!--report:(?:start|end)-->\n?/g;
+export const stripReportBlock = (html: string): string => html.replace(REPORT_BLOCK, "");
+
 function make(template: string, to: string, vars: Record<string, string | undefined>): AuthMail {
   const t = AUTH_MAIL_TEMPLATES[template];
   if (!t) throw new AuthMailError(`Ukendt skabelon: ${template}`);
-  return { to, subject: t.subject, html: renderAuthTemplate(t.html, vars), template };
+  const html = vars.ReportURL ? t.html.replace(REPORT_MARKERS, "") : stripReportBlock(t.html);
+  return { to, subject: t.subject, html: renderAuthTemplate(html, vars), template };
 }
 
 /**
  * Hook-nyttelast → de mails, der skal sendes (0, 1 eller 2). Kaster AuthMailError ved en ugyldig nyttelast.
  * Ved skift af e-mail med "Secure email change" sendes to mails: til den nuværende adresse (token + token_hash_new)
  * og til den nye (token_new + token_hash) — feltnavnene er byttet om af hensyn til bagudkompatibilitet (Supabase-dokumentationen).
+ * extra.ReportURL (kun recovery): signeret "Det var ikke mig"-link; uden det udelades linket i mailen.
  */
-export function buildAuthMails(payload: AuthHookPayload, supabaseUrl: string): AuthMail[] {
+export function buildAuthMails(payload: AuthHookPayload, supabaseUrl: string, extra: { ReportURL?: string } = {}): AuthMail[] {
   const user = payload?.user;
   const data = payload?.email_data;
   if (!user || !data) throw new AuthMailError("Ugyldig nyttelast");
@@ -85,7 +92,7 @@ export function buildAuthMails(payload: AuthHookPayload, supabaseUrl: string): A
     return [make(template, user.new_email, { ...base, Token: data.token || data.token_new, ConfirmationURL: link(hash) })];
   }
 
-  const vars = { ...base, Token: data.token, ConfirmationURL: NEEDS_LINK.has(type) ? link(data.token_hash) : "" };
+  const vars = { ...base, Token: data.token, ConfirmationURL: NEEDS_LINK.has(type) ? link(data.token_hash) : "", ReportURL: type === "recovery" ? extra.ReportURL : undefined };
   if (type === "reauthentication" && !data.token) throw new AuthMailError("Mangler kode");
   return [make(template, user.email, vars)];
 }

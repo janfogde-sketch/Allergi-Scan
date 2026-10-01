@@ -30,6 +30,9 @@ kategorier — ikke bare "virke":
    `_shared/standardWebhook.ts`, hemmelighed i en funktions-secret) og svare 401 uden gyldig signatur,
    før noget læses eller sendes.
 
+   Variant: **signeret token-link** (`report-unrequested-reset`): kaldes fra en statisk side med en token fra en mail;
+   `verify_jwt:false`, men HMAC-signatur og udløb (`_shared/reportLink.ts`) kontrolleres før noget læses eller skrives.
+
 En funktion der ikke falder bevidst i én af de fem er sandsynligvis et hul.
 
 **IDOR-fælden:** når en funktion tjekker ejerskab af ÉT id (fx `listId`) men

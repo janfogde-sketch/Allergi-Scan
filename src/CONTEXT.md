@@ -330,7 +330,7 @@ yderligere handling ventende.
 | `allergens` | Keyword-engine + Claude Haiku fallback |
 | `ocr` | OCR: `ingredients` / `product_name` / `nutrition` / `ean_from_image` |
 | `search` | Fuldtekst-søgning med scoring |
-| `send-email` | Resend email — `type` er enten en Resend-skabelon (`welcome`/`submission_approved`/`submission_rejected`/`ticket_update`) eller `"raw"` (direkte `subject`+`html` i kaldet, ingen skabelon — til interne/dynamiske emails som `admin-digest`). Velkomstmailen udløses af `send_welcome_email()` og sendes først, når e-mailen er bekræftet (29. sept. 2026, `supabase/sql/2026-09-29_welcome_email_after_confirm.sql`). Ved `public.users`-INSERT (`on_user_created`) sker det kun, hvis `auth.users.email_confirmed_at` allerede er sat (Google), ellers via triggeren `on_auth_email_confirmed` på `auth.users` (NULL → sat). Præcis én mail pr. bruger |
+| `send-email` | Resend email — `type` er `welcome_onboarded` (velkomstmailen fra repoet), en servicemail fra `TRANSACTIONAL_TEMPLATES` (`_shared/mailSend.ts`) eller `"raw"`. De gamle typer `submission_approved`/`submission_rejected`/`ticket_update` og de tre gamle Resend-skabeloner (Product Approved/Not Approved, Feedback response) er fjernet 1. okt. 2026; `notify` sender de mails med N2a, N3 og N6. Typen `"raw"` (direkte `subject`+`html` i kaldet, ingen skabelon — til interne/dynamiske emails som `admin-digest`). Velkomstmailen udløses af `send_welcome_email()` og sendes først, når e-mailen er bekræftet (29. sept. 2026, `supabase/sql/2026-09-29_welcome_email_after_confirm.sql`). Ved `public.users`-INSERT (`on_user_created`) sker det kun, hvis `auth.users.email_confirmed_at` allerede er sat (Google), ellers via triggeren `on_auth_email_confirmed` på `auth.users` (NULL → sat). Præcis én mail pr. bruger |
 | `feedback` | **NY** (30. sept. 2026, A4) — modtager feedback-tickets fra appen og admin-panelet. Uden login: 5/time pr. afsender (saltet IP-hash i `feedback_tickets.client_hash`) og 60/time i alt. Med login: 20/time. `submitted_by` sættes kun fra login-tokenet. Validering i `feedback/validate.js` (testet i `src/feedbackValidate.test.js`) |
 | `auto-import-off` | **NY** — importerer fra OFF dagligt kl. 02:00 UTC via pg_cron |
 | `admin-digest` | **NY** (17. sept. 2026) — ugentlig email til alle admins (`role='admin'`) med antal afventende indsendelser + åbne tickets, kun sendt hvis der reelt er noget. pg_cron mandag kl. 08:00 UTC (jobid 4) |
@@ -742,6 +742,15 @@ change" sendes to mails (nuværende adresse: `token_hash_new`; ny adresse: `toke
 (fx `password_changed_notification`) svares 200 uden afsendelse. Resend-fejl (429/5xx) gentages op til tre gange, derefter svares 500, så
 Auth viser en fejl; samme `Idempotency-Key` (`auth-{webhook-id}-{n}`) hindrer dobbeltafsendelse. Fejl logges i `client_errors`
 (kilde `edge:auth-send-email`, aldrig tokens).
+
+**"Var det ikke dig?" i glemt-adgangskode-mailen (1. okt. 2026, to do 1a1e600b):** `recovery.html` har et diskret tekstlink "Giv EatSafe besked"
+mellem markørerne `<!--report:start-->`/`<!--report:end-->` (`{{ .ReportURL }}`). `auth-send-email` signerer en token (bruger-id + 7 dages udløb, HMAC-SHA256,
+nøgle `SEND_EMAIL_HOOK_SECRET`, `_shared/reportLink.ts`) og lægger linket `https://www.eatsafe.dk/uventet-nulstilling.html?t=…` i mailen; uden token (eller i
+Supabase Auths egne skabeloner, hvor `deploy-auth-templates.yml` fjerner blokken) udelades linket. Siden `public/uventet-nulstilling.html` sender først ved et klik på
+knappen (så mailscannere ikke giver falske alarmer) til edge-funktionen `report-unrequested-reset` (signeret token-link, `verify_jwt=false`; 400 `invalid`/`expired`
+uden gyldig token). Den gemmer en række i `security_reports` (migration `20261001120838`, kun admins kan læse, ingen IP-adresser, højst én pr. bruger pr. time),
+opretter en høj-prioritets opgave (spor drift) på to do-listen og mailer alle admins; over 30 indberetninger i timen gemmes de, men der sendes ikke flere mails/opgaver.
+Kontoen låses ikke, og intet ændres ved den. Kun recovery-mailen har linket (magic link og skift af e-mail kan få det senere).
 
 **Mørk tilstand (1. okt. 2026, Bjørn):** alle 28 mails (6 auth + 22 Resend) har samme mørke palette, Outlook-regler (`data-ogsc`/`data-ogsb`) og et logo, der skifter til en mørk version; se afsnittet "Mørk tilstand" i `supabase/templates/resend/README.md` og testen `src/mailDarkMode.test.js`.
 
