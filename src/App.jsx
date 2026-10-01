@@ -49,6 +49,7 @@ import { BUILD_TIME, COMMIT_SHA, formatBuildTime, buildScreenLabel } from './uti
 import { useShoppingList } from './useShoppingList.js';
 import { useFamily } from './useFamily.js';
 import { useHousehold } from './useHousehold.js';
+import { syncPushToken } from './usePush.js';
 import { useHistory } from './useHistory.js';
 import { useAuth, markOnboardedLocally, ONBOARDED_KEY, PENDING_VERIFY_KEY } from './useAuth.js';
 const VerifyEmailScreen = React.lazy(() => import('./VerifyEmailScreen.jsx'));
@@ -482,6 +483,13 @@ export default function EatSafe() {
 
   // ── Beskeder (liste, ulæst-tæller og ?notification=-ruten fra push) ──────
   const notifications = useNotifications({ accessToken, userId, user, screen, setScreen, setAuthTab });
+
+  // Push er per enhed, ikke per konto: har enheden allerede givet tilladelse, får den konto, der er logget ind,
+  // sit abonnement gemt her (ellers viser appen push som "til", men der kommer intet). Spørger aldrig om tilladelse.
+  React.useEffect(() => {
+    if (accessToken && userId) syncPushToken(accessToken);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   // ── Router — browser back-knap support ──────────────────────────────────
   const isOffline = useOffline();
