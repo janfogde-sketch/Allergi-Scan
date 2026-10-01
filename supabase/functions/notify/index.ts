@@ -27,7 +27,7 @@ const MAX_ATTEMPTS = 5;
 const BATCH = 20;
 
 type EventRow = { id: string; event_key: string; kind: string; payload: Record<string, unknown>; attempts: number };
-type Flags = { push: boolean; email: boolean; testUsers: Set<string> };
+type Flags = { push: boolean; email: boolean; testUsers: Set<string>; overrides: Record<string, { title?: string | null; body?: string | null }> };
 type Planned = {
   userId: string; templateKey: string; data: Record<string, unknown>; eventAt?: string;
   /** Web Push TTL og udløbstid for pushen (fx P2: kun så længe invitationen er gyldig). */
@@ -224,7 +224,7 @@ async function productNameFor(db: Db, s: { product_id?: string | null; ean?: str
 
 // ── Én modtager: opret besked, derefter push ────────────────────────────────
 async function deliver(db: Db, ev: EventRow, plan: Planned, flags: Flags): Promise<{ retry: boolean }> {
-  const r = renderNotification(plan.templateKey, plan.data);
+  const r = renderNotification(plan.templateKey, plan.data, { pushOverride: flags.overrides[plan.templateKey] });
 
   // Brugerens valg pr. kanal (med kategoriens standard, se notification_enabled() i databasen).
   // Er både push og mail fravalgt, oprettes ingen besked (udviklerpakken).
@@ -263,7 +263,7 @@ async function sendPushes(db: Db, ev: EventRow, plan: Planned, r: ReturnType<typ
   const { data: tokens } = await db.from("push_tokens").select("token").eq("user_id", plan.userId);
   let retry = false;
   const payload = {
-    title: r.title, body: r.pushBody, icon: "/icon-192.png", lang: "da",
+    title: r.pushTitle, body: r.pushBody, icon: "/icon-192.png", lang: "da",
     url: `${APP_URL}/?notification=${notificationId}`, notificationId, eventId: ev.id,
     tag: `${r.type}:${r.entityId ?? notificationId}`,
     ...(plan.pushExpiresAt ? { expiresAt: plan.pushExpiresAt } : {}),
@@ -390,7 +390,11 @@ Deno.serve(async (req) => {
       push: flagValue("notifications_push_enabled") === true,
       email: flagValue("notifications_email_enabled") === true,
       testUsers: new Set(Array.isArray(testList) ? testList.map(String) : []),
+      overrides: {},
     };
+
+    const { data: ovRows } = await db.from("notification_push_overrides").select("key, title, body");
+    for (const o of ovRows ?? []) flags.overrides[o.key] = { title: o.title, body: o.body };
 
     let q = db.from("notification_events").select("id, event_key, kind, payload, attempts").eq("status", "pending");
     if (body?.event_id) q = q.eq("id", body.event_id);
