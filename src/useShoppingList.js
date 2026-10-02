@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
-import { makeHeaders, apiCall } from "./helpers.js";
+import { makeHeaders, apiCall, findProductOnList } from "./helpers.js";
 import { PREVIEW_MOCK_PRODUCTS } from "./previewMockData.js";
 import { showToast } from "./SharedComponents.jsx";
 
@@ -370,6 +370,11 @@ export function useShoppingList({ accessToken, userId }) {
     const imageUrl = isProduct ? (nameOrProduct.image_url || null) : null;
     const listId = targetListId || activeListId;
     if (!name?.trim() || !listId) return false;
+    // Produktet står allerede på listen (samme EAN/produkt-id): opret ikke en identisk række.
+    if (isProduct) {
+      const target = listsRef.current.find(l => l.id === listId);
+      if (findProductOnList(target?.shopping_list_items, { code: ean, id: productId })) return true;
+    }
     const tempId = uid();
     markPending(tempId);
     let resolveRealId;

@@ -685,25 +685,29 @@ export function computeTopStatus({ hasSufficientData, allergyMatches, intoleranc
   return { level: "safe", icon: "check", headline: "Ingen advarsler fundet", names: [] };
 }
 
-// ─── SCAN → INDKØBSLISTE-MATCH ───────────────────────────────────────────────
-// Finder en umarkeret vare på den aktive indkøbsliste der sandsynligvis er
-// den samme som det lige scannede produkt — bruges KUN til at foreslå
-// "markér som købt" (ResultScreen), aldrig til automatisk at markere noget.
-// Præcist EAN-/produkt-id-match først; fritekst-varer (intet EAN, fx en
-// brugerskrevet "Mælk") matches i stedet på navnetekst begge veje, men kun
-// ved en rimeligt specifik tekst (≥3 tegn) for at undgå støj-match.
-export function findActiveListMatch(shoppingListItems, scanResult) {
-  const unchecked = (shoppingListItems || []).filter(i => !i.checked);
-  if (unchecked.length === 0 || !scanResult) return null;
-  const scannedName = (scanResult.name || "").toLowerCase().trim();
-  let hit = unchecked.find(i => i.ean && scanResult.code && i.ean === scanResult.code);
-  if (!hit) hit = unchecked.find(i => i.product_id && scanResult.id && i.product_id === scanResult.id);
-  if (!hit) {
-    hit = unchecked.find(i => {
-      if (i.ean) return false;
-      const itemName = (i.name || "").toLowerCase().trim();
-      return itemName.length >= 3 && (scannedName.includes(itemName) || itemName.includes(scannedName));
-    });
+// ─── PRODUKT → INDKØBSLISTE-MATCH ────────────────────────────────────────────
+// Finder varen på en liste, der er det samme som produktet (købt eller ej).
+// Match sker på EAN og produkt-id, aldrig kun på navn, så "Harboe Cola" på listen
+// genkendes som "Cola" på produktsiden. Kun fritekst-varer uden EAN/produkt-id
+// (fx en brugerskrevet "Mælk") matches på navnetekst (≥3 tegn, begge veje).
+// Bruges af ResultScreen til at vælge mellem "Tilføj", "Markér som købt" og "Købt",
+// og af addToList til at undgå dubletter.
+export function findProductOnList(listItems, product) {
+  const items = listItems || [];
+  if (items.length === 0 || !product) return null;
+  const code = product.code || product.ean || null;
+  const pid = product.id || product.product_id || null;
+  let hit = code ? items.find(i => i.ean && i.ean === code) : null;
+  if (!hit && pid) hit = items.find(i => i.product_id && i.product_id === pid);
+  if (!hit && !code && !pid) {
+    const name = (product.name || "").toLowerCase().trim();
+    if (name.length >= 3) {
+      hit = items.find(i => {
+        if (i.ean || i.product_id) return false;
+        const itemName = (i.name || "").toLowerCase().trim();
+        return itemName.length >= 3 && (name.includes(itemName) || itemName.includes(name));
+      });
+    }
   }
   return hit || null;
 }

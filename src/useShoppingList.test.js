@@ -48,6 +48,17 @@ beforeEach(() => {
 });
 
 describe("addToList", () => {
+  it("does not create a duplicate row when the product (same EAN) is already on the list", async () => {
+    const { result } = renderHook(() => useShoppingList({ accessToken: "tok", userId: "u1" }));
+    await seedList(result, [{ id: "i1", name: "Harboe Cola", ean: "5701234567890", product_id: null, checked: false }]);
+    global.fetch.mockClear();
+    let ok;
+    await act(async () => { ok = await result.current.addToList({ name: "Cola", ean: "5701234567890" }); });
+    expect(ok).toBe(true);
+    expect(result.current.shoppingList.length).toBe(1);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
   it("removes the optimistic item again if saving fails", async () => {
     const { result } = renderHook(() => useShoppingList({ accessToken: "tok", userId: "u1" }));
     await seedList(result, []);
