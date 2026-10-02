@@ -108,45 +108,40 @@ Deno.serve(async (req) => {
   // ordet (fx et rent smags-/brandnavn som "KiMs Flødeost & Peberrod").
   const orFilters = qWords.map(w => `name.ilike.%${w}%,brand.ilike.%${w}%,category.ilike.%${w}%,subcategory.ilike.%${w}%`).join(",");
 
-  const { data: textData, error } = await supabase
-    .from("products")
-    .select("id, ean, name, brand, category, subcategory, image_url, verified_status, allergen_flags, tags, ingredients_text")
-    .or(orFilters)
-    .limit(400);
+  // Alle opslag kører sideløbende (tekst-match, global popularitet og
+  // brugerens egen historik), i stedet for efter hinanden.
+  const authHeader = req.headers.get("Authorization");
+  const [textRes, { data: popRows }, { data: personalRows }] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id, ean, name, brand, category, subcategory, image_url, verified_status, allergen_flags, tags, ingredients_text")
+      .or(orFilters)
+      .limit(400),
+    supabase.from("search_query_popularity").select("ean, select_count").eq("query_norm", qNorm).limit(100),
+    // Hvem søger? Bruges kun til den personlige rangeringsboost — en
+    // ikke-autoriseret søgning fungerer stadig fint, bare uden den boost.
+    (async () => {
+      if (!authHeader) return { data: [] as any[] };
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: { user } } = await userClient.auth.getUser();
+      if (!user) return { data: [] as any[] };
+      return await supabase.from("search_selections").select("ean").eq("user_id", user.id).eq("query_norm", qNorm).limit(200);
+    })(),
+  ]);
 
-  if (error) {
-    return new Response(JSON.stringify({ success: false, error: error.message }), {
+  if (textRes.error) {
+    return new Response(JSON.stringify({ success: false, error: textRes.error.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  data = textData || [];
+  data = textRes.data || [];
 
-  // Hvem søger? Bruges kun til den personlige rangeringsboost herunder —
-  // en ikke-autoriseret søgning fungerer stadig fint, bare uden den boost.
-  let callerId: string | null = null;
-  const authHeader = req.headers.get("Authorization");
-  if (authHeader) {
-    const userClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
-    );
-    const { data: { user } } = await userClient.auth.getUser();
-    callerId = user?.id ?? null;
-  }
-
-  // Popularitet på tværs af alle brugere for præcis denne søgning, og —
-  // hvis brugeren er logget ind — hvad brugeren selv plejer at vælge for
-  // den samme søgning. Begge dele hentes sideløbende med selve tekst-
-  // matchningen ovenfor.
-  const [{ data: popRows }, { data: personalRows }] = await Promise.all([
-    supabase.from("search_query_popularity").select("ean, select_count").eq("query_norm", qNorm).limit(100),
-    callerId
-      ? supabase.from("search_selections").select("ean").eq("user_id", callerId).eq("query_norm", qNorm).limit(200)
-      : Promise.resolve({ data: [] as any[] }),
-  ]);
   const popularityMap = new Map((popRows || []).map((r: any) => [r.ean, r.select_count]));
   const personalMap = new Map<string, number>();
   for (const r of (personalRows || []) as any[]) personalMap.set(r.ean, (personalMap.get(r.ean) || 0) + 1);
