@@ -109,6 +109,11 @@ export const ALLERGEN_KEYWORDS = {
     "lysozym", "lysozyme", "globulin", "mayonnaise", "majonæse", "remoulade",
     "meringue", "marengs", "æggepulver", "egg powder",
     "dried egg", "whole egg", "pasteuriseret æg",
+    // Sammensatte og bøjede æg-ord (2. okt. 2026 — "HELÆGSPULVER", "skrabeæg" og
+    // "ÆGGEBLOMMER" blev overset, fordi "æg" kun matcher som helt ord).
+    "skrabeæg", "frilandsæg", "helæg", "helægspulver", "buræg", "kyllingeæg", "andeæg",
+    "æggeblommer", "æggehvider", "æggeblommepulver", "æggehvidepulver", "æggemasse",
+    "æggeprotein", "æggeprodukt", "æggeprodukter",
     // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
     "ei", "eier", "hühnerei", "hühnereier", "vollei", "volleipulver", "eigelb", "eiklar", "eipulver", "eiweißpulver",
   ],
@@ -162,6 +167,8 @@ export const ALLERGEN_KEYWORDS = {
     "worcestershire sauce", "worcestershiresauce",
     "caesar dressing", "bouillabaisse",
     "fiskeolie", "fish oil", "surimi",
+    // Sammensatte tun-ord (2. okt. 2026 — "tunekstrakt" blev overset, "tun" er for kort til understreng)
+    "tunekstrakt", "tunfisk", "tunkød", "tunfiskekstrakt",
     "fiskegelatine", "fiskeekstrakt", "fiskeboller", "fiskemel", "omega-3",
     "rogn", "roe", "kaviar", "caviar",
     // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
@@ -171,7 +178,8 @@ export const ALLERGEN_KEYWORDS = {
     "skaldyr", "crustacean", "rejer", "reje", "tigerrejer", "shrimp", "prawn",
     "hummer", "lobster", "krabbe", "krabber", "crab",
     "languster", "langustere", "langoustine", "krebs", "crayfish",
-    "krebsdyr", "krabbestang", "krill",
+    "krebsdyr", "krebsedyr", "krabbestang", "krill",
+    "strandkrabbe", "strandkrabber", "krabbekød", "rejeekstrakt", "rejepulver",
     "musling", "muslinger", "østers", "blæksprutte", "blæksprutter",
     "kammusling", "kammuslinger", "mussel", "oyster", "squid", "scallop",
     "snegle", "pilgrimsmusling", "escargot",

@@ -165,3 +165,47 @@ describe("hjælpefunktioner", () => {
     expect(shouldUseClaudeFallback("Chokolade uden mælk")).toBe(true);
   });
 });
+
+describe("gennemgang af 100 produkter (2. okt.)", () => {
+  const f = (t) => analyzeIngredients(t);
+  it("sammensatte æg-ord fanges", () => {
+    expect(f("HVEDEMEL, HELÆGSPULVER, salt").aeg).toBe("yes");
+    expect(f("Skrabeæg").aeg).toBe("yes");
+    expect(f("pasteuriserede ÆGGEBLOMMER, vand").aeg).toBe("yes");
+  });
+  it("sulfit som del af ord, tunekstrakt og krebsedyr", () => {
+    expect(f("tomater, natriumdisulfit").svovl).toBe("yes");
+    expect(f("krydderiblanding (tunekstrakt)").fisk).toBe("yes");
+    expect(f("Strandkrabbe (KREBSEDYR), vand").skaldyr).toBe("yes");
+  });
+  it("mælkesyre og plantedrikke er ikke mælk", () => {
+    const v = f("vand, mandelmel, vegansk mælkesyre, E270");
+    expect(v.maelkeallergi).toBe("no");
+    expect(v.laktose).toBe("no");
+    expect(f("kokosmælk 60%, vand").maelkeallergi).toBe("no");
+    expect(f("MÆLK, mælkesyrekultur").maelkeallergi).toBe("yes");
+  });
+  it("lecithin: kilde-angivet solsikke er ikke soja, uspecificeret er spor", () => {
+    expect(f("emulgator (solsikke lecithin)").soja).toBe("no");
+    expect(f("emulgator (lecithin)").soja).toBe("traces");
+    expect(f("emulgator (sojalecithin)").soja).toBe("yes");
+  });
+  it("'ris mel' er ikke hvede, men mel alene er", () => {
+    expect(f("ris mel, ingefær").hvede).toBe("no");
+    expect(f("rismel, mel, salt").hvede).toBe("yes");
+  });
+  it("free from-opremsning negerer", () => {
+    const v = f("Rice base, Water. Free from dairy and gluten.");
+    expect(v.maelkeallergi).toBe("no");
+    expect(v.gluten).toBe("no");
+  });
+  it("tilsat laktase giver laktose-spor, ikke direkte", () => {
+    expect(f("MÆLK, laktaseenzym").laktose).toBe("traces");
+    expect(f("MÆLK, laktose").laktose).toBe("yes");
+  });
+  it("fransk, italiensk og polsk genkendes som ikke-dansk", () => {
+    expect(looksNonDanish("Lait de vache pasteurisé, sel, ferments")).toBe(true);
+    expect(looksNonDanish("Brocoli. Peut contenir CELERI")).toBe(true);
+    expect(looksNonDanish("Selleri, gulerod")).toBe(false);
+  });
+});
