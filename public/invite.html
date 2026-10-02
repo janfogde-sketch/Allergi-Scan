@@ -10,7 +10,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root{
       --ink:#15201A; --ink2:rgba(21,32,26,.78); --muted:rgba(21,32,26,.58);
-      --paper:#F6F8F3; --green:#178A50; --green-lt:rgba(23,138,80,.10); --green-mid:rgba(23,138,80,.18);
+      --paper:#F6F8F3; --green:#0F7D4F; --green-dark:#0C643F; --green-lt:rgba(15,125,79,.10); --green-mid:rgba(15,125,79,.18);
       --surface:#FFFFFF; --surface2:#F1F3EC; --border:rgba(21,32,26,.10); --border2:rgba(21,32,26,.16);
       --red:#C8402E; --f:'DM Sans',system-ui,-apple-system,sans-serif;
     }
@@ -23,32 +23,39 @@
     }
     .card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 20px; padding: 32px 28px;
+      border-radius: 20px; padding: 32px 24px 28px;
       max-width: 400px; width: 100%; text-align: center;
       box-shadow: 0 1px 0 rgba(255,255,255,.7) inset, 0 2px 8px -2px rgba(21,32,26,.10);
     }
-    .logo { display: flex; justify-content: center; margin-bottom: 24px; }
+    .logo { display: flex; justify-content: center; margin-bottom: 28px; }
     .logo img { height: 28px; width: auto; }
-    .icon { font-size: 48px; margin-bottom: 16px; }
-    h1 { font-size: 22px; font-weight: 900; color: var(--ink); letter-spacing: -.4px; margin-bottom: 8px; }
-    p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+    /* Ens SVG-stregikon (ingen emoji), samme på iOS og Android */
+    .icon {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: var(--green-lt); color: var(--green);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+    }
+    .icon svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .icon.red { background: rgba(200,64,46,.10); color: var(--red); }
+    h1 { font-size: 24px; font-weight: 800; color: var(--ink); letter-spacing: -.4px; line-height: 1.25; margin-bottom: 12px; }
+    p { font-size: 15px; color: var(--muted); line-height: 1.6; margin-bottom: 28px; }
     .btn {
-      display: block; width: 100%; padding: 15px;
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; min-height: 48px; padding: 12px 20px;
       background: var(--green); color: #fff;
-      border: none; border-radius: 12px;
-      font-size: 15px; font-weight: 800; cursor: pointer;
+      border: 1.5px solid var(--green); border-radius: 12px;
+      font-size: 15px; font-weight: 700; cursor: pointer;
       font-family: inherit; text-decoration: none;
-      margin-bottom: 10px;
+      margin-bottom: 12px; -webkit-tap-highlight-color: transparent;
     }
-    .btn:hover { background: #146e40; }
-    .btn-ghost {
-      background: var(--surface); color: var(--ink2);
-      border: 1.5px solid var(--border2); font-size: 13px;
-      font-weight: 700; padding: 13px;
-    }
-    .btn-ghost:hover { background: var(--surface2); }
+    .btn:hover { background: var(--green-dark); border-color: var(--green-dark); }
+    .btn:active { transform: scale(.97); }
+    .btn:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+    .btn-ghost { background: var(--surface); color: var(--green); border-color: var(--green); }
+    .btn-ghost:hover { background: var(--green-lt); border-color: var(--green); }
+    .expiry { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 12px 0 0; }
     .error { color: var(--red); font-size: 13px; margin-top: 12px; }
-    .success { color: var(--green); font-size: 14px; font-weight: 700; margin-top: 12px; }
     .spinner {
       width: 30px; height: 30px; border: 3px solid var(--border2);
       border-top-color: var(--green); border-radius: 50%;
@@ -72,6 +79,15 @@
     const spinner = document.getElementById("spinner");
     const content = document.getElementById("content");
 
+    // Stregikoner fra appens eget ikonbibliotek (SharedComponents.jsx), så siden ser ens ud på alle platforme.
+    const ICONS = {
+      family: '<path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>',
+      check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.8"/>',
+      clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+      alert: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/>',
+    };
+    const icon = (name, red) => `<div class="icon${red ? " red" : ""}" aria-hidden="true"><svg viewBox="0 0 24 24">${ICONS[name]}</svg></div>`;
+
     function show(html) {
       spinner.style.display = "none";
       content.style.display = "block";
@@ -81,7 +97,7 @@
     async function checkToken() {
       if (!token) {
         show(`
-          <div class="icon">❌</div>
+          ${icon("alert", true)}
           <h1>Ugyldigt link</h1>
           <p>Dette invitationslink er ikke gyldigt.</p>
           <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
@@ -107,7 +123,7 @@
 
         if (!data?.found) {
           show(`
-            <div class="icon">❌</div>
+            ${icon("alert", true)}
             <h1>Ugyldigt link</h1>
             <p>Dette invitationslink findes ikke.</p>
             <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
@@ -118,7 +134,7 @@
         const invite = data;
         if (invite.status === "accepted") {
           show(`
-            <div class="icon">✅</div>
+            ${icon("check")}
             <h1>Allerede accepteret</h1>
             <p>Dette invitationslink er allerede brugt.</p>
             <a href="https://eatsafe.dk" class="btn">Åbn EatSafe</a>
@@ -128,7 +144,7 @@
 
         if (invite.status !== "pending" || new Date(invite.expires_at) < new Date()) {
           show(`
-            <div class="icon">⏱</div>
+            ${icon("clock", true)}
             <h1>Linket er udløbet</h1>
             <p>Bed familiemedlemmet om at sende et nyt invitationslink.</p>
             <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
@@ -138,18 +154,16 @@
 
         // Gyldigt link — vis accept-flow
         show(`
-          <div class="icon">👨‍👩‍👧</div>
+          ${icon("family")}
           <h1>Du er inviteret!</h1>
-          <p>Et EatSafe-familiemedlem har inviteret dig til at dele allergiprofiler. Opret en konto for at acceptere.</p>
-          <a href="https://eatsafe.dk?invite=${token}" class="btn">Acceptér og opret konto</a>
-          <a href="https://eatsafe.dk?invite=${token}&login=1" class="btn btn-ghost">Jeg har allerede en konto</a>
-          <p style="font-size:12px; margin-top:16px; color:var(--muted)">
-            Invitationen udløber ${new Date(invite.expires_at).toLocaleDateString("da-DK")}
-          </p>
+          <p>Du er blevet inviteret til en familie i EatSafe. I kan dele allergiprofiler og gøre indkøb lettere sammen.</p>
+          <a href="https://eatsafe.dk?invite=${token}" class="btn">Opret konto</a>
+          <a href="https://eatsafe.dk?invite=${token}&login=1" class="btn btn-ghost">Log ind</a>
+          <p class="expiry">Invitationen udløber ${new Date(invite.expires_at).toLocaleDateString("da-DK")}</p>
         `);
       } catch {
         show(`
-          <div class="icon">⚠️</div>
+          ${icon("alert", true)}
           <h1>Noget gik galt</h1>
           <p>Tjek din internetforbindelse og prøv igen.</p>
           <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
