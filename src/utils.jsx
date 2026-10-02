@@ -66,7 +66,6 @@ export const buildScreenLabel = ({
     [SCREENS.VERIFYEMAIL]:  "Bekræft din e-mail",
     [SCREENS.RESETPASSWORD]: "Vælg ny adgangskode",
     [SCREENS.HOME]:         "Hjemskærm",
-    [SCREENS.SEARCH]:       "Søg produkter",
     [SCREENS.LIST]:         "Indkøbsliste",
     [SCREENS.PROFILE]:      "Profil",
     [SCREENS.FAMILY]:       "Familie",

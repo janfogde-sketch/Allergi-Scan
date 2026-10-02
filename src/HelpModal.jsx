@@ -19,11 +19,6 @@ const HELP_CONTENT = {
     { icon:"profile", title:"Portionsjustering", desc:"Åbn en opskrift og tryk + / − for at skalere ingredienser automatisk." },
     { icon:"cart", title:"Indkøbsliste", desc:"Tryk 'Tilføj til indkøbsliste' for at sende ingredienser direkte til din liste." },
   ]},
-  "search": { title:"Søg produkter", titleIcon:"search", tips:[
-    { icon:"profile", title:"Filtrér efter profil", desc:"Vælg hvilke profiler resultaterne skal tjekkes op imod, øverst på siden." },
-    { icon:"edit", title:"Allergener og kategori", desc:"Fold 'Allergener' ud for at tilføje ekstra allergener manuelt, eller indsnævr til én kategori — begge sidder lige over søgefeltet." },
-    { icon:"cart", title:"Tilføj til liste", desc:"Tryk '+ Liste' på et resultat for at sende det direkte til din indkøbsliste." },
-  ]},
   "list": { title:"Indkøbsliste", titleIcon:"cart", tips:[
     { icon:"list", title:"Flere lister", desc:"Tryk på listenavnet øverst for at skifte mellem lister eller oprette en ny." },
     { icon:"link", title:"Del listen", desc:"Tryk på listenavnet og derefter Del ud for en liste. Vælg: kun dig, hele familien eller bestemte personer. Du kan også sende et link til en, der ikke er i familien." },

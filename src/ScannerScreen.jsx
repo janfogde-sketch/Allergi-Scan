@@ -21,7 +21,6 @@ import { getGreeting } from "./utils.jsx";
 // forventer et øjeblikkeligt svar. NotFoundScreen/SubmittedScreen rammes langt sjældnere.
 const NotFoundScreen = React.lazy(() => import("./NotFoundScreen.jsx"));
 const SubmittedScreen = React.lazy(() => import("./SubmittedScreen.jsx"));
-const SearchScreen = React.lazy(() => import("./SearchScreen.jsx"));
 const ListScreen = React.lazy(() => import("./ListScreen.jsx"));
 const SuggestEditScreen = React.lazy(() => import("./SuggestEditScreen.jsx"));
 
@@ -234,10 +233,6 @@ function CamCtrlBtn({ icon, label, onClick, active, ariaLabel, ariaPressed }) {
 
 export default function ScannerScreen({
   scanResult, notFoundEan,
-  searchQuery, setSearchQuery,
-  searchResults, setSearchResults,
-  searchCategory, setSearchCategory,
-  searchHasMore, searchTotal, searchLoadingMore, loadMoreSearchResults,
   scanError,
   notFoundStep, setNotFoundStep,
   proposedName, setProposedName,
@@ -268,7 +263,6 @@ export default function ScannerScreen({
   editProductImage,
   editProductImageB64,
   scanFromGallery,
-  searchLoading,
   startCamera,
   stopCamera,
   toggleTorch,
@@ -865,22 +859,6 @@ export default function ScannerScreen({
             submitting={submitting} submitProduct={submitProduct}
             handleImageCapture={handleImageCapture} handleProductImageCapture={handleProductImageCapture}
             scanError={scanError}
-          />
-          </Suspense>
-        )}
-        {screen === SCREENS.SEARCH && (
-          <Suspense fallback={LazyFallback}>
-          <SearchScreen
-            activeIds={activeIds}
-            activeLevels={activeLevels}
-            searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-            searchResults={searchResults} setSearchResults={setSearchResults}
-            searchCategory={searchCategory} setSearchCategory={setSearchCategory}
-            searchLoading={searchLoading}
-            searchHasMore={searchHasMore} searchTotal={searchTotal}
-            searchLoadingMore={searchLoadingMore} loadMoreSearchResults={loadMoreSearchResults}
-            showSafeOnly={showSafeOnly} setShowSafeOnly={setShowSafeOnly}
-            lookupProduct={lookupProduct}
           />
           </Suspense>
         )}

@@ -61,7 +61,6 @@ import { useRecipes } from './useRecipes.js';
 import { useProduct, runLookupProduct, buildScanResultFromProductData } from './useProduct.js';
 import { PREVIEW_MOCK_PRODUCTS } from './previewMockData.js';
 import { useMadpas } from './useMadpas.js';
-import { useSearch } from './useSearch.js';
 import { useAlternatives } from './useAlternatives.js';
 import { AuthProvider } from './AuthContext.jsx';
 import { ProfileProvider } from './ProfileContext.jsx';
@@ -666,7 +665,7 @@ export default function EatSafe() {
   // EAN-værdi/-fejltekst.
   const closeCameraFully = useCallback(() => { stopCamera(); setShowManualEan(false); }, [stopCamera]);
 
-  const SCANNER_SCREENS = [SCREENS.HOME, SCREENS.RESULT, SCREENS.NOTFOUND, SCREENS.SUBMITTED, SCREENS.SEARCH, SCREENS.LIST, SCREENS.SUGGEST_EDIT];
+  const SCANNER_SCREENS = [SCREENS.HOME, SCREENS.RESULT, SCREENS.NOTFOUND, SCREENS.SUBMITTED, SCREENS.LIST, SCREENS.SUGGEST_EDIT];
   useEffect(() => {
     if (!cameraActive) return;
     if (!SCANNER_SCREENS.includes(screen)) closeCameraFully();
@@ -680,11 +679,6 @@ export default function EatSafe() {
 
   // Ref der altid peger på den seneste lookupProduct (undgår TDZ-cirkulær afhænighed)
   const lookupProductRef = useRef(null);
-
-// ── SØGNING → useSearch hook ────────────────────────────────────────────────
-  const { searchQuery, setSearchQuery, searchCategory, setSearchCategory,
-          searchResults, setSearchResults, searchLoading,
-          searchHasMore, searchTotal, searchLoadingMore, loadMoreSearchResults } = useSearch({ accessToken });
 
   const { alternatives, altLoading, loadAlternatives, clearAlternatives } = useAlternatives({ accessToken, activeIds, activeLevels });
 
@@ -1127,15 +1121,10 @@ export default function EatSafe() {
 
         {/* ══ HJEM ══ */}
         {/* ══ SCANNER SCREENS ══ */}
-        {(screen === SCREENS.HOME || screen === SCREENS.RESULT || screen === SCREENS.NOTFOUND || screen === SCREENS.SUBMITTED || screen === SCREENS.SEARCH || screen === SCREENS.LIST || screen === SCREENS.SUGGEST_EDIT) && (
+        {(screen === SCREENS.HOME || screen === SCREENS.RESULT || screen === SCREENS.NOTFOUND || screen === SCREENS.SUBMITTED || screen === SCREENS.LIST || screen === SCREENS.SUGGEST_EDIT) && (
           <ErrorBoundary screen="Scanner">
           <ScannerScreen
             scanResult={scanResult} notFoundEan={notFoundEan}
-            searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-            searchResults={searchResults} setSearchResults={setSearchResults}
-            searchCategory={searchCategory} setSearchCategory={setSearchCategory}
-            searchHasMore={searchHasMore} searchTotal={searchTotal}
-            searchLoadingMore={searchLoadingMore} loadMoreSearchResults={loadMoreSearchResults}
             scanError={scanError}
             notFoundStep={notFoundStep} setNotFoundStep={setNotFoundStep}
             proposedName={proposedName} setProposedName={setProposedName}
@@ -1164,7 +1153,6 @@ export default function EatSafe() {
             editProductImage={editProductImage}
             editProductImageB64={editProductImageB64}
             scanFromGallery={scanFromGallery}
-            searchLoading={searchLoading}
             startCamera={startCamera}
             stopCamera={stopCamera}
             toggleTorch={toggleTorch}
