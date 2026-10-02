@@ -92,7 +92,7 @@ export default function ListScreen({
         }
       } catch (e) { if (e.name !== "AbortError") setItemResults([]); }
       finally { if (!controller.signal.aborted) setItemSearching(false); }
-    }, 300);
+    }, 150);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [newItemName, accessToken]);
 
