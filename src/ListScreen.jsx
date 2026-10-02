@@ -400,11 +400,10 @@ export default function ListScreen({
       {/* ── Aktiv liste ──
           Én sektion: label, brugerdefineret listenavn (ellipsis, aldrig afhængig af navnet) og en sekundær delt-status. Tryk åbner
           listevælgeren (bottom-sheet) til at skifte, oprette, tilslutte og slette lister, så administration ikke fylder på siden. */}
-      <div style={{ display:"flex", gap:8, marginBottom:12 }}>
+      <div style={{ display:"flex", alignItems:"stretch", marginBottom:12, minHeight:56, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, boxShadow:"var(--sh2)", overflow:"hidden" }}>
         <button type="button" aria-haspopup="dialog" aria-label={`Aktiv liste: ${activeList?.name || "ingen valgt"}. Skift eller administrér lister`}
           onClick={() => setShowListPicker(true)}
-          style={{ flex:1, minWidth:0, minHeight:56, display:"flex", alignItems:"center", gap:10, padding:"8px 14px", textAlign:"left", fontFamily:"var(--f)", cursor:"pointer",
-            background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, boxShadow:"var(--sh2)" }}>
+          style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", gap:10, padding:"8px 14px", textAlign:"left", fontFamily:"var(--f)", cursor:"pointer", background:"none", border:"none" }}>
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".8px" }}>Aktiv liste</div>
             <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginTop:1 }}>{activeList?.name || "Vælg liste"}</div>
@@ -412,6 +411,13 @@ export default function ListScreen({
           </div>
           <Icon name="chevronDown" size={18} color="var(--ink2)" />
         </button>
+        {activeList && (
+          <button type="button" aria-label={`Del listen ${activeList.name}`} onClick={() => setShareListId(activeList.id)}
+            style={{ flexShrink:0, minWidth:56, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2, padding:"0 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--ink2)", cursor:"pointer", background:"none", border:"none", borderLeft:"1px solid var(--border)" }}>
+            <Icon name="share" size={18} color="var(--ink2)" />
+            Del
+          </button>
+        )}
       </div>
 
       {showListPicker && (
