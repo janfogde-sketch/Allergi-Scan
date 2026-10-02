@@ -23,7 +23,7 @@
 
 import { isOfficialRecallUrl } from "./recallParser.js";
 
-export const DISCLAIMER = "EatSafe er vejledende. Tjek altid emballagen.";
+export const DISCLAIMER = "EatSafe er vejledende. Kontrollér altid produktets aktuelle ingrediens- og allergenoplysninger.";
 
 /** Handlingstyper appen må bygge en rute ud fra. Alt andet afvises. */
 export const ALLOWED_ACTIONS = ["open_product", "scan", "open_family", "open_ticket", "open_list"];
@@ -74,7 +74,7 @@ const LINK = (label, url) => ({ t: "link", label, url });
 const PRODUCT_VARS = { productName: { max: 34, pushFallback: "Produktet", fallback: "produktet" } };
 const TICKET_VARS = {
   ticketExcerpt: { fallback: "Din tilbagemelding i EatSafe" },
-  message: { fallback: "Der er ikke tilføjet en uddybende besked.", multiline: true },
+  message: { fallback: "", multiline: true }, // tom besked = afsnittet udelades (se renderBlock)
 };
 
 const TICKET_ACTION = { type: "open_ticket", label: "Se din feedback", params: ["ticketId"] };
@@ -177,26 +177,24 @@ export const DEFINITIONS = {
   },
 
   "N5:default": {
-    type: "N5", variant: "default", category: "family", version: 1, ttl: 86400,
-    push: { title: "Din invitation er accepteret", body: "{{memberName}} har accepteret din invitation. I er nu forbundet i EatSafe." },
-    mail: { subject: "Din familieinvitation er accepteret", preheader: "I er nu forbundet og kan bruge familieprofiler og fælles indkøbslister." },
+    type: "N5", variant: "default", category: "family", version: 2, ttl: 86400,
+    push: { title: "Din invitation er accepteret", body: "{{memberName}} er nu tilføjet til din Familie i EatSafe." },
+    mail: { subject: "Din familieinvitation er accepteret", preheader: "Se, hvordan I kan bruge EatSafe sammen i hverdagen." },
     vars: { memberName: { max: 28, pushFallback: "Et familiemedlem", fallback: "Et familiemedlem" } }, required: [],
     blocks: [
       H("{{memberName}} har accepteret din invitation"),
-      P("I er nu forbundet som familie i EatSafe."),
-      P("Det gør det lettere at bruge EatSafe sammen og få overblik over familiens forskellige allergier og intolerancer."),
+      P("{{memberName}} er nu tilføjet til din Familie i EatSafe."),
       PANEL("Brug EatSafe sammen", [
-        P("Når du scanner et produkt, kan du vælge, hvilke familieprofiler produktet skal tjekkes for. Så kan du se vurderingen for hver af de valgte profiler."),
-        P("I kan også bruge fælles indkøbslister, så I har overblik over, hvad der skal købes — og kan tilføje varer til listen fra hver jeres telefon."),
+        P("Når du scanner et produkt, kan du vælge, hvilke personer i din Familie varen skal tjekkes for."),
+        P("I kan også dele indkøbslister med hinanden. Du vælger selv, hvilke lister der deles og med hvem."),
       ]),
-      P("Du finder overblikket over din familie under Familie i appen."),
       DISC,
     ],
     action: { type: "open_family", label: "Se familien", params: [] }, entity: { type: "invitation", idFrom: "inviteId" },
   },
 
   "N6:in_progress": {
-    type: "N6", variant: "in_progress", category: "feedback", version: 1, ttl: 86400,
+    type: "N6", variant: "in_progress", category: "feedback", version: 2, ttl: 86400,
     push: { title: "Vi arbejder på din feedback", body: "Vores team er gået i gang med at undersøge din tilbagemelding." },
     mail: { subject: "Vi arbejder på din feedback", preheader: "Læs den nye status og teamets tilbagemelding på din feedback." },
     vars: TICKET_VARS, required: [],
@@ -206,13 +204,12 @@ export const DEFINITIONS = {
       TICKET_QUOTE,
       { t: "fact", label: "Status", value: STATUS_LABELS.in_progress },
       P("{{message}}", { multiline: true }),
-      P("Tak, fordi du hjælper os med at forbedre EatSafe. Har du flere oplysninger, kan du sende dem via feedbackknappen i appen."),
     ],
     action: TICKET_ACTION, entity: TICKET_ENTITY,
   },
 
   "N6:resolved": {
-    type: "N6", variant: "resolved", category: "feedback", version: 1, ttl: 86400,
+    type: "N6", variant: "resolved", category: "feedback", version: 2, ttl: 86400,
     push: { title: "Din feedback er markeret som løst", body: "Vores team har behandlet din tilbagemelding. Prøv gerne funktionen igen." },
     mail: { subject: "Din feedback er markeret som løst", preheader: "Læs den nye status og teamets tilbagemelding på din feedback." },
     vars: TICKET_VARS, required: [],
@@ -222,13 +219,12 @@ export const DEFINITIONS = {
       TICKET_QUOTE,
       { t: "fact", label: "Status", value: STATUS_LABELS.resolved },
       P("{{message}}", { multiline: true }),
-      P("Prøv gerne funktionen igen. Hvis problemet stadig er der, kan du sende os en ny besked via feedbackknappen i appen. Beskriv gerne, hvad der sker, og henvis til din tidligere tilbagemelding."),
     ],
     action: TICKET_ACTION, entity: TICKET_ENTITY,
   },
 
   "N6:reopened": {
-    type: "N6", variant: "reopened", category: "feedback", version: 1, ttl: 86400,
+    type: "N6", variant: "reopened", category: "feedback", version: 2, ttl: 86400,
     push: { title: "Din feedback er åbnet igen", body: "Vores team ser nærmere på din tilbagemelding igen." },
     mail: { subject: "Din feedback er åbnet igen", preheader: "Læs den nye status og teamets tilbagemelding på din feedback." },
     vars: TICKET_VARS, required: [],
@@ -238,7 +234,6 @@ export const DEFINITIONS = {
       TICKET_QUOTE,
       { t: "fact", label: "Status", value: STATUS_LABELS.open },
       P("{{message}}", { multiline: true }),
-      P("Har du nye oplysninger, der kan hjælpe os, kan du sende dem via feedbackknappen i appen."),
     ],
     action: TICKET_ACTION, entity: TICKET_ENTITY,
   },
@@ -279,13 +274,13 @@ export const DEFINITIONS = {
 
   // ── P1: allergenoplysninger er ændret for et produkt, modtageren bruger (kun stigende risiko) ──
   "P1:default": {
-    type: "P1", variant: "default", category: "product_changes", version: 1, ttl: 86400,
+    type: "P1", variant: "default", category: "product_changes", version: 2, ttl: 86400,
     push: { title: "Allergenoplysninger er ændret", body: "Oplysninger om {{productName}} er ændret. Tjek emballagen." },
     mail: { subject: "Allergenoplysninger er ændret for et af dine produkter", preheader: "Se ændringen, og tjek emballagen, før du bruger produktet." },
     vars: { ...PRODUCT_VARS, changeSummary: { fallback: "Allergenoplysningerne er ændret." } }, required: [],
     blocks: [
       H("Nye oplysninger om dit produkt"),
-      P("Allergenoplysningerne for **{{productName}}** er blevet opdateret i EatSafe. Ændringen vedrører allergener i din profil eller en af dine familieprofiler."),
+      P("Allergenoplysningerne for **{{productName}}** er blevet opdateret i EatSafe. Ændringen vedrører allergener i din profil eller hos en person i din Familie."),
       PANEL("Det er ændret", [P("{{changeSummary}}")]),
       P("Ændringen kan skyldes nye eller rettede oplysninger. Den betyder ikke nødvendigvis, at producenten har ændret selve produktet."),
       P("Scan produktet igen eller søg efter det i appen for at se den opdaterede vurdering. Tjek emballagen, før du bruger produktet."),
@@ -406,8 +401,11 @@ function renderBlock(block, values) {
   switch (block.t) {
     case "heading":
       return { type: "heading", text: fillTemplate(block.text, values) };
-    case "p":
-      return { type: "paragraph", parts: toParts(fillTemplate(block.text, values)), ...(block.multiline ? { multiline: true } : {}) };
+    case "p": {
+      const text = fillTemplate(block.text, values);
+      if (!text.trim()) return null; // tomt afsnit (fx ingen kommentar fra teamet) udelades
+      return { type: "paragraph", parts: toParts(text), ...(block.multiline ? { multiline: true } : {}) };
+    }
     case "panel":
       return { type: "panel", ...(block.title ? { title: block.title } : {}), blocks: block.blocks.map((b) => renderBlock(b, values)).filter(Boolean) };
     case "quote":

@@ -58,9 +58,9 @@ export default function NotificationScreen({ notificationId, markRead, onDelete,
   return (
     <div className="screen fade-in">
       <div style={{ display:"flex", alignItems:"center", gap:10, margin:"4px 0 14px" }}>
-        {/* Kryds i stedet for tilbagepil (1. okt. 2026): lukker beskeden og lander i oversigten. */}
-        <button onClick={onBack} aria-label="Luk besked" className="legal-topbar-back" style={{ position:"static" }}>
-          <span className="legal-topbar-back-circle"><Icon name="x" size={17} color="var(--ink)" /></span>
+        {/* Tilbagepil (som på øvrige undersider); kryds bruges kun i modaler. */}
+        <button onClick={onBack} aria-label="Tilbage" className="legal-topbar-back" style={{ position:"static" }}>
+          <span className="legal-topbar-back-circle"><Icon name="chevronLeft" size={17} color="var(--ink)" /></span>
         </button>
         <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Besked</div>
       </div>

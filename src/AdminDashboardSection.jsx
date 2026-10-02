@@ -18,11 +18,10 @@ function Kpi({ n, icon, label, tone = "neutral" }) {
 }
 
 export default function AdminDashboardSection({
-  adminStats, setAdminSection, setSubmissionFilter, loadSubmissions, loadTickets, loadAdminUsers,
+  adminStats, setAdminSection, setSubmissionFilter, loadSubmissions, loadTickets,
 }) {
   const goSubmissions = (filter = "pending") => { setAdminSection("submissions"); setSubmissionFilter(filter); loadSubmissions(filter); };
   const goTickets = () => { setAdminSection("tickets"); loadTickets({ includeDone: true }); };
-  const goUsers = () => { setAdminSection("users"); loadAdminUsers(); };
   const pending = Number(adminStats?.pending_submissions) || 0;
   const open = Number(adminStats?.open_tickets) || 0;
 
@@ -37,7 +36,7 @@ export default function AdminDashboardSection({
       </div>
 
       <div style={LABEL}>Database & opgaver</div>
-      <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, overflow:"hidden", marginBottom:16 }}>
+      <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, overflow:"hidden" }}>
         {[
           { icon:"package", label:"Produkter i databasen",     n:adminStats?.total_products, tone:"neutral" },
           { icon:"family",  label:"Familiemedlemmer oprettet", n:adminStats?.total_families, tone:"neutral" },
@@ -51,22 +50,6 @@ export default function AdminDashboardSection({
             <span style={{ minWidth:36, textAlign:"right", fontSize:15, fontWeight:800, color: TONE[tone].color, fontVariantNumeric:"tabular-nums" }}>{n ?? "—"}</span>
             {action ? <Chevron /> : <span style={{ width:14, flexShrink:0 }} />}
           </div>
-        ))}
-      </div>
-
-      {/* Kun genveje, der giver værdi; sjældnere værktøjer ligger under Indhold og Drift */}
-      <div style={LABEL}>Genveje</div>
-      <div style={{ display:"flex", gap:8 }}>
-        {[
-          { icon:"package", label:"Godkend indsendelser", fn:() => goSubmissions("pending") },
-          { icon:"bug",     label:"Gennemse tickets",     fn:goTickets },
-          { icon:"family",  label:"Administrér brugere",  fn:goUsers },
-        ].map(({ icon, label, fn }) => (
-          <button key={label} type="button" onClick={fn} className="admin-action-card"
-            style={{ flex:1, minHeight:56, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:4, padding:"6px 4px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:11.5, fontWeight:700, color:"var(--ink)", cursor:"pointer", lineHeight:1.2, textAlign:"center" }}>
-            <Icon name={icon} size={16} color="var(--ink2)" />
-            {label}
-          </button>
         ))}
       </div>
     </div>

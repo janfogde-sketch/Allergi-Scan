@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { showToast } from "../../SharedComponents.jsx";
 import { ticketReporter, ticketDevice } from "../../ticketReporter.js";
 
@@ -71,6 +71,16 @@ const needsDone = (tab) => tab === "resolved" || tab === "all";
 const matchesTab = (t, tab) => tab === "all" || (tab === "active" ? t.status === "open" || t.status === "in_progress" : t.status === tab);
 
 export default function TicketsSection({ adminTickets, ticketsLoading, adminTicketFilter, setAdminTicketFilter, ticketsIncludeDone, loadTickets, openTicket, setOpenTicket, updateTicketStatus }) {
+  // "Løst" kræver en kort afsluttende kommentar, som vises i beskeden til brugeren.
+  const [closing, setClosing] = useState(false);
+  const [note, setNote] = useState("");
+  const openModal = (t) => { setClosing(false); setNote(""); setOpenTicket(t); };
+  const closeModal = () => { setClosing(false); setNote(""); setOpenTicket(null); };
+  const pickStatus = (t, status) => {
+    if (status === t.status) return;
+    if (status === "resolved") { setNote(""); setClosing(true); setOpenTicket(t); return; }
+    updateTicketStatus(t.id, status);
+  };
   const filtered = adminTickets.filter(t => matchesTab(t, adminTicketFilter));
   const openCount = adminTickets.filter(t => t.status === "open").length;
 
@@ -102,14 +112,14 @@ export default function TicketsSection({ adminTickets, ticketsLoading, adminTick
             <thead><tr><th>Type</th><th>Beskrivelse</th><th>Bruger</th><th>Skærm</th><th>Dato</th><th>Status</th><th></th></tr></thead>
             <tbody>
               {filtered.map(t => (
-                <tr key={t.id} style={{ cursor: "pointer" }} onClick={() => setOpenTicket(t)}>
+                <tr key={t.id} style={{ cursor: "pointer" }} onClick={() => openModal(t)}>
                   <td><span className="admin-pill admin-pill-neutral">{TYPE_LABELS[t.type] || t.type}</span></td>
                   <td style={{ maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.description}</td>
                   <td>{ticketReporter(t)}</td>
                   <td>{t.context?.screen_label || t.context?.screen || "–"}</td>
                   <td>{new Date(t.created_at).toLocaleDateString("da-DK")}</td>
                   <td onClick={e => e.stopPropagation()}>
-                    <select value={t.status} onChange={e => updateTicketStatus(t.id, e.target.value)}
+                    <select value={t.status} onChange={e => pickStatus(t, e.target.value)}
                       className={`admin-pill ${STATUS_PILL[t.status] || "admin-pill-neutral"}`}
                       style={{ fontFamily: "var(--f)", border: "none", cursor: "pointer" }}>
                       {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -126,7 +136,7 @@ export default function TicketsSection({ adminTickets, ticketsLoading, adminTick
       </div>
 
       {openTicket && (
-        <div className="admin-modal-overlay" onClick={() => setOpenTicket(null)}>
+        <div className="admin-modal-overlay" onClick={closeModal}>
           <div className="admin-modal" onClick={e => e.stopPropagation()}>
             <div className="admin-modal-header">
               <div>
@@ -135,16 +145,26 @@ export default function TicketsSection({ adminTickets, ticketsLoading, adminTick
                   {ticketReporter(openTicket)}{openTicket.context?.user_email ? ` (${openTicket.context.user_email})` : ""} · {new Date(openTicket.created_at).toLocaleString("da-DK")}
                 </div>
               </div>
-              <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => setOpenTicket(null)}>Luk</button>
+              <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={closeModal}>Luk</button>
             </div>
             <div style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 16, whiteSpace: "pre-wrap" }}>{openTicket.description}</div>
             <div style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 16 }}>
               Skærm: {openTicket.context?.screen_label || openTicket.context?.screen || "–"}
             </div>
+            {closing && (
+              <div style={{ marginBottom: 16 }}>
+                <label htmlFor="ticket-closing-note" style={{ display: "block", fontSize: 11.5, fontWeight: 700, color: "var(--muted)", marginBottom: 6 }}>Afsluttende kommentar til brugeren (vises i beskeden)</label>
+                <textarea id="ticket-closing-note" value={note} onChange={e => setNote(e.target.value)} rows={3} maxLength={500}
+                  placeholder="Fx: Problemet med den grønne prik i menuen er rettet. Ændringen er med i den nyeste version."
+                  style={{ width: "100%", boxSizing: "border-box", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px", fontFamily: "var(--f)", fontSize: 13, resize: "vertical" }} />
+                <button className="admin-btn admin-btn-primary admin-btn-sm" style={{ marginTop: 8 }} disabled={!note.trim()}
+                  onClick={() => updateTicketStatus(openTicket.id, "resolved", note)}>Markér som løst</button>
+              </div>
+            )}
             <div style={{ display: "flex", gap: 6 }}>
               {["open", "in_progress", "resolved"].map(s => (
                 <button key={s} className={`admin-btn admin-btn-sm ${openTicket.status === s ? "admin-btn-primary" : "admin-btn-ghost"}`}
-                  onClick={() => updateTicketStatus(openTicket.id, s)}>{STATUS_LABELS[s]}</button>
+                  onClick={() => pickStatus(openTicket, s)}>{STATUS_LABELS[s]}</button>
               ))}
               <button className="admin-btn admin-btn-ghost admin-btn-sm" style={{ marginLeft: "auto" }}
                 onClick={() => copyTicketPrompt(openTicket)}>
