@@ -463,6 +463,16 @@ describe("følsomhed pr. allergen (spor)", () => {
     const onlyIgnored = categorizeProductFindings({ matchedDanger: [], matchedWarning: [], ignoredTraces: ["soja"], customAllergenMatches: [], matchedENumbers: [], dietResults: [] });
     expect(computeTopStatus({ hasSufficientData: true, ...onlyIgnored }).level).toBe("safe");
   });
+
+  it("for lidt data giver 'Kan ikke vurderes' (aldrig et positivt resultat), men et fund vinder stadig", async () => {
+    const { categorizeProductFindings, computeTopStatus } = await import("./helpers.js");
+    const none = categorizeProductFindings({ matchedDanger: [], matchedWarning: [], ignoredTraces: [], customAllergenMatches: [], matchedENumbers: [], dietResults: [] });
+    const top = computeTopStatus({ hasSufficientData: false, ...none });
+    expect(top.level).toBe("unknown");
+    expect(top.headline).toBe("Kan ikke vurderes");
+    const found = categorizeProductFindings({ matchedDanger: ["maelkeallergi"], matchedWarning: [], ignoredTraces: [], customAllergenMatches: [], matchedENumbers: [], dietResults: [] });
+    expect(computeTopStatus({ hasSufficientData: false, ...found }).level).toBe("danger");
+  });
 });
 
 describe("Cøliaki som eget valg", () => {

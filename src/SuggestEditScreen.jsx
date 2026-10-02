@@ -183,37 +183,27 @@ export default function SuggestEditScreen({
         </div>
       )}
 
-      {/* ── TRIN 2: Guide til foto ── */}
+      {/* ── TRIN 2: Guide til foto ── (kompakt: kort intro, kameraknappen øverst, korte tips nederst) */}
       {editStep === "guide" && (
         <div className="fade-in">
-          <div style={{ background:"var(--surface2)", borderRadius:16, padding:"20px", marginBottom:16, textAlign:"center", border:"1px solid var(--border)" }}>
-            <div style={{ display:"flex", justifyContent:"center", marginBottom:10 }}>
-              <Icon name={editType === "ingredients" ? "list" : editType === "nutrition" ? "package" : "camera"} size={40} color="var(--ink2)" />
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
+            <div style={{ flexShrink:0, display:"flex" }}>
+              <Icon name={editType === "ingredients" ? "list" : editType === "nutrition" ? "package" : "camera"} size={28} color="var(--ink2)" />
             </div>
-            <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>
-              {editType === "ingredients" ? "Fotografér ingredienslisten"
-               : editType === "nutrition" ? "Fotografér næringstabellen"
-               : "Fotografér produktets forside"}
-            </div>
-            <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.7 }}>
-              {editType === "ingredients"
-                ? "Vend pakken om og find listen der starter med 'Ingredienser:'. Hold telefonen stille og sørg for god belysning."
-                : editType === "nutrition"
-                ? "Find tabellen med energi, fedt, protein osv. Hold telefonen parallelt med pakken for skarpest billede."
-                : "Hold produktet mod en lys baggrund. Sørg for at stregkoden og produktnavnet er synlige."}
-            </div>
-          </div>
-
-          <div style={{ background:"var(--paper2)", borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:8 }}><Icon name="bulb" size={13} color="var(--ink)" /> Tips til et godt billede</div>
-            {["Hold telefonen vandret og i armslængde", "Sørg for god belysning — undgå skygger", "Hold billedet skarpt — vent til kameraet fokuserer"].map((tip, i) => (
-              <div key={i} style={{ display:"flex", gap:8, alignItems:"center", marginBottom: i < 2 ? 6 : 0 }}>
-                <div style={{ width:18, height:18, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
-                </div>
-                <div style={UI.ufs12_cmuted2}>{tip}</div>
+            <div style={S.flexMin}>
+              <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)" }}>
+                {editType === "ingredients" ? "Fotografér ingredienslisten"
+                 : editType === "nutrition" ? "Fotografér næringstabellen"
+                 : "Fotografér produktets forside"}
               </div>
-            ))}
+              <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5, marginTop:2 }}>
+                {editType === "ingredients"
+                  ? "Find listen, der starter med 'Ingredienser:'."
+                  : editType === "nutrition"
+                  ? "Find tabellen med energi, fedt og protein."
+                  : "Sørg for, at stregkoden og navnet er synlige."}
+              </div>
+            </div>
           </div>
 
           <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10, width:"100%", padding:"16px", borderRadius:14, cursor:"pointer", background:"var(--green)", border:"none", color:"var(--ink)", fontSize:16, fontWeight:800, boxShadow:"0 4px 16px rgba(34,197,94,.3)", marginBottom:10 }}>
@@ -228,9 +218,18 @@ export default function SuggestEditScreen({
             <Icon name="image" size={15} color="var(--ink2)" /> Vælg billede fra galleri
             <input type="file" accept="image/*" style={S.none} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
           </label>
-          <button className="btn btn-ghost btn-full btn-sm" onClick={() => setEditStep("review")}>
-            Skriv manuelt i stedet
-          </button>
+          {editType !== "image" && (
+            <button className="btn btn-ghost btn-full btn-sm" onClick={() => setEditStep("review")}>
+              Skriv manuelt i stedet
+            </button>
+          )}
+
+          <div style={{ display:"flex", alignItems:"center", flexWrap:"wrap", gap:"4px 14px", marginTop:12, fontSize:11.5, color:"var(--muted2)" }}>
+            <span style={{ display:"flex", alignItems:"center", gap:5, fontWeight:700, color:"var(--ink)" }}><Icon name="bulb" size={12} color="var(--ink)" /> Tips</span>
+            {["God belysning", "Undgå skygger", "Hold kameraet stabilt"].map(tip => (
+              <span key={tip} style={{ display:"flex", alignItems:"center", gap:4 }}><Icon name="check" size={10} color="var(--green)" /> {tip}</span>
+            ))}
+          </div>
         </div>
       )}
 
