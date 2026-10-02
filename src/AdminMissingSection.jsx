@@ -2,6 +2,7 @@
 import React from "react";
 import { Loader, Icon } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
+import { AdminEmpty } from "./adminUi.jsx";
 
 export default function AdminMissingSection({
   missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
@@ -68,7 +69,7 @@ export default function AdminMissingSection({
       {missingEansLoading ? (
         <Loader text="Indlæser…" />
       ) : missingEans.length === 0 ? (
-        <div style={{ textAlign:"center", padding:"40px 0", color:"var(--muted)" }}>Ingen manglende EAN'er endnu</div>
+        <AdminEmpty icon="info" title="Ingen manglende EAN'er" text="Alle efterspurgte stregkoder er håndteret lige nu." />
       ) : (
         <div style={UI.colGap8}>
           {missingEans.map((row, i) => (

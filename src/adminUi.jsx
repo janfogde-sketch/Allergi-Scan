@@ -47,7 +47,7 @@ export function Segmented({ options, value, onChange, label }) {
         return (
           <button key={o.value} role="tab" aria-selected={active} type="button" onClick={() => onChange(o.value)}
             style={{ flex:1, minHeight:34, padding:"0 4px", display:"flex", alignItems:"center", justifyContent:"center", gap:5, border:"none", borderRadius:8, cursor:"pointer", fontFamily:"var(--f)", fontSize:12, fontWeight:700,
-              background: active ? "var(--surface)" : "transparent", color: active ? "var(--ink)" : "var(--muted2)", boxShadow: active ? "var(--sh2)" : "none" }}>
+              background: active ? "var(--surface)" : "transparent", color: active ? "var(--ink)" : "var(--ink2)", boxShadow: active ? "var(--sh2)" : "none" }}>
             {o.label}{o.count != null && <span style={{ fontSize:11, fontWeight:600, color: active ? "var(--muted2)" : "var(--muted)" }}>{o.count}</span>}
           </button>
         );
@@ -59,3 +59,20 @@ export function Segmented({ options, value, onChange, label }) {
 // Fælles række-stil til lister (kompakt, kant i stedet for tung skygge).
 export const ROW = { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"10px 12px" };
 export const LABEL = { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".8px", marginBottom:6 };
+
+// Sekundær handling: tekniske oplysninger (datakilde, jobnavn, UTC-tid, motor) samles her og fylder intet i hoved-UI'et.
+export function TechDetails({ rows }) {
+  return (
+    <details style={{ marginTop:10 }}>
+      <summary style={{ cursor:"pointer", fontSize:12, fontWeight:700, color:"var(--muted2)", minHeight:32, display:"flex", alignItems:"center", listStyle:"none" }}>Vis tekniske detaljer</summary>
+      <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 12px", marginTop:4 }}>
+        {rows.map(([k, v]) => (
+          <div key={k} style={{ display:"flex", justifyContent:"space-between", gap:12, fontSize:11.5, padding:"3px 0" }}>
+            <span style={{ color:"var(--muted2)" }}>{k}</span>
+            <span style={{ color:"var(--ink2)", textAlign:"right", fontFamily:"monospace" }}>{v}</span>
+          </div>
+        ))}
+      </div>
+    </details>
+  );
+}

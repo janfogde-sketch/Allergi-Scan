@@ -5,7 +5,7 @@ import { Loader, Icon, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 import { Chevron, StatusChip, AdminEmpty, Segmented, ROW } from "./adminUi.jsx";
 import { ALL_ALLERGEN_WORDS } from "./allergenKeywords.js";
-import { normalizeENumber, addENumberToText } from "./helpers.js";
+import { normalizeENumber, addENumberToText, normalizeProductName } from "./helpers.js";
 
 // Fremhæv allergener og E-numre i ingredienstekst
 const E_NUMBER_RE = /\b(E\d{3,4}[a-z]?)\b/gi;
@@ -95,7 +95,6 @@ export default function AdminSubmissionsSection({
         {submissions.map(s => {
           const flags = s.ai_parsed_data || {};
           const dangerAllergens = PRODUCT_ALLERGENS.filter(a => flags[a.id]==="yes" || flags[a.id]===true);
-          const daysSince = Math.floor((Date.now() - new Date(s.created_at).getTime()) / 86400000);
           const isEdit = s.type === "edit";
           return (
             <div key={s.id} onClick={() => openSubmissionForReview(s)} className="admin-list-row" role="button" style={{ ...ROW, display:"flex", alignItems:"center", gap:10 }}>
@@ -104,11 +103,11 @@ export default function AdminSubmissionsSection({
               </div>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                  <div style={{ fontSize:13.5, fontWeight:800, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</div>
+                  <div style={{ fontSize:13.5, fontWeight:800, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{normalizeProductName(s.ai_parsed_data?.name || s.product_name) || "Ukendt produkt"}</div>
                   {isEdit && <StatusChip tone="amber">Rettelse</StatusChip>}
                 </div>
                 <div style={{ fontSize:11, color:"var(--muted2)", marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                  EAN {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`} · #{s.id.slice(0, 8)}
+                  EAN {s.ean} · {new Date(s.created_at).toLocaleString("da-DK", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}
                 </div>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginTop:5 }}>
                   {dangerAllergens.slice(0,3).map(a => (
@@ -148,7 +147,7 @@ export function AdminSubmissionReview({
     setNewENumber("");
   };
   return (
-    <div className="screen fade-in" style={UI.pb120}>
+    <div className="screen fade-in" style={{ paddingBottom:"calc(120px + env(safe-area-inset-bottom))" }}>
 
       {/* Header */}
       <div style={UI.avatarRow}>

@@ -173,19 +173,19 @@ export default function AdminScreen() {
 
         {/* ══ ADMIN ══ */}
         {screen === SCREENS.ADMIN && !openSubmission && !openTicket && (
-          <div className="screen fade-in" style={UI.pb120}>
+          <div className="screen fade-in" style={{ paddingBottom:"calc(120px + env(safe-area-inset-bottom))" }}>
 
-            {/* Kompakt header: tilbage, titel og refresh som ikon-knap */}
-            <div style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 0 10px" }}>
+            {/* Kompakt header: tilbage, titel og en lille refresh-ikonknap på samme linje */}
+            <div style={{ display:"flex", alignItems:"center", gap:6, padding:"0 0 4px", marginTop:-6 }}>
               <button onClick={() => setScreen(SCREENS.PROFILE)} aria-label="Tilbage"
-                style={{ width:40, height:40, marginLeft:-8, display:"flex", alignItems:"center", justifyContent:"center", background:"none", border:"none", cursor:"pointer" }}>
+                style={{ width:36, height:36, marginLeft:-8, display:"flex", alignItems:"center", justifyContent:"center", background:"none", border:"none", cursor:"pointer" }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2.25"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
               </button>
-              <div style={{ flex:1, fontSize:17, fontWeight:800, color:"var(--ink)", display:"flex", alignItems:"center", gap:8 }}><Icon name="shield" size={16} color="var(--ink)" /> Admin</div>
+              <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)", display:"flex", alignItems:"center", gap:8 }}><Icon name="shield" size={16} color="var(--ink)" /> Admin</div>
               <button onClick={() => { loadAdminStats(); if (adminSection==="submissions") loadSubmissions(submissionFilter); if (adminSection==="tickets") loadTickets({ includeDone: true }); if (adminSection==="users") loadAdminUsers(); if (adminSection==="missing") loadMissingEans(); }}
                 aria-label="Opdatér"
-                style={{ width:40, height:40, display:"flex", alignItems:"center", justifyContent:"center", background:"none", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}>
-                <Icon name="refresh" size={15} color="var(--ink2)" />
+                style={{ width:32, height:32, marginLeft:2, display:"flex", alignItems:"center", justifyContent:"center", background:"none", border:"1px solid var(--border)", borderRadius:8, cursor:"pointer" }}>
+                <Icon name="refresh" size={13} color="var(--ink2)" />
               </button>
             </div>
 
