@@ -47,3 +47,8 @@ export function parseListCode(input) {
   } catch { /* ikke et link, brug som kode */ }
   return raw.toUpperCase();
 }
+
+// Ser det indsatte ud som et link eller en kode til en delt liste? (Serveren afgør endeligt, om den findes.)
+export function looksLikeListLink(input) {
+  return /^[A-Z0-9]{4,}$/.test(parseListCode(input));
+}
