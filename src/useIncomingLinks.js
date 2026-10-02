@@ -12,16 +12,28 @@ export function useIncomingLinks({
   joinByCode, loadShoppingList, setAuthTab, setScreen,
 }) {
   // ── Familie-invitation accept ────────────────────────────────────────────
+  // Token gemmes i localStorage (som indkøbslistekoden nedenfor), så den overlever oprettelse, e-mailbekræftelse og onboarding,
+  // og koblingen sker automatisk, når brugeren er logget ind. `&login=1` åbner login i stedet for oprettelse.
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const inviteToken = params.get("invite");
-    if (!inviteToken || !accessToken || !userId) return;
+    const fromUrl = params.get("invite");
+    if (fromUrl) {
+      localStorage.setItem("as_pending_invite", fromUrl);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("invite");
+      url.searchParams.delete("login");
+      window.history.replaceState({}, "", url.toString());
+      if (!localStorage.getItem("as_token")) {
+        setAuthTab(params.get("login") === "1" ? "login" : "signup");
+        setScreen(SCREENS.LOGIN);
+      }
+    }
+  }, []);
 
-    // Fjern token fra URL uden reload
-    const url = new URL(window.location.href);
-    url.searchParams.delete("invite");
-    url.searchParams.delete("login");
-    window.history.replaceState({}, "", url.toString());
+  React.useEffect(() => {
+    const inviteToken = localStorage.getItem("as_pending_invite");
+    if (!inviteToken || !accessToken || !userId) return;
+    localStorage.removeItem("as_pending_invite");
 
     // Accepter invitation via RPC
     const acceptInvite = async () => {
