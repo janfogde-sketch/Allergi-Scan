@@ -230,3 +230,11 @@ describe("sulfit-ammoniak-karamel (2. okt.)", () => {
     expect(analyzeIngredients("vand, natriumdisulfit").svovl).toBe("yes");
   });
 });
+
+describe("sammensatte ost- og bygord (2. okt. 2026)", () => {
+  it("OSTEPULVER giver mælk og BYGEKSTRAKT/BYGGRYN giver gluten", () => {
+    expect(analyzeIngredients("salt, OSTEPULVER, sukker").maelkeallergi).toBe("yes");
+    expect(analyzeIngredients("vand, BYGEKSTRAKT").gluten).toBe("yes");
+    expect(analyzeIngredients("vand, byggryn").gluten).toBe("yes");
+  });
+});
