@@ -49,11 +49,11 @@ export function useIncomingLinks({
         if (data?.success) {
           // Genindlæs familie-data
           loadFamily();
-          showToast("🎉 Invitation accepteret! Jeres familieoplysninger er nu delt.");
+          showToast("Invitation accepteret. Du er nu i familie med den, der inviterede dig. Se jer under Familie i menuen.");
 
           // Beskeden til den der inviterede (N5) oprettes af databasen og sendes af `notify`.
         } else if (data?.error) {
-          showToast("Invitation fejlede: " + data.error, "error");
+          showToast("Invitationen kunne ikke bruges: " + data.error, "error");
         }
       } catch { /* ignorer */ }
     };
@@ -94,7 +94,7 @@ export function useIncomingLinks({
       if (res.success) {
         loadShoppingList();
         setScreen(SCREENS.LIST);
-        showToast(`🛒 Du er nu tilsluttet listen "${res.list?.name || ""}"!`);
+        showToast("Du er nu tilsluttet den delte liste. Du kan se og redigere den under Indkøbsliste.");
       } else {
         showToast("Kunne ikke tilslutte listen: " + (res.error || "Ugyldig kode"), "error");
       }

@@ -79,12 +79,15 @@ Deno.serve(async (req) => {
   const isAccess = parts.includes("access");
   const isJoin = parts[parts.length - 1] === "join";
   const isFamilyMembers = parts[parts.length - 1] === "family-members";
+  const isRotate = parts[parts.length - 1] === "rotate-code";
   const itemId = isItems ? parts[parts.length - 1] : null;
   const accessUserId = isAccess && parts[parts.length - 1] !== "access" ? parts[parts.length - 1] : null;
   const listId = isItems
     ? parts[parts.indexOf("items") - 1]
     : isAccess
     ? parts[parts.indexOf("access") - 1]
+    : isRotate
+    ? parts[parts.length - 2]
     : (isJoin || isFamilyMembers || parts[parts.length - 1] === "shopping")
     ? null
     : parts[parts.length - 1];
@@ -146,6 +149,8 @@ Deno.serve(async (req) => {
       if (!user_id) return new Response(JSON.stringify({ error: "user_id er påkrævet" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       const { data: list } = await supabase.from("shopping_lists").select("owner_id").eq("id", listId).single();
       if (!list || list.owner_id !== caller.id) return new Response(JSON.stringify({ error: "Kun ejeren kan give adgang til listen" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      // Udvalgte personer skal være i ejerens familie (link-deling bruger /join i stedet)
+      if (!(await callerFamilyGroup()).includes(user_id)) return new Response(JSON.stringify({ error: "Du kan kun dele med personer i din familie" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
       const { data: access, error } = await supabase
         .from("shopping_list_access")
@@ -155,13 +160,28 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true, access }), { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // DELETE — fjern en brugers adgang (kun ejeren)
+    // DELETE — fjern en brugers adgang (ejeren fjerner andre; enhver kan forlade listen selv)
     if (method === "DELETE" && isAccess && accessUserId) {
       const { data: list } = await supabase.from("shopping_lists").select("owner_id").eq("id", listId).single();
-      if (!list || list.owner_id !== caller.id) return new Response(JSON.stringify({ error: "Kun ejeren kan fjerne adgang til listen" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (!list || (list.owner_id !== caller.id && accessUserId !== caller.id)) return new Response(JSON.stringify({ error: "Kun ejeren kan fjerne andres adgang til listen" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       const { error } = await supabase.from("shopping_list_access").delete().eq("list_id", listId).eq("user_id", accessUserId);
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // POST — lav en ny kode til listelinket (kun ejeren). Det gamle link holder op med at virke;
+    // personer, der allerede er tilsluttet, beholder deres adgang og fjernes under "Har adgang nu".
+    if (method === "POST" && isRotate) {
+      const { data: list } = await supabase.from("shopping_lists").select("owner_id").eq("id", listId).single();
+      if (!list || list.owner_id !== caller.id) return new Response(JSON.stringify({ error: "Kun ejeren kan lave et nyt link" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      let updated, error;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        ({ data: updated, error } = await supabase
+          .from("shopping_lists").update({ share_link: generateCode(), updated_at: new Date() }).eq("id", listId).select("share_link").single());
+        if (!error) break;
+      }
+      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: true, share_link: updated.share_link }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // ─────────────────────────────────────
@@ -200,8 +220,28 @@ Deno.serve(async (req) => {
 
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+      // Berig med det, appen skal bruge til en klar delt-status: ejerens fornavn, hvem egne lister er delt med
+      // (fornavne), og om jeg har adgang via en udvalgt/link-række. Listekoden er kun til ejeren.
+      const firstName = (n) => (n ?? "").trim().split(/\s+/)[0] || null;
+      const rows = lists ?? [];
+      const foreignOwnerIds = [...new Set(rows.filter((l) => l.owner_id !== userId).map((l) => l.owner_id))];
+      const ownIds = rows.filter((l) => l.owner_id === userId).map((l) => l.id);
+      const { data: owners } = foreignOwnerIds.length
+        ? await supabase.from("users").select("id, name").in("id", foreignOwnerIds) : { data: [] };
+      const { data: ownAccess } = ownIds.length
+        ? await supabase.from("shopping_list_access").select("list_id, users(name)").in("list_id", ownIds) : { data: [] };
+      const ownerName = new Map((owners ?? []).map((o) => [o.id, firstName(o.name)]));
+      const sharedWith = new Map<string, string[]>();
+      for (const a of ownAccess ?? []) {
+        const u = Array.isArray(a.users) ? a.users[0] : a.users;
+        sharedWith.set(a.list_id, [...(sharedWith.get(a.list_id) ?? []), firstName(u?.name) ?? "En person"]);
+      }
+      const enriched = rows.map((l) => l.owner_id === userId
+        ? { ...l, shared_with: sharedWith.get(l.id) ?? [], via_access: false }
+        : { ...l, share_link: null, owner_name: ownerName.get(l.owner_id) ?? null, via_access: sharedListIds.includes(l.id) });
+
       return new Response(
-        JSON.stringify({ success: true, lists }),
+        JSON.stringify({ success: true, lists: enriched }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -265,9 +305,25 @@ Deno.serve(async (req) => {
       );
       const body = await req.json();
 
+      // Kun navn og delingstype må ændres (aldrig owner_id/share_link via PATCH). Delingstypen er kun for ejeren.
+      const patch: Record<string, unknown> = {};
+      if (typeof body.name === "string" && body.name.trim()) patch.name = body.name.trim().slice(0, 60);
+      if (body.type === "family" || body.type === "personal") {
+        const { data: ownerRow } = await supabase.from("shopping_lists").select("owner_id").eq("id", listId).single();
+        if (!ownerRow || ownerRow.owner_id !== caller.id) return new Response(
+          JSON.stringify({ error: "Kun ejeren kan ændre, hvem listen er delt med" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+        patch.type = body.type;
+      }
+      if (Object.keys(patch).length === 0) return new Response(
+        JSON.stringify({ error: "Intet at opdatere" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+
       const { data: list, error } = await supabase
         .from("shopping_lists")
-        .update({ ...body, updated_at: new Date() })
+        .update({ ...patch, updated_at: new Date() })
         .eq("id", listId)
         .select()
         .single();

@@ -272,13 +272,13 @@ export default function ProfileScreen({
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             <Icon name="family" size={16} color="var(--ink)" />
             <div>
-              <div style={UI.boldInk13}>Husstand</div>
+              <div style={UI.boldInk13}>Familie</div>
               <div style={UI.muted11mt2}>
                 {householdLoading
                   ? "Henter…"
                   : (family.length + household.length) === 0
-                    ? "Ingen medlemmer endnu"
-                    : `${family.length + household.length} medlem${family.length + household.length === 1 ? "" : "mer"}`}
+                    ? "Ingen i familien endnu"
+                    : `${family.length + household.length} ${family.length + household.length === 1 ? "person" : "personer"}`}
               </div>
             </div>
           </div>

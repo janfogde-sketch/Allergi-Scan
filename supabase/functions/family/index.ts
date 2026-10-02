@@ -98,7 +98,8 @@ Deno.serve(async (req) => {
 
       const withPermissions = (members ?? []).map((m) => ({
         ...m,
-        canRemove: adminOf.has(m.id),
+        canRemove: true, // begge sider i en forbindelse kan afslutte den (26. okt.: også den inviterede)
+        invitedByMe: adminOf.has(m.id),
         allergens: allergensByUser.get(m.id)?.allergens ?? [],
         custom: allergensByUser.get(m.id)?.custom ?? [],
         diets: m.diets ?? [],
@@ -108,19 +109,26 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true, members: withPermissions }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // DELETE — fjern et medlem af husstanden. Kun den der oprindeligt sendte
-    // invitationen (husstandens "admin" for den forbindelse) kan gøre dette —
-    // et medlem, der selv blev inviteret, kan ikke fjerne andre.
+    // DELETE — afslut forbindelsen til et familiemedlem. Begge sider kan gøre det (den der inviterede, og den der accepterede),
+    // så ingen sidder fast i en familie, de ikke vil være en del af.
     if (method === "DELETE" && isGroup && groupUserId) {
       const { data: link } = await supabase
         .from("family_invites").select("id")
-        .eq("status", "accepted").eq("invited_by", caller.id).eq("accepted_by", groupUserId).maybeSingle();
+        .eq("status", "accepted")
+        .or(`and(invited_by.eq.${caller.id},accepted_by.eq.${groupUserId}),and(invited_by.eq.${groupUserId},accepted_by.eq.${caller.id})`)
+        .maybeSingle();
       if (!link) return new Response(
-        JSON.stringify({ error: "Kun den der inviterede dette medlem kan fjerne det" }),
+        JSON.stringify({ error: "Denne konto er ikke i din familie" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
       const { error } = await supabase.from("family_invites").delete().eq("id", link.id);
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      // "I mister adgang til hinandens delte data": fjern også udvalgt/link-adgang til hinandens indkøbslister
+      for (const [owner, other] of [[caller.id, groupUserId], [groupUserId, caller.id]]) {
+        const { data: ownerLists } = await supabase.from("shopping_lists").select("id").eq("owner_id", owner);
+        const ids = (ownerLists ?? []).map((l) => l.id);
+        if (ids.length > 0) await supabase.from("shopping_list_access").delete().in("list_id", ids).eq("user_id", other);
+      }
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -155,7 +163,7 @@ Deno.serve(async (req) => {
         .or(`and(invited_by.eq.${caller.id},accepted_by.eq.${target_user_id}),and(invited_by.eq.${target_user_id},accepted_by.eq.${caller.id})`)
         .maybeSingle();
       if (!link) return new Response(
-        JSON.stringify({ error: "Denne konto er ikke en del af din husstand" }),
+        JSON.stringify({ error: "Denne konto er ikke en del af din familie" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
 

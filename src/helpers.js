@@ -520,7 +520,7 @@ export const isLinkedProfileId = (id) => typeof id === "string" && id.startsWith
 export function householdToProfiles(household) {
   return (household || []).map((m, i) => ({
     id: `${LINKED_PROFILE_PREFIX}${m.id}`,
-    name: m.name || (m.email || "").split("@")[0] || "Husstandsmedlem",
+    name: m.name || (m.email || "").split("@")[0] || "Familiemedlem",
     color: AVATAR_COLORS[(i + 3) % AVATAR_COLORS.length],
     allergens: m.allergens || [],
     custom: m.custom || [],

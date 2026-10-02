@@ -352,7 +352,7 @@ describe("husstandskonti som skrivebeskyttede profiler", () => {
   });
   it("falder tilbage til e-mailens lokale del, når kontoen ingen navn har", () => {
     expect(householdToProfiles([{ id: "u2", email: "mia@x.dk" }])[0].name).toBe("mia");
-    expect(householdToProfiles([{ id: "u3" }])[0].name).toBe("Husstandsmedlem");
+    expect(householdToProfiles([{ id: "u3" }])[0].name).toBe("Familiemedlem");
     expect(householdToProfiles(undefined)).toEqual([]);
   });
   it("genkender husstandsid'er og aldrig oprettede profilers uuid eller 'me'", () => {
