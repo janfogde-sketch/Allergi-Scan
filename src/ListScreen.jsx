@@ -9,6 +9,7 @@ import { useNavigationContext } from "./NavigationContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 import { UI } from "./styleUtils.js";
+import { ListSwitcherSheet, ShareListSheet, ShareStatus } from "./ListSheets.jsx";
 
 const S = {
   flexMin: { flex:1, minWidth:0 },
@@ -17,109 +18,6 @@ const S = {
   h13b:    { fontSize:13, fontWeight:700, color:"var(--ink)" },
   sub11:   { fontSize:11, color:"var(--muted)" },
 };
-
-function ShareSheet({ list, familyMembers, loadFamilyMembers, getListAccess, grantAccess, revokeAccess, setListType, onClose }) {
-  const [access, setAccess]     = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [copied, setCopied]     = useState(false);
-
-  React.useEffect(() => {
-    loadFamilyMembers();
-    getListAccess(list.id).then(a => { setAccess(a); setLoading(false); });
-  }, [list.id]);
-
-  const sharedIds = new Set(access.map(a => a.user_id));
-  const shareLink = `https://eatsafe.dk/?join-list=${list.share_link}`;
-
-  const toggleMember = async (memberId) => {
-    if (sharedIds.has(memberId)) {
-      setAccess(a => a.filter(x => x.user_id !== memberId));
-      await revokeAccess(list.id, memberId);
-    } else {
-      setAccess(a => [...a, { user_id: memberId, permission: "edit" }]);
-      await grantAccess(list.id, memberId, "edit");
-    }
-  };
-
-  return (
-    <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }}
-      onClick={onClose}>
-      <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"85vh", overflowY:"auto" }}
-        onClick={e => e.stopPropagation()}>
-        <div style={UI.rowBetweenMb16}>
-          <div style={UI.ufs18_fw900_cink}>Del "{list.name}"</div>
-          <button onClick={onClose} aria-label="Luk"
-            style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
-        </div>
-
-        {/* Hele familien */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:10 }}>
-          <div>
-            <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:13, fontWeight:700, color:"var(--ink)" }}><Icon name="family" size={14} color="var(--ink)" /> Del med hele familien</div>
-            <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>Alle du har inviteret til EatSafe ser og redigerer listen</div>
-          </div>
-          <div role="switch" aria-checked={list.type === "family"} tabIndex={0}
-            onClick={() => setListType(list.id, list.type === "family" ? "personal" : "family")}
-            onKeyDown={e => e.key === "Enter" && setListType(list.id, list.type === "family" ? "personal" : "family")}
-            style={{ width:42, height:24, borderRadius:20, background: list.type === "family" ? "var(--green)" : "var(--border2)", position:"relative", cursor:"pointer", flexShrink:0, transition:"background .2s" }}>
-            <div style={{ position:"absolute", top:2, left: list.type === "family" ? 20 : 2, width:20, height:20, borderRadius:"50%", background:"#fff", transition:"left .2s" }} />
-          </div>
-        </div>
-
-        {/* Vælg personer */}
-        <div style={{ marginBottom:14 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>
-            Eller vælg udvalgte personer
-          </div>
-          {/* Tydeliggørelse (25. sept. 2026, brugerfeedback) — familieprofiler
-              man selv har oprettet (fx et barn) har ikke nødvendigvis deres
-              egen EatSafe-konto, og kan derfor ikke inviteres/få redigerings-
-              adgang til listen her. Kun listen nedenfor (personer der reelt
-              har accepteret en invitation til EatSafe) kan det. */}
-          <div style={{ fontSize:10.5, color:"var(--muted)", marginBottom:8, lineHeight:1.4 }}>
-            Kun personer med deres egen EatSafe-konto kan få redigeringsadgang her — familieprofiler uden konto (fx et barn) deles ikke automatisk med.
-          </div>
-          {loading ? (
-            <div style={{ fontSize:12, color:"var(--muted)" }}>Henter…</div>
-          ) : familyMembers.length === 0 ? (
-            <div style={{ fontSize:12, color:"var(--muted)" }}>Du har ikke inviteret nogen endnu — brug "Inviter" under Profil, eller del listen med koden nedenfor.</div>
-          ) : familyMembers.map(m => (
-            // padding øget til ~44px radhøjde (25. sept. 2026, brugerfeedback:
-            // minimum tap-area på checkboxes/interaktive elementer) — hele
-            // rækken er klikmålet, ikke kun den lille 20×20-checkboks.
-            <div key={m.id} onClick={() => toggleMember(m.id)}
-              style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, marginBottom:6, cursor:"pointer" }}>
-              <div style={{ fontSize:13, fontWeight:600, color:"var(--ink)" }}>{m.name || m.email}</div>
-              <div style={{ width:20, height:20, borderRadius:6, border:`1.5px solid ${sharedIds.has(m.id) ? "var(--green)" : "var(--border2)"}`, background: sharedIds.has(m.id) ? "var(--green)" : "transparent", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                {sharedIds.has(m.id) && <Icon name="check" size={12} color="#fff" />}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Del med link */}
-        <div style={{ padding:"14px", background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:12 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:8 }}>
-            Eller del med et link
-          </div>
-          <div style={{ display:"flex", gap:8 }}>
-            <button className="btn btn-primary btn-sm" style={{ flex:1 }}
-              onClick={() => { navigator.clipboard?.writeText(shareLink); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
-              <Icon name={copied ? "check" : "link"} size={14} color="var(--on-green)" /> {copied ? "Link kopieret" : "Kopiér link"}
-            </button>
-            {navigator.share && (
-              <button className="btn btn-outline btn-sm"
-                onClick={() => navigator.share({ title: `Indkøbsliste: ${list.name}`, url: shareLink })}>
-                <Icon name="share" size={14} color="var(--ink)" /> Del
-              </button>
-            )}
-          </div>
-          <div style={{ fontSize:11, color:"var(--muted)", marginTop:8 }}>Alle med linket kan tilslutte sig og redigere listen.</div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function ListScreen({
   activeIds, activeLevels,
@@ -139,23 +37,12 @@ export default function ListScreen({
   } = useShoppingContext();
 
   const [showListPicker, setShowListPicker] = useState(false);
-  const [showNewList, setShowNewList]       = useState(false);
-  const [newListName, setNewListName]       = useState("");
   const [showShareSheet, setShowShareSheet] = useState(false);
-  const [showJoin, setShowJoin]             = useState(false);
-  const [joinCode, setJoinCode]             = useState("");
-  const [joinError, setJoinError]           = useState("");
-  const [joinLoading, setJoinLoading]       = useState(false);
   // Bekræft-dialoger for destruktive handlinger (25. sept. 2026,
   // brugerfeedback) — erstatter native confirm(), se ConfirmDialog i
   // SharedComponents.jsx for hvorfor. listPendingDelete holder LISTEN
   // (ikke kun dens id) så dialogens tekst kan vise det rigtige navn.
   const [listPendingDelete, setListPendingDelete] = useState(null);
-  // "Rediger"-tilstand i listevælgeren — viser Slet-knapper; nulstilles
-  // når vælgeren lukkes.
-  const [editLists, setEditLists] = useState(false);
-  const canDeleteAny = lists.length > 1 && lists.some(l => l.owner_id === userId);
-  useEffect(() => { if (!showListPicker || !canDeleteAny) setEditLists(false); }, [showListPicker, canDeleteAny]);
   const [showClearDoneConfirm, setShowClearDoneConfirm] = useState(false);
 
   const handleToggleItem = (id, wasChecked) => {
@@ -324,18 +211,6 @@ export default function ListScreen({
     setActiveProfiles(next.length === 0 ? [id] : next);
   };
 
-  const handleJoin = async () => {
-    setJoinLoading(true);
-    setJoinError("");
-    // Accepter både et fuldt link (?join-list=KODE) og en rå kode indsat direkte
-    let code = joinCode.trim();
-    try { code = new URL(code).searchParams.get("join-list") || code; } catch { /* ikke et link — brug som kode */ }
-    const res = await joinByCode(code);
-    setJoinLoading(false);
-    if (res.success) { setShowJoin(false); setJoinCode(""); }
-    else setJoinError(res.error || "Kunne ikke tilslutte listen");
-  };
-
   return (
     <div className="screen fade-in">
       {/* Titlen fik sin egen fulde linje/zone (29. sept. 2026, bruger-
@@ -498,116 +373,36 @@ export default function ListScreen({
         )}
       </div>
 
-      {/* ── Listevælger (komprimeret) ──
-          Samlet til ÉN kontrol (30. sept. 2026): listevælger og del-knap
-          deler samme ramme, adskilt af en tynd skillelinje, i stedet for
-          separate knapper. Favorit-knappen er fjernet herfra (favoritter
-          nås fortsat via menuen → Favoritter). */}
-      <div style={{ marginBottom:10 }}>
-        <div style={{ display:"flex", alignItems:"stretch", height:36, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, overflow:"hidden" }}>
-          <div onClick={() => setShowListPicker(v => !v)}
-            style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, padding:"0 12px", cursor:"pointer" }}>
-            <div style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-              <span style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{activeList?.name || "Vælg liste"}</span>
-              {activeList?.type === "family" && <span style={{ marginLeft:6, display:"inline-flex", verticalAlign:"middle" }}><Icon name="family" size={11} color="var(--green)" /></span>}
-            </div>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2" style={{ flexShrink:0, transform: showListPicker ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
-              <path strokeLinecap="round" d="M19 9l-7 7-7-7"/>
-            </svg>
+      {/* ── Aktiv liste ──
+          Én sektion: label, brugerdefineret listenavn (ellipsis, aldrig afhængig af navnet) og en sekundær delt-status. Tryk åbner
+          listevælgeren (bottom-sheet) til at skifte, oprette, tilslutte og slette lister, så administration ikke fylder på siden. */}
+      <div style={{ display:"flex", gap:8, marginBottom:12 }}>
+        <button type="button" aria-haspopup="dialog" aria-label={`Aktiv liste: ${activeList?.name || "ingen valgt"}. Skift eller administrér lister`}
+          onClick={() => setShowListPicker(true)}
+          style={{ flex:1, minWidth:0, minHeight:56, display:"flex", alignItems:"center", gap:10, padding:"8px 14px", textAlign:"left", fontFamily:"var(--f)", cursor:"pointer",
+            background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, boxShadow:"var(--sh2)" }}>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".8px" }}>Aktiv liste</div>
+            <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginTop:1 }}>{activeList?.name || "Vælg liste"}</div>
+            {activeList && <ShareStatus list={activeList} userId={userId} />}
           </div>
-          <button aria-label="Del liste" onClick={() => setShowShareSheet(true)} disabled={!activeList}
-            style={{ display:"flex", alignItems:"center", justifyContent:"center", width:36, padding:0, background:"none", border:"none", borderLeft:"1px solid var(--border)", cursor: activeList ? "pointer" : "not-allowed", opacity: activeList ? 1 : .5, flexShrink:0 }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2">
-              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-              <path strokeLinecap="round" d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
-            </svg>
-          </button>
-        </div>
+          <Icon name="chevronDown" size={18} color="var(--ink2)" />
+        </button>
+        <button type="button" aria-label="Del liste" onClick={() => setShowShareSheet(true)} disabled={!activeList}
+          style={{ width:56, minHeight:56, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", padding:0, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, boxShadow:"var(--sh2)",
+            cursor: activeList ? "pointer" : "not-allowed", opacity: activeList ? 1 : .5 }}>
+          <Icon name="share" size={20} color="var(--ink)" />
+        </button>
       </div>
 
-      {/* Listevælgerens dropdown (30. sept. 2026): kompakte rækker (52px),
-          aktiv liste med lysegrøn baggrund + checkmark, og ingen permanente
-          papirkurve. Sletning ligger bag "Rediger" øverst i panelet, så den
-          ikke er en fremtrædende handling. Sletning bruger stadig den delte
-          ConfirmDialog, og man kan aldrig slette sin sidste liste
-          (lists.length>1) — "Min indkøbsliste" er en almindelig liste uden
-          særstatus i skemaet (ingen is_default-kolonne). */}
       {showListPicker && (
-        <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"4px 6px 8px", marginBottom:10, boxShadow:"var(--sh)" }}>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"4px 8px 2px" }}>
-            <span style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".8px" }}>Dine lister</span>
-            {canDeleteAny && (
-              <button type="button" onClick={() => setEditLists(v => !v)}
-                style={{ background:"none", border:"none", padding:"6px 0 6px 12px", cursor:"pointer", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--green)" }}>
-                {editLists ? "Færdig" : "Rediger"}
-              </button>
-            )}
-          </div>
-          {lists.map(l => {
-            const isActive = l.id === activeListId;
-            const deletable = l.owner_id === userId && lists.length > 1;
-            return (
-              <div key={l.id} onClick={() => { if (editLists) return; setActiveListId(l.id); setShowListPicker(false); }}
-                style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, minHeight:52, padding:"0 10px", borderRadius:8, cursor: editLists ? "default" : "pointer", background: isActive ? "var(--green-selected-bg)" : "transparent" }}>
-                <div style={{ minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                  <span style={{ fontSize:14, fontWeight: isActive ? 700 : 600, color: isActive ? "var(--green)" : "var(--ink)" }}>{l.name}</span>
-                  {l.type === "family" && <span style={{ marginLeft:6, display:"inline-flex", verticalAlign:"middle" }}><Icon name="family" size={12} color="var(--muted)" /></span>}
-                  {l.owner_id !== userId && <span style={{ marginLeft:6, fontSize:11, color:"var(--muted)" }}>(delt)</span>}
-                </div>
-                {editLists ? (
-                  deletable && (
-                    <button type="button" aria-label={`Slet "${l.name}"`}
-                      onClick={e => { e.stopPropagation(); setListPendingDelete(l); }}
-                      style={{ flexShrink:0, height:32, padding:"0 10px", background:"none", border:"1px solid var(--red-md)", borderRadius:8, cursor:"pointer", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--red)" }}>
-                      Slet
-                    </button>
-                  )
-                ) : (
-                  isActive && <Icon name="check" size={16} color="var(--green)" />
-                )}
-              </div>
-            );
-          })}
-          {!showNewList ? (
-            <div style={{ display:"flex", gap:8, marginTop:8, padding:"0 2px" }}>
-              <button type="button" className="list-picker-action" onClick={() => setShowNewList(true)}>
-                <Icon name="plus" size={13} color="var(--ink)" /> Ny liste
-              </button>
-              <button type="button" className="list-picker-action" onClick={() => { setShowListPicker(false); setShowJoin(true); }}>
-                <Icon name="link" size={13} color="var(--ink)" /> Tilslut med link
-              </button>
-            </div>
-          ) : (
-            <div style={{ display:"flex", gap:8, marginTop:8, padding:"0 2px" }}>
-              <input className="field" placeholder="Fx. Weekend, Fest…" autoFocus style={{ flex:1, marginBottom:0, height:40, padding:"0 12px" }}
-                value={newListName} onChange={e => setNewListName(e.target.value)}
-                onKeyDown={async e => { if (e.key === "Enter" && newListName.trim()) { await createList(newListName); setNewListName(""); setShowNewList(false); setShowListPicker(false); } }} />
-              <button className="btn btn-primary btn-sm" style={{ height:40, minHeight:40, padding:"0 14px", borderRadius:10 }} onClick={async () => { if (newListName.trim()) { await createList(newListName); setNewListName(""); setShowNewList(false); setShowListPicker(false); } }}>
-                Opret
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Tilslut med link ── */}
-      {showJoin && (
-        <div className="card" style={{ marginBottom:14 }}>
-          <div className="card-lbl" style={S.mb10}>Tilslut liste med link</div>
-          <div className="input-row">
-            <input className="field" placeholder="Indsæt det delte link"
-              value={joinCode} onChange={e => { setJoinCode(e.target.value); setJoinError(""); }}
-              onKeyDown={e => e.key === "Enter" && handleJoin()} />
-            <button className="btn btn-primary btn-sm" style={UI.uwsnowrap} disabled={joinLoading || !joinCode.trim()} onClick={handleJoin}>
-              {joinLoading ? "…" : "Tilslut"}
-            </button>
-          </div>
-          {joinError && <div style={{ fontSize:11, color:"var(--red)", marginTop:6 }}>{joinError}</div>}
-        </div>
+        <ListSwitcherSheet lists={lists} activeListId={activeListId} userId={userId}
+          onSelect={setActiveListId} onClose={() => setShowListPicker(false)}
+          createList={createList} joinByCode={joinByCode} onRequestDelete={setListPendingDelete} />
       )}
 
       {showShareSheet && activeList && (
-        <ShareSheet list={activeList} familyMembers={familyMembers} loadFamilyMembers={loadFamilyMembers}
+        <ShareListSheet list={activeList} familyMembers={familyMembers} loadFamilyMembers={loadFamilyMembers}
           getListAccess={getListAccess} grantAccess={grantAccess} revokeAccess={revokeAccess} setListType={setListType}
           onClose={() => setShowShareSheet(false)} />
       )}
