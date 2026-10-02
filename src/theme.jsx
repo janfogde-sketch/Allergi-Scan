@@ -1094,7 +1094,7 @@ body::-webkit-scrollbar{display:none;}
   90%{opacity:1;}
   100%{transform:translateY(0);opacity:0;}
 }
-@keyframes laserMove{0%{top:0;}50%{top:96px;}100%{top:0;}}
+@keyframes laserMove{0%{top:0;}50%{top:calc(100% - 2px);}100%{top:0;}}
 .scan-loading-txt{font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.1px;text-align:center;}
 .scan-loading-sub{font-size:12.5px;color:var(--muted);text-align:center;margin-top:2px;}
 .scroll-top-btn{

@@ -109,40 +109,43 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     setScanZoom(1.0); setShowPhotoHint(false); setScanError("");
   }, [setScanError]);
 
-  // ── Roteret afkodning ───────────────────────────────────────────────────────
-  // Uden BarcodeDetector (iOS Safari) afkoder ZXing kun vandrette koder. Hver ~300 ms
-  // tegnes hele billedet derfor 90° roteret og afkodes, så en lodret stregkode også virker.
-  // Med BarcodeDetector (Chrome/Android) er det overflødigt: den finder koder i alle retninger.
-  const startRotatedDecodeLoop = useCallback((videoEl) => {
+  // ── Afkodning i alle retninger ──────────────────────────────────────────────
+  // Uden BarcodeDetector (iOS Safari) afkoder html5-qrcode kun vandrette koder. Derfor kører
+  // en ekstra løkke: hele billedet afkodes direkte med ZXing og TRY_HARDER, som også prøver
+  // billedet drejet 90° (lodret kode) og spejlvendt/på hovedet. Med BarcodeDetector (Chrome/
+  // Android) er det overflødigt: den finder koder i alle retninger.
+  const startRotatedDecodeLoop = useCallback(async (videoEl) => {
     if (typeof window === "undefined" || "BarcodeDetector" in window || !videoEl) return;
+    const Z = await import("@zxing/library");
+    if (!html5QrRef.current) return; // kameraet blev lukket imens biblioteket hentedes
+    const hints = new Map();
+    hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [
+      Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E,
+      Z.BarcodeFormat.CODE_128, Z.BarcodeFormat.CODE_39, Z.BarcodeFormat.ITF,
+    ]);
+    hints.set(Z.DecodeHintType.TRY_HARDER, true);
+    const reader = new Z.MultiFormatReader();
+    reader.setHints(hints);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     let busy = false;
-    let flip = false;
-    rotatedLoopRef.current = setInterval(async () => {
+    rotatedLoopRef.current = setInterval(() => {
       if (busy || !videoEl.videoWidth || !videoEl.videoHeight) return;
       busy = true;
       try {
         const scale = Math.min(1, 1280 / Math.max(videoEl.videoWidth, videoEl.videoHeight));
-        const w = Math.round(videoEl.videoWidth * scale), h = Math.round(videoEl.videoHeight * scale);
-        const canvas = document.createElement("canvas");
-        canvas.width = h; canvas.height = w;
-        const ctx = canvas.getContext("2d");
-        ctx.translate(h / 2, w / 2);
-        ctx.rotate((flip ? -90 : 90) * Math.PI / 180);
-        flip = !flip;
-        ctx.drawImage(videoEl, -w / 2, -h / 2, w, h);
-        const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.85));
-        if (!blob || !rotatedLoopRef.current) return;
-        const { Html5Qrcode } = await import("html5-qrcode");
-        const reader = new Html5Qrcode("qr-reader-gallery", { verbose: false, formatsToSupport: [3, 5, 8, 9, 10, 12, 13, 14, 15] });
-        const code = await reader.scanFile(new File([blob], "frame.jpg", { type: "image/jpeg" }), false);
-        try { reader.clear(); } catch {}
+        canvas.width = Math.round(videoEl.videoWidth * scale);
+        canvas.height = Math.round(videoEl.videoHeight * scale);
+        ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+        const bitmap = new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(canvas)));
+        const code = reader.decode(bitmap).getText();
         if (!code || !rotatedLoopRef.current || !isValidEanChecksum(code)) return;
         if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
         stopCamera();
         onScanSuccessRef.current?.(code);
       } catch { /* ingen kode i denne frame */ }
       finally { busy = false; }
-    }, 300);
+    }, 150);
   }, [stopCamera]);
 
   // ── startCamera ────────────────────────────────────────────────────────────
