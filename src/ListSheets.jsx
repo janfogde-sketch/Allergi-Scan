@@ -1,24 +1,34 @@
 // @ts-nocheck
 // Bottom-sheets til indkøbslisten: listevælger (skift/opret/tilslut/slet) og deling. Listenavne er brugerdata og vises kun som tekst
 // (ellipsis/ombrydning), aldrig som faste systemtekster. Portal til body, fordi .screen.fade-in fanger position:fixed (CLAUDE.md §3 regel 4).
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Icon, ConfirmDialog, showToast } from "./SharedComponents.jsx";
-import { isSharedList, listShareStatus, joinNames, parseListCode, listLinkUrl, listShareText } from "./listShare.js";
+import { isSharedList, listShareStatus, joinNames, parseListCode, listLinkUrl, listShareText, looksLikeListLink } from "./listShare.js";
 
 const LBL = { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".8px" };
 const WRAP = { overflowWrap:"anywhere", wordBreak:"break-word" };
 
+// Fælles top-/padding-struktur for alle sheets: fast header (sticky, aldrig clippet), scroll altid fra toppen, og layoutet følger
+// visualViewport, så tastaturet ikke skjuler handlinger (samme mønster som FeedbackModal).
 function Sheet({ label, onClose, children }) {
+  const panelRef = useRef(null);
+  const [vv, setVv] = useState(() => (typeof window !== "undefined" && window.visualViewport ? { top: window.visualViewport.offsetTop, h: window.visualViewport.height } : null));
   useEffect(() => {
+    if (panelRef.current) panelRef.current.scrollTop = 0;
     const onKey = e => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    const v = window.visualViewport;
+    const sync = () => v && setVv({ top: v.offsetTop, h: v.height });
+    v?.addEventListener("resize", sync);
+    v?.addEventListener("scroll", sync);
+    return () => { document.removeEventListener("keydown", onKey); v?.removeEventListener("resize", sync); v?.removeEventListener("scroll", sync); };
   }, [onClose]);
+  const frame = vv ? { top: vv.top, height: vv.h } : { top: 0, bottom: 0 };
   return createPortal(
-    <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }} onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-label={label} onClick={e => e.stopPropagation()}
-        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"16px 16px 28px", width:"100%", maxHeight:"85vh", overflowY:"auto", boxShadow:"var(--sh)" }}>
+    <div style={{ position:"fixed", left:0, right:0, ...frame, zIndex:9995, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }} onClick={onClose}>
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label={label} onClick={e => e.stopPropagation()}
+        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", width:"100%", maxHeight:"92%", overflowY:"auto", overscrollBehavior:"contain", boxShadow:"var(--sh)" }}>
         {children}
       </div>
     </div>,
@@ -26,9 +36,10 @@ function Sheet({ label, onClose, children }) {
   );
 }
 
+// Header er sticky øverst i sheetet; indholdet under har egen padding.
 function SheetHeader({ title, sub, onClose, right }) {
   return (
-    <div style={{ display:"flex", alignItems:"flex-start", gap:8, marginBottom:16 }}>
+    <div style={{ position:"sticky", top:0, zIndex:2, background:"var(--sheet)", padding:"22px 16px 12px", display:"flex", alignItems:"flex-start", gap:8 }}>
       <div style={{ flex:1, minWidth:0, paddingTop:4 }}>
         <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)", lineHeight:1.25 }}>{title}</div>
         {sub && <div style={{ fontSize:13, fontWeight:600, color:"var(--ink2)", marginTop:4, lineHeight:1.4, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden", ...WRAP }}>{sub}</div>}
@@ -40,6 +51,10 @@ function SheetHeader({ title, sub, onClose, right }) {
       </button>
     </div>
   );
+}
+
+function SheetBody({ children }) {
+  return <div style={{ padding:"4px 16px 28px" }}>{children}</div>;
 }
 
 // Ét fælles ikon (family) og én statuslinje for delte lister.
@@ -55,74 +70,117 @@ function ShareStatus({ list, userId, color = "var(--muted)" }) {
 
 export { ShareStatus };
 
-export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClose, createList, joinByCode, onRequestDelete, onShare }) {
+const CANCEL_LINK = { minHeight:44, padding:"0 4px", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--ink2)", textDecoration:"underline", textUnderlineOffset:3 };
+// Små, diskrete række-handlinger i Rediger (44 px højt trykmål, men ikke visuelt dominerende)
+const ROW_ACTION = { flexShrink:0, minHeight:44, minWidth:60, padding:"0 12px", background:"var(--surface)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", fontSize:13, fontWeight:700 };
+
+export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClose, createList, renameList, leaveList, joinByCode, onRequestDelete, onShare }) {
   const [mode, setMode]       = useState(null); // null | "new" | "join"
   const [editLists, setEdit]  = useState(false);
   const [newName, setNewName] = useState("");
+  const [creating, setCreating] = useState(false);
   const [joinCode, setJoinCode]       = useState("");
   const [joinError, setJoinError]     = useState("");
   const [joinLoading, setJoinLoading] = useState(false);
-  const canDeleteAny = lists.length > 1 && lists.some(l => l.owner_id === userId);
-  useEffect(() => { if (!canDeleteAny) setEdit(false); }, [canDeleteAny]);
+  const [renamingId, setRenamingId]   = useState(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [leaving, setLeaving]         = useState(null);
+  // Egne lister kan omdøbes (og slettes, når der er mere end én); lister andre har delt med mig (via adgang) kan forlades.
+  const canEditAny = lists.some(l => l.owner_id === userId || l.via_access);
+  useEffect(() => { if (!canEditAny) setEdit(false); }, [canEditAny]);
+  const toggleEdit = () => { setEdit(v => !v); setMode(null); setRenamingId(null); };
 
   const submitNew = async () => {
-    if (!newName.trim()) return;
-    await createList(newName);
-    setNewName(""); setMode(null); onClose();
+    if (!newName.trim() || creating) return;
+    setCreating(true);
+    const made = await createList(newName); // gør den nye liste aktiv
+    setCreating(false);
+    if (made) { setNewName(""); setMode(null); onClose(); }
   };
   const submitJoin = async () => {
+    if (!looksLikeListLink(joinCode) || joinLoading) return;
     setJoinLoading(true); setJoinError("");
     // Accepter både et fuldt link (/list/KODE eller det gamle ?join-list=KODE) og en rå kode indsat direkte
-    const code = parseListCode(joinCode);
-    const res = await joinByCode(code);
+    const res = await joinByCode(parseListCode(joinCode));
     setJoinLoading(false);
     if (res.success) { setJoinCode(""); setMode(null); onClose(); }
     else setJoinError(res.error || "Kunne ikke tilslutte listen. Tjek, at linket er helt.");
   };
+  const submitRename = async (l) => {
+    const v = renameValue.trim();
+    setRenamingId(null);
+    if (v && v !== l.name) await renameList(l.id, v);
+  };
 
   return (
     <Sheet label="Dine lister" onClose={onClose}>
-      <SheetHeader title="Dine lister" sub="Vælg en liste, eller tryk Del for at dele den." onClose={onClose}
-        right={canDeleteAny && (
-          <button type="button" onClick={() => setEdit(v => !v)}
+      <SheetHeader title="Dine lister" sub={editLists ? "Omdøb, slet eller forlad lister." : "Vælg en liste, eller tryk Del for at dele den."} onClose={onClose}
+        right={canEditAny && (
+          <button type="button" onClick={toggleEdit}
             style={{ minHeight:44, padding:"0 8px", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--green)" }}>
             {editLists ? "Færdig" : "Rediger"}
           </button>
         )} />
+      <SheetBody>
       <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:16 }}>
         {lists.map(l => {
           const isActive = l.id === activeListId;
-          const deletable = l.owner_id === userId && lists.length > 1;
+          const isOwner = l.owner_id === userId;
+          const deletable = isOwner && lists.length > 1;
+          const rowStyle = { flex:1, minWidth:0, minHeight:56, display:"flex", alignItems:"center", gap:10, padding:"8px 14px", textAlign:"left", fontFamily:"var(--f)",
+            background: isActive && !editLists ? "var(--green-selected-bg)" : "var(--surface)", border:`1px solid ${isActive && !editLists ? "var(--green)" : "var(--border)"}`, borderRadius:12 };
+          const nameBlock = (
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:15, fontWeight: isActive ? 800 : 600, color: isActive && !editLists ? "var(--green)" : "var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{l.name}</div>
+              <ShareStatus list={l} userId={userId} />
+            </div>
+          );
+          if (editLists && renamingId === l.id) {
+            return (
+              <div key={l.id} style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <input className="field" autoFocus maxLength={60} enterKeyHint="done" aria-label="Nyt listenavn" style={{ flex:1, minWidth:0, marginBottom:0, height:44, padding:"0 12px" }}
+                  value={renameValue} onChange={e => setRenameValue(e.target.value)} onKeyDown={e => { if (e.key === "Enter") submitRename(l); if (e.key === "Escape") { e.stopPropagation(); setRenamingId(null); } }} />
+                <button type="button" className="btn btn-primary" style={{ minHeight:44, padding:"0 14px" }} disabled={!renameValue.trim()} onClick={() => submitRename(l)}>Gem</button>
+                <button type="button" aria-label="Annullér omdøbning" onClick={() => setRenamingId(null)} style={{ ...ROW_ACTION, minWidth:44, padding:0, border:"1px solid var(--border)", color:"var(--ink2)" }}>
+                  <Icon name="x" size={14} color="var(--ink2)" />
+                </button>
+              </div>
+            );
+          }
           return (
             <div key={l.id} style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <button type="button" aria-current={isActive ? "true" : undefined} disabled={editLists}
-                onClick={() => { onSelect(l.id); onClose(); }}
-                style={{ flex:1, minWidth:0, minHeight:56, display:"flex", alignItems:"center", gap:10, padding:"8px 14px", textAlign:"left", fontFamily:"var(--f)", cursor: editLists ? "default" : "pointer",
-                  background: isActive ? "var(--green-selected-bg)" : "var(--surface)", border:`1px solid ${isActive ? "var(--green)" : "var(--border)"}`, borderRadius:12 }}>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:15, fontWeight: isActive ? 800 : 600, color: isActive ? "var(--green)" : "var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{l.name}</div>
-                  <ShareStatus list={l} userId={userId} />
-                </div>
-                {isActive && !editLists && <Icon name="check" size={18} color="var(--green)" />}
-              </button>
+              {editLists ? (
+                <div style={rowStyle}>{nameBlock}</div>
+              ) : (
+                <button type="button" aria-current={isActive ? "true" : undefined} onClick={() => { onSelect(l.id); onClose(); }} style={{ ...rowStyle, cursor:"pointer" }}>
+                  {nameBlock}
+                  {isActive && <Icon name="check" size={18} color="var(--green)" />}
+                </button>
+              )}
               {!editLists && onShare && (
                 <button type="button" aria-label={`Del listen ${l.name}`} onClick={() => onShare(l)}
-                  style={{ flexShrink:0, minHeight:56, minWidth:64, padding:"0 10px", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)" }}>
-                  <Icon name="share" size={16} color="var(--ink)" /> Del
+                  style={{ ...ROW_ACTION, minWidth:44, padding:"0 10px", display:"flex", alignItems:"center", justifyContent:"center", gap:4, border:"1px solid var(--border)", color:"var(--ink2)", fontSize:12 }}>
+                  <Icon name="share" size={15} color="var(--ink2)" /> Del
                 </button>
+              )}
+              {editLists && isOwner && (
+                <button type="button" aria-label={`Omdøb listen ${l.name}`} onClick={() => { setRenamingId(l.id); setRenameValue(l.name); }}
+                  style={{ ...ROW_ACTION, border:"1px solid var(--border2)", color:"var(--ink)" }}>Omdøb</button>
               )}
               {editLists && deletable && (
                 <button type="button" aria-label={`Slet listen ${l.name}`} onClick={() => onRequestDelete(l)}
-                  style={{ flexShrink:0, minHeight:44, minWidth:64, padding:"0 12px", background:"none", border:"1px solid var(--red-md)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--red)" }}>
-                  Slet
-                </button>
+                  style={{ ...ROW_ACTION, minWidth:52, border:"1px solid var(--red-md)", color:"var(--red)" }}>Slet</button>
+              )}
+              {editLists && !isOwner && l.via_access && (
+                <button type="button" aria-label={`Forlad listen ${l.name}`} onClick={() => setLeaving(l)}
+                  style={{ ...ROW_ACTION, border:"1px solid var(--red-md)", color:"var(--red)" }}>Forlad</button>
               )}
             </div>
           );
         })}
       </div>
 
-      {mode === null && (
+      {!editLists && mode === null && (
         <div style={{ display:"flex", gap:8 }}>
           <button type="button" className="list-picker-action" onClick={() => setMode("new")}>
             <Icon name="plus" size={14} color="var(--ink)" /> Ny liste
@@ -132,31 +190,36 @@ export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClo
           </button>
         </div>
       )}
-      {mode === "new" && (
+      {!editLists && mode === "new" && (
         <div>
           <div style={{ ...LBL, marginBottom:8 }}>Ny liste</div>
           <div style={{ display:"flex", gap:8 }}>
-            <input className="field" placeholder="Fx. Weekend, Fest…" autoFocus maxLength={60} style={{ flex:1, minWidth:0, marginBottom:0, height:44, padding:"0 12px" }}
+            <input className="field" placeholder="Fx. Weekend, Fest…" autoFocus maxLength={60} enterKeyHint="done" aria-label="Navn på ny liste" style={{ flex:1, minWidth:0, marginBottom:0, height:44, padding:"0 12px" }}
               value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === "Enter" && submitNew()} />
-            <button type="button" className="btn btn-primary" style={{ minHeight:44, padding:"0 16px" }} disabled={!newName.trim()} onClick={submitNew}>Opret</button>
+            <button type="button" className="btn btn-primary" style={{ minHeight:44, padding:"0 16px" }} disabled={!newName.trim() || creating} onClick={submitNew}>{creating ? "…" : "Opret"}</button>
           </div>
-          <button type="button" onClick={() => setMode(null)} style={{ minHeight:44, background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted)" }}>Annullér</button>
+          <button type="button" onClick={() => { setMode(null); setNewName(""); }} style={CANCEL_LINK}>Annullér</button>
         </div>
       )}
-      {mode === "join" && (
+      {!editLists && mode === "join" && (
         <div>
           <div style={{ ...LBL, marginBottom:4 }}>Tilslut delt liste</div>
-          <div style={{ fontSize:12, color:"var(--muted)", marginBottom:8, lineHeight:1.4 }}>Har nogen sendt dig et link til deres liste? Indsæt linket her, så kan du se og redigere den.</div>
+          <div style={{ fontSize:12, color:"var(--muted)", marginBottom:8, lineHeight:1.4 }}>Har du fået et link til en delt liste? Indsæt linket her.</div>
           <div style={{ display:"flex", gap:8 }}>
-            <input className="field" placeholder="Indsæt linket" autoFocus style={{ flex:1, minWidth:0, marginBottom:0, height:44, padding:"0 12px" }}
-              value={joinCode} onChange={e => { setJoinCode(e.target.value); setJoinError(""); }} onKeyDown={e => e.key === "Enter" && joinCode.trim() && submitJoin()} />
-            <button type="button" className="btn btn-primary" style={{ minHeight:44, padding:"0 16px", whiteSpace:"nowrap" }} disabled={joinLoading || !joinCode.trim()} onClick={submitJoin}>
+            <input className="field" placeholder="Indsæt linket" autoFocus enterKeyHint="go" aria-label="Link til delt liste" style={{ flex:1, minWidth:0, marginBottom:0, height:44, padding:"0 12px" }}
+              value={joinCode} onChange={e => { setJoinCode(e.target.value); setJoinError(""); }} onKeyDown={e => e.key === "Enter" && submitJoin()} />
+            <button type="button" className="btn btn-primary" style={{ minHeight:44, padding:"0 16px", whiteSpace:"nowrap" }} disabled={joinLoading || !looksLikeListLink(joinCode)} onClick={submitJoin}>
               {joinLoading ? "…" : "Tilslut"}
             </button>
           </div>
           {joinError && <div style={{ fontSize:12, color:"var(--red)", marginTop:6 }}>{joinError}</div>}
-          <button type="button" onClick={() => setMode(null)} style={{ minHeight:44, background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted)" }}>Annullér</button>
+          <button type="button" onClick={() => { setMode(null); setJoinCode(""); setJoinError(""); }} style={CANCEL_LINK}>Annullér</button>
         </div>
+      )}
+      </SheetBody>
+      {leaving && (
+        <ConfirmDialog title={`Forlad listen "${leaving.name}"?`} message="Du kan ikke længere se eller redigere den. Ejeren kan give dig adgang igen." confirmLabel="Forlad listen"
+          onConfirm={async () => { const l = leaving; setLeaving(null); await leaveList(l.id); }} onCancel={() => setLeaving(null)} />
       )}
     </Sheet>
   );
@@ -171,13 +234,13 @@ const BTN_TEXT = { minHeight:44, padding:"0 4px", background:"none", border:"non
 function ModeOption({ selected, disabled, title, sub, onSelect }) {
   return (
     <button type="button" role="radio" aria-checked={selected} disabled={disabled} onClick={onSelect}
-      style={{ ...CARD, width:"100%", minHeight:56, display:"flex", alignItems:"center", gap:12, padding:"10px 14px", textAlign:"left", fontFamily:"var(--f)", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? .55 : 1,
-        borderColor: selected ? "var(--green)" : "var(--border)", background: selected ? "var(--green-selected-bg)" : "var(--surface)" }}>
-      <span aria-hidden="true" style={{ width:22, height:22, flexShrink:0, borderRadius:"50%", border:`2px solid ${selected ? "var(--green)" : "var(--border2)"}`, display:"flex", alignItems:"center", justifyContent:"center" }}>
-        {selected && <span style={{ width:10, height:10, borderRadius:"50%", background:"var(--green)" }} />}
+      style={{ ...CARD, width:"100%", minHeight:56, display:"flex", alignItems:"center", gap:12, padding:"10px 14px", textAlign:"left", fontFamily:"var(--f)", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? .6 : 1,
+        borderColor: selected && !disabled ? "var(--green)" : "var(--border)", background: disabled ? "var(--surface2)" : selected ? "var(--green-selected-bg)" : "var(--surface)" }}>
+      <span aria-hidden="true" style={{ width:22, height:22, flexShrink:0, borderRadius:"50%", border:`2px solid ${selected && !disabled ? "var(--green)" : "var(--border2)"}`, display:"flex", alignItems:"center", justifyContent:"center" }}>
+        {selected && !disabled && <span style={{ width:10, height:10, borderRadius:"50%", background:"var(--green)" }} />}
       </span>
       <span style={{ flex:1, minWidth:0 }}>
-        <span style={{ display:"block", fontSize:14, fontWeight:700, color:"var(--ink)" }}>{title}</span>
+        <span style={{ display:"block", fontSize:14, fontWeight:700, color: disabled ? "var(--muted2)" : "var(--ink)" }}>{title}</span>
         <span style={{ display:"block", fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4, ...WRAP }}>{sub}</span>
       </span>
     </button>
@@ -258,6 +321,7 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
     return (
       <Sheet label="Del liste" onClose={onClose}>
         <SheetHeader title="Del liste" sub={list.name} onClose={onClose} />
+      <SheetBody>
         <div style={{ ...CARD, padding:14, marginBottom:16 }}>
           <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:700, color:"var(--ink)" }}><Icon name="family" size={14} color="var(--ink)" /> Delt af {ownerName}</div>
           <div style={{ fontSize:13, color:"var(--muted2)", marginTop:6, lineHeight:1.5 }}>
@@ -274,6 +338,7 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
           <ConfirmDialog title={`Forlad listen "${list.name}"?`} message={`Du kan ikke længere se eller redigere den. ${ownerName} kan give dig adgang igen.`} confirmLabel="Forlad listen"
             onConfirm={async () => { setConfirm(null); if (await leaveList(list.id)) onClose(); }} onCancel={() => setConfirm(null)} />
         )}
+      </SheetBody>
       </Sheet>
     );
   }
@@ -281,6 +346,7 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
   return (
     <Sheet label="Del liste" onClose={onClose}>
       <SheetHeader title="Del liste" sub={list.name} onClose={onClose} />
+      <SheetBody>
       <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.5, marginBottom:16 }}>Vælg, hvem der kan se og redigere listen. Alle med adgang kan tilføje, afkrydse og fjerne varer.</div>
 
       <div style={{ ...LBL, marginBottom:8 }}>Hvem skal have adgang?</div>
@@ -295,9 +361,9 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
         </div>
       )}
       {familyMembers.length === 0 && (
-        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginTop:-8, marginBottom:20 }}>
-          Familie er de voksne, du har inviteret med egen konto.{" "}
-          {onGoToFamily && <button type="button" onClick={onGoToFamily} style={{ ...BTN_TEXT, minHeight:0, padding:0, color:"var(--green)", fontSize:12 }}>Gå til Familie og invitér</button>}
+        <div style={{ marginTop:-8, marginBottom:20 }}>
+          <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginBottom:8 }}>Familie er de voksne, du har inviteret med egen konto.</div>
+          {onGoToFamily && <button type="button" className="btn btn-outline" style={{ width:"100%", minHeight:44 }} onClick={onGoToFamily}>Gå til Familie og invitér</button>}
         </div>
       )}
 
@@ -356,7 +422,7 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
             </button>
           )}
         </div>
-        <button type="button" onClick={() => setConfirm("newlink")} style={{ ...BTN_TEXT, marginTop:4, color:"var(--muted2)" }}>Lav nyt link</button>
+        <button type="button" disabled={!list.share_link} onClick={() => setConfirm("newlink")} style={{ ...BTN_TEXT, marginTop:4, color:"var(--muted2)", opacity: list.share_link ? 1 : .45, cursor: list.share_link ? "pointer" : "not-allowed" }}>Lav nyt link</button>
       </div>
 
       {confirm === "private" && (
@@ -367,6 +433,7 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
         <ConfirmDialog title="Lav et nyt link?" message="Det gamle link virker ikke længere. De, der allerede er tilsluttet, beholder adgangen, indtil du fjerner dem." confirmLabel="Lav nyt link" danger={false}
           onConfirm={async () => { setConfirm(null); await rotateListCode(list.id); }} onCancel={() => setConfirm(null)} />
       )}
+      </SheetBody>
     </Sheet>
   );
 }
@@ -383,6 +450,7 @@ export function JoinListSheet({ preview, busy, onConfirm, onCancel }) {
   return (
     <Sheet label="Tilslut delt liste" onClose={onCancel}>
       <SheetHeader title="Tilslut delt liste?" sub={preview.name} onClose={onCancel} />
+      <SheetBody>
       <div style={{ fontSize:14, color:"var(--ink)", lineHeight:1.5, marginBottom:12, ...WRAP }}>
         <strong>{owner}</strong> vil dele indkøbslisten <strong>"{preview.name}"</strong> med dig.
       </div>
@@ -398,6 +466,7 @@ export function JoinListSheet({ preview, busy, onConfirm, onCancel }) {
         {busy ? "Tilslutter…" : "Tilslut listen"}
       </button>
       <button type="button" className="btn btn-outline" style={{ width:"100%", minHeight:48 }} disabled={busy} onClick={onCancel}>Ikke nu</button>
+      </SheetBody>
     </Sheet>
   );
 }

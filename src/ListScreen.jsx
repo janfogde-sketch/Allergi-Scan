@@ -32,7 +32,7 @@ export default function ListScreen({
   const {
     lists, activeList, activeListId, setActiveListId,
     shoppingList, newItemName, setNewItemName, addToList, toggleItem, removeItem, clearDone,
-    familyMembers, loadFamilyMembers, createList, deleteList, joinByCode,
+    familyMembers, loadFamilyMembers, createList, renameList, deleteList, joinByCode,
     getListAccess, grantAccess, revokeAccess, setListType, rotateListCode, leaveList, loadShoppingList,
   } = useShoppingContext();
 
@@ -417,7 +417,7 @@ export default function ListScreen({
       {showListPicker && (
         <ListSwitcherSheet lists={lists} activeListId={activeListId} userId={userId}
           onSelect={setActiveListId} onClose={() => setShowListPicker(false)}
-          createList={createList} joinByCode={joinByCode} onRequestDelete={setListPendingDelete}
+          createList={createList} renameList={renameList} leaveList={leaveList} joinByCode={joinByCode} onRequestDelete={setListPendingDelete}
           onShare={l => { setShowListPicker(false); setShareListId(l.id); }} />
       )}
 
@@ -438,7 +438,7 @@ export default function ListScreen({
           delte klasser brugt uændret af MadpasScreen.jsx og tre steder i
           ProfileScreen.jsx, som ikke skal påvirkes. */}
       {shoppingList.length === 0 && (
-        <div className="empty-state">
+        <div className="empty-state" style={{ paddingTop:16 }}>
           <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="cart" size={23} color="var(--muted)" /></span>
           <div className="empty-txt">Listen er tom</div>
           <div className="empty-sub" style={{ lineHeight:1.35, color:"var(--ink2)" }}>Søg efter produkter eller tilføj en vare manuelt</div>
@@ -457,7 +457,7 @@ export default function ListScreen({
             <div key={item.id} className="list-item">
               <div className="list-check" role="checkbox" aria-checked="false" aria-label={`Markér "${item.name}" som købt`} tabIndex={0}
                 onClick={() => handleToggleItem(item.id, false)} onKeyDown={e => e.key === "Enter" && handleToggleItem(item.id, false)} />
-              {item.ean && <ProductImage product={item} size={22} />}
+              {item.ean && <ProductImage product={item} size={36} />}
               <div style={{ flex:1, minWidth:0 }}>
                 {item.ean
                   ? <div className="list-name" role="link" tabIndex={0} style={{ cursor:"pointer" }}
@@ -507,7 +507,7 @@ export default function ListScreen({
             <div key={item.id} className="list-item done">
               <div className="list-check checked" role="checkbox" aria-checked="true" aria-label={`Fjern "${item.name}" fra købt`} tabIndex={0}
                 onClick={() => toggleItem(item.id)} onKeyDown={e => e.key === "Enter" && toggleItem(item.id)}><Icon name="check" size={12} color="#fff" /></div>
-              {item.ean && <ProductImage product={item} size={22} />}
+              {item.ean && <ProductImage product={item} size={36} />}
               <div style={{ flex:1, minWidth:0 }}>
                 {item.ean
                   ? <div className="list-name done" role="link" tabIndex={0} style={{ cursor:"pointer" }}

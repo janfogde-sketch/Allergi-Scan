@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isSharedList, listShareStatus, joinNames, parseListCode, listLinkUrl, listShareText } from "./listShare.js";
+import { isSharedList, listShareStatus, joinNames, parseListCode, listLinkUrl, listShareText, looksLikeListLink } from "./listShare.js";
 
 describe("listShare", () => {
   const me = "u1";
@@ -47,5 +47,14 @@ describe("listelink", () => {
     expect(listLinkUrl("ABC234")).toBe("https://eatsafe.dk/list/ABC234");
     expect(listShareText("Weekend")).toContain('"Weekend"');
     expect(listShareText("Weekend")).toContain("Du bestemmer selv");
+  });
+
+  it("looksLikeListLink accepterer links og koder, afviser tekst", () => {
+    expect(looksLikeListLink("https://eatsafe.dk/list/ABC123")).toBe(true);
+    expect(looksLikeListLink("https://eatsafe.dk/?join-list=abc123")).toBe(true);
+    expect(looksLikeListLink("abc123")).toBe(true);
+    expect(looksLikeListLink("")).toBe(false);
+    expect(looksLikeListLink("hej med dig")).toBe(false);
+    expect(looksLikeListLink("ab")).toBe(false);
   });
 });
