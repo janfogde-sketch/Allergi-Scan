@@ -561,6 +561,9 @@ body::-webkit-scrollbar{display:none;}
 .btn-ghost{background:var(--surface2);color:var(--ink2);border:1px solid var(--border);}
 .btn-ghost:hover{background:var(--surface2);color:var(--ink);}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;}
+.btn-primary svg,.btn-green svg{stroke:var(--on-green);}
+.btn-primary:disabled,.btn-green:disabled{background:var(--border);color:var(--muted);box-shadow:none;opacity:1;}
+.btn-primary:disabled svg,.btn-green:disabled svg{stroke:var(--muted);}
 
 /* ── CHIPS & TAGS ── */
 .chip-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}

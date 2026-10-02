@@ -344,10 +344,11 @@ export default function ResultScreen({
   };
 
   const renderAddToList = (secondary = false) => (
-    <button className={`btn ${secondary ? "btn-outline" : "btn-green"} btn-sm btn-full`} onClick={handleAddToList}
-      style={{ marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:8, opacity: addedToList ? .7 : 1 }}>
+    <button className={`btn ${secondary || addedToList ? "btn-outline" : "btn-green"} btn-sm btn-full`} onClick={handleAddToList} aria-live="polite"
+      style={{ marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+        ...(addedToList ? { background:"var(--green-lt)", borderColor:"var(--green-mid)", color:"var(--green)" } : {}) }}>
       {addedToList
-        ? <><Icon name="check" size={15} color={secondary ? "var(--green)" : "var(--on-green)"} /> Tilføjet til indkøbsliste</>
+        ? <><Icon name="check" size={15} color="var(--green)" /> Tilføjet til indkøbsliste</>
         : <><Icon name="cart" size={15} color={secondary ? "var(--green)" : "var(--on-green)"} /> Tilføj til indkøbsliste</>}
     </button>
   );
@@ -830,7 +831,8 @@ export default function ResultScreen({
     if (!rows.length) return null;
     return (
       <div className="card">
-        <div className="card-lbl">Næringsindhold pr. {nutritionUnit}</div>
+        <div className="card-lbl" style={cannotAssess ? { marginBottom:4 } : undefined}>Næringsindhold pr. {nutritionUnit}</div>
+        {cannotAssess && <div style={{ fontSize:11.5, color:"var(--muted)", marginBottom:8, lineHeight:1.4 }}>Næringsdata findes, men siger ikke noget om dine allergier.</div>}
         <div style={UI.udflex_fdcolumn}>
           {rows.map(([label, value], i) => (
             <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom: i < rows.length-1 ? "1px solid var(--border)" : "none" }}>
@@ -867,10 +869,10 @@ export default function ResultScreen({
       {/* ── Scan-integration: forslag om at markere en matchende vare på
           indkøbslisten som købt — diskret, kræver et eksplicit klik. ── */}
       {listMatch && (
-        <div style={{ display:"flex", alignItems:"center", gap:8, background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, padding:"10px 10px", marginBottom:10 }}>
-          <Icon name="cart" size={14} color="var(--green)" />
+        <div style={{ display:"flex", alignItems:"center", gap:8, background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", marginBottom:10 }}>
+          <Icon name="cart" size={14} color="var(--muted)" />
           <button type="button" onClick={confirmListMatch}
-            style={{ flex:1, minWidth:0, textAlign:"left", background:"none", border:"none", padding:0, cursor:"pointer", fontFamily:"var(--f)", fontSize:11.5, fontWeight:700, color:"var(--green)", lineHeight:1.4 }}>
+            style={{ flex:1, minWidth:0, textAlign:"left", background:"none", border:"none", padding:0, cursor:"pointer", fontFamily:"var(--f)", fontSize:12, fontWeight:600, color:"var(--ink2)", lineHeight:1.4 }}>
             Matcher "{listMatch.name}" på din liste – markér som købt
           </button>
           <button type="button" aria-label="Afvis forslag" onClick={() => setListMatchDismissed(true)}

@@ -37,6 +37,17 @@ export default function SuggestEditScreen({
   const { setScreen } = useNavigationContext();
   const [ingItems, setIngItems] = useState([]);
   const [ingInput, setIngInput] = useState("");
+  // Tilbage = ét logisk trin tilbage til den visning, brugeren kom fra. Stakken fyldes kun af brugerens egne valg inde i flowet;
+  // åbnes flowet direkte på et trin (fx "Indsend ingrediensliste" fra produktet), er stakken tom, og tilbage fører til produktet.
+  const [stepStack, setStepStack] = useState([]);
+  const goStep = (next) => { setStepStack(st => [...st, editStep]); setEditStep(next); };
+  const goBack = () => {
+    if (editStep === "scanning" || editStep === "sending") return;
+    if (editStep === "start" || editStep === "done" || stepStack.length === 0) { setScreen(SCREENS.RESULT); return; }
+    const prev = stepStack[stepStack.length - 1];
+    setStepStack(st => st.slice(0, -1));
+    setEditStep(prev);
+  };
 
   // Nulstil ingrediensliste ved nyt redigeringsforslag
   useEffect(() => {
@@ -55,8 +66,15 @@ export default function SuggestEditScreen({
 
   const ingToText = (items) => items.join(", ");
 
+  // Send forslag er først aktiv, når der er noget at sende for den valgte type.
+  const canSubmit = editType === "ingredients" ? (editIngText.trim().length > 0 || ingItems.length > 0)
+    : editType === "nutrition" ? editIngText.trim().length > 0
+    : editType === "image" ? !!editProductImage
+    : editNote.trim().length > 0;
+
   // ── OCR via Edge Function ─────────────────────────────────────────────────
   const runOcr = async (file) => {
+    if (editStep !== "review") setStepStack(st => [...st, editStep]);
     setEditStep("scanning");
     try {
       const b64 = await compressImageToBase64(file);
@@ -131,7 +149,7 @@ export default function SuggestEditScreen({
 
       {/* Header */}
       <div style={UI.avatarRow}>
-        <button onClick={() => setScreen(SCREENS.RESULT)}
+        <button onClick={goBack} aria-label="Tilbage"
           style={UI.iconBtn}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
             <path strokeLinecap="round" d="M15 19l-7-7 7-7"/>
@@ -170,7 +188,7 @@ export default function SuggestEditScreen({
             { id:"other",       icon:"edit",    title:"Andet er forkert",            desc:"Skriv hvad der skal rettes" },
           ].map(opt => (
             <div key={opt.id}
-              onClick={() => { setEditType(opt.id); setEditStep(opt.id === "other" ? "review" : "guide"); }}
+              onClick={() => { setEditType(opt.id); goStep(opt.id === "other" ? "review" : "guide"); }}
               style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, marginBottom:8, cursor:"pointer" }}>
               <div style={UI.ufs28_shr0}><Icon name={opt.icon} size={24} color="var(--ink2)" /></div>
               <div style={S.flex1}>
@@ -208,20 +226,17 @@ export default function SuggestEditScreen({
             </div>
           </div>
 
-          <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10, width:"100%", padding:"16px", borderRadius:14, cursor:"pointer", background:"var(--green)", border:"none", color:"var(--on-green)", fontSize:16, fontWeight:800, boxShadow:"0 4px 16px rgba(34,197,94,.3)", marginBottom:10 }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--on-green)" strokeWidth="2">
-              <path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
+          <label className="btn btn-primary btn-full" style={{ marginBottom:10 }}>
+            <Icon name="camera" size={18} color="var(--on-green)" />
             Tag billede med kamera
             <input type="file" accept="image/*" capture="environment" style={S.none} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
           </label>
-          <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, width:"100%", padding:"14px", borderRadius:12, cursor:"pointer", background:"var(--surface)", border:"1px solid var(--border2)", color:"var(--ink2)", fontSize:14, fontWeight:600, marginBottom:10 }}>
-            <Icon name="image" size={15} color="var(--ink2)" /> Vælg billede fra galleri
+          <label className="btn btn-outline btn-full" style={{ marginBottom:10 }}>
+            <Icon name="image" size={16} color="var(--ink2)" /> Vælg billede fra galleri
             <input type="file" accept="image/*" style={S.none} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
           </label>
           {editType !== "image" && (
-            <button className="btn btn-ghost btn-full btn-sm" onClick={() => setEditStep("review")}>
+            <button className="btn btn-ghost btn-full btn-sm" onClick={() => goStep("review")}>
               Skriv manuelt i stedet
             </button>
           )}
@@ -322,11 +337,14 @@ export default function SuggestEditScreen({
             </div>
           )}
 
-          {/* Andet / bemærkning */}
+          {/* Bemærkning: valgfri ved de andre typer, påkrævet ved "Andet er forkert" (så knappen og feltet ikke modsiger hinanden) */}
           <div className="card" style={S.mb12}>
-            <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Bemærkning (valgfrit)</div>
+            <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>
+              {editType === "other" ? "Hvad skal rettes?" : "Bemærkning (valgfrit)"}
+            </div>
             <textarea value={editNote} onChange={e => setEditNote(e.target.value)}
-              rows={2} placeholder="Fx. Ny udgave af produktet, fejl i allergen-info..."
+              rows={editType === "other" ? 4 : 2}
+              placeholder={editType === "other" ? "Fx. forkert navn, forkert mærke eller fejl i allergenoplysninger…" : "Fx. Ny udgave af produktet, fejl i allergen-info..."}
               className="field" style={{ resize:"none", fontFamily:"var(--f)", fontSize:13 }} />
           </div>
 
@@ -338,16 +356,14 @@ export default function SuggestEditScreen({
             <div style={S.sub11lh}>Dit forslag gennemgås af vores team inden det publiceres. Tak for din hjælp!</div>
           </div>
 
-          <button
+          <button className="btn btn-primary btn-full" style={{ marginBottom:8 }} disabled={!canSubmit}
             onClick={() => {
               if (editType === "ingredients" && ingItems.length > 0) setEditIngText(ingToText(ingItems));
               submit();
-            }}
-            disabled={editType === "ingredients" && !editIngText.trim() && ingItems.length === 0}
-            style={{ width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", borderRadius:12, padding:"16px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor:"pointer", marginBottom:8, opacity: (editType === "ingredients" && !editIngText.trim()) ? 0.4 : 1, boxShadow:"0 2px 12px rgba(14,143,90,.25)", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+            }}>
             Send forslag <Icon name="check" size={14} color="var(--on-green)" />
           </button>
-          <button className="btn btn-ghost btn-full" onClick={() => setScreen(SCREENS.RESULT)}>Annuller</button>
+          <button className="btn btn-outline btn-full" onClick={() => setScreen(SCREENS.RESULT)}>Annuller</button>
         </div>
       )}
 
