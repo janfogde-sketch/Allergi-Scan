@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { DIETS, SUPABASE_URL, SCREENS } from "./constants.jsx";
 import { initials, getAllergenLabels, makeHeaders, apiCall, visibleDiets } from "./helpers.js";
-import { Icon, showToast, ConfirmDialog, AllergenGlyph, InfoSheet } from "./SharedComponents.jsx";
+import { Icon, showToast, ConfirmDialog, AllergenGlyph } from "./SharedComponents.jsx";
+import HelpModal from "./HelpModal.jsx";
 import { MemberForm } from "./MemberForm.jsx";
 import { TextLink } from "./DesignSystem.jsx";
-import { InvitePanel, PendingInviteCard, WhatIsShared } from "./FamilyInvite.jsx";
+import { InvitePanel, PendingInviteCard } from "./FamilyInvite.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -17,6 +18,16 @@ import { UI } from "./styleUtils.js";
 // stadig af ProfileScreen, fordi Profil-siden også viser antallet.
 const SECTION = { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".8px", margin:"16px 0 4px" };
 const SECTION_SUB = { fontSize:12, color:"var(--muted)", lineHeight:1.45, marginBottom:8 };
+
+// Kompakt tom tilstand pr. sektion: gør funktionen synlig uden et stort tomt kort.
+function EmptyRow({ title, text }) {
+  return (
+    <div style={{ padding:"10px 14px", background:"var(--surface)", border:"1px dashed var(--border2)", borderRadius:12, marginBottom:8 }}>
+      <div style={{ fontSize:13, fontWeight:700, color:"var(--ink2)" }}>{title}</div>
+      <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>{text}</div>
+    </div>
+  );
+}
 
 export default function FamilyScreen({ household, setHousehold, loadHousehold }) {
   const { userId, accessToken } = useAuthContext();
@@ -156,14 +167,9 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
       <div className="screen-sub">Saml personer, du tjekker varer for og deler indkøbslister med.</div>
       <TextLink onClick={() => setShowHowItWorks(true)}>Sådan virker Familie</TextLink>
 
-      {family.length===0 && household.length===0 && pendingInvites.length===0 && <div className="empty-state"><span className="empty-icon" style={{ width:60, height:60 }}><Icon name="family" size={23} color="var(--muted)" /></span><div className="empty-txt">Ingen i din familie endnu</div><div className="empty-sub">Opret en profil til et barn, eller invitér en voksen med egen konto</div></div>}
-
-      {(household.length > 0 || pendingInvites.length > 0) && (
-        <>
-          <div style={SECTION}>Familiemedlemmer med egen konto</div>
-          <div style={SECTION_SUB}>Voksne, der er inviteret til familien og har deres egen EatSafe-konto. De styrer selv deres allergier og kan få adgang til delte indkøbslister.</div>
-        </>
-      )}
+      <div style={SECTION}>Familiemedlemmer med egen konto</div>
+      <div style={SECTION_SUB}>Voksne, der er inviteret til familien og har deres egen EatSafe-konto. De styrer selv deres allergier og kan få adgang til delte indkøbslister.</div>
+      {household.length === 0 && pendingInvites.length === 0 && <EmptyRow title="Ingen endnu" text="Invitér en voksen med egen EatSafe-konto." />}
       {household.map(m => (
         <div key={`h-${m.id}`} className="family-member">
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
@@ -215,12 +221,9 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
         }} />
       ))}
 
-      {family.length > 0 && (
-        <>
-          <div style={SECTION}>Profiler du administrerer</div>
-          <div style={SECTION_SUB}>Fx børn eller andre uden egen konto. Du styrer selv allergier, intolerancer og øvrige profiloplysninger.</div>
-        </>
-      )}
+      <div style={SECTION}>Profiler du administrerer</div>
+      <div style={SECTION_SUB}>Fx børn eller andre uden egen konto. Du administrerer deres profil.</div>
+      {family.length === 0 && <EmptyRow title="Ingen endnu" text="Opret en profil til fx et barn." />}
       {family.map(m => (
         <div key={`p-${m.id}`} className="family-member" style={editingMemberId === m.id ? { border:"1.5px solid var(--green)", background:"var(--green-selected-bg)" } : undefined}>
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
@@ -232,12 +235,12 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
               </div>
             </div>
             <button type="button" onClick={() => { setFamilyAddMode(null); startEditMember(m); }} aria-label={`Rediger ${m.name}`}
-              style={{ background:"none", border:"none", cursor:"pointer", padding:"10px 6px", minHeight:44, fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color: editingMemberId === m.id ? "var(--green)" : "var(--muted2)" }}>
+              style={{ background:"none", border:"none", cursor:"pointer", padding:"0 4px", minHeight:44, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color: editingMemberId === m.id ? "var(--green)" : "var(--ink2)" }}>
               Rediger
             </button>
             <button type="button" onClick={() => setConfirmDeleteProfile(m)} aria-label={`Slet profilen for ${m.name}`}
-              style={{ background:"none", border:"none", cursor:"pointer", width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center", opacity:.5, flexShrink:0 }}>
-              <Icon name="trash" size={18} color="var(--muted)" />
+              style={{ background:"none", border:"none", cursor:"pointer", width:40, height:44, marginLeft:-2, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+              <Icon name="trash" size={18} color="var(--ink2)" />
             </button>
           </div>
           {renderMemberChips(m, `p-${m.id}`)}
@@ -265,7 +268,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
             </span>
             <span>
               <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>Invitér voksen</div>
-              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Har sin egen EatSafe-konto og styrer selv sine oplysninger.</div>
+              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Har sin egen EatSafe-konto og styrer selv sin profil.</div>
             </span>
           </button>
           <button type="button" onClick={() => setFamilyAddMode("form")}
@@ -327,19 +330,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
           reversibel afkobling af to konti — ingen data slettes, kun
           den delte adgang (danger=false, grøn "Fjern fra familien"),
           erstatter den tidligere native window.confirm(). */}
-      {showHowItWorks && (
-        <InfoSheet title="Sådan virker Familie" onClose={() => setShowHowItWorks(false)}>
-          <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.55 }}>
-            <div style={{ fontWeight:800, color:"var(--ink)", marginBottom:2 }}>Voksne med egen konto</div>
-            <div style={{ marginBottom:10 }}>Invitér med et link. De opretter deres egen EatSafe-konto og styrer selv deres allergier.</div>
-            <div style={{ marginBottom:14 }}><WhatIsShared /></div>
-            <div style={{ fontWeight:800, color:"var(--ink)", marginBottom:2 }}>Profiler uden konto</div>
-            <div style={{ marginBottom:10 }}>Til fx børn. Du opretter og administrerer profilen.</div>
-            <div style={{ fontWeight:800, color:"var(--ink)", marginBottom:2 }}>Indkøbslister</div>
-            <div>Vælg pr. liste, om den er privat, delt med hele familien eller bestemte personer. Du kan også dele en liste via link.</div>
-          </div>
-        </InfoSheet>
-      )}
+      {showHowItWorks && <HelpModal screen="family" closeLabel="Forstået" onClose={() => setShowHowItWorks(false)} />}
       {confirmDeleteProfile && (
         <ConfirmDialog
           title={`Slet profilen for ${confirmDeleteProfile.name}?`}

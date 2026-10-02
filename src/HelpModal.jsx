@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "./SharedComponents.jsx";
 import { DIETS_ENABLED } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
@@ -34,10 +35,11 @@ const HELP_CONTENT = {
     { icon:"family", title:"Din familie", desc:"Voksne, du har inviteret (eller som har inviteret dig), kan se hinandens allergier og dele lister. Se dem under Familie i menuen." },
     { icon:"list", title:"Mine / Familien", desc:"Under historik og favoritter kan du skifte mellem kun dine egne og hele familiens." },
   ]},
-  "family": { title:"Familie", titleIcon:"family", tips:[
-    { icon:"👶", title:"Allergiprofiler", desc:"Opret en profil til et barn eller en anden uden egen konto — vælg dem på Scan-siden for at tjekke varer for dem." },
-    { icon:"home", title:"Voksne med egen konto", desc:"Når en voksen siger ja til din invitation, kan I se hinandens allergier og dele lister. Begge kan afslutte forbindelsen igen." },
-    { icon:"link", title:"Invitér en voksen", desc:"Send invitationen til en voksen. Linket virker i 24 timer og kun til én person." },
+  "family": { title:"Sådan virker Familie", titleIcon:"family", tips:[
+    { icon:"family", title:"1. Tilføj personer", desc:"Invitér voksne med egen EatSafe-konto, eller opret profiler til fx børn." },
+    { icon:"barcode", title:"2. Tjek varer for familien", desc:"Når du scanner, kan du se, om varen passer til de personer, du har adgang til." },
+    { icon:"cart", title:"3. Del indkøbslister", desc:"Vælg om en liste er privat, deles med hele familien eller kun bestemte personer." },
+    { icon:"shield", title:"4. I bestemmer selv, hvad der deles", desc:"Voksne styrer deres egen profil. Profiler uden konto administreres af den person, der har oprettet dem." },
   ]},
   "result": { title:"Scanningsresultat", titleIcon:"package", tips:[
     { icon:"🚦", title:"Farvet ramme", desc:"Grøn = sikkert, gul = advarsel, rød = farligt — vurderet ud fra dine aktive profiler." },
@@ -87,11 +89,13 @@ const HELP_CONTENT = {
 };
 
 // ── Hjælp-modal — kontekstuel tips-liste ud fra hvilken skærm brugeren er på ──
-export default function HelpModal({ screen, onClose, onOpenFeedback }) {
+// closeLabel: viser en primær grøn lukke-knap ("Forstået") i stedet for feedback-knappen.
+export default function HelpModal({ screen, onClose, onOpenFeedback, closeLabel }) {
   const content = HELP_CONTENT[screen] || { title:"Hjælp", titleIcon:"info", tips:[
     { icon:"message", title:"Send feedback", desc:"Brug Feedback-knappen øverst til at rapportere problemer eller forslag." },
   ]};
-  return (
+  // Portal til body: .screen.fade-in fanger ellers position:fixed (CLAUDE.md §3 regel 4), når modalen åbnes fra en skærm.
+  return createPortal(
     <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.85)", display:"flex", alignItems:"flex-end" }}
       onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
@@ -116,11 +120,19 @@ export default function HelpModal({ screen, onClose, onOpenFeedback }) {
             </div>
           ))}
         </div>
-        <button onClick={() => { onClose(); onOpenFeedback(); }}
-          style={{ width:"100%", padding:"12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-          <Icon name="message" size={13} color="var(--muted2)" /> Send feedback eller rapportér fejl
-        </button>
+        {closeLabel ? (
+          <button type="button" onClick={onClose}
+            style={{ width:"100%", minHeight:44, padding:12, background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"#fff", cursor:"pointer" }}>
+            {closeLabel}
+          </button>
+        ) : (
+          <button onClick={() => { onClose(); onOpenFeedback(); }}
+            style={{ width:"100%", padding:"12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+            <Icon name="message" size={13} color="var(--muted2)" /> Send feedback eller rapportér fejl
+          </button>
+        )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
