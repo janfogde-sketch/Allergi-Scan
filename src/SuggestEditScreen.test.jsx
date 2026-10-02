@@ -47,9 +47,12 @@ describe("Bidragsflow: tilbage går ét logisk trin tilbage", () => {
     expect(onScreen).toHaveBeenCalledWith(SCREENS.RESULT);
   });
 
-  it("åbnet direkte på fotoguiden fører tilbage til produktet", () => {
+  it("åbnet direkte på fotoguiden fører tilbage til oversigten (aldrig direkte til produktet)", () => {
     const onScreen = vi.fn();
     render(<Harness startStep="guide" startType="ingredients" onScreen={onScreen} />);
+    back();
+    expect(screen.getByText("Næringsindhold mangler")).toBeTruthy();
+    expect(onScreen).not.toHaveBeenCalled();
     back();
     expect(onScreen).toHaveBeenCalledWith(SCREENS.RESULT);
   });

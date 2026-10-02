@@ -45,7 +45,9 @@ export default function SuggestEditScreen({
   const goStep = (next) => { setStepStack(st => [...st, editStep]); setEditStep(next); };
   const goBack = () => {
     if (editStep === "scanning" || editStep === "sending") return;
-    if (editStep === "start" || editStep === "done" || stepStack.length === 0) { setScreen(SCREENS.RESULT); return; }
+    if (editStep === "start" || editStep === "done") { setScreen(SCREENS.RESULT); return; }
+    // Fotoskærmene (og de øvrige undertrin) går altid tilbage til "Hjælp os med at forbedre"-oversigten, aldrig helt til produktet.
+    if (stepStack.length === 0) { setEditStep("start"); return; }
     const prev = stepStack[stepStack.length - 1];
     setStepStack(st => st.slice(0, -1));
     setEditStep(prev);
@@ -217,9 +219,10 @@ export default function SuggestEditScreen({
         </div>
       )}
 
-      {/* ── TRIN 2: Guide til foto ── (kompakt: kort intro, kameraknappen øverst, korte tips nederst) */}
+      {/* ── TRIN 2: Guide til foto ── ét samlet, næsten hvidt kort (så intet ligger løst oven på baggrundsbilledet):
+          ikon + overskrift + hjælpetekst, kameraknappen øverst, galleri, evt. manuel, og tips nederst. Samme kort til ingrediens, næring og forside. */}
       {editStep === "guide" && (
-        <div className="fade-in">
+        <div className="fade-in card" style={{ background:"rgba(255,255,255,.97)", padding:16, marginTop:16 }}>
           <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
             <div style={{ flexShrink:0, display:"flex" }}>
               <Icon name={editType === "ingredients" ? "list" : editType === "nutrition" ? "package" : "camera"} size={28} color="var(--ink2)" />
@@ -250,13 +253,13 @@ export default function SuggestEditScreen({
             <input type="file" accept="image/*" style={S.none} onChange={e => e.target.files[0] && runOcr(e.target.files[0])} />
           </label>
           {editType !== "image" && (
-            <button className="btn btn-ghost btn-full btn-sm" onClick={() => goStep("review")}>
+            <button className="btn btn-ghost btn-full btn-sm" style={{ color:"var(--ink2)" }} onClick={() => goStep("review")}>
               Skriv manuelt i stedet
             </button>
           )}
 
           {/* Tips: samme faste layout på alle fotoskærme (ingrediens, næring, forside) — overskrift og tre punkter under hinanden, aldrig tilfældige linjeskift */}
-          <div style={{ marginTop:16, fontSize:12.5, lineHeight:1.4, color:"var(--ink2)" }}>
+          <div style={{ marginTop:14, paddingTop:12, borderTop:"1px solid var(--border)", fontSize:12.5, lineHeight:1.4, color:"var(--ink2)" }}>
             <div style={{ display:"flex", alignItems:"center", gap:6, fontWeight:700, color:"var(--ink)", marginBottom:6 }}><Icon name="bulb" size={14} color="var(--ink)" /> Tips</div>
             {["God belysning", "Undgå skygger", "Hold kameraet stabilt"].map(tip => (
               <div key={tip} style={{ display:"flex", alignItems:"center", gap:6, padding:"2px 0" }}><Icon name="check" size={12} color="var(--green)" /> {tip}</div>
