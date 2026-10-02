@@ -259,6 +259,7 @@ export async function runLookupProduct(ean, ctx) {
       setOcrText(""); setProposedName("");
       setProposedFlags(Object.fromEntries(PRODUCT_ALLERGENS.map(a => [a.id, false])));
       setProductImagePreview(null); setProductImageBase64(null);
+      setOcrImageBase64(null); setNutritionImageBase64(null);
       return;
     }
     let product = data.product;
@@ -339,6 +340,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
 
   // Næringsindhold OCR
   const [nutritionOcrLoading, setNutritionOcrLoading] = useState(false);
+  const [nutritionImageBase64, setNutritionImageBase64] = useState(null);
 
   // Suggest-edit state
   const [editStep, setEditStep]               = useState("start");
@@ -460,6 +462,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
     setScanError_("");
     try {
       const base64 = await compressImageToBase64(file);
+      setNutritionImageBase64(base64);
       const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, {
         method: "POST",
         headers: makeHeaders(accessToken),
@@ -518,6 +521,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
           ean: notFoundEan, submitted_by: userId,
           ocr_raw_text: finalOcrText, raw_label_image: ocrImageBase64 || null,
           ai_parsed_data: { ...proposedFlags, name: proposedName, product_image_base64: productImageBase64, nutrition: proposedNutrition, notes: proposedNotes },
+          images: nutritionImageBase64 ? [{ kind: "nutrition", base64: nutritionImageBase64 }] : [],
           user_confirmed: true,
         }),
       });

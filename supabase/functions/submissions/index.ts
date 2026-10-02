@@ -6,6 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
 };
 
+const MAX_EXTRA_IMAGES = 6;
+const MAX_IMAGE_BASE64_LENGTH = 8_000_000; // samme loft som ocr-funktionen
+
 // ── Upload base64 billede til Supabase Storage ─────────────────────────────
 async function uploadImageToStorage(
   supabase: ReturnType<typeof createClient>,
@@ -105,7 +108,7 @@ Deno.serve(async (req) => {
     // ── POST — indsend nyt produkt eller rettelsesforslag ───────────────────
     if (method === "POST" && identifier === "submissions") {
       const body = await req.json();
-      const { ean, submitted_by, raw_label_image, ocr_raw_text, ai_parsed_data, user_confirmed, notes } = body;
+      const { ean, submitted_by, raw_label_image, ocr_raw_text, ai_parsed_data, user_confirmed, notes, images } = body;
       const type = body.type === "edit" ? "edit" : "new_product";
       let product_id = type === "edit" ? body.product_id : null;
 
@@ -179,6 +182,20 @@ Deno.serve(async (req) => {
 
       // Tilføj produkt-billed-URL til parsedData
       if (productImageUrl) parsedData.product_image_url = productImageUrl;
+
+      // Alle øvrige billeder brugeren har taget (ingrediens-, næringsbillede
+      // m.fl.) gemmes også, så admin kan kvalitetsteste OCR'en mod dem.
+      // Ligger som [{kind, url}] i ai_parsed_data.images; ingrediensbilledet
+      // ligger i raw_label_image og produktbilledet i product_image_url.
+      const extraImages = Array.isArray(images) ? images.slice(0, MAX_EXTRA_IMAGES) : [];
+      const uploaded = await Promise.all(extraImages.map(async (img: { kind?: string; base64?: string }, i: number) => {
+        if (!img?.base64 || img.base64.length > MAX_IMAGE_BASE64_LENGTH) return null;
+        const kind = String(img.kind ?? "other").replace(/[^a-z_]/g, "").slice(0, 20) || "other";
+        const url = await uploadImageToStorage(supabase, img.base64, "extra", `${safeEan}_${timestamp}_${kind}_${i}`);
+        return url ? { kind, url } : null;
+      }));
+      const storedImages = uploaded.filter(Boolean) as { kind: string; url: string }[];
+      if (storedImages.length > 0) parsedData.images = storedImages;
 
       const { data: submission, error } = await supabase
         .from("submissions")

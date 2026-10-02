@@ -229,6 +229,14 @@ export function AdminSubmissionReview({
         </div>
       )}
 
+      {/* Øvrige billeder brugeren har taget (fx næringstabel) */}
+      {(openSubmission.ai_parsed_data?.images || []).map((img, i) => (
+        <div key={i} style={UI.card}>
+          <div style={{ ...UI.ufs13_fw800_cink_mb10, display:"flex", alignItems:"center", gap:6 }}><Icon name="camera" size={13} color="var(--ink)" /> {img.kind === "nutrition" ? "Foto af næringstabellen" : "Foto indsendt af brugeren"}</div>
+          <img src={img.url} alt={img.kind} style={{ width:"100%", borderRadius:10, objectFit:"contain", maxHeight:240 }} />
+        </div>
+      ))}
+
       {/* OCR tekst */}
       {openSubmission.ocr_raw_text && (
         <div style={UI.card}>

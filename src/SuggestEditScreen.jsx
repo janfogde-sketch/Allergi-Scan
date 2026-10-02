@@ -37,6 +37,8 @@ export default function SuggestEditScreen({
   const { setScreen } = useNavigationContext();
   const [ingItems, setIngItems] = useState([]);
   const [ingInput, setIngInput] = useState("");
+  // Det foto, OCR'en blev kørt på, sendes med indsendelsen, så teamet kan kvalitetstestes mod det.
+  const [photoB64, setPhotoB64] = useState(null);
   // Tilbage = ét logisk trin tilbage til den visning, brugeren kom fra. Stakken fyldes kun af brugerens egne valg inde i flowet;
   // åbnes flowet direkte på et trin (fx "Indsend ingrediensliste" fra produktet), er stakken tom, og tilbage fører til produktet.
   const [stepStack, setStepStack] = useState([]);
@@ -51,7 +53,7 @@ export default function SuggestEditScreen({
 
   // Nulstil ingrediensliste ved nyt redigeringsforslag
   useEffect(() => {
-    if (editStep === "start") { setIngItems([]); setIngInput(""); }
+    if (editStep === "start") { setIngItems([]); setIngInput(""); setPhotoB64(null); }
   }, [editStep]);
 
   // Sync ingItems → editIngText automatisk
@@ -85,10 +87,11 @@ export default function SuggestEditScreen({
     setEditStep("scanning");
     try {
       const b64 = await compressImageToBase64(file);
+      setPhotoB64(b64);
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/ocr`, {
         method: "POST",
         headers: makeHeaders(accessToken),
-        body: JSON.stringify({ image_base64: b64 }),
+        body: JSON.stringify({ image_base64: b64, mode: editType === "nutrition" ? "nutrition" : "ingredients" }),
       });
       const data = await resp.json();
       const text = data.success && data.text ? data.text : "";
@@ -117,6 +120,8 @@ export default function SuggestEditScreen({
           ean:          scanResult.code || scanResult.ean,
           submitted_by: userId,
           ocr_raw_text: editType === "ingredients" ? editIngText : null,
+          raw_label_image: editType === "ingredients" ? photoB64 : null,
+          images: editType === "nutrition" && photoB64 ? [{ kind: "nutrition", base64: photoB64 }] : [],
           ai_parsed_data: {
             name:  scanResult.name,
             brand: scanResult.brand,

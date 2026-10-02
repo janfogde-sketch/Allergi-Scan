@@ -177,6 +177,19 @@ export default function SubmissionsSection({
               </div>
             )}
 
+            {[
+              openSubmission.raw_label_image && { label: "Foto af ingredienslisten", url: openSubmission.raw_label_image },
+              ...(openSubmission.ai_parsed_data?.images || []).map(img => ({ label: img.kind === "nutrition" ? "Foto af næringstabellen" : "Foto indsendt af brugeren", url: img.url })),
+              openSubmission.ai_parsed_data?.product_image_url && { label: "Foto af produktet", url: openSubmission.ai_parsed_data.product_image_url },
+            ].filter(Boolean).map((img, i) => (
+              <div className="admin-field" key={i}>
+                <label className="admin-label">{img.label}</label>
+                <a href={img.url} target="_blank" rel="noreferrer">
+                  <img src={img.url} alt={img.label} style={{ width: "100%", maxHeight: 280, objectFit: "contain", borderRadius: 8, background: "var(--surface2)" }} />
+                </a>
+              </div>
+            ))}
+
             {openSubmission.ocr_raw_text && (
               <div className="admin-field">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
