@@ -97,7 +97,7 @@ fund). `prevent_role_self_escalation()` er revoked fra PUBLIC. `pg_trgm` ligger 
 | `products` | GET/POST/PATCH/DELETE produkt-CRUD + OFF fallback |
 | `allergens` | Keyword-engine + Claude Haiku fallback |
 | `ocr` | OCR: `ingredients` / `product_name` / `nutrition` / `ean_from_image` |
-| `search` | Fuldtekst-søgning med scoring |
+| `search` | Fuldtekst-søgning. Matchning, scoring og sideinddeling sker i RPC'en `search_products` (kun `service_role`; verificeret bruger sendes som `p_user_id`). Trigram-indekser på `products.name/brand/category/subcategory`. Rangeringen i SQL skal følge `normalize()` i funktionen. Klienten (`ListScreen.jsx`) har 70 ms debounce og en 5 min cache pr. søgetekst |
 | `send-email` | Resend-mail; `type` er `welcome_onboarded`, en servicemail fra `TRANSACTIONAL_TEMPLATES` (`_shared/mailSend.ts`) eller `"raw"` (direkte `subject`+`html`, til interne mails som `admin-digest`). Mails om indsendelser/tickets sendes af `notify` (N2a, N3, N6) |
 | `feedback` | **NY** (30. sept. 2026, A4) — modtager feedback-tickets fra appen og admin-panelet. Uden login: 5/time pr. afsender (saltet IP-hash i `feedback_tickets.client_hash`) og 60/time i alt. Med login: 20/time. `submitted_by` sættes kun fra login-tokenet. Validering i `feedback/validate.js` (testet i `src/feedbackValidate.test.js`) |
 | `auto-import-off` | **NY** — importerer fra OFF dagligt kl. 02:00 UTC via pg_cron |
