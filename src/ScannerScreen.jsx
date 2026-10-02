@@ -459,13 +459,11 @@ export default function ScannerScreen({
                   position:"absolute", inset:0, pointerEvents:"none",
                   display:"flex", alignItems:"center", justifyContent:"center",
                 }}>
-                  {/* Mørke hjørner */}
-                  <div style={{ position:"absolute", inset:0, background:"rgba(0,0,0,.4)" }} />
                   {/* Klar scanzone */}
                   <div style={{
                     position:"relative",
                     width:"92%", height:240,
-                    boxShadow:"0 0 0 9999px rgba(0,0,0,.4)",
+                    boxShadow:"0 0 0 9999px rgba(0,0,0,.28)",
                     borderRadius:8,
                   }}>
                     {/* Hjørne-markører */}

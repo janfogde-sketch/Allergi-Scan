@@ -130,14 +130,14 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     const frameCtx = frame.getContext("2d", { willReadFrequently: true });
     const rot = document.createElement("canvas");
     const rotCtx = rot.getContext("2d", { willReadFrequently: true });
-    const angles = [0, 90, 45, 135];
+    const angles = [90, 45, 90, 135]; // 0° (og 180°) afkodes allerede af html5-qrcode
     let step = 0;
     let busy = false;
     rotatedLoopRef.current = setInterval(() => {
       if (busy || !videoEl.videoWidth || !videoEl.videoHeight) return;
       busy = true;
       try {
-        const scale = Math.min(1, 960 / Math.max(videoEl.videoWidth, videoEl.videoHeight));
+        const scale = Math.min(1, 800 / Math.max(videoEl.videoWidth, videoEl.videoHeight));
         const w = Math.round(videoEl.videoWidth * scale), h = Math.round(videoEl.videoHeight * scale);
         frame.width = w; frame.height = h;
         frameCtx.drawImage(videoEl, 0, 0, w, h);
@@ -159,7 +159,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
         onScanSuccessRef.current?.(code);
       } catch { /* ingen kode i denne vinkel */ }
       finally { busy = false; }
-    }, 90);
+    }, 50);
   }, [stopCamera]);
 
   // ── startCamera ────────────────────────────────────────────────────────────
@@ -221,7 +221,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       });
 
       const qrConfig = {
-        fps: isIOS ? 25 : 24,
+        fps: isIOS ? 12 : 20, // lavere fps på iOS: html5-qrcodes afkodning deler tråd med rotationsløkken
         // Hele kamerabilledet afkodes (ikke kun et udsnit), så koden kan sidde hvor som helst i billedet.
         qrbox: (w, h) => ({ width: w, height: h }),
         aspectRatio: undefined,
