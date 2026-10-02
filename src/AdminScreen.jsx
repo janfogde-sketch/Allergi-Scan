@@ -17,6 +17,7 @@ import AdminMissingSection from "./AdminMissingSection.jsx";
 import AdminImportSection from "./AdminImportSection.jsx";
 import AdminDebugSection from "./AdminDebugSection.jsx";
 import AdminRecipesSection from "./AdminRecipesSection.jsx";
+import AdminMobileNav from "./AdminMobileNav.jsx";
 
 export default function AdminScreen() {
   const { userId, accessToken } = useAuthContext();
@@ -149,6 +150,17 @@ export default function AdminScreen() {
     setRecipeActionLoading(false);
   };
 
+  const selectSection = (id) => {
+    setAdminSection(id);
+    if (id === "missing") loadMissingEans();
+    if (id === "import") runImport(false);
+    if (id === "submissions") loadSubmissions(submissionFilter);
+    if (id === "tickets") loadTickets();
+    if (id === "dashboard") loadAdminStats();
+    if (id === "users") loadAdminUsers();
+    if (id === "recipes") loadAdminRecipes();
+  };
+
   return (
     <>
         <AdminTicketDetailSheet openTicket={openTicket} setOpenTicket={setOpenTicket} updateTicketStatus={updateTicketStatus} />
@@ -170,36 +182,7 @@ export default function AdminScreen() {
               </button>
             </div>
 
-            {/* Sektion tabs — store knapper */}
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:16 }}>
-              {[
-                { id:"dashboard",   icon:"chart",  label:"Dashboard" },
-                { id:"users",       icon:"family",  label:"Brugere" },
-                { id:"submissions", icon:"package", label:"Indsendelser" },
-                { id:"tickets",     icon:"bug",     label:"Tickets" },
-                { id:"debug",       icon:"search",  label:"Debug" },
-                { id:"missing",    icon:"info",    label:"Manglende" },
-                { id:"import",     icon:"download",label:"Import" },
-                { id:"recipes",    icon:"book",    label:"Opskrifter" },
-              ].map(s => (
-                <button key={s.id} className="admin-tab"
-                  onClick={() => {
-                    setAdminSection(s.id); if (s.id==="missing") loadMissingEans(); if (s.id==="import") runImport(false);
-                    if (s.id === "submissions") loadSubmissions(submissionFilter);
-                    if (s.id === "tickets") loadTickets();
-                    if (s.id === "dashboard") loadAdminStats();
-                    if (s.id === "users") loadAdminUsers();
-                    if (s.id === "recipes") loadAdminRecipes();
-                  }}
-                  style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:4, padding:"14px 16px",
-                    background: adminSection===s.id ? "var(--green-lt)" : "var(--surface)",
-                    border: `1px solid ${adminSection===s.id ? "var(--green)" : "var(--border)"}`,
-                    borderRadius:14, boxShadow:"var(--sh)", fontFamily:"var(--f)", textAlign:"left" }}>
-                  <Icon name={s.icon} size={20} color={adminSection===s.id ? "var(--green)" : "var(--ink2)"} />
-                  <span style={{ fontSize:13, fontWeight:800, color: adminSection===s.id ? "var(--green)" : "var(--ink)" }}>{s.label}</span>
-                </button>
-              ))}
-            </div>
+            <AdminMobileNav adminSection={adminSection} adminStats={adminStats} onSelect={selectSection} />
 
             {/* ── DASHBOARD ── */}
             {adminSection === "dashboard" && (
