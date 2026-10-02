@@ -760,6 +760,28 @@ export const MADPAS_ALLERGY_STATEMENT_T = {
   th:"ฉันแพ้อาหาร: {name}",
   el:"Έχω τροφική αλλεργία: {name}.",
 };
+// Cøliaki i Madpas (2. okt. 2026): sygdom, ikke allergi, så egne tekster i stedet for
+// {name}-skabelonerne ovenfor. n = navn, statement = første sætning, safety = strengt
+// glutenfrit, også spor (gælder uanset krydskontaminerings-toggle). Gennemlæses af Bjørn.
+export const MADPAS_COELIAC_T = {
+  da:{ n:"Cøliaki", statement:"Jeg har cøliaki.", safety:"Min mad skal være strengt glutenfri. Selv spor af gluten, fx fra delt køkkenudstyr eller flader, kan gøre mig syg." },
+  en:{ n:"Coeliac disease", statement:"I have coeliac disease.", safety:"My food must be strictly gluten-free. Even traces of gluten, for example from shared utensils or surfaces, can make me ill." },
+  de:{ n:"Zöliakie", statement:"Ich habe Zöliakie.", safety:"Mein Essen muss streng glutenfrei sein. Schon Spuren von Gluten, z. B. von gemeinsam genutzten Utensilien oder Oberflächen, können mich krank machen." },
+  fr:{ n:"Maladie cœliaque", statement:"J'ai la maladie cœliaque.", safety:"Mon repas doit être strictement sans gluten. Même des traces de gluten, par exemple via des ustensiles ou des surfaces partagés, peuvent me rendre malade." },
+  es:{ n:"Celiaquía", statement:"Tengo celiaquía.", safety:"Mi comida debe ser estrictamente sin gluten. Incluso las trazas de gluten, por ejemplo de utensilios o superficies compartidos, pueden enfermarme." },
+  it:{ n:"Celiachia", statement:"Ho la celiachia.", safety:"Il mio cibo deve essere rigorosamente senza glutine. Anche tracce di glutine, ad esempio da utensili o superfici condivisi, possono farmi stare male." },
+  nl:{ n:"Coeliakie", statement:"Ik heb coeliakie.", safety:"Mijn eten moet strikt glutenvrij zijn. Zelfs sporen van gluten, bijvoorbeeld van gedeeld keukengerei of werkbladen, kunnen mij ziek maken." },
+  pt:{ n:"Doença celíaca", statement:"Tenho doença celíaca.", safety:"A minha comida tem de ser estritamente sem glúten. Até vestígios de glúten, por exemplo de utensílios ou superfícies partilhados, podem deixar-me doente." },
+  pl:{ n:"Celiakia", statement:"Mam celiakię.", safety:"Moje jedzenie musi być ściśle bezglutenowe. Nawet śladowe ilości glutenu, np. ze wspólnych przyborów lub powierzchni, mogą mnie rozchorować." },
+  sv:{ n:"Celiaki", statement:"Jag har celiaki.", safety:"Min mat måste vara strikt glutenfri. Även spår av gluten, till exempel från delade redskap eller ytor, kan göra mig sjuk." },
+  no:{ n:"Cøliaki", statement:"Jeg har cøliaki.", safety:"Maten min må være strengt glutenfri. Selv spor av gluten, for eksempel fra delt kjøkkenutstyr eller flater, kan gjøre meg syk." },
+  ja:{ n:"セリアック病", statement:"私はセリアック病です。", safety:"食事は厳密にグルテンフリーでなければなりません。共用の調理器具や調理台などからのごく微量のグルテンでも、体調を崩します。" },
+  zh:{ n:"乳糜泻", statement:"我患有乳糜泻。", safety:"我的食物必须严格无麸质。即使是来自共用器具或台面的微量麸质，也会让我生病。" },
+  ar:{ n:"داء السيلياك", statement:"أعاني من داء السيلياك.", safety:"يجب أن يكون طعامي خالياً تماماً من الغلوتين. حتى آثار الغلوتين، مثلاً من أدوات أو أسطح مشتركة، قد تسبب لي المرض." },
+  tr:{ n:"Çölyak hastalığı", statement:"Çölyak hastasıyım.", safety:"Yemeğim kesinlikle glutensiz olmalı. Ortak mutfak gereçlerinden veya yüzeylerden bulaşan eser miktarda gluten bile beni hasta edebilir." },
+  th:{ n:"โรคซีลิแอค", statement:"ฉันเป็นโรคซีลิแอค", safety:"อาหารของฉันต้องปราศจากกลูเตนอย่างเคร่งครัด แม้เพียงร่องรอยของกลูเตน เช่น จากอุปกรณ์หรือพื้นผิวที่ใช้ร่วมกัน ก็ทำให้ฉันป่วยได้" },
+  el:{ n:"Κοιλιοκάκη", statement:"Έχω κοιλιοκάκη.", safety:"Το φαγητό μου πρέπει να είναι αυστηρά χωρίς γλουτένη. Ακόμη και ίχνη γλουτένης, π.χ. από κοινά σκεύη ή επιφάνειες, μπορούν να με αρρωστήσουν." },
+};
 // Engelsk "milk-derived"-form pr. allergen (1. okt. 2026). Bruges kun på
 // engelsk og kun for de faste allergener — fritekst falder tilbage til
 // "ingredients made from {name}".
@@ -913,7 +935,8 @@ export const ALLERGEN_T = {
   // koden tilbage til ALLERGENS' danske a.label, så et madpas på fx
   // engelsk viste "Hvede" i stedet for "Wheat", mens resten af UI'et var
   // korrekt oversat. Se madpasAllergenLabel() i useMadpas.js).
-  coeliaki:    { en:{n:"Coeliac disease",d:"I have coeliac disease and must avoid gluten strictly"} },
+  // Cøliaki hentes fra MADPAS_COELIAC_T (navn + to-sætnings-budskab, 17 sprog).
+  coeliaki:    Object.fromEntries(Object.entries(MADPAS_COELIAC_T).map(([l,v]) => [l,{n:v.n,d:v.statement}])),
   hvede:       { en:{n:"Wheat",d:"Contains wheat and wheat products"},de:{n:"Weizen",d:"Enthält Weizen und Weizenprodukte"},fr:{n:"Blé",d:"Contient du blé et des produits à base de blé"},es:{n:"Trigo",d:"Contiene trigo y productos a base de trigo"},it:{n:"Grano",d:"Contiene grano e prodotti a base di grano"},nl:{n:"Tarwe",d:"Bevat tarwe en tarweproducten"},pt:{n:"Trigo",d:"Contém trigo e produtos à base de trigo"},pl:{n:"Pszenica",d:"Zawiera pszenicę i produkty pszenne"},sv:{n:"Vete",d:"Innehåller vete och veteprodukter"},no:{n:"Hvete",d:"Inneholder hvete og hveteprodukter"},ja:{n:"小麦",d:"小麦および小麦製品を含む"},zh:{n:"小麦",d:"含有小麦和小麦制品"},ar:{n:"القمح",d:"يحتوي على القمح ومنتجاته"},tr:{n:"Buğday",d:"Buğday ve buğday ürünleri içerir"},th:{n:"ข้าวสาลี",d:"มีข้าวสาลีและผลิตภัณฑ์จากข้าวสาลี"},el:{n:"Σιτάρι",d:"Περιέχει σιτάρι και προϊόντα σιταριού"} },
   maelkeallergi: { en:{n:"Milk",d:"Contains milk and milk products"},de:{n:"Milch",d:"Enthält Milch und Milchprodukte"},fr:{n:"Lait",d:"Contient du lait et des produits laitiers"},es:{n:"Leche",d:"Contiene leche y productos lácteos"},it:{n:"Latte",d:"Contiene latte e latticini"},nl:{n:"Melk",d:"Bevat melk en zuivelproducten"},pt:{n:"Leite",d:"Contém leite e laticínios"},pl:{n:"Mleko",d:"Zawiera mleko i produkty mleczne"},sv:{n:"Mjölk",d:"Innehåller mjölk och mjölkprodukter"},no:{n:"Melk",d:"Inneholder melk og melkeprodukter"},ja:{n:"牛乳",d:"牛乳および乳製品を含む"},zh:{n:"牛奶",d:"含有牛奶和乳制品"},ar:{n:"الحليب",d:"يحتوي على الحليب ومنتجاته"},tr:{n:"Süt",d:"Süt ve süt ürünleri içerir"},th:{n:"นม",d:"มีนมและผลิตภัณฑ์จากนม"},el:{n:"Γάλα",d:"Περιέχει γάλα και γαλακτοκομικά προϊόντα"} },
   laktose:     { en:{n:"Lactose / Dairy",d:"Contains milk and dairy products (lactose)"},de:{n:"Laktose / Milch",d:"Enthält Milch und Milchprodukte (Laktose)"},fr:{n:"Lactose / Lait",d:"Contient du lait et des produits laitiers (lactose)"},es:{n:"Lactosa / Lácteos",d:"Contiene leche y productos lácteos (lactosa)"},it:{n:"Lattosio / Latte",d:"Contiene latte e latticini (lattosio)"},nl:{n:"Lactose / Melk",d:"Bevat melk en zuivelproducten (lactose)"},pt:{n:"Lactose / Leite",d:"Contém leite e produtos lácteos (lactose)"},pl:{n:"Laktoza / Mleko",d:"Zawiera mleko i produkty mleczne (laktoza)"},sv:{n:"Laktos / Mjölk",d:"Innehåller mjölk och mjölkprodukter (laktos)"},no:{n:"Laktose / Melk",d:"Inneholder melk og meieriprodukter (laktose)"},ja:{n:"乳糖 / 乳製品",d:"牛乳および乳製品を含む（ラクトース）"},zh:{n:"乳糖 / 乳制品",d:"含有牛奶和乳制品（乳糖）"},ar:{n:"اللاكتوز / الألبان",d:"يحتوي على الحليب ومنتجات الألبان"},tr:{n:"Laktoz / Süt",d:"Süt ve süt ürünleri içerir (laktoz)"},th:{n:"แลคโตส / นม",d:"มีนมและผลิตภัณฑ์จากนม (แลคโตส)"},el:{n:"Λακτόζη / Γάλα",d:"Περιέχει γάλα και γαλακτοκομικά (λακτόζη)"} },

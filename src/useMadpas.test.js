@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
+import { MADPAS_LANGUAGES, MADPAS_COELIAC_T, ALLERGEN_T } from "./constants.jsx";
 import { madpasSafetyNote, madpasCrossContactNote, madpasAllergyStatement, madpasAllergenExamples } from "./useMadpas.js";
 
 describe("Madpas-sætninger", () => {
@@ -28,5 +29,23 @@ describe("Madpas-sætninger", () => {
   it("viser mælkens eksempler uden 'Milk' selv", () => {
     expect(madpasAllergenExamples("maelkeallergi", "en")).toEqual(["Cream","Butter","Cheese","Whey","Milk powder"]);
     expect(madpasAllergenExamples("maelkeallergi", "da")).toContain("Mælkepulver");
+  });
+
+  it("har cøliaki-budskab (navn, sætning, strengt glutenfrit) på alle 17 sprog", () => {
+    expect(MADPAS_LANGUAGES).toHaveLength(17);
+    MADPAS_LANGUAGES.forEach(({ code }) => {
+      const t = MADPAS_COELIAC_T[code];
+      expect(t?.n, code).toBeTruthy();
+      expect(t?.statement, code).toBeTruthy();
+      expect(t?.safety, code).toBeTruthy();
+      expect(ALLERGEN_T.coeliaki[code]?.n, code).toBe(t.n);
+    });
+  });
+
+  it("bruger egne cøliaki-tekster og ikke allergi-skabelonerne", () => {
+    expect(madpasAllergyStatement("Coeliac disease", "en", "coeliaki")).toBe("I have coeliac disease.");
+    expect(madpasSafetyNote("Coeliac disease", "en", "coeliaki")).toContain("strictly gluten-free");
+    expect(madpasSafetyNote("Cøliaki", "da", "coeliaki")).toContain("strengt glutenfri");
+    expect(madpasSafetyNote("Cøliaki", "da", "coeliaki")).not.toContain("ikke indeholder");
   });
 });
