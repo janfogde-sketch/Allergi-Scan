@@ -3,7 +3,7 @@
 // Udskilt fra FamilyScreen.jsx (arkitekturregel 3). Ordforråd: "Familie" = voksne med egen konto, der er forbundet via en
 // invitation. "Link til listen" (indkøbsliste) er noget helt andet og hører hjemme i Del liste.
 import React, { useState } from "react";
-import { SUPABASE_URL } from "./constants.jsx";
+import { SUPABASE_URL, DIETS_ENABLED } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 import { Icon, showToast } from "./SharedComponents.jsx";
 import { TextLink } from "./DesignSystem.jsx";
@@ -63,16 +63,16 @@ export function PendingInviteCard({ invite, onCancel }) {
 }
 
 const SHARED_POINTS = [
-  "Allergier og kostvalg, så I kan tjekke varer for hinanden ved scanning",
-  "Scanningshistorik og favoritter (I vælger selv at se dem under Historik og Favoritter)",
-  "Indkøbslister, som I vælger at dele",
+  DIETS_ENABLED ? "Allergier og kostvalg" : "Allergier",
+  "Historik og favoritter, hvis I vælger det",
+  "Indkøbslister, som I deler",
 ];
 
 // Det, der deles, når to konti er i samme familie. Bruges både før invitationen oprettes og i "Sådan virker familie".
 export function WhatIsShared() {
   return (
     <div>
-      <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Det deler I med hinanden</div>
+      <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>I kan dele</div>
       {SHARED_POINTS.map(t => (
         <div key={t} style={{ display:"flex", gap:8, fontSize:12.5, color:"var(--ink2)", lineHeight:1.45, marginBottom:6 }}>
           <span style={{ flexShrink:0, marginTop:2 }}><Icon name="check" size={13} color="var(--green)" /></span><span>{t}</span>

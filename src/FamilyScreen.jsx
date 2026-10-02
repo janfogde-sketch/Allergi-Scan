@@ -153,15 +153,15 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
   return (
     <div className="screen fade-in" style={{ paddingBottom:"calc(110px + env(safe-area-inset-bottom))" }}>
       <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Familie</div>
-      <div className="screen-sub">Her samler du dem, du tjekker allergier for ved scanning og deler indkøbslister med.</div>
+      <div className="screen-sub">Saml personer, du tjekker varer for og deler indkøbslister med.</div>
       <TextLink onClick={() => setShowHowItWorks(true)}>Sådan virker Familie</TextLink>
 
       {family.length===0 && household.length===0 && pendingInvites.length===0 && <div className="empty-state"><span className="empty-icon" style={{ width:60, height:60 }}><Icon name="family" size={23} color="var(--muted)" /></span><div className="empty-txt">Ingen i din familie endnu</div><div className="empty-sub">Opret en profil til et barn, eller invitér en voksen med egen konto</div></div>}
 
       {(household.length > 0 || pendingInvites.length > 0) && (
         <>
-          <div style={SECTION}>Voksne med egen konto</div>
-          <div style={SECTION_SUB}>Personer, der har accepteret din invitation (eller har inviteret dig). I kan se hinandens allergier og dele lister. Dem, du har inviteret, kan ikke se hinanden, medmindre de selv er forbundet.</div>
+          <div style={SECTION}>Familiemedlemmer med egen konto</div>
+          <div style={SECTION_SUB}>Voksne, der er inviteret til familien og har deres egen EatSafe-konto. De styrer selv deres allergier og kan få adgang til delte indkøbslister.</div>
         </>
       )}
       {household.map(m => (
@@ -218,7 +218,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
       {family.length > 0 && (
         <>
           <div style={SECTION}>Profiler du administrerer</div>
-          <div style={SECTION_SUB}>Til børn og andre uden egen konto. Det er dig, der styrer profilen.</div>
+          <div style={SECTION_SUB}>Fx børn eller andre uden egen konto. Du styrer selv allergier, intolerancer og øvrige profiloplysninger.</div>
         </>
       )}
       {family.map(m => (
@@ -255,7 +255,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
       {!editingMemberId && familyAddMode === "choose" && (
         <div className="card" style={{ marginTop:16 }}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
-            <div className="card-title" style={{ marginBottom:0 }}>Hvem vil du tilføje?</div>
+            <div className="card-title" style={{ marginBottom:0 }}>Tilføj til familien</div>
             <TextLink onClick={() => setFamilyAddMode(null)}>Annuller</TextLink>
           </div>
           <button type="button" onClick={() => setFamilyAddMode("invite")}
@@ -264,8 +264,8 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
               <Icon name="link" size={18} color="var(--green)" />
             </span>
             <span>
-              <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>En voksen med egen konto</div>
-              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Du sender en invitation. Personen styrer selv sine allergier, og I kan dele indkøbslister.</div>
+              <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>Invitér voksen</div>
+              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Har sin egen EatSafe-konto og styrer selv sine oplysninger.</div>
             </span>
           </button>
           <button type="button" onClick={() => setFamilyAddMode("form")}
@@ -274,8 +274,8 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
               <Icon name="family" size={18} color="var(--green)" />
             </span>
             <span>
-              <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>Et barn eller en anden uden konto</div>
-              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Du opretter og styrer profilen, så du kan tjekke varer for dem.</div>
+              <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>Opret profil</div>
+              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Til fx børn eller andre, du administrerer.</div>
             </span>
           </button>
         </div>
@@ -331,13 +331,12 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
         <InfoSheet title="Sådan virker Familie" onClose={() => setShowHowItWorks(false)}>
           <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.55 }}>
             <div style={{ fontWeight:800, color:"var(--ink)", marginBottom:2 }}>Voksne med egen konto</div>
-            <div style={{ marginBottom:10 }}>Du inviterer dem med et link. De opretter deres egen EatSafe-konto og styrer selv deres allergier.</div>
+            <div style={{ marginBottom:10 }}>Invitér med et link. De opretter deres egen EatSafe-konto og styrer selv deres allergier.</div>
             <div style={{ marginBottom:14 }}><WhatIsShared /></div>
             <div style={{ fontWeight:800, color:"var(--ink)", marginBottom:2 }}>Profiler uden konto</div>
-            <div style={{ marginBottom:10 }}>Til børn og andre, du tjekker varer for. Du opretter og styrer profilen selv.</div>
+            <div style={{ marginBottom:10 }}>Til fx børn. Du opretter og administrerer profilen.</div>
             <div style={{ fontWeight:800, color:"var(--ink)", marginBottom:2 }}>Indkøbslister</div>
-            <div>Du bestemmer pr. liste, om den er kun din, delt med hele familien eller med bestemte personer. Du kan også sende et link til en, der ikke er i familien. Det finder du under Indkøbsliste → tryk på listenavnet → Del.</div>
-            <div style={{ marginTop:14, fontSize:12, color:"var(--muted)" }}>Du er kun forbundet med dem, du selv har inviteret, og den der inviterede dig. Har du inviteret to personer, er de ikke forbundet med hinanden.</div>
+            <div>Vælg pr. liste, om den er privat, delt med hele familien eller bestemte personer. Du kan også dele en liste via link.</div>
           </div>
         </InfoSheet>
       )}
