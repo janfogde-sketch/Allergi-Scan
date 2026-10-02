@@ -1,19 +1,28 @@
 // @ts-nocheck
-import React from "react";
+import React, { useState } from "react";
 import { Icon, showToast } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 
 export default function AdminTicketDetailSheet({ openTicket, setOpenTicket, updateTicketStatus }) {
+  const [closing, setClosing] = useState(false);
+  const [note, setNote] = useState("");
   if (!openTicket) return null;
+  const close = () => { setClosing(false); setNote(""); setOpenTicket(null); };
+  const pickStatus = (val) => {
+    if (val === openTicket.status) return;
+    if (val === "resolved") { setClosing(true); return; }
+    setClosing(false);
+    updateTicketStatus(openTicket.id, val);
+  };
   return (
     <div style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"flex-end" }}
-      onClick={e => e.target === e.currentTarget && setOpenTicket(null)}>
+      onClick={e => e.target === e.currentTarget && close()}>
       <div style={UI.ubgsheet_br20px20px_p20px16px_w100_mxh90vh_ovyauto}
         onClick={e => e.stopPropagation()}>
 
         {/* Header */}
         <div style={UI.udflex_aicenter_g12_mb16}>
-          <button onClick={() => setOpenTicket(null)} aria-label="Luk"
+          <button onClick={close} aria-label="Luk"
             style={UI.ubgsurface2_bdnone_br50_w32_h32_curpointer_fs18_cmuted}>×</button>
           <div style={{ flex:1, fontSize:16, fontWeight:800, color:"var(--ink)", display:"flex", alignItems:"center", gap:6 }}><Icon name="bug" size={15} color="var(--ink)" /> Ticket #{openTicket.id?.slice(0,8)}</div>
         </div>
@@ -25,7 +34,7 @@ export default function AdminTicketDetailSheet({ openTicket, setOpenTicket, upda
             { val:"in_progress", label:"I gang",  dot:"var(--amber)" },
             { val:"resolved",    label:"Løst",    dot:"var(--green)" },
           ].map(s => (
-            <button key={s.val} onClick={() => updateTicketStatus(openTicket.id, s.val)}
+            <button key={s.val} onClick={() => pickStatus(s.val)}
               style={{ flex:1, padding:"8px 4px", borderRadius:10, border:`1px solid ${openTicket.status===s.val?"var(--green)":"var(--border)"}`,
                 background: openTicket.status===s.val ? "var(--green-lt)" : "var(--surface)",
                 display:"flex", alignItems:"center", justifyContent:"center", gap:6,
@@ -36,6 +45,18 @@ export default function AdminTicketDetailSheet({ openTicket, setOpenTicket, upda
             </button>
           ))}
         </div>
+
+        {closing && (
+          <div style={UI.ubgsurface_bd1pxsolid_br12_p14px_mb10}>
+            <label htmlFor="ticket-closing-note" style={{ fontSize:11, color:"var(--muted)", fontWeight:700, display:"block", marginBottom:6 }}>AFSLUTTENDE KOMMENTAR TIL BRUGEREN</label>
+            <textarea id="ticket-closing-note" value={note} onChange={e => setNote(e.target.value)} rows={3} maxLength={500}
+              placeholder="Fx: Problemet med den grønne prik i menuen er rettet. Ændringen er med i den nyeste version."
+              style={{ width:"100%", boxSizing:"border-box", border:"1px solid var(--border)", borderRadius:10, padding:"10px 12px", fontFamily:"var(--f)", fontSize:14, color:"var(--ink)", background:"var(--surface)", resize:"vertical" }} />
+            <div style={{ fontSize:12, color:"var(--muted)", marginTop:6, lineHeight:1.5 }}>Kommentaren vises direkte i beskeden til brugeren.</div>
+            <button onClick={() => updateTicketStatus(openTicket.id, "resolved", note)} disabled={!note.trim()}
+              className="btn btn-primary btn-full" style={{ marginTop:10, opacity: note.trim() ? 1 : .5 }}>Markér som løst</button>
+          </div>
+        )}
 
         {/* Beskrivelse */}
         <div style={UI.ubgsurface_bd1pxsolid_br12_p14px_mb10}>
@@ -178,7 +199,7 @@ Implementér derefter løsningen.`;
           </button>
         </div>
 
-        <button onClick={() => setOpenTicket(null)}
+        <button onClick={close}
           style={{ width:"100%", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"10px", fontFamily:"var(--f)", fontSize:13, fontWeight:600, color:"var(--ink)", cursor:"pointer" }}>
           Luk
         </button>

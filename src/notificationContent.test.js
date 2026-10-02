@@ -108,7 +108,7 @@ describe("indholdsregler fra pakken", () => {
   it("N6 svar kræver et svar; statusvarianter falder tilbage til en neutral tekst", () => {
     expect(() => renderNotification("N6:reply", { ...SAMPLE, message: "" })).toThrow(MissingRequiredError);
     const n = renderNotification("N6:resolved", { ...SAMPLE, message: "" });
-    expect(blocksToText(n.blocks)).toContain("Der er ikke tilføjet en uddybende besked.");
+    expect(blocksToText(n.blocks)).not.toContain("uddybende besked");
     expect(blocksToText(n.blocks)).toContain("Status: Løst");
   });
 

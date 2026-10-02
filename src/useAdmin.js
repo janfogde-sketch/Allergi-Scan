@@ -898,12 +898,14 @@ export function useAdmin(accessToken, userId, clearAuth) {
     if (failed > 0) loadSubmissions(submissionFilter);
   };
 
-  const updateTicketStatus = async (id, status) => {
+  // `note` er teamets afsluttende kommentar; den gemmes som admin_note og vises i beskeden til brugeren (N6).
+  const updateTicketStatus = async (id, status, note) => {
+    const trimmed = typeof note === "string" ? note.trim() : "";
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/feedback_tickets?id=eq.${id}`, {
         method: "PATCH",
         headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(trimmed ? { status, admin_note: trimmed } : { status }),
       });
       loadTickets();
       setOpenTicket(null);

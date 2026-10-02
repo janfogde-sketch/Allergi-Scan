@@ -258,7 +258,7 @@ export default function AdminApp() {
           adminTicketFilter={admin.adminTicketFilter} setAdminTicketFilter={admin.setAdminTicketFilter}
           ticketsIncludeDone={admin.ticketsIncludeDone} loadTickets={admin.loadTickets}
           openTicket={admin.openTicket} setOpenTicket={admin.setOpenTicket}
-          updateTicketStatus={async (id, status) => { await admin.updateTicketStatus(id, status); todos.load({ quiet: true }); }}
+          updateTicketStatus={async (id, status, note) => { await admin.updateTicketStatus(id, status, note); todos.load({ quiet: true }); }}
         />
       )}
       {section === "missing" && (
