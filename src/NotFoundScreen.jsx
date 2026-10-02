@@ -24,6 +24,50 @@ const S = {
   dot:              { width:28, height:28, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
 };
 
+// Fælles stilarter for flowet: diskret "Spring over", trinoverskrift og kompakt stepper.
+const SKIP = { width:"100%", minHeight:44, background:"none", border:"none", cursor:"pointer", fontSize:13, fontWeight:600, color:"var(--muted2)", fontFamily:"var(--f)" };
+const STEPS = [
+  { num:1, label:"Forside" },
+  { num:2, label:"Ingredienser" },
+  { num:3, label:"Næring", optional:true },
+  { num:4, label:"Andet", optional:true },
+  { num:5, label:"Send" },
+];
+
+// Kompakt fremgangsindikator: færdige trin med flueben, aktivt trin fremhævet, kommende trin dæmpede; Næring og Andet er mærket "valgfri".
+function Stepper({ step }) {
+  return (
+    <ol aria-label="Trin" style={{ listStyle:"none", display:"flex", alignItems:"flex-start", margin:"0 0 18px", padding:0 }}>
+      {STEPS.map((st, i) => {
+        const done = st.num < step, active = st.num === step;
+        return (
+          <li key={st.num} aria-current={active ? "step" : undefined} style={{ flex:1, minWidth:0, display:"flex", flexDirection:"column", alignItems:"center", position:"relative" }}>
+            {i > 0 && <span aria-hidden="true" style={{ position:"absolute", top:11, right:"50%", width:"100%", height:2, background: st.num <= step ? "var(--green)" : "var(--border2)" }} />}
+            <span style={{ position:"relative", zIndex:1, width:24, height:24, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800,
+              background: done || active ? "var(--green)" : "var(--surface)", color: done || active ? "var(--on-green)" : "var(--muted)",
+              border: `2px solid ${done || active ? "var(--green)" : "var(--border2)"}`, boxShadow: active ? "0 0 0 3px var(--green-lt)" : "none" }}>
+              {done ? <Icon name="check" size={12} color="var(--on-green)" /> : st.num}
+            </span>
+            <span style={{ marginTop:6, fontSize:"clamp(10px, 3.1vw, 11px)", lineHeight:1.2, fontWeight: active ? 800 : 600, color: active ? "var(--ink)" : done ? "var(--ink2)" : "var(--muted)", textAlign:"center", whiteSpace:"nowrap" }}>{st.label}</span>
+            {st.optional && <span style={{ marginTop:1, fontSize:10, color:"var(--muted)" }}>valgfri</span>}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+// Trinoverskrift: lille "Trin X af 5" over en tydelig titel og en kort hjælpetekst.
+function StepHead({ step, title, help, optional }) {
+  return (
+    <div style={{ marginBottom:14 }}>
+      <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".8px" }}>Trin {step} af 5{optional ? " · Valgfrit" : ""}</div>
+      <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)", marginTop:2, lineHeight:1.3 }}>{title}</div>
+      {help && <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.5, marginTop:4 }}>{help}</div>}
+    </div>
+  );
+}
+
 export default function NotFoundScreen({
   notFoundEan,
   notFoundStep, setNotFoundStep,
@@ -89,77 +133,46 @@ export default function NotFoundScreen({
   return (
     <>
       <div className="screen fade-in">
-        {/* Header */}
-        <div style={UI.avatarRow}>
-          <button onClick={() => setScreen(SCREENS.HOME)}
-            style={UI.iconBtn}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
-              <path strokeLinecap="round" d="M15 19l-7-7 7-7"/>
+        {/* Header: tilbage, titel og EAN som sekundær information */}
+        <div style={{ ...UI.avatarRow, padding:"12px 0 12px" }}>
+          <button type="button" onClick={() => setScreen(SCREENS.HOME)} aria-label="Tilbage"
+            style={{ width:44, height:44, flexShrink:0, marginLeft:-8, display:"flex", alignItems:"center", justifyContent:"center", background:"none", border:"none", cursor:"pointer" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2.25">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
             </svg>
           </button>
           <div style={S.flex1}>
             <div style={S.h17}>Nyt produkt</div>
-            <div style={{ fontSize:12, color:"var(--muted)", marginTop:1, fontFamily:"monospace" }}>EAN: {notFoundEan}</div>
-          </div>
-          {/* Fremgangsindikator */}
-          <div style={{ display:"flex", gap:6, alignItems:"center" }}>
-            {[1,2,3,4,5].map(s => (
-              <div key={s} style={{
-                width: notFoundStep === s ? 20 : 8,
-                height:8, borderRadius:4, transition:"all .3s",
-                background: s < notFoundStep ? "var(--green)" : s === notFoundStep ? "var(--green)" : "var(--border2)"
-              }} />
-            ))}
+            <div style={{ fontSize:11, color:"var(--muted)", marginTop:1 }}>EAN {notFoundEan}</div>
           </div>
         </div>
+
+        <Stepper step={notFoundStep} />
 
         {/* ── TRIN 1: Fotografér forsiden ── */}
         {notFoundStep === 1 && !ocrLoading && (
           <div className="fade-in">
-            <div style={{ background:"var(--surface2)", borderRadius:16, padding:"24px 20px", marginBottom:16, textAlign:"center", border:"1px solid var(--border)" }}>
-              <div style={{ display:"flex", justifyContent:"center", marginBottom:10 }}><Icon name="package" size={48} color="var(--muted)" /></div>
-              <div style={{ fontSize:18, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>
-                Vi kender ikke dette produkt
-              </div>
-              <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.7 }}>
-                Tag 2 hurtige billeder — vi finder automatisk navn og allergener
+            <div style={{ display:"flex", alignItems:"center", gap:12, background:"var(--surface)", borderRadius:12, padding:"12px 14px", marginBottom:18, border:"1px solid var(--border)" }}>
+              <Icon name="package" size={28} color="var(--muted2)" />
+              <div>
+                <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>Vi kender ikke dette produkt endnu</div>
+                <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5, marginTop:2 }}>Fotografér forsiden og ingredienslisten, så hjælper vi med at oprette det.</div>
               </div>
             </div>
 
-            <div style={{ display:"flex", gap:8, marginBottom:20 }}>
-              {[
-                { num:1, icon:"camera", label:"Forside",      desc:"Navn" },
-                { num:2, icon:"search", label:"Ingredienser", desc:"Allergener" },
-                { num:3, icon:"package",label:"Næring",       desc:"Indhold" },
-                { num:4, icon:"edit",   label:"Andet",        desc:"Noter" },
-                { num:5, icon:"check",  label:"Send",         desc:"Bekræft" },
-              ].map(s => (
-                <div key={s.num} style={{ flex:1, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 8px", textAlign:"center" }}>
-                  <div style={{ display:"flex", justifyContent:"center", marginBottom:4 }}><Icon name={s.icon} size={19} color="var(--ink2)" /></div>
-                  <div style={UI.boldInk12}>{s.label}</div>
-                  <div style={{ fontSize:10, color:"var(--muted)", marginTop:2 }}>{s.desc}</div>
-                </div>
-              ))}
-            </div>
-
-            <div style={S.h13bMb}>Trin 1 — Fotografér produktets forside</div>
-            <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6, marginBottom:16 }}>
-              Hold telefonen foran produktets forside. Vi bruger billedet til at hente produktnavnet automatisk.
-            </div>
+            <StepHead step={1} title="Fotografér produktets forside" help="Vi bruger billedet til at finde produktnavnet automatisk." />
 
             <label className="btn btn-primary btn-full" style={{ marginBottom:10 }}>
               <Icon name="camera" size={18} color="var(--on-green)" />
               Fotografér forsiden
               <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleProductImageCapture} />
             </label>
-            <label style={UI.udflex_aicenter_jccenter_g8_w100_p13px_br12_curpointer_bgsur}>
+            <label className="btn btn-outline btn-full" style={{ marginBottom:4 }}>
               <Icon name="image" size={15} color="var(--ink)" /> Vælg fra galleri
               <input type="file" accept="image/*" style={S.none} onChange={handleProductImageCapture} />
             </label>
-            <button style={UI.uw100_bgnone_bdnone_curpointer_fs12_cmuted_p8px0_fff}
-              onClick={() => setNotFoundStep(2)}>
-              Spring forside over →
-            </button>
+            <button type="button" style={SKIP} onClick={() => setNotFoundStep(2)}>Spring over</button>
+            <div style={{ fontSize:11, color:"var(--muted)", textAlign:"center", lineHeight:1.5 }}>Springer du over, skriver du produktnavnet selv til sidst.</div>
           </div>
         )}
 
@@ -174,7 +187,7 @@ export default function NotFoundScreen({
               : notFoundStep === 3
               ? "Vi udtrækker energi, fedt, kulhydrat og protein automatisk"
               : "Vi finder allergener og ingredienser automatisk"}
-            hint="Det tager typisk 5-10 sekunder ☕" />
+            hint="Det tager typisk 5-10 sekunder" />
         )}
 
         {/* ── TRIN 2: Fotografér ingredienslisten ── */}
@@ -193,9 +206,9 @@ export default function NotFoundScreen({
               </div>
             )}
 
-            <div style={S.h13bMb}>Trin 2 — Fotografér ingredienslisten</div>
+            <StepHead step={2} title="Fotografér ingredienslisten" help="Vi bruger billedet til at finde allergener og ingredienser." />
 
-            <div style={{ background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:14 }}>
+            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:14 }}>
               <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:10 }}>Sådan finder du ingredienslisten:</div>
               {[
                 "Vend pakken om — ingredienslisten starter typisk med \"Ingredienser:\" eller \"Indeholder:\"",
@@ -216,40 +229,31 @@ export default function NotFoundScreen({
               Fotografér ingredienslisten
               <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleImageCapture} />
             </label>
-            <label style={UI.udflex_aicenter_jccenter_g8_w100_p13px_br12_curpointer_bgsur}>
+            <label className="btn btn-outline btn-full" style={{ marginBottom:4 }}>
               <Icon name="image" size={15} color="var(--ink)" /> Vælg fra galleri
               <input type="file" accept="image/*" style={S.none} onChange={handleImageCapture} />
             </label>
             {scanError && <div className="error-box" style={S.mb10}><Icon name="warning" size={13} color="var(--red)" /> {scanError}</div>}
-            {ocrText && (
-              <button className="btn btn-primary btn-full" onClick={() => setNotFoundStep(3)}>
-                Fortsæt → Næringsindhold
-              </button>
+            {ocrText ? (
+              <button className="btn btn-primary btn-full" style={{ marginTop:6 }} onClick={() => setNotFoundStep(3)}>Fortsæt</button>
+            ) : (
+              <button type="button" style={SKIP} onClick={() => { setProposedFlags({}); setNotFoundStep(3); }}>Spring over</button>
             )}
-            <button style={UI.uw100_bgnone_bdnone_curpointer_fs12_cmuted_p8px0_fff}
-              onClick={() => { if (!ocrText) setProposedFlags({}); setNotFoundStep(3); }}>
-              {ocrText ? "Spring næring over →" : "Spring ingredienser over →"}
-            </button>
           </div>
         )}
 
         {/* ── TRIN 3: Næringsindhold ── */}
         {notFoundStep === 3 && !ocrLoading && !nutritionOcrLoading && (
           <div className="fade-in">
-            <div style={UI.ufs13_fw700_cink_mb4}>
-              Trin 3 — Næringsindhold (valgfrit)
-            </div>
-            <div style={UI.ufs12_cmuted_mb16_lh15}>
-              Fotografér eller skriv næringsdeklarationen. Alle felter er valgfri.
-            </div>
+            <StepHead step={3} optional title="Næringsindhold" help="Fotografér eller skriv næringsdeklarationen. Du kan gå videre uden at udfylde noget." />
 
             <label className="btn btn-primary btn-full" style={{ marginBottom:10 }}>
               <Icon name="camera" size={18} color="var(--on-green)" />
               Fotografér næringsdeklarationen
               <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleNutritionCapture} />
             </label>
-            <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, width:"100%", padding:"12px", borderRadius:12, cursor:"pointer", background:"var(--surface)", border:"1px solid var(--border2)", color:"var(--ink2)", fontSize:12, fontWeight:600, marginBottom:14 }}>
-              <Icon name="image" size={15} color="var(--ink2)" /> Vælg fra galleri
+            <label className="btn btn-outline btn-full" style={{ marginBottom:14 }}>
+              <Icon name="image" size={15} color="var(--ink)" /> Vælg fra galleri
               <input type="file" accept="image/*" style={S.none} onChange={handleNutritionCapture} />
             </label>
 
@@ -284,25 +288,18 @@ export default function NotFoundScreen({
               </div>
             </div>
 
-            <button className="btn btn-primary btn-full" onClick={() => setNotFoundStep(4)}>
-              Fortsæt → Andet
-            </button>
-            <button style={UI.uw100_bgnone_bdnone_curpointer_fs12_cmuted_p10px0_fff}
-              onClick={() => setNotFoundStep(4)}>
-              Spring næring over →
-            </button>
+            {proposedNutrition && Object.values(proposedNutrition).some(v => v) ? (
+              <button className="btn btn-primary btn-full" onClick={() => setNotFoundStep(4)}>Fortsæt</button>
+            ) : (
+              <button type="button" style={SKIP} onClick={() => setNotFoundStep(4)}>Spring over</button>
+            )}
           </div>
         )}
 
         {/* ── TRIN 4: Andet / noter ── */}
         {notFoundStep === 4 && !ocrLoading && (
           <div className="fade-in">
-            <div style={UI.ufs13_fw700_cink_mb4}>
-              Trin 4 — Yderligere oplysninger (valgfrit)
-            </div>
-            <div style={UI.ufs12_cmuted_mb16_lh15}>
-              Tilføj ekstra information — fx opbevaringsinstruktioner, certifikater (Ø, Halal, Vegan) eller andet.
-            </div>
+            <StepHead step={4} optional title="Yderligere oplysninger" help="Fx mærkninger og certifikater. Du kan gå videre uden at udfylde noget." />
 
             <div style={UI.ubgsurface_bd1pxsolid_br12_p14px_mb14}>
               <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>Mærkninger / certifikater</div>
@@ -332,22 +329,18 @@ export default function NotFoundScreen({
                 style={{ resize:"none", fontSize:12 }} />
             </div>
 
-            <button className="btn btn-primary btn-full" onClick={() => setNotFoundStep(5)}>
-              Fortsæt → Gennemse og send
-            </button>
-            <button style={UI.uw100_bgnone_bdnone_curpointer_fs12_cmuted_p10px0_fff}
-              onClick={() => setNotFoundStep(5)}>
-              Spring over →
-            </button>
+            {proposedNotes ? (
+              <button className="btn btn-primary btn-full" onClick={() => setNotFoundStep(5)}>Fortsæt</button>
+            ) : (
+              <button type="button" style={SKIP} onClick={() => setNotFoundStep(5)}>Spring over</button>
+            )}
           </div>
         )}
 
         {/* ── TRIN 5: Gennemse og send ── */}
         {notFoundStep === 5 && !ocrLoading && (
           <div className="fade-in">
-            <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", marginBottom:12 }}>
-              Trin 5 — Gennemse og send
-            </div>
+            <StepHead step={5} title="Gennemse og send" />
 
             {/* Produktkort */}
             <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb12}>
@@ -358,7 +351,7 @@ export default function NotFoundScreen({
               <div style={UI.udflex_aicenter_g12_mb12}>
                 {productImagePreview
                   ? <img loading="lazy" src={productImagePreview} alt="Produkt" style={{ width:60, height:60, objectFit:"contain", borderRadius:10, border:"1px solid var(--border)", flexShrink:0 }} />
-                  : <div style={{ width:60, height:60, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>📦</div>
+                  : <div style={{ width:60, height:60, borderRadius:10, background:"var(--paper2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name="package" size={26} color="var(--muted2)" /></div>
                 }
                 <div style={S.flex1}>
                   <div style={UI.ufs11_cmuted_fw600_mb4}>Produktnavn</div>
@@ -505,16 +498,26 @@ export default function NotFoundScreen({
 
             {scanError && <div className="error-box" style={S.mb10}><Icon name="warning" size={13} color="var(--red)" /> {scanError}</div>}
 
-            <button
+            {/* Minimumskrav før indsendelse: kun produktnavn er påkrævet; ingredienser anbefales (uden dem kan produktet ikke vurderes). */}
+            <div style={{ ...S.card, marginBottom:12 }}>
+              <div style={{ fontSize:12, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>Før du sender</div>
+              <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:13, color: proposedName.trim() ? "var(--ink)" : "var(--red)", fontWeight:600, marginBottom:6 }}>
+                <Icon name={proposedName.trim() ? "check" : "warning"} size={14} color={proposedName.trim() ? "var(--green)" : "var(--red)"} /> Produktnavn <span style={{ fontWeight:500, color:"var(--muted)" }}>(påkrævet)</span>
+              </div>
+              <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:13, color:"var(--ink)", fontWeight:600 }}>
+                <Icon name={(ingItems.length > 0 || ocrText) ? "check" : "warning"} size={14} color={(ingItems.length > 0 || ocrText) ? "var(--green)" : "var(--amber)"} /> Ingredienser <span style={{ fontWeight:500, color:"var(--muted)" }}>(anbefalet)</span>
+              </div>
+            </div>
+
+            <button type="button" className="btn btn-primary btn-full" style={{ marginBottom:8, minHeight:48 }}
               onClick={() => {
                 const finalText = ingItems.length > 0 ? ingToText(ingItems) : ocrText;
                 if (ingItems.length > 0) setOcrText(finalText);
                 submitProduct(finalText);
               }}
-              disabled={submitting || !proposedName.trim()}
-              style={{ width:"100%", background: proposedName.trim() ? "var(--green)" : "var(--border2)", color: proposedName.trim() ? "var(--on-green)" : "var(--muted)", border:"none", borderRadius:12, padding:"16px", fontFamily:"var(--f)", fontSize:15, fontWeight:800, cursor: proposedName.trim() ? "pointer" : "not-allowed", marginBottom:8, opacity: submitting ? 0.6 : 1, boxShadow: proposedName.trim() ? "0 2px 12px rgba(14,143,90,.25)" : "none", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+              disabled={submitting || !proposedName.trim()}>
               {submitting
-                ? <><div style={{ width:16, height:16, border:"2px solid rgba(0,0,0,.2)", borderTopColor:"var(--on-green)", borderRadius:"50%", animation:"spin .7s linear infinite", display:"inline-block" }} />Sender…</>
+                ? <><span style={{ width:16, height:16, border:"2px solid rgba(255,255,255,.4)", borderTopColor:"var(--on-green)", borderRadius:"50%", animation:"spin .7s linear infinite", display:"inline-block" }} /> Sender…</>
                 : <>Send produkt ind <Icon name="check" size={15} color={proposedName.trim() ? "var(--on-green)" : "var(--muted)"} /></>}
             </button>
             <button className="btn btn-ghost btn-full" onClick={() => setNotFoundStep(2)}>← Tilbage</button>
