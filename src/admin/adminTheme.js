@@ -55,9 +55,14 @@ body{
 
 /* ── Layout ── */
 .admin-shell{display:flex;min-height:100vh;}
-.admin-sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 12px;}
+.admin-sidebar{width:var(--sidebar-w);flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;box-sizing:border-box;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 12px;}
 .admin-sidebar-logo{display:flex;align-items:center;gap:7px;font-size:17px;font-weight:900;color:var(--ink);padding:0 10px 20px;}
 .admin-nav{display:flex;flex-direction:column;gap:2px;flex:1;}
+.admin-nav-group{display:flex;flex-direction:column;gap:2px;margin-bottom:8px;}
+.admin-nav-group-head{display:flex;align-items:center;gap:6px;padding:6px 10px;border:none;background:none;font-family:var(--f);font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;width:100%;text-align:left;border-radius:6px;}
+.admin-nav-group-head:hover{background:var(--surface2);}
+.admin-nav-group-head .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:10px;padding:1px 6px;min-width:16px;text-align:center;letter-spacing:0;}
+.admin-nav-sub{padding-left:14px;}
 .admin-nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer;border:none;background:none;font-family:var(--f);text-align:left;width:100%;}
 .admin-nav-item:hover{background:var(--surface2);}
 .admin-nav-item.active{background:var(--green-lt);color:var(--green);font-weight:800;}
