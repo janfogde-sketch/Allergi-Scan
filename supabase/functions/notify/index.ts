@@ -17,9 +17,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { renderNotification, MissingRequiredError, productLabel } from "../_shared/notificationContent.js";
 import { sendWebPush, endpointHash } from "../_shared/webpush.ts";
-import { formatDanishDeadline, summarizeItems, affectedAllergenChanges, summarizeAllergenChanges } from "../_shared/notifyHelpers.js";
+import { formatDanishDeadline, formatNames, itemCountText, bulletList, affectedAllergenChanges, summarizeAllergenChanges } from "../_shared/notifyHelpers.js";
 import { eanVariants } from "../_shared/recallParser.js";
-import { RESEND_TEMPLATES, MAIL_ONLY_WITHOUT_PUSH, buildMailVariables, sendTemplateMail } from "../_shared/mailSend.ts";
+import { RESEND_TEMPLATES, MAIL_ONLY_WITHOUT_PUSH, buildMailVariables, sendTemplateMail, sendHtmlMail } from "../_shared/mailSend.ts";
+import { LIST_MAIL_KEYS, renderListMail } from "../_shared/listMail.ts";
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 const APP_URL = "https://www.eatsafe.dk";
@@ -110,13 +111,22 @@ async function planEvent(db: Db, ev: EventRow): Promise<Planned[]> {
       const { data: access } = await db.from("shopping_list_access").select("user_id").eq("list_id", list.id);
       // Modtagere: ejeren og de brugere, der har adgang NU (adgang genvurderes ved afsendelse)
       const recipients = [...new Set([list.owner_id, ...(access ?? []).map((a: { user_id: string }) => a.user_id)].filter(Boolean))] as string[];
+      // Navnene på dem, der har tilføjet varer (fornavn), så beskeden kan sige HVEM: "Jan og Bjørn har tilføjet 4 varer til Weekend".
+      const adderIds = [...new Set(items.map((i: { added_by: string }) => i.added_by))];
+      const { data: adders } = await db.from("users").select("id, name").in("id", adderIds);
+      const nameById = new Map((adders ?? []).map((u: { id: string; name: string | null }) => [u.id, u.name ?? ""] as [string, string]));
       const plans: Planned[] = [];
       for (const userId of recipients) {
         const theirs = items.filter((i: { added_by: string }) => i.added_by !== userId);
         if (theirs.length === 0) continue;
         plans.push({
           userId, templateKey: theirs.length === 1 ? "P3:one" : "P3:many",
-          data: { listName: list.name, listId: list.id, itemSummary: summarizeItems(theirs.map((i: { name: string }) => i.name)) },
+          data: {
+            listName: list.name, listId: list.id,
+            adders: formatNames(theirs.map((i: { added_by: string }) => nameById.get(i.added_by) ?? "")),
+            countText: itemCountText(theirs.length),
+            itemList: bulletList(theirs.map((i: { name: string }) => i.name)),
+          },
         });
       }
       return plans;
@@ -306,8 +316,9 @@ async function sendPushes(db: Db, ev: EventRow, plan: Planned, r: ReturnType<typ
 
 // Mail: én pr. besked (registret forhindrer dobbelt afsendelse), via Resend-skabelonen for varianten.
 async function sendMail(db: Db, plan: Planned, r: ReturnType<typeof renderNotification>, notificationId: string, pushWasSent: boolean): Promise<boolean> {
+  const direct = LIST_MAIL_KEYS.has(r.key); // P3 sendes som direkte HTML fra repoet (ikke Resend-skabelonen)
   const templateId = RESEND_TEMPLATES[r.key];
-  if (!templateId) return false; // varianten har ingen mail (endnu)
+  if (!templateId && !direct) return false; // varianten har ingen mail (endnu)
   if (pushWasSent && MAIL_ONLY_WITHOUT_PUSH.has(r.key)) {
     // Fx P2: mailen er kun til dem uden push (udviklerpakken anbefaler ikke begge som standard).
     const { count } = await db.from("push_tokens").select("id", { count: "exact", head: true }).eq("user_id", plan.userId);
@@ -328,10 +339,10 @@ async function sendMail(db: Db, plan: Planned, r: ReturnType<typeof renderNotifi
   const apiKey = Deno.env.get("RESEND_API_KEY") ?? "";
   if (!apiKey) { await record("failed", "RESEND_API_KEY mangler"); return false; }
 
-  const res = await sendTemplateMail({
-    apiKey, to: user.email, templateId, subject: r.mail.subject,
-    variables: buildMailVariables(r.mailVars, user.name), idempotencyKey: `notification-${notificationId}`,
-  });
+  const variables = buildMailVariables(r.mailVars, user.name);
+  const res = direct
+    ? await sendHtmlMail({ apiKey, to: user.email, subject: r.mail.subject, html: renderListMail(variables), idempotencyKey: `notification-${notificationId}` })
+    : await sendTemplateMail({ apiKey, to: user.email, templateId, subject: r.mail.subject, variables, idempotencyKey: `notification-${notificationId}` });
   await record(res.ok ? "sent" : "failed", res.ok ? null : res.error ?? null);
   return !res.ok && res.retryable;
 }

@@ -238,15 +238,18 @@
  },
  "P3": {
   "file": "P3-delt-indkoebsliste.html",
-  "subject": "Der er nye varer på jeres indkøbsliste",
+  "subject": "{{{adders}}} har tilføjet {{{countText}}} til {{{listName}}}",
   "vars": [
-   "itemSummary",
+   "adders",
+   "countText",
+   "itemList",
    "listName",
    "name"
   ],
   "bytes": 5960,
   "resendId": "77fab913-e8f3-4271-a824-fc592791ada1",
-  "alias": "eatsafe-p3-delt-indkoebsliste"
+  "alias": "eatsafe-p3-delt-indkoebsliste",
+  "note": "Sendes som direkte HTML fra supabase/functions/_shared/listMail.ts (node scripts/build-list-mail.mjs), ikke via Resend-skabelonen."
  },
  "P4": {
   "file": "P4-konto-slettet.html",

@@ -215,7 +215,12 @@ indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push
   når invitationen ikke længere er aktiv; mail kun til dem uden push (`MAIL_ONLY_WITHOUT_PUSH`).
   **P3** (delt liste): trigger på `shopping_list_items` (kun lister delt med nogen andre) giver én hændelse
   pr. liste pr. 30-min-vindue, udskudt 5 min (`notification_events.available_at`); `notify` tæller pr.
-  modtager varer tilføjet af *andre* (ejer + nuværende adgangsbrugere), varenavne kun i app/mail, ikke i push.
+  modtager varer tilføjet af *andre* (ejer + nuværende adgangsbrugere). Beskeden siger HVEM (fornavne fra `users.name`:
+  "Jan", "Jan og Bjørn", "Jan, Bjørn og Maria", derefter "N andre") og hvor mange: "Jan har tilføjet 2 varer til Weekend"
+  (overskrift i app og mail; push er titel "Jan har tilføjet 2 varer" + tekst "til Weekend. Se listen i EatSafe."). Varerne står som
+  punktliste (højst 8, derefter "og N flere") kun i app og mail (`itemList` er `noPush`, kan heller ikke bruges i admins push-tekst).
+  P3-mailen sendes som direkte HTML (`_shared/listMail.ts`, bygget af `P3-delt-indkoebsliste.html` med
+  `node scripts/build-list-mail.mjs`, testet i `src/listMail.test.js`), ikke via Resend-skabelonen.
   Varer tilføjet efter afsendelsen i samme vindue får først en besked, hvis der kommer en ny tilføjelse i
   næste vindue (bevidst grænse: højst én besked pr. modtager pr. liste pr. 30 min).
 - **Ticket-visning, N1, P4:** *Se din feedback*: `SCREENS.TICKET` (`TicketScreen.jsx`) viser egen ticket

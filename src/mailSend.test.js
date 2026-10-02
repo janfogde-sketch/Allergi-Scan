@@ -15,7 +15,7 @@ const KEY_TO_CATALOG = {
 const SAMPLE = {
   productName: "Havregryn", ean: "5701234567890", submissionId: "s1", reason: "Billedet viser ikke ingredienslisten.",
   memberName: "Kaj", inviteId: "i1", description: "Knappen virker ikke på min iPhone.", message: "Vi har rettet fejlen.", ticketId: "t1",
-  expiresAt: "i dag kl. 18:35", listName: "Familiens indkøb", listId: "l1", itemSummary: "Mælk og Æg", changeSummary: "Æg indeholder nu",
+  expiresAt: "i dag kl. 18:35", listName: "Familiens indkøb", listId: "l1", adders: "Jan og Bjørn", countText: "4 varer", itemList: "• Mælk\n• Æg", changeSummary: "Æg indeholder nu",
   recallReason: "For højt indhold af glycerol.", affectedBatches: "Frosty Pocket Lemon\nLotnr.: L1", recallAction: "Kassér produktet.", recallUrl: "https://foedevarestyrelsen.dk/nyheder/a", recallId: "r1",
 };
 
