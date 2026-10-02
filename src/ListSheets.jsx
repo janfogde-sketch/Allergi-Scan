@@ -263,17 +263,15 @@ function PersonRow({ name, tag, actionLabel, onAction, actionAria, primary }) {
   );
 }
 
-export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers, getListAccess, grantAccess, revokeAccess, setListType, rotateListCode, leaveList, onChanged, onGoToFamily, onClose }) {
+export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers, getListAccess, grantAccess, revokeAccess, setListType, rotateListCode, onChanged, onGoToFamily, onClose }) {
   const [access, setAccess]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied]   = useState(false);
-  const [confirm, setConfirm] = useState(null); // "private" | "newlink" | "leave"
-  const isOwner = list.owner_id === userId;
+  const [confirm, setConfirm] = useState(null); // "private" | "newlink"
   const [mode, setMode] = useState(list.type === "family" ? "family" : (list.shared_with?.length > 0 ? "people" : "private"));
 
   useEffect(() => {
     loadFamilyMembers();
-    if (!isOwner) { setLoading(false); return; }
     getListAccess(list.id).then(a => { setAccess(a); setLoading(false); });
   }, [list.id]);
 
@@ -286,7 +284,6 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
   const shareLink = listLinkUrl(list.share_link);
   const shareText = listShareText(list.name);
   const copyMessage = () => { navigator.clipboard?.writeText(`${shareText}\n${shareLink}`); setCopied(true); setTimeout(() => setCopied(false), 2000); };
-  const ownerName = list.owner_name || "ejeren";
 
   const grant = async (m) => {
     setAccess(a => [...a, { user_id: m.id, permission: "edit", users: { name: m.name, email: m.email } }]);
@@ -318,32 +315,6 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
   };
 
   const familySub = familyMembers.length > 0 ? `${joinNames(familyMembers.map(m => (nameOf(m)).split(" ")[0]))} kan se og redigere listen.` : "Du har ingen i din familie endnu. Invitér en voksen først.";
-
-  if (!isOwner) {
-    return (
-      <Sheet label="Del liste" onClose={onClose}>
-        <SheetHeader title="Del liste" sub={list.name} onClose={onClose} />
-      <SheetBody>
-        <div style={{ ...CARD, padding:14, marginBottom:16 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:700, color:"var(--ink)" }}><Icon name="family" size={14} color="var(--ink)" /> Delt af {ownerName}</div>
-          <div style={{ fontSize:13, color:"var(--muted2)", marginTop:6, lineHeight:1.5 }}>
-            Alle med adgang kan tilføje, afkrydse og fjerne varer. Det er {ownerName}, der bestemmer, hvem listen er delt med.
-          </div>
-          <div style={{ fontSize:12, color:"var(--muted)", marginTop:8, lineHeight:1.5 }}>
-            {list.via_access ? "Du har fået adgang, fordi du er valgt eller tilsluttet via et link." : `Du kan se listen, fordi ${ownerName} deler den med hele familien.`}
-          </div>
-        </div>
-        {list.via_access && (
-          <button type="button" className="btn btn-outline" style={{ width:"100%", minHeight:44, color:"var(--red)", borderColor:"var(--red-md)" }} onClick={() => setConfirm("leave")}>Forlad listen</button>
-        )}
-        {confirm === "leave" && (
-          <ConfirmDialog title={`Forlad listen "${list.name}"?`} message={`Du kan ikke længere se eller redigere den. ${ownerName} kan give dig adgang igen.`} confirmLabel="Forlad listen"
-            onConfirm={async () => { setConfirm(null); if (await leaveList(list.id)) onClose(); }} onCancel={() => setConfirm(null)} />
-        )}
-      </SheetBody>
-      </Sheet>
-    );
-  }
 
   return (
     <Sheet label="Del liste" onClose={onClose}>

@@ -2,7 +2,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
-import { ShareListSheet, JoinListSheet } from "./ListSheets.jsx";
+import { ShareListSheet, JoinListSheet, ListSwitcherSheet } from "./ListSheets.jsx";
 import { formatExpiry } from "./FamilyInvite.jsx";
 
 const members = [{ id: "u2", name: "Anna Nielsen", email: "a@x.dk" }, { id: "u3", name: "Ben", email: "b@x.dk" }];
@@ -42,14 +42,20 @@ describe("ShareListSheet", () => {
     fireEvent.click(screen.getByLabelText("Fjern Carl Hansen fra listen"));
     await waitFor(() => expect(p.revokeAccess).toHaveBeenCalledWith("l1", "u9"));
   });
-  it("ikke-ejer ser ejerens navn og kan forlade listen", async () => {
-    const p = base({ userId: "u2", list: { id: "l1", name: "X", owner_id: "u1", owner_name: "Jan", type: "personal", via_access: true } });
-    render(<ShareListSheet {...p} />);
-    expect(screen.getByText(/Delt af Jan/)).toBeTruthy();
-    expect(p.getListAccess).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByText("Forlad listen"));
+  it("en liste, andre har delt, forlades under Dine lister → Rediger (ikke via Del)", async () => {
+    const leaveList = vi.fn().mockResolvedValue(true);
+    const lists = [
+      { id: "a", name: "Min", owner_id: "u2", type: "personal" },
+      { id: "l1", name: "Test", owner_id: "u1", owner_name: "Jan", type: "personal", via_access: true },
+    ];
+    render(<ListSwitcherSheet lists={lists} activeListId="l1" userId="u2" onSelect={() => {}} onClose={() => {}} createList={vi.fn()} renameList={vi.fn()}
+      leaveList={leaveList} joinByCode={vi.fn()} onRequestDelete={vi.fn()} />);
+    expect(screen.getByText("Delt af Jan")).toBeTruthy();
+    fireEvent.click(screen.getByText("Rediger"));
+    expect(screen.queryByLabelText(/Slet listen Test/)).toBeNull(); // kan ikke slette en andens liste
+    fireEvent.click(screen.getByLabelText("Forlad listen Test"));
     fireEvent.click(screen.getAllByText("Forlad listen").pop());
-    await waitFor(() => expect(p.leaveList).toHaveBeenCalledWith("l1"));
+    await waitFor(() => expect(leaveList).toHaveBeenCalledWith("l1"));
   });
 });
 
