@@ -187,7 +187,7 @@ generel sporinfo. Cøliaki matches mod produktets gluten-/hvedeflag (`effectiveA
 `AllergenSensitivity` (finpudset 2. okt.: segmenteret kontrol `.trace-seg`, kort linje under valget; ignorerede spor er en neutral info-strimmel under banneret). Detaljer: `src/CONTEXT.md` §3.
 
 **Resultatsiden:** data-drevet kategorisering; kaldes aldrig "sikker" blot fordi der ikke var match. RØD = allergi/intolerance,
-GUL/ORANGE = kostpræference/E-nummer-fravalg og spor, neutral grå (`--neutral`) = for lidt data. Sektionen "Dine valg" viser alle
+GUL/ORANGE = kostpræference/E-nummer-fravalg og spor, neutral grå (`--neutral`) = for lidt data, med statussen **"Kan ikke vurderes"**: kortet "Ingrediensliste mangler" med primær "Indsend ingrediensliste" kommer lige under status, "Tilføj til indkøbsliste" er sekundær nederst, og ukontrollerede valg samles i én foldbar linje i "Dine valg". Bidragsflowet (foto/indtastning) skjuler bundnavigationen. Sektionen "Dine valg" viser alle
 brugerens valg med ✓/✕/?. Ingredienslisten fremhæver kun det, der er relevant for brugeren (`highlightRules`).
 
 **Profil/familie:** "Rediger profil" ændrer kun navn (Bjørns beslutning). **Alder og køn er obligatoriske i onboarding** (Jans

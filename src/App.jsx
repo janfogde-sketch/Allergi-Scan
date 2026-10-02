@@ -559,6 +559,8 @@ export default function EatSafe() {
   // fra en kontekst der normalt viser dem (Indstillinger/Profil) eller ikke
   // (Velkommen/Log ind) — så navigationen er identisk uanset indgang.
   const isLegalPage = screen === SCREENS.TERMS || screen === SCREENS.PRIVACY;
+  // Bidragsflowet (foto/indtastning) skjuler bundnavigationen, så brugeren holder fokus og ikke navigerer væk ved et uheld. Valgmenuen (start) og kvitteringen (done) viser den.
+  const hideNavForContribution = screen === SCREENS.SUGGEST_EDIT && ["guide", "scanning", "review", "sending"].includes(editStep);
 
   const FamilyChips = () => {
     const allIds = ["me", ...scanFamily.map(m => m.id)];
@@ -1336,7 +1338,7 @@ export default function EatSafe() {
             åbnes fra kontekster uden bundnav (Velkommen/Log ind), så den
             skal være konsekvent fraværende uanset hvor siden blev åbnet
             fra, i stedet for at dukke op/forsvinde afhængigt af indgang. */}
-        {!isOnboard && !madpasWaiterView && !isLegalPage && (
+        {!isOnboard && !madpasWaiterView && !isLegalPage && !hideNavForContribution && (
           <nav className="bottom-nav" role="navigation" aria-label="Hovednavigation">
             {[
               [SCREENS.LIST,    "cart",     "Indkøbsliste"],

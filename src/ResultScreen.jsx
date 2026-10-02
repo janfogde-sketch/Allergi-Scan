@@ -41,9 +41,10 @@ export default function ResultScreen({
   const [showListPicker, setShowListPicker] = React.useState(false);
   const [listMatchDismissed, setListMatchDismissed] = React.useState(false);
   const [listMatchConfirmed, setListMatchConfirmed] = React.useState(false);
+  const [unknownOpen, setUnknownOpen] = React.useState(false);
   // Nulstil "tilføjet"-kvitteringen når man ser et nyt produkt — ResultScreen
   // forbliver monteret på tværs af scanninger, kun scanResult skifter.
-  React.useEffect(() => { setAddedToList(false); setShowListPicker(false); setListMatchDismissed(false); setListMatchConfirmed(false); }, [scanResult?.code]);
+  React.useEffect(() => { setAddedToList(false); setShowListPicker(false); setListMatchDismissed(false); setListMatchConfirmed(false); setUnknownOpen(false); }, [scanResult?.code]);
   if (!scanResult) return null;
 
   // ── Per-profil sikkerhedsvurdering (25. sept. 2026, brugerfeedback) ──────
@@ -127,6 +128,8 @@ export default function ResultScreen({
   const hasIngredientsText = !!(scanResult.ingredients && scanResult.ingredients.trim());
   const hasSufficientData = !profileResults.some(p => (p.unknown || []).length > 0) && (hasAnyAllergenData || hasIngredientsText);
   const topStatus = computeTopStatus({ hasSufficientData, ...findings });
+  // "Kan ikke vurderes": ingen fund, men for lidt data til at kontrollere alle valg (også ved flere profiler, hvor "ukendt" ellers giver et gult "kan ikke bekræftes").
+  const cannotAssess = topStatus.level === "unknown";
 
   // ── Ingrediensliste-fremhævning (krav 8/9) ──────────────────────────────
   // KUN ingredienser der reelt matcher et fund relevant for DENNE bruger —
@@ -263,7 +266,10 @@ export default function ResultScreen({
     ).sort((a, b) => CHOICE_STATUS_ORDER[a.status] - CHOICE_STATUS_ORDER[b.status]);
   };
 
+  // Standardforklaringer på "kan ikke afgøres" gentages ikke pr. valg: den samlede linje i "Dine valg" siger det én gang.
+  const GENERIC_UNKNOWN_REASONS = ["Kan ikke afgøres ud fra de tilgængelige produktdata.", "Ingrediensliste mangler — kan ikke afgøres."];
   const ChoiceRow = ({ status, label, reason, crossColor = "var(--red)" }) => {
+    if (status === "unknown" && GENERIC_UNKNOWN_REASONS.includes(reason)) reason = null;
     const icon = status === "cross" ? "x" : status === "trace" ? "warning" : status === "unknown" ? "info" : "check";
     const color = status === "cross" ? crossColor : status === "trace" ? "var(--amber)" : status === "unknown" ? "var(--muted)" : "var(--green)";
     return (
@@ -295,17 +301,87 @@ export default function ResultScreen({
     const dietRows = buildDietChoiceRows();
     const eNumberRows = buildENumberChoiceRows();
     if (allergyRows.length === 0 && dietRows.length === 0 && eNumberRows.length === 0) return null;
+    // Valg, der ikke kan kontrolleres, samles i én foldbar linje i stedet for at gentage samme forklaring pr. valg.
+    const isUnknown = r => r.status === "unknown";
+    const unknownRows = [...allergyRows, ...dietRows, ...eNumberRows].filter(isUnknown);
+    const known = rows => rows.filter(r => !isUnknown(r));
     return (
       <div className="card">
         <div className="card-lbl">Dine valg</div>
         <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-          <ChoiceCategory title="Allergier & intolerancer" rows={allergyRows} crossColor="var(--red)" />
-          <ChoiceCategory title="Kostpræferencer" rows={dietRows} crossColor="var(--amber)" />
-          <ChoiceCategory title="E-numre & øvrige fravalg" rows={eNumberRows} crossColor="var(--amber)" />
+          <ChoiceCategory title="Allergier & intolerancer" rows={known(allergyRows)} crossColor="var(--red)" />
+          <ChoiceCategory title="Kostpræferencer" rows={known(dietRows)} crossColor="var(--amber)" />
+          <ChoiceCategory title="E-numre & øvrige fravalg" rows={known(eNumberRows)} crossColor="var(--amber)" />
+          {unknownRows.length > 0 && (
+            <div>
+              <button type="button" onClick={() => setUnknownOpen(o => !o)} aria-expanded={unknownOpen}
+                style={{ display:"flex", alignItems:"center", gap:8, width:"100%", background:"none", border:"none", padding:"2px 0", cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" }}>
+                <Icon name="info" size={14} color="var(--muted)" />
+                <span style={{ flex:1, fontSize:13, fontWeight:700, color:"var(--ink)" }}>
+                  {unknownRows.length === 1 ? "1 valg kan ikke kontrolleres" : `${unknownRows.length} valg kan ikke kontrolleres`}
+                </span>
+                <span style={{ display:"flex", transform: unknownOpen ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
+                  <Icon name="chevronDown" size={14} color="var(--muted)" />
+                </span>
+              </button>
+              {unknownOpen && (
+                <div className="acc-body"><div style={{ paddingTop:6, paddingLeft:22 }}>
+                  {unknownRows.map((r, i) => <ChoiceRow key={i} {...r} />)}
+                </div></div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
   };
+
+  const openContribution = (type) => {
+    setEditIngText(scanResult?.ingredients || ""); setEditNote(""); setEditType(type);
+    setEditStep(type ? "guide" : "start");
+    setScreen(SCREENS.SUGGEST_EDIT);
+  };
+
+  const renderAddToList = (secondary = false) => (
+    <button className={`btn ${secondary ? "btn-outline" : "btn-green"} btn-sm btn-full`} onClick={handleAddToList}
+      style={{ marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:8, opacity: addedToList ? .7 : 1 }}>
+      {addedToList
+        ? <><Icon name="check" size={15} color={secondary ? "var(--green)" : "var(--on-green)"} /> Tilføjet til indkøbsliste</>
+        : <><Icon name="cart" size={15} color={secondary ? "var(--green)" : "var(--on-green)"} /> Tilføj til indkøbsliste</>}
+    </button>
+  );
+
+  // Kort lige under status, når produktet ikke kan vurderes: hvorfor, og hvad brugeren kan gøre ved det.
+  const renderMissingData = () => (
+    <div className="card" style={{ marginBottom:10 }}>
+      <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
+        <Icon name={hasIngredientsText ? "info" : "list"} size={20} color="var(--ink2)" />
+        <div style={S.flex1}>
+          <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>{hasIngredientsText ? "Oplysninger mangler" : "Ingrediensliste mangler"}</div>
+          <div style={{ fontSize:12.5, color:"var(--muted2)", lineHeight:1.5, marginTop:3 }}>
+            {hasIngredientsText
+              ? "Vi mangler allergenoplysninger og kan ikke kontrollere alle dine valg."
+              : "Vi kan ikke kontrollere dine allergier og intolerancer uden ingredienslisten."}
+          </div>
+        </div>
+      </div>
+      {!scanResult.isDemo && (
+        <div style={{ display:"flex", flexDirection:"column", gap:8, marginTop:12 }}>
+          {hasIngredientsText ? (
+            <button className="btn btn-primary btn-full" onClick={() => openContribution(null)}>Hjælp med produktoplysninger</button>
+          ) : (
+            <>
+              <button className="btn btn-primary btn-full" onClick={() => openContribution("ingredients")}
+                style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+                <Icon name="camera" size={16} color="var(--on-green)" /> Indsend ingrediensliste
+              </button>
+              <button className="btn btn-outline btn-full" onClick={() => openContribution(null)}>Hjælp med andre produktoplysninger</button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
 
   const handleAddToList = () => {
     if (lists.length > 1) { setShowListPicker(true); return; }
@@ -425,11 +501,11 @@ export default function ResultScreen({
     // profiler bruges fortsat den eksisterende, samlede tre-tilstands-status
     // (overallStatus/overallHeadline) — per-profil-detaljer vises separat
     // nedenfor (renderPersonOverview).
-    const verdictColor = isMultiProfile
+    const verdictColor = cannotAssess ? "var(--neutral)" : isMultiProfile
       ? ({ danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[overallStatus] || "var(--green)")
       : ({ danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", unknown:"var(--neutral)" }[topStatus.level] || "var(--green)");
-    const verdictIcon = isMultiProfile ? (overallStatus === "safe" ? "check" : "warning") : topStatus.icon;
-    const headlineText = isMultiProfile ? overallHeadline : topStatus.headline;
+    const verdictIcon = cannotAssess ? "info" : isMultiProfile ? (overallStatus === "safe" ? "check" : "warning") : topStatus.icon;
+    const headlineText = cannotAssess ? "Kan ikke vurderes" : isMultiProfile ? overallHeadline : topStatus.headline;
     // Konkrete navne under headline, vist som chips/tags (krav 1: "hvis flere
     // ting udløser resultatet, må de gerne vises som korte chips/tags") — kun
     // ved én aktiv profil, hvor topStatus.names allerede er de præcise fund.
@@ -501,9 +577,9 @@ export default function ResultScreen({
               Vi fandt ingen match med dine valgte allergier, intolerancer eller øvrige præferencer.
             </div>
           )}
-          {!isMultiProfile && topStatus.level === "unknown" && (
-            <div style={{ fontSize:11.5, color:"rgba(255,255,255,.9)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>
-              Vi mangler produktdata og kan derfor ikke kontrollere alle dine præferencer.
+          {cannotAssess && (
+            <div style={{ fontSize:12, color:"rgba(255,255,255,.95)", marginTop:4, lineHeight:1.45, fontWeight:500 }}>
+              Vi mangler ingrediens- eller allergenoplysninger og kan derfor ikke kontrollere alle dine valg.
             </div>
           )}
         </div>
@@ -586,7 +662,7 @@ export default function ResultScreen({
             <SafetyRow key={p.id}
               name={p.id==="me" ? "Dig" : p.name}
               status={p.status}
-              statusText={[...p.reasons, ...(p.ignoredTraces || []).map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id} (du har valgt ikke at få advarsel)`)].join(" · ") || "Matcher profilen"}
+              statusText={cannotAssess && (p.unknown || []).length > 0 ? ((p.unknown.length === 1) ? "1 valg kan ikke kontrolleres" : `${p.unknown.length} valg kan ikke kontrolleres`) : [...p.reasons, ...(p.ignoredTraces || []).map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id} (du har valgt ikke at få advarsel)`)].join(" · ") || "Matcher profilen"}
               onClick={(p.danger.length > 0 || p.warning.length > 0) ? () => {
                 const first = [...p.danger, ...p.warning][0];
                 setKnowledgeSlug(first); setScreen(SCREENS.KNOWLEDGE);
@@ -780,10 +856,9 @@ export default function ResultScreen({
       {/* ── 1. PRODUKT — verdikten sidder nu som en ramme + strimmel på selve kortet ── */}
       {renderProductHero()}
 
-      <button className="btn btn-green btn-sm btn-full" onClick={handleAddToList}
-        style={{ marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:8, opacity: addedToList ? .7 : 1 }}>
-        {addedToList ? <><Icon name="check" size={15} color="var(--on-green)" /> Tilføjet til indkøbsliste</> : <><Icon name="cart" size={15} color="var(--on-green)" /> Tilføj til indkøbsliste</>}
-      </button>
+      {/* Kan ikke vurderes: hjælp med de manglende oplysninger er den vigtigste handling, og indkøbslisten bliver sekundær nederst */}
+      {cannotAssess && renderMissingData()}
+      {!cannotAssess && renderAddToList()}
       {showListPicker && (
         <ListPickerSheet lists={lists} onChoose={chooseListForAdd} onCancel={() => setShowListPicker(false)} />
       )}
@@ -805,7 +880,7 @@ export default function ResultScreen({
       )}
 
       {/* ── 1b. SIKRE ALTERNATIVER ── */}
-      {(scanResult.status === "danger" || scanResult.status === "warn") && (
+      {!cannotAssess && (scanResult.status === "danger" || scanResult.status === "warn") && (
         <div style={UI.mb10}>
           {altLoading && (
             <div style={UI.udflex_aicenter_g10_p12px14px_bgsurface_bd1pxsolid_br12}>
@@ -841,11 +916,8 @@ export default function ResultScreen({
             <div style={UI.udflex_aicenter_g10_p12px14px_bgsurface_bd1pxsolid_br12}>
               <Icon name="search" size={16} color="var(--muted)" />
               <div style={UI.ufs12_cmuted_lh15}>
-                Ingen kendte alternativer i samme kategori endnu.{" "}
-                <span style={UI.ucgreen_fw700_curpointer}
-                  onClick={() => {}}>
-                  Hjælp os ved at scanne alternativer.
-                </span>
+                <div style={{ fontWeight:700, color:"var(--ink2)" }}>Ingen alternativer fundet endnu</div>
+                Scan et lignende produkt for at hjælpe EatSafe.
               </div>
             </div>
           )}
@@ -866,7 +938,8 @@ export default function ResultScreen({
           selv, rent informativt. ── */}
       {scanResult.allergen_flags && renderOtherAllergens()}
 
-      {/* ── 5. INGREDIENSLISTE ── */}
+      {/* ── 5. INGREDIENSLISTE ── (skjult uden data, når kortet "Ingrediensliste mangler" allerede står øverst) */}
+      {!(cannotAssess && !hasIngredientsText) && (
       <div className="card">
         <div className="card-lbl">Ingrediensliste</div>
         {scanResult.ingredients ? (
@@ -898,6 +971,7 @@ export default function ResultScreen({
           </div>
         )}
       </div>
+      )}
 
       {/* ── 5b. E-NUMRE I PRODUKTET (fuld liste, uændret) ── */}
       {scanResult.productENumbers?.length > 0 && renderENumbers()}
@@ -905,6 +979,8 @@ export default function ResultScreen({
       {/* ── 6. NÆRINGSINDHOLD — skjules helt hvis der ikke er brugbare data
           (krav 10/13), ikke længere en "hjælp os"-prompt. ── */}
       {renderNutrition()}
+
+      {cannotAssess && renderAddToList(true)}
 
       {/* ── 7. ÉN SAMLET SIKKERHEDSDISCLAIMER (krav 11) — den eneste faste
           disclaimer på siden. Placeret her, umiddelbart før "Ret forkerte

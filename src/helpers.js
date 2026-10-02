@@ -678,7 +678,7 @@ export function computeTopStatus({ hasSufficientData, allergyMatches, intoleranc
     return { level: "warn", icon: "warning", headline: "Passer ikke til dine valg", names: preferenceNames };
   }
   if (!hasSufficientData) {
-    return { level: "unknown", icon: "info", headline: "Ikke nok oplysninger til fuld kontrol", names: [] };
+    return { level: "unknown", icon: "info", headline: "Kan ikke vurderes", names: [] };
   }
   return { level: "safe", icon: "check", headline: "Ingen advarsler fundet", names: [] };
 }
