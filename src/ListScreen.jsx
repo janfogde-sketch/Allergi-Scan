@@ -76,23 +76,46 @@ export default function ListScreen({
   // ny søgning.
   const [showHiddenConflicts, setShowHiddenConflicts] = useState(false);
   useEffect(() => { setShowHiddenConflicts(false); }, [newItemName]);
+  // Cache pr. søgetekst (første side), så et tilbageskridt eller en gentaget
+  // søgning vises med det samme uden nyt kald. Udløber efter 5 min, fordi
+  // populariteten og brugerens egne valg påvirker rangeringen, og ryddes,
+  // når brugeren skifter (login/logout).
+  const itemCacheRef = useRef({ token: null, map: new Map() });
   useEffect(() => {
-    if (!newItemName.trim()) { setItemResults([]); setItemSearching(false); setItemHasMore(false); setItemTotal(0); return; }
+    const q = newItemName.trim();
+    if (!q) { setItemResults([]); setItemSearching(false); setItemHasMore(false); setItemTotal(0); return; }
+    if (itemCacheRef.current.token !== accessToken) itemCacheRef.current = { token: accessToken, map: new Map() };
+    const cache = itemCacheRef.current.map;
+    const key = q.toLowerCase();
+    const hit = cache.get(key);
+    if (hit && Date.now() - hit.at < 5 * 60 * 1000) {
+      itemOffsetRef.current = hit.offset;
+      setItemResults(hit.results);
+      setItemHasMore(hit.hasMore);
+      setItemTotal(hit.total);
+      setItemSearching(false);
+      return;
+    }
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       setItemSearching(true);
       try {
-        const data = await apiCall(`${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(newItemName.trim())}`,
+        const data = await apiCall(`${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(q)}`,
           { headers: makeHeaders(accessToken), signal: controller.signal });
         if (data.success) {
-          itemOffsetRef.current = (data.products || []).length;
-          setItemResults(completeOnly(data.products));
+          const results = completeOnly(data.products);
+          const offset = (data.products || []).length;
+          const total = data.total || offset;
+          itemOffsetRef.current = offset;
+          setItemResults(results);
           setItemHasMore(!!data.hasMore);
-          setItemTotal(data.total || (data.products || []).length);
+          setItemTotal(total);
+          if (cache.size >= 30) cache.delete(cache.keys().next().value);
+          cache.set(key, { at: Date.now(), results, offset, hasMore: !!data.hasMore, total });
         }
       } catch (e) { if (e.name !== "AbortError") setItemResults([]); }
       finally { if (!controller.signal.aborted) setItemSearching(false); }
-    }, 150);
+    }, 70);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [newItemName, accessToken]);
 
