@@ -160,12 +160,17 @@ export function isTracesContext(text, keyword) {
 // plantedrikke ("kokosmælk" → "kokos"), mælkesyre/mælkesyrekultur (ingen mælk),
 // kilde-angivet lecithin ("solsikke lecithin" er ikke soja) og "ris mel" som to
 // ord (ellers matcher "mel" under hvede).
+// Sulfit-ammoniak-karamel (E150d, "ammonieret sulfiteret caramel") er en farve, ikke et sulfit-tilsætningsstof:
+// den giver svovl-SPOR, ikke direkte svovl (se analyzeIngredients).
+const CARAMEL_SULFITE = /(ammonieret\s+)?sulfiteret(\s+(caramel|karamel)\w*)?|sulfit-?ammoniak-?(caramel|karamel)\w*|ammonium-?sulfit-?(caramel|karamel)\w*|sulphite ammonia caramel/gi;
+
 export function normalizeIngredientText(text) {
   return text
     .replace(/(kokos|mandel|havre|soja|ris|cashew|ærte|hamp|hasselnød)(mælk|drik)\b/gi, "$1")
     .replace(/\b(coconut|almond|oat|soy|rice|cashew|hazelnut|pea) milk\b/gi, "$1")
     .replace(/(vegansk\s+)?mælkesyre\w*/gi, " ")
     .replace(/\b(solsikke|raps|sunflower|rapeseed)[\s-]*(le[ck]ithin|le[ck]itin)\w*/gi, "$1")
+    .replace(CARAMEL_SULFITE, " ")
     .replace(/\b(ris|majs|kokos|mandel|kikærte|tapioka|boghvede|kartoffel|havre|linse|ærte|quinoa|hirse)\s+mel\b/gi, "$1mel");
 }
 
@@ -174,6 +179,8 @@ const WEAK_SOY_WORDS = new Set(["lecithin", "lecitin"]);
 
 export function analyzeIngredients(rawText) {
   const text = normalizeIngredientText(rawText);
+  CARAMEL_SULFITE.lastIndex = 0;
+  const hasSulfiteCaramel = CARAMEL_SULFITE.test(rawText);
   const flags = {};
   const lower = text.toLowerCase();
 
@@ -214,6 +221,8 @@ export function analyzeIngredients(rawText) {
 
     flags[allergen] = status;
   }
+
+  if (hasSulfiteCaramel && flags.svovl === "no") flags.svovl = "traces";
 
   // ── E-nummer detektion ──────────────────────────────────────────────────
   for (const [enumber, mapping] of Object.entries(ENUMBER_ALLERGENS)) {

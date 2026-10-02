@@ -209,3 +209,10 @@ describe("gennemgang af 100 produkter (2. okt.)", () => {
     expect(looksNonDanish("Selleri, gulerod")).toBe(false);
   });
 });
+
+describe("sulfit-ammoniak-karamel (2. okt.)", () => {
+  it("giver svovl-spor, ikke direkte svovl", () => {
+    expect(analyzeIngredients("vand, farvestof (ammonieret sulfiteret caramel)").svovl).toBe("traces");
+    expect(analyzeIngredients("vand, natriumdisulfit").svovl).toBe("yes");
+  });
+});

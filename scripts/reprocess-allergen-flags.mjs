@@ -5,7 +5,8 @@
 //
 // Regler: producent-verificerede produkter og pladsholder-ingredienser (tekst = navn) røres ikke.
 // Rækker læst af Claude (`keyword+claude`) kan kun få HØJERE risiko (aldrig lavere), så AI-fund ikke går tabt.
-// Øvrige rækker får motorens nye resultat. OBS: trigger `on_products_allergen_change` lægger en P1-hændelse i
+// Rækker med ukendt herkomst (NULL) må højst gå fra "ja" til "spor" (aldrig til "nej"), så fund fra en tidligere
+// proces ikke går tabt, når motoren misser en slåfejl (fx "hvededemel"). Rækker med `keyword` får motorens nye resultat. OBS: trigger `on_products_allergen_change` lægger en P1-hændelse i
 // outboxen for hvert flag, der får højere risiko (push/mail til berørte brugere). Kør derfor kun --apply efter aftale.
 import { analyzeIngredients, liftGlutenFromWheat, looksNonDanish } from "../supabase/functions/_shared/allergenEngine.js";
 
@@ -35,6 +36,7 @@ for (;;) {
     if (!claude && looksNonDanish(text)) for (const k of Object.keys(next)) if (next[k] === "no") next[k] = "unknown";
     next = liftGlutenFromWheat(next);
     if (claude) for (const k of Object.keys(next)) if (rank(old[k]) > rank(next[k])) next[k] = old[k];
+    else if (!p.allergen_source_method) for (const k of Object.keys(next)) if (rank(next[k]) < 2 && rank(old[k]) > rank(next[k])) next[k] = old[k];
     const diffs = Object.keys(next).filter((k) => (old[k] ?? "unknown") !== next[k] && !(old[k] === false && next[k] === "no"));
     if (diffs.length === 0) continue;
     stats.changed++;
