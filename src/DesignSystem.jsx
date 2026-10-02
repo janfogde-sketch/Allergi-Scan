@@ -171,7 +171,7 @@ export function Accordion({ label, count, countLabel, open, onToggle, children, 
           <Icon name="chevronRight" size={16} color="var(--muted)" />
         </span>
       </button>
-      {open && children}
+      {open && <div className="acc-body"><div>{children}</div></div>}
     </div>
   );
 }

@@ -65,7 +65,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     [setScreen],
   );
 
-  const resolveOnboardingRoute = useCallback(async (uid, token) => {
+  const resolveOnboardingRoute = useCallback(async (uid, token, attempt = 0) => {
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=onboarding_completed,onboarding_step`, {
         headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, Accept: "application/json" },
@@ -81,10 +81,13 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         goHomeUnlessDeepLink();
       }
     } catch {
-      // Kunne ikke afgøre status (netværksfejl) — fald tilbage til den
-      // tidligere, simple adfærd frem for at lade brugeren hænge på et tomt
-      // login-skærmbillede.
-      goHomeUnlessDeepLink();
+      // Status kunne ikke afgøres (netværksfejl). En enhed, der har set en færdig profil, må gerne åbne appen; ellers prøver vi igen
+      // og sender derefter til login frem for til forsiden, så en bruger midt i onboarding aldrig lander i scanneren uden profil.
+      let seenCompleted = false;
+      try { seenCompleted = !!localStorage.getItem(ONBOARDED_KEY); } catch { /* privat tilstand */ }
+      if (seenCompleted) goHomeUnlessDeepLink();
+      else if (attempt < 3) setTimeout(() => resolveOnboardingRoute(uid, token, attempt + 1), 2000 * 2 ** attempt);
+      else setScreen(SCREENS.LOGIN);
     }
   }, [setScreen, setOnboardStep, goHomeUnlessDeepLink]);
 
