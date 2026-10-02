@@ -25,19 +25,19 @@ const HELP_CONTENT = {
   ]},
   "list": { title:"Indkøbsliste", titleIcon:"cart", tips:[
     { icon:"list", title:"Flere lister", desc:"Tryk på listenavnet øverst for at skifte mellem lister eller oprette en ny." },
-    { icon:"link", title:"Del listen", desc:"Tryk 'Del' for at give hele husstanden, udvalgte personer, eller alle med et link adgang til listen." },
+    { icon:"link", title:"Del listen", desc:"Tryk på del-ikonet og vælg: kun dig, hele familien eller bestemte personer. Du kan også sende et link til en, der ikke er i familien." },
     { icon:"edit", title:"Tilføj varer", desc:"Skriv en vare og tryk Tilføj — eller send direkte fra en opskrift eller et søgeresultat." },
     { icon:"check", title:"Afkryds og ryd", desc:"Tryk på en vare for at markere den som købt, og brug 'Ryd' for at fjerne alle købte varer på én gang." },
   ]},
   "profile": { title:"Profil", titleIcon:"profile", tips:[
     { icon:"edit", title:"Mine præferencer", desc:DIETS_ENABLED ? "Allergier, diæter og E-numre du overvåges for — tryk 'Rediger' for at ændre dem." : "Allergier, intolerancer og E-numre du overvåges for — tryk 'Rediger' for at ændre dem." },
-    { icon:"family", title:"Din husstand", desc:"Konti du har inviteret deler automatisk scanningshistorik, favoritter og indkøbslister med dig." },
-    { icon:"list", title:"Mine / Husstanden", desc:"Under historik og favoritter kan du skifte mellem kun dine egne og hele husstandens." },
+    { icon:"family", title:"Din familie", desc:"Voksne, du har inviteret (eller som har inviteret dig), kan se hinandens allergier og dele lister. Se dem under Familie i menuen." },
+    { icon:"list", title:"Mine / Familien", desc:"Under historik og favoritter kan du skifte mellem kun dine egne og hele familiens." },
   ]},
   "family": { title:"Familie", titleIcon:"family", tips:[
-    { icon:"👶", title:"Allergiprofiler", desc:"Opret en profil for familiemedlemmer uden egen konto (fx et barn) — aktivér dem for at tjekke deres allergier ved scanning." },
-    { icon:"home", title:"Din husstand", desc:"Rigtige konti du har inviteret deler automatisk data. Kun den der sendte invitationen kan fjerne forbindelsen igen." },
-    { icon:"link", title:"Invitér via link", desc:"Del linket med en voksen i familien — når de opretter en konto via linket, bliver I automatisk en husstand." },
+    { icon:"👶", title:"Allergiprofiler", desc:"Opret en profil til et barn eller en anden uden egen konto — vælg dem på Scan-siden for at tjekke varer for dem." },
+    { icon:"home", title:"Voksne med egen konto", desc:"Når en voksen siger ja til din invitation, kan I se hinandens allergier og dele lister. Begge kan afslutte forbindelsen igen." },
+    { icon:"link", title:"Invitér en voksen", desc:"Send invitationen til en voksen. Linket virker i 24 timer og kun til én person." },
   ]},
   "result": { title:"Scanningsresultat", titleIcon:"package", tips:[
     { icon:"🚦", title:"Farvet ramme", desc:"Grøn = sikkert, gul = advarsel, rød = farligt — vurderet ud fra dine aktive profiler." },
@@ -47,12 +47,12 @@ const HELP_CONTENT = {
     { icon:"edit", title:"Ret forkerte data", desc:"Mangler eller fejler noget? Tryk 'Ret forkerte data' nederst for at foreslå en rettelse." },
   ]},
   "history": { title:"Scanningshistorik", titleIcon:"list", tips:[
-    { icon:"family", title:"Mine / Husstanden", desc:"Skift mellem kun dine egne scanninger og hele husstandens, hvis du har en." },
+    { icon:"family", title:"Mine / Familien", desc:"Skift mellem kun dine egne scanninger og hele familiens, hvis du har en." },
     { icon:"👆", title:"Åbn en scanning", desc:"Tryk på en linje for at se det fulde resultat igen." },
   ]},
   "favorites": { title:"Favoritter", titleIcon:"star", tips:[
     { icon:"heart", title:"Gem favoritter", desc:"Tryk hjerte-ikonet på et produkt under scanning for at gemme det her." },
-    { icon:"family", title:"Mine / Husstanden", desc:"Se dine egne favoritter eller hele husstandens delte favoritter." },
+    { icon:"family", title:"Mine / Familien", desc:"Se dine egne favoritter eller hele familiens." },
     { icon:"x", title:"Fjern", desc:"Du kan kun fjerne dine egne favoritter herfra — ikke andres." },
   ]},
   "madpas": { title:"Madpas", titleIcon:"globe", tips:[

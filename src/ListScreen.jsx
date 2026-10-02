@@ -33,7 +33,7 @@ export default function ListScreen({
     lists, activeList, activeListId, setActiveListId,
     shoppingList, newItemName, setNewItemName, addToList, toggleItem, removeItem, clearDone,
     familyMembers, loadFamilyMembers, createList, deleteList, joinByCode,
-    getListAccess, grantAccess, revokeAccess, setListType,
+    getListAccess, grantAccess, revokeAccess, setListType, rotateListCode, leaveList, loadShoppingList,
   } = useShoppingContext();
 
   const [showListPicker, setShowListPicker] = useState(false);
@@ -402,8 +402,10 @@ export default function ListScreen({
       )}
 
       {showShareSheet && activeList && (
-        <ShareListSheet list={activeList} familyMembers={familyMembers} loadFamilyMembers={loadFamilyMembers}
+        <ShareListSheet list={activeList} userId={userId} familyMembers={familyMembers} loadFamilyMembers={loadFamilyMembers}
           getListAccess={getListAccess} grantAccess={grantAccess} revokeAccess={revokeAccess} setListType={setListType}
+          rotateListCode={rotateListCode} leaveList={leaveList} onChanged={loadShoppingList}
+          onGoToFamily={() => { setShowShareSheet(false); setScreen(SCREENS.FAMILY); }}
           onClose={() => setShowShareSheet(false)} />
       )}
 

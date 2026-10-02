@@ -159,7 +159,7 @@
         show(`
           ${icon("family")}
           <h1>Du er inviteret!</h1>
-          <p>${invite.inviter_first_name ? `${esc(invite.inviter_first_name)} har inviteret dig til sin familie i EatSafe.` : "Du er blevet inviteret til en familie i EatSafe."} I kan dele allergiprofiler og gøre indkøb lettere sammen.</p>
+          <p>${invite.inviter_first_name ? `${esc(invite.inviter_first_name)} har inviteret dig til sin familie i EatSafe.` : "Du er blevet inviteret til en familie i EatSafe."} Når du siger ja, kan I se hinandens allergier og kostvalg, så I kan tjekke varer for hinanden, og I kan dele indkøbslister. Du styrer selv dine egne oplysninger og kan til enhver tid afslutte forbindelsen igen.</p>
           <a href="https://eatsafe.dk?invite=${token}" class="btn">Opret konto</a>
           <a href="https://eatsafe.dk?invite=${token}&login=1" class="btn btn-ghost">Log ind</a>
           <p class="expiry">Invitationen udløber ${new Date(invite.expires_at).toLocaleDateString("da-DK")}</p>

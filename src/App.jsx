@@ -337,7 +337,7 @@ export default function EatSafe() {
     newItemName, setNewItemName,
     familyMembers, loadFamilyMembers,
     createList, renameList, setListType, deleteList, joinByCode,
-    getListAccess, grantAccess, revokeAccess,
+    getListAccess, grantAccess, revokeAccess, rotateListCode, leaveList,
     loadShoppingList, addToList, toggleItem, removeItem, clearDone,
   } = useShoppingList({ accessToken, userId });
 
@@ -889,11 +889,11 @@ export default function EatSafe() {
     newItemName, setNewItemName, loadShoppingList,
     familyMembers, loadFamilyMembers,
     createList, renameList, setListType, deleteList, joinByCode,
-    getListAccess, grantAccess, revokeAccess,
+    getListAccess, grantAccess, revokeAccess, rotateListCode, leaveList,
     addToList, toggleItem, removeItem, clearDone,
   }), [lists, activeList, activeListId, setActiveListId, shoppingList, shoppingListId, newItemName, loadShoppingList,
        familyMembers, loadFamilyMembers, createList, renameList, setListType, deleteList, joinByCode,
-       getListAccess, grantAccess, revokeAccess, addToList, toggleItem, removeItem, clearDone]);
+       getListAccess, grantAccess, revokeAccess, rotateListCode, leaveList, addToList, toggleItem, removeItem, clearDone]);
 
   const familyFormContextValue = useMemo(() => ({
     newMemberName, setNewMemberName,

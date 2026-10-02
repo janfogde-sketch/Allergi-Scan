@@ -229,6 +229,27 @@ export function useShoppingList({ accessToken, userId }) {
     } catch { return false; }
   }, [accessToken]);
 
+  // Nyt listelink: det gamle link holder op med at virke, allerede tilsluttede beholder adgangen.
+  const rotateListCode = useCallback(async (listId) => {
+    try {
+      const data = await apiCall(`${SHOPPING_FN}/${listId}/rotate-code`, { method: "POST", headers: makeHeaders(accessToken) });
+      if (data?.share_link) {
+        updateLists(l => l.map(x => x.id === listId ? { ...x, share_link: data.share_link } : x));
+        return data.share_link;
+      }
+    } catch { /* faldt igennem til besked */ }
+    showToast(`Det nye link ${SAVE_FAILED}`, "error");
+    return null;
+  }, [accessToken]);
+
+  // Forlad en liste, andre har delt med mig (fjerner min egen adgangsrække).
+  const leaveList = useCallback(async (listId) => {
+    const ok = await revokeAccess(listId, userId);
+    if (ok) await loadShoppingList();
+    else showToast("Du kunne ikke forlade listen. Tjek din forbindelse og prøv igen.", "error");
+    return ok;
+  }, [userId, revokeAccess, loadShoppingList]);
+
   // ── Realtime subscription (kun den aktive liste) ─────────────────────────────
   useEffect(() => {
     if (!accessToken || !activeListId) return;
@@ -451,7 +472,7 @@ export function useShoppingList({ accessToken, userId }) {
     familyMembers, loadFamilyMembers,
     loadShoppingList,
     createList, renameList, setListType, deleteList, joinByCode,
-    getListAccess, grantAccess, revokeAccess,
+    getListAccess, grantAccess, revokeAccess, rotateListCode, leaveList,
     addToList,
     toggleItem,
     removeItem,

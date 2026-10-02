@@ -131,7 +131,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
           ikke blev nævnt, beholder deres centrerede titel uændret. */}
       <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Historik</div>
       <div className="screen-sub">
-        {historyScope === "family" ? "Alle scanninger i din husstand." : "Alle dine tidligere scanninger."}
+        {historyScope === "family" ? "Alle scanninger i din familie." : "Alle dine tidligere scanninger."}
       </div>
       {household.length > 0 && (
         <div style={{ display:"flex", gap:8, marginBottom:10 }}>
@@ -146,7 +146,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
               display:"flex", alignItems:"center", justifyContent:"center", gap:6,
               background: historyScope==="family" ? "var(--green)" : "var(--surface)", color: historyScope==="family" ? "var(--on-green)" : "var(--muted)",
               border:`1px solid ${historyScope==="family" ? "var(--green)" : "var(--border)"}` }}>
-            <Icon name="family" size={12} color={historyScope==="family" ? "var(--on-green)" : "var(--muted)"} /> Husstanden
+            <Icon name="family" size={12} color={historyScope==="family" ? "var(--on-green)" : "var(--muted)"} /> Familien
           </div>
         </div>
       )}

@@ -175,7 +175,7 @@ export default function FavoritesScreen({ household, lookupProduct }) {
               display:"flex", alignItems:"center", justifyContent:"center", gap:6,
               background: favoritesScope==="family" ? "var(--green)" : "var(--surface)", color: favoritesScope==="family" ? "var(--on-green)" : "var(--muted)",
               border:`1px solid ${favoritesScope==="family" ? "var(--green)" : "var(--border)"}` }}>
-            <Icon name="family" size={12} color={favoritesScope==="family" ? "var(--on-green)" : "var(--muted)"} /> Husstanden
+            <Icon name="family" size={12} color={favoritesScope==="family" ? "var(--on-green)" : "var(--muted)"} /> Familien
           </div>
         </div>
       )}

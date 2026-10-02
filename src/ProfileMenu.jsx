@@ -72,7 +72,7 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenSafetyInf
         // hvorfor der ikke er en Produkter/Opskrifter-fane på selve siden.
         { icon:"bell", label:"Beskeder", sub: unreadNotifications > 0 ? `${unreadNotifications} ulæste` : "Svar og opdateringer fra EatSafe", screen: SCREENS.NOTIFICATIONS },
         { icon:"star", label:"Favoritter", sub:"Gemte produkter", screen: SCREENS.FAVORITES },
-        { icon:"family", label:"Familie", sub:"Allergiprofiler og husstand", screen: SCREENS.FAMILY },
+        { icon:"family", label:"Familie", sub:"Profiler, invitationer og deling", screen: SCREENS.FAMILY },
       ],
     },
     {
