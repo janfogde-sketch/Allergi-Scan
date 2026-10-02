@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Delt indkøbsliste i EatSafe</title>
-  <meta name="description" content="Nogen vil dele en indkøbsliste med dig i EatSafe. Åbn linket for at se, hvad der deles. Du bestemmer selv, om du vil tilslutte." />
+  <meta name="description" content="Nogen vil dele en indkøbsliste med dig i EatSafe. Fortsæt i EatSafe for at se, hvilken liste der deles, og hvem der deler den. Du bestemmer selv, om du vil tilslutte dig." />
   <meta property="og:title" content="Nogen vil dele en indkøbsliste med dig" />
-  <meta property="og:description" content="Åbn linket for at se, hvad der deles, og tilslut listen i EatSafe. Du bestemmer selv, om du vil tilslutte." />
+  <meta property="og:description" content="Fortsæt i EatSafe for at se, hvilken liste der deles, og hvem der deler den. Du bestemmer selv, om du vil tilslutte dig." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://eatsafe.dk/list/" />
   <meta property="og:image" content="https://eatsafe.dk/brand/EatSafe_Logo_Horizontal_2400.png" />
@@ -92,15 +92,14 @@
       const base = "https://eatsafe.dk/?join-list=" + code;
       content.innerHTML = icon +
         '<h1>Nogen vil dele en indkøbsliste med dig</h1>' +
-        '<p>Åbn linket i EatSafe for at se, hvilken liste det er, og hvem der deler den. Du bestemmer selv, om du vil tilslutte.</p>' +
+        '<p>Fortsæt i EatSafe for at se, hvilken liste der deles, og hvem der deler den. Du bestemmer selv, om du vil tilslutte dig.</p>' +
         '<ul class="points">' +
           '<li>Hvis du tilslutter, kan du se, tilføje, afkrydse og fjerne varer på listen.</li>' +
-          '<li>Du deler kun denne ene liste. Dine allergier og din profil bliver ikke delt.</li>' +
-          '<li>Du kan forlade listen igen når som helst.</li>' +
+          '<li>Kun denne liste deles. Dine allergier og øvrige profiloplysninger deles ikke.</li>' +
+          '<li>Du kan når som helst forlade listen igen under Dine lister → Rediger.</li>' +
         '</ul>' +
         '<a href="' + base + '" class="btn">Opret konto</a>' +
-        '<a href="' + base + '&login=1" class="btn btn-ghost">Jeg har en konto</a>' +
-        '<p class="expiry">Har du allerede EatSafe, så tryk "Jeg har en konto".</p>';
+        '<a href="' + base + '&login=1" class="btn btn-ghost">Jeg har en konto</a>';
     }
   </script>
 </body>

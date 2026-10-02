@@ -451,13 +451,13 @@ export function JoinListSheet({ preview, busy, onConfirm, onCancel }) {
   const owner = preview.owner_name || "En bruger af EatSafe";
   const points = [
     "Du kan se, tilføje, afkrydse og fjerne varer på listen.",
-    `${preview.owner_name || "Ejeren"} og andre med adgang kan se, hvad du tilføjer.`,
-    "Du deler kun denne ene liste. Dine allergier og din profil bliver ikke delt.",
-    "Du kan forlade listen igen når som helst: tryk på listenavnet og derefter Del.",
+    `${preview.owner_name || "Ejeren"} og andre med adgang kan se dine ændringer på listen.`,
+    "Kun denne liste deles. Dine allergier og øvrige profiloplysninger deles ikke.",
+    "Du kan når som helst forlade listen igen under Dine lister → Rediger.",
   ];
   return (
     <Sheet label="Tilslut delt liste" onClose={onCancel}>
-      <SheetHeader title="Tilslut delt liste?" sub={preview.name} onClose={onCancel} />
+      <SheetHeader title="Tilslut delt liste?" onClose={onCancel} />
       <SheetBody>
       <div style={{ fontSize:14, color:"var(--ink)", lineHeight:1.5, marginBottom:12, ...WRAP }}>
         <strong>{owner}</strong> vil dele indkøbslisten <strong>"{preview.name}"</strong> med dig.
