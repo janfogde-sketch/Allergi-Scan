@@ -52,8 +52,8 @@ export default function AdminUsersSection({
       )}
       <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
         {filtered.map(u => (
-          <div key={u.id} onClick={() => setOpenAdminUser(u)} className="admin-list-row" role="button" style={{ ...ROW, display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:32, height:32, borderRadius:"50%", background: u.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:800, color: u.role==="admin" ? "var(--ink2)" : "var(--on-green)", flexShrink:0 }}>
+          <div key={u.id} onClick={() => setOpenAdminUser(u)} className="admin-list-row" role="button" style={{ ...ROW, padding:"7px 12px", display:"flex", alignItems:"center", gap:10 }}>
+            <div style={{ width:30, height:30, borderRadius:"50%", background: u.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:800, color: u.role==="admin" ? "var(--ink2)" : "var(--on-green)", flexShrink:0 }}>
               {(u.name||u.email||"?").charAt(0).toUpperCase()}
             </div>
             <div style={{ flex:1, minWidth:0 }}>
@@ -61,7 +61,7 @@ export default function AdminUsersSection({
                 {u.name || "Intet navn"}{u.id === userId && <span style={{ fontSize:11, fontWeight:500, color:"var(--muted)" }}> · Dig</span>}
               </div>
               <div style={{ fontSize:11, color:"var(--muted2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</div>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginTop:5 }}>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginTop:3 }}>
                 <StatusChip tone={u.role === "admin" ? "green" : "neutral"}>{u.role === "admin" ? "Admin" : "Bruger"}</StatusChip>
                 {u.onboarding_completed === false && <StatusChip tone="amber" icon="clock">Onboarding ufærdig</StatusChip>}
               </div>

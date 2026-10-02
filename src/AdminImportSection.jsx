@@ -2,6 +2,7 @@
 import React from "react";
 import { Icon } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
+import { TechDetails } from "./adminUi.jsx";
 
 export default function AdminImportSection({
   importLog, importLoading, runImport, reparseLog, reparseLoading, runReparse,
@@ -9,20 +10,28 @@ export default function AdminImportSection({
   return (
     <div>
       <div style={UI.rowBetweenMb16}>
-        <div style={{ ...UI.ufs17_fw800_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name="download" size={15} color="var(--ink)" /> OFF Auto-import</div>
+        <div style={{ ...UI.ufs17_fw800_cink, display:"flex", alignItems:"center", gap:8, minWidth:0, flex:1 }}><Icon name="download" size={15} color="var(--ink)" /> Open Food Facts auto-import</div>
         <button
           onClick={() => runImport(true)}
           disabled={importLoading}
-          style={{ background: importLoading ? "var(--border2)" : "var(--green)", color: importLoading ? "var(--muted)" : "var(--on-green)", border:"none", borderRadius:8, padding:"8px 16px", fontSize:12, fontWeight:800, fontFamily:"var(--f)", cursor: importLoading ? "not-allowed" : "pointer", boxShadow: importLoading ? "none" : "var(--sh)", display:"flex", alignItems:"center", gap:6 }}>
+          style={{ background: importLoading ? "var(--border2)" : "var(--green)", color: importLoading ? "var(--muted)" : "var(--on-green)", border:"none", borderRadius:8, padding:"8px 16px", fontSize:12, fontWeight:800, fontFamily:"var(--f)", cursor: importLoading ? "not-allowed" : "pointer", boxShadow: importLoading ? "none" : "var(--sh)", whiteSpace:"nowrap", flexShrink:0, marginLeft:10, display:"flex", alignItems:"center", gap:6 }}>
           {importLoading
             ? <><div style={{ width:12, height:12, border:"2px solid rgba(0,0,0,.2)", borderTopColor:"var(--on-green)", borderRadius:"50%", animation:"spin .7s linear infinite" }} /> Importerer…</>
-            : "▶ Kør import nu"}
+            : "Kør import nu"}
         </button>
       </div>
 
-      <div style={{ fontSize:12, color:"var(--muted)", marginBottom:16, lineHeight:1.6 }}>
-        Henter top-50 manglende EAN'er fra <code>missing_ean_log</code>, slår op på Open Food Facts og importerer automatisk.
-        Kører også automatisk hver nat kl. 02:00 UTC.
+      <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>
+        Henter op til 50 manglende produkter og forsøger automatisk import. Kører automatisk hver nat.
+      </div>
+      <div style={{ marginBottom:16 }}>
+        <TechDetails rows={[
+          ["Datakilde", "missing_ean_log"],
+          ["Opslag", "Open Food Facts"],
+          ["Planlagt kørsel", "02:00 UTC (04:00 dansk sommertid)"],
+          ["Antal pr. kørsel", "op til 50"],
+          ...(importLog?.stats ? [["Seneste manuelle kørsel", `${importLog.stats.imported ?? 0} importeret, ${importLog.stats.not_on_off ?? 0} ikke på OFF, ${importLog.stats.error ?? 0} fejl`]] : []),
+        ]} />
       </div>
 
       {/* Status */}
@@ -69,7 +78,7 @@ export default function AdminImportSection({
       {importLog && !importLoading && (!importLog.log || importLog.log.length === 0) && (
         <div style={{ textAlign:"center", padding:"32px 0", color:"var(--muted)", fontSize:13 }}>
           {importLog.stats?.imported === 0
-            ? "Ingen nye produkter fundet — prøv igen senere når missing_ean_log er fyldt op"
+            ? "Ingen nye produkter fundet. Prøv igen senere, når flere produkter er efterspurgt."
             : "Import fuldført"}
         </div>
       )}
@@ -79,7 +88,7 @@ export default function AdminImportSection({
           <div style={{ marginBottom:12, display:"flex", justifyContent:"center" }}><Icon name="download" size={32} color="var(--muted)" /></div>
           <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Klar til import</div>
           <div style={UI.ufs12_cmuted}>
-            Tryk "Kør import nu" for at importere manglende produkter fra Open Food Facts
+            Tryk "Kør import nu" for at hente manglende produkter fra Open Food Facts
           </div>
         </div>
       )}
@@ -88,36 +97,35 @@ export default function AdminImportSection({
       <div style={{ marginTop:24, paddingTop:20, borderTop:"1px solid var(--border)" }}>
         <div style={UI.rowBetweenMb10}>
           <div>
-            <div style={UI.ufs15_fw800_cink}>🧠 Allergen reparsing</div>
-            <div style={{ fontSize:11, color:"var(--muted)", marginTop:2, lineHeight:1.6 }}>
-              Kører allergen-engine (keyword + Claude Haiku) på produkter med lav kvalitet.
-              Kører automatisk hver nat kl. 03:00 UTC.
+            <div style={{ ...UI.ufs15_fw800_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name="refresh" size={14} color="var(--ink)" /> Allergen-genanalyse</div>
+            <div style={{ fontSize:12, color:"var(--muted2)", marginTop:2, lineHeight:1.6 }}>
+              Genanalyserer produkter med lav datakvalitet og forsøger at forbedre allergeninformationen. Kører automatisk hver nat.
             </div>
           </div>
           <button
             onClick={() => reparseLoading ? null : runReparse(true)}
             disabled={reparseLoading}
-            style={{ background: reparseLoading ? "var(--border2)" : "var(--blue)", color: reparseLoading ? "var(--muted)" : "var(--on-green)",
+            style={{ background: reparseLoading ? "var(--border2)" : "var(--green)", color: reparseLoading ? "var(--muted)" : "var(--on-green)",
               border:"none", borderRadius:8, padding:"8px 14px", fontSize:12, fontWeight:800,
               fontFamily:"var(--f)", cursor: reparseLoading ? "not-allowed" : "pointer", boxShadow: reparseLoading ? "none" : "var(--sh)",
               display:"flex", alignItems:"center", gap:6, flexShrink:0, marginLeft:12 }}>
             {reparseLoading
-              ? <><div style={{ width:12, height:12, border:"2px solid rgba(255,255,255,.2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .7s linear infinite" }} /> Reparserer…</>
-              : "▶ Kør nu"}
+              ? <><div style={{ width:12, height:12, border:"2px solid rgba(0,0,0,.2)", borderTopColor:"var(--ink)", borderRadius:"50%", animation:"spin .7s linear infinite" }} /> Genanalyserer…</>
+              : "Kør nu"}
           </button>
         </div>
 
         {reparseLoading && (
           <div style={UI.udflex_aicenter_g10_p12px14px_bgsurface_bd1pxsolid_br12_mb12}>
-            <div style={{ width:16, height:16, border:"2px solid var(--border2)", borderTopColor:"var(--blue)", borderRadius:"50%", animation:"spin .7s linear infinite", flexShrink:0 }} />
-            <div style={UI.muted13}>Reparserer allergen-flags med Claude Haiku…</div>
+            <div style={{ width:16, height:16, border:"2px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .7s linear infinite", flexShrink:0 }} />
+            <div style={UI.muted13}>Genanalyserer allergeninformation…</div>
           </div>
         )}
 
         {reparseLog && !reparseLoading && (
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:10 }}>
             {[
-              { icon:"check",       label:"Reparseret",    value: reparseLog.reparsed, color:"var(--green)" },
+              { icon:"check",       label:"Genanalyseret", value: reparseLog.reparsed, color:"var(--green)" },
               { icon:"chevronRight", label:"Sprunget over", value: reparseLog.skipped,  color:"var(--muted)" },
               { icon:"x",           label:"Fejl",          value: reparseLog.errors,  color:"var(--amber)" },
             ].map(s => (
@@ -135,11 +143,13 @@ export default function AdminImportSection({
           </div>
         )}
 
-        {!reparseLog && !reparseLoading && (
-          <div style={{ textAlign:"center", padding:"16px 0", color:"var(--muted)", fontSize:12 }}>
-            Reparserer 100 produkter ad gangen — gratis keyword-engine + Haiku på de svære
-          </div>
-        )}
+        <TechDetails rows={[
+          ["Jobnavn", "allergen-reparse"],
+          ["Motor", "nøgleordsmatch + Claude Haiku på de svære tilfælde"],
+          ["Antal pr. kørsel", "100 produkter"],
+          ["Planlagt kørsel", "03:00 UTC (05:00 dansk sommertid)"],
+          ...(reparseLog && !reparseLog.error ? [["Seneste manuelle kørsel", `${reparseLog.reparsed ?? 0} genanalyseret, ${reparseLog.skipped ?? 0} sprunget over, ${reparseLog.errors ?? 0} fejl`]] : []),
+        ]} />
       </div>
     </div>
   );
