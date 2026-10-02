@@ -79,7 +79,9 @@ describe("useAuth handleLogin — validation guards", () => {
   });
 
   it("saves tokens and navigates home on a successful login", async () => {
-    global.fetch.mockResolvedValue(textResponse({ access_token: "at", refresh_token: "rt", user: { id: "u1" } }));
+    global.fetch
+      .mockResolvedValueOnce(textResponse({ access_token: "at", refresh_token: "rt", user: { id: "u1" } }))
+      .mockResolvedValue({ ok: true, status: 200, json: async () => [{ onboarding_completed: true, onboarding_step: 5 }] });
     const { result, setScreen } = setup();
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("correctpass"); });
     await act(async () => { await result.current.handleLogin(); });
@@ -328,5 +330,22 @@ describe("useAuth — app-start overskriver ikke en besked åbnet fra push", () 
     expect(withUpdater[0]("ticket")).toBe("ticket");
     expect(withUpdater[0]("boot")).toBe("home");
     expect(withUpdater[0]("home")).toBe("home");
+  });
+
+  it("sender aldrig en ufærdig bruger til forsiden, hvis statusopslaget fejler på netværket", async () => {
+    vi.useFakeTimers();
+    try {
+      localStorage.removeItem("as_onboarded");
+      global.fetch
+        .mockResolvedValueOnce(textResponse({ access_token: "at", refresh_token: "rt", user: { id: "u1" } }))
+        .mockRejectedValue(new Error("offline"));
+      const { result, setScreen } = setup();
+      act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("correctpass"); });
+      await act(async () => { await result.current.handleLogin(); });
+      await act(async () => { await vi.advanceTimersByTimeAsync(20000); });
+      const updaters = setScreen.mock.calls.map(([x]) => x).filter((x) => typeof x === "function");
+      expect(updaters.some((fn) => fn("login") === "home")).toBe(false);
+      expect(setScreen.mock.calls.some(([x]) => x === "login")).toBe(true);
+    } finally { vi.useRealTimers(); }
   });
 });
