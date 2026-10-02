@@ -110,12 +110,12 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   }, [setScanError]);
 
   // ── Afkodning i alle retninger ──────────────────────────────────────────────
-  // Uden BarcodeDetector (iOS Safari) afkoder html5-qrcode kun vandrette koder. Derfor kører
-  // en ekstra løkke: hele billedet afkodes direkte med ZXing og TRY_HARDER, som også prøver
-  // billedet drejet 90° (lodret kode) og spejlvendt/på hovedet. Med BarcodeDetector (Chrome/
-  // Android) er det overflødigt: den finder koder i alle retninger.
+  // html5-qrcode afkoder kun vandrette koder (og iOS Safari har ingen BarcodeDetector). ZXings
+  // egen TRY_HARDER-rotation virker ikke på canvas-kilder (målt: 90°/270° fejler), så billedet
+  // tegnes selv drejet 0°/90°/45°/135° på skift (én vinkel pr. tick, så hver tick er let).
+  // ZXing tåler ca. ±20° pr. vinkel og læser også på hovedet, så alle retninger er dækket.
   const startRotatedDecodeLoop = useCallback(async (videoEl) => {
-    if (typeof window === "undefined" || "BarcodeDetector" in window || !videoEl) return;
+    if (typeof window === "undefined" || !videoEl) return;
     const Z = await import("@zxing/library");
     if (!html5QrRef.current) return; // kameraet blev lukket imens biblioteket hentedes
     const hints = new Map();
@@ -126,26 +126,40 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     hints.set(Z.DecodeHintType.TRY_HARDER, true);
     const reader = new Z.MultiFormatReader();
     reader.setHints(hints);
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const frame = document.createElement("canvas");
+    const frameCtx = frame.getContext("2d", { willReadFrequently: true });
+    const rot = document.createElement("canvas");
+    const rotCtx = rot.getContext("2d", { willReadFrequently: true });
+    const angles = [0, 90, 45, 135];
+    let step = 0;
     let busy = false;
     rotatedLoopRef.current = setInterval(() => {
       if (busy || !videoEl.videoWidth || !videoEl.videoHeight) return;
       busy = true;
       try {
-        const scale = Math.min(1, 1280 / Math.max(videoEl.videoWidth, videoEl.videoHeight));
-        canvas.width = Math.round(videoEl.videoWidth * scale);
-        canvas.height = Math.round(videoEl.videoHeight * scale);
-        ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
-        const bitmap = new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(canvas)));
+        const scale = Math.min(1, 960 / Math.max(videoEl.videoWidth, videoEl.videoHeight));
+        const w = Math.round(videoEl.videoWidth * scale), h = Math.round(videoEl.videoHeight * scale);
+        frame.width = w; frame.height = h;
+        frameCtx.drawImage(videoEl, 0, 0, w, h);
+        const deg = angles[step++ % angles.length];
+        if (deg === 0) { rot.width = w; rot.height = h; }
+        else if (deg === 90) { rot.width = h; rot.height = w; }
+        else { rot.width = rot.height = Math.ceil(Math.hypot(w, h)); }
+        rotCtx.fillStyle = "#888";
+        rotCtx.fillRect(0, 0, rot.width, rot.height);
+        rotCtx.translate(rot.width / 2, rot.height / 2);
+        rotCtx.rotate(deg * Math.PI / 180);
+        rotCtx.drawImage(frame, -w / 2, -h / 2);
+        rotCtx.setTransform(1, 0, 0, 1, 0, 0);
+        const bitmap = new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(rot)));
         const code = reader.decode(bitmap).getText();
         if (!code || !rotatedLoopRef.current || !isValidEanChecksum(code)) return;
         if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
         stopCamera();
         onScanSuccessRef.current?.(code);
-      } catch { /* ingen kode i denne frame */ }
+      } catch { /* ingen kode i denne vinkel */ }
       finally { busy = false; }
-    }, 150);
+    }, 90);
   }, [stopCamera]);
 
   // ── startCamera ────────────────────────────────────────────────────────────
@@ -300,7 +314,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
           };
         }
       }
-      startRotatedDecodeLoop(videoEl);
+      startRotatedDecodeLoop(videoEl).catch(() => {});
       startRetriesRef.current = 0; // kameraet kørte succesfuldt — nulstil retry-tæller
     } catch (e) {
       setCameraActive(false);
