@@ -402,7 +402,7 @@ export default function EatSafe() {
     history, setHistory,
     historyLoading, historyScope,
     favorites, setFavorites, favoritesScope,
-    loadHistory, saveHistoryEntry, loadFavorites, toggleFavorite, setFavoriteCategory, isFavorite,
+    loadHistory, clearHistory, saveHistoryEntry, loadFavorites, toggleFavorite, setFavoriteCategory, isFavorite,
   } = useHistory({ accessToken, userId });
 
   const {
@@ -875,8 +875,8 @@ export default function EatSafe() {
 
   const historyContextValue = useMemo(() => ({
     history, setHistory, historyLoading, historyScope,
-    favorites, favoritesScope, loadHistory, loadFavorites, toggleFavorite, setFavoriteCategory, isFavorite,
-  }), [history, historyLoading, historyScope, favorites, favoritesScope, loadHistory, loadFavorites, toggleFavorite, setFavoriteCategory, isFavorite]);
+    favorites, favoritesScope, loadHistory, clearHistory, loadFavorites, toggleFavorite, setFavoriteCategory, isFavorite,
+  }), [history, historyLoading, historyScope, favorites, favoritesScope, loadHistory, clearHistory, loadFavorites, toggleFavorite, setFavoriteCategory, isFavorite]);
 
   const shoppingContextValue = useMemo(() => ({
     lists, activeList, activeListId, setActiveListId,

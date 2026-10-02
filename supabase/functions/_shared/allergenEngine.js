@@ -43,6 +43,9 @@ export const SUBSTRING_KEYWORDS = new Set([
   "laktose", "lactose", "sesam", "lupin", "selleri", "sennep",
   // "natriumdisulfit", "kaliumbisulfit" m.fl. (2. okt. 2026)
   "sulfit",
+  // Kornsorter med gluten i sammensatte ord: "HAVREgryn", "fuldkornsSPELTmel", "BYGMALTEKSTRAKT" (2. okt. 2026). Frontenden matcher
+  // ord over 4 tegn som understreng; her skal de stå eksplicit.
+  "havre", "spelt", "maltekstrakt", "bygmalt", "bygmel", "bygflager", "perlebyg",
   // Tyske kerneord (30. sept. 2026) — tysk sammensætter ord ("Vollmilch-
   // pulver", "Weizenmehl", "Haselnusskerne"), så de skal matches som
   // understreng for at blive fundet.
@@ -166,6 +169,10 @@ const CARAMEL_SULFITE = /(ammonieret\s+)?sulfiteret(\s+(caramel|karamel)\w*)?|su
 
 export function normalizeIngredientText(text) {
   return text
+    // "Kan indeholde spor afæg" (manglende mellemrum, set i butiksdata): ellers matcher "æg" aldrig som eget ord
+    .replace(/\bspor\s+af(?=[a-zæøå])/gi, "spor af ")
+    // "glutenfri havregryn" er certificeret glutenfri havre: ingen glutenmatch (kun havre; hvede/spelt røres ikke, de er hvedeallergi)
+    .replace(/gluten[\s-]?fri\w*\s+havre\w*/gi, " ")
     .replace(/(kokos|mandel|havre|soja|ris|cashew|ærte|hamp|hasselnød)(mælk|drik)\b/gi, "$1")
     .replace(/\b(coconut|almond|oat|soy|rice|cashew|hazelnut|pea) milk\b/gi, "$1")
     .replace(/(vegansk\s+)?mælkesyre\w*/gi, " ")

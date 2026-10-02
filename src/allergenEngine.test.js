@@ -109,6 +109,20 @@ describe("negation og laktosefri", () => {
   });
 });
 
+describe("sammensatte kornsorter og sammenklistret spor-tekst (2. okt. 2026)", () => {
+  it("HAVREgryn, fuldkornsSPELTmel og BYGMALTEKSTRAKT giver gluten", () => {
+    expect(analyzeIngredients("HAVREgryn (24%), sukker").gluten).toBe("yes");
+    expect(analyzeIngredients("fuldkornsSPELTmel, salt").gluten).toBe("yes");
+    expect(analyzeIngredients("sukker, BYGMALTEKSTRAKT, salt").gluten).toBe("yes");
+  });
+  it('"Kan indeholde spor afæg" (manglende mellemrum) giver æg-spor, men ikke direkte æg', () => {
+    expect(analyzeIngredients("sukker, salt. Kan indeholde spor afæg, mælk og soja.").aeg).toBe("traces");
+  });
+  it("glutenfri havregryn giver stadig ikke gluten", () => {
+    expect(analyzeIngredients("glutenfri havregryn, sukker").gluten).not.toBe("yes");
+  });
+});
+
 describe("E-numre", () => {
   it("E322 giver soja-spor, E220 giver svovl ja", () => {
     const flags = analyzeIngredients("sukker, emulgator (E322), konserveringsmiddel E220");

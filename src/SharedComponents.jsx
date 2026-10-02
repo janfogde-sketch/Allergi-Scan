@@ -349,10 +349,16 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
   if (!text) return null;
 
   // Rens teksten — fjern linjeskift og ekstra mellemrum
+  // "spor afæg" (manglende mellemrum i butiksdata) vises og matches som "spor af æg"
   const cleaned = text
     .replace(/[\n\r]+/g, " ")
     .replace(/\s+/g, " ")
+    .replace(/\bspor\s+af(?=[a-zæøå])/gi, "spor af ")
     .trim();
+  // "..., olivenekstrakt. Kan indeholde spor af æg, mælk" er to sætninger: "Kan indeholde ..." deles ud som egen del (adskilt af et punktum),
+  // så en fremhævelse af sporet ikke også farver den foregående ingrediens. \u0001 markerer sætningsstart.
+  const SENTENCE_MARK = "\u0001";
+  const withSentences = cleaned.replace(/\.\s+(?=(Kan indeholde|May contain)\b)/gi, "," + SENTENCE_MARK);
 
   // Split på ALLE kommaer, uanset paren-dybde — en indlejret under-liste (fx
   // "7% krydderiblanding (sukker, salt, VALLEPULVER (MÆLK), ...)") skal give
@@ -371,7 +377,7 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
   // maskeres midlertidigt i stedet for et lookbehind-regex, som ældre
   // iOS-Safari (før 16.4) ikke kan parse — det ville vælte hele bundlen.
   const DECIMAL_MARK = "\u0000";
-  const rawParts = cleaned.replace(/(\d),(?=\d)/g, "$1" + DECIMAL_MARK)
+  const rawParts = withSentences.replace(/(\d),(?=\d)/g, "$1" + DECIMAL_MARK)
     .split(",")
     .map(p => p.split(DECIMAL_MARK).join(",").trim())
     .filter(Boolean);
@@ -389,6 +395,10 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
       parts.push(raw);
     }
   }
+
+  // Hvilke dele starter en ny sætning (separatoren før dem vises som punktum i stedet for komma), og rens markeringen af.
+  const sentenceStart = parts.map(p => p.startsWith(SENTENCE_MARK));
+  for (let k = 0; k < parts.length; k++) parts[k] = parts[k].split(SENTENCE_MARK).join("").trim();
 
   const isHighlighted = (part) => {
     // STORE BOGSTAVER = allergen markeret af producent. Tæl kun de
@@ -462,7 +472,7 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
               {part}
             </span>
             {i < parts.length - 1 && (
-              <span style={{ color:"var(--border2)", fontSize:12, marginRight:2 }}>,</span>
+              <span style={{ color:"var(--border2)", fontSize:12, marginRight:2 }}>{sentenceStart[i + 1] ? "." : ","}</span>
             )}
           </span>
         );

@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { allergenChoiceLabel, compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findActiveListMatch, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag } from "./helpers.js";
+import { glutenCerealsIn, allergenChoiceLabel, compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findActiveListMatch, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -713,9 +713,16 @@ export default function ResultScreen({
 
   const renderOtherAllergens = () => {
     const flags = scanResult.allergen_flags;
-    const present = Object.entries(flags).filter(([k,v]) => v==="yes"    && isRealAllergen(k));
-    const traces  = Object.entries(flags).filter(([k,v]) => v==="traces" && isRealAllergen(k));
+    // Gluten er en intolerance i appen, men kornsorter med gluten (hvede, rug, byg, havre) er også EU-allergener, så produktets gluten vises
+    // her som eget tag, hvis ingen aktiv profil har valgt gluten/cøliaki. Havre/byg/rug/spelt vises i parentes, når de står i ingredienslisten.
+    const cereals = glutenCerealsIn(scanResult.ingredients);
+    const glutenState = flags.gluten === "yes" || cereals.length > 0 ? "yes" : flags.gluten === "traces" ? "traces" : null;
+    const isRealOrGluten = (id) => isRealAllergen(id) || id === "gluten";
+    const present = Object.entries({ ...flags, ...(glutenState ? { gluten: glutenState } : {}) }).filter(([k,v]) => v==="yes"    && isRealOrGluten(k));
+    const traces  = Object.entries({ ...flags, ...(glutenState ? { gluten: glutenState } : {}) }).filter(([k,v]) => v==="traces" && isRealOrGluten(k));
     const myAllergens  = new Set([...liveDanger, ...liveWarning]);
+    if (myAllergens.has("coeliaki")) myAllergens.add("gluten");
+    const glutenLabel = (a) => (a.id === "gluten" && cereals.length > 0 ? `Gluten (${cereals.join(", ")})` : a.label);
     const otherPresent = present.filter(([k]) => !myAllergens.has(k));
     const otherTraces  = traces.filter(([k])  => !myAllergens.has(k));
     if (!otherPresent.length && !otherTraces.length) return null;
@@ -731,7 +738,7 @@ export default function ResultScreen({
                 <div key={k} className="tag"
                   onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
                   style={{ background:"var(--surface2)", color:"var(--ink)", borderColor:"var(--border2)", cursor:"pointer" }}>
-                  <AllergenGlyph a={a} size={13} /> {a.label} <span style={UI.ufs9_op06}>›</span>
+                  <AllergenGlyph a={a} size={13} /> {glutenLabel(a)} <span style={UI.ufs9_op06}>›</span>
                 </div>
               ) : null;
             })}
@@ -745,7 +752,7 @@ export default function ResultScreen({
                 <div key={k} className="tag"
                   onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
                   style={{ background:"var(--surface)", color:"var(--muted)", borderColor:"var(--border2)", cursor:"pointer" }}>
-                  spor: <AllergenGlyph a={a} size={13} /> {a.label} <span style={UI.ufs9_op06}>›</span>
+                  spor: <AllergenGlyph a={a} size={13} /> {glutenLabel(a)} <span style={UI.ufs9_op06}>›</span>
                 </div>
               ) : null;
             })}

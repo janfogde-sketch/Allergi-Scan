@@ -788,3 +788,16 @@ export function normalizeProductName(name) {
   const lower = n.toLocaleLowerCase("da-DK");
   return lower.charAt(0).toLocaleUpperCase("da-DK") + lower.slice(1);
 }
+
+// Kornsorter med gluten, der står direkte i ingredienslisten (ikke i en "kan indeholde spor af"-sætning), til tagget "Gluten (havre, byg)"
+// under "Andre deklarerede allergener". Hvede er ikke med (det er et eget allergen med eget tag).
+export function glutenCerealsIn(text) {
+  const direct = (text || "").toLowerCase().split(/kan indeholde|may contain/)[0];
+  const cereals = [
+    ["rug", /\brug|rugmel|\brye\b|secale/],
+    ["byg", /\bbyg|perlebyg|barley|hordeum/],
+    ["havre", /havre|\boats?\b|avena/],
+    ["spelt", /spelt|dinkel/],
+  ];
+  return cereals.filter(([, re]) => re.test(direct)).map(([name]) => name);
+}

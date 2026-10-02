@@ -32,6 +32,19 @@ export function useHistory({ accessToken, userId }) {
     finally { setHistoryLoading(false); }
   }, [userId, accessToken, historyScope]);
 
+  // Ryd egen scanningshistorik (kun scan_history for den indloggede bruger; favoritter, produkter, profiler og lister røres ikke). Returnerer true/false.
+  const clearHistory = useCallback(async () => {
+    try {
+      const data = await apiCall(`${SUPABASE_URL}/functions/v1/history?user_id=${userId}`, {
+        method: "DELETE", headers: makeHeaders(accessToken),
+      });
+      if (!data?.success) return false;
+      // I familievisningen står andres scanninger stadig; hent listen igen i stedet for at tømme den.
+      if (historyScope === "family") await loadHistory("family"); else setHistory([]);
+      return true;
+    } catch { return false; }
+  }, [userId, accessToken, historyScope, loadHistory]);
+
   const saveHistoryEntry = useCallback(async (ean, productId, result, flags, activeProfiles) => {
     try {
       await apiCall(`${SUPABASE_URL}/functions/v1/history`, {
@@ -118,6 +131,7 @@ export function useHistory({ accessToken, userId }) {
     favorites, setFavorites,
     favoritesScope,
     loadHistory,
+    clearHistory,
     saveHistoryEntry,
     loadFavorites,
     toggleFavorite,

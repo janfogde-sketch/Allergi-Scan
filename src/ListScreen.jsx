@@ -411,7 +411,8 @@ export default function ListScreen({
           </div>
           <Icon name="chevronDown" size={18} color="var(--ink2)" />
         </button>
-        {activeList && (
+        {/* Del vises kun for egne lister: en liste, en anden har delt med mig, kan jeg ikke dele videre (den forlades under Dine lister → Rediger). */}
+        {activeList && activeList.owner_id === userId && (
           <button type="button" aria-label={`Del listen ${activeList.name}`} onClick={() => setShareListId(activeList.id)}
             style={{ flexShrink:0, minWidth:56, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2, padding:"0 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--ink2)", cursor:"pointer", background:"none", border:"none", borderLeft:"1px solid var(--border)" }}>
             <Icon name="share" size={18} color="var(--ink2)" />
@@ -429,7 +430,7 @@ export default function ListScreen({
       {shareList && (
         <ShareListSheet list={shareList} userId={userId} familyMembers={familyMembers} loadFamilyMembers={loadFamilyMembers}
           getListAccess={getListAccess} grantAccess={grantAccess} revokeAccess={revokeAccess} setListType={setListType}
-          rotateListCode={rotateListCode} leaveList={leaveList} onChanged={loadShoppingList}
+          rotateListCode={rotateListCode} onChanged={loadShoppingList}
           onGoToFamily={() => { setShareListId(null); setScreen(SCREENS.FAMILY); }}
           onClose={() => setShareListId(null)} />
       )}

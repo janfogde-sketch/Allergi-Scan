@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { SCREENS } from "./constants.jsx";
 import { timeAgo, buildActiveProfileList, computeProfileResults, profileConflictLabel, profileMatchLabel } from "./helpers.js";
-import { Icon, ProductImage } from "./SharedComponents.jsx";
+import { Icon, ProductImage, ConfirmDialog, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -19,7 +19,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
   // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
   const { allergens, customAllerg, scanFamily: family, activeProfiles, setActiveProfiles } = useProfileContext();
   const { setScreen } = useNavigationContext();
-  const { history, historyLoading, historyScope, loadHistory } = useHistoryContext();
+  const { history, historyLoading, historyScope, loadHistory, clearHistory } = useHistoryContext();
   const { selectedENumbers } = useAllergenPrefsContext();
 
   // Historikken opdaterer automatisk ved hvert besøg på Historik (26. sept.
@@ -32,6 +32,14 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
 
   // ── Historik: kompakt filter + status pr. post ──────────────────────────────
   const [historyFilter, setHistoryFilter] = useState("all");
+  // "Ryd": fjerner kun brugerens egen scanningshistorik (favoritter, produkter, profiler og lister røres ikke). Skjult, når der intet er at rydde.
+  const [confirmClear, setConfirmClear] = useState(false);
+  const hasOwnHistory = history.some(h => !h.user_id || h.user_id === userId);
+  const doClear = async () => {
+    setConfirmClear(false);
+    if (await clearHistory()) showToast("Historikken er ryddet.", "success");
+    else showToast("Historikken kunne ikke ryddes. Prøv igen.", "error");
+  };
 
   // Beregner samme sikkerhedsvurdering som Indkøbslisten (buildActiveProfileList
   // + computeProfileResults, helpers.js) — men ud fra den FROSNE `flags_triggered`
@@ -129,7 +137,15 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
           reference som Indkøbslistens allerede venstrestillede titel).
           Ændrer IKKE den delte klasse — resten af appens skærme, som
           ikke blev nævnt, beholder deres centrerede titel uændret. */}
-      <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Historik</div>
+      <div style={{ position:"relative" }}>
+        <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Historik</div>
+        {hasOwnHistory && (
+          <button type="button" onClick={() => setConfirmClear(true)}
+            style={{ position:"absolute", right:-8, top:"50%", transform:"translateY(-50%)", minWidth:44, minHeight:44, padding:"0 8px", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)" }}>
+            Ryd
+          </button>
+        )}
+      </div>
       <div className="screen-sub">
         {historyScope === "family" ? "Alle scanninger i din familie." : "Alle dine tidligere scanninger."}
       </div>
@@ -264,6 +280,10 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
           </div>
         );
       })}
+      {confirmClear && (
+        <ConfirmDialog title="Ryd historik?" message="Alle tidligere scanninger fjernes fra din historik. Handlingen kan ikke fortrydes."
+          confirmLabel="Ryd historik" onConfirm={doClear} onCancel={() => setConfirmClear(false)} />
+      )}
     </div>
   );
 }

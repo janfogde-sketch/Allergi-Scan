@@ -90,6 +90,8 @@ function isNegatedAt(text, idx, kwLength) {
 export function keywordMatches(text, keyword) {
   const kw = keyword.toLowerCase();
   if (!kw) return false;
+  // "spor afæg" (manglende mellemrum i butiksdata) skal behandles som "spor af æg", ellers matcher "æg" aldrig som eget ord
+  text = text.replace(/\bspor\s+af(?=[a-zæøå])/g, "spor af ");
   const indices = findAllKeywordIndices(text, kw);
   // "some" i stedet for kun at tjekke første forekomst — hvis BARE ÉN
   // forekomst af ordet er en ægte (ikke-negeret) omtale, skal det flages,
