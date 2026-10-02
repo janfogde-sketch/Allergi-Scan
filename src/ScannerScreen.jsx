@@ -464,7 +464,7 @@ export default function ScannerScreen({
                   {/* Klar scanzone */}
                   <div style={{
                     position:"relative",
-                    width:"75%", height:100,
+                    width:"92%", height:240,
                     boxShadow:"0 0 0 9999px rgba(0,0,0,.4)",
                     borderRadius:8,
                   }}>

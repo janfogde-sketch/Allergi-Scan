@@ -1053,7 +1053,7 @@ body::-webkit-scrollbar{display:none;}
 #qr-reader-home{width:100%!important;overflow:hidden;}
 #qr-reader-home>div{padding:0!important;border:none!important;background:transparent!important;}
 #qr-reader-home img{display:none!important;}
-#qr-reader-home video{width:100%!important;height:260px!important;object-fit:cover!important;display:block!important;}
+#qr-reader-home video{width:100%!important;height:380px!important;object-fit:cover!important;display:block!important;}
 #qr-reader__dashboard{display:none!important;}
 #qr-reader__status_span{display:none!important;}
 #qr-reader img{display:none!important;}

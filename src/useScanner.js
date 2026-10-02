@@ -79,6 +79,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   const photoFallbackRef = useRef(null);
   const startingRef      = useRef(false); // låser mod dobbelt-tap mens kameraet starter op
   const startRetriesRef  = useRef(0);
+  const rotatedLoopRef   = useRef(null);
 
   // onScanSuccess gemmes i ref for at undgå TDZ-problemer
   // (lookupProduct defineres efter useScanner initialiseres i App.jsx)
@@ -97,6 +98,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   // deres egen loading-indikator på samme tick.
   const stopCamera = useCallback(() => {
     if (noScanTimerRef.current) { clearTimeout(noScanTimerRef.current); noScanTimerRef.current = null; }
+    if (rotatedLoopRef.current) { clearInterval(rotatedLoopRef.current); rotatedLoopRef.current = null; }
     if (html5QrRef.current) { html5QrRef.current.stop().catch(() => {}); html5QrRef.current = null; }
     if (torchTrackRef.current) {
       try { torchTrackRef.current.applyConstraints({ advanced: [{ torch: false }] }); } catch {}
@@ -106,6 +108,42 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     setCameraActive(false); setTorchOn(false); setScanReady(false);
     setScanZoom(1.0); setShowPhotoHint(false); setScanError("");
   }, [setScanError]);
+
+  // ── Roteret afkodning ───────────────────────────────────────────────────────
+  // Uden BarcodeDetector (iOS Safari) afkoder ZXing kun vandrette koder. Hver ~300 ms
+  // tegnes hele billedet derfor 90° roteret og afkodes, så en lodret stregkode også virker.
+  // Med BarcodeDetector (Chrome/Android) er det overflødigt: den finder koder i alle retninger.
+  const startRotatedDecodeLoop = useCallback((videoEl) => {
+    if (typeof window === "undefined" || "BarcodeDetector" in window || !videoEl) return;
+    let busy = false;
+    let flip = false;
+    rotatedLoopRef.current = setInterval(async () => {
+      if (busy || !videoEl.videoWidth || !videoEl.videoHeight) return;
+      busy = true;
+      try {
+        const scale = Math.min(1, 1280 / Math.max(videoEl.videoWidth, videoEl.videoHeight));
+        const w = Math.round(videoEl.videoWidth * scale), h = Math.round(videoEl.videoHeight * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = h; canvas.height = w;
+        const ctx = canvas.getContext("2d");
+        ctx.translate(h / 2, w / 2);
+        ctx.rotate((flip ? -90 : 90) * Math.PI / 180);
+        flip = !flip;
+        ctx.drawImage(videoEl, -w / 2, -h / 2, w, h);
+        const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.85));
+        if (!blob || !rotatedLoopRef.current) return;
+        const { Html5Qrcode } = await import("html5-qrcode");
+        const reader = new Html5Qrcode("qr-reader-gallery", { verbose: false, formatsToSupport: [3, 5, 8, 9, 10, 12, 13, 14, 15] });
+        const code = await reader.scanFile(new File([blob], "frame.jpg", { type: "image/jpeg" }), false);
+        try { reader.clear(); } catch {}
+        if (!code || !rotatedLoopRef.current || !isValidEanChecksum(code)) return;
+        if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
+        stopCamera();
+        onScanSuccessRef.current?.(code);
+      } catch { /* ingen kode i denne frame */ }
+      finally { busy = false; }
+    }, 300);
+  }, [stopCamera]);
 
   // ── startCamera ────────────────────────────────────────────────────────────
   const startCamera = useCallback(async () => {
@@ -124,7 +162,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const constraints = isIOS
       ? { video: { facingMode: { exact: "environment" } } }
-      : { video: { facingMode: "environment", width: { min: 1280, ideal: 1920 }, height: { min: 720, ideal: 1080 },
+      : { video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 },
           advanced: [{ focusMode: "continuous" }, { exposureMode: "continuous" }] } };
 
     try {
@@ -157,30 +195,20 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       const readerEl = document.getElementById(readerId);
       if (!readerEl) { setScanError("Kamera-element ikke fundet. Genindlæs siden."); setCameraActive(false); return; }
 
-      html5QrRef.current = new Html5Qrcode(readerId, { verbose: false });
-
-      // Kun stregkode-formater (hurtigere decode). Tilføjet RSS_14/RSS_EXPANDED
-      // (GS1 DataBar / DataBar Expanded, 25. sept. 2026) — bruges ofte på
-      // variabel-vægt-varer i danske supermarkeder (løsvægt-frugt/grønt,
-      // slagter-/delikatesse-disk), som appens egne bilka/nemlig-kilder
-      // dækker tungt. Uden disse formater afkodede kameraet aldrig sådan et
-      // produkts stregkode overhovedet — brugeren endte i foto-/OCR-fallback
-      // for noget der reelt burde kunne live-scannes direkte. html5-qrcode
-      // har allerede en dokumenteret afbødning for en kendt ZXing-kvirk med
-      // RSS_14 (ny decoder-instans pr. scan) — ingen ekstra risiko ved at
-      // slå formaterne til.
-      const barcodeFormats = [3, 5, 8, 9, 10, 12, 13, 14, 15]; // CODE_39, CODE_128, ITF, EAN_13, EAN_8, RSS_14, RSS_EXPANDED, UPC_A, UPC_E
+      // formatsToSupport og experimentalFeatures er KONSTRUKTØR-config i html5-qrcode;
+      // som del af start()-config blev de ignoreret (RSS-formaterne var aldrig slået til).
+      html5QrRef.current = new Html5Qrcode(readerId, {
+        verbose: false,
+        formatsToSupport: [3, 5, 8, 9, 10, 12, 13, 14, 15], // CODE_39, CODE_128, ITF, EAN_13, EAN_8, RSS_14, RSS_EXPANDED, UPC_A, UPC_E
+        experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+      });
 
       const qrConfig = {
         fps: isIOS ? 25 : 24,
-        qrbox: (w, h) => ({
-          width:  Math.round(w * 0.92),
-          height: Math.round(h * 0.55),
-        }),
+        // Hele kamerabilledet afkodes (ikke kun et udsnit), så koden kan sidde hvor som helst i billedet.
+        qrbox: (w, h) => ({ width: w, height: h }),
         aspectRatio: undefined,
         disableFlip: false,
-        formatsToSupport: barcodeFormats,
-        experimentalFeatures: { useBarCodeDetectorIfSupported: true },
         videoConstraints: isIOS
           ? { facingMode: { exact: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }
           : { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } },
@@ -231,7 +259,6 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
             if (caps.focusMode?.includes("continuous"))       adv.push({ focusMode: "continuous" });
             if (caps.exposureMode?.includes("continuous"))    adv.push({ exposureMode: "continuous" });
             if (caps.whiteBalanceMode?.includes("continuous")) adv.push({ whiteBalanceMode: "continuous" });
-            if (caps.focusDistance)                           adv.push({ focusDistance: caps.focusDistance.min });
             if (adv.length) await track.applyConstraints({ advanced: adv });
           } catch (e) { console.warn("Camera constraints fejlede:", e); }
 
@@ -270,6 +297,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
           };
         }
       }
+      startRotatedDecodeLoop(videoEl);
       startRetriesRef.current = 0; // kameraet kørte succesfuldt — nulstil retry-tæller
     } catch (e) {
       setCameraActive(false);
@@ -285,7 +313,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     } finally {
       startingRef.current = false;
     }
-  }, [cameraActive, setScanError, stopCamera]);
+  }, [cameraActive, setScanError, stopCamera, startRotatedDecodeLoop]);
 
   // ── scanFromGallery ────────────────────────────────────────────────────────
   const scanFromGallery = useCallback(async (file) => {
