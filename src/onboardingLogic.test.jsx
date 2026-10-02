@@ -19,6 +19,10 @@ describe("pruneAllergenLevels", () => {
     expect(pruneAllergenLevels({ maelkeallergi: "direct_only" }, [])).toEqual({});
     expect(pruneAllergenLevels(undefined, ["gluten"])).toEqual({});
   });
+  it("fjerner Cøliakis sporvalg sammen med Cøliaki (men ikke Glutens)", () => {
+    expect(pruneAllergenLevels({ coeliaki: "direct_only", gluten: "direct_only" }, ["gluten"])).toEqual({ gluten: "direct_only" });
+    expect(pruneAllergenLevels({ coeliaki: "direct_only" }, ["hvede"])).toEqual({});
+  });
   it("returnerer det samme objekt, når intet skal fjernes", () => {
     const lv = { gluten: "direct_only" };
     expect(pruneAllergenLevels(lv, ["gluten", "hvede"])).toBe(lv);
@@ -197,6 +201,7 @@ describe("faglig neutralitet i E-numre og allergennoter", () => {
 describe("spor: kun hvor det giver mening", () => {
   it("laktose har ingen sporvalg, hverken i valget, i state eller i den gemte profil", () => {
     expect(traceEligible(["laktose", "maelkeallergi", "gluten"])).toEqual(["maelkeallergi", "gluten"]);
+    expect(traceEligible(["coeliaki", "laktose"])).toEqual(["coeliaki"]);
     expect(pruneAllergenLevels({ laktose: "direct_only", maelkeallergi: "direct_only" }, ["laktose", "maelkeallergi"])).toEqual({ maelkeallergi: "direct_only" });
     render(<AllergenSensitivity selected={["laktose"]} levels={{}} onChange={() => {}} />);
     expect(screen.queryAllByRole("group")).toHaveLength(0);

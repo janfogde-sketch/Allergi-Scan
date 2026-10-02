@@ -5,7 +5,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useRef } from "react";
-import { SUPABASE_URL, ALLERGENS, SCREENS } from "./constants.jsx";
+import { SUPABASE_URL, ALLERGENS, PRODUCT_ALLERGENS, SCREENS } from "./constants.jsx";
 import { makeHeaders, apiCall, compareAllergens, compareENumbers, extractENumbers, traceId, traceLog, compressImageToBase64, matchCustomAllergens, normalizeProductFlags } from "./helpers.js";
 import { saveToOfflineCache, getFromOfflineCache } from "./useOffline.js";
 
@@ -257,7 +257,7 @@ export async function runLookupProduct(ean, ctx) {
       if (isStale()) return;
       setLoading(false); setScreen(SCREENS.NOTFOUND); setNotFoundStep(1);
       setOcrText(""); setProposedName("");
-      setProposedFlags(Object.fromEntries(ALLERGENS.map(a => [a.id, false])));
+      setProposedFlags(Object.fromEntries(PRODUCT_ALLERGENS.map(a => [a.id, false])));
       setProductImagePreview(null); setProductImageBase64(null);
       return;
     }

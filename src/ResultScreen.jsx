@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findActiveListMatch, categorizeProductFindings, computeTopStatus, ignoresTraces } from "./helpers.js";
+import { compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findActiveListMatch, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -211,7 +211,7 @@ export default function ResultScreen({
     const rows = (soloProfile.allergens || []).map(id => {
       const a = ALLERGENS.find(x => x.id === id);
       if (!a) return null;
-      const val = flags[id];
+      const val = effectiveAllergenFlag(flags, id);
       if (val === "yes") return { status: "cross", label: a.label, reason: "Fundet i produktet." };
       if (val === "traces") {
         // Brugeren reagerer kun på direkte indhold: spor er ikke en advarsel, men skjules ikke

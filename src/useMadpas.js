@@ -38,7 +38,7 @@ export function madpasDietMessage(dietId, lang) {
 export function madpasAllergenExamples(allergenId, lang) {
   const override = MADPAS_EXAMPLES_OVERRIDE[allergenId];
   if (override) return override[lang] || override.en;
-  const ex = ALLERGEN_EXAMPLES[allergenId];
+  const ex = ALLERGEN_EXAMPLES[allergenId === "coeliaki" ? "gluten" : allergenId];
   if (!ex) return [];
   const products = ex.products?.[lang] || ex.products?.en || [];
   const ingredients = ex.ingredients?.[lang] || ex.ingredients?.en || [];

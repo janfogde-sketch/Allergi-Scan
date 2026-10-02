@@ -71,6 +71,9 @@ privilegeret kolonne tilføjes til en selv-redigerbar tabel.
 allergen = "strict" (spor flagges). `direct_only` = kun direkte indhold flagges; spor vises som rolig info. Logik i `helpers.js` (`compareAllergens(flags, ids,
 levels)` → `ignoredTraces`, `computeProfileResults`, `mergeAllergenLevels` — strengeste aktive profil vinder). Husstandskonti får niveauer via `family/group`
 (`allergenLevels`); `notify` P1 sender ikke spor-ændringer til en modtager, der kun reagerer på direkte indhold (`affectedAllergenChanges(..., tracesIgnored)`).
+**Cøliaki** (`coeliaki`, `profileOnly` i `ALLERGENS`; ingen DB-ændring, ids er fri tekst): kun et profilvalg uden egne produktflag (`PRODUCT_ALLERGENS` bruges i admin, indberetning og
+"produkt ikke fundet"). `effectiveAllergenFlag(flags,"coeliaki")` = højeste af gluten/hvede; `notify` P1 behandler gluten-/hvede-ændringer som berørende en cøliaki-profil. Madpas: kun navn på engelsk (`ALLERGEN_T`) og
+gluten-eksempler; fuldt 17-sprogs budskab mangler (se to do). Leksikon: `coeliaki` tilføjet til `allergen_ids` på `gluten`, `faq-coeliaki`, `faq-hvede-vs-gluten` (migration `20261002063606`).
 UI: `AllergenSensitivity` i `AllergenPicker.jsx`. Admin → Brugere kan sætte niveauet; familiemedlemmers niveauer redigeres kun i appen.
 
 **`users.onboarding_step`** (integer 1-5, default 1) husker onboarding-trinnet sammen med `onboarding_completed`; selv-opdateres via PATCH. Signup sender kun

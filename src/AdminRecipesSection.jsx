@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from "react";
-import { ALLERGENS } from "./constants.jsx";
+import { PRODUCT_ALLERGENS } from "./constants.jsx";
 import { Loader, Icon, AllergenGlyph } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 
@@ -47,7 +47,7 @@ export default function AdminRecipesSection({
           {/* Allergen flags */}
           <div style={UI.sectionLbl6}>Allergener</div>
           <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:12 }}>
-            {ALLERGENS.map(a => {
+            {PRODUCT_ALLERGENS.map(a => {
               let flags = {};
               try { flags = typeof editingRecipe.allergen_flags==="string" ? JSON.parse(editingRecipe.allergen_flags) : (editingRecipe.allergen_flags||{}); } catch {}
               const isOn = flags[a.id] === true || flags[a.id] === "yes";
@@ -95,7 +95,7 @@ export default function AdminRecipesSection({
       ) : adminRecipes.map(r => {
         let flags = {};
         try { flags = typeof r.allergen_flags==="string" ? JSON.parse(r.allergen_flags) : (r.allergen_flags||{}); } catch {}
-        const flaggedAllergens = ALLERGENS.filter(a => flags[a.id]===true||flags[a.id]==="yes");
+        const flaggedAllergens = PRODUCT_ALLERGENS.filter(a => flags[a.id]===true||flags[a.id]==="yes");
         return (
           <div key={r.id} className="admin-list-row" style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:8, boxShadow:"var(--sh)" }}
             onClick={() => setEditingRecipe(r)}>

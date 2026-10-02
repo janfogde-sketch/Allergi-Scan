@@ -32,7 +32,21 @@ describe("AllergenSensitivity (spor pr. allergen)", () => {
     expect(onChange).toHaveBeenLastCalledWith({ hvede: "direct_only" });
   });
 
-  it("viser aldrig cøliaki-vejledning, hverken for gluten, hvede eller andre allergier", () => {
+  it("viser cøliaki-vejledningen kun under Cøliaki, ikke under Gluten eller Hvede", () => {
+    render(<AllergenSensitivity selected={["gluten", "hvede", "coeliaki"]} levels={{}} onChange={() => {}} />);
+    const guidance = screen.getAllByText(/Har du cøliaki, bør du vælge Advar mig/);
+    expect(guidance).toHaveLength(1);
+    expect(screen.getByRole("group", { name: /^Cøliaki/ }).parentElement.textContent).toContain("Har du cøliaki");
+    expect(screen.getByRole("group", { name: /^Glutenfølsomhed/ }).parentElement.textContent).not.toMatch(/cøliaki/i);
+    expect(screen.getByRole("group", { name: /^Hvede/ }).parentElement.textContent).not.toMatch(/cøliaki/i);
+  });
+
+  it("Cøliaki er som standard på Advar mig (spor advarer)", () => {
+    render(<AllergenSensitivity selected={["coeliaki"]} levels={{}} onChange={() => {}} />);
+    expect(screen.getByRole("group", { name: /^Cøliaki/ }).querySelectorAll("button")[0].getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("viser ingen cøliaki-vejledning for gluten, hvede eller andre valg uden Cøliaki", () => {
     const { rerender } = render(<AllergenSensitivity selected={["gluten"]} levels={{}} onChange={() => {}} />);
     expect(screen.queryByText(/cøliaki/i)).toBeNull();
     rerender(<AllergenSensitivity selected={["hvede"]} levels={{}} onChange={() => {}} />);

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from "react";
-import { ALLERGENS } from "../../constants.jsx";
+import { PRODUCT_ALLERGENS } from "../../constants.jsx";
 import { downloadCsv } from "../csvExport.js";
 
 const VERIFIED_STATUSES = ["unverified", "partial", "verified"];
@@ -130,7 +130,7 @@ export default function ProductsSection({
             <div className="admin-field">
               <label className="admin-label">Allergener (klik for at skifte: Nej → Ja → Spor)</label>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6 }}>
-                {ALLERGENS.map(a => {
+                {PRODUCT_ALLERGENS.map(a => {
                   const val = editingProduct.allergen_flags[a.id] || "no";
                   const next = val === "no" ? "yes" : val === "yes" ? "traces" : "no";
                   const isYes = val === "yes", isTrace = val === "traces";

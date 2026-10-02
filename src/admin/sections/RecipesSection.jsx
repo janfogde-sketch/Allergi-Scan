@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from "react";
-import { ALLERGENS } from "../../constants.jsx";
+import { PRODUCT_ALLERGENS } from "../../constants.jsx";
 
 const FILTERS = [["pending", "Afventer"], ["approved", "Godkendte"], ["rejected", "Afviste"]];
 const CATEGORIES = ["aftensmad", "morgenmad", "frokost", "dessert", "tilbehør", "snack"];
@@ -44,7 +44,7 @@ export default function RecipesSection({
             <tbody>
               {adminRecipes.map(r => {
                 const flags = parseFlags(r.allergen_flags);
-                const flagged = ALLERGENS.filter(a => flags[a.id] === true || flags[a.id] === "yes");
+                const flagged = PRODUCT_ALLERGENS.filter(a => flags[a.id] === true || flags[a.id] === "yes");
                 return (
                   <tr key={r.id} style={{ cursor: "pointer" }} onClick={() => setEditingRecipe(r)}>
                     <td>{r.title}</td>
@@ -94,7 +94,7 @@ export default function RecipesSection({
             <div className="admin-field">
               <label className="admin-label">Allergener</label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {ALLERGENS.map(a => {
+                {PRODUCT_ALLERGENS.map(a => {
                   const flags = parseFlags(editingRecipe.allergen_flags);
                   const isOn = flags[a.id] === true || flags[a.id] === "yes";
                   return (

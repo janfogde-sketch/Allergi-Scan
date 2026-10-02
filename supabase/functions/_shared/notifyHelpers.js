@@ -38,6 +38,7 @@ const ALLERGEN_LABELS = {
   aeg: "Æg", fisk: "Fisk", soja: "Soja", hvede: "Hvede", lupin: "Lupin", sesam: "Sesam", svovl: "Svovldioxid og sulfit",
   gluten: "Gluten", sennep: "Sennep", laktose: "Laktose", noedder: "Nødder", selleri: "Selleri", skaldyr: "Skaldyr",
   bloeddyr: "Bløddyr", jordnoedder: "Jordnødder", maelkeallergi: "Mælkeprotein",
+  coeliaki: "Cøliaki",
 };
 const CHANGE_WORDS = { yes: "indeholder nu", traces: "kan nu indeholde spor", unknown: "er nu uoplyst" };
 
@@ -55,13 +56,18 @@ export function allergenRiskRank(v) {
  */
 export function affectedAllergenChanges(changes, current, profileAllergens, tracesIgnored = new Set()) {
   const mine = new Set(profileAllergens);
+  // Cøliaki er kun et profilvalg uden egne produktflag: det berøres af ændringer i gluten og hvede
+  const viaCoeliac = mine.has("coeliaki");
   const out = [];
   for (const [key, ch] of Object.entries(changes ?? {})) {
-    if (!mine.has(key)) continue;
+    const own = mine.has(key);
+    const derived = viaCoeliac && (key === "gluten" || key === "hvede");
+    if (!own && !derived) continue;
     const now = current?.[key];
     if (allergenRiskRank(now) <= allergenRiskRank(ch?.old)) continue; // rullet tilbage siden
-    // Modtageren reagerer kun på direkte indhold (allergen_levels): en ændring til "spor" er ikke en advarsel
-    if (now === "traces" && tracesIgnored.has(key)) continue;
+    // Modtageren reagerer kun på direkte indhold (allergen_levels): en ændring til "spor" er ikke en advarsel,
+    // men kun hvis ALLE valg, der berøres af flaget, ignorerer spor
+    if (now === "traces" && (!own || tracesIgnored.has(key)) && (!derived || tracesIgnored.has("coeliaki"))) continue;
     out.push({ key, label: ALLERGEN_LABELS[key] ?? key, value: now });
   }
   return out;

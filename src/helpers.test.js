@@ -8,7 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { describe, it, expect } from "vitest";
-import { DIETS_ENABLED } from "./constants.jsx";
+import { DIETS_ENABLED, ALLERGENS, PRODUCT_ALLERGENS } from "./constants.jsx";
 import {
   compareAllergens,
   checkDietCompatibility,
@@ -462,5 +462,33 @@ describe("følsomhed pr. allergen (spor)", () => {
     expect(computeTopStatus({ hasSufficientData: true, ...direct }).level).toBe("danger");
     const onlyIgnored = categorizeProductFindings({ matchedDanger: [], matchedWarning: [], ignoredTraces: ["soja"], customAllergenMatches: [], matchedENumbers: [], dietResults: [] });
     expect(computeTopStatus({ hasSufficientData: true, ...onlyIgnored }).level).toBe("safe");
+  });
+});
+
+describe("Cøliaki som eget valg", () => {
+  it("vurderes mod produktets gluten- og hvedeflag, aldrig udledt af dem i profilen", () => {
+    expect(effectiveAllergenFlag({ gluten:"yes" }, "coeliaki")).toBe("yes");
+    expect(effectiveAllergenFlag({ gluten:"no", hvede:"traces" }, "coeliaki")).toBe("traces");
+    expect(effectiveAllergenFlag({ gluten:"no", hvede:"no" }, "coeliaki")).toBe("no");
+    expect(effectiveAllergenFlag({}, "coeliaki")).toBeUndefined();
+  });
+  it("compareAllergens: gluten giver fare, spor advarer som standard, og ukendt kan ikke afgøres", () => {
+    expect(compareAllergens({ ...ALL_NO, gluten:"yes" }, ["coeliaki"]).status).toBe("danger");
+    expect(compareAllergens({ ...ALL_NO, gluten:"traces" }, ["coeliaki"]).status).toBe("warn");
+    expect(compareAllergens({ ...ALL_NO, hvede:"yes" }, ["coeliaki"]).matchedDanger).toEqual(["coeliaki"]);
+    expect(compareAllergens({ gluten:"unknown" }, ["coeliaki"]).hasUnknown).toBe(true);
+  });
+  it("Kun ved ingrediens ignorerer spor for Cøliaki", () => {
+    const r = compareAllergens({ ...ALL_NO, gluten:"traces" }, ["coeliaki"], { coeliaki: "direct_only" });
+    expect(r.status).toBe("safe");
+    expect(r.ignoredTraces).toEqual(["coeliaki"]);
+  });
+  it("Gluten eller Hvede alene giver ikke Cøliaki i profilens resultat", () => {
+    const [r] = cpr([{ id:"me", name:"Åse", allergens:["gluten"] }], { allergen_flags: { ...ALL_NO, gluten:"yes" }, ingredients:"hvedemel" });
+    expect(r.danger).toEqual(["gluten"]);
+  });
+  it("er kun et profilvalg: findes ikke som produktflag", () => {
+    expect(ALLERGENS.find(a => a.id === "coeliaki")?.profileOnly).toBe(true);
+    expect(PRODUCT_ALLERGENS.some(a => a.id === "coeliaki")).toBe(false);
   });
 });

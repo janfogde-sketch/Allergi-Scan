@@ -15,6 +15,7 @@ const MADPAS_ALLERGEN_ICON = {
   maelkeallergi: "milk",
   hvede: "wheat",
   gluten: "bread",
+  coeliaki: "bread",
   laktose: "glass",
   aeg: "egg",
   noedder: "acorn",

@@ -323,10 +323,14 @@ export const ALLERGENS = [
   // (se useGlutenFreeSync i AllergenPicker.jsx: vælges Gluten her, tilføjes
   // Glutenfri automatisk under Kostpræferencer), så brugeren ikke behøver
   // vælge begge selv for at opnå samme filtrering.
-  // Glutenfølsomhed (ikke-cøliakisk) er et eget valg: ikke det samme som hvedeallergi og ikke cøliaki (som ikke er et valg i EatSafe).
+  // Glutenfølsomhed (ikke-cøliakisk) er et eget valg: ikke det samme som hvedeallergi og ikke cøliaki (som er et eget valg, `coeliaki`).
   // `pickerLabel` bruges i valg-skærmene; `label` bruges i resultater ("Indeholder gluten"). Id'et er uændret.
   { id:"gluten",        label:"Gluten",           pickerLabel:"Glutenfølsomhed", emoji:"🥖", type:"intolerance", note:"Glutenfølsomhed er ikke det samme som hvedeallergi eller cøliaki." },
   { id:"hvede",         label:"Hvede",             emoji:"🌾", type:"allergi", note:"Hvedeallergi er en allergi over for hvede og er ikke det samme som glutenfølsomhed eller cøliaki." },
+  // Cøliaki (2. okt. 2026, Bjørn): et eget, eksplicit valg, aldrig udledt af Gluten eller Hvede. `profileOnly`: det er en tilstand hos brugeren,
+  // ikke en egenskab ved et produkt, så det findes ikke som produktflag (se PRODUCT_ALLERGENS). Matches mod produktets gluten-/hvedeflag
+  // (`effectiveAllergenFlag` i helpers.js). Cøliaki-vejledningen om spor vises kun for dette id (`AllergenSensitivity`).
+  { id:"coeliaki",      label:"Cøliaki",           emoji:"🌾", type:"intolerance", profileOnly:true, note:"Cøliaki er en autoimmun sygdom udløst af gluten. Det er ikke det samme som hvedeallergi eller glutenfølsomhed." },
   { id:"maelkeallergi", label:"Mælk",              emoji:"🥛", type:"allergi" },
   // emoji er kun et fallback-tegn for evt. rene tekst-kontekster uden JSX
   // (se AllergenGlyph i SharedComponents.jsx, som al UI reelt bruger) — det
@@ -348,6 +352,9 @@ export const ALLERGENS = [
   { id:"lupin",         label:"Lupin",             emoji:"🌸", type:"allergi" },
   { id:"bloeddyr",      label:"Bløddyr",           emoji:"🦑", type:"allergi" },
 ];
+
+// Allergener, der findes som produktflag (allergen_flags). Cøliaki er kun et profilvalg og hører ikke hjemme i produktredigering, indberetning mv.
+export const PRODUCT_ALLERGENS = ALLERGENS.filter(a => !a.profileOnly);
 
 export const DEMO_CODES = [
   { code:"3017620422003", label:"Nutella" },
@@ -758,7 +765,7 @@ export const MADPAS_ALLERGY_STATEMENT_T = {
 // "ingredients made from {name}".
 export const MADPAS_EN_DERIVED = {
   maelkeallergi:"milk", aeg:"egg", jordnoedder:"peanut", noedder:"nut", hvede:"wheat",
-  gluten:"gluten", soja:"soy", fisk:"fish", skaldyr:"shellfish", bloeddyr:"mollusc",
+  gluten:"gluten", coeliaki:"gluten", soja:"soy", fisk:"fish", skaldyr:"shellfish", bloeddyr:"mollusc",
   selleri:"celery", sennep:"mustard", sesam:"sesame", lupin:"lupin", svovl:"sulphite",
 };
 
@@ -906,6 +913,7 @@ export const ALLERGEN_T = {
   // koden tilbage til ALLERGENS' danske a.label, så et madpas på fx
   // engelsk viste "Hvede" i stedet for "Wheat", mens resten af UI'et var
   // korrekt oversat. Se madpasAllergenLabel() i useMadpas.js).
+  coeliaki:    { en:{n:"Coeliac disease",d:"I have coeliac disease and must avoid gluten strictly"} },
   hvede:       { en:{n:"Wheat",d:"Contains wheat and wheat products"},de:{n:"Weizen",d:"Enthält Weizen und Weizenprodukte"},fr:{n:"Blé",d:"Contient du blé et des produits à base de blé"},es:{n:"Trigo",d:"Contiene trigo y productos a base de trigo"},it:{n:"Grano",d:"Contiene grano e prodotti a base di grano"},nl:{n:"Tarwe",d:"Bevat tarwe en tarweproducten"},pt:{n:"Trigo",d:"Contém trigo e produtos à base de trigo"},pl:{n:"Pszenica",d:"Zawiera pszenicę i produkty pszenne"},sv:{n:"Vete",d:"Innehåller vete och veteprodukter"},no:{n:"Hvete",d:"Inneholder hvete og hveteprodukter"},ja:{n:"小麦",d:"小麦および小麦製品を含む"},zh:{n:"小麦",d:"含有小麦和小麦制品"},ar:{n:"القمح",d:"يحتوي على القمح ومنتجاته"},tr:{n:"Buğday",d:"Buğday ve buğday ürünleri içerir"},th:{n:"ข้าวสาลี",d:"มีข้าวสาลีและผลิตภัณฑ์จากข้าวสาลี"},el:{n:"Σιτάρι",d:"Περιέχει σιτάρι και προϊόντα σιταριού"} },
   maelkeallergi: { en:{n:"Milk",d:"Contains milk and milk products"},de:{n:"Milch",d:"Enthält Milch und Milchprodukte"},fr:{n:"Lait",d:"Contient du lait et des produits laitiers"},es:{n:"Leche",d:"Contiene leche y productos lácteos"},it:{n:"Latte",d:"Contiene latte e latticini"},nl:{n:"Melk",d:"Bevat melk en zuivelproducten"},pt:{n:"Leite",d:"Contém leite e laticínios"},pl:{n:"Mleko",d:"Zawiera mleko i produkty mleczne"},sv:{n:"Mjölk",d:"Innehåller mjölk och mjölkprodukter"},no:{n:"Melk",d:"Inneholder melk og melkeprodukter"},ja:{n:"牛乳",d:"牛乳および乳製品を含む"},zh:{n:"牛奶",d:"含有牛奶和乳制品"},ar:{n:"الحليب",d:"يحتوي على الحليب ومنتجاته"},tr:{n:"Süt",d:"Süt ve süt ürünleri içerir"},th:{n:"นม",d:"มีนมและผลิตภัณฑ์จากนม"},el:{n:"Γάλα",d:"Περιέχει γάλα και γαλακτοκομικά προϊόντα"} },
   laktose:     { en:{n:"Lactose / Dairy",d:"Contains milk and dairy products (lactose)"},de:{n:"Laktose / Milch",d:"Enthält Milch und Milchprodukte (Laktose)"},fr:{n:"Lactose / Lait",d:"Contient du lait et des produits laitiers (lactose)"},es:{n:"Lactosa / Lácteos",d:"Contiene leche y productos lácteos (lactosa)"},it:{n:"Lattosio / Latte",d:"Contiene latte e latticini (lattosio)"},nl:{n:"Lactose / Melk",d:"Bevat melk en zuivelproducten (lactose)"},pt:{n:"Lactose / Leite",d:"Contém leite e produtos lácteos (lactose)"},pl:{n:"Laktoza / Mleko",d:"Zawiera mleko i produkty mleczne (laktoza)"},sv:{n:"Laktos / Mjölk",d:"Innehåller mjölk och mjölkprodukter (laktos)"},no:{n:"Laktose / Melk",d:"Inneholder melk og meieriprodukter (laktose)"},ja:{n:"乳糖 / 乳製品",d:"牛乳および乳製品を含む（ラクトース）"},zh:{n:"乳糖 / 乳制品",d:"含有牛奶和乳制品（乳糖）"},ar:{n:"اللاكتوز / الألبان",d:"يحتوي على الحليب ومنتجات الألبان"},tr:{n:"Laktoz / Süt",d:"Süt ve süt ürünleri içerir (laktoz)"},th:{n:"แลคโตส / นม",d:"มีนมและผลิตภัณฑ์จากนม (แลคโตส)"},el:{n:"Λακτόζη / Γάλα",d:"Περιέχει γάλα και γαλακτοκομικά (λακτόζη)"} },
