@@ -44,7 +44,7 @@ export const ALLERGEN_KEYWORDS = {
     "gluten", "rug", "rye", "secale", "byg", "barley", "hordeum",
     "havre", "oats", "oat", "avena", "spelt", "kamut", "dinkel", "dinkelhvede",
     "emmer", "einkorn", "khorasanhvede", "hvedemel", "wheat flour",
-    "rugmel", "bygmel", "havremel", "malt", "maltekstrakt", "malt extract",
+    "rugmel", "bygmel", "bygekstrakt", "byggryn", "bygsirup", "havremel", "malt", "maltekstrakt", "malt extract",
     "malteddike", "maltsirup", "øleddike", "bryggersgær",
     "hvedestivelse", "wheat starch", "stivelse af hvede",
     "semulje", "semolina", "couscous", "bulgur", "farro", "freekeh",
@@ -85,6 +85,8 @@ export const ALLERGEN_KEYWORDS = {
     "smørfedt", "smørfedtstof", "flødeost", "flødeoste", "smøreost", "smøreoste",
     "friskost", "friskoste", "hytteost", "hytteoste", "rygeost", "rygeoste",
     "gedeost", "gedeoste", "fåreost", "fåreoste",
+    // "OSTEPULVER" i snacks og krydderiblandinger (2. okt. 2026): ost som første led i sammensat ord (ens i ental/flertal)
+    "ostepulver", "ostemasse", "ostecreme", "ostesmag", "ostearoma", "osteekstrakt",
     // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
     "milch", "vollmilch", "vollmilchpulver", "magermilch", "magermilchpulver", "milchpulver", "milcheiweiß", "milchbestandteile", "sahne", "rahm", "käse", "molke", "molken", "molkenpulver", "molkenerzeugnis", "butterreinfett", "joghurt",
   ],
@@ -99,7 +101,7 @@ export const ALLERGEN_KEYWORDS = {
     "valle", "whey", "tørmælk", "mælkepulver", "milk powder",
     // Friske oste indeholder laktose (30. sept. 2026)
     "flødeost", "flødeoste", "smøreost", "smøreoste", "friskost", "friskoste",
-    "hytteost", "hytteoste",
+    "hytteost", "hytteoste", "ostepulver", "ostemasse", "ostecreme",
     // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)
     "milchzucker", "milch", "sahne", "rahm", "käse", "molke", "molken", "molkenpulver", "joghurt", "buttermilch",
   ],
