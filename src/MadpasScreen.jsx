@@ -76,8 +76,10 @@ export default function MadpasScreen({
   const buildGroups = (lang) => {
     const allergenItems = mpAllergens.map(id => ALLERGENS.find(a => a.id === id)).filter(Boolean);
     return {
-      allergyItems: allergenItems.filter(a => a.type === "allergi"),
-      intoleranceItems: allergenItems.filter(a => a.type === "intolerance"),
+      // Cøliaki er en intolerance-type, men får sit eget budskab og vises derfor i
+      // samme sektion som allergierne (2. okt. 2026).
+      allergyItems: allergenItems.filter(a => a.type === "allergi" || a.id === "coeliaki"),
+      intoleranceItems: allergenItems.filter(a => a.type === "intolerance" && a.id !== "coeliaki"),
       customItems: (mpCustom || []).filter(c => typeof c === "string" && !mpAllergens.includes(c)),
       dietItems: (mpDiets || []).map(id => ({ id, label: madpasDietLabel(id, lang) })).filter(x => x.label),
     };
@@ -96,7 +98,7 @@ export default function MadpasScreen({
     const { allergyItems, intoleranceItems, customItems, dietItems } = buildGroups(lang);
     // Bruges til den kombinerede krydskontaminerings-sætning nedenfor —
     // IKKE til den enkelte sikkerhedstekst, som nu genereres pr. emne.
-    const crossContactNames = [...allergyItems.map(a => madpasAllergenLabel(a, lang)), ...customItems];
+    const crossContactNames = [...allergyItems.filter(a => a.id !== "coeliaki").map(a => madpasAllergenLabel(a, lang)), ...customItems];
 
     // Typografisk hierarki (27. sept. 2026, Madpas-finpolish nr. 2), i
     // prioriteret rækkefølge: 1) allergenets/diætens navn (itemName) —
@@ -194,7 +196,7 @@ export default function MadpasScreen({
                     </div>
                     {renderExamples(a.id)}
                     <div style={messageBlock}>
-                      <div style={statementLine}>{madpasAllergyStatement(madpasAllergenLabel(a, lang), lang)}</div>
+                      <div style={statementLine}>{madpasAllergyStatement(madpasAllergenLabel(a, lang), lang, a.id)}</div>
                       <div style={messageSafety}>{madpasSafetyNote(madpasAllergenLabel(a, lang), lang, a.id)}</div>
                     </div>
                   </div>

@@ -74,8 +74,8 @@ allergen = "strict" (spor flagges). `direct_only` = kun direkte indhold flagges;
 levels)` → `ignoredTraces`, `computeProfileResults`, `mergeAllergenLevels` — strengeste aktive profil vinder). Husstandskonti får niveauer via `family/group`
 (`allergenLevels`); `notify` P1 sender ikke spor-ændringer til en modtager, der kun reagerer på direkte indhold (`affectedAllergenChanges(..., tracesIgnored)`).
 **Cøliaki** (`coeliaki`, `profileOnly` i `ALLERGENS`; ingen DB-ændring, ids er fri tekst): kun et profilvalg uden egne produktflag (`PRODUCT_ALLERGENS` bruges i admin, indberetning og
-"produkt ikke fundet"). `effectiveAllergenFlag(flags,"coeliaki")` = højeste af gluten/hvede; `notify` P1 behandler gluten-/hvede-ændringer som berørende en cøliaki-profil. Madpas: kun navn på engelsk (`ALLERGEN_T`) og
-gluten-eksempler; fuldt 17-sprogs budskab mangler (se to do). Leksikon: `coeliaki` tilføjet til `allergen_ids` på `gluten`, `faq-coeliaki`, `faq-hvede-vs-gluten` (migration `20261002063606`).
+"produkt ikke fundet"). `effectiveAllergenFlag(flags,"coeliaki")` = højeste af gluten/hvede; `notify` P1 behandler gluten-/hvede-ændringer som berørende en cøliaki-profil. Madpas: navn + to-sætnings-budskab ("Jeg har cøliaki." + strengt glutenfrit, også spor) på 17 sprog i `MADPAS_COELIAC_T`
+(konstanter, ikke `{name}`-skabelonerne); vises i allergi-sektionen, indgår ikke i krydskontaminerings-sætningen, oplæses; gluten-eksempler. Leksikon: `coeliaki` tilføjet til `allergen_ids` på `gluten`, `faq-coeliaki`, `faq-hvede-vs-gluten` (migration `20261002063606`).
 UI: `AllergenSensitivity` i `AllergenPicker.jsx`. Admin → Brugere kan sætte niveauet; familiemedlemmers niveauer redigeres kun i appen.
 
 **`users.onboarding_step`** (integer 1-5, default 1) husker onboarding-trinnet sammen med `onboarding_completed`; selv-opdateres via PATCH. Signup sender kun
@@ -129,7 +129,7 @@ On-device visning (profil → sprog → kompakt preview → "Åbn madpas" → fu
   allergi vs. intolerance); hvert emne er sin egen blok (ikon + stort navn, "May be found in:" med korte eksempler, sikkerhedstekst pr. emne).
 - Hjælpefunktioner i `useMadpas.js`: `madpasAllergenLabel()`, `madpasDietLabel()`, `madpasAllergenExamples()`, `madpasSafetyNote(name, lang)`,
   `madpasCrossContactNote(names, lang)`, `madpasDietMessage(dietId, lang)`, `madpasSpeak()`. Brug dem (korrekt sprog-fallback) frem for at genopfinde logikken.
-  Tekstkonstanter (17 sprog): `ALLERGEN_T`, `ALLERGEN_EXAMPLES`, `MADPAS_ALLERGY_STATEMENT_T`, `MADPAS_SAFETY_NOTE_T`, `MADPAS_DIET_MESSAGE_T`,
+  Tekstkonstanter (17 sprog): `ALLERGEN_T`, `ALLERGEN_EXAMPLES`, `MADPAS_ALLERGY_STATEMENT_T`, `MADPAS_SAFETY_NOTE_T`, `MADPAS_COELIAC_T`, `MADPAS_DIET_MESSAGE_T`,
   `MADPAS_SECTIONS_T`, `MADPAS_EXAMPLES_LABEL_T`, `MADPAS_EXAMPLES_OVERRIDE`, `MADPAS_SPEAK_LABEL_T`/`MADPAS_STOP_LABEL_T`.
 - Sikkerhedsteksten genereres altid pr. emne ("...does not contain {name} or ingredients made from {name}."), aldrig som kombineret sætning.
 - Krydskontaminering er bevidst OPT-IN (toggle, default FRA, `localStorage` `as_madpas_cross_contact`): én sætning nederst i FOOD ALLERGIES (singular/plural,

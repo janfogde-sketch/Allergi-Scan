@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState } from "react";
 import { visibleDiets } from "./helpers.js";
-import { ALLERGENS, MADPAS_LANGUAGES, ALLERGEN_T, ALLERGEN_EXAMPLES, DIETS, DIET_T, MADPAS_SAFETY_NOTE_T, MADPAS_ALLERGY_STATEMENT_T, MADPAS_EN_DERIVED, MADPAS_EXAMPLES_OVERRIDE, MADPAS_CROSS_CONTACT_SINGULAR_T, MADPAS_CROSS_CONTACT_PLURAL_T, MADPAS_DIET_MESSAGE_T } from "./constants.jsx";
+import { ALLERGENS, MADPAS_LANGUAGES, ALLERGEN_T, ALLERGEN_EXAMPLES, DIETS, DIET_T, MADPAS_SAFETY_NOTE_T, MADPAS_ALLERGY_STATEMENT_T, MADPAS_EN_DERIVED, MADPAS_EXAMPLES_OVERRIDE, MADPAS_CROSS_CONTACT_SINGULAR_T, MADPAS_CROSS_CONTACT_PLURAL_T, MADPAS_DIET_MESSAGE_T, MADPAS_COELIAC_T } from "./constants.jsx";
 
 // ALLERGEN_T har ingen "da"-nøgle (dansk er allerede ALLERGENS' eget
 // a.label, se konstantens egen kommentar) — uden dette faldt et valgt
@@ -60,6 +60,7 @@ function inlineName(name, lang) {
 }
 export function madpasSafetyNote(name, lang, allergenId) {
   if (!name) return "";
+  if (allergenId === "coeliaki") return (MADPAS_COELIAC_T[lang] || MADPAS_COELIAC_T.en).safety;
   // Engelsk, fast allergen: "does not contain milk or any milk-derived ingredients".
   const derived = (lang === "en" || !MADPAS_SAFETY_NOTE_T[lang]) && allergenId && MADPAS_EN_DERIVED[allergenId];
   if (derived) return `Please make sure my food does not contain ${inlineName(name, "en")} or any ${derived}\u2011derived ingredients.`; // ikke-brydende bindestreg
@@ -67,8 +68,9 @@ export function madpasSafetyNote(name, lang, allergenId) {
   return template.split("{name}").join(inlineName(name, lang));
 }
 // "I have a food allergy to milk." — første, direkte sætning pr. allergi.
-export function madpasAllergyStatement(name, lang) {
+export function madpasAllergyStatement(name, lang, allergenId) {
   if (!name) return "";
+  if (allergenId === "coeliaki") return (MADPAS_COELIAC_T[lang] || MADPAS_COELIAC_T.en).statement;
   const template = MADPAS_ALLERGY_STATEMENT_T[lang] || MADPAS_ALLERGY_STATEMENT_T.en;
   return template.split("{name}").join(inlineName(name, lang));
 }
@@ -174,15 +176,16 @@ export function useMadpas({ allergens, customAllerg, user, madpasLang, family, m
       const a = ALLERGENS.find(x => x.id === id);
       if (!a) return;
       const label = madpasAllergenLabel(a, lang);
-      if (a.type === "allergi") allergyEntries.push({ name: label, id });
+      if (a.type === "allergi" || id === "coeliaki") allergyEntries.push({ name: label, id });
       else intoleranceNames.push(label);
     });
     speakCustom.filter(c => typeof c === "string" && !speakAllergens.includes(c)).forEach(c => allergyEntries.push({ name: c }));
-    const allergyNames = allergyEntries.map(e => e.name);
+    // Cøliaki-budskabet dækker allerede spor, så den indgår ikke i krydskontaminerings-sætningen.
+    const allergyNames = allergyEntries.filter(e => e.id !== "coeliaki").map(e => e.name);
 
     // Samme to sætninger som på skærmen: "I have a food allergy to milk."
     // + "Please make sure my food contains no milk or milk-derived ingredients."
-    allergyEntries.forEach(e => parts.push(madpasAllergyStatement(e.name, lang) + " " + madpasSafetyNote(e.name, lang, e.id)));
+    allergyEntries.forEach(e => parts.push(madpasAllergyStatement(e.name, lang, e.id) + " " + madpasSafetyNote(e.name, lang, e.id)));
     // Krydskontaminering oplæses KUN hvis brugeren selv har aktiveret den
     // (krav 7 — må aldrig vises/oplæses automatisk for alle).
     if (madpasCrossContact && allergyNames.length > 0) {
