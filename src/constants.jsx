@@ -325,8 +325,8 @@ export const ALLERGENS = [
   // vælge begge selv for at opnå samme filtrering.
   // Glutenfølsomhed (ikke-cøliakisk) er et eget valg: ikke det samme som hvedeallergi og ikke cøliaki (som er et eget valg, `coeliaki`).
   // `pickerLabel` bruges i valg-skærmene; `label` bruges i resultater ("Indeholder gluten"). Id'et er uændret.
-  { id:"gluten",        label:"Gluten",           pickerLabel:"Glutenfølsomhed", emoji:"🥖", type:"intolerance", note:"Glutenfølsomhed er ikke det samme som hvedeallergi eller cøliaki." },
-  { id:"hvede",         label:"Hvede",             emoji:"🌾", type:"allergi", note:"Hvedeallergi er en allergi over for hvede og er ikke det samme som glutenfølsomhed eller cøliaki." },
+  { id:"gluten",        label:"Gluten",           pickerLabel:"Glutenfølsomhed", emoji:"🥖", type:"intolerance", note:"Glutenfølsomhed og glutenfri kost er koblet sammen. Vælger du glutenfølsomhed, kan glutenfri kost anvendes automatisk, så du ikke skal vælge begge. Det er ikke det samme som hvedeallergi eller cøliaki." },
+  { id:"hvede",         label:"Hvede",             emoji:"🌾", type:"allergi", note:"Hvedeallergi gælder hvede. Det er ikke det samme som glutenfølsomhed, og de vælges hver for sig." },
   // Cøliaki (2. okt. 2026, Bjørn): et eget, eksplicit valg, aldrig udledt af Gluten eller Hvede. `profileOnly`: det er en tilstand hos brugeren,
   // ikke en egenskab ved et produkt, så det findes ikke som produktflag (se PRODUCT_ALLERGENS). Matches mod produktets gluten-/hvedeflag
   // (`effectiveAllergenFlag` i helpers.js). Cøliaki-vejledningen om spor vises kun for dette id (`AllergenSensitivity`).
@@ -348,7 +348,7 @@ export const ALLERGENS = [
   { id:"sesam",         label:"Sesam",             emoji:"🌿", type:"allergi" },
   // Sulfitter: mærkningspligtigt EU-allergen (svovldioxid/sulfitter) over 10 mg/kg eller 10 mg/l samlet SO₂. Klassificeres fortsat som
   // "intolerance" i resultatlogikken (sikker filtrering), men har sin egen mærkningsgrænse som data (labelThresholdMgPerKg).
-  { id:"svovl",         label:"Sulfitter",         emoji:"🍷", type:"intolerance", labelThresholdMgPerKg:10, note:"Svovldioxid og sulfitter er blandt EU's mærkningspligtige allergener. De skal fremhæves som allergen, når indholdet overstiger 10 mg/kg eller 10 mg/l målt som samlet SO₂. Under denne grænse er de ikke nødvendigvis omfattet af samme krav om allergenfremhævelse." },
+  { id:"svovl",         label:"Sulfitter",         emoji:"🍷", type:"intolerance", labelThresholdMgPerKg:10, note:"Sulfitter er et mærkningspligtigt allergen i EU, når der er over 10 mg/kg eller 10 mg/l (målt som samlet SO₂). Under grænsen står de ikke nødvendigvis på emballagen." },
   { id:"lupin",         label:"Lupin",             emoji:"🌸", type:"allergi" },
   { id:"bloeddyr",      label:"Bløddyr",           emoji:"🦑", type:"allergi" },
 ];

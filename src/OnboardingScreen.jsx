@@ -978,8 +978,8 @@ export default function OnboardingScreen({
                     onCancel={() => setConfirmRemoveMember(null)}
                     onConfirm={() => { removeMember(confirmRemoveMember.id); setConfirmRemoveMember(null); }} />
                 )}
-                <div className="step-title" style={UI.utacenter}>Familiemedlemmer</div>
-                <div style={{ fontSize:13, color:"var(--ink2)", textAlign:"center", marginBottom:16 }}>Tilføj en profil til en person, du administrerer, fx et barn. Voksne kan du invitere under Familie, så de selv styrer deres oplysninger. Valgfrit.</div>
+                <div className="step-title">Familiemedlemmer</div>
+                <div style={{ fontSize:13, color:"var(--ink2)", marginBottom:16 }}>Tilføj en profil til en person, du administrerer, fx et barn. Voksne kan du invitere under Familie, så de selv styrer deres oplysninger. Valgfrit.</div>
 
                 {/* Allerede tilføjede — viser navn + alder som primær linje
                     (25. sept. 2026, brugerfeedback: "Mia, 24 år"), ikke kun
@@ -1124,7 +1124,7 @@ export default function OnboardingScreen({
                           er den anbefalede handling, "Ikke nu" er der bare
                           uden at presse. Afslutter onboarding direkte, ingen
                           ekstra "Du er færdig"-skærm. */}
-                      <TextLink variant="muted" block style={{ minHeight:44 }} onClick={finishOnboard}>
+                      <TextLink variant="muted" block style={{ minHeight:44, fontSize:14, fontWeight:700, color:"var(--ink2)" }} onClick={finishOnboard}>
                         Ikke nu
                       </TextLink>
                     </>
