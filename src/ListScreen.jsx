@@ -37,7 +37,7 @@ export default function ListScreen({
   } = useShoppingContext();
 
   const [showListPicker, setShowListPicker] = useState(false);
-  const [shareListId, setShareListId] = useState(null); // listen, der deles (åbnes fra listevælgeren)
+  const [shareListId, setShareListId] = useState(null); // listen, der deles (åbnes fra Del-ikonet i liste-knappen)
   const shareList = lists.find(l => l.id === shareListId) || null;
   // Bekræft-dialoger for destruktive handlinger (25. sept. 2026,
   // brugerfeedback) — erstatter native confirm(), se ConfirmDialog i
@@ -423,8 +423,7 @@ export default function ListScreen({
       {showListPicker && (
         <ListSwitcherSheet lists={lists} activeListId={activeListId} userId={userId}
           onSelect={setActiveListId} onClose={() => setShowListPicker(false)}
-          createList={createList} renameList={renameList} leaveList={leaveList} joinByCode={joinByCode} onRequestDelete={setListPendingDelete}
-          onShare={l => { setShowListPicker(false); setShareListId(l.id); }} />
+          createList={createList} renameList={renameList} leaveList={leaveList} joinByCode={joinByCode} onRequestDelete={setListPendingDelete} />
       )}
 
       {shareList && (

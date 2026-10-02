@@ -82,7 +82,7 @@ const CANCEL_LINK = { minHeight:44, padding:"0 4px", background:"none", border:"
 // Ren tekst uden ramme eller fyld, så selve listen er det primære element (44 px højt trykmål): Omdøb er neutral, Slet/Forlad er røde.
 const ROW_ACTION = { flexShrink:0, minHeight:44, minWidth:44, padding:"0 8px", background:"none", border:"none", borderRadius:8, cursor:"pointer", fontFamily:"var(--f)", fontSize:13, fontWeight:700 };
 
-export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClose, createList, renameList, leaveList, joinByCode, onRequestDelete, onShare }) {
+export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClose, createList, renameList, leaveList, joinByCode, onRequestDelete }) {
   const [mode, setMode]       = useState(null); // null | "new" | "join"
   const [editLists, setEdit]  = useState(false);
   const [newName, setNewName] = useState("");
@@ -163,12 +163,6 @@ export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClo
                 <button type="button" aria-current={isActive ? "true" : undefined} onClick={() => { onSelect(l.id); onClose(); }} style={{ ...rowStyle, cursor:"pointer" }}>
                   {nameBlock}
                   {isActive && <Icon name="check" size={18} color="var(--green)" />}
-                </button>
-              )}
-              {!editLists && onShare && (
-                <button type="button" aria-label={`Del listen ${l.name}`} onClick={() => onShare(l)}
-                  style={{ ...ROW_ACTION, minWidth:44, padding:"0 10px", display:"flex", alignItems:"center", justifyContent:"center", gap:4, borderRadius:12, border:"1px solid var(--border)", color:"var(--ink2)", fontSize:12 }}>
-                  <Icon name="share" size={15} color="var(--ink2)" /> Del
                 </button>
               )}
               {editLists && isOwner && (

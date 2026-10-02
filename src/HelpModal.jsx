@@ -21,7 +21,7 @@ const HELP_CONTENT = {
   ]},
   "list": { title:"Indkøbsliste", titleIcon:"cart", tips:[
     { icon:"list", title:"Flere lister", desc:"Tryk på listenavnet øverst for at skifte mellem lister eller oprette en ny." },
-    { icon:"link", title:"Del listen", desc:"Tryk på listenavnet og derefter Del ud for en liste. Vælg: kun dig, hele familien eller bestemte personer. Du kan også sende et link til en, der ikke er i familien." },
+    { icon:"link", title:"Del listen", desc:"Tryk på Del-ikonet ved siden af listenavnet. Vælg: kun dig, hele familien eller bestemte personer. Du kan også sende et link til en, der ikke er i familien." },
     { icon:"edit", title:"Tilføj varer", desc:"Skriv en vare og tryk Tilføj — eller send direkte fra en opskrift eller et søgeresultat." },
     { icon:"check", title:"Afkryds og ryd", desc:"Tryk på en vare for at markere den som købt, og brug 'Ryd' for at fjerne alle købte varer på én gang." },
   ]},
