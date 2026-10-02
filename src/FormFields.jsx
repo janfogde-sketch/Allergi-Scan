@@ -16,12 +16,18 @@ import { ChoiceCard } from "./DesignSystem.jsx";
 // .age-step-btn-klasse (theme.jsx) giver en tydelig tryk-feedback
 // (:active{scale+mørkere baggrund}), som de rå inline-stylede knapper
 // ikke havde nogen af før.
-export function AgeStepper({ value, onChange, min = 1, max = 120, placeholder = "Vælg alder" }) {
+// onOverMax (valgfri): hvis sat, kan alderen aldrig komme over `max` (typet eller med +); i stedet sættes den til max, og onOverMax kaldes,
+// så skærmen kan forklare hvorfor. Uden onOverMax er adfærden uændret.
+export function AgeStepper({ value, onChange, min = 1, max = 120, placeholder = "Vælg alder", onOverMax, startAt = 25 }) {
   const numValue = Number(value) || 0;
   const step = delta => {
     // Tom alder: første tryk (+ eller −) viser 25 som synligt udgangspunkt; der er ingen forudfyldt alder.
-    const base = Number(value) || 25;
-    const next = !value ? base : Math.min(max, Math.max(min, base + delta));
+    // Alder 0 er en gyldig værdi (spædbarn) og må ikke behandles som "tom".
+    const hasValue = value !== "" && value != null;
+    const base = hasValue ? Number(value) : startAt;
+    const wanted = base + delta;
+    if (hasValue && onOverMax && wanted > max) { onChange(String(max)); onOverMax(); return; }
+    const next = !hasValue ? base : Math.min(max, Math.max(min, wanted));
     onChange(String(next));
   };
   return (
@@ -31,7 +37,13 @@ export function AgeStepper({ value, onChange, min = 1, max = 120, placeholder = 
         −
       </button>
       <input className="field field-no-spinner" type="number" inputMode="numeric" placeholder={placeholder} min={min} max={max} aria-label="Alder i år"
-        value={value || ""} onChange={e => onChange(e.target.value)}
+        value={value || ""}
+        onChange={e => {
+          const v = e.target.value;
+          if (onOverMax && v !== "" && Number(v) > max) { onChange(String(max)); onOverMax(); return; }
+          if (onOverMax && v !== "" && Number(v) < min) { onChange(String(min)); return; }
+          onChange(v);
+        }}
         style={{ width: value ? 64 : 112, height:44, flexShrink:0, textAlign:"center", padding:"0 4px", fontSize: value ? 17 : 14, fontWeight: value ? 700 : 500, boxSizing:"border-box" }} />
       <button type="button" className="age-step-btn" onClick={() => step(1)} aria-label="Ét år ældre"
         style={{ width:44, height:44, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>

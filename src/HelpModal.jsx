@@ -36,10 +36,10 @@ const HELP_CONTENT = {
     { icon:"list", title:"Mine / Familien", desc:"Under historik og favoritter kan du skifte mellem kun dine egne og hele familiens." },
   ]},
   "family": { title:"Sådan virker Familie", titleIcon:"family", tips:[
-    { icon:"family", title:"1. Tilføj personer", desc:"Invitér voksne med egen EatSafe-konto, eller opret profiler til fx børn." },
+    { icon:"family", title:"1. Tilføj personer", desc:"Invitér voksne med egen EatSafe-konto, eller opret profiler til børn under 18 år." },
     { icon:"barcode", title:"2. Tjek varer for familien", desc:"Når du scanner, kan du se, om varen passer til de personer, du har adgang til." },
     { icon:"cart", title:"3. Del indkøbslister", desc:"Vælg om en liste er privat, deles med hele familien eller kun bestemte personer." },
-    { icon:"shield", title:"4. Hver profil styres af den rette person", desc:"Voksne styrer deres egen profil. Profiler uden konto administreres af den person, der har oprettet dem." },
+    { icon:"shield", title:"4. Hver profil styres af den rette person", desc:"Voksne styrer deres egen profil. Børneprofiler uden egen konto administreres af den person, der har oprettet dem." },
   ]},
   "result": { title:"Scanningsresultat", titleIcon:"package", tips:[
     { icon:"🚦", title:"Farvet ramme", desc:"Grøn = sikkert, gul = advarsel, rød = farligt — vurderet ud fra dine aktive profiler." },

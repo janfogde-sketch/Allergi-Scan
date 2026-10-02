@@ -31,24 +31,25 @@ export const MemberForm = ({
   eNumbers, setENumbers,
   customInput, setCustomInput,
   onAdd, addLabel, editing = false,
-  // Voksne administreres ikke som underprofiler: de inviteres (egen konto, eget samtykke). `onSkip` afslutter/lukker formularen uden at tilføje;
-  // `inviteHint` er teksten om, hvor invitationen sker (afhænger af, om vi er i onboarding eller på Familie-siden). `openPrivacy` åbner politikken.
-  onSkip, inviteHint = "Invitér personen under Familie, når din profil er oprettet.", openPrivacy,
+  // Profiler uden egen konto er kun til børn under 18: alderen kan ikke sættes højere end 17. Forsøger man alligevel, vises en note; `onInviteAdult`
+  // fører direkte til invitation af en voksen (findes ikke i onboarding, hvor `inviteHint` forklarer, hvor invitationen sker). `onInviteOwnAccount`
+  // bruges ved en ældre profil, der er fyldt 18, til at invitere personen til en egen konto. `openPrivacy` åbner politikken.
+  onInviteAdult, onInviteOwnAccount, inviteHint = "Du kan invitere personen under Familie, når din profil er oprettet.", openPrivacy,
 }) => {
   const age = birthYear ? String(new Date().getFullYear() - parseInt(birthYear)) : "";
-  // Samme realistiske interval som trin 1 (0 tilladt for spædbørn).
-  const ageOk = age !== "" && Number(age) >= 0 && Number(age) <= 120;
-  // Voksne oprettes ikke som administreret underprofil (de inviteres, se panelet under Alder). Gælder nye profiler, ikke redigering.
+  // Børneprofil: 0-17 år. En ældre, allerede oprettet profil, der er fyldt 18, kan stadig redigeres (og får en overgangsnote), men en ny kan aldrig være 18+.
+  const legacyAdult = editing && age !== "" && Number(age) >= 18;
+  const ageMax = legacyAdult ? 120 : 17;
+  const ageOk = age !== "" && Number(age) >= 0 && Number(age) <= ageMax;
   const ageKnown = age !== "" && ageOk;
-  const isAdult = ageKnown && Number(age) >= 18;
-  const blockAdult = isAdult && !editing;
+  const [adultTried, setAdultTried] = React.useState(false); // brugeren forsøgte at vælge 18 år eller derover
   const hasHealthData = ((allergens?.length || 0) + (customAllerg?.length || 0)) > 0;
   // Allergivalget skal være aktivt: mindst én allergi/intolerance ELLER et eksplicit "ingen". Ved redigering af et medlem
   // uden allergier tæller det som det eksplicitte valg. Formularen remountes pr. medlem (key), så startværdien er korrekt.
   const [noAllergies, setNoAllergies] = React.useState(editing && !hasHealthData);
   const [confirmNone, setConfirmNone] = React.useState(false);
   const allergyChoiceOk = hasHealthData || noAllergies;
-  const isValid = name?.trim() && birthYear && ageOk && gender && allergyChoiceOk && !blockAdult;
+  const isValid = name?.trim() && birthYear && ageOk && gender && allergyChoiceOk;
   // "Navn, alder og køn er obligatoriske"-teksten må først vises EFTER et
   // forsøgt tryk på "+ Tilføj familiemedlem", ikke proaktivt fra starten
   // (25. sept. 2026, brugerfeedback — samme princip som trin 1's
@@ -61,7 +62,7 @@ export const MemberForm = ({
   const consent = useHealthConsent();
   const [consentChecked, setConsentChecked] = React.useState(false);
   const memberConsent = memberConsentTexts({ name, age });
-  const needsMemberConfirm = hasHealthData && !editing && ageKnown && !isAdult;
+  const needsMemberConfirm = hasHealthData && !editing && ageKnown;
   const consentOk = !needsMemberConfirm || consentChecked;
   // E-numre skal være lukket som standard, ligesom trin 2 — ellers bliver
   // trin 4 unødigt langt for en valgfri funktion (25. sept. 2026,
@@ -86,23 +87,26 @@ export const MemberForm = ({
           internt som fødselsår (birthYear-prop uændret). */}
       <div style={{ marginBottom:19 }}>
         <label className="field-lbl">Alder <span style={UI.red}>*</span></label>
-        <AgeStepper value={age} min={0}
-          onChange={a => setBirthYear(a ? String(new Date().getFullYear() - parseInt(a)) : "")} />
-        {/* Voksne oprettes ikke som administreret underprofil: de administrerer selv deres profil og inviteres. */}
-        {blockAdult && (
+        <AgeStepper value={age} min={0} max={ageMax} startAt={8} onOverMax={() => setAdultTried(true)}
+          onChange={a => { setAdultTried(false); setBirthYear(a ? String(new Date().getFullYear() - parseInt(a)) : ""); }} />
+        {/* Kun børn under 18: forsøg på 18+ forklares og fører til invitation af en voksen. */}
+        {adultTried && (
           <div role="note" style={{ marginTop:10, padding:"12px 14px", borderRadius:12, background:"var(--surface2)", border:"1px solid var(--border)" }}>
-            <div style={{ fontSize:13.5, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>Voksne administrerer deres egen profil</div>
-            <div style={{ fontSize:12.5, color:"var(--ink2)", lineHeight:1.5 }}>{inviteHint}</div>
-            <div style={{ display:"flex", flexDirection:"column", gap:8, marginTop:10 }}>
-              {onSkip && <SecondaryButton style={{ minHeight:44 }} onClick={onSkip}>Fortsæt uden at tilføje</SecondaryButton>}
-              <SecondaryButton style={{ minHeight:44 }} onClick={() => setBirthYear("")}>Tilbage</SecondaryButton>
-            </div>
+            <div style={{ fontSize:13, color:"var(--ink)", lineHeight:1.5 }}>Personer på 18 år eller derover skal have deres egen EatSafe-konto.</div>
+            {onInviteAdult
+              ? <SecondaryButton style={{ minHeight:44, marginTop:10 }} onClick={onInviteAdult}>Invitér voksen</SecondaryButton>
+              : <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginTop:6 }}>{inviteHint}</div>}
+          </div>
+        )}
+        {/* En profil, der er fyldt 18, skal over på en personlig konto (ingen blindgyde). */}
+        {legacyAdult && (
+          <div role="note" style={{ marginTop:10, padding:"12px 14px", borderRadius:12, background:"var(--surface2)", border:"1px solid var(--border)" }}>
+            <div style={{ fontSize:13, color:"var(--ink)", lineHeight:1.5 }}>Denne profil skal nu overgå til en personlig EatSafe-konto.</div>
+            {onInviteOwnAccount && <SecondaryButton style={{ minHeight:44, marginTop:10 }} onClick={onInviteOwnAccount}>Invitér til egen konto</SecondaryButton>}
           </div>
         )}
       </div>
 
-      {/* Resten af formularen vises ikke for en voksen (se panelet under Alder) */}
-      {!blockAdult && (
       <>
       {/* Køn * — delt GenderPicker-komponent, samme fire valgmuligheder
           (inkl. "Vil ikke oplyse") som trin 1. */}
@@ -191,7 +195,6 @@ export const MemberForm = ({
         {addLabel || "+ Tilføj familiemedlem"}
       </PrimaryButton>
       </>
-      )}
     </div>
   );
 };
