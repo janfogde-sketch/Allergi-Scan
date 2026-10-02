@@ -19,4 +19,12 @@ describe("IngredientsList: fremhævning efter brugerens valg", () => {
     render(<IngredientsList text="Havregryn, vand" />);
     expect(screen.getByText("Havregryn").style.color).toBe("var(--red)");
   });
+  it('"Kan indeholde spor afæg" (manglende mellemrum) fremhæves som egen del, uden at foregående ingrediens farves', () => {
+    const rules = [{ keywords: ["æg"], category: "trace", label: "Æg", reason: "spor" }];
+    render(<IngredientsList text="aromaer, olivenekstrakt. Kan indeholde spor afæg, mælk, soja" highlightRules={rules} />);
+    const egg = screen.getByText("Kan indeholde spor af æg");
+    expect(egg.style.fontWeight).toBe("700");
+    expect(egg.style.color).toBe("var(--amber)");
+    expect(screen.getByText("olivenekstrakt").style.fontWeight).toBe("400");
+  });
 });

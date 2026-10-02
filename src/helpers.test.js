@@ -16,6 +16,7 @@ import {
   compareENumbers,
   verifiedBadge,
   isValidEanChecksum,
+  glutenCerealsIn,
 } from "./helpers.js";
 import { profileConflictLabel, profileMatchLabel, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
 
@@ -515,5 +516,13 @@ describe("pladsholder-ingredienser og laktosefri-navn (2. okt.)", () => {
     const f = normalizeProductFlags({ ...ALL_NO, laktose: "yes", maelkeallergi: "yes" }, { ingredientsText: "LETMÆLK, laktaseenzym", productName: "Yoghurt laktosefri" });
     expect(f.laktose).toBe("no");
     expect(f.maelkeallergi).toBe("yes");
+  });
+});
+
+describe("glutenCerealsIn", () => {
+  it("finder havre, byg og spelt i sammensatte ord, men ikke i spor-sætningen", () => {
+    expect(glutenCerealsIn("HAVREgryn (24%), sukker, BYGMALTEKSTRAKT, fuldkornsSPELTmel. Kan indeholde spor af rug")).toEqual(["byg", "havre", "spelt"]);
+    expect(glutenCerealsIn("sukker, salt")).toEqual([]);
+    expect(glutenCerealsIn("")).toEqual([]);
   });
 });
