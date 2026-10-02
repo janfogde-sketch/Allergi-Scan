@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { glutenCerealsIn, allergenChoiceLabel, compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findActiveListMatch, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag } from "./helpers.js";
+import { glutenCerealsIn, allergenChoiceLabel, compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findProductOnList, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -39,12 +39,10 @@ export default function ResultScreen({
   const { lists, activeList, activeListId, addToList, shoppingList, toggleItem } = useShoppingContext();
   const [addedToList, setAddedToList] = React.useState(false);
   const [showListPicker, setShowListPicker] = React.useState(false);
-  const [listMatchDismissed, setListMatchDismissed] = React.useState(false);
-  const [listMatchConfirmed, setListMatchConfirmed] = React.useState(false);
   const [unknownOpen, setUnknownOpen] = React.useState(false);
   // Nulstil "tilføjet"-kvitteringen når man ser et nyt produkt — ResultScreen
   // forbliver monteret på tværs af scanninger, kun scanResult skifter.
-  React.useEffect(() => { setAddedToList(false); setShowListPicker(false); setListMatchDismissed(false); setListMatchConfirmed(false); setUnknownOpen(false); }, [scanResult?.code]);
+  React.useEffect(() => { setAddedToList(false); setShowListPicker(false); setUnknownOpen(false); }, [scanResult?.code]);
   if (!scanResult) return null;
 
   // ── Per-profil sikkerhedsvurdering (25. sept. 2026, brugerfeedback) ──────
@@ -343,15 +341,47 @@ export default function ResultScreen({
     setScreen(SCREENS.SUGGEST_EDIT);
   };
 
-  const renderAddToList = (secondary = false) => (
-    <button className={`btn ${secondary || addedToList ? "btn-outline" : "btn-green"} btn-sm btn-full`} onClick={handleAddToList} aria-live="polite"
-      style={{ marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-        ...(addedToList ? { background:"var(--green-lt)", borderColor:"var(--green-mid)", color:"var(--green)" } : {}) }}>
-      {addedToList
-        ? <><Icon name="check" size={15} color="var(--green)" /> Tilføjet til indkøbsliste</>
-        : <><Icon name="cart" size={15} color={secondary ? "var(--green)" : "var(--on-green)"} /> Tilføj til indkøbsliste</>}
-    </button>
-  );
+  // Produktets række på den AKTIVE liste (samme EAN/produkt-id), udledt direkte af listen,
+  // så knappen opdateres med det samme, når varen tilføjes, købes eller fjernes andetsteds.
+  const listItem = findProductOnList(shoppingList, { code: scanResult.code, id: scanResult.id, name: scanResult.name });
+
+  const renderAddToList = (secondary = false) => {
+    if (listItem && !listItem.checked) {
+      return (
+        <div style={{ marginBottom:10 }}>
+          <button className="btn btn-green btn-sm btn-full" onClick={() => { toggleItem(listItem.id); showToast(`"${listItem.name}" markeret som købt`, "success"); }}
+            style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+            <Icon name="check" size={15} color="var(--on-green)" /> Markér som købt
+          </button>
+          {activeList?.name && <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", marginTop:6 }}>På listen "{activeList.name}"</div>}
+        </div>
+      );
+    }
+    if (listItem && listItem.checked) {
+      return (
+        <div style={{ marginBottom:10 }}>
+          <button className="btn btn-outline btn-sm btn-full" disabled aria-live="polite"
+            style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, background:"var(--green-lt)", borderColor:"var(--green-mid)", color:"var(--green)", opacity:1 }}>
+            <Icon name="check" size={15} color="var(--green)" /> Købt
+          </button>
+          <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", marginTop:6 }}>
+            {activeList?.name ? `På listen "${activeList.name}" · ` : ""}
+            <button type="button" onClick={() => toggleItem(listItem.id)}
+              style={{ background:"none", border:"none", padding:0, cursor:"pointer", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--green)", textDecoration:"underline" }}>Markér som manglende</button>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <button className={`btn ${secondary || addedToList ? "btn-outline" : "btn-green"} btn-sm btn-full`} onClick={handleAddToList} aria-live="polite"
+        style={{ marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+          ...(addedToList ? { background:"var(--green-lt)", borderColor:"var(--green-mid)", color:"var(--green)" } : {}) }}>
+        {addedToList
+          ? <><Icon name="check" size={15} color="var(--green)" /> Tilføjet til indkøbsliste</>
+          : <><Icon name="cart" size={15} color={secondary ? "var(--green)" : "var(--on-green)"} /> Tilføj til indkøbsliste</>}
+      </button>
+    );
+  };
 
   // Kort lige under status, når produktet ikke kan vurderes: hvorfor, og hvad brugeren kan gøre ved det.
   const renderMissingData = () => (
@@ -394,19 +424,6 @@ export default function ResultScreen({
     setShowListPicker(false);
     addToList({ name: productDisplayName({ name: scanResult.name, brand: scanResult.brand }), ean: scanResult.code, id: scanResult.id, image_url: scanResult.image_url }, listId)
       .then(ok => { if (ok) setAddedToList(true); });
-  };
-
-  // ── Scan-integration: matcher det scannede produkt en umarkeret vare på
-  // den aktive indkøbsliste? (25. sept. 2026, brugerfeedback) — kun et
-  // diskret forslag, ALDRIG en automatisk markering; kræver et eksplicit
-  // klik fra brugeren (se knappen nedenfor). Skjules resten af visningen
-  // af dette scan-resultat, hvis brugeren enten bekræfter eller afviser.
-  const listMatch = (!listMatchDismissed && !listMatchConfirmed) ? findActiveListMatch(shoppingList, scanResult) : null;
-  const confirmListMatch = () => {
-    if (!listMatch) return;
-    toggleItem(listMatch.id);
-    setListMatchConfirmed(true);
-    showToast(`"${listMatch.name}" markeret som købt`, "success");
   };
 
   // ── Småbørn-advarsler (under 3 år) ──────────────────────────────────────────
@@ -871,22 +888,6 @@ export default function ResultScreen({
       {!cannotAssess && renderAddToList()}
       {showListPicker && (
         <ListPickerSheet lists={lists} onChoose={chooseListForAdd} onCancel={() => setShowListPicker(false)} />
-      )}
-
-      {/* ── Scan-integration: forslag om at markere en matchende vare på
-          indkøbslisten som købt — diskret, kræver et eksplicit klik. ── */}
-      {listMatch && (
-        <div style={{ display:"flex", alignItems:"center", gap:8, background:"var(--paper2)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", marginBottom:10 }}>
-          <Icon name="cart" size={14} color="var(--muted)" />
-          <button type="button" onClick={confirmListMatch}
-            style={{ flex:1, minWidth:0, textAlign:"left", background:"none", border:"none", padding:0, cursor:"pointer", fontFamily:"var(--f)", fontSize:12, fontWeight:600, color:"var(--ink2)", lineHeight:1.4 }}>
-            Matcher "{listMatch.name}" på din liste – markér som købt
-          </button>
-          <button type="button" aria-label="Afvis forslag" onClick={() => setListMatchDismissed(true)}
-            style={{ background:"none", border:"none", cursor:"pointer", padding:4, flexShrink:0, display:"flex" }}>
-            <Icon name="x" size={13} color="var(--muted)" />
-          </button>
-        </div>
       )}
 
       {/* ── 1b. SIKRE ALTERNATIVER ── */}

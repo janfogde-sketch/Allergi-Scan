@@ -526,3 +526,23 @@ describe("glutenCerealsIn", () => {
     expect(glutenCerealsIn("")).toEqual([]);
   });
 });
+
+describe("findProductOnList", () => {
+  const items = [
+    { id: "1", name: "Harboe Cola", ean: "5701234567890", product_id: null, checked: false },
+    { id: "2", name: "Havregryn", ean: null, product_id: "p-2", checked: true },
+  ];
+  it("matcher på EAN uanset navn", async () => {
+    const { findProductOnList } = await import("./helpers.js");
+    expect(findProductOnList(items, { code: "5701234567890", name: "Cola" })?.id).toBe("1");
+  });
+  it("matcher på produkt-id og finder også købte varer", async () => {
+    const { findProductOnList } = await import("./helpers.js");
+    expect(findProductOnList(items, { code: "999", id: "p-2", name: "Andet" })?.checked).toBe(true);
+  });
+  it("matcher ikke kun på navn, når produktet har EAN", async () => {
+    const { findProductOnList } = await import("./helpers.js");
+    expect(findProductOnList(items, { code: "111", name: "Harboe Cola" })).toBeNull();
+    expect(findProductOnList([], { code: "111" })).toBeNull();
+  });
+});
