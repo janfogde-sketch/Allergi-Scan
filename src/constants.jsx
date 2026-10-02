@@ -370,7 +370,7 @@ export const SCREENS = {
   VERIFYEMAIL:"verifyemail", BOOT:"boot",
   // RESETPASSWORD: "Vælg ny adgangskode" efter linket i "Glemt adgangskode"-mailen.
   RESETPASSWORD:"resetpassword",
-  HOME:"home", SEARCH:"search",
+  HOME:"home",
   LIST:"list", PROFILE:"profile", FAMILY:"family",
   RESULT:"result", HISTORY:"history",
   NOTFOUND:"notfound", SUBMITTED:"submitted",
