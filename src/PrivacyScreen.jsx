@@ -80,7 +80,7 @@ export default function PrivacyScreen({ onBack }) {
 
         <h2 style={S.h2}>4. Husstand, familie og oplysninger om andre personer</h2>
         <p style={S.p}>Hvis du opretter oplysninger om en anden person, kan EatSafe behandle personoplysninger, som ikke kommer direkte fra den person, oplysningerne vedrører.</p>
-        <p style={S.p}>Voksne husstandsmedlemmer inviteres og skal selv acceptere invitationen, før de indgår i din husstand. Registrerer du oplysninger om en voksen på en profil, du selv administrerer, forudsætter det, at personen har givet dig sit samtykke.</p>
+        <p style={S.p}>Voksne husstandsmedlemmer inviteres og skal selv acceptere invitationen, før de indgår i din husstand. Når du inviterer en voksen, kan modtageren se dit fornavn på invitationssiden, før vedkommende har oprettet en konto. Registrerer du oplysninger om en voksen på en profil, du selv administrerer, forudsætter det, at personen har givet dig sit samtykke.</p>
         <p style={S.p}>Når personoplysninger ikke er indsamlet direkte hos den registrerede, kan EatSafe have en informationspligt efter GDPR artikel 14. Informationen skal som udgangspunkt gives inden for rimelig tid og senest inden for én måned, medmindre en relevant undtagelse finder anvendelse.</p>
         <p style={S.p}>Ved oprettelse af en profil for et barn skal den person, der opretter profilen, have ret til at handle på barnets vegne.</p>
         <p style={S.p}>Hvis EatSafe senere tilbyder tjenesten direkte til børn, skal reglerne om børns egne konti og samtykke vurderes særskilt.</p>
