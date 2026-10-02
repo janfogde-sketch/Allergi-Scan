@@ -1074,6 +1074,10 @@ body::-webkit-scrollbar{display:none;}
 .product-hero-source{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;letterSpacing:.3px;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 .fade-in{animation:fadeUp .18s ease both;}
+@keyframes acc-open{from{grid-template-rows:0fr;opacity:0;}to{grid-template-rows:1fr;opacity:1;}}
+.acc-body{display:grid;grid-template-rows:1fr;animation:acc-open .2s ease-out;}
+.acc-body>div{min-height:0;overflow:hidden;}
+@media (prefers-reduced-motion:reduce){.acc-body{animation:none;}}
 @keyframes toast-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 
 /* ── SCAN-LOADING (logo-baseret loading-animation, vist mens et scannet/
