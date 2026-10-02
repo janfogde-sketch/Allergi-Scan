@@ -14,7 +14,7 @@ import { STATUS_COLOR, STATUS_ICON, HISTORY_FILTERS } from "./historyStatus.js";
 // SCREENS.HISTORY — udskilt fra ProfileScreen.jsx 30. sept. 2026
 // (arkitektur-audit A8, én skærm = én fil). ProfileScreen ejer stadig det,
 // der deles mellem skærmene (husstanden, første hent af historikken).
-export default function HistoryScreen({ household, lookupProduct }) {
+export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
   const { user, userId, accessToken } = useAuthContext();
   // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
   const { allergens, customAllerg, scanFamily: family, activeProfiles, setActiveProfiles } = useProfileContext();
@@ -181,7 +181,7 @@ export default function HistoryScreen({ household, lookupProduct }) {
           {/* Ekstra horisontal padding (14→20px), samme højde/farve/
               kompakthed — knappen føles mere balanceret uden at blive
               fuld bredde. */}
-          <button className="btn btn-primary btn-sm" style={{ ...UI.mt12, padding:"8px 20px" }} onClick={() => setScreen(SCREENS.HOME)}>Scan nu</button>
+          <button className="btn btn-primary btn-sm" style={{ ...UI.mt12, padding:"8px 20px" }} onClick={() => (onScanNow ? onScanNow() : setScreen(SCREENS.HOME))}>Scan nu</button>
         </div>
       )}
 

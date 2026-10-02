@@ -149,7 +149,7 @@ function GamificationCard({ history, setScreen, SCREENS }) {
 
 export default function ProfileScreen({
   customInput, setCustomInput,
-  lookupProduct,
+  lookupProduct, onScanNow,
 }) {
   const { user, setUser, userId, accessToken, loginEmail } = useAuthContext();
   const { allergens, customAllerg, family, household, setHousehold, householdLoading, loadHousehold } = useProfileContext();
@@ -175,7 +175,7 @@ export default function ProfileScreen({
     if (userId && accessToken) loadHistory();
   }, [userId, accessToken, loadHistory]);
 
-  if (screen === SCREENS.HISTORY) return <HistoryScreen household={household} lookupProduct={lookupProduct} />;
+  if (screen === SCREENS.HISTORY) return <HistoryScreen household={household} lookupProduct={lookupProduct} onScanNow={onScanNow} />;
   if (screen === SCREENS.FAVORITES) return <FavoritesScreen household={household} lookupProduct={lookupProduct} />;
   if (screen === SCREENS.EDITPROFILE) return <EditProfileScreen />;
   if (screen === SCREENS.EDITPREFERENCES) {

@@ -710,6 +710,9 @@ export default function EatSafe() {
   // Primær handling fra en besked. Produktet slås op på ny (aktuel status),
   // så en gammel besked aldrig fungerer som en aktuel sikkerhedsvurdering.
   const [openTicketId, setOpenTicketId] = useState(null);
+  // "Scan nu" i tom historik: gå til scanneren og åbn kameraet (ScannerScreen læser flaget ved mount)
+  const [autoStartScan, setAutoStartScan] = useState(false);
+  const openScannerAndScan = useCallback(() => { setAutoStartScan(true); setScreen(SCREENS.HOME); }, [setScreen]);
   React.useEffect(() => { if (!accessToken) setOpenTicketId(null); }, [accessToken]);
   const handleNotificationAction = useCallback((action) => {
     if (action?.type === "open_product" && action.params?.ean) lookupProduct(action.params.ean);
@@ -1171,6 +1174,7 @@ export default function EatSafe() {
             alternatives={alternatives}
             altLoading={altLoading}
             onOpenHelp={() => setHelpOpen(true)}
+            autoStartScan={autoStartScan} onAutoStartHandled={() => setAutoStartScan(false)}
           />
           </ErrorBoundary>
         )}
@@ -1235,6 +1239,7 @@ export default function EatSafe() {
           <ProfileScreen
             customInput={customInput} setCustomInput={setCustomInput}
             lookupProduct={lookupProduct}
+            onScanNow={openScannerAndScan}
           />
           </ErrorBoundary>
           </Suspense>
