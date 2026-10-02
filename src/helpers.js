@@ -19,7 +19,9 @@ export const timeAgo = ts => { const d=Date.now()-new Date(ts).getTime(); if(d<6
 // sit emoji. Denne fil er ren .js (ingen JSX-understøttelse i byggeriet),
 // så selve ikon-renderingen sker hos kaldestedet (ProfileScreen.jsx), der
 // får `id`/`emoji`/`label` og kan bruge <AllergenGlyph a={item} />.
-export const getAllergenLabels = (ids,custom=[]) => [...ids.map(id=>ALLERGENS.find(a=>a.id===id)).filter(Boolean).map(a=>({ id:a.id, emoji:a.emoji, label:a.label })),...custom.map(c=>({ id:null, emoji:"✏️", label:c }))];
+// Brugerens valg hedder det samme overalt (profil, onboarding, Dine valg, familie): pickerLabel, hvis den findes (fx Glutenfølsomhed). `label` bruges kun i sætninger om produktets indhold ("Indeholder gluten").
+export const allergenChoiceLabel = (a) => (a && (a.pickerLabel || a.label)) || "";
+export const getAllergenLabels = (ids,custom=[]) => [...ids.map(id=>ALLERGENS.find(a=>a.id===id)).filter(Boolean).map(a=>({ id:a.id, emoji:a.emoji, label:allergenChoiceLabel(a) })),...custom.map(c=>({ id:null, emoji:"✏️", label:c }))];
 
 // En del importerede produkter har et generisk navn der reelt er en kategori/
 // produkttype (fx "Energidrik", "Ice", "Original") frem for et navn der kan
@@ -581,7 +583,7 @@ export function computeProfileResults(profiles, { allergen_flags, ingredients, n
       ...warning.map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id}`),
       ...dietFails.map(r => `${r.label}: ${r.reasons[0] || "passer ikke"}`),
       ...eNumberMatches.map(e => `Overvåget E-nummer ${e}`),
-      ...unknown.map(id => `${ALLERGENS.find(a => a.id === id)?.label || id}: kan ikke afgøres`),
+      ...unknown.map(id => `${allergenChoiceLabel(ALLERGENS.find(a => a.id === id)) || id}: kan ikke afgøres`),
     ];
     const status = (danger.length > 0 || customMatches.length > 0) ? "danger"
       : (warning.length > 0 || dietFails.length > 0 || eNumberMatches.length > 0 || unknown.length > 0) ? "warn"

@@ -147,11 +147,8 @@ export default function NotFoundScreen({
               Hold telefonen foran produktets forside. Vi bruger billedet til at hente produktnavnet automatisk.
             </div>
 
-            <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10, width:"100%", padding:"16px", borderRadius:14, cursor:"pointer", background:"var(--green)", border:"none", color:"var(--on-green)", fontSize:15, fontWeight:800, boxShadow:"0 4px 16px rgba(31,39,51,.25)", marginBottom:10 }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--on-green)" strokeWidth="2">
-                <path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
+            <label className="btn btn-primary btn-full" style={{ marginBottom:10 }}>
+              <Icon name="camera" size={18} color="var(--on-green)" />
               Fotografér forsiden
               <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleProductImageCapture} />
             </label>
@@ -214,11 +211,8 @@ export default function NotFoundScreen({
               ))}
             </div>
 
-            <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10, width:"100%", padding:"16px", borderRadius:14, cursor:"pointer", background:"var(--green)", border:"none", color:"var(--ink)", fontSize:15, fontWeight:800, boxShadow:"0 4px 16px rgba(34,197,94,.3)", marginBottom:10 }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2">
-                <path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
+            <label className="btn btn-primary btn-full" style={{ marginBottom:10 }}>
+              <Icon name="camera" size={18} color="var(--on-green)" />
               Fotografér ingredienslisten
               <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleImageCapture} />
             </label>
@@ -249,11 +243,8 @@ export default function NotFoundScreen({
               Fotografér eller skriv næringsdeklarationen. Alle felter er valgfri.
             </div>
 
-            <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10, width:"100%", padding:"16px", borderRadius:14, cursor:"pointer", background:"var(--green)", border:"none", color:"var(--on-green)", fontSize:15, fontWeight:800, marginBottom:8, boxShadow:"0 4px 16px rgba(14,143,90,.25)" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--on-green)" strokeWidth="2">
-                <path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
+            <label className="btn btn-primary btn-full" style={{ marginBottom:10 }}>
+              <Icon name="camera" size={18} color="var(--on-green)" />
               Fotografér næringsdeklarationen
               <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleNutritionCapture} />
             </label>

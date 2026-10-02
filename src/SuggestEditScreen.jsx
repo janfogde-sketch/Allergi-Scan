@@ -66,6 +66,13 @@ export default function SuggestEditScreen({
 
   const ingToText = (items) => items.join(", ");
 
+  // Androids systemtilbage (App.jsx) følger samme trin-stak som tilbagepilen.
+  useEffect(() => {
+    const onBack = (e) => { e.preventDefault(); goBack(); };
+    window.addEventListener("eatsafe:back", onBack);
+    return () => window.removeEventListener("eatsafe:back", onBack);
+  });
+
   // Send forslag er først aktiv, når der er noget at sende for den valgte type.
   const canSubmit = editType === "ingredients" ? (editIngText.trim().length > 0 || ingItems.length > 0)
     : editType === "nutrition" ? editIngText.trim().length > 0
@@ -89,8 +96,10 @@ export default function SuggestEditScreen({
       // i stedet for at overskrive hele den OCR-læste liste (se sync-effect ovenfor).
       setIngItems(text ? text.split(",").map(s => s.trim()).filter(Boolean) : []);
       setEditIngText(text);
+      if (!text) showToast("Vi kunne ikke læse billedet. Prøv igen eller skriv manuelt.", "error");
       setEditStep("review");
     } catch {
+      showToast("Vi kunne ikke læse billedet. Prøv igen eller skriv manuelt.", "error");
       setEditStep("review");
     }
   };
@@ -121,7 +130,7 @@ export default function SuggestEditScreen({
       });
       setEditStep("done");
     } catch (e) {
-      showToast("Fejl: " + e.message, "error");
+      showToast("Kunne ikke sende forslaget. Prøv igen.", "error");
       setEditStep("review");
     }
   };
@@ -158,7 +167,7 @@ export default function SuggestEditScreen({
         <div style={S.flexMin}>
           <div style={S.h17}>Hjælp os med at forbedre</div>
           <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-            {scanResult.name}
+            {scanResult.name || "Produkt uden navn"}
           </div>
         </div>
       </div>
@@ -167,7 +176,7 @@ export default function SuggestEditScreen({
       <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:16, boxShadow:"var(--sh)" }}>
         <ProductImage product={scanResult} size={40} />
         <div style={S.flexMin}>
-          <div style={UI.ufs13_fw700_cink_ovhidden_toellipsis_wsnowrap}>{scanResult.name}</div>
+          <div style={UI.ufs13_fw700_cink_ovhidden_toellipsis_wsnowrap}>{scanResult.name || "Produkt uden navn"}</div>
           {scanResult.brand && <div style={S.sub11mt}>{scanResult.brand}</div>}
           <div style={{ fontSize:10, color:"var(--muted)", marginTop:1, fontFamily:"monospace" }}>EAN: {scanResult.code}</div>
         </div>
@@ -216,7 +225,7 @@ export default function SuggestEditScreen({
                  : editType === "nutrition" ? "Fotografér næringstabellen"
                  : "Fotografér produktets forside"}
               </div>
-              <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5, marginTop:2 }}>
+              <div style={{ fontSize:12.5, color:"var(--ink2)", lineHeight:1.5, marginTop:2 }}>
                 {editType === "ingredients"
                   ? "Find listen, der starter med 'Ingredienser:'."
                   : editType === "nutrition"
@@ -241,10 +250,11 @@ export default function SuggestEditScreen({
             </button>
           )}
 
-          <div style={{ display:"flex", alignItems:"center", flexWrap:"wrap", gap:"4px 14px", marginTop:14, fontSize:12.5, lineHeight:1.5, color:"var(--ink2)" }}>
-            <span style={{ display:"inline-flex", alignItems:"center", gap:5, fontWeight:700, color:"var(--ink)", whiteSpace:"nowrap" }}><Icon name="bulb" size={13} color="var(--ink)" /> Tips</span>
+          {/* Tips: samme faste layout på alle fotoskærme (ingrediens, næring, forside) — overskrift og tre punkter under hinanden, aldrig tilfældige linjeskift */}
+          <div style={{ marginTop:16, fontSize:12.5, lineHeight:1.4, color:"var(--ink2)" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:6, fontWeight:700, color:"var(--ink)", marginBottom:6 }}><Icon name="bulb" size={14} color="var(--ink)" /> Tips</div>
             {["God belysning", "Undgå skygger", "Hold kameraet stabilt"].map(tip => (
-              <span key={tip} style={{ display:"inline-flex", alignItems:"center", gap:4, whiteSpace:"nowrap" }}><Icon name="check" size={11} color="var(--green)" /> {tip}</span>
+              <div key={tip} style={{ display:"flex", alignItems:"center", gap:6, padding:"2px 0" }}><Icon name="check" size={12} color="var(--green)" /> {tip}</div>
             ))}
           </div>
         </div>

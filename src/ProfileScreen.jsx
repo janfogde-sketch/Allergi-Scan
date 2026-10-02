@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useEffect } from "react";
 import { ALLERGENS, SCREENS, DIETS, DIETS_ENABLED } from "./constants.jsx";
-import { initials, visibleDiets } from "./helpers.js";
+import { allergenChoiceLabel, initials, visibleDiets } from "./helpers.js";
 import { Icon, AllergenGlyph } from "./SharedComponents.jsx";
 import { useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -231,7 +231,7 @@ export default function ProfileScreen({
                 {allergens.filter(id => ALLERGENS.some(a => a.id === id)).length > 0 && (
                   <div style={UI.mb8}>
                     <div style={UI.sectionLbl4Ink}>Allergier</div>
-                    <div className="tags">{allergens.filter(id => ALLERGENS.some(a => a.id === id)).map(id => { const a = ALLERGENS.find(x=>x.id===id); return a ? <div key={id} className="tag" style={{ background:"var(--red-lt)", color:"var(--red)", borderColor:"var(--red-md)" }}><AllergenGlyph a={a} size={11} /> {a.label}</div> : null; })}</div>
+                    <div className="tags">{allergens.filter(id => ALLERGENS.some(a => a.id === id)).map(id => { const a = ALLERGENS.find(x=>x.id===id); return a ? <div key={id} className="tag" style={{ background:"var(--red-lt)", color:"var(--red)", borderColor:"var(--red-md)" }}><AllergenGlyph a={a} size={11} /> {allergenChoiceLabel(a)}</div> : null; })}</div>
                   </div>
                 )}
                 {customAllerg.length > 0 && (
