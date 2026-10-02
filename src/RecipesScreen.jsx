@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useMemo, useEffect } from "react";
-import { ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
+import { ALLERGENS, PRODUCT_ALLERGENS, SCREENS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { compareAllergens, getAllergenLabels, matchCustomAllergens } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, SafetyRow, SafetyPill, EmptyState, ScrollToTop, AllergenGlyph } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -912,7 +912,7 @@ export default function RecipesScreen({
                 {/* Mini allergen-picker */}
                 {showAllergenPicker && (
                   <div style={{ marginTop:8, display:"flex", flexWrap:"wrap", gap:6 }}>
-                    {ALLERGENS.filter(a => !allIngAllergens.includes(a.id)).map(a => (
+                    {PRODUCT_ALLERGENS.filter(a => !allIngAllergens.includes(a.id)).map(a => (
                       <div key={a.id}
                         onClick={() => setSubmitIngredients(submitIngredients.map((x,i) =>
                           i===idx ? {...x, allergens:[...(x.allergens||[]),a.id], showPicker:false} : x
@@ -999,7 +999,7 @@ export default function RecipesScreen({
           {/* Manuelle allergener */}
           <div style={UI.ufs12_cink3_mb8}>Manuelle allergener (hvis ikke auto-detekteret):</div>
           <div style={UI.udflex_flewrap_g6}>
-            {ALLERGENS.map(a => {
+            {PRODUCT_ALLERGENS.map(a => {
               const isAuto = autoAllergens.includes(a.id) && !removedAuto.includes(a.id);
               const isManual = manualAllergens.includes(a.id);
               if (isAuto) return null;

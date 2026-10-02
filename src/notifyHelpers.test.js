@@ -46,6 +46,14 @@ describe("P1: ændrede allergenoplysninger", () => {
     expect(hits).toEqual([{ key: "aeg", label: "Æg", value: "yes" }]);
     expect(affectedAllergenChanges(changes, current, ["gluten"])).toEqual([]);
   });
+  it("Cøliaki berøres af ændringer i gluten og hvede", () => {
+    const ch = { gluten: { old: "no", new: "yes" }, hvede: { old: "no", new: "traces" } };
+    const now = { gluten: "yes", hvede: "traces" };
+    expect(affectedAllergenChanges(ch, now, ["coeliaki"]).map(h => h.key)).toEqual(["gluten", "hvede"]);
+    expect(affectedAllergenChanges(ch, now, ["coeliaki"], new Set(["coeliaki"])).map(h => h.key)).toEqual(["gluten"]);
+    expect(affectedAllergenChanges(ch, now, ["coeliaki", "hvede"], new Set(["coeliaki"])).map(h => h.key)).toEqual(["gluten", "hvede"]);
+    expect(affectedAllergenChanges(ch, now, ["fisk"])).toEqual([]);
+  });
   it("sender ikke en ændring til spor, når modtageren kun reagerer på direkte indhold", () => {
     expect(affectedAllergenChanges(changes, current, ["fisk"], new Set(["fisk"]))).toEqual([]);
     // direkte indhold (yes) sendes stadig, selv om spor ignoreres

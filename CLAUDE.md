@@ -181,8 +181,9 @@ alvorlige allergier"). Tryk-feedback `:active{transform:scale(.97)}`. Scan-knapp
 indeholde spor af". Data `allergen_levels` (jsonb, `direct_only`) på `users`/`family_members`. Spor er GULE overalt, kun direkte
 indhold er rødt. Eget trin 3 i onboarding, plus Rediger præferencer og familieformularen. Hvert valgt allergen har sin egen række (også Glutenfølsomhed
 [`pickerLabel` for id `gluten`] og Hvede), og sporvalget fjernes sammen med allergenet (`pruneAllergenLevels`). Laktose (`traceOk:false`) og egne valg har ingen
-sporvalg (`traceEligible()`); trin 3 springes over, hvis intet valgt allergen har det. Ingen medicinske antagelser: der er ingen cøliaki-tekst, og Cøliaki
-skal i givet fald være et eget, eksplicit valg. Logik: `helpers.js` (`mergeAllergenLevels` m.fl.), notifikation P1 (`tracesIgnored`), UI
+sporvalg (`traceEligible()`); trin 3 springes over, hvis intet valgt allergen har det. Ingen medicinske antagelser: **Cøliaki er et eget, eksplicit valg** (id `coeliaki`, `profileOnly`, 2. okt.),
+aldrig udledt af Gluten/Hvede. Cøliaki-vejledningen under sporvalget ("Har du cøliaki, bør du vælge Advar mig …") vises KUN for rækken Cøliaki; Gluten/Hvede får kun
+generel sporinfo. Cøliaki matches mod produktets gluten-/hvedeflag (`effectiveAllergenFlag`) og har ingen egne produktflag (`PRODUCT_ALLERGENS` udelader det). Logik: `helpers.js` (`mergeAllergenLevels` m.fl.), notifikation P1 (`tracesIgnored`), UI
 `AllergenSensitivity` (finpudset 2. okt.: segmenteret kontrol `.trace-seg`, kort linje under valget; ignorerede spor er en neutral info-strimmel under banneret). Detaljer: `src/CONTEXT.md` §3.
 
 **Resultatsiden:** data-drevet kategorisering; kaldes aldrig "sikker" blot fordi der ikke var match. RØD = allergi/intolerance,

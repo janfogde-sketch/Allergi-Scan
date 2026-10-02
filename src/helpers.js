@@ -154,12 +154,18 @@ export function decodeJwtPayload(token) {
 
 // ─── ALLERGEN SAMMENLIGNING ──────────────────────────────────────────────────
 
+export const COELIAC_ID = "coeliaki";
 const FLAG_RANK = { yes: 3, traces: 2, no: 1, unknown: 0 };
 const flagRank = (v) => (v === true ? 3 : FLAG_RANK[v] ?? 0);
 
 // Hvede indeholder altid gluten — et hvede-fund skal derfor også advare en
 // gluten-bruger, selv hvis produktets gluten-flag (fejlagtigt) siger "no".
+// Cøliaki er kun et profilvalg (ingen egne produktflag): det vurderes mod produktets gluten- og hvedeflag, den højeste risiko vinder.
 export function effectiveAllergenFlag(flags, id) {
+  if (id === COELIAC_ID) {
+    const g = effectiveAllergenFlag(flags, "gluten");
+    return flagRank(flags?.hvede) > flagRank(g) ? flags.hvede : g;
+  }
   const val = flags?.[id];
   if (id === "gluten" && flagRank(flags?.hvede) >= 2 && flagRank(flags.hvede) > flagRank(val)) return flags.hvede;
   return val;

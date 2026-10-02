@@ -4,7 +4,7 @@ import { Icon, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { ALLERGENS, E_NUMBERS, E_CATEGORIES, DIETS, DIETS_ENABLED } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
 import { ChoiceChip } from "./DesignSystem.jsx";
-import { addUniqueCustom, traceEligible } from "./helpers.js";
+import { addUniqueCustom, traceEligible, COELIAC_ID } from "./helpers.js";
 
 // Gluten ↔ Glutenfri-synkronisering (28. sept. 2026, Profil-restrukturering,
 // krav 3: "Ændres en valgmulighed ét sted i kodebasen, skal ændringen slå
@@ -116,8 +116,8 @@ export const CustomAllergenField = ({ customAllerg, setCustomAllerg, customInput
 // Følsomhed pr. valgt allergen (allergen_levels, 1. okt. 2026): hvad skal der ske, når pakken siger "Kan indeholde spor af …"?
 // "Advar mig" (standard, sikreste valg) eller "Kun ved ingrediens" (advar kun, hvis allergenet står i ingredienslisten).
 // Gemmes som levels: { [allergenId]: "direct_only" } (tom = advar også ved spor). Hvert valgt allergen har sin egen række,
-// også Gluten og Hvede (to forskellige valg). Der vises ingen medicinsk vejledning (fx om cøliaki): appen antager ikke en diagnose ud
-// fra et allergi- eller intolerancevalg.
+// også Gluten og Hvede (to forskellige valg). Cøliaki-vejledning vises KUN under rækken Cøliaki (eget, eksplicit valg): appen antager aldrig
+// en diagnose ud fra Gluten, Hvede eller andre valg, og Gluten/Hvede får kun den generelle sporinfo.
 // Design (2. okt. 2026, Bjørn): segmenteret kontrol (.trace-seg i theme.jsx, 44 px høje knapper, solid grøn valgt-state med flueben)
 // og én kort linje under det valgte valg.
 // `bare` fjerner kortets øverste skillelinje (bruges i onboarding, hvor trinnet selv har overskrift); `showTitle` skjuler overskriften.
@@ -125,6 +125,7 @@ const TRACE_NOTE = {
   warn: "Du advares både ved ingrediens og ved spor.",
   direct: "Du advares kun, hvis allergenet står i ingredienslisten.",
 };
+const COELIAC_GUIDANCE = "Har du cøliaki, bør du vælge Advar mig: selv små spor kan give symptomer. Er du i tvivl, så spørg din læge.";
 export const AllergenSensitivity = ({ selected, levels, onChange, showIntro = true, showTitle = true, bare = false }) => {
   // Kun allergener, hvor sporvalg giver mening (ikke laktose), og aldrig egne valg
   const ids = traceEligible(selected);
@@ -160,6 +161,7 @@ export const AllergenSensitivity = ({ selected, levels, onChange, showIntro = tr
               {opt(row, true, direct, "Kun ved ingrediens")}
             </div>
             <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.45, marginTop:6 }}>{direct ? TRACE_NOTE.direct : TRACE_NOTE.warn}</div>
+            {row.key === COELIAC_ID && <div style={{ fontSize:12.5, color:"var(--ink2)", lineHeight:1.45, marginTop:4 }}>{COELIAC_GUIDANCE}</div>}
           </div>
         );
       })}

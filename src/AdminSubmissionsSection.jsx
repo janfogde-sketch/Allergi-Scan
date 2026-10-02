@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { ALLERGENS } from "./constants.jsx";
+import { PRODUCT_ALLERGENS } from "./constants.jsx";
 import { Loader, Icon, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
 import { ALL_ALLERGEN_WORDS } from "./allergenKeywords.js";
@@ -106,7 +106,7 @@ export default function AdminSubmissionsSection({
       <div style={UI.colGap8}>
         {submissions.map(s => {
           const flags = s.ai_parsed_data || {};
-          const dangerAllergens = ALLERGENS.filter(a => flags[a.id]==="yes" || flags[a.id]===true);
+          const dangerAllergens = PRODUCT_ALLERGENS.filter(a => flags[a.id]==="yes" || flags[a.id]===true);
           const daysSince = Math.floor((Date.now() - new Date(s.created_at).getTime()) / 86400000);
           const isEdit = s.type === "edit";
           return (
@@ -347,7 +347,7 @@ export function AdminSubmissionReview({
           <div style={UI.muted10}>Ja → Spor → Nej</div>
         </div>
         <div style={UI.grid2gap6}>
-          {ALLERGENS.map(a => {
+          {PRODUCT_ALLERGENS.map(a => {
             const val = editingSubmission.allergen_flags[a.id] || "no";
             const next = val==="no" ? "yes" : val==="yes" ? "traces" : "no";
             const isYes = val === "yes";

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from "react";
-import { ALLERGENS, SCREENS } from "./constants.jsx";
+import { ALLERGENS, PRODUCT_ALLERGENS, SCREENS } from "./constants.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { Icon, Loader, AllergenGlyph } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
@@ -442,7 +442,7 @@ export default function NotFoundScreen({
                 <div style={S.sub11}>Tryk for at til/fra</div>
               </div>
               <div style={UI.wrapGap7}>
-                {ALLERGENS.filter(a => !["svovl","lupin","bloeddyr"].includes(a.id)).map(a => {
+                {PRODUCT_ALLERGENS.filter(a => !["svovl","lupin","bloeddyr"].includes(a.id)).map(a => {
                   const val = proposedFlags?.[a.id];
                   const isOn = val === "yes" || val === true;
                   const isTrace = val === "traces";

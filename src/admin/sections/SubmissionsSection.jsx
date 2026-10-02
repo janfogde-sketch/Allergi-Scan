@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { ALLERGENS, SUPABASE_URL } from "../../constants.jsx";
+import { PRODUCT_ALLERGENS, SUPABASE_URL } from "../../constants.jsx";
 import { apiCall, makeHeaders, extractENumbers, normalizeENumber, addENumberToText } from "../../helpers.js";
 import { showToast } from "../../SharedComponents.jsx";
 
@@ -116,7 +116,7 @@ export default function SubmissionsSection({
             <tbody>
               {submissions.map(s => {
                 const flags = s.ai_parsed_data || {};
-                const danger = ALLERGENS.filter(a => flags[a.id] === "yes" || flags[a.id] === true);
+                const danger = PRODUCT_ALLERGENS.filter(a => flags[a.id] === "yes" || flags[a.id] === true);
                 const isEdit = s.type === "edit";
                 return (
                   <tr key={s.id} style={{ cursor: "pointer" }} onClick={() => openForReview(s)}>
@@ -250,7 +250,7 @@ export default function SubmissionsSection({
             <div className="admin-field">
               <label className="admin-label">Allergener (klik for at skifte: Nej → Ja → Spor)</label>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6 }}>
-                {ALLERGENS.map(a => {
+                {PRODUCT_ALLERGENS.map(a => {
                   const val = editingSubmission.allergen_flags[a.id] || "no";
                   const next = val === "no" ? "yes" : val === "yes" ? "traces" : "no";
                   const isYes = val === "yes", isTrace = val === "traces";
