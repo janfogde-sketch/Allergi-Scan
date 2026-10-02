@@ -161,7 +161,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
       {(household.length > 0 || pendingInvites.length > 0) && (
         <>
           <div style={SECTION}>Voksne med egen konto</div>
-          <div style={SECTION_SUB}>Personer, der har accepteret din invitation (eller har inviteret dig). I kan se hinandens allergier og dele lister.</div>
+          <div style={SECTION_SUB}>Personer, der har accepteret din invitation (eller har inviteret dig). I kan se hinandens allergier og dele lister. Dem, du har inviteret, kan ikke se hinanden, medmindre de selv er forbundet.</div>
         </>
       )}
       {household.map(m => (
@@ -336,7 +336,8 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
             <div style={{ fontWeight:800, color:"var(--ink)", marginBottom:2 }}>Profiler uden konto</div>
             <div style={{ marginBottom:10 }}>Til børn og andre, du tjekker varer for. Du opretter og styrer profilen selv.</div>
             <div style={{ fontWeight:800, color:"var(--ink)", marginBottom:2 }}>Indkøbslister</div>
-            <div>Du bestemmer pr. liste, om den er kun din, delt med hele familien eller med bestemte personer. Du kan også sende et link til en, der ikke er i familien. Det finder du under Indkøbsliste → Del.</div>
+            <div>Du bestemmer pr. liste, om den er kun din, delt med hele familien eller med bestemte personer. Du kan også sende et link til en, der ikke er i familien. Det finder du under Indkøbsliste → tryk på listenavnet → Del.</div>
+            <div style={{ marginTop:14, fontSize:12, color:"var(--muted)" }}>Du er kun forbundet med dem, du selv har inviteret, og den der inviterede dig. Har du inviteret to personer, er de ikke forbundet med hinanden.</div>
           </div>
         </InfoSheet>
       )}

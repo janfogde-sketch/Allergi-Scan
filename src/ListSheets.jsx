@@ -288,6 +288,11 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
         <ModeOption selected={mode === "family"} disabled={familyMembers.length === 0} title="Hele familien" sub={familySub} onSelect={() => chooseMode("family")} />
         <ModeOption selected={mode === "people"} disabled={familyMembers.length === 0 && mode !== "people"} title="Bestemte personer" sub="Vælg, hvem i din familie der kan redigere listen." onSelect={() => chooseMode("people")} />
       </div>
+      {familyMembers.length > 0 && (
+        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginTop:-8, marginBottom:20 }}>
+          Du kan kun dele med dem, du selv er forbundet med. Personer, du har inviteret, er ikke automatisk forbundet med hinanden.
+        </div>
+      )}
       {familyMembers.length === 0 && (
         <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginTop:-8, marginBottom:20 }}>
           Familie er de voksne, du har inviteret med egen konto.{" "}
