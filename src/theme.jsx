@@ -154,7 +154,7 @@ export const appCss = `
   /* Blå — sekundær accentfarve, adskilt fra grøn: info/tip-indhold */
   --blue:#3A6EA5;--blue-lt:rgba(58,110,165,.10);--blue-md:rgba(58,110,165,.20);
   /* Neutral grå — labels, metadata */
-  --neutral:#6B7A70;--neutral-lt:rgba(107,122,112,.12);
+  --neutral:#6B7A70;--neutral-lt:rgba(107,122,112,.12);--unknown:#6F6B63;
   /* Muted — neutral grå tekst */
   --muted:rgba(21,32,26,.58);
   --muted2:rgba(21,32,26,.40);
@@ -394,7 +394,7 @@ body::-webkit-scrollbar{display:none;}
 }
 
 /* ── LAYOUT ── */
-.screen{flex:1;padding:0 16px 110px;position:relative;z-index:1;}
+.screen{flex:1;padding:0 16px calc(110px + env(safe-area-inset-bottom));position:relative;z-index:1;}
 /* Scan-forsidens hero-boks (idle-tilstand, kamera ikke aktivt) — skal ALTID
    passe præcis mellem topbar og bundnav, uden scroll, på enhver telefon,
    så hilsen/scan-knap altid er synlige uden at skulle scrolle. Bevidst
