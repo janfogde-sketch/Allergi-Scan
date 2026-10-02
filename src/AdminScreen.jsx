@@ -195,7 +195,7 @@ export default function AdminScreen() {
             {adminSection === "dashboard" && (
               <AdminDashboardSection
                 adminStats={adminStats} setAdminSection={setAdminSection} setSubmissionFilter={setSubmissionFilter}
-                loadSubmissions={loadSubmissions} loadTickets={loadTickets} loadAdminUsers={loadAdminUsers}
+                loadSubmissions={loadSubmissions} loadTickets={loadTickets}
               />
             )}
 
