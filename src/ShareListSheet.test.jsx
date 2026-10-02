@@ -2,7 +2,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
-import { ShareListSheet } from "./ListSheets.jsx";
+import { ShareListSheet, JoinListSheet } from "./ListSheets.jsx";
 import { formatExpiry } from "./FamilyInvite.jsx";
 
 const members = [{ id: "u2", name: "Anna Nielsen", email: "a@x.dk" }, { id: "u3", name: "Ben", email: "b@x.dk" }];
@@ -56,5 +56,19 @@ describe("ShareListSheet", () => {
 describe("formatExpiry", () => {
   it("siger i dag kl.", () => {
     expect(formatExpiry(new Date(Date.now() + 60000).toISOString())).toMatch(/^i (dag|morgen) kl\. \d\d\.\d\d$/);
+  });
+});
+
+describe("JoinListSheet", () => {
+  it("forklarer hvad der sker og kræver et aktivt valg", () => {
+    const onConfirm = vi.fn(), onCancel = vi.fn();
+    render(<JoinListSheet preview={{ name: "Weekend", owner_name: "Anna", code: "ABC234" }} onConfirm={onConfirm} onCancel={onCancel} />);
+    expect(screen.getByText(/vil dele indkøbslisten/)).toBeTruthy();
+    expect(screen.getByText(/Dine allergier og din profil bliver ikke delt/)).toBeTruthy();
+    expect(onConfirm).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText("Tilslut listen"));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByText("Ikke nu"));
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Delt indkøbsliste i EatSafe</title>
+  <meta name="description" content="Nogen vil dele en indkøbsliste med dig i EatSafe. Åbn linket for at se, hvad der deles. Du bestemmer selv, om du vil tilslutte." />
+  <meta property="og:title" content="Nogen vil dele en indkøbsliste med dig" />
+  <meta property="og:description" content="Åbn linket for at se, hvad der deles, og tilslut listen i EatSafe. Du bestemmer selv, om du vil tilslutte." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://eatsafe.dk/list/" />
+  <meta property="og:image" content="https://eatsafe.dk/brand/EatSafe_Logo_Horizontal_2400.png" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root{
+      --ink:#15201A; --ink2:rgba(21,32,26,.78); --muted:rgba(21,32,26,.58);
+      --paper:#F6F8F3; --green:#0F7D4F; --green-dark:#0C643F; --green-lt:rgba(15,125,79,.10); --green-mid:rgba(15,125,79,.18);
+      --surface:#FFFFFF; --surface2:#F1F3EC; --border:rgba(21,32,26,.10); --border2:rgba(21,32,26,.16);
+      --red:#C8402E; --f:'DM Sans',system-ui,-apple-system,sans-serif;
+    }
+    body {
+      font-family: var(--f);
+      background: var(--paper); color: var(--ink);
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 32px 24px 28px;
+      max-width: 400px; width: 100%; text-align: center;
+      box-shadow: 0 1px 0 rgba(255,255,255,.7) inset, 0 2px 8px -2px rgba(21,32,26,.10);
+    }
+    .logo { display: flex; justify-content: center; margin-bottom: 28px; }
+    .logo img { height: 28px; width: auto; }
+    /* Ens SVG-stregikon (ingen emoji), samme på iOS og Android */
+    .icon {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: var(--green-lt); color: var(--green);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+    }
+    .icon svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .icon.red { background: rgba(200,64,46,.10); color: var(--red); }
+    h1 { font-size: 24px; font-weight: 800; color: var(--ink); letter-spacing: -.4px; line-height: 1.25; margin-bottom: 12px; }
+    p { font-size: 15px; color: var(--muted); line-height: 1.6; margin-bottom: 28px; }
+    .btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; min-height: 48px; padding: 12px 20px;
+      background: var(--green); color: #fff;
+      border: 1.5px solid var(--green); border-radius: 12px;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      font-family: inherit; text-decoration: none;
+      margin-bottom: 12px; -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover { background: var(--green-dark); border-color: var(--green-dark); }
+    .btn:active { transform: scale(.97); }
+    .btn:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+    .btn-ghost { background: var(--surface); color: var(--green); border-color: var(--green); }
+    .btn-ghost:hover { background: var(--green-lt); border-color: var(--green); }
+    .points { list-style: none; text-align: left; margin: 0 0 24px; }
+    .points li { position: relative; padding-left: 22px; font-size: 14px; color: var(--ink2); line-height: 1.5; margin-bottom: 8px; }
+    .points li::before { content: ""; position: absolute; left: 2px; top: 6px; width: 10px; height: 6px; border-left: 2px solid var(--green); border-bottom: 2px solid var(--green); transform: rotate(-45deg); }
+    .expiry { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 12px 0 0; }
+    .error { color: var(--red); font-size: 13px; margin-top: 12px; }
+    .spinner {
+      width: 30px; height: 30px; border: 3px solid var(--border2);
+      border-top-color: var(--green); border-radius: 50%;
+      animation: spin .8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="logo"><img src="/brand/EatSafe_Master_Logo_Horizontal.svg" alt="EatSafe" /></div>
+    <div id="content"></div>
+  </div>
+
+  <script>
+    // Statisk forklaring uden opslag: listenavn og afsender vises først i appen, efter login (kodens indhold er ikke offentligt).
+    const code = (window.location.pathname.split("/list/")[1] || "").split("/")[0].replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+    const content = document.getElementById("content");
+    const icon = '<div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3c-.6.6-.2 1.7.7 1.7H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>';
+    if (!code) {
+      content.innerHTML = icon.replace('class="icon"', 'class="icon red"') + '<h1>Ugyldigt link</h1><p>Dette link til en indkøbsliste er ikke gyldigt.</p><a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>';
+    } else {
+      const base = "https://eatsafe.dk/?join-list=" + code;
+      content.innerHTML = icon +
+        '<h1>Nogen vil dele en indkøbsliste med dig</h1>' +
+        '<p>Åbn linket i EatSafe for at se, hvilken liste det er, og hvem der deler den. Du bestemmer selv, om du vil tilslutte.</p>' +
+        '<ul class="points">' +
+          '<li>Hvis du tilslutter, kan du se, tilføje, afkrydse og fjerne varer på listen.</li>' +
+          '<li>Du deler kun denne ene liste. Dine allergier og din profil bliver ikke delt.</li>' +
+          '<li>Du kan forlade listen igen når som helst.</li>' +
+        '</ul>' +
+        '<a href="' + base + '" class="btn">Opret konto</a>' +
+        '<a href="' + base + '&login=1" class="btn btn-ghost">Jeg har en konto</a>' +
+        '<p class="expiry">Har du allerede EatSafe, så tryk "Jeg har en konto".</p>';
+    }
+  </script>
+</body>
+</html>

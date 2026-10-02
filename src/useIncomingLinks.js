@@ -76,34 +76,79 @@ export function useIncomingLinks({
     if (!code) return;
     localStorage.setItem("as_pending_join_list", code);
     setPendingJoinList(code);
+    const wantsLogin = params.get("login") === "1";
     // Fjern koden fra URL uden reload — den lever videre i localStorage
     const url = new URL(window.location.href);
     url.searchParams.delete("join-list");
+    url.searchParams.delete("login");
     window.history.replaceState({}, "", url.toString());
     // Ikke logget ind endnu — opfordr direkte til at oprette en konto,
     // fremfor at brugeren lander på den almindelige velkomstskærm
     if (!localStorage.getItem("as_token")) {
-      setAuthTab("signup");
+      setAuthTab(wantsLogin ? "login" : "signup");
       setScreen(SCREENS.LOGIN);
     }
   }, []);
 
+  // Linket tilslutter ALDRIG af sig selv: først hentes en forhåndsvisning (listenavn + afsenderens fornavn), og modtageren bekræfter i
+  // JoinListSheet. Nye brugere bekræfter, når oprettelse og onboarding er færdige (koden ligger imens i localStorage).
+  const [joinPreview, setJoinPreview] = useState(null); // { code, name, owner_name }
+  const [joining, setJoining] = useState(false);
+  const userReady = !!user && user.onboarding_completed !== false;
+
+  const clearPending = () => { localStorage.removeItem("as_pending_join_list"); setPendingJoinList(null); };
+
   React.useEffect(() => {
-    if (!pendingJoinList || !accessToken || !userId) return;
-    const code = pendingJoinList;
-    localStorage.removeItem("as_pending_join_list");
-    setPendingJoinList(null);
+    if (!pendingJoinList || !accessToken || !userId || !userReady || joinPreview) return;
+    let cancelled = false;
+    apiCall(`${SUPABASE_URL}/functions/v1/shopping/preview?code=${encodeURIComponent(pendingJoinList)}`, { headers: makeHeaders(accessToken) })
+      .then(data => {
+        if (cancelled) return;
+        const l = data?.list;
+        if (!l) throw new Error("ugyldig");
+        if (l.is_owner || l.already_member) {
+          clearPending();
+          loadShoppingList();
+          setScreen(SCREENS.LIST);
+          showToast(l.is_owner ? "Det er din egen liste." : "Du har allerede adgang til den liste.");
+          return;
+        }
+        setJoinPreview({ code: pendingJoinList, name: l.name, owner_name: l.owner_name });
+      })
+      .catch(e => {
+        if (cancelled) return;
+        if (e?.status === 404 || e?.message === "ugyldig") {
+          clearPending();
+          showToast("Linket til listen virker ikke. Tjek, at det er helt, eller bed om et nyt.", "error");
+        } else {
+          showToast("Vi kunne ikke hente den delte liste. Tjek din forbindelse og åbn linket igen.", "error");
+          setPendingJoinList(null); // koden ligger stadig i localStorage og prøves igen næste gang appen åbnes
+        }
+      });
+    return () => { cancelled = true; };
+  }, [accessToken, userId, pendingJoinList, userReady]);
 
-    joinByCode(code).then(res => {
-      if (res.success) {
-        loadShoppingList();
-        setScreen(SCREENS.LIST);
-        showToast("Du er nu tilsluttet den delte liste. Du kan se og redigere den under Indkøbsliste.");
-      } else {
-        showToast("Kunne ikke tilslutte listen: " + (res.error || "Ugyldig kode"), "error");
-      }
-    });
-  }, [accessToken, userId, pendingJoinList]);
+  const confirmJoin = async () => {
+    if (!joinPreview) return;
+    setJoining(true);
+    const res = await joinByCode(joinPreview.code);
+    setJoining(false);
+    const name = joinPreview.name;
+    setJoinPreview(null);
+    clearPending();
+    if (res.success) {
+      loadShoppingList();
+      setScreen(SCREENS.LIST);
+      showToast(`Du er nu tilsluttet "${name}". Du finder den under Indkøbsliste.`);
+    } else {
+      showToast("Kunne ikke tilslutte listen: " + (res.error || "Ugyldig kode"), "error");
+    }
+  };
+  const declineJoin = () => {
+    setJoinPreview(null);
+    clearPending();
+    showToast("Okay. Du er ikke tilsluttet listen.");
+  };
 
-  return { pendingJoinList };
+  return { pendingJoinList, joinPreview, joining, confirmJoin, declineJoin };
 }

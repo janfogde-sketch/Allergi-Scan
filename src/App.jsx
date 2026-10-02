@@ -78,6 +78,7 @@ import SafetyInfoModal from "./SafetyInfoModal.jsx";
 import DeleteAccountModal from "./DeleteAccountModal.jsx";
 import { useAdminTools } from "./useAdminTools.js";
 import { useIncomingLinks } from "./useIncomingLinks.js";
+import { JoinListSheet } from "./ListSheets.jsx";
 import { useNotifications } from "./useNotifications.js";
 import { useLoadUserData } from "./useLoadUserData.js";
 
@@ -473,7 +474,7 @@ export default function EatSafe() {
   } = useRecipes(accessToken, userId);
 
   // ── Familie-invitation og delt indkøbsliste via link → useIncomingLinks ──
-  const { pendingJoinList } = useIncomingLinks({
+  const { pendingJoinList, joinPreview, joining, confirmJoin, declineJoin } = useIncomingLinks({
     accessToken, userId, user, loadFamily,
     joinByCode, loadShoppingList, setAuthTab, setScreen,
   });
@@ -1074,6 +1075,9 @@ export default function EatSafe() {
             deletingAccount={deletingAccount} deleteOwnAccount={deleteOwnAccount}
           />
         )}
+
+        {/* ══ BEKRÆFT TILSLUTNING TIL DELT LISTE (efter åbnet link) ══ */}
+        {joinPreview && <JoinListSheet preview={joinPreview} busy={joining} onConfirm={confirmJoin} onCancel={declineJoin} />}
 
         {/* ══ SIKKERHEDSINFORMATION ══ */}
         {showSafetyInfo && <SafetyInfoModal onAcknowledge={acknowledgeSafety} busy={safetyBusy} />}
