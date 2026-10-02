@@ -1203,6 +1203,7 @@ export default function EatSafe() {
           <KnowledgeScreen
             openSlug={knowledgeSlug}
             onSlugHandled={() => setKnowledgeSlug(null)}
+            onExit={() => setScreen(scanResult ? SCREENS.RESULT : SCREENS.HOME)}
           />
           </ErrorBoundary>
           </Suspense>

@@ -136,13 +136,15 @@ function EntryCard({ entry, cat, onOpen, style, summaryStyle }) {
   );
 }
 
-export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
+export default function KnowledgeScreen({ openSlug, onSlugHandled, onExit }) {
   const { accessToken } = useAuthContext();
   const { screen, setScreen } = useNavigationContext();
   const [searchQuery, setSearchQuery]       = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [entries, setEntries]               = useState([]);
   const [selectedEntry, setSelectedEntry]   = useState(null);
+  // Åbnet fra en anden skærm (fx et E-nummer på produktsiden): tilbage fører dér hen, ikke til leksikonets forside.
+  const [openedFromOutside, setOpenedFromOutside] = useState(false);
   const [loading, setLoading]               = useState(false);
   const [counts, setCounts]                 = useState({});
   const [error, setError]                   = useState(null);
@@ -199,7 +201,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
     (async () => {
       try {
         const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?slug=eq.${openSlug}&limit=1`);
-        if (Array.isArray(data) && data[0]) setSelectedEntry(data[0]);
+        if (Array.isArray(data) && data[0]) { setSelectedEntry(data[0]); setOpenedFromOutside(true); }
       } catch {}
       onSlugHandled?.();
     })();
@@ -285,7 +287,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled }) {
         {/* Tydelig tilbageknap øverst til venstre + kategori-label OVER
             titlen (fx "ALLERGENER"). */}
         <div style={{ display:"flex", alignItems:"center", gap:10, padding:"4px 0 0" }}>
-          <button onClick={() => setSelectedEntry(null)} aria-label="Tilbage" style={S.backBtn}>
+          <button onClick={() => (openedFromOutside && onExit ? onExit() : setSelectedEntry(null))} aria-label="Tilbage" style={S.backBtn}>
             <Icon name="chevronLeft" size={17} color="var(--ink)" />
           </button>
           <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:700, color:cat.color||"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px" }}>
