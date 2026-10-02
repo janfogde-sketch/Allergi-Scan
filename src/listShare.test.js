@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isSharedList, listShareStatus, joinNames } from "./listShare.js";
+import { isSharedList, listShareStatus, joinNames, parseListCode, listLinkUrl, listShareText } from "./listShare.js";
 
 describe("listShare", () => {
   const me = "u1";
@@ -34,5 +34,18 @@ describe("listShare", () => {
   it("mangler liste", () => {
     expect(isSharedList(null, me)).toBe(false);
     expect(listShareStatus(undefined, me)).toBe("");
+  });
+});
+
+describe("listelink", () => {
+  it("læser kode fra nyt og gammelt link og rå kode", () => {
+    expect(parseListCode("https://eatsafe.dk/list/abc234")).toBe("ABC234");
+    expect(parseListCode("https://eatsafe.dk/?join-list=XYZ789")).toBe("XYZ789");
+    expect(parseListCode("  k7m2pq ")).toBe("K7M2PQ");
+  });
+  it("bygger link og forklarende tekst", () => {
+    expect(listLinkUrl("ABC234")).toBe("https://eatsafe.dk/list/ABC234");
+    expect(listShareText("Weekend")).toContain('"Weekend"');
+    expect(listShareText("Weekend")).toContain("Du bestemmer selv");
   });
 });

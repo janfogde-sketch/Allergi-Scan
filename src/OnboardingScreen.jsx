@@ -579,7 +579,7 @@ export default function OnboardingScreen({
             {hasPendingJoinList && (
               <div style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:12, padding:"12px 14px", marginBottom:16, textAlign:"center" }}>
                 <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:13, fontWeight:800, color:"var(--green)" }}><Icon name="cart" size={13} color="var(--green)" /> Du er blevet inviteret til en indkøbsliste</div>
-                <div style={{ fontSize:12, color:"var(--green)", marginTop:2 }}>Opret en gratis konto for at få adgang til den. Du ser kun den ene liste, ikke nogens allergier.</div>
+                <div style={{ fontSize:12, color:"var(--green)", marginTop:2 }}>Opret en gratis konto. Bagefter forklarer vi, hvad der deles, og du bestemmer selv, om du vil tilslutte. Du ser kun den ene liste, ikke nogens allergier.</div>
               </div>
             )}
 
@@ -664,7 +664,7 @@ export default function OnboardingScreen({
               <div className="fade-in">
                 {hasPendingJoinList && (
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, padding:"10px 12px", marginBottom:14, textAlign:"center", fontSize:12, fontWeight:700, color:"var(--green)" }}>
-                    <Icon name="cart" size={13} color="var(--green)" /> En indkøbsliste venter på dig — den bliver tilføjet, når du er oprettet
+                    <Icon name="cart" size={13} color="var(--green)" /> En delt indkøbsliste venter på dig. Når du er oprettet, forklarer vi, hvad der deles, og du bestemmer selv, om du tilslutter
                   </div>
                 )}
                 <div style={UI.utacenter_mb16}>

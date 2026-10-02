@@ -25,3 +25,25 @@ export function listShareStatus(list, userId) {
   if (list.shared_with && list.shared_with.length > 0) return `Delt med ${joinNames(list.shared_with)}`;
   return "Kun dig";
 }
+
+// ── Link til en indkøbsliste ────────────────────────────────────────────────
+export const LIST_LINK_BASE = "https://eatsafe.dk/list/";
+export const listLinkUrl = code => `${LIST_LINK_BASE}${code}`;
+
+// Teksten, der følger med linket, så modtageren forstår, hvad de får (messenger-apps viser kun teksten og linkets forhåndsvisning).
+export function listShareText(listName) {
+  return `Jeg vil gerne dele min indkøbsliste "${listName}" med dig i EatSafe. Åbn linket for at se, hvad der deles. Du bestemmer selv, om du vil tilslutte.`;
+}
+
+// Kode ud af et indsat link (nyt /list/KODE, gammelt ?join-list=KODE) eller en rå kode.
+export function parseListCode(input) {
+  const raw = (input || "").trim();
+  try {
+    const u = new URL(raw);
+    const fromQuery = u.searchParams.get("join-list");
+    if (fromQuery) return fromQuery.trim().toUpperCase();
+    const m = u.pathname.match(/^\/list\/([A-Za-z0-9]+)/);
+    if (m) return m[1].toUpperCase();
+  } catch { /* ikke et link, brug som kode */ }
+  return raw.toUpperCase();
+}

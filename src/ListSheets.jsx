@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Icon, ConfirmDialog, showToast } from "./SharedComponents.jsx";
-import { isSharedList, listShareStatus, joinNames } from "./listShare.js";
+import { isSharedList, listShareStatus, joinNames, parseListCode, listLinkUrl, listShareText } from "./listShare.js";
 
 const LBL = { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".8px" };
 const WRAP = { overflowWrap:"anywhere", wordBreak:"break-word" };
@@ -72,9 +72,8 @@ export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClo
   };
   const submitJoin = async () => {
     setJoinLoading(true); setJoinError("");
-    // Accepter både et fuldt link (?join-list=KODE) og en rå kode indsat direkte
-    let code = joinCode.trim();
-    try { code = new URL(code).searchParams.get("join-list") || code; } catch { /* ikke et link — brug som kode */ }
+    // Accepter både et fuldt link (/list/KODE eller det gamle ?join-list=KODE) og en rå kode indsat direkte
+    const code = parseListCode(joinCode);
     const res = await joinByCode(code);
     setJoinLoading(false);
     if (res.success) { setJoinCode(""); setMode(null); onClose(); }
@@ -219,7 +218,9 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
   const linkRows = access.filter(a => !famIds.has(a.user_id));          // tilsluttet via link
   const pickedMembers = familyMembers.filter(m => accessIds.has(m.id)); // valgt af ejeren
   const otherMembers = familyMembers.filter(m => !accessIds.has(m.id));
-  const shareLink = `https://eatsafe.dk/?join-list=${list.share_link}`;
+  const shareLink = listLinkUrl(list.share_link);
+  const shareText = listShareText(list.name);
+  const copyMessage = () => { navigator.clipboard?.writeText(`${shareText}\n${shareLink}`); setCopied(true); setTimeout(() => setCopied(false), 2000); };
   const ownerName = list.owner_name || "ejeren";
 
   const grant = async (m) => {
@@ -340,17 +341,17 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
         <div style={{ display:"flex", gap:8 }}>
           {navigator.share ? (
             <>
-              <button type="button" className="btn btn-primary" style={{ flex:1, minHeight:44 }} onClick={() => navigator.share({ title: `Indkøbsliste: ${list.name}`, url: shareLink }).catch(() => {})}>
+              <button type="button" className="btn btn-primary" style={{ flex:1, minHeight:44 }} onClick={() => navigator.share({ title: `Indkøbsliste: ${list.name}`, text: shareText, url: shareLink }).catch(() => {})}>
                 <Icon name="share" size={14} color="var(--on-green)" /> Send link
               </button>
               <button type="button" className="btn btn-outline" style={{ minHeight:44 }}
-                onClick={() => { navigator.clipboard?.writeText(shareLink); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
+                onClick={copyMessage}>
                 <Icon name={copied ? "check" : "link"} size={14} color="var(--ink)" /> {copied ? "Kopieret" : "Kopiér"}
               </button>
             </>
           ) : (
             <button type="button" className="btn btn-primary" style={{ flex:1, minHeight:44 }}
-              onClick={() => { navigator.clipboard?.writeText(shareLink); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
+              onClick={copyMessage}>
               <Icon name={copied ? "check" : "link"} size={14} color="var(--on-green)" /> {copied ? "Link kopieret" : "Kopiér link"}
             </button>
           )}
@@ -366,6 +367,37 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
         <ConfirmDialog title="Lav et nyt link?" message="Det gamle link virker ikke længere. De, der allerede er tilsluttet, beholder adgangen, indtil du fjerner dem." confirmLabel="Lav nyt link" danger={false}
           onConfirm={async () => { setConfirm(null); await rotateListCode(list.id); }} onCancel={() => setConfirm(null)} />
       )}
+    </Sheet>
+  );
+}
+
+// Bekræftelse, når en modtager åbner et link til en delt liste: forklarer, hvad der sker, før noget tilsluttes.
+export function JoinListSheet({ preview, busy, onConfirm, onCancel }) {
+  const owner = preview.owner_name || "En bruger af EatSafe";
+  const points = [
+    "Du kan se, tilføje, afkrydse og fjerne varer på listen.",
+    `${preview.owner_name || "Ejeren"} og andre med adgang kan se, hvad du tilføjer.`,
+    "Du deler kun denne ene liste. Dine allergier og din profil bliver ikke delt.",
+    "Du kan forlade listen igen når som helst: tryk på listenavnet og derefter Del.",
+  ];
+  return (
+    <Sheet label="Tilslut delt liste" onClose={onCancel}>
+      <SheetHeader title="Tilslut delt liste?" sub={preview.name} onClose={onCancel} />
+      <div style={{ fontSize:14, color:"var(--ink)", lineHeight:1.5, marginBottom:12, ...WRAP }}>
+        <strong>{owner}</strong> vil dele indkøbslisten <strong>"{preview.name}"</strong> med dig.
+      </div>
+      <div style={{ ...CARD, padding:"12px 14px", marginBottom:16 }}>
+        <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Hvis du tilslutter</div>
+        {points.map(t => (
+          <div key={t} style={{ display:"flex", gap:8, fontSize:12.5, color:"var(--ink2)", lineHeight:1.45, marginBottom:6 }}>
+            <span style={{ flexShrink:0, marginTop:2 }}><Icon name="check" size={13} color="var(--green)" /></span><span>{t}</span>
+          </div>
+        ))}
+      </div>
+      <button type="button" className="btn btn-primary" style={{ width:"100%", minHeight:48, marginBottom:8 }} disabled={busy} onClick={onConfirm}>
+        {busy ? "Tilslutter…" : "Tilslut listen"}
+      </button>
+      <button type="button" className="btn btn-outline" style={{ width:"100%", minHeight:48 }} disabled={busy} onClick={onCancel}>Ikke nu</button>
     </Sheet>
   );
 }

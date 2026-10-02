@@ -80,6 +80,7 @@ Deno.serve(async (req) => {
   const isJoin = parts[parts.length - 1] === "join";
   const isFamilyMembers = parts[parts.length - 1] === "family-members";
   const isRotate = parts[parts.length - 1] === "rotate-code";
+  const isPreview = parts[parts.length - 1] === "preview";
   const itemId = isItems ? parts[parts.length - 1] : null;
   const accessUserId = isAccess && parts[parts.length - 1] !== "access" ? parts[parts.length - 1] : null;
   const listId = isItems
@@ -88,7 +89,7 @@ Deno.serve(async (req) => {
     ? parts[parts.indexOf("access") - 1]
     : isRotate
     ? parts[parts.length - 2]
-    : (isJoin || isFamilyMembers || parts[parts.length - 1] === "shopping")
+    : (isJoin || isFamilyMembers || isPreview || parts[parts.length - 1] === "shopping")
     ? null
     : parts[parts.length - 1];
 
@@ -106,6 +107,32 @@ Deno.serve(async (req) => {
         .from("users").select("id, name, email").in("id", group);
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       return new Response(JSON.stringify({ success: true, members }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // ─────────────────────────────────────
+    // FORHÅNDSVISNING AF EN LISTEKODE (til bekræftelsen, før man tilslutter)
+    // ─────────────────────────────────────
+
+    // Kun for indloggede brugere (ikke offentligt): listenavn og ejerens fornavn, og om man allerede har adgang.
+    if (method === "GET" && isPreview) {
+      const code = (url.searchParams.get("code") ?? "").trim().toUpperCase();
+      if (!code) return new Response(JSON.stringify({ error: "code er påkrævet" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const { data: list } = await supabase
+        .from("shopping_lists").select("id, owner_id, name, type").eq("share_link", code).maybeSingle();
+      if (!list) return new Response(JSON.stringify({ error: "Ugyldig kode" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const { data: owner } = await supabase.from("users").select("name").eq("id", list.owner_id).maybeSingle();
+      const { data: access } = await supabase
+        .from("shopping_list_access").select("user_id").eq("list_id", list.id).eq("user_id", caller.id).maybeSingle();
+      const inFamilyShare = list.type === "family" && (await callerFamilyGroup()).includes(list.owner_id);
+      return new Response(JSON.stringify({
+        success: true,
+        list: {
+          name: list.name,
+          owner_name: (owner?.name ?? "").trim().split(/\s+/)[0] || null,
+          is_owner: list.owner_id === caller.id,
+          already_member: Boolean(access) || inFamilyShare,
+        },
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // ─────────────────────────────────────
