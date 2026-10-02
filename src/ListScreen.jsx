@@ -177,6 +177,11 @@ export default function ListScreen({
   const [itemHasMore, setItemHasMore]         = useState(false);
   const [itemTotal, setItemTotal]             = useState(0);
   const [itemLoadingMore, setItemLoadingMore] = useState(false);
+  // Antal rå resultater hentet fra serveren (før filtrering af ukomplette
+  // produkter), så "Indlæs flere" bruger det rigtige offset.
+  const itemOffsetRef = useRef(0);
+  // Produkter uden navn eller ingrediensliste vises ikke i søgningen.
+  const completeOnly = (list) => (list || []).filter(p => (p.name || "").trim() && (p.ingredients_text || p.ingredients || "").trim());
   // Skjulte konflikt-produkter foldes ud manuelt af brugeren (se
   // hiddenConflictResults nedenfor) — nulstillet ved en ny søgetekst, så
   // et tidligere udfoldet resultat ikke fejlagtigt "følger med" over i en
@@ -192,7 +197,8 @@ export default function ListScreen({
         const data = await apiCall(`${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(newItemName.trim())}`,
           { headers: makeHeaders(accessToken), signal: controller.signal });
         if (data.success) {
-          setItemResults(data.products || []);
+          itemOffsetRef.current = (data.products || []).length;
+          setItemResults(completeOnly(data.products));
           setItemHasMore(!!data.hasMore);
           setItemTotal(data.total || (data.products || []).length);
         }
@@ -211,10 +217,11 @@ export default function ListScreen({
     if (!q || itemLoadingMore || !itemHasMore) return;
     setItemLoadingMore(true);
     try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(q)}&offset=${itemResults.length}`,
+      const data = await apiCall(`${SUPABASE_URL}/functions/v1/search?q=${encodeURIComponent(q)}&offset=${itemOffsetRef.current}`,
         { headers: makeHeaders(accessToken) });
       if (data.success && newItemName.trim() === q) {
-        setItemResults(prev => [...prev, ...(data.products || [])]);
+        itemOffsetRef.current += (data.products || []).length;
+        setItemResults(prev => [...prev, ...completeOnly(data.products)]);
         setItemHasMore(!!data.hasMore);
         setItemTotal(data.total || 0);
       }
@@ -476,7 +483,7 @@ export default function ListScreen({
                 <button className="btn btn-outline btn-full btn-sm"
                   disabled={itemLoadingMore}
                   onMouseDown={e => { e.preventDefault(); loadMoreItemResults(); }}>
-                  {itemLoadingMore ? "Indlæser…" : `Indlæs flere (${Math.max(itemTotal - itemResults.length, 0)} tilbage)`}
+                  {itemLoadingMore ? "Indlæser…" : `Indlæs flere (${Math.max(itemTotal - itemOffsetRef.current, 0)} tilbage)`}
                 </button>
               </div>
             )}
