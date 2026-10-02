@@ -336,9 +336,10 @@ export default function ResultScreen({
     );
   };
 
-  const openContribution = (type) => {
+  // type: "ingredients" går direkte til fotoguiden; "missing"/"correct" åbner valgmenuen med hver sin overskrift (manglende vs. forkerte oplysninger).
+  const openContribution = (type, step = "guide") => {
     setEditIngText(scanResult?.ingredients || ""); setEditNote(""); setEditType(type);
-    setEditStep(type ? "guide" : "start");
+    setEditStep(step);
     setScreen(SCREENS.SUGGEST_EDIT);
   };
 
@@ -368,14 +369,14 @@ export default function ResultScreen({
       {!scanResult.isDemo && (
         <div style={{ display:"flex", flexDirection:"column", gap:8, marginTop:12 }}>
           {hasIngredientsText ? (
-            <button className="btn btn-primary btn-full" onClick={() => openContribution(null)}>Hjælp med produktoplysninger</button>
+            <button className="btn btn-primary btn-full" onClick={() => openContribution("missing", "start")}>Hjælp med produktoplysninger</button>
           ) : (
             <>
               <button className="btn btn-primary btn-full" onClick={() => openContribution("ingredients")}
                 style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
                 <Icon name="camera" size={16} color="var(--on-green)" /> Indsend ingrediensliste
               </button>
-              <button className="btn btn-outline btn-full" onClick={() => openContribution(null)}>Hjælp med andre produktoplysninger</button>
+              <button className="btn btn-outline btn-full" onClick={() => openContribution("missing", "start")}>Hjælp med andre produktoplysninger</button>
             </>
           )}
         </div>
@@ -501,7 +502,7 @@ export default function ResultScreen({
     // profiler bruges fortsat den eksisterende, samlede tre-tilstands-status
     // (overallStatus/overallHeadline) — per-profil-detaljer vises separat
     // nedenfor (renderPersonOverview).
-    const verdictColor = cannotAssess ? "var(--neutral)" : isMultiProfile
+    const verdictColor = cannotAssess ? "var(--unknown)" : isMultiProfile
       ? ({ danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[overallStatus] || "var(--green)")
       : ({ danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", unknown:"var(--neutral)" }[topStatus.level] || "var(--green)");
     const verdictIcon = cannotAssess ? "info" : isMultiProfile ? (overallStatus === "safe" ? "check" : "warning") : topStatus.icon;
@@ -600,8 +601,8 @@ export default function ResultScreen({
               </div>
             : null}
           <div className="product-hero-img-placeholder"
-            style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"column", gap:8, background:"var(--paper2)", borderRadius:12, padding:20, margin:"0 0 10px" }}>
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="var(--border2)" strokeWidth="1.5">
+            style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"row", gap:10, height:"auto", background:"var(--paper2)", borderRadius:12, padding:"12px 16px", margin:"0 0 10px" }}>
+            <svg width="28" height="28" viewBox="0 0 48 48" fill="none" stroke="var(--border2)" strokeWidth="2">
               <rect x="4" y="10" width="40" height="30" rx="3"/>
               <circle cx="16" cy="20" r="4"/>
               <path strokeLinecap="round" d="M4 34l10-8 8 6 6-4 16 12"/>
@@ -965,8 +966,8 @@ export default function ResultScreen({
           <div style={{ paddingTop:4 }}>
             <div style={UI.ufs13_cmuted2_mb8}>Vi mangler ingredienslisten for dette produkt.</div>
             <button className="btn btn-outline btn-sm"
-              onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients||""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
-              Hjælp os — indsend ingrediensliste
+              onClick={() => openContribution("ingredients")}>
+              Indsend ingrediensliste
             </button>
           </div>
         )}
@@ -997,7 +998,7 @@ export default function ResultScreen({
       {!scanResult.isDemo && (
         <div style={UI.mb10}>
           <button className="btn btn-outline btn-sm btn-full"
-            onClick={() => { setEditStep("start"); setEditIngText(scanResult?.ingredients||""); setEditNote(""); setEditType(null); setScreen(SCREENS.SUGGEST_EDIT); }}>
+            onClick={() => openContribution("correct", "start")}>
             Ret forkerte data
           </button>
         </div>

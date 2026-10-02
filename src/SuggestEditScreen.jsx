@@ -159,7 +159,9 @@ export default function SuggestEditScreen({
       {editStep === "start" && (
         <div className="fade-in">
           <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6, marginBottom:16 }}>
-            Hvad mangler eller er forkert på dette produkt?
+            {editType === "missing" ? "Hvilke oplysninger mangler på dette produkt?"
+             : editType === "correct" ? "Hvad er forkert på dette produkt?"
+             : "Hvad mangler eller er forkert på dette produkt?"}
           </div>
           {[
             { id:"ingredients", icon:"list",    title:"Ingrediensliste mangler",     desc:"Fotografér bagsiden af pakken med ingredienserne" },
@@ -206,8 +208,8 @@ export default function SuggestEditScreen({
             </div>
           </div>
 
-          <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10, width:"100%", padding:"16px", borderRadius:14, cursor:"pointer", background:"var(--green)", border:"none", color:"var(--ink)", fontSize:16, fontWeight:800, boxShadow:"0 4px 16px rgba(34,197,94,.3)", marginBottom:10 }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2">
+          <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10, width:"100%", padding:"16px", borderRadius:14, cursor:"pointer", background:"var(--green)", border:"none", color:"var(--on-green)", fontSize:16, fontWeight:800, boxShadow:"0 4px 16px rgba(34,197,94,.3)", marginBottom:10 }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--on-green)" strokeWidth="2">
               <path strokeLinecap="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
               <circle cx="12" cy="13" r="4"/>
             </svg>
@@ -224,10 +226,10 @@ export default function SuggestEditScreen({
             </button>
           )}
 
-          <div style={{ display:"flex", alignItems:"center", flexWrap:"wrap", gap:"4px 14px", marginTop:12, fontSize:11.5, color:"var(--muted2)" }}>
-            <span style={{ display:"flex", alignItems:"center", gap:5, fontWeight:700, color:"var(--ink)" }}><Icon name="bulb" size={12} color="var(--ink)" /> Tips</span>
+          <div style={{ display:"flex", alignItems:"center", flexWrap:"wrap", gap:"4px 14px", marginTop:14, fontSize:12.5, lineHeight:1.5, color:"var(--ink2)" }}>
+            <span style={{ display:"inline-flex", alignItems:"center", gap:5, fontWeight:700, color:"var(--ink)", whiteSpace:"nowrap" }}><Icon name="bulb" size={13} color="var(--ink)" /> Tips</span>
             {["God belysning", "Undgå skygger", "Hold kameraet stabilt"].map(tip => (
-              <span key={tip} style={{ display:"flex", alignItems:"center", gap:4 }}><Icon name="check" size={10} color="var(--green)" /> {tip}</span>
+              <span key={tip} style={{ display:"inline-flex", alignItems:"center", gap:4, whiteSpace:"nowrap" }}><Icon name="check" size={11} color="var(--green)" /> {tip}</span>
             ))}
           </div>
         </div>
@@ -259,8 +261,8 @@ export default function SuggestEditScreen({
               </div>
 
               {!editIngText && ingItems.length === 0 && (
-                <div style={{ ...UI.ufs12_camber_fw600_p8px10px_bgamberlt_br8_mb10, display:"flex", alignItems:"center", gap:6 }}>
-                  <Icon name="warning" size={12} color="var(--amber)" /> Fotografér ingredienslisten eller skriv dem herunder
+                <div style={{ fontSize:12, fontWeight:600, color:"var(--ink2)", padding:"8px 10px", background:"var(--paper2)", borderRadius:8, marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
+                  <Icon name="info" size={12} color="var(--muted)" /> Fotografér ingredienslisten eller skriv dem herunder
                 </div>
               )}
 
