@@ -168,8 +168,8 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
       <TextLink onClick={() => setShowHowItWorks(true)}>Sådan virker Familie</TextLink>
 
       <div style={SECTION}>Familiemedlemmer med egen konto</div>
-      <div style={SECTION_SUB}>Voksne, der er inviteret til familien og har deres egen EatSafe-konto. De styrer selv deres allergier og kan få adgang til delte indkøbslister.</div>
-      {household.length === 0 && pendingInvites.length === 0 && <EmptyRow title="Ingen endnu" text="Invitér en voksen med egen EatSafe-konto." />}
+      <div style={SECTION_SUB}>Voksne med egen EatSafe-konto, som du har inviteret.</div>
+      {household.length === 0 && pendingInvites.length === 0 && <EmptyRow title="Ingen endnu" text="Invitér en voksen til familien." />}
       {household.map(m => (
         <div key={`h-${m.id}`} className="family-member">
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
