@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { formatDanishDeadline, formatDanishDateTime, summarizeItems, affectedAllergenChanges, summarizeAllergenChanges, allergenRiskRank } from "../supabase/functions/_shared/notifyHelpers.js";
+import { formatDanishDeadline, formatDanishDateTime, summarizeItems, formatNames, itemCountText, bulletList, affectedAllergenChanges, summarizeAllergenChanges, allergenRiskRank } from "../supabase/functions/_shared/notifyHelpers.js";
 
 describe("formatDanishDeadline", () => {
   const now = new Date("2026-09-30T12:00:00Z"); // 14:00 dansk sommertid
@@ -67,5 +67,25 @@ describe("P1: ændrede allergenoplysninger", () => {
   it("formulerer resumeet", () => {
     const hits = affectedAllergenChanges(changes, current, ["aeg", "fisk"]);
     expect(summarizeAllergenChanges(hits)).toBe("Æg indeholder nu, Fisk kan nu indeholde spor");
+  });
+});
+
+describe("delt indkøbsliste: hvem og hvad", () => {
+  it("formatNames: fornavne, dubletter fjernet, højst tre navne", () => {
+    expect(formatNames(["Jan Fogde"])).toBe("Jan");
+    expect(formatNames(["Jan Fogde", "Bjørn Holst"])).toBe("Jan og Bjørn");
+    expect(formatNames(["Jan", "Jan Fogde", "Bjørn", "Maria"])).toBe("Jan, Bjørn og Maria");
+    expect(formatNames(["Jan", "Bjørn", "Maria", "Kaj"])).toBe("Jan, Bjørn og 2 andre");
+    expect(formatNames(["", null, "  "])).toBe("");
+  });
+  it("itemCountText: en vare / N varer", () => {
+    expect(itemCountText(1)).toBe("en vare");
+    expect(itemCountText(4)).toBe("4 varer");
+  });
+  it("bulletList: én vare pr. linje, højst otte, derefter 'og N flere'", () => {
+    expect(bulletList(["Mælk", " Æg "])).toBe("• Mælk\n• Æg");
+    expect(bulletList(Array.from({ length: 10 }, (_, i) => `v${i + 1}`)).split("\n")).toHaveLength(9);
+    expect(bulletList(Array.from({ length: 10 }, (_, i) => `v${i + 1}`)).endsWith("og 2 flere")).toBe(true);
+    expect(bulletList([])).toBe("");
   });
 });

@@ -84,16 +84,23 @@ const PRODUCT_ACTION = { type: "open_product", label: "Se produktet", params: ["
 
 const TICKET_QUOTE = { t: "quote", label: "Din tilbagemelding", text: "{{ticketExcerpt}}" };
 
+// adders: fornavne på dem, der har tilføjet ("Jan", "Jan og Bjørn"); countText: "en vare"/"4 varer"; itemList: punktliste med varenavne,
+// KUN i app og mail (noPush), aldrig i push.
 const LIST_VARS = {
   listName: { max: 34, pushFallback: "jeres fælles indkøbsliste", fallback: "jeres fælles indkøbsliste" },
-  itemSummary: { fallback: "" },
+  adders: { max: 24, fallback: "Nogen" },
+  countText: { fallback: "varer" },
+  itemList: { fallback: "", multiline: true, noPush: true },
 };
 const LIST_BLOCKS = [
-  H("Jeres indkøbsliste er opdateret"),
-  P("Der er blevet tilføjet varer til **{{listName}}** af andre, som deler listen med dig."),
-  PANEL("Tilføjede varer", [P("{{itemSummary}}")]),
+  H("{{adders}} har tilføjet {{countText}} til {{listName}}"),
+  P("Det er varer, som andre, der deler **{{listName}}** med dig, har lagt på listen."),
+  PANEL("Tilføjede varer", [P("{{itemList}}", { multiline: true })]),
   P("Åbn Indkøbslister i appen for at se den aktuelle liste og markere de varer, der er købt."),
 ];
+// Titel + tekst læses sammen: "Jan har tilføjet 2 varer" / "til Weekend. Se listen i EatSafe." (titel ≤ 40 tegn). Overskriften i appen og mailen har hele sætningen.
+const LIST_PUSH = { title: "{{adders}} har tilføjet {{countText}}", body: "til {{listName}}. Se listen i EatSafe." };
+const LIST_MAIL = { subject: "{{adders}} har tilføjet {{countText}} til {{listName}}", preheader: "Se, hvad der er kommet på den indkøbsliste, du deler." };
 const LIST_ACTION = { type: "open_list", label: "Åbn indkøbslisten", params: ["listId"] };
 const LIST_ENTITY = { type: "list", idFrom: "listId" };
 
@@ -315,17 +322,15 @@ export const DEFINITIONS = {
 
   // ── P3: nye varer på en delt indkøbsliste (aggregeret; varenavne står ikke i pushen) ──
   "P3:one": {
-    type: "P3", variant: "one", category: "shared_lists", version: 1, ttl: 7200,
-    push: { title: "Jeres indkøbsliste er opdateret", body: "Der er tilføjet en vare til {{listName}}. Se listen i EatSafe." },
-    mail: { subject: "Der er nye varer på jeres indkøbsliste", preheader: "Se, hvad der er blevet tilføjet til den indkøbsliste, du deler." },
+    type: "P3", variant: "one", category: "shared_lists", version: 2, ttl: 7200,
+    push: LIST_PUSH, mail: LIST_MAIL,
     vars: LIST_VARS, required: [],
     blocks: LIST_BLOCKS,
     action: LIST_ACTION, entity: LIST_ENTITY,
   },
   "P3:many": {
-    type: "P3", variant: "many", category: "shared_lists", version: 1, ttl: 7200,
-    push: { title: "Jeres indkøbsliste er opdateret", body: "Nye varer er tilføjet til {{listName}}. Se den opdaterede liste." },
-    mail: { subject: "Der er nye varer på jeres indkøbsliste", preheader: "Se, hvad der er blevet tilføjet til den indkøbsliste, du deler." },
+    type: "P3", variant: "many", category: "shared_lists", version: 2, ttl: 7200,
+    push: LIST_PUSH, mail: LIST_MAIL,
     vars: LIST_VARS, required: [],
     blocks: LIST_BLOCKS,
     action: LIST_ACTION, entity: LIST_ENTITY,
@@ -347,7 +352,7 @@ export const PUSH_BODY_MAX = 180;
 
 /** Variabelnavne, en pushtekst til denne notifikation må bruge. */
 export function pushVariablesFor(key) {
-  return Object.keys(DEFINITIONS[key]?.vars ?? {});
+  return Object.entries(DEFINITIONS[key]?.vars ?? {}).filter(([, spec]) => !spec.noPush).map(([name]) => name);
 }
 
 /** Tjekker en redigeret pushtekst: kendt notifikation, længder og kun tilladte {{variabler}}. */
@@ -389,6 +394,7 @@ function buildValues(def, key, data, { forPush }) {
     const raw = name === "ticketExcerpt" ? truncate(cleanText(data.ticketExcerpt ?? data.description), TICKET_EXCERPT_MAX)
       : cleanText(data[name], { multiline: !!spec.multiline });
     if (!raw && def.required.includes(name)) throw new MissingRequiredError(key, name);
+    if (forPush && spec.noPush) { values[name] = ""; continue; } // fx varenavne: aldrig i push
     let v = raw || (forPush ? (spec.pushFallback ?? spec.fallback) : spec.fallback) || "";
     if (forPush && spec.max) v = truncate(v, spec.max);
     values[name] = v;
@@ -432,10 +438,10 @@ export function renderNotification(key, data = {}, options = {}) {
   const blockValues = buildValues(def, key, data, { forPush: false });
   const pushValues = buildValues(def, key, data, { forPush: true });
 
-  const title = def.push.title;
+  const title = fillTemplate(def.push.title, blockValues);
   // Admin kan rette pushens tekst (tabellen notification_push_overrides). Mailen og beskeden i appen røres ikke.
   const override = options.pushOverride && validatePushOverride(key, options.pushOverride).ok ? options.pushOverride : null;
-  const pushTitle = override?.title ? fillTemplate(override.title, pushValues) : title;
+  const pushTitle = fillTemplate(override?.title || def.push.title, pushValues);
   const pushBody = fillTemplate(override?.body || def.push.body, pushValues);
   const blocks = def.blocks.map((b) => renderBlock(b, blockValues)).filter(Boolean);
 
@@ -460,7 +466,7 @@ export function renderNotification(key, data = {}, options = {}) {
     primaryAction: { type: def.action.type, label: def.action.label, ...(Object.keys(params).length ? { params } : {}) },
     entityType: def.entity.type,
     entityId: entityId || null,
-    mail: { subject: def.mail.subject, preheader: def.mail.preheader },
+    mail: { subject: fillTemplate(def.mail.subject, blockValues), preheader: def.mail.preheader },
     // De samme rensede værdier som brødteksten bruger — sendes som variabler til mailskabelonen,
     // så app og mail aldrig kan vise forskellige tal/tekster for samme hændelse.
     mailVars: blockValues,

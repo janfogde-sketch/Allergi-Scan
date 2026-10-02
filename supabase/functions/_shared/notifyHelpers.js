@@ -24,6 +24,30 @@ export function summarizeItems(names) {
   return shown.length > 1 ? `${shown.slice(0, -1).join(", ")} og ${shown[shown.length - 1]}` : shown[0];
 }
 
+/** Navne til "Jan har tilføjet …": "Jan", "Jan og Bjørn", "Jan, Bjørn og Maria" (fornavne, dubletter fjernet, højst 3 navne, resten som "N andre"). */
+export function formatNames(names) {
+  const first = (n) => String(n ?? "").trim().split(/\s+/)[0];
+  const clean = [...new Set(names.map(first).filter(Boolean))];
+  if (clean.length === 0) return "";
+  if (clean.length === 1) return clean[0];
+  if (clean.length <= 3) return `${clean.slice(0, -1).join(", ")} og ${clean[clean.length - 1]}`;
+  return `${clean.slice(0, 2).join(", ")} og ${clean.length - 2} andre`;
+}
+
+/** "en vare" / "4 varer". */
+export function itemCountText(n) {
+  return n === 1 ? "en vare" : `${n} varer`;
+}
+
+/** Varer som punktliste (én pr. linje, højst `max`, derefter "og N flere"). Kun til app og mail, aldrig til push. */
+export function bulletList(names, max = 8) {
+  const clean = names.map((n) => String(n ?? "").trim()).filter(Boolean);
+  const shown = clean.slice(0, max).map((n) => `• ${n}`);
+  const rest = clean.length - shown.length;
+  if (rest > 0) shown.push(`og ${rest} flere`);
+  return shown.join("\n");
+}
+
 /** "30. september 2026 kl. 17:12" i dansk tid. */
 export function formatDanishDateTime(iso) {
   const d = new Date(iso);

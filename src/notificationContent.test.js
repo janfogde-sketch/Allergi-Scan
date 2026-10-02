@@ -11,7 +11,7 @@ const SAMPLE = {
   reason: "Ingredienslisten er ikke læsbar.\nIndsend et skarpere billede.",
   memberName: "Frederikke", inviteId: "inv-1",
   description: "Kameraet åbner ikke, når jeg vælger Scan.", message: "Vi har rettet fejlen. Prøv gerne igen.", ticketId: "tik-1",
-  expiresAt: "i dag kl. 18:35", listName: "Familiens indkøb", listId: "list-1", itemSummary: "Mælk og Æg", changeSummary: "Æg indeholder nu",
+  expiresAt: "i dag kl. 18:35", listName: "Familiens indkøb", listId: "list-1", adders: "Jan og Bjørn", countText: "4 varer", itemList: "• Mælk\n• Æg", changeSummary: "Æg indeholder nu",
   recallReason: "For højt indhold af glycerol.", affectedBatches: "Frosty Pocket Lemon\nLotnr.: L1", recallAction: "Kassér produktet.", recallUrl: "https://foedevarestyrelsen.dk/nyheder/a", recallId: "r1",
 };
 const KEYS = Object.keys(DEFINITIONS);
