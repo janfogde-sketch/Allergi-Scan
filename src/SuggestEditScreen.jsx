@@ -216,7 +216,7 @@ export default function SuggestEditScreen({
                  : editType === "nutrition" ? "Fotografér næringstabellen"
                  : "Fotografér produktets forside"}
               </div>
-              <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5, marginTop:2 }}>
+              <div style={{ fontSize:12.5, color:"var(--ink2)", lineHeight:1.5, marginTop:2 }}>
                 {editType === "ingredients"
                   ? "Find listen, der starter med 'Ingredienser:'."
                   : editType === "nutrition"
@@ -241,10 +241,11 @@ export default function SuggestEditScreen({
             </button>
           )}
 
-          <div style={{ display:"flex", alignItems:"center", flexWrap:"wrap", gap:"4px 14px", marginTop:14, fontSize:12.5, lineHeight:1.5, color:"var(--ink2)" }}>
-            <span style={{ display:"inline-flex", alignItems:"center", gap:5, fontWeight:700, color:"var(--ink)", whiteSpace:"nowrap" }}><Icon name="bulb" size={13} color="var(--ink)" /> Tips</span>
+          {/* Tips: samme faste layout på alle fotoskærme (ingrediens, næring, forside) — overskrift og tre punkter under hinanden, aldrig tilfældige linjeskift */}
+          <div style={{ marginTop:16, fontSize:12.5, lineHeight:1.4, color:"var(--ink2)" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:6, fontWeight:700, color:"var(--ink)", marginBottom:6 }}><Icon name="bulb" size={14} color="var(--ink)" /> Tips</div>
             {["God belysning", "Undgå skygger", "Hold kameraet stabilt"].map(tip => (
-              <span key={tip} style={{ display:"inline-flex", alignItems:"center", gap:4, whiteSpace:"nowrap" }}><Icon name="check" size={11} color="var(--green)" /> {tip}</span>
+              <div key={tip} style={{ display:"flex", alignItems:"center", gap:6, padding:"2px 0" }}><Icon name="check" size={12} color="var(--green)" /> {tip}</div>
             ))}
           </div>
         </div>

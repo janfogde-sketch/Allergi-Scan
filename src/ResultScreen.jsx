@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findActiveListMatch, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag } from "./helpers.js";
+import { allergenChoiceLabel, compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findActiveListMatch, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -215,14 +215,14 @@ export default function ResultScreen({
       const a = ALLERGENS.find(x => x.id === id);
       if (!a) return null;
       const val = effectiveAllergenFlag(flags, id);
-      if (val === "yes") return { status: "cross", label: a.label, reason: "Fundet i produktet." };
+      if (val === "yes") return { status: "cross", label: allergenChoiceLabel(a), reason: "Fundet i produktet." };
       if (val === "traces") {
         // Brugeren reagerer kun på direkte indhold: spor er ikke en advarsel, men skjules ikke
-        if (ignoresTraces(soloProfile.levels, id)) return { status: "check", label: a.label, reason: "Pakken nævner spor. Du har valgt ikke at få advarsel om spor." };
-        return { status: "trace", label: a.label, reason: "Kan indeholde spor i produktet." };
+        if (ignoresTraces(soloProfile.levels, id)) return { status: "check", label: allergenChoiceLabel(a), reason: "Pakken nævner spor. Du har valgt ikke at få advarsel om spor." };
+        return { status: "trace", label: allergenChoiceLabel(a), reason: "Kan indeholde spor i produktet." };
       }
-      if (val === "no") return { status: "check", label: a.label, reason: null };
-      return { status: "unknown", label: a.label, reason: "Kan ikke afgøres ud fra de tilgængelige produktdata." };
+      if (val === "no") return { status: "check", label: allergenChoiceLabel(a), reason: null };
+      return { status: "unknown", label: allergenChoiceLabel(a), reason: "Kan ikke afgøres ud fra de tilgængelige produktdata." };
     }).filter(Boolean);
     // Egne, fritekst-tilføjede allergier — kun fundet/ikke fundet, ingen
     // "?"-tilstand er mulig her (binært tekst-match, se matchCustomAllergens).
