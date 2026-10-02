@@ -979,7 +979,7 @@ export default function OnboardingScreen({
                     onConfirm={() => { removeMember(confirmRemoveMember.id); setConfirmRemoveMember(null); }} />
                 )}
                 <div className="step-title">Familiemedlemmer</div>
-                <div style={{ fontSize:13, color:"var(--ink2)", marginBottom:16 }}>Tilføj en profil til en person, du administrerer, fx et barn. Voksne kan du invitere under Familie, så de selv styrer deres oplysninger. Valgfrit.</div>
+                <div style={{ fontSize:13, color:"var(--ink2)", marginBottom:16 }}>Opret en profil til et barn under 18 år uden egen konto. Voksne kan du invitere under Familie, så de selv styrer deres oplysninger. Valgfrit.</div>
 
                 {/* Allerede tilføjede — viser navn + alder som primær linje
                     (25. sept. 2026, brugerfeedback: "Mia, 24 år"), ikke kun
@@ -1042,12 +1042,11 @@ export default function OnboardingScreen({
                 {showAddMemberForm ? (
                   <div className="card" style={UI.mb12}>
                     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
-                      <div className="card-lbl">{editingMemberId ? "Rediger familiemedlem" : "Tilføj nyt familiemedlem"}</div>
+                      <div className="card-lbl">{editingMemberId ? "Rediger profil" : "Opret profil til et barn"}</div>
                       <TextLink onClick={() => { cancelEditMember(); setShowAddMemberForm(false); }}>Annuller</TextLink>
                     </div>
                     <MemberForm key={editingMemberId || "new"} editing={!!editingMemberId}
                       openPrivacy={() => openLegal(SCREENS.PRIVACY)}
-                      onSkip={() => { cancelEditMember(); setShowAddMemberForm(false); setOnboardStep(5); }}
                       name={newMemberName} setName={setNewMemberName}
                       birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
                       gender={newMemberGender} setGender={setNewMemberGender}
