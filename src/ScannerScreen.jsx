@@ -284,6 +284,7 @@ export default function ScannerScreen({
   alternatives,
   altLoading,
   onOpenHelp,
+  autoStartScan, onAutoStartHandled,
 }) {
   const { user, userId, accessToken } = useAuthContext();
   // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
@@ -333,6 +334,14 @@ export default function ScannerScreen({
     setShowCameraPrimer(false);
     startCamera();
   };
+
+  // "Scan nu" fra tom historik: åbn kameraet (med primer første gang) når scanneren monteres
+  React.useEffect(() => {
+    if (!autoStartScan) return;
+    onAutoStartHandled?.();
+    handleScanButtonClick();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStartScan]);
 
   // Åbner manuel EAN-indtastning frisk hver gang — rydder en evt. tidligere
   // værdi/fejl fra sidste åbning, i stedet for at genbruge et forladt
