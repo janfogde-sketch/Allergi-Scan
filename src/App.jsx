@@ -756,6 +756,12 @@ export default function EatSafe() {
       // Redigering åbnes fra Profil og går tilbage dertil; alt andet (menu-
       // skærme, resultat, indsendelse, Madpas m.fl.) går til forsiden.
       if (screen === SCREENS.EDITPROFILE || screen === SCREENS.EDITPREFERENCES) { setScreen(SCREENS.PROFILE); return; }
+      // Bidragsflowet har sin egen trin-stak: systemets tilbage går ét trin tilbage (SuggestEditScreen lytter og afbryder hændelsen).
+      if (screen === SCREENS.SUGGEST_EDIT) {
+        const ev = new CustomEvent("eatsafe:back", { cancelable: true });
+        window.dispatchEvent(ev);
+        if (ev.defaultPrevented) return;
+      }
       setScreen(SCREENS.HOME);
     };
     window.addEventListener("popstate", handleBack);

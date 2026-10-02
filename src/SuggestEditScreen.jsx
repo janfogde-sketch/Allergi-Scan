@@ -66,6 +66,13 @@ export default function SuggestEditScreen({
 
   const ingToText = (items) => items.join(", ");
 
+  // Androids systemtilbage (App.jsx) følger samme trin-stak som tilbagepilen.
+  useEffect(() => {
+    const onBack = (e) => { e.preventDefault(); goBack(); };
+    window.addEventListener("eatsafe:back", onBack);
+    return () => window.removeEventListener("eatsafe:back", onBack);
+  });
+
   // Send forslag er først aktiv, når der er noget at sende for den valgte type.
   const canSubmit = editType === "ingredients" ? (editIngText.trim().length > 0 || ingItems.length > 0)
     : editType === "nutrition" ? editIngText.trim().length > 0
@@ -89,8 +96,10 @@ export default function SuggestEditScreen({
       // i stedet for at overskrive hele den OCR-læste liste (se sync-effect ovenfor).
       setIngItems(text ? text.split(",").map(s => s.trim()).filter(Boolean) : []);
       setEditIngText(text);
+      if (!text) showToast("Vi kunne ikke læse billedet. Prøv igen eller skriv manuelt.", "error");
       setEditStep("review");
     } catch {
+      showToast("Vi kunne ikke læse billedet. Prøv igen eller skriv manuelt.", "error");
       setEditStep("review");
     }
   };
@@ -121,7 +130,7 @@ export default function SuggestEditScreen({
       });
       setEditStep("done");
     } catch (e) {
-      showToast("Fejl: " + e.message, "error");
+      showToast("Kunne ikke sende forslaget. Prøv igen.", "error");
       setEditStep("review");
     }
   };
@@ -158,7 +167,7 @@ export default function SuggestEditScreen({
         <div style={S.flexMin}>
           <div style={S.h17}>Hjælp os med at forbedre</div>
           <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-            {scanResult.name}
+            {scanResult.name || "Produkt uden navn"}
           </div>
         </div>
       </div>
@@ -167,7 +176,7 @@ export default function SuggestEditScreen({
       <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, marginBottom:16, boxShadow:"var(--sh)" }}>
         <ProductImage product={scanResult} size={40} />
         <div style={S.flexMin}>
-          <div style={UI.ufs13_fw700_cink_ovhidden_toellipsis_wsnowrap}>{scanResult.name}</div>
+          <div style={UI.ufs13_fw700_cink_ovhidden_toellipsis_wsnowrap}>{scanResult.name || "Produkt uden navn"}</div>
           {scanResult.brand && <div style={S.sub11mt}>{scanResult.brand}</div>}
           <div style={{ fontSize:10, color:"var(--muted)", marginTop:1, fontFamily:"monospace" }}>EAN: {scanResult.code}</div>
         </div>

@@ -613,7 +613,7 @@ export default function ResultScreen({
         </div>
 
         <div className="product-hero-body">
-          <div className="product-hero-name">{scanResult.name}</div>
+          <div className="product-hero-name">{scanResult.name || "Produkt uden navn"}</div>
           {scanResult.brand && <div className="product-hero-brand">{scanResult.brand}</div>}
           <div className="product-hero-meta">
             <span style={{ fontSize:10, color:"var(--muted)", fontWeight:500 }}>EAN: {scanResult.code}</span>

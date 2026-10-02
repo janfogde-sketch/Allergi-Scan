@@ -2,7 +2,7 @@
 // @vitest-environment jsdom
 import React, { useState } from "react";
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, act } from "@testing-library/react";
 import { AuthProvider } from "./AuthContext.jsx";
 import { NavigationProvider } from "./NavigationContext.jsx";
 import SuggestEditScreen from "./SuggestEditScreen.jsx";
@@ -70,5 +70,16 @@ describe("Bidragsflow: tilbage går ét logisk trin tilbage", () => {
   it("'Skriv manuelt' vises ikke ved produktbillede", () => {
     render(<Harness startStep="guide" startType="image" onScreen={() => {}} />);
     expect(screen.queryByText("Skriv manuelt i stedet")).toBeNull();
+  });
+
+  it("Androids systemtilbage (eatsafe:back) følger samme stak som tilbagepilen", () => {
+    const onScreen = vi.fn();
+    render(<Harness startStep="start" startType="missing" onScreen={onScreen} />);
+    fireEvent.click(screen.getByText("Ingrediensliste mangler"));
+    const ev = new CustomEvent("eatsafe:back", { cancelable: true });
+    act(() => { window.dispatchEvent(ev); });
+    expect(ev.defaultPrevented).toBe(true);
+    expect(screen.getByText("Næringsindhold mangler")).toBeTruthy();
+    expect(onScreen).not.toHaveBeenCalled();
   });
 });
