@@ -777,3 +777,14 @@ export function passwordErrorText(pw) {
   const { tooShort, missing } = passwordProblems(pw);
   return tooShort || missing.length ? PASSWORD_REQUIREMENTS_ERROR : "";
 }
+
+// Produktnavn i normal formatering: et navn skrevet udelukkende med STORE BOGSTAVER (fx aflæst fra emballagen) vises som "Chokobær".
+// Navne med blandet case røres ikke.
+export function normalizeProductName(name) {
+  const n = (name || "").trim();
+  if (!n) return "";
+  const letters = n.replace(/[^A-Za-zÆØÅæøåÉéÜü]/g, "");
+  if (letters.length < 2 || letters !== letters.toUpperCase()) return n;
+  const lower = n.toLocaleLowerCase("da-DK");
+  return lower.charAt(0).toLocaleUpperCase("da-DK") + lower.slice(1);
+}

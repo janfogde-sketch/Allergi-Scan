@@ -82,7 +82,7 @@ sikre alternativer og indkøbsliste.
 
 **Bundmenu:** Indkøbsliste | Scan (midten) | Historik. Øverst til højre et hamburger-ikon (tre streger) der åbner `ProfileMenu.jsx`
 (profil-hero → `SCREENS.PROFILE`, Favoritter, Familie, Scanningshistorik, Opskrifter, Viden, Madpas, Indstillinger, Admin hvis
-admin). `SCREENS.SEARCH` findes som route (nås fra `SubmittedScreen`). Header: `AppHeader.jsx` med ren tekst-wordmark.
+admin). `SCREENS.SEARCH` findes som route (ingen skærm linker til den lige nu). Header: `AppHeader.jsx` med ren tekst-wordmark.
 
 **Skærme:** se `SCREENS` i `src/constants.jsx`. Én screen = én fil (`XxxScreen.jsx`). Vigtigste: HOME (`ScannerScreen.jsx`, også en
 intern router), RESULT, LIST, PROFILE/EDITPROFILE (kun navn)/EDITPREFERENCES, FAMILY, FAVORITES, HISTORY, MADPAS, KNOWLEDGE,
