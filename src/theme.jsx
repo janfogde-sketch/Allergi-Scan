@@ -563,8 +563,8 @@ body::-webkit-scrollbar{display:none;}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;}
 
 /* ── CHIPS & TAGS ── */
-.chip-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.chip{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border2);background:var(--surface);cursor:pointer;transition:all .15s;font-size:12.5px;font-weight:600;color:var(--ink2);user-select:none;}
+.chip-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+.chip{display:flex;align-items:center;gap:8px;min-height:44px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border2);background:var(--surface);cursor:pointer;transition:all .15s;font-size:12.5px;font-weight:600;color:var(--ink2);user-select:none;}
 .chip:hover{border-color:var(--border2);color:var(--ink);}
 .chip.on{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);font-weight:700;}
 .chip-check{margin-left:auto;width:16px;height:16px;background:var(--green-accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--ink);flex-shrink:0;}

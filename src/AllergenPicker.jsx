@@ -46,8 +46,9 @@ export const AllergenChipPicker = ({ selected, onChange }) => {
     const on = selected.includes(a.id);
     return (
       <ChoiceChip key={a.id} selected={on} showCheck={false}
+        style={(a.pickerLabel || a.label).length > 12 ? { gridColumn:"1 / -1" } : undefined}
         onClick={() => onChange(on ? selected.filter(x => x !== a.id) : [...selected, a.id])}>
-        <span style={UI.flex1}><AllergenGlyph a={a} size={14} /> {a.pickerLabel || a.label}</span>
+        <span style={{ ...UI.flex1, minWidth:0, display:"flex", alignItems:"center", gap:6 }}><AllergenGlyph a={a} size={14} /><span style={{ minWidth:0 }}>{a.pickerLabel || a.label}</span></span>
         {a.note && (
           <span role="button" aria-label={`Om ${a.pickerLabel || a.label}`}
             onClick={e => { e.stopPropagation(); showToast(a.note, "info"); }}
