@@ -56,7 +56,7 @@ export function PendingInviteCard({ invite, onCancel }) {
       </div>
       <div style={{ marginTop:10 }}><InviteLinkActions token={invite.token} /></div>
       <div style={{ display:"flex", justifyContent:"flex-end", marginTop:8 }}>
-        <TextLink onClick={onCancel}>Annullér invitation</TextLink>
+        <TextLink onClick={onCancel}>Annuller invitation</TextLink>
       </div>
     </div>
   );
@@ -125,11 +125,11 @@ export function InvitePanel({ accessToken, userId, onClose, onInviteId, onChange
       {!token ? (
         <>
           <div style={{ fontSize:12.5, color:"var(--muted2)", lineHeight:1.5, marginBottom:12 }}>
-            Personen får et link og opretter sin egen EatSafe-konto og styrer selv sine allergier. Når personen siger ja, er I i samme familie.
+            Send et invitationslink. Personen opretter sin egen EatSafe-konto og styrer selv sin profil.
           </div>
           <div style={{ background:"var(--surface2)", borderRadius:10, padding:"12px 14px", marginBottom:12 }}><WhatIsShared /></div>
           <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginBottom:12 }}>
-            Linket virker i 24 timer og kun til én person. Du kan til enhver tid fjerne forbindelsen igen.
+            Linket virker i 24 timer og kan kun bruges af én person. Forbindelsen kan fjernes igen senere.
           </div>
           <button type="button" onClick={create} disabled={loading}
             style={{ ...BTN, width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", opacity: loading ? .6 : 1 }}>
@@ -144,10 +144,10 @@ export function InvitePanel({ accessToken, userId, onClose, onInviteId, onChange
           </div>
           <InviteLinkActions token={token} />
           <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginTop:10 }}>
-            Når personen har oprettet sin konto, dukker vedkommende op her på siden.
+            Når invitationen accepteres, bliver personen tilføjet til din Familie i EatSafe.
           </div>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:8 }}>
-            <TextLink onClick={cancel}>Annullér invitation</TextLink>
+            <TextLink onClick={cancel}>Annuller invitation</TextLink>
             <TextLink onClick={done}>Færdig</TextLink>
           </div>
         </>

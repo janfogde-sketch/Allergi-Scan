@@ -149,7 +149,7 @@ export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClo
                 <input className="field" autoFocus maxLength={60} enterKeyHint="done" aria-label="Nyt listenavn" style={{ flex:1, minWidth:0, marginBottom:0, height:44, padding:"0 12px" }}
                   value={renameValue} onChange={e => setRenameValue(e.target.value)} onKeyDown={e => { if (e.key === "Enter") submitRename(l); if (e.key === "Escape") { e.stopPropagation(); setRenamingId(null); } }} />
                 <button type="button" className="btn btn-primary" style={{ minHeight:44, padding:"0 14px" }} disabled={!renameValue.trim()} onClick={() => submitRename(l)}>Gem</button>
-                <button type="button" aria-label="Annullér omdøbning" onClick={() => setRenamingId(null)} style={{ ...ROW_ACTION, padding:0, border:"1px solid var(--border)", borderRadius:"50%", color:"var(--ink2)" }}>
+                <button type="button" aria-label="Annuller omdøbning" onClick={() => setRenamingId(null)} style={{ ...ROW_ACTION, padding:0, border:"1px solid var(--border)", borderRadius:"50%", color:"var(--ink2)" }}>
                   <Icon name="x" size={14} color="var(--ink2)" />
                 </button>
               </div>
@@ -206,7 +206,7 @@ export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClo
               value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === "Enter" && submitNew()} />
             <button type="button" className="btn btn-primary" style={{ minHeight:44, padding:"0 16px" }} disabled={!newName.trim() || creating} onClick={submitNew}>{creating ? "…" : "Opret"}</button>
           </div>
-          <button type="button" onClick={() => { setMode(null); setNewName(""); }} style={CANCEL_LINK}>Annullér</button>
+          <button type="button" onClick={() => { setMode(null); setNewName(""); }} style={CANCEL_LINK}>Annuller</button>
         </div>
       )}
       {!editLists && mode === "join" && (
@@ -221,7 +221,7 @@ export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClo
             </button>
           </div>
           {joinError && <div style={{ fontSize:12, color:"var(--red)", marginTop:6 }}>{joinError}</div>}
-          <button type="button" onClick={() => { setMode(null); setJoinCode(""); setJoinError(""); }} style={CANCEL_LINK}>Annullér</button>
+          <button type="button" onClick={() => { setMode(null); setJoinCode(""); setJoinError(""); }} style={CANCEL_LINK}>Annuller</button>
         </div>
       )}
       </SheetBody>

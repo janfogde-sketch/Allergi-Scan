@@ -39,7 +39,7 @@ const HELP_CONTENT = {
     { icon:"family", title:"1. Tilføj personer", desc:"Invitér voksne med egen EatSafe-konto, eller opret profiler til fx børn." },
     { icon:"barcode", title:"2. Tjek varer for familien", desc:"Når du scanner, kan du se, om varen passer til de personer, du har adgang til." },
     { icon:"cart", title:"3. Del indkøbslister", desc:"Vælg om en liste er privat, deles med hele familien eller kun bestemte personer." },
-    { icon:"shield", title:"4. I bestemmer selv, hvad der deles", desc:"Voksne styrer deres egen profil. Profiler uden konto administreres af den person, der har oprettet dem." },
+    { icon:"shield", title:"4. Hver profil styres af den rette person", desc:"Voksne styrer deres egen profil. Profiler uden konto administreres af den person, der har oprettet dem." },
   ]},
   "result": { title:"Scanningsresultat", titleIcon:"package", tips:[
     { icon:"🚦", title:"Farvet ramme", desc:"Grøn = sikkert, gul = advarsel, rød = farligt — vurderet ud fra dine aktive profiler." },
@@ -102,8 +102,10 @@ export default function HelpModal({ screen, onClose, onOpenFeedback, closeLabel 
         onClick={e => e.stopPropagation()}>
         <div style={UI.rowBetweenMb16}>
           <div style={{ ...UI.ufs18_fw900_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name={content.titleIcon} size={17} color="var(--ink)" /> {content.title}</div>
-          <button onClick={onClose} aria-label="Luk"
-            style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
+          <button type="button" onClick={onClose} aria-label="Luk"
+            style={{ width:44, height:44, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"50%", cursor:"pointer" }}>
+            <Icon name="x" size={16} color="var(--ink)" />
+          </button>
         </div>
         <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
           {content.tips.map((tip, i) => (
