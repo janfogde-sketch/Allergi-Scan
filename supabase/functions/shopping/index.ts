@@ -127,6 +127,8 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({
         success: true,
         list: {
+          // Id returneres kun til ejer/medlem, så appen kan åbne den eksisterende liste (ikke-medlemmer får aldrig listens id).
+          id: (list.owner_id === caller.id || Boolean(access) || inFamilyShare) ? list.id : undefined,
           name: list.name,
           owner_name: (owner?.name ?? "").trim().split(/\s+/)[0] || null,
           is_owner: list.owner_id === caller.id,

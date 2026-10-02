@@ -64,7 +64,11 @@ describe("JoinListSheet", () => {
     const onConfirm = vi.fn(), onCancel = vi.fn();
     render(<JoinListSheet preview={{ name: "Weekend", owner_name: "Anna", code: "ABC234" }} onConfirm={onConfirm} onCancel={onCancel} />);
     expect(screen.getByText(/vil dele indkøbslisten/)).toBeTruthy();
-    expect(screen.getByText(/Dine allergier og din profil bliver ikke delt/)).toBeTruthy();
+    expect(screen.getByText(/Dine allergier og øvrige profiloplysninger deles ikke/)).toBeTruthy();
+    expect(screen.getAllByText(/Weekend/)).toHaveLength(1); // listenavnet står kun i sætningen, ikke også som undertitel
+    expect(screen.getByText(/Anna og andre med adgang kan se dine ændringer/)).toBeTruthy();
+    expect(screen.getByText(/Dine lister → Rediger/)).toBeTruthy();
+    expect(screen.queryByText(/tryk på listenavnet/)).toBeNull();
     expect(onConfirm).not.toHaveBeenCalled();
     fireEvent.click(screen.getByText("Tilslut listen"));
     expect(onConfirm).toHaveBeenCalledTimes(1);

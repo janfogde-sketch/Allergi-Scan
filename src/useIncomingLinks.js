@@ -9,7 +9,7 @@ import { showToast } from "./SharedComponents.jsx";
 
 export function useIncomingLinks({
   accessToken, userId, user, loadFamily,
-  joinByCode, loadShoppingList, setAuthTab, setScreen,
+  joinByCode, loadShoppingList, setAuthTab, setScreen, setActiveListId,
 }) {
   // ── Familie-invitation accept ────────────────────────────────────────────
   // Token gemmes i localStorage (som indkøbslistekoden nedenfor), så den overlever oprettelse, e-mailbekræftelse og onboarding,
@@ -109,6 +109,7 @@ export function useIncomingLinks({
         if (l.is_owner || l.already_member) {
           clearPending();
           loadShoppingList();
+          if (l.id) setActiveListId?.(l.id); // åbn den eksisterende liste i stedet for invitationen
           setScreen(SCREENS.LIST);
           showToast(l.is_owner ? "Det er din egen liste." : "Du har allerede adgang til den liste.");
           return;
@@ -119,7 +120,7 @@ export function useIncomingLinks({
         if (cancelled) return;
         if (e?.status === 404 || e?.message === "ugyldig") {
           clearPending();
-          showToast("Linket til listen virker ikke. Tjek, at det er helt, eller bed om et nyt.", "error");
+          showToast("Linket virker ikke længere. Det kan være ugyldigt, eller listen er slettet eller delt med et nyt link. Bed om et nyt link.", "error");
         } else {
           showToast("Vi kunne ikke hente den delte liste. Tjek din forbindelse og åbn linket igen.", "error");
           setPendingJoinList(null); // koden ligger stadig i localStorage og prøves igen næste gang appen åbnes
@@ -147,7 +148,7 @@ export function useIncomingLinks({
   const declineJoin = () => {
     setJoinPreview(null);
     clearPending();
-    showToast("Okay. Du er ikke tilsluttet listen.");
+    showToast("Okay. Du er ikke tilsluttet. Åbn linket igen, hvis du fortryder.");
   };
 
   return { pendingJoinList, joinPreview, joining, confirmJoin, declineJoin };

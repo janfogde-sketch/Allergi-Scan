@@ -476,7 +476,7 @@ export default function EatSafe() {
   // ── Familie-invitation og delt indkøbsliste via link → useIncomingLinks ──
   const { pendingJoinList, joinPreview, joining, confirmJoin, declineJoin } = useIncomingLinks({
     accessToken, userId, user, loadFamily,
-    joinByCode, loadShoppingList, setAuthTab, setScreen,
+    joinByCode, loadShoppingList, setAuthTab, setScreen, setActiveListId,
   });
 
   // ── Beskeder (liste, ulæst-tæller og ?notification=-ruten fra push) ──────

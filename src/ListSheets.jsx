@@ -1,7 +1,7 @@
 // @ts-nocheck
 // Bottom-sheets til indkøbslisten: listevælger (skift/opret/tilslut/slet) og deling. Listenavne er brugerdata og vises kun som tekst
 // (ellipsis/ombrydning), aldrig som faste systemtekster. Portal til body, fordi .screen.fade-in fanger position:fixed (CLAUDE.md §3 regel 4).
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Icon, ConfirmDialog, showToast } from "./SharedComponents.jsx";
 import { isSharedList, listShareStatus, joinNames, parseListCode, listLinkUrl, listShareText, looksLikeListLink } from "./listShare.js";
@@ -9,26 +9,27 @@ import { isSharedList, listShareStatus, joinNames, parseListCode, listLinkUrl, l
 const LBL = { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".8px" };
 const WRAP = { overflowWrap:"anywhere", wordBreak:"break-word" };
 
-// Fælles top-/padding-struktur for alle sheets: fast header (sticky, aldrig clippet), scroll altid fra toppen, og layoutet følger
-// visualViewport, så tastaturet ikke skjuler handlinger (samme mønster som FeedbackModal).
+// Fælles struktur for alle sheets: panelet er en flex-kolonne med en FAST header (titel, undertitel, hjælpetekst, luk; scroller aldrig og
+// kan derfor aldrig clippes) og et scrollende indhold (SheetBody), der altid starter i position 0. Layoutet følger visualViewport, så
+// tastaturet ikke skjuler handlinger (samme mønster som FeedbackModal). onClose gemmes i en ref, så effekten kun kører én gang.
 function Sheet({ label, onClose, children }) {
-  const panelRef = useRef(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   const [vv, setVv] = useState(() => (typeof window !== "undefined" && window.visualViewport ? { top: window.visualViewport.offsetTop, h: window.visualViewport.height } : null));
   useEffect(() => {
-    if (panelRef.current) panelRef.current.scrollTop = 0;
-    const onKey = e => { if (e.key === "Escape") onClose(); };
+    const onKey = e => { if (e.key === "Escape") closeRef.current(); };
     document.addEventListener("keydown", onKey);
     const v = window.visualViewport;
     const sync = () => v && setVv({ top: v.offsetTop, h: v.height });
     v?.addEventListener("resize", sync);
     v?.addEventListener("scroll", sync);
     return () => { document.removeEventListener("keydown", onKey); v?.removeEventListener("resize", sync); v?.removeEventListener("scroll", sync); };
-  }, [onClose]);
+  }, []);
   const frame = vv ? { top: vv.top, height: vv.h } : { top: 0, bottom: 0 };
   return createPortal(
-    <div style={{ position:"fixed", left:0, right:0, ...frame, zIndex:9995, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }} onClick={onClose}>
-      <div ref={panelRef} role="dialog" aria-modal="true" aria-label={label} onClick={e => e.stopPropagation()}
-        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", width:"100%", maxHeight:"92%", overflowY:"auto", overscrollBehavior:"contain", boxShadow:"var(--sh)" }}>
+    <div style={{ position:"fixed", left:0, right:0, ...frame, zIndex:9995, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }} onClick={() => closeRef.current()}>
+      <div role="dialog" aria-modal="true" aria-label={label} onClick={e => e.stopPropagation()}
+        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", width:"100%", maxHeight:"92%", display:"flex", flexDirection:"column", overflow:"hidden", boxShadow:"var(--sh)" }}>
         {children}
       </div>
     </div>,
@@ -36,25 +37,31 @@ function Sheet({ label, onClose, children }) {
   );
 }
 
-// Header er sticky øverst i sheetet; indholdet under har egen padding.
-function SheetHeader({ title, sub, onClose, right }) {
+// Fast header. `note` er hjælpeteksten under titlen/listenavnet og hører til headeren, så den altid er synlig.
+function SheetHeader({ title, sub, note, onClose, right }) {
   return (
-    <div style={{ position:"sticky", top:0, zIndex:2, background:"var(--sheet)", padding:"22px 16px 12px", display:"flex", alignItems:"flex-start", gap:8 }}>
-      <div style={{ flex:1, minWidth:0, paddingTop:4 }}>
-        <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)", lineHeight:1.25 }}>{title}</div>
-        {sub && <div style={{ fontSize:13, fontWeight:600, color:"var(--ink2)", marginTop:4, lineHeight:1.4, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden", ...WRAP }}>{sub}</div>}
+    <div style={{ flexShrink:0, background:"var(--sheet)", padding:"22px 16px 12px" }}>
+      <div style={{ display:"flex", alignItems:"flex-start", gap:8 }}>
+        <div style={{ flex:1, minWidth:0, paddingTop:4 }}>
+          <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)", lineHeight:1.25 }}>{title}</div>
+          {sub && <div style={{ fontSize:13, fontWeight:600, color:"var(--ink2)", marginTop:4, lineHeight:1.4, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden", ...WRAP }}>{sub}</div>}
+        </div>
+        {right}
+        <button type="button" onClick={onClose} aria-label="Luk"
+          style={{ width:44, height:44, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"50%", cursor:"pointer" }}>
+          <Icon name="x" size={16} color="var(--ink)" />
+        </button>
       </div>
-      {right}
-      <button type="button" onClick={onClose} aria-label="Luk"
-        style={{ width:44, height:44, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"50%", cursor:"pointer" }}>
-        <Icon name="x" size={16} color="var(--ink)" />
-      </button>
+      {note && <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.5, marginTop:8 }}>{note}</div>}
     </div>
   );
 }
 
+// Det scrollende indhold; starter altid øverst (også hvis indholdet ændrer højde under åbningen).
 function SheetBody({ children }) {
-  return <div style={{ padding:"4px 16px 28px" }}>{children}</div>;
+  const ref = useRef(null);
+  useLayoutEffect(() => { if (ref.current) ref.current.scrollTop = 0; }, []);
+  return <div ref={ref} style={{ flex:1, minHeight:0, overflowY:"auto", overscrollBehavior:"contain", padding:"4px 16px 28px" }}>{children}</div>;
 }
 
 // Ét fælles ikon (family) og én statuslinje for delte lister.
@@ -72,7 +79,8 @@ export { ShareStatus };
 
 const CANCEL_LINK = { minHeight:44, padding:"0 4px", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--ink2)", textDecoration:"underline", textUnderlineOffset:3 };
 // Små, diskrete række-handlinger i Rediger (44 px højt trykmål, men ikke visuelt dominerende)
-const ROW_ACTION = { flexShrink:0, minHeight:44, minWidth:60, padding:"0 12px", background:"var(--surface)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", fontSize:13, fontWeight:700 };
+// Ren tekst uden ramme eller fyld, så selve listen er det primære element (44 px højt trykmål): Omdøb er neutral, Slet/Forlad er røde.
+const ROW_ACTION = { flexShrink:0, minHeight:44, minWidth:44, padding:"0 8px", background:"none", border:"none", borderRadius:8, cursor:"pointer", fontFamily:"var(--f)", fontSize:13, fontWeight:700 };
 
 export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClose, createList, renameList, leaveList, joinByCode, onRequestDelete, onShare }) {
   const [mode, setMode]       = useState(null); // null | "new" | "join"
@@ -141,7 +149,7 @@ export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClo
                 <input className="field" autoFocus maxLength={60} enterKeyHint="done" aria-label="Nyt listenavn" style={{ flex:1, minWidth:0, marginBottom:0, height:44, padding:"0 12px" }}
                   value={renameValue} onChange={e => setRenameValue(e.target.value)} onKeyDown={e => { if (e.key === "Enter") submitRename(l); if (e.key === "Escape") { e.stopPropagation(); setRenamingId(null); } }} />
                 <button type="button" className="btn btn-primary" style={{ minHeight:44, padding:"0 14px" }} disabled={!renameValue.trim()} onClick={() => submitRename(l)}>Gem</button>
-                <button type="button" aria-label="Annullér omdøbning" onClick={() => setRenamingId(null)} style={{ ...ROW_ACTION, minWidth:44, padding:0, border:"1px solid var(--border)", color:"var(--ink2)" }}>
+                <button type="button" aria-label="Annullér omdøbning" onClick={() => setRenamingId(null)} style={{ ...ROW_ACTION, padding:0, border:"1px solid var(--border)", borderRadius:"50%", color:"var(--ink2)" }}>
                   <Icon name="x" size={14} color="var(--ink2)" />
                 </button>
               </div>
@@ -159,21 +167,21 @@ export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClo
               )}
               {!editLists && onShare && (
                 <button type="button" aria-label={`Del listen ${l.name}`} onClick={() => onShare(l)}
-                  style={{ ...ROW_ACTION, minWidth:44, padding:"0 10px", display:"flex", alignItems:"center", justifyContent:"center", gap:4, border:"1px solid var(--border)", color:"var(--ink2)", fontSize:12 }}>
+                  style={{ ...ROW_ACTION, minWidth:44, padding:"0 10px", display:"flex", alignItems:"center", justifyContent:"center", gap:4, borderRadius:12, border:"1px solid var(--border)", color:"var(--ink2)", fontSize:12 }}>
                   <Icon name="share" size={15} color="var(--ink2)" /> Del
                 </button>
               )}
               {editLists && isOwner && (
                 <button type="button" aria-label={`Omdøb listen ${l.name}`} onClick={() => { setRenamingId(l.id); setRenameValue(l.name); }}
-                  style={{ ...ROW_ACTION, border:"1px solid var(--border2)", color:"var(--ink)" }}>Omdøb</button>
+                  style={{ ...ROW_ACTION, color:"var(--ink2)" }}>Omdøb</button>
               )}
               {editLists && deletable && (
                 <button type="button" aria-label={`Slet listen ${l.name}`} onClick={() => onRequestDelete(l)}
-                  style={{ ...ROW_ACTION, minWidth:52, border:"1px solid var(--red-md)", color:"var(--red)" }}>Slet</button>
+                  style={{ ...ROW_ACTION, color:"var(--red)" }}>Slet</button>
               )}
               {editLists && !isOwner && l.via_access && (
                 <button type="button" aria-label={`Forlad listen ${l.name}`} onClick={() => setLeaving(l)}
-                  style={{ ...ROW_ACTION, border:"1px solid var(--red-md)", color:"var(--red)" }}>Forlad</button>
+                  style={{ ...ROW_ACTION, color:"var(--red)" }}>Forlad</button>
               )}
             </div>
           );
@@ -345,9 +353,9 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
 
   return (
     <Sheet label="Del liste" onClose={onClose}>
-      <SheetHeader title="Del liste" sub={list.name} onClose={onClose} />
+      <SheetHeader title="Del liste" sub={list.name} onClose={onClose}
+        note="Vælg, hvem der kan se og redigere listen. Alle med adgang kan tilføje, afkrydse og fjerne varer." />
       <SheetBody>
-      <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.5, marginBottom:16 }}>Vælg, hvem der kan se og redigere listen. Alle med adgang kan tilføje, afkrydse og fjerne varer.</div>
 
       <div style={{ ...LBL, marginBottom:8 }}>Hvem skal have adgang?</div>
       <div role="radiogroup" aria-label="Hvem skal have adgang?" style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:20 }}>
@@ -443,13 +451,13 @@ export function JoinListSheet({ preview, busy, onConfirm, onCancel }) {
   const owner = preview.owner_name || "En bruger af EatSafe";
   const points = [
     "Du kan se, tilføje, afkrydse og fjerne varer på listen.",
-    `${preview.owner_name || "Ejeren"} og andre med adgang kan se, hvad du tilføjer.`,
-    "Du deler kun denne ene liste. Dine allergier og din profil bliver ikke delt.",
-    "Du kan forlade listen igen når som helst: tryk på listenavnet og derefter Del.",
+    `${preview.owner_name || "Ejeren"} og andre med adgang kan se dine ændringer på listen.`,
+    "Kun denne liste deles. Dine allergier og øvrige profiloplysninger deles ikke.",
+    "Du kan når som helst forlade listen igen under Dine lister → Rediger.",
   ];
   return (
     <Sheet label="Tilslut delt liste" onClose={onCancel}>
-      <SheetHeader title="Tilslut delt liste?" sub={preview.name} onClose={onCancel} />
+      <SheetHeader title="Tilslut delt liste?" onClose={onCancel} />
       <SheetBody>
       <div style={{ fontSize:14, color:"var(--ink)", lineHeight:1.5, marginBottom:12, ...WRAP }}>
         <strong>{owner}</strong> vil dele indkøbslisten <strong>"{preview.name}"</strong> med dig.
