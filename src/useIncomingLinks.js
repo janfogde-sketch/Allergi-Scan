@@ -52,10 +52,14 @@ export function useIncomingLinks({
           showToast("Invitation accepteret. Du er nu i familie med den, der inviterede dig. Se jer under Familie i menuen.");
 
           // Beskeden til den der inviterede (N5) oprettes af databasen og sendes af `notify`.
-        } else if (data?.error) {
-          showToast("Invitationen kunne ikke bruges: " + data.error, "error");
+        } else {
+          showToast("Invitationen virker ikke længere. Den er udløbet eller allerede brugt. Bed den, der inviterede dig, om en ny.", "error");
         }
-      } catch { /* ignorer */ }
+      } catch {
+        // Netværksfejl: behold token, så koblingen prøves igen ved næste åbning, og sig det højt.
+        localStorage.setItem("as_pending_invite", inviteToken);
+        showToast("Vi kunne ikke tilknytte invitationen. Tjek din forbindelse og åbn appen igen.", "error");
+      }
     };
     acceptInvite();
   }, [accessToken, userId]);
