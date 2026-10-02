@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { Icon, showToast, AllergenGlyph } from "./SharedComponents.jsx";
+import { Icon, AllergenGlyph, InfoSheet } from "./SharedComponents.jsx";
 import { ALLERGENS, E_NUMBERS, E_CATEGORIES, DIETS, DIETS_ENABLED } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
 import { ChoiceChip } from "./DesignSystem.jsx";
@@ -41,6 +41,7 @@ export function useGlutenFreeSync(allergens, diets, setDiets) {
 export const AllergenChipPicker = ({ selected, onChange }) => {
   const allergiItems = ALLERGENS.filter(a => a.type !== "intolerance");
   const intoleranceItems = ALLERGENS.filter(a => a.type === "intolerance");
+  const [infoFor, setInfoFor] = useState(null);
 
   const renderChip = a => {
     const on = selected.includes(a.id);
@@ -51,7 +52,7 @@ export const AllergenChipPicker = ({ selected, onChange }) => {
         <span style={{ ...UI.flex1, minWidth:0, display:"flex", alignItems:"center", gap:6 }}><AllergenGlyph a={a} size={14} /><span style={{ minWidth:0 }}>{a.pickerLabel || a.label}</span></span>
         {a.note && (
           <span role="button" aria-label={`Om ${a.pickerLabel || a.label}`}
-            onClick={e => { e.stopPropagation(); showToast(a.note, "info"); }}
+            onClick={e => { e.stopPropagation(); setInfoFor(a); }}
             style={{ display:"flex", alignItems:"center", justifyContent:"center", width:18, height:18, flexShrink:0, color: on ? "var(--green)" : "var(--muted)" }}>
             <Icon name="info" size={14} color="currentColor" />
           </span>
@@ -71,6 +72,7 @@ export const AllergenChipPicker = ({ selected, onChange }) => {
       <div className="chip-grid">
         {intoleranceItems.map(renderChip)}
       </div>
+      {infoFor && <InfoSheet title={infoFor.pickerLabel || infoFor.label} onClose={() => setInfoFor(null)}>{infoFor.note}</InfoSheet>}
     </div>
   );
 };

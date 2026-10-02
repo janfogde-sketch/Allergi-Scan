@@ -223,13 +223,13 @@ describe("spor: kun hvor det giver mening", () => {
   it("sulfitter har sin egen mærkningsgrænse som data og en præcis, ikke-kategorisk note", () => {
     const a = ALLERGENS.find(x => x.id === "svovl");
     expect(a.labelThresholdMgPerKg).toBe(10);
-    expect(a.note).toMatch(/mærkningspligtige allergener/);
+    expect(a.note).toMatch(/mærkningspligtigt allergen/);
     expect(a.note).toMatch(/samlet SO₂/);
     expect(a.note).not.toMatch(/kan EatSafe ikke se/);
   });
   it("hvede-noten adskiller hvedeallergi fra glutenfølsomhed og cøliaki, uden den upræcise 'Gluten (intolerance)'", () => {
     const note = id => ALLERGENS.find(a => a.id === id)?.note || "";
-    expect(note("hvede")).toBe("Hvedeallergi er en allergi over for hvede og er ikke det samme som glutenfølsomhed eller cøliaki.");
+    expect(note("hvede")).toBe("Hvedeallergi gælder hvede. Det er ikke det samme som glutenfølsomhed, og de vælges hver for sig.");
     expect(ALLERGENS.map(a => a.note || "").join(" ")).not.toContain("Gluten (intolerance)");
   });
 });
