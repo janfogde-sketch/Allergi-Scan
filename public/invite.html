@@ -88,6 +88,9 @@
     };
     const icon = (name, red) => `<div class="icon${red ? " red" : ""}" aria-hidden="true"><svg viewBox="0 0 24 24">${ICONS[name]}</svg></div>`;
 
+    // Navnet kommer fra en bruger og indsættes som HTML, så det skal escapes.
+    const esc = t => String(t).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+
     function show(html) {
       spinner.style.display = "none";
       content.style.display = "block";
@@ -156,7 +159,7 @@
         show(`
           ${icon("family")}
           <h1>Du er inviteret!</h1>
-          <p>Du er blevet inviteret til en familie i EatSafe. I kan dele allergiprofiler og gøre indkøb lettere sammen.</p>
+          <p>${invite.inviter_first_name ? `${esc(invite.inviter_first_name)} har inviteret dig til sin familie i EatSafe.` : "Du er blevet inviteret til en familie i EatSafe."} I kan dele allergiprofiler og gøre indkøb lettere sammen.</p>
           <a href="https://eatsafe.dk?invite=${token}" class="btn">Opret konto</a>
           <a href="https://eatsafe.dk?invite=${token}&login=1" class="btn btn-ghost">Log ind</a>
           <p class="expiry">Invitationen udløber ${new Date(invite.expires_at).toLocaleDateString("da-DK")}</p>
