@@ -1,81 +1,72 @@
 // @ts-nocheck
-import React from "react";
-import { Loader, Icon } from "./SharedComponents.jsx";
-import { UI } from "./styleUtils.js";
+import React, { useState } from "react";
+import { Loader } from "./SharedComponents.jsx";
+import { Chevron, StatusChip, AdminEmpty, ROW, LABEL } from "./adminUi.jsx";
+
+const FIELD = { padding:"0 10px", minHeight:40, border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:13, background:"var(--surface)", color:"var(--ink)", outline:"none" };
 
 export default function AdminUsersSection({
-  userId, adminUsers, adminUsersLoading, userSearch, setUserSearch, userSearchParam, setUserSearchParam,
+  userId, adminUsers, adminUsersLoading, userSearch, setUserSearch,
   setOpenAdminUser,
 }) {
-  const filteredAdminUsers = adminUsers.filter(u => {
-    if (userSearchParam === "admin") return u.role === "admin";
-    if (userSearchParam === "incomplete") return u.onboarding_completed === false;
-    if (!userSearch.trim()) return true;
-    const q = userSearch.toLowerCase();
-    if (userSearchParam === "name") return (u.name||"").toLowerCase().includes(q);
-    if (userSearchParam === "email") return (u.email||"").toLowerCase().includes(q);
-    if (userSearchParam === "role") return (u.role||"").toLowerCase().includes(q);
-    if (userSearchParam === "onboarding") return String(u.onboarding_completed).includes(q);
-    return (u.name||"").toLowerCase().includes(q) || (u.email||"").toLowerCase().includes(q);
-  });
+  // Filtre og sortering sker i frontend på de brugere, der allerede er hentet.
+  const [roleFilter, setRoleFilter] = useState("all");             // all | admin | user
+  const [onboardingFilter, setOnboardingFilter] = useState("all"); // all | incomplete | done
+  const [sort, setSort] = useState("newest");                      // newest | name
+
+  const q = userSearch.trim().toLowerCase();
+  const filtered = adminUsers
+    .filter(u => roleFilter === "all" || (roleFilter === "admin" ? u.role === "admin" : u.role !== "admin"))
+    .filter(u => onboardingFilter === "all" || (onboardingFilter === "incomplete" ? u.onboarding_completed === false : u.onboarding_completed !== false))
+    .filter(u => !q || (u.name || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q))
+    .sort((a, b) => sort === "name"
+      ? (a.name || a.email || "").localeCompare(b.name || b.email || "", "da")
+      : String(b.created_at || "").localeCompare(String(a.created_at || "")));
 
   return (
     <div className="fade-in">
-
-      {/* Søgebar */}
       <div style={{ display:"flex", gap:6, marginBottom:8 }}>
-        <input
-          value={userSearch}
-          onChange={e => setUserSearch(e.target.value)}
-          placeholder="Søg bruger…"
-          style={{ flex:1, padding:"10px 14px", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:14, background:"var(--surface)", outline:"none", color:"var(--ink)" }}
-        />
+        <input value={userSearch} onChange={e => setUserSearch(e.target.value)} placeholder="Søg på navn eller e-mail…" aria-label="Søg bruger"
+          style={{ ...FIELD, flex:1, minWidth:0 }} />
         {userSearch && (
           <button onClick={() => setUserSearch("")} aria-label="Ryd søgning"
-            style={{ padding:"0 12px", border:"1px solid var(--border)", borderRadius:10, background:"var(--surface2)", fontFamily:"var(--f)", fontSize:12, color:"var(--muted)", cursor:"pointer" }}>
-            ×
-          </button>
+            style={{ ...FIELD, width:40, padding:0, background:"var(--surface2)", color:"var(--muted)", cursor:"pointer" }}>×</button>
         )}
       </div>
-
-      {/* Søge-parameter — dropdown */}
-      <div style={UI.mb12}>
-        <select value={userSearchParam} onChange={e => setUserSearchParam(e.target.value)}
-          style={{ width:"100%", padding:"10px 14px", border:"1px solid var(--border2)", borderRadius:10, fontFamily:"var(--f)", fontSize:14, background:"var(--surface)", color:"var(--ink)", outline:"none", cursor:"pointer" }}>
-          <option value="all">🔍 Alle felter</option>
-          <option value="name">👤 Søg på navn</option>
-          <option value="email">📧 Søg på email</option>
-          <option value="role">🛡️ Søg på rolle</option>
-          <option value="admin">🛡️ Kun admins</option>
-          <option value="incomplete">⏳ Ufærdig onboarding</option>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6, marginBottom:10 }}>
+        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} aria-label="Filtrér på rolle" style={{ ...FIELD, width:"100%", minWidth:0 }}>
+          <option value="all">Alle roller</option><option value="admin">Admins</option><option value="user">Brugere</option>
+        </select>
+        <select value={onboardingFilter} onChange={e => setOnboardingFilter(e.target.value)} aria-label="Filtrér på onboarding" style={{ ...FIELD, width:"100%", minWidth:0 }}>
+          <option value="all">Al onboarding</option><option value="incomplete">Ufærdig</option><option value="done">Færdig</option>
+        </select>
+        <select value={sort} onChange={e => setSort(e.target.value)} aria-label="Sortér" style={{ ...FIELD, width:"100%", minWidth:0 }}>
+          <option value="newest">Nyeste først</option><option value="name">Navn A-Å</option>
         </select>
       </div>
 
-      {/* Tæller */}
-      <div style={UI.sectionLbl8}>
-        {filteredAdminUsers.length} af {adminUsers.length} brugere
-      </div>
+      <div style={LABEL}>{filtered.length} af {adminUsers.length} brugere</div>
       {adminUsersLoading && <Loader text="Indlæser…" />}
-      <div style={UI.udflex_fdcolumn_g6}>
-        {filteredAdminUsers.map(u => (
-          <div key={u.id} onClick={() => setOpenAdminUser(u)} className="admin-list-row"
-            style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", boxShadow:"var(--sh)" }}>
-            <div style={UI.udflex_aicenter_g10}>
-              <div style={{ width:38, height:38, borderRadius:"50%", background: u.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, color:"var(--ink)", flexShrink:0 }}>
-                {(u.name||u.email||"?").charAt(0).toUpperCase()}
+      {!adminUsersLoading && filtered.length === 0 && (
+        <AdminEmpty icon="family" title="Ingen brugere matcher" text="Prøv at ændre søgning eller filtre." />
+      )}
+      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+        {filtered.map(u => (
+          <div key={u.id} onClick={() => setOpenAdminUser(u)} className="admin-list-row" role="button" style={{ ...ROW, display:"flex", alignItems:"center", gap:10 }}>
+            <div style={{ width:32, height:32, borderRadius:"50%", background: u.role==="admin" ? "var(--surface2)" : "var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:800, color: u.role==="admin" ? "var(--ink2)" : "var(--on-green)", flexShrink:0 }}>
+              {(u.name||u.email||"?").charAt(0).toUpperCase()}
+            </div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                {u.name || "Intet navn"}{u.id === userId && <span style={{ fontSize:11, fontWeight:500, color:"var(--muted)" }}> · Dig</span>}
               </div>
-              <div style={UI.flexMin}>
-                <div style={UI.ufs13_fw700_cink_ovhidden_toellipsis_wsnowrap}>{u.name || "Ingen navn"}</div>
-                <div style={{ fontSize:11, color:"var(--muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</div>
-              </div>
-              <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0 }}>
-                <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:100, background: u.role==="admin" ? "rgba(14,143,90,.2)" : "var(--surface2)", color: u.role==="admin" ? "var(--green)" : "var(--muted)", border: `1px solid ${u.role==="admin" ? "var(--green-mid)" : "var(--border)"}` }}>
-                  {u.role==="admin" ? "Admin" : "Bruger"}
-                </span>
-                {u.onboarding_completed === false && <span style={{ fontSize:9, color:"var(--amber)", fontWeight:700 }}>Onboarding ufærdig</span>}
-                {u.id === userId && <span style={{ fontSize:9, color:"var(--green)", fontWeight:700 }}>← Dig</span>}
+              <div style={{ fontSize:11, color:"var(--muted2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</div>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginTop:5 }}>
+                <StatusChip tone={u.role === "admin" ? "green" : "neutral"}>{u.role === "admin" ? "Admin" : "Bruger"}</StatusChip>
+                {u.onboarding_completed === false && <StatusChip tone="amber" icon="clock">Onboarding ufærdig</StatusChip>}
               </div>
             </div>
+            <Chevron />
           </div>
         ))}
       </div>
