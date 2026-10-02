@@ -55,7 +55,7 @@ function ShareStatus({ list, userId, color = "var(--muted)" }) {
 
 export { ShareStatus };
 
-export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClose, createList, joinByCode, onRequestDelete }) {
+export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClose, createList, joinByCode, onRequestDelete, onShare }) {
   const [mode, setMode]       = useState(null); // null | "new" | "join"
   const [editLists, setEdit]  = useState(false);
   const [newName, setNewName] = useState("");
@@ -83,7 +83,7 @@ export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClo
 
   return (
     <Sheet label="Dine lister" onClose={onClose}>
-      <SheetHeader title="Dine lister" onClose={onClose}
+      <SheetHeader title="Dine lister" sub="Vælg en liste, eller tryk Del for at dele den." onClose={onClose}
         right={canDeleteAny && (
           <button type="button" onClick={() => setEdit(v => !v)}
             style={{ minHeight:44, padding:"0 8px", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--green)" }}>
@@ -106,6 +106,12 @@ export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClo
                 </div>
                 {isActive && !editLists && <Icon name="check" size={18} color="var(--green)" />}
               </button>
+              {!editLists && onShare && (
+                <button type="button" aria-label={`Del listen ${l.name}`} onClick={() => onShare(l)}
+                  style={{ flexShrink:0, minHeight:56, minWidth:64, padding:"0 10px", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)" }}>
+                  <Icon name="share" size={16} color="var(--ink)" /> Del
+                </button>
+              )}
               {editLists && deletable && (
                 <button type="button" aria-label={`Slet listen ${l.name}`} onClick={() => onRequestDelete(l)}
                   style={{ flexShrink:0, minHeight:44, minWidth:64, padding:"0 12px", background:"none", border:"1px solid var(--red-md)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--red)" }}>

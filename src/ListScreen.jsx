@@ -37,7 +37,8 @@ export default function ListScreen({
   } = useShoppingContext();
 
   const [showListPicker, setShowListPicker] = useState(false);
-  const [showShareSheet, setShowShareSheet] = useState(false);
+  const [shareListId, setShareListId] = useState(null); // listen, der deles (åbnes fra listevælgeren)
+  const shareList = lists.find(l => l.id === shareListId) || null;
   // Bekræft-dialoger for destruktive handlinger (25. sept. 2026,
   // brugerfeedback) — erstatter native confirm(), se ConfirmDialog i
   // SharedComponents.jsx for hvorfor. listPendingDelete holder LISTEN
@@ -388,25 +389,21 @@ export default function ListScreen({
           </div>
           <Icon name="chevronDown" size={18} color="var(--ink2)" />
         </button>
-        <button type="button" aria-label="Del liste" onClick={() => setShowShareSheet(true)} disabled={!activeList}
-          style={{ width:56, minHeight:56, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", padding:0, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, boxShadow:"var(--sh2)",
-            cursor: activeList ? "pointer" : "not-allowed", opacity: activeList ? 1 : .5 }}>
-          <Icon name="share" size={20} color="var(--ink)" />
-        </button>
       </div>
 
       {showListPicker && (
         <ListSwitcherSheet lists={lists} activeListId={activeListId} userId={userId}
           onSelect={setActiveListId} onClose={() => setShowListPicker(false)}
-          createList={createList} joinByCode={joinByCode} onRequestDelete={setListPendingDelete} />
+          createList={createList} joinByCode={joinByCode} onRequestDelete={setListPendingDelete}
+          onShare={l => { setShowListPicker(false); setShareListId(l.id); }} />
       )}
 
-      {showShareSheet && activeList && (
-        <ShareListSheet list={activeList} userId={userId} familyMembers={familyMembers} loadFamilyMembers={loadFamilyMembers}
+      {shareList && (
+        <ShareListSheet list={shareList} userId={userId} familyMembers={familyMembers} loadFamilyMembers={loadFamilyMembers}
           getListAccess={getListAccess} grantAccess={grantAccess} revokeAccess={revokeAccess} setListType={setListType}
           rotateListCode={rotateListCode} leaveList={leaveList} onChanged={loadShoppingList}
-          onGoToFamily={() => { setShowShareSheet(false); setScreen(SCREENS.FAMILY); }}
-          onClose={() => setShowShareSheet(false)} />
+          onGoToFamily={() => { setShareListId(null); setScreen(SCREENS.FAMILY); }}
+          onClose={() => setShareListId(null)} />
       )}
 
       {/* ── Tom tilstand ──
