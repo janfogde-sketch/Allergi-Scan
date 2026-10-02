@@ -101,7 +101,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     if (rotatedLoopRef.current) { clearInterval(rotatedLoopRef.current); rotatedLoopRef.current = null; }
     if (html5QrRef.current) { html5QrRef.current.stop().catch(() => {}); html5QrRef.current = null; }
     if (torchTrackRef.current) {
-      try { torchTrackRef.current.applyConstraints({ advanced: [{ torch: false }] }); } catch {}
+      try { torchTrackRef.current.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {}); } catch {}
       torchTrackRef.current = null;
     }
     scanZoomRef.current = 1.0;
