@@ -29,7 +29,7 @@ export function buildScanResultFromProductData({ product, data, ean, activeIds, 
   const variantLabel = product.variant_label || null;
   const ingredientsText = product.ingredients || data?.ingredients?.raw_text || product.ingredients_text || "";
   const flags = normalizeProductFlags(product.allergen_flags || data?.allergen_flags || {}, {
-    ingredientsText, verifiedStatus: product.verified_status, source: product.source,
+    ingredientsText, productName: product.name || "", verifiedStatus: product.verified_status, source: product.source,
     sourceMethod: product.allergen_source_method, quality: product.allergen_quality,
   });
   const { status: rawStatus, matchedDanger, matchedWarning, ignoredTraces, hasUnknown } = compareAllergens(flags, activeIds, activeLevels);

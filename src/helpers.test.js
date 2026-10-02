@@ -492,3 +492,18 @@ describe("Cøliaki som eget valg", () => {
     expect(PRODUCT_ALLERGENS.some(a => a.id === "coeliaki")).toBe(false);
   });
 });
+
+describe("pladsholder-ingredienser og laktosefri-navn (2. okt.)", () => {
+  it("ingrediensfelt = produktnavn er ingen liste, så 'no' bliver 'unknown'", () => {
+    const f = normalizeProductFlags(ALL_NO, { ingredientsText: "Skrabeæg 8 M/L", productName: "Skrabeæg 8 M/L" });
+    expect(f.soja).toBe("unknown");
+  });
+  it("en rigtig, kort liste bevares", () => {
+    expect(normalizeProductFlags(ALL_NO, { ingredientsText: "Grisekød.", productName: "Hakket grisekød 12-17% øko." }).soja).toBe("no");
+  });
+  it("laktosefri i navnet fjerner laktose-flaget, men ikke mælkeprotein", () => {
+    const f = normalizeProductFlags({ ...ALL_NO, laktose: "yes", maelkeallergi: "yes" }, { ingredientsText: "LETMÆLK, laktaseenzym", productName: "Yoghurt laktosefri" });
+    expect(f.laktose).toBe("no");
+    expect(f.maelkeallergi).toBe("yes");
+  });
+});

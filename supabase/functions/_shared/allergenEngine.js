@@ -17,7 +17,7 @@ export const ENUMBER_ALLERGENS = {
   "e322": { allergen: "soja", certainty: "traces" },      // Lecithin — ofte soja
   "e471": { allergen: "maelkeallergi", certainty: "traces" }, // Mono/diglycerider — kan være mælk
   "e472": { allergen: "maelkeallergi", certainty: "traces" },
-  "e270": { allergen: "maelkeallergi", certainty: "traces" }, // Mælkesyre — sjældent, men muligt
+  // E270 (mælkesyre) er fjernet 2. okt. 2026: syren er ikke et mælkeallergen og gav falske mælke-advarsler.
   "e966": { allergen: "laktose", certainty: "yes" },      // Lactitol — afledt af laktose
   "e220": { allergen: "svovl", certainty: "yes" },
   "e221": { allergen: "svovl", certainty: "yes" },
@@ -41,6 +41,8 @@ export const ALL_ALLERGENS = [
 export const SUBSTRING_KEYWORDS = new Set([
   "mælk", "milk", "kasein", "valle", "soja", "soy", "gluten",
   "laktose", "lactose", "sesam", "lupin", "selleri", "sennep",
+  // "natriumdisulfit", "kaliumbisulfit" m.fl. (2. okt. 2026)
+  "sulfit",
   // Tyske kerneord (30. sept. 2026) — tysk sammensætter ord ("Vollmilch-
   // pulver", "Weizenmehl", "Haselnusskerne"), så de skal matches som
   // understreng for at blive fundet.
@@ -67,6 +69,11 @@ export function isNegated(text, keyword) {
   const idx = matchIndex(lower, kw);
   if (idx === -1) return false;
   const before = lower.substring(Math.max(0, idx - 18), idx);
+  // "Free from dairy and gluten." — opremsningen kan være længere end 18 tegn,
+  // så "free from"/"frei von"/"sans" tjekkes tilbage til sætningens start (2. okt. 2026).
+  const clauseStart = Math.max(lower.lastIndexOf(".", idx), lower.lastIndexOf(";", idx)) + 1;
+  const clauseBefore = lower.substring(clauseStart, idx);
+  if (/(free from|free of|frei von|sans|without)\s[^.;]*$/.test(clauseBefore)) return true;
   const after = lower.substring(idx + kw.length, idx + kw.length + 18);
   return (
     before.includes("uden") ||
@@ -149,7 +156,31 @@ export function isTracesContext(text, keyword) {
  );
 }
 
-export function analyzeIngredients(text) {
+// Ord der indeholder et allergenord uden at være det allergen (2. okt. 2026):
+// plantedrikke ("kokosmælk" → "kokos"), mælkesyre/mælkesyrekultur (ingen mælk),
+// kilde-angivet lecithin ("solsikke lecithin" er ikke soja) og "ris mel" som to
+// ord (ellers matcher "mel" under hvede).
+// Sulfit-ammoniak-karamel (E150d, "ammonieret sulfiteret caramel") er en farve, ikke et sulfit-tilsætningsstof:
+// den giver svovl-SPOR, ikke direkte svovl (se analyzeIngredients).
+const CARAMEL_SULFITE = /(ammonieret\s+)?sulfiteret(\s+(caramel|karamel)\w*)?|sulfit-?ammoniak-?(caramel|karamel)\w*|ammonium-?sulfit-?(caramel|karamel)\w*|sulphite ammonia caramel/gi;
+
+export function normalizeIngredientText(text) {
+  return text
+    .replace(/(kokos|mandel|havre|soja|ris|cashew|ærte|hamp|hasselnød)(mælk|drik)\b/gi, "$1")
+    .replace(/\b(coconut|almond|oat|soy|rice|cashew|hazelnut|pea) milk\b/gi, "$1")
+    .replace(/(vegansk\s+)?mælkesyre\w*/gi, " ")
+    .replace(/\b(solsikke|raps|sunflower|rapeseed)[\s-]*(le[ck]ithin|le[ck]itin)\w*/gi, "$1")
+    .replace(CARAMEL_SULFITE, " ")
+    .replace(/\b(ris|majs|kokos|mandel|kikærte|tapioka|boghvede|kartoffel|havre|linse|ærte|quinoa|hirse)\s+mel\b/gi, "$1mel");
+}
+
+// Lecithin uden kilde kan være soja, men er ikke bekræftet → spor, ikke direkte.
+const WEAK_SOY_WORDS = new Set(["lecithin", "lecitin"]);
+
+export function analyzeIngredients(rawText) {
+  const text = normalizeIngredientText(rawText);
+  CARAMEL_SULFITE.lastIndex = 0;
+  const hasSulfiteCaramel = CARAMEL_SULFITE.test(rawText);
   const flags = {};
   const lower = text.toLowerCase();
 
@@ -179,12 +210,19 @@ export function analyzeIngredients(text) {
                    // allergen andetsteds i teksten skal stadig kunne opgradere til "yes"
       }
 
+      if (allergen === "soja" && WEAK_SOY_WORDS.has(keyword.toLowerCase())) {
+        if (status === "no") status = "traces";
+        continue;
+      }
+
       status = "yes";
       break; // yes er højeste sikkerhed, stop
     }
 
     flags[allergen] = status;
   }
+
+  if (hasSulfiteCaramel && flags.svovl === "no") flags.svovl = "traces";
 
   // ── E-nummer detektion ──────────────────────────────────────────────────
   for (const [enumber, mapping] of Object.entries(ENUMBER_ALLERGENS)) {
@@ -210,6 +248,9 @@ export function analyzeIngredients(text) {
     /laktose\s+(under|<|mindre)/.test(lower)
  ) {
     flags["laktose"] = "no";
+  } else if (flags.laktose === "yes" && /\blaktase\b|laktaseenzym|lactase/.test(lower) && !/laktose|lactose|mælkesukker/.test(lower)) {
+    // Tilsat laktase = laktosereduceret produkt. Ikke garanteret laktosefrit → gult, ikke rødt.
+    flags["laktose"] = "traces";
   }
 
   return flags;
@@ -223,13 +264,21 @@ export const FOREIGN_INGREDIENT_STEMS = [
   "sugar","wheat","flour","milk","water","yeast","eggs","hazelnut","almond","butter","cream","barley","rye","ingredients",
   "socker","vete","mjölk","vatten","ägg","råg","grädde","smör","jäst","nötter","ingredienser:","hvete","melk",
 ];
+// Korte fremmedord, der kun må matche som HELE ord (en stamme som "sel" ville ramme "selleri").
+export const FOREIGN_EXACT_WORDS = new Set([
+  "lait","sucre","sel","eau","beurre","farine","huile","amidon","ferments","contient","peut","contenir","ingrédients","sirop","œufs","oeufs","œuf","oeuf","blé","fromage","noisettes","arachides",
+  "zucchero","latte","farina","sale","burro","uova","olio","acqua","ingredienti","contenere","può",
+  "leche","azúcar","harina","sal","huevo","huevos","aceite","agua","trigo","ingredientes",
+  "zout","suiker","tarwe","melk","eieren","ingrediënten",
+  "mleko","cukier","mąka","sól","woda","jaja","składniki",
+]);
 export const DANISH_INGREDIENT_STEMS = ["sukker","hvede","mælk","vand","gær","smør","fløde","olie","nødder","mandler","kerner","stivelse","krydderi","æg","rug","byg","havre"];
 export function looksNonDanish(text) {
-  const words = text.toLowerCase().split(/[^a-zæøåäöüß:]+/).filter(Boolean);
+  const words = text.toLowerCase().split(/[^a-zæøåäöüß\u00C0-\u024F:]+/).filter(Boolean);
   if (words.length === 0) return false;
   const danishHits = words.filter(w => DANISH_INGREDIENT_STEMS.some(s => w.startsWith(s) || w.endsWith(s)) || /mel$/.test(w)).length;
   if (danishHits > 0) return false;
-  return words.some(w => FOREIGN_INGREDIENT_STEMS.some(s => w.startsWith(s)));
+  return words.some(w => FOREIGN_EXACT_WORDS.has(w) || FOREIGN_INGREDIENT_STEMS.some(s => w.startsWith(s)));
 }
 
 // Hvede indeholder altid gluten — gluten må aldrig stå lavere end hvede.

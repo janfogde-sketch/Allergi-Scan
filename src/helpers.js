@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { ALLERGENS, DIETS, DIETS_ENABLED, AVATAR_COLORS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { ALLERGEN_KEYWORDS, keywordMatches, matchCustomAllergens } from "./allergenKeywords.js";
+import { looksNonDanish } from "../supabase/functions/_shared/allergenEngine.js";
 
 // Re-eksporteret så scan-/opskrift-/resultat-koden kan importere den sammen
 // med de øvrige allergen-hjælpefunktioner fra denne fil, fremfor at skulle
@@ -171,27 +172,19 @@ export function effectiveAllergenFlag(flags, id) {
   return val;
 }
 
-// Ord der næsten kun optræder i tyske/engelske/svenske/norske ingredienslister.
-const FOREIGN_INGREDIENT_STEMS = [
-  "zucker","weizen","milch","vollmilch","magermilch","wasser","salz","hefe","eier","haselnüss","mandeln","roggen","gerste","sahne","zutaten",
-  "sugar","wheat","flour","milk","water","yeast","eggs","hazelnut","almond","butter","cream","barley","rye","ingredients",
-  "socker","vete","mjölk","vatten","ägg","råg","grädde","smör","jäst","nötter","ingredienser:","hvete","melk",
-];
-const DANISH_INGREDIENT_STEMS = ["sukker","hvede","mælk","vand","gær","smør","fløde","olie","nødder","mandler","kerner","stivelse","krydderi","æg","rug","byg","havre"];
+// Ingredienslister på et andet sprog end dansk kan vores danske nøgleordsmotor
+// ikke læse — den svarer "no" for alt, hvilket ellers vises som grønt. Samme
+// heuristik som backend (delt kode siden 2. okt. 2026, så de to ikke driver fra hinanden).
+export const looksNonDanishIngredients = looksNonDanish;
 
-// Ingredienslister på et andet sprog end dansk kan vores danske nøgleords-
-// motor ikke læse — den svarer "no" for alt, hvilket ellers vises som grønt.
-export function looksNonDanishIngredients(text) {
-  const words = (text || "").toLowerCase().split(/[^a-zæøåäöüß:]+/).filter(Boolean);
-  if (words.length === 0) return false;
-  const danishHits = words.filter(w => DANISH_INGREDIENT_STEMS.some(s => w.startsWith(s) || w.endsWith(s)) || /mel$/.test(w)).length;
-  if (danishHits > 0) return false;
-  return words.some(w => FOREIGN_INGREDIENT_STEMS.some(s => w.startsWith(s)));
-}
+const normName = (t) => (t || "").toLowerCase().replace(/[^a-zæøåäöü0-9]+/g, " ").trim();
 
-export function hasRealIngredients(text) {
+// Importerede produkter har ofte produktnavnet som "ingrediensliste" (fx "Skrabeæg 8 M/L",
+// "Hvidløgssmør"). Det er ingen liste, og nøgleordsmotoren svarede "ingen allergener".
+export function hasRealIngredients(text, productName) {
   const t = (text || "").trim();
-  return t.length > 0 && !/^ingen ingrediensliste/i.test(t);
+  if (t.length === 0 || /^ingen ingrediensliste/i.test(t)) return false;
+  return !(productName && normName(t) === normName(productName));
 }
 
 // Produktets allergen-flag som de reelt kan bruges til en vurdering: "no"
@@ -199,16 +192,18 @@ export function hasRealIngredients(text) {
 // kan læse) gøres til "unknown", så appen aldrig viser "ingen advarsler" for
 // noget den ikke har kontrolleret. Producent-verificerede eller AI-læste
 // (Claude) flag stoles der på uændret.
-export function normalizeProductFlags(flags, { ingredientsText = "", verifiedStatus, source, sourceMethod, quality } = {}) {
+export function normalizeProductFlags(flags, { ingredientsText = "", productName = "", verifiedStatus, source, sourceMethod, quality } = {}) {
   const out = { ...(flags || {}) };
   // Uden ingrediensliste har hverken nøgleord eller Claude læst noget — da
   // stoles der kun på producent-verificerede data.
   const verified = verifiedStatus === "verified" || source === "producer";
   const aiRead = /claude/.test(sourceMethod || "") || quality === "high";
-  const noIngredients = !hasRealIngredients(ingredientsText);
+  const noIngredients = !hasRealIngredients(ingredientsText, productName);
   if (!verified && (noIngredients || (!aiRead && looksNonDanishIngredients(ingredientsText)))) {
     for (const k of Object.keys(out)) if (out[k] === "no" || out[k] === false) out[k] = "unknown";
   }
+  // Producentens eget "laktosefri" i navnet (samme tillid som "laktosefri" i selve teksten, se motoren).
+  if (!noIngredients && /laktose\s*-?fri|lactose[\s-]?free/i.test(productName) && (out.laktose === "yes" || out.laktose === "traces")) out.laktose = "no";
   const g = effectiveAllergenFlag(out, "gluten");
   if (g !== out.gluten && g !== undefined) out.gluten = g;
   return out;
@@ -218,6 +213,7 @@ export function normalizeProductFlagsFor(product) {
   if (!product) return {};
   return normalizeProductFlags(product.allergen_flags, {
     ingredientsText: product.ingredients || product.ingredients_text || "",
+    productName: product.name || "",
     verifiedStatus: product.verified_status, source: product.source,
     sourceMethod: product.allergen_source_method, quality: product.allergen_quality,
   });
