@@ -968,7 +968,7 @@ export default function EatSafe() {
             samme (1. okt. 2026, samme rolige udtryk som Favoritter), også en åbnet
             besked og "Se din feedback" (Jans feedback: brødteksten lå direkte oven
             på baggrundsbilledet og var svær at læse). */}
-        {(screen === SCREENS.NOTFOUND || screen === SCREENS.SUBMITTED || screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE || screen === SCREENS.FAMILY || screen === SCREENS.MADPAS || screen === SCREENS.NOTIFICATIONS || screen === SCREENS.NOTIFICATION || screen === SCREENS.TICKET || isLegalPage) && <div className="app-bg-hide" aria-hidden="true" />}
+        {(screen === SCREENS.NOTFOUND || screen === SCREENS.ADMIN || screen === SCREENS.SUBMITTED || screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE || screen === SCREENS.FAMILY || screen === SCREENS.MADPAS || screen === SCREENS.NOTIFICATIONS || screen === SCREENS.NOTIFICATION || screen === SCREENS.TICKET || isLegalPage) && <div className="app-bg-hide" aria-hidden="true" />}
 
         {/* Skip-link for tastatur/screen reader brugere */}
         <a href="#main-content" className="skip-link">Spring til indhold</a>
@@ -1342,7 +1342,7 @@ export default function EatSafe() {
             skal være konsekvent fraværende uanset hvor siden blev åbnet
             fra, i stedet for at dukke op/forsvinde afhængigt af indgang. */}
         {!isOnboard && !madpasWaiterView && !isLegalPage && !hideNavForContribution && (
-          <nav className="bottom-nav" role="navigation" aria-label="Hovednavigation">
+          <nav className={`bottom-nav${screen === SCREENS.ADMIN ? " nav-muted" : ""}`} role="navigation" aria-label="Hovednavigation">
             {[
               [SCREENS.LIST,    "cart",     "Indkøbsliste"],
               [SCREENS.HOME,    "scanframe","Scan"],

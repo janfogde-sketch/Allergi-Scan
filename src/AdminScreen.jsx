@@ -18,6 +18,7 @@ import AdminImportSection from "./AdminImportSection.jsx";
 import AdminDebugSection from "./AdminDebugSection.jsx";
 import AdminRecipesSection from "./AdminRecipesSection.jsx";
 import AdminMobileNav from "./AdminMobileNav.jsx";
+import AdminHubSection from "./AdminHubSection.jsx";
 
 export default function AdminScreen() {
   const { userId, accessToken } = useAuthContext();
@@ -155,10 +156,15 @@ export default function AdminScreen() {
     if (id === "missing") loadMissingEans();
     if (id === "import") runImport(false);
     if (id === "submissions") loadSubmissions(submissionFilter);
-    if (id === "tickets") loadTickets();
+    if (id === "tickets") loadTickets({ includeDone: true });
     if (id === "dashboard") loadAdminStats();
     if (id === "users") loadAdminUsers();
     if (id === "recipes") loadAdminRecipes();
+  };
+  // Fra Indhold/Drift-oversigterne: "approved" er en genvej til godkendte indsendelser, resten åbner værktøjet.
+  const openTool = (id) => {
+    if (id === "approved") { setAdminSection("submissions"); setSubmissionFilter("approved"); loadSubmissions("approved"); return; }
+    selectSection(id);
   };
 
   return (
@@ -169,16 +175,17 @@ export default function AdminScreen() {
         {screen === SCREENS.ADMIN && !openSubmission && !openTicket && (
           <div className="screen fade-in" style={UI.pb120}>
 
-            {/* Header */}
-            <div style={UI.avatarRow}>
-              <button onClick={() => setScreen(SCREENS.PROFILE)}
-                style={UI.iconBtn}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2"><path strokeLinecap="round" d="M15 19l-7-7 7-7"/></svg>
+            {/* Kompakt header: tilbage, titel og refresh som ikon-knap */}
+            <div style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 0 10px" }}>
+              <button onClick={() => setScreen(SCREENS.PROFILE)} aria-label="Tilbage"
+                style={{ width:40, height:40, marginLeft:-8, display:"flex", alignItems:"center", justifyContent:"center", background:"none", border:"none", cursor:"pointer" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2.25"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
               </button>
-              <div style={{ flex:1, fontSize:18, fontWeight:900, color:"var(--ink)", display:"flex", alignItems:"center", gap:8 }}><Icon name="shield" size={17} color="var(--ink)" /> Admin</div>
-              <button onClick={() => { loadAdminStats(); if (adminSection==="submissions") loadSubmissions(submissionFilter); if (adminSection==="tickets") loadTickets(); if (adminSection==="missing") loadMissingEans(); }}
-                style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:10, padding:"6px 12px", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex" }}>
-                <Icon name="refresh" size={14} color="var(--ink)" />
+              <div style={{ flex:1, fontSize:17, fontWeight:800, color:"var(--ink)", display:"flex", alignItems:"center", gap:8 }}><Icon name="shield" size={16} color="var(--ink)" /> Admin</div>
+              <button onClick={() => { loadAdminStats(); if (adminSection==="submissions") loadSubmissions(submissionFilter); if (adminSection==="tickets") loadTickets({ includeDone: true }); if (adminSection==="users") loadAdminUsers(); if (adminSection==="missing") loadMissingEans(); }}
+                aria-label="Opdatér"
+                style={{ width:40, height:40, display:"flex", alignItems:"center", justifyContent:"center", background:"none", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}>
+                <Icon name="refresh" size={15} color="var(--ink2)" />
               </button>
             </div>
 
@@ -215,7 +222,42 @@ export default function AdminScreen() {
             {adminSection === "tickets" && (
               <AdminTicketsSection
                 adminTickets={adminTickets} adminTicketFilter={adminTicketFilter} setAdminTicketFilter={setAdminTicketFilter}
-                ticketsLoading={ticketsLoading} updateTicketStatus={updateTicketStatus} setOpenTicket={setOpenTicket}
+                ticketsLoading={ticketsLoading} setOpenTicket={setOpenTicket}
+              />
+            )}
+
+            {/* ── INDHOLD / DRIFT: oversigter med værktøjer ── */}
+            {(adminSection === "content" || adminSection === "system") && (
+              <AdminHubSection kind={adminSection} onOpen={openTool} />
+            )}
+
+            {/* Værktøjssiderne ligger INDE i skærmen (header, navigation og bundpadding), og vises kun, mens Admin er åben. */}
+            {adminSection === "missing" && (
+              <AdminMissingSection
+                missingEans={missingEans} missingEansLoading={missingEansLoading}
+                loadMissingEans={loadMissingEans} deleteMissingEan={deleteMissingEan}
+              />
+            )}
+
+            {adminSection === "import" && (
+              <AdminImportSection
+                importLog={importLog} importLoading={importLoading} runImport={runImport}
+                reparseLog={reparseLog} reparseLoading={reparseLoading} runReparse={runReparse}
+              />
+            )}
+
+            {adminSection === "debug" && (
+              <AdminDebugSection />
+            )}
+
+            {adminSection === "recipes" && (
+              <AdminRecipesSection
+                adminRecipes={adminRecipes} adminRecipesLoading={adminRecipesLoading}
+                adminRecipeFilter={adminRecipeFilter} setAdminRecipeFilter={setAdminRecipeFilter}
+                loadAdminRecipes={loadAdminRecipes}
+                editingRecipe={editingRecipe} setEditingRecipe={setEditingRecipe}
+                recipeActionLoading={recipeActionLoading} saveRecipeEdit={saveRecipeEdit}
+                updateRecipeStatus={updateRecipeStatus}
               />
             )}
 
@@ -239,35 +281,6 @@ export default function AdminScreen() {
             cleanedOcrText={cleanedOcrText} cleaningOcr={cleaningOcr} cleanOcrWithAI={cleanOcrWithAI}
             updateSubmissionAndApprove={updateSubmissionAndApprove} rejectSubmission={rejectSubmission}
             submitterInfo={submitterInfo} submitterLoading={submitterLoading}
-          />
-        )}
-
-        {adminSection === "missing" && (
-          <AdminMissingSection
-            missingEans={missingEans} missingEansLoading={missingEansLoading}
-            loadMissingEans={loadMissingEans} deleteMissingEan={deleteMissingEan}
-          />
-        )}
-
-        {adminSection === "import" && (
-          <AdminImportSection
-            importLog={importLog} importLoading={importLoading} runImport={runImport}
-            reparseLog={reparseLog} reparseLoading={reparseLoading} runReparse={runReparse}
-          />
-        )}
-
-        {adminSection === "debug" && (
-          <AdminDebugSection />
-        )}
-
-        {adminSection === "recipes" && (
-          <AdminRecipesSection
-            adminRecipes={adminRecipes} adminRecipesLoading={adminRecipesLoading}
-            adminRecipeFilter={adminRecipeFilter} setAdminRecipeFilter={setAdminRecipeFilter}
-            loadAdminRecipes={loadAdminRecipes}
-            editingRecipe={editingRecipe} setEditingRecipe={setEditingRecipe}
-            recipeActionLoading={recipeActionLoading} saveRecipeEdit={saveRecipeEdit}
-            updateRecipeStatus={updateRecipeStatus}
           />
         )}
 

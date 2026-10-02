@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { PRODUCT_ALLERGENS } from "./constants.jsx";
 import { Loader, Icon, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
+import { Chevron, StatusChip, AdminEmpty, Segmented, ROW } from "./adminUi.jsx";
 import { ALL_ALLERGEN_WORDS } from "./allergenKeywords.js";
 import { normalizeENumber, addENumberToText } from "./helpers.js";
 
@@ -78,55 +79,46 @@ export default function AdminSubmissionsSection({
   submissions, submissionsLoading, submissionFilter, setSubmissionFilter, loadSubmissions,
   openSubmissionForReview,
 }) {
+  const EMPTY = {
+    pending:  { title:"Ingen indsendelser afventer", text:"Der er ingen produkter, der skal gennemgås lige nu." },
+    approved: { title:"Ingen godkendte indsendelser", text:"Godkendte produkter vises her." },
+    rejected: { title:"Ingen afviste indsendelser", text:"Afviste indsendelser vises her." },
+  };
   return (
     <div className="fade-in">
-      <div style={{ display:"flex", gap:6, marginBottom:12 }}>
-        {[
-          { val:"pending",  label:"Afventer", icon:"clock", color:"var(--amber)" },
-          { val:"approved", label:"Godkendt", icon:"check", color:"var(--green)" },
-          { val:"rejected", label:"Afvist",   icon:"x",     color:"var(--red)" },
-        ].map(({ val, label, icon, color }) => (
-          <button key={val} onClick={() => { setSubmissionFilter(val); loadSubmissions(val); }}
-            style={{ flex:1, padding:"10px 4px", borderRadius:10, border:`1px solid ${submissionFilter===val ? color : "var(--border)"}`,
-              background: submissionFilter===val ? (val==="pending"?"var(--amber-lt)":val==="approved"?"var(--green-lt)":"var(--red-lt)") : "var(--surface)",
-              display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-              fontFamily:"var(--f)", fontSize:11, fontWeight:700,
-              color: submissionFilter===val ? color : "var(--muted)", cursor:"pointer" }}>
-            <Icon name={icon} size={12} color={submissionFilter===val ? color : "var(--muted)"} /> {label}
-          </button>
-        ))}
-      </div>
+      <Segmented label="Filtrér indsendelser" value={submissionFilter}
+        onChange={(val) => { setSubmissionFilter(val); loadSubmissions(val); }}
+        options={[{ value:"pending", label:"Afventer" }, { value:"approved", label:"Godkendt" }, { value:"rejected", label:"Afvist" }]} />
       {submissionsLoading && <Loader text="Indlæser…" />}
-      {!submissionsLoading && submissions.length === 0 && (
-        <div style={UI.utacenter_p48px0}>
-          <div style={{ ...UI.emoji48mb12, display:"flex", justifyContent:"center" }}>{submissionFilter==="pending" ? "🎉" : <Icon name="package" size={40} color="var(--muted)" />}</div>
-          <div style={UI.ufs16_fw800_cink}>{submissionFilter==="pending" ? "Ingen afventer" : "Ingen indsendelser"}</div>
-        </div>
-      )}
-      <div style={UI.colGap8}>
+      {!submissionsLoading && submissions.length === 0 && <AdminEmpty icon="package" {...(EMPTY[submissionFilter] || EMPTY.pending)} />}
+      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
         {submissions.map(s => {
           const flags = s.ai_parsed_data || {};
           const dangerAllergens = PRODUCT_ALLERGENS.filter(a => flags[a.id]==="yes" || flags[a.id]===true);
           const daysSince = Math.floor((Date.now() - new Date(s.created_at).getTime()) / 86400000);
           const isEdit = s.type === "edit";
           return (
-            <div key={s.id} onClick={() => openSubmissionForReview(s)} className="admin-list-row"
-              style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", boxShadow:"var(--sh)" }}>
-              <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
-                <div style={{ width:48, height:48, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon name={isEdit ? "edit" : "package"} size={22} color="var(--ink2)" /></div>
-                <div style={UI.flexMin}>
-                  <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:2 }}>
-                    <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</div>
-                    {isEdit && <span style={{ fontSize:9, padding:"2px 6px", borderRadius:100, background:"var(--amber-lt)", color:"var(--amber)", fontWeight:800, flexShrink:0 }}>RETTELSE</span>}
-                  </div>
-                  <div style={{ fontSize:11, color:"var(--muted)", marginBottom:6, fontFamily:"monospace" }}>EAN: {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`} · #{s.id.slice(0, 8)}</div>
-                  <div style={UI.wrapGap4}>
-                    {dangerAllergens.slice(0,3).map(a => <span key={a.id} style={{ fontSize:10, padding:"2px 8px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", fontWeight:700 }}><AllergenGlyph a={a} size={10} /> {a.label}</span>)}
-                    {dangerAllergens.length === 0 && <span style={UI.muted10}>Ingen allergener</span>}
-                  </div>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
+            <div key={s.id} onClick={() => openSubmissionForReview(s)} className="admin-list-row" role="button" style={{ ...ROW, display:"flex", alignItems:"center", gap:10 }}>
+              <div style={{ width:36, height:36, borderRadius:10, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                <Icon name={isEdit ? "edit" : "package"} size={17} color="var(--ink2)" />
               </div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                  <div style={{ fontSize:13.5, fontWeight:800, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</div>
+                  {isEdit && <StatusChip tone="amber">Rettelse</StatusChip>}
+                </div>
+                <div style={{ fontSize:11, color:"var(--muted2)", marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                  EAN {s.ean} · {daysSince === 0 ? "i dag" : `${daysSince}d siden`} · #{s.id.slice(0, 8)}
+                </div>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginTop:5 }}>
+                  {dangerAllergens.slice(0,3).map(a => (
+                    <span key={a.id} style={{ display:"inline-flex", alignItems:"center", gap:3, fontSize:10.5, padding:"3px 8px", borderRadius:100, background:"var(--red-lt)", color:"var(--red)", fontWeight:700 }}><AllergenGlyph a={a} size={10} /> {a.label}</span>
+                  ))}
+                  {dangerAllergens.length > 3 && <StatusChip>+{dangerAllergens.length - 3}</StatusChip>}
+                  {dangerAllergens.length === 0 && <span style={{ fontSize:11, color:"var(--muted)" }}>Ingen allergener</span>}
+                </div>
+              </div>
+              <Chevron />
             </div>
           );
         })}

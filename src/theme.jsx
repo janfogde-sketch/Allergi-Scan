@@ -456,6 +456,8 @@ body::-webkit-scrollbar{display:none;}
 @media (prefers-reduced-motion: reduce){
   .scan-cta-halo{animation:none;}
 }
+/* Admin er en arbejdssektion: bundnavigationen dæmpes, så den ikke konkurrerer med adminnavigationen */
+.bottom-nav.nav-muted{opacity:.72;}
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
   width:100%;max-width:480px;
