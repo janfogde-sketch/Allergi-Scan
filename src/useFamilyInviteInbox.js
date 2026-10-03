@@ -29,8 +29,8 @@ export function useFamilyInviteInbox({ accessToken, userId, user, loadFamily }) 
       let linkInvite = null;
       if (token) {
         linkInvite = await rpc("get_family_invite_by_link", accessToken, { p_token: token });
-        // Brugt, udløbet eller din egen: tokenet er ikke længere til nytte
-        if (!linkInvite || !linkInvite.id) { linkInvite = null; clearToken(); }
+        // Brugt, udløbet, din egen eller allerede anmodet om (afventer afsenderens godkendelse): tokenet er ikke længere til nytte
+        if (!linkInvite || !linkInvite.id || linkInvite.awaiting) { linkInvite = null; clearToken(); }
       }
       setInvites(mergeInvites(emailInvites, linkInvite, linkInvite ? token : null));
     } catch { /* stille: tokenet beholdes, og det prøves igen næste gang appen åbnes eller kommer i forgrunden */ }
@@ -59,7 +59,10 @@ export function useFamilyInviteInbox({ accessToken, userId, user, loadFamily }) 
         : await rpc("accept_my_family_invite", accessToken, { p_invite_id: current.id });
       remove(current.id);
       if (current.viaToken) clearToken();
-      if (res?.success) {
+      if (res?.success && res.pending_approval) {
+        // Delt link: afsenderen skal godkende, før I bliver forbundet
+        showToast(`Anmodningen er sendt. ${current.inviter_first_name || "Afsenderen"} skal godkende, før I bliver forbundet.`);
+      } else if (res?.success) {
         loadFamily?.();
         showToast("Du er nu i familie med den, der inviterede dig. Se jer under Familie i menuen.");
       } else showToast("Invitationen virker ikke længere. Den er udløbet eller allerede brugt. Bed om en ny.", "error");
@@ -71,8 +74,9 @@ export function useFamilyInviteInbox({ accessToken, userId, user, loadFamily }) 
     if (!current) return;
     setBusy(true);
     try {
-      if (current.viaToken) await rpc("decline_family_invite_by_link", accessToken, { p_token: current.viaToken });
-      else await rpc("decline_my_family_invite", accessToken, { p_invite_id: current.id });
+      // Et delt link kan ikke afvises af en, der blot har linket (det ville også ødelægge afsenderens invitation): tokenet ryddes bare
+      if (current.viaToken && current.kind !== "link") await rpc("decline_family_invite_by_link", accessToken, { p_token: current.viaToken });
+      else if (!current.viaToken) await rpc("decline_my_family_invite", accessToken, { p_invite_id: current.id });
       remove(current.id);
       if (current.viaToken) clearToken();
       showToast("Okay. Du er ikke tilføjet til familien.");

@@ -77,8 +77,9 @@ import SafetyInfoModal from "./SafetyInfoModal.jsx";
 import DeleteAccountModal from "./DeleteAccountModal.jsx";
 import { useAdminTools } from "./useAdminTools.js";
 import { useIncomingLinks } from "./useIncomingLinks.js";
-import { JoinListSheet, FamilyInviteSheet } from "./ListSheets.jsx";
+import { JoinListSheet, FamilyInviteSheet, FamilyRequestSheet } from "./ListSheets.jsx";
 import { useFamilyInviteInbox } from "./useFamilyInviteInbox.js";
+import { useFamilyLinkRequests } from "./useFamilyLinkRequests.js";
 import { useNotifications } from "./useNotifications.js";
 import { useLoadUserData } from "./useLoadUserData.js";
 
@@ -481,6 +482,11 @@ export default function EatSafe() {
 
   // ── Familie-invitationer til min bekræftede e-mail (bekræftes i FamilyInviteSheet) ──
   const { familyInvite, familyInviteBusy, acceptFamilyInvite, declineFamilyInvite, laterFamilyInvite } = useFamilyInviteInbox({
+    accessToken, userId, user, loadFamily,
+  });
+
+  // ── Afsenderens godkendelse af en, der har brugt det delte invitationslink ──
+  const { linkRequest, linkRequestBusy, approveLinkRequest, declineLinkRequest, laterLinkRequest } = useFamilyLinkRequests({
     accessToken, userId, user, loadFamily,
   });
 
@@ -1081,6 +1087,9 @@ export default function EatSafe() {
 
         {/* ══ BEKRÆFT FAMILIE-INVITATION (sendt til min e-mail) ══ */}
         {familyInvite && !joinPreview && <FamilyInviteSheet invite={familyInvite} busy={familyInviteBusy} onConfirm={acceptFamilyInvite} onDecline={declineFamilyInvite} onLater={laterFamilyInvite} />}
+
+        {/* ══ GODKEND DEN, DER BRUGTE MIT DELTE LINK ══ */}
+        {linkRequest && !familyInvite && !joinPreview && <FamilyRequestSheet request={linkRequest} busy={linkRequestBusy} onApprove={approveLinkRequest} onDecline={declineLinkRequest} onLater={laterLinkRequest} />}
 
         {/* ══ SIKKERHEDSINFORMATION ══ */}
         {showSafetyInfo && <SafetyInfoModal onAcknowledge={acknowledgeSafety} busy={safetyBusy} />}

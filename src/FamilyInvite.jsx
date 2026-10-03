@@ -1,7 +1,7 @@
 // @ts-nocheck
-// Invitation til familien: forklaring af, hvad der deles, afsendelse af invitationen til en e-mailadresse, og række for en afventende
-// invitation. Invitationen sendes som mail og gælder kun for den adresse (3. okt. 2026; før var det et link, der kunne deles videre og
-// gik tabt, når det blev åbnet i en anden browser end den, modtageren loggede ind i). Ordforråd: "Familie" = voksne med egen konto.
+// Invitation til familien: forklaring af, hvad der deles, og to måder at invitere på (3. okt. 2026): en mail til en bestemt adresse, eller
+// et delt link (fx i Messenger), hvor afsenderen selv godkender, hvem der bruger det (se useFamilyLinkRequests). Række for en afventende
+// invitation. Ordforråd: "Familie" = voksne med egen konto.
 // "Link til listen" (indkøbsliste) er noget helt andet og hører hjemme i Del liste. Udskilt fra FamilyScreen.jsx (arkitekturregel 3).
 import React, { useState } from "react";
 import { SUPABASE_URL, DIETS_ENABLED } from "./constants.jsx";
@@ -47,9 +47,33 @@ const callInviteFn = async (accessToken, body) => {
   }
 };
 
-// Række i oversigten: en sendt invitation, der endnu ikke er accepteret. "Send igen" har en pause på 30 minutter (serveren afgør).
+export const inviteUrl = token => `https://eatsafe.dk/invite/${token}`;
+
+// Del/kopiér det delte link. `url` er hele adressen.
+function LinkActions({ url }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => { navigator.clipboard?.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  const share = () => navigator.share({ title: "Invitation til EatSafe", text: "Jeg vil gerne invitere dig til min familie i EatSafe.", url }).catch(() => {});
+  return (
+    <div style={UI.rowGap8}>
+      {navigator.share && (
+        <button type="button" onClick={share} style={{ ...BTN, flex:1, background:"var(--green)", color:"var(--on-green)", border:"none" }}>
+          <Icon name="share" size={14} color="var(--on-green)" /> Del linket
+        </button>
+      )}
+      <button type="button" onClick={copy}
+        style={{ ...BTN, flex:1, background: navigator.share ? "var(--surface)" : "var(--green)", color: navigator.share ? "var(--ink)" : "var(--on-green)", border: navigator.share ? "1px solid var(--border2)" : "none" }}>
+        <Icon name={copied ? "check" : "link"} size={14} color={navigator.share ? "var(--ink)" : "var(--on-green)"} /> {copied ? "Kopieret" : "Kopiér link"}
+      </button>
+    </div>
+  );
+}
+
+// Række i oversigten: en sendt invitation, der endnu ikke er accepteret. Mail-invitationer har "Send igen" (pause på 30 minutter, serveren
+// afgør); delte links kan deles igen, og hver, der bruger linket, skal godkendes af afsenderen.
 export function PendingInviteCard({ invite, onCancel, accessToken }) {
   const [sending, setSending] = useState(false);
+  const isLink = invite.kind === "link";
   const resend = async () => {
     setSending(true);
     const res = await callInviteFn(accessToken, { resend_id: invite.id });
@@ -61,15 +85,18 @@ export function PendingInviteCard({ invite, onCancel, accessToken }) {
   return (
     <div className="family-member">
       <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-        <div className="fm-avatar" style={{ background:"var(--surface2)" }}><Icon name="mail" size={16} color="var(--muted2)" /></div>
+        <div className="fm-avatar" style={{ background:"var(--surface2)" }}><Icon name={isLink ? "link" : "mail"} size={16} color="var(--muted2)" /></div>
         <div style={UI.flex1}>
-          <div style={{ fontWeight:800, fontSize:15 }}>Invitation sendt</div>
-          <div style={{ ...UI.muted11mt2, overflowWrap:"anywhere" }}>{invite.invitee_email || "Afventer svar"} · virker {formatExpiry(invite.expires_at)}</div>
+          <div style={{ fontWeight:800, fontSize:15 }}>{isLink ? "Delt link" : "Invitation sendt"}</div>
+          <div style={{ ...UI.muted11mt2, overflowWrap:"anywhere" }}>
+            {isLink ? "Du godkender, hvem der bruger det" : (invite.invitee_email || "Afventer svar")} · virker {formatExpiry(invite.expires_at)}
+          </div>
         </div>
       </div>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:10 }}>
+      {isLink && invite.token && <div style={{ marginTop:10 }}><LinkActions url={inviteUrl(invite.token)} /></div>}
+      <div style={{ display:"flex", alignItems:"center", justifyContent: isLink ? "flex-start" : "space-between", marginTop:10 }}>
         <TextLink onClick={onCancel}>Annuller invitation</TextLink>
-        <TextLink onClick={sending ? undefined : resend}>{sending ? "Sender…" : "Send igen"}</TextLink>
+        {!isLink && <TextLink onClick={sending ? undefined : resend}>{sending ? "Sender…" : "Send igen"}</TextLink>}
       </div>
     </div>
   );
@@ -95,24 +122,34 @@ export function WhatIsShared() {
   );
 }
 
-// Panel: forklaring → skriv e-mail → send. onInviteId bruges af oversigten til ikke at vise samme invitation to gange.
+// Panel: forklaring → vælg mail eller delt link → send/opret. onInviteId bruges af oversigten til ikke at vise samme invitation to gange.
 export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
+  const [mode, setMode] = useState("mail"); // "mail" | "link"
   const [email, setEmail] = useState("");
   const [sentTo, setSentTo] = useState(null);
+  const [linkUrl, setLinkUrl] = useState(null);
   const [inviteId, setInviteId] = useState(null);
   const [expiresAt, setExpiresAt] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const finish = invite => { setInviteId(invite.id); setExpiresAt(invite.expires_at); onInviteId?.(invite.id); onChanged?.(); };
 
   const send = async e => {
     e?.preventDefault();
     setLoading(true); setError("");
     const res = await callInviteFn(accessToken, { email: email.trim() });
     setLoading(false);
-    if (res.success && res.invite) {
-      setSentTo(res.invite.invitee_email); setInviteId(res.invite.id); setExpiresAt(res.invite.expires_at);
-      onInviteId?.(res.invite.id); onChanged?.();
-    } else setError(inviteErrorText(res.error));
+    if (res.success && res.invite) { setSentTo(res.invite.invitee_email); finish(res.invite); }
+    else setError(inviteErrorText(res.error));
+  };
+
+  const createLink = async () => {
+    setLoading(true); setError("");
+    const res = await callInviteFn(accessToken, { kind: "link" });
+    setLoading(false);
+    if (res.success && res.invite?.url) { setLinkUrl(res.invite.url); finish(res.invite); }
+    else setError(inviteErrorText(res.error));
   };
 
   const cancel = async () => {
@@ -124,19 +161,35 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
   };
   const done = () => { onInviteId?.(null); onChanged?.(); onClose(); };
 
+  const created = !!(sentTo || linkUrl);
+  const TAB = on => ({ ...BTN, flex:1, minHeight:40, background: on ? "var(--green-selected-bg)" : "var(--surface)", color:"var(--ink)", border: on ? "1px solid var(--green)" : "1px solid var(--border2)" });
+
   return (
     <div className="card" style={UI.mb12}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6 }}>
         <div className="card-title" style={{ marginBottom:0 }}>Invitér en voksen</div>
-        {!sentTo && <TextLink onClick={onClose}>Annuller</TextLink>}
+        {!created && <TextLink onClick={onClose}>Annuller</TextLink>}
       </div>
 
-      {!sentTo ? (
+      {!created && (
+        <>
+          <div style={{ display:"flex", gap:8, margin:"6px 0 12px" }} role="tablist" aria-label="Sådan inviterer du">
+            <button type="button" role="tab" aria-selected={mode === "mail"} style={TAB(mode === "mail")} onClick={() => { setMode("mail"); setError(""); }}>
+              <Icon name="mail" size={14} color="var(--ink)" /> Send på mail
+            </button>
+            <button type="button" role="tab" aria-selected={mode === "link"} style={TAB(mode === "link")} onClick={() => { setMode("link"); setError(""); }}>
+              <Icon name="link" size={14} color="var(--ink)" /> Del et link
+            </button>
+          </div>
+          <div style={{ background:"var(--surface2)", borderRadius:10, padding:"12px 14px", marginBottom:12 }}><WhatIsShared /></div>
+        </>
+      )}
+
+      {!created && mode === "mail" && (
         <form onSubmit={send}>
           <div style={{ fontSize:12.5, color:"var(--muted2)", lineHeight:1.5, marginBottom:12 }}>
             Skriv e-mailadressen på den, du vil invitere. Vi sender en invitation dertil. Har personen allerede en EatSafe-konto, logger de bare ind og bekræfter i appen; ellers opretter de en egen konto. Personen styrer selv sin profil.
           </div>
-          <div style={{ background:"var(--surface2)", borderRadius:10, padding:"12px 14px", marginBottom:12 }}><WhatIsShared /></div>
           <label htmlFor="invite-email" style={{ fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 }}>E-mailadresse</label>
           <input id="invite-email" type="email" inputMode="email" autoComplete="off" autoCapitalize="none" spellCheck={false}
             placeholder="navn@eksempel.dk" value={email} onChange={e => { setEmail(e.target.value); setError(""); }}
@@ -150,13 +203,47 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
           </button>
           {error && <div role="alert" style={{ fontSize:12, color:"var(--red)", marginTop:8 }}>{error}</div>}
         </form>
-      ) : (
+      )}
+
+      {!created && mode === "link" && (
+        <div>
+          <div style={{ fontSize:12.5, color:"var(--muted2)", lineHeight:1.5, marginBottom:12 }}>
+            Få et link, du selv kan dele, fx i Messenger eller en besked. Du behøver ikke kende personens e-mailadresse.
+          </div>
+          <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginBottom:12 }}>
+            Den første, der bruger linket og siger ja, skal godkendes af dig, før I bliver forbundet. Del kun linket med den, du vil invitere. Det virker i 24 timer og kun til én person.
+          </div>
+          <button type="button" onClick={createLink} disabled={loading}
+            style={{ ...BTN, width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", opacity: loading ? .6 : 1 }}>
+            {loading ? "Opretter link…" : "Opret link"}
+          </button>
+          {error && <div role="alert" style={{ fontSize:12, color:"var(--red)", marginTop:8 }}>{error}</div>}
+        </div>
+      )}
+
+      {sentTo && (
         <>
           <div style={{ fontSize:12.5, color:"var(--ink2)", lineHeight:1.5, marginBottom:12, overflowWrap:"anywhere" }}>
             Invitationen er sendt til <strong>{sentTo}</strong>{expiresAt ? ` og virker ${formatExpiry(expiresAt)}` : ""}.
           </div>
           <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>
             Bed personen åbne mailen og følge linket, eller oprette sig eller logge ind med den adresse. Når personen har sagt ja i appen, bliver de tilføjet til din Familie. Kan mailen ikke findes, så tjek spam-mappen.
+          </div>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:10 }}>
+            <TextLink onClick={cancel}>Annuller invitation</TextLink>
+            <TextLink onClick={done}>Færdig</TextLink>
+          </div>
+        </>
+      )}
+
+      {linkUrl && (
+        <>
+          <div style={{ fontSize:12.5, color:"var(--ink2)", lineHeight:1.5, marginBottom:12 }}>
+            Linket er klar{expiresAt ? ` og virker ${formatExpiry(expiresAt)}` : ""}. Del det med den, du vil invitere.
+          </div>
+          <LinkActions url={linkUrl} />
+          <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginTop:10 }}>
+            Når personen har brugt linket og sagt ja, får du besked i appen og skal godkende, før I bliver forbundet.
           </div>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:10 }}>
             <TextLink onClick={cancel}>Annuller invitation</TextLink>

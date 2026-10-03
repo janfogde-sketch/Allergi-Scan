@@ -22,6 +22,12 @@ describe("mergeInvites", () => {
     expect(res).toHaveLength(1);
     expect(res[0].viaToken).toBe("tok-a");
   });
+  it("bevarer typen på et delt link, så sheetet kan bede om afsenderens godkendelse", () => {
+    const link = { id: "c", kind: "link", inviter_first_name: "Jan", expires_at: "2026-10-04T12:00:00Z", awaiting: false };
+    const res = mergeInvites([], link, "tok-c");
+    expect(res[0].kind).toBe("link");
+    expect(res[0].viaToken).toBe("tok-c");
+  });
   it("ignorerer et link uden token eller uden gyldig invitation", () => {
     expect(mergeInvites([a], b, null)).toEqual([a]);
     expect(mergeInvites([a], {}, "tok")).toEqual([a]);

@@ -73,7 +73,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
   const [pendingInvites, setPendingInvites] = useState([]);
   const loadPendingInvites = () => {
     if (!accessToken || !userId) return;
-    apiCall(`${SUPABASE_URL}/rest/v1/family_invites?invited_by=eq.${userId}&status=eq.pending&order=created_at.desc&select=id,invitee_email,expires_at`, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } })
+    apiCall(`${SUPABASE_URL}/rest/v1/family_invites?invited_by=eq.${userId}&status=eq.pending&order=created_at.desc&select=id,invitee_email,expires_at,kind,token`, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } })
       .then(data => { if (Array.isArray(data)) setPendingInvites(data.filter(i => new Date(i.expires_at) > new Date())); })
       .catch(() => {});
   };
