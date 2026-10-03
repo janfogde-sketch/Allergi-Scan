@@ -167,7 +167,7 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
   return (
     <div className="card" style={UI.mb12}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6 }}>
-        <div className="card-title" style={{ marginBottom:0 }}>Invitér en voksen</div>
+        <div className="card-title" style={{ marginBottom:0 }}>Invitér til familien</div>
         {!created && <TextLink onClick={onClose}>Annuller</TextLink>}
       </div>
 

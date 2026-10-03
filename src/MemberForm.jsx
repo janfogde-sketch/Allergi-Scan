@@ -94,7 +94,7 @@ export const MemberForm = ({
           <div role="note" style={{ marginTop:10, padding:"12px 14px", borderRadius:12, background:"var(--surface2)", border:"1px solid var(--border)" }}>
             <div style={{ fontSize:13, color:"var(--ink)", lineHeight:1.5 }}>Personer på 18 år eller derover skal have deres egen EatSafe-konto.</div>
             {onInviteAdult
-              ? <SecondaryButton style={{ minHeight:44, marginTop:10 }} onClick={onInviteAdult}>Invitér voksen</SecondaryButton>
+              ? <SecondaryButton style={{ minHeight:44, marginTop:10 }} onClick={onInviteAdult}>Invitér til familien</SecondaryButton>
               : <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginTop:6 }}>{inviteHint}</div>}
           </div>
         )}

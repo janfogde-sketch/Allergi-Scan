@@ -146,7 +146,7 @@ describe("MemberForm: samtykke og model for andres profiler", () => {
     expect(document.getElementById("member-consent")).toBeNull();
   });
 
-  it("alderen i en børneprofil kan ikke komme over 17: typet eller med +, og 18+ forklares med Invitér voksen", () => {
+  it("alderen i en børneprofil kan ikke komme over 17: typet eller med +, og 18+ forklares med Invitér til familien", () => {
     const onAdd = vi.fn(); const onInviteAdult = vi.fn();
     render(<Harness onAdd={onAdd} onInviteAdult={onInviteAdult} initial={{ allergens: ["noedder"] }} />);
     fireEvent.change(screen.getByPlaceholderText("Fx. Mia"), { target: { value: "Arnold" } });
@@ -154,7 +154,7 @@ describe("MemberForm: samtykke og model for andres profiler", () => {
     expect(screen.getByLabelText("Alder i år").value).toBe("17"); // klippet til 17
     expect(screen.getByText("Personer på 18 år eller derover skal have deres egen EatSafe-konto.")).toBeTruthy();
     expect(screen.queryByText("Voksne administrerer deres egen profil")).toBeNull();
-    fireEvent.click(screen.getByText("Invitér voksen"));
+    fireEvent.click(screen.getByText("Invitér til familien"));
     expect(onInviteAdult).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByLabelText("Ét år ældre")); // + ved 17 går ikke videre
     expect(screen.getByLabelText("Alder i år").value).toBe("17");

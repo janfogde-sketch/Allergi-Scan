@@ -169,7 +169,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
 
       <div style={SECTION}>Familiemedlemmer med egen konto</div>
       <div style={SECTION_SUB}>Voksne med egen EatSafe-konto, som du har inviteret.</div>
-      {household.length === 0 && pendingInvites.length === 0 && <EmptyRow title="Ingen endnu" text="Invitér en voksen til familien." />}
+      {household.length === 0 && pendingInvites.length === 0 && <EmptyRow title="Ingen endnu" text="Invitér en person til familien." />}
       {household.map(m => (
         <div key={`h-${m.id}`} className="family-member">
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
@@ -273,7 +273,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
               <Icon name="mail" size={18} color="var(--green)" />
             </span>
             <span>
-              <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>Invitér voksen</div>
+              <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>Invitér til familien</div>
               <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Sendes som mail til personer på 18 år eller derover med egen EatSafe-konto.</div>
             </span>
           </button>

@@ -314,7 +314,7 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
     onChanged?.();
   };
 
-  const familySub = familyMembers.length > 0 ? `${joinNames(familyMembers.map(m => (nameOf(m)).split(" ")[0]))} kan se og redigere listen.` : "Du har ingen i din familie endnu. Invitér en voksen først.";
+  const familySub = familyMembers.length > 0 ? `${joinNames(familyMembers.map(m => (nameOf(m)).split(" ")[0]))} kan se og redigere listen.` : "Du har ingen i din familie endnu. Invitér nogen til familien først.";
 
   return (
     <Sheet label="Del liste" onClose={onClose}>
