@@ -12,12 +12,17 @@ export function useIncomingLinks({
   joinByCode, loadShoppingList, setAuthTab, setScreen, setActiveListId,
 }) {
   // ── Familie-invitation (?invite=) ────────────────────────────────────────
-  // Invitationen er bundet til modtagerens e-mail (3. okt. 2026), så tokenet gemmes ikke længere: når en konto med den e-mail er
-  // logget ind, viser useFamilyInviteInbox en bekræftelse, uanset i hvilken browser linket blev åbnet. Linket sender kun en ny
-  // bruger til oprettelse (eller login med `&login=1`).
+  // To veje til samme bekræftelse (useFamilyInviteInbox, 3. okt. 2026): kontoens bekræftede e-mail matcher invitationen, ELLER brugeren
+  // fulgte linket i mailen. Tokenet gemmes derfor (`as_pending_invite`), så det overlever oprettelse, login (også Facebook) og onboarding;
+  // tokenet fjernes fra adressen med det samme og ryddes, når invitationen er besvaret. Linket sender en ny bruger til oprettelse
+  // (eller login med `&login=1`). Intet kobles uden brugerens eget ja.
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (!params.has("invite")) return;
+    const token = params.get("invite");
+    if (token && /^[A-Za-z0-9]{16,128}$/.test(token)) {
+      try { localStorage.setItem("as_pending_invite", token); } catch { /* ingen lagring: e-mail-match virker stadig */ }
+    }
     const url = new URL(window.location.href);
     url.searchParams.delete("invite");
     url.searchParams.delete("login");

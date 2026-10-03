@@ -314,7 +314,7 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
     onChanged?.();
   };
 
-  const familySub = familyMembers.length > 0 ? `${joinNames(familyMembers.map(m => (nameOf(m)).split(" ")[0]))} kan se og redigere listen.` : "Du har ingen i din familie endnu. Invitér en voksen først.";
+  const familySub = familyMembers.length > 0 ? `${joinNames(familyMembers.map(m => (nameOf(m)).split(" ")[0]))} kan se og redigere listen.` : "Du har ingen i din familie endnu. Invitér nogen til familien først.";
 
   return (
     <Sheet label="Del liste" onClose={onClose}>
@@ -415,6 +415,7 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
 // Bekræftelse af en familie-invitation, sendt til kontoens bekræftede e-mail. Kobles aldrig uden et aktivt ja (helbredsdata, GDPR art. 9).
 export function FamilyInviteSheet({ invite, busy, onConfirm, onDecline, onLater }) {
   const who = invite.inviter_first_name || "En bruger af EatSafe";
+  const isLink = invite.kind === "link"; // delt link: afsenderen skal også godkende
   const points = [
     "I kan se hinandens allergier, så I kan tjekke varer for hinanden.",
     "I kan dele indkøbslister.",
@@ -427,6 +428,7 @@ export function FamilyInviteSheet({ invite, busy, onConfirm, onDecline, onLater 
       <SheetBody>
       <div style={{ fontSize:14, color:"var(--ink)", lineHeight:1.5, marginBottom:12, ...WRAP }}>
         <strong>{who}</strong> har inviteret dig til sin familie i EatSafe.
+        {isLink && " Når du siger ja, skal vedkommende godkende, før I bliver forbundet."}
       </div>
       <div style={{ ...CARD, padding:"12px 14px", marginBottom:12 }}>
         <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Hvis du siger ja</div>
@@ -440,9 +442,44 @@ export function FamilyInviteSheet({ invite, busy, onConfirm, onDecline, onLater 
         Kender du ikke personen, så vælg "Nej tak". Så får de ingen adgang.
       </div>
       <button type="button" className="btn btn-primary" style={{ width:"100%", minHeight:48, marginBottom:8 }} disabled={busy} onClick={onConfirm}>
-        {busy ? "Accepterer…" : "Ja, forbind os"}
+        {busy ? (isLink ? "Sender…" : "Accepterer…") : (isLink ? "Ja, send anmodning" : "Ja, forbind os")}
       </button>
       <button type="button" className="btn btn-outline" style={{ width:"100%", minHeight:48 }} disabled={busy} onClick={onDecline}>Nej tak</button>
+      </SheetBody>
+    </Sheet>
+  );
+}
+
+// Afsenderens godkendelse: en person har brugt det delte invitationslink og vil forbindes. Intet kobles uden afsenderens ja.
+export function FamilyRequestSheet({ request, busy, onApprove, onDecline, onLater }) {
+  const who = request.requester_first_name || "En bruger af EatSafe";
+  const points = [
+    "I kan se hinandens allergier, så I kan tjekke varer for hinanden.",
+    "I kan dele indkøbslister.",
+    "Du kan til enhver tid afslutte forbindelsen under Familie.",
+  ];
+  return (
+    <Sheet label="Godkend forbindelse" onClose={onLater}>
+      <SheetHeader title="Godkend forbindelse" onClose={onLater} />
+      <SheetBody>
+      <div style={{ fontSize:14, color:"var(--ink)", lineHeight:1.5, marginBottom:12, ...WRAP }}>
+        <strong>{who}</strong> har brugt dit invitationslink og vil forbindes med dig i Familie.
+      </div>
+      <div style={{ ...CARD, padding:"12px 14px", marginBottom:12 }}>
+        <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Hvis du godkender</div>
+        {points.map(t => (
+          <div key={t} style={{ display:"flex", gap:8, fontSize:12.5, color:"var(--ink2)", lineHeight:1.45, marginBottom:6 }}>
+            <span style={{ flexShrink:0, marginTop:2 }}><Icon name="check" size={13} color="var(--green)" /></span><span>{t}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginBottom:16 }}>
+        Kender du ikke personen, eller var linket ikke tiltænkt dem, så vælg "Afvis".
+      </div>
+      <button type="button" className="btn btn-primary" style={{ width:"100%", minHeight:48, marginBottom:8 }} disabled={busy} onClick={onApprove}>
+        {busy ? "Godkender…" : "Godkend"}
+      </button>
+      <button type="button" className="btn btn-outline" style={{ width:"100%", minHeight:48 }} disabled={busy} onClick={onDecline}>Afvis</button>
       </SheetBody>
     </Sheet>
   );

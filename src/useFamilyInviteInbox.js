@@ -1,10 +1,17 @@
 // @ts-nocheck
-// Familie-invitationer til kontoens bekræftede e-mail (3. okt. 2026). Invitationen er bundet til den e-mail, afsenderen skrev, så
-// den virker uanset hvilken browser linket blev åbnet i. Modtageren bekræfter selv i FamilyInviteSheet; intet kobles uden et ja.
+// Familie-invitationer (3. okt. 2026). To veje ind til samme sheet, begge kræver et aktivt ja fra modtageren:
+//  1) e-mail-match: kontoens bekræftede e-mail er den, afsenderen skrev (virker uden token, i enhver browser og ved enhver loginmetode med e-mail);
+//  2) linket i mailen: tokenet gemmes i localStorage (`as_pending_invite`, sat af useIncomingLinks) og følger brugeren gennem oprettelse/login,
+//     også med Facebook eller en anden adresse end den inviterede. Tokenet ryddes, når invitationen er besvaret eller ikke længere gælder.
 import { useState, useEffect, useCallback } from "react";
 import { SUPABASE_URL } from "./constants.jsx";
 import { apiCall, makeHeaders } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
+import { mergeInvites, nextInvite } from "./familyInviteInbox.js";
+
+const TOKEN_KEY = "as_pending_invite";
+const readToken = () => { try { return localStorage.getItem(TOKEN_KEY); } catch { return null; } };
+const clearToken = () => { try { localStorage.removeItem(TOKEN_KEY); } catch { /* ingen lagring: intet at rydde */ } };
 
 const rpc = (name, accessToken, body = {}) =>
   apiCall(`${SUPABASE_URL}/rest/v1/rpc/${name}`, { method: "POST", headers: makeHeaders(accessToken), body: JSON.stringify(body) });
@@ -17,9 +24,16 @@ export function useFamilyInviteInbox({ accessToken, userId, user, loadFamily }) 
 
   const load = useCallback(async () => {
     try {
-      const data = await rpc("get_my_pending_family_invites", accessToken);
-      setInvites(Array.isArray(data) ? data : []);
-    } catch { /* stille: prøves igen næste gang appen åbnes */ }
+      const emailInvites = await rpc("get_my_pending_family_invites", accessToken);
+      const token = readToken();
+      let linkInvite = null;
+      if (token) {
+        linkInvite = await rpc("get_family_invite_by_link", accessToken, { p_token: token });
+        // Brugt, udløbet, din egen eller allerede anmodet om (afventer afsenderens godkendelse): tokenet er ikke længere til nytte
+        if (!linkInvite || !linkInvite.id || linkInvite.awaiting) { linkInvite = null; clearToken(); }
+      }
+      setInvites(mergeInvites(emailInvites, linkInvite, linkInvite ? token : null));
+    } catch { /* stille: tokenet beholdes, og det prøves igen næste gang appen åbnes eller kommer i forgrunden */ }
   }, [accessToken]);
 
   useEffect(() => { if (ready) load(); }, [ready, userId, load]);
@@ -33,16 +47,22 @@ export function useFamilyInviteInbox({ accessToken, userId, user, loadFamily }) 
     return () => { document.removeEventListener("visibilitychange", onVisible); window.removeEventListener("focus", onVisible); };
   }, [ready, load]);
 
-  const current = invites.find(i => !dismissed.includes(i.id)) || null;
+  const current = nextInvite(invites, dismissed);
   const remove = id => setInvites(list => list.filter(i => i.id !== id));
 
   const accept = async () => {
     if (!current) return;
     setBusy(true);
     try {
-      const res = await rpc("accept_my_family_invite", accessToken, { p_invite_id: current.id });
+      const res = current.viaToken
+        ? await rpc("accept_family_invite_by_link", accessToken, { p_token: current.viaToken })
+        : await rpc("accept_my_family_invite", accessToken, { p_invite_id: current.id });
       remove(current.id);
-      if (res?.success) {
+      if (current.viaToken) clearToken();
+      if (res?.success && res.pending_approval) {
+        // Delt link: afsenderen skal godkende, før I bliver forbundet
+        showToast(`Anmodningen er sendt. ${current.inviter_first_name || "Afsenderen"} skal godkende, før I bliver forbundet.`);
+      } else if (res?.success) {
         loadFamily?.();
         showToast("Du er nu i familie med den, der inviterede dig. Se jer under Familie i menuen.");
       } else showToast("Invitationen virker ikke længere. Den er udløbet eller allerede brugt. Bed om en ny.", "error");
@@ -54,8 +74,11 @@ export function useFamilyInviteInbox({ accessToken, userId, user, loadFamily }) 
     if (!current) return;
     setBusy(true);
     try {
-      await rpc("decline_my_family_invite", accessToken, { p_invite_id: current.id });
+      // Et delt link kan ikke afvises af en, der blot har linket (det ville også ødelægge afsenderens invitation): tokenet ryddes bare
+      if (current.viaToken && current.kind !== "link") await rpc("decline_family_invite_by_link", accessToken, { p_token: current.viaToken });
+      else if (!current.viaToken) await rpc("decline_my_family_invite", accessToken, { p_invite_id: current.id });
       remove(current.id);
+      if (current.viaToken) clearToken();
       showToast("Okay. Du er ikke tilføjet til familien.");
     } catch { showToast("Kunne ikke afvise invitationen. Prøv igen.", "error"); }
     setBusy(false);

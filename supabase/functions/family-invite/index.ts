@@ -3,6 +3,7 @@
 // så antal og afsendelse styres her. Tokenet returneres aldrig til klienten; det findes kun i mailen.
 //
 //   POST { email }      → opret invitation og send mail
+//   POST { kind: "link" } → opret et delt link (ingen e-mail); afsenderen får URL'en og skal selv godkende, hvem der bruger det
 //   POST { resend_id }  → send mailen igen (pause mellem hver afsendelse)
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { sendHtmlMail } from "../_shared/mailSend.ts";
@@ -37,7 +38,7 @@ Deno.serve(async (req) => {
   const apiKey = Deno.env.get("RESEND_API_KEY") ?? "";
   if (!apiKey) return json({ error: "mail_not_configured" }, 500);
 
-  let body: { email?: unknown; resend_id?: unknown } = {};
+  let body: { email?: unknown; resend_id?: unknown; kind?: unknown } = {};
   try { body = await req.json(); } catch { return json({ error: "Ugyldig forespørgsel" }, 400); }
 
   const { data: me } = await db.from("users").select("name").eq("id", caller.id).maybeSingle();
@@ -77,6 +78,19 @@ Deno.serve(async (req) => {
       if (!(await sendInviteMail(inv))) return json({ error: "mail_failed" }, 502);
       await db.from("family_invites").update({ mail_sent_at: new Date().toISOString() }).eq("id", inv.id).eq("invited_by", caller.id);
       return json({ success: true });
+    }
+
+    // ── Delt link (afsenderen godkender hver, der bruger det; se accept_family_invite_by_link) ──
+    if (body.kind === "link") {
+      const since = new Date(Date.now() - 864e5).toISOString();
+      const { count } = await db.from("family_invites").select("id", { count: "exact", head: true })
+        .eq("invited_by", caller.id).gte("created_at", since);
+      if ((count ?? 0) >= MAX_INVITE_MAILS_PER_DAY) return json({ error: "rate_limited" }, 429);
+      const { data: link, error: linkError } = await db.from("family_invites")
+        .insert({ invited_by: caller.id, kind: "link" })
+        .select("id, token, expires_at").single();
+      if (linkError || !link) { console.error("family-invite: link fejlede", linkError?.message); return json({ error: "create_failed" }, 500); }
+      return json({ success: true, invite: { id: link.id, kind: "link", expires_at: link.expires_at, url: `https://eatsafe.dk/invite/${link.token}` } });
     }
 
     // ── Ny invitation ──────────────────────────────────────────────────────
