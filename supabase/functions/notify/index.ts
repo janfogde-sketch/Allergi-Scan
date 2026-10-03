@@ -71,13 +71,39 @@ async function planEvent(db: Db, ev: EventRow): Promise<Planned[]> {
       return ids.map((userId) => ({ userId: userId as string, templateKey: "N4:default", eventAt: s.reviewed_at ?? undefined, data: { productName, ean: s.ean } }));
     }
     case "family_invite_accepted": {
-      const { data: inv } = await db.from("family_invites").select("id, invited_by, accepted_by, accepted_at").eq("id", p.invite_id).maybeSingle();
+      const { data: inv } = await db.from("family_invites").select("id, kind, invited_by, accepted_by, accepted_at").eq("id", p.invite_id).maybeSingle();
       if (!inv?.invited_by || !inv?.accepted_by) return [];
+      // Delt link: afsenderen har selv godkendt, så beskeden går til DEN, DER BAD om forbindelsen (ikke til den, der godkendte).
+      if (inv.kind === "link") {
+        const { data: sender } = await db.from("users").select("name").eq("id", inv.invited_by).maybeSingle();
+        return [{
+          userId: inv.accepted_by, templateKey: "N11:approved", eventAt: inv.accepted_at ?? undefined,
+          data: { memberName: sender?.name, inviteId: inv.id },
+        }];
+      }
       const { data: who } = await db.from("users").select("name").eq("id", inv.accepted_by).maybeSingle();
       return [{
         userId: inv.invited_by, templateKey: "N5:default", eventAt: inv.accepted_at ?? undefined,
         data: { memberName: who?.name, inviteId: inv.id },
       }];
+    }
+    case "family_link_requested": {
+      // Nogen har brugt afsenderens delte link og venter på godkendelse (N10 til afsenderen).
+      const { data: inv } = await db.from("family_invites").select("id, kind, status, invited_by, requested_by").eq("id", p.invite_id).maybeSingle();
+      if (!inv?.invited_by || !inv?.requested_by || inv.kind !== "link" || inv.status !== "pending") return []; // allerede besvaret eller trukket tilbage
+      const { data: who } = await db.from("users").select("name").eq("id", inv.requested_by).maybeSingle();
+      return [{ userId: inv.invited_by, templateKey: "N10:default", data: { memberName: who?.name, inviteId: inv.id } }];
+    }
+    case "family_link_declined": {
+      // Afsenderen har afvist eller annulleret, efter at nogen bad om forbindelse (N11:declined til den, der bad). Rækken kan være slettet,
+      // så id'erne ligger i hændelsen. Er afsenderens konto slettet, sendes intet.
+      const requesterId = String(p.requester_id ?? ""), inviterId = String(p.inviter_id ?? "");
+      if (!requesterId || !inviterId) return [];
+      const { data: sender } = await db.from("users").select("name").eq("id", inviterId).maybeSingle();
+      if (!sender) return [];
+      const { data: requester } = await db.from("users").select("id").eq("id", requesterId).maybeSingle();
+      if (!requester) return [];
+      return [{ userId: requesterId, templateKey: "N11:declined", data: { memberName: sender.name, inviteId: String(p.invite_id ?? "") } }];
     }
     case "ticket_update": {
       const { data: t } = await db.from("feedback_tickets").select("id, description, submitted_by").eq("id", p.ticket_id).maybeSingle();

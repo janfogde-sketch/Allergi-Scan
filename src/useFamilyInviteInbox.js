@@ -7,11 +7,10 @@ import { useState, useEffect, useCallback } from "react";
 import { SUPABASE_URL } from "./constants.jsx";
 import { apiCall, makeHeaders } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
-import { mergeInvites, nextInvite } from "./familyInviteInbox.js";
+import { mergeInvites, nextInvite, linkStatusMessage, INVITE_TOKEN_EVENT, readInviteToken, clearInviteToken } from "./familyInviteInbox.js";
 
-const TOKEN_KEY = "as_pending_invite";
-const readToken = () => { try { return localStorage.getItem(TOKEN_KEY); } catch { return null; } };
-const clearToken = () => { try { localStorage.removeItem(TOKEN_KEY); } catch { /* ingen lagring: intet at rydde */ } };
+const readToken = readInviteToken;
+const clearToken = clearInviteToken;
 
 const rpc = (name, accessToken, body = {}) =>
   apiCall(`${SUPABASE_URL}/rest/v1/rpc/${name}`, { method: "POST", headers: makeHeaders(accessToken), body: JSON.stringify(body) });
@@ -29,14 +28,30 @@ export function useFamilyInviteInbox({ accessToken, userId, user, loadFamily }) 
       let linkInvite = null;
       if (token) {
         linkInvite = await rpc("get_family_invite_by_link", accessToken, { p_token: token });
-        // Brugt, udløbet, din egen eller allerede anmodet om (afventer afsenderens godkendelse): tokenet er ikke længere til nytte
-        if (!linkInvite || !linkInvite.id || linkInvite.awaiting) { linkInvite = null; clearToken(); }
+        // Brugt, udløbet, din egen eller allerede anmodet om (afventer afsenderens godkendelse): tokenet er ikke længere til nytte.
+        // Brugeren får en forklaring (fx hvis en anden allerede har brugt det delte link), i stedet for at invitationen forsvinder stille.
+        if (!linkInvite || !linkInvite.id || linkInvite.awaiting) {
+          linkInvite = null;
+          clearToken();
+          try {
+            const status = await rpc("get_family_invite_link_status", accessToken, { p_token: token });
+            const msg = linkStatusMessage(typeof status === "string" ? status : null);
+            if (msg) showToast(msg, status === "awaiting" ? "success" : "error");
+          } catch { /* ingen forklaring: tokenet er alligevel ryddet */ }
+        }
       }
       setInvites(mergeInvites(emailInvites, linkInvite, linkInvite ? token : null));
     } catch { /* stille: tokenet beholdes, og det prøves igen næste gang appen åbnes eller kommer i forgrunden */ }
   }, [accessToken]);
 
   useEffect(() => { if (ready) load(); }, [ready, userId, load]);
+
+  // Et invitationslink indsat i appen (Familie → "Har du fået et invitationslink?") skal virke med det samme.
+  useEffect(() => {
+    if (!ready) return undefined;
+    window.addEventListener(INVITE_TOKEN_EVENT, load);
+    return () => window.removeEventListener(INVITE_TOKEN_EVENT, load);
+  }, [ready, load]);
 
   // En allerede logget ind bruger skal også se en invitation, der kommer, mens appen er åben i baggrunden: hent igen, når appen kommer i forgrunden.
   useEffect(() => {

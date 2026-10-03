@@ -14,11 +14,18 @@ Notation: **A** = afsender (inviterer), **M** = modtager, **✔** = skal virke, 
 ## 1. Automatiske test (kør altid først)
 | Hvad | Hvordan | Forventet |
 |---|---|---|
-| Enheds- og logiktest | `npx vitest run` | Alle grønne (bl.a. `familyInvite.test.js`, `inviteMail.test.js`, `familyInviteInbox.test.js`, `mailDarkMode.test.js`) |
-| Databasen, 33 kontroller (M1-M14, L1-L16, O1, P1, P2) | Kør `docs/familie-invitationer-test.sql` i Supabase SQL Editor | Fejler med `TEST_RESULTAT ... Antal FEJL: 0`. Alt rulles tilbage |
+| Enheds- og logiktest, inkl. appens hooks og sheets i jsdom (46 tests i `familyInvitesFlow.test.jsx`) | `npx vitest run` | Alle grønne (903 pr. 4. okt.) |
+| Databasen, 48 kontroller (M1-M14, L1-L16, S1-S9, E1-E6, O1, P1, P2) | Kør `docs/familie-invitationer-test.sql` i Supabase SQL Editor | Fejler med `TEST_RESULTAT ... Antal FEJL: 0`. Alt rulles tilbage. E4 og E5 (annullering, `delete`-udløberen) kan kun køres i SQL Editor, ikke via Claude-værktøjet |
+| Invitationssiden i browser, 774 kontroller: 28 enheder/browserstrenge (iPhone, iPad, Android, Samsung, Firefox, Edge, Opera, computer, 10 app-browsere) × tilstande, kopiér-knap, installationsråd, vandret scroll, konsolfejl | `node scripts/e2e/invite-page.mjs` | `774/774 kontroller OK` |
+| Appens routing for invitationslinks, 72 kontroller (6 browserstrenge × 4 links × 3 første besøg) | `npm run build && npx vite preview --port 4174`, derefter `node scripts/e2e/app-invite.mjs` | `72/72 OK` |
+
+**Begrænsning:** browsertestene kører kun i Chromium. Safari, Firefox og Samsung Internet er EMULERET med browserstreng, skærmstørrelse og
+berøring, ikke med de rigtige motorer. Rigtige enheder, mailklienter, push til en rigtig telefon og Google-/Facebook-login kræver manuel test
+(afsnit 2-5).
 
 Databasetesten dækker: e-mail-match, anden e-mail, token-vejen, udløb, accept/afvis, dobbelt brug, afsenderens egen invitation, delt link
-(anmodning, låsning, tredje person, godkend, afvis, udløb), oprydning af e-mail og rettigheder (herunder at klienten ikke kan oprette invitationer direkte).
+(anmodning, låsning, tredje person, godkend, afvis, udløb), linkets status, notifikationshændelser (anmodning, godkendelse, afvisning, annullering),
+oprydning af e-mail og rettigheder (herunder at klienten ikke kan oprette invitationer direkte).
 
 ## 2. Afsenderen opretter (mail)
 | # | Handling | Forventet |
@@ -49,7 +56,10 @@ Kør hver række på den nævnte kombination. "Sheet" = "Invitation til familien
 | R7 | Eksisterende bruger, appen lukket, logger ind | ✔ Sheet ved login |
 | R8 | Eksisterende bruger, appen åben i baggrunden, invitationen sendes nu | ✔ Sheet, når appen kommer i forgrunden |
 | R9 | Linket åbnes i browser A, login sker i browser B (samme e-mail) | ✔ Sheet vises i B (e-mail-match, ingen token nødvendig) |
-| R10 | Linket åbnes i browser A, login i browser B med **anden** e-mail eller Facebook | ✘ Ingen sheet i B (forventet). Åbn mailens link i B igen → ✔ sheet |
+| R10 | Linket åbnes i browser A, login i browser B med **anden** e-mail eller Facebook | ✘ Ingen sheet i B af sig selv (forventet). I B: Familie → "Har du fået et invitationslink?" → indsæt linket → ✔ sheet. Alternativt åbn mailens link i B |
+| R23 | Første besøg på invitationslinket (ny browser, service workeren genindlæser siden) | ✔ Brugeren lander på oprettelse/login, ikke på velkomstsiden (rettet 4. okt., `recentInviteLinkFollowed`) |
+| R24 | "Har du fået et invitationslink?": indsæt et gyldigt link, et forkert link og tom tekst | ✔ Gyldigt: sheet vises med det samme. Forkert: "Det ligner ikke et invitationslink…". Tom: knappen er slået fra |
+| R25 | Et link, der ikke kan bruges (brugt, udløbet, trukket tilbage, låst, ukendt) følges, mens man er logget ind | ✔ En tydelig besked, ikke en stille forsvinden. Tokenet ryddes |
 | R11 | Linket åbnes i Messenger/Instagram/Googles app-browser | ✔ Advarsel "Åbn invitationen i din browser" og "Kopiér link". Fuldfør i rigtig browser |
 | R12 | Konto, hvis e-mail ikke er bekræftet | ✘ Ingen sheet, før e-mailen er bekræftet |
 | R13 | Midt i onboarding | ✘ Ingen sheet, før onboarding er færdig. Token overlever lukning af appen |
@@ -68,17 +78,17 @@ Kør hver række på den nævnte kombination. "Sheet" = "Invitation til familien
 |---|---|---|
 | L1 | A: fanen "Del et link" → Opret link → Del linket / Kopiér link | ✔ Linket kopieres/deles (`eatsafe.dk/invite/…`). Står i oversigten som "Delt link" med Del/Kopiér/Annuller |
 | L2 | M (ny bruger, e-mail) følger linket → opretter sig → sheet "Ja, send anmodning" | ✔ Toast "Anmodningen er sendt…". M er IKKE forbundet |
-| L3 | A åbner appen (eller har den åben) | ✔ Sheet "Godkend forbindelse" med M's fornavn, senest efter 30 sek. |
-| L4 | A trykker Godkend | ✔ Forbundet. A og M ser hinanden. N5 sendes til A |
-| L5 | A trykker Afvis | ✔ M er ikke forbundet. Linket virker ikke mere |
+| L3 | A åbner appen (eller har den åben) | ✔ Push og besked i appen "Anmodning om forbindelse" (N10, kun push, ingen mail). Sheet "Godkend forbindelse" med M's fornavn, senest efter 30 sek. |
+| L4 | A trykker Godkend | ✔ Forbundet. A og M ser hinanden. M får push/besked "Du er nu i en familie" (N11, godkendt). A får IKKE N5 om sin egen godkendelse |
+| L5 | A trykker Afvis | ✔ M er ikke forbundet. Linket virker ikke mere. M får push/besked "Anmodningen blev ikke godkendt" (N11, afvist) |
 | L6 | A lukker godkendelsessheetet (X) | ✔ Intet afgøres, sheetet kommer igen ved næste åbning |
 | L7 | Samme link som L2, men M logger ind med Facebook | ✔ som L2 |
-| L8 | M2 følger samme link, efter M1 har bedt om det | ✘ Ingen forbindelse (se kendt hul 2: M2 får ingen besked) |
+| L8 | M2 følger samme link, efter M1 har bedt om det | ✘ Ingen forbindelse. M2 får en besked: "Linket er allerede brugt af en anden…", og `invite.html` siger "Linket er allerede brugt" |
 | L9 | M1 følger linket igen efter at have bedt om det | ✔ Ingen dublet |
 | L10 | Linket åbnes i app-browser (Messenger) | ✔ Advarsel, og kopiér-knap |
 | L11 | Linket er over 24 timer gammelt og ingen har bedt om det | ✘ "Invitationen er udløbet" |
 | L12 | M bad om det, A godkender mere end 24 timer senere | ✔ Udløbet forlænges til 24 t fra anmodningen, så en sen godkendelse virker |
-| L13 | A annullerer linket, efter M har bedt om det | ✔ Ingen forbindelse. M får ingen besked (se kendt hul 1) |
+| L13 | A annullerer linket, efter M har bedt om det | ✔ Ingen forbindelse. M får push/besked "Anmodningen blev ikke godkendt" |
 | L14 | A forsøger at bruge sit eget link | ✘ Ingen anmodning |
 | L15 | Mail- og linkinvitationer sammen tæller mod grænsen på 10 pr. døgn | ✔ |
 
@@ -91,16 +101,22 @@ Kør hver række på den nævnte kombination. "Sheet" = "Invitation til familien
 | T4 | Rettigheder | Anonyme kan ikke kalde RPC'erne. Klienten kan ikke indsætte i `family_invites` (testet i SQL-scriptet, P1/P2) |
 | T5 | `invite.html` alle tilstande: gyldig mail, gyldig delt link, udløbet, brugt, findes ikke, netværksfejl | ✔ Rigtig tekst. Maskeret adresse vises kun for mail-invitationer |
 | T6 | `invite.html` installationsråd: Safari, Samsung Internet, Firefox, Edge, Opera, Chrome | ✔ Eget råd pr. browser. Skjules i installeret app |
-| T7 | P2 (invitation udløber snart, 4 t før): mail og push | ✔ Ny tekst. Se kendt hul 3 for delte links |
+| T7 | P2 (invitation udløber snart, 4 t før): mail, push og besked i appen, for både mail-invitation og delt link | ✔ Teksten passer til begge ("Har du sendt invitationen som mail… Har du delt et link…") |
+| T10 | Notifikationsindstillinger → Familieinvitationer | Beskrivelsen: "Svar på dine invitationer og anmodninger om at blive forbundet". N10/N11 følger kategoriens push-/besked-valg. De har ingen mail |
+| T11 | Afsenderens konto slettes, efter at nogen har bedt om et delt link | Ingen besked sendes til den, der bad (afsenderen findes ikke mere) |
 | T8 | Vilkår og privatlivspolitik | Teksten om invitationer (afsnit 4, 7, 11) passer og viser "Sidst opdateret: 3. oktober 2026" |
 | T9 | Tilgængelighed: sheetene med skærmlæser/tastatur | Fokus i sheetet, Escape lukker (= "senere"), knapper har tekst |
 
-## 6. Kendte huller (forventes at fejle, indtil de er rettet)
-1. **M får ingen besked, når A godkender, afviser eller annullerer et delt link.** M ser først forbindelsen ved næste besøg på Familie (opdateres hvert 12. sek. dér). Overvej en besked/notifikationstype.
-2. **En anden person med et allerede låst delt link får ingen forklaring** (tokenet ryddes stille). `invite.html` kender ikke til låsningen.
-3. **P2-teksten taler om "invitationsmailen"**, også for delte links, hvor der ikke findes en mail. Linkinvitationer bør have egen tekst ("del linket igen").
-4. **A får ingen push eller mail, når nogen har bedt om et delt link**, kun sheetet ved næste åbning (maks. 30 sek. når appen er åben).
-5. **Linket i mailen virker kun i den browser, hvor tokenet blev gemt**, når modtageren bruger en anden e-mail end den inviterede. E-mail-match dækker de øvrige tilfælde.
+## 6. Huller fundet i planlægningen, rettet 4. okt. 2026
+1. ~~M fik ingen besked, når A godkender, afviser eller annullerer et delt link.~~ Rettet: N11 (godkendt/afvist) som push og besked i appen, via `family_invite_accepted` (kind=link) og udløberen `trg_notify_link_declined` (afvisning og annullering).
+2. ~~En anden med et låst delt link fik ingen forklaring.~~ Rettet: `get_family_invite_link_status` og en tydelig besked i appen; `invite.html` viser "Linket er allerede brugt" og "Invitationen er trukket tilbage".
+3. ~~P2-teksten talte om invitationsmailen for delte links.~~ Rettet: teksten dækker både mail og delt link (også Resend-skabelonen, når den er opdateret).
+4. ~~A fik ingen push om en anmodning.~~ Rettet: N10 til afsenderen, første gang nogen beder om forbindelse (ingen dublet ved gentagelse).
+5. ~~Mailens link virkede kun i den browser, hvor tokenet blev gemt.~~ Rettet: "Har du fået et invitationslink?" under Familie, hvor linket kan indsættes i den browser, man er logget ind i.
+
+Også rettet undervejs: iPad (Safari fremstår som en Mac) fik Android-råd, computere fik Android-tekst, første besøg på et invitationslink endte på velkomstsiden i stedet for oprettelsen, og mailen lovede "automatisk" kobling, selv om brugeren selv skal sige ja.
+
+**Kendte begrænsninger, ikke huller:** N10/N11 har ingen mail (kun push og besked i appen). Linket i mailen kan bruges af alle, der har mailen (enkelt-brug, 24 t, kræver altid eget ja og, for delte links, afsenderens godkendelse). `?join-list=` (delt indkøbsliste) har samme første-besøg-genindlæsning, som invitationer havde; den er ikke rettet her.
 
 ## 7. Resultater
 Noter dato, hvem der testede, enheder og fund her eller som tickets. Opret et ticket for hvert ✘, der ikke er forventet.
@@ -108,3 +124,9 @@ Noter dato, hvem der testede, enheder og fund her eller som tickets. Opret et ti
 | Dato | Test | Enhed/browser | Resultat |
 |---|---|---|---|
 | 3. okt. 2026 | Databasetest (33 kontroller) | Supabase | 0 FEJL |
+| 4. okt. 2026 | Databasetest, udvidet (13 af 15 nye: S1-S9, E1-E3, E6; E4/E5 kræver SQL Editor) | Supabase | 0 FEJL |
+| 4. okt. 2026 | Vitest, 903 tests (46 nye i `familyInvitesFlow.test.jsx`) | Node/jsdom | Alle grønne |
+| 4. okt. 2026 | Invitationssiden, 774 kontroller | Chromium med 28 emulerede enheder/browsere | 774/774 OK (fandt og rettede iPad- og computerfejl) |
+| 4. okt. 2026 | Appens routing for links, 72 kontroller | Chromium med 6 emulerede browsere | 72/72 OK (fandt og rettede første-besøg-fejlen) |
+| 4. okt. 2026 | Mail N9 (begge varianter) i lys og mørk tilstand, 390 px | Chromium | Læsbar, intet overløb. Logoer ikke indlæst (eksterne billeder blokeret i testen) |
+| Mangler | Push til rigtig telefon, N10/N11 gennem hele kæden (dispatch → notify → besked), testmails i rigtige mailklienter, Google-/Facebook-login, rigtige Safari/Firefox/Samsung-enheder | – | Venter på merge og på manuel test |

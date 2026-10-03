@@ -9,6 +9,7 @@ import { makeHeaders, apiCall } from "./helpers.js";
 import { Icon, showToast } from "./SharedComponents.jsx";
 import { TextLink } from "./DesignSystem.jsx";
 import { UI } from "./styleUtils.js";
+import { parseInviteToken, storeInviteToken, INVITE_TOKEN_EVENT } from "./familyInviteInbox.js";
 
 // "i dag kl. 14.30" / "i morgen kl. 09.10" / "tirsdag 7. okt." — invitationen udløber efter 24 timer
 export function formatExpiry(iso) {
@@ -119,6 +120,36 @@ export function WhatIsShared() {
         </div>
       ))}
     </div>
+  );
+}
+
+// "Har du fået et invitationslink?": den, der har fået en invitation, men ikke kom ind via linket i den browser, de er logget ind i
+// (fx åbnet i Messenger), kan indsætte linket her. Så virker invitationen uanset browser og loginmetode.
+export function InviteLinkEntry() {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
+  const [error, setError] = useState("");
+  const submit = e => {
+    e?.preventDefault();
+    const token = parseInviteToken(value);
+    if (!token) { setError("Det ligner ikke et invitationslink. Indsæt hele linket fra mailen eller beskeden."); return; }
+    storeInviteToken(token);
+    window.dispatchEvent(new Event(INVITE_TOKEN_EVENT));
+    setValue(""); setError(""); setOpen(false);
+  };
+  if (!open) return <div style={{ marginTop:8 }}><TextLink onClick={() => setOpen(true)}>Har du fået et invitationslink?</TextLink></div>;
+  return (
+    <form onSubmit={submit} className="card" style={{ marginTop:8 }}>
+      <label htmlFor="invite-link-input" style={{ fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 }}>Indsæt invitationslinket</label>
+      <input id="invite-link-input" type="text" inputMode="url" autoComplete="off" autoCapitalize="none" spellCheck={false}
+        placeholder="https://eatsafe.dk/invite/…" value={value} onChange={e => { setValue(e.target.value); setError(""); }}
+        style={{ width:"100%", boxSizing:"border-box", minHeight:46, padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:15 }} />
+      {error && <div role="alert" style={{ fontSize:12, color:"var(--red)", marginTop:6 }}>{error}</div>}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:10 }}>
+        <TextLink onClick={() => { setOpen(false); setError(""); }}>Annuller</TextLink>
+        <button type="submit" disabled={!value.trim()} style={{ ...BTN, minHeight:40, padding:"8px 16px", background:"var(--green)", color:"var(--on-green)", border:"none", opacity: value.trim() ? 1 : .6 }}>Fortsæt</button>
+      </div>
+    </form>
   );
 }
 

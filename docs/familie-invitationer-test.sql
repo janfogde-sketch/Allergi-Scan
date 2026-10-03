@@ -1,11 +1,11 @@
--- Databasetest af familie-invitationer (mail og delt link). Kan køres igen og igen: ALT rulles tilbage til sidst (scriptet afslutter altid med
+-- Databasetest af familie-invitationer (mail og delt link, status, notifikationshændelser). Kan køres igen og igen: ALT rulles tilbage til sidst (scriptet afslutter altid med
 -- en fejl, TEST_RESULTAT, så intet gemmes). Kør i Supabase SQL Editor eller via execute_sql. Kræver mindst tre brugere i public.users.
 -- Hver linje i resultatet starter med OK eller FEJL. Se docs/familie-invitationer-testplan.md for den fulde testplan (også manuelle test).
 do $$
 declare
   u_a uuid; u_b uuid; u_c uuid;           -- A inviterer, B og C er modtagere
   email_b text; email_c text;
-  inv uuid; tok text; r jsonb; n int;
+  inv uuid; tok text; r_tok text; r jsonb; n int;
   log text := ''; fejl int := 0;
 
   -- lille hjælper: skift den indloggede bruger (auth.uid())
@@ -145,6 +145,63 @@ begin
     reset role;
     log := log || 'OK   P2 en klient kan ikke oprette en invitation direkte (' || sqlstate || ')' || E'\n';
   end;
+
+
+  -- ===== STATUS FOR ET LINK (forklaring til brugeren) =====
+  perform set_config('request.jwt.claims', json_build_object('sub', u_c, 'role', 'authenticated')::text, true);
+  log := log || case when public.get_family_invite_link_status('findes-ikke') = 'unknown' then 'OK   ' else 'FEJL ' end || 'S1 ukendt token → unknown' || E'\n';
+  perform set_config('request.jwt.claims', json_build_object('sub', u_a, 'role', 'authenticated')::text, true);
+  insert into public.family_invites (invited_by, kind) values (u_a, 'link') returning id, token into inv, tok;
+  log := log || case when public.get_family_invite_link_status(tok) = 'own' then 'OK   ' else 'FEJL ' end || 'S2 afsenderens eget link → own' || E'\n';
+  perform set_config('request.jwt.claims', json_build_object('sub', u_b, 'role', 'authenticated')::text, true);
+  log := log || case when public.get_family_invite_link_status(tok) = 'ok' then 'OK   ' else 'FEJL ' end || 'S3 frit link → ok' || E'\n';
+  perform public.accept_family_invite_by_link(tok);
+  perform public.accept_family_invite_by_link(tok); -- anmoder to gange: kun én besked til afsenderen
+  log := log || case when public.get_family_invite_link_status(tok) = 'awaiting' then 'OK   ' else 'FEJL ' end || 'S4 den, der bad → awaiting' || E'\n';
+  perform set_config('request.jwt.claims', json_build_object('sub', u_c, 'role', 'authenticated')::text, true);
+  log := log || case when public.get_family_invite_link_status(tok) = 'locked' then 'OK   ' else 'FEJL ' end || 'S5 en anden, når linket er låst → locked' || E'\n';
+  perform set_config('request.jwt.claims', json_build_object('sub', u_a, 'role', 'authenticated')::text, true);
+  perform public.approve_family_link_request(inv);
+  log := log || case when (select count(*) from public.notification_events where event_key = 'invite:' || inv || ':accepted' and kind = 'family_invite_accepted') = 1 then 'OK   ' else 'FEJL ' end || 'E2 godkendelse lægger præcis én family_invite_accepted-hændelse i køen' || E'\n';
+  perform set_config('request.jwt.claims', json_build_object('sub', u_b, 'role', 'authenticated')::text, true);
+  log := log || case when public.get_family_invite_link_status(tok) = 'mine' then 'OK   ' else 'FEJL ' end || 'S6 godkendt og brugt af mig → mine' || E'\n';
+  perform set_config('request.jwt.claims', json_build_object('sub', u_c, 'role', 'authenticated')::text, true);
+  log := log || case when public.get_family_invite_link_status(tok) = 'used' then 'OK   ' else 'FEJL ' end || 'S7 godkendt og brugt af en anden → used' || E'\n';
+  log := log || case when (select count(*) from public.notification_events where event_key = 'invite:' || inv || ':requested' and kind = 'family_link_requested') = 1 then 'OK   ' else 'FEJL ' end || 'E1 anmodning (sendt to gange) lægger præcis én family_link_requested-hændelse i køen' || E'\n';
+
+  -- revoked og expired
+  perform set_config('request.jwt.claims', json_build_object('sub', u_a, 'role', 'authenticated')::text, true);
+  insert into public.family_invites (invited_by, kind, status) values (u_a, 'link', 'revoked') returning token into tok;
+  insert into public.family_invites (invited_by, kind, expires_at) values (u_a, 'link', now() - interval '1 hour') returning token into r_tok;
+  perform set_config('request.jwt.claims', json_build_object('sub', u_b, 'role', 'authenticated')::text, true);
+  log := log || case when public.get_family_invite_link_status(tok) = 'revoked' then 'OK   ' else 'FEJL ' end || 'S8 afvist/annulleret → revoked' || E'\n';
+  log := log || case when public.get_family_invite_link_status(r_tok) = 'expired' then 'OK   ' else 'FEJL ' end || 'S9 udløbet → expired' || E'\n';
+
+  -- ===== BESKED TIL DEN, DER BAD, VED AFVISNING OG ANNULLERING =====
+  perform set_config('request.jwt.claims', json_build_object('sub', u_a, 'role', 'authenticated')::text, true);
+  insert into public.family_invites (invited_by, kind) values (u_a, 'link') returning id, token into inv, tok;
+  perform set_config('request.jwt.claims', json_build_object('sub', u_b, 'role', 'authenticated')::text, true);
+  perform public.accept_family_invite_by_link(tok);
+  perform set_config('request.jwt.claims', json_build_object('sub', u_a, 'role', 'authenticated')::text, true);
+  perform public.decline_family_link_request(inv);
+  log := log || case when (select count(*) from public.notification_events where event_key = 'invite:' || inv || ':declined' and kind = 'family_link_declined'
+                              and payload->>'requester_id' = u_b::text and payload->>'inviter_id' = u_a::text) = 1 then 'OK   ' else 'FEJL ' end || 'E3 afvisning lægger en family_link_declined-hændelse til den, der bad' || E'\n';
+
+  insert into public.family_invites (invited_by, kind) values (u_a, 'link') returning id, token into inv, tok;
+  perform set_config('request.jwt.claims', json_build_object('sub', u_b, 'role', 'authenticated')::text, true);
+  perform public.accept_family_invite_by_link(tok);
+  perform set_config('request.jwt.claims', json_build_object('sub', u_a, 'role', 'authenticated')::text, true);
+  delete from public.family_invites where id = inv; -- annullering efter anmodning
+  log := log || case when (select count(*) from public.notification_events where event_key = 'invite:' || inv || ':declined') = 1 then 'OK   ' else 'FEJL ' end || 'E4 annullering efter anmodning lægger en family_link_declined-hændelse i køen' || E'\n';
+
+  insert into public.family_invites (invited_by, kind) values (u_a, 'link') returning id into inv;
+  delete from public.family_invites where id = inv; -- annullering uden anmodning
+  log := log || case when (select count(*) from public.notification_events where event_key = 'invite:' || inv || ':declined') = 0 then 'OK   ' else 'FEJL ' end || 'E5 annullering uden anmodning giver ingen besked' || E'\n';
+
+  insert into public.family_invites (invited_by, invitee_email, kind) values (u_a, 'afvis2@example.invalid', 'email') returning id, token into inv, tok;
+  perform set_config('request.jwt.claims', json_build_object('sub', u_c, 'role', 'authenticated')::text, true);
+  perform public.decline_family_invite_by_link(tok);
+  log := log || case when (select count(*) from public.notification_events where event_key = 'invite:' || inv || ':declined') = 0 then 'OK   ' else 'FEJL ' end || 'E6 afvisning af en mail-invitation giver ingen link-besked' || E'\n';
 
   raise exception E'TEST_RESULTAT (alt er rullet tilbage). Antal FEJL: %\n%', (length(log) - length(replace(log, 'FEJL', ''))) / 4, log;
 end $$;
