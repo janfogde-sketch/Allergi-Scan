@@ -102,12 +102,25 @@
     // Browsere inde i apps (Messenger, Instagram m.fl.) har deres egen lagring og kan ikke bruge Google-login. Her guides modtageren
     // til at åbne invitationen i den rigtige browser, før kontoen oprettes. Installation kan ikke registreres fra en browser, så guiden
     // vises for alle, der ikke allerede kører som installeret app.
-    const inAppBrowser = /Viber|FBAN|FBAV|FB_IAB|Messenger|Instagram|Snapchat|Line\/|MicroMessenger|TikTok|Twitter|LinkedInApp/i.test(navigator.userAgent);
+    const inAppBrowser = /Viber|FBAN|FBAV|FB_IAB|Messenger|Instagram|Snapchat|Line\/|MicroMessenger|TikTok|Twitter|LinkedInApp|Pinterest|GSA\//i.test(navigator.userAgent);
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const isSamsungBrowser = /SamsungBrowser/i.test(navigator.userAgent);
+    const isFirefox = /Firefox|FxiOS/i.test(navigator.userAgent);
+    const isEdge = /EdgA|EdgiOS|Edg\//.test(navigator.userAgent);
+    const isOpera = /OPR\/|OPT\//.test(navigator.userAgent);
     // Navnet på den browser, modtageren skal åbne linket i: Safari på iPhone/iPad, ellers Chrome eller Samsung Internet på Android.
-    const browserName = isIOS ? "Safari" : "Chrome eller Samsung Internet";
+    const browserName = isIOS ? "Safari" : "Chrome, Samsung Internet, Firefox eller Edge";
+
+    // Kort installationsråd, tilpasset browseren. Alle større mobilbrowsere kan føje en webapp til startskærmen via menuen.
+    const installTip = () => {
+      if (isIOS) return "På iPhone skal du bruge Safari: tryk på Del-ikonet og vælg Føj til hjemmeskærm.";
+      if (isSamsungBrowser) return "I Samsung Internet åbner du menuen og vælger Tilføj side til → Startskærm.";
+      if (isFirefox) return "I Firefox åbner du menuen (⋮) og vælger Installér.";
+      if (isEdge) return "I Edge åbner du menuen (⋯) og vælger Føj til telefon eller Installér app.";
+      if (isOpera) return "I Opera åbner du menuen og vælger Startskærm.";
+      return "På Android åbner du menuen i din browser (fx Chrome) og vælger Installér app eller Føj til startskærm.";
+    };
 
     const inAppNotice = () => !inAppBrowser ? "" : `
       <div class="notice" role="alert">
@@ -119,7 +132,7 @@
     const installGuide = () => isStandalone ? "" : `
       <div class="install">
         <strong>Første gang i EatSafe?</strong>
-        <p>EatSafe virker bedst som app på din startskærm, og kun dér kan du få pushbeskeder. Når du har oprettet dig, kan du installere den. ${isIOS ? "På iPhone skal du bruge Safari: tryk på Del-ikonet og vælg Føj til hjemmeskærm." : isSamsungBrowser ? "I Samsung Internet åbner du menuen og vælger Tilføj side til → Startskærm." : "På Android åbner du menuen i Chrome og vælger Installér app."}</p>
+        <p>EatSafe virker bedst som app på din startskærm, og kun dér kan du få pushbeskeder. Når du har oprettet dig, kan du installere den. ${installTip()}</p>
         <a href="https://eatsafe.dk/install.html" class="btn btn-ghost">Sådan installerer du EatSafe</a>
       </div>`;
 
