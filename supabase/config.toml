@@ -30,6 +30,9 @@ verify_jwt = false
 [functions.family]
 verify_jwt = false
 
+[functions.family-invite]
+verify_jwt = false
+
 [functions.feedback]
 verify_jwt = false
 

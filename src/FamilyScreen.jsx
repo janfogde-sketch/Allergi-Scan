@@ -69,11 +69,11 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
   // panelet nedenfor, men en invitation, der allerede er sendt (og endnu ikke
   // accepteret eller udløbet), skal også kunne ses direkte i familie-
   // oversigten med status "Invitation afventer" — uden at man behøver åbne
-  // panelet igen for at kunne kopiere/dele linket igen eller annullere det.
+  // panelet igen for at sende mailen igen eller annullere invitationen.
   const [pendingInvites, setPendingInvites] = useState([]);
   const loadPendingInvites = () => {
     if (!accessToken || !userId) return;
-    apiCall(`${SUPABASE_URL}/rest/v1/family_invites?invited_by=eq.${userId}&status=eq.pending&order=created_at.desc&select=id,token,expires_at`, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } })
+    apiCall(`${SUPABASE_URL}/rest/v1/family_invites?invited_by=eq.${userId}&status=eq.pending&order=created_at.desc&select=id,invitee_email,expires_at`, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } })
       .then(data => { if (Array.isArray(data)) setPendingInvites(data.filter(i => new Date(i.expires_at) > new Date())); })
       .catch(() => {});
   };
@@ -211,7 +211,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
         </div>
       ))}
       {pendingInvites.filter(inv => inv.id !== inviteId).map(inv => (
-        <PendingInviteCard key={`inv-${inv.id}`} invite={inv} onCancel={async () => {
+        <PendingInviteCard key={`inv-${inv.id}`} invite={inv} accessToken={accessToken} onCancel={async () => {
           try {
             await apiCall(`${SUPABASE_URL}/rest/v1/family_invites?id=eq.${inv.id}`, { method:"DELETE", headers: makeHeaders(accessToken) });
             setPendingInvites(p => p.filter(x => x.id !== inv.id));
@@ -270,11 +270,11 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
           <button type="button" onClick={() => setFamilyAddMode("invite")}
             style={{ display:"flex", alignItems:"center", gap:12, width:"100%", textAlign:"left", cursor:"pointer", fontFamily:"var(--f)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px 16px", marginBottom:10 }}>
             <span style={{ width:38, height:38, borderRadius:"50%", background:"var(--green-selected-bg)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-              <Icon name="link" size={18} color="var(--green)" />
+              <Icon name="mail" size={18} color="var(--green)" />
             </span>
             <span>
               <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>Invitér voksen</div>
-              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Til personer på 18 år eller derover med egen EatSafe-konto.</div>
+              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Sendes som mail til personer på 18 år eller derover med egen EatSafe-konto.</div>
             </span>
           </button>
           <button type="button" onClick={() => setFamilyAddMode("form")}
@@ -292,7 +292,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
 
       {!editingMemberId && familyAddMode === "invite" && (
         <div id="family-invite-panel" style={{ marginTop:16 }}>
-          <InvitePanel accessToken={accessToken} userId={userId}
+          <InvitePanel accessToken={accessToken}
             onInviteId={setInviteId} onChanged={loadPendingInvites}
             onClose={() => { setFamilyAddMode(null); setInviteId(null); loadPendingInvites(); }} />
         </div>

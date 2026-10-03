@@ -1,5 +1,5 @@
 // @ts-nocheck
-// Bottom-sheets til indkøbslisten: listevælger (skift/opret/tilslut/slet) og deling. Listenavne er brugerdata og vises kun som tekst
+// Bottom-sheets til indkøbslisten: listevælger (skift/opret/tilslut/slet) og deling, samt bekræftelsen af en familie-invitation (samme sheet-skelet). Listenavne er brugerdata og vises kun som tekst
 // (ellipsis/ombrydning), aldrig som faste systemtekster. Portal til body, fordi .screen.fade-in fanger position:fixed (CLAUDE.md §3 regel 4).
 import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -412,6 +412,42 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
 }
 
 // Bekræftelse, når en modtager åbner et link til en delt liste: forklarer, hvad der sker, før noget tilsluttes.
+// Bekræftelse af en familie-invitation, sendt til kontoens bekræftede e-mail. Kobles aldrig uden et aktivt ja (helbredsdata, GDPR art. 9).
+export function FamilyInviteSheet({ invite, busy, onConfirm, onDecline, onLater }) {
+  const who = invite.inviter_first_name || "En bruger af EatSafe";
+  const points = [
+    "I kan se hinandens allergier, så I kan tjekke varer for hinanden.",
+    "I kan dele indkøbslister.",
+    "Du styrer selv din egen profil og dine oplysninger.",
+    "Du kan til enhver tid afslutte forbindelsen under Familie.",
+  ];
+  return (
+    <Sheet label="Invitation til familie" onClose={onLater}>
+      <SheetHeader title="Invitation til familie" onClose={onLater} />
+      <SheetBody>
+      <div style={{ fontSize:14, color:"var(--ink)", lineHeight:1.5, marginBottom:12, ...WRAP }}>
+        <strong>{who}</strong> har inviteret dig til sin familie i EatSafe.
+      </div>
+      <div style={{ ...CARD, padding:"12px 14px", marginBottom:12 }}>
+        <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Hvis du siger ja</div>
+        {points.map(t => (
+          <div key={t} style={{ display:"flex", gap:8, fontSize:12.5, color:"var(--ink2)", lineHeight:1.45, marginBottom:6 }}>
+            <span style={{ flexShrink:0, marginTop:2 }}><Icon name="check" size={13} color="var(--green)" /></span><span>{t}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginBottom:16 }}>
+        Kender du ikke personen, så vælg "Nej tak". Så får de ingen adgang.
+      </div>
+      <button type="button" className="btn btn-primary" style={{ width:"100%", minHeight:48, marginBottom:8 }} disabled={busy} onClick={onConfirm}>
+        {busy ? "Accepterer…" : "Ja, forbind os"}
+      </button>
+      <button type="button" className="btn btn-outline" style={{ width:"100%", minHeight:48 }} disabled={busy} onClick={onDecline}>Nej tak</button>
+      </SheetBody>
+    </Sheet>
+  );
+}
+
 export function JoinListSheet({ preview, busy, onConfirm, onCancel }) {
   const owner = preview.owner_name || "En bruger af EatSafe";
   const points = [

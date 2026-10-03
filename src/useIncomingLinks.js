@@ -1,5 +1,5 @@
 // @ts-nocheck
-// Links, som åbner appen med en handling: familie-invitation (?invite=)
+// Links, som åbner appen med en handling: familie-invitation (?invite=, kun routing til oprettelse/login)
 // og deling af indkøbsliste (?join-list=). Flyttet uændret fra App.jsx
 // 30. sept. 2026 (arkitektur-audit A8).
 import React, { useState } from "react";
@@ -8,61 +8,25 @@ import { apiCall, makeHeaders } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 
 export function useIncomingLinks({
-  accessToken, userId, user, loadFamily,
+  accessToken, userId, user,
   joinByCode, loadShoppingList, setAuthTab, setScreen, setActiveListId,
 }) {
-  // ── Familie-invitation accept ────────────────────────────────────────────
-  // Token gemmes i localStorage (som indkøbslistekoden nedenfor), så den overlever oprettelse, e-mailbekræftelse og onboarding,
-  // og koblingen sker automatisk, når brugeren er logget ind. `&login=1` åbner login i stedet for oprettelse.
+  // ── Familie-invitation (?invite=) ────────────────────────────────────────
+  // Invitationen er bundet til modtagerens e-mail (3. okt. 2026), så tokenet gemmes ikke længere: når en konto med den e-mail er
+  // logget ind, viser useFamilyInviteInbox en bekræftelse, uanset i hvilken browser linket blev åbnet. Linket sender kun en ny
+  // bruger til oprettelse (eller login med `&login=1`).
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const fromUrl = params.get("invite");
-    if (fromUrl) {
-      localStorage.setItem("as_pending_invite", fromUrl);
-      const url = new URL(window.location.href);
-      url.searchParams.delete("invite");
-      url.searchParams.delete("login");
-      window.history.replaceState({}, "", url.toString());
-      if (!localStorage.getItem("as_token")) {
-        setAuthTab(params.get("login") === "1" ? "login" : "signup");
-        setScreen(SCREENS.LOGIN);
-      }
+    if (!params.has("invite")) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("invite");
+    url.searchParams.delete("login");
+    window.history.replaceState({}, "", url.toString());
+    if (!localStorage.getItem("as_token")) {
+      setAuthTab(params.get("login") === "1" ? "login" : "signup");
+      setScreen(SCREENS.LOGIN);
     }
   }, []);
-
-  React.useEffect(() => {
-    const inviteToken = localStorage.getItem("as_pending_invite");
-    if (!inviteToken || !accessToken || !userId) return;
-    localStorage.removeItem("as_pending_invite");
-
-    // Accepter invitation via RPC
-    const acceptInvite = async () => {
-      try {
-        const data = await apiCall(
-          `${SUPABASE_URL}/rest/v1/rpc/accept_family_invite`,
-          {
-            method: "POST",
-            headers: makeHeaders(accessToken),
-            body: JSON.stringify({ p_token: inviteToken }),
-          }
-        );
-        if (data?.success) {
-          // Genindlæs familie-data
-          loadFamily();
-          showToast("Invitation accepteret. Du er nu i familie med den, der inviterede dig. Se jer under Familie i menuen.");
-
-          // Beskeden til den der inviterede (N5) oprettes af databasen og sendes af `notify`.
-        } else {
-          showToast("Invitationen virker ikke længere. Den er udløbet eller allerede brugt. Bed den, der inviterede dig, om en ny.", "error");
-        }
-      } catch {
-        // Netværksfejl: behold token, så koblingen prøves igen ved næste åbning, og sig det højt.
-        localStorage.setItem("as_pending_invite", inviteToken);
-        showToast("Vi kunne ikke tilknytte invitationen. Tjek din forbindelse og åbn appen igen.", "error");
-      }
-    };
-    acceptInvite();
-  }, [accessToken, userId]);
 
   // ── Indkøbsliste-tilslutning via delt link ────────────────────────────────
   // Koden gemmes i localStorage (ikke kun URL'en), så den overlever hele

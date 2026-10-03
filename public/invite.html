@@ -54,6 +54,14 @@
     .btn:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
     .btn-ghost { background: var(--surface); color: var(--green); border-color: var(--green); }
     .btn-ghost:hover { background: var(--green-lt); border-color: var(--green); }
+    .notice { text-align: left; background: rgba(181,121,26,.10); border: 1px solid rgba(181,121,26,.35); border-radius: 12px; padding: 14px 16px; margin: 0 0 16px; }
+    .notice strong { display: block; font-size: 14px; color: var(--ink); margin-bottom: 4px; }
+    .notice p { font-size: 13px; color: var(--ink2); line-height: 1.55; margin: 0 0 10px; }
+    .notice .btn { margin: 4px 0 0; min-height: 44px; font-size: 14px; }
+    .install { text-align: left; border-top: 1px solid var(--border); margin-top: 20px; padding-top: 16px; }
+    .install strong { display: block; font-size: 14px; color: var(--ink); margin-bottom: 4px; }
+    .install p { font-size: 13px; line-height: 1.55; margin: 0 0 10px; }
+    .install .btn { min-height: 44px; font-size: 14px; margin-bottom: 0; }
     .expiry { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 12px 0 0; }
     .error { color: var(--red); font-size: 13px; margin-top: 12px; }
     .spinner {
@@ -91,6 +99,41 @@
     // Navnet kommer fra en bruger og indsættes som HTML, så det skal escapes.
     const esc = t => String(t).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 
+    // Browsere inde i apps (Viber, Messenger, Instagram m.fl.) har deres egen lagring og kan ikke bruge Google-login. Her guides modtageren
+    // til at åbne invitationen i den rigtige browser, før kontoen oprettes. Installation kan ikke registreres fra en browser, så guiden
+    // vises for alle, der ikke allerede kører som installeret app.
+    const inAppBrowser = /Viber|FBAN|FBAV|FB_IAB|Messenger|Instagram|Snapchat|Line\/|MicroMessenger|TikTok|Twitter|LinkedInApp/i.test(navigator.userAgent);
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    const inAppNotice = () => !inAppBrowser ? "" : `
+      <div class="notice" role="alert">
+        <strong>Åbn invitationen i din browser</strong>
+        <p>Du ser siden i en app (fx Viber eller Messenger). Her kan du ikke logge ind med Google, og dine oplysninger bliver ikke husket. Åbn linket i ${isIOS ? "Safari" : "Chrome"}: tryk på menuen (⋯ eller del-ikonet) og vælg "Åbn i browser" eller "Åbn i ${isIOS ? "Safari" : "Chrome"}". Eller kopiér linket og indsæt det i din browser.</p>
+        <button type="button" class="btn btn-ghost" id="copy-link">Kopiér link</button>
+      </div>`;
+
+    const installGuide = () => isStandalone ? "" : `
+      <div class="install">
+        <strong>Første gang i EatSafe?</strong>
+        <p>EatSafe virker bedst som app på din startskærm, og kun dér kan du få pushbeskeder. Når du har oprettet dig, kan du installere den. ${isIOS ? "På iPhone skal du bruge Safari." : "På Android åbner du menuen i Chrome og vælger Installér app."}</p>
+        <a href="https://eatsafe.dk/install.html" class="btn btn-ghost">Sådan installerer du EatSafe</a>
+      </div>`;
+
+    function wireCopy() {
+      const b = document.getElementById("copy-link");
+      if (!b) return;
+      b.addEventListener("click", async () => {
+        const url = window.location.href;
+        try { await navigator.clipboard.writeText(url); b.textContent = "Link kopieret"; }
+        catch {
+          const t = document.createElement("textarea"); t.value = url; document.body.appendChild(t); t.select();
+          try { document.execCommand("copy"); b.textContent = "Link kopieret"; } catch { b.textContent = "Tryk og hold på adressen for at kopiere"; }
+          t.remove();
+        }
+      });
+    }
+
     function show(html) {
       spinner.style.display = "none";
       content.style.display = "block";
@@ -101,8 +144,8 @@
       if (!token) {
         show(`
           ${icon("alert", true)}
-          <h1>Ugyldigt link</h1>
-          <p>Dette invitationslink er ikke gyldigt.</p>
+          <h1>Ugyldig invitation</h1>
+          <p>Denne invitation er ikke gyldig.</p>
           <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
         `);
         return;
@@ -127,8 +170,8 @@
         if (!data?.found) {
           show(`
             ${icon("alert", true)}
-            <h1>Ugyldigt link</h1>
-            <p>Dette invitationslink findes ikke.</p>
+            <h1>Ugyldig invitation</h1>
+            <p>Denne invitation findes ikke.</p>
             <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
           `);
           return;
@@ -139,7 +182,7 @@
           show(`
             ${icon("check")}
             <h1>Allerede accepteret</h1>
-            <p>Dette invitationslink er allerede brugt.</p>
+            <p>Denne invitation er allerede brugt.</p>
             <a href="https://eatsafe.dk" class="btn">Åbn EatSafe</a>
           `);
           return;
@@ -148,8 +191,8 @@
         if (invite.status !== "pending" || new Date(invite.expires_at) < new Date()) {
           show(`
             ${icon("clock", true)}
-            <h1>Linket er udløbet</h1>
-            <p>Bed familiemedlemmet om at sende et nyt invitationslink.</p>
+            <h1>Invitationen er udløbet</h1>
+            <p>Bed familiemedlemmet om at sende en ny invitation til din e-mailadresse.</p>
             <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
           `);
           return;
@@ -160,10 +203,14 @@
           ${icon("family")}
           <h1>Du er inviteret!</h1>
           <p>${invite.inviter_first_name ? `${esc(invite.inviter_first_name)} har inviteret dig til sin familie i EatSafe.` : "Du er blevet inviteret til en familie i EatSafe."} Når du siger ja, kan I se hinandens allergier og kostvalg, så I kan tjekke varer for hinanden, og I kan dele indkøbslister. Du styrer selv dine egne oplysninger og kan til enhver tid afslutte forbindelsen igen.</p>
-          <a href="https://eatsafe.dk?invite=${token}" class="btn">Opret konto</a>
-          <a href="https://eatsafe.dk?invite=${token}&login=1" class="btn btn-ghost">Log ind</a>
+          ${invite.invitee_email_hint ? `<p><strong>Vigtigt:</strong> Opret dig eller log ind med den e-mailadresse, invitationen blev sendt til (${esc(invite.invitee_email_hint)}). Det er kun med den adresse, invitationen virker. Åbn EatSafe i den browser, du plejer at bruge, og log ind dér.</p>` : ""}
+          ${inAppNotice()}
+          <a href="https://eatsafe.dk?invite=1" class="btn">Opret konto</a>
+          <a href="https://eatsafe.dk?invite=1&login=1" class="btn btn-ghost">Log ind</a>
           <p class="expiry">Invitationen udløber ${new Date(invite.expires_at).toLocaleDateString("da-DK")}</p>
+          ${installGuide()}
         `);
+        wireCopy();
       } catch {
         show(`
           ${icon("alert", true)}

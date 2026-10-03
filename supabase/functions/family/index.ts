@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
   try {
     // ─────────────────────────────────────
     // HUSSTAND (family_invites-baseret — de rigtige konti, du har inviteret
-    // via invitationslinket, adskilt fra family_members-profilerne)
+    // via invitationen, adskilt fra family_members-profilerne)
     // ─────────────────────────────────────
 
     // GET — hent min husstand (mig + alle jeg har inviteret/er inviteret af).
