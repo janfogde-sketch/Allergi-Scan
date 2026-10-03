@@ -99,24 +99,27 @@
     // Navnet kommer fra en bruger og indsættes som HTML, så det skal escapes.
     const esc = t => String(t).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 
-    // Browsere inde i apps (Viber, Messenger, Instagram m.fl.) har deres egen lagring og kan ikke bruge Google-login. Her guides modtageren
+    // Browsere inde i apps (Messenger, Instagram m.fl.) har deres egen lagring og kan ikke bruge Google-login. Her guides modtageren
     // til at åbne invitationen i den rigtige browser, før kontoen oprettes. Installation kan ikke registreres fra en browser, så guiden
     // vises for alle, der ikke allerede kører som installeret app.
     const inAppBrowser = /Viber|FBAN|FBAV|FB_IAB|Messenger|Instagram|Snapchat|Line\/|MicroMessenger|TikTok|Twitter|LinkedInApp/i.test(navigator.userAgent);
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isSamsungBrowser = /SamsungBrowser/i.test(navigator.userAgent);
+    // Navnet på den browser, modtageren skal åbne linket i: Safari på iPhone/iPad, ellers Chrome eller Samsung Internet på Android.
+    const browserName = isIOS ? "Safari" : "Chrome eller Samsung Internet";
 
     const inAppNotice = () => !inAppBrowser ? "" : `
       <div class="notice" role="alert">
         <strong>Åbn invitationen i din browser</strong>
-        <p>Du ser siden i en app (fx Viber eller Messenger). Her kan du ikke logge ind med Google, og dine oplysninger bliver ikke husket. Åbn linket i ${isIOS ? "Safari" : "Chrome"}: tryk på menuen (⋯ eller del-ikonet) og vælg "Åbn i browser" eller "Åbn i ${isIOS ? "Safari" : "Chrome"}". Eller kopiér linket og indsæt det i din browser.</p>
+        <p>Du ser siden i en app (fx Messenger eller Instagram). Her kan du ikke logge ind med Google, og dine oplysninger bliver ikke husket. Åbn linket i ${browserName}: tryk på menuen (⋯ eller del-ikonet) og vælg "Åbn i browser" eller "Åbn i ${isIOS ? "Safari" : "Chrome"}". Eller kopiér linket og indsæt det i ${browserName}.</p>
         <button type="button" class="btn btn-ghost" id="copy-link">Kopiér link</button>
       </div>`;
 
     const installGuide = () => isStandalone ? "" : `
       <div class="install">
         <strong>Første gang i EatSafe?</strong>
-        <p>EatSafe virker bedst som app på din startskærm, og kun dér kan du få pushbeskeder. Når du har oprettet dig, kan du installere den. ${isIOS ? "På iPhone skal du bruge Safari." : "På Android åbner du menuen i Chrome og vælger Installér app."}</p>
+        <p>EatSafe virker bedst som app på din startskærm, og kun dér kan du få pushbeskeder. Når du har oprettet dig, kan du installere den. ${isIOS ? "På iPhone skal du bruge Safari: tryk på Del-ikonet og vælg Føj til hjemmeskærm." : isSamsungBrowser ? "I Samsung Internet åbner du menuen og vælger Tilføj side til → Startskærm." : "På Android åbner du menuen i Chrome og vælger Installér app."}</p>
         <a href="https://eatsafe.dk/install.html" class="btn btn-ghost">Sådan installerer du EatSafe</a>
       </div>`;
 
