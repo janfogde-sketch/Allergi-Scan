@@ -134,7 +134,7 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
       {!sentTo ? (
         <form onSubmit={send}>
           <div style={{ fontSize:12.5, color:"var(--muted2)", lineHeight:1.5, marginBottom:12 }}>
-            Skriv e-mailadressen på den, du vil invitere. Vi sender en invitation dertil. Personen opretter sin egen EatSafe-konto og styrer selv sin profil.
+            Skriv e-mailadressen på den, du vil invitere. Vi sender en invitation dertil. Har personen allerede en EatSafe-konto, logger de bare ind og bekræfter i appen; ellers opretter de en egen konto. Personen styrer selv sin profil.
           </div>
           <div style={{ background:"var(--surface2)", borderRadius:10, padding:"12px 14px", marginBottom:12 }}><WhatIsShared /></div>
           <label htmlFor="invite-email" style={{ fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 }}>E-mailadresse</label>
@@ -142,7 +142,7 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
             placeholder="navn@eksempel.dk" value={email} onChange={e => { setEmail(e.target.value); setError(""); }}
             style={{ width:"100%", boxSizing:"border-box", minHeight:46, padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:15 }} />
           <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, margin:"8px 0 12px" }}>
-            Personen skal oprette sig eller logge ind med præcis denne e-mailadresse. Invitationen virker i 24 timer og kun for den adresse. Forbindelsen kan fjernes igen senere.
+            Personen skal oprette sig eller logge ind med præcis denne e-mailadresse. Ingen bliver forbundet, før de selv har sagt ja i appen. Invitationen virker i 24 timer og kun for den adresse. Forbindelsen kan fjernes igen senere.
           </div>
           <button type="submit" disabled={loading || !email.trim()}
             style={{ ...BTN, width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", opacity: loading || !email.trim() ? .6 : 1 }}>

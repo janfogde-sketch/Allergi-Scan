@@ -44,6 +44,9 @@ Deno.serve(async (req) => {
   const inviterName = (String(me?.name ?? "").trim().split(/\s+/)[0] || "En bruger").slice(0, 30);
 
   async function sendInviteMail(invite: { id: string; token: string; invitee_email: string; expires_at: string }): Promise<boolean> {
+    // En eksisterende bruger får en mail om at logge ind (og bekræfte i appen) i stedet for at oprette sig. Afsenderen får aldrig at vide,
+    // om adressen har en konto: svaret fra funktionen er det samme.
+    const { data: hasAccount } = await db.rpc("invitee_has_account", { p_email: invite.invitee_email });
     const res = await sendHtmlMail({
       apiKey,
       to: invite.invitee_email,
@@ -53,6 +56,7 @@ Deno.serve(async (req) => {
         inviteeEmail: invite.invitee_email,
         inviteUrl: `https://eatsafe.dk/invite/${invite.token}`,
         expiryText: formatInviteExpiry(new Date(invite.expires_at)),
+        existingAccount: hasAccount === true,
       }),
       idempotencyKey: `family-invite-${invite.id}-${Math.floor(Date.now() / 60000)}`,
     });

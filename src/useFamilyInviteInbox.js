@@ -24,6 +24,15 @@ export function useFamilyInviteInbox({ accessToken, userId, user, loadFamily }) 
 
   useEffect(() => { if (ready) load(); }, [ready, userId, load]);
 
+  // En allerede logget ind bruger skal også se en invitation, der kommer, mens appen er åben i baggrunden: hent igen, når appen kommer i forgrunden.
+  useEffect(() => {
+    if (!ready) return undefined;
+    const onVisible = () => { if (document.visibilityState === "visible") load(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => { document.removeEventListener("visibilitychange", onVisible); window.removeEventListener("focus", onVisible); };
+  }, [ready, load]);
+
   const current = invites.find(i => !dismissed.includes(i.id)) || null;
   const remove = id => setInvites(list => list.filter(i => i.id !== id));
 

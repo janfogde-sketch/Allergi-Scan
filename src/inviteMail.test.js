@@ -23,6 +23,20 @@ describe("invitationsmail", () => {
     expect(html).toContain("i morgen kl. 18.29");
     expect(html).toContain("præcis denne e-mailadresse");
   });
+  it("vælger teksten efter, om adressen har en konto, og efterlader ingen markører", () => {
+    const nyBruger = renderInviteMail(vars);
+    const medKonto = renderInviteMail({ ...vars, existingAccount: true });
+    expect(nyBruger).toContain("Opret dig, eller log ind, med præcis denne e-mailadresse");
+    expect(nyBruger).not.toContain("Du har allerede en EatSafe-konto");
+    expect(medKonto).toContain("Du har allerede en EatSafe-konto");
+    expect(medKonto).toContain("Ingenting sker, før du har sagt ja");
+    expect(medKonto).not.toContain("Opret dig, eller log ind, med præcis denne e-mailadresse");
+    for (const html of [nyBruger, medKonto]) {
+      expect(html).not.toMatch(/<!--\/?IF/);
+      expect(html).toContain("frederikke@gmail.com");
+      expect(html).toContain("Se invitationen");
+    }
+  });
   it("HTML-escaper tekst, så et fornavn eller en adresse ikke kan injicere markup", () => {
     const html = renderInviteMail({ ...vars, inviterName: "<img src=x onerror=1>", inviteeEmail: "a\"><script>@b.dk" });
     expect(html).not.toContain("<img src=x");
