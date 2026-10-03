@@ -16,7 +16,8 @@ create index if not exists family_invites_invitee_email_pending_idx
   on public.family_invites (invitee_email) where status = 'pending';
 
 -- Klienten opretter ikke længere invitationer selv: kun edge-funktionen (service role), som begrænser antal og sender mailen.
--- (Kørt separat, fordi værktøjet blokerede `drop policy`: se to do 9e6c5888.)
+-- I produktion er politikken i stedet låst med `alter policy family_invites_insert_own on public.family_invites with check (false)`,
+-- fordi værktøjet blokerede `drop policy` (3. okt. 2026). Samme virkning; sætningen herunder kan køres senere for at fjerne den helt.
 drop policy if exists family_invites_insert_own on public.family_invites;
 
 -- Kalderens bekræftede e-mail (små bogstaver). Intern hjælper: ingen må kalde den direkte.
