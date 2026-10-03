@@ -259,15 +259,15 @@ export const DEFINITIONS = {
   "P2:default": {
     type: "P2", variant: "default", category: "family", version: 1, ttl: 3600,
     push: { title: "Din invitation udløber snart", body: "Din familieinvitation er endnu ikke accepteret. Den udløber inden for fire timer." },
-    mail: { subject: "Din familieinvitation udløber snart", preheader: "Der er stadig tid til at bruge invitationen, inden linket udløber." },
+    mail: { subject: "Din familieinvitation udløber snart", preheader: "Der er stadig tid til at bruge invitationen, inden den udløber." },
     vars: { expiresAt: { fallback: "snart" } }, required: [],
     blocks: [
       H("Din invitation er stadig åben"),
-      P("Din familieinvitation i EatSafe er endnu ikke blevet accepteret. Linket udløber **{{expiresAt}}**."),
+      P("Din familieinvitation i EatSafe er endnu ikke blevet besvaret. Den udløber **{{expiresAt}}**."),
       PANEL("Vil du stadig forbinde familien?", [
-        P("Du kan minde den person, du har inviteret, om at åbne det invitationslink, du har delt. Personen skal logge ind for at acceptere invitationen."),
+        P("Du kan minde den person, du har inviteret, om at finde invitationsmailen (tjek evt. spam-mappen) og oprette sig eller logge ind med præcis den e-mailadresse, du sendte den til. Personen accepterer derefter invitationen i appen. Du kan også sende mailen igen under Familie."),
       ]),
-      P("Hvis linket når at udløbe, kan du oprette en ny invitation under Familie i appen. Du behøver ikke gøre noget, hvis invitationen ikke længere er relevant."),
+      P("Hvis invitationen når at udløbe, kan du sende en ny under Familie i appen. Du behøver ikke gøre noget, hvis invitationen ikke længere er relevant."),
     ],
     action: { type: "open_family", label: "Se familieinvitationer", params: [] }, entity: { type: "invitation", idFrom: "inviteId" },
   },

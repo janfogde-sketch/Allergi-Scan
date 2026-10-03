@@ -270,11 +270,11 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
           <button type="button" onClick={() => setFamilyAddMode("invite")}
             style={{ display:"flex", alignItems:"center", gap:12, width:"100%", textAlign:"left", cursor:"pointer", fontFamily:"var(--f)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px 16px", marginBottom:10 }}>
             <span style={{ width:38, height:38, borderRadius:"50%", background:"var(--green-selected-bg)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-              <Icon name="link" size={18} color="var(--green)" />
+              <Icon name="mail" size={18} color="var(--green)" />
             </span>
             <span>
               <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>Invitér voksen</div>
-              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Til personer på 18 år eller derover med egen EatSafe-konto.</div>
+              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Sendes som mail til personer på 18 år eller derover med egen EatSafe-konto.</div>
             </span>
           </button>
           <button type="button" onClick={() => setFamilyAddMode("form")}

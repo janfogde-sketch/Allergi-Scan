@@ -101,8 +101,8 @@
       if (!token) {
         show(`
           ${icon("alert", true)}
-          <h1>Ugyldigt link</h1>
-          <p>Dette invitationslink er ikke gyldigt.</p>
+          <h1>Ugyldig invitation</h1>
+          <p>Denne invitation er ikke gyldig.</p>
           <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
         `);
         return;
@@ -127,8 +127,8 @@
         if (!data?.found) {
           show(`
             ${icon("alert", true)}
-            <h1>Ugyldigt link</h1>
-            <p>Dette invitationslink findes ikke.</p>
+            <h1>Ugyldig invitation</h1>
+            <p>Denne invitation findes ikke.</p>
             <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
           `);
           return;
@@ -139,7 +139,7 @@
           show(`
             ${icon("check")}
             <h1>Allerede accepteret</h1>
-            <p>Dette invitationslink er allerede brugt.</p>
+            <p>Denne invitation er allerede brugt.</p>
             <a href="https://eatsafe.dk" class="btn">Åbn EatSafe</a>
           `);
           return;
@@ -148,8 +148,8 @@
         if (invite.status !== "pending" || new Date(invite.expires_at) < new Date()) {
           show(`
             ${icon("clock", true)}
-            <h1>Linket er udløbet</h1>
-            <p>Bed familiemedlemmet om at sende et nyt invitationslink.</p>
+            <h1>Invitationen er udløbet</h1>
+            <p>Bed familiemedlemmet om at sende en ny invitation til din e-mailadresse.</p>
             <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
           `);
           return;
