@@ -69,11 +69,11 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
   // panelet nedenfor, men en invitation, der allerede er sendt (og endnu ikke
   // accepteret eller udløbet), skal også kunne ses direkte i familie-
   // oversigten med status "Invitation afventer" — uden at man behøver åbne
-  // panelet igen for at kunne kopiere/dele linket igen eller annullere det.
+  // panelet igen for at sende mailen igen eller annullere invitationen.
   const [pendingInvites, setPendingInvites] = useState([]);
   const loadPendingInvites = () => {
     if (!accessToken || !userId) return;
-    apiCall(`${SUPABASE_URL}/rest/v1/family_invites?invited_by=eq.${userId}&status=eq.pending&order=created_at.desc&select=id,token,expires_at`, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } })
+    apiCall(`${SUPABASE_URL}/rest/v1/family_invites?invited_by=eq.${userId}&status=eq.pending&order=created_at.desc&select=id,invitee_email,expires_at`, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } })
       .then(data => { if (Array.isArray(data)) setPendingInvites(data.filter(i => new Date(i.expires_at) > new Date())); })
       .catch(() => {});
   };
@@ -211,7 +211,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
         </div>
       ))}
       {pendingInvites.filter(inv => inv.id !== inviteId).map(inv => (
-        <PendingInviteCard key={`inv-${inv.id}`} invite={inv} onCancel={async () => {
+        <PendingInviteCard key={`inv-${inv.id}`} invite={inv} accessToken={accessToken} onCancel={async () => {
           try {
             await apiCall(`${SUPABASE_URL}/rest/v1/family_invites?id=eq.${inv.id}`, { method:"DELETE", headers: makeHeaders(accessToken) });
             setPendingInvites(p => p.filter(x => x.id !== inv.id));
@@ -292,7 +292,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
 
       {!editingMemberId && familyAddMode === "invite" && (
         <div id="family-invite-panel" style={{ marginTop:16 }}>
-          <InvitePanel accessToken={accessToken} userId={userId}
+          <InvitePanel accessToken={accessToken}
             onInviteId={setInviteId} onChanged={loadPendingInvites}
             onClose={() => { setFamilyAddMode(null); setInviteId(null); loadPendingInvites(); }} />
         </div>

@@ -18,7 +18,7 @@ variabler pr. skabelon.
   `supabase/functions/_shared/welcomeMail.ts` med `node scripts/build-welcome-mail.mjs`), ikke
   via Resend-skabelonen — så overskrift og tekst følger filen her.
 
-## Mørk tilstand (1. okt. 2026, gælder alle 28 mails: Resend og `auth/`)
+## Mørk tilstand (1. okt. 2026, gælder alle 29 mails: Resend og `auth/`)
 
 Samme palette og klasser i alle skabeloner (testet i `src/mailDarkMode.test.js`):
 ydre baggrund `#121413`, kort `#1C1F1E` (kun en anelse lysere, næsten uden kant), felter/paneler `#262A28`,

@@ -77,7 +77,8 @@ import SafetyInfoModal from "./SafetyInfoModal.jsx";
 import DeleteAccountModal from "./DeleteAccountModal.jsx";
 import { useAdminTools } from "./useAdminTools.js";
 import { useIncomingLinks } from "./useIncomingLinks.js";
-import { JoinListSheet } from "./ListSheets.jsx";
+import { JoinListSheet, FamilyInviteSheet } from "./ListSheets.jsx";
+import { useFamilyInviteInbox } from "./useFamilyInviteInbox.js";
 import { useNotifications } from "./useNotifications.js";
 import { useLoadUserData } from "./useLoadUserData.js";
 
@@ -474,8 +475,13 @@ export default function EatSafe() {
 
   // ── Familie-invitation og delt indkøbsliste via link → useIncomingLinks ──
   const { pendingJoinList, joinPreview, joining, confirmJoin, declineJoin } = useIncomingLinks({
-    accessToken, userId, user, loadFamily,
+    accessToken, userId, user,
     joinByCode, loadShoppingList, setAuthTab, setScreen, setActiveListId,
+  });
+
+  // ── Familie-invitationer til min bekræftede e-mail (bekræftes i FamilyInviteSheet) ──
+  const { familyInvite, familyInviteBusy, acceptFamilyInvite, declineFamilyInvite, laterFamilyInvite } = useFamilyInviteInbox({
+    accessToken, userId, user, loadFamily,
   });
 
   // ── Beskeder (liste, ulæst-tæller og ?notification=-ruten fra push) ──────
@@ -1072,6 +1078,9 @@ export default function EatSafe() {
 
         {/* ══ BEKRÆFT TILSLUTNING TIL DELT LISTE (efter åbnet link) ══ */}
         {joinPreview && <JoinListSheet preview={joinPreview} busy={joining} onConfirm={confirmJoin} onCancel={declineJoin} />}
+
+        {/* ══ BEKRÆFT FAMILIE-INVITATION (sendt til min e-mail) ══ */}
+        {familyInvite && !joinPreview && <FamilyInviteSheet invite={familyInvite} busy={familyInviteBusy} onConfirm={acceptFamilyInvite} onDecline={declineFamilyInvite} onLater={laterFamilyInvite} />}
 
         {/* ══ SIKKERHEDSINFORMATION ══ */}
         {showSafetyInfo && <SafetyInfoModal onAcknowledge={acknowledgeSafety} busy={safetyBusy} />}

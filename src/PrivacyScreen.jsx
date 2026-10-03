@@ -42,7 +42,7 @@ export default function PrivacyScreen({ onBack }) {
       {/* paddingTop matcher .legal-topbar's egen renderede højde (header er
           position:fixed, tager ikke plads i normal flow) + lidt luft. */}
       <div className="screen fade-in" style={{ paddingTop:"calc(75px + env(safe-area-inset-top))" }}>
-        <div style={S.updated}>Sidst opdateret: 2. oktober 2026</div>
+        <div style={S.updated}>Sidst opdateret: 3. oktober 2026</div>
 
         <div style={S.draftNotice}>
           Denne side er en foreløbig udgave af EatSafes privatlivspolitik og er endnu ikke juridisk gennemgået. Kontakt <Mail />, hvis du har spørgsmål, indtil den endelige version er på plads.
@@ -80,7 +80,7 @@ export default function PrivacyScreen({ onBack }) {
 
         <h2 style={S.h2}>4. Husstand, familie og oplysninger om andre personer</h2>
         <p style={S.p}>Hvis du opretter oplysninger om en anden person, kan EatSafe behandle personoplysninger, som ikke kommer direkte fra den person, oplysningerne vedrører.</p>
-        <p style={S.p}>Voksne husstandsmedlemmer inviteres og skal selv acceptere invitationen, før de indgår i din husstand. Når du inviterer en voksen, kan modtageren se dit fornavn på invitationssiden, før vedkommende har oprettet en konto. Profiler, du selv administrerer uden egen konto, er kun til børn under 18 år.</p>
+        <p style={S.p}>Voksne husstandsmedlemmer inviteres og skal selv acceptere invitationen, før de indgår i din husstand. Når du inviterer en voksen, indtaster du vedkommendes e-mailadresse, og EatSafe sender en invitationsmail dertil via vores e-mailleverandør. Invitationen gælder kun for den adresse, og modtageren kan se dit fornavn i mailen og på invitationssiden, før vedkommende har oprettet en konto. Forbindelsen oprettes først, når modtageren selv har bekræftet den i appen. Profiler, du selv administrerer uden egen konto, er kun til børn under 18 år.</p>
         <p style={S.p}>Når personoplysninger ikke er indsamlet direkte hos den registrerede, kan EatSafe have en informationspligt efter GDPR artikel 14. Informationen skal som udgangspunkt gives inden for rimelig tid og senest inden for én måned, medmindre en relevant undtagelse finder anvendelse.</p>
         <p style={S.p}>Ved oprettelse af en profil for et barn skal den person, der opretter profilen, have ret til at handle på barnets vegne.</p>
         <p style={S.p}>Hvis EatSafe senere tilbyder tjenesten direkte til børn, skal reglerne om børns egne konti og samtykke vurderes særskilt.</p>
@@ -147,7 +147,7 @@ export default function PrivacyScreen({ onBack }) {
         <p style={S.p}>Vercels aktuelle DPA oplyser, at virksomhedens primære behandlingsfaciliteter er i USA, og at data kan behandles internationalt. DPA’en beskriver samtidig mekanismer for lovlige internationale overførsler.</p>
         <p style={S.p}><strong>Anthropic</strong><br/>Kan anvendes til automatisk analyse af produktbilleder og tekst.</p>
         <p style={S.p}><strong>Open Food Facts</strong><br/>Anvendes som ekstern kilde til produktoplysninger og billeder. Disse stammer fra Open Food Facts og dets bidragydere og er udgivet under Open Database License (ODbL), Database Contents License og Creative Commons Attribution-ShareAlike (billeder). Opslag af produktdata sker fra EatSafes server alene med produktets stregkode. Produktbilleder kan hentes direkte fra Open Food Facts’ servere, hvorved din IP-adresse og tekniske enhedsoplysninger kan blive synlige for dem.</p>
-        <p style={S.p}><strong>Resend</strong><br/>Anvendes til at sende e-mails fra EatSafe, fx bekræftelse af e-mail, nulstilling af adgangskode og beskeder. Resend modtager din e-mailadresse, dit navn og beskedens indhold.</p>
+        <p style={S.p}><strong>Resend</strong><br/>Anvendes til at sende e-mails fra EatSafe, fx bekræftelse af e-mail, nulstilling af adgangskode, invitationer til familie og beskeder. Resend modtager din e-mailadresse, dit navn og beskedens indhold.</p>
         <p style={S.p}><strong>Google og Facebook</strong><br/>Hvis du vælger at logge ind med din Google- eller Facebook-konto, modtager vi dit navn og din e-mailadresse fra udbyderen.</p>
         <p style={S.p}><strong>Push-tjenester</strong><br/>Push-notifikationer leveres via din browser- eller enhedsleverandørs push-tjeneste (fx Apple, Google eller Mozilla).</p>
 
@@ -172,6 +172,7 @@ export default function PrivacyScreen({ onBack }) {
           <li style={S.li}>beskeder i appen: slettes automatisk efter 12 måneder</li>
           <li style={S.li}>tekniske hændelser og afsendelseslog for beskeder: slettes automatisk efter 90 dage</li>
           <li style={S.li}>tekniske fejllogs: slettes automatisk efter 90 dage og er ikke knyttet til din konto efter en sletning</li>
+          <li style={S.li}>e-mailadressen på en person, du har inviteret til din familie: slettes, så snart invitationen er besvaret eller udløbet (invitationen virker højst 24 timer, og oprydningen sker dagligt), og senest når du sletter din konto</li>
           <li style={S.li}>sikkerhedsindberetninger (hvis du har oplyst, at en e-mail om nulstilling af adgangskode ikke var fra dig): slettes automatisk efter 12 måneder</li>
           <li style={S.li}>logs hos vores leverandører (fx Supabase og Vercel): efter leverandørernes egne standardfrister</li>
           <li style={S.li}>sikkerhedskopier: hvis EatSafe tager sikkerhedskopier, udfases slettede oplysninger, når kopierne udløber.</li>
