@@ -142,7 +142,7 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
             placeholder="navn@eksempel.dk" value={email} onChange={e => { setEmail(e.target.value); setError(""); }}
             style={{ width:"100%", boxSizing:"border-box", minHeight:46, padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:15 }} />
           <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, margin:"8px 0 12px" }}>
-            Personen skal oprette sig eller logge ind med præcis denne e-mailadresse. Ingen bliver forbundet, før de selv har sagt ja i appen. Invitationen virker i 24 timer og kun for den adresse. Forbindelsen kan fjernes igen senere.
+            Personen kan oprette sig eller logge ind med denne e-mailadresse, eller følge linket i mailen med en anden adresse eller loginmetode (fx Facebook). Ingen bliver forbundet, før de selv har sagt ja i appen. Invitationen virker i 24 timer og kan kun bruges én gang. Forbindelsen kan fjernes igen senere.
           </div>
           <button type="submit" disabled={loading || !email.trim()}
             style={{ ...BTN, width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", opacity: loading || !email.trim() ? .6 : 1 }}>
@@ -156,7 +156,7 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
             Invitationen er sendt til <strong>{sentTo}</strong>{expiresAt ? ` og virker ${formatExpiry(expiresAt)}` : ""}.
           </div>
           <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>
-            Bed personen oprette sig eller logge ind med den adresse. Når personen har sagt ja i appen, bliver de tilføjet til din Familie. Kan mailen ikke findes, så tjek spam-mappen.
+            Bed personen åbne mailen og følge linket, eller oprette sig eller logge ind med den adresse. Når personen har sagt ja i appen, bliver de tilføjet til din Familie. Kan mailen ikke findes, så tjek spam-mappen.
           </div>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:10 }}>
             <TextLink onClick={cancel}>Annuller invitation</TextLink>

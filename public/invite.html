@@ -219,10 +219,10 @@
           ${icon("family")}
           <h1>Du er inviteret!</h1>
           <p>${invite.inviter_first_name ? `${esc(invite.inviter_first_name)} har inviteret dig til sin familie i EatSafe.` : "Du er blevet inviteret til en familie i EatSafe."} Når du siger ja, kan I se hinandens allergier og kostvalg, så I kan tjekke varer for hinanden, og I kan dele indkøbslister. Du styrer selv dine egne oplysninger og kan til enhver tid afslutte forbindelsen igen.</p>
-          ${invite.invitee_email_hint ? `<p><strong>Vigtigt:</strong> Opret dig eller log ind med den e-mailadresse, invitationen blev sendt til (${esc(invite.invitee_email_hint)}). Det er kun med den adresse, invitationen virker. Åbn EatSafe i den browser, du plejer at bruge, og log ind dér.</p>` : ""}
+          ${invite.invitee_email_hint ? `<p><strong>Tip:</strong> Opret dig eller log ind med den e-mailadresse, invitationen blev sendt til (${esc(invite.invitee_email_hint)}). Bruger du Facebook eller en anden adresse, er det også fint: tryk på knapperne herunder, og log ind i den samme browser, så vises invitationen i appen. Du bestemmer selv, om du vil forbindes.</p>` : ""}
           ${inAppNotice()}
-          <a href="https://eatsafe.dk?invite=1" class="btn">Opret konto</a>
-          <a href="https://eatsafe.dk?invite=1&login=1" class="btn btn-ghost">Log ind</a>
+          <a href="https://eatsafe.dk?invite=${encodeURIComponent(token)}" class="btn">Opret konto</a>
+          <a href="https://eatsafe.dk?invite=${encodeURIComponent(token)}&login=1" class="btn btn-ghost">Log ind</a>
           <p class="expiry">Invitationen udløber ${new Date(invite.expires_at).toLocaleDateString("da-DK")}</p>
           ${installGuide()}
         `);

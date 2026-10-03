@@ -21,16 +21,18 @@ describe("invitationsmail", () => {
     expect(html).toContain("<strong class=\"strong\">frederikke@gmail.com</strong>");
     expect(html).toContain('href="https://eatsafe.dk/invite/abc123"');
     expect(html).toContain("i morgen kl. 18.29");
-    expect(html).toContain("præcis denne e-mailadresse");
+    expect(html).toContain("frederikke@gmail.com");
+    expect(html).toContain("kan kun bruges én gang");
   });
   it("vælger teksten efter, om adressen har en konto, og efterlader ingen markører", () => {
     const nyBruger = renderInviteMail(vars);
     const medKonto = renderInviteMail({ ...vars, existingAccount: true });
-    expect(nyBruger).toContain("Opret dig, eller log ind, med præcis denne e-mailadresse");
+    expect(nyBruger).toContain("Bruger du i stedet Facebook eller en anden adresse, virker invitationen også");
     expect(nyBruger).not.toContain("Du har allerede en EatSafe-konto");
     expect(medKonto).toContain("Du har allerede en EatSafe-konto");
     expect(medKonto).toContain("Ingenting sker, før du har sagt ja");
-    expect(medKonto).not.toContain("Opret dig, eller log ind, med præcis denne e-mailadresse");
+    expect(medKonto).not.toContain("Bruger du i stedet Facebook eller en anden adresse, virker invitationen også");
+    expect(medKonto).toContain("Bruger du en anden adresse eller Facebook");
     for (const html of [nyBruger, medKonto]) {
       expect(html).not.toMatch(/<!--\/?IF/);
       expect(html).toContain("frederikke@gmail.com");

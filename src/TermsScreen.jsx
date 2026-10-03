@@ -110,7 +110,7 @@ export default function TermsScreen({ onBack }) {
         <h2 style={S.h2}>8. Familie- og husstandsprofiler</h2>
         <p style={S.p}>EatSafe kan gøre det muligt at oprette eller administrere profiler for andre personer i en husstand.</p>
         <p style={S.p}>Du må kun registrere oplysninger om en anden person, når du har ret til det.</p>
-        <p style={S.p}>Voksne personer skal selv acceptere en invitation, før de indgår i din husstand. Du må kun invitere personer, der ønsker det, og skal indtaste deres egen e-mailadresse; en invitation virker kun for den adresse, den er sendt til. Registrerer du oplysninger om en voksen på en profil, du selv administrerer, forudsætter det, at personen har givet dig sit samtykke.</p>
+        <p style={S.p}>Voksne personer skal selv acceptere en invitation, før de indgår i din husstand. Du må kun invitere personer, der ønsker det, og skal indtaste deres egen e-mailadresse; en invitation kan kun bruges af den, der har fået mailen, og kun én gang. Registrerer du oplysninger om en voksen på en profil, du selv administrerer, forudsætter det, at personen har givet dig sit samtykke.</p>
         <p style={S.p}>Ved oprettelse af en profil for et barn skal du have ret til at handle på barnets vegne.</p>
         <p style={S.p}>EatSafe kan begrænse eller ændre mulighederne for at registrere oplysninger om andre personer for at beskytte deres privatliv og sikkerhed.</p>
 
