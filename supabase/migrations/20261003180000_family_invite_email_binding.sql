@@ -16,6 +16,7 @@ create index if not exists family_invites_invitee_email_pending_idx
   on public.family_invites (invitee_email) where status = 'pending';
 
 -- Klienten opretter ikke længere invitationer selv: kun edge-funktionen (service role), som begrænser antal og sender mailen.
+-- (Kørt separat, fordi værktøjet blokerede `drop policy`: se to do 9e6c5888.)
 drop policy if exists family_invites_insert_own on public.family_invites;
 
 -- Kalderens bekræftede e-mail (små bogstaver). Intern hjælper: ingen må kalde den direkte.
@@ -197,16 +198,15 @@ grant execute on function public.accept_my_family_invite(uuid) to authenticated;
 grant execute on function public.decline_my_family_invite(uuid) to authenticated;
 
 -- Opbevaring: modtagerens e-mail slettes, når invitationen er besvaret eller udløbet (rækken bevares, som forbindelsen kræver).
-create or replace function public.cleanup_notifications()
+-- Egen funktion og eget cron-job (dagligt 03:40 UTC, lige efter `notify-cleanup`), så cleanup_notifications() er uændret.
+create or replace function public.cleanup_family_invite_emails()
  returns void
  language sql
  security definer
  set search_path to 'public'
 as $function$
-  delete from public.notifications where created_at < now() - interval '12 months';
-  delete from public.notification_events where created_at < now() - interval '90 days' and status <> 'pending';
-  delete from public.client_errors where last_seen < now() - interval '90 days';
-  delete from public.security_reports where created_at < now() - interval '12 months';
   update public.family_invites set invitee_email = null
     where invitee_email is not null and (status <> 'pending' or expires_at < now());
 $function$;
+revoke execute on function public.cleanup_family_invite_emails() from public, anon, authenticated;
+select cron.schedule('family-invite-email-cleanup', '40 3 * * *', 'select public.cleanup_family_invite_emails();');
