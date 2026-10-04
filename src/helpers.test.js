@@ -18,7 +18,7 @@ import {
   isValidEanChecksum,
   glutenCerealsIn,
 } from "./helpers.js";
-import { profileConflictLabel, profileMatchLabel, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
+import { profileConflictLabel, profileMatchLabel, scanTargetCopy, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
 
 describe("isValidEanChecksum", () => {
   it("accepts a real EAN-13 with a correct check digit", () => {
@@ -544,5 +544,25 @@ describe("findProductOnList", () => {
     const { findProductOnList } = await import("./helpers.js");
     expect(findProductOnList(items, { code: "111", name: "Harboe Cola" })).toBeNull();
     expect(findProductOnList([], { code: "111" })).toBeNull();
+  });
+});
+
+describe("scanTargetCopy", () => {
+  const family = [{ id: "f1", name: "Valdemar Jensen" }, { id: "f2", name: "Bjørn" }, { id: "acct:9", name: "Jan" }];
+  it("kun brugeren selv", () => {
+    expect(scanTargetCopy(["me"], family)).toEqual({ chip: "Dig", intro: "Scan et produkt og se straks, om det passer til dine allergier og præferencer." });
+    expect(scanTargetCopy(["me"], []).chip).toBe("Dig");
+    expect(scanTargetCopy([], family).chip).toBe("Dig");
+  });
+  it("én anden person, med fornavn", () => {
+    expect(scanTargetCopy(["f1"], family)).toEqual({ chip: "Valdemar", intro: "Scan et produkt og se straks, om det passer til Valdemar." });
+  });
+  it("flere personer tælles, også brugeren selv", () => {
+    expect(scanTargetCopy(["me", "f1", "acct:9"], family)).toEqual({ chip: "3 personer", intro: "Scan et produkt og se straks, om det passer til de valgte personer." });
+    expect(scanTargetCopy(["f1", "f2"], family).chip).toBe("2 personer");
+  });
+  it("ignorerer ukendte id'er og dubletter", () => {
+    expect(scanTargetCopy(["f1", "gone", "f1"], family).chip).toBe("Valdemar");
+    expect(scanTargetCopy(["me", "gone"], family).chip).toBe("Dig");
   });
 });

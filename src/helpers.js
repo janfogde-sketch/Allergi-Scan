@@ -623,6 +623,24 @@ export function profileMatchLabel(profiles) {
   return first ? `Passer til ${first}` : "Passer til den valgte profil";
 }
 
+// Scanner-forsidens dynamiske tekster (4. okt. 2026, Bjørn): forklaringen og
+// profilvælgeren taler til den aktuelle situation — brugeren selv, én anden
+// person eller flere. Ukendte id'er (fx en fjernet profil) tælles ikke med.
+// Returnerer { chip, intro }: chip til "Tjekker for: …", intro til teksten
+// under hilsenen. "Passer til" konsekvent, som profileMatchLabel.
+export function scanTargetCopy(activeProfiles, family) {
+  const known = new Set(["me", ...(family || []).map(m => m.id)]);
+  const ids = [...new Set((activeProfiles || []).filter(id => known.has(id)))];
+  const self = { chip: "Dig", intro: "Scan et produkt og se straks, om det passer til dine allergier og præferencer." };
+  if (ids.length === 0 || (ids.length === 1 && ids[0] === "me")) return self;
+  if (ids.length === 1) {
+    const first = ((family || []).find(m => m.id === ids[0])?.name || "").trim().split(/\s+/)[0];
+    if (!first) return { chip: "1 person", intro: "Scan et produkt og se straks, om det passer til den valgte person." };
+    return { chip: first, intro: `Scan et produkt og se straks, om det passer til ${first}.` };
+  }
+  return { chip: `${ids.length} personer`, intro: "Scan et produkt og se straks, om det passer til de valgte personer." };
+}
+
 // ─── PRODUKTRESULTAT: KATEGORISEREDE FUND (28. sept. 2026) ──────────────────
 // FINAL PRODUCT RESULT PAGE — ét genbrugeligt, data-drevet lag der grupperer
 // et allerede-beregnet scan-resultats matches (matchedDanger/matchedWarning

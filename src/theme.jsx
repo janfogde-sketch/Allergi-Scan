@@ -453,6 +453,15 @@ body::-webkit-scrollbar{display:none;}
 .scan-cta-halo{animation:scan-halo-pulse 4s ease-in-out infinite;}
 .scan-cta-btn{transition:transform .12s cubic-bezier(.34,1.56,.64,1);}
 .scan-cta-btn:active{transform:scale(.95);}
+/* Profilvælgeren under Scan-knappen ("Tjekker for: …", 4. okt. 2026): sekundær
+   og rolig, men tydeligt klikbar. Hele pillen er én knap; tryk-feedback som
+   resten af appen. Hover kun på enheder med rigtig hover, så den ikke hænger
+   fast efter et tryk på iOS/Android. */
+.scan-profile-chip{display:flex;align-items:center;gap:6px;min-height:36px;background:rgba(255,255,255,.94);border:1px solid var(--border2);border-radius:var(--r);padding:6px 12px 6px 10px;cursor:pointer;box-shadow:0 4px 12px -6px rgba(21,32,26,.32);font-family:var(--f);max-width:260px;-webkit-tap-highlight-color:transparent;transition:transform .12s ease, background-color .15s ease, border-color .15s ease;}
+@media (hover:hover){.scan-profile-chip:hover{background:var(--surface);border-color:var(--green);}}
+.scan-profile-chip:active,.scan-profile-chip[aria-expanded="true"]{background:var(--green-selected-bg);border-color:var(--green);}
+.scan-profile-chip:active{transform:scale(.97);}
+.scan-profile-chip:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
 @media (prefers-reduced-motion: reduce){
   .scan-cta-halo{animation:none;}
 }

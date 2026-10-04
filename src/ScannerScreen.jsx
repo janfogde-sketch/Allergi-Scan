@@ -3,7 +3,7 @@ import React, { useState, useRef, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
          ALLERGEN_EXAMPLES, E_NUMBERS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
-import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo, isValidEanChecksum, initials } from "./helpers.js";
+import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo, isValidEanChecksum, initials, scanTargetCopy } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage, LazyFallback } from "./SharedComponents.jsx";
 import { DEMO_SLIDES } from "./demoSlides.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -181,20 +181,25 @@ function ScanProfilePickerSheet({ activeProfiles, setActiveProfiles, family, use
       <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
-          <div style={{ fontSize:16, fontWeight:900, color:"var(--ink)" }}>Scanner for</div>
+          <div style={{ fontSize:16, fontWeight:900, color:"var(--ink)" }}>Tjekker for</div>
           <button onClick={onClose} aria-label="Luk"
             style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
         </div>
         <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12, lineHeight:1.4 }}>
-          Vælg hvilke profiler fremtidige scanninger skal tjekkes imod.
+          Vælg, hvem dine scanninger skal tjekkes for. Du kan vælge én eller flere.
+        </div>
+        {/* Aktuelt valg, opdateres med det samme ved hvert tryk (4. okt. 2026). */}
+        <div aria-live="polite" style={{ fontSize:12.5, fontWeight:600, color:"var(--ink)", marginBottom:8 }}>
+          Valgt nu: <span style={{ color:"var(--green)", fontWeight:800 }}>{isAll ? `Alle (${allIds.length} personer)` : scanTargetCopy(activeProfiles, family).chip}</span>
         </div>
         <Row id="all" label="Alle" checked={isAll} onClick={toggleAll} />
-        <Row id="me" label={user.name || "Dig"} avatarColor="var(--green)" avatarInitials={initials(user.name || "Mig")}
+        <Row id="me" label={user.name ? `Dig (${user.name.trim().split(/\s+/)[0]})` : "Dig"} avatarColor="var(--green)" avatarInitials={initials(user.name || "Mig")}
           checked={!isAll && activeProfiles.includes("me")} onClick={() => toggleOne("me")} />
         {family.map(m => (
           <Row key={m.id} id={m.id} label={m.name} avatarColor={m.color} avatarInitials={initials(m.name)}
             checked={!isAll && activeProfiles.includes(m.id)} onClick={() => toggleOne(m.id)} />
         ))}
+        <button type="button" className="btn btn-primary btn-full" onClick={onClose} style={{ marginTop:16 }}>Færdig</button>
       </div>
     </div>,
     document.body
@@ -383,16 +388,10 @@ export default function ScannerScreen({
   // familiemedlem tilføjes, og skjules igen hvis antallet falder til én.
   const scanProfilePickerAvailable = family.length > 0;
 
-  // Kompakt label til "Scanner for: ..."-chippen (25. sept. 2026,
-  // brugerfeedback) — "Alle" når alle profiler er aktive, personens navn ved
-  // præcis én, ellers "N profiler".
-  const scanProfileAllIds = ["me", ...family.map(m => m.id)];
-  const scanProfileIsAll = scanProfilePickerAvailable && scanProfileAllIds.every(id => activeProfiles.includes(id));
-  const scanProfileLabel = scanProfileIsAll
-    ? "Alle"
-    : activeProfiles.length === 1
-      ? (activeProfiles[0] === "me" ? (user.name?.split(" ")[0] || "Dig") : (family.find(m => m.id === activeProfiles[0])?.name?.split(" ")[0] || "1 profil"))
-      : `${activeProfiles.length} profiler`;
+  // Dynamiske tekster til forklaringen og "Tjekker for: …"-chippen (4. okt.
+  // 2026): "Dig" / fornavn / "N personer", og en forklaring der passer til
+  // samme situation. Uden familie er det altid brugeren selv.
+  const scanTarget = scanTargetCopy(scanProfilePickerAvailable ? activeProfiles : ["me"], family);
 
   // activeIds (kombinerede allergen-id'er for alle aktive profiler) kommer nu
   // som prop fra App.jsx' allActive() i stedet for at blive genberegnet her
@@ -617,7 +616,7 @@ export default function ScannerScreen({
                   <div style={{ fontSize:"clamp(11.5px, 2.1cqh, 15px)", fontWeight:500, color:"var(--ink2)", marginTop:"clamp(5px, 1.1cqh, 9px)", lineHeight:1.5, maxWidth:250, marginLeft:"auto", marginRight:"auto", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 12px rgba(255,255,255,.6)" }}>
                     {cameraPermissionDenied
                       ? "Kameraadgang er slået fra — brug Billede eller Indtast EAN i stedet."
-                      : "Scan et produkt og se straks, om det matcher dine allergier."}
+                      : scanTarget.intro}
                   </div>
                 </div>
 
@@ -750,15 +749,18 @@ export default function ScannerScreen({
                           trak teksten forkert sammen ("Scanner ..." i stedet
                           for "Scanner for: Alle"). En fast px-værdi løser det
                           og er rigeligt inden for appens 480px-loft. */}
-                      <button type="button" onClick={() => setShowScanProfilePicker(true)}
-                        style={{ display:"flex", alignItems:"center", gap:4, background:"rgba(255,255,255,.82)", border:"1px solid var(--border)",
-                          borderRadius:"var(--r)", padding:"clamp(4px, 1cqh, 6px) clamp(10px, 2cqh, 12px)", cursor:"pointer",
-                          boxShadow:"0 4px 12px -6px rgba(21,32,26,.3)", fontFamily:"var(--f)", maxWidth:260 }}>
-                        <Icon name="family" size={11} color="var(--green)" />
-                        <span style={{ fontSize:"clamp(9.5px, 1.7cqh, 11px)", fontWeight:500, color:"var(--ink2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                          Scanner for: <span style={{ color:"var(--green)", fontWeight:800 }}>{scanProfileLabel}</span>
+                      {/* Hele pillen er én knap (4. okt. 2026): lidt højere
+                          kontrast, kraftigere kant og chevron, hover/tryk/åben-
+                          tilstand i .scan-profile-chip (theme.jsx). Stadig
+                          hvid og lille, så den aldrig konkurrerer med Scan. */}
+                      <button type="button" className="scan-profile-chip" onClick={() => setShowScanProfilePicker(true)}
+                        aria-haspopup="dialog" aria-expanded={showScanProfilePicker}
+                        aria-label={`Tjekker for: ${scanTarget.chip}. Skift hvem der tjekkes for`}>
+                        <Icon name="family" size={12} color="var(--green)" />
+                        <span style={{ fontSize:"clamp(10.5px, 1.8cqh, 12px)", fontWeight:600, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                          Tjekker for: <span style={{ color:"var(--green)", fontWeight:800 }}>{scanTarget.chip}</span>
                         </span>
-                        <Icon name="chevronDown" size={10} color="var(--muted)" />
+                        <Icon name="chevronDown" size={12} color="var(--ink2)" />
                       </button>
                     </div>
                   )}
