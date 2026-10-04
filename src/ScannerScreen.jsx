@@ -785,15 +785,15 @@ export default function ScannerScreen({
                     ingen animation. Skjules på meget lave skærme (.scan-tip, container-query i theme.jsx), og når
                     kameraadgang er nægtet (det kort fylder selv). Linket åbner den præcise artikel. */}
                 {dailyTip && !cameraPermissionDenied && (
-                  // Kompakt (4. okt. 2026, Bjørn): hele kortet er én knap til artiklen; "Læs mere …" er kun en
-                  // diskret tekst i første linje, så kortet fylder ca. en tredjedel mindre og ikke konkurrerer med Scan.
+                  // Kompakt (4. okt. 2026, Bjørn): hele kortet er én knap til artiklen. En diskret chevron til højre i
+                  // første linje viser, at man kan trykke; "Læs mere i Allergileksikonet" står kun i aria-label.
                   <button type="button" className="scan-tip"
                     aria-label={`Vidste du, at … ${dailyTip.text} Læs mere i Allergileksikonet`}
                     onClick={() => { setKnowledgeSlug(dailyTip.slug); setScreen(SCREENS.KNOWLEDGE); }}>
                     <span className="scan-tip-head">
                       <Icon name="bulb" size={12} color="var(--green)" />
                       <span className="scan-tip-title">Vidste du, at …</span>
-                      <span className="scan-tip-more">Læs mere i Allergileksikonet →</span>
+                      <span aria-hidden="true" style={{ display:"flex", flexShrink:0, marginRight:-2 }}><Icon name="chevronRight" size={14} color="var(--muted)" /></span>
                     </span>
                     <span className="scan-tip-text">{dailyTip.text}</span>
                   </button>
