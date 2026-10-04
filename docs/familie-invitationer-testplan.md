@@ -56,9 +56,9 @@ Kør hver række på den nævnte kombination. "Sheet" = "Invitation til familien
 | R7 | Eksisterende bruger, appen lukket, logger ind | ✔ Sheet ved login |
 | R8 | Eksisterende bruger, appen åben i baggrunden, invitationen sendes nu | ✔ Sheet, når appen kommer i forgrunden |
 | R9 | Linket åbnes i browser A, login sker i browser B (samme e-mail) | ✔ Sheet vises i B (e-mail-match, ingen token nødvendig) |
-| R10 | Linket åbnes i browser A, login i browser B med **anden** e-mail eller Facebook | ✘ Ingen sheet i B af sig selv (forventet). I B: Familie → "Har du fået et invitationslink?" → indsæt linket → ✔ sheet. Alternativt åbn mailens link i B |
+| R10 | Linket åbnes i browser A, login i browser B med **anden** e-mail eller Facebook | ✘ Ingen sheet i B af sig selv (forventet). I B: Familie → "Tilslut via invitationslink" → indsæt linket → ✔ sheet. Alternativt åbn mailens link i B |
 | R23 | Første besøg på invitationslinket (ny browser, service workeren genindlæser siden) | ✔ Brugeren lander på oprettelse/login, ikke på velkomstsiden (rettet 4. okt., `recentInviteLinkFollowed`) |
-| R24 | "Har du fået et invitationslink?": indsæt et gyldigt link, et forkert link og tom tekst | ✔ Gyldigt: sheet vises med det samme. Forkert: "Det ligner ikke et invitationslink…". Tom: knappen er slået fra |
+| R24 | "Tilslut via invitationslink": indsæt et gyldigt link, et forkert link og tom tekst | ✔ Gyldigt: sheet vises med det samme. Forkert: "Det ligner ikke et invitationslink…". Tom: knappen er slået fra |
 | R25 | Et link, der ikke kan bruges (brugt, udløbet, trukket tilbage, låst, ukendt) følges, mens man er logget ind | ✔ En tydelig besked, ikke en stille forsvinden. Tokenet ryddes |
 | R11 | Linket åbnes i Messenger/Instagram/Googles app-browser | ✔ Advarsel "Åbn invitationen i din browser" og "Kopiér link". Fuldfør i rigtig browser |
 | R12 | Konto, hvis e-mail ikke er bekræftet | ✘ Ingen sheet, før e-mailen er bekræftet |
@@ -112,7 +112,7 @@ Kør hver række på den nævnte kombination. "Sheet" = "Invitation til familien
 2. ~~En anden med et låst delt link fik ingen forklaring.~~ Rettet: `get_family_invite_link_status` og en tydelig besked i appen; `invite.html` viser "Linket er allerede brugt" og "Invitationen er trukket tilbage".
 3. ~~P2-teksten talte om invitationsmailen for delte links.~~ Rettet: teksten dækker både mail og delt link (også Resend-skabelonen, når den er opdateret).
 4. ~~A fik ingen push om en anmodning.~~ Rettet: N10 til afsenderen, første gang nogen beder om forbindelse (ingen dublet ved gentagelse).
-5. ~~Mailens link virkede kun i den browser, hvor tokenet blev gemt.~~ Rettet: "Har du fået et invitationslink?" under Familie, hvor linket kan indsættes i den browser, man er logget ind i.
+5. ~~Mailens link virkede kun i den browser, hvor tokenet blev gemt.~~ Rettet: "Tilslut via invitationslink" under Familie, hvor linket kan indsættes i den browser, man er logget ind i.
 
 Også rettet undervejs: iPad (Safari fremstår som en Mac) fik Android-råd, computere fik Android-tekst, første besøg på et invitationslink endte på velkomstsiden i stedet for oprettelsen, og mailen lovede "automatisk" kobling, selv om brugeren selv skal sige ja.
 

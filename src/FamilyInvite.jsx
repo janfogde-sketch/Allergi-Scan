@@ -123,7 +123,7 @@ export function WhatIsShared() {
   );
 }
 
-// "Har du fået et invitationslink?": den, der har fået en invitation, men ikke kom ind via linket i den browser, de er logget ind i
+// "Tilslut via invitationslink": den, der har fået en invitation, men ikke kom ind via linket i den browser, de er logget ind i
 // (fx åbnet i Messenger), kan indsætte linket her. Så virker invitationen uanset browser og loginmetode.
 export function InviteLinkEntry() {
   const [open, setOpen] = useState(false);
@@ -137,7 +137,13 @@ export function InviteLinkEntry() {
     window.dispatchEvent(new Event(INVITE_TOKEN_EVENT));
     setValue(""); setError(""); setOpen(false);
   };
-  if (!open) return <div style={{ marginTop:8 }}><TextLink onClick={() => setOpen(true)}>Har du fået et invitationslink?</TextLink></div>;
+  // Tydelig sekundær handling (4. okt. 2026): omridset knap med link-ikon, aldrig grøn fyld, så "+ Tilføj til familien" forbliver den primære.
+  if (!open) return (
+    <button type="button" className="btn btn-outline" onClick={() => setOpen(true)}
+      style={{ marginTop:8, minHeight:44, padding:"10px 14px", display:"inline-flex", alignItems:"center", gap:8, fontSize:13 }}>
+      <Icon name="link" size={15} color="var(--green)" /> Tilslut via invitationslink
+    </button>
+  );
   return (
     <form onSubmit={submit} className="card" style={{ marginTop:8 }}>
       <label htmlFor="invite-link-input" style={{ fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 }}>Indsæt invitationslinket</label>

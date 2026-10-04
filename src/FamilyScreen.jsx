@@ -16,13 +16,15 @@ import { UI } from "./styleUtils.js";
 // SCREENS.FAMILY — udskilt fra ProfileScreen.jsx 30. sept. 2026
 // (arkitektur-audit A8, én skærm = én fil). Husstanden (household) ejes
 // stadig af ProfileScreen, fordi Profil-siden også viser antallet.
-const SECTION = { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".8px", margin:"16px 0 4px" };
+// Samme overskriftsstil som appens øvrige sektioner (.list-section, UI.sectionLbl*): 11 px, 700, versaler, 1 px spacing.
+const SECTION = { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", margin:"16px 0 4px" };
 const SECTION_SUB = { fontSize:12, color:"var(--muted)", lineHeight:1.45, marginBottom:8 };
 
-// Kompakt tom tilstand pr. sektion: gør funktionen synlig uden et stort tomt kort.
+// Kompakt tom tilstand pr. sektion: kun forklarende tekst (ingen handling), neutral lys baggrund og almindelig diskret kant
+// (4. okt. 2026: den stiplede ramme lignede en upload-zone/deaktiveret tilstand).
 function EmptyRow({ title, text }) {
   return (
-    <div style={{ padding:"10px 14px", background:"var(--surface)", border:"1px dashed var(--border2)", borderRadius:12, marginBottom:8 }}>
+    <div style={{ padding:"10px 14px", background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, marginBottom:8 }}>
       <div style={{ fontSize:13, fontWeight:700, color:"var(--ink2)" }}>{title}</div>
       <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>{text}</div>
     </div>
@@ -122,10 +124,10 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
     const overflow = chips.length - visible.length;
     return (
       <div className="tags">
-        {visible.map((c,j) => <div key={j} className="tag" style={{ fontSize:11, ...CHIP_VARIANT_STYLE[c.variant] }}>{c.variant==="allergy" ? <><AllergenGlyph a={c.item} size={11} /> {c.item.label}</> : c.text}</div>)}
+        {visible.map((c,j) => <div key={j} className="tag" style={CHIP_VARIANT_STYLE[c.variant]}>{c.variant==="allergy" ? <><AllergenGlyph a={c.item} size={11} /> {c.item.label}</> : c.text}</div>)}
         {overflow>0 && (
           <button type="button" onClick={() => setExpandedChipsFor(f => [...f, rowKey])}
-            className="tag" style={{ fontSize:11, color:"var(--muted)", background:"var(--surface2)", borderColor:"var(--border)", cursor:"pointer", fontFamily:"var(--f)" }}>
+            className="tag" style={{ color:"var(--muted)", background:"var(--surface2)", borderColor:"var(--border)", cursor:"pointer", fontFamily:"var(--f)" }}>
             +{overflow}
           </button>
         )}
@@ -164,15 +166,15 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
   return (
     <div className="screen fade-in" style={{ paddingBottom:"calc(110px + env(safe-area-inset-bottom))" }}>
       <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Familie</div>
-      <div className="screen-sub">Saml personer, du tjekker varer for og deler indkøbslister med.</div>
-      <TextLink onClick={() => setShowHowItWorks(true)}>Sådan virker Familie</TextLink>
+      <div className="screen-sub">Saml personer, du tjekker varer for, og voksne du deler indkøbslister med.</div>
+      <div style={{ marginBottom:12 }}><TextLink onClick={() => setShowHowItWorks(true)}>Sådan virker Familie</TextLink></div>
 
       <div style={SECTION}>Familiemedlemmer med egen konto</div>
-      <div style={SECTION_SUB}>Voksne med egen EatSafe-konto, som du har inviteret.</div>
-      {household.length === 0 && pendingInvites.length === 0 && <EmptyRow title="Ingen endnu" text="Invitér en person til familien." />}
+      <div style={SECTION_SUB}>Voksne med egen EatSafe-konto, som du er forbundet med.</div>
+      {household.length === 0 && pendingInvites.length === 0 && <EmptyRow title="Ingen endnu" text="Invitér en voksen til familien." />}
       {household.map(m => (
         <div key={`h-${m.id}`} className="family-member">
-          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
             <div className="fm-avatar" style={{ background:"var(--green)", color:"var(--ink)" }}>{initials(m.name || m.email)}</div>
             <div style={UI.flex1}>
               <div style={{ fontWeight:800, fontSize:15 }}>{m.name || m.email}</div>
@@ -227,21 +229,19 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
       {family.length === 0 && <EmptyRow title="Ingen endnu" text="Opret en profil til et barn." />}
       {family.map(m => (
         <div key={`p-${m.id}`} className="family-member" style={editingMemberId === m.id ? { border:"1.5px solid var(--green)", background:"var(--green-selected-bg)" } : undefined}>
-          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
             <div className="fm-avatar" style={{ background:m.color, color:"var(--ink)" }}>{initials(m.name)}</div>
             <div style={UI.flex1}>
               <div style={{ fontWeight:800, fontSize:15 }}>{m.name}</div>
               <div style={UI.muted11mt2}>
-                {[m.birth_year && `${new Date().getFullYear() - m.birth_year} år`, m.gender, "Ingen egen konto"].filter(Boolean).join(" · ")}
+                {[m.birth_year && `${new Date().getFullYear() - m.birth_year} år`, m.gender, "Børneprofil"].filter(Boolean).join(" · ")}
               </div>
             </div>
+            {/* Kun Rediger på kortet (4. okt. 2026): "Slet profil" ligger i Rediger-flowet bag en bekræftelse,
+                så et enkelt fejltryk på kortet aldrig kan slette en profil. */}
             <button type="button" onClick={() => { setFamilyAddMode(null); startEditMember(m); }} aria-label={`Rediger ${m.name}`}
-              style={{ background:"none", border:"none", cursor:"pointer", padding:"0 4px", minHeight:44, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color: editingMemberId === m.id ? "var(--green)" : "var(--ink2)" }}>
+              style={{ background:"none", border:"none", cursor:"pointer", padding:"0 8px", minHeight:44, marginRight:-8, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color: editingMemberId === m.id ? "var(--green)" : "var(--ink2)" }}>
               Rediger
-            </button>
-            <button type="button" onClick={() => setConfirmDeleteProfile(m)} aria-label={`Slet profilen for ${m.name}`}
-              style={{ background:"none", border:"none", cursor:"pointer", width:40, height:44, marginLeft:-2, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-              <Icon name="trash" size={18} color="var(--ink2)" />
             </button>
           </div>
           {m.birth_year && new Date().getFullYear() - m.birth_year >= 18 && (
@@ -326,6 +326,14 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
             }}
             addLabel={editingMemberId ? "Gem ændringer" : "+ Tilføj familiemedlem"}
           />
+          {editingMemberId && (
+            <div style={{ marginTop:16, paddingTop:12, borderTop:"1px solid var(--border)", display:"flex", justifyContent:"center" }}>
+              <button type="button" onClick={() => { const m = family.find(x => x.id === editingMemberId); if (m) setConfirmDeleteProfile(m); }}
+                style={{ background:"none", border:"none", cursor:"pointer", minHeight:44, padding:"0 12px", display:"flex", alignItems:"center", gap:6, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--red)" }}>
+                <Icon name="trash" size={15} color="var(--red)" /> Slet profil
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -343,14 +351,14 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
           title={`Slet profilen for ${confirmDeleteProfile.name}?`}
           message="Profilen og alle tilknyttede allergivalg fjernes permanent."
           confirmLabel="Slet profil"
-          onConfirm={() => { removeMember(confirmDeleteProfile.id); setConfirmDeleteProfile(null); }}
+          onConfirm={() => { const id = confirmDeleteProfile.id; if (editingMemberId === id) cancelEditMember(); removeMember(id); setConfirmDeleteProfile(null); }}
           onCancel={() => setConfirmDeleteProfile(null)}
         />
       )}
       {confirmRemoveHousehold && (
         <ConfirmDialog
           title={`Fjern ${confirmRemoveHousehold.name || confirmRemoveHousehold.email} fra familien?`}
-          message="I kan ikke længere se hinandens allergier, historik og favoritter, og lister, I har delt med hinanden, stoppes. Personens egen konto påvirkes ikke."
+          message="Indkøbslister, I har delt med hinanden, deles ikke længere, og I mister adgang til hinandens allergier, historik og favoritter. Ingen af jeres egne konti eller data slettes, og I kan forbinde jer igen med en ny invitation."
           confirmLabel="Fjern fra familien"
           danger={false}
           onConfirm={async () => {
