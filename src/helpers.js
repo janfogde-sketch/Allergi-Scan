@@ -823,3 +823,36 @@ export function glutenCerealsIn(text) {
   ];
   return cereals.filter(([, re]) => re.test(direct)).map(([name]) => name);
 }
+
+// ─── "VIDSTE DU, AT …" (scanner-forsiden, 4. okt. 2026) ─────────────────────
+// Vælger dagens tip blandt godkendte tips fra Allergileksikonet (knowledge_base.tips) — aldrig frit genereret tekst.
+// entries: [{ slug, allergen_ids, tips: [..] }]. allergenIds: allergener for dem, der tjekkes for.
+// Relevante tips (opslagets allergen_ids rammer et valgt allergen) vises to ud af tre dage og roterer dag for dag;
+// den tredje dag (og når intet er relevant) vises et generelt tip (opslag uden allergen_ids). Tips for allergener,
+// ingen har valgt, vises ikke. Samme dag = samme tip, så kortet ikke skifter, mens man bruger appen.
+export function pickDailyTip(entries, allergenIds, dayNumber) {
+  const chosen = new Set(allergenIds || []);
+  const all = [];
+  for (const e of entries || []) {
+    const ids = (e.allergen_ids || []).filter(Boolean);
+    for (const text of e.tips || []) {
+      const t = (text || "").trim();
+      if (t) all.push({ slug: e.slug, text: t, allergenIds: ids });
+    }
+  }
+  all.sort((a, b) => (a.slug + a.text).localeCompare(b.slug + b.text));
+  const relevant = all.filter(t => t.allergenIds.some(id => chosen.has(id)));
+  const general = all.filter(t => t.allergenIds.length === 0);
+  const day = Math.max(0, Math.floor(dayNumber || 0));
+  let pool = relevant.length > 0 && (day % 3 !== 2 || general.length === 0) ? relevant : general;
+  if (pool.length === 0) pool = relevant;
+  if (pool.length === 0) return null;
+  // Relevante tips tælles kun på deres egne dage, så rotationen går gennem alle emner i rækkefølge.
+  const step = pool === relevant && general.length > 0 ? day - Math.floor((day + 1) / 3) : day;
+  return pool[step % pool.length];
+}
+
+// Lokalt dagsnummer (skifter ved lokal midnat, ikke UTC).
+export function localDayNumber(date = new Date()) {
+  return Math.floor((date.getTime() - date.getTimezoneOffset() * 60000) / 86400000);
+}

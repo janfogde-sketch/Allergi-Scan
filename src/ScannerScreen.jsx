@@ -8,6 +8,7 @@ import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage, Laz
 import { DEMO_SLIDES } from "./demoSlides.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
+import { useDailyTip } from "./useDailyTip.js";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 
@@ -287,7 +288,7 @@ export default function ScannerScreen({
 }) {
   const { user, userId, accessToken } = useAuthContext();
   // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
-  const { activeProfiles, setActiveProfiles, scanFamily: family } = useProfileContext();
+  const { activeProfiles, setActiveProfiles, scanFamily: family, allergens: myAllergens } = useProfileContext();
   const { screen, setScreen } = useNavigationContext();
   const { favorites, toggleFavorite, isFavorite } = useHistoryContext();
 
@@ -392,6 +393,14 @@ export default function ScannerScreen({
   // 2026): "Dig" / fornavn / "N personer", og en forklaring der passer til
   // samme situation. Uden familie er det altid brugeren selv.
   const scanTarget = scanTargetCopy(scanProfilePickerAvailable ? activeProfiles : ["me"], family);
+
+  // "Vidste du, at …" (4. okt. 2026): dagens tip fra Allergileksikonet, helst om et allergen, der tjekkes for.
+  const tipProfileIds = scanProfilePickerAvailable ? activeProfiles : ["me"];
+  const tipAllergenIds = [
+    ...(tipProfileIds.includes("me") ? (myAllergens || []) : []),
+    ...family.filter(m => tipProfileIds.includes(m.id)).flatMap(m => m.allergens || []),
+  ];
+  const dailyTip = useDailyTip(tipAllergenIds);
 
   // activeIds (kombinerede allergen-id'er for alle aktive profiler) kommer nu
   // som prop fra App.jsx' allActive() i stedet for at blive genberegnet her
@@ -770,6 +779,24 @@ export default function ScannerScreen({
                     </div>
                   )}
                 </div>
+
+                {/* "Vidste du, at …" (4. okt. 2026, Bjørn): lille, rolig info-kort nederst over bundnavigationen,
+                    under profilvælgeren. Kun godkendte tips fra Allergileksikonet (knowledge_base.tips), ét pr. dag,
+                    ingen animation. Skjules på meget lave skærme (.scan-tip, container-query i theme.jsx), og når
+                    kameraadgang er nægtet (det kort fylder selv). Linket åbner den præcise artikel. */}
+                {dailyTip && !cameraPermissionDenied && (
+                  <div className="scan-tip">
+                    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                      <Icon name="bulb" size={14} color="var(--green)" />
+                      <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>Vidste du, at …</div>
+                    </div>
+                    <div className="scan-tip-text">{dailyTip.text}</div>
+                    <button type="button" className="scan-tip-link"
+                      onClick={() => { setKnowledgeSlug(dailyTip.slug); setScreen(SCREENS.KNOWLEDGE); }}>
+                      Læs mere i Allergileksikonet →
+                    </button>
+                  </div>
+                )}
 
                 {/* Sikkerhedsinformationen kan genåbnes fra menuen/Indstillinger (SafetyInfoModal), ikke fra en fast knap her. */}
               </div>

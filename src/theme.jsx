@@ -462,6 +462,16 @@ body::-webkit-scrollbar{display:none;}
 .scan-profile-chip:active,.scan-profile-chip[aria-expanded="true"]{background:var(--green-selected-bg);border-color:var(--green);}
 .scan-profile-chip:active{transform:scale(.97);}
 .scan-profile-chip:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
+/* "Vidste du, at …"-kortet nederst på scanner-forsiden (4. okt. 2026): lyst kort, diskret kant, næsten ingen
+   skygge, samme radius som øvrige kort. Ligger i bunden af .home-hero-frame (12 px over bundnavigationens
+   kant). Teksten klippes efter to linjer som sikkerhedsnet. Under 560 px hero-højde (fx iPhone SE) er der
+   ikke god luft til profilvælgeren, så kortet skjules dér. */
+.scan-tip{position:absolute;left:0;right:0;bottom:12px;z-index:1;margin:0 auto;max-width:360px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px 6px;box-shadow:0 2px 8px -6px rgba(21,32,26,.25);}
+.scan-tip-text{font-size:12.5px;line-height:1.45;color:var(--ink2);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.scan-tip-link{background:none;border:none;padding:6px 0;min-height:32px;cursor:pointer;font-family:var(--f);font-size:12px;font-weight:600;color:var(--green);-webkit-tap-highlight-color:transparent;}
+.scan-tip-link:active{color:var(--green-dark);}
+.scan-tip-link:focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:4px;}
+@container (max-height:560px){.scan-tip{display:none;}}
 @media (prefers-reduced-motion: reduce){
   .scan-cta-halo{animation:none;}
 }

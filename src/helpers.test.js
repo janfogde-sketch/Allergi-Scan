@@ -18,7 +18,7 @@ import {
   isValidEanChecksum,
   glutenCerealsIn,
 } from "./helpers.js";
-import { profileConflictLabel, profileMatchLabel, scanTargetCopy, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
+import { profileConflictLabel, profileMatchLabel, scanTargetCopy, pickDailyTip, localDayNumber, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
 
 describe("isValidEanChecksum", () => {
   it("accepts a real EAN-13 with a correct check digit", () => {
@@ -564,5 +564,39 @@ describe("scanTargetCopy", () => {
   it("ignorerer ukendte id'er og dubletter", () => {
     expect(scanTargetCopy(["f1", "gone", "f1"], family).chip).toBe("Valdemar");
     expect(scanTargetCopy(["me", "gone"], family).chip).toBe("Dig");
+  });
+});
+
+describe("pickDailyTip", () => {
+  const entries = [
+    { slug: "maelkeallergi", allergen_ids: ["maelkeallergi"], tips: ["M1", "M2"] },
+    { slug: "sesam", allergen_ids: ["sesam"], tips: ["S1"] },
+    { slug: "faq-oko", allergen_ids: [], tips: ["G1"] },
+    { slug: "fun-parmesan", allergen_ids: null, tips: ["G2"] },
+    { slug: "tom", allergen_ids: [], tips: null },
+  ];
+  it("viser kun generelle tips uden valgte allergener", () => {
+    for (let d = 0; d < 6; d++) expect(["G1", "G2"]).toContain(pickDailyTip(entries, [], d).text);
+  });
+  it("viser aldrig tips for allergener, ingen har valgt", () => {
+    for (let d = 0; d < 9; d++) expect(pickDailyTip(entries, ["maelkeallergi"], d).text).not.toBe("S1");
+  });
+  it("relevante to ud af tre dage og rotation gennem alle relevante", () => {
+    const seen = [0, 1, 2, 3, 4, 5].map(d => pickDailyTip(entries, ["maelkeallergi", "sesam"], d).text);
+    expect(seen[2]).toMatch(/^G/);
+    expect(seen[5]).toMatch(/^G/);
+    expect(new Set([seen[0], seen[1], seen[3], seen[4]])).toEqual(new Set(["M1", "M2", "S1"]));
+  });
+  it("samme dag giver samme tip, og link-slug følger med", () => {
+    const a = pickDailyTip(entries, ["sesam"], 7), b = pickDailyTip(entries, ["sesam"], 7);
+    expect(a).toEqual(b);
+    expect(pickDailyTip(entries, ["sesam"], 0)).toEqual({ slug: "sesam", text: "S1", allergenIds: ["sesam"] });
+  });
+  it("ingen tips giver null", () => {
+    expect(pickDailyTip([], ["sesam"], 1)).toBeNull();
+  });
+  it("dagsnummer skifter ved lokal midnat", () => {
+    expect(localDayNumber(new Date(2026, 9, 4, 23, 59))).toBe(localDayNumber(new Date(2026, 9, 4, 0, 1)));
+    expect(localDayNumber(new Date(2026, 9, 5, 0, 1))).toBe(localDayNumber(new Date(2026, 9, 4, 12)) + 1);
   });
 });
