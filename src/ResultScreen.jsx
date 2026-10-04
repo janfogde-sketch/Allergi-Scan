@@ -681,7 +681,7 @@ export default function ResultScreen({
             <SafetyRow key={p.id}
               name={p.id==="me" ? "Dig" : p.name}
               status={p.status}
-              statusText={cannotAssess && (p.unknown || []).length > 0 ? ((p.unknown.length === 1) ? "1 valg kan ikke kontrolleres" : `${p.unknown.length} valg kan ikke kontrolleres`) : [...p.reasons, ...(p.ignoredTraces || []).map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id} (du har valgt ikke at få advarsel)`)].join(" · ") || "Matcher profilen"}
+              statusText={cannotAssess && (p.unknown || []).length > 0 ? ((p.unknown.length === 1) ? "1 valg kan ikke kontrolleres" : `${p.unknown.length} valg kan ikke kontrolleres`) : [...p.reasons, ...(p.ignoredTraces || []).map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id} (du har valgt ikke at få advarsel)`)].join(" · ") || "Passer til profilen"}
               onClick={(p.danger.length > 0 || p.warning.length > 0) ? () => {
                 const first = [...p.danger, ...p.warning][0];
                 setKnowledgeSlug(first); setScreen(SCREENS.KNOWLEDGE);
