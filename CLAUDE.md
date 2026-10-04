@@ -205,7 +205,7 @@ Struktur og tekster: `src/CONTEXT.md` §6.
 **Indstillinger:** seks sektioner (Konto, Madpas-sprog, Scanning, Notifikationer, Privatliv & data, Om EatSafe). Privatlivspolitik-
 link kun her og i Profil-footeren. Bevidst udeladt: app-sprog, dataeksport, selvstændig vilkårs-side.
 
-**Scanner-forsiden (Bjørn, 4. okt.):** forklaringen følger valget ("passer til" dig/navn/de valgte personer, `scanTargetCopy()`), profilvælgeren hedder "Tjekker for: …", teksten står fast 28 px over Scan-knappen. Nederst et "Vidste du, at …"-kort (`useDailyTip.js`, `pickDailyTip()`): KUN godkendte tips fra `knowledge_base.tips`, aldrig genereret tekst; ét tip pr. dag, relevante allergener 2 ud af 3 dage, link til den præcise artikel, skjult under 560 px hero-højde. Nye tips godkendes af Bjørn/Jan og skal stå i artiklen.
+**Scanner-forsiden (Bjørn, 4. okt.):** forklaringen følger valget ("passer til" dig/navn/de valgte personer, `scanTargetCopy()`), profilvælgeren hedder "Tjekker for: …", teksten står fast 28 px over Scan-knappen. Nederst et "Vidste du, at …"-kort (`useDailyTip.js`, `pickDailyTip()`): KUN godkendte tips fra `knowledge_base.tips`, aldrig genereret tekst; ét tip pr. dag, relevante allergener 2 ud af 3 dage, link til den præcise artikel, skjult under 500 px hero-højde. Nye tips godkendes af Bjørn/Jan og skal stå i artiklen.
 
 **Scanner:** `stopCamera()` nulstiller al scanner-state (også det manuelle EAN-panel via `closeCameraFully()` i `App.jsx`) ved
 ethvert kamera-luk. `cameraPermissionDenied` viser et dedikeret kort. Advarselsvibration/-lyd via `fireWarningAlert()`.

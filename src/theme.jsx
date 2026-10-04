@@ -462,16 +462,19 @@ body::-webkit-scrollbar{display:none;}
 .scan-profile-chip:active,.scan-profile-chip[aria-expanded="true"]{background:var(--green-selected-bg);border-color:var(--green);}
 .scan-profile-chip:active{transform:scale(.97);}
 .scan-profile-chip:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
-/* "Vidste du, at …"-kortet nederst på scanner-forsiden (4. okt. 2026): lyst kort, diskret kant, næsten ingen
-   skygge, samme radius som øvrige kort. Ligger i bunden af .home-hero-frame (12 px over bundnavigationens
-   kant). Teksten klippes efter to linjer som sikkerhedsnet. Under 560 px hero-højde (fx iPhone SE) er der
-   ikke god luft til profilvælgeren, så kortet skjules dér. */
-.scan-tip{position:absolute;left:0;right:0;bottom:12px;z-index:1;margin:0 auto;max-width:360px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px 6px;box-shadow:0 2px 8px -6px rgba(21,32,26,.25);}
-.scan-tip-text{font-size:12.5px;line-height:1.45;color:var(--ink2);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.scan-tip-link{background:none;border:none;padding:6px 0;min-height:32px;cursor:pointer;font-family:var(--f);font-size:12px;font-weight:600;color:var(--green);-webkit-tap-highlight-color:transparent;}
-.scan-tip-link:active{color:var(--green-dark);}
-.scan-tip-link:focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:4px;}
-@container (max-height:560px){.scan-tip{display:none;}}
+/* "Vidste du, at …"-kortet nederst på scanner-forsiden (4. okt. 2026, gjort kompakt samme dag): en lille
+   informationsbonus, ikke et primært element. Hele kortet er én knap (artiklen); "Læs mere …" er en diskret
+   tekst til højre i første linje. Lav padding, 12 px tekst klippet efter to linjer, samme radius/kant som
+   øvrige kort. 16 px over bundnavigationens kant. Under 500 px hero-højde skjules det, så profilvælgeren
+   altid har god luft. */
+.scan-tip{position:absolute;left:0;right:0;bottom:16px;z-index:1;margin:0 auto;width:100%;max-width:360px;box-sizing:border-box;display:block;text-align:left;cursor:pointer;font-family:var(--f);background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;box-shadow:0 2px 8px -6px rgba(21,32,26,.2);-webkit-tap-highlight-color:transparent;transition:transform .12s ease, background-color .15s ease;}
+.scan-tip:active{transform:scale(.98);background:var(--surface2);}
+.scan-tip:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
+.scan-tip-head{display:flex;align-items:center;gap:5px;}
+.scan-tip-title{font-size:11.5px;font-weight:700;color:var(--ink);white-space:nowrap;}
+.scan-tip-more{margin-left:auto;padding-left:8px;font-size:10.5px;font-weight:500;color:var(--green);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.scan-tip-text{display:-webkit-box;margin-top:3px;font-size:12px;line-height:1.35;color:var(--ink2);-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+@container (max-height:500px){.scan-tip{display:none;}}
 @media (prefers-reduced-motion: reduce){
   .scan-cta-halo{animation:none;}
 }

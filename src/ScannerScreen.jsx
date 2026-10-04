@@ -785,17 +785,18 @@ export default function ScannerScreen({
                     ingen animation. Skjules på meget lave skærme (.scan-tip, container-query i theme.jsx), og når
                     kameraadgang er nægtet (det kort fylder selv). Linket åbner den præcise artikel. */}
                 {dailyTip && !cameraPermissionDenied && (
-                  <div className="scan-tip">
-                    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                      <Icon name="bulb" size={14} color="var(--green)" />
-                      <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)" }}>Vidste du, at …</div>
-                    </div>
-                    <div className="scan-tip-text">{dailyTip.text}</div>
-                    <button type="button" className="scan-tip-link"
-                      onClick={() => { setKnowledgeSlug(dailyTip.slug); setScreen(SCREENS.KNOWLEDGE); }}>
-                      Læs mere i Allergileksikonet →
-                    </button>
-                  </div>
+                  // Kompakt (4. okt. 2026, Bjørn): hele kortet er én knap til artiklen; "Læs mere …" er kun en
+                  // diskret tekst i første linje, så kortet fylder ca. en tredjedel mindre og ikke konkurrerer med Scan.
+                  <button type="button" className="scan-tip"
+                    aria-label={`Vidste du, at … ${dailyTip.text} Læs mere i Allergileksikonet`}
+                    onClick={() => { setKnowledgeSlug(dailyTip.slug); setScreen(SCREENS.KNOWLEDGE); }}>
+                    <span className="scan-tip-head">
+                      <Icon name="bulb" size={12} color="var(--green)" />
+                      <span className="scan-tip-title">Vidste du, at …</span>
+                      <span className="scan-tip-more">Læs mere i Allergileksikonet →</span>
+                    </span>
+                    <span className="scan-tip-text">{dailyTip.text}</span>
+                  </button>
                 )}
 
                 {/* Sikkerhedsinformationen kan genåbnes fra menuen/Indstillinger (SafetyInfoModal), ikke fra en fast knap her. */}
