@@ -586,7 +586,12 @@ export default function ScannerScreen({
                   synlig indgang i UI'et. */}
               {!cameraActive && (
               <div className="home-hero-frame">
-                <div style={{ position:"absolute", top:"calc(27% - 62px)", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
+                {/* Forankret i BUNDEN (4. okt. 2026, Bjørn): sidste tekstlinje står altid
+                    28-32 px over den grønne cirkel (cirklen starter calc(44% - 45px) + insettet
+                    clamp(5px,1.1cqh,7px), se scan-knappen nedenfor), og en forklaring på tre
+                    linjer vokser OPAD i stedet for ned mod knappen. Tidligere top:calc(27% - 62px)
+                    gav kun 3-5 px luft, når teksten fik tre linjer. Knappen er ikke flyttet. */}
+                <div style={{ position:"absolute", bottom:"calc(56% + 45px - clamp(5px, 1.1cqh, 7px) + clamp(28px, 4.2cqh, 32px))", left:0, right:0, zIndex:1, textAlign:"center", padding:"0 12px" }}>
                   {/* Tykkere/større tekst + en blød hvid text-shadow-glød "løfter"
                       teksten af det app-brede baggrundsbillede bagved (.app-bg,
                       theme.jsx — samme billede på tværs af hele appen, se dens
