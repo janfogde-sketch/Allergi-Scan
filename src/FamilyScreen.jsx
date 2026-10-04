@@ -104,15 +104,18 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
   // (vigtigst for sikkerheden), så kostpræferencer, så overvågede E-numre.
   const CHIP_VISIBLE_LIMIT = 4;
   const buildMemberChips = (m) => [
-    ...getAllergenLabels(m.allergens || [], m.custom || []).map(item => ({ item, variant:"allergy" })),
+    ...getAllergenLabels(m.allergens || [], m.custom || []).map(item => ({ item, variant: item.id ? "allergy" : "custom" })),
     ...visibleDiets(m.diets).map(id => DIETS.find(d => d.id === id)?.label).filter(Boolean).map(text => ({ text, variant:"diet" })),
     ...(m.eNumbers || []).map(text => ({ text, variant:"enumber" })),
   ];
-  // Allergi-chips bruger den eksisterende, delte .tag-klasse uændret (grøn
-  // selected-chip). Kostpræferencer får en diskret, lysere grøn/neutral
+  // Allergi-chips bruger den delte .tag-klasse med Profil-sidens farver.
+  // Kostpræferencer får en diskret, lysere grøn/neutral
   // variant, E-numre en helt neutral variant — ingen nye, stærke farver,
   // kun eksisterende designsystem-tokens.
+  // Allergi-tags har samme farver som på Profil-siden (4. okt. 2026, Bjørn): røde for valgte allergener, ravgule med blyant for egne valg.
   const CHIP_VARIANT_STYLE = {
+    allergy: { background:"var(--red-lt)", color:"var(--red)", borderColor:"var(--red-md)" },
+    custom: { background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" },
     diet: { background:"var(--green-selected-bg)", borderColor:"var(--border)", color:"var(--ink2)" },
     enumber: { background:"var(--surface2)", borderColor:"var(--border)", color:"var(--ink2)" },
   };
@@ -124,7 +127,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
     const overflow = chips.length - visible.length;
     return (
       <div className="tags">
-        {visible.map((c,j) => <div key={j} className="tag" style={CHIP_VARIANT_STYLE[c.variant]}>{c.variant==="allergy" ? <><AllergenGlyph a={c.item} size={11} /> {c.item.label}</> : c.text}</div>)}
+        {visible.map((c,j) => <div key={j} className="tag" style={CHIP_VARIANT_STYLE[c.variant]}>{c.variant==="allergy" ? <><AllergenGlyph a={c.item} size={11} /> {c.item.label}</> : c.variant==="custom" ? <><Icon name="edit" size={10} color="var(--amber)" /> {c.item.label}</> : c.text}</div>)}
         {overflow>0 && (
           <button type="button" onClick={() => setExpandedChipsFor(f => [...f, rowKey])}
             className="tag" style={{ color:"var(--muted)", background:"var(--surface2)", borderColor:"var(--border)", cursor:"pointer", fontFamily:"var(--f)" }}>
