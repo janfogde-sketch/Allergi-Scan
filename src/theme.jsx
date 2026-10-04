@@ -463,16 +463,15 @@ body::-webkit-scrollbar{display:none;}
 .scan-profile-chip:active{transform:scale(.97);}
 .scan-profile-chip:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
 /* "Vidste du, at …"-kortet nederst på scanner-forsiden (4. okt. 2026, gjort kompakt samme dag): en lille
-   informationsbonus, ikke et primært element. Hele kortet er én knap (artiklen); "Læs mere …" er en diskret
-   tekst til højre i første linje. Lav padding, 12 px tekst klippet efter to linjer, samme radius/kant som
+   informationsbonus, ikke et primært element. Hele kortet er én knap (artiklen); en diskret chevron til
+   højre i første linje viser det. Titlen kan aldrig skubbe chevronen ud (flex:1 + ellipsis). Lav padding, 12 px tekst klippet efter to linjer, samme radius/kant som
    øvrige kort. 16 px over bundnavigationens kant. Under 500 px hero-højde skjules det, så profilvælgeren
    altid har god luft. */
 .scan-tip{position:absolute;left:0;right:0;bottom:16px;z-index:1;margin:0 auto;width:100%;max-width:360px;box-sizing:border-box;display:block;text-align:left;cursor:pointer;font-family:var(--f);background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;box-shadow:0 2px 8px -6px rgba(21,32,26,.2);-webkit-tap-highlight-color:transparent;transition:transform .12s ease, background-color .15s ease;}
 .scan-tip:active{transform:scale(.98);background:var(--surface2);}
 .scan-tip:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
 .scan-tip-head{display:flex;align-items:center;gap:5px;}
-.scan-tip-title{font-size:11.5px;font-weight:700;color:var(--ink);white-space:nowrap;}
-.scan-tip-more{margin-left:auto;padding-left:8px;font-size:10.5px;font-weight:500;color:var(--green);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.scan-tip-title{flex:1;min-width:0;font-size:11.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .scan-tip-text{display:-webkit-box;margin-top:3px;font-size:12px;line-height:1.35;color:var(--ink2);-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 @container (max-height:500px){.scan-tip{display:none;}}
 @media (prefers-reduced-motion: reduce){
