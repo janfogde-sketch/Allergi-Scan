@@ -193,6 +193,54 @@ export const DEFINITIONS = {
     action: { type: "open_family", label: "Se familien", params: [] }, entity: { type: "invitation", idFrom: "inviteId" },
   },
 
+  // ── N10/N11: delt invitationslink (4. okt. 2026). Kun push og besked i appen, ingen mail (tidskritisk og kort), derfor `mail: null`.
+  // N10 går til afsenderen, når nogen har bedt om forbindelse. N11 går til den, der bad, når afsenderen godkender eller afviser.
+  "N10:default": {
+    type: "N10", variant: "default", category: "family", version: 1, ttl: 86400,
+    push: { title: "Anmodning om forbindelse", body: "{{memberName}} har brugt dit invitationslink og venter på din godkendelse." },
+    mail: null,
+    vars: { memberName: { max: 28, pushFallback: "En person", fallback: "En person" } }, required: [],
+    blocks: [
+      H("{{memberName}} vil forbindes med dig"),
+      P("{{memberName}} har brugt dit invitationslink i EatSafe og venter på, at du godkender."),
+      PANEL("Før du godkender", [
+        P("Når I er forbundet, kan I se hinandens allergier og dele indkøbslister. Kender du ikke personen, så afvis anmodningen."),
+      ]),
+    ],
+    action: { type: "open_family", label: "Se familien", params: [] }, entity: { type: "invitation", idFrom: "inviteId" },
+  },
+
+  "N11:approved": {
+    type: "N11", variant: "approved", category: "family", version: 1, ttl: 86400,
+    push: { title: "Du er nu i en familie", body: "{{memberName}} har godkendt din anmodning. I er nu forbundet i EatSafe." },
+    mail: null,
+    vars: { memberName: { max: 28, pushFallback: "Afsenderen", fallback: "Afsenderen" } }, required: [],
+    blocks: [
+      H("{{memberName}} har godkendt din anmodning"),
+      P("I er nu forbundet i Familie, og I kan se hinandens allergier og dele indkøbslister."),
+      PANEL("Brug EatSafe sammen", [
+        P("Når du scanner et produkt, kan du vælge, hvilke personer i din Familie varen skal tjekkes for."),
+      ]),
+      DISC,
+    ],
+    action: { type: "open_family", label: "Se familien", params: [] }, entity: { type: "invitation", idFrom: "inviteId" },
+  },
+
+  "N11:declined": {
+    type: "N11", variant: "declined", category: "family", version: 1, ttl: 86400,
+    push: { title: "Anmodningen blev ikke godkendt", body: "{{memberName}} har ikke godkendt din anmodning om at blive forbundet." },
+    mail: null,
+    vars: { memberName: { max: 28, pushFallback: "Afsenderen", fallback: "Afsenderen" } }, required: [],
+    blocks: [
+      H("Anmodningen blev ikke godkendt"),
+      P("{{memberName}} har ikke godkendt din anmodning om at blive forbundet i EatSafe, eller linket er trukket tilbage."),
+      PANEL("Hvad nu?", [
+        P("Du er ikke forbundet med {{memberName}}, og der er ikke delt noget. Hvis det var en fejl, kan du bede om et nyt link."),
+      ]),
+    ],
+    action: { type: "open_family", label: "Se familien", params: [] }, entity: { type: "invitation", idFrom: "inviteId" },
+  },
+
   "N6:in_progress": {
     type: "N6", variant: "in_progress", category: "feedback", version: 2, ttl: 86400,
     push: { title: "Vi arbejder på din feedback", body: "Vores team er gået i gang med at undersøge din tilbagemelding." },
@@ -258,14 +306,14 @@ export const DEFINITIONS = {
   // ── P2: familieinvitationen udløber snart (maks. én påmindelse pr. invitation) ──
   "P2:default": {
     type: "P2", variant: "default", category: "family", version: 1, ttl: 3600,
-    push: { title: "Din invitation udløber snart", body: "Din familieinvitation er endnu ikke accepteret. Den udløber inden for fire timer." },
+    push: { title: "Din invitation udløber snart", body: "Din familieinvitation er endnu ikke besvaret. Den udløber inden for fire timer." },
     mail: { subject: "Din familieinvitation udløber snart", preheader: "Der er stadig tid til at bruge invitationen, inden den udløber." },
     vars: { expiresAt: { fallback: "snart" } }, required: [],
     blocks: [
       H("Din invitation er stadig åben"),
       P("Din familieinvitation i EatSafe er endnu ikke blevet besvaret. Den udløber **{{expiresAt}}**."),
       PANEL("Vil du stadig forbinde familien?", [
-        P("Du kan minde den person, du har inviteret, om at finde invitationsmailen (tjek evt. spam-mappen) og oprette sig eller logge ind med præcis den e-mailadresse, du sendte den til. Personen accepterer derefter invitationen i appen. Du kan også sende mailen igen under Familie."),
+        P("Har du sendt invitationen som mail, kan du minde personen om at finde mailen (tjek evt. spam-mappen). Har du delt et link, kan du dele det igen. Du finder begge under Familie. Personen skal selv sige ja i appen."),
       ]),
       P("Hvis invitationen når at udløbe, kan du sende en ny under Familie i appen. Du behøver ikke gøre noget, hvis invitationen ikke længere er relevant."),
     ],
@@ -464,13 +512,13 @@ export function renderNotification(key, data = {}, options = {}) {
     primaryAction: { type: def.action.type, label: def.action.label, ...(Object.keys(params).length ? { params } : {}) },
     entityType: def.entity.type,
     entityId: entityId || null,
-    mail: { subject: fillTemplate(def.mail.subject, blockValues), preheader: def.mail.preheader },
+    mail: def.mail ? { subject: fillTemplate(def.mail.subject, blockValues), preheader: def.mail.preheader } : null,
     // De samme rensede værdier som brødteksten bruger — sendes som variabler til mailskabelonen,
     // så app og mail aldrig kan vise forskellige tal/tekster for samme hændelse.
     mailVars: blockValues,
   };
 
-  for (const s of [out.title, out.pushTitle, out.pushBody, JSON.stringify(out.blocks), out.mail.subject]) {
+  for (const s of [out.title, out.pushTitle, out.pushBody, JSON.stringify(out.blocks), out.mail?.subject ?? ""]) {
     if (/\{\{/.test(s)) throw new Error(`Uløst variabel i ${key}`);
   }
   return out;

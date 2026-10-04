@@ -18,6 +18,9 @@ export const NOTIFICATION_NAMES = {
   "N3:default": "Indsendelse afvist",
   "N4:default": "Manglende produkt fundet",
   "N5:default": "Invitation accepteret",
+  "N10:default": "Anmodning om forbindelse (delt link)",
+  "N11:approved": "Anmodning godkendt (delt link)",
+  "N11:declined": "Anmodning ikke godkendt (delt link)",
   "N6:in_progress": "Ticket: i gang",
   "N6:resolved": "Ticket: løst",
   "N6:reopened": "Ticket: genåbnet",
@@ -63,7 +66,7 @@ export function defaultPush(key) {
 /** Push som den ser ud med eksempeldata. draft: { title, body } (tom = standard). */
 export function previewPush(key, draft) {
   const r = renderNotification(key, mockDataFor(key), { pushOverride: draft });
-  return { title: r.pushTitle, body: r.pushBody, mailSubject: r.mail.subject };
+  return { title: r.pushTitle, body: r.pushBody, mailSubject: r.mail?.subject ?? null };
 }
 
 export function overrideIsActive(row) {

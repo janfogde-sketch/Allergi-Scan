@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
 import { apiCall, makeHeaders } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
+import { storeInviteToken } from "./familyInviteInbox.js";
 
 export function useIncomingLinks({
   accessToken, userId, user,
@@ -20,9 +21,7 @@ export function useIncomingLinks({
     const params = new URLSearchParams(window.location.search);
     if (!params.has("invite")) return;
     const token = params.get("invite");
-    if (token && /^[A-Za-z0-9]{16,128}$/.test(token)) {
-      try { localStorage.setItem("as_pending_invite", token); } catch { /* ingen lagring: e-mail-match virker stadig */ }
-    }
+    if (token && /^[A-Za-z0-9]{16,128}$/.test(token)) storeInviteToken(token); // uden lagring virker e-mail-match stadig
     const url = new URL(window.location.href);
     url.searchParams.delete("invite");
     url.searchParams.delete("login");

@@ -79,6 +79,7 @@ import { useAdminTools } from "./useAdminTools.js";
 import { useIncomingLinks } from "./useIncomingLinks.js";
 import { JoinListSheet, FamilyInviteSheet, FamilyRequestSheet } from "./ListSheets.jsx";
 import { useFamilyInviteInbox } from "./useFamilyInviteInbox.js";
+import { recentInviteLinkFollowed } from "./familyInviteInbox.js";
 import { useFamilyLinkRequests } from "./useFamilyLinkRequests.js";
 import { useNotifications } from "./useNotifications.js";
 import { useLoadUserData } from "./useLoadUserData.js";
@@ -103,6 +104,8 @@ function initialScreen() {
     if (token) return localStorage.getItem(ONBOARDED_KEY) ? SCREENS.HOME : SCREENS.BOOT;
     if (localStorage.getItem(PENDING_VERIFY_KEY)) return SCREENS.VERIFYEMAIL;
   } catch { /* privat tilstand */ }
+  // Nyligt fulgt invitationslink: ny bruger direkte til oprettelse/login (første besøg genindlæser siden, og ?invite= er så væk).
+  if (recentInviteLinkFollowed()) return SCREENS.LOGIN;
   return SCREENS.WELCOME;
 }
 

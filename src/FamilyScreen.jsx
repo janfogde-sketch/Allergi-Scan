@@ -6,7 +6,7 @@ import { Icon, showToast, ConfirmDialog, AllergenGlyph } from "./SharedComponent
 import HelpModal from "./HelpModal.jsx";
 import { MemberForm } from "./MemberForm.jsx";
 import { TextLink } from "./DesignSystem.jsx";
-import { InvitePanel, PendingInviteCard } from "./FamilyInvite.jsx";
+import { InvitePanel, PendingInviteCard, InviteLinkEntry } from "./FamilyInvite.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -220,6 +220,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
           }
         }} />
       ))}
+      <InviteLinkEntry />
 
       <div style={SECTION}>Profiler du administrerer</div>
       <div style={SECTION_SUB}>Børn under 18 år uden egen konto. Du administrerer deres profil.</div>

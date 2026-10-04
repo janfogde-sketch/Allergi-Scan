@@ -65,7 +65,11 @@ describe("skabeloner ↔ beskeder", () => {
   }
 
   it("alle varianter med mail har en skabelon", () => {
-    for (const key of Object.keys(DEFINITIONS)) expect(RESEND_TEMPLATES[key], key).toBeTruthy();
+    for (const key of Object.keys(DEFINITIONS).filter((k) => DEFINITIONS[k].mail)) expect(RESEND_TEMPLATES[key], key).toBeTruthy();
+  });
+
+  it("varianter uden mail (delt invitationslink) har ingen skabelon, så notify aldrig forsøger at sende mail", () => {
+    for (const key of Object.keys(DEFINITIONS).filter((k) => !DEFINITIONS[k].mail)) expect(RESEND_TEMPLATES[key], key).toBeUndefined();
   });
 });
 

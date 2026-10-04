@@ -40,6 +40,7 @@ describe("Resend-link", () => {
   it("hver notifikation med mail linker direkte til sin skabelon", async () => {
     const { resendTemplateUrl } = await import("./admin/notificationAdminLogic.js");
     expect(resendTemplateUrl("N2a:default")).toBe("https://resend.com/templates/eccf4c47-2e02-4515-82c7-c9ee437aec27");
-    for (const k of Object.keys(DEFINITIONS)) expect(resendTemplateUrl(k)).toMatch(/^https:\/\/resend\.com\/templates\/[0-9a-f-]{36}$/);
+    for (const k of Object.keys(DEFINITIONS).filter((key) => DEFINITIONS[key].mail)) expect(resendTemplateUrl(k)).toMatch(/^https:\/\/resend\.com\/templates\/[0-9a-f-]{36}$/);
+    for (const k of Object.keys(DEFINITIONS).filter((key) => !DEFINITIONS[key].mail)) expect(resendTemplateUrl(k)).toBeNull();
   });
 });

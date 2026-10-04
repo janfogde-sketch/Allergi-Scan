@@ -59,11 +59,49 @@ describe("renderNotification — alle definitioner", () => {
     expect(n.entityType).toBeTruthy();
   });
 
-  it.each(KEYS)("%s: emne ≤ 55 og preheader 40–90 tegn (pakkens mailkrav)", (key) => {
+  const MAIL_KEYS = KEYS.filter((k) => DEFINITIONS[k].mail);
+  it.each(MAIL_KEYS)("%s: emne ≤ 55 og preheader 40–90 tegn (pakkens mailkrav)", (key) => {
     const { subject, preheader } = renderNotification(key, SAMPLE).mail;
     expect(subject.length).toBeLessThanOrEqual(55);
     expect(preheader.length).toBeGreaterThanOrEqual(40);
     expect(preheader.length).toBeLessThanOrEqual(90);
+  });
+
+  it("kun det delte invitationslink (N10, N11) er uden mail: push og besked i appen", () => {
+    expect(KEYS.filter((k) => !DEFINITIONS[k].mail).sort()).toEqual(["N10:default", "N11:approved", "N11:declined"]);
+    for (const key of ["N10:default", "N11:approved", "N11:declined"]) expect(renderNotification(key, SAMPLE).mail).toBeNull();
+  });
+
+  it("N10 går til afsenderen og nævner den, der bad om forbindelse og at der skal godkendes", () => {
+    const n = renderNotification("N10:default", { memberName: "Frederikke", inviteId: "inv-1" });
+    expect(n.pushBody).toContain("Frederikke");
+    expect(n.pushBody).toMatch(/godkend/i);
+    expect(n.primaryAction.type).toBe("open_family");
+    expect(n.entityId).toBe("inv-1");
+  });
+
+  it("N11 har en variant for godkendt og en for ikke godkendt, begge til den, der bad", () => {
+    const ok = renderNotification("N11:approved", { memberName: "Jan", inviteId: "inv-1" });
+    const no = renderNotification("N11:declined", { memberName: "Jan", inviteId: "inv-1" });
+    expect(ok.title).toBe("Du er nu i en familie");
+    expect(ok.pushBody).toContain("Jan");
+    expect(no.title).toBe("Anmodningen blev ikke godkendt");
+    expect(no.pushBody).toContain("Jan");
+    expect(JSON.stringify(no.blocks)).not.toMatch(/accepteret/i);
+  });
+
+  it("N10 og N11 falder tilbage til en neutral tekst uden navn", () => {
+    for (const key of ["N10:default", "N11:approved", "N11:declined"]) {
+      const n = renderNotification(key, { inviteId: "inv-1" });
+      expect(JSON.stringify(n)).not.toMatch(/\{\{/);
+      expect(n.pushBody.length).toBeGreaterThan(20);
+    }
+  });
+
+  it("P2 passer til både mail og delt link (nævner begge)", () => {
+    const text = blocksToText(renderNotification("P2:default", { expiresAt: "i morgen kl. 14.00" }).blocks);
+    expect(text).toMatch(/mail/i);
+    expect(text).toMatch(/link/i);
   });
 
   it("er deterministisk: samme input giver samme snapshot", () => {
