@@ -46,7 +46,7 @@ export function useFamilyInviteInbox({ accessToken, userId, user, loadFamily }) 
 
   useEffect(() => { if (ready) load(); }, [ready, userId, load]);
 
-  // Et invitationslink indsat i appen (Familie → "Har du fået et invitationslink?") skal virke med det samme.
+  // Et invitationslink indsat i appen (Familie → "Tilslut via invitationslink") skal virke med det samme.
   useEffect(() => {
     if (!ready) return undefined;
     window.addEventListener(INVITE_TOKEN_EVENT, load);

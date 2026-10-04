@@ -986,7 +986,7 @@ body::-webkit-scrollbar{display:none;}
 .stat3-lbl{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:3px;letter-spacing:.2px;}
 
 /* ── FAMILY ── */
-.family-member{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;}
+.family-member{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;}
 .fm-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;}
 .ap-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:100px;border:1.5px solid var(--border2);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--muted);}
 .ap-chip:hover{border-color:var(--border2);color:var(--ink);}

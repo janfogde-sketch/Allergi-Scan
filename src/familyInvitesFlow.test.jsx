@@ -410,7 +410,7 @@ describe("modtager uden link i browseren: indsæt linket (Familie)", () => {
     const heard = vi.fn();
     window.addEventListener("eatsafe:invite-token", heard);
     render(<InviteLinkEntry />);
-    fireEvent.click(screen.getByText("Har du fået et invitationslink?"));
+    fireEvent.click(screen.getByText(/Tilslut via invitationslink/));
     fireEvent.change(screen.getByLabelText("Indsæt invitationslinket"), { target: { value: `https://eatsafe.dk/invite/${TOKEN}` } });
     fireEvent.click(screen.getByText("Fortsæt"));
     expect(localStorage.getItem("as_pending_invite")).toBe(TOKEN);
@@ -420,7 +420,7 @@ describe("modtager uden link i browseren: indsæt linket (Familie)", () => {
 
   it("noget, der ikke ligner et link, afvises med en forklaring og gemmer intet", () => {
     render(<InviteLinkEntry />);
-    fireEvent.click(screen.getByText("Har du fået et invitationslink?"));
+    fireEvent.click(screen.getByText(/Tilslut via invitationslink/));
     fireEvent.change(screen.getByLabelText("Indsæt invitationslinket"), { target: { value: "hej med dig" } });
     fireEvent.click(screen.getByText("Fortsæt"));
     expect(screen.getByRole("alert").textContent).toMatch(/ligner ikke et invitationslink/);
