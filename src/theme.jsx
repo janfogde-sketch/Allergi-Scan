@@ -465,11 +465,12 @@ body::-webkit-scrollbar{display:none;}
 /* "Vidste du, at …"-kortet nederst på scanner-forsiden (4. okt. 2026, gjort kompakt samme dag): en lille
    informationsbonus, ikke et primært element. Hele kortet er én knap (artiklen); en diskret chevron til
    højre i første linje viser det. Titlen kan aldrig skubbe chevronen ud (flex:1 + ellipsis).
-   Bredden følger indholdet (fit-content, Bjørn 4. okt.): mindst 220 px, højst ca. 88 % af skærmen,
-   derefter vokser kortet i højden. Venstrestillet ved layoutets faste venstre margin, aldrig centreret. Lav padding, 12 px tekst klippet efter to linjer, samme radius/kant som
+   Bredde (Bjørn 5. okt.): samme indholdsbredde som sidens øvrige kort (left/right:0 inden for .screens
+   16 px sidemargin), så venstre og højre margin altid er ens. Padding 12 px i begge sider; chevronen
+   sidder inden for samme padding (ingen negativ margin), så kortet ikke trækkes visuelt mod højre. Lav padding, 12 px tekst klippet efter to linjer, samme radius/kant som
    øvrige kort. 16 px over bundnavigationens kant. Under 500 px hero-højde skjules det, så profilvælgeren
    altid har god luft. */
-.scan-tip{position:absolute;left:0;right:auto;bottom:16px;z-index:1;margin:0;width:fit-content;min-width:min(220px, 100%);max-width:min(100%, 88vw, 400px);box-sizing:border-box;display:block;text-align:left;cursor:pointer;font-family:var(--f);background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;box-shadow:0 2px 8px -6px rgba(21,32,26,.2);-webkit-tap-highlight-color:transparent;transition:transform .12s ease, background-color .15s ease;}
+.scan-tip{position:absolute;left:0;right:0;bottom:16px;z-index:1;margin:0;width:auto;box-sizing:border-box;display:block;text-align:left;cursor:pointer;font-family:var(--f);background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;box-shadow:0 2px 8px -6px rgba(21,32,26,.2);-webkit-tap-highlight-color:transparent;transition:transform .12s ease, background-color .15s ease;}
 .scan-tip:active{transform:scale(.98);background:var(--surface2);}
 .scan-tip:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
 .scan-tip-head{display:flex;align-items:center;gap:5px;}

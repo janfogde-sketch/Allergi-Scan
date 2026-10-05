@@ -793,7 +793,7 @@ export default function ScannerScreen({
                     <span className="scan-tip-head">
                       <Icon name="bulb" size={12} color="var(--green)" />
                       <span className="scan-tip-title">Vidste du, at …</span>
-                      <span aria-hidden="true" style={{ display:"flex", flexShrink:0, marginRight:-2 }}><Icon name="chevronRight" size={14} color="var(--muted)" /></span>
+                      <span aria-hidden="true" style={{ display:"flex", flexShrink:0 }}><Icon name="chevronRight" size={14} color="var(--muted)" /></span>
                     </span>
                     <span className="scan-tip-text">{dailyTip.text}</span>
                   </button>
