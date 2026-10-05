@@ -57,6 +57,8 @@ function Stepper({ step }) {
   );
 }
 
+const NUTRITION_KEYS = ["energy", "fat", "saturated", "carbs", "sugars", "protein", "salt"];
+
 // Trinoverskrift: lille "Trin X af 5" over en tydelig titel og en kort hjælpetekst.
 function StepHead({ step, title, help, optional }) {
   return (
@@ -85,6 +87,8 @@ export default function NotFoundScreen({
   const { setScreen } = useNavigationContext();
   const [ingItems, setIngItems] = React.useState([]);
   const [ingInput, setIngInput] = React.useState("");
+  const nutritionFilledCount = NUTRITION_KEYS.filter(k => proposedNutrition?.[k]).length;
+  const nutritionFilled = nutritionFilledCount > 0;
 
   const parseIngredients = (text) => {
     if (!text) return [];
@@ -247,21 +251,24 @@ export default function NotFoundScreen({
           <div className="fade-in">
             <StepHead step={3} optional title="Næringsindhold" help="Fotografér eller skriv næringsdeklarationen. Du kan gå videre uden at udfylde noget." />
 
-            <label className="btn btn-primary btn-full" style={{ marginBottom:10 }}>
-              <Icon name="camera" size={18} color="var(--on-green)" />
-              Fotografér næringsdeklarationen
+            {/* Når felterne allerede er aflæst, er billedknapperne sekundære ("igen"), så det ikke ligner, at man skal fotografere forfra. */}
+            <label className={`btn ${nutritionFilled ? "btn-outline" : "btn-primary"} btn-full`} style={{ marginBottom:10 }}>
+              <Icon name="camera" size={18} color={nutritionFilled ? "var(--ink)" : "var(--on-green)"} />
+              {nutritionFilled ? "Fotografér igen" : "Fotografér næringsdeklarationen"}
               <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleNutritionCapture} />
             </label>
-            <label className="btn btn-outline btn-full" style={{ marginBottom:14 }}>
-              <Icon name="image" size={15} color="var(--ink)" /> Vælg fra galleri
-              <input type="file" accept="image/*" style={S.none} onChange={handleNutritionCapture} />
-            </label>
+            {!nutritionFilled && (
+              <label className="btn btn-outline btn-full" style={{ marginBottom:14 }}>
+                <Icon name="image" size={15} color="var(--ink)" /> Vælg fra galleri
+                <input type="file" accept="image/*" style={S.none} onChange={handleNutritionCapture} />
+              </label>
+            )}
 
             {scanError && <div className="error-box" style={S.mb10}><Icon name="warning" size={13} color="var(--red)" /> {scanError}</div>}
 
-            {proposedNutrition && Object.values(proposedNutrition).some(v => v) && (
+            {nutritionFilled && (
               <div style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 12px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, marginBottom:10, fontSize:12, color:"var(--green)", fontWeight:700 }}>
-                <Icon name="check" size={12} color="var(--green)" /> Næringsindhold delvist udfyldt — tjek og ret felterne herunder
+                <Icon name="check" size={12} color="var(--green)" /> {nutritionFilledCount} af {NUTRITION_KEYS.length} felter er læst fra billedet. Tjek tallene, og udfyld resten selv, hvis du vil.
               </div>
             )}
 
