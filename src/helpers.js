@@ -36,6 +36,15 @@ export function productDisplayName(product) {
   return name.toLowerCase().includes(brand.toLowerCase()) ? name : `${brand} ${name}`;
 }
 
+export const OFF_IMAGE_LICENSE_URL = "https://creativecommons.org/licenses/by-sa/3.0/deed.da";
+
+// Kildeangivelse til Open Food Facts-billeder (CC BY-SA). Kilden aflæses af
+// billedets adresse, så ingen kolonne er nødvendig. Andre kilder giver null.
+export function imageAttribution(url) {
+  if (typeof url !== "string") return null;
+  return /^https:\/\/images\.openfoodfacts\.org\//i.test(url) ? "Billede: Open Food Facts, CC BY-SA" : null;
+}
+
 // Skaler et kamera-/galleri-billede ned og genkod som JPEG FØR det sendes til
 // en OCR/allergen-Edge Function som base64. Uden dette sendes et fuldt
 // opløst telefonfoto (ofte 5-15MB) rå som base64 (~33% større igen) — det

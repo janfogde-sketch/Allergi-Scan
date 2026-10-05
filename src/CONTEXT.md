@@ -355,3 +355,6 @@ Kontoen låses ikke, og intet ændres ved den. Kun recovery-mailen har linket (m
 3. Slå hook'en TIL, og test straks: opret en testkonto med en plus-adresse (bekræftelse) og brug "Glemt adgangskode" (recovery); tjek
    mailen i Resend. Går noget galt: slå hook'en fra igen.
 
+
+### Billedkilde (Open Food Facts, CC BY-SA, 5. okt. 2026)
+OFF-billeder skal krediteres. Kilden aflæses af `image_url` (`images.openfoodfacts.org`) via `imageAttribution()` i `helpers.js`, ingen kolonne. Resultatsiden viser "Billede: Open Food Facts, CC BY-SA" under billedet (link til OFF-produktet); miniaturer har ingen tekst, men Indstillinger → Om EatSafe har en samlet kildelinje. Vilkårene nævner licensen allerede.
