@@ -357,4 +357,4 @@ Kontoen låses ikke, og intet ændres ved den. Kun recovery-mailen har linket (m
 
 
 ### Billedkilde (Open Food Facts, CC BY-SA, 5. okt. 2026)
-OFF-billeder skal krediteres. Kilden aflæses af `image_url` (`images.openfoodfacts.org`) via `imageAttribution()` i `helpers.js`, ingen kolonne. Resultatsiden viser "Billede: Open Food Facts, CC BY-SA" under billedet (link til OFF-produktet); miniaturer har ingen tekst, men Indstillinger → Om EatSafe har en samlet kildelinje. Vilkårene nævner licensen allerede.
+OFF-billeder skal krediteres. Kilden aflæses af `image_url` (`images.openfoodfacts.org`) via `imageAttribution()` i `helpers.js`, ingen kolonne. Resultatsiden viser "Billede: Open Food Facts, CC BY-SA" under billedet (link til OFF-produktet); miniaturer (`ProductImage`) har et lille "OFF"-mærke, og Indstillinger → Om EatSafe har en samlet kildelinje. Vilkårene nævner licensen allerede.

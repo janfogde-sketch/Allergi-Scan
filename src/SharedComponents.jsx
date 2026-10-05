@@ -2,7 +2,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, PAGE_IDS } from "./constants.jsx";
-import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers, profileConflictLabel, profileMatchLabel } from "./helpers.js";
+import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers, profileConflictLabel, profileMatchLabel, imageAttribution } from "./helpers.js";
 import { isAllergenWord, keywordMatches } from "./allergenKeywords.js";
 import { UI } from "./styleUtils.js";
 import eatsafeLogoHorizontal from "./assets/logo/eatsafe-logo-horizontal.svg";
@@ -662,19 +662,27 @@ export function getProductIcon(product) {
 
 export function ProductImage({ product, size = 64 }) {
   if (product?.image_url) {
+    // Kildeangivelse (CC BY-SA): lille "OFF"-mærke nederst til højre på Open Food Facts-billeder.
+    const credited = !!imageAttribution(product.image_url);
     return (
-      <>
+      <span style={{ position:"relative", display:"inline-flex", flexShrink:0, width:size, height:size }}>
         <img
           src={product.image_url}
           alt={product.name}
           loading="lazy"
           style={{ width:size, height:size, objectFit:"contain", borderRadius:8 }}
-          onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }}
+          onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; if (e.target.nextSibling.nextSibling) e.target.nextSibling.nextSibling.style.display="none"; }}
         />
         <div style={{ width:size, height:size, background:"var(--paper2)", borderRadius:8, display:"none", alignItems:"center", justifyContent:"center", fontSize:size*0.5 }}>
           {getProductIcon(product)}
         </div>
-      </>
+        {credited && (
+          <span title={imageAttribution(product.image_url)} aria-label={imageAttribution(product.image_url)}
+            style={{ position:"absolute", right:2, bottom:2, fontSize:8, lineHeight:1, fontWeight:700, color:"var(--muted)", background:"var(--paper)", border:"1px solid var(--border)", borderRadius:4, padding:"1px 3px" }}>
+            OFF
+          </span>
+        )}
+      </span>
     );
   }
   return (
