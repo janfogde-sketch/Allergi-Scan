@@ -388,7 +388,7 @@ export default function SettingsScreen({
         )}
         <ChevronRow icon="warning" label="Sikkerhedsinformation" sub="Se den vigtige sikkerhedsinformation igen" onClick={onOpenSafetyInfo} />
         <ChevronRow icon="message" label="Kontakt & support" onClick={onOpenFeedback} last />
-        {/* Kildeangivelse (CC BY-SA kræver den): miniaturer har ingen tekst pr. billede. */}
+        {/* Kildeangivelse (CC BY-SA kræver den): miniaturer har kun et lille OFF-mærke. */}
         <div style={{ fontSize:11, lineHeight:1.45, color:"var(--muted)", marginTop:12 }}>
           Produktbilleder: <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener noreferrer" style={{ color:"var(--muted)", textDecoration:"underline" }}>Open Food Facts</a> og bidragydere, <a href={OFF_IMAGE_LICENSE_URL} target="_blank" rel="noopener noreferrer" style={{ color:"var(--muted)", textDecoration:"underline" }}>CC BY-SA</a>.
         </div>
