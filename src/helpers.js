@@ -856,3 +856,65 @@ export function pickDailyTip(entries, allergenIds, dayNumber) {
 export function localDayNumber(date = new Date()) {
   return Math.floor((date.getTime() - date.getTimezoneOffset() * 60000) / 86400000);
 }
+
+// ─── HISTORIK: SAML GENTAGNE SCANNINGER (5. okt. 2026, Bjørn) ───────────────
+// Samler identiske scanninger til én historikpost med et antal (`__count`), så Historik ikke fyldes med
+// ens poster. Kun visningen ændres; databasen beholder hver scanning. `list` er nyest først (som API'et).
+// Fundne produkter samles kun, når de står lige efter hinanden og har SAMME: produkt (EAN, ellers
+// produkt-ID; aldrig kun navnet), bruger, valgte personer (rækkefølge ligegyldig), resultat og allergen-
+// flag (ændrede produktdata giver en ny post), og når der højst er `windowMs` mellem to scanninger i
+// gruppen. "Ikke fundet" samles som før pr. stregkode og bruger uanset tid (ingen data at skelne på).
+// Søgning kan senere lægges ovenpå uden at ændre dette.
+export const HISTORY_GROUP_WINDOW_MS = 30 * 60 * 1000;
+
+const historyTime = h => new Date(h.scanned_at || h.timestamp || 0).getTime();
+const historyProductKey = h => {
+  const ean = (h.ean_scanned || h.code || "").toString().trim();
+  if (ean) return `ean:${ean}`;
+  const pid = h.product_id || h.products?.id;
+  return pid ? `id:${pid}` : null;
+};
+const stableJson = v => {
+  if (Array.isArray(v)) return `[${v.map(stableJson).join(",")}]`;
+  if (v && typeof v === "object") return `{${Object.keys(v).sort().map(k => `${JSON.stringify(k)}:${stableJson(v[k])}`).join(",")}}`;
+  return JSON.stringify(v ?? null);
+};
+const historySignature = h => [
+  historyProductKey(h),
+  h.user_id || "",
+  [...new Set(h.active_profiles || [])].sort().join(","),
+  h.result || h.status || "",
+  stableJson(h.flags_triggered || {}),
+].join("|");
+
+export function groupHistoryDuplicates(list, { windowMs = HISTORY_GROUP_WINDOW_MS } = {}) {
+  const result = [];
+  const notFoundByKey = new Map();
+  let open = null; // senest åbne gruppe af fundne produkter
+  for (const h of list || []) {
+    const isNF = (h.result || h.status) === "not_found";
+    const key = historyProductKey(h);
+    if (isNF && key) {
+      open = null; // en anden scanning imellem bryder rækken af ens fundne produkter
+      const nfKey = `${key}|${h.user_id || ""}`;
+      const existing = notFoundByKey.get(nfKey);
+      if (existing) { existing.__count++; continue; }
+      const group = { ...h, __count: 1 };
+      notFoundByKey.set(nfKey, group);
+      result.push(group);
+      continue;
+    }
+    if (!key) { open = null; result.push({ ...h, __count: 1 }); continue; }
+    const sig = historySignature(h);
+    const t = historyTime(h);
+    if (open && open.sig === sig && open.oldest - t <= windowMs && t <= open.oldest) {
+      open.group.__count++;
+      open.oldest = t;
+      continue;
+    }
+    const group = { ...h, __count: 1 };
+    open = { sig, oldest: t, group };
+    result.push(group);
+  }
+  return result;
+}

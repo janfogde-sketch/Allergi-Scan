@@ -1016,7 +1016,7 @@ body::-webkit-scrollbar{display:none;}
    til samme bordered-card-behandling som .list-item — samme padding/
    baggrund/kant/radius/margin, plus samme tryk-feedback-mønster
    (:active{scale(.99)}) som andre trykbare kort i appen (fx .recipe-card). */
-.hist-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:11px;margin-bottom:8px;cursor:pointer;transition:opacity .1s,transform .1s;}
+.hist-row{display:flex;align-items:center;gap:12px;padding:10px 14px;min-height:60px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:11px;margin-bottom:8px;cursor:pointer;transition:opacity .1s,transform .1s;}
 .hist-row:hover{opacity:.85;}
 .hist-row:active{transform:scale(.99);}
 .menu-item{display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .1s;}

@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { SCREENS } from "./constants.jsx";
-import { timeAgo, buildActiveProfileList, computeProfileResults, profileConflictLabel, profileMatchLabel } from "./helpers.js";
+import { timeAgo, groupHistoryDuplicates, buildActiveProfileList, computeProfileResults, profileConflictLabel, profileMatchLabel } from "./helpers.js";
 import { Icon, ProductImage, ConfirmDialog, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -97,35 +97,13 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
     lookupProduct(h.ean_scanned || h.code);
   };
 
-  // Samler gentagne "produkt ikke fundet"-scanninger af SAMME stregkode til
-  // én række med et antal (26. sept. 2026, brugerfeedback: "historikken kan
-  // hurtigt blive fyldt med identiske mislykkede scanninger") — kun for
-  // ikke-fundne produkter, IKKE for fundne produkter (at scanne den samme
-  // yoghurt to gange med to ugers mellemrum er reel, adskilt historik, ikke
-  // støj, der skal slås sammen). `history` kommer allerede nyest-først fra
-  // API'et, så den FØRSTE forekomst af et EAN i iterationsrækkefølgen er
-  // automatisk den seneste — den bruges som rækkens tidspunkt/plads i
-  // listen, øvrige forekomster tælles ind i samme objekt og udelades selv.
-  const groupNotFoundDuplicates = (list) => {
-    const seenByEan = new Map();
-    const result = [];
-    for (const h of list) {
-      const isNF = (h.result || h.status) === "not_found";
-      const ean = h.ean_scanned || h.code;
-      if (!isNF || !ean) { result.push(h); continue; }
-      const existing = seenByEan.get(ean);
-      if (existing) { existing.__count++; continue; }
-      const group = { ...h, __count: 1 };
-      seenByEan.set(ean, group);
-      result.push(group);
-    }
-    return result;
-  };
-
+  // Gentagne scanninger samles til én post med et antal (groupHistoryDuplicates i helpers.js, 5. okt. 2026):
+  // fundne produkter kun ved samme produkt (EAN/produkt-ID), personer, resultat og data kort efter hinanden;
+  // "ikke fundet" pr. stregkode som før. Kun visningen; databasen beholder hver scanning.
   const filteredHistory = historyFilter === "all"
     ? history
     : history.filter(h => historyDetails(h).status === historyFilter);
-  const groupedHistory = groupNotFoundDuplicates(filteredHistory);
+  const groupedHistory = groupHistoryDuplicates(filteredHistory);
 
   return (
     <div className="screen fade-in">
@@ -193,7 +171,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
               rettelse som HelpModal.jsx/demoSlides.jsx. */}
           <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="clock" size={23} color="var(--muted)" /></span>
           <div className="empty-txt">Ingen scanninger endnu</div>
-          <div className="empty-sub">Scan dit første produkt for at se din historik her</div>
+          <div className="empty-sub">Dine scannede produkter vises her.</div>
           {/* Ekstra horisontal padding (14→20px), samme højde/farve/
               kompakthed — knappen føles mere balanceret uden at blive
               fuld bredde. */}
@@ -250,8 +228,8 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
               <div className="hist-name">{name}</div>
               <div className="hist-time">
                 {isNotFound
-                  ? `Stregkode ${h.ean_scanned || h.code || "?"} · ${h.__count > 1 ? `Scannet ${h.__count} gange, senest ${timeAgo(h.scanned_at||h.timestamp)}` : `${timeAgo(h.scanned_at||h.timestamp)}`}`
-                  : `${timeAgo(h.scanned_at||h.timestamp)}${d.checkedFor ? ` · Tjekket for: ${d.checkedFor}` : ""}`}
+                  ? `Stregkode ${h.ean_scanned || h.code || "?"} · ${h.__count > 1 ? `Scannet ${h.__count} gange, senest ${timeAgo(h.scanned_at||h.timestamp).toLowerCase()}` : `${timeAgo(h.scanned_at||h.timestamp)}`}`
+                  : `${h.__count > 1 ? `Scannet ${h.__count} gange, senest ${timeAgo(h.scanned_at||h.timestamp).toLowerCase()}` : timeAgo(h.scanned_at||h.timestamp)}${d.checkedFor ? ` · Tjekket for: ${d.checkedFor}` : ""}`}
                 {scannedBySuffix}
               </div>
               {/* Altid ikon + tekst + farve, aldrig farve alene (26. sept.

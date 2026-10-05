@@ -18,7 +18,7 @@ import {
   isValidEanChecksum,
   glutenCerealsIn,
 } from "./helpers.js";
-import { profileConflictLabel, profileMatchLabel, scanTargetCopy, pickDailyTip, localDayNumber, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
+import { profileConflictLabel, profileMatchLabel, scanTargetCopy, pickDailyTip, localDayNumber, groupHistoryDuplicates, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
 
 describe("isValidEanChecksum", () => {
   it("accepts a real EAN-13 with a correct check digit", () => {
@@ -598,5 +598,49 @@ describe("pickDailyTip", () => {
   it("dagsnummer skifter ved lokal midnat", () => {
     expect(localDayNumber(new Date(2026, 9, 4, 23, 59))).toBe(localDayNumber(new Date(2026, 9, 4, 0, 1)));
     expect(localDayNumber(new Date(2026, 9, 5, 0, 1))).toBe(localDayNumber(new Date(2026, 9, 4, 12)) + 1);
+  });
+});
+
+describe("groupHistoryDuplicates", () => {
+  const at = min => new Date(Date.UTC(2026, 9, 5, 8, 0) - min * 60000).toISOString();
+  const cola = (min, extra = {}) => ({ id: `c${min}`, ean_scanned: "5740", product_id: "p1", user_id: "u1", active_profiles: ["f1"], result: "safe", flags_triggered: { milk: false }, scanned_at: at(min), ...extra });
+  it("samler ens scanninger kort efter hinanden og beholder den nyeste", () => {
+    const out = groupHistoryDuplicates([cola(0), cola(2), cola(10, { active_profiles: ["f1"] })]);
+    expect(out).toHaveLength(1);
+    expect(out[0].id).toBe("c0");
+    expect(out[0].__count).toBe(3);
+  });
+  it("profilrækkefølge og flag-nøglers rækkefølge er ligegyldig", () => {
+    const a = cola(0, { active_profiles: ["me", "f1"], flags_triggered: { a: true, b: false } });
+    const b = cola(1, { active_profiles: ["f1", "me"], flags_triggered: { b: false, a: true } });
+    expect(groupHistoryDuplicates([a, b])).toHaveLength(1);
+  });
+  it("holder poster adskilt ved andre personer, andet resultat, ændrede data eller lang tid", () => {
+    expect(groupHistoryDuplicates([cola(0), cola(1, { active_profiles: ["me"] })])).toHaveLength(2);
+    expect(groupHistoryDuplicates([cola(0), cola(1, { result: "danger" })])).toHaveLength(2);
+    expect(groupHistoryDuplicates([cola(0), cola(1, { flags_triggered: { milk: true } })])).toHaveLength(2);
+    expect(groupHistoryDuplicates([cola(0), cola(31)])).toHaveLength(2);
+  });
+  it("tidsvinduet gælder mellem nabo-scanninger i gruppen", () => {
+    expect(groupHistoryDuplicates([cola(0), cola(25), cola(50)])[0].__count).toBe(3);
+  });
+  it("matcher på EAN eller produkt-ID, aldrig kun navn", () => {
+    const n1 = { id: "n1", name: "Cola", user_id: "u1", result: "safe", scanned_at: at(0) };
+    const n2 = { id: "n2", name: "Cola", user_id: "u1", result: "safe", scanned_at: at(1) };
+    expect(groupHistoryDuplicates([n1, n2])).toHaveLength(2);
+    const p1 = { ...n1, product_id: "p9" }, p2 = { ...n2, product_id: "p9" };
+    expect(groupHistoryDuplicates([p1, p2])).toHaveLength(1);
+  });
+  it("en anden scanning imellem bryder rækken", () => {
+    const other = cola(1, { ean_scanned: "999", id: "o" });
+    expect(groupHistoryDuplicates([cola(0), other, cola(2)])).toHaveLength(3);
+  });
+  it("forskellige brugere i familievisningen samles ikke", () => {
+    expect(groupHistoryDuplicates([cola(0), cola(1, { user_id: "u2" })])).toHaveLength(2);
+  });
+  it("ikke fundne samles pr. stregkode uanset tid, som før", () => {
+    const nf = (min, ean = "111") => ({ id: `n${min}`, ean_scanned: ean, user_id: "u1", result: "not_found", scanned_at: at(min) });
+    const out = groupHistoryDuplicates([nf(0), cola(5), nf(600), nf(700, "222")]);
+    expect(out.map(h => [h.id, h.__count])).toEqual([["n0", 2], ["c5", 1], ["n700", 1]]);
   });
 });
