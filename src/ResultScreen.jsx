@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { glutenCerealsIn, allergenChoiceLabel, compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findProductOnList, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag } from "./helpers.js";
+import { glutenCerealsIn, allergenChoiceLabel, compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findProductOnList, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, imageAttribution } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -618,6 +618,13 @@ export default function ResultScreen({
                   onError={e => { const wrap = e.target.closest(".product-hero-imgwrap"); wrap.style.display="none"; wrap.nextSibling.style.display="flex"; }} />
               </div>
             : null}
+          {imageAttribution(scanResult.image_url) && (
+            <div style={{ fontSize:11, color:"var(--muted)", textAlign:"right", padding:"0 14px 6px" }}>
+              {scanResult.code
+                ? <a href={`https://world.openfoodfacts.org/product/${encodeURIComponent(scanResult.code)}`} target="_blank" rel="noopener noreferrer" style={{ color:"var(--muted)", textDecoration:"underline" }}>{imageAttribution(scanResult.image_url)}</a>
+                : imageAttribution(scanResult.image_url)}
+            </div>
+          )}
           <div className="product-hero-img-placeholder"
             style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"row", gap:10, height:"auto", background:"var(--paper2)", borderRadius:12, padding:"12px 16px", margin:"0 0 10px" }}>
             <svg width="28" height="28" viewBox="0 0 48 48" fill="none" stroke="var(--border2)" strokeWidth="2">
