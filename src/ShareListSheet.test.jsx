@@ -57,6 +57,19 @@ describe("ShareListSheet", () => {
     fireEvent.click(screen.getAllByText("Forlad listen").pop());
     await waitFor(() => expect(leaveList).toHaveBeenCalledWith("l1"));
   });
+  it("en liste delt med hele familien kan også forlades (skjules for mig)", async () => {
+    const leaveList = vi.fn().mockResolvedValue(true);
+    const lists = [
+      { id: "a", name: "Min", owner_id: "u2", type: "personal" },
+      { id: "f1", name: "Familie", owner_id: "u1", owner_name: "Jan", type: "family", via_access: false },
+    ];
+    render(<ListSwitcherSheet lists={lists} activeListId="a" userId="u2" onSelect={() => {}} onClose={() => {}} createList={vi.fn()} renameList={vi.fn()}
+      leaveList={leaveList} joinByCode={vi.fn()} onRequestDelete={vi.fn()} />);
+    fireEvent.click(screen.getByText("Rediger"));
+    fireEvent.click(screen.getByLabelText("Forlad listen Familie"));
+    fireEvent.click(screen.getAllByText("Forlad listen").pop());
+    await waitFor(() => expect(leaveList).toHaveBeenCalledWith("f1"));
+  });
 });
 
 describe("formatExpiry", () => {
