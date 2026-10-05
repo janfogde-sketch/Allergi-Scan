@@ -10,6 +10,12 @@ const FILTERS = [
   { val: "rejected", label: "Afvist" },
 ];
 
+// Felterne brugeren udfylder i indsendelsen (trin 3); serveren omsætter dem til resultatsidens format ved godkendelse.
+const NUTRITION_FIELDS = [
+  ["energy", "Energi (kJ/kcal)"], ["fat", "Fedt (g)"], ["saturated", "- heraf mættet (g)"], ["carbs", "Kulhydrat (g)"],
+  ["sugars", "- heraf sukker (g)"], ["protein", "Protein (g)"], ["salt", "Salt (g)"],
+];
+
 export default function SubmissionsSection({
   submissions, submissionsLoading, submissionFilter, setSubmissionFilter, loadSubmissions,
   openSubmission, setOpenSubmission, editingSubmission, setEditingSubmission,
@@ -60,6 +66,7 @@ export default function SubmissionsSection({
         name: s.ai_parsed_data?.name || s.product_name || "",
         brand: s.ai_parsed_data?.brand || s.brand || "",
         allergen_flags: s.ai_parsed_data || {},
+        nutrition: Object.fromEntries(NUTRITION_FIELDS.map(([k]) => [k, String(s.ai_parsed_data?.nutrition?.[k] ?? "")])),
       });
     }
     if (s.submitted_by) {
@@ -189,6 +196,21 @@ export default function SubmissionsSection({
                 </a>
               </div>
             ))}
+
+            {editingSubmission.nutrition && openSubmission.type !== "edit" && (
+              <div className="admin-field">
+                <label className="admin-label">Næringsindhold pr. 100 g/ml (sammenlign med fotoet af næringstabellen; redigérbart)</label>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px 12px" }}>
+                  {NUTRITION_FIELDS.map(([key, label]) => (
+                    <div key={key}>
+                      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 3 }}>{label}</div>
+                      <input value={editingSubmission.nutrition[key] || ""}
+                        onChange={e => setEditingSubmission(s => ({ ...s, nutrition: { ...s.nutrition, [key]: e.target.value } }))} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {openSubmission.ocr_raw_text && (
               <div className="admin-field">

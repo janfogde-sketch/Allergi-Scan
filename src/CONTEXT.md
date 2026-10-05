@@ -152,7 +152,7 @@ On-device visning (profil → sprog → kompakt preview → "Åbn madpas" → fu
 
 - `paddingBottom:120` på screen-divs (plads til bundnav); grønne primærknapper `color:#071510`; farver: `--green` CTA/succes, `--blue` navigation, `--amber`
   advarsel, `--red` fare.
-- `submissions`/`product_submissions` er den aktive indsendelsestabel.
+- `submissions`/`product_submissions` er den aktive indsendelsestabel. Næringsindhold fra en indsendelse (`ai_parsed_data.nutrition`: energy, fat, saturated, carbs, sugars, protein, salt som tekst) vises og redigeres i admins gennemsyn og omsættes ved godkendelse af `_shared/nutrition.js` (`normalizeNutrition`) til `products.nutrition` i resultatsidens format (`energy_kcal`, `saturated_fat`, `carbohydrates` m.fl. som tal). Produkter godkendt før 5. okt. 2026 kan have det gamle tekstformat.
 
 ---
 

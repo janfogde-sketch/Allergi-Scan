@@ -1,4 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { normalizeNutrition } from "../_shared/nutrition.js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -353,7 +354,8 @@ Deno.serve(async (req) => {
         const image_url         = body.image_url        ?? parsed.product_image_url ?? submission.raw_label_image ?? null;
         const ingredients_text  = body.ingredients_text ?? submission.ocr_raw_text  ?? null;
         const finalFlags        = Object.keys(body.allergen_flags ?? {}).length > 0 ? body.allergen_flags : allergenFlags;
-        const nutrition         = parsed.nutrition      ?? null;
+        // Admin kan have rettet tallene under gennemsyn (body.nutrition); ellers brugerens egne. Normaliseres til det format, resultatsiden læser.
+        const nutrition         = normalizeNutrition(body.nutrition ?? parsed.nutrition);
 
         const { data: product, error: productError } = await supabase
           .from("products")

@@ -706,6 +706,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
           brand: edited?.brand,
           ingredients_text: finalIngredientsText,
           allergen_flags: allergenFlags,
+          nutrition: edited?.nutrition,
         }),
       });
 
