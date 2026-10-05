@@ -242,13 +242,17 @@ export function useShoppingList({ accessToken, userId }) {
     return null;
   }, [accessToken]);
 
-  // Forlad en liste, andre har delt med mig (fjerner min egen adgangsrække).
+  // Forlad en liste, andre har delt med mig: fjerner min egen adgangsrække, eller skjuler en familiedelt liste for mig.
   const leaveList = useCallback(async (listId) => {
-    const ok = await revokeAccess(listId, userId);
+    const isFamily = listsRef.current.find(l => l.id === listId)?.type === "family";
+    let ok;
+    if (isFamily) {
+      try { await apiCall(`${SHOPPING_FN}/${listId}/hide`, { method: "POST", headers: makeHeaders(accessToken) }); ok = true; } catch { ok = false; }
+    } else ok = await revokeAccess(listId, userId);
     if (ok) await loadShoppingList();
     else showToast("Du kunne ikke forlade listen. Tjek din forbindelse og prøv igen.", "error");
     return ok;
-  }, [userId, revokeAccess, loadShoppingList]);
+  }, [userId, accessToken, revokeAccess, loadShoppingList]);
 
   // ── Realtime subscription (kun den aktive liste) ─────────────────────────────
   useEffect(() => {

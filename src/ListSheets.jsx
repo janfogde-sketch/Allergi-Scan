@@ -93,8 +93,9 @@ export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClo
   const [renamingId, setRenamingId]   = useState(null);
   const [renameValue, setRenameValue] = useState("");
   const [leaving, setLeaving]         = useState(null);
-  // Egne lister kan omdøbes (og slettes, når der er mere end én); lister andre har delt med mig (via adgang) kan forlades.
-  const canEditAny = lists.some(l => l.owner_id === userId || l.via_access);
+  // Egne lister kan omdøbes (og slettes, når der er mere end én); lister andre har delt med mig (via adgang eller hele familien) kan forlades.
+  const canLeave = l => l.owner_id !== userId && (l.via_access || l.type === "family");
+  const canEditAny = lists.some(l => l.owner_id === userId || canLeave(l));
   useEffect(() => { if (!canEditAny) setEdit(false); }, [canEditAny]);
   const toggleEdit = () => { setEdit(v => !v); setMode(null); setRenamingId(null); };
 
@@ -173,7 +174,7 @@ export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClo
                 <button type="button" aria-label={`Slet listen ${l.name}`} onClick={() => onRequestDelete(l)}
                   style={{ ...ROW_ACTION, color:"var(--red)" }}>Slet</button>
               )}
-              {editLists && !isOwner && l.via_access && (
+              {editLists && canLeave(l) && (
                 <button type="button" aria-label={`Forlad listen ${l.name}`} onClick={() => setLeaving(l)}
                   style={{ ...ROW_ACTION, color:"var(--red)" }}>Forlad</button>
               )}
@@ -220,7 +221,7 @@ export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClo
       )}
       </SheetBody>
       {leaving && (
-        <ConfirmDialog title={`Forlad listen "${leaving.name}"?`} message="Du kan ikke længere se eller redigere den. Ejeren kan give dig adgang igen." confirmLabel="Forlad listen"
+        <ConfirmDialog title={`Forlad listen "${leaving.name}"?`} message={leaving.type === "family" ? "Listen skjules for dig. Ejeren kan give dig adgang igen ved at dele den med dig." : "Du kan ikke længere se eller redigere den. Ejeren kan give dig adgang igen."} confirmLabel="Forlad listen"
           onConfirm={async () => { const l = leaving; setLeaving(null); await leaveList(l.id); }} onCancel={() => setLeaving(null)} />
       )}
     </Sheet>

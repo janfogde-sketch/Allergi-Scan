@@ -80,6 +80,7 @@ Deno.serve(async (req) => {
   const isJoin = parts[parts.length - 1] === "join";
   const isFamilyMembers = parts[parts.length - 1] === "family-members";
   const isRotate = parts[parts.length - 1] === "rotate-code";
+  const isHide = parts[parts.length - 1] === "hide";
   const isPreview = parts[parts.length - 1] === "preview";
   const itemId = isItems ? parts[parts.length - 1] : null;
   const accessUserId = isAccess && parts[parts.length - 1] !== "access" ? parts[parts.length - 1] : null;
@@ -87,7 +88,7 @@ Deno.serve(async (req) => {
     ? parts[parts.indexOf("items") - 1]
     : isAccess
     ? parts[parts.indexOf("access") - 1]
-    : isRotate
+    : isRotate || isHide
     ? parts[parts.length - 2]
     : (isJoin || isFamilyMembers || isPreview || parts[parts.length - 1] === "shopping")
     ? null
@@ -189,6 +190,17 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true, access }), { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // POST /<id>/hide — "forlad" en liste, der er delt med hele familien: skjul den for mig (og fjern min evt. adgangsrække).
+    // Ejeren kan ikke skjule sin egen liste; kun lister, jeg reelt har adgang til.
+    if (method === "POST" && isHide) {
+      const { data: list } = await supabase.from("shopping_lists").select("owner_id").eq("id", listId).single();
+      if (!list || list.owner_id === caller.id || !(await canAccessList(listId, false))) return new Response(JSON.stringify({ error: "Ikke autoriseret til denne liste" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      await supabase.from("shopping_list_access").delete().eq("list_id", listId).eq("user_id", caller.id);
+      const { error } = await supabase.from("shopping_list_hidden").upsert({ list_id: listId, user_id: caller.id });
+      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // DELETE — fjern en brugers adgang (ejeren fjerner andre; enhver kan forlade listen selv)
     if (method === "DELETE" && isAccess && accessUserId) {
       const { data: list } = await supabase.from("shopping_lists").select("owner_id").eq("id", listId).single();
@@ -234,6 +246,8 @@ Deno.serve(async (req) => {
       const group = await callerFamilyGroup();
       const { data: accessRows } = await supabase.from("shopping_list_access").select("list_id").eq("user_id", userId);
       const sharedListIds = (accessRows ?? []).map((r) => r.list_id);
+      const { data: hiddenRows } = await supabase.from("shopping_list_hidden").select("list_id").eq("user_id", userId);
+      const hiddenIds = new Set((hiddenRows ?? []).map((r) => r.list_id));
 
       let query = supabase
         .from("shopping_lists")
@@ -252,7 +266,8 @@ Deno.serve(async (req) => {
       // Berig med det, appen skal bruge til en klar delt-status: ejerens fornavn, hvem egne lister er delt med
       // (fornavne), og om jeg har adgang via en udvalgt/link-række. Listekoden er kun til ejeren.
       const firstName = (n) => (n ?? "").trim().split(/\s+/)[0] || null;
-      const rows = lists ?? [];
+      // Skjulte lister (forladt familiedeling) udelades, medmindre jeg er ejer eller siden har fået en egen adgangsrække.
+      const rows = (lists ?? []).filter((l) => l.owner_id === userId || sharedListIds.includes(l.id) || !hiddenIds.has(l.id));
       const foreignOwnerIds = [...new Set(rows.filter((l) => l.owner_id !== userId).map((l) => l.owner_id))];
       const ownIds = rows.filter((l) => l.owner_id === userId).map((l) => l.id);
       const { data: owners } = foreignOwnerIds.length
