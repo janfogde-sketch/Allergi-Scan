@@ -150,22 +150,3 @@ export function usePush() {
 
   return { supported, permission, subscribe, unsubscribe };
 }
-
-// Hjælpefunktion til at sende push fra frontend (kun til eget brug — admin bruger Edge Function)
-// `category` bør altid sendes med — matcher en notification_preferences-
-// kategori ('submission_status', 'missing_product_found', 'family',
-// 'feedback', 'weekly_digest') så send-push kan respektere brugerens
-// egne notifikationsindstillinger. Se send-push/index.ts.
-export async function sendPushToUser(userId, title, body, url, accessToken, category) {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
-      method: "POST",
-      headers: { ...makeHeaders(accessToken), "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: userId, title, body, url, category }),
-    });
-    return await res.json();
-  } catch (e) {
-    console.error("[usePush] sendPushToUser fejl:", e);
-    return { error: String(e) };
-  }
-}
