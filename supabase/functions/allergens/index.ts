@@ -1,4 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { withinGlobalLimit, withinUserLimit } from "../_shared/apiUsage.ts";
 import {
   ALL_ALLERGENS,
   analyzeIngredients,
@@ -132,7 +133,19 @@ Deno.serve(async (req) => {
     let method = "keyword";
 
     // 2. Claude-fallback hvis usikker ELLER eksplicit anmodet (force_ai)
+    // Dagligt loft mod misbrug: pr. bruger for loggede kald, globalt for interne/anonyme kald.
+    // Over loftet springes kun Claude over; nøgleordsmotoren kører som normalt.
+    let claudeAllowed = false;
     if (force_ai || shouldUseClaudeFallback(text)) {
+      const usageClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+      claudeAllowed = isInternalCall
+        ? await withinGlobalLimit(usageClient, "claude_internal")
+        : await withinUserLimit(usageClient, caller!.id, "claude_analysis");
+    }
+    if (claudeAllowed) {
       const claudeFlags = await analyzeWithClaude(text);
       if (claudeFlags) {
         // Claude vinder ved konflikt — men behold "yes" fra keyword (konservativt)

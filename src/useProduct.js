@@ -457,7 +457,9 @@ export function useProduct({ accessToken, userId, activeProfiles,
       }
     } catch (e) {
       traceLog(tid, "ocr:error", { error: e?.message || String(e) });
-      setScanError_("Billedet kunne ikke analyseres. Prøv igen.");
+      setScanError_(e?.status === 429
+        ? "Du har brugt dagens grænse for billedlæsning. Prøv igen i morgen, eller indtast ingredienserne selv."
+        : "Billedet kunne ikke analyseres. Prøv igen.");
     }
     setOcrLoading(false);
   };
