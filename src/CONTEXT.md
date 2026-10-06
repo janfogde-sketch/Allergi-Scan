@@ -252,7 +252,7 @@ indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push
   Kategori `product_changes` (standard TIL) er nu synlig i Indstillinger. **P5 er droppet** (Jan, 30. sept.).
 
 - **P6 (30. sept. 2026):** tabel `recalls` (kun admin kan læse) + edge-funktionen `recalls-sync` (service-role, cron
-  `notify-recalls-sync` dagligt kl. 06:07 UTC) henter Fødevarestyrelsens RSS-feed
+  `notify-recalls-sync` dagligt kl. 17:00 UTC) henter Fødevarestyrelsens RSS-feed
   (`foedevarestyrelsen.dk/handlers/DynamicRss.ashx?id=8c2cdc12-...`), læser hver ny side (`_shared/recallParser.js`) og
   udleder EAN, parti og årsag. Kun EAN'er med gyldigt GTIN-kontrolciffer tæller. Status: `ready` (gyldig EAN, sendes),
   `needs_review` (ingen gyldig EAN; kun admin ser den, `unverified_eans` viser rå tal), `cancelled` (titel starter med
