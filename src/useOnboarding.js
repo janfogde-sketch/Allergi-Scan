@@ -91,7 +91,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
     const customToSave = overrideCustomAllerg !== undefined ? overrideCustomAllerg : customAllerg;
     // Én transaktion (RPC save_my_allergens, F2-2): enten gemmes hele listen, eller intet
     // ændres. Før kunne en fejl mellem DELETE og POST efterlade brugeren uden allergier.
-    await saveMyAllergens({ accessToken, allergens: allergensToSave, custom: customToSave });
+    await saveMyAllergens({ accessToken, userId, allergens: allergensToSave, custom: customToSave });
     // E-numre gemmes på samme trin i UI'et (Accordion inde i renderStep2),
     // men blev tidligere KUN gemt fra Rediger præferencer på Profil-siden,
     // aldrig fra selve onboardingen — et reelt hul (29. sept. 2026,

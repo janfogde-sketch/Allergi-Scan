@@ -85,7 +85,7 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
       });
 
       // Én transaktion (RPC save_my_allergens, F2-2): fejler gemningen, er profilen uændret
-      await saveMyAllergens({ accessToken, allergens, custom: allCustom });
+      await saveMyAllergens({ accessToken, userId, allergens, custom: allCustom });
       setScreen(SCREENS.PROFILE);
     } catch (e) {
       reportError(e, { source: "edit-preferences" });
