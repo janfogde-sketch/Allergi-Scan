@@ -1,8 +1,8 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { SCREENS, SUPABASE_URL, DIETS_ENABLED } from "./constants.jsx";
-import { makeHeaders, apiCall, addUniqueCustom, pruneAllergenLevels } from "./helpers.js";
+import { SCREENS, DIETS_ENABLED } from "./constants.jsx";
+import { addUniqueCustom, pruneAllergenLevels } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 import { Accordion } from "./DesignSystem.jsx";
 import { ENumberPicker, AllergenChipPicker, AllergenSensitivity, DietChipPicker, CustomAllergenField } from "./AllergenPicker.jsx";
@@ -77,15 +77,14 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
       const allCustom = pendingCustom ? addUniqueCustom(customAllerg, pendingCustom) : customAllerg;
       if (pendingCustom) { setCustomAllerg(allCustom); setCustomInput(""); }
 
-      await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
-        method:"PATCH",
-        headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" },
-        // Mens kostpræferencer er på pause, røres de gemte valg ikke (sendes ikke med)
-        body:JSON.stringify({ ...(DIETS_ENABLED ? { diets:user.diets||[] } : {}), e_numbers:selectedENumbers||[], allergen_levels:pruneAllergenLevels(user.allergenLevels, allergens) }),
-      });
-
       // Én transaktion (RPC save_my_allergens, F2-2): fejler gemningen, er profilen uændret
-      await saveMyAllergens({ accessToken, userId, allergens, custom: allCustom });
+      await saveMyAllergens({
+        accessToken, userId, allergens, custom: allCustom,
+        eNumbers: selectedENumbers || [],
+        allergenLevels: pruneAllergenLevels(user.allergenLevels, allergens),
+        // Mens kostpræferencer er på pause, røres de gemte valg ikke (sendes ikke med)
+        ...(DIETS_ENABLED ? { diets: user.diets || [] } : {}),
+      });
       setScreen(SCREENS.PROFILE);
     } catch (e) {
       reportError(e, { source: "edit-preferences" });

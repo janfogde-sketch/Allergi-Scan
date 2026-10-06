@@ -91,16 +91,12 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
     const customToSave = overrideCustomAllerg !== undefined ? overrideCustomAllerg : customAllerg;
     // Én transaktion (RPC save_my_allergens, F2-2): enten gemmes hele listen, eller intet
     // ændres. Før kunne en fejl mellem DELETE og POST efterlade brugeren uden allergier.
-    await saveMyAllergens({ accessToken, userId, allergens: allergensToSave, custom: customToSave });
-    // E-numre gemmes på samme trin i UI'et (Accordion inde i renderStep2),
-    // men blev tidligere KUN gemt fra Rediger præferencer på Profil-siden,
-    // aldrig fra selve onboardingen — et reelt hul (29. sept. 2026,
-    // "Onboarding-persistens"): lukkede brugeren appen efter at have valgt
-    // E-numre her, men før hele onboardingen var gennemført, gik valget tabt.
-    await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
-      method: "PATCH",
-      headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-      body: JSON.stringify({ e_numbers: selectedENumbers || [], allergen_levels: pruneAllergenLevels(user.allergenLevels, allergensToSave) }),
+    // E-numre og spor-valg gemmes i samme transaktion (de blev tidligere KUN gemt fra Rediger
+    // præferencer, aldrig fra onboardingen: lukkede brugeren appen før onboarding var færdig, gik valget tabt).
+    await saveMyAllergens({
+      accessToken, userId, allergens: allergensToSave, custom: customToSave,
+      eNumbers: selectedENumbers || [],
+      allergenLevels: pruneAllergenLevels(user.allergenLevels, allergensToSave),
     });
   };
 
