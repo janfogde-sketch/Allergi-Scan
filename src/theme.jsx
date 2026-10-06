@@ -77,7 +77,7 @@ export const THEME = {
 };
 
 export const appCss = `
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,300&family=DM+Mono:wght@400;500&display=swap');
+@import url('/fonts/fonts.css');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   /* Tekst — mørk grøn-sort, ikke ren sort */
