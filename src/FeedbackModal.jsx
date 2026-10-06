@@ -268,7 +268,7 @@ export default function FeedbackModal({
                             <div key={i}>
                               <span style={{ color:"var(--green-text)" }}>[{t.id}]</span>{" "}
                               <span style={UI.ucink}>{t.step}</span>{" "}
-                              <span style={{ color:"var(--muted2)" }}>{t.ts?.slice(11,19)}</span>
+                              <span style={{ color:"var(--muted)" }}>{t.ts?.slice(11,19)}</span>
                             </div>
                           ))}
                         </div>

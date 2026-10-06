@@ -277,7 +277,7 @@ export default function SettingsScreen({
           <div style={{ flex:1 }} />
           <div style={{ display:"flex", gap:12, flexShrink:0 }}>
             {["Push", "E-mail"].map(label => (
-              <div key={label} style={{ width:36, textAlign:"center", fontSize:9, fontWeight:700, color:"var(--muted2)", textTransform:"uppercase", letterSpacing:.3 }}>{label}</div>
+              <div key={label} style={{ width:36, textAlign:"center", fontSize:9, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:.3 }}>{label}</div>
             ))}
           </div>
         </div>

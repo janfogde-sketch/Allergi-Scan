@@ -16,7 +16,7 @@ export default function DeleteAccountModal({
         <div style={UI.utacenter_mb20}>
           <div style={{ ...UI.ufs48_mb10, display:"flex", justifyContent:"center" }}><Icon name="warning" size={40} color="var(--red)" /></div>
           <div style={{ fontSize:19, fontWeight:900, color:"var(--red)", marginBottom:8 }}>Slet din konto</div>
-          <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.7 }}>
+          <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.7 }}>
             Dette sletter permanent alle dine data — allergier, familie, historik og præferencer. Handlingen kan ikke fortrydes.
           </div>
         </div>

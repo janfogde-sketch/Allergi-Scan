@@ -12,7 +12,7 @@ function Kpi({ n, icon, label, tone = "neutral" }) {
         <span style={{ fontSize:24, fontWeight:900, color, lineHeight:1.1, fontVariantNumeric:"tabular-nums" }}>{n ?? "—"}</span>
         <Icon name={icon} size={14} color="var(--muted)" />
       </div>
-      <div style={{ fontSize:11, color:"var(--muted2)", fontWeight:600, marginTop:4 }}>{label}</div>
+      <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600, marginTop:4 }}>{label}</div>
     </div>
   );
 }

@@ -60,7 +60,7 @@ export default function AdminUsersSection({
               <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                 {u.name || "Intet navn"}{u.id === userId && <span style={{ fontSize:11, fontWeight:500, color:"var(--muted)" }}> · Dig</span>}
               </div>
-              <div style={{ fontSize:11, color:"var(--muted2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</div>
+              <div style={{ fontSize:11, color:"var(--muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</div>
               <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginTop:3 }}>
                 <StatusChip tone={u.role === "admin" ? "green" : "neutral"}>{u.role === "admin" ? "Admin" : "Bruger"}</StatusChip>
                 {u.onboarding_completed === false && <StatusChip tone="amber" icon="clock">Onboarding ufærdig</StatusChip>}

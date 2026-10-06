@@ -53,12 +53,12 @@ const S = {
   sub11: { fontSize:11, color:"var(--muted)" },
   sub11mt: { fontSize:11, color:"var(--muted)", marginTop:1 },
   sub11lh: { fontSize:11, color:"var(--muted)", lineHeight:1.5 },
-  body12: { fontSize:12, color:"var(--muted2)", lineHeight:1.5 },
-  body13: { fontSize:13, color:"var(--muted2)", lineHeight:1.5 },
+  body12: { fontSize:12, color:"var(--muted)", lineHeight:1.5 },
+  body13: { fontSize:13, color:"var(--muted)", lineHeight:1.5 },
   label: { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 },
   dot: { width:28, height:28, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
   opacity6: { opacity:.6 },
-  linkBtn: { width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, fontWeight:700, color:"var(--muted2)", fontFamily:"var(--f)" },
+  linkBtn: { width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:12, fontWeight:700, color:"var(--muted)", fontFamily:"var(--f)" },
 };
 
 
@@ -859,7 +859,7 @@ export default function ScannerScreen({
                       background: manualEanReadyLength ? "var(--green)" : "var(--border2)",
                       color: manualEanReadyLength ? "var(--on-green)" : "var(--muted)",
                       fontWeight:800, fontSize:14, cursor: manualEanReadyLength ? "pointer" : "default", fontFamily:"var(--f)", flexShrink:0, minHeight:44,
-                      boxShadow: manualEanReadyLength ? "0 2px 12px rgba(14,143,90,.25)" : "none" }}
+                      boxShadow: manualEanReadyLength ? "var(--sh-green)" : "none" }}
                     onClick={() => submitManualEan(manualEanValue)}>
                     Søg
                   </button>

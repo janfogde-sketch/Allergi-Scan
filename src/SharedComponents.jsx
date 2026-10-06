@@ -438,7 +438,7 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
   // Mindre "washed out" grundtekst (krav 8) — kun i den nye tilstand, så
   // RecipesScreen.jsx's eksisterende brug (ingen highlightRules) er
   // pixel-identisk uændret.
-  const baseColor = useRules ? "var(--ink2)" : "var(--muted2)";
+  const baseColor = useRules ? "var(--ink2)" : "var(--muted)";
 
   return (
     <div style={{ display:"flex", flexWrap:"wrap", gap:"4px 2px", lineHeight:1.6 }}>
@@ -856,7 +856,7 @@ export function ConfirmDialog({ title, message, confirmLabel, cancelLabel = "Ann
           {danger && <Icon name="warning" size={20} color="var(--red)" />}
           <div>
             <div style={{ fontSize:15.5, fontWeight:800, color:"var(--ink)", marginBottom: message ? 4 : 0 }}>{title}</div>
-            {message && <div style={{ fontSize:12.5, color:"var(--muted2)", lineHeight:1.5 }}>{message}</div>}
+            {message && <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.5 }}>{message}</div>}
           </div>
         </div>
         <div style={{ display:"flex", gap:8 }}>

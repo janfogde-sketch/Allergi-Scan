@@ -32,7 +32,7 @@ export function AdminEmpty({ icon = "package", title, text, action }) {
         <Icon name={icon} size={20} color="var(--muted)" />
       </span>
       <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>{title}</div>
-      {text && <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5, marginTop:4 }}>{text}</div>}
+      {text && <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginTop:4 }}>{text}</div>}
       {action}
     </div>
   );
@@ -64,11 +64,11 @@ export const LABEL = { fontSize:11, fontWeight:700, color:"var(--muted)", textTr
 export function TechDetails({ rows }) {
   return (
     <details style={{ marginTop:10 }}>
-      <summary style={{ cursor:"pointer", fontSize:12, fontWeight:700, color:"var(--muted2)", minHeight:32, display:"flex", alignItems:"center", listStyle:"none" }}>Vis tekniske detaljer</summary>
+      <summary style={{ cursor:"pointer", fontSize:12, fontWeight:700, color:"var(--muted)", minHeight:32, display:"flex", alignItems:"center", listStyle:"none" }}>Vis tekniske detaljer</summary>
       <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 12px", marginTop:4 }}>
         {rows.map(([k, v]) => (
           <div key={k} style={{ display:"flex", justifyContent:"space-between", gap:12, fontSize:11.5, padding:"3px 0" }}>
-            <span style={{ color:"var(--muted2)" }}>{k}</span>
+            <span style={{ color:"var(--muted)" }}>{k}</span>
             <span style={{ color:"var(--ink2)", textAlign:"right", fontFamily:"monospace" }}>{v}</span>
           </div>
         ))}

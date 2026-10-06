@@ -142,22 +142,29 @@ export const appCss = `
   /* Borders — bløde, lyse */
   --border:rgba(21,32,26,.10);
   --border2:rgba(21,32,26,.16);
+  /* Inputfelters kant: mindst 3:1 mod baggrunden (WCAG 1.4.11, F4-5) */
+  --field-border:rgba(21,32,26,.50);
   /* Surfaces — hvide, ophøjede kort på den lyse baggrund */
   --surface:#FFFFFF;
   --surface2:#F4F4F2;
   --surface3:#FAFAF9;
   /* Semantiske farver */
   --red:#C8402E;--red-lt:rgba(200,64,46,.08);--red-md:rgba(200,64,46,.18);
-  --amber:#B5791A;--amber-lt:rgba(181,121,26,.08);--amber-md:rgba(181,121,26,.18);
+  /* --amber mørkere (6. okt. 2026, F4-1/F4-4): hvid tekst på banneret og gul tekst på --amber-lt giver nu mindst 4,5:1 */
+  --amber:#9A6514;--on-amber:#FFFFFF;--amber-lt:rgba(181,121,26,.08);--amber-md:rgba(181,121,26,.18);
   /* Varm — alias til amber, så app'en ikke bærer endnu en dekorativ farve */
-  --warm:#B5791A;--warm-lt:rgba(181,121,26,.08);--warm-md:rgba(181,121,26,.18);
+  --warm:var(--amber);--warm-lt:rgba(181,121,26,.08);--warm-md:rgba(181,121,26,.18);
   /* Blå — sekundær accentfarve, adskilt fra grøn: info/tip-indhold */
   --blue:#3A6EA5;--blue-lt:rgba(58,110,165,.10);--blue-md:rgba(58,110,165,.20);
   /* Neutral grå — labels, metadata */
-  --neutral:#6B7A70;--neutral-lt:rgba(107,122,112,.12);--unknown:#6F6B63;
+  /* --neutral mørkere (F4-4): 4,8:1 på --neutral-lt. --unknown er et alias, så "Kan ikke vurderes" har én grå (F3-3) */
+  --neutral:#5C6A61;--neutral-lt:rgba(107,122,112,.12);--unknown:var(--neutral);
   /* Muted — neutral grå tekst */
-  --muted:rgba(21,32,26,.58);
+  /* --muted hævet fra .58 til .66 (F4-3): 5,4:1 på hvid. --muted2 kun til kanter, ikoner og deaktiveret tekst (F4-2) */
+  --muted:rgba(21,32,26,.66);
   --muted2:rgba(21,32,26,.40);
+  /* Skygge under primærknapper i --green (F3-4) */
+  --sh-green:0 2px 12px rgba(15,125,79,.25);
   --r:12px;
   --f:'DM Sans',system-ui,sans-serif;
   --mono:'DM Mono',monospace;
@@ -324,7 +331,7 @@ body::-webkit-scrollbar{display:none;}
    den altid centrerer sig lodret mod tekstlogoet uanset dets nøjagtige
    linjehøjde (den tidligere marginTop:2-hack kompenserede specifikt for
    billedlogoets egen indre luft, og er ikke længere nødvendig). */
-.topbar-beta{background:var(--amber);color:var(--ink);font-size:9px;font-weight:800;padding:3px 8px;border-radius:100px;letter-spacing:.5px;line-height:1;display:inline-flex;align-items:center;flex-shrink:0;}
+.topbar-beta{background:var(--amber);color:var(--on-amber);font-size:9px;font-weight:800;padding:3px 8px;border-radius:100px;letter-spacing:.5px;line-height:1;display:inline-flex;align-items:center;flex-shrink:0;}
 .topbar-avatar{width:32px;height:32px;background:var(--green-lt);border:1.5px solid var(--green-mid);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--green);cursor:pointer;transition:all .15s;letter-spacing:.3px;}
 .topbar-avatar:hover{background:var(--green-mid);}
 
@@ -529,7 +536,7 @@ body::-webkit-scrollbar{display:none;}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px;box-shadow:var(--sh);}
 .card-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--neutral);margin-bottom:10px;}
 .card-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;letter-spacing:-.2px;}
-.field{width:100%;background:var(--surface2);border:1.5px solid var(--border2);border-radius:10px;padding:12px 14px;color:var(--ink);font-family:var(--f);font-size:16px;outline:none;transition:border-color .15s,background .15s;}
+.field{width:100%;background:var(--surface2);border:1.5px solid var(--field-border);border-radius:10px;padding:12px 14px;color:var(--ink);font-family:var(--f);font-size:16px;outline:none;transition:border-color .15s,background .15s;}
 .field:focus{border-color:var(--green);background:var(--surface2);box-shadow:0 0 0 3px var(--green-lt);}
 /* Browserens native autofill-baggrund (kraftig gul i Chrome/Safari) er
    overstyret her, så et autofillet felt (fx e-mail på Log ind-fanen) ser ud
@@ -547,7 +554,7 @@ body::-webkit-scrollbar{display:none;}
   caret-color:var(--ink);
   -webkit-box-shadow:0 0 0 1000px var(--surface2) inset;
   box-shadow:0 0 0 1000px var(--surface2) inset;
-  border-color:var(--border2);
+  border-color:var(--field-border);
   transition:background-color 600000s ease-in-out 0s;
 }
 /* Skjuler browserens native op/ned-spinner-pile på type="number"-felter
@@ -575,9 +582,9 @@ body::-webkit-scrollbar{display:none;}
 /* ── BUTTONS ── */
 .btn{padding:12px 20px;border-radius:10px;border:none;font-family:var(--f);font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px;letter-spacing:-.1px;}
 .btn-full{width:100%;}
-.btn-primary{background:var(--green);color:var(--on-green);box-shadow:0 2px 12px rgba(14,143,90,.25);}
+.btn-primary{background:var(--green);color:var(--on-green);box-shadow:var(--sh-green);}
 .btn-primary:hover{background:var(--green-glow);transform:translateY(-1px);}
-.btn-green{background:var(--green);color:var(--on-green);box-shadow:0 2px 12px rgba(14,143,90,.25);}
+.btn-green{background:var(--green);color:var(--on-green);box-shadow:var(--sh-green);}
 .btn-green:hover{background:var(--green-glow);transform:translateY(-1px);}
 .btn-outline{background:transparent;color:var(--ink);border:1.5px solid var(--border2);}
 .btn-outline:hover{border-color:var(--ink2);background:var(--surface);}
@@ -873,7 +880,7 @@ body::-webkit-scrollbar{display:none;}
 .scan-card::after{content:'';position:absolute;top:0;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(61,204,110,.28),transparent);}
 .scan-card-text{text-align:center;}
 .scan-card-title{font-size:17px;font-weight:600;color:var(--ink);letter-spacing:-.4px;margin-bottom:4px;}
-.scan-card-sub{font-size:11px;color:var(--muted2);font-weight:400;line-height:1.5;}
+.scan-card-sub{font-size:11px;color:var(--muted);font-weight:400;line-height:1.5;}
 
 /* Reticle */
 .reticle{width:80px;height:80px;position:relative;flex-shrink:0;}
@@ -908,7 +915,7 @@ body::-webkit-scrollbar{display:none;}
 .home-mini-card:hover{border-color:var(--border2);}
 .home-mini-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--green-lt);}
 .home-mini-label{font-size:12px;font-weight:600;color:var(--ink);letter-spacing:-.2px;margin-bottom:2px;}
-.home-mini-sub{font-size:10px;color:var(--muted2);font-weight:400;}
+.home-mini-sub{font-size:10px;color:var(--muted);font-weight:400;}
 .home-mini-badge{width:18px;height:18px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--on-green);flex-shrink:0;}
 
 /* Section label */
@@ -920,7 +927,7 @@ body::-webkit-scrollbar{display:none;}
 .recent-item:last-child{border-bottom:none;}
 .recent-thumb{width:38px;height:38px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
 .recent-name{font-size:13px;font-weight:500;color:var(--ink);letter-spacing:-.2px;margin-bottom:2px;}
-.recent-meta{font-size:10px;color:var(--muted2);font-weight:400;}
+.recent-meta{font-size:10px;color:var(--muted);font-weight:400;}
 .recent-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-left:auto;}
 .recent-dot.safe{background:var(--green-accent);box-shadow:0 0 7px rgba(52,208,106,.6);}
 .recent-dot.warn{background:var(--amber);}

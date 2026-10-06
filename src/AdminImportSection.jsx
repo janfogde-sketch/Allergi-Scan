@@ -21,7 +21,7 @@ export default function AdminImportSection({
         </button>
       </div>
 
-      <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.6 }}>
+      <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6 }}>
         Henter op til 50 manglende produkter og forsøger automatisk import. Kører automatisk hver nat.
       </div>
       <div style={{ marginBottom:16 }}>
@@ -98,7 +98,7 @@ export default function AdminImportSection({
         <div style={UI.rowBetweenMb10}>
           <div>
             <div style={{ ...UI.ufs15_fw800_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name="refresh" size={14} color="var(--ink)" /> Allergen-genanalyse</div>
-            <div style={{ fontSize:12, color:"var(--muted2)", marginTop:2, lineHeight:1.6 }}>
+            <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.6 }}>
               Genanalyserer produkter med lav datakvalitet og forsøger at forbedre allergeninformationen. Kører automatisk hver nat.
             </div>
           </div>

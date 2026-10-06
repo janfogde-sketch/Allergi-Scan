@@ -229,7 +229,7 @@ export const CategorySelect = ({ value, onChange, options, placeholder="Alle kat
         ))}
       </select>
       {/* Pile-ikon */}
-      <div style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", color:"var(--muted2)", fontSize:11 }}>▾</div>
+      <div style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", color:"var(--muted)", fontSize:11 }}>▾</div>
     </div>
   );
 };

@@ -192,7 +192,7 @@ export default function SuggestEditScreen({
       {/* ── TRIN 1: Vælg hvad der mangler ── */}
       {editStep === "start" && (
         <div className="fade-in">
-          <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6, marginBottom:16 }}>
+          <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6, marginBottom:16 }}>
             {editType === "missing" ? "Hvilke oplysninger mangler på dette produkt?"
              : editType === "correct" ? "Hvad er forkert på dette produkt?"
              : "Hvad mangler eller er forkert på dette produkt?"}
@@ -348,7 +348,7 @@ export default function SuggestEditScreen({
                 <img loading="lazy" src={editProductImage} alt="Produkt"
                   style={{ width:"100%", maxHeight:180, objectFit:"contain", borderRadius:10, marginBottom:10 }} />
               )}
-              <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"12px", background:"var(--paper2)", border:"1.5px dashed var(--border2)", borderRadius:10, cursor:"pointer", fontSize:13, color:"var(--muted2)" }}>
+              <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"12px", background:"var(--paper2)", border:"1.5px dashed var(--border2)", borderRadius:10, cursor:"pointer", fontSize:13, color:"var(--muted)" }}>
                 <Icon name="camera" size={14} color="var(--muted2)" /> {editProductImage ? "Tag nyt billede" : "Tag billede af produktet"}
                 <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleEditProductCapture} />
               </label>
@@ -399,7 +399,7 @@ export default function SuggestEditScreen({
             </svg>
           </div>
           <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Tak for din hjælp! 🙏</div>
-          <div style={{ fontSize:14, color:"var(--muted2)", lineHeight:1.7, marginBottom:28 }}>
+          <div style={{ fontSize:14, color:"var(--muted)", lineHeight:1.7, marginBottom:28 }}>
             Dit forslag er modtaget og vil blive gennemgået af vores team snarest.
             Du hjælper andre med allergi med at spise trygt.
           </div>

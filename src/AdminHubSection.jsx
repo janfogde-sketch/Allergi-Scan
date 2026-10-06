@@ -13,7 +13,7 @@ function Tool({ icon, title, text, onClick }) {
       </span>
       <span style={{ flex:1, minWidth:0 }}>
         <span style={{ display:"block", fontSize:13.5, fontWeight:800, color:"var(--ink)" }}>{title}</span>
-        <span style={{ display:"block", fontSize:12, color:"var(--muted2)", lineHeight:1.4, marginTop:1 }}>{text}</span>
+        <span style={{ display:"block", fontSize:12, color:"var(--muted)", lineHeight:1.4, marginTop:1 }}>{text}</span>
       </span>
       <Chevron />
     </button>
@@ -54,7 +54,7 @@ export default function AdminHubSection({ kind, onOpen }) {
           <div onClick={e => e.stopPropagation()}
             style={{ background:"var(--sheet)", borderRadius:20, padding:"24px 20px", maxWidth:340, width:"100%", textAlign:"center" }}>
             <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>Installér EatSafe</div>
-            <div style={{ fontSize:12, color:"var(--muted2)", marginBottom:16, lineHeight:1.5 }}>
+            <div style={{ fontSize:12, color:"var(--muted)", marginBottom:16, lineHeight:1.5 }}>
               Vis denne kode til beta-testere. Når de scanner den med telefonens kamera, åbner appen med det samme.
             </div>
             <img src={installQrImg} alt="Installations-QR til EatSafe" width={220} height={220}
@@ -62,7 +62,7 @@ export default function AdminHubSection({ kind, onOpen }) {
             <div style={{ fontSize:11, color:"var(--muted)", marginBottom:14, wordBreak:"break-all" }}>{installUrl}</div>
             <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, padding:"10px 12px", textAlign:"left", marginBottom:14 }}>
               <div style={{ fontSize:11, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>Sådan installerer de</div>
-              <div style={{ fontSize:11, color:"var(--muted2)", lineHeight:1.6 }}>
+              <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.6 }}>
                 Linket tjekker selv enheden: <strong style={{ color:"var(--ink2)" }}>Android/Chrome</strong> sendes direkte ind i appen, hvor browseren selv kan vise "Installér app". <strong style={{ color:"var(--ink2)" }}>iPhone/iPad</strong> lander på en trin-for-trin guide til "Del → Føj til hjemmeskærm" — Apple tillader ikke automatisk installation, så det trin er ikke til at komme udenom.
               </div>
             </div>

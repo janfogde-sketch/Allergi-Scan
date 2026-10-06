@@ -20,12 +20,12 @@ const S = {
   h17:              { fontSize:17, fontWeight:800, color:"var(--ink)" },
   sub11:            { fontSize:11, color:"var(--muted)" },
   sub11lh:          { fontSize:11, color:"var(--muted)", lineHeight:1.5 },
-  body12:           { fontSize:12, color:"var(--muted2)", lineHeight:1.5 },
+  body12:           { fontSize:12, color:"var(--muted)", lineHeight:1.5 },
   dot:              { width:28, height:28, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
 };
 
 // Fælles stilarter for flowet: diskret "Spring over", trinoverskrift og kompakt stepper.
-const SKIP = { width:"100%", minHeight:44, background:"none", border:"none", cursor:"pointer", fontSize:13, fontWeight:600, color:"var(--muted2)", fontFamily:"var(--f)" };
+const SKIP = { width:"100%", minHeight:44, background:"none", border:"none", cursor:"pointer", fontSize:13, fontWeight:600, color:"var(--muted)", fontFamily:"var(--f)" };
 const STEPS = [
   { num:1, label:"Forside" },
   { num:2, label:"Ingredienser" },
@@ -65,7 +65,7 @@ function StepHead({ step, title, help, optional }) {
     <div style={{ marginBottom:14 }}>
       <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".8px" }}>Trin {step} af 5{optional ? " · Valgfrit" : ""}</div>
       <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)", marginTop:2, lineHeight:1.3 }}>{title}</div>
-      {help && <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.5, marginTop:4 }}>{help}</div>}
+      {help && <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.5, marginTop:4 }}>{help}</div>}
     </div>
   );
 }
@@ -160,7 +160,7 @@ export default function NotFoundScreen({
               <Icon name="package" size={28} color="var(--muted2)" />
               <div>
                 <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>Vi kender ikke dette produkt endnu</div>
-                <div style={{ fontSize:12, color:"var(--muted2)", lineHeight:1.5, marginTop:2 }}>Fotografér forsiden og ingredienslisten, så hjælper vi med at oprette det.</div>
+                <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginTop:2 }}>Fotografér forsiden og ingredienslisten, så hjælper vi med at oprette det.</div>
               </div>
             </div>
 
@@ -448,7 +448,7 @@ export default function NotFoundScreen({
                       }}
                       style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 12px", borderRadius:100, cursor:"pointer", border:`1px solid ${isOn ? "var(--red-md)" : isTrace ? "var(--amber-md)" : "var(--border2)"}`, background: isOn ? "var(--red-lt)" : isTrace ? "var(--amber-lt)" : "var(--paper2)", transition:"all .15s" }}>
                       <span style={{ fontSize:14 }}><AllergenGlyph a={a} size={13} /></span>
-                      <span style={{ fontSize:11, fontWeight:700, color: isOn ? "var(--red)" : isTrace ? "var(--amber)" : "var(--muted2)" }}>{a.label}</span>
+                      <span style={{ fontSize:11, fontWeight:700, color: isOn ? "var(--red)" : isTrace ? "var(--amber)" : "var(--muted)" }}>{a.label}</span>
                       {isOn    && <span style={{ fontSize:9, fontWeight:800, color:"var(--red)",   background:"var(--red-lt)",   padding:"1px 6px", borderRadius:4 }}>JA</span>}
                       {isTrace && <span style={{ fontSize:9, fontWeight:800, color:"var(--amber)", background:"var(--amber-lt)", padding:"1px 6px", borderRadius:4 }}>SPOR</span>}
                     </div>
@@ -535,9 +535,12 @@ export default function NotFoundScreen({
       {/* Fuld-skærm loading ved submit */}
       {submitting && (
         <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.7)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:16 }}>
-          <div style={{ width:48, height:48, border:"3px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite" }} />
-          <div style={UI.boldInk14}>Sender produkt…</div>
-          <div style={UI.ufs12_cmuted}>Vent venligst</div>
+          {/* Teksten ligger i et kort: mørk tekst direkte på det mørke overlay kunne ikke læses (F3-2). */}
+          <div className="card" role="status" style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:12, padding:"24px 32px", margin:0 }}>
+            <div style={{ width:48, height:48, border:"3px solid var(--border2)", borderTopColor:"var(--green)", borderRadius:"50%", animation:"spin .8s linear infinite" }} />
+            <div style={UI.boldInk14}>Sender produkt…</div>
+            <div style={UI.ufs12_cmuted}>Vent venligst</div>
+          </div>
         </div>
       )}
     </>

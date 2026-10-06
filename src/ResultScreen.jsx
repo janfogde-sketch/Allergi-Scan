@@ -307,7 +307,7 @@ export default function ResultScreen({
         <Icon name={icon} size={13} color={color} />
         <div style={{ fontSize:12.5, lineHeight:1.4 }}>
           <span style={{ fontWeight:700, color:"var(--ink)" }}>{label}</span>
-          {reason && <div style={{ color:"var(--muted2)", fontSize:11.5, marginTop:1 }}>{reason}</div>}
+          {reason && <div style={{ color:"var(--muted)", fontSize:11.5, marginTop:1 }}>{reason}</div>}
         </div>
       </div>
     );
@@ -422,7 +422,7 @@ export default function ResultScreen({
         <Icon name={hasIngredientsText ? "info" : "list"} size={20} color="var(--ink2)" />
         <div style={S.flex1}>
           <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>{hasIngredientsText ? "Oplysninger mangler" : "Ingrediensliste mangler"}</div>
-          <div style={{ fontSize:12.5, color:"var(--muted2)", lineHeight:1.5, marginTop:3 }}>
+          <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.5, marginTop:3 }}>
             {hasIngredientsText
               ? "Vi mangler allergenoplysninger og kan ikke kontrollere alle dine valg."
               : "Vi kan ikke kontrollere dine allergier og intolerancer uden ingredienslisten."}
@@ -552,7 +552,7 @@ export default function ResultScreen({
     // profiler bruges fortsat den eksisterende, samlede tre-tilstands-status
     // (overallStatus/overallHeadline) — per-profil-detaljer vises separat
     // nedenfor (renderPersonOverview).
-    const verdictColor = cannotAssess ? "var(--unknown)" : isMultiProfile
+    const verdictColor = cannotAssess ? "var(--neutral)" : isMultiProfile
       ? ({ danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[overallStatus] || "var(--green)")
       : ({ danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", unknown:"var(--neutral)" }[topStatus.level] || "var(--green)");
     const verdictIcon = cannotAssess ? "info" : isMultiProfile ? (overallStatus === "safe" ? "check" : "warning") : topStatus.icon;

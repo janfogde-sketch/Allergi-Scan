@@ -830,7 +830,7 @@ export default function OnboardingScreen({
                 --muted2 i stedet for --muted, mindre skrifttykkelse. */}
             <div style={{ display:"flex", alignItems:"center", gap:10, margin:"16px 0 10px" }}>
               <div style={UI.hr} />
-              <span style={{ fontSize:11.5, color:"var(--muted2)", fontWeight:500 }}>Eller fortsæt med</span>
+              <span style={{ fontSize:11.5, color:"var(--muted)", fontWeight:500 }}>Eller fortsæt med</span>
               <div style={UI.hr} />
             </div>
 

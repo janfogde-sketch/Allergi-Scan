@@ -123,7 +123,7 @@ export default function HelpModal({ screen, onClose, onOpenFeedback, closeLabel 
           </button>
         ) : (
           <button onClick={() => { onClose(); onOpenFeedback(); }}
-            style={{ width:"100%", padding:"12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+            style={{ width:"100%", padding:"12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--muted)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
             <Icon name="message" size={13} color="var(--muted2)" /> Send feedback eller rapportér fejl
           </button>
         )}

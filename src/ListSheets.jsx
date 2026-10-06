@@ -52,7 +52,7 @@ function SheetHeader({ title, sub, note, onClose, right }) {
           <Icon name="x" size={16} color="var(--ink)" />
         </button>
       </div>
-      {note && <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.5, marginTop:8 }}>{note}</div>}
+      {note && <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.5, marginTop:8 }}>{note}</div>}
     </div>
   );
 }
@@ -396,7 +396,7 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
             </button>
           )}
         </div>
-        <button type="button" disabled={!list.share_link} onClick={() => setConfirm("newlink")} style={{ ...BTN_TEXT, marginTop:4, color:"var(--muted2)", opacity: list.share_link ? 1 : .45, cursor: list.share_link ? "pointer" : "not-allowed" }}>Lav nyt link</button>
+        <button type="button" disabled={!list.share_link} onClick={() => setConfirm("newlink")} style={{ ...BTN_TEXT, marginTop:4, color:"var(--muted)", opacity: list.share_link ? 1 : .45, cursor: list.share_link ? "pointer" : "not-allowed" }}>Lav nyt link</button>
       </div>
 
       {confirm === "private" && (
