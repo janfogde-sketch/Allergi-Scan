@@ -530,5 +530,331 @@
    "noedder": "yes"
   },
   "kilde": "kokosnød maskerer ikke mandler"
+ },
+ {
+  "text": "Socker, glukossirap, kakaomassa, hasselnötter, honung, invertsocker, kakaosmör, smörfett, äggvita, emulgeringsmedel (sojalecitin, E476), aromer",
+  "expect": {
+   "aeg": "yes",
+   "noedder": "yes",
+   "maelkeallergi": "yes",
+   "soja": "yes"
+  },
+  "kilde": "Svensk chokolade (G1)"
+ },
+ {
+  "text": "Kvarg/kvark (MJÖLK/MÆLK) (41 %), skumMJÖLK/MÆLK, socker/sukker, vatten/vand",
+  "expect": {
+   "maelkeallergi": "yes",
+   "laktose": "yes"
+  },
+  "kilde": "Svensk/dansk kvark"
+ },
+ {
+  "text": "Kokosmjölk, vatten, förtjockningsmedel",
+  "expect": {
+   "maelkeallergi": "no",
+   "laktose": "no",
+   "noedder": "no"
+  },
+  "kilde": "Svensk kokosmælk"
+ },
+ {
+  "text": "Vetemjöl, socker, salt, jäst",
+  "expect": {
+   "hvede": "yes",
+   "gluten": "yes"
+  },
+  "kilde": "Svensk vetemjöl"
+ },
+ {
+  "text": "Fullkornsvete, vatten, salt",
+  "expect": {
+   "hvede": "yes",
+   "gluten": "yes"
+  },
+  "kilde": "Svensk fuldkornshvede"
+ },
+ {
+  "text": "Bovetemjöl, salt",
+  "expect": {
+   "hvede": "no",
+   "gluten": "no"
+  },
+  "kilde": "Svensk boghvede er ikke hvede"
+ },
+ {
+  "text": "Jordnötter, salt, solrosolja",
+  "expect": {
+   "jordnoedder": "yes",
+   "noedder": "no"
+  },
+  "kilde": "Svenske jordnødder er ikke trænødder"
+ },
+ {
+  "text": "Mandelmjölk, vatten, socker",
+  "expect": {
+   "maelkeallergi": "no",
+   "noedder": "yes"
+  },
+  "kilde": "Svensk mandeldrik"
+ },
+ {
+  "text": "Socker, vatten. Kan innehålla spår av mjölk.",
+  "expect": {
+   "maelkeallergi": "traces"
+  },
+  "kilde": "Svensk sporadvarsel"
+ },
+ {
+  "text": "Socker, mjölksyra, vatten",
+  "expect": {
+   "maelkeallergi": "no",
+   "laktose": "no"
+  },
+  "kilde": "Svensk mælkesyre"
+ },
+ {
+  "text": "Dadelpasta, melkeiwit, pindapasta, invertsuiker, suiker, cacaomassa, melkeiwitcrispies, pinda’s, amandelen, kokosvet, cacaoboter, emulgator (sojalecithine), natuurlijke aroma: vanille.",
+  "expect": {
+   "maelkeallergi": "yes",
+   "laktose": "yes",
+   "jordnoedder": "yes",
+   "noedder": "yes",
+   "soja": "yes"
+  },
+  "kilde": "Hollandsk dadelbar"
+ },
+ {
+  "text": "Rauwe melk, zout, dierlijk stremsel.",
+  "expect": {
+   "maelkeallergi": "yes",
+   "laktose": "yes"
+  },
+  "kilde": "Hollandsk mælk"
+ },
+ {
+  "text": "tarwebloem, suiker, eieren, boter, zout",
+  "expect": {
+   "hvede": "yes",
+   "gluten": "yes",
+   "aeg": "yes"
+  },
+  "kilde": "Hollandsk tarwebloem"
+ },
+ {
+  "text": "Boekweitmeel, water, zout",
+  "expect": {
+   "hvede": "no",
+   "gluten": "no"
+  },
+  "kilde": "Hollandsk boghvede"
+ },
+ {
+  "text": "Water, suiker. Kan sporen van pinda bevatten.",
+  "expect": {
+   "jordnoedder": "traces"
+  },
+  "kilde": "Hollandsk spor"
+ },
+ {
+  "text": "Melk, salt, melkesyrekultur, mikrobiell osteløpe, muggkultur",
+  "expect": {
+   "maelkeallergi": "yes",
+   "laktose": "yes"
+  },
+  "kilde": "Norsk ost"
+ },
+ {
+  "text": "Rapsolje, salt, melkesyrekultur",
+  "expect": {
+   "maelkeallergi": "no",
+   "laktose": "no"
+  },
+  "kilde": "Norsk mælkesyrekultur"
+ },
+ {
+  "text": "300 g Biscotto Digestive med melkechokolade",
+  "expect": {
+   "maelkeallergi": "yes"
+  },
+  "kilde": "Norsk melkechokolade"
+ },
+ {
+  "text": "vesi, pastöroitu rasvaton _maito_, sokeri, kookosrasva, _heratiiviste_ (_maidosta_)",
+  "expect": {
+   "maelkeallergi": "yes",
+   "laktose": "yes"
+  },
+  "kilde": "Finsk mælk"
+ },
+ {
+  "text": "Sokeri, vehnäjauho, kananmuna, soijalesitiini",
+  "expect": {
+   "hvede": "yes",
+   "gluten": "yes",
+   "aeg": "yes",
+   "soja": "yes"
+  },
+  "kilde": "Finsk mel og æg"
+ },
+ {
+  "text": "Sokeri, kaakaovoi, kookosmaito, vesi",
+  "expect": {
+   "maelkeallergi": "no",
+   "noedder": "no"
+  },
+  "kilde": "Finsk kakaosmør og kokosmælk"
+ },
+ {
+  "text": "Maapähkinät, suola",
+  "expect": {
+   "jordnoedder": "yes",
+   "noedder": "no"
+  },
+  "kilde": "Finske jordnødder"
+ },
+ {
+  "text": "Farine de blé, sucre, œufs, lait écrémé en poudre",
+  "expect": {
+   "hvede": "yes",
+   "gluten": "yes",
+   "aeg": "yes",
+   "maelkeallergi": "yes"
+  },
+  "kilde": "Fransk kage"
+ },
+ {
+  "text": "Beurre de cacao, sucre, lécithine de tournesol, arôme vanille",
+  "expect": {
+   "maelkeallergi": "no",
+   "soja": "no"
+  },
+  "kilde": "Fransk kakaosmør"
+ },
+ {
+  "text": "Lait de coco, eau, gomme de guar",
+  "expect": {
+   "maelkeallergi": "no",
+   "laktose": "no",
+   "noedder": "no"
+  },
+  "kilde": "Fransk kokosmælk"
+ },
+ {
+  "text": "Farine de blé noir, eau, sel",
+  "expect": {
+   "hvede": "no",
+   "gluten": "no"
+  },
+  "kilde": "Fransk boghvede"
+ },
+ {
+  "text": "HELLEFISKFILET uden skind (Reinhardtius hippoglossoides).",
+  "expect": {
+   "fisk": "yes"
+  },
+  "kilde": "Hellefisk"
+ },
+ {
+  "text": "Mørksej (Pollachius virens) uden skind. Enkelte ben kan forekomme.",
+  "expect": {
+   "fisk": "yes"
+  },
+  "kilde": "Sej"
+ },
+ {
+  "text": "TORSKELOINS uden skind (Gadus morhua).",
+  "expect": {
+   "fisk": "yes"
+  },
+  "kilde": "Torskeloins"
+ },
+ {
+  "text": "SKRUBBEFILET (Platichthys flesus, fanget i det Nordøstlige Atlanterhav) (55%). Uden mørkt skind og ben Panering (33%): HVEDEMEL, rapsolie, kartoffelstivelse",
+  "expect": {
+   "fisk": "yes",
+   "hvede": "yes",
+   "skaldyr": "no"
+  },
+  "kilde": "Skrubbefilet"
+ },
+ {
+  "text": "ISINGFILET, salt",
+  "expect": {
+   "fisk": "yes"
+  },
+  "kilde": "Isingfilet"
+ },
+ {
+  "text": "Ising i dej, salt",
+  "expect": {
+   "fisk": "yes"
+  },
+  "kilde": "Ising"
+ },
+ {
+  "text": "Soltørrede californiske rosiner uden kerner og uden tilsætningsstoffer. Kan indeholde rester af druestilke.",
+  "expect": {
+   "fisk": "no"
+  },
+  "kilde": "Rosiner er ikke fisk"
+ },
+ {
+  "text": "Fiskefilet af alaska pollock (65%), vand, salt",
+  "expect": {
+   "fisk": "yes"
+  },
+  "kilde": "Fiskefilet"
+ },
+ {
+  "text": "Salmon (Salmo salar), salt. Multebær, sukker",
+  "expect": {
+   "fisk": "yes",
+   "aeg": "no"
+  },
+  "kilde": "Multebær er ikke fisk"
+ },
+ {
+  "text": "Multebærsyltetøj: multebær, sukker, geleringsmiddel",
+  "expect": {
+   "fisk": "no"
+  },
+  "kilde": "Multebær"
+ },
+ {
+  "text": "Tonnikala, vesi, suola",
+  "expect": {
+   "fisk": "yes"
+  },
+  "kilde": "Finsk tun"
+ },
+ {
+  "text": "Thon, eau, sel",
+  "expect": {
+   "fisk": "yes"
+  },
+  "kilde": "Fransk tun"
+ },
+ {
+  "text": "Räkor, vatten, salt",
+  "expect": {
+   "skaldyr": "yes"
+  },
+  "kilde": "Svenske rejer"
+ },
+ {
+  "text": "Basilikum, sukkermajs, tørrede abrikoser, persille",
+  "expect": {
+   "fisk": "no",
+   "maelkeallergi": "no"
+  },
+  "kilde": "Ord i ord må ikke give falsk fisk eller mælk (G1)"
+ },
+ {
+  "text": "Tørrede dadler, rosiner, basillikum",
+  "expect": {
+   "fisk": "no"
+  },
+  "kilde": "Basillikum er ikke sild (G1)"
  }
 ]
