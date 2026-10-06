@@ -509,5 +509,26 @@
    "maelkeallergi": "traces"
   },
   "kilde": "D2 HTML"
+ },
+ {
+  "text": "Vand, kokosnøddeekstrakt, stabilisator (E412), emulgator (E 435).",
+  "expect": {
+   "noedder": "no"
+  },
+  "kilde": "kokosnød er ikke træ-nød (genanalyse 6. okt.)"
+ },
+ {
+  "text": "Kokosnød* (91%), vand. *økologisk.",
+  "expect": {
+   "noedder": "no"
+  },
+  "kilde": "Vegansk piskefløde, kokosnød"
+ },
+ {
+  "text": "Kokosnød, mandler, sukker",
+  "expect": {
+   "noedder": "yes"
+  },
+  "kilde": "kokosnød maskerer ikke mandler"
  }
 ]

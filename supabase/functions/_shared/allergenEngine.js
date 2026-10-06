@@ -231,10 +231,10 @@ export function normalizeIngredientText(text) {
     .replace(/\b(ris|majs|kokos|mandel|kikærte|tapioka|boghvede|kartoffel|havre|linse|ærte|quinoa|hirse)\s+mel\b/gi, "$1mel");
 }
 
-// Ord der aldrig må tælle med i ét bestemt allergen: jordnødder og muskatnød er ikke "nødder" (træ-nødder),
-// og de ender på "nødder" (6. okt. 2026, understrengs-matchning).
+// Ord der aldrig må tælle med i ét bestemt allergen: jordnødder, muskatnød og kokosnød er ikke "nødder" (træ-nødder),
+// og de ender på "nødder" (6. okt. 2026, understrengs-matchning; kokosnød er ikke et EU-allergen).
 const ALLERGEN_MASKS = {
-  noedder: /jord-?nød\w*|peanut\w*|groundnut\w*|arachis\w*|muskat\w*/g,
+  noedder: /jord-?nød\w*|peanut\w*|groundnut\w*|arachis\w*|muskat\w*|kokos-?nød\w*/g,
 };
 
 // Lecithin uden kilde kan være soja, men er ikke bekræftet → spor, ikke direkte.
