@@ -2,8 +2,8 @@
 
 // ── Historik/Favoritter: status-sprog, kompakt filter ───────────────────────
 // Samme grøn/rød/orange-farvesprog og ikon+tekst+farve-mønster som
-// Indkøbslistens itemStatus (ListScreen.jsx) — én kilde til hvad "Konflikt"/
-// "Kan ikke afgøres sikkert"/"Matcher" betyder på tværs af appen, ikke en
+// Indkøbslistens itemStatus (ListScreen.jsx) — én kilde til hvad "Allergi-advarsel"/
+// "Kan indeholde spor"/"Passer til" betyder på tværs af appen, ikke en
 // selvstændig kopi af logikken. Delt mellem Historik og Favoritter (26.
 // sept. 2026, opfølgning) — samme tekst/farve/ikon uanset hvilken skærm der
 // viser statussen. "not_found" er specifikt for Historik (et scan der ikke
@@ -12,8 +12,8 @@ export const STATUS_COLOR = { danger:"var(--red)", warn:"var(--amber)", safe:"va
 export const STATUS_ICON  = { danger:"warning", warn:"warning", safe:"check", not_found:"info" };
 export const HISTORY_FILTERS = [
   { id:"all",       label:"Alle" },
-  { id:"safe",      label:"Sikker" },
-  { id:"danger",    label:"Konflikt" },
-  { id:"warn",      label:"Usikker" },
+  { id:"safe",      label:"Ingen advarsler" },
+  { id:"danger",    label:"Allergi-advarsel" },
+  { id:"warn",      label:"Øvrige advarsler" },
   { id:"not_found", label:"Ikke fundet" },
 ];

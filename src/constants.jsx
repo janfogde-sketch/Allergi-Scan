@@ -1008,7 +1008,7 @@ export const ALLERGEN_T = {
 };
 
 export const MADPAS_INTRO = {
-  da:"Jeg har følgende fødevareallergier og intoleranser. Vær venlig at sikre, at min mad ikke indeholder nogen af disse.",
+  da:"Jeg har følgende fødevareallergier og intolerancer. Vær venlig at sikre, at min mad ikke indeholder nogen af disse.",
   en:"I have the following food allergies and intolerances. Please ensure my meal does not contain any of these.",
   de:"Ich habe folgende Lebensmittelallergien und Unverträglichkeiten. Bitte stellen Sie sicher, dass mein Essen keines davon enthält.",
   fr:"J'ai les allergies alimentaires et intolérances suivantes. Veuillez vous assurer que mon repas n'en contient aucune.",

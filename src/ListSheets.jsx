@@ -197,7 +197,7 @@ export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClo
         <div>
           <div style={{ ...LBL, marginBottom:8 }}>Ny liste</div>
           <div style={{ display:"flex", gap:8 }}>
-            <input className="field" placeholder="Fx. Weekend, Fest…" autoFocus maxLength={60} enterKeyHint="done" aria-label="Navn på ny liste" style={{ flex:1, minWidth:0, marginBottom:0, height:44, padding:"0 12px" }}
+            <input className="field" placeholder="Fx Weekend, Fest…" autoFocus maxLength={60} enterKeyHint="done" aria-label="Navn på ny liste" style={{ flex:1, minWidth:0, marginBottom:0, height:44, padding:"0 12px" }}
               value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === "Enter" && submitNew()} />
             <button type="button" className="btn btn-primary" style={{ minHeight:44, padding:"0 16px" }} disabled={!newName.trim() || creating} onClick={submitNew}>{creating ? "…" : "Opret"}</button>
           </div>

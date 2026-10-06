@@ -338,7 +338,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
               addMember();
               if (valid) setFamilyAddMode(null);
             }}
-            addLabel={editingMemberId ? "Gem ændringer" : "+ Tilføj familiemedlem"}
+            addLabel={editingMemberId ? "Gem ændringer" : "+ Tilføj børneprofil"}
           />
           {editingMemberId && (
             <div style={{ marginTop:16, paddingTop:12, borderTop:"1px solid var(--border)", display:"flex", justifyContent:"center" }}>

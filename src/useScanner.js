@@ -11,6 +11,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { SUPABASE_URL } from "./constants.jsx";
 import { compressImageToBase64, isValidEanChecksum, apiCall, makeHeaders } from "./helpers.js";
+import { reportError } from "./errorReporter.js";
 
 // ── Delt to-trins stregkode-afkodning fra et billede ──────────────────────
 // Trin 1: html5-qrcode (hurtig, gratis, ren billed-afkodning). Trin 2, kun
@@ -199,7 +200,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       } else if (e.name === "OverconstrainedError" && isIOS) {
         try { const s2 = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); s2.getTracks().forEach(t => t.stop()); }
         catch { setScanError("Kunne ikke starte kamera. Prøv at genindlæse siden."); return; }
-      } else { setScanError("Kamera fejl: " + e.message); return; }
+      } else { reportError(e, { source: "camera-start" }); setScanError("Kameraet kunne ikke startes. Prøv igen."); return; }
     }
 
     setCameraActive(true);
@@ -210,7 +211,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       const readerId = "qr-reader-home";
       if (html5QrRef.current) { try { await html5QrRef.current.stop(); } catch {} html5QrRef.current = null; }
       const readerEl = document.getElementById(readerId);
-      if (!readerEl) { setScanError("Kamera-element ikke fundet. Genindlæs siden."); setCameraActive(false); return; }
+      if (!readerEl) { setScanError("Kameraet kunne ikke vises. Genindlæs siden."); setCameraActive(false); return; }
 
       // formatsToSupport og experimentalFeatures er KONSTRUKTØR-config i html5-qrcode;
       // som del af start()-config blev de ignoreret (RSS-formaterne var aldrig slået til).
@@ -347,7 +348,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       setScanError("Vi kunne ikke finde en tydelig stregkode på billedet. Prøv et andet billede eller indtast EAN manuelt.");
     } catch {
       setLoading(false);
-      setScanError("Foto-scan fejlede. Prøv igen.");
+      setScanError("Billedet kunne ikke læses. Prøv igen.");
     }
   }, [setScanError, setLoading, stopCamera, accessToken]);
 
@@ -363,7 +364,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       setScanError("Vi kunne ikke finde en tydelig stregkode på billedet. Prøv et andet billede eller indtast EAN manuelt.");
     } catch {
       setPhotoScanLoading(false);
-      setScanError("Foto-scan fejlede. Prøv igen.");
+      setScanError("Billedet kunne ikke læses. Prøv igen.");
     }
   }, [setScanError, stopCamera, accessToken]);
 
@@ -378,7 +379,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       const newState = !torchOn;
       await track.applyConstraints({ advanced: [{ torch: newState }] });
       setTorchOn(newState);
-    } catch (e) { setScanError("Kunne ikke tænde lygte: " + e.message); }
+    } catch (e) { reportError(e, { source: "camera-torch" }); setScanError("Lygten kunne ikke tændes."); }
   }, [torchOn, setScanError]);
 
   // ── Ryd op ved unmount ─────────────────────────────────────────────────────

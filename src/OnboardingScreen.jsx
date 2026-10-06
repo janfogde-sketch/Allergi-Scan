@@ -187,6 +187,7 @@ export default function OnboardingScreen({
   const [pushDone, setPushDone] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
   const [pushDeclined, setPushDeclined] = useState(false);
+  const [pushDenied, setPushDenied] = useState(false); // tilladelse afvist i browseren: ingen "aktiveret"-tekst (F1-7)
 
   const handleEnablePush = async () => {
     setPushLoading(true);
@@ -194,6 +195,7 @@ export default function OnboardingScreen({
     setPushLoading(false);
     // Et abonnement, der ikke kunne gemmes, må ikke spærre for onboarding; appen prøver igen ved næste start (syncPushToken).
     if (result.ok || result.reason === "Tilladelse afvist" || result.reason === SAVE_FAILED_REASON) {
+      setPushDenied(result.reason === "Tilladelse afvist");
       setPushDone(true);
       // Onboarding afsluttes direkte herfra uanset svar — ingen ekstra
       // "Du er færdig"-oversigtsskærm (25. sept. 2026, brugerfeedback).
@@ -229,7 +231,7 @@ export default function OnboardingScreen({
               at ALLE felter her (navn/telefon/alder/køn) er nødvendige for
               selve allergi-logikken, hvilket kun allergier/diæter reelt er
               (indsamlet på senere trin) — disse felter er kontooplysninger. */}
-          <div style={{ ...UI.ufs13_cmuted2_lh15, color:"var(--ink2)" }}>Oplysningerne bruges til at opsætte din profil og kan ændres senere.</div>
+          <div style={{ ...UI.ufs13_cmuted2_lh15, color:"var(--ink2)" }}>Alder og køn bruges til at tilpasse tjenesten og forstå, hvem den bruges af.</div>
         </div>
 
         {/* Ekstra, blød hvid glød lige bag kortet (25. sept. 2026,
@@ -253,7 +255,7 @@ export default function OnboardingScreen({
               konto/Log ind-skærmens felt-fejl. */}
           <div style={{ marginBottom:17 }}>
             <InputField label="Fulde navn" required
-              type="text" placeholder="Fx. Anna Hansen"
+              type="text" placeholder="Fx Anna Hansen"
               value={user.name||""} onChange={e => setUser(u => ({...u, name:e.target.value}))}
               error={step1Attempted && !nameOk} />
             {step1Attempted && !nameOk && (
@@ -376,7 +378,7 @@ export default function OnboardingScreen({
             onCancel={() => setConfirmNoAllergies(false)} onConfirm={confirmNoAllergiesNow} />
         )}
         <FormCard>
-          <SectionHeading title="Allergier / intolerancer" sub="Vælg alt der gælder for dig" count={selectedCount} />
+          <SectionHeading title="Allergier / intolerancer" sub="Vælg alle, der gælder for dig" count={selectedCount} />
 
           <AllergenChipPicker selected={allergens} onChange={arr => {
             setAllergens(arr);
@@ -488,7 +490,7 @@ export default function OnboardingScreen({
     return (
       <div className="fade-in">
         <div className="card">
-          <SectionHeading title="Kostpræferencer" sub="Vælg alle der gælder for dig" count={selectedCount} />
+          <SectionHeading title="Kostpræferencer" sub="Vælg alle, der gælder for dig" count={selectedCount} />
 
           <DietChipPicker selected={diets} showCount={false}
             autoNote={glutenFreeAutoApplied ? { id:"gluten-free", text:"Valgt ud fra gluten" } : undefined}
@@ -978,7 +980,7 @@ export default function OnboardingScreen({
                     onCancel={() => setConfirmRemoveMember(null)}
                     onConfirm={() => { removeMember(confirmRemoveMember.id); setConfirmRemoveMember(null); }} />
                 )}
-                <div className="step-title">Familiemedlemmer</div>
+                <div className="step-title">Børneprofiler</div>
                 <div style={{ fontSize:13, color:"var(--ink2)", marginBottom:16 }}>Opret en profil til et barn under 18 år uden egen konto. Voksne kan du invitere under Familie, så de selv styrer deres oplysninger. Valgfrit.</div>
 
                 {/* Allerede tilføjede — viser navn + alder som primær linje
@@ -1058,22 +1060,22 @@ export default function OnboardingScreen({
                       eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
                       customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}
                       onAdd={() => { (editingMemberId ? updateMember : addMember)(); setShowAddMemberForm(false); }}
-                      addLabel={editingMemberId ? "Gem ændringer" : "+ Tilføj familiemedlem"}
+                      addLabel={editingMemberId ? "Gem ændringer" : "+ Tilføj børneprofil"}
                     />
                   </div>
                 ) : (
                   <>
                     {family.length === 0 ? (
-                      <PrimaryButton style={UI.mb8} onClick={() => setShowAddMemberForm(true)}>+ Tilføj familiemedlem</PrimaryButton>
+                      <PrimaryButton style={UI.mb8} onClick={() => setShowAddMemberForm(true)}>+ Tilføj børneprofil</PrimaryButton>
                     ) : (
-                      <SecondaryButton style={UI.mb12} onClick={() => setShowAddMemberForm(true)}>+ Tilføj endnu et familiemedlem</SecondaryButton>
+                      <SecondaryButton style={UI.mb12} onClick={() => setShowAddMemberForm(true)}>+ Tilføj endnu en børneprofil</SecondaryButton>
                     )}
                     {/* Trinnet er valgfrit: uden medlemmer er "spring over" den eneste vej videre (sekundær), med medlemmer er
                         "Fortsæt →" den primære handling. Skjules, mens formularen er åben, så der kun er én ting at gøre ad gangen. */}
                     {family.length > 0 ? (
                       <PrimaryButton onClick={() => setOnboardStep(5)}>Fortsæt →</PrimaryButton>
                     ) : (
-                      <SecondaryButton onClick={() => setOnboardStep(5)}>Jeg vil ikke tilføje familiemedlemmer nu</SecondaryButton>
+                      <SecondaryButton onClick={() => setOnboardStep(5)}>Jeg vil ikke tilføje børneprofiler nu</SecondaryButton>
                     )}
                   </>
                 )}
@@ -1093,6 +1095,7 @@ export default function OnboardingScreen({
 
                   <FormCard style={UI.mb16}>
                     {[
+                      ["warning","Tilbagekaldelser og ændringer","Når et produkt, du har scannet, bliver kaldt tilbage eller får nye allergenoplysninger"],
                       ["check","Produktet er godkendt","Når et produkt, du har indsendt, bliver godkendt"],
                       ["family","Familiemedlem tilslutter sig","Når nogen accepterer din invitation"],
                       ["search","Produkt tilgængeligt","Når et produkt, du har ledt efter, kommer i databasen"],
@@ -1106,9 +1109,15 @@ export default function OnboardingScreen({
                       Fortsæt →
                     </PrimaryButton>
                   ) : pushDone ? (
-                    <PrimaryButton disabled style={{ opacity:.7, background:"var(--green)", color:"var(--on-green)" }}>
-                      <Icon name="check" size={14} color="var(--on-green)" /> Notifikationer aktiveret
-                    </PrimaryButton>
+                    pushDenied ? (
+                      <div role="status" style={{ fontSize:13, color:"var(--ink2)", textAlign:"center", padding:"12px 0" }}>
+                        Notifikationer er ikke slået til. Du kan slå dem til senere under Indstillinger.
+                      </div>
+                    ) : (
+                      <PrimaryButton disabled style={{ opacity:.7, background:"var(--green)", color:"var(--on-green)" }}>
+                        <Icon name="check" size={14} color="var(--on-green)" /> Notifikationer aktiveret
+                      </PrimaryButton>
+                    )
                   ) : (
                     <>
                       <PrimaryButton onClick={handleEnablePush} disabled={pushLoading}

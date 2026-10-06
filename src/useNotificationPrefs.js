@@ -24,8 +24,8 @@ export const NOTIFICATION_CATEGORIES = [
   { id: "submission_status", label: "Indsendte produkter", description: "Når en indsendelse du har lavet bliver godkendt eller afvist" },
   { id: "missing_product_found", label: "Efterspurgte produkter", description: "Når et produkt du har ledt efter, men ikke fundet, bliver tilføjet" },
   { id: "family", label: "Familieinvitationer", description: "Svar på dine invitationer og anmodninger om at blive forbundet" },
-  { id: "feedback", label: "Svar på feedback", description: "Når en ticket du har sendt ind får svar eller opdateret status" },
-  { id: "weekly_digest", label: "Ugentlig opskriftsoversigt", description: "En ugentlig påmindelse om nye opskrifter der matcher dine allergier" },
+  { id: "feedback", label: "Svar på feedback", description: "Når en henvendelse, du har sendt, får svar eller ny status" },
+  { id: "weekly_digest", label: "Ugentlig opskriftsoversigt", description: "En ugentlig påmindelse om nye opskrifter der matcher dine allergier", live: false }, // skjult, mens Opskrifter er på pause (F1-10)
   // Tilføjet 30. sept. 2026 (notifikations-redesign). `defaultOn` skal matche notification_enabled() i
   // databasen. `live:false` = kategorien findes i databasen, men der sendes endnu ikke noget i den, så den
   // vises ikke i Indstillinger (ingen kontakter, der ikke gør noget). Sæt live:true, når afsendelsen er bygget.

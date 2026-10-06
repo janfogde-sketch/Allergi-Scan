@@ -15,6 +15,7 @@ import { useHealthConsent } from "./useHealthConsent.js";
 import { useMeasuredHeight } from "./useMeasuredHeight.js";
 import HealthConsentBox from "./HealthConsentBox.jsx";
 import { canSaveHealthData } from "./healthConsent.js";
+import { reportError } from "./errorReporter.js";
 
 // Sorteret, sammenlignelig udgave af alt, siden kan ændre — bruges til at afgøre, om der er ugemte ændringer.
 const prefsSnapshot = ({ allergens, customAllerg, levels, diets, eNumbers }) => JSON.stringify({
@@ -94,7 +95,8 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
       }
       setScreen(SCREENS.PROFILE);
     } catch (e) {
-      showToast("Fejl: " + e.message, "error");
+      reportError(e, { source: "edit-preferences" });
+      showToast("Dine ændringer kunne ikke gemmes. Prøv igen.", "error");
     } finally {
       setSavingProfile(false);
     }

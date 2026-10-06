@@ -185,7 +185,7 @@ export default function FeedbackModal({
                   <div style={{ fontSize:11.5, color:"var(--muted)", lineHeight:1.45, marginTop:8 }}>
                     {hasCrashData
                       ? "Vi vedhæfter automatisk den seneste tekniske fejl, så du ikke selv behøver beskrive de tekniske detaljer."
-                      : "Vi fandt ingen nylig crash-log på enheden. Beskriv gerne, hvad du gjorde lige før appen lukkede."}
+                      : "Vi fandt ingen nylig fejl på enheden. Beskriv gerne, hvad du gjorde lige før appen lukkede."}
                   </div>
                 )}
               </div>

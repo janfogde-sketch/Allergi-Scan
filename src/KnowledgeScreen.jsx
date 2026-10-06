@@ -5,6 +5,7 @@ import { Icon, EmptyState, ScrollToTop } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { UI } from "./styleUtils.js";
+import { reportError } from "./errorReporter.js";
 
 // Redesignet 26. sept. 2026 (brugerfeedback: "match resten af appens rene
 // funktionelle design") — emoji-glyffer erstattet med Icon-bibliotekets
@@ -187,7 +188,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled, onExit }) {
           data.forEach(r => { if(r.category) c[r.category] = (c[r.category]||0)+1; });
           setCounts(c);
         }
-      } catch (e) { setError(`Counts: ${e.message}`); }
+      } catch (e) { reportError(e, { source: "knowledge-counts" }); setError("Leksikonet kunne ikke hentes. Tjek din forbindelse, og prøv igen."); }
       try {
         const facts = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?category=eq.fun_fact&limit=3`);
         if (Array.isArray(facts)) setFunFacts(facts);
@@ -243,7 +244,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled, onExit }) {
     try {
       const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?category=eq.${cat}&order=sort_order.asc,title.asc&limit=200`);
       setEntries(Array.isArray(data) ? data : []);
-    } catch (e) { setError(`Load: ${e.message}`); setEntries([]); }
+    } catch (e) { reportError(e, { source: "knowledge-category" }); setError("Emnerne kunne ikke hentes. Tjek din forbindelse, og prøv igen."); setEntries([]); }
     setLoading(false);
   }, [accessToken, doFetch]);
 
@@ -257,7 +258,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled, onExit }) {
       const catFilter = selectedCategory ? `&category=eq.${selectedCategory}` : (DIETS_ENABLED ? "" : "&category=neq.diet");
       const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?or=(title.ilike.${enc},summary.ilike.${enc})${catFilter}&order=category.asc,sort_order.asc&limit=50`);
       setEntries(Array.isArray(data) ? data : []);
-    } catch (e) { setError(`Søg: ${e.message}`); setEntries([]); }
+    } catch (e) { reportError(e, { source: "knowledge-search" }); setError("Søgningen mislykkedes. Tjek din forbindelse, og prøv igen."); setEntries([]); }
     setLoading(false);
   }, [accessToken, selectedCategory, doFetch]);
 

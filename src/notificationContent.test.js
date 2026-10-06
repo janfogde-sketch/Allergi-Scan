@@ -171,6 +171,9 @@ describe("indholdsregler fra pakken", () => {
     const n = renderNotification("N2a:default", { ...SAMPLE, productName: "" });
     expect(n.pushBody).toBe("Produktet er godkendt af vores team og nu tilgængeligt for alle.");
     expect(blocksToText(n.blocks)).toContain("din indsendelse af produktet.");
+    // F1-11: midt i sætningen med lille forbogstav
+    expect(renderNotification("P6:default", { ...SAMPLE, productName: "" }).pushBody).toContain("tilbagekaldelse for produktet.");
+    expect(renderNotification("P1:default", { ...SAMPLE, productName: "" }).pushBody).toBe("Oplysninger om produktet er ændret. Tjek emballagen.");
     const m = renderNotification("N5:default", { ...SAMPLE, memberName: "" });
     expect(m.title).toBe("Din invitation er accepteret");
     expect(m.blocks[0].text).toBe("Et familiemedlem har accepteret din invitation");

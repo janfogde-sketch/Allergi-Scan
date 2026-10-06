@@ -440,7 +440,7 @@ export default function MadpasScreen({
                 <div className="empty-state" style={{ paddingTop:32 }}>
                   <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="shield" size={23} color="var(--muted)" /></span>
                   <div className="empty-txt">Ingen allergier registreret</div>
-                  <div className="empty-sub">{DIETS_ENABLED ? "Tilføj dine allergier, intoleranser og diæter under Profil → Mine præferencer" : "Tilføj dine allergier og intoleranser under Profil → Mine præferencer"}</div>
+                  <div className="empty-sub">{DIETS_ENABLED ? "Tilføj dine allergier, intolerancer og diæter under Profil → Mine præferencer" : "Tilføj dine allergier og intoleranser under Profil → Mine præferencer"}</div>
                 </div>
               )}
 

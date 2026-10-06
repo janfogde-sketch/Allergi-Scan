@@ -18,7 +18,7 @@ import {
   isValidEanChecksum,
   glutenCerealsIn,
 } from "./helpers.js";
-import { profileConflictLabel, profileMatchLabel, scanTargetCopy, pickDailyTip, localDayNumber, groupHistoryDuplicates, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
+import { profileConflictLabel, profileWarnLabel, profileMatchLabel, scanTargetCopy, pickDailyTip, localDayNumber, groupHistoryDuplicates, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
 
 describe("isValidEanChecksum", () => {
   it("accepts a real EAN-13 with a correct check digit", () => {
@@ -319,10 +319,28 @@ describe("profileConflictLabel", () => {
     expect(profileConflictLabel([r("Jan Fogde", "warn"), r("Mia", "safe")])).toBeNull();
   });
   it("also names profiles with a warning when another profile has a conflict", () => {
-    expect(profileConflictLabel([r("Jan Fogde", "warn"), r("Mia", "danger")])).toBe("Konflikt for Mia · advarsel for Jan");
+    expect(profileConflictLabel([r("Jan Fogde", "warn"), r("Mia", "danger")])).toBe("Allergi-advarsel for Mia · advarsel for Jan");
   });
   it("uses the summary text above maxNames", () => {
     expect(profileConflictLabel([r("A", "danger"), r("B", "danger"), r("C", "danger")], { maxNames: 2 })).toBe("Passer ikke til valgte profiler");
+  });
+});
+
+describe("profileWarnLabel", () => {
+  const r = (extra) => ({ name: "A", status: "warn", warning: [], unknown: [], dietFails: [], eNumberMatches: [], ...extra });
+  it("returnerer null uden advarsler", () => {
+    expect(profileWarnLabel([{ name: "A", status: "safe" }])).toBeNull();
+  });
+  it("siger 'Kan indeholde spor' ved spor, også når en anden profil mangler data", () => {
+    expect(profileWarnLabel([r({ unknown: ["sesam"] }), r({ warning: ["noedder"] })])).toBe("Kan indeholde spor");
+  });
+  it("siger 'Passer ikke til dine valg' ved E-numre", () => {
+    expect(profileWarnLabel([r({ eNumberMatches: ["E211"] })])).toBe("Passer ikke til dine valg");
+  });
+  it("siger 'Kan ikke vurderes' ved manglende data og aldrig 'sikkert'", () => {
+    const label = profileWarnLabel([r({ unknown: ["sesam"] })]);
+    expect(label).toBe("Kan ikke vurderes");
+    expect(label).not.toMatch(/sikker/i);
   });
 });
 

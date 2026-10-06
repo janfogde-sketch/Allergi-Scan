@@ -355,7 +355,7 @@ export default function RecipesScreen({
           )}
           {customAllerg?.length > 0 && (
             <div style={{ fontSize:10, color:"var(--muted)", marginBottom:12, lineHeight:1.4 }}>
-              Dine egne tilføjede allergier tjekkes via fritekst-søgning i opskriftens ingrediensliste — det kan være sværere for os at fange end vores faste allergener. Dobbelttjek altid selv, og sig endelig til hvis vi overser noget — vi udvider løbende vores allergen-liste.
+              Dine egne tilføjede allergier tjekkes via fritekstsøgning i opskriftens ingrediensliste — det kan være sværere for os at fange end vores faste allergener. Dobbelttjek altid selv, og sig endelig til hvis vi overser noget — vi udvider løbende vores allergen-liste.
             </div>
           )}
 

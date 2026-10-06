@@ -8,14 +8,13 @@ import { UI } from "./styleUtils.js";
 const HELP_CONTENT = {
   "home": { title:"Scanner", titleIcon:"camera", tips:[
     { icon:"barcode", title:"Scan stregkode", desc:"Tryk på det grønne scan-felt for at åbne kameraet, og hold det roligt over stregkoden. Appen scanner automatisk." },
-    { icon:"search", title:"Søg produkter", desc:"Kan du ikke scanne? Brug genvejen 'Søg produkter' længere nede på skærmen til at finde varer ved navn." },
-    { icon:"hash", title:"Indtast manuelt", desc:"Har du kun tallene fra stregkoden? Tryk 'Indtast EAN-nummer manuelt' under scan-feltet." },
+    { icon:"hash", title:"Indtast manuelt", desc:"Kan stregkoden ikke scannes? Tryk 'Indtast' i kameravisningen, og skriv tallene under stregkoden." },
     { icon:"zap", title:"Hurtig scanning", desc:"God belysning og rolig hånd giver hurtigere og mere præcist resultat." },
-    { icon:"list", title:"Historik", desc:"Dine seneste scanninger gemmes automatisk — find dem under Profil." },
+    { icon:"list", title:"Historik", desc:"Dine scanninger gemmes automatisk. Find dem under Historik i bundmenuen." },
   ]},
   "recipes": { title:"Opskrifter", titleIcon:"recipes", tips:[
     { icon:"search", title:"Søg og filtrer", desc:"Søg på navn eller vælg kategori. Slå 'Kun sikre' til for at skjule opskrifter med dine allergener." },
-    { icon:"heart", title:"Favoritter", desc:"Tryk hjerte-ikonet for at gemme en opskrift til Favoritter-fanen." },
+    { icon:"heart", title:"Favoritter", desc:"Tryk på hjertet for at gemme en opskrift til Favoritter-fanen." },
     { icon:"profile", title:"Portionsjustering", desc:"Åbn en opskrift og tryk + / − for at skalere ingredienser automatisk." },
     { icon:"cart", title:"Indkøbsliste", desc:"Tryk 'Tilføj til indkøbsliste' for at sende ingredienser direkte til din liste." },
   ]},
@@ -37,8 +36,8 @@ const HELP_CONTENT = {
     { icon:"shield", title:"4. Hver profil styres af den rette person", desc:"Voksne styrer deres egen profil. Børneprofiler uden egen konto administreres af den person, der har oprettet dem." },
   ]},
   "result": { title:"Scanningsresultat", titleIcon:"package", tips:[
-    { icon:"🚦", title:"Farvet ramme", desc:"Grøn = sikkert, gul = advarsel, rød = farligt — vurderet ud fra dine aktive profiler." },
-    { icon:"check", title:"Sikre alternativer", desc:"Ved advarsel eller fare foreslår vi sikre alternativer i samme kategori, du kan trykke direkte på." },
+    { icon:"🚦", title:"Farvet ramme", desc:"Grøn: ingen advarsler fundet. Gul: kan indeholde spor eller passer ikke til dine valg. Rød: allergi-advarsel. Grå: kan ikke vurderes. Vurderet ud fra de personer, du tjekker for." },
+    { icon:"check", title:"Alternativer", desc:"Ved en advarsel foreslår vi varer i samme kategori uden advarsler for din profil. Tryk på en for at se den." },
     { icon:"book", title:"Tryk på en ingrediens", desc:"Åbner leksikonet med forklaring på allergener, E-numre og tilsætningsstoffer." },
     { icon:"heart", title:"Favorit og del", desc:"De to runde knapper øverst på billedet gemmer produktet som favorit eller deler det." },
     { icon:"edit", title:"Ret forkerte data", desc:"Mangler eller fejler noget? Tryk 'Ret forkerte data' nederst for at foreslå en rettelse." },
@@ -48,21 +47,21 @@ const HELP_CONTENT = {
     { icon:"👆", title:"Åbn en scanning", desc:"Tryk på en linje for at se det fulde resultat igen." },
   ]},
   "favorites": { title:"Favoritter", titleIcon:"star", tips:[
-    { icon:"heart", title:"Gem favoritter", desc:"Tryk hjerte-ikonet på et produkt under scanning for at gemme det her." },
+    { icon:"heart", title:"Gem favoritter", desc:"Tryk på hjertet på et scanningsresultat for at gemme produktet her." },
     { icon:"family", title:"Mine / Familien", desc:"Se dine egne favoritter eller hele familiens." },
     { icon:"x", title:"Fjern", desc:"Du kan kun fjerne dine egne favoritter herfra — ikke andres." },
   ]},
   "madpas": { title:"Madpas", titleIcon:"globe", tips:[
     { icon:"globe", title:"Vælg sprog", desc:"Vælg sproget for landet du besøger. EatSafe oversætter dine allergier automatisk." },
-    { icon:"list", title:"Vis til tjeneren", desc:"Tryk 'Vis til tjener' for en stor, tydelig skærm du kan vise restaurantpersonalet." },
-    { icon:"speaker", title:"Oplæsning", desc:"Tryk højttalerikonet for at høre udtalen på det lokale sprog." },
+    { icon:"list", title:"Vis til tjeneren", desc:"Tryk 'Åbn madpas' for en stor, tydelig skærm, du kan vise restaurantpersonalet." },
+    { icon:"speaker", title:"Oplæsning", desc:"Tryk 'Læs højt' for at få teksten læst op på det valgte sprog." },
   ]},
   "editprofile": { title:"Rediger profil", titleIcon:"edit", tips:[
     { icon:"profile", title:"Dit navn", desc:"Navnet bruges i appen og i mails fra EatSafe." },
     { icon:"warning", title:"Allergier og præferencer", desc:DIETS_ENABLED ? "Allergier, intolerancer, diæter og E-numre ændrer du under 'Rediger præferencer' på din profil." : "Allergier, intolerancer og E-numre ændrer du under 'Rediger præferencer' på din profil." },
   ]},
   "suggest_edit": { title:"Foreslå rettelse", titleIcon:"edit", tips:[
-    { icon:"camera", title:"Ingrediensliste", desc:"Fotografér etiketten og lad OCR læse teksten, eller ret ingredienserne manuelt." },
+    { icon:"camera", title:"Ingrediensliste", desc:"Fotografér etiketten, så læser appen teksten, eller ret ingredienserne selv." },
     { icon:"clock", title:"Godkendelse", desc:"Dit forslag gennemgås, før ændringen bliver synlig for andre brugere." },
   ]},
   "notfound": { title:"Tilføj nyt produkt", titleIcon:"package", tips:[

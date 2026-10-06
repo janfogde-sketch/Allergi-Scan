@@ -71,7 +71,7 @@ const PANEL = (title, blocks) => ({ t: "panel", title, blocks });
 const DISC = { t: "disclaimer" };
 const LINK = (label, url) => ({ t: "link", label, url });
 
-const PRODUCT_VARS = { productName: { max: 34, pushFallback: "Produktet", fallback: "produktet" } };
+const PRODUCT_VARS = { productName: { max: 34, pushFallback: "produktet", fallback: "produktet" } };
 const TICKET_VARS = {
   ticketExcerpt: { fallback: "Din tilbagemelding i EatSafe" },
   message: { fallback: "", multiline: true }, // tom besked = afsnittet udelades (se renderBlock)
@@ -161,7 +161,7 @@ export const DEFINITIONS = {
     type: "N4", variant: "default", category: "missing_product_found", version: 1, ttl: 86400,
     push: { title: "Produktet findes nu i EatSafe", body: "{{productName}} er nu tilføjet. Scan igen for at se oplysningerne." },
     mail: { subject: "Et produkt, du har ledt efter, er nu i EatSafe", preheader: "Du kan nu scanne produktet igen og se oplysningerne samt vurderingen ud fra din profil." },
-    vars: { productName: { max: 34, pushFallback: "Produktet", fallback: "produktet, du tidligere har scannet" } }, required: [],
+    vars: { productName: { max: 34, pushFallback: "produktet", fallback: "produktet, du tidligere har scannet" } }, required: [],
     blocks: [
       H("Nu kan du finde produktet i EatSafe"),
       P("Du har tidligere scannet **{{productName}}**, hvor produktet endnu ikke fandtes i EatSafe."),
@@ -427,8 +427,14 @@ function toParts(text) {
   return parts;
 }
 
+// En værdi, der står først i en sætning, får stort forbogstav; midt i en sætning bruges den,
+// som den er (F1-11: fallback "produktet" gav før "en tilbagekaldelse for Produktet").
 function fillTemplate(template, values) {
-  return template.replace(/\{\{\s*([a-zA-Z_]+)\s*\}\}/g, (_, name) => values[name] ?? "");
+  return template.replace(/\{\{\s*([a-zA-Z_]+)\s*\}\}/g, (_, name, offset, whole) => {
+    const v = values[name] ?? "";
+    const sentenceStart = offset === 0 || /[.!?]\s+$/.test(whole.slice(0, offset));
+    return sentenceStart && v ? v.charAt(0).toUpperCase() + v.slice(1) : v;
+  });
 }
 
 function buildValues(def, key, data, { forPush }) {

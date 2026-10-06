@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { SCREENS } from "./constants.jsx";
-import { timeAgo, groupHistoryDuplicates, buildActiveProfileList, computeProfileResults, profileConflictLabel, profileMatchLabel } from "./helpers.js";
+import { timeAgo, groupHistoryDuplicates, buildActiveProfileList, computeProfileResults, profileConflictLabel, profileWarnLabel, profileMatchLabel } from "./helpers.js";
 import { Icon, ProductImage, ConfirmDialog, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -50,7 +50,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
   // næringsdata er IKKE gemt i historikken (kun allergen_flags via
   // flags_triggered) — diæt-/E-nummer-baserede advarsler indgår derfor ikke
   // her, kun det primære allergen-match, som er den dominerende faktor bag
-  // "Konflikt"/"Kan ikke afgøres sikkert" alligevel.
+  // "Allergi-advarsel"/"Kan indeholde spor" alligevel.
   const historyDetails = (h) => {
     const rawStatus = h.result || h.status;
     const ids = (h.active_profiles && h.active_profiles.length) ? h.active_profiles : activeProfiles;
@@ -75,7 +75,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
     const results = computeProfileResults(profiles, { allergen_flags: flags, ingredients:"", nutrition:null, productENumbers:[] });
     const conflict = profileConflictLabel(results, { maxNames: 2 });
     if (conflict) return { status:"danger", text: conflict, checkedFor };
-    if (results.some(r => r.status === "warn")) return { status:"warn", text:"Kan ikke afgøres sikkert", checkedFor };
+    if (results.some(r => r.status === "warn")) return { status:"warn", text: profileWarnLabel(results), checkedFor };
     return { status:"safe", text: profileMatchLabel(profiles), checkedFor };
   };
 

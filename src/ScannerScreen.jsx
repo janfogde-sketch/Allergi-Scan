@@ -370,7 +370,7 @@ export default function ScannerScreen({
   const submitManualEan = (rawValue) => {
     const digits = rawValue.replace(/\D/g, "");
     if (![8, 12, 13, 14].includes(digits.length)) {
-      setManualEanError("EAN-nummeret skal være 8 eller 13 cifre.");
+      setManualEanError("Stregkodenummeret skal have 8 eller 13 cifre.");
       return;
     }
     if (!isValidEanChecksum(digits)) {

@@ -36,11 +36,11 @@ describe("FeedbackModal: tekster og privacy", () => {
   it("'Appen lukker ned' uden crash-data lover ikke at sende noget og siger det i diagnostikken", () => {
     renderModal();
     fireEvent.click(screen.getByRole("radio", { name: "Appen lukker ned" }));
-    expect(screen.getByText(/Vi fandt ingen nylig crash-log på enheden/)).toBeTruthy();
+    expect(screen.getByText(/Vi fandt ingen nylig fejl på enheden/)).toBeTruthy();
     expect(screen.queryByText(/vedhæfter automatisk den seneste tekniske fejl/)).toBeNull();
     fireEvent.click(screen.getByText("Automatisk inkluderet diagnostik"));
     expect(screen.getByText("Seneste fejl")).toBeTruthy();
-    expect(screen.getByText("Ingen nylig crash-log fundet")).toBeTruthy();
+    expect(screen.getByText("Ingen nylig fejl fundet")).toBeTruthy();
   });
 
   it("'Appen lukker ned' med registreret fejl lover at vedhæfte den seneste, og viser den", () => {

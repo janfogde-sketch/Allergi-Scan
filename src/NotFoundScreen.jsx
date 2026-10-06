@@ -430,7 +430,7 @@ export default function NotFoundScreen({
             <div style={S.card}>
               <div style={S.rowBetweenMb10}>
                 <div style={{ ...S.h13, display:"flex", alignItems:"center", gap:6 }}><Icon name="warning" size={13} color="var(--ink)" /> Allergener</div>
-                <div style={S.sub11}>Tryk for at til/fra</div>
+                <div style={S.sub11}>Tryk for at slå til eller fra</div>
               </div>
               <div style={UI.wrapGap7}>
                 {PRODUCT_ALLERGENS.filter(a => !["svovl","lupin","bloeddyr"].includes(a.id)).map(a => {

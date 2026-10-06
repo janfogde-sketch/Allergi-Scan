@@ -335,7 +335,7 @@ export default function SuggestEditScreen({
                 </label>
               </div>
               <textarea value={editIngText} onChange={e => setEditIngText(e.target.value)}
-                rows={5} placeholder="Fx. Energi: 250 kcal, Fedt: 5g, Kulhydrater: 30g..."
+                rows={5} placeholder="Fx Energi: 250 kcal, Fedt: 5g, Kulhydrater: 30g..."
                 className="field" style={{ resize:"vertical", fontFamily:"var(--f)", fontSize:13, lineHeight:1.6 }} />
             </div>
           )}
@@ -362,7 +362,7 @@ export default function SuggestEditScreen({
             </div>
             <textarea value={editNote} onChange={e => setEditNote(e.target.value)}
               rows={editType === "other" ? 4 : 2}
-              placeholder={editType === "other" ? "Fx. forkert navn, forkert mærke eller fejl i allergenoplysninger…" : "Fx. Ny udgave af produktet, fejl i allergen-info..."}
+              placeholder={editType === "other" ? "Fx forkert navn, forkert mærke eller fejl i allergenoplysninger…" : "Fx ny udgave af produktet, fejl i allergen-info..."}
               className="field" style={{ resize:"none", fontFamily:"var(--f)", fontSize:13 }} />
           </div>
 

@@ -80,7 +80,7 @@ export const MemberForm = ({
 
       {/* Navn * */}
       <InputField label="Navn" required style={{ marginBottom:17 }}
-        placeholder="Fx. Mia" value={name} onChange={e => setName(e.target.value)} />
+        placeholder="Fx Mia" value={name} onChange={e => setName(e.target.value)} />
 
       {/* Alder * — vælger med 0-17 år (6. okt. 2026, Bjørn: "– | Vælg alder | +" uden startværdi var ikke intuitiv). Gemmes internt som
           fødselsår (birthYear-prop uændret). */}
@@ -196,7 +196,7 @@ export const MemberForm = ({
           onAdd();
           setAttempted(false);
         }}>
-        {addLabel || "+ Tilføj familiemedlem"}
+        {addLabel || "+ Tilføj børneprofil"}
       </PrimaryButton>
       </>
     </div>

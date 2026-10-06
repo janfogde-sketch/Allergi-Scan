@@ -93,7 +93,7 @@ export default function VerifyEmailScreen() {
           </button>
           <div className="verify-links">
             <TextLink onClick={changeVerifyEmail}>Skift e-mailadresse</TextLink>
-            <div className="verify-help">Kan du ikke finde mailen? Tjek din spam-mappe.</div>
+            <div className="verify-help">Kan du ikke finde mailen? Tjek din spammappe.</div>
           </div>
         </>
       )}

@@ -60,7 +60,7 @@ function Harness({ onAdd, editing = false, initial = {}, onInviteAdult, onInvite
 }
 
 const fillBasics = () => {
-  fireEvent.change(screen.getByPlaceholderText("Fx. Mia"), { target: { value: "Mia" } });
+  fireEvent.change(screen.getByPlaceholderText("Fx Mia"), { target: { value: "Mia" } });
   fireEvent.change(screen.getByLabelText("Alder i år"), { target: { value: "12" } });
   fireEvent.click(screen.getByText("Kvinde"));
 };
@@ -70,21 +70,21 @@ describe("MemberForm: obligatoriske felter", () => {
     const onAdd = vi.fn();
     render(<Harness onAdd={onAdd} />);
     fillBasics();
-    fireEvent.click(screen.getByText("+ Tilføj familiemedlem"));
+    fireEvent.click(screen.getByText("+ Tilføj børneprofil"));
     expect(onAdd).not.toHaveBeenCalled();
     expect(screen.getByText(/allergivalg er obligatoriske/)).toBeTruthy();
     fireEvent.click(screen.getByText("Ingen allergier eller intolerancer"));
-    fireEvent.click(screen.getByText("+ Tilføj familiemedlem"));
+    fireEvent.click(screen.getByText("+ Tilføj børneprofil"));
     expect(onAdd).toHaveBeenCalledTimes(1);
   });
 
   it("kan ikke gemmes uden alder, selv med navn, køn og allergi", () => {
     const onAdd = vi.fn();
     render(<Harness onAdd={onAdd} />);
-    fireEvent.change(screen.getByPlaceholderText("Fx. Mia"), { target: { value: "Mia" } });
+    fireEvent.change(screen.getByPlaceholderText("Fx Mia"), { target: { value: "Mia" } });
     fireEvent.click(screen.getByText("Kvinde"));
     fireEvent.click(screen.getByText("Ingen allergier eller intolerancer"));
-    fireEvent.click(screen.getByText("+ Tilføj familiemedlem"));
+    fireEvent.click(screen.getByText("+ Tilføj børneprofil"));
     expect(onAdd).not.toHaveBeenCalled();
   });
 
@@ -120,7 +120,7 @@ describe("ENumberPicker: chips og liste hænger sammen", () => {
 
 describe("MemberForm: samtykke og model for andres profiler", () => {
   const fill = (age = "12") => {
-    fireEvent.change(screen.getByPlaceholderText("Fx. Mia"), { target: { value: "Mia" } });
+    fireEvent.change(screen.getByPlaceholderText("Fx Mia"), { target: { value: "Mia" } });
     fireEvent.change(screen.getByLabelText("Alder i år"), { target: { value: age } });
     fireEvent.click(screen.queryByText("Kvinde") || document.body);
   };
@@ -134,10 +134,10 @@ describe("MemberForm: samtykke og model for andres profiler", () => {
     expect(document.body.textContent).not.toMatch(/\bmine\b/i);
     fireEvent.click(screen.getByText("Læs privatlivspolitikken"));
     expect(openPrivacy).toHaveBeenCalled();
-    fireEvent.click(screen.getByText("+ Tilføj familiemedlem"));
+    fireEvent.click(screen.getByText("+ Tilføj børneprofil"));
     expect(onAdd).not.toHaveBeenCalled();
     fireEvent.click(document.getElementById("member-consent"));
-    fireEvent.click(screen.getByText("+ Tilføj familiemedlem"));
+    fireEvent.click(screen.getByText("+ Tilføj børneprofil"));
     expect(onAdd).toHaveBeenCalledTimes(1);
   });
 
@@ -185,7 +185,7 @@ describe("MemberForm: samtykke og model for andres profiler", () => {
     render(<Harness onAdd={onAdd} editing initial={{ allergens: ["noedder"] }} />);
     fill("12");
     expect(document.getElementById("member-consent")).toBeNull();
-    fireEvent.click(screen.getByText("+ Tilføj familiemedlem"));
+    fireEvent.click(screen.getByText("+ Tilføj børneprofil"));
     expect(onAdd).toHaveBeenCalledTimes(1);
   });
 
