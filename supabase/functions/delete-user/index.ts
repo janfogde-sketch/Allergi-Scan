@@ -6,6 +6,7 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { TRANSACTIONAL_TEMPLATES, buildMailVariables, sendTemplateMail } from "../_shared/mailSend.ts";
 import { formatDanishDateTime } from "../_shared/notifyHelpers.js";
+import { PRODUCT_IMAGES_BUCKET, pathsToDelete } from "../_shared/productImages.js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,6 +66,20 @@ Deno.serve(async (req) => {
       const { error } = await query;
       if (error) throw new DeleteStepError(label, error.message);
     };
+
+    // Indsendte billeder (offentlig bøtte) fjernes FØRST, mens indsendelsernes rækker stadig peger på dem, så et nyt forsøg kan
+    // finde resten. Billeder, et godkendt produkt i produktdatabasen bruger, bliver (privatlivspolitikken, afsnit 11).
+    const { data: subs, error: subsError } = await supabase
+      .from("submissions").select("raw_label_image, ai_parsed_data").eq("submitted_by", uid);
+    if (subsError) throw new DeleteStepError("submissions (opslag)", subsError.message);
+    if (pathsToDelete(subs ?? [], []).length > 0) {
+      const { data: kept, error: keptError } = await supabase.from("products").select("image_url").ilike("image_url", `%/${PRODUCT_IMAGES_BUCKET}/%`);
+      if (keptError) throw new DeleteStepError("products (billeder)", keptError.message);
+      const toRemove = pathsToDelete(subs ?? [], (kept ?? []).map((r: { image_url: string }) => r.image_url));
+      for (let i = 0; i < toRemove.length; i += 100) {
+        await step("storage product-images", supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove(toRemove.slice(i, i + 100)));
+      }
+    }
 
     // Slet afhængige data i korrekt rækkefølge.
     //
