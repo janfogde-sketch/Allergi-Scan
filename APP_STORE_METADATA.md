@@ -1,6 +1,6 @@
 # EatSafe — App Store Metadata
 
-Godkendt af Bjørn 6. okt. 2026 (F6-2). Tal tjekket i databasen samme dag: 20.182 varer og 768 opslag i leksikonet.
+Godkendt af Bjørn og Jan 6. okt. 2026 (F6-2, F6-3; billederne ligger i projektmappen eatsafe/butiksbilleder-v2-2026-10-06). Tal tjekket i databasen samme dag: 20.182 varer og 768 opslag i leksikonet.
 Undgå "sikkert", "præcis" og funktioner på pause (opskrifter, diæter), når teksten ændres.
 
 **Tjek tallene før hver indsendelse til butikkerne** (teksten i butikkerne opdateres ikke af sig selv, så tallene er rundet ned):
