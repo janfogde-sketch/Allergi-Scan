@@ -1,7 +1,7 @@
 // @ts-nocheck
-// Invitation til familien: forklaring af, hvad der deles, og to måder at invitere på (3. okt. 2026): en mail til en bestemt adresse, eller
-// et delt link (fx i Messenger), hvor afsenderen selv godkender, hvem der bruger det (se useFamilyLinkRequests). Række for en afventende
-// invitation. Ordforråd: "Familie" = voksne med egen konto.
+// Invitation til familien: to måder at invitere på (3. okt. 2026): en mail til en bestemt adresse, eller et delt link (fx i Messenger),
+// hvor afsenderen selv godkender, hvem der bruger det (se useFamilyLinkRequests). "Opret og del link" åbner telefonens delingsmenu direkte
+// (Bjørn, 6. okt.). Række for en afventende invitation. Modtagere kommer ind via linket; der er ingen "indsæt link"-funktion længere. Ordforråd: "Familie" = voksne med egen konto.
 // "Link til listen" (indkøbsliste) er noget helt andet og hører hjemme i Del liste. Udskilt fra FamilyScreen.jsx (arkitekturregel 3).
 import React, { useState } from "react";
 import { SUPABASE_URL, DIETS_ENABLED } from "./constants.jsx";
@@ -9,7 +9,6 @@ import { makeHeaders, apiCall } from "./helpers.js";
 import { Icon, showToast } from "./SharedComponents.jsx";
 import { TextLink } from "./DesignSystem.jsx";
 import { UI } from "./styleUtils.js";
-import { parseInviteToken, storeInviteToken, INVITE_TOKEN_EVENT } from "./familyInviteInbox.js";
 
 // "i dag kl. 14.30" / "i morgen kl. 09.10" / "tirsdag 7. okt." — invitationen udløber efter 24 timer
 export function formatExpiry(iso) {
@@ -50,11 +49,16 @@ const callInviteFn = async (accessToken, body) => {
 
 export const inviteUrl = token => `https://eatsafe.dk/invite/${token}`;
 
+const SHARE_DATA = url => ({ title: "Invitation til EatSafe", text: "Jeg vil gerne invitere dig til min familie i EatSafe.", url });
+
+// Gyldig nok til at slå "Send invitation" til; serveren validerer endeligt (invalid_email).
+export const isValidInviteEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v || "").trim());
+
 // Del/kopiér det delte link. `url` er hele adressen.
 function LinkActions({ url }) {
   const [copied, setCopied] = useState(false);
   const copy = () => { navigator.clipboard?.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); };
-  const share = () => navigator.share({ title: "Invitation til EatSafe", text: "Jeg vil gerne invitere dig til min familie i EatSafe.", url }).catch(() => {});
+  const share = () => navigator.share(SHARE_DATA(url)).catch(() => {});
   return (
     <div style={UI.rowGap8}>
       {navigator.share && (
@@ -104,58 +108,22 @@ export function PendingInviteCard({ invite, onCancel, accessToken }) {
 }
 
 const SHARED_POINTS = [
-  DIETS_ENABLED ? "Allergier og kostvalg" : "Allergier",
-  "Historik og favoritter, hvis I vælger det",
-  "Indkøbslister, som I deler",
+  DIETS_ENABLED ? "Jeres allergier og kostvalg" : "Jeres allergier",
+  "Indkøbslister",
+  "Historik og favoritter, hvis I vil",
 ];
 
 // Det, der deles, når to konti er i samme familie. Bruges både før invitationen oprettes og i "Sådan virker familie".
 export function WhatIsShared() {
   return (
     <div>
-      <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>I kan dele</div>
+      <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>I familien kan I dele</div>
       {SHARED_POINTS.map(t => (
         <div key={t} style={{ display:"flex", gap:8, fontSize:12.5, color:"var(--ink2)", lineHeight:1.45, marginBottom:6 }}>
           <span style={{ flexShrink:0, marginTop:2 }}><Icon name="check" size={13} color="var(--green)" /></span><span>{t}</span>
         </div>
       ))}
     </div>
-  );
-}
-
-// "Tilslut via invitationslink": den, der har fået en invitation, men ikke kom ind via linket i den browser, de er logget ind i
-// (fx åbnet i Messenger), kan indsætte linket her. Så virker invitationen uanset browser og loginmetode.
-export function InviteLinkEntry() {
-  const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("");
-  const [error, setError] = useState("");
-  const submit = e => {
-    e?.preventDefault();
-    const token = parseInviteToken(value);
-    if (!token) { setError("Det ligner ikke et invitationslink. Indsæt hele linket fra mailen eller beskeden."); return; }
-    storeInviteToken(token);
-    window.dispatchEvent(new Event(INVITE_TOKEN_EVENT));
-    setValue(""); setError(""); setOpen(false);
-  };
-  // Tydelig sekundær handling (4. okt. 2026): omridset knap med link-ikon, aldrig grøn fyld, så "+ Tilføj til familien" forbliver den primære.
-  if (!open) return (
-    <button type="button" className="btn btn-outline" onClick={() => setOpen(true)}
-      style={{ marginTop:8, minHeight:44, padding:"10px 14px", display:"inline-flex", alignItems:"center", gap:8, fontSize:13 }}>
-      <Icon name="link" size={15} color="var(--green)" /> Tilslut via invitationslink
-    </button>
-  );
-  return (
-    <form onSubmit={submit} className="card" style={{ marginTop:8 }}>
-      <label htmlFor="invite-link-input" style={{ fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 }}>Indsæt invitationslinket</label>
-      <input id="invite-link-input" type="text" inputMode="url" autoComplete="off" autoCapitalize="none" spellCheck={false}
-        placeholder="https://eatsafe.dk/invite/…" value={value} onChange={e => { setValue(e.target.value); setError(""); }}
-        style={{ width:"100%", boxSizing:"border-box", minHeight:46, padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:15 }} />
-      {error && <div role="alert" style={{ fontSize:12, color:"var(--red)", marginTop:6 }}>{error}</div>}
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:10 }}>
-        <TextLink onClick={() => { setOpen(false); setError(""); }}>Annuller</TextLink>
-        <button type="submit" disabled={!value.trim()} style={{ ...BTN, minHeight:40, padding:"8px 16px", background:"var(--green)", color:"var(--on-green)", border:"none", opacity: value.trim() ? 1 : .6 }}>Fortsæt</button>
-      </div>
-    </form>
   );
 }
 
@@ -181,12 +149,15 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
     else setError(inviteErrorText(res.error));
   };
 
+  // Opret linket og åbn straks telefonens delingsmenu. Afviser browseren delingen (ingen Web Share, fx på computer, eller tiden for
+  // brugerens tryk er udløbet under oprettelsen), står linket klar med "Del linket"/"Kopiér link" i stedet.
   const createLink = async () => {
     setLoading(true); setError("");
     const res = await callInviteFn(accessToken, { kind: "link" });
     setLoading(false);
-    if (res.success && res.invite?.url) { setLinkUrl(res.invite.url); finish(res.invite); }
-    else setError(inviteErrorText(res.error));
+    if (!(res.success && res.invite?.url)) { setError(inviteErrorText(res.error)); return; }
+    setLinkUrl(res.invite.url); finish(res.invite);
+    if (typeof navigator !== "undefined" && navigator.share) navigator.share(SHARE_DATA(res.invite.url)).catch(() => {});
   };
 
   const cancel = async () => {
@@ -199,7 +170,10 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
   const done = () => { onInviteId?.(null); onChanged?.(); onClose(); };
 
   const created = !!(sentTo || linkUrl);
-  const TAB = on => ({ ...BTN, flex:1, minHeight:40, background: on ? "var(--green-selected-bg)" : "var(--surface)", color:"var(--ink)", border: on ? "1px solid var(--green)" : "1px solid var(--border2)" });
+  const emailOk = isValidInviteEmail(email);
+  // Metodevalg: den valgte har lys grøn baggrund og grøn kant, den anden er neutral.
+  const TAB = on => ({ ...BTN, flex:1, minHeight:44, background: on ? "var(--green-selected-bg)" : "var(--surface)", color:"var(--ink)", border: on ? "1.5px solid var(--green)" : "1px solid var(--border2)" });
+  const HINT = { fontSize:12.5, color:"var(--muted2)", lineHeight:1.5, marginBottom:12 };
 
   return (
     <div className="card" style={UI.mb12}>
@@ -209,33 +183,25 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
       </div>
 
       {!created && (
-        <>
-          <div style={{ display:"flex", gap:8, margin:"6px 0 12px" }} role="tablist" aria-label="Sådan inviterer du">
-            <button type="button" role="tab" aria-selected={mode === "mail"} style={TAB(mode === "mail")} onClick={() => { setMode("mail"); setError(""); }}>
-              <Icon name="mail" size={14} color="var(--ink)" /> Send på mail
-            </button>
-            <button type="button" role="tab" aria-selected={mode === "link"} style={TAB(mode === "link")} onClick={() => { setMode("link"); setError(""); }}>
-              <Icon name="link" size={14} color="var(--ink)" /> Del et link
-            </button>
-          </div>
-          <div style={{ background:"var(--surface2)", borderRadius:10, padding:"12px 14px", marginBottom:12 }}><WhatIsShared /></div>
-        </>
+        <div style={{ display:"flex", gap:8, margin:"6px 0 12px" }} role="tablist" aria-label="Sådan inviterer du">
+          <button type="button" role="tab" aria-selected={mode === "mail"} style={TAB(mode === "mail")} onClick={() => { setMode("mail"); setError(""); }}>
+            <Icon name="mail" size={14} color={mode === "mail" ? "var(--green)" : "var(--ink)"} /> Send på mail
+          </button>
+          <button type="button" role="tab" aria-selected={mode === "link"} style={TAB(mode === "link")} onClick={() => { setMode("link"); setError(""); }}>
+            <Icon name="link" size={14} color={mode === "link" ? "var(--green)" : "var(--ink)"} /> Del et link
+          </button>
+        </div>
       )}
 
       {!created && mode === "mail" && (
-        <form onSubmit={send}>
-          <div style={{ fontSize:12.5, color:"var(--muted2)", lineHeight:1.5, marginBottom:12 }}>
-            Skriv e-mailadressen på den, du vil invitere. Vi sender en invitation dertil. Har personen allerede en EatSafe-konto, logger de bare ind og bekræfter i appen; ellers opretter de en egen konto. Personen styrer selv sin profil.
-          </div>
+        <form onSubmit={send} noValidate>
+          <div style={HINT}>Indtast e-mailadressen på den person, du vil invitere. Personen skal selv acceptere invitationen i EatSafe.</div>
           <label htmlFor="invite-email" style={{ fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 }}>E-mailadresse</label>
           <input id="invite-email" type="email" inputMode="email" autoComplete="off" autoCapitalize="none" spellCheck={false}
             placeholder="navn@eksempel.dk" value={email} onChange={e => { setEmail(e.target.value); setError(""); }}
-            style={{ width:"100%", boxSizing:"border-box", minHeight:46, padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:15 }} />
-          <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, margin:"8px 0 12px" }}>
-            Personen kan oprette sig eller logge ind med denne e-mailadresse, eller følge linket i mailen med en anden adresse eller loginmetode (fx Facebook). Ingen bliver forbundet, før de selv har sagt ja i appen. Invitationen virker i 24 timer og kan kun bruges én gang. Forbindelsen kan fjernes igen senere.
-          </div>
-          <button type="submit" disabled={loading || !email.trim()}
-            style={{ ...BTN, width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", opacity: loading || !email.trim() ? .6 : 1 }}>
+            style={{ width:"100%", boxSizing:"border-box", minHeight:46, padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:15, marginBottom:12 }} />
+          <button type="submit" disabled={loading || !emailOk}
+            style={{ ...BTN, width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", opacity: loading || !emailOk ? .6 : 1, cursor: loading || !emailOk ? "default" : "pointer" }}>
             {loading ? "Sender invitation…" : "Send invitation"}
           </button>
           {error && <div role="alert" style={{ fontSize:12, color:"var(--red)", marginTop:8 }}>{error}</div>}
@@ -244,19 +210,18 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
 
       {!created && mode === "link" && (
         <div>
-          <div style={{ fontSize:12.5, color:"var(--muted2)", lineHeight:1.5, marginBottom:12 }}>
-            Få et link, du selv kan dele, fx i Messenger eller en besked. Du behøver ikke kende personens e-mailadresse.
-          </div>
-          <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginBottom:12 }}>
-            Den første, der bruger linket og siger ja, skal godkendes af dig, før I bliver forbundet. Del kun linket med den, du vil invitere. Det virker i 24 timer og kun til én person.
+          <div style={HINT}>
+            Send invitationslinket via fx Messenger, Beskeder eller en anden app. Personen skal selv acceptere invitationen, før I bliver forbundet. Linket gælder én person og udløber efter 24 timer.
           </div>
           <button type="button" onClick={createLink} disabled={loading}
             style={{ ...BTN, width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", opacity: loading ? .6 : 1 }}>
-            {loading ? "Opretter link…" : "Opret link"}
+            <Icon name="share" size={14} color="var(--on-green)" /> {loading ? "Opretter link…" : "Opret og del link"}
           </button>
           {error && <div role="alert" style={{ fontSize:12, color:"var(--red)", marginTop:8 }}>{error}</div>}
         </div>
       )}
+
+      {!created && <div style={{ background:"var(--surface2)", borderRadius:10, padding:"12px 14px", marginTop:14 }}><WhatIsShared /></div>}
 
       {sentTo && (
         <>

@@ -6,7 +6,8 @@ import { Icon, showToast, ConfirmDialog, AllergenGlyph } from "./SharedComponent
 import HelpModal from "./HelpModal.jsx";
 import { MemberForm } from "./MemberForm.jsx";
 import { TextLink } from "./DesignSystem.jsx";
-import { InvitePanel, PendingInviteCard, InviteLinkEntry } from "./FamilyInvite.jsx";
+import { InvitePanel, PendingInviteCard } from "./FamilyInvite.jsx";
+import { useMeasuredHeight } from "./useMeasuredHeight.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -53,6 +54,8 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
   // ── Invitation: panelet (FamilyInvite.jsx) ejer selve oprettelsen; her huskes kun id'et, så den ikke vises to gange i oversigten.
   const [inviteId, setInviteId] = useState(null);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  // Bundnavigationens faktiske højde (inkl. iOS safe area), så invitationskortet og formularerne altid kan scrolles helt fri af den.
+  const navH = useMeasuredHeight(() => document.querySelector(".bottom-nav"));
 
   // ── Familie-redesign (26. sept. 2026): "+ Tilføj familiemedlem" viser først
   // et valg mellem de to tilføjelses-måder, i stedet for at have et stort
@@ -164,10 +167,15 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
     }
   };
 
-  // Bundpadding med iOS safe area: bundnavigationen er ca. 113 px høj på iPhones med hjemmeindikator, mere end .screens faste 110 px, så
-  // formularens sidste knap kunne ligge bag den (2. okt. 2026).
+  // Bundpadding: den målte navigationshøjde plus luft (6. okt. 2026). Den faste "110px + safe area" var for lidt på iPhones med
+  // hjemmeindikator, så invitationskortets sidste knap kunne ende bag navigationen. Uden måling (fx i test) bruges den gamle værdi.
+  const bottomPad = navH ? `${navH + 32}px` : "calc(110px + env(safe-area-inset-bottom))";
+  const openInvite = () => {
+    setFamilyAddMode("invite");
+    setTimeout(() => document.getElementById("family-invite-panel")?.scrollIntoView({ behavior:"smooth", block:"start" }), 60);
+  };
   return (
-    <div className="screen fade-in" style={{ paddingBottom:"calc(110px + env(safe-area-inset-bottom))" }}>
+    <div className="screen fade-in" style={{ paddingBottom: bottomPad }}>
       <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Familie</div>
       <div className="screen-sub">Saml personer, du tjekker varer for, og voksne du deler indkøbslister med.</div>
       <div style={{ marginBottom:12 }}><TextLink onClick={() => setShowHowItWorks(true)}>Sådan virker Familie</TextLink></div>
@@ -225,7 +233,6 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
           }
         }} />
       ))}
-      <InviteLinkEntry />
 
       <div style={SECTION}>Profiler du administrerer</div>
       <div style={SECTION_SUB}>Børn under 18 år uden egen konto. Du administrerer deres profil.</div>
@@ -250,7 +257,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
           {m.birth_year && new Date().getFullYear() - m.birth_year >= 18 && (
             <div role="note" style={{ margin:"0 0 10px", padding:"10px 12px", borderRadius:12, background:"var(--surface2)", border:"1px solid var(--border)" }}>
               <div style={{ fontSize:12.5, color:"var(--ink)", lineHeight:1.5 }}>Denne profil skal nu overgå til en personlig EatSafe-konto.</div>
-              <button type="button" className="btn btn-outline btn-sm" style={{ marginTop:8, minHeight:44 }} onClick={() => { cancelEditMember(); setFamilyAddMode("invite"); setTimeout(() => document.getElementById("family-invite-panel")?.scrollIntoView({ behavior:"smooth", block:"start" }), 60); }}>Invitér til egen konto</button>
+              <button type="button" className="btn btn-outline btn-sm" style={{ marginTop:8, minHeight:44 }} onClick={() => { cancelEditMember(); openInvite(); }}>Invitér til egen konto</button>
             </div>
           )}
           {renderMemberChips(m, `p-${m.id}`)}
@@ -271,14 +278,14 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
             <div className="card-title" style={{ marginBottom:0 }}>Tilføj til familien</div>
             <TextLink onClick={() => setFamilyAddMode(null)}>Annuller</TextLink>
           </div>
-          <button type="button" onClick={() => setFamilyAddMode("invite")}
+          <button type="button" onClick={openInvite}
             style={{ display:"flex", alignItems:"center", gap:12, width:"100%", textAlign:"left", cursor:"pointer", fontFamily:"var(--f)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px 16px", marginBottom:10 }}>
             <span style={{ width:38, height:38, borderRadius:"50%", background:"var(--green-selected-bg)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
               <Icon name="mail" size={18} color="var(--green)" />
             </span>
             <span>
               <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>Invitér til familien</div>
-              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Sendes som mail til personer på 18 år eller derover med egen EatSafe-konto.</div>
+              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Send en mail eller del et link til personer på 18 år eller derover.</div>
             </span>
           </button>
           <button type="button" onClick={() => setFamilyAddMode("form")}
@@ -295,7 +302,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
       )}
 
       {!editingMemberId && familyAddMode === "invite" && (
-        <div id="family-invite-panel" style={{ marginTop:16 }}>
+        <div id="family-invite-panel" style={{ marginTop:16, scrollMarginTop:16, scrollMarginBottom: navH + 16 }}>
           <InvitePanel accessToken={accessToken}
             onInviteId={setInviteId} onChanged={loadPendingInvites}
             onClose={() => { setFamilyAddMode(null); setInviteId(null); loadPendingInvites(); }} />

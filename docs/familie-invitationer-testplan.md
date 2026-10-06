@@ -56,9 +56,9 @@ Kør hver række på den nævnte kombination. "Sheet" = "Invitation til familien
 | R7 | Eksisterende bruger, appen lukket, logger ind | ✔ Sheet ved login |
 | R8 | Eksisterende bruger, appen åben i baggrunden, invitationen sendes nu | ✔ Sheet, når appen kommer i forgrunden |
 | R9 | Linket åbnes i browser A, login sker i browser B (samme e-mail) | ✔ Sheet vises i B (e-mail-match, ingen token nødvendig) |
-| R10 | Linket åbnes i browser A, login i browser B med **anden** e-mail eller Facebook | ✘ Ingen sheet i B af sig selv (forventet). I B: Familie → "Tilslut via invitationslink" → indsæt linket → ✔ sheet. Alternativt åbn mailens link i B |
+| R10 | Linket åbnes i browser A, login i browser B med **anden** e-mail eller Facebook | ✘ Ingen sheet i B af sig selv (forventet). Åbn mailens link i B → ✔ sheet ("Tilslut via invitationslink" er fjernet 6. okt.) |
 | R23 | Første besøg på invitationslinket (ny browser, service workeren genindlæser siden) | ✔ Brugeren lander på oprettelse/login, ikke på velkomstsiden (rettet 4. okt., `recentInviteLinkFollowed`) |
-| R24 | "Tilslut via invitationslink": indsæt et gyldigt link, et forkert link og tom tekst | ✔ Gyldigt: sheet vises med det samme. Forkert: "Det ligner ikke et invitationslink…". Tom: knappen er slået fra |
+| R24 | Udgået 6. okt. 2026: "Tilslut via invitationslink" er fjernet fra Familie | – |
 | R25 | Et link, der ikke kan bruges (brugt, udløbet, trukket tilbage, låst, ukendt) følges, mens man er logget ind | ✔ En tydelig besked, ikke en stille forsvinden. Tokenet ryddes |
 | R11 | Linket åbnes i Messenger/Instagram/Googles app-browser | ✔ Advarsel "Åbn invitationen i din browser" og "Kopiér link". Fuldfør i rigtig browser |
 | R12 | Konto, hvis e-mail ikke er bekræftet | ✘ Ingen sheet, før e-mailen er bekræftet |

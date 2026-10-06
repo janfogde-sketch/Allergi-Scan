@@ -8,7 +8,7 @@ import { act, renderHook, waitFor, render, screen, fireEvent, cleanup } from "@t
 import { useFamilyInviteInbox } from "./useFamilyInviteInbox.js";
 import { useFamilyLinkRequests } from "./useFamilyLinkRequests.js";
 import { FamilyInviteSheet, FamilyRequestSheet } from "./ListSheets.jsx";
-import { InvitePanel, InviteLinkEntry, PendingInviteCard, inviteErrorText } from "./FamilyInvite.jsx";
+import { InvitePanel, PendingInviteCard, inviteErrorText } from "./FamilyInvite.jsx";
 import { showToast } from "./SharedComponents.jsx";
 
 vi.mock("./SharedComponents.jsx", async (orig) => ({ ...(await orig()), showToast: vi.fn() }));
@@ -343,17 +343,39 @@ describe("afsender: opret invitation (panel)", () => {
     expect(inviteErrorText(code === "HTTP 500" ? "x" : code)).toMatch(text);
   });
 
-  it("knappen er slået fra uden adresse", () => {
+  it("knappen er slået fra uden en gyldig adresse", () => {
     mockNetwork({});
     render(<InvitePanel accessToken="t" onClose={vi.fn()} onInviteId={vi.fn()} onChanged={vi.fn()} />);
-    expect(screen.getByText("Send invitation").closest("button").disabled).toBe(true);
+    const btn = () => screen.getByText("Send invitation").closest("button");
+    expect(btn().disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("E-mailadresse"), { target: { value: "anna@" } });
+    expect(btn().disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("E-mailadresse"), { target: { value: "anna@eksempel.dk" } });
+    expect(btn().disabled).toBe(false);
+  });
+
+  it("delt link: ingen e-mailfelt, og telefonens delingsmenu åbnes med linket", async () => {
+    const url = `https://eatsafe.dk/invite/${TOKEN}`;
+    const share = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "share", { value: share, configurable: true });
+    try {
+      mockNetwork({ "family-invite": { success: true, invite: { id: "l2", kind: "link", expires_at: "2026-10-05T10:00:00Z", url } } });
+      render(<InvitePanel accessToken="t" onClose={vi.fn()} onInviteId={vi.fn()} onChanged={vi.fn()} />);
+      fireEvent.click(screen.getByText("Del et link"));
+      expect(screen.queryByLabelText("E-mailadresse")).toBeNull();
+      fireEvent.click(screen.getByText("Opret og del link"));
+      await waitFor(() => expect(share).toHaveBeenCalledTimes(1));
+      expect(share.mock.calls[0][0].url).toBe(url);
+    } finally {
+      delete navigator.share;
+    }
   });
 
   it("delt link: opretter et link uden e-mail og viser adressen og forklaringen om godkendelse", async () => {
     mockNetwork({ "family-invite": { success: true, invite: { id: "l1", kind: "link", expires_at: "2026-10-05T10:00:00Z", url: `https://eatsafe.dk/invite/${TOKEN}` } } });
     render(<InvitePanel accessToken="t" onClose={vi.fn()} onInviteId={vi.fn()} onChanged={vi.fn()} />);
     fireEvent.click(screen.getByText("Del et link"));
-    fireEvent.click(screen.getByText("Opret link"));
+    fireEvent.click(screen.getByText("Opret og del link"));
     await waitFor(() => expect(screen.getByText(/Linket er klar/)).toBeTruthy());
     expect(called("family-invite")[0].body).toEqual({ kind: "link" });
     expect(screen.getByText(/skal godkende, før I bliver forbundet/)).toBeTruthy();
@@ -364,7 +386,7 @@ describe("afsender: opret invitation (panel)", () => {
     mockNetwork({ "family-invite": { __error: "rate_limited", status: 429 } });
     render(<InvitePanel accessToken="t" onClose={vi.fn()} onInviteId={vi.fn()} onChanged={vi.fn()} />);
     fireEvent.click(screen.getByText("Del et link"));
-    fireEvent.click(screen.getByText("Opret link"));
+    fireEvent.click(screen.getByText("Opret og del link"));
     await waitFor(() => expect(screen.getByRole("alert").textContent).toMatch(/mange invitationer/));
   });
 
@@ -402,28 +424,5 @@ describe("afsender: afventende invitationer i oversigten", () => {
     mockNetwork({ "family-invite": { success: true } });
     fireEvent.click(screen.getByText("Send igen"));
     await waitFor(() => expect(toasts().join(" ")).toMatch(/sendt igen/));
-  });
-});
-
-describe("modtager uden link i browseren: indsæt linket (Familie)", () => {
-  it("et gyldigt link gemmes og sender en begivenhed, så invitationen hentes", () => {
-    const heard = vi.fn();
-    window.addEventListener("eatsafe:invite-token", heard);
-    render(<InviteLinkEntry />);
-    fireEvent.click(screen.getByText(/Tilslut via invitationslink/));
-    fireEvent.change(screen.getByLabelText("Indsæt invitationslinket"), { target: { value: `https://eatsafe.dk/invite/${TOKEN}` } });
-    fireEvent.click(screen.getByText("Fortsæt"));
-    expect(localStorage.getItem("as_pending_invite")).toBe(TOKEN);
-    expect(heard).toHaveBeenCalledTimes(1);
-    window.removeEventListener("eatsafe:invite-token", heard);
-  });
-
-  it("noget, der ikke ligner et link, afvises med en forklaring og gemmer intet", () => {
-    render(<InviteLinkEntry />);
-    fireEvent.click(screen.getByText(/Tilslut via invitationslink/));
-    fireEvent.change(screen.getByLabelText("Indsæt invitationslinket"), { target: { value: "hej med dig" } });
-    fireEvent.click(screen.getByText("Fortsæt"));
-    expect(screen.getByRole("alert").textContent).toMatch(/ligner ikke et invitationslink/);
-    expect(localStorage.getItem("as_pending_invite")).toBeNull();
   });
 });
