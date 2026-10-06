@@ -963,7 +963,8 @@ body::-webkit-scrollbar{display:none;}
 
 /* ── SEARCH ── */
 /* Klump 6b (6. okt. 2026): rækker og chips er nu <button>; nulstil browserens knap-stil, så de ser ud som før. */
-button.filter-chip,button.hist-row,button.menu-item,button.row-btn{font-family:var(--f);text-align:left;width:100%;appearance:none;}
+button.filter-chip,button.hist-row,button.menu-item,button.row-btn{font-family:var(--f);text-align:left;width:100%;appearance:none;-webkit-appearance:none;color:inherit;}
+button.menu-item{background:none;border:0;border-bottom:1px solid var(--border);border-radius:0;margin:0;}
 button.filter-chip{width:auto;}
 .row-btn{background:none;border:none;padding:0;margin:0;font-family:var(--f);color:inherit;cursor:pointer;width:100%;text-align:left;appearance:none;}
 .row-btn:disabled{cursor:default;}
