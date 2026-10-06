@@ -8,6 +8,7 @@ begin
   select id into u from public.users where role is distinct from 'admin' order by created_at limit 1;
   select id into adm from public.users where role = 'admin' order by created_at limit 1;
   select id into plan from public.plans limit 1;
+  if plan is null then insert into public.plans (name) values ('test-plan') returning id into plan; end if;  -- tabellen er tom; rulles tilbage
   select email into login_email from auth.users where id = u;
   if u is null or adm is null then raise exception 'Kræver en almindelig bruger og en admin'; end if;
 
