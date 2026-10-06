@@ -271,14 +271,16 @@ async function deliver(db: Db, ev: EventRow, plan: Planned, flags: Flags): Promi
   const r = renderNotification(plan.templateKey, plan.data, { pushOverride: flags.overrides[plan.templateKey] });
 
   // Brugerens valg pr. kanal (med kategoriens standard, se notification_enabled() i databasen).
-  // Er både push og mail fravalgt, oprettes ingen besked (udviklerpakken).
+  // Er både push og mail fravalgt, oprettes ingen besked (udviklerpakken). Undtagelse: en
+  // tilbagekaldelse (P6) lander altid som besked i appen, så den aldrig forsvinder helt
+  // (F1-4, Jan 6. okt. 2026); push og mail følger stadig brugerens valg.
   const enabled = async (channel: string): Promise<boolean> => {
     const { data, error } = await db.rpc("notification_enabled", { p_user_id: plan.userId, p_category: r.category, p_channel: channel });
     if (error) throw error;
     return data !== false;
   };
   const [pushOn, emailOn] = [await enabled("push"), await enabled("email")];
-  if (!pushOn && !emailOn) return { retry: false };
+  if (!pushOn && !emailOn && r.category !== "recalls") return { retry: false };
 
   const row = {
     user_id: plan.userId, event_id: ev.id, event_key: ev.event_key,
