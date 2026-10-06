@@ -101,3 +101,11 @@ export function affectedAllergenChanges(changes, current, profileAllergens, trac
 export function summarizeAllergenChanges(list) {
   return list.map((c) => `${c.label} ${CHANGE_WORDS[c.value] ?? "er ændret"}`).join(", ");
 }
+
+// F1-12 (6. okt. 2026): ventetid før næste forsøg efter et midlertidigt fejlet forsøg nr. `attempt`
+// (1-baseret). Stigende, så et kort nedbrud hos push-/mailtjenesten ikke opbruger alle forsøg.
+export const RETRY_DELAYS_MIN = [1, 5, 15, 60, 240];
+export function retryDelayMinutes(attempt) {
+  const i = Math.max(1, Math.floor(attempt || 1)) - 1;
+  return RETRY_DELAYS_MIN[Math.min(i, RETRY_DELAYS_MIN.length - 1)];
+}

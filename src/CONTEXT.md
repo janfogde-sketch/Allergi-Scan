@@ -189,7 +189,8 @@ indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push
 - **Afvikling:** pg_cron `notify-dispatch` hvert minut kalder edge-funktionen `notify`
   (kategori 4, kun service-role) for hændelser ældre end 15 sek. `notify` opretter beskeden
   FØR push, sender push kun hvis flaget er tændt og brugeren ikke har slået kategorien fra,
-  og retry'er op til 5 gange. Afvisning uden `review_note` afvises som `failed` og logges.
+  og genforsøger op til 5 gange med stigende ventetid via `available_at` (1, 5, 15, 60, 240 min.; `retryDelayMinutes()` i
+  `notifyHelpers.js`). Opgivne afsendelser logges i `client_errors`. Afvisning uden `review_note` afvises som `failed` og logges.
   Oprydning: beskeder 12 mdr., hændelser 90 dage (`cleanup_notifications`).
 - **Delt kode i `supabase/functions/_shared/`:** `notificationContent.js` (definitioner,
   `renderNotification`, testet i `src/notificationContent.test.js`) og `webpush.ts` (VAPID
