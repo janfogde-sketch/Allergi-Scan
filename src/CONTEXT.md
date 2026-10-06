@@ -358,3 +358,6 @@ Kontoen låses ikke, og intet ændres ved den. Kun recovery-mailen har linket (m
 
 ### Billedkilde (Open Food Facts, CC BY-SA, 5. okt. 2026)
 OFF-billeder skal krediteres. Kilden aflæses af `image_url` (`images.openfoodfacts.org`) via `imageAttribution()` i `helpers.js`, ingen kolonne. Resultatsiden viser "Billede: Open Food Facts, CC BY-SA" under billedet (link til OFF-produktet); miniaturer (`ProductImage`) har et lille "OFF"-mærke, og Indstillinger → Om EatSafe har en samlet kildelinje. Vilkårene nævner licensen allerede.
+
+### Android-app (TWA) og fast vært (6. okt. 2026)
+Appens faste adresse er `https://www.eatsafe.dk` (`eatsafe.dk` videresender dertil med 307). Android-appen (TWA, Bubblewrap) skal bygges mod `www`, ellers fejler verifikationen. `public/.well-known/assetlinks.json` kobler appen til siden (pakkenavn `dk.eatsafe.app`, foreløbigt); `sha256_cert_fingerprints` er TOM, til Play Console har oprettet appen (Play App Signing-fingeraftrykket, evt. også uploadnøglens). Indsæt dem, når Jan har dem. `vercel.json` sætter `Content-Type: application/json` på filen (test `src/assetlinks.test.js`). Efter deploy: `curl -sI https://www.eatsafe.dk/.well-known/assetlinks.json` skal give 200 og `application/json`.
