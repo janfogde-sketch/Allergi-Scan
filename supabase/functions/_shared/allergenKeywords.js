@@ -44,7 +44,7 @@ export const ALLERGEN_KEYWORDS = {
     "gluten", "rug", "rye", "secale", "byg", "barley", "hordeum",
     "havre", "oats", "oat", "avena", "spelt", "kamut", "dinkel", "dinkelhvede",
     "emmer", "einkorn", "khorasanhvede", "hvedemel", "wheat flour",
-    "rugmel", "bygmel", "bygekstrakt", "byggryn", "bygsirup", "havremel", "malt", "maltekstrakt", "malt extract",
+    "rugmel", "rugkerne", "rugkerner", "rugflager", "rugbrød", "rugsigte", "rugskrå", "rugsurdej", "bygkerne", "bygkorn", "bygmel", "bygekstrakt", "byggryn", "bygsirup", "havremel", "malt", "maltekstrakt", "malt extract",
     "malteddike", "maltsirup", "øleddike", "bryggersgær",
     "hvedestivelse", "wheat starch", "stivelse af hvede",
     "semulje", "semolina", "couscous", "bulgur", "farro", "freekeh",
@@ -69,7 +69,10 @@ export const ALLERGEN_KEYWORDS = {
     "potassium caseinate", "calcium caseinate",
     "valle", "whey", "valleprotein", "whey protein", "vallepulver",
     "lactalbumin", "laktalbumin", "lactoglobulin", "laktoglobulin",
-    "ost", "cheese", "fromage", "fløde", "cream", "creme fraiche",
+    "ost", "oste", "cheese", "fromage", "fløde", "cream", "creme fraiche",
+    // Ostenavne og friske mejeriprodukter (6. okt. 2026, F1)
+    "mozzarella", "cheddar", "parmesan", "parmigiano", "grana padano", "feta", "fetaost", "gouda", "brie", "camembert",
+    "emmentaler", "pecorino", "edamer", "havarti", "burrata", "halloumi", "paneer", "bagesmør",
     "smør", "butter", "smørolie", "butteroil", "smøraroma",
     "yoghurt", "yogurt", "kefir", "skyr", "kvark", "quark",
     "mascarpone", "ricotta", "ghee", "mælkefedt", "milk fat", "dairy",
@@ -97,6 +100,9 @@ export const ALLERGEN_KEYWORDS = {
   laktose: [
     "laktose", "lactose", "mælkesukker", "milk sugar",
     "mælk", "milk", "fløde", "cream", "ost", "oste", "cheese",
+    // 6. okt. 2026 (F1): ostenavne og friske mejeriprodukter indeholder laktose
+    "mozzarella", "cheddar", "parmesan", "feta", "fetaost", "gouda", "brie", "camembert", "emmentaler", "pecorino",
+    "creme fraiche", "mascarpone", "ricotta", "kvark", "quark", "skyr", "kefir", "bagesmør",
     "yoghurt", "yogurt", "kærnemælk", "buttermilk",
     "valle", "whey", "tørmælk", "mælkepulver", "milk powder",
     // Friske oste indeholder laktose (30. sept. 2026)
@@ -129,7 +135,7 @@ export const ALLERGEN_KEYWORDS = {
     "paranød", "paranødder", "brazil nut",
     "pinjekerne", "pinjekerner", "pinjenød", "pinjenødder", "pine nut",
     "kokosnød", "kokosnødder", "chestnuts", "kastanje", "kastanjer",
-    "nøddepasta", "nut paste", "marcipan", "marzipan", "nougat",
+    "nødde", "nøddepasta", "nut paste", "marcipan", "marzipan", "nougat",
     "pesto", "praline", "gianduja",
     "mandelmel", "nøddemel", "mandelsmør", "nøddeolie",
     "mandelekstrakt", "hasselnøddepasta",
@@ -170,7 +176,7 @@ export const ALLERGEN_KEYWORDS = {
     "caesar dressing", "bouillabaisse",
     "fiskeolie", "fish oil", "surimi",
     // Sammensatte tun-ord (2. okt. 2026 — "tunekstrakt" blev overset, "tun" er for kort til understreng)
-    "tunekstrakt", "tunfisk", "tunkød", "tunfiskekstrakt",
+    "tunekstrakt", "tunsalat", "tunfisk", "tunkød", "tunfiskekstrakt",
     "fiskegelatine", "fiskeekstrakt", "fiskeboller", "fiskemel", "omega-3",
     "rogn", "roe", "kaviar", "caviar",
     // Tysk (30. sept. 2026 — tyske ingredienslister blev ikke genkendt)

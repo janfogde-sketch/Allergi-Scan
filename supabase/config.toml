@@ -98,3 +98,7 @@ verify_jwt = false
 # HMAC-signatur og udløb (_shared/reportLink.ts) før noget læses eller skrives.
 [functions.report-unrequested-reset]
 verify_jwt = false
+
+# Engangs-genanalyse af produkters allergenflag (fase 2 K4): kræver admin-JWT eller service-role (tjekkes i funktionen).
+[functions.allergen-reanalyze]
+verify_jwt = true

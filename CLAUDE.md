@@ -112,9 +112,13 @@ velkomst/login/onboarding/admin; header bruger tekst-wordmark). `productDisplayN
 
 **Allergenlogik:** motoren bor i `supabase/functions/_shared/allergenEngine.js` (test `src/allergenEngine.test.js`); frontend-
 logik i `src/helpers.js` (`compareAllergens`, `computeProfileResults`, `categorizeProductFindings`, `computeTopStatus`).
-**Stående regel for nøgleordslister** (`supabase/functions/allergens/index.ts` OG `src/allergenKeywords.js`, deler ikke kode):
+**Stående regel for nøgleordslister** (én fælles liste i `supabase/functions/_shared/allergenKeywords.js`, brugt af både motoren og `src/allergenKeywords.js`):
 hvert tælleligt dansk substantiv skal have både ental og flertal ("hasselnød"+"hasselnødder"), undtagen ord hvor de er ens
-("æg", "fisk", "rug", "byg", "havre"). Pas på tvetydige ord (fx "snegle").
+("æg", "fisk", "rug", "byg", "havre"). Pas på tvetydige ord (fx "snegle"). **Matchning (6. okt. 2026):** nøgleord på 5 tegn eller mere matches som
+understreng (fanger "FuldkornsHVEDE", "Mandelflager"); undtagelser står i `NO_SUBSTRING`, og ord der ikke må matche (boghvede, kanelsnegl, kokosfløde) fjernes i
+`normalizeIngredientText`. Ord på højst 4 tegn matcher som hele ord, med eksplicitte sammensætningsregler i `SHORT_PATTERNS`. Negation gælder kun inden for samme kommasegment,
+spor-signalet ("kan indeholde spor af") skal stå i samme sætning FØR ordet. Ændringer i motoren skal have en liste i `src/fixtures/allergenRegression.json` (test `src/allergenRegression.test.js`).
+Genanalyse af alle produkter efter en motorrettelse: `allergen-reanalyze` (først `dry_run` til diff-tabellen, så `apply`), backup i `products_allergen_backup_20261006`.
 
 ---
 

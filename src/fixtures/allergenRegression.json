@@ -1,0 +1,513 @@
+[
+ {
+  "text": "FuldkornsHVEDE (95%), BYGmaltekstrakt, sukker, salt",
+  "expect": {
+   "hvede": "yes",
+   "gluten": "yes"
+  },
+  "kilde": "Weetabix"
+ },
+ {
+  "text": "Fuldkornshvede, sukker, kakao",
+  "expect": {
+   "hvede": "yes",
+   "gluten": "yes"
+  },
+  "kilde": "Hvedefras"
+ },
+ {
+  "text": "FULDKORNSRUGMEL, salt, gær",
+  "expect": {
+   "gluten": "yes"
+  },
+  "kilde": "Fuldkornsknækbrød"
+ },
+ {
+  "text": "38% knækkede HVEDEKERNER, 26% RUGKERNER, havregryn",
+  "expect": {
+   "hvede": "yes",
+   "gluten": "yes"
+  },
+  "kilde": "Femkornsblanding"
+ },
+ {
+  "text": "SkalÆG",
+  "expect": {
+   "aeg": "yes"
+  },
+  "kilde": "Frilandsæg"
+ },
+ {
+  "text": "Sukker, TØRÆG, smør",
+  "expect": {
+   "aeg": "yes"
+  },
+  "kilde": "Brownie"
+ },
+ {
+  "text": "Mandelflager",
+  "expect": {
+   "noedder": "yes"
+  },
+  "kilde": "fase 2 bilag"
+ },
+ {
+  "text": "Mandelmasse, sukker",
+  "expect": {
+   "noedder": "yes"
+  },
+  "kilde": "fase 2 bilag"
+ },
+ {
+  "text": "Hasselnøddekerner",
+  "expect": {
+   "noedder": "yes"
+  },
+  "kilde": "fase 2 bilag"
+ },
+ {
+  "text": "Nøddemix",
+  "expect": {
+   "noedder": "yes"
+  },
+  "kilde": "fase 2 bilag"
+ },
+ {
+  "text": "Peanutbutter",
+  "expect": {
+   "jordnoedder": "yes",
+   "noedder": "no"
+  },
+  "kilde": "fase 2 bilag"
+ },
+ {
+  "text": "Torskefilet",
+  "expect": {
+   "fisk": "yes"
+  },
+  "kilde": "fase 2 bilag"
+ },
+ {
+  "text": "Torskerogn",
+  "expect": {
+   "fisk": "yes"
+  },
+  "kilde": "fase 2 bilag"
+ },
+ {
+  "text": "Laksefilet",
+  "expect": {
+   "fisk": "yes"
+  },
+  "kilde": "fase 2 bilag"
+ },
+ {
+  "text": "Rejesalat",
+  "expect": {
+   "skaldyr": "yes"
+  },
+  "kilde": "fase 2 bilag"
+ },
+ {
+  "text": "Muslingekød",
+  "expect": {
+   "skaldyr": "yes",
+   "bloeddyr": "yes"
+  },
+  "kilde": "fase 2 bilag"
+ },
+ {
+  "text": "Fuldkornsbyg",
+  "expect": {
+   "gluten": "yes"
+  },
+  "kilde": "fase 2"
+ },
+ {
+  "text": "Durumhvedesemulje",
+  "expect": {
+   "hvede": "yes",
+   "gluten": "yes"
+  },
+  "kilde": "fase 2"
+ },
+ {
+  "text": "Piskefløde",
+  "expect": {
+   "maelkeallergi": "yes",
+   "laktose": "yes"
+  },
+  "kilde": "fase 2 bilag"
+ },
+ {
+  "text": "Flødeskum",
+  "expect": {
+   "maelkeallergi": "yes"
+  },
+  "kilde": "fase 2 bilag"
+ },
+ {
+  "text": "Flødeis",
+  "expect": {
+   "maelkeallergi": "yes"
+  },
+  "kilde": "fase 2 bilag"
+ },
+ {
+  "text": "Bagesmør",
+  "expect": {
+   "maelkeallergi": "yes"
+  },
+  "kilde": "fase 2 bilag"
+ },
+ {
+  "text": "Chokolade uden sukker, hvedemel",
+  "expect": {
+   "hvede": "yes",
+   "gluten": "yes"
+  },
+  "kilde": "K2"
+ },
+ {
+  "text": "Hvede, freeze-dried jordbær",
+  "expect": {
+   "hvede": "yes"
+  },
+  "kilde": "K2"
+ },
+ {
+  "text": "Free from artificial colours, hvedemel, mælk",
+  "expect": {
+   "hvede": "yes",
+   "gluten": "yes",
+   "maelkeallergi": "yes"
+  },
+  "kilde": "K2"
+ },
+ {
+  "text": "Ingen salt, æg",
+  "expect": {
+   "aeg": "yes"
+  },
+  "kilde": "K2"
+ },
+ {
+  "text": "Uden mælk, sukker",
+  "expect": {
+   "maelkeallergi": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Chokolade uden mælk og æg",
+  "expect": {
+   "maelkeallergi": "no",
+   "aeg": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Mælkefri chokolade, sukker",
+  "expect": {
+   "maelkeallergi": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Laktosefri mælk",
+  "expect": {
+   "maelkeallergi": "yes",
+   "laktose": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Free from dairy and gluten.",
+  "expect": {
+   "maelkeallergi": "no",
+   "gluten": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Glutenfri havregryn, sukker",
+  "expect": {
+   "gluten": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Uden hvede, hvedemel",
+  "expect": {
+   "hvede": "yes"
+  },
+  "kilde": "to forekomster"
+ },
+ {
+  "text": "Sukker, hvedemel, kan indeholde spor af sesam",
+  "expect": {
+   "hvede": "yes",
+   "gluten": "yes",
+   "sesam": "traces"
+  },
+  "kilde": "K3"
+ },
+ {
+  "text": "Vitaminer og sporstoffer, hvedemel",
+  "expect": {
+   "hvede": "yes",
+   "gluten": "yes"
+  },
+  "kilde": "K3"
+ },
+ {
+  "text": "Fremstillet af hvedemel, sukker, vand",
+  "expect": {
+   "hvede": "yes",
+   "gluten": "yes"
+  },
+  "kilde": "K3"
+ },
+ {
+  "text": "Hvedemel, vand\nKan indeholde spor af æg",
+  "expect": {
+   "hvede": "yes",
+   "aeg": "traces"
+  },
+  "kilde": "K3"
+ },
+ {
+  "text": "Kan indeholde spor af SESAMFRØ, SENNEP, HASSELNØDDER, SELLERI, SULFITTER, SOJA og JORDNØDDER",
+  "expect": {
+   "sesam": "traces",
+   "sennep": "traces",
+   "noedder": "traces",
+   "selleri": "traces",
+   "svovl": "traces",
+   "soja": "traces",
+   "jordnoedder": "traces"
+  },
+  "kilde": "25. sept."
+ },
+ {
+  "text": "Kan indeholde spor af hvede",
+  "expect": {
+   "hvede": "traces",
+   "gluten": "traces"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Produceret på et anlæg, der også håndterer nødder",
+  "expect": {
+   "noedder": "traces"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Sukker, mælk. Kan indeholde spor af nødder.",
+  "expect": {
+   "maelkeallergi": "yes",
+   "noedder": "traces"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Zucker, Weizenmehl. Kann Spuren von Haselnüssen enthalten.",
+  "expect": {
+   "hvede": "yes",
+   "noedder": "traces"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Oste",
+  "expect": {
+   "maelkeallergi": "yes",
+   "laktose": "yes"
+  },
+  "kilde": "F1"
+ },
+ {
+  "text": "Mozzarella, cheddar, parmesan, feta",
+  "expect": {
+   "maelkeallergi": "yes",
+   "laktose": "yes"
+  },
+  "kilde": "F1"
+ },
+ {
+  "text": "Gouda, brie",
+  "expect": {
+   "maelkeallergi": "yes"
+  },
+  "kilde": "F1"
+ },
+ {
+  "text": "Creme fraiche",
+  "expect": {
+   "laktose": "yes",
+   "maelkeallergi": "yes"
+  },
+  "kilde": "F1"
+ },
+ {
+  "text": "Skyr, kvark",
+  "expect": {
+   "laktose": "yes"
+  },
+  "kilde": "F1"
+ },
+ {
+  "text": "E 220",
+  "expect": {
+   "svovl": "yes"
+  },
+  "kilde": "F2"
+ },
+ {
+  "text": "E220",
+  "expect": {
+   "svovl": "yes"
+  },
+  "kilde": "F2"
+ },
+ {
+  "text": "E-471",
+  "expect": {
+   "maelkeallergi": "traces"
+  },
+  "kilde": "F2"
+ },
+ {
+  "text": "E472e",
+  "expect": {
+   "maelkeallergi": "traces"
+  },
+  "kilde": "F2"
+ },
+ {
+  "text": "E322i",
+  "expect": {
+   "soja": "traces"
+  },
+  "kilde": "F2"
+ },
+ {
+  "text": "Farvestof E150d",
+  "expect": {
+   "svovl": "traces"
+  },
+  "kilde": "F2"
+ },
+ {
+  "text": "Lysozym E1105",
+  "expect": {
+   "aeg": "yes"
+  },
+  "kilde": "F2"
+ },
+ {
+  "text": "Olive 220 g",
+  "expect": {
+   "svovl": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Kokosmælk, kokosfløde, sukker",
+  "expect": {
+   "maelkeallergi": "no",
+   "laktose": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Mælkesyre, vand",
+  "expect": {
+   "maelkeallergi": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Boghvedemel, boghvede",
+  "expect": {
+   "hvede": "no",
+   "gluten": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Buckwheat flour",
+  "expect": {
+   "hvede": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Rismel, solsikkelecithin",
+  "expect": {
+   "hvede": "no",
+   "soja": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Lægemiddel, ægte vare",
+  "expect": {
+   "aeg": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Brug af vand, bygning",
+  "expect": {
+   "gluten": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Kanelsnegl, sukker",
+  "expect": {
+   "skaldyr": "no",
+   "bloeddyr": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Muskatnød, kardemomme",
+  "expect": {
+   "noedder": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Cream of tartar, kakaosmør, shea butter",
+  "expect": {
+   "maelkeallergi": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Tunge af okse",
+  "expect": {
+   "fisk": "no"
+  },
+  "kilde": "modtilfælde"
+ },
+ {
+  "text": "Salt<BR>Hvedemel<BR>Sukker",
+  "expect": {
+   "hvede": "yes"
+  },
+  "kilde": "D2 HTML"
+ },
+ {
+  "text": "Hvedemel&nbsp;sukker, kan indeholde spor af mælk",
+  "expect": {
+   "hvede": "yes",
+   "maelkeallergi": "traces"
+  },
+  "kilde": "D2 HTML"
+ }
+]
