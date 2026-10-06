@@ -562,7 +562,7 @@ export default function EatSafe() {
   }, [accessToken]);
 
   // ── Load brugerdata ved login → useLoadUserData ──
-  useLoadUserData({
+  const { profileLoadStatus, retryProfileLoad } = useLoadUserData({
     accessToken, userId, setUser, setSelectedENumbers, setAllergens, setCustomAllerg,
     loadFamily, loadShoppingList, loadFavorites,
   });
@@ -853,7 +853,8 @@ export default function EatSafe() {
     allergens, setAllergens, customAllerg, setCustomAllerg,
     family, setFamily, activeProfiles, setActiveProfiles,
     scanFamily, household, setHousehold, householdLoading, loadHousehold,
-  }), [allergens, customAllerg, family, activeProfiles, scanFamily, household, householdLoading, loadHousehold]);
+    profileLoadStatus, retryProfileLoad,
+  }), [allergens, customAllerg, family, activeProfiles, scanFamily, household, householdLoading, loadHousehold, profileLoadStatus, retryProfileLoad]);
 
   const adminContextValue = useMemo(() => ({
     adminSection, setAdminSection, adminStats,

@@ -94,8 +94,13 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
           levels: m.allergen_levels || {},
           eNumbers: m.e_numbers || [],
         })));
+        return true;
       }
-    } catch { /* silent */ }
+      return false;
+    } catch {
+      // Returnerer false, så useLoadUserData kan spærre for en vurdering (hotfix F2-1).
+      return false;
+    }
   };
 
   const addMember = async () => {

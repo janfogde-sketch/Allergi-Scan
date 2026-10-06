@@ -33,7 +33,7 @@ export default function ResultScreen({
 }) {
   const { user, accessToken } = useAuthContext();
   // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
-  const { scanFamily: family, allergens, customAllerg, activeProfiles } = useProfileContext();
+  const { scanFamily: family, allergens, customAllerg, activeProfiles, profileLoadStatus, retryProfileLoad } = useProfileContext();
   const { setScreen } = useNavigationContext();
   const { isFavorite, toggleFavorite } = useHistoryContext();
   const { lists, activeList, activeListId, addToList, shoppingList, toggleItem } = useShoppingContext();
@@ -44,6 +44,38 @@ export default function ResultScreen({
   // forbliver monteret på tværs af scanninger, kun scanResult skifter.
   React.useEffect(() => { setAddedToList(false); setShowListPicker(false); setUnknownOpen(false); }, [scanResult?.code]);
   if (!scanResult) return null;
+
+  // Hotfix F2-1 (6. okt. 2026): uden hentet profil (allergener og familie) er der intet at
+  // vurdere imod, og en tom profil ville give et grønt "Ingen advarsler fundet". Vis i
+  // stedet, at profilen mangler, og vurdér først, når den er hentet (siden regner selv om).
+  if (profileLoadStatus === "loading" || profileLoadStatus === "error") {
+    const failed = profileLoadStatus === "error";
+    return (
+      <div className="screen fade-in">
+        <div className="card" role="status" style={{ marginTop:8 }}>
+          <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>
+            {productDisplayName({ name: scanResult.name, brand: scanResult.brand }) || "Produktet"}
+          </div>
+          <div style={{ display:"flex", alignItems:"flex-start", gap:10, marginTop:12 }}>
+            <span style={{ flexShrink:0, marginTop:2 }}><Icon name="info" size={18} color="var(--neutral)" /></span>
+            <div>
+              <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>
+                {failed ? "Din profil kunne ikke hentes" : "Henter din profil …"}
+              </div>
+              <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.5 }}>
+                {failed
+                  ? "Vi kan ikke vurdere produktet, før dine allergier er hentet. Tjek din forbindelse, og prøv igen."
+                  : "Vurderingen vises, så snart dine allergier er hentet."}
+              </div>
+            </div>
+          </div>
+          {failed && (
+            <button className="btn btn-primary btn-full" style={{ marginTop:16 }} onClick={retryProfileLoad}>Prøv igen</button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // ── Per-profil sikkerhedsvurdering (25. sept. 2026, brugerfeedback) ──────
   // Hver aktiv profil evalueres SEPARAT mod produktets allergener,

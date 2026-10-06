@@ -9,6 +9,32 @@ export function useLoadUserData({
   accessToken, userId, setUser, setSelectedENumbers, setAllergens, setCustomAllerg,
   loadFamily, loadShoppingList, loadFavorites,
 }) {
+  // Status for hentningen af profil, allergener og familie (6. okt. 2026, hotfix F2-1):
+  // "idle" (ikke logget ind) | "loading" | "ok" | "error". Så længe den ikke er "ok",
+  // må ResultScreen ikke give en vurdering, for en tom profil ville ellers give et
+  // grønt "Ingen advarsler fundet".
+  const [profileLoadStatus, setProfileLoadStatus] = React.useState("idle");
+  // Tælles op for at hente igen (knappen "Prøv igen", online, appen kommer i forgrunden).
+  const [reloadKey, setReloadKey] = React.useState(0);
+  const retryProfileLoad = React.useCallback(() => setReloadKey(k => k + 1), []);
+
+  React.useEffect(() => {
+    if (!accessToken || !userId) setProfileLoadStatus("idle");
+  }, [accessToken, userId]);
+
+  // Nyt forsøg af sig selv, når nettet kommer igen, eller appen åbnes igen.
+  React.useEffect(() => {
+    if (profileLoadStatus !== "error") return;
+    const onOnline = () => retryProfileLoad();
+    const onVisible = () => { if (document.visibilityState === "visible") retryProfileLoad(); };
+    window.addEventListener("online", onOnline);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [profileLoadStatus, retryProfileLoad]);
+
   // ── Load brugerdata ved login ─────────────────────────────────────────────
   React.useEffect(() => {
     if (!accessToken || !userId) return;
@@ -18,6 +44,7 @@ export function useLoadUserData({
     let cancelled = false;
 
     const loadAll = async () => {
+      setProfileLoadStatus("loading");
       try {
         // Brugerprofil
         const profile = await apiCall(
@@ -61,16 +88,23 @@ export function useLoadUserData({
           setCustomAllerg(allergenData.filter(a => a.type === "custom").map(a => a.allergen));
         }
 
-        // Familie + indkøb + favoritter
-        loadFamily();
+        // Indkøb + favoritter må gerne fejle stille; familien skal være hentet,
+        // før der kan vurderes for den.
         loadShoppingList();
         loadFavorites();
+        const familyOk = await loadFamily();
+        if (cancelled) return;
+        if (familyOk === false) throw new Error("Familien kunne ikke hentes");
+        setProfileLoadStatus("ok");
       } catch (e) {
         console.error("loadAll fejl:", e);
+        if (!cancelled) setProfileLoadStatus("error");
       }
     };
 
     loadAll();
     return () => { cancelled = true; };
-  }, [accessToken, userId]);
+  }, [accessToken, userId, reloadKey]);
+
+  return { profileLoadStatus, retryProfileLoad };
 }
