@@ -31,4 +31,13 @@ describe("saveMyAllergens", () => {
     expect(global.fetch.mock.calls[1][1].method).toBe("DELETE");
     expect(JSON.parse(global.fetch.mock.calls[2][1].body)).toEqual([{ user_id: "u1", allergen: "aeg", type: "allergen" }]);
   });
+
+  it("sender spor-valg og E-numre med i samme kald", async () => {
+    global.fetch.mockResolvedValueOnce({ ok: true, status: 204, text: async () => "" });
+    await saveMyAllergens({ accessToken: "tok", allergens: ["aeg"], custom: [], eNumbers: ["E951"], allergenLevels: { aeg: "direct_only" } });
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({
+      p_allergens: ["aeg"], p_custom: [], p_e_numbers: ["E951"], p_allergen_levels: { aeg: "direct_only" },
+    });
+  });
 });

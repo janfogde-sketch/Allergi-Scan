@@ -6,15 +6,31 @@
 import { SUPABASE_URL } from "./constants.jsx";
 import { apiCall, makeHeaders } from "./helpers.js";
 
-export async function saveMyAllergens({ accessToken, userId, allergens, custom }) {
+// Valgfrit kan spor-valg, E-numre og kostpræferencer følge med (gemmes i samme transaktion).
+export async function saveMyAllergens({ accessToken, userId, allergens, custom, eNumbers, allergenLevels, diets }) {
   try {
     return await apiCall(`${SUPABASE_URL}/rest/v1/rpc/save_my_allergens`, {
       method: "POST",
       headers: makeHeaders(accessToken),
-      body: JSON.stringify({ p_allergens: allergens || [], p_custom: custom || [] }),
+      body: JSON.stringify({
+        p_allergens: allergens || [], p_custom: custom || [],
+        ...(eNumbers !== undefined ? { p_e_numbers: eNumbers || [] } : {}),
+        ...(allergenLevels !== undefined ? { p_allergen_levels: allergenLevels || {} } : {}),
+        ...(diets !== undefined ? { p_diets: diets || [] } : {}),
+      }),
     });
   } catch (e) {
     if (e?.status !== 404 || !userId) throw e;
+  }
+  const userPatch = {
+    ...(eNumbers !== undefined ? { e_numbers: eNumbers || [] } : {}),
+    ...(allergenLevels !== undefined ? { allergen_levels: allergenLevels || {} } : {}),
+    ...(diets !== undefined ? { diets: diets || [] } : {}),
+  };
+  if (Object.keys(userPatch).length > 0) {
+    await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+      method: "PATCH", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" }, body: JSON.stringify(userPatch),
+    });
   }
   await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, { method: "DELETE", headers: makeHeaders(accessToken) });
   const rows = [
