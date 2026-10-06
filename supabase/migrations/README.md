@@ -9,12 +9,18 @@ filer i `supabase/sql/`.
 tomt projekt (staging eller lokal `supabase start`) og til at kunne læse og
 diffe skemaet i repoet.
 
-## Nye ændringer
+## Nye ændringer (fra 6. okt. 2026)
 
-1. Kør ændringen med `apply_migration` (Supabase MCP) — navnet i snake_case.
-2. Gem præcis samme SQL her som `<version>_<navn>.sql`, hvor `<version>` er
-   den version, `list_migrations` viser for den nye migration.
-3. Commit filen i samme omgang som koden, der bruger ændringen.
+Alle databaseændringer, også enkeltstående rettelser (grant, sletning), skrives som en fil her og går i en PR.
+Workflowet `apply-migrations.yml` anvender nye filer ved merge til main (Jans "push" er godkendelsen); tråde
+bruger ikke `apply_migration`/`execute_sql` til skrivning, fordi Supabase-forbindelsens bekræftelsesdialog ikke
+er synlig for Jan.
+
+1. Gem SQL som `<ÅÅÅÅMMDDTTMMSS>_<navn>.sql` (version nyere end alle eksisterende).
+2. Skriv i PR-teksten tydeligt, hvis filen sletter eller ændrer data.
+3. Filen køres i én transaktion og registreres i `schema_migrations`; fejler den, stopper workflowet.
+4. Test uden at ændre noget: kør SQL'en i en transaktion, der rulles tilbage (`begin; ...; rollback;`), eller start
+   workflowet manuelt med `dry_run`. Læsning (`execute_sql` med select) er stadig fint.
 
 ## Hvis Supabase CLI skal bruge mappen (`supabase db push`)
 

@@ -13,8 +13,8 @@
   opgave (et to do-id), så læs kun den opgave (og dens kommentarer), og gå i gang; læs ikke hele listen. Starter den uden opgave:
   `select title, status, priority, track, due_date from admin_todos where status <> 'done'`, nævn de åbne punkter kort, og spørg hvad
   der skal tages først. Afslut punkter (`status='done'`) og opret nye. Tickets ligger også på listen (status følger begge veje).
-- **Databaseændringer** køres som migration (`apply_migration`) OG gemmes som fil i `supabase/migrations/` med den anvendte version
-  (`list_migrations`), aldrig kun som løs SQL. Edge-funktioner deployes ved merge af `.github/workflows/deploy-edge-functions.yml`
+- **Databaseændringer** skrives som fil i `supabase/migrations/` (version = tidsstempel) og anvendes automatisk af workflowet `apply-migrations.yml`
+  ved merge til main (Jans "push"). Brug ikke `apply_migration`/`execute_sql` til skrivning (dialogen er usynlig for Jan); læsning er fint. Se `supabase/migrations/README.md`. Edge-funktioner deployes ved merge af `.github/workflows/deploy-edge-functions.yml`
   (secret `SUPABASE_ACCESS_TOKEN`; 401/403 = ny adgangsnøgle, udløber). `supabase/config.toml` har `verify_jwt` pr. funktion.
 - **Supabase Pro er sat på pause (Jans beslutning):** backups, testmiljø og Leaked Password Protection venter. Spørg ikke, om det
   er glemt, kun om han vil opgradere. **Vercel skal skifte til Pro, før vi går live** (Vercels DPA gælder kun Pro/Enterprise; to do på listen).
