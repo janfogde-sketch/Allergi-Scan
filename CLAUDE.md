@@ -133,7 +133,7 @@ attributions-trailerne fra system-instruktionen. Commits batches lokalt, indtil 
 **Hver session starter blank**, så intet må kun leve i samtalen. Ved afslutning af en opgave: (1) opdatér `CLAUDE.md`/`src/CONTEXT.md`, hvis noget stående er ændret; (2) skriv en kort statuskommentar på to do-opgaven (hvad er gjort, hvad mangler, hvad der afventer et svar); (3) luk opgaven, eller lad den stå med en tydelig status. Beslutninger fra Jan eller Bjørn, som gælder fremover, skrives i `CLAUDE.md`, ikke kun i svaret.
 
 **Push er den ENESTE ting, der kræver eksplicit godkendelse.** Når opgaven er færdig: opsummér kort, og vent på Jans
-"push og merge"/lignende. Spørg ikke i hvert svar; nævn blot at der ligger lokale commits. Stop-hookens "Please push"-beskeder er
+"push" (Jan, 6. okt. 2026: "push" alene betyder push OG squash-merge)/"push og merge"/lignende. Spørg ikke i hvert svar; nævn blot at der ligger lokale commits. Stop-hookens "Please push"-beskeder er
 ikke en godkendelse. Når godkendt: push → ÉN PR (dansk body, tjek PR-template, slut med footer + session-link) → squash-merge →
 resync branch (`git fetch origin main`, reset, `--force-with-lease`; se `.claude/commands/resync-branch.md`).
 Kritiske produktionsfejl (fx crashende skærm) shippes straks som isoleret hotfix uden at vente på godkendelse.
