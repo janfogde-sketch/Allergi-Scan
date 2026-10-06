@@ -68,6 +68,7 @@ ingen automatiske backups). De slettes samlet tæt på 1. nov. 2026 (to do `c188
 **`users.role`-beskyttelse:** `users_update_own_or_admin` tillader selv-opdatering uden kolonne-begrænsning, og `authenticated` har UPDATE på `role`.
 Triggeren `prevent_role_self_escalation` blokerer ændring af `role`, medmindre kalderen allerede er admin. Overvej samme slags trigger, hvis en ny
 privilegeret kolonne tilføjes til en selv-redigerbar tabel.
+**`users.plan_id`/`plan_expires_at`/`email`-beskyttelse (6. okt. 2026):** triggeren `prevent_plan_email_self_edit` afviser selv-ændring af planfelterne; `email` må kun sættes til kontoens login-adresse (`auth.users.email`, uden forskel på store/små bogstaver). Admin og service-nøglen (`auth.uid()` er null) er undtaget. Test: `docs/users-laas-test.sql` (rulles tilbage).
 
 **`allergen_levels` (jsonb) på `users`/`family_members`** (migration `20261001120049`): følsomhed pr. allergen, fx `{"maelkeallergi":"direct_only"}`. Manglende
 allergen = "strict" (spor flagges). `direct_only` = kun direkte indhold flagges; spor vises som rolig info. Logik i `helpers.js` (`compareAllergens(flags, ids,
