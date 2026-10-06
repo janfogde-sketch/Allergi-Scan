@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { MADPAS_LANGUAGES, MADPAS_COELIAC_T, ALLERGEN_T } from "./constants.jsx";
+import { MADPAS_LANGUAGES, MADPAS_COELIAC_T, ALLERGEN_T, MADPAS_SAFETY_NOTE_T, MADPAS_SPEECH_INTRO_T, MADPAS_SPEECH_CANNOT_T, MADPAS_SPEECH_OUTRO_T } from "./constants.jsx";
 import { madpasSafetyNote, madpasCrossContactNote, madpasAllergyStatement, madpasAllergenExamples } from "./useMadpas.js";
 
 describe("Madpas-sætninger", () => {
@@ -47,5 +47,25 @@ describe("Madpas-sætninger", () => {
     expect(madpasSafetyNote("Coeliac disease", "en", "coeliaki")).toContain("strictly gluten-free");
     expect(madpasSafetyNote("Cøliaki", "da", "coeliaki")).toContain("strengt glutenfri");
     expect(madpasSafetyNote("Cøliaki", "da", "coeliaki")).not.toContain("ikke indeholder");
+  });
+
+  // F5-1 (6. okt. 2026): thai manglede i oplæsningen, så en thai-stemme læste engelsk.
+  it("har oplæsningens hilsen, 'kan ikke spise' og afslutning på alle 17 sprog", () => {
+    for (const { code } of MADPAS_LANGUAGES) {
+      for (const t of [MADPAS_SPEECH_INTRO_T, MADPAS_SPEECH_CANNOT_T, MADPAS_SPEECH_OUTRO_T]) {
+        expect(t[code], code).toBeTruthy();
+      }
+    }
+  });
+
+  // F5-3: "{name}'den" gav "süt'den"; skabelonen må ikke bøje navnet.
+  it("bøjer ikke allergennavnet i den tyrkiske sikkerhedssætning", () => {
+    expect(MADPAS_SAFETY_NOTE_T.tr).not.toMatch(/\{name\}'/);
+    expect(madpasSafetyNote("Süt", "tr")).toContain("süt içeren");
+  });
+
+  // F5-4: "Φιστίκια" alene kan læses som pistacie.
+  it("kalder jordnødder 'Αραχίδες' på græsk", () => {
+    expect(ALLERGEN_T.jordnoedder.el.n).toBe("Αραχίδες");
   });
 });

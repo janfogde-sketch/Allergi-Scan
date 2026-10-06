@@ -152,7 +152,7 @@ export default function MadpasScreen({
     };
 
     return (
-      <div style={{ position:"fixed", inset:0, zIndex:9999, background:"var(--paper)", display:"flex", flexDirection:"column" }} dir={rtl ? "rtl" : "ltr"}>
+      <div style={{ position:"fixed", inset:0, zIndex:9999, background:"var(--paper)", display:"flex", flexDirection:"column" }} dir={rtl ? "rtl" : "ltr"} lang={langInfo?.bcp || lang}>
 
         {/* Stort flag/sprog øverst + tydelig-men-diskret luk-knap. */}
         <div style={{ padding:"20px 24px 8px", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
@@ -162,7 +162,7 @@ export default function MadpasScreen({
             <Icon name="globe" size={24} color="var(--ink2)" />
             <span style={{ fontSize:17, color:"var(--ink2)", fontWeight:700, minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{langInfo?.name}</span>
           </div>
-          <button className="mp-close-btn" onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }} aria-label="Luk">
+          <button className="mp-close-btn" lang="da" onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }} aria-label="Luk">
             <Icon name="x" size={20} color="var(--ink2)" />
           </button>
         </div>
@@ -280,7 +280,7 @@ export default function MadpasScreen({
             for tæt på home indicator-området på en notch-telefon. */}
         {window.speechSynthesis && (
           <div style={{ padding:"12px 24px calc(16px + env(safe-area-inset-bottom))", borderTop:"1px solid var(--border)", flexShrink:0 }}>
-            <button className="mp-speak-btn" onClick={madpasSpeak} style={{ background: madpasSpeaking ? "var(--amber)" : "var(--green)" }}>
+            <button className="mp-speak-btn" lang="da" onClick={madpasSpeak} style={{ background: madpasSpeaking ? "var(--amber)" : "var(--green)" }}>
               <Icon name={madpasSpeaking ? "speakerOff" : "speaker"} size={19} color="var(--on-green)" />
               {/* Knappen er til brugeren, ikke personalet: altid appens sprog (dansk). */}
               {madpasSpeaking ? "Stop" : "Læs højt"}

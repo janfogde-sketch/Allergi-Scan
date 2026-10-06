@@ -508,7 +508,7 @@ export const ALLERGEN_EXAMPLES = {
   },
   jordnoedder: {
     products: { da:["Jordnøddesmør","Satay sauce","Snacks","Cookies"], en:["Peanut butter","Satay sauce","Snacks","Cookies"], de:["Erdnussbutter","Satay-Sauce","Snacks","Kekse"], fr:["Beurre de cacahuète","Sauce satay","Snacks","Cookies"], es:["Mantequilla de cacahuete","Salsa satay","Snacks","Galletas"], it:["Burro di arachidi","Salsa satay","Snack","Biscotti"], nl:["Pindakaas","Satésaus","Snacks","Koekjes"], pt:["Manteiga de amendoim","Molho satay","Snacks","Bolachas"], pl:["Masło orzechowe","Sos satay","Przekąski","Ciastka"], sv:["Jordnötssmör","Sataysås","Snacks","Kakor"], no:["Peanøttsmør","Sataysaus","Snacks","Kjeks"], ja:["ピーナッツバター","サテソース","スナック","クッキー"], zh:["花生酱","沙爹酱","零食","饼干"], ar:["زبدة الفول السوداني","صلصة الساتيه","وجبات خفيفة","بسكويت"], tr:["Fıstık ezmesi","Satay sosu","Atıştırmalık","Kurabiye"], th:["เนยถั่ว","ซอสสะเต๊ะ","ขนมขบเคี้ยว","คุกกี้"], el:["Βούτυρο φιστικιών","Σάλτσα σατέ","Σνακ","Μπισκότα"] },
-    ingredients: { da:["Jordnødder","Peanuts","Arachis hypogaea"], en:["Peanuts","Groundnuts","Arachis hypogaea"], de:["Erdnüsse","Erdnuss","Arachis hypogaea"], fr:["Arachides","Cacahuètes","Arachis hypogaea"], es:["Cacahuetes","Maníes","Arachis hypogaea"], it:["Arachidi","Noccioline","Arachis hypogaea"], nl:["Pinda's","Grondnoten","Arachis hypogaea"], pt:["Amendoins","Arachis hypogaea"], pl:["Orzeszki ziemne","Orzeszki arachidowe"], sv:["Jordnötter","Arachis hypogaea"], no:["Peanøtter","Jordnøtter","Arachis hypogaea"], ja:["ピーナッツ","落花生","アラキス"], zh:["花生","落花生"], ar:["الفول السوداني","فول سوداني"], tr:["Yerfıstığı","Fıstık"], th:["ถั่วลิสง"], el:["Φιστίκια Αμερικής","Αραχίδες"] },
+    ingredients: { da:["Jordnødder","Peanuts","Arachis hypogaea"], en:["Peanuts","Groundnuts","Arachis hypogaea"], de:["Erdnüsse","Erdnuss","Arachis hypogaea"], fr:["Arachides","Cacahuètes","Arachis hypogaea"], es:["Cacahuetes","Maníes","Arachis hypogaea"], it:["Arachidi","Noccioline","Arachis hypogaea"], nl:["Pinda's","Grondnoten","Arachis hypogaea"], pt:["Amendoins","Arachis hypogaea"], pl:["Orzeszki ziemne","Orzeszki arachidowe"], sv:["Jordnötter","Arachis hypogaea"], no:["Peanøtter","Jordnøtter","Arachis hypogaea"], ja:["ピーナッツ","落花生","アラキス"], zh:["花生","落花生"], ar:["الفول السوداني","فول سوداني"], tr:["Yerfıstığı","Fıstık"], th:["ถั่วลิสง"], el:["Φιστίκια Αμερικής","Αράπικα φιστίκια"] },
   },
   soja: {
     products: { da:["Tofu","Soja sauce","Miso","Edamame","Tempeh"], en:["Tofu","Soy sauce","Miso","Edamame","Tempeh"], de:["Tofu","Sojasoße","Miso","Edamame","Tempeh"], fr:["Tofu","Sauce soja","Miso","Edamame","Tempeh"], es:["Tofu","Salsa de soja","Miso","Edamame","Tempeh"], it:["Tofu","Salsa di soia","Miso","Edamame","Tempeh"], nl:["Tofu","Sojasaus","Miso","Edamame","Tempeh"], pt:["Tofu","Molho de soja","Miso","Edamame","Tempeh"], pl:["Tofu","Sos sojowy","Miso","Edamame","Tempeh"], sv:["Tofu","Sojasås","Miso","Edamame","Tempeh"], no:["Tofu","Soyasaus","Miso","Edamame","Tempeh"], ja:["豆腐","醤油","味噌","枝豆","テンペ"], zh:["豆腐","酱油","味噌","毛豆","天贝"], ar:["توفو","صلصة الصويا","ميسو","إيدامامي","تيمبيه"], tr:["Tofu","Soya sosu","Miso","Edamame","Tempeh"], th:["เต้าหู้","ซีอิ้ว","มิโซะ","เอดาแมม","เทมเป้"], el:["Τόφου","Σάλτσα σόγιας","Μίσο","Εντάμαμε","Τέμπε"] },
@@ -717,9 +717,58 @@ export const MADPAS_SAFETY_NOTE_T = {
   ja:"私の食事に{name}、または{name}由来の原材料が含まれていないことを確認してください。",
   zh:"请确保我的食物不含{name}，也不含由{name}制成的成分。",
   ar:"يرجى التأكد من أن طعامي لا يحتوي على: {name}، أو أي مكونات مصنوعة منه.",
-  tr:"Lütfen yemeğimde {name} veya {name}'den yapılan malzemeler bulunmadığından emin olun.",
+  tr:"Lütfen yemeğimde {name} veya {name} içeren malzemeler bulunmadığından emin olun.",
   th:"กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มี {name} หรือส่วนผสมที่ทำจาก {name}",
   el:"Παρακαλώ φροντίστε το φαγητό μου να μην περιέχει το ακόλουθο: {name}, ή οποιοδήποτε συστατικό που παράγεται από αυτό.",
+};
+
+// Oplæsningens hilsen, "kan ikke spise" og afslutning (flyttet fra useMadpas.js 6. okt. 2026,
+// F5-1/F5-14), så de er med i sprogtjekket. Alle 17 sprog skal være her (test i useMadpas.test.js);
+// før manglede thai, så en thai-stemme læste engelsk op.
+export const MADPAS_SPEECH_INTRO_T = {
+  da:"Hej! Jeg har nogle fødevareallergier og ønsker gerne din hjælp til at finde noget, jeg kan spise trygt.",
+  en:"Hi! I have some food allergies and would love your help finding something safe for me to eat.",
+  de:"Hallo! Ich habe einige Lebensmittelallergien und würde mich über Ihre Hilfe freuen.",
+  fr:"Bonjour ! J'ai des allergies alimentaires et j'aurais besoin de votre aide.",
+  es:"¡Hola! Tengo algunas alergias alimentarias y agradecería su ayuda.",
+  it:"Ciao! Ho alcune allergie alimentari e apprezzerei il suo aiuto.",
+  nl:"Hallo! Ik heb wat voedselallergieën en zou graag uw hulp willen.",
+  pt:"Olá! Tenho algumas alergias alimentares e gostaria da sua ajuda.",
+  pl:"Cześć! Mam kilka alergii pokarmowych i chciałbym prosić o pomoc.",
+  sv:"Hej! Jag har några matallergier och skulle uppskatta din hjälp.",
+  no:"Hei! Jeg har noen matallergier og ønsker gjerne din hjelp.",
+  ja:"こんにちは！食物アレルギーがあります。安全な食事を見つけるお手伝いをお願いできますか。",
+  zh:"您好！我有食物过敏，希望您能帮助我找到安全的食物。",
+  ar:"مرحباً! لدي بعض الحساسية الغذائية وأود مساعدتك في إيجاد شيء آمن لي.",
+  tr:"Merhaba! Gıda alerjilerim var ve güvenli bir şey bulmam için yardımınıza ihtiyacım var.",
+  th:"สวัสดี! ฉันแพ้อาหารบางอย่าง และอยากขอให้ช่วยหาอาหารที่ฉันกินได้อย่างปลอดภัย",
+  el:"Γεια σας! Έχω κάποιες αλλεργίες τροφίμων και θα εκτιμούσα τη βοήθειά σας.",
+};
+export const MADPAS_SPEECH_CANNOT_T = {
+  da:"Jeg kan ikke spise", en:"I cannot eat", de:"Ich kann nicht essen",
+  fr:"Je ne peux pas manger", es:"No puedo comer", it:"Non posso mangiare",
+  nl:"Ik kan niet eten", pt:"Não posso comer", pl:"Nie mogę jeść",
+  sv:"Jag kan inte äta", no:"Jeg kan ikke spise", ja:"食べられません",
+  zh:"我不能吃", ar:"لا أستطيع تناول", tr:"Yiyemiyorum", th:"ฉันกินสิ่งเหล่านี้ไม่ได้", el:"Δεν μπορώ να φάω",
+};
+export const MADPAS_SPEECH_OUTRO_T = {
+  da:"Tak for din hjælp — det betyder rigtig meget for mig.",
+  en:"Thank you so much for your help — it means a lot to me.",
+  de:"Vielen Dank für Ihre Hilfe — das bedeutet mir sehr viel.",
+  fr:"Merci beaucoup pour votre aide — cela compte beaucoup pour moi.",
+  es:"Muchas gracias por su ayuda — significa mucho para mí.",
+  it:"Grazie mille per il suo aiuto — significa molto per me.",
+  nl:"Heel erg bedankt voor uw hulp — dat betekent veel voor mij.",
+  pt:"Muito obrigado pela sua ajuda — significa muito para mim.",
+  pl:"Bardzo dziękuję za pomoc — wiele dla mnie znaczy.",
+  sv:"Tack så mycket för din hjälp — det betyder mycket för mig.",
+  no:"Tusen takk for hjelpen — det betyr mye for meg.",
+  ja:"ご協力ありがとうございます。本当に助かります。",
+  zh:"非常感谢您的帮助，对我来说意义重大。",
+  ar:"شكراً جزيلاً على مساعدتك — هذا يعني لي الكثير.",
+  tr:"Yardımınız için çok teşekkür ederim — bu benim için çok şey ifade ediyor.",
+  th:"ขอบคุณมากสำหรับความช่วยเหลือ มีความหมายกับฉันมาก",
+  el:"Σας ευχαριστώ πολύ για τη βοήθειά σας — σημαίνει πολλά για μένα.",
 };
 
 // Madpas-specifikke eksempler (1. okt. 2026): mælk viser ikke "Mælk" som
@@ -942,7 +991,7 @@ export const ALLERGEN_T = {
   laktose:     { en:{n:"Lactose / Dairy",d:"Contains milk and dairy products (lactose)"},de:{n:"Laktose / Milch",d:"Enthält Milch und Milchprodukte (Laktose)"},fr:{n:"Lactose / Lait",d:"Contient du lait et des produits laitiers (lactose)"},es:{n:"Lactosa / Lácteos",d:"Contiene leche y productos lácteos (lactosa)"},it:{n:"Lattosio / Latte",d:"Contiene latte e latticini (lattosio)"},nl:{n:"Lactose / Melk",d:"Bevat melk en zuivelproducten (lactose)"},pt:{n:"Lactose / Leite",d:"Contém leite e produtos lácteos (lactose)"},pl:{n:"Laktoza / Mleko",d:"Zawiera mleko i produkty mleczne (laktoza)"},sv:{n:"Laktos / Mjölk",d:"Innehåller mjölk och mjölkprodukter (laktos)"},no:{n:"Laktose / Melk",d:"Inneholder melk og meieriprodukter (laktose)"},ja:{n:"乳糖 / 乳製品",d:"牛乳および乳製品を含む（ラクトース）"},zh:{n:"乳糖 / 乳制品",d:"含有牛奶和乳制品（乳糖）"},ar:{n:"اللاكتوز / الألبان",d:"يحتوي على الحليب ومنتجات الألبان"},tr:{n:"Laktoz / Süt",d:"Süt ve süt ürünleri içerir (laktoz)"},th:{n:"แลคโตส / นม",d:"มีนมและผลิตภัณฑ์จากนม (แลคโตส)"},el:{n:"Λακτόζη / Γάλα",d:"Περιέχει γάλα και γαλακτοκομικά (λακτόζη)"} },
   aeg:         { en:{n:"Eggs",d:"Contains eggs and egg products"},de:{n:"Ei",d:"Enthält Eier und Eiprodukte"},fr:{n:"Œufs",d:"Contient des œufs et ovoproduits"},es:{n:"Huevos",d:"Contiene huevos y ovoproductos"},it:{n:"Uova",d:"Contiene uova e ovoprodotti"},nl:{n:"Eieren",d:"Bevat eieren en eiproducten"},pt:{n:"Ovos",d:"Contém ovos e produtos à base de ovos"},pl:{n:"Jaja",d:"Zawiera jaja i produkty na bazie jaj"},sv:{n:"Ägg",d:"Innehåller ägg och äggprodukter"},no:{n:"Egg",d:"Inneholder egg og eggprodukter"},ja:{n:"卵",d:"卵および卵製品を含む"},zh:{n:"鸡蛋",d:"含有鸡蛋和蛋制品"},ar:{n:"البيض",d:"يحتوي على البيض ومنتجاته"},tr:{n:"Yumurta",d:"Yumurta ve yumurta ürünleri içerir"},th:{n:"ไข่",d:"มีไข่และผลิตภัณฑ์จากไข่"},el:{n:"Αυγά",d:"Περιέχει αυγά και προϊόντα αυγών"} },
   noedder:     { en:{n:"Tree Nuts",d:"Contains nuts (almonds, hazelnuts, walnuts, cashews, pistachios etc.)"},de:{n:"Schalenfrüchte",d:"Enthält Nüsse (Mandeln, Haselnüsse, Walnüsse, Cashews, Pistazien usw.)"},fr:{n:"Fruits à coque",d:"Contient des fruits à coque (amandes, noisettes, noix, cajou, pistaches, etc.)"},es:{n:"Frutos secos",d:"Contiene frutos secos (almendras, avellanas, nueces, anacardos, pistachos, etc.)"},it:{n:"Frutta a guscio",d:"Contiene frutta a guscio (mandorle, nocciole, noci, anacardi, pistacchi ecc.)"},nl:{n:"Noten",d:"Bevat noten (amandelen, hazelnoten, walnoten, cashewnoten, pistachenoten, etc.)"},pt:{n:"Frutos de casca rija",d:"Contém frutos de casca rija (amêndoas, avelãs, nozes, cajus, pistáchios, etc.)"},pl:{n:"Orzechy",d:"Zawiera orzechy (migdały, orzechy laskowe, włoskie, nerkowce, pistacje itp.)"},sv:{n:"Nötter",d:"Innehåller nötter (mandlar, hasselnötter, valnötter, cashewnötter, pistaschnötter m.fl.)"},no:{n:"Nøtter",d:"Inneholder nøtter (mandler, hasselnøtter, valnøtter, cashewnøtter, pistasjnøtter m.fl.)"},ja:{n:"ナッツ類",d:"ナッツ類含有（アーモンド・ヘーゼルナッツ・クルミ・カシューナッツ・ピスタチオ等）"},zh:{n:"坚果",d:"含有坚果（杏仁、榛子、核桃、腰果、开心果等）"},ar:{n:"المكسرات",d:"يحتوي على المكسرات (اللوز، البندق، الجوز، الكاجو، الفستق)"},tr:{n:"Kabuklu Yemişler",d:"Kabuklu yemiş içerir (badem, fındık, ceviz, kaju, antep fıstığı vb.)"},th:{n:"ถั่วต้นไม้",d:"มีถั่ว (อัลมอนด์, เฮเซลนัท, วอลนัท, มะม่วงหิมพานต์, พิสตาชิโอ)"},el:{n:"Ξηροί καρποί",d:"Περιέχει ξηρούς καρπούς (αμύγδαλα, φουντούκια, καρύδια, κάσιους, φιστίκια)"} },
-  jordnoedder: { en:{n:"Peanuts",d:"Contains peanuts and peanut products"},de:{n:"Erdnüsse",d:"Enthält Erdnüsse und Erdnussprodukte"},fr:{n:"Arachides",d:"Contient des arachides (cacahuètes) et produits"},es:{n:"Cacahuetes",d:"Contiene cacahuetes y productos a base de cacahuetes"},it:{n:"Arachidi",d:"Contiene arachidi e prodotti a base di arachidi"},nl:{n:"Pinda's",d:"Bevat pinda's en pindaproducten"},pt:{n:"Amendoins",d:"Contém amendoins e produtos à base de amendoins"},pl:{n:"Orzeszki ziemne",d:"Zawiera orzeszki ziemne i produkty z orzeszków ziemnych"},sv:{n:"Jordnötter",d:"Innehåller jordnötter och jordnötsprodukter"},no:{n:"Peanøtter",d:"Inneholder peanøtter og peanøttprodukter"},ja:{n:"ピーナッツ",d:"ピーナッツおよびピーナッツ製品を含む"},zh:{n:"花生",d:"含有花生和花生制品"},ar:{n:"الفول السوداني",d:"يحتوي على الفول السوداني ومنتجاته"},tr:{n:"Yerfıstığı",d:"Yerfıstığı ve yerfıstığı ürünleri içerir"},th:{n:"ถั่วลิสง",d:"มีถั่วลิสงและผลิตภัณฑ์จากถั่วลิสง"},el:{n:"Φιστίκια",d:"Περιέχει φιστίκια και προϊόντα φιστικιών"} },
+  jordnoedder: { en:{n:"Peanuts",d:"Contains peanuts and peanut products"},de:{n:"Erdnüsse",d:"Enthält Erdnüsse und Erdnussprodukte"},fr:{n:"Arachides",d:"Contient des arachides (cacahuètes) et produits"},es:{n:"Cacahuetes",d:"Contiene cacahuetes y productos a base de cacahuetes"},it:{n:"Arachidi",d:"Contiene arachidi e prodotti a base di arachidi"},nl:{n:"Pinda's",d:"Bevat pinda's en pindaproducten"},pt:{n:"Amendoins",d:"Contém amendoins e produtos à base de amendoins"},pl:{n:"Orzeszki ziemne",d:"Zawiera orzeszki ziemne i produkty z orzeszków ziemnych"},sv:{n:"Jordnötter",d:"Innehåller jordnötter och jordnötsprodukter"},no:{n:"Peanøtter",d:"Inneholder peanøtter og peanøttprodukter"},ja:{n:"ピーナッツ",d:"ピーナッツおよびピーナッツ製品を含む"},zh:{n:"花生",d:"含有花生和花生制品"},ar:{n:"الفول السوداني",d:"يحتوي على الفول السوداني ومنتجاته"},tr:{n:"Yerfıstığı",d:"Yerfıstığı ve yerfıstığı ürünleri içerir"},th:{n:"ถั่วลิสง",d:"มีถั่วลิสงและผลิตภัณฑ์จากถั่วลิสง"},el:{n:"Αραχίδες",d:"Περιέχει αραχίδες (φιστίκια Αμερικής) και προϊόντα τους"} },
   // "Soya" (IKKE "Soy / Soya") — det korrekte lokale navn for MADPAS_LANGUAGES'
   // "en"-variant, som er britisk engelsk (🇬🇧, bcp en-GB, se MADPAS_LANGUAGES) —
   // to varianter samtidig var forvirrende for personalet (27. sept. 2026,
