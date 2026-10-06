@@ -45,6 +45,12 @@ export default function ResultScreen({
   // Nulstil "tilføjet"-kvitteringen når man ser et nyt produkt — ResultScreen
   // forbliver monteret på tværs af scanninger, kun scanResult skifter.
   React.useEffect(() => { setAddedToList(false); setShowListPicker(false); setUnknownOpen(false); }, [scanResult?.code]);
+  // F4-6: resultatets overskrift får fokus ved hvert nyt resultat, så skærmlæseren straks læser vurderingen op.
+  const verdictHeadingRef = React.useRef(null);
+  React.useEffect(() => {
+    const id = requestAnimationFrame(() => verdictHeadingRef.current?.focus({ preventScroll: true }));
+    return () => cancelAnimationFrame(id);
+  }, [scanResult?.code]);
   // F1-1: tilbagekaldt af Fødevarestyrelsen (opslag på EAN); gør status rød uanset allergier.
   const recalls = useRecalls(scanResult?.isDemo ? null : scanResult?.code, accessToken);
   if (!scanResult) return null;
@@ -605,7 +611,9 @@ export default function ResultScreen({
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
             <div style={{ display:"flex", alignItems:"center", gap:8, minWidth:0 }}>
               {headlineText && <><Icon name={verdictIcon} size={13} color="#fff" />
-              <span style={UI.ufs12_fw800_ls01em_ttuppercas}>{headlineText}</span></>}
+              <h1 ref={verdictHeadingRef} tabIndex={-1} style={{ ...UI.ufs12_fw800_ls01em_ttuppercas, margin:0 }}>
+                {headlineText}<span className="sr-only">: {productDisplayName({ name: scanResult.name, brand: scanResult.brand }) || "Produktet"}</span>
+              </h1></>}
             </div>
             <div style={{ display:"flex", gap:8, flexShrink:0 }}>
               <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} onClick={() => toggleFavorite(scanResult)}

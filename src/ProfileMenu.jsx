@@ -18,6 +18,7 @@ import { SCREENS } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { Icon } from "./SharedComponents.jsx";
+import { useDialogA11y } from "./useDialogA11y.js";
 
 // Delt række-komponent, så ethvert menupunkt (uanset gruppe) ser og opfører
 // sig ens: ikon til venstre, titel + evt. sekundær beskrivelse, evt. chevron
@@ -50,6 +51,8 @@ function MenuRow({ icon, label, sub, chevron = true, onClick, secondary = false 
 
 export default function ProfileMenu({ open, onClose, onNavigate, onOpenSafetyInfo, unreadNotifications = 0 }) {
   const { user, clearAuth } = useAuthContext();
+  const panelRef = React.useRef(null);
+  useDialogA11y(panelRef, onClose, { active: open });
 
   if (!open) return null;
 
@@ -145,12 +148,13 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenSafetyInf
           menu; var(--surface3) er en meget svag, subtil off-white i
           stedet, ikke en ny farve. Drawer-positionering/animation og det
           mørke overlay ovenfor er UÆNDREDE. */}
-      <div style={{ position:"absolute", top:0, right:0, bottom:0, width:"min(320px, 86vw)",
-          background:"var(--surface3)",
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="profile-menu-title" tabIndex={-1}
+        style={{ position:"absolute", top:0, right:0, bottom:0, width:"min(320px, 86vw)",
+          background:"var(--surface3)", outline:"none",
           boxShadow:"-10px 0 28px rgba(0,0,0,.18)", display:"flex", flexDirection:"column", overflowY:"auto" }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 14px 14px" }}>
-          <div style={{ fontSize:16, fontWeight:900, color:"var(--ink)" }}>Menu</div>
+          <div id="profile-menu-title" style={{ fontSize:16, fontWeight:900, color:"var(--ink)" }}>Menu</div>
           <button onClick={onClose} aria-label="Luk menu"
             style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
         </div>

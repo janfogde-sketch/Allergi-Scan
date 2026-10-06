@@ -8,6 +8,7 @@ import { useProfileContext } from "./ProfileContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 import { UI } from "./styleUtils.js";
+import { useDialogA11y } from "./useDialogA11y.js";
 import { STATUS_COLOR, STATUS_ICON } from "./historyStatus.js";
 
 // ── Favoritter: kategoriser-bottom sheet ─────────────────────────────────────
@@ -39,6 +40,8 @@ import { STATUS_COLOR, STATUS_ICON } from "./historyStatus.js";
 // allerede bruger: portal til document.body.
 function FavoriteCategorySheet({ favorite, existingCategories, onSetCategory, onClose }) {
   const [newCategoryInput, setNewCategoryInput] = useState("");
+  const sheetRef = React.useRef(null);
+  useDialogA11y(sheetRef, onClose);
   const createCategory = () => {
     const name = newCategoryInput.trim();
     if (!name) return;
@@ -52,14 +55,15 @@ function FavoriteCategorySheet({ favorite, existingCategories, onSetCategory, on
           safe-area padding nederst") — samme additive mønster som
           .bottom-nav allerede bruger (calc(24px + env(...))), så "Opret"-
           knappen aldrig ender under enhedens home-indikator/safe-area. */}
-      <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px calc(28px + env(safe-area-inset-bottom))", position:"absolute", left:0, right:0, bottom:0, maxHeight:"75vh", overflowY:"auto" }}
+      <div ref={sheetRef} role="dialog" aria-modal="true" aria-labelledby="favorite-category-title" tabIndex={-1}
+        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px calc(28px + env(safe-area-inset-bottom))", position:"absolute", left:0, right:0, bottom:0, maxHeight:"75vh", overflowY:"auto", outline:"none" }}
         onClick={e => e.stopPropagation()}>
         <div style={UI.rowBetweenMb16}>
           {/* "Kategorisér favorit" → "Kategorier" (26. sept. 2026,
               brugerfeedback: "renere — brugeren kan allerede se produkt-
               navnet nedenunder og forstår handlingen"). Produktnavnet
               herunder er UÆNDRET. */}
-          <div style={UI.ufs18_fw900_cink}>Kategorier</div>
+          <div id="favorite-category-title" style={UI.ufs18_fw900_cink}>Kategorier</div>
           <button onClick={onClose} aria-label="Luk"
             style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
         </div>

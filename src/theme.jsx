@@ -1319,6 +1319,8 @@ body::-webkit-scrollbar{display:none;}
 .btn{min-height:44px;}
 .nav-item{min-height:44px;min-width:44px;}
 *:focus-visible{outline:2.5px solid var(--green);outline-offset:2px;border-radius:4px;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+[tabindex="-1"]:focus{outline:none;}
 .skip-link{position:absolute;top:-100px;left:16px;background:var(--green);color:var(--on-green);padding:8px 16px;border-radius:8px;font-size:14px;font-weight:700;z-index:9999;text-decoration:none;}
 .skip-link:focus{top:8px;}
 @media (prefers-reduced-motion: reduce) {

@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { Icon } from "./SharedComponents.jsx";
 import { DIETS_ENABLED } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
+import { useDialogA11y } from "./useDialogA11y.js";
 
 const HELP_CONTENT = {
   "home": { title:"Scanner", titleIcon:"camera", tips:[
@@ -88,14 +89,17 @@ export default function HelpModal({ screen, onClose, onOpenFeedback, closeLabel 
   const content = HELP_CONTENT[screen] || { title:"Hjælp", titleIcon:"info", tips:[
     { icon:"message", title:"Send feedback", desc:"Brug Feedback-knappen øverst til at rapportere problemer eller forslag." },
   ]};
+  const panelRef = React.useRef(null);
+  useDialogA11y(panelRef, onClose);
   // Portal til body: .screen.fade-in fanger ellers position:fixed (CLAUDE.md §3 regel 4), når modalen åbnes fra en skærm.
   return createPortal(
     <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.85)", display:"flex", alignItems:"flex-end" }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="help-modal-title" tabIndex={-1}
+        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto", outline:"none" }}
         onClick={e => e.stopPropagation()}>
         <div style={UI.rowBetweenMb16}>
-          <div style={{ ...UI.ufs18_fw900_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name={content.titleIcon} size={17} color="var(--ink)" /> {content.title}</div>
+          <div id="help-modal-title" style={{ ...UI.ufs18_fw900_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name={content.titleIcon} size={17} color="var(--ink)" /> {content.title}</div>
           <button type="button" onClick={onClose} aria-label="Luk"
             style={{ width:44, height:44, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"50%", cursor:"pointer" }}>
             <Icon name="x" size={16} color="var(--ink)" />

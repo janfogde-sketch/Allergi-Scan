@@ -5,6 +5,7 @@ import { ALLERGENS, PAGE_IDS } from "./constants.jsx";
 import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers, profileConflictLabel, profileWarnLabel, profileMatchLabel, imageAttribution } from "./helpers.js";
 import { isAllergenWord, keywordMatches } from "./allergenKeywords.js";
 import { UI } from "./styleUtils.js";
+import { useDialogA11y } from "./useDialogA11y.js";
 import eatsafeLogoHorizontal from "./assets/logo/eatsafe-logo-horizontal.svg";
 import eatsafeLogoHorizontalMono from "./assets/logo/eatsafe-logo-horizontal-mono.svg";
 import eatsafeSymbol from "./assets/logo/eatsafe-symbol.svg";
@@ -813,22 +814,26 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
 // position:fixed-børn — et almindeligt fixed-ark ville ellers rulle med
 // resten af siden i stedet for at blive stående over bundmenuen.
 export function ListPickerSheet({ lists, onChoose, onCancel }) {
+  const sheetRef = React.useRef(null);
+  const titleId = React.useId();
+  useDialogA11y(sheetRef, onCancel);
   return createPortal(
     <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }}
       onClick={onCancel}>
-      <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"70vh", overflowY:"auto" }}
+      <div ref={sheetRef} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}
+        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"70vh", overflowY:"auto", outline:"none" }}
         onClick={e => e.stopPropagation()}>
         <div style={UI.rowBetweenMb16}>
-          <div style={UI.ufs18_fw900_cink}>Tilføj til hvilken liste?</div>
+          <div id={titleId} style={UI.ufs18_fw900_cink}>Tilføj til hvilken liste?</div>
           <button onClick={onCancel} aria-label="Luk"
             style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
         </div>
         {lists.map(l => (
-          <div key={l.id} onClick={() => onChoose(l.id)}
-            style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, marginBottom:8, cursor:"pointer" }}>
+          <button type="button" key={l.id} onClick={() => onChoose(l.id)}
+            style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", minHeight:44, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, marginBottom:8, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" }}>
             <span style={{ fontSize:14, fontWeight:700, color:"var(--ink)" }}>{l.name}</span>
             {l.type === "family" && <Icon name="family" size={13} color="var(--muted)" />}
-          </div>
+          </button>
         ))}
       </div>
     </div>,
@@ -848,16 +853,21 @@ export function ListPickerSheet({ lists, onChoose, onCancel }) {
 // grøn uden ikon (for evt. fremtidig ikke-destruktiv brug af samme
 // komponent). Begge knapper er mindst 44px høje (tap-area-krav).
 export function ConfirmDialog({ title, message, confirmLabel, cancelLabel = "Annuller", onConfirm, onCancel, danger = true }) {
+  const sheetRef = React.useRef(null);
+  const titleId = React.useId();
+  const msgId = React.useId();
+  useDialogA11y(sheetRef, onCancel);
   return createPortal(
     <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }}
       onClick={onCancel}>
-      <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"22px 16px 28px", width:"100%" }}
+      <div ref={sheetRef} role="alertdialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={message ? msgId : undefined} tabIndex={-1}
+        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"22px 16px 28px", width:"100%", outline:"none" }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display:"flex", alignItems:"flex-start", gap:10, marginBottom:18 }}>
           {danger && <Icon name="warning" size={20} color="var(--red)" />}
           <div>
-            <div style={{ fontSize:15.5, fontWeight:800, color:"var(--ink)", marginBottom: message ? 4 : 0 }}>{title}</div>
-            {message && <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.5 }}>{message}</div>}
+            <div id={titleId} style={{ fontSize:15.5, fontWeight:800, color:"var(--ink)", marginBottom: message ? 4 : 0 }}>{title}</div>
+            {message && <div id={msgId} style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.5 }}>{message}</div>}
           </div>
         </div>
         <div style={{ display:"flex", gap:8 }}>
@@ -877,11 +887,6 @@ export function ConfirmDialog({ title, message, confirmLabel, cancelLabel = "Ann
   );
 }
 
-// ─── INFO SHEET ───────────────────────────────────────────────────────────────
-// Lille bottom-sheet med en forklaring bag et info-ikon (1. okt. 2026, første
-// brug: "Hvad er krydskontaminering?" i Madpas). Samme portal-mønster som
-// ConfirmDialog (position:fixed fanges ellers af .screen.fade-in's transform).
-// Én "Forstået"-knap (44px) og tryk udenfor lukker.
 // ── Fejl- og informationstilstande (F2-4, finpudset af Bjørn 6. okt. 2026) ────
 // StateBox er den fælles inline-boks: tone "error" (rød, egentlig fejl) eller "info"
 // (neutral, fx offline med gemt resultat). Genopretning er en grøn, sekundær knap.
@@ -904,12 +909,19 @@ export function LoadErrorBox({ what, onRetry }) {
   return <StateBox tone="error" title={`${what} kunne ikke hentes.`} text="Tjek din forbindelse, og prøv igen." onAction={onRetry} />;
 }
 
+// ─── INFO SHEET ───────────────────────────────────────────────────────────────
+// Lille bottom-sheet med en forklaring bag et info-ikon (1. okt. 2026, første
+// brug: "Hvad er krydskontaminering?" i Madpas). Samme portal-mønster som
+// ConfirmDialog (position:fixed fanges ellers af .screen.fade-in's transform).
+// Én "Forstået"-knap (44px) og tryk udenfor lukker.
 export function InfoSheet({ title, children, onClose, closeLabel = "Forstået" }) {
+  const sheetRef = React.useRef(null);
+  useDialogA11y(sheetRef, onClose);
   return createPortal(
     <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }}
       onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-label={title}
-        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"22px 16px 28px", width:"100%" }}
+      <div ref={sheetRef} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}
+        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"22px 16px 28px", width:"100%", outline:"none" }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display:"flex", alignItems:"flex-start", gap:10, marginBottom:18 }}>
           <span style={{ flexShrink:0, marginTop:1, display:"flex" }}><Icon name="info" size={20} color="var(--blue)" /></span>
@@ -977,19 +989,19 @@ export function ToastHost({ top = false }) {
   React.useEffect(() => {
     const handler = (toast) => {
       setToasts(t => [...t, toast]);
-      // Bekræftelser forsvinder efter ca. 2,5 sekunder, fejl efter 4 og forklarende info (fx note under et allergen) efter 6
-      setTimeout(() => setToasts(t => t.filter(x => x.id !== toast.id)), toast.type === "error" ? 4000 : toast.type === "info" ? 6000 : 2500);
+      // F4-8: bekræftelser står 3 sekunder; fejl og forklarende info (fx note under et allergen) 6, så de kan nå at blive læst.
+      setTimeout(() => setToasts(t => t.filter(x => x.id !== toast.id)), toast.type === "success" ? 3000 : 6000);
     };
     toastListeners.push(handler);
     return () => { toastListeners = toastListeners.filter(l => l !== handler); };
   }, []);
 
-  if (!toasts.length) return null;
-
+  // F4-8: beholderen er altid monteret med role="status", så skærmlæseren opdager nye beskeder;
+  // fejl får role="alert" og læses op med det samme.
   return createPortal(
-    <div style={{ position:"fixed", left:0, right:0, ...(top ? { top:"calc(64px + env(safe-area-inset-top))" } : { bottom:"calc(84px + env(safe-area-inset-bottom))" }), zIndex:9998, display:"flex", flexDirection:"column", alignItems:"center", gap:8, pointerEvents:"none", padding:"0 16px" }}>
+    <div role="status" aria-live="polite" style={{ position:"fixed", left:0, right:0, ...(top ? { top:"calc(64px + env(safe-area-inset-top))" } : { bottom:"calc(84px + env(safe-area-inset-bottom))" }), zIndex:9998, display:"flex", flexDirection:"column", alignItems:"center", gap:8, pointerEvents:"none", padding:"0 16px" }}>
       {toasts.map(t => (
-        <div key={t.id} style={{
+        <div key={t.id} role={t.type === "error" ? "alert" : undefined} style={{
           display:"flex", alignItems:"center", gap:8,
           background:"var(--surface)", border:`1px solid ${t.type === "error" ? "var(--red-md)" : t.type === "info" ? "var(--blue-md)" : "var(--border)"}`,
           borderRadius:12, padding:"12px 16px", boxShadow:"var(--sh2)",

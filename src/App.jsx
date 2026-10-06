@@ -43,6 +43,7 @@ const FeedbackModal = React.lazy(() => import('./FeedbackModal.jsx'));
 const ProfileMenu = React.lazy(() => import('./ProfileMenu.jsx'));
 import ErrorBoundary from './ErrorBoundary.jsx';
 import { useOffline } from './useOffline.js';
+import { useScreenFocus } from './useScreenFocus.js';
 
 import { appCss } from './theme.jsx';
 import { BUILD_TIME, COMMIT_SHA, formatBuildTime, buildScreenLabel } from './utils.jsx';
@@ -499,6 +500,8 @@ export default function EatSafe() {
 
   // ── Beskeder (liste, ulæst-tæller og ?notification=-ruten fra push) ──────
   const notifications = useNotifications({ accessToken, userId, user, screen, setScreen, setAuthTab });
+  // F4-6: fokus til den nye skærms overskrift ved skærmskift (resultatsiden styrer selv sit fokus).
+  useScreenFocus(screen, { skip: [SCREENS.RESULT, SCREENS.BOOT] });
 
   // Push er per enhed, ikke per konto: har enheden allerede givet tilladelse, får den konto, der er logget ind,
   // sit abonnement gemt her (ellers viser appen push som "til", men der kommer intet). Spørger aldrig om tilladelse.

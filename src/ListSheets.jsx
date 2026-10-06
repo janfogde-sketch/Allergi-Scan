@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Icon, ConfirmDialog, showToast } from "./SharedComponents.jsx";
+import { useDialogA11y } from "./useDialogA11y.js";
 import { isSharedList, listShareStatus, joinNames, parseListCode, listLinkUrl, listShareText, looksLikeListLink } from "./listShare.js";
 
 const LBL = { fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".8px" };
@@ -15,21 +16,22 @@ const WRAP = { overflowWrap:"anywhere", wordBreak:"break-word" };
 function Sheet({ label, onClose, children }) {
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const panelRef = useRef(null);
+  // F4-7: fokus ind/tilbage, Tab inde i arket og Esc (fælles hook).
+  useDialogA11y(panelRef, () => closeRef.current());
   const [vv, setVv] = useState(() => (typeof window !== "undefined" && window.visualViewport ? { top: window.visualViewport.offsetTop, h: window.visualViewport.height } : null));
   useEffect(() => {
-    const onKey = e => { if (e.key === "Escape") closeRef.current(); };
-    document.addEventListener("keydown", onKey);
     const v = window.visualViewport;
     const sync = () => v && setVv({ top: v.offsetTop, h: v.height });
     v?.addEventListener("resize", sync);
     v?.addEventListener("scroll", sync);
-    return () => { document.removeEventListener("keydown", onKey); v?.removeEventListener("resize", sync); v?.removeEventListener("scroll", sync); };
+    return () => { v?.removeEventListener("resize", sync); v?.removeEventListener("scroll", sync); };
   }, []);
   const frame = vv ? { top: vv.top, height: vv.h } : { top: 0, bottom: 0 };
   return createPortal(
     <div style={{ position:"fixed", left:0, right:0, ...frame, zIndex:9995, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }} onClick={() => closeRef.current()}>
-      <div role="dialog" aria-modal="true" aria-label={label} onClick={e => e.stopPropagation()}
-        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", width:"100%", maxHeight:"92%", display:"flex", flexDirection:"column", overflow:"hidden", boxShadow:"var(--sh)" }}>
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1} onClick={e => e.stopPropagation()}
+        style={{ outline:"none", background:"var(--sheet)", borderRadius:"20px 20px 0 0", width:"100%", maxHeight:"92%", display:"flex", flexDirection:"column", overflow:"hidden", boxShadow:"var(--sh)" }}>
         {children}
       </div>
     </div>,

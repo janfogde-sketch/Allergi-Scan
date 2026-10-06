@@ -15,6 +15,7 @@ import { useHistoryContext } from "./HistoryContext.jsx";
 import { CategorySelect } from "./MemberForm.jsx";
 import ResultScreen from "./ResultScreen.jsx";
 import { UI } from "./styleUtils.js";
+import { useDialogA11y } from "./useDialogA11y.js";
 import { getGreeting } from "./utils.jsx";
 // Lazy: skærme brugeren ikke nødvendigvis besøger hver session, holdes ude af hoved-bundlet.
 // ResultScreen er IKKE med her — den vises efter stort set hvert scan (hoved-flowet),
@@ -144,6 +145,8 @@ function DemoSlider({ onClose }) {
 // almindelige klik derefter til-/fravælger enkeltvis. Portal-baseret — se
 // CLAUDE.md afsnit 3 for hvorfor (samme fade-in-containing-block-fælde).
 function ScanProfilePickerSheet({ activeProfiles, setActiveProfiles, family, user, onClose }) {
+  const sheetRef = useRef(null);
+  useDialogA11y(sheetRef, onClose);
   const allIds = ["me", ...family.map(m => m.id)];
   const isAll = allIds.every(id => activeProfiles.includes(id));
   const toggleAll = () => setActiveProfiles(isAll ? ["me"] : allIds);
@@ -179,10 +182,11 @@ function ScanProfilePickerSheet({ activeProfiles, setActiveProfiles, family, use
   return createPortal(
     <div style={{ position:"fixed", inset:0, zIndex:9996, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }}
       onClick={onClose}>
-      <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
+      <div ref={sheetRef} role="dialog" aria-modal="true" aria-labelledby="scan-profile-title" tabIndex={-1}
+        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto", outline:"none" }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
-          <div style={{ fontSize:16, fontWeight:900, color:"var(--ink)" }}>Tjekker for</div>
+          <div id="scan-profile-title" style={{ fontSize:16, fontWeight:900, color:"var(--ink)" }}>Tjekker for</div>
           <button onClick={onClose} aria-label="Luk"
             style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
         </div>
@@ -215,6 +219,50 @@ function ScanProfilePickerSheet({ activeProfiles, setActiveProfiles, family, use
 // baggrund som før, men nu med en tekst under. `minWidth`/`minHeight:44`
 // sikrer et reelt touch-target på mindst ca. 44×44pt (krav 14), selvom den
 // synlige cirkel stadig er 34px — touch-fladen er større end det viste ikon.
+// F3-8/F4-7 (6. okt. 2026): app-guiden og kamera-primeren som portal (position:fixed fanges ellers af
+// .screen.fade-in's transform, CLAUDE.md §3 regel 4) med dialog-rolle, Esc og fokus.
+function GuideSheet({ onClose }) {
+  const sheetRef = useRef(null);
+  useDialogA11y(sheetRef, onClose);
+  return createPortal(
+    <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.7)", display:"flex", flexDirection:"column", justifyContent:"flex-end" }}
+      onClick={onClose}>
+      <div ref={sheetRef} role="dialog" aria-modal="true" aria-label="App-guide" tabIndex={-1}
+        style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", overflow:"hidden", maxHeight:"90vh", overflowY:"auto", outline:"none" }}
+        onClick={e => e.stopPropagation()}>
+        <DemoSlider onClose={onClose} />
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function CameraPrimer({ onDismiss }) {
+  const boxRef = useRef(null);
+  useDialogA11y(boxRef, onDismiss);
+  return createPortal(
+    <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.6)", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
+      onClick={onDismiss}>
+      <div ref={boxRef} role="dialog" aria-modal="true" aria-labelledby="camera-primer-title" tabIndex={-1}
+        style={{ background:"var(--paper)", borderRadius:20, padding:"24px 22px", maxWidth:320, textAlign:"center", boxShadow:"var(--sh2)", outline:"none" }}
+        onClick={e => e.stopPropagation()}>
+        <div style={{ display:"flex", justifyContent:"center", marginBottom:12 }}>
+          <div style={{ width:48, height:48, borderRadius:"50%", background:"var(--green-selected-bg)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+            <Icon name="camera" size={22} color="var(--green)" />
+          </div>
+        </div>
+        <div id="camera-primer-title" style={{ fontSize:15, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>
+          EatSafe bruger kameraet til at læse produktets stregkode.
+        </div>
+        <button className="btn btn-primary btn-full" onClick={onDismiss} style={{ marginTop:6 }}>
+          Fortsæt
+        </button>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function CamCtrlBtn({ icon, label, onClick, active, ariaLabel, ariaPressed }) {
   return (
     <button onClick={onClick} aria-label={ariaLabel || label} aria-pressed={ariaPressed}
@@ -414,39 +462,13 @@ export default function ScannerScreen({
           <div className="screen fade-in" id="main-content" style={{ display:"flex", flexDirection:"column", minHeight:"calc(100vh - 130px)", paddingBottom:0 }}>
 
             {/* Guide modal — vises ved klik på "App-guide" */}
-            {showGuide && (
-              <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.7)", display:"flex", flexDirection:"column", justifyContent:"flex-end" }}
-                onClick={() => setShowGuide(false)}>
-                <div style={{ background:"var(--paper)", borderRadius:"20px 20px 0 0", overflow:"hidden", maxHeight:"90vh", overflowY:"auto" }}
-                  onClick={e => e.stopPropagation()}>
-                  <DemoSlider onClose={() => setShowGuide(false)} />
-                </div>
-              </div>
-            )}
+            {showGuide && <GuideSheet onClose={() => setShowGuide(false)} />}
 
             {/* Kamera-permission-primer — vises KUN første gang, lige før
                 browserens egen kamera-tilladelses-dialog (28. sept. 2026,
                 FINAL POLISH – SCANNER, krav 10). Kort, ét sætning — ingen
                 lang privacy-forklaring. */}
-            {showCameraPrimer && (
-              <div style={{ position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,.6)", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
-                onClick={dismissCameraPrimer}>
-                <div style={{ background:"var(--paper)", borderRadius:20, padding:"24px 22px", maxWidth:320, textAlign:"center", boxShadow:"var(--sh2)" }}
-                  onClick={e => e.stopPropagation()}>
-                  <div style={{ display:"flex", justifyContent:"center", marginBottom:12 }}>
-                    <div style={{ width:48, height:48, borderRadius:"50%", background:"var(--green-selected-bg)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                      <Icon name="camera" size={22} color="var(--green)" />
-                    </div>
-                  </div>
-                  <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>
-                    EatSafe bruger kameraet til at læse produktets stregkode.
-                  </div>
-                  <button className="btn btn-primary btn-full" onClick={dismissCameraPrimer} style={{ marginTop:6 }}>
-                    Fortsæt
-                  </button>
-                </div>
-              </div>
-            )}
+            {showCameraPrimer && <CameraPrimer onDismiss={dismissCameraPrimer} />}
 
             {/* Scan-boks — kun til loggede. Forsiden viser en hilsen + stor
                 scan-CTA oven på appens fælles baggrundsbillede — se CLAUDE.md
