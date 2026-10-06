@@ -299,7 +299,7 @@ export async function runLookupProduct(ean, ctx) {
     if (product.canonical_ean) {
       try {
         const canonicalData = await apiCall(
-          `${SUPABASE_URL}/rest/v1/products?ean=eq.${product.canonical_ean}&select=allergen_flags,ingredients,nutrition,verified_status,source&limit=1`,
+          `${SUPABASE_URL}/rest/v1/products?ean=eq.${product.canonical_ean}&select=allergen_flags,ingredients_text,nutrition,verified_status,source,allergen_source_method,allergen_quality&limit=1`,
           { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
         );
         if (Array.isArray(canonicalData) && canonicalData[0]) {
@@ -308,10 +308,13 @@ export async function runLookupProduct(ean, ctx) {
           product = {
             ...product,
             allergen_flags: c.allergen_flags || product.allergen_flags,
-            ingredients: c.ingredients || product.ingredients,
+            ingredients: c.ingredients_text || product.ingredients,
+            ingredients_text: c.ingredients_text || product.ingredients_text,
             nutrition: c.nutrition || product.nutrition,
             verified_status: c.verified_status || product.verified_status,
             source: c.source || product.source,
+            allergen_source_method: c.allergen_source_method || product.allergen_source_method,
+            allergen_quality: c.allergen_quality || product.allergen_quality,
           };
         }
       } catch { /* Brug variant-data som fallback */ }
