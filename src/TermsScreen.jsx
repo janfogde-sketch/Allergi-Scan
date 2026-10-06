@@ -47,7 +47,7 @@ export default function TermsScreen({ onBack }) {
       {/* paddingTop matcher .legal-topbar's egen renderede højde (header er
           position:fixed, tager ikke plads i normal flow) + lidt luft. */}
       <div className="screen fade-in" style={{ paddingTop:"calc(75px + env(safe-area-inset-top))" }}>
-        <div style={S.updated}>Sidst opdateret: 3. oktober 2026</div>
+        <div style={S.updated}>Sidst opdateret: 6. oktober 2026</div>
 
         <div style={S.draftNotice}>
           Denne side er en foreløbig udgave af EatSafes brugsvilkår og er endnu ikke juridisk gennemgået. Kontakt <Mail />, hvis du har spørgsmål, indtil den endelige version er på plads.
@@ -70,7 +70,7 @@ export default function TermsScreen({ onBack }) {
           <li style={S.li}>kontrollere kostpræferencer og valgte E-numre</li>
           <li style={S.li}>vise ingredienser, allergener og næringsoplysninger</li>
           <li style={S.li}>gemme historik, favoritter og indkøbslister</li>
-          <li style={S.li}>understøtte profiler for familiemedlemmer eller andre personer i din husstand</li>
+          <li style={S.li}>understøtte profiler for familiemedlemmer eller andre personer i din familie</li>
           <li style={S.li}>modtage produktbilleder, rettelser og andre produktoplysninger fra brugere.</li>
         </ul>
         <p style={S.p}>Hvilke funktioner der er tilgængelige, kan ændre sig over tid.</p>
@@ -107,10 +107,10 @@ export default function TermsScreen({ onBack }) {
         <p style={S.p}>Du kan slette din konto via EatSafes indstillinger.</p>
         <p style={S.p}>Behandling og sletning af personoplysninger er nærmere beskrevet i EatSafes privatlivspolitik.</p>
 
-        <h2 style={S.h2}>8. Familie- og husstandsprofiler</h2>
-        <p style={S.p}>EatSafe kan gøre det muligt at oprette eller administrere profiler for andre personer i en husstand.</p>
+        <h2 style={S.h2}>8. Familieprofiler</h2>
+        <p style={S.p}>EatSafe kan gøre det muligt at oprette eller administrere profiler for andre personer i din familie.</p>
         <p style={S.p}>Du må kun registrere oplysninger om en anden person, når du har ret til det.</p>
-        <p style={S.p}>Voksne personer skal selv acceptere en invitation, før de indgår i din husstand. Du må kun invitere personer, der ønsker det, og skal indtaste deres egen e-mailadresse; en invitation kan kun bruges af den, der har fået mailen eller linket, og kun én gang. Deler du et link, skal du selv godkende, hvem der bruger det. Registrerer du oplysninger om en voksen på en profil, du selv administrerer, forudsætter det, at personen har givet dig sit samtykke.</p>
+        <p style={S.p}>Voksne personer skal selv acceptere en invitation, før de indgår i din familie. Du må kun invitere personer, der ønsker det, og skal indtaste deres egen e-mailadresse; en invitation kan kun bruges af den, der har fået mailen eller linket, og kun én gang. Deler du et link, skal du selv godkende, hvem der bruger det. Registrerer du oplysninger om en voksen på en profil, du selv administrerer, forudsætter det, at personen har givet dig sit samtykke.</p>
         <p style={S.p}>Ved oprettelse af en profil for et barn skal du have ret til at handle på barnets vegne.</p>
         <p style={S.p}>EatSafe kan begrænse eller ændre mulighederne for at registrere oplysninger om andre personer for at beskytte deres privatliv og sikkerhed.</p>
 
