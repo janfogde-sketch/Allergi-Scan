@@ -5,7 +5,7 @@ import { useHealthConsent } from "./useHealthConsent.js";
 import HealthConsentBox from "./HealthConsentBox.jsx";
 import { memberConsentTexts } from "./healthConsent.js";
 import { UI } from "./styleUtils.js";
-import { AgeStepper, GenderPicker } from "./FormFields.jsx";
+import { AgeSelect, GenderPicker } from "./FormFields.jsx";
 import { AllergenChipPicker, AllergenSensitivity, CustomAllergenField, DietChipPicker, ENumberPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { Accordion, PrimaryButton, SecondaryButton, InputField } from "./DesignSystem.jsx";
 import { pruneAllergenLevels } from "./helpers.js";
@@ -39,8 +39,7 @@ export const MemberForm = ({
   const age = birthYear ? String(new Date().getFullYear() - parseInt(birthYear)) : "";
   // Børneprofil: 0-17 år. En ældre, allerede oprettet profil, der er fyldt 18, kan stadig redigeres (og får en overgangsnote), men en ny kan aldrig være 18+.
   const legacyAdult = editing && age !== "" && Number(age) >= 18;
-  const ageMax = legacyAdult ? 120 : 17;
-  const ageOk = age !== "" && Number(age) >= 0 && Number(age) <= ageMax;
+  const ageOk = age !== "" && Number(age) >= 0 && (legacyAdult || Number(age) <= 17);
   const ageKnown = age !== "" && ageOk;
   const [adultTried, setAdultTried] = React.useState(false); // brugeren forsøgte at vælge 18 år eller derover
   const hasHealthData = ((allergens?.length || 0) + (customAllerg?.length || 0)) > 0;
@@ -83,11 +82,11 @@ export const MemberForm = ({
       <InputField label="Navn" required style={{ marginBottom:17 }}
         placeholder="Fx. Mia" value={name} onChange={e => setName(e.target.value)} />
 
-      {/* Alder * — delt AgeStepper-komponent, samme som trin 1. Gemmes
-          internt som fødselsår (birthYear-prop uændret). */}
+      {/* Alder * — vælger med 0-17 år (6. okt. 2026, Bjørn: "– | Vælg alder | +" uden startværdi var ikke intuitiv). Gemmes internt som
+          fødselsår (birthYear-prop uændret). */}
       <div style={{ marginBottom:19 }}>
-        <label className="field-lbl">Alder <span style={UI.red}>*</span></label>
-        <AgeStepper value={age} min={0} max={ageMax} startAt={8} onOverMax={() => setAdultTried(true)}
+        <label className="field-lbl" htmlFor="member-age">Alder <span style={UI.red}>*</span></label>
+        <AgeSelect id="member-age" value={age} max={17} onOverMax={legacyAdult ? undefined : () => setAdultTried(true)}
           onChange={a => { setAdultTried(false); setBirthYear(a ? String(new Date().getFullYear() - parseInt(a)) : ""); }} />
         {/* Kun børn under 18: forsøg på 18+ forklares og fører til invitation af en voksen. */}
         {adultTried && (
@@ -124,7 +123,6 @@ export const MemberForm = ({
         if (setLevels) setLevels(pruneAllergenLevels(levels, arr));
         if (arr.length > 0) setNoAllergies(false);
       }} />
-      {setLevels && <AllergenSensitivity selected={allergens} levels={levels} onChange={setLevels} />}
 
       {/* Skriv selv — samme delte felt som onboarding og Rediger præferencer */}
       <CustomAllergenField customAllerg={customAllerg} setCustomAllerg={setCustomAllerg} customInput={customInput} setCustomInput={setCustomInput}
@@ -132,7 +130,10 @@ export const MemberForm = ({
 
       {/* Eksplicit "ingen": et medlem uden allergier skal vælges aktivt, så "glemt" og "ingen" ikke ligner hinanden. Vælges det,
           mens der allerede er valgt noget, spørger vi først, så profilen aldrig både har allergier og står som "ingen". */}
-      <SecondaryButton active={noAllergies} style={{ marginTop:12, minHeight:40 }}
+      {/* Neutral, når den ikke er valgt (6. okt. 2026, Bjørn): den må ikke ligne en aktiv, primær mulighed ved siden af valgte allergier.
+          Gensidigt eksklusiv: et allergi- eller fritekstvalg fjerner markeringen, og "ingen" rydder alle valg (efter bekræftelse). */}
+      <SecondaryButton active={noAllergies}
+        style={{ marginTop:12, minHeight:44, ...(noAllergies ? {} : { color:"var(--ink2)", border:"1.5px solid var(--border2)", fontWeight:600 }) }}
         onClick={() => { if (noAllergies) setNoAllergies(false); else if (hasHealthData) setConfirmNone(true); else setNoAllergies(true); }}>
         Ingen allergier eller intolerancer
       </SecondaryButton>
@@ -143,6 +144,9 @@ export const MemberForm = ({
           onCancel={() => setConfirmNone(false)}
           onConfirm={() => { setAllergens([]); setCustomAllerg([]); setCustomInput(""); if (setLevels) setLevels({}); setNoAllergies(true); setConfirmNone(false); }} />
       )}
+
+      {/* Spor af allergener — efter allergivalget, så rækkefølgen er Allergier → Spor → E-numre */}
+      {setLevels && <AllergenSensitivity selected={allergens} levels={levels} onChange={setLevels} />}
 
       {/* Kostpræferencer — delt DietChipPicker, samme som trin 3 (grøn
           valgt-state, sidste-ulige-kort spænder hele bredden). */}

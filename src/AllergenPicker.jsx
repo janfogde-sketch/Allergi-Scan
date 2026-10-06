@@ -99,11 +99,11 @@ export const CustomAllergenField = ({ customAllerg, setCustomAllerg, customInput
         <button className="btn btn-outline" aria-label="Tilføj" onClick={add}
           style={{ width:46, minHeight:0, padding:0, borderRadius:10, fontSize:19, flexShrink:0 }}>+</button>
       </div>
-      {customAllerg.length > 0 && (
-        <div style={{ fontSize:11.5, color:"var(--muted)", lineHeight:1.45, marginBottom:6 }}>
-          Egne valg tjekkes mod ingredienslisten som tekst. De har ingen sporvalg.
-        </div>
-      )}
+      {/* Ingen falsk tryghed (6. okt. 2026, Bjørn): egne valg er en ren ordsøgning i ingredienslisten (matchCustomAllergens), ikke et
+          allergen i EatSafes data. Andre navne for det samme, spor og manglende ingredienslister fanges ikke, så det skal stå tydeligt. */}
+      <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.45, margin: customAllerg.length ? "0 0 8px" : "8px 0 0" }}>
+        Egne valg er en ordsøgning: EatSafe advarer kun, hvis netop det ord står i ingredienslisten. Andre navne for det samme og spor fanges ikke, så tjek altid selv pakken.
+      </div>
       {customAllerg.length > 0 && (
         <div className="tags">
           {customAllerg.map((a, i) => (
@@ -150,7 +150,7 @@ export const AllergenSensitivity = ({ selected, levels, onChange, showIntro = tr
     <div className="allergen-sensitivity" style={bare ? undefined : { marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)" }}>
       {showTitle && <div style={UI.sectionLbl6}>Spor af allergener</div>}
       {showIntro && (
-        <div style={{ fontSize:13, color:"var(--ink2)", margin: "0 0 4px", lineHeight:1.5 }}>
+        <div style={{ fontSize:12.5, color:"var(--muted)", margin: "0 0 4px", lineHeight:1.5 }}>
           Mange pakker skriver "kan indeholde spor af", selv om allergenet ikke er en ingrediens. Vælg, hvornår du vil advares.
         </div>
       )}

@@ -5,6 +5,7 @@
 // design). Bruges af både OnboardingScreen.jsx (trin 1) og MemberForm.jsx.
 import React from "react";
 import { ChoiceCard } from "./DesignSystem.jsx";
+import { Icon } from "./SharedComponents.jsx";
 
 // 27. sept. 2026, "FINAL 10/10 POLISH – ONBOARDING TRIN 1": alle tre bokse
 // (minus/værdi/plus) har nu samme 44px højde (var 40px på knapperne, en
@@ -49,6 +50,32 @@ export function AgeStepper({ value, onChange, min = 1, max = 120, placeholder = 
         style={{ width:44, height:44, flexShrink:0, borderRadius:10, border:"1.5px solid var(--border2)", background:"var(--surface2)", fontSize:19, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
         +
       </button>
+    </div>
+  );
+}
+
+// Aldersvælger til børneprofiler (6. okt. 2026, Bjørn): "– | Vælg alder | +" uden startværdi var ikke intuitiv. Et tryk på feltet åbner
+// telefonens egen vælger med 0-`max` år, og den valgte værdi vises som "3 år". Med `onOverMax` findes et sidste valg "18 år eller derover",
+// som ikke ændrer alderen, men kalder onOverMax, så skærmen kan forklare, at voksne skal have egen konto. En ældre værdi over `max`
+// (en profil, der er fyldt 18) vises stadig, så den kan redigeres.
+const OVER_MAX = "over-max";
+export const ageLabel = a => (String(a) === "0" ? "Under 1 år" : `${a} år`);
+export function AgeSelect({ value, onChange, max = 17, onOverMax, placeholder = "Vælg alder", id }) {
+  const ages = Array.from({ length: max + 1 }, (_, i) => String(i));
+  const hasValue = value !== "" && value != null;
+  if (hasValue && !ages.includes(String(value))) ages.push(String(value));
+  return (
+    <div style={{ position:"relative" }}>
+      <select id={id} className="field" aria-label="Alder i år" value={hasValue ? String(value) : ""}
+        onChange={e => { const v = e.target.value; if (v === OVER_MAX) { onOverMax?.(); return; } onChange(v); }}
+        style={{ appearance:"none", WebkitAppearance:"none", minHeight:46, paddingRight:40, cursor:"pointer", fontWeight: hasValue ? 700 : 500, color: hasValue ? "var(--ink)" : "var(--muted2)" }}>
+        <option value="" disabled>{placeholder}</option>
+        {ages.map(a => <option key={a} value={a}>{ageLabel(a)}</option>)}
+        {onOverMax && <option value={OVER_MAX}>18 år eller derover</option>}
+      </select>
+      <span style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", display:"flex" }}>
+        <Icon name="chevronDown" size={16} color="var(--muted2)" />
+      </span>
     </div>
   );
 }

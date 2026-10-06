@@ -169,10 +169,14 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
 
   // Bundpadding: den målte navigationshøjde plus luft (6. okt. 2026). Den faste "110px + safe area" var for lidt på iPhones med
   // hjemmeindikator, så invitationskortets sidste knap kunne ende bag navigationen. Uden måling (fx i test) bruges den gamle værdi.
-  const bottomPad = navH ? `${navH + 32}px` : "calc(110px + env(safe-area-inset-bottom))";
+  const bottomPad = navH ? `${navH + 40}px` : "calc(110px + env(safe-area-inset-bottom))";
   const openInvite = () => {
     setFamilyAddMode("invite");
     setTimeout(() => document.getElementById("family-invite-panel")?.scrollIntoView({ behavior:"smooth", block:"start" }), 60);
+  };
+  const openChildForm = () => {
+    setFamilyAddMode("form");
+    setTimeout(() => document.getElementById("family-member-form")?.scrollIntoView({ behavior:"smooth", block:"start" }), 60);
   };
   return (
     <div className="screen fade-in" style={{ paddingBottom: bottomPad }}>
@@ -276,7 +280,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
         <div className="card" style={{ marginTop:16 }}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
             <div className="card-title" style={{ marginBottom:0 }}>Tilføj til familien</div>
-            <TextLink onClick={() => setFamilyAddMode(null)}>Annuller</TextLink>
+            <TextLink underline={false} onClick={() => setFamilyAddMode(null)}>Annuller</TextLink>
           </div>
           <button type="button" onClick={openInvite}
             style={{ display:"flex", alignItems:"center", gap:12, width:"100%", textAlign:"left", cursor:"pointer", fontFamily:"var(--f)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px 16px", marginBottom:10 }}>
@@ -285,17 +289,17 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
             </span>
             <span>
               <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>Invitér til familien</div>
-              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Send en mail eller del et link til personer på 18 år eller derover.</div>
+              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Voksen med egen EatSafe-konto. Send en mail eller del et link.</div>
             </span>
           </button>
-          <button type="button" onClick={() => setFamilyAddMode("form")}
+          <button type="button" onClick={openChildForm}
             style={{ display:"flex", alignItems:"center", gap:12, width:"100%", textAlign:"left", cursor:"pointer", fontFamily:"var(--f)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px 16px", marginBottom:0 }}>
             <span style={{ width:38, height:38, borderRadius:"50%", background:"var(--green-selected-bg)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
               <Icon name="family" size={18} color="var(--green)" />
             </span>
             <span>
               <div style={{ fontWeight:800, fontSize:14, color:"var(--ink)" }}>Opret profil til et barn</div>
-              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Til børn under 18 år uden egen konto.</div>
+              <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, lineHeight:1.4 }}>Barn under 18 år uden egen konto.</div>
             </span>
           </button>
         </div>
@@ -310,15 +314,15 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
       )}
 
       {(familyAddMode === "form" || editingMemberId) && (
-        <div className="card">
+        <div id="family-member-form" className="card" style={{ scrollMarginTop:16, scrollMarginBottom: navH + 16 }}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
             <div className="card-title">{editingMemberId ? "Rediger profil" : "Opret profil til et barn"}</div>
-            <TextLink onClick={() => { cancelEditMember(); setFamilyAddMode(null); }}>Annuller</TextLink>
+            <TextLink underline={false} onClick={() => { cancelEditMember(); setFamilyAddMode(null); }}>Annuller</TextLink>
           </div>
           <MemberForm key={editingMemberId || "new"} editing={!!editingMemberId}
             openPrivacy={() => openLegal(SCREENS.PRIVACY)}
-            onInviteAdult={() => { cancelEditMember(); setFamilyAddMode("invite"); }}
-            onInviteOwnAccount={() => { cancelEditMember(); setFamilyAddMode("invite"); }}
+            onInviteAdult={() => { cancelEditMember(); openInvite(); }}
+            onInviteOwnAccount={() => { cancelEditMember(); openInvite(); }}
             name={newMemberName} setName={setNewMemberName}
             birthYear={newMemberBirthYear} setBirthYear={setNewMemberBirthYear}
             gender={newMemberGender} setGender={setNewMemberGender}

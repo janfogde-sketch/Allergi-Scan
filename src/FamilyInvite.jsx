@@ -108,9 +108,9 @@ export function PendingInviteCard({ invite, onCancel, accessToken }) {
 }
 
 const SHARED_POINTS = [
-  DIETS_ENABLED ? "Jeres allergier og kostvalg" : "Jeres allergier",
+  DIETS_ENABLED ? "Allergier og kostvalg" : "Allergier",
   "Indkøbslister",
-  "Historik og favoritter, hvis I vil",
+  "Historik og favoritter, hvis I ønsker det",
 ];
 
 // Det, der deles, når to konti er i samme familie. Bruges både før invitationen oprettes og i "Sådan virker familie".
@@ -179,7 +179,7 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
     <div className="card" style={UI.mb12}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6 }}>
         <div className="card-title" style={{ marginBottom:0 }}>Invitér til familien</div>
-        {!created && <TextLink onClick={onClose}>Annuller</TextLink>}
+        {!created && <TextLink underline={false} onClick={onClose}>Annuller</TextLink>}
       </div>
 
       {!created && (
