@@ -16,7 +16,6 @@ describe("useHistory: clearHistory", () => {
     const { result } = renderHook(() => useHistory({ accessToken: "t", userId: "u1" }));
     await act(async () => { await result.current.loadHistory("own"); });
     expect(result.current.history).toHaveLength(1);
-    result.current.favorites; // uændret
     let ok;
     await act(async () => { ok = await result.current.clearHistory(); });
     expect(ok).toBe(true);

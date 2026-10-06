@@ -40,6 +40,8 @@ function makeCtx(overrides = {}) {
     setProposedFlags: vi.fn(),
     setProductImagePreview: vi.fn(),
     setProductImageBase64: vi.fn(),
+    setOcrImageBase64: vi.fn(),
+    setNutritionImageBase64: vi.fn(),
     ...overrides,
   };
 }
@@ -137,6 +139,8 @@ describe("runLookupProduct — network not-found path", () => {
     expect(ctx.setScreen).toHaveBeenCalledWith(SCREENS.NOTFOUND);
     expect(ctx.setNotFoundStep).toHaveBeenCalledWith(1);
     expect(ctx.setLoading).toHaveBeenLastCalledWith(false);
+    expect(ctx.setOcrImageBase64).toHaveBeenCalledWith(null);
+    expect(ctx.setNutritionImageBase64).toHaveBeenCalledWith(null);
   }, 10000);
 });
 
