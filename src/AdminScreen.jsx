@@ -169,7 +169,7 @@ export default function AdminScreen() {
 
   return (
     <>
-        <AdminTicketDetailSheet openTicket={openTicket} setOpenTicket={setOpenTicket} updateTicketStatus={updateTicketStatus} />
+        <AdminTicketDetailSheet openTicket={openTicket} setOpenTicket={setOpenTicket} updateTicketStatus={updateTicketStatus} accessToken={accessToken} />
 
         {/* ══ ADMIN ══ */}
         {screen === SCREENS.ADMIN && !openSubmission && !openTicket && (

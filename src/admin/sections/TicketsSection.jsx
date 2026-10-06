@@ -35,7 +35,7 @@ function buildTicketPrompt(t) {
     ...(ctx.scan_result_ean ? [`Relateret produkt: ${ctx.scan_result_name || "—"} [EAN ${ctx.scan_result_ean}]`] : []),
     ...(ctx.allergens?.length ? [`Brugerens allergener: ${ctx.allergens.join(", ")}`] : []),
     ...(ctx.debug_trace?.length ? [``, `## Seneste debug-trace (${ctx.debug_trace.length} entries)`, JSON.stringify(ctx.debug_trace.slice(-15), null, 2)] : []),
-    t.image_base64 ? `\n(Der er vedhæftet et skærmbillede til denne ticket i EatSafe-admin — se ticket-id ${t.id} i Supabase feedback_tickets-tabellen hvis det er relevant for fejlsøgningen.)` : ``,
+    (t.image_path || t.image_base64) ? `\n(Der er vedhæftet et skærmbillede til denne ticket i EatSafe-admin — se ticket-id ${t.id} i Supabase feedback_tickets-tabellen hvis det er relevant for fejlsøgningen.)` : ``,
     ``,
     `## Opgave`,
     `1. Undersøg selv koden i repoet for at finde den sandsynlige rodårsag — gæt ikke, grep/læs de relevante filer først.`,
