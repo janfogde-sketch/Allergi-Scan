@@ -118,7 +118,7 @@ hvert tælleligt dansk substantiv skal have både ental og flertal ("hasselnød"
 understreng (fanger "FuldkornsHVEDE", "Mandelflager"); undtagelser står i `NO_SUBSTRING`, og ord der ikke må matche (boghvede, kanelsnegl, kokosfløde) fjernes i
 `normalizeIngredientText`. Ord på højst 4 tegn matcher som hele ord, med eksplicitte sammensætningsregler i `SHORT_PATTERNS`. Negation gælder kun inden for samme kommasegment,
 spor-signalet ("kan indeholde spor af") skal stå i samme sætning FØR ordet. Ændringer i motoren skal have en liste i `src/fixtures/allergenRegression.json` (test `src/allergenRegression.test.js`).
-Genanalyse af alle produkter efter en motorrettelse: `allergen-reanalyze` (først `dry_run` til diff-tabellen, så `apply`), backup i `products_allergen_backup_20261006`.
+Genanalyse af alle produkter efter en motorrettelse: `allergen-reanalyze` (først `dry_run` til diff-tabellen, så `apply`; kun opadgående: nej→spor→ja, aldrig nedgange, fordi motoren ikke kender fremmedsprog og fiskenavne), backup i `products_allergen_backup_20261006`.
 
 ---
 
