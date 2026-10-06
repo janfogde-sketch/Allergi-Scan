@@ -12,7 +12,7 @@ export default function RecallNotice({ recalls }) {
   const date = r.published_at ? new Date(r.published_at).toLocaleDateString("da-DK", { day:"numeric", month:"long", year:"numeric" }) : null;
   const line = { fontSize:13, color:"var(--ink)", lineHeight:1.5, marginTop:6 };
   return (
-    <div className="card" role="alert" style={{ border:"2px solid var(--red)", background:"var(--red-lt)", marginBottom:10 }}>
+    <div className="card" role="alert" style={{ border:"2px solid var(--red)", background:"linear-gradient(var(--red-lt), var(--red-lt)), var(--surface)", marginBottom:10 }}>
       <div style={{ display:"flex", alignItems:"center", gap:8 }}>
         <Icon name="warning" size={18} color="var(--red)" />
         <div style={{ fontSize:15, fontWeight:800, color:"var(--red)" }}>Tilbagekaldt af Fødevarestyrelsen</div>

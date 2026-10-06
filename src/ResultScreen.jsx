@@ -52,7 +52,7 @@ export default function ResultScreen({
     return () => cancelAnimationFrame(id);
   }, [scanResult?.code]);
   // F1-1: tilbagekaldt af Fødevarestyrelsen (opslag på EAN); gør status rød uanset allergier.
-  const recalls = useRecalls(scanResult?.isDemo ? null : scanResult?.code, accessToken);
+  const recalls = useRecalls(scanResult?.isDemo && import.meta.env.MODE !== "artifact-preview" ? null : scanResult?.code, accessToken);
   if (!scanResult) return null;
 
   // Hotfix F2-1 (6. okt. 2026): uden hentet profil (allergener og familie) er der intet at
