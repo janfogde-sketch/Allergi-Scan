@@ -48,7 +48,7 @@
   den offentlige tekst. Væsentlige ændringer skal meddeles brugerne på passende måde (Jan beslutter hvordan).
 - **Opbevaringsfrister overholdes, som loven foreskriver (GDPR: ikke længere end nødvendigt).** Frister står i privatlivspolitikkens afsnit 11 og
   i `src/CONTEXT.md` §3 og skal også være det, databasen faktisk gør. Ny tabel/kolonne med personoplysninger: definér frist, sørg for sletning ved
-  kontosletning (`delete-user` eller cascade) og automatisk oprydning (`cleanup_notifications()`, dagligt kl. 03:30 UTC), og opdatér politikken.
+  kontosletning (`delete-user` eller cascade) og automatisk oprydning (`cleanup_notifications()`, dagligt kl. 03:30 UTC), og opdatér politikken. **DB-testen `supabase/tests/account_deletion.sql` (workflow `db-tests.yml`) fejler, hvis en kolonne med brugerdata ikke står på dens "dækket"-liste: tilføj sletning/oprydning først, derefter listen.**
   Samtykke til helbredsdata (art. 9) gives særskilt og logges i `consent_log` (RPC `give_health_consent`/`withdraw_health_consent`; se `src/CONTEXT.md` §3); tilbagetrækning sletter helbredsdata. Nuværende frister: kontodata slettes straks ved kontosletning; beskeder 12 mdr.; notifikationshændelser og fejllogs 90 dage; sikkerhedsindberetninger 12 mdr.; invitationens `invitee_email` slettes ved svar/udløb (højst ca. 48 t).
 
 ---

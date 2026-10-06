@@ -1,0 +1,31 @@
+name: DB-tests
+
+# Bygger en tom Postgres ud fra supabase/migrations/ og kører SQL-tests i supabase/tests/.
+# Rører aldrig produktion (kører på en midlertidig kopi på GitHub-maskinen). Kræver ikke Supabase Pro.
+on:
+  pull_request:
+    paths: ["supabase/migrations/**", "supabase/tests/**", "supabase/functions/delete-user/**", ".github/workflows/db-tests.yml"]
+  push:
+    branches: [main]
+    paths: ["supabase/migrations/**", "supabase/tests/**", "supabase/functions/delete-user/**", ".github/workflows/db-tests.yml"]
+
+jobs:
+  sql-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start lokal Supabase og afspil alle migrationer
+        run: supabase start -x studio,imgproxy,logflare,vector,mailpit,edge-runtime,supavisor
+
+      - name: Kør SQL-tests
+        run: |
+          DB_URL=$(supabase status -o env | grep '^DB_URL=' | cut -d= -f2- | tr -d '"')
+          for f in supabase/tests/*.sql; do
+            echo "== $f"
+            psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$f"
+          done
