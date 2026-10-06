@@ -146,29 +146,29 @@ describe("MemberForm: samtykke og model for andres profiler", () => {
     expect(document.getElementById("member-consent")).toBeNull();
   });
 
-  it("alderen i en børneprofil kan ikke komme over 17: typet eller med +, og 18+ forklares med Invitér til familien", () => {
+  it("aldersvælgeren har 0-17 år og et valg for 18+, som forklares med Invitér til familien uden at ændre alderen", () => {
     const onAdd = vi.fn(); const onInviteAdult = vi.fn();
     render(<Harness onAdd={onAdd} onInviteAdult={onInviteAdult} initial={{ allergens: ["noedder"] }} />);
-    fireEvent.change(screen.getByPlaceholderText("Fx. Mia"), { target: { value: "Arnold" } });
-    fireEvent.change(screen.getByLabelText("Alder i år"), { target: { value: "28" } });
-    expect(screen.getByLabelText("Alder i år").value).toBe("17"); // klippet til 17
+    const sel = () => screen.getByLabelText("Alder i år");
+    const values = [...sel().options].map(o => o.value);
+    expect(values).toContain("0"); expect(values).toContain("17"); expect(values).not.toContain("18");
+    expect(sel().value).toBe(""); // ingen forudfyldt alder
+    fireEvent.change(sel(), { target: { value: "3" } });
+    expect(sel().selectedOptions[0].textContent).toBe("3 år");
+    fireEvent.change(sel(), { target: { value: "over-max" } });
+    expect(sel().value).toBe("3");
     expect(screen.getByText("Personer på 18 år eller derover skal have deres egen EatSafe-konto.")).toBeTruthy();
-    expect(screen.queryByText("Voksne administrerer deres egen profil")).toBeNull();
     fireEvent.click(screen.getByText("Invitér til familien"));
     expect(onInviteAdult).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByLabelText("Ét år ældre")); // + ved 17 går ikke videre
-    expect(screen.getByLabelText("Alder i år").value).toBe("17");
-    fireEvent.click(screen.getByLabelText("Ét år yngre"));
-    expect(screen.getByLabelText("Alder i år").value).toBe("16");
+    fireEvent.change(sel(), { target: { value: "16" } });
     expect(screen.queryByText("Personer på 18 år eller derover skal have deres egen EatSafe-konto.")).toBeNull();
     expect(onAdd).not.toHaveBeenCalled();
   });
 
-  it("minus går ikke under 0", () => {
+  it("0 år vises som 'Under 1 år'", () => {
     render(<Harness onAdd={() => {}} initial={{ allergens: ["noedder"] }} />);
     fireEvent.change(screen.getByLabelText("Alder i år"), { target: { value: "0" } });
-    fireEvent.click(screen.getByLabelText("Ét år yngre"));
-    expect(screen.getByLabelText("Alder i år").value).toBe("0");
+    expect(screen.getByLabelText("Alder i år").selectedOptions[0].textContent).toBe("Under 1 år");
   });
 
   it("en ældre profil, der er fyldt 18, kan redigeres og får overgangsnoten", () => {
@@ -195,6 +195,25 @@ describe("MemberForm: samtykke og model for andres profiler", () => {
     expect(btn.getAttribute("aria-pressed")).toBe("false");
     fireEvent.click(btn);
     expect(btn.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("'Ingen' og et allergivalg kan aldrig være aktive samtidig", () => {
+    render(<Harness onAdd={() => {}} />);
+    const none = () => screen.getByRole("button", { name: /Ingen allergier eller intolerancer/ });
+    fireEvent.click(none());
+    expect(none().getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(screen.getAllByRole("button", { name: /Hvede/ })[0]);
+    expect(none().getAttribute("aria-pressed")).toBe("false");
+    fireEvent.change(screen.getByLabelText("Egen allergi eller intolerance"), { target: { value: "Fruktose" } });
+    fireEvent.click(none());
+    fireEvent.click(screen.getByText("Ja, fjern valgene"));
+    expect(none().getAttribute("aria-pressed")).toBe("true");
+    expect(screen.queryAllByRole("button", { name: /Hvede/ }).every(b => b.getAttribute("aria-pressed") !== "true")).toBe(true);
+  });
+
+  it("egne valg forklares som en ordsøgning, ikke som en kontrol", () => {
+    render(<Harness onAdd={() => {}} />);
+    expect(screen.getByText(/Egne valg er en ordsøgning/)).toBeTruthy();
   });
 });
 

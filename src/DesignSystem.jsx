@@ -82,7 +82,8 @@ export function SecondaryButton({
 // `variant="green"` (default) til reelle handlinger ("Glemt adgangskode?"),
 // `variant="muted"` til bevidst nedtonede alternativer ("Ikke nu") der ikke
 // må konkurrere visuelt med en PrimaryButton ovenover.
-export function TextLink({ children, onClick, disabled = false, variant = "green", block = false, style, className = "" }) {
+// `underline={false}`: diskret, sekundær grøn tekstknap uden understregning (fx "Annuller" i Familie-kortene, 6. okt. 2026).
+export function TextLink({ children, onClick, disabled = false, variant = "green", block = false, underline = true, style, className = "" }) {
   const isMuted = variant === "muted";
   return (
     <button
@@ -97,6 +98,7 @@ export function TextLink({ children, onClick, disabled = false, variant = "green
           textDecoration: "underline", textUnderlineOffset: 2, padding: "6px",
         } : {}),
         ...(block ? { display: "block", width: "100%", textAlign: "center", marginTop: 12 } : {}),
+        ...(underline ? {} : { textDecoration: "none", fontSize: 13.5, padding: "8px 0", minHeight: 36 }),
         ...style,
       }}>
       {children}

@@ -222,13 +222,13 @@ export default function ResultScreen({
       if (val === "no") return { status: "check", label: allergenChoiceLabel(a), reason: null };
       return { status: "unknown", label: allergenChoiceLabel(a), reason: "Kan ikke afgøres ud fra de tilgængelige produktdata." };
     }).filter(Boolean);
-    // Egne, fritekst-tilføjede allergier — kun fundet/ikke fundet, ingen
-    // "?"-tilstand er mulig her (binært tekst-match, se matchCustomAllergens).
+    // Egne, fritekst-tilføjede allergier er en ren ordsøgning (matchCustomAllergens). Fundet = ✕. Ikke fundet er IKKE et ✓
+    // (6. okt. 2026, Bjørn: ingen falsk tryghed): andre navne for det samme og spor fanges ikke, så den vises som "?".
     const customRows = (soloProfile.custom || []).map(term => {
       const found = liveCustom.some(m => m.toLowerCase() === term.toLowerCase());
       return found
         ? { status: "cross", label: term, reason: "Fundet i ingredienslisten (fritekst)." }
-        : { status: "check", label: term, reason: null };
+        : { status: "unknown", label: term, reason: "Ordet står ikke i ingredienslisten. Andre navne og spor fanges ikke, så tjek selv pakken." };
     });
     return [...rows, ...customRows].sort((a, b) => CHOICE_STATUS_ORDER[a.status] - CHOICE_STATUS_ORDER[b.status]);
   };
