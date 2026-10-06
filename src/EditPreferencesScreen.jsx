@@ -16,6 +16,7 @@ import { useMeasuredHeight } from "./useMeasuredHeight.js";
 import HealthConsentBox from "./HealthConsentBox.jsx";
 import { canSaveHealthData } from "./healthConsent.js";
 import { reportError } from "./errorReporter.js";
+import { saveMyAllergens } from "./saveMyAllergens.js";
 
 // Sorteret, sammenlignelig udgave af alt, siden kan ændre — bruges til at afgøre, om der er ugemte ændringer.
 const prefsSnapshot = ({ allergens, customAllerg, levels, diets, eNumbers }) => JSON.stringify({
@@ -83,16 +84,8 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
         body:JSON.stringify({ ...(DIETS_ENABLED ? { diets:user.diets||[] } : {}), e_numbers:selectedENumbers||[], allergen_levels:pruneAllergenLevels(user.allergenLevels, allergens) }),
       });
 
-      // Samlet DELETE + én bulk-POST i stedet for et loop af enkelt-POSTs —
-      // ellers kan et fejlet kald midtvejs efterlade en delvist gemt liste
-      await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, { method:"DELETE", headers:makeHeaders(accessToken) });
-      const rows = [
-        ...allergens.map(a => ({ user_id:userId, allergen:a, type:"allergen" })),
-        ...allCustom.map(c => ({ user_id:userId, allergen:c, type:"custom" })),
-      ];
-      if (rows.length > 0) {
-        await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, { method:"POST", headers:{ ...makeHeaders(accessToken), "Prefer":"return=minimal" }, body:JSON.stringify(rows) });
-      }
+      // Én transaktion (RPC save_my_allergens, F2-2): fejler gemningen, er profilen uændret
+      await saveMyAllergens({ accessToken, allergens, custom: allCustom });
       setScreen(SCREENS.PROFILE);
     } catch (e) {
       reportError(e, { source: "edit-preferences" });

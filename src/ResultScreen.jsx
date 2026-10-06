@@ -10,6 +10,8 @@ import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
 import { UI } from "./styleUtils.js";
+import { useRecalls } from "./useRecalls.js";
+import RecallNotice from "./RecallNotice.jsx";
 
 const S = {
   flex1:    { flex:1 },
@@ -43,6 +45,8 @@ export default function ResultScreen({
   // Nulstil "tilføjet"-kvitteringen når man ser et nyt produkt — ResultScreen
   // forbliver monteret på tværs af scanninger, kun scanResult skifter.
   React.useEffect(() => { setAddedToList(false); setShowListPicker(false); setUnknownOpen(false); }, [scanResult?.code]);
+  // F1-1: tilbagekaldt af Fødevarestyrelsen (opslag på EAN); gør status rød uanset allergier.
+  const recalls = useRecalls(scanResult?.isDemo ? null : scanResult?.code, accessToken);
   if (!scanResult) return null;
 
   // Hotfix F2-1 (6. okt. 2026): uden hentet profil (allergener og familie) er der intet at
@@ -552,11 +556,12 @@ export default function ResultScreen({
     // profiler bruges fortsat den eksisterende, samlede tre-tilstands-status
     // (overallStatus/overallHeadline) — per-profil-detaljer vises separat
     // nedenfor (renderPersonOverview).
-    const verdictColor = cannotAssess ? "var(--neutral)" : isMultiProfile
+    const isRecalled = recalls.length > 0;
+    const verdictColor = isRecalled ? "var(--red)" : cannotAssess ? "var(--neutral)" : isMultiProfile
       ? ({ danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[overallStatus] || "var(--green)")
       : ({ danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", unknown:"var(--neutral)" }[topStatus.level] || "var(--green)");
-    const verdictIcon = cannotAssess ? "info" : isMultiProfile ? (overallStatus === "safe" ? "check" : "warning") : topStatus.icon;
-    const headlineText = cannotAssess ? "Kan ikke vurderes" : isMultiProfile ? overallHeadline : topStatus.headline;
+    const verdictIcon = isRecalled ? "warning" : cannotAssess ? "info" : isMultiProfile ? (overallStatus === "safe" ? "check" : "warning") : topStatus.icon;
+    const headlineText = isRecalled ? "Tilbagekaldt" : cannotAssess ? "Kan ikke vurderes" : isMultiProfile ? overallHeadline : topStatus.headline;
     // Konkrete navne under headline, vist som chips/tags (krav 1: "hvis flere
     // ting udløser resultatet, må de gerne vises som korte chips/tags") — kun
     // ved én aktiv profil, hvor topStatus.names allerede er de præcise fund.
@@ -923,6 +928,9 @@ export default function ResultScreen({
 
       {/* ── 1. PRODUKT — verdikten sidder nu som en ramme + strimmel på selve kortet ── */}
       {renderProductHero()}
+
+      {/* F1-1: tilbagekaldelse fra Fødevarestyrelsen, lige under produktet */}
+      {recalls.length > 0 && <RecallNotice recalls={recalls} />}
 
       {/* Kan ikke vurderes: hjælp med de manglende oplysninger er den vigtigste handling, og indkøbslisten bliver sekundær nederst */}
       {cannotAssess && renderMissingData()}

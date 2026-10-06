@@ -7,6 +7,7 @@
 import { useState, useEffect } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { makeHeaders, apiCall, pruneAllergenLevels } from "./helpers.js";
+import { saveMyAllergens } from "./saveMyAllergens.js";
 
 // onboardStep/setOnboardStep er deklareret i App.jsx og sendes ind som
 // props (29. sept. 2026, "Onboarding-persistens") — IKKE længere lokal
@@ -88,27 +89,9 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
     if (previewNoSession) return;
     const allergensToSave = overrideAllergens !== undefined ? overrideAllergens : allergens;
     const customToSave = overrideCustomAllerg !== undefined ? overrideCustomAllerg : customAllerg;
-    // Tidligere blev hvert allergen POST'et enkeltvis i et loop efter DELETE —
-    // fejlede ét kald midtvejs (fx netværksudfald), endte brugeren med en
-    // DELVIST gemt allergiliste uden nogen advarsel. Kritisk i en app der skal
-    // advare mod farlige allergener. Nu: DELETE + én samlet POST af alle rækker,
-    // så det enten lykkes helt eller slet ikke — og fejl kastes videre i stedet
-    // for at blive slugt stille.
-    await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}`, {
-      method: "DELETE",
-      headers: makeHeaders(accessToken),
-    });
-    const rows = [
-      ...allergensToSave.map(a => ({ user_id: userId, allergen: a, type: "allergen" })),
-      ...customToSave.map(c => ({ user_id: userId, allergen: c, type: "custom" })),
-    ];
-    if (rows.length > 0) {
-      await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, {
-        method: "POST",
-        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-        body: JSON.stringify(rows),
-      });
-    }
+    // Én transaktion (RPC save_my_allergens, F2-2): enten gemmes hele listen, eller intet
+    // ændres. Før kunne en fejl mellem DELETE og POST efterlade brugeren uden allergier.
+    await saveMyAllergens({ accessToken, allergens: allergensToSave, custom: customToSave });
     // E-numre gemmes på samme trin i UI'et (Accordion inde i renderStep2),
     // men blev tidligere KUN gemt fra Rediger præferencer på Profil-siden,
     // aldrig fra selve onboardingen — et reelt hul (29. sept. 2026,
