@@ -3,6 +3,10 @@
 Godkendt af Bjørn 6. okt. 2026 (F6-2). Tal tjekket i databasen samme dag: 20.182 varer og 768 opslag i leksikonet.
 Undgå "sikkert", "præcis" og funktioner på pause (opskrifter, diæter), når teksten ændres.
 
+**Tjek tallene før hver indsendelse til butikkerne** (teksten i butikkerne opdateres ikke af sig selv, så tallene er rundet ned):
+`select (select count(*) from products) varer, (select count(*) from knowledge_base where category <> 'diet') opslag;`
+Sprogene i madpasset tælles i `MADPAS_LANGUAGES` (`src/constants.jsx`, test i `src/useMadpas.test.js`).
+
 ## App-navn
 **EatSafe**
 
@@ -36,7 +40,7 @@ Du kan desuden vælge bestemte E-numre, du ønsker at holde øje med.
 
 **Tjek for hele familien**
 
-Opret profiler til børn og andre familiemedlemmer, og tjek den samme vare for flere personer på én gang.
+Opret profiler til dine børn, og tjek den samme vare for flere personer på én gang.
 
 Invitér andre voksne til familien, og del blandt andet indkøbslister på tværs af familien.
 
